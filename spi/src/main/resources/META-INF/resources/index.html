@@ -1,4 +1,4 @@
-<html>
+<html lang="en">
 <head>
     <title>keycloak-spa</title>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
@@ -16,14 +16,14 @@
         });
 
         function makeAjaxRequest() {
-            axios.get("/users/me", {
+            axios.get("/vaults/vaultId1/keys/deviceId1", {
                 headers: {
                     'Authorization': 'Bearer ' + keycloak.token
                 }
             })
-            .then( function (response) {
-                console.log("Response: ", response);
-            }).catch(function (error) {
+                .then(function (response) {
+                    console.log("Response: ", response);
+                }).catch(function (error) {
                 console.log('refreshing');
                 keycloak.updateToken(5).then(function () {
                     console.log('Token refreshed');
@@ -31,10 +31,52 @@
                     console.log('Failed to refresh token', error);
                 });
             });
-    }
+        }
+
+        function createDevice(uuid) {
+            axios.put('/devices/' + uuid, {name: 'asd', publicKey: 'world'}, {
+                headers: {
+                    'Authorization': 'Bearer ' + keycloak.token
+                }
+            })
+                .then(function (response) {
+                    console.log("Response: ", response);
+                }).catch(function (error) {
+                console.log('refreshing');
+                keycloak.updateToken(5).then(function () {
+                    console.log('Token refreshed');
+                }).catch(function (error) {
+                    console.log('Failed to refresh token', error);
+                });
+            });
+        }
+
+        function createVault() {
+            axios.put('/vaults/', {uuid: 'asd', name: 'world', masterKey: 'hello'}, {
+                headers: {
+                    'Authorization': 'Bearer ' + keycloak.token
+                }
+            })
+                .then(function (response) {
+                    console.log("Response: ", response);
+                }).catch(function (error) {
+                console.log('refreshing');
+                keycloak.updateToken(5).then(function () {
+                    console.log('Token refreshed');
+                }).catch(function (error) {
+                    console.log('Failed to refresh token', error);
+                });
+            });
+        }
     </script>
 </head>
 <body>
-    <button onclick="makeAjaxRequest()">Request</button>
+<button onclick="createVault()">Request</button>
+<br><br><br>
+
+<label>Create device:</label><br>
+UUID: <input name="uuid" id="uuid"><br>
+<button onclick="createDevice(document.getElementById('uuid').value)">Add</button>
+
 </body>
 </html>

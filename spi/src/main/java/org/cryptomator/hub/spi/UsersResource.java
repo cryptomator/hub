@@ -1,5 +1,10 @@
 package org.cryptomator.hub.spi;
 
+import io.quarkus.oidc.UserInfo;
+import org.cryptomator.hub.persistence.entities.UserDao;
+import org.cryptomator.hub.persistence.entities.VaultDao;
+import org.jboss.resteasy.annotations.cache.NoCache;
+
 import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -7,34 +12,22 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-import org.jboss.resteasy.annotations.cache.NoCache;
-import io.quarkus.security.identity.SecurityIdentity;
-
 @Path("/users")
-@Produces(MediaType.APPLICATION_JSON)
+@Produces(MediaType.TEXT_PLAIN)
 public class UsersResource {
 
     @Inject
-    SecurityIdentity securityIdentity;
+    UserInfo userInfo;
+
+    @Inject
+    UserDao userDao;
 
     @GET
     @Path("/me")
     @RolesAllowed("user")
     @NoCache
-    public User me() {
-        return new User(securityIdentity);
+    public String me() {
+        return userDao.get(userInfo.getString("sub")).getName();
     }
 
-    public static class User {
-
-        private final String userName;
-
-        User(SecurityIdentity securityIdentity) {
-            this.userName = securityIdentity.getPrincipal().getName();
-        }
-
-        public String getUserName() {
-            return userName;
-        }
-    }
 }
