@@ -36,14 +36,14 @@ public class VaultResource {
     VaultDao vaultDao;
 
     @GET
-    @Path("/{id}/keys/{deviceId}")
+    @Path("/{uuid}/keys/{deviceId}")
     @RolesAllowed("user")
     @Transactional
     @Produces(MediaType.TEXT_PLAIN)
-    public Response unlock(@PathParam("id") String id, @PathParam("deviceId") String deviceId) {
+    public Response unlock(@PathParam("uuid") String uuid, @PathParam("deviceId") String deviceId) {
         // FIXME validate parameter
 
-        var deviceAccess = accessDao.get(id, deviceId);
+        var deviceAccess = accessDao.get(uuid, deviceId);
         var currentUserId = userInfo.getString("sub");
 
         if (deviceAccess == null || !deviceAccess.getDevice().getUser().getId().equals(currentUserId)) {
@@ -54,21 +54,24 @@ public class VaultResource {
     }
 
     @PUT
+    @Path("/{uuid}")
     @RolesAllowed("user")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_PLAIN)
     @Transactional
-    public Response create(/*@Valid*/ VaultDto vaultDto) {
+    public Response create(/*@Valid*/ VaultDto vaultDto, @PathParam("uuid") String uuid) {
+        // FIXME verify uuid
+
         if (vaultDto == null) {
             return Response.serverError().entity("Vault cannot be null").build();
         }
 
-        if (vaultDao.get(vaultDto.getUuid()) != null) {
+        if (vaultDao.get(uuid) != null) {
             return Response.status(Response.Status.CONFLICT).build();
         }
 
         var currentUser = userDao.get(userInfo.getString("sub"));
-        var vault = vaultDto.toVault(currentUser);
+        var vault = vaultDto.toVault(currentUser, uuid);
         var persistedVaultId = vaultDao.persist(vault);
 
         return Response.ok(persistedVaultId).build();
@@ -76,22 +79,16 @@ public class VaultResource {
 
     public static class VaultDto {
 
-        private final String uuid;
         private final String name;
         private final String masterkey;
         private final String iterations;
         private final String salt;
 
-        public VaultDto(@JsonProperty("uuid") String uuid, @JsonProperty("name") String name, @JsonProperty("masterkey") String masterkey, @JsonProperty("iterations") String iterations, @JsonProperty("salt") String salt) {
-            this.uuid = uuid;
+        public VaultDto(@JsonProperty("name") String name, @JsonProperty("masterkey") String masterkey, @JsonProperty("iterations") String iterations, @JsonProperty("salt") String salt) {
             this.name = name;
             this.masterkey = masterkey;
             this.iterations = iterations;
             this.salt = salt;
-        }
-
-        public String getUuid() {
-            return uuid;
         }
 
         public String getName() {
@@ -110,9 +107,9 @@ public class VaultResource {
             return salt;
         }
 
-        public Vault toVault(User user) {
+        public Vault toVault(User user, String uuid) {
             var vault = new Vault();
-            vault.setId(getUuid());
+            vault.setId(uuid);
             vault.setName(getName());
             vault.setMasterkey(getMasterkey());
             vault.setIterations(getIterations());
