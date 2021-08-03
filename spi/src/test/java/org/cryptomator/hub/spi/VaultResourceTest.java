@@ -39,13 +39,14 @@ public class VaultResourceTest {
 
     @Test
     public void testCreateVault() {
-        var uuid = "foo";
-        var name = "baar";
-        var masterKey = "baz";
+        var uuid = "uuid1";
+        var name = "name1";
+        var masterKey = "masterKey1";
+        var costParam = "costParam1";
+        var salt = "salt1";
 
-        var vaultDto = new VaultResource.VaultDto(uuid, name, masterKey);
+        var vaultDto = new VaultResource.VaultDto(uuid, name, masterKey, costParam, salt);
 
-        // FIXME
         given()
                 .when()
                 .contentType(ContentType.JSON)

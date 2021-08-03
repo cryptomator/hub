@@ -1,8 +1,10 @@
 package org.cryptomator.hub.spi;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.oidc.UserInfo;
 import org.cryptomator.hub.persistence.entities.Device;
 import org.cryptomator.hub.persistence.entities.DeviceDao;
+import org.cryptomator.hub.persistence.entities.User;
 import org.cryptomator.hub.persistence.entities.UserDao;
 
 import javax.annotation.security.RolesAllowed;
@@ -15,7 +17,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.Objects;
 
 @Path("/devices")
 public class DeviceResource {
@@ -41,22 +42,13 @@ public class DeviceResource {
             return Response.serverError().entity("UUID cannot be empty").build();
         }
         if (deviceDao.get(uuid) == null) {
-            var storedDeviceId = createNewDevice(deviceDto, uuid);
-            assert (Objects.equals(storedDeviceId, uuid));
+            var currentUser = userDao.get(userInfo.getString("sub"));
+            var device = deviceDto.toDevice(currentUser, uuid);
+            var storedDeviceId = deviceDao.persist(device);
             return Response.status(Response.Status.CREATED).build();
         } else {
             return Response.status(Response.Status.CONFLICT).build();
         }
-    }
-
-    private String createNewDevice(DeviceDto deviceDto, String uuid) {
-        var currentUser = userDao.get(userInfo.getString("sub"));
-        var device = new Device();
-        device.setId(uuid);
-        device.setUser(currentUser);
-        device.setName(deviceDto.getName());
-        device.setPublickey(deviceDto.getPublicKey());
-        return deviceDao.persist(device);
     }
 
     public static class DeviceDto {
@@ -64,7 +56,7 @@ public class DeviceResource {
         private final String name;
         private final String publicKey;
 
-        public DeviceDto(String name, String publicKey) {
+        public DeviceDto(@JsonProperty("name") String name, @JsonProperty("publicKey") String publicKey) {
             this.name = name;
             this.publicKey = publicKey;
         }
@@ -75,6 +67,15 @@ public class DeviceResource {
 
         public String getPublicKey() {
             return publicKey;
+        }
+
+        public Device toDevice(User user, String uuid) {
+            var device = new Device();
+            device.setId(uuid);
+            device.setUser(user);
+            device.setName(getName());
+            device.setPublickey(getPublicKey());
+            return device;
         }
     }
 }

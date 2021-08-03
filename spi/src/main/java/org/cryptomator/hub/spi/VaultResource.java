@@ -1,8 +1,9 @@
 package org.cryptomator.hub.spi;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.oidc.UserInfo;
-import org.cryptomator.hub.persistence.entities.Access;
 import org.cryptomator.hub.persistence.entities.AccessDao;
+import org.cryptomator.hub.persistence.entities.User;
 import org.cryptomator.hub.persistence.entities.UserDao;
 import org.cryptomator.hub.persistence.entities.Vault;
 import org.cryptomator.hub.persistence.entities.VaultDao;
@@ -18,7 +19,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.stream.Collectors;
 
 @Path("/vaults")
 public class VaultResource {
@@ -63,37 +63,15 @@ public class VaultResource {
             return Response.serverError().entity("Vault cannot be null").build();
         }
 
-        if (vaultDao.get(vaultDto.uuid) != null) {
+        if (vaultDao.get(vaultDto.getUuid()) != null) {
             return Response.status(Response.Status.CONFLICT).build();
         }
 
         var currentUser = userDao.get(userInfo.getString("sub"));
-
-        var vault = new Vault();
-        vault.setId(vaultDto.uuid);
-        vault.setName(vaultDto.name);
-        vault.setMasterkey(vaultDto.masterKey);
-        vault.setCostParam("default"); // TODO
-        vault.setSalt("default"); // TODO
-        vault.setUser(currentUser);
-
+        var vault = vaultDto.toVault(currentUser);
         var persistedVaultId = vaultDao.persist(vault);
-        createAccessEntriesFor(vault);
 
         return Response.ok(persistedVaultId).build();
-    }
-
-    private void createAccessEntriesFor(Vault vault) {
-        var user = vault.getUser();
-        var result = user.getDevices().stream().map(device -> {
-                    var access = new Access();
-                    access.setId(new Access.AccessId(device.getId(), vault.getId()));
-                    access.setVault(vault);
-                    access.setDevice(device);
-                    access.setDeviceSpecificMasterkey(""); // TODO encrypt masterkey with devices public key
-                    return access;
-                }).map(access -> accessDao.persist(access))
-                .collect(Collectors.toList());
     }
 
     public static class VaultDto {
@@ -101,11 +79,15 @@ public class VaultResource {
         private final String uuid;
         private final String name;
         private final String masterKey;
+        private final String costParam;
+        private final String salt;
 
-        public VaultDto(String uuid, String name, String masterKey) {
+        public VaultDto(@JsonProperty("uuid") String uuid, @JsonProperty("name") String name, @JsonProperty("masterKey") String masterKey, @JsonProperty("costParam") String costParam, @JsonProperty("salt") String salt) {
             this.uuid = uuid;
             this.name = name;
             this.masterKey = masterKey;
+            this.costParam = costParam;
+            this.salt = salt;
         }
 
         public String getUuid() {
@@ -114,6 +96,29 @@ public class VaultResource {
 
         public String getName() {
             return name;
+        }
+
+        public String getMasterKey() {
+            return masterKey;
+        }
+
+        public String getCostParam() {
+            return costParam;
+        }
+
+        public String getSalt() {
+            return salt;
+        }
+
+        public Vault toVault(User user) {
+            var vault = new Vault();
+            vault.setId(getUuid());
+            vault.setName(getName());
+            vault.setMasterkey(getMasterKey());
+            vault.setCostParam(getCostParam());
+            vault.setSalt(getSalt());
+            vault.setUser(user);
+            return vault;
         }
     }
 }

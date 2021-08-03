@@ -52,7 +52,7 @@
         }
 
         function createVault() {
-            axios.put('/vaults/', {uuid: 'asd', name: 'world', masterKey: 'hello'}, {
+            axios.put('/vaults/', {uuid: 'uuid1', name: 'name1', masterKey: 'masterKey1', costParam: 'costParam1', salt: 'salt1'}, {
                 headers: {
                     'Authorization': 'Bearer ' + keycloak.token
                 }
@@ -71,7 +71,7 @@
     </script>
 </head>
 <body>
-<button onclick="createVault()">Request</button>
+<button onclick="createVault()">Create Vault</button>
 <br><br><br>
 
 <label>Create device:</label><br>
