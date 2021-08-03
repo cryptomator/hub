@@ -1,0 +1,29 @@
+{
+  "[typescript]": {
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": true,
+      "source.fixAll.tslint": true
+    },
+    "editor.foldingStrategy": "indentation",
+    "editor.formatOnSave": true,
+    "editor.tabSize": 2,
+    "editor.comments.insertSpace": true,
+    "files.insertFinalNewline": true,
+  },
+  "[json]": {
+    "editor.tabSize": 2,
+    "editor.quickSuggestions": {
+      "strings": true
+    },
+    "editor.suggest.insertMode": "replace"
+  },
+  "html.format.wrapLineLength": 0,
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "typescript.preferences.quoteStyle": "single",
+  "mochaExplorer.env": {
+    "TS_NODE_COMPILER_OPTIONS": "{\"module\": \"commonjs\" }",
+    "TS_NODE_PROJECT": "./test/tsconfig.json"
+  },
+  "mochaExplorer.files": "test/**/*.spec.ts",
+  "mochaExplorer.require": "ts-node/register"
+}
