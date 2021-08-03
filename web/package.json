@@ -8,9 +8,13 @@
   "main": "index.js",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
-    "test": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha -r ts-node/register test/**/*.spec.ts",
+    "build": "tsc --project src/tsconfig.json && vite build",
+    "test": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' TS_NODE_PROJECT='test/tsconfig.json' mocha -r ts-node/register test/**/*.spec.ts",
     "serve": "vite preview"
+  },
+  "directories": {
+    "src": "./src",
+    "test": "./test"
   },
   "devDependencies": {
     "@types/chai": "^4.2.21",

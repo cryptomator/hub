@@ -10,7 +10,8 @@
             "name": "Run Mocha Tests",
             "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
             "env": {
-                "TS_NODE_COMPILER_OPTIONS": "{\"module\": \"commonjs\" }"
+                "TS_NODE_COMPILER_OPTIONS": "{\"module\": \"commonjs\" }",
+                "TS_NODE_PROJECT": "./test/tsconfig.json"
             },
             "args": [
                 "-r", "ts-node/register",
