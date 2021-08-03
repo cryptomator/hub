@@ -35,8 +35,8 @@ public class Vault {
     @Column(name = "salt", nullable = false)
     private String salt;
 
-    @Column(name = "costParam", nullable = false)
-    private String costParam;
+    @Column(name = "iterations", nullable = false)
+    private String iterations;
 
     @Column(name = "masterkey", nullable = false)
     private String masterkey;
@@ -82,12 +82,12 @@ public class Vault {
         this.salt = salt;
     }
 
-    public String getCostParam() {
-        return costParam;
+    public String getIterations() {
+        return iterations;
     }
 
-    public void setCostParam(String costParam) {
-        this.costParam = costParam;
+    public void setIterations(String iterations) {
+        this.iterations = iterations;
     }
 
     public String getMasterkey() {
@@ -108,7 +108,7 @@ public class Vault {
                 && Objects.equals(access, vault.access)
                 && Objects.equals(name, vault.name)
                 && Objects.equals(salt, vault.salt)
-                && Objects.equals(costParam, vault.costParam)
+                && Objects.equals(iterations, vault.iterations)
                 && Objects.equals(masterkey, vault.masterkey);
     }
 
@@ -125,7 +125,7 @@ public class Vault {
                 ", access=" + access.stream().map(Access::getId).collect(Collectors.toList()) +
                 ", name='" + name + '\'' +
                 ", salt='" + salt + '\'' +
-                ", costParam='" + costParam + '\'' +
+                ", iterations='" + iterations + '\'' +
                 ", masterkey='" + masterkey + '\'' +
                 '}';
     }

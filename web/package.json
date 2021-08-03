@@ -12,7 +12,7 @@
     "lint": "tslint --project src/tsconfig.json",
     "test": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' TS_NODE_PROJECT='test/tsconfig.json' mocha -r ts-node/register test/**/*.spec.ts",
     "serve": "vite preview",
-    "dist": "tsc --project src/tsconfig.json && vite build --outDir='../spi/src/main/resources/META-INF/resources'"
+    "dist": "tsc --project src/tsconfig.json && vite build --outDir='../spi/src/main/resources/META-INF/resources' --emptyOutDir"
   },
   "directories": {
     "src": "./src",

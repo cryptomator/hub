@@ -13,7 +13,7 @@ CREATE TABLE vault
     user_id   VARCHAR(255) NOT NULL,
     name      VARCHAR(255) NOT NULL,
     salt      VARCHAR(255) NOT NULL,
-    costParam VARCHAR(255) NOT NULL,
+    iterations VARCHAR(255) NOT NULL,
     masterkey VARCHAR(255) NOT NULL,
     CONSTRAINT pk_vault PRIMARY KEY (id),
     CONSTRAINT FK_VAULT_ON_USER FOREIGN KEY (user_id) REFERENCES user (id)

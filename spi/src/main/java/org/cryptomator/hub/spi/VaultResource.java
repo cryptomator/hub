@@ -78,15 +78,15 @@ public class VaultResource {
 
         private final String uuid;
         private final String name;
-        private final String masterKey;
-        private final String costParam;
+        private final String masterkey;
+        private final String iterations;
         private final String salt;
 
-        public VaultDto(@JsonProperty("uuid") String uuid, @JsonProperty("name") String name, @JsonProperty("masterKey") String masterKey, @JsonProperty("costParam") String costParam, @JsonProperty("salt") String salt) {
+        public VaultDto(@JsonProperty("uuid") String uuid, @JsonProperty("name") String name, @JsonProperty("masterkey") String masterkey, @JsonProperty("iterations") String iterations, @JsonProperty("salt") String salt) {
             this.uuid = uuid;
             this.name = name;
-            this.masterKey = masterKey;
-            this.costParam = costParam;
+            this.masterkey = masterkey;
+            this.iterations = iterations;
             this.salt = salt;
         }
 
@@ -98,12 +98,12 @@ public class VaultResource {
             return name;
         }
 
-        public String getMasterKey() {
-            return masterKey;
+        public String getMasterkey() {
+            return masterkey;
         }
 
-        public String getCostParam() {
-            return costParam;
+        public String getIterations() {
+            return iterations;
         }
 
         public String getSalt() {
@@ -114,8 +114,8 @@ public class VaultResource {
             var vault = new Vault();
             vault.setId(getUuid());
             vault.setName(getName());
-            vault.setMasterkey(getMasterKey());
-            vault.setCostParam(getCostParam());
+            vault.setMasterkey(getMasterkey());
+            vault.setIterations(getIterations());
             vault.setSalt(getSalt());
             vault.setUser(user);
             return vault;

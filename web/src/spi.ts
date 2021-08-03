@@ -19,7 +19,7 @@ export class Spi {
 
   public async createVault(uuid: string, name: string, masterkey: String, iterations: number, salt: String): Promise<AxiosResponse<any>> {
     await this.initialized;
-    return axios.put('/vaults/', { uuid: uuid, name: name, masterKey: masterkey, costParam: iterations, salt: salt }, {
+    return axios.put('/vaults/', { uuid: uuid, name: name, masterkey: masterkey, iterations: iterations, salt: salt }, {
       headers: {
         'Authorization': 'Bearer ' + this.keycloak.token
       }
