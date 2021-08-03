@@ -1,3 +1,4 @@
+import { Spi } from './spi';
 import './style.css';
 import { Vault } from './vault';
 
@@ -10,21 +11,14 @@ vault.createVaultConfig(vaultId, hubUrl).then(token => {
   div.innerHTML = `<b>jwt</b>: <code>${token}</code>`
 });
 
+const spi = new Spi()
 vault.encryptMasterkey("foobar").then(masterkey => {
-  const div = document.querySelector<HTMLDivElement>('#key')!
-  div.innerHTML = `<b>key</b>: ${masterkey.encrypted}<br>
-    <b>salt</b>: ${masterkey.salt}`
+  spi.createVault(uuid(), "name1", masterkey.encrypted, masterkey.iterations, masterkey.salt)
 })
 
-// vault.generateMasterkey().then(mk => {
-//   crypto.subtle.exportKey('raw', mk).then(raw => {
-//     console.log(vault.base64Url(raw));
-//   });
-//   vault.createVaultConfig("foobar", mk).then(token => {
-//     console.log(token);
-//     app.innerHTML = `
-//       <h1>Hello Vite!</h1>
-//       <a href="https://vitejs.dev/guide/features.html" target="_blank">Documentation</a>
-//       ${token}`
-//   });
-// });
+function uuid() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}

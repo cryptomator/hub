@@ -11,7 +11,8 @@
     "build": "tsc --project src/tsconfig.json && vite build",
     "lint": "tslint --project src/tsconfig.json",
     "test": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' TS_NODE_PROJECT='test/tsconfig.json' mocha -r ts-node/register test/**/*.spec.ts",
-    "serve": "vite preview"
+    "serve": "vite preview",
+    "dist": "tsc --project src/tsconfig.json && vite build --outDir='../spi/src/main/resources/META-INF/resources'"
   },
   "directories": {
     "src": "./src",
@@ -27,5 +28,9 @@
     "tslint": "^6.1.3",
     "typescript": "^4.3.5",
     "vite": "^2.4.4"
+  },
+  "dependencies": {
+    "axios": "^0.21.1",
+    "keycloak-js": "^15.0.0"
   }
 }

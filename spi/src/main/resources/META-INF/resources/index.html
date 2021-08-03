@@ -1,82 +1,16 @@
+<!DOCTYPE html>
 <html lang="en">
-<head>
-    <title>keycloak-spa</title>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="http://localhost:8080/auth/js/keycloak.js"></script>
-    <script>
-        var keycloak = new Keycloak({
-            url: 'http://localhost:8080/auth',
-            realm: 'cryptomator',
-            clientId: 'cryptomator-hub'
-        });
-        keycloak.init({onLoad: 'login-required'}).then(function (response) {
-            console.log('User is now authenticated.', response);
-        }).catch(function (error) {
-            console.error('keycloak init failed', error);
-        });
-
-        function makeAjaxRequest() {
-            axios.get("/vaults/vaultId1/keys/deviceId1", {
-                headers: {
-                    'Authorization': 'Bearer ' + keycloak.token
-                }
-            })
-                .then(function (response) {
-                    console.log("Response: ", response);
-                }).catch(function (error) {
-                console.log('refreshing');
-                keycloak.updateToken(5).then(function () {
-                    console.log('Token refreshed');
-                }).catch(function (error) {
-                    console.log('Failed to refresh token', error);
-                });
-            });
-        }
-
-        function createDevice(uuid) {
-            axios.put('/devices/' + uuid, {name: 'asd', publicKey: 'world'}, {
-                headers: {
-                    'Authorization': 'Bearer ' + keycloak.token
-                }
-            })
-                .then(function (response) {
-                    console.log("Response: ", response);
-                }).catch(function (error) {
-                console.log('refreshing');
-                keycloak.updateToken(5).then(function () {
-                    console.log('Token refreshed');
-                }).catch(function (error) {
-                    console.log('Failed to refresh token', error);
-                });
-            });
-        }
-
-        function createVault() {
-            axios.put('/vaults/', {uuid: 'uuid1', name: 'name1', masterKey: 'masterKey1', costParam: 'costParam1', salt: 'salt1'}, {
-                headers: {
-                    'Authorization': 'Bearer ' + keycloak.token
-                }
-            })
-                .then(function (response) {
-                    console.log("Response: ", response);
-                }).catch(function (error) {
-                console.log('refreshing');
-                keycloak.updateToken(5).then(function () {
-                    console.log('Token refreshed');
-                }).catch(function (error) {
-                    console.log('Failed to refresh token', error);
-                });
-            });
-        }
-    </script>
-</head>
-<body>
-<button onclick="createVault()">Create Vault</button>
-<br><br><br>
-
-<label>Create device:</label><br>
-UUID: <input name="uuid" id="uuid"><br>
-<button onclick="createDevice(document.getElementById('uuid').value)">Add</button>
-
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon.17e50649.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite App</title>
+    <script type="module" crossorigin src="/assets/index.6b4461a9.js"></script>
+    <link rel="modulepreload" href="/assets/vendor.0c829102.js">
+    <link rel="stylesheet" href="/assets/index.ccce2ca3.css">
+  </head>
+  <body>
+    <div id="jwt"></div>
+    
+  </body>
 </html>

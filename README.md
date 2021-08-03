@@ -54,6 +54,10 @@ curl -v -X GET \
 ```
 
 
-## Web
+## Web-Frontend (Port 9090)
 
-Static web frontend - maybe included in spi as static resource...?
+Open folder `web` and run this command to deploy the frontend:
+
+```shell script
+npm run dist
+```
