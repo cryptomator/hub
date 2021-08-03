@@ -1,8 +1,36 @@
 {
 	"folders": [
 		{
+			"name": "Keycloak Configuration",
+			"path": "keycloak"
+		},
+		{
+			"name": "Backend Services",
+			"path": "spi"
+		},
+		{
+			"name": "Web Frontend",
+			"path": "web"
+		},
+		{
+			"name": "[Workspace Root]",
 			"path": "."
 		}
 	],
-	"settings": {}
+	"extensions": {
+		"recommendations": [
+			"ms-vscode.vscode-typescript-tslint-plugin",
+			"hbenl.vscode-mocha-test-adapter"
+		]
+	},
+	"settings": {
+		"files.exclude": {
+			"**/.git": true,
+			"**/node_modules": true,
+			"**/package-lock.json": true,
+			"**/.DS_Store": true
+		},
+		"typescript.referencesCodeLens.enabled": true,
+		"typescript.implementationsCodeLens.enabled": true,
+	}
 }
