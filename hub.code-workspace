@@ -20,7 +20,8 @@
 	"extensions": {
 		"recommendations": [
 			"ms-vscode.vscode-typescript-tslint-plugin",
-			"hbenl.vscode-mocha-test-adapter"
+			"hbenl.vscode-mocha-test-adapter",
+			"octref.vetur"
 		]
 	},
 	"settings": {
