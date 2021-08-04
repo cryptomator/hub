@@ -1,5 +1,6 @@
 import { expect } from 'chai';
-import { Base64Url } from '../src/vault';
+import { describe } from 'mocha';
+import { Base64Url } from '../../src/common/vault';
 
 describe('Base64Url', () => {
   it('should encode to AAAAAAA', () => {

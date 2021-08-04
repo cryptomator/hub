@@ -37,6 +37,3 @@ nb-configuration.xml
 
 # Local environment
 .env
-
-# Generated Web-Frontend code
-src/main/resources/META-INF/resources/

@@ -1,27 +1,15 @@
 import axios, { AxiosResponse } from 'axios';
-import Keycloak, { KeycloakInstance } from 'keycloak-js';
-import './style.css';
+import auth from './auth';
 
 export class Spi {
 
-  private keycloak: KeycloakInstance;
-  private initialized: Promise<boolean>;
-
-  public constructor() {
-    this.keycloak = Keycloak({
-      url: 'http://localhost:8080/auth',
-      realm: 'cryptomator',
-      clientId: 'cryptomator-hub'
-    });
-
-    this.initialized = this.keycloak.init({ onLoad: 'login-required' })
-  }
-
   public async createVault(uuid: string, name: string, masterkey: String, iterations: number, salt: String): Promise<AxiosResponse<any>> {
-    await this.initialized;
+    if (!auth.isAuthenticated()) {
+      return Promise.reject('not logged in');
+    }
     return axios.put('/vaults/' + uuid, { name: name, masterkey: masterkey, iterations: iterations, salt: salt }, {
       headers: {
-        'Authorization': 'Bearer ' + this.keycloak.token
+        'Authorization': 'Bearer ' + auth.bearerToken()
       }
     })
      /*.catch(function (error) {
