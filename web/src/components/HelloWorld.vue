@@ -1,5 +1,6 @@
 <template>
   <h1>{{ msg }}</h1>
+  <h2>hello {{ username }}</h2>
 
   <p>
     Recommended IDE setup:
@@ -36,17 +37,14 @@
 
 <script lang="ts">
 import { ref, defineComponent } from 'vue'
+import auth from '../common/auth'
+
 export default defineComponent({
   name: 'HelloWorld',
-  props: {
-    msg: {
-      type: String,
-      required: true
-    }
-  },
   setup: () => {
     const count = ref(0)
-    return { count }
+    const username = auth.userId()
+    return { count, username }
   }
 })
 </script>

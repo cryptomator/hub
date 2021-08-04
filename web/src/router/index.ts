@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
+import auth from '../common/auth';
+import CreateVault from '../components/CreateVault.vue';
 import HelloWorld from '../components/HelloWorld.vue';
-import Other from '../components/Other.vue';
 
 const routes: RouteRecordRaw[] = [
   {
@@ -9,15 +10,26 @@ const routes: RouteRecordRaw[] = [
     component: HelloWorld
   },
   {
-    path: '/other',
-    name: 'Other',
-    component: Other
+    path: '/vaults/create',
+    name: 'Create Vault',
+    component: CreateVault
   }
 ];
 
 const router = createRouter({
   history: createWebHistory(),
   routes: routes
+});
+router.beforeEach((to, from, next) => {
+  if (!auth.isAuthenticated()) {
+    auth.loginIfRequired().then(() => {
+      next()
+    }).catch(error => {
+      next(new Error("auth failed " + error));
+    })
+  } else {
+    next()
+  }
 });
 
 export default router;
