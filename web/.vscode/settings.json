@@ -25,5 +25,6 @@
     // "TS_NODE_PROJECT": "./test/tsconfig.json"
   },
   "mochaExplorer.files": "test/**/*.spec.ts",
-  "mochaExplorer.require": "ts-node/register"
+  "mochaExplorer.require": "ts-node/register",
+  "eslint.validate": ["typescript", "javascript", "vue"]
 }

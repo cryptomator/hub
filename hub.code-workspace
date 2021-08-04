@@ -19,10 +19,11 @@
 	],
 	"extensions": {
 		"recommendations": [
-			"ms-vscode.vscode-typescript-tslint-plugin",
+			"dbaeumer.vscode-eslint",
 			"hbenl.vscode-mocha-test-adapter",
 			"octref.vetur"
-		]
+		],
+		"unwantedRecommendations": ["dbaeumer.jshint"]
 	},
 	"settings": {
 		"files.exclude": {
@@ -33,5 +34,6 @@
 		},
 		"typescript.referencesCodeLens.enabled": true,
 		"typescript.implementationsCodeLens.enabled": true,
+		"vetur.validation.template": false
 	}
 }
