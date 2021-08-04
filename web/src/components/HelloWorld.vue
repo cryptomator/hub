@@ -1,5 +1,4 @@
 <template>
-  <h1>{{ msg }}</h1>
   <h2>hello {{ username }}</h2>
 
   <p>
