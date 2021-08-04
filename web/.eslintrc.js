@@ -21,7 +21,8 @@ module.exports = {
       rules: {
         'vue/max-attributes-per-line': 'off',
         'vue/singleline-html-element-content-newline': 'off',
-        'vue/html-closing-bracket-spacing': 'off'
+        'vue/html-closing-bracket-spacing': 'off',
+        'vue/html-self-closing': 'off',
       }
     }]
   }
