@@ -33,6 +33,7 @@
     }
   },
   "users" : [ {
+    "id" : "5e362e34-a767-4b0d-a05f-f4b2aea32b88",
     "username" : "owner",
     "enabled" : true,
     "credentials" : [ {
