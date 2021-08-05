@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
+import { createRouter, createWebHashHistory, RouteRecordRaw } from 'vue-router';
 import auth from '../common/auth';
 import CreateVault from '../components/CreateVault.vue';
 import HelloWorld from '../components/HelloWorld.vue';
@@ -17,19 +17,15 @@ const routes: RouteRecordRaw[] = [
 ];
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHashHistory(),
   routes: routes
 });
 router.beforeEach((to, from, next) => {
-  if (!auth.isAuthenticated()) {
-    auth.loginIfRequired().then(() => {
-      next()
-    }).catch(error => {
-      next(new Error("auth failed " + error));
-    })
-  } else {
-    next()
-  }
+  auth.loginIfRequired().then(() => {
+    next();
+  }).catch(error => {
+    next(new Error("auth failed " + error));
+  });
 });
 
 export default router;
