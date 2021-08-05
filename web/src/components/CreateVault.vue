@@ -10,33 +10,24 @@
 <script lang="ts">
 import backend from '../common/backend'
 import { uuid } from '../common/util'
-import { Vault } from '../common/vault'
+import { Masterkey } from '../common/crypto'
 import { defineComponent } from 'vue'
 
 export default defineComponent({
-  name: 'Other',
-
   data: () => ({
     password: '' as string,
     vaultName: '' as string,
   }),
 
   methods: {
-    createVault() {
-      const vault = Vault.create();
+    async createVault() {
+      const masterkey = await Masterkey.create();
       const vaultId = uuid();
       const hubUrl = 'hub+' + location.protocol + '//' + location.hostname + ':' + location.port + '/vault/' + vaultId
-
-      vault.createVaultConfig(vaultId, hubUrl).then(token => {
-        // const div = document.querySelector<HTMLDivElement>('#jwt')!
-        // div.innerHTML = `<b>jwt</b>: <code>${token}</code>`
-        console.log("vault config: ", token);
-      }).catch(e => {
-        console.log("error creating vault config: ", e);
-      });
-      vault.encryptMasterkey(this.$data.password).then(masterkey => {
-        backend.vaults.createVault(vaultId, this.$data.vaultName, masterkey.encrypted, masterkey.iterations, masterkey.salt)
-      });
+      const token = await masterkey.createVaultConfig(vaultId, hubUrl);
+      console.log("vault config: ", token);
+      const wrapped = await masterkey.wrap(this.$data.password);
+      backend.vaults.createVault(vaultId, this.$data.vaultName, wrapped.encrypted, wrapped.iterations, wrapped.salt)
     }
   }
 })

@@ -1,20 +1,24 @@
 import { Base64Url } from './util';
 
-class Masterkey {
+export class WrappedMasterkey {
   constructor(readonly encrypted: string, readonly salt: string, readonly iterations: number) { }
 }
 
-export class Vault {
+export class Masterkey {
 
   private static readonly PBKDF2_ITERATION_COUNT = 100000;
-  private masterkey: Promise<CryptoKey>
+  private key: CryptoKey
 
-  private constructor(masterkey: Promise<CryptoKey>) {
-    this.masterkey = masterkey;
+  private constructor(key: CryptoKey) {
+    this.key = key;
   }
 
-  public static create(): Vault {
-    return new Vault(crypto.subtle.generateKey(
+  /**
+   * Creates a new masterkey, that can be wrapped
+   * @returns A new masterkey
+   */
+  public static async create(): Promise<Masterkey> {
+    const key = crypto.subtle.generateKey(
       {
         name: 'HMAC',
         hash: 'SHA-256',
@@ -22,10 +26,11 @@ export class Vault {
       },
       true,
       ['sign']
-    ))
+    );
+    return new Masterkey(await key);
   }
 
-  private async pbkdf2(password: string, salt: Uint8Array, iterations: number): Promise<CryptoKey> {
+  private static async pbkdf2(password: string, salt: Uint8Array, iterations: number): Promise<CryptoKey> {
     const encodedPw = new TextEncoder().encode(password);
     const pwKey = await crypto.subtle.importKey(
       'raw',
@@ -48,17 +53,42 @@ export class Vault {
     );
   }
 
-  public async encryptMasterkey(password: string): Promise<Masterkey> {
+  public async wrap(password: string): Promise<WrappedMasterkey> {
     const salt = new Uint8Array(16);
     crypto.getRandomValues(salt);
-    const kek = this.pbkdf2(password, salt, Vault.PBKDF2_ITERATION_COUNT);
+    const kek = Masterkey.pbkdf2(password, salt, Masterkey.PBKDF2_ITERATION_COUNT);
     const wrapped = crypto.subtle.wrapKey(
       "raw",
-      await this.masterkey,
+      await this.key,
       await kek,
       { "name": "AES-KW" }
     )
-    return new Masterkey(Base64Url.encode(await wrapped), Base64Url.encode(salt), Vault.PBKDF2_ITERATION_COUNT);
+    return new WrappedMasterkey(Base64Url.encode(await wrapped), Base64Url.encode(salt), Masterkey.PBKDF2_ITERATION_COUNT);
+  }
+
+  /**
+   * Unwraps a masterkey.
+   * @param password Password used for wrapping
+   * @param wrapped The wrapped key
+   * @returns The unwrapped masterkey.
+   */
+  public static async unwrap(password: string, wrapped: WrappedMasterkey): Promise<Masterkey> {
+    const kek = Masterkey.pbkdf2(password, Base64Url.decode(wrapped.salt), wrapped.iterations);
+    const encrypted = Base64Url.decode(wrapped.encrypted);
+    const key = crypto.subtle.unwrapKey(
+      "raw",
+      encrypted,
+      await kek,
+      { name: 'AES-KW' },
+      {
+        name: 'HMAC',
+        hash: 'SHA-256',
+        length: 512
+      },
+      false, // unwrapped key not exportable atm (no rewrapping allowed right now)
+      ['sign']
+    );
+    return new Masterkey(await key);
   }
 
   public async createVaultConfig(jti: string, kid: string): Promise<string> {
@@ -79,7 +109,7 @@ export class Vault {
     const encodedUnsignedToken = new TextEncoder().encode(unsignedToken);
     const signature = await crypto.subtle.sign(
       { name: 'HMAC' },
-      await this.masterkey,
+      await this.key,
       encodedUnsignedToken
     );
     return unsignedToken + '.' + Base64Url.encode(signature);

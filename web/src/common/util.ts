@@ -1,12 +1,22 @@
 export class Base64Url {
   /**
-   * Applies Base64 URL Encoding
+   * Applies base64url encoding
    * @param data raw binary data
    * @returns base64url-encoded string representation of data
    */
   public static encode(data: ArrayBufferLike): string {
     const base64 = btoa(String.fromCharCode(...new Uint8Array(data)));
     return base64.replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+  }
+
+  /**
+   * Decodes a base64url-encoded string
+   * @param encoded base64url-encoded string
+   * @returns decoded data
+   */
+  public static decode(encoded: string): Uint8Array {
+    const base64 = encoded.replace(/\-/g, '+').replace(/_/g, '/');
+    return Uint8Array.from(atob(base64), c => c.charCodeAt(0));
   }
 }
 
