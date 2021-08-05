@@ -24,7 +24,7 @@ public class VaultResourceTest {
     @BeforeEach
     public void setup() {
         Mockito.when(identity.hasRole("user")).thenReturn(true);
-        Mockito.when(userInfo.getString("sub")).thenReturn("5e362e34-a767-4b0d-a05f-f4b2aea32b88");
+        Mockito.when(userInfo.getString("sub")).thenReturn("test-uuid-for-testing-only");
     }
 
     @Test

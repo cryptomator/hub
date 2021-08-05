@@ -33,6 +33,7 @@
     }
   },
   "users" : [ {
+    "id" : "test-uuid-for-testing-only",
     "username" : "owner",
     "enabled" : true,
     "credentials" : [ {

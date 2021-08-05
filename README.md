@@ -12,7 +12,7 @@ For development run it using:
 docker run --rm -p 8080:8080 \
 -e KEYCLOAK_USER=admin \
 -e KEYCLOAK_PASSWORD=admin \
--e KEYCLOAK_IMPORT=/cfg/cryptomator-public-realm.json \
+-e KEYCLOAK_IMPORT=/cfg/cryptomator-dev-realm.json \
 -v $(pwd)/keycloak:/cfg:ro \
 quay.io/keycloak/keycloak:14.0.0
 ```

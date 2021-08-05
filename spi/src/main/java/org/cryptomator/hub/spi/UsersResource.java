@@ -2,7 +2,6 @@ package org.cryptomator.hub.spi;
 
 import io.quarkus.oidc.UserInfo;
 import org.cryptomator.hub.persistence.entities.UserDao;
-import org.cryptomator.hub.persistence.entities.VaultDao;
 import org.jboss.resteasy.annotations.cache.NoCache;
 
 import javax.annotation.security.RolesAllowed;
