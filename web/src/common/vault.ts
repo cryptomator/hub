@@ -1,14 +1,4 @@
-export class Base64Url {
-  /**
-   * Applies Base64 URL Encoding
-   * @param data raw binary data
-   * @returns base64url-encoded string representation of data
-   */
-  public static encode(data: ArrayBufferLike): string {
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(data)));
-    return base64.replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
-  }
-}
+import { Base64Url } from './util';
 
 class Masterkey {
   constructor(readonly encrypted: string, readonly salt: string, readonly iterations: number) { }

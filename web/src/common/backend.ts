@@ -1,7 +1,7 @@
 import axios, { AxiosResponse } from 'axios';
 import auth from './auth';
 
-export class Spi {
+class VaultService {
 
   public async createVault(uuid: string, name: string, masterkey: String, iterations: number, salt: String): Promise<AxiosResponse<any>> {
     if (!auth.isAuthenticated()) {
@@ -22,3 +22,9 @@ export class Spi {
       })*/;
   }
 }
+
+const services = {
+  vaults: new VaultService()
+};
+
+export default services;
