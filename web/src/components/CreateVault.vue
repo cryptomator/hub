@@ -27,7 +27,9 @@ export default defineComponent({
       const token = await masterkey.createVaultConfig(vaultId, hubUrl);
       console.log("vault config: ", token);
       const wrapped = await masterkey.wrap(this.$data.password);
-      backend.vaults.createVault(vaultId, this.$data.vaultName, wrapped.encrypted, wrapped.iterations, wrapped.salt)
+      backend.vaults.createVault(vaultId, this.$data.vaultName, wrapped.encrypted, wrapped.iterations, wrapped.salt).then(() => {
+        alert("Vault created")
+      })
     }
   }
 })
