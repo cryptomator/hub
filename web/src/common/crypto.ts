@@ -6,7 +6,16 @@ export class WrappedMasterkey {
 
 export class Masterkey {
 
-  private static readonly PBKDF2_ITERATION_COUNT = 100000;
+  // in this browser application, this 512 bit key is used
+  // as a hmac key to sign the vault config.
+  // however when used by cryptomator, it gets split into
+  // a 256 bit encryption key and a 256 bit mac key
+  private static readonly KEY_DESIGNATION: HmacImportParams | HmacKeyGenParams = {
+    name: 'HMAC',
+    hash: 'SHA-256',
+    length: 512
+  };
+  private static readonly PBKDF2_ITERATION_COUNT = 1000000;
   private key: CryptoKey
 
   private constructor(key: CryptoKey) {
@@ -19,11 +28,7 @@ export class Masterkey {
    */
   public static async create(): Promise<Masterkey> {
     const key = crypto.subtle.generateKey(
-      {
-        name: 'HMAC',
-        hash: 'SHA-256',
-        length: 512
-      },
+      Masterkey.KEY_DESIGNATION,
       true,
       ['sign']
     );
@@ -35,7 +40,7 @@ export class Masterkey {
     const pwKey = await crypto.subtle.importKey(
       'raw',
       encodedPw,
-      { name: 'PBKDF2' },
+      'PBKDF2',
       false,
       ['deriveKey']
     );
@@ -58,10 +63,10 @@ export class Masterkey {
     crypto.getRandomValues(salt);
     const kek = Masterkey.pbkdf2(password, salt, Masterkey.PBKDF2_ITERATION_COUNT);
     const wrapped = crypto.subtle.wrapKey(
-      "raw",
-      await this.key,
+      'raw',
+      this.key,
       await kek,
-      { "name": "AES-KW" }
+      'AES-KW'
     )
     return new WrappedMasterkey(Base64Url.encode(await wrapped), Base64Url.encode(salt), Masterkey.PBKDF2_ITERATION_COUNT);
   }
@@ -75,16 +80,13 @@ export class Masterkey {
   public static async unwrap(password: string, wrapped: WrappedMasterkey): Promise<Masterkey> {
     const kek = Masterkey.pbkdf2(password, Base64Url.decode(wrapped.salt), wrapped.iterations);
     const encrypted = Base64Url.decode(wrapped.encrypted);
+
     const key = crypto.subtle.unwrapKey(
-      "raw",
+      'raw',
       encrypted,
       await kek,
-      { name: 'AES-KW' },
-      {
-        name: 'HMAC',
-        hash: 'SHA-256',
-        length: 512
-      },
+      'AES-KW',
+      Masterkey.KEY_DESIGNATION,
       false, // unwrapped key not exportable atm (no rewrapping allowed right now)
       ['sign']
     );
@@ -92,7 +94,6 @@ export class Masterkey {
   }
 
   public async createVaultConfig(jti: string, kid: string): Promise<string> {
-    // 'hub+' + location.protocol + '//' + location.hostname + ':' + location.port + '/vault/' + vaultId
     const header = JSON.stringify({
       kid: kid,
       typ: 'jwt',
@@ -108,8 +109,8 @@ export class Masterkey {
     const unsignedToken = Base64Url.encode(encoder.encode(header)) + '.' + Base64Url.encode(encoder.encode(payload));
     const encodedUnsignedToken = new TextEncoder().encode(unsignedToken);
     const signature = await crypto.subtle.sign(
-      { name: 'HMAC' },
-      await this.key,
+      'HMAC',
+      this.key,
       encodedUnsignedToken
     );
     return unsignedToken + '.' + Base64Url.encode(signature);
