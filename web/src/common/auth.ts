@@ -38,8 +38,16 @@ class Auth {
     });
   }
 
-  public bearerToken(): string | undefined {
-    return this.keycloak.token;
+  public async bearerToken(): Promise<string | undefined> {
+    if (this.keycloak.isTokenExpired()) {
+      return this.keycloak.updateToken(30)
+        .then(() => {
+          return Promise.resolve(this.keycloak.token);
+        })
+        .catch(error => { return Promise.reject(error) });
+    } else {
+      return Promise.resolve(this.keycloak.token);
+    }
   }
 
   public userId(): string | undefined {
