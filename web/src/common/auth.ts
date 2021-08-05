@@ -10,20 +10,32 @@ class Auth {
       realm: 'cryptomator',
       clientId: 'cryptomator-hub'
     });
-    this.initialized = this.keycloak.init({})
+    this.initialized = this.keycloak.init({
+      onLoad: 'check-sso',
+      silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html'
+    })
   }
 
   public isAuthenticated(): boolean {
     return this.keycloak.authenticated || false;
   }
 
-  public async loginIfRequired(): Promise<boolean> {
+  public async loginIfRequired(redirectUri?: string): Promise<void> {
     await this.initialized;
     if (this.keycloak.authenticated) {
-      return true;
+      return Promise.resolve();
     } else {
-      return this.keycloak.login({}).then(() => true).catch(() => false);
+      return this.keycloak.login({
+        redirectUri: (redirectUri ?? window.location) + '?login' // keycloak appends '&state=...' which confuses vue-router if there is no '?'
+      });
     }
+  }
+
+  public async logout(redirectUri?: string): Promise<void> {
+    await this.initialized;
+    return this.keycloak.logout({
+      redirectUri: redirectUri
+    });
   }
 
   public bearerToken(): string | undefined {
