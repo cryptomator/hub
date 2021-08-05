@@ -1,7 +1,17 @@
-import axios, { AxiosResponse } from 'axios';
+import AxiosStatic, { AxiosResponse } from 'axios';
 import auth from './auth';
 
-const REST_BASE = import.meta.env.DEV ? 'http://localhost:9090' : '';
+const axios = AxiosStatic.create({
+  baseURL: import.meta.env.DEV ? 'http://localhost:9090' : '',
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
+axios.interceptors.request.use(async request => {
+  const token = await auth.bearerToken();
+  request.headers['Authorization'] = 'Bearer ' + token;
+  return request;
+});
 
 class VaultService {
 
@@ -9,21 +19,8 @@ class VaultService {
     if (!auth.isAuthenticated()) {
       return Promise.reject('not logged in');
     }
-    return auth.bearerToken().then(token => {
-      return axios.put(REST_BASE + '/vaults/' + uuid, { name: name, masterkey: masterkey, iterations: iterations, salt: salt }, {
-        headers: {
-          'Authorization': 'Bearer ' + token
-        }
-      })
-       /*.catch(function (error) {
-          console.log('refreshing');
-          keycloak.updateToken(5).then(function () {
-            console.log('Token refreshed');
-          }).catch(function (error) {
-            console.log('Failed to refresh token', error);
-          });
-        })*/;
-    }).catch(error => { return Promise.reject(error) })
+    const body = { name: name, masterkey: masterkey, iterations: iterations, salt: salt };
+    return axios.put('/vaults/' + uuid, body);
   }
 }
 
