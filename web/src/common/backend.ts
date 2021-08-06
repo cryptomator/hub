@@ -24,8 +24,18 @@ class VaultService {
   }
 }
 
+class UserService {
+  public async me(): Promise<string> {
+    if (!auth.isAuthenticated()) {
+      return Promise.reject('not logged in');
+    }
+    return axios.get<string>('/users/me').then(response => response.data)
+  }
+}
+
 const services = {
-  vaults: new VaultService()
+  vaults: new VaultService(),
+  users: new UserService(),
 };
 
 export default services;
