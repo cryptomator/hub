@@ -4,6 +4,10 @@ export class WrappedMasterkey {
   constructor(readonly encrypted: string, readonly salt: string, readonly iterations: number) { }
 }
 
+export class DeviceSpecificMasterkey {
+  constructor(readonly encrypted: string, readonly publicKey: string) { }
+}
+
 export class Masterkey {
 
   // in this browser application, this 512 bit key is used
@@ -114,6 +118,57 @@ export class Masterkey {
       encodedUnsignedToken
     );
     return unsignedToken + '.' + Base64Url.encode(signature);
+  }
+
+  /**
+   * ECIES based on ECDH:
+   * This derives a shared secret using ephemeral-static-ECDH, where the given
+   * static public key is the trusted recipient.
+   * The agreed shared secret is used in an authenticated encryption scheme
+   * (in this case AES-KW) to protect the actual masterkey.
+   * 
+   * Therefore all ECIES components are based on existing primitives. 
+   * @param devicePublicKey The recipient's public key
+   */
+  public async encryptForDevice(devicePublicKey: Uint8Array): Promise<DeviceSpecificMasterkey> {
+    const ephemeralKey = await crypto.subtle.generateKey(
+      {
+        name: 'ECDH',
+        namedCurve: 'P-256'
+      },
+      false,
+      ['deriveKey']
+    );
+    const publicKey = await crypto.subtle.importKey(
+      'spki',
+      devicePublicKey,
+      {
+        name: 'ECDH',
+        namedCurve: 'P-256'
+      },
+      false,
+      []
+    );
+    const agreedKey = await crypto.subtle.deriveKey(
+      {
+        name: 'ECDH',
+        public: publicKey
+      },
+      ephemeralKey.privateKey,
+      { name: 'AES-KW', length: 256 },
+      false,
+      ['wrapKey', 'unwrapKey']
+    );
+    const wrapped = await crypto.subtle.wrapKey(
+      'raw',
+      this.key,
+      agreedKey,
+      'AES-KW'
+    )
+    const epk = await crypto.subtle.exportKey(
+      "raw", ephemeralKey.publicKey
+    )
+    return new DeviceSpecificMasterkey(Base64Url.encode(wrapped), Base64Url.encode(epk))
   }
 
 
