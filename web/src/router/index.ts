@@ -32,14 +32,14 @@ const routes: RouteRecordRaw[] = [
     component: CreateVault
   },
   {
-    path: '/vaults/:uuid',
+    path: '/vaults/:id',
     component: VaultDetails,
-    props: (route) => ({ vaultId: route.params.uuid })
+    props: (route) => ({ vaultId: route.params.id })
   },
   {
-    path: '/vaults/:uuid/unlock',
+    path: '/vaults/:id/unlock',
     component: UnlockVault,
-    props: (route) => ({ vaultId: route.params.uuid, deviceId: route.query.deviceid, deviceKey: route.query.devicekey, redirectTo: route.query.redirect_to })
+    props: (route) => ({ vaultId: route.params.id, deviceId: route.query.deviceid, deviceKey: route.query.devicekey, redirectTo: route.query.redirect_to })
   },
   {
     path: '/logout',

@@ -41,7 +41,7 @@ public class DeviceResource {
 	public Response create(/*@Valid*/ DeviceDto deviceDto, @PathParam("deviceId") String deviceId) {
 		// FIXME validate parameter
 		if (deviceId == null || deviceId.trim().length() == 0 || deviceDto == null) {
-			return Response.serverError().entity("UUID cannot be empty").build();
+			return Response.serverError().entity("deviceId or deviceDto cannot be empty").build();
 		}
 		if (deviceDao.get(deviceId) == null) {
 			var currentUser = userDao.get(userInfo.getString("sub"));
@@ -60,7 +60,7 @@ public class DeviceResource {
 	public Response get(@PathParam("deviceId") String deviceId) {
 		// FIXME validate parameter
 		if (deviceId == null || deviceId.trim().length() == 0) {
-			return Response.serverError().entity("UUID cannot be empty").build();
+			return Response.serverError().entity("deviceId cannot be empty").build();
 		}
 		var device = deviceDao.get(deviceId);
 		if (device != null) {
@@ -104,9 +104,9 @@ public class DeviceResource {
 			return publicKey;
 		}
 
-		public Device toDevice(User user, String uuid) {
+		public Device toDevice(User user, String id) {
 			var device = new Device();
-			device.setId(uuid);
+			device.setId(id);
 			device.setUser(user);
 			device.setName(getName());
 			device.setPublickey(getPublicKey());

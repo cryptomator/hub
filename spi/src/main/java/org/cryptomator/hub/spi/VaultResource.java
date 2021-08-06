@@ -132,9 +132,9 @@ public class VaultResource {
 			return salt;
 		}
 
-		public Vault toVault(User user, String uuid) {
+		public Vault toVault(User user, String id) {
 			var vault = new Vault();
-			vault.setId(uuid);
+			vault.setId(id);
 			vault.setName(getName());
 			vault.setMasterkey(getMasterkey());
 			vault.setIterations(getIterations());
