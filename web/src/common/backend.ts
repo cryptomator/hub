@@ -44,19 +44,19 @@ class VaultService {
 
 class DeviceService {
 
-  public async createDevice(vaultId: string, name: string, publicKey: String): Promise<AxiosResponse<any>> {
+  public async createDevice(deviceId: string, name: string, publicKey: String): Promise<AxiosResponse<any>> {
     if (!auth.isAuthenticated()) {
       return Promise.reject('not logged in');
     }
-    const body = { name: name, publicKey: publicKey }
-    return axios.put(`/devices/${vaultId}`, body)
+    const body = { id: deviceId, name: name, publicKey: publicKey }
+    return axios.put(`/devices/${deviceId}`, body)
   }
 
-  public async getDevice(vaultId: string): Promise<AxiosResponse<DeviceDto>> {
+  public async getDevice(deviceId: string): Promise<AxiosResponse<DeviceDto>> {
     if (!auth.isAuthenticated()) {
       return Promise.reject('not logged in');
     }
-    return axios.get<DeviceDto>(`/devices/${vaultId}`)
+    return axios.get<DeviceDto>(`/devices/${deviceId}`)
   }
 
   public async listAll(): Promise<DeviceDto[]> {

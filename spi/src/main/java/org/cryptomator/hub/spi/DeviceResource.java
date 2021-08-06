@@ -33,19 +33,19 @@ public class DeviceResource {
 	DeviceDao deviceDao;
 
 	@PUT
-	@Path("/{uuid}")
+	@Path("/{deviceId}")
 	@RolesAllowed("user")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
-	public Response create(/*@Valid*/ DeviceDto deviceDto, @PathParam("uuid") String uuid) {
+	public Response create(/*@Valid*/ DeviceDto deviceDto, @PathParam("deviceId") String deviceId) {
 		// FIXME validate parameter
-		if (uuid == null || uuid.trim().length() == 0 || deviceDto == null) {
+		if (deviceId == null || deviceId.trim().length() == 0 || deviceDto == null) {
 			return Response.serverError().entity("UUID cannot be empty").build();
 		}
-		if (deviceDao.get(uuid) == null) {
+		if (deviceDao.get(deviceId) == null) {
 			var currentUser = userDao.get(userInfo.getString("sub"));
-			var device = deviceDto.toDevice(currentUser, uuid);
+			var device = deviceDto.toDevice(currentUser, deviceId);
 			var storedDeviceId = deviceDao.persist(device);
 			return Response.status(Response.Status.CREATED).build();
 		} else {
@@ -54,17 +54,17 @@ public class DeviceResource {
 	}
 
 	@GET
-	@Path("/{uuid}")
+	@Path("/{deviceId}")
 	@RolesAllowed("user")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response get(@PathParam("uuid") String uuid) {
+	public Response get(@PathParam("deviceId") String deviceId) {
 		// FIXME validate parameter
-		if (uuid == null || uuid.trim().length() == 0) {
+		if (deviceId == null || deviceId.trim().length() == 0) {
 			return Response.serverError().entity("UUID cannot be empty").build();
 		}
-		var device = deviceDao.get(uuid);
+		var device = deviceDao.get(deviceId);
 		if (device != null) {
-			return Response.ok(new DeviceDto(device.getName(), device.getPublickey())).build();
+			return Response.ok(new DeviceDto(device.getId(), device.getName(), device.getPublickey())).build();
 		} else {
 			return Response.status(Response.Status.NOT_FOUND).build();
 		}
@@ -90,10 +90,6 @@ public class DeviceResource {
 			this.id = id;
 			this.name = name;
 			this.publicKey = publicKey;
-		}
-
-		public DeviceDto(@JsonProperty("name") String name, @JsonProperty("publicKey") String publicKey) {
-			this(null, name, publicKey);
 		}
 
 		public String getId() {

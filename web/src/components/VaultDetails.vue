@@ -1,5 +1,5 @@
 <template>
-  <h1>Vault Details for vaultId1</h1>
+  <h1>Vault Details for {{ vaultId }}</h1>
 
   <ul>
     <li v-for="device in devices" :key="device.name">{{ device.name }}</li>

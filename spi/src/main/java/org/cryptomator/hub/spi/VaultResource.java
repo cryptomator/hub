@@ -37,19 +37,19 @@ public class VaultResource {
 	@Inject
 	VaultDao vaultDao;
 
-    @Inject
-    DeviceDao deviceDao;
+	@Inject
+	DeviceDao deviceDao;
 
-    @GET
-    @Path("/{vaultId}/keys/{deviceId}")
-    @RolesAllowed("user")
-    @Transactional
-    @Produces(MediaType.TEXT_PLAIN)
-    public Response unlock(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId) {
-        // FIXME validate parameter
+	@GET
+	@Path("/{vaultId}/keys/{deviceId}")
+	@RolesAllowed("user")
+	@Transactional
+	@Produces(MediaType.TEXT_PLAIN)
+	public Response unlock(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId) {
+		// FIXME validate parameter
 
-        var deviceAccess = accessDao.get(vaultId, deviceId);
-        var currentUserId = userInfo.getString("sub");
+		var deviceAccess = accessDao.get(vaultId, deviceId);
+		var currentUserId = userInfo.getString("sub");
 
 		if (deviceAccess == null || !deviceAccess.getDevice().getUser().getId().equals(currentUserId)) {
 			return Response.status(Response.Status.NOT_FOUND).build();
@@ -58,39 +58,45 @@ public class VaultResource {
 		return Response.ok(deviceAccess.getDeviceSpecificMasterkey()).build();
 	}
 
-    @PUT
-    @Path("/{vaultId}/keys/{deviceId}")
-    @RolesAllowed("user")
-    @Transactional
-    @Consumes(MediaType.TEXT_PLAIN)
-    public Response grantAccess(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId, String deviceSpecificMasterkey) {
-        var access = new Access();
-        access.setVault(vaultDao.get(vaultId));
-        access.setDevice(deviceDao.get(deviceId));
-        access.setDeviceSpecificMasterkey(deviceSpecificMasterkey);
-        accessDao.persist(access);
-        return Response.noContent().build();
-    }
+	@PUT
+	@Path("/{vaultId}/keys/{deviceId}")
+	@RolesAllowed("user")
+	@Transactional
+	@Consumes(MediaType.TEXT_PLAIN)
+	public Response grantAccess(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId, String deviceSpecificMasterkey) {
+		System.out.println(vaultId);
+		System.out.println(deviceId);
 
-    @PUT
-    @Path("/{uuid}")
-    @RolesAllowed("user")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.TEXT_PLAIN)
-    @Transactional
-    public Response create(/*@Valid*/ VaultDto vaultDto, @PathParam("uuid") String uuid) {
-        // FIXME verify uuid
+		var access = new Access();
+		access.setVault(vaultDao.get(vaultId));
+		access.setDevice(deviceDao.get(deviceId));
+		access.setDeviceSpecificMasterkey(deviceSpecificMasterkey);
+
+		System.out.println(access);
+
+		accessDao.persist(access);
+		return Response.noContent().build();
+	}
+
+	@PUT
+	@Path("/{vaultId}")
+	@RolesAllowed("user")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.TEXT_PLAIN)
+	@Transactional
+	public Response create(/*@Valid*/ VaultDto vaultDto, @PathParam("vaultId") String vaultId) {
+		// FIXME verify uuid
 
 		if (vaultDto == null) {
 			return Response.serverError().entity("Vault cannot be null").build();
 		}
 
-		if (vaultDao.get(uuid) != null) {
+		if (vaultDao.get(vaultId) != null) {
 			return Response.status(Response.Status.CONFLICT).build();
 		}
 
 		var currentUser = userDao.get(userInfo.getString("sub"));
-		var vault = vaultDto.toVault(currentUser, uuid);
+		var vault = vaultDto.toVault(currentUser, vaultId);
 		var persistedVaultId = vaultDao.persist(vault);
 
 		return Response.ok(persistedVaultId).build();
