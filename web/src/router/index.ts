@@ -3,6 +3,7 @@ import auth from '../common/auth';
 import CreateVault from '../components/CreateVault.vue';
 import HelloWorld from '../components/HelloWorld.vue';
 import LogoutComponent from '../components/Logout.vue';
+import VaultDetails from '../components/VaultDetails.vue';
 
 const routes: RouteRecordRaw[] = [
   {
@@ -15,6 +16,11 @@ const routes: RouteRecordRaw[] = [
     path: '/vaults/create',
     name: 'Create Vault',
     component: CreateVault
+  },
+  {
+    path: '/vaults/uuid3000',
+    name: 'Vault Details',
+    component: VaultDetails
   },
   {
     path: '/logout',

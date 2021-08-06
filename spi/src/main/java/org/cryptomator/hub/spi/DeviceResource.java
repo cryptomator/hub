@@ -11,12 +11,14 @@ import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
 import javax.transaction.Transactional;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.stream.Collectors;
 
 @Path("/devices")
 public class DeviceResource {
@@ -49,6 +51,16 @@ public class DeviceResource {
         } else {
             return Response.status(Response.Status.CONFLICT).build();
         }
+    }
+
+    @GET
+    @Path("/")
+    @RolesAllowed("user")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getAll() {
+        var devices = deviceDao.getAll();
+        var dtos = devices.stream().map(d -> new DeviceDto(d.getName(), d.getPublickey())).collect(Collectors.toList());
+        return Response.status(Response.Status.OK).entity(dtos).build();
     }
 
     public static class DeviceDto {

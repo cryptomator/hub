@@ -33,9 +33,23 @@ class UserService {
   }
 }
 
+export class DeviceDto {
+  constructor(public name: string, public publicKey: string) { }
+}
+
+class DeviceService {
+  public async listAll(): Promise<DeviceDto[]> {
+    if (!auth.isAuthenticated()) {
+      return Promise.reject('not logged in');
+    }
+    return axios.get<DeviceDto[]>('/devices/').then(response => response.data)
+  }
+}
+
 const services = {
   vaults: new VaultService(),
   users: new UserService(),
+  devices: new DeviceService(),
 };
 
 export default services;

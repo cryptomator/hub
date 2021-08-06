@@ -2,6 +2,7 @@
   <ul>
     <li><router-link to="/">Home</router-link></li>
     <li><router-link to="/vaults/create">Other</router-link></li>
+    <li><router-link to="/vaults/uuid3000">vault 3000</router-link></li>
     <li><router-link to="/logout">Logout</router-link></li>
   </ul>
 
