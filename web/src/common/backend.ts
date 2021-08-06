@@ -15,24 +15,61 @@ axios.interceptors.request.use(async request => {
 
 class VaultService {
 
-  public async createVault(uuid: string, name: string, masterkey: String, iterations: number, salt: String): Promise<AxiosResponse<any>> {
+  public async createVault(vaultId: string, name: string, masterkey: String, iterations: number, salt: String): Promise<AxiosResponse<any>> {
     if (!auth.isAuthenticated()) {
       return Promise.reject('not logged in');
     }
     const body = { name: name, masterkey: masterkey, iterations: iterations, salt: salt };
-    return axios.put('/vaults/' + uuid, body);
+    return axios.put(`/vaults/${vaultId}`, body);
+  }
+
+  public async getKeyFor(vaultId: string, deviceId: String): Promise<AxiosResponse<String>> {
+    if (!auth.isAuthenticated()) {
+      return Promise.reject('not logged in');
+    }
+    return axios.get(`/vaults/${vaultId}/keys/${deviceId}`);
   }
 
   public async grantAccess(vaultId: string, deviceId: string, vaultSpecificMasterkey: String) {
     if (!auth.isAuthenticated()) {
       return Promise.reject('not logged in');
     }
-    await axios.put('/vaults/' + vaultId + '/keys/' + deviceId, vaultSpecificMasterkey, {
+    await axios.put(`/vaults/${vaultId}/keys/${deviceId}`, vaultSpecificMasterkey, {
       headers: {
         'Content-Type': 'text/plain'
       }
     })
   }
+}
+
+class DeviceService {
+
+  public async createDevice(vaultId: string, name: string, publicKey: String): Promise<AxiosResponse<any>> {
+    if (!auth.isAuthenticated()) {
+      return Promise.reject('not logged in');
+    }
+    const body = { name: name, publicKey: publicKey }
+    return axios.put(`/devices/${vaultId}`, body)
+  }
+
+  public async getDevice(vaultId: string): Promise<AxiosResponse<DeviceDto>> {
+    if (!auth.isAuthenticated()) {
+      return Promise.reject('not logged in');
+    }
+    return axios.get<DeviceDto>(`/devices/${vaultId}`)
+  }
+
+  public async listAll(): Promise<DeviceDto[]> {
+    if (!auth.isAuthenticated()) {
+      return Promise.reject('not logged in');
+    }
+    return axios.get<DeviceDto[]>('/devices/').then(response => response.data)
+  }
+
+}
+
+export class DeviceDto {
+  constructor(public id: string, public name: string, public publicKey: string) { }
 }
 
 class UserService {
@@ -44,23 +81,10 @@ class UserService {
   }
 }
 
-export class DeviceDto {
-  constructor(public id: string, public name: string, public publicKey: string) { }
-}
-
-class DeviceService {
-  public async listAll(): Promise<DeviceDto[]> {
-    if (!auth.isAuthenticated()) {
-      return Promise.reject('not logged in');
-    }
-    return axios.get<DeviceDto[]>('/devices/').then(response => response.data)
-  }
-}
-
 const services = {
   vaults: new VaultService(),
   users: new UserService(),
-  devices: new DeviceService(),
+  devices: new DeviceService()
 };
 
 export default services;

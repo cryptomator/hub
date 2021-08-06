@@ -11,23 +11,23 @@ import javax.transaction.Transactional;
 @Transactional
 public class AccessDao {
 
-    @PersistenceContext()
-    EntityManager em;
+	@PersistenceContext()
+	EntityManager em;
 
-    @Inject
-    BasicDao basicDao;
+	@Inject
+	BasicDao basicDao;
 
-    public Access get(String vaultId, String deviceId) {
-        return basicDao.get(Access.class, new Access.AccessId(deviceId, vaultId));
-    }
+	public Access get(String vaultId, String deviceId) {
+		return basicDao.get(Access.class, new Access.AccessId(deviceId, vaultId));
+	}
 
-    public Access.AccessId persist(Access access) {
-        try {
-            return basicDao.persist(access).getId();
-        } catch (PersistenceException e) {
-            //ConstraintViolation.throwIfConstraintViolated(e);
-            throw e;
-        }
-    }
+	public Access.AccessId persist(Access access) {
+		try {
+			return basicDao.persist(access).getId();
+		} catch (PersistenceException e) {
+			//ConstraintViolation.throwIfConstraintViolated(e);
+			throw e;
+		}
+	}
 
 }

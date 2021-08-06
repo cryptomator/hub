@@ -16,6 +16,12 @@ import { defineComponent } from 'vue'
 
 export default defineComponent({
   name: 'VaultDetails',
+  props: {
+    vaultId: {
+      type: String,
+      default: null
+    }
+  },
   data: () => ({
     devices: [] as DeviceDto[]
   }),
@@ -33,7 +39,7 @@ export default defineComponent({
         const publicKey = Base64Url.decode(device.publicKey);
         const deviceSpecificKey = await masterkey.encryptForDevice(publicKey);
         console.log(deviceSpecificKey);
-        await backend.vaults.grantAccess('vaultId1', device.id, deviceSpecificKey.encrypted); // FIXME we need to persist encrypted + epk
+        await backend.vaults.grantAccess(this.vaultId, device.id, deviceSpecificKey.encrypted); // FIXME we need to persist encrypted + epk
       }
     }
   }

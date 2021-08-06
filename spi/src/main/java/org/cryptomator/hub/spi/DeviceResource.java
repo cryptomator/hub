@@ -54,6 +54,23 @@ public class DeviceResource {
 	}
 
 	@GET
+	@Path("/{uuid}")
+	@RolesAllowed("user")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response get(@PathParam("uuid") String uuid) {
+		// FIXME validate parameter
+		if (uuid == null || uuid.trim().length() == 0) {
+			return Response.serverError().entity("UUID cannot be empty").build();
+		}
+		var device = deviceDao.get(uuid);
+		if (device != null) {
+			return Response.ok(new DeviceDto(device.getName(), device.getPublickey())).build();
+		} else {
+			return Response.status(Response.Status.NOT_FOUND).build();
+		}
+	}
+
+	@GET
 	@Path("/")
 	@RolesAllowed("user")
 	@Produces(MediaType.APPLICATION_JSON)

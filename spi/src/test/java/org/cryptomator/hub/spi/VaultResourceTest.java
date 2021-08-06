@@ -15,45 +15,45 @@ import static org.hamcrest.CoreMatchers.is;
 @QuarkusTest
 public class VaultResourceTest {
 
-    @InjectMock
-    SecurityIdentity identity;
+	@InjectMock
+	SecurityIdentity identity;
 
-    @InjectMock
-    UserInfo userInfo;
+	@InjectMock
+	UserInfo userInfo;
 
-    @BeforeEach
-    public void setup() {
-        Mockito.when(identity.hasRole("user")).thenReturn(true);
-        Mockito.when(userInfo.getString("sub")).thenReturn("test-uuid-for-testing-only");
-    }
+	@BeforeEach
+	public void setup() {
+		Mockito.when(identity.hasRole("user")).thenReturn(true);
+		Mockito.when(userInfo.getString("sub")).thenReturn("test-uuid-for-testing-only");
+	}
 
-    @Test
-    public void testGetDeviceSpecificMasterKey() {
-        given()
-                .when()
-                .get("/vaults/vaultId1/keys/deviceId1")
-                .then()
-                .statusCode(200)
-                .body(is("specificMasterKeyDevice1Vault1"));
-    }
+	@Test
+	public void testGetDeviceSpecificMasterKey() {
+		given()
+				.when()
+				.get("/vaults/vaultId1/keys/deviceId1")
+				.then()
+				.statusCode(200)
+				.body(is("specificMasterKeyDevice1Vault1"));
+	}
 
-    @Test
-    public void testCreateVault() {
-        var uuid = "uuid1";
-        var name = "name1";
-        var masterkey = "masterkey1";
-        var iterations = "iterations1";
-        var salt = "salt1";
+	@Test
+	public void testCreateVault() {
+		var uuid = "uuid1";
+		var name = "name1";
+		var masterkey = "masterkey1";
+		var iterations = "iterations1";
+		var salt = "salt1";
 
-        var vaultDto = new VaultResource.VaultDto(name, masterkey, iterations, salt);
+		var vaultDto = new VaultResource.VaultDto(name, masterkey, iterations, salt);
 
-        given()
-                .when()
-                .contentType(ContentType.JSON)
-                .body(vaultDto)
-                .put("/vaults/"+uuid)
-                .then()
-                .statusCode(200)
-                .body(is(uuid));
-    }
+		given()
+				.when()
+				.contentType(ContentType.JSON)
+				.body(vaultDto)
+				.put("/vaults/" + uuid)
+				.then()
+				.statusCode(200)
+				.body(is(uuid));
+	}
 }
