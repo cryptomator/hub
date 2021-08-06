@@ -22,6 +22,37 @@ class VaultService {
     const body = { name: name, masterkey: masterkey, iterations: iterations, salt: salt };
     return axios.put('/vaults/' + uuid, body);
   }
+
+  public async getKeyFor(vaultId: string, deviceId: String): Promise<AxiosResponse<String>> {
+    if (!auth.isAuthenticated()) {
+      return Promise.reject('not logged in');
+    }
+    return axios.get(`/vaults/${vaultId}/keys/${deviceId}`);
+  }
+}
+
+class DeviceService {
+
+  public async createDevice(uuid: string, name: string, publicKey: String): Promise<AxiosResponse<any>> {
+    if (!auth.isAuthenticated()) {
+      return Promise.reject('not logged in');
+    }
+    const body = { name: name, publicKey: publicKey }
+    return axios.put('/devices/' + uuid, body)
+  }
+
+  public async getDevice(uuid: string): Promise<AxiosResponse<DeviceDto>> {
+    if (!auth.isAuthenticated()) {
+      return Promise.reject('not logged in');
+    }
+    return axios.get<DeviceDto>('/devices/' + uuid)
+  }
+
+}
+
+interface DeviceDto {
+  name: string;
+  publicKey: string;
 }
 
 class UserService {
@@ -36,6 +67,7 @@ class UserService {
 const services = {
   vaults: new VaultService(),
   users: new UserService(),
+  devices: new DeviceService()
 };
 
 export default services;

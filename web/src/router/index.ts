@@ -3,6 +3,7 @@ import auth from '../common/auth';
 import CreateVault from '../components/CreateVault.vue';
 import HelloWorld from '../components/HelloWorld.vue';
 import LogoutComponent from '../components/Logout.vue';
+import UnlockVault from '../components/UnlockVault.vue';
 
 const routes: RouteRecordRaw[] = [
   {
@@ -11,10 +12,28 @@ const routes: RouteRecordRaw[] = [
     end: true,
     component: HelloWorld
   },
+  /*{
+    path: '/vaults',
+    component: Vaults,
+    children: [
+      {
+        path: 'create',
+        component: CreateVault
+      },
+      {
+        path: ':uuid/unlock',
+        component: UnlockVault
+      }
+    ]
+  },*/
   {
     path: '/vaults/create',
-    name: 'Create Vault',
     component: CreateVault
+  },
+  {
+    path: '/vaults/:uuid/unlock',
+    component: UnlockVault,
+    props: (route) => ({ vaultId: route.params.uuid, deviceId: route.query.deviceid, deviceKey: route.query.devicekey, redirectTo: route.query.redirect_to })
   },
   {
     path: '/logout',

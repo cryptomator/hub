@@ -11,6 +11,7 @@ import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
 import javax.transaction.Transactional;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -48,6 +49,23 @@ public class DeviceResource {
             return Response.status(Response.Status.CREATED).build();
         } else {
             return Response.status(Response.Status.CONFLICT).build();
+        }
+    }
+
+    @GET
+    @Path("/{uuid}")
+    @RolesAllowed("user")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response get(@PathParam("uuid") String uuid) {
+        // FIXME validate parameter
+        if (uuid == null || uuid.trim().length() == 0) {
+            return Response.serverError().entity("UUID cannot be empty").build();
+        }
+        var device = deviceDao.get(uuid);
+        if (device != null) {
+            return Response.ok(new DeviceDto(device.getName(), device.getPublickey())).build();
+        } else {
+            return Response.status(Response.Status.NOT_FOUND).build();
         }
     }
 
