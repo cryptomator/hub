@@ -13,9 +13,9 @@ INSERT INTO vault
 VALUES ('vaultId2', 'test-uuid-for-testing-only', 'vault2', 'salt2', 'iterations2', 'masterkey2');
 
 INSERT INTO device
-VALUES ('deviceId1', 'test-uuid-for-testing-only', 'device1', 'pubkey1');
+VALUES ('deviceId1', 'test-uuid-for-testing-only', 'device1', 'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEInfsHWhmb9iQssLt_VqVX6Dkd8nVekf0jApSJuNYfoAmvvi-bbp6SxoXZV5I8USOsSW-dc9kxBqCNHGuTTCtRg==');
 INSERT INTO device
-VALUES ('deviceId2', 'test-uuid-for-testing-only', 'device2', 'pubkey2');
+VALUES ('deviceId2', 'test-uuid-for-testing-only', 'device2', 'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE8PAmkx_HLeVaZfpJX9lJEXwtQCpm97bNfjEAQQwUH9RjGCTeZggTIQE6oUSVd07dtjvhfXG7MRvHDM3llaYw7Q==');
 
 INSERT INTO access
 VALUES ('deviceId1', 'vaultId1', 'specificMasterKeyDevice1Vault1');
