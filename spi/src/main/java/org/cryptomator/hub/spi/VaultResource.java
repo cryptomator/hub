@@ -2,7 +2,9 @@ package org.cryptomator.hub.spi;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.oidc.UserInfo;
+import org.cryptomator.hub.persistence.entities.Access;
 import org.cryptomator.hub.persistence.entities.AccessDao;
+import org.cryptomator.hub.persistence.entities.DeviceDao;
 import org.cryptomator.hub.persistence.entities.User;
 import org.cryptomator.hub.persistence.entities.UserDao;
 import org.cryptomator.hub.persistence.entities.Vault;
@@ -35,15 +37,18 @@ public class VaultResource {
     @Inject
     VaultDao vaultDao;
 
+    @Inject
+    DeviceDao deviceDao;
+
     @GET
-    @Path("/{uuid}/keys/{deviceId}")
+    @Path("/{vaultId}/keys/{deviceId}")
     @RolesAllowed("user")
     @Transactional
     @Produces(MediaType.TEXT_PLAIN)
-    public Response unlock(@PathParam("uuid") String uuid, @PathParam("deviceId") String deviceId) {
+    public Response unlock(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId) {
         // FIXME validate parameter
 
-        var deviceAccess = accessDao.get(uuid, deviceId);
+        var deviceAccess = accessDao.get(vaultId, deviceId);
         var currentUserId = userInfo.getString("sub");
 
         if (deviceAccess == null || !deviceAccess.getDevice().getUser().getId().equals(currentUserId)) {
@@ -51,6 +56,20 @@ public class VaultResource {
         }
 
         return Response.ok(deviceAccess.getDeviceSpecificMasterkey()).build();
+    }
+
+    @PUT
+    @Path("/{vaultId}/keys/{deviceId}")
+    @RolesAllowed("user")
+    @Transactional
+    @Consumes(MediaType.TEXT_PLAIN)
+    public Response grantAccess(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId, String deviceSpecificMasterkey) {
+        var access = new Access();
+        access.setVault(vaultDao.get(vaultId));
+        access.setDevice(deviceDao.get(deviceId));
+        access.setDeviceSpecificMasterkey(deviceSpecificMasterkey);
+        accessDao.persist(access);
+        return Response.noContent().build();
     }
 
     @PUT

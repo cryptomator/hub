@@ -1,5 +1,5 @@
 <template>
-  <h1>Vault Details</h1>
+  <h1>Vault Details for vaultId1</h1>
 
   <ul>
     <li v-for="device in devices" :key="device.name">{{ device.name }}</li>
@@ -33,6 +33,7 @@ export default defineComponent({
         const publicKey = Base64Url.decode(device.publicKey);
         const deviceSpecificKey = await masterkey.encryptForDevice(publicKey);
         console.log(deviceSpecificKey);
+        await backend.vaults.grantAccess('vaultId1', device.id, deviceSpecificKey.encrypted); // FIXME we need to persist encrypted + epk
       }
     }
   }

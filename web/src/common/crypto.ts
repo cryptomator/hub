@@ -27,7 +27,7 @@ export class Masterkey {
   }
 
   /**
-   * Creates a new masterkey, that can be wrapped
+   * Creates a new masterkey
    * @returns A new masterkey
    */
   public static async create(): Promise<Masterkey> {
@@ -91,7 +91,7 @@ export class Masterkey {
       await kek,
       'AES-KW',
       Masterkey.KEY_DESIGNATION,
-      false, // unwrapped key not exportable atm (no rewrapping allowed right now)
+      true,
       ['sign']
     );
     return new Masterkey(await key);

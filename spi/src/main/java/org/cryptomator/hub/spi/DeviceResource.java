@@ -23,71 +23,81 @@ import java.util.stream.Collectors;
 @Path("/devices")
 public class DeviceResource {
 
-    @Inject
-    UserInfo userInfo;
+	@Inject
+	UserInfo userInfo;
 
-    @Inject
-    UserDao userDao;
+	@Inject
+	UserDao userDao;
 
-    @Inject
-    DeviceDao deviceDao;
+	@Inject
+	DeviceDao deviceDao;
 
-    @PUT
-    @Path("/{uuid}")
-    @RolesAllowed("user")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @Transactional
-    public Response create(/*@Valid*/ DeviceDto deviceDto, @PathParam("uuid") String uuid) {
-        // FIXME validate parameter
-        if (uuid == null || uuid.trim().length() == 0 || deviceDto == null) {
-            return Response.serverError().entity("UUID cannot be empty").build();
-        }
-        if (deviceDao.get(uuid) == null) {
-            var currentUser = userDao.get(userInfo.getString("sub"));
-            var device = deviceDto.toDevice(currentUser, uuid);
-            var storedDeviceId = deviceDao.persist(device);
-            return Response.status(Response.Status.CREATED).build();
-        } else {
-            return Response.status(Response.Status.CONFLICT).build();
-        }
-    }
+	@PUT
+	@Path("/{uuid}")
+	@RolesAllowed("user")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Transactional
+	public Response create(/*@Valid*/ DeviceDto deviceDto, @PathParam("uuid") String uuid) {
+		// FIXME validate parameter
+		if (uuid == null || uuid.trim().length() == 0 || deviceDto == null) {
+			return Response.serverError().entity("UUID cannot be empty").build();
+		}
+		if (deviceDao.get(uuid) == null) {
+			var currentUser = userDao.get(userInfo.getString("sub"));
+			var device = deviceDto.toDevice(currentUser, uuid);
+			var storedDeviceId = deviceDao.persist(device);
+			return Response.status(Response.Status.CREATED).build();
+		} else {
+			return Response.status(Response.Status.CONFLICT).build();
+		}
+	}
 
-    @GET
-    @Path("/")
-    @RolesAllowed("user")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getAll() {
-        var devices = deviceDao.getAll();
-        var dtos = devices.stream().map(d -> new DeviceDto(d.getName(), d.getPublickey())).collect(Collectors.toList());
-        return Response.status(Response.Status.OK).entity(dtos).build();
-    }
+	@GET
+	@Path("/")
+	@RolesAllowed("user")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getAll() {
+		var devices = deviceDao.getAll();
+		var dtos = devices.stream().map(d -> new DeviceDto(d.getId(), d.getName(), d.getPublickey())).collect(Collectors.toList());
+		return Response.status(Response.Status.OK).entity(dtos).build();
+	}
 
-    public static class DeviceDto {
+	public static class DeviceDto {
 
-        private final String name;
-        private final String publicKey;
+		private final String id;
+		private final String name;
+		private final String publicKey;
 
-        public DeviceDto(@JsonProperty("name") String name, @JsonProperty("publicKey") String publicKey) {
-            this.name = name;
-            this.publicKey = publicKey;
-        }
+		public DeviceDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("publicKey") String publicKey) {
+			this.id = id;
+			this.name = name;
+			this.publicKey = publicKey;
+		}
 
-        public String getName() {
-            return name;
-        }
+		public DeviceDto(@JsonProperty("name") String name, @JsonProperty("publicKey") String publicKey) {
+			this(null, name, publicKey);
+		}
 
-        public String getPublicKey() {
-            return publicKey;
-        }
+		public String getId() {
+			return id;
+		}
 
-        public Device toDevice(User user, String uuid) {
-            var device = new Device();
-            device.setId(uuid);
-            device.setUser(user);
-            device.setName(getName());
-            device.setPublickey(getPublicKey());
-            return device;
-        }
-    }
+		public String getName() {
+			return name;
+		}
+
+		public String getPublicKey() {
+			return publicKey;
+		}
+
+		public Device toDevice(User user, String uuid) {
+			var device = new Device();
+			device.setId(uuid);
+			device.setUser(user);
+			device.setName(getName());
+			device.setPublickey(getPublicKey());
+			return device;
+		}
+	}
 }

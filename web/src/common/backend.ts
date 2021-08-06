@@ -22,6 +22,17 @@ class VaultService {
     const body = { name: name, masterkey: masterkey, iterations: iterations, salt: salt };
     return axios.put('/vaults/' + uuid, body);
   }
+
+  public async grantAccess(vaultId: string, deviceId: string, vaultSpecificMasterkey: String) {
+    if (!auth.isAuthenticated()) {
+      return Promise.reject('not logged in');
+    }
+    await axios.put('/vaults/' + vaultId + '/keys/' + deviceId, vaultSpecificMasterkey, {
+      headers: {
+        'Content-Type': 'text/plain'
+      }
+    })
+  }
 }
 
 class UserService {
@@ -34,7 +45,7 @@ class UserService {
 }
 
 export class DeviceDto {
-  constructor(public name: string, public publicKey: string) { }
+  constructor(public id: string, public name: string, public publicKey: string) { }
 }
 
 class DeviceService {

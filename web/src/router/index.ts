@@ -18,7 +18,7 @@ const routes: RouteRecordRaw[] = [
     component: CreateVault
   },
   {
-    path: '/vaults/uuid3000',
+    path: '/vaults/vaultId1',
     name: 'Vault Details',
     component: VaultDetails
   },
