@@ -15,18 +15,18 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.TEXT_PLAIN)
 public class UsersResource {
 
-    @Inject
-    UserInfo userInfo;
+	@Inject
+	UserInfo userInfo;
 
-    @Inject
-    UserDao userDao;
+	@Inject
+	UserDao userDao;
 
-    @GET
-    @Path("/me")
-    @RolesAllowed("user")
-    @NoCache
-    public String me() {
-        return userDao.get(userInfo.getString("sub")).getName();
-    }
+	@GET
+	@Path("/me")
+	@RolesAllowed("user")
+	@NoCache
+	public String me() {
+		return userDao.get(userInfo.getString("sub")).getName();
+	}
 
 }

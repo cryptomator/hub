@@ -12,26 +12,26 @@ import java.util.List;
 @Transactional
 public class VaultDao {
 
-    @PersistenceContext()
-    EntityManager em;
+	@PersistenceContext()
+	EntityManager em;
 
-    @Inject
-    BasicDao basicDao;
+	@Inject
+	BasicDao basicDao;
 
-    public List<Vault> getAll() {
-        return basicDao.getAll(Vault.class);
-    }
+	public List<Vault> getAll() {
+		return basicDao.getAll(Vault.class);
+	}
 
-    public Vault get(String id) {
-        return basicDao.get(Vault.class, id);
-    }
+	public Vault get(String id) {
+		return basicDao.get(Vault.class, id);
+	}
 
-    public String persist(Vault vault) {
-        try {
-            return basicDao.persist(vault).getId();
-        } catch (PersistenceException e) {
-            //ConstraintViolation.throwIfConstraintViolated(e);
-            throw e;
-        }
-    }
+	public String persist(Vault vault) {
+		try {
+			return basicDao.persist(vault).getId();
+		} catch (PersistenceException e) {
+			//ConstraintViolation.throwIfConstraintViolated(e);
+			throw e;
+		}
+	}
 }

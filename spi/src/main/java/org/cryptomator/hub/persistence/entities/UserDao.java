@@ -12,30 +12,30 @@ import java.util.List;
 @Transactional
 public class UserDao {
 
-    @PersistenceContext()
-    EntityManager em;
+	@PersistenceContext()
+	EntityManager em;
 
-    @Inject
-    BasicDao basicDao;
+	@Inject
+	BasicDao basicDao;
 
-    public List<User> getAll() {
-        return basicDao.getAll(User.class);
-    }
+	public List<User> getAll() {
+		return basicDao.getAll(User.class);
+	}
 
-    public User get(String id) {
-        return basicDao.get(User.class, id);
-    }
+	public User get(String id) {
+		return basicDao.get(User.class, id);
+	}
 
-    public Long count() {
-        return em.createNamedQuery("User.count", Long.class).getSingleResult();
-    }
+	public Long count() {
+		return em.createNamedQuery("User.count", Long.class).getSingleResult();
+	}
 
-    public String persist(User user) {
-        try {
-            return basicDao.persist(user).getId();
-        } catch (PersistenceException e) {
-            //ConstraintViolation.throwIfConstraintViolated(e);
-            throw e;
-        }
-    }
+	public String persist(User user) {
+		try {
+			return basicDao.persist(user).getId();
+		} catch (PersistenceException e) {
+			//ConstraintViolation.throwIfConstraintViolated(e);
+			throw e;
+		}
+	}
 }
