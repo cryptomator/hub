@@ -64,15 +64,19 @@ public class VaultResource {
 	@Transactional
 	@Consumes(MediaType.TEXT_PLAIN)
 	public Response grantAccess(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId, String deviceSpecificMasterkey) {
-		System.out.println(vaultId);
-		System.out.println(deviceId);
+		// FIXME validate parameter
+
+		var vault = vaultDao.get(vaultId);
+		var device = deviceDao.get(deviceId);
+
+		if (vault == null || device == null ) {
+			return Response.status(Response.Status.NOT_FOUND).build();
+		}
 
 		var access = new Access();
-		access.setVault(vaultDao.get(vaultId));
-		access.setDevice(deviceDao.get(deviceId));
+		access.setVault(vault);
+		access.setDevice(device);
 		access.setDeviceSpecificMasterkey(deviceSpecificMasterkey);
-
-		System.out.println(access);
 
 		accessDao.persist(access);
 		return Response.noContent().build();

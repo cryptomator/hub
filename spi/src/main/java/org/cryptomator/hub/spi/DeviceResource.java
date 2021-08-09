@@ -77,7 +77,7 @@ public class DeviceResource {
 	public Response getAll() {
 		var devices = deviceDao.getAll();
 		var dtos = devices.stream().map(d -> new DeviceDto(d.getId(), d.getName(), d.getPublickey())).collect(Collectors.toList());
-		return Response.status(Response.Status.OK).entity(dtos).build();
+		return Response.ok(dtos).build();
 	}
 
 	public static class DeviceDto {
