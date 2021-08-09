@@ -20,10 +20,10 @@ export class Masterkey {
     length: 512
   };
   private static readonly PBKDF2_ITERATION_COUNT = 1000000;
-  private key: CryptoKey
+  readonly #key: CryptoKey
 
   private constructor(key: CryptoKey) {
-    this.key = key;
+    this.#key = key;
   }
 
   /**
@@ -68,7 +68,7 @@ export class Masterkey {
     const kek = Masterkey.pbkdf2(password, salt, Masterkey.PBKDF2_ITERATION_COUNT);
     const wrapped = crypto.subtle.wrapKey(
       'raw',
-      this.key,
+      this.#key,
       await kek,
       'AES-KW'
     )
@@ -114,7 +114,7 @@ export class Masterkey {
     const encodedUnsignedToken = new TextEncoder().encode(unsignedToken);
     const signature = await crypto.subtle.sign(
       'HMAC',
-      this.key,
+      this.#key,
       encodedUnsignedToken
     );
     return unsignedToken + '.' + Base64Url.encode(signature);
@@ -157,17 +157,17 @@ export class Masterkey {
       ephemeralKey.privateKey,
       { name: 'AES-KW', length: 256 },
       false,
-      ['wrapKey', 'unwrapKey']
+      ['wrapKey']
     );
     const wrapped = await crypto.subtle.wrapKey(
       'raw',
-      this.key,
+      this.#key,
       agreedKey,
       'AES-KW'
-    )
+    );
     const epk = await crypto.subtle.exportKey(
-      "raw", ephemeralKey.publicKey
-    )
+      'spki', ephemeralKey.publicKey
+    );
     return new DeviceSpecificMasterkey(Base64Url.encode(wrapped), Base64Url.encode(epk))
   }
 

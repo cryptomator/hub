@@ -15,6 +15,9 @@
     <input v-model="deviceName" type="text" placeholder="Device Name">
     <button @click="createDevice()">Request Access</button>
   </div>
+  <div v-else-if="state === State.Unauthorized">
+    This device is not yet authorized. Please tell the vault owner to grant access to <code>{{ deviceId }}</code>.
+  </div>
 </template>
 
 <script lang="ts">
@@ -27,6 +30,7 @@ enum State {
   Processing,
   ChangedPublicKey,
   NewDevice,
+  Unauthorized,
   Unlocked,
 }
 
@@ -60,33 +64,35 @@ export default defineComponent({
       if(device.data.publicKey === this.deviceKey) {
         this.getKeyForThisVault()
       } else {
-        this.$data.state = State.ChangedPublicKey; // TODO redirect CANCELLED
+        this.$data.state = State.ChangedPublicKey; // TODO callback CANCELLED
       }
     }).catch((error: AxiosError) => {
       if (error.response?.status === 404) {
-        this.$data.state = State.NewDevice; // TODO redirect CANCELLED
+        this.$data.state = State.NewDevice; // TODO callback CANCELLED
       } else {
-        throw error; // TODO redirect CANCELLED(/ERROR?)
+        throw error; // TODO callback CANCELLED(/ERROR?)
       }
     });
   },
   methods: {
     async createDevice() {
-      await backend.devices.createDevice(this.deviceId, this.$data.deviceName, this.deviceKey)
+      this.$data.state = State.Processing;
+      await backend.devices.createDevice(this.deviceId, this.$data.deviceName, this.deviceKey);
+      this.$data.state = State.Unauthorized; // TODO callback UNAUTHORIZED
     },
     getKeyForThisVault() {
       backend.vaults.getKeyFor(this.vaultId, this.deviceId)
       .then(response => {
-        return new CallbackService(this.$props.redirectTo).unlockSuccess(response.data.vault_specific_masterkey, response.data.ephemeral_public_key);
+        return new CallbackService(this.$props.redirectTo).unlockSuccess(response.data.device_specific_masterkey, response.data.ephemeral_public_key);
       })
       .then(response => {
         this.$data.state = State.Unlocked;
       })
       .catch((error: AxiosError) => {
         if (error.response?.status === 404) {
-          console.warn('device not authorized'); // TODO redirect UNAUTHORIZED
+          this.$data.state = State.Unauthorized; // TODO callback UNAUTHORIZED
         } else {
-          throw error; // TODO redirect CANCELLED(/ERROR?)
+          throw error; // TODO callback CANCELLED(/ERROR?)
         }
       });
     }
