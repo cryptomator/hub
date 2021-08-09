@@ -13,13 +13,23 @@ axios.interceptors.request.use(async request => {
   return request;
 });
 
+export class VaultDto {
+  constructor(public name: string, public masterkey: string, public iterations: number, public salt: string) { }
+}
 class VaultService {
 
-  public async createVault(vaultId: string, name: string, masterkey: String, iterations: number, salt: String): Promise<AxiosResponse<any>> {
+  public async get(vaultId: string): Promise<AxiosResponse<VaultDto>> {
     if (!auth.isAuthenticated()) {
       return Promise.reject('not logged in');
     }
-    const body = { name: name, masterkey: masterkey, iterations: iterations, salt: salt };
+    return axios.get(`/vaults/${vaultId}`);
+  }
+
+  public async createVault(vaultId: string, name: string, masterkey: string, iterations: number, salt: string): Promise<AxiosResponse<any>> {
+    if (!auth.isAuthenticated()) {
+      return Promise.reject('not logged in');
+    }
+    const body: VaultDto = { name: name, masterkey: masterkey, iterations: iterations, salt: salt };
     return axios.put(`/vaults/${vaultId}`, body);
   }
 
@@ -30,17 +40,17 @@ class VaultService {
     return axios.get(`/vaults/${vaultId}/keys/${deviceId}`);
   }
 
-  public async grantAccess(vaultId: string, deviceId: string, vaultSpecificMasterkey: string, ephemeralPublicKey: string) {
+  public async grantAccess(vaultId: string, deviceId: string, deviceSpecificMasterkey: string, ephemeralPublicKey: string) {
     if (!auth.isAuthenticated()) {
       return Promise.reject('not logged in');
     }
-    const body: AccessDto = { vault_specific_masterkey: vaultSpecificMasterkey, ephemeral_public_key: ephemeralPublicKey }
+    const body: AccessDto = { device_specific_masterkey: deviceSpecificMasterkey, ephemeral_public_key: ephemeralPublicKey }
     await axios.put(`/vaults/${vaultId}/keys/${deviceId}`, body);
   }
 }
 
 export class AccessDto {
-  constructor(public vault_specific_masterkey: string, public ephemeral_public_key: string) { }
+  constructor(public device_specific_masterkey: string, public ephemeral_public_key: string) { }
 }
 
 class DeviceService {

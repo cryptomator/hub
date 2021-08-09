@@ -10,9 +10,11 @@ import org.cryptomator.hub.persistence.entities.User;
 import org.cryptomator.hub.persistence.entities.UserDao;
 import org.cryptomator.hub.persistence.entities.Vault;
 import org.cryptomator.hub.persistence.entities.VaultDao;
+import org.hibernate.exception.ConstraintViolationException;
 
 import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
+import javax.persistence.PersistenceException;
 import javax.transaction.Transactional;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -82,8 +84,30 @@ public class VaultResource {
 		access.setDeviceSpecificMasterkey(dto.deviceSpecificMasterkey);
 		access.setEphemeralPublicKey(dto.ephemeralPublicKey);
 
-		accessDao.persist(access);
-		return Response.noContent().build();
+		try {
+			accessDao.persist(access);
+			return Response.noContent().build();
+		} catch (PersistenceException e) {
+			if (e.getCause() instanceof ConstraintViolationException) {
+				return Response.status(Response.Status.CONFLICT).build();
+			} else {
+				throw e; // will cause error 500
+			}
+		}
+	}
+
+	@GET
+	@Path("/{vaultId}")
+	@RolesAllowed("user")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Transactional
+	public Response get(@PathParam("vaultId") String vaultId) {
+		var vault = vaultDao.get(vaultId);
+		if (vault == null) {
+			return Response.status(Response.Status.NOT_FOUND).build();
+		}
+		var dto = new VaultDto(vault.getName(), vault.getMasterkey(), vault.getIterations(), vault.getSalt());
+		return Response.ok(dto).build();
 	}
 
 	@PUT
@@ -111,11 +135,14 @@ public class VaultResource {
 	}
 
 	public static class AccessGrantDto {
+		@JsonProperty("device_specific_masterkey")
 		public final String deviceSpecificMasterkey;
+
+		@JsonProperty("ephemeral_public_key")
 		public final String ephemeralPublicKey;
 
 		@JsonCreator
-		public AccessGrantDto(@JsonProperty("vault_specific_masterkey") String deviceSpecificMasterkey, @JsonProperty("ephemeral_public_key") String ephemeralPublicKey) {
+		public AccessGrantDto(@JsonProperty("device_specific_masterkey") String deviceSpecificMasterkey, @JsonProperty("ephemeral_public_key") String ephemeralPublicKey) {
 			this.deviceSpecificMasterkey = deviceSpecificMasterkey;
 			this.ephemeralPublicKey = ephemeralPublicKey;
 		}
