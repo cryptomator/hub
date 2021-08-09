@@ -39,7 +39,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/vaults/:id/unlock',
     component: UnlockVault,
-    props: (route) => ({ vaultId: route.params.id, deviceId: route.query.deviceid, deviceKey: route.query.devicekey, redirectTo: route.query.redirect_to })
+    props: (route) => ({ vaultId: route.params.id, deviceId: route.query.device_id, deviceKey: route.query.device_key, redirectTo: route.query.redirect_uri })
   },
   {
     path: '/logout',
@@ -57,10 +57,7 @@ router.beforeEach((to, from, next) => {
   if (to.meta.skipAuth) {
     next();
   } else {
-    const redirectUri = window.location.protocol
-      + '//' + window.location.host
-      + import.meta.env.BASE_URL
-      + '#' + to.fullPath;
+    const redirectUri = `${window.location.protocol}//${window.location.host}${import.meta.env.BASE_URL}#${to.fullPath}`
     auth.loginIfRequired(redirectUri).then(() => {
       next();
     }).catch(error => {

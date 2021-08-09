@@ -21,6 +21,7 @@
 import backend from '../common/backend'
 import { defineComponent } from 'vue'
 import { AxiosError } from 'axios';
+import { CallbackService } from '../common/callback'
 
 enum State {
   Processing,
@@ -75,8 +76,11 @@ export default defineComponent({
     },
     getKeyForThisVault() {
       backend.vaults.getKeyFor(this.vaultId, this.deviceId)
-      .then(publicKey => {
-        this.$data.state = State.Unlocked; // TODO redirect SUCCESS
+      .then(response => {
+        return new CallbackService(this.$props.redirectTo).unlockSuccess(response.data.vault_specific_masterkey, response.data.ephemeral_public_key);
+      })
+      .then(response => {
+        this.$data.state = State.Unlocked;
       })
       .catch((error: AxiosError) => {
         if (error.response?.status === 404) {

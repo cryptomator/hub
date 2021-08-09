@@ -39,8 +39,8 @@ export default defineComponent({
     async createVault() {
       const masterkey = await Masterkey.create();
       const vaultId = uuid();
-      const hubUrl = `hub/${location.protocol}//${location.hostname}:${location.port}/vault/${vaultId}`
-      this.token = await masterkey.createVaultConfig(vaultId, hubUrl);
+      const unlockUrl = `hub+${location.protocol}//${location.host}${import.meta.env.BASE_URL}#/vaults/${vaultId}/unlock`;
+      this.token = await masterkey.createVaultConfig(vaultId, unlockUrl);
       const wrapped = await masterkey.wrap(this.$data.password);
       backend.vaults.createVault(vaultId, this.$data.vaultName, wrapped.encrypted, wrapped.iterations, wrapped.salt).then(() => {
         this.$data.state = State.Created
