@@ -23,23 +23,24 @@ class VaultService {
     return axios.put(`/vaults/${vaultId}`, body);
   }
 
-  public async getKeyFor(vaultId: string, deviceId: String): Promise<AxiosResponse<String>> {
+  public async getKeyFor(vaultId: string, deviceId: String): Promise<AxiosResponse<AccessDto>> {
     if (!auth.isAuthenticated()) {
       return Promise.reject('not logged in');
     }
     return axios.get(`/vaults/${vaultId}/keys/${deviceId}`);
   }
 
-  public async grantAccess(vaultId: string, deviceId: string, vaultSpecificMasterkey: String) {
+  public async grantAccess(vaultId: string, deviceId: string, vaultSpecificMasterkey: string, ephemeralPublicKey: string) {
     if (!auth.isAuthenticated()) {
       return Promise.reject('not logged in');
     }
-    await axios.put(`/vaults/${vaultId}/keys/${deviceId}`, vaultSpecificMasterkey, {
-      headers: {
-        'Content-Type': 'text/plain'
-      }
-    })
+    const body: AccessDto = { vault_specific_masterkey: vaultSpecificMasterkey, ephemeral_public_key: ephemeralPublicKey }
+    await axios.put(`/vaults/${vaultId}/keys/${deviceId}`, body);
   }
+}
+
+export class AccessDto {
+  constructor(public vault_specific_masterkey: string, public ephemeral_public_key: string) { }
 }
 
 class DeviceService {

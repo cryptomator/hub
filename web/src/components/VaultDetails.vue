@@ -38,8 +38,7 @@ export default defineComponent({
       for (const device of this.$data.devices) {
         const publicKey = Base64Url.decode(device.publicKey);
         const deviceSpecificKey = await masterkey.encryptForDevice(publicKey);
-        console.log(deviceSpecificKey);
-        await backend.vaults.grantAccess(this.vaultId, device.id, deviceSpecificKey.encrypted); // FIXME we need to persist encrypted + epk
+        await backend.vaults.grantAccess(this.vaultId, device.id, deviceSpecificKey.encrypted, deviceSpecificKey.publicKey);
       }
     }
   }

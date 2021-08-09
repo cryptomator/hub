@@ -31,8 +31,11 @@ public class Access {
 	@JoinColumn(name = "vault_id")
 	private Vault vault;
 
-	@Column(name = "deviceSpecificMasterkey", nullable = false)
+	@Column(name = "vault_specific_masterkey", nullable = false)
 	private String deviceSpecificMasterkey;
+
+	@Column(name = "ephemeral_public_key", nullable = false)
+	private String ephemeralPublicKey;
 
 	public AccessId getId() {
 		return id;
@@ -64,6 +67,14 @@ public class Access {
 
 	public void setDeviceSpecificMasterkey(String deviceSpecificMasterkey) {
 		this.deviceSpecificMasterkey = deviceSpecificMasterkey;
+	}
+
+	public String getEphemeralPublicKey() {
+		return ephemeralPublicKey;
+	}
+
+	public void setEphemeralPublicKey(String ephemeralPublicKey) {
+		this.ephemeralPublicKey = ephemeralPublicKey;
 	}
 
 	@Override

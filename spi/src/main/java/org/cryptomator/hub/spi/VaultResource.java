@@ -1,5 +1,6 @@
 package org.cryptomator.hub.spi;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.oidc.UserInfo;
 import org.cryptomator.hub.persistence.entities.Access;
@@ -44,7 +45,7 @@ public class VaultResource {
 	@Path("/{vaultId}/keys/{deviceId}")
 	@RolesAllowed("user")
 	@Transactional
-	@Produces(MediaType.TEXT_PLAIN)
+	@Produces(MediaType.APPLICATION_JSON)
 	public Response unlock(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId) {
 		// FIXME validate parameter
 
@@ -55,15 +56,17 @@ public class VaultResource {
 			return Response.status(Response.Status.NOT_FOUND).build();
 		}
 
-		return Response.ok(deviceAccess.getDeviceSpecificMasterkey()).build();
+		var dto = new AccessGrantDto(deviceAccess.getDeviceSpecificMasterkey(), deviceAccess.getEphemeralPublicKey());
+
+		return Response.ok(dto).build();
 	}
 
 	@PUT
 	@Path("/{vaultId}/keys/{deviceId}")
 	@RolesAllowed("user")
 	@Transactional
-	@Consumes(MediaType.TEXT_PLAIN)
-	public Response grantAccess(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId, String deviceSpecificMasterkey) {
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response grantAccess(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId, AccessGrantDto dto) {
 		// FIXME validate parameter
 
 		var vault = vaultDao.get(vaultId);
@@ -76,7 +79,8 @@ public class VaultResource {
 		var access = new Access();
 		access.setVault(vault);
 		access.setDevice(device);
-		access.setDeviceSpecificMasterkey(deviceSpecificMasterkey);
+		access.setDeviceSpecificMasterkey(dto.deviceSpecificMasterkey);
+		access.setEphemeralPublicKey(dto.ephemeralPublicKey);
 
 		accessDao.persist(access);
 		return Response.noContent().build();
@@ -104,6 +108,17 @@ public class VaultResource {
 		var persistedVaultId = vaultDao.persist(vault);
 
 		return Response.ok(persistedVaultId).build();
+	}
+
+	public static class AccessGrantDto {
+		public final String deviceSpecificMasterkey;
+		public final String ephemeralPublicKey;
+
+		@JsonCreator
+		public AccessGrantDto(@JsonProperty("vault_specific_masterkey") String deviceSpecificMasterkey, @JsonProperty("ephemeral_public_key") String ephemeralPublicKey) {
+			this.deviceSpecificMasterkey = deviceSpecificMasterkey;
+			this.ephemeralPublicKey = ephemeralPublicKey;
+		}
 	}
 
 	public static class VaultDto {
