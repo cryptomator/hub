@@ -1,3 +1,5 @@
+import { base32Encode } from '@ctrl/ts-base32';
+import * as miscreant from "miscreant";
 import { Base64Url } from './util';
 
 export class WrappedMasterkey {
@@ -118,6 +120,18 @@ export class Masterkey {
       encodedUnsignedToken
     );
     return unsignedToken + '.' + Base64Url.encode(signature);
+  }
+
+  public async hashDirectoryId(cleartextDirectoryId: string): Promise<string> {
+    const dirHash = new TextEncoder().encode(cleartextDirectoryId)
+    const rawKey = await crypto.subtle.exportKey(
+      'raw',
+      this.#key
+    )
+    const rawKeyBuffer = new Uint8Array(rawKey);
+    const key = await miscreant.SIV.importKey(rawKeyBuffer, "AES-SIV");
+    const ciphertext = await key.seal(dirHash, crypto.getRandomValues(new Uint8Array(64)))
+    return base32Encode(ciphertext)
   }
 
   /**
