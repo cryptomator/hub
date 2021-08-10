@@ -155,9 +155,10 @@ export class Masterkey {
       this.#key
     )
     const rawKeyBuffer = new Uint8Array(rawKey);
-    const key = await miscreant.SIV.importKey(rawKeyBuffer, "AES-SIV");
+    const key = await miscreant.SIV.importKey(rawKeyBuffer, 'AES-SIV');
     const ciphertext = await key.seal(dirHash, []);
-    return base32.stringify(ciphertext);
+    const hash = await crypto.subtle.digest('SHA-1', ciphertext);
+    return base32.stringify(new Uint8Array(hash));
   }
 
   /**
