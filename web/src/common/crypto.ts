@@ -9,6 +9,33 @@ export class DeviceSpecificMasterkey {
   constructor(readonly encrypted: string, readonly publicKey: string) { }
 }
 
+export class X936 {
+
+  /**
+   * Performs <a href="https://www.secg.org/sec1-v2.pdf">ANSI-X9.63-KDF</a> with SHA-256
+   * @param sharedSecret A shared secret
+   * @param sharedInfo Additional authenticated data
+   * @param keyDataLen Desired key length (in bytes)
+   * @return key data
+   */
+  public static async kdf(sharedSecret: Uint8Array, sharedInfo: Uint8Array, keyDataLen: number): Promise<Uint8Array> {
+    const hashLen = 32;
+    const n = Math.ceil(keyDataLen / hashLen);
+    const buffer = new Uint8Array(n * hashLen);
+
+    const tmp = new ArrayBuffer(sharedSecret.byteLength + 4 + sharedInfo.byteLength);
+    for (let i = 0; i < n; i++) {
+      new Uint8Array(tmp).set(sharedSecret, 0);
+      new DataView(tmp, sharedSecret.byteLength, 4).setUint32(0, i + 1, false);
+      new Uint8Array(tmp).set(sharedInfo, sharedSecret.byteLength + 4);
+      const digest = await crypto.subtle.digest('SHA-256', tmp);
+      buffer.set(new Uint8Array(digest), i * hashLen);
+    }
+    return buffer.slice(0, keyDataLen);
+  }
+
+}
+
 export class Masterkey {
 
   // in this browser application, this 512 bit key is used
@@ -73,7 +100,7 @@ export class Masterkey {
       await kek,
       'AES-KW'
     )
-    return new WrappedMasterkey(base64url.stringify(new Uint8Array(await wrapped)), base64url.stringify(salt), Masterkey.PBKDF2_ITERATION_COUNT);
+    return new WrappedMasterkey(base64url.stringify(new Uint8Array(await wrapped), { pad: false }), base64url.stringify(salt, { pad: false }), Masterkey.PBKDF2_ITERATION_COUNT);
   }
 
   /**
@@ -83,8 +110,8 @@ export class Masterkey {
    * @returns The unwrapped masterkey.
    */
   public static async unwrap(password: string, wrapped: WrappedMasterkey): Promise<Masterkey> {
-    const kek = Masterkey.pbkdf2(password, base64url.parse(wrapped.salt), wrapped.iterations);
-    const encrypted = base64url.parse(wrapped.encrypted);
+    const kek = Masterkey.pbkdf2(password, base64url.parse(wrapped.salt, { loose: true }), wrapped.iterations);
+    const encrypted = base64url.parse(wrapped.encrypted, { loose: true });
 
     const key = crypto.subtle.unwrapKey(
       'raw',
@@ -111,14 +138,14 @@ export class Masterkey {
       shorteningThreshold: 220
     });
     const encoder = new TextEncoder();
-    const unsignedToken = base64url.stringify(encoder.encode(header)) + '.' + base64url.stringify(encoder.encode(payload));
+    const unsignedToken = base64url.stringify(encoder.encode(header), { pad: false }) + '.' + base64url.stringify(encoder.encode(payload), { pad: false });
     const encodedUnsignedToken = new TextEncoder().encode(unsignedToken);
     const signature = await crypto.subtle.sign(
       'HMAC',
       this.#key,
       encodedUnsignedToken
     );
-    return unsignedToken + '.' + base64url.stringify(new Uint8Array(signature));
+    return unsignedToken + '.' + base64url.stringify(new Uint8Array(signature), { pad: false });
   }
 
   public async hashDirectoryId(cleartextDirectoryId: string): Promise<string> {
@@ -129,8 +156,8 @@ export class Masterkey {
     )
     const rawKeyBuffer = new Uint8Array(rawKey);
     const key = await miscreant.SIV.importKey(rawKeyBuffer, "AES-SIV");
-    const ciphertext = await key.seal(dirHash, crypto.getRandomValues(new Uint8Array(64)))
-    return base32.stringify(ciphertext)
+    const ciphertext = await key.seal(dirHash, []);
+    return base32.stringify(ciphertext);
   }
 
   /**
@@ -147,41 +174,49 @@ export class Masterkey {
     const ephemeralKey = await crypto.subtle.generateKey(
       {
         name: 'ECDH',
-        namedCurve: 'P-256'
+        namedCurve: 'P-384'
       },
       false,
-      ['deriveKey']
+      ['deriveBits']
     );
     const publicKey = await crypto.subtle.importKey(
       'spki',
       devicePublicKey,
       {
         name: 'ECDH',
-        namedCurve: 'P-256'
+        namedCurve: 'P-384'
       },
       false,
       []
     );
-    const agreedKey = await crypto.subtle.deriveKey(
+    const agreedKey = await crypto.subtle.deriveBits(
       {
         name: 'ECDH',
         public: publicKey
       },
       ephemeralKey.privateKey,
-      { name: 'AES-KW', length: 256 },
+      384
+    );
+    console.log('agreedKey: ', base64url.stringify(new Uint8Array(agreedKey), { pad: false }));
+    const sharedSecret = await X936.kdf(new Uint8Array(agreedKey), new Uint8Array(0), 44);
+    console.log('sharedSecret: ', base64url.stringify(new Uint8Array(sharedSecret), { pad: false }));
+    const aesKey = await crypto.subtle.importKey(
+      'raw',
+      sharedSecret.slice(0, 32),
+      { name: 'AES-GCM', length: 256 },
       false,
       ['wrapKey']
     );
     const wrapped = await crypto.subtle.wrapKey(
       'raw',
       this.#key,
-      agreedKey,
-      'AES-KW'
+      aesKey,
+      { name: 'AES-GCM', iv: sharedSecret.slice(32, 44), tagLength: 128 }
     );
     const epk = await crypto.subtle.exportKey(
       'spki', ephemeralKey.publicKey
     );
-    return new DeviceSpecificMasterkey(base64url.stringify(new Uint8Array(wrapped)), base64url.stringify(new Uint8Array(epk)))
+    return new DeviceSpecificMasterkey(base64url.stringify(new Uint8Array(wrapped), { pad: false }), base64url.stringify(new Uint8Array(epk), { pad: false }))
   }
 
 
