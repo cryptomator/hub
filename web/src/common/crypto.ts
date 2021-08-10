@@ -1,6 +1,5 @@
-import { base32Encode } from '@ctrl/ts-base32';
 import * as miscreant from "miscreant";
-import { Base64Url } from './util';
+import { base32, base64url } from "rfc4648";
 
 export class WrappedMasterkey {
   constructor(readonly encrypted: string, readonly salt: string, readonly iterations: number) { }
@@ -74,7 +73,7 @@ export class Masterkey {
       await kek,
       'AES-KW'
     )
-    return new WrappedMasterkey(Base64Url.encode(await wrapped), Base64Url.encode(salt), Masterkey.PBKDF2_ITERATION_COUNT);
+    return new WrappedMasterkey(base64url.stringify(new Uint8Array(await wrapped)), base64url.stringify(salt), Masterkey.PBKDF2_ITERATION_COUNT);
   }
 
   /**
@@ -84,8 +83,8 @@ export class Masterkey {
    * @returns The unwrapped masterkey.
    */
   public static async unwrap(password: string, wrapped: WrappedMasterkey): Promise<Masterkey> {
-    const kek = Masterkey.pbkdf2(password, Base64Url.decode(wrapped.salt), wrapped.iterations);
-    const encrypted = Base64Url.decode(wrapped.encrypted);
+    const kek = Masterkey.pbkdf2(password, base64url.parse(wrapped.salt), wrapped.iterations);
+    const encrypted = base64url.parse(wrapped.encrypted);
 
     const key = crypto.subtle.unwrapKey(
       'raw',
@@ -112,14 +111,14 @@ export class Masterkey {
       shorteningThreshold: 220
     });
     const encoder = new TextEncoder();
-    const unsignedToken = Base64Url.encode(encoder.encode(header)) + '.' + Base64Url.encode(encoder.encode(payload));
+    const unsignedToken = base64url.stringify(encoder.encode(header)) + '.' + base64url.stringify(encoder.encode(payload));
     const encodedUnsignedToken = new TextEncoder().encode(unsignedToken);
     const signature = await crypto.subtle.sign(
       'HMAC',
       this.#key,
       encodedUnsignedToken
     );
-    return unsignedToken + '.' + Base64Url.encode(signature);
+    return unsignedToken + '.' + base64url.stringify(new Uint8Array(signature));
   }
 
   public async hashDirectoryId(cleartextDirectoryId: string): Promise<string> {
@@ -131,7 +130,7 @@ export class Masterkey {
     const rawKeyBuffer = new Uint8Array(rawKey);
     const key = await miscreant.SIV.importKey(rawKeyBuffer, "AES-SIV");
     const ciphertext = await key.seal(dirHash, crypto.getRandomValues(new Uint8Array(64)))
-    return base32Encode(ciphertext)
+    return base32.stringify(ciphertext)
   }
 
   /**
@@ -182,7 +181,7 @@ export class Masterkey {
     const epk = await crypto.subtle.exportKey(
       'spki', ephemeralKey.publicKey
     );
-    return new DeviceSpecificMasterkey(Base64Url.encode(wrapped), Base64Url.encode(epk))
+    return new DeviceSpecificMasterkey(base64url.stringify(new Uint8Array(wrapped)), base64url.stringify(new Uint8Array(epk)))
   }
 
 
