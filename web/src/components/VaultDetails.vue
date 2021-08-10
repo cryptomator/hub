@@ -6,7 +6,7 @@
     <h1>Vault Details for {{ vault?.name }}</h1>
 
     <ul>
-      <li v-for="device in devices" :key="device.name">{{ device.name }}</li>
+      <li v-for="device in devices" :key="device.name">{{ device.name }} <button @click="revokeAccess(device.id)">revoke access (see console.log)</button></li>
     </ul>
 
     <input v-model="password" type="password" placeholder="Masterpassword"/>
@@ -56,6 +56,14 @@ export default defineComponent({
         }
       } catch (error) {
         console.error('granting access permissions failed.', error);
+      }
+    },
+
+    async revokeAccess(deviceId: string) {
+      try {
+        backend.vaults.revokeAccess(this.vaultId, deviceId)
+      } catch (error) {
+        console.error('revoking access permissions failed.', error);
       }
     }
   }

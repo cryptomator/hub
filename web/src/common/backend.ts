@@ -47,6 +47,13 @@ class VaultService {
     const body: AccessDto = { device_specific_masterkey: deviceSpecificMasterkey, ephemeral_public_key: ephemeralPublicKey }
     await axios.put(`/vaults/${vaultId}/keys/${deviceId}`, body);
   }
+
+  public async revokeAccess(vaultId: string, deviceId: string) {
+    if (!auth.isAuthenticated()) {
+      return Promise.reject('not logged in');
+    }
+    await axios.delete(`/vaults/${vaultId}/keys/${deviceId}`);
+  }
 }
 
 export class AccessDto {

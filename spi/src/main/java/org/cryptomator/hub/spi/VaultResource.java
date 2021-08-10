@@ -14,9 +14,11 @@ import org.hibernate.exception.ConstraintViolationException;
 
 import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
+import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceException;
 import javax.transaction.Transactional;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -93,6 +95,19 @@ public class VaultResource {
 			} else {
 				throw e; // will cause error 500
 			}
+		}
+	}
+
+	@DELETE
+	@Path("/{vaultId}/keys/{deviceId}")
+	@RolesAllowed("user")
+	@Transactional
+	public Response revokeAccess(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId) {
+		try {
+			accessDao.delete(vaultId, deviceId);
+			return Response.noContent().build();
+		} catch (EntityNotFoundException e) {
+			return Response.status(Response.Status.NOT_FOUND).build();
 		}
 	}
 

@@ -8,12 +8,14 @@ import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.MapsId;
+import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 import java.io.Serializable;
 import java.util.Objects;
 
 @Entity
 @Table(name = "access")
+@NamedQuery(name = "Access.revoke", query = "DELETE Access a WHERE a.id.deviceId = :deviceId AND a.id.vaultId = :vaultId")
 public class Access {
 
 	// FIXME @ManyToOne(...cascade = {CascadeType.REMOVE}) doesn't add 'ON DELETE CASCADE' to foreign keys
