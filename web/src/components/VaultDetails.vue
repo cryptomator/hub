@@ -16,7 +16,7 @@
 
 <script lang="ts">
 import backend, { DeviceDto, VaultDto } from '../common/backend'
-import { Base64Url } from '../common/util'
+import { base64url } from "rfc4648";
 import { Masterkey, WrappedMasterkey } from '../common/crypto'
 import { defineComponent } from 'vue'
 
@@ -50,7 +50,7 @@ export default defineComponent({
         const wrappedKey = new WrappedMasterkey(vaultDto.masterkey, vaultDto.salt, vaultDto.iterations);
         const masterkey = await Masterkey.unwrap(this.$data.password, wrappedKey);
         for (const device of this.$data.devices) {
-          const publicKey = Base64Url.decode(device.publicKey);
+          const publicKey = base64url.parse(device.publicKey);
           const deviceSpecificKey = await masterkey.encryptForDevice(publicKey);
           await backend.vaults.grantAccess(this.vaultId, device.id, deviceSpecificKey.encrypted, deviceSpecificKey.publicKey);
         }
