@@ -21,7 +21,7 @@ export default defineComponent({
   methods: {
     logout() {
       auth.logout();
-      this.$data.loggedIn = true;
+      this.loggedIn = true;
     }
   }
 })

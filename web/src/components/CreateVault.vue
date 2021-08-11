@@ -41,22 +41,22 @@ export default defineComponent({
       const masterkey = await Masterkey.create();
       const vaultId = uuid();
       const unlockUrl = `hub+${location.protocol}//${location.host}${import.meta.env.BASE_URL}#/vaults/${vaultId}/unlock`;
-      this.$data.token = await masterkey.createVaultConfig(vaultId, unlockUrl);
-      const wrapped = await masterkey.wrap(this.$data.password);
-      backend.vaults.createVault(vaultId, this.$data.vaultName, wrapped.encrypted, wrapped.iterations, wrapped.salt).then(() => {
+      this.token = await masterkey.createVaultConfig(vaultId, unlockUrl);
+      const wrapped = await masterkey.wrap(this.password);
+      backend.vaults.createVault(vaultId, this.vaultName, wrapped.encrypted, wrapped.iterations, wrapped.salt).then(() => {
         masterkey.hashDirectoryId("").then(rootDirHash => {
-          this.$data.rootDirHash = rootDirHash
-          this.$data.state = State.Created
+          this.rootDirHash = rootDirHash
+          this.state = State.Created
         })
       })
     },
     async createVaultFolder() {
-      if(this.$data.state === State.Created) {
+      if(this.state === State.Created) {
         const zip = new JSZip()
         zip.file("vault.cryptomator", this.token)
         zip.folder("d")?.folder(this.rootDirHash.substring(0, 2))?.folder(this.rootDirHash.substring(2))
         zip.generateAsync({type: "blob"}).then((blob) => {
-          saveAs(blob, `${this.$data.vaultName}.zip`);
+          saveAs(blob, `${this.vaultName}.zip`);
         })
       }
     }

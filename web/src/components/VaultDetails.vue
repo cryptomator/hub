@@ -36,20 +36,20 @@ export default defineComponent({
 
   mounted() {
     backend.vaults.get(this.vaultId).then(vault => {
-      this.$data.vault = vault.data;
+      this.vault = vault.data;
     });
     backend.devices.listAll().then(devices => {
-      this.$data.devices = devices;
+      this.devices = devices;
     });
   },
 
   methods: {
     async giveAccess() {
       try {
-        const vaultDto = this.$data.vault!;
+        const vaultDto = this.vault!;
         const wrappedKey = new WrappedMasterkey(vaultDto.masterkey, vaultDto.salt, vaultDto.iterations);
-        const masterkey = await Masterkey.unwrap(this.$data.password, wrappedKey);
-        for (const device of this.$data.devices) {
+        const masterkey = await Masterkey.unwrap(this.password, wrappedKey);
+        for (const device of this.devices) {
           const publicKey = base64url.parse(device.publicKey);
           const deviceSpecificKey = await masterkey.encryptForDevice(publicKey);
           await backend.vaults.grantAccess(this.vaultId, device.id, deviceSpecificKey.encrypted, deviceSpecificKey.publicKey);

@@ -15,7 +15,7 @@ export default defineComponent({
   }),
   mounted() {
     services.users.me().then(username => {
-      this.$data.username = username;
+      this.username = username;
     });
   }
   

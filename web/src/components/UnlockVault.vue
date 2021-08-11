@@ -64,11 +64,11 @@ export default defineComponent({
       if(device.data.publicKey === this.deviceKey) {
         this.getKeyForThisVault()
       } else {
-        this.$data.state = State.ChangedPublicKey; // TODO callback CANCELLED
+        this.state = State.ChangedPublicKey; // TODO callback CANCELLED
       }
     }).catch((error: AxiosError) => {
       if (error.response?.status === 404) {
-        this.$data.state = State.NewDevice; // TODO callback CANCELLED
+        this.state = State.NewDevice; // TODO callback CANCELLED
       } else {
         throw error; // TODO callback CANCELLED(/ERROR?)
       }
@@ -76,21 +76,21 @@ export default defineComponent({
   },
   methods: {
     async createDevice() {
-      this.$data.state = State.Processing;
-      await backend.devices.createDevice(this.deviceId, this.$data.deviceName, this.deviceKey);
-      this.$data.state = State.Unauthorized; // TODO callback UNAUTHORIZED
+      this.state = State.Processing;
+      await backend.devices.createDevice(this.deviceId, this.deviceName, this.deviceKey);
+      this.state = State.Unauthorized; // TODO callback UNAUTHORIZED
     },
     getKeyForThisVault() {
       backend.vaults.getKeyFor(this.vaultId, this.deviceId)
       .then(response => {
-        return new CallbackService(this.$props.redirectTo).unlockSuccess(response.data.device_specific_masterkey, response.data.ephemeral_public_key);
+        return new CallbackService(this.redirectTo).unlockSuccess(response.data.device_specific_masterkey, response.data.ephemeral_public_key);
       })
       .then(response => {
-        this.$data.state = State.Unlocked;
+        this.state = State.Unlocked;
       })
       .catch((error: AxiosError) => {
         if (error.response?.status === 404) {
-          this.$data.state = State.Unauthorized; // TODO callback UNAUTHORIZED
+          this.state = State.Unauthorized; // TODO callback UNAUTHORIZED
         } else {
           throw error; // TODO callback CANCELLED(/ERROR?)
         }
