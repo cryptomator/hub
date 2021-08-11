@@ -10,6 +10,8 @@ describe('crypto', () => {
     // since this test runs on Node, we need to replace window.crypto:
     // @ts-ignore: global not defined (but will be available within Node)
     global.crypto = new Crypto();
+    // @ts-ignore: global not defined (but will be available within Node)
+    global.window = { crypto: global.crypto }
     done()
   })
 
@@ -95,4 +97,41 @@ describe('crypto', () => {
 
   })
 
-});
+  describe('Hash directory id', () => {
+    it('root directory', async () => {
+      const masterkey = await TestMasterkey.createMasterkey();
+      const result = await masterkey.hashDirectoryId("")
+      expect(result).to.eql("VLWEHT553J5DR7OZLRJAYDIWFCXZABOD")
+    })
+
+    it('specific directory', async () => {
+      const masterkey = await TestMasterkey.createMasterkey();
+      const result = await masterkey.hashDirectoryId("918acfbd-a467-3f77-93f1-f4a44f9cfe9c")
+      expect(result).to.eql("7C3USOO3VU7IVQRKFMRFV3QE4VEZJECV")
+    })
+  });
+})
+
+class TestMasterkey extends Masterkey {
+  constructor(key: CryptoKey) {
+    super(key)
+  }
+
+  static async createMasterkey() {
+    const raw = new Uint8Array(64);
+    raw.fill(0x55, 0, 32);
+    raw.fill(0x77, 32, 64);
+    const key = await crypto.subtle.importKey(
+      "raw",
+      raw,
+      {
+        name: 'HMAC',
+        hash: 'SHA-256',
+        length: 512
+      },
+      true,
+      ["sign"]
+    );
+    return new TestMasterkey(key)
+  }
+}

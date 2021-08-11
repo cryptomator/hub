@@ -50,7 +50,7 @@ export class Masterkey {
   private static readonly PBKDF2_ITERATION_COUNT = 1000000;
   readonly #key: CryptoKey
 
-  private constructor(key: CryptoKey) {
+  protected constructor(key: CryptoKey) {
     this.#key = key;
   }
 
@@ -150,12 +150,20 @@ export class Masterkey {
 
   public async hashDirectoryId(cleartextDirectoryId: string): Promise<string> {
     const dirHash = new TextEncoder().encode(cleartextDirectoryId)
-    const rawKey = await crypto.subtle.exportKey(
+    const rawKeyBuffer = await crypto.subtle.exportKey(
       'raw',
       this.#key
     )
-    const rawKeyBuffer = new Uint8Array(rawKey);
-    const key = await miscreant.SIV.importKey(rawKeyBuffer, 'AES-SIV');
+
+    var rawkey = new Uint8Array(rawKeyBuffer)
+    // miscreant lib requires mac key first and then the enc key
+    const encKey = rawkey.subarray(0, rawkey.length / 2 | 0);
+    const macKey = rawkey.subarray(rawkey.length / 2 | 0);
+    const shiftedRawKey = new Uint8Array(rawkey.length)
+    shiftedRawKey.set(macKey)
+    shiftedRawKey.set(encKey, macKey.length)
+
+    const key = await miscreant.SIV.importKey(shiftedRawKey, 'AES-SIV');
     const ciphertext = await key.seal(dirHash, []);
     const hash = await crypto.subtle.digest('SHA-1', ciphertext);
     return base32.stringify(new Uint8Array(hash));
