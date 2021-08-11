@@ -1,15 +1,12 @@
 {
 	"folders": [
 		{
-			"name": "Keycloak Configuration",
 			"path": "keycloak"
 		},
 		{
-			"name": "Backend Services",
 			"path": "spi"
 		},
 		{
-			"name": "Web Frontend",
 			"path": "web"
 		},
 		{
@@ -27,9 +24,6 @@
 	},
 	"settings": {
 		"files.exclude": {
-			"**/.git": true,
-			"**/node_modules": true,
-			"**/package-lock.json": true,
 			"**/.DS_Store": true
 		},
 		"typescript.referencesCodeLens.enabled": true,

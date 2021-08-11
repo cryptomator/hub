@@ -1,17 +1,24 @@
 package org.cryptomator.hub.spi;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.oidc.UserInfo;
+import org.cryptomator.hub.persistence.entities.Access;
 import org.cryptomator.hub.persistence.entities.AccessDao;
+import org.cryptomator.hub.persistence.entities.DeviceDao;
 import org.cryptomator.hub.persistence.entities.User;
 import org.cryptomator.hub.persistence.entities.UserDao;
 import org.cryptomator.hub.persistence.entities.Vault;
 import org.cryptomator.hub.persistence.entities.VaultDao;
+import org.hibernate.exception.ConstraintViolationException;
 
 import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
+import javax.persistence.EntityNotFoundException;
+import javax.persistence.PersistenceException;
 import javax.transaction.Transactional;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -35,46 +42,125 @@ public class VaultResource {
 	@Inject
 	VaultDao vaultDao;
 
+	@Inject
+	DeviceDao deviceDao;
+
 	@GET
-	@Path("/{uuid}/keys/{deviceId}")
+	@Path("/{vaultId}/keys/{deviceId}")
 	@RolesAllowed("user")
 	@Transactional
-	@Produces(MediaType.TEXT_PLAIN)
-	public Response unlock(@PathParam("uuid") String uuid, @PathParam("deviceId") String deviceId) {
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response unlock(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId) {
 		// FIXME validate parameter
 
-		var deviceAccess = accessDao.get(uuid, deviceId);
+		var deviceAccess = accessDao.get(vaultId, deviceId);
 		var currentUserId = userInfo.getString("sub");
 
 		if (deviceAccess == null || !deviceAccess.getDevice().getUser().getId().equals(currentUserId)) {
 			return Response.status(Response.Status.NOT_FOUND).build();
 		}
 
-		return Response.ok(deviceAccess.getDeviceSpecificMasterkey()).build();
+		var dto = new AccessGrantDto(deviceAccess.getDeviceSpecificMasterkey(), deviceAccess.getEphemeralPublicKey());
+
+		return Response.ok(dto).build();
 	}
 
 	@PUT
-	@Path("/{uuid}")
+	@Path("/{vaultId}/keys/{deviceId}")
+	@RolesAllowed("user")
+	@Transactional
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response grantAccess(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId, AccessGrantDto dto) {
+		// FIXME validate parameter
+
+		var vault = vaultDao.get(vaultId);
+		var device = deviceDao.get(deviceId);
+
+		if (vault == null || device == null ) {
+			return Response.status(Response.Status.NOT_FOUND).build();
+		}
+
+		var access = new Access();
+		access.setVault(vault);
+		access.setDevice(device);
+		access.setDeviceSpecificMasterkey(dto.deviceSpecificMasterkey);
+		access.setEphemeralPublicKey(dto.ephemeralPublicKey);
+
+		try {
+			accessDao.persist(access);
+			return Response.noContent().build();
+		} catch (PersistenceException e) {
+			if (e.getCause() instanceof ConstraintViolationException) {
+				return Response.status(Response.Status.CONFLICT).build();
+			} else {
+				throw e; // will cause error 500
+			}
+		}
+	}
+
+	@DELETE
+	@Path("/{vaultId}/keys/{deviceId}")
+	@RolesAllowed("user")
+	@Transactional
+	public Response revokeAccess(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId) {
+		try {
+			accessDao.delete(vaultId, deviceId);
+			return Response.noContent().build();
+		} catch (EntityNotFoundException e) {
+			return Response.status(Response.Status.NOT_FOUND).build();
+		}
+	}
+
+	@GET
+	@Path("/{vaultId}")
+	@RolesAllowed("user")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Transactional
+	public Response get(@PathParam("vaultId") String vaultId) {
+		var vault = vaultDao.get(vaultId);
+		if (vault == null) {
+			return Response.status(Response.Status.NOT_FOUND).build();
+		}
+		var dto = new VaultDto(vault.getName(), vault.getMasterkey(), vault.getIterations(), vault.getSalt());
+		return Response.ok(dto).build();
+	}
+
+	@PUT
+	@Path("/{vaultId}")
 	@RolesAllowed("user")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.TEXT_PLAIN)
 	@Transactional
-	public Response create(/*@Valid*/ VaultDto vaultDto, @PathParam("uuid") String uuid) {
+	public Response create(/*@Valid*/ VaultDto vaultDto, @PathParam("vaultId") String vaultId) {
 		// FIXME verify uuid
 
 		if (vaultDto == null) {
 			return Response.serverError().entity("Vault cannot be null").build();
 		}
 
-		if (vaultDao.get(uuid) != null) {
+		if (vaultDao.get(vaultId) != null) {
 			return Response.status(Response.Status.CONFLICT).build();
 		}
 
 		var currentUser = userDao.get(userInfo.getString("sub"));
-		var vault = vaultDto.toVault(currentUser, uuid);
+		var vault = vaultDto.toVault(currentUser, vaultId);
 		var persistedVaultId = vaultDao.persist(vault);
 
 		return Response.ok(persistedVaultId).build();
+	}
+
+	public static class AccessGrantDto {
+		@JsonProperty("device_specific_masterkey")
+		public final String deviceSpecificMasterkey;
+
+		@JsonProperty("ephemeral_public_key")
+		public final String ephemeralPublicKey;
+
+		@JsonCreator
+		public AccessGrantDto(@JsonProperty("device_specific_masterkey") String deviceSpecificMasterkey, @JsonProperty("ephemeral_public_key") String ephemeralPublicKey) {
+			this.deviceSpecificMasterkey = deviceSpecificMasterkey;
+			this.ephemeralPublicKey = ephemeralPublicKey;
+		}
 	}
 
 	public static class VaultDto {
@@ -107,9 +193,9 @@ public class VaultResource {
 			return salt;
 		}
 
-		public Vault toVault(User user, String uuid) {
+		public Vault toVault(User user, String id) {
 			var vault = new Vault();
-			vault.setId(uuid);
+			vault.setId(id);
 			vault.setName(getName());
 			vault.setMasterkey(getMasterkey());
 			vault.setIterations(getIterations());

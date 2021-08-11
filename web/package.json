@@ -21,6 +21,7 @@
   "devDependencies": {
     "@peculiar/webcrypto": "^1.1.7",
     "@types/chai": "^4.2.21",
+    "@types/file-saver": "^2.0.3",
     "@types/mocha": "^9.0.0",
     "@types/node": "^16.4.12",
     "@typescript-eslint/eslint-plugin": "^4.25.0",
@@ -38,7 +39,11 @@
   },
   "dependencies": {
     "axios": "^0.21.1",
+    "file-saver": "^2.0.5",
+    "jszip": "^3.7.1",
     "keycloak-js": "^15.0.0",
+    "miscreant": "^0.3.2",
+    "rfc4648": "^1.5.0",
     "vue": "^3.0.5",
     "vue-router": "^4.0.10"
   }

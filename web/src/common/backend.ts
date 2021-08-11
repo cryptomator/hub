@@ -13,46 +13,81 @@ axios.interceptors.request.use(async request => {
   return request;
 });
 
+export class VaultDto {
+  constructor(public name: string, public masterkey: string, public iterations: number, public salt: string) { }
+}
 class VaultService {
 
-  public async createVault(uuid: string, name: string, masterkey: String, iterations: number, salt: String): Promise<AxiosResponse<any>> {
+  public async get(vaultId: string): Promise<AxiosResponse<VaultDto>> {
     if (!auth.isAuthenticated()) {
       return Promise.reject('not logged in');
     }
-    const body = { name: name, masterkey: masterkey, iterations: iterations, salt: salt };
-    return axios.put('/vaults/' + uuid, body);
+    return axios.get(`/vaults/${vaultId}`);
   }
 
-  public async getKeyFor(vaultId: string, deviceId: String): Promise<AxiosResponse<String>> {
+  public async createVault(vaultId: string, name: string, masterkey: string, iterations: number, salt: string): Promise<AxiosResponse<any>> {
+    if (!auth.isAuthenticated()) {
+      return Promise.reject('not logged in');
+    }
+    const body: VaultDto = { name: name, masterkey: masterkey, iterations: iterations, salt: salt };
+    return axios.put(`/vaults/${vaultId}`, body);
+  }
+
+  public async getKeyFor(vaultId: string, deviceId: String): Promise<AxiosResponse<AccessDto>> {
     if (!auth.isAuthenticated()) {
       return Promise.reject('not logged in');
     }
     return axios.get(`/vaults/${vaultId}/keys/${deviceId}`);
   }
+
+  public async grantAccess(vaultId: string, deviceId: string, deviceSpecificMasterkey: string, ephemeralPublicKey: string) {
+    if (!auth.isAuthenticated()) {
+      return Promise.reject('not logged in');
+    }
+    const body: AccessDto = { device_specific_masterkey: deviceSpecificMasterkey, ephemeral_public_key: ephemeralPublicKey }
+    await axios.put(`/vaults/${vaultId}/keys/${deviceId}`, body);
+  }
+
+  public async revokeAccess(vaultId: string, deviceId: string) {
+    if (!auth.isAuthenticated()) {
+      return Promise.reject('not logged in');
+    }
+    await axios.delete(`/vaults/${vaultId}/keys/${deviceId}`);
+  }
+}
+
+export class AccessDto {
+  constructor(public device_specific_masterkey: string, public ephemeral_public_key: string) { }
 }
 
 class DeviceService {
 
-  public async createDevice(uuid: string, name: string, publicKey: String): Promise<AxiosResponse<any>> {
+  public async createDevice(deviceId: string, name: string, publicKey: String): Promise<AxiosResponse<any>> {
     if (!auth.isAuthenticated()) {
       return Promise.reject('not logged in');
     }
-    const body = { name: name, publicKey: publicKey }
-    return axios.put('/devices/' + uuid, body)
+    const body = { id: deviceId, name: name, publicKey: publicKey }
+    return axios.put(`/devices/${deviceId}`, body)
   }
 
-  public async getDevice(uuid: string): Promise<AxiosResponse<DeviceDto>> {
+  public async getDevice(deviceId: string): Promise<AxiosResponse<DeviceDto>> {
     if (!auth.isAuthenticated()) {
       return Promise.reject('not logged in');
     }
-    return axios.get<DeviceDto>('/devices/' + uuid)
+    return axios.get<DeviceDto>(`/devices/${deviceId}`)
+  }
+
+  public async listAll(): Promise<DeviceDto[]> {
+    if (!auth.isAuthenticated()) {
+      return Promise.reject('not logged in');
+    }
+    return axios.get<DeviceDto[]>('/devices/').then(response => response.data)
   }
 
 }
 
-interface DeviceDto {
-  name: string;
-  publicKey: string;
+export class DeviceDto {
+  constructor(public id: string, public name: string, public publicKey: string) { }
 }
 
 class UserService {
