@@ -8,11 +8,12 @@ class Auth {
     this.keycloak = newKeycloak({
       url: 'http://localhost:8080/auth',
       realm: 'cryptomator',
-      clientId: 'cryptomator-hub'
+      clientId: 'cryptomator-hub',
     });
     this.initialized = this.keycloak.init({
       onLoad: 'check-sso',
-      silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html'
+      silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
+      pkceMethod: 'S256',
     })
   }
 

@@ -64,6 +64,9 @@
     "webOrigins" : [ "*" ],
     "bearerOnly" : false,
     "frontchannelLogout" : false,
-    "protocol" : "openid-connect"
+    "protocol" : "openid-connect",
+    "attributes": {
+      "pkce.code.challenge.method": "S256"
+    }
   }]
 }
