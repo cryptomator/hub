@@ -67,7 +67,7 @@ public class VaultResource {
 
 	@PUT
 	@Path("/{vaultId}/keys/{deviceId}")
-	@RolesAllowed("user")
+	@RolesAllowed("vault-owner")
 	@Transactional
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response grantAccess(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId, AccessGrantDto dto) {
@@ -100,7 +100,7 @@ public class VaultResource {
 
 	@DELETE
 	@Path("/{vaultId}/keys/{deviceId}")
-	@RolesAllowed("user")
+	@RolesAllowed("owner")
 	@Transactional
 	public Response revokeAccess(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId) {
 		try {
@@ -127,7 +127,7 @@ public class VaultResource {
 
 	@PUT
 	@Path("/{vaultId}")
-	@RolesAllowed("user")
+	@RolesAllowed("vault-owner")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.TEXT_PLAIN)
 	@Transactional
