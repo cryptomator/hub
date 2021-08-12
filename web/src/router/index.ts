@@ -3,6 +3,8 @@ import auth from '../common/auth';
 import CreateVault from '../components/CreateVault.vue';
 import HelloWorld from '../components/HelloWorld.vue';
 import LogoutComponent from '../components/Logout.vue';
+import UnlockError from '../components/UnlockError.vue';
+import UnlockSuccess from '../components/UnlockSuccess.vue';
 import UnlockVault from '../components/UnlockVault.vue';
 import VaultDetails from '../components/VaultDetails.vue';
 
@@ -42,8 +44,17 @@ const routes: RouteRecordRaw[] = [
     props: (route) => ({ vaultId: route.params.id, deviceId: route.query.device_id, deviceKey: route.query.device_key, redirectTo: route.query.redirect_uri })
   },
   {
+    path: '/unlock-success',
+    component: UnlockSuccess,
+    meta: { skipAuth: true } // FIXME depends on what will be displayed later on this side
+  },
+  {
+    path: '/unlock-error',
+    component: UnlockError,
+    meta: { skipAuth: true }
+  },
+  {
     path: '/logout',
-    name: 'Logout',
     component: LogoutComponent,
     meta: { skipAuth: true }
   }

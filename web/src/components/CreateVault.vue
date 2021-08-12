@@ -16,7 +16,7 @@
 <script lang="ts">
 import backend from '../common/backend'
 import { uuid } from '../common/util'
-import { Masterkey } from '../common/crypto'
+import { Masterkey, VaultConfigPayload } from '../common/crypto'
 import { defineComponent } from 'vue'
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
@@ -40,8 +40,21 @@ export default defineComponent({
     async createVault() {
       const masterkey = await Masterkey.create();
       const vaultId = uuid();
-      const unlockUrl = `hub+${location.protocol}//${location.host}${import.meta.env.BASE_URL}#/vaults/${vaultId}/unlock`;
-      this.token = await masterkey.createVaultConfig(vaultId, unlockUrl);
+      const kid = `hub+http://localhost:9090/vaults/${vaultId}`
+
+      const vaultConfig :VaultConfigPayload = {
+        jti: vaultId,
+        format: 8,
+        cipherCombo: 'SIV_GCM',
+        shorteningThreshold: 220,
+        clientId: 'cryptomator-hub',
+        authEndpoint: 'http://localhost:8080/auth/realms/cryptomator/protocol/openid-connect/auth',
+        tokenEndpoint: 'http://localhost:8080/auth/realms/cryptomator/protocol/openid-connect/token',
+        unlockSuccessUrl: `${location.protocol}//${location.host}${import.meta.env.BASE_URL}#/unlock-success`,
+        unlockErrorUrl: `${location.protocol}//${location.host}${import.meta.env.BASE_URL}#/unlock-error`
+      };
+
+      this.token = await masterkey.createVaultConfig(kid, vaultConfig);
       const wrapped = await masterkey.wrap(this.password);
       backend.vaults.createVault(vaultId, this.vaultName, wrapped.encrypted, wrapped.iterations, wrapped.salt).then(() => {
         masterkey.hashDirectoryId("").then(rootDirHash => {

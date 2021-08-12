@@ -9,6 +9,18 @@ export class DeviceSpecificMasterkey {
   constructor(readonly encrypted: string, readonly publicKey: string) { }
 }
 
+export interface VaultConfigPayload {
+  jti: string
+  format: number
+  cipherCombo: string
+  shorteningThreshold: number
+  clientId: string
+  authEndpoint: string
+  tokenEndpoint: string
+  unlockSuccessUrl: string
+  unlockErrorUrl: string
+}
+
 export class X936 {
 
   /**
@@ -125,20 +137,15 @@ export class Masterkey {
     return new Masterkey(await key);
   }
 
-  public async createVaultConfig(jti: string, kid: string): Promise<string> {
+  public async createVaultConfig(kid: string, payload: VaultConfigPayload): Promise<string> {
     const header = JSON.stringify({
       kid: kid,
       typ: 'jwt',
       alg: 'HS256'
     });
-    const payload = JSON.stringify({
-      jti: jti,
-      format: 8,
-      cipherCombo: 'SIV_GCM',
-      shorteningThreshold: 220
-    });
+    const payloadJson = JSON.stringify(payload);
     const encoder = new TextEncoder();
-    const unsignedToken = base64url.stringify(encoder.encode(header), { pad: false }) + '.' + base64url.stringify(encoder.encode(payload), { pad: false });
+    const unsignedToken = base64url.stringify(encoder.encode(header), { pad: false }) + '.' + base64url.stringify(encoder.encode(payloadJson), { pad: false });
     const encodedUnsignedToken = new TextEncoder().encode(unsignedToken);
     const signature = await crypto.subtle.sign(
       'HMAC',
