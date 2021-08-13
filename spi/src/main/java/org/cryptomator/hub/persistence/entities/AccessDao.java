@@ -4,6 +4,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.PersistenceException;
 import javax.transaction.Transactional;
@@ -18,8 +19,16 @@ public class AccessDao {
 	@Inject
 	BasicDao basicDao;
 
-	public Access get(String vaultId, String deviceId) {
-		return basicDao.get(Access.class, new Access.AccessId(deviceId, vaultId));
+	public Access unlock(String vaultId, String deviceId, String userId) {
+		try {
+			return em.createNamedQuery("Access.get", Access.class)
+					.setParameter("deviceId", deviceId)
+					.setParameter("vaultId", vaultId)
+					.setParameter("userId", userId)
+					.getSingleResult();
+		} catch (NoResultException e) {
+			return null;
+		}
 	}
 
 	public Access.AccessId persist(Access access) {

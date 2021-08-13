@@ -53,16 +53,20 @@ public class VaultResource {
 	public Response unlock(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId) {
 		// FIXME validate parameter
 
-		var deviceAccess = accessDao.get(vaultId, deviceId);
 		var currentUserId = userInfo.getString("sub");
+		var access = accessDao.unlock(vaultId, deviceId, currentUserId);
+		var device = deviceDao.get(deviceId);
 
-		if (deviceAccess == null || !deviceAccess.getDevice().getUser().getId().equals(currentUserId)) {
+		if (device == null) {
+			// no such device
 			return Response.status(Response.Status.NOT_FOUND).build();
+		} else if (access == null) {
+			// device exists, but access has not been granted
+			return Response.status(Response.Status.FORBIDDEN).build();
+		} else {
+			var dto = new AccessGrantDto(access.getDeviceSpecificMasterkey(), access.getEphemeralPublicKey());
+			return Response.ok(dto).build();
 		}
-
-		var dto = new AccessGrantDto(deviceAccess.getDeviceSpecificMasterkey(), deviceAccess.getEphemeralPublicKey());
-
-		return Response.ok(dto).build();
 	}
 
 	@PUT
