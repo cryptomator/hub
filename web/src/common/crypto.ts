@@ -14,9 +14,13 @@ export interface VaultConfigPayload {
   format: number
   cipherCombo: string
   shorteningThreshold: number
+}
+
+export interface VaultConfigHeaderHub {
   clientId: string
   authEndpoint: string
   tokenEndpoint: string
+  deviceRegistrationUrl: string,
   unlockSuccessUrl: string
   unlockErrorUrl: string
 }
@@ -137,11 +141,12 @@ export class Masterkey {
     return new Masterkey(await key);
   }
 
-  public async createVaultConfig(kid: string, payload: VaultConfigPayload): Promise<string> {
+  public async createVaultConfig(kid: string, hubConfig: VaultConfigHeaderHub, payload: VaultConfigPayload): Promise<string> {
     const header = JSON.stringify({
       kid: kid,
       typ: 'jwt',
-      alg: 'HS256'
+      alg: 'HS256',
+      hub: hubConfig
     });
     const payloadJson = JSON.stringify(payload);
     const encoder = new TextEncoder();

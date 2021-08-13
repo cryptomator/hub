@@ -16,7 +16,7 @@
 <script lang="ts">
 import backend from '../common/backend'
 import { uuid } from '../common/util'
-import { Masterkey, VaultConfigPayload } from '../common/crypto'
+import { Masterkey, VaultConfigHeaderHub, VaultConfigPayload } from '../common/crypto'
 import { defineComponent } from 'vue'
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
@@ -42,19 +42,23 @@ export default defineComponent({
       const vaultId = uuid();
       const kid = `hub+http://localhost:9090/vaults/${vaultId}`
 
-      const vaultConfig :VaultConfigPayload = {
-        jti: vaultId,
-        format: 8,
-        cipherCombo: 'SIV_GCM',
-        shorteningThreshold: 220,
+      const hubConfig: VaultConfigHeaderHub = {
         clientId: 'cryptomator-hub',
         authEndpoint: 'http://localhost:8080/auth/realms/cryptomator/protocol/openid-connect/auth',
         tokenEndpoint: 'http://localhost:8080/auth/realms/cryptomator/protocol/openid-connect/token',
+        deviceRegistrationUrl: `${location.protocol}//${location.host}${import.meta.env.BASE_URL}#/devices/add`,
         unlockSuccessUrl: `${location.protocol}//${location.host}${import.meta.env.BASE_URL}#/unlock-success`,
         unlockErrorUrl: `${location.protocol}//${location.host}${import.meta.env.BASE_URL}#/unlock-error`
       };
 
-      this.token = await masterkey.createVaultConfig(kid, vaultConfig);
+      const jwtPayload: VaultConfigPayload = {
+        jti: vaultId,
+        format: 8,
+        cipherCombo: 'SIV_GCM',
+        shorteningThreshold: 220
+      };
+
+      this.token = await masterkey.createVaultConfig(kid, hubConfig, jwtPayload);
       const wrapped = await masterkey.wrap(this.password);
       backend.vaults.createVault(vaultId, this.vaultName, wrapped.encrypted, wrapped.iterations, wrapped.salt).then(() => {
         masterkey.hashDirectoryId("").then(rootDirHash => {
