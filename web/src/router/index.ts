@@ -1,11 +1,11 @@
 import { createRouter, createWebHashHistory, RouteRecordRaw } from 'vue-router';
 import auth from '../common/auth';
+import AddDevice from '../components/AddDevice.vue';
 import CreateVault from '../components/CreateVault.vue';
 import HelloWorld from '../components/HelloWorld.vue';
 import LogoutComponent from '../components/Logout.vue';
 import UnlockError from '../components/UnlockError.vue';
 import UnlockSuccess from '../components/UnlockSuccess.vue';
-import UnlockVault from '../components/UnlockVault.vue';
 import VaultDetails from '../components/VaultDetails.vue';
 
 const routes: RouteRecordRaw[] = [
@@ -30,6 +30,11 @@ const routes: RouteRecordRaw[] = [
     ]
   },*/
   {
+    path: '/devices/add',
+    component: AddDevice,
+    props: (route) => ({ deviceId: route.query.device_id, deviceKey: route.query.device_key, verificationHash: route.query.verification_hash })
+  },
+  {
     path: '/vaults/create',
     component: CreateVault
   },
@@ -37,11 +42,6 @@ const routes: RouteRecordRaw[] = [
     path: '/vaults/:id',
     component: VaultDetails,
     props: (route) => ({ vaultId: route.params.id })
-  },
-  {
-    path: '/vaults/:id/unlock',
-    component: UnlockVault,
-    props: (route) => ({ vaultId: route.params.id, deviceId: route.query.device_id, deviceKey: route.query.device_key, redirectTo: route.query.redirect_uri })
   },
   {
     path: '/unlock-success',

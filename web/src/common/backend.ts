@@ -33,13 +33,6 @@ class VaultService {
     return axios.put(`/vaults/${vaultId}`, body);
   }
 
-  public async getKeyFor(vaultId: string, deviceId: String): Promise<AxiosResponse<AccessDto>> {
-    if (!auth.isAuthenticated()) {
-      return Promise.reject('not logged in');
-    }
-    return axios.get(`/vaults/${vaultId}/keys/${deviceId}`);
-  }
-
   public async grantAccess(vaultId: string, deviceId: string, deviceSpecificMasterkey: string, ephemeralPublicKey: string) {
     if (!auth.isAuthenticated()) {
       return Promise.reject('not logged in');
