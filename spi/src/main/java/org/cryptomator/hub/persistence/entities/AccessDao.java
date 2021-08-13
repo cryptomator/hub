@@ -32,13 +32,7 @@ public class AccessDao {
 	}
 
 	public void delete(String vaultId, String deviceId) {
-		int affected = em.createNamedQuery("Access.revoke")
-				.setParameter("vaultId", vaultId)
-				.setParameter("deviceId", deviceId)
-				.executeUpdate();
-		if (affected == 0) {
-			throw new EntityNotFoundException("Access(vault: " + vaultId + ", device: " + deviceId + ") not found");
-		}
+		basicDao.delete(Access.class, new Access.AccessId(vaultId, deviceId));
 	}
 
 }

@@ -15,7 +15,6 @@ import java.util.Objects;
 
 @Entity
 @Table(name = "access")
-@NamedQuery(name = "Access.revoke", query = "DELETE Access a WHERE a.id.deviceId = :deviceId AND a.id.vaultId = :vaultId")
 public class Access {
 
 	// FIXME @ManyToOne(...cascade = {CascadeType.REMOVE}) doesn't add 'ON DELETE CASCADE' to foreign keys

@@ -50,6 +50,11 @@ class BasicDao {
 		em.remove(entity);
 	}
 
+	public <T> void delete(Class<T> clazz, Object primaryKey) {
+		T entity = get(clazz, primaryKey);
+		em.remove(entity);
+	}
+
 	public <T> List<T> getByIds(Class<T> clazz, Collection<Integer> ids) {
 		if (ids.isEmpty()) {
 			return Collections.emptyList();

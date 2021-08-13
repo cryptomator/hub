@@ -103,12 +103,8 @@ public class VaultResource {
 	@RolesAllowed("owner")
 	@Transactional
 	public Response revokeAccess(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId) {
-		try {
-			accessDao.delete(vaultId, deviceId);
-			return Response.noContent().build();
-		} catch (EntityNotFoundException e) {
-			return Response.status(Response.Status.NOT_FOUND).build();
-		}
+		accessDao.delete(vaultId, deviceId);
+		return Response.noContent().build();
 	}
 
 	@GET
