@@ -104,7 +104,7 @@ public class VaultResource {
 
 	@DELETE
 	@Path("/{vaultId}/keys/{deviceId}")
-	@RolesAllowed("owner")
+	@RolesAllowed("vault-owner")
 	@Transactional
 	public Response revokeAccess(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId) {
 		accessDao.delete(vaultId, deviceId);
