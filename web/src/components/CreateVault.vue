@@ -47,8 +47,8 @@ export default defineComponent({
         authEndpoint: 'http://localhost:8080/auth/realms/cryptomator/protocol/openid-connect/auth',
         tokenEndpoint: 'http://localhost:8080/auth/realms/cryptomator/protocol/openid-connect/token',
         deviceRegistrationUrl: `${location.protocol}//${location.host}${import.meta.env.BASE_URL}#/devices/add`,
-        unlockSuccessUrl: `${location.protocol}//${location.host}${import.meta.env.BASE_URL}#/unlock-success`,
-        unlockErrorUrl: `${location.protocol}//${location.host}${import.meta.env.BASE_URL}#/unlock-error`
+        authSuccessUrl: `${location.protocol}//${location.host}${import.meta.env.BASE_URL}#/unlock-success`,
+        authErrorUrl: `${location.protocol}//${location.host}${import.meta.env.BASE_URL}#/unlock-error`
       };
 
       const jwtPayload: VaultConfigPayload = {

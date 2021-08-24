@@ -21,8 +21,8 @@ export interface VaultConfigHeaderHub {
   authEndpoint: string
   tokenEndpoint: string
   deviceRegistrationUrl: string,
-  unlockSuccessUrl: string
-  unlockErrorUrl: string
+  authSuccessUrl: string
+  authErrorUrl: string
 }
 
 export class X936 {
