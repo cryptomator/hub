@@ -6,7 +6,7 @@ Hub consists of these components:
 
 Keycloak handles user authentication.
 
-For development run it using:
+During development, run:
 
 ```shell
 docker run --rm -p 8080:8080 \
@@ -17,7 +17,25 @@ docker run --rm -p 8080:8080 \
 quay.io/keycloak/keycloak:14.0.0
 ```
 
-Optionally retrieve an `access_token` for further tests:
+## Web Frontend (Port 3000)
+
+During development, run this from `web` dir:
+
+```shell
+npm run dev
+```
+
+## Web Backend (Port 9090)
+
+During development, run this from `spi` dir:
+
+```shell
+mvn -fspi/pom.xml compile quarkus:dev
+```
+
+### Testing rest services via CLI:
+
+First, retrieve an `access_token` from keycloak:
 
 ```
 export access_token=$(\
@@ -28,36 +46,11 @@ export access_token=$(\
 )
 ```
 
-## DB ?
 
-TODO maybe not required?
-
-
-## SPI (Port 9090)
-
-Web services.
-
-Run using:
-
-```shell
-mvn -fspi/pom.xml compile quarkus:dev
-# or
-# docker run --rm -p 9090:9090 cryptomator/hub-spi:latest
-```
-
-Test services:
+Then use this token as a Bearer Token:
 
 ```shell
 curl -v -X GET \
   http://localhost:9090/users/me \
   -H "Authorization: Bearer "$access_token
-```
-
-
-## Web-Frontend (Port 9090)
-
-Open folder `web` and run this command to deploy the frontend:
-
-```shell script
-npm run dist
 ```
