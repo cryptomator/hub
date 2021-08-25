@@ -6,15 +6,15 @@ Hub consists of these components:
 
 Keycloak handles user authentication.
 
-During development, run:
+During development, run this from `keycloak` dir:
 
 ```shell
 docker run --rm -p 8080:8080 \
 -e KEYCLOAK_USER=admin \
 -e KEYCLOAK_PASSWORD=admin \
 -e KEYCLOAK_IMPORT=/cfg/cryptomator-dev-realm.json \
--v $(pwd)/keycloak:/cfg:ro \
-quay.io/keycloak/keycloak:14.0.0
+-v $(pwd):/cfg:ro \
+quay.io/keycloak/keycloak:15.0.2 # arm64: mihaibob/keycloak:15.0.1
 ```
 
 ## Web Frontend (Port 3000)
@@ -30,7 +30,7 @@ npm run dev
 During development, run this from `spi` dir:
 
 ```shell
-mvn -fspi/pom.xml compile quarkus:dev
+mvn compile quarkus:dev
 ```
 
 ### Testing rest services via CLI:
@@ -45,7 +45,6 @@ export access_token=$(\
     -d 'username=owner&password=owner&grant_type=password' | jq --raw-output '.access_token' \
 )
 ```
-
 
 Then use this token as a Bearer Token:
 
