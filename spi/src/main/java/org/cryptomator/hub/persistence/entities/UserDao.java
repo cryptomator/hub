@@ -26,6 +26,10 @@ public class UserDao {
 		return em.createNamedQuery("User.includingDevices").getResultList();
 	}
 
+	public List<User> getAllWithDevicesAndAccess() {
+		return em.createNamedQuery("User.includingDevicesAndVaults").getResultList();
+	}
+
 	public User get(String id) {
 		return basicDao.get(User.class, id);
 	}

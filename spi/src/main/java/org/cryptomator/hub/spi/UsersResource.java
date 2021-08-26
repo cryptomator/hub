@@ -38,11 +38,11 @@ public class UsersResource {
 	@RolesAllowed("user")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getAllIncludingDevices() {
-		var users = userDao.getAllWithDevices().stream().map(user -> {
+		var users = userDao.getAllWithDevicesAndAccess().stream().map(user -> {
 			var devices = user
 					.getDevices()
 					.stream()
-					.map(device -> new DeviceResource.DeviceDto(device.getId(), device.getName(), device.getPublickey()))
+					.map(device -> new DeviceResource.DeviceDto(device.getId(), device.getName(), device.getPublickey(), device.getAccess().stream().map(access -> access.getId().getVaultId()).collect(Collectors.toSet())))
 					.collect(Collectors.toSet());
 			return new UserDto(user.getId(), user.getName(), devices);
 		}).collect(Collectors.toList());

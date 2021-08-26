@@ -1,7 +1,5 @@
 package org.cryptomator.hub.persistence.entities;
 
-import io.smallrye.context.api.NamedInstance;
-
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
@@ -10,7 +8,6 @@ import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.MapsId;
-import javax.persistence.NamedEntityGraph;
 import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 import java.io.Serializable;
@@ -125,6 +122,14 @@ public class Access {
 		}
 
 		public AccessId() {
+		}
+
+		public String getDeviceId() {
+			return deviceId;
+		}
+
+		public String getVaultId() {
+			return vaultId;
 		}
 
 		@Override

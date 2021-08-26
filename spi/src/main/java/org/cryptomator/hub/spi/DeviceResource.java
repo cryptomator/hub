@@ -18,6 +18,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Path("/devices")
@@ -64,7 +65,7 @@ public class DeviceResource {
 		}
 		var device = deviceDao.get(deviceId);
 		if (device != null) {
-			return Response.ok(new DeviceDto(device.getId(), device.getName(), device.getPublickey())).build();
+			return Response.ok(new DeviceDto(device.getId(), device.getName(), device.getPublickey(), null)).build();
 		} else {
 			return Response.status(Response.Status.NOT_FOUND).build();
 		}
@@ -76,7 +77,7 @@ public class DeviceResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getAll() {
 		var devices = deviceDao.getAll();
-		var dtos = devices.stream().map(d -> new DeviceDto(d.getId(), d.getName(), d.getPublickey())).collect(Collectors.toList());
+		var dtos = devices.stream().map(d -> new DeviceDto(d.getId(), d.getName(), d.getPublickey(), null)).collect(Collectors.toList());
 		return Response.ok(dtos).build();
 	}
 
@@ -85,11 +86,13 @@ public class DeviceResource {
 		private final String id;
 		private final String name;
 		private final String publicKey;
+		private final Set<String> vaultsAccessTo;
 
-		public DeviceDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("publicKey") String publicKey) {
+		public DeviceDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("publicKey") String publicKey, @JsonProperty("vaultsAccessTo") Set<String> vaultsAccessTo) {
 			this.id = id;
 			this.name = name;
 			this.publicKey = publicKey;
+			this.vaultsAccessTo = vaultsAccessTo;
 		}
 
 		public String getId() {
@@ -111,6 +114,10 @@ public class DeviceResource {
 			device.setName(getName());
 			device.setPublickey(getPublicKey());
 			return device;
+		}
+
+		public Set<String> getVaultsAccessTo() {
+			return vaultsAccessTo;
 		}
 	}
 }
