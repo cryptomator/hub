@@ -38,7 +38,7 @@ public class Access {
 	@JoinColumn(name = "vault_id")
 	private Vault vault;
 
-	@Column(name = "vault_specific_masterkey", nullable = false)
+	@Column(name = "device_specific_masterkey", nullable = false)
 	private String deviceSpecificMasterkey;
 
 	@Column(name = "ephemeral_public_key", nullable = false)
