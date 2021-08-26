@@ -45,8 +45,7 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/unlock-success',
-    component: UnlockSuccess,
-    meta: { skipAuth: true } // FIXME depends on what will be displayed later on this side
+    component: UnlockSuccess
   },
   {
     path: '/unlock-error',
