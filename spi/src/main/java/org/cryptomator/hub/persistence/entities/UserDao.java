@@ -22,6 +22,10 @@ public class UserDao {
 		return basicDao.getAll(User.class);
 	}
 
+	public List<User> getAllWithDevices() {
+		return em.createNamedQuery("User.includingDevices").getResultList();
+	}
+
 	public User get(String id) {
 		return basicDao.get(User.class, id);
 	}

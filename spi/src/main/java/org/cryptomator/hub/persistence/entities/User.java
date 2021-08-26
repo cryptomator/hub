@@ -15,6 +15,7 @@ import java.util.Set;
 @Entity
 @Table(name = "user")
 @NamedQuery(name = "User.count", query = "SELECT COUNT(u) FROM User u")
+@NamedQuery(name = "User.includingDevices", query = "SELECT u FROM User u LEFT JOIN FETCH u.devices")
 public class User {
 
 	@Id

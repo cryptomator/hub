@@ -40,13 +40,23 @@ public class AccessDao {
 		}
 	}
 
-	public void delete(String vaultId, String deviceId) {
-		int affected = em.createNamedQuery("Access.revoke")
+	public void deleteDeviceAccess(String vaultId, String deviceId) {
+		int affected = em.createNamedQuery("Access.revokeDevice")
 				.setParameter("vaultId", vaultId)
 				.setParameter("deviceId", deviceId)
 				.executeUpdate();
 		if (affected == 0) {
 			throw new EntityNotFoundException("Access(vault: " + vaultId + ", device: " + deviceId + ") not found");
+		}
+	}
+
+	public void deleteUserAccess(String vaultId, String userId) {
+		int affected = em.createNamedQuery("Access.revokeUser")
+				.setParameter("vaultId", vaultId)
+				.setParameter("userId", userId)
+				.executeUpdate();
+		if (affected == 0) {
+			throw new EntityNotFoundException("Access(vault: " + vaultId + ", user: " + userId + ") not found");
 		}
 	}
 

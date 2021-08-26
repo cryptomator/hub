@@ -16,6 +16,11 @@ axios.interceptors.request.use(async request => {
 export class VaultDto {
   constructor(public name: string, public masterkey: string, public iterations: number, public salt: string) { }
 }
+
+export class UserDto {
+  constructor(public name: string, public devices: DeviceDto[]) { }
+}
+
 class VaultService {
 
   public async get(vaultId: string): Promise<AxiosResponse<VaultDto>> {
@@ -41,11 +46,18 @@ class VaultService {
     await axios.put(`/vaults/${vaultId}/keys/${deviceId}`, body);
   }
 
-  public async revokeAccess(vaultId: string, deviceId: string) {
+  public async revokeDeviceAccess(vaultId: string, deviceId: string) {
     if (!auth.isAuthenticated()) {
       return Promise.reject('not logged in');
     }
     await axios.delete(`/vaults/${vaultId}/keys/${deviceId}`);
+  }
+
+  public async revokeUserAccess(vaultId: string, userId: string) {
+    if (!auth.isAuthenticated()) {
+      return Promise.reject('not logged in');
+    }
+    await axios.delete(`/vaults/${vaultId}/revoke-user/${userId}`);
   }
 }
 
@@ -76,7 +88,6 @@ class DeviceService {
     }
     return axios.get<DeviceDto[]>('/devices/').then(response => response.data)
   }
-
 }
 
 export class DeviceDto {
@@ -89,6 +100,13 @@ class UserService {
       return Promise.reject('not logged in');
     }
     return axios.get<string>('/users/me').then(response => response.data)
+  }
+
+  public async listAllUsersIncludingDevices(): Promise<UserDto[]> {
+    if (!auth.isAuthenticated()) {
+      return Promise.reject('not logged in');
+    }
+    return axios.get<UserDto[]>('/users/devices/').then(response => response.data)
   }
 }
 

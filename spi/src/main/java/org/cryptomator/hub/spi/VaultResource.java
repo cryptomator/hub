@@ -80,7 +80,7 @@ public class VaultResource {
 		var vault = vaultDao.get(vaultId);
 		var device = deviceDao.get(deviceId);
 
-		if (vault == null || device == null ) {
+		if (vault == null || device == null) {
 			return Response.status(Response.Status.NOT_FOUND).build();
 		}
 
@@ -106,9 +106,22 @@ public class VaultResource {
 	@Path("/{vaultId}/keys/{deviceId}")
 	@RolesAllowed("vault-owner")
 	@Transactional
-	public Response revokeAccess(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId) {
+	public Response revokeDeviceAccess(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId) {
 		try {
-			accessDao.delete(vaultId, deviceId);
+			accessDao.deleteDeviceAccess(vaultId, deviceId);
+			return Response.noContent().build();
+		} catch (EntityNotFoundException e) {
+			return Response.status(Response.Status.NOT_FOUND).build();
+		}
+	}
+
+	@DELETE
+	@Path("/{vaultId}/revoke-user/{userId}")
+	@RolesAllowed("vault-owner")
+	@Transactional
+	public Response revokeUserAccess(@PathParam("vaultId") String vaultId, @PathParam("userId") String userId) {
+		try {
+			accessDao.deleteUserAccess(vaultId, userId);
 			return Response.noContent().build();
 		} catch (EntityNotFoundException e) {
 			return Response.status(Response.Status.NOT_FOUND).build();
