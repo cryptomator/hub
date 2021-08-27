@@ -12,7 +12,7 @@
     <ul>
       <li v-for="user in users" :key="user.name">👤 {{ user.name }} <button @click="revokeUserAccess(user.id)">⛔</button> <button @click="giveUserAccess(user)">✅</button>
         <ul v-if="user.devices.length > 0">
-          <li v-for="device in user.devices" :key="device.name">📱 {{ device.name }} <button v-if="device.vaultsAccessTo.length > 0 && !device.vaultsAccessTo.includes(vault.id)" @click="revokeDeviceAccess(device.id)">⛔</button> <button v-else @click="giveDeviceAccess(device)">✅</button></li>
+          <li v-for="device in user.devices" :key="device.name">📱 {{ device.name }} <button v-if="device.vaultsAccessTo.length > 0 && device.vaultsAccessTo.includes(vaultId)" @click="revokeDeviceAccess(device.id)">⛔</button> <button v-else @click="giveDeviceAccess(device)">✅</button></li>
         </ul>
       </li>
     </ul>
