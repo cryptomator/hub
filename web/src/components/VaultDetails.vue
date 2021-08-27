@@ -1,6 +1,9 @@
 <template>
-  <div v-if="vault == null">
+  <div v-if="vault == null && errorCode == Error.None">
     Loading...
+  </div>
+  <div v-else-if="errorCode == Error.NotFound">
+    <h1>Vault not found</h1>
   </div>
   <div v-else>
     <h1>Vault Details for {{ vault?.name }}</h1>
@@ -23,6 +26,12 @@ import backend, { DeviceDto, UserDto, VaultDto } from '../common/backend'
 import { base64url } from "rfc4648";
 import { Masterkey, WrappedMasterkey } from '../common/crypto'
 import { defineComponent } from 'vue'
+import { AxiosError } from 'axios'
+
+enum Error {
+  None,
+  NotFound
+}
 
 export default defineComponent({
   name: 'VaultDetails',
@@ -33,15 +42,21 @@ export default defineComponent({
     }
   },
   data: () => ({
+    Error,
+    errorCode: Error.None as Error,
     password: '' as string,
     users: [] as UserDto[],
-    vault: null as VaultDto | null,
+    vault: null as VaultDto | null
   }),
 
   mounted() {
     backend.vaults.get(this.vaultId).then(vault => {
       this.vault = vault.data;
-    });
+    }).catch((error: AxiosError) => {
+      if (error.response?.status === 404) {
+        this.errorCode = Error.NotFound;
+      }
+    })
     backend.users.listAllUsersIncludingDevices().then(users => {
       this.users = users
     })
