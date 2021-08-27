@@ -3,6 +3,7 @@ package org.cryptomator.hub.persistence.entities;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.PersistenceException;
 import javax.transaction.Transactional;
@@ -28,6 +29,16 @@ public class UserDao {
 
 	public List<User> getAllWithDevicesAndAccess() {
 		return em.createNamedQuery("User.includingDevicesAndVaults").getResultList();
+	}
+
+	public User getWithDevicesAndAccess(String userId) {
+		try {
+			return em.createNamedQuery("User.withDevicesAndAccess", User.class)
+					.setParameter("userId", userId)
+					.getSingleResult();
+		} catch (NoResultException e) {
+			return null;
+		}
 	}
 
 	public User get(String id) {

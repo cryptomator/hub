@@ -17,6 +17,7 @@ import java.util.Set;
 @NamedQuery(name = "User.count", query = "SELECT COUNT(u) FROM User u")
 @NamedQuery(name = "User.includingDevices", query = "SELECT u FROM User u LEFT JOIN FETCH u.devices")
 @NamedQuery(name = "User.includingDevicesAndVaults", query = "SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.devices d LEFT JOIN FETCH d.access")
+@NamedQuery(name = "User.withDevicesAndAccess", query = "SELECT u FROM User u LEFT JOIN FETCH u.devices d LEFT JOIN FETCH d.access a LEFT JOIN FETCH a.vault WHERE u.id = :userId")
 public class User {
 
 	@Id

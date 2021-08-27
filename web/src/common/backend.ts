@@ -102,6 +102,13 @@ class UserService {
     return axios.get<string>('/users/me').then(response => response.data)
   }
 
+  public async meIncludingDevices(): Promise<UserDto> {
+    if (!auth.isAuthenticated()) {
+      return Promise.reject('not logged in');
+    }
+    return axios.get<UserDto>('/users/me-extended/').then(response => response.data)
+  }
+
   public async listAllUsersIncludingDevices(): Promise<UserDto[]> {
     if (!auth.isAuthenticated()) {
       return Promise.reject('not logged in');

@@ -6,6 +6,7 @@ import HelloWorld from '../components/HelloWorld.vue';
 import LogoutComponent from '../components/Logout.vue';
 import UnlockError from '../components/UnlockError.vue';
 import UnlockSuccess from '../components/UnlockSuccess.vue';
+import UserDetails from '../components/UserDetails.vue';
 import VaultDetails from '../components/VaultDetails.vue';
 
 const routes: RouteRecordRaw[] = [
@@ -33,6 +34,11 @@ const routes: RouteRecordRaw[] = [
     path: '/devices/add',
     component: AddDevice,
     props: (route) => ({ deviceId: route.query.device_id, deviceKey: route.query.device_key, verificationHash: route.query.verification_hash })
+  },
+  {
+    path: '/user',
+    component: UserDetails,
+    props: (route) => ({ vaultId: route.params.id })
   },
   {
     path: '/vaults/create',

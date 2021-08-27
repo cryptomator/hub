@@ -34,6 +34,20 @@ public class UsersResource {
 	}
 
 	@GET
+	@Path("/me-extended")
+	@RolesAllowed("user")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getMeIncludingDevicesAndVaults() {
+		var user = userDao.getWithDevicesAndAccess(userInfo.getString("sub"));
+		var devices = user
+				.getDevices()
+				.stream()
+				.map(device -> new DeviceResource.DeviceDto(device.getId(), device.getName(), device.getPublickey(), device.getAccess().stream().map(access -> access.getVault().getName()).collect(Collectors.toSet())))
+				.collect(Collectors.toSet());
+		return Response.ok(new UserDto(user.getId(), user.getName(), devices)).build();
+	}
+
+	@GET
 	@Path("/devices")
 	@RolesAllowed("user")
 	@Produces(MediaType.APPLICATION_JSON)
