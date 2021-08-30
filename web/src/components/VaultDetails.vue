@@ -6,7 +6,7 @@
     <h1>Vault not found</h1>
   </div>
   <div v-else>
-    <h1>Vault Details for {{ vault?.name }}</h1>
+    <h1>{{ t('vault_details_title') }} {{ vault?.name }}</h1>
 
     <h2>Modify access list</h2>
     <ul>
@@ -27,6 +27,7 @@ import { base64url } from "rfc4648";
 import { Masterkey, WrappedMasterkey } from '../common/crypto'
 import { defineComponent } from 'vue'
 import { AxiosError } from 'axios'
+import { useI18n } from 'vue-i18n'
 
 enum Error {
   None,
@@ -40,6 +41,12 @@ export default defineComponent({
       type: String,
       default: null
     }
+  },
+  setup() {
+    const { t, n } = useI18n({
+      useScope: 'global'
+    })
+    return { t, n }
   },
   data: () => ({
     Error,

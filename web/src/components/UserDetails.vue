@@ -1,5 +1,5 @@
 <template>
-  <h1>Details of {{ username }}</h1>
+  <h1>{{ t('user_details_title') }} {{ username }}</h1>
   <div v-if="user == null">
     Loading...
   </div>
@@ -17,12 +17,18 @@
 import { UserDto } from '../common/backend'
 import { defineComponent } from 'vue'
 import services from '../common/backend'
+import { useI18n } from 'vue-i18n'
 
 export default defineComponent({
   name: 'UserDetails',
   props: {
   },
-
+  setup() {
+  const { t, n } = useI18n({
+    useScope: 'global'
+  })
+  return { t, n }
+  },
   data: () => ({
     username: '' as string,
     user: null as UserDto | null
