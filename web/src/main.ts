@@ -1,18 +1,14 @@
 import { createApp } from 'vue';
 import { createI18n } from 'vue-i18n';
 import App from './App.vue';
-import deDE from './locales/de-DE.json';
-import enUS from './locales/en-US.json';
+import { defaultLocale, messages } from "./locales/index";
 import router from './router';
 
 const i18n = createI18n({
-  locale: 'en-US',
-  fallbackLocale: 'en-US',
-  legacy: false,
-  messages: {
-    'en-US': enUS,
-    'de-DE': deDE
-  }
+  locale: defaultLocale,
+  fallbackLocale: defaultLocale,
+  messages,
+  globalInjection: true
 })
 
 createApp(App)

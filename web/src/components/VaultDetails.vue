@@ -43,10 +43,10 @@ export default defineComponent({
     }
   },
   setup() {
-    const { t, n } = useI18n({
+    const { t } = useI18n({
       useScope: 'global'
     })
-    return { t, n }
+    return { t }
   },
   data: () => ({
     Error,

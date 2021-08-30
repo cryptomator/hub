@@ -24,10 +24,10 @@ export default defineComponent({
   props: {
   },
   setup() {
-  const { t, n } = useI18n({
+  const { t } = useI18n({
     useScope: 'global'
   })
-  return { t, n }
+  return { t }
   },
   data: () => ({
     username: '' as string,
