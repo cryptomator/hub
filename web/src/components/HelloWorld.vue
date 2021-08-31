@@ -1,5 +1,5 @@
 <template>
-  <h2>hello {{ username }}</h2>
+  <span class="text-primary text-xl" >hello {{ username }}</span>
 </template>
 
 <script lang="ts">
