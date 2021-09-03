@@ -91,7 +91,7 @@ class DeviceService {
 }
 
 export class DeviceDto {
-  constructor(public id: string, public name: string, public publicKey: string, public vaultsAccessTo: String[]) { }
+  constructor(public id: string, public name: string, public publicKey: string, public accessTo: VaultDto[]) { }
 }
 
 class UserService {

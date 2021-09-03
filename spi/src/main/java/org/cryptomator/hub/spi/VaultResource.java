@@ -138,7 +138,7 @@ public class VaultResource {
 		if (vault == null) {
 			return Response.status(Response.Status.NOT_FOUND).build();
 		}
-		var dto = new VaultDto(vault.getName(), vault.getMasterkey(), vault.getIterations(), vault.getSalt());
+		var dto = new VaultDto(vaultId, vault.getName(), vault.getMasterkey(), vault.getIterations(), vault.getSalt());
 		return Response.ok(dto).build();
 	}
 
@@ -182,16 +182,22 @@ public class VaultResource {
 
 	public static class VaultDto {
 
+		private final String id;
 		private final String name;
 		private final String masterkey;
 		private final String iterations;
 		private final String salt;
 
-		public VaultDto(@JsonProperty("name") String name, @JsonProperty("masterkey") String masterkey, @JsonProperty("iterations") String iterations, @JsonProperty("salt") String salt) {
+		public VaultDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("masterkey") String masterkey, @JsonProperty("iterations") String iterations, @JsonProperty("salt") String salt) {
+			this.id = id;
 			this.name = name;
 			this.masterkey = masterkey;
 			this.iterations = iterations;
 			this.salt = salt;
+		}
+
+		public String getId() {
+			return id;
 		}
 
 		public String getName() {

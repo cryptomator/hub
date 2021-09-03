@@ -5,10 +5,12 @@
   </div>
   <div v-else>
     <h2>Devices with access to</h2>
-    <ul>
-      <ul v-if="user.devices.length > 0">
-        <li v-for="device in user.devices" :key="device.name">📱 {{ device.name }}: {{ device.vaultsAccessTo }}</li>
-      </ul>
+    <ul v-if="user.devices.length > 0">
+      <li v-for="device in user.devices" :key="device.name">📱 {{ device.name }}:
+        <ul v-if="device.accessTo.length > 0">
+          <li v-for="vault in device.accessTo" :key="vault.name"><a :href="'http://localhost:3000/#/vaults/' + vault.id">{{ vault.name }}</a></li>
+        </ul>
+      </li>
     </ul>
   </div>
 </template>

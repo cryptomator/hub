@@ -86,13 +86,13 @@ public class DeviceResource {
 		private final String id;
 		private final String name;
 		private final String publicKey;
-		private final Set<String> vaultsAccessTo;
+		private final Set<VaultResource.VaultDto> accessTo;
 
-		public DeviceDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("publicKey") String publicKey, @JsonProperty("vaultsAccessTo") Set<String> vaultsAccessTo) {
+		public DeviceDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("publicKey") String publicKey, @JsonProperty("accessTo") Set<VaultResource.VaultDto> accessTo) {
 			this.id = id;
 			this.name = name;
 			this.publicKey = publicKey;
-			this.vaultsAccessTo = vaultsAccessTo;
+			this.accessTo = accessTo;
 		}
 
 		public String getId() {
@@ -116,8 +116,8 @@ public class DeviceResource {
 			return device;
 		}
 
-		public Set<String> getVaultsAccessTo() {
-			return vaultsAccessTo;
+		public Set<VaultResource.VaultDto> getAccessTo() {
+			return accessTo;
 		}
 	}
 }

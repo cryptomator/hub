@@ -3,6 +3,7 @@
   <ul>
     <li><router-link to="/">Home</router-link></li>
     <li><router-link to="/vaults/create">Create vault</router-link></li>
+    <li><router-link to="/user">User Details</router-link></li>
     <li><router-link to="/logout">Logout</router-link></li>
   </ul>
 

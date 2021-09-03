@@ -42,7 +42,10 @@ public class UsersResource {
 		var devices = user
 				.getDevices()
 				.stream()
-				.map(device -> new DeviceResource.DeviceDto(device.getId(), device.getName(), device.getPublickey(), device.getAccess().stream().map(access -> access.getVault().getName()).collect(Collectors.toSet())))
+				.map(device -> new DeviceResource.DeviceDto(device.getId(), device.getName(), device.getPublickey(), device.getAccess().stream().map(access -> {
+					var vault = access.getVault();
+					return new VaultResource.VaultDto(vault.getId(), access.getVault().getName(), null, null, null);
+				}).collect(Collectors.toSet())))
 				.collect(Collectors.toSet());
 		return Response.ok(new UserDto(user.getId(), user.getName(), devices)).build();
 	}
@@ -56,7 +59,11 @@ public class UsersResource {
 			var devices = user
 					.getDevices()
 					.stream()
-					.map(device -> new DeviceResource.DeviceDto(device.getId(), device.getName(), device.getPublickey(), device.getAccess().stream().map(access -> access.getId().getVaultId()).collect(Collectors.toSet())))
+					.map(device -> new DeviceResource.DeviceDto(device.getId(), device.getName(), device.getPublickey(), device
+							.getAccess()
+							.stream()
+							.map(access -> new VaultResource.VaultDto(access.getId().getVaultId(), null, null, null, null))
+							.collect(Collectors.toSet())))
 					.collect(Collectors.toSet());
 			return new UserDto(user.getId(), user.getName(), devices);
 		}).collect(Collectors.toList());
