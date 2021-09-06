@@ -18,8 +18,7 @@ quay.io/keycloak/keycloak:15.0.2 # arm64: mihaibob/keycloak:15.0.1
 ```
 When working with powershell, run this instead of the above from the `keycloak` dir:
 ```shell
-docker run --rm -p 8080:8080 -e KEYCLOAK_USER=admin -e KEYCLOAK_PASSWORD=admin -e KEYCLOAK_IMPORT=/cfg/cryptomator-dev-realm.json -v ${PWD}
-:/cfg:ro quay.io/keycloak/keycloak:15.0.2 # arm64: mihaibob/keycloak:15.0.1
+docker run --rm -p 8080:8080 -e KEYCLOAK_USER=admin -e KEYCLOAK_PASSWORD=admin -e KEYCLOAK_IMPORT=/cfg/cryptomator-dev-realm.json -v ${PWD}:/cfg:ro quay.io/keycloak/keycloak:15.0.2 # arm64: mihaibob/keycloak:15.0.1
 ```
 
 ## Web Frontend (Port 3000)
