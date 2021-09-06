@@ -22,6 +22,7 @@ export default defineComponent({
     logout() {
       auth.logout();
       this.loggedIn = true;
+      //TODO shouldn't this be false?
     }
   }
 })

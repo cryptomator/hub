@@ -1,16 +1,55 @@
 <template>
-  <h1>Create new vault</h1>
-  <div v-if="state === State.Processing">
-    <input v-model="vaultName" type="text" placeholder="Vault Name"/>
-    <input v-model="password" type="password" placeholder="Masterpwassword"/>
-    
-    <button type="button" @click="createVault()">createVault</button>
-  </div>
-  <div v-else-if="state === State.Created">
-    <h2>Vault created!</h2>
+  <form class="">
+    <div class="md:flex md:items-center md:justify-between">
+      <div class="flex-1 min-w-0">
+        <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+          Create new vault
+        </h2>
+      </div>
+    </div>
 
-    <button type="button" @click="createVaultFolder()">Download zipped vault folder</button>
-  </div>
+    <div v-if="state === State.Processing">
+      <div class="space-y-8 divide-y divide-gray-200">
+        <div class="pt-8">
+          <div class="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+            <div class="sm:col-span-3">
+              <label for="first-name" class="block text-sm font-medium text-gray-700">
+                Vault Name
+              </label>
+              <div class="mt-1">
+                <input v-model="vaultName" type="text" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md" />
+              </div>
+            </div>
+
+            <div class="sm:col-span-3">
+              <label for="last-name" class="block text-sm font-medium text-gray-700">
+                Masterpassword
+              </label>
+              <div class="mt-1">
+                <input v-model="password" type="password" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md" />
+              </div>
+            </div>
+          </div>
+          <br>
+          <input v-model="vaultName" type="text" placeholder="Vault Name"/>
+          <input v-model="password" type="password" placeholder="Masterpassword"/>
+        </div>
+
+        <!--<button type="button" @click="createVault()">createVault</button>-->
+        <button type="submit" @click="createVault()" class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+          Create vault
+        </button>
+      </div>
+    </div>
+    <div v-else-if="state === State.Created">
+      <h2>Vault created!</h2>
+
+      <button type="button" @click="createVaultFolder()" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+        Download zipped vault folder
+        <DownloadIcon class="ml-2 -mr-1 h-5 w-5" aria-hidden="true" />
+      </button>
+    </div>
+  </form>
 </template>
 
 <script lang="ts">
@@ -20,6 +59,7 @@ import { Masterkey, VaultConfigHeaderHub, VaultConfigPayload } from '../common/c
 import { defineComponent } from 'vue'
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
+import { DownloadIcon } from '@heroicons/vue/solid';
 
 enum State {
   Processing,
@@ -77,6 +117,11 @@ export default defineComponent({
         })
       }
     }
+  },
+  components: {
+    DownloadIcon,
   }
-})
+}
+)
+
 </script>

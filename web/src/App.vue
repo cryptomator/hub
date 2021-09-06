@@ -1,13 +1,16 @@
 <template>
-	<Navbar v-show="showNavbar" />
-  <ul>
-    <li><router-link to="/">Home</router-link></li>
-    <li><router-link to="/vaults/create">Create vault</router-link></li>
-    <li><router-link to="/user">User Details</router-link></li>
-    <li><router-link to="/logout">Logout</router-link></li>
-  </ul>
+  <Navbar v-show="showNavbar" />
 
-  <router-view/>
+  <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+    <ul>
+      <li><router-link to="/">Home</router-link></li>
+      <li><router-link to="/vaults/create">Create vault</router-link></li>
+      <li><router-link to="/user">User Details</router-link></li>
+      <li><router-link to="/logout">Logout</router-link></li>
+    </ul>
+    <router-view/>
+</div>
+
 </template>
 
 <script>
@@ -32,11 +35,12 @@ export default {
 
 <style>
 #app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
+
+  /*font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  margin-top: 0px;
+  margin-top: 0px;*/
 }
 </style>
