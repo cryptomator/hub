@@ -8,13 +8,18 @@ import UnlockError from '../components/UnlockError.vue';
 import UnlockSuccess from '../components/UnlockSuccess.vue';
 import UserDetails from '../components/UserDetails.vue';
 import VaultDetails from '../components/VaultDetails.vue';
+import VaultList from "../components/VaultList.vue";
 
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'Home',
     end: true,
-    component: HelloWorld
+    //component: VaultList,
+    components: {
+      default: VaultList,
+
+      end: HelloWorld},
   },
   /*{
     path: '/vaults',

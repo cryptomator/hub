@@ -8,13 +8,14 @@
       <li><router-link to="/user">User Details</router-link></li>
       <li><router-link to="/logout">Logout</router-link></li>
     </ul>
-    <router-view/>
+    <router-view></router-view>
 </div>
 
 </template>
 
 <script>
 import Navbar from './components/Navbar.vue';
+import VaultList from "./components/VaultList.vue";
 
 export default {
 	name: 'App',

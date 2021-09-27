@@ -45,7 +45,7 @@ public class VaultResourceTest {
 		var iterations = "iterations1";
 		var salt = "salt1";
 
-		var vaultDto = new VaultResource.VaultDto(name, masterkey, iterations, salt);
+		var vaultDto = new VaultResource.VaultDto(uuid, name, masterkey, iterations, salt);
 
 		given()
 				.when()
