@@ -24,7 +24,7 @@ public class Vault {
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "user_id", updatable = false, nullable = false)
-	private User user;
+	private User owner;
 
 	@OneToMany(mappedBy = "device", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true, fetch = FetchType.LAZY)
 	private Set<Access> access = new HashSet<>();
@@ -57,12 +57,12 @@ public class Vault {
 		this.name = name;
 	}
 
-	public User getUser() {
-		return user;
+	public User getOwner() {
+		return owner;
 	}
 
-	public void setUser(User user) {
-		this.user = user;
+	public void setOwner(User owner) {
+		this.owner = owner;
 	}
 
 	public Set<Access> getAccess() {
@@ -104,7 +104,7 @@ public class Vault {
 		if (o == null || getClass() != o.getClass()) return false;
 		Vault vault = (Vault) o;
 		return Objects.equals(id, vault.id)
-				&& Objects.equals(user, vault.user)
+				&& Objects.equals(owner, vault.owner)
 				&& Objects.equals(access, vault.access)
 				&& Objects.equals(name, vault.name)
 				&& Objects.equals(salt, vault.salt)
@@ -121,7 +121,7 @@ public class Vault {
 	public String toString() {
 		return "Vault{" +
 				"id='" + id + '\'' +
-				", user=" + user +
+				", user=" + owner +
 				", access=" + access.stream().map(Access::getId).collect(Collectors.toList()) +
 				", name='" + name + '\'' +
 				", salt='" + salt + '\'' +

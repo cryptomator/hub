@@ -216,14 +216,14 @@ public class VaultResource {
 			return salt;
 		}
 
-		public Vault toVault(User user, String id) {
+		public Vault toVault(User owner, String id) {
 			var vault = new Vault();
 			vault.setId(id);
 			vault.setName(getName());
 			vault.setMasterkey(getMasterkey());
 			vault.setIterations(getIterations());
 			vault.setSalt(getSalt());
-			vault.setUser(user);
+			vault.setOwner(owner);
 			return vault;
 		}
 	}
