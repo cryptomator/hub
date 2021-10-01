@@ -1,16 +1,9 @@
 <template>
   <Navbar v-show="showNavbar" />
 
-  <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-    <ul>
-      <li><router-link to="/">Home</router-link></li>
-      <li><router-link to="/vaults/create">Create vault</router-link></li>
-      <li><router-link to="/user">User Details</router-link></li>
-      <li><router-link to="/logout">Logout</router-link></li>
-    </ul>
+  <div class="my-5 max-w-7xl mx-auto sm:px-6 lg:px-8">
     <router-view></router-view>
-</div>
-
+  </div>
 </template>
 
 <script>
