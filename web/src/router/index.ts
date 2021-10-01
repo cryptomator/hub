@@ -4,6 +4,7 @@ import AddDevice from '../components/AddDevice.vue';
 import CreateVault from '../components/CreateVault.vue';
 import HelloWorld from '../components/HelloWorld.vue';
 import LogoutComponent from '../components/Logout.vue';
+import SetupComponent from "../components/Setup.vue";
 import UnlockError from '../components/UnlockError.vue';
 import UnlockSuccess from '../components/UnlockSuccess.vue';
 import UserDetails from '../components/UserDetails.vue';
@@ -19,7 +20,8 @@ const routes: RouteRecordRaw[] = [
     components: {
       default: VaultList,
 
-      end: HelloWorld},
+      end: HelloWorld
+    },
   },
   /*{
     path: '/vaults',
@@ -66,6 +68,11 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/logout',
     component: LogoutComponent,
+    meta: { skipAuth: true }
+  },
+  {
+    path: '/setup',
+    component: SetupComponent,
     meta: { skipAuth: true }
   }
 ];

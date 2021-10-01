@@ -62,6 +62,11 @@
                            active-class="bg-gray-900 text-white px-3 py-2 rounded-md text-sm font-medium"
                            exact-path>
                 Logout</router-link>
+              <router-link to="/setup"
+                           class="text-gray-300 hover:bg-gray-700 hover:text-white', 'px-3 py-2 rounded-md text-sm font-medium'"
+                           active-class="bg-gray-900 text-white px-3 py-2 rounded-md text-sm font-medium"
+                           exact-path>
+                Setup</router-link>
             </div>
           </div>
         </div>
