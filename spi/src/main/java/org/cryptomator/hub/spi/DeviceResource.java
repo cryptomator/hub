@@ -110,7 +110,7 @@ public class DeviceResource {
 		public Device toDevice(User user, String id) {
 			var device = new Device();
 			device.setId(id);
-			device.setUser(user);
+			device.setOwner(user);
 			device.setName(getName());
 			device.setPublickey(getPublicKey());
 			return device;

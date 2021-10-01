@@ -24,10 +24,10 @@ public class User {
 	@Column(name = "id", nullable = false)
 	private String id;
 
-	@OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST}, orphanRemoval = true, fetch = FetchType.LAZY)
+	@OneToMany(mappedBy = "owner", cascade = {CascadeType.PERSIST}, orphanRemoval = true, fetch = FetchType.LAZY)
 	private Set<Device> devices = new HashSet<>();
 
-	@OneToMany(mappedBy = "user", cascade = {CascadeType.PERSIST}, orphanRemoval = true, fetch = FetchType.LAZY)
+	@OneToMany(mappedBy = "owner", cascade = {CascadeType.PERSIST}, orphanRemoval = true, fetch = FetchType.LAZY)
 	private Set<Vault> vaults = new HashSet<>();
 
 	@Column(name = "name", nullable = false)

@@ -23,7 +23,7 @@ public class Device {
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "user_id", updatable = false, nullable = false)
-	private User user;
+	private User owner;
 
 	@OneToMany(mappedBy = "device", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true, fetch = FetchType.LAZY)
 	private Set<Access> access = new HashSet<>();
@@ -42,12 +42,12 @@ public class Device {
 		this.id = id;
 	}
 
-	public User getUser() {
-		return user;
+	public User getOwner() {
+		return owner;
 	}
 
-	public void setUser(User user) {
-		this.user = user;
+	public void setOwner(User owner) {
+		this.owner = owner;
 	}
 
 	public Set<Access> getAccess() {
@@ -79,7 +79,7 @@ public class Device {
 	public String toString() {
 		return "Device{" +
 				"id='" + id + '\'' +
-				", user=" + user.getId() +
+				", owner=" + owner.getId() +
 				", name='" + name + '\'' +
 				", publickey='" + publickey + '\'' +
 				'}';
@@ -89,12 +89,12 @@ public class Device {
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
-		Device device = (Device) o;
-		return Objects.equals(id, device.id)
-				&& Objects.equals(user, device.user)
-				&& Objects.equals(access, device.access)
-				&& Objects.equals(name, device.name)
-				&& Objects.equals(publickey, device.publickey);
+		Device other = (Device) o;
+		return Objects.equals(this.id, other.id)
+				&& Objects.equals(this.owner, other.owner)
+				&& Objects.equals(this.access, other.access)
+				&& Objects.equals(this.name, other.name)
+				&& Objects.equals(this.publickey, other.publickey);
 	}
 
         /*@Override
