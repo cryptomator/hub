@@ -17,8 +17,13 @@ docker run --rm -p 8080:8080 \
 quay.io/keycloak/keycloak:15.0.2 # arm64: mihaibob/keycloak:15.0.1
 ```
 When working with powershell, run this instead of the above from the `keycloak` dir:
-```shell
-docker run --rm -p 8080:8080 -e KEYCLOAK_USER=admin -e KEYCLOAK_PASSWORD=admin -e KEYCLOAK_IMPORT=/cfg/cryptomator-dev-realm.json -v ${PWD}:/cfg:ro quay.io/keycloak/keycloak:15.0.2 # arm64: mihaibob/keycloak:15.0.1
+```powershell
+docker run --rm -p 8080:8080 `
+-e KEYCLOAK_USER=admin `
+-e KEYCLOAK_PASSWORD=admin `
+-e KEYCLOAK_IMPORT=/cfg/cryptomator-dev-realm.json `
+-v ${PWD}:/cfg:ro `
+quay.io/keycloak/keycloak:15.0.2
 ```
 
 ## Web Frontend (Port 3000)
@@ -39,7 +44,9 @@ mvn compile quarkus:dev
 
 ### Testing rest services via CLI:
 
-First, retrieve an `access_token` from keycloak:
+First, access the keycloak admin web console and activate direct access grants for the `cryptomator-hub` realm.
+
+Then, retrieve an `access_token` from keycloak:
 
 ```
 export access_token=$(\
