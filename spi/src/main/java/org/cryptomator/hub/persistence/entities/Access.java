@@ -15,9 +15,22 @@ import java.util.Objects;
 
 @Entity
 @Table(name = "access")
-@NamedQuery(name = "Access.get", query = "SELECT a FROM Access a WHERE a.device.id = :deviceId AND a.device.owner.id = :userId AND a.id.vaultId = :vaultId")
+@NamedQuery(name = "Access.get",
+	query = """
+		SELECT a
+		FROM Access a
+		WHERE a.device.id = :deviceId
+			AND a.device.owner.id = :userId
+			AND a.id.vaultId = :vaultId
+	""")
 @NamedQuery(name = "Access.revokeDevice", query = "DELETE FROM Access a WHERE a.id.deviceId = :deviceId AND a.id.vaultId = :vaultId")
-@NamedQuery(name = "Access.revokeUser", query = "DELETE FROM Access a WHERE a.id.vaultId = :vaultId AND a.id.deviceId IN (SELECT d.id FROM Device d WHERE d.owner.id = :userId)")
+@NamedQuery(name = "Access.revokeUser",
+	query = """
+		DELETE
+		FROM Access a
+		WHERE a.id.vaultId = :vaultId
+			AND a.id.deviceId IN (SELECT d.id FROM Device d WHERE d.owner.id = :userId)
+	""")
 public class Access {
 
 	// FIXME @ManyToOne(...cascade = {CascadeType.REMOVE}) doesn't add 'ON DELETE CASCADE' to foreign keys
