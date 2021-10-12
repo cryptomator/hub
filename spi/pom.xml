@@ -11,11 +11,11 @@
     <flywaydb.version>4.0.3</flywaydb.version>
     <h2database.version>1.4.200</h2database.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <project.jdk.version>11</project.jdk.version>
+    <project.jdk.version>17</project.jdk.version>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <quarkus.container-image.group>cryptomator</quarkus.container-image.group>
     <quarkus.container-image.name>hub-spi</quarkus.container-image.name>
-    <quarkus.platform.version>2.0.0.Final</quarkus.platform.version>
+    <quarkus.platform.version>2.3.0.Final</quarkus.platform.version>
     <surefire-plugin.version>3.0.0-M5</surefire-plugin.version>
   </properties>
 
