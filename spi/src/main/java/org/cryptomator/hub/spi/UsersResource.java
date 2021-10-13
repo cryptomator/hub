@@ -44,7 +44,7 @@ public class UsersResource {
 				.stream()
 				.map(device -> new DeviceResource.DeviceDto(device.getId(), device.getName(), device.getPublickey(), device.getAccess().stream().map(access -> {
 					var vault = access.getVault();
-					return new VaultResource.VaultDto(vault.getId(), access.getVault().getName(), null, null, null);
+					return new VaultResource.VaultDto(vault.id, access.getVault().name, null, null, null);
 				}).collect(Collectors.toSet())))
 				.collect(Collectors.toSet());
 		return Response.ok(new UserDto(user.getId(), user.getName(), devices)).build();

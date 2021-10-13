@@ -115,7 +115,7 @@ public class Access {
 		return "Access{" +
 				"id=" + id +
 				", device=" + device.getId() +
-				", vault=" + vault.getId() +
+				", vault=" + vault.id +
 				", deviceSpecificMasterkey='" + deviceSpecificMasterkey + '\'' +
 				'}';
 	}

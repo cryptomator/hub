@@ -9,7 +9,6 @@ import org.cryptomator.hub.persistence.entities.DeviceDao;
 import org.cryptomator.hub.persistence.entities.User;
 import org.cryptomator.hub.persistence.entities.UserDao;
 import org.cryptomator.hub.persistence.entities.Vault;
-import org.cryptomator.hub.persistence.entities.VaultDao;
 import org.hibernate.exception.ConstraintViolationException;
 
 import javax.annotation.security.RolesAllowed;
@@ -38,9 +37,6 @@ public class VaultResource {
 
 	@Inject
 	UserDao userDao;
-
-	@Inject
-	VaultDao vaultDao;
 
 	@Inject
 	DeviceDao deviceDao;
@@ -77,7 +73,7 @@ public class VaultResource {
 	public Response grantAccess(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId, AccessGrantDto dto) {
 		// FIXME validate parameter
 
-		var vault = vaultDao.get(vaultId);
+		Vault vault = Vault.findById(vaultId);
 		var device = deviceDao.get(deviceId);
 
 		if (vault == null || device == null) {
@@ -134,11 +130,11 @@ public class VaultResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
 	public Response get(@PathParam("vaultId") String vaultId) {
-		var vault = vaultDao.get(vaultId);
+		Vault vault = Vault.findById(vaultId);
 		if (vault == null) {
 			return Response.status(Response.Status.NOT_FOUND).build();
 		}
-		var dto = new VaultDto(vaultId, vault.getName(), vault.getMasterkey(), vault.getIterations(), vault.getSalt());
+		var dto = new VaultDto(vaultId, vault.name, vault.masterkey, vault.iterations, vault.salt);
 		return Response.ok(dto).build();
 	}
 
@@ -155,15 +151,15 @@ public class VaultResource {
 			return Response.serverError().entity("Vault cannot be null").build();
 		}
 
-		if (vaultDao.get(vaultId) != null) {
+		if (Vault.findByIdOptional(vaultId).isPresent()) {
 			return Response.status(Response.Status.CONFLICT).build();
 		}
 
 		var currentUser = userDao.get(userInfo.getString("sub"));
 		var vault = vaultDto.toVault(currentUser, vaultId);
-		var persistedVaultId = vaultDao.persist(vault);
-
-		return Response.ok(persistedVaultId).build();
+		//TODO: can the persisted id different?
+		Vault.persist(vault);
+		return Response.ok(vault.id).build();
 	}
 
 	public static class AccessGrantDto {
@@ -218,12 +214,12 @@ public class VaultResource {
 
 		public Vault toVault(User owner, String id) {
 			var vault = new Vault();
-			vault.setId(id);
-			vault.setName(getName());
-			vault.setMasterkey(getMasterkey());
-			vault.setIterations(getIterations());
-			vault.setSalt(getSalt());
-			vault.setOwner(owner);
+			vault.id = id;
+			vault.name = getName();
+			vault.masterkey = getMasterkey();
+			vault.iterations = getIterations();
+			vault.salt =getSalt();
+			vault.owner = owner;
 			return vault;
 		}
 	}
