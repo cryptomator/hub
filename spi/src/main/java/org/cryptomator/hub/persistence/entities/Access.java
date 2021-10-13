@@ -114,7 +114,7 @@ public class Access {
 	public String toString() {
 		return "Access{" +
 				"id=" + id +
-				", device=" + device.getId() +
+				", device=" + device.id +
 				", vault=" + vault.id +
 				", deviceSpecificMasterkey='" + deviceSpecificMasterkey + '\'' +
 				'}';

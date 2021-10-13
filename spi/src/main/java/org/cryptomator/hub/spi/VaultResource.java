@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.oidc.UserInfo;
 import org.cryptomator.hub.persistence.entities.Access;
 import org.cryptomator.hub.persistence.entities.AccessDao;
-import org.cryptomator.hub.persistence.entities.DeviceDao;
+import org.cryptomator.hub.persistence.entities.Device;
 import org.cryptomator.hub.persistence.entities.User;
 import org.cryptomator.hub.persistence.entities.UserDao;
 import org.cryptomator.hub.persistence.entities.Vault;
@@ -38,9 +38,6 @@ public class VaultResource {
 	@Inject
 	UserDao userDao;
 
-	@Inject
-	DeviceDao deviceDao;
-
 	@GET
 	@Path("/{vaultId}/keys/{deviceId}")
 	@RolesAllowed("user")
@@ -51,7 +48,7 @@ public class VaultResource {
 
 		var currentUserId = userInfo.getString("sub");
 		var access = accessDao.unlock(vaultId, deviceId, currentUserId);
-		var device = deviceDao.get(deviceId);
+		Device device = Device.findById(deviceId);
 
 		if (device == null) {
 			// no such device
@@ -74,7 +71,7 @@ public class VaultResource {
 		// FIXME validate parameter
 
 		Vault vault = Vault.findById(vaultId);
-		var device = deviceDao.get(deviceId);
+		Device device = Device.findById(deviceId);
 
 		if (vault == null || device == null) {
 			return Response.status(Response.Status.NOT_FOUND).build();
