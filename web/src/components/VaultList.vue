@@ -6,65 +6,133 @@
           <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
               <tr>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Name
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" scope="col">
+                  Owner
                 </th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Title
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" scope="col">
+                  Device-name
                 </th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Email
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" scope="col">
+                  Id
                 </th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Role
-                </th>
-                <th scope="col" class="relative px-6 py-3">
+                <th class="relative px-6 py-3" scope="col">
                   <span class="sr-only">Edit</span>
                 </th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(person, personIdx) in people" :key="person.email" :class="personIdx % 2 === 0 ? 'bg-white' : 'bg-gray-50'">
+              <tr v-for="(user, userIdx) in users" :key="user.id" :class="userIdx % 2 === 0 ? 'bg-white' : 'bg-gray-50'">
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {{ person.name }}
+                  {{ user.name }}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {{ person.title }}
+                <td v-for="(device, userIdx) in user.devices" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {{ device.name }}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {{ person.email }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {{ person.role }}
+                <td v-for="(device, userIdx) in user.devices" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {{ device.id }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <a href="#" class="text-indigo-600 hover:text-indigo-900">Edit</a>
+                  <a class="text-indigo-600 hover:text-indigo-900" href="#">
+                    Edit
+                  </a>
                 </td>
               </tr>
             </tbody>
           </table>
+
+          <div v-if="me != null">
+            I am owner of these vaults:
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" scope="col">
+                    Owner
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" scope="col">
+                    Device-Name
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" scope="col">
+                    Vault-Name
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" scope="col">
+                    Id
+                  </th>
+                  <th class="relative px-6 py-3" scope="col">
+                    <span class="sr-only">
+                      Edit
+                    </span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(device, deviceIdx) in me.devices" :key="device.id">
+                  <td v-for="(vault, vaultIdx) in device.accessTo" :key="vault.id" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {{ me.name }}
+                  </td>
+                  <td v-for="(vault, vaultIdx) in device.accessTo" :key="vault.id" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {{ device.name }}
+                  </td>
+                  <td v-for="(vault, vaultIdx) in device.accessTo" :key="vault.id" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {{ vault.name }}
+                  </td>
+                  <td v-for="(vault, vaultIdx) in device.accessTo" :key="vault.id" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <a class="text-indigo-600 hover:text-indigo-900" href="vaults/{{ vault.id }}">
+                      not working: {{ vault.id }}
+                    </a>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <a class="text-indigo-600 hover:text-indigo-900" href="#">
+                      Edit
+                    </a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </template>
 
-<script>
+<script lang="ts">
 
-const people = [
-  { name: 'Jane Cooper', title: 'Regional Paradigm Technician', role: 'Admin', email: 'jane.cooper@example.com' },
-  { name: 'Cody Fisher', title: 'Product Directives Officer', role: 'Owner', email: 'cody.fisher@example.com' },
-  // More people...
-]
+import {defineComponent} from "vue";
+import {useI18n} from "vue-i18n";
+import backend, {UserDto, VaultDto} from "../common/backend";
 
-export default {
-  setup() {
-    return {
-      people,
-    }
-  },
-  name: "VaultList"
-}
+export default defineComponent({
+	name: 'VaultList',
+	props: {
+		vaultId: {
+			type: String,
+			default: null
+		}
+	},
+	setup() {
+		const {t} = useI18n({
+			useScope: 'global'
+		})
+		return {t}
+	},
+	data: () => ({
+		Error,
+		//errorCode: Error.None as Error,
+		me: null as UserDto,
+		users: [] as UserDto[],
+		vaults: [] as VaultDto[],
+		//devices: [] as DeviceDto[]
+	}),
+
+	mounted() {
+		backend.users.meIncludingDevices().then(me => {
+			this.me = me
+		}),
+		backend.users.listAllUsersIncludingDevices().then(users => {
+			this.users = users
+		})
+	}
+})
 
 </script>
 
