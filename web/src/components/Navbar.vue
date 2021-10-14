@@ -1,20 +1,4 @@
 <template>
-  <!--<nav class="w-full text-primary lg:px-8 border-t-2 border-primary shadow ">
-    <div>
-      < !-- main menu -- >
-      <div class="flex justify-between items-stretch w-full">
-        <a class="flex items-center hover:no-underline py-2 mx-2 lg:ml-0" href="/">
-          <img
-            src="../assets/logo.svg"
-            class="h-8"
-            alt="Logo"
-          >
-          <span class="font-headline font-bold ml-2 pb-px">CRYPTOMATOR HUB</span>
-        </a>
-      </div>
-    </div>
-  </nav>-->
-
   <Disclosure as="nav" class="bg-gray-800" v-slot="{ open }">
     <div class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
       <div class="relative flex items-center justify-between h-16">
@@ -82,11 +66,18 @@
             <MenuItems class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none">
               <MenuItem v-slot="{ active }">
                 <a href="#" :class="[active ? 'bg-gray-100' : '', 'block px-4 py-2 text-sm text-gray-700']">
-                  ?Your connected Devices?</a>
+                  ?Your connected Devices?
+                </a>
               </MenuItem>
-              <MenuItem v-slot="{ active }" @click="logout()">
-                <a href="#" :class="[active ? 'bg-gray-100' : '', 'block px-4 py-2 text-sm text-gray-700']">
-                  Log out</a>
+              <MenuItem v-if="isLoggedIn()" v-slot="{ active }" @click="logout()">
+                <a :class="[active ? 'bg-gray-100' : '', 'block px-4 py-2 text-sm text-gray-700']">
+                  Log out
+                </a>
+              </MenuItem>
+              <MenuItem v-if="!isLoggedIn()" v-slot="{ active }" @click="logout()">
+                <a :class="[active ? 'bg-gray-100' : '', 'block px-4 py-2 text-sm text-gray-700']">
+                  Logged out
+                </a>
               </MenuItem>
             </MenuItems>
           </transition>
@@ -101,7 +92,8 @@
   </Disclosure>
 </template>
 
-<script>
+<script lang="ts">
+import { defineComponent } from 'vue'
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import { BellIcon, MenuIcon, XIcon } from '@heroicons/vue/outline'
 import { defineComponent } from 'vue'
@@ -114,7 +106,7 @@ const navigation = [
 ]
 
 
-export default {
+export default defineComponent({
   components: {
     Disclosure,
     DisclosureButton,
@@ -133,12 +125,21 @@ export default {
       navigation,
     }
   },
-  logout(){
-    auth.logout();
-    this.loggedIn = true;
+  data: () => ({
+  }),
+  
+  methods: {
+    isLoggedIn(){
+      return auth.isAuthenticated();
+    },
+    logout() {
+      auth.logout();
+      this.loggedIn = flase;
+      //TODO shouldn't this be false?
+    }
   }
 
-}
+})
 </script>
 
 <style scoped>

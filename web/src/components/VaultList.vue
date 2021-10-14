@@ -15,8 +15,8 @@
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" scope="col">
                   Id
                 </th>
-                <th class="relative px-6 py-3" scope="col">
-                  <span class="sr-only">Edit</span>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" scope="col">
+                  Edit
                 </th>
               </tr>
             </thead>
@@ -57,10 +57,8 @@
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" scope="col">
                     Id
                   </th>
-                  <th class="relative px-6 py-3" scope="col">
-                    <span class="sr-only">
-                      Edit
-                    </span>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" scope="col">
+                    Edit
                   </th>
                 </tr>
               </thead>
