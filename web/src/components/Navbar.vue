@@ -5,7 +5,8 @@
         <div class="absolute inset-y-0 left-0 flex items-center sm:hidden">
           <!-- Mobile menu button-->
           <DisclosureButton class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
-            <span class="sr-only">Open main menu</span>
+            <span class="sr-only">
+            Open main menu</span>
             <MenuIcon v-if="!open" class="block h-6 w-6" aria-hidden="true" />
             <XIcon v-else class="block h-6 w-6" aria-hidden="true" />
           </DisclosureButton>
@@ -29,13 +30,13 @@
                            class="text-gray-300 hover:bg-gray-700 hover:text-white', 'px-3 py-2 rounded-md text-sm font-medium'"
                            active-class="bg-gray-900 text-white px-3 py-2 rounded-md text-sm font-medium"
                            exact-path>
-                Home
-              </router-link>
+                Home</router-link>
               <router-link to="/vaults/create"
                            class="text-gray-300 hover:bg-gray-700 hover:text-white', 'px-3 py-2 rounded-md text-sm font-medium'"
                            active-class="bg-gray-900 text-white px-3 py-2 rounded-md text-sm font-medium"
                            exact-path>
-                Create vault</router-link>
+                {{ t('create_vault_title') }}
+                </router-link>
               <router-link to="/user"
                            class="text-gray-300 hover:bg-gray-700 hover:text-white', 'px-3 py-2 rounded-md text-sm font-medium'"
                            active-class="bg-gray-900 text-white px-3 py-2 rounded-md text-sm font-medium"
@@ -54,6 +55,13 @@
             </div>
           </div>
         </div>
+          <div class="locale-changer">
+            <select v-model="$i18n.locale">
+              <option v-for="(lang, i) in languages" :key="`Lang${i}`" :value="lang">
+                {{ lang }}
+              </option>
+            </select>
+          </div>
         <!-- Profile dropdown -->
         <Menu as="div" class="ml-3 relative">
           <div>
@@ -96,8 +104,14 @@
 import { defineComponent } from 'vue'
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import { BellIcon, MenuIcon, XIcon } from '@heroicons/vue/outline'
-import { defineComponent } from 'vue'
+import { ref } from 'vue'
+import { Listbox, ListboxButton, ListboxLabel, ListboxOption, ListboxOptions } from '@headlessui/vue'
+import { CheckIcon, SelectorIcon } from '@heroicons/vue/solid'
+import { Locales } from "../locales/locales";
+import { useI18n } from 'vue-i18n'
 import auth from '../common/auth';
+
+
 
 const navigation = [
   { name: 'Home', href: '/'},
@@ -105,6 +119,7 @@ const navigation = [
   { name: 'User Details', href: '/user'},
 ]
 
+const languages = Locales
 
 export default defineComponent({
   components: {
@@ -121,13 +136,15 @@ export default defineComponent({
   },
   name: "Navbar.vue",
   setup(){
+    const { t } = useI18n({
+  	  useScope: 'global'
+  	})
     return {
+      t,
       navigation,
+      languages
     }
   },
-  data: () => ({
-  }),
-  
   methods: {
     isLoggedIn(){
       return auth.isAuthenticated();

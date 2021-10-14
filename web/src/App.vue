@@ -9,6 +9,8 @@
 <script>
 import Navbar from './components/Navbar.vue';
 import VaultList from "./components/VaultList.vue";
+import { useI18n } from 'vue-i18n'
+
 
 export default {
 	name: 'App',
@@ -24,6 +26,12 @@ export default {
 			return this.$route.meta.footer == null ? true : this.$route.meta.footer;
 		},*/
 	},
+	setup() {
+  	const { t } = useI18n({
+  	  useScope: 'global'
+  	})
+  	return { t }
+  	},
 };
 </script>
 
