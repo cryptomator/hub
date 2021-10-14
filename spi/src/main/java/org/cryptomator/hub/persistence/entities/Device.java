@@ -45,7 +45,7 @@ public class Device extends PanacheEntityBase {
 	public String toString() {
 		return "Device{" +
 				"id='" + id + '\'' +
-				", owner=" + owner.getId() +
+				", owner=" + owner.id +
 				", name='" + name + '\'' +
 				", publickey='" + publickey + '\'' +
 				'}';

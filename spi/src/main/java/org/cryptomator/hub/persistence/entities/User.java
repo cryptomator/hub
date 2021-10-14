@@ -1,5 +1,8 @@
 package org.cryptomator.hub.persistence.entities;
 
+import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import io.quarkus.panache.common.Parameters;
+
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -9,12 +12,12 @@ import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
 @Entity
 @Table(name = "user")
-@NamedQuery(name = "User.count", query = "SELECT COUNT(u) FROM User u")
 @NamedQuery(name = "User.includingDevices", query = "SELECT u FROM User u LEFT JOIN FETCH u.devices")
 @NamedQuery(name = "User.includingDevicesAndVaults",
 	query = """
@@ -32,53 +35,29 @@ import java.util.Set;
 			LEFT JOIN FETCH a.vault
 		WHERE u.id = :userId
 	""")
-public class User {
+public class User extends PanacheEntityBase {
 
 	@Id
 	@Column(name = "id", nullable = false)
-	private String id;
+	public String id;
 
 	@OneToMany(mappedBy = "owner", cascade = {CascadeType.PERSIST}, orphanRemoval = true, fetch = FetchType.LAZY)
-	private Set<Device> devices = new HashSet<>();
+	public Set<Device> devices = new HashSet<>();
 
 	@OneToMany(mappedBy = "owner", cascade = {CascadeType.PERSIST}, orphanRemoval = true, fetch = FetchType.LAZY)
-	private Set<Vault> vaults = new HashSet<>();
+	public Set<Vault> vaults = new HashSet<>();
 
 	@Column(name = "name", nullable = false)
-	private String name;
-
-	public String getId() {
-		return id;
-	}
-
-	public void setId(String id) {
-		this.id = id;
-	}
-
-	public Set<Device> getDevices() {
-		return devices;
-	}
+	public String name;
 
 	public void setDevices(Set<Device> devices) {
 		this.devices.clear();
 		this.devices.addAll(devices);
 	}
 
-	public Set<Vault> getVaults() {
-		return vaults;
-	}
-
 	public void setVaults(Set<Vault> vaults) {
 		this.vaults.clear();
 		this.vaults.addAll(vaults);
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
 	}
 
 	@Override
@@ -106,4 +85,18 @@ public class User {
     public int hashCode() {
         return Objects.hash(id, devices, vaults, name);
     }*/
+
+	// --- data layer queries ---
+
+	public static List<User> getAllWithDevices() {
+		return list("#User.includingDevices");
+	}
+
+	public static List<User> getAllWithDevicesAndAccess() {
+		return list("#User.includingDevicesAndVaults");
+	}
+
+	public static User getWithDevicesAndAccess(String userId) {
+		return find("#User.withDevicesAndAccess", Parameters.with("userId", userId)).firstResult();
+	}
 }

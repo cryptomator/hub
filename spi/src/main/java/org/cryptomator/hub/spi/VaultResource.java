@@ -7,7 +7,6 @@ import org.cryptomator.hub.persistence.entities.Access;
 import org.cryptomator.hub.persistence.entities.AccessDao;
 import org.cryptomator.hub.persistence.entities.Device;
 import org.cryptomator.hub.persistence.entities.User;
-import org.cryptomator.hub.persistence.entities.UserDao;
 import org.cryptomator.hub.persistence.entities.Vault;
 import org.hibernate.exception.ConstraintViolationException;
 
@@ -34,9 +33,6 @@ public class VaultResource {
 
 	@Inject
 	AccessDao accessDao;
-
-	@Inject
-	UserDao userDao;
 
 	@GET
 	@Path("/{vaultId}/keys/{deviceId}")
@@ -152,7 +148,7 @@ public class VaultResource {
 			return Response.status(Response.Status.CONFLICT).build();
 		}
 
-		var currentUser = userDao.get(userInfo.getString("sub"));
+		User currentUser = User.findById(userInfo.getString("sub"));
 		var vault = vaultDto.toVault(currentUser, vaultId);
 		//TODO: can the persisted id different?
 		Vault.persist(vault);

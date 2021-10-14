@@ -2,7 +2,7 @@ package org.cryptomator.hub.spi;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.oidc.UserInfo;
-import org.cryptomator.hub.persistence.entities.UserDao;
+import org.cryptomator.hub.persistence.entities.User;
 import org.jboss.resteasy.annotations.cache.NoCache;
 
 import javax.annotation.security.RolesAllowed;
@@ -22,15 +22,12 @@ public class UsersResource {
 	@Inject
 	UserInfo userInfo;
 
-	@Inject
-	UserDao userDao;
-
 	@GET
 	@Path("/me")
 	@RolesAllowed("user")
 	@NoCache
 	public String me() {
-		return userDao.get(userInfo.getString("sub")).getName();
+		return ((User) User.findById(userInfo.getString("sub"))).name;
 	}
 
 	@GET
@@ -38,16 +35,16 @@ public class UsersResource {
 	@RolesAllowed("user")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getMeIncludingDevicesAndVaults() {
-		var user = userDao.getWithDevicesAndAccess(userInfo.getString("sub"));
+		User user = User.getWithDevicesAndAccess(userInfo.getString("sub"));
 		var devices = user
-				.getDevices()
+				.devices
 				.stream()
 				.map(device -> new DeviceResource.DeviceDto(device.id, device.name, device.publickey, device.access.stream().map(access -> {
 					var vault = access.getVault();
 					return new VaultResource.VaultDto(vault.id, access.getVault().name, null, null, null);
 				}).collect(Collectors.toSet())))
 				.collect(Collectors.toSet());
-		return Response.ok(new UserDto(user.getId(), user.getName(), devices)).build();
+		return Response.ok(new UserDto(user.id, user.name, devices)).build();
 	}
 
 	@GET
@@ -55,9 +52,9 @@ public class UsersResource {
 	@RolesAllowed("user")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getAllIncludingDevices() {
-		var users = userDao.getAllWithDevicesAndAccess().stream().map(user -> {
+		var users = User.getAllWithDevicesAndAccess().stream().map(user -> {
 			var devices = user
-					.getDevices()
+					.devices
 					.stream()
 					.map(device -> new DeviceResource.DeviceDto(device.id, device.name, device.publickey, device
 							.access
@@ -65,7 +62,7 @@ public class UsersResource {
 							.map(access -> new VaultResource.VaultDto(access.getId().getVaultId(), null, null, null, null))
 							.collect(Collectors.toSet())))
 					.collect(Collectors.toSet());
-			return new UserDto(user.getId(), user.getName(), devices);
+			return new UserDto(user.id, user.name, devices);
 		}).collect(Collectors.toList());
 		return Response.ok(users).build();
 	}

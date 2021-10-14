@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.oidc.UserInfo;
 import org.cryptomator.hub.persistence.entities.Device;
 import org.cryptomator.hub.persistence.entities.User;
-import org.cryptomator.hub.persistence.entities.UserDao;
 
 import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
@@ -27,9 +26,6 @@ public class DeviceResource {
 	@Inject
 	UserInfo userInfo;
 
-	@Inject
-	UserDao userDao;
-
 	@PUT
 	@Path("/{deviceId}")
 	@RolesAllowed("user")
@@ -42,7 +38,7 @@ public class DeviceResource {
 			return Response.serverError().entity("deviceId or deviceDto cannot be empty").build();
 		}
 		if (Device.findByIdOptional(deviceId).isEmpty() ) {
-			var currentUser = userDao.get(userInfo.getString("sub"));
+			User currentUser = User.findById(userInfo.getString("sub"));
 			var device = deviceDto.toDevice(currentUser, deviceId);
 			device.persist(device);
 			return Response.status(Response.Status.CREATED).build();
