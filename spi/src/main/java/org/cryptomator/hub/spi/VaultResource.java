@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.oidc.UserInfo;
 import org.cryptomator.hub.persistence.entities.Access;
-import org.cryptomator.hub.persistence.entities.AccessDao;
 import org.cryptomator.hub.persistence.entities.Device;
 import org.cryptomator.hub.persistence.entities.User;
 import org.cryptomator.hub.persistence.entities.Vault;
@@ -31,9 +30,6 @@ public class VaultResource {
 	@Inject
 	UserInfo userInfo;
 
-	@Inject
-	AccessDao accessDao;
-
 	@GET
 	@Path("/{vaultId}/keys/{deviceId}")
 	@RolesAllowed("user")
@@ -43,7 +39,7 @@ public class VaultResource {
 		// FIXME validate parameter
 
 		var currentUserId = userInfo.getString("sub");
-		var access = accessDao.unlock(vaultId, deviceId, currentUserId);
+		var access = Access.unlock(vaultId, deviceId, currentUserId);
 		Device device = Device.findById(deviceId);
 
 		if (device == null) {
@@ -53,7 +49,7 @@ public class VaultResource {
 			// device exists, but access has not been granted
 			return Response.status(Response.Status.FORBIDDEN).build();
 		} else {
-			var dto = new AccessGrantDto(access.getDeviceSpecificMasterkey(), access.getEphemeralPublicKey());
+			var dto = new AccessGrantDto(access.deviceSpecificMasterkey, access.ephemeralPublicKey);
 			return Response.ok(dto).build();
 		}
 	}
@@ -74,13 +70,13 @@ public class VaultResource {
 		}
 
 		var access = new Access();
-		access.setVault(vault);
-		access.setDevice(device);
-		access.setDeviceSpecificMasterkey(dto.deviceSpecificMasterkey);
-		access.setEphemeralPublicKey(dto.ephemeralPublicKey);
+		access.vault = vault;
+		access.device = device;
+		access.deviceSpecificMasterkey = dto.deviceSpecificMasterkey;
+		access.ephemeralPublicKey = dto.ephemeralPublicKey;
 
 		try {
-			accessDao.persist(access);
+			access.persist();
 			return Response.noContent().build();
 		} catch (PersistenceException e) {
 			if (e.getCause() instanceof ConstraintViolationException) {
@@ -97,7 +93,7 @@ public class VaultResource {
 	@Transactional
 	public Response revokeDeviceAccess(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId) {
 		try {
-			accessDao.deleteDeviceAccess(vaultId, deviceId);
+			Access.deleteDeviceAccess(vaultId, deviceId);
 			return Response.noContent().build();
 		} catch (EntityNotFoundException e) {
 			return Response.status(Response.Status.NOT_FOUND).build();
@@ -110,7 +106,7 @@ public class VaultResource {
 	@Transactional
 	public Response revokeUserAccess(@PathParam("vaultId") String vaultId, @PathParam("userId") String userId) {
 		try {
-			accessDao.deleteUserAccess(vaultId, userId);
+			Access.deleteUserAccess(vaultId, userId);
 			return Response.noContent().build();
 		} catch (EntityNotFoundException e) {
 			return Response.status(Response.Status.NOT_FOUND).build();

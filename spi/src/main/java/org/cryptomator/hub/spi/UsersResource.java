@@ -40,8 +40,8 @@ public class UsersResource {
 				.devices
 				.stream()
 				.map(device -> new DeviceResource.DeviceDto(device.id, device.name, device.publickey, device.access.stream().map(access -> {
-					var vault = access.getVault();
-					return new VaultResource.VaultDto(vault.id, access.getVault().name, null, null, null);
+					var vault = access.vault;
+					return new VaultResource.VaultDto(vault.id, vault.name, null, null, null);
 				}).collect(Collectors.toSet())))
 				.collect(Collectors.toSet());
 		return Response.ok(new UserDto(user.id, user.name, devices)).build();
@@ -59,7 +59,7 @@ public class UsersResource {
 					.map(device -> new DeviceResource.DeviceDto(device.id, device.name, device.publickey, device
 							.access
 							.stream()
-							.map(access -> new VaultResource.VaultDto(access.getId().getVaultId(), null, null, null, null))
+							.map(access -> new VaultResource.VaultDto(access.id.getVaultId(), null, null, null, null))
 							.collect(Collectors.toSet())))
 					.collect(Collectors.toSet());
 			return new UserDto(user.id, user.name, devices);

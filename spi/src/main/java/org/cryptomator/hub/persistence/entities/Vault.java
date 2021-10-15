@@ -72,7 +72,7 @@ public class Vault extends PanacheEntityBase {
 		return "Vault{" +
 				"id='" + id + '\'' +
 				", user=" + owner +
-				", access=" + access.stream().map(Access::getId).collect(Collectors.toList()) +
+				", access=" + access.stream().map(a -> a.id).collect(Collectors.toList()) +
 				", name='" + name + '\'' +
 				", salt='" + salt + '\'' +
 				", iterations='" + iterations + '\'' +
