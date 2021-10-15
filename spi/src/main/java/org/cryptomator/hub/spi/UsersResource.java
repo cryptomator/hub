@@ -27,7 +27,7 @@ public class UsersResource {
 	@RolesAllowed("user")
 	@NoCache
 	public String me() {
-		return ((User) User.findById(userInfo.getString("sub"))).name;
+		return User.findById(userInfo.getString("sub")).name;
 	}
 
 	@GET
