@@ -57,6 +57,8 @@
 import { defineComponent } from 'vue'
 import axios, { AxiosResponse } from 'axios';
 
+let backendBaseURL = import.meta.env.DEV ? 'http://localhost:9090' : '';
+
 export default defineComponent({
   data: () => ({
     kcUrl: '' as string,
@@ -66,8 +68,7 @@ export default defineComponent({
   }),
 
   mounted() {
-    let baseURL = import.meta.env.DEV ? 'http://localhost:9090' : '';
-    axios.get(baseURL + '/setup/keycloak-url').then(response => {
+    axios.get(`${backendBaseURL}/setup/keycloak-url`).then(response => {
       this.kcUrl = response.data;
     }).catch(error => {
       this.kcUrl = 'http://localhost:8080';
@@ -77,16 +78,12 @@ export default defineComponent({
   methods: {
     auth() {
       const params = new URLSearchParams();
-      params.append('grant_type', 'password');
-      params.append('client_id', 'admin-cli');
-      params.append('username', this.kcUser);
+      params.append('kcurl', this.kcUrl);
+      params.append('user', this.kcUser);
       params.append('password', this.kcPass);
-      axios.post(`${this.kcUrl}/auth/realms/master/protocol/openid-connect/token`, params,
-        {
-          headers: {'Content-Type': 'application/x-www-form-urlencoded'}
-        }
-      ).then(response => {
-        console.log('success: ', response.data);
+
+      axios.post(`${backendBaseURL}/setup/create-realm`, params).then(response => {
+        console.info('realm created!');
       }).catch(error => {
         console.error('failed', error);
       });
