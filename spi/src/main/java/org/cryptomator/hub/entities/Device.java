@@ -1,4 +1,6 @@
-package org.cryptomator.hub.persistence.entities;
+package org.cryptomator.hub.entities;
+
+import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -15,71 +17,35 @@ import java.util.Set;
 
 @Entity
 @Table(name = "device")
-public class Device {
+public class Device extends PanacheEntityBase {
 
 	@Id
 	@Column(name = "id", nullable = false)
-	private String id;
+	public String id;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "user_id", updatable = false, nullable = false)
-	private User owner;
+	public User owner;
 
 	@OneToMany(mappedBy = "device", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true, fetch = FetchType.LAZY)
-	private Set<Access> access = new HashSet<>();
+	public Set<Access> access = new HashSet<>();
 
 	@Column(name = "name", nullable = false)
-	private String name;
+	public String name;
 
 	@Column(name = "publickey", nullable = false)
-	private String publickey;
-
-	public String getId() {
-		return id;
-	}
-
-	public void setId(String id) {
-		this.id = id;
-	}
-
-	public User getOwner() {
-		return owner;
-	}
-
-	public void setOwner(User owner) {
-		this.owner = owner;
-	}
-
-	public Set<Access> getAccess() {
-		return access;
-	}
+	public String publickey;
 
 	public void setAccess(Set<Access> access) {
 		this.access.clear();
 		this.access.addAll(access);
 	}
 
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public String getPublickey() {
-		return publickey;
-	}
-
-	public void setPublickey(String publickey) {
-		this.publickey = publickey;
-	}
-
 	@Override
 	public String toString() {
 		return "Device{" +
 				"id='" + id + '\'' +
-				", owner=" + owner.getId() +
+				", owner=" + owner.id +
 				", name='" + name + '\'' +
 				", publickey='" + publickey + '\'' +
 				'}';

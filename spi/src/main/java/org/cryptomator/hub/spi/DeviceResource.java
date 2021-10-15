@@ -2,10 +2,8 @@ package org.cryptomator.hub.spi;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.oidc.UserInfo;
-import org.cryptomator.hub.persistence.entities.Device;
-import org.cryptomator.hub.persistence.entities.DeviceDao;
-import org.cryptomator.hub.persistence.entities.User;
-import org.cryptomator.hub.persistence.entities.UserDao;
+import org.cryptomator.hub.entities.Device;
+import org.cryptomator.hub.entities.User;
 
 import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
@@ -18,6 +16,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -26,12 +25,6 @@ public class DeviceResource {
 
 	@Inject
 	UserInfo userInfo;
-
-	@Inject
-	UserDao userDao;
-
-	@Inject
-	DeviceDao deviceDao;
 
 	@PUT
 	@Path("/{deviceId}")
@@ -44,10 +37,10 @@ public class DeviceResource {
 		if (deviceId == null || deviceId.trim().length() == 0 || deviceDto == null) {
 			return Response.serverError().entity("deviceId or deviceDto cannot be empty").build();
 		}
-		if (deviceDao.get(deviceId) == null) {
-			var currentUser = userDao.get(userInfo.getString("sub"));
+		if (Device.findByIdOptional(deviceId).isEmpty() ) {
+			User currentUser = User.findById(userInfo.getString("sub"));
 			var device = deviceDto.toDevice(currentUser, deviceId);
-			var storedDeviceId = deviceDao.persist(device);
+			device.persist(device);
 			return Response.status(Response.Status.CREATED).build();
 		} else {
 			return Response.status(Response.Status.CONFLICT).build();
@@ -63,9 +56,9 @@ public class DeviceResource {
 		if (deviceId == null || deviceId.trim().length() == 0) {
 			return Response.serverError().entity("deviceId cannot be empty").build();
 		}
-		var device = deviceDao.get(deviceId);
+		Device device = Device.findById(deviceId);
 		if (device != null) {
-			return Response.ok(new DeviceDto(device.getId(), device.getName(), device.getPublickey(), null)).build();
+			return Response.ok(new DeviceDto(device.id, device.name, device.publickey, null)).build();
 		} else {
 			return Response.status(Response.Status.NOT_FOUND).build();
 		}
@@ -76,8 +69,8 @@ public class DeviceResource {
 	@RolesAllowed("user")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getAll() {
-		var devices = deviceDao.getAll();
-		var dtos = devices.stream().map(d -> new DeviceDto(d.getId(), d.getName(), d.getPublickey(), null)).collect(Collectors.toList());
+		List<Device> devices = Device.listAll();
+		var dtos = devices.stream().map(d -> new DeviceDto(d.id, d.name, d.publickey, null)).collect(Collectors.toList());
 		return Response.ok(dtos).build();
 	}
 
@@ -109,10 +102,10 @@ public class DeviceResource {
 
 		public Device toDevice(User user, String id) {
 			var device = new Device();
-			device.setId(id);
-			device.setOwner(user);
-			device.setName(getName());
-			device.setPublickey(getPublicKey());
+			device.id = id;
+			device.owner = user;
+			device.name = getName();
+			device.publickey = getPublicKey();
 			return device;
 		}
 

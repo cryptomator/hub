@@ -1,4 +1,6 @@
-package org.cryptomator.hub.persistence.entities;
+package org.cryptomator.hub.entities;
+
+import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -16,86 +18,34 @@ import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "vault")
-public class Vault {
+public class Vault extends PanacheEntityBase {
 
 	@Id
 	@Column(name = "id", nullable = false)
-	private String id;
+	public String id;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "user_id", updatable = false, nullable = false)
-	private User owner;
+	public User owner;
 
 	@OneToMany(mappedBy = "device", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true, fetch = FetchType.LAZY)
-	private Set<Access> access = new HashSet<>();
+	public Set<Access> access = new HashSet<>();
 
 	@Column(name = "name", nullable = false)
-	private String name;
+	public String name;
 
 	@Column(name = "salt", nullable = false)
-	private String salt;
+	public String salt;
 
 	@Column(name = "iterations", nullable = false)
-	private String iterations;
+	public String iterations;
 
 	@Column(name = "masterkey", nullable = false)
-	private String masterkey;
-
-	public String getId() {
-		return id;
-	}
-
-	public void setId(String id) {
-		this.id = id;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public User getOwner() {
-		return owner;
-	}
-
-	public void setOwner(User owner) {
-		this.owner = owner;
-	}
-
-	public Set<Access> getAccess() {
-		return access;
-	}
+	public String masterkey;
 
 	public void setAccess(Set<Access> access) {
 		this.access.clear();
 		this.access.addAll(access);
-	}
-
-	public String getSalt() {
-		return salt;
-	}
-
-	public void setSalt(String salt) {
-		this.salt = salt;
-	}
-
-	public String getIterations() {
-		return iterations;
-	}
-
-	public void setIterations(String iterations) {
-		this.iterations = iterations;
-	}
-
-	public String getMasterkey() {
-		return masterkey;
-	}
-
-	public void setMasterkey(String masterkey) {
-		this.masterkey = masterkey;
 	}
 
 	@Override
@@ -122,7 +72,7 @@ public class Vault {
 		return "Vault{" +
 				"id='" + id + '\'' +
 				", user=" + owner +
-				", access=" + access.stream().map(Access::getId).collect(Collectors.toList()) +
+				", access=" + access.stream().map(a -> a.id).collect(Collectors.toList()) +
 				", name='" + name + '\'' +
 				", salt='" + salt + '\'' +
 				", iterations='" + iterations + '\'' +

@@ -3,13 +3,10 @@ package org.cryptomator.hub.spi;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.oidc.UserInfo;
-import org.cryptomator.hub.persistence.entities.Access;
-import org.cryptomator.hub.persistence.entities.AccessDao;
-import org.cryptomator.hub.persistence.entities.DeviceDao;
-import org.cryptomator.hub.persistence.entities.User;
-import org.cryptomator.hub.persistence.entities.UserDao;
-import org.cryptomator.hub.persistence.entities.Vault;
-import org.cryptomator.hub.persistence.entities.VaultDao;
+import org.cryptomator.hub.entities.Access;
+import org.cryptomator.hub.entities.Device;
+import org.cryptomator.hub.entities.User;
+import org.cryptomator.hub.entities.Vault;
 import org.hibernate.exception.ConstraintViolationException;
 
 import javax.annotation.security.RolesAllowed;
@@ -33,18 +30,6 @@ public class VaultResource {
 	@Inject
 	UserInfo userInfo;
 
-	@Inject
-	AccessDao accessDao;
-
-	@Inject
-	UserDao userDao;
-
-	@Inject
-	VaultDao vaultDao;
-
-	@Inject
-	DeviceDao deviceDao;
-
 	@GET
 	@Path("/{vaultId}/keys/{deviceId}")
 	@RolesAllowed("user")
@@ -54,8 +39,8 @@ public class VaultResource {
 		// FIXME validate parameter
 
 		var currentUserId = userInfo.getString("sub");
-		var access = accessDao.unlock(vaultId, deviceId, currentUserId);
-		var device = deviceDao.get(deviceId);
+		var access = Access.unlock(vaultId, deviceId, currentUserId);
+		Device device = Device.findById(deviceId);
 
 		if (device == null) {
 			// no such device
@@ -64,7 +49,7 @@ public class VaultResource {
 			// device exists, but access has not been granted
 			return Response.status(Response.Status.FORBIDDEN).build();
 		} else {
-			var dto = new AccessGrantDto(access.getDeviceSpecificMasterkey(), access.getEphemeralPublicKey());
+			var dto = new AccessGrantDto(access.deviceSpecificMasterkey, access.ephemeralPublicKey);
 			return Response.ok(dto).build();
 		}
 	}
@@ -77,21 +62,21 @@ public class VaultResource {
 	public Response grantAccess(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId, AccessGrantDto dto) {
 		// FIXME validate parameter
 
-		var vault = vaultDao.get(vaultId);
-		var device = deviceDao.get(deviceId);
+		Vault vault = Vault.findById(vaultId);
+		Device device = Device.findById(deviceId);
 
 		if (vault == null || device == null) {
 			return Response.status(Response.Status.NOT_FOUND).build();
 		}
 
 		var access = new Access();
-		access.setVault(vault);
-		access.setDevice(device);
-		access.setDeviceSpecificMasterkey(dto.deviceSpecificMasterkey);
-		access.setEphemeralPublicKey(dto.ephemeralPublicKey);
+		access.vault = vault;
+		access.device = device;
+		access.deviceSpecificMasterkey = dto.deviceSpecificMasterkey;
+		access.ephemeralPublicKey = dto.ephemeralPublicKey;
 
 		try {
-			accessDao.persist(access);
+			access.persist();
 			return Response.noContent().build();
 		} catch (PersistenceException e) {
 			if (e.getCause() instanceof ConstraintViolationException) {
@@ -108,7 +93,7 @@ public class VaultResource {
 	@Transactional
 	public Response revokeDeviceAccess(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId) {
 		try {
-			accessDao.deleteDeviceAccess(vaultId, deviceId);
+			Access.deleteDeviceAccess(vaultId, deviceId);
 			return Response.noContent().build();
 		} catch (EntityNotFoundException e) {
 			return Response.status(Response.Status.NOT_FOUND).build();
@@ -121,7 +106,7 @@ public class VaultResource {
 	@Transactional
 	public Response revokeUserAccess(@PathParam("vaultId") String vaultId, @PathParam("userId") String userId) {
 		try {
-			accessDao.deleteUserAccess(vaultId, userId);
+			Access.deleteUserAccess(vaultId, userId);
 			return Response.noContent().build();
 		} catch (EntityNotFoundException e) {
 			return Response.status(Response.Status.NOT_FOUND).build();
@@ -134,11 +119,11 @@ public class VaultResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
 	public Response get(@PathParam("vaultId") String vaultId) {
-		var vault = vaultDao.get(vaultId);
+		Vault vault = Vault.findById(vaultId);
 		if (vault == null) {
 			return Response.status(Response.Status.NOT_FOUND).build();
 		}
-		var dto = new VaultDto(vaultId, vault.getName(), vault.getMasterkey(), vault.getIterations(), vault.getSalt());
+		var dto = new VaultDto(vaultId, vault.name, vault.masterkey, vault.iterations, vault.salt);
 		return Response.ok(dto).build();
 	}
 
@@ -155,15 +140,15 @@ public class VaultResource {
 			return Response.serverError().entity("Vault cannot be null").build();
 		}
 
-		if (vaultDao.get(vaultId) != null) {
+		if (Vault.findByIdOptional(vaultId).isPresent()) {
 			return Response.status(Response.Status.CONFLICT).build();
 		}
 
-		var currentUser = userDao.get(userInfo.getString("sub"));
+		User currentUser = User.findById(userInfo.getString("sub"));
 		var vault = vaultDto.toVault(currentUser, vaultId);
-		var persistedVaultId = vaultDao.persist(vault);
-
-		return Response.ok(persistedVaultId).build();
+		//TODO: can the persisted id different?
+		Vault.persist(vault);
+		return Response.ok(vault.id).build();
 	}
 
 	public static class AccessGrantDto {
@@ -218,12 +203,12 @@ public class VaultResource {
 
 		public Vault toVault(User owner, String id) {
 			var vault = new Vault();
-			vault.setId(id);
-			vault.setName(getName());
-			vault.setMasterkey(getMasterkey());
-			vault.setIterations(getIterations());
-			vault.setSalt(getSalt());
-			vault.setOwner(owner);
+			vault.id = id;
+			vault.name = getName();
+			vault.masterkey = getMasterkey();
+			vault.iterations = getIterations();
+			vault.salt =getSalt();
+			vault.owner = owner;
 			return vault;
 		}
 	}
