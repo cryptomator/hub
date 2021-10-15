@@ -2,8 +2,8 @@ package org.cryptomator.hub.spi;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.oidc.UserInfo;
-import org.cryptomator.hub.persistence.entities.Device;
-import org.cryptomator.hub.persistence.entities.User;
+import org.cryptomator.hub.entities.Device;
+import org.cryptomator.hub.entities.User;
 
 import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;

@@ -1,4 +1,4 @@
-package org.cryptomator.hub.persistence.entities;
+package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.panache.common.Parameters;

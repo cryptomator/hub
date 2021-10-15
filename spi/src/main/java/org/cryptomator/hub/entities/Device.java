@@ -1,4 +1,4 @@
-package org.cryptomator.hub.persistence.entities;
+package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 
@@ -14,11 +14,10 @@ import javax.persistence.Table;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Entity
-@Table(name = "vault")
-public class Vault extends PanacheEntityBase {
+@Table(name = "device")
+public class Device extends PanacheEntityBase {
 
 	@Id
 	@Column(name = "id", nullable = false)
@@ -34,14 +33,8 @@ public class Vault extends PanacheEntityBase {
 	@Column(name = "name", nullable = false)
 	public String name;
 
-	@Column(name = "salt", nullable = false)
-	public String salt;
-
-	@Column(name = "iterations", nullable = false)
-	public String iterations;
-
-	@Column(name = "masterkey", nullable = false)
-	public String masterkey;
+	@Column(name = "publickey", nullable = false)
+	public String publickey;
 
 	public void setAccess(Set<Access> access) {
 		this.access.clear();
@@ -49,34 +42,30 @@ public class Vault extends PanacheEntityBase {
 	}
 
 	@Override
+	public String toString() {
+		return "Device{" +
+				"id='" + id + '\'' +
+				", owner=" + owner.id +
+				", name='" + name + '\'' +
+				", publickey='" + publickey + '\'' +
+				'}';
+	}
+
+	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
-		Vault vault = (Vault) o;
-		return Objects.equals(id, vault.id)
-				&& Objects.equals(owner, vault.owner)
-				&& Objects.equals(access, vault.access)
-				&& Objects.equals(name, vault.name)
-				&& Objects.equals(salt, vault.salt)
-				&& Objects.equals(iterations, vault.iterations)
-				&& Objects.equals(masterkey, vault.masterkey);
+		Device other = (Device) o;
+		return Objects.equals(this.id, other.id)
+				&& Objects.equals(this.owner, other.owner)
+				&& Objects.equals(this.access, other.access)
+				&& Objects.equals(this.name, other.name)
+				&& Objects.equals(this.publickey, other.publickey);
 	}
 
-    /*@Override
+        /*@Override
     public int hashCode() {
-        return Objects.hash(id, user, access, name, salt, costParam, masterkey);
+        return Objects.hash(id, user, access, name, publickey);
     }*/
 
-	@Override
-	public String toString() {
-		return "Vault{" +
-				"id='" + id + '\'' +
-				", user=" + owner +
-				", access=" + access.stream().map(a -> a.id).collect(Collectors.toList()) +
-				", name='" + name + '\'' +
-				", salt='" + salt + '\'' +
-				", iterations='" + iterations + '\'' +
-				", masterkey='" + masterkey + '\'' +
-				'}';
-	}
 }
