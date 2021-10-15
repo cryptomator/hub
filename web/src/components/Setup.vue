@@ -59,11 +59,20 @@ import axios, { AxiosResponse } from 'axios';
 
 export default defineComponent({
   data: () => ({
-    kcUrl: 'http://localhost:8080' as string,
+    kcUrl: '' as string,
     kcUser: 'admin' as string,
     kcPass: 'admin' as string,
     kcAuthToken: '' as string,
   }),
+
+  mounted() {
+    let baseURL = import.meta.env.DEV ? 'http://localhost:9090' : '';
+    axios.get(baseURL + '/setup/keycloak-url').then(response => {
+      this.kcUrl = response.data;
+    }).catch(error => {
+      this.kcUrl = 'http://localhost:8080';
+    });
+  },
 
   methods: {
     auth() {
