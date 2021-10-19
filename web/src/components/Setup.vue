@@ -11,9 +11,61 @@
     <div class="my-8 space-y-8 divide-y divide-gray-200">
       <fieldset class="bg-white shadow px-4 py-5 sm:rounded-lg sm:p-6 md:grid md:grid-cols-3 md:gap-6">
         <div class="block md:col-span-1">
-          <h3 class="text-lg font-medium leading-6 text-gray-700">Connect to Keycloak</h3>
+          <h3 class="text-lg font-medium leading-6 text-gray-700">Configure Realm</h3>
           <p class="mt-1 text-sm text-gray-500">
-            This information is used during setup. Admin credentials are discarded when done.
+            These values are used to create a realm configuration file.
+            This configuration is then used to configure Keycloak to provide <abbr title="Identity and Access Management">IAM</abbr> services for Cryptomator Hub.
+          </p>
+        </div>
+        <div class="mt-5 md:mt-0 md:col-span-2 space-y-6">
+          <div class="sm:col-span-3">
+            <label for="hub-url" class="block text-sm font-medium text-gray-700">
+              Cryptomator Hub URL
+            </label>
+            <div class="mt-1">
+              <input id="hub-url" v-model="hubUrl" type="text" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md" @change="updateRealmJson" />
+            </div>
+          </div>
+
+          <div class="sm:col-span-3">
+            <label for="hub-user" class="block text-sm font-medium text-gray-700">
+              Initial Hub Admin User
+            </label>
+            <div class="mt-1">
+              <input id="hub-user" v-model="hubUser" type="text" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md" @change="updateRealmJson" />
+            </div>
+          </div>
+
+          <div class="sm:col-span-3">
+            <label for="hub-pass" class="block text-sm font-medium text-gray-700">
+              Initial Hub Admin Password
+            </label>
+            <div class="mt-1">
+              <input id="hub-pass" v-model="hubPass" type="password" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md" @change="updateRealmJson" />
+            </div>
+          </div>
+
+          <div>
+            <label for="hub-realm-json" class="block text-sm font-medium text-gray-700">
+              Realm Config File
+            </label>
+            <div class="mt-1">
+              <textarea id="hub-realm-json" v-model="hubRealmJson" rows="10" class="resize-y shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border border-gray-300 rounded-md" readonly></textarea>
+            </div>
+            <p class="mt-2 text-sm text-gray-500">
+              This JSON file will be used to configure a new Keycloak realm.
+            </p>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+
+    <div class="my-8 space-y-8 divide-y divide-gray-200">
+      <fieldset class="bg-white shadow px-4 py-5 sm:rounded-lg sm:p-6 md:grid md:grid-cols-3 md:gap-6">
+        <div class="block md:col-span-1">
+          <h3 class="text-lg font-medium leading-6 text-gray-700">Upload Realm to Keycloak</h3>
+          <p class="mt-1 text-sm text-gray-500">
+            Use the Keycloak admin user to create a new realm. The credentials are discarded immediately after upload.
           </p>
         </div>
         <div class="mt-5 md:mt-0 md:col-span-2 space-y-6">
@@ -45,7 +97,7 @@
           </div>
 
           <button type="button" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" @click="auth()">
-            Connect
+            Upload
           </button>
         </div>
       </fieldset>
@@ -55,12 +107,17 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue'
-import axios, { AxiosResponse } from 'axios';
+import axios from 'axios';
+import createRealmJson from '../common/realm';
 
 let backendBaseURL = import.meta.env.DEV ? 'http://localhost:9090' : '';
 
 export default defineComponent({
   data: () => ({
+    hubUrl: window.location.protocol + '//' + window.location.hostname + ':' + window.location.port as string,
+    hubUser: 'owner' as string,
+    hubPass: '' as string,
+    hubRealmJson: '' as string,
     kcUrl: '' as string,
     kcUser: 'admin' as string,
     kcPass: 'admin' as string,
@@ -73,9 +130,14 @@ export default defineComponent({
     }).catch(error => {
       this.kcUrl = 'http://localhost:8080';
     });
+    this.updateRealmJson();
   },
 
   methods: {
+    updateRealmJson() {
+      this.hubRealmJson = createRealmJson(this.hubUrl, this.hubUser, this.hubPass);
+    },
+
     auth() {
       const params = new URLSearchParams();
       params.append('kcurl', this.kcUrl);
