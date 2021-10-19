@@ -13,10 +13,12 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 
 @Path("/setup")
 public class SetupResource {
@@ -47,11 +49,11 @@ public class SetupResource {
 	@Path("/create-realm")
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	@Produces(MediaType.TEXT_PLAIN)
-	public Response createRealm(@FormParam("kcurl") String url, @FormParam("user") String user, @FormParam("password") String password) {
+	public Response createRealm(@FormParam("kcUrl") String url, @FormParam("user") String user, @FormParam("password") String password, @FormParam("realmCfg") String realmCfg) {
 		try {
 			var baseUrl = new URL(url);
 			var token = auth(baseUrl, user, password);
-			createRealm(baseUrl, token);
+			createRealm(baseUrl, token, realmCfg);
 			return Response.noContent().build();
 		} catch (MalformedURLException e) {
 			return Response.status(Response.Status.BAD_REQUEST).build();
@@ -65,8 +67,8 @@ public class SetupResource {
 		return authService.authorize(GRANT_TYPE_PW, ADMIN_CLIENT_ID, user, password).accessToken;
 	}
 
-	private void createRealm(URL url, String accessToken) {
-		try (var in = getClass().getResourceAsStream("/keycloak/hub-realm.json")) {
+	private void createRealm(URL url, String accessToken, String realmCfg) {
+		try (var in = new ByteArrayInputStream(realmCfg.getBytes(StandardCharsets.UTF_8))) {
 			var realmsService = RestClientBuilder.newBuilder()
 					.baseUrl(url)
 					.build(RealmsService.class);

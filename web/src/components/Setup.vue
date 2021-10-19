@@ -50,7 +50,7 @@
               Realm Config File
             </label>
             <div class="mt-1">
-              <textarea id="hub-realm-json" v-model="hubRealmJson" rows="10" class="resize-y shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border border-gray-300 rounded-md" readonly></textarea>
+              <textarea id="hub-realm-json" v-model="hubRealmCfg" rows="10" class="resize-y shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border border-gray-300 rounded-md" readonly></textarea>
             </div>
             <p class="mt-2 text-sm text-gray-500">
               This JSON file will be used to configure a new Keycloak realm.
@@ -117,7 +117,7 @@ export default defineComponent({
     hubUrl: window.location.protocol + '//' + window.location.hostname + ':' + window.location.port as string,
     hubUser: 'owner' as string,
     hubPass: '' as string,
-    hubRealmJson: '' as string,
+    hubRealmCfg: '' as string,
     kcUrl: '' as string,
     kcUser: 'admin' as string,
     kcPass: 'admin' as string,
@@ -135,14 +135,15 @@ export default defineComponent({
 
   methods: {
     updateRealmJson() {
-      this.hubRealmJson = createRealmJson(this.hubUrl, this.hubUser, this.hubPass);
+      this.hubRealmCfg = createRealmJson(this.hubUrl, this.hubUser, this.hubPass);
     },
 
     auth() {
       const params = new URLSearchParams();
-      params.append('kcurl', this.kcUrl);
+      params.append('kcUrl', this.kcUrl);
       params.append('user', this.kcUser);
       params.append('password', this.kcPass);
+      params.append('realmCfg', this.hubRealmCfg);
 
       axios.post(`${backendBaseURL}/setup/create-realm`, params).then(response => {
         console.info('realm created!');
