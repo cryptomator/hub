@@ -1,4 +1,47 @@
 <template>
+  <!-- Notification for successfully creation of a realm -->
+  <div v-if="realmSuccessfulCreatedNotification" class="rounded-md bg-green-50 p-4">
+    <div class="flex">
+      <div class="flex-shrink-0">
+        <CheckCircleIcon class="h-5 w-5 text-green-400" aria-hidden="true" />
+      </div>
+      <div class="ml-3">
+        <p class="text-sm font-medium text-green-800">
+          Successfully created realm
+        </p>
+      </div>
+      <div class="ml-auto pl-3">
+        <div class="-mx-1.5 -my-1.5">
+          <button type="button" class="inline-flex bg-green-50 rounded-md p-1.5 text-green-500 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-green-50 focus:ring-green-600" @click="closeNotifications()">
+            <span class="sr-only">Dismiss</span>
+            <XIcon class="h-5 w-5" aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Notification for error during creation of a realm -->
+  <div v-if="realmErrorNotification" class="rounded-md bg-red-50 p-4">
+    <div class="flex">
+      <div class="flex-shrink-0">
+        <XCircleIcon class="h-5 w-5 text-red-400" aria-hidden="true" />
+      </div>
+      <div class="ml-3">
+        <p class="text-sm font-medium text-green-800">
+          Error while creating realm. It might exist already.
+        </p>
+      </div>
+      <div class="ml-auto pl-3">
+        <div class="-mx-1.5 -my-1.5">
+          <button type="button" class="inline-flex bg-red-50 rounded-md p-1.5 text-red-500 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-red-50 focus:ring-red-600" @click="closeNotifications()">
+            <span class="sr-only">Dismiss</span>
+            <XIcon class="h-5 w-5" aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <form class="" action="#">
     <div class="md:flex md:items-center md:justify-between">
       <div class="flex-1 min-w-0">
@@ -20,7 +63,7 @@
         <div class="mt-5 md:mt-0 md:col-span-2 space-y-6">
           <div class="sm:col-span-3">
             <label for="hub-url" class="block text-sm font-medium text-gray-700">
-              Cryptomator Hub URL
+              Cryptomator Hub URL *
             </label>
             <div class="mt-1">
               <input id="hub-url" v-model="hubUrl" type="text" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md" @change="updateRealmJson" />
@@ -29,7 +72,7 @@
 
           <div class="sm:col-span-3">
             <label for="hub-user" class="block text-sm font-medium text-gray-700">
-              Initial Hub Admin User
+              Initial Hub Admin User *
             </label>
             <div class="mt-1">
               <input id="hub-user" v-model="hubUser" type="text" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md" @change="updateRealmJson" />
@@ -38,7 +81,7 @@
 
           <div class="sm:col-span-3">
             <label for="hub-pass" class="block text-sm font-medium text-gray-700">
-              Initial Hub Admin Password
+              Initial Hub Admin Password *
             </label>
             <div class="mt-1">
               <input id="hub-pass" v-model="hubPass" type="password" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md" @change="updateRealmJson" />
@@ -60,7 +103,7 @@
       </fieldset>
     </div>
 
-    <div class="my-8 space-y-8 divide-y divide-gray-200">
+    <div v-if="hubUrl.length>0 && hubUser.length>0 && hubPass.length>0 && hubRealmCfg.length>0" class="my-8 space-y-8 divide-y divide-gray-200">
       <fieldset class="bg-white shadow px-4 py-5 sm:rounded-lg sm:p-6 md:grid md:grid-cols-3 md:gap-6">
         <div class="block md:col-span-1">
           <h3 class="text-lg font-medium leading-6 text-gray-700">Upload Realm to Keycloak</h3>
@@ -109,10 +152,15 @@
 import { defineComponent } from 'vue'
 import axios from 'axios';
 import createRealmJson from '../common/realm';
+import { CheckCircleIcon, XIcon } from '@heroicons/vue/solid'
 
 let backendBaseURL = import.meta.env.DEV ? 'http://localhost:9090' : '';
 
 export default defineComponent({
+  components: {
+	  CheckCircleIcon,
+	  XIcon,
+  },
   data: () => ({
     hubUrl: window.location.protocol + '//' + window.location.hostname + ':' + window.location.port as string,
     hubUser: 'owner' as string,
@@ -122,6 +170,8 @@ export default defineComponent({
     kcUser: 'admin' as string,
     kcPass: 'admin' as string,
     kcAuthToken: '' as string,
+	realmSuccessfulCreatedNotification: false as boolean,
+	realmErrorNotification: false as boolean,
   }),
 
   mounted() {
@@ -147,10 +197,17 @@ export default defineComponent({
 
       axios.post(`${backendBaseURL}/setup/create-realm`, params).then(response => {
         console.info('realm created!');
+		this.realmSuccessfulCreatedNotification = true;
       }).catch(error => {
-        console.error('failed', error);
+        console.error('failed to create realm', error);
+		this.realmErrorNotification = true;
       });
-    }
+    },
+
+	closeNotifications(){
+	  this.realmSuccessfulCreatedNotification = false;
+	  this.realmErrorNotification = false;
+	}
   }
 })
 </script>
