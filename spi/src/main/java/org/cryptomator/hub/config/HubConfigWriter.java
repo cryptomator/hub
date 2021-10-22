@@ -7,7 +7,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
@@ -16,7 +15,6 @@ public class HubConfigWriter {
 
     private final Path configPath;
     private final ExecutorService executorService;
-    private final CompletableFuture<Void> runner;
 
     private AtomicReference<Properties> nextJob;
 
@@ -24,14 +22,13 @@ public class HubConfigWriter {
         this.configPath = configPath;
         this.executorService = Executors.newSingleThreadExecutor();
         this.nextJob = new AtomicReference<>(null);
-        this.runner = CompletableFuture.completedFuture(null);
     }
 
     synchronized void persist(Map<String, String> config) {
         var prop = new Properties();
         prop.putAll(config);
         nextJob.set(prop);
-        runner.thenRunAsync(write(), executorService);
+        executorService.submit(this::write);
     }
 
     private Runnable write() {
