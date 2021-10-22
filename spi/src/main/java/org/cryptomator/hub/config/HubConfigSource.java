@@ -1,11 +1,13 @@
 package org.cryptomator.hub.config;
 
+import org.eclipse.microprofile.config.ConfigProvider;
 import org.eclipse.microprofile.config.spi.ConfigSource;
 
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.StreamSupport;
 
 //TODO: reevaluate if CDI is possible
 // because configs are so early created, this might not be possible
@@ -52,6 +54,12 @@ public class HubConfigSource implements ConfigSource {
         if (oldVal != null && !oldVal.equals(value)) {
             writer.persist(config);
         }
+    }
+
+    public static HubConfigSource getInstance() {
+        return  (HubConfigSource) StreamSupport.stream(ConfigProvider.getConfig().getConfigSources().spliterator(),false)
+                .filter(s -> s instanceof HubConfigSource)
+                .findFirst().get();
     }
 
 }
