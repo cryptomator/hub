@@ -11,20 +11,24 @@ import java.util.List;
 @ApplicationScoped
 public class HubConfigSourceFactory implements ConfigSourceFactory {
 
+    private static final String USER_HOME = System.getProperty("user.home");
+
     @Override
     public Iterable<ConfigSource> getConfigSources(ConfigSourceContext configSourceContext) {
         var s = configSourceContext.getValue("hub.config.path");
+        final String hubConfigLocation;
         if (s != null) {
-            var hubConfig = new HubConfigSource(resolveHome(s.getValue()));
-            return List.of(hubConfig);
+            hubConfigLocation = s.getValue();
         } else {
-            return List.of();
+            hubConfigLocation = USER_HOME;
         }
+        var hubConfig = new HubConfigSource(resolveHome(hubConfigLocation));
+        return List.of(hubConfig);
     }
 
     private static Path resolveHome(String p) {
         if (p.startsWith("~")) {
-            return Path.of(System.getProperty("user.home"), p.substring(1));
+            return Path.of(USER_HOME, p.substring(1));
         } else {
             System.out.println(p);
             return Path.of(p);
