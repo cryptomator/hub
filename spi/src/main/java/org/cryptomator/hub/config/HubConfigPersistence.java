@@ -17,7 +17,7 @@ class HubConfigPersistence {
 
 	private final Path configPath;
 
-	public HubConfigPersistence(Path configPath) {
+	HubConfigPersistence(Path configPath) {
 		this.configPath = configPath;
 	}
 
