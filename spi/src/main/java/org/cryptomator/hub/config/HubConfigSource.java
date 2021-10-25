@@ -35,8 +35,9 @@ public class HubConfigSource implements ConfigSource {
     }
 
     @Override
+    //for default sources and their precedence see https://quarkus.io/guides/config-reference#configuration-sources
     public int getOrdinal() {
-        return 900; //TODO
+        return 240;
     }
 
     @Override
