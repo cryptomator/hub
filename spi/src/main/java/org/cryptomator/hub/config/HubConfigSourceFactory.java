@@ -17,7 +17,7 @@ public class HubConfigSourceFactory implements ConfigSourceFactory {
     public Iterable<ConfigSource> getConfigSources(ConfigSourceContext configSourceContext) {
         var s = configSourceContext.getValue("hub.config.path");
         final String hubConfigLocation;
-        if (s != null) {
+        if (s.getValue() != null) {
             hubConfigLocation = s.getValue();
         } else {
             hubConfigLocation = DEFAULT_CONFIG_LOCATION;

@@ -13,7 +13,7 @@ import java.util.Properties;
 class HubConfigPersistence {
 
 	private static final Logger LOG = Logger.getLogger(HubConfigPersistence.class);
-	private static final String HUB_CONFIG_DESCRIPTION = "This file contains configuration values for Crypotmator Hub.";
+	private static final String HUB_CONFIG_DESCRIPTION = "Cryptomator Hub configuration persistence file";
 
 	private final Path configPath;
 

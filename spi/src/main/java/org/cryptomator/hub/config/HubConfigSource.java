@@ -16,7 +16,7 @@ public class HubConfigSource implements ConfigSource {
     private final ConcurrentHashMap<String, String> config;
 
     public HubConfigSource(HubConfigPersistence persistence) {
-        this.config = new ConcurrentHashMap();
+        this.config = new ConcurrentHashMap<>();
         this.persistence = persistence;
 
         config.putAll(persistence.load());
