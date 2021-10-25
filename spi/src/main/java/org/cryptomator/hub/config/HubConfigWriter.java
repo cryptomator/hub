@@ -9,9 +9,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicReference;
 
 class HubConfigWriter {
 
@@ -19,15 +16,9 @@ class HubConfigWriter {
 	private static final String HUB_CONFIG_DESCRIPTION = "This file contains configuration values for Crypotmator Hub.";
 
 	private final Path configPath;
-	private final ExecutorService executorService;
-
-
-	private AtomicReference<Properties> nextJob;
 
 	public HubConfigWriter(Path configPath) {
 		this.configPath = configPath;
-		this.executorService = Executors.newSingleThreadExecutor();
-		this.nextJob = new AtomicReference<>(null);
 	}
 
 	synchronized void persist(Map<String, String> config) {
