@@ -10,14 +10,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-class HubConfigWriter {
+class HubConfigPersistence {
 
-	private static final Logger LOG = Logger.getLogger(HubConfigWriter.class);
+	private static final Logger LOG = Logger.getLogger(HubConfigPersistence.class);
 	private static final String HUB_CONFIG_DESCRIPTION = "This file contains configuration values for Crypotmator Hub.";
 
 	private final Path configPath;
 
-	public HubConfigWriter(Path configPath) {
+	public HubConfigPersistence(Path configPath) {
 		this.configPath = configPath;
 	}
 

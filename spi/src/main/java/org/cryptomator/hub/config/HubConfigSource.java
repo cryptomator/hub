@@ -15,12 +15,12 @@ public class HubConfigSource implements ConfigSource {
 
     private static final String HUB_CONFIGSOURCE_NAME = "HubConfig";
 
-    private HubConfigWriter writer;
+    private HubConfigPersistence writer;
     private final ConcurrentHashMap<String, String> config;
 
     public HubConfigSource(Path p) {
         this.config = new ConcurrentHashMap();
-        writer = new HubConfigWriter(p);
+        writer = new HubConfigPersistence(p);
         config.putAll(writer.read());
     }
 
