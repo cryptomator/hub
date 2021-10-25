@@ -51,7 +51,7 @@ public class HubConfigSource implements ConfigSource {
 
     public void setProperty(String key, String value) {
         String oldVal = config.put(key, value);
-        if (oldVal != null && !oldVal.equals(value)) {
+        if (oldVal == null || (oldVal != null && !oldVal.equals(value))) {
             writer.persist(config);
         }
     }

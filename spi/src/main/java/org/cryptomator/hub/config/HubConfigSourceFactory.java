@@ -11,7 +11,7 @@ import java.util.List;
 @ApplicationScoped
 public class HubConfigSourceFactory implements ConfigSourceFactory {
 
-    private static final String USER_HOME = System.getProperty("user.home");
+    private static final String DEFAULT_CONFIG_LOCATION = "~/hub.properties";
 
     @Override
     public Iterable<ConfigSource> getConfigSources(ConfigSourceContext configSourceContext) {
@@ -20,7 +20,7 @@ public class HubConfigSourceFactory implements ConfigSourceFactory {
         if (s != null) {
             hubConfigLocation = s.getValue();
         } else {
-            hubConfigLocation = USER_HOME;
+            hubConfigLocation = DEFAULT_CONFIG_LOCATION;
         }
         var hubConfig = new HubConfigSource(resolveHome(hubConfigLocation));
         return List.of(hubConfig);
@@ -28,9 +28,8 @@ public class HubConfigSourceFactory implements ConfigSourceFactory {
 
     private static Path resolveHome(String p) {
         if (p.startsWith("~")) {
-            return Path.of(USER_HOME, p.substring(1));
+            return Path.of(System.getProperty("user.home"), p.substring(1));
         } else {
-            System.out.println(p);
             return Path.of(p);
         }
     }

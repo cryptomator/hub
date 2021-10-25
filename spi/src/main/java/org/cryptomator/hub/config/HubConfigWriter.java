@@ -11,7 +11,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class HubConfigWriter {
+class HubConfigWriter {
 
     private final Path configPath;
     private final ExecutorService executorService;
