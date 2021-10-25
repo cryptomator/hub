@@ -1,6 +1,5 @@
 package org.cryptomator.hub.spi;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.oidc.UserInfo;
 import org.cryptomator.hub.entities.Access;
@@ -151,64 +150,19 @@ public class VaultResource {
 		return Response.ok(vault.id).build();
 	}
 
-	public static class AccessGrantDto {
-		@JsonProperty("device_specific_masterkey")
-		public final String deviceSpecificMasterkey;
-
-		@JsonProperty("ephemeral_public_key")
-		public final String ephemeralPublicKey;
-
-		@JsonCreator
-		public AccessGrantDto(@JsonProperty("device_specific_masterkey") String deviceSpecificMasterkey, @JsonProperty("ephemeral_public_key") String ephemeralPublicKey) {
-			this.deviceSpecificMasterkey = deviceSpecificMasterkey;
-			this.ephemeralPublicKey = ephemeralPublicKey;
-		}
+	public static record AccessGrantDto(@JsonProperty("device_specific_masterkey") String deviceSpecificMasterkey, @JsonProperty("ephemeral_public_key") String ephemeralPublicKey) {
 	}
 
-	public static class VaultDto {
-
-		private final String id;
-		private final String name;
-		private final String masterkey;
-		private final String iterations;
-		private final String salt;
-
-		public VaultDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("masterkey") String masterkey, @JsonProperty("iterations") String iterations, @JsonProperty("salt") String salt) {
-			this.id = id;
-			this.name = name;
-			this.masterkey = masterkey;
-			this.iterations = iterations;
-			this.salt = salt;
-		}
-
-		public String getId() {
-			return id;
-		}
-
-		public String getName() {
-			return name;
-		}
-
-		public String getMasterkey() {
-			return masterkey;
-		}
-
-		public String getIterations() {
-			return iterations;
-		}
-
-		public String getSalt() {
-			return salt;
-		}
+	public static record VaultDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("masterkey") String masterkey, @JsonProperty("iterations") String iterations, @JsonProperty("salt") String salt) {
 
 		public Vault toVault(User owner, String id) {
 			var vault = new Vault();
 			vault.id = id;
-			vault.name = getName();
-			vault.masterkey = getMasterkey();
-			vault.iterations = getIterations();
-			vault.salt =getSalt();
 			vault.owner = owner;
+			vault.name = name;
+			vault.masterkey = masterkey;
+			vault.iterations = iterations;
+			vault.salt = salt;
 			return vault;
 		}
 	}

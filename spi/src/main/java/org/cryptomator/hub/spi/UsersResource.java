@@ -67,28 +67,9 @@ public class UsersResource {
 		return Response.ok(users).build();
 	}
 
-	public static class UserDto {
+    public static record UserDto(@JsonProperty("id") String id, @JsonProperty("name") String name,
+                                 @JsonProperty("devices") Set<DeviceResource.DeviceDto> devices) {
 
-		private final String id;
-		private final String name;
-		private final Set<DeviceResource.DeviceDto> devices;
+    }
 
-		public UserDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("devices") Set<DeviceResource.DeviceDto> devices) {
-			this.id = id;
-			this.name = name;
-			this.devices = devices;
-		}
-
-		public String getId() {
-			return id;
-		}
-
-		public String getName() {
-			return name;
-		}
-
-		public Set<DeviceResource.DeviceDto> getDevices() {
-			return devices;
-		}
-	}
 }

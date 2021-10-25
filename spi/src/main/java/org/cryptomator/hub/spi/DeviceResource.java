@@ -74,43 +74,16 @@ public class DeviceResource {
 		return Response.ok(dtos).build();
 	}
 
-	public static class DeviceDto {
-
-		private final String id;
-		private final String name;
-		private final String publicKey;
-		private final Set<VaultResource.VaultDto> accessTo;
-
-		public DeviceDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("publicKey") String publicKey, @JsonProperty("accessTo") Set<VaultResource.VaultDto> accessTo) {
-			this.id = id;
-			this.name = name;
-			this.publicKey = publicKey;
-			this.accessTo = accessTo;
-		}
-
-		public String getId() {
-			return id;
-		}
-
-		public String getName() {
-			return name;
-		}
-
-		public String getPublicKey() {
-			return publicKey;
-		}
+	public static record DeviceDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("publicKey") String publicKey, @JsonProperty("accessTo") Set<VaultResource.VaultDto> accessTo) {
 
 		public Device toDevice(User user, String id) {
 			var device = new Device();
 			device.id = id;
 			device.owner = user;
-			device.name = getName();
-			device.publickey = getPublicKey();
+			device.name = name;
+			device.publickey = publicKey;
 			return device;
 		}
 
-		public Set<VaultResource.VaultDto> getAccessTo() {
-			return accessTo;
-		}
 	}
 }
