@@ -22,7 +22,8 @@ public class HubConfigSourceFactory implements ConfigSourceFactory {
         } else {
             hubConfigLocation = DEFAULT_CONFIG_LOCATION;
         }
-        var hubConfig = new HubConfigSource(resolveHome(hubConfigLocation));
+        var hubConfigPersistence = new HubConfigPersistence(resolveHome(hubConfigLocation));
+        var hubConfig = new HubConfigSource(hubConfigPersistence);
         return List.of(hubConfig);
     }
 
