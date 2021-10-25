@@ -32,7 +32,7 @@ class HubConfigPersistence {
 	}
 
 
-	Map<String, String> read() {
+	Map<String, String> load() {
 		Map<String, String> config = new HashMap<>();
 		try (var in = Files.newInputStream(configPath, StandardOpenOption.READ)) {
 			var prop = new Properties();

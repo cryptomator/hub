@@ -19,7 +19,7 @@ public class HubConfigSource implements ConfigSource {
         this.config = new ConcurrentHashMap();
         this.persistence = persistence;
 
-        config.putAll(persistence.read());
+        config.putAll(persistence.load());
     }
 
     @Override
