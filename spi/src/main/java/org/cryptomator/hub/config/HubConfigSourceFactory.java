@@ -11,27 +11,17 @@ import java.util.List;
 @ApplicationScoped
 public class HubConfigSourceFactory implements ConfigSourceFactory {
 
-    private static final String DEFAULT_CONFIG_LOCATION = "~/hub.properties";
+    private static final String HUBCONFIG_PROPERTY_KEY = "hub.config.path";
 
     @Override
     public Iterable<ConfigSource> getConfigSources(ConfigSourceContext configSourceContext) {
-        var s = configSourceContext.getValue("hub.config.path");
-        final String hubConfigLocation;
-        if (s.getValue() != null) {
-            hubConfigLocation = s.getValue();
-        } else {
-            hubConfigLocation = DEFAULT_CONFIG_LOCATION;
+        var s = configSourceContext.getValue(HUBCONFIG_PROPERTY_KEY);
+        if (s.getValue() == null) {
+            throw new IllegalStateException("Property \"" + HUBCONFIG_PROPERTY_KEY + "\" to point to hub config file is missing");
         }
-        var hubConfigPersistence = new HubConfigPersistence(resolveHome(hubConfigLocation));
+        var hubConfigPersistence = new HubConfigPersistence(Path.of(s.getValue()));
         var hubConfig = new HubConfigSource(hubConfigPersistence);
         return List.of(hubConfig);
     }
 
-    private static Path resolveHome(String p) {
-        if (p.startsWith("~")) {
-            return Path.of(System.getProperty("user.home"), p.substring(1));
-        } else {
-            return Path.of(p);
-        }
-    }
 }
