@@ -1,10 +1,13 @@
 package org.cryptomator.hub.spi;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.cryptomator.hub.config.Config;
 import org.cryptomator.hub.spi.keycloak.AuthService;
 import org.cryptomator.hub.spi.keycloak.RealmsService;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.RestClientBuilder;
 
+import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
@@ -27,15 +30,21 @@ public class SetupResource {
 	private static final String GRANT_TYPE_PW = "password";
 	private static final String ADMIN_CLIENT_ID = "admin-cli";
 
-	// TODO: write this to custom hub-config.json/yaml/whatever once setup is done
+	@Inject
+	Config config; // TODO: replace, once we have a writable config
+
+	// TODO: verify this still works with custom writable config
 	@ConfigProperty(name = "quarkus.oidc.auth-server-url")
 	private String oidcUrl;
 
-	// TODO: refactor this to a global "GET /setup/config" resource used by the frontend
 	@GET
-	@Path("/keycloak-url")
-	@Produces(MediaType.TEXT_PLAIN)
-	public String keycloakUrl() {
+	@Path("/")
+	@Produces(MediaType.APPLICATION_JSON)
+	public ConfigDto getConfig() {
+		return new ConfigDto(keycloakUrl());
+	}
+
+	private String keycloakUrl() {
 		try {
 			var url = new URL(oidcUrl);
 			return url.getProtocol() + "://" + url.getAuthority();
@@ -44,7 +53,7 @@ public class SetupResource {
 		}
 	}
 
-	// TODO: add a ContainerRequestFilter to prevent running this on already-configured servers
+	@AppSetup
 	@POST
 	@Path("/create-realm")
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
@@ -54,6 +63,7 @@ public class SetupResource {
 			var baseUrl = new URL(url);
 			var token = auth(baseUrl, user, password);
 			createRealm(baseUrl, token, realmCfg);
+			config.setSetup(true);
 			return Response.noContent().build();
 		} catch (MalformedURLException e) {
 			return Response.status(Response.Status.BAD_REQUEST).build();
@@ -78,4 +88,8 @@ public class SetupResource {
 			throw new UncheckedIOException(e);
 		}
 	}
+
+	public static record ConfigDto(@JsonProperty("keycloakUrl") String keycloakUrl) {
+	}
+
 }

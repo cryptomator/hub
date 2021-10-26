@@ -175,8 +175,8 @@ export default defineComponent({
   }),
 
   mounted() {
-    axios.get(`${backendBaseURL}/setup/keycloak-url`).then(response => {
-      this.kcUrl = response.data;
+    axios.get(`${backendBaseURL}/setup/`).then(response => {
+      this.kcUrl = response.data.keycloakUrl;
     }).catch(error => {
       this.kcUrl = 'http://localhost:8080';
     });
