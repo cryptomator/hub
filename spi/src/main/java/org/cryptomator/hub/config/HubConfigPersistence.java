@@ -5,6 +5,7 @@ import org.jboss.logging.Logger;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
@@ -39,8 +40,10 @@ class HubConfigPersistence {
 			var prop = new Properties();
 			prop.load(in);
 			prop.forEach((k, v) -> config.put((String) k, (String) v));
+		} catch (NoSuchFileException e) {
+			LOG.debugf("No hub config file found at %s.", configPath);
 		} catch (IOException e) {
-			LOG.info("Unable to read hub config from {}, creating empty.", configPath, e);
+			LOG.warn(String.format("Unable to read hub config from %s, creating empty.", configPath), e);
 		}
 		return config;
 	}
