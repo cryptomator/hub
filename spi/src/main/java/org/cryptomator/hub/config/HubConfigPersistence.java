@@ -3,6 +3,7 @@ package org.cryptomator.hub.config;
 import org.jboss.logging.Logger;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -27,7 +28,7 @@ class HubConfigPersistence {
 		try (var out = Files.newOutputStream(configPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
 			prop.store(out, HUB_CONFIG_DESCRIPTION);
 		} catch (IOException e) {
-			LOG.warn("Unable to persist hub config to {}.", configPath, e);
+			throw new UncheckedIOException("Unable to persist Hub config to "+configPath,e);
 		}
 	}
 
