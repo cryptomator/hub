@@ -1,12 +1,12 @@
 <template>
-  <Disclosure as="nav" class="bg-gray-800" v-slot="{ open }">
+  <Disclosure v-slot="{ open }" as="nav" class="bg-gray-800">
     <div class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
       <div class="relative flex items-center justify-between h-16">
         <div class="absolute inset-y-0 left-0 flex items-center sm:hidden">
           <!-- Mobile menu button-->
           <DisclosureButton class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
             <span class="sr-only">
-            Open main menu</span>
+              Open main menu</span>
             <MenuIcon v-if="!open" class="block h-6 w-6" aria-hidden="true" />
             <XIcon v-else class="block h-6 w-6" aria-hidden="true" />
           </DisclosureButton>
@@ -14,9 +14,9 @@
         <div class="flex-1 flex items-center justify-center sm:items-stretch sm:justify-start">
           <div class="flex-shrink-0 flex items-center">
             <img
-                src="../assets/logo.svg"
-                class="h-8"
-                alt="Logo"
+              src="../assets/logo.svg"
+              class="h-8"
+              alt="Logo"
             >
             <span class="font-headline font-bold text-primary ml-2 pb-px">CRYPTOMATOR HUB</span>
             <!--<img class="block lg:hidden h-8 w-auto" src="https://tailwindui.com/img/logos/workflow-mark-indigo-500.svg" alt="Workflow" />
@@ -29,39 +29,50 @@
               <router-link to="/"
                            class="text-gray-300 hover:bg-gray-700 hover:text-white', 'px-3 py-2 rounded-md text-sm font-medium'"
                            active-class="bg-gray-900 text-white px-3 py-2 rounded-md text-sm font-medium"
-                           exact-path>
-                Home</router-link>
+                           exact-path
+              >
+                Home
+              </router-link>
               <router-link to="/vaults/create"
                            class="text-gray-300 hover:bg-gray-700 hover:text-white', 'px-3 py-2 rounded-md text-sm font-medium'"
                            active-class="bg-gray-900 text-white px-3 py-2 rounded-md text-sm font-medium"
-                           exact-path>
+                           exact-path
+              >
                 {{ t('create_vault_title') }}
-                </router-link>
+              </router-link>
               <router-link to="/user"
                            class="text-gray-300 hover:bg-gray-700 hover:text-white', 'px-3 py-2 rounded-md text-sm font-medium'"
                            active-class="bg-gray-900 text-white px-3 py-2 rounded-md text-sm font-medium"
-                           exact-path>
-                User Details</router-link>
-              <router-link to="/logout"
+                           exact-path
+              >
+                User Details
+              </router-link>
+              <!-- TODO decide to use logout() directly and remove Logout.vue-->
+              <router-link v-if="isLoggedIn()"
+                           to="/logout"
                            class="text-gray-300 hover:bg-gray-700 hover:text-white', 'px-3 py-2 rounded-md text-sm font-medium'"
                            active-class="bg-gray-900 text-white px-3 py-2 rounded-md text-sm font-medium"
-                           exact-path>
-                Logout</router-link>
+                           exact-path
+              >
+                Logout
+              </router-link>
               <router-link to="/setup"
                            class="text-gray-300 hover:bg-gray-700 hover:text-white', 'px-3 py-2 rounded-md text-sm font-medium'"
                            active-class="bg-gray-900 text-white px-3 py-2 rounded-md text-sm font-medium"
-                           exact-path>
-                Setup</router-link>
+                           exact-path
+              >
+                Setup
+              </router-link>
             </div>
           </div>
         </div>
-          <div class="locale-changer">
-            <select v-model="$i18n.locale">
-              <option v-for="(lang, i) in languages" :key="`Lang${i}`" :value="lang">
-                {{ lang }}
-              </option>
-            </select>
-          </div>
+        <div>
+          <select v-model="$i18n.locale" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+            <option v-for="(lang, i) in languages" :key="`Lang${i}`" :value="lang">
+              {{ lang }}
+            </option>
+          </select>
+        </div>
         <!-- Profile dropdown -->
         <Menu as="div" class="ml-3 relative">
           <div>
@@ -103,25 +114,21 @@
 <script lang="ts">
 import { defineComponent } from 'vue'
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
-import { BellIcon, MenuIcon, XIcon } from '@heroicons/vue/outline'
-import { ref } from 'vue'
-import { Listbox, ListboxButton, ListboxLabel, ListboxOption, ListboxOptions } from '@headlessui/vue'
-import { CheckIcon, SelectorIcon } from '@heroicons/vue/solid'
+import { MenuIcon, XIcon } from '@heroicons/vue/outline'
 import { Locales } from "../locales/locales";
 import { useI18n } from 'vue-i18n'
 import auth from '../common/auth';
 
-
-
 const navigation = [
   { name: 'Home', href: '/'},
-  { name: 'Create vault', href: '/vaults/create'},
+  { name: "{{ t(\'create_vault_title\') }}", href: '/vaults/create'},
   { name: 'User Details', href: '/user'},
 ]
 
 const languages = Locales
 
 export default defineComponent({
+  name: "Navbar.vue",
   components: {
     Disclosure,
     DisclosureButton,
@@ -130,11 +137,9 @@ export default defineComponent({
     MenuButton,
     MenuItem,
     MenuItems,
-    BellIcon,
     MenuIcon,
-    XIcon,
+	XIcon,
   },
-  name: "Navbar.vue",
   setup(){
     const { t } = useI18n({
   	  useScope: 'global'
@@ -151,8 +156,6 @@ export default defineComponent({
     },
     logout() {
       auth.logout();
-      this.loggedIn = flase;
-      //TODO shouldn't this be false?
     }
   }
 
