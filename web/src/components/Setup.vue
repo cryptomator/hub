@@ -28,7 +28,7 @@
       </div>
       <div class="ml-3">
         <p class="text-sm font-medium text-red-800">
-          Error while creating realm. It might exist already.
+          Error while creating realm. It might already exist.
         </p>
       </div>
       <div class="ml-auto pl-3">
@@ -153,13 +153,14 @@ import { defineComponent } from 'vue'
 import axios from 'axios';
 import config from '../common/config';
 import createRealmJson from '../common/realm';
-import { CheckCircleIcon, XIcon } from '@heroicons/vue/solid'
+import { CheckCircleIcon, XCircleIcon, XIcon } from '@heroicons/vue/solid'
 
 let backendBaseURL = import.meta.env.DEV ? 'http://localhost:9090' : '';
 
 export default defineComponent({
   components: {
 	  CheckCircleIcon,
+	  XCircleIcon,
 	  XIcon,
   },
   data: () => ({
