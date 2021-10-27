@@ -8,10 +8,12 @@ import org.jboss.resteasy.annotations.cache.NoCache;
 import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.net.URI;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -22,13 +24,22 @@ public class UsersResource {
 	@Inject
 	JsonWebToken jwt;
 
+	@PUT
+	@Path("/me")
+	@RolesAllowed("user")
+	@NoCache
+	public Response syncMe() {
+		User.createOrUpdate(jwt.getSubject(), jwt.getName());
+		return Response.created(URI.create(".")).build();
+	}
+
 	@GET
 	@Path("/me")
 	@RolesAllowed("user")
 	@NoCache
-	public String me() {
+	public String getMe() {
 		User user = User.findById(jwt.getSubject());
-		return user.name; // TODO: fix NPE if user not found
+		return user.name;
 	}
 
 	@GET

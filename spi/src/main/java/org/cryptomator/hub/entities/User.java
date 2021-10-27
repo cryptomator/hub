@@ -11,6 +11,7 @@ import javax.persistence.Id;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import javax.transaction.Transactional;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -87,6 +88,17 @@ public class User extends PanacheEntityBase {
     }*/
 
 	// --- data layer queries ---
+
+	@Transactional(Transactional.TxType.REQUIRED)
+	public static void createOrUpdate(String id, String name) {
+		User user = findById(id);
+		if (user == null) {
+			user = new User();
+			user.id = id;
+		}
+		user.name = name;
+		user.persist();
+	}
 
 	public static List<User> getAllWithDevices() {
 		return list("#User.includingDevices");

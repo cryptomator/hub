@@ -1,5 +1,6 @@
 import { createRouter, createWebHashHistory, RouteRecordRaw } from 'vue-router';
 import authPromise from '../common/auth';
+import backend from '../common/backend';
 import config from '../common/config';
 import AddDevice from '../components/AddDevice.vue';
 import CreateVault from '../components/CreateVault.vue';
@@ -102,6 +103,7 @@ router.beforeEach((to, from, next) => {
     const redirectUri = `${window.location.protocol}//${window.location.host}${import.meta.env.BASE_URL}#${to.fullPath}`
     authPromise.then(auth => {
       auth.loginIfRequired(redirectUri).then(() => {
+        backend.users.syncMe(); // updates db entry with account info from identity provider
         next();
       }).catch(error => {
         next(new Error("auth failed " + error));
