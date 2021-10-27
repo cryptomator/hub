@@ -10,7 +10,7 @@ import javax.ws.rs.core.MediaType;
 import java.io.InputStream;
 
 @RegisterRestClient
-@Path("/auth/admin/realms")
+@Path("/admin/realms")
 public interface RealmsService {
 
 	@POST

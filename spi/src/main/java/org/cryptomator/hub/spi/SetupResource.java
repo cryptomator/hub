@@ -47,7 +47,7 @@ public class SetupResource {
 	private String keycloakUrl() {
 		try {
 			var url = new URL(oidcUrl);
-			return url.getProtocol() + "://" + url.getAuthority();
+			return url.getProtocol() + "://" + url.getAuthority() + "/auth";
 		} catch (MalformedURLException e) {
 			return DEFAULT_OIDC_URL;
 		}

@@ -9,7 +9,7 @@ class Auth {
     console.assert(config.get().setupCompleted, 'did not run setup yet');
 
     this.keycloak = newKeycloak({
-      url: `${config.get().keycloakUrl}/auth`,
+      url: `${config.get().keycloakUrl}`,
       realm: 'cryptomator', // TODO: read from config
       clientId: 'cryptomator-hub', // TODO: read from config
     });
