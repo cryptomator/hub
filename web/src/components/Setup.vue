@@ -1,5 +1,6 @@
 <template>
   <!-- Notification for successfully creation of a realm -->
+  <!-- TODO remove if staying with @dafcoe/vue-notification plugin
   <div id="realmSuccessfulCreatedNotification" v-if="realmSuccessfulCreatedNotification" class="rounded-md bg-green-50 p-4">
     <div class="flex">
       <div class="flex-shrink-0">
@@ -20,7 +21,9 @@
       </div>
     </div>
   </div>
+  -->
   <!-- Notification for error during creation of a realm -->
+  <!-- TODO remove if staying with @dafcoe/vue-notification plugin
   <div id="realmErrorNotification" v-if="realmErrorNotification" class="rounded-md bg-red-50 p-4">
     <div class="flex">
       <div class="flex-shrink-0">
@@ -41,6 +44,7 @@
       </div>
     </div>
   </div>
+  -->
 
   <form class="" action="#">
     <div class="md:flex md:items-center md:justify-between">
@@ -153,7 +157,10 @@ import { defineComponent } from 'vue'
 import axios from 'axios';
 import config from '../common/config';
 import createRealmJson from '../common/realm';
-import { CheckCircleIcon, XCircleIcon, XIcon } from '@heroicons/vue/solid'
+import { CheckCircleIcon, XCircleIcon, XIcon } from '@heroicons/vue/solid';
+import { useNotificationStore } from '@dafcoe/vue-notification'
+const { setNotification } = useNotificationStore()
+
 
 let backendBaseURL = import.meta.env.DEV ? 'http://localhost:9090' : '';
 
@@ -172,8 +179,8 @@ export default defineComponent({
     kcUser: 'admin' as string,
     kcPass: 'admin' as string,
     kcAuthToken: '' as string,
-    realmSuccessfulCreatedNotification: false as boolean,
-    realmErrorNotification: false as boolean,
+    //realmSuccessfulCreatedNotification: false as boolean,
+    //realmErrorNotification: false as boolean,
   }),
 
   mounted() {
@@ -193,18 +200,39 @@ export default defineComponent({
       params.append('realmCfg', this.hubRealmCfg);
 
       axios.post(`${backendBaseURL}/setup/create-realm`, params).then(response => {
-		    this.realmSuccessfulCreatedNotification = true;
+		//this.realmSuccessfulCreatedNotification = true;
+		const realmSuccessfulCreatedNotification = {
+		 "message": "Successfully created realm.",
+		 "type": "success",
+		 "showIcon": true,
+		 "dismiss": {
+		  "manually": true,
+		  "automatically": true
+		 },
+		 "showDurationProgress": true,
+		}
+		setNotification(realmSuccessfulCreatedNotification)
         config.reload();
       }).catch(error => {
         console.error('failed to create realm', error);
-		    this.realmErrorNotification = true;
+		//this.realmErrorNotification = true;
+		const realmErrorNotification = {
+		 "message": "Error while creating realm. It might already exist.",
+		 "type": "alert",
+		 "showIcon": true,
+		 "dismiss": {
+		  "manually": true,
+		  "automatically": false
+		 },
+		}
+		setNotification(realmErrorNotification)
       });
     },
 
-	closeNotifications(){
+	/*closeNotifications(){
 	  this.realmSuccessfulCreatedNotification = false;
 	  this.realmErrorNotification = false;
-	}
+	}*/
   }
 })
 </script>
