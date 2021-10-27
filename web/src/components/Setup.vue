@@ -1,6 +1,6 @@
 <template>
   <!-- Notification for successfully creation of a realm -->
-  <div v-if="realmSuccessfulCreatedNotification" class="rounded-md bg-green-50 p-4">
+  <div id="realmSuccessfulCreatedNotification" v-if="realmSuccessfulCreatedNotification" class="rounded-md bg-green-50 p-4">
     <div class="flex">
       <div class="flex-shrink-0">
         <CheckCircleIcon class="h-5 w-5 text-green-400" aria-hidden="true" />
@@ -21,13 +21,13 @@
     </div>
   </div>
   <!-- Notification for error during creation of a realm -->
-  <div v-if="realmErrorNotification" class="rounded-md bg-red-50 p-4">
+  <div id="realmErrorNotification" v-if="realmErrorNotification" class="rounded-md bg-red-50 p-4">
     <div class="flex">
       <div class="flex-shrink-0">
         <XCircleIcon class="h-5 w-5 text-red-400" aria-hidden="true" />
       </div>
       <div class="ml-3">
-        <p class="text-sm font-medium text-green-800">
+        <p class="text-sm font-medium text-red-800">
           Error while creating realm. It might exist already.
         </p>
       </div>
