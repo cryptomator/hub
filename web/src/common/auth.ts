@@ -1,20 +1,23 @@
 import newKeycloak, { KeycloakInstance } from 'keycloak-js';
+import config from './config';
 
 class Auth {
   private keycloak: KeycloakInstance;
   private initialized: Promise<boolean>;
 
   public constructor() {
+    console.assert(config.get().setupCompleted, 'did not run setup yet');
+
     this.keycloak = newKeycloak({
-      url: 'http://localhost:8080/auth',
-      realm: 'cryptomator',
-      clientId: 'cryptomator-hub',
+      url: `${config.get().keycloakUrl}/auth`,
+      realm: 'cryptomator', // TODO: read from config
+      clientId: 'cryptomator-hub', // TODO: read from config
     });
     this.initialized = this.keycloak.init({
       onLoad: 'check-sso',
       silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
       pkceMethod: 'S256',
-    })
+    });
   }
 
   public isAuthenticated(): boolean {
@@ -23,10 +26,8 @@ class Auth {
 
   public async loginIfRequired(redirectUri?: string): Promise<void> {
     await this.initialized;
-    if (this.keycloak.authenticated) {
-      return Promise.resolve();
-    } else {
-      return this.keycloak.login({
+    if (!this.keycloak.authenticated) {
+      await this.keycloak.login({
         redirectUri: (redirectUri ?? window.location) + '?login' // keycloak appends '&state=...' which confuses vue-router if there is no '?'
       });
     }
@@ -41,20 +42,17 @@ class Auth {
 
   public async bearerToken(): Promise<string | undefined> {
     if (this.keycloak.isTokenExpired()) {
-      return this.keycloak.updateToken(30)
-        .then(() => {
-          return Promise.resolve(this.keycloak.token);
-        })
-        .catch(error => { return Promise.reject(error) });
-    } else {
-      return Promise.resolve(this.keycloak.token);
+      await this.keycloak.updateToken(30);
     }
+    return this.keycloak.token;
   }
 
-  public userId(): string | undefined {
-    return this.keycloak.subject;
-  }
 }
 
-const auth = new Auth();
-export default auth;
+// this is a lazy singleton:
+const instance: Promise<Auth> = (async () => {
+  await config.awaitSetupCompletion();
+  return new Auth();
+})();
+
+export default instance;

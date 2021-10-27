@@ -139,7 +139,7 @@
             </div>
           </div>
 
-          <button type="button" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" @click="auth()">
+          <button type="button" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" @click="createRealm()">
             Upload
           </button>
         </div>
@@ -151,6 +151,7 @@
 <script lang="ts">
 import { defineComponent } from 'vue'
 import axios from 'axios';
+import config from '../common/config';
 import createRealmJson from '../common/realm';
 import { CheckCircleIcon, XIcon } from '@heroicons/vue/solid'
 
@@ -166,20 +167,15 @@ export default defineComponent({
     hubUser: 'owner' as string,
     hubPass: '' as string,
     hubRealmCfg: '' as string,
-    kcUrl: '' as string,
+    kcUrl: config.get().keycloakUrl as string,
     kcUser: 'admin' as string,
     kcPass: 'admin' as string,
     kcAuthToken: '' as string,
-	realmSuccessfulCreatedNotification: false as boolean,
-	realmErrorNotification: false as boolean,
+    realmSuccessfulCreatedNotification: false as boolean,
+    realmErrorNotification: false as boolean,
   }),
 
   mounted() {
-    axios.get(`${backendBaseURL}/setup/`).then(response => {
-      this.kcUrl = response.data.keycloakUrl;
-    }).catch(error => {
-      this.kcUrl = 'http://localhost:8080';
-    });
     this.updateRealmJson();
   },
 
@@ -188,7 +184,7 @@ export default defineComponent({
       this.hubRealmCfg = createRealmJson(this.hubUrl, this.hubUser, this.hubPass);
     },
 
-    auth() {
+    createRealm() {
       const params = new URLSearchParams();
       params.append('kcUrl', this.kcUrl);
       params.append('user', this.kcUser);
@@ -196,11 +192,11 @@ export default defineComponent({
       params.append('realmCfg', this.hubRealmCfg);
 
       axios.post(`${backendBaseURL}/setup/create-realm`, params).then(response => {
-        console.info('realm created!');
-		this.realmSuccessfulCreatedNotification = true;
+		    this.realmSuccessfulCreatedNotification = true;
+        config.reload();
       }).catch(error => {
         console.error('failed to create realm', error);
-		this.realmErrorNotification = true;
+		    this.realmErrorNotification = true;
       });
     },
 

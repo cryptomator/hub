@@ -35,13 +35,13 @@ public class SetupResource {
 
 	// TODO: verify this still works with custom writable config
 	@ConfigProperty(name = "quarkus.oidc.auth-server-url")
-	private String oidcUrl;
+	String oidcUrl;
 
 	@GET
 	@Path("/")
 	@Produces(MediaType.APPLICATION_JSON)
 	public ConfigDto getConfig() {
-		return new ConfigDto(keycloakUrl());
+		return new ConfigDto(config.isSetup(), keycloakUrl());
 	}
 
 	private String keycloakUrl() {
@@ -89,7 +89,7 @@ public class SetupResource {
 		}
 	}
 
-	public static record ConfigDto(@JsonProperty("keycloakUrl") String keycloakUrl) {
+	public static record ConfigDto(@JsonProperty("setupCompleted") boolean setupCompleted, @JsonProperty("keycloakUrl") String keycloakUrl) {
 	}
 
 }

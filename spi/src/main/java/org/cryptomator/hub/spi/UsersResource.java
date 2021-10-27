@@ -1,8 +1,8 @@
 package org.cryptomator.hub.spi;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.quarkus.oidc.UserInfo;
 import org.cryptomator.hub.entities.User;
+import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.jboss.resteasy.annotations.cache.NoCache;
 
 import javax.annotation.security.RolesAllowed;
@@ -20,14 +20,15 @@ import java.util.stream.Collectors;
 public class UsersResource {
 
 	@Inject
-	UserInfo userInfo;
+	JsonWebToken jwt;
 
 	@GET
 	@Path("/me")
 	@RolesAllowed("user")
 	@NoCache
 	public String me() {
-		return User.findById(userInfo.getString("sub")).name;
+		User user = User.findById(jwt.getSubject());
+		return user.name; // TODO: fix NPE if user not found
 	}
 
 	@GET
@@ -35,7 +36,7 @@ public class UsersResource {
 	@RolesAllowed("user")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getMeIncludingDevicesAndVaults() {
-		User user = User.getWithDevicesAndAccess(userInfo.getString("sub"));
+		User user = User.getWithDevicesAndAccess(jwt.getSubject()); // TODO: fix NPE if user not found
 		var devices = user
 				.devices
 				.stream()

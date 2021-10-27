@@ -1,5 +1,5 @@
 export default function createRealmJson(hubUrl: string, adminUser: string, adminPass: string): string {
-return `{
+    return `{
     "id" : "cryptomator",
     "realm" : "cryptomator",
     "displayName" : "Cryptomator",
@@ -57,8 +57,8 @@ return `{
         "publicClient" : true,
         "name" : "Cryptomator Hub",
         "enabled" : true,
-        "redirectUris" : [ "${hubUrl}", "http://127.0.0.1" ],
-        "webOrigins" : [ "${hubUrl}" ],
+        "redirectUris" : [ "${hubUrl}/*", "http://127.0.0.1" ],
+        "webOrigins" : [ "+" ],
         "bearerOnly" : false,
         "frontchannelLogout" : false,
         "protocol" : "openid-connect",

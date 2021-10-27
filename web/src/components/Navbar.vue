@@ -109,7 +109,7 @@ import { Listbox, ListboxButton, ListboxLabel, ListboxOption, ListboxOptions } f
 import { CheckIcon, SelectorIcon } from '@heroicons/vue/solid'
 import { Locales } from "../locales/locales";
 import { useI18n } from 'vue-i18n'
-import auth from '../common/auth';
+import authPromise from '../common/auth';
 
 
 
@@ -146,13 +146,13 @@ export default defineComponent({
     }
   },
   methods: {
-    isLoggedIn(){
+    async isLoggedIn(){
+      const auth = await authPromise;
       return auth.isAuthenticated();
     },
-    logout() {
+    async logout() {
+      const auth = await authPromise;
       auth.logout();
-      this.loggedIn = flase;
-      //TODO shouldn't this be false?
     }
   }
 

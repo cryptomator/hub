@@ -88,10 +88,6 @@ public class User extends PanacheEntityBase {
 
 	// --- data layer queries ---
 
-	public static User findById(String id) {
-		return PanacheEntityBase.findById(id);
-	}
-
 	public static List<User> getAllWithDevices() {
 		return list("#User.includingDevices");
 	}

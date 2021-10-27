@@ -8,3 +8,17 @@ export function uuid(): string {
     return v.toString(16);
   });
 }
+
+export class Deferred<T> {
+  public promise: Promise<T>;
+  public reject: (reason?: any) => void;
+  public resolve: (value: T) => void;
+  constructor() {
+    this.reject = (reason) => { };
+    this.resolve = (value) => { };
+    this.promise = new Promise<T>((resolve, reject) => {
+      this.reject = reject
+      this.resolve = resolve
+    })
+  }
+}
