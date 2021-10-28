@@ -7,8 +7,6 @@ import org.jboss.logging.Logger;
 import javax.enterprise.inject.Produces;
 import javax.inject.Named;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.StreamSupport;
@@ -33,11 +31,6 @@ public class HubConfig implements ConfigSource {
         this.persistence = new HubConfigPersistence(Path.of(configPath));
 
         persistence.load(config);
-    }
-
-    @Override
-    public Map<String, String> getProperties() {
-        return Collections.unmodifiableMap((Map<String, String>) (Map<?, ?>) config);
     }
 
     @Override
