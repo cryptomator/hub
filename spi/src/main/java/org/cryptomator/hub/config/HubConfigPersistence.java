@@ -8,7 +8,6 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.Map;
 import java.util.Properties;
 
 class HubConfigPersistence {
@@ -22,19 +21,15 @@ class HubConfigPersistence {
         this.configPath = configPath;
     }
 
-    synchronized void persist(Map<String, String> config) {
-        var prop = new Properties();
-        prop.putAll(config);
+    synchronized void persist(Properties properties) {
         try (var out = Files.newOutputStream(configPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
-            prop.store(out, HUB_CONFIG_DESCRIPTION);
+            properties.store(out, HUB_CONFIG_DESCRIPTION);
         } catch (IOException e) {
             throw new UncheckedIOException("Unable to persist Hub config to " + configPath, e);
         }
     }
 
-
-    synchronized Map<String, String> load() {
-        var prop = new Properties();
+    synchronized void load(Properties prop) {
         try (var in = Files.newInputStream(configPath, StandardOpenOption.READ)) {
             prop.load(in);
         } catch (NoSuchFileException e) {
@@ -42,7 +37,6 @@ class HubConfigPersistence {
         } catch (IOException e) {
             LOG.warn(String.format("Unable to read hub config from %s, creating empty.", configPath), e);
         }
-        return (Map<String, String>) (Map<?, ?>) prop;
     }
 
 

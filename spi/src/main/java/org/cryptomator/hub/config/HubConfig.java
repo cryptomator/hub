@@ -9,8 +9,8 @@ import javax.inject.Named;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.StreamSupport;
 
 public class HubConfig implements ConfigSource {
@@ -20,7 +20,7 @@ public class HubConfig implements ConfigSource {
     private static final String HUB_CONFIGPATH_PROPERTY_KEY = "hub.config.path";
 
     private final HubConfigPersistence persistence;
-    private final ConcurrentHashMap<String, String> config;
+    private final Properties config;
 
     public HubConfig() {
         var configPath = System.getProperty(HUB_CONFIGPATH_PROPERTY_KEY);
@@ -29,20 +29,20 @@ public class HubConfig implements ConfigSource {
         }
 
         LOG.info("Hub config persists to " + configPath);
-        this.config = new ConcurrentHashMap<>();
+        this.config = new Properties();
         this.persistence = new HubConfigPersistence(Path.of(configPath));
 
-        config.putAll(persistence.load());
+        persistence.load(config);
     }
 
     @Override
     public Map<String, String> getProperties() {
-        return Collections.unmodifiableMap(config);
+        return Collections.unmodifiableMap((Map<String, String>) (Map<?, ?>) config);
     }
 
     @Override
     public Set<String> getPropertyNames() {
-        return config.keySet();
+        return config.stringPropertyNames();
     }
 
     @Override
@@ -52,8 +52,8 @@ public class HubConfig implements ConfigSource {
     }
 
     @Override
-    public String getValue(String s) {
-        return config.get(s);
+    public String getValue(String key) {
+        return config.getProperty(key);
     }
 
     @Override
@@ -61,8 +61,8 @@ public class HubConfig implements ConfigSource {
         return HUB_CONFIGSOURCE_NAME;
     }
 
-    public void setProperty(Key key, String value) {
-        String oldVal = config.put(key.toString(), value);
+    public synchronized void setProperty(Key key, String value) {
+        String oldVal = (String) config.setProperty(key.toString(), value);
         if (oldVal == null || !oldVal.equals(value)) {
             persistence.persist(config);
         }
