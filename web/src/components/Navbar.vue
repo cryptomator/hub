@@ -24,45 +24,13 @@
           </div>
           <div class="hidden sm:block sm:ml-6">
             <div class="flex space-x-4">
-              <!--<router-link v-for="item in navigation" :key="item.name" :to="item.href" :class="[item.current ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white', 'px-3 py-2 rounded-md text-sm font-medium']" :aria-current="item.current ? 'page' : undefined">{{ item.name }}</router-link>-->
-              <!--<a v-for="item in navigation" :key="item.name" :href="item.href" :class="[item.current ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white', 'px-3 py-2 rounded-md text-sm font-medium']" :aria-current="item.current ? 'page' : undefined">{{ item.name }}</a>-->
-              <router-link to="/"
+              <router-link v-for="item in navigation" :key="item.name" :v-if="!item.to === '/logout' && isLoggedIn()" :to="item.to"
                            class="text-gray-300 hover:bg-gray-700 hover:text-white', 'px-3 py-2 rounded-md text-sm font-medium'"
                            active-class="bg-gray-900 text-white px-3 py-2 rounded-md text-sm font-medium"
                            exact-path
               >
-                Home
-              </router-link>
-              <router-link to="/vaults/create"
-                           class="text-gray-300 hover:bg-gray-700 hover:text-white', 'px-3 py-2 rounded-md text-sm font-medium'"
-                           active-class="bg-gray-900 text-white px-3 py-2 rounded-md text-sm font-medium"
-                           exact-path
-              >
-                {{ t('create_vault_title') }}
-              </router-link>
-              <router-link to="/user"
-                           class="text-gray-300 hover:bg-gray-700 hover:text-white', 'px-3 py-2 rounded-md text-sm font-medium'"
-                           active-class="bg-gray-900 text-white px-3 py-2 rounded-md text-sm font-medium"
-                           exact-path
-              >
-                User Details
-              </router-link>
-              <!-- TODO decide to use logout() directly and remove Logout.vue-->
-              <router-link v-if="isLoggedIn()"
-                           to="/logout"
-                           class="text-gray-300 hover:bg-gray-700 hover:text-white', 'px-3 py-2 rounded-md text-sm font-medium'"
-                           active-class="bg-gray-900 text-white px-3 py-2 rounded-md text-sm font-medium"
-                           exact-path
-              >
-                Logout
-              </router-link>
-              <router-link to="/setup"
-                           class="text-gray-300 hover:bg-gray-700 hover:text-white', 'px-3 py-2 rounded-md text-sm font-medium'"
-                           active-class="bg-gray-900 text-white px-3 py-2 rounded-md text-sm font-medium"
-                           exact-path
-              >
-                Setup
-              </router-link>
+                {{ t(item.name) }}
+              </router-link>	
             </div>
           </div>
         </div>
@@ -105,7 +73,9 @@
     </div>
     <DisclosurePanel class="sm:hidden">
       <div class="px-2 pt-2 pb-3 space-y-1">
-        <a v-for="item in navigation" :key="item.name" :href="item.href" :class="[item.current ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white', 'block px-3 py-2 rounded-md text-base font-medium']" :aria-current="item.current ? 'page' : undefined">{{ item.name }}</a>
+        <router-link v-for="item in navigation" :key="item.name" :to="item.to" :class="[item.current ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white', 'block px-3 py-2 rounded-md text-base font-medium']" :aria-current="item.current ? 'page' : undefined">
+          {{ t(item.name) }}
+        </router-link>
       </div>
     </DisclosurePanel>
   </Disclosure>
@@ -120,9 +90,11 @@ import { useI18n } from 'vue-i18n'
 import auth from '../common/auth';
 
 const navigation = [
-  { name: 'Home', href: '/'},
-  { name: "{{ t(\'create_vault_title\') }}", href: '/vaults/create'},
-  { name: 'User Details', href: '/user'},
+  { name: 'home', to: '/'},
+  { name: "create_vault_title", to: '/vaults/create'},
+  { name: 'user_details', to: '/user'},
+  { name: 'logout', to: '/logout'},
+  { name: 'setup', to: "/setup"}
 ]
 
 const languages = Locales
