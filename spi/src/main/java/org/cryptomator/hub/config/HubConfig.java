@@ -1,0 +1,97 @@
+package org.cryptomator.hub.config;
+
+import org.eclipse.microprofile.config.ConfigProvider;
+import org.eclipse.microprofile.config.spi.ConfigSource;
+import org.jboss.logging.Logger;
+
+import javax.enterprise.inject.Produces;
+import javax.inject.Named;
+import java.nio.file.Path;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.StreamSupport;
+
+public class HubConfig implements ConfigSource {
+
+    private static final Logger LOG = Logger.getLogger(HubConfig.class);
+    private static final String HUB_CONFIGSOURCE_NAME = "HubConfig";
+    private static final String HUB_CONFIGPATH_PROPERTY_KEY = "hub.config.path";
+
+    private final HubConfigPersistence persistence;
+    private final ConcurrentHashMap<String, String> config;
+
+    public HubConfig() {
+        var configPath = System.getProperty(HUB_CONFIGPATH_PROPERTY_KEY);
+        if (configPath == null) {
+            throw new IllegalStateException("Property " + HUB_CONFIGPATH_PROPERTY_KEY + " not set.");
+        }
+
+        LOG.info("Hub config persists to " + configPath);
+        this.config = new ConcurrentHashMap<>();
+        this.persistence = new HubConfigPersistence(Path.of(configPath));
+
+        config.putAll(persistence.load());
+    }
+
+    @Override
+    public Map<String, String> getProperties() {
+        return Collections.unmodifiableMap(config);
+    }
+
+    @Override
+    public Set<String> getPropertyNames() {
+        return config.keySet();
+    }
+
+    @Override
+    //for default sources and their precedence see https://quarkus.io/guides/config-reference#configuration-sources
+    public int getOrdinal() {
+        return 240;
+    }
+
+    @Override
+    public String getValue(String s) {
+        return config.get(s);
+    }
+
+    @Override
+    public String getName() {
+        return HUB_CONFIGSOURCE_NAME;
+    }
+
+    public void setProperty(Key key, String value) {
+        String oldVal = config.put(key.toString(), value);
+        if (oldVal == null || !oldVal.equals(value)) {
+            persistence.persist(config);
+        }
+    }
+
+    @Produces
+    @Named("HubConfig")
+    public static HubConfig getInstance() {
+        return (HubConfig) StreamSupport.stream(ConfigProvider.getConfig().getConfigSources().spliterator(), false)
+                .filter(s -> s instanceof HubConfig)
+                .findFirst()
+                .get();
+    }
+
+    public enum Key {
+
+        //TODO: replace by real property key
+        DUMMY_VALUE("dummy.value");
+
+        private final String actualKeyString;
+
+        Key(String actualKeyString) {
+            this.actualKeyString = actualKeyString;
+        }
+
+        @Override
+        public String toString() {
+            return actualKeyString;
+        }
+    }
+
+}
