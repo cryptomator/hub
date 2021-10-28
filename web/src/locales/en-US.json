@@ -1,6 +1,9 @@
 {
   "vault_details_title": "Vault Details for",
   "user_details_title": "User Details of",
-  "create_vault_title": "Create Vault"
-
+  "create_vault_title": "Create Vault",
+  "home": "Home",
+  "user_details": "User Details",
+  "logout": "Logout",
+  "setup": "Setup"
 }
