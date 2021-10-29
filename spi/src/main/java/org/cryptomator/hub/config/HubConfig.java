@@ -11,6 +11,9 @@ import java.util.Set;
 @Vetoed
 public class HubConfig implements ConfigSource {
 
+	public static final String SETUP_COMPLETED = "hub.setupCompleted";
+	public static final String OIDC_ENDPOINT = "quarkus.oidc.auth-server-url";
+
 	private static final Logger LOG = Logger.getLogger(HubConfig.class);
 	private static final String HUB_CONFIGSOURCE_NAME = "HubConfig";
 	private static final String HUB_CONFIGPATH_PROPERTY_KEY = "hub.config.path";
@@ -52,28 +55,27 @@ public class HubConfig implements ConfigSource {
 		return HUB_CONFIGSOURCE_NAME;
 	}
 
-	public synchronized void setProperty(Key key, String value) {
-		String oldVal = (String) config.setProperty(key.toString(), value);
+	private synchronized void setProperty(String key, String value) {
+		String oldVal = (String) config.setProperty(key, value);
 		if (oldVal == null || !oldVal.equals(value)) {
 			persistence.persist(config);
 		}
 	}
 
-	public enum Key {
-
-		//TODO: replace by real property key
-		DUMMY_VALUE("dummy.value");
-
-		private final String actualKeyString;
-
-		Key(String actualKeyString) {
-			this.actualKeyString = actualKeyString;
-		}
-
-		@Override
-		public String toString() {
-			return actualKeyString;
-		}
+	public boolean isSetupCompleted() {
+		var val = getValue(SETUP_COMPLETED);
+		return Boolean.parseBoolean(val);
 	}
 
+	public void setSetupCompleted(boolean completed) {
+		setProperty(SETUP_COMPLETED, Boolean.toString(completed));
+	}
+
+	public void setOidcAuthEndpoint(String oidcAuthEndpoint) {
+		setProperty(OIDC_ENDPOINT, oidcAuthEndpoint);
+	}
+
+	public String getOidcAuthEndpoint() {
+		return getValue(OIDC_ENDPOINT);
+	}
 }
