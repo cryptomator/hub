@@ -1,16 +1,14 @@
 package org.cryptomator.hub.config;
 
-import org.eclipse.microprofile.config.ConfigProvider;
 import org.eclipse.microprofile.config.spi.ConfigSource;
 import org.jboss.logging.Logger;
 
-import javax.enterprise.inject.Produces;
-import javax.inject.Named;
+import javax.enterprise.inject.Vetoed;
 import java.nio.file.Path;
 import java.util.Properties;
 import java.util.Set;
-import java.util.stream.StreamSupport;
 
+@Vetoed
 public class HubConfig implements ConfigSource {
 
 	private static final Logger LOG = Logger.getLogger(HubConfig.class);
@@ -59,15 +57,6 @@ public class HubConfig implements ConfigSource {
 		if (oldVal == null || !oldVal.equals(value)) {
 			persistence.persist(config);
 		}
-	}
-
-	@Produces
-	@Named("HubConfig")
-	public static HubConfig getInstance() {
-		return (HubConfig) StreamSupport.stream(ConfigProvider.getConfig().getConfigSources().spliterator(), false)
-				.filter(s -> s instanceof HubConfig)
-				.findFirst()
-				.get();
 	}
 
 	public enum Key {
