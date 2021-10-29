@@ -16,7 +16,11 @@ axiosAuth.interceptors.request.use(async request => {
     throw new Error('not logged in');
   }
   const token = await auth.bearerToken();
-  request.headers['Authorization'] = 'Bearer ' + token;
+  if (request.headers) {
+    request.headers['Authorization'] = `Bearer ${token}`;
+  } else {
+    request.headers = {'Authorization': `Bearer ${token}`}
+  }
   return request;
 });
 
