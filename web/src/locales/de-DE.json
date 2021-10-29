@@ -1,5 +1,10 @@
 {
   "vault_details_title": "Vault details von",
   "user_details_title": "Benutzer details von",
-  "create_vault_title": "Tresor erstellen"
+  "create_vault_title": "Tresor erstellen",
+  "home": "Home",
+  "user_details": "User Infos",
+  "logout": "Abmelden",
+  "setup": "Einrichtung"
+
 }
