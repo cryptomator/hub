@@ -95,20 +95,31 @@ router.beforeEach((to, from, next) => {
   }
 });
 
-// SECOND (only works after! setup) we need to check auth
+// SECOND check auth (requires setup)
 router.beforeEach((to, from, next) => {
   if (to.meta.skipAuth) {
     next();
   } else {
     const redirectUri = `${window.location.protocol}//${window.location.host}${import.meta.env.BASE_URL}#${to.fullPath}`
-    authPromise.then(auth => {
-      auth.loginIfRequired(redirectUri).then(() => {
-        backend.users.syncMe(); // updates db entry with account info from identity provider
-        next();
-      }).catch(error => {
-        next(new Error("auth failed " + error));
-      });
+    authPromise.then(async auth => {
+      await auth.loginIfRequired(redirectUri);
+      next();
     });
+  }
+});
+
+// THIRD update user data (requires auth)
+router.beforeEach((to, from, next) => {
+  if ('login' in to.query) {
+    authPromise.then(async auth => {
+      if (auth.isAuthenticated()) {
+        await backend.users.syncMe();
+      }
+    }).finally(() => {
+      next();
+    });
+  } else {
+    next();
   }
 });
 

@@ -80,7 +80,7 @@ export class DeviceDto {
 class UserService {
 
   public async syncMe(): Promise<void> {
-    axiosAuth.put('/users/me')
+    return axiosAuth.put('/users/me')
   }
   public async me(): Promise<string> {
     return axiosAuth.get<string>('/users/me').then(response => response.data)
