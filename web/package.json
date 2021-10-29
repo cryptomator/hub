@@ -45,7 +45,7 @@
     "@dafcoe/vue-notification": "^0.1.6",
     "@headlessui/vue": "^1.4.1",
     "@heroicons/vue": "^1.0.4",
-    "axios": "^0.21.1",
+    "axios": "^0.24.0",
     "file-saver": "^2.0.5",
     "jszip": "^3.7.1",
     "keycloak-js": "^15.0.2",
