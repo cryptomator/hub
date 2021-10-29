@@ -23,19 +23,18 @@ public class AdminClient {
 		this.accessToken = accessToken;
 	}
 
-	public static AdminClient connect(URL baseUrl, String user, String password) {
-		var authService = RestClientBuilder.newBuilder()
-				.baseUrl(baseUrl)
-				.build(AuthService.class);
-		var token = authService.authorize(GRANT_TYPE_PW, ADMIN_CLIENT_ID, user, password).accessToken;
-		return new AdminClient(baseUrl, token);
+	public static AdminClient connect(URL baseUrl, String user, String password) throws IOException {
+		var restClientBuilder = RestClientBuilder.newBuilder().baseUrl(baseUrl);
+		try (var authService = restClientBuilder.build(AuthService.class)) {
+			var token = authService.authorize(GRANT_TYPE_PW, ADMIN_CLIENT_ID, user, password).accessToken;
+			return new AdminClient(baseUrl, token);
+		}
 	}
 
 	public void createRealm(String realmCfg) {
-		try (var in = new ByteArrayInputStream(realmCfg.getBytes(StandardCharsets.UTF_8))) {
-			var realmsService = RestClientBuilder.newBuilder()
-					.baseUrl(baseUrl)
-					.build(RealmsService.class);
+		var restClientBuilder = RestClientBuilder.newBuilder().baseUrl(baseUrl);
+		try (var in = new ByteArrayInputStream(realmCfg.getBytes(StandardCharsets.UTF_8));
+			 var realmsService = restClientBuilder.build(RealmsService.class)) {
 			var authHeader = "Bearer " + accessToken;
 			realmsService.importRealm(authHeader, in);
 		} catch (IOException e) {

@@ -8,10 +8,11 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import java.io.Closeable;
 
 @RegisterRestClient
 @Path("/realms/master")
-public interface AuthService {
+public interface AuthService extends Closeable {
 
 	@POST
 	@Path("/protocol/openid-connect/token")

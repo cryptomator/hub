@@ -7,11 +7,12 @@ import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.MediaType;
+import java.io.Closeable;
 import java.io.InputStream;
 
 @RegisterRestClient
 @Path("/admin/realms")
-public interface RealmsService {
+public interface RealmsService extends Closeable {
 
 	@POST
 	@Path("/")
