@@ -1,6 +1,7 @@
 package org.cryptomator.hub.spi;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import org.cryptomator.hub.entities.Access;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.User;
@@ -22,12 +23,25 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.List;
+import java.util.stream.Stream;
 
 @Path("/vaults")
 public class VaultResource {
 
 	@Inject
 	JsonWebToken jwt;
+
+	@GET
+	@Path("/")
+	@RolesAllowed("user")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Transactional
+	public List<VaultDto> getAll() {
+		var currentUserId = jwt.getSubject();
+		Stream<Vault> resultStream = Vault.findAccessibleOrOwnerByUser(currentUserId);
+		return resultStream.map(VaultDto::fromEntity).toList();
+	}
 
 	@GET
 	@Path("/{vaultId}/keys/{deviceId}")
@@ -164,6 +178,10 @@ public class VaultResource {
 			vault.iterations = iterations;
 			vault.salt = salt;
 			return vault;
+		}
+
+		public static VaultDto fromEntity(Vault entity) {
+			return new VaultDto(entity.id, entity.name, entity.masterkey, entity.iterations, entity.salt);
 		}
 	}
 }
