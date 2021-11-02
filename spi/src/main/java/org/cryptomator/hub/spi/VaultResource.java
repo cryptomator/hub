@@ -1,11 +1,11 @@
 package org.cryptomator.hub.spi;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.quarkus.oidc.UserInfo;
 import org.cryptomator.hub.entities.Access;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
+import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.hibernate.exception.ConstraintViolationException;
 
 import javax.annotation.security.RolesAllowed;
@@ -27,7 +27,7 @@ import javax.ws.rs.core.Response;
 public class VaultResource {
 
 	@Inject
-	UserInfo userInfo;
+	JsonWebToken jwt;
 
 	@GET
 	@Path("/{vaultId}/keys/{deviceId}")
@@ -37,7 +37,7 @@ public class VaultResource {
 	public Response unlock(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId) {
 		// FIXME validate parameter
 
-		var currentUserId = userInfo.getString("sub");
+		var currentUserId = jwt.getSubject();
 		var access = Access.unlock(vaultId, deviceId, currentUserId);
 		Device device = Device.findById(deviceId);
 
@@ -143,7 +143,7 @@ public class VaultResource {
 			return Response.status(Response.Status.CONFLICT).build();
 		}
 
-		User currentUser = User.findById(userInfo.getString("sub"));
+		User currentUser = User.findById(jwt.getSubject());
 		var vault = vaultDto.toVault(currentUser, vaultId);
 		//TODO: can the persisted id different?
 		Vault.persist(vault);

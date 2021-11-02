@@ -1,9 +1,9 @@
 package org.cryptomator.hub.spi;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.quarkus.oidc.UserInfo;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.User;
+import org.eclipse.microprofile.jwt.JsonWebToken;
 
 import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 public class DeviceResource {
 
 	@Inject
-	UserInfo userInfo;
+	JsonWebToken jwt;
 
 	@PUT
 	@Path("/{deviceId}")
@@ -37,8 +37,8 @@ public class DeviceResource {
 		if (deviceId == null || deviceId.trim().length() == 0 || deviceDto == null) {
 			return Response.serverError().entity("deviceId or deviceDto cannot be empty").build();
 		}
-		if (Device.findByIdOptional(deviceId).isEmpty() ) {
-			User currentUser = User.findById(userInfo.getString("sub"));
+		if (Device.findByIdOptional(deviceId).isEmpty()) {
+			User currentUser = User.findById(jwt.getSubject());
 			var device = deviceDto.toDevice(currentUser, deviceId);
 			device.persist(device);
 			return Response.status(Response.Status.CREATED).build();
@@ -74,7 +74,9 @@ public class DeviceResource {
 		return Response.ok(dtos).build();
 	}
 
-	public static record DeviceDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("publicKey") String publicKey, @JsonProperty("accessTo") Set<VaultResource.VaultDto> accessTo) {
+	public static record DeviceDto(@JsonProperty("id") String id, @JsonProperty("name") String name,
+								   @JsonProperty("publicKey") String publicKey,
+								   @JsonProperty("accessTo") Set<VaultResource.VaultDto> accessTo) {
 
 		public Device toDevice(User user, String id) {
 			var device = new Device();
