@@ -11,18 +11,24 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue'
-import auth from '../common/auth';
+import authPromise from '../common/auth';
+
 
 export default defineComponent({
   data: () => ({
-    loggedIn: auth.isAuthenticated() as boolean,
+    loggedIn: false as boolean,
   }),
 
+  async mounted() {
+    const auth = await authPromise;
+    this.loggedIn = auth.isAuthenticated();
+  },
+
   methods: {
-    logout() {
+    async logout() {
+      const auth = await authPromise;
       auth.logout();
-      this.loggedIn = true;
-      //TODO shouldn't this be false?
+      this.loggedIn = false;
     }
   }
 })

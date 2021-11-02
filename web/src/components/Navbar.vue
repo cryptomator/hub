@@ -87,7 +87,7 @@ import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuIt
 import { MenuIcon, XIcon } from '@heroicons/vue/outline'
 import { Locales } from "../locales/locales";
 import { useI18n } from 'vue-i18n'
-import auth from '../common/auth';
+import authPromise from '../common/auth';
 
 const navigation = [
   { name: 'home', to: '/'},
@@ -123,10 +123,12 @@ export default defineComponent({
     }
   },
   methods: {
-    isLoggedIn(){
+    async isLoggedIn(){
+      const auth = await authPromise;
       return auth.isAuthenticated();
     },
-    logout() {
+    async logout() {
+      const auth = await authPromise;
       auth.logout();
     }
   }

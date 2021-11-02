@@ -1,16 +1,7 @@
 {
 	"folders": [
 		{
-			"path": "keycloak"
-		},
-		{
-			"path": "spi"
-		},
-		{
-			"path": "web"
-		},
-		{
-			"name": "[Workspace Root]",
+			"name": "Cryptomator Hub",
 			"path": "."
 		}
 	],

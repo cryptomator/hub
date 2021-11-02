@@ -54,6 +54,7 @@
 
 <script lang="ts">
 import backend from '../common/backend'
+import config from '../common/config';
 import { uuid } from '../common/util'
 import { Masterkey, VaultConfigHeaderHub, VaultConfigPayload } from '../common/crypto'
 import { defineComponent } from 'vue'
@@ -84,8 +85,8 @@ export default defineComponent({
 
       const hubConfig: VaultConfigHeaderHub = {
         clientId: 'cryptomator-hub',
-        authEndpoint: 'http://localhost:8080/auth/realms/cryptomator/protocol/openid-connect/auth',
-        tokenEndpoint: 'http://localhost:8080/auth/realms/cryptomator/protocol/openid-connect/token',
+        authEndpoint: `${config.get().keycloakUrl}realms/cryptomator/protocol/openid-connect/auth`, // TODO: read full endpoint url from config
+        tokenEndpoint: `${config.get().keycloakUrl}realms/cryptomator/protocol/openid-connect/token`,
         deviceRegistrationUrl: `${location.protocol}//${location.host}${import.meta.env.BASE_URL}#/devices/add`,
         authSuccessUrl: `${location.protocol}//${location.host}${import.meta.env.BASE_URL}#/unlock-success`,
         authErrorUrl: `${location.protocol}//${location.host}${import.meta.env.BASE_URL}#/unlock-error`

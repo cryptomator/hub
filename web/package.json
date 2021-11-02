@@ -42,12 +42,13 @@
     "vue-tsc": "^0.2.2"
   },
   "dependencies": {
+    "@dafcoe/vue-notification": "^0.1.6",
     "@headlessui/vue": "^1.4.1",
     "@heroicons/vue": "^1.0.4",
-    "axios": "^0.21.1",
+    "axios": "^0.24.0",
     "file-saver": "^2.0.5",
     "jszip": "^3.7.1",
-    "keycloak-js": "^15.0.0",
+    "keycloak-js": "^15.0.2",
     "miscreant": "^0.3.2",
     "rfc4648": "^1.5.0",
     "vue": "^3.0.5",

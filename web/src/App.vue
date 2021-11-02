@@ -1,4 +1,5 @@
 <template>
+  <vue-notification-list position="top-right"></vue-notification-list>
   <Navbar v-show="showNavbar" />
 
   <div class="my-5 max-w-7xl mx-auto sm:px-6 lg:px-8">

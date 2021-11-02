@@ -1,5 +1,7 @@
 import { createRouter, createWebHashHistory, RouteRecordRaw } from 'vue-router';
-import auth from '../common/auth';
+import authPromise from '../common/auth';
+import backend from '../common/backend';
+import config from '../common/config';
 import AddDevice from '../components/AddDevice.vue';
 import CreateVault from '../components/CreateVault.vue';
 import HelloWorld from '../components/HelloWorld.vue';
@@ -73,7 +75,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/setup',
     component: SetupComponent,
-    meta: { skipAuth: true }
+    meta: { skipAuth: true, skipSetup: true }
   }
 ];
 
@@ -81,16 +83,43 @@ const router = createRouter({
   history: createWebHashHistory(),
   routes: routes
 });
+
+// FIRST we must check whether the setup wizard ran
+router.beforeEach((to, from, next) => {
+  if (to.meta.skipSetup) {
+    next();
+  } else if (config.get().setupCompleted) {
+    next();
+  } else {
+    next({ path: '/setup' });
+  }
+});
+
+// SECOND check auth (requires setup)
 router.beforeEach((to, from, next) => {
   if (to.meta.skipAuth) {
     next();
   } else {
     const redirectUri = `${window.location.protocol}//${window.location.host}${import.meta.env.BASE_URL}#${to.fullPath}`
-    auth.loginIfRequired(redirectUri).then(() => {
+    authPromise.then(async auth => {
+      await auth.loginIfRequired(redirectUri);
       next();
-    }).catch(error => {
-      next(new Error("auth failed " + error));
     });
+  }
+});
+
+// THIRD update user data (requires auth)
+router.beforeEach((to, from, next) => {
+  if ('login' in to.query) {
+    authPromise.then(async auth => {
+      if (auth.isAuthenticated()) {
+        await backend.users.syncMe();
+      }
+    }).finally(() => {
+      next();
+    });
+  } else {
+    next();
   }
 });
 
