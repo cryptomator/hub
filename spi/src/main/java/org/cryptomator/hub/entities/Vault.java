@@ -22,21 +22,13 @@ import java.util.stream.Stream;
 
 @Entity
 @Table(name = "vault")
-@NamedQuery(name = "Vault.accessibleByUser",
+@NamedQuery(name = "Vault.accessibleOrOwnedByUser",
 		query = """
 		SELECT v
-		FROM User u
-			INNER JOIN u.devices d
-			INNER JOIN d.access a
-			INNER JOIN a.vault v
-		WHERE u.id = :userId
-	""")
-@NamedQuery(name = "Vault.ownedByUser",
-query = """
-		SELECT v
 		FROM Vault v
-		INNER JOIN v.owner o
-		WHERE o.id = :userId
+		LEFT JOIN v.access a
+		LEFT JOIN a.device d
+		WHERE v.owner.id = :userId OR d.owner.id = :userId 
 		""")
 public class Vault extends PanacheEntityBase {
 
@@ -100,10 +92,7 @@ public class Vault extends PanacheEntityBase {
 	}
 
 	public static Stream<Vault> findAccessibleOrOwnerByUser(String userId) {
-		// TODO: try to find both in a single query (JPA doesn't support UNION)
-		Stream<Vault> accessible = find("#Vault.accessibleByUser", Parameters.with("userId", userId)).stream();
-		Stream<Vault> owned = find("#Vault.ownedByUser", Parameters.with("userId", userId)).stream();
-		return Stream.concat(accessible, owned).distinct();
+		return find("#Vault.accessibleOrOwnedByUser", Parameters.with("userId", userId)).stream();
 	}
 
 }
