@@ -216,17 +216,22 @@ export default defineComponent({
       }).catch(error => {
         console.error('failed to create realm', error);
 		//this.realmErrorNotification = true;
-		const realmErrorNotification = {
-		 "message": "Error while creating realm. It might already exist.",
-		 "type": "alert",
-		 "showIcon": true,
-		 "dismiss": {
-		  "manually": true,
-		  "automatically": false
-		 },
+		let realmErrorNotification = {
+				"message": "error",
+				"type": "alert",
+				"showIcon": true,
+				"dismiss": {
+					"manually": true,
+					"automatically": false
+				},
+		}
+		if (error.response.status === 404){
+			realmErrorNotification.message = "Error while creating realm. URL can't be found.";
+		} else if (error.response.status === 409){
+			realmErrorNotification.message = "Error while creating realm. It might already exist.";
 		}
 		setNotification(realmErrorNotification)
-      });
+	  });
     },
 
 	/*closeNotifications(){
