@@ -14,7 +14,7 @@
                 </th>
 
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" scope="col">
-                  Edit
+                  Details
                 </th>
               </tr>
             </thead>
@@ -27,9 +27,9 @@
                   {{ vault.masterkey }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <a class="text-indigo-600 hover:text-indigo-900" href="#">
-                    Edit
-                  </a>
+                  <router-link :to="`/vaults/${vault.id}`" exact-path class="text-indigo-600 hover:text-indigo-900">
+                    Details
+                  </router-link>
                 </td>
               </tr>
             </tbody>
@@ -110,23 +110,15 @@ export default defineComponent({
 		Error,
 		//errorCode: Error.None as Error,
 		me: null as unknown as UserDto,
-		users: [] as UserDto[],
-		vaults: [] as VaultDto[],
-		devices: [] as DeviceDto[]
+		vaults: [] as VaultDto[]
 	}),
 	mounted() {
 		backend.users.meIncludingDevices().then(me => {
 			this.me = me
 		}),
-		backend.users.listAllUsersIncludingDevices().then(users => {
-			this.users = users
-			for (let i = 0; i < users.length; i++) {
-				this.devices.concat(this.users[i].devices)
-				for (let j = 0; j < this.users[i].devices.length; j++) {
-					this.vaults.concat(this.users[i].devices[j].accessTo)
-				}
-			}
-		})
+    backend.vaults.listAll().then(vaults => {
+      this.vaults = vaults;
+    });
 	}
 })
 

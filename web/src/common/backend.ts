@@ -33,6 +33,9 @@ export class UserDto {
 }
 
 class VaultService {
+  public async listAll(): Promise<VaultDto[]> {
+    return axiosAuth.get('/vaults').then(response => response.data);
+  }
 
   public async get(vaultId: string): Promise<AxiosResponse<VaultDto>> {
     return axiosAuth.get(`/vaults/${vaultId}`);
