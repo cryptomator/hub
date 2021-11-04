@@ -1,55 +1,61 @@
 <template>
-  <form class="">
-    <div class="md:flex md:items-center md:justify-between">
-      <div class="flex-1 min-w-0">
-        <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-          Create new vault
+  <div v-if="state === State.Processing">
+    <div class="min-h-full flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div class="sm:mx-auto sm:w-full sm:max-w-md">
+        <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          Create New Vault
         </h2>
       </div>
-    </div>
 
-    <div v-if="state === State.Processing">
-      <div class="space-y-8 divide-y divide-gray-200">
-        <div class="pt-8">
-          <div class="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-            <div class="sm:col-span-3">
-              <label for="first-name" class="block text-sm font-medium text-gray-700">
+      <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+          <form class="space-y-6" @submit.prevent="createVault()">
+            <div>
+              <label for="vaultName" class="block text-sm font-medium text-gray-700">
                 Vault Name
               </label>
               <div class="mt-1">
-                <input v-model="vaultName" type="text" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md" />
+                <input id="vaultName" v-model="vaultName" name="vaultName" type="text" required="" class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
               </div>
             </div>
 
-            <div class="sm:col-span-3">
-              <label for="last-name" class="block text-sm font-medium text-gray-700">
-                Masterpassword
+            <div>
+              <label for="password" class="block text-sm font-medium text-gray-700">
+                Master Password
               </label>
               <div class="mt-1">
-                <input v-model="password" type="password" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md" />
+                <input id="password" v-model="password" name="password" type="password" autocomplete="current-password" required="" class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
               </div>
             </div>
-          </div>
-          <br>
-          <input v-model="vaultName" type="text" placeholder="Vault Name"/>
-          <input v-model="password" type="password" placeholder="Masterpassword"/>
-        </div>
 
-        <!--<button type="button" @click="createVault()">createVault</button>-->
-        <button type="submit" @click="createVault()" class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-          Create vault
+            <div>
+              <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                Create Vault
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div v-else-if="state === State.Created">
+    <div class="text-center">
+      <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+        <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+      </svg>
+      <h3 class="mt-2 text-sm font-medium text-gray-900">Vault created</h3>
+      <p class="mt-1 text-sm text-gray-500">
+        After downloading the zipped vault folder, unpack it to any location shared with your team members.
+      </p>
+      <div class="mt-6">
+        <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" @click="createVaultFolder()">
+          <DownloadIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+          Download zipped vault folder
         </button>
       </div>
     </div>
-    <div v-else-if="state === State.Created">
-      <h2>Vault created!</h2>
-
-      <button type="button" @click="createVaultFolder()" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-        Download zipped vault folder
-        <DownloadIcon class="ml-2 -mr-1 h-5 w-5" aria-hidden="true" />
-      </button>
-    </div>
-  </form>
+  </div>
 </template>
 
 <script lang="ts">
@@ -68,6 +74,9 @@ enum State {
 }
 
 export default defineComponent({
+  components: {
+    DownloadIcon,
+  },
   data: () => ({
     State,
     state: State.Processing as State,
@@ -110,19 +119,13 @@ export default defineComponent({
     },
     async createVaultFolder() {
       if(this.state === State.Created) {
-        const zip = new JSZip()
-        zip.file("vault.cryptomator", this.token)
-        zip.folder("d")?.folder(this.rootDirHash.substring(0, 2))?.folder(this.rootDirHash.substring(2))
-        zip.generateAsync({type: "blob"}).then((blob) => {
-          saveAs(blob, `${this.vaultName}.zip`);
-        })
+        const zip = new JSZip();
+        zip.file("vault.cryptomator", this.token);
+        zip.folder("d")?.folder(this.rootDirHash.substring(0, 2))?.folder(this.rootDirHash.substring(2));
+        const blob = await zip.generateAsync({type: "blob"});
+        saveAs(blob, `${this.vaultName}.zip`);
       }
     }
-  },
-  components: {
-    DownloadIcon,
   }
-}
-)
-
+})
 </script>
