@@ -6,6 +6,7 @@ import AddDevice from '../components/AddDevice.vue';
 import CreateVault from '../components/CreateVault.vue';
 import DeviceList from '../components/DeviceList.vue';
 import HelloWorld from '../components/HelloWorld.vue';
+import Settings from '../components/Settings.vue';
 import SetupComponent from "../components/Setup.vue";
 import UnlockError from '../components/UnlockError.vue';
 import UnlockSuccess from '../components/UnlockSuccess.vue';
@@ -47,6 +48,10 @@ const routes: RouteRecordRaw[] = [
     path: '/devices/add',
     component: AddDevice,
     props: (route) => ({ deviceId: route.query.device_id, deviceKey: route.query.device_key, verificationHash: route.query.verification_hash })
+  },
+  {
+    path: '/settings',
+    component: Settings
   },
   {
     path: '/user',
