@@ -20,7 +20,6 @@
               <router-link v-for="item in navigation" :key="item.name" :to="item.to"
                            class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
                            active-class="bg-gray-900 text-white px-3 py-2 rounded-md text-sm font-medium"
-                           exact-path
               >
                 {{ t(item.name) }}
               </router-link>	
@@ -46,7 +45,7 @@
           <transition enter-active-class="transition ease-out duration-100" enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 scale-100" leave-to-class="transform opacity-0 scale-95">
             <MenuItems class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white divide-y divide-gray-100 ring-1 ring-black ring-opacity-5 focus:outline-none">
               <MenuItem v-slot="{ active }">
-                <a href="#" :class="[active ? 'bg-gray-100' : '', 'block px-4 py-2 text-sm text-gray-700']">Your Devices</a>
+                <router-link to="/devices" :class="[active ? 'bg-gray-100' : '', 'block px-4 py-2 text-sm text-gray-700']">Your Devices</router-link>
               </MenuItem>
               <MenuItem v-slot="{ active }">
                 <a :class="[active ? 'bg-gray-100' : '', 'block px-4 py-2 text-sm text-gray-700']" @click="logout()">Sign out</a>
@@ -62,7 +61,6 @@
         <router-link v-for="item in navigation" :key="item.name" :to="item.to"
                      class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
                      active-class="bg-gray-900 text-white block px-3 py-2 rounded-md text-base font-medium"
-                     exact-path
         >
           {{ t(item.name) }}
         </router-link>

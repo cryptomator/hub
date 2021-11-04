@@ -4,6 +4,7 @@ import backend from '../common/backend';
 import config from '../common/config';
 import AddDevice from '../components/AddDevice.vue';
 import CreateVault from '../components/CreateVault.vue';
+import DeviceList from '../components/DeviceList.vue';
 import HelloWorld from '../components/HelloWorld.vue';
 import SetupComponent from "../components/Setup.vue";
 import UnlockError from '../components/UnlockError.vue';
@@ -38,6 +39,10 @@ const routes: RouteRecordRaw[] = [
       }
     ]
   },*/
+  {
+    path: '/devices',
+    component: DeviceList
+  },
   {
     path: '/devices/add',
     component: AddDevice,

@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col">
+  <div v-if="me != null && me.devices.length > 0" class="flex flex-col">
     <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
       <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
         <div class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
@@ -7,29 +7,40 @@
             <thead class="bg-gray-50">
               <tr>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" scope="col">
-                  Vault-Name
+                  Owner
                 </th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" scope="col">
-                  Vault-Masterkey
+                  Device-Name
                 </th>
-
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" scope="col">
-                  Details
+                  Device-ID
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" scope="col">
+                  Amount of available vaults
+                </th> 	
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" scope="col">
+                  Edit
                 </th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(vault, vaultIdx) in vaults" :key="vault.masterkey" :class="vaultIdx % 2 === 0 ? 'bg-white' : 'bg-gray-50'">
+              <tr v-for="(device, deviceIdx) in me.devices" :key="device.id" :class="deviceIdx % 2 === 0 ? 'bg-white' : 'bg-gray-50'">
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {{ vault.name }}
+                  {{ me.name }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {{ vault.masterkey }}
+                  {{ device.name }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {{ device.id }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {{ device.accessTo.length }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <router-link :to="`/vaults/${vault.id}`" class="text-indigo-600 hover:text-indigo-900">
-                    Details
-                  </router-link>
+                  <a class="text-indigo-600 hover:text-indigo-900" href="#">
+                    Edit
+                  </a>
                 </td>
               </tr>
             </tbody>
@@ -38,11 +49,17 @@
       </div>
     </div>
   </div>
+  <div v-else-if="me != null && me.devices.length == 0">
+    You have no registered devices.
+  </div>
+  <div v-else>
+    Loading devices…
+  </div>
 </template>
 
 <script lang="ts">
 import {defineComponent} from "vue";
-import backend, {VaultDto} from "../common/backend";
+import backend, {UserDto} from "../common/backend";
 
 export default defineComponent({
 	name: 'VaultList',
@@ -54,10 +71,10 @@ export default defineComponent({
 	},
 	data: () => ({
 		Error,
-		vaults: [] as VaultDto[]
+		me: null as unknown as UserDto
 	}),
 	async mounted() {
-    this.vaults = await backend.vaults.listAll();
+		this.me = await backend.users.meIncludingDevices()
 	}
 })
 </script>
