@@ -3,6 +3,10 @@
 		{
 			"name": "Cryptomator Hub",
 			"path": "."
+		},
+		{
+			"name": "Frontend",
+			"path": "frontend"
 		}
 	],
 	"extensions": {

@@ -4,7 +4,7 @@ Hub consists of these components:
 
 ## Web Frontend (Port 3000)
 
-During development, run this from `web` dir:
+During development, run this from `frontend` dir:
 
 ```shell
 npm run dev
@@ -12,16 +12,16 @@ npm run dev
 
 ## Web Backend (Port 9090)
 
-During development, start Docker, then run this from `spi` dir:
+During development, start Docker, then run this from `backend` dir:
 
 ```shell
-mvn compile quarkus:dev
+mvn clean quarkus:dev -Dhub.config.path=hub.properties
 ```
 
 Or on ARM64:
 
 ```shell
-mvn compile quarkus:dev -Dquarkus.keycloak.devservices.image-name=mihaibob/keycloak:15.0.1
+mvn clean quarkus:dev -Dhub.config.path=hub.properties -Dquarkus.keycloak.devservices.image-name=mihaibob/keycloak:15.0.1
 ```
 
 ### Accessing Keycloak
