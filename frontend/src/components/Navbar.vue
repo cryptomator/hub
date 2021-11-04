@@ -79,7 +79,6 @@ import authPromise from '../common/auth';
 
 const navigation = [
   { name: 'home', to: '/'},
-  { name: "create_vault_title", to: '/vaults/create'},
   { name: 'user_details', to: '/user'},
 ]
 
@@ -96,12 +95,12 @@ export default defineComponent({
     MenuItem,
     MenuItems,
     MenuIcon,
-	  XIcon,
+    XIcon,
   },
   setup() {
     const { t } = useI18n({
-  	  useScope: 'global'
-  	})
+      useScope: 'global'
+    })
     return {
       t,
       navigation,
@@ -114,6 +113,5 @@ export default defineComponent({
       auth.logout();
     }
   }
-
 })
 </script>

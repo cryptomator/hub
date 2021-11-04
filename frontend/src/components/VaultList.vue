@@ -1,63 +1,63 @@
 <template>
-  <div class="flex flex-col">
-    <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-      <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
-        <div class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-              <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" scope="col">
-                  Vault-Name
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" scope="col">
-                  Vault-Masterkey
-                </th>
-
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" scope="col">
-                  Details
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(vault, vaultIdx) in vaults" :key="vault.masterkey" :class="vaultIdx % 2 === 0 ? 'bg-white' : 'bg-gray-50'">
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {{ vault.name }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {{ vault.masterkey }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <router-link :to="`/vaults/${vault.id}`" class="text-indigo-600 hover:text-indigo-900">
-                    Details
-                  </router-link>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+  <div class="flex items-center mb-3 whitespace-nowrap">
+    <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">Vaults</h2>
+    <div class="flex-none flex items-center ml-auto pl-4 sm:pl-6">
+      <router-link to="/vaults/create" tag="button" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+        <PlusIcon class="-ml-0.5 mr-2 h-4 w-4" aria-hidden="true" />
+        Create Vault
+      </router-link>
     </div>
+  </div>
+  <div class="bg-white shadow overflow-hidden sm:rounded-md">
+    <ul role="list" class="divide-y divide-gray-200">
+      <li v-for="vault in vaults" :key="vault.masterkey">
+        <router-link :to="`/vaults/${vault.id}`" class="block hover:bg-gray-50">
+          <div class="px-4 py-4 flex items-center sm:px-6">
+            <div class="min-w-0 flex-1 sm:flex sm:items-center sm:justify-between">
+              <p class="text-sm font-medium text-indigo-600 truncate">{{ vault.name }}</p>
+              <div class="mt-4 flex-shrink-0 sm:mt-0 sm:ml-5">
+                <div class="flex overflow-hidden -space-x-1">
+                  <img key="driesvincent@example.com" class="inline-block h-6 w-6 rounded-full ring-2 ring-white" src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="Dries Vincent" />
+                  <img key="lindsaywalton@example.com" class="inline-block h-6 w-6 rounded-full ring-2 ring-white" src="https://images.unsplash.com/photo-1517841905240-472988babdf9?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="Lindsay Walton" />
+                  <img key="courtneyhenry@example.com" class="inline-block h-6 w-6 rounded-full ring-2 ring-white" src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="Courtney Henry" />
+                  <img key="tomcook@example.com" class="inline-block h-6 w-6 rounded-full ring-2 ring-white" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="Tom Cook" />
+                  <!-- <img v-for="applicant in position.applicants" :key="applicant.email" class="inline-block h-6 w-6 rounded-full ring-2 ring-white" :src="applicant.imageUrl" :alt="applicant.name" /> -->
+                </div>
+              </div>
+            </div>
+            <div class="ml-5 flex-shrink-0">
+              <ChevronRightIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+            </div>
+          </div>
+        </router-link>
+      </li>
+    </ul>
   </div>
 </template>
 
 <script lang="ts">
-import {defineComponent} from "vue";
-import backend, {VaultDto} from "../common/backend";
+import { defineComponent } from "vue";
+import backend, { VaultDto } from "../common/backend";
+import { ChevronRightIcon, PlusIcon } from '@heroicons/vue/solid'
 
 export default defineComponent({
-	name: 'VaultList',
-	props: {
-		vaultId: {
-			type: String,
-			default: null
-		}
-	},
-	data: () => ({
-		Error,
-		vaults: [] as VaultDto[]
-	}),
-	async mounted() {
+  name: 'VaultList',
+  components: {
+    ChevronRightIcon,
+    PlusIcon,
+  },
+  props: {
+    vaultId: {
+      type: String,
+      default: null
+    }
+  },
+  data: () => ({
+    Error,
+    vaults: [] as VaultDto[]
+  }),
+  async mounted() {
     this.vaults = await backend.vaults.listAll();
-	}
+  }
 })
 </script>
