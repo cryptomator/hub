@@ -5,7 +5,6 @@ import config from '../common/config';
 import AddDevice from '../components/AddDevice.vue';
 import CreateVault from '../components/CreateVault.vue';
 import HelloWorld from '../components/HelloWorld.vue';
-import LogoutComponent from '../components/Logout.vue';
 import SetupComponent from "../components/Setup.vue";
 import UnlockError from '../components/UnlockError.vue';
 import UnlockSuccess from '../components/UnlockSuccess.vue';
@@ -65,11 +64,6 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/unlock-error',
     component: UnlockError,
-    meta: { skipAuth: true }
-  },
-  {
-    path: '/logout',
-    component: LogoutComponent,
     meta: { skipAuth: true }
   },
   {
