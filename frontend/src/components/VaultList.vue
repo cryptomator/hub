@@ -11,7 +11,7 @@
   <div class="bg-white shadow overflow-hidden sm:rounded-md">
     <ul role="list" class="divide-y divide-gray-200">
       <li v-for="vault in vaults" :key="vault.masterkey">
-        <router-link :to="`/vaults/${vault.id}`" class="block hover:bg-gray-50">
+        <a href="#" class="block hover:bg-gray-50" @click="onVaultClick(vault)">
           <div class="px-4 py-4 flex items-center sm:px-6">
             <div class="min-w-0 flex-1 sm:flex sm:items-center sm:justify-between">
               <p class="text-sm font-medium text-indigo-600 truncate">{{ vault.name }}</p>
@@ -29,35 +29,43 @@
               <ChevronRightIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
             </div>
           </div>
-        </router-link>
+        </a>
       </li>
     </ul>
   </div>
+  <SlideOver v-if="selectedVault != null" ref="vaultDetailsSlideOver" :title="selectedVault.name">
+    <VaultDetails :vault-id="selectedVault.id"></VaultDetails>
+  </SlideOver>
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
-import backend, { VaultDto } from "../common/backend";
-import { ChevronRightIcon, PlusIcon } from '@heroicons/vue/solid'
+import { defineComponent } from 'vue';
+import backend, { VaultDto } from '../common/backend';
+import { ChevronRightIcon, PlusIcon } from '@heroicons/vue/solid';
+import SlideOver from './SlideOver.vue';
+import VaultDetails from './VaultDetails.vue';
 
 export default defineComponent({
   name: 'VaultList',
   components: {
     ChevronRightIcon,
     PlusIcon,
-  },
-  props: {
-    vaultId: {
-      type: String,
-      default: null
-    }
+    SlideOver,
+    VaultDetails,
   },
   data: () => ({
     Error,
-    vaults: [] as VaultDto[]
+    vaults: [] as VaultDto[],
+    selectedVault: null as VaultDto | null,
   }),
   async mounted() {
     this.vaults = await backend.vaults.listAll();
+  },
+  methods: {
+    onVaultClick(vault: VaultDto) {
+      this.selectedVault = vault;
+      this.$nextTick(() => this.$refs.vaultDetailsSlideOver.show());
+    }
   }
 })
 </script>
