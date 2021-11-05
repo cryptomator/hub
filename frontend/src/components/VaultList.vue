@@ -2,10 +2,10 @@
   <div class="flex items-center mb-3 whitespace-nowrap">
     <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">Vaults</h2>
     <div class="flex-none flex items-center ml-auto pl-4 sm:pl-6">
-      <router-link to="/vaults/create" tag="button" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+      <button class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" @click="onCreateVaultClick()">
         <PlusIcon class="-ml-0.5 mr-2 h-4 w-4" aria-hidden="true" />
         Create Vault
-      </router-link>
+      </button>
     </div>
   </div>
   <div class="bg-white shadow overflow-hidden sm:rounded-md">
@@ -36,12 +36,16 @@
   <SlideOver v-if="selectedVault != null" ref="vaultDetailsSlideOver" :title="selectedVault.name" @close="selectedVault = null">
     <VaultDetails :vault-id="selectedVault.id"></VaultDetails>
   </SlideOver>
+  <SlideOver v-if="creatingVault" ref="createVaultSlideOver" title="Create Vault" @close="creatingVault = false">
+    <CreateVault></CreateVault>
+  </SlideOver>
 </template>
 
 <script lang="ts">
 import { defineComponent } from 'vue';
 import backend, { VaultDto } from '../common/backend';
 import { ChevronRightIcon, PlusIcon } from '@heroicons/vue/solid';
+import CreateVault from './CreateVault.vue';
 import SlideOver from './SlideOver.vue';
 import VaultDetails from './VaultDetails.vue';
 
@@ -49,6 +53,7 @@ export default defineComponent({
   name: 'VaultList',
   components: {
     ChevronRightIcon,
+    CreateVault,
     PlusIcon,
     SlideOver,
     VaultDetails,
@@ -57,6 +62,7 @@ export default defineComponent({
     Error,
     vaults: [] as VaultDto[],
     selectedVault: null as VaultDto | null,
+    creatingVault: false,
   }),
   async mounted() {
     this.vaults = await backend.vaults.listAll();
@@ -65,7 +71,11 @@ export default defineComponent({
     onVaultClick(vault: VaultDto) {
       this.selectedVault = vault;
       this.$nextTick(() => (this.$refs.vaultDetailsSlideOver as typeof SlideOver).show());
-    }
+    },
+    onCreateVaultClick() {
+      this.creatingVault = true;
+      this.$nextTick(() => (this.$refs.createVaultSlideOver as typeof SlideOver).show());
+    },
   }
 });
 </script>

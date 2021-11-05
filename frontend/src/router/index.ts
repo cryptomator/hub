@@ -3,7 +3,6 @@ import authPromise from '../common/auth';
 import backend from '../common/backend';
 import config from '../common/config';
 import AddDevice from '../components/AddDevice.vue';
-import CreateVault from '../components/CreateVault.vue';
 import DeviceList from '../components/DeviceList.vue';
 import HelloWorld from '../components/HelloWorld.vue';
 import Settings from '../components/Settings.vue';
@@ -57,10 +56,6 @@ const routes: RouteRecordRaw[] = [
     path: '/user',
     component: UserDetails,
     props: (route) => ({ vaultId: route.params.id })
-  },
-  {
-    path: '/vaults/create',
-    component: CreateVault
   },
   {
     path: '/vaults/:id',
