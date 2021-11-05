@@ -1,5 +1,5 @@
 <template>
-  <TransitionRoot as="template" :show="open">
+  <TransitionRoot as="template" :show="open" @after-leave="$emit('close')">
     <Dialog as="div" class="fixed inset-0 overflow-hidden" @close="open = false">
       <div class="absolute inset-0 overflow-hidden">
         <DialogOverlay class="absolute inset-0" />
@@ -54,6 +54,7 @@ export default defineComponent({
       default: '',
     },
   },
+  emits: ['close'],
   setup() {
     const open = ref(false)
     return {

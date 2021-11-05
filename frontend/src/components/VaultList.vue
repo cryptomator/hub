@@ -11,7 +11,7 @@
   <div class="bg-white shadow overflow-hidden sm:rounded-md">
     <ul role="list" class="divide-y divide-gray-200">
       <li v-for="vault in vaults" :key="vault.masterkey">
-        <a href="#" class="block hover:bg-gray-50" @click="onVaultClick(vault)">
+        <a href="#" class="block hover:bg-gray-50" :class="selectedVault == vault ? 'bg-gray-50' : ''" @click="onVaultClick(vault)">
           <div class="px-4 py-4 flex items-center sm:px-6">
             <div class="min-w-0 flex-1 sm:flex sm:items-center sm:justify-between">
               <p class="text-sm font-medium text-indigo-600 truncate">{{ vault.name }}</p>
@@ -33,7 +33,7 @@
       </li>
     </ul>
   </div>
-  <SlideOver v-if="selectedVault != null" ref="vaultDetailsSlideOver" :title="selectedVault.name">
+  <SlideOver v-if="selectedVault != null" ref="vaultDetailsSlideOver" :title="selectedVault.name" @close="selectedVault = null">
     <VaultDetails :vault-id="selectedVault.id"></VaultDetails>
   </SlideOver>
 </template>
@@ -64,7 +64,7 @@ export default defineComponent({
   methods: {
     onVaultClick(vault: VaultDto) {
       this.selectedVault = vault;
-      this.$nextTick(() => this.$refs.vaultDetailsSlideOver.show());
+      this.$nextTick(() => (this.$refs.vaultDetailsSlideOver as typeof SlideOver).show());
     }
   }
 })
