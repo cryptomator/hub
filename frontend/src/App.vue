@@ -9,30 +9,30 @@
 
 <script>
 import Navbar from './components/Navbar.vue';
-import VaultList from "./components/VaultList.vue";
-import { useI18n } from 'vue-i18n'
+import VaultList from './components/VaultList.vue';
+import { useI18n } from 'vue-i18n';
 
 
 export default {
-	name: 'App',
-	components: {
-		Navbar,
-		//Footer,
-	},
-	computed: {
-		showNavbar() {
-			return this.$route.meta.navbar == null ? true : this.$route.meta.navbar;
-		},
-		/*showFooter() {
-			return this.$route.meta.footer == null ? true : this.$route.meta.footer;
-		},*/
-	},
-	setup() {
+  name: 'App',
+  components: {
+    Navbar,
+    //Footer,
+  },
+  setup() {
   	const { t } = useI18n({
   	  useScope: 'global'
-  	})
-  	return { t }
+  	});
+  	return { t };
   	},
+  computed: {
+    showNavbar() {
+      return this.$route.meta.navbar == null ? true : this.$route.meta.navbar;
+    },
+    /*showFooter() {
+			return this.$route.meta.footer == null ? true : this.$route.meta.footer;
+		},*/
+  },
 };
 </script>
 

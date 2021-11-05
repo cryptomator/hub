@@ -8,19 +8,17 @@
 </template>
 
 <script lang="ts">
-
-import {defineComponent} from "vue";
-import backend, {DeviceDto, UserDto, VaultDto} from "../common/backend";
+import { defineComponent } from 'vue';
+import backend, { DeviceDto, UserDto, VaultDto } from '../common/backend';
 
 export default defineComponent({
-	data: () => ({
-		me: null as unknown as UserDto,
-	}),
-	mounted() {
-		backend.users.meIncludingDevices().then(me => {
-			this.me = me
-		});
-	}
-})
-
+  data: () => ({
+    me: null as unknown as UserDto,
+  }),
+  mounted() {
+    backend.users.meIncludingDevices().then(me => {
+      this.me = me;
+    });
+  }
+});
 </script>

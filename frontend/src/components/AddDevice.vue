@@ -11,9 +11,9 @@
 </template>
 
 <script lang="ts">
-import backend from '../common/backend'
-import { defineComponent } from 'vue'
-import { base64url } from "rfc4648";
+import backend from '../common/backend';
+import { defineComponent } from 'vue';
+import { base64url } from 'rfc4648';
 
 export default defineComponent({
   props: {
@@ -22,12 +22,12 @@ export default defineComponent({
       default: null
     },
     deviceKey: {
-        type: String,
-        default: null
+      type: String,
+      default: null
     },
     verificationHash: {
-        type: String,
-        default: null
+      type: String,
+      default: null
     }
   },
   data: () => ({
@@ -43,10 +43,10 @@ export default defineComponent({
       const encoder = new TextEncoder();
       const data = encoder.encode(this.deviceId + this.deviceKey + this.verificationCode);
       const hash = await crypto.subtle.digest('SHA-256', data);
-      const actualVerificationCode = base64url.stringify(new Uint8Array(hash)).replaceAll("=", "");
+      const actualVerificationCode = base64url.stringify(new Uint8Array(hash)).replaceAll('=', '');
       this.validVerificationCode = actualVerificationCode === this.verificationHash;
-      console.log("valid: ", this.validVerificationCode);
+      console.log('valid: ', this.validVerificationCode);
     }
   }
-})
+});
 </script>

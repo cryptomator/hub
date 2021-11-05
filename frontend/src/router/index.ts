@@ -7,12 +7,12 @@ import CreateVault from '../components/CreateVault.vue';
 import DeviceList from '../components/DeviceList.vue';
 import HelloWorld from '../components/HelloWorld.vue';
 import Settings from '../components/Settings.vue';
-import SetupComponent from "../components/Setup.vue";
+import SetupComponent from '../components/Setup.vue';
 import UnlockError from '../components/UnlockError.vue';
 import UnlockSuccess from '../components/UnlockSuccess.vue';
 import UserDetails from '../components/UserDetails.vue';
 import VaultDetails from '../components/VaultDetails.vue';
-import VaultList from "../components/VaultList.vue";
+import VaultList from '../components/VaultList.vue';
 
 const routes: RouteRecordRaw[] = [
   {
@@ -104,7 +104,7 @@ router.beforeEach((to, from, next) => {
   if (to.meta.skipAuth) {
     next();
   } else {
-    const redirectUri = `${window.location.protocol}//${window.location.host}${import.meta.env.BASE_URL}#${to.fullPath}`
+    const redirectUri = `${window.location.protocol}//${window.location.host}${import.meta.env.BASE_URL}#${to.fullPath}`;
     authPromise.then(async auth => {
       await auth.loginIfRequired(redirectUri);
       next();

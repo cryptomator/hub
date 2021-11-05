@@ -67,5 +67,5 @@ export default defineComponent({
       this.$nextTick(() => (this.$refs.vaultDetailsSlideOver as typeof SlideOver).show());
     }
   }
-})
+});
 </script>

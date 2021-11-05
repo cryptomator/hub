@@ -19,7 +19,7 @@ axiosAuth.interceptors.request.use(async request => {
   if (request.headers) {
     request.headers['Authorization'] = `Bearer ${token}`;
   } else {
-    request.headers = {'Authorization': `Bearer ${token}`}
+    request.headers = { 'Authorization': `Bearer ${token}` };
   }
   return request;
 });
@@ -47,7 +47,7 @@ class VaultService {
   }
 
   public async grantAccess(vaultId: string, deviceId: string, deviceSpecificMasterkey: string, ephemeralPublicKey: string) {
-    const body: AccessDto = { device_specific_masterkey: deviceSpecificMasterkey, ephemeral_public_key: ephemeralPublicKey }
+    const body: AccessDto = { device_specific_masterkey: deviceSpecificMasterkey, ephemeral_public_key: ephemeralPublicKey };
     await axiosAuth.put(`/vaults/${vaultId}/keys/${deviceId}`, body);
   }
 
@@ -67,16 +67,16 @@ export class AccessDto {
 class DeviceService {
 
   public async createDevice(deviceId: string, name: string, publicKey: String): Promise<AxiosResponse<any>> {
-    const body = { id: deviceId, name: name, publicKey: publicKey }
-    return axiosAuth.put(`/devices/${deviceId}`, body)
+    const body = { id: deviceId, name: name, publicKey: publicKey };
+    return axiosAuth.put(`/devices/${deviceId}`, body);
   }
 
   public async getDevice(deviceId: string): Promise<AxiosResponse<DeviceDto>> {
-    return axiosAuth.get<DeviceDto>(`/devices/${deviceId}`)
+    return axiosAuth.get<DeviceDto>(`/devices/${deviceId}`);
   }
 
   public async listAll(): Promise<DeviceDto[]> {
-    return axiosAuth.get<DeviceDto[]>('/devices/').then(response => response.data)
+    return axiosAuth.get<DeviceDto[]>('/devices/').then(response => response.data);
   }
 }
 
@@ -87,18 +87,18 @@ export class DeviceDto {
 class UserService {
 
   public async syncMe(): Promise<void> {
-    return axiosAuth.put('/users/me')
+    return axiosAuth.put('/users/me');
   }
   public async me(): Promise<string> {
-    return axiosAuth.get<string>('/users/me').then(response => response.data)
+    return axiosAuth.get<string>('/users/me').then(response => response.data);
   }
 
   public async meIncludingDevices(): Promise<UserDto> {
-    return axiosAuth.get<UserDto>('/users/me-extended/').then(response => response.data)
+    return axiosAuth.get<UserDto>('/users/me-extended/').then(response => response.data);
   }
 
   public async listAllUsersIncludingDevices(): Promise<UserDto[]> {
-    return axiosAuth.get<UserDto[]>('/users/devices/').then(response => response.data)
+    return axiosAuth.get<UserDto[]>('/users/devices/').then(response => response.data);
   }
 }
 

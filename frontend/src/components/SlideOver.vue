@@ -39,7 +39,7 @@ import { Dialog, DialogOverlay, DialogTitle, TransitionChild, TransitionRoot } f
 import { XIcon } from '@heroicons/vue/outline';
 
 export default defineComponent({
-  name: "SlideOver",
+  name: 'SlideOver',
   components: {
     Dialog,
     DialogOverlay,
@@ -56,15 +56,15 @@ export default defineComponent({
   },
   emits: ['close'],
   setup() {
-    const open = ref(false)
+    const open = ref(false);
     return {
       open,
-    }
+    };
   },
   methods: {
     show() {
       this.open = true;
     },
   },
-})
+});
 </script>

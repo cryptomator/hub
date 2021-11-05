@@ -59,11 +59,11 @@
 </template>
 
 <script lang="ts">
-import backend from '../common/backend'
+import backend from '../common/backend';
 import config from '../common/config';
-import { uuid } from '../common/util'
-import { Masterkey, VaultConfigHeaderHub, VaultConfigPayload } from '../common/crypto'
-import { defineComponent } from 'vue'
+import { uuid } from '../common/util';
+import { Masterkey, VaultConfigHeaderHub, VaultConfigPayload } from '../common/crypto';
+import { defineComponent } from 'vue';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import { DownloadIcon } from '@heroicons/vue/solid';
@@ -90,7 +90,7 @@ export default defineComponent({
     async createVault() {
       const masterkey = await Masterkey.create();
       const vaultId = uuid();
-      const kid = `hub+http://localhost:9090/vaults/${vaultId}`
+      const kid = `hub+http://localhost:9090/vaults/${vaultId}`;
 
       const hubConfig: VaultConfigHeaderHub = {
         clientId: 'cryptomator-hub',
@@ -111,21 +111,21 @@ export default defineComponent({
       this.token = await masterkey.createVaultConfig(kid, hubConfig, jwtPayload);
       const wrapped = await masterkey.wrap(this.password);
       backend.vaults.createVault(vaultId, this.vaultName, wrapped.encrypted, wrapped.iterations, wrapped.salt).then(() => {
-        masterkey.hashDirectoryId("").then(rootDirHash => {
-          this.rootDirHash = rootDirHash
-          this.state = State.Created
-        })
-      })
+        masterkey.hashDirectoryId('').then(rootDirHash => {
+          this.rootDirHash = rootDirHash;
+          this.state = State.Created;
+        });
+      });
     },
     async createVaultFolder() {
       if(this.state === State.Created) {
         const zip = new JSZip();
-        zip.file("vault.cryptomator", this.token);
-        zip.folder("d")?.folder(this.rootDirHash.substring(0, 2))?.folder(this.rootDirHash.substring(2));
-        const blob = await zip.generateAsync({type: "blob"});
+        zip.file('vault.cryptomator', this.token);
+        zip.folder('d')?.folder(this.rootDirHash.substring(0, 2))?.folder(this.rootDirHash.substring(2));
+        const blob = await zip.generateAsync({ type: 'blob' });
         saveAs(blob, `${this.vaultName}.zip`);
       }
     }
   }
-})
+});
 </script>

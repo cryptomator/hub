@@ -16,15 +16,15 @@ import { useI18n } from 'vue-i18n';
 const languages = Locales;
 
 export default defineComponent({
-  name: "Settings",
+  name: 'Settings',
   setup() {
     const { t } = useI18n({
       useScope: 'global'
-    })
+    });
     return {
       t,
       languages
-    }
+    };
   },
-})
+});
 </script>

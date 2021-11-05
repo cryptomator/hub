@@ -1,22 +1,26 @@
+// eslint-disable-next-line no-undef
 module.exports = {
-    plugins: ['@typescript-eslint'],
-    parserOptions: {
-      parser: require.resolve('@typescript-eslint/parser'),
-      extraFileExtensions: ['.vue'],
-      ecmaFeatures: {
-        jsx: true
-      }
-    },
-    extends: [
-      'plugin:vue/vue3-recommended'
-    ],
-    overrides: [{
+  plugins: ['@typescript-eslint'],
+  parserOptions: {
+    // eslint-disable-next-line no-undef
+    parser: require.resolve('@typescript-eslint/parser'),
+    extraFileExtensions: ['.vue'],
+    ecmaFeatures: {
+      jsx: true
+    }
+  },
+  extends: [
+    'eslint:recommended',
+    'plugin:vue/vue3-recommended',
+  ],
+  overrides: [
+    {
       files: ['*.ts', '*.tsx'],
       rules: {
         'no-unused-vars': 'off',
-      }
-    }],
-    overrides: [{
+      },
+    },
+    {
       files: ['*.vue'],
       rules: {
         'vue/max-attributes-per-line': 'off',
@@ -24,5 +28,13 @@ module.exports = {
         'vue/html-closing-bracket-spacing': 'off',
         'vue/html-self-closing': 'off',
       }
-    }]
+    },
+  ],
+  rules: {
+    'indent': ['error', 2],
+    'linebreak-style': ['error', 'unix'],
+    'object-curly-spacing': ['error', 'always'],
+    'quotes': ['error', 'single'],
+    'semi': ['error', 'always'],
   }
+};

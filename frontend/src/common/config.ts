@@ -13,7 +13,7 @@ class ConfigDto {
 }
 
 async function loadConfig(): Promise<ConfigDto> {
-  return axios.get<ConfigDto>('/setup').then(response => response.data)
+  return axios.get<ConfigDto>('/setup').then(response => response.data);
 }
 
 class ConfigWrapper {

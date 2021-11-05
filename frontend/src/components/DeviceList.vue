@@ -58,23 +58,17 @@
 </template>
 
 <script lang="ts">
-import {defineComponent} from "vue";
-import backend, {UserDto} from "../common/backend";
+import { defineComponent } from 'vue';
+import backend, { UserDto } from '../common/backend';
 
 export default defineComponent({
-	name: 'VaultList',
-	props: {
-		vaultId: {
-			type: String,
-			default: null
-		}
-	},
-	data: () => ({
-		Error,
-		me: null as unknown as UserDto
-	}),
-	async mounted() {
-		this.me = await backend.users.meIncludingDevices()
-	}
-})
+  name: 'DeviceList',
+  data: () => ({
+    Error,
+    me: null as unknown as UserDto
+  }),
+  async mounted() {
+    this.me = await backend.users.meIncludingDevices();
+  }
+});
 </script>

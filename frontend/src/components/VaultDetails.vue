@@ -10,7 +10,8 @@
 
     <h2>Modify access list</h2>
     <ul>
-      <li v-for="user in users" :key="user.name">👤 {{ user.name }} <button @click="revokeUserAccess(user.id)">⛔</button> <button @click="giveUserAccess(user)">✅</button>
+      <li v-for="user in users" :key="user.name">
+        👤 {{ user.name }} <button @click="revokeUserAccess(user.id)">⛔</button> <button @click="giveUserAccess(user)">✅</button>
         <ul v-if="user.devices.length > 0">
           <li v-for="device in user.devices" :key="device.name">📱 {{ device.name }} <button @click="revokeDeviceAccess(device.id)">⛔</button> <button @click="giveDeviceAccess(device)">✅</button></li>
         </ul>
@@ -22,12 +23,12 @@
 </template>
 
 <script lang="ts">
-import backend, { DeviceDto, UserDto, VaultDto } from '../common/backend'
-import { base64url } from "rfc4648";
-import { Masterkey, WrappedMasterkey } from '../common/crypto'
-import { defineComponent } from 'vue'
-import { AxiosError } from 'axios'
-import { useI18n } from 'vue-i18n'
+import backend, { DeviceDto, UserDto, VaultDto } from '../common/backend';
+import { base64url } from 'rfc4648';
+import { Masterkey, WrappedMasterkey } from '../common/crypto';
+import { defineComponent } from 'vue';
+import { AxiosError } from 'axios';
+import { useI18n } from 'vue-i18n';
 
 enum Error {
   None,
@@ -45,8 +46,8 @@ export default defineComponent({
   setup() {
     const { t } = useI18n({
       useScope: 'global'
-    })
-    return { t }
+    });
+    return { t };
   },
   data: () => ({
     Error,
@@ -63,16 +64,16 @@ export default defineComponent({
       if (error.response?.status === 404) {
         this.errorCode = Error.NotFound;
       }
-    })
+    });
     backend.users.listAllUsersIncludingDevices().then(users => {
-      this.users = users
-    })
+      this.users = users;
+    });
   },
 
   methods: {
     async giveUserAccess(user: UserDto) {
       for(const device of user.devices) {
-        this.giveDeviceAccess(device)
+        this.giveDeviceAccess(device);
       }
     },
 
@@ -91,7 +92,7 @@ export default defineComponent({
 
     async revokeUserAccess(userId: string) {
       try {
-        backend.vaults.revokeUserAccess(this.vaultId, userId)
+        backend.vaults.revokeUserAccess(this.vaultId, userId);
       } catch (error) {
         console.error('revoking access permissions failed.', error);
       }
@@ -99,11 +100,11 @@ export default defineComponent({
 
     async revokeDeviceAccess(deviceId: string) {
       try {
-        backend.vaults.revokeDeviceAccess(this.vaultId, deviceId)
+        backend.vaults.revokeDeviceAccess(this.vaultId, deviceId);
       } catch (error) {
         console.error('revoking access permissions failed.', error);
       }
     }
   }
-})
+});
 </script>

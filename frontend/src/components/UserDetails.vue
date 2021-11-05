@@ -6,7 +6,8 @@
   <div v-else>
     <h2>Devices with access to</h2>
     <ul v-if="user.devices.length > 0">
-      <li v-for="device in user.devices" :key="device.name">📱 {{ device.name }}:
+      <li v-for="device in user.devices" :key="device.name">
+        📱 {{ device.name }}:
         <ul v-if="device.accessTo.length > 0">
           <li v-for="vault in device.accessTo" :key="vault.name"><a :href="'http://localhost:3000/#/vaults/' + vault.id">{{ vault.name }}</a></li>
         </ul>
@@ -16,20 +17,20 @@
 </template>
 
 <script lang="ts">
-import { UserDto } from '../common/backend'
-import { defineComponent } from 'vue'
-import services from '../common/backend'
-import { useI18n } from 'vue-i18n'
+import { UserDto } from '../common/backend';
+import { defineComponent } from 'vue';
+import services from '../common/backend';
+import { useI18n } from 'vue-i18n';
 
 export default defineComponent({
   name: 'UserDetails',
   props: {
   },
   setup() {
-  const { t } = useI18n({
-    useScope: 'global'
-  })
-  return { t }
+    const { t } = useI18n({
+      useScope: 'global'
+    });
+    return { t };
   },
   data: () => ({
     username: '' as string,
@@ -48,5 +49,5 @@ export default defineComponent({
 
   methods: {
   }
-})
+});
 </script>

@@ -8,6 +8,6 @@ describe('uuid', () => {
     const uuid1 = uuid();
     const uuid2 = uuid();
     expect(uuid1).not.to.equal(uuid2);
-  })
+  });
 
-})
+});

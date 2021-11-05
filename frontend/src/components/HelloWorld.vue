@@ -3,8 +3,8 @@
 </template>
 
 <script lang="ts">
-import { ref, defineComponent } from 'vue'
-import services from '../common/backend'
+import { ref, defineComponent } from 'vue';
+import services from '../common/backend';
 
 defineComponent((p, c)=>{});
 
@@ -19,5 +19,5 @@ export default defineComponent({
     });
   }
   
-})
+});
 </script>

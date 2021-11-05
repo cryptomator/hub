@@ -17,8 +17,8 @@ export class Deferred<T> {
     this.reject = (reason) => { };
     this.resolve = (value) => { };
     this.promise = new Promise<T>((resolve, reject) => {
-      this.reject = reject
-      this.resolve = resolve
-    })
+      this.reject = reject;
+      this.resolve = resolve;
+    });
   }
 }

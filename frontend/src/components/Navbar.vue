@@ -22,7 +22,7 @@
                            active-class="bg-gray-900 text-white px-3 py-2 rounded-md text-sm font-medium"
               >
                 {{ t(item.name) }}
-              </router-link>	
+              </router-link>
             </div>
           </div>
         </div>
@@ -68,19 +68,19 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue'
-import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
-import { MenuIcon, XIcon } from '@heroicons/vue/outline'
-import { useI18n } from 'vue-i18n'
+import { defineComponent } from 'vue';
+import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
+import { MenuIcon, XIcon } from '@heroicons/vue/outline';
+import { useI18n } from 'vue-i18n';
 import authPromise from '../common/auth';
 
 const navigation = [
-  { name: 'home', to: '/'},
-  { name: 'user_details', to: '/user'},
-]
+  { name: 'home', to: '/' },
+  { name: 'user_details', to: '/user' },
+];
 
 export default defineComponent({
-  name: "Navbar",
+  name: 'Navbar',
   components: {
     Disclosure,
     DisclosureButton,
@@ -95,11 +95,11 @@ export default defineComponent({
   setup() {
     const { t } = useI18n({
       useScope: 'global'
-    })
+    });
     return {
       t,
       navigation
-    }
+    };
   },
   methods: {
     async logout() {
@@ -107,5 +107,5 @@ export default defineComponent({
       auth.logout();
     }
   }
-})
+});
 </script>

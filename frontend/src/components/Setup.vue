@@ -153,13 +153,13 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue'
+import { defineComponent } from 'vue';
 import axios from 'axios';
 import config from '../common/config';
 import createRealmJson from '../common/realm';
 import { CheckCircleIcon, XCircleIcon, XIcon } from '@heroicons/vue/solid';
-import { useNotificationStore } from '@dafcoe/vue-notification'
-const { setNotification } = useNotificationStore()
+import { useNotificationStore } from '@dafcoe/vue-notification';
+const { setNotification } = useNotificationStore();
 
 
 let backendBaseURL = import.meta.env.DEV ? 'http://localhost:9090' : '';
@@ -200,45 +200,45 @@ export default defineComponent({
       params.append('realmCfg', this.hubRealmCfg);
 
       axios.post(`${backendBaseURL}/setup/create-realm`, params).then(response => {
-		//this.realmSuccessfulCreatedNotification = true;
-		const realmSuccessfulCreatedNotification = {
-		 "message": "Successfully created realm.",
-		 "type": "success",
-		 "showIcon": true,
-		 "dismiss": {
-		  "manually": true,
-		  "automatically": true
-		 },
-		 "showDurationProgress": true,
-		}
-		setNotification(realmSuccessfulCreatedNotification)
+        //this.realmSuccessfulCreatedNotification = true;
+        const realmSuccessfulCreatedNotification = {
+          'message': 'Successfully created realm.',
+          'type': 'success',
+          'showIcon': true,
+          'dismiss': {
+            'manually': true,
+            'automatically': true
+          },
+          'showDurationProgress': true,
+        };
+        setNotification(realmSuccessfulCreatedNotification);
         config.reload();
       }).catch(error => {
         console.error('failed to create realm', error);
-		//this.realmErrorNotification = true;
-		let realmErrorNotification = {
-				"message": "error",
-				"type": "alert",
-				"showIcon": true,
-				"dismiss": {
-					"manually": true,
-					"automatically": false
-				},
-		}
-		if (error.response.status === 404){
-			realmErrorNotification.message = "Error while creating realm. URL can't be found.";
-		} else if (error.response.status === 409){
-			realmErrorNotification.message = "Error while creating realm. It might already exist.";
-		}
-		setNotification(realmErrorNotification)
-	  });
+        //this.realmErrorNotification = true;
+        let realmErrorNotification = {
+          'message': 'error',
+          'type': 'alert',
+          'showIcon': true,
+          'dismiss': {
+            'manually': true,
+            'automatically': false
+          },
+        };
+        if (error.response.status === 404){
+          realmErrorNotification.message = 'Error while creating realm. URL can\'t be found.';
+        } else if (error.response.status === 409){
+          realmErrorNotification.message = 'Error while creating realm. It might already exist.';
+        }
+        setNotification(realmErrorNotification);
+      });
     },
 
-	/*closeNotifications(){
+    /*closeNotifications(){
 	  this.realmSuccessfulCreatedNotification = false;
 	  this.realmErrorNotification = false;
 	}*/
   }
-})
+});
 </script>
 
