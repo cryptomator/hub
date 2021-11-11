@@ -18,6 +18,7 @@ class Auth {
       silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
       pkceMethod: 'S256',
     });
+    this.keycloak.onTokenExpired = () => this.keycloak.updateToken(30);
   }
 
   public isAuthenticated(): boolean {
@@ -41,9 +42,7 @@ class Auth {
   }
 
   public async bearerToken(): Promise<string | undefined> {
-    if (this.keycloak.isTokenExpired()) {
-      await this.keycloak.updateToken(30);
-    }
+    await this.keycloak.updateToken(10);
     return this.keycloak.token;
   }
 
