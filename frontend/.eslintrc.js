@@ -13,6 +13,10 @@ module.exports = {
     'eslint:recommended',
     'plugin:vue/vue3-recommended',
   ],
+  globals: {
+    defineProps: 'readonly',
+    defineEmits: 'readonly'
+  },
   overrides: [
     {
       files: ['*.ts', '*.tsx'],
