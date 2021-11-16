@@ -3,10 +3,8 @@
 </template>
 
 <script lang="ts">
-import { ref, defineComponent } from 'vue';
+import { defineComponent } from 'vue';
 import services from '../common/backend';
-
-defineComponent((p, c)=>{});
 
 export default defineComponent({
   name: 'HelloWorld',
@@ -18,6 +16,5 @@ export default defineComponent({
       this.username = username;
     });
   }
-  
 });
 </script>

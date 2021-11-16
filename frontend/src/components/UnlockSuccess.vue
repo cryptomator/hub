@@ -9,7 +9,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import backend, { DeviceDto, UserDto, VaultDto } from '../common/backend';
+import backend, { UserDto } from '../common/backend';
 
 export default defineComponent({
   data: () => ({

@@ -13,16 +13,18 @@
 		"recommendations": [
 			"dbaeumer.vscode-eslint",
 			"hbenl.vscode-mocha-test-adapter",
-			"octref.vetur"
+			"johnsoncodehk.volar"
 		],
-		"unwantedRecommendations": ["dbaeumer.jshint"]
+		"unwantedRecommendations": [
+			"dbaeumer.jshint",
+			"octref.vetur"
+		]
 	},
 	"settings": {
 		"files.exclude": {
 			"**/.DS_Store": true
 		},
 		"typescript.referencesCodeLens.enabled": true,
-		"typescript.implementationsCodeLens.enabled": true,
-		"vetur.validation.template": false
+		"typescript.implementationsCodeLens.enabled": true
 	}
 }
