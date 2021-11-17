@@ -67,7 +67,7 @@ async function verifyCode(code: string): Promise<boolean> {
   const encoder = new TextEncoder();
   const data = encoder.encode(props.deviceId + props.deviceKey + code);
   const hash = await crypto.subtle.digest('SHA-256', data);
-  const actualVerificationCode = base64url.stringify(new Uint8Array(hash)).replaceAll('=', '');
-  return actualVerificationCode === props.verificationHash;
+  const encodedHash = base64url.stringify(new Uint8Array(hash)).replaceAll('=', '');
+  return encodedHash === props.verificationHash;
 }
 </script>
