@@ -36,7 +36,7 @@
 
 <script setup lang="ts">
 import { base64url } from 'rfc4648';
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import backend from '../common/backend';
 
 const props = defineProps<{
@@ -48,15 +48,11 @@ const props = defineProps<{
 const form = ref<HTMLFormElement>();
 const deviceName = ref('');
 const verificationCode = ref('');
-const validDeviceName = ref(false);
+
+const validDeviceName = computed(() => deviceName.value.length > 0);
 const validVerificationCode = ref(false);
-
-watch(deviceName, (val) => {
-  validDeviceName.value = val.length > 0;
-});
-
-watch(verificationCode, async (val) => {
-  validVerificationCode.value = await verifyCode(val);
+watch(verificationCode, async (code) => {
+  validVerificationCode.value = await verifyCode(code);
 });
 
 async function createDevice() {
