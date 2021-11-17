@@ -19,12 +19,6 @@ module.exports = {
   },
   overrides: [
     {
-      files: ['*.ts', '*.tsx'],
-      rules: {
-        'no-unused-vars': 'off',
-      },
-    },
-    {
       files: ['*.vue'],
       rules: {
         'vue/max-attributes-per-line': 'off',
@@ -37,8 +31,10 @@ module.exports = {
   rules: {
     'indent': ['error', 2],
     'linebreak-style': ['error', 'unix'],
+    'no-unused-vars': 'off',
     'object-curly-spacing': ['error', 'always'],
     'quotes': ['error', 'single'],
     'semi': ['error', 'always'],
+    '@typescript-eslint/no-unused-vars': 'error',
   }
 };
