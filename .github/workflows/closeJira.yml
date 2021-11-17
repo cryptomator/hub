@@ -6,13 +6,13 @@ on:
 jobs:
   CloseJiraTicket: 
     if: contains(github.event.issue.body, '<!-- JIRA-KEY:')
-    name: Parse closed ticket
+    name: Close Jira Ticket
     runs-on: ubuntu-latest
     steps:
       - name: Extracts JIRA issue key from github ticket
         id: parseJiraKey
         run: |
-          ISSUE_ID=`echo ${ISSUE_BODY} | grep -m1 '<\!-- JIRA-KEY:' | sed -E 's/.*JIRA-KEY: ([^\s]+).*/\1/'`
+          ISSUE_ID=`echo ${ISSUE_BODY} | grep -m1 '<\!-- JIRA-KEY:' | sed -E 's/.*JIRA-KEY: (\w+) .*/\1/'`
           echo "::set-output name=issueId::${ISSUE_ID}"
         env:
           ISSUE_BODY: ${{ github.event.issue.body }}
