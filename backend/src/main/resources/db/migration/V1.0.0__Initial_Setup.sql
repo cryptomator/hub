@@ -4,6 +4,7 @@ CREATE TABLE user
 (
 	id   VARCHAR(255) NOT NULL,
 	name VARCHAR(255) NOT NULL,
+	picture_url VARCHAR(255),
 	CONSTRAINT pk_user PRIMARY KEY (id)
 );
 

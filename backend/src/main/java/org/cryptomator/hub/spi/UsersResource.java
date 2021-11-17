@@ -29,7 +29,7 @@ public class UsersResource {
 	@RolesAllowed("user")
 	@NoCache
 	public Response syncMe() {
-		User.createOrUpdate(jwt.getSubject(), jwt.getName());
+		User.createOrUpdate(jwt.getSubject(), jwt.getName(), jwt.getClaim("picture"));
 		return Response.created(URI.create(".")).build();
 	}
 
@@ -56,7 +56,7 @@ public class UsersResource {
 					return new VaultResource.VaultDto(vault.id, vault.name, null, null, null);
 				}).collect(Collectors.toSet())))
 				.collect(Collectors.toSet());
-		return Response.ok(new UserDto(user.id, user.name, devices)).build();
+		return Response.ok(new UserDto(user.id, user.name, user.pictureUrl, devices)).build();
 	}
 
 	@GET
@@ -74,12 +74,12 @@ public class UsersResource {
 							.map(access -> new VaultResource.VaultDto(access.id.getVaultId(), null, null, null, null))
 							.collect(Collectors.toSet())))
 					.collect(Collectors.toSet());
-			return new UserDto(user.id, user.name, devices);
+			return new UserDto(user.id, user.name, user.pictureUrl, devices);
 		}).collect(Collectors.toList());
 		return Response.ok(users).build();
 	}
 
-    public static record UserDto(@JsonProperty("id") String id, @JsonProperty("name") String name,
+    public static record UserDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("pictureUrl") String pictureUrl,
                                  @JsonProperty("devices") Set<DeviceResource.DeviceDto> devices) {
 
     }

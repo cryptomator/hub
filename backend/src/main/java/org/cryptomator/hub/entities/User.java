@@ -51,6 +51,9 @@ public class User extends PanacheEntityBase {
 	@Column(name = "name", nullable = false)
 	public String name;
 
+	@Column(name = "picture_url")
+	public String pictureUrl;
+
 	public void setDevices(Set<Device> devices) {
 		this.devices.clear();
 		this.devices.addAll(devices);
@@ -90,13 +93,14 @@ public class User extends PanacheEntityBase {
 	// --- data layer queries ---
 
 	@Transactional(Transactional.TxType.REQUIRED)
-	public static void createOrUpdate(String id, String name) {
+	public static void createOrUpdate(String id, String name, String pictureUrl) {
 		User user = findById(id);
 		if (user == null) {
 			user = new User();
 			user.id = id;
 		}
 		user.name = name;
+		user.pictureUrl = pictureUrl;
 		user.persist();
 	}
 
@@ -111,4 +115,5 @@ public class User extends PanacheEntityBase {
 	public static User getWithDevicesAndAccess(String userId) {
 		return find("#User.withDevicesAndAccess", Parameters.with("userId", userId)).firstResult();
 	}
+
 }
