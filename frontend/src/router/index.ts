@@ -78,7 +78,7 @@ const routes: RouteRecordRaw[] = [
     meta: { skipAuth: true },
     beforeEnter: (to, from, next) => {
       authPromise.then(async auth => {
-        if (auth.isAuthenticated()) {
+        if (await auth.isAuthenticated()) {
           const loggedOutUri = `${location.origin}/${router.resolve(to).href}`;
           await auth.logout(loggedOutUri);
         } else {
@@ -129,7 +129,7 @@ router.beforeEach((to, from, next) => {
 router.beforeEach((to, from, next) => {
   if ('login' in to.query) {
     authPromise.then(async auth => {
-      if (auth.isAuthenticated()) {
+      if (await auth.isAuthenticated()) {
         await backend.users.syncMe();
       }
     }).finally(() => {

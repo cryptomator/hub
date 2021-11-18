@@ -33,7 +33,7 @@
             <div>
               <MenuButton class="bg-gray-800 flex text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">
                 <span class="sr-only">Open user menu</span>
-                <img class="h-8 w-8 rounded-full" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="" />
+                <img class="h-8 w-8 rounded-full" :src="me != null ? me.pictureUrl : 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'" alt="" />
               </MenuButton>
             </div>
             <transition enter-active-class="transition ease-out duration-100" enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 scale-100" leave-to-class="transform opacity-0 scale-95">
@@ -67,38 +67,25 @@
   </Disclosure>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue';
+<script setup lang="ts">
+import { ref, onMounted } from 'vue';
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
 import { MenuIcon, XIcon } from '@heroicons/vue/outline';
 import { useI18n } from 'vue-i18n';
+import backend, { UserDto } from '../common/backend';
 
 const navigation = [
   { name: 'home', to: '/' },
   { name: 'user_details', to: '/user' },
 ];
 
-export default defineComponent({
-  name: 'Navbar',
-  components: {
-    Disclosure,
-    DisclosureButton,
-    DisclosurePanel,
-    Menu,
-    MenuButton,
-    MenuItem,
-    MenuItems,
-    MenuIcon,
-    XIcon,
-  },
-  setup() {
-    const { t } = useI18n({
-      useScope: 'global'
-    });
-    return {
-      t,
-      navigation
-    };
-  }
+const { t } = useI18n({ useScope: 'global' });
+
+const me = ref<UserDto>();
+
+onMounted(async () => {
+  console.log('onMounted called for realz');
+  me.value = await backend.users.meIncludingDevices();
 });
+
 </script>

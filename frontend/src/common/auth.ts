@@ -21,7 +21,8 @@ class Auth {
     this.keycloak.onTokenExpired = () => this.keycloak.updateToken(30);
   }
 
-  public isAuthenticated(): boolean {
+  public async isAuthenticated(): Promise<boolean> {
+    await this.initialized;
     return this.keycloak.authenticated || false;
   }
 
