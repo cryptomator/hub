@@ -84,8 +84,11 @@ const { t } = useI18n({ useScope: 'global' });
 const me = ref<UserDto>();
 
 onMounted(async () => {
-  console.log('onMounted called for realz');
-  me.value = await backend.users.meIncludingDevices();
+  try {
+    me.value = await backend.users.meIncludingDevices();
+  } catch (error) {
+    me.value = undefined;
+  }
 });
 
 </script>

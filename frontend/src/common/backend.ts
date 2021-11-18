@@ -12,7 +12,7 @@ const axios = AxiosStatic.create(axiosBaseCfg);
 const axiosAuth = AxiosStatic.create(axiosBaseCfg);
 axiosAuth.interceptors.request.use(async request => {
   const auth = await authPromise;
-  if (!await auth.isAuthenticated()) {
+  if (!auth.isAuthenticated()) {
     throw new Error('not logged in');
   }
   const token = await auth.bearerToken();

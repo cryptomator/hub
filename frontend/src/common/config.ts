@@ -8,19 +8,24 @@ const axios = AxiosStatic.create({
   }
 });
 
-class ConfigDto {
+export class ConfigDto {
   constructor(public setupCompleted: boolean, public keycloakUrl: string) { }
-}
-
-async function loadConfig(): Promise<ConfigDto> {
-  return axios.get<ConfigDto>('/setup').then(response => response.data);
 }
 
 class ConfigWrapper {
   private data: ConfigDto;
   private deferredSetupCompletion: Deferred<void>;
 
-  public constructor(data: ConfigDto) {
+  private static async loadConfig(): Promise<ConfigDto> {
+    const response = await axios.get<ConfigDto>('/setup');
+    return response.data;
+  }
+
+  static async build(): Promise<ConfigWrapper> {
+    return new ConfigWrapper(await this.loadConfig());
+  }
+
+  private constructor(data: ConfigDto) {
     this.data = data;
     this.deferredSetupCompletion = new Deferred();
     this.checkSetupCompleted();
@@ -37,7 +42,7 @@ class ConfigWrapper {
   }
 
   public async reload(): Promise<void> {
-    this.data = await loadConfig();
+    this.data = await ConfigWrapper.loadConfig();
     this.checkSetupCompleted();
   }
 
@@ -47,6 +52,6 @@ class ConfigWrapper {
 
 }
 
-const config = new ConfigWrapper(await loadConfig());
+const config = await ConfigWrapper.build();
 
 export default config;

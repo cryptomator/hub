@@ -78,7 +78,7 @@ const routes: RouteRecordRaw[] = [
     meta: { skipAuth: true },
     beforeEnter: (to, from, next) => {
       authPromise.then(async auth => {
-        if (await auth.isAuthenticated()) {
+        if (auth.isAuthenticated()) {
           const loggedOutUri = `${location.origin}/${router.resolve(to).href}`;
           await auth.logout(loggedOutUri);
         } else {
