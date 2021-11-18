@@ -35,6 +35,9 @@ export default function createRealmJson(hubUrl: string, adminUser: string, admin
     "users" : [ {
         "username" : "${adminUser}",
         "enabled" : true,
+        "attributes" : {
+            "picture" : "https://cryptomator.org/img/logo.svg"
+        },
         "credentials" : [ {
             "type" : "password",
             "value" : "${adminPass}"
