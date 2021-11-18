@@ -43,7 +43,7 @@ const routes: RouteRecordRaw[] = [
     }
   },
   {
-    path: '/',
+    path: '/main-dummy-path', /* required but unused */
     component: MainComponent,
     children: [
       {
