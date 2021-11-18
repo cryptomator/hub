@@ -4,8 +4,9 @@ import backend from '../common/backend';
 import config from '../common/config';
 import AddDevice from '../components/AddDevice.vue';
 import DeviceList from '../components/DeviceList.vue';
-import HelloWorld from '../components/HelloWorld.vue';
+import LoginComponent from '../components/Login.vue';
 import LogoutComponent from '../components/Logout.vue';
+import MainComponent from '../components/Main.vue';
 import Settings from '../components/Settings.vue';
 import SetupComponent from '../components/Setup.vue';
 import UnlockError from '../components/UnlockError.vue';
@@ -16,70 +17,22 @@ import VaultList from '../components/VaultList.vue';
 
 const routes: RouteRecordRaw[] = [
   {
-    path: '/',
-    name: 'Home',
-    end: true,
-    //component: VaultList,
-    components: {
-      default: VaultList,
-
-      end: HelloWorld
-    },
-  },
-  /*{
-    path: '/vaults',
-    component: Vaults,
-    children: [
-      {
-        path: 'create',
-        component: CreateVault
-      },
-      {
-        path: ':uuid/unlock',
-        component: UnlockVault
-      }
-    ]
-  },*/
-  {
-    path: '/devices',
-    component: DeviceList
+    path: '/setup',
+    component: SetupComponent,
+    meta: { skipAuth: true, skipSetup: true }
   },
   {
-    path: '/devices/add',
-    component: AddDevice,
-    props: (route) => ({ deviceId: route.query.device_id, deviceKey: route.query.device_key, verificationHash: route.query.verification_hash })
-  },
-  {
-    path: '/settings',
-    component: Settings
-  },
-  {
-    path: '/user',
-    component: UserDetails,
-    props: (route) => ({ vaultId: route.params.id })
-  },
-  {
-    path: '/vaults/:id',
-    component: VaultDetails,
-    props: (route) => ({ vaultId: route.params.id })
-  },
-  {
-    path: '/unlock-success',
-    component: UnlockSuccess
-  },
-  {
-    path: '/unlock-error',
-    component: UnlockError,
+    path: '/login',
+    component: LoginComponent,
     meta: { skipAuth: true }
   },
   {
     path: '/logout',
     component: LogoutComponent,
-    meta: { skipAuth: true },
     beforeEnter: (to, from, next) => {
       authPromise.then(async auth => {
         if (auth.isAuthenticated()) {
-          const loggedOutUri = `${location.origin}/${router.resolve(to).href}`;
+          const loggedOutUri = `${location.origin}/${router.resolve('/login').href}`;
           await auth.logout(loggedOutUri);
         } else {
           next();
@@ -90,9 +43,46 @@ const routes: RouteRecordRaw[] = [
     }
   },
   {
-    path: '/setup',
-    component: SetupComponent,
-    meta: { skipAuth: true, skipSetup: true }
+    path: '/',
+    component: MainComponent,
+    children: [
+      {
+        path: '/',
+        component: VaultList
+      },
+      {
+        path: '/devices',
+        component: DeviceList
+      },
+      {
+        path: '/devices/add',
+        component: AddDevice,
+        props: (route) => ({ deviceId: route.query.device_id, deviceKey: route.query.device_key, verificationHash: route.query.verification_hash })
+      },
+      {
+        path: '/settings',
+        component: Settings
+      },
+      {
+        path: '/user',
+        component: UserDetails,
+        props: (route) => ({ vaultId: route.params.id })
+      },
+      {
+        path: '/vaults/:id',
+        component: VaultDetails,
+        props: (route) => ({ vaultId: route.params.id })
+      },
+    ]
+  },
+  {
+    path: '/unlock-success',
+    component: UnlockSuccess
+  },
+  {
+    path: '/unlock-error',
+    component: UnlockError,
+    meta: { skipAuth: true }
   }
 ];
 
