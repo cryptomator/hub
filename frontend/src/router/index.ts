@@ -129,7 +129,7 @@ router.beforeEach((to, from, next) => {
 router.beforeEach((to, from, next) => {
   if ('login' in to.query) {
     authPromise.then(async auth => {
-      if (await auth.isAuthenticated()) {
+      if (auth.isAuthenticated()) {
         await backend.users.syncMe();
       }
     }).finally(() => {
