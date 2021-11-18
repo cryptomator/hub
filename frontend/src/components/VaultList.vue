@@ -41,41 +41,32 @@
   </SlideOver>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue';
-import backend, { VaultDto } from '../common/backend';
+<script setup lang="ts">
 import { ChevronRightIcon, PlusIcon } from '@heroicons/vue/solid';
+import { nextTick, onMounted, ref } from 'vue';
+import backend, { VaultDto } from '../common/backend';
 import CreateVault from './CreateVault.vue';
 import SlideOver from './SlideOver.vue';
 import VaultDetails from './VaultDetails.vue';
 
-export default defineComponent({
-  name: 'VaultList',
-  components: {
-    ChevronRightIcon,
-    CreateVault,
-    PlusIcon,
-    SlideOver,
-    VaultDetails,
-  },
-  data: () => ({
-    Error,
-    vaults: [] as VaultDto[],
-    selectedVault: null as VaultDto | null,
-    creatingVault: false,
-  }),
-  async mounted() {
-    this.vaults = await backend.vaults.listAll();
-  },
-  methods: {
-    onVaultClick(vault: VaultDto) {
-      this.selectedVault = vault;
-      this.$nextTick(() => (this.$refs.vaultDetailsSlideOver as typeof SlideOver).show());
-    },
-    onCreateVaultClick() {
-      this.creatingVault = true;
-      this.$nextTick(() => (this.$refs.createVaultSlideOver as typeof SlideOver).show());
-    },
-  }
+const vaultDetailsSlideOver = ref<typeof SlideOver>();
+const createVaultSlideOver = ref<typeof SlideOver>();
+
+const vaults = ref<VaultDto[]>([]);
+const selectedVault = ref<VaultDto | null>(null);
+const creatingVault = ref(false);
+
+onMounted(async () => {
+  vaults.value = await backend.vaults.listAll();
 });
+
+function onVaultClick(vault: VaultDto) {
+  selectedVault.value = vault;
+  nextTick(() => vaultDetailsSlideOver.value?.show());
+}
+
+function onCreateVaultClick() {
+  creatingVault.value = true;
+  nextTick(() => createVaultSlideOver.value?.show());
+}
 </script>
