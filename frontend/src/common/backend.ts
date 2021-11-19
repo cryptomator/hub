@@ -29,7 +29,7 @@ export class VaultDto {
 }
 
 export class UserDto {
-  constructor(public id: string | undefined, public name: string, public pictureUrl: string, public devices: DeviceDto[]) { }
+  constructor(public id: string, public name: string, public pictureUrl: string, public devices: DeviceDto[]) { }
 }
 
 class VaultService {
@@ -41,7 +41,7 @@ class VaultService {
     return axiosAuth.get(`/vaults/${vaultId}`).then(response => response.data);
   }
 
-  public async getMembers(vaultId: string): Promise<AxiosResponse<UserDto[]>> {
+  public async getMembers(vaultId: string): Promise<UserDto[]> {
     return axiosAuth.get(`/vaults/${vaultId}/members`).then(response => response.data);
   }
 
@@ -49,7 +49,7 @@ class VaultService {
     return axiosAuth.put(`/vaults/${vaultId}/members/${userId}`);
   }
 
-  public async getDevicesRequiringAccessGrant(vaultId: string): Promise<AxiosResponse<DeviceDto>> {
+  public async getDevicesRequiringAccessGrant(vaultId: string): Promise<DeviceDto> {
     return axiosAuth.get(`/vaults/${vaultId}/devices-requiring-access-grant`).then(response => response.data);
   }
 
@@ -107,6 +107,10 @@ class UserService {
 
   public async meIncludingDevices(): Promise<UserDto> {
     return axiosAuth.get<UserDto>('/users/me-extended/').then(response => response.data);
+  }
+
+  public async listAll(): Promise<UserDto[]> {
+    return axiosAuth.get<UserDto[]>('/users/').then(response => response.data);
   }
 
   public async listAllUsersIncludingDevices(): Promise<UserDto[]> {

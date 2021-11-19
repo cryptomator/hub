@@ -1,6 +1,7 @@
 package org.cryptomator.hub.spi;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import org.cryptomator.hub.entities.User;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.jboss.resteasy.annotations.cache.NoCache;
@@ -14,6 +15,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.net.URI;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -60,6 +62,15 @@ public class UsersResource {
 	}
 
 	@GET
+	@Path("/")
+	@RolesAllowed("user")
+	@Produces(MediaType.APPLICATION_JSON)
+	public List<UserDto> getAll() {
+		PanacheQuery<User> query = User.findAll();
+		return query.stream().map(UserDto::fromEntity).toList();
+	}
+
+	@GET
 	@Path("/devices")
 	@RolesAllowed("user")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -79,8 +90,8 @@ public class UsersResource {
 		return Response.ok(users).build();
 	}
 
-    public static record UserDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("pictureUrl") String pictureUrl,
-                                 @JsonProperty("devices") Set<DeviceResource.DeviceDto> devices) {
+	public static record UserDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("pictureUrl") String pictureUrl,
+								 @JsonProperty("devices") Set<DeviceResource.DeviceDto> devices) {
 
 		public static UserDto fromEntity(User user) {
 			return new UserDto(user.id, user.name, user.pictureUrl, Set.of());
