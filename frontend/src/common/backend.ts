@@ -37,8 +37,8 @@ class VaultService {
     return axiosAuth.get('/vaults').then(response => response.data);
   }
 
-  public async get(vaultId: string): Promise<AxiosResponse<VaultDto>> {
-    return axiosAuth.get(`/vaults/${vaultId}`);
+  public async get(vaultId: string): Promise<VaultDto> {
+    return axiosAuth.get(`/vaults/${vaultId}`).then(response => response.data);
   }
 
   public async createVault(vaultId: string, name: string, masterkey: string, iterations: number, salt: string): Promise<AxiosResponse<any>> {

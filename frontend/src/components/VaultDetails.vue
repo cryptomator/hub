@@ -22,89 +22,72 @@
   </div>
 </template>
 
-<script lang="ts">
-import backend, { DeviceDto, UserDto, VaultDto } from '../common/backend';
+<script setup lang="ts">
+import axios from 'axios';
 import { base64url } from 'rfc4648';
-import { Masterkey, WrappedMasterkey } from '../common/crypto';
-import { defineComponent } from 'vue';
-import { AxiosError } from 'axios';
+import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import backend, { DeviceDto, UserDto, VaultDto } from '../common/backend';
+import { Masterkey, WrappedMasterkey } from '../common/crypto';
 
 enum Error {
   None,
   NotFound
 }
 
-export default defineComponent({
-  name: 'VaultDetails',
-  props: {
-    vaultId: {
-      type: String,
-      default: null
-    }
-  },
-  setup() {
-    const { t } = useI18n({
-      useScope: 'global'
-    });
-    return { t };
-  },
-  data: () => ({
-    Error,
-    errorCode: Error.None as Error,
-    password: '' as string,
-    users: [] as UserDto[],
-    vault: null as VaultDto | null
-  }),
+const props = defineProps<{
+  vaultId: string
+}>();
 
-  mounted() {
-    backend.vaults.get(this.vaultId).then(vault => {
-      this.vault = vault.data;
-    }).catch((error: AxiosError) => {
-      if (error.response?.status === 404) {
-        this.errorCode = Error.NotFound;
-      }
-    });
-    backend.users.listAllUsersIncludingDevices().then(users => {
-      this.users = users;
-    });
-  },
+const { t } = useI18n({ useScope: 'global' });
+const errorCode = ref(Error.None);
+const password = ref('');
+const users = ref<UserDto[]>([]);
+const vault = ref<VaultDto | null>(null);
 
-  methods: {
-    async giveUserAccess(user: UserDto) {
-      for(const device of user.devices) {
-        this.giveDeviceAccess(device);
-      }
-    },
-
-    async giveDeviceAccess(device: DeviceDto) {
-      try {
-        const vaultDto = this.vault!;
-        const wrappedKey = new WrappedMasterkey(vaultDto.masterkey, vaultDto.salt, vaultDto.iterations);
-        const masterkey = await Masterkey.unwrap(this.password, wrappedKey);
-        const publicKey = base64url.parse(device.publicKey);
-        const deviceSpecificKey = await masterkey.encryptForDevice(publicKey);
-        await backend.vaults.grantAccess(this.vaultId, device.id, deviceSpecificKey.encrypted, deviceSpecificKey.publicKey);
-      } catch (error) {
-        console.error('granting access permissions failed.', error);
-      }
-    },
-
-    async revokeUserAccess(userId: string) {
-      try {
-        backend.vaults.revokeUserAccess(this.vaultId, userId);
-      } catch (error) {
-        console.error('revoking access permissions failed.', error);
-      }
-    },
-
-    async revokeDeviceAccess(deviceId: string) {
-      try {
-        backend.vaults.revokeDeviceAccess(this.vaultId, deviceId);
-      } catch (error) {
-        console.error('revoking access permissions failed.', error);
-      }
+onMounted(async () => {
+  try {
+    vault.value = await backend.vaults.get(props.vaultId);
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 404) {
+      errorCode.value = Error.NotFound;
     }
   }
+  users.value = await backend.users.listAllUsersIncludingDevices();
 });
+
+async function giveUserAccess(user: UserDto) {
+  for (const device of user.devices) {
+    giveDeviceAccess(device);
+  }
+}
+
+async function giveDeviceAccess(device: DeviceDto) {
+  try {
+    const vaultDto = vault.value!;
+    const wrappedKey = new WrappedMasterkey(vaultDto.masterkey, vaultDto.salt, vaultDto.iterations);
+    const masterkey = await Masterkey.unwrap(password.value, wrappedKey);
+    const publicKey = base64url.parse(device.publicKey);
+    const deviceSpecificKey = await masterkey.encryptForDevice(publicKey);
+    await backend.vaults.grantAccess(props.vaultId, device.id, deviceSpecificKey.encrypted, deviceSpecificKey.publicKey);
+  } catch (error) {
+    console.error('granting access permissions failed.', error);
+  }
+}
+
+async function revokeUserAccess(userId: string) {
+  try {
+    backend.vaults.revokeUserAccess(props.vaultId, userId);
+  } catch (error) {
+    console.error('revoking access permissions failed.', error);
+  }
+}
+
+async function revokeDeviceAccess(deviceId: string) {
+  try {
+    backend.vaults.revokeDeviceAccess(props.vaultId, deviceId);
+  } catch (error) {
+    console.error('revoking access permissions failed.', error);
+  }
+}
 </script>

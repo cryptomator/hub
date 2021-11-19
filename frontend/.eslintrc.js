@@ -30,6 +30,7 @@ module.exports = {
   ],
   rules: {
     'indent': ['error', 2],
+    'keyword-spacing': ['error', { 'before': true, 'after': true }],
     'linebreak-style': ['error', 'unix'],
     'no-unused-vars': 'off',
     'object-curly-spacing': ['error', 'always'],
