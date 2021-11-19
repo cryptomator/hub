@@ -51,7 +51,7 @@ public class UsersResource {
 		var devices = user
 				.devices
 				.stream()
-				.map(device -> new DeviceResource.DeviceDto(device.id, device.name, device.publickey, device.access.stream().map(access -> {
+				.map(device -> new DeviceResource.DeviceDto(device.id, device.name, device.publickey, device.owner.id, device.access.stream().map(access -> {
 					var vault = access.vault;
 					return new VaultResource.VaultDto(vault.id, vault.name, null, null, null);
 				}).collect(Collectors.toSet())))
@@ -68,7 +68,7 @@ public class UsersResource {
 			var devices = user
 					.devices
 					.stream()
-					.map(device -> new DeviceResource.DeviceDto(device.id, device.name, device.publickey, device
+					.map(device -> new DeviceResource.DeviceDto(device.id, device.name, device.publickey, device.owner.id, device
 							.access
 							.stream()
 							.map(access -> new VaultResource.VaultDto(access.id.getVaultId(), null, null, null, null))
@@ -82,6 +82,9 @@ public class UsersResource {
     public static record UserDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("pictureUrl") String pictureUrl,
                                  @JsonProperty("devices") Set<DeviceResource.DeviceDto> devices) {
 
-    }
+		public static UserDto fromEntity(User user) {
+			return new UserDto(user.id, user.name, user.pictureUrl, Set.of());
+		}
+	}
 
 }

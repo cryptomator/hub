@@ -1,7 +1,6 @@
 package org.cryptomator.hub.spi;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import org.cryptomator.hub.entities.Access;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.User;
@@ -17,6 +16,7 @@ import javax.transaction.Transactional;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -41,6 +41,38 @@ public class VaultResource {
 		var currentUserId = jwt.getSubject();
 		Stream<Vault> resultStream = Vault.findAccessibleOrOwnerByUser(currentUserId);
 		return resultStream.map(VaultDto::fromEntity).toList();
+	}
+
+	@GET
+	@Path("/{vaultId}/members")
+	@RolesAllowed("user") // TODO: only owners?
+	@Transactional
+	@Produces(MediaType.APPLICATION_JSON)
+	public List<UsersResource.UserDto> getMembers(@PathParam("vaultId") String vaultId) {
+		Vault vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
+		return vault.members.stream().map(UsersResource.UserDto::fromEntity).toList();
+	}
+
+	@PUT
+	@Path("/{vaultId}/members/{userId}")
+	@RolesAllowed("user") // TODO: only owners!
+	@Transactional
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response addMember(@PathParam("vaultId") String vaultId, @PathParam("userId") String userId) {
+		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
+		var user = User.<User>findByIdOptional(userId).orElseThrow(NotFoundException::new);
+		vault.members.add(user);
+		vault.persist();
+		return Response.status(Response.Status.CREATED).build();
+	}
+
+	@GET
+	@Path("/{vaultId}/devices-requiring-access-grant")
+	@RolesAllowed("user") // TODO: only owners!
+	@Transactional
+	@Produces(MediaType.APPLICATION_JSON)
+	public List<DeviceResource.DeviceDto> getDevicesRequiringAccessGrant(@PathParam("vaultId") String vaultId) {
+		return Device.findRequiringAccessGrant(vaultId).map(DeviceResource.DeviceDto::fromEntity).toList();
 	}
 
 	@GET

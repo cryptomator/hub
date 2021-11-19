@@ -58,7 +58,7 @@ public class DeviceResource {
 		}
 		Device device = Device.findById(deviceId);
 		if (device != null) {
-			return Response.ok(new DeviceDto(device.id, device.name, device.publickey, null)).build();
+			return Response.ok(new DeviceDto(device.id, device.name, device.publickey, device.owner.id, null)).build();
 		} else {
 			return Response.status(Response.Status.NOT_FOUND).build();
 		}
@@ -70,12 +70,13 @@ public class DeviceResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getAll() {
 		List<Device> devices = Device.listAll();
-		var dtos = devices.stream().map(d -> new DeviceDto(d.id, d.name, d.publickey, null)).collect(Collectors.toList());
+		var dtos = devices.stream().map(d -> new DeviceDto(d.id, d.name, d.publickey, null, null)).collect(Collectors.toList());
 		return Response.ok(dtos).build();
 	}
 
 	public static record DeviceDto(@JsonProperty("id") String id, @JsonProperty("name") String name,
 								   @JsonProperty("publicKey") String publicKey,
+								   @JsonProperty("owner") String ownerId,
 								   @JsonProperty("accessTo") Set<VaultResource.VaultDto> accessTo) {
 
 		public Device toDevice(User user, String id) {
@@ -85,6 +86,10 @@ public class DeviceResource {
 			device.name = name;
 			device.publickey = publicKey;
 			return device;
+		}
+
+		public static DeviceDto fromEntity(Device entity) {
+			return new DeviceDto(entity.id, entity.name, entity.publickey, entity.owner.id, Set.of());
 		}
 
 	}

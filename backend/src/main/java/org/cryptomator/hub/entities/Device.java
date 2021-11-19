@@ -1,6 +1,7 @@
 package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import io.quarkus.panache.common.Parameters;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -9,14 +10,26 @@ import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Stream;
 
 @Entity
 @Table(name = "device")
+@NamedQuery(name = "Device.requiringAccessGrant",
+		query = """
+				SELECT d
+				FROM Vault v
+					INNER JOIN v.members m
+					INNER JOIN m.devices d
+					LEFT JOIN d.access a ON a.id.vaultId = :vaultId AND a.id.deviceId = d
+					WHERE v.id = :vaultId AND a.vault IS NULL
+				"""
+)
 public class Device extends PanacheEntityBase {
 
 	@Id
@@ -36,11 +49,6 @@ public class Device extends PanacheEntityBase {
 	@Column(name = "publickey", nullable = false)
 	public String publickey;
 
-	public void setAccess(Set<Access> access) {
-		this.access.clear();
-		this.access.addAll(access);
-	}
-
 	@Override
 	public String toString() {
 		return "Device{" +
@@ -58,14 +66,17 @@ public class Device extends PanacheEntityBase {
 		Device other = (Device) o;
 		return Objects.equals(this.id, other.id)
 				&& Objects.equals(this.owner, other.owner)
-				&& Objects.equals(this.access, other.access)
 				&& Objects.equals(this.name, other.name)
 				&& Objects.equals(this.publickey, other.publickey);
 	}
 
-        /*@Override
+    @Override
     public int hashCode() {
-        return Objects.hash(id, user, access, name, publickey);
-    }*/
+        return Objects.hash(id, owner, name, publickey);
+    }
+
+	public static Stream<Device> findRequiringAccessGrant(String vaultId) {
+		return find("#Device.requiringAccessGrant", Parameters.with("vaultId", vaultId)).stream();
+	}
 
 }

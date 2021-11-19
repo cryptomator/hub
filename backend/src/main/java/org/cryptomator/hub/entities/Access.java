@@ -68,10 +68,10 @@ public class Access extends PanacheEntityBase {
 				&& Objects.equals(deviceSpecificMasterkey, access.deviceSpecificMasterkey);
 	}
 
-    /*@Override
-    public int hashCode() {
-        return Objects.hash(id, device, vault, deviceSpecificMasterkey);
-    }*/
+	@Override
+	public int hashCode() {
+		return Objects.hash(id, device, vault, deviceSpecificMasterkey);
+	}
 
 	@Override
 	public String toString() {

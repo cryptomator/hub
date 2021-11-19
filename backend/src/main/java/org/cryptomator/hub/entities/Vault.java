@@ -9,27 +9,27 @@ import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Entity
 @Table(name = "vault")
 @NamedQuery(name = "Vault.accessibleOrOwnedByUser",
 		query = """
-		SELECT v
-		FROM Vault v
-		LEFT JOIN v.access a
-		LEFT JOIN a.device d
-		WHERE v.owner.id = :userId OR d.owner.id = :userId 
-		""")
+				SELECT v
+				FROM Vault v
+				LEFT JOIN v.access a
+				LEFT JOIN a.device d
+				WHERE v.owner.id = :userId OR d.owner.id = :userId 
+				""")
 public class Vault extends PanacheEntityBase {
 
 	@Id
@@ -39,6 +39,10 @@ public class Vault extends PanacheEntityBase {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "user_id", updatable = false, nullable = false)
 	public User owner;
+
+	@ManyToMany
+	@JoinTable(name = "vault_user", joinColumns = @JoinColumn(name = "vault_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"))
+	public Set<User> members = new HashSet<>();
 
 	@OneToMany(mappedBy = "vault", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true, fetch = FetchType.LAZY)
 	public Set<Access> access = new HashSet<>();
@@ -55,11 +59,6 @@ public class Vault extends PanacheEntityBase {
 	@Column(name = "masterkey", nullable = false)
 	public String masterkey;
 
-	public void setAccess(Set<Access> access) {
-		this.access.clear();
-		this.access.addAll(access);
-	}
-
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
@@ -73,17 +72,18 @@ public class Vault extends PanacheEntityBase {
 				&& Objects.equals(masterkey, vault.masterkey);
 	}
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, owner, name, salt, iterations, masterkey);
-    }
+	@Override
+	public int hashCode() {
+		return Objects.hash(id, owner, name, salt, iterations, masterkey);
+	}
 
 	@Override
 	public String toString() {
 		return "Vault{" +
 				"id='" + id + '\'' +
-				", user=" + owner +
-				", access=" + access.stream().map(a -> a.id).collect(Collectors.toList()) +
+				", owner=" + owner +
+				", members=" + members.stream().map(m -> m.id).toList() +
+				", access=" + access.stream().map(a -> a.id).toList() +
 				", name='" + name + '\'' +
 				", salt='" + salt + '\'' +
 				", iterations='" + iterations + '\'' +

@@ -8,6 +8,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.Id;
+import javax.persistence.ManyToMany;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
@@ -21,21 +22,21 @@ import java.util.Set;
 @Table(name = "user")
 @NamedQuery(name = "User.includingDevices", query = "SELECT u FROM User u LEFT JOIN FETCH u.devices")
 @NamedQuery(name = "User.includingDevicesAndVaults",
-	query = """
-		SELECT DISTINCT u
-		FROM User u
-			LEFT JOIN FETCH u.devices d
-			LEFT JOIN FETCH d.access
-	""")
+		query = """
+					SELECT DISTINCT u
+					FROM User u
+						LEFT JOIN FETCH u.devices d
+						LEFT JOIN FETCH d.access
+				""")
 @NamedQuery(name = "User.withDevicesAndAccess",
-	query = """
-		SELECT u
-		FROM User u
-			LEFT JOIN FETCH u.devices d
-			LEFT JOIN FETCH d.access a
-			LEFT JOIN FETCH a.vault
-		WHERE u.id = :userId
-	""")
+		query = """
+					SELECT u
+					FROM User u
+						LEFT JOIN FETCH u.devices d
+						LEFT JOIN FETCH d.access a
+						LEFT JOIN FETCH a.vault
+					WHERE u.id = :userId
+				""")
 public class User extends PanacheEntityBase {
 
 	@Id
@@ -46,7 +47,10 @@ public class User extends PanacheEntityBase {
 	public Set<Device> devices = new HashSet<>();
 
 	@OneToMany(mappedBy = "owner", cascade = {CascadeType.PERSIST}, orphanRemoval = true, fetch = FetchType.LAZY)
-	public Set<Vault> vaults = new HashSet<>();
+	public Set<Vault> ownedVaults = new HashSet<>();
+
+	@ManyToMany(mappedBy = "members")
+	public Set<Vault> sharedVaults = new HashSet<>();
 
 	@Column(name = "name", nullable = false)
 	public String name;
@@ -54,22 +58,12 @@ public class User extends PanacheEntityBase {
 	@Column(name = "picture_url")
 	public String pictureUrl;
 
-	public void setDevices(Set<Device> devices) {
-		this.devices.clear();
-		this.devices.addAll(devices);
-	}
-
-	public void setVaults(Set<Vault> vaults) {
-		this.vaults.clear();
-		this.vaults.addAll(vaults);
-	}
-
 	@Override
 	public String toString() {
 		return "User{" +
 				"id='" + id + '\'' +
 				", devices=" + devices.size() +
-				", vaults=" + vaults.size() +
+				", ownedVaults=" + ownedVaults.size() +
 				", name='" + name + '\'' +
 				'}';
 	}
@@ -80,15 +74,14 @@ public class User extends PanacheEntityBase {
 		if (o == null || getClass() != o.getClass()) return false;
 		User user = (User) o;
 		return Objects.equals(id, user.id)
-				&& Objects.equals(devices, user.devices)
-				&& Objects.equals(vaults, user.vaults)
-				&& Objects.equals(name, user.name);
+				&& Objects.equals(name, user.name)
+				&& Objects.equals(pictureUrl, user.pictureUrl);
 	}
 
-    /*@Override
+    @Override
     public int hashCode() {
-        return Objects.hash(id, devices, vaults, name);
-    }*/
+        return Objects.hash(id, name, pictureUrl);
+    }
 
 	// --- data layer queries ---
 
