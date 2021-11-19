@@ -37,7 +37,7 @@
             <img :src="member.pictureUrl" alt="" class="w-8 h-8 rounded-full" />
             <p class="ml-4 text-sm font-medium text-gray-900">{{ member.name }}</p>
           </div>
-          <button type="button" class="ml-6 bg-white rounded-md text-sm font-medium text-indigo-600 hover:text-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Remove<span class="sr-only"> {{ member.name }}</span></button>
+          <button type="button" class="ml-6 bg-white rounded-md text-sm font-medium text-indigo-600 hover:text-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" @click="revokeUserAccess(member.id)">Remove<span class="sr-only"> {{ member.name }}</span></button>
         </li>
         <li class="py-2 flex justify-between items-center">
           <div v-if="!addingMember">
@@ -52,37 +52,30 @@
         </li>
       </ul>
     </div>
-    <div class="flex">
+    <div v-if="devicesRequiringAccessGrant.length > 0">
+      <button type="button" class="flex-1 bg-indigo-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" @click="showGrantPermissionDialog()">
+        Update Permissions
+      </button>
+    </div>
+    <!-- <div class="flex">
       <button type="button" class="flex-1 bg-indigo-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
         Download
       </button>
       <button type="button" class="flex-1 ml-3 bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
         Delete
       </button>
-    </div>
-
-    <!-- <h2>Modify access list</h2>
-    <ul>
-      <li v-for="user in users" :key="user.name">
-        👤 {{ user.name }} <button @click="revokeUserAccess(user.id)">⛔</button> <button @click="giveUserAccess(user)">✅</button>
-        <ul v-if="user.devices.length > 0">
-          <li v-for="device in user.devices" :key="device.name">📱 {{ device.name }} <button @click="revokeDeviceAccess(device.id)">⛔</button> <button @click="giveDeviceAccess(device)">✅</button></li>
-        </ul>
-      </li>
-    </ul>
-
-    <input v-model="password" type="password" placeholder="Masterpassword"/> -->
+    </div> -->
   </div>
+  <GrantPermissionDialog v-if="grantingPermission" ref="grantPermissionDialog" :vault="vault" :devices="devicesRequiringAccessGrant" @close="grantingPermission = false" @permission-granted="permissionGranted()" />
 </template>
 
 <script setup lang="ts">
 import { PencilIcon, PlusSmIcon } from '@heroicons/vue/solid';
 import axios from 'axios';
-// import { base64url } from 'rfc4648';
-import { onMounted, ref } from 'vue';
+import { nextTick, onMounted, ref } from 'vue';
 // import { useI18n } from 'vue-i18n';
-import backend, { UserDto, VaultDto } from '../common/backend';
-// import { Masterkey, WrappedMasterkey } from '../common/crypto';
+import backend, { DeviceDto, UserDto, VaultDto } from '../common/backend';
+import GrantPermissionDialog from './GrantPermissionDialog.vue';
 import SearchInputGroup from './SearchInputGroup.vue';
 
 enum Error {
@@ -96,11 +89,13 @@ const props = defineProps<{
 
 // const { t } = useI18n({ useScope: 'global' });
 const addingMember = ref(false);
+const grantingPermission = ref(false);
+const grantPermissionDialog = ref<typeof GrantPermissionDialog>();
 const errorCode = ref(Error.None);
-// const password = ref('');
 const users = ref<UserDto[]>([]);
 const members = ref<UserDto[]>([]);
 const vault = ref<VaultDto | null>(null);
+const devicesRequiringAccessGrant = ref<DeviceDto[]>([]);
 
 onMounted(async () => {
   try {
@@ -112,6 +107,7 @@ onMounted(async () => {
   }
   members.value = await backend.vaults.getMembers(props.vaultId);
   users.value = await backend.users.listAll();
+  devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
 });
 
 async function addMember(id: string) {
@@ -122,38 +118,22 @@ async function addMember(id: string) {
   }
 }
 
-// async function giveUserAccess(user: UserDto) {
-//   for (const device of user.devices) {
-//     giveDeviceAccess(device);
-//   }
-// }
+function showGrantPermissionDialog() {
+  grantingPermission.value = true;
+  nextTick(() => grantPermissionDialog.value?.show());
+}
 
-// async function giveDeviceAccess(device: DeviceDto) {
-//   try {
-//     const vaultDto = vault.value!;
-//     const wrappedKey = new WrappedMasterkey(vaultDto.masterkey, vaultDto.salt, vaultDto.iterations);
-//     const masterkey = await Masterkey.unwrap(password.value, wrappedKey);
-//     const publicKey = base64url.parse(device.publicKey);
-//     const deviceSpecificKey = await masterkey.encryptForDevice(publicKey);
-//     await backend.vaults.grantAccess(props.vaultId, device.id, deviceSpecificKey.encrypted, deviceSpecificKey.publicKey);
-//   } catch (error) {
-//     console.error('granting access permissions failed.', error);
-//   }
-// }
+function permissionGranted() {
+  devicesRequiringAccessGrant.value = [];
+}
 
-// async function revokeUserAccess(userId: string) {
-//   try {
-//     backend.vaults.revokeUserAccess(props.vaultId, userId);
-//   } catch (error) {
-//     console.error('revoking access permissions failed.', error);
-//   }
-// }
-
-// async function revokeDeviceAccess(deviceId: string) {
-//   try {
-//     backend.vaults.revokeDeviceAccess(props.vaultId, deviceId);
-//   } catch (error) {
-//     console.error('revoking access permissions failed.', error);
-//   }
-// }
+async function revokeUserAccess(userId: string) {
+  try {
+    await backend.vaults.revokeUserAccess(props.vaultId, userId);
+    members.value = members.value.filter(m => m.id !== userId);
+  } catch (error) {
+    // TODO: error handling
+    console.error('revoking access permissions failed.', error);
+  }
+}
 </script>

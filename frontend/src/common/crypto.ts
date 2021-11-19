@@ -64,7 +64,7 @@ export class Masterkey {
     length: 512
   };
   private static readonly PBKDF2_ITERATION_COUNT = 1000000;
-  readonly #key: CryptoKey
+  readonly #key: CryptoKey;
 
   protected constructor(key: CryptoKey) {
     this.#key = key;
@@ -215,12 +215,10 @@ export class Masterkey {
         name: 'ECDH',
         public: publicKey
       },
-      ephemeralKey.privateKey,
+      ephemeralKey.privateKey!,
       384
     );
-    console.log('agreedKey: ', base64url.stringify(new Uint8Array(agreedKey), { pad: false }));
     const sharedSecret = await X936.kdf(new Uint8Array(agreedKey), new Uint8Array(0), 44);
-    console.log('sharedSecret: ', base64url.stringify(new Uint8Array(sharedSecret), { pad: false }));
     const aesKey = await crypto.subtle.importKey(
       'raw',
       sharedSecret.slice(0, 32),
@@ -235,10 +233,8 @@ export class Masterkey {
       { name: 'AES-GCM', iv: sharedSecret.slice(32, 44), tagLength: 128 }
     );
     const epk = await crypto.subtle.exportKey(
-      'spki', ephemeralKey.publicKey
+      'spki', ephemeralKey.publicKey!
     );
     return new DeviceSpecificMasterkey(base64url.stringify(new Uint8Array(wrapped), { pad: false }), base64url.stringify(new Uint8Array(epk), { pad: false }));
   }
-
-
 }
