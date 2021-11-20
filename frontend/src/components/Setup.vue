@@ -70,7 +70,7 @@
               Cryptomator Hub URL *
             </label>
             <div class="mt-1">
-              <input id="hub-url" v-model="hubUrl" type="text" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md" @change="updateRealmJson" />
+              <input id="hub-url" v-model="hubUrl" type="text" class="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md" @change="updateRealmJson" />
             </div>
           </div>
 
@@ -79,7 +79,7 @@
               Initial Hub Admin User *
             </label>
             <div class="mt-1">
-              <input id="hub-user" v-model="hubUser" type="text" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md" @change="updateRealmJson" />
+              <input id="hub-user" v-model="hubUser" type="text" class="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md" @change="updateRealmJson" />
             </div>
           </div>
 
@@ -88,7 +88,7 @@
               Initial Hub Admin Password *
             </label>
             <div class="mt-1">
-              <input id="hub-pass" v-model="hubPass" type="password" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md" @change="updateRealmJson" />
+              <input id="hub-pass" v-model="hubPass" type="password" class="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md" @change="updateRealmJson" />
             </div>
           </div>
 
@@ -97,7 +97,7 @@
               Realm Config File
             </label>
             <div class="mt-1">
-              <textarea id="hub-realm-json" v-model="hubRealmCfg" rows="10" class="resize-y shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border border-gray-300 rounded-md" readonly></textarea>
+              <textarea id="hub-realm-json" v-model="hubRealmCfg" rows="10" class="resize-y shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border border-gray-300 rounded-md" readonly></textarea>
             </div>
             <p class="mt-2 text-sm text-gray-500">
               This JSON file will be used to configure a new Keycloak realm.
@@ -121,7 +121,7 @@
               Keycloak URL
             </label>
             <div class="mt-1">
-              <input id="kc-url" v-model="kcUrl" type="text" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md" />
+              <input id="kc-url" v-model="kcUrl" type="text" class="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md" />
             </div>
           </div>
 
@@ -130,7 +130,7 @@
               Admin User
             </label>
             <div class="mt-1">
-              <input id="kc-user" v-model="kcUser" type="text" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md" />
+              <input id="kc-user" v-model="kcUser" type="text" class="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md" />
             </div>
           </div>
 
@@ -139,11 +139,11 @@
               Admin Password
             </label>
             <div class="mt-1">
-              <input id="kc-pass" v-model="kcPass" type="password" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md" />
+              <input id="kc-pass" v-model="kcPass" type="password" class="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md" />
             </div>
           </div>
 
-          <button type="button" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" @click="createRealm()">
+          <button type="button" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="createRealm()">
             Upload
           </button>
         </div>

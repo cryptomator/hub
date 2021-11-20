@@ -38,7 +38,7 @@
                   {{ device.accessTo.length }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <a class="text-indigo-600 hover:text-indigo-900" href="#">
+                  <a class="text-primary hover:text-primary-d1" href="#">
                     Edit
                   </a>
                 </td>

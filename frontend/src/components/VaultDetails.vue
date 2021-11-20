@@ -10,7 +10,7 @@
       <h3 class="font-medium text-gray-900">Description</h3>
       <div class="mt-2 flex items-center justify-between">
         <p class="text-sm text-gray-500 italic">Add a description to this vault.</p>
-        <button type="button" class="-mr-2 h-8 w-8 bg-white rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <button type="button" class="-mr-2 h-8 w-8 bg-white rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary">
           <PencilIcon class="h-5 w-5" aria-hidden="true" />
           <span class="sr-only">Add description</span>
         </button>
@@ -37,15 +37,15 @@
             <img :src="member.pictureUrl" alt="" class="w-8 h-8 rounded-full" />
             <p class="ml-4 text-sm font-medium text-gray-900">{{ member.name }}</p>
           </div>
-          <button type="button" class="ml-6 bg-white rounded-md text-sm font-medium text-indigo-600 hover:text-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" @click="revokeUserAccess(member.id)">Remove<span class="sr-only"> {{ member.name }}</span></button>
+          <button type="button" class="ml-6 bg-white rounded-md text-sm font-medium text-primary hover:text-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="revokeUserAccess(member.id)">Remove<span class="sr-only"> {{ member.name }}</span></button>
         </li>
         <li class="py-2 flex justify-between items-center">
           <div v-if="!addingMember">
-            <button type="button" class="group -ml-1 bg-white p-1 rounded-md flex items-center focus:outline-none focus:ring-2 focus:ring-indigo-500" @click="addingMember = true">
+            <button type="button" class="group -ml-1 bg-white p-1 rounded-md flex items-center focus:outline-none focus:ring-2 focus:ring-primary" @click="addingMember = true">
               <span class="w-8 h-8 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400">
                 <PlusSmIcon class="h-5 w-5" aria-hidden="true" />
               </span>
-              <span class="ml-4 text-sm font-medium text-indigo-600 group-hover:text-indigo-500">Share</span>
+              <span class="ml-4 text-sm font-medium text-primary group-hover:text-primary">Share</span>
             </button>
           </div>
           <SearchInputGroup v-else-if="addingMember" action-title="Add" :items="users" class="flex-grow" @action="addMember" />
@@ -53,15 +53,15 @@
       </ul>
     </div>
     <div v-if="devicesRequiringAccessGrant.length > 0">
-      <button type="button" class="flex-1 bg-indigo-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" @click="showGrantPermissionDialog()">
+      <button type="button" class="flex-1 bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showGrantPermissionDialog()">
         Update Permissions
       </button>
     </div>
     <!-- <div class="flex">
-      <button type="button" class="flex-1 bg-indigo-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+      <button type="button" class="flex-1 bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
         Download
       </button>
-      <button type="button" class="flex-1 ml-3 bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+      <button type="button" class="flex-1 ml-3 bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
         Delete
       </button>
     </div> -->

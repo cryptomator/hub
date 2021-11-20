@@ -6,7 +6,7 @@
           Vault Name
         </label>
         <div class="mt-1">
-          <input id="vaultName" v-model="vaultName" name="vaultName" type="text" required="" class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+          <input id="vaultName" v-model="vaultName" name="vaultName" type="text" required="" class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm" />
         </div>
       </div>
 
@@ -15,12 +15,12 @@
           Master Password
         </label>
         <div class="mt-1">
-          <input id="password" v-model="password" name="password" type="password" autocomplete="current-password" required="" class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+          <input id="password" v-model="password" name="password" type="password" autocomplete="current-password" required="" class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm" />
         </div>
       </div>
 
       <div>
-        <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+        <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
           Create Vault
         </button>
       </div>
@@ -37,7 +37,7 @@
         After downloading the zipped vault folder, unpack it to any location shared with your team members.
       </p>
       <div class="mt-6">
-        <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" @click="createVaultFolder()">
+        <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="createVaultFolder()">
           <DownloadIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
           Download zipped vault folder
         </button>
@@ -106,7 +106,7 @@ export default defineComponent({
       });
     },
     async createVaultFolder() {
-      if(this.state === State.Created) {
+      if (this.state === State.Created) {
         const zip = new JSZip();
         zip.file('vault.cryptomator', this.token);
         zip.folder('d')?.folder(this.rootDirHash.substring(0, 2))?.folder(this.rootDirHash.substring(2));

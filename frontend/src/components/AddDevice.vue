@@ -14,19 +14,19 @@
               <div class="grid grid-cols-6 gap-6">
                 <div class="col-span-6 sm:col-span-3">
                   <label for="verificationCode" class="block text-sm font-medium text-gray-700">Verification Code</label>
-                  <input id="verificationCode" v-model="verificationCode" :disabled="state == State.Processing" type="text" inputmode="numeric" pattern="[0-9]{6}" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" />
+                  <input id="verificationCode" v-model="verificationCode" :disabled="state == State.Processing" type="text" inputmode="numeric" pattern="[0-9]{6}" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" />
                 </div>
 
                 <div class="col-span-6 sm:col-span-4">
                   <label for="deviceName" class="block text-sm font-medium text-gray-700">Device Name</label>
-                  <input id="deviceName" v-model="deviceName" :disabled="state == State.Processing" type="text" class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" required />
+                  <input id="deviceName" v-model="deviceName" :disabled="state == State.Processing" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" required />
                 </div>
               </div>
             </div>
           </div>
         </div>
         <div class="px-4 py-3 bg-gray-50 text-right sm:px-6">
-          <button :disabled="!validDeviceName || !validVerificationCode || state == State.Processing" type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed">
+          <button :disabled="!validDeviceName || !validVerificationCode || state == State.Processing" type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed">
             Register Device
           </button>
         </div>

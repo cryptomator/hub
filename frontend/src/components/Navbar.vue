@@ -1,5 +1,5 @@
 <template>
-  <Disclosure v-slot="{ open }" as="nav" class="bg-gray-800">
+  <Disclosure v-slot="{ open }" as="nav" class="bg-tertiary2">
     <div class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
       <div class="relative flex items-center justify-between h-16">
         <div class="absolute inset-y-0 left-0 flex items-center sm:hidden">
@@ -32,7 +32,7 @@
           <!-- Profile dropdown -->
           <Menu as="div" class="ml-3 relative">
             <div>
-              <MenuButton class="bg-gray-800 flex text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">
+              <MenuButton class="bg-tertiary2 flex text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">
                 <span class="sr-only">Open user menu</span>
                 <img class="h-8 w-8 rounded-full" :src="me != null ? me.pictureUrl : 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'" alt="" />
               </MenuButton>
