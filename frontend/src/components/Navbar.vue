@@ -13,13 +13,14 @@
         <div class="flex-1 flex items-center justify-center sm:items-stretch sm:justify-start">
           <div class="flex-shrink-0 flex items-center">
             <img src="../assets/logo.svg" class="h-8" alt="Logo"/>
-            <span class="font-headline font-bold text-primary ml-2 pb-px">CRYPTOMATOR HUB</span>
+            <span class="font-logo font-bold text-primary ml-2 pb-px">CRYPTOMATOR HUB</span>
           </div>
           <div class="hidden sm:block sm:ml-6">
             <div class="flex space-x-4">
-              <router-link v-for="item in navigation" :key="item.name" :to="item.to"
-                           class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
-                           active-class="bg-gray-900 text-white px-3 py-2 rounded-md text-sm font-medium"
+              <router-link
+                v-for="item in navigation" :key="item.name" :to="item.to"
+                class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
+                active-class="bg-gray-900 text-white px-3 py-2 rounded-md text-sm font-medium"
               >
                 {{ t(item.name) }}
               </router-link>
@@ -56,9 +57,10 @@
 
     <DisclosurePanel class="sm:hidden">
       <div class="px-2 pt-2 pb-3 space-y-1">
-        <router-link v-for="item in navigation" :key="item.name" :to="item.to"
-                     class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
-                     active-class="bg-gray-900 text-white block px-3 py-2 rounded-md text-base font-medium"
+        <router-link
+          v-for="item in navigation" :key="item.name" :to="item.to"
+          class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
+          active-class="bg-gray-900 text-white block px-3 py-2 rounded-md text-base font-medium"
         >
           {{ t(item.name) }}
         </router-link>
