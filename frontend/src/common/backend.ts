@@ -63,6 +63,7 @@ class VaultService {
     await axiosAuth.put(`/vaults/${vaultId}/keys/${deviceId}`, body);
   }
 
+  // TODO: is it still required to remove individual devices?
   public async revokeDeviceAccess(vaultId: string, deviceId: string) {
     await axiosAuth.delete(`/vaults/${vaultId}/keys/${deviceId}`);
   }

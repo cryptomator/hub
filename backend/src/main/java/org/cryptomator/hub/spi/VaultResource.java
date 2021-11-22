@@ -145,6 +145,7 @@ public class VaultResource {
 		}
 	}
 
+	// TODO: is it still required to remove individual devices?
 	@DELETE
 	@Path("/{vaultId}/keys/{deviceId}")
 	@RolesAllowed("vault-owner")
