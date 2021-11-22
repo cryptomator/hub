@@ -41,11 +41,12 @@ CREATE TABLE device
 
 CREATE TABLE access
 (
-	device_id                VARCHAR(255) NOT NULL,
-	vault_id                 VARCHAR(255) NOT NULL,
+	device_id                 VARCHAR(255) NOT NULL,
+	user_id                   VARCHAR(255) NOT NULL,
+	vault_id                  VARCHAR(255) NOT NULL,
 	device_specific_masterkey VARCHAR(255) NOT NULL,
-	ephemeral_public_key     VARCHAR(255) NOT NULL,
+	ephemeral_public_key      VARCHAR(255) NOT NULL,
 	CONSTRAINT PK_ACCESS PRIMARY KEY (device_id, vault_id),
 	CONSTRAINT FK_ACCESS_ON_DEVICE FOREIGN KEY (device_id) REFERENCES device (id) ON DELETE CASCADE,
-	CONSTRAINT FK_ACCESS_ON_VAULT FOREIGN KEY (vault_id) REFERENCES vault (id) ON DELETE CASCADE
+	CONSTRAINT FK_ACCESS_ON_VAULT_USER FOREIGN KEY (vault_id, user_id) REFERENCES vault_user (vault_id, user_id) ON DELETE CASCADE
 );

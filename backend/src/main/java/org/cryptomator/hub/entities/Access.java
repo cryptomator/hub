@@ -24,19 +24,11 @@ import java.util.Objects;
 			SELECT a
 			FROM Access a
 			WHERE a.device.id = :deviceId
-				AND a.device.owner.id = :userId
+				AND a.id.userId = :userId
 				AND a.id.vaultId = :vaultId
 		""")
 @NamedQuery(name = "Access.revokeDevice", query = "DELETE FROM Access a WHERE a.id.deviceId = :deviceId AND a.id.vaultId = :vaultId")
-@NamedQuery(name = "Access.revokeUser", query = """
-			DELETE
-			FROM Access a
-			WHERE a.id.vaultId = :vaultId
-				AND a.id.deviceId IN (SELECT d.id FROM Device d WHERE d.owner.id = :userId)
-		""")
 public class Access extends PanacheEntityBase {
-
-	// FIXME @ManyToOne(...cascade = {CascadeType.REMOVE}) doesn't add 'ON DELETE CASCADE' to foreign keys
 
 	@EmbeddedId
 	public AccessId id = new AccessId();
@@ -45,6 +37,11 @@ public class Access extends PanacheEntityBase {
 	@MapsId("deviceId")
 	@JoinColumn(name = "device_id")
 	public Device device;
+
+	@ManyToOne(optional = false, cascade = {CascadeType.REMOVE})
+	@MapsId("userId")
+	@JoinColumn(name = "user_id")
+	public User user;
 
 	@ManyToOne(optional = false, cascade = {CascadeType.REMOVE})
 	@MapsId("vaultId")
@@ -64,13 +61,14 @@ public class Access extends PanacheEntityBase {
 		Access access = (Access) o;
 		return Objects.equals(id, access.id)
 				&& Objects.equals(device, access.device)
+				&& Objects.equals(user, access.user)
 				&& Objects.equals(vault, access.vault)
 				&& Objects.equals(deviceSpecificMasterkey, access.deviceSpecificMasterkey);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, device, vault, deviceSpecificMasterkey);
+		return Objects.hash(id, device, user, vault, deviceSpecificMasterkey);
 	}
 
 	@Override
@@ -78,6 +76,7 @@ public class Access extends PanacheEntityBase {
 		return "Access{" +
 				"id=" + id +
 				", device=" + device.id +
+				", user=" + user.id +
 				", vault=" + vault.id +
 				", deviceSpecificMasterkey='" + deviceSpecificMasterkey + '\'' +
 				'}';
@@ -89,11 +88,15 @@ public class Access extends PanacheEntityBase {
 		@Column(name = "device_id", nullable = false)
 		private String deviceId;
 
+		@Column(name = "user_id", nullable = false)
+		private String userId;
+
 		@Column(name = "vault_id", nullable = false)
 		private String vaultId;
 
-		public AccessId(String deviceId, String vaultId) {
+		public AccessId(String deviceId, String userId, String vaultId) {
 			this.deviceId = deviceId;
+			this.userId = userId;
 			this.vaultId = vaultId;
 		}
 
@@ -112,13 +115,15 @@ public class Access extends PanacheEntityBase {
 		public boolean equals(Object o) {
 			if (this == o) return true;
 			if (o == null || getClass() != o.getClass()) return false;
-			AccessId accessId = (AccessId) o;
-			return Objects.equals(deviceId, accessId.deviceId) && Objects.equals(vaultId, accessId.vaultId);
+			AccessId other = (AccessId) o;
+			return Objects.equals(deviceId, other.deviceId) //
+					&& Objects.equals(userId, other.userId) //
+					&& Objects.equals(vaultId, other.vaultId);
 		}
 
 		@Override
 		public int hashCode() {
-			return Objects.hash(deviceId, vaultId);
+			return Objects.hash(deviceId, userId, vaultId);
 		}
 	}
 
@@ -137,14 +142,6 @@ public class Access extends PanacheEntityBase {
 		int affected = getEntityManager().createNamedQuery("Access.revokeDevice").setParameter("vaultId", vaultId).setParameter("deviceId", deviceId).executeUpdate();
 		if (affected == 0) {
 			throw new EntityNotFoundException("Access(vault: " + vaultId + ", device: " + deviceId + ") not found");
-		}
-	}
-
-	public static void deleteUserAccess(String vaultId, String userId) {
-		//TODO Replace with PanacheEntityBase.delete(...) once https://github.com/quarkusio/quarkus/issues/20758 is fixed
-		int affected = getEntityManager().createNamedQuery("Access.revokeUser").setParameter("vaultId", vaultId).setParameter("userId", userId).executeUpdate();
-		if (affected == 0) {
-			throw new EntityNotFoundException("Access(vault: " + vaultId + ", user: " + userId + ") not found");
 		}
 	}
 

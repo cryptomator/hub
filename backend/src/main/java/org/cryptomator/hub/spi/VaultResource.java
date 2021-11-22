@@ -66,6 +66,18 @@ public class VaultResource {
 		return Response.status(Response.Status.CREATED).build();
 	}
 
+	@DELETE
+	@Path("/{vaultId}/members/{userId}")
+	@RolesAllowed("vault-owner")
+	@Transactional
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response removeMember(@PathParam("vaultId") String vaultId, @PathParam("userId") String userId) {
+		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
+		vault.members.removeIf(u -> u.id.equals(userId));
+		vault.persist();
+		return Response.status(Response.Status.NO_CONTENT).build();
+	}
+
 	@GET
 	@Path("/{vaultId}/devices-requiring-access-grant")
 	@RolesAllowed("vault-owner")
@@ -116,6 +128,7 @@ public class VaultResource {
 
 		var access = new Access();
 		access.vault = vault;
+		access.user = device.owner;
 		access.device = device;
 		access.deviceSpecificMasterkey = dto.deviceSpecificMasterkey;
 		access.ephemeralPublicKey = dto.ephemeralPublicKey;
@@ -139,19 +152,6 @@ public class VaultResource {
 	public Response revokeDeviceAccess(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId) {
 		try {
 			Access.deleteDeviceAccess(vaultId, deviceId);
-			return Response.noContent().build();
-		} catch (EntityNotFoundException e) {
-			return Response.status(Response.Status.NOT_FOUND).build();
-		}
-	}
-
-	@DELETE
-	@Path("/{vaultId}/revoke-user/{userId}")
-	@RolesAllowed("vault-owner")
-	@Transactional
-	public Response revokeUserAccess(@PathParam("vaultId") String vaultId, @PathParam("userId") String userId) {
-		try {
-			Access.deleteUserAccess(vaultId, userId);
 			return Response.noContent().build();
 		} catch (EntityNotFoundException e) {
 			return Response.status(Response.Status.NOT_FOUND).build();

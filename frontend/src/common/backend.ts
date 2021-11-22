@@ -68,7 +68,7 @@ class VaultService {
   }
 
   public async revokeUserAccess(vaultId: string, userId: string) {
-    await axiosAuth.delete(`/vaults/${vaultId}/revoke-user/${userId}`);
+    await axiosAuth.delete(`/vaults/${vaultId}/members/${userId}`);
   }
 }
 
