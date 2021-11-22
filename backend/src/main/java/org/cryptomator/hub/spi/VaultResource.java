@@ -45,7 +45,7 @@ public class VaultResource {
 
 	@GET
 	@Path("/{vaultId}/members")
-	@RolesAllowed("user") // TODO: only owners?
+	@RolesAllowed("vault-owner")
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	public List<UsersResource.UserDto> getMembers(@PathParam("vaultId") String vaultId) {
@@ -55,7 +55,7 @@ public class VaultResource {
 
 	@PUT
 	@Path("/{vaultId}/members/{userId}")
-	@RolesAllowed("user") // TODO: only owners!
+	@RolesAllowed("vault-owner")
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response addMember(@PathParam("vaultId") String vaultId, @PathParam("userId") String userId) {
@@ -68,7 +68,7 @@ public class VaultResource {
 
 	@GET
 	@Path("/{vaultId}/devices-requiring-access-grant")
-	@RolesAllowed("user") // TODO: only owners!
+	@RolesAllowed("vault-owner")
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	public List<DeviceResource.DeviceDto> getDevicesRequiringAccessGrant(@PathParam("vaultId") String vaultId) {
