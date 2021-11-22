@@ -1,0 +1,56 @@
+/*
+ * For Font reduction use:
+ * `pip install fonttools brotli`
+ */
+
+/*
+ * For text bodies [ASCII + ÄäÖöÜüß€]:
+ * pyftsubset opensans-regular.woff2 --unicodes=U+0020-007F,U+00C4,U+00E4,U+00D6,U+00F6,U+00DC,U+00FC,U+00DF,U+20AC --verbose --flavor=woff2 --output-file=opensans-regular.reduced.woff2
+ */
+ @font-face {
+  font-family: 'Open Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Open Sans Regular'), local('OpenSans-Regular'), url('/fonts/opensans-regular.reduced.woff2') format('woff2');
+  unicode-range: U+0020-007F,U+00C4,U+00E4,U+00D6,U+00F6,U+00DC,U+00FC,U+00DF,U+20AC;
+}
+
+/*
+* For h3 headings [ASCII + ÄäÖöÜüß€]:
+* pyftsubset quicksand-regular.woff2 --unicodes=U+0020-007F,U+00C4,U+00E4,U+00D6,U+00F6,U+00DC,U+00FC,U+00DF,U+20AC --verbose --flavor=woff2 --output-file=quicksand-regular.reduced.woff2
+*/
+@font-face {
+  font-family: 'Quicksand';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/quicksand-regular.reduced.woff2') format('woff2');
+  unicode-range: U+0020-007F,U+00C4,U+00E4,U+00D6,U+00F6,U+00DC,U+00FC,U+00DF,U+20AC;
+}
+
+/*
+* For h1/h2 headings [ASCII + ÄäÖöÜüß€]:
+* pyftsubset quicksand-medium.woff2 --unicodes=U+0020-007F,U+00C4,U+00E4,U+00D6,U+00F6,U+00DC,U+00FC,U+00DF,U+20AC --verbose --flavor=woff2 --output-file=quicksand-medium.reduced.woff2
+*/
+@font-face {
+  font-family: 'Quicksand';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/quicksand-medium.reduced.woff2') format('woff2');
+  unicode-range: U+0020-007F,U+00C4,U+00E4,U+00D6,U+00F6,U+00DC,U+00FC,U+00DF,U+20AC;
+}
+
+/*
+* Only for "CRYPTOMATOR" title:
+* pyftsubset quicksand-bold.woff2 --text=CRYPTOMATOR --verbose --flavor=woff2 --output-file=quicksand-bold.reduced.woff2
+*/
+@font-face {
+  font-family: 'Quicksand';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/quicksand-bold.reduced.woff2') format('woff2');
+  unicode-range: U+0043,U+0052,U+0059,U+0050,U+0054,U+004F,U+004D,U+0041;
+}

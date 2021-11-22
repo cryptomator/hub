@@ -32,9 +32,8 @@ module.exports = {
       },
     },
     fontFamily: {
-      logo: ['Quicksand', 'bold'],
-      heading: ['Quicksand', 'medium'],
-      body: ['Open Sans', 'regular']
+      'headline': 'Quicksand, sans-serif',
+      'body': 'Open Sans, sans-serif',
     },
     variants: {
       extend: {},

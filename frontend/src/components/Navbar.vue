@@ -13,7 +13,7 @@
         <div class="flex-1 flex items-center justify-center sm:items-stretch sm:justify-start">
           <div class="flex-shrink-0 flex items-center">
             <img src="../assets/logo.svg" class="h-8" alt="Logo"/>
-            <span class="font-logo font-bold text-primary ml-2 pb-px">CRYPTOMATOR HUB</span>
+            <span class="font-headline font-bold text-primary ml-2 pb-px">CRYPTOMATOR HUB</span>
           </div>
           <div class="hidden sm:block sm:ml-6">
             <div class="flex space-x-4">
@@ -70,9 +70,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
 import { MenuIcon, XIcon } from '@heroicons/vue/outline';
+import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { UserDto } from '../common/backend';
 
