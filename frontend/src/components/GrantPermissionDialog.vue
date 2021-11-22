@@ -50,8 +50,6 @@ import { base64url } from 'rfc4648';
 import { defineExpose, ref } from 'vue';
 import backend, { DeviceDto, VaultDto } from '../common/backend';
 import { Masterkey, WrappedMasterkey } from '../common/crypto';
-import { useNotificationStore } from '@dafcoe/vue-notification';
-const { setNotification } = useNotificationStore();
 
 const open = ref(false);
 const password = ref('');
@@ -90,31 +88,9 @@ async function giveDevicesAccess(devices: DeviceDto[]) {
       const deviceSpecificKey = await masterkey.encryptForDevice(publicKey);
       await backend.vaults.grantAccess(vaultDto.id, device.id, deviceSpecificKey.encrypted, deviceSpecificKey.publicKey);
     }
-    const permissionsGrantedSuccessNotification = {
-      'message': 'Successfully updated permissions',
-      'type': 'success',
-      'showIcon': true,
-      'dismiss': {
-        'manually': true,
-        'automatically': true
-      },
-      'showDurationProgress': true,
-    };
-    setNotification(permissionsGrantedSuccessNotification);
   } catch (error) {
     // TODO: error handling
     console.error('granting access permissions failed.', error);
-    const permissionsGrantedErrorNotification = {
-      'message': 'Error while updating permissions. Wrong password?',
-      'type': 'alert',
-      'showIcon': true,
-      'dismiss': {
-        'manually': true,
-        'automatically': false
-      },
-      'showDurationProgress': false,
-    };
-    setNotification(permissionsGrantedErrorNotification);
   }
 }
 </script>
