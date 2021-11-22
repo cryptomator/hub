@@ -47,7 +47,7 @@
 import { Dialog, DialogOverlay, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import { ExclamationIcon } from '@heroicons/vue/outline';
 import { base64url } from 'rfc4648';
-import { defineExpose, ref } from 'vue';
+import { ref } from 'vue';
 import backend, { DeviceDto, VaultDto } from '../common/backend';
 import { Masterkey, WrappedMasterkey } from '../common/crypto';
 
