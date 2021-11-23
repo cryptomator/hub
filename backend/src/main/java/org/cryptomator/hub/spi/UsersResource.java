@@ -2,12 +2,16 @@ package org.cryptomator.hub.spi;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
+import org.cryptomator.hub.entities.Access;
+import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.User;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.jboss.resteasy.annotations.cache.NoCache;
+import org.jboss.resteasy.annotations.jaxrs.QueryParam;
 
 import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
+import javax.transaction.Transactional;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -17,6 +21,7 @@ import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Path("/users")
@@ -29,7 +34,6 @@ public class UsersResource {
 	@PUT
 	@Path("/me")
 	@RolesAllowed("user")
-	@NoCache
 	public Response syncMe() {
 		User.createOrUpdate(jwt.getSubject(), jwt.getName(), jwt.getClaim("picture"));
 		return Response.created(URI.create(".")).build();
@@ -38,27 +42,18 @@ public class UsersResource {
 	@GET
 	@Path("/me")
 	@RolesAllowed("user")
-	@NoCache
-	public String getMe() {
-		User user = User.findById(jwt.getSubject());
-		return user.name;
-	}
-
-	@GET
-	@Path("/me-extended")
-	@RolesAllowed("user")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getMeIncludingDevicesAndVaults() {
-		User user = User.getWithDevicesAndAccess(jwt.getSubject()); // TODO: fix NPE if user not found
-		var devices = user
-				.devices
-				.stream()
-				.map(device -> new DeviceResource.DeviceDto(device.id, device.name, device.publickey, device.owner.id, device.access.stream().map(access -> {
-					var vault = access.vault;
-					return new VaultResource.VaultDto(vault.id, vault.name, null, null, null);
-				}).collect(Collectors.toSet())))
-				.collect(Collectors.toSet());
-		return Response.ok(new UserDto(user.id, user.name, user.pictureUrl, devices)).build();
+	@NoCache
+	@Transactional
+	public UserDto getMe(@QueryParam("withDevices") boolean withDevices, @QueryParam("withAccessibleVaults") boolean withAccessibleVaults) {
+		User user = User.findById(jwt.getSubject());
+		Function<Access, VaultResource.VaultDto> mapAccessibleVaults = a -> new VaultResource.VaultDto(a.vault.id, a.vault.name, null, null, null);
+		Function<Device, DeviceResource.DeviceDto> mapDevices = withAccessibleVaults //
+				? d -> new DeviceResource.DeviceDto(d.id, d.name, d.publickey, d.owner.id, d.access.stream().map(mapAccessibleVaults).collect(Collectors.toSet())) //
+				: d -> new DeviceResource.DeviceDto(d.id, d.name, d.publickey, d.owner.id, Set.of());
+		return withDevices //
+				? new UserDto(user.id, user.name, user.pictureUrl, user.devices.stream().map(mapDevices).collect(Collectors.toSet()))
+				: new UserDto(user.id, user.name, user.pictureUrl, Set.of());
 	}
 
 	@GET
@@ -68,26 +63,6 @@ public class UsersResource {
 	public List<UserDto> getAll() {
 		PanacheQuery<User> query = User.findAll();
 		return query.stream().map(UserDto::fromEntity).toList();
-	}
-
-	@GET
-	@Path("/devices")
-	@RolesAllowed("user")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response getAllIncludingDevices() {
-		var users = User.getAllWithDevicesAndAccess().stream().map(user -> {
-			var devices = user
-					.devices
-					.stream()
-					.map(device -> new DeviceResource.DeviceDto(device.id, device.name, device.publickey, device.owner.id, device
-							.access
-							.stream()
-							.map(access -> new VaultResource.VaultDto(access.id.getVaultId(), null, null, null, null))
-							.collect(Collectors.toSet())))
-					.collect(Collectors.toSet());
-			return new UserDto(user.id, user.name, user.pictureUrl, devices);
-		}).collect(Collectors.toList());
-		return Response.ok(users).build();
 	}
 
 	public static record UserDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("pictureUrl") String pictureUrl,

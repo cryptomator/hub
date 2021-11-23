@@ -57,7 +57,7 @@ const selectedVault = ref<VaultDto | null>(null);
 const creatingVault = ref(false);
 
 onMounted(async () => {
-  vaults.value = await backend.vaults.listAll();
+  vaults.value = await backend.vaults.listSharedOrOwned();
 });
 
 function onVaultClick(vault: VaultDto) {

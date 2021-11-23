@@ -10,12 +10,15 @@ import org.hibernate.exception.ConstraintViolationException;
 
 import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
-import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceException;
 import javax.transaction.Transactional;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.GET;
+import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -23,6 +26,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.net.URI;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -37,7 +41,7 @@ public class VaultResource {
 	@RolesAllowed("user")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
-	public List<VaultDto> getAll() {
+	public List<VaultDto> getSharedOrOwned() {
 		var currentUserId = jwt.getSubject();
 		Stream<Vault> resultStream = Vault.findAccessibleOrOwnerByUser(currentUserId);
 		return resultStream.map(VaultDto::fromEntity).toList();
@@ -92,22 +96,15 @@ public class VaultResource {
 	@RolesAllowed("user")
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response unlock(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId) {
-		// FIXME validate parameter
-
+	public AccessGrantDto unlock(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId) {
 		var currentUserId = jwt.getSubject();
 		var access = Access.unlock(vaultId, deviceId, currentUserId);
-		Device device = Device.findById(deviceId);
-
-		if (device == null) {
-			// no such device
-			return Response.status(Response.Status.NOT_FOUND).build();
-		} else if (access == null) {
-			// device exists, but access has not been granted
-			return Response.status(Response.Status.FORBIDDEN).build();
+		if (access != null) {
+			return new AccessGrantDto(access.deviceSpecificMasterkey, access.ephemeralPublicKey);
+		} else if (Device.findById(deviceId) == null) {
+			throw new NotFoundException("No such device.");
 		} else {
-			var dto = new AccessGrantDto(access.deviceSpecificMasterkey, access.ephemeralPublicKey);
-			return Response.ok(dto).build();
+			throw new ForbiddenException("Access to this device not granted.");
 		}
 	}
 
@@ -117,14 +114,8 @@ public class VaultResource {
 	@Transactional
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response grantAccess(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId, AccessGrantDto dto) {
-		// FIXME validate parameter
-
-		Vault vault = Vault.findById(vaultId);
-		Device device = Device.findById(deviceId);
-
-		if (vault == null || device == null) {
-			return Response.status(Response.Status.NOT_FOUND).build();
-		}
+		Vault vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
+		Device device = Device.<Device>findByIdOptional(deviceId).orElseThrow(NotFoundException::new);
 
 		var access = new Access();
 		access.vault = vault;
@@ -138,24 +129,10 @@ public class VaultResource {
 			return Response.noContent().build();
 		} catch (PersistenceException e) {
 			if (e.getCause() instanceof ConstraintViolationException) {
-				return Response.status(Response.Status.CONFLICT).build();
+				throw new ClientErrorException(Response.Status.CONFLICT, e);
 			} else {
-				throw e; // will cause error 500
+				throw new InternalServerErrorException(e);
 			}
-		}
-	}
-
-	// TODO: is it still required to remove individual devices?
-	@DELETE
-	@Path("/{vaultId}/keys/{deviceId}")
-	@RolesAllowed("vault-owner")
-	@Transactional
-	public Response revokeDeviceAccess(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId) {
-		try {
-			Access.deleteDeviceAccess(vaultId, deviceId);
-			return Response.noContent().build();
-		} catch (EntityNotFoundException e) {
-			return Response.status(Response.Status.NOT_FOUND).build();
 		}
 	}
 
@@ -164,13 +141,10 @@ public class VaultResource {
 	@RolesAllowed("user")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
-	public Response get(@PathParam("vaultId") String vaultId) {
-		Vault vault = Vault.findById(vaultId);
-		if (vault == null) {
-			return Response.status(Response.Status.NOT_FOUND).build();
-		}
-		var dto = new VaultDto(vaultId, vault.name, vault.masterkey, vault.iterations, vault.salt);
-		return Response.ok(dto).build();
+	public VaultDto get(@PathParam("vaultId") String vaultId) {
+		// TODO: check if user has permission to access this vault?
+		Vault vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
+		return new VaultDto(vaultId, vault.name, vault.masterkey, vault.iterations, vault.salt);
 	}
 
 	@PUT
@@ -179,28 +153,25 @@ public class VaultResource {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.TEXT_PLAIN)
 	@Transactional
-	public Response create(/*@Valid*/ VaultDto vaultDto, @PathParam("vaultId") String vaultId) {
-		// FIXME verify uuid
-
+	public Response create(@PathParam("vaultId") String vaultId, VaultDto vaultDto) {
 		if (vaultDto == null) {
-			return Response.serverError().entity("Vault cannot be null").build();
+			throw new BadRequestException("Missing vault dto");
 		}
-
 		if (Vault.findByIdOptional(vaultId).isPresent()) {
-			return Response.status(Response.Status.CONFLICT).build();
+			throw new ClientErrorException(Response.Status.CONFLICT);
 		}
-
 		User currentUser = User.findById(jwt.getSubject());
 		var vault = vaultDto.toVault(currentUser, vaultId);
-		//TODO: can the persisted id different?
 		Vault.persist(vault);
-		return Response.ok(vault.id).build();
+		return Response.created(URI.create(".")).build();
 	}
 
-	public static record AccessGrantDto(@JsonProperty("device_specific_masterkey") String deviceSpecificMasterkey, @JsonProperty("ephemeral_public_key") String ephemeralPublicKey) {
+	public static record AccessGrantDto(@JsonProperty(value = "device_specific_masterkey", required = true) String deviceSpecificMasterkey,
+										@JsonProperty(value = "ephemeral_public_key", required = true) String ephemeralPublicKey) {
 	}
 
-	public static record VaultDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("masterkey") String masterkey, @JsonProperty("iterations") String iterations, @JsonProperty("salt") String salt) {
+	public static record VaultDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("masterkey") String masterkey, @JsonProperty("iterations") String iterations,
+								  @JsonProperty("salt") String salt) {
 
 		public Vault toVault(User owner, String id) {
 			var vault = new Vault();

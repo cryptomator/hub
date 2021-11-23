@@ -16,7 +16,7 @@ export default defineComponent({
     me: null as unknown as UserDto,
   }),
   mounted() {
-    backend.users.meIncludingDevices().then(me => {
+    backend.users.me(true).then(me => {
       this.me = me;
     });
   }

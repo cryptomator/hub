@@ -24,6 +24,8 @@ axiosAuth.interceptors.request.use(async request => {
   return request;
 });
 
+/* DTOs */
+
 export class VaultDto {
   constructor(public id: string, public name: string, public masterkey: string, public iterations: number, public salt: string) { }
 }
@@ -32,8 +34,14 @@ export class UserDto {
   constructor(public id: string, public name: string, public pictureUrl: string, public devices: DeviceDto[]) { }
 }
 
+export class DeviceDto {
+  constructor(public id: string, public name: string, public publicKey: string, public accessTo: VaultDto[]) { }
+}
+
+/* Services */
+
 class VaultService {
-  public async listAll(): Promise<VaultDto[]> {
+  public async listSharedOrOwned(): Promise<VaultDto[]> {
     return axiosAuth.get('/vaults').then(response => response.data);
   }
 
@@ -63,11 +71,6 @@ class VaultService {
     await axiosAuth.put(`/vaults/${vaultId}/keys/${deviceId}`, body);
   }
 
-  // TODO: is it still required to remove individual devices?
-  public async revokeDeviceAccess(vaultId: string, deviceId: string) {
-    await axiosAuth.delete(`/vaults/${vaultId}/keys/${deviceId}`);
-  }
-
   public async revokeUserAccess(vaultId: string, userId: string) {
     await axiosAuth.delete(`/vaults/${vaultId}/members/${userId}`);
   }
@@ -84,17 +87,6 @@ class DeviceService {
     return axiosAuth.put(`/devices/${deviceId}`, body);
   }
 
-  public async getDevice(deviceId: string): Promise<AxiosResponse<DeviceDto>> {
-    return axiosAuth.get<DeviceDto>(`/devices/${deviceId}`);
-  }
-
-  public async listAll(): Promise<DeviceDto[]> {
-    return axiosAuth.get<DeviceDto[]>('/devices/').then(response => response.data);
-  }
-}
-
-export class DeviceDto {
-  constructor(public id: string, public name: string, public publicKey: string, public accessTo: VaultDto[]) { }
 }
 
 class UserService {
@@ -102,21 +94,14 @@ class UserService {
   public async syncMe(): Promise<void> {
     return axiosAuth.put('/users/me');
   }
-  public async me(): Promise<string> {
-    return axiosAuth.get<string>('/users/me').then(response => response.data);
-  }
-
-  public async meIncludingDevices(): Promise<UserDto> {
-    return axiosAuth.get<UserDto>('/users/me-extended/').then(response => response.data);
+  public async me(withDevices: boolean = false, withAccessibleVaults: boolean = false): Promise<UserDto> {
+    return axiosAuth.get<UserDto>(`/users/me?withDevices=${withDevices}&withAccessibleVaults=${withAccessibleVaults}`).then(response => response.data);
   }
 
   public async listAll(): Promise<UserDto[]> {
     return axiosAuth.get<UserDto[]>('/users/').then(response => response.data);
   }
 
-  public async listAllUsersIncludingDevices(): Promise<UserDto[]> {
-    return axiosAuth.get<UserDto[]>('/users/devices/').then(response => response.data);
-  }
 }
 
 const services = {

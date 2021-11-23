@@ -1,5 +1,5 @@
 <template>
-  <h1>{{ t('user_details_title') }} {{ username }}</h1>
+  <h1>{{ t('user_details_title') }} {{ user?.name }}</h1>
   <div v-if="user == null">
     Loading...
   </div>
@@ -33,16 +33,11 @@ export default defineComponent({
     return { t };
   },
   data: () => ({
-    username: '' as string,
     user: null as UserDto | null
   }),
 
   mounted() {
-    services.users.me().then(username => {
-      this.username = username;
-    });
-
-    services.users.meIncludingDevices().then(user => {
+    services.users.me(true, true).then(user => {
       this.user = user;
     });
   },

@@ -87,7 +87,7 @@ const me = ref<UserDto>();
 
 onMounted(async () => {
   try {
-    me.value = await backend.users.meIncludingDevices();
+    me.value = await backend.users.me();
   } catch (error) {
     me.value = undefined;
   }

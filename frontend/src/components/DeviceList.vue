@@ -68,7 +68,7 @@ export default defineComponent({
     me: null as unknown as UserDto
   }),
   async mounted() {
-    this.me = await backend.users.meIncludingDevices();
+    this.me = await backend.users.me(true, true);
   }
 });
 </script>
