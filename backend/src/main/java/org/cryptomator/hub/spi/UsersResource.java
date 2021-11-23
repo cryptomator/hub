@@ -6,6 +6,9 @@ import org.cryptomator.hub.entities.Access;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.User;
 import org.eclipse.microprofile.jwt.JsonWebToken;
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.jboss.resteasy.annotations.cache.NoCache;
 import org.jboss.resteasy.annotations.jaxrs.QueryParam;
 
@@ -34,6 +37,8 @@ public class UsersResource {
 	@PUT
 	@Path("/me")
 	@RolesAllowed("user")
+	@Operation(summary = "get the logged-in user")
+	@APIResponse(responseCode = "201", description = "user created")
 	public Response syncMe() {
 		User.createOrUpdate(jwt.getSubject(), jwt.getName(), jwt.getClaim("picture"));
 		return Response.created(URI.create(".")).build();
@@ -45,6 +50,7 @@ public class UsersResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@NoCache
 	@Transactional
+	@Operation(summary = "get the logged-in user")
 	public UserDto getMe(@QueryParam("withDevices") boolean withDevices, @QueryParam("withAccessibleVaults") boolean withAccessibleVaults) {
 		User user = User.findById(jwt.getSubject());
 		Function<Access, VaultResource.VaultDto> mapAccessibleVaults = a -> new VaultResource.VaultDto(a.vault.id, a.vault.name, null, null, null);
@@ -58,8 +64,9 @@ public class UsersResource {
 
 	@GET
 	@Path("/")
-	@RolesAllowed("user")
+	@RolesAllowed("vault-owner")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Operation(summary = "list all users")
 	public List<UserDto> getAll() {
 		PanacheQuery<User> query = User.findAll();
 		return query.stream().map(UserDto::fromEntity).toList();

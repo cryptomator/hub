@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.User;
 import org.eclipse.microprofile.jwt.JsonWebToken;
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 
 import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
@@ -29,7 +31,9 @@ public class DeviceResource {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
-	public Response create(/*@Valid*/ DeviceDto deviceDto, @PathParam("deviceId") String deviceId) {
+	@Operation(summary = "adds a device", description = "the device will be owned by the currently logged-in user")
+	@APIResponse(responseCode = "201", description = "device created")
+	public Response create(DeviceDto deviceDto, @PathParam("deviceId") String deviceId) {
 		// FIXME validate parameter
 		if (deviceId == null || deviceId.trim().length() == 0 || deviceDto == null) {
 			return Response.serverError().entity("deviceId or deviceDto cannot be empty").build();
