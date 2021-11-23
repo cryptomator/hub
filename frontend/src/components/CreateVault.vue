@@ -46,74 +46,65 @@
   </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
+import { DownloadIcon } from '@heroicons/vue/solid';
+import { saveAs } from 'file-saver';
+import JSZip from 'jszip';
+import { ref } from 'vue';
 import backend from '../common/backend';
 import config from '../common/config';
-import { uuid } from '../common/util';
 import { Masterkey, VaultConfigHeaderHub, VaultConfigPayload } from '../common/crypto';
-import { defineComponent } from 'vue';
-import JSZip from 'jszip';
-import { saveAs } from 'file-saver';
-import { DownloadIcon } from '@heroicons/vue/solid';
+import { uuid } from '../common/util';
 
 enum State {
   Processing,
   Created
 }
 
-export default defineComponent({
-  components: {
-    DownloadIcon,
-  },
-  data: () => ({
-    State,
-    state: State.Processing as State,
-    password: '' as string,
-    vaultName: '' as string,
-    token: '' as string,
-    rootDirHash: '' as string,
-  }),
+const state = ref(State.Processing);
+const password = ref('');
+const vaultName = ref('');
+const token = ref('');
+const rootDirHash = ref('');
 
-  methods: {
-    async createVault() {
-      const masterkey = await Masterkey.create();
-      const vaultId = uuid();
-      const kid = `hub+http://localhost:9090/vaults/${vaultId}`;
+async function createVault() {
+  const masterkey = await Masterkey.create();
+  const vaultId = uuid();
+  const kid = `hub+http://localhost:9090/vaults/${vaultId}`;
 
-      const hubConfig: VaultConfigHeaderHub = {
-        clientId: 'cryptomator-hub',
-        authEndpoint: `${config.get().keycloakUrl}realms/cryptomator/protocol/openid-connect/auth`, // TODO: read full endpoint url from config
-        tokenEndpoint: `${config.get().keycloakUrl}realms/cryptomator/protocol/openid-connect/token`,
-        deviceRegistrationUrl: `${location.protocol}//${location.host}${import.meta.env.BASE_URL}#/devices/add`,
-        authSuccessUrl: `${location.protocol}//${location.host}${import.meta.env.BASE_URL}#/unlock-success`,
-        authErrorUrl: `${location.protocol}//${location.host}${import.meta.env.BASE_URL}#/unlock-error`
-      };
+  const hubConfig: VaultConfigHeaderHub = {
+    clientId: 'cryptomator-hub',
+    authEndpoint: `${config.get().keycloakUrl}realms/cryptomator/protocol/openid-connect/auth`, // TODO: read full endpoint url from config
+    tokenEndpoint: `${config.get().keycloakUrl}realms/cryptomator/protocol/openid-connect/token`,
+    deviceRegistrationUrl: `${location.protocol}//${location.host}${import.meta.env.BASE_URL}#/devices/add`,
+    authSuccessUrl: `${location.protocol}//${location.host}${import.meta.env.BASE_URL}#/unlock-success`,
+    authErrorUrl: `${location.protocol}//${location.host}${import.meta.env.BASE_URL}#/unlock-error`
+  };
 
-      const jwtPayload: VaultConfigPayload = {
-        jti: vaultId,
-        format: 8,
-        cipherCombo: 'SIV_GCM',
-        shorteningThreshold: 220
-      };
+  const jwtPayload: VaultConfigPayload = {
+    jti: vaultId,
+    format: 8,
+    cipherCombo: 'SIV_GCM',
+    shorteningThreshold: 220
+  };
 
-      this.token = await masterkey.createVaultConfig(kid, hubConfig, jwtPayload);
-      const wrapped = await masterkey.wrap(this.password);
-      backend.vaults.createVault(vaultId, this.vaultName, wrapped.encrypted, wrapped.iterations, wrapped.salt).then(() => {
-        masterkey.hashDirectoryId('').then(rootDirHash => {
-          this.rootDirHash = rootDirHash;
-          this.state = State.Created;
-        });
-      });
-    },
-    async createVaultFolder() {
-      if (this.state === State.Created) {
-        const zip = new JSZip();
-        zip.file('vault.cryptomator', this.token);
-        zip.folder('d')?.folder(this.rootDirHash.substring(0, 2))?.folder(this.rootDirHash.substring(2));
-        const blob = await zip.generateAsync({ type: 'blob' });
-        saveAs(blob, `${this.vaultName}.zip`);
-      }
-    }
+  token.value = await masterkey.createVaultConfig(kid, hubConfig, jwtPayload);
+  const wrapped = await masterkey.wrap(password.value);
+  backend.vaults.createVault(vaultId, vaultName.value, wrapped.encrypted, wrapped.iterations, wrapped.salt).then(() => {
+    masterkey.hashDirectoryId('').then(hash => {
+      rootDirHash.value = hash;
+      state.value = State.Created;
+    });
+  });
+}
+
+async function createVaultFolder() {
+  if (state.value === State.Created) {
+    const zip = new JSZip();
+    zip.file('vault.cryptomator', token.value);
+    zip.folder('d')?.folder(rootDirHash.value.substring(0, 2))?.folder(rootDirHash.value.substring(2));
+    const blob = await zip.generateAsync({ type: 'blob' });
+    saveAs(blob, `${vaultName.value}.zip`);
   }
-});
+}
 </script>

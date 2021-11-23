@@ -57,18 +57,13 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue';
+<script script lang="ts">
+import { ref, onMounted } from 'vue';
 import backend, { UserDto } from '../common/backend';
 
-export default defineComponent({
-  name: 'DeviceList',
-  data: () => ({
-    Error,
-    me: null as unknown as UserDto
-  }),
-  async mounted() {
-    this.me = await backend.users.me(true, true);
-  }
+const me = ref<UserDto | null>(null);
+
+onMounted(async () => {
+  me.value = await backend.users.me(true, true);
 });
 </script>

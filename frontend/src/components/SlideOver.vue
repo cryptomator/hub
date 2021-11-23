@@ -33,38 +33,26 @@
   </TransitionRoot>
 </template>
 
-<script lang="ts">
-import { defineComponent, ref } from 'vue';
+<script setup lang="ts">
+import { ref } from 'vue';
 import { Dialog, DialogOverlay, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import { XIcon } from '@heroicons/vue/outline';
 
-export default defineComponent({
-  name: 'SlideOver',
-  components: {
-    Dialog,
-    DialogOverlay,
-    DialogTitle,
-    TransitionChild,
-    TransitionRoot,
-    XIcon,
-  },
-  props: {
-    title: {
-      type: String,
-      default: '',
-    },
-  },
-  emits: ['close'],
-  setup() {
-    const open = ref(false);
-    return {
-      open,
-    };
-  },
-  methods: {
-    show() {
-      this.open = true;
-    },
-  },
+defineProps<{
+  title: string
+}>();
+
+defineEmits<{
+  (e: 'close'): void
+}>();
+
+defineExpose({
+  show
 });
+
+const open = ref(false);
+
+function show() {
+  open.value = true;
+}
 </script>

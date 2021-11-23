@@ -7,18 +7,13 @@
   <p class="mt-4">You can now close this page and return to your device.</p>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue';
+<script setup lang="ts">
+import { onMounted, ref } from 'vue';
 import backend, { UserDto } from '../common/backend';
 
-export default defineComponent({
-  data: () => ({
-    me: null as unknown as UserDto,
-  }),
-  mounted() {
-    backend.users.me(true).then(me => {
-      this.me = me;
-    });
-  }
+const me = ref<UserDto | null>(null);
+
+onMounted(async () => {
+  me.value = await backend.users.me(true);
 });
 </script>

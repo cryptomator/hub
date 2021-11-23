@@ -1,51 +1,4 @@
 <template>
-  <!-- Notification for successfully creation of a realm -->
-  <!-- TODO remove if staying with @dafcoe/vue-notification plugin
-  <div id="realmSuccessfulCreatedNotification" v-if="realmSuccessfulCreatedNotification" class="rounded-md bg-green-50 p-4">
-    <div class="flex">
-      <div class="flex-shrink-0">
-        <CheckCircleIcon class="h-5 w-5 text-green-400" aria-hidden="true" />
-      </div>
-      <div class="ml-3">
-        <p class="text-sm font-medium text-green-800">
-          Successfully created realm
-        </p>
-      </div>
-      <div class="ml-auto pl-3">
-        <div class="-mx-1.5 -my-1.5">
-          <button type="button" class="inline-flex bg-green-50 rounded-md p-1.5 text-green-500 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-green-50 focus:ring-green-600" @click="closeNotifications()">
-            <span class="sr-only">Dismiss</span>
-            <XIcon class="h-5 w-5" aria-hidden="true" />
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-  -->
-  <!-- Notification for error during creation of a realm -->
-  <!-- TODO remove if staying with @dafcoe/vue-notification plugin
-  <div id="realmErrorNotification" v-if="realmErrorNotification" class="rounded-md bg-red-50 p-4">
-    <div class="flex">
-      <div class="flex-shrink-0">
-        <XCircleIcon class="h-5 w-5 text-red-400" aria-hidden="true" />
-      </div>
-      <div class="ml-3">
-        <p class="text-sm font-medium text-red-800">
-          Error while creating realm. It might already exist.
-        </p>
-      </div>
-      <div class="ml-auto pl-3">
-        <div class="-mx-1.5 -my-1.5">
-          <button type="button" class="inline-flex bg-red-50 rounded-md p-1.5 text-red-500 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-red-50 focus:ring-red-600" @click="closeNotifications()">
-            <span class="sr-only">Dismiss</span>
-            <XIcon class="h-5 w-5" aria-hidden="true" />
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-  -->
-
   <form class="" action="#">
     <div class="md:flex md:items-center md:justify-between">
       <div class="flex-1 min-w-0">
@@ -152,93 +105,69 @@
   </form>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue';
+<script setup lang="ts">
+import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import config from '../common/config';
 import createRealmJson from '../common/realm';
-import { CheckCircleIcon, XCircleIcon, XIcon } from '@heroicons/vue/solid';
 import { useNotificationStore } from '@dafcoe/vue-notification';
 const { setNotification } = useNotificationStore();
 
-
 let backendBaseURL = import.meta.env.DEV ? 'http://localhost:9090' : '';
 
-export default defineComponent({
-  components: {
-	  CheckCircleIcon,
-	  XCircleIcon,
-	  XIcon,
-  },
-  data: () => ({
-    hubUrl: window.location.protocol + '//' + window.location.hostname + ':' + window.location.port as string,
-    hubUser: 'owner' as string,
-    hubPass: '' as string,
-    hubRealmCfg: '' as string,
-    kcUrl: config.get().keycloakUrl as string,
-    kcUser: 'admin' as string,
-    kcPass: 'admin' as string,
-    kcAuthToken: '' as string,
-    //realmSuccessfulCreatedNotification: false as boolean,
-    //realmErrorNotification: false as boolean,
-  }),
+const hubUrl = ref(window.location.protocol + '//' + window.location.hostname + ':' + window.location.port);
+const hubUser = ref('owner');
+const hubPass = ref('');
+const hubRealmCfg = ref('');
+const kcUrl = ref(config.get().keycloakUrl);
+const kcUser = ref('admin');
+const kcPass = ref('admin');
 
-  mounted() {
-    this.updateRealmJson();
-  },
-
-  methods: {
-    updateRealmJson() {
-      this.hubRealmCfg = createRealmJson(this.hubUrl, this.hubUser, this.hubPass);
-    },
-
-    createRealm() {
-      const params = new URLSearchParams();
-      params.append('kcUrl', this.kcUrl);
-      params.append('user', this.kcUser);
-      params.append('password', this.kcPass);
-      params.append('realmCfg', this.hubRealmCfg);
-
-      axios.post(`${backendBaseURL}/setup/create-realm`, params).then(response => {
-        //this.realmSuccessfulCreatedNotification = true;
-        const realmSuccessfulCreatedNotification = {
-          'message': 'Successfully created realm.',
-          'type': 'success',
-          'showIcon': true,
-          'dismiss': {
-            'manually': true,
-            'automatically': true
-          },
-          'showDurationProgress': true,
-        };
-        setNotification(realmSuccessfulCreatedNotification);
-        config.reload();
-      }).catch(error => {
-        console.error('failed to create realm', error);
-        //this.realmErrorNotification = true;
-        let realmErrorNotification = {
-          'message': 'error',
-          'type': 'alert',
-          'showIcon': true,
-          'dismiss': {
-            'manually': true,
-            'automatically': false
-          },
-        };
-        if (error.response.status === 404){
-          realmErrorNotification.message = 'Error while creating realm. URL can\'t be found.';
-        } else if (error.response.status === 409){
-          realmErrorNotification.message = 'Error while creating realm. It might already exist.';
-        }
-        setNotification(realmErrorNotification);
-      });
-    },
-
-    /*closeNotifications(){
-	  this.realmSuccessfulCreatedNotification = false;
-	  this.realmErrorNotification = false;
-	}*/
-  }
+onMounted(() => {
+  updateRealmJson();
 });
-</script>
 
+function updateRealmJson() {
+  hubRealmCfg.value = createRealmJson(hubUrl.value, hubUser.value, hubPass.value);
+}
+
+function createRealm() {
+  const params = new URLSearchParams();
+  params.append('kcUrl', kcUrl.value);
+  params.append('user', kcUser.value);
+  params.append('password', kcPass.value);
+  params.append('realmCfg', hubRealmCfg.value);
+
+  axios.post(`${backendBaseURL}/setup/create-realm`, params).then(response => {
+    const realmSuccessfulCreatedNotification = {
+      'message': 'Successfully created realm.',
+      'type': 'success',
+      'showIcon': true,
+      'dismiss': {
+        'manually': true,
+        'automatically': true
+      },
+      'showDurationProgress': true,
+    };
+    setNotification(realmSuccessfulCreatedNotification);
+    config.reload();
+  }).catch(error => {
+    console.error('failed to create realm', error);
+    let realmErrorNotification = {
+      'message': 'error',
+      'type': 'alert',
+      'showIcon': true,
+      'dismiss': {
+        'manually': true,
+        'automatically': false
+      },
+    };
+    if (error.response.status === 404){
+      realmErrorNotification.message = 'Error while creating realm. URL can\'t be found.';
+    } else if (error.response.status === 409){
+      realmErrorNotification.message = 'Error while creating realm. It might already exist.';
+    }
+    setNotification(realmErrorNotification);
+  });
+}
+</script>

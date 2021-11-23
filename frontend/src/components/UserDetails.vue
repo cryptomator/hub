@@ -16,33 +16,17 @@
   </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import { UserDto } from '../common/backend';
-import { defineComponent } from 'vue';
+import { ref, onMounted } from 'vue';
 import services from '../common/backend';
 import { useI18n } from 'vue-i18n';
 
-export default defineComponent({
-  name: 'UserDetails',
-  props: {
-  },
-  setup() {
-    const { t } = useI18n({
-      useScope: 'global'
-    });
-    return { t };
-  },
-  data: () => ({
-    user: null as UserDto | null
-  }),
+const { t } = useI18n({ useScope: 'global' });
 
-  mounted() {
-    services.users.me(true, true).then(user => {
-      this.user = user;
-    });
-  },
+const user = ref<UserDto | null>(null);
 
-  methods: {
-  }
+onMounted(async () => {
+  user.value = await services.users.me(true, true);
 });
 </script>
