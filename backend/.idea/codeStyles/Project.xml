@@ -2,6 +2,10 @@
   <code_scheme name="Project" version="173">
     <option name="LINE_SEPARATOR" value="&#10;" />
     <option name="RIGHT_MARGIN" value="220" />
+    <JavaCodeStyleSettings>
+      <option name="CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND" value="99" />
+      <option name="NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND" value="5" />
+    </JavaCodeStyleSettings>
     <codeStyleSettings language="JAVA">
       <indentOptions>
         <option name="USE_TAB_CHARACTER" value="true" />
