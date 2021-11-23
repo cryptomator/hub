@@ -26,4 +26,4 @@ jobs:
         uses: atlassian/gajira-transition@v2.0.2
         with:
           issue: ${{ steps.parseJiraKey.outputs.issueId }}
-          transition: "Finish"
+          transition: "Fixed on GitHub"
