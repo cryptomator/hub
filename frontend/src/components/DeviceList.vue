@@ -57,7 +57,7 @@
   </div>
 </template>
 
-<script script lang="ts">
+<script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import backend, { UserDto } from '../common/backend';
 
