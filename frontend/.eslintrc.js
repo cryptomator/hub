@@ -30,13 +30,13 @@ module.exports = {
     },
   ],
   rules: {
-    'indent': ['error', 2],
     'keyword-spacing': ['error', { 'before': true, 'after': true }],
     'linebreak-style': ['error', 'unix'],
     'no-unused-vars': 'off',
     'object-curly-spacing': ['error', 'always'],
     'quotes': ['error', 'single'],
     'semi': ['error', 'always'],
+    '@typescript-eslint/indent': ['error', 2],
     '@typescript-eslint/no-unused-vars': 'error',
   }
 };
