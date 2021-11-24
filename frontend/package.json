@@ -42,7 +42,6 @@
     "vue-tsc": "^0.29.5"
   },
   "dependencies": {
-    "@dafcoe/vue-notification": "^0.1.6",
     "@headlessui/vue": "^1.4.2",
     "@heroicons/vue": "^1.0.5",
     "axios": "^0.24.0",
