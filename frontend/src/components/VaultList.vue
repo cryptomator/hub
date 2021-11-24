@@ -1,5 +1,21 @@
 <template>
-  <div v-if="vaults.length > 0">
+  <div v-if="vaults == null">
+    Loading…
+  </div>
+  <div v-else-if="vaults.length == 0" class="text-center">
+    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+      <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+    </svg>
+    <h3 class="mt-2 text-sm font-medium text-gray-900">No vaults</h3>
+    <p class="mt-1 text-sm text-gray-500">Get started by creating a new vault.</p>
+    <div class="mt-6">
+      <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="onCreateVaultClick()">
+        <PlusIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+        Create Vault
+      </button>
+    </div>
+  </div>
+  <div v-else>
     <div class="flex items-center mb-3 whitespace-nowrap">
       <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">Vaults</h2>
       <div class="flex-none flex items-center ml-auto pl-4 sm:pl-6">
@@ -31,19 +47,6 @@
       </ul>
     </div>
   </div>
-  <div v-else class="text-center">
-    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-      <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-    </svg>
-    <h3 class="mt-2 text-sm font-medium text-gray-900">No vaults</h3>
-    <p class="mt-1 text-sm text-gray-500">Get started by creating a new vault.</p>
-    <div class="mt-6">
-      <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="onCreateVaultClick()">
-        <PlusIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
-        Create Vault
-      </button>
-    </div>
-  </div>
   <SlideOver v-if="selectedVault != null" ref="vaultDetailsSlideOver" :title="selectedVault.name" @close="selectedVault = null">
     <VaultDetails :vault-id="selectedVault.id"></VaultDetails>
   </SlideOver>
@@ -63,7 +66,7 @@ import VaultDetails from './VaultDetails.vue';
 const vaultDetailsSlideOver = ref<typeof SlideOver>();
 const createVaultSlideOver = ref<typeof SlideOver>();
 
-const vaults = ref<VaultDto[]>([]);
+const vaults = ref<VaultDto[] | null>(null);
 const selectedVault = ref<VaultDto | null>(null);
 const creatingVault = ref(false);
 
