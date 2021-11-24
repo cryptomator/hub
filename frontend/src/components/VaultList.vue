@@ -9,20 +9,20 @@
     <h3 class="mt-2 text-sm font-medium text-gray-900">No vaults</h3>
     <p class="mt-1 text-sm text-gray-500">Get started by creating a new vault.</p>
     <div class="mt-6">
-      <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="onCreateVaultClick()">
+      <router-link to="/vaults/create" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
         <PlusIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
         Create Vault
-      </button>
+      </router-link>
     </div>
   </div>
   <div v-else>
     <div class="flex items-center mb-3 whitespace-nowrap">
       <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">Vaults</h2>
       <div class="flex-none flex items-center ml-auto pl-4 sm:pl-6">
-        <button class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="onCreateVaultClick()">
+        <router-link to="/vaults/create" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
           <PlusIcon class="-ml-0.5 mr-2 h-4 w-4" aria-hidden="true" />
           Create Vault
-        </button>
+        </router-link>
       </div>
     </div>
     <div class="bg-white shadow overflow-hidden sm:rounded-md">
@@ -50,25 +50,19 @@
   <SlideOver v-if="selectedVault != null" ref="vaultDetailsSlideOver" :title="selectedVault.name" @close="selectedVault = null">
     <VaultDetails :vault-id="selectedVault.id"></VaultDetails>
   </SlideOver>
-  <SlideOver v-if="creatingVault" ref="createVaultSlideOver" title="Create Vault" @close="creatingVault = false">
-    <CreateVault></CreateVault>
-  </SlideOver>
 </template>
 
 <script setup lang="ts">
 import { ChevronRightIcon, PlusIcon } from '@heroicons/vue/solid';
 import { nextTick, onMounted, ref } from 'vue';
 import backend, { VaultDto } from '../common/backend';
-import CreateVault from './CreateVault.vue';
 import SlideOver from './SlideOver.vue';
 import VaultDetails from './VaultDetails.vue';
 
 const vaultDetailsSlideOver = ref<typeof SlideOver>();
-const createVaultSlideOver = ref<typeof SlideOver>();
 
 const vaults = ref<VaultDto[] | null>(null);
 const selectedVault = ref<VaultDto | null>(null);
-const creatingVault = ref(false);
 
 onMounted(async () => {
   vaults.value = await backend.vaults.listSharedOrOwned();
@@ -77,10 +71,5 @@ onMounted(async () => {
 function onVaultClick(vault: VaultDto) {
   selectedVault.value = vault;
   nextTick(() => vaultDetailsSlideOver.value?.show());
-}
-
-function onCreateVaultClick() {
-  creatingVault.value = true;
-  nextTick(() => createVaultSlideOver.value?.show());
 }
 </script>

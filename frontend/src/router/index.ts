@@ -3,6 +3,7 @@ import authPromise from '../common/auth';
 import backend from '../common/backend';
 import config from '../common/config';
 import AddDevice from '../components/AddDevice.vue';
+import CreateVault from '../components/CreateVault.vue';
 import DeviceList from '../components/DeviceList.vue';
 import LoginComponent from '../components/Login.vue';
 import LogoutComponent from '../components/Logout.vue';
@@ -51,6 +52,15 @@ const routes: RouteRecordRaw[] = [
         component: VaultList
       },
       {
+        path: '/vaults/create',
+        component: CreateVault
+      },
+      {
+        path: '/vaults/:id',
+        component: VaultDetails,
+        props: (route) => ({ vaultId: route.params.id })
+      },
+      {
         path: '/devices',
         component: DeviceList
       },
@@ -66,11 +76,6 @@ const routes: RouteRecordRaw[] = [
       {
         path: '/user',
         component: UserDetails,
-        props: (route) => ({ vaultId: route.params.id })
-      },
-      {
-        path: '/vaults/:id',
-        component: VaultDetails,
         props: (route) => ({ vaultId: route.params.id })
       },
     ]
