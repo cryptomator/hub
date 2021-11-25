@@ -16,15 +16,13 @@ public class HubConfig implements ConfigSource {
 
 	private static final Logger LOG = Logger.getLogger(HubConfig.class);
 	private static final String HUB_CONFIGSOURCE_NAME = "HubConfig";
-	private static final String HUB_CONFIGPATH_PROPERTY_KEY = "hub.config.path";
 
 	private final HubConfigPersistence persistence;
 	private final Properties config;
 
-	public HubConfig() {
-		var configPath = System.getProperty(HUB_CONFIGPATH_PROPERTY_KEY);
+	public HubConfig(String configPath) {
 		if (configPath == null) {
-			throw new IllegalStateException("Property " + HUB_CONFIGPATH_PROPERTY_KEY + " not set.");
+			throw new IllegalStateException("Hub config path not set.");
 		}
 
 		LOG.info("Hub config persists to " + configPath);
