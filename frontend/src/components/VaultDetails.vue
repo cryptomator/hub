@@ -57,6 +57,9 @@
         Update Permissions
       </button>
     </div>
+    <button type="button" class="flex-1 bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDownloadVaultTemplate()">
+      Download Vault Template
+    </button>
     <!-- <div class="flex">
       <button type="button" class="flex-1 bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
         Download
@@ -67,6 +70,7 @@
     </div> -->
   </div>
   <GrantPermissionDialog v-if="grantingPermission" ref="grantPermissionDialog" :vault="vault" :devices="devicesRequiringAccessGrant" @close="grantingPermission = false" @permission-granted="permissionGranted()" />
+  <DownloadVaultTemplateDialog v-if="downloadingVaultTemplate" ref="downloadVaultTemplateDialog" :vault="vault" @close="downloadingVaultTemplate = false" />
 </template>
 
 <script setup lang="ts">
@@ -75,6 +79,7 @@ import axios from 'axios';
 import { nextTick, onMounted, ref } from 'vue';
 // import { useI18n } from 'vue-i18n';
 import backend, { DeviceDto, UserDto, VaultDto } from '../common/backend';
+import DownloadVaultTemplateDialog from './DownloadVaultTemplateDialog.vue';
 import GrantPermissionDialog from './GrantPermissionDialog.vue';
 import SearchInputGroup from './SearchInputGroup.vue';
 
@@ -91,6 +96,8 @@ const props = defineProps<{
 const addingMember = ref(false);
 const grantingPermission = ref(false);
 const grantPermissionDialog = ref<typeof GrantPermissionDialog>();
+const downloadingVaultTemplate = ref(false);
+const downloadVaultTemplateDialog = ref<typeof DownloadVaultTemplateDialog>();
 const errorCode = ref(Error.None);
 const users = ref<UserDto[]>([]);
 const members = ref<UserDto[]>([]);
@@ -121,6 +128,11 @@ async function addMember(id: string) {
 function showGrantPermissionDialog() {
   grantingPermission.value = true;
   nextTick(() => grantPermissionDialog.value?.show());
+}
+
+function showDownloadVaultTemplate() {
+  downloadingVaultTemplate.value = true;
+  nextTick(() => downloadVaultTemplateDialog.value?.show());
 }
 
 function permissionGranted() {
