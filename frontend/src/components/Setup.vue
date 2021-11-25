@@ -151,11 +151,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { CheckCircleIcon, XCircleIcon, XIcon } from '@heroicons/vue/solid';
 import axios from 'axios';
+import { onMounted, ref } from 'vue';
 import config from '../common/config';
 import createRealmJson from '../common/realm';
-import { CheckCircleIcon, XCircleIcon, XIcon } from '@heroicons/vue/solid';
 
 let backendBaseURL = import.meta.env.DEV ? 'http://localhost:9090' : '';
 
@@ -190,7 +190,7 @@ function createRealm() {
     realmSuccessfulCreatedNotification.value = true;
     config.reload();
   }).catch(error => {
-    console.error('failed to create realm', error);
+    console.error('Creating realm failed.', error);
     realmErrorNotification.value = true;
     if (error.response.status === 404){
       realmErrorNotificationMessage.value = 'URL can\'t be found.';

@@ -90,7 +90,7 @@ async function giveDevicesAccess(devices: DeviceDto[]) {
     }
   } catch (error) {
     // TODO: error handling
-    console.error('granting access permissions failed.', error);
+    console.error('Granting access permissions failed.', error);
   }
 }
 </script>

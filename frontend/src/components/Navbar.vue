@@ -12,7 +12,7 @@
         </div>
         <div class="flex-1 flex items-center justify-center sm:items-stretch sm:justify-start">
           <router-link to="/" class="flex-shrink-0 flex items-center">
-            <img src="../assets/logo.svg" class="h-8" alt="Logo"/>
+            <img src="/logo.svg" class="h-8" alt="Logo"/>
             <span class="font-headline font-bold text-primary ml-2 pb-px">CRYPTOMATOR HUB</span>
           </router-link>
           <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
@@ -30,19 +30,13 @@
             <div>
               <MenuButton class="bg-tertiary2 flex text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">
                 <span class="sr-only">Open user menu</span>
-                <img class="h-8 w-8 rounded-full" :src="me != null ? me.pictureUrl : 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'" alt="" />
+                <img class="h-8 w-8 rounded-full" :src="me?.pictureUrl ?? '/logo.svg'" alt="" />
               </MenuButton>
             </div>
             <transition enter-active-class="transition ease-out duration-100" enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 scale-100" leave-to-class="transform opacity-0 scale-95">
               <MenuItems class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white divide-y divide-gray-100 ring-1 ring-black ring-opacity-5 focus:outline-none">
-                <MenuItem v-slot="{ active }">
-                  <router-link to="/devices" :class="[active ? 'bg-gray-100' : '', 'block px-4 py-2 text-sm text-gray-700']">{{ t('nav.profile.devices') }}</router-link>
-                </MenuItem>
-                <MenuItem v-slot="{ active }">
-                  <router-link to="/settings" :class="[active ? 'bg-gray-100' : '', 'block px-4 py-2 text-sm text-gray-700']">{{ t('nav.profile.settings') }}</router-link>
-                </MenuItem>
-                <MenuItem v-slot="{ active }">
-                  <router-link to="/logout" :class="[active ? 'bg-gray-100' : '', 'block px-4 py-2 text-sm text-gray-700']">{{ t('nav.profile.signOut') }}</router-link>
+                <MenuItem v-for="item in profileDropdown" :key="item.name" v-slot="{ active }">
+                  <router-link :to="item.to" :class="[active ? 'bg-gray-100' : '', 'block px-4 py-2 text-sm text-gray-700']">{{ t(item.name) }}</router-link>
                 </MenuItem>
               </MenuItems>
             </transition>
@@ -53,11 +47,7 @@
 
     <DisclosurePanel class="sm:hidden">
       <div class="px-2 pt-2 pb-3 space-y-1">
-        <router-link
-          v-for="item in navigation" :key="item.name" :to="item.to"
-          class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
-          active-class="bg-gray-900 text-white block px-3 py-2 rounded-md text-base font-medium"
-        >
+        <router-link v-for="item in navigation" :key="item.name" :to="item.to" class="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium" active-class="bg-gray-900 text-white block px-3 py-2 rounded-md text-base font-medium">
           {{ t(item.name) }}
         </router-link>
       </div>
@@ -72,20 +62,25 @@ import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { UserDto } from '../common/backend';
 
-const navigation = [
-  { name: 'nav.vaults', to: '/' },
-];
-
 const { t } = useI18n({ useScope: 'global' });
 
-const me = ref<UserDto>();
+const navigation = [
+  { name: 'nav.vaults', to: '/vaults' },
+];
+const profileDropdown = [
+  { name: 'nav.profile.devices', to: '/devices' },
+  { name: 'nav.profile.settings', to: '/settings' },
+  { name: 'nav.profile.signOut', to: '/logout' },
+];
+
+const me = ref<UserDto | null>(null);
 
 onMounted(async () => {
   try {
     me.value = await backend.users.me();
   } catch (error) {
-    me.value = undefined;
+    // TODO: error handling
+    console.error('Retrieving current user failed.', error);
   }
 });
-
 </script>

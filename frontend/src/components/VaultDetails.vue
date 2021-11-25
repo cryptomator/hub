@@ -1,12 +1,15 @@
 <template>
   <div v-if="vault == null && errorCode == Error.None">
-    Loading...
+    Loading…
   </div>
+
   <div v-else-if="errorCode == Error.NotFound">
     <h1>Vault not found</h1>
   </div>
+
   <div v-else class="pb-16 space-y-6">
-    <div>
+    <!-- TODO: add metadata to vault in backend -->
+    <div v-if="false">
       <h3 class="font-medium text-gray-900">Description</h3>
       <div class="mt-2 flex items-center justify-between">
         <p class="text-sm text-gray-500 italic">Add a description to this vault.</p>
@@ -16,7 +19,7 @@
         </button>
       </div>
     </div>
-    <div>
+    <div v-if="false">
       <h3 class="font-medium text-gray-900">Information</h3>
       <dl class="mt-2 border-t border-b border-gray-200 divide-y divide-gray-200">
         <div class="py-3 flex justify-between text-sm font-medium">
@@ -37,7 +40,7 @@
             <img :src="member.pictureUrl" alt="" class="w-8 h-8 rounded-full" />
             <p class="ml-4 text-sm font-medium text-gray-900">{{ member.name }}</p>
           </div>
-          <button type="button" class="ml-6 bg-white rounded-md text-sm font-medium text-primary hover:text-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="revokeUserAccess(member.id)">Remove<span class="sr-only"> {{ member.name }}</span></button>
+          <button type="button" class="ml-6 bg-white rounded-md text-sm font-medium text-red-600 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="revokeUserAccess(member.id)">Remove<span class="sr-only"> {{ member.name }}</span></button>
         </li>
         <li class="py-2 flex justify-between items-center">
           <div v-if="!addingMember">
@@ -45,29 +48,23 @@
               <span class="w-8 h-8 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400">
                 <PlusSmIcon class="h-5 w-5" aria-hidden="true" />
               </span>
-              <span class="ml-4 text-sm font-medium text-primary group-hover:text-primary">Share</span>
+              <span class="ml-4 text-sm font-medium text-primary group-hover:text-primary-l1">Share</span>
             </button>
           </div>
-          <SearchInputGroup v-else-if="addingMember" action-title="Add" :items="users" class="flex-grow" @action="addMember" />
+          <SearchInputGroup v-else-if="addingMember" action-title="Add" :items="allUsers" class="flex-grow" @action="addMember" />
         </li>
       </ul>
     </div>
-    <div v-if="devicesRequiringAccessGrant.length > 0">
-      <button type="button" class="flex-1 bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showGrantPermissionDialog()">
-        Update Permissions
+    <div class="flex gap-3">
+      <div v-if="devicesRequiringAccessGrant.length > 0">
+        <button type="button" class="flex-1 bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showGrantPermissionDialog()">
+          Update Permissions
+        </button>
+      </div>
+      <button type="button" class="flex-1 bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDownloadVaultTemplate()">
+        Download Vault Template
       </button>
     </div>
-    <button type="button" class="flex-1 bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDownloadVaultTemplate()">
-      Download Vault Template
-    </button>
-    <!-- <div class="flex">
-      <button type="button" class="flex-1 bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
-        Download
-      </button>
-      <button type="button" class="flex-1 ml-3 bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
-        Delete
-      </button>
-    </div> -->
   </div>
   <GrantPermissionDialog v-if="grantingPermission" ref="grantPermissionDialog" :vault="vault" :devices="devicesRequiringAccessGrant" @close="grantingPermission = false" @permission-granted="permissionGranted()" />
   <DownloadVaultTemplateDialog v-if="downloadingVaultTemplate" ref="downloadVaultTemplateDialog" :vault="vault" @close="downloadingVaultTemplate = false" />
@@ -77,7 +74,7 @@
 import { PencilIcon, PlusSmIcon } from '@heroicons/vue/solid';
 import axios from 'axios';
 import { nextTick, onMounted, ref } from 'vue';
-// import { useI18n } from 'vue-i18n';
+import { useI18n } from 'vue-i18n';
 import backend, { DeviceDto, UserDto, VaultDto } from '../common/backend';
 import DownloadVaultTemplateDialog from './DownloadVaultTemplateDialog.vue';
 import GrantPermissionDialog from './GrantPermissionDialog.vue';
@@ -88,20 +85,21 @@ enum Error {
   NotFound
 }
 
+const { t } = useI18n({ useScope: 'global' });
+
 const props = defineProps<{
   vaultId: string
 }>();
 
-// const { t } = useI18n({ useScope: 'global' });
+const errorCode = ref(Error.None);
 const addingMember = ref(false);
 const grantingPermission = ref(false);
 const grantPermissionDialog = ref<typeof GrantPermissionDialog>();
 const downloadingVaultTemplate = ref(false);
 const downloadVaultTemplateDialog = ref<typeof DownloadVaultTemplateDialog>();
-const errorCode = ref(Error.None);
-const users = ref<UserDto[]>([]);
-const members = ref<UserDto[]>([]);
 const vault = ref<VaultDto | null>(null);
+const members = ref<UserDto[]>([]);
+const allUsers = ref<UserDto[]>([]);
 const devicesRequiringAccessGrant = ref<DeviceDto[]>([]);
 
 onMounted(async () => {
@@ -113,15 +111,16 @@ onMounted(async () => {
     }
   }
   members.value = await backend.vaults.getMembers(props.vaultId);
-  users.value = await backend.users.listAll();
+  allUsers.value = await backend.users.listAll();
   devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
 });
 
 async function addMember(id: string) {
-  const user = users.value.find(u => u.id === id);
+  const user = allUsers.value.find(u => u.id === id);
   if (user) {
     await backend.vaults.addMember(props.vaultId, id);
     members.value = members.value.concat(user);
+    devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
   }
 }
 
@@ -143,9 +142,10 @@ async function revokeUserAccess(userId: string) {
   try {
     await backend.vaults.revokeUserAccess(props.vaultId, userId);
     members.value = members.value.filter(m => m.id !== userId);
+    devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
   } catch (error) {
     // TODO: error handling
-    console.error('revoking access permissions failed.', error);
+    console.error('Revoking access permissions failed.', error);
   }
 }
 </script>

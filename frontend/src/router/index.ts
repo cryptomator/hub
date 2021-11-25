@@ -2,12 +2,12 @@ import { createRouter, createWebHashHistory, RouteRecordRaw } from 'vue-router';
 import authPromise from '../common/auth';
 import backend from '../common/backend';
 import config from '../common/config';
-import AddDevice from '../components/AddDevice.vue';
 import CreateVault from '../components/CreateVault.vue';
 import DeviceList from '../components/DeviceList.vue';
 import LoginComponent from '../components/Login.vue';
 import LogoutComponent from '../components/Logout.vue';
 import MainComponent from '../components/Main.vue';
+import RegisterDevice from '../components/RegisterDevice.vue';
 import Settings from '../components/Settings.vue';
 import SetupComponent from '../components/Setup.vue';
 import UnlockError from '../components/UnlockError.vue';
@@ -17,14 +17,25 @@ import VaultList from '../components/VaultList.vue';
 
 const routes: RouteRecordRaw[] = [
   {
+    path: '/',
+    component: LoginComponent,
+    meta: { skipAuth: true },
+    beforeEnter: (to, from, next) => {
+      authPromise.then(async auth => {
+        if (auth.isAuthenticated()) {
+          next('/vaults');
+        } else {
+          next();
+        }
+      }).catch(error => {
+        next(error);
+      });
+    }
+  },
+  {
     path: '/setup',
     component: SetupComponent,
     meta: { skipAuth: true, skipSetup: true }
-  },
-  {
-    path: '/login',
-    component: LoginComponent,
-    meta: { skipAuth: true }
   },
   {
     path: '/logout',
@@ -32,7 +43,7 @@ const routes: RouteRecordRaw[] = [
     beforeEnter: (to, from, next) => {
       authPromise.then(async auth => {
         if (auth.isAuthenticated()) {
-          const loggedOutUri = `${location.origin}/${router.resolve('/login').href}`;
+          const loggedOutUri = `${location.origin}/${router.resolve('/').href}`;
           await auth.logout(loggedOutUri);
         } else {
           next();
@@ -43,11 +54,11 @@ const routes: RouteRecordRaw[] = [
     }
   },
   {
-    path: '/main-dummy-path', /* required but unused */
+    path: '/', /* required but unused */
     component: MainComponent,
     children: [
       {
-        path: '/',
+        path: '/vaults',
         component: VaultList
       },
       {
@@ -64,8 +75,8 @@ const routes: RouteRecordRaw[] = [
         component: DeviceList
       },
       {
-        path: '/devices/add',
-        component: AddDevice,
+        path: '/devices/register',
+        component: RegisterDevice,
         props: (route) => ({ deviceId: route.query.device_id, deviceKey: route.query.device_key, verificationHash: route.query.verification_hash })
       },
       {

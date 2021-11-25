@@ -2,6 +2,7 @@
   <div v-if="vaults == null">
     Loading…
   </div>
+
   <div v-else-if="vaults.length == 0" class="text-center">
     <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
       <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
@@ -15,8 +16,9 @@
       </router-link>
     </div>
   </div>
+
   <div v-else>
-    <div class="flex items-center mb-3 whitespace-nowrap">
+    <div class="pb-5 border-b border-gray-200 flex items-center whitespace-nowrap">
       <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">Vaults</h2>
       <div class="flex-none flex items-center ml-auto pl-4 sm:pl-6">
         <router-link to="/vaults/create" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
@@ -25,10 +27,10 @@
         </router-link>
       </div>
     </div>
-    <div class="bg-white shadow overflow-hidden sm:rounded-md">
+    <div class="mt-5 bg-white shadow overflow-hidden sm:rounded-md">
       <ul role="list" class="divide-y divide-gray-200">
         <li v-for="vault in vaults" :key="vault.masterkey">
-          <a href="#" class="block hover:bg-gray-50" :class="selectedVault == vault ? 'bg-gray-50' : ''" @click="onVaultClick(vault)">
+          <a role="button" tabindex="0" class="block hover:bg-gray-50" :class="selectedVault == vault ? 'bg-gray-50' : ''" @click="onVaultClick(vault)">
             <div class="px-4 py-4 flex items-center sm:px-6">
               <div class="min-w-0 flex-1 sm:flex sm:items-center sm:justify-between">
                 <p class="text-sm font-medium text-primary truncate">{{ vault.name }}</p>

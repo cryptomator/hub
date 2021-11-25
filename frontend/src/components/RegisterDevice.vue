@@ -26,7 +26,7 @@
           </div>
         </div>
         <div class="px-4 py-3 bg-gray-50 text-right sm:px-6">
-          <button :disabled="!validDeviceName || !validVerificationCode || state == State.Processing" type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed">
+          <button :disabled="!validDeviceName || !validVerificationCode || state == State.Processing" type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
             Register Device
           </button>
         </div>
@@ -75,8 +75,9 @@ const props = defineProps<{
   verificationHash: string
 }>();
 
-const state = ref(State.Initial);
 const form = ref<HTMLFormElement>();
+
+const state = ref(State.Initial);
 const deviceName = ref('');
 const verificationCode = ref('');
 
