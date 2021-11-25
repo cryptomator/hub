@@ -50,7 +50,7 @@ import { saveAs } from 'file-saver';
 import { ref } from 'vue';
 import { VaultDto } from '../common/backend';
 import { Masterkey, WrappedMasterkey } from '../common/crypto';
-import { createVaultConfig, createVaultTemplate } from '../common/vaultconfig';
+import { VaultConfig } from '../common/vaultconfig';
 
 const open = ref(false);
 const password = ref('');
@@ -82,12 +82,8 @@ async function generateVaultZip(): Promise<Blob> {
     const vaultDto = props.vault!;
     const wrappedKey = new WrappedMasterkey(vaultDto.masterkey, vaultDto.salt, vaultDto.iterations);
     const masterkey = await Masterkey.unwrap(password.value, wrappedKey);
-
-    const rootDirHash = await masterkey.hashDirectoryId('');
-    const token = await createVaultConfig(vaultDto.id, masterkey);
-
-    return await createVaultTemplate(rootDirHash, token);
-
+    const config = await VaultConfig.create(vaultDto.id, masterkey);
+    return await config.exportTemplate();
   } catch (error) {
     // TODO: error handling
     console.error('Downloading vault template failed.', error);

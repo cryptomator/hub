@@ -78,7 +78,7 @@ import { computed, ref } from 'vue';
 import backend from '../common/backend';
 import { Masterkey } from '../common/crypto';
 import { uuid } from '../common/util';
-import { createVaultConfig, createVaultTemplate } from '../common/vaultconfig';
+import { VaultConfig } from '../common/vaultconfig';
 
 enum State {
   Initial,
@@ -89,8 +89,7 @@ enum State {
 const state = ref(State.Initial);
 const vaultName = ref('');
 const password = ref('');
-const token = ref('');
-const rootDirHash = ref('');
+const vaultConfig = ref<VaultConfig | null>(null);
 
 const validVaultName = computed(() => vaultName.value.length > 0);
 const validPassword = computed(() => password.value.length >= 8);
@@ -99,19 +98,15 @@ async function createVault() {
   state.value = State.Processing;
   const masterkey = await Masterkey.create();
   const vaultId = uuid();
-  token.value = await createVaultConfig(vaultId,masterkey);
+  vaultConfig.value = await VaultConfig.create(vaultId, masterkey);
   const wrapped = await masterkey.wrap(password.value);
-  backend.vaults.createVault(vaultId, vaultName.value, wrapped.encrypted, wrapped.iterations, wrapped.salt).then(() => {
-    masterkey.hashDirectoryId('').then(hash => {
-      rootDirHash.value = hash;
-      state.value = State.Finished;
-    });
-  });
+  await backend.vaults.createVault(vaultId, vaultName.value, wrapped.encrypted, wrapped.iterations, wrapped.salt);
+  state.value = State.Finished;
 }
 
 async function downloadVaultTemplate() {
-  if (state.value === State.Finished) {
-    const blob = await createVaultTemplate(rootDirHash.value, token.value);
+  if (state.value === State.Finished && vaultConfig.value != null) {
+    const blob = await vaultConfig.value.exportTemplate();
     saveAs(blob, `${vaultName.value}.zip`);
   }
 }
