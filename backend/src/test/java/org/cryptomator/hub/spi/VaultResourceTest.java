@@ -1,43 +1,37 @@
 package org.cryptomator.hub.spi;
 
-import io.quarkus.oidc.UserInfo;
-import io.quarkus.security.identity.SecurityIdentity;
+import io.quarkus.test.common.http.TestHTTPEndpoint;
 import io.quarkus.test.junit.QuarkusTest;
-import io.quarkus.test.junit.mockito.InjectMock;
+import io.quarkus.test.security.TestSecurity;
+import io.quarkus.test.security.oidc.Claim;
+import io.quarkus.test.security.oidc.OidcSecurity;
 import io.restassured.http.ContentType;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.CoreMatchers.is;
 
 @QuarkusTest
+@TestHTTPEndpoint(VaultResource.class)
 public class VaultResourceTest {
 
-	@InjectMock
-	SecurityIdentity identity;
-
-	@InjectMock
-	UserInfo userInfo;
-
-	@BeforeEach
-	public void setup() {
-		Mockito.when(identity.hasRole("user")).thenReturn(true);
-		Mockito.when(userInfo.getString("sub")).thenReturn("test-uuid-for-testing-only");
-	}
-
 	@Test
+	@TestSecurity(user = "userName1", roles = {"user"})
+	@OidcSecurity(claims = {
+			@Claim(key = "sub", value = "userId1")
+	})
 	public void testGetDeviceSpecificMasterKey() {
 		given()
 				.when()
-				.get("/vaults/vaultId1/keys/deviceId1")
+				.get("vaultId1/keys/noSuchDevice")
 				.then()
-				.statusCode(200)
-				.body(is("specificMasterKeyDevice1Vault1"));
+				.statusCode(404);
 	}
 
 	@Test
+	@TestSecurity(user = "userName2", roles = {"user", "vault-owner"})
+	@OidcSecurity(claims = {
+			@Claim(key = "sub", value = "userId2")
+	})
 	public void testCreateVault() {
 		var uuid = "uuid1";
 		var name = "name1";
@@ -51,9 +45,8 @@ public class VaultResourceTest {
 				.when()
 				.contentType(ContentType.JSON)
 				.body(vaultDto)
-				.put("/vaults/" + uuid)
+				.put(uuid)
 				.then()
-				.statusCode(200)
-				.body(is(uuid));
+				.statusCode(201);
 	}
 }
