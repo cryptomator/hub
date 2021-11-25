@@ -54,7 +54,7 @@
             </div>
           </div>
           <div class="mt-5 sm:mt-6">
-            <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="createVaultFolder()">
+            <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="downloadVaultTemplate()">
               <DownloadIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
               Download zipped vault folder
             </button>
@@ -74,12 +74,11 @@
 import { CheckIcon } from '@heroicons/vue/outline';
 import { DownloadIcon } from '@heroicons/vue/solid';
 import { saveAs } from 'file-saver';
-import JSZip from 'jszip';
 import { computed, ref } from 'vue';
 import backend from '../common/backend';
-import config from '../common/config';
-import { Masterkey, VaultConfigHeaderHub, VaultConfigPayload } from '../common/crypto';
+import { Masterkey } from '../common/crypto';
 import { uuid } from '../common/util';
+import { createVaultConfig, createVaultTemplate } from '../common/vaultconfig';
 
 enum State {
   Initial,
@@ -100,37 +99,19 @@ async function createVault() {
   state.value = State.Processing;
   const masterkey = await Masterkey.create();
   const vaultId = uuid();
-  const kid = `hub+http://localhost:9090/vaults/${vaultId}`;
-
-  const hubConfig: VaultConfigHeaderHub = {
-    clientId: 'cryptomator-hub',
-    authEndpoint: `${config.get().keycloakUrl}realms/cryptomator/protocol/openid-connect/auth`, // TODO: read full endpoint url from config
-    tokenEndpoint: `${config.get().keycloakUrl}realms/cryptomator/protocol/openid-connect/token`,
-    deviceRegistrationUrl: `${location.protocol}//${location.host}${import.meta.env.BASE_URL}#/devices/add`,
-    authSuccessUrl: `${location.protocol}//${location.host}${import.meta.env.BASE_URL}#/unlock-success`,
-    authErrorUrl: `${location.protocol}//${location.host}${import.meta.env.BASE_URL}#/unlock-error`
-  };
-
-  const jwtPayload: VaultConfigPayload = {
-    jti: vaultId,
-    format: 8,
-    cipherCombo: 'SIV_GCM',
-    shorteningThreshold: 220
-  };
-
-  token.value = await masterkey.createVaultConfig(kid, hubConfig, jwtPayload);
+  token.value = await createVaultConfig(vaultId,masterkey);
   const wrapped = await masterkey.wrap(password.value);
-  await backend.vaults.createVault(vaultId, vaultName.value, wrapped.encrypted, wrapped.iterations, wrapped.salt);
-  rootDirHash.value = await masterkey.hashDirectoryId('');
-  state.value = State.Finished;
+  backend.vaults.createVault(vaultId, vaultName.value, wrapped.encrypted, wrapped.iterations, wrapped.salt).then(() => {
+    masterkey.hashDirectoryId('').then(hash => {
+      rootDirHash.value = hash;
+      state.value = State.Finished;
+    });
+  });
 }
 
-async function createVaultFolder() {
+async function downloadVaultTemplate() {
   if (state.value === State.Finished) {
-    const zip = new JSZip();
-    zip.file('vault.cryptomator', token.value);
-    zip.folder('d')?.folder(rootDirHash.value.substring(0, 2))?.folder(rootDirHash.value.substring(2));
-    const blob = await zip.generateAsync({ type: 'blob' });
+    const blob = await createVaultTemplate(rootDirHash.value, token.value);
     saveAs(blob, `${vaultName.value}.zip`);
   }
 }
