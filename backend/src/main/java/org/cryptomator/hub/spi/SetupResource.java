@@ -6,6 +6,7 @@ import org.cryptomator.hub.spi.keycloak.AdminClient;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
+import javax.annotation.security.PermitAll;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.Consumes;
@@ -36,6 +37,7 @@ public class SetupResource {
 	@ConfigProperty(name = "quarkus.oidc.auth-server-url", defaultValue = "")
 	Provider<String> oidcUrl;
 
+	@PermitAll
 	@GET
 	@Path("/")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -43,6 +45,7 @@ public class SetupResource {
 		return new ConfigDto(setupCompleted.get(), oidcUrl.get());
 	}
 
+	@PermitAll
 	@AppSetup
 	@POST
 	@Path("/create-realm")
