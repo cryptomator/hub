@@ -1,7 +1,7 @@
 <template>
   <Disclosure v-slot="{ open }" as="nav" class="bg-tertiary2">
     <div class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
-      <div class="relative flex items-center justify-between h-16">
+      <div class="relative flex justify-between h-16">
         <div class="absolute inset-y-0 left-0 flex items-center sm:hidden">
           <!-- Mobile menu button-->
           <DisclosureButton class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
@@ -11,20 +11,16 @@
           </DisclosureButton>
         </div>
         <div class="flex-1 flex items-center justify-center sm:items-stretch sm:justify-start">
-          <div class="flex-shrink-0 flex items-center">
+          <router-link to="/" class="flex-shrink-0 flex items-center">
             <img src="../assets/logo.svg" class="h-8" alt="Logo"/>
             <span class="font-headline font-bold text-primary ml-2 pb-px">CRYPTOMATOR HUB</span>
-          </div>
-          <div class="hidden sm:block sm:ml-6">
-            <div class="flex space-x-4">
-              <router-link
-                v-for="item in navigation" :key="item.name" :to="item.to"
-                class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
-                active-class="bg-gray-900 text-white px-3 py-2 rounded-md text-sm font-medium"
-              >
+          </router-link>
+          <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+            <router-link v-for="item in navigation" :key="item.name" v-slot="{ isActive, href, navigate }" :to="item.to" custom>
+              <a v-bind="$attrs" :href="href" :class="[isActive ? 'border-primary text-white' : 'border-transparent text-gray-300 hover:border-gray-300 hover:text-white', ' inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium']" @click="navigate">
                 {{ t(item.name) }}
-              </router-link>
-            </div>
+              </a>
+            </router-link>
           </div>
         </div>
 
@@ -40,13 +36,13 @@
             <transition enter-active-class="transition ease-out duration-100" enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 scale-100" leave-to-class="transform opacity-0 scale-95">
               <MenuItems class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white divide-y divide-gray-100 ring-1 ring-black ring-opacity-5 focus:outline-none">
                 <MenuItem v-slot="{ active }">
-                  <router-link to="/devices" :class="[active ? 'bg-gray-100' : '', 'block px-4 py-2 text-sm text-gray-700']">Your Devices</router-link>
+                  <router-link to="/devices" :class="[active ? 'bg-gray-100' : '', 'block px-4 py-2 text-sm text-gray-700']">{{ t('nav.profile.devices') }}</router-link>
                 </MenuItem>
                 <MenuItem v-slot="{ active }">
-                  <router-link to="/settings" :class="[active ? 'bg-gray-100' : '', 'block px-4 py-2 text-sm text-gray-700']">Settings</router-link>
+                  <router-link to="/settings" :class="[active ? 'bg-gray-100' : '', 'block px-4 py-2 text-sm text-gray-700']">{{ t('nav.profile.settings') }}</router-link>
                 </MenuItem>
                 <MenuItem v-slot="{ active }">
-                  <router-link to="/logout" :class="[active ? 'bg-gray-100' : '', 'block px-4 py-2 text-sm text-gray-700']">Sign out</router-link>
+                  <router-link to="/logout" :class="[active ? 'bg-gray-100' : '', 'block px-4 py-2 text-sm text-gray-700']">{{ t('nav.profile.signOut') }}</router-link>
                 </MenuItem>
               </MenuItems>
             </transition>
@@ -77,8 +73,7 @@ import { useI18n } from 'vue-i18n';
 import backend, { UserDto } from '../common/backend';
 
 const navigation = [
-  { name: 'home', to: '/' },
-  { name: 'user_details', to: '/user' },
+  { name: 'nav.vaults', to: '/' },
 ];
 
 const { t } = useI18n({ useScope: 'global' });

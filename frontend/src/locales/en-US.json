@@ -1,9 +1,6 @@
 {
-  "vault_details_title": "Vault Details for",
-  "user_details_title": "User Details of",
-  "create_vault_title": "Create Vault",
-  "home": "Home",
-  "user_details": "User Details",
-  "logout": "Logout",
-  "setup": "Setup"
+  "nav.vaults": "Vaults",
+  "nav.profile.devices": "Your Devices",
+  "nav.profile.settings": "Settings",
+  "nav.profile.signOut": "Sign out"
 }

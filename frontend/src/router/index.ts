@@ -12,7 +12,6 @@ import Settings from '../components/Settings.vue';
 import SetupComponent from '../components/Setup.vue';
 import UnlockError from '../components/UnlockError.vue';
 import UnlockSuccess from '../components/UnlockSuccess.vue';
-import UserDetails from '../components/UserDetails.vue';
 import VaultDetails from '../components/VaultDetails.vue';
 import VaultList from '../components/VaultList.vue';
 
@@ -72,11 +71,6 @@ const routes: RouteRecordRaw[] = [
       {
         path: '/settings',
         component: Settings
-      },
-      {
-        path: '/user',
-        component: UserDetails,
-        props: (route) => ({ vaultId: route.params.id })
       },
     ]
   },

@@ -1,9 +1,6 @@
 {
-  "vault_details_title": "Vault details von",
-  "user_details_title": "Benutzer details von",
-  "create_vault_title": "Tresor erstellen",
-  "home": "Home",
-  "user_details": "User Infos",
-  "logout": "Abmelden",
-  "setup": "Einrichtung"
+  "nav.vaults": "Tresore",
+  "nav.profile.devices": "Deine Geräte",
+  "nav.profile.settings": "Einstellungen",
+  "nav.profile.signOut": "Abmelden"
 }
