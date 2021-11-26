@@ -2,8 +2,8 @@ import { createApp } from 'vue';
 import { createI18n } from 'vue-i18n';
 import App from './App.vue';
 import './css/fonts.css';
+import { defaultLocale, messages } from './i18n/index';
 import './index.css';
-import { defaultLocale, messages } from './locales/index';
 import router from './router';
 
 const i18n = createI18n({

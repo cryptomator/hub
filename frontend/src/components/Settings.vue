@@ -17,7 +17,7 @@
               <div class="col-span-6 sm:col-span-3">
                 <label for="language" class="block text-sm font-medium text-gray-700">{{ t('settings.general.language.title') }}</label>
                 <select v-model="$i18n.locale" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm">
-                  <option v-for="locale in Locales" :key="locale" :value="locale">
+                  <option v-for="locale in Locale" :key="locale" :value="locale">
                     {{ t(`locale.${locale}`) }}
                   </option>
                 </select>
@@ -31,8 +31,8 @@
 </template>
 
 <script setup lang="ts">
-import { Locales } from '../locales/locales';
 import { useI18n } from 'vue-i18n';
+import { Locale } from '../i18n';
 
 const { t } = useI18n({ useScope: 'global' });
 </script>
