@@ -13,14 +13,17 @@ VALUES
 INSERT INTO vault_user (vault_id, user_id)
 VALUES
     ('vault1', 'user1'),
-    ('vault1', 'user2');
+    ('vault1', 'user2'),
+    ('vault2', 'user1');
 
 INSERT INTO device (id, user_id, name, publickey)
 VALUES
     ('device1', 'user1', 'Computer 1', 'publickey1'),
-    ('device2', 'user2', 'Computer 2', 'publickey2');
+    ('device2', 'user2', 'Computer 2', 'publickey2'),
+    ('device3', 'user1', 'Computer 3', 'publickey3');
 
 INSERT INTO access (device_id, user_id, vault_id, device_specific_masterkey, ephemeral_public_key)
 VALUES
     ('device1', 'user1', 'vault1', 'dsm1', 'epk1'),
-    ('device2', 'user2', 'vault1', 'dsm2', 'epk2');
+    ('device2', 'user2', 'vault1', 'dsm2', 'epk2'),
+    ('device1', 'user1', 'vault2', 'dsm3', 'epk3');
