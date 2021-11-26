@@ -24,7 +24,7 @@ import java.util.stream.Stream;
 @Table(name = "vault")
 @NamedQuery(name = "Vault.accessibleOrOwnedByUser",
 		query = """
-				SELECT v
+				SELECT DISTINCT v
 				FROM Vault v
 				LEFT JOIN v.access a
 				LEFT JOIN a.device d
