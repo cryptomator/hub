@@ -1,5 +1,7 @@
 package org.cryptomator.hub.spi;
 
+import com.radcortez.flyway.test.annotation.DataSource;
+import com.radcortez.flyway.test.annotation.FlywayTest;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.quarkus.test.security.oidc.Claim;
@@ -16,6 +18,7 @@ import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
 
 @QuarkusTest
+@FlywayTest(value = @DataSource(url = "jdbc:h2:mem:test"))
 @DisplayName("Resource /vaults")
 public class VaultResourceTest {
 

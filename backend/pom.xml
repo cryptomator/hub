@@ -96,6 +96,14 @@
       <artifactId>quarkus-test-security-oidc</artifactId>
       <scope>test</scope>
     </dependency>
+
+    <!-- needed until https://github.com/quarkusio/quarkus/issues/14240 is solved -->
+    <dependency>
+      <groupId>com.radcortez.flyway</groupId>
+      <artifactId>flyway-junit5-extension</artifactId>
+      <version>1.2.0</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
