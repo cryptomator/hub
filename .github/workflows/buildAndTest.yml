@@ -1,0 +1,41 @@
+name: Build and test
+
+on:
+  push:
+  pull_request_target:
+    types: [labeled]
+
+env:
+  JAVA_VERSION: 17
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')" # can the if also be est for all jobs?
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
+      - name: Switch to frontend dir
+        run: cd frontend
+      - name: Install npm dependencies
+        run: npm install
+      - name: Run frontend tests
+        run: npm test
+      - name: Switch to backend dir
+        run: cd ../backend
+      - uses: actions/setup-java@v2
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: 'maven'
+      - name: Build and Test backend
+        run: mvn -B clean install
