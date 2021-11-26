@@ -8,7 +8,6 @@ import org.cryptomator.hub.entities.Vault;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
-import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.hibernate.exception.ConstraintViolationException;
 
 import javax.annotation.security.RolesAllowed;
@@ -141,8 +140,8 @@ public class VaultResource {
 		access.ephemeralPublicKey = dto.ephemeralPublicKey;
 
 		try {
-			access.persist();
-			return Response.noContent().build();
+			access.persistAndFlush();
+			return Response.created(URI.create(".")).build();
 		} catch (PersistenceException e) {
 			if (e.getCause() instanceof ConstraintViolationException) {
 				throw new ClientErrorException(Response.Status.CONFLICT, e);
