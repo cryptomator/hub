@@ -21,7 +21,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
-        working-directory: frontend
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
@@ -36,7 +35,6 @@ jobs:
         working-directory: frontend
         run: npm run dist
       - uses: actions/setup-java@v2
-        working-directory: backend
         with:
           distribution: 'temurin'
           java-version: ${{ env.JAVA_VERSION }}
