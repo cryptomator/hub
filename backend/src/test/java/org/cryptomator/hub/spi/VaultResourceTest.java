@@ -1,52 +1,106 @@
 package org.cryptomator.hub.spi;
 
-import io.quarkus.test.common.http.TestHTTPEndpoint;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.quarkus.test.security.oidc.Claim;
 import io.quarkus.test.security.oidc.OidcSecurity;
+import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
+import org.hamcrest.CoreMatchers;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static io.restassured.RestAssured.given;
 
 @QuarkusTest
-@TestHTTPEndpoint(VaultResource.class)
+@DisplayName("Resource /vaults")
 public class VaultResourceTest {
 
-	@Test
-	@TestSecurity(user = "userName1", roles = {"user"})
-	@OidcSecurity(claims = {
-			@Claim(key = "sub", value = "userId1")
-	})
-	public void testGetDeviceSpecificMasterKey() {
-		given()
-				.when()
-				.get("vaultId1/keys/noSuchDevice")
-				.then()
-				.statusCode(404);
+	@BeforeAll
+	public static void beforeAll() {
+		RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
 	}
 
-	@Test
-	@TestSecurity(user = "userName2", roles = {"user", "vault-owner"})
+	@Nested
+	@DisplayName("As user1")
+	@TestSecurity(user = "User Name 1", roles = {"user"})
 	@OidcSecurity(claims = {
-			@Claim(key = "sub", value = "userId2")
+			@Claim(key = "sub", value = "user1")
 	})
-	public void testCreateVault() {
-		var uuid = "uuid1";
-		var name = "name1";
-		var masterkey = "masterkey1";
-		var iterations = "iterations1";
-		var salt = "salt1";
+	public class AsAuthorzedUser1 {
 
-		var vaultDto = new VaultResource.VaultDto(uuid, name, masterkey, iterations, salt);
+		@Test
+		@DisplayName("GET /vaults/vault1/keys/device1 returns 200")
+		public void testUnlock1() {
+			given()
+					.when()
+					.get("/vaults/vault1/keys/device1")
+					.then()
+					.statusCode(200)
+					.body("device_specific_masterkey", CoreMatchers.is("dsm1"))
+					.body("ephemeral_public_key", CoreMatchers.is("epk1"));
+		}
 
-		given()
-				.when()
-				.contentType(ContentType.JSON)
-				.body(vaultDto)
-				.put(uuid)
-				.then()
-				.statusCode(201);
+		@Test
+		@DisplayName("GET /vaults/vault1/keys/noSuchDevice returns 404")
+		public void testUnlock2() {
+			given()
+					.when()
+					.get("/vaults/vault1/keys/noSuchDevice")
+					.then()
+					.statusCode(404);
+		}
+
+		@Test
+		@DisplayName("GET /vaults/vault1/keys/device2 returns 403")
+		public void testUnlock3() {
+			given()
+					.when()
+					.get("/vaults/vault1/keys/device2")
+					.then()
+					.statusCode(403);
+		}
+
 	}
+
+	@Nested
+	@DisplayName("As vault owner user1")
+	@TestSecurity(user = "User Name 1", roles = {"user", "vault-owner"})
+	@OidcSecurity(claims = {
+			@Claim(key = "sub", value = "user1")
+	})
+	public class AsVaultOwner {
+
+		@Test
+		@DisplayName("PUT /vaults/vault1 returns 409")
+		public void testCreateVault1() {
+			var vaultDto = new VaultResource.VaultDto("vault1", "My Vault", "masterkey3", "42", "NaCl");
+
+			given()
+					.when()
+					.contentType(ContentType.JSON)
+					.body(vaultDto)
+					.put("/vaults/vault1")
+					.then()
+					.statusCode(409);
+		}
+
+		@Test
+		@DisplayName("PUT /vaults/vault3 returns 201")
+		public void testCreateVault2() {
+			var vaultDto = new VaultResource.VaultDto("vault3", "My Vault", "masterkey3", "42", "NaCl");
+
+			given()
+					.when()
+					.contentType(ContentType.JSON)
+					.body(vaultDto)
+					.put("/vaults/vault3")
+					.then()
+					.statusCode(201);
+		}
+
+	}
+
 }
