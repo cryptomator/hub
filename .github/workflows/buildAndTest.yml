@@ -41,4 +41,10 @@ jobs:
           cache: 'maven'
       - name: Build and Test backend
         working-directory: backend
-        run: mvn -B clean install
+        run: mvn -B clean package -Puber-jar
+      - name: Upload uber-jar
+        uses: actions/upload-artifact@v2
+        with:
+          name: uber-jar
+          path: backend/target/hub-backend-*-runner.jar
+          if-no-files-found: error
