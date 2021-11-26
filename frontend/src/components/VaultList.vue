@@ -27,6 +27,7 @@
         </router-link>
       </div>
     </div>
+
     <div class="mt-5 bg-white shadow overflow-hidden sm:rounded-md">
       <ul role="list" class="divide-y divide-gray-200">
         <li v-for="vault in vaults" :key="vault.masterkey">

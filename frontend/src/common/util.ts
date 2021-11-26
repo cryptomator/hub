@@ -10,9 +10,11 @@ export function uuid(): string {
 }
 
 export class Deferred<T> {
+
   public promise: Promise<T>;
   public reject: (reason?: any) => void;
   public resolve: (value: T) => void;
+
   constructor() {
     this.reject = (reason) => { };
     this.resolve = (value) => { };
@@ -21,4 +23,5 @@ export class Deferred<T> {
       this.resolve = resolve;
     });
   }
+
 }

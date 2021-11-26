@@ -5,6 +5,7 @@
         <UsersIcon v-if="selectedItem == null" class="h-5 w-5 text-gray-400" aria-hidden="true" />
         <img v-else :src="selectedItem.pictureUrl" alt="" class="w-5 h-5 rounded-full" />
       </div>
+
       <Listbox v-model="selectedItem" as="div" class="w-full">
         <ListboxButton class="w-full" @focus="searchInput?.focus()">
           <input id="searchInput" ref="searchInput" v-model="searchTerm" v-focus :disabled="selectedItem != null" type="text" name="searchInput" autocomplete="off" class="focus:ring-primary focus:border-primary block w-full rounded-none rounded-l-md pl-10 sm:text-sm border-gray-300 disabled:bg-primary-l2" placeholder="John Doe" @focus="searchInputFocus = true" @blur="onSearchInputBlur()" />
@@ -22,10 +23,12 @@
           </ListboxOptions>
         </div>
       </Listbox>
+
       <button v-if="selectedItem != null" type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center" @click="reset()">
         <XCircleIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
       </button>
     </div>
+
     <button ref="actionButton" :disabled="selectedItem == null" type="button" class="-ml-px relative inline-flex items-center space-x-2 px-4 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="onAction()">
       {{ actionTitle }}
     </button>

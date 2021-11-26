@@ -13,6 +13,7 @@ export class ConfigDto {
 }
 
 class ConfigWrapper {
+
   private data: ConfigDto;
   private deferredSetupCompletion: Deferred<void>;
 

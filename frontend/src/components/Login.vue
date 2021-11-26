@@ -4,6 +4,7 @@
       <img src="/logo.svg" class="h-8" alt="Logo"/>
       <span class="font-headline font-bold text-primary ml-2 pb-px">CRYPTOMATOR HUB</span>
     </div>
+
     <div class="relative shadow-xl sm:rounded-2xl sm:overflow-hidden">
       <div class="absolute inset-0">
         <div class="absolute inset-0 bg-gradient-to-r from-primary-l1 to-primary mix-blend-multiply" />

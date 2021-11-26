@@ -30,12 +30,16 @@ export class VaultDto {
   constructor(public id: string, public name: string, public masterkey: string, public iterations: number, public salt: string) { }
 }
 
+export class DeviceDto {
+  constructor(public id: string, public name: string, public publicKey: string, public accessTo: VaultDto[]) { }
+}
+
 export class UserDto {
   constructor(public id: string, public name: string, public pictureUrl: string, public devices: DeviceDto[]) { }
 }
 
-export class DeviceDto {
-  constructor(public id: string, public name: string, public publicKey: string, public accessTo: VaultDto[]) { }
+export class AccessDto {
+  constructor(public device_specific_masterkey: string, public ephemeral_public_key: string) { }
 }
 
 /* Services */
@@ -75,11 +79,6 @@ class VaultService {
     await axiosAuth.delete(`/vaults/${vaultId}/members/${userId}`);
   }
 }
-
-export class AccessDto {
-  constructor(public device_specific_masterkey: string, public ephemeral_public_key: string) { }
-}
-
 class DeviceService {
 
   public async createDevice(deviceId: string, name: string, publicKey: String): Promise<AxiosResponse<any>> {

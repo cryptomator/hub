@@ -237,4 +237,5 @@ export class Masterkey {
     );
     return new DeviceSpecificMasterkey(base64url.stringify(new Uint8Array(wrapped), { pad: false }), base64url.stringify(new Uint8Array(epk), { pad: false }));
   }
+
 }
