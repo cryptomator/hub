@@ -6,6 +6,7 @@ on:
     types: [labeled]
 
 env:
+  NODE_VERSION: 16
   JAVA_VERSION: 17
 
 defaults:
@@ -13,37 +14,33 @@ defaults:
     shell: bash
 
 jobs:
-  test-frontend:
-    name: Build and Test frontend
+  test:
+    name: Build and Test
     runs-on: ubuntu-latest
     if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')" # can the if also be est for all jobs?
-    defaults:
-      run:
-        working-directory: frontend
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
+        working-directory: frontend
         with:
-          node-version: '16'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
       - name: Install npm dependencies
+        working-directory: frontend
         run: npm install
-      - name: Run frontend tests
+      - name: Build and Test frontend
+        working-directory: frontend
         run: npm test
-  test-backend:
-    name: Build and Test backend
-    runs-on: ubuntu-latest
-    if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')" # can the if also be est for all jobs?
-    defaults:
-      run:
-        working-directory: backend
-    steps:
-      - uses: actions/checkout@v2
+      - name: Deploy frontend
+        working-directory: frontend
+        run: npm run dist
       - uses: actions/setup-java@v2
+        working-directory: backend
         with:
           distribution: 'temurin'
           java-version: ${{ env.JAVA_VERSION }}
           cache: 'maven'
       - name: Build and Test backend
+        working-directory: backend
         run: mvn -B clean install

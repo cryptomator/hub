@@ -12,7 +12,7 @@
     "lint": "eslint -c .eslintrc.js",
     "test": "env-cmd mocha -r ts-node/register test/**/*.spec.ts",
     "serve": "vite preview",
-    "dist": "tsc --project src/tsconfig.json && vite build --outDir='../spi/src/main/resources/META-INF/resources' --emptyOutDir"
+    "dist": "vite build --outDir='../backend/src/main/resources/META-INF/resources' --emptyOutDir"
   },
   "directories": {
     "src": "./src",
