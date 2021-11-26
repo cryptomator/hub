@@ -1,6 +1,13 @@
 {
+  "locale.en": "Englisch",
+  "locale.de": "Deutsch",
+
   "nav.vaults": "Tresore",
   "nav.profile.devices": "Deine Geräte",
   "nav.profile.settings": "Einstellungen",
-  "nav.profile.signOut": "Abmelden"
+  "nav.profile.signOut": "Abmelden",
+
+  "settings.title": "Einstellungen",
+  "settings.general.title": "Allgemein",
+  "settings.general.language.title": "Sprache"
 }

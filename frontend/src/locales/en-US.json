@@ -1,6 +1,13 @@
 {
+  "locale.en": "English",
+  "locale.de": "German",
+
   "nav.vaults": "Vaults",
   "nav.profile.devices": "Your Devices",
   "nav.profile.settings": "Settings",
-  "nav.profile.signOut": "Sign out"
+  "nav.profile.signOut": "Sign out",
+
+  "settings.title": "Settings",
+  "settings.general.title": "General",
+  "settings.general.language.title": "Language"
 }
