@@ -8,7 +8,13 @@ If you want to learn more about Quarkus, please visit its website: https://quark
 
 You can run your application in dev mode that enables live coding using:
 ```shell script
-mvn clean quarkus:dev -Dhub.config.path=hub.properties
+mvn clean quarkus:dev
+```
+
+Or on ARM64:
+
+```shell
+mvn clean quarkus:dev -Dquarkus.keycloak.devservices.image-name=mihaibob/keycloak:15.0.1
 ```
 
 > **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at http://localhost:8080/q/dev/.

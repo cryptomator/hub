@@ -15,13 +15,13 @@ npm run dev
 During development, start Docker, then run this from `backend` dir:
 
 ```shell
-mvn clean quarkus:dev -Dhub.config.path=hub.properties
+mvn clean quarkus:dev
 ```
 
 Or on ARM64:
 
 ```shell
-mvn clean quarkus:dev -Dhub.config.path=hub.properties -Dquarkus.keycloak.devservices.image-name=mihaibob/keycloak:15.0.1
+mvn clean quarkus:dev -Dquarkus.keycloak.devservices.image-name=mihaibob/keycloak:15.0.1
 ```
 
 ### Accessing Keycloak
