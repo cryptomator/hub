@@ -55,7 +55,7 @@ const open = ref(false);
 const password = ref('');
 
 const props = defineProps<{
-  vault: VaultDto | null
+  vault: VaultDto
   devices: DeviceDto[]
 }>();
 
@@ -73,24 +73,23 @@ function show() {
 }
 
 async function grantAccess() {
-  await giveDevicesAccess(props.devices);
-  emit('permissionGranted');
-  open.value = false;
-}
-
-async function giveDevicesAccess(devices: DeviceDto[]) {
   try {
-    const vaultDto = props.vault!;
-    const wrappedKey = new WrappedMasterkey(vaultDto.masterkey, vaultDto.salt, vaultDto.iterations);
-    const masterkey = await Masterkey.unwrap(password.value, wrappedKey);
-    for (const device of devices) {
-      const publicKey = base64url.parse(device.publicKey);
-      const deviceSpecificKey = await masterkey.encryptForDevice(publicKey);
-      await backend.vaults.grantAccess(vaultDto.id, device.id, deviceSpecificKey.encrypted, deviceSpecificKey.publicKey);
-    }
+    await giveDevicesAccess(props.devices);
+    emit('permissionGranted');
+    open.value = false;
   } catch (error) {
     // TODO: error handling
     console.error('Granting access permissions failed.', error);
+  }
+}
+
+async function giveDevicesAccess(devices: DeviceDto[]) {
+  const wrappedKey = new WrappedMasterkey(props.vault.masterkey, props.vault.salt, props.vault.iterations);
+  const masterkey = await Masterkey.unwrap(password.value, wrappedKey);
+  for (const device of devices) {
+    const publicKey = base64url.parse(device.publicKey);
+    const deviceSpecificKey = await masterkey.encryptForDevice(publicKey);
+    await backend.vaults.grantAccess(props.vault.id, device.id, deviceSpecificKey.encrypted, deviceSpecificKey.publicKey);
   }
 }
 </script>

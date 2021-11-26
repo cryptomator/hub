@@ -49,10 +49,11 @@
         </li>
       </ul>
     </div>
+
+    <SlideOver v-if="selectedVault != null" ref="vaultDetailsSlideOver" :title="selectedVault.name" @close="selectedVault = null">
+      <VaultDetails :vault-id="selectedVault.id"></VaultDetails>
+    </SlideOver>
   </div>
-  <SlideOver v-if="selectedVault != null" ref="vaultDetailsSlideOver" :title="selectedVault.name" @close="selectedVault = null">
-    <VaultDetails :vault-id="selectedVault.id"></VaultDetails>
-  </SlideOver>
 </template>
 
 <script setup lang="ts">
@@ -64,11 +65,16 @@ import VaultDetails from './VaultDetails.vue';
 
 const vaultDetailsSlideOver = ref<typeof SlideOver>();
 
-const vaults = ref<VaultDto[] | null>(null);
+const vaults = ref<VaultDto[]>();
 const selectedVault = ref<VaultDto | null>(null);
 
 onMounted(async () => {
-  vaults.value = await backend.vaults.listSharedOrOwned();
+  try {
+    vaults.value = await backend.vaults.listSharedOrOwned();
+  } catch (error) {
+    // TODO: error handling
+    console.error('Retrieving vault list failed.', error);
+  }
 });
 
 function onVaultClick(vault: VaultDto) {

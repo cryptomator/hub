@@ -56,7 +56,7 @@ const open = ref(false);
 const password = ref('');
 
 const props = defineProps<{
-  vault: VaultDto | null
+  vault: VaultDto
 }>();
 
 defineEmits<{
@@ -72,22 +72,20 @@ function show() {
 }
 
 async function downloadVault() {
-  const blob = await generateVaultZip();
-  saveAs(blob, `${props.vault!.name}.zip`);
-  open.value = false;
-}
-
-async function generateVaultZip(): Promise<Blob> {
   try {
-    const vaultDto = props.vault!;
-    const wrappedKey = new WrappedMasterkey(vaultDto.masterkey, vaultDto.salt, vaultDto.iterations);
-    const masterkey = await Masterkey.unwrap(password.value, wrappedKey);
-    const config = await VaultConfig.create(vaultDto.id, masterkey);
-    return await config.exportTemplate();
+    const blob = await generateVaultZip();
+    saveAs(blob, `${props.vault.name}.zip`);
+    open.value = false;
   } catch (error) {
     // TODO: error handling
     console.error('Downloading vault template failed.', error);
-    return Promise.reject(error);
   }
+}
+
+async function generateVaultZip(): Promise<Blob> {
+  const wrappedKey = new WrappedMasterkey(props.vault.masterkey, props.vault.salt, props.vault.iterations);
+  const masterkey = await Masterkey.unwrap(password.value, wrappedKey);
+  const config = await VaultConfig.create(props.vault.id, masterkey);
+  return await config.exportTemplate();
 }
 </script>

@@ -89,25 +89,36 @@ enum State {
 const state = ref(State.Initial);
 const vaultName = ref('');
 const password = ref('');
-const vaultConfig = ref<VaultConfig | null>(null);
+const vaultConfig = ref<VaultConfig>();
 
 const validVaultName = computed(() => vaultName.value.length > 0);
 const validPassword = computed(() => password.value.length >= 8);
 
 async function createVault() {
-  state.value = State.Processing;
-  const masterkey = await Masterkey.create();
-  const vaultId = uuid();
-  vaultConfig.value = await VaultConfig.create(vaultId, masterkey);
-  const wrapped = await masterkey.wrap(password.value);
-  await backend.vaults.createVault(vaultId, vaultName.value, wrapped.encrypted, wrapped.iterations, wrapped.salt);
-  state.value = State.Finished;
+  try {
+    state.value = State.Processing;
+    const vaultId = uuid();
+    const masterkey = await Masterkey.create();
+    vaultConfig.value = await VaultConfig.create(vaultId, masterkey);
+    const wrapped = await masterkey.wrap(password.value);
+    await backend.vaults.createVault(vaultId, vaultName.value, wrapped.encrypted, wrapped.iterations, wrapped.salt);
+    state.value = State.Finished;
+  } catch (error) {
+    // TODO: error handling
+    console.error('Creating vault failed.', error);
+    state.value = State.Initial;
+  }
 }
 
 async function downloadVaultTemplate() {
-  if (state.value === State.Finished && vaultConfig.value != null) {
-    const blob = await vaultConfig.value.exportTemplate();
-    saveAs(blob, `${vaultName.value}.zip`);
+  if (state.value === State.Finished) {
+    const blob = await vaultConfig.value?.exportTemplate();
+    if (blob != null) {
+      saveAs(blob, `${vaultName.value}.zip`);
+    } else {
+      // TODO: error handling
+      console.error('Downloading vault template failed.');
+    }
   }
 }
 </script>

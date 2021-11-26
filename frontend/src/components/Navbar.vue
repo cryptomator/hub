@@ -73,7 +73,7 @@ const profileDropdown = [
   { name: 'nav.profile.signOut', to: '/logout' },
 ];
 
-const me = ref<UserDto | null>(null);
+const me = ref<UserDto>();
 
 onMounted(async () => {
   try {

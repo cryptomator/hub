@@ -1,13 +1,13 @@
 <template>
-  <div v-if="vault == null && errorCode == Error.None">
+  <div v-if="vault == null && !vaultNotFound">
     Loading…
   </div>
 
-  <div v-else-if="errorCode == Error.NotFound">
-    <h1>Vault not found</h1>
+  <div v-else-if="vault == null && vaultNotFound">
+    Vault not found
   </div>
 
-  <div v-else class="pb-16 space-y-6">
+  <div v-else-if="vault != null" class="pb-16 space-y-6">
     <!-- TODO: add metadata to vault in backend -->
     <div v-if="false">
       <h3 class="font-medium text-gray-900">Description</h3>
@@ -19,6 +19,7 @@
         </button>
       </div>
     </div>
+
     <div v-if="false">
       <h3 class="font-medium text-gray-900">Information</h3>
       <dl class="mt-2 border-t border-b border-gray-200 divide-y divide-gray-200">
@@ -32,6 +33,7 @@
         </div>
       </dl>
     </div>
+
     <div>
       <h3 class="font-medium text-gray-900">Shared with</h3>
       <ul role="list" class="mt-2 border-t border-b border-gray-200 divide-y divide-gray-200">
@@ -55,6 +57,7 @@
         </li>
       </ul>
     </div>
+
     <div class="flex gap-3">
       <div v-if="devicesRequiringAccessGrant.length > 0">
         <button type="button" class="flex-1 bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showGrantPermissionDialog()">
@@ -65,9 +68,10 @@
         Download Vault Template
       </button>
     </div>
+
+    <GrantPermissionDialog v-if="grantingPermission" ref="grantPermissionDialog" :vault="vault" :devices="devicesRequiringAccessGrant" @close="grantingPermission = false" @permission-granted="permissionGranted()" />
+    <DownloadVaultTemplateDialog v-if="downloadingVaultTemplate" ref="downloadVaultTemplateDialog" :vault="vault" @close="downloadingVaultTemplate = false" />
   </div>
-  <GrantPermissionDialog v-if="grantingPermission" ref="grantPermissionDialog" :vault="vault" :devices="devicesRequiringAccessGrant" @close="grantingPermission = false" @permission-granted="permissionGranted()" />
-  <DownloadVaultTemplateDialog v-if="downloadingVaultTemplate" ref="downloadVaultTemplateDialog" :vault="vault" @close="downloadingVaultTemplate = false" />
 </template>
 
 <script setup lang="ts">
@@ -80,24 +84,19 @@ import DownloadVaultTemplateDialog from './DownloadVaultTemplateDialog.vue';
 import GrantPermissionDialog from './GrantPermissionDialog.vue';
 import SearchInputGroup from './SearchInputGroup.vue';
 
-enum Error {
-  None,
-  NotFound
-}
-
 const { t } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{
   vaultId: string
 }>();
 
-const errorCode = ref(Error.None);
+const vaultNotFound = ref(false);
 const addingMember = ref(false);
 const grantingPermission = ref(false);
 const grantPermissionDialog = ref<typeof GrantPermissionDialog>();
 const downloadingVaultTemplate = ref(false);
 const downloadVaultTemplateDialog = ref<typeof DownloadVaultTemplateDialog>();
-const vault = ref<VaultDto | null>(null);
+const vault = ref<VaultDto>();
 const members = ref<UserDto[]>([]);
 const allUsers = ref<UserDto[]>([]);
 const devicesRequiringAccessGrant = ref<DeviceDto[]>([]);
@@ -107,20 +106,43 @@ onMounted(async () => {
     vault.value = await backend.vaults.get(props.vaultId);
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 404) {
-      errorCode.value = Error.NotFound;
+      vaultNotFound.value = true;
+    } else {
+      // TODO: error handling
+      console.error('Retrieving vault failed.', error);
     }
   }
-  members.value = await backend.vaults.getMembers(props.vaultId);
-  allUsers.value = await backend.users.listAll();
-  devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
+  try {
+    members.value = await backend.vaults.getMembers(props.vaultId);
+  } catch (error) {
+    // TODO: error handling
+    console.error('Retrieving vault members failed.', error);
+  }
+  try {
+    allUsers.value = await backend.users.listAll();
+  } catch (error) {
+    // TODO: error handling
+    console.error('Retrieving all users failed.', error);
+  }
+  try {
+    devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
+  } catch (error) {
+    // TODO: error handling
+    console.error('Retrieving devices requiring access grant failed.', error);
+  }
 });
 
 async function addMember(id: string) {
-  const user = allUsers.value.find(u => u.id === id);
-  if (user) {
-    await backend.vaults.addMember(props.vaultId, id);
-    members.value = members.value.concat(user);
-    devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
+  try {
+    const user = allUsers.value.find(u => u.id === id);
+    if (user) {
+      await backend.vaults.addMember(props.vaultId, id);
+      members.value = members.value.concat(user);
+      devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
+    }
+  } catch (error) {
+    // TODO: error handling
+    console.error('Adding member failed.', error);
   }
 }
 
@@ -145,7 +167,7 @@ async function revokeUserAccess(userId: string) {
     devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
   } catch (error) {
     // TODO: error handling
-    console.error('Revoking access permissions failed.', error);
+    console.error('Revoking user access failed.', error);
   }
 }
 </script>

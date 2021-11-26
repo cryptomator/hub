@@ -75,7 +75,7 @@ import { DesktopComputerIcon } from '@heroicons/vue/solid';
 import { onMounted, ref } from 'vue';
 import backend, { DeviceDto, UserDto } from '../common/backend';
 
-const me = ref<UserDto | null>(null);
+const me = ref<UserDto>();
 
 onMounted(async () => {
   try {

@@ -88,21 +88,30 @@ watch(verificationCode, async (code) => {
 });
 
 async function registerDevice() {
-  state.value = State.Processing;
-  const response = await backend.devices.createDevice(props.deviceId, deviceName.value, props.deviceKey);
-  if (response.status == 201) {
-    state.value = State.Finished;
-  } else {
+  try {
+    state.value = State.Processing;
+    const response = await backend.devices.createDevice(props.deviceId, deviceName.value, props.deviceKey);
+    if (response.status == 201) {
+      state.value = State.Finished;
+    } else {
+      throw new Error(`Unexpected status code: ${response.status}`);
+    }
+  } catch (error) {
+    console.error('Registering device failed.', error);
     state.value = State.Initial;
-    console.error('Registering device failed with status ' + response.status + ': ' + response.statusText);
   }
 }
 
 async function verifyCode(code: string): Promise<boolean> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(props.deviceId + props.deviceKey + code);
-  const hash = await crypto.subtle.digest('SHA-256', data);
-  const encodedHash = base64url.stringify(new Uint8Array(hash)).replaceAll('=', '');
-  return encodedHash === props.verificationHash;
+  try {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(props.deviceId + props.deviceKey + code);
+    const hash = await crypto.subtle.digest('SHA-256', data);
+    const encodedHash = base64url.stringify(new Uint8Array(hash)).replaceAll('=', '');
+    return encodedHash === props.verificationHash;
+  } catch (error) {
+    console.error('Verifying verification code failed.', error);
+    return false;
+  }
 }
 </script>
