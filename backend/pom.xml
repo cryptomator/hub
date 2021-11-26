@@ -190,7 +190,6 @@
       <properties>
         <quarkus.package.type>uber-jar</quarkus.package.type>
       </properties>
-      <build>o</build>
     </profile>
   </profiles>
 </project>
