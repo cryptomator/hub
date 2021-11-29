@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
@@ -273,17 +273,19 @@ public class VaultResourceTest {
 	@DisplayName("As unauthenticated user")
 	public class AsAnonymous {
 
-		@ParameterizedTest(name = "GET {0}")
-		@ValueSource(strings = {
-				"/vaults",
-				"/vaults/vault1",
-				"/vaults/vault1/members",
-				"/vaults/vault1/devices-requiring-access-grant",
-				"/vaults/vault1/keys/device1",
+		@DisplayName("401 Unauthorized")
+		@ParameterizedTest(name = "{0} {1}")
+		@CsvSource(value = {
+				"GET, /vaults",
+				"GET, /vaults/vault1",
+				"GET, /vaults/vault1/members",
+				"PUT, /vaults/vault1/members/user1",
+				"DELETE, /vaults/vault1/members/user1",
+				"GET, /vaults/vault1/devices-requiring-access-grant",
+				"GET, /vaults/vault1/keys/device1"
 		})
-		@DisplayName("GET results in Status 401")
-		public void testGet(String path) {
-			when().get(path)
+		public void testGet(String method, String path) {
+			when().request(method, path)
 					.then().statusCode(401);
 		}
 
