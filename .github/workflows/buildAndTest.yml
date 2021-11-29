@@ -6,6 +6,7 @@ on:
     types: [labeled]
 
 env:
+  NODE_VERSION: 16
   JAVA_VERSION: 17
 
 defaults:
@@ -21,21 +22,29 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
         with:
-          node-version: '16'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: 'frontend/package-lock.json'
-      - name: Switch to frontend dir
-        run: cd frontend
+          cache-dependency-path: frontend/package-lock.json
       - name: Install npm dependencies
+        working-directory: frontend
         run: npm install
-      - name: Run frontend tests
+      - name: Build and Test frontend
+        working-directory: frontend
         run: npm test
-      - name: Switch to backend dir
-        run: cd ../backend
+      - name: Deploy frontend
+        working-directory: frontend
+        run: npm run dist
       - uses: actions/setup-java@v2
         with:
           distribution: 'temurin'
           java-version: ${{ env.JAVA_VERSION }}
           cache: 'maven'
       - name: Build and Test backend
-        run: mvn -B clean install
+        working-directory: backend
+        run: mvn -B clean package -Puber-jar
+      - name: Upload uber-jar
+        uses: actions/upload-artifact@v2
+        with:
+          name: uber-jar
+          path: backend/target/hub-backend-*-runner.jar
+          if-no-files-found: error
