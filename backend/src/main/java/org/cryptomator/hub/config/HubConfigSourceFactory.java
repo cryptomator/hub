@@ -13,7 +13,13 @@ public class HubConfigSourceFactory implements ConfigSourceFactory {
 	@Override
 	public Iterable<ConfigSource> getConfigSources(ConfigSourceContext configSourceContext) {
 		var configPath = configSourceContext.getValue(HUBCONFIG_PROPERTY_KEY);
-		var hubConfig = new HubConfig(configPath.getValue());
-		return List.of(hubConfig);
+		// dev console can't "see" application.properties. In this case, there is no need for a HubConfig
+		if (configPath.getValue() == null) {
+			return List.of();
+		} else {
+			var hubConfig = new HubConfig(configPath.getValue());
+			return List.of(hubConfig);
+		}
 	}
+
 }
