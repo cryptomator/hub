@@ -1,3 +1,5 @@
+[![Build and test](https://github.com/cryptomator/hub/actions/workflows/buildAndTest.yml/badge.svg)](https://github.com/cryptomator/hub/actions/workflows/buildAndTest.yml)
+
 # Cryptomator Hub
 
 Hub consists of these components:
