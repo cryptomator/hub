@@ -1,7 +1,6 @@
 package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
-import io.quarkus.panache.common.Parameters;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -9,34 +8,15 @@ import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.ManyToMany;
-import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.transaction.Transactional;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
 @Entity
 @Table(name = "user")
-@NamedQuery(name = "User.includingDevices", query = "SELECT u FROM User u LEFT JOIN FETCH u.devices")
-@NamedQuery(name = "User.includingDevicesAndVaults",
-		query = """
-					SELECT DISTINCT u
-					FROM User u
-						LEFT JOIN FETCH u.devices d
-						LEFT JOIN FETCH d.access
-				""")
-@NamedQuery(name = "User.withDevicesAndAccess",
-		query = """
-					SELECT u
-					FROM User u
-						LEFT JOIN FETCH u.devices d
-						LEFT JOIN FETCH d.access a
-						LEFT JOIN FETCH a.vault
-					WHERE u.id = :userId
-				""")
 public class User extends PanacheEntityBase {
 
 	@Id
@@ -78,10 +58,10 @@ public class User extends PanacheEntityBase {
 				&& Objects.equals(pictureUrl, user.pictureUrl);
 	}
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, name, pictureUrl);
-    }
+	@Override
+	public int hashCode() {
+		return Objects.hash(id, name, pictureUrl);
+	}
 
 	// --- data layer queries ---
 
@@ -96,17 +76,4 @@ public class User extends PanacheEntityBase {
 		user.pictureUrl = pictureUrl;
 		user.persist();
 	}
-
-	public static List<User> getAllWithDevices() {
-		return list("#User.includingDevices");
-	}
-
-	public static List<User> getAllWithDevicesAndAccess() {
-		return list("#User.includingDevicesAndVaults");
-	}
-
-	public static User getWithDevicesAndAccess(String userId) {
-		return find("#User.withDevicesAndAccess", Parameters.with("userId", userId)).firstResult();
-	}
-
 }
