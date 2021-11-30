@@ -44,7 +44,7 @@ public class Vault extends PanacheEntityBase {
 	@JoinTable(name = "vault_user", joinColumns = @JoinColumn(name = "vault_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"))
 	public Set<User> members = new HashSet<>();
 
-	@OneToMany(mappedBy = "vault", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true, fetch = FetchType.LAZY)
+	@OneToMany(mappedBy = "vault", fetch = FetchType.LAZY)
 	public Set<Access> access = new HashSet<>();
 
 	@Column(name = "name", nullable = false)

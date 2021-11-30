@@ -40,7 +40,7 @@ public class Device extends PanacheEntityBase {
 	@JoinColumn(name = "user_id", updatable = false, nullable = false)
 	public User owner;
 
-	@OneToMany(mappedBy = "device", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true, fetch = FetchType.LAZY)
+	@OneToMany(mappedBy = "device", fetch = FetchType.LAZY)
 	public Set<Access> access = new HashSet<>();
 
 	@Column(name = "name", nullable = false)
