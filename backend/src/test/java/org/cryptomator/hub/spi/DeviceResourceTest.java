@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Set;
 
 import static io.restassured.RestAssured.given;
+import static io.restassured.RestAssured.when;
 
 @QuarkusTest
 @FlywayTest(value = @DataSource(url = "jdbc:h2:mem:test"))
@@ -55,6 +56,28 @@ public class DeviceResourceTest {
 					.then().statusCode(201);
 		}
 
+		@Test
+		@DisplayName("DELETE /devices/device0 returns 404")
+		public void testDeleteNotExisting() {
+			when().delete("/devices/{deviceId}", "device0") //
+					.then().statusCode(404);
+		}
+
+		@Test
+		@DisplayName("DELETE /devices/device4 returns 403")
+		public void testDeleteNotOwner() {
+			when().delete("/devices/{deviceId}", "device2") //
+					.then().statusCode(403);
+		}
+
+		@Test
+		@DisplayName("DELETE /devices/device4 returns 200")
+		public void testDeleteOk() {
+			when().delete("/devices/{deviceId}", "device1") //
+					.then().statusCode(200);
+		}
+
+
 	}
 
 	@Nested
@@ -68,6 +91,13 @@ public class DeviceResourceTest {
 
 			given().contentType(ContentType.JSON).body(deviceDto)
 					.when().put("/devices/{deviceId}", "device1")
+					.then().statusCode(401);
+		}
+
+		@Test
+		@DisplayName("DELETE /devices/device1 returns 401")
+		public void testDelete() {
+			when().delete("/devices/{deviceId}", "device1") //
 					.then().statusCode(401);
 		}
 
