@@ -86,8 +86,15 @@ onMounted(async () => {
   }
 });
 
-function removeDevice(device: DeviceDto) {
-  // TODO: add remove device to backend
-  console.log('User tried to remove device.', device);
+
+//TODO: make it reactive!
+async function removeDevice(device: DeviceDto) {
+  try {
+    await backend.devices.removeDevice(device.id);
+    me.value = await backend.users.me(true, true);
+  } catch (error) {
+    // TODO: error handling
+    console.error('Removing device failed.', error);
+  }
 }
 </script>
