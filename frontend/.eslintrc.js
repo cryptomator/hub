@@ -9,6 +9,9 @@ module.exports = {
       jsx: true
     }
   },
+  env: {
+    'browser': true
+  },
   extends: [
     'eslint:recommended',
     'plugin:vue/vue3-recommended',
@@ -38,5 +41,6 @@ module.exports = {
     'semi': ['error', 'always'],
     '@typescript-eslint/indent': ['error', 2],
     '@typescript-eslint/no-unused-vars': 'error',
+    'no-undef': 'off' // types checked by typescript already
   }
 };
