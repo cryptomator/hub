@@ -86,8 +86,6 @@ onMounted(async () => {
   }
 });
 
-
-//TODO: make it reactive!
 async function removeDevice(device: DeviceDto) {
   try {
     await backend.devices.removeDevice(device.id);
