@@ -56,6 +56,14 @@ public class DeviceResourceTest {
 					.then().statusCode(201);
 		}
 
+
+		@Test
+		@DisplayName("DELETE /devices/ returns 400")
+		public void testDeleteNoDeviceId() {
+			when().delete("/devices/{deviceId}", "\u0020") //a whitespace
+					.then().statusCode(400);
+		}
+
 		@Test
 		@DisplayName("DELETE /devices/device0 returns 404")
 		public void testDeleteNotExisting() {
@@ -64,17 +72,17 @@ public class DeviceResourceTest {
 		}
 
 		@Test
-		@DisplayName("DELETE /devices/device4 returns 403")
+		@DisplayName("DELETE /devices/device2 returns 404")
 		public void testDeleteNotOwner() {
 			when().delete("/devices/{deviceId}", "device2") //
-					.then().statusCode(403);
+					.then().statusCode(404);
 		}
 
 		@Test
-		@DisplayName("DELETE /devices/device4 returns 200")
-		public void testDeleteOk() {
-			when().delete("/devices/{deviceId}", "device1") //
-					.then().statusCode(200);
+		@DisplayName("DELETE /devices/device4 returns 204")
+		public void testDeleteValid() {
+			when().delete("/devices/{deviceId}", "device4") //
+					.then().statusCode(204);
 		}
 
 

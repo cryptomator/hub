@@ -56,22 +56,20 @@ public class DeviceResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
 	@Operation(summary = "removes a device", description = "the device will be only be removed if the current user is the owner")
-	@APIResponse(responseCode = "200", description = "device removed")
+	@APIResponse(responseCode = "204", description = "device removed")
 	public Response remove(@PathParam("deviceId") String deviceId) {
 		// FIXME validate parameter
 		if (deviceId == null || deviceId.trim().length() == 0) {
-			return Response.serverError().entity("deviceId cannot be empty").build();
+			return Response.status(Response.Status.BAD_REQUEST).entity("deviceId cannot be empty").build();
 		}
 
 		User currentUser = User.findById(jwt.getSubject());
 		Optional<Device> maybeDevice = Device.findByIdOptional(deviceId);
 		if (maybeDevice.isPresent() && currentUser.equals(maybeDevice.get().owner)) {
 			maybeDevice.get().delete();
-			return Response.status(Response.Status.OK).build();
-		} else if (maybeDevice.isEmpty()) {
-			return Response.status(Response.Status.NOT_FOUND).build();
+			return Response.status(Response.Status.NO_CONTENT).build();
 		} else {
-			return Response.status(Response.Status.FORBIDDEN).build();
+			return Response.status(Response.Status.NOT_FOUND).build();
 		}
 	}
 
