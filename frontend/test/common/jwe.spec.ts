@@ -38,8 +38,8 @@ describe('JWE', () => {
         {
           kty: 'EC',
           crv: 'P-384',
-          x: 'RI9z7FsC0oDgNhv5w9LLYp98z6hJh6ddKPb9piIZSLcp-YCvU3PdNsVRILkqexr5',
-          y: 'dDaIFT9Vr6mY58QYp9D5Ed-gpmiPx3dw0pixhwiFuJc41JyW106fEgU6QAf-mkUM'
+          x: 'RxQR-NRN6Wga01370uBBzr2NHDbKIC56tPUEq2HX64RhITGhii8Zzbkb1HnRmdF0',
+          y: 'aq6uqmUy4jUhuxnKxsv59A6JeK7Unn-mpmm3pQAygjoGc9wrvoH4HWJSQYUlsXDu'
         },
         {
           name: 'ECDH',
