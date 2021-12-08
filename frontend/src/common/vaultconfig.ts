@@ -19,9 +19,9 @@ export class VaultConfig {
       clientId: 'cryptomator-hub',
       authEndpoint: `${config.get().keycloakUrl}realms/cryptomator/protocol/openid-connect/auth`, // TODO: read full endpoint url from config
       tokenEndpoint: `${config.get().keycloakUrl}realms/cryptomator/protocol/openid-connect/token`,
-      deviceRegistrationUrl: `${location.protocol}//${location.host}${import.meta.env.BASE_URL}#/devices/register`,
-      authSuccessUrl: `${location.protocol}//${location.host}${import.meta.env.BASE_URL}#/unlock-success`,
-      authErrorUrl: `${location.protocol}//${location.host}${import.meta.env.BASE_URL}#/unlock-error`
+      deviceRegistrationUrl: `${location.protocol}//${location.host}${import.meta.env.BASE_URL}#/devices/register?vault=${vaultId}`,
+      authSuccessUrl: `${location.protocol}//${location.host}${import.meta.env.BASE_URL}#/unlock-success?vault=${vaultId}`,
+      authErrorUrl: `${location.protocol}//${location.host}${import.meta.env.BASE_URL}#/unlock-error?vault=${vaultId}`
     };
 
     const jwtPayload: VaultConfigPayload = {
