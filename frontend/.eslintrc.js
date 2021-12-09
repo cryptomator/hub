@@ -1,8 +1,6 @@
-// eslint-disable-next-line no-undef
 module.exports = {
   plugins: ['@typescript-eslint'],
   parserOptions: {
-    // eslint-disable-next-line no-undef
     parser: require.resolve('@typescript-eslint/parser'),
     extraFileExtensions: ['.vue'],
     ecmaFeatures: {
