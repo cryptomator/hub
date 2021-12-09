@@ -66,7 +66,7 @@ export class JWE {
    * @param apu Optional public information about the producer (PartyUInfo)
    * @param apv Optional public information about the recipient (PartyVInfo)
    */
-  public static async build(payload: Uint8Array, devicePublicKey: Uint8Array, apu: Uint8Array = new Uint8Array(), apv: Uint8Array = new Uint8Array()): Promise<string> {
+  public static async build(payload: Uint8Array, recipientPublicKey: CryptoKey, apu: Uint8Array = new Uint8Array(), apv: Uint8Array = new Uint8Array()): Promise<string> {
     /* key agreement and header params described in RFC 7518, Section 4.6: */
     const ephemeralKey = await crypto.subtle.generateKey(
       {
@@ -75,16 +75,6 @@ export class JWE {
       },
       false,
       ['deriveBits']
-    );
-    const publicKey = await crypto.subtle.importKey(
-      'spki',
-      devicePublicKey,
-      {
-        name: 'ECDH',
-        namedCurve: 'P-384'
-      },
-      false,
-      []
     );
     const alg = 'ECDH-ES';
     const enc = 'A256GCM';
@@ -96,7 +86,7 @@ export class JWE {
     const iv = crypto.getRandomValues(new Uint8Array(12));
     const encodedIv = base64url.stringify(iv, { pad: false });
     const encodedEncryptedKey = ''; // empty for Direct Key Agreement as per spec
-    const cek = await this.deriveKey(publicKey, ephemeralKey.privateKey!, 384, 32, header);
+    const cek = await this.deriveKey(recipientPublicKey, ephemeralKey.privateKey!, 384, 32, header);
     const m = new Uint8Array(await crypto.subtle.encrypt(
       {
         name: 'AES-GCM',
@@ -115,6 +105,7 @@ export class JWE {
     return encodedHeader + '.' + encodedEncryptedKey + '.' + encodedIv + '.' + encodedCiphertext + '.' + encodedTag;
   }
 
+  // visible for testing
   public static async deriveKey(recipientPublicKey: CryptoKey, ephemeralSecretKey: CryptoKey, ecdhKeyBits: number, desiredKeyBytes: number, header: JWEHeader, exportable: boolean = false): Promise<CryptoKey> {
     let agreedKey = new Uint8Array();
     let derivedKey = new Uint8Array();

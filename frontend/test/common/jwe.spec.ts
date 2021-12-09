@@ -33,7 +33,7 @@ describe('JWE', () => {
   describe('RFC 7516 / RFC 7518', () => {
 
     it('should build JWE for given public key', async () => {
-      const receiver = await crypto.subtle.importKey(
+      const recipientPublicKey = await crypto.subtle.importKey(
         'jwk',
         {
           kty: 'EC',
@@ -45,12 +45,11 @@ describe('JWE', () => {
           name: 'ECDH',
           namedCurve: 'P-384'
         },
-        true,
+        false,
         []
       );
-      const pem = await crypto.subtle.exportKey('spki', receiver);
 
-      const result = await JWE.build(new TextEncoder().encode('hello'), new Uint8Array(pem));
+      const result = await JWE.build(new TextEncoder().encode('hello'), recipientPublicKey);
       expect(result).not.to.be.null; // TODO do some tests
     });
 
