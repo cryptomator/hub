@@ -79,9 +79,9 @@ public class DeviceResourceTest {
 		}
 
 		@Test
-		@DisplayName("DELETE /devices/device4 returns 204")
+		@DisplayName("DELETE /devices/device1 returns 204")
 		public void testDeleteValid() {
-			when().delete("/devices/{deviceId}", "device4") //
+			when().delete("/devices/{deviceId}", "device1") //
 					.then().statusCode(204);
 		}
 
