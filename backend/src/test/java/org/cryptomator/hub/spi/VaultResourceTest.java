@@ -227,7 +227,7 @@ public class VaultResourceTest {
 		@Order(6)
 		@DisplayName("PUT /vaults/vault2/keys/device2 returns 201")
 		public void testGrantAccess() {
-			given().contentType(ContentType.TEXT).body("jwe3")
+			given().contentType(ContentType.TEXT).body("jwe4")
 					.when().put("/vaults/{vaultId}/keys/{deviceId}", "vault2", "device2")
 					.then().statusCode(201);
 		}
