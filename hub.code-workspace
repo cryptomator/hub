@@ -25,6 +25,10 @@
 			"**/.DS_Store": true
 		},
 		"typescript.referencesCodeLens.enabled": true,
-		"typescript.implementationsCodeLens.enabled": true
+		"typescript.implementationsCodeLens.enabled": true,
+		"editor.codeActionsOnSave": {
+			"source.organizeImports": true,
+			"source.fixAll.eslint": true
+		}
 	}
 }
