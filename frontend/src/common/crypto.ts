@@ -1,5 +1,5 @@
 import * as miscreant from 'miscreant';
-import { base32, base64url } from 'rfc4648';
+import { base32, base64, base64url } from 'rfc4648';
 import { JWE } from './jwe';
 
 export class WrappedMasterkey {
@@ -132,23 +132,22 @@ export class Masterkey {
 
   public async hashDirectoryId(cleartextDirectoryId: string): Promise<string> {
     const dirHash = new TextEncoder().encode(cleartextDirectoryId);
-    const rawKeyBuffer = await crypto.subtle.exportKey(
-      'raw',
-      this.#key
-    );
+    const rawkey = new Uint8Array(await crypto.subtle.exportKey('raw', this.#key));
+    try {
+      // miscreant lib requires mac key first and then the enc key
+      const encKey = rawkey.subarray(0, rawkey.length / 2 | 0);
+      const macKey = rawkey.subarray(rawkey.length / 2 | 0);
+      const shiftedRawKey = new Uint8Array(rawkey.length);
+      shiftedRawKey.set(macKey);
+      shiftedRawKey.set(encKey, macKey.length);
 
-    var rawkey = new Uint8Array(rawKeyBuffer);
-    // miscreant lib requires mac key first and then the enc key
-    const encKey = rawkey.subarray(0, rawkey.length / 2 | 0);
-    const macKey = rawkey.subarray(rawkey.length / 2 | 0);
-    const shiftedRawKey = new Uint8Array(rawkey.length);
-    shiftedRawKey.set(macKey);
-    shiftedRawKey.set(encKey, macKey.length);
-
-    const key = await miscreant.SIV.importKey(shiftedRawKey, 'AES-SIV');
-    const ciphertext = await key.seal(dirHash, []);
-    const hash = await crypto.subtle.digest('SHA-1', ciphertext);
-    return base32.stringify(new Uint8Array(hash));
+      const key = await miscreant.SIV.importKey(shiftedRawKey, 'AES-SIV');
+      const ciphertext = await key.seal(dirHash, []);
+      const hash = await crypto.subtle.digest('SHA-1', ciphertext);
+      return base32.stringify(new Uint8Array(hash));
+    } finally {
+      rawkey.fill(0x00);
+    }
   }
 
   /**
@@ -168,12 +167,18 @@ export class Masterkey {
       []
     );
 
-    // TODO: make a class:
-    const payload = new TextEncoder().encode(JSON.stringify({
-      key: this.#key
-    }));
+    const rawkey = new Uint8Array(await crypto.subtle.exportKey('raw', this.#key));
+    try {
 
-    return JWE.build(payload, publicKey);
+      // TODO: make a class:
+      const payload = new TextEncoder().encode(JSON.stringify({
+        key: base64.stringify(rawkey)
+      }));
+
+      return JWE.build(payload, publicKey);
+    } finally {
+      rawkey.fill(0x00);
+    }
   }
 
 }
