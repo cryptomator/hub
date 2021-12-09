@@ -22,8 +22,8 @@ VALUES
     ('device2', 'user2', 'Computer 2', 'publickey2'),
     ('device3', 'user1', 'Computer 3', 'publickey3');
 
-INSERT INTO access (device_id, user_id, vault_id, device_specific_masterkey, ephemeral_public_key)
+INSERT INTO access (device_id, user_id, vault_id, jwe)
 VALUES
-    ('device1', 'user1', 'vault1', 'dsm1', 'epk1'),
-    ('device2', 'user2', 'vault1', 'dsm2', 'epk2'),
-    ('device1', 'user1', 'vault2', 'dsm3', 'epk3');
+    ('device1', 'user1', 'vault1', 'jwe1'),
+    ('device2', 'user2', 'vault1', 'jwe2'),
+    ('device1', 'user1', 'vault2', 'jwe3');

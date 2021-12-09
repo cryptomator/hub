@@ -88,8 +88,8 @@ async function giveDevicesAccess(devices: DeviceDto[]) {
   const masterkey = await Masterkey.unwrap(password.value, wrappedKey);
   for (const device of devices) {
     const publicKey = base64url.parse(device.publicKey);
-    const deviceSpecificKey = await masterkey.encryptForDevice(publicKey);
-    await backend.vaults.grantAccess(props.vault.id, device.id, deviceSpecificKey.encrypted, deviceSpecificKey.publicKey);
+    const jwe = await masterkey.encryptForDevice(publicKey);
+    await backend.vaults.grantAccess(props.vault.id, device.id, jwe);
   }
 }
 </script>
