@@ -1,8 +1,11 @@
 import { Crypto } from '@peculiar/webcrypto';
-import { expect } from 'chai';
+import { expect, use as chaiUse } from 'chai';
+import chaiAsPromised from 'chai-as-promised';
 import { describe } from 'mocha';
 import { base16 } from 'rfc4648';
 import { Masterkey, WrappedMasterkey, X936 } from '../../src/common/crypto';
+
+chaiUse(chaiAsPromised);
 
 describe('crypto', () => {
 
@@ -68,29 +71,29 @@ describe('crypto', () => {
       expect(orig).to.be.not.null;
     });
 
-    it('create and wrap', async () => {
-      const orig = await Masterkey.create();
-      const wrapped = await orig.wrap('pass');
-
-      expect(wrapped).to.be.not.null;
+    it('unwrap() with wrong pw', () => {
+      const wrapped = new WrappedMasterkey('reGgZc4NTcTIyggz36K_E6aA6ttOJv2T7z6Fb3OGdvFf8uMvYS87J3hR7Pxavhmv3LyjCs8LUl_oLffoo2QsKtQHn0PLd-jb', 'v_4KUaPQAu-rAFTUbxLSQA', 1);
+      expect(Masterkey.unwrap('wrong', wrapped)).to.be.rejected;
     });
 
-    describe('from wrapped', () => {
-      let wrapped: WrappedMasterkey;
+    it('unwrap() with correct pw', () => {
+      const wrapped = new WrappedMasterkey('reGgZc4NTcTIyggz36K_E6aA6ttOJv2T7z6Fb3OGdvFf8uMvYS87J3hR7Pxavhmv3LyjCs8LUl_oLffoo2QsKtQHn0PLd-jb', 'v_4KUaPQAu-rAFTUbxLSQA', 1);
+      expect(Masterkey.unwrap('pass', wrapped)).to.be.fulfilled;
+    });
+
+    describe('Created Masterkey', () => {
+      let masterkey: Masterkey;
 
       beforeEach(async () => {
-        wrapped = await (await Masterkey.create()).wrap('pass');
+        masterkey = await TestMasterkey.create();
       });
 
-      it('unwrap with wrong pw', async () => {
-        return Masterkey.unwrap('wrong', wrapped)
-          .then(k => {
-            expect.fail('should not succeed');
-          })
-          .catch(e => {
-            expect(e).to.have.property('message').that.does.not.contain('should not succeed');
-          });
+      it('wrap()', async () => {
+        const wrapped = await masterkey.wrap('pass');
+
+        expect(wrapped).to.be.not.null;
       });
+
 
     });
 
