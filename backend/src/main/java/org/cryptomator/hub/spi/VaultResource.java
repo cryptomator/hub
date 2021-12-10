@@ -104,16 +104,16 @@ public class VaultResource {
 	@Path("/{vaultId}/keys/{deviceId}")
 	@RolesAllowed("user")
 	@Transactional
-	@Produces(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.TEXT_PLAIN)
 	@Operation(summary = "get the device-specific masterkey")
 	@APIResponse(responseCode = "200")
 	@APIResponse(responseCode = "403", description = "device not authorized to access this vault")
 	@APIResponse(responseCode = "404", description = "unknown device")
-	public AccessGrantDto unlock(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId) {
+	public String unlock(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId) {
 		var currentUserId = jwt.getSubject();
 		var access = Access.unlock(vaultId, deviceId, currentUserId);
 		if (access != null) {
-			return new AccessGrantDto(access.deviceSpecificMasterkey, access.ephemeralPublicKey);
+			return access.jwe;
 		} else if (Device.findById(deviceId) == null) {
 			throw new NotFoundException("No such device.");
 		} else {
@@ -125,10 +125,10 @@ public class VaultResource {
 	@Path("/{vaultId}/keys/{deviceId}")
 	@RolesAllowed("vault-owner")
 	@Transactional
-	@Consumes(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.TEXT_PLAIN)
 	@Operation(summary = "adds a device-specific masterkey")
 	@APIResponse(responseCode = "201", description = "device-specific key stored")
-	public Response grantAccess(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId, AccessGrantDto dto) {
+	public Response grantAccess(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId, String jwe) {
 		Vault vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		Device device = Device.<Device>findByIdOptional(deviceId).orElseThrow(NotFoundException::new);
 
@@ -136,8 +136,7 @@ public class VaultResource {
 		access.vault = vault;
 		access.user = device.owner;
 		access.device = device;
-		access.deviceSpecificMasterkey = dto.deviceSpecificMasterkey;
-		access.ephemeralPublicKey = dto.ephemeralPublicKey;
+		access.jwe = jwe;
 
 		try {
 			access.persistAndFlush();
@@ -182,10 +181,6 @@ public class VaultResource {
 		var vault = vaultDto.toVault(currentUser, vaultId);
 		Vault.persist(vault);
 		return Response.created(URI.create(".")).build();
-	}
-
-	public static record AccessGrantDto(@JsonProperty(value = "device_specific_masterkey", required = true) String deviceSpecificMasterkey,
-										@JsonProperty(value = "ephemeral_public_key", required = true) String ephemeralPublicKey) {
 	}
 
 	public static record VaultDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("masterkey") String masterkey, @JsonProperty("iterations") String iterations,

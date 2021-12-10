@@ -38,10 +38,6 @@ export class UserDto {
   constructor(public id: string, public name: string, public pictureUrl: string, public devices: DeviceDto[]) { }
 }
 
-export class AccessDto {
-  constructor(public device_specific_masterkey: string, public ephemeral_public_key: string) { }
-}
-
 /* Services */
 
 class VaultService {
@@ -70,9 +66,8 @@ class VaultService {
     return axiosAuth.put(`/vaults/${vaultId}`, body);
   }
 
-  public async grantAccess(vaultId: string, deviceId: string, deviceSpecificMasterkey: string, ephemeralPublicKey: string) {
-    const body: AccessDto = { device_specific_masterkey: deviceSpecificMasterkey, ephemeral_public_key: ephemeralPublicKey };
-    await axiosAuth.put(`/vaults/${vaultId}/keys/${deviceId}`, body);
+  public async grantAccess(vaultId: string, deviceId: string, jwe: string) {
+    await axiosAuth.put(`/vaults/${vaultId}/keys/${deviceId}`, jwe, { headers: { 'Content-Type': 'text/plain' } });
   }
 
   public async revokeUserAccess(vaultId: string, userId: string) {
