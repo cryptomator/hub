@@ -88,7 +88,7 @@ onMounted(async () => {
 });
 
 async function setPictureUrl() {
-  let emailHash = md5(me.value?.email ?? '');
+  let emailHash = md5(me.value?.email.trim().toLowerCase() ?? '');
   let gravatarUrl = `https://www.gravatar.com/avatar/${emailHash}?d=identicon`;
   pictureUrl.value = me.value?.pictureUrl ?? gravatarUrl;
 }
