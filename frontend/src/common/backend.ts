@@ -81,6 +81,10 @@ class DeviceService {
     return axiosAuth.put(`/devices/${deviceId}`, body);
   }
 
+  public async removeDevice(deviceId: string): Promise<AxiosResponse<any>> {
+    return axiosAuth.delete(`/devices/${deviceId}`);
+  }
+
 }
 
 class UserService {
