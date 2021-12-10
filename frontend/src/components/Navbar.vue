@@ -30,7 +30,7 @@
             <div>
               <MenuButton class="bg-tertiary2 flex text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">
                 <span class="sr-only">Open user menu</span>
-                <img class="h-8 w-8 rounded-full" :src="me?.pictureUrl ?? '/logo.svg'" alt="" />
+                <img class="h-8 w-8 rounded-full" :src="pictureUrl" alt="" />
               </MenuButton>
             </div>
             <transition enter-active-class="transition ease-out duration-100" enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 scale-100" leave-to-class="transform opacity-0 scale-95">
@@ -58,6 +58,7 @@
 <script setup lang="ts">
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
 import { MenuIcon, XIcon } from '@heroicons/vue/outline';
+import md5 from 'blueimp-md5';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { UserDto } from '../common/backend';
@@ -74,13 +75,22 @@ const profileDropdown = [
 ];
 
 const me = ref<UserDto>();
+const pictureUrl = ref('');
 
 onMounted(async () => {
   try {
     me.value = await backend.users.me();
+    await setPictureUrl();
   } catch (error) {
     // TODO: error handling
     console.error('Retrieving current user failed.', error);
   }
 });
+
+async function setPictureUrl() {
+  let emailHash = md5(me.value?.email ?? '');
+  let gravatarUrl = `https://www.gravatar.com/avatar/${emailHash}?d=identicon`;
+  pictureUrl.value = me.value?.pictureUrl ?? gravatarUrl;
+}
+
 </script>
