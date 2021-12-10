@@ -22,6 +22,10 @@ export interface VaultConfigHeaderHub {
   authErrorUrl: string
 }
 
+interface JWEPayload {
+  key: string
+}
+
 export class Masterkey {
 
   // in this browser application, this 512 bit key is used
@@ -137,10 +141,7 @@ export class Masterkey {
       // miscreant lib requires mac key first and then the enc key
       const encKey = rawkey.subarray(0, rawkey.length / 2 | 0);
       const macKey = rawkey.subarray(rawkey.length / 2 | 0);
-      const shiftedRawKey = new Uint8Array(rawkey.length);
-      shiftedRawKey.set(macKey);
-      shiftedRawKey.set(encKey, macKey.length);
-
+      const shiftedRawKey = new Uint8Array([...macKey, ...encKey]);
       const key = await miscreant.SIV.importKey(shiftedRawKey, 'AES-SIV');
       const ciphertext = await key.seal(dirHash, []);
       const hash = await crypto.subtle.digest('SHA-1', ciphertext);
@@ -169,13 +170,12 @@ export class Masterkey {
 
     const rawkey = new Uint8Array(await crypto.subtle.exportKey('raw', this.#key));
     try {
-
-      // TODO: make a class:
-      const payload = new TextEncoder().encode(JSON.stringify({
+      const payload: JWEPayload = {
         key: base64.stringify(rawkey)
-      }));
+      };
+      const payloadJson = new TextEncoder().encode(JSON.stringify(payload));
 
-      return JWE.build(payload, publicKey);
+      return JWE.build(payloadJson, publicKey);
     } finally {
       rawkey.fill(0x00);
     }

@@ -16,12 +16,7 @@ export class ConcatKDF {
    */
   public static async kdf(z: Uint8Array, keyDataLen: number, algorithmId: Uint8Array, partyUInfo: Uint8Array, partyVInfo: Uint8Array, suppPubInfo: Uint8Array = new Uint8Array(), suppPrivInfo: Uint8Array = new Uint8Array()): Promise<Uint8Array> {
     // AlgorithmID || PartyUInfo || PartyVInfo {|| SuppPubInfo }{|| SuppPrivInfo }
-    const otherInfo = new ArrayBuffer(algorithmId.byteLength + partyUInfo.byteLength + partyVInfo.byteLength + suppPubInfo.byteLength + suppPrivInfo.byteLength);
-    new Uint8Array(otherInfo).set(algorithmId, 0);
-    new Uint8Array(otherInfo).set(partyUInfo, algorithmId.byteLength);
-    new Uint8Array(otherInfo).set(partyVInfo, algorithmId.byteLength + partyUInfo.byteLength);
-    new Uint8Array(otherInfo).set(suppPubInfo, algorithmId.byteLength + partyUInfo.byteLength + partyVInfo.byteLength);
-    new Uint8Array(otherInfo).set(suppPrivInfo, algorithmId.byteLength + partyUInfo.byteLength + partyVInfo.byteLength + suppPubInfo.byteLength);
+    const otherInfo = new Uint8Array([...algorithmId, ...partyUInfo, ...partyVInfo, ...suppPubInfo, ...suppPrivInfo]);
     return this.kdfInternal(z, keyDataLen, new Uint8Array(otherInfo));
   }
 
