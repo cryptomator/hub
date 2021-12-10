@@ -48,11 +48,8 @@ public class Access extends PanacheEntityBase {
 	@JoinColumn(name = "vault_id")
 	public Vault vault;
 
-	@Column(name = "device_specific_masterkey", nullable = false)
-	public String deviceSpecificMasterkey;
-
-	@Column(name = "ephemeral_public_key", nullable = false)
-	public String ephemeralPublicKey;
+	@Column(name = "jwe", nullable = false)
+	public String jwe;
 
 	@Override
 	public boolean equals(Object o) {
@@ -63,12 +60,12 @@ public class Access extends PanacheEntityBase {
 				&& Objects.equals(device, access.device)
 				&& Objects.equals(user, access.user)
 				&& Objects.equals(vault, access.vault)
-				&& Objects.equals(deviceSpecificMasterkey, access.deviceSpecificMasterkey);
+				&& Objects.equals(jwe, access.jwe);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, device, user, vault, deviceSpecificMasterkey);
+		return Objects.hash(id, device, user, vault, jwe);
 	}
 
 	@Override
@@ -78,7 +75,7 @@ public class Access extends PanacheEntityBase {
 				", device=" + device.id +
 				", user=" + user.id +
 				", vault=" + vault.id +
-				", deviceSpecificMasterkey='" + deviceSpecificMasterkey + '\'' +
+				", jwe='" + jwe + '\'' +
 				'}';
 	}
 

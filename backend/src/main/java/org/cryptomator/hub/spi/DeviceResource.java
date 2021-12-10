@@ -38,7 +38,7 @@ public class DeviceResource {
 	public Response create(DeviceDto deviceDto, @PathParam("deviceId") String deviceId) {
 		// FIXME validate parameter
 		if (deviceId == null || deviceId.trim().length() == 0 || deviceDto == null) {
-			return Response.serverError().entity("deviceId or deviceDto cannot be empty").build();
+			return Response.status(Response.Status.BAD_REQUEST).entity("deviceId or deviceDto cannot be empty").build();
 		}
 		if (Device.findByIdOptional(deviceId).isEmpty()) {
 			User currentUser = User.findById(jwt.getSubject());

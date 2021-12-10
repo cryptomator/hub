@@ -37,7 +37,6 @@ public class VaultResourceTest {
 
 	@Nested
 	@DisplayName("As user1")
-	@FlywayTest(value = @DataSource(url = "jdbc:h2:mem:test"))
 	@TestSecurity(user = "User Name 1", roles = {"user"})
 	@OidcSecurity(claims = {
 			@Claim(key = "sub", value = "user1")
@@ -80,8 +79,7 @@ public class VaultResourceTest {
 		public void testUnlock1() {
 			when().get("/vaults/{vaultId}/keys/{deviceId}", "vault1", "device1")
 					.then().statusCode(200)
-					.body("device_specific_masterkey", is("dsm1"))
-					.body("ephemeral_public_key", is("epk1"));
+					.body(is("jwe1"));
 		}
 
 		@Test
@@ -102,7 +100,6 @@ public class VaultResourceTest {
 
 	@Nested
 	@DisplayName("As vault owner user1")
-	@FlywayTest(value = @DataSource(url = "jdbc:h2:mem:test"))
 	@TestSecurity(user = "User Name 1", roles = {"user", "vault-owner"})
 	@OidcSecurity(claims = {
 			@Claim(key = "sub", value = "user1")
@@ -148,9 +145,7 @@ public class VaultResourceTest {
 		@Test
 		@DisplayName("PUT /vaults/vault1/keys/device3 returns 201")
 		public void testGrantAccess1() {
-			var grantDto = new VaultResource.AccessGrantDto("dsm4", "epk4");
-
-			given().contentType(ContentType.JSON).body(grantDto)
+			given().contentType(ContentType.TEXT).body("jwe4")
 					.when().put("/vaults/{vaultId}/keys/{deviceId}", "vault1", "device3")
 					.then().statusCode(201);
 		}
@@ -158,9 +153,7 @@ public class VaultResourceTest {
 		@Test
 		@DisplayName("PUT /vaults/vault2/keys/device1 returns 409")
 		public void testGrantAccess2() {
-			var grantDto = new VaultResource.AccessGrantDto("dsm4", "epk4");
-
-			given().contentType(ContentType.JSON).body(grantDto)
+			given().contentType(ContentType.TEXT).body("jwe4")
 					.when().put("/vaults/{vaultId}/keys/{deviceId}", "vault2", "device1")
 					.then().statusCode(409);
 		}
@@ -168,9 +161,7 @@ public class VaultResourceTest {
 		@Test
 		@DisplayName("PUT /vaults/vault1/keys/nonExistingDevice returns 404")
 		public void testGrantAccess3() {
-			var grantDto = new VaultResource.AccessGrantDto("dsm3", "epk3");
-
-			given().contentType(ContentType.JSON).body(grantDto)
+			given().contentType(ContentType.TEXT).body("jwe3")
 					.when().put("/vaults/{vaultId}/keys/{deviceId}", "vault1", "nonExistingDevice")
 					.then().statusCode(404);
 		}
@@ -234,9 +225,7 @@ public class VaultResourceTest {
 		@Order(6)
 		@DisplayName("PUT /vaults/vault2/keys/device2 returns 201")
 		public void testGrantAccess() {
-			var grantDto = new VaultResource.AccessGrantDto("dsm3", "epk3");
-
-			given().contentType(ContentType.JSON).body(grantDto)
+			given().contentType(ContentType.TEXT).body("jwe4")
 					.when().put("/vaults/{vaultId}/keys/{deviceId}", "vault2", "device2")
 					.then().statusCode(201);
 		}

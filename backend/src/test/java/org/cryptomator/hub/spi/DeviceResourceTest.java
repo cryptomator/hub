@@ -37,6 +37,23 @@ public class DeviceResourceTest {
 	public class AsAuthorzedUser1 {
 
 		@Test
+		@DisplayName("PUT /devices/device1 without DTO returns 400 ")
+		public void testCreateNoDeviceDto() {
+			given().contentType(ContentType.JSON).body("")
+					.when().put("/devices/{deviceId}", "device1")
+					.then().statusCode(400);
+		}
+
+		@Test
+		@DisplayName("PUT /devices/ with DTO returns 400 ")
+		public void testCreateNoDeviceId() {
+			var deviceDto = new DeviceResource.DeviceDto("device1", "Computer 1", "publickey1", "", Set.of());
+			given().contentType(ContentType.JSON).body(deviceDto)
+					.when().put("/devices/{deviceId}", "\u0020") //a whitespace
+					.then().statusCode(400);
+		}
+
+		@Test
 		@DisplayName("PUT /devices/device1 returns 409")
 		public void testCreate1() {
 			var deviceDto = new DeviceResource.DeviceDto("device1", "Computer 1", "publickey1", "", Set.of());

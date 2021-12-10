@@ -1,12 +1,9 @@
 import * as miscreant from 'miscreant';
-import { base32, base64url } from 'rfc4648';
+import { base32, base64, base64url } from 'rfc4648';
+import { JWE } from './jwe';
 
 export class WrappedMasterkey {
   constructor(readonly encrypted: string, readonly salt: string, readonly iterations: number) { }
-}
-
-export class DeviceSpecificMasterkey {
-  constructor(readonly encrypted: string, readonly publicKey: string) { }
 }
 
 export interface VaultConfigPayload {
@@ -25,31 +22,8 @@ export interface VaultConfigHeaderHub {
   authErrorUrl: string
 }
 
-export class X936 {
-
-  /**
-   * Performs <a href="https://www.secg.org/sec1-v2.pdf">ANSI-X9.63-KDF</a> with SHA-256
-   * @param sharedSecret A shared secret
-   * @param sharedInfo Additional authenticated data
-   * @param keyDataLen Desired key length (in bytes)
-   * @return key data
-   */
-  public static async kdf(sharedSecret: Uint8Array, sharedInfo: Uint8Array, keyDataLen: number): Promise<Uint8Array> {
-    const hashLen = 32;
-    const n = Math.ceil(keyDataLen / hashLen);
-    const buffer = new Uint8Array(n * hashLen);
-
-    const tmp = new ArrayBuffer(sharedSecret.byteLength + 4 + sharedInfo.byteLength);
-    for (let i = 0; i < n; i++) {
-      new Uint8Array(tmp).set(sharedSecret, 0);
-      new DataView(tmp, sharedSecret.byteLength, 4).setUint32(0, i + 1, false);
-      new Uint8Array(tmp).set(sharedInfo, sharedSecret.byteLength + 4);
-      const digest = await crypto.subtle.digest('SHA-256', tmp);
-      buffer.set(new Uint8Array(digest), i * hashLen);
-    }
-    return buffer.slice(0, keyDataLen);
-  }
-
+interface JWEPayload {
+  key: string
 }
 
 export class Masterkey {
@@ -162,44 +136,27 @@ export class Masterkey {
 
   public async hashDirectoryId(cleartextDirectoryId: string): Promise<string> {
     const dirHash = new TextEncoder().encode(cleartextDirectoryId);
-    const rawKeyBuffer = await crypto.subtle.exportKey(
-      'raw',
-      this.#key
-    );
-
-    var rawkey = new Uint8Array(rawKeyBuffer);
-    // miscreant lib requires mac key first and then the enc key
-    const encKey = rawkey.subarray(0, rawkey.length / 2 | 0);
-    const macKey = rawkey.subarray(rawkey.length / 2 | 0);
-    const shiftedRawKey = new Uint8Array(rawkey.length);
-    shiftedRawKey.set(macKey);
-    shiftedRawKey.set(encKey, macKey.length);
-
-    const key = await miscreant.SIV.importKey(shiftedRawKey, 'AES-SIV');
-    const ciphertext = await key.seal(dirHash, []);
-    const hash = await crypto.subtle.digest('SHA-1', ciphertext);
-    return base32.stringify(new Uint8Array(hash));
+    const rawkey = new Uint8Array(await crypto.subtle.exportKey('raw', this.#key));
+    try {
+      // miscreant lib requires mac key first and then the enc key
+      const encKey = rawkey.subarray(0, rawkey.length / 2 | 0);
+      const macKey = rawkey.subarray(rawkey.length / 2 | 0);
+      const shiftedRawKey = new Uint8Array([...macKey, ...encKey]);
+      const key = await miscreant.SIV.importKey(shiftedRawKey, 'AES-SIV');
+      const ciphertext = await key.seal(dirHash, []);
+      const hash = await crypto.subtle.digest('SHA-1', ciphertext);
+      return base32.stringify(new Uint8Array(hash));
+    } finally {
+      rawkey.fill(0x00);
+    }
   }
 
   /**
-   * ECIES based on ECDH:
-   * This derives a shared secret using ephemeral-static-ECDH, where the given
-   * static public key is the trusted recipient.
-   * The agreed shared secret is used in an authenticated encryption scheme
-   * (in this case AES-KW) to protect the actual masterkey.
-   * 
-   * Therefore all ECIES components are based on existing primitives. 
-   * @param devicePublicKey The recipient's public key
+   * Encrypts this masterkey using the given public key
+   * @param devicePublicKey The recipient's public key (DER-encoded)
+   * @returns a JWE containing this Masterkey
    */
-  public async encryptForDevice(devicePublicKey: Uint8Array): Promise<DeviceSpecificMasterkey> {
-    const ephemeralKey = await crypto.subtle.generateKey(
-      {
-        name: 'ECDH',
-        namedCurve: 'P-384'
-      },
-      false,
-      ['deriveBits']
-    );
+  public async encryptForDevice(devicePublicKey: Uint8Array): Promise<string> {
     const publicKey = await crypto.subtle.importKey(
       'spki',
       devicePublicKey,
@@ -210,32 +167,18 @@ export class Masterkey {
       false,
       []
     );
-    const agreedKey = await crypto.subtle.deriveBits(
-      {
-        name: 'ECDH',
-        public: publicKey
-      },
-      ephemeralKey.privateKey!,
-      384
-    );
-    const sharedSecret = await X936.kdf(new Uint8Array(agreedKey), new Uint8Array(0), 44);
-    const aesKey = await crypto.subtle.importKey(
-      'raw',
-      sharedSecret.slice(0, 32),
-      { name: 'AES-GCM', length: 256 },
-      false,
-      ['wrapKey']
-    );
-    const wrapped = await crypto.subtle.wrapKey(
-      'raw',
-      this.#key,
-      aesKey,
-      { name: 'AES-GCM', iv: sharedSecret.slice(32, 44), tagLength: 128 }
-    );
-    const epk = await crypto.subtle.exportKey(
-      'spki', ephemeralKey.publicKey!
-    );
-    return new DeviceSpecificMasterkey(base64url.stringify(new Uint8Array(wrapped), { pad: false }), base64url.stringify(new Uint8Array(epk), { pad: false }));
+
+    const rawkey = new Uint8Array(await crypto.subtle.exportKey('raw', this.#key));
+    try {
+      const payload: JWEPayload = {
+        key: base64.stringify(rawkey)
+      };
+      const payloadJson = new TextEncoder().encode(JSON.stringify(payload));
+
+      return JWE.build(payloadJson, publicKey);
+    } finally {
+      rawkey.fill(0x00);
+    }
   }
 
 }
