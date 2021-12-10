@@ -59,7 +59,7 @@
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
 import { MenuIcon, XIcon } from '@heroicons/vue/outline';
 import md5 from 'blueimp-md5';
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { UserDto } from '../common/backend';
 
@@ -75,22 +75,22 @@ const profileDropdown = [
 ];
 
 const me = ref<UserDto>();
-const pictureUrl = ref('');
+
+const pictureUrl = computed(() => getPictureUrl());
 
 onMounted(async () => {
   try {
     me.value = await backend.users.me();
-    setPictureUrl();
   } catch (error) {
     // TODO: error handling
     console.error('Retrieving current user failed.', error);
   }
 });
 
-function setPictureUrl() {
+function getPictureUrl(): string {
   let emailHash = md5(me.value?.email.trim().toLowerCase() ?? '');
   let gravatarUrl = `https://www.gravatar.com/avatar/${emailHash}?d=identicon`;
-  pictureUrl.value = me.value?.pictureUrl ?? gravatarUrl;
+  return me.value?.pictureUrl ?? gravatarUrl;
 }
 
 </script>
