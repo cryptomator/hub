@@ -31,7 +31,6 @@ public class UsersResourceTest {
 
 	@Nested
 	@DisplayName("As user1")
-	@FlywayTest(value = @DataSource(url = "jdbc:h2:mem:test"))
 	@TestSecurity(user = "User Name 1", roles = {"user"})
 	@OidcSecurity(claims = {
 			@Claim(key = "sub", value = "user1")
@@ -85,7 +84,6 @@ public class UsersResourceTest {
 
 	@Nested
 	@DisplayName("As vault owner user1")
-	@FlywayTest(value = @DataSource(url = "jdbc:h2:mem:test"))
 	@TestSecurity(user = "User Name 1", roles = {"user", "vault-owner"})
 	@OidcSecurity(claims = {
 			@Claim(key = "sub", value = "user1")
