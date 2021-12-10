@@ -80,14 +80,14 @@ const pictureUrl = ref('');
 onMounted(async () => {
   try {
     me.value = await backend.users.me();
-    await setPictureUrl();
+    setPictureUrl();
   } catch (error) {
     // TODO: error handling
     console.error('Retrieving current user failed.', error);
   }
 });
 
-async function setPictureUrl() {
+function setPictureUrl() {
   let emailHash = md5(me.value?.email.trim().toLowerCase() ?? '');
   let gravatarUrl = `https://www.gravatar.com/avatar/${emailHash}?d=identicon`;
   pictureUrl.value = me.value?.pictureUrl ?? gravatarUrl;
