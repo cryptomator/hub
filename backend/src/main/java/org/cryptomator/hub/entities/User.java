@@ -38,6 +38,9 @@ public class User extends PanacheEntityBase {
 	@Column(name = "picture_url")
 	public String pictureUrl;
 
+	@Column(name = "email")
+	public String email;
+
 	@Override
 	public String toString() {
 		return "User{" +
@@ -55,18 +58,19 @@ public class User extends PanacheEntityBase {
 		User user = (User) o;
 		return Objects.equals(id, user.id)
 				&& Objects.equals(name, user.name)
-				&& Objects.equals(pictureUrl, user.pictureUrl);
+				&& Objects.equals(pictureUrl, user.pictureUrl)
+				&& Objects.equals(email, user.email);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, name, pictureUrl);
+		return Objects.hash(id, name, pictureUrl, email);
 	}
 
 	// --- data layer queries ---
 
 	@Transactional(Transactional.TxType.REQUIRED)
-	public static void createOrUpdate(String id, String name, String pictureUrl) {
+	public static void createOrUpdate(String id, String name, String pictureUrl, String email) {
 		User user = findById(id);
 		if (user == null) {
 			user = new User();
@@ -74,6 +78,7 @@ public class User extends PanacheEntityBase {
 		}
 		user.name = name;
 		user.pictureUrl = pictureUrl;
+		user.email = email;
 		user.persist();
 	}
 }

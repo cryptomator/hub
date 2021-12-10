@@ -81,6 +81,15 @@
             </div>
 
             <div class="sm:col-span-3">
+              <label for="hub-email" class="block text-sm font-medium text-gray-700">
+                Initial Hub Admin Email *
+              </label>
+              <div class="mt-1">
+                <input id="hub-email" v-model="hubEmail" type="email" class="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md" @change="updateRealmJson" />
+              </div>
+            </div>            
+
+            <div class="sm:col-span-3">
               <label for="hub-pass" class="block text-sm font-medium text-gray-700">
                 Initial Hub Admin Password *
               </label>
@@ -104,7 +113,7 @@
         </fieldset>
       </div>
 
-      <div v-if="hubUrl.length>0 && hubUser.length>0 && hubPass.length>0 && hubRealmCfg.length>0" class="my-8 space-y-8 divide-y divide-gray-200">
+      <div v-if="hubUrl.length>0 && hubUser.length>0 && hubEmail.length>0 && hubPass.length>0 && hubRealmCfg.length>0" class="my-8 space-y-8 divide-y divide-gray-200">
         <fieldset class="bg-white shadow px-4 py-5 sm:rounded-lg sm:p-6 md:grid md:grid-cols-3 md:gap-6">
           <div class="block md:col-span-1">
             <h3 class="text-lg font-medium leading-6 text-gray-700">Upload Realm to Keycloak</h3>
@@ -161,6 +170,7 @@ let backendBaseURL = import.meta.env.DEV ? 'http://localhost:9090' : '';
 
 const hubUrl = ref(window.location.protocol + '//' + window.location.hostname + ':' + window.location.port);
 const hubUser = ref('owner');
+const hubEmail = ref('');
 const hubPass = ref('');
 const hubRealmCfg = ref('');
 const kcUrl = ref(config.get().keycloakUrl);
@@ -176,7 +186,7 @@ onMounted(() => {
 });
 
 function updateRealmJson() {
-  hubRealmCfg.value = createRealmJson(hubUrl.value, hubUser.value, hubPass.value);
+  hubRealmCfg.value = createRealmJson(hubUrl.value, hubUser.value, hubEmail.value, hubPass.value);
 }
 
 function createRealm() {

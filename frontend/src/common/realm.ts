@@ -1,4 +1,4 @@
-export default function createRealmJson(hubUrl: string, adminUser: string, adminPass: string): string {
+export default function createRealmJson(hubUrl: string, adminUser: string, adminEmail: String, adminPass: string): string {
     return `{
     "id" : "cryptomator",
     "realm" : "cryptomator",
@@ -34,6 +34,7 @@ export default function createRealmJson(hubUrl: string, adminUser: string, admin
     },
     "users" : [ {
         "username" : "${adminUser}",
+        "email" : "${adminEmail}",
         "enabled" : true,
         "attributes" : {
             "picture" : "https://cryptomator.org/img/logo.svg"
