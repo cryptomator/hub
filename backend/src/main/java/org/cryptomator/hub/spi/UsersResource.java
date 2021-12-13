@@ -8,7 +8,6 @@ import org.cryptomator.hub.entities.User;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
-import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.jboss.resteasy.annotations.cache.NoCache;
 import org.jboss.resteasy.annotations.jaxrs.QueryParam;
 
@@ -40,7 +39,7 @@ public class UsersResource {
 	@Operation(summary = "get the logged-in user")
 	@APIResponse(responseCode = "201", description = "user created")
 	public Response syncMe() {
-		User.createOrUpdate(jwt.getSubject(), jwt.getName(), jwt.getClaim("picture"));
+		User.createOrUpdate(jwt.getSubject(), jwt.getName(), jwt.getClaim("picture"), jwt.getClaim("email"));
 		return Response.created(URI.create(".")).build();
 	}
 
@@ -58,8 +57,8 @@ public class UsersResource {
 				? d -> new DeviceResource.DeviceDto(d.id, d.name, d.publickey, d.owner.id, d.access.stream().map(mapAccessibleVaults).collect(Collectors.toSet())) //
 				: d -> new DeviceResource.DeviceDto(d.id, d.name, d.publickey, d.owner.id, Set.of());
 		return withDevices //
-				? new UserDto(user.id, user.name, user.pictureUrl, user.devices.stream().map(mapDevices).collect(Collectors.toSet()))
-				: new UserDto(user.id, user.name, user.pictureUrl, Set.of());
+				? new UserDto(user.id, user.name, user.pictureUrl, user.email, user.devices.stream().map(mapDevices).collect(Collectors.toSet()))
+				: new UserDto(user.id, user.name, user.pictureUrl, user.email, Set.of());
 	}
 
 	@GET
@@ -72,11 +71,11 @@ public class UsersResource {
 		return query.stream().map(UserDto::fromEntity).toList();
 	}
 
-	public static record UserDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("pictureUrl") String pictureUrl,
+	public static record UserDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("pictureUrl") String pictureUrl, @JsonProperty("email") String email,
 								 @JsonProperty("devices") Set<DeviceResource.DeviceDto> devices) {
 
 		public static UserDto fromEntity(User user) {
-			return new UserDto(user.id, user.name, user.pictureUrl, Set.of());
+			return new UserDto(user.id, user.name, user.pictureUrl, user.email, Set.of());
 		}
 	}
 

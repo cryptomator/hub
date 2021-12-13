@@ -47,7 +47,9 @@
   "dependencies": {
     "@headlessui/vue": "^1.4.2",
     "@heroicons/vue": "^1.0.5",
+    "@types/blueimp-md5": "^2.18.0",
     "axios": "^0.24.0",
+    "blueimp-md5": "^2.19.0",
     "file-saver": "^2.0.5",
     "jszip": "^3.7.1",
     "keycloak-js": "^15.0.2",
