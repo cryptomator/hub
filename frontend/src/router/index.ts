@@ -7,7 +7,6 @@ import DeviceList from '../components/DeviceList.vue';
 import LoginComponent from '../components/Login.vue';
 import LogoutComponent from '../components/Logout.vue';
 import MainComponent from '../components/Main.vue';
-import RegisterDevice from '../components/RegisterDevice.vue';
 import Settings from '../components/Settings.vue';
 import SetupComponent from '../components/Setup.vue';
 import UnlockError from '../components/UnlockError.vue';
@@ -73,11 +72,6 @@ const routes: RouteRecordRaw[] = [
       {
         path: '/devices',
         component: DeviceList
-      },
-      {
-        path: '/devices/register',
-        component: RegisterDevice,
-        props: (route) => ({ deviceId: route.query.device_id, deviceKey: route.query.device_key, verificationHash: route.query.verification_hash })
       },
       {
         path: '/settings',

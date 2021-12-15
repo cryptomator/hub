@@ -76,11 +76,6 @@ class VaultService {
 }
 class DeviceService {
 
-  public async createDevice(deviceId: string, name: string, publicKey: String): Promise<AxiosResponse<any>> {
-    const body = { id: deviceId, name: name, publicKey: publicKey };
-    return axiosAuth.put(`/devices/${deviceId}`, body);
-  }
-
   public async removeDevice(deviceId: string): Promise<AxiosResponse<any>> {
     return axiosAuth.delete(`/devices/${deviceId}`);
   }
