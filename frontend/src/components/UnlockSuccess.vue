@@ -18,16 +18,22 @@
           <h1 class="text-center text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl text-white">
             Welcome back, {{ me.name }}!
           </h1>
-          <!-- TODO: can we figure out if the _current_ device is on the device list? -->
-          <div v-if="me.devices.length == 0" class="max-w-lg mx-auto text-center text-xl text-primary-l2 sm:max-w-3xl">
+          <div v-if="deviceState == DeviceState.Unknown" class="max-w-lg mx-auto text-center text-xl text-primary-l2 sm:max-w-3xl">
             <p class="mt-6">
-              You have no registered devices.
+              This device is unknown to Cryptomator Hub.
             </p>
             <p class="mt-3">
               Please return to Cryptomator and register your device.
             </p>
           </div>
-
+          <div v-else-if="deviceState == DeviceState.Registered" class="max-w-lg mx-auto text-center text-xl text-primary-l2 sm:max-w-3xl">
+            <p class="mt-6">
+              This device is registered, but has no access to the vault.
+            </p>
+            <p class="mt-3">
+              Please contact the vault owner to give your device access to the vault.
+            </p>
+          </div>
           <div v-else class="max-w-lg mx-auto text-center text-xl text-primary-l2 sm:max-w-3xl">
             <p class="mt-6">
               Your unlock was successful.
@@ -43,8 +49,31 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import backend, { UserDto } from '../common/backend';
+
+const props = defineProps<{
+  vaultId: string,
+  deviceId: string
+}>();
+
+const deviceState = computed(() => {
+  var foundDevice = me.value?.devices.find(d => d.id == props.deviceId);
+  if ( foundDevice?.accessTo.find(v => v.id == props.vaultId) ) {
+    return DeviceState.AccessAllowed;
+  } else if ( foundDevice ) {
+    return DeviceState.Registered;
+  } else {
+    return DeviceState.Unknown;
+  }
+});
+
+
+enum DeviceState {
+  Unknown,
+  Registered,
+  AccessAllowed
+}
 
 const me = ref<UserDto>();
 
@@ -56,4 +85,5 @@ onMounted(async () => {
     console.error('Retrieving user information failed.', error);
   }
 });
+
 </script>
