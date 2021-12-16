@@ -1,16 +1,16 @@
 <template>
   <div v-if="me == null">
-    Loading…
+    {{ t('common.loading') }}
   </div>
 
   <div v-else-if="me.devices.length == 0">
-    You have no registered devices.
+    {{ t('deviceList.notFound') }}
   </div>
 
   <div v-else>
     <div class="pb-5 border-b border-gray-200">
       <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-        Devices ({{ me.devices.length }})
+        {{ t('deviceList.title', [me.devices.length]) }}
       </h2>
     </div>
 
@@ -22,19 +22,19 @@
               <thead class="bg-gray-50">
                 <tr>
                   <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Device Name
+                    {{ t('deviceList.deviceName') }}
                   </th>
                   <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Type
+                    {{ t('deviceList.type') }}
                   </th>
                   <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Number of Shared Vaults
+                    {{ t('deviceList.numberOfSharedVaults') }}
                   </th>
                   <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Added
+                    {{ t('deviceList.added') }}
                   </th>
                   <th scope="col" class="relative px-6 py-3">
-                    <span class="sr-only">Remove</span>
+                    <span class="sr-only">{{ t('common.remove') }}</span>
                   </th>
                 </tr>
               </thead>
@@ -58,7 +58,7 @@
                     June 8, 2020
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <a role="button" tabindex="0" class="text-red-600 hover:text-red-900" @click="removeDevice(device)">Remove</a>
+                    <a role="button" tabindex="0" class="text-red-600 hover:text-red-900" @click="removeDevice(device)">{{ t('common.remove') }}</a>
                   </td>
                 </tr>
               </tbody>
@@ -73,7 +73,10 @@
 <script setup lang="ts">
 import { DesktopComputerIcon } from '@heroicons/vue/solid';
 import { onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import backend, { DeviceDto, UserDto } from '../common/backend';
+
+const { t } = useI18n({ useScope: 'global' });
 
 const me = ref<UserDto>();
 

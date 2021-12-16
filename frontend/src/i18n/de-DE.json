@@ -2,12 +2,56 @@
   "locale.en": "Englisch",
   "locale.de": "Deutsch",
 
+  "common.add": "Hinzufügen",
+  "common.cancel": "Abbrechen",
+  "common.download": "Herunterladen",
+  "common.loading": "Laden…",
+  "common.remove": "Entfernen",
+  "common.share": "Teilen",
+
+  "createVault.title": "Tresor erstellen",
+  "createVault.description": "Das Master-Passwort sollte geheim gehalten werden und wird nur für administrative Zwecke benötigt. Bitte achte darauf, dass du dir das Passwort merkst.",
+  "createVault.vaultName": "Tresorname",
+  "createVault.masterPassword": "Master-Passwort",
+  "createVault.submit": "Tresor erstellen",
+  "createVault.success.title": "Tresor erstellt",
+  "createVault.success.description": "Nachdem du den gezippten Tresorordner heruntergeladen hast, entpacke ihn an einem beliebigen Ort, der für deine Teammitglieder freigegeben ist.",
+  "createVault.success.download": "Gezippten Tresorordner herunterladen",
+  "createVault.success.return": "Zurück zur Tresorliste",
+
+  "deviceList.notFound": "Du hast keine registrierten Geräte.",
+  "deviceList.title": "Geräte ({0})",
+  "deviceList.deviceName": "Gerätename",
+  "deviceList.type": "Typ",
+  "deviceList.numberOfSharedVaults": "Anzahl der geteilten Tresore",
+  "deviceList.added": "Hinzugefügt",
+
+  "downloadVaultTemplateDialog.title": "Tresor-Vorlage herunterladen",
+  "downloadVaultTemplateDialog.description": "Gib das Master-Passwort des Tresors ein, um die Tresorvorlage erneut herunterzuladen.",
+  "downloadVaultTemplateDialog.masterPassword": "Master-Passwort",
+
+  "grantPermissionDialog.title": "Berechtigung erteilen",
+  "grantPermissionDialog.description": "Gib das Master-Kennwort des Tresors ein, um weiteren Geräten den Zugriff darauf zu ermöglichen.",
+  "grantPermissionDialog.masterPassword": "Master-Passwort",
+  "grantPermissionDialog.submit": "Berechtigung für {0} Gerät(e) gewähren",
+
   "nav.vaults": "Tresore",
   "nav.profile.devices": "Deine Geräte",
   "nav.profile.settings": "Einstellungen",
   "nav.profile.signOut": "Abmelden",
+  "nav.mobileMenu": "Hauptmenü öffnen",
 
   "settings.title": "Einstellungen",
   "settings.general.title": "Allgemein",
-  "settings.general.language.title": "Sprache"
+  "settings.general.language.title": "Sprache",
+
+  "vaultDetails.notFound": "Tresor nicht gefunden",
+  "vaultDetails.sharedWith.title": "Geteilt mit",
+  "vaultDetails.updatePermissions": "Berechtigungen aktualisieren",
+  "vaultDetails.downloadVaultTemplate": "Tresor-Vorlage herunterladen",
+
+  "vaultList.title": "Tresore",
+  "vaultList.empty.title": "Keine Tresore",
+  "vaultList.empty.description": "Beginne mit der Erstellung eines neuen Tresors.",
+  "vaultList.createVault": "Tresor erstellen"
 }

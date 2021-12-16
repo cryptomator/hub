@@ -2,6 +2,39 @@
   "locale.en": "English",
   "locale.de": "German",
 
+  "common.add": "Add",
+  "common.cancel": "Cancel",
+  "common.download": "Download",
+  "common.loading": "Loading…",
+  "common.remove": "Remove",
+  "common.share": "Share",
+
+  "createVault.title": "Create Vault",
+  "createVault.description": "The master password should be kept secret and is only needed for administrative purposes. Please make sure that you remember the password.",
+  "createVault.vaultName": "Vault Name",
+  "createVault.masterPassword": "Master Password",
+  "createVault.submit": "Create Vault",
+  "createVault.success.title": "Vault created",
+  "createVault.success.description": "After downloading the zipped vault folder, unpack it to any location shared with your team members.",
+  "createVault.success.download": "Download zipped vault folder",
+  "createVault.success.return": "Return to vault list",
+
+  "deviceList.notFound": "You have no registered devices.",
+  "deviceList.title": "Devices ({0})",
+  "deviceList.deviceName": "Device Name",
+  "deviceList.type": "Type",
+  "deviceList.numberOfSharedVaults": "Number of Shared Vaults",
+  "deviceList.added": "Added",
+
+  "downloadVaultTemplateDialog.title": "Download Vault Template",
+  "downloadVaultTemplateDialog.description": "Type in the master password of the vault to download the vault template again.",
+  "downloadVaultTemplateDialog.masterPassword": "Master Password",
+
+  "grantPermissionDialog.title": "Grant Permission",
+  "grantPermissionDialog.description": "Type in the master password of the vault to grant additional devices permission to access it.",
+  "grantPermissionDialog.masterPassword": "Master Password",
+  "grantPermissionDialog.submit": "Grant Permission to {0} Device(s)",
+
   "nav.vaults": "Vaults",
   "nav.profile.devices": "Your Devices",
   "nav.profile.settings": "Settings",
@@ -9,5 +42,15 @@
 
   "settings.title": "Settings",
   "settings.general.title": "General",
-  "settings.general.language.title": "Language"
+  "settings.general.language.title": "Language",
+
+  "vaultDetails.notFound": "Vault not found",
+  "vaultDetails.sharedWith.title": "Shared with",
+  "vaultDetails.updatePermissions": "Update Permissions",
+  "vaultDetails.downloadVaultTemplate": "Download Vault Template",
+
+  "vaultList.title": "Vaults",
+  "vaultList.empty.title": "No vaults",
+  "vaultList.empty.description": "Get started by creating a new vault.",
+  "vaultList.createVault": "Create Vault"
 }

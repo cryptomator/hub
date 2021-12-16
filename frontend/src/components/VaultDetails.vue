@@ -1,10 +1,10 @@
 <template>
   <div v-if="vault == null && !vaultNotFound">
-    Loading…
+    {{ t('common.loading') }}
   </div>
 
   <div v-else-if="vault == null && vaultNotFound">
-    Vault not found
+    {{ t('vaultDetails.notFound') }}
   </div>
 
   <div v-else-if="vault != null" class="pb-16 space-y-6">
@@ -35,14 +35,14 @@
     </div>
 
     <div>
-      <h3 class="font-medium text-gray-900">Shared with</h3>
+      <h3 class="font-medium text-gray-900">{{ t('vaultDetails.sharedWith.title') }}</h3>
       <ul role="list" class="mt-2 border-t border-b border-gray-200 divide-y divide-gray-200">
         <li v-for="member in members" :key="member.id" class="py-3 flex justify-between items-center">
           <div class="flex items-center">
             <img :src="member.pictureUrl" alt="" class="w-8 h-8 rounded-full" />
             <p class="ml-4 text-sm font-medium text-gray-900">{{ member.name }}</p>
           </div>
-          <button type="button" class="ml-6 bg-white rounded-md text-sm font-medium text-red-600 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="revokeUserAccess(member.id)">Remove<span class="sr-only"> {{ member.name }}</span></button>
+          <button type="button" class="ml-6 bg-white rounded-md text-sm font-medium text-red-600 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="revokeUserAccess(member.id)">{{ t('common.remove') }}<span class="sr-only"> {{ member.name }}</span></button>
         </li>
         <li class="py-2 flex justify-between items-center">
           <div v-if="!addingMember">
@@ -50,10 +50,10 @@
               <span class="w-8 h-8 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400">
                 <PlusSmIcon class="h-5 w-5" aria-hidden="true" />
               </span>
-              <span class="ml-4 text-sm font-medium text-primary group-hover:text-primary-l1">Share</span>
+              <span class="ml-4 text-sm font-medium text-primary group-hover:text-primary-l1">{{ t('common.share') }}</span>
             </button>
           </div>
-          <SearchInputGroup v-else-if="addingMember" action-title="Add" :items="allUsers" class="flex-grow" @action="addMember" />
+          <SearchInputGroup v-else-if="addingMember" :action-title="t('common.add')" :items="allUsers" class="flex-grow" @action="addMember" />
         </li>
       </ul>
     </div>
@@ -61,11 +61,11 @@
     <div class="flex gap-3">
       <div v-if="devicesRequiringAccessGrant.length > 0">
         <button type="button" class="flex-1 bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showGrantPermissionDialog()">
-          Update Permissions
+          {{ t('vaultDetails.updatePermissions') }}
         </button>
       </div>
       <button type="button" class="flex-1 bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDownloadVaultTemplate()">
-        Download Vault Template
+        {{ t('vaultDetails.downloadVaultTemplate') }}
       </button>
     </div>
 
