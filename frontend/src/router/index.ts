@@ -81,7 +81,8 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/unlock-success',
-    component: UnlockSuccess
+    component: UnlockSuccess,
+    props: (route) => ({ vaultId: route.query.vault, deviceId: route.query.device })
   },
   {
     path: '/unlock-error',
