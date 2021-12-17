@@ -58,7 +58,7 @@ const props = defineProps<{
 }>();
 
 const deviceState = computed(() => {
-  var foundDevice = me.value?.devices.find(d => d.id == props.deviceId);
+  const foundDevice = me.value?.devices.find(d => d.id == props.deviceId);
   if ( foundDevice?.accessTo.find(v => v.id == props.vaultId) ) {
     return DeviceState.AccessAllowed;
   } else if ( foundDevice ) {
