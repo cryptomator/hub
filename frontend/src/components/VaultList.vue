@@ -35,13 +35,13 @@
             <div class="px-4 py-4 flex items-center sm:px-6">
               <div class="min-w-0 flex-1 sm:flex sm:items-center sm:justify-between">
                 <p class="text-sm font-medium text-primary truncate">{{ vault.name }}</p>
-                <div class="mt-4 flex-shrink-0 sm:mt-0 sm:ml-5">
+                <div class="mt-4 shrink-0 sm:mt-0 sm:ml-5">
                   <div class="flex overflow-hidden -space-x-1">
                     <!-- <img v-for="member in vault.members" :key="member.id" class="inline-block h-6 w-6 rounded-full ring-2 ring-white" :src="member.pictureUrl" :alt="member.name" /> -->
                   </div>
                 </div>
               </div>
-              <div class="ml-5 flex-shrink-0">
+              <div class="ml-5 shrink-0">
                 <ChevronRightIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
               </div>
             </div>

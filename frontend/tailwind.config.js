@@ -1,13 +1,12 @@
 module.exports = {
-  mode: 'jit',
-  purge: [
+  content: [
     './public/**/*.html',
     './src/**/*.{ts,vue}',
   ],
-  darkMode: false, // or 'media' or 'class'
   theme: {
     extend: {
       colors: {
+        current: 'currentColor',
         'primary': '#49B04A',
         'primary2': '#009F69',
         'primary-l1': '#66CC68',
@@ -34,9 +33,6 @@ module.exports = {
     fontFamily: {
       'headline': 'Quicksand, sans-serif',
       'body': 'Open Sans, sans-serif',
-    },
-    variants: {
-      extend: {},
     },
   },
   plugins: [

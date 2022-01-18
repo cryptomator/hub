@@ -5,7 +5,7 @@
     </div>
 
     <div v-else>
-      <div class="pt-8 pb-4 flex-shrink-0 flex items-center">
+      <div class="pt-8 pb-4 shrink-0 flex items-center">
         <img src="/logo.svg" class="h-8" alt="Logo"/>
         <span class="font-headline font-bold text-primary ml-2 pb-px">CRYPTOMATOR HUB</span>
       </div>
