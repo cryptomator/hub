@@ -15,7 +15,7 @@
             <ListboxOption v-for="item in filteredItems" :key="item.id" v-slot="{ active }" as="template" :value="item">
               <li :class="[active ? 'text-white bg-primary' : 'text-gray-900', {'hover:text-white hover:bg-primary': !listboxOptionsFocus}, 'cursor-default select-none relative py-2 pl-3 pr-9']" @focus="listboxOptionFocus = true" @blur="listboxOptionFocus = false">
                 <div class="flex items-center">
-                  <img :src="item.pictureUrl" alt="" class="flex-shrink-0 h-6 w-6 rounded-full" />
+                  <img :src="item.pictureUrl" alt="" class="shrink-0 h-6 w-6 rounded-full" />
                   <span class="ml-3 block truncate">{{ item.name }}</span>
                 </div>
               </li>

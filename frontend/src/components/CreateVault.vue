@@ -44,8 +44,8 @@
     <div class="flex justify-center">
       <div class="shadow sm:rounded-lg sm:overflow-hidden sm:max-w-lg">
         <div class="text-center bg-white px-4 py-5 sm:p-6">
-          <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100">
-            <CheckIcon class="h-6 w-6 text-green-600" aria-hidden="true" />
+          <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-emerald-100">
+            <CheckIcon class="h-6 w-6 text-emerald-600" aria-hidden="true" />
           </div>
           <div class="mt-3 sm:mt-5">
             <h3 class="text-lg leading-6 font-medium text-gray-900">

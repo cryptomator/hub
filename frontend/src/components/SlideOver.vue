@@ -5,7 +5,7 @@
         <DialogOverlay class="absolute inset-0" />
 
         <div class="fixed inset-y-0 right-0 pl-10 max-w-full flex">
-          <TransitionChild as="template" enter="transform transition ease-in-out duration-500 sm:duration-700" enter-from="translate-x-full" enter-to="translate-x-0" leave="transform transition ease-in-out duration-500 sm:duration-700" leave-from="translate-x-0" leave-to="translate-x-full">
+          <TransitionChild as="template" enter=" transition ease-in-out duration-500 sm:duration-700" enter-from="translate-x-full" enter-to="translate-x-0" leave=" transition ease-in-out duration-500 sm:duration-700" leave-from="translate-x-0" leave-to="translate-x-full">
             <div class="w-screen max-w-md">
               <div class="h-full flex flex-col py-6 bg-white shadow-xl overflow-y-scroll">
                 <div class="px-4 sm:px-6">
