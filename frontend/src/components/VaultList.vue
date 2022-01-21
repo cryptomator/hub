@@ -1,9 +1,5 @@
 <template>
-  <div v-if="vaults == null">
-    {{ t('common.loading') }}
-  </div>
-
-  <div v-else-if="vaults.length == 0" class="text-center">
+  <div v-if="vaults.length == 0" class="text-center">
     <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
       <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
     </svg>
@@ -58,9 +54,9 @@
 
 <script setup lang="ts">
 import { ChevronRightIcon, PlusIcon } from '@heroicons/vue/solid';
-import { nextTick, onMounted, ref } from 'vue';
+import { nextTick, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { VaultDto } from '../common/backend';
+import { VaultDto } from '../common/backend';
 import SlideOver from './SlideOver.vue';
 import VaultDetails from './VaultDetails.vue';
 
@@ -68,17 +64,12 @@ const { t } = useI18n({ useScope: 'global' });
 
 const vaultDetailsSlideOver = ref<typeof SlideOver>();
 
-const vaults = ref<VaultDto[]>();
 const selectedVault = ref<VaultDto | null>(null);
 
-onMounted(async () => {
-  try {
-    vaults.value = await backend.vaults.listSharedOrOwned();
-  } catch (error) {
-    // TODO: error handling
-    console.error('Retrieving vault list failed.', error);
-  }
-});
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const props = defineProps<{
+  vaults : VaultDto[],
+}>();
 
 function onVaultClick(vault: VaultDto) {
   selectedVault.value = vault;

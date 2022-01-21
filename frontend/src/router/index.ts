@@ -7,12 +7,14 @@ import DeviceList from '../components/DeviceList.vue';
 import LoginComponent from '../components/Login.vue';
 import LogoutComponent from '../components/Logout.vue';
 import MainComponent from '../components/Main.vue';
+import ServiceUnavailable from '../components/ServiceUnavailable.vue';
 import Settings from '../components/Settings.vue';
 import SetupComponent from '../components/Setup.vue';
 import UnlockError from '../components/UnlockError.vue';
 import UnlockSuccess from '../components/UnlockSuccess.vue';
 import VaultDetails from '../components/VaultDetails.vue';
 import VaultList from '../components/VaultList.vue';
+import fetchVaultListData from './vaultListGuard';
 
 const routes: RouteRecordRaw[] = [
   {
@@ -58,7 +60,9 @@ const routes: RouteRecordRaw[] = [
     children: [
       {
         path: '/vaults',
-        component: VaultList
+        component: VaultList,
+        beforeEnter: fetchVaultListData('/error'),
+        props: (route) => ({ vaults: route.meta.vaults })
       },
       {
         path: '/vaults/create',
@@ -77,6 +81,10 @@ const routes: RouteRecordRaw[] = [
         path: '/settings',
         component: Settings
       },
+      {
+        path: '/error',
+        component: ServiceUnavailable
+      }
     ]
   },
   {
