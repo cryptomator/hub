@@ -1,16 +1,26 @@
 import { RouteLocationNormalized, RouteLocationRaw } from 'vue-router';
-import backend from '../common/backend';
+import backend, { VaultDto } from '../common/backend';
 
-function fetchVaultListData(onErrorRoute: RouteLocationRaw) {
-  return async function fetch(from: RouteLocationNormalized, to: RouteLocationNormalized): Promise<RouteLocationRaw | undefined> {
+declare module 'vue-router' {
+  interface RouteMeta {
+    vaults?: VaultDto[]
+  }
+}
+class VaultListGuard {
+  public async fetch(to: RouteLocationNormalized): Promise<RouteLocationRaw | undefined> {
     try {
       to.meta.vaults = await backend.vaults.listSharedOrOwned();
-      return undefined;
     } catch (error) {
       console.error('Retrieving vault list failed.', error);
-      return onErrorRoute;
+      return '/error';
     }
-  };
+  }
+
+  public copy(to: RouteLocationNormalized) {
+    return { vaults: to.meta.vaults };
+  }
 }
 
-export default fetchVaultListData;
+const vaultListGuard = new VaultListGuard();
+
+export default vaultListGuard;

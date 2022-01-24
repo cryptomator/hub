@@ -14,7 +14,7 @@ import UnlockError from '../components/UnlockError.vue';
 import UnlockSuccess from '../components/UnlockSuccess.vue';
 import VaultDetails from '../components/VaultDetails.vue';
 import VaultList from '../components/VaultList.vue';
-import fetchVaultListData from './vaultListGuard';
+import vaultListGuard from './vaultListGuard';
 
 const routes: RouteRecordRaw[] = [
   {
@@ -61,8 +61,8 @@ const routes: RouteRecordRaw[] = [
       {
         path: '/vaults',
         component: VaultList,
-        beforeEnter: fetchVaultListData('/error'),
-        props: (route) => ({ vaults: route.meta.vaults })
+        beforeEnter: vaultListGuard.fetch,
+        props: vaultListGuard.copy
       },
       {
         path: '/vaults/create',
