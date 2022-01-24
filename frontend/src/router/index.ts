@@ -14,6 +14,7 @@ import UnlockError from '../components/UnlockError.vue';
 import UnlockSuccess from '../components/UnlockSuccess.vue';
 import VaultDetails from '../components/VaultDetails.vue';
 import VaultList from '../components/VaultList.vue';
+import deviceListGuard from './deviceListGuard';
 import vaultListGuard from './vaultListGuard';
 
 const routes: RouteRecordRaw[] = [
@@ -75,7 +76,9 @@ const routes: RouteRecordRaw[] = [
       },
       {
         path: '/devices',
-        component: DeviceList
+        component: DeviceList,
+        beforeEnter: deviceListGuard.fetch,
+        props: deviceListGuard.copy
       },
       {
         path: '/settings',

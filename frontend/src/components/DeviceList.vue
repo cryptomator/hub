@@ -80,13 +80,12 @@ const { t } = useI18n({ useScope: 'global' });
 
 const me = ref<UserDto>();
 
+const props = defineProps<{
+  user: UserDto
+}>();
+
 onMounted(async () => {
-  try {
-    me.value = await backend.users.me(true, true);
-  } catch (error) {
-    // TODO: error handling
-    console.error('Retrieving device list failed.', error);
-  }
+  me.value = props.user;
 });
 
 async function removeDevice(device: DeviceDto) {
