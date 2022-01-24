@@ -15,6 +15,7 @@ import UnlockSuccess from '../components/UnlockSuccess.vue';
 import VaultDetails from '../components/VaultDetails.vue';
 import VaultList from '../components/VaultList.vue';
 import deviceListGuard from './deviceListGuard';
+import unlockSuccessGuard from './unlockSuccessGuard';
 import vaultListGuard from './vaultListGuard';
 
 const routes: RouteRecordRaw[] = [
@@ -93,7 +94,8 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/unlock-success',
     component: UnlockSuccess,
-    props: (route) => ({ vaultId: route.query.vault, deviceId: route.query.device })
+    beforeEnter: unlockSuccessGuard.fetch,
+    props: (route) => ({ vaultId: route.query.vault, deviceId: route.query.device, me: route.meta.user })
   },
   {
     path: '/unlock-error',
