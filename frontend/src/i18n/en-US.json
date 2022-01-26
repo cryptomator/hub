@@ -16,6 +16,8 @@
   "createVault.masterPasssord.description": "Must contain at least 8 characters.",
   "createVault.submit": "Create Vault",
   "createVault.formValidationFailed": "Please check the form and try again.",
+  "createVault.vaultCreationFailed": "An error occured. Please try again and if the error persists, contact your administrator.",
+  "createVault.downloadTemplateFailed": "Download of vault template failed. Please contact your administrator.",
   "createVault.success.title": "Vault created",
   "createVault.success.description": "After downloading the zipped vault folder, unpack it to any location shared with your team members.",
   "createVault.success.download": "Download zipped vault folder",
