@@ -1,5 +1,6 @@
 import AxiosStatic, { AxiosRequestConfig, AxiosResponse } from 'axios';
 import authPromise from './auth';
+import { AlreadyExistsError, BackendError, NotAuthorizedError, NotFoundError } from './error';
 
 const axiosBaseCfg: AxiosRequestConfig = {
   baseURL: import.meta.env.DEV ? 'http://localhost:9090' : '',
@@ -63,7 +64,8 @@ class VaultService {
 
   public async createVault(vaultId: string, name: string, masterkey: string, iterations: number, salt: string): Promise<AxiosResponse<any>> {
     const body: VaultDto = { id: vaultId, name: name, masterkey: masterkey, iterations: iterations, salt: salt };
-    return axiosAuth.put(`/vaults/${vaultId}`, body);
+    return axiosAuth.put(`/vaults/${vaultId}`, body)
+      .catch((err) => Promise.reject(tryConversionToBackendError(err)));
   }
 
   public async grantAccess(vaultId: string, deviceId: string, jwe: string) {
@@ -102,5 +104,22 @@ const services = {
   users: new UserService(),
   devices: new DeviceService()
 };
+
+
+function tryConversionToBackendError(error: unknown): BackendError | unknown {
+  if (AxiosStatic.isAxiosError(error)) {
+    switch (error.response?.status) {
+      case 409:
+        return new AlreadyExistsError();
+      case 404:
+        return new NotFoundError();
+      case 403:
+        return new NotAuthorizedError();
+      default:
+        return error;
+    }
+  }
+  return error;
+}
 
 export default services;
