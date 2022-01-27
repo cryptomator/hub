@@ -35,6 +35,7 @@ public class DeviceResource {
 	@Transactional
 	@Operation(summary = "adds a device", description = "the device will be owned by the currently logged-in user")
 	@APIResponse(responseCode = "201", description = "device created")
+	@APIResponse(responseCode = "409", description = "Device already exists")
 	public Response create(DeviceDto deviceDto, @PathParam("deviceId") String deviceId) {
 		// FIXME validate parameter
 		if (deviceId == null || deviceId.trim().length() == 0 || deviceDto == null) {
@@ -57,6 +58,7 @@ public class DeviceResource {
 	@Transactional
 	@Operation(summary = "removes a device", description = "the device will be only be removed if the current user is the owner")
 	@APIResponse(responseCode = "204", description = "device removed")
+	@APIResponse(responseCode = "404", description = "device not found with current user")
 	public Response remove(@PathParam("deviceId") String deviceId) {
 		// FIXME validate parameter
 		if (deviceId == null || deviceId.trim().length() == 0) {

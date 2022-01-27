@@ -8,6 +8,7 @@
   "common.loading": "Loading…",
   "common.remove": "Remove",
   "common.share": "Share",
+  "common.unexpectedError": "Unexpected error",
 
   "createVault.title": "Create Vault",
   "createVault.description": "The master password should be kept secret and is only needed for administrative purposes. Please make sure that you remember the password.",
@@ -15,8 +16,8 @@
   "createVault.masterPassword": "Master Password",
   "createVault.masterPasssord.description": "Must contain at least 8 characters.",
   "createVault.submit": "Create Vault",
-  "createVault.formValidationFailed": "Please check the form and try again.",
-  "createVault.vaultCreationFailed": "An error occured. Please try again and if the error persists, contact your administrator.",
+  "createVault.error.formValidationFailed": "Please check the form and try again.",
+  "createVault.error.alreadyExists": "The chosen name already exists. Select a different name.",
   "createVault.downloadTemplateFailed": "Download of vault template failed. Please contact your administrator.",
   "createVault.success.title": "Vault created",
   "createVault.success.description": "After downloading the zipped vault folder, unpack it to any location shared with your team members.",
