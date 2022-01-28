@@ -1,6 +1,6 @@
 import AxiosStatic, { AxiosRequestConfig, AxiosResponse } from 'axios';
 import authPromise from './auth';
-import { BackendError, ConflictError, ForbiddenError, NotFoundError, StrangeError } from './error';
+import { BackendError, ConflictError, ForbiddenError, NotFoundError } from './error';
 
 const axiosBaseCfg: AxiosRequestConfig = {
   baseURL: import.meta.env.DEV ? 'http://localhost:9090' : '',
@@ -118,8 +118,6 @@ function tryConversionToBackendError(error: unknown): BackendError | unknown {
       default:
         return error;
     }
-  } else if (error! instanceof Error) {
-    return new StrangeError(error);
   }
   return error;
 }

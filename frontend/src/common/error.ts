@@ -22,13 +22,3 @@ export class ConflictError extends BackendError {
     super('Resource already exists');
   }
 }
-
-export class StrangeError extends BackendError {
-
-  readonly thrownObject: any;
-  constructor(thrownObject: any) {
-    super('Unidentified error thrown');
-    this.thrownObject = thrownObject;
-  }
-}
-

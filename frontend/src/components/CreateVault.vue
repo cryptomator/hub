@@ -140,7 +140,7 @@ async function createVault() {
     state.value = State.Finished;
   } catch (error) {
     console.error('Creating vault failed.', error);
-    onCreateError.value = wrapIfNotErrorObject(error);
+    onCreateError.value = error instanceof Error? error : new Error('Unknown Reason');
     state.value = State.Initial;
   }
   return;
@@ -157,15 +157,7 @@ async function downloadVaultTemplate() {
     }
   } catch (error: unknown) {
     console.error('Exporting Template returned failed.', error);
-    onDownloadTemplateError.value = wrapIfNotErrorObject(error);
-  }
-}
-
-function wrapIfNotErrorObject(thrownObject: unknown) : Error {
-  if ( thrownObject instanceof Error) {
-    return thrownObject;
-  } else {
-    return new Error ('Unknown'); //TODO: stringify the error?
+    onDownloadTemplateError.value = error instanceof Error? error : new Error('Unknown Reason');
   }
 }
 
