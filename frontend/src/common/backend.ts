@@ -65,7 +65,7 @@ class VaultService {
   public async createVault(vaultId: string, name: string, masterkey: string, iterations: number, salt: string): Promise<AxiosResponse<any>> {
     const body: VaultDto = { id: vaultId, name: name, masterkey: masterkey, iterations: iterations, salt: salt };
     return axiosAuth.put(`/vaults/${vaultId}`, body)
-      .catch((err) => { throw tryConversionToBackendError(err); });
+      .catch((err) => { throw convertIfExpectedStatus([404, 409], err); });
   }
 
   public async grantAccess(vaultId: string, deviceId: string, jwe: string) {
@@ -105,21 +105,25 @@ const services = {
   devices: new DeviceService()
 };
 
-
-function tryConversionToBackendError(error: unknown): BackendError | unknown {
-  if (AxiosStatic.isAxiosError(error)) {
-    switch (error.response?.status) {
-      case 409:
-        return new ConflictError();
-      case 404:
-        return new NotFoundError();
-      case 403:
-        return new ForbiddenError();
-      default:
-        return error;
-    }
+function convertExpectedToBackendError(status: number): BackendError {
+  switch (status) {
+    case 403:
+      return new ForbiddenError();
+    case 404:
+      return new NotFoundError();
+    case 409:
+      return new ConflictError();
+    default:
+      return new BackendError('Status Code ${status} not mapped');
   }
-  return error;
+}
+
+function convertIfExpectedStatus(expectedStatusCodes: number[], error: unknown): BackendError | unknown {
+  if (AxiosStatic.isAxiosError(error) && error.response != null && expectedStatusCodes.includes(error.response.status)) {
+    return convertExpectedToBackendError;
+  } else {
+    return error;
+  }
 }
 
 export default services;
