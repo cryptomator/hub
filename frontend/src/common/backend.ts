@@ -65,7 +65,7 @@ class VaultService {
   public async createVault(vaultId: string, name: string, masterkey: string, iterations: number, salt: string): Promise<AxiosResponse<any>> {
     const body: VaultDto = { id: vaultId, name: name, masterkey: masterkey, iterations: iterations, salt: salt };
     return axiosAuth.put(`/vaults/${vaultId}`, body)
-      .catch((err) => Promise.reject(tryConversionToBackendError(err)));
+      .catch((err) => { throw tryConversionToBackendError(err); });
   }
 
   public async grantAccess(vaultId: string, deviceId: string, jwe: string) {
