@@ -155,7 +155,7 @@ async function downloadVaultTemplate() {
     } else {
       throw new ExportingTemplateFailedError();
     }
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Exporting Template returned failed.', error);
     onDownloadTemplateError.value = error instanceof Error? error : new Error('Unknown Reason');
   }
