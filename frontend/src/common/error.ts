@@ -1,3 +1,4 @@
+
 export class BackendError extends Error {
   constructor(msg: string) {
     super(msg);
@@ -19,6 +20,15 @@ export class NotFoundError extends BackendError {
 export class AlreadyExistsError extends BackendError {
   constructor() {
     super('Resource already exists');
+  }
+}
+
+export class StrangeError extends BackendError {
+
+  readonly thrownObject: any;
+  constructor(thrownObject: any) {
+    super('Unidentified error thrown');
+    this.thrownObject = thrownObject;
   }
 }
 
