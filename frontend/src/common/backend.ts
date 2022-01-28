@@ -65,7 +65,7 @@ class VaultService {
   public async createVault(vaultId: string, name: string, masterkey: string, iterations: number, salt: string): Promise<AxiosResponse<any>> {
     const body: VaultDto = { id: vaultId, name: name, masterkey: masterkey, iterations: iterations, salt: salt };
     return axiosAuth.put(`/vaults/${vaultId}`, body)
-      .catch((err) => { throw convertIfExpectedStatus([404, 409], err); });
+      .catch((err) => rethrowAndConvertIfExpected(err, 404, 409));
   }
 
   public async grantAccess(vaultId: string, deviceId: string, jwe: string) {
@@ -118,11 +118,16 @@ function convertExpectedToBackendError(status: number): BackendError {
   }
 }
 
-function convertIfExpectedStatus(expectedStatusCodes: number[], error: unknown): BackendError | unknown {
+/**
+ * Rethrows the error object or, if 'error' is an response with an expected http status code, it is converted to an BackendError and then rethrown.
+ * @param error A thrown object
+ * @param expectedStatusCodes The expected http status codes of the backend call
+ */
+function rethrowAndConvertIfExpected(error: unknown, ...expectedStatusCodes: number[]): Promise<any> {
   if (AxiosStatic.isAxiosError(error) && error.response != null && expectedStatusCodes.includes(error.response.status)) {
-    return convertExpectedToBackendError;
+    throw convertExpectedToBackendError;
   } else {
-    return error;
+    throw error;
   }
 }
 
