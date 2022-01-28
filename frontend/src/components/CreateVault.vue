@@ -35,7 +35,7 @@
           <div v-if="onCreateError != null" >
             <p v-if="onCreateError instanceof ConflictError" class="text-sm text-red-900 mr-4">{{ t('createVault.error.vaultAlreadyExists') }}</p>
             <p v-else-if="onCreateError instanceof FormValidationFailedError" class="text-sm text-red-900 mr-4">{{ t('createVault.error.formValidationFailed') }}</p>
-            <p v-else class="text-sm text-red-900 mr-4">{{ t('common.unexpectedError') + ': ' + (onCreateError as Error).message }}</p>
+            <p v-else class="text-sm text-red-900 mr-4">{{ t('common.unexpectedError', [onCreateError.message]) }}</p>
           </div>
           <button :disabled="state == State.Processing" type="submit" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
             {{ t('createVault.submit') }}
@@ -67,7 +67,7 @@
               <DownloadIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
               {{ t('createVault.success.download') }}
             </button>
-            <p v-if="downloadTemplateFailed" class="text-sm text-red-900 mr-4">{{ t('createVault.error.downloadTemplateFailed') }}</p> <!-- TODO: not beautiful-->
+            <p v-if="onDownloadTemplateError != null " class="text-sm text-red-900 mr-4">{{ t('createVault.error.downloadTemplateFailed', [onDownloadTemplateError.message]) }}</p> <!-- TODO: not beautiful-->
           </div>
           <div class="mt-2">
             <router-link to="/" class="text-sm text-gray-500">
@@ -104,12 +104,18 @@ class FormValidationFailedError extends Error {
   }
 }
 
+class ExportingTemplateFailedError extends Error {
+  constructor() {
+    super('Exporting template function returned null.');
+  }
+}
+
 const { t } = useI18n({ useScope: 'global' });
 
 const form = ref<HTMLFormElement>();
 
 const onCreateError = ref<Error | null >(null);
-const downloadTemplateFailed = ref(false);
+const onDownloadTemplateError = ref<Error | null>(null);
 
 const state = ref(State.Initial);
 const vaultName = ref('');
@@ -134,26 +140,32 @@ async function createVault() {
     state.value = State.Finished;
   } catch (error) {
     console.error('Creating vault failed.', error);
-    if ( error instanceof Error) {
-      onCreateError.value = error;
-    } else {
-      onCreateError.value = new Error ('Unknown'); //TODO: stringify the error?
-    }
+    onCreateError.value = wrapIfNotErrorObject(error);
     state.value = State.Initial;
   }
   return;
 }
 
 async function downloadVaultTemplate() {
-  downloadTemplateFailed.value = false;
-  if (state.value === State.Finished) {
+  onDownloadTemplateError.value = null;
+  try {
     const blob = await vaultConfig.value?.exportTemplate();
     if (blob != null) {
       saveAs(blob, `${vaultName.value}.zip`);
     } else {
-      downloadTemplateFailed.value = true;
-      console.error('Downloading vault template failed.');
+      throw new ExportingTemplateFailedError();
     }
+  } catch (error: unknown) {
+    console.error('Exporting Template returned failed.', error);
+    onDownloadTemplateError.value = wrapIfNotErrorObject(error);
+  }
+}
+
+function wrapIfNotErrorObject(thrownObject: unknown) : Error {
+  if ( thrownObject instanceof Error) {
+    return thrownObject;
+  } else {
+    return new Error ('Unknown'); //TODO: stringify the error?
   }
 }
 
