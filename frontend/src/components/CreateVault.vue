@@ -17,14 +17,14 @@
               <div class="grid grid-cols-6 gap-6">
                 <div class="col-span-6 sm:col-span-3">
                   <label for="vaultName" class="block text-sm font-medium text-gray-700">{{ t('createVault.vaultName') }}</label>
-                  <input id="vaultName" v-model="vaultName" :disabled="state == State.Processing" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onCreateError == ComponentError.FormValidationFailed }" required />
-                  <p v-if="onCreateError == ComponentError.FormValidationFailed" id="vaultName-required-description" class="mt-2 text-sm text-gray-500">{{ t('common.form.required') }}</p>
+                  <input id="vaultName" v-model="vaultName" :disabled="state == State.Processing" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onCreateError instanceof FormValidationFailedError }" required />
+                  <p v-if="onCreateError instanceof FormValidationFailedError" id="vaultName-required-description" class="mt-2 text-sm text-gray-500">{{ t('common.form.required') }}</p>
                 </div>
 
                 <div class="col-span-6 sm:col-span-4">
                   <label for="password" class="block text-sm font-medium text-gray-700">{{ t('createVault.masterPassword') }}</label>
-                  <input id="password" v-model="password" :disabled="state == State.Processing" type="password" minlength="8" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onCreateError == ComponentError.FormValidationFailed }" aria-describedby="password-description" required />
-                  <p id="password-description" class="mt-2 text-sm text-gray-500">{{ t('createVault.masterPasssord.description') }}</p>
+                  <input id="password" v-model="password" :disabled="state == State.Processing" type="password" minlength="8" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onCreateError instanceof FormValidationFailedError }" aria-describedby="password-description" required />
+                  <p id="password-description" class="mt-2 text-sm text-gray-500">{{ t('createVault.masterPassword.description') }}</p>
                 </div>
               </div>
             </div>
@@ -33,8 +33,8 @@
 
         <div class="flex justify-end items-center px-4 py-3 bg-gray-50 sm:px-6">
           <div v-if="onCreateError != null" >
-            <p v-if="onCreateError instanceof AlreadyExistsError" class="text-sm text-red-900 mr-4">{{ t('createVault.error.vaultAlreadyExists') }}</p>
-            <p v-else-if="onCreateError == ComponentError.FormValidationFailed" class="text-sm text-red-900 mr-4">{{ t('createVault.error.formValidationFailed') }}</p>
+            <p v-if="onCreateError instanceof ConflictError" class="text-sm text-red-900 mr-4">{{ t('createVault.error.vaultAlreadyExists') }}</p>
+            <p v-else-if="onCreateError instanceof FormValidationFailedError" class="text-sm text-red-900 mr-4">{{ t('createVault.error.formValidationFailed') }}</p>
             <p v-else class="text-sm text-red-900 mr-4">{{ t('common.unexpectedError') + ': ' + (onCreateError as Error).message }}</p>
           </div>
           <button :disabled="state == State.Processing" type="submit" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
@@ -88,7 +88,7 @@ import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend from '../common/backend';
 import { Masterkey } from '../common/crypto';
-import { AlreadyExistsError } from '../common/error';
+import { ConflictError } from '../common/error';
 import { uuid } from '../common/util';
 import { VaultConfig } from '../common/vaultconfig';
 
@@ -98,15 +98,17 @@ enum State {
   Finished
 }
 
-enum ComponentError {
-  FormValidationFailed,
+class FormValidationFailedError extends Error {
+  constructor() {
+    super('The html form is not correctly filled.');
+  }
 }
 
 const { t } = useI18n({ useScope: 'global' });
 
 const form = ref<HTMLFormElement>();
 
-const onCreateError = ref<ComponentError | Error | null >(null);
+const onCreateError = ref<Error | null >(null);
 const downloadTemplateFailed = ref(false);
 
 const state = ref(State.Initial);
@@ -117,8 +119,8 @@ const vaultConfig = ref<VaultConfig>();
 async function createVault() {
   onCreateError.value = null;
 
-  if ( !form.value?.checkValidity()) {
-    onCreateError.value = ComponentError.FormValidationFailed;
+  if (!form.value?.checkValidity()) {
+    onCreateError.value = new FormValidationFailedError();
     return;
   }
 

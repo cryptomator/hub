@@ -5,7 +5,7 @@ export class BackendError extends Error {
   }
 }
 
-export class NotAuthorizedError extends BackendError {
+export class ForbiddenError extends BackendError {
   constructor() {
     super('Not authorized to access resource');
   }
@@ -17,7 +17,7 @@ export class NotFoundError extends BackendError {
   }
 }
 
-export class AlreadyExistsError extends BackendError {
+export class ConflictError extends BackendError {
   constructor() {
     super('Resource already exists');
   }
