@@ -170,6 +170,7 @@ public class VaultResource {
 	@Transactional
 	@Operation(summary = "creates a vault")
 	@APIResponse(responseCode = "201", description = "vault created")
+	@APIResponse(responseCode = "409", description = "vault with given id already exists")
 	public Response create(@PathParam("vaultId") String vaultId, VaultDto vaultDto) {
 		if (vaultDto == null) {
 			throw new BadRequestException("Missing vault dto");
