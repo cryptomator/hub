@@ -25,9 +25,6 @@ jobs:
       - name: Install npm dependencies
         working-directory: frontend
         run: npm install
-      - name: Build and Test frontend
-        working-directory: frontend
-        run: npm test
       - name: Deploy frontend
         working-directory: frontend
         run: npm run dist
@@ -44,7 +41,7 @@ jobs:
             ${{ runner.os }}-maven-
       - name: Build and push container # TODO push only tagged builds?
         working-directory: backend
-        run: mvn -B clean package -Pnative
+        run: mvn -B clean package -Pnative -DskipTests
         env:
           QUARKUS_CONTAINER_IMAGE_BUILD: true
           QUARKUS_CONTAINER_IMAGE_PUSH: true
