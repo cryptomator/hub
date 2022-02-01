@@ -26,6 +26,9 @@ Make sure Docker is running (required to register the built image locally).
 Then run this command to build the image:
 ```shell script
 mvn clean package -Dquarkus.container-image.build=true -Dquarkus.container-image.tag=latest
-# mvn clean package jib:dockerBuild -Djib.to.image=cryptomator/hub:latest
 ```
 
+Or to build a native image (3x smaller, takes longer to build):
+```shell script
+mvn clean package -Pnative -Dquarkus.container-image.build=true -Dquarkus.native.container-build=true -Dquarkus.container-image.tag=latest
+```

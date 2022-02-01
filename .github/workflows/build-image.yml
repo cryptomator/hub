@@ -1,4 +1,4 @@
-name: Build and test
+name: Build Container Image
 
 on:
   push:
@@ -7,15 +7,12 @@ on:
 
 env:
   NODE_VERSION: 16
+  GRAAL_VERSION: 22.0.0.2
   JAVA_VERSION: 17
 
-defaults:
-  run:
-    shell: bash
-
 jobs:
-  test:
-    name: Build and Test
+  image:
+    name: Build Container Image
     runs-on: ubuntu-latest
     if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')" # can the if also be est for all jobs?
     steps:
@@ -34,11 +31,23 @@ jobs:
       - name: Deploy frontend
         working-directory: frontend
         run: npm run dist
-      - uses: actions/setup-java@v2
+      - uses: graalvm/setup-graalvm@v1
         with:
-          distribution: 'temurin'
+          version: ${{ env.GRAAL_VERSION }}
           java-version: ${{ env.JAVA_VERSION }}
-          cache: 'maven'
-      - name: Build and Test backend
+          components: 'native-image'
+      - uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - name: Log in to the Container registry # TODO only for tagged builds?
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and Test backend # TODO push tagged builds?
         working-directory: backend
-        run: mvn -B clean verify
+        run: mvn -B clean package -Pnative -Dquarkus.container-image.build=true -Dquarkus.container-image.push=true
