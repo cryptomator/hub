@@ -128,6 +128,8 @@ public class VaultResource {
 	@Consumes(MediaType.TEXT_PLAIN)
 	@Operation(summary = "adds a device-specific masterkey")
 	@APIResponse(responseCode = "201", description = "device-specific key stored")
+	@APIResponse(responseCode = "404", description = "specified user or device not found")
+	@APIResponse(responseCode = "409", description = "Access to vault for device already granted")
 	public Response grantAccess(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId, String jwe) {
 		Vault vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		Device device = Device.<Device>findByIdOptional(deviceId).orElseThrow(NotFoundException::new);

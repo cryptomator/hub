@@ -1,6 +1,11 @@
 <template>
   <div v-if="me == null">
-    {{ t('common.loading') }}
+    <div v-if="onFetchError == null">
+      {{ t('common.loading') }}
+    </div>
+    <div v-else>
+      <ErrorScreen :error="onFetchError" :allow-retry="true" @retry="loadData"/>
+    </div>
   </div>
 
   <div v-else-if="me.devices.length == 0">
@@ -75,19 +80,24 @@ import { DesktopComputerIcon } from '@heroicons/vue/solid';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { DeviceDto, UserDto } from '../common/backend';
+import ErrorScreen from './FetchError.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 
 const me = ref<UserDto>();
+const onFetchError = ref<Error | null>();
 
-onMounted(async () => {
+onMounted(loadData);
+
+async function loadData() {
+  onFetchError.value = null;
   try {
     me.value = await backend.users.me(true, true);
-  } catch (error) {
-    // TODO: error handling
-    console.error('Retrieving device list failed.', error);
+  } catch (err) {
+    console.error('Retrieving device list failed.', err);
+    onFetchError.value = err instanceof Error? err : new Error('Unknown Error');
   }
-});
+}
 
 async function removeDevice(device: DeviceDto) {
   try {

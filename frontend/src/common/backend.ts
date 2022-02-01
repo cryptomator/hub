@@ -69,7 +69,8 @@ class VaultService {
   }
 
   public async grantAccess(vaultId: string, deviceId: string, jwe: string) {
-    await axiosAuth.put(`/vaults/${vaultId}/keys/${deviceId}`, jwe, { headers: { 'Content-Type': 'text/plain' } });
+    await axiosAuth.put(`/vaults/${vaultId}/keys/${deviceId}`, jwe, { headers: { 'Content-Type': 'text/plain' } })
+      .catch((err) => rethrowAndConvertIfExpected(err, 404, 409));
   }
 
   public async revokeUserAccess(vaultId: string, userId: string) {
@@ -79,7 +80,8 @@ class VaultService {
 class DeviceService {
 
   public async removeDevice(deviceId: string): Promise<AxiosResponse<any>> {
-    return axiosAuth.delete(`/devices/${deviceId}`);
+    return axiosAuth.delete(`/devices/${deviceId}`)
+      .catch((err) => rethrowAndConvertIfExpected(err, 404));
   }
 
 }
