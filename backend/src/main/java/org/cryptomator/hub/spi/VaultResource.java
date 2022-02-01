@@ -1,5 +1,6 @@
 package org.cryptomator.hub.spi;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.cryptomator.hub.entities.Access;
 import org.cryptomator.hub.entities.Device;
@@ -184,8 +185,23 @@ public class VaultResource {
 		return Response.created(URI.create(".")).build();
 	}
 
-	public static record VaultDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("masterkey") String masterkey, @JsonProperty("iterations") String iterations,
-								  @JsonProperty("salt") String salt) {
+	@SuppressWarnings("ClassCanBeRecord") // wait for https://github.com/quarkusio/quarkus/issues/20891
+	public static class VaultDto {
+
+		private final String id;
+		private final String name;
+		private final String masterkey;
+		private final String iterations;
+		private final String salt;
+
+		@JsonCreator
+		public VaultDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("masterkey") String masterkey, @JsonProperty("iterations") String iterations, @JsonProperty("salt") String salt) {
+			this.id = id;
+			this.name = name;
+			this.masterkey = masterkey;
+			this.iterations = iterations;
+			this.salt = salt;
+		}
 
 		public Vault toVault(User owner, String id) {
 			var vault = new Vault();
@@ -200,6 +216,31 @@ public class VaultResource {
 
 		public static VaultDto fromEntity(Vault entity) {
 			return new VaultDto(entity.id, entity.name, entity.masterkey, entity.iterations, entity.salt);
+		}
+
+		@JsonProperty("id")
+		public String getId() {
+			return id;
+		}
+
+		@JsonProperty("name")
+		public String getName() {
+			return name;
+		}
+
+		@JsonProperty("masterkey")
+		public String getMasterkey() {
+			return masterkey;
+		}
+
+		@JsonProperty("iterations")
+		public String getIterations() {
+			return iterations;
+		}
+
+		@JsonProperty("salt")
+		public String getSalt() {
+			return salt;
 		}
 	}
 }

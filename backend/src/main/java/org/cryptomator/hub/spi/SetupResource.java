@@ -66,8 +66,25 @@ public class SetupResource {
 		}
 	}
 
-	public static record ConfigDto(@JsonProperty("setupCompleted") boolean setupCompleted,
-								   @JsonProperty("keycloakUrl") String keycloakUrl) {
+	@SuppressWarnings("ClassCanBeRecord") // wait for https://github.com/quarkusio/quarkus/issues/20891
+	public static class ConfigDto {
+		private final boolean setupCompleted;
+		private final String keycloakUrl;
+
+		public ConfigDto(@JsonProperty("setupCompleted") boolean setupCompleted, @JsonProperty("keycloakUrl") String keycloakUrl) {
+			this.setupCompleted = setupCompleted;
+			this.keycloakUrl = keycloakUrl;
+		}
+
+		@JsonProperty("setupCompleted")
+		public boolean isSetupCompleted() {
+			return setupCompleted;
+		}
+
+		@JsonProperty("keycloakUrl")
+		public String getKeycloakUrl() {
+			return keycloakUrl;
+		}
 	}
 
 }

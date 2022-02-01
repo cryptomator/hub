@@ -1,5 +1,6 @@
 package org.cryptomator.hub.spi;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import org.cryptomator.hub.entities.Access;
@@ -71,11 +72,51 @@ public class UsersResource {
 		return query.stream().map(UserDto::fromEntity).toList();
 	}
 
-	public static record UserDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("pictureUrl") String pictureUrl, @JsonProperty("email") String email,
-								 @JsonProperty("devices") Set<DeviceResource.DeviceDto> devices) {
+	@SuppressWarnings("ClassCanBeRecord") // wait for https://github.com/quarkusio/quarkus/issues/20891
+	public static class UserDto {
+
+		private final String id;
+		private final String name;
+		private final String pictureUrl;
+		private final String email;
+		private final Set<DeviceResource.DeviceDto> devices;
+
+		@JsonCreator
+		public UserDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("pictureUrl") String pictureUrl, @JsonProperty("email") String email, @JsonProperty("devices") Set<DeviceResource.DeviceDto> devices) {
+			this.id = id;
+			this.name = name;
+			this.pictureUrl = pictureUrl;
+			this.email = email;
+			this.devices = devices;
+		}
 
 		public static UserDto fromEntity(User user) {
 			return new UserDto(user.id, user.name, user.pictureUrl, user.email, Set.of());
+		}
+
+		@JsonProperty("id")
+		public String getId() {
+			return id;
+		}
+
+		@JsonProperty("name")
+		public String getName() {
+			return name;
+		}
+
+		@JsonProperty("pictureUrl")
+		public String getPictureUrl() {
+			return pictureUrl;
+		}
+
+		@JsonProperty("email")
+		public String getEmail() {
+			return email;
+		}
+
+		@JsonProperty("devices")
+		public Set<DeviceResource.DeviceDto> getDevices() {
+			return devices;
 		}
 	}
 
