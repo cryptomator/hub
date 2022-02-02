@@ -23,7 +23,8 @@
                     <p class="text-sm text-gray-500">
                       {{ t('grantPermissionDialog.description') }}
                     </p>
-                    <input id="password" v-model="password" type="password" name="password" class="mt-2 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md" :placeholder="t('grantPermissionDialog.masterPassword')" />
+                    <input id="password" v-model="password" type="password" name="password" class="mt-2 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': isWrongPassword }" :placeholder="t('grantPermissionDialog.masterPassword')" />
+                    <p v-if="isWrongPassword" class="mt-2 text-sm text-red-500 text-left">{{ t('common.error.wrongPassword') }}</p>
                   </div>
                 </div>
               </div>
@@ -53,7 +54,7 @@ import { base64url } from 'rfc4648';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { DeviceDto, VaultDto } from '../common/backend';
-import { NotFoundError, ConflictError } from '../common/error';
+import { NotFoundError, ConflictError, WrongPasswordError } from '../common/error';
 import { Masterkey, WrappedMasterkey } from '../common/crypto';
 
 const { t } = useI18n({ useScope: 'global' });
@@ -61,6 +62,7 @@ const { t } = useI18n({ useScope: 'global' });
 const open = ref(false);
 const password = ref('');
 
+const isWrongPassword = ref<boolean>(false);
 const onGrantPermissionError = ref<Error | null>();
 
 const props = defineProps<{
@@ -83,13 +85,18 @@ function show() {
 
 async function grantAccess() {
   onGrantPermissionError.value = null;
+  isWrongPassword.value = false;
   try {
     await giveDevicesAccess(props.devices);
     emit('permissionGranted');
     open.value = false;
   } catch (error) {
-    console.error('Granting access permissions failed.', error);
-    onGrantPermissionError.value = error instanceof Error? error : new Error('Unknown Error');
+    if ( error instanceof WrongPasswordError) {
+      isWrongPassword.value = true;
+    } else {
+      console.error('Granting access permissions failed.', error);
+      onGrantPermissionError.value = error instanceof Error? error : new Error('Unknown Error');
+    }
   }
 }
 
