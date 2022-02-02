@@ -36,6 +36,9 @@
                 {{ t('common.cancel') }}
               </button>
             </div>
+            <p v-if="onGrantPermissionError != null" class="text-sm text-red-900 px-4 sm:px-6 pb-3 text-right bg-red-50">
+              {{ t('common.unexpectedError', [onGrantPermissionError.message]) }}
+            </p>
           </div>
         </TransitionChild>
       </div>
@@ -50,12 +53,15 @@ import { base64url } from 'rfc4648';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { DeviceDto, VaultDto } from '../common/backend';
+import { NotFoundError, ConflictError } from '../common/error';
 import { Masterkey, WrappedMasterkey } from '../common/crypto';
 
 const { t } = useI18n({ useScope: 'global' });
 
 const open = ref(false);
 const password = ref('');
+
+const onGrantPermissionError = ref<Error | null>();
 
 const props = defineProps<{
   vault: VaultDto
@@ -76,23 +82,34 @@ function show() {
 }
 
 async function grantAccess() {
+  onGrantPermissionError.value = null;
   try {
     await giveDevicesAccess(props.devices);
     emit('permissionGranted');
     open.value = false;
   } catch (error) {
-    // TODO: error handling
     console.error('Granting access permissions failed.', error);
+    onGrantPermissionError.value = error instanceof Error? error : new Error('Unknown Error');
   }
 }
 
 async function giveDevicesAccess(devices: DeviceDto[]) {
   const wrappedKey = new WrappedMasterkey(props.vault.masterkey, props.vault.salt, props.vault.iterations);
   const masterkey = await Masterkey.unwrap(password.value, wrappedKey);
+  //TODO: error handling for crypto bei falschem Passwort
   for (const device of devices) {
     const publicKey = base64url.parse(device.publicKey);
     const jwe = await masterkey.encryptForDevice(publicKey);
-    await backend.vaults.grantAccess(props.vault.id, device.id, jwe);
+    try {
+      await backend.vaults.grantAccess(props.vault.id, device.id, jwe); 
+    } catch (error) {
+      if (error instanceof NotFoundError || error instanceof ConflictError) {
+        //404 (NotFound) or 409(Conflict) can happen if the local state is outdated
+        console.info(error);
+      } else {
+        throw error;
+      }
+    }
   }
 }
 </script>
