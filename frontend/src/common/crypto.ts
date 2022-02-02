@@ -1,5 +1,6 @@
 import * as miscreant from 'miscreant';
 import { base32, base64, base64url } from 'rfc4648';
+import { WrongPasswordError } from './error';
 import { JWE } from './jwe';
 
 export class WrappedMasterkey {
@@ -98,21 +99,30 @@ export class Masterkey {
    * @param password Password used for wrapping
    * @param wrapped The wrapped key
    * @returns The unwrapped masterkey.
+   * @throws WrongPasswordError, if the wrong password is used
    */
   public static async unwrap(password: string, wrapped: WrappedMasterkey): Promise<Masterkey> {
     const kek = Masterkey.pbkdf2(password, base64url.parse(wrapped.salt, { loose: true }), wrapped.iterations);
     const encrypted = base64url.parse(wrapped.encrypted, { loose: true });
 
-    const key = crypto.subtle.unwrapKey(
-      'raw',
-      encrypted,
-      await kek,
-      'AES-KW',
-      Masterkey.KEY_DESIGNATION,
-      true,
-      ['sign']
-    );
-    return new Masterkey(await key);
+    try {
+      const key = crypto.subtle.unwrapKey(
+        'raw',
+        encrypted,
+        await kek,
+        'AES-KW',
+        Masterkey.KEY_DESIGNATION,
+        true,
+        ['sign']
+      );
+      return new Masterkey(await key);
+    } catch (error) {
+      if (error instanceof DOMException && error.name == 'OperationError') {
+        throw new WrongPasswordError();
+      } else {
+        throw error;
+      }
+    }
   }
 
   public async createVaultConfig(kid: string, hubConfig: VaultConfigHeaderHub, payload: VaultConfigPayload): Promise<string> {

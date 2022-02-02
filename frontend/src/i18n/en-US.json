@@ -12,6 +12,7 @@
   "common.unexpectedError": "Unexpected Error: {0}",
   "common.form.required": "This field is required.",
   "common.error.notFound":"A requested resource could not be found on the server",
+  "common.error.wrongPassword":"Wrong password",
 
   "fetchError.title": "Fetching data failed",
 
@@ -37,7 +38,7 @@
   "deviceList.added": "Added",
 
   "downloadVaultTemplateDialog.title": "Download Vault Template",
-  "downloadVaultTemplateDialog.description": "Type in the master password of the vault to download the vault template again.",
+  "downloadVaultTemplateDialog.description": "Type in the master password of the vault to download its template again.",
   "downloadVaultTemplateDialog.masterPassword": "Master Password",
 
   "grantPermissionDialog.title": "Grant Permission",

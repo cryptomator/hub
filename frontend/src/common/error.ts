@@ -22,3 +22,17 @@ export class ConflictError extends BackendError {
     super('Resource already exists');
   }
 }
+
+export class FrontendError extends Error {
+
+  constructor(msg: string) {
+    super(msg);
+  }
+}
+
+export class WrongPasswordError extends FrontendError {
+
+  constructor() {
+    super('Password is incorrect');
+  }
+}
