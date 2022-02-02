@@ -82,7 +82,7 @@ public class VaultResource {
 	@RolesAllowed("vault-owner")
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
-	@Operation(summary = "remove a member from this vault", description = "revokes the given user's access rights from this vault")
+	@Operation(summary = "remove a member from this vault", description = "revokes the given user's access rights from this vault. If the given user is no member, the request is a no-op.")
 	@APIResponse(responseCode = "204", description = "member removed")
 	@APIResponse(responseCode = "404", description = "vault not found")
 	public Response removeMember(@PathParam("vaultId") String vaultId, @PathParam("userId") String userId) {
