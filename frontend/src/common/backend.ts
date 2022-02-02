@@ -55,7 +55,8 @@ class VaultService {
   }
 
   public async addMember(vaultId: string, userId: string): Promise<AxiosResponse<void>> {
-    return axiosAuth.put(`/vaults/${vaultId}/members/${userId}`);
+    return axiosAuth.put(`/vaults/${vaultId}/members/${userId}`)
+      .catch((err) => rethrowAndConvertIfExpected(err, 404));
   }
 
   public async getDevicesRequiringAccessGrant(vaultId: string): Promise<DeviceDto[]> {
@@ -74,7 +75,8 @@ class VaultService {
   }
 
   public async revokeUserAccess(vaultId: string, userId: string) {
-    await axiosAuth.delete(`/vaults/${vaultId}/members/${userId}`);
+    await axiosAuth.delete(`/vaults/${vaultId}/members/${userId}`)
+      .catch((err) => rethrowAndConvertIfExpected(err, 404));
   }
 }
 class DeviceService {

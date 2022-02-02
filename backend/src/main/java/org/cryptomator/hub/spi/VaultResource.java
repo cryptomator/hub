@@ -68,6 +68,7 @@ public class VaultResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "adds a member to this vault")
 	@APIResponse(responseCode = "201", description = "member added")
+	@APIResponse(responseCode = "404", description = "vault or user not found")
 	public Response addMember(@PathParam("vaultId") String vaultId, @PathParam("userId") String userId) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		var user = User.<User>findByIdOptional(userId).orElseThrow(NotFoundException::new);
@@ -83,6 +84,7 @@ public class VaultResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "remove a member from this vault", description = "revokes the given user's access rights from this vault")
 	@APIResponse(responseCode = "204", description = "member removed")
+	@APIResponse(responseCode = "404", description = "vault not found")
 	public Response removeMember(@PathParam("vaultId") String vaultId, @PathParam("userId") String userId) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		vault.members.removeIf(u -> u.id.equals(userId));
