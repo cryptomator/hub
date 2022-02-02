@@ -44,28 +44,36 @@
                 </tr>
               </thead>
               <tbody class="bg-white divide-y divide-gray-200">
-                <tr v-for="device in me.devices" :key="device.id">
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {{ device.name }}
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <!-- TODO: actual type -->
-                    <span class="inline-flex items-center">
-                      <DesktopComputerIcon class="mr-1 h-5 w-5" aria-hidden="true" />
-                      Computer
-                    </span>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {{ device.accessTo.length }}
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <!-- TODO: actual added date -->
-                    June 8, 2020
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <a role="button" tabindex="0" class="text-red-600 hover:text-red-900" @click="removeDevice(device)">{{ t('common.remove') }}</a>
-                  </td>
-                </tr>
+                <template v-for="device in me.devices" :key="device.id">
+                  <tr v-for="device in me.devices" :key="device.id">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {{ device.name }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <!-- TODO: actual type -->
+                      <span class="inline-flex items-center">
+                        <DesktopComputerIcon class="mr-1 h-5 w-5" aria-hidden="true" />
+                        Computer
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {{ device.accessTo.length }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <!-- TODO: actual added date -->
+                      June 8, 2020
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <a role="button" tabindex="0" class="text-red-600 hover:text-red-900" @click="removeDevice(device)">{{ t('common.remove') }}</a>
+                    </td>
+                  </tr>
+                  <!-- TODO: good styling -->
+                  <tr v-if="onRemoveDeviceError[device.id] != null" class="bg-red-50">
+                    <th colspan="5" class="px-6 py-3 text-center text-xs font-medium text-red-500 uppercase tracking-wider">
+                      {{ t('common.unexpectedError', [onRemoveDeviceError[device.id].message]) }}
+                    </th>
+                  </tr>
+                </template>
               </tbody>
             </table>
           </div>
@@ -80,12 +88,14 @@ import { DesktopComputerIcon } from '@heroicons/vue/solid';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { DeviceDto, UserDto } from '../common/backend';
+import { NotFoundError } from '../common/error';
 import FetchError from './FetchError.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 
 const me = ref<UserDto>();
 const onFetchError = ref<Error | null>();
+const onRemoveDeviceError = ref< {[id: string]: Error} >({});
 
 onMounted(fetchData);
 
@@ -100,12 +110,18 @@ async function fetchData() {
 }
 
 async function removeDevice(device: DeviceDto) {
+  delete onRemoveDeviceError.value[device.id];
   try {
     await backend.devices.removeDevice(device.id);
     me.value = await backend.users.me(true, true);
   } catch (error) {
-    // TODO: error handling
     console.error('Removing device failed.', error);
+    if ( error instanceof NotFoundError) {
+      //device is already missing in backend, no error
+      fetchData();
+    } else {
+      onRemoveDeviceError.value[device.id] = error instanceof Error? error: new Error('Unknown Error');
+    }
   }
 }
 </script>
