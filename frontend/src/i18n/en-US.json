@@ -13,7 +13,7 @@
   "common.form.required": "This field is required.",
   "common.error.notFound":"A requested resource could not be found on the server",
 
-  "fetchError.description": "An error occurred on requesting data from the server: \n {0}",
+  "fetchError.title": "Fetching data failed",
 
   "createVault.title": "Create Vault",
   "createVault.description": "The master password should be kept secret and is only needed for administrative purposes. Please make sure that you remember the password.",

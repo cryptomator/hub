@@ -4,7 +4,7 @@
       {{ t('common.loading') }}
     </div>
     <div v-else>
-      <ErrorScreen :error="onFetchError" :allow-retry="true" @retry="loadData"/>
+      <FetchError :error="onFetchError" :allow-retry="true" @retry="fetchData"/>
     </div>
   </div>
 
@@ -80,16 +80,16 @@ import { DesktopComputerIcon } from '@heroicons/vue/solid';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { DeviceDto, UserDto } from '../common/backend';
-import ErrorScreen from './FetchError.vue';
+import FetchError from './FetchError.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 
 const me = ref<UserDto>();
 const onFetchError = ref<Error | null>();
 
-onMounted(loadData);
+onMounted(fetchData);
 
-async function loadData() {
+async function fetchData() {
   onFetchError.value = null;
   try {
     me.value = await backend.users.me(true, true);
