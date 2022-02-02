@@ -4,7 +4,7 @@
   </div>
 
   <div v-else-if="onFetchError != null">
-    <FetchError :error="onFetchError" :allow-retry="true" @retry="fetchData"/>
+    <FetchError :error="onFetchError" :allow-retry="allowRetryFetch" @retry="fetchData"/>
   </div>
 
   <div v-else-if="vault != null" class="pb-16 space-y-6">
@@ -94,6 +94,7 @@ import DownloadVaultTemplateDialog from './DownloadVaultTemplateDialog.vue';
 import GrantPermissionDialog from './GrantPermissionDialog.vue';
 import SearchInputGroup from './SearchInputGroup.vue';
 import FetchError from './FetchError.vue';
+import { NotFoundError } from '../common/error';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -102,6 +103,7 @@ const props = defineProps<{
 }>();
 const isFetchingData = ref<Boolean>(false);
 const onFetchError = ref<Error | null>();
+const allowRetryFetch = ref<boolean>(false);
 
 const onRevokeUserAccessError = ref< {[id: string]: Error} >({});
 const onAddMemberError = ref<Error | null>();
@@ -129,6 +131,7 @@ async function fetchData() {
   } catch (error) {
     console.error('Fetching data failed.', error);
     onFetchError.value = error instanceof Error? error : new Error('Unknown Error');
+    allowRetryFetch.value =! (error instanceof NotFoundError); //requests above either list something, or query from th vault. In the latter, a 404 indicates the vault does not exists anymore.
   } finally {
     isFetchingData.value = false;
   }

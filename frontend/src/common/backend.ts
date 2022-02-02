@@ -47,7 +47,8 @@ class VaultService {
   }
 
   public async get(vaultId: string): Promise<VaultDto> {
-    return axiosAuth.get(`/vaults/${vaultId}`).then(response => response.data);
+    return axiosAuth.get(`/vaults/${vaultId}`).then(response => response.data)
+      .catch((err) => rethrowAndConvertIfExpected(err, 404));
   }
 
   public async getMembers(vaultId: string): Promise<UserDto[]> {
