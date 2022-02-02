@@ -56,8 +56,11 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import backend, { UserDto } from '../common/backend';
 import ErrorScreen from './FetchError.vue';
+
+const { t } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{
   vaultId: string,
