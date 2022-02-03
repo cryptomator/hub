@@ -6,7 +6,6 @@ on:
 
 env:
   NODE_VERSION: 16
-  GRAAL_VERSION: 22.0.0.2
   JAVA_VERSION: 17
 
 jobs:
@@ -26,20 +25,14 @@ jobs:
       - name: Deploy frontend
         working-directory: frontend
         run: npm run dist
-      - uses: graalvm/setup-graalvm@v1
+      - uses: actions/setup-java@v2
         with:
-          version: ${{ env.GRAAL_VERSION }}
+          distribution: 'temurin'
           java-version: ${{ env.JAVA_VERSION }}
-          components: 'native-image'
-      - uses: actions/cache@v2
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-maven-
+          cache: 'maven'
       - name: Build and push container
         working-directory: backend
-        run: mvn -B clean package -Pnative -DskipTests
+        run: mvn -B clean package -DskipTests
         env:
           QUARKUS_CONTAINER_IMAGE_BUILD: true
           QUARKUS_CONTAINER_IMAGE_PUSH: true
