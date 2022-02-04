@@ -42,12 +42,15 @@ jobs:
       - name: Build and test backend
         working-directory: backend
         run: mvn -B clean verify
+      - id: get_tag
+        if: startsWith(github.ref, 'refs/tags/')
+        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
       - name: Build and push container image
         if: startsWith(github.ref, 'refs/tags/')
         working-directory: backend
         run: mvn -B clean package -DskipTests
         env:
-          QUARKUS_APPLICATION_VERSION: ${{ github.ref }}
+          QUARKUS_APPLICATION_VERSION: ${{ steps.get_tag.outputs.VERSION }}
           QUARKUS_CONTAINER_IMAGE_BUILD: true
           QUARKUS_CONTAINER_IMAGE_PUSH: true
           QUARKUS_CONTAINER_IMAGE_REGISTRY: ghcr.io
