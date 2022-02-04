@@ -37,7 +37,7 @@ async function fetchData() {
   try {
     me.value = await backend.users.me(true, true);
   } catch (err) {
-    console.error('Retrieving device list failed.', err);
+    console.error('Retrieving logged in user failed.', err);
     onFetchError.value = err instanceof Error ? err : new Error('Unknown Error');
   }
 }

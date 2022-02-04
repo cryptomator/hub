@@ -102,7 +102,6 @@ async function grantAccess() {
 async function giveDevicesAccess(devices: DeviceDto[]) {
   const wrappedKey = new WrappedMasterkey(props.vault.masterkey, props.vault.salt, props.vault.iterations);
   const masterkey = await Masterkey.unwrap(password.value, wrappedKey);
-  //TODO: error handling for crypto bei falschem Passwort
   for (const device of devices) {
     const publicKey = base64url.parse(device.publicKey);
     const jwe = await masterkey.encryptForDevice(publicKey);

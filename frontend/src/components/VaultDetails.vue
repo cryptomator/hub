@@ -1,11 +1,13 @@
 <template>
-  <div v-if="isFetchingData">
-    {{ t('common.loading') }}
+  <div v-if="!fetchDataSuccessful">
+    <div v-if="onFetchError == null">
+      {{ t('common.loading') }}
+    </div>
+    <div v-else>
+      <FetchError :error="onFetchError" :allow-retry="allowRetryFetch" @retry="fetchData"/>
+    </div>
   </div>
 
-  <div v-else-if="onFetchError != null">
-    <FetchError :error="onFetchError" :allow-retry="allowRetryFetch" @retry="fetchData"/>
-  </div>
 
   <div v-else-if="vault != null" class="pb-16 space-y-6">
     <!-- TODO: add metadata to vault in backend -->
@@ -100,7 +102,7 @@ const { t } = useI18n({ useScope: 'global' });
 const props = defineProps<{
   vaultId: string
 }>();
-const isFetchingData = ref<Boolean>(false);
+const fetchDataSuccessful = ref<Boolean>(false);
 const onFetchError = ref<Error | null>();
 const allowRetryFetch = ref<boolean>(false);
 
@@ -120,19 +122,18 @@ const devicesRequiringAccessGrant = ref<DeviceDto[]>([]);
 onMounted(fetchData);
 
 async function fetchData() {
-  isFetchingData.value = true;
+  fetchDataSuccessful.value = false;
   onFetchError.value = null;
   try {
     vault.value = await backend.vaults.get(props.vaultId);
     members.value = await backend.vaults.getMembers(props.vaultId);
     allUsers.value = await backend.users.listAll();
     devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
+    fetchDataSuccessful.value = true;
   } catch (error) {
     console.error('Fetching data failed.', error);
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
     allowRetryFetch.value =! (error instanceof NotFoundError); //requests above either list something, or query from th vault. In the latter, a 404 indicates the vault does not exists anymore.
-  } finally {
-    isFetchingData.value = false;
   }
 }
 

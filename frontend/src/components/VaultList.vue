@@ -4,7 +4,7 @@
       {{ t('common.loading') }}
     </div>
     <div v-else>
-      <ErrorScreen :error="onFetchError" :allow-retry="true" @retry="fetchData"/>
+      <FetchError :error="onFetchError" :allow-retry="true" @retry="fetchData"/>
     </div>
   </div>
 
@@ -68,7 +68,7 @@ import { useI18n } from 'vue-i18n';
 import backend, { VaultDto } from '../common/backend';
 import SlideOver from './SlideOver.vue';
 import VaultDetails from './VaultDetails.vue';
-import ErrorScreen from './FetchError.vue';
+import FetchError from './FetchError.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 
