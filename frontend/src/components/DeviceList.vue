@@ -4,7 +4,7 @@
       {{ t('common.loading') }}
     </div>
     <div v-else>
-      <FetchError :error="onFetchError" :allow-retry="true" @retry="fetchData"/>
+      <FetchError :error="onFetchError" :retry="fetchData"/>
     </div>
   </div>
 
