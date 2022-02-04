@@ -32,6 +32,19 @@ spec:
             memory: 64Mi
         ports:
         - containerPort: 8080
+        startupProbe:
+          httpGet:
+            path: /q/health/started
+            port: 8080
+          failureThreshold: 30
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /q/health/live
+            port: 8080
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
         env:
         - name: HUB_CONFIG_PATH
           value: /hub/config.properties
