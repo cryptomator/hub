@@ -96,7 +96,7 @@ async function fetchData() {
     me.value = await backend.users.me(true, true);
   } catch (err) {
     console.error('Retrieving user information failed.', err);
-    onFetchError.value = err instanceof Error? err : new Error('Unknown Error');
+    onFetchError.value = err instanceof Error ? err : new Error('Unknown Error');
   }
 }
 

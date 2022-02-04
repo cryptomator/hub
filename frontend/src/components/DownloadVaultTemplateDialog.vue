@@ -93,7 +93,7 @@ async function downloadVault() {
       isWrongPassword.value = true;
     } else {
       console.error('Downloading vault template failed.', error);
-      onDownloadError.value = error instanceof Error? error : new Error('Unknown Error');
+      onDownloadError.value = error instanceof Error ? error : new Error('Unknown Error');
     }
   }
 }

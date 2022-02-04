@@ -94,7 +94,7 @@ async function grantAccess() {
       isWrongPassword.value = true;
     } else {
       console.error('Granting access permissions failed.', error);
-      onGrantPermissionError.value = error instanceof Error? error : new Error('Unknown Error');
+      onGrantPermissionError.value = error instanceof Error ? error : new Error('Unknown Error');
     }
   }
 }

@@ -69,9 +69,9 @@
                   </tr>
                   <!-- TODO: good styling -->
                   <tr v-if="onRemoveDeviceError[device.id] != null" class="bg-red-50">
-                    <th colspan="5" class="px-6 py-3 text-center text-xs font-medium text-red-500 uppercase tracking-wider">
+                    <td colspan="5" class="px-6 py-3 text-center text-xs font-medium text-red-500 uppercase tracking-wider">
                       {{ t('common.unexpectedError', [onRemoveDeviceError[device.id].message]) }}
-                    </th>
+                    </td>
                   </tr>
                 </template>
               </tbody>
@@ -104,7 +104,7 @@ async function fetchData() {
     me.value = await backend.users.me(true, true);
   } catch (err) {
     console.error('Retrieving device list failed.', err);
-    onFetchError.value = err instanceof Error? err : new Error('Unknown Error');
+    onFetchError.value = err instanceof Error ? err : new Error('Unknown Error');
   }
 }
 
@@ -119,7 +119,7 @@ async function removeDevice(device: DeviceDto) {
       //device is already missing in backend, no error
       fetchData();
     } else {
-      onRemoveDeviceError.value[device.id] = error instanceof Error? error: new Error('Unknown Error');
+      onRemoveDeviceError.value[device.id] = error instanceof Error ? error: new Error('Unknown Error');
     }
   }
 }

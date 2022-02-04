@@ -86,7 +86,7 @@ async function fetchData() {
     vaults.value = await backend.vaults.listSharedOrOwned();
   } catch (error) {
     console.error('Retrieving vault list failed.', error);
-    onFetchError.value = error instanceof Error? error : new Error('Unknown Error');
+    onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
 }
 

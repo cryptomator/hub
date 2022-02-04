@@ -129,7 +129,7 @@ async function fetchData() {
     devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
   } catch (error) {
     console.error('Fetching data failed.', error);
-    onFetchError.value = error instanceof Error? error : new Error('Unknown Error');
+    onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
     allowRetryFetch.value =! (error instanceof NotFoundError); //requests above either list something, or query from th vault. In the latter, a 404 indicates the vault does not exists anymore.
   } finally {
     isFetchingData.value = false;
@@ -148,7 +148,7 @@ async function addMember(id: string) {
   } catch (error) {
     //404 not expected from user perspective
     console.error('Adding member failed.', error);
-    onAddMemberError.value = error instanceof Error? error : new Error('Unknown Error');
+    onAddMemberError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
 }
 
@@ -175,7 +175,7 @@ async function revokeUserAccess(userId: string) {
   } catch (error) {
     console.error('Revoking user access failed.', error);
     //404 not expected from user perspective
-    onRevokeUserAccessError.value[userId] = error instanceof Error? error: new Error('Unknown Error');
+    onRevokeUserAccessError.value[userId] = error instanceof Error ? error: new Error('Unknown Error');
   }
 }
 </script>
