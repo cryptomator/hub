@@ -89,12 +89,11 @@
 import { PencilIcon, PlusSmIcon } from '@heroicons/vue/solid';
 import { nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { DeviceDto, UserDto, VaultDto } from '../common/backend';
+import backend, { DeviceDto, NotFoundError, UserDto, VaultDto } from '../common/backend';
 import DownloadVaultTemplateDialog from './DownloadVaultTemplateDialog.vue';
 import GrantPermissionDialog from './GrantPermissionDialog.vue';
 import SearchInputGroup from './SearchInputGroup.vue';
 import FetchError from './FetchError.vue';
-import { NotFoundError } from '../common/error';
 
 const { t } = useI18n({ useScope: 'global' });
 

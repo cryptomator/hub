@@ -1,10 +1,19 @@
 import * as miscreant from 'miscreant';
 import { base32, base64, base64url } from 'rfc4648';
-import { WrongPasswordError } from './error';
 import { JWE } from './jwe';
 
 export class WrappedMasterkey {
   constructor(readonly encrypted: string, readonly salt: string, readonly iterations: number) { }
+}
+
+export class UnwrapKeyError extends Error {
+  readonly actualError: any;
+
+  constructor(actualError: any) {
+    super('Unwrapping key failed');
+    this.actualError = actualError;
+  }
+
 }
 
 export interface VaultConfigPayload {
@@ -117,13 +126,10 @@ export class Masterkey {
       );
       return new Masterkey(await key);
     } catch (error) {
-      if (error instanceof DOMException && error.name == 'OperationError') {
-        throw new WrongPasswordError();
-      } else {
-        throw error;
-      }
+      throw new UnwrapKeyError(error);
     }
   }
+
 
   public async createVaultConfig(kid: string, hubConfig: VaultConfigHeaderHub, payload: VaultConfigPayload): Promise<string> {
     const header = JSON.stringify({

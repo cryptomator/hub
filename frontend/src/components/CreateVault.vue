@@ -86,9 +86,8 @@ import { DownloadIcon } from '@heroicons/vue/solid';
 import { saveAs } from 'file-saver';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend from '../common/backend';
+import backend, { ConflictError } from '../common/backend';
 import { Masterkey } from '../common/crypto';
-import { ConflictError } from '../common/error';
 import { uuid } from '../common/util';
 import { VaultConfig } from '../common/vaultconfig';
 

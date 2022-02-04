@@ -54,8 +54,7 @@ import { saveAs } from 'file-saver';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { VaultDto } from '../common/backend';
-import { Masterkey, WrappedMasterkey } from '../common/crypto';
-import { WrongPasswordError } from '../common/error';
+import { Masterkey, UnwrapKeyError, WrappedMasterkey } from '../common/crypto';
 import { VaultConfig } from '../common/vaultconfig';
 
 const { t } = useI18n({ useScope: 'global' });
@@ -90,7 +89,7 @@ async function downloadVault() {
     saveAs(blob, `${props.vault.name}.zip`);
     open.value = false;
   } catch (error) {
-    if ( error instanceof WrongPasswordError) {
+    if ( error instanceof UnwrapKeyError) {
       isWrongPassword.value = true;
     } else {
       console.error('Downloading vault template failed.', error);

@@ -87,8 +87,7 @@
 import { DesktopComputerIcon } from '@heroicons/vue/solid';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { DeviceDto, UserDto } from '../common/backend';
-import { NotFoundError } from '../common/error';
+import backend, { DeviceDto, NotFoundError, UserDto } from '../common/backend';
 import FetchError from './FetchError.vue';
 
 const { t } = useI18n({ useScope: 'global' });

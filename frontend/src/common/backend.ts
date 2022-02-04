@@ -1,6 +1,5 @@
 import AxiosStatic, { AxiosRequestConfig, AxiosResponse } from 'axios';
 import authPromise from './auth';
-import { BackendError, ConflictError, ForbiddenError, NotFoundError } from './error';
 
 const axiosBaseCfg: AxiosRequestConfig = {
   baseURL: import.meta.env.DEV ? 'http://localhost:9090' : '',
@@ -137,3 +136,28 @@ function rethrowAndConvertIfExpected(error: unknown, ...expectedStatusCodes: num
 }
 
 export default services;
+
+//-- Error thrown by this module --
+export class BackendError extends Error {
+  constructor(msg: string) {
+    super(msg);
+  }
+}
+
+export class ForbiddenError extends BackendError {
+  constructor() {
+    super('Not authorized to access resource');
+  }
+}
+
+export class NotFoundError extends BackendError {
+  constructor() {
+    super('Requested resource not found');
+  }
+}
+
+export class ConflictError extends BackendError {
+  constructor() {
+    super('Resource already exists');
+  }
+}

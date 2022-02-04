@@ -53,9 +53,8 @@ import { ExclamationIcon } from '@heroicons/vue/outline';
 import { base64url } from 'rfc4648';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { DeviceDto, VaultDto } from '../common/backend';
-import { NotFoundError, ConflictError, WrongPasswordError } from '../common/error';
-import { Masterkey, WrappedMasterkey } from '../common/crypto';
+import backend, { ConflictError, DeviceDto, NotFoundError, VaultDto } from '../common/backend';
+import { Masterkey, UnwrapKeyError, WrappedMasterkey } from '../common/crypto';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -91,7 +90,7 @@ async function grantAccess() {
     emit('permissionGranted');
     open.value = false;
   } catch (error) {
-    if ( error instanceof WrongPasswordError) {
+    if ( error instanceof UnwrapKeyError) {
       isWrongPassword.value = true;
     } else {
       console.error('Granting access permissions failed.', error);
