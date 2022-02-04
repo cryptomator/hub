@@ -1,6 +1,5 @@
 package org.cryptomator.hub.spi;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.User;
@@ -76,23 +75,10 @@ public class DeviceResource {
 		}
 	}
 
-
-	@SuppressWarnings("ClassCanBeRecord") // wait for https://github.com/quarkusio/quarkus/issues/20891
-	public static class DeviceDto {
-		private final String id;
-		private final String name;
-		private final String publicKey;
-		private final String ownerId;
-		private final Set<VaultResource.VaultDto> accessTo;
-
-		@JsonCreator
-		public DeviceDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("publicKey") String publicKey, @JsonProperty("owner") String ownerId, @JsonProperty("accessTo") Set<VaultResource.VaultDto> accessTo) {
-			this.id = id;
-			this.name = name;
-			this.publicKey = publicKey;
-			this.ownerId = ownerId;
-			this.accessTo = accessTo;
-		}
+	public static record DeviceDto(@JsonProperty("id") String id, @JsonProperty("name") String name,
+								   @JsonProperty("publicKey") String publicKey,
+								   @JsonProperty("owner") String ownerId,
+								   @JsonProperty("accessTo") Set<VaultResource.VaultDto> accessTo) {
 
 		public Device toDevice(User user, String id) {
 			var device = new Device();
@@ -105,31 +91,6 @@ public class DeviceResource {
 
 		public static DeviceDto fromEntity(Device entity) {
 			return new DeviceDto(entity.id, entity.name, entity.publickey, entity.owner.id, Set.of());
-		}
-
-		@JsonProperty("id")
-		public String getId() {
-			return id;
-		}
-
-		@JsonProperty("name")
-		public String getName() {
-			return name;
-		}
-
-		@JsonProperty("publicKey")
-		public String getPublicKey() {
-			return publicKey;
-		}
-
-		@JsonProperty("owner")
-		public String getOwnerId() {
-			return ownerId;
-		}
-
-		@JsonProperty("accessTo")
-		public Set<VaultResource.VaultDto> getAccessTo() {
-			return accessTo;
 		}
 
 	}
