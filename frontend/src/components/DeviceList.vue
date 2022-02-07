@@ -116,8 +116,7 @@ async function removeDevice(device: DeviceDto) {
       console.error('Removing device failed.', error);
       //if device is already missing in backend, ignore error
       if (! (error instanceof NotFoundError)) {
-        onRemoveDeviceError.value[device.id] = error instanceof Error ? error: new Error('Unknown Error');
-        return Promise.reject();
+        throw onRemoveDeviceError.value[device.id] = error instanceof Error ? error: new Error('Unknown Error');
       }
     })
     .then(fetchData);
