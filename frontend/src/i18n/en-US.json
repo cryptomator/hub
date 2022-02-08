@@ -13,6 +13,7 @@
   "common.form.required": "This field is required.",
   "common.error.notFound":"A requested resource could not be found on the server",
   "common.error.wrongPassword":"Wrong password",
+  "common.reload":"Please reload the page.",
 
   "fetchError.title": "Fetching data failed",
 

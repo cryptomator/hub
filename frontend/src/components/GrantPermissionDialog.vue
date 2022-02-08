@@ -37,8 +37,11 @@
                 {{ t('common.cancel') }}
               </button>
             </div>
-            <p v-if="onGrantPermissionError != null" class="text-sm text-red-900 px-4 sm:px-6 pb-3 text-right bg-red-50">
+            <p v-if="onGrantPermissionError != null" class="text-sm text-red-900 px-4 sm:px-6 text-right bg-red-50">
               {{ t('common.unexpectedError', [onGrantPermissionError.message]) }}
+            </p>
+            <p v-if="onGrantPermissionError instanceof ConflictError || onGrantPermissionError instanceof NotFoundError" class="text-sm text-red-900 px-4 sm:px-6 pb-3 text-right bg-red-50">
+              {{ t('common.reload') }}
             </p>
           </div>
         </TransitionChild>
@@ -105,16 +108,7 @@ async function giveDevicesAccess(devices: DeviceDto[]) {
   for (const device of devices) {
     const publicKey = base64url.parse(device.publicKey);
     const jwe = await masterkey.encryptForDevice(publicKey);
-    try {
-      await backend.vaults.grantAccess(props.vault.id, device.id, jwe); 
-    } catch (error) {
-      if (error instanceof NotFoundError || error instanceof ConflictError) {
-        //404 (NotFound) or 409(Conflict) can happen if the local state is outdated
-        console.info(error);
-      } else {
-        throw error;
-      }
-    }
+    await backend.vaults.grantAccess(props.vault.id, device.id, jwe);
   }
 }
 </script>
