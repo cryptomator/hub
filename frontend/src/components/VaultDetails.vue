@@ -9,7 +9,7 @@
   </div>
 
 
-  <div v-else-if="vault != null" class="pb-16 space-y-6">
+  <div v-else class="pb-16 space-y-6">
     <!-- TODO: add metadata to vault in backend -->
     <div v-if="false">
       <h3 class="font-medium text-gray-900">Description</h3>
@@ -89,7 +89,7 @@
 
 <script setup lang="ts">
 import { PencilIcon, PlusSmIcon } from '@heroicons/vue/solid';
-import { nextTick, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { DeviceDto, NotFoundError, UserDto, VaultDto } from '../common/backend';
 import DownloadVaultTemplateDialog from './DownloadVaultTemplateDialog.vue';
@@ -104,7 +104,7 @@ const props = defineProps<{
 }>();
 const fetchDataSuccessful = ref<Boolean>(false);
 const onFetchError = ref<Error | null>();
-const allowRetryFetch = ref<boolean>(false);
+const allowRetryFetch = computed(() => onFetchError.value != null && !(onFetchError.value instanceof NotFoundError));  //fetch requests either list something, or query from th vault. In the latter, a 404 indicates the vault does not exists anymore.
 
 const onRevokeUserAccessError = ref< {[id: string]: Error} >({});
 const onAddMemberError = ref<Error | null>();
@@ -133,7 +133,6 @@ async function fetchData() {
   } catch (error) {
     console.error('Fetching data failed.', error);
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
-    allowRetryFetch.value = !(error instanceof NotFoundError); //requests above either list something, or query from th vault. In the latter, a 404 indicates the vault does not exists anymore.
   }
 }
 

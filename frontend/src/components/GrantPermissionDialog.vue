@@ -37,7 +37,7 @@
                 {{ t('common.cancel') }}
               </button>
             </div>
-            <p v-if="onGrantPermissionError != null" class="text-sm text-red-900 px-4 sm:px-6 text-right bg-red-50">
+            <p v-if="onGrantPermissionError != null && !isWrongPassword " class="text-sm text-red-900 px-4 sm:px-6 text-right bg-red-50">
               {{ t('common.unexpectedError', [onGrantPermissionError.message]) }}
             </p>
             <p v-if="onGrantPermissionError instanceof ConflictError || onGrantPermissionError instanceof NotFoundError" class="text-sm text-red-900 px-4 sm:px-6 pb-3 text-right bg-red-50">
@@ -54,7 +54,7 @@
 import { Dialog, DialogOverlay, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import { ExclamationIcon } from '@heroicons/vue/outline';
 import { base64url } from 'rfc4648';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { ConflictError, DeviceDto, NotFoundError, VaultDto } from '../common/backend';
 import { Masterkey, UnwrapKeyError, WrappedMasterkey } from '../common/crypto';
@@ -64,7 +64,7 @@ const { t } = useI18n({ useScope: 'global' });
 const open = ref(false);
 const password = ref('');
 
-const isWrongPassword = ref<boolean>(false);
+const isWrongPassword = computed(() => onGrantPermissionError.value instanceof UnwrapKeyError);
 const onGrantPermissionError = ref<Error | null>();
 
 const props = defineProps<{
@@ -87,18 +87,13 @@ function show() {
 
 async function grantAccess() {
   onGrantPermissionError.value = null;
-  isWrongPassword.value = false;
   try {
     await giveDevicesAccess(props.devices);
     emit('permissionGranted');
     open.value = false;
   } catch (error) {
-    if ( error instanceof UnwrapKeyError) {
-      isWrongPassword.value = true;
-    } else {
-      console.error('Granting access permissions failed.', error);
-      onGrantPermissionError.value = error instanceof Error ? error : new Error('Unknown Error');
-    }
+    console.error('Granting access permissions failed.', error);
+    onGrantPermissionError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
 }
 

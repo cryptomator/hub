@@ -36,7 +36,7 @@
               <button ref="cancelButtonRef" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" @click="open = false">
                 {{ t('common.cancel') }}
               </button>
-              <p v-if="onDownloadError != null" class="text-sm text-red-900 px-4 sm:px-6 pb-3 text-right bg-red-50">
+              <p v-if="onDownloadError != null && !isWrongPassword" class="text-sm text-red-900 px-4 sm:px-6 pb-3 text-right bg-red-50">
                 {{ t('common.unexpectedError', [onDownloadError.message]) }}
               </p>
             </div>
@@ -51,7 +51,7 @@
 import { Dialog, DialogOverlay, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import { FolderDownloadIcon } from '@heroicons/vue/outline';
 import { saveAs } from 'file-saver';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { VaultDto } from '../common/backend';
 import { Masterkey, UnwrapKeyError, WrappedMasterkey } from '../common/crypto';
@@ -62,7 +62,7 @@ const { t } = useI18n({ useScope: 'global' });
 const open = ref(false);
 const password = ref('');
 
-const isWrongPassword = ref<boolean>(false);
+const isWrongPassword = computed(() => onDownloadError.value instanceof UnwrapKeyError);
 const onDownloadError = ref<Error|null>();
 
 const props = defineProps<{
@@ -83,18 +83,13 @@ function show() {
 
 async function downloadVault() {
   onDownloadError.value = null;
-  isWrongPassword.value = false;
   try {
     const blob = await generateVaultZip();
     saveAs(blob, `${props.vault.name}.zip`);
     open.value = false;
   } catch (error) {
-    if ( error instanceof UnwrapKeyError) {
-      isWrongPassword.value = true;
-    } else {
-      console.error('Downloading vault template failed.', error);
-      onDownloadError.value = error instanceof Error ? error : new Error('Unknown Error');
-    }
+    console.error('Downloading vault template failed.', error);
+    onDownloadError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
 }
 
