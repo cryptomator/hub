@@ -80,8 +80,8 @@
       </button>
     </div>
 
-    <GrantPermissionDialog v-if="grantingPermission" ref="grantPermissionDialog" :vault="vault" :devices="devicesRequiringAccessGrant" @close="grantingPermission = false" @permission-granted="permissionGranted()" />
-    <DownloadVaultTemplateDialog v-if="downloadingVaultTemplate" ref="downloadVaultTemplateDialog" :vault="vault" @close="downloadingVaultTemplate = false" />
+    <GrantPermissionDialog v-if="grantingPermission && vault!=null" ref="grantPermissionDialog" :vault="vault" :devices="devicesRequiringAccessGrant" @close="grantingPermission = false" @permission-granted="permissionGranted()" />
+    <DownloadVaultTemplateDialog v-if="downloadingVaultTemplate && vault!=null" ref="downloadVaultTemplateDialog" :vault="vault" @close="downloadingVaultTemplate = false" />
   </div>
 </template>
 
