@@ -1,13 +1,11 @@
 <template>
-  <div v-if="!fetchDataSuccessful">
-    <div v-if="onFetchError == null">
-      {{ t('common.loading') }}
-    </div>
-    <div v-else>
-      <FetchError :error="onFetchError" :retry="allowRetryFetch? fetchData : null"/>
-    </div>
+  <div v-if="isFetching">
+    {{ t('common.loading') }}
   </div>
 
+  <div v-else-if="onFetchError != null">
+    <FetchError :error="onFetchError" :retry="allowRetryFetch? fetchData : null"/>
+  </div>
 
   <div v-else class="pb-16 space-y-6">
     <!-- TODO: add metadata to vault in backend -->
@@ -102,7 +100,8 @@ const { t } = useI18n({ useScope: 'global' });
 const props = defineProps<{
   vaultId: string
 }>();
-const fetchDataSuccessful = ref<Boolean>(false);
+
+const isFetching = ref<boolean>();
 const onFetchError = ref<Error | null>();
 const allowRetryFetch = computed(() => onFetchError.value != null && !(onFetchError.value instanceof NotFoundError));  //fetch requests either list something, or query from th vault. In the latter, a 404 indicates the vault does not exists anymore.
 
@@ -122,18 +121,20 @@ const devicesRequiringAccessGrant = ref<DeviceDto[]>([]);
 onMounted(fetchData);
 
 async function fetchData() {
-  fetchDataSuccessful.value = false;
+  isFetching.value = true;
   onFetchError.value = null;
+
   try {
     vault.value = await backend.vaults.get(props.vaultId);
     members.value = await backend.vaults.getMembers(props.vaultId);
     allUsers.value = await backend.users.listAll();
     devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
-    fetchDataSuccessful.value = true;
   } catch (error) {
     console.error('Fetching data failed.', error);
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
+
+  isFetching.value = false;
 }
 
 async function addMember(id: string) {
