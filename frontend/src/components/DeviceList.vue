@@ -110,18 +110,18 @@ async function fetchData() {
 
 async function removeDevice(device: DeviceDto) {
   delete onRemoveDeviceError.value[device.id];
-
-  await backend.devices.removeDevice(device.id)
-    .catch(error => {
-      console.error('Removing device failed.', error);
-      if (error instanceof NotFoundError) {
-        // if device is already missing in backend → ignore and proceed to then()
-      } else {
-        let e = error instanceof Error ? error : new Error('Unknown Error');
-        onRemoveDeviceError.value[device.id] = e;
-        throw e;
-      }
-    })
-    .then(fetchData);
+  try {
+    await backend.devices.removeDevice(device.id);
+  } catch (error) {
+    console.error('Removing device failed.', error);
+    if (error instanceof NotFoundError) {
+      // if device is already missing in backend → ignore and proceed to then()
+    } else {
+      let e = error instanceof Error ? error : new Error('Unknown Error');
+      onRemoveDeviceError.value[device.id] = e;
+      throw e;
+    }
+  }
+  await fetchData(); // already handle errors
 }
 </script>
