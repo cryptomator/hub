@@ -7,10 +7,15 @@
   "common.download": "Download",
   "common.loading": "Loading…",
   "common.remove": "Remove",
+  "common.retry":"Retry",
   "common.share": "Share",
   "common.unexpectedError": "Unexpected Error: {0}",
   "common.form.required": "This field is required.",
   "common.error.notFound":"A requested resource could not be found on the server",
+  "common.error.wrongPassword":"Wrong password",
+  "common.reload":"Please reload the page.",
+
+  "fetchError.title": "Fetching data failed",
 
   "createVault.title": "Create Vault",
   "createVault.description": "The master password should be kept secret and is only needed for administrative purposes. Please make sure that you remember the password.",
@@ -34,7 +39,7 @@
   "deviceList.added": "Added",
 
   "downloadVaultTemplateDialog.title": "Download Vault Template",
-  "downloadVaultTemplateDialog.description": "Type in the master password of the vault to download the vault template again.",
+  "downloadVaultTemplateDialog.description": "Type in the master password of the vault to download its template again.",
   "downloadVaultTemplateDialog.masterPassword": "Master Password",
 
   "grantPermissionDialog.title": "Grant Permission",

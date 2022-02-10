@@ -1,13 +1,13 @@
 <template>
-  <div v-if="vault == null && !vaultNotFound">
+  <div v-if="isFetching">
     {{ t('common.loading') }}
   </div>
 
-  <div v-else-if="vault == null && vaultNotFound">
-    {{ t('vaultDetails.notFound') }}
+  <div v-else-if="onFetchError != null">
+    <FetchError :error="onFetchError" :retry="allowRetryFetch? fetchData : null"/>
   </div>
 
-  <div v-else-if="vault != null" class="pb-16 space-y-6">
+  <div v-else class="pb-16 space-y-6">
     <!-- TODO: add metadata to vault in backend -->
     <div v-if="false">
       <h3 class="font-medium text-gray-900">Description</h3>
@@ -37,15 +37,23 @@
     <div>
       <h3 class="font-medium text-gray-900">{{ t('vaultDetails.sharedWith.title') }}</h3>
       <ul role="list" class="mt-2 border-t border-b border-gray-200 divide-y divide-gray-200">
-        <li v-for="member in members" :key="member.id" class="py-3 flex justify-between items-center">
-          <div class="flex items-center">
-            <img :src="member.pictureUrl" alt="" class="w-8 h-8 rounded-full" />
-            <p class="ml-4 text-sm font-medium text-gray-900">{{ member.name }}</p>
-          </div>
-          <button type="button" class="ml-6 bg-white rounded-md text-sm font-medium text-red-600 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="revokeUserAccess(member.id)">{{ t('common.remove') }}<span class="sr-only"> {{ member.name }}</span></button>
-        </li>
-        <li class="py-2 flex justify-between items-center">
-          <div v-if="!addingMember">
+        <template v-for="member in members" :key="member.id">
+          <li class="py-3 flex flex-col">
+            <div class="flex justify-between items-center">
+              <div class="flex items-center">
+                <img :src="member.pictureUrl" alt="" class="w-8 h-8 rounded-full" />
+                <p class="ml-4 text-sm font-medium text-gray-900">{{ member.name }}</p>
+              </div>
+              <button type="button" class="ml-6 bg-white rounded-md text-sm font-medium text-red-600 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="revokeUserAccess(member.id)">{{ t('common.remove') }}<span class="sr-only"> {{ member.name }}</span></button>
+            </div>
+
+            <p v-if="onRevokeUserAccessError[member.id] != null" class="text-sm text-red-900 text-right">
+              {{ t('common.unexpectedError', [onRevokeUserAccessError[member.id].message]) }}
+            </p>
+          </li>
+        </template>
+        <li class="py-2 flex flex-col ">
+          <div v-if="!addingMember" class="justify-between items-center">
             <button type="button" class="group -ml-1 bg-white p-1 rounded-md flex items-center focus:outline-none focus:ring-2 focus:ring-primary" @click="addingMember = true">
               <span class="w-8 h-8 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400">
                 <PlusSmIcon class="h-5 w-5" aria-hidden="true" />
@@ -54,6 +62,9 @@
             </button>
           </div>
           <SearchInputGroup v-else-if="addingMember" :action-title="t('common.add')" :items="allUsers" class="flex-grow" @action="addMember" />
+          <p v-if="onAddMemberError != null" class="text-sm text-red-900 text-right">
+            {{ t('common.unexpectedError', [onAddMemberError.message]) }}
+          </p>
         </li>
       </ul>
     </div>
@@ -69,20 +80,20 @@
       </button>
     </div>
 
-    <GrantPermissionDialog v-if="grantingPermission" ref="grantPermissionDialog" :vault="vault" :devices="devicesRequiringAccessGrant" @close="grantingPermission = false" @permission-granted="permissionGranted()" />
-    <DownloadVaultTemplateDialog v-if="downloadingVaultTemplate" ref="downloadVaultTemplateDialog" :vault="vault" @close="downloadingVaultTemplate = false" />
+    <GrantPermissionDialog v-if="grantingPermission && vault!=null" ref="grantPermissionDialog" :vault="vault" :devices="devicesRequiringAccessGrant" @close="grantingPermission = false" @permission-granted="permissionGranted()" />
+    <DownloadVaultTemplateDialog v-if="downloadingVaultTemplate && vault!=null" ref="downloadVaultTemplateDialog" :vault="vault" @close="downloadingVaultTemplate = false" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { PencilIcon, PlusSmIcon } from '@heroicons/vue/solid';
-import axios from 'axios';
-import { nextTick, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { DeviceDto, UserDto, VaultDto } from '../common/backend';
+import backend, { DeviceDto, NotFoundError, UserDto, VaultDto } from '../common/backend';
 import DownloadVaultTemplateDialog from './DownloadVaultTemplateDialog.vue';
 import GrantPermissionDialog from './GrantPermissionDialog.vue';
 import SearchInputGroup from './SearchInputGroup.vue';
+import FetchError from './FetchError.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -90,7 +101,13 @@ const props = defineProps<{
   vaultId: string
 }>();
 
-const vaultNotFound = ref(false);
+const isFetching = ref<boolean>();
+const onFetchError = ref<Error | null>();
+const allowRetryFetch = computed(() => onFetchError.value != null && !(onFetchError.value instanceof NotFoundError));  //fetch requests either list something, or query from th vault. In the latter, a 404 indicates the vault does not exists anymore.
+
+const onRevokeUserAccessError = ref< {[id: string]: Error} >({});
+const onAddMemberError = ref<Error | null>();
+
 const addingMember = ref(false);
 const grantingPermission = ref(false);
 const grantPermissionDialog = ref<typeof GrantPermissionDialog>();
@@ -101,38 +118,27 @@ const members = ref<UserDto[]>([]);
 const allUsers = ref<UserDto[]>([]);
 const devicesRequiringAccessGrant = ref<DeviceDto[]>([]);
 
-onMounted(async () => {
+onMounted(fetchData);
+
+async function fetchData() {
+  isFetching.value = true;
+  onFetchError.value = null;
+
   try {
     vault.value = await backend.vaults.get(props.vaultId);
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status === 404) {
-      vaultNotFound.value = true;
-    } else {
-      // TODO: error handling
-      console.error('Retrieving vault failed.', error);
-    }
-  }
-  try {
     members.value = await backend.vaults.getMembers(props.vaultId);
-  } catch (error) {
-    // TODO: error handling
-    console.error('Retrieving vault members failed.', error);
-  }
-  try {
     allUsers.value = await backend.users.listAll();
-  } catch (error) {
-    // TODO: error handling
-    console.error('Retrieving all users failed.', error);
-  }
-  try {
     devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
   } catch (error) {
-    // TODO: error handling
-    console.error('Retrieving devices requiring access grant failed.', error);
+    console.error('Fetching data failed.', error);
+    onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
-});
+
+  isFetching.value = false;
+}
 
 async function addMember(id: string) {
+  onAddMemberError.value = null;
   try {
     const user = allUsers.value.find(u => u.id === id);
     if (user) {
@@ -141,8 +147,9 @@ async function addMember(id: string) {
       devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
     }
   } catch (error) {
-    // TODO: error handling
+    //even if error instanceof NotFoundError, it is not expected from user perspective
     console.error('Adding member failed.', error);
+    onAddMemberError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
 }
 
@@ -161,13 +168,15 @@ function permissionGranted() {
 }
 
 async function revokeUserAccess(userId: string) {
+  delete onRevokeUserAccessError.value[userId];
   try {
     await backend.vaults.revokeUserAccess(props.vaultId, userId);
     members.value = members.value.filter(m => m.id !== userId);
     devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
   } catch (error) {
-    // TODO: error handling
     console.error('Revoking user access failed.', error);
+    //404 not expected from user perspective
+    onRevokeUserAccessError.value[userId] = error instanceof Error ? error: new Error('Unknown Error');
   }
 }
 </script>

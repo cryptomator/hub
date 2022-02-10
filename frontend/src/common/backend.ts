@@ -1,6 +1,5 @@
 import AxiosStatic, { AxiosRequestConfig, AxiosResponse } from 'axios';
 import authPromise from './auth';
-import { BackendError, ConflictError, ForbiddenError, NotFoundError } from './error';
 
 const axiosBaseCfg: AxiosRequestConfig = {
   baseURL: import.meta.env.DEV ? 'http://localhost:9090' : '',
@@ -47,7 +46,8 @@ class VaultService {
   }
 
   public async get(vaultId: string): Promise<VaultDto> {
-    return axiosAuth.get(`/vaults/${vaultId}`).then(response => response.data);
+    return axiosAuth.get(`/vaults/${vaultId}`).then(response => response.data)
+      .catch((err) => rethrowAndConvertIfExpected(err, 404));
   }
 
   public async getMembers(vaultId: string): Promise<UserDto[]> {
@@ -55,7 +55,8 @@ class VaultService {
   }
 
   public async addMember(vaultId: string, userId: string): Promise<AxiosResponse<void>> {
-    return axiosAuth.put(`/vaults/${vaultId}/members/${userId}`);
+    return axiosAuth.put(`/vaults/${vaultId}/members/${userId}`)
+      .catch((err) => rethrowAndConvertIfExpected(err, 404));
   }
 
   public async getDevicesRequiringAccessGrant(vaultId: string): Promise<DeviceDto[]> {
@@ -69,17 +70,20 @@ class VaultService {
   }
 
   public async grantAccess(vaultId: string, deviceId: string, jwe: string) {
-    await axiosAuth.put(`/vaults/${vaultId}/keys/${deviceId}`, jwe, { headers: { 'Content-Type': 'text/plain' } });
+    await axiosAuth.put(`/vaults/${vaultId}/keys/${deviceId}`, jwe, { headers: { 'Content-Type': 'text/plain' } })
+      .catch((err) => rethrowAndConvertIfExpected(err, 404, 409));
   }
 
   public async revokeUserAccess(vaultId: string, userId: string) {
-    await axiosAuth.delete(`/vaults/${vaultId}/members/${userId}`);
+    await axiosAuth.delete(`/vaults/${vaultId}/members/${userId}`)
+      .catch((err) => rethrowAndConvertIfExpected(err, 404));
   }
 }
 class DeviceService {
 
   public async removeDevice(deviceId: string): Promise<AxiosResponse<any>> {
-    return axiosAuth.delete(`/devices/${deviceId}`);
+    return axiosAuth.delete(`/devices/${deviceId}`)
+      .catch((err) => rethrowAndConvertIfExpected(err, 404));
   }
 
 }
@@ -132,3 +136,28 @@ function rethrowAndConvertIfExpected(error: unknown, ...expectedStatusCodes: num
 }
 
 export default services;
+
+//-- Error thrown by this module --
+export class BackendError extends Error {
+  constructor(msg: string) {
+    super(msg);
+  }
+}
+
+export class ForbiddenError extends BackendError {
+  constructor() {
+    super('Not authorized to access resource');
+  }
+}
+
+export class NotFoundError extends BackendError {
+  constructor() {
+    super('Requested resource not found');
+  }
+}
+
+export class ConflictError extends BackendError {
+  constructor() {
+    super('Resource already exists');
+  }
+}

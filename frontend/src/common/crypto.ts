@@ -6,6 +6,16 @@ export class WrappedMasterkey {
   constructor(readonly encrypted: string, readonly salt: string, readonly iterations: number) { }
 }
 
+export class UnwrapKeyError extends Error {
+  readonly actualError: any;
+
+  constructor(actualError: any) {
+    super('Unwrapping key failed');
+    this.actualError = actualError;
+  }
+
+}
+
 export interface VaultConfigPayload {
   jti: string
   format: number
@@ -98,22 +108,28 @@ export class Masterkey {
    * @param password Password used for wrapping
    * @param wrapped The wrapped key
    * @returns The unwrapped masterkey.
+   * @throws WrongPasswordError, if the wrong password is used
    */
   public static async unwrap(password: string, wrapped: WrappedMasterkey): Promise<Masterkey> {
     const kek = Masterkey.pbkdf2(password, base64url.parse(wrapped.salt, { loose: true }), wrapped.iterations);
     const encrypted = base64url.parse(wrapped.encrypted, { loose: true });
 
-    const key = crypto.subtle.unwrapKey(
-      'raw',
-      encrypted,
-      await kek,
-      'AES-KW',
-      Masterkey.KEY_DESIGNATION,
-      true,
-      ['sign']
-    );
-    return new Masterkey(await key);
+    try {
+      const key = crypto.subtle.unwrapKey(
+        'raw',
+        encrypted,
+        await kek,
+        'AES-KW',
+        Masterkey.KEY_DESIGNATION,
+        true,
+        ['sign']
+      );
+      return new Masterkey(await key);
+    } catch (error) {
+      throw new UnwrapKeyError(error);
+    }
   }
+
 
   public async createVaultConfig(kid: string, hubConfig: VaultConfigHeaderHub, payload: VaultConfigPayload): Promise<string> {
     const header = JSON.stringify({

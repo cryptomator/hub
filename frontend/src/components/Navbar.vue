@@ -59,9 +59,9 @@
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
 import { MenuIcon, XIcon } from '@heroicons/vue/outline';
 import md5 from 'blueimp-md5';
-import { computed, onMounted, ref } from 'vue';
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { UserDto } from '../common/backend';
+import { UserDto } from '../common/backend';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -74,23 +74,16 @@ const profileDropdown = [
   { name: 'nav.profile.signOut', to: '/logout' },
 ];
 
-const me = ref<UserDto>();
-
 const pictureUrl = computed(() => getPictureUrl());
 
-onMounted(async () => {
-  try {
-    me.value = await backend.users.me();
-  } catch (error) {
-    // TODO: error handling
-    console.error('Retrieving current user failed.', error);
-  }
-});
+const props = defineProps<{
+  me : UserDto
+}>();
 
 function getPictureUrl(): string {
-  let emailHash = md5(me.value?.email.trim().toLowerCase() ?? '');
+  let emailHash = md5(props.me.email.trim().toLowerCase());
   let gravatarUrl = `https://www.gravatar.com/avatar/${emailHash}?d=identicon`;
-  return me.value?.pictureUrl ?? gravatarUrl;
+  return props.me.pictureUrl ?? gravatarUrl;
 }
 
 </script>

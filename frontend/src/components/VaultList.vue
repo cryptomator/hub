@@ -1,6 +1,11 @@
 <template>
   <div v-if="vaults == null">
-    {{ t('common.loading') }}
+    <div v-if="onFetchError == null">
+      {{ t('common.loading') }}
+    </div>
+    <div v-else>
+      <FetchError :error="onFetchError" :retry="fetchData"/>
+    </div>
   </div>
 
   <div v-else-if="vaults.length == 0" class="text-center">
@@ -63,22 +68,28 @@ import { useI18n } from 'vue-i18n';
 import backend, { VaultDto } from '../common/backend';
 import SlideOver from './SlideOver.vue';
 import VaultDetails from './VaultDetails.vue';
+import FetchError from './FetchError.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 
 const vaultDetailsSlideOver = ref<typeof SlideOver>();
+const onFetchError = ref<Error | null>();
 
 const vaults = ref<VaultDto[]>();
 const selectedVault = ref<VaultDto | null>(null);
 
-onMounted(async () => {
+onMounted(fetchData);
+
+async function fetchData() {
+  onFetchError.value = null;
   try {
     vaults.value = await backend.vaults.listSharedOrOwned();
   } catch (error) {
-    // TODO: error handling
     console.error('Retrieving vault list failed.', error);
+    onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
-});
+}
+
 
 function onVaultClick(vault: VaultDto) {
   selectedVault.value = vault;

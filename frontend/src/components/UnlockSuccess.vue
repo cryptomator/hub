@@ -1,7 +1,12 @@
 <template>
   <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
     <div v-if="me == null">
-      Loading…
+      <div v-if="onFetchError == null">
+        {{ t('common.loading') }}
+      </div>
+      <div v-else>
+        <FetchError :error="onFetchError" :retry="fetchData"/>
+      </div>
     </div>
 
     <div v-else>
@@ -14,6 +19,7 @@
         <div class="absolute inset-0">
           <div class="absolute inset-0 bg-gradient-to-r from-primary-l1 to-primary mix-blend-multiply" />
         </div>
+        <!-- TODO: localize-->
         <div class="relative px-4 py-16 sm:px-6 sm:py-24 lg:py-32 lg:px-8">
           <h1 class="text-center text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl text-white">
             Welcome back, {{ me.name }}!
@@ -50,7 +56,11 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import backend, { UserDto } from '../common/backend';
+import FetchError from './FetchError.vue';
+
+const { t } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{
   vaultId: string,
@@ -76,14 +86,18 @@ enum DeviceState {
 }
 
 const me = ref<UserDto>();
+const onFetchError = ref<Error | null>();
 
-onMounted(async () => {
+onMounted(fetchData);
+
+async function fetchData() {
+  onFetchError.value = null;
   try {
     me.value = await backend.users.me(true, true);
-  } catch (error) {
-    // TODO: error handling
-    console.error('Retrieving user information failed.', error);
+  } catch (err) {
+    console.error('Retrieving user information failed.', err);
+    onFetchError.value = err instanceof Error ? err : new Error('Unknown Error');
   }
-});
+}
 
 </script>
