@@ -51,6 +51,8 @@ jobs:
         run: mvn -B clean package -DskipTests
         env:
           QUARKUS_APPLICATION_VERSION: ${{ steps.get_tag.outputs.VERSION }}
+          QUARKUS_JIB_PLATFORMS: linux/amd64,linux/arm64/v8
+          QUARKUS_CONTAINER_IMAGE_ADDITIONAL_TAGS: latest
           QUARKUS_CONTAINER_IMAGE_BUILD: true
           QUARKUS_CONTAINER_IMAGE_PUSH: true
           QUARKUS_CONTAINER_IMAGE_REGISTRY: ghcr.io
