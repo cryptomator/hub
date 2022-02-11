@@ -15,7 +15,9 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <quarkus.container-image.group>cryptomator</quarkus.container-image.group>
     <quarkus.container-image.name>hub</quarkus.container-image.name>
-    <quarkus.platform.version>2.5.0.Final</quarkus.platform.version>
+    <quarkus.platform.version>2.6.3.Final</quarkus.platform.version>
+    <quarkus.native.builder-image>quay.io/quarkus/ubi-quarkus-mandrel:22.0-java17</quarkus.native.builder-image>
+    <quarkus.jib.base-jvm-image>eclipse-temurin:17-jre</quarkus.jib.base-jvm-image> <!-- irrelevant for -Pnative -->
     <surefire-plugin.version>3.0.0-M5</surefire-plugin.version>
   </properties>
 
@@ -38,11 +40,11 @@
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-resteasy</artifactId>
+      <artifactId>quarkus-smallrye-openapi</artifactId>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-smallrye-openapi</artifactId>
+      <artifactId>quarkus-smallrye-health</artifactId>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>

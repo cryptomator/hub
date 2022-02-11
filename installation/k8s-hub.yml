@@ -1,0 +1,77 @@
+# TODO: Remove Comment when publishing
+# 
+# To pull the container from ghcr private repo, you need to `docker login ghcr.io` using a [personal access token](https://github.com/settings/tokens).
+# Then run: `kubectl create secret docker-registry ghcr-secret --docker-server=ghcr.io --docker-username=<github-username> --docker-password=<github-personal-access-token>  --docker-email=<email-address>`
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cryptomator-hub
+  labels:
+    app: cryptomator-hub
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cryptomator-hub
+  template:
+    metadata:
+      labels:
+        app: cryptomator-hub
+    spec:
+      containers:
+      - name: cryptomator-hub
+        image: ghcr.io/cryptomator/hub:latest
+        resources:
+          limits:
+            cpu: 500m
+            memory: 256Mi
+          requests:
+            cpu: 100m
+            memory: 64Mi
+        ports:
+        - containerPort: 8080
+        startupProbe:
+          httpGet:
+            path: /q/health/started
+            port: 8080
+          failureThreshold: 30
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /q/health/live
+            port: 8080
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 1
+        env:
+        - name: HUB_CONFIG_PATH
+          value: /hub/config.properties
+        - name: QUARKUS_HTTP_PORT
+          value: "8080"
+        - name: QUARKUS_DATASOURCE_JDBC_URL
+          value: jdbc:h2:file:/hub/db
+        - name: QUARKUS_OIDC_AUTH_SERVER_URL
+          value: https://keycloak.example.com/auth
+        volumeMounts:
+        - mountPath: /hub
+          name: hub-data
+      volumes:
+      - name: hub-data
+        emptyDir: {}
+      imagePullSecrets: # TODO remove when publishing
+      - name: ghcr-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cryptomator-hub-service
+spec:
+  selector:
+    app: cryptomator-hub
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: 8080
+---
