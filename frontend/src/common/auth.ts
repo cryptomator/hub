@@ -5,10 +5,10 @@ class Auth {
   private readonly keycloak: KeycloakInstance;
 
   static async build(cfg: ConfigDto): Promise<Auth> {
-    console.assert(cfg.setupCompleted, 'did not run setup yet');
     const keycloak = newKeycloak({
+      
       url: `${cfg.keycloakUrl}`,
-      realm: 'cryptomator', // TODO: read from config
+      realm: `${cfg.keycloakRealm}`,
       clientId: 'cryptomator-hub', // TODO: read from config
     });
     await keycloak.init({
@@ -51,7 +51,6 @@ class Auth {
 
 // this is a lazy singleton:
 const instance: Promise<Auth> = (async () => {
-  await config.awaitSetupCompletion();
   return await Auth.build(config.get());
 })();
 
