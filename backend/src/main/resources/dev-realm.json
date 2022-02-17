@@ -1,0 +1,107 @@
+{
+  "id": "cryptomator",
+  "realm": "cryptomator",
+  "displayName": "Cryptomator Hub",
+  "enabled": true,
+  "sslRequired": "external",
+  "roles": {
+    "realm": [
+      {
+        "name": "user",
+        "description": "User",
+        "composite": true,
+        "composites": {
+          "realm": [
+            "default-roles-cryptomator"
+          ]
+        }
+      },
+      {
+        "name": "admin",
+        "description": "Administrator",
+        "composite": true,
+        "composites": {
+          "realm": [
+            "user"
+          ],
+          "client": {
+            "cryptomator-hub": [
+              "vault-owner"
+            ]
+          }
+        }
+      }
+    ],
+    "client": {
+      "cryptomator-hub": [
+        {
+          "name": "vault-owner",
+          "description": "Vault Owner"
+        }
+      ]
+    }
+  },
+  "users": [
+    {
+      "username": "admin",
+      "email": "admin@localhost",
+      "enabled": true,
+      "attributes": {
+        "picture": "https://cryptomator.org/img/logo.svg"
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin"
+        }
+      ],
+      "realmRoles": [
+        "admin"
+      ]
+    }
+  ],
+  "scopeMappings": [
+    {
+      "client": "cryptomator-hub",
+      "roles": [
+        "user",
+        "admin"
+      ]
+    }
+  ],
+  "clientScopeMappings": {
+    "account": [
+      {
+        "client": "cryptomator-hub",
+        "roles": [
+          "vault-owner"
+        ]
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "cryptomator-hub",
+      "serviceAccountsEnabled": false,
+      "publicClient": true,
+      "name": "Cryptomator Hub",
+      "enabled": true,
+      "redirectUris": [
+        "http://127.0.0.1/*",
+        "http://localhost:3000/*"
+      ],
+      "webOrigins": [
+        "+"
+      ],
+      "bearerOnly": false,
+      "frontchannelLogout": false,
+      "protocol": "openid-connect",
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
+    }
+  ],
+  "browserSecurityHeaders": {
+    "contentSecurityPolicy": "frame-src 'self'; frame-ancestors 'self' http://localhost:*; object-src 'none';"
+  }
+}

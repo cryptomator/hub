@@ -13,7 +13,7 @@ export class VaultConfig {
   }
 
   public static async create(vaultId: string, masterkey: Masterkey): Promise<VaultConfig> {
-    const kid = `hub+http://localhost:9090/vaults/${vaultId}`;
+    const kid = `hub+http://localhost:8080/vaults/${vaultId}`;
 
     const hubConfig: VaultConfigHeaderHub = {
       clientId: 'cryptomator-hub',

@@ -1,14 +1,12 @@
 import { createRouter, createWebHashHistory, RouteRecordRaw } from 'vue-router';
 import authPromise from '../common/auth';
 import backend from '../common/backend';
-import config from '../common/config';
 import CreateVault from '../components/CreateVault.vue';
 import DeviceList from '../components/DeviceList.vue';
 import LoginComponent from '../components/Login.vue';
 import LogoutComponent from '../components/Logout.vue';
 import MainComponent from '../components/Main.vue';
 import Settings from '../components/Settings.vue';
-import SetupComponent from '../components/Setup.vue';
 import UnlockError from '../components/UnlockError.vue';
 import UnlockSuccess from '../components/UnlockSuccess.vue';
 import VaultDetails from '../components/VaultDetails.vue';
@@ -30,11 +28,6 @@ const routes: RouteRecordRaw[] = [
         next(error);
       });
     }
-  },
-  {
-    path: '/setup',
-    component: SetupComponent,
-    meta: { skipAuth: true, skipSetup: true }
   },
   {
     path: '/logout',
@@ -96,18 +89,7 @@ const router = createRouter({
   routes: routes
 });
 
-// FIRST we must check whether the setup wizard ran
-router.beforeEach((to, from, next) => {
-  if (to.meta.skipSetup) {
-    next();
-  } else if (config.get().setupCompleted) {
-    next();
-  } else {
-    next({ path: '/setup' });
-  }
-});
-
-// SECOND check auth (requires setup)
+// FIRST check auth
 router.beforeEach((to, from, next) => {
   if (to.meta.skipAuth) {
     next();
@@ -120,7 +102,7 @@ router.beforeEach((to, from, next) => {
   }
 });
 
-// THIRD update user data (requires auth)
+// SECOND update user data (requires auth)
 router.beforeEach((to, from, next) => {
   if ('login' in to.query) {
     authPromise.then(async auth => {

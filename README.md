@@ -12,7 +12,7 @@ During development, run this from `frontend` dir:
 npm run dev
 ```
 
-## Web Backend (Port 9090)
+## Web Backend (Port 8080)
 
 During development, start Docker, then run this from `backend` dir:
 
@@ -26,9 +26,9 @@ Or on ARM64:
 mvn clean quarkus:dev -Dquarkus.keycloak.devservices.image-name=mihaibob/keycloak:15.0.1
 ```
 
-### Accessing Keycloak
+### Accessing Keycloak (Port 8180)
 
-Keycloak is started by Quarkus as a "Dev Service" on a system-assigned port. To access dev services, visit [http://localhost:9090/q/dev](http://localhost:9090/q/dev).
+During development, Keycloak is started as a Quarkus Dev Service using port 8180. When using alternative ports, you can also find it via [http://localhost:8080/q/dev](http://localhost:8080/q/dev).
 
 ### Testing rest services via CLI:
 
@@ -38,7 +38,7 @@ Then, retrieve an `access_token` from keycloak:
 
 ```
 export access_token=$(\
-    curl -X POST http://localhost:port/auth/realms/cryptomator/protocol/openid-connect/token \
+    curl -X POST http://localhost:8180/auth/realms/cryptomator/protocol/openid-connect/token \
     --user cryptomator-hub:CHANGEME \
     -H 'content-type: application/x-www-form-urlencoded' \
     -d 'username=owner&password=owner&grant_type=password' | jq --raw-output '.access_token' \
@@ -49,6 +49,6 @@ Then use this token as a Bearer Token:
 
 ```shell
 curl -v -X GET \
-  http://localhost:9090/users/me \
+  http://localhost:8080/users/me \
   -H "Authorization: Bearer "$access_token
 ```
