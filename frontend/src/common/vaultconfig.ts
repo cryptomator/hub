@@ -13,13 +13,15 @@ export class VaultConfig {
   }
 
   public static async create(vaultId: string, masterkey: Masterkey): Promise<VaultConfig> {
-    const kid = `hub+http://localhost:8080/vaults/${vaultId}`;
+    const cfg = config.get();
+
+    const kid = `hub+http://localhost:8080/vaults/${vaultId}`; // TODO: read from config
 
     const hubConfig: VaultConfigHeaderHub = {
-      clientId: 'cryptomator-hub',
-      authEndpoint: `${config.get().keycloakUrl}realms/cryptomator/protocol/openid-connect/auth`, // TODO: read full endpoint url from config
-      tokenEndpoint: `${config.get().keycloakUrl}realms/cryptomator/protocol/openid-connect/token`,
-      deviceRegistrationUrl: `${location.protocol}//${location.host}${import.meta.env.BASE_URL}#/devices/register?vault=${vaultId}`,
+      clientId: 'cryptomator-hub', // TODO: read from config
+      authEndpoint: `${cfg.keycloakUrl}/realms/${cfg.keycloakRealm}/protocol/openid-connect/auth`, // TODO: read from config
+      tokenEndpoint: `${cfg.keycloakUrl}/realms/${cfg.keycloakRealm}/protocol/openid-connect/token`, // TODO: read from config
+      devicesResourceUrl: 'http://localhost:8080/devices/', // TODO: read from config
       authSuccessUrl: `${location.protocol}//${location.host}${import.meta.env.BASE_URL}#/unlock-success?vault=${vaultId}`,
       authErrorUrl: `${location.protocol}//${location.host}${import.meta.env.BASE_URL}#/unlock-error?vault=${vaultId}`
     };

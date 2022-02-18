@@ -27,7 +27,7 @@ export interface VaultConfigHeaderHub {
   clientId: string
   authEndpoint: string
   tokenEndpoint: string
-  deviceRegistrationUrl: string,
+  devicesResourceUrl: string,
   authSuccessUrl: string
   authErrorUrl: string
 }
