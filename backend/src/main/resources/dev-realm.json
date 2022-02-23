@@ -25,7 +25,7 @@
             "user"
           ],
           "client": {
-            "cryptomator-hub": [
+            "cryptomatorhub": [
               "vault-owner"
             ]
           }
@@ -33,7 +33,7 @@
       }
     ],
     "client": {
-      "cryptomator-hub": [
+      "cryptomatorhub": [
         {
           "name": "vault-owner",
           "description": "Vault Owner"
@@ -62,7 +62,7 @@
   ],
   "scopeMappings": [
     {
-      "client": "cryptomator-hub",
+      "client": "cryptomatorhub",
       "roles": [
         "user",
         "admin"
@@ -72,7 +72,7 @@
   "clientScopeMappings": {
     "account": [
       {
-        "client": "cryptomator-hub",
+        "client": "cryptomatorhub",
         "roles": [
           "vault-owner"
         ]
@@ -81,7 +81,7 @@
   },
   "clients": [
     {
-      "clientId": "cryptomator-hub",
+      "clientId": "cryptomatorhub",
       "serviceAccountsEnabled": false,
       "publicClient": true,
       "name": "Cryptomator Hub",

@@ -8,7 +8,7 @@ const axios = AxiosStatic.create({
 });
 
 export class ConfigDto {
-  constructor(public keycloakRealm: string, public keycloakUrl: string) { }
+  constructor(public keycloakRealm: string, public keycloakUrl: string, public keycloakClientId: string) { }
 }
 
 class ConfigWrapper {

@@ -18,7 +18,7 @@ export class VaultConfig {
     const kid = `hub+http://localhost:8080/vaults/${vaultId}`; // TODO: read from config
 
     const hubConfig: VaultConfigHeaderHub = {
-      clientId: 'cryptomator-hub', // TODO: read from config
+      clientId: cfg.keycloakClientId,
       authEndpoint: `${cfg.keycloakUrl}/realms/${cfg.keycloakRealm}/protocol/openid-connect/auth`, // TODO: read from config
       tokenEndpoint: `${cfg.keycloakUrl}/realms/${cfg.keycloakRealm}/protocol/openid-connect/token`, // TODO: read from config
       devicesResourceUrl: 'http://localhost:8080/devices/', // TODO: read from config

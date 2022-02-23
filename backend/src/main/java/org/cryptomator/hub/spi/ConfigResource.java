@@ -9,30 +9,31 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import java.util.StringJoiner;
-import java.util.StringTokenizer;
 
 @Path("/config")
 public class ConfigResource {
 
-	private static final String KC_REALM_DELIM = "/realms/";
+	@Inject
+	@ConfigProperty(name = "hub.keycloak.public-url", defaultValue = "")
+	String keycloakUrl;
 
 	@Inject
-	@ConfigProperty(name = "quarkus.oidc.auth-server-url", defaultValue = "")
-	String oidcUrl;
+	@ConfigProperty(name = "hub.keycloak.realm", defaultValue = "")
+	String keycloakRealm;
+
+	@Inject
+	@ConfigProperty(name = "quarkus.oidc.client-id", defaultValue = "")
+	String keycloakClientId;
 
 	@PermitAll
 	@GET
 	@Path("/")
 	@Produces(MediaType.APPLICATION_JSON)
 	public ConfigDto getConfig() {
-		int delimPos = oidcUrl.indexOf(KC_REALM_DELIM);
-		var kcBaseUrl = oidcUrl.substring(0, delimPos);
-		var kcRealmName = oidcUrl.substring(delimPos + KC_REALM_DELIM.length());
-		return new ConfigDto(kcBaseUrl, kcRealmName);
+		return new ConfigDto(keycloakUrl, keycloakRealm, keycloakClientId);
 	}
 
-	public record ConfigDto(@JsonProperty("keycloakUrl") String keycloakUrl, @JsonProperty("keycloakRealm") String keycloakRealm) {
+	public record ConfigDto(@JsonProperty("keycloakUrl") String keycloakUrl, @JsonProperty("keycloakRealm") String keycloakRealm, @JsonProperty("keycloakClientId") String keycloakClientId) {
 	}
 
 }

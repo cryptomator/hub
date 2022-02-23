@@ -6,10 +6,9 @@ class Auth {
 
   static async build(cfg: ConfigDto): Promise<Auth> {
     const keycloak = newKeycloak({
-      
-      url: `${cfg.keycloakUrl}`,
-      realm: `${cfg.keycloakRealm}`,
-      clientId: 'cryptomator-hub', // TODO: read from config
+      url: cfg.keycloakUrl,
+      realm: cfg.keycloakRealm,
+      clientId: cfg.keycloakClientId
     });
     await keycloak.init({
       onLoad: 'check-sso',
