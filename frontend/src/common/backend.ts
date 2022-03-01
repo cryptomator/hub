@@ -27,7 +27,7 @@ axiosAuth.interceptors.request.use(async request => {
 /* DTOs */
 
 export class VaultDto {
-  constructor(public id: string, public name: string, public masterkey: string, public iterations: number, public salt: string) { }
+  constructor(public id: string, public name: string, public description: string, public creationTime: Date, public masterkey: string, public iterations: number, public salt: string) { }
 }
 
 export class DeviceDto {
@@ -63,8 +63,8 @@ class VaultService {
     return axiosAuth.get(`/vaults/${vaultId}/devices-requiring-access-grant`).then(response => response.data);
   }
 
-  public async createVault(vaultId: string, name: string, masterkey: string, iterations: number, salt: string): Promise<AxiosResponse<any>> {
-    const body: VaultDto = { id: vaultId, name: name, masterkey: masterkey, iterations: iterations, salt: salt };
+  public async createVault(vaultId: string, name: string, description: string, creationTime: Date, masterkey: string, iterations: number, salt: string): Promise<AxiosResponse<any>> {
+    const body: VaultDto = { id: vaultId, name: name, description: description, creationTime: creationTime, masterkey: masterkey, iterations: iterations, salt: salt };
     return axiosAuth.put(`/vaults/${vaultId}`, body)
       .catch((err) => rethrowAndConvertIfExpected(err, 404, 409));
   }

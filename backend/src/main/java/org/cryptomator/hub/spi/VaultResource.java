@@ -1,5 +1,6 @@
 package org.cryptomator.hub.spi;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.cryptomator.hub.entities.Access;
 import org.cryptomator.hub.entities.Device;
@@ -29,6 +30,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.net.URI;
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -163,7 +165,7 @@ public class VaultResource {
 	public VaultDto get(@PathParam("vaultId") String vaultId) {
 		// TODO: check if user has permission to access this vault?
 		Vault vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-		return new VaultDto(vaultId, vault.name, vault.masterkey, vault.iterations, vault.salt);
+		return VaultDto.fromEntity(vault);
 	}
 
 	@PUT
@@ -188,14 +190,18 @@ public class VaultResource {
 		return Response.created(URI.create(".")).build();
 	}
 
-	public static record VaultDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("masterkey") String masterkey, @JsonProperty("iterations") String iterations,
-								  @JsonProperty("salt") String salt) {
+	public static record VaultDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("description") String description,
+								  @JsonProperty("creationTime") @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSX") Timestamp creationTime, @JsonProperty("masterkey") String masterkey,
+								  @JsonProperty("iterations") String iterations, @JsonProperty("salt") String salt
+	) {
 
 		public Vault toVault(User owner, String id) {
 			var vault = new Vault();
 			vault.id = id;
 			vault.owner = owner;
 			vault.name = name;
+			vault.description = description;
+			vault.creationTime = creationTime;
 			vault.masterkey = masterkey;
 			vault.iterations = iterations;
 			vault.salt = salt;
@@ -203,7 +209,7 @@ public class VaultResource {
 		}
 
 		public static VaultDto fromEntity(Vault entity) {
-			return new VaultDto(entity.id, entity.name, entity.masterkey, entity.iterations, entity.salt);
+			return new VaultDto(entity.id, entity.name, entity.description, entity.creationTime, entity.masterkey, entity.iterations, entity.salt);
 		}
 	}
 }
