@@ -1,7 +1,7 @@
 package org.cryptomator.hub.spi;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.cryptomator.hub.entities.Access;
+import org.cryptomator.hub.entities.Useraccess;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
@@ -43,7 +43,7 @@ public class VaultResource {
 	@RolesAllowed("user")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
-	@Operation(summary = "list all accessible vaults", description = "list all vaults that have been shared with the currently logged in user")
+	@Operation(summary = "list all accessible vaults", description = "list all vaults that have been shared with the currently logged in user or a group in wich this user is")
 	public List<VaultDto> getSharedOrOwned() {
 		var currentUserId = jwt.getSubject();
 		Stream<Vault> resultStream = Vault.findAccessibleOrOwnerByUser(currentUserId);
@@ -58,6 +58,8 @@ public class VaultResource {
 	@Operation(summary = "list vault members", description = "list all users that this vault has been shared with")
 	public List<UsersResource.UserDto> getMembers(@PathParam("vaultId") String vaultId) {
 		Vault vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
+		// TODO add all group users too?
+
 		return vault.members.stream().map(UsersResource.UserDto::fromEntity).toList();
 	}
 
@@ -77,6 +79,8 @@ public class VaultResource {
 		return Response.status(Response.Status.CREATED).build();
 	}
 
+	// TODO add group
+
 	@DELETE
 	@Path("/{vaultId}/members/{userId}")
 	@RolesAllowed("vault-owner")
@@ -91,6 +95,8 @@ public class VaultResource {
 		vault.persist();
 		return Response.status(Response.Status.NO_CONTENT).build();
 	}
+
+	// TODO remove group
 
 	@GET
 	@Path("/{vaultId}/devices-requiring-access-grant")
@@ -113,9 +119,10 @@ public class VaultResource {
 	@APIResponse(responseCode = "404", description = "unknown device")
 	public String unlock(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId) {
 		var currentUserId = jwt.getSubject();
-		var access = Access.unlock(vaultId, deviceId, currentUserId);
-		if (access != null) {
-			return access.jwe;
+		var useraccess = Useraccess.unlock(vaultId, deviceId, currentUserId);
+		//var access = Groupaccess.unlock(vaultId, deviceId, currentUserId); FIXME check unlock for groups too
+		if (useraccess != null) {
+			return useraccess.jwe;
 		} else if (Device.findById(deviceId) == null) {
 			throw new NotFoundException("No such device.");
 		} else {
@@ -136,7 +143,9 @@ public class VaultResource {
 		Vault vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		Device device = Device.<Device>findByIdOptional(deviceId).orElseThrow(NotFoundException::new);
 
-		var access = new Access();
+		// FIXME differentiate between group and user access
+
+		var access = new Useraccess();
 		access.vault = vault;
 		access.user = device.owner;
 		access.device = device;
@@ -188,8 +197,8 @@ public class VaultResource {
 		return Response.created(URI.create(".")).build();
 	}
 
-	public static record VaultDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("masterkey") String masterkey, @JsonProperty("iterations") String iterations,
-								  @JsonProperty("salt") String salt) {
+	public record VaultDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("masterkey") String masterkey, @JsonProperty("iterations") String iterations,
+						   @JsonProperty("salt") String salt) {
 
 		public Vault toVault(User owner, String id) {
 			var vault = new Vault();

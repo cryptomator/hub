@@ -12,6 +12,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.transaction.Transactional;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -28,6 +29,9 @@ public class User extends PanacheEntityBase {
 
 	@OneToMany(mappedBy = "owner", cascade = {CascadeType.PERSIST}, orphanRemoval = true, fetch = FetchType.LAZY)
 	public Set<Vault> ownedVaults = new HashSet<>();
+
+	@ManyToMany(mappedBy = "members", fetch = FetchType.LAZY)
+	public Set<Group> groups = new HashSet<>();
 
 	@ManyToMany(mappedBy = "members")
 	public Set<Vault> sharedVaults = new HashSet<>();
@@ -79,6 +83,20 @@ public class User extends PanacheEntityBase {
 		user.name = name;
 		user.pictureUrl = pictureUrl;
 		user.email = email;
+		user.persist();
+	}
+
+	@Transactional(Transactional.TxType.REQUIRED)
+	public static void createOrUpdate(String id, String name, String pictureUrl, String email, Set<Group> groups) {
+		User user = findById(id);
+		if (user == null) {
+			user = new User();
+			user.id = id;
+		}
+		user.name = name;
+		user.pictureUrl = pictureUrl;
+		user.email = email;
+		user.groups = groups;
 		user.persist();
 	}
 }

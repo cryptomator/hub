@@ -3,7 +3,6 @@ package org.cryptomator.hub.entities;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.panache.common.Parameters;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -26,8 +25,9 @@ import java.util.stream.Stream;
 				FROM Vault v
 					INNER JOIN v.members m
 					INNER JOIN m.devices d
-					LEFT JOIN d.access a ON a.id.vaultId = :vaultId AND a.id.deviceId = d
-					WHERE v.id = :vaultId AND a.vault IS NULL
+					LEFT JOIN d.useraccess ua ON ua.id.vaultId = :vaultId AND ua.id.deviceId = d.id
+					LEFT JOIN d.groupaccess ga ON ga.id.vaultId = :vaultId AND ga.id.deviceId = d.id
+					WHERE v.id = :vaultId AND (ua.vault IS NULL OR ga.vault IS NULL)
 				"""
 )
 public class Device extends PanacheEntityBase {
@@ -41,7 +41,10 @@ public class Device extends PanacheEntityBase {
 	public User owner;
 
 	@OneToMany(mappedBy = "device", fetch = FetchType.LAZY)
-	public Set<Access> access = new HashSet<>();
+	public Set<Useraccess> useraccess = new HashSet<>();
+
+	@OneToMany(mappedBy = "device", fetch = FetchType.LAZY)
+	public Set<Groupaccess> groupaccess = new HashSet<>();
 
 	@Column(name = "name", nullable = false)
 	public String name;

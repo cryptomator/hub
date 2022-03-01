@@ -75,7 +75,7 @@ public class DeviceResource {
 		}
 	}
 
-	public static record DeviceDto(@JsonProperty("id") String id, @JsonProperty("name") String name,
+	public record DeviceDto(@JsonProperty("id") String id, @JsonProperty("name") String name,
 								   @JsonProperty("publicKey") String publicKey,
 								   @JsonProperty("owner") String ownerId,
 								   @JsonProperty("accessTo") Set<VaultResource.VaultDto> accessTo) {

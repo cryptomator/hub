@@ -2,7 +2,8 @@ package org.cryptomator.hub.spi;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
-import org.cryptomator.hub.entities.Access;
+import org.cryptomator.hub.entities.Groupaccess;
+import org.cryptomator.hub.entities.Useraccess;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.User;
 import org.eclipse.microprofile.jwt.JsonWebToken;
@@ -25,6 +26,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Path("/users")
 @Produces(MediaType.TEXT_PLAIN)
@@ -52,13 +54,18 @@ public class UsersResource {
 	@Operation(summary = "get the logged-in user")
 	public UserDto getMe(@QueryParam("withDevices") boolean withDevices, @QueryParam("withAccessibleVaults") boolean withAccessibleVaults) {
 		User user = User.findById(jwt.getSubject());
-		Function<Access, VaultResource.VaultDto> mapAccessibleVaults = a -> new VaultResource.VaultDto(a.vault.id, a.vault.name, null, null, null);
 		Function<Device, DeviceResource.DeviceDto> mapDevices = withAccessibleVaults //
-				? d -> new DeviceResource.DeviceDto(d.id, d.name, d.publickey, d.owner.id, d.access.stream().map(mapAccessibleVaults).collect(Collectors.toSet())) //
+				? d -> new DeviceResource.DeviceDto(d.id, d.name, d.publickey, d.owner.id, accessTo(d.useraccess, d.groupaccess)) //
 				: d -> new DeviceResource.DeviceDto(d.id, d.name, d.publickey, d.owner.id, Set.of());
 		return withDevices //
 				? new UserDto(user.id, user.name, user.pictureUrl, user.email, user.devices.stream().map(mapDevices).collect(Collectors.toSet()))
 				: new UserDto(user.id, user.name, user.pictureUrl, user.email, Set.of());
+	}
+
+	private Set<VaultResource.VaultDto> accessTo(Set<Useraccess> useraccess, Set<Groupaccess> groupaccess) {
+		Function<Useraccess, VaultResource.VaultDto> mapUseraccessibleVaults = a -> new VaultResource.VaultDto(a.vault.id, a.vault.name, null, null, null);
+		Function<Groupaccess, VaultResource.VaultDto> mapGroupaccessibleVaults = a -> new VaultResource.VaultDto(a.vault.id, a.vault.name, null, null, null);
+		return Stream.concat(useraccess.stream().map(mapUseraccessibleVaults), groupaccess.stream().map(mapGroupaccessibleVaults)).collect(Collectors.toSet());
 	}
 
 	@GET
@@ -71,8 +78,8 @@ public class UsersResource {
 		return query.stream().map(UserDto::fromEntity).toList();
 	}
 
-	public static record UserDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("pictureUrl") String pictureUrl, @JsonProperty("email") String email,
-								 @JsonProperty("devices") Set<DeviceResource.DeviceDto> devices) {
+	public record UserDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("pictureUrl") String pictureUrl, @JsonProperty("email") String email,
+						  @JsonProperty("devices") Set<DeviceResource.DeviceDto> devices) {
 
 		public static UserDto fromEntity(User user) {
 			return new UserDto(user.id, user.name, user.pictureUrl, user.email, Set.of());
