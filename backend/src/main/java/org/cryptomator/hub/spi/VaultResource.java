@@ -31,6 +31,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -174,7 +175,8 @@ public class VaultResource {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.TEXT_PLAIN)
 	@Transactional
-	@Operation(summary = "creates a vault")
+	@Operation(summary = "creates a vault",
+			description = "Creates a vault with the given vault id. The creationTime in the vaultDto is ignored and the current server time is used.")
 	@APIResponse(responseCode = "201", description = "vault created")
 	@APIResponse(responseCode = "409", description = "vault with given id already exists")
 	public Response create(@PathParam("vaultId") String vaultId, VaultDto vaultDto) {
@@ -186,6 +188,7 @@ public class VaultResource {
 		}
 		User currentUser = User.findById(jwt.getSubject());
 		var vault = vaultDto.toVault(currentUser, vaultId);
+		vault.creationTime = Timestamp.from(Instant.now());
 		Vault.persist(vault);
 		return Response.created(URI.create(".")).build();
 	}
