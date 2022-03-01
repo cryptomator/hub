@@ -1,5 +1,8 @@
 import AxiosStatic, { AxiosRequestConfig, AxiosResponse } from 'axios';
+import dayjs from 'dayjs';
 import authPromise from './auth';
+
+const TIME_PLACEHOLDER = dayjs('1970-01-01T00:00:00.000+00:00');
 
 const axiosBaseCfg: AxiosRequestConfig = {
   baseURL: import.meta.env.DEV ? 'http://localhost:8080' : '',
@@ -27,7 +30,13 @@ axiosAuth.interceptors.request.use(async request => {
 /* DTOs */
 
 export class VaultDto {
-  constructor(public id: string, public name: string, public description: string, public creationTime: Date, public masterkey: string, public iterations: number, public salt: string) { }
+
+  public creationTime: dayjs.Dayjs;
+
+  constructor(public id: string, public name: string, public description: string, creationTime: string, public masterkey: string, public iterations: number, public salt: string) {
+    this.creationTime = dayjs(creationTime);
+  }
+
 }
 
 export class DeviceDto {
@@ -63,8 +72,8 @@ class VaultService {
     return axiosAuth.get(`/vaults/${vaultId}/devices-requiring-access-grant`).then(response => response.data);
   }
 
-  public async createVault(vaultId: string, name: string, description: string, creationTime: Date, masterkey: string, iterations: number, salt: string): Promise<AxiosResponse<any>> {
-    const body: VaultDto = { id: vaultId, name: name, description: description, creationTime: creationTime, masterkey: masterkey, iterations: iterations, salt: salt };
+  public async createVault(vaultId: string, name: string, description: string, masterkey: string, iterations: number, salt: string): Promise<AxiosResponse<any>> {
+    const body: VaultDto = { id: vaultId, name: name, description: description, creationTime: TIME_PLACEHOLDER, masterkey: masterkey, iterations: iterations, salt: salt };
     return axiosAuth.put(`/vaults/${vaultId}`, body)
       .catch((err) => rethrowAndConvertIfExpected(err, 404, 409));
   }

@@ -26,7 +26,7 @@
       </div>
       <div class="py-3 flex justify-between text-sm font-medium">
         <dt class="text-gray-500">Created</dt>
-        <dd class="text-gray-900">{{ vault?.creationTime }}</dd>
+        <dd class="text-gray-900">{{ vaultCTime }}</dd>
       </div>
     </dl>
 
@@ -90,6 +90,7 @@ import DownloadVaultTemplateDialog from './DownloadVaultTemplateDialog.vue';
 import GrantPermissionDialog from './GrantPermissionDialog.vue';
 import SearchInputGroup from './SearchInputGroup.vue';
 import FetchError from './FetchError.vue';
+import dayjs from 'dayjs';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -110,6 +111,9 @@ const grantPermissionDialog = ref<typeof GrantPermissionDialog>();
 const downloadingVaultTemplate = ref(false);
 const downloadVaultTemplateDialog = ref<typeof DownloadVaultTemplateDialog>();
 const vault = ref<VaultDto>();
+const vaultCTime = computed(() => {
+  return dayjs(vault.value?.creationTime).format('ddd, D MMM YYYY HH:mm:ss');
+} );
 const members = ref<UserDto[]>([]);
 const allUsers = ref<UserDto[]>([]);
 const devicesRequiringAccessGrant = ref<DeviceDto[]>([]);
