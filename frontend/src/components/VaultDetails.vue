@@ -8,24 +8,24 @@
   </div>
 
   <div v-else class="pb-16 space-y-6">
-    <!-- TODO: add metadata to vault in backend -->
-    <h3 class="font-medium text-gray-900">Description</h3>
+    <h3 class="font-medium text-gray-900">{{ t('vaultDetails.description.header') }}</h3>
     <div class="mt-2 flex items-center justify-between">
-      <p class="text-sm text-gray-500 italic">{{ vault?.description }}</p>
+      <p class="text-sm text-gray-500">{{ vault?.description }}</p>
+      <!-- TODO: add rest API to change vault metadata in backend -->
       <button v-if="false" type="button" class="-mr-2 h-8 w-8 bg-white rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary">
         <PencilIcon class="h-5 w-5" aria-hidden="true" />
         <span class="sr-only">Add description</span>
       </button>
     </div>
 
-    <h3 class="font-medium text-gray-900">Information</h3>
+    <h3 class="font-medium text-gray-900">{{ t('vaultDetails.information.header') }}</h3>
     <dl class="mt-2 border-t border-b border-gray-200 divide-y divide-gray-200">
       <div class="py-3 flex justify-between text-sm font-medium">
-        <dt class="text-gray-500">Owned by</dt>
+        <dt class="text-gray-500">{{ t('vaultDetails.information.ownedBy') }}</dt>
         <dd class="text-gray-900">{{ vault?.owner?.name }}</dd>
       </div>
       <div class="py-3 flex justify-between text-sm font-medium">
-        <dt class="text-gray-500">Created</dt>
+        <dt class="text-gray-500">{{ t('vaultDetails.information.created') }}</dt>
         <dd class="text-gray-900">{{ vaultCTime }}</dd>
       </div>
     </dl>

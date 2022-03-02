@@ -58,6 +58,10 @@
   "settings.general.title": "General",
   "settings.general.language.title": "Language",
 
+  "vaultDetails.description.header": "Description",
+  "vaultDetails.information.header": "Information",
+  "vaultDetails.information.ownedBy": "Owned by",
+  "vaultDetails.information.created": "Created",
   "vaultDetails.notFound": "Vault not found",
   "vaultDetails.sharedWith.title": "Shared with",
   "vaultDetails.updatePermissions": "Update Permissions",
