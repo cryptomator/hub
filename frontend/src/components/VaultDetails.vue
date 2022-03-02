@@ -20,9 +20,9 @@
 
     <h3 class="font-medium text-gray-900">Information</h3>
     <dl class="mt-2 border-t border-b border-gray-200 divide-y divide-gray-200">
-      <div v-if="false" class="py-3 flex justify-between text-sm font-medium">
+      <div class="py-3 flex justify-between text-sm font-medium">
         <dt class="text-gray-500">Owned by</dt>
-        <dd class="text-gray-900">Marie Culver</dd>
+        <dd class="text-gray-900">{{ vault?.owner?.name }}</dd>
       </div>
       <div class="py-3 flex justify-between text-sm font-medium">
         <dt class="text-gray-500">Created</dt>

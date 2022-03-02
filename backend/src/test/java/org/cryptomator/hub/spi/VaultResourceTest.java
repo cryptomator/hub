@@ -119,7 +119,7 @@ public class VaultResourceTest {
 		@Test
 		@DisplayName("PUT /vaults/vault1 returns 409")
 		public void testCreateVault1() {
-			var vaultDto = new VaultResource.VaultDto("vault1", "My Vault","Test vault 1", Timestamp.valueOf("1999-11-19 19:19:19"), "masterkey3", "42", "NaCl");
+			var vaultDto = new VaultResource.VaultDto("vault1", "My Vault","Test vault 1", Timestamp.valueOf("1999-11-19 19:19:19"), null, "masterkey3", "42", "NaCl");
 
 			given().contentType(ContentType.JSON).body(vaultDto)
 					.when().put("/vaults/{vaultId}", "vault1")
@@ -129,7 +129,7 @@ public class VaultResourceTest {
 		@Test
 		@DisplayName("PUT /vaults/vault3 returns 201")
 		public void testCreateVault2() {
-			var vaultDto = new VaultResource.VaultDto("vault3", "My Vault","Test vault 3", Timestamp.valueOf("2112-12-21 21:12:21"), "masterkey3", "42", "NaCl");
+			var vaultDto = new VaultResource.VaultDto("vault3", "My Vault","Test vault 3", Timestamp.valueOf("2112-12-21 21:12:21"), null, "masterkey3", "42", "NaCl");
 
 			given().contentType(ContentType.JSON).body(vaultDto)
 					.when().put("/vaults/{vaultId}", "vault3")

@@ -33,7 +33,7 @@ export class VaultDto {
 
   public creationTime: dayjs.Dayjs;
 
-  constructor(public id: string, public name: string, public description: string, creationTime: string, public masterkey: string, public iterations: number, public salt: string) {
+  constructor(public id: string, public name: string, public description: string, creationTime: string, public owner: UserDto | null, public masterkey: string, public iterations: number, public salt: string) {
     this.creationTime = dayjs(creationTime);
   }
 
@@ -73,7 +73,7 @@ class VaultService {
   }
 
   public async createVault(vaultId: string, name: string, description: string, masterkey: string, iterations: number, salt: string): Promise<AxiosResponse<any>> {
-    const body: VaultDto = { id: vaultId, name: name, description: description, creationTime: TIME_PLACEHOLDER, masterkey: masterkey, iterations: iterations, salt: salt };
+    const body: VaultDto = { id: vaultId, name: name, description: description, creationTime: TIME_PLACEHOLDER, owner: null, masterkey: masterkey, iterations: iterations, salt: salt };
     return axiosAuth.put(`/vaults/${vaultId}`, body)
       .catch((err) => rethrowAndConvertIfExpected(err, 404, 409));
   }

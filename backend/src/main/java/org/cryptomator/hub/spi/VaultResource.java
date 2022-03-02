@@ -61,7 +61,7 @@ public class VaultResource {
 	@Operation(summary = "list vault members", description = "list all users that this vault has been shared with")
 	public List<UsersResource.UserDto> getMembers(@PathParam("vaultId") String vaultId) {
 		Vault vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-		return vault.members.stream().map(UsersResource.UserDto::fromEntity).toList();
+		return vault.members.stream().map(UsersResource.UserDto::fromEntityWithoutDevices).toList();
 	}
 
 	@PUT
@@ -193,9 +193,10 @@ public class VaultResource {
 		return Response.created(URI.create(".")).build();
 	}
 
-	public static record VaultDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("description") String description,
-								  @JsonProperty("creationTime") @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSX") Timestamp creationTime, @JsonProperty("masterkey") String masterkey,
-								  @JsonProperty("iterations") String iterations, @JsonProperty("salt") String salt
+	public record VaultDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("description") String description,
+								  @JsonProperty("creationTime") @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSX") Timestamp creationTime,
+								  @JsonProperty("owner") UsersResource.UserDto user,
+								  @JsonProperty("masterkey") String masterkey, @JsonProperty("iterations") String iterations, @JsonProperty("salt") String salt
 	) {
 
 		public Vault toVault(User owner, String id) {
@@ -212,7 +213,7 @@ public class VaultResource {
 		}
 
 		public static VaultDto fromEntity(Vault entity) {
-			return new VaultDto(entity.id, entity.name, entity.description, entity.creationTime, entity.masterkey, entity.iterations, entity.salt);
+			return new VaultDto(entity.id, entity.name, entity.description, entity.creationTime, UsersResource.UserDto.fromEntityWithoutDevices(entity.owner), entity.masterkey, entity.iterations, entity.salt);
 		}
 	}
 }
