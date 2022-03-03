@@ -24,31 +24,6 @@ axiosAuth.interceptors.request.use(async request => {
   }
   return request;
 });
-axiosAuth.interceptors.response.use(async response => {
-  convertDateStringsToDates(response);
-  return response;
-});
-
-const isoDateFormat = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d*)?(?:[-+]\d{2}:?\d{2}|Z)?$/;
-
-function isIsoDateString(value: any): boolean {
-  return value && typeof value === 'string' && isoDateFormat.test(value);
-}
-
-function convertDateStringsToDates(body: any) {
-  if (body === null || body === undefined || typeof body !== 'object')
-    return body;
-
-  for (const key of Object.keys(body)) {
-    const value = body[key];
-    if (isIsoDateString(value)) {
-      body[key] = new Date(Date.parse(value));
-    } else if (typeof value === 'object') {
-      convertDateStringsToDates(value);
-    }
-  }
-}
-
 
 /* DTOs */
 
@@ -74,7 +49,12 @@ class VaultService {
   }
 
   public async get(vaultId: string): Promise<VaultDto> {
-    return axiosAuth.get(`/vaults/${vaultId}`).then(response => response.data)
+    return axiosAuth.get(`/vaults/${vaultId}`)
+      .then(response => {
+        let dateString = response.data.creationTime;
+        response.data.creationTime = new Date(dateString);
+        return response.data;
+      })
       .catch((err) => rethrowAndConvertIfExpected(err, 404));
   }
 
@@ -92,7 +72,7 @@ class VaultService {
   }
 
   public async createVault(vaultId: string, name: string, description: string, masterkey: string, iterations: number, salt: string): Promise<AxiosResponse<any>> {
-    const body: VaultDto = { id: vaultId, name: name, description: description, creationTime: new Date(Date.now()), masterkey: masterkey, iterations: iterations, salt: salt };
+    const body: VaultDto = { id: vaultId, name: name, description: description, creationTime: new Date(), masterkey: masterkey, iterations: iterations, salt: salt };
     return axiosAuth.put(`/vaults/${vaultId}`, body)
       .catch((err) => rethrowAndConvertIfExpected(err, 404, 409));
   }
