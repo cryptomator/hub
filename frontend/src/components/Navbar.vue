@@ -81,11 +81,12 @@ const props = defineProps<{
 }>();
 
 function getPictureUrl(): string {
-  let getGravatarUrl = (mail?: string) =>  !mail ? undefined : `https://www.gravatar.com/avatar/${md5(mail.trim())}?d=identicon`;
-
-  return props.me.pictureUrl
-    ?? getGravatarUrl(props.me.email)
-    ?? 'http://placekitten.com/80/80';
+  if (props.me.pictureUrl) {
+    return props.me.pictureUrl;
+  } else if (props.me.email) {
+    return `https://www.gravatar.com/avatar/${md5(props.me.email.trim())}?d=identicon`;
+  } else {
+    return '/logo.svg';
+  }
 }
-
 </script>
