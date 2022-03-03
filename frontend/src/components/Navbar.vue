@@ -81,9 +81,11 @@ const props = defineProps<{
 }>();
 
 function getPictureUrl(): string {
-  let emailHash = md5(props.me.email.trim().toLowerCase());
-  let gravatarUrl = `https://www.gravatar.com/avatar/${emailHash}?d=identicon`;
-  return props.me.pictureUrl ?? gravatarUrl;
+  let getGravatarUrl = (mail?: string) =>  !mail ? undefined : `https://www.gravatar.com/avatar/${md5(mail.trim())}?d=identicon`;
+
+  return props.me.pictureUrl
+    ?? getGravatarUrl(props.me.email)
+    ?? 'http://placekitten.com/80/80';
 }
 
 </script>
