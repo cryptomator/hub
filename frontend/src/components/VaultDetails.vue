@@ -26,7 +26,7 @@
       </div>
       <div class="py-3 flex justify-between text-sm font-medium">
         <dt class="text-gray-500">{{ t('vaultDetails.information.created') }}</dt>
-        <dd class="text-gray-900">{{ vaultCTime }}</dd>
+        <dd class="text-gray-900">{{ vault?.creationTime.toLocaleString() }}</dd>
       </div>
     </dl>
 
@@ -87,10 +87,9 @@ import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { DeviceDto, NotFoundError, UserDto, VaultDto } from '../common/backend';
 import DownloadVaultTemplateDialog from './DownloadVaultTemplateDialog.vue';
+import FetchError from './FetchError.vue';
 import GrantPermissionDialog from './GrantPermissionDialog.vue';
 import SearchInputGroup from './SearchInputGroup.vue';
-import FetchError from './FetchError.vue';
-import dayjs from 'dayjs';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -111,9 +110,6 @@ const grantPermissionDialog = ref<typeof GrantPermissionDialog>();
 const downloadingVaultTemplate = ref(false);
 const downloadVaultTemplateDialog = ref<typeof DownloadVaultTemplateDialog>();
 const vault = ref<VaultDto>();
-const vaultCTime = computed(() => {
-  return dayjs(vault.value?.creationTime).format('ddd, D MMM YYYY HH:mm:ss');
-} );
 const members = ref<UserDto[]>([]);
 const allUsers = ref<UserDto[]>([]);
 const devicesRequiringAccessGrant = ref<DeviceDto[]>([]);

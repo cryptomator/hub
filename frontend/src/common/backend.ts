@@ -1,8 +1,6 @@
 import AxiosStatic, { AxiosRequestConfig, AxiosResponse } from 'axios';
-import dayjs from 'dayjs';
 import authPromise from './auth';
 
-const TIME_PLACEHOLDER = dayjs('1970-01-01T00:00:00.000+00:00');
 
 const axiosBaseCfg: AxiosRequestConfig = {
   baseURL: import.meta.env.DEV ? 'http://localhost:8080' : '',
@@ -26,16 +24,37 @@ axiosAuth.interceptors.request.use(async request => {
   }
   return request;
 });
+axiosAuth.interceptors.response.use(async response => {
+  convertDateStringsToDates(response);
+  return response;
+});
+
+const isoDateFormat = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d*)?(?:[-+]\d{2}:?\d{2}|Z)?$/;
+
+function isIsoDateString(value: any): boolean {
+  return value && typeof value === 'string' && isoDateFormat.test(value);
+}
+
+function convertDateStringsToDates(body: any) {
+  if (body === null || body === undefined || typeof body !== 'object')
+    return body;
+
+  for (const key of Object.keys(body)) {
+    const value = body[key];
+    if (isIsoDateString(value)) {
+      body[key] = new Date(Date.parse(value));
+    } else if (typeof value === 'object') {
+      convertDateStringsToDates(value);
+    }
+  }
+}
+
 
 /* DTOs */
 
 export class VaultDto {
 
-  public creationTime: dayjs.Dayjs;
-
-  constructor(public id: string, public name: string, public description: string, creationTime: string, public owner: UserDto | null, public masterkey: string, public iterations: number, public salt: string) {
-    this.creationTime = dayjs(creationTime);
-  }
+  constructor(public id: string, public name: string, public description: string, public creationTime: Date, public masterkey: string, public iterations: number, public salt: string, public owner?: UserDto) { }
 
 }
 
@@ -73,7 +92,7 @@ class VaultService {
   }
 
   public async createVault(vaultId: string, name: string, description: string, masterkey: string, iterations: number, salt: string): Promise<AxiosResponse<any>> {
-    const body: VaultDto = { id: vaultId, name: name, description: description, creationTime: TIME_PLACEHOLDER, owner: null, masterkey: masterkey, iterations: iterations, salt: salt };
+    const body: VaultDto = { id: vaultId, name: name, description: description, creationTime: new Date(Date.now()), masterkey: masterkey, iterations: iterations, salt: salt };
     return axiosAuth.put(`/vaults/${vaultId}`, body)
       .catch((err) => rethrowAndConvertIfExpected(err, 404, 409));
   }

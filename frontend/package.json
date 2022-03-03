@@ -49,7 +49,6 @@
     "@heroicons/vue": "^1.0.5",
     "axios": "^0.25.0",
     "blueimp-md5": "^2.19.0",
-    "dayjs": "^1.10.8",
     "file-saver": "^2.0.5",
     "jszip": "^3.7.1",
     "keycloak-js": "^15.0.2",

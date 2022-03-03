@@ -188,7 +188,6 @@ public class VaultResource {
 		}
 		User currentUser = User.findById(jwt.getSubject());
 		var vault = vaultDto.toVault(currentUser, vaultId);
-		vault.creationTime = Timestamp.from(Instant.now());
 		Vault.persist(vault);
 		return Response.created(URI.create(".")).build();
 	}
