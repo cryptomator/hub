@@ -212,7 +212,7 @@ public class VaultResource {
 		}
 
 		public static VaultDto fromEntity(Vault entity) {
-			return new VaultDto(entity.id, entity.name, entity.description, entity.creationTime, UsersResource.UserDto.fromEntityWithoutDevices(entity.owner), entity.masterkey, entity.iterations, entity.salt);
+			return new VaultDto(entity.id, entity.name, entity.description, entity.creationTime, UsersResource.UserDto.fromEntity(entity.owner), entity.masterkey, entity.iterations, entity.salt);
 		}
 	}
 }
