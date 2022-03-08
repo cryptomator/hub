@@ -5,7 +5,7 @@ VALUES
     ('user1', 'User Name 1'),
     ('user2', 'User Name 2');
 
-INSERT INTO vault (id, user_id, name, description, creationTime, salt, iterations, masterkey)
+INSERT INTO vault (id, user_id, name, description, creation_time, salt, iterations, masterkey)
 VALUES
     ('vault1', 'user1', 'Vault 1', 'This is a testvault.', '2020-02-20 20:20:20', 'salt1', 'iterations1', 'masterkey1'),
     ('vault2', 'user2', 'Vault 2', 'This is a testvault.', '2020-02-20 20:20:20', 'salt2', 'iterations2', 'masterkey2');

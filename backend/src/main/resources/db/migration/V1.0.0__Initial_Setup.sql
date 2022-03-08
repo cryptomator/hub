@@ -15,7 +15,7 @@ CREATE TABLE vault
 	user_id    VARCHAR(255) NOT NULL,
 	name       VARCHAR(255) NOT NULL,
 	description VARCHAR(255),
-	creationTime TIMESTAMP NOT NULL,
+	creation_time TIMESTAMP NOT NULL,
 	salt       VARCHAR(255) NOT NULL,
 	iterations VARCHAR(255) NOT NULL,
 	masterkey  VARCHAR(255) NOT NULL,
