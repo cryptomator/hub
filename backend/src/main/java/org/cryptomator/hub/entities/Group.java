@@ -29,6 +29,9 @@ public class Group extends PanacheEntityBase  {
 	@JoinTable(name = "group_user", joinColumns = @JoinColumn(name = "group_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"))
 	public Set<User> members = new HashSet<>();
 
+	@ManyToMany(mappedBy = "groups")
+	public Set<Vault> sharedVaults = new HashSet<>();
+
 	@Override
 	public String toString() {
 		return "Group{" +
@@ -59,6 +62,7 @@ public class Group extends PanacheEntityBase  {
 			group.id = id;
 		}
 		group.name = name;
+		group.persist();
 	}
 
 	@Transactional(Transactional.TxType.REQUIRED)
@@ -70,5 +74,6 @@ public class Group extends PanacheEntityBase  {
 		}
 		group.name = name;
 		group.members = users;
+		group.persist();
 	}
 }

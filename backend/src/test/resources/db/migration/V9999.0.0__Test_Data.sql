@@ -22,7 +22,7 @@ VALUES
     ('device2', 'user2', 'Computer 2', 'publickey2'),
     ('device3', 'user1', 'Computer 3', 'publickey3');
 
-INSERT INTO access (device_id, user_id, vault_id, jwe)
+INSERT INTO user_access (device_id, user_id, vault_id, jwe)
 VALUES
     ('device1', 'user1', 'vault1', 'jwe1'),
     ('device2', 'user2', 'vault1', 'jwe2'),

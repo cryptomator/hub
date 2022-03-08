@@ -36,19 +36,19 @@
 
     <div>
       <h3 class="font-medium text-gray-900">{{ t('vaultDetails.sharedWith.title') }}</h3>
-      <ul role="list" class="mt-2 border-t border-b border-gray-200 divide-y divide-gray-200">
-        <template v-for="member in members" :key="member.id">
+       <ul role="list" class="mt-2 border-t border-b border-gray-200 divide-y divide-gray-200">
+       <!-- <template v-for="user in vaultAccess?.users" :key="user.id">
           <li class="py-3 flex flex-col">
             <div class="flex justify-between items-center">
               <div class="flex items-center">
-                <img :src="member.pictureUrl" alt="" class="w-8 h-8 rounded-full" />
-                <p class="ml-4 text-sm font-medium text-gray-900">{{ member.name }}</p>
+                <img :src="user.pictureUrl" alt="" class="w-8 h-8 rounded-full" />
+                <p class="ml-4 text-sm font-medium text-gray-900">{{ user.name }}</p>
               </div>
-              <button type="button" class="ml-6 bg-white rounded-md text-sm font-medium text-red-600 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="revokeUserAccess(member.id)">{{ t('common.remove') }}<span class="sr-only"> {{ member.name }}</span></button>
+              <button type="button" class="ml-6 bg-white rounded-md text-sm font-medium text-red-600 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="revokeUserAccess(user.id)">{{ t('common.remove') }}<span class="sr-only"> {{ user.name }}</span></button>
             </div>
 
-            <p v-if="onRevokeUserAccessError[member.id] != null" class="text-sm text-red-900 text-right">
-              {{ t('common.unexpectedError', [onRevokeUserAccessError[member.id].message]) }}
+            <p v-if="onRevokeUserAccessError[user.id] != null" class="text-sm text-red-900 text-right">
+              {{ t('common.unexpectedError', [onRevokeUserAccessError[user.id].message]) }}
             </p>
           </li>
         </template>
@@ -65,7 +65,7 @@
           <p v-if="onAddMemberError != null" class="text-sm text-red-900 text-right">
             {{ t('common.unexpectedError', [onAddMemberError.message]) }}
           </p>
-        </li>
+        </li> -->
       </ul>
     </div>
 
@@ -89,7 +89,7 @@
 import { PencilIcon, PlusSmIcon } from '@heroicons/vue/solid';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { DeviceDto, NotFoundError, UserDto, VaultDto } from '../common/backend';
+import backend, { DeviceDto, NotFoundError, UserDto, VaultDto, VaultAccess } from '../common/backend';
 import DownloadVaultTemplateDialog from './DownloadVaultTemplateDialog.vue';
 import GrantPermissionDialog from './GrantPermissionDialog.vue';
 import SearchInputGroup from './SearchInputGroup.vue';
@@ -114,7 +114,7 @@ const grantPermissionDialog = ref<typeof GrantPermissionDialog>();
 const downloadingVaultTemplate = ref(false);
 const downloadVaultTemplateDialog = ref<typeof DownloadVaultTemplateDialog>();
 const vault = ref<VaultDto>();
-const members = ref<UserDto[]>([]);
+const vaultAccess = ref<VaultAccess>();
 const allUsers = ref<UserDto[]>([]);
 const devicesRequiringAccessGrant = ref<DeviceDto[]>([]);
 
@@ -126,7 +126,7 @@ async function fetchData() {
 
   try {
     vault.value = await backend.vaults.get(props.vaultId);
-    members.value = await backend.vaults.getMembers(props.vaultId);
+    vaultAccess.value = await backend.vaults.getVaultAccess(props.vaultId);
     allUsers.value = await backend.users.listAll();
     devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
   } catch (error) {
@@ -137,7 +137,8 @@ async function fetchData() {
   isFetching.value = false;
 }
 
-async function addMember(id: string) {
+// FIXME does not work currently
+/*async function addMember(id: string) {
   onAddMemberError.value = null;
   try {
     const user = allUsers.value.find(u => u.id === id);
@@ -151,7 +152,7 @@ async function addMember(id: string) {
     console.error('Adding member failed.', error);
     onAddMemberError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
-}
+}*/
 
 function showGrantPermissionDialog() {
   grantingPermission.value = true;
@@ -167,7 +168,8 @@ function permissionGranted() {
   devicesRequiringAccessGrant.value = [];
 }
 
-async function revokeUserAccess(userId: string) {
+// FIXME does not work currently
+/*async function revokeUserAccess(userId: string) {
   delete onRevokeUserAccessError.value[userId];
   try {
     await backend.vaults.revokeUserAccess(props.vaultId, userId);
@@ -178,5 +180,5 @@ async function revokeUserAccess(userId: string) {
     //404 not expected from user perspective
     onRevokeUserAccessError.value[userId] = error instanceof Error ? error: new Error('Unknown Error');
   }
-}
+}*/
 </script>

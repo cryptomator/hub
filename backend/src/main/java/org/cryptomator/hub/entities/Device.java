@@ -21,12 +21,12 @@ import java.util.stream.Stream;
 @Table(name = "device")
 @NamedQuery(name = "Device.requiringAccessGrant",
 		query = """
-				SELECT d
+				SELECT DISTINCT d
 				FROM Vault v
 					INNER JOIN v.members m
 					INNER JOIN m.devices d
-					LEFT JOIN d.useraccess ua ON ua.id.vaultId = :vaultId AND ua.id.deviceId = d.id
-					LEFT JOIN d.groupaccess ga ON ga.id.vaultId = :vaultId AND ga.id.deviceId = d.id
+					LEFT JOIN d.userAccess ua ON ua.id.vaultId = :vaultId AND ua.id.deviceId = d.id
+					LEFT JOIN d.groupAccess ga ON ga.id.vaultId = :vaultId AND ga.id.deviceId = d.id
 					WHERE v.id = :vaultId AND (ua.vault IS NULL OR ga.vault IS NULL)
 				"""
 )
@@ -41,10 +41,10 @@ public class Device extends PanacheEntityBase {
 	public User owner;
 
 	@OneToMany(mappedBy = "device", fetch = FetchType.LAZY)
-	public Set<Useraccess> useraccess = new HashSet<>();
+	public Set<UserAccess> userAccess = new HashSet<>();
 
 	@OneToMany(mappedBy = "device", fetch = FetchType.LAZY)
-	public Set<Groupaccess> groupaccess = new HashSet<>();
+	public Set<GroupAccess> groupAccess = new HashSet<>();
 
 	@Column(name = "name", nullable = false)
 	public String name;

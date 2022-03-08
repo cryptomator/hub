@@ -19,16 +19,16 @@ import java.io.Serializable;
 import java.util.Objects;
 
 @Entity
-@Table(name = "useraccess")
-@NamedQuery(name = "Useraccess.get", query = """
+@Table(name = "user_access")
+@NamedQuery(name = "UserAccess.get", query = """
 			SELECT a
-			FROM Useraccess a
+			FROM UserAccess a
 			WHERE a.device.id = :deviceId
 				AND a.id.userId = :userId
 				AND a.id.vaultId = :vaultId
 		""")
-@NamedQuery(name = "Useraccess.revokeDevice", query = "DELETE FROM Useraccess a WHERE a.id.deviceId = :deviceId AND a.id.vaultId = :vaultId")
-public class Useraccess extends PanacheEntityBase {
+@NamedQuery(name = "UserAccess.revokeDevice", query = "DELETE FROM UserAccess a WHERE a.id.deviceId = :deviceId AND a.id.vaultId = :vaultId")
+public class UserAccess extends PanacheEntityBase {
 
 	@EmbeddedId
 	public AccessId id = new AccessId();
@@ -55,7 +55,7 @@ public class Useraccess extends PanacheEntityBase {
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
-		Useraccess access = (Useraccess) o;
+		UserAccess access = (UserAccess) o;
 		return Objects.equals(id, access.id)
 				&& Objects.equals(device, access.device)
 				&& Objects.equals(user, access.user)
@@ -70,7 +70,7 @@ public class Useraccess extends PanacheEntityBase {
 
 	@Override
 	public String toString() {
-		return "Useraccess{" +
+		return "UserAccess{" +
 				"id=" + id +
 				", device=" + device.id +
 				", user=" + user.id +
@@ -126,9 +126,9 @@ public class Useraccess extends PanacheEntityBase {
 
 	// --- data layer queries ---
 
-	public static Useraccess unlock(String vaultId, String deviceId, String userId) {
+	public static UserAccess unlock(String vaultId, String deviceId, String userId) {
 		try {
-			return find("#Useraccess.get", Parameters.with("deviceId", deviceId).and("vaultId", vaultId).and("userId", userId)).firstResult();
+			return find("#UserAccess.get", Parameters.with("deviceId", deviceId).and("vaultId", vaultId).and("userId", userId)).firstResult();
 		} catch (NoResultException e) {
 			return null;
 		}
@@ -136,9 +136,9 @@ public class Useraccess extends PanacheEntityBase {
 
 	public static void deleteDeviceAccess(String vaultId, String deviceId) {
 		//TODO Replace with PanacheEntityBase.delete(...) once https://github.com/quarkusio/quarkus/issues/20758 is fixed
-		int affected = getEntityManager().createNamedQuery("Useraccess.revokeDevice").setParameter("vaultId", vaultId).setParameter("deviceId", deviceId).executeUpdate();
+		int affected = getEntityManager().createNamedQuery("UserAccess.revokeDevice").setParameter("vaultId", vaultId).setParameter("deviceId", deviceId).executeUpdate();
 		if (affected == 0) {
-			throw new EntityNotFoundException("Useraccess(vault: " + vaultId + ", device: " + deviceId + ") not found");
+			throw new EntityNotFoundException("UserAccess(vault: " + vaultId + ", device: " + deviceId + ") not found");
 		}
 	}
 

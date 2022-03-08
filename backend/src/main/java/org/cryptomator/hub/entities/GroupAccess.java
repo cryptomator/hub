@@ -18,15 +18,15 @@ import java.io.Serializable;
 import java.util.Objects;
 
 @Entity
-@Table(name = "groupaccess")
-@NamedQuery(name = "Groupaccess.get", query = """
+@Table(name = "group_access")
+@NamedQuery(name = "GroupAccess.get", query = """
 			SELECT a
-			FROM Groupaccess a
+			FROM GroupAccess a
 			WHERE a.device.id = :deviceId
 				AND a.id.groupId = :groupId
 				AND a.id.vaultId = :vaultId
 		""")
-public class Groupaccess extends PanacheEntityBase {
+public class GroupAccess extends PanacheEntityBase {
 
 	@EmbeddedId
 	public AccessId id = new AccessId();
@@ -53,7 +53,7 @@ public class Groupaccess extends PanacheEntityBase {
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
-		Groupaccess access = (Groupaccess) o;
+		GroupAccess access = (GroupAccess) o;
 		return Objects.equals(id, access.id)
 				&& Objects.equals(device, access.device)
 				&& Objects.equals(group, access.group)
@@ -124,9 +124,9 @@ public class Groupaccess extends PanacheEntityBase {
 
 	// --- data layer queries ---
 
-	public static Groupaccess unlock(String vaultId, String deviceId, String groupId) {
+	public static GroupAccess unlock(String vaultId, String deviceId, String groupId) {
 		try {
-			return find("#Groupaccess.get", Parameters.with("deviceId", deviceId).and("vaultId", vaultId).and("groupId", groupId)).firstResult();
+			return find("#GroupAccess.get", Parameters.with("deviceId", deviceId).and("vaultId", vaultId).and("groupId", groupId)).firstResult();
 		} catch (NoResultException e) {
 			return null;
 		}

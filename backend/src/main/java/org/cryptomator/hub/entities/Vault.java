@@ -25,10 +25,10 @@ import java.util.stream.Stream;
 		query = """
 				SELECT DISTINCT v
 				FROM Vault v
-				LEFT JOIN v.useraccess ua
-				LEFT JOIN v.groupaccess ga
+				LEFT JOIN v.userAccess ua
+				LEFT JOIN v.groupAccess ga
 				LEFT JOIN ua.device du
-				LEFT JOIN ua.device dg
+				LEFT JOIN ga.device dg
 				WHERE v.owner.id = :userId OR du.owner.id = :userId OR dg.owner.id = :userId
 				""")
 public class Vault extends PanacheEntityBase {
@@ -50,10 +50,10 @@ public class Vault extends PanacheEntityBase {
 	public Set<Group> groups = new HashSet<>();
 
 	@OneToMany(mappedBy = "vault", fetch = FetchType.LAZY)
-	public Set<Useraccess> useraccess = new HashSet<>();
+	public Set<UserAccess> userAccess = new HashSet<>();
 
 	@OneToMany(mappedBy = "vault", fetch = FetchType.LAZY)
-	public Set<Groupaccess> groupaccess = new HashSet<>();
+	public Set<GroupAccess> groupAccess = new HashSet<>();
 
 	@Column(name = "name", nullable = false)
 	public String name;
@@ -92,8 +92,8 @@ public class Vault extends PanacheEntityBase {
 				", owner=" + owner +
 				", members=" + members.stream().map(m -> m.id).toList() +
 				", groups=" + groups.stream().map(g -> g.id).toList() +
-				", useraccess=" + useraccess.stream().map(a -> a.id).toList() +
-				", groupaccess=" + groupaccess.stream().map(a -> a.id).toList() +
+				", userAccess=" + userAccess.stream().map(a -> a.id).toList() +
+				", groupAccess=" + groupAccess.stream().map(a -> a.id).toList() +
 				", name='" + name + '\'' +
 				", salt='" + salt + '\'' +
 				", iterations='" + iterations + '\'' +

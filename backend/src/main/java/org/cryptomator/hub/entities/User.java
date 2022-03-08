@@ -30,7 +30,7 @@ public class User extends PanacheEntityBase {
 	@OneToMany(mappedBy = "owner", cascade = {CascadeType.PERSIST}, orphanRemoval = true, fetch = FetchType.LAZY)
 	public Set<Vault> ownedVaults = new HashSet<>();
 
-	@ManyToMany(mappedBy = "members", fetch = FetchType.LAZY)
+	@ManyToMany(mappedBy = "members", fetch = FetchType.EAGER) // TODO think about do we really need FetchType.EAGER?
 	public Set<Group> groups = new HashSet<>();
 
 	@ManyToMany(mappedBy = "members")

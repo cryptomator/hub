@@ -18,7 +18,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.Optional;
 import java.util.Set;
 
 @Path("/devices")
@@ -66,7 +65,7 @@ public class DeviceResource {
 		}
 
 		User currentUser = User.findById(jwt.getSubject());
-		Optional<Device> maybeDevice = Device.findByIdOptional(deviceId);
+		var maybeDevice = Device.<Device>findByIdOptional(deviceId);
 		if (maybeDevice.isPresent() && currentUser.equals(maybeDevice.get().owner)) {
 			maybeDevice.get().delete();
 			return Response.status(Response.Status.NO_CONTENT).build();
