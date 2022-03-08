@@ -61,7 +61,7 @@ public class VaultResource {
 	@Operation(summary = "list vault members", description = "list all users that this vault has been shared with")
 	public List<UsersResource.UserDto> getMembers(@PathParam("vaultId") String vaultId) {
 		Vault vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-		return vault.members.stream().map(UsersResource.UserDto::fromEntityWithoutDevices).toList();
+		return vault.members.stream().map(UsersResource.UserDto::fromEntity).toList();
 	}
 
 	@PUT

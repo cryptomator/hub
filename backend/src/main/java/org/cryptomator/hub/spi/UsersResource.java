@@ -69,13 +69,13 @@ public class UsersResource {
 	@Operation(summary = "list all users")
 	public List<UserDto> getAll() {
 		PanacheQuery<User> query = User.findAll();
-		return query.stream().map(UserDto::fromEntityWithoutDevices).toList();
+		return query.stream().map(UserDto::fromEntity).toList();
 	}
 
-	public record UserDto(@JsonProperty(value = "id") String id, @JsonProperty("name") String name, @JsonProperty("pictureUrl") String pictureUrl, @JsonProperty("email") String email,
+	public record UserDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("pictureUrl") String pictureUrl, @JsonProperty("email") String email,
 								 @JsonProperty("devices") Set<DeviceResource.DeviceDto> devices) {
 
-		public static UserDto fromEntityWithoutDevices(User user) {
+		public static UserDto fromEntity(User user) {
 			return new UserDto(user.id, user.name, user.pictureUrl, user.email, Set.of());
 		}
 	}
