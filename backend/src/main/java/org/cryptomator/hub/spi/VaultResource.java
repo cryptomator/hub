@@ -1,5 +1,6 @@
 package org.cryptomator.hub.spi;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.cryptomator.hub.entities.Access;
 import org.cryptomator.hub.entities.Device;
@@ -29,6 +30,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.net.URI;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -163,7 +166,7 @@ public class VaultResource {
 	public VaultDto get(@PathParam("vaultId") String vaultId) {
 		// TODO: check if user has permission to access this vault?
 		Vault vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-		return new VaultDto(vaultId, vault.name, vault.masterkey, vault.iterations, vault.salt);
+		return VaultDto.fromEntity(vault);
 	}
 
 	@PUT
@@ -172,7 +175,8 @@ public class VaultResource {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.TEXT_PLAIN)
 	@Transactional
-	@Operation(summary = "creates a vault")
+	@Operation(summary = "creates a vault",
+			description = "Creates a vault with the given vault id. The creationTime in the vaultDto is ignored and the current server time is used.")
 	@APIResponse(responseCode = "201", description = "vault created")
 	@APIResponse(responseCode = "409", description = "vault with given id already exists")
 	public Response create(@PathParam("vaultId") String vaultId, VaultDto vaultDto) {
@@ -188,14 +192,19 @@ public class VaultResource {
 		return Response.created(URI.create(".")).build();
 	}
 
-	public static record VaultDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("masterkey") String masterkey, @JsonProperty("iterations") String iterations,
-								  @JsonProperty("salt") String salt) {
+	public record VaultDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("description") String description,
+								  @JsonProperty("creationTime") @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSX") Timestamp creationTime,
+								  @JsonProperty("owner") UsersResource.UserDto user,
+								  @JsonProperty("masterkey") String masterkey, @JsonProperty("iterations") String iterations, @JsonProperty("salt") String salt
+	) {
 
 		public Vault toVault(User owner, String id) {
 			var vault = new Vault();
 			vault.id = id;
 			vault.owner = owner;
 			vault.name = name;
+			vault.description = description;
+			vault.creationTime = creationTime;
 			vault.masterkey = masterkey;
 			vault.iterations = iterations;
 			vault.salt = salt;
@@ -203,7 +212,7 @@ public class VaultResource {
 		}
 
 		public static VaultDto fromEntity(Vault entity) {
-			return new VaultDto(entity.id, entity.name, entity.masterkey, entity.iterations, entity.salt);
+			return new VaultDto(entity.id, entity.name, entity.description, entity.creationTime, UsersResource.UserDto.fromEntity(entity.owner), entity.masterkey, entity.iterations, entity.salt);
 		}
 	}
 }

@@ -22,6 +22,13 @@
                 </div>
 
                 <div class="col-span-6 sm:col-span-4">
+                  <label for="vaultDescription" class="block text-sm font-medium text-gray-700">
+                    {{ t('createVault.vaultDescription') }}
+                    <span class="text-xs text-gray-500">({{ t('common.optional') }})</span></label>
+                  <input id="vaultDescription" v-model="vaultDescription" :disabled="state == State.Processing" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200"/>
+                </div>
+
+                <div class="col-span-6 sm:col-span-4">
                   <label for="password" class="block text-sm font-medium text-gray-700">{{ t('createVault.masterPassword') }}</label>
                   <input id="password" v-model="password" :disabled="state == State.Processing" type="password" minlength="8" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onCreateError instanceof FormValidationFailedError }" aria-describedby="password-description" required />
                   <p id="password-description" class="mt-2 text-sm text-gray-500">{{ t('createVault.masterPassword.description') }}</p>
@@ -118,6 +125,7 @@ const onDownloadTemplateError = ref<Error | null>(null);
 
 const state = ref(State.Initial);
 const vaultName = ref('');
+const vaultDescription = ref('');
 const password = ref('');
 const vaultConfig = ref<VaultConfig>();
 
@@ -135,7 +143,7 @@ async function createVault() {
     const masterkey = await Masterkey.create();
     vaultConfig.value = await VaultConfig.create(vaultId, masterkey);
     const wrapped = await masterkey.wrap(password.value);
-    await backend.vaults.createVault(vaultId, vaultName.value, wrapped.encrypted, wrapped.iterations, wrapped.salt);
+    await backend.vaults.createVault(vaultId, vaultName.value, vaultDescription.value, wrapped.encrypted, wrapped.iterations, wrapped.salt);
     state.value = State.Finished;
   } catch (error) {
     console.error('Creating vault failed.', error);
