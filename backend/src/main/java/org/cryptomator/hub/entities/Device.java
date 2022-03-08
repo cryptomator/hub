@@ -15,19 +15,30 @@ import javax.persistence.Table;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Entity
 @Table(name = "device")
-@NamedQuery(name = "Device.requiringAccessGrant",
+@NamedQuery(name = "Device.requiringUserAccessGrant",
 		query = """
-				SELECT DISTINCT d
+				SELECT d
 				FROM Vault v
 					INNER JOIN v.members m
 					INNER JOIN m.devices d
-					LEFT JOIN d.userAccess ua ON ua.id.vaultId = :vaultId AND ua.id.deviceId = d.id
-					LEFT JOIN d.groupAccess ga ON ga.id.vaultId = :vaultId AND ga.id.deviceId = d.id
-					WHERE v.id = :vaultId AND (ua.vault IS NULL OR ga.vault IS NULL)
+					LEFT JOIN d.userAccess a ON a.id.vaultId = :vaultId AND a.id.deviceId = d.id
+					WHERE v.id = :vaultId AND a.vault IS NULL
+				"""
+)
+@NamedQuery(name = "Device.requiringGroupAccessGrant",
+		query = """
+				SELECT d
+				FROM Vault v
+					INNER JOIN v.groups g
+					INNER JOIN g.members m
+					INNER JOIN m.devices d
+					LEFT JOIN d.groupAccess a ON a.id.vaultId = :vaultId AND a.id.deviceId = d.id
+					WHERE v.id = :vaultId AND a.vault IS NULL
 				"""
 )
 public class Device extends PanacheEntityBase {
@@ -73,13 +84,14 @@ public class Device extends PanacheEntityBase {
 				&& Objects.equals(this.publickey, other.publickey);
 	}
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, owner, name, publickey);
-    }
+	@Override
+	public int hashCode() {
+		return Objects.hash(id, owner, name, publickey);
+	}
 
 	public static Stream<Device> findRequiringAccessGrant(String vaultId) {
-		return find("#Device.requiringAccessGrant", Parameters.with("vaultId", vaultId)).stream();
+		return Stream.<Device>concat(find("#Device.requiringUserAccessGrant", Parameters.with("vaultId", vaultId)).stream(),
+				find("#Device.requiringGroupAccessGrant", Parameters.with("vaultId", vaultId)).stream()).collect(Collectors.toSet()).stream();
 	}
 
 }

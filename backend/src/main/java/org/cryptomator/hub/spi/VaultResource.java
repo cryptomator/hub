@@ -33,7 +33,6 @@ import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 
 @Path("/vaults")
 public class VaultResource {
@@ -49,7 +48,7 @@ public class VaultResource {
 	@Operation(summary = "list all accessible vaults", description = "list all vaults that have been shared with the currently logged in user or a group in wich this user is")
 	public List<VaultDto> getSharedOrOwned() {
 		var currentUserId = jwt.getSubject();
-		Stream<Vault> resultStream = Vault.findAccessibleOrOwnerByUser(currentUserId);
+		var resultStream = Vault.findAccessibleOrOwnerByUser(currentUserId);
 		return resultStream.map(VaultDto::fromEntity).toList();
 	}
 

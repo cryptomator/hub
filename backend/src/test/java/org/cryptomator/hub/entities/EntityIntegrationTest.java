@@ -36,16 +36,44 @@ public class EntityIntegrationTest {
 	}
 
 	@Test
+	@DisplayName("Removing a Vault Group cascades to Access")
+	public void removeGroupCascadesToGroupAccess() {
+		tx(() -> {
+			Vault vault = Vault.findById("vault3");
+			Assumptions.assumeTrue(vault.groupAccess.stream().anyMatch(ga -> "group1".equals(ga.group.id)));
+
+			vault.groups.removeIf(g -> "group1".equals(g.id));
+			vault.persist();
+		});
+
+		tx(() -> {
+			Group group = Group.findById("group1");
+			Assertions.assertNotNull(group);
+
+			Vault vault = Vault.findById("vault3");
+			Assertions.assertFalse(vault.groupAccess.stream().anyMatch(ga -> group.equals(ga.group)));
+		});
+	}
+
+	@Test
 	@DisplayName("Removing a Device cascades to Access")
 	public void removingDeviceCascadesToAccess() {
 		tx(() -> {
 			Device device = Device.findById("device1");
+			/* FIXME Affects the deletion of the device such that the following transaction fails but should be executed.
+			boolean userMatch = UserAccess.<UserAccess>findAll().stream().anyMatch(a -> "device1".equals(a.device.id));
+			boolean groupMatch = GroupAccess.<GroupAccess>findAll().stream().anyMatch(a -> "device1".equals(a.device.id));
+			Assertions.assertTrue(userMatch);
+			Assertions.assertTrue(groupMatch);
+			*/
 			device.delete();
 		});
 
 		tx(() -> {
-			boolean match = UserAccess.<UserAccess>findAll().stream().anyMatch(a -> "device1".equals(a.device.id));
-			Assertions.assertFalse(match);
+			boolean userMatch = UserAccess.<UserAccess>findAll().stream().anyMatch(a -> "device1".equals(a.device.id));
+			boolean groupMatch = GroupAccess.<GroupAccess>findAll().stream().anyMatch(a -> "device1".equals(a.device.id));
+			Assertions.assertFalse(userMatch);
+			Assertions.assertFalse(groupMatch);
 		});
 	}
 

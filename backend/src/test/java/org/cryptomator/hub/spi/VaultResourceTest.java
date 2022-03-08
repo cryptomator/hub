@@ -48,8 +48,8 @@ public class VaultResourceTest {
 		public void testGetSharedOrOwned() {
 			when().get("/vaults")
 					.then().statusCode(200)
-					.body("size()", is(2))
-					.body("id", hasItems("vault1", "vault2"));
+					.body("size()", is(3))
+					.body("id", hasItems("vault1", "vault2", "vault3"));
 		}
 
 		@Test
@@ -68,9 +68,9 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@DisplayName("GET /vaults/vault1/members returns 403")
-		public void testGetMembers() {
-			when().get("/vaults/{vaultId}/members", "vault1")
+		@DisplayName("GET /vaults/vault1/access returns 403")
+		public void testGetAccess() {
+			when().get("/vaults/{vaultId}/access", "vault1")
 					.then().statusCode(403);
 		}
 
@@ -107,11 +107,11 @@ public class VaultResourceTest {
 	public class AsVaultOwner {
 
 		@Test
-		@DisplayName("GET /vaults/vault1/members returns 200")
-		public void testGetMembers() {
-			when().get("/vaults/{vaultId}/members", "vault1")
+		@DisplayName("GET /vaults/vault1/access returns 200")
+		public void testGetAccess() {
+			when().get("/vaults/{vaultId}/access", "vault1")
 					.then().statusCode(200)
-					.body("id", hasItems("user1", "user2"));
+					.body("users.id", hasItems("user1", "user2"));
 		}
 
 		@Test
@@ -125,20 +125,20 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@DisplayName("PUT /vaults/vault3 returns 201")
+		@DisplayName("PUT /vaults/vault999 returns 201")
 		public void testCreateVault2() {
-			var vaultDto = new VaultResource.VaultDto("vault3", "My Vault", "masterkey3", "42", "NaCl");
+			var vaultDto = new VaultResource.VaultDto("vault999", "My Vault", "masterkey999", "42", "NaCl");
 
 			given().contentType(ContentType.JSON).body(vaultDto)
-					.when().put("/vaults/{vaultId}", "vault3")
+					.when().put("/vaults/{vaultId}", "vault999")
 					.then().statusCode(201);
 		}
 
 		@Test
-		@DisplayName("PUT /vaults/vault3 returns 400")
+		@DisplayName("PUT /vaults/vault999 returns 400")
 		public void testCreateVault3() {
 			given().contentType(ContentType.JSON)
-					.when().put("/vaults/{vaultId}", "vault3")
+					.when().put("/vaults/{vaultId}", "vault999")
 					.then().statusCode(400);
 		}
 
@@ -188,11 +188,11 @@ public class VaultResourceTest {
 
 		@Test
 		@Order(2)
-		@DisplayName("GET /vaults/vault2/members does not contain user2")
-		public void getMembers1() {
-			when().get("/vaults/{vaultId}/members", "vault2")
+		@DisplayName("GET /vaults/vault2/access does not contain user2")
+		public void getAccess1() {
+			when().get("/vaults/{vaultId}/access", "vault2")
 					.then().statusCode(200)
-					.body("id", not(hasItems("user2")));
+					.body("users.id", not(hasItems("user2")));
 		}
 
 		@Test
@@ -205,11 +205,11 @@ public class VaultResourceTest {
 
 		@Test
 		@Order(4)
-		@DisplayName("GET /vaults/vault2/members does contain user2")
+		@DisplayName("GET /vaults/vault2/access does contain user2")
 		public void getMembers2() {
-			when().get("/vaults/{vaultId}/members", "vault2")
+			when().get("/vaults/{vaultId}/access", "vault2")
 					.then().statusCode(200)
-					.body("id", hasItems("user2"));
+					.body("users.id", hasItems("user2"));
 		}
 
 		@Test
@@ -232,7 +232,7 @@ public class VaultResourceTest {
 
 		@Test
 		@Order(7)
-		@DisplayName("GET /vaults/vault2/devices-requiring-access-grant contains device2")
+		@DisplayName("GET /vaults/vault2/devices-requiring-access-grant contains not device2")
 		public void testGetDevicesRequiringAccess2() {
 			when().get("/vaults/{vaultId}/devices-requiring-access-grant", "vault2")
 					.then().statusCode(200)
@@ -249,11 +249,11 @@ public class VaultResourceTest {
 
 		@Test
 		@Order(9)
-		@DisplayName("GET /vaults/vault2/members does not contain user2")
+		@DisplayName("GET /vaults/vault2/acces does not contain user2")
 		public void getMembers3() {
-			when().get("/vaults/{vaultId}/members", "vault2")
+			when().get("/vaults/{vaultId}/access", "vault2")
 					.then().statusCode(200)
-					.body("id", not(hasItems("user2")));
+					.body("users.id", not(hasItems("user2")));
 		}
 
 	}
@@ -267,7 +267,7 @@ public class VaultResourceTest {
 		@CsvSource(value = {
 				"GET, /vaults",
 				"GET, /vaults/vault1",
-				"GET, /vaults/vault1/members",
+				"GET, /vaults/vault1/access",
 				"PUT, /vaults/vault1/members/user1",
 				"DELETE, /vaults/vault1/members/user1",
 				"GET, /vaults/vault1/devices-requiring-access-grant",

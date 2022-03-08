@@ -64,12 +64,12 @@ public class DeviceResourceTest {
 		}
 
 		@Test
-		@DisplayName("PUT /devices/device4 returns 201")
+		@DisplayName("PUT /devices/device999 returns 201")
 		public void testCreate2() {
-			var deviceDto = new DeviceResource.DeviceDto("device4", "Computer 4", "publickey4", "", Set.of());
+			var deviceDto = new DeviceResource.DeviceDto("device999", "Computer 4", "publickey4", "", Set.of());
 
 			given().contentType(ContentType.JSON).body(deviceDto)
-					.when().put("/devices/{deviceId}", "device4")
+					.when().put("/devices/{deviceId}", "device999")
 					.then().statusCode(201);
 		}
 
