@@ -46,4 +46,4 @@ VALUES
 INSERT INTO group_access (device_id, group_id, vault_id, jwe)
 VALUES
     ('device1', 'group1', 'vault3', 'jwe1'),
-    ('device4', 'group1', 'vault3', 'jwe2');
+    ('device4', 'group1', 'vault3', 'jwe4');

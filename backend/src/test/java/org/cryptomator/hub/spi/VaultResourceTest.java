@@ -32,7 +32,6 @@ public class VaultResourceTest {
 	@BeforeAll
 	public static void beforeAll() {
 		RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
-
 	}
 
 	@Nested
@@ -75,7 +74,7 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@DisplayName("GET /vaults/vault1/keys/device1 returns 200")
+		@DisplayName("GET /vaults/vault1/keys/device1 returns 200 using user access")
 		public void testUnlock1() {
 			when().get("/vaults/{vaultId}/keys/{deviceId}", "vault1", "device1")
 					.then().statusCode(200)
@@ -83,15 +82,23 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@DisplayName("GET /vaults/vault1/keys/noSuchDevice returns 404")
+		@DisplayName("GET /vaults/vault3/keys/device4 returns 200 using group access")
 		public void testUnlock2() {
+			when().get("/vaults/{vaultId}/keys/{deviceId}", "vault3", "device4")
+					.then().statusCode(200)
+					.body(is("jwe4"));
+		}
+
+		@Test
+		@DisplayName("GET /vaults/vault1/keys/noSuchDevice returns 404")
+		public void testUnlock3() {
 			when().get("/vaults/{vaultId}/keys/{deviceId}", "vault1", "noSuchDevice")
 					.then().statusCode(404);
 		}
 
 		@Test
 		@DisplayName("GET /vaults/vault1/keys/device2 returns 403")
-		public void testUnlock3() {
+		public void testUnlock4() {
 			when().get("/vaults/{vaultId}/keys/{deviceId}", "vault1", "device2")
 					.then().statusCode(403);
 		}

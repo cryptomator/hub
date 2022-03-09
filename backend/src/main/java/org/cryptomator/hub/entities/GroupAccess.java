@@ -22,9 +22,10 @@ import java.util.Objects;
 @NamedQuery(name = "GroupAccess.get", query = """
 			SELECT a
 			FROM GroupAccess a
+			INNER JOIN a.group.members m
 			WHERE a.device.id = :deviceId
-				AND a.id.groupId = :groupId
 				AND a.id.vaultId = :vaultId
+				AND m.id = :userId
 		""")
 public class GroupAccess extends PanacheEntityBase {
 
@@ -124,9 +125,9 @@ public class GroupAccess extends PanacheEntityBase {
 
 	// --- data layer queries ---
 
-	public static GroupAccess unlock(String vaultId, String deviceId, String groupId) {
+	public static GroupAccess unlock(String vaultId, String deviceId, String userId) {
 		try {
-			return find("#GroupAccess.get", Parameters.with("deviceId", deviceId).and("vaultId", vaultId).and("groupId", groupId)).firstResult();
+			return find("#GroupAccess.get", Parameters.with("deviceId", deviceId).and("vaultId", vaultId).and("userId", userId)).firstResult();
 		} catch (NoResultException e) {
 			return null;
 		}
