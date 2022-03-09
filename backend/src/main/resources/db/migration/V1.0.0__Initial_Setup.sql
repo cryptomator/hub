@@ -1,5 +1,13 @@
 -- noinspection SqlNoDataSourceInspectionForFile
 
+CREATE TABLE billing
+(
+    id     INT4 NOT NULL,
+    hub_id VARCHAR(255) NOT NULL,
+    token  VARCHAR(2000),
+    CONSTRAINT PK_BILLING PRIMARY KEY (id)
+);
+
 CREATE TABLE user
 (
 	id   VARCHAR(255) NOT NULL,

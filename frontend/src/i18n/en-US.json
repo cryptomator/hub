@@ -16,6 +16,12 @@
   "common.share": "Share",
   "common.unexpectedError": "Unexpected Error: {0}",
 
+  "billing.title": "Billing",
+  "billing.serverInfo.title": "Server Info",
+  "billing.serverInfo.hubId.title": "Hub ID",
+  "billing.serverInfo.token.title": "Token",
+  "billing.submit": "Manage Subscription",
+
   "fetchError.title": "Fetching data failed",
 
   "createVault.title": "Create Vault",

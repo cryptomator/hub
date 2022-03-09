@@ -1,6 +1,7 @@
 import { createRouter, createWebHashHistory, RouteRecordRaw } from 'vue-router';
 import authPromise from '../common/auth';
 import backend from '../common/backend';
+import Billing from '../components/Billing.vue';
 import CreateVault from '../components/CreateVault.vue';
 import DeviceList from '../components/DeviceList.vue';
 import LoginComponent from '../components/Login.vue';
@@ -69,6 +70,11 @@ const routes: RouteRecordRaw[] = [
       {
         path: '/settings',
         component: Settings
+      },
+      {
+        path: '/billing',
+        component: Billing,
+        props: (route) => ({ token: route.query.token })
       },
     ]
   },
