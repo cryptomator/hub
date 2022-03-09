@@ -2,10 +2,10 @@ package org.cryptomator.hub.spi;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
-import org.cryptomator.hub.entities.GroupAccess;
-import org.cryptomator.hub.entities.UserAccess;
 import org.cryptomator.hub.entities.Device;
+import org.cryptomator.hub.entities.GroupAccess;
 import org.cryptomator.hub.entities.User;
+import org.cryptomator.hub.entities.UserAccess;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -66,8 +66,10 @@ public class UsersResource {
 	}
 
 	private Set<VaultResource.VaultDto> accessTo(Set<UserAccess> userAccess, Set<GroupAccess> groupAccess) {
-		Function<UserAccess, VaultResource.VaultDto> mapUserAccessibleVaults = a -> new VaultResource.VaultDto(a.vault.id, a.vault.name, null, null, null);
-		Function<GroupAccess, VaultResource.VaultDto> mapGroupAccessibleVaults = a -> new VaultResource.VaultDto(a.vault.id, a.vault.name, null, null, null);
+		Function<UserAccess, VaultResource.VaultDto> mapUserAccessibleVaults =
+				a -> new VaultResource.VaultDto(a.vault.id, a.vault.name, a.vault.description, a.vault.creationTime, UserDto.fromEntity(a.vault.owner), null, null, null);
+		Function<GroupAccess, VaultResource.VaultDto> mapGroupAccessibleVaults =
+				a -> new VaultResource.VaultDto(a.vault.id, a.vault.name, a.vault.description, a.vault.creationTime, UserDto.fromEntity(a.vault.owner), null, null, null);
 		return Stream.concat(userAccess.stream().map(mapUserAccessibleVaults), groupAccess.stream().map(mapGroupAccessibleVaults)).collect(Collectors.toSet());
 	}
 

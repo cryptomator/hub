@@ -81,9 +81,12 @@ const props = defineProps<{
 }>();
 
 function getPictureUrl(): string {
-  let emailHash = md5(props.me.email.trim().toLowerCase());
-  let gravatarUrl = `https://www.gravatar.com/avatar/${emailHash}?d=identicon`;
-  return props.me.pictureUrl ?? gravatarUrl;
+  if (props.me.pictureUrl) {
+    return props.me.pictureUrl;
+  } else if (props.me.email) {
+    return `https://www.gravatar.com/avatar/${md5(props.me.email.trim())}?d=identicon`;
+  } else {
+    return '/logo.svg';
+  }
 }
-
 </script>

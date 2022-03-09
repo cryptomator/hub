@@ -14,11 +14,11 @@ INSERT INTO group_user (group_id, user_id)
 VALUES
     ('group1', 'user1');
 
-INSERT INTO vault (id, user_id, name, salt, iterations, masterkey)
+INSERT INTO vault (id, user_id, name, description, creation_time, salt, iterations, masterkey)
 VALUES
-    ('vault1', 'user1', 'Vault 1', 'salt1', 'iterations1', 'masterkey1'),
-    ('vault2', 'user2', 'Vault 2', 'salt2', 'iterations2', 'masterkey2'),
-    ('vault3', 'user1', 'Vault 3', 'salt3', 'iterations3', 'masterkey3');
+    ('vault1', 'user1', 'Vault 1', 'This is a testvault.', '2020-02-20 20:20:20', 'salt1', 'iterations1', 'masterkey1'),
+    ('vault2', 'user2', 'Vault 2', 'This is a testvault.', '2020-02-20 20:20:20', 'salt2', 'iterations2', 'masterkey2'),
+    ('vault3', 'user1', 'Vault 3', 'This is a testvault.', '2020-02-20 20:20:20', 'salt3', 'iterations3', 'masterkey3');
 
 INSERT INTO vault_user (vault_id, user_id)
 VALUES

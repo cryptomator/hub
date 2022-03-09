@@ -14,6 +14,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import java.sql.Timestamp;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -66,6 +67,12 @@ public class Vault extends PanacheEntityBase {
 
 	@Column(name = "masterkey", nullable = false)
 	public String masterkey;
+
+	@Column(name = "creation_time", nullable = false)
+	public Timestamp creationTime;
+
+	@Column(name = "description")
+	public String description;
 
 	@Override
 	public boolean equals(Object o) {

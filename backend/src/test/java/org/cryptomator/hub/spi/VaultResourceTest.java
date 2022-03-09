@@ -18,6 +18,8 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import java.sql.Timestamp;
+
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
 import static org.hamcrest.CoreMatchers.hasItems;
@@ -135,7 +137,7 @@ public class VaultResourceTest {
 		@Test
 		@DisplayName("PUT /vaults/vault1 returns 409")
 		public void testCreateVault1() {
-			var vaultDto = new VaultResource.VaultDto("vault1", "My Vault", "masterkey3", "42", "NaCl");
+			var vaultDto = new VaultResource.VaultDto("vault1", "My Vault","Test vault 1", Timestamp.valueOf("1999-11-19 19:19:19"), null, "masterkey3", "42", "NaCl");
 
 			given().contentType(ContentType.JSON).body(vaultDto)
 					.when().put("/vaults/{vaultId}", "vault1")
@@ -145,7 +147,7 @@ public class VaultResourceTest {
 		@Test
 		@DisplayName("PUT /vaults/vault999 returns 201")
 		public void testCreateVault2() {
-			var vaultDto = new VaultResource.VaultDto("vault999", "My Vault", "masterkey999", "42", "NaCl");
+			var vaultDto = new VaultResource.VaultDto("vault999", "My Vault","Test vault 999", Timestamp.valueOf("2112-12-21 21:12:21"), null, "masterkey999", "42", "NaCl");
 
 			given().contentType(ContentType.JSON).body(vaultDto)
 					.when().put("/vaults/{vaultId}", "vault999")
