@@ -40,6 +40,10 @@ export class UserDto {
   constructor(public id: string, public name: string, public pictureUrl: string, public email: string, public devices: DeviceDto[]) { }
 }
 
+export class BillingDto {
+  constructor(public hub_id: string, public token: string) { }
+}
+
 /* Services */
 
 class VaultService {
@@ -110,10 +114,21 @@ class UserService {
 
 }
 
+class BillingService {
+  public async get(): Promise<BillingDto> {
+    return axiosAuth.get('/billing').then(response => response.data);
+  }
+
+  public async setToken(token: string): Promise<void> {
+    return axiosAuth.put('/billing/token', token, { headers: { 'Content-Type': 'text/plain' } });
+  }
+}
+
 const services = {
   vaults: new VaultService(),
   users: new UserService(),
-  devices: new DeviceService()
+  devices: new DeviceService(),
+  billing: new BillingService()
 };
 
 function convertExpectedToBackendError(status: number): BackendError {
