@@ -41,7 +41,7 @@
               <div class="min-w-0 flex-1 sm:flex sm:items-center sm:justify-between">
                 <div class="truncate">
                   <p class="text-sm font-medium text-primary">{{ vault.name }}</p>
-                  <p class="text-sm text-gray-500 mt-2">{{ vault.description }}</p>
+                  <p v-if="vault.description.length > 0" class="text-sm text-gray-500 mt-2">{{ vault.description }}</p>
                 </div>
                 <div class="mt-4 shrink-0 sm:mt-0 sm:ml-5">
                   <div class="flex overflow-hidden -space-x-1">
@@ -69,9 +69,9 @@ import { ChevronRightIcon, PlusIcon } from '@heroicons/vue/solid';
 import { nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { VaultDto } from '../common/backend';
+import FetchError from './FetchError.vue';
 import SlideOver from './SlideOver.vue';
 import VaultDetails from './VaultDetails.vue';
-import FetchError from './FetchError.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 
