@@ -66,6 +66,7 @@
   "settings.general.language.title": "Language",
 
   "vaultDetails.description.header": "Description",
+  "vaultDetails.description.empty": "No description provided.",
   "vaultDetails.information.header": "Information",
   "vaultDetails.information.ownedBy": "Owned by",
   "vaultDetails.information.created": "Created",
