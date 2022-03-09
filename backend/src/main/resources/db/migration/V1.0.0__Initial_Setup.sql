@@ -8,8 +8,6 @@ CREATE TABLE billing
     CONSTRAINT PK_BILLING PRIMARY KEY (id)
 );
 
-INSERT INTO billing VALUES (0, random_uuid(), NULL);
-
 CREATE TABLE user
 (
 	id   VARCHAR(255) NOT NULL,
