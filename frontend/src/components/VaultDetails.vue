@@ -57,7 +57,7 @@
               <span class="ml-4 text-sm font-medium text-primary group-hover:text-primary-l1">{{ t('common.share') }}</span>
             </button>
           </div>
-          <SearchInputGroup v-else-if="addingMember" :action-title="t('common.add')" :items="allUsers" class="flex-grow" @action="addMember" />
+          <SearchInputGroup v-else-if="addingMember" :action-title="t('common.add')" :items="allUsers" @action="addMember" />
           <p v-if="onAddMemberError != null" class="text-sm text-red-900 text-right">
             {{ t('common.unexpectedError', [onAddMemberError.message]) }}
           </p>
