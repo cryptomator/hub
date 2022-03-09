@@ -36,8 +36,8 @@
 
     <div>
       <h3 class="font-medium text-gray-900">{{ t('vaultDetails.sharedWith.title') }}</h3>
-       <ul role="list" class="mt-2 border-t border-b border-gray-200 divide-y divide-gray-200">
-       <!-- <template v-for="user in vaultAccess?.users" :key="user.id">
+      <ul role="list" class="mt-2 border-t border-b border-gray-200 divide-y divide-gray-200">
+        <template v-for="user in vaultAccess?.users" :key="user.id">
           <li class="py-3 flex flex-col">
             <div class="flex justify-between items-center">
               <div class="flex items-center">
@@ -65,7 +65,7 @@
           <p v-if="onAddMemberError != null" class="text-sm text-red-900 text-right">
             {{ t('common.unexpectedError', [onAddMemberError.message]) }}
           </p>
-        </li> -->
+        </li>
       </ul>
     </div>
 
@@ -137,14 +137,15 @@ async function fetchData() {
   isFetching.value = false;
 }
 
-// FIXME does not work currently
-/*async function addMember(id: string) {
+async function addMember(id: string) {
   onAddMemberError.value = null;
   try {
     const user = allUsers.value.find(u => u.id === id);
     if (user) {
       await backend.vaults.addMember(props.vaultId, id);
-      members.value = members.value.concat(user);
+      if (vaultAccess.value) {
+        vaultAccess.value.users = vaultAccess.value?.users.concat(user);
+      }
       devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
     }
   } catch (error) {
@@ -152,7 +153,7 @@ async function fetchData() {
     console.error('Adding member failed.', error);
     onAddMemberError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
-}*/
+}
 
 function showGrantPermissionDialog() {
   grantingPermission.value = true;
@@ -168,17 +169,18 @@ function permissionGranted() {
   devicesRequiringAccessGrant.value = [];
 }
 
-// FIXME does not work currently
-/*async function revokeUserAccess(userId: string) {
+async function revokeUserAccess(userId: string) {
   delete onRevokeUserAccessError.value[userId];
   try {
     await backend.vaults.revokeUserAccess(props.vaultId, userId);
-    members.value = members.value.filter(m => m.id !== userId);
+    if (vaultAccess.value) {
+      vaultAccess.value.users = vaultAccess.value.users.filter(m => m.id !== userId);
+    }
     devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
   } catch (error) {
     console.error('Revoking user access failed.', error);
     //404 not expected from user perspective
     onRevokeUserAccessError.value[userId] = error instanceof Error ? error: new Error('Unknown Error');
   }
-}*/
+}
 </script>
