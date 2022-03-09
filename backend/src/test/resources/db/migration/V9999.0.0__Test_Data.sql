@@ -24,7 +24,7 @@ INSERT INTO vault_user (vault_id, user_id)
 VALUES
     ('vault1', 'user1'),
     ('vault1', 'user2'),
-    ('vault2', 'user1'); // User2 too
+    ('vault2', 'user1');
 
 INSERT INTO vault_group (vault_id, group_id)
 VALUES

@@ -23,6 +23,7 @@ import static io.restassured.RestAssured.when;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.Matchers.empty;
 
 @QuarkusTest
 @FlywayTest(value = @DataSource(url = "jdbc:h2:mem:test"))
@@ -115,10 +116,20 @@ public class VaultResourceTest {
 
 		@Test
 		@DisplayName("GET /vaults/vault1/access returns 200")
-		public void testGetAccess() {
+		public void testGetAccess1() {
 			when().get("/vaults/{vaultId}/access", "vault1")
 					.then().statusCode(200)
-					.body("users.id", hasItems("user1", "user2"));
+					.body("users.id", hasItems("user1", "user2"))
+					.body("groups.id", empty());
+		}
+
+		@Test
+		@DisplayName("GET /vaults/vault3/access returns 200")
+		public void testGetAccess2() {
+			when().get("/vaults/{vaultId}/access", "vault3")
+					.then().statusCode(200)
+					.body("users.id", empty())
+					.body("groups.id", hasItems("group1"));
 		}
 
 		@Test
@@ -158,7 +169,7 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@DisplayName("PUT /vaults/vault2/keys/device1 returns 409")
+		@DisplayName("PUT /vaults/vault2/keys/device1 returns 409 due to user access")
 		public void testGrantAccess2() {
 			given().contentType(ContentType.TEXT).body("jwe4")
 					.when().put("/vaults/{vaultId}/keys/{deviceId}", "vault2", "device1")
@@ -166,8 +177,16 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@DisplayName("PUT /vaults/vault1/keys/nonExistingDevice returns 404")
+		@DisplayName("PUT /vaults/vault3/keys/device4 returns 409 due to group access")
 		public void testGrantAccess3() {
+			given().contentType(ContentType.TEXT).body("jwe5")
+					.when().put("/vaults/{vaultId}/keys/{deviceId}", "vault3", "device4")
+					.then().statusCode(409);
+		}
+
+		@Test
+		@DisplayName("PUT /vaults/vault1/keys/nonExistingDevice returns 404")
+		public void testGrantAccess4() {
 			given().contentType(ContentType.TEXT).body("jwe3")
 					.when().put("/vaults/{vaultId}/keys/{deviceId}", "vault1", "nonExistingDevice")
 					.then().statusCode(404);
@@ -176,7 +195,7 @@ public class VaultResourceTest {
 	}
 
 	@Nested
-	@DisplayName("Managing members as user2")
+	@DisplayName("Managing members and groups as user2")
 	@FlywayTest(value = @DataSource(url = "jdbc:h2:mem:test"), clean = false)
 	@TestSecurity(user = "User Name 2", roles = {"user", "vault-owner"})
 	@OidcSecurity(claims = {
@@ -231,7 +250,7 @@ public class VaultResourceTest {
 		@Test
 		@Order(6)
 		@DisplayName("PUT /vaults/vault2/keys/device2 returns 201")
-		public void testGrantAccess() {
+		public void testGrantAccess1() {
 			given().contentType(ContentType.TEXT).body("jwe4")
 					.when().put("/vaults/{vaultId}/keys/{deviceId}", "vault2", "device2")
 					.then().statusCode(201);
@@ -261,6 +280,86 @@ public class VaultResourceTest {
 			when().get("/vaults/{vaultId}/access", "vault2")
 					.then().statusCode(200)
 					.body("users.id", not(hasItems("user2")));
+		}
+
+		// groups
+
+		@Test
+		@Order(10)
+		@DisplayName("PUT /vaults/vault2/groups/group3000 returns 404")
+		public void addNonExistingGroup() {
+			when().put("/vaults/{vaultId}/groups/{groupId}", "vault2", "group3000")
+					.then().statusCode(404);
+		}
+
+		@Test
+		@Order(11)
+		@DisplayName("GET /vaults/vault2/access does not contain group1")
+		public void getAccess2() {
+			when().get("/vaults/{vaultId}/access", "vault2")
+					.then().statusCode(200)
+					.body("groups.id", not(hasItems("group1")));
+		}
+
+		@Test
+		@Order(12)
+		@DisplayName("PUT /vaults/vault2/groups/group1 returns 201")
+		public void addGroup1() {
+			when().put("/vaults/{vaultId}/groups/{groupId}", "vault2", "group1")
+					.then().statusCode(201);
+		}
+
+		@Test
+		@Order(13)
+		@DisplayName("GET /vaults/vault2/access does contain group1")
+		public void getMembers4() {
+			when().get("/vaults/{vaultId}/access", "vault2")
+					.then().statusCode(200)
+					.body("groups.id", hasItems("group1"));
+		}
+
+		@Test
+		@Order(14)
+		@DisplayName("GET /vaults/vault2/devices-requiring-access-grant contains device1, device3, device4")
+		public void testGetDevicesRequiringAccess3() {
+			when().get("/vaults/{vaultId}/devices-requiring-access-grant", "vault2")
+					.then().statusCode(200)
+					.body("id", hasItems("device1", "device3", "device4"));
+		}
+
+		@Test
+		@Order(15)
+		@DisplayName("PUT /vaults/vault2/keys/device4 returns 201")
+		public void testGrantAccess2() {
+			given().contentType(ContentType.TEXT).body("jwe5")
+					.when().put("/vaults/{vaultId}/keys/{deviceId}", "vault2", "device4")
+					.then().statusCode(201);
+		}
+
+		@Test
+		@Order(16)
+		@DisplayName("GET /vaults/vault2/devices-requiring-access-grant contains not device4")
+		public void testGetDevicesRequiringAccess4() {
+			when().get("/vaults/{vaultId}/devices-requiring-access-grant", "vault2")
+					.then().statusCode(200)
+					.body("id", not(hasItems("device4")));
+		}
+
+		@Test
+		@Order(17)
+		@DisplayName("DELETE /vaults/vault2/groups/group1 returns 204")
+		public void removeGroup2() {
+			when().delete("/vaults/{vaultId}/groups/{groupId}", "vault2", "group1")
+					.then().statusCode(204);
+		}
+
+		@Test
+		@Order(18)
+		@DisplayName("GET /vaults/vault2/acces does not contain group1")
+		public void getMembers5() {
+			when().get("/vaults/{vaultId}/access", "vault2")
+					.then().statusCode(200)
+					.body("groups.id", not(hasItems("group1")));
 		}
 
 	}
