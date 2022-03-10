@@ -16,7 +16,7 @@ import java.util.Objects;
 import java.util.Set;
 
 @Entity
-@Table(name = "user")
+@Table(name = "\"user\"") // https://docs.jboss.org/hibernate/orm/current/userguide/html_single/Hibernate_User_Guide.html#mapping-quoted-identifiers
 public class User extends PanacheEntityBase {
 
 	@Id

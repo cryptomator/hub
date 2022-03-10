@@ -8,8 +8,6 @@
 
   <properties>
     <compiler-plugin.version>3.8.1</compiler-plugin.version>
-    <flywaydb.version>4.0.3</flywaydb.version>
-    <h2database.version>1.4.200</h2database.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.jdk.version>17</project.jdk.version>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -65,6 +63,10 @@
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-jdbc-h2</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-jdbc-postgresql</artifactId>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
