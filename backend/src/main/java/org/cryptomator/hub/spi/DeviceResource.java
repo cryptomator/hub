@@ -6,9 +6,11 @@ import org.cryptomator.hub.entities.User;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.hibernate.exception.ConstraintViolationException;
 
 import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
+import javax.persistence.PersistenceException;
 import javax.transaction.Transactional;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -18,6 +20,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.net.URI;
 import java.util.Optional;
 import java.util.Set;
 
@@ -41,13 +44,18 @@ public class DeviceResource {
 		if (deviceId == null || deviceId.trim().length() == 0 || deviceDto == null) {
 			return Response.status(Response.Status.BAD_REQUEST).entity("deviceId or deviceDto cannot be empty").build();
 		}
-		if (Device.findByIdOptional(deviceId).isEmpty()) {
-			User currentUser = User.findById(jwt.getSubject());
-			var device = deviceDto.toDevice(currentUser, deviceId);
+		User currentUser = User.findById(jwt.getSubject());
+		var device = deviceDto.toDevice(currentUser, deviceId);
+		try {
 			Device.persist(device);
-			return Response.status(Response.Status.CREATED).build();
-		} else {
-			return Response.status(Response.Status.CONFLICT).build();
+			Device.flush(); // flush to trigger constraint violations
+			return Response.created(URI.create(".")).build();
+		} catch (PersistenceException e) {
+			if (e.getCause() instanceof ConstraintViolationException c) {
+				return Response.status(Response.Status.CONFLICT).entity(new ConstraintViolationDto(c.getConstraintName())).build();
+			} else {
+				throw e;
+			}
 		}
 	}
 

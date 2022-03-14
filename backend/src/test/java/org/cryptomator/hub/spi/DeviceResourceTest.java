@@ -17,6 +17,7 @@ import java.util.Set;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
+import static org.hamcrest.CoreMatchers.containsString;
 
 @QuarkusTest
 @FlywayTest(value = @DataSource(url = "jdbc:h2:mem:test"))
@@ -61,6 +62,17 @@ public class DeviceResourceTest {
 			given().contentType(ContentType.JSON).body(deviceDto)
 					.when().put("/devices/{deviceId}", "device1")
 					.then().statusCode(409);
+		}
+
+		@Test
+		@DisplayName("PUT /devices/deviceX returns 409 due to non-unique name")
+		public void testCreateX() {
+			var deviceDto = new DeviceResource.DeviceDto("deviceX", "Computer 1", "publickey1", "", Set.of());
+
+			given().contentType(ContentType.JSON).body(deviceDto)
+					.when().put("/devices/{deviceId}", "deviceX")
+					.then().statusCode(409)
+					.body("constraint", containsString("UNIQUE_DEVICE_NAME_PER_USER"));
 		}
 
 		@Test

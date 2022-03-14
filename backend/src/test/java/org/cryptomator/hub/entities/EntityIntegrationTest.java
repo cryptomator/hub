@@ -3,11 +3,13 @@ package org.cryptomator.hub.entities;
 import com.radcortez.flyway.test.annotation.DataSource;
 import com.radcortez.flyway.test.annotation.FlywayTest;
 import io.quarkus.test.junit.QuarkusTest;
+import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import javax.persistence.PersistenceException;
 import javax.transaction.Transactional;
 
 @QuarkusTest
@@ -46,6 +48,24 @@ public class EntityIntegrationTest {
 		tx(() -> {
 			boolean match = Access.<Access>findAll().stream().anyMatch(a -> "device1".equals(a.device.id));
 			Assertions.assertFalse(match);
+		});
+	}
+
+	@Test
+	@DisplayName("User's device names need to be unique")
+	public void testAddNonUniqueDeviceName() {
+		tx(() -> {
+			Device existingDevice = Device.findById("device1");
+			Device conflictingDevice = new Device();
+			conflictingDevice.id = "deviceX";
+			conflictingDevice.name = existingDevice.name;
+			conflictingDevice.owner = existingDevice.owner;
+			conflictingDevice.publickey = "XYZ";
+
+			Device.persist(conflictingDevice);
+
+			PersistenceException thrown = Assertions.assertThrows(PersistenceException.class, Device::flush);
+			Assertions.assertInstanceOf(ConstraintViolationException.class, thrown.getCause());
 		});
 	}
 
