@@ -71,8 +71,7 @@ public class DeviceResourceTest {
 
 			given().contentType(ContentType.JSON).body(deviceDto)
 					.when().put("/devices/{deviceId}", "deviceX")
-					.then().statusCode(409)
-					.body("constraint", containsString("UNIQUE_DEVICE_NAME_PER_USER"));
+					.then().statusCode(409);
 		}
 
 		@Test

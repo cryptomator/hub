@@ -62,9 +62,7 @@ public class EntityIntegrationTest {
 			conflictingDevice.owner = existingDevice.owner;
 			conflictingDevice.publickey = "XYZ";
 
-			Device.persist(conflictingDevice);
-
-			PersistenceException thrown = Assertions.assertThrows(PersistenceException.class, Device::flush);
+			PersistenceException thrown = Assertions.assertThrows(PersistenceException.class, conflictingDevice::persistAndFlush);
 			Assertions.assertInstanceOf(ConstraintViolationException.class, thrown.getCause());
 		});
 	}

@@ -12,8 +12,10 @@ import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
 import javax.persistence.PersistenceException;
 import javax.transaction.Transactional;
+import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -47,14 +49,13 @@ public class DeviceResource {
 		User currentUser = User.findById(jwt.getSubject());
 		var device = deviceDto.toDevice(currentUser, deviceId);
 		try {
-			Device.persist(device);
-			Device.flush(); // flush to trigger constraint violations
+			device.persistAndFlush();
 			return Response.created(URI.create(".")).build();
 		} catch (PersistenceException e) {
-			if (e.getCause() instanceof ConstraintViolationException c) {
-				return Response.status(Response.Status.CONFLICT).entity(new ConstraintViolationDto(c.getConstraintName())).build();
+			if (e.getCause() instanceof ConstraintViolationException) {
+				throw new ClientErrorException(Response.Status.CONFLICT, e);
 			} else {
-				throw e;
+				throw new InternalServerErrorException(e);
 			}
 		}
 	}

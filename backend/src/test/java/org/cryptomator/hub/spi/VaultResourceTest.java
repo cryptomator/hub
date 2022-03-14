@@ -134,8 +134,7 @@ public class VaultResourceTest {
 
 			given().contentType(ContentType.JSON).body(vaultDto)
 					.when().put("/vaults/{vaultId}", "vaultX")
-					.then().statusCode(409)
-					.body("constraint", containsString("UNIQUE_VAULT_NAME"));
+					.then().statusCode(409);
 		}
 
 		@Test

@@ -31,7 +31,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -186,14 +185,13 @@ public class VaultResource {
 		User currentUser = User.findById(jwt.getSubject());
 		var vault = vaultDto.toVault(currentUser, vaultId);
 		try {
-			Vault.persist(vault);
-			Vault.flush(); // flush to trigger constraint violations
+			vault.persistAndFlush();
 			return Response.created(URI.create(".")).build();
 		} catch (PersistenceException e) {
-			if (e.getCause() instanceof ConstraintViolationException c) {
-				return Response.status(Response.Status.CONFLICT).entity(new ConstraintViolationDto(c.getConstraintName())).build();
+			if (e.getCause() instanceof ConstraintViolationException) {
+				throw new ClientErrorException(Response.Status.CONFLICT, e);
 			} else {
-				throw e;
+				throw new InternalServerErrorException(e);
 			}
 		}
 	}
