@@ -146,11 +146,20 @@
   --pf-global--disabled-color--100: #737679;
   --pf-global--disabled-color--200: #d2d2d2;
   --pf-global--disabled-color--300: #ededed;
-  --pf-global--primary-color--100: #06c;
+
+  --pf-global--primary-color--100: #49B04A;
+  --pf-global--primary-color--200: #009F69;
+  --pf-global--primary-color--light-100: #66CC68;
+  --pf-global--primary-color--dark-100: #407F41; 
+  --pf-global--secondary-color--100: #008A7B;
+
+
+  /*--pf-global--primary-color--100: #06c;
   --pf-global--primary-color--200: #004080;
   --pf-global--primary-color--light-100: #73bcf7;
-  --pf-global--primary-color--dark-100: #06c;
-  --pf-global--secondary-color--100: #737679;
+  /*--pf-global--primary-color--dark-100: #06c;*/
+  /* cryptomator color: primary-d1 for e.g. default button* /
+  --pf-global--secondary-color--100: #737679;*/
   --pf-global--default-color--100: #73c5c5;
   --pf-global--default-color--200: #009596;
   --pf-global--default-color--300: #003737;
@@ -204,12 +213,20 @@
   --pf-global--breakpoint--lg: 992px;
   --pf-global--breakpoint--xl: 1200px;
   --pf-global--breakpoint--2xl: 1450px;
-  --pf-global--link--Color: #06c;
+  /*--pf-global--link--Color: #06c;
   --pf-global--link--Color--hover: #004080;
   --pf-global--link--Color--light: #73bcf7;
   --pf-global--link--Color--light--hover: #2b9af3;
   --pf-global--link--Color--dark: #06c;
   --pf-global--link--Color--dark--hover: #004080;
+  */
+  --pf-global--link--Color: #49B04A;
+  --pf-global--link--Color--hover: #009F69;
+  --pf-global--link--Color--light: #66CC68;
+  --pf-global--link--Color--light--hover: #EBF5EB;
+  --pf-global--link--Color--dark: #407F41;
+  --pf-global--link--Color--dark--hover: #2D4D2E;
+
   --pf-global--link--FontWeight: 500;
   --pf-global--link--TextDecoration: none;
   --pf-global--link--TextDecoration--hover: underline;
