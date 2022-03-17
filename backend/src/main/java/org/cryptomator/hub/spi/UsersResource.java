@@ -1,11 +1,9 @@
 package org.cryptomator.hub.spi;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import org.cryptomator.hub.entities.Device;
-import org.cryptomator.hub.entities.GroupAccess;
 import org.cryptomator.hub.entities.User;
-import org.cryptomator.hub.entities.UserAccess;
+import org.cryptomator.hub.entities.Access;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -26,7 +24,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Path("/users")
 @Produces(MediaType.TEXT_PLAIN)
@@ -57,20 +54,14 @@ public class UsersResource {
 	@Operation(summary = "get the logged-in user")
 	public UserDto getMe(@QueryParam("withDevices") boolean withDevices, @QueryParam("withAccessibleVaults") boolean withAccessibleVaults) {
 		User user = User.findById(jwt.getSubject());
+		Function<Access, VaultResource.VaultDto> mapAccessibleVaults =
+				a -> new VaultResource.VaultDto(a.vault.id, a.vault.name, a.vault.description, a.vault.creationTime, UserDto.fromEntity(a.vault.owner), null, null, null);
 		Function<Device, DeviceResource.DeviceDto> mapDevices = withAccessibleVaults //
-				? d -> new DeviceResource.DeviceDto(d.id, d.name, d.publickey, d.owner.id, accessTo(d.userAccess, d.groupAccess)) //
+				? d -> new DeviceResource.DeviceDto(d.id, d.name, d.publickey, d.owner.id, d.accesses.stream().map(mapAccessibleVaults).collect(Collectors.toSet())) //
 				: d -> new DeviceResource.DeviceDto(d.id, d.name, d.publickey, d.owner.id, Set.of());
 		return withDevices //
 				? new UserDto(user.id, user.name, user.pictureUrl, user.email, user.devices.stream().map(mapDevices).collect(Collectors.toSet()))
 				: new UserDto(user.id, user.name, user.pictureUrl, user.email, Set.of());
-	}
-
-	private Set<VaultResource.VaultDto> accessTo(Set<UserAccess> userAccess, Set<GroupAccess> groupAccess) {
-		Function<UserAccess, VaultResource.VaultDto> mapUserAccessibleVaults =
-				a -> new VaultResource.VaultDto(a.vault.id, a.vault.name, a.vault.description, a.vault.creationTime, UserDto.fromEntity(a.vault.owner), null, null, null);
-		Function<GroupAccess, VaultResource.VaultDto> mapGroupAccessibleVaults =
-				a -> new VaultResource.VaultDto(a.vault.id, a.vault.name, a.vault.description, a.vault.creationTime, UserDto.fromEntity(a.vault.owner), null, null, null);
-		return Stream.concat(userAccess.stream().map(mapUserAccessibleVaults), groupAccess.stream().map(mapGroupAccessibleVaults)).collect(Collectors.toSet());
 	}
 
 	@GET
@@ -79,8 +70,7 @@ public class UsersResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "list all users")
 	public List<UserDto> getAll() {
-		PanacheQuery<User> query = User.findAll();
-		return query.stream().map(UserDto::fromEntity).toList();
+		return User.findAll().<User>stream().map(UserDto::fromEntity).toList();
 	}
 
 	@GET

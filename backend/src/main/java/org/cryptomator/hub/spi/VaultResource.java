@@ -2,11 +2,10 @@ package org.cryptomator.hub.spi;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.cryptomator.hub.entities.Access;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.Group;
-import org.cryptomator.hub.entities.GroupAccess;
 import org.cryptomator.hub.entities.User;
-import org.cryptomator.hub.entities.UserAccess;
 import org.cryptomator.hub.entities.Vault;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
@@ -33,7 +32,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.List;
 
 @Path("/vaults")
@@ -109,6 +107,9 @@ public class VaultResource {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		vault.members.removeIf(u -> u.id.equals(userId));
 		vault.persist();
+
+		// TODO call Access.revokeDevice if no group with this user have still access to this vault
+
 		return Response.status(Response.Status.NO_CONTENT).build();
 	}
 
@@ -124,6 +125,9 @@ public class VaultResource {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		vault.groups.removeIf(g -> g.id.equals(groupId));
 		vault.persist();
+
+		// TODO call Access.revokeDevice if no group with this user have still access to this vault
+
 		return Response.status(Response.Status.NO_CONTENT).build();
 	}
 
@@ -148,12 +152,9 @@ public class VaultResource {
 	@APIResponse(responseCode = "404", description = "unknown device")
 	public String unlock(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId) {
 		var currentUserId = jwt.getSubject();
-		var userAccess = UserAccess.unlock(vaultId, deviceId, currentUserId);
-		var groupAccess = GroupAccess.unlock(vaultId, deviceId, currentUserId);
-		if (userAccess != null) {
-			return userAccess.jwe;
-		} else if (groupAccess != null) {
-			return groupAccess.jwe;
+		var access = Access.unlock(vaultId, deviceId, currentUserId);
+		if (access != null) {
+			return access.jwe;
 		} else if (Device.findById(deviceId) == null) {
 			throw new NotFoundException("No such device.");
 		} else {
@@ -174,30 +175,14 @@ public class VaultResource {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		var device = Device.<Device>findByIdOptional(deviceId).orElseThrow(NotFoundException::new);
 
-		var userAccess = new UserAccess();
-		userAccess.vault = vault;
-		userAccess.user = device.owner;
-		userAccess.device = device;
-		userAccess.jwe = jwe;
-
-		var groupAccesses = new ArrayList<GroupAccess>();
-		for (Group userGroup : device.owner.groups) {
-			if (vault.groups.contains(userGroup)) {
-				var groupAccess = new GroupAccess();
-				groupAccess.vault = vault;
-				groupAccess.group = userGroup;
-				groupAccess.device = device;
-				groupAccess.jwe = jwe;
-				groupAccesses.add(groupAccess);
-			}
-		}
+		var access = new Access();
+		access.vault = vault;
+		access.user = device.owner;
+		access.device = device;
+		access.jwe = jwe;
 
 		try {
-			userAccess.persistAndFlush();
-			for (GroupAccess groupAccess : groupAccesses) {
-				// TODO handle ConstraintViolationException if access already granted because some group member may already have permission
-				groupAccess.persistAndFlush();
-			}
+			access.persistAndFlush();
 			return Response.created(URI.create(".")).build();
 		} catch (PersistenceException e) {
 			if (e.getCause() instanceof ConstraintViolationException) {

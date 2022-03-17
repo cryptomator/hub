@@ -15,30 +15,21 @@ import javax.persistence.Table;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Entity
-@Table(name = "device")
-@NamedQuery(name = "Device.requiringUserAccessGrant",
+@Table(name = "Device")
+// FIXME simplify request, some LEFT JOIN can be replaced with JOIN
+@NamedQuery(name = "Device.requiringAccessGrant",
 		query = """
-				SELECT d
+				SELECT DISTINCT d
 				FROM Vault v
-					INNER JOIN v.members m
-					INNER JOIN m.devices d
-					LEFT JOIN d.userAccess a ON a.id.vaultId = :vaultId AND a.id.deviceId = d.id
-					WHERE v.id = :vaultId AND a.vault IS NULL
-				"""
-)
-@NamedQuery(name = "Device.requiringGroupAccessGrant",
-		query = """
-				SELECT d
-				FROM Vault v
-					INNER JOIN v.groups g
-					INNER JOIN g.members m
-					INNER JOIN m.devices d
-					LEFT JOIN d.groupAccess a ON a.id.vaultId = :vaultId AND a.id.deviceId = d.id
-					WHERE v.id = :vaultId AND a.vault IS NULL
+					LEFT JOIN v.groups vg
+					LEFT JOIN vg.members gu
+					LEFT JOIN v.members vu
+					LEFT JOIN Device d ON gu.id = d.owner.id OR vu.id = d.owner.id
+					LEFT JOIN Access a ON d.id = a.id.deviceId AND v.id = a.id.vaultId
+					WHERE d IS NOT NULL AND v.id = :vaultId AND a.vault IS NULL
 				"""
 )
 public class Device extends PanacheEntityBase {
@@ -52,10 +43,7 @@ public class Device extends PanacheEntityBase {
 	public User owner;
 
 	@OneToMany(mappedBy = "device", fetch = FetchType.LAZY)
-	public Set<UserAccess> userAccess = new HashSet<>();
-
-	@OneToMany(mappedBy = "device", fetch = FetchType.LAZY)
-	public Set<GroupAccess> groupAccess = new HashSet<>();
+	public Set<Access> accesses = new HashSet<>();
 
 	@Column(name = "name", nullable = false)
 	public String name;
@@ -90,8 +78,7 @@ public class Device extends PanacheEntityBase {
 	}
 
 	public static Stream<Device> findRequiringAccessGrant(String vaultId) {
-		return Stream.<Device>concat(find("#Device.requiringUserAccessGrant", Parameters.with("vaultId", vaultId)).stream(),
-				find("#Device.requiringGroupAccessGrant", Parameters.with("vaultId", vaultId)).stream()).collect(Collectors.toSet()).stream();
+		return find("#Device.requiringAccessGrant", Parameters.with("vaultId", vaultId)).stream();
 	}
 
 }

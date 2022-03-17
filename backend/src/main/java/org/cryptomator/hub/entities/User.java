@@ -12,7 +12,6 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.transaction.Transactional;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -30,7 +29,7 @@ public class User extends PanacheEntityBase {
 	@OneToMany(mappedBy = "owner", cascade = {CascadeType.PERSIST}, orphanRemoval = true, fetch = FetchType.LAZY)
 	public Set<Vault> ownedVaults = new HashSet<>();
 
-	@ManyToMany(mappedBy = "members", fetch = FetchType.EAGER) // TODO think about do we really need FetchType.EAGER?
+	@ManyToMany(mappedBy = "members", fetch = FetchType.LAZY)
 	public Set<Group> groups = new HashSet<>();
 
 	@ManyToMany(mappedBy = "members")

@@ -42,7 +42,7 @@ public class RemoteUserPuller {
 
 		for(Group group: removedGroups) {
 			if(!Group.deleteById(group.id)) {
-				System.out.println("Failed to delete group: ${user.id}");
+				System.out.println("Failed to delete group: ${group.id}");
 			}
 		}
 	}
