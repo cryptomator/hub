@@ -33,6 +33,7 @@ import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Path("/vaults")
 public class VaultResource {
@@ -107,9 +108,7 @@ public class VaultResource {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		vault.members.removeIf(u -> u.id.equals(userId));
 		vault.persist();
-
-		// TODO call Access.revokeDevice if no group with this user have still access to this vault
-
+		Access.revokeDeviceAccessIfNoAccessViaGroupsGranted(vaultId, userId);
 		return Response.status(Response.Status.NO_CONTENT).build();
 	}
 
@@ -125,9 +124,7 @@ public class VaultResource {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		vault.groups.removeIf(g -> g.id.equals(groupId));
 		vault.persist();
-
-		// TODO call Access.revokeDevice if no group with this user have still access to this vault
-
+		Access.revokeDeviceAccessIfNoAccessViaUserGranted(vaultId, groupId);
 		return Response.status(Response.Status.NO_CONTENT).build();
 	}
 

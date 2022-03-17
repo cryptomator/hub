@@ -32,7 +32,28 @@ import java.util.Objects;
 				AND a.id.vaultId = :vaultId
 				AND NOT (vu.id IS NULL AND vg.id is NULL)
 		""")
-@NamedQuery(name = "Access.revokeDevice", query = "DELETE FROM Access a WHERE a.id.deviceId = :deviceId AND a.id.vaultId = :vaultId")
+@NamedQuery(name = "Access.revokeDeviceAccessIfNoAccessViaGroupsGranted", query = """
+			DELETE
+			FROM Access a
+			WHERE a IN (SELECT qa FROM Access qa
+				LEFT JOIN qa.vault.members vu
+				LEFT JOIN vu.groups gu
+				LEFT JOIN qa.vault.groups vg
+				WHERE a.id.userId = :userId
+					AND qa.id.vaultId = :vaultId
+					AND vu.id IS NULL AND vg.id is NULL)
+		""")
+@NamedQuery(name = "Access.revokeDeviceAccessIfNoAccessViaUserGranted", query = """
+			DELETE
+			FROM Access a
+			WHERE a IN (SELECT qa FROM Access qa
+				LEFT JOIN qa.vault.members vu
+				LEFT JOIN vu.groups gu
+				LEFT JOIN qa.vault.groups vg
+					WHERE gu.id = :groupId
+					AND qa.id.vaultId = :vaultId
+					AND vu.id IS NULL AND vg.id is NULL)
+		""")
 public class Access extends PanacheEntityBase {
 
 	@EmbeddedId
@@ -139,12 +160,22 @@ public class Access extends PanacheEntityBase {
 		}
 	}
 
-	public static void deleteDeviceAccess(String vaultId, String deviceId) {
+	public static void revokeDeviceAccessIfNoAccessViaGroupsGranted(String vaultId, String userId) {
 		//TODO Replace with PanacheEntityBase.delete(...) once https://github.com/quarkusio/quarkus/issues/20758 is fixed
-		int affected = getEntityManager().createNamedQuery("Access.revokeDevice").setParameter("vaultId", vaultId).setParameter("deviceId", deviceId).executeUpdate();
-		if (affected == 0) {
-			throw new EntityNotFoundException("Access(vault: " + vaultId + ", device: " + deviceId + ") not found");
-		}
+		int affected = getEntityManager().createNamedQuery("Access.revokeDeviceAccessIfNoAccessViaGroupsGranted").setParameter("vaultId", vaultId).setParameter("userId", userId).executeUpdate();
+		// TODO think about what to do with that
+		/*if (affected == 0) {
+			throw new EntityNotFoundException("Access(vault: " + vaultId + ", device: " + userId + ") not found");
+		}*/
+	}
+
+	public static void revokeDeviceAccessIfNoAccessViaUserGranted(String vaultId, String groupId) {
+		//TODO Replace with PanacheEntityBase.delete(...) once https://github.com/quarkusio/quarkus/issues/20758 is fixed
+		int affected = getEntityManager().createNamedQuery("Access.revokeDeviceAccessIfNoAccessViaUserGranted").setParameter("vaultId", vaultId).setParameter("groupId", groupId).executeUpdate();
+		// TODO think about what to do with that
+		/*if (affected == 0) {
+			throw new EntityNotFoundException("Access(vault: " + vaultId + ", device: " + groupId + ") not found");
+		}*/
 	}
 
 }
