@@ -21,7 +21,7 @@ import static org.hamcrest.Matchers.empty;
 
 @QuarkusTest
 @FlywayTest(value = @DataSource(url = "jdbc:h2:mem:test"))
-@DisplayName("Resource /devices")
+@DisplayName("Resource /users")
 public class UsersResourceTest {
 
 	@BeforeAll
