@@ -1,4 +1,4 @@
-package org.cryptomator.hub.spi.keycloak;
+package org.cryptomator.hub.api.keycloak;
 
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 

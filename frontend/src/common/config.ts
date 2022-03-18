@@ -1,7 +1,7 @@
 import AxiosStatic from 'axios';
 
 const axios = AxiosStatic.create({
-  baseURL: import.meta.env.DEV ? 'http://localhost:8080' : '',
+  baseURL: (import.meta.env.DEV ? 'http://localhost:8080' : '') + '/api',
   headers: {
     'Content-Type': 'application/json'
   }

@@ -1,4 +1,4 @@
-package org.cryptomator.hub.spi;
+package org.cryptomator.hub.api;
 
 import com.radcortez.flyway.test.annotation.DataSource;
 import com.radcortez.flyway.test.annotation.FlywayTest;

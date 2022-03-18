@@ -1,4 +1,4 @@
-package org.cryptomator.hub.spi;
+package org.cryptomator.hub.api;
 
 import com.radcortez.flyway.test.annotation.DataSource;
 import com.radcortez.flyway.test.annotation.FlywayTest;
@@ -17,7 +17,6 @@ import java.util.Set;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
-import static org.hamcrest.CoreMatchers.containsString;
 
 @QuarkusTest
 @FlywayTest(value = @DataSource(url = "jdbc:h2:mem:test"))
