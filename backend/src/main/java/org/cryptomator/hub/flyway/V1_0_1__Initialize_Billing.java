@@ -1,4 +1,4 @@
-package db.migration;
+package org.cryptomator.hub.flyway;
 
 import org.flywaydb.core.api.migration.BaseJavaMigration;
 import org.flywaydb.core.api.migration.Context;

@@ -27,7 +27,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 
 @QuarkusTest
-@FlywayTest(value = @DataSource(url = "jdbc:h2:mem:test"))
+@FlywayTest(value = @DataSource(url = "jdbc:h2:mem:test"), additionalLocations = {"classpath:org/cryptomator/hub/flyway"})
 @DisplayName("Resource /vaults")
 public class VaultResourceTest {
 
@@ -182,7 +182,7 @@ public class VaultResourceTest {
 
 	@Nested
 	@DisplayName("Managing members as user2")
-	@FlywayTest(value = @DataSource(url = "jdbc:h2:mem:test"), clean = false)
+	@FlywayTest(value = @DataSource(url = "jdbc:h2:mem:test"), additionalLocations = {"classpath:org/cryptomator/hub/flyway"}, clean = false)
 	@TestSecurity(user = "User Name 2", roles = {"user", "vault-owner"})
 	@OidcSecurity(claims = {
 			@Claim(key = "sub", value = "user2")

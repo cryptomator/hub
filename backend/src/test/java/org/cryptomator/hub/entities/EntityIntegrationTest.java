@@ -13,7 +13,7 @@ import javax.persistence.PersistenceException;
 import javax.transaction.Transactional;
 
 @QuarkusTest
-@FlywayTest(value = @DataSource(url = "jdbc:h2:mem:test"))
+@FlywayTest(value = @DataSource(url = "jdbc:h2:mem:test"), additionalLocations = {"classpath:org/cryptomator/hub/flyway"})
 @DisplayName("Persistent Entities")
 public class EntityIntegrationTest {
 
