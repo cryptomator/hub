@@ -1,8 +1,9 @@
 import AxiosStatic, { AxiosRequestConfig, AxiosResponse } from 'axios';
 import authPromise from './auth';
+import { backendBaseURL } from './config';
 
 const axiosBaseCfg: AxiosRequestConfig = {
-  baseURL: (import.meta.env.DEV ? 'http://localhost:8080' : '') + '/api',
+  baseURL: backendBaseURL,
   headers: {
     'Content-Type': 'application/json'
   }
