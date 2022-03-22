@@ -19,8 +19,8 @@ export class VaultConfig {
 
     const hubConfig: VaultConfigHeaderHub = {
       clientId: cfg.keycloakClientId,
-      authEndpoint: `${cfg.keycloakUrl}/realms/${cfg.keycloakRealm}/protocol/openid-connect/auth`, // TODO: read from config
-      tokenEndpoint: `${cfg.keycloakUrl}/realms/${cfg.keycloakRealm}/protocol/openid-connect/token`, // TODO: read from config
+      authEndpoint: cfg.keycloakAuthEndpoint,
+      tokenEndpoint: cfg.keycloakTokenEndpoint,
       devicesResourceUrl: `${backendBaseURL}/devices/`,
       authSuccessUrl: `${frontendBaseURL}/unlock-success?vault=${vaultId}`,
       authErrorUrl: `${frontendBaseURL}/unlock-error?vault=${vaultId}`
