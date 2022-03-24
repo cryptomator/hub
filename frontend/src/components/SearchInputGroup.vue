@@ -1,14 +1,14 @@
 <template>
   <div class="flex rounded-md shadow-sm">
     <div class="relative flex items-stretch flex-grow focus-within:z-10">
-      <Combobox as="div" class="w-full" @update:model-value="item => selectedItem = item">
+      <Combobox v-slot="{ open }" as="div" class="w-full" @update:model-value="item => selectedItem = item">
         <div class="relative">
           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <UsersIcon v-if="selectedItem == null" class="h-5 w-5 text-gray-400" aria-hidden="true" />
             <img v-else :src="selectedItem.pictureUrl" alt="" class="w-5 h-5 rounded-full" />
           </div>
 
-          <ComboboxInput v-if="selectedItem == null" v-focus class="w-full h-10 rounded-l-md border border-gray-300 bg-white py-2 px-10 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm disabled:bg-primary-l2" placeholder="John Doe" @change="query = $event.target.value" />
+          <ComboboxInput v-if="selectedItem == null" v-focus class="w-full h-10 rounded-l-md border border-gray-300 bg-white py-2 px-10 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm disabled:bg-primary-l2" placeholder="John Doe" @change="query = $event.target.value" @keydown.enter="onInputKeydownEnter(open)" />
           <input v-else v-model="selectedItem.name" class="w-full h-10 rounded-l-md border border-gray-300 bg-primary-l2 py-2 px-10 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm" readonly />
         </div>
 
@@ -24,7 +24,7 @@
         </ComboboxOptions>
       </Combobox>
 
-      <button v-if="selectedItem != null" type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center" @click="selectedItem = null">
+      <button v-if="selectedItem != null" type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center" @click="reset()">
         <XCircleIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
       </button>
     </div>
@@ -79,10 +79,21 @@ const filteredItems = computed(() => {
   }
 });
 
+function onInputKeydownEnter(openCombobox: boolean) {
+  if (openCombobox && filteredItems.value.length > 0) {
+    selectedItem.value = filteredItems.value[0];
+  }
+}
+
 function onAction() {
   if (selectedItem.value) {
     emit('action', selectedItem.value.id);
-    selectedItem.value = null;
+    reset();
   }
+}
+
+function reset() {
+  selectedItem.value = null;
+  query.value = '';
 }
 </script>
