@@ -47,7 +47,7 @@ public class LicenseValidatorTest {
 	}
 
 	@Test
-	@DisplayName("validate malformed")
+	@DisplayName("validate malformed token")
 	public void testValidateMalformedToken() {
 		Assertions.assertThrows(JWTDecodeException.class, () -> {
 			validator.validate(MALFORMED_TOKEN);
