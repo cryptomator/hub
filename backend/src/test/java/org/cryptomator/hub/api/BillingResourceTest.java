@@ -15,8 +15,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
@@ -114,24 +112,18 @@ public class BillingResourceTest {
 	})
 	public class AsAnyOtherRole {
 
-		@DisplayName("403 Forbidden")
-		@ParameterizedTest(name = "{0} {1}")
-		@CsvSource(value = {
-				"GET, /billing"
-		})
-		public void testGet(String method, String path) {
-			when().request(method, path)
+		@Test
+		@DisplayName("GET /billing returns 403 Forbidden")
+		public void testGet() {
+			when().get("/billing")
 					.then().statusCode(403);
 		}
 
-		@DisplayName("403 Forbidden")
-		@ParameterizedTest(name = "{0} {1}")
-		@CsvSource(value = {
-				"PUT, /billing/token"
-		})
-		public void testPut(String method, String path) {
+		@Test
+		@DisplayName("PUT /billing/token returns 403 Forbidden")
+		public void testPut() {
 			given().contentType(ContentType.TEXT).body("")
-					.when().request(method, path)
+					.when().put("/billing/token")
 					.then().statusCode(403);
 		}
 
@@ -141,24 +133,18 @@ public class BillingResourceTest {
 	@DisplayName("As unauthenticated user")
 	public class AsAnonymous {
 
-		@DisplayName("401 Unauthorized")
-		@ParameterizedTest(name = "{0} {1}")
-		@CsvSource(value = {
-				"GET, /billing"
-		})
-		public void testGet(String method, String path) {
-			when().request(method, path)
+		@Test
+		@DisplayName("GET /billing returns 401 Unauthorized")
+		public void testGet() {
+			when().get("/billing")
 					.then().statusCode(401);
 		}
 
-		@DisplayName("401 Unauthorized")
-		@ParameterizedTest(name = "{0} {1}")
-		@CsvSource(value = {
-				"PUT, /billing/token"
-		})
-		public void testPut(String method, String path) {
+		@Test
+		@DisplayName("PUT /billing/token returns 401 Unauthorized")
+		public void testPut() {
 			given().contentType(ContentType.TEXT).body("")
-					.when().request(method, path)
+					.when().put("/billing/token")
 					.then().statusCode(401);
 		}
 
