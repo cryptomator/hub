@@ -44,6 +44,9 @@ public class BillingResourceTest {
 
 		private static final String INITIAL_TOKEN = "eyJhbGciOiJFUzUxMiJ9.eyJqdGkiOiI0MiIsImlhdCI6MTY0ODA0OTM2MCwiaXNzIjoiU2t5bWF0aWMiLCJhdWQiOiJDcnlwdG9tYXRvciBIdWIiLCJzdWIiOiJodWJAY3J5cHRvbWF0b3Iub3JnIiwic2VhdHMiOjUsImV4cCI6MjUzNDAyMjE0NDAwLCJyZWZyZXNoVXJsIjoiaHR0cDovL2xvY2FsaG9zdDo4Nzg3L2h1Yi9zdWJzY3JpcHRpb24_aHViX2lkPTQyIn0.AKyoZ0WQ8xhs8vPymWPHCsc6ch6pZpfxBcrF5QjVLSQVnYz2s5QF3nnkwn4AGR7V14TuhkJMZLUZxMdQAYLyL95sAV2Fu0E4-e1v3IVKlNKtze89eqYvEs6Ak9jWjtecOgPWNWjz2itI4MfJBDmbFtTnehOtqRqUdsDoC9NFik2C7tHm";
 		private static final String UPDATED_TOKEN = "eyJhbGciOiJFUzUxMiJ9.eyJqdGkiOiI0MiIsImlhdCI6MTY0ODA1MDIxMCwiaXNzIjoiU2t5bWF0aWMiLCJhdWQiOiJDcnlwdG9tYXRvciBIdWIiLCJzdWIiOiJodWJAY3J5cHRvbWF0b3Iub3JnIiwic2VhdHMiOjUsImV4cCI6MjUzNDAyMjE0NDAwLCJyZWZyZXNoVXJsIjoiaHR0cDovL2xvY2FsaG9zdDo4Nzg3L2h1Yi9zdWJzY3JpcHRpb24_aHViX2lkPTQyIn0.AfYO7yp2-HpfT3yAfhX-2Hc-y4POPRevUNhW9IrL0Ru4BuwJCdf7KLuYIQFeNQ8Etz2RIg6rAnoVJ-xuP4RNE7RmAJuVhrYOyxHmF6btj3e3ES9JyBJW15Yw4R9iM3LKycNxL5OXsktC7I--_IOrB70C05511uGoifbKvvrnbapfn8gE";
+		private static final String EXPIRED_TOKEN = "eyJhbGciOiJFUzUxMiJ9.eyJqdGkiOiI0MiIsImlhdCI6MTY0ODA1MTA0MCwiaXNzIjoiU2t5bWF0aWMiLCJhdWQiOiJDcnlwdG9tYXRvciBIdWIiLCJzdWIiOiJodWJAY3J5cHRvbWF0b3Iub3JnIiwic2VhdHMiOjUsImV4cCI6LTYyMTY3MjE5MjAwLCJyZWZyZXNoVXJsIjoiaHR0cDovL2xvY2FsaG9zdDo4Nzg3L2h1Yi9zdWJzY3JpcHRpb24_aHViX2lkPTQyIn0.AK9Du5MNsyVgOzicgi2S7ECxxqZPBLP8cFByAAZ7_y96NEvrwOiR8NNmlZlfvebMfckaYUEg-nf3BAd1JHAxur1UADyYbKSLoMs4B69SkbKW0drjfY9RjFUhO_w6sS4gg39_X_IhbwW6wRkGFoqGRI0juaCPViQqV5WFIcj7RbuCcNJ6";
+		private static final String TOKEN_WITH_INVALID_SIGNATURE = "eyJhbGciOiJFUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.AbVUinMiT3J_03je8WTOIl-VdggzvoFgnOsdouAs-DLOtQzau9valrq-S6pETyi9Q18HH-EuwX49Q7m3KC0GuNBJAc9Tksulgsdq8GqwIqZqDKmG7hNmDzaQG1Dpdezn2qzv-otf3ZZe-qNOXUMRImGekfQFIuH_MjD2e8RZyww6lbZk";
+		private static final String MALFORMED_TOKEN = "hello world";
 
 		@Test
 		@Order(1)
@@ -78,7 +81,7 @@ public class BillingResourceTest {
 		@Order(4)
 		@DisplayName("PUT /billing/token returns 400 due to expired token")
 		public void testPutExpiredToken() {
-			given().contentType(ContentType.TEXT).body("eyJhbGciOiJFUzUxMiJ9.eyJqdGkiOiI0MiIsImlhdCI6MTY0ODA1MTA0MCwiaXNzIjoiU2t5bWF0aWMiLCJhdWQiOiJDcnlwdG9tYXRvciBIdWIiLCJzdWIiOiJodWJAY3J5cHRvbWF0b3Iub3JnIiwic2VhdHMiOjUsImV4cCI6LTYyMTY3MjE5MjAwLCJyZWZyZXNoVXJsIjoiaHR0cDovL2xvY2FsaG9zdDo4Nzg3L2h1Yi9zdWJzY3JpcHRpb24_aHViX2lkPTQyIn0.AK9Du5MNsyVgOzicgi2S7ECxxqZPBLP8cFByAAZ7_y96NEvrwOiR8NNmlZlfvebMfckaYUEg-nf3BAd1JHAxur1UADyYbKSLoMs4B69SkbKW0drjfY9RjFUhO_w6sS4gg39_X_IhbwW6wRkGFoqGRI0juaCPViQqV5WFIcj7RbuCcNJ6")
+			given().contentType(ContentType.TEXT).body(EXPIRED_TOKEN)
 					.when().put("/billing/token")
 					.then().statusCode(400);
 		}
@@ -87,7 +90,7 @@ public class BillingResourceTest {
 		@Order(5)
 		@DisplayName("PUT /billing/token returns 400 due to invalid signature")
 		public void testPutTokenWithInvalidSignature() {
-			given().contentType(ContentType.TEXT).body("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c")
+			given().contentType(ContentType.TEXT).body(TOKEN_WITH_INVALID_SIGNATURE)
 					.when().put("/billing/token")
 					.then().statusCode(400);
 		}
@@ -96,7 +99,7 @@ public class BillingResourceTest {
 		@Order(6)
 		@DisplayName("PUT /billing/token returns 400 due to malformed token")
 		public void testPutMalformedToken() {
-			given().contentType(ContentType.TEXT).body("hello world")
+			given().contentType(ContentType.TEXT).body(MALFORMED_TOKEN)
 					.when().put("/billing/token")
 					.then().statusCode(400);
 		}
