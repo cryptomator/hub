@@ -25,7 +25,7 @@ import static org.hamcrest.CoreMatchers.is;
 @QuarkusTest
 @FlywayTest(value = @DataSource(url = "jdbc:h2:mem:test"), additionalLocations = {"classpath:org/cryptomator/hub/flyway"})
 @DisplayName("Resource /billing")
-class BillingResourceTest {
+public class BillingResourceTest {
 
 	@BeforeAll
 	public static void beforeAll() {
@@ -114,11 +114,21 @@ class BillingResourceTest {
 		@DisplayName("403 Forbidden")
 		@ParameterizedTest(name = "{0} {1}")
 		@CsvSource(value = {
-				"GET, /billing",
-//				"PUT, /billing/token"
+				"GET, /billing"
 		})
 		public void testGet(String method, String path) {
 			when().request(method, path)
+					.then().statusCode(403);
+		}
+
+		@DisplayName("403 Forbidden")
+		@ParameterizedTest(name = "{0} {1}")
+		@CsvSource(value = {
+				"PUT, /billing/token"
+		})
+		public void testPut(String method, String path) {
+			given().contentType(ContentType.TEXT).body("")
+					.when().request(method, path)
 					.then().statusCode(403);
 		}
 
@@ -131,11 +141,21 @@ class BillingResourceTest {
 		@DisplayName("401 Unauthorized")
 		@ParameterizedTest(name = "{0} {1}")
 		@CsvSource(value = {
-				"GET, /billing",
-//				"PUT, /billing/token"
+				"GET, /billing"
 		})
 		public void testGet(String method, String path) {
 			when().request(method, path)
+					.then().statusCode(401);
+		}
+
+		@DisplayName("401 Unauthorized")
+		@ParameterizedTest(name = "{0} {1}")
+		@CsvSource(value = {
+				"PUT, /billing/token"
+		})
+		public void testPut(String method, String path) {
+			given().contentType(ContentType.TEXT).body("")
+					.when().request(method, path)
 					.then().statusCode(401);
 		}
 
