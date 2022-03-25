@@ -38,8 +38,10 @@
   "grantPermissionDialog.submit": "Berechtigung für {0} Gerät(e) gewähren",
 
   "nav.vaults": "Tresore",
+  "nav.profile.signedInAs": "Eingeloggt als",
   "nav.profile.devices": "Deine Geräte",
   "nav.profile.settings": "Einstellungen",
+  "nav.profile.billing": "Abrechnung",
   "nav.profile.signOut": "Abmelden",
   "nav.mobileMenu": "Hauptmenü öffnen",
 
