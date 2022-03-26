@@ -1,4 +1,4 @@
-package org.cryptomator.hub.spi;
+package org.cryptomator.hub.api;
 
 import io.quarkus.scheduler.Scheduled;
 import org.cryptomator.hub.entities.Access;

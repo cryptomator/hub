@@ -1,4 +1,4 @@
-package org.cryptomator.hub.spi;
+package org.cryptomator.hub.api;
 
 import com.radcortez.flyway.test.annotation.DataSource;
 import com.radcortez.flyway.test.annotation.FlywayTest;
@@ -19,7 +19,7 @@ import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
 
 @QuarkusTest
-@FlywayTest(value = @DataSource(url = "jdbc:h2:mem:test"))
+@FlywayTest(value = @DataSource(url = "jdbc:h2:mem:test"), additionalLocations = {"classpath:org/cryptomator/hub/flyway"})
 @DisplayName("Resource /devices")
 public class DeviceResourceTest {
 
@@ -64,15 +64,24 @@ public class DeviceResourceTest {
 		}
 
 		@Test
+		@DisplayName("PUT /devices/deviceX returns 409 due to non-unique name")
+		public void testCreateX() {
+			var deviceDto = new DeviceResource.DeviceDto("deviceX", "Computer 1", "publickey1", "", Set.of());
+
+			given().contentType(ContentType.JSON).body(deviceDto)
+					.when().put("/devices/{deviceId}", "deviceX")
+					.then().statusCode(409);
+		}
+
+		@Test
 		@DisplayName("PUT /devices/device999 returns 201")
 		public void testCreate2() {
-			var deviceDto = new DeviceResource.DeviceDto("device999", "Computer 4", "publickey4", "", Set.of());
+			var deviceDto = new DeviceResource.DeviceDto("device999", "Computer 999", "publickey999", "", Set.of());
 
 			given().contentType(ContentType.JSON).body(deviceDto)
 					.when().put("/devices/{deviceId}", "device999")
 					.then().statusCode(201);
 		}
-
 
 		@Test
 		@DisplayName("DELETE /devices/ returns 400")

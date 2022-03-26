@@ -19,7 +19,7 @@ import java.util.Objects;
 import java.util.Set;
 
 @Entity
-@Table(name = "Access")
+@Table(name = "access")
 // FIXME simplify request, some LEFT JOIN can be replaced with JOIN
 @NamedQuery(name = "Access.get", query = """
 			SELECT a

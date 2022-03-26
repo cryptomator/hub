@@ -1,4 +1,4 @@
-package org.cryptomator.hub.spi;
+package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.cryptomator.hub.entities.Device;
@@ -6,18 +6,23 @@ import org.cryptomator.hub.entities.User;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.hibernate.exception.ConstraintViolationException;
 
 import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
+import javax.persistence.PersistenceException;
 import javax.transaction.Transactional;
+import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.net.URI;
 import java.util.Set;
 
 @Path("/devices")
@@ -40,13 +45,17 @@ public class DeviceResource {
 		if (deviceId == null || deviceId.trim().length() == 0 || deviceDto == null) {
 			return Response.status(Response.Status.BAD_REQUEST).entity("deviceId or deviceDto cannot be empty").build();
 		}
-		if (Device.findByIdOptional(deviceId).isEmpty()) {
-			User currentUser = User.findById(jwt.getSubject());
-			var device = deviceDto.toDevice(currentUser, deviceId);
-			Device.persist(device);
-			return Response.status(Response.Status.CREATED).build();
-		} else {
-			return Response.status(Response.Status.CONFLICT).build();
+		User currentUser = User.findById(jwt.getSubject());
+		var device = deviceDto.toDevice(currentUser, deviceId);
+		try {
+			device.persistAndFlush();
+			return Response.created(URI.create(".")).build();
+		} catch (PersistenceException e) {
+			if (e.getCause() instanceof ConstraintViolationException) {
+				throw new ClientErrorException(Response.Status.CONFLICT, e);
+			} else {
+				throw new InternalServerErrorException(e);
+			}
 		}
 	}
 

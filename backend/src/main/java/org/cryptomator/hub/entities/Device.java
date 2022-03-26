@@ -18,7 +18,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 @Entity
-@Table(name = "Device")
+@Table(name = "device")
 // FIXME simplify request, some LEFT JOIN can be replaced with JOIN
 @NamedQuery(name = "Device.requiringAccessGrant",
 		query = """

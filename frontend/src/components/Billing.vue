@@ -47,6 +47,7 @@
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { BillingDto } from '../common/backend';
+import { frontendBaseURL } from '../common/config';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -80,7 +81,7 @@ async function fetchData() {
 }
 
 function manageSubscription() {
-  const returnUrl = `${window.location.protocol}//${window.location.host}${import.meta.env.BASE_URL}#/billing`;
+  const returnUrl = `${frontendBaseURL}/billing`;
   window.open(`http://localhost:1313/hub/billing/?hub_id=${billing.value?.hub_id}&return_url=${encodeURIComponent(returnUrl)}`, '_self'); // TODO: use real url
 }
 </script>

@@ -1,4 +1,4 @@
-package org.cryptomator.hub.spi;
+package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -33,7 +33,6 @@ import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.sql.Timestamp;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Path("/vaults")
 public class VaultResource {
@@ -206,23 +205,27 @@ public class VaultResource {
 	@Path("/{vaultId}")
 	@RolesAllowed("vault-owner")
 	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.TEXT_PLAIN)
 	@Transactional
 	@Operation(summary = "creates a vault",
 			description = "Creates a vault with the given vault id. The creationTime in the vaultDto is ignored and the current server time is used.")
 	@APIResponse(responseCode = "201", description = "vault created")
-	@APIResponse(responseCode = "409", description = "vault with given id already exists")
+	@APIResponse(responseCode = "409", description = "vault with given id or name already exists")
 	public Response create(@PathParam("vaultId") String vaultId, VaultDto vaultDto) {
 		if (vaultDto == null) {
 			throw new BadRequestException("Missing vault dto");
 		}
-		if (Vault.findByIdOptional(vaultId).isPresent()) {
-			throw new ClientErrorException(Response.Status.CONFLICT);
-		}
-		var currentUser = User.<User>findById(jwt.getSubject());
+		User currentUser = User.findById(jwt.getSubject());
 		var vault = vaultDto.toVault(currentUser, vaultId);
-		Vault.persist(vault);
-		return Response.created(URI.create(".")).build();
+		try {
+			vault.persistAndFlush();
+			return Response.created(URI.create(".")).build();
+		} catch (PersistenceException e) {
+			if (e.getCause() instanceof ConstraintViolationException) {
+				throw new ClientErrorException(Response.Status.CONFLICT, e);
+			} else {
+				throw new InternalServerErrorException(e);
+			}
+		}
 	}
 
 	public record VaultDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("description") String description,

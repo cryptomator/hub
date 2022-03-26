@@ -1,28 +1,28 @@
 <template>
   <div class="flex rounded-md shadow-sm">
     <div class="relative flex items-stretch flex-grow focus-within:z-10">
-      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-        <UsersIcon v-if="selectedItem == null" class="h-5 w-5 text-gray-400" aria-hidden="true" />
-        <img v-else :src="selectedItem.pictureUrl" alt="" class="w-5 h-5 rounded-full" />
-      </div>
+      <Combobox v-slot="{ open }" as="div" class="w-full" @update:model-value="item => selectedItem = item">
+        <div class="relative">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <UsersIcon v-if="selectedItem == null" class="h-5 w-5 text-gray-400" aria-hidden="true" />
+            <img v-else :src="selectedItem.pictureUrl" alt="" class="w-5 h-5 rounded-full" />
+          </div>
 
-      <Listbox v-model="selectedItem" as="div" class="w-full">
-        <ListboxButton class="w-full" @focus="searchInput?.focus()">
-          <input id="searchInput" ref="searchInput" v-model="searchTerm" v-focus :disabled="selectedItem != null" type="text" name="searchInput" autocomplete="off" class="focus:ring-primary focus:border-primary block w-full rounded-none rounded-l-md pl-10 sm:text-sm border-gray-300 disabled:bg-primary-l2" placeholder="John Doe" @focus="searchInputFocus = true" @blur="onSearchInputBlur()" />
-        </ListboxButton>
-        <div v-show="listboxOptionsOpen">
-          <ListboxOptions ref="listboxOptions" class="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm" static @focus="listboxOptionsFocus = true" @blur="onListboxOptionsBlur()">
-            <ListboxOption v-for="item in filteredItems" :key="item.id" v-slot="{ active }" as="template" :value="item">
-              <li :class="[active ? 'text-white bg-primary' : 'text-gray-900', {'hover:text-white hover:bg-primary': !listboxOptionsFocus}, 'cursor-default select-none relative py-2 pl-3 pr-9']" @focus="listboxOptionFocus = true" @blur="listboxOptionFocus = false">
-                <div class="flex items-center">
-                  <img :src="item.pictureUrl" alt="" class="shrink-0 h-6 w-6 rounded-full" />
-                  <span class="ml-3 block truncate">{{ item.name }}</span>
-                </div>
-              </li>
-            </ListboxOption>
-          </ListboxOptions>
+          <ComboboxInput v-if="selectedItem == null" v-focus class="w-full h-10 rounded-l-md border border-gray-300 bg-white py-2 px-10 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm disabled:bg-primary-l2" placeholder="John Doe" @change="query = $event.target.value" @keydown.enter="onInputKeydownEnter(open)" />
+          <input v-else v-model="selectedItem.name" class="w-full h-10 rounded-l-md border border-gray-300 bg-primary-l2 py-2 px-10 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm" readonly />
         </div>
-      </Listbox>
+
+        <ComboboxOptions v-if="selectedItem == null && filteredItems.length > 0" class="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+          <ComboboxOption v-for="item in filteredItems" :key="item.id" v-slot="{ active }" :value="item" as="template">
+            <li :class="['relative cursor-default select-none py-2 pl-3 pr-9', active ? 'bg-primary text-white' : 'text-gray-900']">
+              <div class="flex items-center">
+                <img :src="item.pictureUrl" alt="" class="h-6 w-6 shrink-0 rounded-full" />
+                <span class="ml-3 truncate">{{ item.name }}</span>
+              </div>
+            </li>
+          </ComboboxOption>
+        </ComboboxOptions>
+      </Combobox>
 
       <button v-if="selectedItem != null" type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center" @click="reset()">
         <XCircleIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
@@ -36,9 +36,9 @@
 </template>
 
 <script setup lang="ts">
-import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue';
+import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions } from '@headlessui/vue';
 import { UsersIcon, XCircleIcon } from '@heroicons/vue/solid';
-import { computed, nextTick, ref, Ref, watch } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 
 interface Item {
   id: string;
@@ -61,57 +61,28 @@ const vFocus = {
   }
 };
 
-const searchInput = ref<HTMLInputElement>();
-const listboxOptions = ref<HTMLElement>();
 const actionButton = ref<HTMLButtonElement>();
 
-const searchInputFocus = ref(false);
-const listboxOptionsFocus = ref(false);
-const listboxOptionFocus = ref(false);
-const searchTerm = ref('');
+const query = ref('');
 const selectedItem = ref<Item | null>(null);
 watch(selectedItem, (value) => {
   if (value != null) {
-    searchTerm.value = value.name;
     nextTick(() => actionButton.value?.focus());
   }
 });
 
-const listboxOptionsOpen = computed(() => {
-  if (selectedItem.value == null) {
-    return (searchInputFocus.value || listboxOptionsFocus.value || listboxOptionFocus.value) && filteredItems.value.length > 0;
-  } else {
-    return false;
-  }
-});
 const filteredItems = computed(() => {
-  if (searchTerm.value.length == 0) {
+  if (query.value.length == 0) {
     return [];
   } else {
-    return props.items.filter((item) => item.name.toLowerCase().includes(searchTerm.value.toLowerCase()));
+    return props.items.filter((item) => item.name.toLowerCase().includes(query.value.toLowerCase()));
   }
 });
 
-function delayBlur(el: HTMLElement | undefined, focus: Ref<boolean>) {
-  setTimeout(() => {
-    if (document.activeElement != el) {
-      focus.value = false;
-    }
-  }, 500);
-}
-
-function onSearchInputBlur() {
-  delayBlur(searchInput.value, searchInputFocus);
-}
-
-function onListboxOptionsBlur() {
-  delayBlur(listboxOptions.value, listboxOptionsFocus);
-}
-
-function reset() {
-  selectedItem.value = null;
-  searchTerm.value = '';
-  nextTick(() => searchInput.value?.focus());
+function onInputKeydownEnter(openCombobox: boolean) {
+  if (openCombobox && filteredItems.value.length > 0) {
+    selectedItem.value = filteredItems.value[0];
+  }
 }
 
 function onAction() {
@@ -119,5 +90,10 @@ function onAction() {
     emit('action', selectedItem.value.id);
     reset();
   }
+}
+
+function reset() {
+  selectedItem.value = null;
+  query.value = '';
 }
 </script>

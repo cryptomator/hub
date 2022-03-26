@@ -1,6 +1,4 @@
-package org.cryptomator.hub.spi;
-
-import org.cryptomator.hub.spi.keycloak.KeycloakRemoteUserProvider;
+package org.cryptomator.hub.api;
 
 import javax.enterprise.context.ApplicationScoped;
 
