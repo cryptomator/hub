@@ -2,10 +2,13 @@ package org.cryptomator.hub.spi;
 
 import org.cryptomator.hub.spi.keycloak.KeycloakRemoteUserProvider;
 
+import javax.enterprise.context.ApplicationScoped;
+
+@ApplicationScoped
 public class RemoteUserProviderFactory {
 
-	public static RemoteUserProvider get(ConfigResource configResource) {
-		return new KeycloakRemoteUserProvider(configResource);
+	public RemoteUserProvider get(SyncerConfig syncerConfig) {
+		return new KeycloakRemoteUserProvider(syncerConfig);
 	}
 
 }

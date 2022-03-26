@@ -2,8 +2,8 @@ package org.cryptomator.hub.spi.keycloak;
 
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
-import org.cryptomator.hub.spi.ConfigResource;
 import org.cryptomator.hub.spi.RemoteUserProvider;
+import org.cryptomator.hub.spi.SyncerConfig;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
@@ -19,31 +19,24 @@ import java.util.stream.Stream;
 @ApplicationScoped
 public class KeycloakRemoteUserProvider implements RemoteUserProvider {
 
-	private final String keycloakUrl;
-	private final String keycloakRealm;
-	private final String keycloakClientId;
-	private final String username = "syncer";
-	private final String password = "syncer";
+	private final SyncerConfig syncerConfig;
 
-	public KeycloakRemoteUserProvider(ConfigResource configResource) {
-		var config = configResource.getConfig();
-		this.keycloakUrl = config.keycloakUrl();
-		this.keycloakRealm = config.keycloakRealm();
-		this.keycloakClientId = "admin-cli";
+	public KeycloakRemoteUserProvider(SyncerConfig syncerConfig) {
+		this.syncerConfig = syncerConfig;
 	}
 
 	@Override
 	public Stream<User> users() {
-		try (Keycloak keycloak = Keycloak.getInstance(keycloakUrl, keycloakRealm, username, password, keycloakClientId)) {
-			return keycloak.realm(keycloakRealm).users().list().stream().map(this::mapToUser);
+		try (Keycloak keycloak = Keycloak.getInstance(syncerConfig.getKeycloakUrl(), syncerConfig.getKeycloakRealm(), syncerConfig.getUsername(), syncerConfig.getPassword(), syncerConfig.getKeycloakClientId())) {
+			return keycloak.realm(syncerConfig.getKeycloakRealm()).users().list().stream().map(this::mapToUser);
 		}
 	}
 
 	@Override
 	public Stream<User> usersIncludingGroups() {
-		try (Keycloak keycloak = Keycloak.getInstance(keycloakUrl, keycloakRealm, username, password, keycloakClientId)) {
+		try (Keycloak keycloak = Keycloak.getInstance(syncerConfig.getKeycloakUrl(), syncerConfig.getKeycloakRealm(), syncerConfig.getUsername(), syncerConfig.getPassword(), syncerConfig.getKeycloakClientId())) {
 			var groups = groupsIncludingMembers().collect(Collectors.toSet());
-			return keycloak.realm(keycloakRealm).users().list().stream().map(user -> {
+			return keycloak.realm(syncerConfig.getKeycloakRealm()).users().list().stream().map(user -> {
 				var actualGroups = groups.stream().filter(group -> group.members.stream().anyMatch(usr -> usr.id.equals(user.getId()))).collect(Collectors.toSet());
 				return mapToUser(user, Optional.of(actualGroups));
 			});
@@ -74,15 +67,15 @@ public class KeycloakRemoteUserProvider implements RemoteUserProvider {
 
 	@Override
 	public Stream<User> searchUser(String querry) {
-		try (Keycloak keycloak = Keycloak.getInstance(keycloakUrl, keycloakRealm, username, password, keycloakClientId)) {
-			return keycloak.realm(keycloakRealm).users().search(querry).stream().map(this::mapToUser);
+		try (Keycloak keycloak = Keycloak.getInstance(syncerConfig.getKeycloakUrl(), syncerConfig.getKeycloakRealm(), syncerConfig.getUsername(), syncerConfig.getPassword(), syncerConfig.getKeycloakClientId())) {
+			return keycloak.realm(syncerConfig.getKeycloakRealm()).users().search(querry).stream().map(this::mapToUser);
 		}
 	}
 
 	@Override
 	public Stream<Group> groups() {
-		try (Keycloak keycloak = Keycloak.getInstance(keycloakUrl, keycloakRealm, username, password, keycloakClientId)) {
-			return keycloak.realm(keycloakRealm).groups().groups().stream().map(group -> {
+		try (Keycloak keycloak = Keycloak.getInstance(syncerConfig.getKeycloakUrl(), syncerConfig.getKeycloakRealm(), syncerConfig.getUsername(), syncerConfig.getPassword(), syncerConfig.getKeycloakClientId())) {
+			return keycloak.realm(syncerConfig.getKeycloakRealm()).groups().groups().stream().map(group -> {
 				var groupEntity = new Group();
 				groupEntity.id = group.getId();
 				groupEntity.name = group.getName();
@@ -93,9 +86,9 @@ public class KeycloakRemoteUserProvider implements RemoteUserProvider {
 
 	@Override
 	public Stream<Group> groupsIncludingMembers() {
-		try (Keycloak keycloak = Keycloak.getInstance(keycloakUrl, keycloakRealm, username, password, keycloakClientId)) {
-			var groups = keycloak.realm(keycloakRealm).groups().groups().stream().map(group -> {
-				var members  = keycloak.realm(keycloakRealm).groups().group(group.getId()).members().stream().map(this::mapToUser).collect(Collectors.toSet());
+		try (Keycloak keycloak = Keycloak.getInstance(syncerConfig.getKeycloakUrl(), syncerConfig.getKeycloakRealm(), syncerConfig.getUsername(), syncerConfig.getPassword(), syncerConfig.getKeycloakClientId())) {
+			var groups = keycloak.realm(syncerConfig.getKeycloakRealm()).groups().groups().stream().map(group -> {
+				var members  = keycloak.realm(syncerConfig.getKeycloakRealm()).groups().group(group.getId()).members().stream().map(this::mapToUser).collect(Collectors.toSet());
 				// at this point, members contains only this group and not all groups. all other groups will be added to this user in a second step
 				return mapToGroup(group, members);
 			}).toList();

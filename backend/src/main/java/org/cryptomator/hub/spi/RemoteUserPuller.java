@@ -1,11 +1,13 @@
 package org.cryptomator.hub.spi;
 
 import io.quarkus.scheduler.Scheduled;
+import org.cryptomator.hub.entities.Access;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.transaction.Transactional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -13,64 +15,73 @@ import java.util.stream.Stream;
 public class RemoteUserPuller {
 
 	@Inject
-	ConfigResource configResource;
+	SyncerConfig config;
 
-	@Scheduled(every="1m") // TODO use in final version Scheduled variant loaded from config
+	@Scheduled(every = "{hub.keycloak.syncer-period}")
+	@Transactional
 	void sync() {
-		updateUsers();
-		updateGroups();
-	}
-
-	private void updateGroups() {
-		var keycloakGroups = RemoteUserProviderFactory.get(configResource).groupsIncludingMembers().collect(Collectors.toSet());
+		var keycloakGroups = new RemoteUserProviderFactory().get(config).groups().collect(Collectors.toSet());
 		var databaseGroups = databaseGroups().collect(Collectors.toSet());
-
-		var newOrUpdatedGroups = keycloakGroups.stream().filter(keycloakGroup -> {
-			if(databaseGroups.contains(keycloakGroup)) {
-				var dbGroup = databaseGroups.stream().filter(group -> group.id.equals(keycloakGroup.id)).findAny().get();
-				return !keycloakGroup.equals(dbGroup) || !keycloakGroup.members.equals(dbGroup.members);
-			} else {
-				return true;
-			}
-		}).collect(Collectors.toSet());
-
-		var removedGroups = databaseGroups.stream().filter(databaseGroup -> !keycloakGroups.contains(databaseGroup)).collect(Collectors.toSet());
-
-		for(Group group: newOrUpdatedGroups) {
-			Group.createOrUpdate(group.id, group.name, group.members);
-		}
-
-		for(Group group: removedGroups) {
-			if(!Group.deleteById(group.id)) {
-				System.out.println("Failed to delete group: ${group.id}");
-			}
-		}
-	}
-
-	private void updateUsers() {
-		var keycloakUsers = RemoteUserProviderFactory.get(configResource).usersIncludingGroups().collect(Collectors.toSet());
+		var keycloakUsers = new RemoteUserProviderFactory().get(config).usersIncludingGroups().collect(Collectors.toSet());
 		var databaseUsers = databaseUsers().collect(Collectors.toSet());
 
-		var newOrUpdatedUsers = keycloakUsers.stream().filter(keycloakUser -> {
-			if(databaseUsers.contains(keycloakUser)) {
-				var dbUser = databaseUsers.stream().filter(user -> user.id.equals(keycloakUser.id)).findAny().get();
-				return !keycloakUser.equals(dbUser) || !keycloakUser.groups.equals(dbUser.groups);
-			} else {
-				return true;
-			}
+		var newOrUpdatedGroups = keycloakGroups
+				.stream()
+				.filter(keycloakGroup -> !databaseGroups.contains(keycloakGroup) || databaseGroups.stream().noneMatch(group -> group.id.equals(keycloakGroup.id)))
+				.collect(Collectors.toSet());
+		var removedGroups = databaseGroups
+				.stream()
+				.filter(databaseGroup -> keycloakGroups.stream().noneMatch(keycloakGroup -> databaseGroup.id.equals(keycloakGroup.id)))
+				.collect(Collectors.toSet());
+
+		var newOrUpdatedUsersMetadata = keycloakUsers
+				.stream()
+				.filter(keycloakUser -> !databaseUsers.contains(keycloakUser) || databaseUsers.stream().noneMatch(user -> user.id.equals(keycloakUser.id)))
+				.collect(Collectors.toSet());
+
+		var updatedGroupMembers = keycloakUsers.stream().filter(keycloakUser -> {
+			var dbUser = databaseUsers.stream().filter(user -> user.id.equals(keycloakUser.id)).findAny();
+			return dbUser.isPresent() && !keycloakUser.groups.equals(dbUser.get().groups);
 		}).collect(Collectors.toSet());
 
-		var removedUsers = databaseUsers.stream().filter(databaseUser -> !keycloakUsers.contains(databaseUser)).collect(Collectors.toSet());
+		var removedUsers = databaseUsers
+				.stream()
+				.filter(databaseUser -> keycloakUsers.stream().noneMatch(keycloakUser -> databaseUser.id.equals(keycloakUser.id)))
+				.collect(Collectors.toSet());
 
-		for(User user: newOrUpdatedUsers) {
+		var removedGroupIds = removedGroups.stream().map(group -> group.id).collect(Collectors.toSet());
+		Access.revokeDeviceAccessForGroupsIfNoAccessViaUserGranted(removedGroupIds);
+
+		for (Group group : newOrUpdatedGroups) {
+			Group.createOrUpdate(group.id, group.name);
+		}
+
+		for (Group group : removedGroups) {
+			if (!Group.deleteById(group.id)) {
+				System.out.printf("Failed to delete group %s%n", group.id);
+			}
+		}
+
+		for (User user : newOrUpdatedUsersMetadata) {
+			User.createOrUpdate(user.id, user.name, user.pictureUrl, user.email);
+		}
+
+		for (User user : updatedGroupMembers) {
 			User.createOrUpdate(user.id, user.name, user.pictureUrl, user.email, user.groups);
 		}
 
-		for(User user: removedUsers) {
-			if(!User.deleteById(user.id)) {
-				System.out.println("Failed to delete user: ${user.id}");
+		for (User user : removedUsers) {
+			if (!User.deleteById(user.id)) {
+				System.out.printf("Failed to delete user %s%n", user.id);
 			}
 		}
+
+		var usersWithReducedGroups = keycloakUsers.stream().filter(keycloakUser -> {
+			var dbUser = databaseUsers.stream().filter(user -> user.id.equals(keycloakUser.id)).findAny();
+			return dbUser.isPresent() && dbUser.get().groups.stream().anyMatch(dbGroup -> keycloakUser.groups.stream().noneMatch(groupId -> groupId.id.equals(dbGroup.id)));
+		}).collect(Collectors.toSet());
+
+		Access.revokeDeviceAccessForUsersIfNoAccessViaGroupsGranted(usersWithReducedGroups.stream().map(user -> user.id).collect(Collectors.toSet()));
 	}
 
 	private Stream<User> databaseUsers() {

@@ -33,7 +33,7 @@ public class UsersResource {
 	JsonWebToken jwt;
 
 	@Inject
-	ConfigResource configResource;
+	SyncerConfig syncerConfig;
 
 	@PUT
 	@Path("/me")
@@ -41,7 +41,7 @@ public class UsersResource {
 	@Operation(summary = "get the logged-in user")
 	@APIResponse(responseCode = "201", description = "user created")
 	public Response syncMe() {
-		// TODO delete me
+		// TODO delete user sync to update access credentials
 		return Response.created(URI.create(".")).build();
 	}
 
@@ -80,7 +80,7 @@ public class UsersResource {
 	@NoCache
 	@Operation(summary = "search user")
 	public List<UserDto> search(@QueryParam("querry") String querry) {
-		return RemoteUserProviderFactory.get(configResource).searchUser(querry).map(UserDto::fromEntity).toList();
+		return new RemoteUserProviderFactory().get(syncerConfig).searchUser(querry).map(UserDto::fromEntity).toList();
 	}
 
 	public record UserDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("pictureUrl") String pictureUrl, @JsonProperty("email") String email,
