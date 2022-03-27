@@ -1,9 +1,7 @@
-package org.cryptomator.hub.api;
+package org.cryptomator.hub;
 
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
-import org.cryptomator.hub.api.RemoteUserProvider;
-import org.cryptomator.hub.api.SyncerConfig;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;

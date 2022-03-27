@@ -1,6 +1,8 @@
 package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.cryptomator.hub.RemoteUserProviderFactory;
+import org.cryptomator.hub.SyncerConfig;
 import org.cryptomator.hub.entities.Group;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.jboss.resteasy.annotations.cache.NoCache;

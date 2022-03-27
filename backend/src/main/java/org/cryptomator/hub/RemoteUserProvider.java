@@ -1,4 +1,4 @@
-package org.cryptomator.hub.api;
+package org.cryptomator.hub;
 
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;

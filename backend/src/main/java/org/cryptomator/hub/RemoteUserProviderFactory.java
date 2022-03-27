@@ -1,4 +1,4 @@
-package org.cryptomator.hub.api;
+package org.cryptomator.hub;
 
 import javax.enterprise.context.ApplicationScoped;
 
