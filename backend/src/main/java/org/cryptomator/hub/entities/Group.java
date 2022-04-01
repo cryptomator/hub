@@ -15,7 +15,7 @@ import java.util.Objects;
 import java.util.Set;
 
 @Entity
-@Table(name = "grp")
+@Table(name = "group")
 public class Group extends PanacheEntityBase  {
 
 	@Id
