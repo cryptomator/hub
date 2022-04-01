@@ -5,8 +5,6 @@ import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.Table;
 import javax.transaction.Transactional;
@@ -25,8 +23,7 @@ public class Group extends PanacheEntityBase  {
 	@Column(name = "name", nullable = false)
 	public String name;
 
-	@ManyToMany
-	@JoinTable(name = "group_user", joinColumns = @JoinColumn(name = "group_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"))
+	@ManyToMany(mappedBy = "groups")
 	public Set<User> members = new HashSet<>();
 
 	@ManyToMany(mappedBy = "groups")
