@@ -33,17 +33,8 @@ public class RemoteUserPuller {
 		var removedUsers = getRemovedUsers(keycloakUsers, databaseUsers);
 		var usersWithReducedGroups = getUsersWithReducedGroups(keycloakUsers, databaseUsers);
 
-		var removedGroupIds = removedGroups.stream().map(group -> group.id).collect(Collectors.toSet());
-		Access.revokeDeviceAccessForGroupsIfNoAccessViaUserGranted(removedGroupIds);
-
 		for (Group group : newOrUpdatedGroups) {
 			Group.createOrUpdate(group.id, group.name);
-		}
-
-		for (Group group : removedGroups) {
-			if (!Group.deleteById(group.id)) {
-				System.out.printf("Failed to delete group %s%n", group.id);
-			}
 		}
 
 		for (User user : newUserOrUpdatedUsersMetadata) {
@@ -60,7 +51,21 @@ public class RemoteUserPuller {
 			}
 		}
 
-		Access.revokeDeviceAccessForUsersIfNoAccessViaGroupsGranted(usersWithReducedGroups.stream().map(user -> user.id).collect(Collectors.toSet()));
+		if(!removedGroups.isEmpty()) {
+			var removedGroupIds = removedGroups.stream().map(group -> group.id).collect(Collectors.toSet());
+			Access.revokeDeviceAccessForGroupsIfNoAccessViaUserGranted(removedGroupIds);
+		}
+
+		for (Group group : removedGroups) {
+			if (!Group.deleteById(group.id)) {
+				System.out.printf("Failed to delete group %s%n", group.id);
+			}
+		}
+
+		if(!usersWithReducedGroups.isEmpty()) {
+			var usersWithReducedGroupsIds = usersWithReducedGroups.stream().map(user -> user.id).collect(Collectors.toSet());
+			Access.revokeDeviceAccessForUsersIfNoAccessViaGroupsGranted(usersWithReducedGroupsIds);
+		}
 	}
 
 	Set<Group> newOrUpdatedGroups(Set<Group> keycloakGroups, Set<Group> databaseGroups) {
