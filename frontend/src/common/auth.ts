@@ -12,6 +12,7 @@ class Auth {
     });
     await keycloak.init({
       onLoad: 'check-sso',
+      silentCheckSsoFallback: false,
       silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
       pkceMethod: 'S256',
     });
