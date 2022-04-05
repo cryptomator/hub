@@ -61,16 +61,4 @@ public class Group extends PanacheEntityBase  {
 		group.name = name;
 		group.persist();
 	}
-
-	@Transactional(Transactional.TxType.REQUIRED)
-	public static void createOrUpdate(String id, String name, Set<User> users) {
-		Group group = findById(id);
-		if (group == null) {
-			group = new Group();
-			group.id = id;
-		}
-		group.name = name;
-		group.members = users;
-		group.persist();
-	}
 }
