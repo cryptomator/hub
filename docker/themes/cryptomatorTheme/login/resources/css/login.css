@@ -149,13 +149,13 @@ textarea.pf-c-form-control {
 /* default - IE compatibility */
 .pf-m-primary {
     color: #FFFFFF;
-    background-color: #0066CC;
+    background-color: #139624;
     background-color: var(--pf-global--primary-color--100);
 }
 
 /* default - IE compatibility */
 .pf-m-primary:hover {
-    background-color: #004080;
+    background-color: #009F69;
     background-color: var(--pf-global--primary-color--200);
 }
 
