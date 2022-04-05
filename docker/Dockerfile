@@ -1,4 +1,4 @@
-FROM quay.io/keycloak/keycloak:17.0.0
+FROM quay.io/keycloak/keycloak:17.0.1
 LABEL maintainer="martin.beyer@skymatic.de"
 
 ENV LANG=C.UTF-8
