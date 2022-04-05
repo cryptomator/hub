@@ -1,3 +1,4 @@
+@import "fonts.css";
 .pf-t-light {
   --pf-global--Color--100: var(--pf-global--Color--dark-100);
   --pf-global--Color--200: var(--pf-global--Color--dark-200);
@@ -246,12 +247,12 @@
   --pf-global--icon--FontSize--md: 1.125rem;
   --pf-global--icon--FontSize--lg: 1.5rem;
   --pf-global--icon--FontSize--xl: 3.375rem;
-  --pf-global--FontFamily--sans-serif: overpass, overpass, open sans, -apple-system, blinkmacsystemfont, Segoe UI, roboto, Helvetica Neue, arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol;
-  --pf-global--FontFamily--heading--sans-serif: overpass, overpass, open sans, -apple-system, blinkmacsystemfont, Segoe UI, roboto, Helvetica Neue, arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol;
+  --pf-global--FontFamily--sans-serif: open sans, -apple-system, blinkmacsystemfont, Segoe UI, roboto, Helvetica Neue, arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol;
+  --pf-global--FontFamily--heading--sans-serif: Quicksand, open sans, -apple-system, blinkmacsystemfont, Segoe UI, roboto, Helvetica Neue, arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol;
   --pf-global--FontFamily--monospace: overpass-mono, overpass-mono, SFMono-Regular, menlo, monaco, consolas, Liberation Mono, Courier New, monospace;
   --pf-global--FontFamily--redhatfont--sans-serif: RedHatText, Overpass, overpass, helvetica, arial, sans-serif;
-  --pf-global--FontFamily--redhatfont--heading--sans-serif: RedHatDisplay, Overpass, overpass, helvetica, arial, sans-serif;
-  --pf-global--FontFamily--redhatfont--monospace: Liberation Mono, consolas, SFMono-Regular, menlo, monaco, Courier New, monospace;
+/*  --pf-global--FontFamily--redhatfont--heading--sans-serif: RedHatDisplay, Overpass, overpass, helvetica, arial, sans-serif; commented out to avoid errors while trying to load font-family: overpass
+  --pf-global--FontFamily--redhatfont--monospace: Liberation Mono, consolas, SFMono-Regular, menlo, monaco, Courier New, monospace;*/
   --pf-global--FontSize--4xl: 2.25rem;
   --pf-global--FontSize--3xl: 1.75rem;
   --pf-global--FontSize--2xl: 1.5rem;

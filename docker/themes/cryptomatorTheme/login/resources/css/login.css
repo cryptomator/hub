@@ -168,6 +168,7 @@ textarea.pf-c-form-control {
 /*End of IE compatibility*/
 h1#kc-page-title {
     margin-top: 10px;
+    font-family: var(--pf-global--FontFamily--heading--sans-serif);
 }
 
 #kc-locale ul {
