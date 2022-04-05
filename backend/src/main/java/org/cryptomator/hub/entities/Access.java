@@ -71,7 +71,7 @@ import java.util.Set;
 				LEFT JOIN qa.vault.members vu
 				LEFT JOIN vu.groups gu
 				LEFT JOIN qa.vault.groups vg
-					WHERE vu.id is NULL AND vg.id iS NULL AND qa.id.userId IN :userIds)
+					WHERE vu.id is NULL AND gu.id iS NULL AND qa.id.userId IN :userIds)
 		""")
 public class Access extends PanacheEntityBase {
 
