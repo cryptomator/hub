@@ -217,10 +217,12 @@ a#kc-current-locale-link::after {
 }
 
 div.kc-logo-text {
-    background-image: url(../img/keycloak-logo-text.png);
+    background-image: url(../img/logo.svg);
+    /*background-image: url(../img/keycloak-logo-text.png);*/
     background-repeat: no-repeat;
+    background-size: contain;
     height: 63px;
-    width: 300px;
+    width: 63px;
     margin: 0 auto;
 }
 
