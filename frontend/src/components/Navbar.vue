@@ -34,10 +34,19 @@
               </MenuButton>
             </div>
             <transition enter-active-class="transition ease-out duration-100" enter-from-class="opacity-0 scale-95" enter-to-class="opacity-100 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class=" opacity-100 scale-100" leave-to-class=" opacity-0 scale-95">
-              <MenuItems class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white divide-y divide-gray-100 ring-1 ring-black ring-opacity-5 focus:outline-none">
-                <MenuItem v-for="item in profileDropdown" :key="item.name" v-slot="{ active }">
-                  <router-link :to="item.to" :class="[active ? 'bg-gray-100' : '', 'block px-4 py-2 text-sm text-gray-700']">{{ t(item.name) }}</router-link>
-                </MenuItem>
+              <MenuItems class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white divide-y divide-gray-100 ring-1 ring-black ring-opacity-5 focus:outline-none">
+                <div class="px-3.5 py-3 truncate">
+                  <span class="block mb-0.5 text-xs text-gray-500">{{ t('nav.profile.signedInAs') }}</span>
+                  <span class="text-sm font-semibold">{{ me.name }}</span>
+                </div>
+                <div v-for="(itemGroup, index) in profileDropdown" :key="`itemGroup-${index}`" class="px-3.5 py-1.5">
+                  <MenuItem v-for="item in itemGroup" :key="item.name" v-slot="{ active }">
+                    <router-link :to="item.to" :class="[active ? 'text-primary' : '', 'flex items-center py-1.5 text-sm text-gray-700']">
+                      <component :is="item.icon" :class="[active ? 'text-primary' : '', 'flex-none h-5 w-5 text-gray-400 mr-3']" aria-hidden="true"></component>
+                      {{ t(item.name) }}
+                    </router-link>
+                  </MenuItem>
+                </div>
               </MenuItems>
             </transition>
           </Menu>
@@ -57,7 +66,7 @@
 
 <script setup lang="ts">
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
-import { MenuIcon, XIcon } from '@heroicons/vue/outline';
+import { CogIcon, CreditCardIcon, DesktopComputerIcon, LogoutIcon, MenuIcon, XIcon } from '@heroicons/vue/outline';
 import md5 from 'blueimp-md5';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -69,9 +78,16 @@ const navigation = [
   { name: 'nav.vaults', to: '/vaults' },
 ];
 const profileDropdown = [
-  { name: 'nav.profile.devices', to: '/devices' },
-  { name: 'nav.profile.settings', to: '/settings' },
-  { name: 'nav.profile.signOut', to: '/logout' },
+  [
+    { icon: DesktopComputerIcon, name: 'nav.profile.devices', to: '/devices' }
+  ],
+  [
+    { icon: CreditCardIcon, name: 'nav.profile.billing', to: '/billing' }
+  ],
+  [
+    { icon: CogIcon, name: 'nav.profile.settings', to: '/settings' },
+    { icon: LogoutIcon, name: 'nav.profile.signOut', to: '/logout' }
+  ],
 ];
 
 const pictureUrl = computed(() => getPictureUrl());

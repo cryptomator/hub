@@ -1,4 +1,4 @@
-package org.cryptomator.hub.spi;
+package org.cryptomator.hub.api;
 
 import com.radcortez.flyway.test.annotation.DataSource;
 import com.radcortez.flyway.test.annotation.FlywayTest;
@@ -27,7 +27,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 
 @QuarkusTest
-@FlywayTest(value = @DataSource(url = "jdbc:h2:mem:test"))
+@FlywayTest(value = @DataSource(url = "jdbc:h2:mem:test"), additionalLocations = {"classpath:org/cryptomator/hub/flyway"})
 @DisplayName("Resource /vaults")
 public class VaultResourceTest {
 
@@ -127,8 +127,18 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@DisplayName("PUT /vaults/vault3 returns 201")
+		@DisplayName("PUT /vaults/vaultX returns 409")
 		public void testCreateVault2() {
+			var vaultDto = new VaultResource.VaultDto("vaultX", "Vault 1","This is a testvault.", Timestamp.valueOf("2020-02-20 20:20:20"), null, "masterkey1", "iterations1", "salt1");
+
+			given().contentType(ContentType.JSON).body(vaultDto)
+					.when().put("/vaults/{vaultId}", "vaultX")
+					.then().statusCode(409);
+		}
+
+		@Test
+		@DisplayName("PUT /vaults/vault3 returns 201")
+		public void testCreateVault3() {
 			var vaultDto = new VaultResource.VaultDto("vault3", "My Vault","Test vault 3", Timestamp.valueOf("2112-12-21 21:12:21"), null, "masterkey3", "42", "NaCl");
 
 			given().contentType(ContentType.JSON).body(vaultDto)
@@ -138,7 +148,7 @@ public class VaultResourceTest {
 
 		@Test
 		@DisplayName("PUT /vaults/vault3 returns 400")
-		public void testCreateVault3() {
+		public void testCreateVault4() {
 			given().contentType(ContentType.JSON)
 					.when().put("/vaults/{vaultId}", "vault3")
 					.then().statusCode(400);
@@ -172,7 +182,7 @@ public class VaultResourceTest {
 
 	@Nested
 	@DisplayName("Managing members as user2")
-	@FlywayTest(value = @DataSource(url = "jdbc:h2:mem:test"), clean = false)
+	@FlywayTest(value = @DataSource(url = "jdbc:h2:mem:test"), additionalLocations = {"classpath:org/cryptomator/hub/flyway"}, clean = false)
 	@TestSecurity(user = "User Name 2", roles = {"user", "vault-owner"})
 	@OidcSecurity(claims = {
 			@Claim(key = "sub", value = "user2")

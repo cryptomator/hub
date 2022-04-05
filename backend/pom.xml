@@ -8,8 +8,6 @@
 
   <properties>
     <compiler-plugin.version>3.8.1</compiler-plugin.version>
-    <flywaydb.version>4.0.3</flywaydb.version>
-    <h2database.version>1.4.200</h2database.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.jdk.version>17</project.jdk.version>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -18,6 +16,7 @@
     <quarkus.platform.version>2.6.3.Final</quarkus.platform.version>
     <quarkus.native.builder-image>quay.io/quarkus/ubi-quarkus-mandrel:22.0-java17</quarkus.native.builder-image>
     <quarkus.jib.base-jvm-image>eclipse-temurin:17-jre</quarkus.jib.base-jvm-image> <!-- irrelevant for -Pnative -->
+    <jwt.version>3.19.0</jwt.version>
     <surefire-plugin.version>3.0.0-M5</surefire-plugin.version>
   </properties>
 
@@ -68,6 +67,10 @@
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-jdbc-postgresql</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
       <artifactId>quarkus-flyway</artifactId>
     </dependency>
     <dependency>
@@ -97,6 +100,11 @@
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-test-security-oidc</artifactId>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.auth0</groupId>
+      <artifactId>java-jwt</artifactId>
+      <version>${jwt.version}</version>
     </dependency>
 
     <!-- needed until https://github.com/quarkusio/quarkus/issues/14240 is solved -->
