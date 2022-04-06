@@ -14,7 +14,7 @@ CREATE TABLE "authority"
 	"type"        VARCHAR(5) NOT NULL,
 	"name"        VARCHAR(255) NOT NULL,
 	CONSTRAINT "AUTHORITY_PK" PRIMARY KEY ("id", "type"),
-	CONSTRAINT "AUTHORITY_CHK_TYPE" CHECK ("type" = 'user' OR "type" = 'group')
+	CONSTRAINT "AUTHORITY_CHK_TYPE" CHECK ("type" = 'USER' OR "type" = 'GROUP')
 );
 
 CREATE TABLE "group_membership"
@@ -26,33 +26,16 @@ CREATE TABLE "group_membership"
     CONSTRAINT "GROUP_MEMBERSHIP_PK" PRIMARY KEY ("group_id", "group_type", "member_id", "member_type"),
 	CONSTRAINT "GROUP_MEMBERSHIP_FK_GROUP" FOREIGN KEY ("group_id", "group_type") REFERENCES "authority" ("id", "type") ON DELETE CASCADE,
 	CONSTRAINT "GROUP_MEMBERSHIP_FK_MEMBER" FOREIGN KEY ("member_id", "member_type") REFERENCES "authority" ("id", "type") ON DELETE CASCADE,
-	CONSTRAINT "GROUP_MEMBERSHIP_CHK_TYPE" CHECK ("group_type" = 'group')
+	CONSTRAINT "GROUP_MEMBERSHIP_CHK_TYPE" CHECK ("group_type" = 'GROUP')
 );
 
-CREATE VIEW "effective_group_membership" ("group_id", "member_id", "member_type") AS
+CREATE OR REPLACE VIEW "effective_group_membership" ("group_id", "member_id", "member_type") AS
 WITH RECURSIVE "members" ("group_id", "member_id", "member_type") AS (
 	SELECT "gm"."group_id", "gm"."member_id", "gm"."member_type" FROM "group_membership" "gm"
 	UNION
 	SELECT "mem"."group_id", "gm"."member_id", "gm"."member_type" FROM "group_membership" "gm"
 		INNER JOIN "members" "mem" ON "gm"."group_id" = "mem"."member_id" AND "gm"."group_type" = "mem"."member_type"
 ) SELECT * FROM "members";
-
--- demo daten
-INSERT INTO "authority" (id, type, name) VALUES
-	('1', 'group', 'Group1'),
-	('2', 'group', 'Group2'),
-	('1', 'user', 'User1'),
-	('2', 'user', 'User2'),
-	('3', 'user', 'User3'),
-	('4', 'user', 'User4');
-
-INSERT INTO "group_membership" ("group_id", "group_type", "member_id", "member_type") VALUES
-	('1', 'group', '2', 'group'),
-	('1', 'group', '1', 'user'),
-	('2', 'group', '2', 'user'),
-	('1', 'group', '3', 'user'),
-	('2', 'group', '3', 'user');
--- end demo daten
 
 CREATE TABLE "user_details"
 (
@@ -62,13 +45,13 @@ CREATE TABLE "user_details"
 	"email"       VARCHAR(255),
     CONSTRAINT "USER_DETAIL_PK" PRIMARY KEY ("id", "type"),
 	CONSTRAINT "USER_DETAIL_FK_USER" FOREIGN KEY ("id", "type") REFERENCES "authority" ("id", "type") ON DELETE CASCADE,
-	CONSTRAINT "USER_DETAIL_CHK_TYPE" CHECK ("type" = 'user')
+	CONSTRAINT "USER_DETAIL_CHK_TYPE" CHECK ("type" = 'USER')
 );
 
 CREATE TABLE "vault"
 (
 	"id"            VARCHAR(255) NOT NULL,
-	"owner"         VARCHAR(255) NOT NULL,
+	"owner_id"      VARCHAR(255) NOT NULL,
 	"owner_type"    VARCHAR(5) NOT NULL,
 	"name"          VARCHAR(255) NOT NULL,
 	"description"   VARCHAR(255),
@@ -77,9 +60,9 @@ CREATE TABLE "vault"
 	"iterations"    VARCHAR(255) NOT NULL,
 	"masterkey"     VARCHAR(255) NOT NULL,
 	CONSTRAINT "VAULT_PK" PRIMARY KEY ("id"),
-	CONSTRAINT "VAULT_FK_OWNER" FOREIGN KEY ("owner", "owner_type") REFERENCES "authority" ("id", "type"),
+	CONSTRAINT "VAULT_FK_OWNER" FOREIGN KEY ("owner_id", "owner_type") REFERENCES "authority" ("id", "type") ON DELETE RESTRICT,
 	CONSTRAINT "VAULT_UNIQUE_NAME" UNIQUE ("name"),
-	CONSTRAINT "VAULT_CHK_OWNER_TYPE" CHECK ("owner_type" = 'user')
+	CONSTRAINT "VAULT_CHK_OWNER_TYPE" CHECK ("owner_type" = 'USER')
 );
 
 CREATE TABLE "vault_access"
@@ -94,18 +77,18 @@ CREATE TABLE "vault_access"
 
 CREATE TABLE "device"
 (
-	"id"        VARCHAR(255) NOT NULL,
-	"user_id"   VARCHAR(255) NOT NULL,
-	"user_type" VARCHAR(5) NOT NULL,
-	"name"      VARCHAR(255) NOT NULL,
-	"publickey" VARCHAR(255) NOT NULL,
+	"id"         VARCHAR(255) NOT NULL,
+	"owner_id"   VARCHAR(255) NOT NULL,
+	"owner_type" VARCHAR(5) NOT NULL,
+	"name"       VARCHAR(255) NOT NULL,
+	"publickey"  VARCHAR(255) NOT NULL,
 	CONSTRAINT "DEVICE_PK" PRIMARY KEY ("id"),
-	CONSTRAINT "DEVICE_FK_USER" FOREIGN KEY ("user_id", "user_type") REFERENCES "authority" ("id", "type"),
-	CONSTRAINT "DEVICE_UNIQUE_NAME_PER_USER" UNIQUE ("user_id", "user_type", "name"),
-	CONSTRAINT "DEVICE_CHK_USER_TYPE" CHECK ("user_type" = 'user')
+	CONSTRAINT "DEVICE_FK_USER" FOREIGN KEY ("owner_id", "owner_type") REFERENCES "authority" ("id", "type") ON DELETE CASCADE,
+	CONSTRAINT "DEVICE_UNIQUE_NAME_PER_USER" UNIQUE ("owner_id", "owner_type", "name"),
+	CONSTRAINT "DEVICE_CHK_USER_TYPE" CHECK ("owner_type" = 'USER')
 );
 
-CREATE TABLE "access"
+CREATE TABLE "access_token"
 (
 	"device_id" VARCHAR(255) NOT NULL,
 	"user_id"   VARCHAR(255) NOT NULL,
@@ -114,6 +97,8 @@ CREATE TABLE "access"
 	"jwe"       VARCHAR(2000) NOT NULL UNIQUE,
 	CONSTRAINT "ACCESS_PK" PRIMARY KEY ("device_id", "user_id", "vault_id"),
 	CONSTRAINT "ACCESS_FK_DEVICE" FOREIGN KEY ("device_id") REFERENCES "device" ("id") ON DELETE CASCADE,
+	CONSTRAINT "ACCESS_FK_USER" FOREIGN KEY ("user_id", "user_type") REFERENCES "authority" ("id", "type") ON DELETE CASCADE,
+	CONSTRAINT "ACCESS_FK_VAULT" FOREIGN KEY ("vault_id") REFERENCES "vault" ("id") ON DELETE CASCADE,
 	CONSTRAINT "ACCESS_FK_VAULT_ACCESS" FOREIGN KEY ("vault_id", "user_id", "user_type") REFERENCES "vault_access" ("vault_id", "authority_id", "authority_type") ON DELETE CASCADE,
-	CONSTRAINT "ACCESS_CHK_USER_TYPE" CHECK ("user_type" = 'user')
+	CONSTRAINT "ACCESS_CHK_USER_TYPE" CHECK ("user_type" = 'USER')
 );

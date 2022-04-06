@@ -3,7 +3,6 @@ package org.cryptomator.hub.entities;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.panache.common.Parameters;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -20,16 +19,16 @@ import java.util.stream.Stream;
 
 @Entity
 @Table(name = "device")
-@NamedQuery(name = "Device.requiringAccessGrant",
-		query = """
-				SELECT d
-				FROM Vault v
-					INNER JOIN v.members m
-					INNER JOIN m.devices d
-					LEFT JOIN d.access a ON a.id.vaultId = :vaultId AND a.id.deviceId = d
-					WHERE v.id = :vaultId AND a.vault IS NULL
-				"""
-)
+//@NamedQuery(name = "Device.requiringAccessGrant",
+//		query = """
+//				SELECT d
+//				FROM Vault v
+//					INNER JOIN v.members m
+//					INNER JOIN m.devices d
+//					LEFT JOIN d.accessToken a ON a.id.vaultId = :vaultId AND a.id.deviceId = d
+//					WHERE v.id = :vaultId AND a.vault IS NULL
+//				"""
+//)
 public class Device extends PanacheEntityBase {
 
 	@Id
@@ -37,11 +36,12 @@ public class Device extends PanacheEntityBase {
 	public String id;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "user_id", updatable = false, nullable = false)
-	public User owner;
+	@JoinColumn(name = "owner_id", updatable = false, nullable = false)
+	@JoinColumn(name = "owner_type", updatable = false, nullable = false)
+	public Authority owner;
 
 	@OneToMany(mappedBy = "device", fetch = FetchType.LAZY)
-	public Set<Access> access = new HashSet<>();
+	public Set<AccessToken> accessTokens = new HashSet<>();
 
 	@Column(name = "name", nullable = false)
 	public String name;

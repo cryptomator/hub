@@ -19,16 +19,16 @@ import java.io.Serializable;
 import java.util.Objects;
 
 @Entity
-@Table(name = "access")
-@NamedQuery(name = "Access.get", query = """
-			SELECT a
-			FROM Access a
-			WHERE a.device.id = :deviceId
-				AND a.id.userId = :userId
-				AND a.id.vaultId = :vaultId
-		""")
-@NamedQuery(name = "Access.revokeDevice", query = "DELETE FROM Access a WHERE a.id.deviceId = :deviceId AND a.id.vaultId = :vaultId")
-public class Access extends PanacheEntityBase {
+@Table(name = "access_token")
+//@NamedQuery(name = "Access.get", query = """
+//			SELECT a
+//			FROM Access a
+//			WHERE a.device.id = :deviceId
+//				AND a.id.userId = :userId
+//				AND a.id.vaultId = :vaultId
+//		""")
+//@NamedQuery(name = "Access.revokeDevice", query = "DELETE FROM Access a WHERE a.id.deviceId = :deviceId AND a.id.vaultId = :vaultId")
+public class AccessToken extends PanacheEntityBase {
 
 	@EmbeddedId
 	public AccessId id = new AccessId();
@@ -39,9 +39,9 @@ public class Access extends PanacheEntityBase {
 	public Device device;
 
 	@ManyToOne(optional = false, cascade = {CascadeType.REMOVE})
-	@MapsId("userId")
-	@JoinColumn(name = "user_id")
-	public User user;
+	@JoinColumn(name = "user_id", insertable = false, updatable = false)
+	@JoinColumn(name = "user_type", insertable = false, updatable = false)
+	public Authority user;
 
 	@ManyToOne(optional = false, cascade = {CascadeType.REMOVE})
 	@MapsId("vaultId")
@@ -55,12 +55,12 @@ public class Access extends PanacheEntityBase {
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
-		Access access = (Access) o;
-		return Objects.equals(id, access.id)
-				&& Objects.equals(device, access.device)
-				&& Objects.equals(user, access.user)
-				&& Objects.equals(vault, access.vault)
-				&& Objects.equals(jwe, access.jwe);
+		AccessToken other = (AccessToken) o;
+		return Objects.equals(id, other.id)
+				&& Objects.equals(device, other.device)
+				&& Objects.equals(user, other.user)
+				&& Objects.equals(vault, other.vault)
+				&& Objects.equals(jwe, other.jwe);
 	}
 
 	@Override
@@ -88,12 +88,16 @@ public class Access extends PanacheEntityBase {
 		@Column(name = "user_id", nullable = false)
 		private String userId;
 
+		@Column(name = "user_type", nullable = false)
+		private String userType;
+
 		@Column(name = "vault_id", nullable = false)
 		private String vaultId;
 
-		public AccessId(String deviceId, String userId, String vaultId) {
+		public AccessId(String deviceId, String userId, String userType, String vaultId) {
 			this.deviceId = deviceId;
 			this.userId = userId;
+			this.userType = userType;
 			this.vaultId = vaultId;
 		}
 
@@ -115,18 +119,19 @@ public class Access extends PanacheEntityBase {
 			AccessId other = (AccessId) o;
 			return Objects.equals(deviceId, other.deviceId) //
 					&& Objects.equals(userId, other.userId) //
+					&& Objects.equals(userType, other.userType) //
 					&& Objects.equals(vaultId, other.vaultId);
 		}
 
 		@Override
 		public int hashCode() {
-			return Objects.hash(deviceId, userId, vaultId);
+			return Objects.hash(deviceId, userId, userType, vaultId);
 		}
 	}
 
 	// --- data layer queries ---
 
-	public static Access unlock(String vaultId, String deviceId, String userId) {
+	public static AccessToken unlock(String vaultId, String deviceId, String userId) {
 		try {
 			return find("#Access.get", Parameters.with("deviceId", deviceId).and("vaultId", vaultId).and("userId", userId)).firstResult();
 		} catch (NoResultException e) {

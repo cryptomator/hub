@@ -22,14 +22,14 @@ import java.util.stream.Stream;
 
 @Entity
 @Table(name = "vault")
-@NamedQuery(name = "Vault.accessibleOrOwnedByUser",
-		query = """
-				SELECT DISTINCT v
-				FROM Vault v
-				LEFT JOIN v.access a
-				LEFT JOIN a.device d
-				WHERE v.owner.id = :userId OR d.owner.id = :userId 
-				""")
+//@NamedQuery(name = "Vault.accessibleOrOwnedByUser",
+//		query = """
+//				SELECT DISTINCT v
+//				FROM Vault v
+//				LEFT JOIN v.accessToken a
+//				LEFT JOIN a.device d
+//				WHERE v.owner.id = :userId OR d.owner.id = :userId
+//				""")
 public class Vault extends PanacheEntityBase {
 
 	@Id
@@ -37,15 +37,19 @@ public class Vault extends PanacheEntityBase {
 	public String id;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "user_id", updatable = false, nullable = false)
-	public User owner;
+	@JoinColumn(name = "owner_id", updatable = false, nullable = false)
+	@JoinColumn(name = "owner_type", updatable = false, nullable = false)
+	public Authority owner;
 
 	@ManyToMany
-	@JoinTable(name = "vault_user", joinColumns = @JoinColumn(name = "vault_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"))
-	public Set<User> members = new HashSet<>();
+	@JoinTable(name = "vault_access",
+			joinColumns = @JoinColumn(name = "vault_id", referencedColumnName = "id"),
+			inverseJoinColumns = {@JoinColumn(name = "authority_id", referencedColumnName = "id"), @JoinColumn(name = "authority_type", referencedColumnName = "type")}
+	)
+	public Set<Authority> members = new HashSet<>();
 
 	@OneToMany(mappedBy = "vault", fetch = FetchType.LAZY)
-	public Set<Access> access = new HashSet<>();
+	public Set<AccessToken> accessTokens = new HashSet<>(); // rename to accesstokens?
 
 	@Column(name = "name", nullable = false)
 	public String name;
@@ -89,7 +93,7 @@ public class Vault extends PanacheEntityBase {
 				"id='" + id + '\'' +
 				", owner=" + owner +
 				", members=" + members.stream().map(m -> m.id).toList() +
-				", access=" + access.stream().map(a -> a.id).toList() +
+				", accessToken=" + accessTokens.stream().map(a -> a.id).toList() +
 				", name='" + name + '\'' +
 				", salt='" + salt + '\'' +
 				", iterations='" + iterations + '\'' +

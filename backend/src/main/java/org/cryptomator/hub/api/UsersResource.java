@@ -2,9 +2,9 @@ package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
-import org.cryptomator.hub.entities.Access;
+import org.cryptomator.hub.entities.AccessToken;
 import org.cryptomator.hub.entities.Device;
-import org.cryptomator.hub.entities.User;
+import org.cryptomator.hub.entities.Authority;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -39,7 +39,7 @@ public class UsersResource {
 	@Operation(summary = "get the logged-in user")
 	@APIResponse(responseCode = "201", description = "user created")
 	public Response syncMe() {
-		User.createOrUpdate(jwt.getSubject(), jwt.getName(), jwt.getClaim("picture"), jwt.getClaim("email"));
+		Authority.createOrUpdate(jwt.getSubject(), jwt.getName(), jwt.getClaim("picture"), jwt.getClaim("email"));
 		return Response.created(URI.create(".")).build();
 	}
 
@@ -51,15 +51,15 @@ public class UsersResource {
 	@Transactional
 	@Operation(summary = "get the logged-in user")
 	public UserDto getMe(@QueryParam("withDevices") boolean withDevices, @QueryParam("withAccessibleVaults") boolean withAccessibleVaults) {
-		User user = User.findById(jwt.getSubject());
-		Function<Access, VaultResource.VaultDto> mapAccessibleVaults =
+		Authority user = Authority.findById(new Authority.AuthorityId(jwt.getSubject(), Authority.AuthorityType.USER));
+		Function<AccessToken, VaultResource.VaultDto> mapAccessibleVaults =
 				a -> new VaultResource.VaultDto(a.vault.id, a.vault.name, a.vault.description, a.vault.creationTime, UserDto.fromEntity(a.vault.owner), null, null, null);
 		Function<Device, DeviceResource.DeviceDto> mapDevices = withAccessibleVaults //
-				? d -> new DeviceResource.DeviceDto(d.id, d.name, d.publickey, d.owner.id, d.access.stream().map(mapAccessibleVaults).collect(Collectors.toSet())) //
-				: d -> new DeviceResource.DeviceDto(d.id, d.name, d.publickey, d.owner.id, Set.of());
+				? d -> new DeviceResource.DeviceDto(d.id, d.name, d.publickey, d.owner.id.getId(), d.accessTokens.stream().map(mapAccessibleVaults).collect(Collectors.toSet())) //
+				: d -> new DeviceResource.DeviceDto(d.id, d.name, d.publickey, d.owner.id.getId(), Set.of());
 		return withDevices //
-				? new UserDto(user.id, user.name, user.pictureUrl, user.email, user.devices.stream().map(mapDevices).collect(Collectors.toSet()))
-				: new UserDto(user.id, user.name, user.pictureUrl, user.email, Set.of());
+				? new UserDto(user.id.getId(), user.name, user.details.pictureUrl, user.details.email, user.devices.stream().map(mapDevices).collect(Collectors.toSet()))
+				: new UserDto(user.id.getId(), user.name, user.details.pictureUrl, user.details.email, Set.of());
 	}
 
 	@GET
@@ -68,15 +68,15 @@ public class UsersResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "list all users")
 	public List<UserDto> getAll() {
-		PanacheQuery<User> query = User.findAll();
+		PanacheQuery<Authority> query = Authority.findAll();
 		return query.stream().map(UserDto::fromEntity).toList();
 	}
 
 	public record UserDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("pictureUrl") String pictureUrl, @JsonProperty("email") String email,
 								 @JsonProperty("devices") Set<DeviceResource.DeviceDto> devices) {
 
-		public static UserDto fromEntity(User user) {
-			return new UserDto(user.id, user.name, user.pictureUrl, user.email, Set.of());
+		public static UserDto fromEntity(Authority user) {
+			return new UserDto(user.id.getId(), user.name, user.details.pictureUrl, user.details.email, Set.of());
 		}
 	}
 

@@ -22,18 +22,18 @@ public class EntityIntegrationTest {
 	public void removeMemberCascadesToAccess() {
 		tx(() -> {
 			Vault vault = Vault.findById("vault1");
-			Assumptions.assumeTrue(vault.access.stream().anyMatch(a -> "user1".equals(a.user.id)));
+			Assumptions.assumeTrue(vault.accessTokens.stream().anyMatch(a -> "user1".equals(a.user.id)));
 
 			vault.members.removeIf(m -> "user1".equals(m.id));
 			vault.persist();
 		});
 
 		tx(() -> {
-			User user = User.findById("user1");
+			Authority user = Authority.findById("user1");
 			Assertions.assertNotNull(user);
 
 			Vault vault = Vault.findById("vault1");
-			Assertions.assertFalse(vault.access.stream().anyMatch(a -> user.equals(a.user)));
+			Assertions.assertFalse(vault.accessTokens.stream().anyMatch(a -> user.equals(a.user)));
 		});
 	}
 
@@ -46,7 +46,7 @@ public class EntityIntegrationTest {
 		});
 
 		tx(() -> {
-			boolean match = Access.<Access>findAll().stream().anyMatch(a -> "device1".equals(a.device.id));
+			boolean match = AccessToken.<AccessToken>findAll().stream().anyMatch(a -> "device1".equals(a.device.id));
 			Assertions.assertFalse(match);
 		});
 	}

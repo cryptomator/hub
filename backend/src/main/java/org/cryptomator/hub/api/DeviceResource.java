@@ -2,7 +2,7 @@ package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.cryptomator.hub.entities.Device;
-import org.cryptomator.hub.entities.User;
+import org.cryptomator.hub.entities.Authority;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -46,7 +46,7 @@ public class DeviceResource {
 		if (deviceId == null || deviceId.trim().length() == 0 || deviceDto == null) {
 			return Response.status(Response.Status.BAD_REQUEST).entity("deviceId or deviceDto cannot be empty").build();
 		}
-		User currentUser = User.findById(jwt.getSubject());
+		Authority currentUser = Authority.findById(jwt.getSubject());
 		var device = deviceDto.toDevice(currentUser, deviceId);
 		try {
 			device.persistAndFlush();
@@ -74,7 +74,7 @@ public class DeviceResource {
 			return Response.status(Response.Status.BAD_REQUEST).entity("deviceId cannot be empty").build();
 		}
 
-		User currentUser = User.findById(jwt.getSubject());
+		Authority currentUser = Authority.findById(jwt.getSubject());
 		Optional<Device> maybeDevice = Device.findByIdOptional(deviceId);
 		if (maybeDevice.isPresent() && currentUser.equals(maybeDevice.get().owner)) {
 			maybeDevice.get().delete();
@@ -89,7 +89,7 @@ public class DeviceResource {
 								   @JsonProperty("owner") String ownerId,
 								   @JsonProperty("accessTo") Set<VaultResource.VaultDto> accessTo) {
 
-		public Device toDevice(User user, String id) {
+		public Device toDevice(Authority user, String id) {
 			var device = new Device();
 			device.id = id;
 			device.owner = user;
@@ -99,7 +99,7 @@ public class DeviceResource {
 		}
 
 		public static DeviceDto fromEntity(Device entity) {
-			return new DeviceDto(entity.id, entity.name, entity.publickey, entity.owner.id, Set.of());
+			return new DeviceDto(entity.id, entity.name, entity.publickey, entity.owner.id.getId(), Set.of());
 		}
 
 	}
