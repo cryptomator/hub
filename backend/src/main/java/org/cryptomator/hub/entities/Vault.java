@@ -2,6 +2,7 @@ package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.panache.common.Parameters;
+import org.hibernate.annotations.Immutable;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -22,14 +23,13 @@ import java.util.stream.Stream;
 
 @Entity
 @Table(name = "vault")
-//@NamedQuery(name = "Vault.accessibleOrOwnedByUser",
-//		query = """
-//				SELECT DISTINCT v
-//				FROM Vault v
-//				LEFT JOIN v.accessToken a
-//				LEFT JOIN a.device d
-//				WHERE v.owner.id = :userId OR d.owner.id = :userId
-//				""")
+@NamedQuery(name = "Vault.accessibleOrOwnedByUser",
+		query = """
+				SELECT DISTINCT v
+				FROM Vault v
+				LEFT JOIN v.effectiveMembers m
+				WHERE v.owner.id.id = :userId OR m.id.id = :userId
+				""")
 public class Vault extends PanacheEntityBase {
 
 	@Id
@@ -46,7 +46,15 @@ public class Vault extends PanacheEntityBase {
 			joinColumns = @JoinColumn(name = "vault_id", referencedColumnName = "id"),
 			inverseJoinColumns = {@JoinColumn(name = "authority_id", referencedColumnName = "id"), @JoinColumn(name = "authority_type", referencedColumnName = "type")}
 	)
-	public Set<Authority> members = new HashSet<>();
+	public Set<Authority> directMembers = new HashSet<>();
+
+	@ManyToMany
+	@Immutable
+	@JoinTable(name = "effective_vault_access",
+			joinColumns = @JoinColumn(name = "vault_id", referencedColumnName = "id"),
+			inverseJoinColumns = {@JoinColumn(name = "authority_id", referencedColumnName = "id"), @JoinColumn(name = "authority_type", referencedColumnName = "type")}
+	)
+	public Set<Authority> effectiveMembers = new HashSet<>();
 
 	@OneToMany(mappedBy = "vault", fetch = FetchType.LAZY)
 	public Set<AccessToken> accessTokens = new HashSet<>(); // rename to accesstokens?
@@ -92,7 +100,7 @@ public class Vault extends PanacheEntityBase {
 		return "Vault{" +
 				"id='" + id + '\'' +
 				", owner=" + owner +
-				", members=" + members.stream().map(m -> m.id).toList() +
+				", members=" + directMembers.stream().map(m -> m.id).toList() +
 				", accessToken=" + accessTokens.stream().map(a -> a.id).toList() +
 				", name='" + name + '\'' +
 				", salt='" + salt + '\'' +

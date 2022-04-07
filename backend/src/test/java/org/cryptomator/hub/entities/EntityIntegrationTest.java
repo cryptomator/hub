@@ -24,7 +24,7 @@ public class EntityIntegrationTest {
 			Vault vault = Vault.findById("vault1");
 			Assumptions.assumeTrue(vault.accessTokens.stream().anyMatch(a -> "user1".equals(a.user.id.id)));
 
-			vault.members.removeIf(m -> "user1".equals(m.id.id));
+			vault.directMembers.removeIf(m -> "user1".equals(m.id.id));
 			vault.persist();
 		});
 

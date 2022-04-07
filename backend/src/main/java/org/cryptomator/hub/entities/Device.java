@@ -19,16 +19,16 @@ import java.util.stream.Stream;
 
 @Entity
 @Table(name = "device")
-//@NamedQuery(name = "Device.requiringAccessGrant",
-//		query = """
-//				SELECT d
-//				FROM Vault v
-//					INNER JOIN v.members m
-//					INNER JOIN m.devices d
-//					LEFT JOIN d.accessToken a ON a.id.vaultId = :vaultId AND a.id.deviceId = d
-//					WHERE v.id = :vaultId AND a.vault IS NULL
-//				"""
-//)
+@NamedQuery(name = "Device.requiringAccessGrant",
+		query = """
+				SELECT d
+				FROM Vault v
+					INNER JOIN v.effectiveMembers m
+					INNER JOIN m.devices d
+					LEFT JOIN d.accessTokens a ON a.id.vaultId = :vaultId AND a.id.deviceId = d
+					WHERE v.id = :vaultId AND a.vault IS NULL
+				"""
+)
 public class Device extends PanacheEntityBase {
 
 	@Id

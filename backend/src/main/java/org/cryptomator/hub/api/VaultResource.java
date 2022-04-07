@@ -61,7 +61,7 @@ public class VaultResource {
 	@Operation(summary = "list vault members", description = "list all users that this vault has been shared with")
 	public List<UsersResource.UserDto> getMembers(@PathParam("vaultId") String vaultId) {
 		Vault vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-		return vault.members.stream().map(User.class::cast).map(UsersResource.UserDto::fromEntity).toList();
+		return vault.directMembers.stream().map(User.class::cast).map(UsersResource.UserDto::fromEntity).toList();
 	}
 
 	@PUT
@@ -75,7 +75,7 @@ public class VaultResource {
 	public Response addMember(@PathParam("vaultId") String vaultId, @PathParam("userId") String userId) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		var user = User.findByIdOptional(userId).orElseThrow(NotFoundException::new);
-		vault.members.add(user);
+		vault.directMembers.add(user);
 		vault.persist();
 		return Response.status(Response.Status.CREATED).build();
 	}
@@ -90,7 +90,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "404", description = "vault not found")
 	public Response removeMember(@PathParam("vaultId") String vaultId, @PathParam("userId") String userId) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-		vault.members.removeIf(u -> u.id.equals(userId));
+		vault.directMembers.removeIf(u -> u.id.equals(userId));
 		vault.persist();
 		return Response.status(Response.Status.NO_CONTENT).build();
 	}
