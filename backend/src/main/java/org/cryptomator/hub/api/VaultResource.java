@@ -3,8 +3,8 @@ package org.cryptomator.hub.api;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.cryptomator.hub.entities.AccessToken;
-import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.Authority;
+import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
 import org.eclipse.microprofile.jwt.JsonWebToken;
@@ -89,8 +89,9 @@ public class VaultResource {
 	@APIResponse(responseCode = "204", description = "member removed")
 	@APIResponse(responseCode = "404", description = "vault not found")
 	public Response removeMember(@PathParam("vaultId") String vaultId, @PathParam("userId") String userId) {
+		var compositeId = new Authority.AuthorityId(userId, Authority.AuthorityType.USER); // FIXME: we need to distinguish members into users and groups
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-		vault.directMembers.removeIf(u -> u.id.equals(userId));
+		vault.directMembers.removeIf(u -> u.id.equals(compositeId));
 		vault.persist();
 		return Response.status(Response.Status.NO_CONTENT).build();
 	}
