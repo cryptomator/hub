@@ -1,5 +1,6 @@
 package org.cryptomator.hub;
 
+import org.cryptomator.hub.entities.Authority;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
 import org.keycloak.admin.client.Keycloak;
@@ -30,28 +31,13 @@ public class KeycloakRemoteUserProvider implements RemoteUserProvider {
 		}
 	}
 
-	@Override
-	public Stream<User> usersIncludingGroups() {
-		try (Keycloak keycloak = Keycloak.getInstance(syncerConfig.getKeycloakUrl(), syncerConfig.getKeycloakRealm(), syncerConfig.getUsername(), syncerConfig.getPassword(), syncerConfig.getKeycloakClientId())) {
-			var groups = groupsIncludingMembers().collect(Collectors.toSet());
-			return keycloak.realm(syncerConfig.getKeycloakRealm()).users().list().stream().map(user -> {
-				var actualGroups = groups.stream().filter(group -> group.members.stream().anyMatch(usr -> usr.id.equals(user.getId()))).collect(Collectors.toSet());
-				return mapToUser(user, Optional.of(actualGroups));
-			});
-		}
-	}
-
 	private User mapToUser(UserRepresentation userRepresentation) {
-		return mapToUser(userRepresentation, Optional.empty());
-	}
-
-	private User mapToUser(UserRepresentation userRepresentation, Optional<Set<Group>> groups) {
 		var userEntity = new User();
-		userEntity.id = userRepresentation.getId();
+		userEntity.id.id = userRepresentation.getId();
+		userEntity.id.type = Authority.AuthorityType.USER;
 		userEntity.name = userRepresentation.getUsername();
 		userEntity.email = userRepresentation.getEmail();
 		getPictureUrl(userRepresentation.getAttributes()).ifPresent(it -> userEntity.pictureUrl = it);
-		groups.ifPresent(it -> userEntity.groups = it);
 		return userEntity;
 	}
 
@@ -75,7 +61,8 @@ public class KeycloakRemoteUserProvider implements RemoteUserProvider {
 		try (Keycloak keycloak = Keycloak.getInstance(syncerConfig.getKeycloakUrl(), syncerConfig.getKeycloakRealm(), syncerConfig.getUsername(), syncerConfig.getPassword(), syncerConfig.getKeycloakClientId())) {
 			return keycloak.realm(syncerConfig.getKeycloakRealm()).groups().groups().stream().map(group -> {
 				var groupEntity = new Group();
-				groupEntity.id = group.getId();
+				groupEntity.id.id = group.getId();
+				groupEntity.id.type = Authority.AuthorityType.GROUP;
 				groupEntity.name = group.getName();
 				return groupEntity;
 			});
@@ -85,47 +72,20 @@ public class KeycloakRemoteUserProvider implements RemoteUserProvider {
 	@Override
 	public Stream<Group> groupsIncludingMembers() {
 		try (Keycloak keycloak = Keycloak.getInstance(syncerConfig.getKeycloakUrl(), syncerConfig.getKeycloakRealm(), syncerConfig.getUsername(), syncerConfig.getPassword(), syncerConfig.getKeycloakClientId())) {
-			var groups = keycloak.realm(syncerConfig.getKeycloakRealm()).groups().groups().stream().map(group -> {
-				var members  = keycloak.realm(syncerConfig.getKeycloakRealm()).groups().group(group.getId()).members().stream().map(this::mapToUser).collect(Collectors.toSet());
-				// at this point, members contains only this group and not all groups. all other groups will be added to this user in a second step
+			return keycloak.realm(syncerConfig.getKeycloakRealm()).groups().groups().stream().map(group -> {
+				var members  = keycloak.realm(syncerConfig.getKeycloakRealm()).groups().group(group.getId()).members().stream().<Authority>map(this::mapToUser).collect(Collectors.toSet());
 				return mapToGroup(group, members);
-			}).toList();
-
-			return groups.stream().map(group -> {
-				var actualMembers = group.members.stream().map(member -> {
-					var actualGroups = groups.stream().filter(grp -> grp.members.contains(member)).collect(Collectors.toSet());
-					return setGroups(member, actualGroups);
-				}).collect(Collectors.toSet());
-				return setMembers(group, actualMembers);
 			});
-
 		}
 	}
 
-	private Group mapToGroup(GroupRepresentation group, Set<User> member) {
+	private Group mapToGroup(GroupRepresentation group, Set<Authority> member) {
 		var groupEntity = new Group();
-		groupEntity.id = group.getId();
+		groupEntity.id.id = group.getId();
+		groupEntity.id.type = Authority.AuthorityType.GROUP;
 		groupEntity.name = group.getName();
 		groupEntity.members = member;
 		return groupEntity;
-	}
-
-	private Group setMembers(Group group, Set<User> member) {
-		var groupEntity = new Group();
-		groupEntity.id = group.id;
-		groupEntity.name = group.name;
-		groupEntity.members = member;
-		return groupEntity;
-	}
-
-	private User setGroups(User user, Set<Group> groups) {
-		var userEntity = new User();
-		userEntity.id = user.id;
-		userEntity.name = user.name;
-		userEntity.email = user.email;
-		userEntity.pictureUrl = user.pictureUrl;
-		userEntity.groups = groups;
-		return userEntity;
 	}
 
 	@Override

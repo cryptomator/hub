@@ -2,6 +2,7 @@ package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.panache.common.Parameters;
+import org.hibernate.annotations.Immutable;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -26,12 +27,8 @@ import java.util.stream.Stream;
 		query = """
 				SELECT DISTINCT v
 				FROM Vault v
-				LEFT JOIN v.accesses va
-				LEFT JOIN va.device vad
-				LEFT JOIN v.groups vg
-				LEFT JOIN vg.members vgm
-				LEFT JOIN vgm.devices vgmd
-				WHERE v.owner.id = :userId OR vad.owner.id = :userId OR vgmd.owner.id = :userId
+				LEFT JOIN v.effectiveMembers m
+				WHERE v.owner.id.id = :userId OR m.id.id = :userId
 				""")
 public class Vault extends PanacheEntityBase {
 
@@ -40,19 +37,27 @@ public class Vault extends PanacheEntityBase {
 	public String id;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "user_id", updatable = false, nullable = false)
+	@JoinColumn(name = "owner_id", updatable = false, nullable = false)
+	@JoinColumn(name = "owner_type", updatable = false, nullable = false)
 	public User owner;
 
 	@ManyToMany
-	@JoinTable(name = "vault_user", joinColumns = @JoinColumn(name = "vault_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"))
-	public Set<User> members = new HashSet<>();
+	@JoinTable(name = "vault_access",
+			joinColumns = @JoinColumn(name = "vault_id", referencedColumnName = "id"),
+			inverseJoinColumns = {@JoinColumn(name = "authority_id", referencedColumnName = "id"), @JoinColumn(name = "authority_type", referencedColumnName = "type")}
+	)
+	public Set<Authority> directMembers = new HashSet<>();
 
 	@ManyToMany
-	@JoinTable(name = "vault_group", joinColumns = @JoinColumn(name = "vault_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "group_id", referencedColumnName = "id"))
-	public Set<Group> groups = new HashSet<>();
+	@Immutable
+	@JoinTable(name = "effective_vault_access",
+			joinColumns = @JoinColumn(name = "vault_id", referencedColumnName = "id"),
+			inverseJoinColumns = {@JoinColumn(name = "authority_id", referencedColumnName = "id"), @JoinColumn(name = "authority_type", referencedColumnName = "type")}
+	)
+	public Set<Authority> effectiveMembers = new HashSet<>();
 
 	@OneToMany(mappedBy = "vault", fetch = FetchType.LAZY)
-	public Set<Access> accesses = new HashSet<>();
+	public Set<AccessToken> accessTokens = new HashSet<>(); // rename to accesstokens?
 
 	@Column(name = "name", nullable = false)
 	public String name;
@@ -71,6 +76,10 @@ public class Vault extends PanacheEntityBase {
 
 	@Column(name = "description")
 	public String description;
+
+	public static Stream<Vault> findAccessibleOrOwnerByUser(String userId) {
+		return find("#Vault.accessibleOrOwnedByUser", Parameters.with("userId", userId)).stream();
+	}
 
 	@Override
 	public boolean equals(Object o) {
@@ -95,18 +104,13 @@ public class Vault extends PanacheEntityBase {
 		return "Vault{" +
 				"id='" + id + '\'' +
 				", owner=" + owner +
-				", members=" + members.stream().map(m -> m.id).toList() +
-				", groups=" + groups.stream().map(g -> g.id).toList() +
-				", accesses=" + accesses.stream().map(a -> a.id).toList() +
+				", members=" + directMembers.stream().map(m -> m.id).toList() +
+				", accessToken=" + accessTokens.stream().map(a -> a.id).toList() +
 				", name='" + name + '\'' +
 				", salt='" + salt + '\'' +
 				", iterations='" + iterations + '\'' +
 				", masterkey='" + masterkey + '\'' +
 				'}';
-	}
-
-	public static Stream<Vault> findAccessibleOrOwnerByUser(String userId) {
-		return find("#Vault.accessibleOrOwnedByUser", Parameters.with("userId", userId)).stream();
 	}
 
 }

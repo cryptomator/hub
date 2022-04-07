@@ -1,6 +1,7 @@
 package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.cryptomator.hub.entities.Authority;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.User;
 import org.eclipse.microprofile.jwt.JsonWebToken;
@@ -88,7 +89,7 @@ public class DeviceResource {
 								   @JsonProperty("owner") String ownerId,
 								   @JsonProperty("accessTo") Set<VaultResource.VaultDto> accessTo) {
 
-		public Device toDevice(User user, String id) {
+		public Device toDevice(Authority user, String id) {
 			var device = new Device();
 			device.id = id;
 			device.owner = user;
@@ -98,7 +99,7 @@ public class DeviceResource {
 		}
 
 		public static DeviceDto fromEntity(Device entity) {
-			return new DeviceDto(entity.id, entity.name, entity.publickey, entity.owner.id, Set.of());
+			return new DeviceDto(entity.id, entity.name, entity.publickey, entity.owner.id.id, Set.of());
 		}
 
 	}

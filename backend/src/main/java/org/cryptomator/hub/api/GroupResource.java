@@ -3,6 +3,7 @@ package org.cryptomator.hub.api;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.cryptomator.hub.RemoteUserProviderFactory;
 import org.cryptomator.hub.SyncerConfig;
+import org.cryptomator.hub.entities.Authority;
 import org.cryptomator.hub.entities.Group;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.jboss.resteasy.annotations.cache.NoCache;
@@ -33,10 +34,14 @@ public class GroupResource {
 		return new RemoteUserProviderFactory().get(syncerConfig).searchGroup(querry).map(GroupDto::fromEntity).toList();
 	}
 
-	public record GroupDto(@JsonProperty("id") String id, @JsonProperty("name") String name) {
+	public static final class GroupDto extends AuthorityDto {
+
+		GroupDto(@JsonProperty("id") String id, @JsonProperty("name") String name) {
+			super(id, Authority.AuthorityType.GROUP, name);
+		}
 
 		public static GroupDto fromEntity(Group group) {
-			return new GroupDto(group.id, group.name);
+			return new GroupDto(group.id.id, group.name);
 		}
 
 	}

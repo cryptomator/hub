@@ -19,17 +19,14 @@ import java.util.stream.Stream;
 
 @Entity
 @Table(name = "device")
-// FIXME simplify request, some LEFT JOIN can be replaced with JOIN
 @NamedQuery(name = "Device.requiringAccessGrant",
 		query = """
-				SELECT DISTINCT d
+				SELECT d
 				FROM Vault v
-					LEFT JOIN v.groups vg
-					LEFT JOIN vg.members gu
-					LEFT JOIN v.members vu
-					LEFT JOIN Device d ON gu.id = d.owner.id OR vu.id = d.owner.id
-					LEFT JOIN Access a ON d.id = a.id.deviceId AND v.id = a.id.vaultId
-					WHERE d IS NOT NULL AND v.id = :vaultId AND a.vault IS NULL
+					INNER JOIN v.effectiveMembers m
+					INNER JOIN m.devices d
+					LEFT JOIN d.accessTokens a ON a.id.vaultId = :vaultId AND a.id.deviceId = d.id
+					WHERE v.id = :vaultId AND a.vault IS NULL
 				"""
 )
 public class Device extends PanacheEntityBase {
@@ -39,11 +36,12 @@ public class Device extends PanacheEntityBase {
 	public String id;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "user_id", updatable = false, nullable = false)
-	public User owner;
+	@JoinColumn(name = "owner_id", updatable = false, nullable = false)
+	@JoinColumn(name = "owner_type", updatable = false, nullable = false)
+	public Authority owner;
 
 	@OneToMany(mappedBy = "device", fetch = FetchType.LAZY)
-	public Set<Access> accesses = new HashSet<>();
+	public Set<AccessToken> accessTokens = new HashSet<>();
 
 	@Column(name = "name", nullable = false)
 	public String name;

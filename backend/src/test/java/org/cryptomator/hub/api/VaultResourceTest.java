@@ -26,7 +26,6 @@ import static io.restassured.RestAssured.when;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.Matchers.empty;
 
 @QuarkusTest
 @FlywayTest(value = @DataSource(url = "jdbc:h2:mem:test"), additionalLocations = {"classpath:org/cryptomator/hub/flyway"})
@@ -122,8 +121,8 @@ public class VaultResourceTest {
 		public void testGetAccess1() {
 			when().get("/vaults/{vaultId}/access", "vault1")
 					.then().statusCode(200)
-					.body("users.id", hasItems("user1", "user2"))
-					.body("groups.id", empty());
+					.body("id", hasItems("user1", "user2"))
+					.and().body("type", not(hasItems("GROUP")));
 		}
 
 		@Test
@@ -131,8 +130,7 @@ public class VaultResourceTest {
 		public void testGetAccess2() {
 			when().get("/vaults/{vaultId}/access", "vault3")
 					.then().statusCode(200)
-					.body("users.id", empty())
-					.body("groups.id", hasItems("group1"));
+					.body("id", hasItems("group1", "group3"));
 		}
 
 		@Test
@@ -257,7 +255,7 @@ public class VaultResourceTest {
 		public void getMembers2() {
 			when().get("/vaults/{vaultId}/access", "vault2")
 					.then().statusCode(200)
-					.body("users.id", hasItems("user2"));
+					.body("id", hasItems("user2"));
 		}
 
 		@Test
@@ -321,7 +319,7 @@ public class VaultResourceTest {
 		public void getMembers3() {
 			when().get("/vaults/{vaultId}/access", "vault2")
 					.then().statusCode(200)
-					.body("users.id", not(hasItems("user2")));
+					.body("id", not(hasItems("user2")));
 		}
 	}
 
@@ -349,7 +347,7 @@ public class VaultResourceTest {
 		public void getAccess2() {
 			when().get("/vaults/{vaultId}/access", "vault4")
 					.then().statusCode(200)
-					.body("groups.id", not(hasItems("group3")));
+					.body("id", not(hasItems("group3")));
 		}
 
 		@Test
@@ -366,7 +364,7 @@ public class VaultResourceTest {
 		public void getMembers4() {
 			when().get("/vaults/{vaultId}/access", "vault4")
 					.then().statusCode(200)
-					.body("groups.id", hasItems("group3"));
+					.body("id", hasItems("group3"));
 		}
 
 		@Test
@@ -410,7 +408,7 @@ public class VaultResourceTest {
 		public void getMembers5() {
 			when().get("/vaults/{vaultId}/access", "vault4")
 					.then().statusCode(200)
-					.body("groups.id", not(hasItems("group2")));
+					.body("id", not(hasItems("group2")));
 		}
 
 	}

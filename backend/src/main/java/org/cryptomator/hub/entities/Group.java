@@ -1,62 +1,37 @@
 package org.cryptomator.hub.entities;
 
-import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
-
-import javax.persistence.Column;
+import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
-import javax.persistence.Id;
+import javax.persistence.Inheritance;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.Table;
 import javax.transaction.Transactional;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
+@Inheritance
 @Entity
-@Table(name = "group")
-public class Group extends PanacheEntityBase  {
+@Table(name = "group_details")
+@DiscriminatorValue("GROUP")
+public class Group extends Authority {
 
-	@Id
-	@Column(name = "id", nullable = false)
-	public String id;
-
-	@Column(name = "name", nullable = false)
-	public String name;
-
-	@ManyToMany(mappedBy = "groups")
-	public Set<User> members = new HashSet<>();
-
-	@ManyToMany(mappedBy = "groups")
-	public Set<Vault> sharedVaults = new HashSet<>();
-
-	@Override
-	public String toString() {
-		return "Group{" +
-				"id='" + id + '\'' +
-				", name='" + name + '\'' +
-				", members=" + members +
-				'}';
-	}
-
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
-		Group group = (Group) o;
-		return Objects.equals(id, group.id) && Objects.equals(name, group.name);
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(id, name);
-	}
+	@ManyToMany
+	@JoinTable(name = "group_membership",
+			joinColumns = {@JoinColumn(name = "group_id", referencedColumnName = "id"), @JoinColumn(name = "group_type", referencedColumnName = "type")},
+			inverseJoinColumns = {@JoinColumn(name = "member_id", referencedColumnName = "id"), @JoinColumn(name = "member_type", referencedColumnName = "type")}
+	)
+	public Set<Authority> members = new HashSet<>();
 
 	@Transactional(Transactional.TxType.REQUIRED)
 	public static void createOrUpdate(String id, String name) {
-		Group group = findById(id);
+		var compositeId = new AuthorityId(id, AuthorityType.GROUP);
+		Group group = Authority.findById(compositeId);
 		if (group == null) {
 			group = new Group();
-			group.id = id;
+			group.id.id = id;
+			group.id.type = AuthorityType.GROUP;
 		}
 		group.name = name;
 		group.persist();

@@ -5,7 +5,6 @@ import com.radcortez.flyway.test.annotation.FlywayTest;
 import io.quarkus.test.junit.QuarkusTest;
 import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +15,11 @@ import javax.transaction.Transactional;
 @FlywayTest(value = @DataSource(url = "jdbc:h2:mem:test"), additionalLocations = {"classpath:org/cryptomator/hub/flyway"})
 @DisplayName("Persistent Entities")
 public class EntityIntegrationTest {
+
+	@Transactional(Transactional.TxType.REQUIRES_NEW)
+	public static void tx(Runnable validation) {
+		validation.run();
+	}
 
 	@Test
 	@DisplayName("Removing a Device cascades to Access")
@@ -30,7 +34,7 @@ public class EntityIntegrationTest {
 		});
 
 		tx(() -> {
-			boolean match = Access.<Access>findAll().stream().anyMatch(a -> "device1".equals(a.device.id));
+			var match = AccessToken.<AccessToken>findAll().stream().anyMatch(a -> "device1".equals(a.device.id));
 			Assertions.assertFalse(match);
 		});
 	}
@@ -49,11 +53,6 @@ public class EntityIntegrationTest {
 			PersistenceException thrown = Assertions.assertThrows(PersistenceException.class, conflictingDevice::persistAndFlush);
 			Assertions.assertInstanceOf(ConstraintViolationException.class, thrown.getCause());
 		});
-	}
-
-	@Transactional(Transactional.TxType.REQUIRES_NEW)
-	public static void tx(Runnable validation) {
-		validation.run();
 	}
 
 }

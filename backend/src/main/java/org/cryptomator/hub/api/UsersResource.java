@@ -3,9 +3,10 @@ package org.cryptomator.hub.api;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.cryptomator.hub.RemoteUserProviderFactory;
 import org.cryptomator.hub.SyncerConfig;
+import org.cryptomator.hub.entities.AccessToken;
+import org.cryptomator.hub.entities.Authority;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.User;
-import org.cryptomator.hub.entities.Access;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -56,14 +57,14 @@ public class UsersResource {
 	@Operation(summary = "get the logged-in user")
 	public UserDto getMe(@QueryParam("withDevices") boolean withDevices, @QueryParam("withAccessibleVaults") boolean withAccessibleVaults) {
 		User user = User.findById(jwt.getSubject());
-		Function<Access, VaultResource.VaultDto> mapAccessibleVaults =
+		Function<AccessToken, VaultResource.VaultDto> mapAccessibleVaults =
 				a -> new VaultResource.VaultDto(a.vault.id, a.vault.name, a.vault.description, a.vault.creationTime, UserDto.fromEntity(a.vault.owner), null, null, null);
 		Function<Device, DeviceResource.DeviceDto> mapDevices = withAccessibleVaults //
-				? d -> new DeviceResource.DeviceDto(d.id, d.name, d.publickey, d.owner.id, d.accesses.stream().map(mapAccessibleVaults).collect(Collectors.toSet())) //
-				: d -> new DeviceResource.DeviceDto(d.id, d.name, d.publickey, d.owner.id, Set.of());
+				? d -> new DeviceResource.DeviceDto(d.id, d.name, d.publickey, d.owner.id.id, d.accessTokens.stream().map(mapAccessibleVaults).collect(Collectors.toSet())) //
+				: d -> new DeviceResource.DeviceDto(d.id, d.name, d.publickey, d.owner.id.id, Set.of());
 		return withDevices //
-				? new UserDto(user.id, user.name, user.pictureUrl, user.email, user.devices.stream().map(mapDevices).collect(Collectors.toSet()))
-				: new UserDto(user.id, user.name, user.pictureUrl, user.email, Set.of());
+				? new UserDto(user.id.id, user.name, user.pictureUrl, user.email, user.devices.stream().map(mapDevices).collect(Collectors.toSet()))
+				: new UserDto(user.id.id, user.name, user.pictureUrl, user.email, Set.of());
 	}
 
 	@GET
@@ -85,12 +86,23 @@ public class UsersResource {
 		return new RemoteUserProviderFactory().get(syncerConfig).searchUser(querry).map(UserDto::fromEntity).toList();
 	}
 
-	public record UserDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("pictureUrl") String pictureUrl, @JsonProperty("email") String email,
-						  @JsonProperty("devices") Set<DeviceResource.DeviceDto> devices) {
+	public static final class UserDto extends AuthorityDto {
+		@JsonProperty("pictureUrl")
+		public final String pictureUrl;
+		@JsonProperty("email")
+		public final String email;
+		@JsonProperty("devices")
+		public final Set<DeviceResource.DeviceDto> devices;
+
+		UserDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("pictureUrl") String pictureUrl, @JsonProperty("email") String email, @JsonProperty("devices") Set<DeviceResource.DeviceDto> devices) {
+			super(id, Authority.AuthorityType.USER, name);
+			this.pictureUrl = pictureUrl;
+			this.email = email;
+			this.devices = devices;
+		}
 
 		public static UserDto fromEntity(User user) {
-			return new UserDto(user.id, user.name, user.pictureUrl, user.email, Set.of());
+			return new UserDto(user.id.id, user.name, user.pictureUrl, user.email, Set.of());
 		}
 	}
-
 }

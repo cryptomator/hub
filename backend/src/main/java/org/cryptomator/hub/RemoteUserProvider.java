@@ -14,12 +14,6 @@ public interface RemoteUserProvider {
 	Stream<User> users();
 
 	/**
-	 * Get all remote users including groups
-	 * @return Stream of users
-	 */
-	Stream<User> usersIncludingGroups();
-
-	/**
 	 * Search for remote users excluding groups
 	 * @param querry A String contained in username, first or last name, or email
 	 * @return Stream of users without groups
