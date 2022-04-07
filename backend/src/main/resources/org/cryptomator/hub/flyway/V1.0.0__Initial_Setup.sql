@@ -29,6 +29,14 @@ CREATE TABLE "group_membership"
 	CONSTRAINT "GROUP_MEMBERSHIP_CHK_TYPE" CHECK ("group_type" = 'GROUP')
 );
 
+CREATE OR REPLACE VIEW "effective_group_membership" ("group_id", "member_id", "member_type") AS
+WITH RECURSIVE "members" ("root", "parent", "member_id", "member_type") AS (
+	SELECT "group_id", "group_id", "member_id", "member_type" FROM "group_membership"
+	UNION
+	SELECT "parent"."root", "parent"."member_id", "child"."member_id", "child"."member_type" FROM "group_membership" "child"
+		INNER JOIN "members" "parent" ON "child"."group_id" = "parent"."member_id" AND "child"."group_type" = "parent"."member_type"
+) SELECT "root", "member_id", "member_type" FROM "members";
+
 CREATE TABLE "user_details"
 (
 	"id"          VARCHAR(255) NOT NULL,
@@ -66,6 +74,12 @@ CREATE TABLE "vault_access"
 	CONSTRAINT "VAULT_ACCESS_FK_VAULT" FOREIGN KEY ("vault_id") REFERENCES "vault" ("id") ON DELETE CASCADE,
 	CONSTRAINT "VAULT_ACCESS_FK_AUTHORITY" FOREIGN KEY ("authority_id", "authority_type") REFERENCES "authority" ("id", "type") ON DELETE CASCADE
 );
+
+CREATE OR REPLACE VIEW "effective_vault_access" ("vault_id", "authority_id", "authority_type") AS
+	SELECT * FROM "vault_access"
+	UNION
+	SELECT "va"."vault_id", "gm"."member_id", "gm"."member_type" FROM "vault_access" "va"
+		INNER JOIN "effective_group_membership" "gm" ON "va"."authority_id" = "gm"."group_id" AND "va"."authority_type" = 'group';
 
 CREATE TABLE "device"
 (
