@@ -6,28 +6,33 @@ WHERE "id" = 0;
 
 INSERT INTO "authority" ("id", "type", "name")
 VALUES
-    ('user1', 'user', 'User Name 1'),
-    ('user2', 'user', 'User Name 2');
+    ('user1', 'USER', 'User Name 1'),
+    ('user2', 'USER', 'User Name 2');
 
-INSERT INTO "vault" ("id", "owner_id", "owner_type", "name", "description", "creation_time", "salt", "iterations", "masterkey")
+INSERT INTO "user_details" ("id", "type")
 VALUES
-    ('vault1', 'user1', 'user', 'Vault 1', 'This is a testvault.', '2020-02-20 20:20:20', 'salt1', 'iterations1', 'masterkey1'),
-    ('vault2', 'user2', 'user', 'Vault 2', 'This is a testvault.', '2020-02-20 20:20:20', 'salt2', 'iterations2', 'masterkey2');
+    ('user1', 'USER'),
+    ('user2', 'USER');
+
+INSERT INTO "vault" ("id", "owner_id", "name", "description", "creation_time", "salt", "iterations", "masterkey")
+VALUES
+    ('vault1', 'user1', 'Vault 1', 'This is a testvault.', '2020-02-20 20:20:20', 'salt1', 'iterations1', 'masterkey1'),
+    ('vault2', 'user2', 'Vault 2', 'This is a testvault.', '2020-02-20 20:20:20', 'salt2', 'iterations2', 'masterkey2');
 
 INSERT INTO "vault_access" ("vault_id", "authority_id", "authority_type")
 VALUES
-    ('vault1', 'user1', 'user'),
-    ('vault1', 'user2', 'user'),
-    ('vault2', 'user1', 'user');
+    ('vault1', 'user1', 'USER'),
+    ('vault1', 'user2', 'USER'),
+    ('vault2', 'user1', 'USER');
 
-INSERT INTO "device" ("id", "owner_id", "owner_type", "name", "publickey")
+INSERT INTO "device" ("id", "owner_id", "name", "publickey")
 VALUES
-    ('device1', 'user1', 'user', 'Computer 1', 'publickey1'),
-    ('device2', 'user2', 'user', 'Computer 2', 'publickey2'),
-    ('device3', 'user1', 'user', 'Computer 3', 'publickey3');
+    ('device1', 'user1', 'Computer 1', 'publickey1'),
+    ('device2', 'user2', 'Computer 2', 'publickey2'),
+    ('device3', 'user1', 'Computer 3', 'publickey3');
 
-INSERT INTO "access_token" ("device_id", "user_id", "user_type", "vault_id", "jwe")
+INSERT INTO "access_token" ("device_id", "user_id", "vault_id", "jwe")
 VALUES
-    ('device1', 'user1', 'user', 'vault1', 'jwe1'),
-    ('device2', 'user2', 'user', 'vault1', 'jwe2'),
-    ('device1', 'user1', 'user', 'vault2', 'jwe3');
+    ('device1', 'user1', 'vault1', 'jwe1'),
+    ('device2', 'user2', 'vault1', 'jwe2'),
+    ('device1', 'user1', 'vault2', 'jwe3');

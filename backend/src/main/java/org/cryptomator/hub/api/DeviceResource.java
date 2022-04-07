@@ -1,8 +1,9 @@
 package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.Authority;
+import org.cryptomator.hub.entities.Device;
+import org.cryptomator.hub.entities.User;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -46,7 +47,7 @@ public class DeviceResource {
 		if (deviceId == null || deviceId.trim().length() == 0 || deviceDto == null) {
 			return Response.status(Response.Status.BAD_REQUEST).entity("deviceId or deviceDto cannot be empty").build();
 		}
-		Authority currentUser = Authority.findById(jwt.getSubject());
+		User currentUser = User.findById(jwt.getSubject());
 		var device = deviceDto.toDevice(currentUser, deviceId);
 		try {
 			device.persistAndFlush();
@@ -74,7 +75,7 @@ public class DeviceResource {
 			return Response.status(Response.Status.BAD_REQUEST).entity("deviceId cannot be empty").build();
 		}
 
-		Authority currentUser = Authority.findById(jwt.getSubject());
+		User currentUser = User.findById(jwt.getSubject());
 		Optional<Device> maybeDevice = Device.findByIdOptional(deviceId);
 		if (maybeDevice.isPresent() && currentUser.equals(maybeDevice.get().owner)) {
 			maybeDevice.get().delete();
@@ -99,7 +100,7 @@ public class DeviceResource {
 		}
 
 		public static DeviceDto fromEntity(Device entity) {
-			return new DeviceDto(entity.id, entity.name, entity.publickey, entity.owner.id.getId(), Set.of());
+			return new DeviceDto(entity.id, entity.name, entity.publickey, entity.owner.id.id, Set.of());
 		}
 
 	}

@@ -29,18 +29,10 @@ CREATE TABLE "group_membership"
 	CONSTRAINT "GROUP_MEMBERSHIP_CHK_TYPE" CHECK ("group_type" = 'GROUP')
 );
 
-CREATE OR REPLACE VIEW "effective_group_membership" ("group_id", "member_id", "member_type") AS
-WITH RECURSIVE "members" ("group_id", "member_id", "member_type") AS (
-	SELECT "gm"."group_id", "gm"."member_id", "gm"."member_type" FROM "group_membership" "gm"
-	UNION
-	SELECT "mem"."group_id", "gm"."member_id", "gm"."member_type" FROM "group_membership" "gm"
-		INNER JOIN "members" "mem" ON "gm"."group_id" = "mem"."member_id" AND "gm"."group_type" = "mem"."member_type"
-) SELECT * FROM "members";
-
 CREATE TABLE "user_details"
 (
 	"id"          VARCHAR(255) NOT NULL,
-	"type"        VARCHAR(5) NOT NULL,
+	"type"        VARCHAR(5) NOT NULL DEFAULT 'USER',
 	"picture_url" VARCHAR(255),
 	"email"       VARCHAR(255),
     CONSTRAINT "USER_DETAIL_PK" PRIMARY KEY ("id", "type"),
@@ -52,7 +44,7 @@ CREATE TABLE "vault"
 (
 	"id"            VARCHAR(255) NOT NULL,
 	"owner_id"      VARCHAR(255) NOT NULL,
-	"owner_type"    VARCHAR(5) NOT NULL,
+	"owner_type"    VARCHAR(5) NOT NULL DEFAULT 'USER',
 	"name"          VARCHAR(255) NOT NULL,
 	"description"   VARCHAR(255),
 	"creation_time" TIMESTAMP NOT NULL,
@@ -79,7 +71,7 @@ CREATE TABLE "device"
 (
 	"id"         VARCHAR(255) NOT NULL,
 	"owner_id"   VARCHAR(255) NOT NULL,
-	"owner_type" VARCHAR(5) NOT NULL,
+	"owner_type" VARCHAR(5) NOT NULL DEFAULT 'USER',
 	"name"       VARCHAR(255) NOT NULL,
 	"publickey"  VARCHAR(255) NOT NULL,
 	CONSTRAINT "DEVICE_PK" PRIMARY KEY ("id"),
@@ -92,7 +84,7 @@ CREATE TABLE "access_token"
 (
 	"device_id" VARCHAR(255) NOT NULL,
 	"user_id"   VARCHAR(255) NOT NULL,
-	"user_type" VARCHAR(5) NOT NULL,
+	"user_type" VARCHAR(5) NOT NULL DEFAULT 'USER',
 	"vault_id"  VARCHAR(255) NOT NULL,
 	"jwe"       VARCHAR(2000) NOT NULL UNIQUE,
 	CONSTRAINT "ACCESS_PK" PRIMARY KEY ("device_id", "user_id", "vault_id"),

@@ -39,7 +39,7 @@ public class Vault extends PanacheEntityBase {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "owner_id", updatable = false, nullable = false)
 	@JoinColumn(name = "owner_type", updatable = false, nullable = false)
-	public Authority owner;
+	public User owner;
 
 	@ManyToMany
 	@JoinTable(name = "vault_access",

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.cryptomator.hub.entities.AccessToken;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.Authority;
+import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
@@ -60,7 +61,7 @@ public class VaultResource {
 	@Operation(summary = "list vault members", description = "list all users that this vault has been shared with")
 	public List<UsersResource.UserDto> getMembers(@PathParam("vaultId") String vaultId) {
 		Vault vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-		return vault.members.stream().map(UsersResource.UserDto::fromEntity).toList();
+		return vault.members.stream().map(User.class::cast).map(UsersResource.UserDto::fromEntity).toList();
 	}
 
 	@PUT
@@ -73,7 +74,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "404", description = "vault or user not found")
 	public Response addMember(@PathParam("vaultId") String vaultId, @PathParam("userId") String userId) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-		var user = Authority.<Authority>findByIdOptional(userId).orElseThrow(NotFoundException::new);
+		var user = User.findByIdOptional(userId).orElseThrow(NotFoundException::new);
 		vault.members.add(user);
 		vault.persist();
 		return Response.status(Response.Status.CREATED).build();
@@ -114,7 +115,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "403", description = "device not authorized to access this vault")
 	@APIResponse(responseCode = "404", description = "unknown device")
 	public String unlock(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId) {
-		var currentUserId = jwt.getSubject();
+		var currentUserId = new Authority.AuthorityId(jwt.getSubject(), Authority.AuthorityType.USER);
 		var access = AccessToken.unlock(vaultId, deviceId, currentUserId);
 		if (access != null) {
 			return access.jwe;
@@ -182,7 +183,7 @@ public class VaultResource {
 		if (vaultDto == null) {
 			throw new BadRequestException("Missing vault dto");
 		}
-		Authority currentUser = Authority.findById(jwt.getSubject());
+		User currentUser = User.findById(jwt.getSubject());
 		var vault = vaultDto.toVault(currentUser, vaultId);
 		try {
 			vault.persistAndFlush();
@@ -202,7 +203,7 @@ public class VaultResource {
 								  @JsonProperty("masterkey") String masterkey, @JsonProperty("iterations") String iterations, @JsonProperty("salt") String salt
 	) {
 
-		public Vault toVault(Authority owner, String id) {
+		public Vault toVault(User owner, String id) {
 			var vault = new Vault();
 			vault.id = id;
 			vault.owner = owner;

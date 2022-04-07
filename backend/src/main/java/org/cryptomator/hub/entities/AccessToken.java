@@ -9,6 +9,8 @@ import javax.persistence.Embeddable;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.EntityNotFoundException;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.MapsId;
@@ -20,14 +22,14 @@ import java.util.Objects;
 
 @Entity
 @Table(name = "access_token")
-//@NamedQuery(name = "Access.get", query = """
-//			SELECT a
-//			FROM Access a
-//			WHERE a.device.id = :deviceId
-//				AND a.id.userId = :userId
-//				AND a.id.vaultId = :vaultId
-//		""")
-//@NamedQuery(name = "Access.revokeDevice", query = "DELETE FROM Access a WHERE a.id.deviceId = :deviceId AND a.id.vaultId = :vaultId")
+@NamedQuery(name = "AccessToken.get", query = """
+			SELECT a
+			FROM AccessToken a
+			WHERE a.device.id = :deviceId
+				AND a.id.userId = :userId
+				AND a.id.vaultId = :vaultId
+		""")
+@NamedQuery(name = "AccessToken.revokeDevice", query = "DELETE FROM AccessToken a WHERE a.id.deviceId = :deviceId AND a.id.vaultId = :vaultId")
 public class AccessToken extends PanacheEntityBase {
 
 	@EmbeddedId
@@ -39,8 +41,9 @@ public class AccessToken extends PanacheEntityBase {
 	public Device device;
 
 	@ManyToOne(optional = false, cascade = {CascadeType.REMOVE})
-	@JoinColumn(name = "user_id", insertable = false, updatable = false)
-	@JoinColumn(name = "user_type", insertable = false, updatable = false)
+	@MapsId("userId")
+	@JoinColumn(name = "user_id")
+	@JoinColumn(name = "user_type")
 	public Authority user;
 
 	@ManyToOne(optional = false, cascade = {CascadeType.REMOVE})
@@ -82,34 +85,17 @@ public class AccessToken extends PanacheEntityBase {
 	@Embeddable
 	public static class AccessId implements Serializable {
 
-		@Column(name = "device_id", nullable = false)
-		private String deviceId;
+		public String deviceId;
+		public Authority.AuthorityId userId;
+		public String vaultId;
 
-		@Column(name = "user_id", nullable = false)
-		private String userId;
-
-		@Column(name = "user_type", nullable = false)
-		private String userType;
-
-		@Column(name = "vault_id", nullable = false)
-		private String vaultId;
-
-		public AccessId(String deviceId, String userId, String userType, String vaultId) {
+		public AccessId(String deviceId, Authority.AuthorityId userId, String vaultId) {
 			this.deviceId = deviceId;
 			this.userId = userId;
-			this.userType = userType;
 			this.vaultId = vaultId;
 		}
 
 		public AccessId() {
-		}
-
-		public String getDeviceId() {
-			return deviceId;
-		}
-
-		public String getVaultId() {
-			return vaultId;
 		}
 
 		@Override
@@ -119,21 +105,20 @@ public class AccessToken extends PanacheEntityBase {
 			AccessId other = (AccessId) o;
 			return Objects.equals(deviceId, other.deviceId) //
 					&& Objects.equals(userId, other.userId) //
-					&& Objects.equals(userType, other.userType) //
 					&& Objects.equals(vaultId, other.vaultId);
 		}
 
 		@Override
 		public int hashCode() {
-			return Objects.hash(deviceId, userId, userType, vaultId);
+			return Objects.hash(deviceId, userId, vaultId);
 		}
 	}
 
 	// --- data layer queries ---
 
-	public static AccessToken unlock(String vaultId, String deviceId, String userId) {
+	public static AccessToken unlock(String vaultId, String deviceId, Authority.AuthorityId userId) {
 		try {
-			return find("#Access.get", Parameters.with("deviceId", deviceId).and("vaultId", vaultId).and("userId", userId)).firstResult();
+			return find("#AccessToken.get", Parameters.with("deviceId", deviceId).and("vaultId", vaultId).and("userId", userId)).firstResult();
 		} catch (NoResultException e) {
 			return null;
 		}
@@ -141,9 +126,9 @@ public class AccessToken extends PanacheEntityBase {
 
 	public static void deleteDeviceAccess(String vaultId, String deviceId) {
 		//TODO Replace with PanacheEntityBase.delete(...) once https://github.com/quarkusio/quarkus/issues/20758 is fixed
-		int affected = getEntityManager().createNamedQuery("Access.revokeDevice").setParameter("vaultId", vaultId).setParameter("deviceId", deviceId).executeUpdate();
+		int affected = getEntityManager().createNamedQuery("AccessToken.revokeDevice").setParameter("vaultId", vaultId).setParameter("deviceId", deviceId).executeUpdate();
 		if (affected == 0) {
-			throw new EntityNotFoundException("Access(vault: " + vaultId + ", device: " + deviceId + ") not found");
+			throw new EntityNotFoundException("AccessToken(vault: " + vaultId + ", device: " + deviceId + ") not found");
 		}
 	}
 

@@ -22,14 +22,14 @@ public class EntityIntegrationTest {
 	public void removeMemberCascadesToAccess() {
 		tx(() -> {
 			Vault vault = Vault.findById("vault1");
-			Assumptions.assumeTrue(vault.accessTokens.stream().anyMatch(a -> "user1".equals(a.user.id)));
+			Assumptions.assumeTrue(vault.accessTokens.stream().anyMatch(a -> "user1".equals(a.user.id.id)));
 
-			vault.members.removeIf(m -> "user1".equals(m.id));
+			vault.members.removeIf(m -> "user1".equals(m.id.id));
 			vault.persist();
 		});
 
 		tx(() -> {
-			Authority user = Authority.findById("user1");
+			User user = User.findById("user1");
 			Assertions.assertNotNull(user);
 
 			Vault vault = Vault.findById("vault1");
