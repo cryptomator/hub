@@ -54,7 +54,7 @@ public class VaultResource {
 	}
 
 	@GET
-	@Path("/{vaultId}/access")
+	@Path("/{vaultId}/members")
 	@RolesAllowed("vault-owner")
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)

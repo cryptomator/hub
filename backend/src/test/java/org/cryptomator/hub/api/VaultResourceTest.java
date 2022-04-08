@@ -70,9 +70,9 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@DisplayName("GET /vaults/vault1/access returns 403")
+		@DisplayName("GET /vaults/vault1/members returns 403")
 		public void testGetAccess() {
-			when().get("/vaults/{vaultId}/access", "vault1")
+			when().get("/vaults/{vaultId}/members", "vault1")
 					.then().statusCode(403);
 		}
 
@@ -117,18 +117,18 @@ public class VaultResourceTest {
 	public class AsVaultOwner {
 
 		@Test
-		@DisplayName("GET /vaults/vault1/access returns 200")
+		@DisplayName("GET /vaults/vault1/members returns 200")
 		public void testGetAccess1() {
-			when().get("/vaults/{vaultId}/access", "vault1")
+			when().get("/vaults/{vaultId}/members", "vault1")
 					.then().statusCode(200)
 					.body("id", hasItems("user1", "user2"))
 					.and().body("type", not(hasItems("GROUP")));
 		}
 
 		@Test
-		@DisplayName("GET /vaults/vault3/access returns 200")
+		@DisplayName("GET /vaults/vault3/members returns 200")
 		public void testGetAccess2() {
-			when().get("/vaults/{vaultId}/access", "vault3")
+			when().get("/vaults/{vaultId}/members", "vault3")
 					.then().statusCode(200)
 					.body("id", hasItems("group1", "group3"));
 		}
@@ -225,9 +225,9 @@ public class VaultResourceTest {
 
 		@Test
 		@Order(2)
-		@DisplayName("GET /vaults/vault2/access does not contain user2")
+		@DisplayName("GET /vaults/vault2/members does not contain user2")
 		public void getAccess1() {
-			when().get("/vaults/{vaultId}/access", "vault2")
+			when().get("/vaults/{vaultId}/members", "vault2")
 					.then().statusCode(200)
 					.body("users.id", not(hasItems("user2")));
 		}
@@ -251,9 +251,9 @@ public class VaultResourceTest {
 
 		@Test
 		@Order(5)
-		@DisplayName("GET /vaults/vault2/access does contain user2")
+		@DisplayName("GET /vaults/vault2/members does contain user2")
 		public void getMembers2() {
-			when().get("/vaults/{vaultId}/access", "vault2")
+			when().get("/vaults/{vaultId}/members", "vault2")
 					.then().statusCode(200)
 					.body("id", hasItems("user2"));
 		}
@@ -317,7 +317,7 @@ public class VaultResourceTest {
 		@Order(12)
 		@DisplayName("GET /vaults/vault2/acces does not contain user2")
 		public void getMembers3() {
-			when().get("/vaults/{vaultId}/access", "vault2")
+			when().get("/vaults/{vaultId}/members", "vault2")
 					.then().statusCode(200)
 					.body("id", not(hasItems("user2")));
 		}
@@ -343,9 +343,9 @@ public class VaultResourceTest {
 
 		@Test
 		@Order(2)
-		@DisplayName("GET /vaults/vault4/access does not contain group3")
+		@DisplayName("GET /vaults/vault4/members does not contain group3")
 		public void getAccess2() {
-			when().get("/vaults/{vaultId}/access", "vault4")
+			when().get("/vaults/{vaultId}/members", "vault4")
 					.then().statusCode(200)
 					.body("id", not(hasItems("group3")));
 		}
@@ -360,9 +360,9 @@ public class VaultResourceTest {
 
 		@Test
 		@Order(4)
-		@DisplayName("GET /vaults/vault4/access does contain group3")
+		@DisplayName("GET /vaults/vault4/members does contain group3")
 		public void getMembers4() {
-			when().get("/vaults/{vaultId}/access", "vault4")
+			when().get("/vaults/{vaultId}/members", "vault4")
 					.then().statusCode(200)
 					.body("id", hasItems("group3"));
 		}
@@ -404,9 +404,9 @@ public class VaultResourceTest {
 
 		@Test
 		@Order(9)
-		@DisplayName("GET /vaults/vault4/acces does not contain group2")
+		@DisplayName("GET /vaults/vault4/members does not contain group2")
 		public void getMembers5() {
-			when().get("/vaults/{vaultId}/access", "vault4")
+			when().get("/vaults/{vaultId}/members", "vault4")
 					.then().statusCode(200)
 					.body("id", not(hasItems("group2")));
 		}
@@ -422,7 +422,7 @@ public class VaultResourceTest {
 		@CsvSource(value = {
 				"GET, /vaults",
 				"GET, /vaults/vault1",
-				"GET, /vaults/vault1/access",
+				"GET, /vaults/vault1/members",
 				"PUT, /vaults/vault1/members/user1",
 				"DELETE, /vaults/vault1/members/user1",
 				"GET, /vaults/vault1/devices-requiring-access-grant",
