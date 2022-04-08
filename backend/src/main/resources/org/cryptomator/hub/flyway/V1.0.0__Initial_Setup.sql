@@ -23,7 +23,8 @@ CREATE TABLE "group_membership"
 	"member_id"         VARCHAR(255) NOT NULL,
     CONSTRAINT "GROUP_MEMBERSHIP_PK" PRIMARY KEY ("group_id", "member_id"),
 	CONSTRAINT "GROUP_MEMBERSHIP_FK_GROUP" FOREIGN KEY ("group_id") REFERENCES "authority" ("id") ON DELETE CASCADE,
-	CONSTRAINT "GROUP_MEMBERSHIP_FK_MEMBER" FOREIGN KEY ("member_id") REFERENCES "authority" ("id") ON DELETE CASCADE
+	CONSTRAINT "GROUP_MEMBERSHIP_FK_MEMBER" FOREIGN KEY ("member_id") REFERENCES "authority" ("id") ON DELETE CASCADE,
+	CONSTRAINT "GROUP_MEMBERSHIP_CHK_NOTSAME" CHECK ("group_id" <> "member_id")
 );
 
 CREATE OR REPLACE VIEW "effective_group_membership" ("group_id", "member_id", "path") AS
