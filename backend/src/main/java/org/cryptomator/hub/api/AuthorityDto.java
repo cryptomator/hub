@@ -9,12 +9,12 @@ abstract sealed class AuthorityDto permits UsersResource.UserDto, GroupResource.
 	public final String id;
 
 	@JsonProperty("type")
-	public final Authority.AuthorityType type;
+	public final String type;
 
 	@JsonProperty("name")
 	public final String name;
 
-	protected AuthorityDto(String id, Authority.AuthorityType type, String name) {
+	protected AuthorityDto(String id, String type, String name) {
 		this.id = id;
 		this.type = type;
 		this.name = name;

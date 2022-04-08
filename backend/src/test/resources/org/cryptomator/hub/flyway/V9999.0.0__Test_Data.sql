@@ -13,25 +13,25 @@ VALUES
     ('group2', 'GROUP', 'User Name 2'),
     ('group3', 'GROUP', 'User Name 3');
 
-INSERT INTO "user_details" ("id", "type")
+INSERT INTO "user_details" ("id")
 VALUES
-    ('user1', 'USER'),
-    ('user2', 'USER'),
-    ('user3', 'USER');
+    ('user1'),
+    ('user2'),
+    ('user3');
 
-INSERT INTO "group_details" ("id", "type")
+INSERT INTO "group_details" ("id")
 VALUES
-    ('group1', 'GROUP'),
-    ('group2', 'GROUP'),
-    ('group3', 'GROUP');
+    ('group1'),
+    ('group2'),
+    ('group3');
 
-INSERT INTO "group_membership" ("group_id", "group_type", "member_id", "member_type")
+INSERT INTO "group_membership" ("group_id", "member_id")
 VALUES
-    ('group1', 'GROUP', 'user1', 'USER'),
-    ('group1', 'GROUP', 'user3', 'USER'),
-    ('group2', 'GROUP', 'user3', 'USER'),
-    ('group3', 'GROUP', 'user3', 'USER'),
-    ('group3', 'GROUP', 'user1', 'USER');
+    ('group1', 'user1'),
+    ('group1', 'user3'),
+    ('group2', 'user3'),
+    ('group3', 'user3'),
+    ('group3', 'user1');
 
 INSERT INTO "vault" ("id", "owner_id", "name", "description", "creation_time", "salt", "iterations", "masterkey")
 VALUES
@@ -40,15 +40,15 @@ VALUES
     ('vault3', 'user1', 'Vault 3', 'This is a testvault.', '2020-02-20 20:20:20', 'salt3', 'iterations3', 'masterkey3'),
     ('vault4', 'user1', 'Vault 4', 'This is a testvault.', '2020-02-20 20:20:20', 'salt4', 'iterations4', 'masterkey4');
 
-INSERT INTO "vault_access" ("vault_id", "authority_id", "authority_type")
+INSERT INTO "vault_access" ("vault_id", "authority_id")
 VALUES
-    ('vault1', 'user1', 'USER'),
-    ('vault1', 'user2', 'USER'),
-    ('vault2', 'user1', 'USER'),
-    ('vault3', 'user3', 'USER'),
-    ('vault2', 'group2', 'GROUP'),
-    ('vault3', 'group1', 'GROUP'),
-    ('vault3', 'group3', 'GROUP');
+    ('vault1', 'user1'),
+    ('vault1', 'user2'),
+    ('vault2', 'user1'),
+    ('vault3', 'user3'),
+    ('vault2', 'group2'),
+    ('vault3', 'group1'),
+    ('vault3', 'group3');
 
 INSERT INTO "device" ("id", "owner_id", "name", "publickey")
 VALUES

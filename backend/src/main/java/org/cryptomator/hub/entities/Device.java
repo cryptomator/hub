@@ -37,7 +37,6 @@ public class Device extends PanacheEntityBase {
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "owner_id", updatable = false, nullable = false)
-	@JoinColumn(name = "owner_type", updatable = false, nullable = false)
 	public Authority owner;
 
 	@OneToMany(mappedBy = "device", fetch = FetchType.LAZY)

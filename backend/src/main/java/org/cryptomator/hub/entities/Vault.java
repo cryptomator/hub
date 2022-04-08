@@ -28,7 +28,7 @@ import java.util.stream.Stream;
 				SELECT DISTINCT v
 				FROM Vault v
 				LEFT JOIN v.effectiveMembers m
-				WHERE v.owner.id.id = :userId OR m.id.id = :userId
+				WHERE v.owner.id = :userId OR m.id = :userId
 				""")
 public class Vault extends PanacheEntityBase {
 
@@ -38,13 +38,12 @@ public class Vault extends PanacheEntityBase {
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "owner_id", updatable = false, nullable = false)
-	@JoinColumn(name = "owner_type", updatable = false, nullable = false)
 	public User owner;
 
 	@ManyToMany
 	@JoinTable(name = "vault_access",
 			joinColumns = @JoinColumn(name = "vault_id", referencedColumnName = "id"),
-			inverseJoinColumns = {@JoinColumn(name = "authority_id", referencedColumnName = "id"), @JoinColumn(name = "authority_type", referencedColumnName = "type")}
+			inverseJoinColumns = @JoinColumn(name = "authority_id", referencedColumnName = "id")
 	)
 	public Set<Authority> directMembers = new HashSet<>();
 
@@ -52,7 +51,7 @@ public class Vault extends PanacheEntityBase {
 	@Immutable
 	@JoinTable(name = "effective_vault_access",
 			joinColumns = @JoinColumn(name = "vault_id", referencedColumnName = "id"),
-			inverseJoinColumns = {@JoinColumn(name = "authority_id", referencedColumnName = "id"), @JoinColumn(name = "authority_type", referencedColumnName = "type")}
+			inverseJoinColumns = @JoinColumn(name = "authority_id", referencedColumnName = "id")
 	)
 	public Set<Authority> effectiveMembers = new HashSet<>();
 

@@ -33,8 +33,7 @@ public class KeycloakRemoteUserProvider implements RemoteUserProvider {
 
 	private User mapToUser(UserRepresentation userRepresentation) {
 		var userEntity = new User();
-		userEntity.id.id = userRepresentation.getId();
-		userEntity.id.type = Authority.AuthorityType.USER;
+		userEntity.id = userRepresentation.getId();
 		userEntity.name = userRepresentation.getUsername();
 		userEntity.email = userRepresentation.getEmail();
 		getPictureUrl(userRepresentation.getAttributes()).ifPresent(it -> userEntity.pictureUrl = it);
@@ -61,8 +60,7 @@ public class KeycloakRemoteUserProvider implements RemoteUserProvider {
 		try (Keycloak keycloak = Keycloak.getInstance(syncerConfig.getKeycloakUrl(), syncerConfig.getKeycloakRealm(), syncerConfig.getUsername(), syncerConfig.getPassword(), syncerConfig.getKeycloakClientId())) {
 			return keycloak.realm(syncerConfig.getKeycloakRealm()).groups().groups().stream().map(group -> {
 				var groupEntity = new Group();
-				groupEntity.id.id = group.getId();
-				groupEntity.id.type = Authority.AuthorityType.GROUP;
+				groupEntity.id = group.getId();
 				groupEntity.name = group.getName();
 				return groupEntity;
 			});
@@ -81,8 +79,7 @@ public class KeycloakRemoteUserProvider implements RemoteUserProvider {
 
 	private Group mapToGroup(GroupRepresentation group, Set<Authority> member) {
 		var groupEntity = new Group();
-		groupEntity.id.id = group.getId();
-		groupEntity.id.type = Authority.AuthorityType.GROUP;
+		groupEntity.id = group.getId();
 		groupEntity.name = group.getName();
 		groupEntity.members = member;
 		return groupEntity;

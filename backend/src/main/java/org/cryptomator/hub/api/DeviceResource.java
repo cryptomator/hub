@@ -99,7 +99,7 @@ public class DeviceResource {
 		}
 
 		public static DeviceDto fromEntity(Device entity) {
-			return new DeviceDto(entity.id, entity.name, entity.publickey, entity.owner.id.id, Set.of());
+			return new DeviceDto(entity.id, entity.name, entity.publickey, entity.owner.id, Set.of());
 		}
 
 	}

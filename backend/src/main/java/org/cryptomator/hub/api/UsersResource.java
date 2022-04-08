@@ -60,11 +60,11 @@ public class UsersResource {
 		Function<AccessToken, VaultResource.VaultDto> mapAccessibleVaults =
 				a -> new VaultResource.VaultDto(a.vault.id, a.vault.name, a.vault.description, a.vault.creationTime, UserDto.fromEntity(a.vault.owner), null, null, null);
 		Function<Device, DeviceResource.DeviceDto> mapDevices = withAccessibleVaults //
-				? d -> new DeviceResource.DeviceDto(d.id, d.name, d.publickey, d.owner.id.id, d.accessTokens.stream().map(mapAccessibleVaults).collect(Collectors.toSet())) //
-				: d -> new DeviceResource.DeviceDto(d.id, d.name, d.publickey, d.owner.id.id, Set.of());
+				? d -> new DeviceResource.DeviceDto(d.id, d.name, d.publickey, d.owner.id, d.accessTokens.stream().map(mapAccessibleVaults).collect(Collectors.toSet())) //
+				: d -> new DeviceResource.DeviceDto(d.id, d.name, d.publickey, d.owner.id, Set.of());
 		return withDevices //
-				? new UserDto(user.id.id, user.name, user.pictureUrl, user.email, user.devices.stream().map(mapDevices).collect(Collectors.toSet()))
-				: new UserDto(user.id.id, user.name, user.pictureUrl, user.email, Set.of());
+				? new UserDto(user.id, user.name, user.pictureUrl, user.email, user.devices.stream().map(mapDevices).collect(Collectors.toSet()))
+				: new UserDto(user.id, user.name, user.pictureUrl, user.email, Set.of());
 	}
 
 	@GET
@@ -95,14 +95,14 @@ public class UsersResource {
 		public final Set<DeviceResource.DeviceDto> devices;
 
 		UserDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("pictureUrl") String pictureUrl, @JsonProperty("email") String email, @JsonProperty("devices") Set<DeviceResource.DeviceDto> devices) {
-			super(id, Authority.AuthorityType.USER, name);
+			super(id, "user", name); // TODO keep string "user"?
 			this.pictureUrl = pictureUrl;
 			this.email = email;
 			this.devices = devices;
 		}
 
 		public static UserDto fromEntity(User user) {
-			return new UserDto(user.id.id, user.name, user.pictureUrl, user.email, Set.of());
+			return new UserDto(user.id, user.name, user.pictureUrl, user.email, Set.of());
 		}
 	}
 }

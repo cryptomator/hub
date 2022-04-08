@@ -73,6 +73,7 @@ public class VaultResource {
 		}).toList();
 	}
 
+	// TODO rename "members" to "users"
 	@PUT
 	@Path("/{vaultId}/members/{userId}")
 	@RolesAllowed("vault-owner")
@@ -83,7 +84,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "404", description = "vault or user not found")
 	public Response addMember(@PathParam("vaultId") String vaultId, @PathParam("userId") String userId) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-		var user = User.findByIdOptional(userId).orElseThrow(NotFoundException::new);
+		var user = User.<User>findByIdOptional(userId).orElseThrow(NotFoundException::new);
 		vault.directMembers.add(user);
 		vault.persist();
 		return Response.status(Response.Status.CREATED).build();
@@ -98,14 +99,14 @@ public class VaultResource {
 	@APIResponse(responseCode = "201", description = "member added")
 	@APIResponse(responseCode = "404", description = "vault or group not found")
 	public Response addGroup(@PathParam("vaultId") String vaultId, @PathParam("groupId") String groupId) {
-		var compositeGroupId = new Authority.AuthorityId(groupId, Authority.AuthorityType.GROUP);
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-		var group = Group.<Group>findByIdOptional(compositeGroupId).orElseThrow(NotFoundException::new);
+		var group = Group.<Group>findByIdOptional(groupId).orElseThrow(NotFoundException::new);
 		vault.directMembers.add(group);
 		vault.persist();
 		return Response.status(Response.Status.CREATED).build();
 	}
 
+	// TODO rename "members" to "users"
 	@DELETE
 	@Path("/{vaultId}/members/{userId}")
 	@RolesAllowed("vault-owner")
@@ -115,9 +116,8 @@ public class VaultResource {
 	@APIResponse(responseCode = "204", description = "member removed")
 	@APIResponse(responseCode = "404", description = "vault not found")
 	public Response removeMember(@PathParam("vaultId") String vaultId, @PathParam("userId") String userId) {
-		var compositeId = new Authority.AuthorityId(userId, Authority.AuthorityType.USER); // FIXME: we need to distinguish members into users and groups
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-		vault.directMembers.removeIf(u -> u.id.equals(compositeId));
+		vault.directMembers.removeIf(u -> u.id.equals(userId));
 		vault.persist();
 		return Response.status(Response.Status.NO_CONTENT).build();
 	}
@@ -132,8 +132,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "404", description = "vault not found")
 	public Response removeGroup(@PathParam("vaultId") String vaultId, @PathParam("groupId") String groupId) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-		var compositeId = new Authority.AuthorityId(groupId, Authority.AuthorityType.GROUP);
-		vault.directMembers.removeIf(g -> g.id.equals(compositeId));
+		vault.directMembers.removeIf(g -> g.id.equals(groupId));
 		vault.persist();
 		return Response.status(Response.Status.NO_CONTENT).build();
 	}
@@ -158,8 +157,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "403", description = "device not authorized to access this vault")
 	@APIResponse(responseCode = "404", description = "unknown device")
 	public String unlock(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId) {
-		var currentUserId = new Authority.AuthorityId(jwt.getSubject(), Authority.AuthorityType.USER);
-		var access = AccessToken.unlock(vaultId, deviceId, currentUserId);
+		var access = AccessToken.unlock(vaultId, deviceId, jwt.getSubject());
 		if (access != null) {
 			return access.jwe;
 		} else if (Device.findById(deviceId) == null) {

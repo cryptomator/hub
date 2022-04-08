@@ -41,10 +41,10 @@ public class AccessToken extends PanacheEntityBase {
 	@JoinColumn(name = "device_id")
 	public Device device;
 
+	// TODO remove?
 	@ManyToOne(optional = false, cascade = {CascadeType.REMOVE})
 	@MapsId("userId")
 	@JoinColumn(name = "user_id")
-	@JoinColumn(name = "user_type")
 	public Authority user;
 
 	@ManyToOne(optional = false, cascade = {CascadeType.REMOVE})
@@ -55,7 +55,7 @@ public class AccessToken extends PanacheEntityBase {
 	@Column(name = "jwe", nullable = false)
 	public String jwe;
 
-	public static AccessToken unlock(String vaultId, String deviceId, Authority.AuthorityId userId) {
+	public static AccessToken unlock(String vaultId, String deviceId, String userId) {
 		try {
 			return find("#AccessToken.get", Parameters.with("deviceId", deviceId).and("vaultId", vaultId).and("userId", userId)).firstResult();
 		} catch (NoResultException e) {
@@ -105,10 +105,10 @@ public class AccessToken extends PanacheEntityBase {
 	public static class AccessId implements Serializable {
 
 		public String deviceId;
-		public Authority.AuthorityId userId;
+		public String userId;
 		public String vaultId;
 
-		public AccessId(String deviceId, Authority.AuthorityId userId, String vaultId) {
+		public AccessId(String deviceId, String userId, String vaultId) {
 			this.deviceId = deviceId;
 			this.userId = userId;
 			this.vaultId = vaultId;

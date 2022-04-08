@@ -4,9 +4,7 @@ import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.Table;
-import javax.transaction.Transactional;
 import java.util.Objects;
-import java.util.Optional;
 
 @Entity
 @Table(name = "user_details")
@@ -34,29 +32,4 @@ public class User extends Authority {
 		return Objects.hash(id, pictureUrl, email);
 	}
 
-	// --- data layer queries ---
-
-	@Transactional(Transactional.TxType.REQUIRED)
-	public static void createOrUpdate(String id, String name, String pictureUrl, String email) {
-		User user = findById(id);
-		if (user == null) {
-			user = new User();
-			user.id.id = id;
-			user.id.type = AuthorityType.USER;
-		}
-		user.name = name;
-		user.pictureUrl = pictureUrl;
-		user.email = email;
-		user.persist();
-	}
-
-	public static User findById(String id) {
-		var compositeId = new AuthorityId(id, AuthorityType.USER);
-		return Authority.findById(compositeId);
-	}
-
-	public static Optional<User> findByIdOptional(String id) {
-		var compositeId = new AuthorityId(id, AuthorityType.USER);
-		return Authority.findByIdOptional(compositeId);
-	}
 }
