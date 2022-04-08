@@ -26,13 +26,16 @@ CREATE TABLE "group_membership"
 	CONSTRAINT "GROUP_MEMBERSHIP_FK_MEMBER" FOREIGN KEY ("member_id") REFERENCES "authority" ("id") ON DELETE CASCADE
 );
 
-CREATE OR REPLACE VIEW "effective_group_membership" ("group_id", "member_id") AS
-WITH RECURSIVE "members" ("root", "parent", "member_id") AS (
-	SELECT "group_id", "group_id", "member_id" FROM "group_membership"
+CREATE OR REPLACE VIEW "effective_group_membership" ("group_id", "member_id", "path") AS
+WITH RECURSIVE "members" ("root", "member_id", "depth", "path") AS (
+	SELECT "group_id", "member_id", 0, '/' || "group_id" || '/' || "member_id"
+	    FROM "group_membership"
 	UNION
-	SELECT "parent"."root", "parent"."member_id", "child"."member_id" FROM "group_membership" "child"
+	SELECT "parent"."root", "child"."member_id", "parent"."depth" + 1, "parent"."path" || '/' || "child"."member_id"
+	    FROM "group_membership" "child"
 		INNER JOIN "members" "parent" ON "child"."group_id" = "parent"."member_id"
-) SELECT "root", "member_id" FROM "members";
+		WHERE "parent"."depth" < 10
+) SELECT "root", "member_id", "path" FROM "members";
 
 CREATE TABLE "user_details"
 (
