@@ -22,10 +22,13 @@ import java.util.Objects;
 @Table(name = "access_token")
 @NamedQuery(name = "AccessToken.get", query = """
 			SELECT a
-			FROM AccessToken a
-			WHERE a.device.id = :deviceId
-				AND a.id.userId = :userId
-				AND a.id.vaultId = :vaultId
+			FROM Vault v
+			INNER JOIN v.effectiveMembers u
+			INNER JOIN u.devices d
+			INNER JOIN d.accessTokens a
+			WHERE v.id = :vaultId
+				AND u.id = :userId
+				AND d.id = :deviceId
 		""")
 @NamedQuery(name = "AccessToken.revokeDevice", query = "DELETE FROM AccessToken a WHERE a.id.deviceId = :deviceId AND a.id.vaultId = :vaultId")
 public class AccessToken extends PanacheEntityBase {
