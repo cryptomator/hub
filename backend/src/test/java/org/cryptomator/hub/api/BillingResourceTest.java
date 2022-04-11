@@ -19,6 +19,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 
 @QuarkusTest
 @FlywayTest(value = @DataSource(url = "jdbc:h2:mem:test"), additionalLocations = {"classpath:org/cryptomator/hub/flyway"})
@@ -48,35 +49,69 @@ public class BillingResourceTest {
 
 		@Test
 		@Order(1)
-		@DisplayName("GET /billing returns 200")
-		public void testGet() {
+		@DisplayName("GET /billing returns 200 with empty license")
+		public void testGetEmpty() {
 			when().get("/billing")
 					.then().statusCode(200)
-					.body("hub_id", is("42"))
-					.body("token", is(INITIAL_TOKEN));
+					.body("hubId", is("42"))
+					.body("hasLicense", is(false))
+					.body("email", nullValue())
+					.body("totalSeats", nullValue())
+					.body("remainingSeats", nullValue())
+					.body("issuedAt", nullValue())
+					.body("expiresAt", nullValue());
 		}
 
 		@Test
 		@Order(2)
-		@DisplayName("PUT /billing/token returns 204")
-		public void testPutValidToken() {
-			given().contentType(ContentType.TEXT).body(UPDATED_TOKEN)
+		@DisplayName("PUT /billing/token returns 204 for initial token")
+		public void testPutInitialToken() {
+			given().contentType(ContentType.TEXT).body(INITIAL_TOKEN)
 					.when().put("/billing/token")
 					.then().statusCode(204);
 		}
 
 		@Test
 		@Order(3)
-		@DisplayName("GET /billing returns 200 with updated token")
-		public void testGetUpdated() {
+		@DisplayName("GET /billing returns 200 with initial license")
+		public void testGetInitial() {
 			when().get("/billing")
 					.then().statusCode(200)
-					.body("hub_id", is("42"))
-					.body("token", is(UPDATED_TOKEN));
+					.body("hubId", is("42"))
+					.body("hasLicense", is(true))
+					.body("email", is("hub@cryptomator.org"))
+					.body("totalSeats", is(5))
+					.body("remainingSeats", is(5))
+					.body("issuedAt", is("2022-03-23T15:29:20.000Z"))
+					.body("expiresAt", is("9999-12-31T00:00:00.000Z"));
 		}
 
 		@Test
 		@Order(4)
+		@DisplayName("PUT /billing/token returns 204 for updated token")
+		public void testPutUpdatedToken() {
+			given().contentType(ContentType.TEXT).body(UPDATED_TOKEN)
+					.when().put("/billing/token")
+					.then().statusCode(204);
+		}
+
+		@Test
+		@Order(5)
+		@DisplayName("GET /billing returns 200 with updated license")
+		public void testGetUpdated() {
+			when().get("/billing")
+					.then().statusCode(200)
+					.body("hubId", is("42"))
+					.body("hasLicense", is(true))
+					.body("email", is("hub@cryptomator.org"))
+					.body("totalSeats", is(5))
+					.body("remainingSeats", is(5))
+					.body("issuedAt", is("2022-03-23T15:43:30.000Z"))
+					.body("expiresAt", is("9999-12-31T00:00:00.000Z"));
+		}
+
+		@Test
+		@Order(6)
 		@DisplayName("PUT /billing/token returns 400 due to expired token")
 		public void testPutExpiredToken() {
 			given().contentType(ContentType.TEXT).body(EXPIRED_TOKEN)
@@ -85,7 +120,7 @@ public class BillingResourceTest {
 		}
 
 		@Test
-		@Order(5)
+		@Order(7)
 		@DisplayName("PUT /billing/token returns 400 due to invalid signature")
 		public void testPutTokenWithInvalidSignature() {
 			given().contentType(ContentType.TEXT).body(TOKEN_WITH_INVALID_SIGNATURE)
@@ -94,7 +129,7 @@ public class BillingResourceTest {
 		}
 
 		@Test
-		@Order(6)
+		@Order(8)
 		@DisplayName("PUT /billing/token returns 400 due to malformed token")
 		public void testPutMalformedToken() {
 			given().contentType(ContentType.TEXT).body(MALFORMED_TOKEN)
