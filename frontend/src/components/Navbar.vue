@@ -68,8 +68,9 @@
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
 import { CogIcon, CreditCardIcon, DesktopComputerIcon, LogoutIcon, MenuIcon, XIcon } from '@heroicons/vue/outline';
 import md5 from 'blueimp-md5';
-import { computed } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import auth from '../common/auth';
 import { UserDto } from '../common/backend';
 
 const { t } = useI18n({ useScope: 'global' });
@@ -77,24 +78,41 @@ const { t } = useI18n({ useScope: 'global' });
 const navigation = [
   { name: 'nav.vaults', to: '/vaults' },
 ];
-const profileDropdown = [
-  [
-    { icon: DesktopComputerIcon, name: 'nav.profile.devices', to: '/devices' }
-  ],
-  [
-    { icon: CreditCardIcon, name: 'nav.profile.billing', to: '/billing' }
-  ],
-  [
-    { icon: CogIcon, name: 'nav.profile.settings', to: '/settings' },
-    { icon: LogoutIcon, name: 'nav.profile.signOut', to: '/logout' }
-  ],
-];
+
+const profileDropdownSections = {
+  infoSection :
+    [
+      { icon: DesktopComputerIcon, name: 'nav.profile.devices', to: '/devices' }
+    ],
+
+  adminSection :
+    [
+      { icon: CreditCardIcon, name: 'nav.profile.billing', to: '/billing' }
+    ],
+
+  hubSection :
+    [
+      { icon: CogIcon, name: 'nav.profile.settings', to: '/settings' },
+      { icon: LogoutIcon, name: 'nav.profile.signOut', to: '/logout' }
+    ],
+
+};
+
+const profileDropdown = ref<any []>([]);
 
 const pictureUrl = computed(() => getPictureUrl());
 
 const props = defineProps<{
   me : UserDto
 }>();
+
+onMounted(async () => {
+  if ((await auth).isAdmin()) {
+    profileDropdown.value = [profileDropdownSections.infoSection, profileDropdownSections.adminSection, profileDropdownSections.hubSection];
+  } else {
+    profileDropdown.value = [profileDropdownSections.infoSection, profileDropdownSections.hubSection];
+  }
+});
 
 function getPictureUrl(): string {
   if (props.me.pictureUrl) {

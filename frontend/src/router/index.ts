@@ -75,7 +75,11 @@ const routes: RouteRecordRaw[] = [
       {
         path: '/billing',
         component: Billing,
-        props: (route) => ({ token: route.query.token })
+        props: (route) => ({ token: route.query.token }),
+        beforeEnter: async (_to, _from) => {
+          const auth = await authPromise;
+          return auth.isAdmin(); //TODO: reroute to NotFound Screen/ AccessDeniedScreen?
+        }
       },
     ]
   },
