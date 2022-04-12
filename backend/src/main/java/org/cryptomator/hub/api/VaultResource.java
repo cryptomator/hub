@@ -185,9 +185,12 @@ public class VaultResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
 	@Operation(summary = "gets a vault")
+	@APIResponse(responseCode = "403", description = "requesting user is neither member nor owner of the vault")
 	public VaultDto get(@PathParam("vaultId") String vaultId) {
-		// TODO: check if user has permission to access this vault?
 		Vault vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
+		if(vault.members.stream().noneMatch(u -> u.id.equals(jwt.getSubject())) && !vault.owner.id.equals(jwt.getSubject())) {
+			throw new ForbiddenException("Requesting user is neither member nor owner of the vault");
+		}
 		return VaultDto.fromEntity(vault);
 	}
 
