@@ -41,12 +41,6 @@ public class AccessToken extends PanacheEntityBase {
 	@JoinColumn(name = "device_id")
 	public Device device;
 
-	// TODO remove?
-	@ManyToOne(optional = false, cascade = {CascadeType.REMOVE})
-	@MapsId("userId")
-	@JoinColumn(name = "user_id")
-	public Authority user;
-
 	@ManyToOne(optional = false, cascade = {CascadeType.REMOVE})
 	@MapsId("vaultId")
 	@JoinColumn(name = "vault_id")
@@ -78,14 +72,13 @@ public class AccessToken extends PanacheEntityBase {
 		AccessToken other = (AccessToken) o;
 		return Objects.equals(id, other.id)
 				&& Objects.equals(device, other.device)
-				&& Objects.equals(user, other.user)
 				&& Objects.equals(vault, other.vault)
 				&& Objects.equals(jwe, other.jwe);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, device, user, vault, jwe);
+		return Objects.hash(id, device, vault, jwe);
 	}
 
 	// --- data layer queries ---
@@ -95,7 +88,6 @@ public class AccessToken extends PanacheEntityBase {
 		return "Access{" +
 				"id=" + id +
 				", device=" + device.id +
-				", user=" + user.id +
 				", vault=" + vault.id +
 				", jwe='" + jwe + '\'' +
 				'}';
@@ -105,12 +97,10 @@ public class AccessToken extends PanacheEntityBase {
 	public static class AccessId implements Serializable {
 
 		public String deviceId;
-		public String userId;
 		public String vaultId;
 
-		public AccessId(String deviceId, String userId, String vaultId) {
+		public AccessId(String deviceId, String vaultId) {
 			this.deviceId = deviceId;
-			this.userId = userId;
 			this.vaultId = vaultId;
 		}
 
@@ -123,13 +113,12 @@ public class AccessToken extends PanacheEntityBase {
 			if (o == null || getClass() != o.getClass()) return false;
 			AccessId other = (AccessId) o;
 			return Objects.equals(deviceId, other.deviceId) //
-					&& Objects.equals(userId, other.userId) //
 					&& Objects.equals(vaultId, other.vaultId);
 		}
 
 		@Override
 		public int hashCode() {
-			return Objects.hash(deviceId, userId, vaultId);
+			return Objects.hash(deviceId, vaultId);
 		}
 	}
 }

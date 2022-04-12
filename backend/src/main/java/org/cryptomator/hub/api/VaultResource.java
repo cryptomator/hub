@@ -3,7 +3,6 @@ package org.cryptomator.hub.api;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.cryptomator.hub.entities.AccessToken;
-import org.cryptomator.hub.entities.Authority;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
@@ -182,7 +181,6 @@ public class VaultResource {
 
 		var access = new AccessToken();
 		access.vault = vault;
-		access.user = device.owner;
 		access.device = device;
 		access.jwe = jwe;
 

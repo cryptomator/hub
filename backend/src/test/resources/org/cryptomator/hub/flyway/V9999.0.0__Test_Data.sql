@@ -59,10 +59,10 @@ VALUES
     ('device5', 'user3', 'Computer 5', 'publickey5'),
     ('device6', 'user1', 'Computer 6', 'publickey6');
 
-INSERT INTO "access_token" ("device_id", "user_id", "vault_id", "jwe")
+INSERT INTO "access_token" ("device_id", "vault_id", "jwe")
 VALUES
-    ('device1', 'user1', 'vault1', 'jwe1'),
-    ('device2', 'user2', 'vault1', 'jwe2'),
-    ('device1', 'user1', 'vault2', 'jwe3'),
-    ('device5', 'user3', 'vault3', 'jwe4'),
-    ('device6', 'user1', 'vault3', 'jwe5');
+    ('device1', 'vault1', 'jwe1'),
+    ('device2', 'vault1', 'jwe2'),
+    ('device1', 'vault2', 'jwe3'),
+    ('device5', 'vault3', 'jwe4'),
+    ('device6', 'vault3', 'jwe5');

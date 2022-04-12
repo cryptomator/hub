@@ -98,11 +98,9 @@ CREATE TABLE "device"
 CREATE TABLE "access_token"
 (
 	"device_id" VARCHAR(255) NOT NULL,
-	"user_id"   VARCHAR(255) NOT NULL,
 	"vault_id"  VARCHAR(255) NOT NULL,
 	"jwe"       VARCHAR(2000) NOT NULL UNIQUE,
-	CONSTRAINT "ACCESS_PK" PRIMARY KEY ("device_id", "user_id", "vault_id"),
+	CONSTRAINT "ACCESS_PK" PRIMARY KEY ("device_id", "vault_id"),
 	CONSTRAINT "ACCESS_FK_DEVICE" FOREIGN KEY ("device_id") REFERENCES "device" ("id") ON DELETE CASCADE,
-	CONSTRAINT "ACCESS_FK_USER" FOREIGN KEY ("user_id") REFERENCES "authority" ("id") ON DELETE CASCADE,
 	CONSTRAINT "ACCESS_FK_VAULT" FOREIGN KEY ("vault_id") REFERENCES "vault" ("id") ON DELETE CASCADE
 );
