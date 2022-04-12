@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.cryptomator.hub.RemoteUserProviderFactory;
 import org.cryptomator.hub.SyncerConfig;
 import org.cryptomator.hub.entities.AccessToken;
-import org.cryptomator.hub.entities.Authority;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.User;
 import org.eclipse.microprofile.jwt.JsonWebToken;
@@ -83,7 +82,7 @@ public class UsersResource {
 	@NoCache
 	@Operation(summary = "search user")
 	public List<UserDto> search(@QueryParam("querry") String querry) {
-		return new RemoteUserProviderFactory().get(syncerConfig).searchUser(querry).map(UserDto::fromEntity).toList();
+		return new RemoteUserProviderFactory().get(syncerConfig).searchUser(querry).stream().map(UserDto::fromEntity).toList();
 	}
 
 	public static final class UserDto extends AuthorityDto {

@@ -31,7 +31,7 @@ public class GroupResource {
 	@NoCache
 	@Operation(summary = "search group")
 	public List<GroupDto> search(@QueryParam("querry") String querry) {
-		return new RemoteUserProviderFactory().get(syncerConfig).searchGroup(querry).map(GroupDto::fromEntity).toList();
+		return new RemoteUserProviderFactory().get(syncerConfig).searchGroup(querry).stream().map(GroupDto::fromEntity).toList();
 	}
 
 	public static final class GroupDto extends AuthorityDto {

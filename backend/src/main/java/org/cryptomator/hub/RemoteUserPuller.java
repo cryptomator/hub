@@ -23,9 +23,9 @@ public class RemoteUserPuller {
 	void sync() {
 		var remoteUserProvider = new RemoteUserProviderFactory().get(config);
 
-		var keycloakGroups = remoteUserProvider.groupsIncludingMembers().collect(Collectors.toMap(g -> g.id, Function.identity()));
+		var keycloakGroups = remoteUserProvider.groups().stream().collect(Collectors.toMap(g -> g.id, Function.identity()));
 		var databaseGroups = Group.<Group>findAll().stream().collect(Collectors.toMap(g -> g.id, Function.identity()));
-		var keycloakUsers = remoteUserProvider.users().collect(Collectors.toMap(u -> u.id, Function.identity()));
+		var keycloakUsers = remoteUserProvider.users().stream().collect(Collectors.toMap(u -> u.id, Function.identity()));
 		var databaseUsers = User.<User>findAll().stream().collect(Collectors.toMap(u -> u.id, Function.identity()));
 
 		var addedUsers = diff(keycloakUsers.keySet(), databaseUsers.keySet());
