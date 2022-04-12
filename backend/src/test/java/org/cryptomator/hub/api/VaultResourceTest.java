@@ -163,10 +163,10 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@DisplayName("PUT /vaults/vault2/keys/device1 returns 409")
+		@DisplayName("PUT /vaults/vault1/keys/device1 returns 409")
 		public void testGrantAccess2() {
 			given().contentType(ContentType.TEXT).body("jwe4")
-					.when().put("/vaults/{vaultId}/keys/{deviceId}", "vault2", "device1")
+					.when().put("/vaults/{vaultId}/keys/{deviceId}", "vault1", "device1")
 					.then().statusCode(409);
 		}
 
