@@ -11,6 +11,8 @@ import java.util.Objects;
 @DiscriminatorValue("USER")
 public class User extends Authority {
 
+	public static final String TYPE = "user";
+
 	@Column(name = "picture_url")
 	public String pictureUrl;
 

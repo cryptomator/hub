@@ -94,7 +94,7 @@ public class UsersResource {
 		public final Set<DeviceResource.DeviceDto> devices;
 
 		UserDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("pictureUrl") String pictureUrl, @JsonProperty("email") String email, @JsonProperty("devices") Set<DeviceResource.DeviceDto> devices) {
-			super(id, "user", name); // TODO keep string "user"?
+			super(id, User.TYPE, name);
 			this.pictureUrl = pictureUrl;
 			this.email = email;
 			this.devices = devices;

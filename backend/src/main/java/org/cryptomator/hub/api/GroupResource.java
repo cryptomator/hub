@@ -36,7 +36,7 @@ public class GroupResource {
 	public static final class GroupDto extends AuthorityDto {
 
 		GroupDto(@JsonProperty("id") String id, @JsonProperty("name") String name) {
-			super(id, "group", name); // TODO keep string "user"?
+			super(id, Group.TYPE, name);
 		}
 
 		public static GroupDto fromEntity(Group group) {

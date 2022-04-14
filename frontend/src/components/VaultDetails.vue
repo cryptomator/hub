@@ -41,12 +41,10 @@
         <template v-for="member in members" :key="member.id">
           <li class="py-3 flex flex-col">
             <div class="flex justify-between items-center">
-
               <div class="flex items-center">
                 <img :src="member.pictureUrl" alt="" class="w-8 h-8 rounded-full" />
                 <p class="ml-4 text-sm font-medium text-gray-900">{{ member.name }}</p>
               </div>
-
               <button type="button" class="ml-6 bg-white rounded-md text-sm font-medium text-red-600 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="revokeUserAccess(member.id)">{{ t('common.remove') }}<span class="sr-only"> {{ member.name }}</span></button>
             </div>
 

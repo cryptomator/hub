@@ -212,6 +212,7 @@ public class VaultResource {
 	@Path("/{vaultId}")
 	@RolesAllowed("vault-owner")
 	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
 	@Operation(summary = "creates a vault",
 			description = "Creates a vault with the given vault id. The creationTime in the vaultDto is ignored and the current server time is used.")
