@@ -56,7 +56,7 @@ public class KeycloakRemoteUserProvider implements RemoteUserProvider {
 	public List<Group> groups() {
 		try (Keycloak keycloak = Keycloak.getInstance(syncerConfig.getKeycloakUrl(), syncerConfig.getKeycloakRealm(), syncerConfig.getUsername(), syncerConfig.getPassword(), syncerConfig.getKeycloakClientId())) {
 			return keycloak.realm(syncerConfig.getKeycloakRealm()).groups().groups().stream().map(group -> {
-				// TODO add sub groups and the members of the sub group to it too
+				// TODO add sub groups and the members of the sub group to it too using `group.getSubGroups()` recursively
 				var members  = keycloak.realm(syncerConfig.getKeycloakRealm()).groups().group(group.getId()).members().stream().<Authority>map(this::mapToUser).collect(Collectors.toSet());
 				var groupEntity = new Group();
 				groupEntity.id = group.getId();
