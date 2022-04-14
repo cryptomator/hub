@@ -38,18 +38,20 @@
     <div>
       <h3 class="font-medium text-gray-900">{{ t('vaultDetails.sharedWith.title') }}</h3>
       <ul role="list" class="mt-2 border-t border-b border-gray-200 divide-y divide-gray-200">
-        <template v-for="user in vaultAccess?.users" :key="user.id">
+        <template v-for="member in members" :key="member.id">
           <li class="py-3 flex flex-col">
             <div class="flex justify-between items-center">
+
               <div class="flex items-center">
-                <img :src="user.pictureUrl" alt="" class="w-8 h-8 rounded-full" />
-                <p class="ml-4 text-sm font-medium text-gray-900">{{ user.name }}</p>
+                <img :src="member.pictureUrl" alt="" class="w-8 h-8 rounded-full" />
+                <p class="ml-4 text-sm font-medium text-gray-900">{{ member.name }}</p>
               </div>
-              <button type="button" class="ml-6 bg-white rounded-md text-sm font-medium text-red-600 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="revokeUserAccess(user.id)">{{ t('common.remove') }}<span class="sr-only"> {{ user.name }}</span></button>
+
+              <button type="button" class="ml-6 bg-white rounded-md text-sm font-medium text-red-600 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="revokeUserAccess(member.id)">{{ t('common.remove') }}<span class="sr-only"> {{ member.name }}</span></button>
             </div>
 
-            <p v-if="onRevokeUserAccessError[user.id] != null" class="text-sm text-red-900 text-right">
-              {{ t('common.unexpectedError', [onRevokeUserAccessError[user.id].message]) }}
+            <p v-if="onRevokeUserAccessError[member.id] != null" class="text-sm text-red-900 text-right">
+              {{ t('common.unexpectedError', [onRevokeUserAccessError[member.id].message]) }}
             </p>
           </li>
         </template>
@@ -90,7 +92,7 @@
 import { PencilIcon, PlusSmIcon } from '@heroicons/vue/solid';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { DeviceDto, NotFoundError, UserDto, VaultDto, VaultAccess } from '../common/backend';
+import backend, { AuthorityDto, DeviceDto, NotFoundError, UserDto, VaultDto } from '../common/backend';
 import DownloadVaultTemplateDialog from './DownloadVaultTemplateDialog.vue';
 import FetchError from './FetchError.vue';
 import GrantPermissionDialog from './GrantPermissionDialog.vue';
@@ -115,7 +117,7 @@ const grantPermissionDialog = ref<typeof GrantPermissionDialog>();
 const downloadingVaultTemplate = ref(false);
 const downloadVaultTemplateDialog = ref<typeof DownloadVaultTemplateDialog>();
 const vault = ref<VaultDto>();
-const vaultAccess = ref<VaultAccess>();
+const members = ref<AuthorityDto[]>([]);
 const allUsers = ref<UserDto[]>([]);
 const devicesRequiringAccessGrant = ref<DeviceDto[]>([]);
 
@@ -127,7 +129,7 @@ async function fetchData() {
 
   try {
     vault.value = await backend.vaults.get(props.vaultId);
-    vaultAccess.value = await backend.vaults.getVaultAccess(props.vaultId);
+    members.value = await backend.vaults.getMembers(props.vaultId);
     allUsers.value = await backend.users.listAll();
     devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
   } catch (error) {
@@ -144,9 +146,7 @@ async function addMember(id: string) {
     const user = allUsers.value.find(u => u.id === id);
     if (user) {
       await backend.vaults.addMember(props.vaultId, id);
-      if (vaultAccess.value) {
-        vaultAccess.value.users = vaultAccess.value?.users.concat(user);
-      }
+      members.value = members.value.concat(user);
       devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
     }
   } catch (error) {
@@ -174,9 +174,7 @@ async function revokeUserAccess(userId: string) {
   delete onRevokeUserAccessError.value[userId];
   try {
     await backend.vaults.revokeUserAccess(props.vaultId, userId);
-    if (vaultAccess.value) {
-      vaultAccess.value.users = vaultAccess.value.users.filter(m => m.id !== userId);
-    }
+    members.value = members.value.filter(m => m.id !== userId);
     devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
   } catch (error) {
     console.error('Revoking user access failed.', error);

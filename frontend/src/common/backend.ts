@@ -37,16 +37,14 @@ export class DeviceDto {
   constructor(public id: string, public name: string, public publicKey: string, public accessTo: VaultDto[]) { }
 }
 
-export class UserDto {
-  constructor(public id: string, public name: string, public pictureUrl: string, public email: string, public devices: DeviceDto[]) { }
+export class AuthorityDto {
+  constructor(public id: string, public name: string, public type: string) { }
 }
 
-export class GroupDto {
-  constructor(public id: string, public name: string) { }
-}
-
-export class VaultAccess {
-  constructor(public id: string, public users: UserDto[], public groups: GroupDto[]) { }
+export class UserDto extends AuthorityDto {
+  constructor(public id: string, public name: string, public pictureUrl: string, public email: string, public devices: DeviceDto[]) {
+    super(id, name, 'user')
+   }
 }
 
 export class BillingDto {
@@ -70,8 +68,8 @@ class VaultService {
       .catch((err) => rethrowAndConvertIfExpected(err, 404));
   }
 
-  public async getVaultAccess(vaultId: string): Promise<VaultAccess> {
-    return axiosAuth.get(`/vaults/${vaultId}/access`).then(response => response.data);
+  public async getMembers(vaultId: string): Promise<AuthorityDto[]> {
+    return axiosAuth.get(`/vaults/${vaultId}/members`).then(response => response.data);
   }
 
   public async addMember(vaultId: string, userId: string): Promise<AxiosResponse<void>> {
