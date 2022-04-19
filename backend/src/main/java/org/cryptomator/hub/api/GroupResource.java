@@ -1,8 +1,7 @@
 package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.cryptomator.hub.RemoteUserProviderFactory;
-import org.cryptomator.hub.SyncerConfig;
+import org.cryptomator.hub.RemoteUserProvider;
 import org.cryptomator.hub.entities.Group;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.jboss.resteasy.annotations.cache.NoCache;
@@ -21,7 +20,7 @@ import java.util.List;
 public class GroupResource {
 
 	@Inject
-	SyncerConfig syncerConfig;
+	RemoteUserProvider remoteUserProvider;
 
 	@GET
 	@Path("/search")
@@ -29,8 +28,8 @@ public class GroupResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@NoCache
 	@Operation(summary = "search group")
-	public List<GroupDto> search(@QueryParam("querry") String querry) {
-		return new RemoteUserProviderFactory().get(syncerConfig).searchGroup(querry).stream().map(GroupDto::fromEntity).toList();
+	public List<GroupDto> search(@QueryParam("query") String query) {
+		return remoteUserProvider.searchGroup(query).stream().map(GroupDto::fromEntity).toList();
 	}
 
 	public static final class GroupDto extends AuthorityDto {

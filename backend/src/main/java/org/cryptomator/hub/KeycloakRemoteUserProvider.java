@@ -7,6 +7,7 @@ import org.keycloak.admin.client.Keycloak;
 import org.keycloak.representations.idm.UserRepresentation;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -15,11 +16,8 @@ import java.util.stream.Collectors;
 @ApplicationScoped
 public class KeycloakRemoteUserProvider implements RemoteUserProvider {
 
-	private final SyncerConfig syncerConfig;
-
-	public KeycloakRemoteUserProvider(SyncerConfig syncerConfig) {
-		this.syncerConfig = syncerConfig;
-	}
+	@Inject
+	SyncerConfig syncerConfig;
 
 	@Override
 	public List<User> users() {
