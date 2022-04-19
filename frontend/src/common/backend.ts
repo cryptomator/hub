@@ -48,7 +48,7 @@ export class UserDto extends AuthorityDto {
 }
 
 export class BillingDto {
-  constructor(public hub_id: string, public token: string) { }
+  constructor(public hubId: string, public hasLicense: boolean, public email: string, public totalSeats: number, public remainingSeats: number, public issuedAt: Date, public expiresAt: Date) { }
 }
 
 /* Services */
@@ -123,7 +123,11 @@ class UserService {
 
 class BillingService {
   public async get(): Promise<BillingDto> {
-    return axiosAuth.get('/billing').then(response => response.data);
+    return axiosAuth.get('/billing').then(response => {
+      response.data.issuedAt = new Date(response.data.issuedAt);
+      response.data.expiresAt = new Date(response.data.expiresAt);
+      return response.data;
+    });
   }
 
   public async setToken(token: string): Promise<void> {

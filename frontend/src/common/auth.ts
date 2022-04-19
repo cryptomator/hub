@@ -47,6 +47,18 @@ class Auth {
     return this.keycloak.token;
   }
 
+  public isAdmin(): boolean {
+    return this.keycloak.tokenParsed?.realm_access?.roles.includes('admin') ?? false;
+  }
+
+  public isVaultOwner(): boolean {
+    return this.keycloak.tokenParsed?.resource_access?.cryptomatorhub.roles.includes('vault-owner') ?? false;
+  }
+
+  public isUser(): boolean {
+    return this.keycloak.tokenParsed?.realm_access?.roles.includes('user') ?? false;
+  }
+
 }
 
 // this is a lazy singleton:
