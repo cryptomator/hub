@@ -30,7 +30,6 @@ import java.util.Objects;
 				AND u.id = :userId
 				AND d.id = :deviceId
 		""")
-@NamedQuery(name = "AccessToken.revokeDevice", query = "DELETE FROM AccessToken a WHERE a.id.deviceId = :deviceId AND a.id.vaultId = :vaultId")
 public class AccessToken extends PanacheEntityBase {
 
 	@EmbeddedId
@@ -54,14 +53,6 @@ public class AccessToken extends PanacheEntityBase {
 			return find("#AccessToken.get", Parameters.with("deviceId", deviceId).and("vaultId", vaultId).and("userId", userId)).firstResult();
 		} catch (NoResultException e) {
 			return null;
-		}
-	}
-
-	public static void revokeDevice(String vaultId, String deviceId) {
-		//TODO Replace with PanacheEntityBase.delete(...) once https://github.com/quarkusio/quarkus/issues/20758 is fixed
-		int affected = getEntityManager().createNamedQuery("AccessToken.revokeDevice").setParameter("vaultId", vaultId).setParameter("deviceId", deviceId).executeUpdate();
-		if (affected == 0) {
-			throw new EntityNotFoundException("AccessToken(vault: " + vaultId + ", device: " + deviceId + ") not found");
 		}
 	}
 
