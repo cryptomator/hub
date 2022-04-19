@@ -89,7 +89,7 @@ public class DeviceResource {
 								   @JsonProperty("owner") String ownerId,
 								   @JsonProperty("accessTo") Set<VaultResource.VaultDto> accessTo) {
 
-		public Device toDevice(Authority user, String id) {
+		public Device toDevice(User user, String id) {
 			var device = new Device();
 			device.id = id;
 			device.owner = user;
