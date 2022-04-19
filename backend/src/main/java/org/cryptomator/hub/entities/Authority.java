@@ -22,10 +22,6 @@ import java.util.Set;
 @DiscriminatorColumn(name = "type")
 public class Authority extends PanacheEntityBase {
 
-	public enum Type {
-		USER, GROUP
-	}
-
 	@Id
 	@Column(name = "id", nullable = false)
 	public String id;
