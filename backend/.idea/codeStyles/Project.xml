@@ -2,11 +2,23 @@
   <code_scheme name="Project" version="173">
     <option name="LINE_SEPARATOR" value="&#10;" />
     <option name="RIGHT_MARGIN" value="220" />
+    <option name="FORMATTER_TAGS_ENABLED" value="true" />
     <JavaCodeStyleSettings>
       <option name="CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND" value="99" />
       <option name="NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND" value="5" />
     </JavaCodeStyleSettings>
+    <SqlCodeStyleSettings version="6">
+      <option name="INSERT_INTO_NL" value="2" />
+      <option name="INSERT_VALUES_EL_LINE" value="101" />
+      <option name="EXPR_CASE_WHEN_WRAP" value="false" />
+    </SqlCodeStyleSettings>
     <codeStyleSettings language="JAVA">
+      <indentOptions>
+        <option name="USE_TAB_CHARACTER" value="true" />
+      </indentOptions>
+    </codeStyleSettings>
+    <codeStyleSettings language="SQL">
+      <option name="KEEP_LINE_BREAKS" value="false" />
       <indentOptions>
         <option name="USE_TAB_CHARACTER" value="true" />
       </indentOptions>
