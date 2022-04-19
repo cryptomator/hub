@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.cryptomator.hub.RemoteUserProviderFactory;
 import org.cryptomator.hub.SyncerConfig;
 import org.cryptomator.hub.entities.AccessToken;
+import org.cryptomator.hub.entities.Authority;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.User;
 import org.eclipse.microprofile.jwt.JsonWebToken;
@@ -94,7 +95,7 @@ public class UsersResource {
 		public final Set<DeviceResource.DeviceDto> devices;
 
 		UserDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("pictureUrl") String pictureUrl, @JsonProperty("email") String email, @JsonProperty("devices") Set<DeviceResource.DeviceDto> devices) {
-			super(id, User.TYPE, name);
+			super(id, Authority.Type.USER, name);
 			this.pictureUrl = pictureUrl;
 			this.email = email;
 			this.devices = devices;
