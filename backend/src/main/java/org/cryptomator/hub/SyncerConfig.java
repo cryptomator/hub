@@ -16,7 +16,7 @@ public class SyncerConfig {
 	@ConfigProperty(name = "hub.keycloak.syncer-client-id")
 	String keycloakClientId;
 
-	@ConfigProperty(name = "hub.keycloak.public-url")
+	@ConfigProperty(name = "hub.keycloak.local-url")
 	String keycloakUrl;
 
 	@ConfigProperty(name = "hub.keycloak.realm")

@@ -8,7 +8,6 @@ import javax.persistence.Column;
 import javax.persistence.Embeddable;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
-import javax.persistence.EntityNotFoundException;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.MapsId;
@@ -72,8 +71,6 @@ public class AccessToken extends PanacheEntityBase {
 		return Objects.hash(id, device, vault, jwe);
 	}
 
-	// --- data layer queries ---
-
 	@Override
 	public String toString() {
 		return "Access{" +
@@ -110,6 +107,14 @@ public class AccessToken extends PanacheEntityBase {
 		@Override
 		public int hashCode() {
 			return Objects.hash(deviceId, vaultId);
+		}
+
+		@Override
+		public String toString() {
+			return "AccessId{" +
+					"deviceId='" + deviceId + '\'' +
+					", vaultId='" + vaultId + '\'' +
+					'}';
 		}
 	}
 }

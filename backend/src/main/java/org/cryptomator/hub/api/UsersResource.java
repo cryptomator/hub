@@ -1,8 +1,7 @@
 package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.cryptomator.hub.RemoteUserProviderFactory;
-import org.cryptomator.hub.SyncerConfig;
+import org.cryptomator.hub.RemoteUserProvider;
 import org.cryptomator.hub.entities.AccessToken;
 import org.cryptomator.hub.entities.Authority;
 import org.cryptomator.hub.entities.Device;
@@ -36,15 +35,15 @@ public class UsersResource {
 	JsonWebToken jwt;
 
 	@Inject
-	SyncerConfig syncerConfig;
+	RemoteUserProvider remoteUserProvider;
 
 	@PUT
 	@Path("/me")
 	@RolesAllowed("user")
-	@Operation(summary = "get the logged-in user")
+	@Operation(summary = "sync the logged-in user from the remote user provider to hub")
 	@APIResponse(responseCode = "201", description = "user created")
 	public Response syncMe() {
-		// TODO delete user sync to update access credentials
+		// TODO sync this user from the remote user provider against hub to explicitly update e.g. group membership after user was logged in
 		return Response.created(URI.create(".")).build();
 	}
 
@@ -82,8 +81,8 @@ public class UsersResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@NoCache
 	@Operation(summary = "search user")
-	public List<UserDto> search(@QueryParam("querry") String querry) {
-		return new RemoteUserProviderFactory().get(syncerConfig).searchUser(querry).stream().map(UserDto::fromEntity).toList();
+	public List<UserDto> search(@QueryParam("query") String query) {
+		return remoteUserProvider.searchUser(query).stream().map(UserDto::fromEntity).toList();
 	}
 
 	public static final class UserDto extends AuthorityDto {

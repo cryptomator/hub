@@ -48,7 +48,7 @@ public class VaultResource {
 	@Operation(summary = "list all accessible vaults", description = "list all vaults that have been shared with the currently logged in user or a group in wich this user is")
 	public List<VaultDto> getSharedOrOwned() {
 		var currentUserId = jwt.getSubject();
-		var resultStream = Vault.findAccessibleOrOwnerByUser(currentUserId);
+		var resultStream = Vault.findAccessibleOrOwnedByUser(currentUserId);
 		return resultStream.map(VaultDto::fromEntity).toList();
 	}
 
@@ -115,10 +115,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "204", description = "member removed")
 	@APIResponse(responseCode = "404", description = "vault not found")
 	public Response removeMember(@PathParam("vaultId") String vaultId, @PathParam("userId") String userId) {
-		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-		vault.directMembers.removeIf(u -> u.id.equals(userId));
-		vault.persist();
-		return Response.status(Response.Status.NO_CONTENT).build();
+		return removeAutority(vaultId, userId);
 	}
 
 	@DELETE
@@ -130,8 +127,12 @@ public class VaultResource {
 	@APIResponse(responseCode = "204", description = "member removed")
 	@APIResponse(responseCode = "404", description = "vault not found")
 	public Response removeGroup(@PathParam("vaultId") String vaultId, @PathParam("groupId") String groupId) {
+		return removeAutority(vaultId, groupId);
+	}
+
+	private Response removeAutority(String vaultId, String authorityId) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-		vault.directMembers.removeIf(g -> g.id.equals(groupId));
+		vault.directMembers.removeIf(e -> e.id.equals(authorityId));
 		vault.persist();
 		return Response.status(Response.Status.NO_CONTENT).build();
 	}

@@ -4,7 +4,6 @@ import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
 
 import java.util.List;
-import java.util.stream.Stream;
 
 public interface RemoteUserProvider {
 

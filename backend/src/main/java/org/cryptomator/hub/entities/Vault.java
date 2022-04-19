@@ -19,6 +19,7 @@ import java.sql.Timestamp;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Entity
@@ -76,7 +77,7 @@ public class Vault extends PanacheEntityBase {
 	@Column(name = "description")
 	public String description;
 
-	public static Stream<Vault> findAccessibleOrOwnerByUser(String userId) {
+	public static Stream<Vault> findAccessibleOrOwnedByUser(String userId) {
 		return find("#Vault.accessibleOrOwnedByUser", Parameters.with("userId", userId)).stream();
 	}
 
@@ -103,8 +104,8 @@ public class Vault extends PanacheEntityBase {
 		return "Vault{" +
 				"id='" + id + '\'' +
 				", owner=" + owner +
-				", members=" + directMembers.stream().map(m -> m.id).toList() +
-				", accessToken=" + accessTokens.stream().map(a -> a.id).toList() +
+				", members=" + directMembers.stream().map(m -> m.id).collect(Collectors.joining(", ")) +
+				", accessToken=" + accessTokens.stream().map(a -> a.id.toString()).collect(Collectors.joining(", ")) +
 				", name='" + name + '\'' +
 				", salt='" + salt + '\'' +
 				", iterations='" + iterations + '\'' +

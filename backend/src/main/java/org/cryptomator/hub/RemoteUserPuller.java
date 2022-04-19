@@ -16,13 +16,11 @@ import java.util.stream.Collectors;
 public class RemoteUserPuller {
 
 	@Inject
-	SyncerConfig config;
+	RemoteUserProvider remoteUserProvider;
 
 	@Scheduled(every = "{hub.keycloak.syncer-period}")
 	@Transactional
 	void sync() {
-		var remoteUserProvider = new RemoteUserProviderFactory().get(config);
-
 		var keycloakGroups = remoteUserProvider.groups().stream().collect(Collectors.toMap(g -> g.id, Function.identity()));
 		var databaseGroups = Group.<Group>findAll().stream().collect(Collectors.toMap(g -> g.id, Function.identity()));
 		var keycloakUsers = remoteUserProvider.users().stream().collect(Collectors.toMap(u -> u.id, Function.identity()));
