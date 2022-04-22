@@ -245,7 +245,7 @@ public class VaultResourceTest {
 		@Order(4)
 		@DisplayName("PUT /vaults/vault2/members/user2 returns 201")
 		public void addUser1() {
-			when().put("/vaults/{vaultId}/members/{userId}", "vault2", "user2")
+			when().put("/vaults/{vaultId}/users/{userId}", "vault2", "user2")
 					.then().statusCode(201);
 		}
 
@@ -309,7 +309,7 @@ public class VaultResourceTest {
 		@Order(11)
 		@DisplayName("DELETE /vaults/vault2/members/user2 returns 204")
 		public void removeUser2() {
-			when().delete("/vaults/{vaultId}/members/{userId}", "vault2", "user2")
+			when().delete("/vaults/{vaultId}/users/{userId}", "vault2", "user2")
 					.then().statusCode(204);
 		}
 
@@ -423,8 +423,8 @@ public class VaultResourceTest {
 				"GET, /vaults",
 				"GET, /vaults/vault1",
 				"GET, /vaults/vault1/members",
-				"PUT, /vaults/vault1/members/user1",
-				"DELETE, /vaults/vault1/members/user1",
+				"PUT, /vaults/vault1/users/user1",
+				"DELETE, /vaults/vault1/users/user1",
 				"GET, /vaults/vault1/devices-requiring-access-grant",
 				"GET, /vaults/vault1/keys/device1"
 		})

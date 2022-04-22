@@ -72,8 +72,8 @@ class VaultService {
     return axiosAuth.get(`/vaults/${vaultId}/members`).then(response => response.data);
   }
 
-  public async addMember(vaultId: string, userId: string): Promise<AxiosResponse<void>> {
-    return axiosAuth.put(`/vaults/${vaultId}/members/${userId}`)
+  public async addUser(vaultId: string, userId: string): Promise<AxiosResponse<void>> {
+    return axiosAuth.put(`/vaults/${vaultId}/users/${userId}`)
       .catch((err) => rethrowAndConvertIfExpected(err, 404));
   }
 
@@ -93,7 +93,7 @@ class VaultService {
   }
 
   public async revokeUserAccess(vaultId: string, userId: string) {
-    await axiosAuth.delete(`/vaults/${vaultId}/members/${userId}`)
+    await axiosAuth.delete(`/vaults/${vaultId}/users/${userId}`)
       .catch((err) => rethrowAndConvertIfExpected(err, 404));
   }
 }

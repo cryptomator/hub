@@ -54,17 +54,17 @@
           </li>
         </template>
         <li class="py-2 flex flex-col ">
-          <div v-if="!addingMember" class="justify-between items-center">
-            <button type="button" class="group -ml-1 bg-white p-1 rounded-md flex items-center focus:outline-none focus:ring-2 focus:ring-primary" @click="addingMember = true">
+          <div v-if="!addingUser" class="justify-between items-center">
+            <button type="button" class="group -ml-1 bg-white p-1 rounded-md flex items-center focus:outline-none focus:ring-2 focus:ring-primary" @click="addingUser = true">
               <span class="w-8 h-8 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400">
                 <PlusSmIcon class="h-5 w-5" aria-hidden="true" />
               </span>
               <span class="ml-4 text-sm font-medium text-primary group-hover:text-primary-l1">{{ t('common.share') }}</span>
             </button>
           </div>
-          <SearchInputGroup v-else-if="addingMember" :action-title="t('common.add')" :items="allUsers" @action="addMember" />
-          <p v-if="onAddMemberError != null" class="text-sm text-red-900 text-right">
-            {{ t('common.unexpectedError', [onAddMemberError.message]) }}
+          <SearchInputGroup v-else-if="addingUser" :action-title="t('common.add')" :items="allUsers" @action="addUser" />
+          <p v-if="onAddUserError != null" class="text-sm text-red-900 text-right">
+            {{ t('common.unexpectedError', [onAddUserError.message]) }}
           </p>
         </li>
       </ul>
@@ -107,9 +107,9 @@ const onFetchError = ref<Error | null>();
 const allowRetryFetch = computed(() => onFetchError.value != null && !(onFetchError.value instanceof NotFoundError));  //fetch requests either list something, or query from th vault. In the latter, a 404 indicates the vault does not exists anymore.
 
 const onRevokeUserAccessError = ref< {[id: string]: Error} >({});
-const onAddMemberError = ref<Error | null>();
+const onAddUserError = ref<Error | null>();
 
-const addingMember = ref(false);
+const addingUser = ref(false);
 const grantingPermission = ref(false);
 const grantPermissionDialog = ref<typeof GrantPermissionDialog>();
 const downloadingVaultTemplate = ref(false);
@@ -138,19 +138,19 @@ async function fetchData() {
   isFetching.value = false;
 }
 
-async function addMember(id: string) {
-  onAddMemberError.value = null;
+async function addUser(id: string) {
+  onAddUserError.value = null;
   try {
     const user = allUsers.value.find(u => u.id === id);
     if (user) {
-      await backend.vaults.addMember(props.vaultId, id);
+      await backend.vaults.addUser(props.vaultId, id);
       members.value = members.value.concat(user);
       devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
     }
   } catch (error) {
     //even if error instanceof NotFoundError, it is not expected from user perspective
     console.error('Adding member failed.', error);
-    onAddMemberError.value = error instanceof Error ? error : new Error('Unknown Error');
+    onAddUserError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
 }
 

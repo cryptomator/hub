@@ -72,16 +72,15 @@ public class VaultResource {
 		}).toList();
 	}
 
-	// TODO rename "members" to "users"
 	@PUT
-	@Path("/{vaultId}/members/{userId}")
+	@Path("/{vaultId}/users/{userId}")
 	@RolesAllowed("vault-owner")
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
-	@Operation(summary = "adds a member to this vault")
-	@APIResponse(responseCode = "201", description = "member added")
+	@Operation(summary = "adds a user to this vault")
+	@APIResponse(responseCode = "201", description = "user added")
 	@APIResponse(responseCode = "404", description = "vault or user not found")
-	public Response addMember(@PathParam("vaultId") String vaultId, @PathParam("userId") String userId) {
+	public Response addUser(@PathParam("vaultId") String vaultId, @PathParam("userId") String userId) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		var user = User.<User>findByIdOptional(userId).orElseThrow(NotFoundException::new);
 		vault.directMembers.add(user);
@@ -105,14 +104,13 @@ public class VaultResource {
 		return Response.status(Response.Status.CREATED).build();
 	}
 
-	// TODO rename "members" to "users"
 	@DELETE
-	@Path("/{vaultId}/members/{userId}")
+	@Path("/{vaultId}/users/{userId}")
 	@RolesAllowed("vault-owner")
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "remove a member from this vault", description = "revokes the given user's access rights from this vault. If the given user is no member, the request is a no-op.")
-	@APIResponse(responseCode = "204", description = "member removed")
+	@APIResponse(responseCode = "204", description = "user removed")
 	@APIResponse(responseCode = "404", description = "vault not found")
 	public Response removeMember(@PathParam("vaultId") String vaultId, @PathParam("userId") String userId) {
 		return removeAutority(vaultId, userId);
