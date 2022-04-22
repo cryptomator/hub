@@ -33,6 +33,12 @@
                   <input id="password" v-model="password" :disabled="state == State.Processing" type="password" minlength="8" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onCreateError instanceof FormValidationFailedError }" aria-describedby="password-description" required />
                   <p id="password-description" class="mt-2 text-sm text-gray-500">{{ t('createVault.masterPassword.description') }}</p>
                 </div>
+                <div class="col-span-6 sm:col-span-4">
+                  <label for="passwordConfirmation" class="block text-sm font-medium text-gray-700">{{ t('createVault.masterPasswordConformation') }}</label>
+                  <input id="passwordConfirmation" v-model="passwordConfirmation" :disabled="state == State.Processing" type="password" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onCreateError instanceof FormValidationFailedError }" aria-describedby="password-description" required @keyup="validatePassword" />
+                  <p v-if="passwordMatches && passwordConfirmation.length != 0" id="password-description" class="mt-2 text-sm text-gray-500">{{ t('createVault.masterPasswordConformation.passwordsMatch') }}</p>
+                  <p v-else-if="!passwordMatches && passwordConfirmation.length != 0" id="password-description" class="mt-2 text-sm text-gray-500">{{ t('createVault.masterPasswordConformation.passwordsDoNotMatch') }}</p>
+                </div>
               </div>
             </div>
           </div>
@@ -42,6 +48,7 @@
           <div v-if="onCreateError != null" >
             <p v-if="onCreateError instanceof ConflictError" class="text-sm text-red-900 mr-4">{{ t('createVault.error.vaultAlreadyExists') }}</p>
             <p v-else-if="onCreateError instanceof FormValidationFailedError" class="text-sm text-red-900 mr-4">{{ t('createVault.error.formValidationFailed') }}</p>
+            <p v-else-if="onCreateError instanceof PasswordNotMachingError" class="text-sm text-red-900 mr-4">{{ t('createVault.masterPasswordConformation.passwordsDoNotMatch') }}</p>
             <p v-else class="text-sm text-red-900 mr-4">{{ t('common.unexpectedError', [onCreateError.message]) }}</p>
           </div>
           <button :disabled="state == State.Processing" type="submit" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
@@ -91,7 +98,7 @@
 import { CheckIcon } from '@heroicons/vue/outline';
 import { DownloadIcon } from '@heroicons/vue/solid';
 import { saveAs } from 'file-saver';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { ConflictError } from '../common/backend';
 import { Masterkey } from '../common/crypto';
@@ -116,6 +123,12 @@ class ExportingTemplateFailedError extends Error {
   }
 }
 
+class PasswordNotMachingError extends Error {
+  constructor() {
+    super('Passwords do not match.');
+  }
+}
+
 const { t } = useI18n({ useScope: 'global' });
 
 const form = ref<HTMLFormElement>();
@@ -127,6 +140,8 @@ const state = ref(State.Initial);
 const vaultName = ref('');
 const vaultDescription = ref('');
 const password = ref('');
+const passwordConfirmation = ref('');
+const passwordMatches = computed(() => password.value == passwordConfirmation.value)
 const vaultConfig = ref<VaultConfig>();
 
 async function createVault() {
@@ -134,6 +149,11 @@ async function createVault() {
 
   if (!form.value?.checkValidity()) {
     onCreateError.value = new FormValidationFailedError();
+    return;
+  }
+
+  if(!passwordMatches.value) {
+    onCreateError.value = new PasswordNotMachingError();
     return;
   }
 
