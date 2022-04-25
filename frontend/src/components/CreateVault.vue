@@ -34,10 +34,12 @@
                   <p id="password-description" class="mt-2 text-sm text-gray-500">{{ t('createVault.masterPassword.description') }}</p>
                 </div>
                 <div class="col-span-6 sm:col-span-4">
-                  <label for="passwordConfirmation" class="block text-sm font-medium text-gray-700">{{ t('createVault.masterPasswordConformation') }}</label>
-                  <input id="passwordConfirmation" v-model="passwordConfirmation" :disabled="state == State.Processing" type="password" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onCreateError instanceof FormValidationFailedError }" aria-describedby="password-description" required @keyup="validatePassword" />
-                  <p v-if="passwordMatches && passwordConfirmation.length != 0" id="password-description" class="mt-2 text-sm text-gray-500">{{ t('createVault.masterPasswordConformation.passwordsMatch') }}</p>
-                  <p v-else-if="!passwordMatches && passwordConfirmation.length != 0" id="password-description" class="mt-2 text-sm text-gray-500">{{ t('createVault.masterPasswordConformation.passwordsDoNotMatch') }}</p>
+                  <label for="passwordConfirmation" class="block text-sm font-medium text-gray-700">{{ t('createVault.masterPasswordConfirmation') }}</label>
+                  <input id="passwordConfirmation" v-model="passwordConfirmation" :disabled="state == State.Processing" type="password" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onCreateError instanceof FormValidationFailedError }" aria-describedby="password-confirmation-description" required />
+                  <p id="password-confirmation-description" class="mt-2 text-sm text-gray-500">
+                    <span v-if="passwordMatches && passwordConfirmation.length != 0">{{ t('createVault.masterPasswordConfirmation.passwordsMatch') }}</span>
+                    <span v-else-if="!passwordMatches && passwordConfirmation.length != 0">{{ t('createVault.masterPasswordConfirmation.passwordsDoNotMatch') }}</span>
+                  </p>
                 </div>
               </div>
             </div>
