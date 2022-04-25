@@ -39,6 +39,7 @@
                   <p id="password-confirmation-description" class="mt-2 text-sm text-gray-500">
                     <span v-if="passwordMatches && passwordConfirmation.length != 0">{{ t('createVault.masterPasswordConfirmation.passwordsMatch') }}</span>
                     <span v-else-if="!passwordMatches && passwordConfirmation.length != 0">{{ t('createVault.masterPasswordConfirmation.passwordsDoNotMatch') }}</span>
+                    <span v-else>&nbsp;</span>
                   </p>
                 </div>
               </div>
