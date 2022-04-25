@@ -90,7 +90,7 @@
 import { PencilIcon, PlusSmIcon } from '@heroicons/vue/solid';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { DeviceDto, NotFoundError, UserDto, VaultDto } from '../common/backend';
+import backend, { AuthorityDto, DeviceDto, NotFoundError, UserDto, VaultDto } from '../common/backend';
 import DownloadVaultTemplateDialog from './DownloadVaultTemplateDialog.vue';
 import FetchError from './FetchError.vue';
 import GrantPermissionDialog from './GrantPermissionDialog.vue';
@@ -115,7 +115,7 @@ const grantPermissionDialog = ref<typeof GrantPermissionDialog>();
 const downloadingVaultTemplate = ref(false);
 const downloadVaultTemplateDialog = ref<typeof DownloadVaultTemplateDialog>();
 const vault = ref<VaultDto>();
-const members = ref<UserDto[]>([]);
+const members = ref<AuthorityDto[]>([]);
 const allUsers = ref<UserDto[]>([]);
 const devicesRequiringAccessGrant = ref<DeviceDto[]>([]);
 
