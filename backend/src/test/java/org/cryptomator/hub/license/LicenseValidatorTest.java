@@ -1,5 +1,6 @@
 package org.cryptomator.hub.license;
 
+import com.auth0.jwt.exceptions.InvalidClaimException;
 import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.exceptions.SignatureVerificationException;
 import com.auth0.jwt.exceptions.TokenExpiredException;
@@ -19,7 +20,7 @@ public class LicenseValidatorTest {
 	@Test
 	@DisplayName("validate valid token")
 	public void testValidateValidToken() {
-		var jwt = validator.validate(VALID_TOKEN);
+		var jwt = validator.validate(VALID_TOKEN, "42");
 		Assertions.assertEquals("ES512", jwt.getAlgorithm());
 		Assertions.assertEquals("42", jwt.getId());
 		Assertions.assertEquals("Skymatic", jwt.getIssuer());
@@ -31,10 +32,18 @@ public class LicenseValidatorTest {
 	}
 
 	@Test
+	@DisplayName("validate valid token with mismatching hub id")
+	public void testValidateValidTokenWithMismatchingHubId() {
+		Assertions.assertThrows(InvalidClaimException.class, () -> {
+			validator.validate(VALID_TOKEN, "123");
+		});
+	}
+
+	@Test
 	@DisplayName("validate expired token")
 	public void testValidateExpiredToken() {
 		Assertions.assertThrows(TokenExpiredException.class, () -> {
-			validator.validate(EXPIRED_TOKEN);
+			validator.validate(EXPIRED_TOKEN, "42");
 		});
 	}
 
@@ -42,7 +51,7 @@ public class LicenseValidatorTest {
 	@DisplayName("validate token with invalid signature")
 	public void testValidateTokenWithInvalidSignature() {
 		Assertions.assertThrows(SignatureVerificationException.class, () -> {
-			validator.validate(TOKEN_WITH_INVALID_SIGNATURE);
+			validator.validate(TOKEN_WITH_INVALID_SIGNATURE, "42");
 		});
 	}
 
@@ -50,7 +59,7 @@ public class LicenseValidatorTest {
 	@DisplayName("validate malformed token")
 	public void testValidateMalformedToken() {
 		Assertions.assertThrows(JWTDecodeException.class, () -> {
-			validator.validate(MALFORMED_TOKEN);
+			validator.validate(MALFORMED_TOKEN, "42");
 		});
 	}
 
