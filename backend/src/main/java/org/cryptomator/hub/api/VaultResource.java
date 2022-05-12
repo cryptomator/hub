@@ -2,8 +2,9 @@ package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.cryptomator.hub.entities.Access;
+import org.cryptomator.hub.entities.AccessToken;
 import org.cryptomator.hub.entities.Device;
+import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
 import org.eclipse.microprofile.jwt.JsonWebToken;
@@ -32,7 +33,6 @@ import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.sql.Timestamp;
 import java.util.List;
-import java.util.stream.Stream;
 
 @Path("/vaults")
 public class VaultResource {
@@ -45,10 +45,10 @@ public class VaultResource {
 	@RolesAllowed("user")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
-	@Operation(summary = "list all accessible vaults", description = "list all vaults that have been shared with the currently logged in user")
+	@Operation(summary = "list all accessible vaults", description = "list all vaults that have been shared with the currently logged in user or a group in wich this user is")
 	public List<VaultDto> getSharedOrOwned() {
 		var currentUserId = jwt.getSubject();
-		Stream<Vault> resultStream = Vault.findAccessibleOrOwnerByUser(currentUserId);
+		var resultStream = Vault.findAccessibleOrOwnedByUser(currentUserId);
 		return resultStream.map(VaultDto::fromEntity).toList();
 	}
 
@@ -58,38 +58,79 @@ public class VaultResource {
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "list vault members", description = "list all users that this vault has been shared with")
-	public List<UsersResource.UserDto> getMembers(@PathParam("vaultId") String vaultId) {
+	public List<AuthorityDto> getMembers(@PathParam("vaultId") String vaultId) {
 		Vault vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-		return vault.members.stream().map(UsersResource.UserDto::fromEntity).toList();
+		return vault.directMembers.stream().map(authority -> {
+			// TODO replace with pattern matching for switch as soon as available
+			if(authority instanceof User u) {
+				return UsersResource.UserDto.fromEntity(u);
+			} else if(authority instanceof Group g) {
+				return GroupResource.GroupDto.fromEntity(g);
+			} else {
+				throw new IllegalStateException();
+			}
+		}).toList();
 	}
 
 	@PUT
-	@Path("/{vaultId}/members/{userId}")
+	@Path("/{vaultId}/users/{userId}")
 	@RolesAllowed("vault-owner")
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
-	@Operation(summary = "adds a member to this vault")
-	@APIResponse(responseCode = "201", description = "member added")
+	@Operation(summary = "adds a user to this vault")
+	@APIResponse(responseCode = "201", description = "user added")
 	@APIResponse(responseCode = "404", description = "vault or user not found")
-	public Response addMember(@PathParam("vaultId") String vaultId, @PathParam("userId") String userId) {
+	public Response addUser(@PathParam("vaultId") String vaultId, @PathParam("userId") String userId) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		var user = User.<User>findByIdOptional(userId).orElseThrow(NotFoundException::new);
-		vault.members.add(user);
+		vault.directMembers.add(user);
+		vault.persist();
+		return Response.status(Response.Status.CREATED).build();
+	}
+
+	@PUT
+	@Path("/{vaultId}/groups/{groupId}")
+	@RolesAllowed("vault-owner")
+	@Transactional
+	@Produces(MediaType.APPLICATION_JSON)
+	@Operation(summary = "adds a group to this vault")
+	@APIResponse(responseCode = "201", description = "member added")
+	@APIResponse(responseCode = "404", description = "vault or group not found")
+	public Response addGroup(@PathParam("vaultId") String vaultId, @PathParam("groupId") String groupId) {
+		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
+		var group = Group.<Group>findByIdOptional(groupId).orElseThrow(NotFoundException::new);
+		vault.directMembers.add(group);
 		vault.persist();
 		return Response.status(Response.Status.CREATED).build();
 	}
 
 	@DELETE
-	@Path("/{vaultId}/members/{userId}")
+	@Path("/{vaultId}/users/{userId}")
 	@RolesAllowed("vault-owner")
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "remove a member from this vault", description = "revokes the given user's access rights from this vault. If the given user is no member, the request is a no-op.")
-	@APIResponse(responseCode = "204", description = "member removed")
+	@APIResponse(responseCode = "204", description = "user removed")
 	@APIResponse(responseCode = "404", description = "vault not found")
 	public Response removeMember(@PathParam("vaultId") String vaultId, @PathParam("userId") String userId) {
+		return removeAutority(vaultId, userId);
+	}
+
+	@DELETE
+	@Path("/{vaultId}/groups/{groupId}")
+	@RolesAllowed("vault-owner")
+	@Transactional
+	@Produces(MediaType.APPLICATION_JSON)
+	@Operation(summary = "remove a group from this vault", description = "revokes the given group's access rights from this vault. If the given group is no member, the request is a no-op.")
+	@APIResponse(responseCode = "204", description = "member removed")
+	@APIResponse(responseCode = "404", description = "vault not found")
+	public Response removeGroup(@PathParam("vaultId") String vaultId, @PathParam("groupId") String groupId) {
+		return removeAutority(vaultId, groupId);
+	}
+
+	private Response removeAutority(String vaultId, String authorityId) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-		vault.members.removeIf(u -> u.id.equals(userId));
+		vault.directMembers.removeIf(e -> e.id.equals(authorityId));
 		vault.persist();
 		return Response.status(Response.Status.NO_CONTENT).build();
 	}
@@ -114,8 +155,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "403", description = "device not authorized to access this vault")
 	@APIResponse(responseCode = "404", description = "unknown device")
 	public String unlock(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId) {
-		var currentUserId = jwt.getSubject();
-		var access = Access.unlock(vaultId, deviceId, currentUserId);
+		var access = AccessToken.unlock(vaultId, deviceId, jwt.getSubject());
 		if (access != null) {
 			return access.jwe;
 		} else if (Device.findById(deviceId) == null) {
@@ -135,12 +175,11 @@ public class VaultResource {
 	@APIResponse(responseCode = "404", description = "specified vault or device not found")
 	@APIResponse(responseCode = "409", description = "Access to vault for device already granted")
 	public Response grantAccess(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId, String jwe) {
-		Vault vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-		Device device = Device.<Device>findByIdOptional(deviceId).orElseThrow(NotFoundException::new);
+		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
+		var device = Device.<Device>findByIdOptional(deviceId).orElseThrow(NotFoundException::new);
 
-		var access = new Access();
+		var access = new AccessToken();
 		access.vault = vault;
-		access.user = device.owner;
 		access.device = device;
 		access.jwe = jwe;
 
@@ -164,7 +203,7 @@ public class VaultResource {
 	@Operation(summary = "gets a vault")
 	public VaultDto get(@PathParam("vaultId") String vaultId) {
 		// TODO: check if user has permission to access this vault?
-		Vault vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
+		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		return VaultDto.fromEntity(vault);
 	}
 
@@ -197,10 +236,14 @@ public class VaultResource {
 	}
 
 	public record VaultDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("description") String description,
-								  @JsonProperty("creationTime") @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSX") Timestamp creationTime,
-								  @JsonProperty("owner") UsersResource.UserDto user,
-								  @JsonProperty("masterkey") String masterkey, @JsonProperty("iterations") String iterations, @JsonProperty("salt") String salt
+						   @JsonProperty("creationTime") @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSX") Timestamp creationTime,
+						   @JsonProperty("owner") UsersResource.UserDto user,
+						   @JsonProperty("masterkey") String masterkey, @JsonProperty("iterations") String iterations, @JsonProperty("salt") String salt
 	) {
+
+		public static VaultDto fromEntity(Vault entity) {
+			return new VaultDto(entity.id, entity.name, entity.description, entity.creationTime, UsersResource.UserDto.fromEntity(entity.owner), entity.masterkey, entity.iterations, entity.salt);
+		}
 
 		public Vault toVault(User owner, String id) {
 			var vault = new Vault();
@@ -215,8 +258,5 @@ public class VaultResource {
 			return vault;
 		}
 
-		public static VaultDto fromEntity(Vault entity) {
-			return new VaultDto(entity.id, entity.name, entity.description, entity.creationTime, UsersResource.UserDto.fromEntity(entity.owner), entity.masterkey, entity.iterations, entity.salt);
-		}
 	}
 }

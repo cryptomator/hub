@@ -1,6 +1,7 @@
 package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.cryptomator.hub.entities.Authority;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.User;
 import org.eclipse.microprofile.jwt.JsonWebToken;
@@ -23,7 +24,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.net.URI;
-import java.util.Optional;
 import java.util.Set;
 
 @Path("/devices")
@@ -75,7 +75,7 @@ public class DeviceResource {
 		}
 
 		User currentUser = User.findById(jwt.getSubject());
-		Optional<Device> maybeDevice = Device.findByIdOptional(deviceId);
+		var maybeDevice = Device.<Device>findByIdOptional(deviceId);
 		if (maybeDevice.isPresent() && currentUser.equals(maybeDevice.get().owner)) {
 			maybeDevice.get().delete();
 			return Response.status(Response.Status.NO_CONTENT).build();
@@ -84,7 +84,7 @@ public class DeviceResource {
 		}
 	}
 
-	public static record DeviceDto(@JsonProperty("id") String id, @JsonProperty("name") String name,
+	public record DeviceDto(@JsonProperty("id") String id, @JsonProperty("name") String name,
 								   @JsonProperty("publicKey") String publicKey,
 								   @JsonProperty("owner") String ownerId,
 								   @JsonProperty("accessTo") Set<VaultResource.VaultDto> accessTo) {

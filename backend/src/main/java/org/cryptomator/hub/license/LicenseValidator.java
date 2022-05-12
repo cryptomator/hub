@@ -2,6 +2,7 @@ package org.cryptomator.hub.license;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.InvalidClaimException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.jwt.interfaces.JWTVerifier;
@@ -47,8 +48,12 @@ public class LicenseValidator {
 		}
 	}
 
-	public DecodedJWT validate(String token) throws JWTVerificationException {
-		return verifier.verify(token);
+	public DecodedJWT validate(String token, String expectedHubId) throws JWTVerificationException {
+		var jwt = verifier.verify(token);
+		if (!jwt.getId().equals(expectedHubId)) {
+			throw new InvalidClaimException("Token ID does not match your Hub ID.");
+		}
+		return jwt;
 	}
 
 }
