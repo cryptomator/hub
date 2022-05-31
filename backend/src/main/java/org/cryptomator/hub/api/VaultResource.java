@@ -76,9 +76,8 @@ public class VaultResource {
 		}).toList();
 	}
 
-	// TODO rename "members" to "users"
 	@PUT
-	@Path("/{vaultId}/members/{userId}")
+	@Path("/{vaultId}/users/{userId}")
 	@RolesAllowed("vault-owner")
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
@@ -86,7 +85,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "201", description = "member added")
 	@APIResponse(responseCode = "403", description = "requesting user does not own vault")
 	@APIResponse(responseCode = "404", description = "vault or user not found")
-	public Response addMember(@PathParam("vaultId") String vaultId, @PathParam("userId") String userId) {
+	public Response addUser(@PathParam("vaultId") String vaultId, @PathParam("userId") String userId) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		var user = User.<User>findByIdOptional(userId).orElseThrow(NotFoundException::new);
 		if (!vault.owner.id.equals(jwt.getSubject())) {
@@ -114,9 +113,8 @@ public class VaultResource {
 		return Response.status(Response.Status.CREATED).build();
 	}
 
-	// TODO rename "members" to "users"
 	@DELETE
-	@Path("/{vaultId}/members/{userId}")
+	@Path("/{vaultId}/users/{userId}")
 	@RolesAllowed("vault-owner")
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)

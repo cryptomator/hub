@@ -128,7 +128,7 @@ import { useI18n } from 'vue-i18n';
 import backend, { BillingDto } from '../common/backend';
 import { frontendBaseURL } from '../common/config';
 
-const { t, d } = useI18n({ useScope: 'global' });
+const { t, d, locale } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{
   token?: string
@@ -162,6 +162,7 @@ async function fetchData() {
 
 function manageSubscription() {
   const returnUrl = `${frontendBaseURL}/billing`;
-  window.open(`http://localhost:1313/hub/billing/?hub_id=${billing.value?.hubId}&return_url=${encodeURIComponent(returnUrl)}`, '_self'); // TODO: use real url
+  const languagePathComponent = locale.value == 'en' ? '' : `${locale.value}/`;
+  window.open(`http://localhost:1313/${languagePathComponent}hub/billing/?hub_id=${billing.value?.hubId}&return_url=${encodeURIComponent(returnUrl)}`, '_self'); // TODO: use real url
 }
 </script>

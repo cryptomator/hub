@@ -2,6 +2,7 @@ package org.cryptomator.hub.api;
 
 import com.radcortez.flyway.test.annotation.DataSource;
 import com.radcortez.flyway.test.annotation.FlywayTest;
+import io.agroal.api.AgroalDataSource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.quarkus.test.security.oidc.Claim;
@@ -18,6 +19,8 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import javax.inject.Inject;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Set;
 
@@ -32,6 +35,9 @@ import static org.hamcrest.CoreMatchers.not;
 @DisplayName("Resource /vaults")
 public class VaultResourceTest {
 
+	@Inject
+	AgroalDataSource dataSource;
+
 	@BeforeAll
 	public static void beforeAll() {
 		RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
@@ -45,13 +51,14 @@ public class VaultResourceTest {
 	})
 	public class AsAuthorizedUser1 {
 
+
 		@Test
 		@DisplayName("GET /vaults returns 200")
 		public void testGetSharedOrOwned() {
 			when().get("/vaults")
 					.then().statusCode(200)
-					.body("size()", is(4))
-					.body("id", hasItems("vault1", "vault2", "vault3"));
+					.body("size()", is(2))
+					.body("id", hasItems("vault1", "vault2"));
 		}
 
 		@Test
@@ -85,11 +92,11 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@DisplayName("GET /vaults/vault3/keys/device6 returns 200 using group access")
+		@DisplayName("GET /vaults/vault2/keys/device3 returns 200 using group access")
 		public void testUnlock2() {
-			when().get("/vaults/{vaultId}/keys/{deviceId}", "vault3", "device6")
+			when().get("/vaults/{vaultId}/keys/{deviceId}", "vault2", "device3")
 					.then().statusCode(200)
-					.body(is("jwe5"));
+					.body(is("jwe3"));
 		}
 
 		@Test
@@ -126,11 +133,10 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@DisplayName("GET /vaults/vault3/members returns 200")
+		@DisplayName("GET /vaults/vault2/members returns 403")
 		public void testGetAccess2() {
-			when().get("/vaults/{vaultId}/members", "vault3")
-					.then().statusCode(200)
-					.body("id", hasItems("group1", "group3"));
+			when().get("/vaults/{vaultId}/members", "vault2")
+					.then().statusCode(403);
 		}
 
 		@Test
@@ -180,18 +186,22 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@DisplayName("PUT /vaults/vault2/keys/device1 returns 409 due to user access")
+		@DisplayName("PUT /vaults/vault1/keys/device1 returns 409 due to user access already granted")
 		public void testGrantAccess2() {
-			given().contentType(ContentType.TEXT).body("jwe4")
+			given().contentType(ContentType.TEXT).body("jwe1")
 					.when().put("/vaults/{vaultId}/keys/{deviceId}", "vault1", "device1")
 					.then().statusCode(409);
 		}
 
 		@Test
-		@DisplayName("PUT /vaults/vault3/keys/device4 returns 409 due to group access")
-		public void testGrantAccess3() {
-			given().contentType(ContentType.TEXT).body("jwe4")
-					.when().put("/vaults/{vaultId}/keys/{deviceId}", "vault3", "device5")
+		@DisplayName("PUT /vaults/vault2/keys/device3 returns 409 due to group access already granted")
+		@TestSecurity(user = "User Name 2", roles = {"user", "vault-owner"}) //we switch here for easy usage
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user2")
+		})
+		public void testGrantAccess3() throws SQLException {
+			given().contentType(ContentType.TEXT).body("jwe3")
+					.when().put("/vaults/{vaultId}/keys/{deviceId}", "vault2", "device3")
 					.then().statusCode(409);
 		}
 
@@ -245,7 +255,7 @@ public class VaultResourceTest {
 		@Order(4)
 		@DisplayName("PUT /vaults/vault2/members/user2 returns 201")
 		public void addUser1() {
-			when().put("/vaults/{vaultId}/members/{userId}", "vault2", "user2")
+			when().put("/vaults/{vaultId}/users/{userId}", "vault2", "user2")
 					.then().statusCode(201);
 		}
 
@@ -309,7 +319,7 @@ public class VaultResourceTest {
 		@Order(11)
 		@DisplayName("DELETE /vaults/vault2/members/user2 returns 204")
 		public void removeUser2() {
-			when().delete("/vaults/{vaultId}/members/{userId}", "vault2", "user2")
+			when().delete("/vaults/{vaultId}/users/{userId}", "vault2", "user2")
 					.then().statusCode(204);
 		}
 
@@ -343,72 +353,96 @@ public class VaultResourceTest {
 
 		@Test
 		@Order(2)
-		@DisplayName("GET /vaults/vault4/members does not contain group3")
-		public void getAccess2() {
-			when().get("/vaults/{vaultId}/members", "vault4")
-					.then().statusCode(200)
-					.body("id", not(hasItems("group3")));
+		@DisplayName("PUT /vaults/vault2/groups/group11 returns 201")
+		public void addGroupToVault() throws SQLException {
+			try (var s = dataSource.getConnection().createStatement()) {
+				s.execute("""
+						INSERT INTO "authority" ("id", "type", "name")
+						VALUES
+							('group91', 'GROUP', 'group name 91');
+							
+						INSERT INTO "group_details" ("id")
+						VALUES
+							('group91');
+							
+						""");
+			}
+
+			when().put("/vaults/{vaultId}/groups/{groupId}", "vault2", "group91")
+					.then().statusCode(201);
 		}
 
 		@Test
 		@Order(3)
-		@DisplayName("PUT /vaults/vault4/groups/group3 returns 201")
-		public void addGroup1() {
-			when().put("/vaults/{vaultId}/groups/{groupId}", "vault4", "group3")
-					.then().statusCode(201);
+		@DisplayName("GET /vaults/vault2/members does contain group91")
+		public void getMembers4() {
+			when().get("/vaults/{vaultId}/members", "vault2")
+					.then().statusCode(200)
+					.body("id", hasItems("group91"));
 		}
 
 		@Test
 		@Order(4)
-		@DisplayName("GET /vaults/vault4/members does contain group3")
-		public void getMembers4() {
-			when().get("/vaults/{vaultId}/members", "vault4")
+		@DisplayName("GET /vaults/vault2/devices-requiring-access-grant contains device93")
+		public void testGetDevicesRequiringAccess3() throws SQLException {
+			try (var s = dataSource.getConnection().createStatement()) {
+				s.execute("""
+						INSERT INTO "authority" ("id", "type", "name")
+						VALUES
+							('user90', 'USER', 'user name 90');
+							
+						INSERT INTO "user_details" ("id")
+						VALUES
+							('user90');
+							
+						INSERT INTO "group_membership" ("group_id", "member_id")
+						VALUES
+							('group91', 'user90');
+							
+						INSERT INTO "device" ("id", "owner_id", "name", "publickey")
+						VALUES
+							('device93', 'user90', 'Computer 9', 'publickey90');
+						""");
+			}
+
+			when().get("/vaults/{vaultId}/devices-requiring-access-grant", "vault2")
 					.then().statusCode(200)
-					.body("id", hasItems("group3"));
+					.body("id", hasItems("device93"));
 		}
 
 		@Test
 		@Order(5)
-		@DisplayName("GET /vaults/vault4/devices-requiring-access-grant contains device5")
-		public void testGetDevicesRequiringAccess3() {
-			when().get("/vaults/{vaultId}/devices-requiring-access-grant", "vault4")
-					.then().statusCode(200)
-					.body("id", hasItems("device5"));
-		}
-
-		@Test
-		@Order(6)
-		@DisplayName("PUT /vaults/vault4/keys/device5 returns 201")
+		@DisplayName("PUT /vaults/vault2/keys/device93 returns 201")
 		public void testGrantAccess2() {
-			given().contentType(ContentType.TEXT).body("jwe9999")
-					.when().put("/vaults/{vaultId}/keys/{deviceId}", "vault4", "device5")
+			given().contentType(ContentType.TEXT).body("jwe99")
+					.when().put("/vaults/{vaultId}/keys/{deviceId}", "vault2", "device93")
 					.then().statusCode(201);
 		}
 
 		@Test
-		@Order(7)
-		@DisplayName("GET /vaults/vault4/devices-requiring-access-grant contains not device5")
+		@Order(6)
+		@DisplayName("GET /vaults/vault2/devices-requiring-access-grant contains not device93")
 		public void testGetDevicesRequiringAccess4() {
-			when().get("/vaults/{vaultId}/devices-requiring-access-grant", "vault4")
+			when().get("/vaults/{vaultId}/devices-requiring-access-grant", "vault2")
 					.then().statusCode(200)
-					.body("id", not(hasItems("device5")));
+					.body("id", not(hasItems("device93")));
 		}
 
 		@Test
-		@Order(8)
-		@DisplayName("DELETE /vaults/vault4/groups/group2 returns 204")
+		@Order(7)
+		@DisplayName("DELETE /vaults/vault2/groups/group91 returns 204")
 		public void removeGroup2() {
-			when().delete("/vaults/{vaultId}/groups/{groupId}", "vault4", "group2")
+			when().delete("/vaults/{vaultId}/groups/{groupId}", "vault2", "group91")
 					.then().statusCode(204);
 		}
 
 		@Test
-		@Order(9)
-		@DisplayName("GET /vaults/vault4/members does not contain group2")
+		@Order(8)
+		@DisplayName("GET /vaults/vault2/members does not contain group91")
 		public void getMembers5() {
-			when().get("/vaults/{vaultId}/members", "vault4")
+			when().get("/vaults/{vaultId}/members", "vault2")
 					.then().statusCode(200)
-					.body("id", not(hasItems("group2")));
+					.body("id", not(hasItems("group91")));
 		}
 
 	}
@@ -423,8 +457,8 @@ public class VaultResourceTest {
 				"GET, /vaults",
 				"GET, /vaults/vault1",
 				"GET, /vaults/vault1/members",
-				"PUT, /vaults/vault1/members/user1",
-				"DELETE, /vaults/vault1/members/user1",
+				"PUT, /vaults/vault1/users/user1",
+				"DELETE, /vaults/vault1/users/user1",
 				"GET, /vaults/vault1/devices-requiring-access-grant",
 				"GET, /vaults/vault1/keys/device1"
 		})

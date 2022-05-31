@@ -48,12 +48,12 @@ public class BillingResource {
 	@APIResponse(responseCode = "400", description = "token is invalid (e.g., expired or invalid signature)")
 	@APIResponse(responseCode = "403", description = "only admins are allowed to set the token")
 	public Response setToken(String token) {
+		var billing = Billing.<Billing>findByIdOptional(0).get();
 		try {
-			licenseValidator.validate(token);
+			licenseValidator.validate(token, billing.hubId);
 		} catch (JWTVerificationException e) {
 			return Response.status(Response.Status.BAD_REQUEST).build();
 		}
-		var billing = Billing.<Billing>findByIdOptional(0).get();
 		billing.token = token;
 		billing.persist();
 		return Response.status(Response.Status.NO_CONTENT).build();
@@ -69,7 +69,7 @@ public class BillingResource {
 				return new BillingDto(entity.hubId, false, null, null, null, null, null);
 			}
 			var licenseValidator = new LicenseValidator();
-			var jwt = licenseValidator.validate(entity.token);
+			var jwt = licenseValidator.validate(entity.token, entity.hubId);
 			var email = jwt.getSubject();
 			var totalSeats = jwt.getClaim("seats").asInt();
 			var remainingSeats = totalSeats; // TODO
