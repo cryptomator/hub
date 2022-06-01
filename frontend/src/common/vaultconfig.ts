@@ -1,5 +1,5 @@
 import JSZip from 'jszip';
-import config from '../common/config';
+import config, { backendBaseURL, frontendBaseURL } from '../common/config';
 import { Masterkey, VaultConfigHeaderHub, VaultConfigPayload } from '../common/crypto';
 
 export class VaultConfig {
@@ -15,15 +15,15 @@ export class VaultConfig {
   public static async create(vaultId: string, masterkey: Masterkey): Promise<VaultConfig> {
     const cfg = config.get();
 
-    const kid = `hub+http://localhost:8080/vaults/${vaultId}`; // TODO: read from config
+    const kid = `hub+${backendBaseURL}/vaults/${vaultId}`;
 
     const hubConfig: VaultConfigHeaderHub = {
       clientId: cfg.keycloakClientId,
-      authEndpoint: `${cfg.keycloakUrl}/realms/${cfg.keycloakRealm}/protocol/openid-connect/auth`, // TODO: read from config
-      tokenEndpoint: `${cfg.keycloakUrl}/realms/${cfg.keycloakRealm}/protocol/openid-connect/token`, // TODO: read from config
-      devicesResourceUrl: 'http://localhost:8080/devices/', // TODO: read from config
-      authSuccessUrl: `${location.protocol}//${location.host}${import.meta.env.BASE_URL}#/unlock-success?vault=${vaultId}`,
-      authErrorUrl: `${location.protocol}//${location.host}${import.meta.env.BASE_URL}#/unlock-error?vault=${vaultId}`
+      authEndpoint: cfg.keycloakAuthEndpoint,
+      tokenEndpoint: cfg.keycloakTokenEndpoint,
+      devicesResourceUrl: `${backendBaseURL}/devices/`,
+      authSuccessUrl: `${frontendBaseURL}/unlock-success?vault=${vaultId}`,
+      authErrorUrl: `${frontendBaseURL}/unlock-error?vault=${vaultId}`
     };
 
     const jwtPayload: VaultConfigPayload = {

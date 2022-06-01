@@ -1,8 +1,9 @@
 import AxiosStatic, { AxiosRequestConfig, AxiosResponse } from 'axios';
 import authPromise from './auth';
+import { backendBaseURL } from './config';
 
 const axiosBaseCfg: AxiosRequestConfig = {
-  baseURL: (import.meta.env.DEV ? 'http://localhost:8080' : '') + '/api',
+  baseURL: backendBaseURL,
   headers: {
     'Content-Type': 'application/json'
   }
@@ -36,12 +37,18 @@ export class DeviceDto {
   constructor(public id: string, public name: string, public publicKey: string, public accessTo: VaultDto[]) { }
 }
 
-export class UserDto {
-  constructor(public id: string, public name: string, public pictureUrl: string, public email: string, public devices: DeviceDto[]) { }
+export class AuthorityDto {
+  constructor(public id: string, public name: string, public type: string) { }
+}
+
+export class UserDto extends AuthorityDto {
+  constructor(public id: string, public name: string, public pictureUrl: string, public email: string, public devices: DeviceDto[]) {
+    super(id, name, 'user')
+   }
 }
 
 export class BillingDto {
-  constructor(public hub_id: string, public token: string) { }
+  constructor(public hubId: string, public hasLicense: boolean, public email: string, public totalSeats: number, public remainingSeats: number, public issuedAt: Date, public expiresAt: Date) { }
 }
 
 /* Services */
@@ -61,12 +68,12 @@ class VaultService {
       .catch((err) => rethrowAndConvertIfExpected(err, 404));
   }
 
-  public async getMembers(vaultId: string): Promise<UserDto[]> {
+  public async getMembers(vaultId: string): Promise<AuthorityDto[]> {
     return axiosAuth.get(`/vaults/${vaultId}/members`).then(response => response.data);
   }
 
-  public async addMember(vaultId: string, userId: string): Promise<AxiosResponse<void>> {
-    return axiosAuth.put(`/vaults/${vaultId}/members/${userId}`)
+  public async addUser(vaultId: string, userId: string): Promise<AxiosResponse<void>> {
+    return axiosAuth.put(`/vaults/${vaultId}/users/${userId}`)
       .catch((err) => rethrowAndConvertIfExpected(err, 404));
   }
 
@@ -86,7 +93,7 @@ class VaultService {
   }
 
   public async revokeUserAccess(vaultId: string, userId: string) {
-    await axiosAuth.delete(`/vaults/${vaultId}/members/${userId}`)
+    await axiosAuth.delete(`/vaults/${vaultId}/users/${userId}`)
       .catch((err) => rethrowAndConvertIfExpected(err, 404));
   }
 }
@@ -116,7 +123,11 @@ class UserService {
 
 class BillingService {
   public async get(): Promise<BillingDto> {
-    return axiosAuth.get('/billing').then(response => response.data);
+    return axiosAuth.get('/billing').then(response => {
+      response.data.issuedAt = new Date(response.data.issuedAt);
+      response.data.expiresAt = new Date(response.data.expiresAt);
+      return response.data;
+    });
   }
 
   public async setToken(token: string): Promise<void> {

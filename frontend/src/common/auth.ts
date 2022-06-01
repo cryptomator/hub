@@ -12,6 +12,7 @@ class Auth {
     });
     await keycloak.init({
       onLoad: 'check-sso',
+      silentCheckSsoFallback: false,
       silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
       pkceMethod: 'S256',
     });
@@ -44,6 +45,18 @@ class Auth {
   public async bearerToken(): Promise<string | undefined> {
     await this.keycloak.updateToken(10);
     return this.keycloak.token;
+  }
+
+  public isAdmin(): boolean {
+    return this.keycloak.tokenParsed?.realm_access?.roles.includes('admin') ?? false;
+  }
+
+  public isVaultOwner(): boolean {
+    return this.keycloak.tokenParsed?.resource_access?.cryptomatorhub.roles.includes('vault-owner') ?? false;
+  }
+
+  public isUser(): boolean {
+    return this.keycloak.tokenParsed?.realm_access?.roles.includes('user') ?? false;
   }
 
 }

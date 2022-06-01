@@ -1,6 +1,7 @@
 import { createRouter, createWebHashHistory, RouteRecordRaw } from 'vue-router';
 import authPromise from '../common/auth';
 import backend from '../common/backend';
+import { frontendBaseURL } from '../common/config';
 import Billing from '../components/Billing.vue';
 import CreateVault from '../components/CreateVault.vue';
 import DeviceList from '../components/DeviceList.vue';
@@ -74,7 +75,11 @@ const routes: RouteRecordRaw[] = [
       {
         path: '/billing',
         component: Billing,
-        props: (route) => ({ token: route.query.token })
+        props: (route) => ({ token: route.query.token }),
+        beforeEnter: async (_to, _from) => {
+          const auth = await authPromise;
+          return auth.isAdmin(); //TODO: reroute to NotFound Screen/ AccessDeniedScreen?
+        }
       },
     ]
   },
@@ -100,7 +105,7 @@ router.beforeEach((to, from, next) => {
   if (to.meta.skipAuth) {
     next();
   } else {
-    const redirectUri = `${window.location.protocol}//${window.location.host}${import.meta.env.BASE_URL}#${to.fullPath}`;
+    const redirectUri = `${frontendBaseURL}${to.fullPath}`;
     authPromise.then(async auth => {
       await auth.loginIfRequired(redirectUri);
       next();
