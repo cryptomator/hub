@@ -133,12 +133,10 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@DisplayName("GET /vaults/vault2/members returns 200")
+		@DisplayName("GET /vaults/vault2/members returns 403")
 		public void testGetAccess2() {
 			when().get("/vaults/{vaultId}/members", "vault2")
-					.then().statusCode(200)
-					.body("size()", is(1))
-					.body("id", hasItems("group1"));
+					.then().statusCode(403);
 		}
 
 		@Test
@@ -197,7 +195,11 @@ public class VaultResourceTest {
 
 		@Test
 		@DisplayName("PUT /vaults/vault2/keys/device3 returns 409 due to group access already granted")
-		public void testGrantAccess3() {
+		@TestSecurity(user = "User Name 2", roles = {"user", "vault-owner"}) //we switch here for easy usage
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user2")
+		})
+		public void testGrantAccess3() throws SQLException {
 			given().contentType(ContentType.TEXT).body("jwe3")
 					.when().put("/vaults/{vaultId}/keys/{deviceId}", "vault2", "device3")
 					.then().statusCode(409);
@@ -419,11 +421,11 @@ public class VaultResourceTest {
 
 		@Test
 		@Order(6)
-		@DisplayName("GET /vaults/vault4/devices-requiring-access-grant contains not device5")
+		@DisplayName("GET /vaults/vault2/devices-requiring-access-grant contains not device93")
 		public void testGetDevicesRequiringAccess4() {
-			when().get("/vaults/{vaultId}/devices-requiring-access-grant", "vault4")
+			when().get("/vaults/{vaultId}/devices-requiring-access-grant", "vault2")
 					.then().statusCode(200)
-					.body("id", not(hasItems("device5")));
+					.body("id", not(hasItems("device93")));
 		}
 
 		@Test
