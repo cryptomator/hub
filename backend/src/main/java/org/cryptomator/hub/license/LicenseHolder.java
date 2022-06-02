@@ -7,11 +7,11 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.Objects;
+import java.util.Optional;
 
 @ApplicationScoped
 public class LicenseHolder {
 	private volatile DecodedJWT license;
-	// TODO this is just a stub
 
 	public LicenseHolder() {
 
@@ -27,7 +27,16 @@ public class LicenseHolder {
 	}
 
 	public boolean isExpired() {
-		return license.getExpiresAt().toInstant().isBefore(Instant.now());
+		return Optional.ofNullable(license).map(l -> l.getExpiresAt().toInstant().isBefore(Instant.now())).orElse(false); //TODO: should be a non existing license be always expired?
+	}
+
+	public long getSeats() {
+		return Optional.ofNullable(license) //
+				.map(l -> { //
+					var c = l.getClaim("seats"); //
+					return c.isNull()? 0L : c.asLong(); //
+				}) //
+				.orElse(0L);
 	}
 
 	public Collection<LicenseClaim> getClaims() {

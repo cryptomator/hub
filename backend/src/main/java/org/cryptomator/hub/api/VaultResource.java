@@ -7,6 +7,7 @@ import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
+import org.cryptomator.hub.license.SeatsRestricted;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -85,6 +86,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "201", description = "member added")
 	@APIResponse(responseCode = "403", description = "requesting user does not own vault")
 	@APIResponse(responseCode = "404", description = "vault or user not found")
+	@SeatsRestricted
 	public Response addUser(@PathParam("vaultId") String vaultId, @PathParam("userId") String userId) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		var user = User.<User>findByIdOptional(userId).orElseThrow(NotFoundException::new);

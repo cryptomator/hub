@@ -3,12 +3,18 @@ package org.cryptomator.hub.entities;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
+import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 import java.util.Objects;
 
 @Entity
 @Table(name = "user_details")
 @DiscriminatorValue("USER")
+@NamedQuery(name = "User.countEVUs", query = """
+  		SELECT count( DISTINCT u)
+  		FROM User u
+  		INNER JOIN EffectiveVaultAccess eva	ON u.id = eva.id.authorityId
+		""")
 public class User extends Authority {
 
 	@Column(name = "picture_url")
@@ -16,6 +22,10 @@ public class User extends Authority {
 
 	@Column(name = "email")
 	public String email;
+
+	public static long countEffectiveVaultUsers() {
+		return User.count("#User.countEVUs");
+	}
 
 	@Override
 	public boolean equals(Object o) {
