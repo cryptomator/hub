@@ -1,6 +1,8 @@
 package org.cryptomator.hub.license;
 
+import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import org.cryptomator.hub.entities.Billing;
 
 import javax.enterprise.context.ApplicationScoped;
 import java.time.Instant;
@@ -11,15 +13,28 @@ import java.util.Optional;
 
 @ApplicationScoped
 public class LicenseHolder {
+
+	private final LicenseValidator licenseValidator;
 	private volatile DecodedJWT license;
 
-	public LicenseHolder() {
-
+	LicenseHolder(LicenseValidator licenseValidator) {
+		this.licenseValidator = licenseValidator;
 	}
 
-	public void set(DecodedJWT validatedToken) {
-		Objects.requireNonNull(validatedToken);
-		this.license = validatedToken;
+	/**
+	 * Parses, verifies and persists the given token as the license in the database.
+	 *
+	 * @param token The string represenation of the JWT license
+	 * @throws JWTVerificationException if the license cannot be verfied
+	 */
+	public void set(String token) throws JWTVerificationException {
+		Objects.requireNonNull(token);
+
+		var billingEntry = Billing.<Billing>findAll().firstResult();
+		this.license = licenseValidator.validate(token, billingEntry.hubId);
+		billingEntry.token = token;
+		billingEntry.persist();
+
 	}
 
 	public DecodedJWT get() {
@@ -30,7 +45,7 @@ public class LicenseHolder {
 		return Optional.ofNullable(license).map(l -> l.getExpiresAt().toInstant().isBefore(Instant.now())).orElse(false); //TODO: should be a non existing license be always expired?
 	}
 
-	public long getSeats() {
+	public long getAvailableSeats() {
 		return Optional.ofNullable(license) //
 				.map(l -> { //
 					var c = l.getClaim("seats"); //
@@ -40,6 +55,8 @@ public class LicenseHolder {
 	}
 
 	public Collection<LicenseClaim> getClaims() {
+		//the value of the (boolean) claim could also be false
+		//which would not be checked by the annotation
 		return EnumSet.of(LicenseClaim.FOO);
 	}
 
