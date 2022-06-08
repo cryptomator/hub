@@ -1,5 +1,7 @@
 package org.cryptomator.hub.entities;
 
+import io.quarkus.panache.common.Parameters;
+
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
@@ -15,6 +17,12 @@ import java.util.Objects;
   		FROM User u
   		INNER JOIN EffectiveVaultAccess eva	ON u.id = eva.id.authorityId
 		""")
+@NamedQuery(name = "User.countEGUs", query = """
+  		SELECT count( DISTINCT u)
+  		FROM User u
+  		INNER JOIN EffectiveGroupMembership egm	ON u.id = egm.id.memberId
+  		WHERE egm.id.groupId = :groupId
+		""")
 public class User extends Authority {
 
 	@Column(name = "picture_url")
@@ -25,6 +33,10 @@ public class User extends Authority {
 
 	public static long countEffectiveVaultUsers() {
 		return User.count("#User.countEVUs");
+	}
+
+	public static long countEffectiveGroupUsers(String groupdId) {
+		return User.count("#User.countEGUs", Parameters.with("groupId", groupdId));
 	}
 
 	@Override

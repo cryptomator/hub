@@ -7,6 +7,7 @@ import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
+import org.cryptomator.hub.license.LicenseHolder;
 import org.cryptomator.hub.license.SeatsRestricted;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
@@ -40,6 +41,9 @@ public class VaultResource {
 
 	@Inject
 	JsonWebToken jwt;
+
+	@Inject
+	LicenseHolder license;
 
 	@GET
 	@Path("/")
@@ -106,8 +110,14 @@ public class VaultResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "adds a group to this vault")
 	@APIResponse(responseCode = "201", description = "member added")
+	@APIResponse(responseCode = "402", description = "group size exceeds number of seats in license")
 	@APIResponse(responseCode = "404", description = "vault or group not found")
+	@SeatsRestricted
 	public Response addGroup(@PathParam("vaultId") String vaultId, @PathParam("groupId") String groupId) {
+		if(User.countEffectiveGroupUsers(groupId) + license.getSeats() > User.countEffectiveVaultUsers()) { //TODO: better place for EGU?
+			return Response.status(Response.Status.PAYMENT_REQUIRED).build();
+		}
+
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		var group = Group.<Group>findByIdOptional(groupId).orElseThrow(NotFoundException::new);
 		vault.directMembers.add(group);
