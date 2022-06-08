@@ -54,10 +54,4 @@ public class LicenseHolder {
 				.orElse(0L);
 	}
 
-	public Collection<LicenseClaim> getClaims() {
-		//the value of the (boolean) claim could also be false
-		//which would not be checked by the annotation
-		return EnumSet.of(LicenseClaim.FOO);
-	}
-
 }
