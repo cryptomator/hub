@@ -11,9 +11,7 @@ class Auth {
       clientId: cfg.keycloakClientId
     });
     await keycloak.init({
-      onLoad: 'check-sso',
-      silentCheckSsoFallback: false,
-      silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
+      checkLoginIframe: false,
       pkceMethod: 'S256',
     });
     keycloak.onTokenExpired = () => keycloak.updateToken(30);
