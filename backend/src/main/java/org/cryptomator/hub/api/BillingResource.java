@@ -5,6 +5,7 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.cryptomator.hub.entities.Billing;
+import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.license.LicenseHolder;
 import org.cryptomator.hub.license.LicenseValidator;
 import org.eclipse.microprofile.openapi.annotations.Operation;
@@ -85,7 +86,7 @@ public class BillingResource {
 			var id = jwt.getId();
 			var email = jwt.getSubject();
 			var totalSeats = jwt.getClaim("seats").asInt();
-			var remainingSeats = totalSeats; // TODO
+			var remainingSeats = totalSeats - (int) EffectiveVaultAccess.countEffectiveVaultUsers(); //TODO
 			var issuedAt = jwt.getIssuedAt();
 			var expiresAt = jwt.getExpiresAt();
 			return new BillingDto(id, true, email, totalSeats, remainingSeats, issuedAt, expiresAt);
