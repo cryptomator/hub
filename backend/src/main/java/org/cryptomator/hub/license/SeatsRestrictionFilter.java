@@ -22,7 +22,7 @@ public class SeatsRestrictionFilter implements ContainerRequestFilter {
 	@Override
 	public void filter(ContainerRequestContext requestContext) throws IOException {
 		long usedSeats = User.countEffectiveVaultUsers();
-		if (usedSeats >= license.getSeats()) {
+		if (usedSeats >= license.getAvailableSeats()) {
 			var response = Response.status(Response.Status.PAYMENT_REQUIRED).build();
 			requestContext.abortWith(response);
 		}

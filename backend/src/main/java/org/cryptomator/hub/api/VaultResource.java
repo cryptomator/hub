@@ -110,11 +110,11 @@ public class VaultResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "adds a group to this vault")
 	@APIResponse(responseCode = "201", description = "member added")
-	@APIResponse(responseCode = "402", description = "group size exceeds number of seats in license")
+	@APIResponse(responseCode = "402", description = "group size exceeds number of avaible seats in license")
 	@APIResponse(responseCode = "404", description = "vault or group not found")
 	@SeatsRestricted
 	public Response addGroup(@PathParam("vaultId") String vaultId, @PathParam("groupId") String groupId) {
-		if(User.countEffectiveGroupUsers(groupId) + license.getSeats() > User.countEffectiveVaultUsers()) { //TODO: better place for EGU?
+		if(User.countEffectiveGroupUsers(groupId) + User.countEffectiveVaultUsers() > license.getAvailableSeats()) {
 			return Response.status(Response.Status.PAYMENT_REQUIRED).build();
 		}
 
