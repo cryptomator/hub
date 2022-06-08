@@ -7,10 +7,11 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.Provider;
-import java.io.IOException;
 
 /**
- * TODO: docs & tests
+ * Request filter which checks if the license is not expired and available seats in the license are not already exceeded.
+ * <p>
+ * Applied to all methods annotated with {@link SeatsRestricted}.
  */
 @Provider
 @SeatsRestricted
@@ -20,9 +21,10 @@ public class SeatsRestrictionFilter implements ContainerRequestFilter {
 	LicenseHolder license;
 
 	@Override
-	public void filter(ContainerRequestContext requestContext) throws IOException {
+	public void filter(ContainerRequestContext requestContext) {
 		long usedSeats = EffectiveVaultAccess.countEffectiveVaultUsers();
-		if (usedSeats >= license.getAvailableSeats()) {
+
+		if (license.isExpired() || (usedSeats >= license.getAvailableSeats())) {
 			var response = Response.status(Response.Status.PAYMENT_REQUIRED).build();
 			requestContext.abortWith(response);
 		}
