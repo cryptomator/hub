@@ -12,17 +12,6 @@ import java.util.Objects;
 @Entity
 @Table(name = "user_details")
 @DiscriminatorValue("USER")
-@NamedQuery(name = "User.countEVUs", query = """
-  		SELECT count( DISTINCT u)
-  		FROM User u
-  		INNER JOIN EffectiveVaultAccess eva	ON u.id = eva.id.authorityId
-		""")
-@NamedQuery(name = "User.countEGUs", query = """
-  		SELECT count( DISTINCT u)
-  		FROM User u
-  		INNER JOIN EffectiveGroupMembership egm	ON u.id = egm.id.memberId
-  		WHERE egm.id.groupId = :groupId
-		""")
 public class User extends Authority {
 
 	@Column(name = "picture_url")
@@ -30,14 +19,6 @@ public class User extends Authority {
 
 	@Column(name = "email")
 	public String email;
-
-	public static long countEffectiveVaultUsers() {
-		return User.count("#User.countEVUs");
-	}
-
-	public static long countEffectiveGroupUsers(String groupdId) {
-		return User.count("#User.countEGUs", Parameters.with("groupId", groupdId));
-	}
 
 	@Override
 	public boolean equals(Object o) {

@@ -1,6 +1,6 @@
 package org.cryptomator.hub.license;
 
-import org.cryptomator.hub.entities.User;
+import org.cryptomator.hub.entities.EffectiveVaultAccess;
 
 import javax.inject.Inject;
 import javax.ws.rs.container.ContainerRequestContext;
@@ -21,7 +21,7 @@ public class SeatsRestrictionFilter implements ContainerRequestFilter {
 
 	@Override
 	public void filter(ContainerRequestContext requestContext) throws IOException {
-		long usedSeats = User.countEffectiveVaultUsers();
+		long usedSeats = EffectiveVaultAccess.countEffectiveVaultUsers();
 		if (usedSeats >= license.getAvailableSeats()) {
 			var response = Response.status(Response.Status.PAYMENT_REQUIRED).build();
 			requestContext.abortWith(response);
