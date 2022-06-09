@@ -2,6 +2,7 @@ package org.cryptomator.hub.api;
 
 import com.radcortez.flyway.test.annotation.DataSource;
 import com.radcortez.flyway.test.annotation.FlywayTest;
+import io.agroal.api.AgroalDataSource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.quarkus.test.security.oidc.Claim;
@@ -16,6 +17,10 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 
+import javax.inject.Inject;
+
+import java.sql.SQLException;
+
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
 import static org.hamcrest.CoreMatchers.is;
@@ -25,6 +30,9 @@ import static org.hamcrest.CoreMatchers.nullValue;
 @FlywayTest(value = @DataSource(url = "jdbc:h2:mem:test"), additionalLocations = {"classpath:org/cryptomator/hub/flyway"})
 @DisplayName("Resource /billing")
 public class BillingResourceTest {
+
+	@Inject
+	AgroalDataSource dataSource;
 
 	@BeforeAll
 	public static void beforeAll() {
@@ -50,7 +58,15 @@ public class BillingResourceTest {
 		@Test
 		@Order(1)
 		@DisplayName("GET /billing returns 200 with empty license")
-		public void testGetEmpty() {
+		public void testGetEmpty() throws SQLException {
+			try (var s = dataSource.getConnection().createStatement()) {
+				s.execute("""
+					UPDATE "billing"
+					SET "hub_id" = '42', "token" = null
+					WHERE "id" = 0;
+						""");
+			}
+
 			when().get("/billing")
 					.then().statusCode(200)
 					.body("hubId", is("42"))
