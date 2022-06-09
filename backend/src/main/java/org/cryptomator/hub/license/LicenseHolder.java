@@ -62,10 +62,8 @@ public class LicenseHolder {
 
 	public long getAvailableSeats() {
 		return Optional.ofNullable(license) //
-				.map(l -> { //
-					var c = l.getClaim("seats"); //
-					return c.isNull()? 0L : c.asLong(); //
-				}) //
+				.map(l -> l.getClaim("seats")) //
+				.map(Claim::asLong) //
 				.orElse(0L);
 	}
 

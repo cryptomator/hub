@@ -112,7 +112,7 @@ public class VaultResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "adds a group to this vault")
 	@APIResponse(responseCode = "201", description = "member added")
-	@APIResponse(responseCode = "402", description = "group size exceeds number of avaible seats in license")
+	@APIResponse(responseCode = "402", description = "previously used seats + group size exceeds number of total avaible seats in license")
 	@APIResponse(responseCode = "404", description = "vault or group not found")
 	@SeatsRestricted
 	public Response addGroup(@PathParam("vaultId") String vaultId, @PathParam("groupId") String groupId) {
