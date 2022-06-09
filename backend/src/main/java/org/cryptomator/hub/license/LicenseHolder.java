@@ -4,6 +4,7 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import org.cryptomator.hub.entities.Billing;
 
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import java.time.Instant;
 import java.util.Collection;
@@ -19,6 +20,13 @@ public class LicenseHolder {
 
 	LicenseHolder(LicenseValidator licenseValidator) {
 		this.licenseValidator = licenseValidator;
+	}
+
+	/**
+	 * Loads the license from the database, if present
+	 */
+	@PostConstruct
+	void init() {
 		var billingEntry = Billing.<Billing>findAll().firstResult();
 		if(billingEntry.token != null) {
 			try {
