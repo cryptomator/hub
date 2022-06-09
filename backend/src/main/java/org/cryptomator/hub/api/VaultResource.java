@@ -116,7 +116,8 @@ public class VaultResource {
 	@APIResponse(responseCode = "404", description = "vault or group not found")
 	@SeatsRestricted
 	public Response addGroup(@PathParam("vaultId") String vaultId, @PathParam("groupId") String groupId) {
-		if(EffectiveGroupMembership.countEffectiveGroupUsers(groupId) + EffectiveVaultAccess.countEffectiveVaultUsers() > license.getAvailableSeats()) {
+		//usersInGroup - usersInGroupAndPartOfAtLeastOneVault + usersOfAtLeastOneVault
+		if (EffectiveGroupMembership.countEffectiveGroupUsers(groupId) - EffectiveVaultAccess.countEffectiveVaultUsersOfGroup(groupId) + EffectiveVaultAccess.countEffectiveVaultUsers() > license.getAvailableSeats()) {
 			return Response.status(Response.Status.PAYMENT_REQUIRED).build();
 		}
 

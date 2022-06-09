@@ -1,6 +1,7 @@
 package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import io.quarkus.panache.common.Parameters;
 import org.hibernate.annotations.Immutable;
 
 import javax.persistence.Column;
@@ -20,6 +21,13 @@ import java.util.Objects;
 				FROM User u
 				INNER JOIN EffectiveVaultAccess eva ON u.id = eva.id.authorityId
 		""")
+@NamedQuery(name = "EffectiveVaultAccess.countEVUsInGroup", query = """
+				SELECT count( DISTINCT u)
+				FROM User u
+				INNER JOIN EffectiveVaultAccess eva ON u.id = eva.id.authorityId
+				INNER JOIN EffectiveGroupMembership egm ON u.id = egm.id.memberId
+				WHERE egm.id.groupId = :groupId
+		""")
 public class EffectiveVaultAccess extends PanacheEntityBase {
 
 	@EmbeddedId
@@ -27,6 +35,10 @@ public class EffectiveVaultAccess extends PanacheEntityBase {
 
 	public static long countEffectiveVaultUsers() {
 		return EffectiveVaultAccess.count("#EffectiveVaultAccess.countEVUs");
+	}
+
+	public static long countEffectiveVaultUsersOfGroup(String groupId) {
+		return EffectiveVaultAccess.count("#EffectiveVaultAccess.countEVUsInGroup", Parameters.with("groupId", groupId));
 	}
 
 	@Embeddable
