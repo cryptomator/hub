@@ -19,6 +19,14 @@ public class LicenseHolder {
 
 	LicenseHolder(LicenseValidator licenseValidator) {
 		this.licenseValidator = licenseValidator;
+		var billingEntry = Billing.<Billing>findAll().firstResult();
+		if(billingEntry.token != null) {
+			try {
+				this.license = licenseValidator.validate(billingEntry.token, billingEntry.hubId);
+			} catch (JWTVerificationException e) {
+				//TODO: Log error
+			}
+		}
 	}
 
 	/**
@@ -34,7 +42,6 @@ public class LicenseHolder {
 		this.license = licenseValidator.validate(token, billingEntry.hubId);
 		billingEntry.token = token;
 		billingEntry.persist();
-
 	}
 
 	public DecodedJWT get() {
