@@ -24,7 +24,7 @@ public class LicenseHolder {
 			try {
 				this.license = licenseValidator.validate(billingEntry.token, billingEntry.hubId);
 			} catch (JWTVerificationException e) {
-				//TODO: Log error
+				//TODO: Log error, maybe even nullify the token in database
 			}
 		}
 	}
@@ -49,7 +49,7 @@ public class LicenseHolder {
 	}
 
 	public boolean isExpired() {
-		return Optional.ofNullable(license).map(l -> l.getExpiresAt().toInstant().isBefore(Instant.now())).orElse(false); //TODO: should be a non existing license be always expired?
+		return Optional.ofNullable(license).map(l -> l.getExpiresAt().toInstant().isBefore(Instant.now())).orElse(true);
 	}
 
 	public long getAvailableSeats() {
