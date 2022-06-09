@@ -1,11 +1,8 @@
 package org.cryptomator.hub.entities;
 
-import io.quarkus.panache.common.Parameters;
-
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
-import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 import java.util.Objects;
 
