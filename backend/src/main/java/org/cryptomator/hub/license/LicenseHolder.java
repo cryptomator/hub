@@ -4,6 +4,7 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import org.cryptomator.hub.entities.Billing;
+import org.jboss.logging.Logger;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
@@ -16,6 +17,7 @@ import java.util.Optional;
 @ApplicationScoped
 public class LicenseHolder {
 
+	private static final Logger LOG = Logger.getLogger(LicenseHolder.class);
 	private final LicenseValidator licenseValidator;
 	private volatile DecodedJWT license;
 
@@ -33,7 +35,9 @@ public class LicenseHolder {
 			try {
 				this.license = licenseValidator.validate(billingEntry.token, billingEntry.hubId);
 			} catch (JWTVerificationException e) {
-				//TODO: Log error, maybe even nullify the token in database
+				LOG.warn("License in database is invalid. Deleting entry. Please add the license over the REST API again.");
+				billingEntry.token = null;
+				billingEntry.persist();
 			}
 		}
 	}
