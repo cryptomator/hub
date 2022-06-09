@@ -10,6 +10,7 @@ import javax.persistence.Entity;
 import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 import java.io.Serializable;
+import java.util.Objects;
 
 @Entity
 @Immutable
@@ -36,6 +37,29 @@ public class EffectiveVaultAccess extends PanacheEntityBase {
 
 		@Column(name = "authority_id")
 		public String authorityId;
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if(o instanceof EffectiveVaultAccessId evaId) {
+				return Objects.equals(vaultId, evaId.vaultId) //
+						&& Objects.equals(authorityId, evaId.authorityId);
+			}
+			return false;
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(vaultId, authorityId);
+		}
+
+		@Override
+		public String toString() {
+			return "EffectiveVaultAccessId{" +
+					"vaultId='" + vaultId + '\'' +
+					", authorityId='" + authorityId + '\'' +
+					'}';
+		}
 	}
 
 }

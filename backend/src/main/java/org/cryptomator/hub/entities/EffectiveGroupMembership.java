@@ -11,6 +11,7 @@ import javax.persistence.Entity;
 import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 import java.io.Serializable;
+import java.util.Objects;
 
 @Entity
 @Immutable
@@ -41,5 +42,28 @@ public class EffectiveGroupMembership extends PanacheEntityBase {
 
 		@Column(name = "member_id")
 		public String memberId;
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o instanceof EffectiveGroupMembershipId egmId) {
+				return Objects.equals(groupId, egmId.groupId) //
+						&& Objects.equals(memberId, egmId.memberId);
+			}
+			return false;
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(groupId, memberId);
+		}
+
+		@Override
+		public String toString() {
+			return "EffectiveGroupMembershipId{" +
+					"groupId='" + groupId + '\'' +
+					", memberId='" + memberId + '\'' +
+					'}';
+		}
 	}
 }
