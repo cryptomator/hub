@@ -1,26 +1,24 @@
-import newKeycloak, { KeycloakInstance } from 'keycloak-js';
+import Keycloak from 'keycloak-js';
 import config, { ConfigDto } from './config';
 
 class Auth {
-  private readonly keycloak: KeycloakInstance;
+  private readonly keycloak: Keycloak;
 
   static async build(cfg: ConfigDto): Promise<Auth> {
-    const keycloak = newKeycloak({
+    const keycloak = new Keycloak({
       url: cfg.keycloakUrl,
       realm: cfg.keycloakRealm,
       clientId: cfg.keycloakClientId
     });
     await keycloak.init({
-      onLoad: 'check-sso',
-      silentCheckSsoFallback: false,
-      silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
+      checkLoginIframe: false,
       pkceMethod: 'S256',
     });
     keycloak.onTokenExpired = () => keycloak.updateToken(30);
     return new Auth(keycloak);
   }
 
-  private constructor(keycloak: KeycloakInstance) {
+  private constructor(keycloak: Keycloak) {
     this.keycloak = keycloak;
   }
 

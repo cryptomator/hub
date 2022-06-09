@@ -1,4 +1,3 @@
-import { Crypto } from '@peculiar/webcrypto';
 import { expect } from 'chai';
 import { describe } from 'mocha';
 import { base64url } from 'rfc4648';
@@ -9,7 +8,7 @@ describe('JWE', () => {
   before(done => {
     // since this test runs on Node, we need to replace window.crypto:
     // @ts-ignore: global not defined (but will be available within Node)
-    global.crypto = new Crypto();
+    global.crypto = require('node:crypto').webcrypto;
     // @ts-ignore: global not defined (but will be available within Node)
     global.window = { crypto: global.crypto };
     done();
