@@ -353,7 +353,7 @@ public class VaultResourceTest {
 
 		@Test
 		@Order(2)
-		@DisplayName("PUT /vaults/vault2/groups/group11 returns 201")
+		@DisplayName("PUT /vaults/vault2/groups/group91 returns 201")
 		public void addGroupToVault() throws SQLException {
 			try (var s = dataSource.getConnection().createStatement()) {
 				s.execute("""
@@ -443,6 +443,48 @@ public class VaultResourceTest {
 			when().get("/vaults/{vaultId}/members", "vault2")
 					.then().statusCode(200)
 					.body("id", not(hasItems("group91")));
+		}
+
+		@Test
+		@Order(9)
+		@DisplayName("PUT /vaults/vault2/groups/group94 returns 402")
+		public void addGroupToVaultExceedingSeats() throws SQLException {
+			//license has 5 seats, two are already used
+			try (var s = dataSource.getConnection().createStatement()) {
+				s.execute("""
+						INSERT INTO "authority" ("id", "type", "name")
+						VALUES
+							('group94', 'GROUP', 'group name 94'),
+							('user95', 'USER', 'user name 95'),
+							('user96', 'USER', 'user name 96'),
+							('user97', 'USER', 'user name 97'),
+							('user98', 'USER', 'user name 98');
+							
+						INSERT INTO "group_details" ("id")
+						VALUES
+							('group94');
+							
+							
+						INSERT INTO "user_details" ("id")
+						VALUES
+							('user95'),
+							('user96'),
+							('user97'),
+							('user98');
+							
+						INSERT INTO "group_membership" ("group_id", "member_id")
+						VALUES
+							('group94', 'user95'),
+							('group94', 'user96'),
+							('group94', 'user97'),
+							('group94', 'user98'),
+							('group94', 'user1');
+							
+						""");
+			}
+
+			when().put("/vaults/{vaultId}/groups/{groupId}", "vault2", "group94")
+					.then().statusCode(402);
 		}
 
 	}

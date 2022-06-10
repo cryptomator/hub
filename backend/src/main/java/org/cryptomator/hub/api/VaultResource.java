@@ -4,9 +4,13 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.cryptomator.hub.entities.AccessToken;
 import org.cryptomator.hub.entities.Device;
+import org.cryptomator.hub.entities.EffectiveGroupMembership;
+import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
+import org.cryptomator.hub.license.LicenseHolder;
+import org.cryptomator.hub.license.SeatsRestricted;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -39,6 +43,9 @@ public class VaultResource {
 
 	@Inject
 	JsonWebToken jwt;
+
+	@Inject
+	LicenseHolder license;
 
 	@GET
 	@Path("/")
@@ -85,6 +92,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "201", description = "member added")
 	@APIResponse(responseCode = "403", description = "requesting user does not own vault")
 	@APIResponse(responseCode = "404", description = "vault or user not found")
+	@SeatsRestricted
 	public Response addUser(@PathParam("vaultId") String vaultId, @PathParam("userId") String userId) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		var user = User.<User>findByIdOptional(userId).orElseThrow(NotFoundException::new);
@@ -104,8 +112,15 @@ public class VaultResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "adds a group to this vault")
 	@APIResponse(responseCode = "201", description = "member added")
+	@APIResponse(responseCode = "402", description = "used seats + (number of users in group not occupying a seats) exceeds number of total avaible seats in license")
 	@APIResponse(responseCode = "404", description = "vault or group not found")
+	@SeatsRestricted
 	public Response addGroup(@PathParam("vaultId") String vaultId, @PathParam("groupId") String groupId) {
+		//usersInGroup - usersInGroupAndPartOfAtLeastOneVault + usersOfAtLeastOneVault
+		if (EffectiveGroupMembership.countEffectiveGroupUsers(groupId) - EffectiveVaultAccess.countEffectiveVaultUsersOfGroup(groupId) + EffectiveVaultAccess.countEffectiveVaultUsers() > license.getAvailableSeats()) {
+			return Response.status(Response.Status.PAYMENT_REQUIRED).build();
+		}
+
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		var group = Group.<Group>findByIdOptional(groupId).orElseThrow(NotFoundException::new);
 		vault.directMembers.add(group);
@@ -173,6 +188,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "200")
 	@APIResponse(responseCode = "403", description = "device not authorized to access this vault")
 	@APIResponse(responseCode = "404", description = "unknown device")
+	@SeatsRestricted
 	public String unlock(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId) {
 		var access = AccessToken.unlock(vaultId, deviceId, jwt.getSubject());
 		if (access != null) {

@@ -1,10 +1,12 @@
 package org.cryptomator.hub.api;
 
 import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.cryptomator.hub.entities.Billing;
-import org.cryptomator.hub.license.LicenseValidator;
+import org.cryptomator.hub.entities.EffectiveVaultAccess;
+import org.cryptomator.hub.license.LicenseHolder;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 
@@ -19,12 +21,14 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.Date;
+import java.util.Optional;
 
 @Path("/billing")
 public class BillingResource {
 
+
 	@Inject
-	LicenseValidator licenseValidator;
+	LicenseHolder licenseHolder;
 
 	@GET
 	@Path("/")
@@ -35,7 +39,12 @@ public class BillingResource {
 	@APIResponse(responseCode = "200")
 	@APIResponse(responseCode = "403", description = "only admins are allowed to get the billing information")
 	public BillingDto get() {
-		return Billing.<Billing>findByIdOptional(0).map(BillingDto::fromEntity).get();
+		return Optional.ofNullable(licenseHolder.get())
+				.map(BillingDto::fromDecodedJwt)
+				.orElseGet(() -> {
+					var hubId = Billing.<Billing>findAll().firstResult().hubId;
+					return BillingDto.create(hubId);
+				});
 	}
 
 	@PUT
@@ -48,15 +57,12 @@ public class BillingResource {
 	@APIResponse(responseCode = "400", description = "token is invalid (e.g., expired or invalid signature)")
 	@APIResponse(responseCode = "403", description = "only admins are allowed to set the token")
 	public Response setToken(String token) {
-		var billing = Billing.<Billing>findByIdOptional(0).get();
 		try {
-			licenseValidator.validate(token, billing.hubId);
+			licenseHolder.set(token);
+			return Response.status(Response.Status.NO_CONTENT).build();
 		} catch (JWTVerificationException e) {
 			return Response.status(Response.Status.BAD_REQUEST).build();
 		}
-		billing.token = token;
-		billing.persist();
-		return Response.status(Response.Status.NO_CONTENT).build();
 	}
 
 	public record BillingDto(@JsonProperty("hubId") String hubId, @JsonProperty("hasLicense") Boolean hasLicense, @JsonProperty("email") String email,
@@ -64,18 +70,18 @@ public class BillingResource {
 							 @JsonProperty("issuedAt") @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSX") Date issuedAt,
 							 @JsonProperty("expiresAt") @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSX") Date expiresAt) {
 
-		public static BillingDto fromEntity(Billing entity) {
-			if (entity.token == null) {
-				return new BillingDto(entity.hubId, false, null, null, null, null, null);
-			}
-			var licenseValidator = new LicenseValidator();
-			var jwt = licenseValidator.validate(entity.token, entity.hubId);
+		public static BillingDto create(String hubId) {
+			return new BillingDto(hubId, false, null, null, null, null, null);
+		}
+
+		public static BillingDto fromDecodedJwt(DecodedJWT jwt) {
+			var id = jwt.getId();
 			var email = jwt.getSubject();
 			var totalSeats = jwt.getClaim("seats").asInt();
-			var remainingSeats = totalSeats; // TODO
+			var remainingSeats = totalSeats - (int) EffectiveVaultAccess.countEffectiveVaultUsers(); //TODO
 			var issuedAt = jwt.getIssuedAt();
 			var expiresAt = jwt.getExpiresAt();
-			return new BillingDto(entity.hubId, true, email, totalSeats, remainingSeats, issuedAt, expiresAt);
+			return new BillingDto(id, true, email, totalSeats, remainingSeats, issuedAt, expiresAt);
 		}
 
 	}
