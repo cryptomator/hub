@@ -51,7 +51,6 @@ public class BillingResource {
 	@Path("/token")
 	@RolesAllowed("admin")
 	@Consumes(MediaType.TEXT_PLAIN)
-	@Transactional
 	@Operation(summary = "set the token")
 	@APIResponse(responseCode = "204")
 	@APIResponse(responseCode = "400", description = "token is invalid (e.g., expired or invalid signature)")

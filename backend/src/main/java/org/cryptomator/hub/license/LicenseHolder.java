@@ -8,6 +8,7 @@ import org.jboss.logging.Logger;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
+import javax.transaction.Transactional;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.EnumSet;
@@ -48,7 +49,8 @@ public class LicenseHolder {
 	 * @param token The string represenation of the JWT license
 	 * @throws JWTVerificationException if the license cannot be verfied
 	 */
-	public void set(String token) throws JWTVerificationException {
+	@Transactional
+	public synchronized void set(String token) throws JWTVerificationException {
 		Objects.requireNonNull(token);
 
 		var billingEntry = Billing.<Billing>findAll().firstResult();
