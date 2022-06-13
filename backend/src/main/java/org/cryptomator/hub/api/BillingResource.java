@@ -78,7 +78,7 @@ public class BillingResource {
 			var id = jwt.getId();
 			var email = jwt.getSubject();
 			var totalSeats = jwt.getClaim("seats").asInt();
-			var remainingSeats = totalSeats - (int) EffectiveVaultAccess.countEffectiveVaultUsers(); //TODO
+			var remainingSeats = Math.max(totalSeats - (int) EffectiveVaultAccess.countEffectiveVaultUsers(), 0);
 			var issuedAt = jwt.getIssuedAt();
 			var expiresAt = jwt.getExpiresAt();
 			return new BillingDto(id, true, email, totalSeats, remainingSeats, issuedAt, expiresAt);
