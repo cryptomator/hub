@@ -15,15 +15,15 @@ export class VaultConfig {
   public static async create(vaultId: string, masterkey: Masterkey): Promise<VaultConfig> {
     const cfg = config.get();
 
-    const kid = `hub+${backendBaseURL}/vaults/${vaultId}`;
+    const kid = `hub+${backendBaseURL}vaults/${vaultId}`;
 
     const hubConfig: VaultConfigHeaderHub = {
       clientId: cfg.keycloakClientId,
       authEndpoint: cfg.keycloakAuthEndpoint,
       tokenEndpoint: cfg.keycloakTokenEndpoint,
-      devicesResourceUrl: `${backendBaseURL}/devices/`,
-      authSuccessUrl: `${frontendBaseURL}/unlock-success?vault=${vaultId}`,
-      authErrorUrl: `${frontendBaseURL}/unlock-error?vault=${vaultId}`
+      devicesResourceUrl: `${backendBaseURL}devices/`,
+      authSuccessUrl: `${frontendBaseURL}unlock-success?vault=${vaultId}`,
+      authErrorUrl: `${frontendBaseURL}unlock-error?vault=${vaultId}`
     };
 
     const jwtPayload: VaultConfigPayload = {

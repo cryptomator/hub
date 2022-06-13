@@ -29,7 +29,7 @@ class Auth {
   public async loginIfRequired(redirectUri?: string): Promise<void> {
     if (!this.keycloak.authenticated) {
       await this.keycloak.login({
-        redirectUri: (redirectUri ?? window.location) + '?login' // keycloak appends '&state=...' which confuses vue-router if there is no '?'
+        redirectUri: (redirectUri ?? window.location.href)
       });
     }
   }
