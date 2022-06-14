@@ -119,6 +119,10 @@
       <artifactId>java-jwt</artifactId>
       <version>${jwt.version}</version>
     </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-undertow</artifactId>
+    </dependency>
 
     <!-- needed until https://github.com/quarkusio/quarkus/issues/14240 is solved -->
     <dependency>
