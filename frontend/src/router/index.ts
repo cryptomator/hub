@@ -8,6 +8,7 @@ import DeviceList from '../components/DeviceList.vue';
 import LoginComponent from '../components/Login.vue';
 import LogoutComponent from '../components/Logout.vue';
 import MainComponent from '../components/Main.vue';
+import NotFoundComponent from '../components/NotFoundComponent.vue';
 import Settings from '../components/Settings.vue';
 import UnlockError from '../components/UnlockError.vue';
 import UnlockSuccess from '../components/UnlockSuccess.vue';
@@ -87,7 +88,12 @@ const routes: RouteRecordRaw[] = [
     path: '/unlock-error',
     component: UnlockError,
     meta: { skipAuth: true }
-  }
+  },
+  {
+    path: '/:catchAll(.*)', //necessary due to using history mode in router
+    component: NotFoundComponent,
+    name: 'NotFound'
+  },
 ];
 
 const router = createRouter({
