@@ -19,16 +19,11 @@ const routes: RouteRecordRaw[] = [
     path: '/',
     component: LoginComponent,
     meta: { skipAuth: true },
-    beforeEnter: (to, from, next) => {
-      authPromise.then(async auth => {
-        if (auth.isAuthenticated()) {
-          next('/vaults');
-        } else {
-          next();
-        }
-      }).catch(error => {
-        next(error);
-      });
+    beforeEnter: async (_to, _from) => {
+      const auth = await authPromise;
+      if (auth.isAuthenticated()) {
+        return '/vaults';  //TODO:currently not working, since silent single sign-on is missing
+      }
     }
   },
   {
