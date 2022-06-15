@@ -130,6 +130,10 @@ class UserService {
     return axiosAuth.get<UserDto[]>('/users/').then(response => response.data);
   }
 
+  public async search(query: string): Promise<UserDto[]> {
+    return axiosAuth.get<UserDto[]>(`/users/search?query=${query}`).then(response => response.data);
+  }
+
 }
 
 class GroupService {

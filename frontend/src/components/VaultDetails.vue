@@ -62,7 +62,7 @@
               <span class="ml-4 text-sm font-medium text-primary group-hover:text-primary-l1">{{ t('common.share') }}</span>
             </button>
           </div>
-          <SearchInputGroup v-else-if="addingUser" :action-title="t('common.add')" :items="allUsers" @action="addUser" />
+          <SearchInputGroup v-else-if="addingUser" :action-title="t('common.add')" @action="addUser" />
           <p v-if="onAddUserError != null" class="text-sm text-red-900 text-right">
             {{ t('common.unexpectedError', [onAddUserError.message]) }}
           </p>
@@ -116,7 +116,6 @@ const downloadingVaultTemplate = ref(false);
 const downloadVaultTemplateDialog = ref<typeof DownloadVaultTemplateDialog>();
 const vault = ref<VaultDto>();
 const members = ref<AuthorityDto[]>([]);
-const allUsers = ref<UserDto[]>([]);
 const devicesRequiringAccessGrant = ref<DeviceDto[]>([]);
 
 onMounted(fetchData);
@@ -128,7 +127,6 @@ async function fetchData() {
   try {
     vault.value = await backend.vaults.get(props.vaultId);
     members.value = await backend.vaults.getMembers(props.vaultId);
-    allUsers.value = await backend.users.listAll();
     devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
   } catch (error) {
     console.error('Fetching data failed.', error);
@@ -138,12 +136,11 @@ async function fetchData() {
   isFetching.value = false;
 }
 
-async function addUser(id: string) {
+async function addUser(user: UserDto) {
   onAddUserError.value = null;
   try {
-    const user = allUsers.value.find(u => u.id === id);
     if (user) {
-      await backend.vaults.addUser(props.vaultId, id);
+      await backend.vaults.addUser(props.vaultId, user.id);
       members.value = members.value.concat(user);
       devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
     }
