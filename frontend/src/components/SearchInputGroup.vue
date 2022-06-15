@@ -72,7 +72,6 @@ watch(selectedItem, (value) => {
 });
 
 watch(query, async (newQuery, oldQuery) => {
-  console.log('New query is '+newQuery);
   if (newQuery == '') {
     matchingItems.value = [];
   } else if (oldQuery != '' && newQuery.startsWith(oldQuery)) {
