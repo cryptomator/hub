@@ -78,7 +78,9 @@ watch(query, async (newQuery, oldQuery) => {
     const presentResults = matchingItems.value;
     matchingItems.value = presentResults.filter((item) => item.name.toLowerCase().includes(newQuery.toLowerCase()));
   } else {
-    matchingItems.value = await backend.users.search(newQuery);
+    let matchingUsers = await backend.users.search(newQuery);
+    let matchingGroups = await backend.groups.search(newQuery);
+    matchingItems.value = (matchingUsers as Item[]).concat(matchingGroups as Item[]).sort((a,b) => a.name.localeCompare(b.name));
   }
 });
 

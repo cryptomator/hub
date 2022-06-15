@@ -62,7 +62,7 @@
               <span class="ml-4 text-sm font-medium text-primary group-hover:text-primary-l1">{{ t('common.share') }}</span>
             </button>
           </div>
-          <SearchInputGroup v-else-if="addingUser" :action-title="t('common.add')" @action="addUser" />
+          <SearchInputGroup v-else-if="addingUser" :action-title="t('common.add')" @action="addAuthority" />
           <p v-if="onAddUserError != null" class="text-sm text-red-900 text-right">
             {{ t('common.unexpectedError', [onAddUserError.message]) }}
           </p>
@@ -90,7 +90,7 @@
 import { PencilIcon, PlusSmIcon } from '@heroicons/vue/solid';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { AuthorityDto, DeviceDto, NotFoundError, UserDto, VaultDto } from '../common/backend';
+import backend, { AuthorityDto, DeviceDto, NotFoundError, VaultDto } from '../common/backend';
 import DownloadVaultTemplateDialog from './DownloadVaultTemplateDialog.vue';
 import FetchError from './FetchError.vue';
 import GrantPermissionDialog from './GrantPermissionDialog.vue';
@@ -136,14 +136,18 @@ async function fetchData() {
   isFetching.value = false;
 }
 
-async function addUser(user: UserDto) {
+async function addAuthority(authority: AuthorityDto) {
   onAddUserError.value = null;
   try {
-    if (user) {
-      await backend.vaults.addUser(props.vaultId, user.id);
-      members.value = members.value.concat(user);
-      devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
+    if (authority.type == 'user') {
+      await backend.vaults.addUser(props.vaultId, authority.id);
+    } else if (authority.type == 'group') {
+      await backend.vaults.addGroup(props.vaultId, authority.id);
+    } else {
+      //TODO: throw error
     }
+    members.value = members.value.concat(authority);
+    devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
   } catch (error) {
     //even if error instanceof NotFoundError, it is not expected from user perspective
     console.error('Adding member failed.', error);
