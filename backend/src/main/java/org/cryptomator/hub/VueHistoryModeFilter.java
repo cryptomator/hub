@@ -1,5 +1,7 @@
 package org.cryptomator.hub;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
@@ -21,6 +23,9 @@ public class VueHistoryModeFilter extends HttpFilter {
 
 	private static final Pattern FILE_NAME_PATTERN = Pattern.compile(".*[.][a-zA-Z\\d]+");
 
+	@ConfigProperty(name = "quarkus.resteasy.path")
+	String apiPathPrefix;
+
 	public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) throws IOException, ServletException {
 		HttpServletRequest request = (HttpServletRequest) req;
 		HttpServletResponse response = (HttpServletResponse) res;
@@ -28,8 +33,8 @@ public class VueHistoryModeFilter extends HttpFilter {
 
 		if (response.getStatus() == 404) {
 			String path = request.getRequestURI().substring(
-					request.getContextPath().length()).replaceAll("[/]+$", "");
-			if (!FILE_NAME_PATTERN.matcher(path).matches()) {
+					request.getContextPath().length()).replaceAll("[/]+$", ""); //delete all "/" at end of string
+			if (!path.startsWith(apiPathPrefix) && !FILE_NAME_PATTERN.matcher(path).matches()) { //TODO: possibly exclude even more prefixes (e.g. keycloak)
 				// We could not find the resource, i.e. it is not anything known to the server (i.e. it is not a REST
 				// endpoint or a servlet), and does not look like a file so try handling it in the front-end routes
 				// and reset the response status code to 200.
