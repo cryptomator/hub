@@ -43,8 +43,14 @@ export class AuthorityDto {
 
 export class UserDto extends AuthorityDto {
   constructor(public id: string, public name: string, public pictureUrl: string, public email: string, public devices: DeviceDto[]) {
-    super(id, name, 'user')
-   }
+    super(id, name, 'user');
+  }
+}
+
+export class GroupDto extends AuthorityDto {
+  constructor(public id: string, public name: string) {
+    super(id, name, 'group');
+  }
 }
 
 export class BillingDto {
@@ -75,6 +81,11 @@ class VaultService {
   public async addUser(vaultId: string, userId: string): Promise<AxiosResponse<void>> {
     return axiosAuth.put(`/vaults/${vaultId}/users/${userId}`)
       .catch((err) => rethrowAndConvertIfExpected(err, 404));
+  }
+
+  public async addGroup(vaultId: string, groupId: string): Promise<AxiosResponse<void>> {
+    return axiosAuth.put(`/vaults/${vaultId}/groups/${groupId}`)
+      .catch((err) => rethrowAndConvertIfExpected(err, 402, 404));
   }
 
   public async getDevicesRequiringAccessGrant(vaultId: string): Promise<DeviceDto[]> {
@@ -121,6 +132,13 @@ class UserService {
 
 }
 
+class GroupService {
+  public async search(): Promise<GroupDto[]> {
+    return axiosAuth.get<GroupDto[]>('/groups/search').then(response => response.data);
+  }
+
+}
+
 class BillingService {
   public async get(): Promise<BillingDto> {
     return axiosAuth.get('/billing').then(response => {
@@ -138,12 +156,15 @@ class BillingService {
 const services = {
   vaults: new VaultService(),
   users: new UserService(),
+  groups: new GroupService(),
   devices: new DeviceService(),
   billing: new BillingService()
 };
 
 function convertExpectedToBackendError(status: number): BackendError {
   switch (status) {
+    case 402:
+      return new PaymentRequiredError();
     case 403:
       return new ForbiddenError();
     case 404:
@@ -174,6 +195,12 @@ export default services;
 export class BackendError extends Error {
   constructor(msg: string) {
     super(msg);
+  }
+}
+
+export class PaymentRequiredError extends BackendError {
+  constructor() {
+    super('License upgrade needed');
   }
 }
 
