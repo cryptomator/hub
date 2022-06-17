@@ -39,7 +39,6 @@
 import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions } from '@headlessui/vue';
 import { UsersIcon, XCircleIcon } from '@heroicons/vue/solid';
 import { nextTick, ref, watch } from 'vue';
-import backend, { UserDto } from '../common/backend';
 
 interface Item {
   id: string;
@@ -48,11 +47,12 @@ interface Item {
 }
 
 const props = defineProps<{
-  actionTitle: string
+  actionTitle: string,
+  itemGetter: (query: string) => Promise<Item []>
 }>();
 
 const emit = defineEmits<{
-  (e: 'action', user: UserDto): void
+  (e: 'action', user: Item): void
 }>();
 
 const vFocus = {
@@ -78,9 +78,7 @@ watch(query, async (newQuery, oldQuery) => {
     const presentResults = matchingItems.value;
     matchingItems.value = presentResults.filter((item) => item.name.toLowerCase().includes(newQuery.toLowerCase()));
   } else {
-    let matchingUsers = await backend.users.search(newQuery);
-    let matchingGroups = await backend.groups.search(newQuery);
-    matchingItems.value = (matchingUsers as Item[]).concat(matchingGroups as Item[]).sort((a,b) => a.name.localeCompare(b.name));
+    matchingItems.value = (await props.itemGetter(query.value)) as Item [];
   }
 });
 
@@ -92,7 +90,7 @@ function onInputKeydownEnter(openCombobox: boolean) {
 
 function onAction() {
   if (selectedItem.value) {
-    emit('action', selectedItem.value as UserDto);
+    emit('action', selectedItem.value);
     reset();
   }
 }

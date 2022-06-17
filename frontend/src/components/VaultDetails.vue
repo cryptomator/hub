@@ -62,7 +62,7 @@
               <span class="ml-4 text-sm font-medium text-primary group-hover:text-primary-l1">{{ t('common.share') }}</span>
             </button>
           </div>
-          <SearchInputGroup v-else-if="addingUser" :action-title="t('common.add')" @action="addAuthority" />
+          <SearchInputGroup v-else-if="addingUser" :action-title="t('common.add')" :item-getter="searchAuthority" @action="addAuthority" />
           <p v-if="onAddUserError != null" class="text-sm text-red-900 text-right">
             {{ t('common.unexpectedError', [onAddUserError.message]) }}
           </p>
@@ -167,6 +167,12 @@ function showDownloadVaultTemplate() {
 
 function permissionGranted() {
   devicesRequiringAccessGrant.value = [];
+}
+
+async function searchAuthority(query: string) : Promise<AuthorityDto[]> {
+  let matchingUsers = await backend.users.search(query);
+  let matchingGroups = await backend.groups.search(query);
+  return (matchingUsers as AuthorityDto[]).concat(matchingGroups as AuthorityDto[]).sort((a,b) => a.name.localeCompare(b.name));
 }
 
 async function revokeUserAccess(userId: string) {
