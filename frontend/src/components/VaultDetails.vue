@@ -144,7 +144,7 @@ async function addAuthority(authority: AuthorityDto) {
     } else if (authority.type.toLowerCase() == 'group') {
       await backend.vaults.addGroup(props.vaultId, authority.id);
     } else {
-      //TODO: throw error
+      throw new Error('Unknown authority type \'' + authority.type + '\'');
     }
     members.value = members.value.concat(authority);
     devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
