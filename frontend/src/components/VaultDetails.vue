@@ -139,9 +139,9 @@ async function fetchData() {
 async function addAuthority(authority: AuthorityDto) {
   onAddUserError.value = null;
   try {
-    if (authority.type == 'user') {
+    if (authority.type.toLowerCase() == 'user') {
       await backend.vaults.addUser(props.vaultId, authority.id);
-    } else if (authority.type == 'group') {
+    } else if (authority.type.toLowerCase() == 'group') {
       await backend.vaults.addGroup(props.vaultId, authority.id);
     } else {
       //TODO: throw error
