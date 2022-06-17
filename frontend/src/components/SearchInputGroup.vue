@@ -1,14 +1,14 @@
 <template>
   <div class="flex rounded-md shadow-sm">
     <div class="relative flex items-stretch flex-grow focus-within:z-10">
-      <Combobox v-slot="{ open }" as="div" class="w-full" @update:model-value="item => selectedItem = item">
+      <Combobox as="div" class="w-full" @update:model-value="item => selectedItem = item">
         <div class="relative">
           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <UsersIcon v-if="selectedItem == null" class="h-5 w-5 text-gray-400" aria-hidden="true" />
             <!-- img v-else :src="selectedItem.pictureUrl" alt="" class="w-5 h-5 rounded-full" /-->
           </div>
 
-          <ComboboxInput v-if="selectedItem == null" v-focus class="w-full h-10 rounded-l-md border border-gray-300 bg-white py-2 px-10 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm disabled:bg-primary-l2" placeholder="John Doe" @change="query = $event.target.value" @keydown.enter="onInputKeydownEnter(open)" />
+          <ComboboxInput v-if="selectedItem == null" v-focus class="w-full h-10 rounded-l-md border border-gray-300 bg-white py-2 px-10 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm disabled:bg-primary-l2" placeholder="John Doe" @change="query = $event.target.value"/>
           <input v-else v-model="selectedItem.name" class="w-full h-10 rounded-l-md border border-gray-300 bg-primary-l2 py-2 px-10 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm" readonly />
         </div>
 
@@ -81,12 +81,6 @@ watch(query, async (newQuery, oldQuery) => {
     matchingItems.value = (await props.itemGetter(query.value)) as Item [];
   }
 });
-
-function onInputKeydownEnter(openCombobox: boolean) {
-  if (openCombobox && matchingItems.value.length > 0) {
-    selectedItem.value = matchingItems.value[0];
-  }
-}
 
 function onAction() {
   if (selectedItem.value) {
