@@ -1,4 +1,5 @@
 import AxiosStatic, { AxiosRequestConfig, AxiosResponse } from 'axios';
+import md5 from 'blueimp-md5';
 import authPromise from './auth';
 import { backendBaseURL } from './config';
 
@@ -39,6 +40,24 @@ export class DeviceDto {
 
 export class AuthorityDto {
   constructor(public id: string, public name: string, public type: string) { }
+
+  public static getPictureURI(obj: AuthorityDto): string {
+    if (obj.type.toLowerCase() == 'user') {
+      const user = (obj as unknown) as UserDto;
+      if (user.pictureUrl) {
+        return user.pictureUrl;
+      } else if (user.email) {
+        return `https://www.gravatar.com/avatar/${md5(user.email.trim())}?d=identicon`;
+      } else {
+        return '/user-icon.svg';
+      }
+    } else if (obj.type.toLowerCase() == 'group') {
+      return '/group-icon.svg';
+    } else {
+      return '';
+    }
+  }
+
 }
 
 export class UserDto extends AuthorityDto {

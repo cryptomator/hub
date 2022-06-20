@@ -67,11 +67,10 @@
 <script setup lang="ts">
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
 import { CogIcon, CreditCardIcon, DesktopComputerIcon, LogoutIcon, MenuIcon, XIcon } from '@heroicons/vue/outline';
-import md5 from 'blueimp-md5';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auth from '../common/auth';
-import { UserDto } from '../common/backend';
+import { AuthorityDto, UserDto } from '../common/backend';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -99,9 +98,7 @@ const profileDropdownSections = {
 };
 
 const profileDropdown = ref<any []>([]);
-
-const pictureUrl = computed(() => getPictureUrl());
-
+const pictureUrl = computed(() => AuthorityDto.getPictureURI(props.me));
 const props = defineProps<{
   me : UserDto
 }>();
@@ -114,13 +111,4 @@ onMounted(async () => {
   }
 });
 
-function getPictureUrl(): string {
-  if (props.me.pictureUrl) {
-    return props.me.pictureUrl;
-  } else if (props.me.email) {
-    return `https://www.gravatar.com/avatar/${md5(props.me.email.trim())}?d=identicon`;
-  } else {
-    return '/logo.svg';
-  }
-}
 </script>
