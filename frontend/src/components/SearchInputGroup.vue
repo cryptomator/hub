@@ -78,9 +78,29 @@ watch(query, async (newQuery, oldQuery) => {
     const presentResults = matchingItems.value;
     matchingItems.value = presentResults.filter((item) => item.name.toLowerCase().includes(newQuery.toLowerCase()));
   } else {
-    matchingItems.value = (await props.itemGetter(query.value)) as Item [];
+    debounce(queryBackend, 250, false).apply(this);
   }
 });
+
+async function queryBackend() {
+  if (query.value != '') {
+    matchingItems.value = await props.itemGetter(query.value) as Item [];
+  }
+}
+
+//copied from https://github.com/you-dont-need/You-Dont-Need-Lodash-Underscore#_debounce
+function debounce(func: any, wait : number, immediate: boolean) : () => void {
+  var timeout : any  = 250;
+  return () => {
+    var context = this, args = arguments;
+    clearTimeout(timeout);
+    timeout = setTimeout(() => {
+      timeout = null;
+      if (!immediate) func.apply(context, args);
+    }, wait);
+    if (immediate && !timeout) func.apply(context, args);
+  };
+}
 
 function onAction() {
   if (selectedItem.value) {
