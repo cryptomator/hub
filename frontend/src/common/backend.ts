@@ -54,7 +54,7 @@ export class AuthorityDto {
     } else if (obj.type.toLowerCase() == 'group') {
       return '/group-icon.svg';
     } else {
-      return '';
+      return '/logo.svg';
     }
   }
 

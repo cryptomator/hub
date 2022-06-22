@@ -47,7 +47,7 @@ interface Item {
 
 const props = defineProps<{
   actionTitle: string,
-  itemGetter: (query: string) => Promise<Item []>,
+  onSearch: (query: string) => Promise<Item []>,
   itemPicUriGetter: (item: Item) => string
 }>();
 
@@ -89,7 +89,7 @@ async function queryBackend() {
 }
 
 //copied from https://github.com/you-dont-need/You-Dont-Need-Lodash-Underscore#_debounce
-function debounce(func: any, wait : number, immediate: boolean) : () => void {
+function debounce(func: Function, wait: number, immediate: boolean) : () => void {
   var timeout : any  = 250;
   return () => {
     var context = this, args = arguments;
