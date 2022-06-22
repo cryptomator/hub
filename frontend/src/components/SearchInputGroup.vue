@@ -5,7 +5,7 @@
         <div class="relative">
           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <UsersIcon v-if="selectedItem == null" class="h-5 w-5 text-gray-400" aria-hidden="true" />
-            <img v-else :src="props.itemPicUriGetter(selectedItem)" alt="" class="w-5 h-5 rounded-full" >
+            <img v-else :src="selectedItem.pictureUrl" alt="" class="w-5 h-5 rounded-full" >
           </div>
 
           <ComboboxInput v-if="selectedItem == null" v-focus class="w-full h-10 rounded-l-md border border-gray-300 bg-white py-2 px-10 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm disabled:bg-primary-l2" placeholder="John Doe" @change="query = $event.target.value"/>
@@ -16,7 +16,7 @@
           <ComboboxOption v-for="item in matchingItems" :key="item.id" v-slot="{ active }" :value="item" as="template">
             <li :class="['relative cursor-default select-none py-2 pl-3 pr-9', active ? 'bg-primary text-white' : 'text-gray-900']">
               <div class="flex items-center">
-                <img :src="props.itemPicUriGetter(item)" alt="" class="h-6 w-6 shrink-0 rounded-full" >
+                <img :src="item.pictureUrl" alt="" class="h-6 w-6 shrink-0 rounded-full" >
                 <span class="ml-3 truncate">{{ item.name }}</span>
               </div>
             </li>
@@ -43,12 +43,12 @@ import { nextTick, ref, watch } from 'vue';
 interface Item {
   id: string;
   name: string;
+  pictureUrl: string;
 }
 
 const props = defineProps<{
   actionTitle: string,
   onSearch: (query: string) => Promise<Item []>,
-  itemPicUriGetter: (item: Item) => string
 }>();
 
 const emit = defineEmits<{

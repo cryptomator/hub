@@ -86,16 +86,13 @@ public class UsersResource {
 
 	public static final class UserDto extends AuthorityDto {
 
-		@JsonProperty("pictureUrl")
-		public final String pictureUrl;
 		@JsonProperty("email")
 		public final String email;
 		@JsonProperty("devices")
 		public final Set<DeviceResource.DeviceDto> devices;
 
 		UserDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("pictureUrl") String pictureUrl, @JsonProperty("email") String email, @JsonProperty("devices") Set<DeviceResource.DeviceDto> devices) {
-			super(id, Type.USER, name);
-			this.pictureUrl = pictureUrl;
+			super(id, Type.USER, name, pictureUrl);
 			this.email = email;
 			this.devices = devices;
 		}
