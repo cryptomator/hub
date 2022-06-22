@@ -64,6 +64,7 @@ const vFocus = {
 const actionButton = ref<HTMLButtonElement>();
 const matchingItems = ref<Item[]>([]);
 const query = ref('');
+const inputTimeout = ref<NodeJS.Timeout | null>();
 const selectedItem = ref<Item | null>(null);
 watch(selectedItem, (value) => {
   if (value != null) {
@@ -74,31 +75,29 @@ watch(selectedItem, (value) => {
 watch(query, async (newQuery, oldQuery) => {
   if (newQuery == '') {
     matchingItems.value = [];
+    if (inputTimeout.value) clearTimeout(inputTimeout.value);
   } else if (oldQuery != '' && newQuery.startsWith(oldQuery)) {
     const presentResults = matchingItems.value;
     matchingItems.value = presentResults.filter((item) => item.name.toLowerCase().includes(newQuery.toLowerCase()));
   } else {
-    debounce(queryBackend, 250, false).apply(this);
+    debounce(() => queryBackend(newQuery), 250, false).apply(this);
   }
 });
 
-async function queryBackend() {
-  if (query.value != '') {
-    matchingItems.value = await props.itemGetter(query.value) as Item [];
-  }
+async function queryBackend(query: string) {
+  matchingItems.value = await props.onSearch(query) as Item [];
 }
 
 //copied from https://github.com/you-dont-need/You-Dont-Need-Lodash-Underscore#_debounce
 function debounce(func: Function, wait: number, immediate: boolean) : () => void {
-  var timeout : any  = 250;
   return () => {
     var context = this, args = arguments;
-    clearTimeout(timeout);
-    timeout = setTimeout(() => {
-      timeout = null;
+    if (inputTimeout.value) clearTimeout(inputTimeout.value);
+    inputTimeout.value = setTimeout(() => {
+      inputTimeout.value = null;
       if (!immediate) func.apply(context, args);
     }, wait);
-    if (immediate && !timeout) func.apply(context, args);
+    if (immediate && !inputTimeout.value) func.apply(context, args);
   };
 }
 
