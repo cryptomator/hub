@@ -104,7 +104,7 @@ class VaultService {
 
   public async addGroup(vaultId: string, groupId: string): Promise<AxiosResponse<void>> {
     return axiosAuth.put(`/vaults/${vaultId}/groups/${groupId}`)
-      .catch((err) => rethrowAndConvertIfExpected(err, 402, 404));
+      .catch((err) => rethrowAndConvertIfExpected(err, 404));
   }
 
   public async getDevicesRequiringAccessGrant(vaultId: string): Promise<DeviceDto[]> {
@@ -186,8 +186,6 @@ const services = {
 
 function convertExpectedToBackendError(status: number): BackendError {
   switch (status) {
-    case 402:
-      return new PaymentRequiredError();
     case 403:
       return new ForbiddenError();
     case 404:
@@ -218,12 +216,6 @@ export default services;
 export class BackendError extends Error {
   constructor(msg: string) {
     super(msg);
-  }
-}
-
-export class PaymentRequiredError extends BackendError {
-  constructor() {
-    super('License upgrade needed');
   }
 }
 
