@@ -14,9 +14,12 @@ import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Objects;
 
 @ApplicationScoped
 public class LicenseValidator {
+
+	private static final String [] REQUIRED_CLAIMS = {"seats"};
 
 	private static final String LICENSE_PUBLIC_KEY = """
 			MIGbMBAGByqGSM49AgEGBSuBBAAjA4GGAAQBjvVwj5K4/v6yq23luaEEYYG9ru6z\
@@ -52,6 +55,11 @@ public class LicenseValidator {
 		var jwt = verifier.verify(token);
 		if (!jwt.getId().equals(expectedHubId)) {
 			throw new InvalidClaimException("Token ID does not match your Hub ID.");
+		}
+		for(var claim : REQUIRED_CLAIMS) {
+			if(Objects.isNull(jwt.getClaim(claim))) {
+				throw new InvalidClaimException("The claim "+claim+" is required, but not present.");
+			}
 		}
 		return jwt;
 	}
