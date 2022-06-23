@@ -12,8 +12,8 @@
           <input v-else v-model="selectedItem.name" class="w-full h-10 rounded-l-md border border-gray-300 bg-primary-l2 py-2 px-10 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm" readonly />
         </div>
 
-        <ComboboxOptions v-if="selectedItem == null && matchingItems.length > 0" class="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-          <ComboboxOption v-for="item in matchingItems" :key="item.id" v-slot="{ active }" :value="item" as="template">
+        <ComboboxOptions v-if="selectedItem == null && filteredItems.length > 0" class="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+          <ComboboxOption v-for="item in filteredItems" :key="item.id" v-slot="{ active }" :value="item" as="template">
             <li :class="['relative cursor-default select-none py-2 pl-3 pr-9', active ? 'bg-primary text-white' : 'text-gray-900']">
               <div class="flex items-center">
                 <img :src="item.pictureUrl" alt="" class="h-6 w-6 shrink-0 rounded-full" >
@@ -38,7 +38,9 @@
 <script setup lang="ts">
 import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions } from '@headlessui/vue';
 import { UsersIcon, XCircleIcon } from '@heroicons/vue/solid';
+import { computed } from '@vue/reactivity';
 import { nextTick, ref, watch } from 'vue';
+import { debounce } from '../common/util';
 
 interface Item {
   id: string;
@@ -62,9 +64,6 @@ const vFocus = {
 };
 
 const actionButton = ref<HTMLButtonElement>();
-const matchingItems = ref<Item[]>([]);
-const query = ref('');
-const inputTimeout = ref<NodeJS.Timeout | null>();
 const selectedItem = ref<Item | null>(null);
 watch(selectedItem, (value) => {
   if (value != null) {
@@ -72,34 +71,32 @@ watch(selectedItem, (value) => {
   }
 });
 
-watch(query, async (newQuery, oldQuery) => {
+const query = ref('');
+const searchResult = ref<Item[]>([]);
+const debouncedSearch = debounce(async () => {
+  if (query.value != '') {
+    const result = await props.onSearch(query.value);
+    if (query.value != '') {
+      searchResult.value = result;
+    }
+  }
+});
+watch(query, async (newQuery) => {
   if (newQuery == '') {
-    matchingItems.value = [];
-    if (inputTimeout.value) clearTimeout(inputTimeout.value);
-  } else if (oldQuery != '' && newQuery.startsWith(oldQuery)) {
-    const presentResults = matchingItems.value;
-    matchingItems.value = presentResults.filter((item) => item.name.toLowerCase().includes(newQuery.toLowerCase()));
+    searchResult.value = [];
+    debouncedSearch.cancel();
   } else {
-    debounce(() => queryBackend(newQuery), 250, false).apply(this);
+    debouncedSearch();
   }
 });
 
-async function queryBackend(query: string) {
-  matchingItems.value = await props.onSearch(query) as Item [];
-}
-
-//copied from https://github.com/you-dont-need/You-Dont-Need-Lodash-Underscore#_debounce
-function debounce(func: Function, wait: number, immediate: boolean) : () => void {
-  return () => {
-    var context = this, args = arguments;
-    if (inputTimeout.value) clearTimeout(inputTimeout.value);
-    inputTimeout.value = setTimeout(() => {
-      inputTimeout.value = null;
-      if (!immediate) func.apply(context, args);
-    }, wait);
-    if (immediate && !inputTimeout.value) func.apply(context, args);
-  };
-}
+const filteredItems = computed(() => {
+  if (searchResult.value.length == 0) {
+    return [];
+  } else {
+    return searchResult.value.filter((item) => item.name.toLowerCase().includes(query.value.toLowerCase()));
+  }
+});
 
 function onAction() {
   if (selectedItem.value) {
