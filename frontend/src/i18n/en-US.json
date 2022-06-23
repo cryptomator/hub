@@ -23,6 +23,8 @@
   "billing.licenseInfo.title": "License Info",
   "billing.licenseInfo.description": "Verify your license information. If you'd like to make changes or check your subscription status, press \"Manage Subscription\".",
   "billing.licenseInfo.email.title": "Licensed to",
+  "billing.licenseInfo.noLicense.description":"Thank you for using Cryptomator Hub! You have been granted the Community License. If you need more seats, upgrade your license.",
+  "billing.licenseInfo.noLicense.typeLabel":"Type",
   "billing.licenseInfo.seats.title": "Number of Seats",
   "billing.licenseInfo.seats.description.enoughSeats": "You have {0} unused seats remaining.",
   "billing.licenseInfo.seats.description.zeroSeats": "You have no seats remaining. Upgrade if necessary.",
