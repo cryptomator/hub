@@ -38,13 +38,19 @@ export class DeviceDto {
 }
 
 export class AuthorityDto {
-  constructor(public id: string, public name: string, public type: string) { }
+  constructor(public id: string, public name: string, public type: string, public pictureUrl: string) { }
 }
 
 export class UserDto extends AuthorityDto {
   constructor(public id: string, public name: string, public pictureUrl: string, public email: string, public devices: DeviceDto[]) {
-    super(id, name, 'user')
-   }
+    super(id, name, 'user', pictureUrl);
+  }
+}
+
+export class GroupDto extends AuthorityDto {
+  constructor(public id: string, public name: string, public pictureUrl: string) {
+    super(id, name, 'group', pictureUrl);
+  }
 }
 
 export class BillingDto {
@@ -74,6 +80,11 @@ class VaultService {
 
   public async addUser(vaultId: string, userId: string): Promise<AxiosResponse<void>> {
     return axiosAuth.put(`/vaults/${vaultId}/users/${userId}`)
+      .catch((err) => rethrowAndConvertIfExpected(err, 404));
+  }
+
+  public async addGroup(vaultId: string, groupId: string): Promise<AxiosResponse<void>> {
+    return axiosAuth.put(`/vaults/${vaultId}/groups/${groupId}`)
       .catch((err) => rethrowAndConvertIfExpected(err, 404));
   }
 
@@ -119,6 +130,17 @@ class UserService {
     return axiosAuth.get<UserDto[]>('/users/').then(response => response.data);
   }
 
+  public async search(query: string): Promise<UserDto[]> {
+    return axiosAuth.get<UserDto[]>(`/users/search?query=${query}`).then(response => response.data);
+  }
+
+}
+
+class GroupService {
+  public async search(query: string): Promise<GroupDto[]> {
+    return axiosAuth.get<GroupDto[]>(`/groups/search?query=${query}`).then(response => response.data);
+  }
+
 }
 
 class BillingService {
@@ -138,6 +160,7 @@ class BillingService {
 const services = {
   vaults: new VaultService(),
   users: new UserService(),
+  groups: new GroupService(),
   devices: new DeviceService(),
   billing: new BillingService()
 };

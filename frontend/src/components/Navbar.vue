@@ -30,7 +30,7 @@
             <div>
               <MenuButton class="bg-tertiary2 flex text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">
                 <span class="sr-only">Open user menu</span>
-                <img class="h-8 w-8 rounded-full" :src="pictureUrl" alt="" />
+                <img class="h-8 w-8 rounded-full" :src="props.me.pictureUrl" alt="" />
               </MenuButton>
             </div>
             <transition enter-active-class="transition ease-out duration-100" enter-from-class="opacity-0 scale-95" enter-to-class="opacity-100 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class=" opacity-100 scale-100" leave-to-class=" opacity-0 scale-95">
@@ -67,8 +67,7 @@
 <script setup lang="ts">
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
 import { CogIcon, CreditCardIcon, DesktopComputerIcon, LogoutIcon, MenuIcon, XIcon } from '@heroicons/vue/outline';
-import md5 from 'blueimp-md5';
-import { computed, onMounted, ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auth from '../common/auth';
 import { UserDto } from '../common/backend';
@@ -99,9 +98,6 @@ const profileDropdownSections = {
 };
 
 const profileDropdown = ref<any []>([]);
-
-const pictureUrl = computed(() => getPictureUrl());
-
 const props = defineProps<{
   me : UserDto
 }>();
@@ -114,13 +110,4 @@ onMounted(async () => {
   }
 });
 
-function getPictureUrl(): string {
-  if (props.me.pictureUrl) {
-    return props.me.pictureUrl;
-  } else if (props.me.email) {
-    return `https://www.gravatar.com/avatar/${md5(props.me.email.trim())}?d=identicon`;
-  } else {
-    return '/logo.svg';
-  }
-}
 </script>
