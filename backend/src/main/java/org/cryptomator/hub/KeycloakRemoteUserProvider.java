@@ -44,9 +44,9 @@ public class KeycloakRemoteUserProvider implements RemoteUserProvider {
 	}
 
 	@Override
-	public List<User> searchUser(String querry) {
+	public List<User> searchUser(String query) {
 		try (Keycloak keycloak = Keycloak.getInstance(syncerConfig.getKeycloakUrl(), syncerConfig.getKeycloakRealm(), syncerConfig.getUsername(), syncerConfig.getPassword(), syncerConfig.getKeycloakClientId())) {
-			return keycloak.realm(syncerConfig.getKeycloakRealm()).users().search(querry).stream().map(this::mapToUser).toList();
+			return keycloak.realm(syncerConfig.getKeycloakRealm()).users().search(query).stream().map(this::mapToUser).toList();
 		}
 	}
 

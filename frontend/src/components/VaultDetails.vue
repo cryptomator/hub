@@ -62,7 +62,7 @@
               <span class="ml-4 text-sm font-medium text-primary group-hover:text-primary-l1">{{ t('common.share') }}</span>
             </button>
           </div>
-          <SearchInputGroup v-else-if="addingUser" :action-title="t('common.add')" :items="allUsers" @action="addUser" />
+          <SearchInputGroup v-else-if="addingUser" :action-title="t('common.add')" :on-search="searchAuthority" @action="addAuthority" />
           <p v-if="onAddUserError != null" class="text-sm text-red-900 text-right">
             {{ t('common.unexpectedError', [onAddUserError.message]) }}
           </p>
@@ -90,7 +90,7 @@
 import { PencilIcon, PlusSmIcon } from '@heroicons/vue/solid';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { AuthorityDto, DeviceDto, NotFoundError, UserDto, VaultDto } from '../common/backend';
+import backend, { AuthorityDto, DeviceDto, NotFoundError, VaultDto } from '../common/backend';
 import DownloadVaultTemplateDialog from './DownloadVaultTemplateDialog.vue';
 import FetchError from './FetchError.vue';
 import GrantPermissionDialog from './GrantPermissionDialog.vue';
@@ -116,7 +116,6 @@ const downloadingVaultTemplate = ref(false);
 const downloadVaultTemplateDialog = ref<typeof DownloadVaultTemplateDialog>();
 const vault = ref<VaultDto>();
 const members = ref<AuthorityDto[]>([]);
-const allUsers = ref<UserDto[]>([]);
 const devicesRequiringAccessGrant = ref<DeviceDto[]>([]);
 
 onMounted(fetchData);
@@ -128,7 +127,6 @@ async function fetchData() {
   try {
     vault.value = await backend.vaults.get(props.vaultId);
     members.value = await backend.vaults.getMembers(props.vaultId);
-    allUsers.value = await backend.users.listAll();
     devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
   } catch (error) {
     console.error('Fetching data failed.', error);
@@ -138,15 +136,18 @@ async function fetchData() {
   isFetching.value = false;
 }
 
-async function addUser(id: string) {
+async function addAuthority(authority: AuthorityDto) {
   onAddUserError.value = null;
   try {
-    const user = allUsers.value.find(u => u.id === id);
-    if (user) {
-      await backend.vaults.addUser(props.vaultId, id);
-      members.value = members.value.concat(user);
-      devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
+    if (authority.type.toLowerCase() == 'user') {
+      await backend.vaults.addUser(props.vaultId, authority.id);
+    } else if (authority.type.toLowerCase() == 'group') {
+      await backend.vaults.addGroup(props.vaultId, authority.id);
+    } else {
+      throw new Error('Unknown authority type \'' + authority.type + '\'');
     }
+    members.value = members.value.concat(authority);
+    devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
   } catch (error) {
     //even if error instanceof NotFoundError, it is not expected from user perspective
     console.error('Adding member failed.', error);
@@ -166,6 +167,12 @@ function showDownloadVaultTemplate() {
 
 function permissionGranted() {
   devicesRequiringAccessGrant.value = [];
+}
+
+async function searchAuthority(query: string): Promise<AuthorityDto[]> {
+  return (await Promise.all([backend.users.search(query), backend.groups.search(query)]))
+    .flat()
+    .sort((a, b) => a.name.localeCompare(b.name));
 }
 
 async function revokeUserAccess(userId: string) {

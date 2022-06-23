@@ -1,14 +1,14 @@
 <template>
   <div class="flex rounded-md shadow-sm">
     <div class="relative flex items-stretch flex-grow focus-within:z-10">
-      <Combobox v-slot="{ open }" as="div" class="w-full" @update:model-value="item => selectedItem = item">
+      <Combobox as="div" class="w-full" @update:model-value="item => selectedItem = item">
         <div class="relative">
           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <UsersIcon v-if="selectedItem == null" class="h-5 w-5 text-gray-400" aria-hidden="true" />
-            <img v-else :src="selectedItem.pictureUrl" alt="" class="w-5 h-5 rounded-full" />
+            <img v-else :src="selectedItem.pictureUrl" alt="" class="w-5 h-5 rounded-full" >
           </div>
 
-          <ComboboxInput v-if="selectedItem == null" v-focus class="w-full h-10 rounded-l-md border border-gray-300 bg-white py-2 px-10 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm disabled:bg-primary-l2" placeholder="John Doe" @change="query = $event.target.value" @keydown.enter="onInputKeydownEnter(open)" />
+          <ComboboxInput v-if="selectedItem == null" v-focus class="w-full h-10 rounded-l-md border border-gray-300 bg-white py-2 px-10 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm disabled:bg-primary-l2" placeholder="John Doe" @change="query = $event.target.value"/>
           <input v-else v-model="selectedItem.name" class="w-full h-10 rounded-l-md border border-gray-300 bg-primary-l2 py-2 px-10 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm" readonly />
         </div>
 
@@ -16,7 +16,7 @@
           <ComboboxOption v-for="item in filteredItems" :key="item.id" v-slot="{ active }" :value="item" as="template">
             <li :class="['relative cursor-default select-none py-2 pl-3 pr-9', active ? 'bg-primary text-white' : 'text-gray-900']">
               <div class="flex items-center">
-                <img :src="item.pictureUrl" alt="" class="h-6 w-6 shrink-0 rounded-full" />
+                <img :src="item.pictureUrl" alt="" class="h-6 w-6 shrink-0 rounded-full" >
                 <span class="ml-3 truncate">{{ item.name }}</span>
               </div>
             </li>
@@ -38,7 +38,9 @@
 <script setup lang="ts">
 import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions } from '@headlessui/vue';
 import { UsersIcon, XCircleIcon } from '@heroicons/vue/solid';
-import { computed, nextTick, ref, watch } from 'vue';
+import { computed } from '@vue/reactivity';
+import { nextTick, ref, watch } from 'vue';
+import { debounce } from '../common/util';
 
 interface Item {
   id: string;
@@ -47,12 +49,12 @@ interface Item {
 }
 
 const props = defineProps<{
-  actionTitle: string
-  items: Item[]
+  actionTitle: string,
+  onSearch: (query: string) => Promise<Item []>,
 }>();
 
 const emit = defineEmits<{
-  (e: 'action', id: string): void
+  (e: 'action', authority: Item): void
 }>();
 
 const vFocus = {
@@ -62,8 +64,6 @@ const vFocus = {
 };
 
 const actionButton = ref<HTMLButtonElement>();
-
-const query = ref('');
 const selectedItem = ref<Item | null>(null);
 watch(selectedItem, (value) => {
   if (value != null) {
@@ -71,23 +71,36 @@ watch(selectedItem, (value) => {
   }
 });
 
-const filteredItems = computed(() => {
-  if (query.value.length == 0) {
-    return [];
+const query = ref('');
+const searchResult = ref<Item[]>([]);
+const debouncedSearch = debounce(async () => {
+  if (query.value != '') {
+    const result = await props.onSearch(query.value);
+    if (query.value != '') {
+      searchResult.value = result;
+    }
+  }
+});
+watch(query, async (newQuery) => {
+  if (newQuery == '') {
+    searchResult.value = [];
+    debouncedSearch.cancel();
   } else {
-    return props.items.filter((item) => item.name.toLowerCase().includes(query.value.toLowerCase()));
+    debouncedSearch();
   }
 });
 
-function onInputKeydownEnter(openCombobox: boolean) {
-  if (openCombobox && filteredItems.value.length > 0) {
-    selectedItem.value = filteredItems.value[0];
+const filteredItems = computed(() => {
+  if (searchResult.value.length == 0) {
+    return [];
+  } else {
+    return searchResult.value.filter((item) => item.name.toLowerCase().includes(query.value.toLowerCase()));
   }
-}
+});
 
 function onAction() {
   if (selectedItem.value) {
-    emit('action', selectedItem.value.id);
+    emit('action', selectedItem.value);
     reset();
   }
 }

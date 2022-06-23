@@ -47,7 +47,6 @@
     "@headlessui/vue": "^1.6.1",
     "@heroicons/vue": "^1.0.6",
     "axios": "^0.27.2",
-    "blueimp-md5": "^2.19.0",
     "file-saver": "^2.0.5",
     "jszip": "^3.9.1",
     "keycloak-js": "^18.0.0",
