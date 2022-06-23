@@ -52,7 +52,7 @@ public class LicenseHolder {
 		Objects.requireNonNull(token);
 
 		var billingEntry = Billing.<Billing>findAll().firstResult();
-		this.license = licenseValidator.validate(token, billingEntry.hubId); //TODO: should we check also for existence of certain claims? otherwise strange errors can appear
+		this.license = licenseValidator.validate(token, billingEntry.hubId);
 		billingEntry.token = token;
 		billingEntry.persist();
 	}
@@ -61,9 +61,6 @@ public class LicenseHolder {
 		return license;
 	}
 
-	public boolean hasLicense() {
-		return Objects.nonNull(license);
-	}
 	/**
 	 * Checks if the license is expired.
 	 * @return {@code true}, if the license _is set and expired_. Otherwise false.
