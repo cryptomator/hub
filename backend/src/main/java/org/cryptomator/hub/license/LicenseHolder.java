@@ -30,7 +30,7 @@ public class LicenseHolder {
 	@PostConstruct
 	void init() {
 		var billingEntry = Billing.<Billing>findAll().firstResult();
-		if(billingEntry.token != null) {
+		if (billingEntry.token != null) {
 			try {
 				this.license = licenseValidator.validate(billingEntry.token, billingEntry.hubId);
 			} catch (JWTVerificationException e) {
@@ -63,24 +63,28 @@ public class LicenseHolder {
 
 	/**
 	 * Checks if the license is expired.
+	 *
 	 * @return {@code true}, if the license _is set and expired_. Otherwise false.
 	 */
 	public boolean isExpired() {
-		return Optional.ofNullable(license).map(l -> l.getExpiresAt().toInstant().isBefore(Instant.now())).orElse(NoLicenseValues.IS_EXPIRED);
+		return Optional.ofNullable(license) //
+				.map(l -> l.getExpiresAt().toInstant().isBefore(Instant.now())) //
+				.orElse(CommunityLicenseConstants.IS_EXPIRED);
 	}
 
 	/**
 	 * Gets the number of available seats of the license
-	 * @return Number of available seats, if license is not null. Otherwise {@value NoLicenseValues#SEATS}.
+	 *
+	 * @return Number of available seats, if license is not null. Otherwise {@value CommunityLicenseConstants#SEATS}.
 	 */
 	public long getAvailableSeats() {
 		return Optional.ofNullable(license) //
 				.map(l -> l.getClaim("seats")) //
 				.map(Claim::asLong) //
-				.orElse(NoLicenseValues.SEATS);
+				.orElse(CommunityLicenseConstants.SEATS);
 	}
 
-	public static class NoLicenseValues {
+	public static class CommunityLicenseConstants {
 		public static final long SEATS = 5;
 		static final boolean IS_EXPIRED = false;
 	}

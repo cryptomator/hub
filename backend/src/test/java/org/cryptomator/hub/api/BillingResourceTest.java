@@ -18,7 +18,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 
 import javax.inject.Inject;
-
 import java.sql.SQLException;
 
 import static io.restassured.RestAssured.given;
@@ -61,9 +60,9 @@ public class BillingResourceTest {
 		public void testGetEmpty() throws SQLException {
 			try (var s = dataSource.getConnection().createStatement()) {
 				s.execute("""
-					UPDATE "billing"
-					SET "hub_id" = '42', "token" = null
-					WHERE "id" = 0;
+						UPDATE "billing"
+						SET "hub_id" = '42', "token" = null
+						WHERE "id" = 0;
 						""");
 			}
 

@@ -70,8 +70,8 @@ public class BillingResource {
 							 @JsonProperty("expiresAt") @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSX") Date expiresAt) {
 
 		public static BillingDto create(String hubId) {
-			var seats = LicenseHolder.NoLicenseValues.SEATS;
-			var remainingSeats = Math.max( seats - (int) EffectiveVaultAccess.countEffectiveVaultUsers(), 0);
+			var seats = LicenseHolder.CommunityLicenseConstants.SEATS;
+			var remainingSeats = Math.max(seats - EffectiveVaultAccess.countEffectiveVaultUsers(), 0);
 			return new BillingDto(hubId, false, null, (int) seats, (int) remainingSeats, null, null);
 		}
 
