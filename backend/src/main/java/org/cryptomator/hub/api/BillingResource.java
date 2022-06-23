@@ -70,7 +70,9 @@ public class BillingResource {
 							 @JsonProperty("expiresAt") @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSX") Date expiresAt) {
 
 		public static BillingDto create(String hubId) {
-			return new BillingDto(hubId, false, null, null, null, null, null);
+			var seats = LicenseHolder.CommunityLicenseConstants.SEATS;
+			var remainingSeats = Math.max(seats - EffectiveVaultAccess.countEffectiveVaultUsers(), 0);
+			return new BillingDto(hubId, false, null, (int) seats, (int) remainingSeats, null, null);
 		}
 
 		public static BillingDto fromDecodedJwt(DecodedJWT jwt) {
