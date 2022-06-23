@@ -72,8 +72,8 @@ public class BillingResourceTest {
 					.body("hubId", is("42"))
 					.body("hasLicense", is(false))
 					.body("email", nullValue())
-					.body("totalSeats", nullValue())
-					.body("remainingSeats", nullValue())
+					.body("totalSeats", is(5)) //community license
+					.body("remainingSeats", is(3)) //depends on the flyway test data migration
 					.body("issuedAt", nullValue())
 					.body("expiresAt", nullValue());
 		}
