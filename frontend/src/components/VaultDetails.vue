@@ -169,9 +169,10 @@ function permissionGranted() {
   devicesRequiringAccessGrant.value = [];
 }
 
-async function searchAuthority(query: string) : Promise<AuthorityDto[]> {
-  return await (await Promise.all([backend.users.search(query), backend.groups.search(query)])).flatMap(x => (x as unknown) as AuthorityDto).sort((a,b) => a.name.localeCompare(b.name));
-
+async function searchAuthority(query: string): Promise<AuthorityDto[]> {
+  return (await Promise.all([backend.users.search(query), backend.groups.search(query)]))
+    .flat()
+    .sort((a, b) => a.name.localeCompare(b.name));
 }
 
 async function revokeUserAccess(userId: string) {
