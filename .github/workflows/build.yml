@@ -50,7 +50,7 @@ jobs:
       - id: get_tag
         if: github.event.inputs.tag != '' || startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/develop'
         run: |
-          if [[ -z "${{ github.event.inputs.tag }}" ]]; then
+          if [[ ! -z "${{ github.event.inputs.tag }}" ]]; then
             TAG="${{ github.event.inputs.tag }}"
           elif [[ $GITHUB_REF == refs/tags/* ]]; then
             TAG=${GITHUB_REF/refs\/tags\//}
