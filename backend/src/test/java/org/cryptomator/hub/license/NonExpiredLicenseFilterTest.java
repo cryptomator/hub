@@ -1,8 +1,6 @@
 package org.cryptomator.hub.license;
 
-import io.quarkus.panache.mock.PanacheMock;
 import io.quarkus.test.junit.QuarkusTest;
-import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,10 +11,10 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Response;
 
 @QuarkusTest
-public class SeatsRestrictionFilterTest {
+public class NonExpiredLicenseFilterTest {
 
 	ContainerRequestContext context = Mockito.mock(ContainerRequestContext.class);
-	SeatsRestrictionFilter filter = new SeatsRestrictionFilter();
+	NonExpiredLicenseFilter filter = new NonExpiredLicenseFilter();
 
 	@BeforeEach
 	public void setup() {
@@ -27,23 +25,6 @@ public class SeatsRestrictionFilterTest {
 	@DisplayName("abort when providing expired license")
 	public void testFilterWithExpiredLicense() {
 		Mockito.doReturn(true).when(filter.license).isExpired();
-		Mockito.doReturn(Long.MAX_VALUE).when(filter.license).getAvailableSeats();
-		PanacheMock.mock(EffectiveVaultAccess.class);
-		Mockito.when(EffectiveVaultAccess.countEffectiveVaultUsers()).thenReturn(0L);
-
-
-		filter.filter(context);
-
-		Mockito.verify(context).abortWith(Mockito.argThat(StatusCodeMatcher.hasStatus(Response.Status.PAYMENT_REQUIRED)));
-	}
-
-	@Test
-	@DisplayName("abort when number of available seats is exceeded")
-	public void testFilterWhenAllAvailableSeatsUsed() {
-		Mockito.doReturn(false).when(filter.license).isExpired();
-		Mockito.doReturn(1L).when(filter.license).getAvailableSeats();
-		PanacheMock.mock(EffectiveVaultAccess.class);
-		Mockito.when(EffectiveVaultAccess.countEffectiveVaultUsers()).thenReturn(1L);
 
 		filter.filter(context);
 
@@ -52,11 +33,8 @@ public class SeatsRestrictionFilterTest {
 
 	@Test
 	@DisplayName("continue when seats are still available")
-	public void testDontFilterWhenSeatsAvailable() {
+	public void testDontFilterWhenLicenseIsNotExpired() {
 		Mockito.doReturn(false).when(filter.license).isExpired();
-		Mockito.doReturn(Long.MAX_VALUE).when(filter.license).getAvailableSeats();
-		PanacheMock.mock(EffectiveVaultAccess.class);
-		Mockito.when(EffectiveVaultAccess.countEffectiveVaultUsers()).thenReturn(1L);
 
 		filter.filter(context);
 

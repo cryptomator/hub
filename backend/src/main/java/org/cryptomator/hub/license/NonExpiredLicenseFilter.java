@@ -11,20 +11,19 @@ import javax.ws.rs.ext.Provider;
 /**
  * Request filter which checks if the license is not expired and available seats in the license are not already exceeded.
  * <p>
- * Applied to all methods annotated with {@link SeatsRestricted}.
+ * Applied to all methods annotated with {@link NonExpiredLicense}.
  */
 @Provider
-@SeatsRestricted
-public class SeatsRestrictionFilter implements ContainerRequestFilter {
+@NonExpiredLicense
+public class NonExpiredLicenseFilter implements ContainerRequestFilter {
 
 	@Inject
 	LicenseHolder license;
 
 	@Override
 	public void filter(ContainerRequestContext requestContext) {
-		long usedSeats = EffectiveVaultAccess.countEffectiveVaultUsers();
-
-		if (license.isExpired() || (usedSeats >= license.getAvailableSeats())) {
+		//Problem: Nutzer kann bereits teil eines Vaults sein
+		if (license.isExpired()) {
 			var response = Response.status(Response.Status.PAYMENT_REQUIRED).build();
 			requestContext.abortWith(response);
 		}
