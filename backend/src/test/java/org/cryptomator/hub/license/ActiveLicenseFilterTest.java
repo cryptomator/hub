@@ -11,10 +11,10 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Response;
 
 @QuarkusTest
-public class NonExpiredLicenseFilterTest {
+public class ActiveLicenseFilterTest {
 
 	ContainerRequestContext context = Mockito.mock(ContainerRequestContext.class);
-	NonExpiredLicenseFilter filter = new NonExpiredLicenseFilter();
+	ActiveLicenseFilter filter = new ActiveLicenseFilter();
 
 	@BeforeEach
 	public void setup() {
