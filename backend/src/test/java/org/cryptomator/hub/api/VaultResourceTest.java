@@ -117,6 +117,47 @@ public class VaultResourceTest {
 	}
 
 	@Nested
+	@DisplayName("Test GET /vaults/{vaultId]/keys/{deviceId} endpoint (unlock)")
+	public class TestUnlock {
+
+		@Test
+		@DisplayName("Unlock is blocked if there are more EVUs than license seats")
+		@TestSecurity(user = "User Name 1", roles = {"user", "vault-owner"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user1")
+		})
+		public void testUnlockBlockedIfEVUsExcceedLicense() throws SQLException {
+			try (var s = dataSource.getConnection().createStatement()) {
+				s.execute("""
+						INSERT INTO "authority" ("id", "type", "name")
+						VALUES
+							('newUser91', 'USER', 'newUser91 name'),
+							('newUser92', 'USER', 'newUser92 name'),
+							('newUser93', 'USER', 'newUser93 name'),
+							('newUser94', 'USER', 'newUser94 name');
+							
+						INSERT INTO "user_details" ("id")
+						VALUES
+							('newUser91'),
+							('newUser92'),
+							('newUser93'),
+							('newUser94');
+							
+						INSERT INTO "vault_access" ("vault_id", "authority_id")
+						VALUES
+							('vault1', 'newUser91'),
+							('vault1', 'newUser92'),
+							('vault1', 'newUser93'),
+							('vault1', 'newUser94');
+						""");
+			}
+
+			when().get("/vaults/{vaultId}/keys/{deviceId}", "vault1", "device1")
+					.then().statusCode(402);
+		}
+	}
+
+	@Nested
 	@DisplayName("As user1")
 	@TestSecurity(user = "User Name 1", roles = {"user"})
 	@OidcSecurity(claims = {
