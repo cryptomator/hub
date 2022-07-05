@@ -44,6 +44,120 @@ public class VaultResourceTest {
 	}
 
 	@Nested
+	@DisplayName("Test PUT /vaults/users/{userId} endpoint (addUser)")
+	public class TestAddUser {
+
+		@Test
+		@DisplayName("If all license Seats are used, block new user with 402")
+		@TestSecurity(user = "User Name 1", roles = {"user", "vault-owner"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user1")
+		})
+		public void testDepletedLicenseBlocksNewUser() throws SQLException {
+			//this test depends on the flyway migration Test_Data
+			try (var s = dataSource.getConnection().createStatement()) {
+				s.execute("""
+						INSERT INTO "authority" ("id", "type", "name")
+						VALUES
+							('newUser91', 'USER', 'newUser91 name'),
+							('newUser92', 'USER', 'newUser92 name'),
+							('newUser93', 'USER', 'newUser93 name'),
+							('newUser94', 'USER', 'newUser94 name');
+							
+						INSERT INTO "user_details" ("id")
+						VALUES
+							('newUser91'),
+							('newUser92'),
+							('newUser93'),
+							('newUser94');
+							
+						INSERT INTO "vault_access" ("vault_id", "authority_id")
+						VALUES
+							('vault1', 'newUser91'),
+							('vault1', 'newUser92'),
+							('vault1', 'newUser93');
+						""");
+			}
+			when().put("/vaults/{vaultId}/users/{usersId}", "vault1", "newUser94")
+					.then().statusCode(402);
+		}
+
+		@Test
+		@DisplayName("If all license Seats are used, allow users having any vault access")
+		@TestSecurity(user = "User Name 2", roles = {"user", "vault-owner"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user2")
+		})
+		public void testDepletedLicenseAllowsUsingUser() throws SQLException {
+			//this test depends on the flyway migration Test_Data
+			try (var s = dataSource.getConnection().createStatement()) {
+				s.execute("""
+						INSERT INTO "authority" ("id", "type", "name")
+						VALUES
+							('newUser91', 'USER', 'newUser91 name'),
+							('newUser92', 'USER', 'newUser92 name'),
+							('newUser93', 'USER', 'newUser93 name');
+							
+						INSERT INTO "user_details" ("id")
+						VALUES
+							('newUser91'),
+							('newUser92'),
+							('newUser93');
+							
+						INSERT INTO "vault_access" ("vault_id", "authority_id")
+						VALUES
+							('vault1', 'newUser91'),
+							('vault1', 'newUser92'),
+							('vault1', 'newUser93');
+						""");
+			}
+			when().put("/vaults/{vaultId}/users/{usersId}", "vault2", "newUser91")
+					.then().statusCode(201);
+		}
+	}
+
+	@Nested
+	@DisplayName("Test GET /vaults/{vaultId]/keys/{deviceId} endpoint (unlock)")
+	public class TestUnlock {
+
+		@Test
+		@DisplayName("Unlock is blocked if there are more EVUs than license seats")
+		@TestSecurity(user = "User Name 1", roles = {"user", "vault-owner"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user1")
+		})
+		public void testUnlockBlockedIfEVUsExcceedLicense() throws SQLException {
+			try (var s = dataSource.getConnection().createStatement()) {
+				s.execute("""
+						INSERT INTO "authority" ("id", "type", "name")
+						VALUES
+							('newUser91', 'USER', 'newUser91 name'),
+							('newUser92', 'USER', 'newUser92 name'),
+							('newUser93', 'USER', 'newUser93 name'),
+							('newUser94', 'USER', 'newUser94 name');
+							
+						INSERT INTO "user_details" ("id")
+						VALUES
+							('newUser91'),
+							('newUser92'),
+							('newUser93'),
+							('newUser94');
+							
+						INSERT INTO "vault_access" ("vault_id", "authority_id")
+						VALUES
+							('vault1', 'newUser91'),
+							('vault1', 'newUser92'),
+							('vault1', 'newUser93'),
+							('vault1', 'newUser94');
+						""");
+			}
+
+			when().get("/vaults/{vaultId}/keys/{deviceId}", "vault1", "device1")
+					.then().statusCode(402);
+		}
+	}
+
+	@Nested
 	@DisplayName("As user1")
 	@TestSecurity(user = "User Name 1", roles = {"user"})
 	@OidcSecurity(claims = {
@@ -325,7 +439,7 @@ public class VaultResourceTest {
 
 		@Test
 		@Order(12)
-		@DisplayName("GET /vaults/vault2/acces does not contain user2")
+		@DisplayName("GET /vaults/vault2/access does not contain user2")
 		public void getMembers3() {
 			when().get("/vaults/{vaultId}/members", "vault2")
 					.then().statusCode(200)

@@ -16,6 +16,11 @@ import java.util.Objects;
 @Entity
 @Immutable
 @Table(name = "effective_vault_access")
+@NamedQuery(name = "EffectiveVaultAccess.countVaultAccessesOfUser", query = """
+				SELECT count(eva)
+				FROM EffectiveVaultAccess eva
+				WHERE eva.id.authorityId = :userId
+		""")
 @NamedQuery(name = "EffectiveVaultAccess.countEVUs", query = """
 				SELECT count( DISTINCT u)
 				FROM User u
@@ -32,6 +37,10 @@ public class EffectiveVaultAccess extends PanacheEntityBase {
 
 	@EmbeddedId
 	public EffectiveVaultAccessId id;
+
+	public static boolean isUserOccupyingSeat(String userId) {
+		return EffectiveVaultAccess.count("#EffectiveVaultAccess.countVaultAccessesOfUser",Parameters.with("userId", userId)) > 0;
+	}
 
 	public static long countEffectiveVaultUsers() {
 		return EffectiveVaultAccess.count("#EffectiveVaultAccess.countEVUs");
