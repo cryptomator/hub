@@ -51,7 +51,7 @@
           <div v-if="onCreateError != null" >
             <p v-if="onCreateError instanceof ConflictError" class="text-sm text-red-900 mr-4">{{ t('createVault.error.vaultAlreadyExists') }}</p>
             <p v-else-if="onCreateError instanceof FormValidationFailedError" class="text-sm text-red-900 mr-4">{{ t('createVault.error.formValidationFailed') }}</p>
-            <p v-else-if="onCreateError instanceof PasswordNotMachingError" class="text-sm text-red-900 mr-4">{{ t('createVault.masterPasswordConformation.passwordsDoNotMatch') }}</p>
+            <p v-else-if="onCreateError instanceof PasswordNotMachingError" class="text-sm text-red-900 mr-4">{{ t('createVault.masterPasswordConfirmation.passwordsDoNotMatch') }}</p>
             <p v-else class="text-sm text-red-900 mr-4">{{ t('common.unexpectedError', [onCreateError.message]) }}</p>
           </div>
           <button :disabled="state == State.Processing" type="submit" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
@@ -144,7 +144,7 @@ const vaultName = ref('');
 const vaultDescription = ref('');
 const password = ref('');
 const passwordConfirmation = ref('');
-const passwordMatches = computed(() => password.value == passwordConfirmation.value)
+const passwordMatches = computed(() => password.value == passwordConfirmation.value);
 const vaultConfig = ref<VaultConfig>();
 
 async function createVault() {
@@ -155,7 +155,7 @@ async function createVault() {
     return;
   }
 
-  if(!passwordMatches.value) {
+  if (!passwordMatches.value) {
     onCreateError.value = new PasswordNotMachingError();
     return;
   }
