@@ -104,7 +104,7 @@ public class VaultResource {
 			//for new user, we need to check if a license seat is available
 			var usedSeats = EffectiveVaultAccess.countEffectiveVaultUsers();
 			if (usedSeats >= license.getAvailableSeats()) {
-				return Response.status(Response.Status.PAYMENT_REQUIRED).build();
+				throw new PaymentRequiredException("Number of effective vault users greater than or equal to the available license seats");
 			}
 		}
 
@@ -126,7 +126,7 @@ public class VaultResource {
 	public Response addGroup(@PathParam("vaultId") String vaultId, @PathParam("groupId") String groupId) {
 		//usersInGroup - usersInGroupAndPartOfAtLeastOneVault + usersOfAtLeastOneVault
 		if (EffectiveGroupMembership.countEffectiveGroupUsers(groupId) - EffectiveVaultAccess.countEffectiveVaultUsersOfGroup(groupId) + EffectiveVaultAccess.countEffectiveVaultUsers() > license.getAvailableSeats()) {
-			return Response.status(Response.Status.PAYMENT_REQUIRED).build();
+			throw new PaymentRequiredException("Number of effective vault users greater than or equal to the available license seats");
 		}
 
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
