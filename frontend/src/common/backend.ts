@@ -75,7 +75,7 @@ class VaultService {
   }
 
   public async getMembers(vaultId: string): Promise<AuthorityDto[]> {
-    return axiosAuth.get(`/vaults/${vaultId}/members`).then(response => response.data);
+    return axiosAuth.get(`/vaults/${vaultId}/members`).then(response => response.data).catch(err => rethrowAndConvertIfExpected(err, 403));
   }
 
   public async addUser(vaultId: string, userId: string): Promise<AxiosResponse<void>> {
@@ -89,7 +89,7 @@ class VaultService {
   }
 
   public async getDevicesRequiringAccessGrant(vaultId: string): Promise<DeviceDto[]> {
-    return axiosAuth.get(`/vaults/${vaultId}/devices-requiring-access-grant`).then(response => response.data);
+    return axiosAuth.get(`/vaults/${vaultId}/devices-requiring-access-grant`).then(response => response.data).catch(err => rethrowAndConvertIfExpected(err, 403));
   }
 
   public async createVault(vaultId: string, name: string, description: string, masterkey: string, iterations: number, salt: string): Promise<AxiosResponse<any>> {
@@ -185,7 +185,7 @@ function convertExpectedToBackendError(status: number): BackendError {
  */
 function rethrowAndConvertIfExpected(error: unknown, ...expectedStatusCodes: number[]): Promise<any> {
   if (AxiosStatic.isAxiosError(error) && error.response != null && expectedStatusCodes.includes(error.response.status)) {
-    throw convertExpectedToBackendError;
+    throw convertExpectedToBackendError(error.response.status);
   } else {
     throw error;
   }
