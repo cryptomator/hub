@@ -92,7 +92,7 @@
 import { PencilIcon, PlusSmIcon } from '@heroicons/vue/solid';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { AuthorityDto, DeviceDto, ForbiddenError, NotFoundError, VaultDto } from '../common/backend';
+import backend, { AuthorityDto, DeviceDto, NotFoundError, VaultDto } from '../common/backend';
 import DownloadVaultTemplateDialog from './DownloadVaultTemplateDialog.vue';
 import FetchError from './FetchError.vue';
 import GrantPermissionDialog from './GrantPermissionDialog.vue';
@@ -129,25 +129,18 @@ async function fetchData() {
 
   try {
     vault.value = await backend.vaults.get(props.vaultId);
-    await fetchDataForOwner();
+    var currentUser = await backend.users.me(false, false);
+    isOwner.value = currentUser.id === vault.value.owner?.id;
+    if (isOwner.value) {
+      members.value = await backend.vaults.getMembers(props.vaultId);
+      devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
+    }
   } catch (error) {
     console.error('Fetching data failed.', error);
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
 
   isFetching.value = false;
-}
-
-async function fetchDataForOwner() {
-  try {
-    members.value = await backend.vaults.getMembers(props.vaultId);
-    devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
-    isOwner.value = true;
-  } catch (error) {
-    if (!(error instanceof ForbiddenError)) {
-      throw error;
-    }
-  }
 }
 
 async function addAuthority(authority: AuthorityDto) {
