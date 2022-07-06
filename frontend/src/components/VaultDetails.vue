@@ -172,6 +172,7 @@ function permissionGranted() {
 async function searchAuthority(query: string): Promise<AuthorityDto[]> {
   return (await Promise.all([backend.users.search(query), backend.groups.search(query)]))
     .flat()
+    .filter(authority => members.value.findIndex(member => member.id === authority.id) === -1) //TODO: filter() creates a new array, which is quite costly! Additional, searching in members has a bad runtime.
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 

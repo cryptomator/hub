@@ -80,12 +80,12 @@ class VaultService {
 
   public async addUser(vaultId: string, userId: string): Promise<AxiosResponse<void>> {
     return axiosAuth.put(`/vaults/${vaultId}/users/${userId}`)
-      .catch((err) => rethrowAndConvertIfExpected(err, 404));
+      .catch((err) => rethrowAndConvertIfExpected(err, 404, 409));
   }
 
   public async addGroup(vaultId: string, groupId: string): Promise<AxiosResponse<void>> {
     return axiosAuth.put(`/vaults/${vaultId}/groups/${groupId}`)
-      .catch((err) => rethrowAndConvertIfExpected(err, 404));
+      .catch((err) => rethrowAndConvertIfExpected(err, 404, 409));
   }
 
   public async getDevicesRequiringAccessGrant(vaultId: string): Promise<DeviceDto[]> {
