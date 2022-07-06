@@ -90,7 +90,7 @@
 import { PencilIcon, PlusSmIcon } from '@heroicons/vue/solid';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { AuthorityDto, DeviceDto, NotFoundError, VaultDto } from '../common/backend';
+import backend, { AuthorityDto, ConflictError, DeviceDto, NotFoundError, VaultDto } from '../common/backend';
 import DownloadVaultTemplateDialog from './DownloadVaultTemplateDialog.vue';
 import FetchError from './FetchError.vue';
 import GrantPermissionDialog from './GrantPermissionDialog.vue';
@@ -139,6 +139,18 @@ async function fetchData() {
 async function addAuthority(authority: AuthorityDto) {
   onAddUserError.value = null;
   try {
+    await addAuthorityBackend(authority);
+    members.value = members.value.concat(authority);
+    devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
+  } catch (error) {
+    //even if error instanceof NotFoundError, it is not expected from user perspective
+    console.error('Adding member failed.', error);
+    onAddUserError.value = error instanceof Error ? error : new Error('Unknown Error');
+  }
+}
+
+async function addAuthorityBackend(authority: AuthorityDto) {
+  try {
     if (authority.type.toLowerCase() == 'user') {
       await backend.vaults.addUser(props.vaultId, authority.id);
     } else if (authority.type.toLowerCase() == 'group') {
@@ -146,12 +158,11 @@ async function addAuthority(authority: AuthorityDto) {
     } else {
       throw new Error('Unknown authority type \'' + authority.type + '\'');
     }
-    members.value = members.value.concat(authority);
-    devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
   } catch (error) {
-    //even if error instanceof NotFoundError, it is not expected from user perspective
-    console.error('Adding member failed.', error);
-    onAddUserError.value = error instanceof Error ? error : new Error('Unknown Error');
+    if (! (error instanceof ConflictError)) {
+      //backend is already up to date
+      throw error;
+    }
   }
 }
 
