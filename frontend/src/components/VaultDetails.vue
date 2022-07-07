@@ -38,7 +38,7 @@
     <div>
       <h3 class="font-medium text-gray-900">{{ t('vaultDetails.sharedWith.title') }}</h3>
       <ul role="list" class="mt-2 border-t border-b border-gray-200 divide-y divide-gray-200">
-        <template v-for="member in members" :key="member.id">
+        <template v-for="member in members.values()" :key="member.id">
           <li class="py-3 flex flex-col">
             <div class="flex justify-between items-center">
               <div class="flex items-center">
@@ -115,7 +115,7 @@ const grantPermissionDialog = ref<typeof GrantPermissionDialog>();
 const downloadingVaultTemplate = ref(false);
 const downloadVaultTemplateDialog = ref<typeof DownloadVaultTemplateDialog>();
 const vault = ref<VaultDto>();
-const members = ref<AuthorityDto[]>([]);
+const members = ref<Map<string, AuthorityDto>>(new Map());
 const devicesRequiringAccessGrant = ref<DeviceDto[]>([]);
 
 onMounted(fetchData);
@@ -126,7 +126,7 @@ async function fetchData() {
 
   try {
     vault.value = await backend.vaults.get(props.vaultId);
-    members.value = await backend.vaults.getMembers(props.vaultId);
+    (await backend.vaults.getMembers(props.vaultId)).forEach(member => members.value.set(member.id,member));
     devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
   } catch (error) {
     console.error('Fetching data failed.', error);
@@ -140,7 +140,7 @@ async function addAuthority(authority: AuthorityDto) {
   onAddUserError.value = null;
   try {
     await addAuthorityBackend(authority);
-    members.value = members.value.concat(authority);
+    members.value.set(authority.id, authority);
     devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
   } catch (error) {
     //even if error instanceof NotFoundError, it is not expected from user perspective
@@ -183,7 +183,7 @@ function permissionGranted() {
 async function searchAuthority(query: string): Promise<AuthorityDto[]> {
   return (await Promise.all([backend.users.search(query), backend.groups.search(query)]))
     .flat()
-    .filter(authority => members.value.findIndex(member => member.id === authority.id) === -1) //TODO: filter() creates a new array, which is quite costly! Additional, searching in members has a bad runtime.
+    .filter(authority => members.value.get(authority.id) == undefined)
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
@@ -191,7 +191,7 @@ async function revokeUserAccess(userId: string) {
   delete onRevokeUserAccessError.value[userId];
   try {
     await backend.vaults.revokeUserAccess(props.vaultId, userId);
-    members.value = members.value.filter(m => m.id !== userId);
+    members.value.delete(userId);
     devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
   } catch (error) {
     console.error('Revoking user access failed.', error);
