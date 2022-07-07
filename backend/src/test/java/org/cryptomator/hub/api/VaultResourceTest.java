@@ -114,6 +114,38 @@ public class VaultResourceTest {
 			when().put("/vaults/{vaultId}/users/{usersId}", "vault2", "newUser91")
 					.then().statusCode(201);
 		}
+
+		@Test
+		@DisplayName("Adding user, who is already direct member of the vault, returns 409")
+		@TestSecurity(user = "User Name 1", roles = {"user", "vault-owner"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user1")
+		})
+		public void testAddingDirectMemberAgainFails() throws SQLException {
+			//this test depends on the flyway migration Test_Data
+			when().put("/vaults/{vaultId}/users/{usersId}", "vault1", "user1")
+					.then().statusCode(409);
+		}
+
+	}
+
+
+	@Nested
+	@DisplayName("Test PUT /vaults/groups/{userId} endpoint (addGroup)")
+	public class TestAddGroup {
+
+		@Test
+		@DisplayName("Adding group, which is already direct member of the vault, returns 409")
+		@TestSecurity(user = "User Name 2", roles = {"user", "vault-owner"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user2")
+		})
+		public void testAddingMemberAgainFails() throws SQLException {
+			//this test depends on the flyway migration Test_Data
+			when().put("/vaults/{vaultId}/groups/{groupId}", "vault2", "group1")
+					.then().statusCode(409);
+		}
+
 	}
 
 	@Nested

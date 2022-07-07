@@ -39,7 +39,7 @@
       <div>
         <h3 class="font-medium text-gray-900">{{ t('vaultDetails.sharedWith.title') }}</h3>
         <ul role="list" class="mt-2 border-t border-b border-gray-200 divide-y divide-gray-200">
-          <template v-for="member in members" :key="member.id">
+          <template v-for="member in members.values()" :key="member.id">
             <li class="py-3 flex flex-col">
               <div class="flex justify-between items-center">
                 <div class="flex items-center">
@@ -92,7 +92,7 @@
 import { PencilIcon, PlusSmIcon } from '@heroicons/vue/solid';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { AuthorityDto, DeviceDto, NotFoundError, VaultDto } from '../common/backend';
+import backend, { AuthorityDto, ConflictError, DeviceDto, NotFoundError, VaultDto } from '../common/backend';
 import DownloadVaultTemplateDialog from './DownloadVaultTemplateDialog.vue';
 import FetchError from './FetchError.vue';
 import GrantPermissionDialog from './GrantPermissionDialog.vue';
@@ -118,7 +118,7 @@ const grantPermissionDialog = ref<typeof GrantPermissionDialog>();
 const downloadingVaultTemplate = ref(false);
 const downloadVaultTemplateDialog = ref<typeof DownloadVaultTemplateDialog>();
 const vault = ref<VaultDto>();
-const members = ref<AuthorityDto[]>([]);
+const members = ref<Map<string, AuthorityDto>>(new Map());
 const devicesRequiringAccessGrant = ref<DeviceDto[]>([]);
 
 onMounted(fetchData);
@@ -132,7 +132,7 @@ async function fetchData() {
     var currentUser = await backend.users.me(false, false);
     isOwner.value = currentUser.id === vault.value.owner?.id;
     if (isOwner.value) {
-      members.value = await backend.vaults.getMembers(props.vaultId);
+      (await backend.vaults.getMembers(props.vaultId)).forEach(member => members.value.set(member.id,member));
       devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
     }
   } catch (error) {
@@ -146,6 +146,18 @@ async function fetchData() {
 async function addAuthority(authority: AuthorityDto) {
   onAddUserError.value = null;
   try {
+    await addAuthorityBackend(authority);
+    members.value.set(authority.id, authority);
+    devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
+  } catch (error) {
+    //even if error instanceof NotFoundError, it is not expected from user perspective
+    console.error('Adding member failed.', error);
+    onAddUserError.value = error instanceof Error ? error : new Error('Unknown Error');
+  }
+}
+
+async function addAuthorityBackend(authority: AuthorityDto) {
+  try {
     if (authority.type.toLowerCase() == 'user') {
       await backend.vaults.addUser(props.vaultId, authority.id);
     } else if (authority.type.toLowerCase() == 'group') {
@@ -153,12 +165,11 @@ async function addAuthority(authority: AuthorityDto) {
     } else {
       throw new Error('Unknown authority type \'' + authority.type + '\'');
     }
-    members.value = members.value.concat(authority);
-    devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
   } catch (error) {
-    //even if error instanceof NotFoundError, it is not expected from user perspective
-    console.error('Adding member failed.', error);
-    onAddUserError.value = error instanceof Error ? error : new Error('Unknown Error');
+    if (! (error instanceof ConflictError)) {
+      //backend is already up to date
+      throw error;
+    }
   }
 }
 
@@ -179,6 +190,7 @@ function permissionGranted() {
 async function searchAuthority(query: string): Promise<AuthorityDto[]> {
   return (await Promise.all([backend.users.search(query), backend.groups.search(query)]))
     .flat()
+    .filter(authority => !members.value.has(authority.id))
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
@@ -186,7 +198,7 @@ async function revokeUserAccess(userId: string) {
   delete onRevokeUserAccessError.value[userId];
   try {
     await backend.vaults.revokeUserAccess(props.vaultId, userId);
-    members.value = members.value.filter(m => m.id !== userId);
+    members.value.delete(userId);
     devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
   } catch (error) {
     console.error('Revoking user access failed.', error);
