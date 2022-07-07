@@ -183,7 +183,7 @@ function permissionGranted() {
 async function searchAuthority(query: string): Promise<AuthorityDto[]> {
   return (await Promise.all([backend.users.search(query), backend.groups.search(query)]))
     .flat()
-    .filter(authority => members.value.get(authority.id) == undefined)
+    .filter(authority => !members.value.has(authority.id))
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
