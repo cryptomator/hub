@@ -108,7 +108,7 @@ public class VaultResource {
 				throw new PaymentRequiredException("Number of effective vault users greater than or equal to the available license seats");
 			}
 		}
-		if(vault.directMembers.contains(user)) {
+		if (vault.directMembers.contains(user)) {
 			return Response.status(Response.Status.CONFLICT).build();
 		}
 
@@ -136,7 +136,7 @@ public class VaultResource {
 
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		var group = Group.<Group>findByIdOptional(groupId).orElseThrow(NotFoundException::new);
-		if(vault.directMembers.contains(group)) {
+		if (vault.directMembers.contains(group)) {
 			return Response.status(Response.Status.CONFLICT).build();
 		}
 		vault.directMembers.add(group);
