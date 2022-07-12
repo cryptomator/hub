@@ -3,7 +3,7 @@ import { base32, base64, base64url } from 'rfc4648';
 import { JWE } from './jwe';
 
 export class WrappedMasterkey {
-  constructor(readonly encrypted: string, readonly salt: string, readonly iterations: number) { }
+  constructor(readonly masterkey: string, readonly sk: string, readonly pk: string, readonly salt: string, readonly iterations: number) { }
 }
 
 export class UnwrapKeyError extends Error {
@@ -38,6 +38,11 @@ interface JWEPayload {
 
 export class Masterkey {
 
+  private static readonly SK_DESIGNATION: EcKeyImportParams | EcKeyGenParams = {
+    name: 'ECDH',
+    namedCurve: 'P-384'
+  };
+
   // in this browser application, this 512 bit key is used
   // as a hmac key to sign the vault config.
   // however when used by cryptomator, it gets split into
@@ -49,9 +54,11 @@ export class Masterkey {
   };
   private static readonly PBKDF2_ITERATION_COUNT = 1000000;
   readonly #key: CryptoKey;
+  readonly #keypair: CryptoKeyPair;
 
-  protected constructor(key: CryptoKey) {
+  protected constructor(key: CryptoKey, keypair: CryptoKeyPair) {
     this.#key = key;
+    this.#keypair = keypair;
   }
 
   /**
@@ -64,7 +71,12 @@ export class Masterkey {
       true,
       ['sign']
     );
-    return new Masterkey(await key);
+    const keyPair = crypto.subtle.generateKey(
+      Masterkey.SK_DESIGNATION,
+      true,
+      ['deriveKey']
+    );
+    return new Masterkey(await key, await keyPair);
   }
 
   private static async pbkdf2(password: string, salt: Uint8Array, iterations: number): Promise<CryptoKey> {
@@ -84,23 +96,46 @@ export class Masterkey {
         iterations: iterations
       },
       pwKey,
-      { name: 'AES-KW', length: 256 },
+      { name: 'AES-GCM', length: 256 },
       false,
       ['wrapKey', 'unwrapKey']
     );
   }
 
+  /**
+   * Protects the key material. Must only be called for a newly created masterkey. Otherwise it will fail.
+   * // TODO
+   * @param password 
+   * @returns 
+   */
   public async wrap(password: string): Promise<WrappedMasterkey> {
     const salt = new Uint8Array(16);
     crypto.getRandomValues(salt);
     const kek = Masterkey.pbkdf2(password, salt, Masterkey.PBKDF2_ITERATION_COUNT);
-    const wrapped = crypto.subtle.wrapKey(
+    const masterKeyIv = crypto.getRandomValues(new Uint8Array(12));
+    const wrappedMasterKey = new Uint8Array(await crypto.subtle.wrapKey(
       'raw',
       this.#key,
       await kek,
-      'AES-KW'
-    );
-    return new WrappedMasterkey(base64url.stringify(new Uint8Array(await wrapped), { pad: false }), base64url.stringify(salt, { pad: false }), Masterkey.PBKDF2_ITERATION_COUNT);
+      { name: 'AES-GCM', iv: masterKeyIv }
+    ));
+    const encodedMasterKey = base64url.stringify(new Uint8Array([...masterKeyIv, ...wrappedMasterKey]));
+
+    const secretKeyIv = crypto.getRandomValues(new Uint8Array(12));
+    const wrappedSecretKey = new Uint8Array(await crypto.subtle.wrapKey(
+      'pkcs8',
+      this.#keypair.privateKey,
+      await kek,
+      { name: 'AES-GCM', iv: secretKeyIv }
+    ));
+    const encodedSecretKey = base64.stringify(new Uint8Array([...secretKeyIv, ...wrappedSecretKey]));
+
+    const publicKey = new Uint8Array(await crypto.subtle.exportKey('spki', this.#keypair.publicKey));
+    const encodedPublicKey = base64.stringify(publicKey);
+
+    const encodedSalt = base64url.stringify(salt, { pad: false });
+
+    return new WrappedMasterkey(encodedMasterKey, encodedSecretKey, encodedPublicKey, encodedSalt, Masterkey.PBKDF2_ITERATION_COUNT);
   }
 
   /**
@@ -112,19 +147,36 @@ export class Masterkey {
    */
   public static async unwrap(password: string, wrapped: WrappedMasterkey): Promise<Masterkey> {
     const kek = Masterkey.pbkdf2(password, base64url.parse(wrapped.salt, { loose: true }), wrapped.iterations);
-    const encrypted = base64url.parse(wrapped.encrypted, { loose: true });
-
+    const decodedMasterKey = base64url.parse(wrapped.masterkey, { loose: true });
+    const decodedSecretKey = base64.parse(wrapped.sk, { loose: true });
+    const decodedPublicKey = base64.parse(wrapped.pk, { loose: true });
     try {
-      const key = crypto.subtle.unwrapKey(
+      const masterkey = crypto.subtle.unwrapKey(
         'raw',
-        encrypted,
+        decodedMasterKey.slice(12),
         await kek,
-        'AES-KW',
+        { name: 'AES-GCM', iv: decodedMasterKey.slice(0, 12) },
         Masterkey.KEY_DESIGNATION,
         true,
         ['sign']
       );
-      return new Masterkey(await key);
+      const sk = crypto.subtle.unwrapKey(
+        'pkcs8',
+        decodedSecretKey.slice(12),
+        await kek,
+        { name: 'AES-GCM', iv: decodedSecretKey.slice(0, 12) },
+        Masterkey.SK_DESIGNATION,
+        false,
+        ['sign']
+      );
+      const pk = crypto.subtle.importKey(
+        'spki',
+        decodedPublicKey,
+        Masterkey.SK_DESIGNATION,
+        true,
+        ['verify']
+      );
+      return new Masterkey(await masterkey, { privateKey: await sk, publicKey: await pk });
     } catch (error) {
       throw new UnwrapKeyError(error);
     }
