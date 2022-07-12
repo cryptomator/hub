@@ -61,16 +61,13 @@ public class VaultResource {
 
 	@GET
 	@Path("/{vaultId}/members")
-	@RolesAllowed("vault-owner")
+	@RolesAllowed("user") // FIXME change to authentication via derived and salted key from masterkey so that the backend knows the user entered the masterkey
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "list vault members", description = "list all users that this vault has been shared with")
 	@APIResponse(responseCode = "403", description = "requesting user does not own vault")
 	public List<AuthorityDto> getMembers(@PathParam("vaultId") String vaultId) {
 		Vault vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-		if (!vault.owner.id.equals(jwt.getSubject())) {
-			throw new ForbiddenException("Requesting user does not own vault");
-		}
 		return vault.directMembers.stream().map(authority -> {
 			// TODO replace with pattern matching for switch as soon as available
 			if (authority instanceof User u) {
@@ -85,7 +82,7 @@ public class VaultResource {
 
 	@PUT
 	@Path("/{vaultId}/users/{userId}")
-	@RolesAllowed("vault-owner")
+	@RolesAllowed("user") // FIXME change to authentication via derived and salted key from masterkey so that the backend knows the user entered the masterkey
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "adds a member to this vault")
@@ -97,9 +94,6 @@ public class VaultResource {
 	@ActiveLicense
 	public Response addUser(@PathParam("vaultId") String vaultId, @PathParam("userId") String userId) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-		if (!vault.owner.id.equals(jwt.getSubject())) {
-			throw new ForbiddenException("Requesting user does not own vault");
-		}
 		var user = User.<User>findByIdOptional(userId).orElseThrow(NotFoundException::new);
 		if (!EffectiveVaultAccess.isUserOccupyingSeat(userId)) {
 			//for new user, we need to check if a license seat is available
@@ -119,7 +113,7 @@ public class VaultResource {
 
 	@PUT
 	@Path("/{vaultId}/groups/{groupId}")
-	@RolesAllowed("vault-owner")
+	@RolesAllowed("user") // FIXME change to authentication via derived and salted key from masterkey so that the backend knows the user entered the masterkey
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "adds a group to this vault")
@@ -146,7 +140,7 @@ public class VaultResource {
 
 	@DELETE
 	@Path("/{vaultId}/users/{userId}")
-	@RolesAllowed("vault-owner")
+	@RolesAllowed("user") // FIXME change to authentication via derived and salted key from masterkey so that the backend knows the user entered the masterkey
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "remove a member from this vault", description = "revokes the given user's access rights from this vault. If the given user is no member, the request is a no-op.")
@@ -159,7 +153,7 @@ public class VaultResource {
 
 	@DELETE
 	@Path("/{vaultId}/groups/{groupId}")
-	@RolesAllowed("vault-owner")
+	@RolesAllowed("user") // FIXME change to authentication via derived and salted key from masterkey so that the backend knows the user entered the masterkey
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "remove a group from this vault", description = "revokes the given group's access rights from this vault. If the given group is no member, the request is a no-op.")
@@ -171,9 +165,6 @@ public class VaultResource {
 
 	private Response removeAutority(String vaultId, String authorityId) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-		if (!vault.owner.id.equals(jwt.getSubject())) {
-			throw new ForbiddenException("Requesting user does not own vault");
-		}
 
 		vault.directMembers.removeIf(e -> e.id.equals(authorityId));
 		vault.persist();
@@ -182,16 +173,13 @@ public class VaultResource {
 
 	@GET
 	@Path("/{vaultId}/devices-requiring-access-grant")
-	@RolesAllowed("vault-owner")
+	@RolesAllowed("user") // FIXME change to authentication via derived and salted key from masterkey so that the backend knows the user entered the masterkey
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "list devices requiring access rights", description = "lists all devices owned by vault members, that don't have a device-specific masterkey yet")
 	@APIResponse(responseCode = "403", description = "requesting user does not own vault")
 	public List<DeviceResource.DeviceDto> getDevicesRequiringAccessGrant(@PathParam("vaultId") String vaultId) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-		if (!vault.owner.id.equals(jwt.getSubject())) {
-			throw new ForbiddenException("Requesting user does not own vault");
-		}
 		return Device.findRequiringAccessGrant(vaultId).map(DeviceResource.DeviceDto::fromEntity).toList();
 	}
 
@@ -224,7 +212,7 @@ public class VaultResource {
 
 	@PUT
 	@Path("/{vaultId}/keys/{deviceId}")
-	@RolesAllowed("vault-owner")
+	@RolesAllowed("user") // FIXME change to authentication via derived and salted key from masterkey so that the backend knows the user entered the masterkey
 	@Transactional
 	@Consumes(MediaType.TEXT_PLAIN)
 	@Operation(summary = "adds a device-specific masterkey")
@@ -235,9 +223,6 @@ public class VaultResource {
 	public Response grantAccess(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId, String jwe) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		var device = Device.<Device>findByIdOptional(deviceId).orElseThrow(NotFoundException::new);
-		if (!vault.owner.id.equals(jwt.getSubject())) {
-			throw new ForbiddenException("Requesting user does not own vault");
-		}
 
 		var access = new AccessToken();
 		access.vault = vault;
@@ -265,15 +250,15 @@ public class VaultResource {
 	@APIResponse(responseCode = "403", description = "requesting user is neither member nor owner of the vault")
 	public VaultDto get(@PathParam("vaultId") String vaultId) {
 		Vault vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-		if (!vault.owner.id.equals(jwt.getSubject()) && vault.effectiveMembers.stream().noneMatch(u -> u.id.equals(jwt.getSubject()))) {
+		/*if (!vault.owner.id.equals(jwt.getSubject()) && vault.effectiveMembers.stream().noneMatch(u -> u.id.equals(jwt.getSubject()))) {
 			throw new ForbiddenException("Requesting user is neither member nor owner of the vault");
-		}
+		}*/
 		return VaultDto.fromEntity(vault);
 	}
 
 	@PUT
 	@Path("/{vaultId}")
-	@RolesAllowed("vault-owner")
+	@RolesAllowed("user") // FIXME change to authentication via derived and salted key from masterkey so that the backend knows the user entered the masterkey
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
@@ -285,8 +270,11 @@ public class VaultResource {
 		if (vaultDto == null) {
 			throw new BadRequestException("Missing vault dto");
 		}
-		User currentUser = User.findById(jwt.getSubject());
-		var vault = vaultDto.toVault(currentUser, vaultId);
+		var vault = vaultDto.toVault(vaultId);
+
+		User user = User.findById(jwt.getSubject());
+		vault.directMembers.add(user);
+
 		try {
 			vault.persistAndFlush();
 			return Response.created(URI.create(".")).build();
@@ -301,19 +289,17 @@ public class VaultResource {
 
 	public record VaultDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("description") String description,
 						   @JsonProperty("creationTime") @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSX") Timestamp creationTime,
-						   @JsonProperty("owner") UsersResource.UserDto user,
 						   @JsonProperty("masterkey") String masterkey, @JsonProperty("iterations") String iterations, @JsonProperty("salt") String salt,
 						   @JsonProperty("authPublicKey") String authPublicKey, @JsonProperty("authPrivateKey") String authPrivateKey
 	) {
 
 		public static VaultDto fromEntity(Vault entity) {
-			return new VaultDto(entity.id, entity.name, entity.description, entity.creationTime, UsersResource.UserDto.fromEntity(entity.owner), entity.masterkey, entity.iterations, entity.salt, entity.authenticationPublicKey, entity.authenticationPrivateKey);
+			return new VaultDto(entity.id, entity.name, entity.description, entity.creationTime, entity.masterkey, entity.iterations, entity.salt, entity.authenticationPublicKey, entity.authenticationPrivateKey);
 		}
 
-		public Vault toVault(User owner, String id) {
+		public Vault toVault(String id) {
 			var vault = new Vault();
 			vault.id = id;
-			vault.owner = owner;
 			vault.name = name;
 			vault.description = description;
 			vault.creationTime = creationTime;

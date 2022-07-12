@@ -23,12 +23,7 @@
         "composites": {
           "realm": [
             "user"
-          ],
-          "client": {
-            "cryptomatorhub": [
-              "vault-owner"
-            ]
-          }
+          ]
         }
       },
       {
@@ -43,15 +38,7 @@
           }
         }
       }
-    ],
-    "client": {
-      "cryptomatorhub": [
-        {
-          "name": "vault-owner",
-          "description": "Vault Owner"
-        }
-      ]
-    }
+    ]
   },
   "users": [
     {
@@ -98,16 +85,6 @@
       ]
     }
   ],
-  "clientScopeMappings": {
-    "account": [
-      {
-        "client": "cryptomatorhub",
-        "roles": [
-          "vault-owner"
-        ]
-      }
-    ]
-  },
   "clients": [
     {
       "clientId": "cryptomatorhub",

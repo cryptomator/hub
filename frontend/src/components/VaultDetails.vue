@@ -85,6 +85,12 @@
       <GrantPermissionDialog v-if="grantingPermission && vault!=null" ref="grantPermissionDialog" :vault="vault" :devices="devicesRequiringAccessGrant" @close="grantingPermission = false" @permission-granted="permissionGranted()" />
       <DownloadVaultTemplateDialog v-if="downloadingVaultTemplate && vault!=null" ref="downloadVaultTemplateDialog" :vault="vault" @close="downloadingVaultTemplate = false" />
     </div>
+
+    <div v-if="!isOwner">
+      <button type="button" class="flex-1 bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showManageVaultDialog()">
+        {{ 'Manage vault' }}
+      </button>
+    </div>
   </div>
 </template>
 
@@ -171,6 +177,11 @@ async function addAuthorityBackend(authority: AuthorityDto) {
       throw error;
     }
   }
+}
+
+async function showManageVaultDialog() {
+  isOwner.value = true;
+  (await backend.vaults.getMembers(props.vaultId)).forEach(member => members.value.set(member.id,member));
 }
 
 function showGrantPermissionDialog() {

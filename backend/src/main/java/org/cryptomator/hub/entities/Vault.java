@@ -29,17 +29,13 @@ import java.util.stream.Stream;
 				SELECT DISTINCT v
 				FROM Vault v
 				LEFT JOIN v.effectiveMembers m
-				WHERE v.owner.id = :userId OR m.id = :userId
+				WHERE m.id = :userId
 				""")
 public class Vault extends PanacheEntityBase {
 
 	@Id
 	@Column(name = "id", nullable = false)
 	public String id;
-
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "owner_id", updatable = false, nullable = false)
-	public User owner;
 
 	@ManyToMany
 	@JoinTable(name = "vault_access",
@@ -93,7 +89,6 @@ public class Vault extends PanacheEntityBase {
 		if (o == null || getClass() != o.getClass()) return false;
 		Vault vault = (Vault) o;
 		return Objects.equals(id, vault.id)
-				&& Objects.equals(owner, vault.owner)
 				&& Objects.equals(name, vault.name)
 				&& Objects.equals(salt, vault.salt)
 				&& Objects.equals(iterations, vault.iterations)
@@ -102,14 +97,13 @@ public class Vault extends PanacheEntityBase {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, owner, name, salt, iterations, masterkey);
+		return Objects.hash(id, name, salt, iterations, masterkey);
 	}
 
 	@Override
 	public String toString() {
 		return "Vault{" +
 				"id='" + id + '\'' +
-				", owner=" + owner +
 				", members=" + directMembers.stream().map(m -> m.id).collect(Collectors.joining(", ")) +
 				", accessToken=" + accessTokens.stream().map(a -> a.id.toString()).collect(Collectors.joining(", ")) +
 				", name='" + name + '\'' +

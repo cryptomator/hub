@@ -24,7 +24,7 @@ public class GroupResource {
 
 	@GET
 	@Path("/search")
-	@RolesAllowed("vault-owner")
+	@RolesAllowed("user") // FIXME change to authentication via derived and salted key from masterkey so that the backend knows the user entered the masterkey
 	@Produces(MediaType.APPLICATION_JSON)
 	@NoCache
 	@Operation(summary = "search group")
