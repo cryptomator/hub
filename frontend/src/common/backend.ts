@@ -29,7 +29,7 @@ axiosAuth.interceptors.request.use(async request => {
 
 export class VaultDto {
 
-  constructor(public id: string, public name: string, public description: string, public creationTime: Date, public masterkey: string, public iterations: number, public salt: string, public owner?: UserDto) { }
+  constructor(public id: string, public name: string, public description: string, public creationTime: Date, public masterkey: string, public iterations: number, public salt: string, public authPublicKey: string, public authPrivateKey: string, public owner?: UserDto) { }
 
 }
 
@@ -92,8 +92,8 @@ class VaultService {
     return axiosAuth.get(`/vaults/${vaultId}/devices-requiring-access-grant`).then(response => response.data).catch(err => rethrowAndConvertIfExpected(err, 403));
   }
 
-  public async createVault(vaultId: string, name: string, description: string, masterkey: string, iterations: number, salt: string): Promise<AxiosResponse<any>> {
-    const body: VaultDto = { id: vaultId, name: name, description: description, creationTime: new Date(), masterkey: masterkey, iterations: iterations, salt: salt };
+  public async createVault(vaultId: string, name: string, description: string, masterkey: string, iterations: number, salt: string, authPubkey: string, authPrvkey: string): Promise<AxiosResponse<any>> {
+    const body: VaultDto = { id: vaultId, name: name, description: description, creationTime: new Date(), masterkey: masterkey, iterations: iterations, salt: salt, authPublicKey: authPubkey, authPrivateKey: authPrvkey };
     return axiosAuth.put(`/vaults/${vaultId}`, body)
       .catch((err) => rethrowAndConvertIfExpected(err, 404, 409));
   }
