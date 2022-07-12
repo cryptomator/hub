@@ -71,6 +71,12 @@ public class Vault extends PanacheEntityBase {
 	@Column(name = "masterkey", nullable = false)
 	public String masterkey;
 
+	@Column(name = "auth_pubkey", nullable = false)
+	public String authenticationPublicKey;
+
+	@Column(name = "auth_prvkey", nullable = false)
+	public String authenticationPrivateKey;
+
 	@Column(name = "creation_time", nullable = false)
 	public Timestamp creationTime;
 
@@ -110,6 +116,8 @@ public class Vault extends PanacheEntityBase {
 				", salt='" + salt + '\'' +
 				", iterations='" + iterations + '\'' +
 				", masterkey='" + masterkey + '\'' +
+				", authenticationPublicKey='" + authenticationPublicKey + '\'' +
+				", authenticationPrivateKey='" + authenticationPrivateKey + '\'' +
 				'}';
 	}
 

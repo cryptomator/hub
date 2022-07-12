@@ -166,7 +166,7 @@ async function createVault() {
     const masterkey = await Masterkey.create();
     vaultConfig.value = await VaultConfig.create(vaultId, masterkey);
     const wrapped = await masterkey.wrap(password.value);
-    await backend.vaults.createVault(vaultId, vaultName.value, vaultDescription.value, wrapped.encrypted, wrapped.iterations, wrapped.salt);
+    await backend.vaults.createVault(vaultId, vaultName.value, vaultDescription.value, wrapped.encrypted, wrapped.iterations, wrapped.salt, '', ''); //TODO: add pub and private keys for authentication
     state.value = State.Finished;
   } catch (error) {
     console.error('Creating vault failed.', error);

@@ -108,7 +108,7 @@ public class VaultResource {
 				throw new PaymentRequiredException("Number of effective vault users greater than or equal to the available license seats");
 			}
 		}
-		if(vault.directMembers.contains(user)) {
+		if (vault.directMembers.contains(user)) {
 			return Response.status(Response.Status.CONFLICT).build();
 		}
 
@@ -136,7 +136,7 @@ public class VaultResource {
 
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		var group = Group.<Group>findByIdOptional(groupId).orElseThrow(NotFoundException::new);
-		if(vault.directMembers.contains(group)) {
+		if (vault.directMembers.contains(group)) {
 			return Response.status(Response.Status.CONFLICT).build();
 		}
 		vault.directMembers.add(group);
@@ -302,11 +302,12 @@ public class VaultResource {
 	public record VaultDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("description") String description,
 						   @JsonProperty("creationTime") @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSX") Timestamp creationTime,
 						   @JsonProperty("owner") UsersResource.UserDto user,
-						   @JsonProperty("masterkey") String masterkey, @JsonProperty("iterations") String iterations, @JsonProperty("salt") String salt
+						   @JsonProperty("masterkey") String masterkey, @JsonProperty("iterations") String iterations, @JsonProperty("salt") String salt,
+						   @JsonProperty("authPublicKey") String authPublicKey, @JsonProperty("authPrivateKey") String authPrivateKey
 	) {
 
 		public static VaultDto fromEntity(Vault entity) {
-			return new VaultDto(entity.id, entity.name, entity.description, entity.creationTime, UsersResource.UserDto.fromEntity(entity.owner), entity.masterkey, entity.iterations, entity.salt);
+			return new VaultDto(entity.id, entity.name, entity.description, entity.creationTime, UsersResource.UserDto.fromEntity(entity.owner), entity.masterkey, entity.iterations, entity.salt, entity.authenticationPublicKey, entity.authenticationPrivateKey);
 		}
 
 		public Vault toVault(User owner, String id) {
@@ -319,6 +320,8 @@ public class VaultResource {
 			vault.masterkey = masterkey;
 			vault.iterations = iterations;
 			vault.salt = salt;
+			vault.authenticationPublicKey = authPublicKey;
+			vault.authenticationPrivateKey = authPrivateKey;
 			return vault;
 		}
 
