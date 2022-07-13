@@ -166,7 +166,7 @@ async function createVault() {
     const vaultKeys = await VaultKeys.create();
     vaultConfig.value = await VaultConfig.create(vaultId, vaultKeys);
     const wrapped = await vaultKeys.wrap(password.value);
-    await backend.vaults.createVault(vaultId, vaultName.value, vaultDescription.value, wrapped.masterkey, wrapped.iterations, wrapped.salt, wrapped.signaturePrivateKey, wrapped.signaturePublicKey);
+    await backend.vaults.createVault(vaultId, vaultName.value, vaultDescription.value, wrapped.masterkey, wrapped.iterations, wrapped.salt, wrapped.signaturePublicKey, wrapped.signaturePrivateKey);
     state.value = State.Finished;
   } catch (error) {
     console.error('Creating vault failed.', error);
