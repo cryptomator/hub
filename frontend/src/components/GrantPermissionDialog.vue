@@ -57,7 +57,7 @@ import { base64url } from 'rfc4648';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { ConflictError, DeviceDto, NotFoundError, VaultDto } from '../common/backend';
-import { Masterkey, UnwrapKeyError, WrappedMasterkey } from '../common/crypto';
+import { UnwrapKeyError, VaultKeys, WrappedVaultKeys } from '../common/crypto';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -98,8 +98,8 @@ async function grantAccess() {
 }
 
 async function giveDevicesAccess(devices: DeviceDto[]) {
-  const wrappedKey = new WrappedMasterkey(props.vault.masterkey, props.vault.salt, props.vault.iterations);
-  const masterkey = await Masterkey.unwrap(password.value, wrappedKey);
+  const wrappedKey = new WrappedVaultKeys(props.vault.masterkey, props.vault.authPrivateKey, props.vault.authPublicKey, props.vault.salt, props.vault.iterations);
+  const masterkey = await VaultKeys.unwrap(password.value, wrappedKey);
   for (const device of devices) {
     const publicKey = base64url.parse(device.publicKey);
     const jwe = await masterkey.encryptForDevice(publicKey);

@@ -104,7 +104,7 @@ import { saveAs } from 'file-saver';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { ConflictError } from '../common/backend';
-import { Masterkey } from '../common/crypto';
+import { VaultKeys } from '../common/crypto';
 import { uuid } from '../common/util';
 import { VaultConfig } from '../common/vaultconfig';
 
@@ -163,10 +163,10 @@ async function createVault() {
   try {
     state.value = State.Processing;
     const vaultId = uuid();
-    const masterkey = await Masterkey.create();
-    vaultConfig.value = await VaultConfig.create(vaultId, masterkey);
-    const wrapped = await masterkey.wrap(password.value);
-    await backend.vaults.createVault(vaultId, vaultName.value, vaultDescription.value, wrapped.encrypted, wrapped.iterations, wrapped.salt, '', ''); //TODO: add pub and private keys for authentication
+    const vaultKeys = await VaultKeys.create();
+    vaultConfig.value = await VaultConfig.create(vaultId, vaultKeys);
+    const wrapped = await vaultKeys.wrap(password.value);
+    await backend.vaults.createVault(vaultId, vaultName.value, vaultDescription.value, wrapped.masterkey, wrapped.iterations, wrapped.salt, wrapped.signaturePublicKey, wrapped.signaturePrivateKey);
     state.value = State.Finished;
   } catch (error) {
     console.error('Creating vault failed.', error);

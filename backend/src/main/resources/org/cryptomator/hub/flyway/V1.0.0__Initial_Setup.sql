@@ -66,7 +66,7 @@ CREATE TABLE "vault"
 	"iterations"    VARCHAR(255) NOT NULL,
 	"masterkey"     VARCHAR(255) NOT NULL,
 	"auth_pubkey"     VARCHAR(255) NOT NULL,
-	"auth_prvkey"     VARCHAR(255) NOT NULL,
+	"auth_prvkey"     VARCHAR(500) NOT NULL,
 	CONSTRAINT "VAULT_PK" PRIMARY KEY ("id"),
 	CONSTRAINT "VAULT_UNIQUE_NAME" UNIQUE ("name")
 );

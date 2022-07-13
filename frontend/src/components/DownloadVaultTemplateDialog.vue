@@ -54,7 +54,7 @@ import { saveAs } from 'file-saver';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { VaultDto } from '../common/backend';
-import { Masterkey, UnwrapKeyError, WrappedMasterkey } from '../common/crypto';
+import { UnwrapKeyError, VaultKeys, WrappedVaultKeys } from '../common/crypto';
 import { VaultConfig } from '../common/vaultconfig';
 
 const { t } = useI18n({ useScope: 'global' });
@@ -94,8 +94,8 @@ async function downloadVault() {
 }
 
 async function generateVaultZip(): Promise<Blob> {
-  const wrappedKey = new WrappedMasterkey(props.vault.masterkey, props.vault.salt, props.vault.iterations);
-  const masterkey = await Masterkey.unwrap(password.value, wrappedKey);
+  const wrappedKey = new WrappedVaultKeys(props.vault.masterkey, props.vault.authPrivateKey, props.vault.authPublicKey, props.vault.salt, props.vault.iterations);
+  const masterkey = await VaultKeys.unwrap(password.value, wrappedKey);
   const config = await VaultConfig.create(props.vault.id, masterkey);
   return await config.exportTemplate();
 }
