@@ -24,7 +24,7 @@ import java.util.Objects;
 			FROM Vault v
 			INNER JOIN v.effectiveMembers u
 			INNER JOIN u.devices d
-			INNER JOIN d.accessTokens a
+			INNER JOIN d.accessTokens a ON a.id.deviceId = d.id AND a.id.vaultId = v.id
 			WHERE v.id = :vaultId
 				AND u.id = :userId
 				AND d.id = :deviceId

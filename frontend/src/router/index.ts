@@ -1,4 +1,4 @@
-import { createRouter, createWebHashHistory, RouteRecordRaw } from 'vue-router';
+import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
 import authPromise from '../common/auth';
 import backend from '../common/backend';
 import { frontendBaseURL } from '../common/config';
@@ -8,6 +8,7 @@ import DeviceList from '../components/DeviceList.vue';
 import LoginComponent from '../components/Login.vue';
 import LogoutComponent from '../components/Logout.vue';
 import MainComponent from '../components/Main.vue';
+import NotFoundComponent from '../components/NotFoundComponent.vue';
 import Settings from '../components/Settings.vue';
 import UnlockError from '../components/UnlockError.vue';
 import UnlockSuccess from '../components/UnlockSuccess.vue';
@@ -19,16 +20,11 @@ const routes: RouteRecordRaw[] = [
     path: '/',
     component: LoginComponent,
     meta: { skipAuth: true },
-    beforeEnter: (to, from, next) => {
-      authPromise.then(async auth => {
-        if (auth.isAuthenticated()) {
-          next('/vaults');
-        } else {
-          next();
-        }
-      }).catch(error => {
-        next(error);
-      });
+    beforeEnter: async (_to, _from) => {
+      const auth = await authPromise;
+      if (auth.isAuthenticated()) {
+        return '/vaults';  //TODO:currently not working, since silent single sign-on is missing
+      }
     }
   },
   {
@@ -92,11 +88,16 @@ const routes: RouteRecordRaw[] = [
     path: '/unlock-error',
     component: UnlockError,
     meta: { skipAuth: true }
-  }
+  },
+  {
+    path: '/:catchAll(.*)', //necessary due to using history mode in router
+    component: NotFoundComponent,
+    name: 'NotFound'
+  },
 ];
 
 const router = createRouter({
-  history: createWebHashHistory(),
+  history: createWebHistory(),
   routes: routes
 });
 

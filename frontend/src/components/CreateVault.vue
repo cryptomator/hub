@@ -51,7 +51,7 @@
           <div v-if="onCreateError != null" >
             <p v-if="onCreateError instanceof ConflictError" class="text-sm text-red-900 mr-4">{{ t('createVault.error.vaultAlreadyExists') }}</p>
             <p v-else-if="onCreateError instanceof FormValidationFailedError" class="text-sm text-red-900 mr-4">{{ t('createVault.error.formValidationFailed') }}</p>
-            <p v-else-if="onCreateError instanceof PasswordNotMachingError" class="text-sm text-red-900 mr-4">{{ t('createVault.masterPasswordConformation.passwordsDoNotMatch') }}</p>
+            <p v-else-if="onCreateError instanceof PasswordNotMachingError" class="text-sm text-red-900 mr-4">{{ t('createVault.masterPasswordConfirmation.passwordsDoNotMatch') }}</p>
             <p v-else class="text-sm text-red-900 mr-4">{{ t('common.unexpectedError', [onCreateError.message]) }}</p>
           </div>
           <button :disabled="state == State.Processing" type="submit" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
@@ -104,7 +104,7 @@ import { saveAs } from 'file-saver';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { ConflictError } from '../common/backend';
-import { Masterkey } from '../common/crypto';
+import { VaultKeys } from '../common/crypto';
 import { uuid } from '../common/util';
 import { VaultConfig } from '../common/vaultconfig';
 
@@ -144,7 +144,7 @@ const vaultName = ref('');
 const vaultDescription = ref('');
 const password = ref('');
 const passwordConfirmation = ref('');
-const passwordMatches = computed(() => password.value == passwordConfirmation.value)
+const passwordMatches = computed(() => password.value == passwordConfirmation.value);
 const vaultConfig = ref<VaultConfig>();
 
 async function createVault() {
@@ -155,7 +155,7 @@ async function createVault() {
     return;
   }
 
-  if(!passwordMatches.value) {
+  if (!passwordMatches.value) {
     onCreateError.value = new PasswordNotMachingError();
     return;
   }
@@ -163,10 +163,10 @@ async function createVault() {
   try {
     state.value = State.Processing;
     const vaultId = uuid();
-    const masterkey = await Masterkey.create();
-    vaultConfig.value = await VaultConfig.create(vaultId, masterkey);
-    const wrapped = await masterkey.wrap(password.value);
-    await backend.vaults.createVault(vaultId, vaultName.value, vaultDescription.value, wrapped.encrypted, wrapped.iterations, wrapped.salt);
+    const vaultKeys = await VaultKeys.create();
+    vaultConfig.value = await VaultConfig.create(vaultId, vaultKeys);
+    const wrapped = await vaultKeys.wrap(password.value);
+    await backend.vaults.createVault(vaultId, vaultName.value, vaultDescription.value, wrapped.masterkey, wrapped.iterations, wrapped.salt, wrapped.signaturePublicKey, wrapped.signaturePrivateKey);
     state.value = State.Finished;
   } catch (error) {
     console.error('Creating vault failed.', error);

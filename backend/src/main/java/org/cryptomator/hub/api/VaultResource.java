@@ -4,9 +4,13 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.cryptomator.hub.entities.AccessToken;
 import org.cryptomator.hub.entities.Device;
+import org.cryptomator.hub.entities.EffectiveGroupMembership;
+import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
+import org.cryptomator.hub.license.ActiveLicense;
+import org.cryptomator.hub.license.LicenseHolder;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -40,6 +44,9 @@ public class VaultResource {
 	@Inject
 	JsonWebToken jwt;
 
+	@Inject
+	LicenseHolder license;
+
 	@GET
 	@Path("/")
 	@RolesAllowed("user")
@@ -58,13 +65,17 @@ public class VaultResource {
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "list vault members", description = "list all users that this vault has been shared with")
+	@APIResponse(responseCode = "403", description = "requesting user does not own vault")
 	public List<AuthorityDto> getMembers(@PathParam("vaultId") String vaultId) {
 		Vault vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
+		if (!vault.owner.id.equals(jwt.getSubject())) {
+			throw new ForbiddenException("Requesting user does not own vault");
+		}
 		return vault.directMembers.stream().map(authority -> {
 			// TODO replace with pattern matching for switch as soon as available
-			if(authority instanceof User u) {
+			if (authority instanceof User u) {
 				return UsersResource.UserDto.fromEntity(u);
-			} else if(authority instanceof Group g) {
+			} else if (authority instanceof Group g) {
 				return GroupResource.GroupDto.fromEntity(g);
 			} else {
 				throw new IllegalStateException();
@@ -77,12 +88,30 @@ public class VaultResource {
 	@RolesAllowed("vault-owner")
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
-	@Operation(summary = "adds a user to this vault")
-	@APIResponse(responseCode = "201", description = "user added")
+	@Operation(summary = "adds a member to this vault")
+	@APIResponse(responseCode = "201", description = "member added")
+	@APIResponse(responseCode = "402", description = "all seats in license used")
+	@APIResponse(responseCode = "403", description = "requesting user does not own vault")
 	@APIResponse(responseCode = "404", description = "vault or user not found")
+	@APIResponse(responseCode = "409", description = "user is already a direct member of the vault")
+	@ActiveLicense
 	public Response addUser(@PathParam("vaultId") String vaultId, @PathParam("userId") String userId) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
+		if (!vault.owner.id.equals(jwt.getSubject())) {
+			throw new ForbiddenException("Requesting user does not own vault");
+		}
 		var user = User.<User>findByIdOptional(userId).orElseThrow(NotFoundException::new);
+		if (!EffectiveVaultAccess.isUserOccupyingSeat(userId)) {
+			//for new user, we need to check if a license seat is available
+			var usedSeats = EffectiveVaultAccess.countEffectiveVaultUsers();
+			if (usedSeats >= license.getAvailableSeats()) {
+				throw new PaymentRequiredException("Number of effective vault users greater than or equal to the available license seats");
+			}
+		}
+		if (vault.directMembers.contains(user)) {
+			return Response.status(Response.Status.CONFLICT).build();
+		}
+
 		vault.directMembers.add(user);
 		vault.persist();
 		return Response.status(Response.Status.CREATED).build();
@@ -95,10 +124,21 @@ public class VaultResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "adds a group to this vault")
 	@APIResponse(responseCode = "201", description = "member added")
+	@APIResponse(responseCode = "402", description = "used seats + (number of users in group not occupying a seats) exceeds number of total avaible seats in license")
 	@APIResponse(responseCode = "404", description = "vault or group not found")
+	@APIResponse(responseCode = "409", description = "group is already a direct member of the vault")
+	@ActiveLicense
 	public Response addGroup(@PathParam("vaultId") String vaultId, @PathParam("groupId") String groupId) {
+		//usersInGroup - usersInGroupAndPartOfAtLeastOneVault + usersOfAtLeastOneVault
+		if (EffectiveGroupMembership.countEffectiveGroupUsers(groupId) - EffectiveVaultAccess.countEffectiveVaultUsersOfGroup(groupId) + EffectiveVaultAccess.countEffectiveVaultUsers() > license.getAvailableSeats()) {
+			throw new PaymentRequiredException("Number of effective vault users greater than or equal to the available license seats");
+		}
+
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		var group = Group.<Group>findByIdOptional(groupId).orElseThrow(NotFoundException::new);
+		if (vault.directMembers.contains(group)) {
+			return Response.status(Response.Status.CONFLICT).build();
+		}
 		vault.directMembers.add(group);
 		vault.persist();
 		return Response.status(Response.Status.CREATED).build();
@@ -110,7 +150,8 @@ public class VaultResource {
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "remove a member from this vault", description = "revokes the given user's access rights from this vault. If the given user is no member, the request is a no-op.")
-	@APIResponse(responseCode = "204", description = "user removed")
+	@APIResponse(responseCode = "204", description = "member removed")
+	@APIResponse(responseCode = "403", description = "requesting user does not own vault")
 	@APIResponse(responseCode = "404", description = "vault not found")
 	public Response removeMember(@PathParam("vaultId") String vaultId, @PathParam("userId") String userId) {
 		return removeAutority(vaultId, userId);
@@ -130,6 +171,10 @@ public class VaultResource {
 
 	private Response removeAutority(String vaultId, String authorityId) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
+		if (!vault.owner.id.equals(jwt.getSubject())) {
+			throw new ForbiddenException("Requesting user does not own vault");
+		}
+
 		vault.directMembers.removeIf(e -> e.id.equals(authorityId));
 		vault.persist();
 		return Response.status(Response.Status.NO_CONTENT).build();
@@ -141,7 +186,12 @@ public class VaultResource {
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "list devices requiring access rights", description = "lists all devices owned by vault members, that don't have a device-specific masterkey yet")
+	@APIResponse(responseCode = "403", description = "requesting user does not own vault")
 	public List<DeviceResource.DeviceDto> getDevicesRequiringAccessGrant(@PathParam("vaultId") String vaultId) {
+		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
+		if (!vault.owner.id.equals(jwt.getSubject())) {
+			throw new ForbiddenException("Requesting user does not own vault");
+		}
 		return Device.findRequiringAccessGrant(vaultId).map(DeviceResource.DeviceDto::fromEntity).toList();
 	}
 
@@ -152,9 +202,16 @@ public class VaultResource {
 	@Produces(MediaType.TEXT_PLAIN)
 	@Operation(summary = "get the device-specific masterkey")
 	@APIResponse(responseCode = "200")
+	@APIResponse(responseCode = "402", description = "number of effective vault users exceeds available license seats")
 	@APIResponse(responseCode = "403", description = "device not authorized to access this vault")
 	@APIResponse(responseCode = "404", description = "unknown device")
+	@ActiveLicense
 	public String unlock(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId) {
+		var usedSeats = EffectiveVaultAccess.countEffectiveVaultUsers();
+		if (usedSeats > license.getAvailableSeats()) {
+			throw new PaymentRequiredException("Number of effective vault users exceeds available license seats");
+		}
+
 		var access = AccessToken.unlock(vaultId, deviceId, jwt.getSubject());
 		if (access != null) {
 			return access.jwe;
@@ -172,11 +229,15 @@ public class VaultResource {
 	@Consumes(MediaType.TEXT_PLAIN)
 	@Operation(summary = "adds a device-specific masterkey")
 	@APIResponse(responseCode = "201", description = "device-specific key stored")
+	@APIResponse(responseCode = "403", description = "requesting user does not own vault")
 	@APIResponse(responseCode = "404", description = "specified vault or device not found")
 	@APIResponse(responseCode = "409", description = "Access to vault for device already granted")
 	public Response grantAccess(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId, String jwe) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		var device = Device.<Device>findByIdOptional(deviceId).orElseThrow(NotFoundException::new);
+		if (!vault.owner.id.equals(jwt.getSubject())) {
+			throw new ForbiddenException("Requesting user does not own vault");
+		}
 
 		var access = new AccessToken();
 		access.vault = vault;
@@ -201,9 +262,12 @@ public class VaultResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
 	@Operation(summary = "gets a vault")
+	@APIResponse(responseCode = "403", description = "requesting user is neither member nor owner of the vault")
 	public VaultDto get(@PathParam("vaultId") String vaultId) {
-		// TODO: check if user has permission to access this vault?
-		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
+		Vault vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
+		if (!vault.owner.id.equals(jwt.getSubject()) && vault.effectiveMembers.stream().noneMatch(u -> u.id.equals(jwt.getSubject()))) {
+			throw new ForbiddenException("Requesting user is neither member nor owner of the vault");
+		}
 		return VaultDto.fromEntity(vault);
 	}
 
@@ -238,11 +302,12 @@ public class VaultResource {
 	public record VaultDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("description") String description,
 						   @JsonProperty("creationTime") @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSX") Timestamp creationTime,
 						   @JsonProperty("owner") UsersResource.UserDto user,
-						   @JsonProperty("masterkey") String masterkey, @JsonProperty("iterations") String iterations, @JsonProperty("salt") String salt
+						   @JsonProperty("masterkey") String masterkey, @JsonProperty("iterations") String iterations, @JsonProperty("salt") String salt,
+						   @JsonProperty("authPublicKey") String authPublicKey, @JsonProperty("authPrivateKey") String authPrivateKey
 	) {
 
 		public static VaultDto fromEntity(Vault entity) {
-			return new VaultDto(entity.id, entity.name, entity.description, entity.creationTime, UsersResource.UserDto.fromEntity(entity.owner), entity.masterkey, entity.iterations, entity.salt);
+			return new VaultDto(entity.id, entity.name, entity.description, entity.creationTime, UsersResource.UserDto.fromEntity(entity.owner), entity.masterkey, entity.iterations, entity.salt, entity.authenticationPublicKey, entity.authenticationPrivateKey);
 		}
 
 		public Vault toVault(User owner, String id) {
@@ -255,6 +320,8 @@ public class VaultResource {
 			vault.masterkey = masterkey;
 			vault.iterations = iterations;
 			vault.salt = salt;
+			vault.authenticationPublicKey = authPublicKey;
+			vault.authenticationPrivateKey = authPrivateKey;
 			return vault;
 		}
 

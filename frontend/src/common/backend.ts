@@ -29,7 +29,7 @@ axiosAuth.interceptors.request.use(async request => {
 
 export class VaultDto {
 
-  constructor(public id: string, public name: string, public description: string, public creationTime: Date, public masterkey: string, public iterations: number, public salt: string, public owner?: UserDto) { }
+  constructor(public id: string, public name: string, public description: string, public creationTime: Date, public masterkey: string, public iterations: number, public salt: string, public authPublicKey: string, public authPrivateKey: string, public owner?: UserDto) { }
 
 }
 
@@ -38,13 +38,19 @@ export class DeviceDto {
 }
 
 export class AuthorityDto {
-  constructor(public id: string, public name: string, public type: string) { }
+  constructor(public id: string, public name: string, public type: string, public pictureUrl: string) { }
 }
 
 export class UserDto extends AuthorityDto {
   constructor(public id: string, public name: string, public pictureUrl: string, public email: string, public devices: DeviceDto[]) {
-    super(id, name, 'user')
-   }
+    super(id, name, 'user', pictureUrl);
+  }
+}
+
+export class GroupDto extends AuthorityDto {
+  constructor(public id: string, public name: string, public pictureUrl: string) {
+    super(id, name, 'group', pictureUrl);
+  }
 }
 
 export class BillingDto {
@@ -69,20 +75,25 @@ class VaultService {
   }
 
   public async getMembers(vaultId: string): Promise<AuthorityDto[]> {
-    return axiosAuth.get(`/vaults/${vaultId}/members`).then(response => response.data);
+    return axiosAuth.get(`/vaults/${vaultId}/members`).then(response => response.data).catch(err => rethrowAndConvertIfExpected(err, 403));
   }
 
   public async addUser(vaultId: string, userId: string): Promise<AxiosResponse<void>> {
     return axiosAuth.put(`/vaults/${vaultId}/users/${userId}`)
-      .catch((err) => rethrowAndConvertIfExpected(err, 404));
+      .catch((err) => rethrowAndConvertIfExpected(err, 404, 409));
+  }
+
+  public async addGroup(vaultId: string, groupId: string): Promise<AxiosResponse<void>> {
+    return axiosAuth.put(`/vaults/${vaultId}/groups/${groupId}`)
+      .catch((err) => rethrowAndConvertIfExpected(err, 404, 409));
   }
 
   public async getDevicesRequiringAccessGrant(vaultId: string): Promise<DeviceDto[]> {
-    return axiosAuth.get(`/vaults/${vaultId}/devices-requiring-access-grant`).then(response => response.data);
+    return axiosAuth.get(`/vaults/${vaultId}/devices-requiring-access-grant`).then(response => response.data).catch(err => rethrowAndConvertIfExpected(err, 403));
   }
 
-  public async createVault(vaultId: string, name: string, description: string, masterkey: string, iterations: number, salt: string): Promise<AxiosResponse<any>> {
-    const body: VaultDto = { id: vaultId, name: name, description: description, creationTime: new Date(), masterkey: masterkey, iterations: iterations, salt: salt };
+  public async createVault(vaultId: string, name: string, description: string, masterkey: string, iterations: number, salt: string, signPubKey: string, signPrvKey: string): Promise<AxiosResponse<any>> {
+    const body: VaultDto = { id: vaultId, name: name, description: description, creationTime: new Date(), masterkey: masterkey, iterations: iterations, salt: salt, authPublicKey: signPubKey, authPrivateKey: signPrvKey };
     return axiosAuth.put(`/vaults/${vaultId}`, body)
       .catch((err) => rethrowAndConvertIfExpected(err, 404, 409));
   }
@@ -119,6 +130,17 @@ class UserService {
     return axiosAuth.get<UserDto[]>('/users/').then(response => response.data);
   }
 
+  public async search(query: string): Promise<UserDto[]> {
+    return axiosAuth.get<UserDto[]>(`/users/search?query=${query}`).then(response => response.data);
+  }
+
+}
+
+class GroupService {
+  public async search(query: string): Promise<GroupDto[]> {
+    return axiosAuth.get<GroupDto[]>(`/groups/search?query=${query}`).then(response => response.data);
+  }
+
 }
 
 class BillingService {
@@ -138,6 +160,7 @@ class BillingService {
 const services = {
   vaults: new VaultService(),
   users: new UserService(),
+  groups: new GroupService(),
   devices: new DeviceService(),
   billing: new BillingService()
 };
@@ -162,7 +185,7 @@ function convertExpectedToBackendError(status: number): BackendError {
  */
 function rethrowAndConvertIfExpected(error: unknown, ...expectedStatusCodes: number[]): Promise<any> {
   if (AxiosStatic.isAxiosError(error) && error.response != null && expectedStatusCodes.includes(error.response.status)) {
-    throw convertExpectedToBackendError;
+    throw convertExpectedToBackendError(error.response.status);
   } else {
     throw error;
   }

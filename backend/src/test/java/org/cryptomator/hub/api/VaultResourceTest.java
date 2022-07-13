@@ -2,6 +2,7 @@ package org.cryptomator.hub.api;
 
 import com.radcortez.flyway.test.annotation.DataSource;
 import com.radcortez.flyway.test.annotation.FlywayTest;
+import io.agroal.api.AgroalDataSource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.quarkus.test.security.oidc.Claim;
@@ -18,6 +19,8 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import javax.inject.Inject;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Set;
 
@@ -32,9 +35,158 @@ import static org.hamcrest.CoreMatchers.not;
 @DisplayName("Resource /vaults")
 public class VaultResourceTest {
 
+	@Inject
+	AgroalDataSource dataSource;
+
 	@BeforeAll
 	public static void beforeAll() {
 		RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
+	}
+
+	@Nested
+	@DisplayName("Test PUT /vaults/users/{userId} endpoint (addUser)")
+	public class TestAddUser {
+
+		@Test
+		@DisplayName("If all license Seats are used, block new user with 402")
+		@TestSecurity(user = "User Name 1", roles = {"user", "vault-owner"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user1")
+		})
+		public void testDepletedLicenseBlocksNewUser() throws SQLException {
+			//this test depends on the flyway migration Test_Data
+			try (var s = dataSource.getConnection().createStatement()) {
+				s.execute("""
+						INSERT INTO "authority" ("id", "type", "name")
+						VALUES
+							('newUser91', 'USER', 'newUser91 name'),
+							('newUser92', 'USER', 'newUser92 name'),
+							('newUser93', 'USER', 'newUser93 name'),
+							('newUser94', 'USER', 'newUser94 name');
+							
+						INSERT INTO "user_details" ("id")
+						VALUES
+							('newUser91'),
+							('newUser92'),
+							('newUser93'),
+							('newUser94');
+							
+						INSERT INTO "vault_access" ("vault_id", "authority_id")
+						VALUES
+							('vault1', 'newUser91'),
+							('vault1', 'newUser92'),
+							('vault1', 'newUser93');
+						""");
+			}
+			when().put("/vaults/{vaultId}/users/{usersId}", "vault1", "newUser94")
+					.then().statusCode(402);
+		}
+
+		@Test
+		@DisplayName("If all license Seats are used, allow users having any vault access")
+		@TestSecurity(user = "User Name 2", roles = {"user", "vault-owner"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user2")
+		})
+		public void testDepletedLicenseAllowsUsingUser() throws SQLException {
+			//this test depends on the flyway migration Test_Data
+			try (var s = dataSource.getConnection().createStatement()) {
+				s.execute("""
+						INSERT INTO "authority" ("id", "type", "name")
+						VALUES
+							('newUser91', 'USER', 'newUser91 name'),
+							('newUser92', 'USER', 'newUser92 name'),
+							('newUser93', 'USER', 'newUser93 name');
+							
+						INSERT INTO "user_details" ("id")
+						VALUES
+							('newUser91'),
+							('newUser92'),
+							('newUser93');
+							
+						INSERT INTO "vault_access" ("vault_id", "authority_id")
+						VALUES
+							('vault1', 'newUser91'),
+							('vault1', 'newUser92'),
+							('vault1', 'newUser93');
+						""");
+			}
+			when().put("/vaults/{vaultId}/users/{usersId}", "vault2", "newUser91")
+					.then().statusCode(201);
+		}
+
+		@Test
+		@DisplayName("Adding user, who is already direct member of the vault, returns 409")
+		@TestSecurity(user = "User Name 1", roles = {"user", "vault-owner"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user1")
+		})
+		public void testAddingDirectMemberAgainFails() throws SQLException {
+			//this test depends on the flyway migration Test_Data
+			when().put("/vaults/{vaultId}/users/{usersId}", "vault1", "user1")
+					.then().statusCode(409);
+		}
+
+	}
+
+
+	@Nested
+	@DisplayName("Test PUT /vaults/groups/{userId} endpoint (addGroup)")
+	public class TestAddGroup {
+
+		@Test
+		@DisplayName("Adding group, which is already direct member of the vault, returns 409")
+		@TestSecurity(user = "User Name 2", roles = {"user", "vault-owner"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user2")
+		})
+		public void testAddingMemberAgainFails() throws SQLException {
+			//this test depends on the flyway migration Test_Data
+			when().put("/vaults/{vaultId}/groups/{groupId}", "vault2", "group1")
+					.then().statusCode(409);
+		}
+
+	}
+
+	@Nested
+	@DisplayName("Test GET /vaults/{vaultId]/keys/{deviceId} endpoint (unlock)")
+	public class TestUnlock {
+
+		@Test
+		@DisplayName("Unlock is blocked if there are more EVUs than license seats")
+		@TestSecurity(user = "User Name 1", roles = {"user", "vault-owner"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user1")
+		})
+		public void testUnlockBlockedIfEVUsExcceedLicense() throws SQLException {
+			try (var s = dataSource.getConnection().createStatement()) {
+				s.execute("""
+						INSERT INTO "authority" ("id", "type", "name")
+						VALUES
+							('newUser91', 'USER', 'newUser91 name'),
+							('newUser92', 'USER', 'newUser92 name'),
+							('newUser93', 'USER', 'newUser93 name'),
+							('newUser94', 'USER', 'newUser94 name');
+							
+						INSERT INTO "user_details" ("id")
+						VALUES
+							('newUser91'),
+							('newUser92'),
+							('newUser93'),
+							('newUser94');
+							
+						INSERT INTO "vault_access" ("vault_id", "authority_id")
+						VALUES
+							('vault1', 'newUser91'),
+							('vault1', 'newUser92'),
+							('vault1', 'newUser93'),
+							('vault1', 'newUser94');
+						""");
+			}
+
+			when().get("/vaults/{vaultId}/keys/{deviceId}", "vault1", "device1")
+					.then().statusCode(402);
+		}
 	}
 
 	@Nested
@@ -45,13 +197,14 @@ public class VaultResourceTest {
 	})
 	public class AsAuthorizedUser1 {
 
+
 		@Test
 		@DisplayName("GET /vaults returns 200")
 		public void testGetSharedOrOwned() {
 			when().get("/vaults")
 					.then().statusCode(200)
-					.body("size()", is(4))
-					.body("id", hasItems("vault1", "vault2", "vault3"));
+					.body("size()", is(2))
+					.body("id", hasItems("vault1", "vault2"));
 		}
 
 		@Test
@@ -85,11 +238,11 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@DisplayName("GET /vaults/vault3/keys/device6 returns 200 using group access")
+		@DisplayName("GET /vaults/vault2/keys/device3 returns 200 using group access")
 		public void testUnlock2() {
-			when().get("/vaults/{vaultId}/keys/{deviceId}", "vault3", "device6")
+			when().get("/vaults/{vaultId}/keys/{deviceId}", "vault2", "device3")
 					.then().statusCode(200)
-					.body(is("jwe5"));
+					.body(is("jwe3"));
 		}
 
 		@Test
@@ -126,17 +279,16 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@DisplayName("GET /vaults/vault3/members returns 200")
+		@DisplayName("GET /vaults/vault2/members returns 403")
 		public void testGetAccess2() {
-			when().get("/vaults/{vaultId}/members", "vault3")
-					.then().statusCode(200)
-					.body("id", hasItems("group1", "group3"));
+			when().get("/vaults/{vaultId}/members", "vault2")
+					.then().statusCode(403);
 		}
 
 		@Test
 		@DisplayName("PUT /vaults/vault1 returns 409")
 		public void testCreateVault1() {
-			var vaultDto = new VaultResource.VaultDto("vault1", "My Vault","Test vault 1", Timestamp.valueOf("1999-11-19 19:19:19"), null, "masterkey3", "42", "NaCl");
+			var vaultDto = new VaultResource.VaultDto("vault1", "My Vault", "Test vault 1", Timestamp.valueOf("1999-11-19 19:19:19"), null, "masterkey3", "42", "NaCl", "authPubKey3", "authPrvKey3");
 
 			given().contentType(ContentType.JSON).body(vaultDto)
 					.when().put("/vaults/{vaultId}", "vault1")
@@ -146,7 +298,7 @@ public class VaultResourceTest {
 		@Test
 		@DisplayName("PUT /vaults/vaultX returns 409")
 		public void testCreateVault2() {
-			var vaultDto = new VaultResource.VaultDto("vaultX", "Vault 1","This is a testvault.", Timestamp.valueOf("2020-02-20 20:20:20"), null, "masterkey1", "iterations1", "salt1");
+			var vaultDto = new VaultResource.VaultDto("vaultX", "Vault 1", "This is a testvault.", Timestamp.valueOf("2020-02-20 20:20:20"), null, "masterkey1", "iterations1", "salt1", "authPubKey1", "authPrvKey1");
 
 			given().contentType(ContentType.JSON).body(vaultDto)
 					.when().put("/vaults/{vaultId}", "vaultX")
@@ -156,7 +308,7 @@ public class VaultResourceTest {
 		@Test
 		@DisplayName("PUT /vaults/vault3 returns 201")
 		public void testCreateVault3() {
-			var vaultDto = new VaultResource.VaultDto("vault3", "My Vault","Test vault 3", Timestamp.valueOf("2112-12-21 21:12:21"), null, "masterkey3", "42", "NaCl");
+			var vaultDto = new VaultResource.VaultDto("vault3", "My Vault", "Test vault 3", Timestamp.valueOf("2112-12-21 21:12:21"), null, "masterkey3", "42", "NaCl", "authPubKey3", "authPrvKey3");
 
 			given().contentType(ContentType.JSON).body(vaultDto)
 					.when().put("/vaults/{vaultId}", "vault999")
@@ -180,18 +332,22 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@DisplayName("PUT /vaults/vault2/keys/device1 returns 409 due to user access")
+		@DisplayName("PUT /vaults/vault1/keys/device1 returns 409 due to user access already granted")
 		public void testGrantAccess2() {
-			given().contentType(ContentType.TEXT).body("jwe4")
-					.when().put("/vaults/{vaultId}/keys/{deviceId}", "vault2", "device1")
+			given().contentType(ContentType.TEXT).body("jwe1")
+					.when().put("/vaults/{vaultId}/keys/{deviceId}", "vault1", "device1")
 					.then().statusCode(409);
 		}
 
 		@Test
-		@DisplayName("PUT /vaults/vault3/keys/device4 returns 409 due to group access")
-		public void testGrantAccess3() {
-			given().contentType(ContentType.TEXT).body("jwe4")
-					.when().put("/vaults/{vaultId}/keys/{deviceId}", "vault3", "device5")
+		@DisplayName("PUT /vaults/vault2/keys/device3 returns 409 due to group access already granted")
+		@TestSecurity(user = "User Name 2", roles = {"user", "vault-owner"}) //we switch here for easy usage
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user2")
+		})
+		public void testGrantAccess3() throws SQLException {
+			given().contentType(ContentType.TEXT).body("jwe3")
+					.when().put("/vaults/{vaultId}/keys/{deviceId}", "vault2", "device3")
 					.then().statusCode(409);
 		}
 
@@ -315,7 +471,7 @@ public class VaultResourceTest {
 
 		@Test
 		@Order(12)
-		@DisplayName("GET /vaults/vault2/acces does not contain user2")
+		@DisplayName("GET /vaults/vault2/access does not contain user2")
 		public void getMembers3() {
 			when().get("/vaults/{vaultId}/members", "vault2")
 					.then().statusCode(200)
@@ -343,72 +499,138 @@ public class VaultResourceTest {
 
 		@Test
 		@Order(2)
-		@DisplayName("GET /vaults/vault4/members does not contain group3")
-		public void getAccess2() {
-			when().get("/vaults/{vaultId}/members", "vault4")
-					.then().statusCode(200)
-					.body("id", not(hasItems("group3")));
+		@DisplayName("PUT /vaults/vault2/groups/group91 returns 201")
+		public void addGroupToVault() throws SQLException {
+			try (var s = dataSource.getConnection().createStatement()) {
+				s.execute("""
+						INSERT INTO "authority" ("id", "type", "name")
+						VALUES
+							('group91', 'GROUP', 'group name 91');
+							
+						INSERT INTO "group_details" ("id")
+						VALUES
+							('group91');
+							
+						""");
+			}
+
+			when().put("/vaults/{vaultId}/groups/{groupId}", "vault2", "group91")
+					.then().statusCode(201);
 		}
 
 		@Test
 		@Order(3)
-		@DisplayName("PUT /vaults/vault4/groups/group3 returns 201")
-		public void addGroup1() {
-			when().put("/vaults/{vaultId}/groups/{groupId}", "vault4", "group3")
-					.then().statusCode(201);
+		@DisplayName("GET /vaults/vault2/members does contain group91")
+		public void getMembers4() {
+			when().get("/vaults/{vaultId}/members", "vault2")
+					.then().statusCode(200)
+					.body("id", hasItems("group91"));
 		}
 
 		@Test
 		@Order(4)
-		@DisplayName("GET /vaults/vault4/members does contain group3")
-		public void getMembers4() {
-			when().get("/vaults/{vaultId}/members", "vault4")
+		@DisplayName("GET /vaults/vault2/devices-requiring-access-grant contains device93")
+		public void testGetDevicesRequiringAccess3() throws SQLException {
+			try (var s = dataSource.getConnection().createStatement()) {
+				s.execute("""
+						INSERT INTO "authority" ("id", "type", "name")
+						VALUES
+							('user90', 'USER', 'user name 90');
+							
+						INSERT INTO "user_details" ("id")
+						VALUES
+							('user90');
+							
+						INSERT INTO "group_membership" ("group_id", "member_id")
+						VALUES
+							('group91', 'user90');
+							
+						INSERT INTO "device" ("id", "owner_id", "name", "publickey")
+						VALUES
+							('device93', 'user90', 'Computer 9', 'publickey90');
+						""");
+			}
+
+			when().get("/vaults/{vaultId}/devices-requiring-access-grant", "vault2")
 					.then().statusCode(200)
-					.body("id", hasItems("group3"));
+					.body("id", hasItems("device93"));
 		}
 
 		@Test
 		@Order(5)
-		@DisplayName("GET /vaults/vault4/devices-requiring-access-grant contains device5")
-		public void testGetDevicesRequiringAccess3() {
-			when().get("/vaults/{vaultId}/devices-requiring-access-grant", "vault4")
-					.then().statusCode(200)
-					.body("id", hasItems("device5"));
-		}
-
-		@Test
-		@Order(6)
-		@DisplayName("PUT /vaults/vault4/keys/device5 returns 201")
+		@DisplayName("PUT /vaults/vault2/keys/device93 returns 201")
 		public void testGrantAccess2() {
-			given().contentType(ContentType.TEXT).body("jwe9999")
-					.when().put("/vaults/{vaultId}/keys/{deviceId}", "vault4", "device5")
+			given().contentType(ContentType.TEXT).body("jwe99")
+					.when().put("/vaults/{vaultId}/keys/{deviceId}", "vault2", "device93")
 					.then().statusCode(201);
 		}
 
 		@Test
-		@Order(7)
-		@DisplayName("GET /vaults/vault4/devices-requiring-access-grant contains not device5")
+		@Order(6)
+		@DisplayName("GET /vaults/vault2/devices-requiring-access-grant contains not device93")
 		public void testGetDevicesRequiringAccess4() {
-			when().get("/vaults/{vaultId}/devices-requiring-access-grant", "vault4")
+			when().get("/vaults/{vaultId}/devices-requiring-access-grant", "vault2")
 					.then().statusCode(200)
-					.body("id", not(hasItems("device5")));
+					.body("id", not(hasItems("device93")));
 		}
 
 		@Test
-		@Order(8)
-		@DisplayName("DELETE /vaults/vault4/groups/group2 returns 204")
+		@Order(7)
+		@DisplayName("DELETE /vaults/vault2/groups/group91 returns 204")
 		public void removeGroup2() {
-			when().delete("/vaults/{vaultId}/groups/{groupId}", "vault4", "group2")
+			when().delete("/vaults/{vaultId}/groups/{groupId}", "vault2", "group91")
 					.then().statusCode(204);
 		}
 
 		@Test
-		@Order(9)
-		@DisplayName("GET /vaults/vault4/members does not contain group2")
+		@Order(8)
+		@DisplayName("GET /vaults/vault2/members does not contain group91")
 		public void getMembers5() {
-			when().get("/vaults/{vaultId}/members", "vault4")
+			when().get("/vaults/{vaultId}/members", "vault2")
 					.then().statusCode(200)
-					.body("id", not(hasItems("group2")));
+					.body("id", not(hasItems("group91")));
+		}
+
+		@Test
+		@Order(9)
+		@DisplayName("PUT /vaults/vault2/groups/group94 returns 402")
+		public void addGroupToVaultExceedingSeats() throws SQLException {
+			//license has 5 seats, two are already used
+			try (var s = dataSource.getConnection().createStatement()) {
+				s.execute("""
+						INSERT INTO "authority" ("id", "type", "name")
+						VALUES
+							('group94', 'GROUP', 'group name 94'),
+							('user95', 'USER', 'user name 95'),
+							('user96', 'USER', 'user name 96'),
+							('user97', 'USER', 'user name 97'),
+							('user98', 'USER', 'user name 98');
+							
+						INSERT INTO "group_details" ("id")
+						VALUES
+							('group94');
+							
+							
+						INSERT INTO "user_details" ("id")
+						VALUES
+							('user95'),
+							('user96'),
+							('user97'),
+							('user98');
+							
+						INSERT INTO "group_membership" ("group_id", "member_id")
+						VALUES
+							('group94', 'user95'),
+							('group94', 'user96'),
+							('group94', 'user97'),
+							('group94', 'user98'),
+							('group94', 'user1');
+							
+						""");
+			}
+
+			when().put("/vaults/{vaultId}/groups/{groupId}", "vault2", "group94")
+					.then().statusCode(402);
 		}
 
 	}

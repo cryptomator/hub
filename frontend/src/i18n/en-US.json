@@ -32,9 +32,9 @@
   "billing.licenseInfo.expiresAt.description.valid": "Your license is valid.",
   "billing.licenseInfo.expiresAt.description.expired": "Your license has expired.",
   "billing.licenseInfo.manageSubscription": "Manage Subscription",
-  "billing.licenseInfo.empty.title": "No license",
-  "billing.licenseInfo.empty.description": "You don't have a license yet. Get a license to unlock all features.",
-  "billing.licenseInfo.getLicense": "Get License",
+  "billing.licenseInfo.communityLicense.description": "Thank you for using Cryptomator Hub! You have been granted the Community License. If you need more seats, upgrade your license.",
+  "billing.licenseInfo.communityLicense.type.title": "Type",
+  "billing.licenseInfo.communityLicense.upgradeLicense": "Get License",
 
   "fetchError.title": "Fetching data failed",
 

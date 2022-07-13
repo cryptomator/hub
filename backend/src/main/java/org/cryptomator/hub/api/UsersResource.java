@@ -56,7 +56,7 @@ public class UsersResource {
 	public UserDto getMe(@QueryParam("withDevices") boolean withDevices, @QueryParam("withAccessibleVaults") boolean withAccessibleVaults) {
 		User user = User.findById(jwt.getSubject());
 		Function<AccessToken, VaultResource.VaultDto> mapAccessibleVaults =
-				a -> new VaultResource.VaultDto(a.vault.id, a.vault.name, a.vault.description, a.vault.creationTime, UserDto.fromEntity(a.vault.owner), null, null, null);
+				a -> new VaultResource.VaultDto(a.vault.id, a.vault.name, a.vault.description, a.vault.creationTime, UserDto.fromEntity(a.vault.owner), null, null, null, null, null);
 		Function<Device, DeviceResource.DeviceDto> mapDevices = withAccessibleVaults //
 				? d -> new DeviceResource.DeviceDto(d.id, d.name, d.publickey, d.owner.id, d.accessTokens.stream().map(mapAccessibleVaults).collect(Collectors.toSet())) //
 				: d -> new DeviceResource.DeviceDto(d.id, d.name, d.publickey, d.owner.id, Set.of());
@@ -86,16 +86,13 @@ public class UsersResource {
 
 	public static final class UserDto extends AuthorityDto {
 
-		@JsonProperty("pictureUrl")
-		public final String pictureUrl;
 		@JsonProperty("email")
 		public final String email;
 		@JsonProperty("devices")
 		public final Set<DeviceResource.DeviceDto> devices;
 
 		UserDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("pictureUrl") String pictureUrl, @JsonProperty("email") String email, @JsonProperty("devices") Set<DeviceResource.DeviceDto> devices) {
-			super(id, Type.USER, name);
-			this.pictureUrl = pictureUrl;
+			super(id, Type.USER, name, pictureUrl);
 			this.email = email;
 			this.devices = devices;
 		}

@@ -1,6 +1,6 @@
 import JSZip from 'jszip';
 import config, { backendBaseURL, frontendBaseURL } from '../common/config';
-import { Masterkey, VaultConfigHeaderHub, VaultConfigPayload } from '../common/crypto';
+import { VaultConfigHeaderHub, VaultConfigPayload, VaultKeys } from '../common/crypto';
 
 export class VaultConfig {
 
@@ -12,18 +12,18 @@ export class VaultConfig {
     this.rootDirHash = rootDirHash;
   }
 
-  public static async create(vaultId: string, masterkey: Masterkey): Promise<VaultConfig> {
+  public static async create(vaultId: string, vaultKeys: VaultKeys): Promise<VaultConfig> {
     const cfg = config.get();
 
-    const kid = `hub+${backendBaseURL}/vaults/${vaultId}`;
+    const kid = `hub+${backendBaseURL}vaults/${vaultId}`;
 
     const hubConfig: VaultConfigHeaderHub = {
       clientId: cfg.keycloakClientId,
       authEndpoint: cfg.keycloakAuthEndpoint,
       tokenEndpoint: cfg.keycloakTokenEndpoint,
-      devicesResourceUrl: `${backendBaseURL}/devices/`,
-      authSuccessUrl: `${frontendBaseURL}/unlock-success?vault=${vaultId}`,
-      authErrorUrl: `${frontendBaseURL}/unlock-error?vault=${vaultId}`
+      devicesResourceUrl: `${backendBaseURL}devices/`,
+      authSuccessUrl: `${frontendBaseURL}unlock-success?vault=${vaultId}`,
+      authErrorUrl: `${frontendBaseURL}unlock-error?vault=${vaultId}`
     };
 
     const jwtPayload: VaultConfigPayload = {
@@ -33,8 +33,8 @@ export class VaultConfig {
       shorteningThreshold: 220
     };
 
-    const vaultConfigToken = await masterkey.createVaultConfig(kid, hubConfig, jwtPayload);
-    const rootDirHash = await masterkey.hashDirectoryId('');
+    const vaultConfigToken = await vaultKeys.createVaultConfig(kid, hubConfig, jwtPayload);
+    const rootDirHash = await vaultKeys.hashDirectoryId('');
     return new VaultConfig(vaultConfigToken, rootDirHash);
   }
 
