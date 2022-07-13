@@ -2,7 +2,7 @@ import { expect, use as chaiUse } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { describe } from 'mocha';
 import { base64 } from 'rfc4648';
-import { Masterkey, WrappedMasterkey } from '../../src/common/crypto';
+import { Masterkey, UnwrapKeyError, WrappedMasterkey } from '../../src/common/crypto';
 
 chaiUse(chaiAsPromised);
 
@@ -20,10 +20,10 @@ describe('crypto', () => {
   describe('Masterkey', () => {
 
     const wrapped: WrappedMasterkey = {
-      masterkey: 'zuYM3aANgVKaMI2ZkIXp3jt2q_jC5APBVf_W7LxlVEz…u6D9neQlc3b5X9j12fVIkv9vTztBezIMGppCQWOCKk=',
-      sk: 'H3V026OfdgbdKbn43lq18fYageZcfRP7evV3ajTqzCvT/Ul…Co/rTT3XCRUdrfTBa52IULAUACUc4j+zUS6JF2CDAaU5kP',
-      pk: 'MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAESzrRXmyI8VWFJg1…4PXHQTXP5IDGdYhJhL+WLKjnGjQAw0rNGy5V29+aV+yseW',
-      salt: 'EG3Z0m2huTx74FpOCeSbJw',
+      masterkey: 'CMPyJiiOQXBZ8FVvFZs6UOh0kW83-eALeK3bwXfFF2CWsguJZIgCJch94liWCh9xTqW84LUZPyo6IDWbSALqbbdiwDcztT8M81_pgadhTETVtHO5Q1CFNLJ9UvY',
+      signaturePrivateKey: 'O9snY73/eVElnWRLgM404KH7WwO/Ed30Y0UrQQw6x3vxOdroJcjvPdJeSqLD2x4lVP7ceTjVt3IT2N9Mx+jhUQzqrb1E2EvEYlXrTaID1jSdBXZ6ScrI1RvU0iH9cfXf2cRy2x8QZvJyVMr34gLJ3Di/XGrnc/BrOm+aF2K4F9FJXvJFen3CnAs9ewB3Vk0A1wRLX3hW/Wx7eXt/0i1gxB8T/NcLu7xIU3+uusTHh9uajFkA5+z1+JgNHURaa1bT8j5WTtNWIHYT/sw+erMn6S0Uj1vL',
+      signaturePublicKey: 'MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAESzrRXmyI8VWFJg1dPUNbFcc9jZvjZEfH7ulKI1UkXAltd7RGWrcfFxqyGPcwu6AQhHUag3OvDzEr0uUQND4PXHQTXP5IDGdYhJhL+WLKjnGjQAw0rNGy5V29+aV+yseW',
+      salt: 'IdXyKICznXKm41gSb5OqfQ',
       iterations: 1
     };
 
@@ -34,24 +34,42 @@ describe('crypto', () => {
     });
 
     it('unwrap() with wrong pw', () => {
-      expect(Masterkey.unwrap('wrong', wrapped)).to.be.rejected;
+      return expect(Masterkey.unwrap('wrong', wrapped)).to.eventually.be.rejectedWith(UnwrapKeyError);
     });
 
     it('unwrap() with correct pw', () => {
-      expect(Masterkey.unwrap('pass', wrapped)).to.be.fulfilled;
+      return expect(Masterkey.unwrap('pass', wrapped)).to.eventually.be.fulfilled;
     });
 
-    describe('Created Masterkey', () => {
+    // unwrapped keys are not exportable, therefore they can not be re-wrapped
+    describe('After unwrapping existing key material', () => {
+      let masterkey: Masterkey;
+
+      beforeEach(async () => {
+        masterkey = await Masterkey.unwrap('pass', wrapped);
+      });
+
+      it('wrap() fails', () => {
+        return expect(masterkey.wrap('pass')).to.eventually.be.rejected;
+      });
+    });
+
+    describe('After creating new key material', () => {
       let masterkey: Masterkey;
 
       beforeEach(async () => {
         masterkey = await TestMasterkey.create();
       });
 
-      it('wrap()', async () => {
+      it('wrap() succeeds', async () => {
         const wrapped = await masterkey.wrap('pass');
 
         expect(wrapped).to.be.not.null;
+        expect(wrapped.masterkey).to.be.not.null;
+        expect(wrapped.signaturePrivateKey).to.be.not.null;
+        expect(wrapped.signaturePublicKey).to.be.not.null;
+        expect(wrapped.salt).to.be.not.null;
+        expect(wrapped.iterations).to.eq(1000000);
       });
 
       it('encryptForDevice()', async () => {
@@ -93,7 +111,11 @@ class TestMasterkey extends Masterkey {
     const key = await crypto.subtle.importKey(
       'raw',
       raw,
-      Masterkey.KEY_DESIGNATION,
+      {
+        name: 'HMAC',
+        hash: 'SHA-256',
+        length: 512
+      },
       true,
       ['sign']
     );
@@ -108,7 +130,10 @@ class TestMasterkey extends Masterkey {
         y: 'hHUag3OvDzEr0uUQND4PXHQTXP5IDGdYhJhL-WLKjnGjQAw0rNGy5V29-aV-yseW'
 
       },
-      Masterkey.SK_DESIGNATION,
+      {
+        name: 'ECDSA',
+        namedCurve: 'P-384'
+      },
       true,
       ['sign']
     );
@@ -121,7 +146,10 @@ class TestMasterkey extends Masterkey {
         y: 'hHUag3OvDzEr0uUQND4PXHQTXP5IDGdYhJhL-WLKjnGjQAw0rNGy5V29-aV-yseW'
 
       },
-      Masterkey.SK_DESIGNATION,
+      {
+        name: 'ECDSA',
+        namedCurve: 'P-384'
+      },
       true,
       ['verify']
     );
