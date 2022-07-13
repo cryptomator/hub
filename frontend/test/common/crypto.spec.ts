@@ -19,6 +19,14 @@ describe('crypto', () => {
 
   describe('Masterkey', () => {
 
+    const wrapped: WrappedMasterkey = {
+      masterkey: 'zuYM3aANgVKaMI2ZkIXp3jt2q_jC5APBVf_W7LxlVEz…u6D9neQlc3b5X9j12fVIkv9vTztBezIMGppCQWOCKk=',
+      sk: 'H3V026OfdgbdKbn43lq18fYageZcfRP7evV3ajTqzCvT/Ul…Co/rTT3XCRUdrfTBa52IULAUACUc4j+zUS6JF2CDAaU5kP',
+      pk: 'MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAESzrRXmyI8VWFJg1…4PXHQTXP5IDGdYhJhL+WLKjnGjQAw0rNGy5V29+aV+yseW',
+      salt: 'EG3Z0m2huTx74FpOCeSbJw',
+      iterations: 1
+    };
+
     it('create()', async () => {
       const orig = await Masterkey.create();
 
@@ -26,12 +34,10 @@ describe('crypto', () => {
     });
 
     it('unwrap() with wrong pw', () => {
-      const wrapped = new WrappedMasterkey('reGgZc4NTcTIyggz36K_E6aA6ttOJv2T7z6Fb3OGdvFf8uMvYS87J3hR7Pxavhmv3LyjCs8LUl_oLffoo2QsKtQHn0PLd-jb', 'v_4KUaPQAu-rAFTUbxLSQA', 1);
       expect(Masterkey.unwrap('wrong', wrapped)).to.be.rejected;
     });
 
     it('unwrap() with correct pw', () => {
-      const wrapped = new WrappedMasterkey('reGgZc4NTcTIyggz36K_E6aA6ttOJv2T7z6Fb3OGdvFf8uMvYS87J3hR7Pxavhmv3LyjCs8LUl_oLffoo2QsKtQHn0PLd-jb', 'v_4KUaPQAu-rAFTUbxLSQA', 1);
       expect(Masterkey.unwrap('pass', wrapped)).to.be.fulfilled;
     });
 
@@ -76,8 +82,8 @@ describe('crypto', () => {
 });
 
 class TestMasterkey extends Masterkey {
-  constructor(key: CryptoKey) {
-    super(key);
+  constructor(key: CryptoKey, keypair: CryptoKeyPair) {
+    super(key, keypair);
   }
 
   static async create() {
@@ -87,14 +93,38 @@ class TestMasterkey extends Masterkey {
     const key = await crypto.subtle.importKey(
       'raw',
       raw,
-      {
-        name: 'HMAC',
-        hash: 'SHA-256',
-        length: 512
-      },
+      Masterkey.KEY_DESIGNATION,
       true,
       ['sign']
     );
-    return new TestMasterkey(key);
+    const sk = await crypto.subtle.importKey(
+      'jwk',
+      {
+        kty: 'EC',
+        crv: 'P-384',
+        // key coordinates from MDN examples:
+        d: 'wouCtU7Nw4E8_7n5C1-xBjB4xqSb_liZhYMsy8MGgxUny6Q8NCoH9xSiviwLFfK_',
+        x: 'SzrRXmyI8VWFJg1dPUNbFcc9jZvjZEfH7ulKI1UkXAltd7RGWrcfFxqyGPcwu6AQ',
+        y: 'hHUag3OvDzEr0uUQND4PXHQTXP5IDGdYhJhL-WLKjnGjQAw0rNGy5V29-aV-yseW'
+
+      },
+      Masterkey.SK_DESIGNATION,
+      true,
+      ['sign']
+    );
+    const pk = await crypto.subtle.importKey(
+      'jwk',
+      {
+        kty: 'EC',
+        crv: 'P-384',
+        x: 'SzrRXmyI8VWFJg1dPUNbFcc9jZvjZEfH7ulKI1UkXAltd7RGWrcfFxqyGPcwu6AQ',
+        y: 'hHUag3OvDzEr0uUQND4PXHQTXP5IDGdYhJhL-WLKjnGjQAw0rNGy5V29-aV-yseW'
+
+      },
+      Masterkey.SK_DESIGNATION,
+      true,
+      ['verify']
+    );
+    return new TestMasterkey(key, { privateKey: sk, publicKey: pk });
   }
 }
