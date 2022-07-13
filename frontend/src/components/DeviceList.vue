@@ -60,8 +60,7 @@
                       {{ device.accessTo.length }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <!-- TODO: actual added date -->
-                      June 8, 2020
+                      {{ d(device.creationTime, 'short') }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <a role="button" tabindex="0" class="text-red-600 hover:text-red-900" @click="removeDevice(device)">{{ t('common.remove') }}</a>
@@ -90,7 +89,7 @@ import { useI18n } from 'vue-i18n';
 import backend, { DeviceDto, NotFoundError, UserDto } from '../common/backend';
 import FetchError from './FetchError.vue';
 
-const { t } = useI18n({ useScope: 'global' });
+const { t, d } = useI18n({ useScope: 'global' });
 
 const me = ref<UserDto>();
 const onFetchError = ref<Error | null>();

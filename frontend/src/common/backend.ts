@@ -34,7 +34,7 @@ export class VaultDto {
 }
 
 export class DeviceDto {
-  constructor(public id: string, public name: string, public publicKey: string, public accessTo: VaultDto[]) { }
+  constructor(public id: string, public name: string, public publicKey: string, public accessTo: VaultDto[], public creationTime: Date) { }
 }
 
 export class AuthorityDto {

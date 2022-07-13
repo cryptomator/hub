@@ -14,6 +14,7 @@ import javax.inject.Inject;
 import javax.persistence.PersistenceException;
 import javax.transaction.Transactional;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.List;
 
 @QuarkusTest
@@ -57,6 +58,7 @@ public class EntityIntegrationTest {
 			conflictingDevice.name = existingDevice.name;
 			conflictingDevice.owner = existingDevice.owner;
 			conflictingDevice.publickey = "XYZ";
+			conflictingDevice.creationTime = Timestamp.valueOf("2020-02-20 20:20:20");
 
 			PersistenceException thrown = Assertions.assertThrows(PersistenceException.class, conflictingDevice::persistAndFlush);
 			Assertions.assertInstanceOf(ConstraintViolationException.class, thrown.getCause());
