@@ -2,7 +2,7 @@ import * as miscreant from 'miscreant';
 import { base32, base64, base64url } from 'rfc4648';
 import { JWE } from './jwe';
 
-export class WrappedMasterkey {
+export class WrappedVaultKeys {
   constructor(readonly masterkey: string, readonly signaturePrivateKey: string, readonly signaturePublicKey: string, readonly salt: string, readonly iterations: number) { }
 }
 
@@ -36,7 +36,7 @@ interface JWEPayload {
   key: string
 }
 
-export class Masterkey {
+export class VaultKeys {
 
   private static readonly SIGNATURE_KEY_DESIGNATION: EcKeyImportParams | EcKeyGenParams = {
     name: 'ECDSA',
@@ -72,18 +72,18 @@ export class Masterkey {
    * Creates a new masterkey
    * @returns A new masterkey
    */
-  public static async create(): Promise<Masterkey> {
+  public static async create(): Promise<VaultKeys> {
     const key = crypto.subtle.generateKey(
-      Masterkey.MASTERKEY_KEY_DESIGNATION,
+      VaultKeys.MASTERKEY_KEY_DESIGNATION,
       true,
       ['sign']
     );
     const keyPair = crypto.subtle.generateKey(
-      Masterkey.SIGNATURE_KEY_DESIGNATION,
+      VaultKeys.SIGNATURE_KEY_DESIGNATION,
       true,
       ['sign', 'verify']
     );
-    return new Masterkey(await key, await keyPair);
+    return new VaultKeys(await key, await keyPair);
   }
 
   private static async pbkdf2(password: string, salt: Uint8Array, iterations: number): Promise<CryptoKey> {
@@ -103,7 +103,7 @@ export class Masterkey {
         iterations: iterations
       },
       pwKey,
-      Masterkey.KEK_KEY_DESIGNATION,
+      VaultKeys.KEK_KEY_DESIGNATION,
       false,
       ['wrapKey', 'unwrapKey']
     );
@@ -114,15 +114,15 @@ export class Masterkey {
    * @param password Password used for wrapping
    * @returns The wrapped key material
    */
-  public async wrap(password: string): Promise<WrappedMasterkey> {
+  public async wrap(password: string): Promise<WrappedVaultKeys> {
     // salt:
     const salt = new Uint8Array(16);
     crypto.getRandomValues(salt);
     const encodedSalt = base64url.stringify(salt, { pad: false });
     // kek:
-    const kek = Masterkey.pbkdf2(password, salt, Masterkey.PBKDF2_ITERATION_COUNT);
+    const kek = VaultKeys.pbkdf2(password, salt, VaultKeys.PBKDF2_ITERATION_COUNT);
     // masterkey:
-    const masterKeyIv = crypto.getRandomValues(new Uint8Array(Masterkey.GCM_NONCE_LEN));
+    const masterKeyIv = crypto.getRandomValues(new Uint8Array(VaultKeys.GCM_NONCE_LEN));
     const wrappedMasterKey = new Uint8Array(await crypto.subtle.wrapKey(
       'raw',
       this.#masterKey,
@@ -131,7 +131,7 @@ export class Masterkey {
     ));
     const encodedMasterKey = base64url.stringify(new Uint8Array([...masterKeyIv, ...wrappedMasterKey]), { pad: false });
     // secretkey:
-    const secretKeyIv = crypto.getRandomValues(new Uint8Array(Masterkey.GCM_NONCE_LEN));
+    const secretKeyIv = crypto.getRandomValues(new Uint8Array(VaultKeys.GCM_NONCE_LEN));
     const wrappedSecretKey = new Uint8Array(await crypto.subtle.wrapKey(
       'pkcs8',
       this.#signatureKeyPair.privateKey,
@@ -143,7 +143,7 @@ export class Masterkey {
     const publicKey = new Uint8Array(await crypto.subtle.exportKey('spki', this.#signatureKeyPair.publicKey));
     const encodedPublicKey = base64.stringify(publicKey);
     // result:
-    return new WrappedMasterkey(encodedMasterKey, encodedSecretKey, encodedPublicKey, encodedSalt, Masterkey.PBKDF2_ITERATION_COUNT);
+    return new WrappedVaultKeys(encodedMasterKey, encodedSecretKey, encodedPublicKey, encodedSalt, VaultKeys.PBKDF2_ITERATION_COUNT);
   }
 
   /**
@@ -153,38 +153,38 @@ export class Masterkey {
    * @returns The unwrapped key material.
    * @throws WrongPasswordError, if the wrong password is used
    */
-  public static async unwrap(password: string, wrapped: WrappedMasterkey): Promise<Masterkey> {
-    const kek = Masterkey.pbkdf2(password, base64url.parse(wrapped.salt, { loose: true }), wrapped.iterations);
+  public static async unwrap(password: string, wrapped: WrappedVaultKeys): Promise<VaultKeys> {
+    const kek = VaultKeys.pbkdf2(password, base64url.parse(wrapped.salt, { loose: true }), wrapped.iterations);
     const decodedMasterKey = base64url.parse(wrapped.masterkey, { loose: true });
     const decodedPrivateKey = base64.parse(wrapped.signaturePrivateKey, { loose: true });
     const decodedPublicKey = base64.parse(wrapped.signaturePublicKey, { loose: true });
     try {
       const masterkey = crypto.subtle.unwrapKey(
         'raw',
-        decodedMasterKey.slice(Masterkey.GCM_NONCE_LEN),
+        decodedMasterKey.slice(VaultKeys.GCM_NONCE_LEN),
         await kek,
-        { name: 'AES-GCM', iv: decodedMasterKey.slice(0, Masterkey.GCM_NONCE_LEN) },
-        Masterkey.MASTERKEY_KEY_DESIGNATION,
+        { name: 'AES-GCM', iv: decodedMasterKey.slice(0, VaultKeys.GCM_NONCE_LEN) },
+        VaultKeys.MASTERKEY_KEY_DESIGNATION,
         true,
         ['sign']
       );
       const signPrivKey = crypto.subtle.unwrapKey(
         'pkcs8',
-        decodedPrivateKey.slice(Masterkey.GCM_NONCE_LEN),
+        decodedPrivateKey.slice(VaultKeys.GCM_NONCE_LEN),
         await kek,
-        { name: 'AES-GCM', iv: decodedPrivateKey.slice(0, Masterkey.GCM_NONCE_LEN) },
-        Masterkey.SIGNATURE_KEY_DESIGNATION,
+        { name: 'AES-GCM', iv: decodedPrivateKey.slice(0, VaultKeys.GCM_NONCE_LEN) },
+        VaultKeys.SIGNATURE_KEY_DESIGNATION,
         false,
         ['sign']
       );
       const signPubKey = crypto.subtle.importKey(
         'spki',
         decodedPublicKey,
-        Masterkey.SIGNATURE_KEY_DESIGNATION,
+        VaultKeys.SIGNATURE_KEY_DESIGNATION,
         true,
         ['verify']
       );
-      return new Masterkey(await masterkey, { privateKey: await signPrivKey, publicKey: await signPubKey });
+      return new VaultKeys(await masterkey, { privateKey: await signPrivKey, publicKey: await signPubKey });
     } catch (error) {
       throw new UnwrapKeyError(error);
     }
