@@ -57,7 +57,7 @@ export class JWE {
    * See <a href="https://datatracker.ietf.org/doc/html/rfc7516">RFC 7516</a> + <a href="https://datatracker.ietf.org/doc/html/rfc7518#section-4.6">RFC 7518, Section 4.6</a>
    * 
    * @param payload The secret payload
-   * @param devicePublicKey The recipient's public key in PEM-encoded SPKI format
+   * @param devicePublicKey The recipient's public key
    * @param apu Optional public information about the producer (PartyUInfo)
    * @param apv Optional public information about the recipient (PartyVInfo)
    */
