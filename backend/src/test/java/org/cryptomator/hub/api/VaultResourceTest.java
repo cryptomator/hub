@@ -445,7 +445,7 @@ public class VaultResourceTest {
 		@Order(9)
 		@DisplayName("PUT /devices/device9999 returns 201")
 		public void testCreateDevice2() {
-			var deviceDto = new DeviceResource.DeviceDto("device9999", "Computer 9999", "publickey9999", "user2", Set.of());
+			var deviceDto = new DeviceResource.DeviceDto("device9999", "Computer 9999", "publickey9999", "user2", Set.of(), Timestamp.valueOf("2020-02-20 20:20:20"));
 
 			given().contentType(ContentType.JSON).body(deviceDto)
 					.when().put("/devices/{deviceId}", "device9999")
@@ -545,9 +545,9 @@ public class VaultResourceTest {
 						VALUES
 							('group91', 'user90');
 							
-						INSERT INTO "device" ("id", "owner_id", "name", "publickey")
+						INSERT INTO "device" ("id", "owner_id", "name", "publickey", "creation_time")
 						VALUES
-							('device93', 'user90', 'Computer 9', 'publickey90');
+							('device93', 'user90', 'Computer 9', 'publickey90', '2020-02-20 20:20:20');
 						""");
 			}
 
