@@ -1,7 +1,7 @@
 package org.cryptomator.hub.api;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.cryptomator.hub.entities.Authority;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.User;
 import org.eclipse.microprofile.jwt.JsonWebToken;
@@ -24,6 +24,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.net.URI;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.Set;
 
 @Path("/devices")
@@ -47,7 +49,7 @@ public class DeviceResource {
 			return Response.status(Response.Status.BAD_REQUEST).entity("deviceId or deviceDto cannot be empty").build();
 		}
 		User currentUser = User.findById(jwt.getSubject());
-		var device = deviceDto.toDevice(currentUser, deviceId);
+		var device = deviceDto.toDevice(currentUser, deviceId, Timestamp.from(Instant.now()));
 		try {
 			device.persistAndFlush();
 			return Response.created(URI.create(".")).build();
@@ -85,21 +87,23 @@ public class DeviceResource {
 	}
 
 	public record DeviceDto(@JsonProperty("id") String id, @JsonProperty("name") String name,
-								   @JsonProperty("publicKey") String publicKey,
-								   @JsonProperty("owner") String ownerId,
-								   @JsonProperty("accessTo") Set<VaultResource.VaultDto> accessTo) {
+							@JsonProperty("publicKey") String publicKey,
+							@JsonProperty("owner") String ownerId,
+							@JsonProperty("accessTo") Set<VaultResource.VaultDto> accessTo,
+							@JsonProperty("creationTime") @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSX") Timestamp creationTime) {
 
-		public Device toDevice(User user, String id) {
+		public Device toDevice(User user, String id, Timestamp creationTime) {
 			var device = new Device();
 			device.id = id;
 			device.owner = user;
 			device.name = name;
 			device.publickey = publicKey;
+			device.creationTime = creationTime;
 			return device;
 		}
 
 		public static DeviceDto fromEntity(Device entity) {
-			return new DeviceDto(entity.id, entity.name, entity.publickey, entity.owner.id, Set.of());
+			return new DeviceDto(entity.id, entity.name, entity.publickey, entity.owner.id, Set.of(), entity.creationTime);
 		}
 
 	}
