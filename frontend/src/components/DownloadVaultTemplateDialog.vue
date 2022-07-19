@@ -23,8 +23,6 @@
                     <p class="text-sm text-gray-500">
                       {{ t('downloadVaultTemplateDialog.description') }}
                     </p>
-                    <input id="password" v-model="password" type="password" name="password" class="mt-2 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': isWrongPassword }" :placeholder="t('downloadVaultTemplateDialog.masterPassword')" />
-                    <p v-if="isWrongPassword" class="mt-2 text-sm text-red-500 text-left">{{ t('common.error.wrongPassword') }}</p>
                   </div>
                 </div>
               </div>
@@ -36,7 +34,7 @@
               <button ref="cancelButtonRef" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" @click="open = false">
                 {{ t('common.cancel') }}
               </button>
-              <p v-if="onDownloadError != null && !isWrongPassword" class="text-sm text-red-900 px-4 sm:px-6 pb-3 text-right bg-red-50">
+              <p v-if="onDownloadError != null" class="text-sm text-red-900 px-4 sm:px-6 pb-3 text-right bg-red-50">
                 {{ t('common.unexpectedError', [onDownloadError.message]) }}
               </p>
             </div>
@@ -51,22 +49,21 @@
 import { Dialog, DialogOverlay, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import { FolderDownloadIcon } from '@heroicons/vue/outline';
 import { saveAs } from 'file-saver';
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { VaultDto } from '../common/backend';
-import { UnwrapKeyError, VaultKeys, WrappedVaultKeys } from '../common/crypto';
+import { VaultKeys } from '../common/crypto';
 import { VaultConfig } from '../common/vaultconfig';
 
 const { t } = useI18n({ useScope: 'global' });
 
 const open = ref(false);
-const password = ref('');
 
-const isWrongPassword = computed(() => onDownloadError.value instanceof UnwrapKeyError);
 const onDownloadError = ref<Error|null>();
 
 const props = defineProps<{
   vault: VaultDto
+  vaultKeys: VaultKeys
 }>();
 
 defineEmits<{
@@ -94,9 +91,7 @@ async function downloadVault() {
 }
 
 async function generateVaultZip(): Promise<Blob> {
-  const wrappedKey = new WrappedVaultKeys(props.vault.masterkey, props.vault.authPrivateKey, props.vault.authPublicKey, props.vault.salt, props.vault.iterations);
-  const masterkey = await VaultKeys.unwrap(password.value, wrappedKey);
-  const config = await VaultConfig.create(props.vault.id, masterkey);
+  const config = await VaultConfig.create(props.vault.id, props.vaultKeys);
   return await config.exportTemplate();
 }
 </script>

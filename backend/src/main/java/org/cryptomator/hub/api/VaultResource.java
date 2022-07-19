@@ -61,15 +61,16 @@ public class VaultResource {
 
 	@GET
 	@Path("/{vaultId}/members")
-	@RolesAllowed("user") // FIXME change to authentication via derived and salted key from masterkey so that the backend knows the user entered the masterkey
+	@RolesAllowed("user")
+	@VaultOwnerOnlyFilter
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "list vault members", description = "list all users that this vault has been shared with")
 	@APIResponse(responseCode = "403", description = "requesting user does not own vault")
 	public List<AuthorityDto> getMembers(@PathParam("vaultId") String vaultId) {
-		Vault vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
+		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
+
 		return vault.directMembers.stream().map(authority -> {
-			// TODO replace with pattern matching for switch as soon as available
 			if (authority instanceof User u) {
 				return UsersResource.UserDto.fromEntity(u);
 			} else if (authority instanceof Group g) {
@@ -82,7 +83,8 @@ public class VaultResource {
 
 	@PUT
 	@Path("/{vaultId}/users/{userId}")
-	@RolesAllowed("user") // FIXME change to authentication via derived and salted key from masterkey so that the backend knows the user entered the masterkey
+	@RolesAllowed("user")
+	@VaultOwnerOnlyFilter
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "adds a member to this vault")
@@ -113,7 +115,8 @@ public class VaultResource {
 
 	@PUT
 	@Path("/{vaultId}/groups/{groupId}")
-	@RolesAllowed("user") // FIXME change to authentication via derived and salted key from masterkey so that the backend knows the user entered the masterkey
+	@RolesAllowed("user")
+	@VaultOwnerOnlyFilter
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "adds a group to this vault")
@@ -140,7 +143,8 @@ public class VaultResource {
 
 	@DELETE
 	@Path("/{vaultId}/users/{userId}")
-	@RolesAllowed("user") // FIXME change to authentication via derived and salted key from masterkey so that the backend knows the user entered the masterkey
+	@RolesAllowed("user")
+	@VaultOwnerOnlyFilter
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "remove a member from this vault", description = "revokes the given user's access rights from this vault. If the given user is no member, the request is a no-op.")
@@ -153,7 +157,8 @@ public class VaultResource {
 
 	@DELETE
 	@Path("/{vaultId}/groups/{groupId}")
-	@RolesAllowed("user") // FIXME change to authentication via derived and salted key from masterkey so that the backend knows the user entered the masterkey
+	@RolesAllowed("user")
+	@VaultOwnerOnlyFilter
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "remove a group from this vault", description = "revokes the given group's access rights from this vault. If the given group is no member, the request is a no-op.")
@@ -165,7 +170,6 @@ public class VaultResource {
 
 	private Response removeAutority(String vaultId, String authorityId) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-
 		vault.directMembers.removeIf(e -> e.id.equals(authorityId));
 		vault.persist();
 		return Response.status(Response.Status.NO_CONTENT).build();
@@ -173,13 +177,13 @@ public class VaultResource {
 
 	@GET
 	@Path("/{vaultId}/devices-requiring-access-grant")
-	@RolesAllowed("user") // FIXME change to authentication via derived and salted key from masterkey so that the backend knows the user entered the masterkey
+	@RolesAllowed("user")
+	@VaultOwnerOnlyFilter
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "list devices requiring access rights", description = "lists all devices owned by vault members, that don't have a device-specific masterkey yet")
 	@APIResponse(responseCode = "403", description = "requesting user does not own vault")
 	public List<DeviceResource.DeviceDto> getDevicesRequiringAccessGrant(@PathParam("vaultId") String vaultId) {
-		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		return Device.findRequiringAccessGrant(vaultId).map(DeviceResource.DeviceDto::fromEntity).toList();
 	}
 
@@ -212,7 +216,8 @@ public class VaultResource {
 
 	@PUT
 	@Path("/{vaultId}/keys/{deviceId}")
-	@RolesAllowed("user") // FIXME change to authentication via derived and salted key from masterkey so that the backend knows the user entered the masterkey
+	@RolesAllowed("user")
+	@VaultOwnerOnlyFilter
 	@Transactional
 	@Consumes(MediaType.TEXT_PLAIN)
 	@Operation(summary = "adds a device-specific masterkey")
@@ -247,18 +252,31 @@ public class VaultResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
 	@Operation(summary = "gets a vault")
-	@APIResponse(responseCode = "403", description = "requesting user is neither member nor owner of the vault")
+	@APIResponse(responseCode = "403", description = "requesting user is not member of the vault")
 	public VaultDto get(@PathParam("vaultId") String vaultId) {
 		Vault vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-		/*if (!vault.owner.id.equals(jwt.getSubject()) && vault.effectiveMembers.stream().noneMatch(u -> u.id.equals(jwt.getSubject()))) {
+		if (vault.effectiveMembers.stream().noneMatch(u -> u.id.equals(jwt.getSubject()))) {
 			throw new ForbiddenException("Requesting user is neither member nor owner of the vault");
-		}*/
+		}
 		return VaultDto.fromEntity(vault);
 	}
 
+	/*@GET
+	@Path("/{vaultId}")
+	@RolesAllowed("user")
+	@VaultOwnerRequestVerificationFilter
+	@Produces(MediaType.APPLICATION_JSON)
+	@Transactional
+	@Operation(summary = "gets a vault")
+	@APIResponse(responseCode = "403", description = "requesting client is not owner of the vault")
+	public VaultDto get(@PathParam("vaultId") String vaultId) {
+		Vault vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
+		return VaultDto.fromEntity(vault);
+	}*/
+
 	@PUT
 	@Path("/{vaultId}")
-	@RolesAllowed("user") // FIXME change to authentication via derived and salted key from masterkey so that the backend knows the user entered the masterkey
+	@RolesAllowed("user")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional

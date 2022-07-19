@@ -9,12 +9,17 @@
   "common.error.wrongPassword": "Wrong password",
   "common.form.required": "This field is required.",
   "common.loading": "Loading…",
+  "common.manage": "Manage",
   "common.optional": "optional",
   "common.reload": "Please reload the page.",
   "common.remove": "Remove",
   "common.retry": "Retry",
   "common.share": "Share",
   "common.unexpectedError": "Unexpected Error: {0}",
+
+  "authenticateVaultOwnerDialog.title": "Manage Vault",
+  "authenticateVaultOwnerDialog.description": "Type in the master password of the vault to manage it.",
+  "authenticateVaultOwnerDialog.masterPassword": "Master Password",
 
   "billing.title": "Billing",
   "billing.serverInfo.title": "Server Info",
@@ -64,7 +69,7 @@
   "deviceList.added": "Added",
 
   "downloadVaultTemplateDialog.title": "Download Vault Template",
-  "downloadVaultTemplateDialog.description": "Type in the master password of the vault to download its template again.",
+  "downloadVaultTemplateDialog.description": "Download the vault template and place it in the cloud where you want to have the vault located. This is required only once for the initial setup.",
   "downloadVaultTemplateDialog.masterPassword": "Master Password",
 
   "grantPermissionDialog.title": "Grant Permission",

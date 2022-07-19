@@ -24,10 +24,6 @@
     <div>
       <h3 class="font-medium text-gray-900">{{ t('vaultDetails.information.header') }}</h3>
       <dl class="mt-2 border-t border-b border-gray-200 divide-y divide-gray-200">
-        <div v-if="vault?.owner != null" class="py-3 flex justify-between text-sm font-medium">
-          <dt class="text-gray-500">{{ t('vaultDetails.information.ownedBy') }}</dt>
-          <dd class="text-gray-900">{{ vault.owner.name }}</dd>
-        </div>
         <div v-if="vault?.creationTime != null" class="py-3 flex justify-between text-sm font-medium">
           <dt class="text-gray-500">{{ t('vaultDetails.information.created') }}</dt>
           <dd class="text-gray-900">{{ d(vault.creationTime, 'short') }}</dd>
@@ -82,9 +78,11 @@
         </button>
       </div>
 
-      <GrantPermissionDialog v-if="grantingPermission && vault!=null" ref="grantPermissionDialog" :vault="vault" :devices="devicesRequiringAccessGrant" @close="grantingPermission = false" @permission-granted="permissionGranted()" />
-      <DownloadVaultTemplateDialog v-if="downloadingVaultTemplate && vault!=null" ref="downloadVaultTemplateDialog" :vault="vault" @close="downloadingVaultTemplate = false" />
+      <GrantPermissionDialog v-if="grantingPermission && vault!=null" ref="grantPermissionDialog" :vault="vault" :devices="devicesRequiringAccessGrant" :vault-keys="vaultKeys" @close="grantingPermission = false" @permission-granted="permissionGranted()" />
+      <DownloadVaultTemplateDialog v-if="downloadingVaultTemplate && vault!=null" ref="downloadVaultTemplateDialog" :vault="vault" :vault-keys="vaultKeys" @close="downloadingVaultTemplate = false" />
     </div>
+
+    <AuthenticateVaultOwnerDialog v-if="authenticatingVaultOwner && vault!=null" ref="authenticateVaultOwnerDialog" :vault="vault" @action="vaultOwnerAuthenticated" @close="authenticatingVaultOwner = false" />
 
     <div v-if="!isOwner">
       <button type="button" class="flex-1 bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showManageVaultDialog()">
@@ -99,6 +97,8 @@ import { PencilIcon, PlusSmIcon } from '@heroicons/vue/solid';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { AuthorityDto, ConflictError, DeviceDto, NotFoundError, VaultDto } from '../common/backend';
+import { VaultKeys } from '../common/crypto';
+import AuthenticateVaultOwnerDialog from './AuthenticateVaultOwnerDialog.vue';
 import DownloadVaultTemplateDialog from './DownloadVaultTemplateDialog.vue';
 import FetchError from './FetchError.vue';
 import GrantPermissionDialog from './GrantPermissionDialog.vue';
@@ -126,6 +126,9 @@ const downloadVaultTemplateDialog = ref<typeof DownloadVaultTemplateDialog>();
 const vault = ref<VaultDto>();
 const members = ref<Map<string, AuthorityDto>>(new Map());
 const devicesRequiringAccessGrant = ref<DeviceDto[]>([]);
+const authenticateVaultOwnerDialog = ref<typeof AuthenticateVaultOwnerDialog>();
+const authenticatingVaultOwner = ref(false);
+const vaultKeys = ref<VaultKeys>();
 
 onMounted(fetchData);
 
@@ -137,9 +140,9 @@ async function fetchData() {
     vault.value = await backend.vaults.get(props.vaultId);
     var currentUser = await backend.users.me(false, false);
     isOwner.value = currentUser.id === vault.value.owner?.id;
-    if (isOwner.value) {
-      (await backend.vaults.getMembers(props.vaultId)).forEach(member => members.value.set(member.id,member));
-      devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
+    if (isOwner.value && vaultKeys.value) {
+      (await backend.vaults.getMembers(props.vaultId, vaultKeys.value)).forEach(member => members.value.set(member.id,member));
+      devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId, vaultKeys.value);
     }
   } catch (error) {
     console.error('Fetching data failed.', error);
@@ -149,12 +152,20 @@ async function fetchData() {
   isFetching.value = false;
 }
 
+async function vaultOwnerAuthenticated(keys: VaultKeys) {
+  isOwner.value = true;
+  vaultKeys.value = keys;
+  (await backend.vaults.getMembers(props.vaultId, vaultKeys.value)).forEach(member => members.value.set(member.id,member));
+}
+
 async function addAuthority(authority: AuthorityDto) {
   onAddUserError.value = null;
   try {
-    await addAuthorityBackend(authority);
-    members.value.set(authority.id, authority);
-    devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
+    if (isOwner.value && vaultKeys.value) {
+      await addAuthorityBackend(authority);
+      members.value.set(authority.id, authority);
+      devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId, vaultKeys.value);
+    }
   } catch (error) {
     //even if error instanceof NotFoundError, it is not expected from user perspective
     console.error('Adding member failed.', error);
@@ -164,12 +175,14 @@ async function addAuthority(authority: AuthorityDto) {
 
 async function addAuthorityBackend(authority: AuthorityDto) {
   try {
-    if (authority.type.toLowerCase() == 'user') {
-      await backend.vaults.addUser(props.vaultId, authority.id);
-    } else if (authority.type.toLowerCase() == 'group') {
-      await backend.vaults.addGroup(props.vaultId, authority.id);
-    } else {
-      throw new Error('Unknown authority type \'' + authority.type + '\'');
+    if (vaultKeys.value) {
+      if (authority.type.toLowerCase() == 'user') {
+        await backend.vaults.addUser(props.vaultId, authority.id, vaultKeys.value);
+      } else if (authority.type.toLowerCase() == 'group') {
+        await backend.vaults.addGroup(props.vaultId, authority.id, vaultKeys.value);
+      } else {
+        throw new Error('Unknown authority type \'' + authority.type + '\'');
+      }
     }
   } catch (error) {
     if (! (error instanceof ConflictError)) {
@@ -180,8 +193,8 @@ async function addAuthorityBackend(authority: AuthorityDto) {
 }
 
 async function showManageVaultDialog() {
-  isOwner.value = true;
-  (await backend.vaults.getMembers(props.vaultId)).forEach(member => members.value.set(member.id,member));
+  authenticatingVaultOwner.value = true;
+  nextTick(() => authenticateVaultOwnerDialog.value?.show());
 }
 
 function showGrantPermissionDialog() {
@@ -208,9 +221,11 @@ async function searchAuthority(query: string): Promise<AuthorityDto[]> {
 async function revokeUserAccess(userId: string) {
   delete onRevokeUserAccessError.value[userId];
   try {
-    await backend.vaults.revokeUserAccess(props.vaultId, userId);
-    members.value.delete(userId);
-    devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId);
+    if (isOwner.value && vaultKeys.value) {
+      await backend.vaults.revokeUserAccess(props.vaultId, userId, vaultKeys.value);
+      members.value.delete(userId);
+      devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId, vaultKeys.value);
+    }
   } catch (error) {
     console.error('Revoking user access failed.', error);
     //404 not expected from user perspective
