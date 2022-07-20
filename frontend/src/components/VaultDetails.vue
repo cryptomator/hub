@@ -42,7 +42,7 @@
                   <img :src="member.pictureUrl" alt="" class="w-8 h-8 rounded-full" />
                   <p class="ml-4 text-sm font-medium text-gray-900">{{ member.name }}</p>
                 </div>
-                <button type="button" class="ml-6 bg-white rounded-md text-sm font-medium text-red-600 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="revokeUserAccess(member.id)">{{ t('common.remove') }}<span class="sr-only"> {{ member.name }}</span></button>
+                <button v-if="member.id != me?.id" type="button" class="ml-6 bg-white rounded-md text-sm font-medium text-red-600 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="revokeUserAccess(member.id)">{{ t('common.remove') }}<span class="sr-only"> {{ member.name }}</span></button>
               </div>
 
               <p v-if="onRevokeUserAccessError[member.id] != null" class="text-sm text-red-900 text-right">
@@ -96,7 +96,7 @@
 import { PencilIcon, PlusSmIcon } from '@heroicons/vue/solid';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { AuthorityDto, ConflictError, DeviceDto, NotFoundError, VaultDto } from '../common/backend';
+import backend, { AuthorityDto, ConflictError, DeviceDto, NotFoundError, UserDto, VaultDto } from '../common/backend';
 import { VaultKeys } from '../common/crypto';
 import AuthenticateVaultOwnerDialog from './AuthenticateVaultOwnerDialog.vue';
 import DownloadVaultTemplateDialog from './DownloadVaultTemplateDialog.vue';
@@ -129,6 +129,7 @@ const devicesRequiringAccessGrant = ref<DeviceDto[]>([]);
 const authenticateVaultOwnerDialog = ref<typeof AuthenticateVaultOwnerDialog>();
 const authenticatingVaultOwner = ref(false);
 const vaultKeys = ref<VaultKeys>();
+const me = ref<UserDto>();
 
 onMounted(fetchData);
 
@@ -138,12 +139,7 @@ async function fetchData() {
 
   try {
     vault.value = await backend.vaults.get(props.vaultId);
-    var currentUser = await backend.users.me(false, false);
-    isOwner.value = currentUser.id === vault.value.owner?.id;
-    if (isOwner.value && vaultKeys.value) {
-      (await backend.vaults.getMembers(props.vaultId, vaultKeys.value)).forEach(member => members.value.set(member.id,member));
-      devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId, vaultKeys.value);
-    }
+    me.value = await backend.users.me(false, false);
   } catch (error) {
     console.error('Fetching data failed.', error);
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
