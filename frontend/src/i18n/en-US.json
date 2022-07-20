@@ -56,7 +56,8 @@
   "createVault.success.download": "Download zipped vault folder",
   "createVault.success.return": "Return to vault list",
 
-  "deviceList.notFound": "You have no registered devices.",
+  "deviceList.empty.message": "No devices",
+  "deviceList.empty.description": "To add a device, add a vault from this Hub to the Cryptomator app of the device and unlock it.",
   "deviceList.title": "Devices ({0})",
   "deviceList.deviceName": "Device Name",
   "deviceList.type": "Type",
