@@ -143,9 +143,16 @@ async function fetchData() {
   isFetching.value = false;
 }
 
+function isAuthorityDto(toCheck: any): toCheck is AuthorityDto {
+  if ((toCheck as AuthorityDto).type){
+    return true;
+  }
+  return false;
+}
+
 async function addAuthority(authority: unknown) {
   onAddUserError.value = null;
-  if (!(authority instanceof AuthorityDto)) {
+  if (!isAuthorityDto(authority)) {
     throw new Error('Parameter authority is not of type AuthorityDto');
   }
 
