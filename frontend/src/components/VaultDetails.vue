@@ -155,8 +155,19 @@ async function vaultOwnerAuthenticated(keys: VaultKeys) {
   devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId, vaultKeys.value);
 }
 
-async function addAuthority(authority: AuthorityDto) {
+function isAuthorityDto(toCheck: any): toCheck is AuthorityDto {
+  if ((toCheck as AuthorityDto).type){
+    return true;
+  }
+  return false;
+}
+
+async function addAuthority(authority: unknown) {
   onAddUserError.value = null;
+  if (!isAuthorityDto(authority)) {
+    throw new Error('Parameter authority is not of type AuthorityDto');
+  }
+
   try {
     if (isOwner.value && vaultKeys.value) {
       await addAuthorityBackend(authority);
