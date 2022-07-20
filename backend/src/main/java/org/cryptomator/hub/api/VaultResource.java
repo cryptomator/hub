@@ -94,7 +94,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "201", description = "member added")
 	@APIResponse(responseCode = "400", description = "Client-Jwt verification failed")
 	@APIResponse(responseCode = "401", description = "Client-Jwt not provided")
-	@APIResponse(responseCode = "404", description = "vault not found")
+	@APIResponse(responseCode = "402", description = "all seats in license used")
 	@APIResponse(responseCode = "403", description = "Client-Jwt expired")
 	@APIResponse(responseCode = "404", description = "vault or user not found")
 	@APIResponse(responseCode = "409", description = "user is already a direct member of the vault")

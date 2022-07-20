@@ -1,8 +1,8 @@
 package org.cryptomator.hub.api;
 
-import javax.ws.rs.ForbiddenException;
+import javax.ws.rs.NotAuthorizedException;
 
-public class VaultOwnerNotProvidedException extends ForbiddenException {
+public class VaultOwnerNotProvidedException extends NotAuthorizedException {
 
 	public VaultOwnerNotProvidedException(String message) {
 		super(message);
