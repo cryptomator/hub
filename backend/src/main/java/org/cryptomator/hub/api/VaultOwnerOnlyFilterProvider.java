@@ -24,16 +24,16 @@ public class VaultOwnerOnlyFilterProvider implements ContainerRequestFilter {
 
 	@Override
 	public void filter(ContainerRequestContext containerRequestContext) throws IOException {
+		var vaultIdQueryParameter = getVaultIdQueryParameter(containerRequestContext);
 		var clientJwt = containerRequestContext.getHeaderString("Client-Jwt");
 		if (clientJwt != null) {
 			var unveridifedVaultId = JWT.decode(clientJwt).getHeaderClaim("vaultId");
-			if (!unveridifedVaultId.isNull()) {
+			if (!unveridifedVaultId.isNull() && vaultIdQueryParameter.equals(unveridifedVaultId.asString())) {
 				var vault = Vault.<Vault>findByIdOptional(unveridifedVaultId.asString()).orElseThrow(NotFoundException::new);
 				var algorithm = Algorithm.ECDSA384(decodePublicKey(vault.authenticationPublicKey), null);
 				try {
 					JWT.require(algorithm).build().verify(clientJwt);
 				} catch (TokenExpiredException e) {
-					// TODO choose other HTTP status code do differenticate between no Client-Jwt provided and expired?
 					throw new VaultOwnerTokenExpiredException("Token of client-jwt expired");
 				} catch (JWTVerificationException e) {
 					throw new VaultOwnerValidationFailedException("Different key used to sign the client-jwt");
@@ -44,6 +44,14 @@ public class VaultOwnerOnlyFilterProvider implements ContainerRequestFilter {
 		} else {
 			throw new VaultOwnerNotProvidedException("client-jwt not provided");
 		}
+	}
+
+	private String getVaultIdQueryParameter(ContainerRequestContext containerRequestContext) {
+		var vauldIdQueryParameters = containerRequestContext.getUriInfo().getPathParameters().get("vaultId");
+		if (vauldIdQueryParameters == null || vauldIdQueryParameters.size() != 1) {
+			throw new VaultOwnerValidationFailedException("vaultId not provided");
+		}
+		return vauldIdQueryParameters.get(0);
 	}
 
 	private static ECPublicKey decodePublicKey(String pemEncodedPublicKey) {
