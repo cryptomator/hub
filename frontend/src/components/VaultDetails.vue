@@ -143,8 +143,12 @@ async function fetchData() {
   isFetching.value = false;
 }
 
-async function addAuthority(authority: AuthorityDto) {
+async function addAuthority(authority: unknown) {
   onAddUserError.value = null;
+  if (!(authority instanceof AuthorityDto)) {
+    throw new Error('Parameter authority is not of type AuthorityDto');
+  }
+
   try {
     await addAuthorityBackend(authority);
     members.value.set(authority.id, authority);
