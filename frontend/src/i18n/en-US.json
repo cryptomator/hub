@@ -49,7 +49,7 @@
   "createVault.masterPasswordConfirmation.passwordsDoNotMatch": "Passwords do not match",
   "createVault.submit": "Create Vault",
   "createVault.error.formValidationFailed": "Please check the form and try again.",
-  "createVault.error.vaultAlreadyExists": "A vault with the generated id already exists. Please retry.",
+  "createVault.error.vaultAlreadyExists": "A vault with the given name already exists.",
   "createVault.error.downloadTemplateFailed": "Download of vault template failed: {0}",
   "createVault.success.title": "Vault created",
   "createVault.success.description": "After downloading the zipped vault folder, unpack it to any location shared with your team members.",
