@@ -67,7 +67,7 @@ public class UsersResource {
 
 	@GET
 	@Path("/")
-	@RolesAllowed("user") // FIXME change to authentication via derived and salted key from masterkey so that the backend knows the user entered the masterkey
+	@RolesAllowed("user")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "list all users")
 	public List<UserDto> getAll() {
@@ -76,7 +76,7 @@ public class UsersResource {
 
 	@GET
 	@Path("/search")
-	@RolesAllowed("user") // FIXME change to authentication via derived and salted key from masterkey so that the backend knows the user entered the masterkey
+	@RolesAllowed("user")
 	@Produces(MediaType.APPLICATION_JSON)
 	@NoCache
 	@Operation(summary = "search user")
