@@ -2,6 +2,7 @@ package org.cryptomator.hub.api;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.exceptions.TokenExpiredException;
 import org.cryptomator.hub.entities.Vault;
@@ -10,7 +11,6 @@ import javax.ws.rs.NotFoundException;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.ext.Provider;
-import java.io.IOException;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.ECPublicKey;
@@ -23,26 +23,22 @@ import java.util.Base64;
 public class VaultOwnerOnlyFilterProvider implements ContainerRequestFilter {
 
 	@Override
-	public void filter(ContainerRequestContext containerRequestContext) throws IOException {
+	public void filter(ContainerRequestContext containerRequestContext) {
 		var vaultIdQueryParameter = getVaultIdQueryParameter(containerRequestContext);
-		var clientJwt = containerRequestContext.getHeaderString("Client-Jwt");
-		if (clientJwt != null) {
-			var unveridifedVaultId = JWT.decode(clientJwt).getHeaderClaim("vaultId");
-			if (!unveridifedVaultId.isNull() && vaultIdQueryParameter.equals(unveridifedVaultId.asString())) {
-				var vault = Vault.<Vault>findByIdOptional(unveridifedVaultId.asString()).orElseThrow(NotFoundException::new);
-				var algorithm = Algorithm.ECDSA384(decodePublicKey(vault.authenticationPublicKey), null);
-				try {
-					JWT.require(algorithm).build().verify(clientJwt);
-				} catch (TokenExpiredException e) {
-					throw new VaultOwnerTokenExpiredException("Token of client-jwt expired");
-				} catch (JWTVerificationException e) {
-					throw new VaultOwnerValidationFailedException("Different key used to sign the client-jwt");
-				}
-			} else {
-				throw new VaultOwnerValidationFailedException("vaultId not provided");
+		var clientJwt = getClientJwt(containerRequestContext);
+		var unveridifedVaultId = getUnverifiedVaultId(clientJwt);
+		if (vaultIdQueryParameter.equals(unveridifedVaultId)) {
+			var vault = Vault.<Vault>findByIdOptional(unveridifedVaultId).orElseThrow(NotFoundException::new);
+			var algorithm = Algorithm.ECDSA384(decodePublicKey(vault.authenticationPublicKey), null);
+			try {
+				JWT.require(algorithm).build().verify(clientJwt);
+			} catch (TokenExpiredException e) {
+				throw new VaultOwnerTokenExpiredException("Token of client-jwt expired");
+			} catch (JWTVerificationException e) {
+				throw new VaultOwnerValidationFailedException("Different key used to sign the client-jwt");
 			}
 		} else {
-			throw new VaultOwnerNotProvidedException("client-jwt not provided");
+			throw new VaultOwnerValidationFailedException("other vaultId provided");
 		}
 	}
 
@@ -52,6 +48,28 @@ public class VaultOwnerOnlyFilterProvider implements ContainerRequestFilter {
 			throw new VaultOwnerValidationFailedException("vaultId not provided");
 		}
 		return vauldIdQueryParameters.get(0);
+	}
+
+	private String getClientJwt(ContainerRequestContext containerRequestContext) {
+		var clientJwt = containerRequestContext.getHeaderString("Client-Jwt");
+		if (clientJwt != null) {
+			return clientJwt;
+		} else {
+			throw new VaultOwnerNotProvidedException("Client-Jwt not provided");
+		}
+	}
+
+	private String getUnverifiedVaultId(String clientJwt) {
+		try {
+			var unveridifedVaultId = JWT.decode(clientJwt).getHeaderClaim("vaultId");
+			if (!unveridifedVaultId.isNull() && unveridifedVaultId.asString() != null) {
+				return unveridifedVaultId.asString();
+			} else {
+				throw new VaultOwnerValidationFailedException("No Client-Jwt provided");
+			}
+		} catch (JWTDecodeException e) {
+			throw new VaultOwnerValidationFailedException("Malformed Client-Jwt provided");
+		}
 	}
 
 	private static ECPublicKey decodePublicKey(String pemEncodedPublicKey) {
