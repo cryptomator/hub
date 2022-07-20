@@ -156,6 +156,7 @@ async function vaultOwnerAuthenticated(keys: VaultKeys) {
   isOwner.value = true;
   vaultKeys.value = keys;
   (await backend.vaults.getMembers(props.vaultId, vaultKeys.value)).forEach(member => members.value.set(member.id,member));
+  devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId, vaultKeys.value);
 }
 
 async function addAuthority(authority: AuthorityDto) {
