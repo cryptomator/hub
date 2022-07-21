@@ -22,6 +22,9 @@ import java.util.Base64;
 @VaultOwnerOnlyFilter
 public class VaultOwnerOnlyFilterProvider implements ContainerRequestFilter {
 
+	static final String CLIENT_JWT = "Client-JWT";
+	static final String VAULT_ID = "vaultId";
+
 	@Override
 	public void filter(ContainerRequestContext containerRequestContext) {
 		var vaultIdQueryParameter = getVaultIdQueryParameter(containerRequestContext);
@@ -38,20 +41,20 @@ public class VaultOwnerOnlyFilterProvider implements ContainerRequestFilter {
 				throw new VaultOwnerValidationFailedException("Different key used to sign the Client-JWT");
 			}
 		} else {
-			throw new VaultOwnerValidationFailedException("other vaultId provided");
+			throw new VaultOwnerValidationFailedException("Other vaultId provided");
 		}
 	}
 
 	String getVaultIdQueryParameter(ContainerRequestContext containerRequestContext) {
-		var vauldIdQueryParameters = containerRequestContext.getUriInfo().getPathParameters().get("vaultId");
+		var vauldIdQueryParameters = containerRequestContext.getUriInfo().getPathParameters().get(VAULT_ID);
 		if (vauldIdQueryParameters == null || vauldIdQueryParameters.size() != 1) {
-			throw new VaultOwnerValidationFailedException("vaultId not provided");
+			throw new VaultOwnerValidationFailedException("VaultId not provided");
 		}
 		return vauldIdQueryParameters.get(0);
 	}
 
 	String getClientJwt(ContainerRequestContext containerRequestContext) {
-		var clientJwt = containerRequestContext.getHeaderString("Client-JWT");
+		var clientJwt = containerRequestContext.getHeaderString(CLIENT_JWT);
 		if (clientJwt != null) {
 			return clientJwt;
 		} else {

@@ -46,9 +46,9 @@ class VaultOwnerOnlyFilterProviderTest {
 	@DisplayName("validate valid Client-JWT header")
 	public void testValidClientJwtHeader() {
 		var pathParams = new MultivaluedHashMap<String, String>();
-		pathParams.add("vaultId", "vault2");
+		pathParams.add(VaultOwnerOnlyFilterProvider.VAULT_ID, "vault2");
 
-		Mockito.when(context.getHeaderString("Client-JWT")).thenReturn(VALID_TOKEN_VAULT_2);
+		Mockito.when(context.getHeaderString(VaultOwnerOnlyFilterProvider.CLIENT_JWT)).thenReturn(VALID_TOKEN_VAULT_2);
 		Mockito.when(context.getUriInfo()).thenReturn(uriInfo);
 		Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
 
@@ -59,7 +59,7 @@ class VaultOwnerOnlyFilterProviderTest {
 	@DisplayName("validate no Client-JWT header provided")
 	public void testNoClientJwtHeader() {
 		var pathParams = new MultivaluedHashMap<String, String>();
-		pathParams.add("vaultId", "vault2");
+		pathParams.add(VaultOwnerOnlyFilterProvider.VAULT_ID, "vault2");
 
 		Mockito.when(context.getUriInfo()).thenReturn(uriInfo);
 		Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
@@ -71,9 +71,9 @@ class VaultOwnerOnlyFilterProviderTest {
 	@DisplayName("validate other path-param provided")
 	public void testOtherPathParamProvided() {
 		var pathParams = new MultivaluedHashMap<String, String>();
-		pathParams.add("vaultId", "vault3000");
+		pathParams.add(VaultOwnerOnlyFilterProvider.VAULT_ID, "vault3000");
 
-		Mockito.when(context.getHeaderString("Client-JWT")).thenReturn(VALID_TOKEN_VAULT_2);
+		Mockito.when(context.getHeaderString(VaultOwnerOnlyFilterProvider.CLIENT_JWT)).thenReturn(VALID_TOKEN_VAULT_2);
 		Mockito.when(context.getUriInfo()).thenReturn(uriInfo);
 		Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
 
@@ -84,9 +84,9 @@ class VaultOwnerOnlyFilterProviderTest {
 	@DisplayName("validate expired Client-JWT header")
 	public void testExpiredClientJwtHeader() {
 		var pathParams = new MultivaluedHashMap<String, String>();
-		pathParams.add("vaultId", "vault2");
+		pathParams.add(VaultOwnerOnlyFilterProvider.VAULT_ID, "vault2");
 
-		Mockito.when(context.getHeaderString("Client-JWT")).thenReturn(EXPIRED_TOKEN);
+		Mockito.when(context.getHeaderString(VaultOwnerOnlyFilterProvider.CLIENT_JWT)).thenReturn(EXPIRED_TOKEN);
 		Mockito.when(context.getUriInfo()).thenReturn(uriInfo);
 		Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
 
@@ -97,9 +97,9 @@ class VaultOwnerOnlyFilterProviderTest {
 	@DisplayName("validate Client-JWT header signed by other key")
 	public void testOtherKeyClientJwtHeader() {
 		var pathParams = new MultivaluedHashMap<String, String>();
-		pathParams.add("vaultId", "vault2");
+		pathParams.add(VaultOwnerOnlyFilterProvider.VAULT_ID, "vault2");
 
-		Mockito.when(context.getHeaderString("Client-JWT")).thenReturn(TOKEN_WITH_INVALID_SIGNATURE);
+		Mockito.when(context.getHeaderString(VaultOwnerOnlyFilterProvider.CLIENT_JWT)).thenReturn(TOKEN_WITH_INVALID_SIGNATURE);
 		Mockito.when(context.getUriInfo()).thenReturn(uriInfo);
 		Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
 
@@ -110,9 +110,9 @@ class VaultOwnerOnlyFilterProviderTest {
 	@DisplayName("validate malformed Client-JWT header")
 	public void testMalformedClientJwtHeader() {
 		var pathParams = new MultivaluedHashMap<String, String>();
-		pathParams.add("vaultId", "vault2");
+		pathParams.add(VaultOwnerOnlyFilterProvider.VAULT_ID, "vault2");
 
-		Mockito.when(context.getHeaderString("Client-JWT")).thenReturn(MALFORMED_TOKEN);
+		Mockito.when(context.getHeaderString(VaultOwnerOnlyFilterProvider.CLIENT_JWT)).thenReturn(MALFORMED_TOKEN);
 		Mockito.when(context.getUriInfo()).thenReturn(uriInfo);
 		Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
 
@@ -123,9 +123,9 @@ class VaultOwnerOnlyFilterProviderTest {
 	@DisplayName("validate malformed key in database")
 	public void testMalformedKeyInDatabase() throws SQLException {
 		var pathParams = new MultivaluedHashMap<String, String>();
-		pathParams.add("vaultId", "vault3000");
+		pathParams.add(VaultOwnerOnlyFilterProvider.VAULT_ID, "vault3000");
 
-		Mockito.when(context.getHeaderString("Client-JWT")).thenReturn(VALID_TOKEN_VAULT_3000);
+		Mockito.when(context.getHeaderString(VaultOwnerOnlyFilterProvider.CLIENT_JWT)).thenReturn(VALID_TOKEN_VAULT_3000);
 		Mockito.when(context.getUriInfo()).thenReturn(uriInfo);
 		Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
 
@@ -143,7 +143,7 @@ class VaultOwnerOnlyFilterProviderTest {
 	@DisplayName("validate valid vaultId in query")
 	public void testGetValidVaultIdQueryParameter() {
 		var pathParams = new MultivaluedHashMap<String, String>();
-		pathParams.add("vaultId", "vault2");
+		pathParams.add(VaultOwnerOnlyFilterProvider.VAULT_ID, "vault2");
 
 		Mockito.when(context.getUriInfo()).thenReturn(uriInfo);
 		Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
@@ -167,8 +167,8 @@ class VaultOwnerOnlyFilterProviderTest {
 	@DisplayName("validate multiple vaultId in query")
 	public void testMultipleVaultIdQueryParameter() {
 		var pathParams = new MultivaluedHashMap<String, String>();
-		pathParams.add("vaultId", "vault2");
-		pathParams.add("vaultId", "vault3");
+		pathParams.add(VaultOwnerOnlyFilterProvider.VAULT_ID, "vault2");
+		pathParams.add(VaultOwnerOnlyFilterProvider.VAULT_ID, "vault3");
 
 		Mockito.when(context.getUriInfo()).thenReturn(uriInfo);
 		Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
@@ -179,7 +179,7 @@ class VaultOwnerOnlyFilterProviderTest {
 	@Test
 	@DisplayName("validate valid Client-JWT")
 	public void testValidClientJwtProvided() {
-		Mockito.when(context.getHeaderString("Client-JWT")).thenReturn(VALID_TOKEN_VAULT_2);
+		Mockito.when(context.getHeaderString(VaultOwnerOnlyFilterProvider.CLIENT_JWT)).thenReturn(VALID_TOKEN_VAULT_2);
 
 		String result = vaultOwnerOnlyFilterProvider.getClientJwt(context);
 		Assertions.assertEquals(VALID_TOKEN_VAULT_2, result);
