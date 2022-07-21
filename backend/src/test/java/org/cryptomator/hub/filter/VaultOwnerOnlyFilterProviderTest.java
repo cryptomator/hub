@@ -1,4 +1,4 @@
-package org.cryptomator.hub.api;
+package org.cryptomator.hub.filter;
 
 import com.radcortez.flyway.test.annotation.DataSource;
 import com.radcortez.flyway.test.annotation.FlywayTest;
@@ -14,7 +14,6 @@ import javax.inject.Inject;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.UriInfo;
-import java.io.IOException;
 import java.sql.SQLException;
 
 @QuarkusTest

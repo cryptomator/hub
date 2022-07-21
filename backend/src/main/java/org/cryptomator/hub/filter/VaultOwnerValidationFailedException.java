@@ -1,4 +1,4 @@
-package org.cryptomator.hub.api;
+package org.cryptomator.hub.filter;
 
 import javax.ws.rs.BadRequestException;
 

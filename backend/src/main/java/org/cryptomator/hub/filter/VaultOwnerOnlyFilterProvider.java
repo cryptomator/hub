@@ -1,4 +1,4 @@
-package org.cryptomator.hub.api;
+package org.cryptomator.hub.filter;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
