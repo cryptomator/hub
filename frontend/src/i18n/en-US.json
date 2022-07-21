@@ -74,8 +74,7 @@
   "downloadVaultTemplateDialog.masterPassword": "Master Password",
 
   "grantPermissionDialog.title": "Grant Permission",
-  "grantPermissionDialog.description": "Type in the master password of the vault to grant additional devices permission to access it.",
-  "grantPermissionDialog.masterPassword": "Master Password",
+  "grantPermissionDialog.description": "Grant additional devices permission to access the vault.",
   "grantPermissionDialog.submit": "Grant Permission to {0} Device(s)",
 
   "nav.vaults": "Vaults",

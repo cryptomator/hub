@@ -294,11 +294,9 @@ public class VaultResource {
 		if (vaultDto == null) {
 			throw new BadRequestException("Missing vault dto");
 		}
+		User currentUser = User.findById(jwt.getSubject());
 		var vault = vaultDto.toVault(vaultId);
-
-		User user = User.findById(jwt.getSubject());
-		vault.directMembers.add(user);
-
+		vault.directMembers.add(currentUser);
 		try {
 			vault.persistAndFlush();
 			return Response.created(URI.create(".")).build();

@@ -37,7 +37,6 @@ public class VaultResourceTest {
 
 	private final String vault1OwnerJwt = "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzM4NCIsInZhdWx0SWQiOiJ2YXVsdDEifQ.e30.zy5SDqX46G2igNLykXuUsq8bEY5etx_dNzrQTwu6UAl4Z85jf8BWqoPaXvgQTCIu_Ex5joUtwSOAC24bibaSNgI-wTY8IAwnr_R8JjQxSMYrXagY7QgTnqLbV8Or-Fb9";
 	private final String vault2OwnerJwt = "eyJhbGciOiJFUzM4NCIsInR5cCI6IkpXVCIsInZhdWx0SWQiOiJ2YXVsdDIifQ.e30.wGUvw1owDrVXlha056Hb1CRO6IQU8x4aadk5IGlaB12iFXZaypDATCCWGgEV3s2Q9qSVrY9A7M-g0a4FBK4DJ06u8t02Igj8Bh1Ba3jOOdAuiGslttSAcfMqImcjkRZL";
-	private final String vault4OwnerJwt = "eyJhbGciOiJFUzM4NCIsInR5cCI6IkpXVCIsInZhdWx0SWQiOiJ2YXVsdDQifQ.e30.caBZSinbvjUE_dsexrs3oQv_tFRRIa2cpxdEc3i7jZZk_JsSNr4IeTs3PXzZEOf_NhhQtFb6jy5zQNstYN6Da2Ovf9bLK3-vY6Yb8zBKMwKq-WXU-Z-kCnr2lrjbqz6g";
 
 	@Inject
 	AgroalDataSource dataSource;
@@ -516,6 +515,8 @@ public class VaultResourceTest {
 	})
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 	public class ManageGroups {
+
+		private final String vault4OwnerJwt = "eyJhbGciOiJFUzM4NCIsInR5cCI6IkpXVCIsInZhdWx0SWQiOiJ2YXVsdDQifQ.e30.caBZSinbvjUE_dsexrs3oQv_tFRRIa2cpxdEc3i7jZZk_JsSNr4IeTs3PXzZEOf_NhhQtFb6jy5zQNstYN6Da2Ovf9bLK3-vY6Yb8zBKMwKq-WXU-Z-kCnr2lrjbqz6g";
 
 		@Test
 		@Order(1)

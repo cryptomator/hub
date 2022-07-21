@@ -28,7 +28,7 @@ public class VaultOwnerOnlyFilterProvider implements ContainerRequestFilter {
 	@Override
 	public void filter(ContainerRequestContext containerRequestContext) {
 		var vaultIdQueryParameter = getVaultIdQueryParameter(containerRequestContext);
-		var clientJwt = getClientJwt(containerRequestContext);
+		var clientJwt = getClientJWT(containerRequestContext);
 		var unveridifedVaultId = getUnverifiedVaultId(clientJwt);
 		if (vaultIdQueryParameter.equals(unveridifedVaultId)) {
 			var vault = Vault.<Vault>findByIdOptional(unveridifedVaultId).orElseThrow(NotFoundException::new);
@@ -53,7 +53,7 @@ public class VaultOwnerOnlyFilterProvider implements ContainerRequestFilter {
 		return vauldIdQueryParameters.get(0);
 	}
 
-	String getClientJwt(ContainerRequestContext containerRequestContext) {
+	String getClientJWT(ContainerRequestContext containerRequestContext) {
 		var clientJwt = containerRequestContext.getHeaderString(CLIENT_JWT);
 		if (clientJwt != null) {
 			return clientJwt;

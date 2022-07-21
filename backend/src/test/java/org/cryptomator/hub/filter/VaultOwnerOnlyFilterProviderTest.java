@@ -44,7 +44,7 @@ class VaultOwnerOnlyFilterProviderTest {
 
 	@Test
 	@DisplayName("validate valid Client-JWT header")
-	public void testValidClientJwtHeader() {
+	public void testValidClientJWTHeader() {
 		var pathParams = new MultivaluedHashMap<String, String>();
 		pathParams.add(VaultOwnerOnlyFilterProvider.VAULT_ID, "vault2");
 
@@ -57,7 +57,7 @@ class VaultOwnerOnlyFilterProviderTest {
 
 	@Test
 	@DisplayName("validate no Client-JWT header provided")
-	public void testNoClientJwtHeader() {
+	public void testNoClientJWTHeader() {
 		var pathParams = new MultivaluedHashMap<String, String>();
 		pathParams.add(VaultOwnerOnlyFilterProvider.VAULT_ID, "vault2");
 
@@ -82,7 +82,7 @@ class VaultOwnerOnlyFilterProviderTest {
 
 	@Test
 	@DisplayName("validate expired Client-JWT header")
-	public void testExpiredClientJwtHeader() {
+	public void testExpiredClientJWTHeader() {
 		var pathParams = new MultivaluedHashMap<String, String>();
 		pathParams.add(VaultOwnerOnlyFilterProvider.VAULT_ID, "vault2");
 
@@ -95,7 +95,7 @@ class VaultOwnerOnlyFilterProviderTest {
 
 	@Test
 	@DisplayName("validate Client-JWT header signed by other key")
-	public void testOtherKeyClientJwtHeader() {
+	public void testOtherKeyClientJWTHeader() {
 		var pathParams = new MultivaluedHashMap<String, String>();
 		pathParams.add(VaultOwnerOnlyFilterProvider.VAULT_ID, "vault2");
 
@@ -108,7 +108,7 @@ class VaultOwnerOnlyFilterProviderTest {
 
 	@Test
 	@DisplayName("validate malformed Client-JWT header")
-	public void testMalformedClientJwtHeader() {
+	public void testMalformedClientJWTHeader() {
 		var pathParams = new MultivaluedHashMap<String, String>();
 		pathParams.add(VaultOwnerOnlyFilterProvider.VAULT_ID, "vault2");
 
@@ -178,41 +178,41 @@ class VaultOwnerOnlyFilterProviderTest {
 
 	@Test
 	@DisplayName("validate valid Client-JWT")
-	public void testValidClientJwtProvided() {
+	public void testValidClientJWTProvided() {
 		Mockito.when(context.getHeaderString(VaultOwnerOnlyFilterProvider.CLIENT_JWT)).thenReturn(VALID_TOKEN_VAULT_2);
 
-		String result = vaultOwnerOnlyFilterProvider.getClientJwt(context);
+		String result = vaultOwnerOnlyFilterProvider.getClientJWT(context);
 		Assertions.assertEquals(VALID_TOKEN_VAULT_2, result);
 	}
 
 	@Test
 	@DisplayName("validate no Client-JWT")
-	public void testNoClientJwtProvided() {
-		Assertions.assertThrows(VaultOwnerNotProvidedException.class, () -> vaultOwnerOnlyFilterProvider.getClientJwt(context));
+	public void testNoClientJWTProvided() {
+		Assertions.assertThrows(VaultOwnerNotProvidedException.class, () -> vaultOwnerOnlyFilterProvider.getClientJWT(context));
 	}
 
 	@Test
 	@DisplayName("validate valid Client-JWT leads to valid vaultId")
-	public void testValidClientJwtLeadsToValidVaultId() {
+	public void testValidClientJWTLeadsToValidVaultId() {
 		String result = vaultOwnerOnlyFilterProvider.getUnverifiedVaultId(VALID_TOKEN_VAULT_2);
 		Assertions.assertEquals("vault2", result);
 	}
 
 	@Test
 	@DisplayName("validate no Client-JWT")
-	public void testMalformedClientJwt() {
+	public void testMalformedClientJWT() {
 		Assertions.assertThrows(VaultOwnerValidationFailedException.class, () -> vaultOwnerOnlyFilterProvider.getUnverifiedVaultId(MALFORMED_TOKEN));
 	}
 
 	@Test
 	@DisplayName("validate no vaultId in Client-JWT")
-	public void testNoVaultIdInJwt() {
+	public void testNoVaultIdInJWT() {
 		Assertions.assertThrows(VaultOwnerValidationFailedException.class, () -> vaultOwnerOnlyFilterProvider.getUnverifiedVaultId(TOKEN_WITHOUT_VAULT_ID));
 	}
 
 	@Test
 	@DisplayName("validate invalid vaultId in Client-JWT")
-	public void testInvalidVaultIdInJwt() {
+	public void testInvalidVaultIdInJWT() {
 		Assertions.assertThrows(VaultOwnerValidationFailedException.class, () -> vaultOwnerOnlyFilterProvider.getUnverifiedVaultId(TOKEN_WITH_INVALID_VAULT_ID));
 	}
 

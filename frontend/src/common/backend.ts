@@ -27,11 +27,13 @@ axiosAuth.interceptors.request.use(async request => {
   return request;
 });
 
+const acceptedClientJWTLeeway = 15;
+
 /* DTOs */
 
 export class VaultDto {
 
-  constructor(public id: string, public name: string, public description: string, public creationTime: Date, public masterkey: string, public iterations: number, public salt: string, public authPublicKey: string, public authPrivateKey: string, public owner?: UserDto) { }
+  constructor(public id: string, public name: string, public description: string, public creationTime: Date, public masterkey: string, public iterations: number, public salt: string, public authPublicKey: string, public authPrivateKey: string) { }
 }
 
 export class DeviceDto {
@@ -122,8 +124,7 @@ class VaultService {
   private async buildClientJwt(vaultId: string, vaultKeys: VaultKeys): Promise<string> {
     let vaultIdHeader: VaultIdHeader = { alg: 'ES384', b64: true, typ: 'JWT', vaultId: vaultId };
     let nowInSeconds = this.secondsSinceEpoch();
-    let acceptedLeeway = 15;
-    let jwtPayload = { exp: nowInSeconds + acceptedLeeway, nbf: nowInSeconds - acceptedLeeway, iat: nowInSeconds };
+    let jwtPayload = { exp: nowInSeconds + acceptedClientJWTLeeway, nbf: nowInSeconds - acceptedClientJWTLeeway, iat: nowInSeconds };
     return vaultKeys.signVaultEditRequest(vaultIdHeader, jwtPayload);
   }
 

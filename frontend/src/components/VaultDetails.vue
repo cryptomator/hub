@@ -151,8 +151,13 @@ async function fetchData() {
 async function vaultOwnerAuthenticated(keys: VaultKeys) {
   isOwner.value = true;
   vaultKeys.value = keys;
-  (await backend.vaults.getMembers(props.vaultId, vaultKeys.value)).forEach(member => members.value.set(member.id,member));
-  devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId, vaultKeys.value);
+  try {
+    (await backend.vaults.getMembers(props.vaultId, vaultKeys.value)).forEach(member => members.value.set(member.id,member));
+    devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId, vaultKeys.value);
+  } catch (error) {
+    console.error('Getting member or requiring devices access grant failed.', error);
+    onAddUserError.value = error instanceof Error ? error : new Error('Unknown Error');
+  }
 }
 
 function isAuthorityDto(toCheck: any): toCheck is AuthorityDto {
@@ -191,6 +196,8 @@ async function addAuthorityBackend(authority: AuthorityDto) {
       } else {
         throw new Error('Unknown authority type \'' + authority.type + '\'');
       }
+    } else {
+      throw new Error('No vault keys provided');
     }
   } catch (error) {
     if (! (error instanceof ConflictError)) {
