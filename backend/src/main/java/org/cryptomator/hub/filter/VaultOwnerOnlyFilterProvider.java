@@ -42,7 +42,7 @@ public class VaultOwnerOnlyFilterProvider implements ContainerRequestFilter {
 		}
 	}
 
-	private String getVaultIdQueryParameter(ContainerRequestContext containerRequestContext) {
+	String getVaultIdQueryParameter(ContainerRequestContext containerRequestContext) {
 		var vauldIdQueryParameters = containerRequestContext.getUriInfo().getPathParameters().get("vaultId");
 		if (vauldIdQueryParameters == null || vauldIdQueryParameters.size() != 1) {
 			throw new VaultOwnerValidationFailedException("vaultId not provided");
@@ -50,7 +50,7 @@ public class VaultOwnerOnlyFilterProvider implements ContainerRequestFilter {
 		return vauldIdQueryParameters.get(0);
 	}
 
-	private String getClientJwt(ContainerRequestContext containerRequestContext) {
+	String getClientJwt(ContainerRequestContext containerRequestContext) {
 		var clientJwt = containerRequestContext.getHeaderString("Client-Jwt");
 		if (clientJwt != null) {
 			return clientJwt;
@@ -59,7 +59,7 @@ public class VaultOwnerOnlyFilterProvider implements ContainerRequestFilter {
 		}
 	}
 
-	private String getUnverifiedVaultId(String clientJwt) {
+	String getUnverifiedVaultId(String clientJwt) {
 		try {
 			var unveridifedVaultId = JWT.decode(clientJwt).getHeaderClaim("vaultId");
 			if (!unveridifedVaultId.isNull() && unveridifedVaultId.asString() != null) {

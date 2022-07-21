@@ -24,6 +24,8 @@ class VaultOwnerOnlyFilterProviderTest {
 	private static final String VALID_TOKEN_VAULT_3000 = "eyJhbGciOiJFUzM4NCIsInR5cCI6IkpXVCIsInZhdWx0SWQiOiJ2YXVsdDMwMDAifQ.eyJpYXQiOjE1MTYyMzkwMjIsImV4cCI6MTUxNjIzOTAyMn0.ByF9Y3A2w7lRWCEGH4C0tTxME1HM5941BF_IKsd-pY_FF1AYliEFcRMPp6yZSpPXs7T_hrKWViXKQbTyhyEZuQPG1YOy4KUYZEpl0POlWT8iruWTmIdJ_LB0As8d2HJM";
 	private static final String EXPIRED_TOKEN = "eyJhbGciOiJFUzM4NCIsInR5cCI6IkpXVCIsInZhdWx0SWQiOiJ2YXVsdDIifQ.eyJpYXQiOjE1MTYyMzkwMjIsImV4cCI6MTUxNjIzOTAyMn0.fMeWvzSfwfxLXnsMjYg0EMKbdt6FSzc86g_btgJERrrv9DKMcj7rb-X0MbXjbE0albxmc0Llr2p348Fi1vJO0pl0ldcwCeV1Dn8BFpkLKE08WVbE4sLWPHh2PmgTTd-F";
 	private static final String TOKEN_WITH_INVALID_SIGNATURE = "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzM4NCIsInZhdWx0SWQiOiJ2YXVsdDIifQ.e30.cGZDCqzJQgcBHNVPcmBc8JfeGzUf3CHUrwSAMwOA0Dcy9aUZvsAm1dr1MKzuPW_UFHRfMnNi2EwASOA6t-vPWvPFolAHFn5REt2Y9Aw9mIz-qxSBLpz6OMZD16tysQcd";
+	private static final String TOKEN_WITHOUT_VAULT_ID = "eyJhbGciOiJFUzM4NCIsInR5cCI6IkpXVCJ9.e30.vT0jNCotwtzr37JNM_C6uZFCw3GvVjcikn-CVrDociILPiXBXA8i7dWFwBnUQkDBcFbouh-eUB_wEWgqe9WTG2rT66_c1G2LZUQcCsKdWJdTyK4ZxLXLYOYhNOHtqShI";
+	private static final String TOKEN_WITH_INVALID_VAULT_ID = "eyJhbGciOiJFUzM4NCIsInR5cCI6IkpXVCIsInZhdWx0SWQiOjI1fQ.e30.YxqmX5xeOviP9WldQV870zhPEF4PRaZrW0TaoWzm4lvkEmacIUt3OIoH0grAeh_gtJNRg4WfnqFNTgUx40-yDOtBLzyoeubfrMgb0-agN1898Mbr4ZhD1xqor0lBDrmc";
 	private static final String MALFORMED_TOKEN = "hello world";
 
 	private VaultOwnerOnlyFilterProvider vaultOwnerOnlyFilterProvider;
@@ -118,7 +120,7 @@ class VaultOwnerOnlyFilterProviderTest {
 	}
 
 	@Test
-	@DisplayName("validate malformed Client-Jwt header")
+	@DisplayName("validate malformed key in database")
 	public void testMalformedKeyInDatabase() throws SQLException {
 		var pathParams = new MultivaluedHashMap<String, String>();
 		pathParams.add("vaultId", "vault3000");
@@ -135,6 +137,83 @@ class VaultOwnerOnlyFilterProviderTest {
 
 			Assertions.assertThrows(VaultOwnerValidationFailedException.class, () -> vaultOwnerOnlyFilterProvider.filter(context));
 		}
+	}
+
+	@Test
+	@DisplayName("validate valid vaultId in query")
+	public void testGetValidVaultIdQueryParameter() {
+		var pathParams = new MultivaluedHashMap<String, String>();
+		pathParams.add("vaultId", "vault2");
+
+		Mockito.when(context.getUriInfo()).thenReturn(uriInfo);
+		Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
+
+		String result = vaultOwnerOnlyFilterProvider.getVaultIdQueryParameter(context);
+		Assertions.assertEquals("vault2", result);
+	}
+
+	@Test
+	@DisplayName("validate no vaultId in query")
+	public void testNoVaultIdQueryParameter() {
+		var pathParams = new MultivaluedHashMap<String, String>();
+
+		Mockito.when(context.getUriInfo()).thenReturn(uriInfo);
+		Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
+
+		Assertions.assertThrows(VaultOwnerValidationFailedException.class, () -> vaultOwnerOnlyFilterProvider.getVaultIdQueryParameter(context));
+	}
+
+	@Test
+	@DisplayName("validate multiple vaultId in query")
+	public void testMultipleVaultIdQueryParameter() {
+		var pathParams = new MultivaluedHashMap<String, String>();
+		pathParams.add("vaultId", "vault2");
+		pathParams.add("vaultId", "vault3");
+
+		Mockito.when(context.getUriInfo()).thenReturn(uriInfo);
+		Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
+
+		Assertions.assertThrows(VaultOwnerValidationFailedException.class, () -> vaultOwnerOnlyFilterProvider.getVaultIdQueryParameter(context));
+	}
+
+	@Test
+	@DisplayName("validate valid Client-Jwt")
+	public void testValidClientJwtProvided() {
+		Mockito.when(context.getHeaderString("Client-Jwt")).thenReturn(VALID_TOKEN_VAULT_2);
+
+		String result = vaultOwnerOnlyFilterProvider.getClientJwt(context);
+		Assertions.assertEquals(VALID_TOKEN_VAULT_2, result);
+	}
+
+	@Test
+	@DisplayName("validate no Client-Jwt")
+	public void testNoClientJwtProvided() {
+		Assertions.assertThrows(VaultOwnerNotProvidedException.class, () -> vaultOwnerOnlyFilterProvider.getClientJwt(context));
+	}
+
+	@Test
+	@DisplayName("validate valid Client-Jwt leads to valid vaultId")
+	public void testValidClientJwtLeadsToValidVaultId() {
+		String result = vaultOwnerOnlyFilterProvider.getUnverifiedVaultId(VALID_TOKEN_VAULT_2);
+		Assertions.assertEquals("vault2", result);
+	}
+
+	@Test
+	@DisplayName("validate no Client-Jwt")
+	public void testMalformedClientJwt() {
+		Assertions.assertThrows(VaultOwnerValidationFailedException.class, () -> vaultOwnerOnlyFilterProvider.getUnverifiedVaultId(MALFORMED_TOKEN));
+	}
+
+	@Test
+	@DisplayName("validate no vaultId in Client-Jwt")
+	public void testNoVaultIdInJwt() {
+		Assertions.assertThrows(VaultOwnerValidationFailedException.class, () -> vaultOwnerOnlyFilterProvider.getUnverifiedVaultId(TOKEN_WITHOUT_VAULT_ID));
+	}
+
+	@Test
+	@DisplayName("validate invalid vaultId in Client-Jwt")
+	public void testInvalidVaultIdInJwt() {
+		Assertions.assertThrows(VaultOwnerValidationFailedException.class, () -> vaultOwnerOnlyFilterProvider.getUnverifiedVaultId(TOKEN_WITH_INVALID_VAULT_ID));
 	}
 
 }
