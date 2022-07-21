@@ -33,9 +33,9 @@ public class VaultOwnerOnlyFilterProvider implements ContainerRequestFilter {
 			try {
 				JWT.require(algorithm).build().verify(clientJwt);
 			} catch (TokenExpiredException e) {
-				throw new VaultOwnerTokenExpiredException("Token of client-jwt expired");
+				throw new VaultOwnerTokenExpiredException("Token of Client-JWT expired");
 			} catch (JWTVerificationException e) {
-				throw new VaultOwnerValidationFailedException("Different key used to sign the client-jwt");
+				throw new VaultOwnerValidationFailedException("Different key used to sign the Client-JWT");
 			}
 		} else {
 			throw new VaultOwnerValidationFailedException("other vaultId provided");
@@ -51,11 +51,11 @@ public class VaultOwnerOnlyFilterProvider implements ContainerRequestFilter {
 	}
 
 	String getClientJwt(ContainerRequestContext containerRequestContext) {
-		var clientJwt = containerRequestContext.getHeaderString("Client-Jwt");
+		var clientJwt = containerRequestContext.getHeaderString("Client-JWT");
 		if (clientJwt != null) {
 			return clientJwt;
 		} else {
-			throw new VaultOwnerNotProvidedException("Client-Jwt not provided");
+			throw new VaultOwnerNotProvidedException("Client-JWT not provided");
 		}
 	}
 
@@ -65,10 +65,10 @@ public class VaultOwnerOnlyFilterProvider implements ContainerRequestFilter {
 			if (!unveridifedVaultId.isNull() && unveridifedVaultId.asString() != null) {
 				return unveridifedVaultId.asString();
 			} else {
-				throw new VaultOwnerValidationFailedException("No Client-Jwt provided");
+				throw new VaultOwnerValidationFailedException("No Client-JWT provided");
 			}
 		} catch (JWTDecodeException e) {
-			throw new VaultOwnerValidationFailedException("Malformed Client-Jwt provided");
+			throw new VaultOwnerValidationFailedException("Malformed Client-JWT provided");
 		}
 	}
 

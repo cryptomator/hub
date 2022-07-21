@@ -43,12 +43,12 @@ class VaultOwnerOnlyFilterProviderTest {
 	}
 
 	@Test
-	@DisplayName("validate valid Client-Jwt header")
+	@DisplayName("validate valid Client-JWT header")
 	public void testValidClientJwtHeader() {
 		var pathParams = new MultivaluedHashMap<String, String>();
 		pathParams.add("vaultId", "vault2");
 
-		Mockito.when(context.getHeaderString("Client-Jwt")).thenReturn(VALID_TOKEN_VAULT_2);
+		Mockito.when(context.getHeaderString("Client-JWT")).thenReturn(VALID_TOKEN_VAULT_2);
 		Mockito.when(context.getUriInfo()).thenReturn(uriInfo);
 		Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
 
@@ -56,7 +56,7 @@ class VaultOwnerOnlyFilterProviderTest {
 	}
 
 	@Test
-	@DisplayName("validate no Client-Jwt header provided")
+	@DisplayName("validate no Client-JWT header provided")
 	public void testNoClientJwtHeader() {
 		var pathParams = new MultivaluedHashMap<String, String>();
 		pathParams.add("vaultId", "vault2");
@@ -73,7 +73,7 @@ class VaultOwnerOnlyFilterProviderTest {
 		var pathParams = new MultivaluedHashMap<String, String>();
 		pathParams.add("vaultId", "vault3000");
 
-		Mockito.when(context.getHeaderString("Client-Jwt")).thenReturn(VALID_TOKEN_VAULT_2);
+		Mockito.when(context.getHeaderString("Client-JWT")).thenReturn(VALID_TOKEN_VAULT_2);
 		Mockito.when(context.getUriInfo()).thenReturn(uriInfo);
 		Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
 
@@ -81,12 +81,12 @@ class VaultOwnerOnlyFilterProviderTest {
 	}
 
 	@Test
-	@DisplayName("validate expired Client-Jwt header")
+	@DisplayName("validate expired Client-JWT header")
 	public void testExpiredClientJwtHeader() {
 		var pathParams = new MultivaluedHashMap<String, String>();
 		pathParams.add("vaultId", "vault2");
 
-		Mockito.when(context.getHeaderString("Client-Jwt")).thenReturn(EXPIRED_TOKEN);
+		Mockito.when(context.getHeaderString("Client-JWT")).thenReturn(EXPIRED_TOKEN);
 		Mockito.when(context.getUriInfo()).thenReturn(uriInfo);
 		Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
 
@@ -94,12 +94,12 @@ class VaultOwnerOnlyFilterProviderTest {
 	}
 
 	@Test
-	@DisplayName("validate Client-Jwt header signed by other key")
+	@DisplayName("validate Client-JWT header signed by other key")
 	public void testOtherKeyClientJwtHeader() {
 		var pathParams = new MultivaluedHashMap<String, String>();
 		pathParams.add("vaultId", "vault2");
 
-		Mockito.when(context.getHeaderString("Client-Jwt")).thenReturn(TOKEN_WITH_INVALID_SIGNATURE);
+		Mockito.when(context.getHeaderString("Client-JWT")).thenReturn(TOKEN_WITH_INVALID_SIGNATURE);
 		Mockito.when(context.getUriInfo()).thenReturn(uriInfo);
 		Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
 
@@ -107,12 +107,12 @@ class VaultOwnerOnlyFilterProviderTest {
 	}
 
 	@Test
-	@DisplayName("validate malformed Client-Jwt header")
+	@DisplayName("validate malformed Client-JWT header")
 	public void testMalformedClientJwtHeader() {
 		var pathParams = new MultivaluedHashMap<String, String>();
 		pathParams.add("vaultId", "vault2");
 
-		Mockito.when(context.getHeaderString("Client-Jwt")).thenReturn(MALFORMED_TOKEN);
+		Mockito.when(context.getHeaderString("Client-JWT")).thenReturn(MALFORMED_TOKEN);
 		Mockito.when(context.getUriInfo()).thenReturn(uriInfo);
 		Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
 
@@ -125,7 +125,7 @@ class VaultOwnerOnlyFilterProviderTest {
 		var pathParams = new MultivaluedHashMap<String, String>();
 		pathParams.add("vaultId", "vault3000");
 
-		Mockito.when(context.getHeaderString("Client-Jwt")).thenReturn(VALID_TOKEN_VAULT_3000);
+		Mockito.when(context.getHeaderString("Client-JWT")).thenReturn(VALID_TOKEN_VAULT_3000);
 		Mockito.when(context.getUriInfo()).thenReturn(uriInfo);
 		Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
 
@@ -177,41 +177,41 @@ class VaultOwnerOnlyFilterProviderTest {
 	}
 
 	@Test
-	@DisplayName("validate valid Client-Jwt")
+	@DisplayName("validate valid Client-JWT")
 	public void testValidClientJwtProvided() {
-		Mockito.when(context.getHeaderString("Client-Jwt")).thenReturn(VALID_TOKEN_VAULT_2);
+		Mockito.when(context.getHeaderString("Client-JWT")).thenReturn(VALID_TOKEN_VAULT_2);
 
 		String result = vaultOwnerOnlyFilterProvider.getClientJwt(context);
 		Assertions.assertEquals(VALID_TOKEN_VAULT_2, result);
 	}
 
 	@Test
-	@DisplayName("validate no Client-Jwt")
+	@DisplayName("validate no Client-JWT")
 	public void testNoClientJwtProvided() {
 		Assertions.assertThrows(VaultOwnerNotProvidedException.class, () -> vaultOwnerOnlyFilterProvider.getClientJwt(context));
 	}
 
 	@Test
-	@DisplayName("validate valid Client-Jwt leads to valid vaultId")
+	@DisplayName("validate valid Client-JWT leads to valid vaultId")
 	public void testValidClientJwtLeadsToValidVaultId() {
 		String result = vaultOwnerOnlyFilterProvider.getUnverifiedVaultId(VALID_TOKEN_VAULT_2);
 		Assertions.assertEquals("vault2", result);
 	}
 
 	@Test
-	@DisplayName("validate no Client-Jwt")
+	@DisplayName("validate no Client-JWT")
 	public void testMalformedClientJwt() {
 		Assertions.assertThrows(VaultOwnerValidationFailedException.class, () -> vaultOwnerOnlyFilterProvider.getUnverifiedVaultId(MALFORMED_TOKEN));
 	}
 
 	@Test
-	@DisplayName("validate no vaultId in Client-Jwt")
+	@DisplayName("validate no vaultId in Client-JWT")
 	public void testNoVaultIdInJwt() {
 		Assertions.assertThrows(VaultOwnerValidationFailedException.class, () -> vaultOwnerOnlyFilterProvider.getUnverifiedVaultId(TOKEN_WITHOUT_VAULT_ID));
 	}
 
 	@Test
-	@DisplayName("validate invalid vaultId in Client-Jwt")
+	@DisplayName("validate invalid vaultId in Client-JWT")
 	public void testInvalidVaultIdInJwt() {
 		Assertions.assertThrows(VaultOwnerValidationFailedException.class, () -> vaultOwnerOnlyFilterProvider.getUnverifiedVaultId(TOKEN_WITH_INVALID_VAULT_ID));
 	}
