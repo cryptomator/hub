@@ -156,7 +156,7 @@ async function vaultOwnerAuthenticated(keys: VaultKeys) {
     devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId, vaultKeys.value);
   } catch (error) {
     console.error('Getting member or requiring devices access grant failed.', error);
-    onAddUserError.value = error instanceof Error ? error : new Error('Unknown Error');
+    onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
 }
 

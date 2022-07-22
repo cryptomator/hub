@@ -1,4 +1,4 @@
-package org.cryptomator.hub.filter;
+package org.cryptomator.hub.filters;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
@@ -45,6 +45,7 @@ public class VaultOwnerOnlyFilterProvider implements ContainerRequestFilter {
 		}
 	}
 
+	//visible for testing
 	String getVaultIdQueryParameter(ContainerRequestContext containerRequestContext) {
 		var vauldIdQueryParameters = containerRequestContext.getUriInfo().getPathParameters().get(VAULT_ID);
 		if (vauldIdQueryParameters == null || vauldIdQueryParameters.size() != 1) {
@@ -53,6 +54,7 @@ public class VaultOwnerOnlyFilterProvider implements ContainerRequestFilter {
 		return vauldIdQueryParameters.get(0);
 	}
 
+	//visible for testing
 	String getClientJWT(ContainerRequestContext containerRequestContext) {
 		var clientJwt = containerRequestContext.getHeaderString(CLIENT_JWT);
 		if (clientJwt != null) {
@@ -62,6 +64,7 @@ public class VaultOwnerOnlyFilterProvider implements ContainerRequestFilter {
 		}
 	}
 
+	//visible for testing
 	String getUnverifiedVaultId(String clientJwt) {
 		try {
 			var unveridifedVaultId = JWT.decode(clientJwt).getHeaderClaim("vaultId");

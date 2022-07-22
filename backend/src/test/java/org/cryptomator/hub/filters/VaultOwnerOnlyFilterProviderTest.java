@@ -1,4 +1,4 @@
-package org.cryptomator.hub.filter;
+package org.cryptomator.hub.filters;
 
 import com.radcortez.flyway.test.annotation.DataSource;
 import com.radcortez.flyway.test.annotation.FlywayTest;

@@ -9,8 +9,8 @@ import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
-import org.cryptomator.hub.filter.ActiveLicense;
-import org.cryptomator.hub.filter.VaultOwnerOnlyFilter;
+import org.cryptomator.hub.filters.ActiveLicense;
+import org.cryptomator.hub.filters.VaultOwnerOnlyFilter;
 import org.cryptomator.hub.license.LicenseHolder;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
@@ -67,7 +67,6 @@ public class VaultResource {
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "list vault members", description = "list all users that this vault has been shared with")
-	@APIResponse(responseCode = "400", description = "Client-JWT verification failed")
 	@APIResponse(responseCode = "401", description = "Client-JWT not provided")
 	@APIResponse(responseCode = "403", description = "Client-JWT expired")
 	@APIResponse(responseCode = "404", description = "vault not found")
@@ -93,7 +92,6 @@ public class VaultResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "adds a member to this vault")
 	@APIResponse(responseCode = "201", description = "member added")
-	@APIResponse(responseCode = "400", description = "Client-JWT verification failed")
 	@APIResponse(responseCode = "401", description = "Client-JWT not provided")
 	@APIResponse(responseCode = "402", description = "all seats in license used")
 	@APIResponse(responseCode = "403", description = "Client-JWT expired")
@@ -127,7 +125,6 @@ public class VaultResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "adds a group to this vault")
 	@APIResponse(responseCode = "201", description = "member added")
-	@APIResponse(responseCode = "400", description = "Client-JWT verification failed")
 	@APIResponse(responseCode = "401", description = "Client-JWT not provided")
 	@APIResponse(responseCode = "402", description = "used seats + (number of users in group not occupying a seats) exceeds number of total avaible seats in license")
 	@APIResponse(responseCode = "403", description = "Client-JWT expired")
@@ -158,7 +155,6 @@ public class VaultResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "remove a member from this vault", description = "revokes the given user's access rights from this vault. If the given user is no member, the request is a no-op.")
 	@APIResponse(responseCode = "204", description = "member removed")
-	@APIResponse(responseCode = "400", description = "Client-JWT verification failed")
 	@APIResponse(responseCode = "401", description = "Client-JWT not provided")
 	@APIResponse(responseCode = "403", description = "Client-JWT expired")
 	@APIResponse(responseCode = "404", description = "vault not found")
@@ -174,7 +170,6 @@ public class VaultResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "remove a group from this vault", description = "revokes the given group's access rights from this vault. If the given group is no member, the request is a no-op.")
 	@APIResponse(responseCode = "204", description = "member removed")
-	@APIResponse(responseCode = "400", description = "Client-JWT verification failed")
 	@APIResponse(responseCode = "401", description = "Client-JWT not provided")
 	@APIResponse(responseCode = "403", description = "Client-JWT expired")
 	@APIResponse(responseCode = "404", description = "vault not found")
@@ -196,7 +191,6 @@ public class VaultResource {
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "list devices requiring access rights", description = "lists all devices owned by vault members, that don't have a device-specific masterkey yet")
-	@APIResponse(responseCode = "400", description = "Client-JWT verification failed")
 	@APIResponse(responseCode = "401", description = "Client-JWT not provided")
 	@APIResponse(responseCode = "403", description = "Client-JWT expired")
 	@APIResponse(responseCode = "404", description = "vault not found")
@@ -239,7 +233,6 @@ public class VaultResource {
 	@Consumes(MediaType.TEXT_PLAIN)
 	@Operation(summary = "adds a device-specific masterkey")
 	@APIResponse(responseCode = "201", description = "device-specific key stored")
-	@APIResponse(responseCode = "400", description = "Client-JWT verification failed")
 	@APIResponse(responseCode = "401", description = "Client-JWT not provided")
 	@APIResponse(responseCode = "403", description = "Client-JWT expired")
 	@APIResponse(responseCode = "404", description = "vault or device not found")

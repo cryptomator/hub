@@ -70,8 +70,7 @@
   "deviceList.added": "Added",
 
   "downloadVaultTemplateDialog.title": "Download Vault Template",
-  "downloadVaultTemplateDialog.description": "Download the vault template and place it in the cloud where you want to have the vault located. This is required only once for the initial setup.",
-  "downloadVaultTemplateDialog.masterPassword": "Master Password",
+  "downloadVaultTemplateDialog.description": "Download and unpack the zipped vault template to any location shared with your team members. This is required only once during the initial setup.",
 
   "grantPermissionDialog.title": "Grant Permission",
   "grantPermissionDialog.description": "Grant additional devices permission to access the vault.",

@@ -1,4 +1,4 @@
-package org.cryptomator.hub.filter;
+package org.cryptomator.hub.filters;
 
 import io.quarkus.test.junit.QuarkusTest;
 import org.cryptomator.hub.license.LicenseHolder;
