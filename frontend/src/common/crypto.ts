@@ -1,6 +1,7 @@
 import * as miscreant from 'miscreant';
 import { base32, base64, base64url } from 'rfc4648';
 import { JWE } from './jwe';
+import { JWT, JWTHeader } from './jwt';
 
 export class WrappedVaultKeys {
   constructor(readonly masterkey: string, readonly signaturePrivateKey: string, readonly signaturePublicKey: string, readonly salt: string, readonly iterations: number) { }
@@ -60,12 +61,12 @@ export class VaultKeys {
 
   private static readonly GCM_NONCE_LEN = 12;
   private static readonly PBKDF2_ITERATION_COUNT = 1000000;
-  readonly #masterKey: CryptoKey;
-  readonly #signatureKeyPair: CryptoKeyPair;
+  readonly masterKey: CryptoKey;
+  readonly signatureKeyPair: CryptoKeyPair;
 
   protected constructor(masterkey: CryptoKey, signatureKeyPair: CryptoKeyPair) {
-    this.#masterKey = masterkey;
-    this.#signatureKeyPair = signatureKeyPair;
+    this.masterKey = masterkey;
+    this.signatureKeyPair = signatureKeyPair;
   }
 
   /**
@@ -125,7 +126,7 @@ export class VaultKeys {
     const masterKeyIv = crypto.getRandomValues(new Uint8Array(VaultKeys.GCM_NONCE_LEN));
     const wrappedMasterKey = new Uint8Array(await crypto.subtle.wrapKey(
       'raw',
-      this.#masterKey,
+      this.masterKey,
       await kek,
       { name: 'AES-GCM', iv: masterKeyIv }
     ));
@@ -134,13 +135,13 @@ export class VaultKeys {
     const secretKeyIv = crypto.getRandomValues(new Uint8Array(VaultKeys.GCM_NONCE_LEN));
     const wrappedSecretKey = new Uint8Array(await crypto.subtle.wrapKey(
       'pkcs8',
-      this.#signatureKeyPair.privateKey,
+      this.signatureKeyPair.privateKey,
       await kek,
       { name: 'AES-GCM', iv: secretKeyIv }
     ));
     const encodedSecretKey = base64.stringify(new Uint8Array([...secretKeyIv, ...wrappedSecretKey]));
     // publickey:
-    const publicKey = new Uint8Array(await crypto.subtle.exportKey('spki', this.#signatureKeyPair.publicKey));
+    const publicKey = new Uint8Array(await crypto.subtle.exportKey('spki', this.signatureKeyPair.publicKey));
     const encodedPublicKey = base64.stringify(publicKey);
     // result:
     return new WrappedVaultKeys(encodedMasterKey, encodedSecretKey, encodedPublicKey, encodedSalt, VaultKeys.PBKDF2_ITERATION_COUNT);
@@ -204,7 +205,7 @@ export class VaultKeys {
     const encodedUnsignedToken = new TextEncoder().encode(unsignedToken);
     const signature = await crypto.subtle.sign(
       'HMAC',
-      this.#masterKey,
+      this.masterKey,
       encodedUnsignedToken
     );
     return unsignedToken + '.' + base64url.stringify(new Uint8Array(signature), { pad: false });
@@ -212,7 +213,7 @@ export class VaultKeys {
 
   public async hashDirectoryId(cleartextDirectoryId: string): Promise<string> {
     const dirHash = new TextEncoder().encode(cleartextDirectoryId);
-    const rawkey = new Uint8Array(await crypto.subtle.exportKey('raw', this.#masterKey));
+    const rawkey = new Uint8Array(await crypto.subtle.exportKey('raw', this.masterKey));
     try {
       // miscreant lib requires mac key first and then the enc key
       const encKey = rawkey.subarray(0, rawkey.length / 2 | 0);
@@ -244,7 +245,7 @@ export class VaultKeys {
       []
     );
 
-    const rawkey = new Uint8Array(await crypto.subtle.exportKey('raw', this.#masterKey));
+    const rawkey = new Uint8Array(await crypto.subtle.exportKey('raw', this.masterKey));
     try {
       const payload: JWEPayload = {
         key: base64.stringify(rawkey)
@@ -255,6 +256,10 @@ export class VaultKeys {
     } finally {
       rawkey.fill(0x00);
     }
+  }
+
+  public async signVaultEditRequest(jwtHeader: JWTHeader, jwtPayload: any): Promise<string> {
+    return JWT.build(jwtHeader, jwtPayload, this.signatureKeyPair.privateKey);
   }
 
 }

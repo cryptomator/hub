@@ -156,7 +156,7 @@ public class BillingResourceTest {
 
 	@Nested
 	@DisplayName("As any other role")
-	@TestSecurity(user = "User Name 1", roles = {"user", "vault-owner"})
+	@TestSecurity(user = "User Name 1", roles = {"user"})
 	@OidcSecurity(claims = {
 			@Claim(key = "sub", value = "user1")
 	})

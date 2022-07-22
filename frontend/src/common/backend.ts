@@ -1,6 +1,8 @@
 import AxiosStatic, { AxiosRequestConfig, AxiosResponse } from 'axios';
 import authPromise from './auth';
 import { backendBaseURL } from './config';
+import { VaultKeys } from './crypto';
+import { JWTHeader } from './jwt';
 
 const axiosBaseCfg: AxiosRequestConfig = {
   baseURL: backendBaseURL,
@@ -25,12 +27,13 @@ axiosAuth.interceptors.request.use(async request => {
   return request;
 });
 
+const acceptedClientJWTLeeway = 15;
+
 /* DTOs */
 
 export class VaultDto {
 
-  constructor(public id: string, public name: string, public description: string, public creationTime: Date, public masterkey: string, public iterations: number, public salt: string, public authPublicKey: string, public authPrivateKey: string, public owner?: UserDto) { }
-
+  constructor(public id: string, public name: string, public description: string, public creationTime: Date, public masterkey: string, public iterations: number, public salt: string, public authPublicKey: string, public authPrivateKey: string) { }
 }
 
 export class DeviceDto {
@@ -59,6 +62,10 @@ export class BillingDto {
 
 /* Services */
 
+export interface VaultIdHeader extends JWTHeader {
+  vaultId: string;
+}
+
 class VaultService {
   public async listSharedOrOwned(): Promise<VaultDto[]> {
     return axiosAuth.get('/vaults').then(response => response.data);
@@ -74,22 +81,26 @@ class VaultService {
       .catch((err) => rethrowAndConvertIfExpected(err, 404));
   }
 
-  public async getMembers(vaultId: string): Promise<AuthorityDto[]> {
-    return axiosAuth.get(`/vaults/${vaultId}/members`).then(response => response.data).catch(err => rethrowAndConvertIfExpected(err, 403));
+  public async getMembers(vaultId: string, vaultKeys: VaultKeys): Promise<AuthorityDto[]> {
+    let clientJwt = await this.buildClientJwt(vaultId, vaultKeys);
+    return axiosAuth.get(`/vaults/${vaultId}/members`, { headers: { 'Client-JWT': clientJwt } }).then(response => response.data).catch(err => rethrowAndConvertIfExpected(err, 403));
   }
 
-  public async addUser(vaultId: string, userId: string): Promise<AxiosResponse<void>> {
-    return axiosAuth.put(`/vaults/${vaultId}/users/${userId}`)
+  public async addUser(vaultId: string, userId: string, vaultKeys: VaultKeys): Promise<AxiosResponse<void>> {
+    let clientJwt = await this.buildClientJwt(vaultId, vaultKeys);
+    return axiosAuth.put(`/vaults/${vaultId}/users/${userId}`, null, { headers: { 'Client-JWT': clientJwt } })
       .catch((err) => rethrowAndConvertIfExpected(err, 404, 409));
   }
 
-  public async addGroup(vaultId: string, groupId: string): Promise<AxiosResponse<void>> {
-    return axiosAuth.put(`/vaults/${vaultId}/groups/${groupId}`)
+  public async addGroup(vaultId: string, groupId: string, vaultKeys: VaultKeys): Promise<AxiosResponse<void>> {
+    let clientJwt = await this.buildClientJwt(vaultId, vaultKeys);
+    return axiosAuth.put(`/vaults/${vaultId}/groups/${groupId}`, null, { headers: { 'Client-JWT': clientJwt } })
       .catch((err) => rethrowAndConvertIfExpected(err, 404, 409));
   }
 
-  public async getDevicesRequiringAccessGrant(vaultId: string): Promise<DeviceDto[]> {
-    return axiosAuth.get(`/vaults/${vaultId}/devices-requiring-access-grant`).then(response => response.data).catch(err => rethrowAndConvertIfExpected(err, 403));
+  public async getDevicesRequiringAccessGrant(vaultId: string, vaultKeys: VaultKeys): Promise<DeviceDto[]> {
+    let clientJwt = await this.buildClientJwt(vaultId, vaultKeys);
+    return axiosAuth.get(`/vaults/${vaultId}/devices-requiring-access-grant`, { headers: { 'Client-JWT': clientJwt } }).then(response => response.data).catch(err => rethrowAndConvertIfExpected(err, 403));
   }
 
   public async createVault(vaultId: string, name: string, description: string, masterkey: string, iterations: number, salt: string, signPubKey: string, signPrvKey: string): Promise<AxiosResponse<any>> {
@@ -98,14 +109,27 @@ class VaultService {
       .catch((err) => rethrowAndConvertIfExpected(err, 404, 409));
   }
 
-  public async grantAccess(vaultId: string, deviceId: string, jwe: string) {
-    await axiosAuth.put(`/vaults/${vaultId}/keys/${deviceId}`, jwe, { headers: { 'Content-Type': 'text/plain' } })
+  public async grantAccess(vaultId: string, deviceId: string, jwe: string, vaultKeys: VaultKeys) {
+    let clientJwt = await this.buildClientJwt(vaultId, vaultKeys);
+    await axiosAuth.put(`/vaults/${vaultId}/keys/${deviceId}`, jwe, { headers: { 'Content-Type': 'text/plain', 'Client-JWT': clientJwt } })
       .catch((err) => rethrowAndConvertIfExpected(err, 404, 409));
   }
 
-  public async revokeUserAccess(vaultId: string, userId: string) {
-    await axiosAuth.delete(`/vaults/${vaultId}/users/${userId}`)
+  public async revokeUserAccess(vaultId: string, userId: string, vaultKeys: VaultKeys) {
+    let clientJwt = await this.buildClientJwt(vaultId, vaultKeys);
+    await axiosAuth.delete(`/vaults/${vaultId}/users/${userId}`, { headers: { 'Client-JWT': clientJwt } })
       .catch((err) => rethrowAndConvertIfExpected(err, 404));
+  }
+
+  private async buildClientJwt(vaultId: string, vaultKeys: VaultKeys): Promise<string> {
+    let vaultIdHeader: VaultIdHeader = { alg: 'ES384', b64: true, typ: 'JWT', vaultId: vaultId };
+    let nowInSeconds = this.secondsSinceEpoch();
+    let jwtPayload = { exp: nowInSeconds + acceptedClientJWTLeeway, nbf: nowInSeconds - acceptedClientJWTLeeway, iat: nowInSeconds };
+    return vaultKeys.signVaultEditRequest(vaultIdHeader, jwtPayload);
+  }
+
+  private secondsSinceEpoch(): number {
+    return Math.floor(Date.now() / 1000);
   }
 }
 class DeviceService {

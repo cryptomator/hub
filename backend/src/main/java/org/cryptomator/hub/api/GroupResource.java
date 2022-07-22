@@ -24,7 +24,7 @@ public class GroupResource {
 
 	@GET
 	@Path("/search")
-	@RolesAllowed("vault-owner")
+	@RolesAllowed("user")
 	@Produces(MediaType.APPLICATION_JSON)
 	@NoCache
 	@Operation(summary = "search group")

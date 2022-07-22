@@ -29,9 +29,6 @@ public class Authority extends PanacheEntityBase {
 	@OneToMany(mappedBy = "owner", orphanRemoval = true, fetch = FetchType.LAZY)
 	public Set<Device> devices = new HashSet<>();
 
-	@OneToMany(mappedBy = "owner", orphanRemoval = true, fetch = FetchType.LAZY)
-	public Set<Vault> ownedVaults = new HashSet<>();
-
 	@Column(name = "name", nullable = false)
 	public String name;
 
@@ -40,7 +37,6 @@ public class Authority extends PanacheEntityBase {
 		return "Authority{" +
 				"id='" + id + '\'' +
 				", devices=" + devices.size() +
-				", ownedVaults=" + ownedVaults.size() +
 				", name='" + name + '\'' +
 				'}';
 	}

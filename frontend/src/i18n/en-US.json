@@ -9,12 +9,17 @@
   "common.error.wrongPassword": "Wrong password",
   "common.form.required": "This field is required.",
   "common.loading": "Loading…",
+  "common.manage": "Manage",
   "common.optional": "optional",
   "common.reload": "Please reload the page.",
   "common.remove": "Remove",
   "common.retry": "Retry",
   "common.share": "Share",
   "common.unexpectedError": "Unexpected Error: {0}",
+
+  "authenticateVaultOwnerDialog.title": "Manage Vault",
+  "authenticateVaultOwnerDialog.description": "Type in the master password of the vault to manage it.",
+  "authenticateVaultOwnerDialog.masterPassword": "Master Password",
 
   "billing.title": "Billing",
   "billing.serverInfo.title": "Server Info",
@@ -65,12 +70,10 @@
   "deviceList.added": "Added",
 
   "downloadVaultTemplateDialog.title": "Download Vault Template",
-  "downloadVaultTemplateDialog.description": "Type in the master password of the vault to download its template again.",
-  "downloadVaultTemplateDialog.masterPassword": "Master Password",
+  "downloadVaultTemplateDialog.description": "Download and unpack the zipped vault template to any location shared with your team members. This is required only once during the initial setup.",
 
   "grantPermissionDialog.title": "Grant Permission",
-  "grantPermissionDialog.description": "Type in the master password of the vault to grant additional devices permission to access it.",
-  "grantPermissionDialog.masterPassword": "Master Password",
+  "grantPermissionDialog.description": "Grant additional devices permission to access the vault.",
   "grantPermissionDialog.submit": "Grant Permission to {0} Device(s)",
 
   "nav.vaults": "Vaults",

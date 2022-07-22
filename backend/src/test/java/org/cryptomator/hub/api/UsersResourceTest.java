@@ -74,23 +74,6 @@ public class UsersResourceTest {
 		}
 
 		@Test
-		@DisplayName("GET /users returns 403")
-		public void testGetAll() {
-			when().get("/users")
-					.then().statusCode(403);
-		}
-
-	}
-
-	@Nested
-	@DisplayName("As vault owner user1")
-	@TestSecurity(user = "User Name 1", roles = {"user", "vault-owner"})
-	@OidcSecurity(claims = {
-			@Claim(key = "sub", value = "user1")
-	})
-	public class AsVaultOwner {
-
-		@Test
 		@DisplayName("GET /users returns 200")
 		public void testGetAll() {
 			when().get("/users")
