@@ -85,8 +85,12 @@
   "nav.mobileMenu": "Open main menu",
 
   "settings.title": "Settings",
+  "settings.version.description": "For support always state the displayed Hub and Keycloak version.",
   "settings.general.title": "General",
   "settings.general.language.title": "Language",
+  "settings.version.title": "Server Info",
+  "settings.version.hub.title": "Hub version",
+  "settings.version.keycloak.title": "Keycloak version",
 
   "vaultDetails.description.header": "Description",
   "vaultDetails.description.empty": "No description provided.",

@@ -60,6 +60,10 @@ export class BillingDto {
   constructor(public hubId: string, public hasLicense: boolean, public email: string, public totalSeats: number, public remainingSeats: number, public issuedAt: Date, public expiresAt: Date) { }
 }
 
+export class VersionDto {
+  constructor(public hubVersion: string, public keycloakVersion: string) { }
+}
+
 /* Services */
 
 export interface VaultIdHeader extends JWTHeader {
@@ -181,12 +185,19 @@ class BillingService {
   }
 }
 
+class VersionService {
+  public async get(): Promise<VersionDto> {
+    return axiosAuth.get<VersionDto>('/version').then(response => response.data);
+  }
+}
+
 const services = {
   vaults: new VaultService(),
   users: new UserService(),
   groups: new GroupService(),
   devices: new DeviceService(),
-  billing: new BillingService()
+  billing: new BillingService(),
+  version: new VersionService()
 };
 
 function convertExpectedToBackendError(status: number): BackendError {
