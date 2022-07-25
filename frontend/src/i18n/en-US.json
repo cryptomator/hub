@@ -85,6 +85,7 @@
   "nav.mobileMenu": "Open main menu",
 
   "settings.title": "Settings",
+  "settings.version.description": "For support always state the displayed Hub and Keycloak version.",
   "settings.general.title": "General",
   "settings.general.language.title": "Language",
   "settings.version.title": "Server Info",

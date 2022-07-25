@@ -37,6 +37,9 @@
             <h3 class="text-lg font-medium leading-6 text-gray-900">
               {{ t('settings.version.title') }}
             </h3>
+            <p class="mt-1 text-sm text-gray-500">
+              {{ t('settings.version.description') }}
+            </p>
           </div>
           <div class="mt-5 md:mt-0 md:col-span-2">
             <div v-if="version == null">
