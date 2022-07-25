@@ -49,12 +49,12 @@
             </div>
             <div v-else class="grid grid-cols-6 gap-6">
               <div class="col-span-6 sm:col-span-3">
-                <label class="block text-sm font-medium text-gray-700">{{ t('settings.version.hub.title') }}</label>
-                {{ version.hubVersion }}
+                <label for="hubVersion" class="block text-sm font-medium text-gray-700">{{ t('settings.version.hub.title') }}</label>
+                <input id="hubVersion" v-model="version.hubVersion" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
               </div>
               <div class="col-span-6 sm:col-span-3">
-                <label class="block text-sm font-medium text-gray-700">{{ t('settings.version.keycloak.title') }}</label>
-                {{ version.keycloakVersion }}
+                <label for="keycloakVersion" class="block text-sm font-medium text-gray-700">{{ t('settings.version.keycloak.title') }}</label>
+                <input id="keycloakVersion" v-model="version.keycloakVersion" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
               </div>
             </div>
           </div>
