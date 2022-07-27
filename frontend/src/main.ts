@@ -5,6 +5,7 @@ import './css/fonts.css';
 import { datetimeFormats, defaultLocale, messages } from './i18n/index';
 import './index.css';
 import router from './router';
+// migrate to // import messages from '@intlify/vite-plugin-vue-i18n/messages'; as soon as it works
 
 const i18n = createI18n({
   locale: defaultLocale,
