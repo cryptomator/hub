@@ -9,12 +9,17 @@
   "common.error.wrongPassword": "Wrong password",
   "common.form.required": "This field is required.",
   "common.loading": "Loading…",
+  "common.manage": "Manage",
   "common.optional": "optional",
   "common.reload": "Please reload the page.",
   "common.remove": "Remove",
   "common.retry": "Retry",
   "common.share": "Share",
   "common.unexpectedError": "Unexpected Error: {0}",
+
+  "authenticateVaultOwnerDialog.title": "Manage Vault",
+  "authenticateVaultOwnerDialog.description": "Type in the master password of the vault to manage it.",
+  "authenticateVaultOwnerDialog.masterPassword": "Master Password",
 
   "billing.title": "Billing",
   "billing.serverInfo.title": "Server Info",
@@ -49,14 +54,15 @@
   "createVault.masterPasswordConfirmation.passwordsDoNotMatch": "Passwords do not match",
   "createVault.submit": "Create Vault",
   "createVault.error.formValidationFailed": "Please check the form and try again.",
-  "createVault.error.vaultAlreadyExists": "A vault with the generated id already exists. Please retry.",
+  "createVault.error.vaultAlreadyExists": "A vault with the given name already exists.",
   "createVault.error.downloadTemplateFailed": "Download of vault template failed: {0}",
   "createVault.success.title": "Vault created",
   "createVault.success.description": "After downloading the zipped vault folder, unpack it to any location shared with your team members.",
   "createVault.success.download": "Download zipped vault folder",
   "createVault.success.return": "Return to vault list",
 
-  "deviceList.notFound": "You have no registered devices.",
+  "deviceList.empty.message": "No devices",
+  "deviceList.empty.description": "To add a device, add a vault from this Hub to the Cryptomator app of the device and unlock it.",
   "deviceList.title": "Devices ({0})",
   "deviceList.deviceName": "Device Name",
   "deviceList.type": "Type",
@@ -64,12 +70,10 @@
   "deviceList.added": "Added",
 
   "downloadVaultTemplateDialog.title": "Download Vault Template",
-  "downloadVaultTemplateDialog.description": "Type in the master password of the vault to download its template again.",
-  "downloadVaultTemplateDialog.masterPassword": "Master Password",
+  "downloadVaultTemplateDialog.description": "Download and unpack the zipped vault template to any location shared with your team members. This is required only once during the initial setup.",
 
   "grantPermissionDialog.title": "Grant Permission",
-  "grantPermissionDialog.description": "Type in the master password of the vault to grant additional devices permission to access it.",
-  "grantPermissionDialog.masterPassword": "Master Password",
+  "grantPermissionDialog.description": "Grant additional devices permission to access the vault.",
   "grantPermissionDialog.submit": "Grant Permission to {0} Device(s)",
 
   "nav.vaults": "Vaults",
@@ -81,8 +85,12 @@
   "nav.mobileMenu": "Open main menu",
 
   "settings.title": "Settings",
+  "settings.version.description": "For support always state the displayed Hub and Keycloak version.",
   "settings.general.title": "General",
   "settings.general.language.title": "Language",
+  "settings.version.title": "Server Info",
+  "settings.version.hub.title": "Hub version",
+  "settings.version.keycloak.title": "Keycloak version",
 
   "vaultDetails.description.header": "Description",
   "vaultDetails.description.empty": "No description provided.",

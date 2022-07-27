@@ -59,7 +59,6 @@ CREATE TABLE "group_details"
 CREATE TABLE "vault"
 (
 	"id"            VARCHAR(255) NOT NULL,
-	"owner_id"      VARCHAR(255) NOT NULL,
 	"name"          VARCHAR(255) NOT NULL,
 	"description"   VARCHAR(255),
 	"creation_time" TIMESTAMP    NOT NULL,
@@ -69,7 +68,6 @@ CREATE TABLE "vault"
 	"auth_pubkey"     VARCHAR(255) NOT NULL,
 	"auth_prvkey"     VARCHAR(500) NOT NULL,
 	CONSTRAINT "VAULT_PK" PRIMARY KEY ("id"),
-	CONSTRAINT "VAULT_FK_OWNER" FOREIGN KEY ("owner_id") REFERENCES "authority" ("id") ON DELETE RESTRICT,
 	CONSTRAINT "VAULT_UNIQUE_NAME" UNIQUE ("name")
 );
 
@@ -96,6 +94,7 @@ CREATE TABLE "device"
 	"owner_id"  VARCHAR(255) NOT NULL,
 	"name"      VARCHAR(255) NOT NULL,
 	"publickey" VARCHAR(255) NOT NULL,
+	"creation_time" TIMESTAMP NOT NULL,
 	CONSTRAINT "DEVICE_PK" PRIMARY KEY ("id"),
 	CONSTRAINT "DEVICE_FK_USER" FOREIGN KEY ("owner_id") REFERENCES "authority" ("id") ON DELETE CASCADE,
 	CONSTRAINT "DEVICE_UNIQUE_NAME_PER_OWNER" UNIQUE ("owner_id", "name")

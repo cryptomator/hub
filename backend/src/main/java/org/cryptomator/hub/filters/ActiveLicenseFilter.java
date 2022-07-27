@@ -1,4 +1,6 @@
-package org.cryptomator.hub.license;
+package org.cryptomator.hub.filters;
+
+import org.cryptomator.hub.license.LicenseHolder;
 
 import javax.inject.Inject;
 import javax.ws.rs.container.ContainerRequestContext;

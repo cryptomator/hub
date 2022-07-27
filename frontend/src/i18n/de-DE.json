@@ -9,6 +9,10 @@
   "common.remove": "Entfernen",
   "common.share": "Teilen",
 
+  "authenticateVaultOwnerDialog.title": "Tresor verwalten",
+  "authenticateVaultOwnerDialog.description": "Gib das Master-Kennwort des Tresors ein, um ihn zu verwalten.",
+  "authenticateVaultOwnerDialog.masterPassword": "Master-Password",
+
   "createVault.title": "Tresor erstellen",
   "createVault.description": "Das Master-Passwort sollte geheim gehalten werden und wird nur für administrative Zwecke benötigt. Bitte achte darauf, dass du dir das Passwort merkst.",
   "createVault.vaultName": "Tresorname",
@@ -29,12 +33,10 @@
   "deviceList.added": "Hinzugefügt",
 
   "downloadVaultTemplateDialog.title": "Tresor-Vorlage herunterladen",
-  "downloadVaultTemplateDialog.description": "Gib das Master-Passwort des Tresors ein, um die Tresorvorlage erneut herunterzuladen.",
-  "downloadVaultTemplateDialog.masterPassword": "Master-Passwort",
+  "downloadVaultTemplateDialog.description": "Laden die gezippte Tresorvorlage herunter und entpacke ihn an einem beliebigen Ort, der für deine Teammitglieder freigegeben ist. Dies ist einmal für die Ersteinrichtung erforderlich.",
 
   "grantPermissionDialog.title": "Berechtigung erteilen",
-  "grantPermissionDialog.description": "Gib das Master-Kennwort des Tresors ein, um weiteren Geräten den Zugriff darauf zu ermöglichen.",
-  "grantPermissionDialog.masterPassword": "Master-Passwort",
+  "grantPermissionDialog.description": "Berechtige weitere Geräten auf den Tresor zuzugreifen.",
   "grantPermissionDialog.submit": "Berechtigung für {0} Gerät(e) gewähren",
 
   "nav.vaults": "Tresore",

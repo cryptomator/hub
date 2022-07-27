@@ -4,18 +4,12 @@
   "displayName": "Cryptomator Hub",
   "enabled": true,
   "sslRequired": "external",
+  "defaultRole": {
+    "name": "user",
+    "description": "User"
+  },
   "roles": {
     "realm": [
-      {
-        "name": "user",
-        "description": "User",
-        "composite": true,
-        "composites": {
-          "realm": [
-            "default-roles-cryptomator"
-          ]
-        }
-      },
       {
         "name": "admin",
         "description": "Administrator",
@@ -23,12 +17,7 @@
         "composites": {
           "realm": [
             "user"
-          ],
-          "client": {
-            "cryptomatorhub": [
-              "vault-owner"
-            ]
-          }
+          ]
         }
       },
       {
@@ -43,15 +32,7 @@
           }
         }
       }
-    ],
-    "client": {
-      "cryptomatorhub": [
-        {
-          "name": "vault-owner",
-          "description": "Vault Owner"
-        }
-      ]
-    }
+    ]
   },
   "users": [
     {
@@ -98,16 +79,6 @@
       ]
     }
   ],
-  "clientScopeMappings": {
-    "account": [
-      {
-        "client": "cryptomatorhub",
-        "roles": [
-          "vault-owner"
-        ]
-      }
-    ]
-  },
   "clients": [
     {
       "clientId": "cryptomatorhub",

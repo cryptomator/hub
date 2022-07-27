@@ -1,4 +1,4 @@
-package org.cryptomator.hub.license;
+package org.cryptomator.hub.filters;
 
 import javax.ws.rs.NameBinding;
 import java.lang.annotation.ElementType;

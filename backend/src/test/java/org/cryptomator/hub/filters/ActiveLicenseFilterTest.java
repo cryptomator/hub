@@ -1,6 +1,7 @@
-package org.cryptomator.hub.license;
+package org.cryptomator.hub.filters;
 
 import io.quarkus.test.junit.QuarkusTest;
+import org.cryptomator.hub.license.LicenseHolder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

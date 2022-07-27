@@ -191,6 +191,6 @@ async function fetchData() {
 function manageSubscription() {
   const returnUrl = `${frontendBaseURL}billing`;
   const languagePathComponent = locale.value == 'en' ? '' : `${locale.value}/`;
-  window.open(`http://localhost:1313/${languagePathComponent}hub/billing/?hub_id=${billing.value?.hubId}&return_url=${encodeURIComponent(returnUrl)}`, '_self'); // TODO: use real url
+  window.open(`https://cryptomator.org/${languagePathComponent}hub/billing/?hub_id=${billing.value?.hubId}&return_url=${encodeURIComponent(returnUrl)}`, '_self');
 }
 </script>
