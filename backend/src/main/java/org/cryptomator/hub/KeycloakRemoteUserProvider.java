@@ -4,17 +4,22 @@ import org.cryptomator.hub.entities.Authority;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
 import org.keycloak.admin.client.Keycloak;
+import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class KeycloakRemoteUserProvider implements RemoteUserProvider {
+
+	private static final int MAX_COUNT_PER_REQUEST = 5_000;
 
 	@Inject
 	SyncerConfig syncerConfig;
@@ -22,7 +27,15 @@ public class KeycloakRemoteUserProvider implements RemoteUserProvider {
 	@Override
 	public List<User> users() {
 		try (Keycloak keycloak = Keycloak.getInstance(syncerConfig.getKeycloakUrl(), syncerConfig.getKeycloakRealm(), syncerConfig.getUsername(), syncerConfig.getPassword(), syncerConfig.getKeycloakClientId())) {
-			return keycloak.realm(syncerConfig.getKeycloakRealm()).users().list().stream().map(this::mapToUser).toList();
+			List<User> users = new ArrayList<>();
+			List<User> currentRequestedUsers;
+
+			do {
+				currentRequestedUsers = keycloak.realm(syncerConfig.getKeycloakRealm()).users().list(users.size(), MAX_COUNT_PER_REQUEST).stream().map(this::mapToUser).toList();
+				users.addAll(currentRequestedUsers);
+			} while (currentRequestedUsers.size() == MAX_COUNT_PER_REQUEST);
+
+			return users;
 		}
 	}
 
@@ -53,9 +66,9 @@ public class KeycloakRemoteUserProvider implements RemoteUserProvider {
 	@Override
 	public List<Group> groups() {
 		try (Keycloak keycloak = Keycloak.getInstance(syncerConfig.getKeycloakUrl(), syncerConfig.getKeycloakRealm(), syncerConfig.getUsername(), syncerConfig.getPassword(), syncerConfig.getKeycloakClientId())) {
-			return keycloak.realm(syncerConfig.getKeycloakRealm()).groups().groups().stream().map(group -> {
+			return deepCollectGroups(keycloak).stream().map(group -> {
 				// TODO add sub groups and the members of the sub group to it too using `group.getSubGroups()` recursively
-				var members  = keycloak.realm(syncerConfig.getKeycloakRealm()).groups().group(group.getId()).members().stream().<Authority>map(this::mapToUser).collect(Collectors.toSet());
+				var members = deepCollectMembers(keycloak, group.getId());
 				var groupEntity = new Group();
 				groupEntity.id = group.getId();
 				groupEntity.name = group.getName();
@@ -65,10 +78,38 @@ public class KeycloakRemoteUserProvider implements RemoteUserProvider {
 		}
 	}
 
+	private List<GroupRepresentation> deepCollectGroups(Keycloak keycloak) {
+		var group = keycloak.realm(syncerConfig.getKeycloakRealm()).groups();
+
+		List<GroupRepresentation> groups = new ArrayList<>();
+		List<GroupRepresentation> currentRequestedGroups;
+
+		do {
+			currentRequestedGroups = group.groups(groups.size(), MAX_COUNT_PER_REQUEST);
+			groups.addAll(currentRequestedGroups);
+		} while (currentRequestedGroups.size() == MAX_COUNT_PER_REQUEST);
+
+		return groups;
+	}
+
+	private Set<Authority> deepCollectMembers(Keycloak keycloak, String groupId) {
+		var group = keycloak.realm(syncerConfig.getKeycloakRealm()).groups().group(groupId);
+
+		List<UserRepresentation> members = new ArrayList<>();
+		List<UserRepresentation> currentRequestedMemebers;
+
+		do {
+			currentRequestedMemebers = group.members(members.size(), MAX_COUNT_PER_REQUEST);
+			members.addAll(currentRequestedMemebers);
+		} while (currentRequestedMemebers.size() == MAX_COUNT_PER_REQUEST);
+
+		return members.stream().map(this::mapToUser).collect(Collectors.toSet());
+	}
+
 	@Override
 	public List<Group> searchGroup(String groupname) {
 		try (Keycloak keycloak = Keycloak.getInstance(syncerConfig.getKeycloakUrl(), syncerConfig.getKeycloakRealm(), syncerConfig.getUsername(), syncerConfig.getPassword(), syncerConfig.getKeycloakClientId())) {
-			return keycloak.realm(syncerConfig.getKeycloakRealm()).groups().groups().stream().map(group -> {
+			return deepCollectGroups(keycloak).stream().map(group -> {
 				var groupEntity = new Group();
 				groupEntity.id = group.getId();
 				groupEntity.name = group.getName();
