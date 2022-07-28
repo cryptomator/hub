@@ -8,6 +8,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.transaction.Transactional;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -19,11 +20,15 @@ public class RemoteUserPuller {
 	RemoteUserProvider remoteUserProvider;
 
 	@Scheduled(every = "{hub.keycloak.syncer-period}")
-	@Transactional
 	void sync() {
 		var keycloakGroups = remoteUserProvider.groups().stream().collect(Collectors.toMap(g -> g.id, Function.identity()));
-		var databaseGroups = Group.<Group>findAll().stream().collect(Collectors.toMap(g -> g.id, Function.identity()));
 		var keycloakUsers = remoteUserProvider.users().stream().collect(Collectors.toMap(u -> u.id, Function.identity()));
+		sync(keycloakGroups, keycloakUsers);
+	}
+
+	@Transactional
+	void sync(Map<String, Group> keycloakGroups, Map<String, User> keycloakUsers) {
+		var databaseGroups = Group.<Group>findAll().stream().collect(Collectors.toMap(g -> g.id, Function.identity()));
 		var databaseUsers = User.<User>findAll().stream().collect(Collectors.toMap(u -> u.id, Function.identity()));
 
 		var addedUsers = diff(keycloakUsers.keySet(), databaseUsers.keySet());
