@@ -10,7 +10,7 @@ import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.filters.ActiveLicense;
-import org.cryptomator.hub.filters.VaultOwnerOnlyFilter;
+import org.cryptomator.hub.filters.VaultAdminOnlyFilter;
 import org.cryptomator.hub.license.LicenseHolder;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
@@ -63,7 +63,7 @@ public class VaultResource {
 	@GET
 	@Path("/{vaultId}/members")
 	@RolesAllowed("user")
-	@VaultOwnerOnlyFilter
+	@VaultAdminOnlyFilter
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "list vault members", description = "list all users that this vault has been shared with")
@@ -87,7 +87,7 @@ public class VaultResource {
 	@PUT
 	@Path("/{vaultId}/users/{userId}")
 	@RolesAllowed("user")
-	@VaultOwnerOnlyFilter
+	@VaultAdminOnlyFilter
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "adds a member to this vault")
@@ -120,7 +120,7 @@ public class VaultResource {
 	@PUT
 	@Path("/{vaultId}/groups/{groupId}")
 	@RolesAllowed("user")
-	@VaultOwnerOnlyFilter
+	@VaultAdminOnlyFilter
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "adds a group to this vault")
@@ -150,7 +150,7 @@ public class VaultResource {
 	@DELETE
 	@Path("/{vaultId}/users/{userId}")
 	@RolesAllowed("user")
-	@VaultOwnerOnlyFilter
+	@VaultAdminOnlyFilter
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "remove a member from this vault", description = "revokes the given user's access rights from this vault. If the given user is no member, the request is a no-op.")
@@ -165,7 +165,7 @@ public class VaultResource {
 	@DELETE
 	@Path("/{vaultId}/groups/{groupId}")
 	@RolesAllowed("user")
-	@VaultOwnerOnlyFilter
+	@VaultAdminOnlyFilter
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "remove a group from this vault", description = "revokes the given group's access rights from this vault. If the given group is no member, the request is a no-op.")
@@ -187,7 +187,7 @@ public class VaultResource {
 	@GET
 	@Path("/{vaultId}/devices-requiring-access-grant")
 	@RolesAllowed("user")
-	@VaultOwnerOnlyFilter
+	@VaultAdminOnlyFilter
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "list devices requiring access rights", description = "lists all devices owned by vault members, that don't have a device-specific masterkey yet")
@@ -228,7 +228,7 @@ public class VaultResource {
 	@PUT
 	@Path("/{vaultId}/keys/{deviceId}")
 	@RolesAllowed("user")
-	@VaultOwnerOnlyFilter
+	@VaultAdminOnlyFilter
 	@Transactional
 	@Consumes(MediaType.TEXT_PLAIN)
 	@Operation(summary = "adds a device-specific masterkey")
@@ -268,7 +268,7 @@ public class VaultResource {
 	public VaultDto get(@PathParam("vaultId") String vaultId) {
 		Vault vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		if (vault.effectiveMembers.stream().noneMatch(u -> u.id.equals(jwt.getSubject()))) {
-			throw new ForbiddenException("Requesting user is neither member nor owner of the vault");
+			throw new ForbiddenException("Requesting user is not a member of the vault");
 		}
 		return VaultDto.fromEntity(vault);
 	}

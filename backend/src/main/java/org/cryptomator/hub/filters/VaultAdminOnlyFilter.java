@@ -9,5 +9,5 @@ import java.lang.annotation.Target;
 @NameBinding
 @Target({ElementType.TYPE, ElementType.METHOD})
 @Retention(value = RetentionPolicy.RUNTIME)
-public @interface VaultOwnerOnlyFilter {
+public @interface VaultAdminOnlyFilter {
 }
