@@ -4,7 +4,7 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.cryptomator.hub.entities.Billing;
+import org.cryptomator.hub.entities.Settings;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.license.LicenseHolder;
 import org.eclipse.microprofile.openapi.annotations.Operation;
@@ -42,7 +42,7 @@ public class BillingResource {
 		return Optional.ofNullable(licenseHolder.get())
 				.map(BillingDto::fromDecodedJwt)
 				.orElseGet(() -> {
-					var hubId = Billing.<Billing>findAll().firstResult().hubId;
+					var hubId = Settings.get().hubId;
 					return BillingDto.create(hubId);
 				});
 	}
