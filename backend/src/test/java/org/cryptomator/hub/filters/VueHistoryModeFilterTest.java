@@ -1,4 +1,4 @@
-package org.cryptomator.hub;
+package org.cryptomator.hub.filters;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

@@ -1,4 +1,4 @@
-package org.cryptomator.hub;
+package org.cryptomator.hub.filters;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
