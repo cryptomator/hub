@@ -29,14 +29,14 @@ public class LicenseHolder {
 	 */
 	@PostConstruct
 	void init() {
-		var billingEntry = Settings.<Settings>findAll().firstResult();
-		if (billingEntry.licenseKey != null) {
+		var settings = Settings.get();
+		if (settings.licenseKey != null) {
 			try {
-				this.license = licenseValidator.validate(billingEntry.licenseKey, billingEntry.hubId);
+				this.license = licenseValidator.validate(settings.licenseKey, settings.hubId);
 			} catch (JWTVerificationException e) {
 				LOG.warn("License in database is invalid. Deleting entry. Please add the license over the REST API again.");
-				billingEntry.licenseKey = null;
-				billingEntry.persist();
+				settings.licenseKey = null;
+				settings.persist();
 			}
 		}
 	}

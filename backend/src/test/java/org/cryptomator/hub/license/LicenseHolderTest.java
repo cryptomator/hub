@@ -33,6 +33,8 @@ public class LicenseHolderTest {
 
 		LicenseValidator validator;
 
+		MockedStatic<Settings> settingsClass;
+
 		@BeforeEach
 		public void setup() {
 			Query mockQuery = Mockito.mock(Query.class);
@@ -40,8 +42,14 @@ public class LicenseHolderTest {
 			Mockito.when(session.createQuery(Mockito.anyString())).thenReturn(mockQuery);
 			Mockito.when(mockQuery.getSingleResult()).thenReturn(0l);
 
-			this.validator = Mockito.mock(LicenseValidator.class);
+			validator = Mockito.mock(LicenseValidator.class);
+			settingsClass = Mockito.mockStatic(Settings.class);
 			holder = new LicenseHolder(validator);
+		}
+
+		@AfterEach
+		public void teardown() {
+			settingsClass.close();
 		}
 
 		@Test
@@ -52,10 +60,7 @@ public class LicenseHolderTest {
 			Settings settingsMock = new Settings();
 			settingsMock.licenseKey = "token";
 			settingsMock.hubId = "42";
-			PanacheQuery<Settings> query = Mockito.mock(PanacheQuery.class);
-			Mockito.when(query.firstResult()).thenReturn(settingsMock);
-			PanacheMock.mock(Settings.class);
-			Mockito.when(Settings.<Settings>findAll()).thenReturn(query);
+			settingsClass.when(Settings::get).thenReturn(settingsMock);
 
 			holder.init();
 
@@ -70,10 +75,7 @@ public class LicenseHolderTest {
 			Settings settingsMock = new Settings();
 			settingsMock.licenseKey = "token";
 			settingsMock.hubId = "42";
-			PanacheQuery<Settings> query = Mockito.mock(PanacheQuery.class);
-			Mockito.when(query.firstResult()).thenReturn(settingsMock);
-			PanacheMock.mock(Settings.class);
-			Mockito.when(Settings.<Settings>findAll()).thenReturn(query);
+			settingsClass.when(Settings::get).thenReturn(settingsMock);
 
 			holder.init();
 
@@ -86,10 +88,7 @@ public class LicenseHolderTest {
 		@DisplayName("If database token is null, do net set it in license holder")
 		public void testNullDBTokenNotSet() {
 			Settings settingsEntity = Mockito.mock(Settings.class);
-			PanacheQuery<Settings> query = Mockito.mock(PanacheQuery.class);
-			Mockito.when(query.firstResult()).thenReturn(settingsEntity);
-			PanacheMock.mock(Settings.class);
-			Mockito.when(Settings.<Settings>findAll()).thenReturn(query);
+			settingsClass.when(Settings::get).thenReturn(settingsEntity);
 			holder.init();
 
 			Mockito.verify(validator, Mockito.never()).validate(Mockito.anyString(), Mockito.anyString());
@@ -117,9 +116,9 @@ public class LicenseHolderTest {
 			Mockito.when(session.createQuery(Mockito.anyString())).thenReturn(mockQuery);
 			Mockito.when(mockQuery.getSingleResult()).thenReturn(0l);
 
-			this.validator = Mockito.mock(LicenseValidator.class);
-			holder = new LicenseHolder(validator);
+			validator = Mockito.mock(LicenseValidator.class);
 			settingsClass = Mockito.mockStatic(Settings.class);
+			holder = new LicenseHolder(validator);
 		}
 
 		@AfterEach
@@ -134,7 +133,7 @@ public class LicenseHolderTest {
 			Mockito.when(validator.validate("token", "42")).thenReturn(decodedJWT);
 			Settings settingsMock = new Settings();
 			settingsMock.hubId = "42";
-			settingsClass.when(() -> Settings.get()).thenReturn(settingsMock);
+			settingsClass.when(Settings::get).thenReturn(settingsMock);
 
 			holder.set("token");
 
@@ -150,7 +149,7 @@ public class LicenseHolderTest {
 			Mockito.when(validator.validate("token", "42")).thenThrow(JWTVerificationException.class);
 			Settings settingsMock = new Settings();
 			settingsMock.hubId = "42";
-			settingsClass.when(() -> Settings.get()).thenReturn(settingsMock);
+			settingsClass.when(Settings::get).thenReturn(settingsMock);
 
 			Assertions.assertThrows(JWTVerificationException.class, () -> holder.set("token"));
 
