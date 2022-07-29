@@ -14,7 +14,7 @@
         <p v-if="vault != null && vault.description.length > 0" class="text-sm text-gray-500">{{ vault.description }}</p>
         <p v-else class="text-sm text-gray-500 italic">{{ t('vaultDetails.description.empty') }}</p>
         <!-- TODO: add rest API to change vault metadata in backend
-        <button v-if="isAdmin" type="button" class="-mr-2 h-8 w-8 bg-white rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary">
+        <button v-if="isVaultAdmin" type="button" class="-mr-2 h-8 w-8 bg-white rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary">
           <PencilIcon class="h-5 w-5" aria-hidden="true" />
           <span class="sr-only">Add description</span>
         </button>
@@ -32,7 +32,7 @@
       </dl>
     </div>
 
-    <div v-if="isAdmin">
+    <div v-if="isVaultAdmin">
       <div>
         <h3 class="font-medium text-gray-900">{{ t('vaultDetails.sharedWith.title') }}</h3>
         <ul role="list" class="mt-2 border-t border-b border-gray-200 divide-y divide-gray-200">
@@ -85,7 +85,7 @@
 
     <AuthenticateVaultAdminDialog v-if="authenticatingVaultAdmin && vault!=null" ref="authenticateVaultAdminDialog" :vault="vault" @action="vaultAdminAuthenticated" @close="authenticatingVaultAdmin = false" />
 
-    <div v-if="!isAdmin">
+    <div v-if="!isVaultAdmin">
       <button type="button" class="flex-1 bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showManageVaultDialog()">
         {{ 'Manage vault' }}
       </button>
@@ -118,7 +118,7 @@ const allowRetryFetch = computed(() => onFetchError.value != null && !(onFetchEr
 const onRevokeUserAccessError = ref< {[id: string]: Error} >({});
 const onAddUserError = ref<Error | null>();
 
-const isAdmin = ref(false);
+const isVaultAdmin = ref(false);
 const addingUser = ref(false);
 const grantingPermission = ref(false);
 const grantPermissionDialog = ref<typeof GrantPermissionDialog>();
@@ -150,7 +150,7 @@ async function fetchData() {
 }
 
 async function vaultAdminAuthenticated(keys: VaultKeys) {
-  isAdmin.value = true;
+  isVaultAdmin.value = true;
   vaultKeys.value = keys;
   try {
     (await backend.vaults.getMembers(props.vaultId, vaultKeys.value)).forEach(member => members.value.set(member.id,member));
@@ -175,7 +175,7 @@ async function addAuthority(authority: unknown) {
   }
 
   try {
-    if (isAdmin.value && vaultKeys.value) {
+    if (isVaultAdmin.value && vaultKeys.value) {
       await addAuthorityBackend(authority);
       members.value.set(authority.id, authority);
       devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId, vaultKeys.value);
@@ -237,7 +237,7 @@ async function searchAuthority(query: string): Promise<AuthorityDto[]> {
 async function revokeUserAccess(userId: string) {
   delete onRevokeUserAccessError.value[userId];
   try {
-    if (isAdmin.value && vaultKeys.value) {
+    if (isVaultAdmin.value && vaultKeys.value) {
       await backend.vaults.revokeUserAccess(props.vaultId, userId, vaultKeys.value);
       members.value.delete(userId);
       devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId, vaultKeys.value);
