@@ -37,16 +37,16 @@ INSERT INTO "vault_access" ("vault_id", "authority_id")
 VALUES
 	('vault1', 'user1'),
 	('vault1', 'user2'),
-	('vault2', 'group1'); --user1, part of group1, has access to vault2
+	('vault2', 'group1'); /* user1, part of group1, has access to vault2 */
 
 INSERT INTO "device" ("id", "owner_id", "name", "publickey", "creation_time")
 VALUES
-	('device1', 'user1', 'Computer 1', 'publickey1', '2020-02-20 20:20:20',),
-	('device2', 'user2', 'Computer 2', 'publickey2', '2020-02-20 20:20:20',),
-	('device3', 'user1', 'Computer 3', 'publickey3', '2020-02-20 20:20:20',); --user1 is part of group1
+	('device1', 'user1', 'Computer 1', 'publickey1', '2020-02-20 20:20:20'),
+	('device2', 'user2', 'Computer 2', 'publickey2', '2020-02-20 20:20:20'),
+	('device3', 'user1', 'Computer 3', 'publickey3', '2020-02-20 20:20:20'); /* user1 is part of group1 */
 
 INSERT INTO "access_token" ("device_id", "vault_id", "jwe")
 VALUES
 	('device1', 'vault1', 'jwe1'),
 	('device2', 'vault1', 'jwe2'),
-	('device3', 'vault2', 'jwe3'); --device3 of user1, part of group1, has access to vault2
+	('device3', 'vault2', 'jwe3'); -- device3 of user1, part of group1, has access to vault2

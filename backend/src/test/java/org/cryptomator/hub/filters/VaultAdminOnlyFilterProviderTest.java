@@ -132,7 +132,7 @@ class VaultAdminOnlyFilterProviderTest {
 		try (var s = dataSource.getConnection().createStatement()) {
 			s.execute("""
 					INSERT INTO "vault" ("id", "name", "description", "creation_time", "salt", "iterations", "masterkey", "auth_pubkey", "auth_prvkey") 
-					VALUES ('vault3000', 'Vault 1000', 'This is a testvault.', '2020-02-20 20:20:20', 'salt3000', 'iterations3000', 'masterkey3000', 'pubkey', 'prvkey'),
+					VALUES ('vault3000', 'Vault 1000', 'This is a testvault.', '2020-02-20 20:20:20', 'salt3000', 'iterations3000', 'masterkey3000', 'pubkey', 'prvkey')
 					""");
 
 			Assertions.assertThrows(VaultAdminValidationFailedException.class, () -> vaultAdminOnlyFilterProvider.filter(context));
