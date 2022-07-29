@@ -14,7 +14,7 @@
         <p v-if="vault != null && vault.description.length > 0" class="text-sm text-gray-500">{{ vault.description }}</p>
         <p v-else class="text-sm text-gray-500 italic">{{ t('vaultDetails.description.empty') }}</p>
         <!-- TODO: add rest API to change vault metadata in backend
-        <button v-if="isOwner" type="button" class="-mr-2 h-8 w-8 bg-white rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary">
+        <button v-if="isAdmin" type="button" class="-mr-2 h-8 w-8 bg-white rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary">
           <PencilIcon class="h-5 w-5" aria-hidden="true" />
           <span class="sr-only">Add description</span>
         </button>
@@ -32,7 +32,7 @@
       </dl>
     </div>
 
-    <div v-if="isOwner">
+    <div v-if="isAdmin">
       <div>
         <h3 class="font-medium text-gray-900">{{ t('vaultDetails.sharedWith.title') }}</h3>
         <ul role="list" class="mt-2 border-t border-b border-gray-200 divide-y divide-gray-200">
@@ -83,9 +83,9 @@
       <DownloadVaultTemplateDialog v-if="downloadingVaultTemplate && vault!=null" ref="downloadVaultTemplateDialog" :vault="vault" :vault-keys="vaultKeys" @close="downloadingVaultTemplate = false" />
     </div>
 
-    <AuthenticateVaultOwnerDialog v-if="authenticatingVaultOwner && vault!=null" ref="authenticateVaultOwnerDialog" :vault="vault" @action="vaultOwnerAuthenticated" @close="authenticatingVaultOwner = false" />
+    <AuthenticateVaultAdminDialog v-if="authenticatingVaultAdmin && vault!=null" ref="authenticateVaultAdminDialog" :vault="vault" @action="vaultAdminAuthenticated" @close="authenticatingVaultAdmin = false" />
 
-    <div v-if="!isOwner">
+    <div v-if="!isAdmin">
       <button type="button" class="flex-1 bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showManageVaultDialog()">
         {{ 'Manage vault' }}
       </button>
@@ -99,7 +99,7 @@ import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { AuthorityDto, ConflictError, DeviceDto, NotFoundError, UserDto, VaultDto } from '../common/backend';
 import { VaultKeys } from '../common/crypto';
-import AuthenticateVaultOwnerDialog from './AuthenticateVaultOwnerDialog.vue';
+import AuthenticateVaultAdminDialog from './AuthenticateVaultAdminDialog.vue';
 import DownloadVaultTemplateDialog from './DownloadVaultTemplateDialog.vue';
 import FetchError from './FetchError.vue';
 import GrantPermissionDialog from './GrantPermissionDialog.vue';
@@ -118,7 +118,7 @@ const allowRetryFetch = computed(() => onFetchError.value != null && !(onFetchEr
 const onRevokeUserAccessError = ref< {[id: string]: Error} >({});
 const onAddUserError = ref<Error | null>();
 
-const isOwner = ref(false);
+const isAdmin = ref(false);
 const addingUser = ref(false);
 const grantingPermission = ref(false);
 const grantPermissionDialog = ref<typeof GrantPermissionDialog>();
@@ -127,8 +127,8 @@ const downloadVaultTemplateDialog = ref<typeof DownloadVaultTemplateDialog>();
 const vault = ref<VaultDto>();
 const members = ref<Map<string, AuthorityDto>>(new Map());
 const devicesRequiringAccessGrant = ref<DeviceDto[]>([]);
-const authenticateVaultOwnerDialog = ref<typeof AuthenticateVaultOwnerDialog>();
-const authenticatingVaultOwner = ref(false);
+const authenticateVaultAdminDialog = ref<typeof AuthenticateVaultAdminDialog>();
+const authenticatingVaultAdmin = ref(false);
 const vaultKeys = ref<VaultKeys>();
 const me = ref<UserDto>();
 
@@ -149,8 +149,8 @@ async function fetchData() {
   isFetching.value = false;
 }
 
-async function vaultOwnerAuthenticated(keys: VaultKeys) {
-  isOwner.value = true;
+async function vaultAdminAuthenticated(keys: VaultKeys) {
+  isAdmin.value = true;
   vaultKeys.value = keys;
   try {
     (await backend.vaults.getMembers(props.vaultId, vaultKeys.value)).forEach(member => members.value.set(member.id,member));
@@ -175,7 +175,7 @@ async function addAuthority(authority: unknown) {
   }
 
   try {
-    if (isOwner.value && vaultKeys.value) {
+    if (isAdmin.value && vaultKeys.value) {
       await addAuthorityBackend(authority);
       members.value.set(authority.id, authority);
       devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId, vaultKeys.value);
@@ -209,8 +209,8 @@ async function addAuthorityBackend(authority: AuthorityDto) {
 }
 
 async function showManageVaultDialog() {
-  authenticatingVaultOwner.value = true;
-  nextTick(() => authenticateVaultOwnerDialog.value?.show());
+  authenticatingVaultAdmin.value = true;
+  nextTick(() => authenticateVaultAdminDialog.value?.show());
 }
 
 function showGrantPermissionDialog() {
@@ -237,7 +237,7 @@ async function searchAuthority(query: string): Promise<AuthorityDto[]> {
 async function revokeUserAccess(userId: string) {
   delete onRevokeUserAccessError.value[userId];
   try {
-    if (isOwner.value && vaultKeys.value) {
+    if (isAdmin.value && vaultKeys.value) {
       await backend.vaults.revokeUserAccess(props.vaultId, userId, vaultKeys.value);
       members.value.delete(userId);
       devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId, vaultKeys.value);

@@ -18,7 +18,7 @@ import java.sql.SQLException;
 
 @QuarkusTest
 @FlywayTest(value = @DataSource(url = "jdbc:h2:mem:test"), additionalLocations = {"classpath:org/cryptomator/hub/flyway"})
-class VaultOwnerOnlyFilterProviderTest {
+class VaultAdminOnlyFilterProviderTest {
 
 	private static final String VALID_TOKEN_VAULT_2 = "eyJhbGciOiJFUzM4NCIsInR5cCI6IkpXVCIsInZhdWx0SWQiOiJ2YXVsdDIifQ.e30.wGUvw1owDrVXlha056Hb1CRO6IQU8x4aadk5IGlaB12iFXZaypDATCCWGgEV3s2Q9qSVrY9A7M-g0a4FBK4DJ06u8t02Igj8Bh1Ba3jOOdAuiGslttSAcfMqImcjkRZL";
 	private static final String VALID_TOKEN_VAULT_3000 = "eyJhbGciOiJFUzM4NCIsInR5cCI6IkpXVCIsInZhdWx0SWQiOiJ2YXVsdDMwMDAifQ.eyJpYXQiOjE1MTYyMzkwMjIsImV4cCI6MTUxNjIzOTAyMn0.ByF9Y3A2w7lRWCEGH4C0tTxME1HM5941BF_IKsd-pY_FF1AYliEFcRMPp6yZSpPXs7T_hrKWViXKQbTyhyEZuQPG1YOy4KUYZEpl0POlWT8iruWTmIdJ_LB0As8d2HJM";
@@ -28,7 +28,7 @@ class VaultOwnerOnlyFilterProviderTest {
 	private static final String TOKEN_WITH_INVALID_VAULT_ID = "eyJhbGciOiJFUzM4NCIsInR5cCI6IkpXVCIsInZhdWx0SWQiOjI1fQ.e30.YxqmX5xeOviP9WldQV870zhPEF4PRaZrW0TaoWzm4lvkEmacIUt3OIoH0grAeh_gtJNRg4WfnqFNTgUx40-yDOtBLzyoeubfrMgb0-agN1898Mbr4ZhD1xqor0lBDrmc";
 	private static final String MALFORMED_TOKEN = "hello world";
 
-	private VaultOwnerOnlyFilterProvider vaultOwnerOnlyFilterProvider;
+	private VaultAdminOnlyFilterProvider vaultAdminOnlyFilterProvider;
 	private ContainerRequestContext context;
 	private UriInfo uriInfo;
 
@@ -37,7 +37,7 @@ class VaultOwnerOnlyFilterProviderTest {
 
 	@BeforeEach
 	void setUp() {
-		vaultOwnerOnlyFilterProvider = new VaultOwnerOnlyFilterProvider();
+		vaultAdminOnlyFilterProvider = new VaultAdminOnlyFilterProvider();
 		context = Mockito.mock(ContainerRequestContext.class);
 		uriInfo = Mockito.mock(UriInfo.class);
 	}
@@ -46,86 +46,86 @@ class VaultOwnerOnlyFilterProviderTest {
 	@DisplayName("validate valid Client-JWT header")
 	public void testValidClientJWTHeader() {
 		var pathParams = new MultivaluedHashMap<String, String>();
-		pathParams.add(VaultOwnerOnlyFilterProvider.VAULT_ID, "vault2");
+		pathParams.add(VaultAdminOnlyFilterProvider.VAULT_ID, "vault2");
 
-		Mockito.when(context.getHeaderString(VaultOwnerOnlyFilterProvider.CLIENT_JWT)).thenReturn(VALID_TOKEN_VAULT_2);
+		Mockito.when(context.getHeaderString(VaultAdminOnlyFilterProvider.CLIENT_JWT)).thenReturn(VALID_TOKEN_VAULT_2);
 		Mockito.when(context.getUriInfo()).thenReturn(uriInfo);
 		Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
 
-		vaultOwnerOnlyFilterProvider.filter(context);
+		vaultAdminOnlyFilterProvider.filter(context);
 	}
 
 	@Test
 	@DisplayName("validate no Client-JWT header provided")
 	public void testNoClientJWTHeader() {
 		var pathParams = new MultivaluedHashMap<String, String>();
-		pathParams.add(VaultOwnerOnlyFilterProvider.VAULT_ID, "vault2");
+		pathParams.add(VaultAdminOnlyFilterProvider.VAULT_ID, "vault2");
 
 		Mockito.when(context.getUriInfo()).thenReturn(uriInfo);
 		Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
 
-		Assertions.assertThrows(VaultOwnerNotProvidedException.class, () -> vaultOwnerOnlyFilterProvider.filter(context));
+		Assertions.assertThrows(VaultAdminNotProvidedException.class, () -> vaultAdminOnlyFilterProvider.filter(context));
 	}
 
 	@Test
 	@DisplayName("validate other path-param provided")
 	public void testOtherPathParamProvided() {
 		var pathParams = new MultivaluedHashMap<String, String>();
-		pathParams.add(VaultOwnerOnlyFilterProvider.VAULT_ID, "vault3000");
+		pathParams.add(VaultAdminOnlyFilterProvider.VAULT_ID, "vault3000");
 
-		Mockito.when(context.getHeaderString(VaultOwnerOnlyFilterProvider.CLIENT_JWT)).thenReturn(VALID_TOKEN_VAULT_2);
+		Mockito.when(context.getHeaderString(VaultAdminOnlyFilterProvider.CLIENT_JWT)).thenReturn(VALID_TOKEN_VAULT_2);
 		Mockito.when(context.getUriInfo()).thenReturn(uriInfo);
 		Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
 
-		Assertions.assertThrows(VaultOwnerValidationFailedException.class, () -> vaultOwnerOnlyFilterProvider.filter(context));
+		Assertions.assertThrows(VaultAdminValidationFailedException.class, () -> vaultAdminOnlyFilterProvider.filter(context));
 	}
 
 	@Test
 	@DisplayName("validate expired Client-JWT header")
 	public void testExpiredClientJWTHeader() {
 		var pathParams = new MultivaluedHashMap<String, String>();
-		pathParams.add(VaultOwnerOnlyFilterProvider.VAULT_ID, "vault2");
+		pathParams.add(VaultAdminOnlyFilterProvider.VAULT_ID, "vault2");
 
-		Mockito.when(context.getHeaderString(VaultOwnerOnlyFilterProvider.CLIENT_JWT)).thenReturn(EXPIRED_TOKEN);
+		Mockito.when(context.getHeaderString(VaultAdminOnlyFilterProvider.CLIENT_JWT)).thenReturn(EXPIRED_TOKEN);
 		Mockito.when(context.getUriInfo()).thenReturn(uriInfo);
 		Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
 
-		Assertions.assertThrows(VaultOwnerTokenExpiredException.class, () -> vaultOwnerOnlyFilterProvider.filter(context));
+		Assertions.assertThrows(VaultAdminTokenExpiredException.class, () -> vaultAdminOnlyFilterProvider.filter(context));
 	}
 
 	@Test
 	@DisplayName("validate Client-JWT header signed by other key")
 	public void testOtherKeyClientJWTHeader() {
 		var pathParams = new MultivaluedHashMap<String, String>();
-		pathParams.add(VaultOwnerOnlyFilterProvider.VAULT_ID, "vault2");
+		pathParams.add(VaultAdminOnlyFilterProvider.VAULT_ID, "vault2");
 
-		Mockito.when(context.getHeaderString(VaultOwnerOnlyFilterProvider.CLIENT_JWT)).thenReturn(TOKEN_WITH_INVALID_SIGNATURE);
+		Mockito.when(context.getHeaderString(VaultAdminOnlyFilterProvider.CLIENT_JWT)).thenReturn(TOKEN_WITH_INVALID_SIGNATURE);
 		Mockito.when(context.getUriInfo()).thenReturn(uriInfo);
 		Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
 
-		Assertions.assertThrows(VaultOwnerValidationFailedException.class, () -> vaultOwnerOnlyFilterProvider.filter(context));
+		Assertions.assertThrows(VaultAdminValidationFailedException.class, () -> vaultAdminOnlyFilterProvider.filter(context));
 	}
 
 	@Test
 	@DisplayName("validate malformed Client-JWT header")
 	public void testMalformedClientJWTHeader() {
 		var pathParams = new MultivaluedHashMap<String, String>();
-		pathParams.add(VaultOwnerOnlyFilterProvider.VAULT_ID, "vault2");
+		pathParams.add(VaultAdminOnlyFilterProvider.VAULT_ID, "vault2");
 
-		Mockito.when(context.getHeaderString(VaultOwnerOnlyFilterProvider.CLIENT_JWT)).thenReturn(MALFORMED_TOKEN);
+		Mockito.when(context.getHeaderString(VaultAdminOnlyFilterProvider.CLIENT_JWT)).thenReturn(MALFORMED_TOKEN);
 		Mockito.when(context.getUriInfo()).thenReturn(uriInfo);
 		Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
 
-		Assertions.assertThrows(VaultOwnerValidationFailedException.class, () -> vaultOwnerOnlyFilterProvider.filter(context));
+		Assertions.assertThrows(VaultAdminValidationFailedException.class, () -> vaultAdminOnlyFilterProvider.filter(context));
 	}
 
 	@Test
 	@DisplayName("validate malformed key in database")
 	public void testMalformedKeyInDatabase() throws SQLException {
 		var pathParams = new MultivaluedHashMap<String, String>();
-		pathParams.add(VaultOwnerOnlyFilterProvider.VAULT_ID, "vault3000");
+		pathParams.add(VaultAdminOnlyFilterProvider.VAULT_ID, "vault3000");
 
-		Mockito.when(context.getHeaderString(VaultOwnerOnlyFilterProvider.CLIENT_JWT)).thenReturn(VALID_TOKEN_VAULT_3000);
+		Mockito.when(context.getHeaderString(VaultAdminOnlyFilterProvider.CLIENT_JWT)).thenReturn(VALID_TOKEN_VAULT_3000);
 		Mockito.when(context.getUriInfo()).thenReturn(uriInfo);
 		Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
 
@@ -135,7 +135,7 @@ class VaultOwnerOnlyFilterProviderTest {
 					VALUES ('vault3000', 'Vault 1000', 'This is a testvault.', '2020-02-20 20:20:20', 'salt3000', 'iterations3000', 'masterkey3000', 'pubkey', 'prvkey'),
 					""");
 
-			Assertions.assertThrows(VaultOwnerValidationFailedException.class, () -> vaultOwnerOnlyFilterProvider.filter(context));
+			Assertions.assertThrows(VaultAdminValidationFailedException.class, () -> vaultAdminOnlyFilterProvider.filter(context));
 		}
 	}
 
@@ -143,12 +143,12 @@ class VaultOwnerOnlyFilterProviderTest {
 	@DisplayName("validate valid vaultId in query")
 	public void testGetValidVaultIdQueryParameter() {
 		var pathParams = new MultivaluedHashMap<String, String>();
-		pathParams.add(VaultOwnerOnlyFilterProvider.VAULT_ID, "vault2");
+		pathParams.add(VaultAdminOnlyFilterProvider.VAULT_ID, "vault2");
 
 		Mockito.when(context.getUriInfo()).thenReturn(uriInfo);
 		Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
 
-		String result = vaultOwnerOnlyFilterProvider.getVaultIdQueryParameter(context);
+		String result = vaultAdminOnlyFilterProvider.getVaultIdQueryParameter(context);
 		Assertions.assertEquals("vault2", result);
 	}
 
@@ -160,60 +160,60 @@ class VaultOwnerOnlyFilterProviderTest {
 		Mockito.when(context.getUriInfo()).thenReturn(uriInfo);
 		Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
 
-		Assertions.assertThrows(VaultOwnerValidationFailedException.class, () -> vaultOwnerOnlyFilterProvider.getVaultIdQueryParameter(context));
+		Assertions.assertThrows(VaultAdminValidationFailedException.class, () -> vaultAdminOnlyFilterProvider.getVaultIdQueryParameter(context));
 	}
 
 	@Test
 	@DisplayName("validate multiple vaultId in query")
 	public void testMultipleVaultIdQueryParameter() {
 		var pathParams = new MultivaluedHashMap<String, String>();
-		pathParams.add(VaultOwnerOnlyFilterProvider.VAULT_ID, "vault2");
-		pathParams.add(VaultOwnerOnlyFilterProvider.VAULT_ID, "vault3");
+		pathParams.add(VaultAdminOnlyFilterProvider.VAULT_ID, "vault2");
+		pathParams.add(VaultAdminOnlyFilterProvider.VAULT_ID, "vault3");
 
 		Mockito.when(context.getUriInfo()).thenReturn(uriInfo);
 		Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
 
-		Assertions.assertThrows(VaultOwnerValidationFailedException.class, () -> vaultOwnerOnlyFilterProvider.getVaultIdQueryParameter(context));
+		Assertions.assertThrows(VaultAdminValidationFailedException.class, () -> vaultAdminOnlyFilterProvider.getVaultIdQueryParameter(context));
 	}
 
 	@Test
 	@DisplayName("validate valid Client-JWT")
 	public void testValidClientJWTProvided() {
-		Mockito.when(context.getHeaderString(VaultOwnerOnlyFilterProvider.CLIENT_JWT)).thenReturn(VALID_TOKEN_VAULT_2);
+		Mockito.when(context.getHeaderString(VaultAdminOnlyFilterProvider.CLIENT_JWT)).thenReturn(VALID_TOKEN_VAULT_2);
 
-		String result = vaultOwnerOnlyFilterProvider.getClientJWT(context);
+		String result = vaultAdminOnlyFilterProvider.getClientJWT(context);
 		Assertions.assertEquals(VALID_TOKEN_VAULT_2, result);
 	}
 
 	@Test
 	@DisplayName("validate no Client-JWT")
 	public void testNoClientJWTProvided() {
-		Assertions.assertThrows(VaultOwnerNotProvidedException.class, () -> vaultOwnerOnlyFilterProvider.getClientJWT(context));
+		Assertions.assertThrows(VaultAdminNotProvidedException.class, () -> vaultAdminOnlyFilterProvider.getClientJWT(context));
 	}
 
 	@Test
 	@DisplayName("validate valid Client-JWT leads to valid vaultId")
 	public void testValidClientJWTLeadsToValidVaultId() {
-		String result = vaultOwnerOnlyFilterProvider.getUnverifiedVaultId(VALID_TOKEN_VAULT_2);
+		String result = vaultAdminOnlyFilterProvider.getUnverifiedVaultId(VALID_TOKEN_VAULT_2);
 		Assertions.assertEquals("vault2", result);
 	}
 
 	@Test
 	@DisplayName("validate no Client-JWT")
 	public void testMalformedClientJWT() {
-		Assertions.assertThrows(VaultOwnerValidationFailedException.class, () -> vaultOwnerOnlyFilterProvider.getUnverifiedVaultId(MALFORMED_TOKEN));
+		Assertions.assertThrows(VaultAdminValidationFailedException.class, () -> vaultAdminOnlyFilterProvider.getUnverifiedVaultId(MALFORMED_TOKEN));
 	}
 
 	@Test
 	@DisplayName("validate no vaultId in Client-JWT")
 	public void testNoVaultIdInJWT() {
-		Assertions.assertThrows(VaultOwnerValidationFailedException.class, () -> vaultOwnerOnlyFilterProvider.getUnverifiedVaultId(TOKEN_WITHOUT_VAULT_ID));
+		Assertions.assertThrows(VaultAdminValidationFailedException.class, () -> vaultAdminOnlyFilterProvider.getUnverifiedVaultId(TOKEN_WITHOUT_VAULT_ID));
 	}
 
 	@Test
 	@DisplayName("validate invalid vaultId in Client-JWT")
 	public void testInvalidVaultIdInJWT() {
-		Assertions.assertThrows(VaultOwnerValidationFailedException.class, () -> vaultOwnerOnlyFilterProvider.getUnverifiedVaultId(TOKEN_WITH_INVALID_VAULT_ID));
+		Assertions.assertThrows(VaultAdminValidationFailedException.class, () -> vaultAdminOnlyFilterProvider.getUnverifiedVaultId(TOKEN_WITH_INVALID_VAULT_ID));
 	}
 
 }
