@@ -7,7 +7,7 @@ import java.sql.PreparedStatement;
 import java.sql.Types;
 import java.util.UUID;
 
-public class V1_0_1__Initialize_Settings extends BaseJavaMigration {
+public class V2__Initialize_Settings extends BaseJavaMigration {
 
 	@Override
 	public void migrate(Context context) throws Exception {
