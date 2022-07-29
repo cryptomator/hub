@@ -11,7 +11,6 @@ import javax.servlet.http.HttpFilter;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.regex.Pattern;
 
 /**
  * A global http filter which redirects all 404-responses to the frontend app root. Necessary for using <a href="https://v3.router.vuejs.org/guide/essentials/history-mode.html#example-server-configurations">history mode in the vue router</a>
@@ -21,8 +20,6 @@ import java.util.regex.Pattern;
 @WebFilter(urlPatterns = "/*")
 public class VueHistoryModeFilter extends HttpFilter {
 
-	private static final Pattern FILE_NAME_PATTERN = Pattern.compile(".*[.][a-zA-Z\\d]+");
-
 	@ConfigProperty(name = "quarkus.resteasy.path")
 	String apiPathPrefix;
 
@@ -31,19 +28,14 @@ public class VueHistoryModeFilter extends HttpFilter {
 		HttpServletResponse response = (HttpServletResponse) res;
 		chain.doFilter(request, response);
 
-		if (response.getStatus() == 404) {
-			String path = request.getRequestURI().substring(
-					request.getContextPath().length()).replaceAll("[/]+$", ""); //delete all "/" at end of string
-			if (!path.startsWith(apiPathPrefix) && !FILE_NAME_PATTERN.matcher(path).matches()) { //TODO: possibly exclude even more prefixes (e.g. keycloak)
-				// We could not find the resource, i.e. it is not anything known to the server (i.e. it is not a REST
-				// endpoint or a servlet), and does not look like a file so try handling it in the front-end routes
-				// and reset the response status code to 200.
-				try {
-					response.setStatus(200);
-					request.getRequestDispatcher("/").forward(request, response);
-				} finally {
-					response.getOutputStream().close();
-				}
+		// exclude requests to the ReST API from filtering:
+		String contextRelativePath = request.getRequestURI().substring(request.getContextPath().length());
+		if (response.getStatus() == 404 && !contextRelativePath.startsWith(apiPathPrefix)) {
+			try {
+				response.setStatus(200);
+				request.getRequestDispatcher("/").forward(request, response);
+			} finally {
+				response.getOutputStream().close();
 			}
 		}
 	}
