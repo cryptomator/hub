@@ -9,11 +9,13 @@ import io.quarkus.test.junit.mockito.InjectMock;
 import org.cryptomator.hub.entities.Settings;
 import org.hibernate.Session;
 import org.hibernate.query.Query;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
 
@@ -106,6 +108,8 @@ public class LicenseHolderTest {
 
 		LicenseValidator validator;
 
+		MockedStatic<Settings> settingsClass;
+
 		@BeforeEach
 		public void setup() {
 			Query mockQuery = Mockito.mock(Query.class);
@@ -115,6 +119,12 @@ public class LicenseHolderTest {
 
 			this.validator = Mockito.mock(LicenseValidator.class);
 			holder = new LicenseHolder(validator);
+			settingsClass = Mockito.mockStatic(Settings.class);
+		}
+
+		@AfterEach
+		public void teardown() {
+			settingsClass.close();
 		}
 
 		@Test
@@ -124,10 +134,7 @@ public class LicenseHolderTest {
 			Mockito.when(validator.validate("token", "42")).thenReturn(decodedJWT);
 			Settings settingsMock = new Settings();
 			settingsMock.hubId = "42";
-			PanacheQuery<Settings> query = Mockito.mock(PanacheQuery.class);
-			Mockito.when(query.firstResult()).thenReturn(settingsMock);
-			PanacheMock.mock(Settings.class);
-			Mockito.when(Settings.<Settings>findAll()).thenReturn(query);
+			settingsClass.when(() -> Settings.get()).thenReturn(settingsMock);
 
 			holder.set("token");
 
@@ -143,10 +150,7 @@ public class LicenseHolderTest {
 			Mockito.when(validator.validate("token", "42")).thenThrow(JWTVerificationException.class);
 			Settings settingsMock = new Settings();
 			settingsMock.hubId = "42";
-			PanacheQuery<Settings> query = Mockito.mock(PanacheQuery.class);
-			Mockito.when(query.firstResult()).thenReturn(settingsMock);
-			PanacheMock.mock(Settings.class);
-			Mockito.when(Settings.<Settings>findAll()).thenReturn(query);
+			settingsClass.when(() -> Settings.get()).thenReturn(settingsMock);
 
 			Assertions.assertThrows(JWTVerificationException.class, () -> holder.set("token"));
 
