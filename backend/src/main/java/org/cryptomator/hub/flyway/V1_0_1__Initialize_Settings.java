@@ -7,11 +7,11 @@ import java.sql.PreparedStatement;
 import java.sql.Types;
 import java.util.UUID;
 
-public class V1_0_1__Initialize_Billing extends BaseJavaMigration {
+public class V1_0_1__Initialize_Settings extends BaseJavaMigration {
 
 	@Override
 	public void migrate(Context context) throws Exception {
-		try (PreparedStatement statement = context.getConnection().prepareStatement("INSERT INTO \"billing\" VALUES (?, ?, ?)")) {
+		try (PreparedStatement statement = context.getConnection().prepareStatement("INSERT INTO \"settings\" (\"id\", \"hub_id\", \"license_key\") VALUES (?, ?, ?)")) {
 			statement.setInt(1, 0);
 			statement.setString(2, UUID.randomUUID().toString());
 			statement.setNull(3, Types.VARCHAR);

@@ -1,11 +1,11 @@
 -- noinspection SqlNoDataSourceInspectionForFile
 
-CREATE TABLE "billing"
+CREATE TABLE "settings"
 (
 	"id"     INT4         NOT NULL,
 	"hub_id" VARCHAR(255) NOT NULL,
-	"token"  VARCHAR(2000),
-	CONSTRAINT "BILLING_PK" PRIMARY KEY ("id")
+	"license_key"  VARCHAR(2000),
+	CONSTRAINT "SETTINGS_PK" PRIMARY KEY ("id")
 );
 
 CREATE TABLE "authority"

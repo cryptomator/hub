@@ -60,8 +60,8 @@ public class BillingResourceTest {
 		public void testGetEmpty() throws SQLException {
 			try (var s = dataSource.getConnection().createStatement()) {
 				s.execute("""
-						UPDATE "billing"
-						SET "hub_id" = '42', "token" = null
+						UPDATE "settings"
+						SET "hub_id" = '42', "license_key" = null
 						WHERE "id" = 0;
 						""");
 			}
