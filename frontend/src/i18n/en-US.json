@@ -44,7 +44,7 @@
   "fetchError.title": "Fetching data failed",
 
   "createVault.title": "Create Vault",
-  "createVault.description": "The 'Vault Admin Password' should be kept secret and is needed for administrative purposes. Please make sure that you remember the password.",
+  "createVault.description": "The vault admin password should be kept secret and is needed for administrative purposes. Please make sure that you remember the password.",
   "createVault.vaultName": "Vault Name",
   "createVault.vaultDescription": "Vault Description",
   "createVault.masterPassword": "Vault Admin Password",

@@ -14,7 +14,7 @@
   "authenticateVaultAdminDialog.masterPassword": "Vault-Admin-Passwort",
 
   "createVault.title": "Tresor erstellen",
-  "createVault.description": "Das 'Vault-Admin-Passwort' sollte geheim gehalten werden und wird nur für administrative Zwecke benötigt. Bitte achte darauf, dass du dir das Passwort merkst.",
+  "createVault.description": "Das Vault-Admin-Passwort sollte geheim gehalten werden und wird nur für administrative Zwecke benötigt. Bitte achte darauf, dass du dir das Passwort merkst.",
   "createVault.vaultName": "Tresorname",
   "createVault.masterPassword": "Vault-Admin-Passwort",
   "createVault.masterPasssord.description": "Muss mindestens 8 Zeichen enthalten.",
