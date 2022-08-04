@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @ApplicationScoped
@@ -31,12 +32,16 @@ public class KeycloakRemoteUserProvider implements RemoteUserProvider {
 			List<User> currentRequestedUsers;
 
 			do {
-				currentRequestedUsers = keycloak.realm(syncerConfig.getKeycloakRealm()).users().list(users.size(), MAX_COUNT_PER_REQUEST).stream().map(this::mapToUser).toList();
+				currentRequestedUsers = keycloak.realm(syncerConfig.getKeycloakRealm()).users().list(users.size(), MAX_COUNT_PER_REQUEST).stream().filter(notSyncerUser()).map(this::mapToUser).toList();
 				users.addAll(currentRequestedUsers);
 			} while (currentRequestedUsers.size() == MAX_COUNT_PER_REQUEST);
 
 			return users;
 		}
+	}
+
+	private Predicate<UserRepresentation> notSyncerUser() {
+		return user -> !user.getUsername().equals(syncerConfig.getUsername());
 	}
 
 	private User mapToUser(UserRepresentation userRepresentation) {
@@ -59,7 +64,7 @@ public class KeycloakRemoteUserProvider implements RemoteUserProvider {
 	@Override
 	public List<User> searchUser(String query) {
 		try (Keycloak keycloak = Keycloak.getInstance(syncerConfig.getKeycloakUrl(), syncerConfig.getKeycloakRealm(), syncerConfig.getUsername(), syncerConfig.getPassword(), syncerConfig.getKeycloakClientId())) {
-			return keycloak.realm(syncerConfig.getKeycloakRealm()).users().search(query).stream().map(this::mapToUser).toList();
+			return keycloak.realm(syncerConfig.getKeycloakRealm()).users().search(query).stream().filter(notSyncerUser()).map(this::mapToUser).toList();
 		}
 	}
 
