@@ -265,8 +265,8 @@ class RemoteUserPullerTest {
 
 		@Override
 		protected Object convert(Object source, Class<?> targetType) throws ArgumentConversionException {
-			if (source instanceof String && String[].class.isAssignableFrom(targetType)) {
-				return ((String) source).split(",");
+			if (source instanceof String s && String[].class.isAssignableFrom(targetType)) {
+				return s.split(",");
 			} else {
 				throw new IllegalArgumentException("Conversion not supported.");
 			}
