@@ -4,6 +4,7 @@ import org.cryptomator.hub.entities.Authority;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
 import org.keycloak.admin.client.Keycloak;
+import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 
@@ -20,7 +21,8 @@ import java.util.stream.Collectors;
 @ApplicationScoped
 public class KeycloakRemoteUserProvider implements RemoteUserProvider {
 
-	private static final int MAX_COUNT_PER_REQUEST = 5_000;
+	//visible for testing
+	static final int MAX_COUNT_PER_REQUEST = 5_000;
 
 	@Inject
 	SyncerConfig syncerConfig;
@@ -28,16 +30,21 @@ public class KeycloakRemoteUserProvider implements RemoteUserProvider {
 	@Override
 	public List<User> users() {
 		try (Keycloak keycloak = Keycloak.getInstance(syncerConfig.getKeycloakUrl(), syncerConfig.getKeycloakRealm(), syncerConfig.getUsername(), syncerConfig.getPassword(), syncerConfig.getKeycloakClientId())) {
-			List<User> users = new ArrayList<>();
-			List<User> currentRequestedUsers;
-
-			do {
-				currentRequestedUsers = keycloak.realm(syncerConfig.getKeycloakRealm()).users().list(users.size(), MAX_COUNT_PER_REQUEST).stream().filter(notSyncerUser()).map(this::mapToUser).toList();
-				users.addAll(currentRequestedUsers);
-			} while (currentRequestedUsers.size() == MAX_COUNT_PER_REQUEST);
-
-			return users;
+			return users(keycloak.realm(syncerConfig.getKeycloakRealm()));
 		}
+	}
+
+	//visible for testing
+	List<User> users(RealmResource realm) {
+		List<User> users = new ArrayList<>();
+		List<User> currentRequestedUsers;
+
+		do {
+			currentRequestedUsers = realm.users().list(users.size(), MAX_COUNT_PER_REQUEST).stream().filter(notSyncerUser()).map(this::mapToUser).toList();
+			users.addAll(currentRequestedUsers);
+		} while (currentRequestedUsers.size() == MAX_COUNT_PER_REQUEST);
+
+		return users;
 	}
 
 	private Predicate<UserRepresentation> notSyncerUser() {
@@ -64,27 +71,37 @@ public class KeycloakRemoteUserProvider implements RemoteUserProvider {
 	@Override
 	public List<User> searchUser(String query) {
 		try (Keycloak keycloak = Keycloak.getInstance(syncerConfig.getKeycloakUrl(), syncerConfig.getKeycloakRealm(), syncerConfig.getUsername(), syncerConfig.getPassword(), syncerConfig.getKeycloakClientId())) {
-			return keycloak.realm(syncerConfig.getKeycloakRealm()).users().search(query).stream().filter(notSyncerUser()).map(this::mapToUser).toList();
+			return searchUser(keycloak.realm(syncerConfig.getKeycloakRealm()), query);
 		}
+	}
+
+	//visible for testing
+	List<User> searchUser(RealmResource realm, String query) {
+		return realm.users().search(query).stream().filter(notSyncerUser()).map(this::mapToUser).toList();
 	}
 
 	@Override
 	public List<Group> groups() {
 		try (Keycloak keycloak = Keycloak.getInstance(syncerConfig.getKeycloakUrl(), syncerConfig.getKeycloakRealm(), syncerConfig.getUsername(), syncerConfig.getPassword(), syncerConfig.getKeycloakClientId())) {
-			return deepCollectGroups(keycloak).stream().map(group -> {
-				// TODO add sub groups and the members of the sub group to it too using `group.getSubGroups()` recursively
-				var members = deepCollectMembers(keycloak, group.getId());
-				var groupEntity = new Group();
-				groupEntity.id = group.getId();
-				groupEntity.name = group.getName();
-				groupEntity.members = members;
-				return groupEntity;
-			}).toList();
+			return groups(keycloak.realm(syncerConfig.getKeycloakRealm()));
 		}
 	}
 
-	private List<GroupRepresentation> deepCollectGroups(Keycloak keycloak) {
-		var group = keycloak.realm(syncerConfig.getKeycloakRealm()).groups();
+	//visible for testing
+	List<Group> groups(RealmResource realm) {
+		return deepCollectGroups(realm).stream().map(group -> {
+			// TODO add sub groups and the members of the sub group to it too using `group.getSubGroups()` recursively
+			var members = deepCollectMembers(realm, group.getId());
+			var groupEntity = new Group();
+			groupEntity.id = group.getId();
+			groupEntity.name = group.getName();
+			groupEntity.members = members;
+			return groupEntity;
+		}).toList();
+	}
+
+	private List<GroupRepresentation> deepCollectGroups(RealmResource realm) {
+		var group = realm.groups();
 
 		List<GroupRepresentation> groups = new ArrayList<>();
 		List<GroupRepresentation> currentRequestedGroups;
@@ -97,8 +114,8 @@ public class KeycloakRemoteUserProvider implements RemoteUserProvider {
 		return groups;
 	}
 
-	private Set<Authority> deepCollectMembers(Keycloak keycloak, String groupId) {
-		var group = keycloak.realm(syncerConfig.getKeycloakRealm()).groups().group(groupId);
+	private Set<Authority> deepCollectMembers(RealmResource realm, String groupId) {
+		var group = realm.groups().group(groupId);
 
 		List<UserRepresentation> members = new ArrayList<>();
 		List<UserRepresentation> currentRequestedMemebers;
@@ -114,12 +131,17 @@ public class KeycloakRemoteUserProvider implements RemoteUserProvider {
 	@Override
 	public List<Group> searchGroup(String groupname) {
 		try (Keycloak keycloak = Keycloak.getInstance(syncerConfig.getKeycloakUrl(), syncerConfig.getKeycloakRealm(), syncerConfig.getUsername(), syncerConfig.getPassword(), syncerConfig.getKeycloakClientId())) {
-			return deepCollectGroups(keycloak).stream().map(group -> {
-				var groupEntity = new Group();
-				groupEntity.id = group.getId();
-				groupEntity.name = group.getName();
-				return groupEntity;
-			}).filter(group -> group.name.toLowerCase().contains(groupname.toLowerCase())).toList();
+			return searchGroup(keycloak.realm(syncerConfig.getKeycloakRealm()), groupname);
 		}
+	}
+
+	//visible for testing
+	List<Group> searchGroup(RealmResource realm, String groupname) {
+		return deepCollectGroups(realm).stream().map(group -> {
+			var groupEntity = new Group();
+			groupEntity.id = group.getId();
+			groupEntity.name = group.getName();
+			return groupEntity;
+		}).filter(group -> group.name.toLowerCase().contains(groupname.toLowerCase())).toList();
 	}
 }
