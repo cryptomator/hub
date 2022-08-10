@@ -24,4 +24,6 @@ jobs:
       - name: Tag image in github registry
         run: docker tag ghcr.io/cryptomator/hub@${{ github.event.inputs.digest}} ghcr.io/cryptomator/hub:${{ github.event.inputs.tag }}
       - name: Push tagged image
-        run: docker push ghcr.io/cryptomator/hub:${{ github.event.inputs.tag }}
+        run: |
+          docker login --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }} ghcr.io
+          docker push ghcr.io/cryptomator/hub:${{ github.event.inputs.tag }}
