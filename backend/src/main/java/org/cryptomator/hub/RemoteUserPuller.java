@@ -1,6 +1,7 @@
 package org.cryptomator.hub;
 
 import io.quarkus.scheduler.Scheduled;
+import org.cryptomator.hub.entities.Authority;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
 
@@ -35,29 +36,29 @@ public class RemoteUserPuller {
 
 	//visible for testing
 	void sync(Map<String, Group> keycloakGroups, Map<String, User> keycloakUsers, Map<String, Group> databaseGroups, Map<String, User> databaseUsers) {
-		syncAddedUsers(keycloakUsers, databaseUsers);
-		var deletedUsers = syncDeletedUsers(keycloakUsers, databaseUsers);
+		syncAddedAuthorities(keycloakUsers, databaseUsers);
+		var deletedUsers = syncDeletedAuthorities(keycloakUsers, databaseUsers);
 		syncUpdatedUsers(keycloakUsers, databaseUsers, deletedUsers);
-		syncAddedGroups(keycloakGroups, databaseGroups);
-		var deletedGroups = syncDeletedGroups(keycloakGroups, databaseGroups);
+		syncAddedAuthorities(keycloakGroups, databaseGroups);
+		var deletedGroups = syncDeletedAuthorities(keycloakGroups, databaseGroups);
 		syncUpdatedGroups(keycloakGroups, databaseGroups, deletedGroups);
 	}
 
 	//visible for testing
-	void syncAddedUsers(Map<String, User> keycloakUsers, Map<String, User> databaseUsers) {
-		var addedUsers = diff(keycloakUsers.keySet(), databaseUsers.keySet());
-		for (var id : addedUsers) {
-			keycloakUsers.get(id).persist();
+	<T extends Authority> void syncAddedAuthorities(Map<String, T> keycloakAuthorities, Map<String, T> databaseAuthorities) {
+		var addedAuthority = diff(keycloakAuthorities.keySet(), databaseAuthorities.keySet());
+		for (var id : addedAuthority) {
+			keycloakAuthorities.get(id).persist();
 		}
 	}
 
 	//visible for testing
-	Set<String> syncDeletedUsers(Map<String, User> keycloakUsers, Map<String, User> databaseUsers) {
-		var deletedUsers = diff(databaseUsers.keySet(), keycloakUsers.keySet());
-		for (var id : deletedUsers) {
-			databaseUsers.get(id).delete();
+	<T extends Authority> Set<String> syncDeletedAuthorities(Map<String, T> keycloakAuthorities, Map<String, T> databaseAuthorities) {
+		var deletedAuthorities = diff(databaseAuthorities.keySet(), keycloakAuthorities.keySet());
+		for (var id : deletedAuthorities) {
+			databaseAuthorities.get(id).delete();
 		}
-		return deletedUsers;
+		return deletedAuthorities;
 	}
 
 	//visible for testing
@@ -71,23 +72,6 @@ public class RemoteUserPuller {
 			dbUser.email = kcUser.email;
 			dbUser.persist();
 		}
-	}
-
-	//visible for testing
-	void syncAddedGroups(Map<String, Group> keycloakGroups, Map<String, Group> databaseGroups) {
-		var addedGroups = diff(keycloakGroups.keySet(), databaseGroups.keySet());
-		for (var id : addedGroups) {
-			keycloakGroups.get(id).persist();
-		}
-	}
-
-	//visible for testing
-	Set<String> syncDeletedGroups(Map<String, Group> keycloakGroups, Map<String, Group> databaseGroups) {
-		var deletedGroups = diff(databaseGroups.keySet(), keycloakGroups.keySet());
-		for (var id : deletedGroups) {
-			databaseGroups.get(id).delete();
-		}
-		return deletedGroups;
 	}
 
 	//visible for testing

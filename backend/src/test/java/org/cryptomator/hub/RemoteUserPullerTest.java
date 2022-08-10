@@ -25,9 +25,10 @@ import java.util.stream.Collectors;
 @QuarkusTest
 class RemoteUserPullerTest {
 
+	private final RemoteUserProvider remoteUserProvider = Mockito.mock(RemoteUserProvider.class);
+	private final User user = Mockito.mock(User.class);
+
 	private RemoteUserPuller remoteUserPuller;
-	private RemoteUserProvider remoteUserProvider = Mockito.mock(RemoteUserProvider.class);
-	private User user = Mockito.mock(User.class);
 
 	@BeforeEach
 	void setUp() {
@@ -36,11 +37,11 @@ class RemoteUserPullerTest {
 	}
 
 	@Nested
-	@DisplayName("Test sync users")
-	public class TestUser {
+	@DisplayName("Test add delete TestAuthorities")
+	public class AddDeleteTestAuthorities {
 
-		@DisplayName("test add users")
-		@ParameterizedTest(name = "KCUsers: {0} DBUsers: {1} AddedUsers: {2}")
+		@DisplayName("test add authority")
+		@ParameterizedTest(name = "KCAuthorities: {0} DBAuthorities: {1} AddedAuthorities: {2}")
 		@CsvSource(value = {
 				"foo,bar,baz;,;foo,bar,baz",
 				"foo,bar,baz;la,li,lu;foo,bar,baz",
@@ -49,30 +50,30 @@ class RemoteUserPullerTest {
 				",;foo,bar,baz;,",
 				",;,;,"
 		}, delimiterString = ";")
-		public void testAddUsers(@ConvertWith(StringArrayConverter.class) String[] keycloakUserIdString, @ConvertWith(StringArrayConverter.class) String[] databaseUserIdString, @ConvertWith(StringArrayConverter.class) String[] addedUserIdString) {
-			Map<String, User> keycloakUsers = Mockito.mock(Map.class);
-			Map<String, User> databaseUsers = Mockito.mock(Map.class);
+		public void testAddAuthorities(@ConvertWith(StringArrayConverter.class) String[] keycloakAuthorityIdString, @ConvertWith(StringArrayConverter.class) String[] databaseAuthorityIdString, @ConvertWith(StringArrayConverter.class) String[] addedAuthorityIdString) {
+			Map<String, TestAuthority> keycloakAuthorities = Mockito.mock(Map.class);
+			Map<String, TestAuthority> databaseAuthorities = Mockito.mock(Map.class);
 
-			Set<String> keycloakUserIds = Arrays.stream(keycloakUserIdString).collect(Collectors.toSet());
-			Set<String> databaseUserIds = Arrays.stream(databaseUserIdString).collect(Collectors.toSet());
-			Set<String> addedUserIds = Arrays.stream(addedUserIdString).collect(Collectors.toSet());
+			Set<String> keycloakAuthorityIds = Arrays.stream(keycloakAuthorityIdString).collect(Collectors.toSet());
+			Set<String> databaseAuthorityIds = Arrays.stream(databaseAuthorityIdString).collect(Collectors.toSet());
+			Set<String> addedAuthorityIds = Arrays.stream(addedAuthorityIdString).collect(Collectors.toSet());
 
-			Mockito.when(keycloakUsers.keySet()).thenReturn(keycloakUserIds);
-			Mockito.when(databaseUsers.keySet()).thenReturn(databaseUserIds);
+			Mockito.when(keycloakAuthorities.keySet()).thenReturn(keycloakAuthorityIds);
+			Mockito.when(databaseAuthorities.keySet()).thenReturn(databaseAuthorityIds);
 
-			for (String userId : addedUserIds) {
-				Mockito.when(keycloakUsers.get(userId)).thenReturn(Mockito.mock(User.class));
+			for (String authorityId : addedAuthorityIds) {
+				Mockito.when(keycloakAuthorities.get(authorityId)).thenReturn(Mockito.mock(TestAuthority.class));
 			}
 
-			remoteUserPuller.syncAddedUsers(keycloakUsers, databaseUsers);
+			remoteUserPuller.syncAddedAuthorities(keycloakAuthorities, databaseAuthorities);
 
-			for (String userId : addedUserIds) {
-				Mockito.verify(keycloakUsers.get(userId)).persist();
+			for (String authorityId : addedAuthorityIds) {
+				Mockito.verify(keycloakAuthorities.get(authorityId)).persist();
 			}
 		}
 
-		@DisplayName("test delete users")
-		@ParameterizedTest(name = "KCUsers: {0} DBUsers: {1} DeletedUsers: {2}")
+		@DisplayName("test delete users/groups")
+		@ParameterizedTest(name = "KCUAuthorities: {0} DBAuthorities: {1} DeletedAuthorities: {2}")
 		@CsvSource(value = {
 				"foo,bar,baz;,;,",
 				"foo,bar,baz;la,li,lu;la,li,lu",
@@ -81,27 +82,35 @@ class RemoteUserPullerTest {
 				",;foo,bar,baz;foo,bar,baz",
 				",;,;,"
 		}, delimiterString = ";")
-		public void testDeleteUsers(@ConvertWith(StringArrayConverter.class) String[] keycloakUserIdString, @ConvertWith(StringArrayConverter.class) String[] databaseUserIdString, @ConvertWith(StringArrayConverter.class) String[] deletedUserIdString) {
-			Map<String, User> keycloakUsers = Mockito.mock(Map.class);
-			Map<String, User> databaseUsers = Mockito.mock(Map.class);
+		public void testDeleteAuthorities(@ConvertWith(StringArrayConverter.class) String[] keycloakAuthorityIdString, @ConvertWith(StringArrayConverter.class) String[] databaseAuthorityIdString, @ConvertWith(StringArrayConverter.class) String[] deletedAuthorityIdString) {
+			Map<String, TestAuthority> keycloakAuthorities = Mockito.mock(Map.class);
+			Map<String, TestAuthority> databaseAuthorities = Mockito.mock(Map.class);
 
-			Set<String> keycloakUserIds = Arrays.stream(keycloakUserIdString).collect(Collectors.toSet());
-			Set<String> databaseUserIds = Arrays.stream(databaseUserIdString).collect(Collectors.toSet());
-			Set<String> deletedUserIds = Arrays.stream(deletedUserIdString).collect(Collectors.toSet());
+			Set<String> keycloakAuthorityIds = Arrays.stream(keycloakAuthorityIdString).collect(Collectors.toSet());
+			Set<String> databaseAuthorityIds = Arrays.stream(databaseAuthorityIdString).collect(Collectors.toSet());
+			Set<String> deletedAuthorityIds = Arrays.stream(deletedAuthorityIdString).collect(Collectors.toSet());
 
-			Mockito.when(keycloakUsers.keySet()).thenReturn(keycloakUserIds);
-			Mockito.when(databaseUsers.keySet()).thenReturn(databaseUserIds);
+			Mockito.when(keycloakAuthorities.keySet()).thenReturn(keycloakAuthorityIds);
+			Mockito.when(databaseAuthorities.keySet()).thenReturn(databaseAuthorityIds);
 
-			for (String userId : deletedUserIds) {
-				Mockito.when(databaseUsers.get(userId)).thenReturn(Mockito.mock(User.class));
+			for (String authorityId : deletedAuthorityIds) {
+				Mockito.when(databaseAuthorities.get(authorityId)).thenReturn(Mockito.mock(TestAuthority.class));
 			}
 
-			remoteUserPuller.syncDeletedUsers(keycloakUsers, databaseUsers);
+			remoteUserPuller.syncDeletedAuthorities(keycloakAuthorities, databaseAuthorities);
 
-			for (String userId : deletedUserIds) {
-				Mockito.verify(databaseUsers.get(userId)).delete();
+			for (String authorityId : deletedAuthorityIds) {
+				Mockito.verify(databaseAuthorities.get(authorityId)).delete();
 			}
 		}
+
+		private static class TestAuthority extends Authority {
+		}
+	}
+
+	@Nested
+	@DisplayName("Test update authorities")
+	public class TestUpdateAuthorities {
 
 		@DisplayName("test update users")
 		@ParameterizedTest(name = "KCUsers: {0} DBUsers: {1} DeletedUsers: {2} UpdatedUsers: {3} ")
@@ -143,76 +152,6 @@ class RemoteUserPullerTest {
 				Mockito.verify(databaseUsers.get(userId)).email = String.format("email %s", userId);
 			}
 		}
-	}
-
-	@Nested
-	@DisplayName("Test sync groups")
-	public class TestGroups {
-
-		@DisplayName("test add groups")
-		@ParameterizedTest(name = "KCGroups: {0} DBGroups: {1} AddedGroups: {2}")
-		@CsvSource(value = {
-				"foo,bar,baz;,;foo,bar,baz",
-				"foo,bar,baz;la,li,lu;foo,bar,baz",
-				"foo,bar,baz;la,bar,baz;foo",
-				"baz;foo,bar,baz;,",
-				",;foo,bar,baz;,",
-				",;,;,"
-		}, delimiterString = ";")
-		public void testAddGroups(@ConvertWith(StringArrayConverter.class) String[] keycloakGroupIdString, @ConvertWith(StringArrayConverter.class) String[] databaseGroupIdString, @ConvertWith(StringArrayConverter.class) String[] addedGroupIdString) {
-			Map<String, Group> keycloakGroups = Mockito.mock(Map.class);
-			Map<String, Group> databaseGroups = Mockito.mock(Map.class);
-
-			Set<String> keycloakGroupIds = Arrays.stream(keycloakGroupIdString).collect(Collectors.toSet());
-			Set<String> databaseGroupIds = Arrays.stream(databaseGroupIdString).collect(Collectors.toSet());
-			Set<String> addedGroupIds = Arrays.stream(addedGroupIdString).collect(Collectors.toSet());
-
-			Mockito.when(keycloakGroups.keySet()).thenReturn(keycloakGroupIds);
-			Mockito.when(databaseGroups.keySet()).thenReturn(databaseGroupIds);
-
-			for (String groupId : addedGroupIds) {
-				Mockito.when(keycloakGroups.get(groupId)).thenReturn(Mockito.mock(Group.class));
-			}
-
-			remoteUserPuller.syncAddedGroups(keycloakGroups, databaseGroups);
-
-			for (String groupId : addedGroupIds) {
-				Mockito.verify(keycloakGroups.get(groupId)).persist();
-			}
-		}
-
-		@DisplayName("test delete groups")
-		@ParameterizedTest(name = "KCGroups: {0} DBGroups: {1} DeletedGroups: {2}")
-		@CsvSource(value = {
-				"foo,bar,baz;,;,",
-				"foo,bar,baz;la,li,lu;la,li,lu",
-				"foo,bar,baz;la,bar,baz;la",
-				"baz;foo,bar,baz;foo,bar",
-				",;foo,bar,baz;foo,bar,baz",
-				",;,;,"
-		}, delimiterString = ";")
-		public void testDeleteGroups(@ConvertWith(StringArrayConverter.class) String[] keycloakGroupIdString, @ConvertWith(StringArrayConverter.class) String[] databaseGroupIdString, @ConvertWith(StringArrayConverter.class) String[] deletedGroupIdString) {
-			Map<String, Group> keycloakGroups = Mockito.mock(Map.class);
-			Map<String, Group> databaseGroups = Mockito.mock(Map.class);
-
-			Set<String> keycloakGroupIds = Arrays.stream(keycloakGroupIdString).collect(Collectors.toSet());
-			Set<String> databaseGroupIds = Arrays.stream(databaseGroupIdString).collect(Collectors.toSet());
-			Set<String> deletedGroupIds = Arrays.stream(deletedGroupIdString).collect(Collectors.toSet());
-
-			Mockito.when(keycloakGroups.keySet()).thenReturn(keycloakGroupIds);
-			Mockito.when(databaseGroups.keySet()).thenReturn(databaseGroupIds);
-
-			for (String groupId : deletedGroupIds) {
-				Mockito.when(databaseGroups.get(groupId)).thenReturn(Mockito.mock(Group.class));
-			}
-
-			remoteUserPuller.syncDeletedGroups(keycloakGroups, databaseGroups);
-
-			for (String groupId : deletedGroupIds) {
-				Mockito.verify(databaseGroups.get(groupId)).delete();
-			}
-		}
-
 
 		@DisplayName("test update groups")
 		@ParameterizedTest(name = "KCGroups: {0} DBGroups: {1} DeletedGroups: {2} UpdatedGroups: {3} ")
