@@ -1,0 +1,25 @@
+name: Tag Existing Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Image Tag'
+        required: true
+      digest:
+        description: Image digest
+        required: true
+
+defaults:
+  run:
+    shell: pwsh
+
+jobs:
+  tag:
+    name: Tags an existing image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pull image defined by digest
+        run: docker pull ghcr.io/cryptomator/hub@${{ github.event.inputs.digest}}
+      - name: Tag image in github registry
+        run: docker tag ghcr.io/cryptomator/hub@${{ github.event.inputs.digest}} ghcr.io/cryptomator/hub:${{ github.event.inputs.tag }}
