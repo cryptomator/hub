@@ -18,7 +18,7 @@
             <p class="mt-1 text-base text-gray-500">Please check the URL in the address bar and try again.</p>
           </div>
           <div class="mt-10 flex space-x-3 sm:border-l sm:border-transparent sm:pl-6">
-            <a href="/vaults" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"> Go back home </a>
+            <router-link to="/vaults" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"> Go back home </router-link>
           </div>
         </div>
       </main>
