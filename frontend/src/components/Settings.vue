@@ -42,7 +42,7 @@
             </p>
           </div>
           <div class="mt-5 md:mt-0 md:col-span-2">
-            <div v-if="version == null">
+            <div v-if="version == null || latestVersion == null">
               <div v-if="onFetchError == null">
                 {{ t('common.loading') }}
               </div>
@@ -54,6 +54,10 @@
               <div class="col-span-6 sm:col-span-3">
                 <label for="hubVersion" class="block text-sm font-medium text-gray-700">{{ t('settings.version.hub.title') }}</label>
                 <input id="hubVersion" v-model="version.hubVersion" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
+
+                <!-- TODO: semver compare & show "update available" message -->
+                <input id="todo3000" v-model="latestVersion.stable" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
+                <input id="todo3000" v-model="latestVersion.beta" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
               </div>
               <div class="col-span-6 sm:col-span-3">
                 <label for="keycloakVersion" class="block text-sm font-medium text-gray-700">{{ t('settings.version.keycloak.title') }}</label>
@@ -70,12 +74,13 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { VersionDto } from '../common/backend';
+import backend, { VersionDto, LatestVersionDto } from '../common/backend';
 import { Locale } from '../i18n';
 
 const { t } = useI18n({ useScope: 'global' });
 
 const version = ref<VersionDto>();
+const latestVersion = ref<LatestVersionDto>();
 const onFetchError = ref<Error | null>();
 
 onMounted(fetchData);
@@ -83,7 +88,10 @@ onMounted(fetchData);
 async function fetchData() {
   onFetchError.value = null;
   try {
-    version.value = await backend.version.get();
+    let versionInstalled = backend.version.get();
+    let versionAvailable = backend.updates.get();
+    version.value = await versionInstalled;
+    latestVersion.value = await versionAvailable;
   } catch (err) {
     console.error('Retrieving version failed.', err);
     onFetchError.value = err instanceof Error ? err : new Error('Unknown Error');

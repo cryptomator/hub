@@ -64,10 +64,20 @@ export class VersionDto {
   constructor(public hubVersion: string, public keycloakVersion: string) { }
 }
 
+export class LatestVersionDto {
+  constructor(public stable: string, public beta: string) { }
+}
+
 /* Services */
 
 export interface VaultIdHeader extends JWTHeader {
   vaultId: string;
+}
+
+class UpdatesService {
+  public async get(): Promise<LatestVersionDto> {
+    return axios.get('https://api.cryptomator.org/updates/hub.json').then(response => response.data);
+  }
 }
 
 class VaultService {
@@ -192,6 +202,7 @@ class VersionService {
 }
 
 const services = {
+  updates: new UpdatesService(),
   vaults: new VaultService(),
   users: new UserService(),
   groups: new GroupService(),
