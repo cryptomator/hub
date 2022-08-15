@@ -124,48 +124,9 @@ async function fetchData() {
 }
 
 function checkForUpdates() {
-  stableUpdateExists.value = checkForStableUpdate();
-  if (!stableUpdateExists.value) {
-    betaUpdateExists.value = checkForBetaUpdate();
-  }
-}
-
-function checkForStableUpdate() : boolean {
   if (version.value && latestVersion.value) {
-    return checkBySemver(version.value.hubVersion, latestVersion.value.stable);
-  }
-  return false;
-}
-
-
-function checkForBetaUpdate() : boolean {
-  const betaVersionRegex = /.+-beta(\d)*$/;
-
-  if (version.value && latestVersion.value) {
-    var betaVersionMatch = version.value.hubVersion.match(betaVersionRegex);
-    if (betaVersionMatch) {
-      var latestBetaVersionMatch = latestVersion.value.beta.match(betaVersionRegex);
-      if (latestBetaVersionMatch) {
-        return parseInt(betaVersionMatch[0]) < parseInt(latestBetaVersionMatch[0]);
-      } else {
-        return false;
-      }
-    } else {
-      //hub instance does not use beta
-      return checkBySemver(version.value.hubVersion, latestVersion.value.beta);
-    }
-  }
-  return false;
-}
-
-
-function checkBySemver(currentVersion: string, latestVersion: string) : boolean {
-  var semverVersion = semver.coerce(currentVersion);
-  var latestSemverVersion = semver.coerce(latestVersion);
-  if (semverVersion && latestSemverVersion) {
-    return semver.lt(semverVersion, latestSemverVersion);
-  } else {
-    return false;
+    stableUpdateExists.value = semver.lt(version.value.hubVersion, latestVersion.value.stable ?? '0.1.0');
+    betaUpdateExists.value = semver.lt(version.value.hubVersion, latestVersion.value.beta ?? '0.1.0-beta1');
   }
 }
 
