@@ -71,7 +71,7 @@
                   <ExclamationIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
                   {{ t('settings.update.updateExists.description', [latestVersion.beta]) }}
                 </p>
-                <p v-else id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
+                <p v-else-if="betaUpdateExists && !isBeta" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
                   <InformationCircleIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
                   {{ t('settings.update.updateExists.description', [latestVersion.beta]) }}
                 </p>
