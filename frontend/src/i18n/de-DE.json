@@ -50,6 +50,9 @@
   "settings.title": "Einstellungen",
   "settings.general.title": "Allgemein",
   "settings.general.language.title": "Sprache",
+  "settings.update.upToDate.description": "Hub ist aktuell",
+  "settings.update.updateExists.description": "Update auf version {0} möglich",
+
 
   "vaultDetails.notFound": "Tresor nicht gefunden",
   "vaultDetails.sharedWith.title": "Geteilt mit",
