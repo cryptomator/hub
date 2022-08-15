@@ -91,7 +91,7 @@
 <script setup lang="ts">
 import { CheckIcon, ExclamationIcon, InformationCircleIcon } from '@heroicons/vue/solid';
 import semver from 'semver';
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { VersionDto } from '../common/backend';
 import { FetchUpdateError, LatestVersionDto, updateChecker } from '../common/updatecheck';
@@ -101,12 +101,23 @@ import FetchError from './FetchError.vue';
 const { t } = useI18n({ useScope: 'global' });
 
 const version = ref<VersionDto>();
-const isBeta = ref<boolean>(false);
 const latestVersion = ref<LatestVersionDto>();
-const stableUpdateExists = ref<boolean>(false);
-const betaUpdateExists = ref<boolean>(false);
 const onFetchError = ref<Error | null>();
 const errorOnFetchingUpdates = ref<boolean>(false);
+
+const isBeta = computed(() => semver.prerelease(version.value?.hubVersion ?? '0.1.0') != null);
+const stableUpdateExists = computed(() => {
+  if (version.value && latestVersion.value) {
+    return semver.lt(version.value?.hubVersion , latestVersion.value.stable ?? '0.1.0');
+  }
+  return false;
+});
+const betaUpdateExists = computed(() => {
+  if (version.value && latestVersion.value) {
+    return semver.lt(version.value?.hubVersion , latestVersion.value.beta ?? '0.1.0-beta1');
+  }
+  return false;
+});
 
 onMounted(fetchData);
 
@@ -117,8 +128,6 @@ async function fetchData() {
     let versionAvailable = backend.version.get().then(versionDto => updateChecker.get(versionDto.hubVersion));
     version.value = await versionInstalled;
     latestVersion.value = await versionAvailable;
-    isBeta.value = semver.prerelease(version.value.hubVersion) != null;
-    checkForUpdates();
   } catch (err) {
     if (err instanceof FetchUpdateError) {
       errorOnFetchingUpdates.value = true;
@@ -128,13 +137,5 @@ async function fetchData() {
     }
   }
 }
-
-function checkForUpdates() {
-  if (version.value && latestVersion.value) {
-    stableUpdateExists.value = semver.lt(version.value.hubVersion, latestVersion.value.stable ?? '0.1.0');
-    betaUpdateExists.value = semver.lt(version.value.hubVersion, latestVersion.value.beta ?? '0.1.0-beta1');
-  }
-}
-
 
 </script>
