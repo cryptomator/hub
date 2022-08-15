@@ -109,7 +109,7 @@ async function fetchData() {
   onFetchError.value = null;
   try {
     let versionInstalled = backend.version.get();
-    let versionAvailable = updateChecker.get();
+    let versionAvailable = backend.version.get().then(versionDto => updateChecker.get(versionDto.hubVersion));
     version.value = await versionInstalled;
     latestVersion.value = await versionAvailable;
     checkForUpdates();

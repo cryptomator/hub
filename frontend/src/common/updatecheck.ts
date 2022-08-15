@@ -1,20 +1,21 @@
-import AxiosStatic, { AxiosRequestConfig } from 'axios';
+import AxiosStatic from 'axios';
 
-const axiosBaseCfg: AxiosRequestConfig = {
-  headers: {
-    'Content-Type': 'application/json'
-  }
-};
-
-const axios = AxiosStatic.create(axiosBaseCfg);
+const axios = AxiosStatic.create();
 
 export class LatestVersionDto {
   constructor(public stable: string, public beta: string) { }
 }
 
 class UpdatesService {
-  public async get(): Promise<LatestVersionDto> {
-    return axios.get('https://api.cryptomator.org/updates/hub.json')
+  public async get(localVersion: string): Promise<LatestVersionDto> {
+    let config = {
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': 'Hub/' + localVersion,
+        'X-Hub-Instance': 'TODO' //for future uses
+      }
+    };
+    return axios.get('https://api.cryptomator.org/updates/hub.json', config)
       .then(response => response.data)
       .catch(err => {
         console.error(err);
