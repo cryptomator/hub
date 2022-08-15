@@ -108,8 +108,10 @@ onMounted(fetchData);
 async function fetchData() {
   onFetchError.value = null;
   try {
-    version.value = await backend.version.get();
-    latestVersion.value = await updateChecker.get();
+    let versionInstalled = backend.version.get();
+    let versionAvailable = updateChecker.get();
+    version.value = await versionInstalled;
+    latestVersion.value = await versionAvailable;
     checkForUpdates();
   } catch (err) {
     if (err instanceof FetchUpdateError) {
