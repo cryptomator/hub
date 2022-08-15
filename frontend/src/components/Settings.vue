@@ -67,6 +67,10 @@
                   <ExclamationIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
                   {{ t('settings.update.updateExists.description', [latestVersion.stable]) }}
                 </p>
+                <p v-else-if="betaUpdateExists && isBeta" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
+                  <ExclamationIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
+                  {{ t('settings.update.updateExists.description', [latestVersion.beta]) }}
+                </p>
                 <p v-else id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
                   <InformationCircleIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
                   {{ t('settings.update.updateExists.description', [latestVersion.beta]) }}
@@ -97,6 +101,7 @@ import FetchError from './FetchError.vue';
 const { t } = useI18n({ useScope: 'global' });
 
 const version = ref<VersionDto>();
+const isBeta = ref<boolean>(false);
 const latestVersion = ref<LatestVersionDto>();
 const stableUpdateExists = ref<boolean>(false);
 const betaUpdateExists = ref<boolean>(false);
@@ -112,6 +117,7 @@ async function fetchData() {
     let versionAvailable = backend.version.get().then(versionDto => updateChecker.get(versionDto.hubVersion));
     version.value = await versionInstalled;
     latestVersion.value = await versionAvailable;
+    isBeta.value = semver.prerelease(version.value.hubVersion) != null;
     checkForUpdates();
   } catch (err) {
     if (err instanceof FetchUpdateError) {
