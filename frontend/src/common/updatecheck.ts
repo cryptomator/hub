@@ -14,7 +14,18 @@ export class LatestVersionDto {
 
 class UpdatesService {
   public async get(): Promise<LatestVersionDto> {
-    return axios.get('https://api.cryptomator.org/updates/hub.json').then(response => response.data);
+    return axios.get('https://api.cryptomator.org/updates/hub.json')
+      .then(response => response.data)
+      .catch(err => {
+        console.error(err);
+        throw new FetchUpdateError('Unable to get update info.');
+      });
+  }
+}
+
+export class FetchUpdateError extends Error {
+  constructor(msg: string) {
+    super(msg);
   }
 }
 
