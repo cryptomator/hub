@@ -51,8 +51,8 @@
   "settings.general.title": "Allgemein",
   "settings.general.language.title": "Sprache",
   "settings.update.upToDate.description": "Hub ist aktuell",
-  "settings.update.updateExists.description": "Update auf version {0} möglich",
-  "settings.update.fetchingUpdatesFailed.description": "Laden von Updateinfos fehlgeschlagen. Bitte suche manuell nach Updates",
+  "settings.update.updateExists.description": "Update auf Version {0} möglich",
+  "settings.update.fetchingUpdatesFailed.description": "Suche nach Updates ist fehlgeschlagen. Bitte prüfe manuell.",
 
 
   "vaultDetails.notFound": "Tresor nicht gefunden",
