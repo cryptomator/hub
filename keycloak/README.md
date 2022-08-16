@@ -1,0 +1,13 @@
+# Custom Keycloak Image
+
+This custom keycloak image adds a Cryptomator theme and sets some build-time configuration values.
+
+## Theme Development
+
+For live coding, start Keycloak in dev mode (to disable theme caching) and mounting the theme folder as a volume:
+
+```shell script
+docker run --rm -it -p 8080:8080 -e KEYCLOAK_ADMIN=admin -e KEYCLOAK_ADMIN_PASSWORD=admin -v $(pwd)/themes/cryptomatorTheme:/opt/keycloak/themes/cryptomatorTheme:ro quay.io/keycloak/keycloak:19.0 start-dev
+```
+
+The Cryptomator Theme is [based on the Keycloak theme](https://github.com/keycloak/keycloak/tree/main/themes/src/main/resources/theme/keycloak). Use it as a reference.
