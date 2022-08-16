@@ -54,6 +54,27 @@
               <div class="col-span-6 sm:col-span-3">
                 <label for="hubVersion" class="block text-sm font-medium text-gray-700">{{ t('settings.version.hub.title') }}</label>
                 <input id="hubVersion" v-model="version.hubVersion" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
+
+                <p v-if="errorOnFetchingUpdates" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
+                  <ExclamationIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
+                  {{ t('settings.update.fetchingUpdatesFailed.description') }}
+                </p>
+                <p v-else-if="!stableUpdateExists && !betaUpdateExists" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
+                  <CheckIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
+                  {{ t('settings.update.upToDate.description') }}
+                </p>
+                <p v-else-if="stableUpdateExists" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
+                  <ExclamationIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
+                  {{ t('settings.update.updateExists.description', [latestVersion?.stable]) }}
+                </p>
+                <p v-else-if="betaUpdateExists && isBeta" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
+                  <ExclamationIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
+                  {{ t('settings.update.updateExists.description', [latestVersion?.beta]) }}
+                </p>
+                <p v-else-if="betaUpdateExists && !isBeta" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
+                  <InformationCircleIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
+                  {{ t('settings.update.updateExists.description', [latestVersion?.beta]) }}
+                </p>
               </div>
               <div class="col-span-6 sm:col-span-3">
                 <label for="keycloakVersion" class="block text-sm font-medium text-gray-700">{{ t('settings.version.keycloak.title') }}</label>
@@ -68,27 +89,53 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { CheckIcon, ExclamationIcon, InformationCircleIcon } from '@heroicons/vue/solid';
+import semver from 'semver';
+import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { VersionDto } from '../common/backend';
+import { FetchUpdateError, LatestVersionDto, updateChecker } from '../common/updatecheck';
 import { Locale } from '../i18n';
+import FetchError from './FetchError.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 
 const version = ref<VersionDto>();
+const latestVersion = ref<LatestVersionDto>();
 const onFetchError = ref<Error | null>();
+const errorOnFetchingUpdates = ref<boolean>(false);
+
+const isBeta = computed(() => semver.prerelease(version.value?.hubVersion ?? '0.1.0') != null);
+const stableUpdateExists = computed(() => {
+  if (version.value && latestVersion.value?.stable) {
+    return semver.lt(version.value?.hubVersion , latestVersion.value.stable ?? '0.1.0');
+  }
+  return false;
+});
+const betaUpdateExists = computed(() => {
+  if (version.value && latestVersion.value?.beta) {
+    return semver.lt(version.value?.hubVersion , latestVersion.value.beta ?? '0.1.0-beta1');
+  }
+  return false;
+});
 
 onMounted(fetchData);
 
 async function fetchData() {
   onFetchError.value = null;
   try {
-    version.value = await backend.version.get();
+    let versionInstalled = backend.version.get();
+    let versionAvailable = versionInstalled.then(versionDto => updateChecker.get(versionDto.hubVersion));
+    version.value = await versionInstalled;
+    latestVersion.value = await versionAvailable;
   } catch (err) {
-    console.error('Retrieving version failed.', err);
-    onFetchError.value = err instanceof Error ? err : new Error('Unknown Error');
+    if (err instanceof FetchUpdateError) {
+      errorOnFetchingUpdates.value = true;
+    } else {
+      console.error('Retrieving version information failed.', err);
+      onFetchError.value = err instanceof Error ? err : new Error('Unknown Error');
+    }
   }
 }
-
 
 </script>

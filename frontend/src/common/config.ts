@@ -1,6 +1,6 @@
 import AxiosStatic from 'axios';
 
-export const frontendBaseURL = `${location.protocol}//${location.host}${import.meta.env.BASE_URL}`;
+export const frontendBaseURL = `${location.protocol}//${location.host}/app`;
 export const backendBaseURL = import.meta.env.DEV
   ? 'http://localhost:8080/api/'
   : new URL('/api/', location.href).href;

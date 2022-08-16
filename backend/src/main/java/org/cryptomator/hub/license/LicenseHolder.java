@@ -3,7 +3,7 @@ package org.cryptomator.hub.license;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import org.cryptomator.hub.entities.Billing;
+import org.cryptomator.hub.entities.Settings;
 import org.jboss.logging.Logger;
 
 import javax.annotation.PostConstruct;
@@ -29,14 +29,14 @@ public class LicenseHolder {
 	 */
 	@PostConstruct
 	void init() {
-		var billingEntry = Billing.<Billing>findAll().firstResult();
-		if (billingEntry.token != null) {
+		var settings = Settings.get();
+		if (settings.licenseKey != null) {
 			try {
-				this.license = licenseValidator.validate(billingEntry.token, billingEntry.hubId);
+				this.license = licenseValidator.validate(settings.licenseKey, settings.hubId);
 			} catch (JWTVerificationException e) {
 				LOG.warn("License in database is invalid. Deleting entry. Please add the license over the REST API again.");
-				billingEntry.token = null;
-				billingEntry.persist();
+				settings.licenseKey = null;
+				settings.persist();
 			}
 		}
 	}
@@ -51,10 +51,10 @@ public class LicenseHolder {
 	public synchronized void set(String token) throws JWTVerificationException {
 		Objects.requireNonNull(token);
 
-		var billingEntry = Billing.<Billing>findAll().firstResult();
-		this.license = licenseValidator.validate(token, billingEntry.hubId);
-		billingEntry.token = token;
-		billingEntry.persist();
+		var settings = Settings.get();
+		this.license = licenseValidator.validate(token, settings.hubId);
+		settings.licenseKey = token;
+		settings.persist();
 	}
 
 	public DecodedJWT get() {
