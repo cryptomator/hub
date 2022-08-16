@@ -9,6 +9,6 @@ RUN /opt/keycloak/bin/kc.sh build
 FROM quay.io/keycloak/keycloak:19.0
 LABEL maintainer="info@skymatic.de"
 COPY --from=builder /opt/keycloak/ /opt/keycloak/
-COPY /themes/cryptomatorTheme /opt/keycloak/themes/cryptomatorTheme
+COPY /themes/cryptomator /opt/keycloak/themes/cryptomator
 WORKDIR /opt/keycloak
 ENTRYPOINT ["/opt/keycloak/bin/kc.sh"]

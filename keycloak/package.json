@@ -6,8 +6,8 @@
   "license": "AGPL-3.0-or-later",
   "private": true,
   "scripts": {
-    "build": "tailwindcss build -i tailwind.css -o ./themes/cryptomatorTheme/common/resources/css/tailwind.css",
-    "dev": "tailwindcss build -i tailwind.css -o ./themes/cryptomatorTheme/common/resources/css/tailwind.css --watch"
+    "build": "tailwindcss build -i tailwind.css -o ./themes/cryptomator/common/resources/css/tailwind.css",
+    "dev": "tailwindcss build -i tailwind.css -o ./themes/cryptomator/common/resources/css/tailwind.css --watch"
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.2",
