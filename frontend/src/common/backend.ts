@@ -11,7 +11,6 @@ const axiosBaseCfg: AxiosRequestConfig = {
   }
 };
 
-const axios = AxiosStatic.create(axiosBaseCfg);
 const axiosAuth = AxiosStatic.create(axiosBaseCfg);
 axiosAuth.interceptors.request.use(async request => {
   const auth = await authPromise;

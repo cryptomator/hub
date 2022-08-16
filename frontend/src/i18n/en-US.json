@@ -91,6 +91,9 @@
   "settings.version.title": "Server Info",
   "settings.version.hub.title": "Hub version",
   "settings.version.keycloak.title": "Keycloak version",
+  "settings.update.upToDate.description": "Hub is up-to-date",
+  "settings.update.updateExists.description": "Update to version {0} possible",
+  "settings.update.fetchingUpdatesFailed.description": "Unable to check for updates. Please check manually.",
 
   "vaultDetails.description.header": "Description",
   "vaultDetails.description.empty": "No description provided.",
