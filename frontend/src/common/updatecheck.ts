@@ -11,7 +11,7 @@ class UpdatesService {
     let config = {
       headers: {
         'Content-Type': 'application/json',
-        'User-Agent': 'Hub/' + localVersion,
+        'X-Hub-Version': localVersion,
         'X-Hub-Instance': 'TODO' //for future uses
       }
     };
