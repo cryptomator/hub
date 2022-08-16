@@ -1,7 +1,7 @@
 module.exports = {
   content: [
-    'themes/cryptomator/**/*.html',
-    'themes/cryptomator/**/theme.properties',
+    '../../login/*.html',
+    '../../login/theme.properties',
   ],
   theme: {
     extend: {
