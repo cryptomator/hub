@@ -107,13 +107,13 @@ const errorOnFetchingUpdates = ref<boolean>(false);
 
 const isBeta = computed(() => semver.prerelease(version.value?.hubVersion ?? '0.1.0') != null);
 const stableUpdateExists = computed(() => {
-  if (version.value && latestVersion.value) {
+  if (version.value && latestVersion.value?.stable) {
     return semver.lt(version.value?.hubVersion , latestVersion.value.stable ?? '0.1.0');
   }
   return false;
 });
 const betaUpdateExists = computed(() => {
-  if (version.value && latestVersion.value) {
+  if (version.value && latestVersion.value?.beta) {
     return semver.lt(version.value?.hubVersion , latestVersion.value.beta ?? '0.1.0-beta1');
   }
   return false;
