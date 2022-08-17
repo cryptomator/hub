@@ -106,7 +106,8 @@ router.beforeEach((to, from, next) => {
   if (to.meta.skipAuth) {
     next();
   } else {
-    const redirectUri = `${frontendBaseURL}${to.fullPath}`;
+    const relativePath = to.fullPath.startsWith('/') ? to.fullPath.substring(1) : to.fullPath;
+    const redirectUri = `${frontendBaseURL}${relativePath}`;
     authPromise.then(async auth => {
       await auth.loginIfRequired(redirectUri);
       next();
