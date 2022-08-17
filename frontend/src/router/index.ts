@@ -2,7 +2,7 @@ import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
 import authPromise from '../common/auth';
 import backend from '../common/backend';
 import { frontendBaseURL } from '../common/config';
-import Billing from '../components/Billing.vue';
+import AdminSettings from '../components/AdminSettings.vue';
 import CreateVault from '../components/CreateVault.vue';
 import DeviceList from '../components/DeviceList.vue';
 import LoginComponent from '../components/Login.vue';
@@ -69,8 +69,8 @@ const routes: RouteRecordRaw[] = [
         component: Settings
       },
       {
-        path: '/billing',
-        component: Billing,
+        path: '/admin',
+        component: AdminSettings,
         props: (route) => ({ token: route.query.token }),
         beforeEnter: async (_to, _from) => {
           const auth = await authPromise;
