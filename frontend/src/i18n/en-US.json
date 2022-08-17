@@ -23,7 +23,7 @@
 
   "billing.title": "Billing",
   "billing.serverInfo.title": "Server Info",
-  "billing.serverInfo.description": "This information is used to identify your Cryptomator Hub instance for your license.",
+  "billing.serverInfo.description": "The Hub ID is used to identify your Cryptomator Hub instance for your license. For support always state the displayed Hub and Keycloak version.",
   "billing.serverInfo.hubId.title": "Hub ID",
   "billing.licenseInfo.title": "License Info",
   "billing.licenseInfo.description": "Verify your license information. If you'd like to make changes or check your subscription status, press \"Manage Subscription\".",
@@ -85,7 +85,6 @@
   "nav.mobileMenu": "Open main menu",
 
   "settings.title": "Settings",
-  "settings.version.description": "For support always state the displayed Hub and Keycloak version.",
   "settings.general.title": "General",
   "settings.general.language.title": "Language",
   "settings.version.title": "Server Info",
