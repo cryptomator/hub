@@ -14,6 +14,7 @@ Using a different shell, build the web components:
 
 ```shell script
 cd themes/cryptomator/common/resources
+npm install
 npm run dev
 ```
 
@@ -21,9 +22,6 @@ The Cryptomator Theme is [based on the Keycloak theme](https://github.com/keyclo
 
 ## Release Builds
 
-```shell script
-cd themes/cryptomator/common/resources
-npm run build
-```
+Release builds are created for amd64 and arm64 by triggering [this GitHub Workflow](https://github.com/cryptomator/hub/actions/workflows/keycloak.yml).
 
-TODO: build docker image
+Please use a tag based on the base image, so we can easily know that e.g. `ghcr.io/cryptomator/keycloak:19.0.1.4` is based on `quay.io/keycloak/keycloak:19.0.1`.
