@@ -25,6 +25,10 @@
   "createVault.success.download": "Gezippten Tresorordner herunterladen",
   "createVault.success.return": "Zurück zur Tresorliste",
 
+  "admin.update.upToDate.description": "Hub ist aktuell",
+  "admin.update.updateExists.description": "Update auf Version {0} möglich",
+  "admin.update.fetchingUpdatesFailed.description": "Suche nach Updates ist fehlgeschlagen. Bitte prüfe manuell.",
+
   "deviceList.notFound": "Du hast keine registrierten Geräte.",
   "deviceList.title": "Geräte ({0})",
   "deviceList.deviceName": "Gerätename",
@@ -43,16 +47,13 @@
   "nav.profile.signedInAs": "Eingeloggt als",
   "nav.profile.devices": "Deine Geräte",
   "nav.profile.settings": "Einstellungen",
-  "nav.profile.billing": "Abrechnung",
+  "nav.profile.admin": "Administration",
   "nav.profile.signOut": "Abmelden",
   "nav.mobileMenu": "Hauptmenü öffnen",
 
   "settings.title": "Einstellungen",
   "settings.general.title": "Allgemein",
   "settings.general.language.title": "Sprache",
-  "settings.update.upToDate.description": "Hub ist aktuell",
-  "settings.update.updateExists.description": "Update auf Version {0} möglich",
-  "settings.update.fetchingUpdatesFailed.description": "Suche nach Updates ist fehlgeschlagen. Bitte prüfe manuell.",
 
 
   "vaultDetails.notFound": "Tresor nicht gefunden",

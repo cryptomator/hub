@@ -66,7 +66,7 @@
 
 <script setup lang="ts">
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
-import { CogIcon, CreditCardIcon, DesktopComputerIcon, LogoutIcon, MenuIcon, XIcon } from '@heroicons/vue/outline';
+import { AdjustmentsIcon, CogIcon, DesktopComputerIcon, LogoutIcon, MenuIcon, XIcon } from '@heroicons/vue/outline';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auth from '../common/auth';
@@ -86,7 +86,7 @@ const profileDropdownSections = {
 
   adminSection :
     [
-      { icon: CreditCardIcon, name: 'nav.profile.billing', to: '/billing' }
+      { icon: AdjustmentsIcon, name: 'nav.profile.admin', to: '/admin' }
     ],
 
   hubSection :
