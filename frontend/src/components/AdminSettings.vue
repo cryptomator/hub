@@ -1,6 +1,11 @@
 <template>
   <div v-if="billing == null || version == null">
-    {{ t('common.loading') }}
+    <div v-if="onFetchError == null">
+      {{ t('common.loading') }}
+    </div>
+    <div v-else>
+      <FetchError :error="onFetchError" :retry="fetchData"/>
+    </div>
   </div>
 
   <div v-else>
