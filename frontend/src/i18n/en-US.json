@@ -21,7 +21,7 @@
   "authenticateVaultAdminDialog.description": "Type in the vault admin password to manage it.",
   "authenticateVaultAdminDialog.masterPassword": "Vault Admin Password",
 
-  "admin.title": "Admin Settings",
+  "admin.title": "Admin",
   "admin.serverInfo.title": "Server Info",
   "admin.serverInfo.description": "The Hub ID is used to identify your Cryptomator Hub instance for your license. For support always state the displayed Hub and Keycloak version.",
   "admin.serverInfo.hubId.title": "Hub ID",

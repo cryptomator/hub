@@ -86,12 +86,12 @@ const profileDropdownSections = {
 
   adminSection :
     [
-      { icon: CogIcon, name: 'nav.profile.admin', to: '/admin' }
+      { icon: AdjustmentsIcon, name: 'nav.profile.admin', to: '/admin' }
     ],
 
   hubSection :
     [
-      { icon: AdjustmentsIcon, name: 'nav.profile.settings', to: '/settings' },
+      { icon: CogIcon, name: 'nav.profile.settings', to: '/settings' },
       { icon: LogoutIcon, name: 'nav.profile.signOut', to: '/logout' }
     ],
 
