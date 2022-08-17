@@ -2,6 +2,7 @@
   "id": "cryptomator",
   "realm": "cryptomator",
   "displayName": "Cryptomator Hub",
+  "loginTheme": "cryptomator",
   "enabled": true,
   "sslRequired": "external",
   "defaultRole": {
