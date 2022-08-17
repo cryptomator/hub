@@ -18,7 +18,7 @@ npm install
 npm run dev
 ```
 
-The Cryptomator Theme is [based on the Keycloak theme](https://github.com/keycloak/keycloak/tree/main/themes/src/main/resources/theme/keycloak). Use it as a reference.
+The Cryptomator Theme is [based on the Base theme](https://github.com/keycloak/keycloak/tree/main/themes/src/main/resources/theme/base). Use it as a reference.
 
 ## Release Builds
 
