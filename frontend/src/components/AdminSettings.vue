@@ -31,6 +31,27 @@
                 <div class="col-span-6 sm:col-span-3">
                   <label for="hubVersion" class="block text-sm font-medium text-gray-700">{{ t('settings.version.hub.title') }}</label>
                   <input id="hubVersion" v-model="version.hubVersion" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
+
+                  <p v-if="errorOnFetchingUpdates" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
+                    <ExclamationIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
+                    {{ t('settings.update.fetchingUpdatesFailed.description') }}
+                  </p>
+                  <p v-else-if="!stableUpdateExists && !betaUpdateExists" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
+                    <CheckIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
+                    {{ t('settings.update.upToDate.description') }}
+                  </p>
+                  <p v-else-if="stableUpdateExists" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
+                    <ExclamationIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
+                    {{ t('settings.update.updateExists.description', [latestVersion?.stable]) }}
+                  </p>
+                  <p v-else-if="betaUpdateExists && isBeta" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
+                    <ExclamationIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
+                    {{ t('settings.update.updateExists.description', [latestVersion?.beta]) }}
+                  </p>
+                  <p v-else-if="betaUpdateExists && !isBeta" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
+                    <InformationCircleIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
+                    {{ t('settings.update.updateExists.description', [latestVersion?.beta]) }}
+                  </p>
                 </div>
                 <div class="col-span-6 sm:col-span-3">
                   <label for="keycloakVersion" class="block text-sm font-medium text-gray-700">{{ t('settings.version.keycloak.title') }}</label>
@@ -159,10 +180,12 @@
 
 <script setup lang="ts">
 import { CheckIcon, ExclamationIcon, ExternalLinkIcon, XIcon } from '@heroicons/vue/solid';
-import { onMounted, ref } from 'vue';
+import semver from 'semver';
+import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { BillingDto, VersionDto } from '../common/backend';
 import { frontendBaseURL } from '../common/config';
+import { FetchUpdateError, LatestVersionDto, updateChecker } from '../common/updatecheck';
 
 const { t, d, locale } = useI18n({ useScope: 'global' });
 
@@ -171,8 +194,25 @@ const props = defineProps<{
 }>();
 
 const version = ref<VersionDto>();
+const latestVersion = ref<LatestVersionDto>();
 const billing = ref<BillingDto>();
 const now = ref<Date>(new Date());
+const onFetchError = ref<Error | null>();
+const errorOnFetchingUpdates = ref<boolean>(false);
+
+const isBeta = computed(() => semver.prerelease(version.value?.hubVersion ?? '0.1.0') != null);
+const stableUpdateExists = computed(() => {
+  if (version.value && latestVersion.value?.stable) {
+    return semver.lt(version.value?.hubVersion , latestVersion.value.stable ?? '0.1.0');
+  }
+  return false;
+});
+const betaUpdateExists = computed(() => {
+  if (version.value && latestVersion.value?.beta) {
+    return semver.lt(version.value?.hubVersion , latestVersion.value.beta ?? '0.1.0-beta1');
+  }
+  return false;
+});
 
 onMounted(async () => {
   if (props.token) {
@@ -192,11 +232,18 @@ async function setToken(token: string) {
 async function fetchData() {
   try {
     let versionDto = backend.version.get();
+    let versionAvailable = versionDto.then(versionDto => updateChecker.get(versionDto.hubVersion));
     let billingDto = backend.billing.get();
     billing.value = await billingDto;
     version.value = await versionDto;
+    latestVersion.value = await versionAvailable;
   } catch (err) {
-    console.error('Retrieving server information failed.', err);
+    if (err instanceof FetchUpdateError) {
+      errorOnFetchingUpdates.value = true;
+    } else {
+      console.error('Retrieving server information failed.', err);
+      onFetchError.value = err instanceof Error ? err : new Error('Unknown Error');
+    }
   }
 }
 
