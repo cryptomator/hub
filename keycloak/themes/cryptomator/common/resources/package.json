@@ -12,5 +12,8 @@
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.2",
     "tailwindcss": "^3.1.8"
+  },
+  "dependencies": {
+    "@fortawesome/fontawesome-free": "^6.1.2"
   }
 }
