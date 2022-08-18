@@ -256,6 +256,6 @@ async function fetchData() {
 function manageSubscription() {
   const returnUrl = `${frontendBaseURL}admin`;
   const languagePathComponent = locale.value == 'en' ? '' : `${locale.value}/`;
-  window.open(`https://cryptomator.org/${languagePathComponent}hub/admin/?hub_id=${admin.value?.hubId}&return_url=${encodeURIComponent(returnUrl)}`, '_self');
+  window.open(`https://cryptomator.org/${languagePathComponent}hub/billing/?hub_id=${admin.value?.hubId}&return_url=${encodeURIComponent(returnUrl)}`, '_self');
 }
 </script>
