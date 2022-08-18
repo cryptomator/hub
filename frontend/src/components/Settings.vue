@@ -35,10 +35,10 @@
         <div class="md:grid md:grid-cols-3 md:gap-6">
           <div class="md:col-span-1">
             <h3 class="text-lg font-medium leading-6 text-gray-900">
-              {{ t('settings.version.title') }}
+              {{ t('settings.serverInfo.title') }}
             </h3>
             <p class="mt-1 text-sm text-gray-500">
-              {{ t('settings.version.description') }}
+              {{ t('settings.serverInfo.description') }}
             </p>
           </div>
           <div class="mt-5 md:mt-0 md:col-span-2">
@@ -52,11 +52,11 @@
             </div>
             <div v-else class="grid grid-cols-6 gap-6">
               <div class="col-span-6 sm:col-span-3">
-                <label for="hubVersion" class="block text-sm font-medium text-gray-700">{{ t('settings.version.hub.title') }}</label>
+                <label for="hubVersion" class="block text-sm font-medium text-gray-700">{{ t('settings.serverInfo.hubVersion.title') }}</label>
                 <input id="hubVersion" v-model="version.hubVersion" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
               </div>
               <div class="col-span-6 sm:col-span-3">
-                <label for="keycloakVersion" class="block text-sm font-medium text-gray-700">{{ t('settings.version.keycloak.title') }}</label>
+                <label for="keycloakVersion" class="block text-sm font-medium text-gray-700">{{ t('settings.serverInfo.keycloakVersion.title') }}</label>
                 <input id="keycloakVersion" v-model="version.keycloakVersion" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
               </div>
             </div>

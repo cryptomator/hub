@@ -34,32 +34,32 @@
                   <input id="hubId" v-model="admin.hubId" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
                 </div>
                 <div class="col-span-6 sm:col-span-3">
-                  <label for="hubVersion" class="block text-sm font-medium text-gray-700">{{ t('settings.version.hub.title') }}</label>
+                  <label for="hubVersion" class="block text-sm font-medium text-gray-700">{{ t('admin.serverInfo.hubVersion.title') }}</label>
                   <input id="hubVersion" v-model="version.hubVersion" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
 
                   <p v-if="errorOnFetchingUpdates" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
                     <ExclamationIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
-                    {{ t('settings.update.fetchingUpdatesFailed.description') }}
+                    {{ t('admin.serverInfo.hubVersion.description.fetchingUpdatesFailed') }}
                   </p>
                   <p v-else-if="!stableUpdateExists && !betaUpdateExists" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
                     <CheckIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
-                    {{ t('settings.update.upToDate.description') }}
+                    {{ t('admin.serverInfo.hubVersion.description.upToDate') }}
                   </p>
                   <p v-else-if="stableUpdateExists" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
                     <ExclamationIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
-                    {{ t('settings.update.updateExists.description', [latestVersion?.stable]) }}
+                    {{ t('admin.serverInfo.hubVersion.description.updateExists', [latestVersion?.stable]) }}
                   </p>
                   <p v-else-if="betaUpdateExists && isBeta" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
                     <ExclamationIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
-                    {{ t('settings.update.updateExists.description', [latestVersion?.beta]) }}
+                    {{ t('admin.serverInfo.hubVersion.description.updateExists', [latestVersion?.beta]) }}
                   </p>
                   <p v-else-if="betaUpdateExists && !isBeta" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
                     <InformationCircleIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
-                    {{ t('settings.update.updateExists.description', [latestVersion?.beta]) }}
+                    {{ t('admin.serverInfo.hubVersion.description.updateExists', [latestVersion?.beta]) }}
                   </p>
                 </div>
                 <div class="col-span-6 sm:col-span-3">
-                  <label for="keycloakVersion" class="block text-sm font-medium text-gray-700">{{ t('settings.version.keycloak.title') }}</label>
+                  <label for="keycloakVersion" class="block text-sm font-medium text-gray-700">{{ t('admin.serverInfo.keycloakVersion.title') }}</label>
                   <input id="keycloakVersion" v-model="version.keycloakVersion" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
                 </div>
               </div>

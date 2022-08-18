@@ -23,7 +23,7 @@
                     <p class="text-sm text-gray-500">
                       {{ t('authenticateVaultAdminDialog.description') }}
                     </p>
-                    <input id="password" v-model="password" type="password" name="password" class="mt-2 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': isWrongPassword }" :placeholder="t('authenticateVaultAdminDialog.masterPassword')" />
+                    <input id="password" v-model="password" type="password" name="password" class="mt-2 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': isWrongPassword }" :placeholder="t('authenticateVaultAdminDialog.password')" />
                     <p v-if="isWrongPassword" class="mt-2 text-sm text-red-500 text-left">{{ t('common.error.wrongPassword') }}</p>
                   </div>
                 </div>
