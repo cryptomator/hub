@@ -107,7 +107,7 @@ router.beforeEach((to, from, next) => {
     next();
   } else {
     const relativePath = to.fullPath.startsWith('/') ? to.fullPath.substring(1) : to.fullPath;
-    const redirectUri = `${frontendBaseURL}${relativePath}`;
+    const redirectUri = `${frontendBaseURL}${relativePath}?login=true`;
     authPromise.then(async auth => {
       await auth.loginIfRequired(redirectUri);
       next();
