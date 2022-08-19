@@ -3,16 +3,19 @@ package org.cryptomator.hub.api;
 import com.radcortez.flyway.test.annotation.DataSource;
 import com.radcortez.flyway.test.annotation.FlywayTest;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.mockito.InjectMock;
 import io.quarkus.test.security.TestSecurity;
 import io.quarkus.test.security.oidc.Claim;
 import io.quarkus.test.security.oidc.OidcSecurity;
 import io.restassured.RestAssured;
+import org.cryptomator.hub.RemoteUserPuller;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.mockito.Mockito;
 
 import static io.restassured.RestAssured.when;
 import static org.hamcrest.CoreMatchers.hasItems;
@@ -37,9 +40,13 @@ public class UsersResourceTest {
 	})
 	public class AsAuthorzedUser1 {
 
+		@InjectMock
+		RemoteUserPuller remoteUserPuller;
+
 		@Test
 		@DisplayName("PUT /users/me returns 201")
 		public void testSyncMe() {
+			Mockito.doNothing().when(remoteUserPuller).syncSingleUser(Mockito.anyString());
 			when().put("/users/me")
 					.then().statusCode(201);
 		}
