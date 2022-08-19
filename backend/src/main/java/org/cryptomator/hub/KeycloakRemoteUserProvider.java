@@ -28,6 +28,15 @@ public class KeycloakRemoteUserProvider implements RemoteUserProvider {
 	SyncerConfig syncerConfig;
 
 	@Override
+	public User user(String id) {
+		try (Keycloak keycloak = Keycloak.getInstance(syncerConfig.getKeycloakUrl(), syncerConfig.getKeycloakRealm(), syncerConfig.getUsername(), syncerConfig.getPassword(), syncerConfig.getKeycloakClientId())) {
+			return Optional.ofNullable(keycloak.realm(syncerConfig.getKeycloakRealm()).users().get(id).toRepresentation()) //
+					.map(this::mapToUser) //
+					.orElse(null);
+		}
+	}
+
+	@Override
 	public List<User> users() {
 		try (Keycloak keycloak = Keycloak.getInstance(syncerConfig.getKeycloakUrl(), syncerConfig.getKeycloakRealm(), syncerConfig.getUsername(), syncerConfig.getPassword(), syncerConfig.getKeycloakClientId())) {
 			return users(keycloak.realm(syncerConfig.getKeycloakRealm()));

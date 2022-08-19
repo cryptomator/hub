@@ -8,6 +8,13 @@ import java.util.List;
 public interface RemoteUserProvider {
 
 	/**
+	 * Gets a single user with the given id
+	 * @param id the user id
+	 * @return the user or null, if a user with the given id does not exists
+	 */
+	User user(String id);
+
+	/**
 	 * Get all remote users
 	 * @return List of users
 	 */
