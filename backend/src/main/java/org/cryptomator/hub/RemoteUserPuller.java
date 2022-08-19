@@ -20,6 +20,33 @@ public class RemoteUserPuller {
 	@Inject
 	RemoteUserProvider remoteUserProvider;
 
+
+	@Transactional
+	public void syncSingleUser(String userId) {
+		var kcUser = remoteUserProvider.user(userId);
+		if(kcUser == null) {
+			User.deleteById(userId);
+			//TODO: Does the user stay in the group table? If yes, is this bad?
+			return;
+		}
+
+		//user exists remotely
+		var dbUser = User.<User>findById(userId);
+		if(dbUser == null) {
+			kcUser.persist();
+		} else {
+			dbUser.pictureUrl = kcUser.pictureUrl;
+			dbUser.name = kcUser.name;
+			dbUser.email = kcUser.email;
+			dbUser.persist();
+		}
+		var databaseGroups = Group.<Group>findAll().stream().collect(Collectors.toMap(g -> g.id, Function.identity()));
+		var keycloakGroups = remoteUserProvider.groups().stream().collect(Collectors.toMap(g -> g.id, Function.identity()));
+		syncAddedAuthorities(keycloakGroups, databaseGroups);
+		var deletedGroups = syncDeletedAuthorities(keycloakGroups, databaseGroups);
+		syncUpdatedGroups(keycloakGroups, databaseGroups, deletedGroups);
+	}
+
 	@Scheduled(every = "{hub.keycloak.syncer-period}")
 	void sync() {
 		var keycloakGroups = remoteUserProvider.groups().stream().collect(Collectors.toMap(g -> g.id, Function.identity()));

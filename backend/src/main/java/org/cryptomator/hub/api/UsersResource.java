@@ -2,6 +2,7 @@ package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.cryptomator.hub.RemoteUserProvider;
+import org.cryptomator.hub.RemoteUserPuller;
 import org.cryptomator.hub.entities.AccessToken;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.User;
@@ -34,15 +35,18 @@ public class UsersResource {
 	JsonWebToken jwt;
 
 	@Inject
+	RemoteUserPuller remoteUserPuller;
+
+	@Inject
 	RemoteUserProvider remoteUserProvider;
 
 	@PUT
 	@Path("/me")
 	@RolesAllowed("user")
 	@Operation(summary = "sync the logged-in user from the remote user provider to hub")
-	@APIResponse(responseCode = "201", description = "user created")
+	@APIResponse(responseCode = "201", description = "user created") //TODO: depending on the state, the user may already exist!
 	public Response syncMe() {
-		// TODO sync this user from the remote user provider against hub to explicitly update e.g. group membership after user was logged in
+		remoteUserPuller.syncSingleUser(jwt.getSubject());
 		return Response.created(URI.create(".")).build();
 	}
 
