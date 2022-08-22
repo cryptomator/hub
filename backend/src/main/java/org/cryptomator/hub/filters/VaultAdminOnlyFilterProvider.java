@@ -1,7 +1,9 @@
 package org.cryptomator.hub.filters;
 
 import com.auth0.jwt.JWT;
+import com.auth0.jwt.RegisteredClaims;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.IncorrectClaimException;
 import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.exceptions.TokenExpiredException;
@@ -48,6 +50,12 @@ public class VaultAdminOnlyFilterProvider implements ContainerRequestFilter {
 			verifier.verify(clientJWT);
 		} catch (TokenExpiredException e) {
 			throw new VaultAdminTokenExpiredException("Token of Client-JWT expired");
+		} catch (IncorrectClaimException e) {
+			if (e.getClaimName().equals(RegisteredClaims.ISSUED_AT) || e.getClaimName().equals(RegisteredClaims.NOT_BEFORE)) {
+				throw new VaultAdminTokenNotYetValidException("Token of Client-JWT not yet valid");
+			} else {
+				throw new VaultAdminValidationFailedException("Incorrect claim exception");
+			}
 		} catch (JWTVerificationException e) {
 			throw new VaultAdminValidationFailedException("Different key used to sign the Client-JWT");
 		}

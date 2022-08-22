@@ -95,17 +95,29 @@ class VaultAdminOnlyFilterProviderTestIT {
 	}
 
 	@Test
-	@DisplayName("validate future Client-JWT header")
-	public void testClientJWTInFutureHeader() {
+	@DisplayName("validate future issue at Client-JWT header")
+	public void testClientJWTInFutureIssueAtHeader() {
 		var pathParams = new MultivaluedHashMap<String, String>();
 		pathParams.add(VaultAdminOnlyFilterProvider.VAULT_ID, "vault2");
 
-		Mockito.when(context.getHeaderString(VaultAdminOnlyFilterProvider.CLIENT_JWT)).thenReturn(VaultAdminOnlyFilterProviderTestConstants.FUTURE_TOKEN_VAULT_2);
+		Mockito.when(context.getHeaderString(VaultAdminOnlyFilterProvider.CLIENT_JWT)).thenReturn(VaultAdminOnlyFilterProviderTestConstants.FUTURE_ISSUE_AT_TOKEN_VAULT_2);
 		Mockito.when(context.getUriInfo()).thenReturn(uriInfo);
 		Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
 
-		// TODO to be fixed when #191 is implemented, should throw VaultAdminTokenNotYetValidException (HTTP status code 403)
-		Assertions.assertThrows(VaultAdminValidationFailedException.class, () -> vaultAdminOnlyFilterProvider.filter(context));
+		Assertions.assertThrows(VaultAdminTokenNotYetValidException.class, () -> vaultAdminOnlyFilterProvider.filter(context));
+	}
+
+	@Test
+	@DisplayName("validate future not before Client-JWT header")
+	public void testClientJWTInFutureNotBeforeHeader() {
+		var pathParams = new MultivaluedHashMap<String, String>();
+		pathParams.add(VaultAdminOnlyFilterProvider.VAULT_ID, "vault2");
+
+		Mockito.when(context.getHeaderString(VaultAdminOnlyFilterProvider.CLIENT_JWT)).thenReturn(VaultAdminOnlyFilterProviderTestConstants.FUTURE_NOT_BEFORE_TOKEN_VAULT_2);
+		Mockito.when(context.getUriInfo()).thenReturn(uriInfo);
+		Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
+
+		Assertions.assertThrows(VaultAdminTokenNotYetValidException.class, () -> vaultAdminOnlyFilterProvider.filter(context));
 	}
 
 	@Test

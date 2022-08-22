@@ -66,10 +66,15 @@ class VaultAdminOnlyFilterProviderTest {
 		}
 
 		@Test
-		@DisplayName("validate future clientJWT")
-		public void testFutureClientJWT() {
-			// TODO to be fixed when #191 is implemented, should throw VaultAdminTokenNotYetValidException (HTTP status code 403)
-			Assertions.assertThrows(VaultAdminValidationFailedException.class, () -> vaultAdminOnlyFilterProvider.verify(verifier(), JWT.decode(VaultAdminOnlyFilterProviderTestConstants.FUTURE_TOKEN_VAULT_2)));
+		@DisplayName("validate future issue at clientJWT")
+		public void testFutureIssueAtClientJWT() {
+			Assertions.assertThrows(VaultAdminTokenNotYetValidException.class, () -> vaultAdminOnlyFilterProvider.verify(verifier(), JWT.decode(VaultAdminOnlyFilterProviderTestConstants.FUTURE_ISSUE_AT_TOKEN_VAULT_2)));
+		}
+
+		@Test
+		@DisplayName("validate future not before clientJWT")
+		public void testFutureNotBeforeClientJWT() {
+			Assertions.assertThrows(VaultAdminTokenNotYetValidException.class, () -> vaultAdminOnlyFilterProvider.verify(verifier(), JWT.decode(VaultAdminOnlyFilterProviderTestConstants.FUTURE_NOT_BEFORE_TOKEN_VAULT_2)));
 		}
 
 		private com.auth0.jwt.interfaces.JWTVerifier verifier() {
