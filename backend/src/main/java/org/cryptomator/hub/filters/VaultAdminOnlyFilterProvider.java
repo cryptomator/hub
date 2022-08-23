@@ -1,10 +1,15 @@
 package org.cryptomator.hub.filters;
 
 import com.auth0.jwt.JWT;
+import com.auth0.jwt.RegisteredClaims;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.IncorrectClaimException;
 import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.exceptions.TokenExpiredException;
+import com.auth0.jwt.interfaces.DecodedJWT;
+import com.auth0.jwt.interfaces.JWTVerifier;
+import com.auth0.jwt.interfaces.Verification;
 import org.cryptomator.hub.entities.Vault;
 
 import javax.ws.rs.NotFoundException;
@@ -28,21 +33,45 @@ public class VaultAdminOnlyFilterProvider implements ContainerRequestFilter {
 	@Override
 	public void filter(ContainerRequestContext containerRequestContext) {
 		var vaultIdQueryParameter = getVaultIdQueryParameter(containerRequestContext);
-		var clientJwt = getClientJWT(containerRequestContext);
-		var unveridifedVaultId = getUnverifiedVaultId(clientJwt);
+		var clientJWT = getUnverifiedClientJWT(containerRequestContext);
+		var unveridifedVaultId = getUnverifiedVaultId(clientJWT);
 		if (vaultIdQueryParameter.equals(unveridifedVaultId)) {
 			var vault = Vault.<Vault>findByIdOptional(unveridifedVaultId).orElseThrow(NotFoundException::new);
 			var algorithm = Algorithm.ECDSA384(decodePublicKey(vault.authenticationPublicKey), null);
-			try {
-				JWT.require(algorithm).build().verify(clientJwt);
-			} catch (TokenExpiredException e) {
-				throw new VaultAdminTokenExpiredException("Token of Client-JWT expired");
-			} catch (JWTVerificationException e) {
-				throw new VaultAdminValidationFailedException("Different key used to sign the Client-JWT");
-			}
+			verify(buildVerifier(algorithm), clientJWT);
 		} else {
 			throw new VaultAdminValidationFailedException("Other vaultId provided");
 		}
+	}
+
+	//visible for testing
+	void verify(JWTVerifier verifier, DecodedJWT clientJWT) {
+		try {
+			verifier.verify(clientJWT);
+		} catch (TokenExpiredException e) {
+			throw new VaultAdminTokenExpiredException("Token of Client-JWT expired");
+		} catch (IncorrectClaimException e) {
+			if (e.getClaimName().equals(RegisteredClaims.ISSUED_AT) || e.getClaimName().equals(RegisteredClaims.NOT_BEFORE)) {
+				throw new VaultAdminTokenNotYetValidException("Token of Client-JWT not yet valid");
+			} else {
+				throw new VaultAdminValidationFailedException("Incorrect claim exception");
+			}
+		} catch (JWTVerificationException e) {
+			throw new VaultAdminValidationFailedException("Different key used to sign the Client-JWT");
+		}
+	}
+
+	//visible for testing
+	JWTVerifier buildVerifier(Algorithm algorithm) {
+		return verification(algorithm).build();
+	}
+
+	//visible for testing
+	Verification verification(Algorithm algorithm) {
+		return JWT.require(algorithm) //
+				.withClaim(RegisteredClaims.ISSUED_AT, (claim, jwt) -> jwt.getIssuedAt() != null) //
+				.withClaim(RegisteredClaims.NOT_BEFORE, (claim, jwt) -> jwt.getNotBefore() != null) //
+				.withClaim(RegisteredClaims.EXPIRES_AT, (claim, jwt) -> jwt.getExpiresAt() != null);
 	}
 
 	//visible for testing
@@ -55,30 +84,31 @@ public class VaultAdminOnlyFilterProvider implements ContainerRequestFilter {
 	}
 
 	//visible for testing
-	String getClientJWT(ContainerRequestContext containerRequestContext) {
+	DecodedJWT getUnverifiedClientJWT(ContainerRequestContext containerRequestContext) {
 		var clientJwt = containerRequestContext.getHeaderString(CLIENT_JWT);
 		if (clientJwt != null) {
-			return clientJwt;
+			try {
+				return JWT.decode(clientJwt);
+			} catch (JWTDecodeException e) {
+				throw new VaultAdminValidationFailedException("Malformed Client-JWT provided");
+			}
 		} else {
 			throw new VaultAdminNotProvidedException("Client-JWT not provided");
 		}
 	}
 
 	//visible for testing
-	String getUnverifiedVaultId(String clientJwt) {
-		try {
-			var unveridifedVaultId = JWT.decode(clientJwt).getHeaderClaim("vaultId");
-			if (!unveridifedVaultId.isNull() && unveridifedVaultId.asString() != null) {
-				return unveridifedVaultId.asString();
-			} else {
-				throw new VaultAdminValidationFailedException("No Client-JWT provided");
-			}
-		} catch (JWTDecodeException e) {
-			throw new VaultAdminValidationFailedException("Malformed Client-JWT provided");
+	String getUnverifiedVaultId(DecodedJWT clientJWT) {
+		var unveridifedVaultId = clientJWT.getHeaderClaim("vaultId");
+		if (!unveridifedVaultId.isNull() && unveridifedVaultId.asString() != null) {
+			return unveridifedVaultId.asString();
+		} else {
+			throw new VaultAdminValidationFailedException("No Client-JWT provided");
 		}
 	}
 
-	private static ECPublicKey decodePublicKey(String pemEncodedPublicKey) {
+	//visible for testing
+	static ECPublicKey decodePublicKey(String pemEncodedPublicKey) {
 		try {
 			var publicKeySpec = new X509EncodedKeySpec(Base64.getDecoder().decode(pemEncodedPublicKey));
 

@@ -68,7 +68,7 @@ public class VaultResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "list vault members", description = "list all users that this vault has been shared with")
 	@APIResponse(responseCode = "401", description = "Client-JWT not provided")
-	@APIResponse(responseCode = "403", description = "Client-JWT expired")
+	@APIResponse(responseCode = "403", description = "Client-JWT expired or not yet valid")
 	@APIResponse(responseCode = "404", description = "vault not found")
 	public List<AuthorityDto> getMembers(@PathParam("vaultId") String vaultId) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
@@ -94,7 +94,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "201", description = "member added")
 	@APIResponse(responseCode = "401", description = "Client-JWT not provided")
 	@APIResponse(responseCode = "402", description = "all seats in license used")
-	@APIResponse(responseCode = "403", description = "Client-JWT expired")
+	@APIResponse(responseCode = "403", description = "Client-JWT expired or not yet valid")
 	@APIResponse(responseCode = "404", description = "vault or user not found")
 	@APIResponse(responseCode = "409", description = "user is already a direct member of the vault")
 	@ActiveLicense
@@ -127,7 +127,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "201", description = "member added")
 	@APIResponse(responseCode = "401", description = "Client-JWT not provided")
 	@APIResponse(responseCode = "402", description = "used seats + (number of users in group not occupying a seats) exceeds number of total avaible seats in license")
-	@APIResponse(responseCode = "403", description = "Client-JWT expired")
+	@APIResponse(responseCode = "403", description = "Client-JWT expired or not yet valid")
 	@APIResponse(responseCode = "404", description = "vault or group not found")
 	@APIResponse(responseCode = "409", description = "group is already a direct member of the vault")
 	@ActiveLicense
@@ -156,7 +156,7 @@ public class VaultResource {
 	@Operation(summary = "remove a member from this vault", description = "revokes the given user's access rights from this vault. If the given user is no member, the request is a no-op.")
 	@APIResponse(responseCode = "204", description = "member removed")
 	@APIResponse(responseCode = "401", description = "Client-JWT not provided")
-	@APIResponse(responseCode = "403", description = "Client-JWT expired")
+	@APIResponse(responseCode = "403", description = "Client-JWT expired or not yet valid")
 	@APIResponse(responseCode = "404", description = "vault not found")
 	public Response removeMember(@PathParam("vaultId") String vaultId, @PathParam("userId") String userId) {
 		return removeAutority(vaultId, userId);
@@ -171,7 +171,7 @@ public class VaultResource {
 	@Operation(summary = "remove a group from this vault", description = "revokes the given group's access rights from this vault. If the given group is no member, the request is a no-op.")
 	@APIResponse(responseCode = "204", description = "member removed")
 	@APIResponse(responseCode = "401", description = "Client-JWT not provided")
-	@APIResponse(responseCode = "403", description = "Client-JWT expired")
+	@APIResponse(responseCode = "403", description = "Client-JWT expired or not yet valid")
 	@APIResponse(responseCode = "404", description = "vault not found")
 	public Response removeGroup(@PathParam("vaultId") String vaultId, @PathParam("groupId") String groupId) {
 		return removeAutority(vaultId, groupId);
@@ -192,7 +192,7 @@ public class VaultResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "list devices requiring access rights", description = "lists all devices owned by vault members, that don't have a device-specific masterkey yet")
 	@APIResponse(responseCode = "401", description = "Client-JWT not provided")
-	@APIResponse(responseCode = "403", description = "Client-JWT expired")
+	@APIResponse(responseCode = "403", description = "Client-JWT expired or not yet valid")
 	@APIResponse(responseCode = "404", description = "vault not found")
 	public List<DeviceResource.DeviceDto> getDevicesRequiringAccessGrant(@PathParam("vaultId") String vaultId) {
 		return Device.findRequiringAccessGrant(vaultId).map(DeviceResource.DeviceDto::fromEntity).toList();
@@ -234,7 +234,7 @@ public class VaultResource {
 	@Operation(summary = "adds a device-specific masterkey")
 	@APIResponse(responseCode = "201", description = "device-specific key stored")
 	@APIResponse(responseCode = "401", description = "Client-JWT not provided")
-	@APIResponse(responseCode = "403", description = "Client-JWT expired")
+	@APIResponse(responseCode = "403", description = "Client-JWT expired or not yet valid")
 	@APIResponse(responseCode = "404", description = "vault or device not found")
 	@APIResponse(responseCode = "409", description = "Access to vault for device already granted")
 	public Response grantAccess(@PathParam("vaultId") String vaultId, @PathParam("deviceId") String deviceId, String jwe) {
