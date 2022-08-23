@@ -38,9 +38,9 @@ class VaultAdminOnlyFilterProviderTestIT {
 		// Decorate verifier to use fixed time
 		Mockito.doAnswer(invocationOnMock -> {
 			Algorithm algorithm = invocationOnMock.getArgument(0);
-			var verifier = (JWTVerifier.BaseVerification) vaultAdminOnlyFilterProvider.buildVerifier(algorithm);
+			var verifier = (JWTVerifier.BaseVerification) vaultAdminOnlyFilterProvider.verification(algorithm);
 			return verifier.build(VaultAdminOnlyFilterProviderTestConstants.NOW);
-		}).when(vaultAdminOnlyFilterProvider).buildVerification(Mockito.any());
+		}).when(vaultAdminOnlyFilterProvider).buildVerifier(Mockito.any());
 	}
 
 	@Test

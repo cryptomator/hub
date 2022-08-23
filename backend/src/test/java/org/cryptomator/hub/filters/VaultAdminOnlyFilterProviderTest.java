@@ -42,9 +42,9 @@ class VaultAdminOnlyFilterProviderTest {
 		// Decorate verifier to use fixed time
 		Mockito.doAnswer(invocationOnMock -> {
 			Algorithm algorithm = invocationOnMock.getArgument(0);
-			var verifier = (JWTVerifier.BaseVerification) vaultAdminOnlyFilterProvider.buildVerifier(algorithm);
+			var verifier = (JWTVerifier.BaseVerification) vaultAdminOnlyFilterProvider.verification(algorithm);
 			return verifier.build(VaultAdminOnlyFilterProviderTestConstants.NOW);
-		}).when(vaultAdminOnlyFilterProvider).buildVerification(Mockito.any());
+		}).when(vaultAdminOnlyFilterProvider).buildVerifier(Mockito.any());
 	}
 
 	@Nested
@@ -102,7 +102,7 @@ class VaultAdminOnlyFilterProviderTest {
 		}
 
 		private com.auth0.jwt.interfaces.JWTVerifier verifier() {
-			return vaultAdminOnlyFilterProvider.buildVerification(Algorithm.ECDSA384(VaultAdminOnlyFilterProvider.decodePublicKey(PUBLIC_KEY_VAULT_2), null));
+			return vaultAdminOnlyFilterProvider.buildVerifier(Algorithm.ECDSA384(VaultAdminOnlyFilterProvider.decodePublicKey(PUBLIC_KEY_VAULT_2), null));
 		}
 	}
 

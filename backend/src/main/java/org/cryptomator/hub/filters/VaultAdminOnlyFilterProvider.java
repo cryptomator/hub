@@ -38,7 +38,7 @@ public class VaultAdminOnlyFilterProvider implements ContainerRequestFilter {
 		if (vaultIdQueryParameter.equals(unveridifedVaultId)) {
 			var vault = Vault.<Vault>findByIdOptional(unveridifedVaultId).orElseThrow(NotFoundException::new);
 			var algorithm = Algorithm.ECDSA384(decodePublicKey(vault.authenticationPublicKey), null);
-			verify(buildVerification(algorithm), clientJWT);
+			verify(buildVerifier(algorithm), clientJWT);
 		} else {
 			throw new VaultAdminValidationFailedException("Other vaultId provided");
 		}
@@ -62,12 +62,12 @@ public class VaultAdminOnlyFilterProvider implements ContainerRequestFilter {
 	}
 
 	//visible for testing
-	JWTVerifier buildVerification(Algorithm algorithm) {
-		return buildVerifier(algorithm).build();
+	JWTVerifier buildVerifier(Algorithm algorithm) {
+		return verification(algorithm).build();
 	}
 
 	//visible for testing
-	Verification buildVerifier(Algorithm algorithm) {
+	Verification verification(Algorithm algorithm) {
 		return JWT.require(algorithm) //
 				.withClaim(RegisteredClaims.ISSUED_AT, (claim, jwt) -> jwt.getIssuedAt() != null) //
 				.withClaim(RegisteredClaims.NOT_BEFORE, (claim, jwt) -> jwt.getNotBefore() != null) //
