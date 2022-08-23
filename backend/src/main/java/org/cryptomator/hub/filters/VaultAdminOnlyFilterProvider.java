@@ -33,7 +33,7 @@ public class VaultAdminOnlyFilterProvider implements ContainerRequestFilter {
 	@Override
 	public void filter(ContainerRequestContext containerRequestContext) {
 		var vaultIdQueryParameter = getVaultIdQueryParameter(containerRequestContext);
-		var clientJWT = getClientJWT(containerRequestContext);
+		var clientJWT = getUnverifiedClientJWT(containerRequestContext);
 		var unveridifedVaultId = getUnverifiedVaultId(clientJWT);
 		if (vaultIdQueryParameter.equals(unveridifedVaultId)) {
 			var vault = Vault.<Vault>findByIdOptional(unveridifedVaultId).orElseThrow(NotFoundException::new);
@@ -68,7 +68,10 @@ public class VaultAdminOnlyFilterProvider implements ContainerRequestFilter {
 
 	//visible for testing
 	Verification buildVerifier(Algorithm algorithm) {
-		return JWT.require(algorithm);
+		return JWT.require(algorithm) //
+				.withClaim(RegisteredClaims.ISSUED_AT, (claim, jwt) -> jwt.getIssuedAt() != null) //
+				.withClaim(RegisteredClaims.NOT_BEFORE, (claim, jwt) -> jwt.getNotBefore() != null) //
+				.withClaim(RegisteredClaims.EXPIRES_AT, (claim, jwt) -> jwt.getExpiresAt() != null);
 	}
 
 	//visible for testing
@@ -81,16 +84,11 @@ public class VaultAdminOnlyFilterProvider implements ContainerRequestFilter {
 	}
 
 	//visible for testing
-	DecodedJWT getClientJWT(ContainerRequestContext containerRequestContext) {
+	DecodedJWT getUnverifiedClientJWT(ContainerRequestContext containerRequestContext) {
 		var clientJwt = containerRequestContext.getHeaderString(CLIENT_JWT);
 		if (clientJwt != null) {
 			try {
-				var jwt = JWT.decode(clientJwt);
-				if (jwt.getIssuedAt() != null && jwt.getNotBefore() != null && jwt.getExpiresAt() != null) {
-					return jwt;
-				} else {
-					throw new VaultAdminValidationFailedException("No dates provided");
-				}
+				return JWT.decode(clientJwt);
 			} catch (JWTDecodeException e) {
 				throw new VaultAdminValidationFailedException("Malformed Client-JWT provided");
 			}

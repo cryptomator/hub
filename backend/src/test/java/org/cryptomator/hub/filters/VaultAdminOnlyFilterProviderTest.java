@@ -77,6 +77,30 @@ class VaultAdminOnlyFilterProviderTest {
 			Assertions.assertThrows(VaultAdminTokenNotYetValidException.class, () -> vaultAdminOnlyFilterProvider.verify(verifier(), JWT.decode(VaultAdminOnlyFilterProviderTestConstants.FUTURE_NOT_BEFORE_TOKEN_VAULT_2)));
 		}
 
+		@Test
+		@DisplayName("validate no dates in Client-JWT")
+		public void testMalformedClientJWTNoDates() {
+			Assertions.assertThrows(VaultAdminValidationFailedException.class, () -> vaultAdminOnlyFilterProvider.verify(verifier(), JWT.decode(NO_DATES_TOKEN_VAULT_2)));
+		}
+
+		@Test
+		@DisplayName("validate no issued date in Client-JWT")
+		public void testMalformedClientJWTNoIssueDate() {
+			Assertions.assertThrows(VaultAdminValidationFailedException.class, () -> vaultAdminOnlyFilterProvider.verify(verifier(), JWT.decode(NO_ISSUED_DATE_TOKEN_VAULT_2)));
+		}
+
+		@Test
+		@DisplayName("validate no not before date in Client-JWT")
+		public void testMalformedClientJWTNoNotBeforeDate() {
+			Assertions.assertThrows(VaultAdminValidationFailedException.class, () -> vaultAdminOnlyFilterProvider.verify(verifier(), JWT.decode(NO_NOT_BEFORE_DATE_TOKEN_VAULT_2)));
+		}
+
+		@Test
+		@DisplayName("validate no expires date in Client-JWT")
+		public void testMalformedClientJWTNoExpiresDate() {
+			Assertions.assertThrows(VaultAdminValidationFailedException.class, () -> vaultAdminOnlyFilterProvider.verify(verifier(), JWT.decode(NO_EXPIRES_DATE_TOKEN_VAULT_2)));
+		}
+
 		private com.auth0.jwt.interfaces.JWTVerifier verifier() {
 			return vaultAdminOnlyFilterProvider.buildVerification(Algorithm.ECDSA384(VaultAdminOnlyFilterProvider.decodePublicKey(PUBLIC_KEY_VAULT_2), null));
 		}
@@ -131,7 +155,7 @@ class VaultAdminOnlyFilterProviderTest {
 		@DisplayName("validate valid Client-JWT")
 		public void testValidClientJWTProvided() {
 			Mockito.when(context.getHeaderString(VaultAdminOnlyFilterProvider.CLIENT_JWT)).thenReturn(VaultAdminOnlyFilterProviderTestConstants.VALID_TOKEN_VAULT_2);
-			DecodedJWT result = vaultAdminOnlyFilterProvider.getClientJWT(context);
+			DecodedJWT result = vaultAdminOnlyFilterProvider.getUnverifiedClientJWT(context);
 			Assertions.assertEquals(JWT.decode(VaultAdminOnlyFilterProviderTestConstants.VALID_TOKEN_VAULT_2).getHeader(), result.getHeader());
 			Assertions.assertEquals(JWT.decode(VaultAdminOnlyFilterProviderTestConstants.VALID_TOKEN_VAULT_2).getPayload(), result.getPayload());
 		}
@@ -139,42 +163,14 @@ class VaultAdminOnlyFilterProviderTest {
 		@Test
 		@DisplayName("validate no Client-JWT")
 		public void testNoClientJWTProvided() {
-			Assertions.assertThrows(VaultAdminNotProvidedException.class, () -> vaultAdminOnlyFilterProvider.getClientJWT(context));
+			Assertions.assertThrows(VaultAdminNotProvidedException.class, () -> vaultAdminOnlyFilterProvider.getUnverifiedClientJWT(context));
 		}
 
 		@Test
 		@DisplayName("validate malformed Client-JWT")
 		public void testMalformedClientJWT() {
 			Mockito.when(context.getHeaderString(VaultAdminOnlyFilterProvider.CLIENT_JWT)).thenReturn(VaultAdminOnlyFilterProviderTestConstants.MALFORMED_TOKEN);
-			Assertions.assertThrows(VaultAdminValidationFailedException.class, () -> vaultAdminOnlyFilterProvider.getClientJWT(context));
-		}
-
-		@Test
-		@DisplayName("validate no dates in Client-JWT")
-		public void testMalformedClientJWTNoDates() {
-			Mockito.when(context.getHeaderString(VaultAdminOnlyFilterProvider.CLIENT_JWT)).thenReturn(NO_DATES_TOKEN_VAULT_2);
-			Assertions.assertThrows(VaultAdminValidationFailedException.class, () -> vaultAdminOnlyFilterProvider.getClientJWT(context));
-		}
-
-		@Test
-		@DisplayName("validate no issued date in Client-JWT")
-		public void testMalformedClientJWTNoIssueDate() {
-			Mockito.when(context.getHeaderString(VaultAdminOnlyFilterProvider.CLIENT_JWT)).thenReturn(NO_ISSUED_DATE_TOKEN_VAULT_2);
-			Assertions.assertThrows(VaultAdminValidationFailedException.class, () -> vaultAdminOnlyFilterProvider.getClientJWT(context));
-		}
-
-		@Test
-		@DisplayName("validate no not before date in Client-JWT")
-		public void testMalformedClientJWTNoNotBeforeDate() {
-			Mockito.when(context.getHeaderString(VaultAdminOnlyFilterProvider.CLIENT_JWT)).thenReturn(NO_NOT_BEFORE_DATE_TOKEN_VAULT_2);
-			Assertions.assertThrows(VaultAdminValidationFailedException.class, () -> vaultAdminOnlyFilterProvider.getClientJWT(context));
-		}
-
-		@Test
-		@DisplayName("validate no expires date in Client-JWT")
-		public void testMalformedClientJWTNoExpiresDate() {
-			Mockito.when(context.getHeaderString(VaultAdminOnlyFilterProvider.CLIENT_JWT)).thenReturn(NO_EXPIRES_DATE_TOKEN_VAULT_2);
-			Assertions.assertThrows(VaultAdminValidationFailedException.class, () -> vaultAdminOnlyFilterProvider.getClientJWT(context));
+			Assertions.assertThrows(VaultAdminValidationFailedException.class, () -> vaultAdminOnlyFilterProvider.getUnverifiedClientJWT(context));
 		}
 	}
 
