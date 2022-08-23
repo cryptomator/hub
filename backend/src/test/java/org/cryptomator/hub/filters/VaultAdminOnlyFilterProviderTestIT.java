@@ -44,12 +44,12 @@ class VaultAdminOnlyFilterProviderTestIT {
 	}
 
 	@Test
-	@DisplayName("validate valid Client-JWT header")
-	public void testValidClientJWTHeader() {
+	@DisplayName("validate valid vaultAdminAuthorizationJWT header")
+	public void testValidVaultAdminAuthorizationJWTHeader() {
 		var pathParams = new MultivaluedHashMap<String, String>();
 		pathParams.add(VaultAdminOnlyFilterProvider.VAULT_ID, "vault2");
 
-		Mockito.when(context.getHeaderString(VaultAdminOnlyFilterProvider.CLIENT_JWT)).thenReturn(VaultAdminOnlyFilterProviderTestConstants.VALID_TOKEN_VAULT_2);
+		Mockito.when(context.getHeaderString(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION)).thenReturn(VaultAdminOnlyFilterProviderTestConstants.VALID_TOKEN_VAULT_2);
 		Mockito.when(context.getUriInfo()).thenReturn(uriInfo);
 		Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
 
@@ -57,8 +57,8 @@ class VaultAdminOnlyFilterProviderTestIT {
 	}
 
 	@Test
-	@DisplayName("validate no Client-JWT header provided")
-	public void testNoClientJWTHeader() {
+	@DisplayName("validate no vaultAdminAuthorizationJWT header provided")
+	public void testNoVaultAdminAuthorizationJWTHeader() {
 		var pathParams = new MultivaluedHashMap<String, String>();
 		pathParams.add(VaultAdminOnlyFilterProvider.VAULT_ID, "vault2");
 
@@ -74,7 +74,7 @@ class VaultAdminOnlyFilterProviderTestIT {
 		var pathParams = new MultivaluedHashMap<String, String>();
 		pathParams.add(VaultAdminOnlyFilterProvider.VAULT_ID, "vault3000");
 
-		Mockito.when(context.getHeaderString(VaultAdminOnlyFilterProvider.CLIENT_JWT)).thenReturn(VaultAdminOnlyFilterProviderTestConstants.VALID_TOKEN_VAULT_2);
+		Mockito.when(context.getHeaderString(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION)).thenReturn(VaultAdminOnlyFilterProviderTestConstants.VALID_TOKEN_VAULT_2);
 		Mockito.when(context.getUriInfo()).thenReturn(uriInfo);
 		Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
 
@@ -82,12 +82,12 @@ class VaultAdminOnlyFilterProviderTestIT {
 	}
 
 	@Test
-	@DisplayName("validate expired Client-JWT header")
-	public void testExpiredClientJWTHeader() {
+	@DisplayName("validate expired vaultAdminAuthorizationJWT header")
+	public void testExpiredVaultAdminAuthorizationJWTHeader() {
 		var pathParams = new MultivaluedHashMap<String, String>();
 		pathParams.add(VaultAdminOnlyFilterProvider.VAULT_ID, "vault2");
 
-		Mockito.when(context.getHeaderString(VaultAdminOnlyFilterProvider.CLIENT_JWT)).thenReturn(VaultAdminOnlyFilterProviderTestConstants.EXPIRED_TOKEN_VAULT_2);
+		Mockito.when(context.getHeaderString(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION)).thenReturn(VaultAdminOnlyFilterProviderTestConstants.EXPIRED_TOKEN_VAULT_2);
 		Mockito.when(context.getUriInfo()).thenReturn(uriInfo);
 		Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
 
@@ -95,12 +95,12 @@ class VaultAdminOnlyFilterProviderTestIT {
 	}
 
 	@Test
-	@DisplayName("validate future issue at Client-JWT header")
-	public void testClientJWTInFutureIssueAtHeader() {
+	@DisplayName("validate future issue at vaultAdminAuthorizationJWT header")
+	public void testVaultAdminAuthorizationJWTInFutureIssueAtHeader() {
 		var pathParams = new MultivaluedHashMap<String, String>();
 		pathParams.add(VaultAdminOnlyFilterProvider.VAULT_ID, "vault2");
 
-		Mockito.when(context.getHeaderString(VaultAdminOnlyFilterProvider.CLIENT_JWT)).thenReturn(VaultAdminOnlyFilterProviderTestConstants.FUTURE_ISSUE_AT_TOKEN_VAULT_2);
+		Mockito.when(context.getHeaderString(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION)).thenReturn(VaultAdminOnlyFilterProviderTestConstants.FUTURE_ISSUE_AT_TOKEN_VAULT_2);
 		Mockito.when(context.getUriInfo()).thenReturn(uriInfo);
 		Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
 
@@ -108,12 +108,12 @@ class VaultAdminOnlyFilterProviderTestIT {
 	}
 
 	@Test
-	@DisplayName("validate future not before Client-JWT header")
-	public void testClientJWTInFutureNotBeforeHeader() {
+	@DisplayName("validate future not before vaultAdminAuthorizationJWT header")
+	public void testVaultAdminAuthorizationJWTInFutureNotBeforeHeader() {
 		var pathParams = new MultivaluedHashMap<String, String>();
 		pathParams.add(VaultAdminOnlyFilterProvider.VAULT_ID, "vault2");
 
-		Mockito.when(context.getHeaderString(VaultAdminOnlyFilterProvider.CLIENT_JWT)).thenReturn(VaultAdminOnlyFilterProviderTestConstants.FUTURE_NOT_BEFORE_TOKEN_VAULT_2);
+		Mockito.when(context.getHeaderString(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION)).thenReturn(VaultAdminOnlyFilterProviderTestConstants.FUTURE_NOT_BEFORE_TOKEN_VAULT_2);
 		Mockito.when(context.getUriInfo()).thenReturn(uriInfo);
 		Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
 
@@ -121,12 +121,12 @@ class VaultAdminOnlyFilterProviderTestIT {
 	}
 
 	@Test
-	@DisplayName("validate Client-JWT header signed by other key")
-	public void testOtherKeyClientJWTHeader() {
+	@DisplayName("validate vaultAdminAuthorizationJWT header signed by other key")
+	public void testOtherKeyVaultAdminAuthorizationJWTHeader() {
 		var pathParams = new MultivaluedHashMap<String, String>();
 		pathParams.add(VaultAdminOnlyFilterProvider.VAULT_ID, "vault2");
 
-		Mockito.when(context.getHeaderString(VaultAdminOnlyFilterProvider.CLIENT_JWT)).thenReturn(VaultAdminOnlyFilterProviderTestConstants.INVALID_SIGNATURE_TOKEN);
+		Mockito.when(context.getHeaderString(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION)).thenReturn(VaultAdminOnlyFilterProviderTestConstants.INVALID_SIGNATURE_TOKEN);
 		Mockito.when(context.getUriInfo()).thenReturn(uriInfo);
 		Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
 
@@ -134,12 +134,12 @@ class VaultAdminOnlyFilterProviderTestIT {
 	}
 
 	@Test
-	@DisplayName("validate malformed Client-JWT header")
-	public void testMalformedClientJWTHeader() {
+	@DisplayName("validate malformed vaultAdminAuthorizationJWT header")
+	public void testMalformedVaultAdminAuthorizationJWTHeader() {
 		var pathParams = new MultivaluedHashMap<String, String>();
 		pathParams.add(VaultAdminOnlyFilterProvider.VAULT_ID, "vault2");
 
-		Mockito.when(context.getHeaderString(VaultAdminOnlyFilterProvider.CLIENT_JWT)).thenReturn(VaultAdminOnlyFilterProviderTestConstants.MALFORMED_TOKEN);
+		Mockito.when(context.getHeaderString(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION)).thenReturn(VaultAdminOnlyFilterProviderTestConstants.MALFORMED_TOKEN);
 		Mockito.when(context.getUriInfo()).thenReturn(uriInfo);
 		Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
 
@@ -152,7 +152,7 @@ class VaultAdminOnlyFilterProviderTestIT {
 		var pathParams = new MultivaluedHashMap<String, String>();
 		pathParams.add(VaultAdminOnlyFilterProvider.VAULT_ID, "vault3000");
 
-		Mockito.when(context.getHeaderString(VaultAdminOnlyFilterProvider.CLIENT_JWT)).thenReturn(VaultAdminOnlyFilterProviderTestConstants.VALID_TOKEN_VAULT_3000);
+		Mockito.when(context.getHeaderString(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION)).thenReturn(VaultAdminOnlyFilterProviderTestConstants.VALID_TOKEN_VAULT_3000);
 		Mockito.when(context.getUriInfo()).thenReturn(uriInfo);
 		Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
 

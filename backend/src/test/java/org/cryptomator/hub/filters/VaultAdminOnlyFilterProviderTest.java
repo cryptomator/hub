@@ -54,50 +54,50 @@ class VaultAdminOnlyFilterProviderTest {
 		private static final String PUBLIC_KEY_VAULT_2 = "MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAEC1uWSXj2czCDwMTLWV5BFmwxdM6PX9p+Pk9Yf9rIf374m5XP1U8q79dBhLSIuaojsvOT39UUcPJROSD1FqYLued0rXiooIii1D3jaW6pmGVJFhodzC31cy5sfOYotrzF";
 
 		@Test
-		@DisplayName("validate valid clientJWT")
-		public void testValidClientJWT() {
+		@DisplayName("validate valid vaultAdminAuthorizationJWT")
+		public void testValidVaultAdminAuthorizationJWT() {
 			vaultAdminOnlyFilterProvider.verify(verifier(), JWT.decode(VaultAdminOnlyFilterProviderTestConstants.VALID_TOKEN_VAULT_2));
 		}
 
 		@Test
-		@DisplayName("validate expired clientJWT")
-		public void testExpiredClientJWT() {
+		@DisplayName("validate expired vaultAdminAuthorizationJWT")
+		public void testExpiredVaultAdminAuthorizationJWT() {
 			Assertions.assertThrows(VaultAdminTokenExpiredException.class, () -> vaultAdminOnlyFilterProvider.verify(verifier(), JWT.decode(VaultAdminOnlyFilterProviderTestConstants.EXPIRED_TOKEN_VAULT_2)));
 		}
 
 		@Test
-		@DisplayName("validate future issue at clientJWT")
-		public void testFutureIssueAtClientJWT() {
+		@DisplayName("validate future issue at vaultAdminAuthorizationJWT")
+		public void testFutureIssueAtVaultAdminAuthorizationJWT() {
 			Assertions.assertThrows(VaultAdminTokenNotYetValidException.class, () -> vaultAdminOnlyFilterProvider.verify(verifier(), JWT.decode(VaultAdminOnlyFilterProviderTestConstants.FUTURE_ISSUE_AT_TOKEN_VAULT_2)));
 		}
 
 		@Test
-		@DisplayName("validate future not before clientJWT")
-		public void testFutureNotBeforeClientJWT() {
+		@DisplayName("validate future not before vaultAdminAuthorizationJWT")
+		public void testFutureNotBeforeVaultAdminAuthorizationJWT() {
 			Assertions.assertThrows(VaultAdminTokenNotYetValidException.class, () -> vaultAdminOnlyFilterProvider.verify(verifier(), JWT.decode(VaultAdminOnlyFilterProviderTestConstants.FUTURE_NOT_BEFORE_TOKEN_VAULT_2)));
 		}
 
 		@Test
-		@DisplayName("validate no dates in Client-JWT")
-		public void testMalformedClientJWTNoDates() {
+		@DisplayName("validate no dates in vaultAdminAuthorizationJWT")
+		public void testMalformedVaultAdminAuthorizationJWTNoDates() {
 			Assertions.assertThrows(VaultAdminValidationFailedException.class, () -> vaultAdminOnlyFilterProvider.verify(verifier(), JWT.decode(NO_DATES_TOKEN_VAULT_2)));
 		}
 
 		@Test
-		@DisplayName("validate no issued date in Client-JWT")
-		public void testMalformedClientJWTNoIssueDate() {
+		@DisplayName("validate no issued date in vaultAdminAuthorizationJWT")
+		public void testMalformedVaultAdminAuthorizationJWTNoIssueDate() {
 			Assertions.assertThrows(VaultAdminValidationFailedException.class, () -> vaultAdminOnlyFilterProvider.verify(verifier(), JWT.decode(NO_ISSUED_DATE_TOKEN_VAULT_2)));
 		}
 
 		@Test
-		@DisplayName("validate no not before date in Client-JWT")
-		public void testMalformedClientJWTNoNotBeforeDate() {
+		@DisplayName("validate no not before date in vaultAdminAuthorizationJWT")
+		public void testMalformedVaultAdminAuthorizationJWTNoNotBeforeDate() {
 			Assertions.assertThrows(VaultAdminValidationFailedException.class, () -> vaultAdminOnlyFilterProvider.verify(verifier(), JWT.decode(NO_NOT_BEFORE_DATE_TOKEN_VAULT_2)));
 		}
 
 		@Test
-		@DisplayName("validate no expires date in Client-JWT")
-		public void testMalformedClientJWTNoExpiresDate() {
+		@DisplayName("validate no expires date in vaultAdminAuthorizationJWT")
+		public void testMalformedVaultAdminAuthorizationJWTNoExpiresDate() {
 			Assertions.assertThrows(VaultAdminValidationFailedException.class, () -> vaultAdminOnlyFilterProvider.verify(verifier(), JWT.decode(NO_EXPIRES_DATE_TOKEN_VAULT_2)));
 		}
 
@@ -149,50 +149,50 @@ class VaultAdminOnlyFilterProviderTest {
 	}
 
 	@Nested
-	@DisplayName("Test ClientJWT decoding")
-	public class TestClientJWTDecoding {
+	@DisplayName("Test vaultAdminAuthorizationJWT decoding")
+	public class TestVaultAdminAuthorizationJWTDecoding {
 		@Test
-		@DisplayName("validate valid Client-JWT")
-		public void testValidClientJWTProvided() {
-			Mockito.when(context.getHeaderString(VaultAdminOnlyFilterProvider.CLIENT_JWT)).thenReturn(VaultAdminOnlyFilterProviderTestConstants.VALID_TOKEN_VAULT_2);
-			DecodedJWT result = vaultAdminOnlyFilterProvider.getUnverifiedClientJWT(context);
+		@DisplayName("validate valid VAULT_ADMIN_AUTHORIZATION")
+		public void testValidVaultAdminAuthorizationJWTProvided() {
+			Mockito.when(context.getHeaderString(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION)).thenReturn(VaultAdminOnlyFilterProviderTestConstants.VALID_TOKEN_VAULT_2);
+			DecodedJWT result = vaultAdminOnlyFilterProvider.getUnverifiedvaultAdminAuthorizationJWT(context);
 			Assertions.assertEquals(JWT.decode(VaultAdminOnlyFilterProviderTestConstants.VALID_TOKEN_VAULT_2).getHeader(), result.getHeader());
 			Assertions.assertEquals(JWT.decode(VaultAdminOnlyFilterProviderTestConstants.VALID_TOKEN_VAULT_2).getPayload(), result.getPayload());
 		}
 
 		@Test
-		@DisplayName("validate no Client-JWT")
-		public void testNoClientJWTProvided() {
-			Assertions.assertThrows(VaultAdminNotProvidedException.class, () -> vaultAdminOnlyFilterProvider.getUnverifiedClientJWT(context));
+		@DisplayName("validate no vaultAdminAuthorizationJWT")
+		public void testNoVaultAdminAuthorizationJWTProvided() {
+			Assertions.assertThrows(VaultAdminNotProvidedException.class, () -> vaultAdminOnlyFilterProvider.getUnverifiedvaultAdminAuthorizationJWT(context));
 		}
 
 		@Test
-		@DisplayName("validate malformed Client-JWT")
-		public void testMalformedClientJWT() {
-			Mockito.when(context.getHeaderString(VaultAdminOnlyFilterProvider.CLIENT_JWT)).thenReturn(VaultAdminOnlyFilterProviderTestConstants.MALFORMED_TOKEN);
-			Assertions.assertThrows(VaultAdminValidationFailedException.class, () -> vaultAdminOnlyFilterProvider.getUnverifiedClientJWT(context));
+		@DisplayName("validate malformed vaultAdminAuthorizationJWT")
+		public void testMalformedVaultAdminAuthorizationJWT() {
+			Mockito.when(context.getHeaderString(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION)).thenReturn(VaultAdminOnlyFilterProviderTestConstants.MALFORMED_TOKEN);
+			Assertions.assertThrows(VaultAdminValidationFailedException.class, () -> vaultAdminOnlyFilterProvider.getUnverifiedvaultAdminAuthorizationJWT(context));
 		}
 	}
 
 	@Nested
-	@DisplayName("Test ClientJWT header extraction")
-	public class TestClientJWTHeaderExtraction {
+	@DisplayName("Test VAULT_ADMIN_AUTHORIZATION header extraction")
+	public class TestVaultAdminAuthorizationJWTHeaderExtraction {
 
 		@Test
-		@DisplayName("validate valid Client-JWT leads to valid vaultId")
-		public void testValidClientJWTLeadsToValidVaultId() {
+		@DisplayName("validate valid VAULT_ADMIN_AUTHORIZATION leads to valid vaultId")
+		public void testValidVaultAdminAuthorizationJWTLeadsToValidVaultId() {
 			String result = vaultAdminOnlyFilterProvider.getUnverifiedVaultId(JWT.decode(VaultAdminOnlyFilterProviderTestConstants.VALID_TOKEN_VAULT_2));
 			Assertions.assertEquals("vault2", result);
 		}
 
 		@Test
-		@DisplayName("validate no vaultId in Client-JWT")
+		@DisplayName("validate no vaultId in VAULT_ADMIN_AUTHORIZATION")
 		public void testNoVaultIdInJWT() {
 			Assertions.assertThrows(VaultAdminValidationFailedException.class, () -> vaultAdminOnlyFilterProvider.getUnverifiedVaultId(JWT.decode(NO_VAULT_ID_TOKEN)));
 		}
 
 		@Test
-		@DisplayName("validate invalid vaultId in Client-JWT")
+		@DisplayName("validate invalid vaultId in VAULT_ADMIN_AUTHORIZATION")
 		public void testInvalidVaultIdInJWT() {
 			Assertions.assertThrows(VaultAdminValidationFailedException.class, () -> vaultAdminOnlyFilterProvider.getUnverifiedVaultId(JWT.decode(INVALID_VAULT_ID_TOKEN)));
 		}
