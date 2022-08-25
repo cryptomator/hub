@@ -125,7 +125,7 @@ public class KeycloakRemoteUserProvider implements RemoteUserProvider {
 			members.addAll(currentRequestedMemebers);
 		} while (currentRequestedMemebers.size() == MAX_COUNT_PER_REQUEST);
 
-		return members.stream().map(this::mapToUser).collect(Collectors.toSet());
+		return members.stream().filter(notSyncerUser()).map(this::mapToUser).collect(Collectors.toSet());
 	}
 
 	@Override

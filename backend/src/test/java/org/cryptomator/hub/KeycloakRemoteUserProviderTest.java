@@ -122,7 +122,7 @@ class KeycloakRemoteUserProviderTest {
 			Mockito.when(realm.groups().group("grpId3001")).thenReturn(groupResource2);
 
 			Mockito.when(groupResource1.members(0, KeycloakRemoteUserProvider.MAX_COUNT_PER_REQUEST)).thenReturn(List.of());
-			Mockito.when(groupResource2.members(0, KeycloakRemoteUserProvider.MAX_COUNT_PER_REQUEST)).thenReturn(List.of(user1, user2));
+			Mockito.when(groupResource2.members(0, KeycloakRemoteUserProvider.MAX_COUNT_PER_REQUEST)).thenReturn(List.of(user1, user2, syncer));
 		}
 
 		@Test
