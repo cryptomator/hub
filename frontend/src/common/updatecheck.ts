@@ -11,8 +11,8 @@ class UpdatesService {
     let config = {
       headers: {
         'Content-Type': 'application/json',
-        'X-Hub-Version': localVersion,
-        'X-Hub-Instance': 'TODO' //for future uses
+        'Cryptomator-Hub-Version': localVersion,
+        'Cryptomator-Hub-Instance': 'TODO' //for future uses
       }
     };
     return axios.get('https://api.cryptomator.org/updates/hub.json', config)
