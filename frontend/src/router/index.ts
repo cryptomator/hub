@@ -107,7 +107,7 @@ router.beforeEach((to, from, next) => {
     next();
   } else {
     const relativePath = to.fullPath.startsWith('/') ? to.fullPath.substring(1) : to.fullPath;
-    const redirectUri = `${frontendBaseURL}${relativePath}`;
+    const redirectUri = `${frontendBaseURL}${relativePath}?sync_me=true`;
     authPromise.then(async auth => {
       await auth.loginIfRequired(redirectUri);
       next();
@@ -117,12 +117,16 @@ router.beforeEach((to, from, next) => {
 
 // SECOND update user data (requires auth)
 router.beforeEach((to, from, next) => {
-  if ('login' in to.query) {
+  if ('sync_me' in to.query) {
     authPromise.then(async auth => {
       if (auth.isAuthenticated()) {
         await backend.users.syncMe();
+        delete to.query.sync_me; // remove sync_me query parameter to avoid endless recursion
+        next({ path: to.path, query: to.query, params: to.params, replace: true });
+      } else {
+        next();
       }
-    }).finally(() => {
+    }).catch(() => {
       next();
     });
   } else {
