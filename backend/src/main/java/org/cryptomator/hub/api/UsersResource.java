@@ -39,10 +39,20 @@ public class UsersResource {
 	@PUT
 	@Path("/me")
 	@RolesAllowed("user")
+	@Transactional
 	@Operation(summary = "sync the logged-in user from the remote user provider to hub")
-	@APIResponse(responseCode = "201", description = "user created")
+	@APIResponse(responseCode = "201", description = "user created or updated")
 	public Response syncMe() {
-		// TODO sync this user from the remote user provider against hub to explicitly update e.g. group membership after user was logged in
+		var userId = jwt.getSubject();
+		User user = User.findById(userId);
+		if (user == null) {
+			user = new User();
+			user.id = userId;
+		}
+		user.name = jwt.getName();
+		user.pictureUrl = jwt.getClaim("picture");
+		user.email = jwt.getClaim("email");
+		user.persist();
 		return Response.created(URI.create(".")).build();
 	}
 
