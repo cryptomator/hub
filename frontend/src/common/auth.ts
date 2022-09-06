@@ -10,11 +10,11 @@ class Auth {
       realm: cfg.keycloakRealm,
       clientId: cfg.keycloakClientId
     });
+    keycloak.onTokenExpired = () => keycloak.updateToken(30).catch(err => console.error(err));
     await keycloak.init({
       checkLoginIframe: false,
       pkceMethod: 'S256',
     });
-    keycloak.onTokenExpired = () => keycloak.updateToken(30);
     return new Auth(keycloak);
   }
 
