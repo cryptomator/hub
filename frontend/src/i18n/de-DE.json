@@ -25,6 +25,7 @@
   "admin.serverInfo.hubVersion.description.updateExists": "Update auf Version {0} möglich.",
   "admin.serverInfo.hubVersion.description.fetchingUpdatesFailed": "Suche nach Updates ist fehlgeschlagen. Bitte prüfe manuell.",
   "admin.serverInfo.keycloakVersion.title": "Keycloak-Version",
+  "admin.serverInfo.keycloakVersion.description": "Keycloak verwalten",
   "admin.licenseInfo.title": "Lizenz-Infos",
   "admin.licenseInfo.description": "Überprüfe deine Lizenzinformationen. Wenn du Änderungen vornehmen oder deinen Abonnementstatus überprüfen möchtest, drücke „Abonnement verwalten“.",
   "admin.licenseInfo.email.title": "Lizenziert für",

@@ -61,6 +61,10 @@
                 <div class="col-span-6 sm:col-span-3">
                   <label for="keycloakVersion" class="block text-sm font-medium text-gray-700">{{ t('admin.serverInfo.keycloakVersion.title') }}</label>
                   <input id="keycloakVersion" v-model="version.keycloakVersion" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
+                  <p id="keycloakURL" class="inline-flex mt-2 text-sm">
+                    <LinkIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
+                    <a role="button" :href="keycloakURL" target="_blank" class="underline text-gray-500 hover:text-gray-900">{{ $t('admin.serverInfo.keycloakVersion.description') }}</a>
+                  </p>
                 </div>
               </div>
             </div>
@@ -184,12 +188,12 @@
 </template>
 
 <script setup lang="ts">
-import { CheckIcon, ExclamationIcon, ExternalLinkIcon, InformationCircleIcon, XIcon } from '@heroicons/vue/solid';
+import { CheckIcon, ExclamationIcon, ExternalLinkIcon, InformationCircleIcon, LinkIcon, XIcon } from '@heroicons/vue/solid';
 import semver from 'semver';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { BillingDto, VersionDto } from '../common/backend';
-import { frontendBaseURL } from '../common/config';
+import config, { frontendBaseURL } from '../common/config';
 import { FetchUpdateError, LatestVersionDto, updateChecker } from '../common/updatecheck';
 import FetchError from './FetchError.vue';
 
@@ -203,6 +207,7 @@ const version = ref<VersionDto>();
 const latestVersion = ref<LatestVersionDto>();
 const admin = ref<BillingDto>();
 const now = ref<Date>(new Date());
+const keycloakURL = ref<string>();
 const onFetchError = ref<Error | null>();
 const errorOnFetchingUpdates = ref<boolean>(false);
 
@@ -221,6 +226,7 @@ const betaUpdateExists = computed(() => {
 });
 
 onMounted(async () => {
+  keycloakURL.value = config.get().keycloakUrl;
   if (props.token) {
     await setToken(props.token);
   }
