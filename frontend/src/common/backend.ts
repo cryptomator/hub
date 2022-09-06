@@ -13,17 +13,18 @@ const axiosBaseCfg: AxiosRequestConfig = {
 
 const axiosAuth = AxiosStatic.create(axiosBaseCfg);
 axiosAuth.interceptors.request.use(async request => {
-  const auth = await authPromise;
-  if (!auth.isAuthenticated()) {
-    throw new Error('not logged in');
+  try {
+    const token = await authPromise.then(auth => auth.bearerToken());
+    if (request.headers) {
+      request.headers['Authorization'] = `Bearer ${token}`;
+    } else {
+      request.headers = { 'Authorization': `Bearer ${token}` };
+    }
+    return request;
+  } catch (err: unknown) {
+    // only things from auth module can throw errors here
+    throw new UnauthorizedError();
   }
-  const token = await auth.bearerToken();
-  if (request.headers) {
-    request.headers['Authorization'] = `Bearer ${token}`;
-  } else {
-    request.headers = { 'Authorization': `Bearer ${token}` };
-  }
-  return request;
 });
 
 const vaultAdminAuthorizationJWTLeeway = 15;
@@ -191,6 +192,9 @@ class VersionService {
   }
 }
 
+/**
+ * Note: Each service can thrown an {@link UnauthorizedError} when the access token is expired!
+ */
 const services = {
   vaults: new VaultService(),
   users: new UserService(),
@@ -232,6 +236,12 @@ export default services;
 export class BackendError extends Error {
   constructor(msg: string) {
     super(msg);
+  }
+}
+
+export class UnauthorizedError extends BackendError {
+  constructor() {
+    super('Unauthorized');
   }
 }
 
