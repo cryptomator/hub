@@ -226,6 +226,7 @@ const betaUpdateExists = computed(() => {
 });
 
 onMounted(async () => {
+  keycloakURL.value = config.get().keycloakUrl;
   if (props.token) {
     await setToken(props.token);
   }
@@ -246,7 +247,6 @@ async function fetchData() {
     let versionAvailable = versionDto.then(versionDto => updateChecker.get(versionDto.hubVersion));
     let adminDto = backend.billing.get();
     admin.value = await adminDto;
-    keycloakURL.value = config.get().keycloakUrl;
     version.value = await versionDto;
     latestVersion.value = await versionAvailable;
   } catch (err) {
