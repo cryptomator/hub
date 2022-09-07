@@ -75,9 +75,9 @@ public class VaultResource {
 
 		return vault.directMembers.stream().map(authority -> {
 			if (authority instanceof User u) {
-				return UsersResource.UserDto.fromEntity(u);
+				return UserDto.fromEntity(u);
 			} else if (authority instanceof Group g) {
-				return GroupResource.GroupDto.fromEntity(g);
+				return GroupDto.fromEntity(g);
 			} else {
 				throw new IllegalStateException();
 			}

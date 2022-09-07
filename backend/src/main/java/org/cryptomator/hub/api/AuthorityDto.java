@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
 
-abstract sealed class AuthorityDto permits UsersResource.UserDto, GroupResource.GroupDto {
+abstract sealed class AuthorityDto permits UserDto, GroupDto {
 
 	public enum Type {
 		USER, GROUP

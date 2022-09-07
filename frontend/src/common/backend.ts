@@ -159,15 +159,11 @@ class UserService {
     return axiosAuth.get<UserDto[]>('/users/').then(response => response.data);
   }
 
-  public async search(query: string): Promise<UserDto[]> {
-    return axiosAuth.get<UserDto[]>(`/users/search?query=${query}`).then(response => response.data);
-  }
-
 }
 
-class GroupService {
-  public async search(query: string): Promise<GroupDto[]> {
-    return axiosAuth.get<GroupDto[]>(`/groups/search?query=${query}`).then(response => response.data);
+class AuthorityService {
+  public async search(query: string): Promise<AuthorityDto[]> {
+    return axiosAuth.get<AuthorityDto[]>(`/authorities/search?query=${query}`).then(response => response.data);
   }
 
 }
@@ -198,7 +194,7 @@ class VersionService {
 const services = {
   vaults: new VaultService(),
   users: new UserService(),
-  groups: new GroupService(),
+  authorities: new AuthorityService(),
   devices: new DeviceService(),
   billing: new BillingService(),
   version: new VersionService()

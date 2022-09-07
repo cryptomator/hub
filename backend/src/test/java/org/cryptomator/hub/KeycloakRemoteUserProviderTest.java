@@ -74,30 +74,6 @@ class KeycloakRemoteUserProviderTest {
 		Assertions.assertNull(resultUser2.pictureUrl);
 	}
 
-	@Test
-	@DisplayName("test search user excludes syncer and returns two users")
-	public void testSearchUser() {
-		Mockito.when(usersResource.search("query")).thenReturn(List.of(user1, user2, syncer));
-
-		var result = keycloakRemoteUserProvider.searchUser(realm, "query");
-
-		Assertions.assertEquals(2, result.size());
-
-		var resultUser1 = result.get(0);
-		var resultUser2 = result.get(1);
-
-		Assertions.assertEquals("id3000", resultUser1.id);
-		Assertions.assertEquals("username3000", resultUser1.name);
-		Assertions.assertEquals("email3000", resultUser1.email);
-		Assertions.assertEquals("picture3000", resultUser1.pictureUrl);
-
-		Assertions.assertEquals("id3001", resultUser2.id);
-		Assertions.assertEquals("username3001", resultUser2.name);
-		Assertions.assertEquals("email3001", resultUser2.email);
-		Assertions.assertNull(resultUser2.pictureUrl);
-	}
-
-
 	@Nested
 	@DisplayName("Test groups")
 	public class Groups {
@@ -158,28 +134,6 @@ class KeycloakRemoteUserProviderTest {
 			Assertions.assertEquals("username3001", member2Group2.name);
 			Assertions.assertEquals("email3001", member2Group2.email);
 			Assertions.assertNull(member2Group2.pictureUrl);
-		}
-
-		@Test
-		@DisplayName("test groups search contains two groups")
-		public void testSearchGroups() {
-			Mockito.when(groupsResource.groups(0, KeycloakRemoteUserProvider.MAX_COUNT_PER_REQUEST)).thenReturn(List.of(group1, group2));
-
-			var result = keycloakRemoteUserProvider.searchGroup(realm, "grp");
-			var result2 = keycloakRemoteUserProvider.searchGroup(realm, "GRP");
-
-			Assertions.assertEquals(result, result2);
-
-			Assertions.assertEquals(2, result.size());
-
-			var resultGroup1 = result.get(0);
-			var resultGroup2 = result.get(1);
-
-			Assertions.assertEquals("grpId3000", resultGroup1.id);
-			Assertions.assertEquals("grpName3000", resultGroup1.name);
-
-			Assertions.assertEquals("grpId3001", resultGroup2.id);
-			Assertions.assertEquals("grpName3001", resultGroup2.name);
 		}
 	}
 

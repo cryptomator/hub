@@ -69,18 +69,6 @@ public class KeycloakRemoteUserProvider implements RemoteUserProvider {
 	}
 
 	@Override
-	public List<User> searchUser(String query) {
-		try (Keycloak keycloak = Keycloak.getInstance(syncerConfig.getKeycloakUrl(), syncerConfig.getKeycloakRealm(), syncerConfig.getUsername(), syncerConfig.getPassword(), syncerConfig.getKeycloakClientId())) {
-			return searchUser(keycloak.realm(syncerConfig.getKeycloakRealm()), query);
-		}
-	}
-
-	//visible for testing
-	List<User> searchUser(RealmResource realm, String query) {
-		return realm.users().search(query).stream().filter(notSyncerUser()).map(this::mapToUser).toList();
-	}
-
-	@Override
 	public List<Group> groups() {
 		try (Keycloak keycloak = Keycloak.getInstance(syncerConfig.getKeycloakUrl(), syncerConfig.getKeycloakRealm(), syncerConfig.getUsername(), syncerConfig.getPassword(), syncerConfig.getKeycloakClientId())) {
 			return groups(keycloak.realm(syncerConfig.getKeycloakRealm()));
@@ -126,22 +114,5 @@ public class KeycloakRemoteUserProvider implements RemoteUserProvider {
 		} while (currentRequestedMemebers.size() == MAX_COUNT_PER_REQUEST);
 
 		return members.stream().filter(notSyncerUser()).map(this::mapToUser).collect(Collectors.toSet());
-	}
-
-	@Override
-	public List<Group> searchGroup(String groupname) {
-		try (Keycloak keycloak = Keycloak.getInstance(syncerConfig.getKeycloakUrl(), syncerConfig.getKeycloakRealm(), syncerConfig.getUsername(), syncerConfig.getPassword(), syncerConfig.getKeycloakClientId())) {
-			return searchGroup(keycloak.realm(syncerConfig.getKeycloakRealm()), groupname);
-		}
-	}
-
-	//visible for testing
-	List<Group> searchGroup(RealmResource realm, String groupname) {
-		return deepCollectGroups(realm).stream().map(group -> {
-			var groupEntity = new Group();
-			groupEntity.id = group.getId();
-			groupEntity.name = group.getName();
-			return groupEntity;
-		}).filter(group -> group.name.toLowerCase().contains(groupname.toLowerCase())).toList();
 	}
 }

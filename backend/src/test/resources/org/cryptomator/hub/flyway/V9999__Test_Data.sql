@@ -9,7 +9,7 @@ INSERT INTO "authority" ("id", "type", "name")
 VALUES
 	('user1', 'USER', 'User Name 1'),
 	('user2', 'USER', 'User Name 2'),
-	('group1', 'GROUP', 'User Name 1');
+	('group1', 'GROUP', 'Group Name 1');
 
 INSERT INTO "user_details" ("id")
 VALUES
