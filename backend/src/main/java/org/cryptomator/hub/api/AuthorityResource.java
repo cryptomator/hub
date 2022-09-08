@@ -30,8 +30,9 @@ public class AuthorityResource {
 				return new UserDto(authority.id, authority.name, user.pictureUrl, user.email, null);
 			} else if (authority instanceof Group) {
 				return new GroupDto(authority.id, authority.name);
+			} else {
+				throw new IllegalStateException("authority is not of type user or group");
 			}
-			throw new IllegalStateException("authority is not of type user or group");
 		}).toList();
 	}
 
