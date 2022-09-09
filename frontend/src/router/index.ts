@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory, RouteLocationRaw, RouteRecordRaw } from 'vue-router';
 import authPromise from '../common/auth';
 import backend from '../common/backend';
-import { frontendBaseURL } from '../common/config';
+import { baseURL } from '../common/config';
 import AdminSettings from '../components/AdminSettings.vue';
 import CreateVault from '../components/CreateVault.vue';
 import DeviceList from '../components/DeviceList.vue';
@@ -18,17 +18,21 @@ import VaultList from '../components/VaultList.vue';
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
+    redirect: '/app'
+  },
+  {
+    path: '/app',
     component: LoginComponent,
     meta: { skipAuth: true },
-    beforeEnter: async (_to, _from) => {
+    beforeEnter: async () => {
       const auth = await authPromise;
       if (auth.isAuthenticated()) {
-        return '/vaults';  //TODO:currently not working, since silent single sign-on is missing
+        return '/app/vaults';  //TODO:currently not working, since silent single sign-on is missing
       }
     }
   },
   {
-    path: '/logout',
+    path: '/app/logout',
     component: LogoutComponent,
     meta: { skipAuth: true },
     beforeEnter: (to, from, next) => {
@@ -45,32 +49,32 @@ const routes: RouteRecordRaw[] = [
     }
   },
   {
-    path: '/', /* required but unused */
+    path: '/app', /* required but unused */
     component: MainComponent,
     children: [
       {
-        path: '/vaults',
+        path: 'vaults',
         component: VaultList
       },
       {
-        path: '/vaults/create',
+        path: 'vaults/create',
         component: CreateVault
       },
       {
-        path: '/vaults/:id',
+        path: 'vaults/:id',
         component: VaultDetails,
         props: (route) => ({ vaultId: route.params.id })
       },
       {
-        path: '/devices',
+        path: 'devices',
         component: DeviceList
       },
       {
-        path: '/settings',
+        path: 'settings',
         component: Settings
       },
       {
-        path: '/admin',
+        path: 'admin',
         component: AdminSettings,
         props: (route) => ({ token: route.query.token }),
         beforeEnter: async (_to, _from) => {
@@ -81,24 +85,25 @@ const routes: RouteRecordRaw[] = [
     ]
   },
   {
-    path: '/unlock-success',
+    path: '/app/unlock-success',
     component: UnlockSuccess,
     props: (route) => ({ vaultId: route.query.vault, deviceId: route.query.device })
   },
   {
-    path: '/unlock-error',
+    path: '/app/unlock-error',
     component: UnlockError,
     meta: { skipAuth: true }
   },
   {
-    path: '/:catchAll(.*)', //necessary due to using history mode in router
+    path: '/app/:pathMatch(.*)', //necessary due to using history mode in router
     component: NotFoundComponent,
+    meta: { skipAuth: true },
     name: 'NotFound'
   },
 ];
 
 const router = createRouter({
-  history: createWebHistory(frontendBaseURL),
+  history: createWebHistory(baseURL),
   routes: routes,
 });
 

@@ -87,7 +87,7 @@
             <p v-if="onDownloadTemplateError != null " class="text-sm text-red-900 mr-4">{{ t('createVault.error.downloadTemplateFailed', [onDownloadTemplateError.message]) }}</p> <!-- TODO: not beautiful-->
           </div>
           <div class="mt-2">
-            <router-link to="/" class="text-sm text-gray-500">
+            <router-link to="/app/vaults" class="text-sm text-gray-500">
               {{ t('createVault.success.return') }}
             </router-link>
           </div>

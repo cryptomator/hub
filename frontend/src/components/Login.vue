@@ -18,7 +18,7 @@
         </p>
         <div class="mt-10 max-w-sm mx-auto sm:max-w-none sm:flex sm:justify-center">
           <div class="space-y-4 sm:space-y-0 sm:mx-auto">
-            <router-link to="/vaults" class="flex items-center justify-center px-4 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-primary-d1 bg-white hover:bg-primary-l2 sm:px-8">
+            <router-link to="/app/vaults" class="flex items-center justify-center px-4 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-primary-d1 bg-white hover:bg-primary-l2 sm:px-8">
               Continue to Login
             </router-link>
           </div>

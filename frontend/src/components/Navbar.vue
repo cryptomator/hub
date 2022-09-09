@@ -11,7 +11,7 @@
           </DisclosureButton>
         </div>
         <div class="flex-1 flex items-center justify-center sm:items-stretch sm:justify-start">
-          <router-link to="/" class="shrink-0 flex items-center">
+          <router-link to="/app" class="shrink-0 flex items-center">
             <img src="/logo.svg" class="h-8" alt="Logo"/>
             <span class="font-headline font-bold text-primary ml-2 pb-px">CRYPTOMATOR HUB</span>
           </router-link>
@@ -77,24 +77,24 @@ import { UserDto } from '../common/backend';
 const { t } = useI18n({ useScope: 'global' });
 
 const navigation = [
-  { name: 'nav.vaults', to: '/vaults' },
+  { name: 'nav.vaults', to: '/app/vaults' },
 ];
 
 const profileDropdownSections = {
   infoSection :
     [
-      { icon: DesktopComputerIcon, name: 'nav.profile.devices', to: '/devices' }
+      { icon: DesktopComputerIcon, name: 'nav.profile.devices', to: '/app/devices' }
     ],
 
   adminSection :
     [
-      { icon: AdjustmentsIcon, name: 'nav.profile.admin', to: '/admin' }
+      { icon: AdjustmentsIcon, name: 'nav.profile.admin', to: '/app/admin' }
     ],
 
   hubSection :
     [
-      { icon: CogIcon, name: 'nav.profile.settings', to: '/settings' },
-      { icon: LogoutIcon, name: 'nav.profile.signOut', to: '/logout' }
+      { icon: CogIcon, name: 'nav.profile.settings', to: '/app/settings' },
+      { icon: LogoutIcon, name: 'nav.profile.signOut', to: '/app/logout' }
     ],
 
 };
