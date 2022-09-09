@@ -30,10 +30,11 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/logout',
     component: LogoutComponent,
+    meta: { skipAuth: true },
     beforeEnter: (to, from, next) => {
       authPromise.then(async auth => {
         if (auth.isAuthenticated()) {
-          const loggedOutUri = `${location.origin}/${router.resolve('/').href}`;
+          const loggedOutUri = `${location.origin}${router.resolve('/').href}`;
           await auth.logout(loggedOutUri);
         } else {
           next();
@@ -106,8 +107,7 @@ router.beforeEach((to, from, next) => {
   if (to.meta.skipAuth) {
     next();
   } else {
-    const relativePath = to.fullPath.startsWith('/') ? to.fullPath.substring(1) : to.fullPath;
-    const redirectUri = `${frontendBaseURL}${relativePath}?sync_me=true`;
+    const redirectUri = `${location.origin}${router.resolve(to).href}`;
     authPromise.then(async auth => {
       await auth.loginIfRequired(redirectUri);
       next();
