@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
+import { createRouter, createWebHistory, RouteLocationRaw, RouteRecordRaw } from 'vue-router';
 import authPromise from '../common/auth';
 import backend from '../common/backend';
 import { frontendBaseURL } from '../common/config';
@@ -107,8 +107,9 @@ router.beforeEach((to, from, next) => {
   if (to.meta.skipAuth) {
     next();
   } else {
-    const redirectUri = `${location.origin}${router.resolve(to).href}`;
     authPromise.then(async auth => {
+      const redirect: RouteLocationRaw = { query: { sync_me: null } };
+      const redirectUri = `${location.origin}${router.resolve(redirect, to).href}`;
       await auth.loginIfRequired(redirectUri);
       next();
     });
