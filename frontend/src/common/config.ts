@@ -1,9 +1,10 @@
 import AxiosStatic from 'axios';
 
-export const frontendBaseURL = `${location.protocol}//${location.host}/app/`;
-export const backendBaseURL = import.meta.env.DEV
-  ? 'http://localhost:8080/api/'
-  : new URL('/api/', location.href).href;
+// these URLs must end on '/':
+export const frontendBaseURL = `${import.meta.env.BASE_URL}app/`;
+export const absFrontendBaseURL = `${location.origin}${frontendBaseURL}`;
+export const backendBaseURL = `${import.meta.env.BASE_URL}api/`;
+export const absBackendBaseURL = `${location.origin}${backendBaseURL}`;
 
 const axios = AxiosStatic.create({
   baseURL: backendBaseURL,

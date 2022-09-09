@@ -97,8 +97,8 @@ const routes: RouteRecordRaw[] = [
 ];
 
 const router = createRouter({
-  history: createWebHistory('/app/'),
-  routes: routes
+  history: createWebHistory(frontendBaseURL),
+  routes: routes,
 });
 
 // FIRST check auth
