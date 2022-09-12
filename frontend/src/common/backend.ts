@@ -39,19 +39,40 @@ export class DeviceDto {
   constructor(public id: string, public name: string, public publicKey: string, public accessTo: VaultDto[], public creationTime: Date) { }
 }
 
+enum AuthorityType {
+  User = 'USER',
+  Group = 'GROUP'
+}
+
 export class AuthorityDto {
-  constructor(public id: string, public name: string, public type: string, public pictureUrl: string) { }
+  constructor(public id: string, public name: string, public type: AuthorityType, public pictureUrl: string) { }
 }
 
 export class UserDto extends AuthorityDto {
-  constructor(public id: string, public name: string, public pictureUrl: string, public email: string, public devices: DeviceDto[]) {
-    super(id, name, 'user', pictureUrl);
+  constructor(public id: string, public name: string, public type: AuthorityType, public pictureUrl: string, public email: string, public devices: DeviceDto[]) {
+    super(id, name, type, pictureUrl);
+  }
+
+  static typeOf(obj: any): obj is UserDto {
+    const userDto = obj as UserDto;
+    return typeof userDto.id === 'string'
+      && typeof userDto.name === 'string'
+      && typeof userDto.pictureUrl === 'string'
+      && userDto.type === AuthorityType.User;
   }
 }
 
 export class GroupDto extends AuthorityDto {
-  constructor(public id: string, public name: string, public pictureUrl: string) {
-    super(id, name, 'group', pictureUrl);
+  constructor(public id: string, public name: string, public type: AuthorityType, public pictureUrl: string) {
+    super(id, name, type, pictureUrl);
+  }
+
+  static typeOf(obj: any): obj is GroupDto {
+    const groupDto = obj as GroupDto;
+    return typeof groupDto.id === 'string'
+      && typeof groupDto.name === 'string'
+      && typeof groupDto.pictureUrl === 'string'
+      && groupDto.type === AuthorityType.Group;
   }
 }
 
@@ -84,10 +105,19 @@ class VaultService {
       .catch((err) => rethrowAndConvertIfExpected(err, 404));
   }
 
-  public async getMembers(vaultId: string, vaultKeys: VaultKeys): Promise<AuthorityDto[]> {
+  public async getMembers(vaultId: string, vaultKeys: VaultKeys): Promise<(UserDto | GroupDto)[]> {
     let vaultAdminAuthorizationJWT = await this.buildVaultAdminAuthorizationJWT(vaultId, vaultKeys);
-    return axiosAuth.get(`/vaults/${vaultId}/members`, { headers: { 'Cryptomator-Vault-Admin-Authorization': vaultAdminAuthorizationJWT } })
-      .then(response => response.data).catch(err => rethrowAndConvertIfExpected(err, 403));
+    return axiosAuth.get<(UserDto | GroupDto)[]>(`/vaults/${vaultId}/members`, { headers: { 'Cryptomator-Vault-Admin-Authorization': vaultAdminAuthorizationJWT } }).then(response => {
+      return response.data.map(authority => {
+        if (UserDto.typeOf(authority)) {
+          return new UserDto(authority.id, authority.name, authority.type, authority.pictureUrl, authority.email, authority.devices);
+        } else if (GroupDto.typeOf(authority)) {
+          return new GroupDto(authority.id, authority.name, authority.type, authority.pictureUrl);
+        } else {
+          throw new Error('Provided data is not of type UserDTO or GroupDTO');
+        }
+      });
+    }).catch(err => rethrowAndConvertIfExpected(err, 403));
   }
 
   public async addUser(vaultId: string, userId: string, vaultKeys: VaultKeys): Promise<AxiosResponse<void>> {
@@ -162,10 +192,19 @@ class UserService {
 }
 
 class AuthorityService {
-  public async search(query: string): Promise<AuthorityDto[]> {
-    return axiosAuth.get<AuthorityDto[]>(`/authorities/search?query=${query}`).then(response => response.data);
+  public async search(query: string): Promise<(UserDto | GroupDto)[]> {
+    return axiosAuth.get<(UserDto | GroupDto)[]>(`/authorities/search?query=${query}`).then(response => {
+      return response.data.map(authority => {
+        if (UserDto.typeOf(authority)) {
+          return new UserDto(authority.id, authority.name, authority.type, authority.pictureUrl, authority.email, authority.devices);
+        } else if (GroupDto.typeOf(authority)) {
+          return new GroupDto(authority.id, authority.name, authority.type, authority.pictureUrl);
+        } else {
+          throw new Error('Provided data is not of type UserDTO or GroupDTO');
+        }
+      });
+    });
   }
-
 }
 
 class BillingService {
