@@ -15,7 +15,7 @@
     <h3 class="mt-2 text-sm font-medium text-gray-900">{{ t('vaultList.empty.title') }}</h3>
     <p class="mt-1 text-sm text-gray-500">{{ t('vaultList.empty.description') }}</p>
     <div class="mt-6">
-      <router-link to="/vaults/create" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+      <router-link to="/app/vaults/create" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
         <PlusIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
         {{ t('vaultList.createVault') }}
       </router-link>
@@ -26,7 +26,7 @@
     <div class="pb-5 border-b border-gray-200 flex items-center whitespace-nowrap">
       <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">{{ t('vaultList.title') }}</h2>
       <div class="flex-none flex items-center ml-auto pl-4 sm:pl-6">
-        <router-link to="/vaults/create" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+        <router-link to="/app/vaults/create" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
           <PlusIcon class="-ml-0.5 mr-2 h-4 w-4" aria-hidden="true" />
           {{ t('vaultList.createVault') }}
         </router-link>

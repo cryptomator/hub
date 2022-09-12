@@ -12,7 +12,7 @@
     "lint": "eslint -c .eslintrc.js",
     "test": "mocha -r ts-node/register test/**/*.spec.ts",
     "serve": "vite preview",
-    "dist": "vite build --sourcemap --outDir=\"../backend/src/main/resources/META-INF/resources\" --emptyOutDir"
+    "dist": "vite build --sourcemap --base=\"/%hub.public-root-path%/\" --outDir=\"../backend/src/main/resources/META-INF/resources\" --emptyOutDir"
   },
   "directories": {
     "src": "./src",
@@ -57,6 +57,6 @@
     "semver": "^7.3.7",
     "vue": "^3.2.31",
     "vue-i18n": "^9.1.10",
-    "vue-router": "^4.0.15"
+    "vue-router": "^4.1.5"
   }
 }

@@ -1,5 +1,5 @@
 import JSZip from 'jszip';
-import config, { backendBaseURL, frontendBaseURL } from '../common/config';
+import config, { absBackendBaseURL, absFrontendBaseURL } from '../common/config';
 import { VaultConfigHeaderHub, VaultConfigPayload, VaultKeys } from '../common/crypto';
 
 export class VaultConfig {
@@ -15,15 +15,15 @@ export class VaultConfig {
   public static async create(vaultId: string, vaultKeys: VaultKeys): Promise<VaultConfig> {
     const cfg = config.get();
 
-    const kid = `hub+${backendBaseURL}vaults/${vaultId}`;
+    const kid = `hub+${absBackendBaseURL}vaults/${vaultId}`;
 
     const hubConfig: VaultConfigHeaderHub = {
       clientId: cfg.keycloakClientId,
       authEndpoint: cfg.keycloakAuthEndpoint,
       tokenEndpoint: cfg.keycloakTokenEndpoint,
-      devicesResourceUrl: `${backendBaseURL}devices/`,
-      authSuccessUrl: `${frontendBaseURL}unlock-success?vault=${vaultId}`,
-      authErrorUrl: `${frontendBaseURL}unlock-error?vault=${vaultId}`
+      devicesResourceUrl: `${absBackendBaseURL}devices/`,
+      authSuccessUrl: `${absFrontendBaseURL}unlock-success?vault=${vaultId}`,
+      authErrorUrl: `${absFrontendBaseURL}unlock-error?vault=${vaultId}`
     };
 
     const jwtPayload: VaultConfigPayload = {

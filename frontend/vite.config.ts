@@ -6,6 +6,7 @@ import { defineConfig } from 'vite';
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: '/',
   plugins: [
     vue(),
     vueI18n({
@@ -14,5 +15,10 @@ export default defineConfig({
   build: {
     minify: 'esbuild',
     target: 'esnext'
+  },
+  server: {
+    proxy: {
+      '/api/': 'http://127.0.0.1:8080'
+    }
   }
 });

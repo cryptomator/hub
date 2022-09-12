@@ -193,7 +193,7 @@ import semver from 'semver';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { BillingDto, VersionDto } from '../common/backend';
-import config, { frontendBaseURL } from '../common/config';
+import config, { absFrontendBaseURL } from '../common/config';
 import { FetchUpdateError, LatestVersionDto, updateChecker } from '../common/updatecheck';
 import FetchError from './FetchError.vue';
 
@@ -260,7 +260,7 @@ async function fetchData() {
 }
 
 function manageSubscription() {
-  const returnUrl = `${frontendBaseURL}admin`;
+  const returnUrl = `${absFrontendBaseURL}admin`;
   const languagePathComponent = locale.value == 'en' ? '' : `${locale.value}/`;
   window.open(`https://cryptomator.org/${languagePathComponent}hub/billing/?hub_id=${admin.value?.hubId}&return_url=${encodeURIComponent(returnUrl)}`, '_self');
 }
