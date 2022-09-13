@@ -30,37 +30,76 @@ axiosAuth.interceptors.request.use(async request => {
 const vaultAdminAuthorizationJWTLeeway = 15;
 /* DTOs */
 
-export class VaultDto {
+export type VaultDto = {
+  id: string;
+  name: string;
+  description: string;
+  creationTime: Date;
+  masterkey: string;
+  iterations: number;
+  salt: string;
+  authPublicKey: string;
+  authPrivateKey: string;
+};
 
-  constructor(public id: string, public name: string, public description: string, public creationTime: Date, public masterkey: string, public iterations: number, public salt: string, public authPublicKey: string, public authPrivateKey: string) { }
+export type DeviceDto = {
+  id: string;
+  name: string;
+  publicKey: string;
+  accessTo: VaultDto[];
+  creationTime: Date;
+};
+
+enum AuthorityType {
+  User = 'USER',
+  Group = 'GROUP'
 }
 
-export class DeviceDto {
-  constructor(public id: string, public name: string, public publicKey: string, public accessTo: VaultDto[], public creationTime: Date) { }
-}
-
-export class AuthorityDto {
-  constructor(public id: string, public name: string, public type: string, public pictureUrl: string) { }
+abstract class AuthorityDto {
+  constructor(public id: string, public name: string, public type: AuthorityType, public pictureUrl: string) { }
 }
 
 export class UserDto extends AuthorityDto {
-  constructor(public id: string, public name: string, public pictureUrl: string, public email: string, public devices: DeviceDto[]) {
-    super(id, name, 'user', pictureUrl);
+  constructor(public id: string, public name: string, public type: AuthorityType, public pictureUrl: string, public email: string, public devices: DeviceDto[]) {
+    super(id, name, type, pictureUrl);
+  }
+
+  static typeOf(obj: any): obj is UserDto {
+    const userDto = obj as UserDto;
+    return typeof userDto.id === 'string'
+      && typeof userDto.name === 'string'
+      && typeof userDto.pictureUrl === 'string'
+      && userDto.type === AuthorityType.User;
   }
 }
 
 export class GroupDto extends AuthorityDto {
-  constructor(public id: string, public name: string, public pictureUrl: string) {
-    super(id, name, 'group', pictureUrl);
+  constructor(public id: string, public name: string, public type: AuthorityType, public pictureUrl: string) {
+    super(id, name, type, pictureUrl);
+  }
+
+  static typeOf(obj: any): obj is GroupDto {
+    const groupDto = obj as GroupDto;
+    return typeof groupDto.id === 'string'
+      && typeof groupDto.name === 'string'
+      && typeof groupDto.pictureUrl === 'string'
+      && groupDto.type === AuthorityType.Group;
   }
 }
 
-export class BillingDto {
-  constructor(public hubId: string, public hasLicense: boolean, public email: string, public totalSeats: number, public remainingSeats: number, public issuedAt: Date, public expiresAt: Date) { }
+export type BillingDto = {
+  hubId: string;
+  hasLicense: boolean;
+  email: string;
+  totalSeats: number;
+  remainingSeats: number;
+  issuedAt: Date;
+  expiresAt: Date;
 }
 
-export class VersionDto {
-  constructor(public hubVersion: string, public keycloakVersion: string) { }
+export type VersionDto = {
+  hubVersion: string;
+  keycloakVersion: string;
 }
 
 /* Services */
@@ -84,10 +123,19 @@ class VaultService {
       .catch((err) => rethrowAndConvertIfExpected(err, 404));
   }
 
-  public async getMembers(vaultId: string, vaultKeys: VaultKeys): Promise<AuthorityDto[]> {
+  public async getMembers(vaultId: string, vaultKeys: VaultKeys): Promise<(UserDto | GroupDto)[]> {
     let vaultAdminAuthorizationJWT = await this.buildVaultAdminAuthorizationJWT(vaultId, vaultKeys);
-    return axiosAuth.get(`/vaults/${vaultId}/members`, { headers: { 'Cryptomator-Vault-Admin-Authorization': vaultAdminAuthorizationJWT } })
-      .then(response => response.data).catch(err => rethrowAndConvertIfExpected(err, 403));
+    return axiosAuth.get<(UserDto | GroupDto)[]>(`/vaults/${vaultId}/members`, { headers: { 'Cryptomator-Vault-Admin-Authorization': vaultAdminAuthorizationJWT } }).then(response => {
+      return response.data.map(authority => {
+        if (UserDto.typeOf(authority)) {
+          return new UserDto(authority.id, authority.name, authority.type, authority.pictureUrl, authority.email, authority.devices);
+        } else if (GroupDto.typeOf(authority)) {
+          return new GroupDto(authority.id, authority.name, authority.type, authority.pictureUrl);
+        } else {
+          throw new Error('Provided data is not of type UserDTO or GroupDTO');
+        }
+      });
+    }).catch(err => rethrowAndConvertIfExpected(err, 403));
   }
 
   public async addUser(vaultId: string, userId: string, vaultKeys: VaultKeys): Promise<AxiosResponse<void>> {
@@ -159,17 +207,22 @@ class UserService {
     return axiosAuth.get<UserDto[]>('/users/').then(response => response.data);
   }
 
-  public async search(query: string): Promise<UserDto[]> {
-    return axiosAuth.get<UserDto[]>(`/users/search?query=${query}`).then(response => response.data);
-  }
-
 }
 
-class GroupService {
-  public async search(query: string): Promise<GroupDto[]> {
-    return axiosAuth.get<GroupDto[]>(`/groups/search?query=${query}`).then(response => response.data);
+class AuthorityService {
+  public async search(query: string): Promise<(UserDto | GroupDto)[]> {
+    return axiosAuth.get<(UserDto | GroupDto)[]>(`/authorities/search?query=${query}`).then(response => {
+      return response.data.map(authority => {
+        if (UserDto.typeOf(authority)) {
+          return new UserDto(authority.id, authority.name, authority.type, authority.pictureUrl, authority.email, authority.devices);
+        } else if (GroupDto.typeOf(authority)) {
+          return new GroupDto(authority.id, authority.name, authority.type, authority.pictureUrl);
+        } else {
+          throw new Error('Provided data is not of type UserDTO or GroupDTO');
+        }
+      });
+    });
   }
-
 }
 
 class BillingService {
@@ -198,7 +251,7 @@ class VersionService {
 const services = {
   vaults: new VaultService(),
   users: new UserService(),
-  groups: new GroupService(),
+  authorities: new AuthorityService(),
   devices: new DeviceService(),
   billing: new BillingService(),
   version: new VersionService()

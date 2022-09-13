@@ -226,8 +226,7 @@ function permissionGranted() {
 }
 
 async function searchAuthority(query: string): Promise<AuthorityDto[]> {
-  return (await Promise.all([backend.users.search(query), backend.groups.search(query)]))
-    .flat()
+  return (await backend.authorities.search(query))
     .filter(authority => !members.value.has(authority.id))
     .sort((a, b) => a.name.localeCompare(b.name));
 }

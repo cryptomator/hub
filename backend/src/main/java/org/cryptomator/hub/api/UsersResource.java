@@ -3,6 +3,7 @@ package org.cryptomator.hub.api;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.cryptomator.hub.RemoteUserProvider;
 import org.cryptomator.hub.entities.AccessToken;
+import org.cryptomator.hub.entities.Authority;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.User;
 import org.eclipse.microprofile.jwt.JsonWebToken;
@@ -32,9 +33,6 @@ public class UsersResource {
 
 	@Inject
 	JsonWebToken jwt;
-
-	@Inject
-	RemoteUserProvider remoteUserProvider;
 
 	@PUT
 	@Path("/me")
@@ -84,31 +82,4 @@ public class UsersResource {
 		return User.findAll().<User>stream().map(UserDto::fromEntity).toList();
 	}
 
-	@GET
-	@Path("/search")
-	@RolesAllowed("user")
-	@Produces(MediaType.APPLICATION_JSON)
-	@NoCache
-	@Operation(summary = "search user")
-	public List<UserDto> search(@QueryParam("query") String query) {
-		return remoteUserProvider.searchUser(query).stream().map(UserDto::fromEntity).toList();
-	}
-
-	public static final class UserDto extends AuthorityDto {
-
-		@JsonProperty("email")
-		public final String email;
-		@JsonProperty("devices")
-		public final Set<DeviceResource.DeviceDto> devices;
-
-		UserDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("pictureUrl") String pictureUrl, @JsonProperty("email") String email, @JsonProperty("devices") Set<DeviceResource.DeviceDto> devices) {
-			super(id, Type.USER, name, pictureUrl);
-			this.email = email;
-			this.devices = devices;
-		}
-
-		public static UserDto fromEntity(User user) {
-			return new UserDto(user.id, user.name, user.pictureUrl, user.email, Set.of());
-		}
-	}
 }
