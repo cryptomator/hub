@@ -12,6 +12,11 @@
   "roles": {
     "realm": [
       {
+        "name": "user",
+        "description": "User",
+        "composite": false
+      },
+      {
         "name": "admin",
         "description": "Administrator",
         "composite": true,
