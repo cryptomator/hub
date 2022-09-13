@@ -30,21 +30,32 @@ axiosAuth.interceptors.request.use(async request => {
 const vaultAdminAuthorizationJWTLeeway = 15;
 /* DTOs */
 
-export class VaultDto {
+export type VaultDto = {
+  id: string;
+  name: string;
+  description: string;
+  creationTime: Date;
+  masterkey: string;
+  iterations: number;
+  salt: string;
+  authPublicKey: string;
+  authPrivateKey: string;
+};
 
-  constructor(public id: string, public name: string, public description: string, public creationTime: Date, public masterkey: string, public iterations: number, public salt: string, public authPublicKey: string, public authPrivateKey: string) { }
-}
-
-export class DeviceDto {
-  constructor(public id: string, public name: string, public publicKey: string, public accessTo: VaultDto[], public creationTime: Date) { }
-}
+export type DeviceDto = {
+  id: string;
+  name: string;
+  publicKey: string;
+  accessTo: VaultDto[];
+  creationTime: Date;
+};
 
 enum AuthorityType {
   User = 'USER',
   Group = 'GROUP'
 }
 
-export class AuthorityDto {
+abstract class AuthorityDto {
   constructor(public id: string, public name: string, public type: AuthorityType, public pictureUrl: string) { }
 }
 
@@ -76,12 +87,19 @@ export class GroupDto extends AuthorityDto {
   }
 }
 
-export class BillingDto {
-  constructor(public hubId: string, public hasLicense: boolean, public email: string, public totalSeats: number, public remainingSeats: number, public issuedAt: Date, public expiresAt: Date) { }
+export type BillingDto = {
+  hubId: string;
+  hasLicense: boolean;
+  email: string;
+  totalSeats: number;
+  remainingSeats: number;
+  issuedAt: Date;
+  expiresAt: Date;
 }
 
-export class VersionDto {
-  constructor(public hubVersion: string, public keycloakVersion: string) { }
+export type VersionDto = {
+  hubVersion: string;
+  keycloakVersion: string;
 }
 
 /* Services */
