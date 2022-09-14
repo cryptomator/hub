@@ -95,7 +95,7 @@ const routes: RouteRecordRaw[] = [
     meta: { skipAuth: true }
   },
   {
-    path: '/app/:pathMatch(.*)', //necessary due to using history mode in router
+    path: '/app/:pathMatch(.+)', //necessary due to using history mode in router
     component: NotFoundComponent,
     meta: { skipAuth: true },
     name: 'NotFound'
