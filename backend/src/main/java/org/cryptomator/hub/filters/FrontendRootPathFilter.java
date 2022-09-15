@@ -3,6 +3,7 @@ package org.cryptomator.hub.filters;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
@@ -23,14 +24,14 @@ public class FrontendRootPathFilter extends HttpFilter {
 
 	@Inject
 	@ConfigProperty(name = "hub.public-root-path", defaultValue = "")
-	String publicRootPath;
+	Provider<String> publicRootPath;
 
 	@Override
 	protected void doFilter(HttpServletRequest req, HttpServletResponse res, FilterChain chain) throws IOException, ServletException {
 		var capturedResponse = new CapturingResponseWrapper(res);
 		chain.doFilter(req, capturedResponse);
 		String content = capturedResponse.getCaptureAsString(); // This uses response character encoding.
-		String replacedContent = content.replace("/%hub.public-root-path%/", publicRootPath);
+		String replacedContent = content.replace("/%hub.public-root-path%/", publicRootPath.get());
 		res.setContentLength(replacedContent.length());
 		res.getWriter().write(replacedContent);
 		res.getWriter().flush();
