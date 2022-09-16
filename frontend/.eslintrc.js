@@ -37,6 +37,7 @@ module.exports = {
     'object-curly-spacing': ['error', 'always'],
     'quotes': ['error', 'single'],
     'semi': ['error', 'always'],
+    'space-infix-ops': ['error'],
     '@typescript-eslint/indent': ['error', 2],
     '@typescript-eslint/no-unused-vars': 'error',
     'no-undef': 'off' // types checked by typescript already

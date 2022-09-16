@@ -17,8 +17,7 @@
               <div class="grid grid-cols-6 gap-6">
                 <div class="col-span-6 sm:col-span-3">
                   <label for="vaultName" class="block text-sm font-medium text-gray-700">{{ t('createVault.vaultName') }}</label>
-                  <input id="vaultName" v-model="vaultName" :disabled="state == State.Processing" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onCreateError instanceof FormValidationFailedError }" required />
-                  <p v-if="onCreateError instanceof FormValidationFailedError" id="vaultName-required-description" class="mt-2 text-sm text-gray-500">{{ t('common.form.required') }}</p>
+                  <input id="vaultName" v-model="vaultName" :disabled="state == State.Processing" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onCreateError instanceof FormValidationFailedError }" pattern="^(?! )([^\\\/:*?\x22<>|])*(?<! |\.)$" required />
                 </div>
 
                 <div class="col-span-6 sm:col-span-4">
@@ -116,13 +115,13 @@ enum State {
 
 class FormValidationFailedError extends Error {
   constructor() {
-    super('The html form is not correctly filled.');
+    super('The form is invalid.');
   }
 }
 
-class ExportingTemplateFailedError extends Error {
+class EmptyVaultTemplateError extends Error {
   constructor() {
-    super('Exporting template function returned null.');
+    super('Vault template is empty.');
   }
 }
 
@@ -149,18 +148,12 @@ const vaultConfig = ref<VaultConfig>();
 
 async function createVault() {
   onCreateError.value = null;
-
-  if (!form.value?.checkValidity()) {
-    onCreateError.value = new FormValidationFailedError();
-    return;
-  }
-
-  if (!passwordMatches.value) {
-    onCreateError.value = new PasswordNotMachingError();
-    return;
-  }
-
   try {
+    if (!form.value?.checkValidity()) {
+      throw new FormValidationFailedError();
+    } else if (!passwordMatches.value) {
+      throw new PasswordNotMachingError();
+    }
     state.value = State.Processing;
     const vaultId = uuid();
     const vaultKeys = await VaultKeys.create();
@@ -170,10 +163,9 @@ async function createVault() {
     state.value = State.Finished;
   } catch (error) {
     console.error('Creating vault failed.', error);
-    onCreateError.value = error instanceof Error? error : new Error('Unknown Reason');
+    onCreateError.value = error instanceof Error ? error : new Error('Unknown reason');
     state.value = State.Initial;
   }
-  return;
 }
 
 async function downloadVaultTemplate() {
@@ -183,11 +175,11 @@ async function downloadVaultTemplate() {
     if (blob != null) {
       saveAs(blob, `${vaultName.value}.zip`);
     } else {
-      throw new ExportingTemplateFailedError();
+      throw new EmptyVaultTemplateError();
     }
   } catch (error) {
-    console.error('Exporting Template returned failed.', error);
-    onDownloadTemplateError.value = error instanceof Error? error : new Error('Unknown Reason');
+    console.error('Exporting vault template failed.', error);
+    onDownloadTemplateError.value = error instanceof Error ? error : new Error('Unknown reason');
   }
 }
 
