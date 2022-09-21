@@ -56,7 +56,7 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <!-- TODO: actual type -->
                       <span class="inline-flex items-center">
-                        <DesktopComputerIcon class="mr-1 h-5 w-5" aria-hidden="true" />
+                        <ComputerDesktopIcon class="mr-1 h-5 w-5" aria-hidden="true" />
                         Computer
                       </span>
                     </td>
@@ -87,7 +87,7 @@
 </template>
 
 <script setup lang="ts">
-import { DesktopComputerIcon } from '@heroicons/vue/solid';
+import { ComputerDesktopIcon } from '@heroicons/vue/24/solid';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { DeviceDto, NotFoundError, UserDto } from '../common/backend';

@@ -38,7 +38,7 @@
                   <input id="hubVersion" v-model="version.hubVersion" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
 
                   <p v-if="errorOnFetchingUpdates" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
-                    <ExclamationIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
+                    <ExclamationTriangleIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
                     {{ t('admin.serverInfo.hubVersion.description.fetchingUpdatesFailed') }}
                   </p>
                   <p v-else-if="!stableUpdateExists && !betaUpdateExists" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
@@ -46,11 +46,11 @@
                     {{ t('admin.serverInfo.hubVersion.description.upToDate') }}
                   </p>
                   <p v-else-if="stableUpdateExists" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
-                    <ExclamationIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
+                    <ExclamationTriangleIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
                     {{ t('admin.serverInfo.hubVersion.description.updateExists', [latestVersion?.stable]) }}
                   </p>
                   <p v-else-if="betaUpdateExists && isBeta" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
-                    <ExclamationIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
+                    <ExclamationTriangleIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
                     {{ t('admin.serverInfo.hubVersion.description.updateExists', [latestVersion?.beta]) }}
                   </p>
                   <p v-else-if="betaUpdateExists && !isBeta" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
@@ -98,11 +98,11 @@
                     {{ t('admin.licenseInfo.seats.description.enoughSeats', [admin.remainingSeats]) }}
                   </p>
                   <p v-else-if="admin.remainingSeats == 0" id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
-                    <ExclamationIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
+                    <ExclamationTriangleIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
                     {{ t('admin.licenseInfo.seats.description.zeroSeats') }}
                   </p>
                   <p v-else id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
-                    <XIcon class="shrink-0 text-red-500 mr-1 h-5 w-5" aria-hidden="true" />
+                    <XMarkIcon class="shrink-0 text-red-500 mr-1 h-5 w-5" aria-hidden="true" />
                     {{ t('admin.licenseInfo.seats.description.undercutSeats') }}
                   </p>
                 </div>
@@ -120,7 +120,7 @@
                     {{ t('admin.licenseInfo.expiresAt.description.valid') }}
                   </p>
                   <p v-else id="expiresAt-description" class="inline-flex mt-2 text-sm text-gray-500">
-                    <XIcon class="shrink-0 text-red-500 mr-1 h-5 w-5" aria-hidden="true" />
+                    <XMarkIcon class="shrink-0 text-red-500 mr-1 h-5 w-5" aria-hidden="true" />
                     {{ t('admin.licenseInfo.expiresAt.description.expired') }}
                   </p>
                 </div>
@@ -131,7 +131,7 @@
 
         <div class="flex justify-end items-center px-4 py-3 bg-gray-50 sm:px-6">
           <button type="button" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="manageSubscription()">
-            <ExternalLinkIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+            <ArrowTopRightOnSquareIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
             {{ t('admin.licenseInfo.manageSubscription') }}
           </button>
         </div>
@@ -163,11 +163,11 @@
                     {{ t('admin.licenseInfo.seats.description.enoughSeats', [admin.remainingSeats]) }}
                   </p>
                   <p v-else-if="admin.remainingSeats == 0" id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
-                    <ExclamationIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
+                    <ExclamationTriangleIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
                     {{ t('admin.licenseInfo.seats.description.zeroSeats') }}
                   </p>
                   <p v-else id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
-                    <XIcon class="shrink-0 text-red-500 mr-1 h-5 w-5" aria-hidden="true" />
+                    <XMarkIcon class="shrink-0 text-red-500 mr-1 h-5 w-5" aria-hidden="true" />
                     {{ t('admin.licenseInfo.seats.description.undercutSeats') }}
                   </p>
                 </div>
@@ -178,7 +178,7 @@
 
         <div class="flex justify-end items-center px-4 py-3 bg-gray-50 sm:px-6">
           <button type="button" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="manageSubscription()">
-            <ExternalLinkIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+            <ArrowTopRightOnSquareIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
             {{ t('admin.licenseInfo.communityLicense.upgradeLicense') }}
           </button>
         </div>
@@ -188,7 +188,7 @@
 </template>
 
 <script setup lang="ts">
-import { CheckIcon, ExclamationIcon, ExternalLinkIcon, InformationCircleIcon, LinkIcon, XIcon } from '@heroicons/vue/solid';
+import { ArrowTopRightOnSquareIcon, CheckIcon, ExclamationTriangleIcon, InformationCircleIcon, LinkIcon, XMarkIcon } from '@heroicons/vue/20/solid';
 import semver from 'semver';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';

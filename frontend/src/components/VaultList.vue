@@ -65,7 +65,7 @@
 </template>
 
 <script setup lang="ts">
-import { ChevronRightIcon, PlusIcon } from '@heroicons/vue/solid';
+import { ChevronRightIcon, PlusIcon } from '@heroicons/vue/24/solid';
 import { nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { VaultDto } from '../common/backend';

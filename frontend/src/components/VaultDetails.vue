@@ -55,7 +55,7 @@
             <div v-if="!addingUser" class="justify-between items-center">
               <button type="button" class="group -ml-1 bg-white p-1 rounded-md flex items-center focus:outline-none focus:ring-2 focus:ring-primary" @click="addingUser = true">
                 <span class="w-8 h-8 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400">
-                  <PlusSmIcon class="h-5 w-5" aria-hidden="true" />
+                  <PlusSmallIcon class="h-5 w-5" aria-hidden="true" />
                 </span>
                 <span class="ml-4 text-sm font-medium text-primary group-hover:text-primary-l1">{{ t('common.share') }}</span>
               </button>
@@ -92,7 +92,7 @@
 </template>
 
 <script setup lang="ts">
-import { PlusSmIcon } from '@heroicons/vue/solid';
+import { PlusSmallIcon } from '@heroicons/vue/24/solid';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { AuthorityDto, ConflictError, DeviceDto, NotFoundError, UserDto, VaultDto } from '../common/backend';
@@ -242,7 +242,7 @@ async function revokeUserAccess(userId: string) {
   } catch (error) {
     console.error('Revoking user access failed.', error);
     //404 not expected from user perspective
-    onRevokeUserAccessError.value[userId] = error instanceof Error ? error: new Error('Unknown Error');
+    onRevokeUserAccessError.value[userId] = error instanceof Error ? error : new Error('Unknown Error');
   }
 }
 </script>
