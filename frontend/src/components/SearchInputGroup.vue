@@ -37,7 +37,7 @@
 
 <script setup lang="ts">
 import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions } from '@headlessui/vue';
-import { UsersIcon, XCircleIcon } from '@heroicons/vue/solid';
+import { UsersIcon, XCircleIcon } from '@heroicons/vue/24/solid';
 import { computed } from '@vue/reactivity';
 import { nextTick, ref, watch } from 'vue';
 import { debounce } from '../common/util';

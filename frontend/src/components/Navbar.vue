@@ -6,8 +6,8 @@
           <!-- Mobile menu button-->
           <DisclosureButton class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
             <span class="sr-only">{{ t('nav.mobileMenu') }}</span>
-            <MenuIcon v-if="!open" class="block h-6 w-6" aria-hidden="true" />
-            <XIcon v-else class="block h-6 w-6" aria-hidden="true" />
+            <Bars3Icon v-if="!open" class="block h-6 w-6" aria-hidden="true" />
+            <XMarkIcon v-else class="block h-6 w-6" aria-hidden="true" />
           </DisclosureButton>
         </div>
         <div class="flex-1 flex items-center justify-center sm:items-stretch sm:justify-start">
@@ -68,7 +68,7 @@
 
 <script setup lang="ts">
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
-import { AdjustmentsIcon, CogIcon, DesktopComputerIcon, LogoutIcon, MenuIcon, XIcon } from '@heroicons/vue/outline';
+import { ArrowRightOnRectangleIcon, Bars3Icon, Cog8ToothIcon, ComputerDesktopIcon, WrenchIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auth from '../common/auth';
@@ -83,18 +83,18 @@ const navigation = [
 const profileDropdownSections = {
   infoSection :
     [
-      { icon: DesktopComputerIcon, name: 'nav.profile.devices', to: '/app/devices' }
+      { icon: ComputerDesktopIcon, name: 'nav.profile.devices', to: '/app/devices' }
     ],
 
   adminSection :
     [
-      { icon: AdjustmentsIcon, name: 'nav.profile.admin', to: '/app/admin' }
+      { icon: WrenchIcon, name: 'nav.profile.admin', to: '/app/admin' }
     ],
 
   hubSection :
     [
-      { icon: CogIcon, name: 'nav.profile.settings', to: '/app/settings' },
-      { icon: LogoutIcon, name: 'nav.profile.signOut', to: '/app/logout' }
+      { icon: Cog8ToothIcon, name: 'nav.profile.settings', to: '/app/settings' },
+      { icon: ArrowRightOnRectangleIcon, name: 'nav.profile.signOut', to: '/app/logout' }
     ],
 
 };

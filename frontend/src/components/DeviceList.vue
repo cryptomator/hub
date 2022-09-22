@@ -10,7 +10,7 @@
 
   <div v-else-if="me.devices.length == 0" class="text-center">
     <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-      <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
     </svg>
     <h3 class="mt-2 text-sm font-medium text-gray-900">{{ t('deviceList.empty.message') }}</h3>
     <p class="mt-1 text-sm text-gray-500">{{ t('deviceList.empty.description') }}</p>
@@ -56,7 +56,7 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <!-- TODO: actual type -->
                       <span class="inline-flex items-center">
-                        <DesktopComputerIcon class="mr-1 h-5 w-5" aria-hidden="true" />
+                        <ComputerDesktopIcon class="mr-1 h-5 w-5" aria-hidden="true" />
                         Computer
                       </span>
                     </td>
@@ -87,7 +87,7 @@
 </template>
 
 <script setup lang="ts">
-import { DesktopComputerIcon } from '@heroicons/vue/solid';
+import { ComputerDesktopIcon } from '@heroicons/vue/24/solid';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { DeviceDto, NotFoundError, UserDto } from '../common/backend';
