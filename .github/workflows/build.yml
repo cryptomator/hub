@@ -25,6 +25,8 @@ jobs:
     if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')" # can the if also be est for all jobs?
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v2
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -52,12 +54,12 @@ jobs:
           restore-keys: ${{ runner.os }}-sonar
       - name: Build and test backend
         working-directory: backend
-        run: >
-          mvn -B clean verify
-          org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
-          -Dsonar.projectKey=cryptomator_hub
-          -Dsonar.organization=cryptomator
-          -Dsonar.host.url=https://sonarcloud.io
+        run: mvn -B clean verify
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       - id: get_tag
         if: github.event.inputs.tag != '' || startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/develop'
         run: |
