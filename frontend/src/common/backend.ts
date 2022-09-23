@@ -1,4 +1,6 @@
 import AxiosStatic, { AxiosRequestConfig, AxiosResponse } from 'axios';
+import { JdenticonConfig, toSvg } from 'jdenticon';
+import { base64 } from 'rfc4648';
 import authPromise from './auth';
 import { backendBaseURL } from './config';
 import { VaultKeys } from './crypto';
@@ -56,34 +58,91 @@ enum AuthorityType {
 }
 
 abstract class AuthorityDto {
-  constructor(public id: string, public name: string, public type: AuthorityType, public pictureUrl: string) { }
+
+  private _pictureUrl?: string;
+
+  constructor(public id: string, public name: string, public type: AuthorityType, pictureUrl?: string) {
+    this._pictureUrl = pictureUrl;
+  }
+
+  public get pictureUrl() {
+    if (this._pictureUrl) {
+      return this._pictureUrl;
+    } else {
+      switch (this.type) {
+        case AuthorityType.User:
+      }
+      const svg = toSvg(this.id, 100, this.getIdenticonConfig());
+      const bytes = new TextEncoder().encode(svg);
+      return `data:image/svg+xml;base64,${base64.stringify(bytes)}`;
+    }
+  }
+
+  abstract getIdenticonConfig(): JdenticonConfig;
+
 }
 
 export class UserDto extends AuthorityDto {
-  constructor(public id: string, public name: string, public type: AuthorityType, public pictureUrl: string, public email: string, public devices: DeviceDto[]) {
+  constructor(public id: string, public name: string, public type: AuthorityType, public email: string, public devices: DeviceDto[], pictureUrl?: string) {
     super(id, name, type, pictureUrl);
+  }
+
+  getIdenticonConfig(): JdenticonConfig {
+    return {
+      hues: [121],
+      saturation: {
+        color: 0.41,
+      },
+      lightness: {
+        color: [0.45, 0.55],
+        grayscale: [0.3, 0.5]
+      },
+      backColor: '#EBF5EB'
+    };
   }
 
   static typeOf(obj: any): obj is UserDto {
     const userDto = obj as UserDto;
     return typeof userDto.id === 'string'
       && typeof userDto.name === 'string'
-      && typeof userDto.pictureUrl === 'string'
+      && (typeof userDto.pictureUrl === 'string' || userDto.pictureUrl === null)
       && userDto.type === AuthorityType.User;
+  }
+
+  static copy(obj: UserDto): UserDto {
+    return new UserDto(obj.id, obj.name, obj.type, obj.email, obj.devices, obj.pictureUrl);
   }
 }
 
 export class GroupDto extends AuthorityDto {
-  constructor(public id: string, public name: string, public type: AuthorityType, public pictureUrl: string) {
+  constructor(public id: string, public name: string, public type: AuthorityType, pictureUrl: string) {
     super(id, name, type, pictureUrl);
+  }
+
+  getIdenticonConfig(): JdenticonConfig {
+    return {
+      hues: [120],
+      saturation: {
+        color: 0.3
+      },
+      lightness: {
+        color: [0.9, 1.0],
+        grayscale: [0.8, 1.0]
+      },
+      backColor: '#005E71'
+    };
   }
 
   static typeOf(obj: any): obj is GroupDto {
     const groupDto = obj as GroupDto;
     return typeof groupDto.id === 'string'
       && typeof groupDto.name === 'string'
-      && typeof groupDto.pictureUrl === 'string'
+      && (typeof groupDto.pictureUrl === 'string' || groupDto.pictureUrl === null)
       && groupDto.type === AuthorityType.Group;
+  }
+
+  static copy(obj: GroupDto): GroupDto {
+    return new GroupDto(obj.id, obj.name, obj.type, obj.pictureUrl);
   }
 }
 
@@ -128,9 +187,9 @@ class VaultService {
     return axiosAuth.get<(UserDto | GroupDto)[]>(`/vaults/${vaultId}/members`, { headers: { 'Cryptomator-Vault-Admin-Authorization': vaultAdminAuthorizationJWT } }).then(response => {
       return response.data.map(authority => {
         if (UserDto.typeOf(authority)) {
-          return new UserDto(authority.id, authority.name, authority.type, authority.pictureUrl, authority.email, authority.devices);
+          return UserDto.copy(authority);
         } else if (GroupDto.typeOf(authority)) {
-          return new GroupDto(authority.id, authority.name, authority.type, authority.pictureUrl);
+          return GroupDto.copy(authority);
         } else {
           throw new Error('Provided data is not of type UserDTO or GroupDTO');
         }
@@ -200,11 +259,13 @@ class UserService {
     return axiosAuth.put('/users/me');
   }
   public async me(withDevices: boolean = false, withAccessibleVaults: boolean = false): Promise<UserDto> {
-    return axiosAuth.get<UserDto>(`/users/me?withDevices=${withDevices}&withAccessibleVaults=${withAccessibleVaults}`).then(response => response.data);
+    return axiosAuth.get<UserDto>(`/users/me?withDevices=${withDevices}&withAccessibleVaults=${withAccessibleVaults}`).then(response => UserDto.copy(response.data));
   }
 
   public async listAll(): Promise<UserDto[]> {
-    return axiosAuth.get<UserDto[]>('/users/').then(response => response.data);
+    return axiosAuth.get<UserDto[]>('/users/').then(response => {
+      return response.data.map(dto => UserDto.copy(dto));
+    });
   }
 
 }
@@ -214,9 +275,9 @@ class AuthorityService {
     return axiosAuth.get<(UserDto | GroupDto)[]>(`/authorities/search?query=${query}`).then(response => {
       return response.data.map(authority => {
         if (UserDto.typeOf(authority)) {
-          return new UserDto(authority.id, authority.name, authority.type, authority.pictureUrl, authority.email, authority.devices);
+          return UserDto.copy(authority);
         } else if (GroupDto.typeOf(authority)) {
-          return new GroupDto(authority.id, authority.name, authority.type, authority.pictureUrl);
+          return GroupDto.copy(authority);
         } else {
           throw new Error('Provided data is not of type UserDTO or GroupDTO');
         }
