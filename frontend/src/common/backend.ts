@@ -89,15 +89,16 @@ export class UserDto extends AuthorityDto {
 
   getIdenticonConfig(): JdenticonConfig {
     return {
-      hues: [121],
+      hues: [6, 28, 48, 121, 283],
       saturation: {
-        color: 0.41,
+        color: 0.59,
       },
       lightness: {
-        color: [0.45, 0.55],
-        grayscale: [0.3, 0.5]
+        color: [0.32, 0.49],
+        grayscale: [0.32, 0.49]
       },
-      backColor: '#EBF5EB'
+      backColor: '#F7F7F7',
+      padding: 0
     };
   }
 
@@ -121,15 +122,16 @@ export class GroupDto extends AuthorityDto {
 
   getIdenticonConfig(): JdenticonConfig {
     return {
-      hues: [120],
+      hues: [190],
       saturation: {
-        color: 0.3
+        color: 0.59
       },
       lightness: {
-        color: [0.9, 1.0],
-        grayscale: [0.8, 1.0]
+        color: [0.81, 0.97],
+        grayscale: [0.81, 0.97]
       },
-      backColor: '#005E71'
+      backColor: '#005E71',
+      padding: 0
     };
   }
 
