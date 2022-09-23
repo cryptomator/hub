@@ -25,8 +25,8 @@ jobs:
     if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')" # can the if also be est for all jobs?
     steps:
       - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
+      with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
       - uses: actions/setup-node@v2
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -41,6 +41,19 @@ jobs:
       - name: Deploy frontend
         working-directory: frontend
         run: npm run dist
+      - name: SonarCloud Scan Frontend
+        uses: SonarSource/sonarcloud-github-action@master
+        with:
+          projectBaseDir: frontend
+          args: >
+            -Dsonar.organization=cryptomator
+            -Dsonar.projectKey=cryptomator_hub_frontend
+            -Dsonar.typescript.tsconfigPath=tsconfig.json
+            -Dsonar.sources=src/
+            -Dsonar.tests=test/
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       - uses: actions/setup-java@v2
         with:
           distribution: 'temurin'
@@ -54,9 +67,12 @@ jobs:
           restore-keys: ${{ runner.os }}-sonar
       - name: Build and test backend
         working-directory: backend
-        run: mvn -B clean verify
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
+        run: >
+          mvn -B clean verify
+          org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
+          -Dsonar.projectKey=cryptomator_hub_backend
+          -Dsonar.organization=cryptomator
+          -Dsonar.host.url=https://sonarcloud.io
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
