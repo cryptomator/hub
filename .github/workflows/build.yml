@@ -44,9 +44,20 @@ jobs:
           distribution: 'temurin'
           java-version: ${{ env.JAVA_VERSION }}
           cache: 'maven'
+      - name: Cache SonarCloud packages
+        uses: actions/cache@v2
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
       - name: Build and test backend
         working-directory: backend
-        run: mvn -B clean verify
+        run: >
+          mvn -B clean verify
+          org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
+          -Dsonar.projectKey=cryptomator_hub
+          -Dsonar.organization=cryptomator
+          -Dsonar.host.url=https://sonarcloud.io
       - id: get_tag
         if: github.event.inputs.tag != '' || startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/develop'
         run: |
