@@ -25,7 +25,7 @@ jobs:
     if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')" # can the if also be est for all jobs?
     steps:
       - uses: actions/checkout@v2
-      with:
+        with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
       - uses: actions/setup-node@v2
         with:
