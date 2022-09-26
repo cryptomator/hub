@@ -21,6 +21,11 @@ import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
 import javax.persistence.PersistenceException;
 import javax.transaction.Transactional;
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.Consumes;
@@ -38,6 +43,7 @@ import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.Objects;
 
 @Path("/vaults")
 public class VaultResource {
@@ -283,7 +289,7 @@ public class VaultResource {
 			description = "Creates a vault with the given vault id. The creationTime in the vaultDto is ignored and the current server time is used.")
 	@APIResponse(responseCode = "201", description = "vault created")
 	@APIResponse(responseCode = "409", description = "vault with given id or name already exists")
-	public Response create(@PathParam("vaultId") String vaultId, VaultDto vaultDto) {
+	public Response create(@PathParam("vaultId") String vaultId, @Valid VaultDto vaultDto) {
 		if (vaultDto == null) {
 			throw new BadRequestException("Missing vault dto");
 		}
@@ -302,10 +308,12 @@ public class VaultResource {
 		}
 	}
 
-	public record VaultDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("description") String description,
+	public record VaultDto(@JsonProperty("id") @NotBlank @Pattern(regexp = "[-\\w]+") String id,
+						   @JsonProperty("name") @NotBlank @Pattern(regexp = "(?U)[-_\\p{Alnum}]+") String name,
+						   @JsonProperty("description") @Pattern(regexp = "(?U)[-\\p{Alnum}\\h_.~!%&'()*+;=:/?#@]*") String description,
 						   @JsonProperty("creationTime") @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSX") Timestamp creationTime,
-						   @JsonProperty("masterkey") String masterkey, @JsonProperty("iterations") String iterations, @JsonProperty("salt") String salt,
-						   @JsonProperty("authPublicKey") String authPublicKey, @JsonProperty("authPrivateKey") String authPrivateKey
+						   @JsonProperty("masterkey") @NotBlank String masterkey, @JsonProperty("iterations") @NotBlank @Pattern(regexp = "\\d+") String iterations, @JsonProperty("salt") @NotNull String salt,
+						   @JsonProperty("authPublicKey") @NotBlank String authPublicKey, @JsonProperty("authPrivateKey") @NotBlank String authPrivateKey
 	) {
 
 		public static VaultDto fromEntity(Vault entity) {
@@ -316,7 +324,7 @@ public class VaultResource {
 			var vault = new Vault();
 			vault.id = id;
 			vault.name = name;
-			vault.description = description;
+			vault.description = Objects.requireNonNullElse(description,"");
 			vault.creationTime = creationTime;
 			vault.masterkey = masterkey;
 			vault.iterations = iterations;
