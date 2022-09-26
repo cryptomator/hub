@@ -16,7 +16,18 @@ export default defineConfig({
   build: {
     minify: 'esbuild',
     target: 'esnext',
-    assetsInlineLimit: 0
+    assetsInlineLimit: 0,
+    rollupOptions: {
+      output: {
+        manualChunks: (id: string) => {
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          } else {
+            return 'main';
+          }
+        }
+      }
+    }
   },
   server: {
     proxy: {
