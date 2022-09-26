@@ -57,7 +57,7 @@ public class DeviceResourceTest {
 		@Test
 		@DisplayName("PUT /devices/device1 returns 409")
 		public void testCreate1() {
-			var deviceDto = new DeviceResource.DeviceDto("device1", "Computer 1", "publickey1", "", Set.of(), Timestamp.valueOf("2020-02-20 20:20:20"));
+			var deviceDto = new DeviceResource.DeviceDto("device1", "Computer 1", "publickey1", "owner1", Set.of(), Timestamp.valueOf("2020-02-20 20:20:20"));
 
 			given().contentType(ContentType.JSON).body(deviceDto)
 					.when().put("/devices/{deviceId}", "device1")
@@ -67,7 +67,7 @@ public class DeviceResourceTest {
 		@Test
 		@DisplayName("PUT /devices/deviceX returns 409 due to non-unique name")
 		public void testCreateX() {
-			var deviceDto = new DeviceResource.DeviceDto("deviceX", "Computer 1", "publickey1", "", Set.of(), Timestamp.valueOf("2020-02-20 20:20:20"));
+			var deviceDto = new DeviceResource.DeviceDto("deviceX", "Computer 1", "publickey1", "owner1", Set.of(), Timestamp.valueOf("2020-02-20 20:20:20"));
 
 			given().contentType(ContentType.JSON).body(deviceDto)
 					.when().put("/devices/{deviceId}", "deviceX")
@@ -77,7 +77,7 @@ public class DeviceResourceTest {
 		@Test
 		@DisplayName("PUT /devices/device999 returns 201")
 		public void testCreate2() {
-			var deviceDto = new DeviceResource.DeviceDto("device999", "Computer 999", "publickey999", "", Set.of(), Timestamp.valueOf("2020-02-20 20:20:20"));
+			var deviceDto = new DeviceResource.DeviceDto("device999", "Computer 999", "publickey999", "owner1", Set.of(), Timestamp.valueOf("2020-02-20 20:20:20"));
 
 			given().contentType(ContentType.JSON).body(deviceDto)
 					.when().put("/devices/{deviceId}", "device999")

@@ -13,7 +13,6 @@ import org.cryptomator.hub.filters.VaultAdminOnlyFilterProvider;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;
@@ -400,7 +399,7 @@ public class VaultResourceTest {
 		@Test
 		@DisplayName("PUT /vaults/vaultX returns 409")
 		public void testCreateVault2() {
-			var vaultDto = new VaultResource.VaultDto("vaultX", "Vault 1", "This is a testvault.", Timestamp.valueOf("2020-02-20 20:20:20"), "masterkey1", "iterations1", "salt1", "authPubKey1", "authPrvKey1");
+			var vaultDto = new VaultResource.VaultDto("vaultX", "Vault 1", "This is a testvault.", Timestamp.valueOf("2020-02-20 20:20:20"), "masterkey1", "42", "salt1", "authPubKey1", "authPrvKey1");
 
 			given().contentType(ContentType.JSON).body(vaultDto)
 					.when().put("/vaults/{vaultId}", "vaultX")
