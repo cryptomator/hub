@@ -69,9 +69,6 @@ abstract class AuthorityDto {
     if (this._pictureUrl) {
       return this._pictureUrl;
     } else {
-      switch (this.type) {
-        case AuthorityType.User:
-      }
       const svg = toSvg(this.id, 100, this.getIdenticonConfig());
       const bytes = new TextEncoder().encode(svg);
       return `data:image/svg+xml;base64,${base64.stringify(bytes)}`;
