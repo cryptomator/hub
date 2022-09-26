@@ -16,6 +16,7 @@ export default defineConfig({
   build: {
     minify: 'esbuild',
     target: 'esnext',
+    assetsInlineLimit: 0
   },
   server: {
     proxy: {
