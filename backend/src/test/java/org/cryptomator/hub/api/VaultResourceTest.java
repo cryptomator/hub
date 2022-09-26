@@ -139,7 +139,6 @@ public class VaultResourceTest {
 
 	@Nested
 	@DisplayName("Test PUT /vaults/users/{userId} endpoint (addUser)")
-	@Disabled
 	public class TestAddUser {
 
 		@Test
@@ -230,7 +229,6 @@ public class VaultResourceTest {
 
 	@Nested
 	@DisplayName("Test PUT /vaults/groups/{userId} endpoint (addGroup)")
-	@Disabled
 	public class TestAddGroup {
 
 		@Test
@@ -250,7 +248,6 @@ public class VaultResourceTest {
 
 	@Nested
 	@DisplayName("Test GET /vaults/{vaultId]/keys/{deviceId} endpoint (unlock)")
-	@Disabled
 	public class TestUnlock {
 
 		@Test
@@ -291,7 +288,6 @@ public class VaultResourceTest {
 	}
 
 	@Nested
-	@Disabled
 	@DisplayName("As user1")
 	@TestSecurity(user = "User Name 1", roles = {"user"})
 	@OidcSecurity(claims = {
@@ -369,7 +365,6 @@ public class VaultResourceTest {
 	@OidcSecurity(claims = {
 			@Claim(key = "sub", value = "user1")
 	})
-	@Disabled
 	public class AsVaultAdmin {
 
 		@Test
@@ -481,7 +476,6 @@ public class VaultResourceTest {
 			@Claim(key = "sub", value = "user2")
 	})
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-	@Disabled
 	public class ManageMembers {
 
 		@Test
@@ -611,7 +605,6 @@ public class VaultResourceTest {
 			@Claim(key = "sub", value = "user2")
 	})
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-	@Disabled
 	public class ManageGroups {
 
 		private final String vault4AdminJWT = "eyJhbGciOiJFUzM4NCIsInR5cCI6IkpXVCIsInZhdWx0SWQiOiJ2YXVsdDQifQ.eyJpYXQiOjE1MTYyMzkwMTUsImV4cCI6NTgxNjIzOTAzMCwibmJmIjoxNTE2MjM5MDAwfQ.aSe-P9j1vybUPS_Y1PDQ5knh_slaNulX365TSJNBYGY5dooUTZicu27_h_jYC-vvsafn4sjQhifEoXJq1U5r2kEp8ZV_Bn_4GdLLAG2JDewuAvWlkqks1un4spEO8yO4";
@@ -773,7 +766,6 @@ public class VaultResourceTest {
 
 	@Nested
 	@DisplayName("As unauthenticated user")
-	@Disabled
 	public class AsAnonymous {
 
 		@DisplayName("401 Unauthorized")
