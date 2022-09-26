@@ -18,7 +18,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 
 /**
- * Replaces occurences of <code>/%hub.public-root-path%/</code> with the corresponding configuration value.
+ * Replaces occurences of <code>&lt;base href="/"&gt;</code> with the corresponding configuration value from <code>hub.public-root-path</code>.
  */
 public class FrontendRootPathFilter extends HttpFilter {
 
@@ -31,7 +31,7 @@ public class FrontendRootPathFilter extends HttpFilter {
 		var capturedResponse = new CapturingResponseWrapper(res);
 		chain.doFilter(req, capturedResponse);
 		String content = capturedResponse.getCaptureAsString(); // This uses response character encoding.
-		String replacedContent = content.replace("/%hub.public-root-path%/", publicRootPath.get());
+		String replacedContent = content.replace("<base href=\"/\"/>", "<base href=\"%s\"/>".formatted(publicRootPath.get()));
 		res.setContentLength(replacedContent.length());
 		res.getWriter().write(replacedContent);
 		res.getWriter().flush();
