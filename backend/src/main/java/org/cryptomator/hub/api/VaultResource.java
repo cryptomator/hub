@@ -242,7 +242,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "403", description = "VaultAdminAuthorizationJWT expired or not yet valid")
 	@APIResponse(responseCode = "404", description = "vault or device not found")
 	@APIResponse(responseCode = "409", description = "Access to vault for device already granted")
-	public Response grantAccess(@PathParam("vaultId") @Pattern(regexp = ValidationUtil.ID_PATTERN) String vaultId, @PathParam("deviceId") @Pattern(regexp = ValidationUtil.ID_PATTERN) String deviceId, @Pattern(regexp = ValidationUtil.JWE_PATTERN) String jwe) {
+	public Response grantAccess(@PathParam("vaultId") @Pattern(regexp = ValidationUtil.ID_PATTERN) String vaultId, @PathParam("deviceId") @Pattern(regexp = ValidationUtil.ID_PATTERN) String deviceId, @Pattern(regexp = ValidationUtil.JWX_PATTERN) String jwe) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		var device = Device.<Device>findByIdOptional(deviceId).orElseThrow(NotFoundException::new);
 
