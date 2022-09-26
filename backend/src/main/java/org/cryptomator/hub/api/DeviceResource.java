@@ -73,7 +73,6 @@ public class DeviceResource {
 	@APIResponse(responseCode = "204", description = "device removed")
 	@APIResponse(responseCode = "404", description = "device not found with current user")
 	public Response remove(@PathParam("deviceId") @Pattern(regexp = ValidationUtil.ID_PATTERN) String deviceId) {
-		// FIXME validate parameter
 		if (deviceId == null || deviceId.trim().length() == 0) {
 			return Response.status(Response.Status.BAD_REQUEST).entity("deviceId cannot be empty").build();
 		}
