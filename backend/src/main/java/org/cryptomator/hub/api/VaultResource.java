@@ -23,7 +23,6 @@ import javax.persistence.PersistenceException;
 import javax.transaction.Transactional;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.ws.rs.BadRequestException;
@@ -309,7 +308,7 @@ public class VaultResource {
 	}
 
 	public record VaultDto(@JsonProperty("id") @NotBlank @Pattern(regexp = ValidationUtil.ID_PATTERN) String id,
-						   @JsonProperty("name") @NotBlank @Pattern(regexp = "(?U)[-_\\p{Alnum}]+") String name,
+						   @JsonProperty("name") @NotBlank @Pattern(regexp = ValidationUtil.NAME_PATTERN) String name,
 						   @JsonProperty("description") @Pattern(regexp = "(?U)[-\\p{Alnum}\\h_.~!%&'()*+;=:/?#@]*") String description,
 						   @JsonProperty("creationTime") @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSX") Timestamp creationTime,
 						   @JsonProperty("masterkey") @NotBlank String masterkey, @JsonProperty("iterations") @NotBlank @Pattern(regexp = "\\d+") String iterations, @JsonProperty("salt") @NotNull String salt,
@@ -324,7 +323,7 @@ public class VaultResource {
 			var vault = new Vault();
 			vault.id = id;
 			vault.name = name;
-			vault.description = Objects.requireNonNullElse(description,"");
+			vault.description = Objects.requireNonNullElse(description, "");
 			vault.creationTime = creationTime;
 			vault.masterkey = masterkey;
 			vault.iterations = iterations;

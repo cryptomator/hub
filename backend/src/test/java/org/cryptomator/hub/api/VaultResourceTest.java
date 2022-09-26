@@ -81,27 +81,6 @@ public class VaultResourceTest {
 		}
 
 		@ParameterizedTest
-		@DisplayName("Testing invalid values for property id")
-		@ValueSource(strings = {"foo\u5207", "asd§", "asd$", "%&asd", "as02nmf-laksdj.", "foo/\\bar", "+foobarbaz#-\"", "<bar>"})
-		@NullAndEmptySource
-		public void testInvalidId(String id) {
-			var dto = new VaultResource.VaultDto(id, VALID_NAME, VALID_DESCRIPTION, Timestamp.from(Instant.ofEpochMilli(0)), VALID_MASTERKEY, VALID_ITERATIONS, VALID_SALT, VALID_AUTH_PUB, VALID_AUTH_PRI);
-			var violations = validator.validate(dto);
-			MatcherAssert.assertThat(violations, Matchers.not(Matchers.empty()));
-		}
-
-		@ParameterizedTest
-		@DisplayName("Testing invalid values for property name")
-		@ValueSource(strings = {"asd§", "asd$", "%&asd", "as02nmf:laksdj.", "foo/\\bar", "+foobarbaz#-\"", "<bar>"})
-		@NullAndEmptySource
-		public void testInvalidNames(String name) {
-			var dto = new VaultResource.VaultDto(VALID_ID, name, VALID_DESCRIPTION, Timestamp.from(Instant.ofEpochMilli(0)), VALID_MASTERKEY, VALID_ITERATIONS, VALID_SALT, VALID_AUTH_PUB, VALID_AUTH_PRI);
-			var violations = validator.validate(dto);
-			MatcherAssert.assertThat(violations, Matchers.not(Matchers.empty()));
-		}
-
-
-		@ParameterizedTest
 		@DisplayName("Testing invalid values for property description")
 		@ValueSource(strings = {"asd§", "\"asd", "foo/\\bar", "°foo", "<bar>"})
 		public void testInvalidDescriptions(String description) {
