@@ -13,7 +13,7 @@
         <filter-name>rootPathFilter</filter-name>
         <url-pattern>/index.html</url-pattern>
         <url-pattern>/app/*</url-pattern>
-        <url-pattern>/assets/*</url-pattern>
+        <url-pattern>/</url-pattern>
     </filter-mapping>
 
     <filter>
