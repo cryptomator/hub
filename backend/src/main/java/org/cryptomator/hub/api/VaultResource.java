@@ -323,7 +323,7 @@ public class VaultResource {
 			var vault = new Vault();
 			vault.id = id;
 			vault.name = name;
-			vault.description = Objects.requireNonNullElse(description, "");
+			vault.description = description;
 			vault.creationTime = creationTime;
 			vault.masterkey = masterkey;
 			vault.iterations = iterations;
