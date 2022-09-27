@@ -12,6 +12,7 @@ import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.filters.ActiveLicense;
 import org.cryptomator.hub.filters.VaultAdminOnlyFilter;
 import org.cryptomator.hub.license.LicenseHolder;
+import org.cryptomator.hub.validation.AlmostSafeText;
 import org.cryptomator.hub.validation.IsBase64;
 import org.cryptomator.hub.validation.IsBase64Url;
 import org.cryptomator.hub.validation.IsJWE;
@@ -312,8 +313,8 @@ public class VaultResource {
 	}
 
 	public record VaultDto(@JsonProperty("id") @IsUUID String id,
-						   @JsonProperty("name") @NotBlank @Pattern(regexp = ValidationPatterns.NAME_PATTERN) String name,
-						   @JsonProperty("description") @Pattern(regexp = "(?U)[-\\p{Alnum}\\h_.~!%&'()*+;=:/?#@]*") String description,
+						   @JsonProperty("name") @AlmostSafeText String name,
+						   @JsonProperty("description") @Pattern(regexp = "^[&*<>\"]") String description,
 						   @JsonProperty("creationTime") @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSX") Timestamp creationTime,
 						   @JsonProperty("masterkey") @IsBase64Url String masterkey, @JsonProperty("iterations") @NotBlank @Pattern(regexp = "\\d+") String iterations, @JsonProperty("salt") @NotNull String salt,
 						   @JsonProperty("authPublicKey") @IsBase64 String authPublicKey, @JsonProperty("authPrivateKey") @IsBase64 String authPrivateKey
