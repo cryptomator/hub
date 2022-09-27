@@ -42,8 +42,9 @@ public class ConfigResource {
 		var publicRealmUri = trimTrailingSlash(keycloakPublicUrl + "/realms/" + keycloakRealm);
 		var authUri = replacePrefix(oidcConfData.getAuthorizationUri(), trimTrailingSlash(internalRealmUrl), publicRealmUri);
 		var tokenUri = replacePrefix(oidcConfData.getTokenUri(), trimTrailingSlash(internalRealmUrl), publicRealmUri);
+		var adminRealmUri = trimTrailingSlash(keycloakPublicUrl + "/admin/" + keycloakRealm + "/console");
 
-		return new ConfigDto(keycloakPublicUrl, keycloakRealm, keycloakClientId, authUri, tokenUri);
+		return new ConfigDto(keycloakPublicUrl, keycloakRealm, keycloakClientId, authUri, tokenUri, adminRealmUri);
 	}
 
 	//visible for testing
@@ -68,7 +69,7 @@ public class ConfigResource {
 
 	public record ConfigDto(@JsonProperty("keycloakUrl") String keycloakUrl, @JsonProperty("keycloakRealm") String keycloakRealm,
 							@JsonProperty("keycloakClientId") String keycloakClientId, @JsonProperty("keycloakAuthEndpoint") String authEndpoint,
-							@JsonProperty("keycloakTokenEndpoint") String tokenEndpoint) {
+							@JsonProperty("keycloakTokenEndpoint") String tokenEndpoint, @JsonProperty("keycloakAdminRealmUrl") String keycloakAdminRealmUrl) {
 	}
 
 }

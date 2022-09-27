@@ -61,9 +61,9 @@
                 <div class="col-span-6 sm:col-span-3">
                   <label for="keycloakVersion" class="block text-sm font-medium text-gray-700">{{ t('admin.serverInfo.keycloakVersion.title') }}</label>
                   <input id="keycloakVersion" v-model="version.keycloakVersion" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
-                  <p id="keycloakURL" class="inline-flex mt-2 text-sm">
+                  <p id="keycloakAdminRealmURL" class="inline-flex mt-2 text-sm">
                     <LinkIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
-                    <a role="button" :href="keycloakURL" target="_blank" class="underline text-gray-500 hover:text-gray-900">{{ $t('admin.serverInfo.keycloakVersion.description') }}</a>
+                    <a role="button" :href="keycloakAdminRealmURL" target="_blank" class="underline text-gray-500 hover:text-gray-900">{{ $t('admin.serverInfo.keycloakVersion.description') }}</a>
                   </p>
                 </div>
               </div>
@@ -207,7 +207,7 @@ const version = ref<VersionDto>();
 const latestVersion = ref<LatestVersionDto>();
 const admin = ref<BillingDto>();
 const now = ref<Date>(new Date());
-const keycloakURL = ref<string>();
+const keycloakAdminRealmURL = ref<string>();
 const onFetchError = ref<Error | null>();
 const errorOnFetchingUpdates = ref<boolean>(false);
 
@@ -226,7 +226,7 @@ const betaUpdateExists = computed(() => {
 });
 
 onMounted(async () => {
-  keycloakURL.value = config.get().keycloakUrl;
+  keycloakAdminRealmURL.value = config.get().keycloakAdminRealmUrl;
   if (props.token) {
     await setToken(props.token);
   }

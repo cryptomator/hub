@@ -15,7 +15,7 @@ const axios = AxiosStatic.create({
 });
 
 export class ConfigDto {
-  constructor(public keycloakRealm: string, public keycloakUrl: string, public keycloakClientId: string, public keycloakAuthEndpoint: string, public keycloakTokenEndpoint: string) { }
+  constructor(public keycloakRealm: string, public keycloakUrl: string, public keycloakClientId: string, public keycloakAuthEndpoint: string, public keycloakTokenEndpoint: string, public keycloakAdminRealmUrl: string) { }
 }
 
 class ConfigWrapper {
