@@ -16,6 +16,7 @@ import org.cryptomator.hub.validation.IsBase64;
 import org.cryptomator.hub.validation.IsBase64Url;
 import org.cryptomator.hub.validation.IsJWE;
 import org.cryptomator.hub.validation.IsUUID;
+import org.cryptomator.hub.validation.SafeText;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -106,7 +107,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "404", description = "vault or user not found")
 	@APIResponse(responseCode = "409", description = "user is already a direct member of the vault")
 	@ActiveLicense
-	public Response addUser(@PathParam("vaultId") @IsUUID String vaultId, @PathParam("userId") @Pattern(regexp = ValidationPatterns.ID_PATTERN) String userId) {
+	public Response addUser(@PathParam("vaultId") @IsUUID String vaultId, @PathParam("userId") @SafeText String userId) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		var user = User.<User>findByIdOptional(userId).orElseThrow(NotFoundException::new);
 		if (!EffectiveVaultAccess.isUserOccupyingSeat(userId)) {
@@ -139,7 +140,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "404", description = "vault or group not found")
 	@APIResponse(responseCode = "409", description = "group is already a direct member of the vault")
 	@ActiveLicense
-	public Response addGroup(@PathParam("vaultId") @IsUUID String vaultId, @PathParam("groupId") @Pattern(regexp = ValidationPatterns.ID_PATTERN) String groupId) {
+	public Response addGroup(@PathParam("vaultId") @IsUUID String vaultId, @PathParam("groupId") @SafeText String groupId) {
 		//usersInGroup - usersInGroupAndPartOfAtLeastOneVault + usersOfAtLeastOneVault
 		if (EffectiveGroupMembership.countEffectiveGroupUsers(groupId) - EffectiveVaultAccess.countEffectiveVaultUsersOfGroup(groupId) + EffectiveVaultAccess.countEffectiveVaultUsers() > license.getAvailableSeats()) {
 			throw new PaymentRequiredException("Number of effective vault users greater than or equal to the available license seats");
@@ -166,7 +167,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "401", description = "VaultAdminAuthorizationJWT not provided")
 	@APIResponse(responseCode = "403", description = "VaultAdminAuthorizationJWT expired or not yet valid")
 	@APIResponse(responseCode = "404", description = "vault not found")
-	public Response removeMember(@PathParam("vaultId") @IsUUID String vaultId, @PathParam("userId") @Pattern(regexp = ValidationPatterns.ID_PATTERN) String userId) {
+	public Response removeMember(@PathParam("vaultId") @IsUUID String vaultId, @PathParam("userId") @SafeText String userId) {
 		return removeAutority(vaultId, userId);
 	}
 
@@ -181,7 +182,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "401", description = "VaultAdminAuthorizationJWT not provided")
 	@APIResponse(responseCode = "403", description = "VaultAdminAuthorizationJWT expired or not yet valid")
 	@APIResponse(responseCode = "404", description = "vault not found")
-	public Response removeGroup(@PathParam("vaultId") @IsUUID String vaultId, @PathParam("groupId") @Pattern(regexp = ValidationPatterns.ID_PATTERN) String groupId) {
+	public Response removeGroup(@PathParam("vaultId") @IsUUID String vaultId, @PathParam("groupId") @SafeText String groupId) {
 		return removeAutority(vaultId, groupId);
 	}
 

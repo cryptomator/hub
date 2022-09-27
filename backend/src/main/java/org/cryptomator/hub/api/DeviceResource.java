@@ -7,6 +7,7 @@ import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.validation.IsBase64Url;
 import org.cryptomator.hub.validation.IsJWE;
 import org.cryptomator.hub.validation.IsUUID;
+import org.cryptomator.hub.validation.SafeText;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -93,7 +94,7 @@ public class DeviceResource {
 	public record DeviceDto(@JsonProperty("id") @IsUUID String id,
 							@JsonProperty("name") @Pattern(regexp = ValidationPatterns.NAME_PATTERN) String name,
 							@JsonProperty("publicKey") @IsBase64Url String publicKey,
-							@JsonProperty("owner") @Pattern(regexp = ValidationPatterns.ID_PATTERN) String ownerId,
+							@JsonProperty("owner") @SafeText String ownerId,
 							@JsonProperty("accessTo") @Valid Set<VaultResource.VaultDto> accessTo,
 							@JsonProperty("creationTime") @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSX") Timestamp creationTime) {
 
