@@ -12,6 +12,9 @@ import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.filters.ActiveLicense;
 import org.cryptomator.hub.filters.VaultAdminOnlyFilter;
 import org.cryptomator.hub.license.LicenseHolder;
+import org.cryptomator.hub.validation.IsBase64;
+import org.cryptomator.hub.validation.IsBase64Url;
+import org.cryptomator.hub.validation.IsJWE;
 import org.cryptomator.hub.validation.IsUUID;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
@@ -242,7 +245,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "403", description = "VaultAdminAuthorizationJWT expired or not yet valid")
 	@APIResponse(responseCode = "404", description = "vault or device not found")
 	@APIResponse(responseCode = "409", description = "Access to vault for device already granted")
-	public Response grantAccess(@PathParam("vaultId") @IsUUID String vaultId, @PathParam("deviceId") @IsUUID String deviceId, @Pattern(regexp = ValidationPatterns.JWX_PATTERN) String jwe) {
+	public Response grantAccess(@PathParam("vaultId") @IsUUID String vaultId, @PathParam("deviceId") @IsUUID String deviceId, @IsJWE String jwe) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		var device = Device.<Device>findByIdOptional(deviceId).orElseThrow(NotFoundException::new);
 
@@ -311,8 +314,8 @@ public class VaultResource {
 						   @JsonProperty("name") @NotBlank @Pattern(regexp = ValidationPatterns.NAME_PATTERN) String name,
 						   @JsonProperty("description") @Pattern(regexp = "(?U)[-\\p{Alnum}\\h_.~!%&'()*+;=:/?#@]*") String description,
 						   @JsonProperty("creationTime") @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSX") Timestamp creationTime,
-						   @JsonProperty("masterkey") @NotBlank String masterkey, @JsonProperty("iterations") @NotBlank @Pattern(regexp = "\\d+") String iterations, @JsonProperty("salt") @NotNull String salt,
-						   @JsonProperty("authPublicKey") @NotBlank String authPublicKey, @JsonProperty("authPrivateKey") @NotBlank String authPrivateKey
+						   @JsonProperty("masterkey") @IsBase64Url String masterkey, @JsonProperty("iterations") @NotBlank @Pattern(regexp = "\\d+") String iterations, @JsonProperty("salt") @NotNull String salt,
+						   @JsonProperty("authPublicKey") @IsBase64 String authPublicKey, @JsonProperty("authPrivateKey") @IsBase64 String authPrivateKey
 	) {
 
 		public static VaultDto fromEntity(Vault entity) {
