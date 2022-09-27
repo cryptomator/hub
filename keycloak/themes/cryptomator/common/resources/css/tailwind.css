@@ -1,3 +1,27 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  a:not([type='button']) {
+    @apply text-primary;
+  }
+  a:not([type='button']):hover {
+    @apply underline;
+  }
+  ol {
+    @apply list-decimal pl-5 mb-6;
+  }
+  ol > li {
+    @apply text-sm font-medium text-gray-700;
+  }
+  li > * {
+    @apply mb-2;
+  }
+  li > br {
+    @apply hidden;
+  }
+  input[type='checkbox'] {
+    @apply h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary;
+  }
+}
