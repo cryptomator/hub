@@ -316,7 +316,7 @@ public class VaultResource {
 						   @JsonProperty("name") @AlmostSafeText String name,
 						   @JsonProperty("description") @Pattern(regexp = "^[&*<>\"]") String description,
 						   @JsonProperty("creationTime") @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSX") Timestamp creationTime,
-						   @JsonProperty("masterkey") @IsBase64Url String masterkey, @JsonProperty("iterations") @NotBlank @Pattern(regexp = "\\d+") String iterations, @JsonProperty("salt") @NotNull String salt,
+						   @JsonProperty("masterkey") @IsBase64 String masterkey, @JsonProperty("iterations") @NotBlank @Pattern(regexp = "\\d+") String iterations, @JsonProperty("salt") @IsBase64 String salt,
 						   @JsonProperty("authPublicKey") @IsBase64 String authPublicKey, @JsonProperty("authPrivateKey") @IsBase64 String authPrivateKey
 	) {
 
