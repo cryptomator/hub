@@ -56,7 +56,7 @@ public class BillingResource {
 	@APIResponse(responseCode = "204")
 	@APIResponse(responseCode = "400", description = "token is invalid (e.g., expired or invalid signature)")
 	@APIResponse(responseCode = "403", description = "only admins are allowed to set the token")
-	public Response setToken(@Pattern(regexp = ValidationUtil.JWX_PATTERN) String token) {
+	public Response setToken(@Pattern(regexp = ValidationPatterns.JWX_PATTERN) String token) {
 		try {
 			licenseHolder.set(token);
 			return Response.status(Response.Status.NO_CONTENT).build();

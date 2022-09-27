@@ -25,7 +25,7 @@ public class AuthorityResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@NoCache
 	@Operation(summary = "search authority")
-	public List<AuthorityDto> search(@QueryParam("query") @Pattern(regexp = ValidationUtil.NAME_PATTERN) String query) {
+	public List<AuthorityDto> search(@QueryParam("query") @Pattern(regexp = ValidationPatterns.NAME_PATTERN) String query) {
 		return Authority.byName(query).map(authority -> {
 			if (authority instanceof User user) {
 				return new UserDto(authority.id, authority.name, user.pictureUrl, user.email, null);
