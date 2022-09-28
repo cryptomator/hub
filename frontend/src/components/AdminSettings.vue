@@ -226,7 +226,8 @@ const betaUpdateExists = computed(() => {
 });
 
 onMounted(async () => {
-  keycloakAdminRealmURL.value = config.get().keycloakAdminRealmUrl;
+  let cfg = config.get();
+  keycloakAdminRealmURL.value = `${cfg.keycloakUrl}/admin/${cfg.keycloakRealm}/console`;
   if (props.token) {
     await setToken(props.token);
   }
