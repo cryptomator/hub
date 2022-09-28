@@ -167,7 +167,7 @@ export interface VaultIdHeader extends JWTHeader {
 }
 
 class VaultService {
-  public async listSharedOrOwned(): Promise<VaultDto[]> {
+  public async listAccessible(): Promise<VaultDto[]> {
     return axiosAuth.get('/vaults').then(response => response.data);
   }
 

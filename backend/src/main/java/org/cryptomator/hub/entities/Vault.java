@@ -23,7 +23,7 @@ import java.util.stream.Stream;
 
 @Entity
 @Table(name = "vault")
-@NamedQuery(name = "Vault.accessibleOrOwnedByUser",
+@NamedQuery(name = "Vault.accessibleByUser",
 		query = """
 				SELECT DISTINCT v
 				FROM Vault v
@@ -78,8 +78,8 @@ public class Vault extends PanacheEntityBase {
 	@Column(name = "description")
 	public String description;
 
-	public static Stream<Vault> findAccessibleOrOwnedByUser(String userId) {
-		return find("#Vault.accessibleOrOwnedByUser", Parameters.with("userId", userId)).stream();
+	public static Stream<Vault> findAccessibleByUser(String userId) {
+		return find("#Vault.accessibleByUser", Parameters.with("userId", userId)).stream();
 	}
 
 	@Override

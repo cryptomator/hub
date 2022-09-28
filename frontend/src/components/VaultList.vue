@@ -119,7 +119,7 @@ const selectedVault = ref<VaultDto | null>(null);
 const isAdmin = ref<boolean>();
 
 const filterValues = [
-  { id: 1, name: t('vaultList.filter.entry.ownedByMe'), method: onSharedOrOwnedVaultsClick },
+  { id: 1, name: t('vaultList.filter.entry.accessibleVaults'), method: onAccessibleVaultsClick },
   { id: 2, name: t('vaultList.filter.entry.allVaults'), method: onAllVaultsClick },
 ];
 const selectedFilter = ref(filterValues[0]);
@@ -137,7 +137,7 @@ onMounted(fetchData);
 async function fetchData() {
   onFetchError.value = null;
   try {
-    vaults.value = await backend.vaults.listSharedOrOwned();
+    vaults.value = await backend.vaults.listAccessible();
     isAdmin.value = (await auth).isAdmin();
   } catch (error) {
     console.error('Retrieving vault list failed.', error);
@@ -154,7 +154,7 @@ async function onAllVaultsClick() {
   vaults.value = await backend.vaults.listAll();
 }
 
-async function onSharedOrOwnedVaultsClick() {
-  vaults.value = await backend.vaults.listSharedOrOwned();
+async function onAccessibleVaultsClick() {
+  vaults.value = await backend.vaults.listAccessible();
 }
 </script>

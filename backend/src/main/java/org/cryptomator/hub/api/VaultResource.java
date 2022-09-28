@@ -58,9 +58,9 @@ public class VaultResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
 	@Operation(summary = "list all accessible vaults", description = "list all vaults that have been shared with the currently logged in user or a group in wich this user is")
-	public List<VaultDto> getSharedOrOwned() {
+	public List<VaultDto> getAccessible() {
 		var currentUserId = jwt.getSubject();
-		var resultStream = Vault.findAccessibleOrOwnedByUser(currentUserId);
+		var resultStream = Vault.findAccessibleByUser(currentUserId);
 		return resultStream.map(VaultDto::fromEntity).toList();
 	}
 
