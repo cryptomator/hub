@@ -1,3 +1,67 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  a:not([type='button']) {
+    @apply text-primary;
+  }
+  a:not([type='button']):hover {
+    @apply underline;
+  }
+  hr {
+    @apply my-6;
+  }
+  ol {
+    @apply list-decimal pl-5 mb-6;
+  }
+  ol > li {
+    @apply text-sm font-medium text-gray-700;
+  }
+  li > * {
+    @apply mb-2;
+  }
+  li > br {
+    @apply hidden;
+  }
+  input[type='checkbox'] {
+    @apply h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary;
+  }
+  input[type='radio'] {
+    @apply h-4 w-4 border-gray-300 text-primary focus:ring-primary;
+  }
+}
+
+#kc-terms-text > p {
+  @apply mb-6;
+}
+
+#reset-login {
+  @apply font-body text-sm ml-1;
+}
+
+#reset-login > div {
+  @apply inline-block relative;
+}
+
+#reset-login > div:hover > span {
+  @apply block;
+}
+
+#reset-login > div > span {
+  @apply hidden absolute z-50;
+  @apply rounded shadow-md bg-white text-gray-500 w-40 p-2;
+  @apply transform -translate-x-1/2 left-1/2;
+}
+
+#try-another-way {
+  @apply block text-center mt-3;
+}
+
+#kc-webauthn-authenticator {
+  @apply pointer-events-none;
+}
+
+#kc-webauthn-authenticator-label {
+  @apply text-gray-900;
+}
