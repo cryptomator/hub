@@ -2,6 +2,7 @@ package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.quarkus.security.identity.SecurityIdentity;
 import org.cryptomator.hub.entities.AccessToken;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.EffectiveGroupMembership;
@@ -46,6 +47,9 @@ public class VaultResource {
 	JsonWebToken jwt;
 
 	@Inject
+	SecurityIdentity identity;
+
+	@Inject
 	LicenseHolder license;
 
 	@GET
@@ -54,10 +58,20 @@ public class VaultResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
 	@Operation(summary = "list all accessible vaults", description = "list all vaults that have been shared with the currently logged in user or a group in wich this user is")
-	public List<VaultDto> getSharedOrOwned() {
+	public List<VaultDto> getAccessible() {
 		var currentUserId = jwt.getSubject();
-		var resultStream = Vault.findAccessibleOrOwnedByUser(currentUserId);
+		var resultStream = Vault.findAccessibleByUser(currentUserId);
 		return resultStream.map(VaultDto::fromEntity).toList();
+	}
+
+	@GET
+	@Path("/all")
+	@RolesAllowed("admin")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Transactional
+	@Operation(summary = "list all accessible vaults", description = "list all vaults in the system")
+	public List<VaultDto> getAllVaults() {
+		return Vault.findAll().<Vault>stream().map(VaultDto::fromEntity).toList();
 	}
 
 	@GET
@@ -267,7 +281,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "403", description = "requesting user is not member of the vault")
 	public VaultDto get(@PathParam("vaultId") String vaultId) {
 		Vault vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-		if (vault.effectiveMembers.stream().noneMatch(u -> u.id.equals(jwt.getSubject()))) {
+		if (vault.effectiveMembers.stream().noneMatch(u -> u.id.equals(jwt.getSubject())) && !identity.getRoles().contains("admin")) {
 			throw new ForbiddenException("Requesting user is not a member of the vault");
 		}
 		return VaultDto.fromEntity(vault);
