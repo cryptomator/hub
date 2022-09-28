@@ -27,7 +27,7 @@
     <div class="pb-5 pt-2 border-b border-gray-200 flex gap-3 items-center whitespace-nowrap">
       <input id="vaultSearch" v-model="query" :placeholder="t('vaultList.search.placeholder')" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200"/>
       <Listbox v-if="isAdmin" v-model="selectedFilter" as="div">
-        <div class="relative ml-auto mt-1 w-48">
+        <div class="relative ml-auto mt-1 w-46">
           <ListboxButton class="relative w-full cursor-default rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm">
             <span class="block">{{ selectedFilter.name }}</span>
             <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">

@@ -111,7 +111,7 @@
   "vaultList.createVault": "Create Vault",
   "vaultList.filter": "Filter",
   "vaultList.filter.entry.allVaults": "All vaults",
-  "vaultList.filter.entry.ownedByMe": "Owned by me",
+  "vaultList.filter.entry.ownedByMe": "Accessible vaults",
   "vaultList.filter.result.empty.title": "No vaults",
   "vaultList.filter.result.empty.description.admin": "No vault found using that search term or filter.",
   "vaultList.filter.result.empty.description.user": "No vault found using that search term.",
