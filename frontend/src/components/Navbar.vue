@@ -34,7 +34,7 @@
               </MenuButton>
             </div>
             <transition enter-active-class="transition ease-out duration-100" enter-from-class="opacity-0 scale-95" enter-to-class="opacity-100 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class=" opacity-100 scale-100" leave-to-class=" opacity-0 scale-95">
-              <MenuItems class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white divide-y divide-gray-100 ring-1 ring-black ring-opacity-5 focus:outline-none">
+              <MenuItems class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white divide-y divide-gray-100 ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
                 <div class="px-3.5 py-3 truncate">
                   <span class="block mb-0.5 text-xs text-gray-500">{{ t('nav.profile.signedInAs') }}</span>
                   <span class="text-sm font-semibold">{{ me.name }}</span>

@@ -108,5 +108,12 @@
   "vaultList.title": "Vaults",
   "vaultList.empty.title": "No vaults",
   "vaultList.empty.description": "Get started by creating a new vault.",
-  "vaultList.createVault": "Create Vault"
+  "vaultList.createVault": "Create Vault",
+  "vaultList.filter": "Filter",
+  "vaultList.filter.entry.allVaults": "All vaults",
+  "vaultList.filter.entry.ownedByMe": "Owned by me",
+  "vaultList.filter.result.empty.title": "No vaults",
+  "vaultList.filter.result.empty.description.admin": "No vault found using that search term or filter.",
+  "vaultList.filter.result.empty.description.user": "No vault found using that search term.",
+  "vaultList.search.placeholder": "Search..."
 }

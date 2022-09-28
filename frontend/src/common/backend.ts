@@ -171,6 +171,10 @@ class VaultService {
     return axiosAuth.get('/vaults').then(response => response.data);
   }
 
+  public async listAll(): Promise<VaultDto[]> {
+    return axiosAuth.get('/vaults/all').then(response => response.data);
+  }
+
   public async get(vaultId: string): Promise<VaultDto> {
     return axiosAuth.get(`/vaults/${vaultId}`)
       .then(response => {
