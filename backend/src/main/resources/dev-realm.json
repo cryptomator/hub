@@ -23,7 +23,12 @@
         "composites": {
           "realm": [
             "user"
-          ]
+          ],
+          "client": {
+            "realm-management": [
+              "realm-admin"
+            ]
+          }
         }
       },
       {
