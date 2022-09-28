@@ -18,7 +18,10 @@
   ol > li {
     @apply text-sm font-medium text-gray-700;
   }
-  li > * {
+  ol > li:not(:last-child) {
+    @apply mb-2;
+  }
+  li > *:not(:last-child) {
     @apply mb-2;
   }
   li > br {
@@ -50,8 +53,9 @@
 
 #reset-login > div > span {
   @apply hidden absolute z-50;
-  @apply rounded shadow-md bg-white text-gray-500 w-40 p-2;
+  @apply rounded shadow-md bg-white p-2;
   @apply transform -translate-x-1/2 left-1/2;
+  @apply whitespace-nowrap text-gray-700 text-xs;
 }
 
 #try-another-way {
