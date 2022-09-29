@@ -198,6 +198,11 @@ class VaultService {
     }).catch(err => rethrowAndConvertIfExpected(err, 403));
   }
 
+  public async updateDescription(vaultId: string, newDescription: String) {
+    return axiosAuth.put(`/vaults/${vaultId}/description`, newDescription)
+      .catch((error) => rethrowAndConvertIfExpected(error, 404));
+  }
+
   public async addUser(vaultId: string, userId: string, vaultKeys: VaultKeys): Promise<AxiosResponse<void>> {
     let vaultAdminAuthorizationJWT = await this.buildVaultAdminAuthorizationJWT(vaultId, vaultKeys);
     return axiosAuth.put(`/vaults/${vaultId}/users/${userId}`, null, { headers: { 'Cryptomator-Vault-Admin-Authorization': vaultAdminAuthorizationJWT } })

@@ -11,6 +11,7 @@
   "common.reload": "Bitte lade die Seite neu.",
   "common.remove": "Entfernen",
   "common.retry": "Wiederholen",
+  "common.save": "Speichern",
   "common.share": "Teilen",
   "common.unexpectedError": "Unerwarteter Fehler: {0}",
 
@@ -100,6 +101,7 @@
   "vaultDetails.manageVault": "Tresor verwalten",
   "vaultDetails.description.header": "Beschreibung",
   "vaultDetails.description.empty": "Keine Beschreibung vorhanden.",
+  "vaultDetails.description.placeholder": "Kurze Beschreibung dieses Tresors",
   "vaultDetails.information.header": "Information",
   "vaultDetails.information.created": "Erstellt",
   "vaultDetails.sharedWith.title": "Geteilt mit",

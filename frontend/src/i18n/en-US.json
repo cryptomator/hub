@@ -12,6 +12,7 @@
   "common.reload": "Please reload the page.",
   "common.remove": "Remove",
   "common.retry": "Retry",
+  "common.save": "Save",
   "common.share": "Share",
   "common.unexpectedError": "Unexpected Error: {0}",
 
@@ -101,6 +102,7 @@
   "vaultDetails.manageVault": "Manage Vault",
   "vaultDetails.description.header": "Description",
   "vaultDetails.description.empty": "No description provided.",
+  "vaultDetails.description.placeholder": "Short description of this vault",
   "vaultDetails.information.header": "Information",
   "vaultDetails.information.created": "Created",
   "vaultDetails.sharedWith.title": "Shared with",

@@ -9,16 +9,31 @@
 
   <div v-else class="pb-16 space-y-6">
     <div>
-      <h3 class="font-medium text-gray-900">{{ t('vaultDetails.description.header') }}</h3>
-      <div class="mt-2 flex items-center justify-between">
-        <p v-if="vault != null && vault.description.length > 0" class="text-sm text-gray-500">{{ vault.description }}</p>
-        <p v-else class="text-sm text-gray-500 italic">{{ t('vaultDetails.description.empty') }}</p>
-        <!-- TODO: add rest API to change vault metadata in backend
-        <button v-if="isVaultAdmin" type="button" class="-mr-2 h-8 w-8 bg-white rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary">
-          <PencilIcon class="h-5 w-5" aria-hidden="true" />
-          <span class="sr-only">Add description</span>
+      <header class="flex items-center gap-1">
+        <h3 class="font-medium text-gray-900">{{ t('vaultDetails.description.header') }}</h3>
+        <button v-if="isVaultAdmin && !updatingDescription" type="button" class="-mr-2 h-6 w-6 bg-white rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary" @click="beginUpdateDescription()">
+          <PencilIcon class="h-4 w-4" aria-hidden="true" />
+          <span class="sr-only">Update description</span>
         </button>
-        -->
+      </header>
+      <div class="mt-2">
+        <form v-if="vault != null && updatingDescription" novalidate @submit.prevent="updateDescription()" @keydown.esc.prevent="cancelUpdateDescription()">
+          <input v-model="newDescription" v-focus type="text" maxlength="255" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm" :placeholder="t('vaultDetails.description.placeholder')" />
+          <div class="mt-2 flex flex-row-reverse gap-2">
+            <button type="submit" class="inline-flex items-center rounded-md border border-transparent bg-primary px-3 py-2 text-sm font-medium leading-4 text-white shadow-sm hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+              {{ t('common.save') }}
+            </button>
+            <button type="button" class="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2" @click="cancelUpdateDescription()">
+              {{ t('common.cancel') }}
+            </button>
+          </div>
+        </form>
+        <p v-else-if="vault != null && vault.description.length > 0" class="text-sm text-gray-500">
+          {{ vault.description }}
+        </p>
+        <p v-else class="text-sm text-gray-500 italic">
+          {{ t('vaultDetails.description.empty') }}
+        </p>
       </div>
     </div>
 
@@ -92,6 +107,7 @@
 </template>
 
 <script setup lang="ts">
+import { PencilIcon } from '@heroicons/vue/20/solid';
 import { PlusSmallIcon } from '@heroicons/vue/24/solid';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -109,6 +125,12 @@ const props = defineProps<{
   vaultId: string
 }>();
 
+const vFocus = {
+  mounted: (el: HTMLElement) => {
+    el.focus();
+  }
+};
+
 const isFetching = ref<boolean>();
 const onFetchError = ref<Error | null>();
 const allowRetryFetch = computed(() => onFetchError.value != null && !(onFetchError.value instanceof NotFoundError));  //fetch requests either list something, or query from th vault. In the latter, a 404 indicates the vault does not exists anymore.
@@ -117,6 +139,8 @@ const onRevokeUserAccessError = ref< {[id: string]: Error} >({});
 const onAddUserError = ref<Error | null>();
 
 const isVaultAdmin = ref(false);
+const updatingDescription = ref(false);
+const newDescription = ref('');
 const addingUser = ref(false);
 const grantingPermission = ref(false);
 const grantPermissionDialog = ref<typeof GrantPermissionDialog>();
@@ -157,6 +181,29 @@ async function vaultAdminAuthenticated(keys: VaultKeys) {
     console.error('Getting member or requiring devices access grant failed.', error);
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
+}
+
+function beginUpdateDescription() {
+  updatingDescription.value = true;
+  newDescription.value = vault.value?.description ?? '';
+}
+
+function cancelUpdateDescription() {
+  updatingDescription.value = false;
+}
+
+function updateDescription() {
+  if (vault.value == null) {
+    return;
+  }
+
+  backend.vaults.updateDescription(vault.value.id, newDescription.value).then(() => {
+    vault.value!.description = newDescription.value;
+    updatingDescription.value = false;
+  }).catch(error => {
+    console.error('Updating description failed.', error);
+    onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
+  });
 }
 
 function isAuthorityDto(toCheck: any): toCheck is AuthorityDto {
