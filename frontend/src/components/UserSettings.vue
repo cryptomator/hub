@@ -1,7 +1,7 @@
 <template>
   <div class="pb-5 border-b border-gray-200">
     <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-      {{ t('settings.title') }}
+      {{ t('userSettings.title') }}
     </h2>
   </div>
 
@@ -11,12 +11,12 @@
         <div class="bg-white px-4 py-5 sm:p-6">
           <div class="md:grid md:grid-cols-3 md:gap-6">
             <div class="md:col-span-1">
-              <h3 class="text-lg font-medium leading-6 text-gray-900">{{ t('settings.general.title') }}</h3>
+              <h3 class="text-lg font-medium leading-6 text-gray-900">{{ t('userSettings.general.title') }}</h3>
             </div>
             <div class="mt-5 md:mt-0 md:col-span-2">
               <div class="grid grid-cols-6 gap-6">
                 <div class="col-span-6 sm:col-span-3">
-                  <label for="language" class="block text-sm font-medium text-gray-700">{{ t('settings.general.language.title') }}</label>
+                  <label for="language" class="block text-sm font-medium text-gray-700">{{ t('userSettings.general.language.title') }}</label>
                   <select v-model="$i18n.locale" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm">
                     <option v-for="locale in Locale" :key="locale" :value="locale">
                       {{ t(`locale.${locale}`) }}
@@ -35,10 +35,10 @@
         <div class="md:grid md:grid-cols-3 md:gap-6">
           <div class="md:col-span-1">
             <h3 class="text-lg font-medium leading-6 text-gray-900">
-              {{ t('settings.serverInfo.title') }}
+              {{ t('userSettings.serverInfo.title') }}
             </h3>
             <p class="mt-1 text-sm text-gray-500">
-              {{ t('settings.serverInfo.description') }}
+              {{ t('userSettings.serverInfo.description') }}
             </p>
           </div>
           <div class="mt-5 md:mt-0 md:col-span-2">
@@ -52,11 +52,11 @@
             </div>
             <div v-else class="grid grid-cols-6 gap-6">
               <div class="col-span-6 sm:col-span-3">
-                <label for="hubVersion" class="block text-sm font-medium text-gray-700">{{ t('settings.serverInfo.hubVersion.title') }}</label>
+                <label for="hubVersion" class="block text-sm font-medium text-gray-700">{{ t('userSettings.serverInfo.hubVersion.title') }}</label>
                 <input id="hubVersion" v-model="version.hubVersion" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
               </div>
               <div class="col-span-6 sm:col-span-3">
-                <label for="keycloakVersion" class="block text-sm font-medium text-gray-700">{{ t('settings.serverInfo.keycloakVersion.title') }}</label>
+                <label for="keycloakVersion" class="block text-sm font-medium text-gray-700">{{ t('userSettings.serverInfo.keycloakVersion.title') }}</label>
                 <input id="keycloakVersion" v-model="version.keycloakVersion" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
               </div>
             </div>
@@ -86,10 +86,9 @@ async function fetchData() {
   try {
     let versionInstalled = backend.version.get();
     version.value = await versionInstalled;
-  } catch (err) {
-    console.error('Retrieving version information failed.', err);
-    onFetchError.value = err instanceof Error ? err : new Error('Unknown Error');
+  } catch (error) {
+    console.error('Retrieving version information failed.', error);
+    onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
 }
-
 </script>

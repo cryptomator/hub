@@ -3,15 +3,15 @@ import authPromise from '../common/auth';
 import backend from '../common/backend';
 import { baseURL } from '../common/config';
 import AdminSettings from '../components/AdminSettings.vue';
+import AuthenticatedMain from '../components/AuthenticatedMain.vue';
 import CreateVault from '../components/CreateVault.vue';
 import DeviceList from '../components/DeviceList.vue';
-import LoginComponent from '../components/Login.vue';
-import LogoutComponent from '../components/Logout.vue';
-import MainComponent from '../components/Main.vue';
-import NotFoundComponent from '../components/NotFoundComponent.vue';
-import Settings from '../components/Settings.vue';
+import LoginPrompt from '../components/LoginPrompt.vue';
+import LogoutDummy from '../components/LogoutDummy.vue';
+import NotFound from '../components/NotFound.vue';
 import UnlockError from '../components/UnlockError.vue';
 import UnlockSuccess from '../components/UnlockSuccess.vue';
+import UserSettings from '../components/UserSettings.vue';
 import VaultDetails from '../components/VaultDetails.vue';
 import VaultList from '../components/VaultList.vue';
 
@@ -22,7 +22,7 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/app',
-    component: LoginComponent,
+    component: LoginPrompt,
     meta: { skipAuth: true },
     beforeEnter: async () => {
       const auth = await authPromise;
@@ -33,7 +33,7 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/app/logout',
-    component: LogoutComponent,
+    component: LogoutDummy,
     meta: { skipAuth: true },
     beforeEnter: (to, from, next) => {
       authPromise.then(async auth => {
@@ -50,7 +50,7 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/app', /* required but unused */
-    component: MainComponent,
+    component: AuthenticatedMain,
     children: [
       {
         path: 'vaults',
@@ -71,13 +71,13 @@ const routes: RouteRecordRaw[] = [
       },
       {
         path: 'settings',
-        component: Settings
+        component: UserSettings
       },
       {
         path: 'admin',
         component: AdminSettings,
         props: (route) => ({ token: route.query.token }),
-        beforeEnter: async (_to, _from) => {
+        beforeEnter: async () => {
           const auth = await authPromise;
           return auth.isAdmin(); //TODO: reroute to NotFound Screen/ AccessDeniedScreen?
         }
@@ -96,9 +96,8 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/app/:pathMatch(.+)', //necessary due to using history mode in router
-    component: NotFoundComponent,
-    meta: { skipAuth: true },
-    name: 'NotFound'
+    component: NotFound,
+    meta: { skipAuth: true }
   },
 ];
 

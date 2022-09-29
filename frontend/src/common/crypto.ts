@@ -14,7 +14,6 @@ export class UnwrapKeyError extends Error {
     super('Unwrapping key failed');
     this.actualError = actualError;
   }
-
 }
 
 export interface VaultConfigPayload {
@@ -38,7 +37,6 @@ interface JWEPayload {
 }
 
 export class VaultKeys {
-
   private static readonly SIGNATURE_KEY_DESIGNATION: EcKeyImportParams | EcKeyGenParams = {
     name: 'ECDSA',
     namedCurve: 'P-384'
@@ -191,7 +189,6 @@ export class VaultKeys {
     }
   }
 
-
   public async createVaultConfig(kid: string, hubConfig: VaultConfigHeaderHub, payload: VaultConfigPayload): Promise<string> {
     const header = JSON.stringify({
       kid: kid,
@@ -261,5 +258,4 @@ export class VaultKeys {
   public async signVaultEditRequest(jwtHeader: JWTHeader, jwtPayload: any): Promise<string> {
     return JWT.build(jwtHeader, jwtPayload, this.signatureKeyPair.privateKey);
   }
-
 }

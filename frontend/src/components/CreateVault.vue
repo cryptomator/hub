@@ -182,5 +182,4 @@ async function downloadVaultTemplate() {
     onDownloadTemplateError.value = error instanceof Error ? error : new Error('Unknown reason');
   }
 }
-
 </script>

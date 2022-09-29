@@ -19,7 +19,6 @@ export class ConfigDto {
 }
 
 class ConfigWrapper {
-
   private data: ConfigDto;
 
   private static async loadConfig(): Promise<ConfigDto> {
@@ -42,7 +41,6 @@ class ConfigWrapper {
   public async reload(): Promise<void> {
     this.data = await ConfigWrapper.loadConfig();
   }
-
 }
 
 const config = await ConfigWrapper.build();

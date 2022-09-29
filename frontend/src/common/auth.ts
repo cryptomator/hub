@@ -52,7 +52,6 @@ class Auth {
   public isUser(): boolean {
     return this.keycloak.tokenParsed?.realm_access?.roles.includes('user') ?? false;
   }
-
 }
 
 // this is a lazy singleton:

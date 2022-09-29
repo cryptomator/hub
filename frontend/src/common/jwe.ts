@@ -1,7 +1,6 @@
 import { base64url } from 'rfc4648';
 
 export class ConcatKDF {
-
   /**
    * KDF as defined in <a href="https://doi.org/10.6028/NIST.SP.800-56Ar2">NIST SP 800-56A Rev. 2 Section 5.8.1</a> using SHA-256
    * 
@@ -42,7 +41,6 @@ export class ConcatKDF {
     }
     return key.slice(0, keyDataLen);
   }
-
 }
 
 export class JWEHeader {
@@ -50,7 +48,6 @@ export class JWEHeader {
 }
 
 export class JWE {
-
   /**
    * Creates a JWE using ECDH-ES using the P-384 curve and AES-256-GCM for payload encryption.
    * 
@@ -132,5 +129,4 @@ export class JWE {
     new Uint8Array(result).set(data, 4);
     return new Uint8Array(result);
   }
-
 }

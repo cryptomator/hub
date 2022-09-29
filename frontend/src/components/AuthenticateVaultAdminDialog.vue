@@ -94,5 +94,4 @@ async function authenticateVaultAdmin() {
     onAuthenticationError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
 }
-
 </script>

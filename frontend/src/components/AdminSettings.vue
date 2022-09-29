@@ -237,8 +237,8 @@ onMounted(async () => {
 async function setToken(token: string) {
   try {
     await backend.billing.setToken(token);
-  } catch (err) {
-    console.error('Setting token failed.', err);
+  } catch (error) {
+    console.error('Setting token failed.', error);
   }
 }
 
@@ -250,12 +250,12 @@ async function fetchData() {
     admin.value = await adminDto;
     version.value = await versionDto;
     latestVersion.value = await versionAvailable;
-  } catch (err) {
-    if (err instanceof FetchUpdateError) {
+  } catch (error) {
+    if (error instanceof FetchUpdateError) {
       errorOnFetchingUpdates.value = true;
     } else {
-      console.error('Retrieving server information failed.', err);
-      onFetchError.value = err instanceof Error ? err : new Error('Unknown Error');
+      console.error('Retrieving server information failed.', error);
+      onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
     }
   }
 }

@@ -111,5 +111,4 @@ onMounted(async () => {
     profileDropdown.value = [profileDropdownSections.infoSection, profileDropdownSections.hubSection];
   }
 });
-
 </script>

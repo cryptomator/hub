@@ -78,7 +78,6 @@ const deviceState = computed(() => {
   }
 });
 
-
 enum DeviceState {
   Unknown,
   Registered,
@@ -94,10 +93,9 @@ async function fetchData() {
   onFetchError.value = null;
   try {
     me.value = await backend.users.me(true, true);
-  } catch (err) {
-    console.error('Retrieving user information failed.', err);
-    onFetchError.value = err instanceof Error ? err : new Error('Unknown Error');
+  } catch (error) {
+    console.error('Retrieving user information failed.', error);
+    onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
 }
-
 </script>

@@ -57,8 +57,7 @@ enum AuthorityType {
   Group = 'GROUP'
 }
 
-abstract class AuthorityDto {
-
+export abstract class AuthorityDto {
   private _pictureUrl?: string;
 
   constructor(public id: string, public name: string, public type: AuthorityType, pictureUrl?: string) {
@@ -76,7 +75,6 @@ abstract class AuthorityDto {
   }
 
   abstract getIdenticonConfig(): JdenticonConfig;
-
 }
 
 export class UserDto extends AuthorityDto {
@@ -182,7 +180,7 @@ class VaultService {
         response.data.creationTime = new Date(dateString);
         return response.data;
       })
-      .catch((err) => rethrowAndConvertIfExpected(err, 404));
+      .catch((error) => rethrowAndConvertIfExpected(error, 404));
   }
 
   public async getMembers(vaultId: string, vaultKeys: VaultKeys): Promise<(UserDto | GroupDto)[]> {
@@ -203,13 +201,13 @@ class VaultService {
   public async addUser(vaultId: string, userId: string, vaultKeys: VaultKeys): Promise<AxiosResponse<void>> {
     let vaultAdminAuthorizationJWT = await this.buildVaultAdminAuthorizationJWT(vaultId, vaultKeys);
     return axiosAuth.put(`/vaults/${vaultId}/users/${userId}`, null, { headers: { 'Cryptomator-Vault-Admin-Authorization': vaultAdminAuthorizationJWT } })
-      .catch((err) => rethrowAndConvertIfExpected(err, 404, 409));
+      .catch((error) => rethrowAndConvertIfExpected(error, 404, 409));
   }
 
   public async addGroup(vaultId: string, groupId: string, vaultKeys: VaultKeys): Promise<AxiosResponse<void>> {
     let vaultAdminAuthorizationJWT = await this.buildVaultAdminAuthorizationJWT(vaultId, vaultKeys);
     return axiosAuth.put(`/vaults/${vaultId}/groups/${groupId}`, null, { headers: { 'Cryptomator-Vault-Admin-Authorization': vaultAdminAuthorizationJWT } })
-      .catch((err) => rethrowAndConvertIfExpected(err, 404, 409));
+      .catch((error) => rethrowAndConvertIfExpected(error, 404, 409));
   }
 
   public async getDevicesRequiringAccessGrant(vaultId: string, vaultKeys: VaultKeys): Promise<DeviceDto[]> {
@@ -221,19 +219,19 @@ class VaultService {
   public async createVault(vaultId: string, name: string, description: string, masterkey: string, iterations: number, salt: string, signPubKey: string, signPrvKey: string): Promise<AxiosResponse<any>> {
     const body: VaultDto = { id: vaultId, name: name, description: description, creationTime: new Date(), masterkey: masterkey, iterations: iterations, salt: salt, authPublicKey: signPubKey, authPrivateKey: signPrvKey };
     return axiosAuth.put(`/vaults/${vaultId}`, body)
-      .catch((err) => rethrowAndConvertIfExpected(err, 404, 409));
+      .catch((error) => rethrowAndConvertIfExpected(error, 404, 409));
   }
 
   public async grantAccess(vaultId: string, deviceId: string, jwe: string, vaultKeys: VaultKeys) {
     let vaultAdminAuthorizationJWT = await this.buildVaultAdminAuthorizationJWT(vaultId, vaultKeys);
     await axiosAuth.put(`/vaults/${vaultId}/keys/${deviceId}`, jwe, { headers: { 'Content-Type': 'text/plain', 'Cryptomator-Vault-Admin-Authorization': vaultAdminAuthorizationJWT } })
-      .catch((err) => rethrowAndConvertIfExpected(err, 404, 409));
+      .catch((error) => rethrowAndConvertIfExpected(error, 404, 409));
   }
 
   public async revokeUserAccess(vaultId: string, userId: string, vaultKeys: VaultKeys) {
     let vaultAdminAuthorizationJWT = await this.buildVaultAdminAuthorizationJWT(vaultId, vaultKeys);
     await axiosAuth.delete(`/vaults/${vaultId}/users/${userId}`, { headers: { 'Cryptomator-Vault-Admin-Authorization': vaultAdminAuthorizationJWT } })
-      .catch((err) => rethrowAndConvertIfExpected(err, 404));
+      .catch((error) => rethrowAndConvertIfExpected(error, 404));
   }
 
   private async buildVaultAdminAuthorizationJWT(vaultId: string, vaultKeys: VaultKeys): Promise<string> {
@@ -248,19 +246,17 @@ class VaultService {
   }
 }
 class DeviceService {
-
   public async removeDevice(deviceId: string): Promise<AxiosResponse<any>> {
     return axiosAuth.delete(`/devices/${deviceId}`)
-      .catch((err) => rethrowAndConvertIfExpected(err, 404));
+      .catch((error) => rethrowAndConvertIfExpected(error, 404));
   }
-
 }
 
 class UserService {
-
   public async syncMe(): Promise<void> {
     return axiosAuth.put('/users/me');
   }
+
   public async me(withDevices: boolean = false, withAccessibleVaults: boolean = false): Promise<UserDto> {
     return axiosAuth.get<UserDto>(`/users/me?withDevices=${withDevices}&withAccessibleVaults=${withAccessibleVaults}`).then(response => UserDto.copy(response.data));
   }
@@ -270,7 +266,6 @@ class UserService {
       return response.data.map(dto => UserDto.copy(dto));
     });
   }
-
 }
 
 class AuthorityService {

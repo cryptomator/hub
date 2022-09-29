@@ -17,8 +17,8 @@ class UpdatesService {
     };
     return axios.get('https://api.cryptomator.org/updates/hub.json', config)
       .then(response => response.data)
-      .catch(err => {
-        console.error(err);
+      .catch(error => {
+        console.error(error);
         throw new FetchUpdateError('Unable to get update info.');
       });
   }

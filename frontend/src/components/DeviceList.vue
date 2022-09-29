@@ -105,9 +105,9 @@ async function fetchData() {
   onFetchError.value = null;
   try {
     me.value = await backend.users.me(true, true);
-  } catch (err) {
-    console.error('Retrieving device list failed.', err);
-    onFetchError.value = err instanceof Error ? err : new Error('Unknown Error');
+  } catch (error) {
+    console.error('Retrieving device list failed.', error);
+    onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
 }
 
