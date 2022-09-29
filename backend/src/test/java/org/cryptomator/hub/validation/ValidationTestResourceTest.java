@@ -121,13 +121,13 @@ public class ValidationTestResourceTest {
 
 		@DisplayName("Valid JWE compact serializations strings are accepted")
 		@ParameterizedTest
-		@ValueSource(strings = {"foo=.bar.baz==.bas.asd=", "foo=...bar.", "foo.=.=.bar.===="})
+		@ValueSource(strings = {"foo=.b4r.baz==.bas.asd=", "fo0=...bar.", "foo.=.=.bar.===="})
 		public void testJWEValid(String toTest) {
 			when().get("/test/validjwe/{jwe}", toTest)
 					.then().statusCode(200);
 		}
 
-		@DisplayName("Invalid pseudo-base64url strings are rejected")
+		@DisplayName("Invalid JWE compact serializations strings are rejected")
 		@ParameterizedTest
 		@ValueSource(strings = {"foo=.bar.baz.bas", ".bar=.baz.bas.asd=", "föö=.bar.baz.bas.asd", "foo=bar.baz.bas.asd.qwe"})
 		@ArgumentsSource(MalicousStringsProvider.class)
