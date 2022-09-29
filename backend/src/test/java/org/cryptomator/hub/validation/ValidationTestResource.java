@@ -45,4 +45,10 @@ public class ValidationTestResource {
 	public Response probeValidJWE(@PathParam("jwe") @ValidJWE String jwe) {
 		return Response.ok().build();
 	}
+
+	@GET
+	@Path("/validjws/{jws}")
+	public Response probeValidJWS(@PathParam("jws") @ValidJWS String jws) {
+		return Response.ok().build();
+	}
 }

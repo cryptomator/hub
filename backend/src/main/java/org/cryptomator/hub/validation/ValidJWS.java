@@ -11,7 +11,7 @@ import java.lang.annotation.Target;
 import static java.lang.annotation.ElementType.*;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-@Pattern(regexp = "[-_=A-Za-z0-9]+\\.[-_=A-Za-z0-9]*\\.[-_=A-Za-z0-9]*")
+@Pattern(regexp = "[-_A-Za-z0-9]+=*\\.[-_A-Za-z0-9]*=*\\.[-_A-Za-z0-9]*=*")
 @NotNull
 @Target({METHOD, FIELD, ANNOTATION_TYPE, TYPE_USE, PARAMETER})
 @Retention(RUNTIME)

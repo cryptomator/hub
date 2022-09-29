@@ -137,6 +137,28 @@ public class ValidationTestResourceTest {
 		}
 	}
 
+	@Nested
+	@DisplayName("Test @ValidJWS")
+	public class JWSTest {
+
+		@DisplayName("Valid JWS compact serializations strings are accepted")
+		@ParameterizedTest
+		@ValueSource(strings = {"fo0.b4r.baz", "f0o..", "fo0.=.bar="})
+		public void testJWSValid(String toTest) {
+			when().get("/test/validjws/{jws}", toTest)
+					.then().statusCode(200);
+		}
+
+		@DisplayName("Invalid JWS compact serializations strings are rejected")
+		@ParameterizedTest
+		@ValueSource(strings = {"foo=.bar", ".bar=.baz", "föö=.bar.baz", "foo=bar.baz.bas"})
+		@ArgumentsSource(MalicousStringsProvider.class)
+		public void testJWSInvalid(String toTest) {
+			when().get("/test/validjws/{jws}", toTest)
+					.then().statusCode(400);
+		}
+	}
+
 	static class MalicousStringsProvider implements ArgumentsProvider {
 
 		@Override
