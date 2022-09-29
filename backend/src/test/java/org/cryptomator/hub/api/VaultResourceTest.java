@@ -22,7 +22,6 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
-import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import javax.inject.Inject;
@@ -62,74 +61,36 @@ public class VaultResourceTest {
 	@DisplayName("Test VaultDto validation")
 	public class TestVaultDtoValidation {
 
-		private static final String VALID_ID = "id";
-		private static final String VALID_NAME = "foo\u52072077";
-		private static final String VALID_DESCRIPTION = "Description to be found at https://localhost:890000/resource#foo?des&cription";
-		private static final String VALID_MASTERKEY = "key";
-		private static final String VALID_ITERATIONS = "20";
-		private static final String VALID_SALT = "";
-		private static final String VALID_AUTH_PUB = "asd";
-		private static final String VALID_AUTH_PRI = "qwe";
+		private static final String VALID_ID = "2535b22b-a786-4b0f-947d-bae104c4f14f";
+		private static final String VALID_NAME = "foobar";
+		private static final String VALID_MASTERKEY = "base64";
+		private static final String VALID_SALT = "base64";
+		private static final String VALID_AUTH_PUB = "base64";
+		private static final String VALID_AUTH_PRI = "base64";
 
 
 		@Test
 		public void testValidDto() {
-			var dto = new VaultResource.VaultDto(VALID_ID, VALID_NAME, VALID_DESCRIPTION, Timestamp.from(Instant.ofEpochMilli(0)), VALID_MASTERKEY, VALID_ITERATIONS, VALID_SALT, VALID_AUTH_PUB, VALID_AUTH_PRI);
+			var dto = new VaultResource.VaultDto(VALID_ID, VALID_NAME, "foobarbaz", Timestamp.from(Instant.ofEpochMilli(0)), VALID_MASTERKEY, "8", VALID_SALT, VALID_AUTH_PUB, VALID_AUTH_PRI);
 			var violations = validator.validate(dto);
 			MatcherAssert.assertThat(violations, Matchers.empty());
 		}
 
 		@ParameterizedTest
 		@DisplayName("Testing invalid values for property description")
-		@ValueSource(strings = {"asd§", "\"asd", "foo/\\bar", "°foo", "<bar>"})
+		@ValueSource(strings = {"§$%&", "<bar>", "\"; DELETE * FROM USERS", "\" src=\"http://evil.corp\""})
 		public void testInvalidDescriptions(String description) {
-			var dto = new VaultResource.VaultDto(VALID_ID, VALID_NAME, description, Timestamp.from(Instant.ofEpochMilli(0)), VALID_MASTERKEY, VALID_ITERATIONS, VALID_SALT, VALID_AUTH_PUB, VALID_AUTH_PRI);
-			var violations = validator.validate(dto);
-			MatcherAssert.assertThat(violations, Matchers.not(Matchers.empty()));
-		}
-
-		@ParameterizedTest
-		@DisplayName("Testing invalid values for property masterkey")
-		@NullAndEmptySource
-		public void testInvalidMasterkeys(String key) {
-			var dto = new VaultResource.VaultDto(VALID_ID, VALID_NAME, VALID_DESCRIPTION, Timestamp.from(Instant.ofEpochMilli(0)), key, VALID_ITERATIONS, VALID_SALT, VALID_AUTH_PUB, VALID_AUTH_PRI);
+			var dto = new VaultResource.VaultDto(VALID_ID, VALID_NAME, description, Timestamp.from(Instant.ofEpochMilli(0)), VALID_MASTERKEY, "8", VALID_SALT, VALID_AUTH_PUB, VALID_AUTH_PRI);
 			var violations = validator.validate(dto);
 			MatcherAssert.assertThat(violations, Matchers.not(Matchers.empty()));
 		}
 
 		@ParameterizedTest
 		@DisplayName("Testing invalid values for property iterations")
-		@ValueSource(strings = {"asd", "00-2", "10e10", "0.33"})
+		@ValueSource(strings = {"foo", "-5", "0x20", "10e10", "0.33"})
 		@NullAndEmptySource
 		public void testInvalidIterationss(String iterations) {
-			var dto = new VaultResource.VaultDto(VALID_ID, VALID_NAME, VALID_DESCRIPTION, Timestamp.from(Instant.ofEpochMilli(0)), VALID_MASTERKEY, iterations, VALID_SALT, VALID_AUTH_PUB, VALID_AUTH_PRI);
-			var violations = validator.validate(dto);
-			MatcherAssert.assertThat(violations, Matchers.not(Matchers.empty()));
-		}
-
-		@ParameterizedTest
-		@DisplayName("Testing invalid values for property salt")
-		@NullSource
-		public void testInvalidSalt(String salt) {
-			var dto = new VaultResource.VaultDto(VALID_ID, VALID_NAME, VALID_DESCRIPTION, Timestamp.from(Instant.ofEpochMilli(0)), VALID_MASTERKEY, VALID_ITERATIONS, salt, VALID_AUTH_PUB, VALID_AUTH_PRI);
-			var violations = validator.validate(dto);
-			MatcherAssert.assertThat(violations, Matchers.not(Matchers.empty()));
-		}
-
-		@ParameterizedTest
-		@DisplayName("Testing invalid values for property authPublicKey")
-		@NullAndEmptySource
-		public void testInvalidAuthPubKeys(String authPubKey) {
-			var dto = new VaultResource.VaultDto(VALID_ID, VALID_NAME, VALID_DESCRIPTION, Timestamp.from(Instant.ofEpochMilli(0)), VALID_MASTERKEY, VALID_ITERATIONS, VALID_SALT, authPubKey, VALID_AUTH_PRI);
-			var violations = validator.validate(dto);
-			MatcherAssert.assertThat(violations, Matchers.not(Matchers.empty()));
-		}
-
-		@ParameterizedTest
-		@DisplayName("Testing invalid values for property authPrivKey")
-		@NullAndEmptySource
-		public void testInvalidAuthPrivKeys(String authPrivKey) {
-			var dto = new VaultResource.VaultDto(VALID_ID, VALID_NAME, VALID_DESCRIPTION, Timestamp.from(Instant.ofEpochMilli(0)), VALID_MASTERKEY, VALID_ITERATIONS, VALID_SALT, VALID_AUTH_PRI, authPrivKey);
+			var dto = new VaultResource.VaultDto(VALID_ID, VALID_NAME, "foobarbaz", Timestamp.from(Instant.ofEpochMilli(0)), VALID_MASTERKEY, iterations, VALID_SALT, VALID_AUTH_PUB, VALID_AUTH_PRI);
 			var violations = validator.validate(dto);
 			MatcherAssert.assertThat(violations, Matchers.not(Matchers.empty()));
 		}

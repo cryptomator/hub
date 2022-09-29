@@ -312,7 +312,7 @@ public class VaultResource {
 
 	public record VaultDto(@JsonProperty("id") @ValidUUID String id,
 						   @JsonProperty("name") @ValidName String name,
-						   @JsonProperty("description") @Pattern(regexp = "[^&*<>\"]") String description,
+						   @JsonProperty("description") @Pattern(regexp = "[^&*<>\"]*") String description,
 						   @JsonProperty("creationTime") @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSX") Timestamp creationTime,
 						   @JsonProperty("masterkey") @ValidPseudoBase64 String masterkey, @JsonProperty("iterations") @NotBlank @Pattern(regexp = "\\d+") String iterations,
 						   @JsonProperty("salt") @ValidPseudoBase64 String salt,
