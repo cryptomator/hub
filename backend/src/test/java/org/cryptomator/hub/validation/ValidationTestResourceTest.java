@@ -115,6 +115,28 @@ public class ValidationTestResourceTest {
 		}
 	}
 
+	@Nested
+	@DisplayName("Test @ValidJWE")
+	public class JWETest {
+
+		@DisplayName("Valid JWE compact serializations strings are accepted")
+		@ParameterizedTest
+		@ValueSource(strings = {"foo=.bar.baz==.bas.asd=", "foo=...bar.", "foo.=.=.bar.===="})
+		public void testJWEValid(String toTest) {
+			when().get("/test/validjwe/{jwe}", toTest)
+					.then().statusCode(200);
+		}
+
+		@DisplayName("Invalid pseudo-base64url strings are rejected")
+		@ParameterizedTest
+		@ValueSource(strings = {"foo=.bar.baz.bas", ".bar=.baz.bas.asd=", "föö=.bar.baz.bas.asd", "foo=bar.baz.bas.asd.qwe"})
+		@ArgumentsSource(MalicousStringsProvider.class)
+		public void testJWEInvalid(String toTest) {
+			when().get("/test/validjwe/{jwe}", toTest)
+					.then().statusCode(400);
+		}
+	}
+
 	static class MalicousStringsProvider implements ArgumentsProvider {
 
 		@Override

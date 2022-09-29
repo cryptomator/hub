@@ -39,4 +39,10 @@ public class ValidationTestResource {
 	public Response probeValidPseudoBase64Url(@PathParam("pb64urlstring") @ValidPseudoBase64Url String psuedoBase64UrlString) {
 		return Response.ok().build();
 	}
+
+	@GET
+	@Path("/validjwe/{jwe}")
+	public Response probeValidJWE(@PathParam("jwe") @ValidJWE String jwe) {
+		return Response.ok().build();
+	}
 }
