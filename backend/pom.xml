@@ -13,7 +13,7 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <quarkus.container-image.group>cryptomator</quarkus.container-image.group>
     <quarkus.container-image.name>hub</quarkus.container-image.name>
-    <quarkus.platform.version>2.11.1.Final</quarkus.platform.version>
+    <quarkus.platform.version>2.13.0.Final</quarkus.platform.version>
     <quarkus.native.builder-image>quay.io/quarkus/ubi-quarkus-mandrel:22.0-java17</quarkus.native.builder-image>
     <quarkus.jib.base-jvm-image>eclipse-temurin:17-jre</quarkus.jib.base-jvm-image> <!-- irrelevant for -Pnative -->
     <jwt.version>4.0.0</jwt.version>
