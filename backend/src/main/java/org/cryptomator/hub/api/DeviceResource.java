@@ -7,7 +7,6 @@ import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.validation.ValidId;
 import org.cryptomator.hub.validation.ValidName;
 import org.cryptomator.hub.validation.ValidPseudoBase64Url;
-import org.cryptomator.hub.validation.ValidUUID;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -48,7 +47,7 @@ public class DeviceResource {
 	@Operation(summary = "adds a device", description = "the device will be owned by the currently logged-in user")
 	@APIResponse(responseCode = "201", description = "device created")
 	@APIResponse(responseCode = "409", description = "Device already exists")
-	public Response create(@Valid DeviceDto deviceDto, @PathParam("deviceId") @ValidUUID String deviceId) {
+	public Response create(@Valid DeviceDto deviceDto, @PathParam("deviceId") @ValidId String deviceId) {
 		if (deviceId == null || deviceId.trim().length() == 0 || deviceDto == null) {
 			return Response.status(Response.Status.BAD_REQUEST).entity("deviceId or deviceDto cannot be empty").build();
 		}
@@ -74,7 +73,7 @@ public class DeviceResource {
 	@Operation(summary = "removes a device", description = "the device will be only be removed if the current user is the owner")
 	@APIResponse(responseCode = "204", description = "device removed")
 	@APIResponse(responseCode = "404", description = "device not found with current user")
-	public Response remove(@PathParam("deviceId") @ValidUUID String deviceId) {
+	public Response remove(@PathParam("deviceId") @ValidId String deviceId) {
 		if (deviceId == null || deviceId.trim().length() == 0) {
 			return Response.status(Response.Status.BAD_REQUEST).entity("deviceId cannot be empty").build();
 		}
@@ -89,7 +88,7 @@ public class DeviceResource {
 		}
 	}
 
-	public record DeviceDto(@JsonProperty("id") @ValidUUID String id,
+	public record DeviceDto(@JsonProperty("id") @ValidId String id,
 							@JsonProperty("name") @ValidName String name,
 							@JsonProperty("publicKey") @ValidPseudoBase64Url String publicKey,
 							@JsonProperty("owner") @ValidId String ownerId,

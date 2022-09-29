@@ -28,35 +28,13 @@ public class ValidationTestResourceTest {
 	}
 
 	@Nested
-	@DisplayName("Test @ValidUUID")
-	public class UUIDTest {
-
-		@DisplayName("Valid uuids are accepted")
-		@ParameterizedTest
-		@ValueSource(strings = {"2fa854c2-e289-4a4d-9cf5-8dd81e6ae710", "EF08020E-C584-4797-BF34-1FF432E99FC8", "2fa854c2-C584-4797-bf34-1FF432E99FC8"})
-		public void testUUIDvalid(String toTest) {
-			when().get("/test/validuuid/{uuid}", toTest)
-					.then().statusCode(200);
-		}
-
-		@DisplayName("Invalid uuids are rejected")
-		@ParameterizedTest
-		@ValueSource(strings = {"2G$5If2-e28b-4aTd-9ff5-8d81e6ae710", "23af23-23bc-8231", "2fa854c2-e289-4a4d-9cf5-8dd81e6ae710-23008b"})
-		@ArgumentsSource(MalicousStringsProvider.class)
-		public void testUUIDinvalid(String toTest) {
-			when().get("/test/validuuid/{uuid}", toTest)
-					.then().statusCode(400);
-		}
-	}
-
-	@Nested
 	@DisplayName("Test @ValidId")
 	public class IdTest {
 
 		@DisplayName("Valid ids are accepted")
 		@ParameterizedTest
 		@ValueSource(strings = {"2fa854c2-e289-4a4d-9cf5-8dd81e6ae710", "myPersonalId", "_-.-_"})
-		public void testIdvalid(String toTest) {
+		public void testIdValid(String toTest) {
 			when().get("/test/validid/{id}", toTest)
 					.then().statusCode(200);
 		}

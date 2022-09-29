@@ -17,12 +17,6 @@ public class ValidationTestResource {
 	}
 
 	@GET
-	@Path("/validuuid/{uuid}")
-	public Response probeValidUuid(@PathParam("uuid") @ValidUUID String uuid) {
-		return Response.ok().build();
-	}
-
-	@GET
 	@Path("/validid/{id}")
 	public Response probeValidId(@PathParam("id") @ValidId String id) {
 		return Response.ok().build();
