@@ -2,7 +2,7 @@ package org.cryptomator.hub.validation;
 
 import javax.validation.Constraint;
 import javax.validation.Payload;
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
@@ -14,14 +14,14 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.TYPE_USE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-@Pattern(regexp = "[-_=A-Za-z0-9]+")
-@NotNull
+@Pattern(regexp = "(?Ui)[-_\\w\\s]+")
+@NotBlank
 @Target({METHOD, FIELD, ANNOTATION_TYPE, TYPE_USE})
 @Retention(RUNTIME)
 @Constraint(validatedBy = {})
 @Documented
-public @interface IsBase64Url {
-	String message() default "Input is not a valid base64url encoded string";
+public @interface ValidName {
+	String message() default "Input is does not satisfy the regular expression (?Ui)[-_\\w\\s]+";
 
 	Class<?>[] groups() default {};
 

@@ -3,7 +3,7 @@ package org.cryptomator.hub.api;
 import org.cryptomator.hub.entities.Authority;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
-import org.cryptomator.hub.validation.AlmostSafeText;
+import org.cryptomator.hub.validation.ValidName;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.jboss.resteasy.annotations.cache.NoCache;
 import org.jboss.resteasy.annotations.jaxrs.QueryParam;
@@ -25,7 +25,7 @@ public class AuthorityResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@NoCache
 	@Operation(summary = "search authority")
-	public List<AuthorityDto> search(@QueryParam("query") @AlmostSafeText String query) {
+	public List<AuthorityDto> search(@QueryParam("query") @ValidName String query) {
 		return Authority.byName(query).map(authority -> {
 			if (authority instanceof User user) {
 				return new UserDto(authority.id, authority.name, user.pictureUrl, user.email, null);

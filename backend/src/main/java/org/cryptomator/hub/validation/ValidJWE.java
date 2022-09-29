@@ -2,6 +2,7 @@ package org.cryptomator.hub.validation;
 
 import javax.validation.Constraint;
 import javax.validation.Payload;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
@@ -13,20 +14,16 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.TYPE_USE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-/**
- * TODO: doc doc doc
- */
-@Pattern(regexp = "[-_.a-zA-Z0-9]*")
+@Pattern(regexp = "[-_=A-Za-z0-9]+\\.[-_=A-Za-z0-9]*\\.[-_=A-Za-z0-9]*\\.[-_=A-Za-z0-9]+\\.[-_=A-Za-z0-9]*")
+@NotNull
 @Target({METHOD, FIELD, ANNOTATION_TYPE, TYPE_USE})
 @Retention(RUNTIME)
 @Constraint(validatedBy = {})
 @Documented
-public @interface SafeText {
-
-	String message() default "Input contains other characters than [-_.a-zA-Z0-9]";
+public @interface ValidJWE {
+	String message() default "Input is not a valid JWE in compact serialization";
 
 	Class<?>[] groups() default {};
 
 	Class<? extends Payload>[] payload() default {};
 }
-

@@ -12,12 +12,11 @@ import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.filters.ActiveLicense;
 import org.cryptomator.hub.filters.VaultAdminOnlyFilter;
 import org.cryptomator.hub.license.LicenseHolder;
-import org.cryptomator.hub.validation.AlmostSafeText;
-import org.cryptomator.hub.validation.IsBase64;
-import org.cryptomator.hub.validation.IsBase64Url;
-import org.cryptomator.hub.validation.IsJWE;
-import org.cryptomator.hub.validation.IsUUID;
-import org.cryptomator.hub.validation.SafeText;
+import org.cryptomator.hub.validation.ValidId;
+import org.cryptomator.hub.validation.ValidJWE;
+import org.cryptomator.hub.validation.ValidName;
+import org.cryptomator.hub.validation.ValidPseudoBase64;
+import org.cryptomator.hub.validation.ValidUUID;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -29,7 +28,6 @@ import javax.persistence.PersistenceException;
 import javax.transaction.Transactional;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ClientErrorException;
@@ -80,7 +78,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "401", description = "VaultAdminAuthorizationJWT not provided")
 	@APIResponse(responseCode = "403", description = "VaultAdminAuthorizationJWT expired or not yet valid")
 	@APIResponse(responseCode = "404", description = "vault not found")
-	public List<AuthorityDto> getMembers(@PathParam("vaultId") @IsUUID String vaultId) {
+	public List<AuthorityDto> getMembers(@PathParam("vaultId") @ValidUUID String vaultId) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 
 		return vault.directMembers.stream().map(authority -> {
@@ -108,7 +106,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "404", description = "vault or user not found")
 	@APIResponse(responseCode = "409", description = "user is already a direct member of the vault")
 	@ActiveLicense
-	public Response addUser(@PathParam("vaultId") @IsUUID String vaultId, @PathParam("userId") @SafeText String userId) {
+	public Response addUser(@PathParam("vaultId") @ValidUUID String vaultId, @PathParam("userId") @ValidId String userId) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		var user = User.<User>findByIdOptional(userId).orElseThrow(NotFoundException::new);
 		if (!EffectiveVaultAccess.isUserOccupyingSeat(userId)) {
@@ -141,7 +139,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "404", description = "vault or group not found")
 	@APIResponse(responseCode = "409", description = "group is already a direct member of the vault")
 	@ActiveLicense
-	public Response addGroup(@PathParam("vaultId") @IsUUID String vaultId, @PathParam("groupId") @SafeText String groupId) {
+	public Response addGroup(@PathParam("vaultId") @ValidUUID String vaultId, @PathParam("groupId") @ValidId String groupId) {
 		//usersInGroup - usersInGroupAndPartOfAtLeastOneVault + usersOfAtLeastOneVault
 		if (EffectiveGroupMembership.countEffectiveGroupUsers(groupId) - EffectiveVaultAccess.countEffectiveVaultUsersOfGroup(groupId) + EffectiveVaultAccess.countEffectiveVaultUsers() > license.getAvailableSeats()) {
 			throw new PaymentRequiredException("Number of effective vault users greater than or equal to the available license seats");
@@ -168,7 +166,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "401", description = "VaultAdminAuthorizationJWT not provided")
 	@APIResponse(responseCode = "403", description = "VaultAdminAuthorizationJWT expired or not yet valid")
 	@APIResponse(responseCode = "404", description = "vault not found")
-	public Response removeMember(@PathParam("vaultId") @IsUUID String vaultId, @PathParam("userId") @SafeText String userId) {
+	public Response removeMember(@PathParam("vaultId") @ValidUUID String vaultId, @PathParam("userId") @ValidId String userId) {
 		return removeAutority(vaultId, userId);
 	}
 
@@ -183,7 +181,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "401", description = "VaultAdminAuthorizationJWT not provided")
 	@APIResponse(responseCode = "403", description = "VaultAdminAuthorizationJWT expired or not yet valid")
 	@APIResponse(responseCode = "404", description = "vault not found")
-	public Response removeGroup(@PathParam("vaultId") @IsUUID String vaultId, @PathParam("groupId") @SafeText String groupId) {
+	public Response removeGroup(@PathParam("vaultId") @ValidUUID String vaultId, @PathParam("groupId") @ValidId String groupId) {
 		return removeAutority(vaultId, groupId);
 	}
 
@@ -204,7 +202,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "401", description = "VaultAdminAuthorizationJWT not provided")
 	@APIResponse(responseCode = "403", description = "VaultAdminAuthorizationJWT expired or not yet valid")
 	@APIResponse(responseCode = "404", description = "vault not found")
-	public List<DeviceResource.DeviceDto> getDevicesRequiringAccessGrant(@PathParam("vaultId") @IsUUID String vaultId) {
+	public List<DeviceResource.DeviceDto> getDevicesRequiringAccessGrant(@PathParam("vaultId") @ValidUUID String vaultId) {
 		return Device.findRequiringAccessGrant(vaultId).map(DeviceResource.DeviceDto::fromEntity).toList();
 	}
 
@@ -219,7 +217,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "403", description = "device not authorized to access this vault")
 	@APIResponse(responseCode = "404", description = "unknown device")
 	@ActiveLicense
-	public String unlock(@PathParam("vaultId") @IsUUID String vaultId, @PathParam("deviceId") @IsUUID String deviceId) {
+	public String unlock(@PathParam("vaultId") @ValidUUID String vaultId, @PathParam("deviceId") @ValidUUID String deviceId) {
 		var usedSeats = EffectiveVaultAccess.countEffectiveVaultUsers();
 		if (usedSeats > license.getAvailableSeats()) {
 			throw new PaymentRequiredException("Number of effective vault users exceeds available license seats");
@@ -247,7 +245,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "403", description = "VaultAdminAuthorizationJWT expired or not yet valid")
 	@APIResponse(responseCode = "404", description = "vault or device not found")
 	@APIResponse(responseCode = "409", description = "Access to vault for device already granted")
-	public Response grantAccess(@PathParam("vaultId") @IsUUID String vaultId, @PathParam("deviceId") @IsUUID String deviceId, @IsJWE String jwe) {
+	public Response grantAccess(@PathParam("vaultId") @ValidUUID String vaultId, @PathParam("deviceId") @ValidUUID String deviceId, @ValidJWE String jwe) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		var device = Device.<Device>findByIdOptional(deviceId).orElseThrow(NotFoundException::new);
 
@@ -275,7 +273,7 @@ public class VaultResource {
 	@Transactional
 	@Operation(summary = "gets a vault")
 	@APIResponse(responseCode = "403", description = "requesting user is not member of the vault")
-	public VaultDto get(@PathParam("vaultId") @IsUUID String vaultId) {
+	public VaultDto get(@PathParam("vaultId") @ValidUUID String vaultId) {
 		Vault vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		if (vault.effectiveMembers.stream().noneMatch(u -> u.id.equals(jwt.getSubject()))) {
 			throw new ForbiddenException("Requesting user is not a member of the vault");
@@ -293,7 +291,7 @@ public class VaultResource {
 			description = "Creates a vault with the given vault id. The creationTime in the vaultDto is ignored and the current server time is used.")
 	@APIResponse(responseCode = "201", description = "vault created")
 	@APIResponse(responseCode = "409", description = "vault with given id or name already exists")
-	public Response create(@PathParam("vaultId") @IsUUID String vaultId, @Valid VaultDto vaultDto) {
+	public Response create(@PathParam("vaultId") @ValidUUID String vaultId, @Valid VaultDto vaultDto) {
 		if (vaultDto == null) {
 			throw new BadRequestException("Missing vault dto");
 		}
@@ -312,12 +310,13 @@ public class VaultResource {
 		}
 	}
 
-	public record VaultDto(@JsonProperty("id") @IsUUID String id,
-						   @JsonProperty("name") @AlmostSafeText String name,
-						   @JsonProperty("description") @Pattern(regexp = "^[&*<>\"]") String description,
+	public record VaultDto(@JsonProperty("id") @ValidUUID String id,
+						   @JsonProperty("name") @ValidName String name,
+						   @JsonProperty("description") @Pattern(regexp = "[^&*<>\"]") String description,
 						   @JsonProperty("creationTime") @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSX") Timestamp creationTime,
-						   @JsonProperty("masterkey") @IsBase64 String masterkey, @JsonProperty("iterations") @NotBlank @Pattern(regexp = "\\d+") String iterations, @JsonProperty("salt") @IsBase64 String salt,
-						   @JsonProperty("authPublicKey") @IsBase64 String authPublicKey, @JsonProperty("authPrivateKey") @IsBase64 String authPrivateKey
+						   @JsonProperty("masterkey") @ValidPseudoBase64 String masterkey, @JsonProperty("iterations") @NotBlank @Pattern(regexp = "\\d+") String iterations,
+						   @JsonProperty("salt") @ValidPseudoBase64 String salt,
+						   @JsonProperty("authPublicKey") @ValidPseudoBase64 String authPublicKey, @JsonProperty("authPrivateKey") @ValidPseudoBase64 String authPrivateKey
 	) {
 
 		public static VaultDto fromEntity(Vault entity) {

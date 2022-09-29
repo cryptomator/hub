@@ -1,5 +1,6 @@
 package org.cryptomator.hub.validation;
 
+
 import javax.validation.Constraint;
 import javax.validation.Payload;
 import javax.validation.constraints.NotNull;
@@ -14,15 +15,14 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.TYPE_USE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-@Pattern(regexp = "[-_=A-Za-z0-9]+\\.[-_=A-Za-z0-9]*\\.[-_=A-Za-z0-9]*")
+@Pattern(regexp = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")
 @NotNull
 @Target({METHOD, FIELD, ANNOTATION_TYPE, TYPE_USE})
 @Retention(RUNTIME)
 @Constraint(validatedBy = {})
 @Documented
-public @interface IsJWS {
-
-	String message() default "Input is not a valid JWS in compact serialization";
+public @interface ValidUUID {
+	String message() default "Input is not a valid UUID";
 
 	Class<?>[] groups() default {};
 

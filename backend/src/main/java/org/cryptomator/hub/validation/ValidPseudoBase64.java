@@ -1,5 +1,6 @@
 package org.cryptomator.hub.validation;
 
+
 import javax.validation.Constraint;
 import javax.validation.Payload;
 import javax.validation.constraints.NotNull;
@@ -14,14 +15,15 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.TYPE_USE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-@Pattern(regexp = "[-_=A-Za-z0-9]+\\.[-_=A-Za-z0-9]*\\.[-_=A-Za-z0-9]*\\.[-_=A-Za-z0-9]+\\.[-_=A-Za-z0-9]*")
+@Pattern(regexp = "[+/=A-Za-z0-9]+")
 @NotNull
 @Target({METHOD, FIELD, ANNOTATION_TYPE, TYPE_USE})
 @Retention(RUNTIME)
 @Constraint(validatedBy = {})
 @Documented
-public @interface IsJWE {
-	String message() default "Input is not a valid JWE in compact serialization";
+public @interface ValidPseudoBase64 {
+
+	String message() default "Input is not a valid base64 encoded string";
 
 	Class<?>[] groups() default {};
 
