@@ -44,6 +44,8 @@
   "authenticateVaultAdminDialog.title": "Manage Vault",
   "authenticateVaultAdminDialog.description": "Type in the vault admin password to manage it.",
   "authenticateVaultAdminDialog.password": "Vault Admin Password",
+  "authenticateVaultAdminDialog.error.formValidationFailed": "Password must not be empty",
+  "authenticateVaultAdminDialog.error.wrongPassword": "Wrong password",
 
   "fetchError.title": "Fetching data failed",
 

@@ -5,7 +5,6 @@
   "common.add": "Hinzufügen",
   "common.cancel": "Abbrechen",
   "common.download": "Herunterladen",
-  "common.error.wrongPassword": "Falsches Passwort",
   "common.loading": "Laden…",
   "common.manage": "Verwalten",
   "common.optional": "optional",
@@ -44,6 +43,8 @@
   "authenticateVaultAdminDialog.title": "Tresor verwalten",
   "authenticateVaultAdminDialog.description": "Gib das Vault-Admin-Passwort des Tresors ein, um ihn zu verwalten.",
   "authenticateVaultAdminDialog.password": "Vault-Admin-Passwort",
+  "authenticateVaultAdminDialog.error.formValidationFailed": "Passwort darf nicht leer sein",
+  "authenticateVaultAdminDialog.error.wrongPassword": "Falsches Passwort",
 
   "fetchError.title": "Abruf von Daten fehlgeschlagen",
 
