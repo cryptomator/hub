@@ -96,11 +96,11 @@
   "userSettings.serverInfo.hubVersion.title": "Hub Version",
   "userSettings.serverInfo.keycloakVersion.title": "Keycloak Version",
 
+  "vaultDetails.manageVault": "Manage Vault",
   "vaultDetails.description.header": "Description",
   "vaultDetails.description.empty": "No description provided.",
   "vaultDetails.information.header": "Information",
   "vaultDetails.information.created": "Created",
-  "vaultDetails.notFound": "Vault not found",
   "vaultDetails.sharedWith.title": "Shared with",
   "vaultDetails.updatePermissions": "Update Permissions",
   "vaultDetails.downloadVaultTemplate": "Download Vault Template",

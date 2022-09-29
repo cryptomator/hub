@@ -96,11 +96,11 @@
   "userSettings.serverInfo.hubVersion.title": "Hub-Version",
   "userSettings.serverInfo.keycloakVersion.title": "Keycloak-Version",
 
+  "vaultDetails.manageVault": "Tresor verwalten",
   "vaultDetails.description.header": "Beschreibung",
   "vaultDetails.description.empty": "Keine Beschreibung vorhanden.",
   "vaultDetails.information.header": "Information",
   "vaultDetails.information.created": "Erstellt",
-  "vaultDetails.notFound": "Tresor nicht gefunden",
   "vaultDetails.sharedWith.title": "Geteilt mit",
   "vaultDetails.updatePermissions": "Berechtigungen aktualisieren",
   "vaultDetails.downloadVaultTemplate": "Tresor-Vorlage herunterladen",
