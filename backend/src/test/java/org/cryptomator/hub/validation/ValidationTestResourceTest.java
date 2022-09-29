@@ -1,0 +1,87 @@
+package org.cryptomator.hub.validation;
+
+import io.quarkus.test.junit.QuarkusTest;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+
+import static io.restassured.RestAssured.when;
+
+@QuarkusTest
+public class ValidationTestResourceTest {
+
+	private static final String[] MALICOUS_STRINGS = {"§$%&", "<bar>", "\"; DELETE * FROM USERS", "\" src=\"http://evil.corp\""};
+
+	@Test
+	public void testOk() {
+		when().get("/test/nothing")
+				.then().statusCode(200);
+	}
+
+	@Nested
+	@DisplayName("Test @ValidUUID")
+	public class UUIDTest {
+
+		@DisplayName("Valid uuids are accepted")
+		@ParameterizedTest
+		@ValueSource(strings = {"2fa854c2-e289-4a4d-9cf5-8dd81e6ae710", "EF08020E-C584-4797-BF34-1FF432E99FC8", "2fa854c2-C584-4797-bf34-1FF432E99FC8"})
+		public void testUUIDvalid(String toTest) {
+			when().get("/test/validuuid/{uuid}", toTest)
+					.then().statusCode(200);
+		}
+
+		@DisplayName("Invalid uuids are rejected")
+		@ParameterizedTest
+		@ValueSource(strings = {"2G$5If2-e28b-4aTd-9ff5-8d81e6ae710", "23af23-23bc-8231", "2fa854c2-e289-4a4d-9cf5-8dd81e6ae710-23008b"})
+		public void testUUIDinvalid(String toTest) {
+			when().get("/test/validuuid/{uuid}", toTest)
+					.then().statusCode(400);
+		}
+	}
+
+	@Nested
+	@DisplayName("Test @ValidId")
+	public class IdTest {
+
+		@DisplayName("Valid ids are accepted")
+		@ParameterizedTest
+		@ValueSource(strings = {"2fa854c2-e289-4a4d-9cf5-8dd81e6ae710", "myPersonalId", "_-.-_"})
+		public void testIdvalid(String toTest) {
+			when().get("/test/validid/{id}", toTest)
+					.then().statusCode(200);
+		}
+
+		@DisplayName("Invalid ids are rejected")
+		@ParameterizedTest
+		@ValueSource(strings = {"WHITE SPACE", "*$%"})
+		public void testIdInvalid(String toTest) {
+			when().get("/test/validid/{id}", toTest)
+					.then().statusCode(400);
+		}
+	}
+
+	@Nested
+	@DisplayName("Test @ValidPseudoBase64")
+	public class Base64Test {
+
+		@DisplayName("Valid pseudo-base64 strings are accepted")
+		@ParameterizedTest
+		@ValueSource(strings = {"abcdefghijklmnopqrstuvwxyz0123456789+/", "bGlnaHQgd29yaw==", "x======"})
+		public void testPseudoBase64Valid(String toTest) {
+			when().get("/test/validpseudobase64/{pb64String}", toTest)
+					.then().statusCode(200);
+		}
+
+		@DisplayName("Invalid pseudo-base64 strings are rejected")
+		@ParameterizedTest
+		@ValueSource(strings = {"\u5207ä=", "abc==abc", "==="})
+		public void testPseudoBase64Invalid(String toTest) {
+			when().get("/test/validpseudobase64/{pb64String}", toTest)
+					.then().statusCode(400);
+		}
+	}
+
+}
