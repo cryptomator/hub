@@ -29,6 +29,12 @@ public class ValidationTestResource {
 	}
 
 	@GET
+	@Path("/validname/{name}")
+	public Response probeValidName(@PathParam("name") @ValidName String name) {
+		return Response.ok().build();
+	}
+
+	@GET
 	@Path("/validpseudobase64/{pb64string}")
 	public Response probeValidPseudoBase64(@PathParam("pb64string") @ValidPseudoBase64 String psuedoBase64String) {
 		return Response.ok().build();

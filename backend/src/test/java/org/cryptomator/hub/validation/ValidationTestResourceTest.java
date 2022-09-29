@@ -72,6 +72,27 @@ public class ValidationTestResourceTest {
 	}
 
 	@Nested
+	@DisplayName("Test @ValidName")
+	public class NameTest {
+
+		@Test
+		@DisplayName("Valid names are accepted")
+		public void testNameValid() {
+			when().get("/test/validname/{name}", "_foo-\u5207 BAR")
+					.then().statusCode(200);
+		}
+
+		@DisplayName("Invalid names are rejected")
+		@ParameterizedTest
+		@ValueSource(strings = {"foo**r", ".;/()"})
+		@ArgumentsSource(MalicousStringsProvider.class)
+		public void testNameInvalid(String toTest) {
+			when().get("/test/validname/{name}", toTest)
+					.then().statusCode(400);
+		}
+	}
+
+	@Nested
 	@DisplayName("Test @ValidPseudoBase64")
 	public class PseudoBase64Test {
 
