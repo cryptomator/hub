@@ -30,7 +30,13 @@ public class ValidationTestResource {
 
 	@GET
 	@Path("/validpseudobase64/{pb64string}")
-	public Response probeValidBase64(@PathParam("pb64string") @ValidPseudoBase64 String psuedoBase64String) {
+	public Response probeValidPseudoBase64(@PathParam("pb64string") @ValidPseudoBase64 String psuedoBase64String) {
+		return Response.ok().build();
+	}
+
+	@GET
+	@Path("/validpseudobase64url/{pb64urlstring}")
+	public Response probeValidPseudoBase64Url(@PathParam("pb64urlstring") @ValidPseudoBase64Url String psuedoBase64UrlString) {
 		return Response.ok().build();
 	}
 }

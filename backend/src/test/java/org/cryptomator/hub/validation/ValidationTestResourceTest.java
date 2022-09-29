@@ -73,7 +73,7 @@ public class ValidationTestResourceTest {
 
 	@Nested
 	@DisplayName("Test @ValidPseudoBase64")
-	public class Base64Test {
+	public class PseudoBase64Test {
 
 		@DisplayName("Valid pseudo-base64 strings are accepted")
 		@ParameterizedTest
@@ -85,10 +85,32 @@ public class ValidationTestResourceTest {
 
 		@DisplayName("Invalid pseudo-base64 strings are rejected")
 		@ParameterizedTest
-		@ValueSource(strings = {"\u5207ä=", "abc==abc", "==="})
+		@ValueSource(strings = {"\u5207ä=", "foo_-", "abc==abc", "==="})
 		@ArgumentsSource(MalicousStringsProvider.class)
 		public void testPseudoBase64Invalid(String toTest) {
 			when().get("/test/validpseudobase64/{pb64String}", toTest)
+					.then().statusCode(400);
+		}
+	}
+
+	@Nested
+	@DisplayName("Test @ValidPseudoBase64Url")
+	public class PseudoBase64UrlTest {
+
+		@DisplayName("Valid pseudo-base64url strings are accepted")
+		@ParameterizedTest
+		@ValueSource(strings = {"abcdefghijklmnopqrstuvwxyz0123456789-_", "bGln-HQgd2_yaw==", "-======"})
+		public void testPseudoBase64UrlValid(String toTest) {
+			when().get("/test/validpseudobase64url/{pb64urlString}", toTest)
+					.then().statusCode(200);
+		}
+
+		@DisplayName("Invalid pseudo-base64url strings are rejected")
+		@ParameterizedTest
+		@ValueSource(strings = {"foo+/", "\u5207ä=", "abc==abc", "==="})
+		@ArgumentsSource(MalicousStringsProvider.class)
+		public void testPseudoBase64UrlInvalid(String toTest) {
+			when().get("/test/validpseudobase64url/{pb64urlString}", toTest)
 					.then().statusCode(400);
 		}
 	}
