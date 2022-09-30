@@ -12,19 +12,19 @@
     {{ t('vaultList.title') }}
   </h2>
 
-  <div class="pb-5 mt-3 border-b border-gray-200 flex gap-3 items-center whitespace-nowrap">
-    <input id="vaultSearch" v-model="query" :placeholder="t('vaultList.search.placeholder')" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200"/>
+  <div class="pb-5 mt-3 border-b border-gray-200 flex flex-wrap sm:flex-nowrap gap-3 items-center whitespace-nowrap">
+    <input id="vaultSearch" v-model="query" :placeholder="t('vaultList.search.placeholder')" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-sm text-sm border-gray-300 rounded-md disabled:bg-gray-200"/>
 
     <Listbox v-if="isAdmin" v-model="selectedFilter" as="div">
-      <div class="relative ml-auto w-44">
-        <ListboxButton class="relative w-full cursor-default rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm">
-          <span class="block">{{ selectedFilter.name }}</span>
+      <div class="relative w-44">
+        <ListboxButton class="relative w-full cursor-default rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary text-sm">
+          <span class="block truncate">{{ selectedFilter.name }}</span>
           <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-            <ChevronUpDownIcon class="h-5 w-5 text-gray-700" aria-hidden="true" />
+            <ChevronUpDownIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
           </span>
         </ListboxButton>
         <transition leave-active-class="transition ease-in duration-100" leave-from-class="opacity-100" leave-to-class="opacity-0">
-          <ListboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+          <ListboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none text-sm">
             <ListboxOption v-for="filterValue in filterValues" :key="filterValue.id" v-slot="{ active, selected }" :value="filterValue" as="template" @click="filterValue.method">
               <li :class="[active ? 'bg-white text-primary' : 'text-gray-700', 'relative cursor-default select-none py-2 pl-3 pr-9']">
                 <span>{{ filterValue.name }}</span>
@@ -39,29 +39,20 @@
       </div>
     </Listbox>
 
-    <div class="flex-none flex items-center ml-autosm:pl-6">
-      <router-link to="/app/vaults/create" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
-        <PlusIcon class="-ml-0.5 mr-2 h-4 w-4" aria-hidden="true" />
-        {{ t('vaultList.createVault') }}
-      </router-link>
-    </div>
+    <router-link to="/app/vaults/create" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+      <PlusIcon class="-ml-0.5 mr-2 h-4 w-4" aria-hidden="true" />
+      {{ t('vaultList.createVault') }}
+    </router-link>
   </div>
 
-  <div v-if="filteredVaults != null && filteredVaults.length > 0" class="mt-5 bg-white shadow overflow-hidden sm:rounded-md">
+  <div v-if="filteredVaults != null && filteredVaults.length > 0" class="mt-5 bg-white shadow overflow-hidden rounded-md">
     <ul role="list" class="divide-y divide-gray-200">
-      <li v-for="vault in filteredVaults" :key="vault.masterkey">
-        <a role="button" tabindex="0" class="block hover:bg-gray-50" :class="selectedVault == vault ? 'bg-gray-50' : ''" @click="onVaultClick(vault)">
+      <li v-for="(vault, index) in filteredVaults" :key="vault.masterkey">
+        <a role="button" tabindex="0" class="block hover:bg-gray-50" :class="{'ring-2 ring-inset ring-primary': selectedVault == vault, 'rounded-t-md': index == 0, 'rounded-b-md': index == filteredVaults.length - 1}" @click="onVaultClick(vault)">
           <div class="px-4 py-4 flex items-center sm:px-6">
-            <div class="min-w-0 flex-1 sm:flex sm:items-center sm:justify-between">
-              <div class="truncate">
-                <p class="text-sm font-medium text-primary">{{ vault.name }}</p>
-                <p v-if="vault.description.length > 0" class="text-sm text-gray-500 mt-2">{{ vault.description }}</p>
-              </div>
-              <div class="mt-4 shrink-0 sm:mt-0 sm:ml-5">
-                <div class="flex overflow-hidden -space-x-1">
-                  <!-- <img v-for="member in vault.members" :key="member.id" class="inline-block h-6 w-6 rounded-full ring-2 ring-white" :src="member.pictureUrl" :alt="member.name" /> -->
-                </div>
-              </div>
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-sm font-medium text-primary">{{ vault.name }}</p>
+              <p v-if="vault.description.length > 0" class="truncate text-sm text-gray-500 mt-2">{{ vault.description }}</p>
             </div>
             <div class="ml-5 shrink-0">
               <ChevronRightIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
