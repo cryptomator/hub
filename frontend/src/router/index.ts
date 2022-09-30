@@ -6,8 +6,6 @@ import AdminSettings from '../components/AdminSettings.vue';
 import AuthenticatedMain from '../components/AuthenticatedMain.vue';
 import CreateVault from '../components/CreateVault.vue';
 import DeviceList from '../components/DeviceList.vue';
-import LoginPrompt from '../components/LoginPrompt.vue';
-import LogoutDummy from '../components/LogoutDummy.vue';
 import NotFound from '../components/NotFound.vue';
 import UnlockError from '../components/UnlockError.vue';
 import UnlockSuccess from '../components/UnlockSuccess.vue';
@@ -22,18 +20,11 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/app',
-    component: LoginPrompt,
-    meta: { skipAuth: true },
-    beforeEnter: async () => {
-      const auth = await authPromise;
-      if (auth.isAuthenticated()) {
-        return '/app/vaults';  //TODO:currently not working, since silent single sign-on is missing
-      }
-    }
+    redirect: '/app/vaults'
   },
   {
     path: '/app/logout',
-    component: LogoutDummy,
+    component: AuthenticatedMain, // any component will do
     meta: { skipAuth: true },
     beforeEnter: (to, from, next) => {
       authPromise.then(async auth => {
