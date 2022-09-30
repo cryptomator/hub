@@ -380,7 +380,7 @@ public class VaultResourceTest {
 		@DisplayName("PUT /vaults/vault1/keys/device3 returns 201")
 		public void testGrantAccess1() {
 			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault1AdminJWT)
-					.contentType(ContentType.TEXT).body("jwe9999")
+					.contentType(ContentType.TEXT).body("jwe.jwe.jwe.jwe.9999")
 					.when().put("/vaults/{vaultId}/keys/{deviceId}", "vault1", "device3")
 					.then().statusCode(201);
 		}
@@ -389,7 +389,7 @@ public class VaultResourceTest {
 		@DisplayName("PUT /vaults/vault1/keys/device1 returns 409 due to user access already granted")
 		public void testGrantAccess2() {
 			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault1AdminJWT)
-					.contentType(ContentType.TEXT).body("jwe1")
+					.contentType(ContentType.TEXT).body("jwe1.jwe1.jwe1.jwe1.jwe1")
 					.when().put("/vaults/{vaultId}/keys/{deviceId}", "vault1", "device1")
 					.then().statusCode(409);
 		}
@@ -402,7 +402,7 @@ public class VaultResourceTest {
 		})
 		public void testGrantAccess3() throws SQLException {
 			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
-					.contentType(ContentType.TEXT).body("jwe3")
+					.contentType(ContentType.TEXT).body("jwe3.jwe3.jwe3.jwe3.jwe3")
 					.when().put("/vaults/{vaultId}/keys/{deviceId}", "vault2", "device3")
 					.then().statusCode(409);
 		}
@@ -412,7 +412,7 @@ public class VaultResourceTest {
 		public void testGrantAccess4() {
 			given()
 					.header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault1AdminJWT)
-					.contentType(ContentType.TEXT).body("jwe3")
+					.contentType(ContentType.TEXT).body("jwe3.jwe3.jwe3.jwe3.jwe3")
 					.when().put("/vaults/{vaultId}/keys/{deviceId}", "vault1", "nonExistingDevice")
 					.then().statusCode(404);
 		}
@@ -491,7 +491,7 @@ public class VaultResourceTest {
 		@DisplayName("PUT /vaults/vault2/keys/device2 returns 201")
 		public void testGrantAccess1() {
 			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
-					.given().contentType(ContentType.TEXT).body("jwe9999")
+					.given().contentType(ContentType.TEXT).body("jwe.jwe.jwe.jwe.9999")
 					.when().put("/vaults/{vaultId}/keys/{deviceId}", "vault2", "device2")
 					.then().statusCode(201);
 		}
@@ -636,7 +636,7 @@ public class VaultResourceTest {
 		@DisplayName("PUT /vaults/vault2/keys/device93 returns 201")
 		public void testGrantAccess2() {
 			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
-					.contentType(ContentType.TEXT).body("jwe99")
+					.contentType(ContentType.TEXT).body("aaa.AAA.000.999.888")
 					.when().put("/vaults/{vaultId}/keys/{deviceId}", "vault2", "device93")
 					.then().statusCode(201);
 		}
