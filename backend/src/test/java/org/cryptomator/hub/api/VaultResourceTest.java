@@ -77,15 +77,6 @@ public class VaultResourceTest {
 		}
 
 		@ParameterizedTest
-		@DisplayName("Testing invalid values for property description")
-		@ValueSource(strings = {"§$%&", "<bar>", "\"; DELETE * FROM USERS", "\" src=\"http://evil.corp\""})
-		public void testInvalidDescriptions(String description) {
-			var dto = new VaultResource.VaultDto(VALID_ID, VALID_NAME, description, Timestamp.from(Instant.ofEpochMilli(0)), VALID_MASTERKEY, "8", VALID_SALT, VALID_AUTH_PUB, VALID_AUTH_PRI);
-			var violations = validator.validate(dto);
-			MatcherAssert.assertThat(violations, Matchers.not(Matchers.empty()));
-		}
-
-		@ParameterizedTest
 		@DisplayName("Testing invalid values for property iterations")
 		@ValueSource(strings = {"foo", "-5", "0x20", "10e10", "0.33"})
 		@NullAndEmptySource

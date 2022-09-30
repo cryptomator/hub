@@ -1,6 +1,8 @@
 package org.cryptomator.hub.validation;
 
 import io.quarkus.test.junit.QuarkusTest;
+import org.hamcrest.MatcherAssert;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -11,6 +13,8 @@ import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import javax.inject.Inject;
+import javax.validation.Validator;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
@@ -20,6 +24,9 @@ import static io.restassured.RestAssured.when;
 public class ValidationTestResourceTest {
 
 	private static final String[] MALICOUS_STRINGS = {"§$%&", "<bar>", "\"; DELETE * FROM USERS;--", "\" src=\"http://evil.corp\""};
+
+	@Inject
+	Validator validator;
 
 	@Test
 	public void testOk() {
@@ -50,23 +57,25 @@ public class ValidationTestResourceTest {
 	}
 
 	@Nested
-	@DisplayName("Test @ValidName")
-	public class NameTest {
+	@DisplayName("Test @NoHtmlOrScriptChars")
+	public class HtmlOrScriptCharsTest {
 
+		@DisplayName("Valid input is accepted")
 		@Test
-		@DisplayName("Valid names are accepted")
-		public void testNameValid() {
-			when().get("/test/validname/{name}", "_foo-\u5207 BAR")
-					.then().statusCode(200);
+		public void testNoHtmlOrScriptCharsInvalid() {
+			var dto = new ValidationTestResource.NoHtmlOrScriptCharsDto("Collin 老子 O´Connor");
+			var violations = validator.validate(dto);
+			MatcherAssert.assertThat(violations, Matchers.empty());
 		}
 
-		@DisplayName("Invalid names are rejected")
+		@DisplayName("Invalid input is rejected")
 		@ParameterizedTest
-		@ValueSource(strings = {"foo**r", ".;/()"})
+		@ValueSource(strings = {"&lt;bar&gt;", "{{ master.key }}"})
 		@ArgumentsSource(MalicousStringsProvider.class)
-		public void testNameInvalid(String toTest) {
-			when().get("/test/validname/{name}", toTest)
-					.then().statusCode(400);
+		public void testNoHtmlOrScriptCharsInvalid(String data) {
+			var dto = new ValidationTestResource.NoHtmlOrScriptCharsDto(data);
+			var violations = validator.validate(dto);
+			MatcherAssert.assertThat(violations, Matchers.not(Matchers.empty()));
 		}
 	}
 

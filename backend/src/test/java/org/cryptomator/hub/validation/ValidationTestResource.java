@@ -1,6 +1,8 @@
 package org.cryptomator.hub.validation;
 
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -19,12 +21,6 @@ public class ValidationTestResource {
 	@GET
 	@Path("/validid/{id}")
 	public Response probeValidId(@PathParam("id") @ValidId String id) {
-		return Response.ok().build();
-	}
-
-	@GET
-	@Path("/validname/{name}")
-	public Response probeValidName(@PathParam("name") @ValidName String name) {
 		return Response.ok().build();
 	}
 
@@ -51,4 +47,8 @@ public class ValidationTestResource {
 	public Response probeValidJWS(@PathParam("jws") @ValidJWS String jws) {
 		return Response.ok().build();
 	}
+
+	record NoHtmlOrScriptCharsDto(@JsonProperty("data") @NoHtmlOrScriptChars String data) {
+	}
+
 }

@@ -4,9 +4,9 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.User;
-import org.cryptomator.hub.validation.ValidId;
-import org.cryptomator.hub.validation.ValidName;
+import org.cryptomator.hub.validation.NoHtmlOrScriptChars;
 import org.cryptomator.hub.validation.OnlyBase64UrlChars;
+import org.cryptomator.hub.validation.ValidId;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -17,6 +17,7 @@ import javax.inject.Inject;
 import javax.persistence.PersistenceException;
 import javax.transaction.Transactional;
 import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
 import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -89,7 +90,7 @@ public class DeviceResource {
 	}
 
 	public record DeviceDto(@JsonProperty("id") @ValidId String id,
-							@JsonProperty("name") @ValidName String name,
+							@JsonProperty("name") @NoHtmlOrScriptChars @NotBlank String name,
 							@JsonProperty("publicKey") @OnlyBase64UrlChars String publicKey,
 							@JsonProperty("owner") @ValidId String ownerId,
 							@JsonProperty("accessTo") @Valid Set<VaultResource.VaultDto> accessTo,

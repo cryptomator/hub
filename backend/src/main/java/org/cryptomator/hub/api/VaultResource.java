@@ -12,10 +12,10 @@ import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.filters.ActiveLicense;
 import org.cryptomator.hub.filters.VaultAdminOnlyFilter;
 import org.cryptomator.hub.license.LicenseHolder;
+import org.cryptomator.hub.validation.NoHtmlOrScriptChars;
+import org.cryptomator.hub.validation.OnlyBase64Chars;
 import org.cryptomator.hub.validation.ValidId;
 import org.cryptomator.hub.validation.ValidJWE;
-import org.cryptomator.hub.validation.ValidName;
-import org.cryptomator.hub.validation.OnlyBase64Chars;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -310,8 +310,8 @@ public class VaultResource {
 	}
 
 	public record VaultDto(@JsonProperty("id") @ValidId String id,
-						   @JsonProperty("name") @ValidName String name,
-						   @JsonProperty("description") @Pattern(regexp = "[^&*<>\"]*") String description,
+						   @JsonProperty("name") @NoHtmlOrScriptChars @NotBlank String name,
+						   @JsonProperty("description") @NoHtmlOrScriptChars String description,
 						   @JsonProperty("creationTime") @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSX") Timestamp creationTime,
 						   @JsonProperty("masterkey") @OnlyBase64Chars String masterkey, @JsonProperty("iterations") @NotBlank @Pattern(regexp = "\\d+") String iterations,
 						   @JsonProperty("salt") @OnlyBase64Chars String salt,
