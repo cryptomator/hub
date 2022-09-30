@@ -15,7 +15,7 @@ import org.cryptomator.hub.license.LicenseHolder;
 import org.cryptomator.hub.validation.ValidId;
 import org.cryptomator.hub.validation.ValidJWE;
 import org.cryptomator.hub.validation.ValidName;
-import org.cryptomator.hub.validation.ValidPseudoBase64;
+import org.cryptomator.hub.validation.OnlyBase64Chars;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -313,9 +313,9 @@ public class VaultResource {
 						   @JsonProperty("name") @ValidName String name,
 						   @JsonProperty("description") @Pattern(regexp = "[^&*<>\"]*") String description,
 						   @JsonProperty("creationTime") @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSX") Timestamp creationTime,
-						   @JsonProperty("masterkey") @ValidPseudoBase64 String masterkey, @JsonProperty("iterations") @NotBlank @Pattern(regexp = "\\d+") String iterations,
-						   @JsonProperty("salt") @ValidPseudoBase64 String salt,
-						   @JsonProperty("authPublicKey") @ValidPseudoBase64 String authPublicKey, @JsonProperty("authPrivateKey") @ValidPseudoBase64 String authPrivateKey
+						   @JsonProperty("masterkey") @OnlyBase64Chars String masterkey, @JsonProperty("iterations") @NotBlank @Pattern(regexp = "\\d+") String iterations,
+						   @JsonProperty("salt") @OnlyBase64Chars String salt,
+						   @JsonProperty("authPublicKey") @OnlyBase64Chars String authPublicKey, @JsonProperty("authPrivateKey") @OnlyBase64Chars String authPrivateKey
 	) {
 
 		public static VaultDto fromEntity(Vault entity) {

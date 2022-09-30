@@ -18,7 +18,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Retention(RUNTIME)
 @Constraint(validatedBy = {})
 @Documented
-public @interface ValidPseudoBase64 {
+public @interface OnlyBase64Chars {
 
 	String message() default "Input is not a valid base64 encoded string";
 

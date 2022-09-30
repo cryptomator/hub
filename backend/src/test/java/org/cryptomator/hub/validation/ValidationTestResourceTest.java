@@ -19,7 +19,7 @@ import static io.restassured.RestAssured.when;
 @QuarkusTest
 public class ValidationTestResourceTest {
 
-	private static final String[] MALICOUS_STRINGS = {"§$%&", "<bar>", "\"; DELETE * FROM USERS", "\" src=\"http://evil.corp\""};
+	private static final String[] MALICOUS_STRINGS = {"§$%&", "<bar>", "\"; DELETE * FROM USERS;--", "\" src=\"http://evil.corp\""};
 
 	@Test
 	public void testOk() {
@@ -71,45 +71,45 @@ public class ValidationTestResourceTest {
 	}
 
 	@Nested
-	@DisplayName("Test @ValidPseudoBase64")
-	public class PseudoBase64Test {
+	@DisplayName("Test @OnlyBase64Chars")
+	public class Base64CharsTest {
 
-		@DisplayName("Valid pseudo-base64 strings are accepted")
+		@DisplayName("Strings only containing base64-chars are accepted")
 		@ParameterizedTest
 		@ValueSource(strings = {"abcdefghijklmnopqrstuvwxyz0123456789+/", "bGlnaHQgd29yaw==", "x======"})
-		public void testPseudoBase64Valid(String toTest) {
-			when().get("/test/validpseudobase64/{pb64String}", toTest)
+		public void testOnlyBase64CharsValid(String toTest) {
+			when().get("/test/onlybase64chars/{b64String}", toTest)
 					.then().statusCode(200);
 		}
 
-		@DisplayName("Invalid pseudo-base64 strings are rejected")
+		@DisplayName("Strings containing not-base64-chars (or wrong order) are rejected")
 		@ParameterizedTest
 		@ValueSource(strings = {"\u5207ä=", "foo_-", "abc==abc", "==="})
 		@ArgumentsSource(MalicousStringsProvider.class)
-		public void testPseudoBase64Invalid(String toTest) {
-			when().get("/test/validpseudobase64/{pb64String}", toTest)
+		public void testOnlyBase64CharsInvalid(String toTest) {
+			when().get("/test/onlybase64chars/{b64String}", toTest)
 					.then().statusCode(400);
 		}
 	}
 
 	@Nested
-	@DisplayName("Test @ValidPseudoBase64Url")
-	public class PseudoBase64UrlTest {
+	@DisplayName("Test @OnlyBase64UrlChars")
+	public class Base64UrlCharsTest {
 
-		@DisplayName("Valid pseudo-base64url strings are accepted")
+		@DisplayName("Strings only containing base64url-chars are accepted")
 		@ParameterizedTest
 		@ValueSource(strings = {"abcdefghijklmnopqrstuvwxyz0123456789-_", "bGln-HQgd2_yaw==", "-======"})
-		public void testPseudoBase64UrlValid(String toTest) {
-			when().get("/test/validpseudobase64url/{pb64urlString}", toTest)
+		public void testOnlyBase64UrlCharsValid(String toTest) {
+			when().get("/test/onlybase64urlchars/{b64String}", toTest)
 					.then().statusCode(200);
 		}
 
-		@DisplayName("Invalid pseudo-base64url strings are rejected")
+		@DisplayName("Strings containing not-base64url-chars (or wrong order) are rejected")
 		@ParameterizedTest
 		@ValueSource(strings = {"foo+/", "\u5207ä=", "abc==abc", "==="})
 		@ArgumentsSource(MalicousStringsProvider.class)
-		public void testPseudoBase64UrlInvalid(String toTest) {
-			when().get("/test/validpseudobase64url/{pb64urlString}", toTest)
+		public void testOnlyBase64UrlCharsInvalid(String toTest) {
+			when().get("/test/onlybase64urlchars/{b64String}", toTest)
 					.then().statusCode(400);
 		}
 	}

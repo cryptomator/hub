@@ -29,14 +29,14 @@ public class ValidationTestResource {
 	}
 
 	@GET
-	@Path("/validpseudobase64/{pb64string}")
-	public Response probeValidPseudoBase64(@PathParam("pb64string") @ValidPseudoBase64 String psuedoBase64String) {
+	@Path("/onlybase64chars/{b64string}")
+	public Response probeOnlyBase64Chars(@PathParam("b64string") @OnlyBase64Chars String base64String) {
 		return Response.ok().build();
 	}
 
 	@GET
-	@Path("/validpseudobase64url/{pb64urlstring}")
-	public Response probeValidPseudoBase64Url(@PathParam("pb64urlstring") @ValidPseudoBase64Url String psuedoBase64UrlString) {
+	@Path("/onlybase64urlchars/{b64urlstring}")
+	public Response probeOnlyBase64UrlChars(@PathParam("b64urlstring") @OnlyBase64UrlChars String base64UrlString) {
 		return Response.ok().build();
 	}
 
