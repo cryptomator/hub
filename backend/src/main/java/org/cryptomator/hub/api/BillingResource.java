@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.entities.Settings;
 import org.cryptomator.hub.license.LicenseHolder;
+import org.cryptomator.hub.validation.ValidJWS;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 
@@ -55,7 +56,7 @@ public class BillingResource {
 	@APIResponse(responseCode = "204")
 	@APIResponse(responseCode = "400", description = "token is invalid (e.g., expired or invalid signature)")
 	@APIResponse(responseCode = "403", description = "only admins are allowed to set the token")
-	public Response setToken(String token) {
+	public Response setToken(@ValidJWS String token) {
 		try {
 			licenseHolder.set(token);
 			return Response.status(Response.Status.NO_CONTENT).build();

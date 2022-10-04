@@ -1,9 +1,6 @@
 package org.cryptomator.hub.api;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import org.cryptomator.hub.RemoteUserProvider;
 import org.cryptomator.hub.entities.AccessToken;
-import org.cryptomator.hub.entities.Authority;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.User;
 import org.eclipse.microprofile.jwt.JsonWebToken;

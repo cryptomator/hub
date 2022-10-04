@@ -10,6 +10,8 @@ import io.quarkus.test.security.oidc.OidcSecurity;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import org.cryptomator.hub.filters.VaultAdminOnlyFilterProvider;
+import org.hamcrest.MatcherAssert;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
@@ -19,10 +21,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import javax.inject.Inject;
+import javax.validation.Validator;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.Set;
 
 import static io.restassured.RestAssured.given;
@@ -42,9 +48,44 @@ public class VaultResourceTest {
 	@Inject
 	AgroalDataSource dataSource;
 
+	@Inject
+	Validator validator;
+
+
 	@BeforeAll
 	public static void beforeAll() {
 		RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
+	}
+
+	@Nested
+	@DisplayName("Test VaultDto validation")
+	public class TestVaultDtoValidation {
+
+		private static final String VALID_ID = "2535b22b-a786-4b0f-947d-bae104c4f14f";
+		private static final String VALID_NAME = "foobar";
+		private static final String VALID_MASTERKEY = "base64";
+		private static final String VALID_SALT = "base64";
+		private static final String VALID_AUTH_PUB = "base64";
+		private static final String VALID_AUTH_PRI = "base64";
+
+
+		@Test
+		public void testValidDto() {
+			var dto = new VaultResource.VaultDto(VALID_ID, VALID_NAME, "foobarbaz", Timestamp.from(Instant.ofEpochMilli(0)), VALID_MASTERKEY, "8", VALID_SALT, VALID_AUTH_PUB, VALID_AUTH_PRI);
+			var violations = validator.validate(dto);
+			MatcherAssert.assertThat(violations, Matchers.empty());
+		}
+
+		@ParameterizedTest
+		@DisplayName("Testing invalid values for property iterations")
+		@ValueSource(strings = {"foo", "-5", "0x20", "10e10", "0.33"})
+		@NullAndEmptySource
+		public void testInvalidIterationss(String iterations) {
+			var dto = new VaultResource.VaultDto(VALID_ID, VALID_NAME, "foobarbaz", Timestamp.from(Instant.ofEpochMilli(0)), VALID_MASTERKEY, iterations, VALID_SALT, VALID_AUTH_PUB, VALID_AUTH_PRI);
+			var violations = validator.validate(dto);
+			MatcherAssert.assertThat(violations, Matchers.not(Matchers.empty()));
+		}
+
 	}
 
 	@Nested
@@ -310,7 +351,7 @@ public class VaultResourceTest {
 		@Test
 		@DisplayName("PUT /vaults/vaultX returns 409")
 		public void testCreateVault2() {
-			var vaultDto = new VaultResource.VaultDto("vaultX", "Vault 1", "This is a testvault.", Timestamp.valueOf("2020-02-20 20:20:20"), "masterkey1", "iterations1", "salt1", "authPubKey1", "authPrvKey1");
+			var vaultDto = new VaultResource.VaultDto("vaultX", "Vault 1", "This is a testvault.", Timestamp.valueOf("2020-02-20 20:20:20"), "masterkey1", "42", "salt1", "authPubKey1", "authPrvKey1");
 
 			given().contentType(ContentType.JSON).body(vaultDto)
 					.when().put("/vaults/{vaultId}", "vaultX")
@@ -339,7 +380,7 @@ public class VaultResourceTest {
 		@DisplayName("PUT /vaults/vault1/keys/device3 returns 201")
 		public void testGrantAccess1() {
 			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault1AdminJWT)
-					.contentType(ContentType.TEXT).body("jwe9999")
+					.contentType(ContentType.TEXT).body("jwe.jwe.jwe.jwe.9999")
 					.when().put("/vaults/{vaultId}/keys/{deviceId}", "vault1", "device3")
 					.then().statusCode(201);
 		}
@@ -348,7 +389,7 @@ public class VaultResourceTest {
 		@DisplayName("PUT /vaults/vault1/keys/device1 returns 409 due to user access already granted")
 		public void testGrantAccess2() {
 			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault1AdminJWT)
-					.contentType(ContentType.TEXT).body("jwe1")
+					.contentType(ContentType.TEXT).body("jwe1.jwe1.jwe1.jwe1.jwe1")
 					.when().put("/vaults/{vaultId}/keys/{deviceId}", "vault1", "device1")
 					.then().statusCode(409);
 		}
@@ -361,7 +402,7 @@ public class VaultResourceTest {
 		})
 		public void testGrantAccess3() throws SQLException {
 			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
-					.contentType(ContentType.TEXT).body("jwe3")
+					.contentType(ContentType.TEXT).body("jwe3.jwe3.jwe3.jwe3.jwe3")
 					.when().put("/vaults/{vaultId}/keys/{deviceId}", "vault2", "device3")
 					.then().statusCode(409);
 		}
@@ -371,7 +412,7 @@ public class VaultResourceTest {
 		public void testGrantAccess4() {
 			given()
 					.header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault1AdminJWT)
-					.contentType(ContentType.TEXT).body("jwe3")
+					.contentType(ContentType.TEXT).body("jwe3.jwe3.jwe3.jwe3.jwe3")
 					.when().put("/vaults/{vaultId}/keys/{deviceId}", "vault1", "nonExistingDevice")
 					.then().statusCode(404);
 		}
@@ -450,7 +491,7 @@ public class VaultResourceTest {
 		@DisplayName("PUT /vaults/vault2/keys/device2 returns 201")
 		public void testGrantAccess1() {
 			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
-					.given().contentType(ContentType.TEXT).body("jwe9999")
+					.given().contentType(ContentType.TEXT).body("jwe.jwe.jwe.jwe.9999")
 					.when().put("/vaults/{vaultId}/keys/{deviceId}", "vault2", "device2")
 					.then().statusCode(201);
 		}
@@ -595,7 +636,7 @@ public class VaultResourceTest {
 		@DisplayName("PUT /vaults/vault2/keys/device93 returns 201")
 		public void testGrantAccess2() {
 			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
-					.contentType(ContentType.TEXT).body("jwe99")
+					.contentType(ContentType.TEXT).body("aaa.AAA.000.999.888")
 					.when().put("/vaults/{vaultId}/keys/{deviceId}", "vault2", "device93")
 					.then().statusCode(201);
 		}
