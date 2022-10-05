@@ -23,7 +23,7 @@ import static io.restassured.RestAssured.when;
 @QuarkusTest
 public class ValidationTestResourceTest {
 
-	private static final String[] MALICOUS_STRINGS = {"§$%&", "<bar>", "\"; DELETE * FROM USERS;--", "\" src=\"http://evil.corp\""};
+	private static final String[] MALICOUS_STRINGS = {"§$%&*", "<bar>", "\"; DELETE * FROM USERS;--", "\" src=\"http://evil.corp\""};
 
 	@Inject
 	Validator validator;
@@ -70,7 +70,6 @@ public class ValidationTestResourceTest {
 
 		@DisplayName("Invalid input is rejected")
 		@ParameterizedTest
-		@ValueSource(strings = {"&lt;bar&gt;", "{{ master.key }}"})
 		@ArgumentsSource(MalicousStringsProvider.class)
 		public void testNoHtmlOrScriptCharsInvalid(String data) {
 			var dto = new ValidationTestResource.NoHtmlOrScriptCharsDto(data);
