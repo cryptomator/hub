@@ -103,10 +103,13 @@ router.beforeEach((to, from, next) => {
     next();
   } else {
     authPromise.then(async auth => {
-      const redirect: RouteLocationRaw = { query: { sync_me: null } };
-      const redirectUri = `${location.origin}${router.resolve(redirect, to).href}`;
-      await auth.loginIfRequired(redirectUri);
-      next();
+      if (auth.isAuthenticated()) {
+        next();
+      } else {
+        const redirect: RouteLocationRaw = { query: { ...to.query, ['sync_me']: null } };
+        const redirectUri = `${location.origin}${router.resolve(redirect, to).href}`;
+        auth.login(redirectUri);
+      }
     });
   }
 });

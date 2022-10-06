@@ -26,12 +26,10 @@ class Auth {
     return this.keycloak.authenticated || false;
   }
 
-  public async loginIfRequired(redirectUri?: string): Promise<void> {
-    if (!this.keycloak.authenticated) {
-      await this.keycloak.login({
-        redirectUri: (redirectUri ?? window.location.href)
-      });
-    }
+  public async login(redirectUri: string): Promise<void> {
+    await this.keycloak.login({
+      redirectUri: (redirectUri)
+    });
   }
 
   public async logout(redirectUri?: string): Promise<void> {
