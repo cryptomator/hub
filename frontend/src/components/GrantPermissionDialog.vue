@@ -51,7 +51,7 @@
 </template>
 
 <script setup lang="ts">
-import { Dialog, DialogOverlay, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
+import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
 import { base64url } from 'rfc4648';
 import { ref } from 'vue';
