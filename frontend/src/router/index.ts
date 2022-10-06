@@ -106,7 +106,7 @@ router.beforeEach((to, from, next) => {
       if (auth.isAuthenticated()) {
         next();
       } else {
-        const redirect: RouteLocationRaw = { query: { ...to.query, ['sync_me']: null } };
+        const redirect: RouteLocationRaw = { query: { ...to.query, 'sync_me': null } };
         const redirectUri = `${location.origin}${router.resolve(redirect, to).href}`;
         auth.login(redirectUri);
       }

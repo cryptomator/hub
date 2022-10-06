@@ -149,7 +149,7 @@ async function fetchData() {
 
 async function vaultAdminAuthenticated(keys: VaultKeys) {
   try {
-    (await backend.vaults.getMembers(props.vaultId, keys)).forEach(member => members.value.set(member.id,member));
+    (await backend.vaults.getMembers(props.vaultId, keys)).forEach(member => members.value.set(member.id, member));
     devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId, keys);
     isVaultAdmin.value = true; //only set if we can retrieve all necessary information
     vaultKeys.value = keys;
