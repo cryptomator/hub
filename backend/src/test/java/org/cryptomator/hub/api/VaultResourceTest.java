@@ -1,5 +1,7 @@
 package org.cryptomator.hub.api;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
 import com.radcortez.flyway.test.annotation.DataSource;
 import com.radcortez.flyway.test.annotation.FlywayTest;
 import io.agroal.api.AgroalDataSource;
@@ -10,6 +12,7 @@ import io.quarkus.test.security.oidc.OidcSecurity;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import org.cryptomator.hub.filters.VaultAdminOnlyFilterProvider;
+import org.cryptomator.hub.filters.VaultAdminValidationFailedException;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeAll;
@@ -23,12 +26,25 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.keycloak.common.util.PemUtils;
 
 import javax.inject.Inject;
 import javax.validation.Validator;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.interfaces.ECPrivateKey;
+import java.security.interfaces.ECPublicKey;
+import java.security.spec.EncodedKeySpec;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.Base64;
+import java.util.Map;
 import java.util.Set;
 
 import static io.restassured.RestAssured.given;
@@ -42,8 +58,8 @@ import static org.hamcrest.CoreMatchers.not;
 @DisplayName("Resource /vaults")
 public class VaultResourceTest {
 
-	private final String vault1AdminJWT = "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzM4NCIsInZhdWx0SWQiOiJ2YXVsdDEifQ.eyJpYXQiOjE1MTYyMzkwMTUsImV4cCI6NTgxNjIzOTAzMCwibmJmIjoxNTE2MjM5MDAwfQ.ibGVhY3WuD0nCE5tDaExH298JEEaJOEsLTUk1KKWW5kcCHgrl8lfDW4QktUn5O88Yu76Tvr47mxLDKbN1ZL3fHBbcW1QUv5KOw6tMlFWShlcPYN2qlZs1ety8mtOeH2_";
-	private final String vault2AdminJWT = "eyJhbGciOiJFUzM4NCIsInR5cCI6IkpXVCIsInZhdWx0SWQiOiJ2YXVsdDIifQ.eyJpYXQiOjE1MTYyMzkwMTUsImV4cCI6NTgxNjIzOTAzMCwibmJmIjoxNTE2MjM5MDAwfQ.l7Zvozwe3JTCOrxpscT5v1yZ5HALbWIFjtkSAJau3NLZGY8_ItX3PZmDfZrVGGOzahTtN1WQsGzDhtmHGoqoqfPITDLv_WcZKPomPI6Ch6R6lhXSC6m3gL81ZPH5w6R_";
+	private final String vault1AdminJWT;
+	private final String vault2AdminJWT;
 
 	@Inject
 	AgroalDataSource dataSource;
@@ -51,10 +67,21 @@ public class VaultResourceTest {
 	@Inject
 	Validator validator;
 
-
 	@BeforeAll
 	public static void beforeAll() {
 		RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
+	}
+
+	public VaultResourceTest() throws NoSuchAlgorithmException, InvalidKeySpecException {
+		var algorithmVault1 = Algorithm.ECDSA384((ECPrivateKey) getPrivateKey("MIG2AgEAMBAGByqGSM49AgEGBSuBBAAiBIGeMIGbAgEBBDAa57e0Q/KAqmIVOVcWX7b+Sm5YVNRUx8W7nc4wk1IBj2QJmsj+MeShQRHG4ozTE9KhZANiAASVL4lbdVoG9Wv0YpkafXf31YNN3rVD1/BAyZm4EYBg92X+taTvTlBjpaGWZuiSYRW9r+YQdKg1D3zAWb0UEKrOHjkgZ38MbBnTheGLlqH7VspuRWG12zydm0dF1ImiRik="));
+		var algorithmVault2 = Algorithm.ECDSA384((ECPrivateKey) getPrivateKey("MIG2AgEAMBAGByqGSM49AgEGBSuBBAAiBIGeMIGbAgEBBDCAHpFQ62QnGCEvYh/pE9QmR1C9aLcDItRbslbmhen/h1tt8AyMhskeenT+rAyyPhGhZANiAAQLW5ZJePZzMIPAxMtZXkEWbDF0zo9f2n4+T1h/2sh/fviblc/VTyrv10GEtIi5qiOy85Pf1RRw8lE5IPUWpgu553SteKigiKLUPeNpbqmYZUkWGh3MLfVzLmx85ii2vMU="));
+
+		vault1AdminJWT = JWT.create().withHeader(Map.of("vaultId", "vault1")).withIssuedAt(Instant.now()).sign(algorithmVault1);
+		vault2AdminJWT = JWT.create().withHeader(Map.of("vaultId", "vault2")).withIssuedAt(Instant.now()).sign(algorithmVault2);
+	}
+
+	private PrivateKey getPrivateKey(String keyBytes) throws NoSuchAlgorithmException, InvalidKeySpecException {
+		return KeyFactory.getInstance("EC").generatePrivate(new PKCS8EncodedKeySpec(Base64.getDecoder().decode(keyBytes)));
 	}
 
 	@Nested
@@ -67,7 +94,6 @@ public class VaultResourceTest {
 		private static final String VALID_SALT = "base64";
 		private static final String VALID_AUTH_PUB = "base64";
 		private static final String VALID_AUTH_PRI = "base64";
-
 
 		@Test
 		public void testValidDto() {

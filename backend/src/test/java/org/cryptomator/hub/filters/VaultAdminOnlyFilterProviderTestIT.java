@@ -17,6 +17,9 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.UriInfo;
 import java.sql.SQLException;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
 
 @QuarkusTest
 @FlywayTest(value = @DataSource(url = "jdbc:h2:mem:test"), additionalLocations = {"classpath:org/cryptomator/hub/flyway"})
@@ -38,8 +41,8 @@ class VaultAdminOnlyFilterProviderTestIT {
 		// Decorate verifier to use fixed time
 		Mockito.doAnswer(invocationOnMock -> {
 			Algorithm algorithm = invocationOnMock.getArgument(0);
-			var verifier = (JWTVerifier.BaseVerification) vaultAdminOnlyFilterProvider.verification(algorithm);
-			return verifier.build(VaultAdminOnlyFilterProviderTestConstants.NOW);
+			var verifier = (JWTVerifier.BaseVerification) vaultAdminOnlyFilterProvider.verification(algorithm, VaultAdminOnlyFilterProviderTestConstants.NOW);
+			return verifier.build(Clock.fixed(VaultAdminOnlyFilterProviderTestConstants.NOW, ZoneId.of("UTC")));
 		}).when(vaultAdminOnlyFilterProvider).buildVerifier(Mockito.any());
 	}
 
@@ -79,45 +82,6 @@ class VaultAdminOnlyFilterProviderTestIT {
 		Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
 
 		Assertions.assertThrows(VaultAdminValidationFailedException.class, () -> vaultAdminOnlyFilterProvider.filter(context));
-	}
-
-	@Test
-	@DisplayName("validate expired vaultAdminAuthorizationJWT header")
-	public void testExpiredVaultAdminAuthorizationJWTHeader() {
-		var pathParams = new MultivaluedHashMap<String, String>();
-		pathParams.add(VaultAdminOnlyFilterProvider.VAULT_ID, "vault2");
-
-		Mockito.when(context.getHeaderString(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION)).thenReturn(VaultAdminOnlyFilterProviderTestConstants.EXPIRED_TOKEN_VAULT_2);
-		Mockito.when(context.getUriInfo()).thenReturn(uriInfo);
-		Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
-
-		Assertions.assertThrows(VaultAdminTokenExpiredException.class, () -> vaultAdminOnlyFilterProvider.filter(context));
-	}
-
-	@Test
-	@DisplayName("validate future issue at vaultAdminAuthorizationJWT header")
-	public void testVaultAdminAuthorizationJWTInFutureIssueAtHeader() {
-		var pathParams = new MultivaluedHashMap<String, String>();
-		pathParams.add(VaultAdminOnlyFilterProvider.VAULT_ID, "vault2");
-
-		Mockito.when(context.getHeaderString(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION)).thenReturn(VaultAdminOnlyFilterProviderTestConstants.FUTURE_ISSUE_AT_TOKEN_VAULT_2);
-		Mockito.when(context.getUriInfo()).thenReturn(uriInfo);
-		Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
-
-		Assertions.assertThrows(VaultAdminTokenNotYetValidException.class, () -> vaultAdminOnlyFilterProvider.filter(context));
-	}
-
-	@Test
-	@DisplayName("validate future not before vaultAdminAuthorizationJWT header")
-	public void testVaultAdminAuthorizationJWTInFutureNotBeforeHeader() {
-		var pathParams = new MultivaluedHashMap<String, String>();
-		pathParams.add(VaultAdminOnlyFilterProvider.VAULT_ID, "vault2");
-
-		Mockito.when(context.getHeaderString(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION)).thenReturn(VaultAdminOnlyFilterProviderTestConstants.FUTURE_NOT_BEFORE_TOKEN_VAULT_2);
-		Mockito.when(context.getUriInfo()).thenReturn(uriInfo);
-		Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
-
-		Assertions.assertThrows(VaultAdminTokenNotYetValidException.class, () -> vaultAdminOnlyFilterProvider.filter(context));
 	}
 
 	@Test

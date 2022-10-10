@@ -21,6 +21,9 @@ import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
+import java.sql.Date;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 
 @Provider
@@ -29,6 +32,7 @@ public class VaultAdminOnlyFilterProvider implements ContainerRequestFilter {
 
 	public static final String VAULT_ADMIN_AUTHORIZATION = "Cryptomator-Vault-Admin-Authorization";
 	static final String VAULT_ID = "vaultId";
+	static final int REQUEST_LEEWAY_IN_SECONDS = 15;
 
 	@Override
 	public void filter(ContainerRequestContext containerRequestContext) {
@@ -37,7 +41,7 @@ public class VaultAdminOnlyFilterProvider implements ContainerRequestFilter {
 		var unveridifedVaultId = getUnverifiedVaultId(vaultAdminAuthorizationJWT);
 		if (vaultIdQueryParameter.equals(unveridifedVaultId)) {
 			var vault = Vault.<Vault>findByIdOptional(unveridifedVaultId).orElseThrow(NotFoundException::new);
-			var algorithm = Algorithm.ECDSA384(decodePublicKey(vault.authenticationPublicKey), null);
+			var algorithm = Algorithm.ECDSA384(decodePublicKey(vault.authenticationPublicKey));
 			verify(buildVerifier(algorithm), vaultAdminAuthorizationJWT);
 		} else {
 			throw new VaultAdminValidationFailedException("Other vaultId provided");
@@ -48,11 +52,9 @@ public class VaultAdminOnlyFilterProvider implements ContainerRequestFilter {
 	void verify(JWTVerifier verifier, DecodedJWT vaultAdminAuthorizationJWT) {
 		try {
 			verifier.verify(vaultAdminAuthorizationJWT);
-		} catch (TokenExpiredException e) {
-			throw new VaultAdminTokenExpiredException("Token of VaultAdminAuthorizationJWT expired");
 		} catch (IncorrectClaimException e) {
-			if (e.getClaimName().equals(RegisteredClaims.ISSUED_AT) || e.getClaimName().equals(RegisteredClaims.NOT_BEFORE)) {
-				throw new VaultAdminTokenNotYetValidException("Token of VaultAdminAuthorizationJWT not yet valid");
+			if (e.getClaimName().equals(RegisteredClaims.ISSUED_AT)) {
+				throw new VaultAdminValidationFailedException("Token of VaultAdminAuthorizationJWT not provided or not yet or no longer valid");
 			} else {
 				throw new VaultAdminValidationFailedException("Incorrect claim exception");
 			}
@@ -66,12 +68,17 @@ public class VaultAdminOnlyFilterProvider implements ContainerRequestFilter {
 		return verification(algorithm).build();
 	}
 
+	private Verification verification(Algorithm algorithm) {
+		return verification(algorithm, Instant.now());
+	}
+
 	//visible for testing
-	Verification verification(Algorithm algorithm) {
+	Verification verification(Algorithm algorithm, Instant now) {
 		return JWT.require(algorithm) //
-				.withClaim(RegisteredClaims.ISSUED_AT, (claim, jwt) -> jwt.getIssuedAt() != null) //
-				.withClaim(RegisteredClaims.NOT_BEFORE, (claim, jwt) -> jwt.getNotBefore() != null) //
-				.withClaim(RegisteredClaims.EXPIRES_AT, (claim, jwt) -> jwt.getExpiresAt() != null);
+				.withClaim(RegisteredClaims.ISSUED_AT, (claim, jwt) -> jwt.getIssuedAt() != null //
+						&& !jwt.getIssuedAt().before(Date.from(now.minus(REQUEST_LEEWAY_IN_SECONDS, ChronoUnit.SECONDS))) //
+						&& !jwt.getIssuedAt().after(Date.from(now.plus(REQUEST_LEEWAY_IN_SECONDS, ChronoUnit.SECONDS)))) //
+				.ignoreIssuedAt();
 	}
 
 	//visible for testing
