@@ -6,7 +6,6 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.IncorrectClaimException;
 import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
-import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.jwt.interfaces.JWTVerifier;
 import com.auth0.jwt.interfaces.Verification;
@@ -21,10 +20,10 @@ import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
-import java.sql.Date;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
+import java.util.Date;
 
 @Provider
 @VaultAdminOnlyFilter
@@ -54,7 +53,7 @@ public class VaultAdminOnlyFilterProvider implements ContainerRequestFilter {
 			verifier.verify(vaultAdminAuthorizationJWT);
 		} catch (IncorrectClaimException e) {
 			if (e.getClaimName().equals(RegisteredClaims.ISSUED_AT)) {
-				throw new VaultAdminValidationFailedException("Token of VaultAdminAuthorizationJWT not provided or not yet or no longer valid");
+				throw new VaultAdminValidationFailedException("ISSUED_AT claim of VaultAdminAuthorizationJWT not provided or not yet or no longer valid");
 			} else {
 				throw new VaultAdminValidationFailedException("Incorrect claim exception");
 			}
