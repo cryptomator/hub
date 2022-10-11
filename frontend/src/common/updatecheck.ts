@@ -2,9 +2,10 @@ import AxiosStatic from 'axios';
 
 const axios = AxiosStatic.create();
 
-export class LatestVersionDto {
-  constructor(public stable: string, public beta: string) { }
-}
+export type LatestVersionDto = {
+  stable: string;
+  beta: string;
+};
 
 class UpdatesService {
   public async get(localVersion: string): Promise<LatestVersionDto> {
