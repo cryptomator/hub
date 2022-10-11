@@ -96,6 +96,7 @@ import { PlusSmallIcon } from '@heroicons/vue/24/solid';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { AuthorityDto, ConflictError, DeviceDto, NotFoundError, UserDto, VaultDto } from '../common/backend';
+import config from '../common/config';
 import { VaultKeys } from '../common/crypto';
 import AuthenticateVaultAdminDialog from './AuthenticateVaultAdminDialog.vue';
 import DownloadVaultTemplateDialog from './DownloadVaultTemplateDialog.vue';
@@ -149,8 +150,8 @@ async function fetchData() {
 
 async function vaultAdminAuthenticated(keys: VaultKeys) {
   try {
-    (await backend.vaults.getMembers(props.vaultId, keys)).forEach(member => members.value.set(member.id, member));
-    devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId, keys);
+    (await backend.vaults.getMembers(props.vaultId, keys, config.getServerTimeDiff())).forEach(member => members.value.set(member.id, member));
+    devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId, keys, config.getServerTimeDiff());
     isVaultAdmin.value = true; //only set if we can retrieve all necessary information
     vaultKeys.value = keys;
   } catch (error) {
@@ -176,7 +177,7 @@ async function addAuthority(authority: unknown) {
     if (isVaultAdmin.value && vaultKeys.value) {
       await addAuthorityBackend(authority);
       members.value.set(authority.id, authority);
-      devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId, vaultKeys.value);
+      devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId, vaultKeys.value, config.getServerTimeDiff());
     }
   } catch (error) {
     //even if error instanceof NotFoundError, it is not expected from user perspective
@@ -189,9 +190,9 @@ async function addAuthorityBackend(authority: AuthorityDto) {
   try {
     if (vaultKeys.value) {
       if (authority.type.toLowerCase() == 'user') {
-        await backend.vaults.addUser(props.vaultId, authority.id, vaultKeys.value);
+        await backend.vaults.addUser(props.vaultId, authority.id, vaultKeys.value, config.getServerTimeDiff());
       } else if (authority.type.toLowerCase() == 'group') {
-        await backend.vaults.addGroup(props.vaultId, authority.id, vaultKeys.value);
+        await backend.vaults.addGroup(props.vaultId, authority.id, vaultKeys.value, config.getServerTimeDiff());
       } else {
         throw new Error('Unknown authority type \'' + authority.type + '\'');
       }
@@ -235,9 +236,9 @@ async function revokeUserAccess(userId: string) {
   delete onRevokeUserAccessError.value[userId];
   try {
     if (isVaultAdmin.value && vaultKeys.value) {
-      await backend.vaults.revokeUserAccess(props.vaultId, userId, vaultKeys.value);
+      await backend.vaults.revokeUserAccess(props.vaultId, userId, vaultKeys.value, config.getServerTimeDiff());
       members.value.delete(userId);
-      devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId, vaultKeys.value);
+      devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId, vaultKeys.value, config.getServerTimeDiff());
     }
   } catch (error) {
     console.error('Revoking user access failed.', error);
