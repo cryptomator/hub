@@ -313,6 +313,7 @@ public class VaultResource {
 		}
 		User currentUser = User.findById(jwt.getSubject());
 		var vault = vaultDto.toVault(vaultId);
+		vault.creationTime = Timestamp.from(Instant.now());
 		vault.directMembers.add(currentUser);
 		try {
 			vault.persistAndFlush();
