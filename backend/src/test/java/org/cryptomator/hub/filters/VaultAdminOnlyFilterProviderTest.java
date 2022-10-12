@@ -66,14 +66,14 @@ class VaultAdminOnlyFilterProviderTest {
 		@DisplayName("validate future IAT out leeway vaultAdminAuthorizationJWT")
 		public void testFutureIATOutLeewayVaultAdminAuthorizationJWT() {
 			vaultAdminOnlyFilterProviderVerifierFor(VaultAdminOnlyFilterProviderTestConstants.NOW.plus(VaultAdminOnlyFilterProvider.REQUEST_LEEWAY_IN_SECONDS + 1, ChronoUnit.SECONDS));
-			Assertions.assertThrows(VaultAdminValidationFailedException.class, () -> vaultAdminOnlyFilterProvider.verify(verifier(), VALID_VAULT2));
+			Assertions.assertThrows(VaultAdminTokenIAPNotValidException.class, () -> vaultAdminOnlyFilterProvider.verify(verifier(), VALID_VAULT2));
 		}
 
 		@Test
 		@DisplayName("validate after IAT out leeway vaultAdminAuthorizationJWT")
 		public void testAfterIATOutLeewayAdminAuthorizationJWT() {
 			vaultAdminOnlyFilterProviderVerifierFor(VaultAdminOnlyFilterProviderTestConstants.NOW.minus(VaultAdminOnlyFilterProvider.REQUEST_LEEWAY_IN_SECONDS + 1, ChronoUnit.SECONDS));
-			Assertions.assertThrows(VaultAdminValidationFailedException.class, () -> vaultAdminOnlyFilterProvider.verify(verifier(), VALID_VAULT2));
+			Assertions.assertThrows(VaultAdminTokenIAPNotValidException.class, () -> vaultAdminOnlyFilterProvider.verify(verifier(), VALID_VAULT2));
 		}
 
 		@Test

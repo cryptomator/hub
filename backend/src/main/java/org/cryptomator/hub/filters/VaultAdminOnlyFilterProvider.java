@@ -53,7 +53,7 @@ public class VaultAdminOnlyFilterProvider implements ContainerRequestFilter {
 			verifier.verify(vaultAdminAuthorizationJWT);
 		} catch (IncorrectClaimException e) {
 			if (e.getClaimName().equals(RegisteredClaims.ISSUED_AT)) {
-				throw new VaultAdminValidationFailedException("ISSUED_AT claim of VaultAdminAuthorizationJWT not provided or not yet or no longer valid");
+				throw new VaultAdminTokenIAPNotValidException("ISSUED_AT claim of VaultAdminAuthorizationJWT not provided or not yet or no longer valid");
 			} else {
 				throw new VaultAdminValidationFailedException("Incorrect claim exception");
 			}
