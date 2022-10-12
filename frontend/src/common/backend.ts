@@ -235,7 +235,7 @@ class VaultService {
 
   private async buildVaultAdminAuthorizationJWT(vaultId: string, vaultKeys: VaultKeys): Promise<string> {
     let vaultIdHeader: VaultIdHeader = { alg: 'ES384', b64: true, typ: 'JWT', vaultId: vaultId };
-    let jwtPayload = { iat: this.secondsSinceEpoch() + config.getServerTimeDiff() };
+    let jwtPayload = { iat: this.secondsSinceEpoch() + config.serverTimeDiff };
     return vaultKeys.signVaultEditRequest(vaultIdHeader, jwtPayload);
   }
 

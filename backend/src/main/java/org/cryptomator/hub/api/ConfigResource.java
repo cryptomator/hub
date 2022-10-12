@@ -11,8 +11,8 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import java.sql.Timestamp;
-import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 
 @Path("/config")
 public class ConfigResource {
@@ -46,7 +46,7 @@ public class ConfigResource {
 		var authUri = replacePrefix(oidcConfData.getAuthorizationUri(), trimTrailingSlash(internalRealmUrl), publicRealmUri);
 		var tokenUri = replacePrefix(oidcConfData.getTokenUri(), trimTrailingSlash(internalRealmUrl), publicRealmUri);
 
-		return new ConfigDto(keycloakPublicUrl, keycloakRealm, keycloakClientId, authUri, tokenUri, Timestamp.from(Instant.now()));
+		return new ConfigDto(keycloakPublicUrl, keycloakRealm, keycloakClientId, authUri, tokenUri, ZonedDateTime.now(ZoneOffset.UTC));
 	}
 
 	//visible for testing
@@ -71,7 +71,7 @@ public class ConfigResource {
 
 	public record ConfigDto(@JsonProperty("keycloakUrl") String keycloakUrl, @JsonProperty("keycloakRealm") String keycloakRealm,
 							@JsonProperty("keycloakClientId") String keycloakClientId, @JsonProperty("keycloakAuthEndpoint") String authEndpoint,
-							@JsonProperty("keycloakTokenEndpoint") String tokenEndpoint, @JsonProperty("serverTime") @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSX") Timestamp serverTime) {
+							@JsonProperty("keycloakTokenEndpoint") String tokenEndpoint, @JsonProperty("serverTime") @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss.SSSX") ZonedDateTime serverTime) {
 	}
 
 }

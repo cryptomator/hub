@@ -25,7 +25,7 @@ export type ConfigDto = {
 
 class ConfigWrapper {
   private data: ConfigDto;
-  private serverTimeDiff: number;
+  readonly serverTimeDiff: number;
 
   private static async loadConfig(): Promise<ConfigDto> {
     const response = await axios.get<ConfigDto>('/config');
@@ -38,15 +38,11 @@ class ConfigWrapper {
 
   private constructor(data: ConfigDto) {
     this.data = data;
-    this.serverTimeDiff = Math.floor(Date.parse(data.serverTime).valueOf() / 1000) - Math.floor(Date.now() / 1000);
+    this.serverTimeDiff = Math.floor((Date.parse(data.serverTime) - Date.now()) / 1000);
   }
 
   public get(): ConfigDto {
     return this.data;
-  }
-
-  public getServerTimeDiff(): number {
-    return this.serverTimeDiff;
   }
 
   public async reload(): Promise<void> {
