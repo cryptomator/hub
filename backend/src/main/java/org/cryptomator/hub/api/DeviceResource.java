@@ -1,6 +1,5 @@
 package org.cryptomator.hub.api;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.User;
@@ -31,8 +30,7 @@ import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Set;
 
 @Path("/devices")
@@ -55,7 +53,7 @@ public class DeviceResource {
 			return Response.status(Response.Status.BAD_REQUEST).entity("deviceId or deviceDto cannot be empty").build();
 		}
 		User currentUser = User.findById(jwt.getSubject());
-		var device = deviceDto.toDevice(currentUser, deviceId, Timestamp.from(Instant.now()));
+		var device = deviceDto.toDevice(currentUser, deviceId, Timestamp.from(Instant.now().truncatedTo(ChronoUnit.MILLIS)));
 		try {
 			device.persistAndFlush();
 			return Response.created(URI.create(".")).build();
@@ -96,7 +94,7 @@ public class DeviceResource {
 							@JsonProperty("publicKey") @OnlyBase64UrlChars String publicKey,
 							@JsonProperty("owner") @ValidId String ownerId,
 							@JsonProperty("accessTo") @Valid Set<VaultResource.VaultDto> accessTo,
-							@JsonProperty("creationTime") @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSX") ZonedDateTime creationTime) {
+							@JsonProperty("creationTime") Instant creationTime) {
 
 		public Device toDevice(User user, String id, Timestamp creationTime) {
 			var device = new Device();
@@ -109,7 +107,7 @@ public class DeviceResource {
 		}
 
 		public static DeviceDto fromEntity(Device entity) {
-			return new DeviceDto(entity.id, entity.name, entity.publickey, entity.owner.id, Set.of(), entity.creationTime.toInstant().atZone(ZoneOffset.UTC));
+			return new DeviceDto(entity.id, entity.name, entity.publickey, entity.owner.id, Set.of(), entity.creationTime.toInstant().truncatedTo(ChronoUnit.MILLIS));
 		}
 
 	}

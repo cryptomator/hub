@@ -1,6 +1,5 @@
 package org.cryptomator.hub.api;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.oidc.OidcConfigurationMetadata;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -11,8 +10,8 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 @Path("/config")
 public class ConfigResource {
@@ -46,7 +45,7 @@ public class ConfigResource {
 		var authUri = replacePrefix(oidcConfData.getAuthorizationUri(), trimTrailingSlash(internalRealmUrl), publicRealmUri);
 		var tokenUri = replacePrefix(oidcConfData.getTokenUri(), trimTrailingSlash(internalRealmUrl), publicRealmUri);
 
-		return new ConfigDto(keycloakPublicUrl, keycloakRealm, keycloakClientId, authUri, tokenUri, ZonedDateTime.now(ZoneOffset.UTC));
+		return new ConfigDto(keycloakPublicUrl, keycloakRealm, keycloakClientId, authUri, tokenUri, Instant.now().truncatedTo(ChronoUnit.MILLIS));
 	}
 
 	//visible for testing
@@ -71,7 +70,7 @@ public class ConfigResource {
 
 	public record ConfigDto(@JsonProperty("keycloakUrl") String keycloakUrl, @JsonProperty("keycloakRealm") String keycloakRealm,
 							@JsonProperty("keycloakClientId") String keycloakClientId, @JsonProperty("keycloakAuthEndpoint") String authEndpoint,
-							@JsonProperty("keycloakTokenEndpoint") String tokenEndpoint, @JsonProperty("serverTime") @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSX") ZonedDateTime serverTime) {
+							@JsonProperty("keycloakTokenEndpoint") String tokenEndpoint, @JsonProperty("serverTime") Instant serverTime) {
 	}
 
 }
