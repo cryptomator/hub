@@ -1,6 +1,5 @@
 package org.cryptomator.hub.api;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.security.identity.SecurityIdentity;
 import org.cryptomator.hub.entities.AccessToken;
@@ -45,6 +44,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Path("/vaults")
@@ -310,6 +311,7 @@ public class VaultResource {
 		}
 		User currentUser = User.findById(jwt.getSubject());
 		var vault = vaultDto.toVault(vaultId);
+		vault.creationTime = Timestamp.from(Instant.now().truncatedTo(ChronoUnit.MILLIS));
 		vault.directMembers.add(currentUser);
 		try {
 			vault.persistAndFlush();
@@ -326,14 +328,14 @@ public class VaultResource {
 	public record VaultDto(@JsonProperty("id") @ValidId String id,
 						   @JsonProperty("name") @NoHtmlOrScriptChars @NotBlank String name,
 						   @JsonProperty("description") @NoHtmlOrScriptChars String description,
-						   @JsonProperty("creationTime") @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSX") Timestamp creationTime,
+						   @JsonProperty("creationTime") Instant creationTime,
 						   @JsonProperty("masterkey") @OnlyBase64Chars String masterkey, @JsonProperty("iterations") @NotBlank @Pattern(regexp = "\\d+") String iterations,
 						   @JsonProperty("salt") @OnlyBase64Chars String salt,
 						   @JsonProperty("authPublicKey") @OnlyBase64Chars String authPublicKey, @JsonProperty("authPrivateKey") @OnlyBase64Chars String authPrivateKey
 	) {
 
 		public static VaultDto fromEntity(Vault entity) {
-			return new VaultDto(entity.id, entity.name, entity.description, entity.creationTime, entity.masterkey, entity.iterations, entity.salt, entity.authenticationPublicKey, entity.authenticationPrivateKey);
+			return new VaultDto(entity.id, entity.name, entity.description, entity.creationTime.toInstant().truncatedTo(ChronoUnit.MILLIS), entity.masterkey, entity.iterations, entity.salt, entity.authenticationPublicKey, entity.authenticationPrivateKey);
 		}
 
 		public Vault toVault(String id) {
@@ -341,7 +343,7 @@ public class VaultResource {
 			vault.id = id;
 			vault.name = name;
 			vault.description = description;
-			vault.creationTime = creationTime;
+			vault.creationTime = Timestamp.from(creationTime);
 			vault.masterkey = masterkey;
 			vault.iterations = iterations;
 			vault.salt = salt;

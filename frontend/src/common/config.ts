@@ -14,12 +14,18 @@ const axios = AxiosStatic.create({
   }
 });
 
-export class ConfigDto {
-  constructor(public keycloakRealm: string, public keycloakUrl: string, public keycloakClientId: string, public keycloakAuthEndpoint: string, public keycloakTokenEndpoint: string) { }
-}
+export type ConfigDto = {
+  keycloakRealm: string;
+  keycloakUrl: string;
+  keycloakClientId: string;
+  keycloakAuthEndpoint: string;
+  keycloakTokenEndpoint: string;
+  serverTime: string;
+};
 
 class ConfigWrapper {
   private data: ConfigDto;
+  readonly serverTimeDiff: number;
 
   private static async loadConfig(): Promise<ConfigDto> {
     const response = await axios.get<ConfigDto>('/config');
@@ -32,6 +38,7 @@ class ConfigWrapper {
 
   private constructor(data: ConfigDto) {
     this.data = data;
+    this.serverTimeDiff = Math.floor((Date.parse(data.serverTime) - Date.now()) / 1000);
   }
 
   public get(): ConfigDto {

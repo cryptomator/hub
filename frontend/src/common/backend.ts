@@ -2,7 +2,7 @@ import AxiosStatic, { AxiosRequestConfig, AxiosResponse } from 'axios';
 import { JdenticonConfig, toSvg } from 'jdenticon';
 import { base64 } from 'rfc4648';
 import authPromise from './auth';
-import { backendBaseURL } from './config';
+import config, { backendBaseURL } from './config';
 import { VaultKeys } from './crypto';
 import { JWTHeader } from './jwt';
 
@@ -29,7 +29,6 @@ axiosAuth.interceptors.request.use(async request => {
   }
 });
 
-const vaultAdminAuthorizationJWTLeeway = 15;
 /* DTOs */
 
 export type VaultDto = {
@@ -236,8 +235,7 @@ class VaultService {
 
   private async buildVaultAdminAuthorizationJWT(vaultId: string, vaultKeys: VaultKeys): Promise<string> {
     let vaultIdHeader: VaultIdHeader = { alg: 'ES384', b64: true, typ: 'JWT', vaultId: vaultId };
-    let nowInSeconds = this.secondsSinceEpoch();
-    let jwtPayload = { exp: nowInSeconds + vaultAdminAuthorizationJWTLeeway, nbf: nowInSeconds - vaultAdminAuthorizationJWTLeeway, iat: nowInSeconds };
+    let jwtPayload = { iat: this.secondsSinceEpoch() + config.serverTimeDiff };
     return vaultKeys.signVaultEditRequest(vaultIdHeader, jwtPayload);
   }
 

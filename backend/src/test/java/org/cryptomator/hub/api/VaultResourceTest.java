@@ -1,5 +1,7 @@
 package org.cryptomator.hub.api;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
 import com.radcortez.flyway.test.annotation.DataSource;
 import com.radcortez.flyway.test.annotation.FlywayTest;
 import io.agroal.api.AgroalDataSource;
@@ -26,9 +28,16 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import javax.inject.Inject;
 import javax.validation.Validator;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.interfaces.ECPrivateKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.Base64;
+import java.util.Map;
 import java.util.Set;
 
 import static io.restassured.RestAssured.given;
@@ -42,8 +51,8 @@ import static org.hamcrest.CoreMatchers.not;
 @DisplayName("Resource /vaults")
 public class VaultResourceTest {
 
-	private final String vault1AdminJWT = "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzM4NCIsInZhdWx0SWQiOiJ2YXVsdDEifQ.eyJpYXQiOjE1MTYyMzkwMTUsImV4cCI6NTgxNjIzOTAzMCwibmJmIjoxNTE2MjM5MDAwfQ.ibGVhY3WuD0nCE5tDaExH298JEEaJOEsLTUk1KKWW5kcCHgrl8lfDW4QktUn5O88Yu76Tvr47mxLDKbN1ZL3fHBbcW1QUv5KOw6tMlFWShlcPYN2qlZs1ety8mtOeH2_";
-	private final String vault2AdminJWT = "eyJhbGciOiJFUzM4NCIsInR5cCI6IkpXVCIsInZhdWx0SWQiOiJ2YXVsdDIifQ.eyJpYXQiOjE1MTYyMzkwMTUsImV4cCI6NTgxNjIzOTAzMCwibmJmIjoxNTE2MjM5MDAwfQ.l7Zvozwe3JTCOrxpscT5v1yZ5HALbWIFjtkSAJau3NLZGY8_ItX3PZmDfZrVGGOzahTtN1WQsGzDhtmHGoqoqfPITDLv_WcZKPomPI6Ch6R6lhXSC6m3gL81ZPH5w6R_";
+	private static String vault1AdminJWT;
+	private static String vault2AdminJWT;
 
 	@Inject
 	AgroalDataSource dataSource;
@@ -51,10 +60,19 @@ public class VaultResourceTest {
 	@Inject
 	Validator validator;
 
-
 	@BeforeAll
-	public static void beforeAll() {
+	public static void beforeAll() throws NoSuchAlgorithmException, InvalidKeySpecException {
 		RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
+
+		var algorithmVault1 = Algorithm.ECDSA384((ECPrivateKey) getPrivateKey("MIG2AgEAMBAGByqGSM49AgEGBSuBBAAiBIGeMIGbAgEBBDAa57e0Q/KAqmIVOVcWX7b+Sm5YVNRUx8W7nc4wk1IBj2QJmsj+MeShQRHG4ozTE9KhZANiAASVL4lbdVoG9Wv0YpkafXf31YNN3rVD1/BAyZm4EYBg92X+taTvTlBjpaGWZuiSYRW9r+YQdKg1D3zAWb0UEKrOHjkgZ38MbBnTheGLlqH7VspuRWG12zydm0dF1ImiRik="));
+		var algorithmVault2 = Algorithm.ECDSA384((ECPrivateKey) getPrivateKey("MIG2AgEAMBAGByqGSM49AgEGBSuBBAAiBIGeMIGbAgEBBDCAHpFQ62QnGCEvYh/pE9QmR1C9aLcDItRbslbmhen/h1tt8AyMhskeenT+rAyyPhGhZANiAAQLW5ZJePZzMIPAxMtZXkEWbDF0zo9f2n4+T1h/2sh/fviblc/VTyrv10GEtIi5qiOy85Pf1RRw8lE5IPUWpgu553SteKigiKLUPeNpbqmYZUkWGh3MLfVzLmx85ii2vMU="));
+
+		vault1AdminJWT = JWT.create().withHeader(Map.of("vaultId", "vault1")).withIssuedAt(Instant.now()).sign(algorithmVault1);
+		vault2AdminJWT = JWT.create().withHeader(Map.of("vaultId", "vault2")).withIssuedAt(Instant.now()).sign(algorithmVault2);
+	}
+
+	private static PrivateKey getPrivateKey(String keyBytes) throws NoSuchAlgorithmException, InvalidKeySpecException {
+		return KeyFactory.getInstance("EC").generatePrivate(new PKCS8EncodedKeySpec(Base64.getDecoder().decode(keyBytes)));
 	}
 
 	@Nested
@@ -68,10 +86,9 @@ public class VaultResourceTest {
 		private static final String VALID_AUTH_PUB = "base64";
 		private static final String VALID_AUTH_PRI = "base64";
 
-
 		@Test
 		public void testValidDto() {
-			var dto = new VaultResource.VaultDto(VALID_ID, VALID_NAME, "foobarbaz", Timestamp.from(Instant.ofEpochMilli(0)), VALID_MASTERKEY, "8", VALID_SALT, VALID_AUTH_PUB, VALID_AUTH_PRI);
+			var dto = new VaultResource.VaultDto(VALID_ID, VALID_NAME, "foobarbaz", Instant.parse("2020-02-20T20:20:20Z"), VALID_MASTERKEY, "8", VALID_SALT, VALID_AUTH_PUB, VALID_AUTH_PRI);
 			var violations = validator.validate(dto);
 			MatcherAssert.assertThat(violations, Matchers.empty());
 		}
@@ -81,7 +98,7 @@ public class VaultResourceTest {
 		@ValueSource(strings = {"foo", "-5", "0x20", "10e10", "0.33"})
 		@NullAndEmptySource
 		public void testInvalidIterationss(String iterations) {
-			var dto = new VaultResource.VaultDto(VALID_ID, VALID_NAME, "foobarbaz", Timestamp.from(Instant.ofEpochMilli(0)), VALID_MASTERKEY, iterations, VALID_SALT, VALID_AUTH_PUB, VALID_AUTH_PRI);
+			var dto = new VaultResource.VaultDto(VALID_ID, VALID_NAME, "foobarbaz", Instant.parse("2020-02-20T20:20:20Z"), VALID_MASTERKEY, iterations, VALID_SALT, VALID_AUTH_PUB, VALID_AUTH_PRI);
 			var violations = validator.validate(dto);
 			MatcherAssert.assertThat(violations, Matchers.not(Matchers.empty()));
 		}
@@ -341,7 +358,7 @@ public class VaultResourceTest {
 		@Test
 		@DisplayName("PUT /vaults/vault1 returns 409")
 		public void testCreateVault1() {
-			var vaultDto = new VaultResource.VaultDto("vault1", "My Vault", "Test vault 1", Timestamp.valueOf("1999-11-19 19:19:19"), "masterkey3", "42", "NaCl", "authPubKey3", "authPrvKey3");
+			var vaultDto = new VaultResource.VaultDto("vault1", "My Vault", "Test vault 1", Instant.parse("1999-11-19T19:19:19Z"), "masterkey3", "42", "NaCl", "authPubKey3", "authPrvKey3");
 
 			given().contentType(ContentType.JSON).body(vaultDto)
 					.when().put("/vaults/{vaultId}", "vault1")
@@ -351,7 +368,7 @@ public class VaultResourceTest {
 		@Test
 		@DisplayName("PUT /vaults/vaultX returns 409")
 		public void testCreateVault2() {
-			var vaultDto = new VaultResource.VaultDto("vaultX", "Vault 1", "This is a testvault.", Timestamp.valueOf("2020-02-20 20:20:20"), "masterkey1", "42", "salt1", "authPubKey1", "authPrvKey1");
+			var vaultDto = new VaultResource.VaultDto("vaultX", "Vault 1", "This is a testvault.", Instant.parse("2020-02-20T20:20:20Z"), "masterkey1", "42", "salt1", "authPubKey1", "authPrvKey1");
 
 			given().contentType(ContentType.JSON).body(vaultDto)
 					.when().put("/vaults/{vaultId}", "vaultX")
@@ -361,7 +378,7 @@ public class VaultResourceTest {
 		@Test
 		@DisplayName("PUT /vaults/vault3 returns 201")
 		public void testCreateVault3() {
-			var vaultDto = new VaultResource.VaultDto("vault3", "My Vault", "Test vault 3", Timestamp.valueOf("2112-12-21 21:12:21"), "masterkey3", "42", "NaCl", "authPubKey3", "authPrvKey3");
+			var vaultDto = new VaultResource.VaultDto("vault3", "My Vault", "Test vault 3", Instant.parse("2112-12-21T21:12:21Z"), "masterkey3", "42", "NaCl", "authPubKey3", "authPrvKey3");
 
 			given().contentType(ContentType.JSON).body(vaultDto)
 					.when().put("/vaults/{vaultId}", "vault999")
@@ -510,7 +527,7 @@ public class VaultResourceTest {
 		@Order(9)
 		@DisplayName("PUT /devices/device9999 returns 201")
 		public void testCreateDevice2() {
-			var deviceDto = new DeviceResource.DeviceDto("device9999", "Computer 9999", "publickey9999", "user2", Set.of(), Timestamp.valueOf("2020-02-20 20:20:20"));
+			var deviceDto = new DeviceResource.DeviceDto("device9999", "Computer 9999", "publickey9999", "user2", Set.of(), Instant.parse("2020-02-20T20:20:20Z"));
 
 			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
 					.given().contentType(ContentType.JSON).body(deviceDto)
