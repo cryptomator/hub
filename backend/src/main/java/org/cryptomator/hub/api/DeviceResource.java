@@ -31,6 +31,8 @@ import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Set;
 
 @Path("/devices")
@@ -94,7 +96,7 @@ public class DeviceResource {
 							@JsonProperty("publicKey") @OnlyBase64UrlChars String publicKey,
 							@JsonProperty("owner") @ValidId String ownerId,
 							@JsonProperty("accessTo") @Valid Set<VaultResource.VaultDto> accessTo,
-							@JsonProperty("creationTime") @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSX") Timestamp creationTime) {
+							@JsonProperty("creationTime") @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSX") ZonedDateTime creationTime) {
 
 		public Device toDevice(User user, String id, Timestamp creationTime) {
 			var device = new Device();
@@ -107,7 +109,7 @@ public class DeviceResource {
 		}
 
 		public static DeviceDto fromEntity(Device entity) {
-			return new DeviceDto(entity.id, entity.name, entity.publickey, entity.owner.id, Set.of(), entity.creationTime);
+			return new DeviceDto(entity.id, entity.name, entity.publickey, entity.owner.id, Set.of(), entity.creationTime.toInstant().atZone(ZoneOffset.UTC));
 		}
 
 	}

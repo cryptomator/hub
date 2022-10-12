@@ -35,8 +35,8 @@ import java.security.interfaces.ECPrivateKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Set;
@@ -89,7 +89,7 @@ public class VaultResourceTest {
 
 		@Test
 		public void testValidDto() {
-			var dto = new VaultResource.VaultDto(VALID_ID, VALID_NAME, "foobarbaz", Timestamp.from(Instant.ofEpochMilli(0)), VALID_MASTERKEY, "8", VALID_SALT, VALID_AUTH_PUB, VALID_AUTH_PRI);
+			var dto = new VaultResource.VaultDto(VALID_ID, VALID_NAME, "foobarbaz", ZonedDateTime.parse("2020-02-20T20:20:20+00:00"), VALID_MASTERKEY, "8", VALID_SALT, VALID_AUTH_PUB, VALID_AUTH_PRI);
 			var violations = validator.validate(dto);
 			MatcherAssert.assertThat(violations, Matchers.empty());
 		}
@@ -99,7 +99,7 @@ public class VaultResourceTest {
 		@ValueSource(strings = {"foo", "-5", "0x20", "10e10", "0.33"})
 		@NullAndEmptySource
 		public void testInvalidIterationss(String iterations) {
-			var dto = new VaultResource.VaultDto(VALID_ID, VALID_NAME, "foobarbaz", Timestamp.from(Instant.ofEpochMilli(0)), VALID_MASTERKEY, iterations, VALID_SALT, VALID_AUTH_PUB, VALID_AUTH_PRI);
+			var dto = new VaultResource.VaultDto(VALID_ID, VALID_NAME, "foobarbaz", ZonedDateTime.parse("2020-02-20T20:20:20+00:00"), VALID_MASTERKEY, iterations, VALID_SALT, VALID_AUTH_PUB, VALID_AUTH_PRI);
 			var violations = validator.validate(dto);
 			MatcherAssert.assertThat(violations, Matchers.not(Matchers.empty()));
 		}
@@ -359,7 +359,7 @@ public class VaultResourceTest {
 		@Test
 		@DisplayName("PUT /vaults/vault1 returns 409")
 		public void testCreateVault1() {
-			var vaultDto = new VaultResource.VaultDto("vault1", "My Vault", "Test vault 1", Timestamp.valueOf("1999-11-19 19:19:19"), "masterkey3", "42", "NaCl", "authPubKey3", "authPrvKey3");
+			var vaultDto = new VaultResource.VaultDto("vault1", "My Vault", "Test vault 1", ZonedDateTime.parse("1999-11-19T19:19:19+00:00"), "masterkey3", "42", "NaCl", "authPubKey3", "authPrvKey3");
 
 			given().contentType(ContentType.JSON).body(vaultDto)
 					.when().put("/vaults/{vaultId}", "vault1")
@@ -369,7 +369,7 @@ public class VaultResourceTest {
 		@Test
 		@DisplayName("PUT /vaults/vaultX returns 409")
 		public void testCreateVault2() {
-			var vaultDto = new VaultResource.VaultDto("vaultX", "Vault 1", "This is a testvault.", Timestamp.valueOf("2020-02-20 20:20:20"), "masterkey1", "42", "salt1", "authPubKey1", "authPrvKey1");
+			var vaultDto = new VaultResource.VaultDto("vaultX", "Vault 1", "This is a testvault.", ZonedDateTime.parse("2020-02-20T20:20:20+00:00"), "masterkey1", "42", "salt1", "authPubKey1", "authPrvKey1");
 
 			given().contentType(ContentType.JSON).body(vaultDto)
 					.when().put("/vaults/{vaultId}", "vaultX")
@@ -379,7 +379,7 @@ public class VaultResourceTest {
 		@Test
 		@DisplayName("PUT /vaults/vault3 returns 201")
 		public void testCreateVault3() {
-			var vaultDto = new VaultResource.VaultDto("vault3", "My Vault", "Test vault 3", Timestamp.valueOf("2112-12-21 21:12:21"), "masterkey3", "42", "NaCl", "authPubKey3", "authPrvKey3");
+			var vaultDto = new VaultResource.VaultDto("vault3", "My Vault", "Test vault 3", ZonedDateTime.parse("2112-12-21T21:12:21+00:00"), "masterkey3", "42", "NaCl", "authPubKey3", "authPrvKey3");
 
 			given().contentType(ContentType.JSON).body(vaultDto)
 					.when().put("/vaults/{vaultId}", "vault999")
@@ -528,7 +528,7 @@ public class VaultResourceTest {
 		@Order(9)
 		@DisplayName("PUT /devices/device9999 returns 201")
 		public void testCreateDevice2() {
-			var deviceDto = new DeviceResource.DeviceDto("device9999", "Computer 9999", "publickey9999", "user2", Set.of(), Timestamp.valueOf("2020-02-20 20:20:20"));
+			var deviceDto = new DeviceResource.DeviceDto("device9999", "Computer 9999", "publickey9999", "user2", Set.of(), ZonedDateTime.parse("2020-02-20T20:20:20+00:00"));
 
 			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
 					.given().contentType(ContentType.JSON).body(deviceDto)
