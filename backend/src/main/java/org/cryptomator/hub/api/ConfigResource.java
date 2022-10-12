@@ -71,7 +71,7 @@ public class ConfigResource {
 
 	public record ConfigDto(@JsonProperty("keycloakUrl") String keycloakUrl, @JsonProperty("keycloakRealm") String keycloakRealm,
 							@JsonProperty("keycloakClientId") String keycloakClientId, @JsonProperty("keycloakAuthEndpoint") String authEndpoint,
-							@JsonProperty("keycloakTokenEndpoint") String tokenEndpoint, @JsonProperty("serverTime") @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss.SSSX") ZonedDateTime serverTime) {
+							@JsonProperty("keycloakTokenEndpoint") String tokenEndpoint, @JsonProperty("serverTime") @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSX") ZonedDateTime serverTime) {
 	}
 
 }
