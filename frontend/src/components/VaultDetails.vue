@@ -32,7 +32,7 @@
       </dl>
     </div>
 
-    <div v-if="isVaultAdmin">
+    <div v-if="isVaultAdmin" class="space-y-6">
       <div>
         <h3 class="font-medium text-gray-900">{{ t('vaultDetails.sharedWith.title') }}</h3>
         <ul role="list" class="mt-2 border-t border-b border-gray-200 divide-y divide-gray-200">
@@ -78,17 +78,18 @@
           {{ t('vaultDetails.downloadVaultTemplate') }}
         </button>
       </div>
-
-      <GrantPermissionDialog v-if="grantingPermission && vault != null && vaultKeys != null" ref="grantPermissionDialog" :vault="vault" :devices="devicesRequiringAccessGrant" :vault-keys="vaultKeys" @close="grantingPermission = false" @permission-granted="permissionGranted()" />
-      <DownloadVaultTemplateDialog v-if="downloadingVaultTemplate && vault != null && vaultKeys != null" ref="downloadVaultTemplateDialog" :vault="vault" :vault-keys="vaultKeys" @close="downloadingVaultTemplate = false" />
     </div>
+
     <div v-else>
       <button type="button" class="flex-1 bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showManageVaultDialog()">
         {{ t('vaultDetails.manageVault') }}
       </button>
     </div>
-    <AuthenticateVaultAdminDialog v-if="authenticatingVaultAdmin && vault != null" ref="authenticateVaultAdminDialog" :vault="vault" @action="vaultAdminAuthenticated" @close="authenticatingVaultAdmin = false" />
   </div>
+  
+  <AuthenticateVaultAdminDialog v-if="authenticatingVaultAdmin && vault != null" ref="authenticateVaultAdminDialog" :vault="vault" @action="vaultAdminAuthenticated" @close="authenticatingVaultAdmin = false" />
+  <GrantPermissionDialog v-if="grantingPermission && vault != null && vaultKeys != null" ref="grantPermissionDialog" :vault="vault" :devices="devicesRequiringAccessGrant" :vault-keys="vaultKeys" @close="grantingPermission = false" @permission-granted="permissionGranted()" />
+  <DownloadVaultTemplateDialog v-if="downloadingVaultTemplate && vault != null && vaultKeys != null" ref="downloadVaultTemplateDialog" :vault="vault" :vault-keys="vaultKeys" @close="downloadingVaultTemplate = false" />
 </template>
 
 <script setup lang="ts">
