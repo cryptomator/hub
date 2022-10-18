@@ -8,7 +8,7 @@ class Auth {
     const keycloak = new Keycloak({
       url: cfg.keycloakUrl,
       realm: cfg.keycloakRealm,
-      clientId: cfg.keycloakClientId
+      clientId: cfg.keycloakClientIdHub
     });
     keycloak.onTokenExpired = () => keycloak.updateToken(30); //TODO: show notification with .catch(() => notify-user-somehow);
     await keycloak.init({

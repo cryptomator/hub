@@ -17,7 +17,8 @@ const axios = AxiosStatic.create({
 export type ConfigDto = {
   keycloakRealm: string;
   keycloakUrl: string;
-  keycloakClientId: string;
+  keycloakClientIdHub: string;
+  keycloakClientIdCryptomator: string;
   keycloakAuthEndpoint: string;
   keycloakTokenEndpoint: string;
   serverTime: string;

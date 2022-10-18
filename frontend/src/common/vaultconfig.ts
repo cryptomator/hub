@@ -17,7 +17,7 @@ export class VaultConfig {
     const kid = `hub+${absBackendBaseURL}vaults/${vaultId}`;
 
     const hubConfig: VaultConfigHeaderHub = {
-      clientId: cfg.keycloakClientId,
+      clientId: cfg.keycloakClientIdCryptomator,
       authEndpoint: cfg.keycloakAuthEndpoint,
       tokenEndpoint: cfg.keycloakTokenEndpoint,
       devicesResourceUrl: `${absBackendBaseURL}devices/`,
