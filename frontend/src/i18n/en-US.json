@@ -72,7 +72,6 @@
   "deviceList.title": "Devices ({0})",
   "deviceList.deviceName": "Device Name",
   "deviceList.type": "Type",
-  "deviceList.numberOfSharedVaults": "Number of Shared Vaults",
   "deviceList.added": "Added",
 
   "downloadVaultTemplateDialog.title": "Download Vault Template",

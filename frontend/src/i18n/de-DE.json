@@ -71,7 +71,6 @@
   "deviceList.title": "Geräte ({0})",
   "deviceList.deviceName": "Gerätename",
   "deviceList.type": "Typ",
-  "deviceList.numberOfSharedVaults": "Anzahl der geteilten Tresore",
   "deviceList.added": "Hinzugefügt",
 
   "downloadVaultTemplateDialog.title": "Tresorvorlage herunterladen",

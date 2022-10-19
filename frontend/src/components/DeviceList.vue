@@ -37,9 +37,6 @@
                     {{ t('deviceList.type') }}
                   </th>
                   <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {{ t('deviceList.numberOfSharedVaults') }}
-                  </th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     {{ t('deviceList.added') }}
                   </th>
                   <th scope="col" class="relative px-6 py-3">
@@ -59,9 +56,6 @@
                         <ComputerDesktopIcon class="mr-1 h-5 w-5" aria-hidden="true" />
                         Computer
                       </span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {{ device.accessTo.length }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {{ d(device.creationTime, 'short') }}
