@@ -110,12 +110,12 @@
   "vaultList.title": "Vaults",
   "vaultList.empty.title": "No vaults",
   "vaultList.empty.description": "Get started by creating a new vault.",
-  "vaultList.createVault": "Create Vault",
+  "vaultList.createVault": "Create",
   "vaultList.filter": "Filter",
-  "vaultList.filter.entry.allVaults": "All vaults",
-  "vaultList.filter.entry.accessibleVaults": "Accessible vaults",
+  "vaultList.filter.entry.allVaults": "All",
+  "vaultList.filter.entry.accessibleVaults": "Accessible",
   "vaultList.filter.result.empty.title": "No vaults",
-  "vaultList.filter.result.empty.description.admin": "No vault found using that search term or filter.",
-  "vaultList.filter.result.empty.description.user": "No vault found using that search term.",
+  "vaultList.filter.result.empty.description.admin": "No results using that search term or filter.",
+  "vaultList.filter.result.empty.description.user": "No results using that search term.",
   "vaultList.search.placeholder": "Search..."
 }

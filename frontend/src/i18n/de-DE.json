@@ -109,5 +109,12 @@
   "vaultList.title": "Tresore",
   "vaultList.empty.title": "Keine Tresore",
   "vaultList.empty.description": "Beginne mit der Erstellung eines neuen Tresors.",
-  "vaultList.createVault": "Tresor erstellen"
+  "vaultList.createVault": "Erstellen",
+  "vaultList.filter": "Filter",
+  "vaultList.filter.entry.allVaults": "Alle",
+  "vaultList.filter.entry.accessibleVaults": "Zugreifbar",
+  "vaultList.filter.result.empty.title": "Keine Tresore",
+  "vaultList.filter.result.empty.description.admin": "Keinen Treffer mit diesem Suchbegriff oder filter.",
+  "vaultList.filter.result.empty.description.user": "Keinen Treffer mit diesem Suchbegriff.",
+  "vaultList.search.placeholder": "Suche..."
 }
