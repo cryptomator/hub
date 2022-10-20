@@ -82,7 +82,8 @@ class VaultAdminOnlyFilterProviderTest {
 		@DisplayName("validate no IAT in vaultAdminAuthorizationJWT")
 		public void testMalformedVaultAdminAuthorizationJWTNoDates() {
 			var verifier = verifier();
-			Assertions.assertThrows(VaultAdminValidationFailedException.class, () -> vaultAdminOnlyFilterProvider.verify(verifier, JWT.decode(NO_IAT_TOKEN_VAULT_2)));
+			var jwt = JWT.decode(NO_IAT_TOKEN_VAULT_2);
+			Assertions.assertThrows(VaultAdminValidationFailedException.class, () -> vaultAdminOnlyFilterProvider.verify(verifier, jwt));
 		}
 
 		private com.auth0.jwt.interfaces.JWTVerifier verifier() {
