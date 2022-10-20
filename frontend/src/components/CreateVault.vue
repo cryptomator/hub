@@ -104,7 +104,6 @@ import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { ConflictError } from '../common/backend';
 import { VaultKeys } from '../common/crypto';
-import { uuid } from '../common/util';
 import { VaultConfig } from '../common/vaultconfig';
 
 enum State {
@@ -155,7 +154,7 @@ async function createVault() {
       throw new PasswordNotMachingError();
     }
     state.value = State.Processing;
-    const vaultId = uuid();
+    const vaultId = crypto.randomUUID();
     const vaultKeys = await VaultKeys.create();
     vaultConfig.value = await VaultConfig.create(vaultId, vaultKeys);
     const wrapped = await vaultKeys.wrap(password.value);

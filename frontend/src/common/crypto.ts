@@ -218,6 +218,7 @@ export class VaultKeys {
       const shiftedRawKey = new Uint8Array([...macKey, ...encKey]);
       const key = await miscreant.SIV.importKey(shiftedRawKey, 'AES-SIV');
       const ciphertext = await key.seal(dirHash, []);
+      // hash is only used as deterministic scheme for the root dir
       const hash = await crypto.subtle.digest('SHA-1', ciphertext);
       return base32.stringify(new Uint8Array(hash));
     } finally {

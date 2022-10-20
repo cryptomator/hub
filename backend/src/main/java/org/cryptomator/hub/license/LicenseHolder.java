@@ -87,6 +87,10 @@ public class LicenseHolder {
 	public static class CommunityLicenseConstants {
 		public static final long SEATS = 5;
 		static final boolean IS_EXPIRED = false;
+
+		private CommunityLicenseConstants() {
+			throw new IllegalStateException("Utility class");
+		}
 	}
 
 }
