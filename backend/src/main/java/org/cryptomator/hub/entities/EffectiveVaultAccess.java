@@ -39,7 +39,7 @@ public class EffectiveVaultAccess extends PanacheEntityBase {
 	public EffectiveVaultAccessId id;
 
 	public static boolean isUserOccupyingSeat(String userId) {
-		return EffectiveVaultAccess.count("#EffectiveVaultAccess.countVaultAccessesOfUser",Parameters.with("userId", userId)) > 0;
+		return EffectiveVaultAccess.count("#EffectiveVaultAccess.countVaultAccessesOfUser", Parameters.with("userId", userId)) > 0;
 	}
 
 	public static long countEffectiveVaultUsers() {
@@ -62,7 +62,7 @@ public class EffectiveVaultAccess extends PanacheEntityBase {
 		@Override
 		public boolean equals(Object o) {
 			if (this == o) return true;
-			if(o instanceof EffectiveVaultAccessId evaId) {
+			if (o instanceof EffectiveVaultAccessId evaId) {
 				return Objects.equals(vaultId, evaId.vaultId) //
 						&& Objects.equals(authorityId, evaId.authorityId);
 			}

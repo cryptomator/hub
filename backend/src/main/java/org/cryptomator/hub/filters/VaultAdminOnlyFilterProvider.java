@@ -105,7 +105,7 @@ public class VaultAdminOnlyFilterProvider implements ContainerRequestFilter {
 
 	//visible for testing
 	String getUnverifiedVaultId(DecodedJWT vaultAdminAuthorizationJWT) {
-		var unveridifedVaultId = vaultAdminAuthorizationJWT.getHeaderClaim("vaultId");
+		var unveridifedVaultId = vaultAdminAuthorizationJWT.getHeaderClaim(VAULT_ID);
 		if (!unveridifedVaultId.isNull() && unveridifedVaultId.asString() != null) {
 			return unveridifedVaultId.asString();
 		} else {

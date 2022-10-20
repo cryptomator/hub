@@ -66,20 +66,23 @@ class VaultAdminOnlyFilterProviderTest {
 		@DisplayName("validate future IAT out leeway vaultAdminAuthorizationJWT")
 		public void testFutureIATOutLeewayVaultAdminAuthorizationJWT() {
 			vaultAdminOnlyFilterProviderVerifierFor(VaultAdminOnlyFilterProviderTestConstants.NOW.plus(VaultAdminOnlyFilterProvider.REQUEST_LEEWAY_IN_SECONDS + 1, ChronoUnit.SECONDS));
-			Assertions.assertThrows(VaultAdminTokenIAPNotValidException.class, () -> vaultAdminOnlyFilterProvider.verify(verifier(), VALID_VAULT2));
+			var verifier = verifier();
+			Assertions.assertThrows(VaultAdminTokenIAPNotValidException.class, () -> vaultAdminOnlyFilterProvider.verify(verifier, VALID_VAULT2));
 		}
 
 		@Test
 		@DisplayName("validate after IAT out leeway vaultAdminAuthorizationJWT")
 		public void testAfterIATOutLeewayAdminAuthorizationJWT() {
 			vaultAdminOnlyFilterProviderVerifierFor(VaultAdminOnlyFilterProviderTestConstants.NOW.minus(VaultAdminOnlyFilterProvider.REQUEST_LEEWAY_IN_SECONDS + 1, ChronoUnit.SECONDS));
-			Assertions.assertThrows(VaultAdminTokenIAPNotValidException.class, () -> vaultAdminOnlyFilterProvider.verify(verifier(), VALID_VAULT2));
+			var verifier = verifier();
+			Assertions.assertThrows(VaultAdminTokenIAPNotValidException.class, () -> vaultAdminOnlyFilterProvider.verify(verifier, VALID_VAULT2));
 		}
 
 		@Test
 		@DisplayName("validate no IAT in vaultAdminAuthorizationJWT")
 		public void testMalformedVaultAdminAuthorizationJWTNoDates() {
-			Assertions.assertThrows(VaultAdminValidationFailedException.class, () -> vaultAdminOnlyFilterProvider.verify(verifier(), JWT.decode(NO_IAT_TOKEN_VAULT_2)));
+			var verifier = verifier();
+			Assertions.assertThrows(VaultAdminValidationFailedException.class, () -> vaultAdminOnlyFilterProvider.verify(verifier, JWT.decode(NO_IAT_TOKEN_VAULT_2)));
 		}
 
 		private com.auth0.jwt.interfaces.JWTVerifier verifier() {
@@ -178,13 +181,15 @@ class VaultAdminOnlyFilterProviderTest {
 		@Test
 		@DisplayName("validate no vaultId in VAULT_ADMIN_AUTHORIZATION")
 		public void testNoVaultIdInJWT() {
-			Assertions.assertThrows(VaultAdminValidationFailedException.class, () -> vaultAdminOnlyFilterProvider.getUnverifiedVaultId(JWT.decode(NO_VAULT_ID_TOKEN)));
+			var jwt = JWT.decode(NO_VAULT_ID_TOKEN);
+			Assertions.assertThrows(VaultAdminValidationFailedException.class, () -> vaultAdminOnlyFilterProvider.getUnverifiedVaultId(jwt));
 		}
 
 		@Test
 		@DisplayName("validate invalid vaultId in VAULT_ADMIN_AUTHORIZATION")
 		public void testInvalidVaultIdInJWT() {
-			Assertions.assertThrows(VaultAdminValidationFailedException.class, () -> vaultAdminOnlyFilterProvider.getUnverifiedVaultId(JWT.decode(INVALID_VAULT_ID_TOKEN)));
+			var jwt = JWT.decode(INVALID_VAULT_ID_TOKEN);
+			Assertions.assertThrows(VaultAdminValidationFailedException.class, () -> vaultAdminOnlyFilterProvider.getUnverifiedVaultId(jwt));
 		}
 	}
 }

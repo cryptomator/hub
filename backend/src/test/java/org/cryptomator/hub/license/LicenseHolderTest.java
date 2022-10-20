@@ -62,7 +62,7 @@ public class LicenseHolderTest {
 
 			holder.init();
 
-			Mockito.verify(validator, Mockito.times(1)).validate(Mockito.eq("token"), Mockito.eq("42"));
+			Mockito.verify(validator, Mockito.times(1)).validate("token", "42");
 			Assertions.assertEquals(decodedJWT, holder.get());
 		}
 
@@ -77,7 +77,7 @@ public class LicenseHolderTest {
 
 			holder.init();
 
-			Mockito.verify(validator, Mockito.times(1)).validate(Mockito.eq("token"), Mockito.eq("42"));
+			Mockito.verify(validator, Mockito.times(1)).validate("token", "42");
 			Mockito.verify(session, Mockito.times(1)).persist(Mockito.any());
 			Assertions.assertNull(holder.get());
 		}
@@ -135,7 +135,7 @@ public class LicenseHolderTest {
 
 			holder.set("token");
 
-			Mockito.verify(validator, Mockito.times(1)).validate(Mockito.eq("token"), Mockito.eq("42"));
+			Mockito.verify(validator, Mockito.times(1)).validate("token", "42");
 			Mockito.verify(session, Mockito.times(1)).persist(Mockito.any());
 			Assertions.assertEquals("token", settingsMock.licenseKey);
 			Assertions.assertEquals(decodedJWT, holder.get());
@@ -151,7 +151,7 @@ public class LicenseHolderTest {
 
 			Assertions.assertThrows(JWTVerificationException.class, () -> holder.set("token"));
 
-			Mockito.verify(validator, Mockito.times(1)).validate(Mockito.eq("token"), Mockito.eq("42"));
+			Mockito.verify(validator, Mockito.times(1)).validate("token", "42");
 			Mockito.verify(session, Mockito.never()).persist(Mockito.any());
 			Assertions.assertNull(holder.get());
 		}
