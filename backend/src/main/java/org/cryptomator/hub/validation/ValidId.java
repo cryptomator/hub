@@ -11,7 +11,7 @@ import static java.lang.annotation.ElementType.*;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * TODO: doc doc doc
+ * Regex constraint for id fields allowing only alphanumerical ASCII chars, dash (-), underscore (_) and dot (.).
  */
 @Pattern(regexp = "[-_.a-zA-Z0-9]*")
 @Target({METHOD, FIELD, ANNOTATION_TYPE, TYPE_USE, PARAMETER})
