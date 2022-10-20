@@ -161,10 +161,7 @@ async function vaultAdminAuthenticated(keys: VaultKeys) {
 }
 
 function isAuthorityDto(toCheck: any): toCheck is AuthorityDto {
-  if ((toCheck as AuthorityDto).type){
-    return true;
-  }
-  return false;
+  return (toCheck as AuthorityDto).type != null;
 }
 
 async function addAuthority(authority: unknown) {

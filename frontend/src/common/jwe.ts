@@ -70,7 +70,7 @@ export class JWE {
     );
     const alg = 'ECDH-ES';
     const enc = 'A256GCM';
-    const epk = await crypto.subtle.exportKey('jwk', ephemeralKey.publicKey!);
+    const epk = await crypto.subtle.exportKey('jwk', ephemeralKey.publicKey);
     const header = new JWEHeader(alg, enc, epk, base64url.stringify(apu, { pad: false }), base64url.stringify(apv, { pad: false }));
 
     /* JWE assembly and content encryption described in RFC 7516: */
@@ -78,7 +78,7 @@ export class JWE {
     const iv = crypto.getRandomValues(new Uint8Array(12));
     const encodedIv = base64url.stringify(iv, { pad: false });
     const encodedEncryptedKey = ''; // empty for Direct Key Agreement as per spec
-    const cek = await this.deriveKey(recipientPublicKey, ephemeralKey.privateKey!, 384, 32, header);
+    const cek = await this.deriveKey(recipientPublicKey, ephemeralKey.privateKey, 384, 32, header);
     const m = new Uint8Array(await crypto.subtle.encrypt(
       {
         name: 'AES-GCM',
