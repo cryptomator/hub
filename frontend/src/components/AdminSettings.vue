@@ -16,7 +16,7 @@
     </div>
 
     <div class="space-y-6 mt-5">
-      <div class="shadow sm:rounded-lg sm:overflow-hidden">
+      <div class="shadow sm:rounded-lg">
         <div class="bg-white px-4 py-5 sm:p-6">
           <div class="md:grid md:grid-cols-3 md:gap-6">
             <div class="md:col-span-1">
