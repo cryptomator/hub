@@ -69,11 +69,9 @@
       </div>
 
       <div class="flex gap-3">
-        <div v-if="devicesRequiringAccessGrant.length > 0">
-          <button type="button" class="flex-1 bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showGrantPermissionDialog()">
-            {{ t('vaultDetails.updatePermissions') }}
-          </button>
-        </div>
+        <button v-if="devicesRequiringAccessGrant.length > 0" type="button" class="flex-1 bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showGrantPermissionDialog()">
+          {{ t('vaultDetails.updatePermissions') }}
+        </button>
         <button type="button" class="flex-1 bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDownloadVaultTemplate()">
           {{ t('vaultDetails.downloadVaultTemplate') }}
         </button>
