@@ -28,22 +28,22 @@
           <!-- Profile dropdown -->
           <Menu as="div" class="ml-3 relative">
             <div>
-              <MenuButton class="bg-tertiary2 flex text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">
+              <MenuButton class="flex rounded-full bg-tertiary-2 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
                 <span class="sr-only">Open user menu</span>
                 <img class="h-8 w-8 rounded-full" :src="props.me.pictureUrl" alt="" />
               </MenuButton>
             </div>
-            <transition enter-active-class="transition ease-out duration-100" enter-from-class="opacity-0 scale-95" enter-to-class="opacity-100 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class=" opacity-100 scale-100" leave-to-class=" opacity-0 scale-95">
-              <MenuItems class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white divide-y divide-gray-100 ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
+            <transition enter-active-class="transition ease-out duration-100" enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class=" opacity-100 scale-100" leave-to-class=" opacity-0 scale-95">
+              <MenuItems class="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg divide-y divide-gray-100 ring-1 ring-black ring-opacity-5 focus:outline-none">
                 <div class="px-3.5 py-3 truncate">
                   <span class="block mb-0.5 text-xs text-gray-500">{{ t('nav.profile.signedInAs') }}</span>
                   <span class="text-sm font-semibold">{{ me.name }}</span>
                 </div>
-                <div v-for="(itemGroup, index) in profileDropdown" :key="`itemGroup-${index}`" class="px-3.5 py-1.5">
+                <div v-for="(itemGroup, index) in profileDropdown" :key="`itemGroup-${index}`" class="py-1.5">
                   <router-link v-for="item in itemGroup" :key="item.name" v-slot="{ navigate }" :to="item.to" >
                     <MenuItem v-slot="{ active }" @click="navigate">
-                      <div :class="[active ? 'text-primary' : '', 'flex items-center py-1.5 text-sm text-gray-700']">
-                        <component :is="item.icon" :class="[active ? 'text-primary' : '', 'flex-none h-5 w-5 text-gray-400 mr-3']" aria-hidden="true" />
+                      <div :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'flex items-center px-3.5 py-1.5 text-sm text-gray-700']">
+                        <component :is="item.icon" :class="[active ? 'text-gray-500' : 'text-gray-400', 'flex-none h-5 w-5 mr-3']" aria-hidden="true" />
                         {{ t(item.name) }}
                       </div>
                     </MenuItem>
