@@ -1,5 +1,7 @@
 package org.cryptomator.hub.api;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
 import com.radcortez.flyway.test.annotation.DataSource;
 import com.radcortez.flyway.test.annotation.FlywayTest;
 import io.agroal.api.AgroalDataSource;
@@ -9,6 +11,9 @@ import io.quarkus.test.security.oidc.Claim;
 import io.quarkus.test.security.oidc.OidcSecurity;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
+import org.cryptomator.hub.filters.VaultAdminOnlyFilterProvider;
+import org.hamcrest.MatcherAssert;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
@@ -18,10 +23,21 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import javax.inject.Inject;
+import javax.validation.Validator;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.interfaces.ECPrivateKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.sql.SQLException;
-import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.Base64;
+import java.util.Map;
 import java.util.Set;
 
 import static io.restassured.RestAssured.given;
@@ -35,15 +51,58 @@ import static org.hamcrest.CoreMatchers.not;
 @DisplayName("Resource /vaults")
 public class VaultResourceTest {
 
-	private final String vault1AdminJwt = "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzM4NCIsInZhdWx0SWQiOiJ2YXVsdDEifQ.e30.zy5SDqX46G2igNLykXuUsq8bEY5etx_dNzrQTwu6UAl4Z85jf8BWqoPaXvgQTCIu_Ex5joUtwSOAC24bibaSNgI-wTY8IAwnr_R8JjQxSMYrXagY7QgTnqLbV8Or-Fb9";
-	private final String vault2AdminJwt = "eyJhbGciOiJFUzM4NCIsInR5cCI6IkpXVCIsInZhdWx0SWQiOiJ2YXVsdDIifQ.e30.wGUvw1owDrVXlha056Hb1CRO6IQU8x4aadk5IGlaB12iFXZaypDATCCWGgEV3s2Q9qSVrY9A7M-g0a4FBK4DJ06u8t02Igj8Bh1Ba3jOOdAuiGslttSAcfMqImcjkRZL";
+	private static String vault1AdminJWT;
+	private static String vault2AdminJWT;
 
 	@Inject
 	AgroalDataSource dataSource;
 
+	@Inject
+	Validator validator;
+
 	@BeforeAll
-	public static void beforeAll() {
+	public static void beforeAll() throws NoSuchAlgorithmException, InvalidKeySpecException {
 		RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
+
+		var algorithmVault1 = Algorithm.ECDSA384((ECPrivateKey) getPrivateKey("MIG2AgEAMBAGByqGSM49AgEGBSuBBAAiBIGeMIGbAgEBBDAa57e0Q/KAqmIVOVcWX7b+Sm5YVNRUx8W7nc4wk1IBj2QJmsj+MeShQRHG4ozTE9KhZANiAASVL4lbdVoG9Wv0YpkafXf31YNN3rVD1/BAyZm4EYBg92X+taTvTlBjpaGWZuiSYRW9r+YQdKg1D3zAWb0UEKrOHjkgZ38MbBnTheGLlqH7VspuRWG12zydm0dF1ImiRik="));
+		var algorithmVault2 = Algorithm.ECDSA384((ECPrivateKey) getPrivateKey("MIG2AgEAMBAGByqGSM49AgEGBSuBBAAiBIGeMIGbAgEBBDCAHpFQ62QnGCEvYh/pE9QmR1C9aLcDItRbslbmhen/h1tt8AyMhskeenT+rAyyPhGhZANiAAQLW5ZJePZzMIPAxMtZXkEWbDF0zo9f2n4+T1h/2sh/fviblc/VTyrv10GEtIi5qiOy85Pf1RRw8lE5IPUWpgu553SteKigiKLUPeNpbqmYZUkWGh3MLfVzLmx85ii2vMU="));
+
+		vault1AdminJWT = JWT.create().withHeader(Map.of("vaultId", "vault1")).withIssuedAt(Instant.now()).sign(algorithmVault1);
+		vault2AdminJWT = JWT.create().withHeader(Map.of("vaultId", "vault2")).withIssuedAt(Instant.now()).sign(algorithmVault2);
+	}
+
+	private static PrivateKey getPrivateKey(String keyBytes) throws NoSuchAlgorithmException, InvalidKeySpecException {
+		return KeyFactory.getInstance("EC").generatePrivate(new PKCS8EncodedKeySpec(Base64.getDecoder().decode(keyBytes)));
+	}
+
+	@Nested
+	@DisplayName("Test VaultDto validation")
+	public class TestVaultDtoValidation {
+
+		private static final String VALID_ID = "2535b22b-a786-4b0f-947d-bae104c4f14f";
+		private static final String VALID_NAME = "foobar";
+		private static final String VALID_MASTERKEY = "base64";
+		private static final String VALID_SALT = "base64";
+		private static final String VALID_AUTH_PUB = "base64";
+		private static final String VALID_AUTH_PRI = "base64";
+
+		@Test
+		public void testValidDto() {
+			var dto = new VaultResource.VaultDto(VALID_ID, VALID_NAME, "foobarbaz", Instant.parse("2020-02-20T20:20:20Z"), VALID_MASTERKEY, "8", VALID_SALT, VALID_AUTH_PUB, VALID_AUTH_PRI);
+			var violations = validator.validate(dto);
+			MatcherAssert.assertThat(violations, Matchers.empty());
+		}
+
+		@ParameterizedTest
+		@DisplayName("Testing invalid values for property iterations")
+		@ValueSource(strings = {"foo", "-5", "0x20", "10e10", "0.33"})
+		@NullAndEmptySource
+		public void testInvalidIterationss(String iterations) {
+			var dto = new VaultResource.VaultDto(VALID_ID, VALID_NAME, "foobarbaz", Instant.parse("2020-02-20T20:20:20Z"), VALID_MASTERKEY, iterations, VALID_SALT, VALID_AUTH_PUB, VALID_AUTH_PRI);
+			var violations = validator.validate(dto);
+			MatcherAssert.assertThat(violations, Matchers.not(Matchers.empty()));
+		}
+
 	}
 
 	@Nested
@@ -81,7 +140,7 @@ public class VaultResourceTest {
 							('vault1', 'newUser93');
 						""");
 			}
-			given().header("Client-JWT", vault1AdminJwt)
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault1AdminJWT)
 					.when().put("/vaults/{vaultId}/users/{usersId}", "vault1", "newUser94")
 					.then().statusCode(402);
 		}
@@ -115,7 +174,7 @@ public class VaultResourceTest {
 							('vault1', 'newUser93');
 						""");
 			}
-			given().header("Client-JWT", vault2AdminJwt)
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
 					.when().put("/vaults/{vaultId}/users/{usersId}", "vault2", "newUser91")
 					.then().statusCode(201);
 		}
@@ -128,7 +187,7 @@ public class VaultResourceTest {
 		})
 		public void testAddingDirectMemberAgainFails() throws SQLException {
 			//this test depends on the flyway migration Test_Data
-			given().header("Client-JWT", vault1AdminJwt)
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault1AdminJWT)
 					.when().put("/vaults/{vaultId}/users/{usersId}", "vault1", "user1")
 					.then().statusCode(409);
 		}
@@ -148,7 +207,7 @@ public class VaultResourceTest {
 		})
 		public void testAddingMemberAgainFails() throws SQLException {
 			//this test depends on the flyway migration Test_Data
-			given().header("Client-JWT", vault2AdminJwt)
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
 					.when().put("/vaults/{vaultId}/groups/{groupId}", "vault2", "group1")
 					.then().statusCode(409);
 		}
@@ -279,7 +338,7 @@ public class VaultResourceTest {
 		@Test
 		@DisplayName("GET /vaults/vault1/members returns 200")
 		public void testGetAccess1() {
-			given().header("Client-JWT", vault1AdminJwt)
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault1AdminJWT)
 					.when().get("/vaults/{vaultId}/members", "vault1")
 					.then().statusCode(200)
 					.body("id", hasItems("user1", "user2"))
@@ -289,9 +348,9 @@ public class VaultResourceTest {
 		@Test
 		@DisplayName("GET /vaults/vault2/members returns 400")
 		public void testGetAccess2() {
-			var vault2ButWrongKeyAdminJwt = "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzM4NCIsInZhdWx0SWQiOiJ2YXVsdDIifQ.e30.cGZDCqzJQgcBHNVPcmBc8JfeGzUf3CHUrwSAMwOA0Dcy9aUZvsAm1dr1MKzuPW_UFHRfMnNi2EwASOA6t-vPWvPFolAHFn5REt2Y9Aw9mIz-qxSBLpz6OMZD16tysQcd";
+			var vault2ButWrongKeyAdminJWT = "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzM4NCIsInZhdWx0SWQiOiJ2YXVsdDIifQ.e30.cGZDCqzJQgcBHNVPcmBc8JfeGzUf3CHUrwSAMwOA0Dcy9aUZvsAm1dr1MKzuPW_UFHRfMnNi2EwASOA6t-vPWvPFolAHFn5REt2Y9Aw9mIz-qxSBLpz6OMZD16tysQcd";
 
-			given().header("Client-JWT", vault2ButWrongKeyAdminJwt)
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2ButWrongKeyAdminJWT)
 					.when().get("/vaults/{vaultId}/members", "vault2")
 					.then().statusCode(400);
 		}
@@ -299,7 +358,7 @@ public class VaultResourceTest {
 		@Test
 		@DisplayName("PUT /vaults/vault1 returns 409")
 		public void testCreateVault1() {
-			var vaultDto = new VaultResource.VaultDto("vault1", "My Vault", "Test vault 1", Timestamp.valueOf("1999-11-19 19:19:19"), "masterkey3", "42", "NaCl", "authPubKey3", "authPrvKey3");
+			var vaultDto = new VaultResource.VaultDto("vault1", "My Vault", "Test vault 1", Instant.parse("1999-11-19T19:19:19Z"), "masterkey3", "42", "NaCl", "authPubKey3", "authPrvKey3");
 
 			given().contentType(ContentType.JSON).body(vaultDto)
 					.when().put("/vaults/{vaultId}", "vault1")
@@ -309,7 +368,7 @@ public class VaultResourceTest {
 		@Test
 		@DisplayName("PUT /vaults/vaultX returns 409")
 		public void testCreateVault2() {
-			var vaultDto = new VaultResource.VaultDto("vaultX", "Vault 1", "This is a testvault.", Timestamp.valueOf("2020-02-20 20:20:20"), "masterkey1", "iterations1", "salt1", "authPubKey1", "authPrvKey1");
+			var vaultDto = new VaultResource.VaultDto("vaultX", "Vault 1", "This is a testvault.", Instant.parse("2020-02-20T20:20:20Z"), "masterkey1", "42", "salt1", "authPubKey1", "authPrvKey1");
 
 			given().contentType(ContentType.JSON).body(vaultDto)
 					.when().put("/vaults/{vaultId}", "vaultX")
@@ -319,7 +378,7 @@ public class VaultResourceTest {
 		@Test
 		@DisplayName("PUT /vaults/vault3 returns 201")
 		public void testCreateVault3() {
-			var vaultDto = new VaultResource.VaultDto("vault3", "My Vault", "Test vault 3", Timestamp.valueOf("2112-12-21 21:12:21"), "masterkey3", "42", "NaCl", "authPubKey3", "authPrvKey3");
+			var vaultDto = new VaultResource.VaultDto("vault3", "My Vault", "Test vault 3", Instant.parse("2112-12-21T21:12:21Z"), "masterkey3", "42", "NaCl", "authPubKey3", "authPrvKey3");
 
 			given().contentType(ContentType.JSON).body(vaultDto)
 					.when().put("/vaults/{vaultId}", "vault999")
@@ -337,8 +396,8 @@ public class VaultResourceTest {
 		@Test
 		@DisplayName("PUT /vaults/vault1/keys/device3 returns 201")
 		public void testGrantAccess1() {
-			given().header("Client-JWT", vault1AdminJwt)
-					.contentType(ContentType.TEXT).body("jwe9999")
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault1AdminJWT)
+					.contentType(ContentType.TEXT).body("jwe.jwe.jwe.jwe.9999")
 					.when().put("/vaults/{vaultId}/keys/{deviceId}", "vault1", "device3")
 					.then().statusCode(201);
 		}
@@ -346,8 +405,8 @@ public class VaultResourceTest {
 		@Test
 		@DisplayName("PUT /vaults/vault1/keys/device1 returns 409 due to user access already granted")
 		public void testGrantAccess2() {
-			given().header("Client-JWT", vault1AdminJwt)
-					.contentType(ContentType.TEXT).body("jwe1")
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault1AdminJWT)
+					.contentType(ContentType.TEXT).body("jwe1.jwe1.jwe1.jwe1.jwe1")
 					.when().put("/vaults/{vaultId}/keys/{deviceId}", "vault1", "device1")
 					.then().statusCode(409);
 		}
@@ -359,8 +418,8 @@ public class VaultResourceTest {
 				@Claim(key = "sub", value = "user2")
 		})
 		public void testGrantAccess3() throws SQLException {
-			given().header("Client-JWT", vault2AdminJwt)
-					.contentType(ContentType.TEXT).body("jwe3")
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
+					.contentType(ContentType.TEXT).body("jwe3.jwe3.jwe3.jwe3.jwe3")
 					.when().put("/vaults/{vaultId}/keys/{deviceId}", "vault2", "device3")
 					.then().statusCode(409);
 		}
@@ -369,8 +428,8 @@ public class VaultResourceTest {
 		@DisplayName("PUT /vaults/vault1/keys/nonExistingDevice returns 404")
 		public void testGrantAccess4() {
 			given()
-					.header("Client-JWT", vault1AdminJwt)
-					.contentType(ContentType.TEXT).body("jwe3")
+					.header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault1AdminJWT)
+					.contentType(ContentType.TEXT).body("jwe3.jwe3.jwe3.jwe3.jwe3")
 					.when().put("/vaults/{vaultId}/keys/{deviceId}", "vault1", "nonExistingDevice")
 					.then().statusCode(404);
 		}
@@ -399,7 +458,7 @@ public class VaultResourceTest {
 		@Order(2)
 		@DisplayName("GET /vaults/vault2/members does not contain user2")
 		public void getAccess1() {
-			given().header("Client-JWT", vault2AdminJwt)
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
 					.when().get("/vaults/{vaultId}/members", "vault2")
 					.then().statusCode(200)
 					.body("users.id", not(hasItems("user2")));
@@ -409,7 +468,7 @@ public class VaultResourceTest {
 		@Order(3)
 		@DisplayName("GET /vaults/vault2/devices-requiring-access-grant does not contains device2")
 		public void testGetDevicesRequiringAccess1() {
-			given().header("Client-JWT", vault2AdminJwt)
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
 					.when().get("/vaults/{vaultId}/devices-requiring-access-grant", "vault2")
 					.then().statusCode(200)
 					.body("id", not(hasItems("device2")));
@@ -419,7 +478,7 @@ public class VaultResourceTest {
 		@Order(4)
 		@DisplayName("PUT /vaults/vault2/members/user2 returns 201")
 		public void addUser1() {
-			given().header("Client-JWT", vault2AdminJwt)
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
 					.when().put("/vaults/{vaultId}/users/{userId}", "vault2", "user2")
 					.then().statusCode(201);
 		}
@@ -428,7 +487,7 @@ public class VaultResourceTest {
 		@Order(5)
 		@DisplayName("GET /vaults/vault2/members does contain user2")
 		public void getMembers2() {
-			given().header("Client-JWT", vault2AdminJwt)
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
 					.when().get("/vaults/{vaultId}/members", "vault2")
 					.then().statusCode(200)
 					.body("id", hasItems("user2"));
@@ -438,7 +497,7 @@ public class VaultResourceTest {
 		@Order(6)
 		@DisplayName("GET /vaults/vault2/devices-requiring-access-grant contains device2")
 		public void testGetDevicesRequiringAccess2() {
-			given().header("Client-JWT", vault2AdminJwt)
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
 					.when().get("/vaults/{vaultId}/devices-requiring-access-grant", "vault2")
 					.then().statusCode(200)
 					.body("id", hasItems("device2"));
@@ -448,8 +507,8 @@ public class VaultResourceTest {
 		@Order(7)
 		@DisplayName("PUT /vaults/vault2/keys/device2 returns 201")
 		public void testGrantAccess1() {
-			given().header("Client-JWT", vault2AdminJwt)
-					.given().contentType(ContentType.TEXT).body("jwe9999")
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
+					.given().contentType(ContentType.TEXT).body("jwe.jwe.jwe.jwe.9999")
 					.when().put("/vaults/{vaultId}/keys/{deviceId}", "vault2", "device2")
 					.then().statusCode(201);
 		}
@@ -458,7 +517,7 @@ public class VaultResourceTest {
 		@Order(8)
 		@DisplayName("GET /vaults/vault2/devices-requiring-access-grant contains not device2")
 		public void testGetDevicesRequiringAccess3() {
-			given().header("Client-JWT", vault2AdminJwt)
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
 					.when().get("/vaults/{vaultId}/devices-requiring-access-grant", "vault2")
 					.then().statusCode(200)
 					.body("id", not(hasItems("device2")));
@@ -468,9 +527,9 @@ public class VaultResourceTest {
 		@Order(9)
 		@DisplayName("PUT /devices/device9999 returns 201")
 		public void testCreateDevice2() {
-			var deviceDto = new DeviceResource.DeviceDto("device9999", "Computer 9999", "publickey9999", "user2", Set.of(), Timestamp.valueOf("2020-02-20 20:20:20"));
+			var deviceDto = new DeviceResource.DeviceDto("device9999", "Computer 9999", "publickey9999", "user2", Set.of(), Instant.parse("2020-02-20T20:20:20Z"));
 
-			given().header("Client-JWT", vault2AdminJwt)
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
 					.given().contentType(ContentType.JSON).body(deviceDto)
 					.when().put("/devices/{deviceId}", "device9999")
 					.then().statusCode(201);
@@ -480,7 +539,7 @@ public class VaultResourceTest {
 		@Order(10)
 		@DisplayName("GET /vaults/vault2/devices-requiring-access-grant contains not device9999")
 		public void testGetDevicesRequiringAccess4() {
-			given().header("Client-JWT", vault2AdminJwt)
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
 					.when().get("/vaults/{vaultId}/devices-requiring-access-grant", "vault2")
 					.then().statusCode(200)
 					.body("id", hasItems("device9999"));
@@ -490,7 +549,7 @@ public class VaultResourceTest {
 		@Order(11)
 		@DisplayName("DELETE /vaults/vault2/members/user2 returns 204")
 		public void removeUser2() {
-			given().header("Client-JWT", vault2AdminJwt)
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
 					.when().delete("/vaults/{vaultId}/users/{userId}", "vault2", "user2")
 					.then().statusCode(204);
 		}
@@ -499,7 +558,7 @@ public class VaultResourceTest {
 		@Order(12)
 		@DisplayName("GET /vaults/vault2/access does not contain user2")
 		public void getMembers3() {
-			given().header("Client-JWT", vault2AdminJwt)
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
 					.when().get("/vaults/{vaultId}/members", "vault2")
 					.then().statusCode(200)
 					.body("id", not(hasItems("user2")));
@@ -516,13 +575,13 @@ public class VaultResourceTest {
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 	public class ManageGroups {
 
-		private final String vault4AdminJwt = "eyJhbGciOiJFUzM4NCIsInR5cCI6IkpXVCIsInZhdWx0SWQiOiJ2YXVsdDQifQ.e30.caBZSinbvjUE_dsexrs3oQv_tFRRIa2cpxdEc3i7jZZk_JsSNr4IeTs3PXzZEOf_NhhQtFb6jy5zQNstYN6Da2Ovf9bLK3-vY6Yb8zBKMwKq-WXU-Z-kCnr2lrjbqz6g";
+		private final String vault4AdminJWT = "eyJhbGciOiJFUzM4NCIsInR5cCI6IkpXVCIsInZhdWx0SWQiOiJ2YXVsdDQifQ.eyJpYXQiOjE1MTYyMzkwMTUsImV4cCI6NTgxNjIzOTAzMCwibmJmIjoxNTE2MjM5MDAwfQ.aSe-P9j1vybUPS_Y1PDQ5knh_slaNulX365TSJNBYGY5dooUTZicu27_h_jYC-vvsafn4sjQhifEoXJq1U5r2kEp8ZV_Bn_4GdLLAG2JDewuAvWlkqks1un4spEO8yO4";
 
 		@Test
 		@Order(1)
 		@DisplayName("PUT /vaults/vault4/groups/group3000 returns 404")
 		public void addNonExistingGroup() {
-			given().header("Client-JWT", vault4AdminJwt)
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault4AdminJWT)
 					.when().put("/vaults/{vaultId}/groups/{groupId}", "vault4", "group3000")
 					.then().statusCode(404);
 		}
@@ -544,7 +603,7 @@ public class VaultResourceTest {
 						""");
 			}
 
-			given().header("Client-JWT", vault2AdminJwt)
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
 					.when().put("/vaults/{vaultId}/groups/{groupId}", "vault2", "group91")
 					.then().statusCode(201);
 		}
@@ -553,7 +612,7 @@ public class VaultResourceTest {
 		@Order(3)
 		@DisplayName("GET /vaults/vault2/members does contain group91")
 		public void getMembers4() {
-			given().header("Client-JWT", vault2AdminJwt)
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
 					.when().get("/vaults/{vaultId}/members", "vault2")
 					.then().statusCode(200)
 					.body("id", hasItems("group91"));
@@ -583,7 +642,7 @@ public class VaultResourceTest {
 						""");
 			}
 
-			given().header("Client-JWT", vault2AdminJwt)
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
 					.when().get("/vaults/{vaultId}/devices-requiring-access-grant", "vault2")
 					.then().statusCode(200)
 					.body("id", hasItems("device93"));
@@ -593,8 +652,8 @@ public class VaultResourceTest {
 		@Order(5)
 		@DisplayName("PUT /vaults/vault2/keys/device93 returns 201")
 		public void testGrantAccess2() {
-			given().header("Client-JWT", vault2AdminJwt)
-					.contentType(ContentType.TEXT).body("jwe99")
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
+					.contentType(ContentType.TEXT).body("aaa.AAA.000.999.888")
 					.when().put("/vaults/{vaultId}/keys/{deviceId}", "vault2", "device93")
 					.then().statusCode(201);
 		}
@@ -603,7 +662,7 @@ public class VaultResourceTest {
 		@Order(6)
 		@DisplayName("GET /vaults/vault2/devices-requiring-access-grant contains not device93")
 		public void testGetDevicesRequiringAccess4() {
-			given().header("Client-JWT", vault2AdminJwt)
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
 					.when().get("/vaults/{vaultId}/devices-requiring-access-grant", "vault2")
 					.then().statusCode(200)
 					.body("id", not(hasItems("device93")));
@@ -613,7 +672,7 @@ public class VaultResourceTest {
 		@Order(7)
 		@DisplayName("DELETE /vaults/vault2/groups/group91 returns 204")
 		public void removeGroup2() {
-			given().header("Client-JWT", vault2AdminJwt)
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
 					.when().delete("/vaults/{vaultId}/groups/{groupId}", "vault2", "group91")
 					.then().statusCode(204);
 		}
@@ -622,7 +681,7 @@ public class VaultResourceTest {
 		@Order(8)
 		@DisplayName("GET /vaults/vault2/members does not contain group91")
 		public void getMembers5() {
-			given().header("Client-JWT", vault2AdminJwt)
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
 					.when().get("/vaults/{vaultId}/members", "vault2")
 					.then().statusCode(200)
 					.body("id", not(hasItems("group91")));
@@ -666,7 +725,7 @@ public class VaultResourceTest {
 						""");
 			}
 
-			given().header("Client-JWT", vault2AdminJwt)
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
 					.when().put("/vaults/{vaultId}/groups/{groupId}", "vault2", "group94")
 					.then().statusCode(402);
 		}

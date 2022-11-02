@@ -2,11 +2,11 @@ package org.cryptomator.hub.api;
 
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.entities.Settings;
 import org.cryptomator.hub.license.LicenseHolder;
+import org.cryptomator.hub.validation.ValidJWS;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 
@@ -20,7 +20,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.Date;
+import java.time.Instant;
 import java.util.Optional;
 
 @Path("/billing")
@@ -55,7 +55,7 @@ public class BillingResource {
 	@APIResponse(responseCode = "204")
 	@APIResponse(responseCode = "400", description = "token is invalid (e.g., expired or invalid signature)")
 	@APIResponse(responseCode = "403", description = "only admins are allowed to set the token")
-	public Response setToken(String token) {
+	public Response setToken(@ValidJWS String token) {
 		try {
 			licenseHolder.set(token);
 			return Response.status(Response.Status.NO_CONTENT).build();
@@ -66,8 +66,7 @@ public class BillingResource {
 
 	public record BillingDto(@JsonProperty("hubId") String hubId, @JsonProperty("hasLicense") Boolean hasLicense, @JsonProperty("email") String email,
 							 @JsonProperty("totalSeats") Integer totalSeats, @JsonProperty("remainingSeats") Integer remainingSeats,
-							 @JsonProperty("issuedAt") @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSX") Date issuedAt,
-							 @JsonProperty("expiresAt") @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSX") Date expiresAt) {
+							 @JsonProperty("issuedAt") Instant issuedAt, @JsonProperty("expiresAt") Instant expiresAt) {
 
 		public static BillingDto create(String hubId) {
 			var seats = LicenseHolder.CommunityLicenseConstants.SEATS;
@@ -80,8 +79,8 @@ public class BillingResource {
 			var email = jwt.getSubject();
 			var totalSeats = jwt.getClaim("seats").asInt();
 			var remainingSeats = Math.max(totalSeats - (int) EffectiveVaultAccess.countEffectiveVaultUsers(), 0);
-			var issuedAt = jwt.getIssuedAt();
-			var expiresAt = jwt.getExpiresAt();
+			var issuedAt = jwt.getIssuedAt().toInstant();
+			var expiresAt = jwt.getExpiresAt().toInstant();
 			return new BillingDto(id, true, email, totalSeats, remainingSeats, issuedAt, expiresAt);
 		}
 

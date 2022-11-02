@@ -97,8 +97,8 @@ public class BillingResourceTest {
 					.body("email", is("hub@cryptomator.org"))
 					.body("totalSeats", is(5))
 					.body("remainingSeats", is(3))
-					.body("issuedAt", is("2022-03-23T15:29:20.000Z"))
-					.body("expiresAt", is("9999-12-31T00:00:00.000Z"));
+					.body("issuedAt", is("2022-03-23T15:29:20Z"))
+					.body("expiresAt", is("9999-12-31T00:00:00Z"));
 		}
 
 		@Test
@@ -121,8 +121,8 @@ public class BillingResourceTest {
 					.body("email", is("hub@cryptomator.org"))
 					.body("totalSeats", is(5))
 					.body("remainingSeats", is(3))
-					.body("issuedAt", is("2022-03-23T15:43:30.000Z"))
-					.body("expiresAt", is("9999-12-31T00:00:00.000Z"));
+					.body("issuedAt", is("2022-03-23T15:43:30Z"))
+					.body("expiresAt", is("9999-12-31T00:00:00Z"));
 		}
 
 		@Test

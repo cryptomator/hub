@@ -4,7 +4,7 @@
   </div>
 
   <div v-else-if="onFetchError != null">
-    <FetchError :error="onFetchError" :retry="allowRetryFetch? fetchData : null"/>
+    <FetchError :error="onFetchError" :retry="allowRetryFetch ? fetchData : null"/>
   </div>
 
   <div v-else class="pb-16 space-y-6">
@@ -32,7 +32,7 @@
       </dl>
     </div>
 
-    <div v-if="isVaultAdmin">
+    <div v-if="isVaultAdmin" class="space-y-6">
       <div>
         <h3 class="font-medium text-gray-900">{{ t('vaultDetails.sharedWith.title') }}</h3>
         <ul role="list" class="mt-2 border-t border-b border-gray-200 divide-y divide-gray-200">
@@ -55,7 +55,7 @@
             <div v-if="!addingUser" class="justify-between items-center">
               <button type="button" class="group -ml-1 bg-white p-1 rounded-md flex items-center focus:outline-none focus:ring-2 focus:ring-primary" @click="addingUser = true">
                 <span class="w-8 h-8 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400">
-                  <PlusSmIcon class="h-5 w-5" aria-hidden="true" />
+                  <PlusSmallIcon class="h-5 w-5" aria-hidden="true" />
                 </span>
                 <span class="ml-4 text-sm font-medium text-primary group-hover:text-primary-l1">{{ t('common.share') }}</span>
               </button>
@@ -69,32 +69,29 @@
       </div>
 
       <div class="flex gap-3">
-        <div v-if="devicesRequiringAccessGrant.length > 0">
-          <button type="button" class="flex-1 bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showGrantPermissionDialog()">
-            {{ t('vaultDetails.updatePermissions') }}
-          </button>
-        </div>
+        <button v-if="devicesRequiringAccessGrant.length > 0" type="button" class="flex-1 bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showGrantPermissionDialog()">
+          {{ t('vaultDetails.updatePermissions') }}
+        </button>
         <button type="button" class="flex-1 bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDownloadVaultTemplate()">
           {{ t('vaultDetails.downloadVaultTemplate') }}
         </button>
       </div>
-
-      <GrantPermissionDialog v-if="grantingPermission && vault!=null" ref="grantPermissionDialog" :vault="vault" :devices="devicesRequiringAccessGrant" :vault-keys="vaultKeys" @close="grantingPermission = false" @permission-granted="permissionGranted()" />
-      <DownloadVaultTemplateDialog v-if="downloadingVaultTemplate && vault!=null" ref="downloadVaultTemplateDialog" :vault="vault" :vault-keys="vaultKeys" @close="downloadingVaultTemplate = false" />
     </div>
 
-    <AuthenticateVaultAdminDialog v-if="authenticatingVaultAdmin && vault!=null" ref="authenticateVaultAdminDialog" :vault="vault" @action="vaultAdminAuthenticated" @close="authenticatingVaultAdmin = false" />
-
-    <div v-if="!isVaultAdmin">
+    <div v-else>
       <button type="button" class="flex-1 bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showManageVaultDialog()">
-        {{ 'Manage vault' }}
+        {{ t('vaultDetails.manageVault') }}
       </button>
     </div>
   </div>
+  
+  <AuthenticateVaultAdminDialog v-if="authenticatingVaultAdmin && vault != null" ref="authenticateVaultAdminDialog" :vault="vault" @action="vaultAdminAuthenticated" @close="authenticatingVaultAdmin = false" />
+  <GrantPermissionDialog v-if="grantingPermission && vault != null && vaultKeys != null" ref="grantPermissionDialog" :vault="vault" :devices="devicesRequiringAccessGrant" :vault-keys="vaultKeys" @close="grantingPermission = false" @permission-granted="permissionGranted()" />
+  <DownloadVaultTemplateDialog v-if="downloadingVaultTemplate && vault != null && vaultKeys != null" ref="downloadVaultTemplateDialog" :vault="vault" :vault-keys="vaultKeys" @close="downloadingVaultTemplate = false" />
 </template>
 
 <script setup lang="ts">
-import { PlusSmIcon } from '@heroicons/vue/solid';
+import { PlusSmallIcon } from '@heroicons/vue/24/solid';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { AuthorityDto, ConflictError, DeviceDto, NotFoundError, UserDto, VaultDto } from '../common/backend';
@@ -150,11 +147,11 @@ async function fetchData() {
 }
 
 async function vaultAdminAuthenticated(keys: VaultKeys) {
-  isVaultAdmin.value = true;
-  vaultKeys.value = keys;
   try {
-    (await backend.vaults.getMembers(props.vaultId, vaultKeys.value)).forEach(member => members.value.set(member.id,member));
-    devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId, vaultKeys.value);
+    (await backend.vaults.getMembers(props.vaultId, keys)).forEach(member => members.value.set(member.id, member));
+    devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId, keys);
+    isVaultAdmin.value = true; //only set if we can retrieve all necessary information
+    vaultKeys.value = keys;
   } catch (error) {
     console.error('Getting member or requiring devices access grant failed.', error);
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
@@ -162,10 +159,7 @@ async function vaultAdminAuthenticated(keys: VaultKeys) {
 }
 
 function isAuthorityDto(toCheck: any): toCheck is AuthorityDto {
-  if ((toCheck as AuthorityDto).type){
-    return true;
-  }
-  return false;
+  return (toCheck as AuthorityDto).type != null;
 }
 
 async function addAuthority(authority: unknown) {
@@ -228,8 +222,7 @@ function permissionGranted() {
 }
 
 async function searchAuthority(query: string): Promise<AuthorityDto[]> {
-  return (await Promise.all([backend.users.search(query), backend.groups.search(query)]))
-    .flat()
+  return (await backend.authorities.search(query))
     .filter(authority => !members.value.has(authority.id))
     .sort((a, b) => a.name.localeCompare(b.name));
 }
@@ -245,7 +238,7 @@ async function revokeUserAccess(userId: string) {
   } catch (error) {
     console.error('Revoking user access failed.', error);
     //404 not expected from user perspective
-    onRevokeUserAccessError.value[userId] = error instanceof Error ? error: new Error('Unknown Error');
+    onRevokeUserAccessError.value[userId] = error instanceof Error ? error : new Error('Unknown Error');
   }
 }
 </script>

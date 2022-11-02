@@ -1,7 +1,7 @@
 <template>
   <div v-if="state == State.Initial || state == State.Processing">
     <form ref="form" novalidate @submit.prevent="createVault()">
-      <div class="shadow sm:rounded-lg sm:overflow-hidden">
+      <div class="shadow sm:rounded-lg">
         <div class="bg-white px-4 py-5 sm:p-6">
           <div class="md:grid md:grid-cols-3 md:gap-6">
             <div class="md:col-span-1">
@@ -17,8 +17,7 @@
               <div class="grid grid-cols-6 gap-6">
                 <div class="col-span-6 sm:col-span-3">
                   <label for="vaultName" class="block text-sm font-medium text-gray-700">{{ t('createVault.vaultName') }}</label>
-                  <input id="vaultName" v-model="vaultName" :disabled="state == State.Processing" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onCreateError instanceof FormValidationFailedError }" required />
-                  <p v-if="onCreateError instanceof FormValidationFailedError" id="vaultName-required-description" class="mt-2 text-sm text-gray-500">{{ t('common.form.required') }}</p>
+                  <input id="vaultName" v-model="vaultName" :disabled="state == State.Processing" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onCreateError instanceof FormValidationFailedError }" pattern="^(?! )([^\\\/:*?\x22<>|])*(?<! |\.)$" required />
                 </div>
 
                 <div class="col-span-6 sm:col-span-4">
@@ -29,16 +28,16 @@
                 </div>
 
                 <div class="col-span-6 sm:col-span-4">
-                  <label for="password" class="block text-sm font-medium text-gray-700">{{ t('createVault.masterPassword') }}</label>
+                  <label for="password" class="block text-sm font-medium text-gray-700">{{ t('createVault.password') }}</label>
                   <input id="password" v-model="password" :disabled="state == State.Processing" type="password" minlength="8" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onCreateError instanceof FormValidationFailedError }" aria-describedby="password-description" required />
-                  <p id="password-description" class="mt-2 text-sm text-gray-500">{{ t('createVault.masterPassword.description') }}</p>
+                  <p id="password-description" class="mt-2 text-sm text-gray-500">{{ t('createVault.password.description') }}</p>
                 </div>
                 <div class="col-span-6 sm:col-span-4">
-                  <label for="passwordConfirmation" class="block text-sm font-medium text-gray-700">{{ t('createVault.masterPasswordConfirmation') }}</label>
+                  <label for="passwordConfirmation" class="block text-sm font-medium text-gray-700">{{ t('createVault.passwordConfirmation') }}</label>
                   <input id="passwordConfirmation" v-model="passwordConfirmation" :disabled="state == State.Processing" type="password" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onCreateError instanceof FormValidationFailedError }" aria-describedby="password-confirmation-description" required />
                   <p id="password-confirmation-description" class="mt-2 text-sm text-gray-500">
-                    <span v-if="passwordMatches && passwordConfirmation.length != 0">{{ t('createVault.masterPasswordConfirmation.passwordsMatch') }}</span>
-                    <span v-else-if="!passwordMatches && passwordConfirmation.length != 0">{{ t('createVault.masterPasswordConfirmation.passwordsDoNotMatch') }}</span>
+                    <span v-if="passwordMatches && passwordConfirmation.length != 0">{{ t('createVault.passwordConfirmation.passwordsMatch') }}</span>
+                    <span v-else-if="!passwordMatches && passwordConfirmation.length != 0">{{ t('createVault.passwordConfirmation.passwordsDoNotMatch') }}</span>
                     <span v-else>&nbsp;</span>
                   </p>
                 </div>
@@ -51,7 +50,7 @@
           <div v-if="onCreateError != null" >
             <p v-if="onCreateError instanceof ConflictError" class="text-sm text-red-900 mr-4">{{ t('createVault.error.vaultAlreadyExists') }}</p>
             <p v-else-if="onCreateError instanceof FormValidationFailedError" class="text-sm text-red-900 mr-4">{{ t('createVault.error.formValidationFailed') }}</p>
-            <p v-else-if="onCreateError instanceof PasswordNotMachingError" class="text-sm text-red-900 mr-4">{{ t('createVault.masterPasswordConfirmation.passwordsDoNotMatch') }}</p>
+            <p v-else-if="onCreateError instanceof PasswordNotMachingError" class="text-sm text-red-900 mr-4">{{ t('createVault.passwordConfirmation.passwordsDoNotMatch') }}</p>
             <p v-else class="text-sm text-red-900 mr-4">{{ t('common.unexpectedError', [onCreateError.message]) }}</p>
           </div>
           <button :disabled="state == State.Processing" type="submit" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
@@ -81,13 +80,13 @@
           </div>
           <div class="mt-5 sm:mt-6">
             <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="downloadVaultTemplate()">
-              <DownloadIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+              <ArrowDownTrayIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
               {{ t('createVault.success.download') }}
             </button>
             <p v-if="onDownloadTemplateError != null " class="text-sm text-red-900 mr-4">{{ t('createVault.error.downloadTemplateFailed', [onDownloadTemplateError.message]) }}</p> <!-- TODO: not beautiful-->
           </div>
           <div class="mt-2">
-            <router-link to="/" class="text-sm text-gray-500">
+            <router-link to="/app/vaults" class="text-sm text-gray-500">
               {{ t('createVault.success.return') }}
             </router-link>
           </div>
@@ -98,14 +97,13 @@
 </template>
 
 <script setup lang="ts">
-import { CheckIcon } from '@heroicons/vue/outline';
-import { DownloadIcon } from '@heroicons/vue/solid';
+import { CheckIcon } from '@heroicons/vue/24/outline';
+import { ArrowDownTrayIcon } from '@heroicons/vue/24/solid';
 import { saveAs } from 'file-saver';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { ConflictError } from '../common/backend';
 import { VaultKeys } from '../common/crypto';
-import { uuid } from '../common/util';
 import { VaultConfig } from '../common/vaultconfig';
 
 enum State {
@@ -116,13 +114,13 @@ enum State {
 
 class FormValidationFailedError extends Error {
   constructor() {
-    super('The html form is not correctly filled.');
+    super('The form is invalid.');
   }
 }
 
-class ExportingTemplateFailedError extends Error {
+class EmptyVaultTemplateError extends Error {
   constructor() {
-    super('Exporting template function returned null.');
+    super('Vault template is empty.');
   }
 }
 
@@ -149,20 +147,14 @@ const vaultConfig = ref<VaultConfig>();
 
 async function createVault() {
   onCreateError.value = null;
-
-  if (!form.value?.checkValidity()) {
-    onCreateError.value = new FormValidationFailedError();
-    return;
-  }
-
-  if (!passwordMatches.value) {
-    onCreateError.value = new PasswordNotMachingError();
-    return;
-  }
-
   try {
+    if (!form.value?.checkValidity()) {
+      throw new FormValidationFailedError();
+    } else if (!passwordMatches.value) {
+      throw new PasswordNotMachingError();
+    }
     state.value = State.Processing;
-    const vaultId = uuid();
+    const vaultId = crypto.randomUUID();
     const vaultKeys = await VaultKeys.create();
     vaultConfig.value = await VaultConfig.create(vaultId, vaultKeys);
     const wrapped = await vaultKeys.wrap(password.value);
@@ -170,10 +162,9 @@ async function createVault() {
     state.value = State.Finished;
   } catch (error) {
     console.error('Creating vault failed.', error);
-    onCreateError.value = error instanceof Error? error : new Error('Unknown Reason');
+    onCreateError.value = error instanceof Error ? error : new Error('Unknown reason');
     state.value = State.Initial;
   }
-  return;
 }
 
 async function downloadVaultTemplate() {
@@ -183,12 +174,11 @@ async function downloadVaultTemplate() {
     if (blob != null) {
       saveAs(blob, `${vaultName.value}.zip`);
     } else {
-      throw new ExportingTemplateFailedError();
+      throw new EmptyVaultTemplateError();
     }
   } catch (error) {
-    console.error('Exporting Template returned failed.', error);
-    onDownloadTemplateError.value = error instanceof Error? error : new Error('Unknown Reason');
+    console.error('Exporting vault template failed.', error);
+    onDownloadTemplateError.value = error instanceof Error ? error : new Error('Unknown reason');
   }
 }
-
 </script>

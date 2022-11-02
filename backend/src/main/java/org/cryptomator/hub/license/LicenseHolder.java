@@ -18,7 +18,7 @@ public class LicenseHolder {
 
 	private static final Logger LOG = Logger.getLogger(LicenseHolder.class);
 	private final LicenseValidator licenseValidator;
-	private volatile DecodedJWT license;
+	private DecodedJWT license;
 
 	LicenseHolder(LicenseValidator licenseValidator) {
 		this.licenseValidator = licenseValidator;
@@ -48,7 +48,7 @@ public class LicenseHolder {
 	 * @throws JWTVerificationException if the license cannot be verfied
 	 */
 	@Transactional
-	public synchronized void set(String token) throws JWTVerificationException {
+	public void set(String token) throws JWTVerificationException {
 		Objects.requireNonNull(token);
 
 		var settings = Settings.get();
@@ -87,6 +87,10 @@ public class LicenseHolder {
 	public static class CommunityLicenseConstants {
 		public static final long SEATS = 5;
 		static final boolean IS_EXPIRED = false;
+
+		private CommunityLicenseConstants() {
+			throw new IllegalStateException("Utility class");
+		}
 	}
 
 }

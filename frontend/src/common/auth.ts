@@ -8,13 +8,13 @@ class Auth {
     const keycloak = new Keycloak({
       url: cfg.keycloakUrl,
       realm: cfg.keycloakRealm,
-      clientId: cfg.keycloakClientId
+      clientId: cfg.keycloakClientIdHub
     });
+    keycloak.onTokenExpired = () => keycloak.updateToken(30); //TODO: show notification with .catch(() => notify-user-somehow);
     await keycloak.init({
       checkLoginIframe: false,
       pkceMethod: 'S256',
     });
-    keycloak.onTokenExpired = () => keycloak.updateToken(30);
     return new Auth(keycloak);
   }
 
@@ -26,12 +26,10 @@ class Auth {
     return this.keycloak.authenticated || false;
   }
 
-  public async loginIfRequired(redirectUri?: string): Promise<void> {
-    if (!this.keycloak.authenticated) {
-      await this.keycloak.login({
-        redirectUri: (redirectUri ?? window.location.href)
-      });
-    }
+  public async login(redirectUri: string): Promise<void> {
+    await this.keycloak.login({
+      redirectUri: (redirectUri)
+    });
   }
 
   public async logout(redirectUri?: string): Promise<void> {
@@ -52,7 +50,6 @@ class Auth {
   public isUser(): boolean {
     return this.keycloak.tokenParsed?.realm_access?.roles.includes('user') ?? false;
   }
-
 }
 
 // this is a lazy singleton:

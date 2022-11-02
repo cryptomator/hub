@@ -14,7 +14,6 @@ export class UnwrapKeyError extends Error {
     super('Unwrapping key failed');
     this.actualError = actualError;
   }
-
 }
 
 export interface VaultConfigPayload {
@@ -38,7 +37,6 @@ interface JWEPayload {
 }
 
 export class VaultKeys {
-
   private static readonly SIGNATURE_KEY_DESIGNATION: EcKeyImportParams | EcKeyGenParams = {
     name: 'ECDSA',
     namedCurve: 'P-384'
@@ -119,7 +117,7 @@ export class VaultKeys {
     // salt:
     const salt = new Uint8Array(16);
     crypto.getRandomValues(salt);
-    const encodedSalt = base64url.stringify(salt, { pad: false });
+    const encodedSalt = base64.stringify(salt);
     // kek:
     const kek = VaultKeys.pbkdf2(password, salt, VaultKeys.PBKDF2_ITERATION_COUNT);
     // masterkey:
@@ -130,7 +128,7 @@ export class VaultKeys {
       await kek,
       { name: 'AES-GCM', iv: masterKeyIv }
     ));
-    const encodedMasterKey = base64url.stringify(new Uint8Array([...masterKeyIv, ...wrappedMasterKey]), { pad: false });
+    const encodedMasterKey = base64.stringify(new Uint8Array([...masterKeyIv, ...wrappedMasterKey]));
     // secretkey:
     const secretKeyIv = crypto.getRandomValues(new Uint8Array(VaultKeys.GCM_NONCE_LEN));
     const wrappedSecretKey = new Uint8Array(await crypto.subtle.wrapKey(
@@ -155,8 +153,8 @@ export class VaultKeys {
    * @throws WrongPasswordError, if the wrong password is used
    */
   public static async unwrap(password: string, wrapped: WrappedVaultKeys): Promise<VaultKeys> {
-    const kek = VaultKeys.pbkdf2(password, base64url.parse(wrapped.salt, { loose: true }), wrapped.iterations);
-    const decodedMasterKey = base64url.parse(wrapped.masterkey, { loose: true });
+    const kek = VaultKeys.pbkdf2(password, base64.parse(wrapped.salt, { loose: true }), wrapped.iterations);
+    const decodedMasterKey = base64.parse(wrapped.masterkey, { loose: true });
     const decodedPrivateKey = base64.parse(wrapped.signaturePrivateKey, { loose: true });
     const decodedPublicKey = base64.parse(wrapped.signaturePublicKey, { loose: true });
     try {
@@ -191,7 +189,6 @@ export class VaultKeys {
     }
   }
 
-
   public async createVaultConfig(kid: string, hubConfig: VaultConfigHeaderHub, payload: VaultConfigPayload): Promise<string> {
     const header = JSON.stringify({
       kid: kid,
@@ -221,6 +218,7 @@ export class VaultKeys {
       const shiftedRawKey = new Uint8Array([...macKey, ...encKey]);
       const key = await miscreant.SIV.importKey(shiftedRawKey, 'AES-SIV');
       const ciphertext = await key.seal(dirHash, []);
+      // hash is only used as deterministic scheme for the root dir
       const hash = await crypto.subtle.digest('SHA-1', ciphertext);
       return base32.stringify(new Uint8Array(hash));
     } finally {
@@ -261,5 +259,4 @@ export class VaultKeys {
   public async signVaultEditRequest(jwtHeader: JWTHeader, jwtPayload: any): Promise<string> {
     return JWT.build(jwtHeader, jwtPayload, this.signatureKeyPair.privateKey);
   }
-
 }

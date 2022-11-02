@@ -8,7 +8,6 @@ export interface JWTHeader {
 }
 
 export class JWT {
-
   /**
    * Creates a ES384 JWT (signed with ECDSA using P-384 and SHA-384).
    * 
@@ -39,5 +38,4 @@ export class JWT {
     );
     return base64url.stringify(new Uint8Array(signature), { pad: false });
   }
-
 }

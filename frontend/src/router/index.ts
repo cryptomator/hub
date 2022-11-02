@@ -1,39 +1,35 @@
-import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
+import { createRouter, createWebHistory, RouteLocationRaw, RouteRecordRaw } from 'vue-router';
 import authPromise from '../common/auth';
 import backend from '../common/backend';
-import { frontendBaseURL } from '../common/config';
-import Billing from '../components/Billing.vue';
+import { baseURL } from '../common/config';
+import AdminSettings from '../components/AdminSettings.vue';
+import AuthenticatedMain from '../components/AuthenticatedMain.vue';
 import CreateVault from '../components/CreateVault.vue';
 import DeviceList from '../components/DeviceList.vue';
-import LoginComponent from '../components/Login.vue';
-import LogoutComponent from '../components/Logout.vue';
-import MainComponent from '../components/Main.vue';
-import NotFoundComponent from '../components/NotFoundComponent.vue';
-import Settings from '../components/Settings.vue';
+import NotFound from '../components/NotFound.vue';
 import UnlockError from '../components/UnlockError.vue';
 import UnlockSuccess from '../components/UnlockSuccess.vue';
+import UserSettings from '../components/UserSettings.vue';
 import VaultDetails from '../components/VaultDetails.vue';
 import VaultList from '../components/VaultList.vue';
 
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
-    component: LoginComponent,
-    meta: { skipAuth: true },
-    beforeEnter: async (_to, _from) => {
-      const auth = await authPromise;
-      if (auth.isAuthenticated()) {
-        return '/vaults';  //TODO:currently not working, since silent single sign-on is missing
-      }
-    }
+    redirect: '/app'
   },
   {
-    path: '/logout',
-    component: LogoutComponent,
+    path: '/app',
+    redirect: '/app/vaults'
+  },
+  {
+    path: '/app/logout',
+    component: AuthenticatedMain, // any component will do
+    meta: { skipAuth: true },
     beforeEnter: (to, from, next) => {
       authPromise.then(async auth => {
         if (auth.isAuthenticated()) {
-          const loggedOutUri = `${location.origin}/${router.resolve('/').href}`;
+          const loggedOutUri = `${location.origin}${router.resolve('/').href}`;
           await auth.logout(loggedOutUri);
         } else {
           next();
@@ -44,35 +40,35 @@ const routes: RouteRecordRaw[] = [
     }
   },
   {
-    path: '/', /* required but unused */
-    component: MainComponent,
+    path: '/app', /* required but unused */
+    component: AuthenticatedMain,
     children: [
       {
-        path: '/vaults',
+        path: 'vaults',
         component: VaultList
       },
       {
-        path: '/vaults/create',
+        path: 'vaults/create',
         component: CreateVault
       },
       {
-        path: '/vaults/:id',
+        path: 'vaults/:id',
         component: VaultDetails,
         props: (route) => ({ vaultId: route.params.id })
       },
       {
-        path: '/devices',
+        path: 'devices',
         component: DeviceList
       },
       {
-        path: '/settings',
-        component: Settings
+        path: 'settings',
+        component: UserSettings
       },
       {
-        path: '/billing',
-        component: Billing,
+        path: 'admin',
+        component: AdminSettings,
         props: (route) => ({ token: route.query.token }),
-        beforeEnter: async (_to, _from) => {
+        beforeEnter: async () => {
           const auth = await authPromise;
           return auth.isAdmin(); //TODO: reroute to NotFound Screen/ AccessDeniedScreen?
         }
@@ -80,25 +76,25 @@ const routes: RouteRecordRaw[] = [
     ]
   },
   {
-    path: '/unlock-success',
+    path: '/app/unlock-success',
     component: UnlockSuccess,
     props: (route) => ({ vaultId: route.query.vault, deviceId: route.query.device })
   },
   {
-    path: '/unlock-error',
+    path: '/app/unlock-error',
     component: UnlockError,
     meta: { skipAuth: true }
   },
   {
-    path: '/:catchAll(.*)', //necessary due to using history mode in router
-    component: NotFoundComponent,
-    name: 'NotFound'
+    path: '/app/:pathMatch(.+)', //necessary due to using history mode in router
+    component: NotFound,
+    meta: { skipAuth: true }
   },
 ];
 
 const router = createRouter({
-  history: createWebHistory(),
-  routes: routes
+  history: createWebHistory(baseURL),
+  routes: routes,
 });
 
 // FIRST check auth
@@ -106,23 +102,28 @@ router.beforeEach((to, from, next) => {
   if (to.meta.skipAuth) {
     next();
   } else {
-    const redirectUri = `${frontendBaseURL}${to.fullPath}`;
     authPromise.then(async auth => {
-      await auth.loginIfRequired(redirectUri);
-      next();
+      if (auth.isAuthenticated()) {
+        next();
+      } else {
+        const redirect: RouteLocationRaw = { query: { ...to.query, 'sync_me': null } };
+        const redirectUri = `${location.origin}${router.resolve(redirect, to).href}`;
+        auth.login(redirectUri);
+      }
     });
   }
 });
 
 // SECOND update user data (requires auth)
 router.beforeEach((to, from, next) => {
-  if ('login' in to.query) {
+  if ('sync_me' in to.query) {
     authPromise.then(async auth => {
       if (auth.isAuthenticated()) {
         await backend.users.syncMe();
       }
     }).finally(() => {
-      next();
+      delete to.query.sync_me; // remove sync_me query parameter to avoid endless recursion
+      next({ path: to.path, query: to.query, params: to.params, replace: true });
     });
   } else {
     next();

@@ -29,7 +29,6 @@ public class EffectiveGroupMembership extends PanacheEntityBase {
 
 	public String path;
 
-
 	public static long countEffectiveGroupUsers(String groupdId) {
 		return EffectiveGroupMembership.count("#EffectiveGroupMembership.countEGUs", Parameters.with("groupId", groupdId));
 	}

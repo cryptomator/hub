@@ -2,9 +2,7 @@ package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.Objects;
-
-abstract sealed class AuthorityDto permits UsersResource.UserDto, GroupResource.GroupDto {
+abstract sealed class AuthorityDto permits UserDto, GroupDto {
 
 	public enum Type {
 		USER, GROUP
@@ -26,10 +24,7 @@ abstract sealed class AuthorityDto permits UsersResource.UserDto, GroupResource.
 		this.id = id;
 		this.type = type;
 		this.name = name;
-		this.pictureUrl = Objects.requireNonNullElseGet(pictureUrl, () -> switch (type) {
-			case USER -> "/user-icon.svg";
-			case GROUP -> "/group-icon.svg";
-		});
+		this.pictureUrl = pictureUrl;
 	}
 
 }

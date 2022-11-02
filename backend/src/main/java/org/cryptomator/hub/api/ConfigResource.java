@@ -10,6 +10,8 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 @Path("/config")
 public class ConfigResource {
@@ -24,7 +26,11 @@ public class ConfigResource {
 
 	@Inject
 	@ConfigProperty(name = "quarkus.oidc.client-id", defaultValue = "")
-	String keycloakClientId;
+	String keycloakClientIdHub;
+
+	@Inject
+	@ConfigProperty(name = "hub.keycloak.oidc.cryptomator-client-id", defaultValue = "")
+	String keycloakClientIdCryptomator;
 
 	@Inject
 	@ConfigProperty(name = "quarkus.oidc.auth-server-url")
@@ -43,7 +49,7 @@ public class ConfigResource {
 		var authUri = replacePrefix(oidcConfData.getAuthorizationUri(), trimTrailingSlash(internalRealmUrl), publicRealmUri);
 		var tokenUri = replacePrefix(oidcConfData.getTokenUri(), trimTrailingSlash(internalRealmUrl), publicRealmUri);
 
-		return new ConfigDto(keycloakPublicUrl, keycloakRealm, keycloakClientId, authUri, tokenUri);
+		return new ConfigDto(keycloakPublicUrl, keycloakRealm, keycloakClientIdHub, keycloakClientIdCryptomator, authUri, tokenUri, Instant.now().truncatedTo(ChronoUnit.MILLIS));
 	}
 
 	//visible for testing
@@ -67,8 +73,9 @@ public class ConfigResource {
 	}
 
 	public record ConfigDto(@JsonProperty("keycloakUrl") String keycloakUrl, @JsonProperty("keycloakRealm") String keycloakRealm,
-							@JsonProperty("keycloakClientId") String keycloakClientId, @JsonProperty("keycloakAuthEndpoint") String authEndpoint,
-							@JsonProperty("keycloakTokenEndpoint") String tokenEndpoint) {
+							@JsonProperty("keycloakClientIdHub") String keycloakClientIdHub, @JsonProperty("keycloakClientIdCryptomator") String keycloakClientIdCryptomator,
+							@JsonProperty("keycloakAuthEndpoint") String authEndpoint, @JsonProperty("keycloakTokenEndpoint") String tokenEndpoint,
+							@JsonProperty("serverTime") Instant serverTime) {
 	}
 
 }

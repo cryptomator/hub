@@ -2,6 +2,7 @@
   "id": "cryptomator",
   "realm": "cryptomator",
   "displayName": "Cryptomator Hub",
+  "loginTheme": "cryptomator",
   "enabled": true,
   "sslRequired": "external",
   "defaultRole": {
@@ -11,13 +12,23 @@
   "roles": {
     "realm": [
       {
+        "name": "user",
+        "description": "User",
+        "composite": false
+      },
+      {
         "name": "admin",
         "description": "Administrator",
         "composite": true,
         "composites": {
           "realm": [
             "user"
-          ]
+          ],
+          "client": {
+            "realm-management": [
+              "realm-admin"
+            ]
+          }
         }
       },
       {
@@ -87,7 +98,6 @@
       "name": "Cryptomator Hub",
       "enabled": true,
       "redirectUris": [
-        "http://127.0.0.1/*",
         "http://localhost:8080/*",
         "http://localhost:3000/*"
       ],
@@ -127,6 +137,25 @@
           }
         }
       ]
+    },
+    {
+      "clientId": "cryptomator",
+      "serviceAccountsEnabled": false,
+      "publicClient": true,
+      "name": "Cryptomator App",
+      "enabled": true,
+      "redirectUris": [
+        "http://127.0.0.1/*"
+      ],
+      "webOrigins": [
+        "+"
+      ],
+      "bearerOnly": false,
+      "frontchannelLogout": false,
+      "protocol": "openid-connect",
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
     }
   ],
   "browserSecurityHeaders": {

@@ -1,0 +1,19 @@
+{
+  "name": "keycloak-cryptomator-theme",
+  "version": "1.0.0",
+  "description": "A Keycloak Theme for Cryptomator Hub",
+  "author": "Skymatic GmbH",
+  "license": "AGPL-3.0-or-later",
+  "private": true,
+  "scripts": {
+    "build": "tailwindcss build -i ./css/tailwind.css -o ./css/tailwind.min.css --minify",
+    "dev": "tailwindcss build -i ./css/tailwind.css -o ./css/tailwind.min.css --watch"
+  },
+  "devDependencies": {
+    "@tailwindcss/forms": "^0.5.2",
+    "tailwindcss": "^3.1.8"
+  },
+  "dependencies": {
+    "@fortawesome/fontawesome-free": "^6.1.2"
+  }
+}

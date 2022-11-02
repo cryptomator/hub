@@ -1,7 +1,7 @@
 import { expect, use as chaiUse } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { describe } from 'mocha';
-import { base64 } from 'rfc4648';
+import { base64url } from 'rfc4648';
 import { UnwrapKeyError, VaultKeys, WrappedVaultKeys } from '../../src/common/crypto';
 
 chaiUse(chaiAsPromised);
@@ -20,7 +20,7 @@ describe('crypto', () => {
   describe('VaultKeys', () => {
 
     const wrapped: WrappedVaultKeys = {
-      masterkey: 'CMPyJiiOQXBZ8FVvFZs6UOh0kW83-eALeK3bwXfFF2CWsguJZIgCJch94liWCh9xTqW84LUZPyo6IDWbSALqbbdiwDcztT8M81_pgadhTETVtHO5Q1CFNLJ9UvY',
+      masterkey: 'CMPyJiiOQXBZ8FVvFZs6UOh0kW83+eALeK3bwXfFF2CWsguJZIgCJch94liWCh9xTqW84LUZPyo6IDWbSALqbbdiwDcztT8M81/pgadhTETVtHO5Q1CFNLJ9UvY=',
       signaturePrivateKey: 'O9snY73/eVElnWRLgM404KH7WwO/Ed30Y0UrQQw6x3vxOdroJcjvPdJeSqLD2x4lVP7ceTjVt3IT2N9Mx+jhUQzqrb1E2EvEYlXrTaID1jSdBXZ6ScrI1RvU0iH9cfXf2cRy2x8QZvJyVMr34gLJ3Di/XGrnc/BrOm+aF2K4F9FJXvJFen3CnAs9ewB3Vk0A1wRLX3hW/Wx7eXt/0i1gxB8T/NcLu7xIU3+uusTHh9uajFkA5+z1+JgNHURaa1bT8j5WTtNWIHYT/sw+erMn6S0Uj1vL',
       signaturePublicKey: 'MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAESzrRXmyI8VWFJg1dPUNbFcc9jZvjZEfH7ulKI1UkXAltd7RGWrcfFxqyGPcwu6AQhHUag3OvDzEr0uUQND4PXHQTXP5IDGdYhJhL+WLKjnGjQAw0rNGy5V29+aV+yseW',
       salt: 'IdXyKICznXKm41gSb5OqfQ',
@@ -73,7 +73,7 @@ describe('crypto', () => {
       });
 
       it('encryptForDevice()', async () => {
-        const deviceKey = base64.parse('MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAERxQR+NRN6Wga01370uBBzr2NHDbKIC56tPUEq2HX64RhITGhii8Zzbkb1HnRmdF0aq6uqmUy4jUhuxnKxsv59A6JeK7Unn+mpmm3pQAygjoGc9wrvoH4HWJSQYUlsXDu');
+        const deviceKey = base64url.parse('MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAERxQR-NRN6Wga01370uBBzr2NHDbKIC56tPUEq2HX64RhITGhii8Zzbkb1HnRmdF0aq6uqmUy4jUhuxnKxsv59A6JeK7Unn-mpmm3pQAygjoGc9wrvoH4HWJSQYUlsXDu');
 
         const encrypted = await vaultKeys.encryptForDevice(deviceKey);
         expect(encrypted).to.be.not.null;

@@ -1,7 +1,6 @@
 import { base64url } from 'rfc4648';
 
 export class ConcatKDF {
-
   /**
    * KDF as defined in <a href="https://doi.org/10.6028/NIST.SP.800-56Ar2">NIST SP 800-56A Rev. 2 Section 5.8.1</a> using SHA-256
    * 
@@ -42,7 +41,6 @@ export class ConcatKDF {
     }
     return key.slice(0, keyDataLen);
   }
-
 }
 
 export class JWEHeader {
@@ -50,7 +48,6 @@ export class JWEHeader {
 }
 
 export class JWE {
-
   /**
    * Creates a JWE using ECDH-ES using the P-384 curve and AES-256-GCM for payload encryption.
    * 
@@ -73,7 +70,7 @@ export class JWE {
     );
     const alg = 'ECDH-ES';
     const enc = 'A256GCM';
-    const epk = await crypto.subtle.exportKey('jwk', ephemeralKey.publicKey!);
+    const epk = await crypto.subtle.exportKey('jwk', ephemeralKey.publicKey);
     const header = new JWEHeader(alg, enc, epk, base64url.stringify(apu, { pad: false }), base64url.stringify(apv, { pad: false }));
 
     /* JWE assembly and content encryption described in RFC 7516: */
@@ -81,7 +78,7 @@ export class JWE {
     const iv = crypto.getRandomValues(new Uint8Array(12));
     const encodedIv = base64url.stringify(iv, { pad: false });
     const encodedEncryptedKey = ''; // empty for Direct Key Agreement as per spec
-    const cek = await this.deriveKey(recipientPublicKey, ephemeralKey.privateKey!, 384, 32, header);
+    const cek = await this.deriveKey(recipientPublicKey, ephemeralKey.privateKey, 384, 32, header);
     const m = new Uint8Array(await crypto.subtle.encrypt(
       {
         name: 'AES-GCM',
@@ -132,5 +129,4 @@ export class JWE {
     new Uint8Array(result).set(data, 4);
     return new Uint8Array(result);
   }
-
 }

@@ -1,9 +1,11 @@
 import AxiosStatic from 'axios';
 
-export const frontendBaseURL = `${location.protocol}//${location.host}${import.meta.env.BASE_URL}`;
-export const backendBaseURL = import.meta.env.DEV
-  ? 'http://localhost:8080/api/'
-  : new URL('/api/', location.href).href;
+// these URLs must end on '/':
+export const baseURL = new URL(document.baseURI).pathname;
+export const frontendBaseURL = `${baseURL}app/`;
+export const absFrontendBaseURL = `${location.origin}${frontendBaseURL}`;
+export const backendBaseURL = `${baseURL}api/`;
+export const absBackendBaseURL = `${location.origin}${backendBaseURL}`;
 
 const axios = AxiosStatic.create({
   baseURL: backendBaseURL,
@@ -12,13 +14,19 @@ const axios = AxiosStatic.create({
   }
 });
 
-export class ConfigDto {
-  constructor(public keycloakRealm: string, public keycloakUrl: string, public keycloakClientId: string, public keycloakAuthEndpoint: string, public keycloakTokenEndpoint: string) { }
-}
+export type ConfigDto = {
+  keycloakRealm: string;
+  keycloakUrl: string;
+  keycloakClientIdHub: string;
+  keycloakClientIdCryptomator: string;
+  keycloakAuthEndpoint: string;
+  keycloakTokenEndpoint: string;
+  serverTime: string;
+};
 
 class ConfigWrapper {
-
   private data: ConfigDto;
+  readonly serverTimeDiff: number;
 
   private static async loadConfig(): Promise<ConfigDto> {
     const response = await axios.get<ConfigDto>('/config');
@@ -31,6 +39,7 @@ class ConfigWrapper {
 
   private constructor(data: ConfigDto) {
     this.data = data;
+    this.serverTimeDiff = Math.floor((Date.parse(data.serverTime) - Date.now()) / 1000);
   }
 
   public get(): ConfigDto {
@@ -40,7 +49,6 @@ class ConfigWrapper {
   public async reload(): Promise<void> {
     this.data = await ConfigWrapper.loadConfig();
   }
-
 }
 
 const config = await ConfigWrapper.build();
