@@ -1,0 +1,107 @@
+name: CI Build
+
+on:
+  push:
+  pull_request_target:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Image Tag'
+        required: false
+
+env:
+  NODE_VERSION: 16
+  JAVA_VERSION: 17
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')" # can the if also be est for all jobs?
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+      - uses: actions/setup-node@v2
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install npm dependencies
+        working-directory: frontend
+        run: npm install
+      - name: Build and test frontend
+        working-directory: frontend
+        run: npm test
+      - name: Deploy frontend
+        working-directory: frontend
+        run: npm run dist
+      - name: SonarCloud Scan Frontend
+        uses: SonarSource/sonarcloud-github-action@master
+        with:
+          projectBaseDir: frontend
+          args: >
+            -Dsonar.organization=cryptomator
+            -Dsonar.projectKey=cryptomator_hub_frontend
+            -Dsonar.typescript.tsconfigPath=tsconfig.json
+            -Dsonar.sources=src/
+            -Dsonar.tests=test/
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - uses: actions/setup-java@v2
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: 'maven'
+      - name: Cache SonarCloud packages
+        uses: actions/cache@v2
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+      - name: Build and test backend
+        working-directory: backend
+        run: >
+          mvn -B clean verify
+          org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
+          -Dsonar.projectKey=cryptomator_hub_backend
+          -Dsonar.organization=cryptomator
+          -Dsonar.host.url=https://sonarcloud.io
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - id: get_tag
+        if: github.event.inputs.tag != '' || startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/develop'
+        run: |
+          if [[ ! -z "${{ github.event.inputs.tag }}" ]]; then
+            TAG="${{ github.event.inputs.tag }}"
+          elif [[ $GITHUB_REF == refs/tags/* ]]; then
+            TAG=${GITHUB_REF/refs\/tags\//}
+          elif [[ $GITHUB_REF == refs/heads/develop ]]; then
+            TAG="develop"
+          else
+            TAG="snapshot"
+          fi
+          echo ::set-output name=tag::${TAG}
+      - name: Ensure to use tagged version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: mvn versions:set --file ./backend/pom.xml -DnewVersion=${GITHUB_REF##*/}
+      - name: Build and push container image
+        if: github.event.inputs.tag != '' || startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/develop'
+        working-directory: backend
+        run: mvn -B clean package -DskipTests
+        env:
+          QUARKUS_JIB_PLATFORMS: linux/amd64,linux/arm64/v8
+          QUARKUS_CONTAINER_IMAGE_TAG: ${{ steps.get_tag.outputs.tag }}
+          QUARKUS_CONTAINER_IMAGE_BUILD: true
+          QUARKUS_CONTAINER_IMAGE_PUSH: true
+          QUARKUS_CONTAINER_IMAGE_REGISTRY: ghcr.io
+          QUARKUS_CONTAINER_IMAGE_USERNAME: ${{ github.actor }}
+          QUARKUS_CONTAINER_IMAGE_PASSWORD: ${{ secrets.GITHUB_TOKEN }}

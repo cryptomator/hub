@@ -1,63 +1,17 @@
+[![Build and test](https://github.com/cryptomator/hub/actions/workflows/buildAndTest.yml/badge.svg)](https://github.com/cryptomator/hub/actions/workflows/buildAndTest.yml)
+
 # Cryptomator Hub
 
 Hub consists of these components:
 
-## Keycloak (Port 8080)
+## Web Frontend
 
-Keycloak handles user authentication.
+During development, run vite from the `frontend` dir as explained in [its README file](frontend/README.md).
 
-For development run it using:
+## Web Backend
 
-```shell
-docker run --rm -p 8080:8080 \
--e KEYCLOAK_USER=admin \
--e KEYCLOAK_PASSWORD=admin \
--e KEYCLOAK_IMPORT=/cfg/cryptomator-dev-realm.json \
--v $(pwd)/keycloak:/cfg:ro \
-quay.io/keycloak/keycloak:14.0.0
-```
+During development, run Quarkus from the `backend` dir as explained in [its README file](backend/README.md).:
 
-Optionally retrieve an `access_token` for further tests:
+## Custom Keycloak Image
 
-```
-export access_token=$(\
-    curl -X POST http://localhost:8080/auth/realms/cryptomator/protocol/openid-connect/token \
-    --user cryptomator-hub:CHANGEME \
-    -H 'content-type: application/x-www-form-urlencoded' \
-    -d 'username=owner&password=owner&grant_type=password' | jq --raw-output '.access_token' \
-)
-```
-
-## DB ?
-
-TODO maybe not required?
-
-
-## SPI (Port 9090)
-
-Web services.
-
-Run using:
-
-```shell
-mvn -fspi/pom.xml compile quarkus:dev
-# or
-# docker run --rm -p 9090:9090 cryptomator/hub-spi:latest
-```
-
-Test services:
-
-```shell
-curl -v -X GET \
-  http://localhost:9090/users/me \
-  -H "Authorization: Bearer "$access_token
-```
-
-
-## Web-Frontend (Port 9090)
-
-Open folder `web` and run this command to deploy the frontend:
-
-```shell script
-npm run dist
-```
+We add a custom theme to the base keycloak image, as explained in [its README file](keycloak/README.md).:

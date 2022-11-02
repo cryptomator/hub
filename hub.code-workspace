@@ -1,26 +1,24 @@
 {
 	"folders": [
 		{
-			"path": "keycloak"
-		},
-		{
-			"path": "spi"
-		},
-		{
-			"path": "web"
-		},
-		{
-			"name": "[Workspace Root]",
+			"name": "Cryptomator Hub",
 			"path": "."
+		},
+		{
+			"name": "Frontend",
+			"path": "frontend"
 		}
 	],
 	"extensions": {
 		"recommendations": [
 			"dbaeumer.vscode-eslint",
 			"hbenl.vscode-mocha-test-adapter",
-			"octref.vetur"
+			"vue.volar"
 		],
-		"unwantedRecommendations": ["dbaeumer.jshint"]
+		"unwantedRecommendations": [
+			"dbaeumer.jshint",
+			"octref.vetur"
+		]
 	},
 	"settings": {
 		"files.exclude": {
@@ -28,6 +26,9 @@
 		},
 		"typescript.referencesCodeLens.enabled": true,
 		"typescript.implementationsCodeLens.enabled": true,
-		"vetur.validation.template": false
+		"editor.codeActionsOnSave": {
+			"source.organizeImports": true,
+			"source.fixAll.eslint": true
+		}
 	}
 }

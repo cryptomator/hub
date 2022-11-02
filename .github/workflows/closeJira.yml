@@ -1,0 +1,29 @@
+name: Close Jira ticket
+on:
+  issues:
+    types: [closed]
+
+jobs:
+  CloseJiraTicket: 
+    if: contains(github.event.issue.body, '<!-- JIRA-KEY:')
+    name: Close Jira Ticket
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extracts JIRA issue key from github ticket
+        id: parseJiraKey
+        run: |
+          ISSUE_ID=`echo ${ISSUE_BODY} | grep -m1 '<\!-- JIRA-KEY:' | sed -E 's/.*JIRA-KEY: (HUB-[0-9]+) .*/\1/'`
+          echo "::set-output name=issueId::${ISSUE_ID}"
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+      - name: Jira Login
+        uses: atlassian/gajira-login@v2.0.0
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+      - name: Close Jira issue
+        uses: atlassian/gajira-transition@v2.0.2
+        with:
+          issue: ${{ steps.parseJiraKey.outputs.issueId }}
+          transition: "Fixed on GitHub"
