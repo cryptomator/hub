@@ -448,14 +448,35 @@ public class VaultResourceTest {
 
 		@Test
 		@Order(1)
-		@DisplayName("PUT /vaults/vault2/members/user9999 returns 404")
+		@DisplayName("PUT /vaults/vault2/members/user9999 returns 401")
 		public void addNonExistingUser() {
-			when().put("/vaults/{vaultId}/members/{userId}", "vault2", "user9999")
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
+					.when().put("/vaults/{vaultId}/users/{userId}", "vault2", "user9999")
 					.then().statusCode(404);
 		}
 
 		@Test
 		@Order(2)
+		@DisplayName("PUT /vaults/vault9999/members/user2 returns 401")
+		public void addUserToNonExistingVault() throws NoSuchAlgorithmException, InvalidKeySpecException {
+			var algorithmVault = Algorithm.ECDSA384((ECPrivateKey) getPrivateKey("MIG2AgEAMBAGByqGSM49AgEGBSuBBAAiBIGeMIGbAgEBBDCAHpFQ62QnGCEvYh/pE9QmR1C9aLcDItRbslbmhen/h1tt8AyMhskeenT+rAyyPhGhZANiAAQLW5ZJePZzMIPAxMtZXkEWbDF0zo9f2n4+T1h/2sh/fviblc/VTyrv10GEtIi5qiOy85Pf1RRw8lE5IPUWpgu553SteKigiKLUPeNpbqmYZUkWGh3MLfVzLmx85ii2vMU="));
+			var vaultAdminJWT = JWT.create().withHeader(Map.of("vaultId", "vault9999")).withIssuedAt(Instant.now()).sign(algorithmVault);
+
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vaultAdminJWT)
+					.when().put("/vaults/{vaultId}/users/{userId}", "vault9999", "user2")
+					.then().statusCode(404);
+		}
+
+		@Test
+		@Order(3)
+		@DisplayName("PUT /vaults/vault2/members/user9999 returns 404")
+		public void addNonExistingUserUnauthenticated() {
+			when().put("/vaults/{vaultId}/users/{userId}", "vault2", "user9999")
+					.then().statusCode(401);
+		}
+
+		@Test
+		@Order(4)
 		@DisplayName("GET /vaults/vault2/members does not contain user2")
 		public void getAccess1() {
 			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
@@ -465,7 +486,7 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@Order(3)
+		@Order(5)
 		@DisplayName("GET /vaults/vault2/devices-requiring-access-grant does not contains device2")
 		public void testGetDevicesRequiringAccess1() {
 			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
@@ -475,7 +496,7 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@Order(4)
+		@Order(6)
 		@DisplayName("PUT /vaults/vault2/members/user2 returns 201")
 		public void addUser1() {
 			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
@@ -484,7 +505,7 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@Order(5)
+		@Order(7)
 		@DisplayName("GET /vaults/vault2/members does contain user2")
 		public void getMembers2() {
 			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
@@ -494,7 +515,7 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@Order(6)
+		@Order(8)
 		@DisplayName("GET /vaults/vault2/devices-requiring-access-grant contains device2")
 		public void testGetDevicesRequiringAccess2() {
 			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
@@ -504,7 +525,7 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@Order(7)
+		@Order(9)
 		@DisplayName("PUT /vaults/vault2/keys/device2 returns 201")
 		public void testGrantAccess1() {
 			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
@@ -514,7 +535,7 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@Order(8)
+		@Order(10)
 		@DisplayName("GET /vaults/vault2/devices-requiring-access-grant contains not device2")
 		public void testGetDevicesRequiringAccess3() {
 			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
@@ -524,7 +545,7 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@Order(9)
+		@Order(11)
 		@DisplayName("PUT /devices/device9999 returns 201")
 		public void testCreateDevice2() {
 			var deviceDto = new DeviceResource.DeviceDto("device9999", "Computer 9999", "publickey9999", "user2", Set.of(), Instant.parse("2020-02-20T20:20:20Z"));
@@ -536,7 +557,7 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@Order(10)
+		@Order(12)
 		@DisplayName("GET /vaults/vault2/devices-requiring-access-grant contains not device9999")
 		public void testGetDevicesRequiringAccess4() {
 			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
@@ -546,7 +567,7 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@Order(11)
+		@Order(13)
 		@DisplayName("DELETE /vaults/vault2/members/user2 returns 204")
 		public void removeUser2() {
 			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
@@ -555,7 +576,7 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@Order(12)
+		@Order(14)
 		@DisplayName("GET /vaults/vault2/access does not contain user2")
 		public void getMembers3() {
 			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
