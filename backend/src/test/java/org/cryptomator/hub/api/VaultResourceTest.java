@@ -448,7 +448,7 @@ public class VaultResourceTest {
 
 		@Test
 		@Order(1)
-		@DisplayName("PUT /vaults/vault2/users/user9999 returns 401")
+		@DisplayName("PUT /vaults/vault2/users/user9999 returns 404")
 		public void addNonExistingUser() {
 			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
 					.when().put("/vaults/{vaultId}/users/{userId}", "vault2", "user9999")
@@ -457,7 +457,7 @@ public class VaultResourceTest {
 
 		@Test
 		@Order(2)
-		@DisplayName("PUT /vaults/vault9999/users/user2 returns 401")
+		@DisplayName("PUT /vaults/vault9999/users/user2 returns 404")
 		public void addUserToNonExistingVault() throws NoSuchAlgorithmException, InvalidKeySpecException {
 			var algorithmVault = Algorithm.ECDSA384((ECPrivateKey) getPrivateKey("MIG2AgEAMBAGByqGSM49AgEGBSuBBAAiBIGeMIGbAgEBBDCAHpFQ62QnGCEvYh/pE9QmR1C9aLcDItRbslbmhen/h1tt8AyMhskeenT+rAyyPhGhZANiAAQLW5ZJePZzMIPAxMtZXkEWbDF0zo9f2n4+T1h/2sh/fviblc/VTyrv10GEtIi5qiOy85Pf1RRw8lE5IPUWpgu553SteKigiKLUPeNpbqmYZUkWGh3MLfVzLmx85ii2vMU="));
 			var vaultAdminJWT = JWT.create().withHeader(Map.of("vaultId", "vault9999")).withIssuedAt(Instant.now()).sign(algorithmVault);
@@ -469,7 +469,7 @@ public class VaultResourceTest {
 
 		@Test
 		@Order(3)
-		@DisplayName("PUT /vaults/vault2/users/user9999 returns 404")
+		@DisplayName("PUT /vaults/vault2/users/user9999 returns 401")
 		public void addNonExistingUserUnauthenticated() {
 			when().put("/vaults/{vaultId}/users/{userId}", "vault2", "user9999")
 					.then().statusCode(401);
