@@ -11,9 +11,7 @@ describe('crypto', () => {
   before(done => {
     // since this test runs on Node, we need to replace window.crypto:
     // @ts-ignore: global not defined (but will be available within Node)
-    global.crypto = require('node:crypto').webcrypto;
-    // @ts-ignore: global not defined (but will be available within Node)
-    global.window = { crypto: global.crypto };
+    global.window = { crypto: globalThis.crypto };
     done();
   });
 
