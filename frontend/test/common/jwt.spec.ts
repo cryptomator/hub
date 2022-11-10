@@ -6,8 +6,7 @@ describe('JWT', () => {
 
   before(done => {
     // since this test runs on Node, we need to replace window.crypto:
-    // @ts-ignore: global not defined (but will be available within Node)
-    global.crypto = require('node:crypto').webcrypto;
+    Object.defineProperty(global, 'crypto', { value: require('node:crypto').webcrypto });
     // @ts-ignore: global not defined (but will be available within Node)
     global.window = { crypto: global.crypto };
     done();

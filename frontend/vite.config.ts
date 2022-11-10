@@ -1,5 +1,5 @@
 // migrate to @intlify/unplugin-vue-i18n as soon as `mvn run dist` works
-import { vueI18n } from '@intlify/vite-plugin-vue-i18n';
+import vueI18n from '@intlify/vite-plugin-vue-i18n';
 import vue from '@vitejs/plugin-vue';
 import path from 'path';
 import { defineConfig } from 'vite';
@@ -30,6 +30,8 @@ export default defineConfig({
     }
   },
   server: {
+    port: 3000,
+    strictPort: true,
     proxy: {
       '/api/': 'http://127.0.0.1:8080'
     }
