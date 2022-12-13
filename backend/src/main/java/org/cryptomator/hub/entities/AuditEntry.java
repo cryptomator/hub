@@ -20,7 +20,7 @@ import java.util.stream.Stream;
 		query = """
 				SELECT ae
 				FROM AuditEntry ae
-				WHERE ae.timestamp > :startDate
+				WHERE ae.timestamp >= :startDate
 				AND ae.timestamp < :endDate
 				""")
 public class AuditEntry extends PanacheEntityBase {
