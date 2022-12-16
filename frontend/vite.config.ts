@@ -1,5 +1,4 @@
-// migrate to @intlify/unplugin-vue-i18n as soon as `mvn run dist` works
-import vueI18n from '@intlify/vite-plugin-vue-i18n';
+import vueI18nPlugin from '@intlify/unplugin-vue-i18n/vite';
 import vue from '@vitejs/plugin-vue';
 import path from 'path';
 import { defineConfig } from 'vite';
@@ -9,7 +8,7 @@ export default defineConfig({
   base: './', // we use a <base href="/"/> tag, which all other urls need to be relative to
   plugins: [
     vue(),
-    vueI18n({
+    vueI18nPlugin({
       include: path.resolve(__dirname, './src/i18n/*.json')
     }),
   ],
