@@ -145,7 +145,7 @@
                 {{ t('admin.licenseInfo.title') }}
               </h3>
               <p v-if="!admin.managedInstance" class="mt-1 text-sm text-gray-500">
-                {{ t('admin.licenseInfo.communityLicense.description') }}
+                {{ t('admin.licenseInfo.selfHostedNoLicense.description') }}
               </p>
               <p v-else class="mt-1 text-sm text-gray-500">
                 {{ t('admin.licenseInfo.managedNoLicense.description') }}
@@ -183,7 +183,7 @@
         <div class="flex justify-end items-center px-4 py-3 bg-gray-50 sm:px-6">
           <button type="button" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="manageSubscription()">
             <ArrowTopRightOnSquareIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
-            {{ t('admin.licenseInfo.upgradeLicense') }}
+            {{ t('admin.licenseInfo.getLicense') }}
           </button>
         </div>
       </div>

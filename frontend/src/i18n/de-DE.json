@@ -36,9 +36,10 @@
   "admin.licenseInfo.expiresAt.description.valid": "Deine Lizenz ist gültig.",
   "admin.licenseInfo.expiresAt.description.expired": "Deine Lizenz ist abgelaufen.",
   "admin.licenseInfo.manageSubscription": "Abonnement verwalten",
-  "admin.licenseInfo.communityLicense.description": "Vielen Dank, dass du Cryptomator Hub nutzt! Du hast die Community-Lizenz erhalten. Wenn du mehr Sitze benötigst, erweiter deine Lizenz.",
-  "admin.licenseInfo.communityLicense.type.title": "Typ",
-  "admin.licenseInfo.communityLicense.upgradeLicense": "Lizenz erhalten",
+  "admin.licenseInfo.type.title": "Typ",
+  "admin.licenseInfo.getLicense": "Lizenz erhalten",
+  "admin.licenseInfo.selfHostedNoLicense.description": "Vielen Dank, dass du Cryptomator Hub nutzt! Du hast die Community-Lizenz erhalten. Wenn du mehr Sitze benötigst, erweiter deine Lizenz.",
+  "admin.licenseInfo.managedNoLicense.description": "Vielen Dank, dass du Cryptomator Hub nutzt! Du hast aktuell keine aktive Lizenz.",
 
   "authenticateVaultAdminDialog.title": "Tresor verwalten",
   "authenticateVaultAdminDialog.description": "Gib das Vault-Admin-Passwort des Tresors ein, um ihn zu verwalten.",

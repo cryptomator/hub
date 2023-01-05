@@ -75,19 +75,13 @@ public class LicenseHolder {
 	public boolean isExpired() {
 		return Optional.ofNullable(license) //
 				.map(l -> l.getExpiresAt().toInstant().isBefore(Instant.now())) //
-				.orElseGet(() -> {
-					if (!managedInstance) {
-						return CommunityLicenseConstants.IS_EXPIRED;
-					} else {
-						return ManagedInstanceNoLicenseConstants.IS_EXPIRED;
-					}
-				});
+				.orElse(false);
 	}
 
 	/**
 	 * Gets the number of available seats of the license
 	 *
-	 * @return Number of available seats, if license is not null. Otherwise {@value CommunityLicenseConstants#SEATS}.
+	 * @return Number of available seats, if license is not null. Otherwise {@value SelfHostedNoLicenseConstants#SEATS}.
 	 */
 	public long getAvailableSeats() {
 		return Optional.ofNullable(license) //
@@ -98,7 +92,7 @@ public class LicenseHolder {
 
 	public long getNoLicenseSeats() {
 		if (!managedInstance) {
-			return CommunityLicenseConstants.SEATS;
+			return SelfHostedNoLicenseConstants.SEATS;
 		} else {
 			return ManagedInstanceNoLicenseConstants.SEATS;
 		}
@@ -108,18 +102,16 @@ public class LicenseHolder {
 		return managedInstance;
 	}
 
-	public static class CommunityLicenseConstants {
+	public static class SelfHostedNoLicenseConstants {
 		public static final long SEATS = 5;
-		static final boolean IS_EXPIRED = false;
 
-		private CommunityLicenseConstants() {
+		private SelfHostedNoLicenseConstants() {
 			throw new IllegalStateException("Utility class");
 		}
 	}
 
 	public static class ManagedInstanceNoLicenseConstants {
 		public static final long SEATS = 0;
-		static final boolean IS_EXPIRED = false;
 
 		private ManagedInstanceNoLicenseConstants() {
 			throw new IllegalStateException("Utility class");
