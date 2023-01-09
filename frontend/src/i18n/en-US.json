@@ -37,9 +37,10 @@
   "admin.licenseInfo.expiresAt.description.valid": "Your license is valid.",
   "admin.licenseInfo.expiresAt.description.expired": "Your license has expired.",
   "admin.licenseInfo.manageSubscription": "Manage Subscription",
-  "admin.licenseInfo.communityLicense.description": "Thank you for using Cryptomator Hub! You have been granted the Community License. If you need more seats, upgrade your license.",
-  "admin.licenseInfo.communityLicense.type.title": "Type",
-  "admin.licenseInfo.communityLicense.upgradeLicense": "Get License",
+  "admin.licenseInfo.type.title": "Type",
+  "admin.licenseInfo.getLicense": "Get License",
+  "admin.licenseInfo.selfHostedNoLicense.description": "Thank you for using Cryptomator Hub! You have been granted the Community License. If you need more seats, upgrade your license.",
+  "admin.licenseInfo.managedNoLicense.description": "Thank you for using Cryptomator Hub! You currently have no active license.",
 
   "authenticateVaultAdminDialog.title": "Manage Vault",
   "authenticateVaultAdminDialog.description": "Type in the vault admin password to manage it.",
