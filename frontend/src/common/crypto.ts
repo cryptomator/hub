@@ -2,6 +2,7 @@ import * as miscreant from 'miscreant';
 import { base32, base64, base64url } from 'rfc4648';
 import { JWE } from './jwe';
 import { JWT, JWTHeader } from './jwt';
+import { CRC32 } from './util';
 
 export class WrappedVaultKeys {
   constructor(readonly masterkey: string, readonly signaturePrivateKey: string, readonly signaturePublicKey: string, readonly salt: string, readonly iterations: number) { }
@@ -258,5 +259,22 @@ export class VaultKeys {
 
   public async signVaultEditRequest(jwtHeader: JWTHeader, jwtPayload: any): Promise<string> {
     return JWT.build(jwtHeader, jwtPayload, this.signatureKeyPair.privateKey);
+  }
+
+  /**
+   * Encode masterkey for offline backup purposes, allowing re-importing the key for recovery purposes
+   */
+  public async createRecoveryKey(): Promise<string> {
+    const rawkey = new Uint8Array(await crypto.subtle.exportKey('raw', this.masterKey));
+
+    // append the 16 left-most bits of the checksum:
+    const crc32 = CRC32.compute(rawkey);
+    const checksum = new Uint8Array(2);
+    checksum[0] = ((crc32 >> 24) & 0xff);
+    checksum[1] = ((crc32 >> 16) & 0xff);
+    
+    const combined = new Uint8Array([...rawkey, ...checksum]);
+    
+    return 'TODO'; // TODO: encode using word encoder
   }
 }
