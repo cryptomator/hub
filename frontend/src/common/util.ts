@@ -71,10 +71,10 @@ class WordEncoder {
   private readonly words: string[];
   private readonly indices: Map<string, number>;
 
-  constructor() {
-    this.words = dictionary;
+  constructor(words: string[]) {
+    this.words = words;
     this.indices = new Map<string, number>();
-    for (const [i, word] of dictionary.entries()) {
+    for (const [i, word] of words.entries()) {
       this.indices.set(word, i);
     }
   }
@@ -123,4 +123,4 @@ class WordEncoder {
   }
 }
 
-export const wordEncoder = new WordEncoder();
+export const wordEncoder = new WordEncoder(dictionary);
