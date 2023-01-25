@@ -1,4 +1,4 @@
-ad
+export const dictionary: string[] = `ad
 ah
 as
 at
@@ -4093,4 +4093,4 @@ reluctant
 remainder
 reporting
 reproduce
-residence
+residence`.split('\n');

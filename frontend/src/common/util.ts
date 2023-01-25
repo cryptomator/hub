@@ -1,3 +1,5 @@
+import { dictionary } from './4096words_en';
+
 export class Deferred<T> {
   public promise: Promise<T>;
   public reject: (reason?: any) => void;
@@ -50,29 +52,29 @@ export class CRC32 {
     }
   }
 
-  public static compute (data: Uint8Array): number {
+  public static compute(data: Uint8Array): number {
     // crc32b
     // Example input        : [97, 98, 99, 100, 101] (Uint8Array)
     // Example output       : 2240272485 (Uint32)
     var crc = -1; // Begin with all bits set ( 0xffffffff )
     for (var i = 0, l = data.length; i < l; i++) {
-      crc = crc >>> 8 ^ CRC32.TABLE[ crc & 255 ^ data[i] ];
+      crc = crc >>> 8 ^ CRC32.TABLE[crc & 255 ^ data[i]];
     }
     return (crc ^ -1) >>> 0; // Apply binary NOT
   }
 }
 
-export class WordEncoder {
+class WordEncoder {
   static WORD_COUNT = 4096;
   static DELIMITER = ' ';
 
-  readonly words: string[];
-  readonly indices: Map<string, number>;
+  private readonly words: string[];
+  private readonly indices: Map<string, number>;
 
-  constructor(words: string[]) {
-    this.words = words;
+  constructor() {
+    this.words = dictionary;
     this.indices = new Map<string, number>();
-    for (const [i, word] of words.entries()) {
+    for (const [i, word] of dictionary.entries()) {
       this.indices.set(word, i);
     }
   }
@@ -82,7 +84,7 @@ export class WordEncoder {
       throw new Error('input needs to be padded to a multiple of three');
     }
     const result: string[] = [];
-    for (var i = 0; i < input.length; i += 3) {
+    for (let i = 0; i < input.length; i += 3) {
       const b1 = input[i];
       const b2 = input[i + 1];
       const b3 = input[i + 2];
@@ -96,25 +98,29 @@ export class WordEncoder {
   }
 
   public decode(encoded: string): Uint8Array {
-    const split = encoded.split(WordEncoder.DELIMITER);
+    const split = encoded.split(WordEncoder.DELIMITER).filter(s => s !== '');
     if (split.length % 2 != 0) {
-      throw new Error(`${encoded} input needs to be a multiple of two words`);
+      throw new Error(`input needs to be a multiple of two words: "${encoded}"`);
     }
     const result = new Uint8Array(split.length / 2 * 3);
-    for (var i = 0; i < split.length; i += 2) {
+    for (let i = 0; i < split.length; i += 2) {
       const w1 = split[i];
       const w2 = split[i + 1];
-      const firstWordIndex = this.indices.get(w1) || -1;
-      const secondWordIndex = this.indices.get(w2) || -1;
-      console.assert(firstWordIndex != -1, `${w1} not in dictionary`);
-      console.assert(secondWordIndex != -1, `${w2} not in dictionary`);
-      const b1 = (0xFF & (firstWordIndex >> 4));
-      const b2 = ((0xF0 & (firstWordIndex << 4)) + (0x0F & (secondWordIndex >> 8)));
-      const b3 = (0xFF & secondWordIndex);
-      result[i / 2 * 3] = b1;
-      result[i / 2 * 3 + 1] = b2;
-      result[i / 2 * 3 + 2] = b3;
+      const firstWordIndex = this.indices.get(w1);
+      const secondWordIndex = this.indices.get(w2);
+      if (firstWordIndex === undefined || secondWordIndex === undefined) {
+        throw new Error(`Can't decode "${w1} ${w2}". Word not in dictionary`);
+      } else {
+        const b1 = (0xFF & (firstWordIndex >> 4));
+        const b2 = ((0xF0 & (firstWordIndex << 4)) + (0x0F & (secondWordIndex >> 8)));
+        const b3 = (0xFF & secondWordIndex);
+        result[i / 2 * 3] = b1;
+        result[i / 2 * 3 + 1] = b2;
+        result[i / 2 * 3 + 2] = b3;
+      }
     }
     return result;
   }
 }
+
+export const wordEncoder = new WordEncoder();

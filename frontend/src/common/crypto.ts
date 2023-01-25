@@ -2,7 +2,7 @@ import * as miscreant from 'miscreant';
 import { base32, base64, base64url } from 'rfc4648';
 import { JWE } from './jwe';
 import { JWT, JWTHeader } from './jwt';
-import { CRC32, WordEncoder } from './util';
+import { CRC32, wordEncoder } from './util';
 
 export class WrappedVaultKeys {
   constructor(readonly masterkey: string, readonly signaturePrivateKey: string, readonly signaturePublicKey: string, readonly salt: string, readonly iterations: number) { }
@@ -272,15 +272,9 @@ export class VaultKeys {
     const checksum = new Uint8Array(2);
     checksum[0] = ((crc32 >> 24) & 0xff);
     checksum[1] = ((crc32 >> 16) & 0xff);
-    
     const combined = new Uint8Array([...rawkey, ...checksum]);
-    
-    // encode:
-    const wordsFile = `${frontendBaseURL}/4096words_en.txt`;
-    // read and split to word list...
-    // ...
-    // const encoder = new WordEncoder();
 
-    return 'TODO'; // TODO: encode using word encoder
+    // encode using human-readable words:
+    return wordEncoder.encodePadded(combined);
   }
 }

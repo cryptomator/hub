@@ -7,7 +7,6 @@ import { UnwrapKeyError, VaultKeys, WrappedVaultKeys } from '../../src/common/cr
 chaiUse(chaiAsPromised);
 
 describe('crypto', () => {
-
   before(done => {
     // since this test runs on Node, we need to replace window.crypto:
     Object.defineProperty(global, 'crypto', { value: require('node:crypto').webcrypto });
@@ -17,7 +16,6 @@ describe('crypto', () => {
   });
 
   describe('VaultKeys', () => {
-
     const wrapped: WrappedVaultKeys = {
       masterkey: 'CMPyJiiOQXBZ8FVvFZs6UOh0kW83+eALeK3bwXfFF2CWsguJZIgCJch94liWCh9xTqW84LUZPyo6IDWbSALqbbdiwDcztT8M81/pgadhTETVtHO5Q1CFNLJ9UvY=',
       signaturePrivateKey: 'O9snY73/eVElnWRLgM404KH7WwO/Ed30Y0UrQQw6x3vxOdroJcjvPdJeSqLD2x4lVP7ceTjVt3IT2N9Mx+jhUQzqrb1E2EvEYlXrTaID1jSdBXZ6ScrI1RvU0iH9cfXf2cRy2x8QZvJyVMr34gLJ3Di/XGrnc/BrOm+aF2K4F9FJXvJFen3CnAs9ewB3Vk0A1wRLX3hW/Wx7eXt/0i1gxB8T/NcLu7xIU3+uusTHh9uajFkA5+z1+JgNHURaa1bT8j5WTtNWIHYT/sw+erMn6S0Uj1vL',
@@ -78,9 +76,12 @@ describe('crypto', () => {
         expect(encrypted).to.be.not.null;
       });
 
+      it('createRecoveryKey()', async () => {
+        const recoveryKey = await vaultKeys.createRecoveryKey();
+
+        expect(recoveryKey).to.eql('water water water water water water water water water water water water water water water water water water water water water asset partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly bombing');
+      });
     });
-
-
   });
 
   describe('Hash directory id', () => {
