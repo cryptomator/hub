@@ -43,9 +43,9 @@ export class CRC32 {
     // http://wiki.osdev.org/CRC32#Building_the_Lookup_Table
     // ... Actually use Alex's because it generates the correct bit order
     //     so no need for the reversal function
-    for (var i = 256; i--;) {
-      var tmp = i;
-      for (var k = 8; k--;) {
+    for (let i = 256; i--;) {
+      let tmp = i;
+      for (let k = 8; k--;) {
         tmp = tmp & 1 ? 3988292384 ^ tmp >>> 1 : tmp >>> 1;
       }
       CRC32.TABLE[i] = tmp;
@@ -56,8 +56,8 @@ export class CRC32 {
     // crc32b
     // Example input        : [97, 98, 99, 100, 101] (Uint8Array)
     // Example output       : 2240272485 (Uint32)
-    var crc = -1; // Begin with all bits set ( 0xffffffff )
-    for (var i = 0, l = data.length; i < l; i++) {
+    let crc = -1; // Begin with all bits set ( 0xffffffff )
+    for (let i = 0, l = data.length; i < l; i++) {
       crc = crc >>> 8 ^ CRC32.TABLE[crc & 255 ^ data[i]];
     }
     return (crc ^ -1) >>> 0; // Apply binary NOT
