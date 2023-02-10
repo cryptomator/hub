@@ -24,7 +24,7 @@
                       </p>
                       <div>
                         <label for="recoveryKey" class="sr-only">Recovery Key for {{ vault.name }}</label>
-                        <textarea id="recoveryKey" v-model="recoveryKey" rows="4" name="recoveryKey" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"></textarea>
+                        <textarea id="recoveryKey" v-model="recoveryKey" readonly rows="4" name="recoveryKey" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"></textarea>
                       </div>
                     </div>
                   </div>
