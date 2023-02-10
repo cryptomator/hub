@@ -90,6 +90,9 @@
   "nav.profile.signOut": "Sign out",
   "nav.mobileMenu": "Open main menu",
 
+  "recoveryKeyDialog.title": "Recovery Key",
+  "recoveryKeyDialog.description": "This is your recovery key for {0}. Keep it safe, it is your only chance to regain access to a vault in case of system outage.",
+
   "userSettings.title": "Settings",
   "userSettings.general.title": "General",
   "userSettings.general.language.title": "Language",
@@ -106,6 +109,7 @@
   "vaultDetails.sharedWith.title": "Shared with",
   "vaultDetails.updatePermissions": "Update Permissions",
   "vaultDetails.downloadVaultTemplate": "Download Vault Template",
+  "vaultDetails.showRecoveryKey": "Show Recovery Key",
 
   "vaultList.title": "Vaults",
   "vaultList.empty.title": "No vaults",

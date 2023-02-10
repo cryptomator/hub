@@ -89,6 +89,9 @@
   "nav.profile.signOut": "Abmelden",
   "nav.mobileMenu": "Hauptmenü öffnen",
 
+  "recoveryKeyDialog.title": "Recovery-Key",
+  "recoveryKeyDialog.description": "Dies ist dein Recovery-Key für {0}. Verwahre ihn gut, er ist im Falle eines Systemausfalls deine einzige Möglichkeit, auf einen Tresor zuzugreifen.",
+
   "userSettings.title": "Einstellungen",
   "userSettings.general.title": "Allgemein",
   "userSettings.general.language.title": "Sprache",
@@ -105,6 +108,7 @@
   "vaultDetails.sharedWith.title": "Geteilt mit",
   "vaultDetails.updatePermissions": "Berechtigungen aktualisieren",
   "vaultDetails.downloadVaultTemplate": "Tresor-Vorlage herunterladen",
+  "vaultDetails.showRecoveryKey": "Recovery-Key anzeigen",
 
   "vaultList.title": "Tresore",
   "vaultList.empty.title": "Keine Tresore",
