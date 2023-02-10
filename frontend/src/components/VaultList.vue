@@ -43,6 +43,11 @@
       <PlusIcon class="-ml-0.5 mr-2 h-4 w-4" aria-hidden="true" />
       {{ t('vaultList.createVault') }}
     </router-link>
+
+    <router-link to="/app/vaults/recover" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+      <PlusIcon class="-ml-0.5 mr-2 h-4 w-4" aria-hidden="true" />
+      RECOVER3000
+    </router-link>
   </div>
 
   <div v-if="filteredVaults != null && filteredVaults.length > 0" class="mt-5 bg-white shadow overflow-hidden rounded-md">

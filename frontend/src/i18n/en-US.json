@@ -61,6 +61,7 @@
   "createVault.passwordConfirmation.passwordsDoNotMatch": "Passwords do not match",
   "createVault.submit": "Create Vault",
   "createVault.error.formValidationFailed": "Please check the form and try again.",
+  "createVault.error.invalidRecoveryKey": "Invalid Recovery Key",
   "createVault.error.vaultAlreadyExists": "A vault with the given name already exists.",
   "createVault.error.downloadTemplateFailed": "Download of vault template failed: {0}",
   "createVault.success.title": "Vault created",
