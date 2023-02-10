@@ -81,6 +81,54 @@ describe('crypto', () => {
 
         expect(recoveryKey).to.eql('water water water water water water water water water water water water water water water water water water water water water asset partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly bombing');
       });
+
+      it('recover() fails for invalid recovery key', async () => {
+        const noMultipleOfTwo = VaultKeys.recover('water');
+        const notInDict = VaultKeys.recover('hallo bonjour');
+        const wrongLength = VaultKeys.recover('water water');
+        const invalidCrc = VaultKeys.recover('water water water water water water water water water water water water water water water water water water water water water water water water water water water water water water water water water water water water water water water water water water water water');
+
+        return Promise.all([
+          expect(noMultipleOfTwo).to.be.rejectedWith(Error, /input needs to be a multiple of two words/),
+          expect(notInDict).to.be.rejectedWith(Error, /Word not in dictionary/),
+          expect(wrongLength).to.be.rejectedWith(Error, /Invalid recovery key length/),
+          expect(invalidCrc).to.be.rejectedWith(Error, /Invalid recovery key checksum/),
+        ]);
+      });
+
+      describe('After creating a valid recovery key', () => {
+        let recoveryKey: string;
+
+        beforeEach(async () => {
+          recoveryKey = await vaultKeys.createRecoveryKey();
+        });
+
+        it('recover() imports original key', async () => {
+          const recovered = await VaultKeys.recover(recoveryKey);
+
+          const oldMasterKey = await crypto.subtle.exportKey('jwk', vaultKeys.masterKey);
+          const newMasterKey = await crypto.subtle.exportKey('jwk', recovered.masterKey);
+          expect(newMasterKey).to.deep.include({
+            'k': oldMasterKey.k
+          });
+        });
+
+        it('recover() creates new signature key pair', async () => {
+          const recovered = await VaultKeys.recover(recoveryKey);
+
+          const oldSecKey = await crypto.subtle.exportKey('jwk', vaultKeys.signatureKeyPair.privateKey);
+          const newSecKey = await crypto.subtle.exportKey('jwk', recovered.signatureKeyPair.privateKey);
+          const oldPubKey = await crypto.subtle.exportKey('jwk', vaultKeys.signatureKeyPair.publicKey);
+          const newPubKey = await crypto.subtle.exportKey('jwk', recovered.signatureKeyPair.publicKey);
+          expect(newSecKey).to.not.deep.include({
+            'd': oldSecKey.d
+          });
+          expect(newPubKey).to.not.deep.include({
+            'x': oldPubKey.x,
+            'y': oldPubKey.y
+          });
+        });
+      });
     });
   });
 

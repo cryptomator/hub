@@ -190,6 +190,41 @@ export class VaultKeys {
     }
   }
 
+  /**
+   * Restore the master key from a given recovery key, create a new admin signature key pair.
+   * @param recoveryKey The recovery key
+   * @returns The recovered master key
+   * @throws Error, if passing a malformed recovery key
+   */
+  public static async recover(recoveryKey: string): Promise<VaultKeys> {
+    // decode and check recovery key:
+    const decoded = wordEncoder.decode(recoveryKey);
+    if (decoded.length !== 66) {
+      throw new Error('Invalid recovery key length.');
+    }
+    const decodedKey = decoded.subarray(0, 64);
+    const expectedCrc32 = decoded[64] << 8 | decoded[65];
+    const actualCrc32 = CRC32.compute(decodedKey) >> 16 & 0xFFFF;
+    if (expectedCrc32 !== actualCrc32) {
+      throw new Error('Invalid recovery key checksum.');
+    }
+
+    // construct new VaultKeys from recovered key
+    const key = crypto.subtle.importKey(
+      'raw',
+      decodedKey,
+      VaultKeys.MASTERKEY_KEY_DESIGNATION,
+      true,
+      ['sign']
+    );
+    const keyPair = crypto.subtle.generateKey(
+      VaultKeys.SIGNATURE_KEY_DESIGNATION,
+      true,
+      ['sign', 'verify']
+    );
+    return new VaultKeys(await key, await keyPair);
+  }
+
   public async createVaultConfig(kid: string, hubConfig: VaultConfigHeaderHub, payload: VaultConfigPayload): Promise<string> {
     const header = JSON.stringify({
       kid: kid,
