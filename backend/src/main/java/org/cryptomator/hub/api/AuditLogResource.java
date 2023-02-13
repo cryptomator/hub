@@ -1,7 +1,7 @@
 package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.cryptomator.hub.entities.AuditEntry;
+import org.cryptomator.hub.entities.AuditEvent;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
@@ -24,14 +24,15 @@ public class AuditLogResource {
 	@Operation(summary = "list all auditlog entries within a period", description = "list all auditlog entries from a period specified by a start and end date")
 	@Parameter(name = "startDate", description = "the start date of the period in milliseconds from the UNIX epoch", in = ParameterIn.QUERY)
 	@Parameter(name = "endDate", description = "the end date of the period in milliseconds from the UNIX epoch", in = ParameterIn.QUERY)
-	public List<AuditEntryDto> getAllVaults(@QueryParam("startDate") long startDate, @QueryParam("endDate") long endDate) {
-		return AuditEntry.findAllInPeriod(Instant.ofEpochMilli(startDate), Instant.ofEpochMilli(endDate)).map(AuditEntryDto::fromEntity).toList();
+	public List<AuditEntryDto> getAllEvents(@QueryParam("startDate") long startDate, @QueryParam("endDate") long endDate) {
+		return AuditEvent.findAllInPeriod(Instant.ofEpochMilli(startDate), Instant.ofEpochMilli(endDate)).map(AuditEntryDto::fromEntity).toList();
 	}
 
-	record AuditEntryDto(@JsonProperty("id") String id, @JsonProperty("timestamp") Instant timestamp, @JsonProperty("message") String message) {
+	record AuditEntryDto(@JsonProperty("id") String id, @JsonProperty("type") String type, @JsonProperty("timestamp") Instant timestamp, @JsonProperty("message") String message) {
 
-		static AuditEntryDto fromEntity(AuditEntry entry) {
-			return new AuditEntryDto(entry.id, entry.timestamp.toInstant(), entry.message);
+		static <T extends AuditEvent> AuditEntryDto fromEntity(T entry) {
+			// TODO distinguish event types...
+			return new AuditEntryDto(entry.id, "unlock", entry.timestamp.toInstant(), entry.message);
 		}
 	}
 }
