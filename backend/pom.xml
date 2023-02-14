@@ -157,18 +157,25 @@
             </goals>
           </execution>
         </executions>
+        <configuration>
+          <jvmArgs>--enable-preview</jvmArgs>
+        </configuration>
       </plugin>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>${compiler-plugin.version}</version>
         <configuration>
           <release>${project.jdk.version}</release>
+          <source>${project.jdk.version}</source>
+          <target>${project.jdk.version}</target>
+          <compilerArgs>--enable-preview</compilerArgs>
         </configuration>
       </plugin>
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>${surefire-plugin.version}</version>
         <configuration>
+          <argLine>--enable-preview</argLine>
           <systemPropertyVariables>
             <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
             <maven.home>${maven.home}</maven.home>
@@ -198,6 +205,7 @@
                   <goal>verify</goal>
                 </goals>
                 <configuration>
+                  <argLine>--enable-preview</argLine>
                   <systemPropertyVariables>
                     <native.image.path>${project.build.directory}/${project.build.finalName}-runner</native.image.path>
                     <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
