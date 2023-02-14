@@ -35,16 +35,23 @@ public class AuditLogResourceTest {
 	public void testGetAuditLogEntries() throws SQLException {
 		try (var s = dataSource.getConnection().createStatement()) {
 			s.execute("""
-					INSERT INTO "audit_log" ("id", "timestamp", "message")
+					INSERT INTO "audit_event" ("id", "timestamp", "type")
 					VALUES
-						('id1', '1970-01-01T00:00:02.900Z', 'before period'),
-						('id2', '1970-01-01T00:00:03Z', 'entry with start date'),
-						('id3', '1970-01-01T00:00:04Z', 'entry within period'),
-						('id4', '1970-01-01T00:00:05Z', 'entry with end date');
+						('00000000-1111-1111-1111-aabbccddeeff', '1970-01-01T00:00:02.900Z', 'UNLOCK'),
+						('00000000-2222-2222-2222-aabbccddeeff', '1970-01-01T00:00:03Z', 'UNLOCK'),
+						('00000000-3333-3333-3333-aabbccddeeff', '1970-01-01T00:00:04Z', 'UNLOCK'),
+						('00000000-4444-4444-4444-aabbccddeeff', '1970-01-01T00:00:05Z', 'UNLOCK');
+					
+					INSERT INTO "unlock_event" ("id", "user_id", "vault_id", "device_id", "result")
+					VALUES
+						('00000000-1111-1111-1111-aabbccddeeff', '11111111-0000-0000-0000-aabbccddeeff', '22222222-0000-0000-0000-aabbccddeeff', '33333333-0000-0000-0000-aabbccddeeff', 'SUCCESS'),
+						('00000000-2222-2222-2222-aabbccddeeff', '11111111-0000-0000-0000-aabbccddeeff', '22222222-0000-0000-0000-aabbccddeeff', '33333333-0000-0000-0000-aabbccddeeff', 'SUCCESS'),
+						('00000000-3333-3333-3333-aabbccddeeff', '11111111-0000-0000-0000-aabbccddeeff', '22222222-0000-0000-0000-aabbccddeeff', '33333333-0000-0000-0000-aabbccddeeff', 'DEVICE_NOT_AUTHORIZED'),
+						('00000000-4444-4444-4444-aabbccddeeff', '11111111-0000-0000-0000-aabbccddeeff', '22222222-0000-0000-0000-aabbccddeeff', '33333333-0000-0000-0000-aabbccddeeff', 'SUCCESS');
 					""");
 		}
 		when().get("/auditlog?startDate=3000&endDate=5000")
 				.then().statusCode(200)
-				.body("id", Matchers.containsInAnyOrder("id2", "id3"));
+				.body("id", Matchers.containsInAnyOrder("00000000-2222-2222-2222-aabbccddeeff", "00000000-3333-3333-3333-aabbccddeeff"));
 	}
 }

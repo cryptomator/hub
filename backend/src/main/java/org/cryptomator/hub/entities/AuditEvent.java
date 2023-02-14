@@ -6,6 +6,8 @@ import io.quarkus.panache.common.Parameters;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorColumn;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.Id;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
@@ -21,31 +23,30 @@ import java.util.stream.Stream;
 @Table(name = "audit_event")
 @Inheritance(strategy = InheritanceType.JOINED)
 @DiscriminatorColumn(name = "type")
-@NamedQuery(name = "AuditEntry.listAllInPeriod",
+@NamedQuery(name = "AuditEvent.listAllInPeriod",
 		query = """
 				SELECT ae
-				FROM AuditEntry ae
+				FROM AuditEvent ae
 				WHERE ae.timestamp >= :startDate
 				AND ae.timestamp < :endDate
 				""")
-public sealed class AuditEvent extends PanacheEntityBase permits UnlockEvent {
+public class AuditEvent extends PanacheEntityBase {
 
 	@Id
 	@Column(name = "id", nullable = false, updatable = false)
-	public String id;
+	public UUID id;
 
 	@Column(name = "timestamp", nullable = false, updatable = false)
 	public Timestamp timestamp;
 
-	@Column(name = "message", nullable = false, updatable = false)
-	public String message;
+	@Column(name = "type", nullable = false, insertable = false, updatable = false)
+	public String type;
 
 	@Override
 	public String toString() {
 		return "AuditEntry{" +
 				"id='" + id + '\'' +
 				", timestamp=" + timestamp.toString() +
-				", message='" + message + '\'' +
 				'}';
 	}
 
@@ -55,16 +56,15 @@ public sealed class AuditEvent extends PanacheEntityBase permits UnlockEvent {
 		if (o == null || getClass() != o.getClass()) return false;
 		AuditEvent other = (AuditEvent) o;
 		return Objects.equals(this.id, other.id)
-				&& Objects.equals(this.timestamp, other.timestamp)
-				&& Objects.equals(this.message, other.message);
+				&& Objects.equals(this.timestamp, other.timestamp);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, timestamp, message);
+		return Objects.hash(id, timestamp);
 	}
 
 	public static Stream<AuditEvent> findAllInPeriod(Instant startDate, Instant endDate) {
-		return find("#AuditEntry.listAllInPeriod", Parameters.with("startDate", Timestamp.from(startDate)).and("endDate", Timestamp.from(endDate))).stream();
+		return find("#AuditEvent.listAllInPeriod", Parameters.with("startDate", Timestamp.from(startDate)).and("endDate", Timestamp.from(endDate))).stream();
 	}
 }

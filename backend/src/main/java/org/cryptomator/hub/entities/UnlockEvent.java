@@ -3,6 +3,8 @@ package org.cryptomator.hub.entities;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.Table;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -11,8 +13,10 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "unlock_event")
-@DiscriminatorValue("UNLOCK")
-public final class UnlockEvent extends AuditEvent {
+@DiscriminatorValue(UnlockEvent.TYPE)
+public class UnlockEvent extends AuditEvent {
+
+	public static final String TYPE = "UNLOCK";
 
 	@Column(name = "user_id")
 	public String userId;
@@ -22,6 +26,10 @@ public final class UnlockEvent extends AuditEvent {
 
 	@Column(name = "device_id")
 	public String deviceId;
+
+	@Column(name = "result")
+	@Enumerated(EnumType.STRING)
+	public UnlockResult result;
 
 	@Override
 	public boolean equals(Object o) {
@@ -39,14 +47,14 @@ public final class UnlockEvent extends AuditEvent {
 		return Objects.hash(id, userId, vaultId, deviceId);
 	}
 
-	public static void log(User user, Vault vault, Device device) {
+	public static void log(String userId, String vaultId, String deviceId, UnlockResult result) {
 		var event = new UnlockEvent();
-		event.id = UUID.randomUUID().toString();
+		event.id = UUID.randomUUID();
 		event.timestamp = Timestamp.from(Instant.now());
-		event.message = "%s unlocked %s using device %s".formatted(user.email, vault.name, device.name);
-		event.userId = user.id;
-		event.vaultId = vault.id;
-		event.deviceId = device.id;
+		event.userId = userId;
+		event.vaultId = vaultId;
+		event.deviceId = deviceId;
+		event.result = result;
 		event.persist();
 	}
 
