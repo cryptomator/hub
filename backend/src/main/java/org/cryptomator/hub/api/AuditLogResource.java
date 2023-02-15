@@ -55,10 +55,11 @@ public class AuditLogResource {
 		Instant timestamp();
 
 		static AuditEventDto fromEntity(AuditEvent entity) {
-			return switch (entity) {
-				case UnlockEvent e -> new UnlockEventDto(e.id, e.timestamp.toInstant(), UnlockEvent.TYPE, e.userId, e.vaultId, e.deviceId, e.result);
-				default -> throw new UnsupportedOperationException("conversion not implemented for event type " + entity.getClass());
-			};
+			if (entity instanceof UnlockEvent e) {
+				return new UnlockEventDto(e.id, e.timestamp.toInstant(), UnlockEvent.TYPE, e.userId, e.vaultId, e.deviceId, e.result);
+			} else {
+				throw new UnsupportedOperationException("conversion not implemented for event type " + entity.getClass());
+			}
 		}
 	}
 
