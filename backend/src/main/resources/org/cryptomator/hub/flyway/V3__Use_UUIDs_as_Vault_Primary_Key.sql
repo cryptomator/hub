@@ -7,7 +7,7 @@ DROP VIEW "effective_vault_access";
 ALTER TABLE "vault_access" DROP CONSTRAINT "VAULT_ACCESS_FK_VAULT";
 ALTER TABLE "access_token" DROP CONSTRAINT "ACCESS_FK_VAULT";
 
--- UUIDs are even more efficient:
+-- UUIDs are way more efficient than varchar:
 ALTER TABLE "vault" ALTER COLUMN "id" SET DATA TYPE UUID USING "id"::uuid;
 ALTER TABLE "vault_access" ALTER COLUMN "vault_id" SET DATA TYPE UUID USING "vault_id"::uuid;
 ALTER TABLE "access_token" ALTER COLUMN "vault_id" SET DATA TYPE UUID USING "vault_id"::uuid;
