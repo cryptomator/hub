@@ -16,6 +16,7 @@ import javax.persistence.NoResultException;
 import javax.persistence.Table;
 import java.io.Serializable;
 import java.util.Objects;
+import java.util.UUID;
 
 @Entity
 @Table(name = "access_token")
@@ -47,7 +48,7 @@ public class AccessToken extends PanacheEntityBase {
 	@Column(name = "jwe", nullable = false)
 	public String jwe;
 
-	public static AccessToken unlock(String vaultId, String deviceId, String userId) {
+	public static AccessToken unlock(UUID vaultId, String deviceId, String userId) {
 		try {
 			return find("#AccessToken.get", Parameters.with("deviceId", deviceId).and("vaultId", vaultId).and("userId", userId)).firstResult();
 		} catch (NoResultException e) {
@@ -85,9 +86,9 @@ public class AccessToken extends PanacheEntityBase {
 	public static class AccessId implements Serializable {
 
 		public String deviceId;
-		public String vaultId;
+		public UUID vaultId;
 
-		public AccessId(String deviceId, String vaultId) {
+		public AccessId(String deviceId, UUID vaultId) {
 			this.deviceId = deviceId;
 			this.vaultId = vaultId;
 		}

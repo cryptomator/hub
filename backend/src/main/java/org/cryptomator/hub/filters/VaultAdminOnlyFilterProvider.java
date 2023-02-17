@@ -24,6 +24,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.Date;
+import java.util.UUID;
 
 @Provider
 @VaultAdminOnlyFilter
@@ -39,7 +40,7 @@ public class VaultAdminOnlyFilterProvider implements ContainerRequestFilter {
 		var vaultAdminAuthorizationJWT = getUnverifiedvaultAdminAuthorizationJWT(containerRequestContext);
 		var unveridifedVaultId = getUnverifiedVaultId(vaultAdminAuthorizationJWT);
 		if (vaultIdQueryParameter.equals(unveridifedVaultId)) {
-			var vault = Vault.<Vault>findByIdOptional(unveridifedVaultId).orElseThrow(NotFoundException::new);
+			var vault = Vault.<Vault>findByIdOptional(UUID.fromString(unveridifedVaultId)).orElseThrow(NotFoundException::new);
 			var algorithm = Algorithm.ECDSA384(decodePublicKey(vault.authenticationPublicKey));
 			verify(buildVerifier(algorithm), vaultAdminAuthorizationJWT);
 		} else {

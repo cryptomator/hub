@@ -16,6 +16,7 @@ import javax.transaction.Transactional;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.UUID;
 
 @QuarkusTest
 @FlywayTest(value = @DataSource(url = "jdbc:h2:mem:test"), additionalLocations = {"classpath:org/cryptomator/hub/flyway"})
@@ -70,19 +71,19 @@ public class EntityIntegrationTest {
 	public void testGetCorrectTokenForDeviceWithAcessToMultipleVaults() throws SQLException {
 		try (var s = dataSource.getConnection().createStatement()) {
 			s.execute("""
-					INSERT INTO "access_token" ("device_id", "vault_id", "jwe") VALUES ('device3', 'vault1', 'jwe4');
+					INSERT INTO "access_token" ("device_id", "vault_id", "jwe") VALUES ('device3', '7E57C0DE-0000-4000-8000-000100001111', 'jwe4');
 					""");
 
 			List<AccessToken> tokens = AccessToken
 					.<AccessToken>find("#AccessToken.get", Parameters.with("deviceId", "device3")
-							.and("vaultId", "vault1")
+							.and("vaultId", UUID.fromString("7E57C0DE-0000-4000-8000-000100001111"))
 							.and("userId", "user1"))
 					.stream().toList();
 
 			var token = tokens.get(0);
 
 			Assertions.assertEquals(1, tokens.size());
-			Assertions.assertEquals("vault1", token.vault.id);
+			Assertions.assertEquals(UUID.fromString("7E57C0DE-0000-4000-8000-000100001111"), token.vault.id);
 			Assertions.assertEquals("device3", token.device.id);
 			Assertions.assertEquals("jwe4", token.jwe);
 		}

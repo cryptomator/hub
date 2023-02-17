@@ -16,6 +16,7 @@ import java.sql.Timestamp;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 @Entity
@@ -78,7 +79,7 @@ public class Device extends PanacheEntityBase {
 		return Objects.hash(id, owner, name, publickey);
 	}
 
-	public static Stream<Device> findRequiringAccessGrant(String vaultId) {
+	public static Stream<Device> findRequiringAccessGrant(UUID vaultId) {
 		return find("#Device.requiringAccessGrant", Parameters.with("vaultId", vaultId)).stream();
 	}
 
