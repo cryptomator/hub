@@ -40,7 +40,7 @@
 
   <div v-else-if="state == State.EnterVaultDetails">
     <form ref="form" novalidate @submit.prevent="validateVaultDetails()">
-      <div class="shadow sm:rounded-lg">
+      <div class="shadow sm:rounded-lg sm:overflow-hidden">
         <div class="bg-white px-4 py-5 sm:p-6">
           <div class="md:grid md:grid-cols-3 md:gap-6">
             <div class="md:col-span-1">
