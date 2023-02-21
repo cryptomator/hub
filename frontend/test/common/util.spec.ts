@@ -1,7 +1,7 @@
 import { expect, use as chaiUse } from 'chai';
 import chaiBytes from 'chai-bytes';
 import { describe } from 'mocha';
-import { wordEncoder } from '../../src/common/util';
+import { CRC32, wordEncoder } from '../../src/common/util';
 
 chaiUse(chaiBytes);
 
@@ -20,5 +20,15 @@ describe('WordEncoder', () => {
         expect(decoded).to.equalBytes(bytes);
       });
     });
+  });
+});
+
+describe('CRC32', () => {
+  it('crc32(\'123456789\') == 0xCBF43926', () => {
+    let input = new TextEncoder().encode('123456789');
+
+    let result = CRC32.compute(input);
+
+    expect(result).to.eql(0xCBF43926);
   });
 });

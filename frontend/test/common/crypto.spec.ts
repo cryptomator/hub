@@ -30,6 +30,39 @@ describe('crypto', () => {
       expect(orig).to.be.not.null;
     });
 
+    it('recover() succeeds for valid key', async () => {
+      let recoveryKey = `
+        pathway lift abuse plenty export texture gentleman landscape beyond ceiling around leaf cafe charity 
+        border breakdown victory surely computer cat linger restrict infer crowd live computer true written amazed 
+        investor boot depth left theory snow whereby terminal weekly reject happiness circuit partial cup ad
+        `;
+
+      const recovered = await VaultKeys.recover(recoveryKey);
+
+      const newMasterKey = await crypto.subtle.exportKey('jwk', recovered.masterKey);
+      expect(newMasterKey).to.deep.include({
+        'k': 'uwHiVreDbmv47K7oZzlwZbHcEql2Z29brbgFxKA7i54pXVPoHoxKK5rzZS3VEhPxHegQKCwa5Mk4ep7OsYutAw'
+      });
+    });
+
+    it('recover() fails for invalid recovery key', async () => {
+      const noMultipleOfTwo = VaultKeys.recover('pathway');
+      const notInDict = VaultKeys.recover('hallo bonjour');
+      const wrongLength = VaultKeys.recover('pathway lift');
+      const invalidCrc = VaultKeys.recover(`
+        pathway lift abuse plenty export texture gentleman landscape beyond ceiling around leaf cafe charity 
+        border breakdown victory surely computer cat linger restrict infer crowd live computer true written amazed 
+        investor boot depth left theory snow whereby terminal weekly reject happiness circuit partial cup wrong
+        `);
+
+      return Promise.all([
+        expect(noMultipleOfTwo).to.be.rejectedWith(Error, /input needs to be a multiple of two words/),
+        expect(notInDict).to.be.rejectedWith(Error, /Word not in dictionary/),
+        expect(wrongLength).to.be.rejectedWith(Error, /Invalid recovery key length/),
+        expect(invalidCrc).to.be.rejectedWith(Error, /Invalid recovery key checksum/),
+      ]);
+    });
+
     it('unwrap() with wrong pw', () => {
       return expect(VaultKeys.unwrap('wrong', wrapped)).to.eventually.be.rejectedWith(UnwrapKeyError);
     });
@@ -79,21 +112,7 @@ describe('crypto', () => {
       it('createRecoveryKey()', async () => {
         const recoveryKey = await vaultKeys.createRecoveryKey();
 
-        expect(recoveryKey).to.eql('water water water water water water water water water water water water water water water water water water water water water asset partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly bombing');
-      });
-
-      it('recover() fails for invalid recovery key', async () => {
-        const noMultipleOfTwo = VaultKeys.recover('water');
-        const notInDict = VaultKeys.recover('hallo bonjour');
-        const wrongLength = VaultKeys.recover('water water');
-        const invalidCrc = VaultKeys.recover('water water water water water water water water water water water water water water water water water water water water water water water water water water water water water water water water water water water water water water water water water water water water');
-
-        return Promise.all([
-          expect(noMultipleOfTwo).to.be.rejectedWith(Error, /input needs to be a multiple of two words/),
-          expect(notInDict).to.be.rejectedWith(Error, /Word not in dictionary/),
-          expect(wrongLength).to.be.rejectedWith(Error, /Invalid recovery key length/),
-          expect(invalidCrc).to.be.rejectedWith(Error, /Invalid recovery key checksum/),
-        ]);
+        expect(recoveryKey).to.eql('water water water water water water water water water water water water water water water water water water water water water asset partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly option twist');
       });
 
       describe('After creating a valid recovery key', () => {

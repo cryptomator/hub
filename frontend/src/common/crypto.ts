@@ -203,9 +203,9 @@ export class VaultKeys {
       throw new Error('Invalid recovery key length.');
     }
     const decodedKey = decoded.subarray(0, 64);
-    const expectedCrc32 = decoded[64] << 8 | decoded[65];
-    const actualCrc32 = CRC32.compute(decodedKey) >> 16 & 0xFFFF;
-    if (expectedCrc32 !== actualCrc32) {
+    const crc32 = CRC32.compute(decodedKey);
+    if (decoded[64] !== (crc32 & 0xFF)
+      || decoded[65] !== (crc32 >> 8 & 0xFF)) {
       throw new Error('Invalid recovery key checksum.');
     }
 
@@ -302,11 +302,11 @@ export class VaultKeys {
   public async createRecoveryKey(): Promise<string> {
     const rawkey = new Uint8Array(await crypto.subtle.exportKey('raw', this.masterKey));
 
-    // append the 16 left-most bits of the checksum:
+    // add 16 bit checksum:
     const crc32 = CRC32.compute(rawkey);
     const checksum = new Uint8Array(2);
-    checksum[0] = ((crc32 >> 24) & 0xff);
-    checksum[1] = ((crc32 >> 16) & 0xff);
+    checksum[0] = crc32 & 0xff;      // append the least significant byte of the crc
+    checksum[1] = crc32 >> 8 & 0xff; // followed by the second-least significant byte
     const combined = new Uint8Array([...rawkey, ...checksum]);
 
     // encode using human-readable words:

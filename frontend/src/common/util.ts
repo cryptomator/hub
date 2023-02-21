@@ -39,28 +39,21 @@ export class CRC32 {
   static TABLE = new Uint32Array(256);
 
   static {
-    // Pre-generate crc32 polynomial lookup table
-    // http://wiki.osdev.org/CRC32#Building_the_Lookup_Table
-    // ... Actually use Alex's because it generates the correct bit order
-    //     so no need for the reversal function
     for (let i = 256; i--;) {
       let tmp = i;
       for (let k = 8; k--;) {
-        tmp = tmp & 1 ? 3988292384 ^ tmp >>> 1 : tmp >>> 1;
+        tmp = tmp & 1 ? 0xEDB88320 ^ tmp >>> 1 : tmp >>> 1;
       }
       CRC32.TABLE[i] = tmp;
     }
   }
 
   public static compute(data: Uint8Array): number {
-    // crc32b
-    // Example input        : [97, 98, 99, 100, 101] (Uint8Array)
-    // Example output       : 2240272485 (Uint32)
-    let crc = -1; // Begin with all bits set ( 0xffffffff )
+    let crc = 0xFFFFFFFF;
     for (let i = 0, l = data.length; i < l; i++) {
-      crc = crc >>> 8 ^ CRC32.TABLE[crc & 255 ^ data[i]];
+      crc = CRC32.TABLE[(crc ^ data[i]) & 0xFF] ^ (crc >>> 8);
     }
-    return (crc ^ -1) >>> 0; // Apply binary NOT
+    return (crc ^ -1) >>> 0;
   }
 }
 
@@ -98,7 +91,7 @@ class WordEncoder {
   }
 
   public decode(encoded: string): Uint8Array {
-    const split = encoded.split(WordEncoder.DELIMITER).filter(s => s !== '');
+    const split = encoded.split(/\s+/).filter(s => s !== '');
     if (split.length % 2 != 0) {
       throw new Error(`input needs to be a multiple of two words: "${encoded}"`);
     }
