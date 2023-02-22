@@ -4,6 +4,7 @@
 
   "common.add": "Add",
   "common.cancel": "Cancel",
+  "common.close": "Close",
   "common.copied": "Copied!",
   "common.copy": "Copy",
   "common.download": "Download",
@@ -103,7 +104,8 @@
   "nav.mobileMenu": "Open main menu",
 
   "recoveryKeyDialog.title": "Recovery Key",
-  "recoveryKeyDialog.description": "This is your recovery key for {0}. Keep it safe, it is your only chance to regain access to a vault in case of system outage.",
+  "recoveryKeyDialog.description": "This is your recovery key for \"{0}\". Keep it safe, it is your only chance to regain access to a vault in case of system outage.",
+  "recoveryKeyDialog.recoveryKey": "Recovery Key of Your Vault",
 
   "userSettings.title": "Settings",
   "userSettings.general.title": "General",

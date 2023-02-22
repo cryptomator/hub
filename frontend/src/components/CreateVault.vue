@@ -23,7 +23,7 @@
             </div>
             <div class="mt-5 sm:mt-6">
               <label for="recoveryKey" class="sr-only">{{ t('createVault.enterRecoveryKey.recoveryKey') }}</label>
-              <textarea id="recoveryKey" v-model="recoveryKey" rows="5" name="recoveryKey" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onRecoverError instanceof FormValidationFailedError }" required />
+              <textarea id="recoveryKey" v-model="recoveryKey" rows="6" name="recoveryKey" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onRecoverError instanceof FormValidationFailedError }" required />
             </div>
             <div class="mt-5 sm:mt-6">
               <button type="submit" :disabled="processing" class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:primary focus:ring-offset-2 sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
@@ -123,7 +123,7 @@
               <div class="relative mt-5 sm:mt-6">
                 <div class="overflow-hidden rounded-lg border border-gray-300 shadow-sm focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
                   <label for="recoveryKey" class="sr-only">{{ t('createVault.showRecoveryKey.recoveryKey') }}</label>
-                  <textarea id="recoveryKey" v-model="recoveryKey" rows="5" name="recoveryKey" class="block w-full resize-none border-0 py-3 focus:ring-0 sm:text-sm" readonly />
+                  <textarea id="recoveryKey" v-model="recoveryKey" rows="6" name="recoveryKey" class="block w-full resize-none border-0 py-3 focus:ring-0 sm:text-sm" readonly />
 
                   <!-- Spacer element to match the height of the toolbar -->
                   <div class="py-2" aria-hidden="true">
@@ -134,7 +134,7 @@
                 <div class="absolute inset-x-0 bottom-0">
                   <div class="flex flex-nowrap justify-end space-x-2 py-2 px-2 sm:px-3">
                     <div class="flex-shrink-0">
-                      <button type="button" class="relative inline-flex items-center whitespace-nowrap rounded-full bg-gray-50 py-2 px-2 text-sm font-medium text-gray-500 hover:bg-gray-100 sm:px-3">
+                      <button type="button" class="relative inline-flex items-center whitespace-nowrap rounded-full bg-gray-50 py-2 px-2 text-sm font-medium text-gray-500 hover:bg-gray-100 sm:px-3" @click="copyRecoveryKey()">
                         <ClipboardIcon class="h-5 w-5 flex-shrink-0 text-gray-300 sm:-ml-1" aria-hidden="true" />
                         <span v-if="!copiedRecoveryKey" class="hidden truncate sm:ml-2 sm:block text-gray-900">{{ t('common.copy') }}</span>
                         <span v-else class="hidden truncate sm:ml-2 sm:block text-gray-900">{{ t('common.copied') }}</span>
@@ -211,6 +211,7 @@ import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { ConflictError } from '../common/backend';
 import { VaultKeys } from '../common/crypto';
+import { debounce } from '../common/util';
 import { VaultConfig } from '../common/vaultconfig';
 
 enum State {
@@ -255,6 +256,7 @@ const password = ref('');
 const passwordConfirmation = ref('');
 const passwordMatches = computed(() => password.value == passwordConfirmation.value);
 const copiedRecoveryKey = ref(false);
+const debouncedCopyFinish = debounce(() => copiedRecoveryKey.value = false, 2000);
 const confirmRecoveryKey = ref(false);
 const vaultKeys = ref<VaultKeys>();
 const recoveryKey = ref<string>('');
@@ -333,6 +335,12 @@ async function createVault() {
   } finally {
     processing.value = false;
   }
+}
+
+async function copyRecoveryKey() {
+  await navigator.clipboard.writeText(recoveryKey.value);
+  copiedRecoveryKey.value = true;
+  debouncedCopyFinish();
 }
 
 async function downloadVaultTemplate() {
