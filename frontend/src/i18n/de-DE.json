@@ -120,9 +120,10 @@
   "vaultDetails.information.header": "Information",
   "vaultDetails.information.created": "Erstellt",
   "vaultDetails.sharedWith.title": "Geteilt mit",
-  "vaultDetails.updatePermissions": "Berechtigungen aktualisieren",
-  "vaultDetails.downloadVaultTemplate": "Tresor-Vorlage herunterladen",
-  "vaultDetails.showRecoveryKey": "Recovery-Key anzeigen",
+  "vaultDetails.actions.updatePermissions": "Berechtigungen aktualisieren",
+  "vaultDetails.actions.updatePermissions.reload": "Neu laden",
+  "vaultDetails.actions.downloadVaultTemplate": "Tresor-Vorlage herunterladen",
+  "vaultDetails.actions.showRecoveryKey": "Recovery-Key anzeigen",
 
   "vaultList.title": "Tresore",
   "vaultList.empty.title": "Keine Tresore",
