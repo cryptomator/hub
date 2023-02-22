@@ -8,7 +8,7 @@
       <div class="flex justify-center">
         <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6 text-center sm:max-w-lg">
           <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-emerald-100">
-            <KeyIcon class="h-6 w-6 text-emerald-600" aria-hidden="true" />
+            <ArrowPathIcon class="h-6 w-6 text-emerald-600" aria-hidden="true" />
           </div>
           <div class="mt-3 sm:mt-5">
             <h3 class="text-lg leading-6 font-medium text-gray-900">
@@ -196,7 +196,7 @@
 
 <script setup lang="ts">
 import { ClipboardIcon } from '@heroicons/vue/20/solid';
-import { CheckIcon, KeyIcon } from '@heroicons/vue/24/outline';
+import { ArrowPathIcon, CheckIcon, KeyIcon } from '@heroicons/vue/24/outline';
 import { ArrowDownTrayIcon } from '@heroicons/vue/24/solid';
 import { saveAs } from 'file-saver';
 import { computed, onMounted, ref } from 'vue';
