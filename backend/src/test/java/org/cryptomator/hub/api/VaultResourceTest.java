@@ -601,7 +601,6 @@ public class VaultResourceTest {
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 	public class ManageGroups {
 
-											// eyJ2YXVsdElkIjoiN0U1N0MwREUtMDAwMC00MDAwLTgwMDAtMDAwMTAwMDA0NDQ0IiwidHlwIjoiSldUIiwiYWxnIjoiRVMzODQifQ.eyJpYXQiOjE2NzY2NTEwMTd9.HmbkbBO5yemWECLGwp8Q_dOEW1aoENkpZms5FFLhpPjTXb6cvCddBZF0ElK-6a4eG9Z_nR6RV0xsLA8BekBAjlTfYvqRwdQE5WJ2MzMtdxBYjs1Pic52jnJ0by8ko8Ap
 		private final String vault4AdminJWT = "eyJ2YXVsdElkIjoiN0U1N0MwREUtMDAwMC00MDAwLTgwMDAtMDAwMTAwMDA0NDQ0IiwidHlwIjoiSldUIiwiYWxnIjoiRVMzODQifQ.eyJpYXQiOjE2NzY2NTE2OTh9.FS0KBwW2SUB3AUYWbNqge-LLIq8H1MlYPa2opxRM9-Ny9RT64Zpc-se6cvk1tug6gDqwyvGXA_D7AHLbF-YIVwjQR99s_TErUBashPiMBpcO_xXyIFK5q_jYgelJpyw7";
 
 		@Test
