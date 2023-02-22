@@ -6,76 +6,70 @@
   </div>
 
   <div class="space-y-6 mt-5">
-    <form class="mt-5" novalidate>
-      <div class="shadow sm:rounded-lg sm:overflow-hidden">
-        <div class="bg-white px-4 py-5 sm:p-6">
-          <div class="md:grid md:grid-cols-3 md:gap-6">
-            <div class="md:col-span-1">
-              <h3 class="text-lg font-medium leading-6 text-gray-900">{{ t('userSettings.general.title') }}</h3>
-            </div>
-            <div class="mt-5 md:mt-0 md:col-span-2">
-              <div class="grid grid-cols-6 gap-6">
-                <div class="col-span-6 sm:col-span-3">
-                  <Listbox v-model="$i18n.locale" as="div">
-                    <ListboxLabel class="block text-sm font-medium text-gray-700">{{ t('userSettings.general.language.title') }}</ListboxLabel>
-                    <div class="relative mt-1">
-                      <ListboxButton class="relative w-full cursor-default rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary text-sm">
-                        <span class="block truncate">{{ t(`locale.${$i18n.locale}`) }}</span>
-                        <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                          <ChevronUpDownIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
-                        </span>
-                      </ListboxButton>
-                      <transition leave-active-class="transition ease-in duration-100" leave-from-class="opacity-100" leave-to-class="opacity-0">
-                        <ListboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none text-sm">
-                          <ListboxOption v-for="locale in Locale" :key="locale" v-slot="{ active, selected }" as="template" :value="locale">
-                            <li :class="[active ? 'text-white bg-primary' : 'text-gray-900', 'relative cursor-default select-none py-2 pl-3 pr-9']">
-                              <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ t(`locale.${locale}`) }}</span>
-                              <span v-if="selected" :class="[active ? 'text-white' : 'text-primary', 'absolute inset-y-0 right-0 flex items-center pr-4']">
-                                <CheckIcon class="h-5 w-5" aria-hidden="true" />
-                              </span>
-                            </li>
-                          </ListboxOption>
-                        </ListboxOptions>
-                      </transition>
-                    </div>
-                  </Listbox>
+    <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6">
+      <div class="md:grid md:grid-cols-3 md:gap-6">
+        <div class="md:col-span-1">
+          <h3 class="text-lg font-medium leading-6 text-gray-900">{{ t('userSettings.general.title') }}</h3>
+        </div>
+        <div class="mt-5 md:mt-0 md:col-span-2">
+          <div class="grid grid-cols-6 gap-6">
+            <div class="col-span-6 sm:col-span-3">
+              <Listbox v-model="$i18n.locale" as="div">
+                <ListboxLabel class="block text-sm font-medium text-gray-700">{{ t('userSettings.general.language.title') }}</ListboxLabel>
+                <div class="relative mt-1">
+                  <ListboxButton class="relative w-full cursor-default rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary text-sm">
+                    <span class="block truncate">{{ t(`locale.${$i18n.locale}`) }}</span>
+                    <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                      <ChevronUpDownIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                    </span>
+                  </ListboxButton>
+                  <transition leave-active-class="transition ease-in duration-100" leave-from-class="opacity-100" leave-to-class="opacity-0">
+                    <ListboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none text-sm">
+                      <ListboxOption v-for="locale in Locale" :key="locale" v-slot="{ active, selected }" as="template" :value="locale">
+                        <li :class="[active ? 'text-white bg-primary' : 'text-gray-900', 'relative cursor-default select-none py-2 pl-3 pr-9']">
+                          <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ t(`locale.${locale}`) }}</span>
+                          <span v-if="selected" :class="[active ? 'text-white' : 'text-primary', 'absolute inset-y-0 right-0 flex items-center pr-4']">
+                            <CheckIcon class="h-5 w-5" aria-hidden="true" />
+                          </span>
+                        </li>
+                      </ListboxOption>
+                    </ListboxOptions>
+                  </transition>
                 </div>
-              </div>
+              </Listbox>
             </div>
           </div>
         </div>
       </div>
-    </form>
+    </div>
 
-    <div class="shadow sm:rounded-lg sm:overflow-hidden">
-      <div class="bg-white px-4 py-5 sm:p-6">
-        <div class="md:grid md:grid-cols-3 md:gap-6">
-          <div class="md:col-span-1">
-            <h3 class="text-lg font-medium leading-6 text-gray-900">
-              {{ t('userSettings.serverInfo.title') }}
-            </h3>
-            <p class="mt-1 text-sm text-gray-500">
-              {{ t('userSettings.serverInfo.description') }}
-            </p>
-          </div>
-          <div class="mt-5 md:mt-0 md:col-span-2">
-            <div v-if="version == null">
-              <div v-if="onFetchError == null">
-                {{ t('common.loading') }}
-              </div>
-              <div v-else>
-                <FetchError :error="onFetchError" :retry="fetchData"/>
-              </div>
+    <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6">
+      <div class="md:grid md:grid-cols-3 md:gap-6">
+        <div class="md:col-span-1">
+          <h3 class="text-lg font-medium leading-6 text-gray-900">
+            {{ t('userSettings.serverInfo.title') }}
+          </h3>
+          <p class="mt-1 text-sm text-gray-500">
+            {{ t('userSettings.serverInfo.description') }}
+          </p>
+        </div>
+        <div class="mt-5 md:mt-0 md:col-span-2">
+          <div v-if="version == null">
+            <div v-if="onFetchError == null">
+              {{ t('common.loading') }}
             </div>
-            <div v-else class="grid grid-cols-6 gap-6">
-              <div class="col-span-6 sm:col-span-3">
-                <label for="hubVersion" class="block text-sm font-medium text-gray-700">{{ t('userSettings.serverInfo.hubVersion.title') }}</label>
-                <input id="hubVersion" v-model="version.hubVersion" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
-              </div>
-              <div class="col-span-6 sm:col-span-3">
-                <label for="keycloakVersion" class="block text-sm font-medium text-gray-700">{{ t('userSettings.serverInfo.keycloakVersion.title') }}</label>
-                <input id="keycloakVersion" v-model="version.keycloakVersion" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
-              </div>
+            <div v-else>
+              <FetchError :error="onFetchError" :retry="fetchData"/>
+            </div>
+          </div>
+          <div v-else class="grid grid-cols-6 gap-6">
+            <div class="col-span-6 sm:col-span-3">
+              <label for="hubVersion" class="block text-sm font-medium text-gray-700">{{ t('userSettings.serverInfo.hubVersion.title') }}</label>
+              <input id="hubVersion" v-model="version.hubVersion" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
+            </div>
+            <div class="col-span-6 sm:col-span-3">
+              <label for="keycloakVersion" class="block text-sm font-medium text-gray-700">{{ t('userSettings.serverInfo.keycloakVersion.title') }}</label>
+              <input id="keycloakVersion" v-model="version.keycloakVersion" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
             </div>
           </div>
         </div>
