@@ -4,10 +4,12 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import org.cryptomator.hub.entities.Settings;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import javax.transaction.Transactional;
 import java.time.Instant;
 import java.util.Objects;
@@ -15,6 +17,10 @@ import java.util.Optional;
 
 @ApplicationScoped
 public class LicenseHolder {
+
+	@Inject
+	@ConfigProperty(name = "hub.managed-instance", defaultValue = "false")
+	Boolean managedInstance;
 
 	private static final Logger LOG = Logger.getLogger(LicenseHolder.class);
 	private final LicenseValidator licenseValidator;
@@ -69,26 +75,45 @@ public class LicenseHolder {
 	public boolean isExpired() {
 		return Optional.ofNullable(license) //
 				.map(l -> l.getExpiresAt().toInstant().isBefore(Instant.now())) //
-				.orElse(CommunityLicenseConstants.IS_EXPIRED);
+				.orElse(false);
 	}
 
 	/**
 	 * Gets the number of available seats of the license
 	 *
-	 * @return Number of available seats, if license is not null. Otherwise {@value CommunityLicenseConstants#SEATS}.
+	 * @return Number of available seats, if license is not null. Otherwise {@value SelfHostedNoLicenseConstants#SEATS}.
 	 */
 	public long getAvailableSeats() {
 		return Optional.ofNullable(license) //
 				.map(l -> l.getClaim("seats")) //
 				.map(Claim::asLong) //
-				.orElse(CommunityLicenseConstants.SEATS);
+				.orElseGet(this::getNoLicenseSeats);
 	}
 
-	public static class CommunityLicenseConstants {
-		public static final long SEATS = 5;
-		static final boolean IS_EXPIRED = false;
+	public long getNoLicenseSeats() {
+		if (!managedInstance) {
+			return SelfHostedNoLicenseConstants.SEATS;
+		} else {
+			return ManagedInstanceNoLicenseConstants.SEATS;
+		}
+	}
 
-		private CommunityLicenseConstants() {
+	public boolean isManagedInstance() {
+		return managedInstance;
+	}
+
+	public static class SelfHostedNoLicenseConstants {
+		public static final long SEATS = 5;
+
+		private SelfHostedNoLicenseConstants() {
+			throw new IllegalStateException("Utility class");
+		}
+	}
+
+	public static class ManagedInstanceNoLicenseConstants {
+		public static final long SEATS = 0;
+
+		private ManagedInstanceNoLicenseConstants() {
 			throw new IllegalStateException("Utility class");
 		}
 	}

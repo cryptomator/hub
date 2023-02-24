@@ -150,6 +150,7 @@ export type BillingDto = {
   remainingSeats: number;
   issuedAt: Date;
   expiresAt: Date;
+  managedInstance: boolean;
 }
 
 export type VersionDto = {

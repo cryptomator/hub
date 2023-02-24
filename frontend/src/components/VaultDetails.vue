@@ -68,18 +68,30 @@
         </ul>
       </div>
 
-      <div class="flex gap-3">
-        <button v-if="devicesRequiringAccessGrant.length > 0" type="button" class="flex-1 bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showGrantPermissionDialog()">
-          {{ t('vaultDetails.updatePermissions') }}
-        </button>
-        <button type="button" class="flex-1 bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDownloadVaultTemplate()">
-          {{ t('vaultDetails.downloadVaultTemplate') }}
-        </button>
+      <div>
+        <h3 class="font-medium text-gray-900">{{ t('vaultDetails.actions.title') }}</h3>
+        <div class="mt-2 flex flex-col gap-2">
+          <div class="flex gap-2">
+            <button :disabled="devicesRequiringAccessGrant.length == 0" type="button" class="flex-1 bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="showGrantPermissionDialog()">
+              {{ t('vaultDetails.actions.updatePermissions') }}
+            </button>
+            <button type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="reloadDevicesRequiringAccessGrant()">
+              <span class="sr-only">{{ t('vaultDetails.actions.updatePermissions.reload') }}</span>
+              <ArrowPathIcon class="h-5 w-5" aria-hidden="true" />
+            </button>
+          </div>
+          <button type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDownloadVaultTemplate()">
+            {{ t('vaultDetails.actions.downloadVaultTemplate') }}
+          </button>
+          <button type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showRecoveryKey()">
+            {{ t('vaultDetails.actions.showRecoveryKey') }}
+          </button>
+        </div>
       </div>
     </div>
 
     <div v-else>
-      <button type="button" class="flex-1 bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showManageVaultDialog()">
+      <button type="button" class="bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showManageVaultDialog()">
         {{ t('vaultDetails.manageVault') }}
       </button>
     </div>
@@ -88,9 +100,11 @@
   <AuthenticateVaultAdminDialog v-if="authenticatingVaultAdmin && vault != null" ref="authenticateVaultAdminDialog" :vault="vault" @action="vaultAdminAuthenticated" @close="authenticatingVaultAdmin = false" />
   <GrantPermissionDialog v-if="grantingPermission && vault != null && vaultKeys != null" ref="grantPermissionDialog" :vault="vault" :devices="devicesRequiringAccessGrant" :vault-keys="vaultKeys" @close="grantingPermission = false" @permission-granted="permissionGranted()" />
   <DownloadVaultTemplateDialog v-if="downloadingVaultTemplate && vault != null && vaultKeys != null" ref="downloadVaultTemplateDialog" :vault="vault" :vault-keys="vaultKeys" @close="downloadingVaultTemplate = false" />
+  <RecoveryKeyDialog v-if="showingRecoveryKey && vault != null && vaultKeys != null" ref="showRecoveryKeyDialog" :vault="vault" :vault-keys="vaultKeys" @close="showingRecoveryKey = false" />
 </template>
 
 <script setup lang="ts">
+import { ArrowPathIcon } from '@heroicons/vue/20/solid';
 import { PlusSmallIcon } from '@heroicons/vue/24/solid';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -100,6 +114,7 @@ import AuthenticateVaultAdminDialog from './AuthenticateVaultAdminDialog.vue';
 import DownloadVaultTemplateDialog from './DownloadVaultTemplateDialog.vue';
 import FetchError from './FetchError.vue';
 import GrantPermissionDialog from './GrantPermissionDialog.vue';
+import RecoveryKeyDialog from './RecoveryKeyDialog.vue';
 import SearchInputGroup from './SearchInputGroup.vue';
 
 const { t, d } = useI18n({ useScope: 'global' });
@@ -121,6 +136,8 @@ const grantingPermission = ref(false);
 const grantPermissionDialog = ref<typeof GrantPermissionDialog>();
 const downloadingVaultTemplate = ref(false);
 const downloadVaultTemplateDialog = ref<typeof DownloadVaultTemplateDialog>();
+const showingRecoveryKey = ref(false);
+const showRecoveryKeyDialog = ref<typeof RecoveryKeyDialog>();
 const vault = ref<VaultDto>();
 const members = ref<Map<string, AuthorityDto>>(new Map());
 const devicesRequiringAccessGrant = ref<DeviceDto[]>([]);
@@ -153,7 +170,18 @@ async function vaultAdminAuthenticated(keys: VaultKeys) {
     isVaultAdmin.value = true; //only set if we can retrieve all necessary information
     vaultKeys.value = keys;
   } catch (error) {
-    console.error('Getting member or requiring devices access grant failed.', error);
+    console.error('Getting members or devices requiring access grant failed.', error);
+    onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
+  }
+}
+
+async function reloadDevicesRequiringAccessGrant() {
+  try {
+    if (vaultKeys.value) {
+      devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId, vaultKeys.value);
+    }
+  } catch (error) {
+    console.error('Getting devices requiring access grant failed.', error);
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
 }
@@ -165,7 +193,7 @@ function isAuthorityDto(toCheck: any): toCheck is AuthorityDto {
 async function addAuthority(authority: unknown) {
   onAddUserError.value = null;
   if (!isAuthorityDto(authority)) {
-    throw new Error('Parameter authority is not of type AuthorityDto');
+    throw new Error('Parameter authority is not of type AuthorityDto.');
   }
 
   try {
@@ -192,7 +220,7 @@ async function addAuthorityBackend(authority: AuthorityDto) {
         throw new Error('Unknown authority type \'' + authority.type + '\'');
       }
     } else {
-      throw new Error('No vault keys provided');
+      throw new Error('No vault keys provided.');
     }
   } catch (error) {
     if (! (error instanceof ConflictError)) {
@@ -215,6 +243,11 @@ function showGrantPermissionDialog() {
 function showDownloadVaultTemplate() {
   downloadingVaultTemplate.value = true;
   nextTick(() => downloadVaultTemplateDialog.value?.show());
+}
+
+function showRecoveryKey() {
+  showingRecoveryKey.value = true;
+  nextTick(() => showRecoveryKeyDialog.value?.show());
 }
 
 function permissionGranted() {

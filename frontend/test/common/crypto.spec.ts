@@ -7,7 +7,6 @@ import { UnwrapKeyError, VaultKeys, WrappedVaultKeys } from '../../src/common/cr
 chaiUse(chaiAsPromised);
 
 describe('crypto', () => {
-
   before(done => {
     // since this test runs on Node, we need to replace window.crypto:
     Object.defineProperty(global, 'crypto', { value: require('node:crypto').webcrypto });
@@ -17,7 +16,6 @@ describe('crypto', () => {
   });
 
   describe('VaultKeys', () => {
-
     const wrapped: WrappedVaultKeys = {
       masterkey: 'CMPyJiiOQXBZ8FVvFZs6UOh0kW83+eALeK3bwXfFF2CWsguJZIgCJch94liWCh9xTqW84LUZPyo6IDWbSALqbbdiwDcztT8M81/pgadhTETVtHO5Q1CFNLJ9UvY=',
       signaturePrivateKey: 'O9snY73/eVElnWRLgM404KH7WwO/Ed30Y0UrQQw6x3vxOdroJcjvPdJeSqLD2x4lVP7ceTjVt3IT2N9Mx+jhUQzqrb1E2EvEYlXrTaID1jSdBXZ6ScrI1RvU0iH9cfXf2cRy2x8QZvJyVMr34gLJ3Di/XGrnc/BrOm+aF2K4F9FJXvJFen3CnAs9ewB3Vk0A1wRLX3hW/Wx7eXt/0i1gxB8T/NcLu7xIU3+uusTHh9uajFkA5+z1+JgNHURaa1bT8j5WTtNWIHYT/sw+erMn6S0Uj1vL',
@@ -30,6 +28,39 @@ describe('crypto', () => {
       const orig = await VaultKeys.create();
 
       expect(orig).to.be.not.null;
+    });
+
+    it('recover() succeeds for valid key', async () => {
+      let recoveryKey = `
+        pathway lift abuse plenty export texture gentleman landscape beyond ceiling around leaf cafe charity 
+        border breakdown victory surely computer cat linger restrict infer crowd live computer true written amazed 
+        investor boot depth left theory snow whereby terminal weekly reject happiness circuit partial cup ad
+        `;
+
+      const recovered = await VaultKeys.recover(recoveryKey);
+
+      const newMasterKey = await crypto.subtle.exportKey('jwk', recovered.masterKey);
+      expect(newMasterKey).to.deep.include({
+        'k': 'uwHiVreDbmv47K7oZzlwZbHcEql2Z29brbgFxKA7i54pXVPoHoxKK5rzZS3VEhPxHegQKCwa5Mk4ep7OsYutAw'
+      });
+    });
+
+    it('recover() fails for invalid recovery key', async () => {
+      const noMultipleOfTwo = VaultKeys.recover('pathway');
+      const notInDict = VaultKeys.recover('hallo bonjour');
+      const wrongLength = VaultKeys.recover('pathway lift');
+      const invalidCrc = VaultKeys.recover(`
+        pathway lift abuse plenty export texture gentleman landscape beyond ceiling around leaf cafe charity 
+        border breakdown victory surely computer cat linger restrict infer crowd live computer true written amazed 
+        investor boot depth left theory snow whereby terminal weekly reject happiness circuit partial cup wrong
+        `);
+
+      return Promise.all([
+        expect(noMultipleOfTwo).to.be.rejectedWith(Error, /input needs to be a multiple of two words/),
+        expect(notInDict).to.be.rejectedWith(Error, /Word not in dictionary/),
+        expect(wrongLength).to.be.rejectedWith(Error, /Invalid recovery key length/),
+        expect(invalidCrc).to.be.rejectedWith(Error, /Invalid recovery key checksum/),
+      ]);
     });
 
     it('unwrap() with wrong pw', () => {
@@ -78,9 +109,46 @@ describe('crypto', () => {
         expect(encrypted).to.be.not.null;
       });
 
+      it('createRecoveryKey()', async () => {
+        const recoveryKey = await vaultKeys.createRecoveryKey();
+
+        expect(recoveryKey).to.eql('water water water water water water water water water water water water water water water water water water water water water asset partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly option twist');
+      });
+
+      describe('After creating a valid recovery key', () => {
+        let recoveryKey: string;
+
+        beforeEach(async () => {
+          recoveryKey = await vaultKeys.createRecoveryKey();
+        });
+
+        it('recover() imports original key', async () => {
+          const recovered = await VaultKeys.recover(recoveryKey);
+
+          const oldMasterKey = await crypto.subtle.exportKey('jwk', vaultKeys.masterKey);
+          const newMasterKey = await crypto.subtle.exportKey('jwk', recovered.masterKey);
+          expect(newMasterKey).to.deep.include({
+            'k': oldMasterKey.k
+          });
+        });
+
+        it('recover() creates new signature key pair', async () => {
+          const recovered = await VaultKeys.recover(recoveryKey);
+
+          const oldSecKey = await crypto.subtle.exportKey('jwk', vaultKeys.signatureKeyPair.privateKey);
+          const newSecKey = await crypto.subtle.exportKey('jwk', recovered.signatureKeyPair.privateKey);
+          const oldPubKey = await crypto.subtle.exportKey('jwk', vaultKeys.signatureKeyPair.publicKey);
+          const newPubKey = await crypto.subtle.exportKey('jwk', recovered.signatureKeyPair.publicKey);
+          expect(newSecKey).to.not.deep.include({
+            'd': oldSecKey.d
+          });
+          expect(newPubKey).to.not.deep.include({
+            'x': oldPubKey.x,
+            'y': oldPubKey.y
+          });
+        });
+      });
     });
-
-
   });
 
   describe('Hash directory id', () => {

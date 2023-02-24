@@ -26,7 +26,6 @@ import java.util.Optional;
 @Path("/billing")
 public class BillingResource {
 
-
 	@Inject
 	LicenseHolder licenseHolder;
 
@@ -40,10 +39,10 @@ public class BillingResource {
 	@APIResponse(responseCode = "403", description = "only admins are allowed to get the billing information")
 	public BillingDto get() {
 		return Optional.ofNullable(licenseHolder.get())
-				.map(BillingDto::fromDecodedJwt)
+				.map(jwt -> BillingDto.fromDecodedJwt(jwt, licenseHolder))
 				.orElseGet(() -> {
 					var hubId = Settings.get().hubId;
-					return BillingDto.create(hubId);
+					return BillingDto.create(hubId, licenseHolder);
 				});
 	}
 
@@ -66,22 +65,24 @@ public class BillingResource {
 
 	public record BillingDto(@JsonProperty("hubId") String hubId, @JsonProperty("hasLicense") Boolean hasLicense, @JsonProperty("email") String email,
 							 @JsonProperty("totalSeats") Integer totalSeats, @JsonProperty("remainingSeats") Integer remainingSeats,
-							 @JsonProperty("issuedAt") Instant issuedAt, @JsonProperty("expiresAt") Instant expiresAt) {
+							 @JsonProperty("issuedAt") Instant issuedAt, @JsonProperty("expiresAt") Instant expiresAt, @JsonProperty("managedInstance") Boolean managedInstance) {
 
-		public static BillingDto create(String hubId) {
-			var seats = LicenseHolder.CommunityLicenseConstants.SEATS;
+		public static BillingDto create(String hubId, LicenseHolder licenseHolder) {
+			var seats = licenseHolder.getNoLicenseSeats();
 			var remainingSeats = Math.max(seats - EffectiveVaultAccess.countEffectiveVaultUsers(), 0);
-			return new BillingDto(hubId, false, null, (int) seats, (int) remainingSeats, null, null);
+			var managedInstance = licenseHolder.isManagedInstance();
+			return new BillingDto(hubId, false, null, (int) seats, (int) remainingSeats, null, null, managedInstance);
 		}
 
-		public static BillingDto fromDecodedJwt(DecodedJWT jwt) {
+		public static BillingDto fromDecodedJwt(DecodedJWT jwt, LicenseHolder licenseHolder) {
 			var id = jwt.getId();
 			var email = jwt.getSubject();
 			var totalSeats = jwt.getClaim("seats").asInt();
 			var remainingSeats = Math.max(totalSeats - (int) EffectiveVaultAccess.countEffectiveVaultUsers(), 0);
 			var issuedAt = jwt.getIssuedAt().toInstant();
 			var expiresAt = jwt.getExpiresAt().toInstant();
-			return new BillingDto(id, true, email, totalSeats, remainingSeats, issuedAt, expiresAt);
+			var managedInstance = licenseHolder.isManagedInstance();
+			return new BillingDto(id, true, email, totalSeats, remainingSeats, issuedAt, expiresAt, managedInstance);
 		}
 
 	}

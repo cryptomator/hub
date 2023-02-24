@@ -14,6 +14,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
+import java.time.Instant;
 import java.util.Objects;
 
 @ApplicationScoped
@@ -32,7 +33,8 @@ public class LicenseValidator {
 
 	public LicenseValidator() {
 		var algorithm = Algorithm.ECDSA512(decodePublicKey(LICENSE_PUBLIC_KEY), null);
-		this.verifier = JWT.require(algorithm).build();
+		var leeway = Instant.now().getEpochSecond(); // this will make sure to accept tokens that expired in the past (beginning from 1970)
+		this.verifier = JWT.require(algorithm).acceptExpiresAt(leeway).build();
 	}
 
 	private static ECPublicKey decodePublicKey(String pemEncodedPublicKey) {

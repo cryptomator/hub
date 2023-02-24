@@ -56,8 +56,8 @@ public class BillingResourceTest {
 
 		@Test
 		@Order(1)
-		@DisplayName("GET /billing returns 200 with empty license")
-		public void testGetEmpty() throws SQLException {
+		@DisplayName("GET /billing returns 200 with empty license self-hosted")
+		public void testGetEmptySelfHosted() throws SQLException {
 			try (var s = dataSource.getConnection().createStatement()) {
 				s.execute("""
 						UPDATE "settings"

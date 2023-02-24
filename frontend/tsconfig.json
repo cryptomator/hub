@@ -9,6 +9,7 @@
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "lib": ["esnext", "dom"],
+    "noUnusedLocals": true,
   },
   "ts-node": {
     "compilerOptions": {
