@@ -9,7 +9,8 @@ INSERT INTO "authority" ("id", "type", "name")
 VALUES
 	('user1', 'USER', 'User Name 1'),
 	('user2', 'USER', 'User Name 2'),
-	('group1', 'GROUP', 'Group Name 1');
+	('group1', 'GROUP', 'Group Name 1'),
+    ('group2', 'GROUP', 'Group Name 2');
 
 INSERT INTO "user_details" ("id")
 VALUES
@@ -18,11 +19,13 @@ VALUES
 
 INSERT INTO "group_details" ("id")
 VALUES
-	('group1');
+	('group1'),
+	('group2');
 
 INSERT INTO "group_membership" ("group_id", "member_id")
 VALUES
-	('group1', 'user1');
+	('group1', 'user1'),
+	('group2', 'user2');
 
 INSERT INTO "vault" ("id", "name", "description", "creation_time", "salt", "iterations", "masterkey", "auth_pubkey", "auth_prvkey")
 VALUES
