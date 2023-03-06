@@ -71,10 +71,6 @@
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-jdbc-h2</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.quarkus</groupId>
       <artifactId>quarkus-jdbc-postgresql</artifactId>
     </dependency>
     <dependency>
@@ -130,14 +126,6 @@
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-undertow</artifactId>
-    </dependency>
-
-    <!-- needed until https://github.com/quarkusio/quarkus/issues/14240 is solved -->
-    <dependency>
-      <groupId>com.radcortez.flyway</groupId>
-      <artifactId>flyway-junit5-extension</artifactId>
-      <version>1.4.0</version>
-      <scope>test</scope>
     </dependency>
   </dependencies>
 

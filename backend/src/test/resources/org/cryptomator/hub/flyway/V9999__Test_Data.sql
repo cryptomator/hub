@@ -1,5 +1,7 @@
 -- noinspection SqlNoDataSourceInspectionForFile
 
+-- This test data can be used in unit tests. A test should leave this data as it found it, either by transaction rollback or other means. See https://github.com/cryptomator/hub/pull/182 for some options
+
 UPDATE "settings"
 SET "hub_id" = '42',
 	"license_key"  = 'eyJhbGciOiJFUzUxMiJ9.eyJqdGkiOiI0MiIsImlhdCI6MTY0ODA0OTM2MCwiaXNzIjoiU2t5bWF0aWMiLCJhdWQiOiJDcnlwdG9tYXRvciBIdWIiLCJzdWIiOiJodWJAY3J5cHRvbWF0b3Iub3JnIiwic2VhdHMiOjUsImV4cCI6MjUzNDAyMjE0NDAwLCJyZWZyZXNoVXJsIjoiaHR0cDovL2xvY2FsaG9zdDo4Nzg3L2h1Yi9zdWJzY3JpcHRpb24_aHViX2lkPTQyIn0.AKyoZ0WQ8xhs8vPymWPHCsc6ch6pZpfxBcrF5QjVLSQVnYz2s5QF3nnkwn4AGR7V14TuhkJMZLUZxMdQAYLyL95sAV2Fu0E4-e1v3IVKlNKtze89eqYvEs6Ak9jWjtecOgPWNWjz2itI4MfJBDmbFtTnehOtqRqUdsDoC9NFik2C7tHm'
@@ -9,7 +11,8 @@ INSERT INTO "authority" ("id", "type", "name")
 VALUES
 	('user1', 'USER', 'User Name 1'),
 	('user2', 'USER', 'User Name 2'),
-	('group1', 'GROUP', 'Group Name 1');
+	('group1', 'GROUP', 'Group Name 1'),
+    ('group2', 'GROUP', 'Group Name 2');
 
 INSERT INTO "user_details" ("id")
 VALUES
@@ -18,11 +21,13 @@ VALUES
 
 INSERT INTO "group_details" ("id")
 VALUES
-	('group1');
+	('group1'),
+	('group2');
 
 INSERT INTO "group_membership" ("group_id", "member_id")
 VALUES
-	('group1', 'user1');
+	('group1', 'user1'),
+	('group2', 'user2');
 
 INSERT INTO "vault" ("id", "name", "description", "creation_time", "salt", "iterations", "masterkey", "auth_pubkey", "auth_prvkey")
 VALUES
