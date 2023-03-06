@@ -1,0 +1,1 @@
+INSERT INTO "settings" ("id", "hub_id") VALUES (0, gen_random_uuid())
