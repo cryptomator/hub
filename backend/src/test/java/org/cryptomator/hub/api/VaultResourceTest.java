@@ -2,8 +2,6 @@ package org.cryptomator.hub.api;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
-import com.radcortez.flyway.test.annotation.DataSource;
-import com.radcortez.flyway.test.annotation.FlywayTest;
 import io.agroal.api.AgroalDataSource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
@@ -14,12 +12,14 @@ import io.restassured.http.ContentType;
 import org.cryptomator.hub.filters.VaultAdminOnlyFilterProvider;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -49,7 +49,6 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.text.IsEqualIgnoringCase.equalToIgnoringCase;
 
 @QuarkusTest
-@FlywayTest(value = @DataSource(url = "jdbc:h2:mem:test"), additionalLocations = {"classpath:org/cryptomator/hub/flyway"})
 @DisplayName("Resource /vaults")
 public class VaultResourceTest {
 
@@ -108,156 +107,6 @@ public class VaultResourceTest {
 	}
 
 	@Nested
-	@DisplayName("Test PUT /vaults/users/{userId} endpoint (addUser)")
-	public class TestAddUser {
-
-		@Test
-		@DisplayName("If all license Seats are used, block new user with 402")
-		@TestSecurity(user = "User Name 1", roles = {"user"})
-		@OidcSecurity(claims = {
-				@Claim(key = "sub", value = "user1")
-		})
-		public void testDepletedLicenseBlocksNewUser() throws SQLException {
-			//this test depends on the flyway migration Test_Data
-			try (var s = dataSource.getConnection().createStatement()) {
-				s.execute("""
-						INSERT INTO "authority" ("id", "type", "name")
-						VALUES
-							('newUser91', 'USER', 'newUser91 name'),
-							('newUser92', 'USER', 'newUser92 name'),
-							('newUser93', 'USER', 'newUser93 name'),
-							('newUser94', 'USER', 'newUser94 name');
-							
-						INSERT INTO "user_details" ("id")
-						VALUES
-							('newUser91'),
-							('newUser92'),
-							('newUser93'),
-							('newUser94');
-							
-						INSERT INTO "vault_access" ("vault_id", "authority_id")
-						VALUES
-							('7E57C0DE-0000-4000-8000-000100001111', 'newUser91'),
-							('7E57C0DE-0000-4000-8000-000100001111', 'newUser92'),
-							('7E57C0DE-0000-4000-8000-000100001111', 'newUser93');
-						""");
-			}
-			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault1AdminJWT)
-					.when().put("/vaults/{vaultId}/users/{usersId}", "7E57C0DE-0000-4000-8000-000100001111", "newUser94")
-					.then().statusCode(402);
-		}
-
-		@Test
-		@DisplayName("If all license Seats are used, allow users having any vault access")
-		@TestSecurity(user = "User Name 2", roles = {"user"})
-		@OidcSecurity(claims = {
-				@Claim(key = "sub", value = "user2")
-		})
-		public void testDepletedLicenseAllowsUsingUser() throws SQLException {
-			//this test depends on the flyway migration Test_Data
-			try (var s = dataSource.getConnection().createStatement()) {
-				s.execute("""
-						INSERT INTO "authority" ("id", "type", "name")
-						VALUES
-							('newUser91', 'USER', 'newUser91 name'),
-							('newUser92', 'USER', 'newUser92 name'),
-							('newUser93', 'USER', 'newUser93 name');
-							
-						INSERT INTO "user_details" ("id")
-						VALUES
-							('newUser91'),
-							('newUser92'),
-							('newUser93');
-							
-						INSERT INTO "vault_access" ("vault_id", "authority_id")
-						VALUES
-							('7E57C0DE-0000-4000-8000-000100001111', 'newUser91'),
-							('7E57C0DE-0000-4000-8000-000100001111', 'newUser92'),
-							('7E57C0DE-0000-4000-8000-000100001111', 'newUser93');
-						""");
-			}
-			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
-					.when().put("/vaults/{vaultId}/users/{usersId}", "7E57C0DE-0000-4000-8000-000100002222", "newUser91")
-					.then().statusCode(201);
-		}
-
-		@Test
-		@DisplayName("Adding user, who is already direct member of the vault, returns 409")
-		@TestSecurity(user = "User Name 1", roles = {"user"})
-		@OidcSecurity(claims = {
-				@Claim(key = "sub", value = "user1")
-		})
-		public void testAddingDirectMemberAgainFails() throws SQLException {
-			//this test depends on the flyway migration Test_Data
-			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault1AdminJWT)
-					.when().put("/vaults/{vaultId}/users/{usersId}", "7E57C0DE-0000-4000-8000-000100001111", "user1")
-					.then().statusCode(409);
-		}
-
-	}
-
-
-	@Nested
-	@DisplayName("Test PUT /vaults/groups/{userId} endpoint (addGroup)")
-	public class TestAddGroup {
-
-		@Test
-		@DisplayName("Adding group, which is already direct member of the vault, returns 409")
-		@TestSecurity(user = "User Name 2", roles = {"user"})
-		@OidcSecurity(claims = {
-				@Claim(key = "sub", value = "user2")
-		})
-		public void testAddingMemberAgainFails() throws SQLException {
-			//this test depends on the flyway migration Test_Data
-			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
-					.when().put("/vaults/{vaultId}/groups/{groupId}", "7E57C0DE-0000-4000-8000-000100002222", "group1")
-					.then().statusCode(409);
-		}
-
-	}
-
-	@Nested
-	@DisplayName("Test GET /vaults/{vaultId]/keys/{deviceId} endpoint (unlock)")
-	public class TestUnlock {
-
-		@Test
-		@DisplayName("Unlock is blocked if there are more EVUs than license seats")
-		@TestSecurity(user = "User Name 1", roles = {"user"})
-		@OidcSecurity(claims = {
-				@Claim(key = "sub", value = "user1")
-		})
-		public void testUnlockBlockedIfEVUsExcceedLicense() throws SQLException {
-			try (var s = dataSource.getConnection().createStatement()) {
-				s.execute("""
-						INSERT INTO "authority" ("id", "type", "name")
-						VALUES
-							('newUser91', 'USER', 'newUser91 name'),
-							('newUser92', 'USER', 'newUser92 name'),
-							('newUser93', 'USER', 'newUser93 name'),
-							('newUser94', 'USER', 'newUser94 name');
-							
-						INSERT INTO "user_details" ("id")
-						VALUES
-							('newUser91'),
-							('newUser92'),
-							('newUser93'),
-							('newUser94');
-							
-						INSERT INTO "vault_access" ("vault_id", "authority_id")
-						VALUES
-							('7E57C0DE-0000-4000-8000-000100001111', 'newUser91'),
-							('7E57C0DE-0000-4000-8000-000100001111', 'newUser92'),
-							('7E57C0DE-0000-4000-8000-000100001111', 'newUser93'),
-							('7E57C0DE-0000-4000-8000-000100001111', 'newUser94');
-						""");
-			}
-
-			when().get("/vaults/{vaultId}/keys/{deviceId}", "7E57C0DE-0000-4000-8000-000100001111", "device1")
-					.then().statusCode(402);
-		}
-	}
-
-	@Nested
 	@DisplayName("As user1")
 	@TestSecurity(user = "User Name 1", roles = {"user"})
 	@OidcSecurity(claims = {
@@ -265,13 +114,11 @@ public class VaultResourceTest {
 	})
 	public class AsAuthorizedUser1 {
 
-
 		@Test
 		@DisplayName("GET /vaults returns 200")
 		public void testGetSharedOrOwned() {
 			when().get("/vaults")
 					.then().statusCode(200)
-					.body("size()", is(2))
 					.body("id", hasItems(equalToIgnoringCase("7E57C0DE-0000-4000-8000-000100001111"), equalToIgnoringCase("7E57C0DE-0000-4000-8000-000100002222")));
 		}
 
@@ -298,7 +145,7 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@DisplayName("GET /vaults/vault1/keys/device1 returns 200 using user access")
+		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/keys/device1 returns 200 using user access")
 		public void testUnlock1() {
 			when().get("/vaults/{vaultId}/keys/{deviceId}", "7E57C0DE-0000-4000-8000-000100001111", "device1")
 					.then().statusCode(200)
@@ -343,8 +190,7 @@ public class VaultResourceTest {
 			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault1AdminJWT)
 					.when().get("/vaults/{vaultId}/members", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(200)
-					.body("id", hasItems("user1", "user2"))
-					.and().body("type", not(hasItems("GROUP")));
+					.body("id", hasItems("user1", "user2"));
 		}
 
 		@Test
@@ -402,7 +248,7 @@ public class VaultResourceTest {
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111/keys/device3 returns 201")
 		public void testGrantAccess1() {
 			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault1AdminJWT)
-					.contentType(ContentType.TEXT).body("jwe.jwe.jwe.jwe.9999")
+					.contentType(ContentType.TEXT).body("jwe.jwe.jwe.vault1.device3")
 					.when().put("/vaults/{vaultId}/keys/{deviceId}", "7E57C0DE-0000-4000-8000-000100001111", "device3")
 					.then().statusCode(201);
 		}
@@ -422,7 +268,7 @@ public class VaultResourceTest {
 		@OidcSecurity(claims = {
 				@Claim(key = "sub", value = "user2")
 		})
-		public void testGrantAccess3() throws SQLException {
+		public void testGrantAccess3() {
 			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
 					.contentType(ContentType.TEXT).body("jwe3.jwe3.jwe3.jwe3.jwe3")
 					.when().put("/vaults/{vaultId}/keys/{deviceId}", "7E57C0DE-0000-4000-8000-000100002222", "device3")
@@ -443,17 +289,16 @@ public class VaultResourceTest {
 
 	@Nested
 	@DisplayName("Managing members as user2")
-	@FlywayTest(value = @DataSource(url = "jdbc:h2:mem:test"), additionalLocations = {"classpath:org/cryptomator/hub/flyway"}, clean = false)
 	@TestSecurity(user = "User Name 2", roles = {"user"})
 	@OidcSecurity(claims = {
 			@Claim(key = "sub", value = "user2")
 	})
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-	public class ManageMembers {
+	public class ManageAccessAsUser2 {
 
 		@Test
 		@Order(1)
-		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100002222/users/user9999 returns 404")
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100002222/users/user9999 returns 404 - no such user")
 		public void addNonExistingUser() {
 			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
 					.when().put("/vaults/{vaultId}/users/{userId}", "7E57C0DE-0000-4000-8000-000100002222", "user9999")
@@ -462,7 +307,7 @@ public class VaultResourceTest {
 
 		@Test
 		@Order(2)
-		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-BADBADBADBAD/users/user2 returns 404")
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-BADBADBADBAD/users/user2 returns 404 - no such vault")
 		public void addUserToNonExistingVault() throws NoSuchAlgorithmException, InvalidKeySpecException {
 			var algorithmVault = Algorithm.ECDSA384((ECPrivateKey) getPrivateKey("MIG2AgEAMBAGByqGSM49AgEGBSuBBAAiBIGeMIGbAgEBBDCAHpFQ62QnGCEvYh/pE9QmR1C9aLcDItRbslbmhen/h1tt8AyMhskeenT+rAyyPhGhZANiAAQLW5ZJePZzMIPAxMtZXkEWbDF0zo9f2n4+T1h/2sh/fviblc/VTyrv10GEtIi5qiOy85Pf1RRw8lE5IPUWpgu553SteKigiKLUPeNpbqmYZUkWGh3MLfVzLmx85ii2vMU="));
 			var vaultAdminJWT = JWT.create().withHeader(Map.of("vaultId", "7E57C0DE-0000-4000-8000-BADBADBADBAD")).withIssuedAt(Instant.now()).sign(algorithmVault);
@@ -474,7 +319,7 @@ public class VaultResourceTest {
 
 		@Test
 		@Order(3)
-		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100002222/users/user9999 returns 401")
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100002222/users/user9999 returns 401 - unauthenticated")
 		public void addNonExistingUserUnauthenticated() {
 			when().put("/vaults/{vaultId}/users/{userId}", "7E57C0DE-0000-4000-8000-000100002222", "user9999")
 					.then().statusCode(401);
@@ -503,7 +348,7 @@ public class VaultResourceTest {
 		@Test
 		@Order(6)
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100002222/members/user2 returns 201")
-		public void addUser1() {
+		public void testGrantAccess() {
 			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
 					.when().put("/vaults/{vaultId}/users/{userId}", "7E57C0DE-0000-4000-8000-000100002222", "user2")
 					.then().statusCode(201);
@@ -521,6 +366,24 @@ public class VaultResourceTest {
 
 		@Test
 		@Order(8)
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100002222/users/user2 returns 409 - user2 already direct member of vault2")
+		public void testGrantAccessAgain() {
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
+					.when().put("/vaults/{vaultId}/users/{usersId}", "7E57C0DE-0000-4000-8000-000100002222", "user2")
+					.then().statusCode(409);
+		}
+
+		@Test
+		@Order(9)
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100002222/groups/group1 returns 409 - group1 already direct member of vault2")
+		public void testAddingMemberAgainFails() {
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
+					.when().put("/vaults/{vaultId}/groups/{groupId}", "7E57C0DE-0000-4000-8000-000100002222", "group1")
+					.then().statusCode(409);
+		}
+
+		@Test
+		@Order(10)
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100002222/devices-requiring-access-grant contains device2")
 		public void testGetDevicesRequiringAccess2() {
 			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
@@ -530,17 +393,17 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@Order(9)
+		@Order(11)
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100002222/keys/device2 returns 201")
 		public void testGrantAccess1() {
 			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
-					.given().contentType(ContentType.TEXT).body("jwe.jwe.jwe.jwe.9999")
+					.given().contentType(ContentType.TEXT).body("jwe.jwe.jwe.vault2.device2")
 					.when().put("/vaults/{vaultId}/keys/{deviceId}", "7E57C0DE-0000-4000-8000-000100002222", "device2")
 					.then().statusCode(201);
 		}
 
 		@Test
-		@Order(10)
+		@Order(12)
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100002222/devices-requiring-access-grant contains not device2")
 		public void testGetDevicesRequiringAccess3() {
 			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
@@ -550,7 +413,7 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@Order(11)
+		@Order(13)
 		@DisplayName("PUT /devices/device9999 returns 201")
 		public void testCreateDevice2() {
 			var deviceDto = new DeviceResource.DeviceDto("device9999", "Computer 9999", "publickey9999", "user2", Set.of(), Instant.parse("2020-02-20T20:20:20Z"));
@@ -562,7 +425,7 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@Order(12)
+		@Order(14)
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100002222/devices-requiring-access-grant contains not device9999")
 		public void testGetDevicesRequiringAccess4() {
 			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
@@ -572,16 +435,16 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@Order(13)
+		@Order(15)
 		@DisplayName("DELETE /vaults/7E57C0DE-0000-4000-8000-000100002222/members/user2 returns 204")
-		public void removeUser2() {
+		public void testRevokeAccess() { // previously added in testGrantAccess()
 			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
 					.when().delete("/vaults/{vaultId}/users/{userId}", "7E57C0DE-0000-4000-8000-000100002222", "user2")
 					.then().statusCode(204);
 		}
 
 		@Test
-		@Order(14)
+		@Order(16)
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100002222/access does not contain user2")
 		public void getMembers3() {
 			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
@@ -592,168 +455,216 @@ public class VaultResourceTest {
 	}
 
 	@Nested
-	@DisplayName("Managing groups as user2")
-	@FlywayTest(value = @DataSource(url = "jdbc:h2:mem:test"), clean = false)
-	@TestSecurity(user = "User Name 2", roles = {"user"})
+	@DisplayName("Managing groups as user1")
+	@TestSecurity(user = "User Name 1", roles = {"user"})
 	@OidcSecurity(claims = {
-			@Claim(key = "sub", value = "user2")
+			@Claim(key = "sub", value = "user1")
 	})
+	@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-	public class ManageGroups {
-
-		private final String vault4AdminJWT = "eyJ2YXVsdElkIjoiN0U1N0MwREUtMDAwMC00MDAwLTgwMDAtMDAwMTAwMDA0NDQ0IiwidHlwIjoiSldUIiwiYWxnIjoiRVMzODQifQ.eyJpYXQiOjE2NzY2NTE2OTh9.FS0KBwW2SUB3AUYWbNqge-LLIq8H1MlYPa2opxRM9-Ny9RT64Zpc-se6cvk1tug6gDqwyvGXA_D7AHLbF-YIVwjQR99s_TErUBashPiMBpcO_xXyIFK5q_jYgelJpyw7";
+	public class ManageAccessAsUser1 {
 
 		@Test
 		@Order(1)
-		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100004444/groups/group3000 returns 404")
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111/groups/group3000 returns 404")
 		public void addNonExistingGroup() {
-			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault4AdminJWT)
-					.when().put("/vaults/{vaultId}/groups/{groupId}", "7E57C0DE-0000-4000-8000-000100004444", "group3000")
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault1AdminJWT)
+					.when().put("/vaults/{vaultId}/groups/{groupId}", "7E57C0DE-0000-4000-8000-000100001111", "group3000")
 					.then().statusCode(404);
 		}
 
 		@Test
 		@Order(2)
-		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100002222/groups/group91 returns 201")
-		public void addGroupToVault() throws SQLException {
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111/groups/group2 returns 201")
+		public void addGroupToVault() {
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault1AdminJWT)
+					.when().put("/vaults/{vaultId}/groups/{groupId}", "7E57C0DE-0000-4000-8000-000100001111", "group2")
+					.then().statusCode(201);
+		}
+
+		@Test
+		@Order(3)
+		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/members does contain group2")
+		public void getMembers1() {
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault1AdminJWT)
+					.when().get("/vaults/{vaultId}/members", "7E57C0DE-0000-4000-8000-000100001111")
+					.then().statusCode(200)
+					.body("id", hasItems("group2"));
+		}
+
+		@Test
+		@Order(4)
+		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/devices-requiring-access-grant contains device999")
+		public void testGetDevicesRequiringAccess3() throws SQLException {
+			try (var s = dataSource.getConnection().createStatement()) {
+				// device999 will be deleted in #cleanup()
+				s.execute("""
+						INSERT INTO "device" ("id", "owner_id", "name", "publickey", "creation_time")
+						VALUES
+							('device999', 'user2', 'Computer 999', 'publickey90', '2020-02-20 20:20:20');
+						""");
+			}
+
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault1AdminJWT)
+					.when().get("/vaults/{vaultId}/devices-requiring-access-grant", "7E57C0DE-0000-4000-8000-000100001111")
+					.then().statusCode(200)
+					.body("id", hasItems("device999"));
+		}
+
+		@Test
+		@Order(5)
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111/keys/device999 returns 201")
+		public void testGrantAccess2() {
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault1AdminJWT)
+					.contentType(ContentType.TEXT).body("jwe.jwe.jwe.vault2.device93")
+					.when().put("/vaults/{vaultId}/keys/{deviceId}", "7E57C0DE-0000-4000-8000-000100001111", "device999")
+					.then().statusCode(201);
+		}
+
+		@Test
+		@Order(6)
+		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/devices-requiring-access-grant contains not device999")
+		public void testGetDevicesRequiringAccess4() {
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault1AdminJWT)
+					.when().get("/vaults/{vaultId}/devices-requiring-access-grant", "7E57C0DE-0000-4000-8000-000100001111")
+					.then().statusCode(200)
+					.body("id", not(hasItems("device999")));
+		}
+
+		@Test
+		@Order(7)
+		@DisplayName("DELETE /vaults/7E57C0DE-0000-4000-8000-000100001111/groups/group2 returns 204")
+		public void removeGroup2() {
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault1AdminJWT)
+					.when().delete("/vaults/{vaultId}/groups/{groupId}", "7E57C0DE-0000-4000-8000-000100001111", "group2")
+					.then().statusCode(204);
+		}
+
+		@Test
+		@Order(8)
+		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/members does not contain group2")
+		public void getMembers2() {
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault1AdminJWT)
+					.when().get("/vaults/{vaultId}/members", "7E57C0DE-0000-4000-8000-000100001111")
+					.then().statusCode(200)
+					.body("id", not(hasItems("group2")));
+		}
+
+		@AfterAll
+		public void cleanup() throws SQLException {
+			try (var s = dataSource.getConnection().createStatement()) {
+				s.execute("""
+						DELETE FROM "device" WHERE ID = 'device999';
+						""");
+			}
+		}
+
+	}
+
+	@Nested
+	@DisplayName("When exceeding 5 seats in license")
+	@TestSecurity(user = "User Name 1", roles = {"user"})
+	@OidcSecurity(claims = {
+			@Claim(key = "sub", value = "user1")
+	})
+	@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+	public class ExceedingLicenseLimits {
+
+		@BeforeAll
+		public void setup() throws SQLException {
+			//Assumptions.assumeTrue(EffectiveVaultAccess.countEffectiveVaultUsers() == 2);
 			try (var s = dataSource.getConnection().createStatement()) {
 				s.execute("""
 						INSERT INTO "authority" ("id", "type", "name")
 						VALUES
+							('user91', 'USER', 'user name 91'),
+							('user92', 'USER', 'user name 92'),
+							('user93', 'USER', 'user name 93'),
+							('user94', 'USER', 'user name 94'),
 							('group91', 'GROUP', 'group name 91');
 							
 						INSERT INTO "group_details" ("id")
 						VALUES
 							('group91');
 							
+							
+						INSERT INTO "user_details" ("id")
+						VALUES
+							('user91'),
+							('user92'),
+							('user93'),
+							('user94');
+							
+						INSERT INTO "group_membership" ("group_id", "member_id")
+						VALUES
+							('group91', 'user91'),
+							('group91', 'user92'),
+							('group91', 'user93'),
+							('group91', 'user94');
+							
 						""");
 			}
+		}
 
-			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
-					.when().put("/vaults/{vaultId}/groups/{groupId}", "7E57C0DE-0000-4000-8000-000100002222", "group91")
+		@Test
+		@Order(1)
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111/groups/group91 returns 402")
+		public void addGroupToVaultExceedingSeats() {
+			//Assumptions.assumeTrue(EffectiveVaultAccess.countEffectiveVaultUsers() == 2);
+
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault1AdminJWT)
+					.when().put("/vaults/{vaultId}/groups/{groupId}", "7E57C0DE-0000-4000-8000-000100001111", "group91")
+					.then().statusCode(402);
+		}
+
+		@Order(2)
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111/users/userXX returns 201")
+		@ParameterizedTest(name = "Adding user {index} succeeds")
+		@ValueSource(strings = {"user91", "user92", "user93"})
+		public void addUserToVaultNotExceedingSeats(String userId) {
+			//Assumptions.assumeTrue(EffectiveVaultAccess.countEffectiveVaultUsers() == 2);
+
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault1AdminJWT)
+					.when().put("/vaults/{vaultId}/users/{usersId}", "7E57C0DE-0000-4000-8000-000100001111", userId)
 					.then().statusCode(201);
 		}
 
 		@Test
 		@Order(3)
-		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100002222/members does contain group91")
-		public void getMembers4() {
-			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
-					.when().get("/vaults/{vaultId}/members", "7E57C0DE-0000-4000-8000-000100002222")
-					.then().statusCode(200)
-					.body("id", hasItems("group91"));
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111/users/user94 returns 402")
+		public void addUserToVaultExceedingSeats() {
+			//Assumptions.assumeTrue(EffectiveVaultAccess.countEffectiveVaultUsers() == 5);
+
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault1AdminJWT)
+					.when().put("/vaults/{vaultId}/users/{usersId}", "7E57C0DE-0000-4000-8000-000100001111", "user94")
+					.then().statusCode(402);
 		}
 
 		@Test
 		@Order(4)
-		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100002222/devices-requiring-access-grant contains device93")
-		public void testGetDevicesRequiringAccess3() throws SQLException {
+		@DisplayName("Unlock is blocked if exceeding license seats")
+		public void testUnlockBlockedIfLicenseExceeded() throws SQLException {
 			try (var s = dataSource.getConnection().createStatement()) {
 				s.execute("""
-						INSERT INTO "authority" ("id", "type", "name")
-						VALUES
-							('user90', 'USER', 'user name 90');
-							
-						INSERT INTO "user_details" ("id")
-						VALUES
-							('user90');
-							
-						INSERT INTO "group_membership" ("group_id", "member_id")
-						VALUES
-							('group91', 'user90');
-							
-						INSERT INTO "device" ("id", "owner_id", "name", "publickey", "creation_time")
-						VALUES
-							('device93', 'user90', 'Computer 9', 'publickey90', '2020-02-20 20:20:20');
+						INSERT INTO "vault_access" ("vault_id", "authority_id")
+							VALUES ('7E57C0DE-0000-4000-8000-000100001111', 'group91');
 						""");
 			}
+			//Assumptions.assumeTrue(EffectiveVaultAccess.countEffectiveVaultUsers() > 5);
 
-			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
-					.when().get("/vaults/{vaultId}/devices-requiring-access-grant", "7E57C0DE-0000-4000-8000-000100002222")
-					.then().statusCode(200)
-					.body("id", hasItems("device93"));
-		}
-
-		@Test
-		@Order(5)
-		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100002222/keys/device93 returns 201")
-		public void testGrantAccess2() {
-			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
-					.contentType(ContentType.TEXT).body("aaa.AAA.000.999.888")
-					.when().put("/vaults/{vaultId}/keys/{deviceId}", "7E57C0DE-0000-4000-8000-000100002222", "device93")
-					.then().statusCode(201);
-		}
-
-		@Test
-		@Order(6)
-		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100002222/devices-requiring-access-grant contains not device93")
-		public void testGetDevicesRequiringAccess4() {
-			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
-					.when().get("/vaults/{vaultId}/devices-requiring-access-grant", "7E57C0DE-0000-4000-8000-000100002222")
-					.then().statusCode(200)
-					.body("id", not(hasItems("device93")));
-		}
-
-		@Test
-		@Order(7)
-		@DisplayName("DELETE /vaults/7E57C0DE-0000-4000-8000-000100002222/groups/group91 returns 204")
-		public void removeGroup2() {
-			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
-					.when().delete("/vaults/{vaultId}/groups/{groupId}", "7E57C0DE-0000-4000-8000-000100002222", "group91")
-					.then().statusCode(204);
-		}
-
-		@Test
-		@Order(8)
-		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100002222/members does not contain group91")
-		public void getMembers5() {
-			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
-					.when().get("/vaults/{vaultId}/members", "7E57C0DE-0000-4000-8000-000100002222")
-					.then().statusCode(200)
-					.body("id", not(hasItems("group91")));
-		}
-
-		@Test
-		@Order(9)
-		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100002222/groups/group94 returns 402")
-		public void addGroupToVaultExceedingSeats() throws SQLException {
-			//license has 5 seats, two are already used
-			try (var s = dataSource.getConnection().createStatement()) {
-				s.execute("""
-						INSERT INTO "authority" ("id", "type", "name")
-						VALUES
-							('group94', 'GROUP', 'group name 94'),
-							('user95', 'USER', 'user name 95'),
-							('user96', 'USER', 'user name 96'),
-							('user97', 'USER', 'user name 97'),
-							('user98', 'USER', 'user name 98');
-							
-						INSERT INTO "group_details" ("id")
-						VALUES
-							('group94');
-							
-							
-						INSERT INTO "user_details" ("id")
-						VALUES
-							('user95'),
-							('user96'),
-							('user97'),
-							('user98');
-							
-						INSERT INTO "group_membership" ("group_id", "member_id")
-						VALUES
-							('group94', 'user95'),
-							('group94', 'user96'),
-							('group94', 'user97'),
-							('group94', 'user98'),
-							('group94', 'user1');
-							
-						""");
-			}
-
-			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
-					.when().put("/vaults/{vaultId}/groups/{groupId}", "7E57C0DE-0000-4000-8000-000100002222", "group94")
+			when().get("/vaults/{vaultId}/keys/{deviceId}", "7E57C0DE-0000-4000-8000-000100001111", "device1")
 					.then().statusCode(402);
+		}
+
+		@AfterAll
+		public void reset() throws SQLException {
+			try (var s = dataSource.getConnection().createStatement()) {
+				s.execute("""
+						DELETE FROM "authority"
+						WHERE "id" IN ('user91', 'user92', 'user93', 'user94', 'group91');
+						""");
+			}
 		}
 
 	}

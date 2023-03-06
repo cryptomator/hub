@@ -13,6 +13,11 @@ const axiosBaseCfg: AxiosRequestConfig = {
   }
 };
 
+/**
+ * Any mutating requests require authentication. We use the Authorization header,
+ * which transports the Bearer Token and doubles as a CSRF-Protection.
+ * See https://security.stackexchange.com/a/177174/78702
+ */
 const axiosAuth = AxiosStatic.create(axiosBaseCfg);
 axiosAuth.interceptors.request.use(async request => {
   try {

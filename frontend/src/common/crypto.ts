@@ -2,6 +2,7 @@ import * as miscreant from 'miscreant';
 import { base32, base64, base64url } from 'rfc4648';
 import { JWE } from './jwe';
 import { JWT, JWTHeader } from './jwt';
+import { CRC32, wordEncoder } from './util';
 
 export class WrappedVaultKeys {
   constructor(readonly masterkey: string, readonly signaturePrivateKey: string, readonly signaturePublicKey: string, readonly salt: string, readonly iterations: number) { }
@@ -189,6 +190,41 @@ export class VaultKeys {
     }
   }
 
+  /**
+   * Restore the master key from a given recovery key, create a new admin signature key pair.
+   * @param recoveryKey The recovery key
+   * @returns The recovered master key
+   * @throws Error, if passing a malformed recovery key
+   */
+  public static async recover(recoveryKey: string): Promise<VaultKeys> {
+    // decode and check recovery key:
+    const decoded = wordEncoder.decode(recoveryKey);
+    if (decoded.length !== 66) {
+      throw new Error('Invalid recovery key length.');
+    }
+    const decodedKey = decoded.subarray(0, 64);
+    const crc32 = CRC32.compute(decodedKey);
+    if (decoded[64] !== (crc32 & 0xFF)
+      || decoded[65] !== (crc32 >> 8 & 0xFF)) {
+      throw new Error('Invalid recovery key checksum.');
+    }
+
+    // construct new VaultKeys from recovered key
+    const key = crypto.subtle.importKey(
+      'raw',
+      decodedKey,
+      VaultKeys.MASTERKEY_KEY_DESIGNATION,
+      true,
+      ['sign']
+    );
+    const keyPair = crypto.subtle.generateKey(
+      VaultKeys.SIGNATURE_KEY_DESIGNATION,
+      true,
+      ['sign', 'verify']
+    );
+    return new VaultKeys(await key, await keyPair);
+  }
+
   public async createVaultConfig(kid: string, hubConfig: VaultConfigHeaderHub, payload: VaultConfigPayload): Promise<string> {
     const header = JSON.stringify({
       kid: kid,
@@ -258,5 +294,22 @@ export class VaultKeys {
 
   public async signVaultEditRequest(jwtHeader: JWTHeader, jwtPayload: any): Promise<string> {
     return JWT.build(jwtHeader, jwtPayload, this.signatureKeyPair.privateKey);
+  }
+
+  /**
+   * Encode masterkey for offline backup purposes, allowing re-importing the key for recovery purposes
+   */
+  public async createRecoveryKey(): Promise<string> {
+    const rawkey = new Uint8Array(await crypto.subtle.exportKey('raw', this.masterKey));
+
+    // add 16 bit checksum:
+    const crc32 = CRC32.compute(rawkey);
+    const checksum = new Uint8Array(2);
+    checksum[0] = crc32 & 0xff;      // append the least significant byte of the crc
+    checksum[1] = crc32 >> 8 & 0xff; // followed by the second-least significant byte
+    const combined = new Uint8Array([...rawkey, ...checksum]);
+
+    // encode using human-readable words:
+    return wordEncoder.encodePadded(combined);
   }
 }

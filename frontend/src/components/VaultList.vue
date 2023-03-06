@@ -39,10 +39,37 @@
       </div>
     </Listbox>
 
-    <router-link to="/app/vaults/create" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
-      <PlusIcon class="-ml-0.5 mr-2 h-4 w-4" aria-hidden="true" />
-      {{ t('vaultList.createVault') }}
-    </router-link>
+    <Menu as="div" class="relative inline-block text-left">
+      <div>
+        <MenuButton class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+          {{ t('vaultList.addVault') }}
+          <ChevronDownIcon class="-mr-1 ml-2 h-5 w-5" aria-hidden="true" />
+        </MenuButton>
+      </div>
+
+      <transition enter-active-class="transition ease-out duration-100" enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 scale-100" leave-to-class="transform opacity-0 scale-95">
+        <MenuItems class="absolute right-0 z-10 mt-2 w-48 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+          <div class="py-1">
+            <router-link v-slot="{ navigate }" to="/app/vaults/create">
+              <MenuItem v-slot="{ active }" @click="navigate">
+                <div :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'group flex items-center px-4 py-2 text-sm']">
+                  <PlusIcon class="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" aria-hidden="true" />
+                  {{ t('vaultList.addVault.create') }}
+                </div>
+              </MenuItem>
+            </router-link>
+            <router-link v-slot="{ navigate }" to="/app/vaults/recover">
+              <MenuItem v-slot="{ active }" @click="navigate">
+                <div :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'group flex items-center px-4 py-2 text-sm']">
+                  <ArrowPathIcon class="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" aria-hidden="true" />
+                  {{ t('vaultList.addVault.recover') }}
+                </div>
+              </MenuItem>
+            </router-link>
+          </div>
+        </MenuItems>
+      </transition>
+    </Menu>
   </div>
 
   <div v-if="filteredVaults != null && filteredVaults.length > 0" class="mt-5 bg-white shadow overflow-hidden rounded-md">
@@ -86,8 +113,9 @@
 </template>
 
 <script setup lang="ts">
-import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue';
-import { CheckIcon, ChevronRightIcon, ChevronUpDownIcon, PlusIcon } from '@heroicons/vue/24/solid';
+import { Listbox, ListboxButton, ListboxOption, ListboxOptions, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
+import { ArrowPathIcon, ChevronDownIcon, PlusIcon } from '@heroicons/vue/20/solid';
+import { CheckIcon, ChevronRightIcon, ChevronUpDownIcon } from '@heroicons/vue/24/solid';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auth from '../common/auth';
