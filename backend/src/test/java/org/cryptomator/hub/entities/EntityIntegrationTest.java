@@ -1,27 +1,21 @@
 package org.cryptomator.hub.entities;
 
 import io.agroal.api.AgroalDataSource;
-import io.quarkus.hibernate.orm.panache.Panache;
-import io.quarkus.hibernate.orm.panache.runtime.JpaOperations;
 import io.quarkus.panache.common.Parameters;
-import io.quarkus.panache.common.Sort;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
-import org.hibernate.annotations.QueryHints;
 import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceException;
-import javax.transaction.TransactionScoped;
-import javax.transaction.Transactional;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.UUID;
 
 @QuarkusTest
 @DisplayName("Persistent Entities")
@@ -42,7 +36,7 @@ public class EntityIntegrationTest {
 			s.execute("""
 					INSERT INTO "device" ("id", "owner_id", "name", "publickey", "creation_time")
 						VALUES ('device999', 'user1', 'Computer 999', 'publickey999', '2020-02-20 20:20:20');
-					INSERT INTO "access_token" ("device_id", "vault_id", "jwe") VALUES ('device999', 'vault1', 'jwe4');
+					INSERT INTO "access_token" ("device_id", "vault_id", "jwe") VALUES ('device999', '7E57C0DE-0000-4000-8000-000100001111', 'jwe4');
 					""");
 		}
 
@@ -77,21 +71,21 @@ public class EntityIntegrationTest {
 			s.execute("""
 					INSERT INTO "device" ("id", "owner_id", "name", "publickey", "creation_time")
 						VALUES ('device999', 'user1', 'Computer 999', 'publickey999', '2020-02-20 20:20:20');
-					INSERT INTO "access_token" ("device_id", "vault_id", "jwe") VALUES ('device999', 'vault1', 'jwe4');
-					INSERT INTO "access_token" ("device_id", "vault_id", "jwe") VALUES ('device999', 'vault2', 'jwe5');
+					INSERT INTO "access_token" ("device_id", "vault_id", "jwe") VALUES ('device999', '7E57C0DE-0000-4000-8000-000100001111', 'jwe4');
+					INSERT INTO "access_token" ("device_id", "vault_id", "jwe") VALUES ('device999', '7E57C0DE-0000-4000-8000-000100002222', 'jwe5');
 					""");
 		}
 
 		List<AccessToken> tokens = AccessToken
 				.<AccessToken>find("#AccessToken.get", Parameters.with("deviceId", "device999")
-						.and("vaultId", "vault1")
+						.and("vaultId", UUID.fromString("7E57C0DE-0000-4000-8000-000100001111"))
 						.and("userId", "user1"))
 				.stream().toList();
 
 		var token = tokens.get(0);
 
 		Assertions.assertEquals(1, tokens.size());
-		Assertions.assertEquals("vault1", token.vault.id);
+		Assertions.assertEquals(UUID.fromString("7E57C0DE-0000-4000-8000-000100001111"), token.vault.id);
 		Assertions.assertEquals("device999", token.device.id);
 		Assertions.assertEquals("jwe4", token.jwe);
 	}

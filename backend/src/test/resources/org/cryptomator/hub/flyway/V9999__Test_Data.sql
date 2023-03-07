@@ -31,18 +31,18 @@ VALUES
 
 INSERT INTO "vault" ("id", "name", "description", "creation_time", "salt", "iterations", "masterkey", "auth_pubkey", "auth_prvkey")
 VALUES
-	('vault1', 'Vault 1', 'This is a testvault.', '2020-02-20 20:20:20', 'salt1', 'iterations1', 'masterkey1',
+	('7E57C0DE-0000-4000-8000-000100001111', 'Vault 1', 'This is a testvault.', '2020-02-20 20:20:20', 'salt1', 'iterations1', 'masterkey1',
 	 'MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAElS+JW3VaBvVr9GKZGn1399WDTd61Q9fwQMmZuBGAYPdl/rWk705QY6WhlmbokmEVva/mEHSoNQ98wFm9FBCqzh45IGd/DGwZ04Xhi5ah+1bKbkVhtds8nZtHRdSJokYp',
 	 'MIG2AgEAMBAGByqGSM49AgEGBSuBBAAiBIGeMIGbAgEBBDAa57e0Q/KAqmIVOVcWX7b+Sm5YVNRUx8W7nc4wk1IBj2QJmsj+MeShQRHG4ozTE9KhZANiAASVL4lbdVoG9Wv0YpkafXf31YNN3rVD1/BAyZm4EYBg92X+taTvTlBjpaGWZuiSYRW9r+YQdKg1D3zAWb0UEKrOHjkgZ38MbBnTheGLlqH7VspuRWG12zydm0dF1ImiRik='),
-	('vault2', 'Vault 2', 'This is a testvault.', '2020-02-20 20:20:20', 'salt2', 'iterations2', 'masterkey2',
+	('7E57C0DE-0000-4000-8000-000100002222', 'Vault 2', 'This is a testvault.', '2020-02-20 20:20:20', 'salt2', 'iterations2', 'masterkey2',
 	 'MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAEC1uWSXj2czCDwMTLWV5BFmwxdM6PX9p+Pk9Yf9rIf374m5XP1U8q79dBhLSIuaojsvOT39UUcPJROSD1FqYLued0rXiooIii1D3jaW6pmGVJFhodzC31cy5sfOYotrzF',
 	 'MIG2AgEAMBAGByqGSM49AgEGBSuBBAAiBIGeMIGbAgEBBDCAHpFQ62QnGCEvYh/pE9QmR1C9aLcDItRbslbmhen/h1tt8AyMhskeenT+rAyyPhGhZANiAAQLW5ZJePZzMIPAxMtZXkEWbDF0zo9f2n4+T1h/2sh/fviblc/VTyrv10GEtIi5qiOy85Pf1RRw8lE5IPUWpgu553SteKigiKLUPeNpbqmYZUkWGh3MLfVzLmx85ii2vMU=');
 
 INSERT INTO "vault_access" ("vault_id", "authority_id")
 VALUES
-	('vault1', 'user1'),
-	('vault1', 'user2'),
-	('vault2', 'group1'); /* user1, part of group1, has access to vault2 */
+	('7E57C0DE-0000-4000-8000-000100001111', 'user1'),
+	('7E57C0DE-0000-4000-8000-000100001111', 'user2'),
+	('7E57C0DE-0000-4000-8000-000100002222', 'group1'); /* user1, part of group1, has access to vault2 */
 
 INSERT INTO "device" ("id", "owner_id", "name", "publickey", "creation_time")
 VALUES
@@ -52,6 +52,6 @@ VALUES
 
 INSERT INTO "access_token" ("device_id", "vault_id", "jwe")
 VALUES
-	('device1', 'vault1', 'jwe1'),
-	('device2', 'vault1', 'jwe2'),
-	('device3', 'vault2', 'jwe3'); -- device3 of user1, part of group1, has access to vault2
+	('device1', '7E57C0DE-0000-4000-8000-000100001111', 'jwe1'),
+	('device2', '7E57C0DE-0000-4000-8000-000100001111', 'jwe2'),
+	('device3', '7E57C0DE-0000-4000-8000-000100002222', 'jwe3'); -- device3 of user1, part of group1, has access to vault2

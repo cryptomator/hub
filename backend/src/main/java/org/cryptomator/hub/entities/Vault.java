@@ -18,6 +18,7 @@ import java.sql.Timestamp;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -34,7 +35,7 @@ public class Vault extends PanacheEntityBase {
 
 	@Id
 	@Column(name = "id", nullable = false)
-	public String id;
+	public UUID id;
 
 	@ManyToMany
 	@JoinTable(name = "vault_access",

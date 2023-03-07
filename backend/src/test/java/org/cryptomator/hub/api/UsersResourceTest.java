@@ -5,6 +5,8 @@ import io.quarkus.test.security.TestSecurity;
 import io.quarkus.test.security.oidc.Claim;
 import io.quarkus.test.security.oidc.OidcSecurity;
 import io.restassured.RestAssured;
+import org.hamcrest.CoreMatchers;
+import org.hamcrest.text.IsEqualIgnoringCase;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -16,6 +18,7 @@ import static io.restassured.RestAssured.when;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.text.IsEqualIgnoringCase.equalToIgnoringCase;
 
 @QuarkusTest
 @DisplayName("Resource /users")
@@ -67,7 +70,7 @@ public class UsersResourceTest {
 					.then().statusCode(200)
 					.body("id", is("user1"))
 					.body("devices.id", hasItems("device1"))
-					.body("devices.accessTo.id.flatten()", hasItems("vault1"));
+					.body("devices.accessTo.id.flatten()", hasItems(equalToIgnoringCase("7E57C0DE-0000-4000-8000-000100001111")));
 		}
 
 		@Test
