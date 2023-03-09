@@ -45,7 +45,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.net.URI;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -317,7 +316,7 @@ public class VaultResource {
 		}
 		User currentUser = User.findById(jwt.getSubject());
 		var vault = vaultDto.toVault(vaultId);
-		vault.creationTime = Timestamp.from(Instant.now().truncatedTo(ChronoUnit.MILLIS));
+		vault.creationTime = Instant.now().truncatedTo(ChronoUnit.MILLIS);
 		vault.directMembers.add(currentUser);
 		try {
 			vault.persistAndFlush();
@@ -341,7 +340,7 @@ public class VaultResource {
 	) {
 
 		public static VaultDto fromEntity(Vault entity) {
-			return new VaultDto(entity.id, entity.name, entity.description, entity.creationTime.toInstant().truncatedTo(ChronoUnit.MILLIS), entity.masterkey, entity.iterations, entity.salt, entity.authenticationPublicKey, entity.authenticationPrivateKey);
+			return new VaultDto(entity.id, entity.name, entity.description, entity.creationTime.truncatedTo(ChronoUnit.MILLIS), entity.masterkey, entity.iterations, entity.salt, entity.authenticationPublicKey, entity.authenticationPrivateKey);
 		}
 
 		public Vault toVault(UUID id) {
@@ -349,7 +348,7 @@ public class VaultResource {
 			vault.id = id;
 			vault.name = name;
 			vault.description = description;
-			vault.creationTime = Timestamp.from(creationTime);
+			vault.creationTime = creationTime;
 			vault.masterkey = masterkey;
 			vault.iterations = iterations;
 			vault.salt = salt;

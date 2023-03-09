@@ -12,7 +12,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -51,7 +51,7 @@ public class Device extends PanacheEntityBase {
 	public String publickey;
 
 	@Column(name = "creation_time", nullable = false)
-	public Timestamp creationTime;
+	public Instant creationTime;
 
 	@Override
 	public String toString() {
