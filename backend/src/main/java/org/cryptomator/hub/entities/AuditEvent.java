@@ -6,14 +6,11 @@ import io.quarkus.panache.common.Parameters;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorColumn;
 import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
 import javax.persistence.Id;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.NamedQuery;
 import javax.persistence.Table;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
@@ -37,7 +34,7 @@ public class AuditEvent extends PanacheEntityBase {
 	public UUID id;
 
 	@Column(name = "timestamp", nullable = false, updatable = false)
-	public Timestamp timestamp;
+	public Instant timestamp;
 
 	@Column(name = "type", nullable = false, insertable = false, updatable = false)
 	public String type;
@@ -65,6 +62,6 @@ public class AuditEvent extends PanacheEntityBase {
 	}
 
 	public static Stream<AuditEvent> findAllInPeriod(Instant startDate, Instant endDate) {
-		return find("#AuditEvent.listAllInPeriod", Parameters.with("startDate", Timestamp.from(startDate)).and("endDate", Timestamp.from(endDate))).stream();
+		return find("#AuditEvent.listAllInPeriod", Parameters.with("startDate", startDate).and("endDate", endDate)).stream();
 	}
 }

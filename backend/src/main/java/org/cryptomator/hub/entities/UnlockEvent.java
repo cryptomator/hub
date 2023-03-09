@@ -6,7 +6,6 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.Table;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
@@ -22,7 +21,7 @@ public class UnlockEvent extends AuditEvent {
 	public String userId;
 
 	@Column(name = "vault_id")
-	public String vaultId;
+	public UUID vaultId;
 
 	@Column(name = "device_id")
 	public String deviceId;
@@ -47,10 +46,10 @@ public class UnlockEvent extends AuditEvent {
 		return Objects.hash(id, userId, vaultId, deviceId);
 	}
 
-	public static void log(String userId, String vaultId, String deviceId, UnlockResult result) {
+	public static void log(String userId, UUID vaultId, String deviceId, UnlockResult result) {
 		var event = new UnlockEvent();
 		event.id = UUID.randomUUID();
-		event.timestamp = Timestamp.from(Instant.now());
+		event.timestamp = Instant.now();
 		event.userId = userId;
 		event.vaultId = vaultId;
 		event.deviceId = deviceId;

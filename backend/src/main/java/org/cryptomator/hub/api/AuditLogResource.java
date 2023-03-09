@@ -28,10 +28,10 @@ public class AuditLogResource {
 	@RolesAllowed("admin")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "list all auditlog entries within a period", description = "list all auditlog entries from a period specified by a start and end date")
-	@Parameter(name = "startDate", description = "the start date of the period in milliseconds from the UNIX epoch", in = ParameterIn.QUERY)
-	@Parameter(name = "endDate", description = "the end date of the period in milliseconds from the UNIX epoch", in = ParameterIn.QUERY)
-	public EventList getAllEvents(@QueryParam("startDate") long startDate, @QueryParam("endDate") long endDate) {
-		var events = AuditEvent.findAllInPeriod(Instant.ofEpochMilli(startDate), Instant.ofEpochMilli(endDate)).map(AuditEventDto::fromEntity).toList();
+	@Parameter(name = "startDate", description = "the start date of the period as ISO 8601 datetime string", in = ParameterIn.QUERY)
+	@Parameter(name = "endDate", description = "the end date of the period as ISO 8601 datetime string", in = ParameterIn.QUERY)
+	public EventList getAllEvents(@QueryParam("startDate") Instant startDate, @QueryParam("endDate") Instant endDate) {
+		var events = AuditEvent.findAllInPeriod(startDate, endDate).map(AuditEventDto::fromEntity).toList();
 		return new EventList(events);
 	}
 
@@ -56,14 +56,14 @@ public class AuditLogResource {
 
 		static AuditEventDto fromEntity(AuditEvent entity) {
 			if (entity instanceof UnlockEvent e) {
-				return new UnlockEventDto(e.id, e.timestamp.toInstant(), UnlockEvent.TYPE, e.userId, e.vaultId, e.deviceId, e.result);
+				return new UnlockEventDto(e.id, e.timestamp, UnlockEvent.TYPE, e.userId, e.vaultId, e.deviceId, e.result);
 			} else {
 				throw new UnsupportedOperationException("conversion not implemented for event type " + entity.getClass());
 			}
 		}
 	}
 
-	record UnlockEventDto(UUID id, Instant timestamp, String type, @JsonProperty("userId") String userId, @JsonProperty("vaultId") String vaultId, @JsonProperty("deviceId") String deviceId, @JsonProperty("result") UnlockResult result) implements AuditEventDto {
+	record UnlockEventDto(UUID id, Instant timestamp, String type, @JsonProperty("userId") String userId, @JsonProperty("vaultId") UUID vaultId, @JsonProperty("deviceId") String deviceId, @JsonProperty("result") UnlockResult result) implements AuditEventDto {
 	}
 
 }
