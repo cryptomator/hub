@@ -13,7 +13,7 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceException;
 import java.sql.SQLException;
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -56,7 +56,7 @@ public class EntityIntegrationTest {
 		conflictingDevice.name = existingDevice.name;
 		conflictingDevice.owner = existingDevice.owner;
 		conflictingDevice.publickey = "XYZ";
-		conflictingDevice.creationTime = Timestamp.valueOf("2020-02-20 20:20:20");
+		conflictingDevice.creationTime = Instant.parse("2020-02-20T20:20:20Z");
 
 		PersistenceException thrown = Assertions.assertThrows(PersistenceException.class, conflictingDevice::persistAndFlush);
 		Assertions.assertInstanceOf(ConstraintViolationException.class, thrown.getCause());

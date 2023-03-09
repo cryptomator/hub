@@ -28,7 +28,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.net.URI;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Set;
@@ -53,7 +52,7 @@ public class DeviceResource {
 			return Response.status(Response.Status.BAD_REQUEST).entity("deviceId or deviceDto cannot be empty").build();
 		}
 		User currentUser = User.findById(jwt.getSubject());
-		var device = deviceDto.toDevice(currentUser, deviceId, Timestamp.from(Instant.now().truncatedTo(ChronoUnit.MILLIS)));
+		var device = deviceDto.toDevice(currentUser, deviceId, Instant.now().truncatedTo(ChronoUnit.MILLIS));
 		try {
 			device.persistAndFlush();
 			return Response.created(URI.create(".")).build();
@@ -96,7 +95,7 @@ public class DeviceResource {
 							@JsonProperty("accessTo") @Valid Set<VaultResource.VaultDto> accessTo,
 							@JsonProperty("creationTime") Instant creationTime) {
 
-		public Device toDevice(User user, String id, Timestamp creationTime) {
+		public Device toDevice(User user, String id, Instant creationTime) {
 			var device = new Device();
 			device.id = id;
 			device.owner = user;
@@ -107,7 +106,7 @@ public class DeviceResource {
 		}
 
 		public static DeviceDto fromEntity(Device entity) {
-			return new DeviceDto(entity.id, entity.name, entity.publickey, entity.owner.id, Set.of(), entity.creationTime.toInstant().truncatedTo(ChronoUnit.MILLIS));
+			return new DeviceDto(entity.id, entity.name, entity.publickey, entity.owner.id, Set.of(), entity.creationTime.truncatedTo(ChronoUnit.MILLIS));
 		}
 
 	}
