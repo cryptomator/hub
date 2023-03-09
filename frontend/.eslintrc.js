@@ -45,7 +45,7 @@ module.exports = {
     'semi': ['error', 'always'],
     'space-infix-ops': 'error',
     '@typescript-eslint/indent': ['error', 2],
-    '@typescript-eslint/no-unused-vars': 'error',
+    '@typescript-eslint/no-unused-vars': 'off', // is checked by noUnusedLocals in tsconfig.json
     'no-undef': 'off' // types checked by typescript already
   }
 };

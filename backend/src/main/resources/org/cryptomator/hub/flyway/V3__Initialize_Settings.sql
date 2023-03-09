@@ -1,0 +1,2 @@
+-- Only relevant for _new_ installations. This replaces old Java-based V2 migration. See issue #183 why we could not replace V2
+INSERT INTO "settings" ("id", "hub_id") VALUES (0, gen_random_uuid()) ON CONFLICT DO NOTHING

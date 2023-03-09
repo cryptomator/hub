@@ -49,7 +49,13 @@ const routes: RouteRecordRaw[] = [
       },
       {
         path: 'vaults/create',
-        component: CreateVault
+        component: CreateVault,
+        props: () => ({ recover: false })
+      },
+      {
+        path: 'vaults/recover',
+        component: CreateVault,
+        props: () => ({ recover: true })
       },
       {
         path: 'vaults/:id',

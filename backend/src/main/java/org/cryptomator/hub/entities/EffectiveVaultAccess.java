@@ -12,6 +12,7 @@ import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 import java.io.Serializable;
 import java.util.Objects;
+import java.util.UUID;
 
 @Entity
 @Immutable
@@ -54,7 +55,7 @@ public class EffectiveVaultAccess extends PanacheEntityBase {
 	public static class EffectiveVaultAccessId implements Serializable {
 
 		@Column(name = "vault_id")
-		public String vaultId;
+		public UUID vaultId;
 
 		@Column(name = "authority_id")
 		public String authorityId;

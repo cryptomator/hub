@@ -2,8 +2,6 @@ package org.cryptomator.hub.filters;
 
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
-import com.radcortez.flyway.test.annotation.DataSource;
-import com.radcortez.flyway.test.annotation.FlywayTest;
 import io.agroal.api.AgroalDataSource;
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Assertions;
@@ -18,11 +16,9 @@ import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.UriInfo;
 import java.sql.SQLException;
 import java.time.Clock;
-import java.time.Instant;
 import java.time.ZoneId;
 
 @QuarkusTest
-@FlywayTest(value = @DataSource(url = "jdbc:h2:mem:test"), additionalLocations = {"classpath:org/cryptomator/hub/flyway"})
 class VaultAdminOnlyFilterProviderTestIT {
 
 	private VaultAdminOnlyFilterProvider vaultAdminOnlyFilterProvider;
