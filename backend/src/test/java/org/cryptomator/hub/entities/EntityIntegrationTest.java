@@ -4,14 +4,14 @@ import io.agroal.api.AgroalDataSource;
 import io.quarkus.panache.common.Parameters;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceException;
 import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import javax.inject.Inject;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceException;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.util.List;
@@ -59,7 +59,7 @@ public class EntityIntegrationTest {
 		conflictingDevice.creationTime = Instant.parse("2020-02-20T20:20:20Z");
 
 		PersistenceException thrown = Assertions.assertThrows(PersistenceException.class, conflictingDevice::persistAndFlush);
-		Assertions.assertInstanceOf(ConstraintViolationException.class, thrown.getCause());
+		Assertions.assertInstanceOf(ConstraintViolationException.class, thrown);
 	}
 
 	@Test

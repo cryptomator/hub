@@ -9,6 +9,8 @@ import io.quarkus.test.security.oidc.Claim;
 import io.quarkus.test.security.oidc.OidcSecurity;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
+import jakarta.inject.Inject;
+import jakarta.validation.Validator;
 import org.cryptomator.hub.filters.VaultAdminOnlyFilterProvider;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
@@ -26,8 +28,6 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import javax.inject.Inject;
-import javax.validation.Validator;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;

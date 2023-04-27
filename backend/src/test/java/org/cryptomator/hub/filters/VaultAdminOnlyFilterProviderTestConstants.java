@@ -4,12 +4,14 @@ import java.time.Instant;
 
 final class VaultAdminOnlyFilterProviderTestConstants {
 
-	// { "alg": "ES384", "typ": "JWT", "vaultId": "vault2" } { "iat": 1516239015 (2018-01-18T01:30:15) }
-	static final String VALID_TOKEN_VAULT_2 = "eyJhbGciOiJFUzM4NCIsInR5cCI6IkpXVCIsInZhdWx0SWQiOiJ2YXVsdDIifQ.eyJpYXQiOjE1MTYyMzkwMTV9.QYG_3b8d-Hglp68UAX3-Sn679TCb2v4alS6ruExL_gUr3Nrk1zCV5Gqjr5_h0rTsYL8t-bQh9u7NHkAuxcA5wdFTH0fEc45-2RGsMj0Mz4Cduv7WmOEMh28z-J5QTvlS";
+	// { "alg": "ES384", "typ": "JWT", "vaultId": "7E57C0DE-0000-4000-8000-000100002222" } { "iat": 1516239015 (2018-01-18T01:30:15) }
+	static final String VALID_TOKEN_VAULT_2 = "eyJhbGciOiJFUzM4NCIsInR5cCI6IkpXVCIsInZhdWx0SWQiOiI3RTU3QzBERS0wMDAwLTQwMDAtODAwMC0wMDAxMDAwMDIyMjIifQ.eyJpYXQiOjE1MTYyMzkwMTV9.x3-JltFRYrwC6fNBgtvCHyIh8HzmcS190GVSbKzhLROeIyYpvvWo9PH_nVHa_8p6xQoMrwf7-H5gQYVm3EhtHWO_2CZro55zdzFkLThU26ql6yWtGPNroTmOyUT1MSQs";
 
-	// { "alg": "ES384", "typ": "JWT", "vaultId": "vault3000" } { "iat": 1516239015 (2018-01-18T01:30:15) }
-	static final String VALID_TOKEN_VAULT_3000 = "eyJhbGciOiJFUzM4NCIsInR5cCI6IkpXVCIsInZhdWx0SWQiOiJ2YXVsdDMwMDAifQ.eyJpYXQiOjE1MTYyMzkwMTV9.GpYk3tflY1K-rdWLT8wFeNAabW_Q0tQCaSe8It6Fr0xqPMxnrhbukONrrNPGSlhjlrmpVtl3DABaiO8921o7hpsaqQQVFvRFmYWpsajOl_2pi7YhJmKCrdyaTswBGAo3";
-	static final String INVALID_SIGNATURE_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzM4NCIsInZhdWx0SWQiOiJ2YXVsdDIifQ.e30.cGZDCqzJQgcBHNVPcmBc8JfeGzUf3CHUrwSAMwOA0Dcy9aUZvsAm1dr1MKzuPW_UFHRfMnNi2EwASOA6t-vPWvPFolAHFn5REt2Y9Aw9mIz-qxSBLpz6OMZD16tysQcd";
+	// { "alg": "ES384", "typ": "JWT", "vaultId": "7E57C0DE-0000-4000-8000-000100003000" } { "iat": 1516239015 (2018-01-18T01:30:15) }
+	static final String VALID_TOKEN_VAULT_3000 = "eyJhbGciOiJFUzM4NCIsInR5cCI6IkpXVCIsInZhdWx0SWQiOiI3RTU3QzBERS0wMDAwLTQwMDAtODAwMC0wMDAxMDAwMDMwMDAifQ.eyJpYXQiOjE1MTYyMzkwMTV9.MCI388EG6LAXuRLVm6_YFEP-Up8bYI2SBvCtIv3azrPtmNbidR5KxtSVoV_W3iFsG8AUj4G7JLxT8F-b4Dw1i3VBhPMVl4GlC_AN89yvp5SPgtfYmIUdHWvcugahayHh";
+
+	// { "alg": "ES384", "typ": "JWT", "vaultId": "7E57C0DE-0000-4000-8000-000100002222" } { "iat": 1516239015 (2018-01-18T01:30:15) } but signed with key of vault1
+	static final String INVALID_SIGNATURE_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzM4NCIsInZhdWx0SWQiOiI3RTU3QzBERS0wMDAwLTQwMDAtODAwMC0wMDAxMDAwMDIyMjIifQ.e30.9_5pMhgkn9iyOG01T82hB00tHEELwMX0BGIc2_DwzZSizJYNz312B5xWkI1TOwzteEpWO2ivdki3NfgJkRsNBOJ02H5QJ8Zg4qT5lCbWySdZpMeSODTjHRuN5lErwAR2";
 	static final String MALFORMED_TOKEN = "hello world";
 	static final Instant NOW  = Instant.ofEpochSecond(1516239015); // 2018-01-18T01:30:15
 
