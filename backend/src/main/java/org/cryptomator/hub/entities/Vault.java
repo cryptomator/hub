@@ -62,7 +62,7 @@ public class Vault extends PanacheEntityBase {
 	public String salt;
 
 	@Column(name = "iterations", nullable = false)
-	public String iterations;
+	public int iterations;
 
 	@Column(name = "masterkey", nullable = false)
 	public String masterkey;

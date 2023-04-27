@@ -1,0 +1,1 @@
+ALTER TABLE "vault" ALTER COLUMN "iterations" SET DATA TYPE INTEGER USING "iterations"::integer

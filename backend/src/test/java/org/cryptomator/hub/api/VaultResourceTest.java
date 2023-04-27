@@ -89,19 +89,9 @@ public class VaultResourceTest {
 
 		@Test
 		public void testValidDto() {
-			var dto = new VaultResource.VaultDto(VALID_ID, VALID_NAME, "foobarbaz", Instant.parse("2020-02-20T20:20:20Z"), VALID_MASTERKEY, "8", VALID_SALT, VALID_AUTH_PUB, VALID_AUTH_PRI);
+			var dto = new VaultResource.VaultDto(VALID_ID, VALID_NAME, "foobarbaz", Instant.parse("2020-02-20T20:20:20Z"), VALID_MASTERKEY, 8, VALID_SALT, VALID_AUTH_PUB, VALID_AUTH_PRI);
 			var violations = validator.validate(dto);
 			MatcherAssert.assertThat(violations, Matchers.empty());
-		}
-
-		@ParameterizedTest
-		@DisplayName("Testing invalid values for property iterations")
-		@ValueSource(strings = {"foo", "-5", "0x20", "10e10", "0.33"})
-		@NullAndEmptySource
-		public void testInvalidIterationss(String iterations) {
-			var dto = new VaultResource.VaultDto(VALID_ID, VALID_NAME, "foobarbaz", Instant.parse("2020-02-20T20:20:20Z"), VALID_MASTERKEY, iterations, VALID_SALT, VALID_AUTH_PUB, VALID_AUTH_PRI);
-			var violations = validator.validate(dto);
-			MatcherAssert.assertThat(violations, Matchers.not(Matchers.empty()));
 		}
 
 	}
@@ -207,7 +197,7 @@ public class VaultResourceTest {
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111 returns 409")
 		public void testCreateVault1() {
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100001111");
-			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", "Test vault 1", Instant.parse("1999-11-19T19:19:19Z"), "masterkey3", "42", "NaCl", "authPubKey3", "authPrvKey3");
+			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", "Test vault 1", Instant.parse("1999-11-19T19:19:19Z"), "masterkey3", 42, "NaCl", "authPubKey3", "authPrvKey3");
 
 			given().contentType(ContentType.JSON).body(vaultDto)
 					.when().put("/vaults/{vaultId}", uuid.toString())
@@ -218,7 +208,7 @@ public class VaultResourceTest {
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100002222 returns 409")
 		public void testCreateVault2() {
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100002222");
-			var vaultDto = new VaultResource.VaultDto(uuid, "Vault 1", "This is a testvault.", Instant.parse("2020-02-20T20:20:20Z"), "masterkey1", "42", "salt1", "authPubKey1", "authPrvKey1");
+			var vaultDto = new VaultResource.VaultDto(uuid, "Vault 1", "This is a testvault.", Instant.parse("2020-02-20T20:20:20Z"), "masterkey1", 42, "salt1", "authPubKey1", "authPrvKey1");
 
 			given().contentType(ContentType.JSON).body(vaultDto)
 					.when().put("/vaults/{vaultId}", uuid.toString())
@@ -229,7 +219,7 @@ public class VaultResourceTest {
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100003333 returns 201")
 		public void testCreateVault3() {
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100003333");
-			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", "Test vault 3", Instant.parse("2112-12-21T21:12:21Z"), "masterkey3", "42", "NaCl", "authPubKey3", "authPrvKey3");
+			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", "Test vault 3", Instant.parse("2112-12-21T21:12:21Z"), "masterkey3", 42, "NaCl", "authPubKey3", "authPrvKey3");
 
 			given().contentType(ContentType.JSON).body(vaultDto)
 					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-BADBADBADBAD")
