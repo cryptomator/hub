@@ -3,6 +3,7 @@ import authPromise from '../common/auth';
 import backend from '../common/backend';
 import { baseURL } from '../common/config';
 import AdminSettings from '../components/AdminSettings.vue';
+import AuditLog from '../components/AuditLog.vue';
 import AuthenticatedMain from '../components/AuthenticatedMain.vue';
 import CreateVault from '../components/CreateVault.vue';
 import DeviceList from '../components/DeviceList.vue';
@@ -73,6 +74,15 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'admin',
         component: AdminSettings,
+        props: (route) => ({ token: route.query.token }),
+        beforeEnter: async () => {
+          const auth = await authPromise;
+          return auth.isAdmin(); //TODO: reroute to NotFound Screen/ AccessDeniedScreen?
+        }
+      },
+      {
+        path: 'auditlog',
+        component: AuditLog,
         props: (route) => ({ token: route.query.token }),
         beforeEnter: async () => {
           const auth = await authPromise;

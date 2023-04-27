@@ -44,6 +44,11 @@
   "admin.licenseInfo.selfHostedNoLicense.description": "Vielen Dank, dass du Cryptomator Hub nutzt! Du hast die Community-Lizenz erhalten. Wenn du mehr Sitze benötigst, erweiter deine Lizenz.",
   "admin.licenseInfo.managedNoLicense.description": "Vielen Dank, dass du Cryptomator Hub nutzt! Du hast aktuell keine aktive Lizenz.",
 
+  "auditLog.title": "Audit-Logs",
+  "auditLog.id": "ID",
+  "auditLog.timestamp": "Zeitstempel",
+  "auditLog.type": "Typ",
+
   "authenticateVaultAdminDialog.title": "Tresor verwalten",
   "authenticateVaultAdminDialog.description": "Gib das Tresor-Admin-Passwort des Tresors ein, um ihn zu verwalten.",
   "authenticateVaultAdminDialog.password": "Tresor-Admin-Passwort",
@@ -99,6 +104,7 @@
   "nav.profile.devices": "Deine Geräte",
   "nav.profile.settings": "Einstellungen",
   "nav.profile.admin": "Admin",
+  "nav.profile.auditlog": "Audit-Logs",
   "nav.profile.signOut": "Abmelden",
   "nav.mobileMenu": "Hauptmenü öffnen",
 

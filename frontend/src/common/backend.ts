@@ -163,6 +163,41 @@ export type VersionDto = {
   keycloakVersion: string;
 }
 
+enum AuditEventType {
+  Unlock = 'UNLOCK'
+}
+
+export abstract class AuditEventDto {
+  constructor(public id: string, public timestamp: Date, public type: AuditEventType) { }
+}
+
+enum UnlockResult {
+  Success = 'SUCCESS',
+  NoSuchDevice = 'NO_SUCH_DEVICE',
+  DeviceNotAuthorized = 'DEVICE_NOT_AUTHORIZED'
+}
+
+export class UnlockEventDto extends AuditEventDto {
+  constructor(public id: string, public timestamp: Date, public type: AuditEventType, public userId: string, public vaultId: string, public deviceId: string, public result: UnlockResult) {
+    super(id, timestamp, type);
+  }
+
+  static typeOf(obj: any): obj is UnlockEventDto {
+    const unlockEventDto = obj as UnlockEventDto;
+    return typeof unlockEventDto.id === 'string'
+      && typeof unlockEventDto.timestamp === 'string'
+      && typeof unlockEventDto.userId === 'string'
+      && typeof unlockEventDto.vaultId === 'string'
+      && typeof unlockEventDto.deviceId === 'string'
+      && Object.values(UnlockResult).includes(unlockEventDto.result)
+      && unlockEventDto.type === AuditEventType.Unlock;
+  }
+
+  static copy(obj: UnlockEventDto): UnlockEventDto {
+    return new UnlockEventDto(obj.id, obj.timestamp, obj.type, obj.userId, obj.vaultId, obj.deviceId, obj.result);
+  }
+}
+
 /* Services */
 
 export interface VaultIdHeader extends JWTHeader {
@@ -308,6 +343,20 @@ class VersionService {
   }
 }
 
+class AuditLogService {
+  public async getAllEvents(startDate: Date, endDate: Date): Promise<AuditEventDto[]> {
+    return axiosAuth.get<AuditEventDto[]>(`/auditlog?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`).then(response => {
+      return response.data.map(auditEvent => {
+        if (UnlockEventDto.typeOf(auditEvent)) {
+          return UnlockEventDto.copy(auditEvent);
+        } else {
+          throw new Error('Provided data is not of any subtype of AuditEventDto');
+        }
+      });
+    });
+  }
+}
+
 /**
  * Note: Each service can thrown an {@link UnauthorizedError} when the access token is expired!
  */
@@ -317,7 +366,8 @@ const services = {
   authorities: new AuthorityService(),
   devices: new DeviceService(),
   billing: new BillingService(),
-  version: new VersionService()
+  version: new VersionService(),
+  auditLogs: new AuditLogService()
 };
 
 function convertExpectedToBackendError(status: number): BackendError {

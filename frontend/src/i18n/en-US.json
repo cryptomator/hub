@@ -45,6 +45,11 @@
   "admin.licenseInfo.selfHostedNoLicense.description": "Thank you for using Cryptomator Hub! You have been granted the Community License. If you need more seats, upgrade your license.",
   "admin.licenseInfo.managedNoLicense.description": "Thank you for using Cryptomator Hub! You currently have no active license.",
 
+  "auditLog.title": "Audit Logs",
+  "auditLog.id": "ID",
+  "auditLog.timestamp": "Timestamp",
+  "auditLog.type": "Type",
+
   "authenticateVaultAdminDialog.title": "Manage Vault",
   "authenticateVaultAdminDialog.description": "Type in the vault admin password to manage it.",
   "authenticateVaultAdminDialog.password": "Vault Admin Password",
@@ -100,6 +105,7 @@
   "nav.profile.devices": "Your Devices",
   "nav.profile.settings": "Settings",
   "nav.profile.admin": "Admin",
+  "nav.profile.auditlog": "Audit Logs",
   "nav.profile.signOut": "Sign out",
   "nav.mobileMenu": "Open main menu",
 
