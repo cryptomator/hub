@@ -9,12 +9,12 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.jwt.interfaces.JWTVerifier;
 import com.auth0.jwt.interfaces.Verification;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.container.ContainerRequestFilter;
+import jakarta.ws.rs.ext.Provider;
 import org.cryptomator.hub.entities.Vault;
 
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ContainerRequestFilter;
-import javax.ws.rs.ext.Provider;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.ECPublicKey;
@@ -107,7 +107,7 @@ public class VaultAdminOnlyFilterProvider implements ContainerRequestFilter {
 	//visible for testing
 	String getUnverifiedVaultId(DecodedJWT vaultAdminAuthorizationJWT) {
 		var unveridifedVaultId = vaultAdminAuthorizationJWT.getHeaderClaim(VAULT_ID);
-		if (!unveridifedVaultId.isNull() && unveridifedVaultId.asString() != null) {
+		if (!unveridifedVaultId.isNull() && unveridifedVaultId.asString() != null) { // TODO should verify uuid as well
 			return unveridifedVaultId.asString();
 		} else {
 			throw new VaultAdminValidationFailedException("No VaultAdminAuthorizationJWT provided");

@@ -1,6 +1,6 @@
 package org.cryptomator.hub.filters;
 
-import javax.ws.rs.ForbiddenException;
+import jakarta.ws.rs.ForbiddenException;
 
 public class VaultAdminTokenIAPNotValidException extends ForbiddenException {
 

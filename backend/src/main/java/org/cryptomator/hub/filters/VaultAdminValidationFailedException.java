@@ -1,6 +1,6 @@
 package org.cryptomator.hub.filters;
 
-import javax.ws.rs.BadRequestException;
+import jakarta.ws.rs.BadRequestException;
 
 public class VaultAdminValidationFailedException extends BadRequestException {
 
