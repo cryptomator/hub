@@ -13,11 +13,11 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <quarkus.container-image.group>cryptomator</quarkus.container-image.group>
     <quarkus.container-image.name>hub</quarkus.container-image.name>
-    <quarkus.platform.version>2.16.3.Final</quarkus.platform.version>
+    <quarkus.platform.version>3.0.1.Final</quarkus.platform.version>
     <quarkus.native.builder-image>quay.io/quarkus/ubi-quarkus-mandrel:22.3-java17</quarkus.native.builder-image>
     <quarkus.jib.base-jvm-image>eclipse-temurin:17-jre</quarkus.jib.base-jvm-image> <!-- irrelevant for -Pnative -->
-    <jwt.version>4.3.0</jwt.version>
-    <surefire-plugin.version>3.0.0-M9</surefire-plugin.version>
+    <jwt.version>4.4.0</jwt.version>
+    <surefire-plugin.version>3.0.0</surefire-plugin.version>
   </properties>
 
   <dependencyManagement>

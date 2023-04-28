@@ -1,5 +1,15 @@
 package org.cryptomator.hub.api;
 
+import jakarta.annotation.security.RolesAllowed;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.AccessToken;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.User;
@@ -8,16 +18,6 @@ import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.jboss.resteasy.reactive.NoCache;
 
-import javax.annotation.security.RolesAllowed;
-import javax.inject.Inject;
-import javax.transaction.Transactional;
-import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -62,7 +62,7 @@ public class UsersResource {
 	public UserDto getMe(@QueryParam("withDevices") boolean withDevices, @QueryParam("withAccessibleVaults") boolean withAccessibleVaults) {
 		User user = User.findById(jwt.getSubject());
 		Function<AccessToken, VaultResource.VaultDto> mapAccessibleVaults =
-				a -> new VaultResource.VaultDto(a.vault.id, a.vault.name, a.vault.description, a.vault.creationTime.truncatedTo(ChronoUnit.MILLIS), null, null, null, null, null);
+				a -> new VaultResource.VaultDto(a.vault.id, a.vault.name, a.vault.description, a.vault.creationTime.truncatedTo(ChronoUnit.MILLIS), null, 0, null, null, null);
 		Function<Device, DeviceResource.DeviceDto> mapDevices = withAccessibleVaults //
 				? d -> new DeviceResource.DeviceDto(d.id, d.name, d.publickey, d.owner.id, d.accessTokens.stream().map(mapAccessibleVaults).collect(Collectors.toSet()), d.creationTime.truncatedTo(ChronoUnit.MILLIS)) //
 				: d -> new DeviceResource.DeviceDto(d.id, d.name, d.publickey, d.owner.id, Set.of(), d.creationTime.truncatedTo(ChronoUnit.MILLIS));

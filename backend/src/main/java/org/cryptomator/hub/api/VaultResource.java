@@ -2,6 +2,27 @@ package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.security.identity.SecurityIdentity;
+import jakarta.annotation.security.RolesAllowed;
+import jakarta.inject.Inject;
+import jakarta.persistence.PersistenceException;
+import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.ClientErrorException;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.ForbiddenException;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.InternalServerErrorException;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.AccessToken;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.EffectiveGroupMembership;
@@ -23,27 +44,6 @@ import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.hibernate.exception.ConstraintViolationException;
 
-import javax.annotation.security.RolesAllowed;
-import javax.inject.Inject;
-import javax.persistence.PersistenceException;
-import javax.transaction.Transactional;
-import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Pattern;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.ClientErrorException;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.ForbiddenException;
-import javax.ws.rs.GET;
-import javax.ws.rs.InternalServerErrorException;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -277,7 +277,7 @@ public class VaultResource {
 			access.persistAndFlush();
 			return Response.created(URI.create(".")).build();
 		} catch (PersistenceException e) {
-			if (e.getCause() instanceof ConstraintViolationException) {
+			if (e instanceof ConstraintViolationException) {
 				throw new ClientErrorException(Response.Status.CONFLICT, e);
 			} else {
 				throw new InternalServerErrorException(e);
@@ -322,7 +322,7 @@ public class VaultResource {
 			vault.persistAndFlush();
 			return Response.created(URI.create(".")).build();
 		} catch (PersistenceException e) {
-			if (e.getCause() instanceof ConstraintViolationException) {
+			if (e instanceof ConstraintViolationException) {
 				throw new ClientErrorException(Response.Status.CONFLICT, e);
 			} else {
 				throw new InternalServerErrorException(e);
@@ -334,7 +334,7 @@ public class VaultResource {
 						   @JsonProperty("name") @NoHtmlOrScriptChars @NotBlank String name,
 						   @JsonProperty("description") @NoHtmlOrScriptChars String description,
 						   @JsonProperty("creationTime") Instant creationTime,
-						   @JsonProperty("masterkey") @OnlyBase64Chars String masterkey, @JsonProperty("iterations") @NotBlank @Pattern(regexp = "\\d+") String iterations,
+						   @JsonProperty("masterkey") @OnlyBase64Chars String masterkey, @JsonProperty("iterations") int iterations,
 						   @JsonProperty("salt") @OnlyBase64Chars String salt,
 						   @JsonProperty("authPublicKey") @OnlyBase64Chars String authPublicKey, @JsonProperty("authPrivateKey") @OnlyBase64Chars String authPrivateKey
 	) {

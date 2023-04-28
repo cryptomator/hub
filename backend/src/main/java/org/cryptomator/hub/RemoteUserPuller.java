@@ -1,13 +1,13 @@
 package org.cryptomator.hub;
 
 import io.quarkus.scheduler.Scheduled;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import org.cryptomator.hub.entities.Authority;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.transaction.Transactional;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;

@@ -1,6 +1,6 @@
 package org.cryptomator.hub.filters;
 
-import javax.ws.rs.NotAuthorizedException;
+import jakarta.ws.rs.NotAuthorizedException;
 
 public class VaultAdminNotProvidedException extends NotAuthorizedException {
 
