@@ -1,27 +1,22 @@
 package org.cryptomator.hub.api;
 
-import com.radcortez.flyway.test.annotation.DataSource;
-import com.radcortez.flyway.test.annotation.FlywayTest;
 import io.agroal.api.AgroalDataSource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.quarkus.test.security.oidc.Claim;
 import io.quarkus.test.security.oidc.OidcSecurity;
 import io.restassured.RestAssured;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-
-import javax.inject.Inject;
-import java.sql.SQLException;
 
 import static io.restassured.RestAssured.when;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.Matchers.empty;
 
 @QuarkusTest
-@FlywayTest(value = @DataSource(url = "jdbc:h2:mem:test"), additionalLocations = {"classpath:org/cryptomator/hub/flyway"})
 @DisplayName("Resource /authorities")
 public class AuthorityResourceTest {
 
@@ -82,35 +77,11 @@ public class AuthorityResourceTest {
 		}
 
 		@Test
-		@DisplayName("GET /search?query=Name 3000 returns 200 with \"user3000\", \"group3000\"")
-		public void testGetSameUserGroupName() throws SQLException {
-			try (var s = dataSource.getConnection().createStatement()) {
-				s.execute("""
-						INSERT INTO "authority" ("id", "type", "name")
-						VALUES
-							('user3000', 'USER', 'Name 3000');
-							
-						INSERT INTO "user_details" ("id")
-						VALUES
-							('user3000');
-							
-						""");
-
-				s.execute("""
-						INSERT INTO "authority" ("id", "type", "name")
-						VALUES
-							('group3000', 'GROUP', 'Name 3000');
-							
-						INSERT INTO "group_details" ("id")
-						VALUES
-							('group3000');
-							
-						""");
-			}
-
-			when().get("/authorities/search?query=Name 3000")
+		@DisplayName("GET /search?query=1 returns 200 with \"user1\", \"group1\"")
+		public void testGetSameUserGroupName() {
+			when().get("/authorities/search?query=1")
 					.then().statusCode(200)
-					.body("id", hasItems("user3000", "group3000"));
+					.body("id", hasItems("user1", "group1"));
 		}
 	}
 }

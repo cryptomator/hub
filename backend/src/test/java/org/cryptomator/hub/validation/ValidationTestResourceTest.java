@@ -1,6 +1,8 @@
 package org.cryptomator.hub.validation;
 
 import io.quarkus.test.junit.QuarkusTest;
+import jakarta.inject.Inject;
+import jakarta.validation.Validator;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.DisplayName;
@@ -13,8 +15,6 @@ import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import javax.inject.Inject;
-import javax.validation.Validator;
 import java.util.Arrays;
 import java.util.stream.Stream;
 

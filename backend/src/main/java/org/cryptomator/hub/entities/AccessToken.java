@@ -2,20 +2,21 @@ package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.panache.common.Parameters;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.MapsId;
+import jakarta.persistence.NamedQuery;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.Table;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Embeddable;
-import javax.persistence.EmbeddedId;
-import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.MapsId;
-import javax.persistence.NamedQuery;
-import javax.persistence.NoResultException;
-import javax.persistence.Table;
 import java.io.Serializable;
 import java.util.Objects;
+import java.util.UUID;
 
 @Entity
 @Table(name = "access_token")
@@ -47,7 +48,7 @@ public class AccessToken extends PanacheEntityBase {
 	@Column(name = "jwe", nullable = false)
 	public String jwe;
 
-	public static AccessToken unlock(String vaultId, String deviceId, String userId) {
+	public static AccessToken unlock(UUID vaultId, String deviceId, String userId) {
 		try {
 			return find("#AccessToken.get", Parameters.with("deviceId", deviceId).and("vaultId", vaultId).and("userId", userId)).firstResult();
 		} catch (NoResultException e) {
@@ -85,9 +86,9 @@ public class AccessToken extends PanacheEntityBase {
 	public static class AccessId implements Serializable {
 
 		public String deviceId;
-		public String vaultId;
+		public UUID vaultId;
 
-		public AccessId(String deviceId, String vaultId) {
+		public AccessId(String deviceId, UUID vaultId) {
 			this.deviceId = deviceId;
 			this.vaultId = vaultId;
 		}

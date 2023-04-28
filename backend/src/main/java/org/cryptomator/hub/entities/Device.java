@@ -2,20 +2,21 @@ package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.panache.common.Parameters;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.NamedQuery;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.NamedQuery;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 @Entity
@@ -50,7 +51,7 @@ public class Device extends PanacheEntityBase {
 	public String publickey;
 
 	@Column(name = "creation_time", nullable = false)
-	public Timestamp creationTime;
+	public Instant creationTime;
 
 	@Override
 	public String toString() {
@@ -78,7 +79,7 @@ public class Device extends PanacheEntityBase {
 		return Objects.hash(id, owner, name, publickey);
 	}
 
-	public static Stream<Device> findRequiringAccessGrant(String vaultId) {
+	public static Stream<Device> findRequiringAccessGrant(UUID vaultId) {
 		return find("#Device.requiringAccessGrant", Parameters.with("vaultId", vaultId)).stream();
 	}
 

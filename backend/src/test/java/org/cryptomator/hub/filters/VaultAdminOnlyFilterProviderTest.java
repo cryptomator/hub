@@ -4,9 +4,10 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.radcortez.flyway.test.annotation.DataSource;
-import com.radcortez.flyway.test.annotation.FlywayTest;
 import io.quarkus.test.junit.QuarkusTest;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.core.MultivaluedHashMap;
+import jakarta.ws.rs.core.UriInfo;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -14,21 +15,17 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.MultivaluedHashMap;
-import javax.ws.rs.core.UriInfo;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 
 @QuarkusTest
-@FlywayTest(value = @DataSource(url = "jdbc:h2:mem:test"), additionalLocations = {"classpath:org/cryptomator/hub/flyway"})
 class VaultAdminOnlyFilterProviderTest {
 
 	private static final String NO_VAULT_ID_TOKEN = "eyJhbGciOiJFUzM4NCIsInR5cCI6IkpXVCJ9.e30.vT0jNCotwtzr37JNM_C6uZFCw3GvVjcikn-CVrDociILPiXBXA8i7dWFwBnUQkDBcFbouh-eUB_wEWgqe9WTG2rT66_c1G2LZUQcCsKdWJdTyK4ZxLXLYOYhNOHtqShI";
 	private static final String INVALID_VAULT_ID_TOKEN = "eyJhbGciOiJFUzM4NCIsInR5cCI6IkpXVCIsInZhdWx0SWQiOjI1fQ.e30.YxqmX5xeOviP9WldQV870zhPEF4PRaZrW0TaoWzm4lvkEmacIUt3OIoH0grAeh_gtJNRg4WfnqFNTgUx40-yDOtBLzyoeubfrMgb0-agN1898Mbr4ZhD1xqor0lBDrmc";
-	private static final String NO_IAT_TOKEN_VAULT_2 = "eyJhbGciOiJFUzM4NCIsInR5cCI6IkpXVCIsInZhdWx0SWQiOiJ2YXVsdDIifQ.e30.gRKW5JvCZ2th1tpigYTPdP_0v0ChwfoTg-Bpt8YsFujteAp6MBUtNhHQ5_O9yUl_8_Uj0S3F4ztVveIL_U37JMO0q41K_QQ68Nkhf7qlHX2tk2EyzIVXyttwYnwuubeO";
+	private static final String NO_IAT_TOKEN_VAULT_2 = "eyJhbGciOiJFUzM4NCIsInR5cCI6IkpXVCIsInZhdWx0SWQiOiI3RTU3QzBERS0wMDAwLTQwMDAtODAwMC0wMDAxMDAwMDIyMjIifQ.e30.etWcY66h7FAaiBo8SY6t1CLP4ivrYj8ld5OhJn1y3tZ71-EhedIryaDt8nty0DGsm6OFlKd0gUaz_OvU1TuJHArbzLg7uX3Ss-2-v4Kjx7K4E-UEqc4MMP0oCJa0g2re";
 	private VaultAdminOnlyFilterProvider vaultAdminOnlyFilterProvider;
 	private ContainerRequestContext context;
 	private UriInfo uriInfo;
@@ -108,13 +105,13 @@ class VaultAdminOnlyFilterProviderTest {
 		@DisplayName("validate valid vaultId in query")
 		public void testGetValidVaultIdQueryParameter() {
 			var pathParams = new MultivaluedHashMap<String, String>();
-			pathParams.add(VaultAdminOnlyFilterProvider.VAULT_ID, "vault2");
+			pathParams.add(VaultAdminOnlyFilterProvider.VAULT_ID, "7E57C0DE-0000-4000-8000-000100002222");
 
 			Mockito.when(context.getUriInfo()).thenReturn(uriInfo);
 			Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
 
 			String result = vaultAdminOnlyFilterProvider.getVaultIdQueryParameter(context);
-			Assertions.assertEquals("vault2", result);
+			Assertions.assertEquals("7E57C0DE-0000-4000-8000-000100002222", result);
 		}
 
 		@Test
@@ -132,8 +129,8 @@ class VaultAdminOnlyFilterProviderTest {
 		@DisplayName("validate multiple vaultId in query")
 		public void testMultipleVaultIdQueryParameter() {
 			var pathParams = new MultivaluedHashMap<String, String>();
-			pathParams.add(VaultAdminOnlyFilterProvider.VAULT_ID, "vault2");
-			pathParams.add(VaultAdminOnlyFilterProvider.VAULT_ID, "vault3");
+			pathParams.add(VaultAdminOnlyFilterProvider.VAULT_ID, "7E57C0DE-0000-4000-8000-000100002222");
+			pathParams.add(VaultAdminOnlyFilterProvider.VAULT_ID, "7E57C0DE-0000-4000-8000-000100003333");
 
 			Mockito.when(context.getUriInfo()).thenReturn(uriInfo);
 			Mockito.when(context.getUriInfo().getPathParameters()).thenReturn(pathParams);
@@ -176,7 +173,7 @@ class VaultAdminOnlyFilterProviderTest {
 		@DisplayName("validate valid VAULT_ADMIN_AUTHORIZATION leads to valid vaultId")
 		public void testValidVaultAdminAuthorizationJWTLeadsToValidVaultId() {
 			String result = vaultAdminOnlyFilterProvider.getUnverifiedVaultId(JWT.decode(VaultAdminOnlyFilterProviderTestConstants.VALID_TOKEN_VAULT_2));
-			Assertions.assertEquals("vault2", result);
+			Assertions.assertEquals("7E57C0DE-0000-4000-8000-000100002222", result);
 		}
 
 		@Test

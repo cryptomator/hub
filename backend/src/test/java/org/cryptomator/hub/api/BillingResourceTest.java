@@ -1,7 +1,5 @@
 package org.cryptomator.hub.api;
 
-import com.radcortez.flyway.test.annotation.DataSource;
-import com.radcortez.flyway.test.annotation.FlywayTest;
 import io.agroal.api.AgroalDataSource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
@@ -9,6 +7,7 @@ import io.quarkus.test.security.oidc.Claim;
 import io.quarkus.test.security.oidc.OidcSecurity;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
@@ -17,7 +16,6 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 
-import javax.inject.Inject;
 import java.sql.SQLException;
 
 import static io.restassured.RestAssured.given;
@@ -26,7 +24,6 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 
 @QuarkusTest
-@FlywayTest(value = @DataSource(url = "jdbc:h2:mem:test"), additionalLocations = {"classpath:org/cryptomator/hub/flyway"})
 @DisplayName("Resource /billing")
 public class BillingResourceTest {
 
@@ -40,7 +37,6 @@ public class BillingResourceTest {
 
 	@Nested
 	@DisplayName("As admin")
-	@FlywayTest(value = @DataSource(url = "jdbc:h2:mem:test"), additionalLocations = {"classpath:org/cryptomator/hub/flyway"}, clean = false)
 	@TestSecurity(user = "Admin", roles = {"admin"})
 	@OidcSecurity(claims = {
 			@Claim(key = "sub", value = "admin")

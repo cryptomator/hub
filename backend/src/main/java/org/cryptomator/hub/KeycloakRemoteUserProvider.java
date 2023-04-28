@@ -1,5 +1,7 @@
 package org.cryptomator.hub;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import org.cryptomator.hub.entities.Authority;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
@@ -8,8 +10,6 @@ import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

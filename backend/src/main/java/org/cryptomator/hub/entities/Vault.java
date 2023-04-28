@@ -2,22 +2,23 @@ package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.panache.common.Parameters;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.NamedQuery;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import org.hibernate.annotations.Immutable;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
-import javax.persistence.NamedQuery;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -34,7 +35,7 @@ public class Vault extends PanacheEntityBase {
 
 	@Id
 	@Column(name = "id", nullable = false)
-	public String id;
+	public UUID id;
 
 	@ManyToMany
 	@JoinTable(name = "vault_access",
@@ -61,7 +62,7 @@ public class Vault extends PanacheEntityBase {
 	public String salt;
 
 	@Column(name = "iterations", nullable = false)
-	public String iterations;
+	public int iterations;
 
 	@Column(name = "masterkey", nullable = false)
 	public String masterkey;
@@ -73,7 +74,7 @@ public class Vault extends PanacheEntityBase {
 	public String authenticationPrivateKey;
 
 	@Column(name = "creation_time", nullable = false)
-	public Timestamp creationTime;
+	public Instant creationTime;
 
 	@Column(name = "description")
 	public String description;

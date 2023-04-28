@@ -2,16 +2,17 @@ package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.panache.common.Parameters;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
+import jakarta.persistence.NamedQuery;
+import jakarta.persistence.Table;
 import org.hibernate.annotations.Immutable;
 
-import javax.persistence.Column;
-import javax.persistence.Embeddable;
-import javax.persistence.EmbeddedId;
-import javax.persistence.Entity;
-import javax.persistence.NamedQuery;
-import javax.persistence.Table;
 import java.io.Serializable;
 import java.util.Objects;
+import java.util.UUID;
 
 @Entity
 @Immutable
@@ -54,7 +55,7 @@ public class EffectiveVaultAccess extends PanacheEntityBase {
 	public static class EffectiveVaultAccessId implements Serializable {
 
 		@Column(name = "vault_id")
-		public String vaultId;
+		public UUID vaultId;
 
 		@Column(name = "authority_id")
 		public String authorityId;

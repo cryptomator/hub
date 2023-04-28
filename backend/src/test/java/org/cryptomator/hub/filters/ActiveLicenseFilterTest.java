@@ -1,15 +1,14 @@
 package org.cryptomator.hub.filters;
 
 import io.quarkus.test.junit.QuarkusTest;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.license.LicenseHolder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
-
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Response;
 
 @QuarkusTest
 public class ActiveLicenseFilterTest {

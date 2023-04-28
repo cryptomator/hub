@@ -1,7 +1,5 @@
 package org.cryptomator.hub.api;
 
-import com.radcortez.flyway.test.annotation.DataSource;
-import com.radcortez.flyway.test.annotation.FlywayTest;
 import io.agroal.api.AgroalDataSource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.QuarkusTestProfile;
@@ -10,11 +8,11 @@ import io.quarkus.test.security.TestSecurity;
 import io.quarkus.test.security.oidc.Claim;
 import io.quarkus.test.security.oidc.OidcSecurity;
 import io.restassured.RestAssured;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import javax.inject.Inject;
 import java.sql.SQLException;
 import java.util.Map;
 
@@ -23,7 +21,6 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 
 @QuarkusTest
-@FlywayTest(value = @DataSource(url = "jdbc:h2:mem:test"), additionalLocations = {"classpath:org/cryptomator/hub/flyway"})
 @DisplayName("Resource /billing managed instance")
 @TestSecurity(user = "Admin", roles = {"admin"})
 @OidcSecurity(claims = {
