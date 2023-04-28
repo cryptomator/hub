@@ -232,7 +232,7 @@ class VaultService {
   // FIXME: dedup with addUser()
   public async grantAccess(vaultId: string, userId: string, jwe: string, vaultKeys: VaultKeys) {
     let vaultAdminAuthorizationJWT = await this.buildVaultAdminAuthorizationJWT(vaultId, vaultKeys);
-    await axiosAuth.put(`/vaults/${vaultId}/users/${userId}`, jwe, { headers: { 'Content-Type': 'text/plain', 'Cryptomator-Vault-Admin-Authorization': vaultAdminAuthorizationJWT } })
+    await axiosAuth.put(`/vaults/${vaultId}/access-tokens/${userId}`, jwe, { headers: { 'Content-Type': 'text/plain', 'Cryptomator-Vault-Admin-Authorization': vaultAdminAuthorizationJWT } })
       .catch((error) => rethrowAndConvertIfExpected(error, 404, 409));
   }
 

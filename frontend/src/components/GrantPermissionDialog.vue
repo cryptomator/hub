@@ -53,7 +53,7 @@
 <script setup lang="ts">
 import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
-import { base64url } from 'rfc4648';
+import { base64 } from 'rfc4648';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { ConflictError, NotFoundError, UserDto, VaultDto } from '../common/backend';
@@ -98,7 +98,7 @@ async function grantAccess() {
 
 async function giveUsersAccess(users: UserDto[]) {
   for (const user of users) {
-    const publicKey = base64url.parse(user.publicKey!); // TODO: can we be sure the user has a public key?
+    const publicKey = base64.parse(user.publicKey!); // TODO: can we be sure the user has a public key?
     const jwe = await props.vaultKeys.encryptForUser(publicKey);
     await backend.vaults.grantAccess(props.vault.id, user.id, jwe, props.vaultKeys);
   }
