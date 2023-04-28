@@ -6,20 +6,10 @@ export class ConcatKDF {
    * 
    * @param z A shared secret
    * @param keyDataLen Desired key length (in bytes)
-   * @param algorithmId Purpose of the derived key material
-   * @param partyUInfo Public information about party U
-   * @param partyVInfo Public information about party V
-   * @param suppPubInfo Mutually known public information (optional)
-   * @param suppPrivInfo Mutually known private information (optional)
+   * @param otherInfo Optional context info binding the derived key to a key agreement (see e.g. RFC 7518, Section 4.6.2)
    * @returns key data
    */
-  public static async kdf(z: Uint8Array, keyDataLen: number, algorithmId: Uint8Array, partyUInfo: Uint8Array, partyVInfo: Uint8Array, suppPubInfo: Uint8Array = new Uint8Array(), suppPrivInfo: Uint8Array = new Uint8Array()): Promise<Uint8Array> {
-    // AlgorithmID || PartyUInfo || PartyVInfo {|| SuppPubInfo }{|| SuppPrivInfo }
-    const otherInfo = new Uint8Array([...algorithmId, ...partyUInfo, ...partyVInfo, ...suppPubInfo, ...suppPrivInfo]);
-    return this.kdfInternal(z, keyDataLen, new Uint8Array(otherInfo));
-  }
-
-  private static async kdfInternal(z: Uint8Array, keyDataLen: number, otherInfo: Uint8Array): Promise<Uint8Array> {
+  public static async kdf(z: Uint8Array, keyDataLen: number, otherInfo: Uint8Array): Promise<Uint8Array> {
     const hashLen = 32; // output length of SHA-256
     const reps = Math.ceil(keyDataLen / hashLen);
     if (reps >= 0xFFFFFFFF) {
@@ -94,7 +84,7 @@ export class JWE {
     const tag = m.slice(m.byteLength - 16);
     const encodedCiphertext = base64url.stringify(ciphertext, { pad: false });
     const encodedTag = base64url.stringify(tag, { pad: false });
-    return encodedHeader + '.' + encodedEncryptedKey + '.' + encodedIv + '.' + encodedCiphertext + '.' + encodedTag;
+    return `${encodedHeader}.${encodedEncryptedKey}.${encodedIv}.${encodedCiphertext}.${encodedTag}`;
   }
 
   // visible for testing
@@ -115,7 +105,8 @@ export class JWE {
         ephemeralSecretKey,
         ecdhKeyBits
       ));
-      derivedKey = await ConcatKDF.kdf(new Uint8Array(agreedKey), desiredKeyBytes, algorithmId, partyUInfo, partyVInfo, new Uint8Array(suppPubInfo));
+      const otherInfo = new Uint8Array([...algorithmId, ...partyUInfo, ...partyVInfo, ...new Uint8Array(suppPubInfo)]);
+      derivedKey = await ConcatKDF.kdf(new Uint8Array(agreedKey), desiredKeyBytes, otherInfo);
       return crypto.subtle.importKey('raw', derivedKey, { name: 'AES-GCM', length: desiredKeyBytes * 8 }, exportable, ['encrypt']);
     } finally {
       derivedKey.fill(0x00);
@@ -124,9 +115,9 @@ export class JWE {
   }
 
   private static lengthPrefixed(data: Uint8Array): Uint8Array {
-    const result = new ArrayBuffer(4 + data.byteLength);
-    new DataView(result, 0, 4).setUint32(0, data.byteLength, false);
-    new Uint8Array(result).set(data, 4);
-    return new Uint8Array(result);
+    const result = new Uint8Array(4 + data.byteLength);
+    new DataView(result.buffer, 0, 4).setUint32(0, data.byteLength, false);
+    result.set(data, 4);
+    return result;
   }
 }

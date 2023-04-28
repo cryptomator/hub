@@ -102,10 +102,10 @@ describe('crypto', () => {
         expect(wrapped.iterations).to.eq(1000000);
       });
 
-      it('encryptForDevice()', async () => {
-        const deviceKey = base64url.parse('MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAERxQR-NRN6Wga01370uBBzr2NHDbKIC56tPUEq2HX64RhITGhii8Zzbkb1HnRmdF0aq6uqmUy4jUhuxnKxsv59A6JeK7Unn-mpmm3pQAygjoGc9wrvoH4HWJSQYUlsXDu');
+      it('encryptForUser()', async () => {
+        const userKey = base64url.parse('MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAERxQR-NRN6Wga01370uBBzr2NHDbKIC56tPUEq2HX64RhITGhii8Zzbkb1HnRmdF0aq6uqmUy4jUhuxnKxsv59A6JeK7Unn-mpmm3pQAygjoGc9wrvoH4HWJSQYUlsXDu');
 
-        const encrypted = await vaultKeys.encryptForDevice(deviceKey);
+        const encrypted = await vaultKeys.encryptForUser(userKey);
         expect(encrypted).to.be.not.null;
       });
 

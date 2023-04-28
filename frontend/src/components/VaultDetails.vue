@@ -72,7 +72,7 @@
         <h3 class="font-medium text-gray-900">{{ t('vaultDetails.actions.title') }}</h3>
         <div class="mt-2 flex flex-col gap-2">
           <div class="flex gap-2">
-            <button :disabled="devicesRequiringAccessGrant.length == 0" type="button" class="flex-1 bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="showGrantPermissionDialog()">
+            <button :disabled="usersRequiringAccessGrant.length == 0" type="button" class="flex-1 bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="showGrantPermissionDialog()">
               {{ t('vaultDetails.actions.updatePermissions') }}
             </button>
             <button type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="reloadDevicesRequiringAccessGrant()">
@@ -98,7 +98,7 @@
   </div>
   
   <AuthenticateVaultAdminDialog v-if="authenticatingVaultAdmin && vault != null" ref="authenticateVaultAdminDialog" :vault="vault" @action="vaultAdminAuthenticated" @close="authenticatingVaultAdmin = false" />
-  <GrantPermissionDialog v-if="grantingPermission && vault != null && vaultKeys != null" ref="grantPermissionDialog" :vault="vault" :devices="devicesRequiringAccessGrant" :vault-keys="vaultKeys" @close="grantingPermission = false" @permission-granted="permissionGranted()" />
+  <GrantPermissionDialog v-if="grantingPermission && vault != null && vaultKeys != null" ref="grantPermissionDialog" :vault="vault" :users="usersRequiringAccessGrant" :vault-keys="vaultKeys" @close="grantingPermission = false" @permission-granted="permissionGranted()" />
   <DownloadVaultTemplateDialog v-if="downloadingVaultTemplate && vault != null && vaultKeys != null" ref="downloadVaultTemplateDialog" :vault="vault" :vault-keys="vaultKeys" @close="downloadingVaultTemplate = false" />
   <RecoveryKeyDialog v-if="showingRecoveryKey && vault != null && vaultKeys != null" ref="showRecoveryKeyDialog" :vault="vault" :vault-keys="vaultKeys" @close="showingRecoveryKey = false" />
 </template>
@@ -108,7 +108,7 @@ import { ArrowPathIcon } from '@heroicons/vue/20/solid';
 import { PlusSmallIcon } from '@heroicons/vue/24/solid';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { AuthorityDto, ConflictError, DeviceDto, NotFoundError, UserDto, VaultDto } from '../common/backend';
+import backend, { AuthorityDto, ConflictError, NotFoundError, UserDto, VaultDto } from '../common/backend';
 import { VaultKeys } from '../common/crypto';
 import AuthenticateVaultAdminDialog from './AuthenticateVaultAdminDialog.vue';
 import DownloadVaultTemplateDialog from './DownloadVaultTemplateDialog.vue';
@@ -140,7 +140,7 @@ const showingRecoveryKey = ref(false);
 const showRecoveryKeyDialog = ref<typeof RecoveryKeyDialog>();
 const vault = ref<VaultDto>();
 const members = ref<Map<string, AuthorityDto>>(new Map());
-const devicesRequiringAccessGrant = ref<DeviceDto[]>([]);
+const usersRequiringAccessGrant = ref<UserDto[]>([]);
 const authenticateVaultAdminDialog = ref<typeof AuthenticateVaultAdminDialog>();
 const authenticatingVaultAdmin = ref(false);
 const vaultKeys = ref<VaultKeys>();
@@ -166,7 +166,7 @@ async function fetchData() {
 async function vaultAdminAuthenticated(keys: VaultKeys) {
   try {
     (await backend.vaults.getMembers(props.vaultId, keys)).forEach(member => members.value.set(member.id, member));
-    devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId, keys);
+    usersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId, keys);
     isVaultAdmin.value = true; //only set if we can retrieve all necessary information
     vaultKeys.value = keys;
   } catch (error) {
@@ -178,7 +178,7 @@ async function vaultAdminAuthenticated(keys: VaultKeys) {
 async function reloadDevicesRequiringAccessGrant() {
   try {
     if (vaultKeys.value) {
-      devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId, vaultKeys.value);
+      usersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId, vaultKeys.value);
     }
   } catch (error) {
     console.error('Getting devices requiring access grant failed.', error);
@@ -200,7 +200,7 @@ async function addAuthority(authority: unknown) {
     if (isVaultAdmin.value && vaultKeys.value) {
       await addAuthorityBackend(authority);
       members.value.set(authority.id, authority);
-      devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId, vaultKeys.value);
+      usersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId, vaultKeys.value);
     }
   } catch (error) {
     //even if error instanceof NotFoundError, it is not expected from user perspective
@@ -251,7 +251,7 @@ function showRecoveryKey() {
 }
 
 function permissionGranted() {
-  devicesRequiringAccessGrant.value = [];
+  usersRequiringAccessGrant.value = [];
 }
 
 async function searchAuthority(query: string): Promise<AuthorityDto[]> {
@@ -266,7 +266,7 @@ async function revokeUserAccess(userId: string) {
     if (isVaultAdmin.value && vaultKeys.value) {
       await backend.vaults.revokeUserAccess(props.vaultId, userId, vaultKeys.value);
       members.value.delete(userId);
-      devicesRequiringAccessGrant.value = await backend.vaults.getDevicesRequiringAccessGrant(props.vaultId, vaultKeys.value);
+      usersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId, vaultKeys.value);
     }
   } catch (error) {
     console.error('Revoking user access failed.', error);

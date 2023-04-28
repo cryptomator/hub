@@ -97,7 +97,7 @@ public class VaultResource {
 
 		return vault.directMembers.stream().map(authority -> {
 			if (authority instanceof User u) {
-				return UserDto.fromEntity(u);
+				return UserDto.justPublicInfo(u);
 			} else if (authority instanceof Group g) {
 				return GroupDto.fromEntity(g);
 			} else {
@@ -207,7 +207,7 @@ public class VaultResource {
 	}
 
 	@GET
-	@Path("/{vaultId}/devices-requiring-access-grant")
+	@Path("/{vaultId}/users-requiring-access-grant")
 	@RolesAllowed("user")
 	@VaultAdminOnlyFilter
 	@Transactional
@@ -216,67 +216,65 @@ public class VaultResource {
 	@APIResponse(responseCode = "401", description = "VaultAdminAuthorizationJWT not provided")
 	@APIResponse(responseCode = "403", description = "VaultAdminAuthorizationJWT expired or not yet valid")
 	@APIResponse(responseCode = "404", description = "vault not found")
-	public List<DeviceResource.DeviceDto> getDevicesRequiringAccessGrant(@PathParam("vaultId") UUID vaultId) {
-		return Device.findRequiringAccessGrant(vaultId).map(DeviceResource.DeviceDto::fromEntity).toList();
+	public List<UserDto> getUsersRequiringAccessGrant(@PathParam("vaultId") UUID vaultId) {
+		return User.findRequiringAccessGrant(vaultId).map(UserDto::justPublicInfo).toList();
 	}
 
 	@GET
-	@Path("/{vaultId}/keys/{deviceId}")
+	@Path("/{vaultId}/access-tokens/logged-in-user") // TODO: other path?
 	@RolesAllowed("user")
 	@Transactional
 	@Produces(MediaType.TEXT_PLAIN)
-	@Operation(summary = "get the device-specific masterkey")
+	@Operation(summary = "get the user-specific vault key")
 	@APIResponse(responseCode = "200")
 	@APIResponse(responseCode = "402", description = "number of effective vault users exceeds available license seats")
-	@APIResponse(responseCode = "403", description = "device not authorized to access this vault")
-	@APIResponse(responseCode = "404", description = "unknown device")
+	@APIResponse(responseCode = "403", description = "user not authorized to access this vault")
+	@APIResponse(responseCode = "404", description = "unknown vault")
 	@ActiveLicense
-	public String unlock(@PathParam("vaultId") UUID vaultId, @PathParam("deviceId") @ValidId String deviceId) {
+	public String unlock(@PathParam("vaultId") UUID vaultId) {
 		var usedSeats = EffectiveVaultAccess.countEffectiveVaultUsers();
 		if (usedSeats > license.getAvailableSeats()) {
 			throw new PaymentRequiredException("Number of effective vault users exceeds available license seats");
 		}
 
-		var access = AccessToken.unlock(vaultId, deviceId, jwt.getSubject());
+		var access = AccessToken.unlock(vaultId, jwt.getSubject());
 		if (access != null) {
 			return access.jwe;
-		} else if (Device.findById(deviceId) == null) {
-			throw new NotFoundException("No such device.");
+		} else if (Vault.findById(vaultId) == null) {
+			throw new NotFoundException("No such vault.");
 		} else {
-			throw new ForbiddenException("Access to this device not granted.");
+			throw new ForbiddenException("Access to this vault not granted.");
 		}
 	}
 
 	@PUT
-	@Path("/{vaultId}/keys/{deviceId}")
+	@Path("/{vaultId}/access-tokens/{userId}")
 	@RolesAllowed("user")
 	@VaultAdminOnlyFilter
 	@Transactional
 	@Consumes(MediaType.TEXT_PLAIN)
-	@Operation(summary = "adds a device-specific masterkey")
-	@APIResponse(responseCode = "201", description = "device-specific key stored")
+	@Operation(summary = "adds a user-specific vault key")
+	@APIResponse(responseCode = "201", description = "user-specific key stored")
 	@APIResponse(responseCode = "401", description = "VaultAdminAuthorizationJWT not provided")
 	@APIResponse(responseCode = "403", description = "VaultAdminAuthorizationJWT expired or not yet valid")
-	@APIResponse(responseCode = "404", description = "vault or device not found")
+	@APIResponse(responseCode = "404", description = "vault or userId not found")
 	@APIResponse(responseCode = "409", description = "Access to vault for device already granted")
-	public Response grantAccess(@PathParam("vaultId") UUID vaultId, @PathParam("deviceId") @ValidId String deviceId, @ValidJWE String jwe) {
-		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-		var device = Device.<Device>findByIdOptional(deviceId).orElseThrow(NotFoundException::new);
+	public Response grantAccess(@PathParam("vaultId") UUID vaultId, @PathParam("userId") @ValidId String userId, @ValidJWE String jwe) {
+		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new); // should always be found, since @VaultAdminOnlyFilter already checked the jwt matching this vault
+		var user = User.<User>findByIdOptional(userId).orElseThrow(NotFoundException::new);
 
 		var access = new AccessToken();
 		access.vault = vault;
-		access.device = device;
+		access.user = user;
 		access.jwe = jwe;
 
 		try {
 			access.persistAndFlush();
 			return Response.created(URI.create(".")).build();
+		} catch (ConstraintViolationException e) {
+			throw new ClientErrorException(Response.Status.CONFLICT, e);
 		} catch (PersistenceException e) {
-			if (e instanceof ConstraintViolationException) {
-				throw new ClientErrorException(Response.Status.CONFLICT, e);
-			} else {
-				throw new InternalServerErrorException(e);
-			}
+			throw new InternalServerErrorException(e);
 		}
 	}
 

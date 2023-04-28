@@ -29,7 +29,7 @@
                 </div>
                 <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                   <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm" >
-                    {{ t('grantPermissionDialog.submit', [devices.length]) }}
+                    {{ t('grantPermissionDialog.submit', [users.length]) }}
                   </button>
                   <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" @click="open = false">
                     {{ t('common.cancel') }}
@@ -56,7 +56,7 @@ import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
 import { base64url } from 'rfc4648';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { ConflictError, DeviceDto, NotFoundError, VaultDto } from '../common/backend';
+import backend, { ConflictError, NotFoundError, UserDto, VaultDto } from '../common/backend';
 import { VaultKeys } from '../common/crypto';
 
 const { t } = useI18n({ useScope: 'global' });
@@ -67,7 +67,7 @@ const onGrantPermissionError = ref<Error | null>();
 
 const props = defineProps<{
   vault: VaultDto
-  devices: DeviceDto[]
+  users: UserDto[]
   vaultKeys: VaultKeys
 }>();
 
@@ -87,7 +87,7 @@ function show() {
 async function grantAccess() {
   onGrantPermissionError.value = null;
   try {
-    await giveDevicesAccess(props.devices);
+    await giveUsersAccess(props.users);
     emit('permissionGranted');
     open.value = false;
   } catch (error) {
@@ -96,11 +96,11 @@ async function grantAccess() {
   }
 }
 
-async function giveDevicesAccess(devices: DeviceDto[]) {
-  for (const device of devices) {
-    const publicKey = base64url.parse(device.publicKey);
-    const jwe = await props.vaultKeys.encryptForDevice(publicKey);
-    await backend.vaults.grantAccess(props.vault.id, device.id, jwe, props.vaultKeys);
+async function giveUsersAccess(users: UserDto[]) {
+  for (const user of users) {
+    const publicKey = base64url.parse(user.publicKey!); // TODO: can we be sure the user has a public key?
+    const jwe = await props.vaultKeys.encryptForUser(publicKey);
+    await backend.vaults.grantAccess(props.vault.id, user.id, jwe, props.vaultKeys);
   }
 }
 </script>

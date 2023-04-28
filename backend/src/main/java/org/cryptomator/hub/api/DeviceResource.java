@@ -1,7 +1,6 @@
 package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.persistence.PersistenceException;
@@ -21,8 +20,10 @@ import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.validation.NoHtmlOrScriptChars;
+import org.cryptomator.hub.validation.OnlyBase64Chars;
 import org.cryptomator.hub.validation.OnlyBase64UrlChars;
 import org.cryptomator.hub.validation.ValidId;
+import org.cryptomator.hub.validation.ValidJWE;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -31,7 +32,6 @@ import org.hibernate.exception.ConstraintViolationException;
 import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Set;
 
 @Path("/devices")
 public class DeviceResource {
@@ -91,9 +91,9 @@ public class DeviceResource {
 
 	public record DeviceDto(@JsonProperty("id") @ValidId String id,
 							@JsonProperty("name") @NoHtmlOrScriptChars @NotBlank String name,
-							@JsonProperty("publicKey") @OnlyBase64UrlChars String publicKey,
+							@JsonProperty("publicKey") @OnlyBase64Chars String publicKey,
+							@JsonProperty("userKeyJwe") @ValidJWE String userKeyJwe,
 							@JsonProperty("owner") @ValidId String ownerId,
-							@JsonProperty("accessTo") @Valid Set<VaultResource.VaultDto> accessTo,
 							@JsonProperty("creationTime") Instant creationTime) {
 
 		public Device toDevice(User user, String id, Instant creationTime) {
@@ -102,12 +102,13 @@ public class DeviceResource {
 			device.owner = user;
 			device.name = name;
 			device.publickey = publicKey;
+			device.userKeyJwe = userKeyJwe;
 			device.creationTime = creationTime;
 			return device;
 		}
 
 		public static DeviceDto fromEntity(Device entity) {
-			return new DeviceDto(entity.id, entity.name, entity.publickey, entity.owner.id, Set.of(), entity.creationTime.truncatedTo(ChronoUnit.MILLIS));
+			return new DeviceDto(entity.id, entity.name, entity.publickey, entity.userKeyJwe, entity.owner.id, entity.creationTime.truncatedTo(ChronoUnit.MILLIS));
 		}
 
 	}

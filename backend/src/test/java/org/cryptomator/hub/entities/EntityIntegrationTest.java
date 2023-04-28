@@ -29,19 +29,19 @@ public class EntityIntegrationTest {
 
 	@Test
 	@TestTransaction
-	@DisplayName("Removing a Device cascades to Access")
-	public void removingDeviceCascadesToAccess() throws SQLException {
+	@DisplayName("Removing a User cascades to Access")
+	public void removingUserCascadesToAccess() throws SQLException {
 		try (var s = dataSource.getConnection().createStatement()) {
 			// test data will be removed via @TestTransaction
 			s.execute("""
-					INSERT INTO "device" ("id", "owner_id", "name", "publickey", "creation_time")
-						VALUES ('device999', 'user1', 'Computer 999', 'publickey999', '2020-02-20 20:20:20');
-					INSERT INTO "access_token" ("device_id", "vault_id", "jwe") VALUES ('device999', '7E57C0DE-0000-4000-8000-000100001111', 'jwe4');
+					INSERT INTO "authority" ("id", "type", "name") VALUES ('user999', 'USER', 'User 999');
+					INSERT INTO "user_details" ("id") VALUES ('user999');
+					INSERT INTO "access_token" ("user_id", "vault_id", "vault_key_jwe") VALUES ('user999', '7E57C0DE-0000-4000-8000-000100001111', 'jwe4');
 					""");
 		}
 
-		var deleted = Device.deleteById("device999");
-		var matchAfter = AccessToken.<AccessToken>findAll().stream().anyMatch(a -> "device999".equals(a.device.id));
+		var deleted = User.deleteById("user999");
+		var matchAfter = AccessToken.<AccessToken>findAll().stream().anyMatch(a -> "user999".equals(a.user.id));
 		Assertions.assertTrue(deleted);
 		Assertions.assertFalse(matchAfter);
 	}
@@ -64,29 +64,18 @@ public class EntityIntegrationTest {
 
 	@Test
 	@TestTransaction
-	@DisplayName("Retrieve the correct token when a device has access to multiple vaults")
-	public void testGetCorrectTokenForDeviceWithAcessToMultipleVaults() throws SQLException {
-		try (var s = dataSource.getConnection().createStatement()) {
-			// test data will be removed via @TestTransaction
-			s.execute("""
-					INSERT INTO "device" ("id", "owner_id", "name", "publickey", "creation_time")
-						VALUES ('device999', 'user1', 'Computer 999', 'publickey999', '2020-02-20 20:20:20');
-					INSERT INTO "access_token" ("device_id", "vault_id", "jwe") VALUES ('device999', '7E57C0DE-0000-4000-8000-000100001111', 'jwe4');
-					INSERT INTO "access_token" ("device_id", "vault_id", "jwe") VALUES ('device999', '7E57C0DE-0000-4000-8000-000100002222', 'jwe5');
-					""");
-		}
-
+	@DisplayName("Retrieve the correct token when a user has access to multiple vaults")
+	public void testGetCorrectTokenForDeviceWithAcessToMultipleVaults() {
 		List<AccessToken> tokens = AccessToken
-				.<AccessToken>find("#AccessToken.get", Parameters.with("deviceId", "device999")
-						.and("vaultId", UUID.fromString("7E57C0DE-0000-4000-8000-000100001111"))
-						.and("userId", "user1"))
+				.<AccessToken>find("#AccessToken.get", Parameters.with("userId", "user1")
+						.and("vaultId", UUID.fromString("7E57C0DE-0000-4000-8000-000100001111")))
 				.stream().toList();
 
 		var token = tokens.get(0);
 
 		Assertions.assertEquals(1, tokens.size());
 		Assertions.assertEquals(UUID.fromString("7E57C0DE-0000-4000-8000-000100001111"), token.vault.id);
-		Assertions.assertEquals("device999", token.device.id);
-		Assertions.assertEquals("jwe4", token.jwe);
+		Assertions.assertEquals("user1", token.user.id);
+		Assertions.assertEquals("jwe.jwe.jwe.vault1.user1", token.jwe);
 	}
 }

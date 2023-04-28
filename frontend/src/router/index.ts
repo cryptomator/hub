@@ -127,9 +127,16 @@ router.beforeEach((to, from, next) => {
       if (auth.isAuthenticated()) {
         await backend.users.syncMe();
       }
-    }).finally(() => {
-      delete to.query.sync_me; // remove sync_me query parameter to avoid endless recursion
-      next({ path: to.path, query: to.query, params: to.params, replace: true });
+    }).finally(async () => {
+      let me = await backend.users.me();
+      if (!me.publicKey) {
+        // redirect to user setup
+        next({ path: '/app/settings' });
+      } else {
+        // remove sync_me query parameter to avoid endless recursion
+        delete to.query.sync_me;
+        next({ path: to.path, query: to.query, params: to.params, replace: true });
+      }
     });
   } else {
     next();

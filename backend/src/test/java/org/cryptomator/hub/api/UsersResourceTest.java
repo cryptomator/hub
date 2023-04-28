@@ -60,7 +60,7 @@ public class UsersResourceTest {
 					.then().statusCode(200)
 					.body("id", is("user1"))
 					.body("devices.id", hasItems("device1"))
-					.body("devices.accessTo.flatten()", empty());
+					.body("accessibleVaults.flatten()", empty());
 		}
 
 		@Test
@@ -70,7 +70,7 @@ public class UsersResourceTest {
 					.then().statusCode(200)
 					.body("id", is("user1"))
 					.body("devices.id", hasItems("device1"))
-					.body("devices.accessTo.id.flatten()", hasItems(equalToIgnoringCase("7E57C0DE-0000-4000-8000-000100001111")));
+					.body("accessibleVaults.id.flatten()", hasItems(equalToIgnoringCase("7E57C0DE-0000-4000-8000-000100001111")));
 		}
 
 		@Test

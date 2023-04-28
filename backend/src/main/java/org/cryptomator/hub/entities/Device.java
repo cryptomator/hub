@@ -21,16 +21,6 @@ import java.util.stream.Stream;
 
 @Entity
 @Table(name = "device")
-@NamedQuery(name = "Device.requiringAccessGrant",
-		query = """
-				SELECT d
-				FROM Vault v
-					INNER JOIN v.effectiveMembers m
-					INNER JOIN m.devices d
-					LEFT JOIN d.accessTokens a ON a.id.vaultId = :vaultId AND a.id.deviceId = d.id
-					WHERE v.id = :vaultId AND a.vault IS NULL
-				"""
-)
 public class Device extends PanacheEntityBase {
 
 	@Id
@@ -41,14 +31,14 @@ public class Device extends PanacheEntityBase {
 	@JoinColumn(name = "owner_id", updatable = false, nullable = false)
 	public Authority owner;
 
-	@OneToMany(mappedBy = "device", fetch = FetchType.LAZY)
-	public Set<AccessToken> accessTokens = new HashSet<>();
-
 	@Column(name = "name", nullable = false)
 	public String name;
 
 	@Column(name = "publickey", nullable = false)
 	public String publickey;
+
+	@Column(name = "user_key_jwe", nullable = false)
+	public String userKeyJwe;
 
 	@Column(name = "creation_time", nullable = false)
 	public Instant creationTime;
@@ -60,6 +50,8 @@ public class Device extends PanacheEntityBase {
 				", owner=" + owner.id +
 				", name='" + name + '\'' +
 				", publickey='" + publickey + '\'' +
+				", userKeyJwe='" + userKeyJwe + '\'' +
+				", creationTime='" + creationTime + '\'' +
 				'}';
 	}
 
@@ -71,16 +63,14 @@ public class Device extends PanacheEntityBase {
 		return Objects.equals(this.id, other.id)
 				&& Objects.equals(this.owner, other.owner)
 				&& Objects.equals(this.name, other.name)
-				&& Objects.equals(this.publickey, other.publickey);
+				&& Objects.equals(this.publickey, other.publickey)
+				&& Objects.equals(this.userKeyJwe, other.userKeyJwe)
+				&& Objects.equals(this.creationTime, other.creationTime);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, owner, name, publickey);
-	}
-
-	public static Stream<Device> findRequiringAccessGrant(UUID vaultId) {
-		return find("#Device.requiringAccessGrant", Parameters.with("vaultId", vaultId)).stream();
+		return Objects.hash(id, owner, name, publickey, userKeyJwe, creationTime);
 	}
 
 }

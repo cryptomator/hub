@@ -1,4 +1,4 @@
-import AxiosStatic, { AxiosRequestConfig, AxiosResponse } from 'axios';
+import AxiosStatic, { AxiosHeaders, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { JdenticonConfig, toSvg } from 'jdenticon';
 import { base64 } from 'rfc4648';
 import authPromise from './auth';
@@ -23,9 +23,9 @@ axiosAuth.interceptors.request.use(async request => {
   try {
     const token = await authPromise.then(auth => auth.bearerToken());
     if (request.headers) {
-      request.headers['Authorization'] = `Bearer ${token}`;
+      request.headers.setAuthorization(`Bearer ${token}`);
     } else {
-      request.headers = { 'Authorization': `Bearer ${token}` };
+      request.headers = new AxiosHeaders({ 'Authorization': `Bearer ${token}` });
     }
     return request;
   } catch (err: unknown) {
@@ -52,7 +52,7 @@ export type DeviceDto = {
   id: string;
   name: string;
   publicKey: string;
-  accessTo: VaultDto[];
+  userKeyJwe: string;
   creationTime: Date;
 };
 
@@ -82,7 +82,8 @@ export abstract class AuthorityDto {
 }
 
 export class UserDto extends AuthorityDto {
-  constructor(public id: string, public name: string, public type: AuthorityType, public email: string, public devices: DeviceDto[], pictureUrl?: string) {
+  constructor(public id: string, public name: string, public type: AuthorityType, public email: string, public devices: DeviceDto[], public accessibleVaults: VaultDto[], pictureUrl?: string,
+    public publicKey?: string, public privateKey?: string, public salt?: string, public iterations?: number) {
     super(id, name, type, pictureUrl);
   }
 
@@ -110,7 +111,7 @@ export class UserDto extends AuthorityDto {
   }
 
   static copy(obj: UserDto): UserDto {
-    return new UserDto(obj.id, obj.name, obj.type, obj.email, obj.devices, obj.pictureUrl);
+    return new UserDto(obj.id, obj.name, obj.type, obj.email, obj.devices, obj.accessibleVaults, obj.pictureUrl, obj.publicKey, obj.privateKey, obj.salt, obj.iterations);
   }
 }
 
@@ -203,6 +204,7 @@ class VaultService {
     }).catch(err => rethrowAndConvertIfExpected(err, 403));
   }
 
+  // FIXME: dedup with grantAccess()
   public async addUser(vaultId: string, userId: string, vaultKeys: VaultKeys): Promise<AxiosResponse<void>> {
     let vaultAdminAuthorizationJWT = await this.buildVaultAdminAuthorizationJWT(vaultId, vaultKeys);
     return axiosAuth.put(`/vaults/${vaultId}/users/${userId}`, null, { headers: { 'Cryptomator-Vault-Admin-Authorization': vaultAdminAuthorizationJWT } })
@@ -215,9 +217,9 @@ class VaultService {
       .catch((error) => rethrowAndConvertIfExpected(error, 404, 409));
   }
 
-  public async getDevicesRequiringAccessGrant(vaultId: string, vaultKeys: VaultKeys): Promise<DeviceDto[]> {
+  public async getUsersRequiringAccessGrant(vaultId: string, vaultKeys: VaultKeys): Promise<UserDto[]> {
     let vaultAdminAuthorizationJWT = await this.buildVaultAdminAuthorizationJWT(vaultId, vaultKeys);
-    return axiosAuth.get(`/vaults/${vaultId}/devices-requiring-access-grant`, { headers: { 'Cryptomator-Vault-Admin-Authorization': vaultAdminAuthorizationJWT } })
+    return axiosAuth.get(`/vaults/${vaultId}/users-requiring-access-grant`, { headers: { 'Cryptomator-Vault-Admin-Authorization': vaultAdminAuthorizationJWT } })
       .then(response => response.data).catch(err => rethrowAndConvertIfExpected(err, 403));
   }
 
@@ -227,9 +229,10 @@ class VaultService {
       .catch((error) => rethrowAndConvertIfExpected(error, 404, 409));
   }
 
-  public async grantAccess(vaultId: string, deviceId: string, jwe: string, vaultKeys: VaultKeys) {
+  // FIXME: dedup with addUser()
+  public async grantAccess(vaultId: string, userId: string, jwe: string, vaultKeys: VaultKeys) {
     let vaultAdminAuthorizationJWT = await this.buildVaultAdminAuthorizationJWT(vaultId, vaultKeys);
-    await axiosAuth.put(`/vaults/${vaultId}/keys/${deviceId}`, jwe, { headers: { 'Content-Type': 'text/plain', 'Cryptomator-Vault-Admin-Authorization': vaultAdminAuthorizationJWT } })
+    await axiosAuth.put(`/vaults/${vaultId}/users/${userId}`, jwe, { headers: { 'Content-Type': 'text/plain', 'Cryptomator-Vault-Admin-Authorization': vaultAdminAuthorizationJWT } })
       .catch((error) => rethrowAndConvertIfExpected(error, 404, 409));
   }
 
@@ -254,11 +257,20 @@ class DeviceService {
     return axiosAuth.delete(`/devices/${deviceId}`)
       .catch((error) => rethrowAndConvertIfExpected(error, 404));
   }
+
+  public async addDevice(device: DeviceDto): Promise<AxiosResponse<any>> {
+    // TODO
+    return axiosAuth.put(`/devices/${device.id}`, device);
+  }
 }
 
 class UserService {
   public async syncMe(): Promise<void> {
     return axiosAuth.put('/users/me');
+  }
+
+  public async putMyKeyPair(dto: UserDto): Promise<void> {
+    return axiosAuth.put('/users/me/key-pair', dto);
   }
 
   public async me(withDevices: boolean = false, withAccessibleVaults: boolean = false): Promise<UserDto> {

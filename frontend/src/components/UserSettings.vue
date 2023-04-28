@@ -75,6 +75,25 @@
         </div>
       </div>
     </div>
+
+    <!-- TODO move to overlay dialog -->
+    <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6">
+      <div class="md:grid md:grid-cols-3 md:gap-6">
+        <div class="md:col-span-1">
+          <h3 class="text-lg font-medium leading-6 text-gray-900">User Key</h3>
+          <p class="mt-1 text-sm text-gray-500">This is your key...</p>
+        </div>
+        <div class="mt-5 md:mt-0 md:col-span-2">
+          <div v-if="user?.publicKey == null">
+            no key yet...
+            <button @click="createUserKey()">CREATE</button>
+          </div>
+          <div v-else class="grid grid-cols-6 gap-6">
+            you have a key: <span>{{ user.publicKey }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -83,13 +102,15 @@ import { Listbox, ListboxButton, ListboxLabel, ListboxOption, ListboxOptions } f
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/vue/24/solid';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { VersionDto } from '../common/backend';
+import backend, { UserDto, VersionDto } from '../common/backend';
+import { BrowserKeys, UserKeys } from '../common/crypto';
 import { Locale } from '../i18n';
 import FetchError from './FetchError.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 
 const version = ref<VersionDto>();
+const user = ref<UserDto>();
 const onFetchError = ref<Error | null>();
 
 onMounted(fetchData);
@@ -99,9 +120,37 @@ async function fetchData() {
   try {
     let versionInstalled = backend.version.get();
     version.value = await versionInstalled;
+    user.value = await backend.users.me();
   } catch (error) {
     console.error('Retrieving version information failed.', error);
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
+}
+
+async function createUserKey() {
+  if (!user.value) {
+    return;
+  }
+  const userKeys = await UserKeys.create();
+  const recoveryCode = crypto.randomUUID(); // TODO something else?
+  const archive = await userKeys.export(recoveryCode);
+  const me = user.value;
+  me.publicKey = archive.publicKey;
+  me.privateKey = archive.encryptedPrivateKey;
+  me.salt = archive.salt;
+  me.iterations = archive.iterations;
+
+  const browserKeys = await BrowserKeys.create(); // or .load()
+  await browserKeys.store();
+
+  const jwe = await userKeys.encryptForDevice(browserKeys.keyPair.publicKey);
+  backend.devices.addDevice({
+    id: crypto.randomUUID(),
+    name: navigator.userAgent, // TODO something
+    publicKey: await browserKeys.encodedPublicKey(),
+    userKeyJwe: jwe,
+    creationTime: new Date()
+  });
+  backend.users.putMyKeyPair(me);
 }
 </script>

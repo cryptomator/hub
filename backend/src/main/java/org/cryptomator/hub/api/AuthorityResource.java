@@ -28,9 +28,9 @@ public class AuthorityResource {
 	public List<AuthorityDto> search(@QueryParam("query") @NotBlank String query) {
 		return Authority.byName(query).map(authority -> {
 			if (authority instanceof User user) {
-				return new UserDto(authority.id, authority.name, user.pictureUrl, user.email, null);
-			} else if (authority instanceof Group) {
-				return new GroupDto(authority.id, authority.name);
+				return UserDto.justPublicInfo(user);
+			} else if (authority instanceof Group group) {
+				return GroupDto.fromEntity(group);
 			} else {
 				throw new IllegalStateException("authority is not of type user or group");
 			}

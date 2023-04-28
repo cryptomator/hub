@@ -77,11 +77,11 @@ const props = defineProps<{
 
 const deviceState = computed(() => {
   const foundDevice = me.value?.devices.find(d => d.id == props.deviceId);
-  if ( accessibleVaults.value?.find(v => v.id == props.vaultId) == undefined ) {
+  if (accessibleVaults.value?.find(v => v.id == props.vaultId) == undefined) {
     return DeviceState.AccessDenied;
-  } else if ( foundDevice?.accessTo.find(v => v.id == props.vaultId) ) {
+  } else if (me.value?.accessibleVaults.find(v => v.id == props.vaultId)) {
     return DeviceState.AccessAllowed;
-  } else if ( foundDevice ) {
+  } else if (foundDevice) {
     return DeviceState.Registered;
   } else {
     return DeviceState.Unknown;
@@ -105,7 +105,7 @@ async function fetchData() {
   onFetchError.value = null;
   try {
     me.value = await backend.users.me(true, true);
-    accessibleVaults.value = await backend.vaults.listAccessible();
+    accessibleVaults.value = await backend.vaults.listAccessible(); // TODO: redundant??
   } catch (error) {
     console.error('Retrieving user information failed.', error);
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');

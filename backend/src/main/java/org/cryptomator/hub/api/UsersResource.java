@@ -1,9 +1,13 @@
 package org.cryptomator.hub.api;
 
+import jakarta.annotation.Nullable;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
+import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -21,6 +25,7 @@ import org.jboss.resteasy.reactive.NoCache;
 import java.net.URI;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -52,6 +57,24 @@ public class UsersResource {
 		return Response.created(URI.create(".")).build();
 	}
 
+	@PUT
+	@Path("/me/key-pair")
+	@RolesAllowed("user")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Transactional
+	@Operation(summary = "update the logged-in user, storing provided key pair and key derivation parameters")
+	@APIResponse(responseCode = "201", description = "user updated")
+	public Response syncMe(@Valid UserDto dto) {
+		var userId = jwt.getSubject();
+		var user = User.<User>findByIdOptional(userId).orElseThrow(NotFoundException::new);
+		user.publicKey = dto.publicKey;
+		user.privateKey = dto.privateKey;
+		user.salt = dto.salt;
+		user.iterations = dto.iterations;
+		user.persist();
+		return Response.created(URI.create(".")).build();
+	}
+
 	@GET
 	@Path("/me")
 	@RolesAllowed("user")
@@ -61,14 +84,11 @@ public class UsersResource {
 	@Operation(summary = "get the logged-in user")
 	public UserDto getMe(@QueryParam("withDevices") boolean withDevices, @QueryParam("withAccessibleVaults") boolean withAccessibleVaults) {
 		User user = User.findById(jwt.getSubject());
-		Function<AccessToken, VaultResource.VaultDto> mapAccessibleVaults =
-				a -> new VaultResource.VaultDto(a.vault.id, a.vault.name, a.vault.description, a.vault.creationTime.truncatedTo(ChronoUnit.MILLIS), null, 0, null, null, null);
-		Function<Device, DeviceResource.DeviceDto> mapDevices = withAccessibleVaults //
-				? d -> new DeviceResource.DeviceDto(d.id, d.name, d.publickey, d.owner.id, d.accessTokens.stream().map(mapAccessibleVaults).collect(Collectors.toSet()), d.creationTime.truncatedTo(ChronoUnit.MILLIS)) //
-				: d -> new DeviceResource.DeviceDto(d.id, d.name, d.publickey, d.owner.id, Set.of(), d.creationTime.truncatedTo(ChronoUnit.MILLIS));
-		return withDevices //
-				? new UserDto(user.id, user.name, user.pictureUrl, user.email, user.devices.stream().map(mapDevices).collect(Collectors.toSet()))
-				: new UserDto(user.id, user.name, user.pictureUrl, user.email, Set.of());
+		Function<AccessToken, VaultResource.VaultDto> mapAccessibleVaults = a -> new VaultResource.VaultDto(a.vault.id, a.vault.name, a.vault.description, a.vault.creationTime.truncatedTo(ChronoUnit.MILLIS), null, 0, null, null, null);
+		Function<Device, DeviceResource.DeviceDto> mapDevices = d -> new DeviceResource.DeviceDto(d.id, d.name, d.publickey, d.userKeyJwe, d.owner.id, d.creationTime.truncatedTo(ChronoUnit.MILLIS));
+		var devices = withDevices ? user.devices.stream().map(mapDevices).collect(Collectors.toSet()) : Set.<DeviceResource.DeviceDto>of();
+		var vaults = withAccessibleVaults ? user.accessTokens.stream().map(mapAccessibleVaults).collect(Collectors.toSet()) : Set.<VaultResource.VaultDto>of();
+		return new UserDto(user.id, user.name, user.pictureUrl, user.email, devices, vaults, user.publicKey, user.privateKey, user.salt, user.iterations);
 	}
 
 	@GET
@@ -77,7 +97,7 @@ public class UsersResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "list all users")
 	public List<UserDto> getAll() {
-		return User.findAll().<User>stream().map(UserDto::fromEntity).toList();
+		return User.findAll().<User>stream().map(UserDto::justPublicInfo).toList();
 	}
 
 }

@@ -42,16 +42,16 @@ INSERT INTO "vault_access" ("vault_id", "authority_id")
 VALUES
 	('7E57C0DE-0000-4000-8000-000100001111', 'user1'),
 	('7E57C0DE-0000-4000-8000-000100001111', 'user2'),
-	('7E57C0DE-0000-4000-8000-000100002222', 'group1'); /* user1, part of group1, has access to vault2 */
+	('7E57C0DE-0000-4000-8000-000100002222', 'group1');
 
-INSERT INTO "device" ("id", "owner_id", "name", "publickey", "creation_time")
+INSERT INTO "device" ("id", "owner_id", "name", "publickey", "creation_time", "user_key_jwe")
 VALUES
-	('device1', 'user1', 'Computer 1', 'publickey1', '2020-02-20 20:20:20'),
-	('device2', 'user2', 'Computer 2', 'publickey2', '2020-02-20 20:20:20'),
-	('device3', 'user1', 'Computer 3', 'publickey3', '2020-02-20 20:20:20'); /* user1 is part of group1 */
+	('device1', 'user1', 'Computer 1', 'publickey1', '2020-02-20 20:20:20', 'jwe.jwe.jwe.user1.device1'),
+	('device2', 'user2', 'Computer 2', 'publickey2', '2020-02-20 20:20:20', 'jwe.jwe.jwe.user2.device2'),
+	('device3', 'user1', 'Computer 3', 'publickey3', '2020-02-20 20:20:20', 'jwe.jwe.jwe.user1.device3');
 
-INSERT INTO "access_token" ("device_id", "vault_id", "jwe")
+INSERT INTO "access_token" ("user_id", "vault_id", "vault_key_jwe")
 VALUES
-	('device1', '7E57C0DE-0000-4000-8000-000100001111', 'jwe1'),
-	('device2', '7E57C0DE-0000-4000-8000-000100001111', 'jwe2'),
-	('device3', '7E57C0DE-0000-4000-8000-000100002222', 'jwe3'); -- device3 of user1, part of group1, has access to vault2
+	('user1', '7E57C0DE-0000-4000-8000-000100001111', 'jwe.jwe.jwe.vault1.user1'), -- direct access
+	('user2', '7E57C0DE-0000-4000-8000-000100001111', 'jwe.jwe.jwe.vault1.user2'), -- direct access
+	('user1', '7E57C0DE-0000-4000-8000-000100002222', 'jwe.jwe.jwe.vault2.user1'); -- access via group1

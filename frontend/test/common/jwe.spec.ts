@@ -4,7 +4,6 @@ import { base64url } from 'rfc4648';
 import { ConcatKDF, JWE, JWEHeader } from '../../src/common/jwe';
 
 describe('JWE', () => {
-
   before(done => {
     // since this test runs on Node, we need to replace window.crypto:
     Object.defineProperty(global, 'crypto', { value: require('node:crypto').webcrypto });
@@ -14,7 +13,6 @@ describe('JWE', () => {
   });
 
   describe('NIST SP 800-56A Rev. 2 Section 5.8.1', () => {
-
     it('should fulfill test vectors', async () => {
       const z = new Uint8Array([158, 86, 217, 29, 129, 113, 53, 211, 114, 131, 66, 131, 191, 132, 38, 156, 251, 49, 110, 163, 218, 128, 106, 72, 246, 218, 167, 121, 140, 254, 144, 196]);
       const algorithmId = new Uint8Array([0, 0, 0, 7, 65, 49, 50, 56, 71, 67, 77]);
@@ -22,14 +20,13 @@ describe('JWE', () => {
       const partyVInfo = new Uint8Array([0, 0, 0, 3, 66, 111, 98]);
       const suppPubInfo = new Uint8Array([0, 0, 0, 128]);
 
-      let derivedKey = await ConcatKDF.kdf(z, 16, algorithmId, partyUInfo, partyVInfo, suppPubInfo);
+      const otherInfo = new Uint8Array([...algorithmId, ...partyUInfo, ...partyVInfo, ...new Uint8Array(suppPubInfo)]);
+      let derivedKey = await ConcatKDF.kdf(z, 16, otherInfo);
       expect(new Uint8Array(derivedKey), 'derived key').to.eql(new Uint8Array([86, 170, 141, 234, 248, 35, 109, 32, 92, 34, 40, 205, 113, 167, 16, 26]));
     });
-
   });
 
   describe('RFC 7516 / RFC 7518', () => {
-
     it('should build JWE for given public key', async () => {
       const recipientPublicKey = await crypto.subtle.importKey(
         'jwk',

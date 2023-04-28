@@ -23,12 +23,12 @@ import java.util.UUID;
 				WHERE eva.id.authorityId = :userId
 		""")
 @NamedQuery(name = "EffectiveVaultAccess.countEVUs", query = """
-				SELECT count( DISTINCT u)
+				SELECT count(DISTINCT u)
 				FROM User u
 				INNER JOIN EffectiveVaultAccess eva ON u.id = eva.id.authorityId
 		""")
 @NamedQuery(name = "EffectiveVaultAccess.countEVUsInGroup", query = """
-				SELECT count( DISTINCT u)
+				SELECT count(DISTINCT u)
 				FROM User u
 				INNER JOIN EffectiveVaultAccess eva ON u.id = eva.id.authorityId
 				INNER JOIN EffectiveGroupMembership egm ON u.id = egm.id.memberId

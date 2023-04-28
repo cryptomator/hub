@@ -98,7 +98,7 @@ onMounted(fetchData);
 async function fetchData() {
   onFetchError.value = null;
   try {
-    me.value = await backend.users.me(true, true);
+    me.value = await backend.users.me(true);
   } catch (error) {
     console.error('Retrieving device list failed.', error);
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
