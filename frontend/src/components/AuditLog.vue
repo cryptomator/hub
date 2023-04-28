@@ -21,9 +21,15 @@
           <table class="min-w-full divide-y divide-gray-300">
             <thead>
               <tr>
-                <th scope="col" class="whitespace-nowrap py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0">{{ t('auditLog.id') }}</th>
-                <th scope="col" class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900">{{ t('auditLog.timestamp') }}</th>
-                <th scope="col" class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900">{{ t('auditLog.type') }}</th>
+                <th scope="col" class="whitespace-nowrap py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0">
+                  {{ t('auditLog.timestamp') }}
+                </th>
+                <th scope="col" class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                  {{ t('auditLog.type') }}
+                </th>
+                <th scope="col" class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                  {{ t('auditLog.details') }}
+                </th>
                 <!-- <th scope="col" class="relative whitespace-nowrap py-3.5 pl-3 pr-4 sm:pr-0">
                   <span class="sr-only">Edit</span>
                 </th> -->
@@ -31,9 +37,20 @@
             </thead>
             <tbody class="divide-y divide-gray-200 bg-white">
               <tr v-for="auditEvent in auditEvents" :key="auditEvent.id">
-                <td class="whitespace-nowrap py-2 pl-4 pr-3 text-sm text-gray-500 sm:pl-0">{{ auditEvent.id }}</td>
-                <td class="whitespace-nowrap px-2 py-2 text-sm font-medium text-gray-900">{{ d(auditEvent.timestamp, 'short') }}</td>
-                <td class="whitespace-nowrap px-2 py-2 text-sm text-gray-900">{{ auditEvent.type }}</td>
+                <td class="whitespace-nowrap py-2 pl-4 pr-3 text-sm text-gray-500 sm:pl-0">
+                  <code>{{ d(auditEvent.timestamp, 'long') }}</code>
+                </td>
+                <td class="whitespace-nowrap px-2 py-2 text-sm font-medium text-gray-900">
+                  {{ auditEvent.type }}
+                </td>
+                <td class="whitespace-nowrap px-2 py-2 text-sm text-gray-900">
+                  <dl class="flex flex-col gap-2">
+                    <div v-for="detailKey in Object.keys(auditEvent.details())" :key="detailKey" class="flex items-end gap-2">
+                      <dt class="text-xs text-gray-500"><code>{{ detailKey }}</code></dt>
+                      <dd>{{ auditEvent.details()[detailKey] }}</dd>
+                    </div>
+                  </dl>
+                </td>
                 <!-- <td class="relative whitespace-nowrap py-2 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
                   <a href="#" class="text-primary hover:primary-d1">Edit<span class="sr-only">, {{ auditEvent.id }}</span></a>
                 </td> -->

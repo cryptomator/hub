@@ -47,9 +47,9 @@
   "admin.licenseInfo.managedNoLicense.description": "Thank you for using Cryptomator Hub! You currently have no active license.",
 
   "auditLog.title": "Audit Logs",
-  "auditLog.id": "ID",
   "auditLog.timestamp": "Timestamp",
-  "auditLog.type": "Type",
+  "auditLog.type": "Event",
+  "auditLog.details": "Details",
 
   "authenticateVaultAdminDialog.title": "Manage Vault",
   "authenticateVaultAdminDialog.description": "Type in the vault admin password to manage it.",

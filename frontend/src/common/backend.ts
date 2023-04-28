@@ -169,6 +169,8 @@ enum AuditEventType {
 
 export abstract class AuditEventDto {
   constructor(public id: string, public timestamp: Date, public type: AuditEventType) { }
+
+  abstract details(): { [key: string]: string };
 }
 
 enum UnlockResult {
@@ -180,6 +182,15 @@ enum UnlockResult {
 export class UnlockEventDto extends AuditEventDto {
   constructor(public id: string, public timestamp: Date, public type: AuditEventType, public userId: string, public vaultId: string, public deviceId: string, public result: UnlockResult) {
     super(id, timestamp, type);
+  }
+
+  details(): { [key: string]: string } {
+    return {
+      userId: this.userId,
+      vaultId: this.vaultId,
+      deviceId: this.deviceId,
+      result: this.result
+    };
   }
 
   static typeOf(obj: any): obj is UnlockEventDto {

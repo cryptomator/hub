@@ -46,9 +46,9 @@
   "admin.licenseInfo.managedNoLicense.description": "Vielen Dank, dass du Cryptomator Hub nutzt! Du hast aktuell keine aktive Lizenz.",
 
   "auditLog.title": "Audit-Logs",
-  "auditLog.id": "ID",
   "auditLog.timestamp": "Zeitstempel",
-  "auditLog.type": "Typ",
+  "auditLog.type": "Ereignis",
+  "auditLog.details": "Details",
 
   "authenticateVaultAdminDialog.title": "Tresor verwalten",
   "authenticateVaultAdminDialog.description": "Gib das Tresor-Admin-Passwort des Tresors ein, um ihn zu verwalten.",
