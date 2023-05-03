@@ -3,14 +3,16 @@ package org.cryptomator.hub.api;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
-import jakarta.persistence.PersistenceException;
+import jakarta.persistence.NoResultException;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.InternalServerErrorException;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -21,13 +23,13 @@ import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.validation.NoHtmlOrScriptChars;
 import org.cryptomator.hub.validation.OnlyBase64Chars;
-import org.cryptomator.hub.validation.OnlyBase64UrlChars;
 import org.cryptomator.hub.validation.ValidId;
 import org.cryptomator.hub.validation.ValidJWE;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.hibernate.exception.ConstraintViolationException;
+import org.jboss.resteasy.reactive.NoCache;
 
 import java.net.URI;
 import java.time.Instant;
@@ -45,24 +47,45 @@ public class DeviceResource {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
-	@Operation(summary = "adds a device", description = "the device will be owned by the currently logged-in user")
-	@APIResponse(responseCode = "201", description = "device created")
-	@APIResponse(responseCode = "409", description = "Device already exists")
-	public Response create(@Valid DeviceDto deviceDto, @PathParam("deviceId") @ValidId String deviceId) {
-		if (deviceId == null || deviceId.trim().length() == 0 || deviceDto == null) {
-			return Response.status(Response.Status.BAD_REQUEST).entity("deviceId or deviceDto cannot be empty").build();
+	@Operation(summary = "creates or updates a device", description = "the device will be owned by the currently logged-in user")
+	@APIResponse(responseCode = "201", description = "Device created or updated")
+	@APIResponse(responseCode = "409", description = "Conflicting device id or name")
+	public Response createOrUpdate(@Valid @NotNull DeviceDto dto, @PathParam("deviceId") @ValidId String deviceId) {
+		Device device;
+		try {
+			device = Device.findByIdAndUser(deviceId, jwt.getSubject());
+		} catch (NoResultException e) {
+			device = new Device();
+			device.id = deviceId;
+			device.owner = User.findById(jwt.getSubject());
+			device.creationTime = Instant.now().truncatedTo(ChronoUnit.MILLIS);
 		}
-		User currentUser = User.findById(jwt.getSubject());
-		var device = deviceDto.toDevice(currentUser, deviceId, Instant.now().truncatedTo(ChronoUnit.MILLIS));
+		device.name = dto.name;
+		device.publickey = dto.publicKey;
+		device.userKeyJwe = dto.userKeyJwe;
 		try {
 			device.persistAndFlush();
 			return Response.created(URI.create(".")).build();
-		} catch (PersistenceException e) {
-			if (e instanceof ConstraintViolationException) {
-				throw new ClientErrorException(Response.Status.CONFLICT, e);
-			} else {
-				throw new InternalServerErrorException(e);
-			}
+		} catch (ConstraintViolationException e) {
+			throw new ClientErrorException(Response.Status.CONFLICT, e);
+		}
+	}
+
+	@GET
+	@Path("/{deviceId}")
+	@RolesAllowed("user")
+	@Produces(MediaType.APPLICATION_JSON)
+	@NoCache
+	@Transactional
+	@Operation(summary = "get the device", description = "the device must be owned by the currently logged-in user")
+	@APIResponse(responseCode = "200", description = "Device found")
+	@APIResponse(responseCode = "404", description = "Device not found or owned by a different user")
+	public DeviceDto get(@PathParam("deviceId") @ValidId String deviceId) {
+		try {
+			Device device = Device.findByIdAndUser(deviceId, jwt.getSubject());
+			return DeviceDto.fromEntity(device);
+		} catch (NoResultException e) {
+			throw new NotFoundException(e);
 		}
 	}
 
@@ -95,17 +118,6 @@ public class DeviceResource {
 							@JsonProperty("userKeyJwe") @ValidJWE String userKeyJwe,
 							@JsonProperty("owner") @ValidId String ownerId,
 							@JsonProperty("creationTime") Instant creationTime) {
-
-		public Device toDevice(User user, String id, Instant creationTime) {
-			var device = new Device();
-			device.id = id;
-			device.owner = user;
-			device.name = name;
-			device.publickey = publicKey;
-			device.userKeyJwe = userKeyJwe;
-			device.creationTime = creationTime;
-			return device;
-		}
 
 		public static DeviceDto fromEntity(Device entity) {
 			return new DeviceDto(entity.id, entity.name, entity.publickey, entity.userKeyJwe, entity.owner.id, entity.creationTime.truncatedTo(ChronoUnit.MILLIS));

@@ -50,6 +50,9 @@ public class User extends Authority {
 	@OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
 	public Set<AccessToken> accessTokens = new HashSet<>();
 
+	@OneToMany(mappedBy = "owner", orphanRemoval = true, fetch = FetchType.LAZY)
+	public Set<Device> devices = new HashSet<>();
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;

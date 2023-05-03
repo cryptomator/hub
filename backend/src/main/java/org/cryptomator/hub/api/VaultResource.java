@@ -4,18 +4,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
-import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.GET;
-import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
@@ -24,7 +21,6 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.AccessToken;
-import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.EffectiveGroupMembership;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.entities.Group;
@@ -273,8 +269,6 @@ public class VaultResource {
 			return Response.created(URI.create(".")).build();
 		} catch (ConstraintViolationException e) {
 			throw new ClientErrorException(Response.Status.CONFLICT, e);
-		} catch (PersistenceException e) {
-			throw new InternalServerErrorException(e);
 		}
 	}
 
@@ -314,12 +308,8 @@ public class VaultResource {
 		try {
 			vault.persistAndFlush();
 			return Response.created(URI.create(".")).build();
-		} catch (PersistenceException e) {
-			if (e instanceof ConstraintViolationException) {
-				throw new ClientErrorException(Response.Status.CONFLICT, e);
-			} else {
-				throw new InternalServerErrorException(e);
-			}
+		} catch (ConstraintViolationException e) {
+			throw new ClientErrorException(Response.Status.CONFLICT, e);
 		}
 	}
 
