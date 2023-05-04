@@ -9,54 +9,78 @@
   </div>
 
   <div v-else>
-    <div class="pb-5 border-b border-gray-200">
+    <div class="flex justify-between pb-5 border-b border-gray-200 w-full">
       <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
         {{ t('auditLog.title') }}
       </h2>
+
+      <PopoverGroup class="flex items-baseline space-x-8">
+        <Popover as="div" class="relative inline-block text-left">
+          <PopoverButton class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+            <span>Filter</span>
+            <ChevronDownIcon class="-mr-1 ml-2 h-5 w-5" aria-hidden="true" />
+          </PopoverButton>
+
+          <transition enter-active-class="transition ease-out duration-100" enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 scale-100" leave-to-class="transform opacity-0 scale-95">
+            <PopoverPanel class="absolute right-0 z-10 mt-2 origin-top-right rounded-md bg-white p-4 shadow-2xl ring-1 ring-black ring-opacity-5 focus:outline-none w-80">
+              <form class="space-y-4">
+                <div class="sm:grid sm:grid-cols-2 sm:items-baseline sm:gap-2">
+                  <label for="filter-start-date" class="block text-sm font-medium text-gray-700">Start Date</label>
+                  <input id="filter-start-date" v-model="startDateFilter" type="text" class="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': !startDateFilterIsValid }" />
+                </div>
+                <div class="sm:grid sm:grid-cols-2 sm:items-baseline sm:gap-2">
+                  <label for="filter-end-date" class="block text-sm font-medium text-gray-700">End Date</label>
+                  <input id="filter-end-date" v-model="endDateFilter" type="text" class="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': !endDateFilterIsValid }" />
+                </div>
+                <div class="flex flex-col sm:flex-row gap-2 pt-4 border-t border-gray-200">
+                  <button type="button" class="w-full border border-gray-300 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50 disabled:hover:bg-white disabled:cursor-not-allowed" :disabled="filterIsReset" @click="resetFilter()">Reset</button>
+                  <button type="button" class="w-full rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white shadow hover:bg-primary-d1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" :disabled="!filterIsValid" @click="applyFilter()">Apply</button>
+                </div>
+              </form>
+            </PopoverPanel>
+          </transition>
+        </Popover>
+      </PopoverGroup>
     </div>
 
     <div class="mt-5 flow-root">
       <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
         <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-          <table class="min-w-full divide-y divide-gray-300">
-            <thead>
-              <tr>
-                <th scope="col" class="whitespace-nowrap py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0">
-                  {{ t('auditLog.timestamp') }}
-                </th>
-                <th scope="col" class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
-                  {{ t('auditLog.type') }}
-                </th>
-                <th scope="col" class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
-                  {{ t('auditLog.details') }}
-                </th>
-                <!-- <th scope="col" class="relative whitespace-nowrap py-3.5 pl-3 pr-4 sm:pr-0">
-                  <span class="sr-only">Edit</span>
-                </th> -->
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200 bg-white">
-              <tr v-for="auditEvent in auditEvents" :key="auditEvent.id">
-                <td class="whitespace-nowrap py-2 pl-4 pr-3 text-sm text-gray-500 sm:pl-0">
-                  <code>{{ d(auditEvent.timestamp, 'long') }}</code>
-                </td>
-                <td class="whitespace-nowrap px-2 py-2 text-sm font-medium text-gray-900">
-                  {{ auditEvent.type }}
-                </td>
-                <td class="whitespace-nowrap px-2 py-2 text-sm text-gray-900">
-                  <dl class="flex flex-col gap-2">
-                    <div v-for="detailKey in Object.keys(auditEvent.details())" :key="detailKey" class="flex items-end gap-2">
-                      <dt class="text-xs text-gray-500"><code>{{ detailKey }}</code></dt>
-                      <dd>{{ auditEvent.details()[detailKey] }}</dd>
-                    </div>
-                  </dl>
-                </td>
-                <!-- <td class="relative whitespace-nowrap py-2 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
-                  <a href="#" class="text-primary hover:primary-d1">Edit<span class="sr-only">, {{ auditEvent.id }}</span></a>
-                </td> -->
-              </tr>
-            </tbody>
-          </table>
+          <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
+            <table class="min-w-full divide-y divide-gray-300">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">
+                    {{ t('auditLog.timestamp') }}
+                  </th>
+                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    {{ t('auditLog.type') }}
+                  </th>
+                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    {{ t('auditLog.details') }}
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-200 bg-white">
+                <tr v-for="auditEvent in auditEvents" :key="auditEvent.id">
+                  <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">
+                    <code>{{ d(auditEvent.timestamp, 'long') }}</code>
+                  </td>
+                  <td class="whitespace-nowrap px-3 py-4 text-sm font-medium text-gray-900">
+                    {{ auditEvent.type }}
+                  </td>
+                  <td class="whitespace-nowrap px-3 py-4">
+                    <dl class="flex flex-col gap-2">
+                      <div v-for="detailKey in Object.keys(auditEvent.details())" :key="detailKey" class="flex items-end gap-2">
+                        <dt class="text-xs text-gray-500"><code>{{ detailKey }}</code></dt>
+                        <dd class="text-sm text-gray-900">{{ auditEvent.details()[detailKey] }}</dd>
+                      </div>
+                    </dl>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
@@ -64,7 +88,9 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { Popover, PopoverButton, PopoverGroup, PopoverPanel } from '@headlessui/vue';
+import { ChevronDownIcon } from '@heroicons/vue/20/solid';
+import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { AuditEventDto } from '../common/backend';
 import FetchError from './FetchError.vue';
@@ -74,19 +100,72 @@ const { t, d } = useI18n({ useScope: 'global' });
 const auditEvents = ref<AuditEventDto[]>();
 const onFetchError = ref<Error | null>();
 
+const startDate = ref<Date>(beginOfDate(new Date()));
+const startDateFilter = ref<string>(startDate.value.toISOString().split('T')[0]);
+const endDate = ref<Date>(endOfDate(new Date()));
+const endDateFilter = ref<string>(endDate.value.toISOString().split('T')[0]);
+
+const filterIsReset = computed(() => {
+  return startDateFilter.value == startDate.value.toISOString().split('T')[0]
+    && endDateFilter.value == endDate.value.toISOString().split('T')[0];
+});
+const startDateFilterIsValid = computed(() => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(startDateFilter.value)) {
+    return false;
+  }
+  const startDate = new Date(startDateFilter.value);
+  return !isNaN(startDate.getTime());
+});
+const endDateFilterIsValid = computed(() => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(endDateFilter.value)) {
+    return false;
+  }
+  const endDate = new Date(endDateFilter.value);
+  if (isNaN(endDate.getTime())) {
+    return false;
+  }
+  if (startDateFilterIsValid.value) {
+    const startDate = new Date(startDateFilter.value);
+    return startDate <= endDate;
+  }
+  return true;
+});
+const filterIsValid = computed(() => {
+  return startDateFilterIsValid.value && endDateFilterIsValid.value;
+});
+
 onMounted(fetchData);
 
 async function fetchData() {
   onFetchError.value = null;
   try {
-    const startDate = new Date();
-    startDate.setUTCHours(0, 0, 0, 0);
-    const endDate = new Date();
-    endDate.setUTCHours(23, 59, 59, 999);
-    auditEvents.value = await backend.auditLogs.getAllEvents(startDate, endDate);
+    auditEvents.value = await backend.auditLogs.getAllEvents(startDate.value, endDate.value);
   } catch (error) {
     console.error('Retrieving audit log events failed.', error);
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
+}
+
+function applyFilter() {
+  if (filterIsValid.value) {
+    startDate.value = beginOfDate(new Date(startDateFilter.value));
+    endDate.value = endOfDate(new Date(endDateFilter.value));
+    fetchData();
+  }
+}
+
+function resetFilter() {
+  startDateFilter.value = startDate.value.toISOString().split('T')[0];
+  endDateFilter.value = endDate.value.toISOString().split('T')[0];
+}
+
+function beginOfDate(date: Date): Date {
+  date.setUTCHours(0, 0, 0, 0);
+  return date;
+}
+
+function endOfDate(date: Date): Date {
+  date.setUTCHours(23, 59, 59, 999);
+  return date;
 }
 </script>
