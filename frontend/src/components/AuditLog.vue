@@ -17,7 +17,7 @@
       <PopoverGroup class="flex items-baseline space-x-8">
         <Popover as="div" class="relative inline-block text-left">
           <PopoverButton class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
-            <span>Filter</span>
+            <span>{{ t('auditLog.filter') }}</span>
             <ChevronDownIcon class="-mr-1 ml-2 h-5 w-5" aria-hidden="true" />
           </PopoverButton>
 
@@ -25,16 +25,24 @@
             <PopoverPanel class="absolute right-0 z-10 mt-2 origin-top-right rounded-md bg-white p-4 shadow-2xl ring-1 ring-black ring-opacity-5 focus:outline-none w-80">
               <form class="space-y-4">
                 <div class="sm:grid sm:grid-cols-2 sm:items-baseline sm:gap-2">
-                  <label for="filter-start-date" class="block text-sm font-medium text-gray-700">Start Date</label>
+                  <label for="filter-start-date" class="block text-sm font-medium text-gray-700">
+                    {{ t('auditLog.filter.startDate') }}
+                  </label>
                   <input id="filter-start-date" v-model="startDateFilter" type="text" class="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': !startDateFilterIsValid }" />
                 </div>
                 <div class="sm:grid sm:grid-cols-2 sm:items-baseline sm:gap-2">
-                  <label for="filter-end-date" class="block text-sm font-medium text-gray-700">End Date</label>
+                  <label for="filter-end-date" class="block text-sm font-medium text-gray-700">
+                    {{ t('auditLog.filter.endDate') }}
+                  </label>
                   <input id="filter-end-date" v-model="endDateFilter" type="text" class="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': !endDateFilterIsValid }" />
                 </div>
                 <div class="flex flex-col sm:flex-row gap-2 pt-4 border-t border-gray-200">
-                  <button type="button" class="w-full border border-gray-300 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50 disabled:hover:bg-white disabled:cursor-not-allowed" :disabled="filterIsReset" @click="resetFilter()">Reset</button>
-                  <button type="button" class="w-full rounded-md bg-primary px-3 py-2 text-sm font-semibold text-white shadow hover:bg-primary-d1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" :disabled="!filterIsValid" @click="applyFilter()">Apply</button>
+                  <button type="button" class="w-full border border-gray-300 rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50 disabled:hover:bg-white disabled:cursor-not-allowed" :disabled="filterIsReset" @click="resetFilter()">
+                    {{ t('common.reset') }}
+                  </button>
+                  <button type="button" class="w-full rounded-md bg-primary px-3 py-2 text-sm font-medium text-white shadow hover:bg-primary-d1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" :disabled="!filterIsValid" @click="applyFilter()">
+                    {{ t('common.apply') }}
+                  </button>
                 </div>
               </form>
             </PopoverPanel>

@@ -3,6 +3,7 @@
   "locale.de": "Deutsch",
 
   "common.add": "Hinzufügen",
+  "common.apply": "Anwenden",
   "common.cancel": "Abbrechen",
   "common.close": "Schließen",
   "common.copied": "Kopiert!",
@@ -14,6 +15,7 @@
   "common.optional": "optional",
   "common.reload": "Bitte lade die Seite neu.",
   "common.remove": "Entfernen",
+  "common.reset": "Zurücksetzen",
   "common.retry": "Wiederholen",
   "common.share": "Teilen",
   "common.unexpectedError": "Unerwarteter Fehler: {0}",
@@ -46,6 +48,9 @@
   "admin.licenseInfo.managedNoLicense.description": "Vielen Dank, dass du Cryptomator Hub nutzt! Du hast aktuell keine aktive Lizenz.",
 
   "auditLog.title": "Audit-Logs",
+  "auditLog.filter": "Filter",
+  "auditLog.filter.startDate": "Startdatum",
+  "auditLog.filter.endDate": "Enddatum",
   "auditLog.timestamp": "Zeitstempel",
   "auditLog.type": "Ereignis",
   "auditLog.details": "Details",
