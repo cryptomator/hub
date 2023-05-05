@@ -42,7 +42,7 @@ public class Device extends PanacheEntityBase {
 	@Column(name = "publickey", nullable = false)
 	public String publickey;
 
-	@Column(name = "user_key_jwe", nullable = false)
+	@Column(name = "user_key_jwe", nullable = true)
 	public String userKeyJwe;
 
 	@Column(name = "creation_time", nullable = false)
