@@ -21,9 +21,11 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.AccessToken;
+import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.EffectiveGroupMembership;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.entities.Group;
+import org.cryptomator.hub.entities.LegacyAccessToken;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.filters.ActiveLicense;
@@ -217,11 +219,11 @@ public class VaultResource {
 	}
 
 	@GET
-	@Path("/{vaultId}/access-tokens/logged-in-user") // TODO: other path?
+	@Path("/{vaultId}/user-tokens/me")
 	@RolesAllowed("user")
 	@Transactional
 	@Produces(MediaType.TEXT_PLAIN)
-	@Operation(summary = "get the user-specific vault key")
+	@Operation(summary = "get the user-specific vault key", description = "retrieves the vault jwe for the current user")
 	@APIResponse(responseCode = "200")
 	@APIResponse(responseCode = "402", description = "number of effective vault users exceeds available license seats")
 	@APIResponse(responseCode = "403", description = "user not authorized to access this vault")
@@ -244,7 +246,7 @@ public class VaultResource {
 	}
 
 	@PUT
-	@Path("/{vaultId}/access-tokens/{userId}")
+	@Path("/{vaultId}/user-tokens/{userId}")
 	@RolesAllowed("user")
 	@VaultAdminOnlyFilter
 	@Transactional

@@ -204,7 +204,6 @@ class VaultService {
     }).catch(err => rethrowAndConvertIfExpected(err, 403));
   }
 
-  // FIXME: dedup with grantAccess()
   public async addUser(vaultId: string, userId: string, vaultKeys: VaultKeys): Promise<AxiosResponse<void>> {
     let vaultAdminAuthorizationJWT = await this.buildVaultAdminAuthorizationJWT(vaultId, vaultKeys);
     return axiosAuth.put(`/vaults/${vaultId}/users/${userId}`, null, { headers: { 'Cryptomator-Vault-Admin-Authorization': vaultAdminAuthorizationJWT } })
@@ -229,10 +228,9 @@ class VaultService {
       .catch((error) => rethrowAndConvertIfExpected(error, 404, 409));
   }
 
-  // FIXME: dedup with addUser()
   public async grantAccess(vaultId: string, userId: string, jwe: string, vaultKeys: VaultKeys) {
     let vaultAdminAuthorizationJWT = await this.buildVaultAdminAuthorizationJWT(vaultId, vaultKeys);
-    await axiosAuth.put(`/vaults/${vaultId}/access-tokens/${userId}`, jwe, { headers: { 'Content-Type': 'text/plain', 'Cryptomator-Vault-Admin-Authorization': vaultAdminAuthorizationJWT } })
+    await axiosAuth.put(`/vaults/${vaultId}/user-tokens/${userId}`, jwe, { headers: { 'Content-Type': 'text/plain', 'Cryptomator-Vault-Admin-Authorization': vaultAdminAuthorizationJWT } })
       .catch((error) => rethrowAndConvertIfExpected(error, 404, 409));
   }
 

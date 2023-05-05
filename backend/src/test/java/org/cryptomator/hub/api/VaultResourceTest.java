@@ -136,17 +136,17 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/access-tokens/logged-in-user returns 200 using user access")
+		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/user-tokens/me returns 200 using user access")
 		public void testUnlock1() {
-			when().get("/vaults/{vaultId}/access-tokens/logged-in-user", "7E57C0DE-0000-4000-8000-000100001111")
+			when().get("/vaults/{vaultId}/user-tokens/me", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(200)
 					.body(is("jwe.jwe.jwe.vault1.user1"));
 		}
 
 		@Test
-		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100002222/access-tokens/logged-in-user returns 200 using group access")
+		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100002222/user-tokens/me returns 200 using group access")
 		public void testUnlock2() {
-			when().get("/vaults/{vaultId}/access-tokens/logged-in-user", "7E57C0DE-0000-4000-8000-000100002222")
+			when().get("/vaults/{vaultId}/user-tokens/me", "7E57C0DE-0000-4000-8000-000100002222")
 					.then().statusCode(200)
 					.body(is("jwe.jwe.jwe.vault2.user1"));
 		}
@@ -223,7 +223,7 @@ public class VaultResourceTest {
 
 			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault1AdminJWT)
 					.contentType(ContentType.TEXT).body("jwe.jwe.jwe.vault1.user999")
-					.when().put("/vaults/{vaultId}/access-tokens/{userId}", "7E57C0DE-0000-4000-8000-000100001111", "user999")
+					.when().put("/vaults/{vaultId}/user-tokens/{userId}", "7E57C0DE-0000-4000-8000-000100001111", "user999")
 					.then().statusCode(201);
 
 			try (var s = dataSource.getConnection().createStatement()) {
@@ -238,7 +238,7 @@ public class VaultResourceTest {
 		public void testGrantAccess2() {
 			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault1AdminJWT)
 					.contentType(ContentType.TEXT).body("jwe.jwe.jwe.vault1.user1")
-					.when().put("/vaults/{vaultId}/access-tokens/{userId}", "7E57C0DE-0000-4000-8000-000100001111", "user1")
+					.when().put("/vaults/{vaultId}/user-tokens/{userId}", "7E57C0DE-0000-4000-8000-000100001111", "user1")
 					.then().statusCode(409);
 		}
 
@@ -248,7 +248,7 @@ public class VaultResourceTest {
 			given()
 					.header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault1AdminJWT)
 					.contentType(ContentType.TEXT).body("jwe.jwe.jwe.vault666.user1")
-					.when().put("/vaults/{vaultId}/access-tokens/{userId}", "7E57C0DE-0000-4000-8000-BADBADBADBAD", "user1")
+					.when().put("/vaults/{vaultId}/user-tokens/{userId}", "7E57C0DE-0000-4000-8000-BADBADBADBAD", "user1")
 					.then().statusCode(400);
 		}
 
@@ -258,7 +258,7 @@ public class VaultResourceTest {
 			given()
 					.header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault1AdminJWT)
 					.contentType(ContentType.TEXT).body("jwe.jwe.jwe.vault2.user666")
-					.when().put("/vaults/{vaultId}/access-tokens/{userId}", "7E57C0DE-0000-4000-8000-000100001111", "nonExistingUser")
+					.when().put("/vaults/{vaultId}/user-tokens/{userId}", "7E57C0DE-0000-4000-8000-000100001111", "nonExistingUser")
 					.then().statusCode(404);
 		}
 
@@ -375,7 +375,7 @@ public class VaultResourceTest {
 		public void testGrantAccess1() {
 			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
 					.given().contentType(ContentType.TEXT).body("jwe.jwe.jwe.vault2.device2")
-					.when().put("/vaults/{vaultId}/access-tokens/{userId}", "7E57C0DE-0000-4000-8000-000100002222", "user2")
+					.when().put("/vaults/{vaultId}/user-tokens/{userId}", "7E57C0DE-0000-4000-8000-000100002222", "user2")
 					.then().statusCode(201);
 		}
 
@@ -475,7 +475,7 @@ public class VaultResourceTest {
 		public void testGrantAccess2() {
 			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault1AdminJWT)
 					.contentType(ContentType.TEXT).body("jwe.jwe.jwe.vault2.user999")
-					.when().put("/vaults/{vaultId}/access-tokens/{userId}", "7E57C0DE-0000-4000-8000-000100001111", "user999")
+					.when().put("/vaults/{vaultId}/user-tokens/{userId}", "7E57C0DE-0000-4000-8000-000100001111", "user999")
 					.then().statusCode(201);
 		}
 
@@ -611,7 +611,7 @@ public class VaultResourceTest {
 			}
 			//Assumptions.assumeTrue(EffectiveVaultAccess.countEffectiveVaultUsers() > 5);
 
-			when().get("/vaults/{vaultId}/access-tokens/logged-in-user", "7E57C0DE-0000-4000-8000-000100001111")
+			when().get("/vaults/{vaultId}/user-tokens/me", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(402);
 		}
 
@@ -640,7 +640,7 @@ public class VaultResourceTest {
 				"PUT, /vaults/7E57C0DE-0000-4000-8000-000100001111/users/user1",
 				"DELETE, /vaults/7E57C0DE-0000-4000-8000-000100001111/users/user1",
 				"GET, /vaults/7E57C0DE-0000-4000-8000-000100001111/users-requiring-access-grant",
-				"GET, /vaults/7E57C0DE-0000-4000-8000-000100001111/access-tokens/logged-in-user"
+				"GET, /vaults/7E57C0DE-0000-4000-8000-000100001111/user-tokens/me"
 		})
 		public void testGet(String method, String path) {
 			when().request(method, path)

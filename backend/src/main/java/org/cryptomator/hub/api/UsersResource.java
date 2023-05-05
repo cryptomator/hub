@@ -1,15 +1,17 @@
 package org.cryptomator.hub.api;
 
-import jakarta.annotation.Nullable;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
+import jakarta.persistence.NoResultException;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
@@ -17,6 +19,8 @@ import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.AccessToken;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.User;
+import org.cryptomator.hub.filters.ActiveLicense;
+import org.cryptomator.hub.validation.ValidId;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -25,7 +29,6 @@ import org.jboss.resteasy.reactive.NoCache;
 import java.net.URI;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -64,7 +67,7 @@ public class UsersResource {
 	@Transactional
 	@Operation(summary = "update the logged-in user, storing provided key pair and key derivation parameters")
 	@APIResponse(responseCode = "201", description = "user updated")
-	public Response syncMe(@Valid UserDto dto) {
+	public Response putKey(@Valid UserDto dto) {
 		var userId = jwt.getSubject();
 		var user = User.<User>findByIdOptional(userId).orElseThrow(NotFoundException::new);
 		user.publicKey = dto.publicKey;
@@ -98,6 +101,30 @@ public class UsersResource {
 	@Operation(summary = "list all users")
 	public List<UserDto> getAll() {
 		return User.findAll().<User>stream().map(UserDto::justPublicInfo).toList();
+	}
+
+	@GET
+	@Path("/me/device-tokens/{deviceId}")
+	@RolesAllowed("user")
+	@Produces(MediaType.TEXT_PLAIN)
+	@NoCache
+	@Transactional
+	@Operation(summary = "get the device-specific user key", description = "retrieves the user jwe for the specified device")
+	@APIResponse(responseCode = "200", description = "Device found")
+	@APIResponse(responseCode = "403", description = "Device not yet verified")
+	@APIResponse(responseCode = "404", description = "Device not found or owned by a different user")
+	@ActiveLicense
+	public String getMe(@PathParam("deviceId") @ValidId String deviceId) {
+		try {
+			var device = Device.findByIdAndUser(deviceId, jwt.getSubject());
+			if (device.userKeyJwe == null) {
+				throw new ForbiddenException("Device needs verification");
+			} else {
+				return device.userKeyJwe;
+			}
+		} catch (NoResultException e) {
+			throw new NotFoundException(e);
+		}
 	}
 
 }
