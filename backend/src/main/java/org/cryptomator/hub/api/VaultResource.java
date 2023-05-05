@@ -218,6 +218,34 @@ public class VaultResource {
 		return User.findRequiringAccessGrant(vaultId).map(UserDto::justPublicInfo).toList();
 	}
 
+	@Deprecated(forRemoval = true)
+	@GET
+	@Path("/{vaultId}/keys/{deviceId}")
+	@RolesAllowed("user")
+	@Transactional
+	@Produces(MediaType.TEXT_PLAIN)
+	@Operation(summary = "get the device-specific masterkey", deprecated = true)
+	@APIResponse(responseCode = "200")
+	@APIResponse(responseCode = "402", description = "number of effective vault users exceeds available license seats")
+	@APIResponse(responseCode = "403", description = "device not authorized to access this vault")
+	@APIResponse(responseCode = "404", description = "unknown device")
+	@ActiveLicense
+	public String legacyUnlock(@PathParam("vaultId") UUID vaultId, @PathParam("deviceId") @ValidId String deviceId) {
+		var usedSeats = EffectiveVaultAccess.countEffectiveVaultUsers();
+		if (usedSeats > license.getAvailableSeats()) {
+			throw new PaymentRequiredException("Number of effective vault users exceeds available license seats");
+		}
+
+		var access = LegacyAccessToken.unlock(vaultId, deviceId, jwt.getSubject());
+		if (access != null) {
+			return access.jwe;
+		} else if (Device.findById(deviceId) == null) {
+			throw new NotFoundException("No such device.");
+		} else {
+			throw new ForbiddenException("Access to this device not granted.");
+		}
+	}
+
 	@GET
 	@Path("/{vaultId}/user-tokens/me")
 	@RolesAllowed("user")

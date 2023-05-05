@@ -151,6 +151,46 @@ public class VaultResourceTest {
 					.body(is("jwe.jwe.jwe.vault2.user1"));
 		}
 
+		@Nested
+		@DisplayName("legacy unlock")
+		@TestSecurity(user = "User Name 1", roles = {"user"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user1")
+		})
+		public class Legacy {
+
+			@Test
+			@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/keys/device1 returns 200 using user access")
+			public void testUnlock1() {
+				when().get("/vaults/{vaultId}/keys/{deviceId}", "7E57C0DE-0000-4000-8000-000100001111", "device1")
+						.then().statusCode(200)
+						.body(is("legacy.jwe.jwe.vault1.device1"));
+			}
+
+			@Test
+			@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100002222/keys/device3 returns 200 using group access")
+			public void testUnlock2() {
+				when().get("/vaults/{vaultId}/keys/{deviceId}", "7E57C0DE-0000-4000-8000-000100002222", "device3")
+						.then().statusCode(200)
+						.body(is("legacy.jwe.jwe.vault2.device3"));
+			}
+
+			@Test
+			@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/keys/noSuchDevice returns 404")
+			public void testUnlock3() {
+				when().get("/vaults/{vaultId}/keys/{deviceId}", "7E57C0DE-0000-4000-8000-000100001111", "noSuchDevice")
+						.then().statusCode(404);
+			}
+
+			@Test
+			@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/keys/device2 returns 403")
+			public void testUnlock4() {
+				when().get("/vaults/{vaultId}/keys/{deviceId}", "7E57C0DE-0000-4000-8000-000100001111", "device2")
+						.then().statusCode(403);
+			}
+
+		}
+
 	}
 
 	@Nested

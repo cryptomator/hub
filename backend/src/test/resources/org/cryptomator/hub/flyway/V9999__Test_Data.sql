@@ -55,3 +55,10 @@ VALUES
 	('user1', '7E57C0DE-0000-4000-8000-000100001111', 'jwe.jwe.jwe.vault1.user1'), -- direct access
 	('user2', '7E57C0DE-0000-4000-8000-000100001111', 'jwe.jwe.jwe.vault1.user2'), -- direct access
 	('user1', '7E57C0DE-0000-4000-8000-000100002222', 'jwe.jwe.jwe.vault2.user1'); -- access via group1
+
+-- DEPRECATED:
+INSERT INTO "access_token_legacy" ("device_id", "vault_id", "jwe")
+VALUES
+	('device1', '7E57C0DE-0000-4000-8000-000100001111', 'legacy.jwe.jwe.vault1.device1'), -- direct access
+	('device2', '7E57C0DE-0000-4000-8000-000100001111', 'legacy.jwe.jwe.vault1.device2'), -- direct access
+	('device3', '7E57C0DE-0000-4000-8000-000100002222', 'legacy.jwe.jwe.vault2.device3'); -- access via group1
