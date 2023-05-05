@@ -14,6 +14,8 @@
   "common.manage": "Manage",
   "common.next": "Next",
   "common.optional": "optional",
+  "common.pagination": "Pagination",
+  "common.previous": "Previous",
   "common.reload": "Please reload the page.",
   "common.remove": "Remove",
   "common.reset": "Reset",
@@ -55,6 +57,7 @@
   "auditLog.timestamp": "Timestamp",
   "auditLog.type": "Event",
   "auditLog.details": "Details",
+  "auditLog.pagination.showing": "Showing {0} to {1} of {2} entries",
 
   "authenticateVaultAdminDialog.title": "Manage Vault",
   "authenticateVaultAdminDialog.description": "Type in the vault admin password to manage it.",

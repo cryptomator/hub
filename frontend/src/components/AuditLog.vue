@@ -87,6 +87,29 @@
                   </td>
                 </tr>
               </tbody>
+              <tfoot class="bg-gray-50">
+                <tr>
+                  <td colspan="3">
+                    <nav class="flex items-center justify-between px-4 py-3 sm:px-6" :aria-label="t('common.pagination')">
+                      <div class="hidden sm:block">
+                        <i18n-t keypath="auditLog.pagination.showing" scope="global" tag="p" class="text-sm text-gray-700">
+                          <span class="font-medium">{{ paginationBegin }}</span>
+                          <span class="font-medium">{{ paginationEnd }}</span>
+                          <span class="font-medium">–</span>
+                        </i18n-t>
+                      </div>
+                      <div class="flex flex-1 justify-between sm:justify-end">
+                        <button type="button" class="relative inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0 disabled:opacity-50 disabled:hover:bg-white disabled:cursor-not-allowed" :disabled="currentPage == 1" @click="showPreviousPage()">
+                          {{ t('common.previous') }}
+                        </button>
+                        <button type="button" class="relative ml-3 inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0 disabled:opacity-50 disabled:hover:bg-white disabled:cursor-not-allowed" :disabled="!hasNextPage" @click="showNextPage()">
+                          {{ t('common.next') }}
+                        </button>
+                      </div>
+                    </nav>
+                  </td>
+                </tr>
+              </tfoot>
             </table>
           </div>
         </div>
@@ -108,10 +131,10 @@ const { t, d } = useI18n({ useScope: 'global' });
 const auditEvents = ref<AuditEventDto[]>();
 const onFetchError = ref<Error | null>();
 
-const startDate = ref<Date>(beginOfDate(new Date()));
-const startDateFilter = ref<string>(startDate.value.toISOString().split('T')[0]);
-const endDate = ref<Date>(endOfDate(new Date()));
-const endDateFilter = ref<string>(endDate.value.toISOString().split('T')[0]);
+const startDate = ref(beginOfDate(new Date()));
+const startDateFilter = ref(startDate.value.toISOString().split('T')[0]);
+const endDate = ref(endOfDate(new Date()));
+const endDateFilter = ref(endDate.value.toISOString().split('T')[0]);
 
 const filterIsReset = computed(() => {
   return startDateFilter.value == startDate.value.toISOString().split('T')[0]
@@ -141,6 +164,24 @@ const endDateFilterIsValid = computed(() => {
 const filterIsValid = computed(() => {
   return startDateFilterIsValid.value && endDateFilterIsValid.value;
 });
+
+const currentPage = ref(1);
+const pageSize = ref(20);
+const paginationBegin = computed(() => {
+  if (auditEvents.value) {
+    return (currentPage.value - 1) * pageSize.value + Math.min(1, auditEvents.value.length);
+  } else {
+    return 0;
+  }
+});
+const paginationEnd = computed(() => {
+  if (auditEvents.value) {
+    return (currentPage.value - 1) * pageSize.value + auditEvents.value.length;
+  } else {
+    return 0;
+  }
+});
+const hasNextPage = ref(false);
 
 onMounted(fetchData);
 
@@ -175,5 +216,13 @@ function beginOfDate(date: Date): Date {
 function endOfDate(date: Date): Date {
   date.setUTCHours(23, 59, 59, 999);
   return date;
+}
+
+function showNextPage() {
+  // TODO
+}
+
+function showPreviousPage() {
+  // TODO
 }
 </script>
