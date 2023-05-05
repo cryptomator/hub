@@ -64,7 +64,7 @@
                   <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                     {{ t('auditLog.type') }}
                   </th>
-                  <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                  <th scope="col" class="py-3.5 pl-3 pr-4 text-left text-sm font-semibold text-gray-900 sm:pr-6">
                     {{ t('auditLog.details') }}
                   </th>
                 </tr>
@@ -77,7 +77,7 @@
                   <td class="whitespace-nowrap px-3 py-4 text-sm font-medium text-gray-900">
                     {{ auditEvent.type }}
                   </td>
-                  <td class="whitespace-nowrap px-3 py-4">
+                  <td class="whitespace-nowrap py-4 pl-3 pr-4 sm:pr-6">
                     <dl class="flex flex-col gap-2">
                       <div v-for="detailKey in Object.keys(auditEvent.details())" :key="detailKey" class="flex items-end gap-2">
                         <dt class="text-xs text-gray-500"><code>{{ detailKey }}</code></dt>
