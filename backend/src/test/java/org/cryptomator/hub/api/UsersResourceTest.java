@@ -97,11 +97,17 @@ public class UsersResourceTest {
 		}
 
 		@Test
-		@DisplayName("GET /users/me/device-tokens/device3 returns 200")
+		@DisplayName("GET /users/me/device-tokens/device3 returns 403 (device not yet verified)")
 		public void testGetDevice3() {
 			when().get("/users/me/device-tokens/device3")
-					.then().statusCode(200)
-					.body(is("jwe.jwe.jwe.user1.device3"));
+					.then().statusCode(403);
+		}
+
+		@Test
+		@DisplayName("GET /users/me/device-tokens/noSuchDevice returns 404 (no such device)")
+		public void testGetNonExistingDevice() {
+			when().get("/users/me/device-tokens/noSuchDevice")
+					.then().statusCode(404);
 		}
 
 	}

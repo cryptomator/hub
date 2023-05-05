@@ -48,7 +48,7 @@ INSERT INTO "device" ("id", "owner_id", "name", "publickey", "creation_time", "u
 VALUES
 	('device1', 'user1', 'Computer 1', 'publickey1', '2020-02-20 20:20:20', 'jwe.jwe.jwe.user1.device1'),
 	('device2', 'user2', 'Computer 2', 'publickey2', '2020-02-20 20:20:20', 'jwe.jwe.jwe.user2.device2'),
-	('device3', 'user1', 'Computer 3', 'publickey3', '2020-02-20 20:20:20', 'jwe.jwe.jwe.user1.device3');
+	('device3', 'user1', 'Computer 3', 'publickey3', '2020-02-20 20:20:20', NULL);
 
 INSERT INTO "access_token" ("user_id", "vault_id", "vault_key_jwe")
 VALUES
