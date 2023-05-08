@@ -168,7 +168,7 @@ enum AuditEventType {
 }
 
 export abstract class AuditEventDto {
-  constructor(public id: string, public timestamp: Date, public type: AuditEventType) { }
+  constructor(public id: number, public timestamp: Date, public type: AuditEventType) { }
 
   abstract details(): { [key: string]: string };
 }
@@ -180,7 +180,7 @@ enum UnlockResult {
 }
 
 export class UnlockEventDto extends AuditEventDto {
-  constructor(public id: string, public timestamp: Date, public type: AuditEventType, public userId: string, public vaultId: string, public deviceId: string, public result: UnlockResult) {
+  constructor(public id: number, public timestamp: Date, public type: AuditEventType, public userId: string, public vaultId: string, public deviceId: string, public result: UnlockResult) {
     super(id, timestamp, type);
   }
 
@@ -195,7 +195,7 @@ export class UnlockEventDto extends AuditEventDto {
 
   static typeOf(obj: any): obj is UnlockEventDto {
     const unlockEventDto = obj as UnlockEventDto;
-    return typeof unlockEventDto.id === 'string'
+    return typeof unlockEventDto.id === 'number'
       && typeof unlockEventDto.timestamp === 'string'
       && typeof unlockEventDto.userId === 'string'
       && typeof unlockEventDto.vaultId === 'string'
@@ -355,8 +355,8 @@ class VersionService {
 }
 
 class AuditLogService {
-  public async getAllEvents(startDate: Date, endDate: Date): Promise<AuditEventDto[]> {
-    return axiosAuth.get<AuditEventDto[]>(`/auditlog?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`).then(response => {
+  public async getAllEvents(startDate: Date, endDate: Date, after: number, pageSize: number): Promise<AuditEventDto[]> {
+    return axiosAuth.get<AuditEventDto[]>(`/auditlog?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}&after=${after}&pageSize=${pageSize}`).then(response => {
       return response.data.map(auditEvent => {
         if (UnlockEventDto.typeOf(auditEvent)) {
           return UnlockEventDto.copy(auditEvent);

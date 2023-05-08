@@ -182,13 +182,24 @@ const paginationEnd = computed(() => {
   }
 });
 const hasNextPage = ref(false);
+const pages = [0];
 
 onMounted(fetchData);
 
 async function fetchData() {
   onFetchError.value = null;
   try {
-    auditEvents.value = await backend.auditLogs.getAllEvents(startDate.value, endDate.value);
+    const events = await backend.auditLogs.getAllEvents(startDate.value, endDate.value, pages[currentPage.value - 1], pageSize.value + 1);
+    if (currentPage.value == 1 && pages[0] == 0 && events.length > 0) {
+      pages[0] = events[0].id;
+    }
+    if (events.length > pageSize.value) {
+      hasNextPage.value = true;
+      events.pop();
+    } else {
+      hasNextPage.value = false;
+    }
+    auditEvents.value = events;
   } catch (error) {
     console.error('Retrieving audit log events failed.', error);
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
@@ -219,10 +230,15 @@ function endOfDate(date: Date): Date {
 }
 
 function showNextPage() {
-  // TODO
+  currentPage.value++;
+  if (auditEvents.value && pages[currentPage.value - 1] == null) {
+    pages[currentPage.value - 1] = auditEvents.value[auditEvents.value.length - 1].id;
+  }
+  fetchData();
 }
 
 function showPreviousPage() {
-  // TODO
+  currentPage.value--;
+  fetchData();
 }
 </script>

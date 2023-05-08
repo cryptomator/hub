@@ -30,8 +30,10 @@ public class AuditLogResource {
 	@Operation(summary = "list all auditlog entries within a period", description = "list all auditlog entries from a period specified by a start and end date")
 	@Parameter(name = "startDate", description = "the start date of the period as ISO 8601 datetime string", in = ParameterIn.QUERY)
 	@Parameter(name = "endDate", description = "the end date of the period as ISO 8601 datetime string", in = ParameterIn.QUERY)
-	public EventList getAllEvents(@QueryParam("startDate") Instant startDate, @QueryParam("endDate") Instant endDate) {
-		var events = AuditEvent.findAllInPeriod(startDate, endDate).map(AuditEventDto::fromEntity).toList();
+	@Parameter(name = "after", description = "the id of the last entry of the previous page", in = ParameterIn.QUERY)
+	@Parameter(name = "pageSize", description = "the maximum number of entries to return", in = ParameterIn.QUERY)
+	public EventList getAllEvents(@QueryParam("startDate") Instant startDate, @QueryParam("endDate") Instant endDate, @QueryParam("after") long after, @QueryParam("pageSize") int pageSize) {
+		var events = AuditEvent.findAllInPeriod(startDate, endDate, after, pageSize).map(AuditEventDto::fromEntity).toList();
 		return new EventList(events);
 	}
 
@@ -49,7 +51,7 @@ public class AuditLogResource {
 	public interface AuditEventDto {
 
 		@JsonProperty("id")
-		UUID id();
+		long id();
 
 		@JsonProperty("timestamp")
 		Instant timestamp();
@@ -63,7 +65,7 @@ public class AuditLogResource {
 		}
 	}
 
-	record UnlockEventDto(UUID id, Instant timestamp, String type, @JsonProperty("userId") String userId, @JsonProperty("vaultId") UUID vaultId, @JsonProperty("deviceId") String deviceId, @JsonProperty("result") UnlockResult result) implements AuditEventDto {
+	record UnlockEventDto(long id, Instant timestamp, String type, @JsonProperty("userId") String userId, @JsonProperty("vaultId") UUID vaultId, @JsonProperty("deviceId") String deviceId, @JsonProperty("result") UnlockResult result) implements AuditEventDto {
 	}
 
 }

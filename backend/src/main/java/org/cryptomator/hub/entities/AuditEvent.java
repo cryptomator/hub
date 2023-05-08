@@ -5,15 +5,17 @@ import io.quarkus.panache.common.Parameters;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.NamedQuery;
+import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 
 import java.time.Instant;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.stream.Stream;
 
 @Entity
@@ -26,12 +28,15 @@ import java.util.stream.Stream;
 				FROM AuditEvent ae
 				WHERE ae.timestamp >= :startDate
 				AND ae.timestamp < :endDate
+				AND ae.id > :after
 				""")
+@SequenceGenerator(name = "audit_event_seq", sequenceName = "audit_event_seq")
 public class AuditEvent extends PanacheEntityBase {
 
 	@Id
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "audit_event_seq")
 	@Column(name = "id", nullable = false, updatable = false)
-	public UUID id;
+	public long id;
 
 	@Column(name = "timestamp", nullable = false, updatable = false)
 	public Instant timestamp;
@@ -61,7 +66,9 @@ public class AuditEvent extends PanacheEntityBase {
 		return Objects.hash(id, timestamp);
 	}
 
-	public static Stream<AuditEvent> findAllInPeriod(Instant startDate, Instant endDate) {
-		return find("#AuditEvent.listAllInPeriod", Parameters.with("startDate", startDate).and("endDate", endDate)).stream();
+	public static Stream<AuditEvent> findAllInPeriod(Instant startDate, Instant endDate, long after, int pageSize) {
+		var query = find("#AuditEvent.listAllInPeriod", Parameters.with("startDate", startDate).and("endDate", endDate).and("after", after));
+		query.page(0, pageSize);
+		return query.stream();
 	}
 }
