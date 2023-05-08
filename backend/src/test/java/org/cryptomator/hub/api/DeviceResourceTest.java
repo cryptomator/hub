@@ -90,6 +90,39 @@ public class DeviceResourceTest {
 		}
 
 		@Test
+		@Order(1)
+		@DisplayName("GET /devices/device1/device-token returns 200")
+		public void testGetDeviceToken1() {
+			when().get("/devices/{deviceId}/device-token", "device1")
+					.then().statusCode(200)
+					.body(is("jwe.jwe.jwe.user1.device1"));
+		}
+
+		@Test
+		@Order(1)
+		@DisplayName("GET /devices/device2/device-token returns 404 (belongs to other user)")
+		public void testGetDeviceToken2() {
+			when().get("/devices/{deviceId}/device-token", "device2")
+					.then().statusCode(404);
+		}
+
+		@Test
+		@Order(1)
+		@DisplayName("GET /devices/device3/device-token returns 403 (device not yet verified)")
+		public void testGetDeviceToken3() {
+			when().get("/devices/{deviceId}/device-token", "device3")
+					.then().statusCode(403);
+		}
+
+		@Test
+		@Order(1)
+		@DisplayName("GET /devices/noSuchDevice/device-token returns 404 (no such device)")
+		public void testGetNonExistingDeviceToken() {
+			when().get("/devices/{deviceId}/device-token", "noSuchDevice")
+					.then().statusCode(404);
+		}
+
+		@Test
 		@Order(2)
 		@DisplayName("PUT /devices/device999 returns 201 (creating new device)")
 		public void testCreate999() {

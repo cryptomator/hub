@@ -11,6 +11,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.PUT;
@@ -21,6 +22,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.User;
+import org.cryptomator.hub.filters.ActiveLicense;
 import org.cryptomator.hub.validation.NoHtmlOrScriptChars;
 import org.cryptomator.hub.validation.OnlyBase64Chars;
 import org.cryptomator.hub.validation.ValidId;
@@ -84,6 +86,30 @@ public class DeviceResource {
 		try {
 			Device device = Device.findByIdAndUser(deviceId, jwt.getSubject());
 			return DeviceDto.fromEntity(device);
+		} catch (NoResultException e) {
+			throw new NotFoundException(e);
+		}
+	}
+
+	@GET
+	@Path("/{deviceId}/device-token")
+	@RolesAllowed("user")
+	@Produces(MediaType.TEXT_PLAIN)
+	@NoCache
+	@Transactional
+	@Operation(summary = "get the device-specific user key", description = "retrieves the user jwe for the specified device")
+	@APIResponse(responseCode = "200", description = "Device found")
+	@APIResponse(responseCode = "403", description = "Device not yet verified")
+	@APIResponse(responseCode = "404", description = "Device not found or owned by a different user")
+	@ActiveLicense
+	public String getUserJwe(@PathParam("deviceId") @ValidId String deviceId) {
+		try {
+			var device = Device.findByIdAndUser(deviceId, jwt.getSubject());
+			if (device.userKeyJwe == null) {
+				throw new ForbiddenException("Device needs verification");
+			} else {
+				return device.userKeyJwe;
+			}
 		} catch (NoResultException e) {
 			throw new NotFoundException(e);
 		}

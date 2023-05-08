@@ -103,28 +103,4 @@ public class UsersResource {
 		return User.findAll().<User>stream().map(UserDto::justPublicInfo).toList();
 	}
 
-	@GET
-	@Path("/me/device-tokens/{deviceId}")
-	@RolesAllowed("user")
-	@Produces(MediaType.TEXT_PLAIN)
-	@NoCache
-	@Transactional
-	@Operation(summary = "get the device-specific user key", description = "retrieves the user jwe for the specified device")
-	@APIResponse(responseCode = "200", description = "Device found")
-	@APIResponse(responseCode = "403", description = "Device not yet verified")
-	@APIResponse(responseCode = "404", description = "Device not found or owned by a different user")
-	@ActiveLicense
-	public String getMe(@PathParam("deviceId") @ValidId String deviceId) {
-		try {
-			var device = Device.findByIdAndUser(deviceId, jwt.getSubject());
-			if (device.userKeyJwe == null) {
-				throw new ForbiddenException("Device needs verification");
-			} else {
-				return device.userKeyJwe;
-			}
-		} catch (NoResultException e) {
-			throw new NotFoundException(e);
-		}
-	}
-
 }
