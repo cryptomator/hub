@@ -24,7 +24,7 @@ import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.filters.ActiveLicense;
 import org.cryptomator.hub.validation.NoHtmlOrScriptChars;
-import org.cryptomator.hub.validation.OnlyBase64Chars;
+import org.cryptomator.hub.validation.OnlyBase64UrlChars;
 import org.cryptomator.hub.validation.ValidId;
 import org.cryptomator.hub.validation.ValidJWE;
 import org.eclipse.microprofile.jwt.JsonWebToken;
@@ -140,7 +140,7 @@ public class DeviceResource {
 
 	public record DeviceDto(@JsonProperty("id") @ValidId String id,
 							@JsonProperty("name") @NoHtmlOrScriptChars @NotBlank String name,
-							@JsonProperty("publicKey") @OnlyBase64Chars String publicKey,
+							@JsonProperty("publicKey") @OnlyBase64UrlChars String publicKey, // for historic reasons, the device public key is base64url-encoded, instead of base64
 							@JsonProperty("userKeyJwe") @ValidJWE String userKeyJwe,
 							@JsonProperty("owner") @ValidId String ownerId,
 							@JsonProperty("creationTime") Instant creationTime) {

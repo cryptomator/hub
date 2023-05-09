@@ -1,7 +1,7 @@
 -- users will generate a new key pair during first login in the browser:
-ALTER TABLE "user_details" ADD "publickey" VARCHAR(255); -- pem-encoded SPKI field (RFC 5280, 4.1.2.7)
-ALTER TABLE "user_details" ADD "privatekey" VARCHAR(500); -- pem-encoded pkcs8 (RFC 5208), protected by kek generated via PBKDF2
-ALTER TABLE "user_details" ADD "salt" VARCHAR(255);
+ALTER TABLE "user_details" ADD "publickey" VARCHAR(255); -- base64-encoded SPKI DER (RFC 5280, 4.1.2.7)
+ALTER TABLE "user_details" ADD "privatekey" VARCHAR(500); -- base64-encoded 12 byte IV + GCM-encrypted PKCS8 DER (RFC 5208)
+ALTER TABLE "user_details" ADD "salt" VARCHAR(255); -- base64-encoded
 ALTER TABLE "user_details" ADD "iterations" INTEGER DEFAULT 0;
 
 -- keep existing device-based access tokens for continuous unlock from old clients.
@@ -11,7 +11,8 @@ ALTER TABLE "access_token_legacy" RENAME CONSTRAINT "ACCESS_FK_DEVICE" TO "ACCES
 ALTER TABLE "access_token_legacy" RENAME CONSTRAINT "ACCESS_FK_VAULT" TO "ACCESS_LEGACY_FK_VAULT";
 
 -- as soon as a device gets verified by its owner, the owner's private key will be encrypted for this device:
-ALTER TABLE "device" ADD "user_key_jwe"  VARCHAR(2000) UNIQUE;
+ALTER TABLE "device" ADD "user_key_jwe" VARCHAR(2000) UNIQUE;
+COMMENT ON COLUMN "device"."publickey" IS 'Note: This contains base64url-encoded data for historic reasons.';
 
 -- new access tokens will be issued for users (not devices):
 CREATE TABLE "access_token"

@@ -484,7 +484,7 @@ export class BrowserKeys {
     return new Promise<void>((resolve, reject) => {
       const transaction = db.transaction('keys', 'readwrite');
       const keyStore = transaction.objectStore('keys');
-      const query = keyStore.put(this.keyPair, 'browserKeyPair');
+      const query = keyStore.put(this.keyPair, 'browserKeyPair'); // TODO: use user-specific key
       query.onsuccess = evt => { transaction.commit(); resolve(); };
       query.onerror = evt => { reject(query.error); };
     }).finally(() => {
@@ -494,6 +494,6 @@ export class BrowserKeys {
 
   public async encodedPublicKey() {
     const publicKey = new Uint8Array(await crypto.subtle.exportKey('spki', this.keyPair.publicKey));
-    return base64.stringify(publicKey);
+    return base64url.stringify(publicKey); // device keys use base64url
   }
 }

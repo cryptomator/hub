@@ -51,7 +51,7 @@ export type VaultDto = {
 export type DeviceDto = {
   id: string;
   name: string;
-  publicKey: string;
+  publicKey: string; // note: base64url-encoded for historic reasons
   userKeyJwe: string;
   creationTime: Date;
 };
