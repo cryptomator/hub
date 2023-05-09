@@ -140,7 +140,7 @@ public class DeviceResource {
 
 	public record DeviceDto(@JsonProperty("id") @ValidId String id,
 							@JsonProperty("name") @NoHtmlOrScriptChars @NotBlank String name,
-							@JsonProperty("publicKey") @OnlyBase64UrlChars String publicKey, // for historic reasons, the device public key is base64url-encoded, instead of base64
+							@JsonProperty("publicKey") @NotNull @OnlyBase64UrlChars String publicKey, // for historic reasons, the device public key is base64url-encoded, instead of base64
 							@JsonProperty("userKeyJwe") @ValidJWE String userKeyJwe,
 							@JsonProperty("owner") @ValidId String ownerId,
 							@JsonProperty("creationTime") Instant creationTime) {

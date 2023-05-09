@@ -7,6 +7,7 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.Consumes;
@@ -285,7 +286,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "403", description = "VaultAdminAuthorizationJWT expired or not yet valid")
 	@APIResponse(responseCode = "404", description = "vault or userId not found")
 	@APIResponse(responseCode = "409", description = "Access to vault for device already granted")
-	public Response grantAccess(@PathParam("vaultId") UUID vaultId, @PathParam("userId") @ValidId String userId, @ValidJWE String jwe) {
+	public Response grantAccess(@PathParam("vaultId") UUID vaultId, @PathParam("userId") @ValidId String userId, @NotNull @ValidJWE String jwe) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new); // should always be found, since @VaultAdminOnlyFilter already checked the jwt matching this vault
 		var user = User.<User>findByIdOptional(userId).orElseThrow(NotFoundException::new);
 
@@ -347,9 +348,9 @@ public class VaultResource {
 						   @JsonProperty("name") @NoHtmlOrScriptChars @NotBlank String name,
 						   @JsonProperty("description") @NoHtmlOrScriptChars String description,
 						   @JsonProperty("creationTime") Instant creationTime,
-						   @JsonProperty("masterkey") @OnlyBase64Chars String masterkey, @JsonProperty("iterations") int iterations,
-						   @JsonProperty("salt") @OnlyBase64Chars String salt,
-						   @JsonProperty("authPublicKey") @OnlyBase64Chars String authPublicKey, @JsonProperty("authPrivateKey") @OnlyBase64Chars String authPrivateKey
+						   @JsonProperty("masterkey") @NotNull @OnlyBase64Chars String masterkey, @JsonProperty("iterations") int iterations,
+						   @JsonProperty("salt") @NotNull @OnlyBase64Chars String salt,
+						   @JsonProperty("authPublicKey") @NotNull @OnlyBase64Chars String authPublicKey, @JsonProperty("authPrivateKey") @NotNull @OnlyBase64Chars String authPrivateKey
 	) {
 
 		public static VaultDto fromEntity(Vault entity) {

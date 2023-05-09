@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.PUT;
@@ -54,7 +55,7 @@ public class BillingResource {
 	@APIResponse(responseCode = "204")
 	@APIResponse(responseCode = "400", description = "token is invalid (e.g., expired or invalid signature)")
 	@APIResponse(responseCode = "403", description = "only admins are allowed to set the token")
-	public Response setToken(@ValidJWS String token) {
+	public Response setToken(@NotNull @ValidJWS String token) {
 		try {
 			licenseHolder.set(token);
 			return Response.status(Response.Status.NO_CONTENT).build();
