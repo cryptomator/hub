@@ -17,7 +17,7 @@ export const datetimeFormats: I18nOptions['datetimeFormats'] = {
     short: {
       year: 'numeric', month: 'long', day: 'numeric'
     },
-    long: {
+    timestamp: {
       year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit'
     }
   },
@@ -25,7 +25,7 @@ export const datetimeFormats: I18nOptions['datetimeFormats'] = {
     short: {
       year: 'numeric', month: 'long', day: 'numeric'
     },
-    long: {
+    timestamp: {
       year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit'
     }
   }

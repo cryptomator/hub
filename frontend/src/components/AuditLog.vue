@@ -72,7 +72,7 @@
               <tbody class="divide-y divide-gray-200 bg-white">
                 <tr v-for="auditEvent in auditEvents" :key="auditEvent.id">
                   <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">
-                    <code>{{ d(auditEvent.timestamp, 'long') }}</code>
+                    <code>{{ d(auditEvent.timestamp, 'timestamp') }}</code>
                   </td>
                   <td class="whitespace-nowrap px-3 py-4 text-sm font-medium text-gray-900">
                     {{ auditEvent.type }}
