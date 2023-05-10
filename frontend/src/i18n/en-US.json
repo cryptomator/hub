@@ -57,7 +57,7 @@
   "auditLog.timestamp": "Timestamp",
   "auditLog.type": "Event",
   "auditLog.details": "Details",
-  "auditLog.pagination.showing": "Showing {0} to {1} of {2} entries",
+  "auditLog.pagination.showing": "Showing entries {0} to {1}",
 
   "authenticateVaultAdminDialog.title": "Manage Vault",
   "authenticateVaultAdminDialog.description": "Type in the vault admin password to manage it.",

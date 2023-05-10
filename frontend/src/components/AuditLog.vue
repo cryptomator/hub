@@ -95,7 +95,6 @@
                         <i18n-t keypath="auditLog.pagination.showing" scope="global" tag="p" class="text-sm text-gray-700">
                           <span class="font-medium">{{ paginationBegin }}</span>
                           <span class="font-medium">{{ paginationEnd }}</span>
-                          <span class="font-medium">–</span>
                         </i18n-t>
                       </div>
                       <div class="flex flex-1 justify-between sm:justify-end">

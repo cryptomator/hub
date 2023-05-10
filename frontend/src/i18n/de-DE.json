@@ -56,7 +56,7 @@
   "auditLog.timestamp": "Zeitstempel",
   "auditLog.type": "Ereignis",
   "auditLog.details": "Details",
-  "auditLog.pagination.showing": "Zeige {0} bis {1} von {2} Einträgen",
+  "auditLog.pagination.showing": "Zeige Einträge {0} bis {1}",
 
   "authenticateVaultAdminDialog.title": "Tresor verwalten",
   "authenticateVaultAdminDialog.description": "Gib das Tresor-Admin-Passwort des Tresors ein, um ihn zu verwalten.",
