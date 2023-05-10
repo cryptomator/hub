@@ -16,6 +16,7 @@
   "common.optional": "optional",
   "common.pagination": "Pagination",
   "common.previous": "Previous",
+  "common.refresh": "Refresh",
   "common.reload": "Please reload the page.",
   "common.remove": "Remove",
   "common.reset": "Reset",
