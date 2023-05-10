@@ -190,7 +190,7 @@ async function fetchData() {
   try {
     const events = await backend.auditLogs.getAllEvents(startDate.value, endDate.value, pages[currentPage.value - 1], pageSize.value + 1);
     if (currentPage.value == 1 && pages[0] == 0 && events.length > 0) {
-      pages[0] = events[0].id;
+      pages[0] = events[0].id - 1;
     }
     if (events.length > pageSize.value) {
       hasNextPage.value = true;

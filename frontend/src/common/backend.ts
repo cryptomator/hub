@@ -205,7 +205,7 @@ export class UnlockEventDto extends AuditEventDto {
   }
 
   static copy(obj: UnlockEventDto): UnlockEventDto {
-    return new UnlockEventDto(obj.id, obj.timestamp, obj.type, obj.userId, obj.vaultId, obj.deviceId, obj.result);
+    return new UnlockEventDto(obj.id, new Date(obj.timestamp), obj.type, obj.userId, obj.vaultId, obj.deviceId, obj.result);
   }
 }
 
