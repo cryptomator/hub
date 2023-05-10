@@ -2,16 +2,15 @@
 
 CREATE TABLE "audit_event"
 (
-	"id"        BIGSERIAL NOT NULL,
+	"id"        BIGSERIAL,
 	"type"      VARCHAR(50) NOT NULL,
 	"timestamp" TIMESTAMP WITH TIME ZONE NOT NULL,
 	CONSTRAINT "AUDIT_EVENT_PK" PRIMARY KEY ("id")
 );
-CREATE SEQUENCE audit_event_seq;
 
 CREATE TABLE "unlock_event"
 (
-	"id"        BIGSERIAL NOT NULL,
+	"id"        BIGINT NOT NULL,
 	"user_id"   VARCHAR(255) COLLATE "C" NOT NULL,
 	"vault_id"  UUID NOT NULL,
 	"device_id" VARCHAR(64) COLLATE "C" NOT NULL,
@@ -19,4 +18,3 @@ CREATE TABLE "unlock_event"
 	CONSTRAINT "UNLOCK_EVENT_PK" PRIMARY KEY ("id"),
 	CONSTRAINT "UNLOCK_EVENT_FK_AUDIT_EVENT" FOREIGN KEY ("id") REFERENCES "audit_event" ("id") ON DELETE CASCADE
 );
-CREATE SEQUENCE unlock_event_seq;

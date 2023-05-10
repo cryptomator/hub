@@ -5,10 +5,6 @@ import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 
 import java.time.Instant;
@@ -18,15 +14,9 @@ import java.util.UUID;
 @Entity
 @Table(name = "unlock_event")
 @DiscriminatorValue(UnlockEvent.TYPE)
-@SequenceGenerator(name = "unlock_event_seq", sequenceName = "unlock_event_seq")
 public class UnlockEvent extends AuditEvent {
 
 	public static final String TYPE = "UNLOCK";
-
-	@Id
-	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "unlock_event_seq")
-	@Column(name = "id", nullable = false, updatable = false)
-	public long id;
 
 	@Column(name = "user_id")
 	public String userId;

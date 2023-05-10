@@ -30,11 +30,11 @@ import java.util.stream.Stream;
 				AND ae.timestamp < :endDate
 				AND ae.id > :after
 				""")
-@SequenceGenerator(name = "audit_event_seq", sequenceName = "audit_event_seq")
+@SequenceGenerator(name = "audit_event_id_seq", sequenceName = "audit_event_id_seq")
 public class AuditEvent extends PanacheEntityBase {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "audit_event_seq")
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "audit_event_id_seq")
 	@Column(name = "id", nullable = false, updatable = false)
 	public long id;
 
