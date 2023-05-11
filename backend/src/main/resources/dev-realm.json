@@ -99,7 +99,8 @@
       "enabled": true,
       "redirectUris": [
         "http://localhost:8080/*",
-        "http://localhost:3000/*"
+        "http://localhost:3000/*",
+        "http://proxyman.local:8080/*"
       ],
       "webOrigins": [
         "+"
@@ -145,7 +146,9 @@
       "name": "Cryptomator App",
       "enabled": true,
       "redirectUris": [
-        "http://127.0.0.1/*"
+        "http://127.0.0.1/*",
+        "io.mountainduck:oauth",
+        "http://proxyman.local:8080/*"
       ],
       "webOrigins": [
         "+"

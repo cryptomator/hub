@@ -13,6 +13,15 @@ mvn clean quarkus:dev
 
 > **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at http://localhost:8080/q/dev/.
 
+To use proxyman for debgging, add the following lines to `/etc/hosts`:
+```
+127.0.0.1 proxyman.local
+::1 proxyman.local
+```
+Some browsers do not forward any requests to `localhost`, see [Proxyman Documentation](https://docs.proxyman.io/troubleshooting/couldnt-see-any-request-from-localhost-server) for more information.
+
+
+
 ### Accessing Keycloak (Port 8180)
 
 During development, Keycloak is started as a Quarkus Dev Service using port 8180. When using alternative ports, you can also find it via [http://localhost:8080/q/dev](http://localhost:8080/q/dev).
