@@ -103,7 +103,7 @@
                         </i18n-t>
                       </div>
                       <div class="flex flex-1 justify-between sm:justify-end">
-                        <button type="button" class="relative inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0 disabled:opacity-50 disabled:hover:bg-white disabled:cursor-not-allowed" :disabled="currentPage == 1" @click="showPreviousPage()">
+                        <button type="button" class="relative inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0 disabled:opacity-50 disabled:hover:bg-white disabled:cursor-not-allowed" :disabled="currentPage == 0" @click="showPreviousPage()">
                           {{ t('common.previous') }}
                         </button>
                         <button type="button" class="relative ml-3 inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0 disabled:opacity-50 disabled:hover:bg-white disabled:cursor-not-allowed" :disabled="!hasNextPage" @click="showNextPage()">
@@ -169,39 +169,46 @@ const filterIsValid = computed(() => {
   return startDateFilterIsValid.value && endDateFilterIsValid.value;
 });
 
-const currentPage = ref(1);
+const currentPage = ref(0);
 const pageSize = ref(20);
 const paginationBegin = computed(() => {
   if (auditEvents.value) {
-    return (currentPage.value - 1) * pageSize.value + Math.min(1, auditEvents.value.length);
+    return currentPage.value * pageSize.value + Math.min(1, auditEvents.value.length);
   } else {
     return 0;
   }
 });
 const paginationEnd = computed(() => {
   if (auditEvents.value) {
-    return (currentPage.value - 1) * pageSize.value + auditEvents.value.length;
+    return currentPage.value * pageSize.value + auditEvents.value.length;
   } else {
     return 0;
   }
 });
 const hasNextPage = ref(false);
-var pages = [0];
+var lastIdOfPreviousPage = [0];
 
 onMounted(fetchData);
 
 async function fetchData() {
   onFetchError.value = null;
   try {
-    const events = await backend.auditLogs.getAllEvents(startDate.value, endDate.value, pages[currentPage.value - 1], pageSize.value + 1);
-    if (currentPage.value == 1 && pages[0] == 0 && events.length > 0) {
-      pages[0] = events[0].id - 1;
+    // Fetch one more event than the page size to determine if there is a next page
+    const events = await backend.auditLogs.getAllEvents(startDate.value, endDate.value, lastIdOfPreviousPage[currentPage.value], pageSize.value + 1);
+    // If the lastIdOfPreviousPage for the first page has not been set yet, set it to an id "before" the first event
+    if (currentPage.value == 0 && lastIdOfPreviousPage[0] == 0 && events.length > 0) {
+      lastIdOfPreviousPage[0] = events[0].id - 1;
     }
+    // Determine if there is a next page and discard the last event if there is one
     if (events.length > pageSize.value) {
       hasNextPage.value = true;
       events.pop();
     } else {
       hasNextPage.value = false;
+    }
+    // Set the lastIdOfPreviousPage for the next page to the id of the last event of the current page
+    if (events.length > 0) {
+      lastIdOfPreviousPage[currentPage.value + 1] = events[events.length - 1].id;
     }
     auditEvents.value = events;
   } catch (error) {
@@ -211,8 +218,8 @@ async function fetchData() {
 }
 
 function refreshData() {
-  pages = [0];
-  currentPage.value = 1;
+  lastIdOfPreviousPage = [0];
+  currentPage.value = 0;
   fetchData();
 }
 
@@ -241,9 +248,6 @@ function endOfDate(date: Date): Date {
 
 function showNextPage() {
   currentPage.value++;
-  if (auditEvents.value && pages[currentPage.value - 1] == null) {
-    pages[currentPage.value - 1] = auditEvents.value[auditEvents.value.length - 1].id;
-  }
   fetchData();
 }
 
