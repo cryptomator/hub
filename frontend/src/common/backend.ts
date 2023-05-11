@@ -193,17 +193,6 @@ export class UnlockEventDto extends AuditEventDto {
     };
   }
 
-  static typeOf(obj: any): obj is UnlockEventDto {
-    const unlockEventDto = obj as UnlockEventDto;
-    return typeof unlockEventDto.id === 'number'
-      && typeof unlockEventDto.timestamp === 'string'
-      && typeof unlockEventDto.userId === 'string'
-      && typeof unlockEventDto.vaultId === 'string'
-      && typeof unlockEventDto.deviceId === 'string'
-      && Object.values(UnlockResult).includes(unlockEventDto.result)
-      && unlockEventDto.type === AuditEventType.Unlock;
-  }
-
   static copy(obj: UnlockEventDto): UnlockEventDto {
     return new UnlockEventDto(obj.id, new Date(obj.timestamp), obj.type, obj.userId, obj.vaultId, obj.deviceId, obj.result);
   }
@@ -358,8 +347,8 @@ class AuditLogService {
   public async getAllEvents(startDate: Date, endDate: Date, after: number, pageSize: number): Promise<AuditEventDto[]> {
     return axiosAuth.get<AuditEventDto[]>(`/auditlog?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}&after=${after}&pageSize=${pageSize}`).then(response => {
       return response.data.map(auditEvent => {
-        if (UnlockEventDto.typeOf(auditEvent)) {
-          return UnlockEventDto.copy(auditEvent);
+        if (auditEvent.type == AuditEventType.Unlock) {
+          return UnlockEventDto.copy(auditEvent as UnlockEventDto);
         } else {
           throw new Error('Provided data is not of any subtype of AuditEventDto');
         }

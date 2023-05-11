@@ -140,51 +140,25 @@ const startDateFilter = ref(startDate.value.toISOString().split('T')[0]);
 const endDate = ref(endOfDate(new Date()));
 const endDateFilter = ref(endDate.value.toISOString().split('T')[0]);
 
-const filterIsReset = computed(() => {
-  return startDateFilter.value == startDate.value.toISOString().split('T')[0]
-    && endDateFilter.value == endDate.value.toISOString().split('T')[0];
-});
-const startDateFilterIsValid = computed(() => {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(startDateFilter.value)) {
-    return false;
-  }
-  const startDate = new Date(startDateFilter.value);
-  return !isNaN(startDate.getTime());
-});
+const filterIsReset = computed(() => startDateFilter.value == startDate.value.toISOString().split('T')[0] && endDateFilter.value == endDate.value.toISOString().split('T')[0]);
+const startDateFilterIsValid = computed(() => validateDateFilterValue(startDateFilter.value) != null);
 const endDateFilterIsValid = computed(() => {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(endDateFilter.value)) {
+  const endDate = validateDateFilterValue(endDateFilter.value);
+  if (endDate == null) {
     return false;
-  }
-  const endDate = new Date(endDateFilter.value);
-  if (isNaN(endDate.getTime())) {
-    return false;
-  }
-  if (startDateFilterIsValid.value) {
+  } else if (endDate != null && startDateFilterIsValid.value) {
     const startDate = new Date(startDateFilter.value);
     return startDate <= endDate;
+  } else {
+    return true;
   }
-  return true;
 });
-const filterIsValid = computed(() => {
-  return startDateFilterIsValid.value && endDateFilterIsValid.value;
-});
+const filterIsValid = computed(() => startDateFilterIsValid.value && endDateFilterIsValid.value);
 
 const currentPage = ref(0);
 const pageSize = ref(20);
-const paginationBegin = computed(() => {
-  if (auditEvents.value) {
-    return currentPage.value * pageSize.value + Math.min(1, auditEvents.value.length);
-  } else {
-    return 0;
-  }
-});
-const paginationEnd = computed(() => {
-  if (auditEvents.value) {
-    return currentPage.value * pageSize.value + auditEvents.value.length;
-  } else {
-    return 0;
-  }
-});
+const paginationBegin = computed(() => auditEvents.value ? currentPage.value * pageSize.value + Math.min(1, auditEvents.value.length) : 0);
+const paginationEnd = computed(() => auditEvents.value ? currentPage.value * pageSize.value + auditEvents.value.length : 0);
 const hasNextPage = ref(false);
 var lastIdOfPreviousPage = [0];
 
@@ -244,6 +218,18 @@ function beginOfDate(date: Date): Date {
 function endOfDate(date: Date): Date {
   date.setUTCHours(23, 59, 59, 999);
   return date;
+}
+
+function validateDateFilterValue(dateFilterValue: string): Date | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateFilterValue)) {
+    return null;
+  }
+  const date = new Date(dateFilterValue);
+  if (isNaN(date.getTime())) {
+    return null;
+  } else {
+    return date;
+  }
 }
 
 function showNextPage() {
