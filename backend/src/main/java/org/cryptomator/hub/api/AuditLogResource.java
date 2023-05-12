@@ -11,7 +11,6 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import org.cryptomator.hub.entities.AuditEvent;
 import org.cryptomator.hub.entities.UnlockEvent;
-import org.cryptomator.hub.entities.UnlockResult;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
@@ -65,7 +64,7 @@ public class AuditLogResource {
 		}
 	}
 
-	record UnlockEventDto(long id, Instant timestamp, String type, @JsonProperty("userId") String userId, @JsonProperty("vaultId") UUID vaultId, @JsonProperty("deviceId") String deviceId, @JsonProperty("result") UnlockResult result) implements AuditEventDto {
+	record UnlockEventDto(long id, Instant timestamp, String type, @JsonProperty("userId") String userId, @JsonProperty("vaultId") UUID vaultId, @JsonProperty("deviceId") String deviceId, @JsonProperty("result") UnlockEvent.Result result) implements AuditEventDto {
 	}
 
 }

@@ -29,7 +29,7 @@ public class UnlockEvent extends AuditEvent {
 
 	@Column(name = "result")
 	@Enumerated(EnumType.STRING)
-	public UnlockResult result;
+	public Result result;
 
 	@Override
 	public boolean equals(Object o) {
@@ -47,7 +47,7 @@ public class UnlockEvent extends AuditEvent {
 		return Objects.hash(id, userId, vaultId, deviceId);
 	}
 
-	public static void log(String userId, UUID vaultId, String deviceId, UnlockResult result) {
+	public static void log(String userId, UUID vaultId, String deviceId, Result result) {
 		var event = new UnlockEvent();
 		event.timestamp = Instant.now();
 		event.userId = userId;
@@ -55,6 +55,12 @@ public class UnlockEvent extends AuditEvent {
 		event.deviceId = deviceId;
 		event.result = result;
 		event.persist();
+	}
+
+	public enum Result {
+		SUCCESS,
+		NO_SUCH_DEVICE,
+		DEVICE_NOT_AUTHORIZED
 	}
 
 }

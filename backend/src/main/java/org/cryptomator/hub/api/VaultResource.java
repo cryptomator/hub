@@ -8,30 +8,10 @@ import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
-import jakarta.ws.rs.BadRequestException;
-import jakarta.ws.rs.ClientErrorException;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.ForbiddenException;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.InternalServerErrorException;
-import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.PUT;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.cryptomator.hub.entities.AccessToken;
-import org.cryptomator.hub.entities.Device;
-import org.cryptomator.hub.entities.EffectiveGroupMembership;
-import org.cryptomator.hub.entities.EffectiveVaultAccess;
-import org.cryptomator.hub.entities.Group;
-import org.cryptomator.hub.entities.UnlockEvent;
-import org.cryptomator.hub.entities.UnlockResult;
-import org.cryptomator.hub.entities.User;
-import org.cryptomator.hub.entities.Vault;
+import org.cryptomator.hub.entities.*;
 import org.cryptomator.hub.filters.ActiveLicense;
 import org.cryptomator.hub.filters.VaultAdminOnlyFilter;
 import org.cryptomator.hub.license.LicenseHolder;
@@ -241,13 +221,13 @@ public class VaultResource {
 
 		var access = AccessToken.unlock(vaultId, deviceId, jwt.getSubject());
 		if (access != null) {
-			UnlockEvent.log(jwt.getSubject(), vaultId, deviceId, UnlockResult.SUCCESS);
+			UnlockEvent.log(jwt.getSubject(), vaultId, deviceId, UnlockEvent.Result.SUCCESS);
 			return access.jwe;
 		} else if (Device.findById(deviceId) == null) {
-			UnlockEvent.log(jwt.getSubject(), vaultId, deviceId, UnlockResult.NO_SUCH_DEVICE);
+			UnlockEvent.log(jwt.getSubject(), vaultId, deviceId, UnlockEvent.Result.NO_SUCH_DEVICE);
 			throw new NotFoundException("No such device.");
 		} else {
-			UnlockEvent.log(jwt.getSubject(), vaultId, deviceId, UnlockResult.DEVICE_NOT_AUTHORIZED);
+			UnlockEvent.log(jwt.getSubject(), vaultId, deviceId, UnlockEvent.Result.DEVICE_NOT_AUTHORIZED);
 			throw new ForbiddenException("Access to this device not granted.");
 		}
 	}
