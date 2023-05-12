@@ -9,7 +9,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static io.restassured.RestAssured.when;
-import static org.hamcrest.Matchers.equalToIgnoringCase;
+import static org.hamcrest.Matchers.comparesEqualTo;
 
 @QuarkusTest
 @DisplayName("Resource /auditlog")
@@ -22,10 +22,18 @@ public class AuditLogResourceTest {
 
 	@Test
 	@TestSecurity(user = "Admin", roles = {"admin"})
-	@DisplayName("GET /auditlog?startDate=1970-01-01T00:00:03Z&endDate=1970-01-01T00:00:05Z returns 200 with two entries")
-	public void testGetAuditLogEntries() {
-		when().get("/auditlog?startDate=1970-01-01T00:00:03Z&endDate=1970-01-01T00:00:05Z")
+	@DisplayName("As admin, GET /auditlog?startDate=1970-01-01T00:00:03Z&endDate=1970-01-01T00:00:05Z&pageSize=10 returns 200 with two entries")
+	public void testGetAuditLogEntriesAdmin() {
+		when().get("/auditlog?startDate=1970-01-01T00:00:03Z&endDate=1970-01-01T00:00:05Z&pageSize=10")
 				.then().statusCode(200)
-				.body("id", Matchers.containsInAnyOrder(equalToIgnoringCase("7E57C0DE-0000-4000-8000-000510002222"), equalToIgnoringCase("7E57C0DE-0000-4000-8000-000510003333")));
+				.body("id", Matchers.containsInAnyOrder(comparesEqualTo(1000), comparesEqualTo(1111)));
+	}
+
+	@Test
+	@TestSecurity(user = "User", roles = {"user"})
+	@DisplayName("As user, GET /auditlog?startDate=1970-01-01T00:00:03Z&endDate=1970-01-01T00:00:05Z&pageSize=10 returns 403")
+	public void testGetAuditLogEntriesUser() {
+		when().get("/auditlog?startDate=1970-01-01T00:00:03Z&endDate=1970-01-01T00:00:05Z&pageSize=10")
+				.then().statusCode(403);
 	}
 }
