@@ -39,12 +39,13 @@ public class UnlockEvent extends AuditEvent {
 		return super.equals(that) //
 				&& Objects.equals(userId, that.userId) //
 				&& Objects.equals(vaultId, that.vaultId) //
-				&& Objects.equals(deviceId, that.deviceId);
+				&& Objects.equals(deviceId, that.deviceId) //
+				&& Objects.equals(result, that.result);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, userId, vaultId, deviceId);
+		return Objects.hash(id, userId, vaultId, deviceId, result);
 	}
 
 	public static void log(String userId, UUID vaultId, String deviceId, Result result) {
