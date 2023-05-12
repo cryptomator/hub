@@ -26,10 +26,10 @@ public class AuditLogResource {
 	@Operation(summary = "list all auditlog entries within a period", description = "list all auditlog entries from a period specified by a start and end date")
 	@Parameter(name = "startDate", description = "the start date of the period as ISO 8601 datetime string", in = ParameterIn.QUERY)
 	@Parameter(name = "endDate", description = "the end date of the period as ISO 8601 datetime string", in = ParameterIn.QUERY)
-	@Parameter(name = "after", description = "the id of the last entry of the previous page", in = ParameterIn.QUERY)
+	@Parameter(name = "afterId", description = "the start audit entry id, not included in results (used for pagination)", in = ParameterIn.QUERY)
 	@Parameter(name = "pageSize", description = "the maximum number of entries to return", in = ParameterIn.QUERY)
-	public EventList getAllEvents(@QueryParam("startDate") Instant startDate, @QueryParam("endDate") Instant endDate, @QueryParam("after") long after, @QueryParam("pageSize") @DefaultValue("20") int pageSize) {
-		var events = AuditEvent.findAllInPeriod(startDate, endDate, after, pageSize).map(AuditEventDto::fromEntity).toList();
+	public EventList getAllEvents(@QueryParam("startDate") Instant startDate, @QueryParam("endDate") Instant endDate, @QueryParam("afterId") long afterId, @QueryParam("pageSize") @DefaultValue("20") int pageSize) {
+		var events = AuditEvent.findAllInPeriod(startDate, endDate, afterId, pageSize).map(AuditEventDto::fromEntity).toList();
 		return new EventList(events);
 	}
 

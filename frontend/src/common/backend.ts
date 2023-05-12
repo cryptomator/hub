@@ -345,7 +345,7 @@ class VersionService {
 
 class AuditLogService {
   public async getAllEvents(startDate: Date, endDate: Date, after: number, pageSize: number): Promise<AuditEventDto[]> {
-    return axiosAuth.get<AuditEventDto[]>(`/auditlog?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}&after=${after}&pageSize=${pageSize}`).then(response => {
+    return axiosAuth.get<AuditEventDto[]>(`/auditlog?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}&afterId=${after}&pageSize=${pageSize}`).then(response => {
       return response.data.map(auditEvent => {
         if (auditEvent.type == AuditEventType.Unlock) {
           return UnlockEventDto.copy(auditEvent as UnlockEventDto);

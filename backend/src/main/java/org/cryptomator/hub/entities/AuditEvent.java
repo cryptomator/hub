@@ -28,7 +28,7 @@ import java.util.stream.Stream;
 				FROM AuditEvent ae
 				WHERE ae.timestamp >= :startDate
 				AND ae.timestamp < :endDate
-				AND ae.id > :after
+				AND ae.id > :afterId
 				""")
 @SequenceGenerator(name = "audit_event_id_seq", sequenceName = "audit_event_id_seq")
 public class AuditEvent extends PanacheEntityBase {
@@ -66,8 +66,8 @@ public class AuditEvent extends PanacheEntityBase {
 		return Objects.hash(id, timestamp);
 	}
 
-	public static Stream<AuditEvent> findAllInPeriod(Instant startDate, Instant endDate, long after, int pageSize) {
-		var query = find("#AuditEvent.listAllInPeriod", Parameters.with("startDate", startDate).and("endDate", endDate).and("after", after));
+	public static Stream<AuditEvent> findAllInPeriod(Instant startDate, Instant endDate, long afterId, int pageSize) {
+		var query = find("#AuditEvent.listAllInPeriod", Parameters.with("startDate", startDate).and("endDate", endDate).and("afterId", afterId));
 		query.page(0, pageSize);
 		return query.stream();
 	}
