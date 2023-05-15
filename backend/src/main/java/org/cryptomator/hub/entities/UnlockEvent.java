@@ -60,7 +60,6 @@ public class UnlockEvent extends AuditEvent {
 
 	public enum Result {
 		SUCCESS,
-		NO_SUCH_DEVICE,
 		DEVICE_NOT_AUTHORIZED
 	}
 
