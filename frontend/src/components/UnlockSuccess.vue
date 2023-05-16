@@ -37,7 +37,7 @@
               This is a newly added device. In order to proceed, please confirm the following public key:
             </p>
             <p class="mt-3">
-              TODO: confirm public key, maybe enter last few digits or something...
+              TODO: <router-link to="/app/devices" class="text-underline">confirm public key</router-link>, maybe enter last few digits or something...
             </p>
           </div>
           <div v-else-if="vaultAccess == VaultAccess.Denied" class="max-w-lg mx-auto text-center text-xl text-primary-l2 sm:max-w-3xl">
@@ -76,7 +76,7 @@ const props = defineProps<{
 }>();
 
 const deviceState : ComputedRef<DeviceState> = computed(() => {
-  const foundDevice = me.value?.devices.find(d => d.id == props.deviceId);
+  const foundDevice = me.value?.devices.find(d => d.id === props.deviceId);
   if (!foundDevice) {
     return DeviceState.NoSuchDevice;
   } else if (!foundDevice.userKeyJwe) {
@@ -87,7 +87,7 @@ const deviceState : ComputedRef<DeviceState> = computed(() => {
 });
 
 const vaultAccess : ComputedRef<VaultAccess> = computed(() => {
-  return me.value?.accessibleVaults.find(v => v.id == props.vaultId)
+  return me.value?.accessibleVaults.find(v => v.id === props.vaultId)
     ? VaultAccess.Allowed
     : VaultAccess.Denied;
 });

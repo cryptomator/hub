@@ -118,9 +118,10 @@ onMounted(fetchData);
 async function fetchData() {
   onFetchError.value = null;
   try {
-    let versionInstalled = backend.version.get();
+    const versionInstalled = backend.version.get();
+    const me = backend.users.me();
     version.value = await versionInstalled;
-    user.value = await backend.users.me();
+    user.value = await me;
   } catch (error) {
     console.error('Retrieving version information failed.', error);
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
@@ -141,11 +142,11 @@ async function createUserKey() {
   me.iterations = archive.iterations;
 
   const browserKeys = await BrowserKeys.create(); // or .load()
-  await browserKeys.store();
+  await browserKeys.store(me.id);
 
   const jwe = await userKeys.encryptForDevice(browserKeys.keyPair.publicKey);
-  backend.devices.addDevice({
-    id: crypto.randomUUID(),
+  backend.devices.putDevice({
+    id: await browserKeys.id(),
     name: navigator.userAgent, // TODO something
     publicKey: await browserKeys.encodedPublicKey(),
     userKeyJwe: jwe,

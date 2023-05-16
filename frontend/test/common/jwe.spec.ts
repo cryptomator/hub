@@ -52,15 +52,19 @@ describe('JWE', () => {
      * All these test vectors are taken from https://www.rfc-editor.org/rfc/rfc7518#appendix-C
      */
     it('should derive expected key using ECDH-ES', async () => {
+      const alicePub: JsonWebKey = {
+        kty: 'EC',
+        crv: 'P-256',
+        x: 'gI0GAILBdu7T53akrFmMyGcsF3n5dO7MmwNBHKW5SV0',
+        y: 'SLW_xSffzlPWrHEVI30DHM_4egVwt3NQqeUD7nMFpps'
+      };
+      const alicePriv: JsonWebKey = {
+        ...alicePub,
+        d: '0_NxaRPUMQoAJt50Gz8YiTr8gRTwyEaCumd-MToTmIo'
+      };
       const alice = await crypto.subtle.importKey(
         'jwk',
-        {
-          kty: 'EC',
-          crv: 'P-256',
-          x: 'gI0GAILBdu7T53akrFmMyGcsF3n5dO7MmwNBHKW5SV0',
-          y: 'SLW_xSffzlPWrHEVI30DHM_4egVwt3NQqeUD7nMFpps',
-          d: '0_NxaRPUMQoAJt50Gz8YiTr8gRTwyEaCumd-MToTmIo'
-        },
+        alicePriv,
         {
           name: 'ECDH',
           namedCurve: 'P-256'
@@ -88,7 +92,7 @@ describe('JWE', () => {
 
       const apu = new Uint8Array([65, 108, 105, 99, 101]);
       const apv = new Uint8Array([66, 111, 98]);
-      const header = new JWEHeader('ignored', 'A128GCM', null, base64url.stringify(apu, { pad: false }), base64url.stringify(apv, { pad: false }));
+      const header = new JWEHeader('ignored', 'A128GCM', alicePub, base64url.stringify(apu, { pad: false }), base64url.stringify(apv, { pad: false }));
       const derived = await JWE.deriveKey(bob, alice, 256, 16, header, true);
       const derivedBytes = await crypto.subtle.exportKey('raw', derived);
       expect(new Uint8Array(derivedBytes), 'derived key').to.eql(new Uint8Array([86, 170, 141, 234, 248, 35, 109, 32, 92, 34, 40, 205, 113, 167, 16, 26]));

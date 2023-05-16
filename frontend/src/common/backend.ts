@@ -256,8 +256,7 @@ class DeviceService {
       .catch((error) => rethrowAndConvertIfExpected(error, 404));
   }
 
-  public async addDevice(device: DeviceDto): Promise<AxiosResponse<any>> {
-    // TODO
+  public async putDevice(device: DeviceDto): Promise<AxiosResponse<any>> {
     return axiosAuth.put(`/devices/${device.id}`, device);
   }
 }

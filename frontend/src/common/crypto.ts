@@ -1,5 +1,5 @@
 import * as miscreant from 'miscreant';
-import { base32, base64, base64url } from 'rfc4648';
+import { base16, base32, base64, base64url } from 'rfc4648';
 import { JWE } from './jwe';
 import { JWT, JWTHeader } from './jwt';
 import { CRC32, wordEncoder } from './util';
@@ -400,14 +400,13 @@ export class UserKeys {
 
   /**
    * Encrypts the user's private key using the given public key
-   * @param userPublicKey The device's public key (DER-encoded)
+   * @param devicePublicKey The device's public key (DER-encoded)
    * @returns a JWE containing the PKCS#8-encoded private key
    */
   public async encryptForDevice(devicePublicKey: CryptoKey | Uint8Array): Promise<string> {
     let publicKey: CryptoKey;
     if (devicePublicKey instanceof Uint8Array) {
-      const importParams: EcKeyImportParams = { name: 'ECDH', namedCurve: 'P-384' };
-      publicKey = await crypto.subtle.importKey('spki', devicePublicKey, importParams, false, []);
+      publicKey = await crypto.subtle.importKey('spki', devicePublicKey, UserKeys.KEY_DESIGNATION, false, []);
     } else {
       publicKey = devicePublicKey;
     }
@@ -421,6 +420,28 @@ export class UserKeys {
       return JWE.build(payloadJson, publicKey);
     } finally {
       rawkey.fill(0x00);
+    }
+  }
+
+  /**
+   * Decrypts the user's private key using the browser's private key
+   * @param jwe JWE containing the PKCS#8-encoded private key
+   * @param browserPrivateKey The browser's private key
+   * @param userPublicKey User public key
+   * @returns The user's non-extractable key pair
+   */
+  public static async decryptOnBrowser(jwe: string, browserPrivateKey: CryptoKey, userPublicKey: CryptoKey): Promise<UserKeys> {
+    let payloadJson = new Uint8Array();
+    let rawKey = new Uint8Array();
+    try {
+      payloadJson = await JWE.parse(jwe, browserPrivateKey);
+      const payload: JWEPayload = JSON.parse(new TextDecoder().decode(payloadJson));
+      rawKey = base64.parse(payload.key);
+      const privateKey = await crypto.subtle.importKey('pkcs8', rawKey, UserKeys.KEY_DESIGNATION, true, ['deriveKey']);
+      return new UserKeys({ publicKey: userPublicKey, privateKey: privateKey });
+    } finally {
+      payloadJson.fill(0x00);
+      rawKey.fill(0x00);
     }
   }
 }
@@ -442,7 +463,7 @@ export class BrowserKeys {
    * @returns A new device key pair
    */
   public static async create(): Promise<BrowserKeys> {
-    const keyPair = crypto.subtle.generateKey(BrowserKeys.KEY_DESIGNATION, false, ['deriveKey']);
+    const keyPair = crypto.subtle.generateKey(BrowserKeys.KEY_DESIGNATION, false, ['deriveBits']);
     return new BrowserKeys(await keyPair);
   }
 
@@ -450,7 +471,7 @@ export class BrowserKeys {
    * Attempts to load previously stored key pair from the browser's IndexedDB.
    * @returns a promise resolving to the loaded browser key pair
    */
-  public static async load(): Promise<BrowserKeys> {
+  public static async load(userId: string): Promise<BrowserKeys> {
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
       const req = indexedDB.open('hub');
       req.onsuccess = evt => { resolve(req.result); };
@@ -460,7 +481,7 @@ export class BrowserKeys {
     return new Promise<CryptoKeyPair>((resolve, reject) => {
       const transaction = db.transaction('keys', 'readonly');
       const keyStore = transaction.objectStore('keys');
-      const query = keyStore.get('browserKeyPair');
+      const query = keyStore.get(userId);
       query.onsuccess = evt => { resolve(query.result); };
       query.onerror = evt => { reject(query.error); };
     }).then((keyPair) => {
@@ -474,7 +495,7 @@ export class BrowserKeys {
    * Stores the key pair in the browser's IndexedDB. See https://www.w3.org/TR/WebCryptoAPI/#concepts-key-storage
    * @returns a promise that will resolve if the key pair has been saved
    */
-  public async store(): Promise<void> {
+  public async store(userId: string): Promise<void> {
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
       const req = indexedDB.open('hub');
       req.onsuccess = evt => { resolve(req.result); };
@@ -484,12 +505,18 @@ export class BrowserKeys {
     return new Promise<void>((resolve, reject) => {
       const transaction = db.transaction('keys', 'readwrite');
       const keyStore = transaction.objectStore('keys');
-      const query = keyStore.put(this.keyPair, 'browserKeyPair'); // TODO: use user-specific key
+      const query = keyStore.put(this.keyPair, userId);
       query.onsuccess = evt => { transaction.commit(); resolve(); };
       query.onerror = evt => { reject(query.error); };
     }).finally(() => {
       db.close();
     });
+  }
+
+  public async id(): Promise<string> {
+    const publicKey = new Uint8Array(await crypto.subtle.exportKey('spki', this.keyPair.publicKey));
+    const hash = new Uint8Array(await crypto.subtle.digest({ name: 'SHA-256' }, publicKey));
+    return base16.stringify(hash).toUpperCase();
   }
 
   public async encodedPublicKey() {
