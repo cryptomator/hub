@@ -1,12 +1,14 @@
 -- Cryptomator Hub 1.1.0
 
+CREATE SEQUENCE audit_event_id_seq AS BIGINT;
 CREATE TABLE "audit_event"
 (
-	"id"        BIGSERIAL,
+	"id"        BIGINT NOT NULL DEFAULT nextval('audit_event_id_seq'),
 	"type"      VARCHAR(50) NOT NULL,
 	"timestamp" TIMESTAMP WITH TIME ZONE NOT NULL,
 	CONSTRAINT "AUDIT_EVENT_PK" PRIMARY KEY ("id")
 );
+ALTER SEQUENCE audit_event_id_seq OWNED BY audit_event.id;
 
 CREATE TABLE "unlock_event"
 (
