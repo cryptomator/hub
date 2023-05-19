@@ -163,39 +163,17 @@ export type VersionDto = {
   keycloakVersion: string;
 }
 
-enum AuditEventType {
-  Unlock = 'UNLOCK'
+export type AuditEventDto = {
+  id: number;
+  timestamp: Date;
+  type: 'UNLOCK';
 }
 
-export abstract class AuditEventDto {
-  constructor(public id: number, public timestamp: Date, public type: AuditEventType) { }
-
-  abstract details(): { [key: string]: string };
-}
-
-enum UnlockResult {
-  Success = 'SUCCESS',
-  NoSuchDevice = 'NO_SUCH_DEVICE',
-  DeviceNotAuthorized = 'DEVICE_NOT_AUTHORIZED'
-}
-
-export class UnlockEventDto extends AuditEventDto {
-  constructor(public id: number, public timestamp: Date, public type: AuditEventType, public userId: string, public vaultId: string, public deviceId: string, public result: UnlockResult) {
-    super(id, timestamp, type);
-  }
-
-  details(): { [key: string]: string } {
-    return {
-      userId: this.userId,
-      vaultId: this.vaultId,
-      deviceId: this.deviceId,
-      result: this.result
-    };
-  }
-
-  static copy(obj: UnlockEventDto): UnlockEventDto {
-    return new UnlockEventDto(obj.id, new Date(obj.timestamp), obj.type, obj.userId, obj.vaultId, obj.deviceId, obj.result);
-  }
+export type UnlockEventDto = AuditEventDto & {
+  userId: string;
+  vaultId: string;
+  deviceId: string;
+  result: 'SUCCESS' | 'DEVICE_NOT_AUTHORIZED';
 }
 
 /* Services */
@@ -345,15 +323,7 @@ class VersionService {
 
 class AuditLogService {
   public async getAllEvents(startDate: Date, endDate: Date, after: number, pageSize: number): Promise<AuditEventDto[]> {
-    return axiosAuth.get<AuditEventDto[]>(`/auditlog?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}&afterId=${after}&pageSize=${pageSize}`).then(response => {
-      return response.data.map(auditEvent => {
-        if (auditEvent.type == AuditEventType.Unlock) {
-          return UnlockEventDto.copy(auditEvent as UnlockEventDto);
-        } else {
-          throw new Error('Provided data is not of any subtype of AuditEventDto');
-        }
-      });
-    });
+    return axiosAuth.get<AuditEventDto[]>(`/auditlog?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}&afterId=${after}&pageSize=${pageSize}`).then(response => response.data);
   }
 }
 

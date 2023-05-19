@@ -84,9 +84,9 @@
                   </td>
                   <td class="whitespace-nowrap py-4 pl-3 pr-4 sm:pr-6">
                     <dl class="flex flex-col gap-2">
-                      <div v-for="detailKey in Object.keys(auditEvent.details())" :key="detailKey" class="flex items-end gap-2">
+                      <div v-for="[detailKey, detailValue] in Object.entries(auditEventDetails[auditEvent.id])" :key="detailKey" class="flex items-end gap-2">
                         <dt class="text-xs text-gray-500"><code>{{ detailKey }}</code></dt>
-                        <dd class="text-sm text-gray-900">{{ auditEvent.details()[detailKey] }}</dd>
+                        <dd class="text-sm text-gray-900">{{ detailValue }}</dd>
                       </div>
                     </dl>
                   </td>
@@ -133,6 +133,13 @@ import FetchError from './FetchError.vue';
 const { t, d } = useI18n({ useScope: 'global' });
 
 const auditEvents = ref<AuditEventDto[]>();
+const auditEventDetails = computed(() => {
+  return (auditEvents.value ?? []).reduce((details, auditEvent) => {
+    const keysToExclude: (keyof AuditEventDto)[] = ['id', 'timestamp', 'type'];
+    details[auditEvent.id] = Object.fromEntries(Object.entries(auditEvent).filter(([key, _]) => !keysToExclude.includes(key as keyof AuditEventDto)));
+    return details;
+  }, {} as { [key: number]: { [key: string]: any } });
+});
 const onFetchError = ref<Error | null>();
 
 const startDate = ref(beginOfDate(new Date()));
