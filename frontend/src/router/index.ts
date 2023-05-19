@@ -73,21 +73,25 @@ const routes: RouteRecordRaw[] = [
       },
       {
         path: 'admin',
-        component: AdminSettings,
-        props: (route) => ({ token: route.query.token }),
         beforeEnter: async () => {
           const auth = await authPromise;
           return auth.isAdmin(); //TODO: reroute to NotFound Screen/ AccessDeniedScreen?
-        }
-      },
-      {
-        path: 'auditlog',
-        component: AuditLog,
-        props: (route) => ({ token: route.query.token }),
-        beforeEnter: async () => {
-          const auth = await authPromise;
-          return auth.isAdmin(); //TODO: reroute to NotFound Screen/ AccessDeniedScreen?
-        }
+        },
+        children: [
+          {
+            path: '',
+            redirect: '/app/admin/settings'
+          },
+          {
+            path: 'settings',
+            component: AdminSettings,
+            props: (route) => ({ token: route.query.token })
+          },
+          {
+            path: 'auditlog',
+            component: AuditLog,
+          },
+        ]
       },
     ]
   },

@@ -88,8 +88,8 @@ const profileDropdownSections = {
 
   adminSection :
     [
-      { icon: ListBulletIcon, name: 'nav.profile.auditlog', to: '/app/auditlog' },
-      { icon: WrenchIcon, name: 'nav.profile.admin', to: '/app/admin' }
+      { icon: ListBulletIcon, name: 'nav.profile.auditlog', to: '/app/admin/auditlog' },
+      { icon: WrenchIcon, name: 'nav.profile.admin', to: '/app/admin/settings' }
     ],
 
   hubSection :
