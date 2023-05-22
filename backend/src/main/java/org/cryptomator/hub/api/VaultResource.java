@@ -89,6 +89,7 @@ public class VaultResource {
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "list vault members", description = "list all users that this vault has been shared with")
+	@APIResponse(responseCode = "200")
 	@APIResponse(responseCode = "401", description = "VaultAdminAuthorizationJWT not provided")
 	@APIResponse(responseCode = "403", description = "VaultAdminAuthorizationJWT expired or not yet valid")
 	@APIResponse(responseCode = "404", description = "vault not found")
@@ -213,6 +214,7 @@ public class VaultResource {
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "list devices requiring access rights", description = "lists all devices owned by vault members, that don't have a device-specific masterkey yet")
+	@APIResponse(responseCode = "200")
 	@APIResponse(responseCode = "401", description = "VaultAdminAuthorizationJWT not provided")
 	@APIResponse(responseCode = "403", description = "VaultAdminAuthorizationJWT expired or not yet valid")
 	@APIResponse(responseCode = "404", description = "vault not found")
@@ -286,6 +288,7 @@ public class VaultResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
 	@Operation(summary = "gets a vault")
+	@APIResponse(responseCode = "200")
 	@APIResponse(responseCode = "403", description = "requesting user is not member of the vault")
 	public VaultDto get(@PathParam("vaultId") UUID vaultId) {
 		Vault vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
