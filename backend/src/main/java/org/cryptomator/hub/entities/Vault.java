@@ -30,6 +30,7 @@ import java.util.stream.Stream;
 				FROM Vault v
 				LEFT JOIN v.effectiveMembers m
 				WHERE m.id = :userId
+				AND NOT v.archived
 				""")
 public class Vault extends PanacheEntityBase {
 

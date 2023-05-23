@@ -65,7 +65,7 @@ public class VaultResource {
 	@RolesAllowed("user")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
-	@Operation(summary = "list all accessible vaults", description = "list all vaults that have been shared with the currently logged in user or a group in wich this user is")
+	@Operation(summary = "list all accessible vaults", description = "list all vaults that are not archived and have been shared with the currently logged in user or a group this user is part of")
 	public List<VaultDto> getAccessible() {
 		var currentUserId = jwt.getSubject();
 		var resultStream = Vault.findAccessibleByUser(currentUserId);
