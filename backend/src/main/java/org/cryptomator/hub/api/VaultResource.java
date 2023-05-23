@@ -305,7 +305,7 @@ public class VaultResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
 	@Operation(summary = "creates a vault",
-			description = "Creates a vault with the given vault id. The creationTime in the vaultDto is ignored and the current server time is used.")
+			description = "Creates a vault with the given vault id. The creationTime in the vaultDto is ignored and the current server time is used. The archived flag in the vaultDto is ignored and set to false")
 	@APIResponse(responseCode = "201", description = "vault created")
 	@APIResponse(responseCode = "409", description = "vault with given id or name already exists")
 	public Response create(@PathParam("vaultId") UUID vaultId, @Valid VaultDto vaultDto) {
@@ -316,6 +316,7 @@ public class VaultResource {
 		var vault = vaultDto.toVault(vaultId);
 		vault.creationTime = Instant.now().truncatedTo(ChronoUnit.MILLIS);
 		vault.directMembers.add(currentUser);
+		vault.archived = false;
 		try {
 			vault.persistAndFlush();
 			return Response.created(URI.create(".")).build();
@@ -334,11 +335,12 @@ public class VaultResource {
 						   @JsonProperty("creationTime") Instant creationTime,
 						   @JsonProperty("masterkey") @OnlyBase64Chars String masterkey, @JsonProperty("iterations") int iterations,
 						   @JsonProperty("salt") @OnlyBase64Chars String salt,
-						   @JsonProperty("authPublicKey") @OnlyBase64Chars String authPublicKey, @JsonProperty("authPrivateKey") @OnlyBase64Chars String authPrivateKey
+						   @JsonProperty("authPublicKey") @OnlyBase64Chars String authPublicKey, @JsonProperty("authPrivateKey") @OnlyBase64Chars String authPrivateKey,
+						   @JsonProperty("archived") boolean archived
 	) {
 
 		public static VaultDto fromEntity(Vault entity) {
-			return new VaultDto(entity.id, entity.name, entity.description, entity.creationTime.truncatedTo(ChronoUnit.MILLIS), entity.masterkey, entity.iterations, entity.salt, entity.authenticationPublicKey, entity.authenticationPrivateKey);
+			return new VaultDto(entity.id, entity.name, entity.description, entity.creationTime.truncatedTo(ChronoUnit.MILLIS), entity.masterkey, entity.iterations, entity.salt, entity.authenticationPublicKey, entity.authenticationPrivateKey, entity.archived);
 		}
 
 		public Vault toVault(UUID id) {
@@ -352,6 +354,7 @@ public class VaultResource {
 			vault.salt = salt;
 			vault.authenticationPublicKey = authPublicKey;
 			vault.authenticationPrivateKey = authPrivateKey;
+			vault.archived = archived;
 			return vault;
 		}
 

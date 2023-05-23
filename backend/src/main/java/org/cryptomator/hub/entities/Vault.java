@@ -79,6 +79,9 @@ public class Vault extends PanacheEntityBase {
 	@Column(name = "description")
 	public String description;
 
+	@Column(name = "archived", nullable = false)
+	public boolean archived;
+
 	public static Stream<Vault> findAccessibleByUser(String userId) {
 		return find("#Vault.accessibleByUser", Parameters.with("userId", userId)).stream();
 	}
