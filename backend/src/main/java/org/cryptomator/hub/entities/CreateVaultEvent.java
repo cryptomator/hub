@@ -28,7 +28,7 @@ public class CreateVaultEvent extends AuditEvent {
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
-		UnlockVaultEvent that = (UnlockVaultEvent) o;
+		CreateVaultEvent that = (CreateVaultEvent) o;
 		return super.equals(that) //
 				&& Objects.equals(userId, that.userId) //
 				&& Objects.equals(vaultId, that.vaultId);
@@ -40,7 +40,7 @@ public class CreateVaultEvent extends AuditEvent {
 	}
 
 	public static void log(String userId, UUID vaultId) {
-		var event = new UnlockVaultEvent();
+		var event = new CreateVaultEvent();
 		event.timestamp = Instant.now();
 		event.userId = userId;
 		event.vaultId = vaultId;
