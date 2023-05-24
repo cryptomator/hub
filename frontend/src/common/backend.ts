@@ -166,14 +166,7 @@ export type VersionDto = {
 export type AuditEventDto = {
   id: number;
   timestamp: Date;
-  type: 'UNLOCK';
-}
-
-export type UnlockEventDto = AuditEventDto & {
-  userId: string;
-  vaultId: string;
-  deviceId: string;
-  result: 'SUCCESS' | 'DEVICE_NOT_AUTHORIZED';
+  type: string;
 }
 
 /* Services */
