@@ -12,11 +12,11 @@ import java.util.Objects;
 import java.util.UUID;
 
 @Entity
-@Table(name = "unlockvault_event")
+@Table(name = "unlock_vault_event")
 @DiscriminatorValue(UnlockVaultEvent.TYPE)
 public class UnlockVaultEvent extends AuditEvent {
 
-	public static final String TYPE = "UNLOCK";
+	public static final String TYPE = "UNLOCK_VAULT";
 
 	@Column(name = "user_id")
 	public String userId;
@@ -60,7 +60,7 @@ public class UnlockVaultEvent extends AuditEvent {
 
 	public enum Result {
 		SUCCESS,
-		UNAUTHORIZED;
+		UNAUTHORIZED
 	}
 
 }

@@ -3,8 +3,6 @@ package org.cryptomator.hub.entities;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 
 import java.time.Instant;
@@ -12,7 +10,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 @Entity
-@Table(name = "createvault_event")
+@Table(name = "create_vault_event")
 @DiscriminatorValue(CreateVaultEvent.TYPE)
 public class CreateVaultEvent extends AuditEvent {
 
