@@ -7,7 +7,7 @@ import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import org.cryptomator.hub.entities.AuditEvent;
-import org.cryptomator.hub.entities.UnlockEvent;
+import org.cryptomator.hub.entities.UnlockVaultEvent;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
@@ -42,7 +42,7 @@ public class AuditLogResource {
 
 	@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 	@JsonSubTypes({
-			@JsonSubTypes.Type(value = UnlockEventDto.class, name = UnlockEvent.TYPE)
+			@JsonSubTypes.Type(value = UnlockVaultEventDto.class, name = UnlockVaultEvent.TYPE),
 	})
 	public interface AuditEventDto {
 
@@ -53,15 +53,16 @@ public class AuditLogResource {
 		Instant timestamp();
 
 		static AuditEventDto fromEntity(AuditEvent entity) {
-			if (entity instanceof UnlockEvent e) {
-				return new UnlockEventDto(e.id, e.timestamp, UnlockEvent.TYPE, e.userId, e.vaultId, e.deviceId, e.result);
+			if (entity instanceof UnlockVaultEvent e) {
+				return new UnlockVaultEventDto(e.id, e.timestamp, UnlockVaultEvent.TYPE, e.userId, e.vaultId, e.deviceId, e.result);
 			} else {
 				throw new UnsupportedOperationException("conversion not implemented for event type " + entity.getClass());
 			}
 		}
 	}
 
-	record UnlockEventDto(long id, Instant timestamp, String type, @JsonProperty("userId") String userId, @JsonProperty("vaultId") UUID vaultId, @JsonProperty("deviceId") String deviceId, @JsonProperty("result") UnlockEvent.Result result) implements AuditEventDto {
+	record UnlockVaultEventDto(long id, Instant timestamp, String type, @JsonProperty("userId") String userId, @JsonProperty("vaultId") UUID vaultId, @JsonProperty("deviceId") String deviceId, @JsonProperty("result") UnlockVaultEvent.Result result) implements AuditEventDto {
+	}
 	}
 
 }

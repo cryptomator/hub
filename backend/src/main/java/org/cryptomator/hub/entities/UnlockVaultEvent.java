@@ -12,9 +12,9 @@ import java.util.Objects;
 import java.util.UUID;
 
 @Entity
-@Table(name = "unlock_event")
-@DiscriminatorValue(UnlockEvent.TYPE)
-public class UnlockEvent extends AuditEvent {
+@Table(name = "unlockvault_event")
+@DiscriminatorValue(UnlockVaultEvent.TYPE)
+public class UnlockVaultEvent extends AuditEvent {
 
 	public static final String TYPE = "UNLOCK";
 
@@ -35,7 +35,7 @@ public class UnlockEvent extends AuditEvent {
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
-		UnlockEvent that = (UnlockEvent) o;
+		UnlockVaultEvent that = (UnlockVaultEvent) o;
 		return super.equals(that) //
 				&& Objects.equals(userId, that.userId) //
 				&& Objects.equals(vaultId, that.vaultId) //
@@ -49,7 +49,7 @@ public class UnlockEvent extends AuditEvent {
 	}
 
 	public static void log(String userId, UUID vaultId, String deviceId, Result result) {
-		var event = new UnlockEvent();
+		var event = new UnlockVaultEvent();
 		event.timestamp = Instant.now();
 		event.userId = userId;
 		event.vaultId = vaultId;

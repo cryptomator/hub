@@ -27,7 +27,7 @@ import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.EffectiveGroupMembership;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.entities.Group;
-import org.cryptomator.hub.entities.UnlockEvent;
+import org.cryptomator.hub.entities.UnlockVaultEvent;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.filters.ActiveLicense;
@@ -239,12 +239,12 @@ public class VaultResource {
 
 		var access = AccessToken.unlock(vaultId, deviceId, jwt.getSubject());
 		if (access != null) {
-			UnlockEvent.log(jwt.getSubject(), vaultId, deviceId, UnlockEvent.Result.SUCCESS);
+			UnlockVaultEvent.log(jwt.getSubject(), vaultId, deviceId, UnlockVaultEvent.Result.SUCCESS);
 			return access.jwe;
 		} else if (Device.findById(deviceId) == null) {
 			throw new NotFoundException("No such device.");
 		} else {
-			UnlockEvent.log(jwt.getSubject(), vaultId, deviceId, UnlockEvent.Result.DEVICE_NOT_AUTHORIZED);
+			UnlockVaultEvent.log(jwt.getSubject(), vaultId, deviceId, UnlockVaultEvent.Result.DEVICE_NOT_AUTHORIZED);
 			throw new ForbiddenException("Access to this device not granted.");
 		}
 	}
