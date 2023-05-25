@@ -167,7 +167,7 @@ const pageSize = ref(20);
 const paginationBegin = computed(() => auditEvents.value ? currentPage.value * pageSize.value + Math.min(1, auditEvents.value.length) : 0);
 const paginationEnd = computed(() => auditEvents.value ? currentPage.value * pageSize.value + auditEvents.value.length : 0);
 const hasNextPage = ref(false);
-var lastIdOfPreviousPage = [0];
+let lastIdOfPreviousPage = [0];
 
 type ResolvedItem = {
   id: string;
