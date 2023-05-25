@@ -86,7 +86,7 @@
                     <dl class="flex flex-col gap-2">
                       <div v-for="[detailKey, detailValue] in Object.entries(auditEventDetails[auditEvent.id])" :key="detailKey" class="flex items-end gap-2">
                         <dt class="text-xs text-gray-500"><code>{{ detailKey }}</code></dt>
-                        <dd class="text-sm text-gray-900">{{ detailValue }}</dd>
+                        <dd class="text-sm text-gray-900">{{ resolvedValue(detailKey, detailValue).value }}</dd>
                       </div>
                     </dl>
                   </td>
@@ -125,7 +125,7 @@
 <script setup lang="ts">
 import { Popover, PopoverButton, PopoverGroup, PopoverPanel } from '@headlessui/vue';
 import { ChevronDownIcon } from '@heroicons/vue/20/solid';
-import { computed, onMounted, ref } from 'vue';
+import { Ref, computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { AuditEventDto } from '../common/backend';
 import FetchError from './FetchError.vue';
@@ -169,6 +169,29 @@ const paginationEnd = computed(() => auditEvents.value ? currentPage.value * pag
 const hasNextPage = ref(false);
 var lastIdOfPreviousPage = [0];
 
+type ResolvedItem = {
+  id: string;
+  name: string;
+};
+
+const resolvedVaults = ref<ResolvedItem[]>([]);
+const resolvedAuthorities = ref<ResolvedItem[]>([]);
+const resolvedDevices = ref<ResolvedItem[]>([]);
+const resolvedValue = (key: string, value: string) => computed(() => {
+  if (key == 'vaultId') {
+    const name = resolvedVaults.value.find(vault => vault.id == value)?.name;
+    return name ? `${name} (${value})` : value;
+  } else if (key == 'userId' || key == 'authorityId') {
+    const name = resolvedAuthorities.value.find(authority => authority.id == value)?.name;
+    return name ? `${name} (${value})` : value;
+  } else if (key == 'deviceId') {
+    const name = resolvedDevices.value.find(device => device.id == value)?.name;
+    return name ? `${name} (${value})` : value;
+  } else {
+    return value;
+  }
+});
+
 onMounted(fetchData);
 
 async function fetchData() {
@@ -192,23 +215,44 @@ async function fetchData() {
       lastIdOfPreviousPage[currentPage.value + 1] = events[events.length - 1].id;
     }
     auditEvents.value = events;
+    // Resolve missing IDs
+    await resolveMissingIds('vaultId', backend.vaults.listSome, resolvedVaults, events);
+    await resolveMissingIds('authorityId', backend.authorities.listSome, resolvedAuthorities, events);
+    await resolveMissingIds('userId', backend.authorities.listSome, resolvedAuthorities, events);
+    await resolveMissingIds('deviceId', backend.devices.listSome, resolvedDevices, events);
   } catch (error) {
     console.error('Retrieving audit log events failed.', error);
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
 }
 
-function refreshData() {
-  lastIdOfPreviousPage = [0];
-  currentPage.value = 0;
-  fetchData();
+async function resolveMissingIds<T extends ResolvedItem>(key: string, listSome: (ids: string[]) => Promise<T[]>, resolvedItems: Ref<ResolvedItem[]>, events: any[]) {
+  // Collect all missing IDs
+  const resolvedIds = new Set<string>(resolvedItems.value.map(item => item.id));
+  const ids = new Set<string>();
+  events.forEach(event => {
+    if (key in event && typeof event[key] === 'string' && !resolvedIds.has(event[key])) {
+      ids.add(event[key]);
+    }
+  });
+  // Retrieve missing items and add them to resolvedItems
+  if (ids.size > 0) {
+    const missingItems = await listSome(Array.from(ids));
+    resolvedItems.value.push(...missingItems.map(item => ({ id: item.id, name: item.name })));
+  }
 }
 
-function applyFilter() {
+async function refreshData() {
+  lastIdOfPreviousPage = [0];
+  currentPage.value = 0;
+  await fetchData();
+}
+
+async function applyFilter() {
   if (filterIsValid.value) {
     startDate.value = beginOfDate(new Date(startDateFilter.value));
     endDate.value = endOfDate(new Date(endDateFilter.value));
-    fetchData();
+    await fetchData();
   }
 }
 
@@ -239,13 +283,13 @@ function validateDateFilterValue(dateFilterValue: string): Date | null {
   }
 }
 
-function showNextPage() {
+async function showNextPage() {
   currentPage.value++;
-  fetchData();
+  await fetchData();
 }
 
-function showPreviousPage() {
+async function showPreviousPage() {
   currentPage.value--;
-  fetchData();
+  await fetchData();
 }
 </script>

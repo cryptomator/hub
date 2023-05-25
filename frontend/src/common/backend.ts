@@ -180,6 +180,11 @@ class VaultService {
     return axiosAuth.get('/vaults').then(response => response.data);
   }
 
+  public async listSome(vaultsIds: string[]): Promise<VaultDto[]> {
+    const query = `ids=${vaultsIds.join('&ids=')}`;
+    return axiosAuth.get(`/vaults/some?${query}`).then(response => response.data);
+  }
+
   public async listAll(): Promise<VaultDto[]> {
     return axiosAuth.get('/vaults/all').then(response => response.data);
   }
@@ -256,6 +261,11 @@ class VaultService {
   }
 }
 class DeviceService {
+  public async listSome(deviceIds: string[]): Promise<DeviceDto[]> {
+    const query = `ids=${deviceIds.join('&ids=')}`;
+    return axiosAuth.get<DeviceDto[]>(`/devices?${query}`).then(response => response.data);
+  }
+
   public async removeDevice(deviceId: string): Promise<AxiosResponse<any>> {
     return axiosAuth.delete(`/devices/${deviceId}`)
       .catch((error) => rethrowAndConvertIfExpected(error, 404));
@@ -291,6 +301,11 @@ class AuthorityService {
         }
       });
     });
+  }
+
+  public async listSome(authorityIds: string[]): Promise<AuthorityDto[]> {
+    const query = `ids=${authorityIds.join('&ids=')}`;
+    return axiosAuth.get<AuthorityDto[]>(`/authorities?${query}`).then(response => response.data);
   }
 }
 
