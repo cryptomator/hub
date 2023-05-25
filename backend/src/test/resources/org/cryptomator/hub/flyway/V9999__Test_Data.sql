@@ -58,14 +58,14 @@ VALUES
 
 INSERT INTO "audit_event" ("id", "timestamp", "type")
 VALUES
-    (999, '1970-01-01T00:00:02.900Z', 'UNLOCK'),
-    (1000, '1970-01-01T00:00:03Z', 'UNLOCK'),
-    (1111, '1970-01-01T00:00:04Z', 'UNLOCK'),
-    (4242, '1970-01-01T00:00:05Z', 'UNLOCK');
+    (999, '1970-01-01T00:00:02.900Z', 'UNLOCK_VAULT'),
+    (1000, '1970-01-01T00:00:03Z', 'UNLOCK_VAULT'),
+    (1111, '1970-01-01T00:00:04Z', 'UNLOCK_VAULT'),
+    (4242, '1970-01-01T00:00:05Z', 'UNLOCK_VAULT');
 
-INSERT INTO "unlock_event" ("id", "user_id", "vault_id", "device_id", "result")
+INSERT INTO "unlock_vault_event" ("id", "user_id", "vault_id", "device_id", "result")
 VALUES
     (999, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'device1', 'SUCCESS'),
     (1000, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'device1', 'SUCCESS'),
-    (1111, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'device3', 'DEVICE_NOT_AUTHORIZED'),
+    (1111, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'device3', 'UNAUTHORIZED'),
     (4242, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'device1', 'SUCCESS');
