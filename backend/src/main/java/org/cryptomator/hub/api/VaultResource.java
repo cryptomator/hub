@@ -29,6 +29,7 @@ import org.cryptomator.hub.entities.EffectiveGroupMembership;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.UnlockVaultEvent;
+import org.cryptomator.hub.entities.UpdateVaultMembershipEvent;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.filters.ActiveLicense;
@@ -137,6 +138,7 @@ public class VaultResource {
 
 		vault.directMembers.add(user);
 		vault.persist();
+		UpdateVaultMembershipEvent.log(jwt.getSubject(), vaultId, userId, UpdateVaultMembershipEvent.Operation.ADD);
 		return Response.status(Response.Status.CREATED).build();
 	}
 
@@ -167,6 +169,7 @@ public class VaultResource {
 		}
 		vault.directMembers.add(group);
 		vault.persist();
+		UpdateVaultMembershipEvent.log(jwt.getSubject(), vaultId, groupId, UpdateVaultMembershipEvent.Operation.ADD);
 		return Response.status(Response.Status.CREATED).build();
 	}
 
@@ -204,6 +207,7 @@ public class VaultResource {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		vault.directMembers.removeIf(e -> e.id.equals(authorityId));
 		vault.persist();
+		UpdateVaultMembershipEvent.log(jwt.getSubject(), vaultId, authorityId, UpdateVaultMembershipEvent.Operation.REMOVE);
 		return Response.status(Response.Status.NO_CONTENT).build();
 	}
 
