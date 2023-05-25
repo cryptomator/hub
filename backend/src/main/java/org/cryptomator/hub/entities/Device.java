@@ -14,6 +14,7 @@ import jakarta.persistence.Table;
 
 import java.time.Instant;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -31,6 +32,12 @@ import java.util.stream.Stream;
 					WHERE v.id = :vaultId AND a.vault IS NULL
 				"""
 )
+@NamedQuery(name = "Device.allInList",
+		query = """
+				SELECT d
+				FROM Device d
+				WHERE d.id IN :ids
+				""")
 public class Device extends PanacheEntityBase {
 
 	@Id
@@ -83,4 +90,7 @@ public class Device extends PanacheEntityBase {
 		return find("#Device.requiringAccessGrant", Parameters.with("vaultId", vaultId)).stream();
 	}
 
+	public static Stream<Device> findAllInList(List<String> ids) {
+		return find("#Device.allInList", Parameters.with("ids", ids)).stream();
+	}
 }

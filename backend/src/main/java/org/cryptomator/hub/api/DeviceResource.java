@@ -11,13 +11,16 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
 import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.cryptomator.hub.entities.Authority;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.validation.NoHtmlOrScriptChars;
@@ -31,6 +34,7 @@ import org.hibernate.exception.ConstraintViolationException;
 import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Set;
 
 @Path("/devices")
@@ -38,6 +42,17 @@ public class DeviceResource {
 
 	@Inject
 	JsonWebToken jwt;
+
+	@GET
+	@Path("/")
+	@RolesAllowed("admin")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Transactional
+	@Operation(summary = "lists all devices matching the given ids", description ="lists for each id in the list its corresponding device. Ignores all id's where a device cannot be found")
+	@APIResponse(responseCode = "200")
+	public List<DeviceDto> getSome(@QueryParam("ids") List<String> deviceIds) {
+		return Device.findAllInList(deviceIds).map(DeviceDto::fromEntity).toList();
+	}
 
 	@PUT
 	@Path("/{deviceId}")
