@@ -34,9 +34,9 @@ import java.util.stream.Stream;
 				""")
 @NamedQuery(name = "Vault.allInList",
 		query = """
-    			SELECT v
-    			FROM Vault v
-    			WHERE v.id IN :ids
+				SELECT v
+				FROM Vault v
+				WHERE v.id IN :ids
 				"""
 )
 public class Vault extends PanacheEntityBase {
@@ -92,7 +92,7 @@ public class Vault extends PanacheEntityBase {
 	}
 
 	public static Stream<Vault> findAllInList(List<UUID> ids) {
-		return find("#Vault.allInList", Parameters.with("ids",ids)).stream();
+		return find("#Vault.allInList", Parameters.with("ids", ids)).stream();
 	}
 
 	@Override

@@ -81,6 +81,7 @@ public class VaultResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
 	@Operation(summary = "list all vaults corresponding to the given ids", description = "list for each id in the list its corresponding vault. Ignores all id's where a vault does not exist, ")
+	@APIResponse(responseCode = "200")
 	public List<VaultDto> getSomeVaults(@QueryParam("ids") List<UUID> vaultIds) {
 		return Vault.findAllInList(vaultIds).map(VaultDto::fromEntity).toList();
 	}

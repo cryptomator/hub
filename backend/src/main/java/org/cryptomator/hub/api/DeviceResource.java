@@ -1,7 +1,6 @@
 package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.persistence.PersistenceException;
@@ -20,7 +19,6 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.cryptomator.hub.entities.Authority;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.validation.NoHtmlOrScriptChars;
@@ -48,7 +46,7 @@ public class DeviceResource {
 	@RolesAllowed("admin")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
-	@Operation(summary = "lists all devices matching the given ids", description ="lists for each id in the list its corresponding device. Ignores all id's where a device cannot be found")
+	@Operation(summary = "lists all devices matching the given ids", description = "lists for each id in the list its corresponding device. Ignores all id's where a device cannot be found")
 	@APIResponse(responseCode = "200")
 	public List<DeviceDto> getSome(@QueryParam("ids") List<String> deviceIds) {
 		return Device.findAllInList(deviceIds).map(DeviceDto::fromEntity).toList();

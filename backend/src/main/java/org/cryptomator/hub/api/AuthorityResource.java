@@ -9,6 +9,7 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import org.cryptomator.hub.entities.Authority;
 import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.jboss.resteasy.reactive.NoCache;
 
 import java.util.List;
@@ -32,7 +33,8 @@ public class AuthorityResource {
 	@RolesAllowed("admin")
 	@Produces(MediaType.APPLICATION_JSON)
 	@NoCache
-	@Operation(summary = "list all authorities corresponding to the given ids")
+	@Operation(summary = "lists all authorities matching the given ids", description ="lists for each id in the list its corresponding authority. Ignores all id's where an authority cannot be found")
+	@APIResponse(responseCode = "200")
 	public List<AuthorityDto> getSome(@QueryParam("ids") List<String> authorityIds) {
 		return Authority.findAllInList(authorityIds).map(AuthorityDto::fromEntity).toList();
 	}

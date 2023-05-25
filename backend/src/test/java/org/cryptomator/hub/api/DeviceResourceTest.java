@@ -1,7 +1,6 @@
 package org.cryptomator.hub.api;
 
 import io.agroal.api.AgroalDataSource;
-import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.quarkus.test.security.oidc.Claim;
@@ -176,7 +175,7 @@ public class DeviceResourceTest {
 		@Test
 		@DisplayName("GET /devices?ids=iDoNotExist returns 200 with empty body")
 		public void testGetSomeNotExisting() {
-			given().param("ids","iDoNotExist")
+			given().param("ids", "iDoNotExist")
 					.when().get("/devices")
 					.then().statusCode(200)
 					.body("", hasSize(0));
@@ -185,10 +184,10 @@ public class DeviceResourceTest {
 		@Test
 		@DisplayName("GET /devices?ids=device2&ids=device3 returns 200 with body containing device2 and device3")
 		public void testGetSome() {
-			given().param("ids","device2", "device3")
+			given().param("ids", "device2", "device3")
 					.when().get("/devices")
 					.then().statusCode(200)
-					.body("id", containsInAnyOrder("device2","device3"));
+					.body("id", containsInAnyOrder("device2", "device3"));
 		}
 
 		@Test
@@ -198,7 +197,7 @@ public class DeviceResourceTest {
 				@Claim(key = "sub", value = "user1")
 		})
 		public void testGetSomeAsUser() {
-			given().param("ids","device2", "device3")
+			given().param("ids", "device2", "device3")
 					.when().get("/devices")
 					.then().statusCode(403);
 		}

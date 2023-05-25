@@ -12,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -106,7 +107,8 @@ public class AuthorityResourceTest {
 		@Test
 		@DisplayName("GET /authorities?ids=iDoNotExist returns 200 with empty body")
 		public void testGetSomeNotExisting() {
-			when().get("/authorities")
+			given().param("ids", "iDoNotExist")
+					.when().get("/authorities")
 					.then().statusCode(200)
 					.body("", hasSize(0));
 		}
@@ -114,9 +116,10 @@ public class AuthorityResourceTest {
 		@Test
 		@DisplayName("GET /authorities?ids=user1&ids=group2 returns 200 with body containing user1 and group2")
 		public void testGetSome() {
-			when().get("/authorities?ids=user1&ids=group2")
+			given().param("ids", "user1", "group2")
+					.when().get("/authorities")
 					.then().statusCode(200)
-					.body("id", containsInAnyOrder("user1","group2"));
+					.body("id", containsInAnyOrder("user1", "group2"));
 		}
 
 		@Test
@@ -126,7 +129,8 @@ public class AuthorityResourceTest {
 				@Claim(key = "sub", value = "user1")
 		})
 		public void testGetSomeAsUser() {
-			when().get("/authorities?ids=user1&ids=group2")
+			given().param("ids", "user1", "group2")
+					.when().get("/authorities")
 					.then().statusCode(403);
 		}
 	}
