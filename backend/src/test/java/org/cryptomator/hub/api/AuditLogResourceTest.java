@@ -26,7 +26,7 @@ public class AuditLogResourceTest {
 	public void testGetAuditLogEntriesAdmin() {
 		when().get("/auditlog?startDate=1970-01-01T00:00:03Z&endDate=1970-01-01T00:00:05Z&pageSize=10")
 				.then().statusCode(200)
-				.body("id", Matchers.containsInAnyOrder(comparesEqualTo(1000), comparesEqualTo(1111)));
+				.body("id", Matchers.containsInAnyOrder(comparesEqualTo(1000), comparesEqualTo(1001), comparesEqualTo(1111)));
 	}
 
 	@Test
