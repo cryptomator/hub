@@ -83,7 +83,7 @@ export abstract class AuthorityDto {
 
 export class UserDto extends AuthorityDto {
   constructor(public id: string, public name: string, public type: AuthorityType, public email: string, public devices: DeviceDto[], public accessibleVaults: VaultDto[], pictureUrl?: string,
-    public publicKey?: string, public privateKey?: string, public salt?: string, public iterations?: number) {
+    public publicKey?: string, public recoveryJwe?: string, public recoveryPbkdf2?: string, public recoverySalt?: string, public recoveryIterations?: number) {
     super(id, name, type, pictureUrl);
   }
 

@@ -71,9 +71,10 @@ public class UsersResource {
 		var userId = jwt.getSubject();
 		var user = User.<User>findByIdOptional(userId).orElseThrow(NotFoundException::new);
 		user.publicKey = dto.publicKey;
-		user.privateKey = dto.privateKey;
-		user.salt = dto.salt;
-		user.iterations = dto.iterations;
+		user.recoveryJwe = dto.recoveryJwe;
+		user.recoveryPbkdf2 = dto.recoveryPbkdf2;
+		user.recoverySalt = dto.recoverySalt;
+		user.recoveryIterations = dto.recoveryIterations;
 		user.persist();
 		return Response.created(URI.create(".")).build();
 	}
@@ -91,7 +92,7 @@ public class UsersResource {
 		Function<Device, DeviceResource.DeviceDto> mapDevices = d -> new DeviceResource.DeviceDto(d.id, d.name, d.publickey, d.userKeyJwe, d.owner.id, d.creationTime.truncatedTo(ChronoUnit.MILLIS));
 		var devices = withDevices ? user.devices.stream().map(mapDevices).collect(Collectors.toSet()) : Set.<DeviceResource.DeviceDto>of();
 		var vaults = withAccessibleVaults ? user.accessTokens.stream().map(mapAccessibleVaults).collect(Collectors.toSet()) : Set.<VaultResource.VaultDto>of();
-		return new UserDto(user.id, user.name, user.pictureUrl, user.email, devices, vaults, user.publicKey, user.privateKey, user.salt, user.iterations);
+		return new UserDto(user.id, user.name, user.pictureUrl, user.email, devices, vaults, user.publicKey, user.recoveryJwe, user.recoveryPbkdf2, user.recoverySalt, user.recoveryIterations);
 	}
 
 	@GET

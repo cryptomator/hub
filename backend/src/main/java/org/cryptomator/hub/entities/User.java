@@ -38,14 +38,17 @@ public class User extends Authority {
 	@Column(name = "publickey")
 	public String publicKey;
 
-	@Column(name = "privatekey")
-	public String privateKey; // IV + GCM-encrypted PKCS#8
+	@Column(name = "recovery_jwe")
+	public String recoveryJwe;
 
-	@Column(name = "salt")
-	public String salt;
+	@Column(name = "recovery_pbkdf2")
+	public String recoveryPbkdf2; // IV + GCM-encrypted PKCS#8
 
-	@Column(name = "iterations")
-	public int iterations;
+	@Column(name = "recovery_salt")
+	public String recoverySalt;
+
+	@Column(name = "recovery_iterations")
+	public int recoveryIterations;
 
 	@OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
 	public Set<AccessToken> accessTokens = new HashSet<>();
@@ -62,13 +65,15 @@ public class User extends Authority {
 				&& Objects.equals(pictureUrl, that.pictureUrl) //
 				&& Objects.equals(email, that.email) //
 				&& Objects.equals(publicKey, that.publicKey) //
-				&& Objects.equals(privateKey, that.privateKey) //
-				&& Objects.equals(salt, that.salt);
+				&& Objects.equals(recoveryJwe, that.recoveryJwe) //
+				&& Objects.equals(recoveryPbkdf2, that.recoveryPbkdf2) //
+				&& Objects.equals(recoverySalt, that.recoverySalt) //
+				&& Objects.equals(recoveryIterations, that.recoveryIterations);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, pictureUrl, email, publicKey, privateKey, salt, iterations);
+		return Objects.hash(id, pictureUrl, email, publicKey, recoveryJwe, recoveryPbkdf2, recoverySalt, recoveryIterations);
 	}
 
 	public static Stream<User> findRequiringAccessGrant(UUID vaultId) {

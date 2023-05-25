@@ -1,8 +1,9 @@
 -- users will generate a new key pair during first login in the browser:
 ALTER TABLE "user_details" ADD "publickey" VARCHAR(255); -- base64-encoded SPKI DER (RFC 5280, 4.1.2.7)
-ALTER TABLE "user_details" ADD "privatekey" VARCHAR(500); -- base64-encoded 12 byte IV + GCM-encrypted PKCS8 DER (RFC 5208)
-ALTER TABLE "user_details" ADD "salt" VARCHAR(255); -- base64-encoded
-ALTER TABLE "user_details" ADD "iterations" INTEGER DEFAULT 0;
+ALTER TABLE "user_details" ADD "recovery_jwe" VARCHAR(2000); -- recovery code, encrypted using user's public key (JWE format)
+ALTER TABLE "user_details" ADD "recovery_pbkdf2" VARCHAR(500); -- private key, encrypted using the recovery code (base64-encoded 12 byte IV + GCM-encrypted PKCS8 DER (RFC 5208))
+ALTER TABLE "user_details" ADD "recovery_salt" VARCHAR(255); -- base64-encoded
+ALTER TABLE "user_details" ADD "recovery_iterations" INTEGER DEFAULT 0;
 
 -- keep existing device-based access tokens for continuous unlock from old clients.
 ALTER TABLE "access_token" RENAME TO "access_token_legacy";

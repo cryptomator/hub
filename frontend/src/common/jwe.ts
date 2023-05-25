@@ -49,11 +49,13 @@ export class JWE {
    * See <a href="https://datatracker.ietf.org/doc/html/rfc7516">RFC 7516</a> + <a href="https://datatracker.ietf.org/doc/html/rfc7518#section-4.6">RFC 7518, Section 4.6</a>
    * 
    * @param payload The secret payload
-   * @param devicePublicKey The recipient's public key
+   * @param recipientPublicKey The recipient's public key
    * @param apu Optional public information about the producer (PartyUInfo)
    * @param apv Optional public information about the recipient (PartyVInfo)
    */
-  public static async build(payload: Uint8Array, recipientPublicKey: CryptoKey, apu: Uint8Array = new Uint8Array(), apv: Uint8Array = new Uint8Array()): Promise<string> {
+  public static async build(payload: object, recipientPublicKey: CryptoKey, apu: Uint8Array = new Uint8Array(), apv: Uint8Array = new Uint8Array()): Promise<string> {
+    const payloadJson = new TextEncoder().encode(JSON.stringify(payload));
+
     /* key agreement and header params described in RFC 7518, Section 4.6: */
     const ephemeralKey = await crypto.subtle.generateKey(JWE.EPK_ALG, false, ['deriveBits']);
     const alg = 'ECDH-ES';
@@ -67,7 +69,7 @@ export class JWE {
     const iv = crypto.getRandomValues(new Uint8Array(12));
     const encodedIv = base64url.stringify(iv, { pad: false });
     const encodedEncryptedKey = ''; // empty for Direct Key Agreement as per spec
-    const cek = await this.deriveKey(recipientPublicKey, ephemeralKey.privateKey, 384, 32, header);
+    const cek = await this.deriveContentKey(recipientPublicKey, ephemeralKey.privateKey, 384, 32, header);
     const m = new Uint8Array(await crypto.subtle.encrypt(
       {
         name: 'AES-GCM',
@@ -76,7 +78,7 @@ export class JWE {
         tagLength: 128
       },
       cek,
-      payload
+      payloadJson
     ));
     console.assert(m.byteLength > 16, 'result of GCM encryption expected to contain 128bit tag');
     const ciphertext = m.slice(0, m.byteLength - 16);
@@ -86,7 +88,7 @@ export class JWE {
     return `${encodedHeader}.${encodedEncryptedKey}.${encodedIv}.${encodedCiphertext}.${encodedTag}`;
   }
 
-  public static async parse(jwe: string, recipientPrivateKey: CryptoKey): Promise<Uint8Array> {
+  public static async parse(jwe: string, recipientPrivateKey: CryptoKey): Promise<any> {
     /* JWE disassembly and content encryption described in RFC 7516: */
     const utf8dec = new TextDecoder();
     const [encodedHeader, _, encodedIv, encodedCiphertext, encodedTag] = jwe.split('.', 5);
@@ -103,11 +105,11 @@ export class JWE {
     /* content decryption */
     const utf8enc = new TextEncoder();
     const ephemeralKey = await crypto.subtle.importKey('jwk', header.epk, JWE.EPK_ALG, false, []);
-    const cek = await this.deriveKey(ephemeralKey, recipientPrivateKey, 384, 32, header);
+    const cek = await this.deriveContentKey(ephemeralKey, recipientPrivateKey, 384, 32, header);
     const m = new Uint8Array(ciphertext.length + tag.length);
     m.set(ciphertext, 0);
     m.set(tag, ciphertext.length);
-    return new Uint8Array(await crypto.subtle.decrypt(
+    const payloadJson = new Uint8Array(await crypto.subtle.decrypt(
       {
         name: 'AES-GCM',
         iv: iv,
@@ -117,10 +119,12 @@ export class JWE {
       cek,
       m
     ));
+
+    return JSON.parse(new TextDecoder().decode(payloadJson));
   }
 
   // visible for testing
-  public static async deriveKey(publicKey: CryptoKey, privateKey: CryptoKey, ecdhKeyBits: number, desiredKeyBytes: number, header: JWEHeader, exportable: boolean = false): Promise<CryptoKey> {
+  public static async deriveContentKey(publicKey: CryptoKey, privateKey: CryptoKey, ecdhKeyBits: number, desiredKeyBytes: number, header: JWEHeader, exportable: boolean = false): Promise<CryptoKey> {
     let agreedKey = new Uint8Array();
     let derivedKey = new Uint8Array();
     try {

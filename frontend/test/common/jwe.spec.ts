@@ -44,7 +44,7 @@ describe('JWE', () => {
         []
       );
 
-      const result = await JWE.build(new TextEncoder().encode('hello'), recipientPublicKey);
+      const result = await JWE.build({ hello: 'world' }, recipientPublicKey);
       expect(result).not.to.be.null; // TODO do some tests
     });
 
@@ -93,7 +93,7 @@ describe('JWE', () => {
       const apu = new Uint8Array([65, 108, 105, 99, 101]);
       const apv = new Uint8Array([66, 111, 98]);
       const header = new JWEHeader('ignored', 'A128GCM', alicePub, base64url.stringify(apu, { pad: false }), base64url.stringify(apv, { pad: false }));
-      const derived = await JWE.deriveKey(bob, alice, 256, 16, header, true);
+      const derived = await JWE.deriveContentKey(bob, alice, 256, 16, header, true);
       const derivedBytes = await crypto.subtle.exportKey('raw', derived);
       expect(new Uint8Array(derivedBytes), 'derived key').to.eql(new Uint8Array([86, 170, 141, 234, 248, 35, 109, 32, 92, 34, 40, 205, 113, 167, 16, 26]));
     });

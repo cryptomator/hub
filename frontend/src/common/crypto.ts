@@ -284,9 +284,7 @@ export class VaultKeys {
       const payload: JWEPayload = {
         key: base64.stringify(rawkey)
       };
-      const payloadJson = new TextEncoder().encode(JSON.stringify(payload));
-
-      return JWE.build(payloadJson, publicKey);
+      return JWE.build(payload, publicKey);
     } finally {
       rawkey.fill(0x00);
     }
@@ -322,6 +320,8 @@ interface UserKeyArchive {
 }
 
 export class UserKeys {
+  public static readonly KEY_USAGES: KeyUsage[] = ['deriveBits'];
+
   private static readonly KEY_DESIGNATION: EcKeyImportParams | EcKeyGenParams = {
     name: 'ECDH',
     namedCurve: 'P-384'
@@ -343,7 +343,7 @@ export class UserKeys {
    * @returns A new user key pair
    */
   public static async create(): Promise<UserKeys> {
-    const keyPair = crypto.subtle.generateKey(UserKeys.KEY_DESIGNATION, true, ['deriveKey']);
+    const keyPair = crypto.subtle.generateKey(UserKeys.KEY_DESIGNATION, true, UserKeys.KEY_USAGES);
     return new UserKeys(await keyPair);
   }
 
@@ -416,8 +416,7 @@ export class UserKeys {
       const payload: JWEPayload = {
         key: base64.stringify(rawkey)
       };
-      const payloadJson = new TextEncoder().encode(JSON.stringify(payload));
-      return JWE.build(payloadJson, publicKey);
+      return JWE.build(payload, publicKey);
     } finally {
       rawkey.fill(0x00);
     }
@@ -431,22 +430,21 @@ export class UserKeys {
    * @returns The user's non-extractable key pair
    */
   public static async decryptOnBrowser(jwe: string, browserPrivateKey: CryptoKey, userPublicKey: CryptoKey): Promise<UserKeys> {
-    let payloadJson = new Uint8Array();
     let rawKey = new Uint8Array();
     try {
-      payloadJson = await JWE.parse(jwe, browserPrivateKey);
-      const payload: JWEPayload = JSON.parse(new TextDecoder().decode(payloadJson));
+      const payload: JWEPayload = await JWE.parse(jwe, browserPrivateKey);
       rawKey = base64.parse(payload.key);
       const privateKey = await crypto.subtle.importKey('pkcs8', rawKey, UserKeys.KEY_DESIGNATION, true, ['deriveKey']);
       return new UserKeys({ publicKey: userPublicKey, privateKey: privateKey });
     } finally {
-      payloadJson.fill(0x00);
       rawKey.fill(0x00);
     }
   }
 }
 
 export class BrowserKeys {
+  public static readonly KEY_USAGES: KeyUsage[] = ['deriveBits'];
+
   private static readonly KEY_DESIGNATION: EcKeyImportParams | EcKeyGenParams = {
     name: 'ECDH',
     namedCurve: 'P-384'
@@ -463,7 +461,7 @@ export class BrowserKeys {
    * @returns A new device key pair
    */
   public static async create(): Promise<BrowserKeys> {
-    const keyPair = crypto.subtle.generateKey(BrowserKeys.KEY_DESIGNATION, false, ['deriveBits']);
+    const keyPair = crypto.subtle.generateKey(BrowserKeys.KEY_DESIGNATION, false, BrowserKeys.KEY_USAGES);
     return new BrowserKeys(await keyPair);
   }
 
