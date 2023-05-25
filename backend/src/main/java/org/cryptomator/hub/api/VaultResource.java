@@ -20,6 +20,7 @@ import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.AccessToken;
@@ -72,6 +73,16 @@ public class VaultResource {
 		var currentUserId = jwt.getSubject();
 		var resultStream = Vault.findAccessibleByUser(currentUserId);
 		return resultStream.map(VaultDto::fromEntity).toList();
+	}
+
+	@GET
+	@Path("/some")
+	@RolesAllowed("admin")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Transactional
+	@Operation(summary = "list all vaults corresponding to the given ids", description = "list for each id in the list its corresponding vault. Ignores all id's where a vault does not exist, ")
+	public List<VaultDto> getSomeVaults(@QueryParam("ids") List<UUID> vaultIds) {
+		return Vault.findAllInList(vaultIds).map(VaultDto::fromEntity).toList();
 	}
 
 	@GET
