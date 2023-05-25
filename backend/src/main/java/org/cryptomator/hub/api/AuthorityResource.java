@@ -8,8 +8,6 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import org.cryptomator.hub.entities.Authority;
-import org.cryptomator.hub.entities.Group;
-import org.cryptomator.hub.entities.User;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.jboss.resteasy.reactive.NoCache;
 
@@ -24,17 +22,19 @@ public class AuthorityResource {
 	@RolesAllowed("user")
 	@Produces(MediaType.APPLICATION_JSON)
 	@NoCache
-	@Operation(summary = "search authority")
+	@Operation(summary = "search authority by name")
 	public List<AuthorityDto> search(@QueryParam("query") @NotBlank String query) {
-		return Authority.byName(query).map(authority -> {
-			if (authority instanceof User user) {
-				return new UserDto(authority.id, authority.name, user.pictureUrl, user.email, null);
-			} else if (authority instanceof Group) {
-				return new GroupDto(authority.id, authority.name);
-			} else {
-				throw new IllegalStateException("authority is not of type user or group");
-			}
-		}).toList();
+		return Authority.byName(query).map(AuthorityDto::fromEntity).toList();
+	}
+
+	@GET
+	@Path("/")
+	@RolesAllowed("admin")
+	@Produces(MediaType.APPLICATION_JSON)
+	@NoCache
+	@Operation(summary = "list all authorities corresponding to the given ids")
+	public List<AuthorityDto> getSome(@QueryParam("ids") List<String> authorityIds) {
+		return Authority.findAllInList(authorityIds).map(AuthorityDto::fromEntity).toList();
 	}
 
 }

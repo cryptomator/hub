@@ -1,6 +1,9 @@
 package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.cryptomator.hub.entities.Authority;
+import org.cryptomator.hub.entities.Group;
+import org.cryptomator.hub.entities.User;
 
 abstract sealed class AuthorityDto permits UserDto, GroupDto {
 
@@ -25,6 +28,16 @@ abstract sealed class AuthorityDto permits UserDto, GroupDto {
 		this.type = type;
 		this.name = name;
 		this.pictureUrl = pictureUrl;
+	}
+
+	static AuthorityDto fromEntity(Authority a) {
+		if (a instanceof User u) {
+			return new UserDto(u.id, u.name, u.pictureUrl, u.email, null);
+		} else if (a instanceof Group) {
+			return new GroupDto(a.id, a.name);
+		} else {
+			throw new IllegalArgumentException("Authority of this type does not exist");
+		}
 	}
 
 }

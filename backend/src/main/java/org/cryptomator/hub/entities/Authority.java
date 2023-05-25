@@ -14,6 +14,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -27,6 +28,12 @@ import java.util.stream.Stream;
 				SELECT DISTINCT a
 				FROM Authority a
 				WHERE LOWER(a.name) LIKE :name
+				""")
+@NamedQuery(name = "Authority.allInList",
+		query = """
+				SELECT a
+				FROM Authority a
+				WHERE a.id IN :ids
 				""")
 public class Authority extends PanacheEntityBase {
 
@@ -42,6 +49,10 @@ public class Authority extends PanacheEntityBase {
 
 	public static Stream<Authority> byName(String name) {
 		return find("#Authority.byName", Parameters.with("name", '%' + name.toLowerCase() + '%')).stream();
+	}
+
+	public static Stream<Authority> findAllInList(List<String> ids) {
+		return find("#Authority.allInList", Parameters.with("ids", ids)).stream();
 	}
 
 	@Override
