@@ -198,24 +198,13 @@ async function createUserKey() {
     const userKeys = await UserKeys.create();
     recoveryCode.value = crypto.randomUUID(); // TODO something else?
     const archive = await userKeys.export(recoveryCode.value);
-
     me.publicKey = archive.publicKey;
     me.recoveryJwe = await JWE.build({ recoveryCode: recoveryCode.value }, userKeys.keyPair.publicKey);
     me.recoveryPbkdf2 = archive.encryptedPrivateKey;
     me.recoverySalt = archive.salt;
     me.recoveryIterations = archive.iterations;
-
-    const browserKeys = await BrowserKeys.create();
-    await browserKeys.store(me.id);
-    const jwe = await userKeys.encryptForDevice(browserKeys.keyPair.publicKey);
-    await backend.devices.putDevice({
-      id: await browserKeys.id(),
-      name: navigator.userAgent, // TODO something
-      publicKey: await browserKeys.encodedPublicKey(),
-      userKeyJwe: jwe,
-      creationTime: new Date()
-    });
-    await backend.users.putMyKeyPair(me);
+    const browserKeys = await loadOrCreateBrowserKeys(me.id);
+    await submitBrowserKeys(browserKeys, me, userKeys);
 
     state.value = State.SaveRecoveryCode;
   } catch (error) {
@@ -224,12 +213,6 @@ async function createUserKey() {
   } finally {
     processing.value = false;
   }
-}
-
-async function copyRecoveryCode() {
-  await navigator.clipboard.writeText(recoveryCode.value);
-  copiedRecoveryCode.value = true;
-  debouncedCopyFinish();
 }
 
 async function recoverUserKey() {
@@ -242,18 +225,8 @@ async function recoverUserKey() {
     processing.value = true;
 
     const userKeys = await UserKeys.recover(me.publicKey, me.recoveryPbkdf2, recoveryCode.value, me.recoverySalt, me.recoveryIterations);
-
-    const browserKeys = await BrowserKeys.create();
-    await browserKeys.store(me.id);
-    const jwe = await userKeys.encryptForDevice(browserKeys.keyPair.publicKey);
-    await backend.devices.putDevice({
-      id: await browserKeys.id(),
-      name: navigator.userAgent, // TODO something
-      publicKey: await browserKeys.encodedPublicKey(),
-      userKeyJwe: jwe,
-      creationTime: new Date()
-    });
-    await backend.users.putMyKeyPair(me);
+    const browserKeys = await loadOrCreateBrowserKeys(me.id);
+    await submitBrowserKeys(browserKeys, me, userKeys);
 
     router.push('/app/vaults');
   } catch (error) {
@@ -262,5 +235,32 @@ async function recoverUserKey() {
   } finally {
     processing.value = false;
   }
+}
+
+async function loadOrCreateBrowserKeys(userId: string): Promise<BrowserKeys> {
+  let browserKeys = await BrowserKeys.load(userId);
+  if (!browserKeys.keyPair) {
+    browserKeys = await BrowserKeys.create();
+    await browserKeys.store(userId);
+  }
+  return browserKeys;
+}
+
+async function submitBrowserKeys(browserKeys: BrowserKeys, me: UserDto, userKeys: UserKeys) {
+  const jwe = await userKeys.encryptForDevice(browserKeys.keyPair.publicKey);
+  await backend.devices.putDevice({
+    id: await browserKeys.id(),
+    name: navigator.userAgent, // TODO something
+    publicKey: await browserKeys.encodedPublicKey(),
+    userKeyJwe: jwe,
+    creationTime: new Date()
+  });
+  await backend.users.putMyKeyPair(me);
+}
+
+async function copyRecoveryCode() {
+  await navigator.clipboard.writeText(recoveryCode.value);
+  copiedRecoveryCode.value = true;
+  debouncedCopyFinish();
 }
 </script>
