@@ -6,7 +6,7 @@
   <div v-else-if="state == State.EnterRecoveryKey">
     <form ref="form" novalidate @submit.prevent="validateRecoveryKey()">
       <div class="flex justify-center">
-        <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6 text-center sm:max-w-lg">
+        <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6 text-center sm:w-full sm:max-w-lg">
           <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-emerald-100">
             <ArrowPathIcon class="h-6 w-6 text-emerald-600" aria-hidden="true" />
           </div>
@@ -102,7 +102,7 @@
   <div v-else-if="state == State.ShowRecoveryKey">
     <form @submit.prevent="createVault()">
       <div class="flex justify-center">
-        <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6 text-center sm:max-w-lg">
+        <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6 text-center sm:w-full sm:max-w-lg">
           <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-emerald-100">
             <KeyIcon class="h-6 w-6 text-emerald-600" aria-hidden="true" />
           </div>
@@ -163,7 +163,7 @@
 
   <div v-else-if="state == State.Finished">
     <div class="flex justify-center">
-      <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6 text-center sm:max-w-lg">
+      <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6 text-center sm:w-full sm:max-w-lg">
         <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-emerald-100">
           <CheckIcon class="h-6 w-6 text-emerald-600" aria-hidden="true" />
         </div>

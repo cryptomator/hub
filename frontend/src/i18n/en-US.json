@@ -115,6 +115,10 @@
   "setupUserKey.saveRecoveryCode.submit": "Finish Setup",
   "setupUserKey.saveRecoveryCode.recoveryCode": "Personal Hub Secret",
   "setupUserKey.saveRecoveryCode.recoveryCode.confirm": "I understand that I won't be able to sign it to my account on new devices if I don't have the Personal Hub Secret.",
+  "setupUserKey.enterRecoveryCode.title": "Enter your Personal Hub Secret",
+  "setupUserKey.enterRecoveryCode.description": "You need it to sign in on this new device.",
+  "setupUserKey.enterRecoveryCode.submit": "Finish Setup",
+  "setupUserKey.enterRecoveryCode.recoveryCode": "Personal Hub Secret",
 
   "userSettings.title": "Settings",
   "userSettings.general.title": "General",

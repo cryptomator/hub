@@ -12,7 +12,7 @@
     <div v-else-if="state == State.CreateUserKey">
       <form @submit.prevent="createUserKey()">
         <div class="flex justify-center">
-          <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6 text-center sm:max-w-lg">
+          <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6 text-center sm:w-full sm:max-w-lg">
             <div class="flex justify-center">
               <img src="/logo.svg" class="h-12" alt="Logo" aria-hidden="true" />
             </div>
@@ -42,7 +42,7 @@
     <div v-else-if="state == State.SaveRecoveryCode">
       <form @submit.prevent="$router.push('/app/vaults')">
         <div class="flex justify-center">
-          <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6 text-center sm:max-w-lg">
+          <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6 text-center sm:w-full sm:max-w-lg">
             <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-emerald-100">
               <KeyIcon class="h-6 w-6 text-emerald-600" aria-hidden="true" />
             </div>
@@ -87,7 +87,7 @@
                 </div>
               </div>
               <div class="mt-5 sm:mt-6">
-                <button type="submit" :disabled="!confirmRecoveryCode || processing" class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:primary focus:ring-offset-2 sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
+                <button type="submit" :disabled="!confirmRecoveryCode" class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:primary focus:ring-offset-2 sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
                   {{ t('setupUserKey.saveRecoveryCode.submit') }}
                 </button>
               </div>
@@ -98,7 +98,36 @@
     </div>
 
     <div v-else-if="state == State.EnterRecoveryCode">
-      TODO ENTER RECOVERY CODE
+      <form @submit.prevent="recoverUserKey()">
+        <div class="flex justify-center">
+          <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6 text-center sm:w-full sm:max-w-lg">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-emerald-100">
+              <KeyIcon class="h-6 w-6 text-emerald-600" aria-hidden="true" />
+            </div>
+            <div class="mt-3 sm:mt-5">
+              <h3 class="text-lg leading-6 font-medium text-gray-900">
+                {{ t('setupUserKey.enterRecoveryCode.title') }}
+              </h3>
+              <div class="mt-2">
+                <p class="text-sm text-gray-500">
+                  {{ t('setupUserKey.enterRecoveryCode.description') }}
+                </p>
+              </div>
+              <div class="mt-5 sm:mt-6">
+                <input id="recoveryCode" v-model="recoveryCode" type="text" name="recoveryCode" class="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md" :placeholder="t('setupUserKey.enterRecoveryCode.recoveryCode')" required />
+              </div>
+              <div class="mt-5 sm:mt-6">
+                <button type="submit" :disabled="processing" class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:primary focus:ring-offset-2 sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
+                  {{ t('setupUserKey.enterRecoveryCode.submit') }}
+                </button>
+                <div v-if="onRecoverError != null">
+                  <p class="text-sm text-red-900 mt-2">{{ t('common.unexpectedError', [onRecoverError.message]) }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
     </div>
   </div>
 </template>
@@ -112,6 +141,7 @@ import backend, { UserDto } from '../common/backend';
 import { BrowserKeys, UserKeys } from '../common/crypto';
 import { JWE } from '../common/jwe';
 import { debounce } from '../common/util';
+import router from '../router';
 import FetchError from './FetchError.vue';
 
 enum State {
@@ -125,6 +155,7 @@ const { t } = useI18n({ useScope: 'global' });
 
 const onFetchError = ref<Error | null>(null);
 const onCreateError = ref<Error | null >(null);
+const onRecoverError = ref<Error | null >(null);
 
 const state = ref(State.Preparing);
 const processing = ref(false);
@@ -158,7 +189,8 @@ async function fetchData() {
 async function createUserKey() {
   onCreateError.value = null;
   try {
-    if (!user.value) {
+    const me = user.value;
+    if (!me) {
       throw new Error('Invalid state');
     }
     processing.value = true;
@@ -166,8 +198,7 @@ async function createUserKey() {
     const userKeys = await UserKeys.create();
     recoveryCode.value = crypto.randomUUID(); // TODO something else?
     const archive = await userKeys.export(recoveryCode.value);
-    
-    const me = user.value;
+
     me.publicKey = archive.publicKey;
     me.recoveryJwe = await JWE.build({ recoveryCode: recoveryCode.value }, userKeys.keyPair.publicKey);
     me.recoveryPbkdf2 = archive.encryptedPrivateKey;
@@ -177,14 +208,14 @@ async function createUserKey() {
     const browserKeys = await BrowserKeys.create();
     await browserKeys.store(me.id);
     const jwe = await userKeys.encryptForDevice(browserKeys.keyPair.publicKey);
-    backend.devices.putDevice({
+    await backend.devices.putDevice({
       id: await browserKeys.id(),
       name: navigator.userAgent, // TODO something
       publicKey: await browserKeys.encodedPublicKey(),
       userKeyJwe: jwe,
       creationTime: new Date()
     });
-    backend.users.putMyKeyPair(me);
+    await backend.users.putMyKeyPair(me);
 
     state.value = State.SaveRecoveryCode;
   } catch (error) {
@@ -199,5 +230,37 @@ async function copyRecoveryCode() {
   await navigator.clipboard.writeText(recoveryCode.value);
   copiedRecoveryCode.value = true;
   debouncedCopyFinish();
+}
+
+async function recoverUserKey() {
+  onRecoverError.value = null;
+  try {
+    const me = user.value;
+    if (!me || !me.publicKey || !me.recoveryJwe || !me.recoveryPbkdf2 || !me.recoverySalt || !me.recoveryIterations) {
+      throw new Error('Invalid state');
+    }
+    processing.value = true;
+
+    const userKeys = await UserKeys.recover(me.publicKey, me.recoveryPbkdf2, recoveryCode.value, me.recoverySalt, me.recoveryIterations);
+
+    const browserKeys = await BrowserKeys.create();
+    await browserKeys.store(me.id);
+    const jwe = await userKeys.encryptForDevice(browserKeys.keyPair.publicKey);
+    await backend.devices.putDevice({
+      id: await browserKeys.id(),
+      name: navigator.userAgent, // TODO something
+      publicKey: await browserKeys.encodedPublicKey(),
+      userKeyJwe: jwe,
+      creationTime: new Date()
+    });
+    await backend.users.putMyKeyPair(me);
+
+    router.push('/app/vaults');
+  } catch (error) {
+    console.error('Recovering user key failed.', error);
+    onRecoverError.value = error instanceof Error ? error : new Error('Unknown reason');
+  } finally {
+    processing.value = false;
+  }
 }
 </script>

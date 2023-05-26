@@ -111,7 +111,7 @@ export class UserDto extends AuthorityDto {
   }
 
   static copy(obj: UserDto): UserDto {
-    return new UserDto(obj.id, obj.name, obj.type, obj.email, obj.devices, obj.accessibleVaults, obj.pictureUrl, obj.publicKey, obj.privateKey, obj.salt, obj.iterations);
+    return new UserDto(obj.id, obj.name, obj.type, obj.email, obj.devices, obj.accessibleVaults, obj.pictureUrl, obj.publicKey, obj.recoveryJwe, obj.recoveryPbkdf2, obj.recoverySalt, obj.recoveryIterations);
   }
 }
 
