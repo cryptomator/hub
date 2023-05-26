@@ -2,11 +2,13 @@ import { createRouter, createWebHistory, RouteLocationRaw, RouteRecordRaw } from
 import authPromise from '../common/auth';
 import backend from '../common/backend';
 import { baseURL } from '../common/config';
+import { BrowserKeys } from '../common/crypto';
 import AdminSettings from '../components/AdminSettings.vue';
 import AuthenticatedMain from '../components/AuthenticatedMain.vue';
 import CreateVault from '../components/CreateVault.vue';
 import DeviceList from '../components/DeviceList.vue';
 import NotFound from '../components/NotFound.vue';
+import SetupUserKey from '../components/SetupUserKey.vue';
 import UnlockError from '../components/UnlockError.vue';
 import UnlockSuccess from '../components/UnlockSuccess.vue';
 import UserSettings from '../components/UserSettings.vue';
@@ -82,6 +84,13 @@ const routes: RouteRecordRaw[] = [
     ]
   },
   {
+    path: '/app/setup',
+    component: SetupUserKey,
+    beforeEnter: async () => {
+      return await requiresUserKeySetup(); //TODO: reroute to NotFound Screen/ AccessDeniedScreen?
+    }
+  },
+  {
     path: '/app/unlock-success',
     component: UnlockSuccess,
     props: (route) => ({ vaultId: route.query.vault, deviceId: route.query.device })
@@ -127,20 +136,28 @@ router.beforeEach((to, from, next) => {
       if (auth.isAuthenticated()) {
         await backend.users.syncMe();
       }
-    }).finally(async () => {
-      let me = await backend.users.me();
-      if (!me.publicKey) {
-        // redirect to user setup
-        next({ path: '/app/settings' });
-      } else {
-        // remove sync_me query parameter to avoid endless recursion
-        delete to.query.sync_me;
-        next({ path: to.path, query: to.query, params: to.params, replace: true });
-      }
+    }).finally(() => {
+      delete to.query.sync_me; // remove sync_me query parameter to avoid endless recursion
+      next({ path: to.path, query: to.query, params: to.params, replace: true });
     });
   } else {
     next();
   }
 });
+
+// THIRD check user/browser keys (requires auth)
+router.beforeEach(async (to, from, next) => {
+  if (!to.meta.skipAuth && await requiresUserKeySetup() && to.path != '/app/setup') {
+    next({ path: '/app/setup' });
+  } else {
+    next();
+  }
+});
+
+async function requiresUserKeySetup() {
+  const me = await backend.users.me();
+  const browserKeys = await BrowserKeys.load(me.id);
+  return !me.publicKey || !browserKeys.keyPair;
+}
 
 export default router;
