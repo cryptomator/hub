@@ -365,16 +365,16 @@ export class UserKeys {
       decodedPrivateKey.slice(GCM_NONCE_LEN),
       await kek,
       { name: 'AES-GCM', iv: decodedPrivateKey.slice(0, GCM_NONCE_LEN) },
-      UserKeys.KEK_DESIGNATION,
-      false,
-      ['sign']
+      UserKeys.KEY_DESIGNATION,
+      true,
+      UserKeys.KEY_USAGES
     );
     const publicKey = crypto.subtle.importKey(
       'spki',
       decodedPublicKey,
-      UserKeys.KEK_DESIGNATION,
+      UserKeys.KEY_DESIGNATION,
       true,
-      ['verify']
+      []
     );
     return new UserKeys({ privateKey: await privateKey, publicKey: await publicKey });
   }
