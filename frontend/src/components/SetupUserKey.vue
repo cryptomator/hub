@@ -203,7 +203,7 @@ async function createUserKey() {
     me.recoveryPbkdf2 = archive.encryptedPrivateKey;
     me.recoverySalt = archive.salt;
     me.recoveryIterations = archive.iterations;
-    const browserKeys = await loadOrCreateBrowserKeys(me.id);
+    const browserKeys = await createBrowserKeys(me.id);
     await submitBrowserKeys(browserKeys, me, userKeys);
 
     state.value = State.SaveRecoveryCode;
@@ -225,7 +225,7 @@ async function recoverUserKey() {
     processing.value = true;
 
     const userKeys = await UserKeys.recover(me.publicKey, me.recoveryPbkdf2, recoveryCode.value, me.recoverySalt, me.recoveryIterations);
-    const browserKeys = await loadOrCreateBrowserKeys(me.id);
+    const browserKeys = await createBrowserKeys(me.id);
     await submitBrowserKeys(browserKeys, me, userKeys);
 
     router.push('/app/vaults');
@@ -237,12 +237,9 @@ async function recoverUserKey() {
   }
 }
 
-async function loadOrCreateBrowserKeys(userId: string): Promise<BrowserKeys> {
-  let browserKeys = await BrowserKeys.load(userId);
-  if (!browserKeys.keyPair) {
-    browserKeys = await BrowserKeys.create();
-    await browserKeys.store(userId);
-  }
+async function createBrowserKeys(userId: string): Promise<BrowserKeys> {
+  const browserKeys = await BrowserKeys.create();
+  await browserKeys.store(userId);
   return browserKeys;
 }
 
@@ -250,7 +247,7 @@ async function submitBrowserKeys(browserKeys: BrowserKeys, me: UserDto, userKeys
   const jwe = await userKeys.encryptForDevice(browserKeys.keyPair.publicKey);
   await backend.devices.putDevice({
     id: await browserKeys.id(),
-    name: navigator.userAgent, // TODO something
+    name: navigator.userAgent, // TODO something, maybe let the user choose a name?
     publicKey: await browserKeys.encodedPublicKey(),
     userKeyJwe: jwe,
     creationTime: new Date()
