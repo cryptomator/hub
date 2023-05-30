@@ -61,7 +61,8 @@
                       {{ d(device.creationTime, 'short') }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <a role="button" tabindex="0" class="text-red-600 hover:text-red-900" @click="removeDevice(device)">{{ t('common.remove') }}</a>
+                      <span v-if="device.id == myDeviceId" class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">{{ t('deviceList.thisDevice') }}</span>
+                      <a v-if="device.id != myDeviceId" role="button" tabindex="0" class="text-red-600 hover:text-red-900" @click="removeDevice(device)">{{ t('common.remove') }}</a>
                       <a v-if="!device.userKeyJwe" role="button" tabindex="0" class="text-primary hover:text-primary-d1" @click="validateDevice(device)">TODO confirm</a>
                     </td>
                   </tr>
@@ -93,10 +94,14 @@ import FetchError from './FetchError.vue';
 const { t, d } = useI18n({ useScope: 'global' });
 
 const me = ref<UserDto>();
+const myDeviceId = ref<string>();
 const onFetchError = ref<Error | null>();
 const onRemoveDeviceError = ref< {[id: string]: Error} >({});
 
-onMounted(fetchData);
+onMounted(async () => {
+  await fetchData();
+  await determineMyDeviceId();
+});
 
 async function fetchData() {
   onFetchError.value = null;
@@ -106,6 +111,14 @@ async function fetchData() {
     console.error('Retrieving device list failed.', error);
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
+}
+
+async function determineMyDeviceId() {
+  if (me.value == null) {
+    throw new Error('User not initialized.');
+  }
+  const browserKeys = await BrowserKeys.load(me.value.id);
+  myDeviceId.value = await browserKeys.id();
 }
 
 async function validateDevice(device: DeviceDto) {

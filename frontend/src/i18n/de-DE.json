@@ -86,6 +86,7 @@
   "deviceList.deviceName": "Gerätename",
   "deviceList.type": "Typ",
   "deviceList.added": "Hinzugefügt",
+  "deviceList.thisDevice": "Dieses Gerät",
 
   "downloadVaultTemplateDialog.title": "Tresorvorlage herunterladen",
   "downloadVaultTemplateDialog.description": "Lade die gezippte Tresorvorlage herunter und entpacke ihn an einem beliebigen Ort, der für deine Teammitglieder freigegeben ist. Dies ist einmal für die Ersteinrichtung erforderlich.",

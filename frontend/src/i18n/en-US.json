@@ -87,6 +87,7 @@
   "deviceList.deviceName": "Device Name",
   "deviceList.type": "Type",
   "deviceList.added": "Added",
+  "deviceList.thisDevice": "This Device",
 
   "downloadVaultTemplateDialog.title": "Download Vault Template",
   "downloadVaultTemplateDialog.description": "Download and unpack the zipped vault template to any location shared with your team members. This is required only once during the initial setup.",
