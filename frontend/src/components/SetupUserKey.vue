@@ -260,9 +260,11 @@ async function submitBrowserKeys(browserKeys: BrowserKeys, me: UserDto, userKeys
   await backend.devices.putDevice({
     id: await browserKeys.id(),
     name: deviceName.value,
+    type: 'BROWSER',
     publicKey: await browserKeys.encodedPublicKey(),
     userKeyJwe: jwe,
-    creationTime: new Date()
+    creationTime: new Date(),
+    lastSeenTime: new Date()
   });
   await backend.users.putMyKeyPair(me);
 }

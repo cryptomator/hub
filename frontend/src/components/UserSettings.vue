@@ -157,9 +157,11 @@ async function createUserKey() {
   backend.devices.putDevice({
     id: await browserKeys.id(),
     name: navigator.userAgent, // TODO something
+    type: 'BROWSER',
     publicKey: await browserKeys.encodedPublicKey(),
     userKeyJwe: jwe,
-    creationTime: new Date()
+    creationTime: new Date(),
+    lastSeenTime: new Date()
   });
   backend.users.putMyKeyPair(me);
 }

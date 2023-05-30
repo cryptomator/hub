@@ -2,16 +2,13 @@ package org.cryptomator.hub.api;
 
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
-import jakarta.persistence.NoResultException;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
@@ -19,8 +16,6 @@ import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.AccessToken;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.User;
-import org.cryptomator.hub.filters.ActiveLicense;
-import org.cryptomator.hub.validation.ValidId;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -89,7 +84,7 @@ public class UsersResource {
 	public UserDto getMe(@QueryParam("withDevices") boolean withDevices, @QueryParam("withAccessibleVaults") boolean withAccessibleVaults) {
 		User user = User.findById(jwt.getSubject());
 		Function<AccessToken, VaultResource.VaultDto> mapAccessibleVaults = a -> new VaultResource.VaultDto(a.vault.id, a.vault.name, a.vault.description, a.vault.creationTime.truncatedTo(ChronoUnit.MILLIS), null, 0, null, null, null);
-		Function<Device, DeviceResource.DeviceDto> mapDevices = d -> new DeviceResource.DeviceDto(d.id, d.name, d.publickey, d.userKeyJwe, d.owner.id, d.creationTime.truncatedTo(ChronoUnit.MILLIS));
+		Function<Device, DeviceResource.DeviceDto> mapDevices = d -> new DeviceResource.DeviceDto(d.id, d.name, d.type, d.publickey, d.userKeyJwe, d.owner.id, d.creationTime.truncatedTo(ChronoUnit.MILLIS), d.lastSeenTime.truncatedTo(ChronoUnit.MILLIS));
 		var devices = withDevices ? user.devices.stream().map(mapDevices).collect(Collectors.toSet()) : Set.<DeviceResource.DeviceDto>of();
 		var vaults = withAccessibleVaults ? user.accessTokens.stream().map(mapAccessibleVaults).collect(Collectors.toSet()) : Set.<VaultResource.VaultDto>of();
 		return new UserDto(user.id, user.name, user.pictureUrl, user.email, devices, vaults, user.publicKey, user.recoveryJwe, user.recoveryPbkdf2, user.recoverySalt, user.recoveryIterations);

@@ -1,13 +1,12 @@
 package org.cryptomator.hub.api;
 
-import io.agroal.api.AgroalDataSource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.quarkus.test.security.oidc.Claim;
 import io.quarkus.test.security.oidc.OidcSecurity;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
-import jakarta.inject.Inject;
+import org.cryptomator.hub.entities.Device;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
@@ -16,7 +15,6 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 
-import java.sql.SQLException;
 import java.time.Instant;
 
 import static io.restassured.RestAssured.given;
@@ -54,7 +52,7 @@ public class DeviceResourceTest {
 		@Order(1)
 		@DisplayName("PUT /devices/  with DTO returns 400")
 		public void testCreateNoDeviceId() {
-			var deviceDto = new DeviceResource.DeviceDto("device1", "Computer 1", "publickey1", "jwe.jwe.jwe.user1.device1","user1", Instant.parse("2020-02-20T20:20:20Z"));
+			var deviceDto = new DeviceResource.DeviceDto("device1", "Device 1", Device.Type.BROWSER, "publickey1", "jwe.jwe.jwe.user1.device1", "user1", Instant.parse("2020-02-20T20:20:20Z"), Instant.parse("2021-02-21T21:21:21Z"));
 			given().contentType(ContentType.JSON).body(deviceDto)
 					.when().put("/devices/{deviceId}", " ") //a whitespace
 					.then().statusCode(400);
@@ -64,7 +62,7 @@ public class DeviceResourceTest {
 		@Order(1)
 		@DisplayName("PUT /devices/deviceX returns 409 due to non-unique name")
 		public void testCreateX() {
-			var deviceDto = new DeviceResource.DeviceDto("deviceX", "Computer 1", "publickey1", "jwe.jwe.jwe.user1.deviceX","user1", Instant.parse("2020-02-20T20:20:20Z"));
+			var deviceDto = new DeviceResource.DeviceDto("deviceX", "Device 1", Device.Type.BROWSER, "publickey1", "jwe.jwe.jwe.user1.deviceX", "user1", Instant.parse("2020-02-20T20:20:20Z"), Instant.parse("2021-02-21T21:21:21Z"));
 
 			given().contentType(ContentType.JSON).body(deviceDto)
 					.when().put("/devices/{deviceId}", "deviceX")
@@ -126,7 +124,7 @@ public class DeviceResourceTest {
 		@Order(2)
 		@DisplayName("PUT /devices/device999 returns 201 (creating new device)")
 		public void testCreate999() {
-			var deviceDto = new DeviceResource.DeviceDto("device999", "Computer 999", "publickey999", "jwe.jwe.jwe.user1.device999", "user1", Instant.parse("2020-02-20T20:20:20Z"));
+			var deviceDto = new DeviceResource.DeviceDto("device999", "Device 999", Device.Type.DESKTOP, "publickey999", "jwe.jwe.jwe.user1.device999", "user1", Instant.parse("2020-02-20T20:20:20Z"), Instant.parse("2021-02-21T21:21:21Z"));
 
 			given().contentType(ContentType.JSON).body(deviceDto)
 					.when().put("/devices/{deviceId}", "device999")
@@ -147,7 +145,7 @@ public class DeviceResourceTest {
 		@Order(4)
 		@DisplayName("PUT /devices/device999 returns 201 (updating existing device)")
 		public void testUpdate1() {
-			var deviceDto = new DeviceResource.DeviceDto("device999", "Computer 999 got a new name", "publickey999", "jwe.jwe.jwe.user1.device999", "user1", Instant.parse("2020-02-20T20:20:20Z"));
+			var deviceDto = new DeviceResource.DeviceDto("device999", "Device 999 got a new name", Device.Type.DESKTOP, "publickey999", "jwe.jwe.jwe.user1.device999", "user1", Instant.parse("2020-02-20T20:20:20Z"), Instant.parse("2021-02-21T21:21:21Z"));
 
 			given().contentType(ContentType.JSON).body(deviceDto)
 					.when().put("/devices/{deviceId}", "device999")
@@ -206,7 +204,7 @@ public class DeviceResourceTest {
 		@Test
 		@DisplayName("PUT /devices/device1 returns 401")
 		public void testCreate1() {
-			var deviceDto = new DeviceResource.DeviceDto("device1", "Computer 1", "publickey1", "jwe.jwe.jwe.user1.device1", "user1", Instant.parse("2020-02-20T20:20:20Z"));
+			var deviceDto = new DeviceResource.DeviceDto("device1", "Device 1", Device.Type.BROWSER, "publickey1", "jwe.jwe.jwe.user1.device1", "user1", Instant.parse("2020-02-20T20:20:20Z"), Instant.parse("2021-02-21T21:21:21Z"));
 
 			given().contentType(ContentType.JSON).body(deviceDto)
 					.when().put("/devices/{deviceId}", "device1")

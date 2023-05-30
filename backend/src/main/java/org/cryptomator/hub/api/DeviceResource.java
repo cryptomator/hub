@@ -61,10 +61,12 @@ public class DeviceResource {
 			device.id = deviceId;
 			device.owner = User.findById(jwt.getSubject());
 			device.creationTime = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+			device.type = dto.type;
 		}
 		device.name = dto.name;
 		device.publickey = dto.publicKey;
 		device.userKeyJwe = dto.userKeyJwe;
+		device.lastSeenTime = Instant.now().truncatedTo(ChronoUnit.MILLIS);
 		try {
 			device.persistAndFlush();
 			return Response.created(URI.create(".")).build();
@@ -140,13 +142,15 @@ public class DeviceResource {
 
 	public record DeviceDto(@JsonProperty("id") @ValidId String id,
 							@JsonProperty("name") @NoHtmlOrScriptChars @NotBlank String name,
+							@JsonProperty("type") @NotNull Device.Type type,
 							@JsonProperty("publicKey") @NotNull @OnlyBase64UrlChars String publicKey, // for historic reasons, the device public key is base64url-encoded, instead of base64
 							@JsonProperty("userKeyJwe") @ValidJWE String userKeyJwe,
 							@JsonProperty("owner") @ValidId String ownerId,
-							@JsonProperty("creationTime") Instant creationTime) {
+							@JsonProperty("creationTime") Instant creationTime,
+							@JsonProperty("lastSeenTime") Instant lastSeenTime) {
 
 		public static DeviceDto fromEntity(Device entity) {
-			return new DeviceDto(entity.id, entity.name, entity.publickey, entity.userKeyJwe, entity.owner.id, entity.creationTime.truncatedTo(ChronoUnit.MILLIS));
+			return new DeviceDto(entity.id, entity.name, entity.type, entity.publickey, entity.userKeyJwe, entity.owner.id, entity.creationTime.truncatedTo(ChronoUnit.MILLIS), entity.lastSeenTime.truncatedTo(ChronoUnit.MILLIS));
 		}
 
 	}

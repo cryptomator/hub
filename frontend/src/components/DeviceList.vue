@@ -57,17 +57,24 @@
                       </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <!-- TODO: actual type -->
-                      <span class="flex items-center">
+                      <span v-if="device.type == 'BROWSER'" class="flex items-center">
+                        <WindowIcon class="mr-1 h-5 w-5" aria-hidden="true" />
+                        Browser
+                      </span>
+                      <span v-else-if="device.type == 'DESKTOP'" class="flex items-center">
                         <ComputerDesktopIcon class="mr-1 h-5 w-5" aria-hidden="true" />
-                        Computer
+                        Desktop
+                      </span>
+                      <span v-else-if="device.type == 'MOBILE'" class="flex items-center">
+                        <DevicePhoneMobileIcon class="mr-1 h-5 w-5" aria-hidden="true" />
+                        Mobile
                       </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {{ d(device.creationTime, 'short') }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {{ d(device.creationTime, 'short') }}
+                      {{ d(device.lastSeenTime, 'short') }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <a v-if="device.id != myDeviceId" role="button" tabindex="0" class="text-red-600 hover:text-red-900" @click="removeDevice(device)">{{ t('common.remove') }}</a>
@@ -91,7 +98,7 @@
 </template>
 
 <script setup lang="ts">
-import { ComputerDesktopIcon } from '@heroicons/vue/24/solid';
+import { ComputerDesktopIcon, DevicePhoneMobileIcon, WindowIcon } from '@heroicons/vue/24/solid';
 import { base64, base64url } from 'rfc4648';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';

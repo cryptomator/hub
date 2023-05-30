@@ -51,9 +51,11 @@ export type VaultDto = {
 export type DeviceDto = {
   id: string;
   name: string;
+  type: 'BROWSER' | 'DESKTOP' | 'MOBILE';
   publicKey: string; // note: base64url-encoded for historic reasons
   userKeyJwe: string;
   creationTime: Date;
+  lastSeenTime: Date;
 };
 
 enum AuthorityType {
