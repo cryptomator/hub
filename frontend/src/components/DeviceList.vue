@@ -48,11 +48,14 @@
                 <template v-for="device in me.devices" :key="device.id">
                   <tr>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {{ device.name }}
+                      <div class="flex gap-3">
+                        <div>{{ device.name }}</div>
+                        <div v-if="device.id == myDeviceId" class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">{{ t('deviceList.thisDevice') }}</div>
+                      </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <!-- TODO: actual type -->
-                      <span class="inline-flex items-center">
+                      <span class="flex items-center">
                         <ComputerDesktopIcon class="mr-1 h-5 w-5" aria-hidden="true" />
                         Computer
                       </span>
@@ -61,7 +64,6 @@
                       {{ d(device.creationTime, 'short') }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <span v-if="device.id == myDeviceId" class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">{{ t('deviceList.thisDevice') }}</span>
                       <a v-if="device.id != myDeviceId" role="button" tabindex="0" class="text-red-600 hover:text-red-900" @click="removeDevice(device)">{{ t('common.remove') }}</a>
                       <a v-if="!device.userKeyJwe" role="button" tabindex="0" class="text-primary hover:text-primary-d1" @click="validateDevice(device)">TODO confirm</a>
                     </td>
