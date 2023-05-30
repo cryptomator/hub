@@ -25,6 +25,10 @@
                   {{ t('setupUserKey.createUserKey.description') }}
                 </p>
               </div>
+              <div class="mt-5 sm:mt-6 text-left rounded-md px-3 pb-1.5 pt-2.5 shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-primary">
+                <label for="deviceName" class="block text-xs font-medium text-gray-900">{{ t('setupUserKey.deviceName') }}</label>
+                <input id="deviceName" v-model="deviceName" type="text" name="deviceName" class="block w-full border-0 p-0 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6" :placeholder="t('setupUserKey.deviceName.placeholder')" required />
+              </div>
               <div class="mt-5 sm:mt-6">
                 <button type="submit" :disabled="processing" class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:primary focus:ring-offset-2 sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
                   {{ t('setupUserKey.createUserKey.submit') }}
@@ -57,7 +61,7 @@
               </div>
               <div class="relative mt-5 sm:mt-6">
                 <div class="overflow-hidden rounded-lg border border-gray-300 shadow-sm focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
-                  <label for="recoveryCode" class="sr-only">{{ t('setupUserKey.saveRecoveryCode.recoveryCode') }}</label>
+                  <label for="recoveryCode" class="sr-only">{{ t('setupUserKey.recoveryCode') }}</label>
                   <textarea id="recoveryCode" v-model="recoveryCode" rows="1" name="recoveryCode" class="block w-full resize-none border-0 py-3 focus:ring-0 sm:text-sm" readonly />
   
                   <!-- Spacer element to match the height of the toolbar -->
@@ -83,7 +87,7 @@
                   <input id="confirmRecoveryCode" v-model="confirmRecoveryCode" name="confirmRecoveryCode" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary" required>
                 </div>
                 <div class="ml-3 text-sm">
-                  <label for="confirmRecoveryCode" class="font-medium text-gray-700">{{ t('setupUserKey.saveRecoveryCode.recoveryCode.confirm') }}</label>
+                  <label for="confirmRecoveryCode" class="font-medium text-gray-700">{{ t('setupUserKey.recoveryCode.confirm') }}</label>
                 </div>
               </div>
               <div class="mt-5 sm:mt-6">
@@ -113,8 +117,15 @@
                   {{ t('setupUserKey.enterRecoveryCode.description') }}
                 </p>
               </div>
-              <div class="mt-5 sm:mt-6">
-                <input id="recoveryCode" v-model="recoveryCode" type="text" name="recoveryCode" class="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md" :placeholder="t('setupUserKey.enterRecoveryCode.recoveryCode')" required />
+              <div class="mt-5 sm:mt-6 text-left isolate -space-y-px rounded-md shadow-sm">
+                <div class="relative rounded-md rounded-b-none px-3 pb-1.5 pt-2.5 ring-1 ring-inset ring-gray-300 focus-within:z-10 focus-within:ring-2 focus-within:ring-primary">
+                  <label for="recoveryCode" class="block text-xs font-medium text-gray-900">{{ t('setupUserKey.recoveryCode') }}</label>
+                  <input id="recoveryCode" v-model="recoveryCode" type="text" name="recoveryCode" class="block w-full border-0 p-0 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6" :placeholder="t('setupUserKey.recoveryCode.placeholder')" required />
+                </div>
+                <div class="relative rounded-md rounded-t-none px-3 pb-1.5 pt-2.5 ring-1 ring-inset ring-gray-300 focus-within:z-10 focus-within:ring-2 focus-within:ring-primary">
+                  <label for="deviceName" class="block text-xs font-medium text-gray-900">{{ t('setupUserKey.deviceName') }}</label>
+                  <input id="deviceName" v-model="deviceName" type="text" name="deviceName" class="block w-full border-0 p-0 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6" :placeholder="t('setupUserKey.deviceName.placeholder')" required />
+                </div>
               </div>
               <div class="mt-5 sm:mt-6">
                 <button type="submit" :disabled="processing" class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:primary focus:ring-offset-2 sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
@@ -161,7 +172,8 @@ const state = ref(State.Preparing);
 const processing = ref(false);
 
 const user = ref<UserDto>();
-const recoveryCode = ref<string>('');
+const recoveryCode = ref('');
+const deviceName = ref('');
 const copiedRecoveryCode = ref(false);
 const debouncedCopyFinish = debounce(() => copiedRecoveryCode.value = false, 2000);
 const confirmRecoveryCode = ref(false);
@@ -247,7 +259,7 @@ async function submitBrowserKeys(browserKeys: BrowserKeys, me: UserDto, userKeys
   const jwe = await userKeys.encryptForDevice(browserKeys.keyPair.publicKey);
   await backend.devices.putDevice({
     id: await browserKeys.id(),
-    name: navigator.userAgent, // TODO something, maybe let the user choose a name?
+    name: deviceName.value,
     publicKey: await browserKeys.encodedPublicKey(),
     userKeyJwe: jwe,
     creationTime: new Date()
