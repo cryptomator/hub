@@ -87,6 +87,7 @@
   "deviceList.deviceName": "Device Name",
   "deviceList.type": "Type",
   "deviceList.added": "Added",
+  "deviceList.lastSeen": "Last Seen",
   "deviceList.thisDevice": "This Device",
 
   "downloadVaultTemplateDialog.title": "Download Vault Template",

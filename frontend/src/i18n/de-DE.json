@@ -86,6 +86,7 @@
   "deviceList.deviceName": "Gerätename",
   "deviceList.type": "Typ",
   "deviceList.added": "Hinzugefügt",
+  "deviceList.lastSeen": "Zuletzt gesehen",
   "deviceList.thisDevice": "Dieses Gerät",
 
   "downloadVaultTemplateDialog.title": "Tresorvorlage herunterladen",

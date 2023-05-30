@@ -39,6 +39,9 @@
                   <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     {{ t('deviceList.added') }}
                   </th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {{ t('deviceList.lastSeen') }}
+                  </th>
                   <th scope="col" class="relative px-6 py-3">
                     <span class="sr-only">{{ t('common.remove') }}</span>
                   </th>
@@ -48,7 +51,7 @@
                 <template v-for="device in me.devices" :key="device.id">
                   <tr>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      <div class="flex gap-3">
+                      <div class="flex items-center gap-3">
                         <div>{{ device.name }}</div>
                         <div v-if="device.id == myDeviceId" class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">{{ t('deviceList.thisDevice') }}</div>
                       </div>
@@ -59,6 +62,9 @@
                         <ComputerDesktopIcon class="mr-1 h-5 w-5" aria-hidden="true" />
                         Computer
                       </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {{ d(device.creationTime, 'short') }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {{ d(device.creationTime, 'short') }}
