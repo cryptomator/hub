@@ -117,7 +117,6 @@ public class VaultResource {
 	@APIResponse(responseCode = "402", description = "all seats in license used")
 	@APIResponse(responseCode = "403", description = "VaultAdminAuthorizationJWT expired or not yet valid")
 	@APIResponse(responseCode = "404", description = "vault or user not found")
-	@APIResponse(responseCode = "409", description = "user is already a direct member of the vault")
 	@ActiveLicense
 	public Response addUser(@PathParam("vaultId") UUID vaultId, @PathParam("userId") @ValidId String userId) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
@@ -128,9 +127,6 @@ public class VaultResource {
 			if (usedSeats >= license.getAvailableSeats()) {
 				throw new PaymentRequiredException("Number of effective vault users greater than or equal to the available license seats");
 			}
-		}
-		if (vault.directMembers.contains(user)) {
-			return Response.status(Response.Status.CONFLICT).build();
 		}
 
 		vault.directMembers.add(user);
@@ -150,7 +146,6 @@ public class VaultResource {
 	@APIResponse(responseCode = "402", description = "used seats + (number of users in group not occupying a seats) exceeds number of total avaible seats in license")
 	@APIResponse(responseCode = "403", description = "VaultAdminAuthorizationJWT expired or not yet valid")
 	@APIResponse(responseCode = "404", description = "vault or group not found")
-	@APIResponse(responseCode = "409", description = "group is already a direct member of the vault")
 	@ActiveLicense
 	public Response addGroup(@PathParam("vaultId") UUID vaultId, @PathParam("groupId") @ValidId String groupId) {
 		//usersInGroup - usersInGroupAndPartOfAtLeastOneVault + usersOfAtLeastOneVault
@@ -160,9 +155,6 @@ public class VaultResource {
 
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		var group = Group.<Group>findByIdOptional(groupId).orElseThrow(NotFoundException::new);
-		if (vault.directMembers.contains(group)) {
-			return Response.status(Response.Status.CONFLICT).build();
-		}
 		vault.directMembers.add(group);
 		vault.persist();
 		return Response.status(Response.Status.CREATED).build();
