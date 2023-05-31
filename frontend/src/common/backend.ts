@@ -415,7 +415,11 @@ class VersionService {
 
 class AuditLogService {
   public async getAllEvents(startDate: Date, endDate: Date, after: number, pageSize: number): Promise<AuditEventDto[]> {
-    return axiosAuth.get<AuditEventDto[]>(`/auditlog?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}&afterId=${after}&pageSize=${pageSize}`).then(response => response.data);
+    return axiosAuth.get<AuditEventDto[]>(`/auditlog?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}&afterId=${after}&pageSize=${pageSize}`)
+      .then(response => response.data.map(dto => {
+        dto.timestamp = new Date(dto.timestamp);
+        return dto;
+      }));
   }
 }
 

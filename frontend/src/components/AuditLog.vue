@@ -77,7 +77,7 @@
               <tbody class="divide-y divide-gray-200 bg-white">
                 <tr v-for="auditEvent in auditEvents" :key="auditEvent.id">
                   <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">
-                    <code>{{ d(auditEvent.timestamp, 'timestamp') }}</code>
+                    <code>{{ auditEvent.timestamp.toLocaleString('sv') }}</code>
                   </td>
                   <AuditLogCreateVaultEventDetails v-if="auditEvent.type == 'CREATE_VAULT'" :event="auditEvent" />
                   <AuditLogUnlockVaultEventDetails v-else-if="auditEvent.type == 'UNLOCK_VAULT'" :event="auditEvent" />
@@ -125,7 +125,7 @@ import AuditLogUnlockVaultEventDetails from './AuditLogUnlockVaultEventDetails.v
 import AuditLogUpdateVaultMembershipDetails from './AuditLogUpdateVaultMembershipDetails.vue';
 import FetchError from './FetchError.vue';
 
-const { t, d } = useI18n({ useScope: 'global' });
+const { t } = useI18n({ useScope: 'global' });
 
 const auditEvents = ref<AuditEventDto[]>();
 const onFetchError = ref<Error | null>();
