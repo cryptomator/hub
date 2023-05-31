@@ -708,4 +708,33 @@ public class VaultResourceTest {
 					.body("id", hasItems(equalToIgnoringCase("7E57C0DE-0000-4000-8000-000100001111"), equalToIgnoringCase("7E57C0DE-0000-4000-8000-000100002222"), equalToIgnoringCase("7E57C0DE-0000-4000-8000-AAAAAAAAAAAA")));
 		}
 	}
+
+	@Nested
+	@DisplayName("GET /vaults/{vaultid}/keys/{deviceId}")
+	public class Unlock {
+
+		@Test
+		@DisplayName("GET /vaults/{vaultid}/keys/{deviceId} returns 404 for not-existing vaults")
+		@TestSecurity(user = "User Name 1", roles = {"user","admin"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user1")
+		})
+		public void testUnlockNotExistingVault() {
+			when().get("/vaults/{vaultId}/keys/{deviceId}", "7E57C0DE-0000-4000-8000-FFFFFFFFFFFF", "someDevice")
+					.then().statusCode(404);
+		}
+
+		@Test
+		@DisplayName("GET /vaults/{vaultid}/keys/{deviceId} returns 403 for archived vaults")
+		@TestSecurity(user = "User Name 1", roles = {"user","admin"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user1")
+		})
+		public void testUnlockArchived() {
+			when().get("/vaults/{vaultId}/keys/{deviceId}", "7E57C0DE-0000-4000-8000-AAAAAAAAAAAA", "someDevice")
+					.then().statusCode(403);
+		}
+
+	}
+
 }

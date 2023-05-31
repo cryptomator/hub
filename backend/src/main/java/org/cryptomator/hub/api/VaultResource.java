@@ -230,10 +230,15 @@ public class VaultResource {
 	@Operation(summary = "get the device-specific masterkey")
 	@APIResponse(responseCode = "200")
 	@APIResponse(responseCode = "402", description = "number of effective vault users exceeds available license seats")
-	@APIResponse(responseCode = "403", description = "device not authorized to access this vault")
-	@APIResponse(responseCode = "404", description = "unknown device")
+	@APIResponse(responseCode = "403", description = "vault is archived or device not authorized to access this vault")
+	@APIResponse(responseCode = "404", description = "vault or device not found")
 	@ActiveLicense
 	public String unlock(@PathParam("vaultId") UUID vaultId, @PathParam("deviceId") @ValidId String deviceId) {
+		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
+		if(vault.archived) {
+			throw new ForbiddenException("Vault is archived.");
+		}
+
 		var usedSeats = EffectiveVaultAccess.countEffectiveVaultUsers();
 		if (usedSeats > license.getAvailableSeats()) {
 			throw new PaymentRequiredException("Number of effective vault users exceeds available license seats");
