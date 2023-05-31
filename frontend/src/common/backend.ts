@@ -5,6 +5,7 @@ import authPromise from './auth';
 import config, { backendBaseURL } from './config';
 import { VaultKeys } from './crypto';
 import { JWTHeader } from './jwt';
+import { Deferred, debounce } from './util';
 
 const axiosBaseCfg: AxiosRequestConfig = {
   baseURL: backendBaseURL,
@@ -166,7 +167,90 @@ export type VersionDto = {
 export type AuditEventDto = {
   id: number;
   timestamp: Date;
-  type: string;
+  type: 'CREATE_VAULT' | 'UNLOCK_VAULT' | 'UPDATE_VAULT_MEMBERSHIP';
+}
+
+export type CreateVaultEventDto = AuditEventDto & {
+  userId: string;
+  vaultId: string;
+}
+
+export type UnlockVaultEventDto = AuditEventDto & {
+  userId: string;
+  vaultId: string;
+  deviceId: string;
+  result: 'SUCCESS' | 'UNAUTHORIZED';
+}
+
+export type UpdateVaultMembershipEventDto = AuditEventDto & {
+  userId: string;
+  vaultId: string;
+  authorityId: string;
+  operation: 'ADD' | 'REMOVE';
+}
+
+/* AuditLogEntityCache */
+
+export class AuditLogEntityCache {
+  private static instance: AuditLogEntityCache;
+
+  private vaults: Map<string, Deferred<VaultDto>>;
+  private authorities: Map<string, Deferred<AuthorityDto>>;
+  private devices: Map<string, Deferred<DeviceDto>>;  
+
+  private constructor() {
+    this.vaults = new Map();
+    this.authorities = new Map();
+    this.devices = new Map();
+  }
+
+  public static getInstance(): AuditLogEntityCache {
+    if (!AuditLogEntityCache.instance) {
+      AuditLogEntityCache.instance = new AuditLogEntityCache();
+    }
+    return AuditLogEntityCache.instance;
+  }
+
+  public async getVault(vaultId: string): Promise<VaultDto> {
+    return this.getEntity<VaultDto>(vaultId, this.vaults, this.debouncedResolvePendingVaults);
+  }
+
+  public async getAuthority(authorityId: string): Promise<AuthorityDto> {
+    return this.getEntity<AuthorityDto>(authorityId, this.authorities, this.debouncedResolvePendingAuthorities);
+  }
+
+  public async getDevice(deviceId: string): Promise<DeviceDto> {
+    return this.getEntity<DeviceDto>(deviceId, this.devices, this.debouncedResolvePendingDevices);
+  }
+
+  private async getEntity<T>(entityId: string, entities: Map<string, Deferred<T>>, debouncedResolvePendingEntities: Function): Promise<T> {
+    const cachedEntity = entities.get(entityId);
+    if (!cachedEntity) {  
+      const deferredEntity = new Deferred<T>();
+      entities.set(entityId, deferredEntity);
+      debouncedResolvePendingEntities();
+      return deferredEntity.promise;
+    } else {
+      return cachedEntity.promise;
+    }
+  }
+
+  private debouncedResolvePendingVaults = debounce(async () => await this.resolvePendingEntities<VaultDto>(this.vaults, services.vaults.listSome), 100);
+  private debouncedResolvePendingAuthorities = debounce(async () => await this.resolvePendingEntities<AuthorityDto>(this.authorities, services.authorities.listSome), 100);
+  private debouncedResolvePendingDevices = debounce(async () => await this.resolvePendingEntities<DeviceDto>(this.devices, services.devices.listSome), 100);
+
+  private async resolvePendingEntities<T extends { id: string }>(entities: Map<string, Deferred<T>>, listSome: (ids: string[]) => Promise<T[]>): Promise<void> {
+    const pendingEntities = Array.from(entities.entries()).filter(([_, v]) => v.status === 'pending');
+    const entitiesResult = await listSome(pendingEntities.map(([k, _]) => k));
+    for (const [entityId, deferredEntity] of pendingEntities) {
+      const entity = entitiesResult.find(v => v.id === entityId);
+      if (entity) {
+        deferredEntity.resolve(entity);
+      } else {
+        deferredEntity.reject(new Error(`Entity ${entityId} not found`));
+      }
+    }
+  }
 }
 
 /* Services */

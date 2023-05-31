@@ -58,6 +58,9 @@
   "auditLog.type": "Ereignis",
   "auditLog.details": "Details",
   "auditLog.pagination.showing": "Zeige Einträge {0} bis {1}",
+  "auditLog.events.createVault": "Tresor erstellen",
+  "auditLog.events.unlockVault": "Tresor entsperren",
+  "auditLog.events.updateVaultMembership": "Tresor-Mitgliedschaft aktualisieren",
 
   "authenticateVaultAdminDialog.title": "Tresor verwalten",
   "authenticateVaultAdminDialog.description": "Gib das Tresor-Admin-Passwort des Tresors ein, um ihn zu verwalten.",

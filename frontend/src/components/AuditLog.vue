@@ -79,17 +79,9 @@
                   <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">
                     <code>{{ d(auditEvent.timestamp, 'timestamp') }}</code>
                   </td>
-                  <td class="whitespace-nowrap px-3 py-4 text-sm font-medium text-gray-900">
-                    {{ auditEvent.type }}
-                  </td>
-                  <td class="whitespace-nowrap py-4 pl-3 pr-4 sm:pr-6">
-                    <dl class="flex flex-col gap-2">
-                      <div v-for="[detailKey, detailValue] in Object.entries(auditEventDetails[auditEvent.id])" :key="detailKey" class="flex items-end gap-2">
-                        <dt class="text-xs text-gray-500"><code>{{ detailKey }}</code></dt>
-                        <dd class="text-sm text-gray-900">{{ resolvedValue(detailKey, detailValue).value }}</dd>
-                      </div>
-                    </dl>
-                  </td>
+                  <AuditLogCreateVaultEventDetails v-if="auditEvent.type == 'CREATE_VAULT'" :event="auditEvent" />
+                  <AuditLogUnlockVaultEventDetails v-else-if="auditEvent.type == 'UNLOCK_VAULT'" :event="auditEvent" />
+                  <AuditLogUpdateVaultMembershipDetails v-else-if="auditEvent.type == 'UPDATE_VAULT_MEMBERSHIP'" :event="auditEvent" />
                 </tr>
               </tbody>
               <tfoot class="bg-gray-50">
@@ -125,21 +117,17 @@
 <script setup lang="ts">
 import { Popover, PopoverButton, PopoverGroup, PopoverPanel } from '@headlessui/vue';
 import { ChevronDownIcon } from '@heroicons/vue/20/solid';
-import { Ref, computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { AuditEventDto } from '../common/backend';
+import AuditLogCreateVaultEventDetails from './AuditLogCreateVaultEventDetails.vue';
+import AuditLogUnlockVaultEventDetails from './AuditLogUnlockVaultEventDetails.vue';
+import AuditLogUpdateVaultMembershipDetails from './AuditLogUpdateVaultMembershipDetails.vue';
 import FetchError from './FetchError.vue';
 
 const { t, d } = useI18n({ useScope: 'global' });
 
 const auditEvents = ref<AuditEventDto[]>();
-const auditEventDetails = computed(() => {
-  return (auditEvents.value ?? []).reduce((details, auditEvent) => {
-    const keysToExclude: (keyof AuditEventDto)[] = ['id', 'timestamp', 'type'];
-    details[auditEvent.id] = Object.fromEntries(Object.entries(auditEvent).filter(([key, _]) => !keysToExclude.includes(key as keyof AuditEventDto)));
-    return details;
-  }, {} as { [key: number]: { [key: string]: any } });
-});
 const onFetchError = ref<Error | null>();
 
 const startDate = ref(beginOfDate(new Date()));
@@ -169,29 +157,6 @@ const paginationEnd = computed(() => auditEvents.value ? currentPage.value * pag
 const hasNextPage = ref(false);
 let lastIdOfPreviousPage = [0];
 
-type ResolvedItem = {
-  id: string;
-  name: string;
-};
-
-const resolvedVaults = ref<ResolvedItem[]>([]);
-const resolvedAuthorities = ref<ResolvedItem[]>([]);
-const resolvedDevices = ref<ResolvedItem[]>([]);
-const resolvedValue = (key: string, value: string) => computed(() => {
-  if (key == 'vaultId') {
-    const name = resolvedVaults.value.find(vault => vault.id == value)?.name;
-    return name ? `${name} (${value})` : value;
-  } else if (key == 'userId' || key == 'authorityId') {
-    const name = resolvedAuthorities.value.find(authority => authority.id == value)?.name;
-    return name ? `${name} (${value})` : value;
-  } else if (key == 'deviceId') {
-    const name = resolvedDevices.value.find(device => device.id == value)?.name;
-    return name ? `${name} (${value})` : value;
-  } else {
-    return value;
-  }
-});
-
 onMounted(fetchData);
 
 async function fetchData() {
@@ -215,30 +180,9 @@ async function fetchData() {
       lastIdOfPreviousPage[currentPage.value + 1] = events[events.length - 1].id;
     }
     auditEvents.value = events;
-    // Resolve missing IDs
-    await resolveMissingIds('vaultId', backend.vaults.listSome, resolvedVaults, events);
-    await resolveMissingIds('authorityId', backend.authorities.listSome, resolvedAuthorities, events);
-    await resolveMissingIds('userId', backend.authorities.listSome, resolvedAuthorities, events);
-    await resolveMissingIds('deviceId', backend.devices.listSome, resolvedDevices, events);
   } catch (error) {
     console.error('Retrieving audit log events failed.', error);
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
-  }
-}
-
-async function resolveMissingIds<T extends ResolvedItem>(key: string, listSome: (ids: string[]) => Promise<T[]>, resolvedItems: Ref<ResolvedItem[]>, events: any[]) {
-  // Collect all missing IDs
-  const resolvedIds = new Set<string>(resolvedItems.value.map(item => item.id));
-  const ids = new Set<string>();
-  events.forEach(event => {
-    if (key in event && typeof event[key] === 'string' && !resolvedIds.has(event[key])) {
-      ids.add(event[key]);
-    }
-  });
-  // Retrieve missing items and add them to resolvedItems
-  if (ids.size > 0) {
-    const missingItems = await listSome(Array.from(ids));
-    resolvedItems.value.push(...missingItems.map(item => ({ id: item.id, name: item.name })));
   }
 }
 
