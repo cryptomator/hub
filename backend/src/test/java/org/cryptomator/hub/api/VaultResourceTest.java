@@ -106,7 +106,7 @@ public class VaultResourceTest {
 
 		@Test
 		@DisplayName("GET /vaults returns 200")
-		public void testGetSharedOrOwned() {
+		public void testGetSharedOrOwnedNotArchived() {
 			when().get("/vaults")
 					.then().statusCode(200)
 					.body("id", hasItems(equalToIgnoringCase("7E57C0DE-0000-4000-8000-000100001111"), equalToIgnoringCase("7E57C0DE-0000-4000-8000-000100002222")));
@@ -681,4 +681,31 @@ public class VaultResourceTest {
 
 	}
 
+	@Nested
+	@DisplayName("/vaults/all")
+	public class GetAllVaults {
+
+		@Test
+		@DisplayName("GET /vaults/all returns 403 as user")
+		@TestSecurity(user = "User Name 1", roles = {"user"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user1")
+		})
+		public void testGetAllVaultsAsUser() {
+			when().get("/vaults/all")
+					.then().statusCode(403);
+		}
+
+		@Test
+		@DisplayName("GET /vaults/all returns 200 as user")
+		@TestSecurity(user = "User Name 1", roles = {"admin"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user1")
+		})
+		public void testGetAllVaultsAsAdmin() {
+			when().get("/vaults/all")
+					.then().statusCode(200)
+					.body("id", hasItems(equalToIgnoringCase("7E57C0DE-0000-4000-8000-000100001111"), equalToIgnoringCase("7E57C0DE-0000-4000-8000-000100002222"), equalToIgnoringCase("7E57C0DE-0000-4000-8000-AAAAAAAAAAAA")));
+		}
+	}
 }
