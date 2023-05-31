@@ -4,6 +4,8 @@ import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.panache.common.Parameters;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -45,6 +47,7 @@ public class Device extends PanacheEntityBase {
 	public String name;
 
 	@Column(name = "type", nullable = false)
+	@Enumerated(EnumType.STRING)
 	public Type type;
 
 	@Column(name = "publickey", nullable = false)
