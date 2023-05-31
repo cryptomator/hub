@@ -83,6 +83,9 @@
                   </div>
                 </div>
               </div>
+              <div class="mt-2">
+                <p class="text-sm text-gray-500">{{ t('setupUserKey.saveRecoveryCode.recoveryCodeHint') }}</p>
+              </div>
               <div class="mt-5 sm:mt-6">
                 <button type="submit" class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:primary focus:ring-offset-2 sm:text-sm">
                   {{ t('setupUserKey.saveRecoveryCode.submit') }}
@@ -98,8 +101,8 @@
       <form @submit.prevent="recoverUserKey()">
         <div class="flex justify-center">
           <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6 text-center sm:w-full sm:max-w-lg">
-            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-emerald-100">
-              <KeyIcon class="h-6 w-6 text-emerald-600" aria-hidden="true" />
+            <div class="flex justify-center">
+              <img src="/logo.svg" class="h-12" alt="Logo" aria-hidden="true" />
             </div>
             <div class="mt-3 sm:mt-5">
               <h3 class="text-lg leading-6 font-medium text-gray-900">
