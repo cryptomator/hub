@@ -10,6 +10,7 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.AuditEvent;
 import org.cryptomator.hub.entities.CreateVaultEvent;
 import org.cryptomator.hub.entities.UnlockVaultEvent;
@@ -32,11 +33,34 @@ public class AuditLogResource {
 	@Operation(summary = "list all auditlog entries within a period", description = "list all auditlog entries from a period specified by a start and end date")
 	@Parameter(name = "startDate", description = "the start date of the period as ISO 8601 datetime string", in = ParameterIn.QUERY)
 	@Parameter(name = "endDate", description = "the end date of the period as ISO 8601 datetime string", in = ParameterIn.QUERY)
+	@Parameter(name = "beforeId", description = "the end audit entry id, not included in results (used for pagination)", in = ParameterIn.QUERY)
 	@Parameter(name = "afterId", description = "the start audit entry id, not included in results (used for pagination)", in = ParameterIn.QUERY)
 	@Parameter(name = "pageSize", description = "the maximum number of entries to return", in = ParameterIn.QUERY)
-	public EventList getAllEvents(@QueryParam("startDate") Instant startDate, @QueryParam("endDate") Instant endDate, @QueryParam("afterId") long afterId, @QueryParam("pageSize") @DefaultValue("20") int pageSize) {
-		var events = AuditEvent.findAllInPeriod(startDate, endDate, afterId, pageSize).map(AuditEventDto::fromEntity).toList();
-		return new EventList(events);
+	public Response getAllEvents(@QueryParam("startDate") Instant startDate, @QueryParam("endDate") Instant endDate, @QueryParam("beforeId") Long beforeId, @QueryParam("afterId") Long afterId, @QueryParam("pageSize") @DefaultValue("20") int pageSize) {
+		if (startDate == null || endDate == null) {
+			return Response.status(Response.Status.BAD_REQUEST).entity("startDate and endDate must be specified").build();
+		} else if (startDate.isAfter(endDate)) {
+			return Response.status(Response.Status.BAD_REQUEST).entity("startDate must be before endDate").build();
+		} else if (beforeId != null && afterId != null) {
+			return Response.status(Response.Status.BAD_REQUEST).entity("beforeId and afterId cannot be used together").build();
+		} else if (beforeId == null && afterId == null) {
+			return Response.status(Response.Status.BAD_REQUEST).entity("beforeId or afterId must be specified").build();
+		} else if (beforeId != null && beforeId < 0) {
+			return Response.status(Response.Status.BAD_REQUEST).entity("beforeId must be greater than or equal to 0").build();
+		} else if (afterId != null && afterId < 0) {
+			return Response.status(Response.Status.BAD_REQUEST).entity("afterId must be greater than or equal to 0").build();
+		} else if (pageSize < 1 || pageSize > 100) {
+			return Response.status(Response.Status.BAD_REQUEST).entity("pageSize must be between 1 and 100").build();
+		}
+		if (beforeId != null) {
+			var events = AuditEvent.findAllInPeriodBeforeId(startDate, endDate, beforeId, pageSize).map(AuditEventDto::fromEntity).toList();
+			return Response.ok(new EventList(events)).build();
+		} else if (afterId != null) {
+			var events = AuditEvent.findAllInPeriodAfterId(startDate, endDate, afterId, pageSize).map(AuditEventDto::fromEntity).toList();
+			return Response.ok(new EventList(events)).build();
+		} else {
+			throw new IllegalStateException("beforeId and afterId cannot be both null");
+		}
 	}
 
 	// Helper class to prevent type erasure for @JsonTypeInfo, see https://github.com/FasterXML/jackson-databind/issues/336

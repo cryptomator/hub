@@ -18,6 +18,31 @@
         <button role="button" class="w-full bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="refreshData()">
           {{ t('common.refresh') }}
         </button>
+
+        <Listbox v-model="sortDirection" as="div">
+          <div class="relative w-36">
+            <ListboxButton class="relative w-full cursor-default rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary text-sm">
+              <span class="block truncate">{{ t(`auditLog.sort.${sortDirection}`) }}</span>
+              <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                <ChevronUpDownIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+              </span>
+            </ListboxButton>
+            <transition leave-active-class="transition ease-in duration-100" leave-from-class="opacity-100" leave-to-class="opacity-0">
+              <ListboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none text-sm">
+                <ListboxOption v-for="direction in sortDirections" :key="direction" v-slot="{ active, selected }" :value="direction" as="template" @click="sortDirection = direction">
+                  <li :class="[active ? 'text-white bg-primary' : 'text-gray-900', 'relative cursor-default select-none py-2 pl-3 pr-9']">
+                    <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ t(`auditLog.sort.${direction}`) }}</span>
+
+                    <span v-if="selected" :class="[active ? 'text-white' : 'text-primary', 'absolute inset-y-0 right-0 flex items-center pr-4']">
+                      <CheckIcon class="h-5 w-5" aria-hidden="true" />
+                    </span>
+                  </li>
+                </ListboxOption>
+              </ListboxOptions>
+            </transition>
+          </div>
+        </Listbox>
+
         <PopoverGroup class="flex items-baseline space-x-8">
           <Popover as="div" class="relative inline-block text-left">
             <PopoverButton class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
@@ -28,13 +53,13 @@
             <transition enter-active-class="transition ease-out duration-100" enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 scale-100" leave-to-class="transform opacity-0 scale-95">
               <PopoverPanel class="absolute right-0 z-10 mt-2 origin-top-right rounded-md bg-white p-4 shadow-2xl ring-1 ring-black ring-opacity-5 focus:outline-none w-80">
                 <form class="space-y-4">
-                  <div class="sm:grid sm:grid-cols-2 sm:items-baseline sm:gap-2">
+                  <div class="sm:grid sm:grid-cols-2 sm:items-center sm:gap-2">
                     <label for="filter-start-date" class="block text-sm font-medium text-gray-700">
                       {{ t('auditLog.filter.startDate') }}
                     </label>
                     <input id="filter-start-date" v-model="startDateFilter" type="text" class="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': !startDateFilterIsValid }" placeholder="yyyy-MM-dd" />
                   </div>
-                  <div class="sm:grid sm:grid-cols-2 sm:items-baseline sm:gap-2">
+                  <div class="sm:grid sm:grid-cols-2 sm:items-center sm:gap-2">
                     <label for="filter-end-date" class="block text-sm font-medium text-gray-700">
                       {{ t('auditLog.filter.endDate') }}
                     </label>
@@ -115,9 +140,10 @@
 </template>
 
 <script setup lang="ts">
-import { Popover, PopoverButton, PopoverGroup, PopoverPanel } from '@headlessui/vue';
+import { Listbox, ListboxButton, ListboxOption, ListboxOptions, Popover, PopoverButton, PopoverGroup, PopoverPanel } from '@headlessui/vue';
 import { ChevronDownIcon } from '@heroicons/vue/20/solid';
-import { computed, onMounted, ref } from 'vue';
+import { CheckIcon, ChevronUpDownIcon } from '@heroicons/vue/24/solid';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { AuditEventDto } from '../common/backend';
 import AuditLogCreateVaultEventDetails from './AuditLogCreateVaultEventDetails.vue';
@@ -150,12 +176,16 @@ const endDateFilterIsValid = computed(() => {
 });
 const filterIsValid = computed(() => startDateFilterIsValid.value && endDateFilterIsValid.value);
 
+const sortDirection = ref<'asc' | 'desc'>('desc');
+const sortDirections: ('asc' | 'desc')[] = ['desc', 'asc'];
+watch(sortDirection, () => refreshData());
+
 const currentPage = ref(0);
 const pageSize = ref(20);
 const paginationBegin = computed(() => auditEvents.value ? currentPage.value * pageSize.value + Math.min(1, auditEvents.value.length) : 0);
 const paginationEnd = computed(() => auditEvents.value ? currentPage.value * pageSize.value + auditEvents.value.length : 0);
 const hasNextPage = ref(false);
-let lastIdOfPreviousPage = [0];
+let lastIdOfPreviousPage = [Number.MAX_SAFE_INTEGER];
 
 onMounted(fetchData);
 
@@ -163,10 +193,23 @@ async function fetchData() {
   onFetchError.value = null;
   try {
     // Fetch one more event than the page size to determine if there is a next page
-    const events = await backend.auditLogs.getAllEvents(startDate.value, endDate.value, lastIdOfPreviousPage[currentPage.value], pageSize.value + 1);
-    // If the lastIdOfPreviousPage for the first page has not been set yet, set it to an id "before" the first event
+    let events: AuditEventDto[];
+    if (sortDirection.value == 'asc') {
+      events = await backend.auditLogs.getAllEventsAfterId(startDate.value, endDate.value, lastIdOfPreviousPage[currentPage.value], pageSize.value + 1);
+    } else if (sortDirection.value == 'desc') {
+      events = await backend.auditLogs.getAllEventsBeforeId(startDate.value, endDate.value, lastIdOfPreviousPage[currentPage.value], pageSize.value + 1);
+    } else {
+      throw new Error('Invalid sort direction.');
+    }
+    // If the lastIdOfPreviousPage for the first page has not been set yet, set it to an id "before"/"after" the first event
     if (currentPage.value == 0 && lastIdOfPreviousPage[0] == 0 && events.length > 0) {
-      lastIdOfPreviousPage[0] = events[0].id - 1;
+      if (sortDirection.value == 'asc') {
+        lastIdOfPreviousPage[0] = events[0].id - 1;
+      } else if (sortDirection.value == 'desc') {
+        lastIdOfPreviousPage[0] = events[0].id + 1;
+      } else {
+        throw new Error('Invalid sort direction.');
+      }
     }
     // Determine if there is a next page and discard the last event if there is one
     if (events.length > pageSize.value) {
@@ -187,7 +230,13 @@ async function fetchData() {
 }
 
 async function refreshData() {
-  lastIdOfPreviousPage = [0];
+  if (sortDirection.value == 'asc') {
+    lastIdOfPreviousPage = [0];
+  } else if (sortDirection.value == 'desc') {
+    lastIdOfPreviousPage = [Number.MAX_SAFE_INTEGER];
+  } else {
+    throw new Error('Invalid sort direction.');
+  }
   currentPage.value = 0;
   await fetchData();
 }

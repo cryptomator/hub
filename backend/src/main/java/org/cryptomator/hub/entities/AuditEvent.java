@@ -22,13 +22,23 @@ import java.util.stream.Stream;
 @Table(name = "audit_event")
 @Inheritance(strategy = InheritanceType.JOINED)
 @DiscriminatorColumn(name = "type")
-@NamedQuery(name = "AuditEvent.listAllInPeriod",
+@NamedQuery(name = "AuditEvent.listAllInPeriodBeforeId",
+		query = """
+				SELECT ae
+				FROM AuditEvent ae
+				WHERE ae.timestamp >= :startDate
+				AND ae.timestamp < :endDate
+				AND ae.id < :beforeId
+				ORDER BY ae.id DESC
+				""")
+@NamedQuery(name = "AuditEvent.listAllInPeriodAfterId",
 		query = """
 				SELECT ae
 				FROM AuditEvent ae
 				WHERE ae.timestamp >= :startDate
 				AND ae.timestamp < :endDate
 				AND ae.id > :afterId
+				ORDER BY ae.id ASC
 				""")
 @SequenceGenerator(name = "audit_event_id_seq", sequenceName = "audit_event_id_seq")
 public class AuditEvent extends PanacheEntityBase {
@@ -66,8 +76,14 @@ public class AuditEvent extends PanacheEntityBase {
 		return Objects.hash(id, timestamp);
 	}
 
-	public static Stream<AuditEvent> findAllInPeriod(Instant startDate, Instant endDate, long afterId, int pageSize) {
-		var query = find("#AuditEvent.listAllInPeriod", Parameters.with("startDate", startDate).and("endDate", endDate).and("afterId", afterId));
+	public static Stream<AuditEvent> findAllInPeriodBeforeId(Instant startDate, Instant endDate, long beforeId, int pageSize) {
+		var query = find("#AuditEvent.listAllInPeriodBeforeId", Parameters.with("startDate", startDate).and("endDate", endDate).and("beforeId", beforeId));
+		query.page(0, pageSize);
+		return query.stream();
+	}
+
+	public static Stream<AuditEvent> findAllInPeriodAfterId(Instant startDate, Instant endDate, long afterId, int pageSize) {
+		var query = find("#AuditEvent.listAllInPeriodAfterId", Parameters.with("startDate", startDate).and("endDate", endDate).and("afterId", afterId));
 		query.page(0, pageSize);
 		return query.stream();
 	}
