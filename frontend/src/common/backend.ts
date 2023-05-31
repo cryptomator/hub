@@ -25,7 +25,7 @@ axiosAuth.interceptors.request.use(async request => {
     if (request.headers) {
       request.headers.setAuthorization(`Bearer ${token}`);
     } else {
-      request.headers = new AxiosHeaders({ 'Authorization': `Bearer ${token}` });
+      request.headers = AxiosHeaders.from({ 'Authorization': `Bearer ${token}` });
     }
     return request;
   } catch (err: unknown) {
