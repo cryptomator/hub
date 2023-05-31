@@ -134,7 +134,7 @@ router.beforeEach((to, from, next) => {
   if ('sync_me' in to.query) {
     authPromise.then(async auth => {
       if (auth.isAuthenticated()) {
-        await backend.users.syncMe();
+        await backend.users.putMe();
       }
     }).finally(() => {
       delete to.query.sync_me; // remove sync_me query parameter to avoid endless recursion

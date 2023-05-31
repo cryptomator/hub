@@ -266,7 +266,7 @@ async function submitBrowserKeys(browserKeys: BrowserKeys, me: UserDto, userKeys
     creationTime: new Date(),
     lastSeenTime: new Date()
   });
-  await backend.users.putMyKeyPair(me);
+  await backend.users.putMe(me);
 }
 
 async function copyRecoveryCode() {

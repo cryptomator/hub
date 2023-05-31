@@ -1,12 +1,12 @@
 package org.cryptomator.hub.api;
 
+import jakarta.annotation.Nullable;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
-import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -38,10 +38,11 @@ public class UsersResource {
 	@PUT
 	@Path("/me")
 	@RolesAllowed("user")
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Transactional
-	@Operation(summary = "sync the logged-in user from the remote user provider to hub")
+	@Operation(summary = "update the logged-in user")
 	@APIResponse(responseCode = "201", description = "user created or updated")
-	public Response syncMe() {
+	public Response putMe(@Nullable @Valid UserDto dto) {
 		var userId = jwt.getSubject();
 		User user = User.findById(userId);
 		if (user == null) {
@@ -51,25 +52,13 @@ public class UsersResource {
 		user.name = jwt.getName();
 		user.pictureUrl = jwt.getClaim("picture");
 		user.email = jwt.getClaim("email");
-		user.persist();
-		return Response.created(URI.create(".")).build();
-	}
-
-	@PUT
-	@Path("/me/key-pair")
-	@RolesAllowed("user")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Transactional
-	@Operation(summary = "update the logged-in user, storing provided key pair and key derivation parameters")
-	@APIResponse(responseCode = "201", description = "user updated")
-	public Response putKey(@Valid UserDto dto) {
-		var userId = jwt.getSubject();
-		var user = User.<User>findByIdOptional(userId).orElseThrow(NotFoundException::new);
-		user.publicKey = dto.publicKey;
-		user.recoveryJwe = dto.recoveryJwe;
-		user.recoveryPbkdf2 = dto.recoveryPbkdf2;
-		user.recoverySalt = dto.recoverySalt;
-		user.recoveryIterations = dto.recoveryIterations;
+		if (dto != null) {
+			user.publicKey = dto.publicKey;
+			user.recoveryJwe = dto.recoveryJwe;
+			user.recoveryPbkdf2 = dto.recoveryPbkdf2;
+			user.recoverySalt = dto.recoverySalt;
+			user.recoveryIterations = dto.recoveryIterations;
+		}
 		user.persist();
 		return Response.created(URI.create(".")).build();
 	}
@@ -81,6 +70,8 @@ public class UsersResource {
 	@NoCache
 	@Transactional
 	@Operation(summary = "get the logged-in user")
+	@APIResponse(responseCode = "200", description = "returns the current user")
+	@APIResponse(responseCode = "404", description = "no user matching the subject of the JWT passed as Bearer Token")
 	public UserDto getMe(@QueryParam("withDevices") boolean withDevices, @QueryParam("withAccessibleVaults") boolean withAccessibleVaults) {
 		User user = User.findById(jwt.getSubject());
 		Function<AccessToken, VaultResource.VaultDto> mapAccessibleVaults = a -> new VaultResource.VaultDto(a.vault.id, a.vault.name, a.vault.description, a.vault.creationTime.truncatedTo(ChronoUnit.MILLIS), null, 0, null, null, null);

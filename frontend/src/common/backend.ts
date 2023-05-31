@@ -264,12 +264,8 @@ class DeviceService {
 }
 
 class UserService {
-  public async syncMe(): Promise<void> {
-    return axiosAuth.put('/users/me');
-  }
-
-  public async putMyKeyPair(dto: UserDto): Promise<void> {
-    return axiosAuth.put('/users/me/key-pair', dto);
+  public async putMe(dto?: UserDto): Promise<void> {
+    return axiosAuth.put('/users/me', dto);
   }
 
   public async me(withDevices: boolean = false, withAccessibleVaults: boolean = false): Promise<UserDto> {
