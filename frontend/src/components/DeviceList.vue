@@ -8,6 +8,7 @@
     </div>
   </div>
 
+  <!-- FIXME: invalid case: list must at least contain current browser: -->
   <div v-else-if="me.devices.length == 0" class="text-center">
     <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
       <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
@@ -53,7 +54,7 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       <div class="flex items-center gap-3">
                         <div>{{ device.name }}</div>
-                        <div v-if="device.id == myDeviceId" class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">{{ t('deviceList.thisDevice') }}</div>
+                        <div v-if="device.id == myDevice?.id" class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">{{ t('deviceList.thisDevice') }}</div>
                       </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -77,7 +78,7 @@
                       {{ d(device.lastSeenTime, 'short') }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <a v-if="device.id != myDeviceId" role="button" tabindex="0" class="text-red-600 hover:text-red-900" @click="removeDevice(device)">{{ t('common.remove') }}</a>
+                      <a v-if="device.id != myDevice?.id" role="button" tabindex="0" class="text-red-600 hover:text-red-900" @click="removeDevice(device)">{{ t('common.remove') }}</a>
                       <a v-if="!device.userKeyJwe" role="button" tabindex="0" class="text-primary hover:text-primary-d1" @click="validateDevice(device)">TODO confirm</a>
                     </td>
                   </tr>
@@ -95,6 +96,19 @@
       </div>
     </div>
   </div>
+
+  <div v-if="myDevice" class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6">
+    <div class="md:grid md:grid-cols-3 md:gap-6">
+      <div class="md:col-span-1">
+        <h3 class="text-lg font-medium leading-6 text-gray-900">Personal Hub Secret</h3>
+        <p class="mt-1 text-sm text-gray-500">
+          <span v-if="recoveryCode">{{ recoveryCode }}</span>
+          <span v-else>****************</span>
+          <button @click="revealRecoveryCode()">show</button>
+        </p>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -104,12 +118,14 @@ import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { DeviceDto, NotFoundError, UserDto } from '../common/backend';
 import { BrowserKeys, UserKeys } from '../common/crypto';
+import { JWE } from '../common/jwe';
 import FetchError from './FetchError.vue';
 
 const { t, d } = useI18n({ useScope: 'global' });
 
 const me = ref<UserDto>();
-const myDeviceId = ref<string>();
+const myDevice = ref<DeviceDto>();
+const recoveryCode = ref<string>();
 const onFetchError = ref<Error | null>();
 const onRemoveDeviceError = ref< {[id: string]: Error} >({});
 
@@ -133,7 +149,21 @@ async function determineMyDeviceId() {
     throw new Error('User not initialized.');
   }
   const browserKeys = await BrowserKeys.load(me.value.id);
-  myDeviceId.value = await browserKeys.id();
+  const browserId = await browserKeys.id();
+  myDevice.value = me.value.devices.find(d => d.id == browserId);
+}
+
+async function revealRecoveryCode() {
+  if (me.value?.publicKey == null || me.value?.recoveryJwe == null) {
+    throw new Error('User not initialized.');
+  }
+  if (myDevice.value == null) {
+    throw new Error('Device not initialized.');
+  }
+  const browserKeys = await BrowserKeys.load(me.value.id);
+  const userKeys = await UserKeys.decryptOnBrowser(myDevice.value.userKeyJwe, browserKeys.keyPair.privateKey, base64.parse(me.value.publicKey));
+  const recoveryKey : { recoveryCode: string } = await JWE.parse(me.value.recoveryJwe, userKeys.keyPair.privateKey);
+  recoveryCode.value = recoveryKey.recoveryCode;
 }
 
 async function validateDevice(device: DeviceDto) {

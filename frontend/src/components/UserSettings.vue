@@ -75,25 +75,6 @@
         </div>
       </div>
     </div>
-
-    <!-- TODO move to overlay dialog -->
-    <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6">
-      <div class="md:grid md:grid-cols-3 md:gap-6">
-        <div class="md:col-span-1">
-          <h3 class="text-lg font-medium leading-6 text-gray-900">User Key</h3>
-          <p class="mt-1 text-sm text-gray-500">This is your key...</p>
-        </div>
-        <div class="mt-5 md:mt-0 md:col-span-2">
-          <div v-if="user?.publicKey == null">
-            no key yet...
-            <button @click="createUserKey()">CREATE</button>
-          </div>
-          <div v-else class="grid grid-cols-6 gap-6">
-            you have a key: <span>{{ user.publicKey }}</span>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -103,8 +84,6 @@ import { CheckIcon, ChevronUpDownIcon } from '@heroicons/vue/24/solid';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { UserDto, VersionDto } from '../common/backend';
-import { BrowserKeys, UserKeys } from '../common/crypto';
-import { JWE } from '../common/jwe';
 import { Locale } from '../i18n';
 import FetchError from './FetchError.vue';
 
@@ -127,42 +106,5 @@ async function fetchData() {
     console.error('Retrieving version information failed.', error);
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
-}
-
-async function createUserKey() {
-  if (!user.value) {
-    return;
-  }
-  const userKeys = await UserKeys.create();
-  const recoveryCode = crypto.randomUUID(); // TODO something else?
-  const archive = await userKeys.export(recoveryCode);
-  
-  const me = user.value;
-  me.publicKey = archive.publicKey;
-  me.recoveryJwe = await JWE.build({ recoveryCode: recoveryCode }, userKeys.keyPair.publicKey);
-  me.recoveryPbkdf2 = archive.encryptedPrivateKey;
-  me.recoverySalt = archive.salt;
-  me.recoveryIterations = archive.iterations;
-
-  // to display the recovery key at a later point:
-  // ->
-  const recoveryKey : { recoveryCode: string } = await JWE.parse(me.recoveryJwe, userKeys.keyPair.privateKey);
-  console.assert(recoveryKey.recoveryCode == recoveryCode);
-  // <-
-
-  const browserKeys = await BrowserKeys.create(); // or .load()
-  await browserKeys.store(me.id);
-
-  const jwe = await userKeys.encryptForDevice(browserKeys.keyPair.publicKey);
-  backend.devices.putDevice({
-    id: await browserKeys.id(),
-    name: navigator.userAgent, // TODO something
-    type: 'BROWSER',
-    publicKey: await browserKeys.encodedPublicKey(),
-    userKeyJwe: jwe,
-    creationTime: new Date(),
-    lastSeenTime: new Date()
-  });
-  backend.users.putMyKeyPair(me);
 }
 </script>

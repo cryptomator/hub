@@ -427,15 +427,22 @@ export class UserKeys {
    * @param jwe JWE containing the PKCS#8-encoded private key
    * @param browserPrivateKey The browser's private key
    * @param userPublicKey User public key
-   * @returns The user's non-extractable key pair
+   * @returns The user's key pair
    */
-  public static async decryptOnBrowser(jwe: string, browserPrivateKey: CryptoKey, userPublicKey: CryptoKey): Promise<UserKeys> {
+  public static async decryptOnBrowser(jwe: string, browserPrivateKey: CryptoKey, userPublicKey: CryptoKey | BufferSource): Promise<UserKeys> {
+    let publicKey: CryptoKey;
+    if (userPublicKey instanceof CryptoKey) {
+      publicKey = userPublicKey;
+    } else {
+      publicKey = await crypto.subtle.importKey('spki', userPublicKey, UserKeys.KEY_DESIGNATION, false, []);
+    }
+
     let rawKey = new Uint8Array();
     try {
       const payload: JWEPayload = await JWE.parse(jwe, browserPrivateKey);
       rawKey = base64.parse(payload.key);
-      const privateKey = await crypto.subtle.importKey('pkcs8', rawKey, UserKeys.KEY_DESIGNATION, true, ['deriveKey']);
-      return new UserKeys({ publicKey: userPublicKey, privateKey: privateKey });
+      const privateKey = await crypto.subtle.importKey('pkcs8', rawKey, UserKeys.KEY_DESIGNATION, true, UserKeys.KEY_USAGES);
+      return new UserKeys({ publicKey: publicKey, privateKey: privateKey });
     } finally {
       rawKey.fill(0x00);
     }
