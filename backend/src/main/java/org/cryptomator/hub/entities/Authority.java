@@ -5,17 +5,13 @@ import io.quarkus.panache.common.Parameters;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.NamedQuery;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
-import java.util.HashSet;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Stream;
 
 @Entity
@@ -28,7 +24,7 @@ import java.util.stream.Stream;
 				FROM Authority a
 				WHERE LOWER(a.name) LIKE :name
 				""")
-public class Authority extends PanacheEntityBase {
+public class Authority extends PanacheEntityBase { // TODO make sealed?
 
 	@Id
 	@Column(name = "id", nullable = false)

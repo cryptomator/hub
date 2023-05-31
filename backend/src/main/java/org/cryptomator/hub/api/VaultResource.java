@@ -2,6 +2,7 @@ package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.security.identity.SecurityIdentity;
+import jakarta.annotation.Nullable;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -12,6 +13,7 @@ import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
@@ -19,6 +21,7 @@ import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.AccessToken;
@@ -29,6 +32,7 @@ import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.LegacyAccessToken;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
+import org.cryptomator.hub.entities.VaultAccess;
 import org.cryptomator.hub.filters.ActiveLicense;
 import org.cryptomator.hub.filters.VaultAdminOnlyFilter;
 import org.cryptomator.hub.license.LicenseHolder;
@@ -118,7 +122,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "403", description = "VaultAdminAuthorizationJWT expired or not yet valid")
 	@APIResponse(responseCode = "404", description = "vault or user not found")
 	@ActiveLicense
-	public Response addUser(@PathParam("vaultId") UUID vaultId, @PathParam("userId") @ValidId String userId) {
+	public Response addUser(@PathParam("vaultId") UUID vaultId, @PathParam("userId") @ValidId String userId, @QueryParam("role") @Nullable VaultAccess.Role role) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		var user = User.<User>findByIdOptional(userId).orElseThrow(NotFoundException::new);
 		if (!EffectiveVaultAccess.isUserOccupyingSeat(userId)) {
@@ -129,8 +133,15 @@ public class VaultResource {
 			}
 		}
 
-		vault.directMembers.add(user);
-		vault.persist();
+		var id = new VaultAccess.Id(vaultId, userId);
+		var access = VaultAccess.<VaultAccess>findById(id);
+		if (access == null) {
+			access = new VaultAccess();
+			access.vault = vault;
+			access.authority = user;
+		}
+		access.role = role;
+		access.persistAndFlush();
 		return Response.status(Response.Status.CREATED).build();
 	}
 
@@ -147,7 +158,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "403", description = "VaultAdminAuthorizationJWT expired or not yet valid")
 	@APIResponse(responseCode = "404", description = "vault or group not found")
 	@ActiveLicense
-	public Response addGroup(@PathParam("vaultId") UUID vaultId, @PathParam("groupId") @ValidId String groupId) {
+	public Response addGroup(@PathParam("vaultId") UUID vaultId, @PathParam("groupId") @ValidId String groupId, @QueryParam("role") @DefaultValue("MEMBER") VaultAccess.Role role) {
 		//usersInGroup - usersInGroupAndPartOfAtLeastOneVault + usersOfAtLeastOneVault
 		if (EffectiveGroupMembership.countEffectiveGroupUsers(groupId) - EffectiveVaultAccess.countEffectiveVaultUsersOfGroup(groupId) + EffectiveVaultAccess.countEffectiveVaultUsers() > license.getAvailableSeats()) {
 			throw new PaymentRequiredException("Number of effective vault users greater than or equal to the available license seats");
@@ -155,8 +166,16 @@ public class VaultResource {
 
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		var group = Group.<Group>findByIdOptional(groupId).orElseThrow(NotFoundException::new);
-		vault.directMembers.add(group);
-		vault.persist();
+
+		var id = new VaultAccess.Id(vaultId, groupId);
+		var access = VaultAccess.<VaultAccess>findById(id);
+		if (access == null) {
+			access = new VaultAccess();
+			access.vault = vault;
+			access.authority = group;
+		}
+		access.role = role;
+		access.persistAndFlush();
 		return Response.status(Response.Status.CREATED).build();
 	}
 
@@ -172,7 +191,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "403", description = "VaultAdminAuthorizationJWT expired or not yet valid")
 	@APIResponse(responseCode = "404", description = "vault not found")
 	public Response removeMember(@PathParam("vaultId") UUID vaultId, @PathParam("userId") @ValidId String userId) {
-		return removeAutority(vaultId, userId);
+		return removeAuthority(vaultId, userId);
 	}
 
 	@DELETE
@@ -187,14 +206,15 @@ public class VaultResource {
 	@APIResponse(responseCode = "403", description = "VaultAdminAuthorizationJWT expired or not yet valid")
 	@APIResponse(responseCode = "404", description = "vault not found")
 	public Response removeGroup(@PathParam("vaultId") UUID vaultId, @PathParam("groupId") @ValidId String groupId) {
-		return removeAutority(vaultId, groupId);
+		return removeAuthority(vaultId, groupId);
 	}
 
-	private Response removeAutority(UUID vaultId, String authorityId) {
-		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-		vault.directMembers.removeIf(e -> e.id.equals(authorityId));
-		vault.persist();
-		return Response.status(Response.Status.NO_CONTENT).build();
+	private Response removeAuthority(UUID vaultId, String authorityId) {
+		if (VaultAccess.deleteById(new VaultAccess.Id(vaultId, authorityId))) {
+			return Response.status(Response.Status.NO_CONTENT).build();
+		} else {
+			throw new NotFoundException();
+		}
 	}
 
 	@GET
@@ -318,7 +338,7 @@ public class VaultResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
 	@Operation(summary = "creates a vault",
-			description = "Creates a vault with the given vault id. The creationTime in the vaultDto is ignored and the current server time is used.")
+			description = "Creates a vault with the given vault id, owned by the logged in user. The creationTime in the vaultDto is ignored and the current server time is used.")
 	@APIResponse(responseCode = "201", description = "vault created")
 	@APIResponse(responseCode = "409", description = "vault with given id or name already exists")
 	public Response create(@PathParam("vaultId") UUID vaultId, @Valid VaultDto vaultDto) {
@@ -328,9 +348,13 @@ public class VaultResource {
 		User currentUser = User.findById(jwt.getSubject());
 		var vault = vaultDto.toVault(vaultId);
 		vault.creationTime = Instant.now().truncatedTo(ChronoUnit.MILLIS);
-		vault.directMembers.add(currentUser);
+		var access = new VaultAccess();
+		access.vault = vault;
+		access.authority = currentUser;
+		access.role = VaultAccess.Role.OWNER;
 		try {
-			vault.persistAndFlush();
+			vault.persist();
+			access.persist();
 			return Response.created(URI.create(".")).build();
 		} catch (ConstraintViolationException e) {
 			throw new ClientErrorException(Response.Status.CONFLICT, e);

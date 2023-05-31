@@ -27,3 +27,13 @@ CREATE TABLE "access_token"
 	CONSTRAINT "ACCESS_FK_USER" FOREIGN KEY ("user_id") REFERENCES "user_details" ("id") ON DELETE CASCADE,
 	CONSTRAINT "ACCESS_FK_VAULT" FOREIGN KEY ("vault_id") REFERENCES "vault" ("id") ON DELETE CASCADE
 );
+
+ALTER TABLE "vault_access" ADD "role" VARCHAR(50) NOT NULL DEFAULT 'MEMBER';
+
+-- @formatter:off
+CREATE OR REPLACE VIEW "effective_vault_access" ("vault_id", "authority_id", "role") AS
+	SELECT * FROM "vault_access"
+	UNION
+	SELECT "va"."vault_id", "gm"."member_id", "va"."role" FROM "vault_access" "va"
+		INNER JOIN "effective_group_membership" "gm" ON "va"."authority_id" = "gm"."group_id";
+-- @formatter:on

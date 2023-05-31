@@ -38,6 +38,7 @@ public class Vault extends PanacheEntityBase {
 	public UUID id;
 
 	@ManyToMany
+	@Immutable
 	@JoinTable(name = "vault_access",
 			joinColumns = @JoinColumn(name = "vault_id", referencedColumnName = "id"),
 			inverseJoinColumns = @JoinColumn(name = "authority_id", referencedColumnName = "id")
@@ -53,7 +54,7 @@ public class Vault extends PanacheEntityBase {
 	public Set<Authority> effectiveMembers = new HashSet<>();
 
 	@OneToMany(mappedBy = "vault", fetch = FetchType.LAZY)
-	public Set<AccessToken> accessTokens = new HashSet<>(); // rename to accesstokens?
+	public Set<AccessToken> accessTokens = new HashSet<>();
 
 	@Column(name = "name", nullable = false)
 	public String name;
