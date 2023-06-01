@@ -24,7 +24,7 @@ public class AuditLogResourceTest {
 	@TestSecurity(user = "Admin", roles = {"admin"})
 	@DisplayName("As admin, GET /auditlog?startDate=1970-01-01T00:00:03Z&endDate=1970-01-01T00:00:05Z&pageSize=10 returns 200 with two entries")
 	public void testGetAuditLogEntriesAdmin() {
-		when().get("/auditlog?startDate=1970-01-01T00:00:03Z&endDate=1970-01-01T00:00:05Z&pageSize=10")
+		when().get("/auditlog?startDate=1970-01-01T00:00:03Z&endDate=1970-01-01T00:00:05Z&pageSize=10&afterId=0")
 				.then().statusCode(200)
 				.body("id", Matchers.containsInAnyOrder(comparesEqualTo(1000), comparesEqualTo(1001), comparesEqualTo(1111)));
 	}

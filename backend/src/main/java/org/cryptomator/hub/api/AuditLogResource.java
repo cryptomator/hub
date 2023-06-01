@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import jakarta.annotation.security.RolesAllowed;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -36,28 +37,28 @@ public class AuditLogResource {
 	@Parameter(name = "beforeId", description = "the end audit entry id, not included in results (used for pagination)", in = ParameterIn.QUERY)
 	@Parameter(name = "afterId", description = "the start audit entry id, not included in results (used for pagination)", in = ParameterIn.QUERY)
 	@Parameter(name = "pageSize", description = "the maximum number of entries to return", in = ParameterIn.QUERY)
-	public Response getAllEvents(@QueryParam("startDate") Instant startDate, @QueryParam("endDate") Instant endDate, @QueryParam("beforeId") Long beforeId, @QueryParam("afterId") Long afterId, @QueryParam("pageSize") @DefaultValue("20") int pageSize) {
+	public EventList getAllEvents(@QueryParam("startDate") Instant startDate, @QueryParam("endDate") Instant endDate, @QueryParam("beforeId") Long beforeId, @QueryParam("afterId") Long afterId, @QueryParam("pageSize") @DefaultValue("20") int pageSize) {
 		if (startDate == null || endDate == null) {
-			return Response.status(Response.Status.BAD_REQUEST).entity("startDate and endDate must be specified").build();
+			throw new BadRequestException("startDate and endDate must be specified");
 		} else if (startDate.isAfter(endDate)) {
-			return Response.status(Response.Status.BAD_REQUEST).entity("startDate must be before endDate").build();
+			throw new BadRequestException("startDate must be before endDate");
 		} else if (beforeId != null && afterId != null) {
-			return Response.status(Response.Status.BAD_REQUEST).entity("beforeId and afterId cannot be used together").build();
+			throw new BadRequestException("beforeId and afterId cannot be used together");
 		} else if (beforeId == null && afterId == null) {
-			return Response.status(Response.Status.BAD_REQUEST).entity("beforeId or afterId must be specified").build();
+			throw new BadRequestException("beforeId or afterId must be specified");
 		} else if (beforeId != null && beforeId < 0) {
-			return Response.status(Response.Status.BAD_REQUEST).entity("beforeId must be greater than or equal to 0").build();
+			throw new BadRequestException("beforeId must be greater than or equal to 0");
 		} else if (afterId != null && afterId < 0) {
-			return Response.status(Response.Status.BAD_REQUEST).entity("afterId must be greater than or equal to 0").build();
+			throw new BadRequestException("afterId must be greater than or equal to 0");
 		} else if (pageSize < 1 || pageSize > 100) {
-			return Response.status(Response.Status.BAD_REQUEST).entity("pageSize must be between 1 and 100").build();
+			throw new BadRequestException("pageSize must be between 1 and 100");
 		}
 		if (beforeId != null) {
 			var events = AuditEvent.findAllInPeriodBeforeId(startDate, endDate, beforeId, pageSize).map(AuditEventDto::fromEntity).toList();
-			return Response.ok(new EventList(events)).build();
+			return new EventList(events);
 		} else if (afterId != null) {
 			var events = AuditEvent.findAllInPeriodAfterId(startDate, endDate, afterId, pageSize).map(AuditEventDto::fromEntity).toList();
-			return Response.ok(new EventList(events)).build();
+			return new EventList(events);
 		} else {
 			throw new IllegalStateException("beforeId and afterId cannot be both null");
 		}
