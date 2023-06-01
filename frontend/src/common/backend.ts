@@ -173,8 +173,9 @@ export interface VaultIdHeader extends JWTHeader {
 }
 
 class VaultService {
-  public async listAccessible(): Promise<VaultDto[]> {
-    return axiosAuth.get('/vaults').then(response => response.data);
+  public async listAccessible(role?: 'MEMBER' | 'OWNER'): Promise<VaultDto[]> {
+    const queryParams = role ? { role: role } : {};
+    return axiosAuth.get('/vaults/accessible', { params: queryParams }).then(response => response.data);
   }
 
   public async listAll(): Promise<VaultDto[]> {

@@ -28,8 +28,14 @@ import java.util.stream.Stream;
 		query = """
 				SELECT DISTINCT v
 				FROM Vault v
-				LEFT JOIN v.effectiveMembers m
-				WHERE m.id = :userId
+				INNER JOIN EffectiveVaultAccess a ON a.id.vaultId = v.id AND a.id.authorityId = :userId
+				""")
+@NamedQuery(name = "Vault.accessibleByUserAndRole",
+		query = """
+				SELECT DISTINCT v
+				FROM Vault v
+				INNER JOIN EffectiveVaultAccess a ON a.id.vaultId = v.id AND a.id.authorityId = :userId
+				WHERE a.role = :role
 				""")
 public class Vault extends PanacheEntityBase {
 
@@ -82,6 +88,10 @@ public class Vault extends PanacheEntityBase {
 
 	public static Stream<Vault> findAccessibleByUser(String userId) {
 		return find("#Vault.accessibleByUser", Parameters.with("userId", userId)).stream();
+	}
+
+	public static Stream<Vault> findAccessibleByUser(String userId, VaultAccess.Role role) {
+		return find("#Vault.accessibleByUserAndRole", Parameters.with("userId", userId).and("role", role)).stream();
 	}
 
 	@Override

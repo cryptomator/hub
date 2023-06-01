@@ -153,7 +153,7 @@ onMounted(fetchData);
 async function fetchData() {
   onFetchError.value = null;
   try {
-    vaults.value = (await backend.vaults.listAccessible()).sort((a, b) => a.name.localeCompare(b.name));
+    vaults.value = (await backend.vaults.listAccessible('OWNER')).sort((a, b) => a.name.localeCompare(b.name));
     isAdmin.value = (await auth).isAdmin();
   } catch (error) {
     console.error('Retrieving vault list failed.', error);
@@ -171,6 +171,6 @@ async function onAllVaultsClick() {
 }
 
 async function onAccessibleVaultsClick() {
-  vaults.value = (await backend.vaults.listAccessible()).sort((a, b) => a.name.localeCompare(b.name));
+  vaults.value = (await backend.vaults.listAccessible('OWNER')).sort((a, b) => a.name.localeCompare(b.name));
 }
 </script>

@@ -50,6 +50,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 @Path("/vaults")
 public class VaultResource {
@@ -64,14 +65,20 @@ public class VaultResource {
 	LicenseHolder license;
 
 	@GET
-	@Path("/")
+	@Path("/accessible")
 	@RolesAllowed("user")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
 	@Operation(summary = "list all accessible vaults", description = "list all vaults that have been shared with the currently logged in user or a group in wich this user is")
-	public List<VaultDto> getAccessible() {
+	public List<VaultDto> getAccessible(@Nullable @QueryParam("role") VaultAccess.Role role) {
 		var currentUserId = jwt.getSubject();
-		var resultStream = Vault.findAccessibleByUser(currentUserId);
+		// TODO refactor to JEP 441 in JDK 21
+		final Stream<Vault> resultStream;
+		if (role == null) {
+			resultStream = Vault.findAccessibleByUser(currentUserId);
+		} else {
+			resultStream = Vault.findAccessibleByUser(currentUserId, role);
+		}
 		return resultStream.map(VaultDto::fromEntity).toList();
 	}
 
@@ -80,7 +87,7 @@ public class VaultResource {
 	@RolesAllowed("admin")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
-	@Operation(summary = "list all accessible vaults", description = "list all vaults in the system")
+	@Operation(summary = "list all vaults", description = "list all vaults in the system")
 	public List<VaultDto> getAllVaults() {
 		return Vault.findAll().<Vault>stream().map(VaultDto::fromEntity).toList();
 	}
@@ -122,7 +129,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "403", description = "VaultAdminAuthorizationJWT expired or not yet valid")
 	@APIResponse(responseCode = "404", description = "vault or user not found")
 	@ActiveLicense
-	public Response addUser(@PathParam("vaultId") UUID vaultId, @PathParam("userId") @ValidId String userId, @QueryParam("role") @Nullable VaultAccess.Role role) {
+	public Response addUser(@PathParam("vaultId") UUID vaultId, @PathParam("userId") @ValidId String userId, @QueryParam("role") @DefaultValue("MEMBER") VaultAccess.Role role) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		var user = User.<User>findByIdOptional(userId).orElseThrow(NotFoundException::new);
 		if (!EffectiveVaultAccess.isUserOccupyingSeat(userId)) {
