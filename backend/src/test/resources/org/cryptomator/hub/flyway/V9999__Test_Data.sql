@@ -66,7 +66,6 @@ VALUES
 
 INSERT INTO "unlock_vault_event" ("id", "user_id", "vault_id", "device_id", "result")
 VALUES
-    (1000, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'device1', 'SUCCESS'),
     (1111, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'device3', 'UNAUTHORIZED'),
     (4242, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'device1', 'SUCCESS');
 
