@@ -52,8 +52,8 @@
   "admin.licenseInfo.managedNoLicense.description": "Thank you for using Cryptomator Hub! You currently have no active license.",
 
   "auditLog.title": "Audit Logs",
-  "auditLog.sort.asc": "Ascending",
-  "auditLog.sort.desc": "Descending",
+  "auditLog.sort.ascending": "Ascending",
+  "auditLog.sort.descending": "Descending",
   "auditLog.filter": "Filter",
   "auditLog.filter.startDate": "Start Date",
   "auditLog.filter.endDate": "End Date",
