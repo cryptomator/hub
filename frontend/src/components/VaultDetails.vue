@@ -154,7 +154,7 @@ async function fetchData() {
 
   try {
     vault.value = await backend.vaults.get(props.vaultId);
-    me.value = await backend.users.me(false, false);
+    me.value = await backend.users.me(false);
   } catch (error) {
     console.error('Fetching data failed.', error);
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');

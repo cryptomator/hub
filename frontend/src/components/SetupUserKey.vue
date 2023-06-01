@@ -241,7 +241,7 @@ async function recoverUserKey() {
     const browserKeys = await createBrowserKeys(me.id);
     await submitBrowserKeys(browserKeys, me, userKeys);
 
-    router.push('/app/vaults');
+    await router.push('/app/vaults');
   } catch (error) {
     console.error('Recovering user key failed.', error);
     onRecoverError.value = error instanceof Error ? error : new Error('Unknown reason');
