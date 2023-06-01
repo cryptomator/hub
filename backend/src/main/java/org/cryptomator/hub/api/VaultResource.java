@@ -197,7 +197,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "403", description = "VaultAdminAuthorizationJWT expired or not yet valid")
 	@APIResponse(responseCode = "404", description = "vault not found")
 	public Response removeMember(@PathParam("vaultId") UUID vaultId, @PathParam("userId") @ValidId String userId) {
-		return removeAutority(vaultId, userId);
+		return removeAuthority(vaultId, userId);
 	}
 
 	@DELETE
@@ -212,10 +212,10 @@ public class VaultResource {
 	@APIResponse(responseCode = "403", description = "VaultAdminAuthorizationJWT expired or not yet valid")
 	@APIResponse(responseCode = "404", description = "vault not found")
 	public Response removeGroup(@PathParam("vaultId") UUID vaultId, @PathParam("groupId") @ValidId String groupId) {
-		return removeAutority(vaultId, groupId);
+		return removeAuthority(vaultId, groupId);
 	}
 
-	private Response removeAutority(UUID vaultId, String authorityId) {
+	private Response removeAuthority(UUID vaultId, String authorityId) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		vault.directMembers.removeIf(e -> e.id.equals(authorityId));
 		vault.persist();
