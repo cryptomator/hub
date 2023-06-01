@@ -360,7 +360,7 @@ public class VaultResource {
 		access.authority = currentUser;
 		access.role = VaultAccess.Role.OWNER;
 		try {
-			vault.persist();
+			vault.persistAndFlush();
 			access.persist();
 			return Response.created(URI.create(".")).build();
 		} catch (ConstraintViolationException e) {

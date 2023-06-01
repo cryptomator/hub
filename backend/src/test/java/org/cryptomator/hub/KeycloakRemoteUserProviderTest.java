@@ -15,6 +15,7 @@ import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.mockito.Mockito;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -121,9 +122,9 @@ class KeycloakRemoteUserProviderTest {
 			Assertions.assertEquals("grpName3001", resultGroup2.name);
 			Assertions.assertEquals(2, resultGroup2.members.size());
 
-			var membersGroup2 = resultGroup2.members.stream().toList();
-			var member1Group2 = (User) membersGroup2.get(1);
-			var member2Group2 = (User) membersGroup2.get(0);
+			var membersGroup2 = resultGroup2.members.stream().sorted(Comparator.comparing(a -> a.id)).toList();
+			var member1Group2 = (User) membersGroup2.get(0);
+			var member2Group2 = (User) membersGroup2.get(1);
 
 			Assertions.assertEquals("id3000", member1Group2.id);
 			Assertions.assertEquals("username3000", member1Group2.name);

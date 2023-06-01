@@ -38,17 +38,17 @@ VALUES
 	 'MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAEC1uWSXj2czCDwMTLWV5BFmwxdM6PX9p+Pk9Yf9rIf374m5XP1U8q79dBhLSIuaojsvOT39UUcPJROSD1FqYLued0rXiooIii1D3jaW6pmGVJFhodzC31cy5sfOYotrzF',
 	 'MIG2AgEAMBAGByqGSM49AgEGBSuBBAAiBIGeMIGbAgEBBDCAHpFQ62QnGCEvYh/pE9QmR1C9aLcDItRbslbmhen/h1tt8AyMhskeenT+rAyyPhGhZANiAAQLW5ZJePZzMIPAxMtZXkEWbDF0zo9f2n4+T1h/2sh/fviblc/VTyrv10GEtIi5qiOy85Pf1RRw8lE5IPUWpgu553SteKigiKLUPeNpbqmYZUkWGh3MLfVzLmx85ii2vMU=');
 
-INSERT INTO "vault_access" ("vault_id", "authority_id")
+INSERT INTO "vault_access" ("vault_id", "authority_id", "role")
 VALUES
-	('7E57C0DE-0000-4000-8000-000100001111', 'user1'),
-	('7E57C0DE-0000-4000-8000-000100001111', 'user2'),
-	('7E57C0DE-0000-4000-8000-000100002222', 'group1');
+	('7E57C0DE-0000-4000-8000-000100001111', 'user1', 'OWNER'),
+	('7E57C0DE-0000-4000-8000-000100001111', 'user2', 'MEMBER'),
+	('7E57C0DE-0000-4000-8000-000100002222', 'group1', 'MEMBER');
 
-INSERT INTO "device" ("id", "owner_id", "name", "publickey", "creation_time", "user_key_jwe")
+INSERT INTO "device" ("id", "owner_id", "name", "type", "publickey", "creation_time", "last_seen_time", "user_key_jwe")
 VALUES
-	('device1', 'user1', 'Computer 1', 'publickey1', '2020-02-20 20:20:20', 'jwe.jwe.jwe.user1.device1'),
-	('device2', 'user2', 'Computer 2', 'publickey2', '2020-02-20 20:20:20', 'jwe.jwe.jwe.user2.device2'),
-	('device3', 'user1', 'Computer 3', 'publickey3', '2020-02-20 20:20:20', NULL);
+	('device1', 'user1', 'Computer 1', 'DESKTOP', 'publickey1', '2020-02-20 20:20:20', '2023-01-11 22:33:44', 'jwe.jwe.jwe.user1.device1'),
+	('device2', 'user2', 'Computer 2', 'DESKTOP', 'publickey2', '2020-02-20 20:20:20', '2023-01-11 22:33:44', 'jwe.jwe.jwe.user2.device2'),
+	('device3', 'user1', 'Computer 3', 'DESKTOP', 'publickey3', '2020-02-20 20:20:20', '2023-01-11 22:33:44', NULL);
 
 INSERT INTO "access_token" ("user_id", "vault_id", "vault_key_jwe")
 VALUES

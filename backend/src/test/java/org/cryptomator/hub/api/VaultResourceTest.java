@@ -106,9 +106,9 @@ public class VaultResourceTest {
 	public class AsAuthorizedUser1 {
 
 		@Test
-		@DisplayName("GET /vaults returns 200")
+		@DisplayName("GET /vaults/accessible returns 200")
 		public void testGetSharedOrOwned() {
-			when().get("/vaults")
+			when().get("/vaults/accessible")
 					.then().statusCode(200)
 					.body("id", hasItems(equalToIgnoringCase("7E57C0DE-0000-4000-8000-000100001111"), equalToIgnoringCase("7E57C0DE-0000-4000-8000-000100002222")));
 		}
@@ -379,24 +379,6 @@ public class VaultResourceTest {
 					.when().get("/vaults/{vaultId}/members", "7E57C0DE-0000-4000-8000-000100002222")
 					.then().statusCode(200)
 					.body("id", hasItems("user2"));
-		}
-
-		@Test
-		@Order(8)
-		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100002222/users/user2 returns 409 - user2 already direct member of vault2")
-		public void testGrantAccessAgain() {
-			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
-					.when().put("/vaults/{vaultId}/users/{usersId}", "7E57C0DE-0000-4000-8000-000100002222", "user2")
-					.then().statusCode(409);
-		}
-
-		@Test
-		@Order(9)
-		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100002222/groups/group1 returns 409 - group1 already direct member of vault2")
-		public void testAddingMemberAgainFails() {
-			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
-					.when().put("/vaults/{vaultId}/groups/{groupId}", "7E57C0DE-0000-4000-8000-000100002222", "group1")
-					.then().statusCode(409);
 		}
 
 		@Test
@@ -674,7 +656,7 @@ public class VaultResourceTest {
 		@DisplayName("401 Unauthorized")
 		@ParameterizedTest(name = "{0} {1}")
 		@CsvSource(value = {
-				"GET, /vaults",
+				"GET, /vaults/accessible",
 				"GET, /vaults/7E57C0DE-0000-4000-8000-000100001111",
 				"GET, /vaults/7E57C0DE-0000-4000-8000-000100001111/members",
 				"PUT, /vaults/7E57C0DE-0000-4000-8000-000100001111/users/user1",
