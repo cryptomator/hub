@@ -11,7 +11,6 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.AuditEvent;
 import org.cryptomator.hub.entities.CreateVaultEvent;
 import org.cryptomator.hub.entities.UnlockVaultEvent;
@@ -19,6 +18,7 @@ import org.cryptomator.hub.entities.UpdateVaultMembershipEvent;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -32,36 +32,29 @@ public class AuditLogResource {
 	@RolesAllowed("admin")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "list all auditlog entries within a period", description = "list all auditlog entries from a period specified by a start and end date")
-	@Parameter(name = "startDate", description = "the start date of the period as ISO 8601 datetime string", in = ParameterIn.QUERY)
-	@Parameter(name = "endDate", description = "the end date of the period as ISO 8601 datetime string", in = ParameterIn.QUERY)
-	@Parameter(name = "beforeId", description = "the end audit entry id, not included in results (used for pagination)", in = ParameterIn.QUERY)
-	@Parameter(name = "afterId", description = "the start audit entry id, not included in results (used for pagination)", in = ParameterIn.QUERY)
-	@Parameter(name = "pageSize", description = "the maximum number of entries to return", in = ParameterIn.QUERY)
-	public EventList getAllEvents(@QueryParam("startDate") Instant startDate, @QueryParam("endDate") Instant endDate, @QueryParam("beforeId") Long beforeId, @QueryParam("afterId") Long afterId, @QueryParam("pageSize") @DefaultValue("20") int pageSize) {
+	@Parameter(name = "startDate", description = "the start date of the period as ISO 8601 datetime string, inclusive", in = ParameterIn.QUERY)
+	@Parameter(name = "endDate", description = "the end date of the period as ISO 8601 datetime string, exclusive", in = ParameterIn.QUERY)
+	@Parameter(name = "paginationId", description = "The smallest (asc ordering) or highest (desc ordering) audit entry id, not included in results. Used for pagination. ", in = ParameterIn.QUERY)
+	@Parameter(name = "order", description = "The order of the queried table. Determines if most recent (desc) or oldest entries (asc) are considered first. Allowed Values are 'desc' (default) or 'asc'. Used for pagination.", in = ParameterIn.QUERY)
+	@Parameter(name = "pageSize", description = "the maximum number of entries to return. Must be between 1 and 100.", in = ParameterIn.QUERY)
+	@APIResponse(responseCode = "200", description = "Body contains list of events in the specified time interval")
+	@APIResponse(responseCode = "400", description = "startDate or endDate not specified, startDate > endDate, order specified and not in ['asc','desc'] or pageSize not in [1 .. 100]")
+	@APIResponse(responseCode = "403", description = "requesting user is does not have admin role")
+	public EventList getAllEvents(@QueryParam("startDate") Instant startDate, @QueryParam("endDate") Instant endDate, @QueryParam("paginationId") Long paginationId, @QueryParam("order") @DefaultValue("desc") String order, @QueryParam("pageSize") @DefaultValue("20") int pageSize) {
 		if (startDate == null || endDate == null) {
 			throw new BadRequestException("startDate and endDate must be specified");
 		} else if (startDate.isAfter(endDate)) {
 			throw new BadRequestException("startDate must be before endDate");
-		} else if (beforeId != null && afterId != null) {
-			throw new BadRequestException("beforeId and afterId cannot be used together");
-		} else if (beforeId == null && afterId == null) {
-			throw new BadRequestException("beforeId or afterId must be specified");
-		} else if (beforeId != null && beforeId < 0) {
-			throw new BadRequestException("beforeId must be greater than or equal to 0");
-		} else if (afterId != null && afterId < 0) {
-			throw new BadRequestException("afterId must be greater than or equal to 0");
+		} else if (!(order.equals("desc") || order.equals("asc"))) {
+			throw new BadRequestException("order must be either 'asc' or 'desc'");
 		} else if (pageSize < 1 || pageSize > 100) {
 			throw new BadRequestException("pageSize must be between 1 and 100");
+		} else if (paginationId == null) {
+			throw new BadRequestException("paginationId must be specified");
 		}
-		if (beforeId != null) {
-			var events = AuditEvent.findAllInPeriodBeforeId(startDate, endDate, beforeId, pageSize).map(AuditEventDto::fromEntity).toList();
-			return new EventList(events);
-		} else if (afterId != null) {
-			var events = AuditEvent.findAllInPeriodAfterId(startDate, endDate, afterId, pageSize).map(AuditEventDto::fromEntity).toList();
-			return new EventList(events);
-		} else {
-			throw new IllegalStateException("beforeId and afterId cannot be both null");
-		}
+
+		var events = AuditEvent.findAllInPeriod(startDate, endDate, paginationId, order.equals("asc"), pageSize).map(AuditEventDto::fromEntity).toList();
+		return new EventList(events);
 	}
 
 	// Helper class to prevent type erasure for @JsonTypeInfo, see https://github.com/FasterXML/jackson-databind/issues/336

@@ -1,6 +1,7 @@
 package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.panache.common.Parameters;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorColumn;
@@ -28,7 +29,7 @@ import java.util.stream.Stream;
 				FROM AuditEvent ae
 				WHERE ae.timestamp >= :startDate
 				AND ae.timestamp < :endDate
-				AND ae.id < :beforeId
+				AND ae.id < :paginationId
 				ORDER BY ae.id DESC
 				""")
 @NamedQuery(name = "AuditEvent.listAllInPeriodAfterId",
@@ -37,7 +38,7 @@ import java.util.stream.Stream;
 				FROM AuditEvent ae
 				WHERE ae.timestamp >= :startDate
 				AND ae.timestamp < :endDate
-				AND ae.id > :afterId
+				AND ae.id > :paginationId
 				ORDER BY ae.id ASC
 				""")
 @SequenceGenerator(name = "audit_event_id_seq", sequenceName = "audit_event_id_seq")
@@ -76,15 +77,17 @@ public class AuditEvent extends PanacheEntityBase {
 		return Objects.hash(id, timestamp);
 	}
 
-	public static Stream<AuditEvent> findAllInPeriodBeforeId(Instant startDate, Instant endDate, long beforeId, int pageSize) {
-		var query = find("#AuditEvent.listAllInPeriodBeforeId", Parameters.with("startDate", startDate).and("endDate", endDate).and("beforeId", beforeId));
+	public static Stream<AuditEvent> findAllInPeriod(Instant startDate, Instant endDate, long paginationId, boolean ascending, int pageSize) {
+		var parameters = Parameters.with("startDate", startDate).and("endDate", endDate).and("paginationId", paginationId);
+
+		final PanacheQuery<AuditEvent> query;
+		if (ascending) {
+			query = find("#AuditEvent.listAllInPeriodAfterId", parameters);
+		} else {
+			query = find("#AuditEvent.listAllInPeriodBeforeId", parameters);
+		}
 		query.page(0, pageSize);
 		return query.stream();
 	}
 
-	public static Stream<AuditEvent> findAllInPeriodAfterId(Instant startDate, Instant endDate, long afterId, int pageSize) {
-		var query = find("#AuditEvent.listAllInPeriodAfterId", Parameters.with("startDate", startDate).and("endDate", endDate).and("afterId", afterId));
-		query.page(0, pageSize);
-		return query.stream();
-	}
 }

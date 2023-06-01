@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
 import static org.hamcrest.Matchers.comparesEqualTo;
 
@@ -22,11 +23,29 @@ public class AuditLogResourceTest {
 
 	@Test
 	@TestSecurity(user = "Admin", roles = {"admin"})
-	@DisplayName("As admin, GET /auditlog?startDate=1970-01-01T00:00:03Z&endDate=1970-01-01T00:00:05Z&pageSize=10 returns 200 with two entries")
+	@DisplayName("As admin, GET /auditlog?startDate=1970-01-01T00:00:03Z&endDate=1970-01-01T00:00:05Z&pageSize=10&paginationId=9999 returns 200 with three entries")
 	public void testGetAuditLogEntriesAdmin() {
-		when().get("/auditlog?startDate=1970-01-01T00:00:03Z&endDate=1970-01-01T00:00:05Z&pageSize=10&afterId=0")
+		given().param("startDate", "1970-01-01T00:00:03Z")
+				.param("endDate", "1970-01-01T00:00:05Z")
+				.param("pageSize", 10)
+				.param("paginationId", 9999L)
+				.when().get("/auditlog")
 				.then().statusCode(200)
 				.body("id", Matchers.containsInAnyOrder(comparesEqualTo(1000), comparesEqualTo(1001), comparesEqualTo(1111)));
+	}
+
+	@Test
+	@TestSecurity(user = "Admin", roles = {"admin"})
+	@DisplayName("As admin, GET /auditlog?startDate=1970-01-01T00:00:02.900Z&endDate=1970-01-01T00:00:05.100Z&pageSize=10&paginationId=9999 returns 200 with two entries")
+	public void testGetAuditLogEntriesAsc() {
+		given().param("startDate", "1970-01-01T00:00:02.900Z")
+				.param("endDate", "1970-01-01T00:00:05.100Z")
+				.param("pageSize", 3)
+				.param("paginationId", 1001L)
+				.param("order", "asc")
+				.when().get("/auditlog")
+				.then().statusCode(200)
+				.body("id", Matchers.containsInAnyOrder(comparesEqualTo(4242), comparesEqualTo(1111)));
 	}
 
 	@Test
