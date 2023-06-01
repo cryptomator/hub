@@ -18,13 +18,11 @@
   </div>
 
   <div v-else>
-    <div class="pb-5 border-b border-gray-200">
-      <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-        {{ t('deviceList.title', [me.devices.length]) }}
-      </h2>
-    </div>
+    <h2 class="text-base font-semibold leading-6 text-gray-900">
+      {{ t('deviceList.title') }}
+    </h2>
 
-    <div class="mt-5 flex flex-col">
+    <div class="mt-4 flex flex-col">
       <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
         <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
           <div class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
@@ -96,19 +94,6 @@
       </div>
     </div>
   </div>
-
-  <div v-if="myDevice" class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6">
-    <div class="md:grid md:grid-cols-3 md:gap-6">
-      <div class="md:col-span-1">
-        <h3 class="text-lg font-medium leading-6 text-gray-900">Personal Hub Secret</h3>
-        <p class="mt-1 text-sm text-gray-500">
-          <span v-if="recoveryCode">{{ recoveryCode }}</span>
-          <span v-else>****************</span>
-          <button @click="revealRecoveryCode()">show</button>
-        </p>
-      </div>
-    </div>
-  </div>
 </template>
 
 <script setup lang="ts">
@@ -118,7 +103,6 @@ import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { DeviceDto, NotFoundError, UserDto } from '../common/backend';
 import { BrowserKeys, UserKeys } from '../common/crypto';
-import { JWE } from '../common/jwe';
 import FetchError from './FetchError.vue';
 
 const { t, d } = useI18n({ useScope: 'global' });
@@ -131,7 +115,7 @@ const onRemoveDeviceError = ref< {[id: string]: Error} >({});
 
 onMounted(async () => {
   await fetchData();
-  await determineMyDeviceId();
+  await determineMyDevice();
 });
 
 async function fetchData() {
@@ -144,26 +128,13 @@ async function fetchData() {
   }
 }
 
-async function determineMyDeviceId() {
+async function determineMyDevice() {
   if (me.value == null) {
     throw new Error('User not initialized.');
   }
   const browserKeys = await BrowserKeys.load(me.value.id);
   const browserId = await browserKeys.id();
   myDevice.value = me.value.devices.find(d => d.id == browserId);
-}
-
-async function revealRecoveryCode() {
-  if (me.value?.publicKey == null || me.value?.recoveryJwe == null) {
-    throw new Error('User not initialized.');
-  }
-  if (myDevice.value == null) {
-    throw new Error('Device not initialized.');
-  }
-  const browserKeys = await BrowserKeys.load(me.value.id);
-  const userKeys = await UserKeys.decryptOnBrowser(myDevice.value.userKeyJwe, browserKeys.keyPair.privateKey, base64.parse(me.value.publicKey));
-  const recoveryKey : { recoveryCode: string } = await JWE.parse(me.value.recoveryJwe, userKeys.keyPair.privateKey);
-  recoveryCode.value = recoveryKey.recoveryCode;
 }
 
 async function validateDevice(device: DeviceDto) {

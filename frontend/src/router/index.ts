@@ -6,11 +6,11 @@ import { BrowserKeys } from '../common/crypto';
 import AdminSettings from '../components/AdminSettings.vue';
 import AuthenticatedMain from '../components/AuthenticatedMain.vue';
 import CreateVault from '../components/CreateVault.vue';
-import DeviceList from '../components/DeviceList.vue';
 import NotFound from '../components/NotFound.vue';
 import SetupUserKey from '../components/SetupUserKey.vue';
 import UnlockError from '../components/UnlockError.vue';
 import UnlockSuccess from '../components/UnlockSuccess.vue';
+import UserProfile from '../components/UserProfile.vue';
 import UserSettings from '../components/UserSettings.vue';
 import VaultDetails from '../components/VaultDetails.vue';
 import VaultList from '../components/VaultList.vue';
@@ -65,8 +65,8 @@ const routes: RouteRecordRaw[] = [
         props: (route) => ({ vaultId: route.params.id })
       },
       {
-        path: 'devices',
-        component: DeviceList
+        path: 'profile',
+        component: UserProfile
       },
       {
         path: 'settings',

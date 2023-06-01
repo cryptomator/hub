@@ -9,6 +9,7 @@
   "common.copy": "Copy",
   "common.download": "Download",
   "common.error.wrongPassword": "Wrong password",
+  "common.hide": "Hide",
   "common.loading": "Loading…",
   "common.manage": "Manage",
   "common.next": "Next",
@@ -17,6 +18,7 @@
   "common.remove": "Remove",
   "common.retry": "Retry",
   "common.share": "Share",
+  "common.show": "Show",
   "common.unexpectedError": "Unexpected Error: {0}",
 
   "admin.title": "Admin",
@@ -83,7 +85,7 @@
 
   "deviceList.empty.message": "No devices",
   "deviceList.empty.description": "To add a device, add a vault from this Hub to the Cryptomator app of the device and unlock it.",
-  "deviceList.title": "Devices ({0})",
+  "deviceList.title": "Authorized Devices and Browsers",
   "deviceList.deviceName": "Device Name",
   "deviceList.type": "Type",
   "deviceList.added": "Added",
@@ -97,9 +99,12 @@
   "grantPermissionDialog.description": "Grant additional devices permission to access the vault.",
   "grantPermissionDialog.submit": "Grant Permission to {0} Device(s)",
 
+  "manageRecoveryCode.title": "Personal Hub Secret",
+  "manageRecoveryCode.regenerate": "Regenerate Secret",
+
   "nav.vaults": "Vaults",
   "nav.profile.signedInAs": "Signed in as",
-  "nav.profile.devices": "Your Devices",
+  "nav.profile.profile": "Your Profile",
   "nav.profile.settings": "Settings",
   "nav.profile.admin": "Admin",
   "nav.profile.signOut": "Sign out",

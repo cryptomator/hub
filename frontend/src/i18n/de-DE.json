@@ -8,6 +8,7 @@
   "common.copied": "Kopiert!",
   "common.copy": "Kopieren",
   "common.download": "Herunterladen",
+  "common.hide": "Ausblenden",
   "common.loading": "Laden…",
   "common.manage": "Verwalten",
   "common.next": "Weiter",
@@ -16,6 +17,7 @@
   "common.remove": "Entfernen",
   "common.retry": "Wiederholen",
   "common.share": "Teilen",
+  "common.show": "Anzeigen",
   "common.unexpectedError": "Unerwarteter Fehler: {0}",
 
   "admin.title": "Admin",
@@ -82,7 +84,7 @@
 
   "deviceList.empty.message": "Keine Geräte",
   "deviceList.empty.description": "Um ein Gerät hinzuzufügen, füge einen Tresor aus diesem Hub zur Cryptomator-App des Geräts hinzu und entsperre es.",
-  "deviceList.title": "Geräte ({0})",
+  "deviceList.title": "Autorisierte Geräte und Browser",
   "deviceList.deviceName": "Gerätename",
   "deviceList.type": "Typ",
   "deviceList.added": "Hinzugefügt",
@@ -96,9 +98,12 @@
   "grantPermissionDialog.description": "Berechtige weitere Geräten auf den Tresor zuzugreifen.",
   "grantPermissionDialog.submit": "Berechtigung für {0} Gerät(e) gewähren",
 
+  "manageRecoveryCode.title": "Persönliches Hub-Geheimnis",
+  "manageRecoveryCode.regenerate": "Neues Geheimnis generieren",
+
   "nav.vaults": "Tresore",
   "nav.profile.signedInAs": "Eingeloggt als",
-  "nav.profile.devices": "Deine Geräte",
+  "nav.profile.profile": "Dein Profil",
   "nav.profile.settings": "Einstellungen",
   "nav.profile.admin": "Admin",
   "nav.profile.signOut": "Abmelden",
