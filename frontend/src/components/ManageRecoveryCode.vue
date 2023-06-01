@@ -1,5 +1,5 @@
 <template>
-  <div v-if="me == null || myDevice == null">
+  <div v-if="recoveryCode == null">
     <div v-if="onFetchError == null">
       {{ t('common.loading') }}
     </div>
@@ -32,31 +32,34 @@
     </div>
 
     <div class="flex justify-end mt-4">
-      <button type="button" class="bg-red-500 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="regenerateRecoveryCode()">
+      <button type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showRegenerateRecoveryCodeDialog()">
         {{ t('manageRecoveryCode.regenerate') }}
       </button>
     </div>
   </div>
+
+  <RegenerateRecoveryCodeDialog v-if="regeneratingRecoveryCode && recoveryCode != null" ref="regenerateRecoveryCodeDialog" v-model:recovery-code="recoveryCode" @close="regeneratingRecoveryCode = false" />
 </template>
 
 <script setup lang="ts">
 import { ClipboardIcon, EyeIcon, EyeSlashIcon } from '@heroicons/vue/20/solid';
 import { base64 } from 'rfc4648';
-import { onMounted, ref } from 'vue';
+import { nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { DeviceDto, UserDto } from '../common/backend';
+import backend from '../common/backend';
 import { BrowserKeys, UserKeys } from '../common/crypto';
 import { JWE } from '../common/jwe';
 import { debounce } from '../common/util';
 import FetchError from './FetchError.vue';
+import RegenerateRecoveryCodeDialog from './RegenerateRecoveryCodeDialog.vue';
 const { t } = useI18n({ useScope: 'global' });
 
-const me = ref<UserDto>();
-const myDevice = ref<DeviceDto>();
-const recoveryCode = ref<string>('');
+const recoveryCode = ref<string>();
 const recoveryCodeInputType = ref<'password' | 'text'>('password');
 const copiedRecoveryCode = ref(false);
 const debouncedCopyFinish = debounce(() => copiedRecoveryCode.value = false, 2000);
+const regeneratingRecoveryCode = ref(false);
+const regenerateRecoveryCodeDialog = ref<typeof RegenerateRecoveryCodeDialog>();
 const onFetchError = ref<Error | null>();
 
 onMounted(fetchData);
@@ -64,21 +67,21 @@ onMounted(fetchData);
 async function fetchData() {
   onFetchError.value = null;
   try {
-    me.value = await backend.users.me(true);
-    if (me.value?.publicKey == null || me.value?.recoveryJwe == null) {
+    const me = await backend.users.me(true);
+    if (me.publicKey == null || me.recoveryJwe == null) {
       throw new Error('User not initialized.');
     }
-    const browserKeys = await BrowserKeys.load(me.value.id);
+    const browserKeys = await BrowserKeys.load(me.id);
     const browserId = await browserKeys.id();
-    myDevice.value = me.value.devices.find(d => d.id == browserId);
-    if (myDevice.value == null) {
+    const myDevice = me.devices.find(d => d.id == browserId);
+    if (myDevice == null) {
       throw new Error('Device not initialized.');
     }
-    const userKeys = await UserKeys.decryptOnBrowser(myDevice.value.userKeyJwe, browserKeys.keyPair.privateKey, base64.parse(me.value.publicKey));
-    const recoveryKey : { recoveryCode: string } = await JWE.parse(me.value.recoveryJwe, userKeys.keyPair.privateKey);
+    const userKeys = await UserKeys.decryptOnBrowser(myDevice.userKeyJwe, browserKeys.keyPair.privateKey, base64.parse(me.publicKey));
+    const recoveryKey : { recoveryCode: string } = await JWE.parse(me.recoveryJwe, userKeys.keyPair.privateKey);
     recoveryCode.value = recoveryKey.recoveryCode;
   } catch (error) {
-    console.error('Retrieving my device failed.', error);
+    console.error('Retrieving recovery code failed.', error);
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
 }
@@ -88,24 +91,16 @@ function toggleRecoveryCodeVisibility() {
 }
 
 async function copyRecoveryCode() {
+  if (recoveryCode.value == null) {
+    throw new Error('Invalid state.');
+  }
   await navigator.clipboard.writeText(recoveryCode.value);
   copiedRecoveryCode.value = true;
   debouncedCopyFinish();
 }
 
-async function regenerateRecoveryCode() {
-  if (me.value?.publicKey == null || myDevice.value == null) {
-    throw new Error('Illegal state.');
-  }
-  const browserKeys = await BrowserKeys.load(me.value.id);
-  const newCode = crypto.randomUUID(); // TODO something else?
-  const userKeys = await UserKeys.decryptOnBrowser(myDevice.value.userKeyJwe, browserKeys.keyPair.privateKey, base64.parse(me.value.publicKey));
-  const archive = await userKeys.export(newCode);
-  me.value.recoveryJwe = await JWE.build({ recoveryCode: newCode }, userKeys.keyPair.publicKey);
-  me.value.recoveryPbkdf2 = archive.encryptedPrivateKey;
-  me.value.recoverySalt = archive.salt;
-  me.value.recoveryIterations = archive.iterations;
-  await backend.users.putMe(me.value);
-  recoveryCode.value = newCode;
+async function showRegenerateRecoveryCodeDialog() {
+  regeneratingRecoveryCode.value = true;
+  nextTick(() => regenerateRecoveryCodeDialog.value?.show());
 }
 </script>

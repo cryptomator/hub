@@ -133,6 +133,13 @@
   "recoveryKeyDialog.description": "Dies ist dein Wiederherstellungsschlüssel für „{0}“. Verwahre ihn gut, er ist im Falle eines Systemausfalls deine einzige Möglichkeit, auf einen Tresor zuzugreifen.",
   "recoveryKeyDialog.recoveryKey": "Wiederherstellungsschlüssel für deinen Tresor",
 
+  "regenerateRecoveryCodeDialog.confirmRegenerateRecoveryCode.title": "Neues Geheimnis generieren",
+  "regenerateRecoveryCodeDialog.confirmRegenerateRecoveryCode.description": "Möchtest du ein neues persönliches Hub-Geheimnis generiereren? Dadurch wird das alte Geheimnis ungültig.",
+  "regenerateRecoveryCodeDialog.saveRecoveryCode.title": "Persönliches Hub-Geheimnis speichern",
+  "regenerateRecoveryCodeDialog.saveRecoveryCode.description": "Vergiss nicht, dieses neue Geheimnis zu speichern. Du benötigst es, um dich bei neuen Geräten anzumelden. Das alte Geheimnis kannst du gefahrlos löschen.",
+  "regenerateRecoveryCodeDialog.saveRecoveryCode.recoveryCode": "Persönliches Hub-Geheimnis",
+  "regenerateRecoveryCodeDialog.submit": "Neues Geheimnis generieren",
+
   "userSettings.title": "Einstellungen",
   "userSettings.general.title": "Allgemein",
   "userSettings.general.language.title": "Sprache",

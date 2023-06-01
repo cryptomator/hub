@@ -134,6 +134,13 @@
   "recoveryKeyDialog.description": "This is your recovery key for \"{0}\". Keep it safe, it is your only chance to regain access to a vault in case of system outage.",
   "recoveryKeyDialog.recoveryKey": "Recovery Key of Your Vault",
 
+  "regenerateRecoveryCodeDialog.confirmRegenerateRecoveryCode.title": "Regenerate Personal Hub Secret",
+  "regenerateRecoveryCodeDialog.confirmRegenerateRecoveryCode.description": "Do you want to generate a new Personal Hub Secret? If you do so, the old one will be invalidated.",
+  "regenerateRecoveryCodeDialog.saveRecoveryCode.title": "Save Personal Hub Secret",
+  "regenerateRecoveryCodeDialog.saveRecoveryCode.description": "Be sure to save this new secret. You'll need it to sign in to new devices. You can safely delete the old one.",
+  "regenerateRecoveryCodeDialog.saveRecoveryCode.recoveryCode": "Personal Hub Secret",
+  "regenerateRecoveryCodeDialog.submit": "Regenerate Secret",
+
   "setupUserKey.recoveryCode": "Personal Hub Secret",
   "setupUserKey.recoveryCode.description": "Your Personal Hub Secret is required to authorize this browser.",
   "setupUserKey.deviceName": "Browser Name",
@@ -142,7 +149,7 @@
   "setupUserKey.createUserKey.description": "This is your first login on this browser.",
   "setupUserKey.createUserKey.submit": "Continue",
   "setupUserKey.saveRecoveryCode.title": "Save your Personal Hub Secret",
-  "setupUserKey.saveRecoveryCode.description": "You'll need it to sign in on new devices.",
+  "setupUserKey.saveRecoveryCode.description": "You'll need it to sign in to new devices.",
   "setupUserKey.saveRecoveryCode.recoveryCodeHint": "You can look up your Personal Hub Secret later in your profile.",
   "setupUserKey.saveRecoveryCode.submit": "Finish Setup",
   "setupUserKey.enterRecoveryCode.title": "Authorization Required",
