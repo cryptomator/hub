@@ -421,7 +421,7 @@ class VersionService {
 
 class AuditLogService {
   public async getAllEventsBeforeId(startDate: Date, endDate: Date, beforeId: number, pageSize: number): Promise<AuditEventDto[]> {
-    return axiosAuth.get<AuditEventDto[]>(`/auditlog?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}&beforeId=${beforeId}&pageSize=${pageSize}`)
+    return axiosAuth.get<AuditEventDto[]>(`/auditlog?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}&paginationId=${beforeId}&pageSize=${pageSize}`)
       .then(response => response.data.map(dto => {
         dto.timestamp = new Date(dto.timestamp);
         return dto;
@@ -429,7 +429,7 @@ class AuditLogService {
   }
 
   public async getAllEventsAfterId(startDate: Date, endDate: Date, afterId: number, pageSize: number): Promise<AuditEventDto[]> {
-    return axiosAuth.get<AuditEventDto[]>(`/auditlog?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}&afterId=${afterId}&pageSize=${pageSize}`)
+    return axiosAuth.get<AuditEventDto[]>(`/auditlog?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}&paginationId=${afterId}&order=asc&pageSize=${pageSize}`)
       .then(response => response.data.map(dto => {
         dto.timestamp = new Date(dto.timestamp);
         return dto;
