@@ -94,6 +94,18 @@ async function copyRecoveryCode() {
 }
 
 async function regenerateRecoveryCode() {
-  // TODO
+  if (me.value?.publicKey == null || myDevice.value == null) {
+    throw new Error('Illegal state.');
+  }
+  const browserKeys = await BrowserKeys.load(me.value.id);
+  const newCode = crypto.randomUUID(); // TODO something else?
+  const userKeys = await UserKeys.decryptOnBrowser(myDevice.value.userKeyJwe, browserKeys.keyPair.privateKey, base64.parse(me.value.publicKey));
+  const archive = await userKeys.export(newCode);
+  me.value.recoveryJwe = await JWE.build({ recoveryCode: newCode }, userKeys.keyPair.publicKey);
+  me.value.recoveryPbkdf2 = archive.encryptedPrivateKey;
+  me.value.recoverySalt = archive.salt;
+  me.value.recoveryIterations = archive.iterations;
+  await backend.users.putMe(me.value);
+  recoveryCode.value = newCode;
 }
 </script>

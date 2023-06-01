@@ -434,7 +434,7 @@ export class UserKeys {
     if (userPublicKey instanceof CryptoKey) {
       publicKey = userPublicKey;
     } else {
-      publicKey = await crypto.subtle.importKey('spki', userPublicKey, UserKeys.KEY_DESIGNATION, false, []);
+      publicKey = await crypto.subtle.importKey('spki', userPublicKey, UserKeys.KEY_DESIGNATION, true, []);
     }
 
     let rawKey = new Uint8Array();
