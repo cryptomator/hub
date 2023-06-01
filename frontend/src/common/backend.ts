@@ -269,8 +269,8 @@ class UserService {
     return axiosAuth.put('/users/me', dto);
   }
 
-  public async me(withDevices: boolean = false, withAccessibleVaults: boolean = false): Promise<UserDto> {
-    return axiosAuth.get<UserDto>(`/users/me?withDevices=${withDevices}&withAccessibleVaults=${withAccessibleVaults}`).then(response => UserDto.copy(response.data));
+  public async me(withDevices: boolean = false): Promise<UserDto> {
+    return axiosAuth.get<UserDto>(`/users/me?withDevices=${withDevices}`).then(response => UserDto.copy(response.data));
   }
 
   public async listAll(): Promise<UserDto[]> {

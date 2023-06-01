@@ -65,7 +65,7 @@
 <script setup lang="ts">
 import { ComputedRef, computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { UserDto } from '../common/backend';
+import backend, { UserDto, VaultDto } from '../common/backend';
 import FetchError from './FetchError.vue';
 
 const { t } = useI18n({ useScope: 'global' });
@@ -87,7 +87,7 @@ const deviceState : ComputedRef<DeviceState> = computed(() => {
 });
 
 const vaultAccess : ComputedRef<VaultAccess> = computed(() => {
-  return me.value?.accessibleVaults.find(v => v.id === props.vaultId)
+  return accessibleVaults.value?.find(v => v.id === props.vaultId)
     ? VaultAccess.Allowed
     : VaultAccess.Denied;
 });
@@ -104,6 +104,7 @@ enum VaultAccess {
 }
 
 const me = ref<UserDto>();
+const accessibleVaults = ref<VaultDto[]>();
 const onFetchError = ref<Error | null>();
 
 onMounted(fetchData);
@@ -111,7 +112,8 @@ onMounted(fetchData);
 async function fetchData() {
   onFetchError.value = null;
   try {
-    me.value = await backend.users.me(true, true);
+    me.value = await backend.users.me(true);
+    accessibleVaults.value = await backend.vaults.listAccessible();
   } catch (error) {
     console.error('Retrieving user information failed.', error);
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
