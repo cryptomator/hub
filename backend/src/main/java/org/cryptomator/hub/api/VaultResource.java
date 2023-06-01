@@ -8,7 +8,6 @@ import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.Consumes;
@@ -21,13 +20,17 @@ import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.AccessToken;
+import org.cryptomator.hub.entities.CreateVaultEvent;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.EffectiveGroupMembership;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.entities.Group;
+import org.cryptomator.hub.entities.UnlockVaultEvent;
+import org.cryptomator.hub.entities.UpdateVaultMembershipEvent;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.filters.ActiveLicense;
@@ -70,6 +73,17 @@ public class VaultResource {
 		var currentUserId = jwt.getSubject();
 		var resultStream = Vault.findAccessibleByUser(currentUserId);
 		return resultStream.map(VaultDto::fromEntity).toList();
+	}
+
+	@GET
+	@Path("/some")
+	@RolesAllowed("admin")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Transactional
+	@Operation(summary = "list all vaults corresponding to the given ids", description = "list for each id in the list its corresponding vault. Ignores all id's where a vault does not exist, ")
+	@APIResponse(responseCode = "200")
+	public List<VaultDto> getSomeVaults(@QueryParam("ids") List<UUID> vaultIds) {
+		return Vault.findAllInList(vaultIds).map(VaultDto::fromEntity).toList();
 	}
 
 	@GET
@@ -137,6 +151,7 @@ public class VaultResource {
 
 		vault.directMembers.add(user);
 		vault.persist();
+		UpdateVaultMembershipEvent.log(jwt.getSubject(), vaultId, userId, UpdateVaultMembershipEvent.Operation.ADD);
 		return Response.status(Response.Status.CREATED).build();
 	}
 
@@ -167,6 +182,7 @@ public class VaultResource {
 		}
 		vault.directMembers.add(group);
 		vault.persist();
+		UpdateVaultMembershipEvent.log(jwt.getSubject(), vaultId, groupId, UpdateVaultMembershipEvent.Operation.ADD);
 		return Response.status(Response.Status.CREATED).build();
 	}
 
@@ -182,7 +198,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "403", description = "VaultAdminAuthorizationJWT expired or not yet valid")
 	@APIResponse(responseCode = "404", description = "vault not found")
 	public Response removeMember(@PathParam("vaultId") UUID vaultId, @PathParam("userId") @ValidId String userId) {
-		return removeAutority(vaultId, userId);
+		return removeAuthority(vaultId, userId);
 	}
 
 	@DELETE
@@ -197,13 +213,14 @@ public class VaultResource {
 	@APIResponse(responseCode = "403", description = "VaultAdminAuthorizationJWT expired or not yet valid")
 	@APIResponse(responseCode = "404", description = "vault not found")
 	public Response removeGroup(@PathParam("vaultId") UUID vaultId, @PathParam("groupId") @ValidId String groupId) {
-		return removeAutority(vaultId, groupId);
+		return removeAuthority(vaultId, groupId);
 	}
 
-	private Response removeAutority(UUID vaultId, String authorityId) {
+	private Response removeAuthority(UUID vaultId, String authorityId) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		vault.directMembers.removeIf(e -> e.id.equals(authorityId));
 		vault.persist();
+		UpdateVaultMembershipEvent.log(jwt.getSubject(), vaultId, authorityId, UpdateVaultMembershipEvent.Operation.REMOVE);
 		return Response.status(Response.Status.NO_CONTENT).build();
 	}
 
@@ -241,10 +258,12 @@ public class VaultResource {
 
 		var access = AccessToken.unlock(vaultId, deviceId, jwt.getSubject());
 		if (access != null) {
+			UnlockVaultEvent.log(jwt.getSubject(), vaultId, deviceId, UnlockVaultEvent.Result.SUCCESS);
 			return access.jwe;
 		} else if (Device.findById(deviceId) == null) {
 			throw new NotFoundException("No such device.");
 		} else {
+			UnlockVaultEvent.log(jwt.getSubject(), vaultId, deviceId, UnlockVaultEvent.Result.UNAUTHORIZED);
 			throw new ForbiddenException("Access to this device not granted.");
 		}
 	}
@@ -318,6 +337,7 @@ public class VaultResource {
 		vault.directMembers.add(currentUser);
 		try {
 			vault.persistAndFlush();
+			CreateVaultEvent.log(currentUser.id, vault.id);
 			return Response.created(URI.create(".")).build();
 		} catch (PersistenceException e) {
 			if (e instanceof ConstraintViolationException) {
