@@ -251,6 +251,12 @@ export class AuditLogEntityCache {
       }
     }
   }
+
+  public invalidateAll() {
+    this.vaults.clear();
+    this.authorities.clear();
+    this.devices.clear();
+  }
 }
 
 /* Services */
