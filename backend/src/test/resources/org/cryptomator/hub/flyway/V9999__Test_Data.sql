@@ -62,3 +62,25 @@ VALUES
 	('device1', '7E57C0DE-0000-4000-8000-000100001111', 'legacy.jwe.jwe.vault1.device1'), -- direct access
 	('device2', '7E57C0DE-0000-4000-8000-000100001111', 'legacy.jwe.jwe.vault1.device2'), -- direct access
 	('device3', '7E57C0DE-0000-4000-8000-000100002222', 'legacy.jwe.jwe.vault2.device3'); -- access via group1
+
+INSERT INTO "audit_event" ("id", "timestamp", "type")
+VALUES
+    (999, '1970-01-01T00:00:02.900Z', 'CREATE_VAULT'),
+    (1000, '1970-01-01T00:00:03Z', 'UPDATE_VAULT_MEMBERSHIP'),
+    (1001, '1970-01-01T00:00:04Z', 'UPDATE_VAULT_MEMBERSHIP'),
+    (1111, '1970-01-01T00:00:04.999Z', 'UNLOCK_VAULT'),
+    (4242, '1970-01-01T00:00:05Z', 'UNLOCK_VAULT');
+
+INSERT INTO "unlock_vault_event" ("id", "user_id", "vault_id", "device_id", "result")
+VALUES
+    (1111, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'device3', 'UNAUTHORIZED'),
+    (4242, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'device1', 'SUCCESS');
+
+INSERT INTO "create_vault_event" ("id", "user_id", "vault_id")
+VALUES
+    (999, 'user1', '7E57C0DE-0000-4000-8000-000100001111');
+
+INSERT INTO "update_vault_membership_event" ("id", "user_id", "vault_id", "authority_id", "operation")
+VALUES
+    (1000, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'user2', 'ADD'),
+    (1001, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'user2', 'REMOVE');

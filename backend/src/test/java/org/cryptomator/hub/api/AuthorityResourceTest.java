@@ -12,9 +12,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
 import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.hasSize;
 
 @QuarkusTest
 @DisplayName("Resource /authorities")
@@ -79,6 +82,53 @@ public class AuthorityResourceTest {
 			when().get("/authorities/search?query=1")
 					.then().statusCode(200)
 					.body("id", hasItems("user1", "group1"));
+		}
+	}
+
+	@Nested
+	@DisplayName("GET /authorities?ids=...")
+	@TestSecurity(user = "User Name 1", roles = {"user", "admin"})
+	@OidcSecurity(claims = {
+			@Claim(key = "sub", value = "user1")
+	})
+	public class GetSome {
+
+		@Test
+		@DisplayName("GET /authorities returns 200 with empty body")
+		public void testGetSomeEmpty() {
+			when().get("/authorities")
+					.then().statusCode(200)
+					.body("", hasSize(0));
+		}
+
+		@Test
+		@DisplayName("GET /authorities?ids=iDoNotExist returns 200 with empty body")
+		public void testGetSomeNotExisting() {
+			given().param("ids", "iDoNotExist")
+					.when().get("/authorities")
+					.then().statusCode(200)
+					.body("", hasSize(0));
+		}
+
+		@Test
+		@DisplayName("GET /authorities?ids=user1&ids=group2 returns 200 with body containing user1 and group2")
+		public void testGetSome() {
+			given().param("ids", "user1", "group2")
+					.when().get("/authorities")
+					.then().statusCode(200)
+					.body("id", containsInAnyOrder("user1", "group2"));
+		}
+
+		@Test
+		@DisplayName("GET /authorities?ids=user1&ids=group2 as user returns 403")
+		@TestSecurity(user = "User Name 1", roles = {"user"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user1")
+		})
+		public void testGetSomeAsUser() {
+			given().param("ids", "user1", "group2")
+					.when().get("/authorities")
+					.then().statusCode(403);
 		}
 	}
 }

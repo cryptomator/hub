@@ -16,6 +16,7 @@ import org.hibernate.annotations.Immutable;
 
 import java.time.Instant;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -37,6 +38,13 @@ import java.util.stream.Stream;
 				INNER JOIN EffectiveVaultAccess a ON a.id.vaultId = v.id AND a.id.authorityId = :userId
 				WHERE a.role = :role
 				""")
+@NamedQuery(name = "Vault.allInList",
+		query = """
+				SELECT v
+				FROM Vault v
+				WHERE v.id IN :ids
+				"""
+)
 public class Vault extends PanacheEntityBase {
 
 	@Id
@@ -92,6 +100,10 @@ public class Vault extends PanacheEntityBase {
 
 	public static Stream<Vault> findAccessibleByUser(String userId, VaultAccess.Role role) {
 		return find("#Vault.accessibleByUserAndRole", Parameters.with("userId", userId).and("role", role)).stream();
+	}
+
+	public static Stream<Vault> findAllInList(List<UUID> ids) {
+		return find("#Vault.allInList", Parameters.with("ids", ids)).stream();
 	}
 
 	@Override

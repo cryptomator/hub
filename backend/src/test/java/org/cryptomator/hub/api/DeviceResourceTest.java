@@ -20,6 +20,8 @@ import java.time.Instant;
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.hasSize;
 
 @QuarkusTest
 @DisplayName("Resource /devices")
@@ -220,4 +222,50 @@ public class DeviceResourceTest {
 
 	}
 
+	@Nested
+	@DisplayName("GET /devices?ids=...")
+	@TestSecurity(user = "User Name 1", roles = {"user", "admin"})
+	@OidcSecurity(claims = {
+			@Claim(key = "sub", value = "user1")
+	})
+	public class GetSome {
+
+		@Test
+		@DisplayName("GET /devices returns 200 with empty body")
+		public void testGetSomeEmpty() {
+			when().get("/devices")
+					.then().statusCode(200)
+					.body("", hasSize(0));
+		}
+
+		@Test
+		@DisplayName("GET /devices?ids=iDoNotExist returns 200 with empty body")
+		public void testGetSomeNotExisting() {
+			given().param("ids", "iDoNotExist")
+					.when().get("/devices")
+					.then().statusCode(200)
+					.body("", hasSize(0));
+		}
+
+		@Test
+		@DisplayName("GET /devices?ids=device2&ids=device3 returns 200 with body containing device2 and device3")
+		public void testGetSome() {
+			given().param("ids", "device2", "device3")
+					.when().get("/devices")
+					.then().statusCode(200)
+					.body("id", containsInAnyOrder("device2", "device3"));
+		}
+
+		@Test
+		@DisplayName("GET /devices?ids=device2&ids=device3 as user returns 403")
+		@TestSecurity(user = "User Name 1", roles = {"user"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user1")
+		})
+		public void testGetSomeAsUser() {
+			given().param("ids", "device2", "device3")
+					.when().get("/devices")
+					.then().statusCode(403);
+		}
+	}
 }

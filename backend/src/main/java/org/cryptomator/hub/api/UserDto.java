@@ -1,6 +1,7 @@
 package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.annotation.Nullable;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.validation.OnlyBase64Chars;
 import org.cryptomator.hub.validation.ValidJWE;
@@ -25,7 +26,7 @@ public final class UserDto extends AuthorityDto {
 	public final int recoveryIterations;
 
 	UserDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("pictureUrl") String pictureUrl, @JsonProperty("email") String email, @JsonProperty("devices") Set<DeviceResource.DeviceDto> devices,
-			@JsonProperty("publicKey") @OnlyBase64Chars String publicKey, @JsonProperty("recoveryJwe") @ValidJWE String recoveryJwe, @JsonProperty("recoveryPbkdf2") @OnlyBase64Chars String recoveryPbkdf2, @JsonProperty("recoverySalt") @OnlyBase64Chars String recoverySalt, @JsonProperty("recoveryIterations") int recoveryIterations) {
+			@Nullable @JsonProperty("publicKey") @OnlyBase64Chars String publicKey, @Nullable @JsonProperty("recoveryJwe") @ValidJWE String recoveryJwe, @Nullable @JsonProperty("recoveryPbkdf2") @OnlyBase64Chars String recoveryPbkdf2, @Nullable @JsonProperty("recoverySalt") @OnlyBase64Chars String recoverySalt, @JsonProperty("recoveryIterations") int recoveryIterations) {
 		super(id, Type.USER, name, pictureUrl);
 		this.email = email;
 		this.devices = devices;

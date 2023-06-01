@@ -18,6 +18,7 @@ import org.cryptomator.hub.api.DeviceResource;
 
 import java.time.Instant;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -29,6 +30,12 @@ import java.util.stream.Stream;
 @NamedQuery(name = "Device.findByIdAndOwner",
 		query = "SELECT d FROM Device d WHERE d.id = :deviceId AND d.owner.id = :userId"
 )
+@NamedQuery(name = "Device.allInList",
+		query = """
+				SELECT d
+				FROM Device d
+				WHERE d.id IN :ids
+				""")
 public class Device extends PanacheEntityBase {
 
 	public enum Type {
@@ -100,4 +107,7 @@ public class Device extends PanacheEntityBase {
 		return find("#Device.findByIdAndOwner", Parameters.with("deviceId", deviceId).and("userId", userId)).singleResult();
 	}
 
+	public static Stream<Device> findAllInList(List<String> ids) {
+		return find("#Device.allInList", Parameters.with("ids", ids)).stream();
+	}
 }
