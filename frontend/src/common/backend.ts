@@ -5,6 +5,7 @@ import authPromise from './auth';
 import config, { backendBaseURL } from './config';
 import { VaultKeys } from './crypto';
 import { JWTHeader } from './jwt';
+import { Deferred, debounce } from './util';
 
 const axiosBaseCfg: AxiosRequestConfig = {
   baseURL: backendBaseURL,
@@ -163,6 +164,101 @@ export type VersionDto = {
   keycloakVersion: string;
 }
 
+export type AuditEventDto = {
+  id: number;
+  timestamp: Date;
+  type: 'CREATE_VAULT' | 'UNLOCK_VAULT' | 'UPDATE_VAULT_MEMBERSHIP';
+}
+
+export type CreateVaultEventDto = AuditEventDto & {
+  userId: string;
+  vaultId: string;
+}
+
+export type UnlockVaultEventDto = AuditEventDto & {
+  userId: string;
+  vaultId: string;
+  deviceId: string;
+  result: 'SUCCESS' | 'UNAUTHORIZED';
+}
+
+export type UpdateVaultMembershipEventDto = AuditEventDto & {
+  userId: string;
+  vaultId: string;
+  authorityId: string;
+  operation: 'ADD' | 'REMOVE';
+}
+
+/* AuditLogEntityCache */
+
+export class AuditLogEntityCache {
+  private static instance: AuditLogEntityCache;
+
+  private vaults: Map<string, Deferred<VaultDto>>;
+  private authorities: Map<string, Deferred<AuthorityDto>>;
+  private devices: Map<string, Deferred<DeviceDto>>;  
+
+  private constructor() {
+    this.vaults = new Map();
+    this.authorities = new Map();
+    this.devices = new Map();
+  }
+
+  public static getInstance(): AuditLogEntityCache {
+    if (!AuditLogEntityCache.instance) {
+      AuditLogEntityCache.instance = new AuditLogEntityCache();
+    }
+    return AuditLogEntityCache.instance;
+  }
+
+  public async getVault(vaultId: string): Promise<VaultDto> {
+    return this.getEntity<VaultDto>(vaultId, this.vaults, this.debouncedResolvePendingVaults);
+  }
+
+  public async getAuthority(authorityId: string): Promise<AuthorityDto> {
+    return this.getEntity<AuthorityDto>(authorityId, this.authorities, this.debouncedResolvePendingAuthorities);
+  }
+
+  public async getDevice(deviceId: string): Promise<DeviceDto> {
+    return this.getEntity<DeviceDto>(deviceId, this.devices, this.debouncedResolvePendingDevices);
+  }
+
+  private async getEntity<T>(entityId: string, entities: Map<string, Deferred<T>>, debouncedResolvePendingEntities: Function): Promise<T> {
+    const cachedEntity = entities.get(entityId);
+    if (!cachedEntity) {  
+      const deferredEntity = new Deferred<T>();
+      entities.set(entityId, deferredEntity);
+      debouncedResolvePendingEntities();
+      return deferredEntity.promise;
+    } else {
+      return cachedEntity.promise;
+    }
+  }
+
+  private debouncedResolvePendingVaults = debounce(async () => await this.resolvePendingEntities<VaultDto>(this.vaults, services.vaults.listSome), 100);
+  private debouncedResolvePendingAuthorities = debounce(async () => await this.resolvePendingEntities<AuthorityDto>(this.authorities, services.authorities.listSome), 100);
+  private debouncedResolvePendingDevices = debounce(async () => await this.resolvePendingEntities<DeviceDto>(this.devices, services.devices.listSome), 100);
+
+  private async resolvePendingEntities<T extends { id: string }>(entities: Map<string, Deferred<T>>, listSome: (ids: string[]) => Promise<T[]>): Promise<void> {
+    const pendingEntities = Array.from(entities.entries()).filter(([_, v]) => v.status === 'pending');
+    const entitiesResult = await listSome(pendingEntities.map(([k, _]) => k));
+    for (const [entityId, deferredEntity] of pendingEntities) {
+      const entity = entitiesResult.find(v => v.id === entityId);
+      if (entity) {
+        deferredEntity.resolve(entity);
+      } else {
+        deferredEntity.reject(new Error(`Entity ${entityId} not found`));
+      }
+    }
+  }
+
+  public invalidateAll() {
+    this.vaults.clear();
+    this.authorities.clear();
+    this.devices.clear();
+  }
+}
+
 /* Services */
 
 export interface VaultIdHeader extends JWTHeader {
@@ -172,6 +268,11 @@ export interface VaultIdHeader extends JWTHeader {
 class VaultService {
   public async listAccessible(): Promise<VaultDto[]> {
     return axiosAuth.get('/vaults').then(response => response.data);
+  }
+
+  public async listSome(vaultsIds: string[]): Promise<VaultDto[]> {
+    const query = `ids=${vaultsIds.join('&ids=')}`;
+    return axiosAuth.get(`/vaults/some?${query}`).then(response => response.data);
   }
 
   public async listAll(): Promise<VaultDto[]> {
@@ -250,6 +351,11 @@ class VaultService {
   }
 }
 class DeviceService {
+  public async listSome(deviceIds: string[]): Promise<DeviceDto[]> {
+    const query = `ids=${deviceIds.join('&ids=')}`;
+    return axiosAuth.get<DeviceDto[]>(`/devices?${query}`).then(response => response.data);
+  }
+
   public async removeDevice(deviceId: string): Promise<AxiosResponse<any>> {
     return axiosAuth.delete(`/devices/${deviceId}`)
       .catch((error) => rethrowAndConvertIfExpected(error, 404));
@@ -286,6 +392,11 @@ class AuthorityService {
       });
     });
   }
+
+  public async listSome(authorityIds: string[]): Promise<AuthorityDto[]> {
+    const query = `ids=${authorityIds.join('&ids=')}`;
+    return axiosAuth.get<AuthorityDto[]>(`/authorities?${query}`).then(response => response.data);
+  }
 }
 
 class BillingService {
@@ -308,6 +419,24 @@ class VersionService {
   }
 }
 
+class AuditLogService {
+  public async getAllEventsBeforeId(startDate: Date, endDate: Date, beforeId: number, pageSize: number): Promise<AuditEventDto[]> {
+    return axiosAuth.get<AuditEventDto[]>(`/auditlog?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}&paginationId=${beforeId}&pageSize=${pageSize}`)
+      .then(response => response.data.map(dto => {
+        dto.timestamp = new Date(dto.timestamp);
+        return dto;
+      }));
+  }
+
+  public async getAllEventsAfterId(startDate: Date, endDate: Date, afterId: number, pageSize: number): Promise<AuditEventDto[]> {
+    return axiosAuth.get<AuditEventDto[]>(`/auditlog?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}&paginationId=${afterId}&order=asc&pageSize=${pageSize}`)
+      .then(response => response.data.map(dto => {
+        dto.timestamp = new Date(dto.timestamp);
+        return dto;
+      }));
+  }
+}
+
 /**
  * Note: Each service can thrown an {@link UnauthorizedError} when the access token is expired!
  */
@@ -317,7 +446,8 @@ const services = {
   authorities: new AuthorityService(),
   devices: new DeviceService(),
   billing: new BillingService(),
-  version: new VersionService()
+  version: new VersionService(),
+  auditLogs: new AuditLogService()
 };
 
 function convertExpectedToBackendError(status: number): BackendError {

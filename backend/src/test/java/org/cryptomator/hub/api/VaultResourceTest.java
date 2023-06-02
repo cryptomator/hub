@@ -25,7 +25,6 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.security.KeyFactory;
@@ -46,6 +45,8 @@ import static io.restassured.RestAssured.when;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.Matchers.comparesEqualTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.text.IsEqualIgnoringCase.equalToIgnoringCase;
 
 @QuarkusTest
@@ -715,7 +716,7 @@ public class VaultResourceTest {
 
 		@Test
 		@DisplayName("GET /vaults/{vaultid}/keys/{deviceId} returns 404 for not-existing vaults")
-		@TestSecurity(user = "User Name 1", roles = {"user","admin"})
+		@TestSecurity(user = "User Name 1", roles = {"user", "admin"})
 		@OidcSecurity(claims = {
 				@Claim(key = "sub", value = "user1")
 		})
@@ -726,7 +727,7 @@ public class VaultResourceTest {
 
 		@Test
 		@DisplayName("GET /vaults/{vaultid}/keys/{deviceId} returns 403 for archived vaults")
-		@TestSecurity(user = "User Name 1", roles = {"user","admin"})
+		@TestSecurity(user = "User Name 1", roles = {"user", "admin"})
 		@OidcSecurity(claims = {
 				@Claim(key = "sub", value = "user1")
 		})
@@ -735,6 +736,53 @@ public class VaultResourceTest {
 					.then().statusCode(403);
 		}
 
+	}
+
+	@DisplayName("/vaults/some")
+	public class GetSomeVaults {
+
+		@Nested
+		@DisplayName("as admin")
+		@TestSecurity(user = "User Name 1", roles = {"user", "admin"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user1")
+		})
+		public class AsAdmin {
+
+			@Test
+			@DisplayName("GET /vaults/some?ids=7e57c0de-0000-4000-8000-000100001111&ids=7e57c0de-0000-4000-8000-000100002222")
+			public void testListSomeVaults() {
+				given().param("ids", "7e57c0de-0000-4000-8000-000100001111", "7e57c0de-0000-4000-8000-000100002222")
+						.when().get("/vaults/some")
+						.then().statusCode(200)
+						.body("id", Matchers.containsInAnyOrder(comparesEqualTo("7e57c0de-0000-4000-8000-000100001111"), comparesEqualTo("7e57c0de-0000-4000-8000-000100002222")));
+			}
+
+			@Test
+			@DisplayName("GET /vaults/some?ids=7e57c0de-0000-4000-8000-BADBADBADBAD")
+			public void testListSomeVaultsNotExistingId() {
+				given().param("ids", "7e57c0de-0000-4000-8000-BADBADBADBAD")
+						.when().get("/vaults/some")
+						.then().statusCode(200)
+						.body("", hasSize(0));
+			}
+
+			@Test
+			@DisplayName("GET /vaults/some")
+			public void testListSomeVaultsNoParams() {
+				given().when().get("/vaults/some")
+						.then().statusCode(200)
+						.body("", hasSize(0));
+			}
+		}
+
+		@Test
+		@DisplayName("GET /vaults/some?ids=7e57c0de-0000-4000-8000-000100001111")
+		public void testListSomeVaultsAsUser() {
+			given().param("ids", "7e57c0de-0000-4000-8000-000100001111")
+					.when().get("/vaults/some")
+					.then().statusCode(403);
+		}
 	}
 
 }
