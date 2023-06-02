@@ -243,7 +243,7 @@ export class ECDH_ES {
 
 // visible for testing
 export class PBES2 {
-  public static readonly DEFAULT_ITERATION_COUNT = 1000; // FIXME increase!!
+  public static readonly DEFAULT_ITERATION_COUNT = 1000000;
   private static readonly NULL_BYTE = Uint8Array.of(0x00);
 
   // TODO: can we dedup this with crypto.ts's PBKDF2? Or is the latter unused anyway, once we migrate all ciphertext to JWE containers
