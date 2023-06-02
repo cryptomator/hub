@@ -48,7 +48,7 @@ import { nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend from '../common/backend';
 import { BrowserKeys, UserKeys } from '../common/crypto';
-import { JWE } from '../common/jwe';
+import { JWEParser } from '../common/jwe';
 import { debounce } from '../common/util';
 import FetchError from './FetchError.vue';
 import RegenerateRecoveryCodeDialog from './RegenerateRecoveryCodeDialog.vue';
@@ -78,7 +78,7 @@ async function fetchData() {
       throw new Error('Device not initialized.');
     }
     const userKeys = await UserKeys.decryptOnBrowser(myDevice.userKeyJwe, browserKeys.keyPair.privateKey, base64.parse(me.publicKey));
-    const recoveryKey : { recoveryCode: string } = await JWE.parse(me.recoveryJwe, userKeys.keyPair.privateKey);
+    const recoveryKey : { recoveryCode: string } = await JWEParser.parse(me.recoveryJwe).decryptEcdhEs(userKeys.keyPair.privateKey);
     recoveryCode.value = recoveryKey.recoveryCode;
   } catch (error) {
     console.error('Retrieving recovery code failed.', error);

@@ -146,7 +146,7 @@ import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { UserDto } from '../common/backend';
 import { BrowserKeys, UserKeys } from '../common/crypto';
-import { JWE } from '../common/jwe';
+import { JWEBuilder } from '../common/jwe';
 import { debounce } from '../common/util';
 import router from '../router';
 import FetchError from './FetchError.vue';
@@ -212,7 +212,7 @@ async function createUserKey() {
     recoveryCode.value = crypto.randomUUID(); // TODO something else?
     const archive = await userKeys.export(recoveryCode.value);
     me.publicKey = archive.publicKey;
-    me.recoveryJwe = await JWE.build({ recoveryCode: recoveryCode.value }, userKeys.keyPair.publicKey);
+    me.recoveryJwe = await JWEBuilder.ecdhEs(userKeys.keyPair.publicKey).encrypt({ recoveryCode: recoveryCode.value });
     me.recoveryPbkdf2 = archive.encryptedPrivateKey;
     me.recoverySalt = archive.salt;
     me.recoveryIterations = archive.iterations;

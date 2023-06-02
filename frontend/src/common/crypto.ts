@@ -1,6 +1,6 @@
 import * as miscreant from 'miscreant';
 import { base16, base32, base64, base64url } from 'rfc4648';
-import { JWE } from './jwe';
+import { JWEBuilder, JWEParser } from './jwe';
 import { JWT, JWTHeader } from './jwt';
 import { CRC32, wordEncoder } from './util';
 
@@ -40,7 +40,7 @@ interface JWEPayload {
 const GCM_NONCE_LEN = 12;
 const PBKDF2_ITERATION_COUNT = 1000000;
 
-async function pbkdf2(password: string, salt: Uint8Array, iterations: number, keyParams: AesDerivedKeyParams): Promise<CryptoKey> {
+async function pbkdf2(password: string, hash: 'SHA-256' | 'SHA-512', salt: Uint8Array, iterations: number, keyParams: AesDerivedKeyParams): Promise<CryptoKey> {
   const encodedPw = new TextEncoder().encode(password);
   const pwKey = await crypto.subtle.importKey(
     'raw',
@@ -49,10 +49,10 @@ async function pbkdf2(password: string, salt: Uint8Array, iterations: number, ke
     false,
     ['deriveKey']
   );
-  return await crypto.subtle.deriveKey(
+  return crypto.subtle.deriveKey(
     {
       name: 'PBKDF2',
-      hash: 'SHA-256',
+      hash: hash,
       salt: salt,
       iterations: iterations
     },
@@ -120,7 +120,7 @@ export class VaultKeys {
     const salt = crypto.getRandomValues(new Uint8Array(16));
     const encodedSalt = base64.stringify(salt);
     // kek:
-    const kek = pbkdf2(password, salt, PBKDF2_ITERATION_COUNT, VaultKeys.KEK_KEY_DESIGNATION);
+    const kek = pbkdf2(password, 'SHA-256', salt, PBKDF2_ITERATION_COUNT, VaultKeys.KEK_KEY_DESIGNATION);
     // masterkey:
     const masterKeyIv = crypto.getRandomValues(new Uint8Array(GCM_NONCE_LEN));
     const wrappedMasterKey = new Uint8Array(await crypto.subtle.wrapKey(
@@ -154,7 +154,7 @@ export class VaultKeys {
    * @throws WrongPasswordError, if the wrong password is used
    */
   public static async unwrap(password: string, wrapped: WrappedVaultKeys): Promise<VaultKeys> {
-    const kek = pbkdf2(password, base64.parse(wrapped.salt, { loose: true }), wrapped.iterations, VaultKeys.KEK_KEY_DESIGNATION);
+    const kek = pbkdf2(password, 'SHA-256', base64.parse(wrapped.salt, { loose: true }), wrapped.iterations, VaultKeys.KEK_KEY_DESIGNATION);
     const decodedMasterKey = base64.parse(wrapped.masterkey, { loose: true });
     const decodedPrivateKey = base64.parse(wrapped.signaturePrivateKey, { loose: true });
     const decodedPublicKey = base64.parse(wrapped.signaturePublicKey, { loose: true });
@@ -284,7 +284,7 @@ export class VaultKeys {
       const payload: JWEPayload = {
         key: base64.stringify(rawkey)
       };
-      return JWE.build(payload, publicKey);
+      return JWEBuilder.ecdhEs(publicKey).encrypt(payload);
     } finally {
       rawkey.fill(0x00);
     }
@@ -357,7 +357,7 @@ export class UserKeys {
    * @returns 
    */
   public static async recover(encodedPublicKey: string, encryptedPrivateKey: string, recoveryCode: string, salt: string, iterations: number) {
-    const kek = pbkdf2(recoveryCode, base64.parse(salt, { loose: true }), iterations, UserKeys.KEK_DESIGNATION);
+    const kek = pbkdf2(recoveryCode, 'SHA-256', base64.parse(salt, { loose: true }), iterations, UserKeys.KEK_DESIGNATION);
     const decodedPublicKey = base64.parse(encodedPublicKey, { loose: true });
     const decodedPrivateKey = base64.parse(encryptedPrivateKey, { loose: true });
     const privateKey = crypto.subtle.unwrapKey(
@@ -381,7 +381,7 @@ export class UserKeys {
 
   public async export(recoveryCode: string): Promise<UserKeyArchive> {
     const salt = crypto.getRandomValues(new Uint8Array(12));
-    const kek = pbkdf2(recoveryCode, salt, PBKDF2_ITERATION_COUNT, UserKeys.KEK_DESIGNATION);
+    const kek = pbkdf2(recoveryCode, 'SHA-256', salt, PBKDF2_ITERATION_COUNT, UserKeys.KEK_DESIGNATION);
     const iv = crypto.getRandomValues(new Uint8Array(GCM_NONCE_LEN));
     const publicKey = new Uint8Array(await crypto.subtle.exportKey('spki', this.keyPair.publicKey));
     const wrappedPrivateKey = new Uint8Array(await crypto.subtle.wrapKey(
@@ -416,7 +416,7 @@ export class UserKeys {
       const payload: JWEPayload = {
         key: base64.stringify(rawkey)
       };
-      return JWE.build(payload, publicKey);
+      return JWEBuilder.ecdhEs(publicKey).encrypt(payload);
     } finally {
       rawkey.fill(0x00);
     }
@@ -439,7 +439,7 @@ export class UserKeys {
 
     let rawKey = new Uint8Array();
     try {
-      const payload: JWEPayload = await JWE.parse(jwe, browserPrivateKey);
+      const payload: JWEPayload = await JWEParser.parse(jwe).decryptEcdhEs(browserPrivateKey);
       rawKey = base64.parse(payload.key);
       const privateKey = await crypto.subtle.importKey('pkcs8', rawKey, UserKeys.KEY_DESIGNATION, true, UserKeys.KEY_USAGES);
       return new UserKeys({ publicKey: publicKey, privateKey: privateKey });

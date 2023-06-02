@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { describe } from 'mocha';
 import { base64url } from 'rfc4648';
-import { ConcatKDF, JWE, JWEHeader } from '../../src/common/jwe';
+import { ConcatKDF, ECDH_ES, ECDH_P384, JWEBuilder, JWEHeader, JWEParser, PBES2 } from '../../src/common/jwe';
 
 describe('JWE', () => {
   before(done => {
@@ -26,30 +26,65 @@ describe('JWE', () => {
     });
   });
 
-  describe('RFC 7516 / RFC 7518', () => {
-    it('should build JWE for given public key', async () => {
-      const recipientPublicKey = await crypto.subtle.importKey(
-        'jwk',
-        {
-          kty: 'EC',
-          crv: 'P-384',
-          x: 'RxQR-NRN6Wga01370uBBzr2NHDbKIC56tPUEq2HX64RhITGhii8Zzbkb1HnRmdF0',
-          y: 'aq6uqmUy4jUhuxnKxsv59A6JeK7Unn-mpmm3pQAygjoGc9wrvoH4HWJSQYUlsXDu'
-        },
-        {
-          name: 'ECDH',
-          namedCurve: 'P-384'
-        },
-        false,
-        []
-      );
+  describe('JWE using alg: ECDH-ES', () => {
+    it('x = decrypt(encrypt(x, pubKey), privKey)', async () => {
+      // pkcs8: ME8CAQAwEAYHKoZIzj0CAQYFK4EEACIEODA2AgEBBDEA6QybmBitf94veD5aCLr7nlkF5EZpaXHCfq1AXm57AKQyGOjTDAF9EQB28fMywTDQ:
+      const publicKeyJwk: JsonWebKey = {
+        kty: 'EC',
+        crv: 'P-384',
+        x: 'RxQR-NRN6Wga01370uBBzr2NHDbKIC56tPUEq2HX64RhITGhii8Zzbkb1HnRmdF0',
+        y: 'aq6uqmUy4jUhuxnKxsv59A6JeK7Unn-mpmm3pQAygjoGc9wrvoH4HWJSQYUlsXDu'
+      };
+      const privateKeyJwk: JsonWebKey = {
+        ...publicKeyJwk,
+        d: '6QybmBitf94veD5aCLr7nlkF5EZpaXHCfq1AXm57AKQyGOjTDAF9EQB28fMywTDQ'
+      };
+      const recipientPublicKey = await crypto.subtle.importKey('jwk', publicKeyJwk, ECDH_P384, false, []);
+      const recipientPrivateKey = await crypto.subtle.importKey('jwk', privateKeyJwk, ECDH_P384, true, ['deriveBits']);
 
-      const result = await JWE.build({ hello: 'world' }, recipientPublicKey);
-      expect(result).not.to.be.null; // TODO do some tests
+      const orig = { hello: 'world' };
+
+      const jwe = await JWEBuilder.ecdhEs(recipientPublicKey).encrypt(orig);
+
+      const decrypted = await JWEParser.parse(jwe).decryptEcdhEs(recipientPrivateKey);
+      expect(decrypted).to.deep.eq(orig);
     });
 
+    // TODO: add some more decrypt-only tests with JWE from 3rd party
+  });
+
+  describe('JWE using alg: PBES2-HS512+A256KW', () => {
+    it('x = decrypt(encrypt(x, pass), pass)', async () => {
+      const orig = { hello: 'world' };
+
+      const jwe = await JWEBuilder.pbes2('topsecret').encrypt(orig);
+
+      const decrypted = await JWEParser.parse(jwe).decryptPbes2('topsecret');
+      expect(decrypted).to.deep.eq(orig);
+    });
+
+    // TODO: add some more decrypt-only tests with JWE from 3rd party
+  });
+
+  describe('PBES2', () => {
     /**
-     * All these test vectors are taken from https://www.rfc-editor.org/rfc/rfc7518#appendix-C
+     * Test vectors from https://www.rfc-editor.org/rfc/rfc7517#appendix-C.4
+     */
+    it('should derive expected key using PBES2', async () => {
+      const saltInput = Uint8Array.of(217, 96, 147, 112, 150, 117, 70, 247, 127, 8, 155, 137, 174, 42, 80, 215);
+      const iterations = 4096;
+      const password = 'Thus from my lips, by yours, my sin is purged.';
+
+      const wrappingKey = await PBES2.deriveWrappingKey(password, 'PBES2-HS256+A128KW', saltInput, iterations, true);
+      const rawKey = await crypto.subtle.exportKey('raw', wrappingKey);
+      expect(new Uint8Array(rawKey), 'wrappingKey').to.eql(Uint8Array.of(110, 171, 169, 92, 129, 92, 109, 117, 233, 242, 116, 233, 170, 14,
+        24, 75));
+    });
+  });
+
+  describe('ECDH_ES', () => {
+    /**
+     * Test vectors from https://www.rfc-editor.org/rfc/rfc7518#appendix-C
      */
     it('should derive expected key using ECDH-ES', async () => {
       const alicePub: JsonWebKey = {
@@ -92,8 +127,14 @@ describe('JWE', () => {
 
       const apu = new Uint8Array([65, 108, 105, 99, 101]);
       const apv = new Uint8Array([66, 111, 98]);
-      const header = new JWEHeader('ignored', 'A128GCM', alicePub, base64url.stringify(apu, { pad: false }), base64url.stringify(apv, { pad: false }));
-      const derived = await JWE.deriveContentKey(bob, alice, 256, 16, header, true);
+      const header: JWEHeader = {
+        alg: 'ECDH-ES', // not relevant for this test
+        enc: 'A128GCM',
+        epk: alicePub,
+        apu: base64url.stringify(apu, { pad: false }),
+        apv: base64url.stringify(apv, { pad: false })
+      };
+      const derived = await ECDH_ES.deriveContentKey(bob, alice, 256, 16, header, true);
       const derivedBytes = await crypto.subtle.exportKey('raw', derived);
       expect(new Uint8Array(derivedBytes), 'derived key').to.eql(new Uint8Array([86, 170, 141, 234, 248, 35, 109, 32, 92, 34, 40, 205, 113, 167, 16, 26]));
     });

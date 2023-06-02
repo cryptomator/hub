@@ -104,7 +104,7 @@ import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend from '../common/backend';
 import { BrowserKeys, UserKeys } from '../common/crypto';
-import { JWE } from '../common/jwe';
+import { JWEBuilder } from '../common/jwe';
 import { debounce } from '../common/util';
 
 enum State {
@@ -164,7 +164,7 @@ async function regenerateRecoveryCode() {
     const newCode = crypto.randomUUID(); // TODO something else?
     const userKeys = await UserKeys.decryptOnBrowser(myDevice.userKeyJwe, browserKeys.keyPair.privateKey, base64.parse(me.publicKey));
     const archive = await userKeys.export(newCode);
-    me.recoveryJwe = await JWE.build({ recoveryCode: newCode }, userKeys.keyPair.publicKey);
+    me.recoveryJwe = await JWEBuilder.ecdhEs(userKeys.keyPair.publicKey).encrypt({ recoveryCode: newCode });
     me.recoveryPbkdf2 = archive.encryptedPrivateKey;
     me.recoverySalt = archive.salt;
     me.recoveryIterations = archive.iterations;
