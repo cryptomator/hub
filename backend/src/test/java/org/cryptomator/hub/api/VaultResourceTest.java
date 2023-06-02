@@ -55,6 +55,7 @@ public class VaultResourceTest {
 
 	private static String vault1AdminJWT;
 	private static String vault2AdminJWT;
+	private static String vaultArchivedAdminJWT;
 
 	@Inject
 	AgroalDataSource dataSource;
@@ -68,9 +69,11 @@ public class VaultResourceTest {
 
 		var algorithmVault1 = Algorithm.ECDSA384((ECPrivateKey) getPrivateKey("MIG2AgEAMBAGByqGSM49AgEGBSuBBAAiBIGeMIGbAgEBBDAa57e0Q/KAqmIVOVcWX7b+Sm5YVNRUx8W7nc4wk1IBj2QJmsj+MeShQRHG4ozTE9KhZANiAASVL4lbdVoG9Wv0YpkafXf31YNN3rVD1/BAyZm4EYBg92X+taTvTlBjpaGWZuiSYRW9r+YQdKg1D3zAWb0UEKrOHjkgZ38MbBnTheGLlqH7VspuRWG12zydm0dF1ImiRik="));
 		var algorithmVault2 = Algorithm.ECDSA384((ECPrivateKey) getPrivateKey("MIG2AgEAMBAGByqGSM49AgEGBSuBBAAiBIGeMIGbAgEBBDCAHpFQ62QnGCEvYh/pE9QmR1C9aLcDItRbslbmhen/h1tt8AyMhskeenT+rAyyPhGhZANiAAQLW5ZJePZzMIPAxMtZXkEWbDF0zo9f2n4+T1h/2sh/fviblc/VTyrv10GEtIi5qiOy85Pf1RRw8lE5IPUWpgu553SteKigiKLUPeNpbqmYZUkWGh3MLfVzLmx85ii2vMU="));
+		var algorithmVaultArchived = Algorithm.ECDSA384((ECPrivateKey) getPrivateKey("MIG2AgEAMBAGByqGSM49AgEGBSuBBAAiBIGeMIGbAgEBBDCAHpFQ62QnGCEvYh/pE9QmR1C9aLcDItRbslbmhen/h1tt8AyMhskeenT+rAyyPhGhZANiAAQLW5ZJePZzMIPAxMtZXkEWbDF0zo9f2n4+T1h/2sh/fviblc/VTyrv10GEtIi5qiOy85Pf1RRw8lE5IPUWpgu553SteKigiKLUPeNpbqmYZUkWGh3MLfVzLmx85ii2vMU="));
 
 		vault1AdminJWT = JWT.create().withHeader(Map.of("vaultId", "7E57C0DE-0000-4000-8000-000100001111")).withIssuedAt(Instant.now()).sign(algorithmVault1);
 		vault2AdminJWT = JWT.create().withHeader(Map.of("vaultId", "7E57C0DE-0000-4000-8000-000100002222")).withIssuedAt(Instant.now()).sign(algorithmVault2);
+		vaultArchivedAdminJWT = JWT.create().withHeader(Map.of("vaultId", "7E57C0DE-0000-4000-8000-AAAAAAAAAAAA")).withIssuedAt(Instant.now()).sign(algorithmVaultArchived);
 	}
 
 	private static PrivateKey getPrivateKey(String keyBytes) throws NoSuchAlgorithmException, InvalidKeySpecException {
@@ -785,4 +788,71 @@ public class VaultResourceTest {
 		}
 	}
 
+	@Nested
+	@DisplayName("PUT /vaults/{vaultId}/users/{userId}")
+	@TestSecurity(user = "User Name 1", roles = {"user", "admin"})
+	@OidcSecurity(claims = {
+			@Claim(key = "sub", value = "user1")
+	})
+	public class AddUser {
+
+		@Test
+		@DisplayName("PUT /vaults/{vaultId}/users/{userId} returns 403 for archived vaults")
+		public void testAddUserArchived() {
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vaultArchivedAdminJWT).
+					when().put("/vaults/{vaultId}/users/{userId}", "7E57C0DE-0000-4000-8000-AAAAAAAAAAAA", "user2")
+					.then().statusCode(403);
+		}
+	}
+
+	@Nested
+	@DisplayName("DELETE /vaults/{vaultId}/users/{userId}")
+	@TestSecurity(user = "User Name 1", roles = {"user", "admin"})
+	@OidcSecurity(claims = {
+			@Claim(key = "sub", value = "user1")
+	})
+	public class RemoveUser {
+
+		@Test
+		@DisplayName("DELETE /vaults/{vaultId}/users/{userId} returns 403 for archived vaults")
+		public void testAddUserArchived() {
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vaultArchivedAdminJWT).
+					when().delete("/vaults/{vaultId}/users/{userId}", "7E57C0DE-0000-4000-8000-AAAAAAAAAAAA", "user2")
+					.then().statusCode(403);
+		}
+	}
+
+	@Nested
+	@DisplayName("PUT /vaults/{vaultid}/groups/{groupId}")
+	@TestSecurity(user = "User Name 1", roles = {"user", "admin"})
+	@OidcSecurity(claims = {
+			@Claim(key = "sub", value = "user1")
+	})
+	public class AddGroup {
+
+		@Test
+		@DisplayName("PUT /vaults/{vaultId}/groups/{groupId} returns 403 for archived vaults")
+		public void testAddGroupArchived() {
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vaultArchivedAdminJWT).
+					when().put("/vaults/{vaultId}/groups/{groupId}", "7E57C0DE-0000-4000-8000-AAAAAAAAAAAA", "group1")
+					.then().statusCode(403);
+		}
+	}
+
+	@Nested
+	@DisplayName("DELETE /vaults/{vaultid}/groups/{groupId}")
+	@TestSecurity(user = "User Name 1", roles = {"user", "admin"})
+	@OidcSecurity(claims = {
+			@Claim(key = "sub", value = "user1")
+	})
+	public class RemoveGroup {
+
+		@Test
+		@DisplayName("DELETE /vaults/{vaultId}/groups/{groupId} returns 403 for archived vaults")
+		public void testAddGroupArchived() {
+			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vaultArchivedAdminJWT).
+					when().delete("/vaults/{vaultId}/groups/{groupId}", "7E57C0DE-0000-4000-8000-AAAAAAAAAAAA", "group1")
+					.then().statusCode(403);
+		}
+	}
 }
