@@ -46,6 +46,7 @@ import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.comparesEqualTo;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.text.IsEqualIgnoringCase.equalToIgnoringCase;
 
@@ -854,5 +855,52 @@ public class VaultResourceTest {
 					when().delete("/vaults/{vaultId}/groups/{groupId}", "7E57C0DE-0000-4000-8000-AAAAAAAAAAAA", "group1")
 					.then().statusCode(403);
 		}
+	}
+
+	@Nested
+	@DisplayName("PATCH /vaults/{vaultid}")
+	@TestSecurity(user = "User Name 1", roles = {"user", "admin"})
+	@OidcSecurity(claims = {
+			@Claim(key = "sub", value = "user1")
+	})
+	@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+	public class Update {
+
+		@BeforeAll
+		public void insertData() throws SQLException {
+			try (var s = dataSource.getConnection().createStatement()) {
+				s.execute("""
+						INSERT INTO "vault" ("id", "name", "description", "creation_time", "salt", "iterations", "masterkey", "auth_pubkey", "auth_prvkey", "archived")
+						VALUES
+						('7E57C0DE-0000-4000-8000-DADADADADADA', 'Vault U', 'Vault to update.',
+						 '2020-02-20 20:20:20', 'saltU', 42, 'masterkeyU', 'auth_pubkeyU', 'auht_prvkeyU', FALSE);
+						""");
+
+			}
+		}
+
+		@Test
+		@DisplayName("PATCH /vaults/{vaultId}} with Body { \"name\":\"Vault X\", \"description\":\"Vault updated\", \"archived\":true } returns 200 with updated name")
+		public void testAddGroupArchived() {
+			given().contentType(ContentType.JSON)
+					.body(new VaultResource.VaultUpdateDto("Vault X", "Vault updated", true))
+					.when().patch("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-DADADADADADA")
+					.then().statusCode(200)
+					.body("name", equalTo("Vault X"))
+					.body("description", equalTo("Vault updated"))
+					.body("archived", equalTo(true));
+
+		}
+
+		@AfterAll
+		public void deleteData() throws SQLException {
+			try (var s = dataSource.getConnection().createStatement()) {
+				s.execute("""
+						DELETE FROM "vault"
+						WHERE "id" ='7E57C0DE-0000-4000-8000-DADADADADADA';
+						""");
+			}
+		}
+
 	}
 }

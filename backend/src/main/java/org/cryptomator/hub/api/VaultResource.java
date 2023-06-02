@@ -16,6 +16,7 @@ import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.PATCH;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -373,6 +374,29 @@ public class VaultResource {
 		}
 	}
 
+	@PATCH
+	@Path("/{vaultId}")
+	@RolesAllowed("admin")
+	@Transactional
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Operation(summary = "Updates a vault",
+			description = "Changes the vault description, its name or its archive status.")
+	@APIResponse(responseCode = "204", description = "the vault has been archived")
+	public VaultDto update(@PathParam("vaultId") UUID vaultId, VaultUpdateDto update) {
+		Vault vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
+		if(update.name != null) {
+			vault.name = update.name;
+		}
+		if(update.description != null) {
+			vault.description = update.description;
+		}
+		vault.archived = update.archived;
+		vault.persistAndFlush();
+		return VaultDto.fromEntity(vault);
+	}
+
+
 	public record VaultDto(@JsonProperty("id") UUID id,
 						   @JsonProperty("name") @NoHtmlOrScriptChars @NotBlank String name,
 						   @JsonProperty("description") @NoHtmlOrScriptChars String description,
@@ -401,6 +425,9 @@ public class VaultResource {
 			vault.archived = archived;
 			return vault;
 		}
+	}
+
+	public record VaultUpdateDto(@JsonProperty("name") String name, @JsonProperty("description") String description, @JsonProperty(value = "archived", defaultValue = "false")  boolean archived) {
 
 	}
 }
