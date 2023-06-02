@@ -598,6 +598,12 @@ public class VaultResourceTest {
 							('group91', 'user93'),
 							('group91', 'user94');
 							
+						INSERT INTO "vault_access" ("vault_id", "authority_id")
+						VALUES
+							('7E57C0DE-0000-4000-8000-AAAAAAAAAAAA', 'user91'),
+							('7E57C0DE-0000-4000-8000-AAAAAAAAAAAA', 'user92'),
+							('7E57C0DE-0000-4000-8000-AAAAAAAAAAAA', 'user93'),
+							('7E57C0DE-0000-4000-8000-AAAAAAAAAAAA', 'user94');
 						""");
 			}
 		}
