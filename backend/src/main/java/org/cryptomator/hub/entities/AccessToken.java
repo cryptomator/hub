@@ -42,8 +42,8 @@ public class AccessToken extends PanacheEntityBase {
 	@JoinColumn(name = "vault_id")
 	public Vault vault;
 
-	@Column(name = "vault_key_jwe", nullable = false)
-	public String jwe;
+	@Column(name = "vault_key", nullable = false)
+	public String vaultKey;
 
 	public static AccessToken unlock(UUID vaultId, String userId) {
 		try {
@@ -61,12 +61,12 @@ public class AccessToken extends PanacheEntityBase {
 		return Objects.equals(id, other.id)
 				&& Objects.equals(user, other.user)
 				&& Objects.equals(vault, other.vault)
-				&& Objects.equals(jwe, other.jwe);
+				&& Objects.equals(vaultKey, other.vaultKey);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, user, vault, jwe);
+		return Objects.hash(id, user, vault, vaultKey);
 	}
 
 	@Override
@@ -75,7 +75,7 @@ public class AccessToken extends PanacheEntityBase {
 				"id=" + id +
 				", user=" + user.id +
 				", vault=" + vault.id +
-				", jwe='" + jwe + '\'' +
+				", vaultKey='" + vaultKey + '\'' +
 				'}';
 	}
 

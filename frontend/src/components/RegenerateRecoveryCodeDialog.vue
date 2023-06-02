@@ -152,7 +152,7 @@ async function regenerateRecoveryCode() {
     processing.value = true;
 
     const me = await backend.users.me(true);
-    if (me.publicKey == null || me.recoveryJwe == null) {
+    if (me.publicKey == null || me.setupCode == null) {
       throw new Error('User not initialized.');
     }
     const browserKeys = await BrowserKeys.load(me.id);
@@ -162,12 +162,9 @@ async function regenerateRecoveryCode() {
       throw new Error('Device not initialized.');
     }
     const newCode = crypto.randomUUID(); // TODO something else?
-    const userKeys = await UserKeys.decryptOnBrowser(myDevice.userKeyJwe, browserKeys.keyPair.privateKey, base64.parse(me.publicKey));
-    const archive = await userKeys.export(newCode);
-    me.recoveryJwe = await JWEBuilder.ecdhEs(userKeys.keyPair.publicKey).encrypt({ recoveryCode: newCode });
-    me.recoveryPbkdf2 = archive.encryptedPrivateKey;
-    me.recoverySalt = archive.salt;
-    me.recoveryIterations = archive.iterations;
+    const userKeys = await UserKeys.decryptOnBrowser(myDevice.userKey, browserKeys.keyPair.privateKey, base64.parse(me.publicKey));
+    me.privateKey = await userKeys.encryptedPrivateKey(newCode);
+    me.setupCode = await JWEBuilder.ecdhEs(userKeys.keyPair.publicKey).encrypt({ setupCode: newCode });
     await backend.users.putMe(me);
     recoveryCode.value = newCode;
 

@@ -68,7 +68,7 @@ async function fetchData() {
   onFetchError.value = null;
   try {
     const me = await backend.users.me(true);
-    if (me.publicKey == null || me.recoveryJwe == null) {
+    if (me.publicKey == null || me.setupCode == null) {
       throw new Error('User not initialized.');
     }
     const browserKeys = await BrowserKeys.load(me.id);
@@ -77,9 +77,9 @@ async function fetchData() {
     if (myDevice == null) {
       throw new Error('Device not initialized.');
     }
-    const userKeys = await UserKeys.decryptOnBrowser(myDevice.userKeyJwe, browserKeys.keyPair.privateKey, base64.parse(me.publicKey));
-    const recoveryKey : { recoveryCode: string } = await JWEParser.parse(me.recoveryJwe).decryptEcdhEs(userKeys.keyPair.privateKey);
-    recoveryCode.value = recoveryKey.recoveryCode;
+    const userKeys = await UserKeys.decryptOnBrowser(myDevice.userKey, browserKeys.keyPair.privateKey, base64.parse(me.publicKey));
+    const recoveryKey : { setupCode: string } = await JWEParser.parse(me.setupCode).decryptEcdhEs(userKeys.keyPair.privateKey);
+    recoveryCode.value = recoveryKey.setupCode;
   } catch (error) {
     console.error('Retrieving recovery code failed.', error);
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');

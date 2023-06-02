@@ -306,7 +306,7 @@ public class VaultResource {
 
 		var access = AccessToken.unlock(vaultId, jwt.getSubject());
 		if (access != null) {
-			return access.jwe;
+			return access.vaultKey;
 		} else if (Vault.findById(vaultId) == null) {
 			throw new NotFoundException("No such vault.");
 		} else {
@@ -326,14 +326,14 @@ public class VaultResource {
 	@APIResponse(responseCode = "403", description = "VaultAdminAuthorizationJWT expired or not yet valid")
 	@APIResponse(responseCode = "404", description = "vault or userId not found")
 	@APIResponse(responseCode = "409", description = "Access to vault for device already granted")
-	public Response grantAccess(@PathParam("vaultId") UUID vaultId, @PathParam("userId") @ValidId String userId, @NotNull @ValidJWE String jwe) {
+	public Response grantAccess(@PathParam("vaultId") UUID vaultId, @PathParam("userId") @ValidId String userId, @NotNull @ValidJWE String vaultKey) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new); // should always be found, since @VaultAdminOnlyFilter already checked the jwt matching this vault
 		var user = User.<User>findByIdOptional(userId).orElseThrow(NotFoundException::new);
 
 		var access = new AccessToken();
 		access.vault = vault;
 		access.user = user;
-		access.jwe = jwe;
+		access.vaultKey = vaultKey;
 
 		try {
 			access.persistAndFlush();

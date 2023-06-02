@@ -210,12 +210,9 @@ async function createUserKey() {
 
     const userKeys = await UserKeys.create();
     recoveryCode.value = crypto.randomUUID(); // TODO something else?
-    const archive = await userKeys.export(recoveryCode.value);
-    me.publicKey = archive.publicKey;
-    me.recoveryJwe = await JWEBuilder.ecdhEs(userKeys.keyPair.publicKey).encrypt({ recoveryCode: recoveryCode.value });
-    me.recoveryPbkdf2 = archive.encryptedPrivateKey;
-    me.recoverySalt = archive.salt;
-    me.recoveryIterations = archive.iterations;
+    me.publicKey = await userKeys.encodedPublicKey();
+    me.privateKey = await userKeys.encryptedPrivateKey(recoveryCode.value);
+    me.setupCode = await JWEBuilder.ecdhEs(userKeys.keyPair.publicKey).encrypt({ setupCode: recoveryCode.value });
     const browserKeys = await createBrowserKeys(me.id);
     await submitBrowserKeys(browserKeys, me, userKeys);
 
@@ -232,12 +229,12 @@ async function recoverUserKey() {
   onRecoverError.value = null;
   try {
     const me = user.value;
-    if (!me || !me.publicKey || !me.recoveryJwe || !me.recoveryPbkdf2 || !me.recoverySalt || !me.recoveryIterations) {
+    if (!me || !me.publicKey || !me.privateKey) {
       throw new Error('Invalid state');
     }
     processing.value = true;
 
-    const userKeys = await UserKeys.recover(me.publicKey, me.recoveryPbkdf2, recoveryCode.value, me.recoverySalt, me.recoveryIterations);
+    const userKeys = await UserKeys.recover(me.publicKey, me.privateKey, recoveryCode.value);
     const browserKeys = await createBrowserKeys(me.id);
     await submitBrowserKeys(browserKeys, me, userKeys);
 
@@ -263,7 +260,7 @@ async function submitBrowserKeys(browserKeys: BrowserKeys, me: UserDto, userKeys
     name: deviceName.value,
     type: 'BROWSER',
     publicKey: await browserKeys.encodedPublicKey(),
-    userKeyJwe: jwe,
+    userKey: jwe,
     creationTime: new Date(),
     lastSeenTime: new Date()
   });

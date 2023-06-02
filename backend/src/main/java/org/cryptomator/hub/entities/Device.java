@@ -60,8 +60,8 @@ public class Device extends PanacheEntityBase {
 	@Column(name = "publickey", nullable = false)
 	public String publickey;
 
-	@Column(name = "user_key_jwe", nullable = true)
-	public String userKeyJwe;
+	@Column(name = "user_key", nullable = true)
+	public String userKey;
 
 	@Column(name = "creation_time", nullable = false)
 	public Instant creationTime;
@@ -77,7 +77,7 @@ public class Device extends PanacheEntityBase {
 				", name='" + name + '\'' +
 				", type='" + type + '\'' +
 				", publickey='" + publickey + '\'' +
-				", userKeyJwe='" + userKeyJwe + '\'' +
+				", userKey='" + userKey + '\'' +
 				", creationTime='" + creationTime + '\'' +
 				", lastSeenTime='" + lastSeenTime + '\'' +
 				'}';
@@ -93,14 +93,14 @@ public class Device extends PanacheEntityBase {
 				&& Objects.equals(this.name, other.name)
 				&& Objects.equals(this.type, other.type)
 				&& Objects.equals(this.publickey, other.publickey)
-				&& Objects.equals(this.userKeyJwe, other.userKeyJwe)
+				&& Objects.equals(this.userKey, other.userKey)
 				&& Objects.equals(this.creationTime, other.creationTime)
 				&& Objects.equals(this.lastSeenTime, other.lastSeenTime);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, owner, name, type, publickey, userKeyJwe, creationTime, lastSeenTime);
+		return Objects.hash(id, owner, name, type, publickey, userKey, creationTime, lastSeenTime);
 	}
 
 	public static Device findByIdAndUser(String deviceId, String userId) throws NoResultException {

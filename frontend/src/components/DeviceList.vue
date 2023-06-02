@@ -77,7 +77,7 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <a v-if="device.id != myDevice?.id" role="button" tabindex="0" class="text-red-600 hover:text-red-900" @click="removeDevice(device)">{{ t('common.remove') }}</a>
-                      <a v-if="!device.userKeyJwe" role="button" tabindex="0" class="text-primary hover:text-primary-d1" @click="validateDevice(device)">TODO confirm</a>
+                      <a v-if="!device.userKey" role="button" tabindex="0" class="text-primary hover:text-primary-d1" @click="validateDevice(device)">TODO confirm</a>
                     </td>
                   </tr>
                   <!-- TODO: good styling -->
@@ -109,7 +109,6 @@ const { t, d } = useI18n({ useScope: 'global' });
 
 const me = ref<UserDto>();
 const myDevice = ref<DeviceDto>();
-const recoveryCode = ref<string>();
 const onFetchError = ref<Error | null>();
 const onRemoveDeviceError = ref< {[id: string]: Error} >({});
 
@@ -142,20 +141,17 @@ async function validateDevice(device: DeviceDto) {
     throw new Error('User keys not initialized.');
   }
   /* decrypt user key on this browser: */
-  const userPublicKey = crypto.subtle.importKey('spki', base64.parse(me.value.publicKey), {
-    name: 'ECDH',
-    namedCurve: 'P-384'
-  }, false, []);
+  const userPublicKey = crypto.subtle.importKey('spki', base64.parse(me.value.publicKey), UserKeys.KEY_DESIGNATION, false, []);
   const browserKeys = await BrowserKeys.load(me.value.id);
   const browserId = await browserKeys.id();
   const browser = me.value.devices.find(d => d.id === browserId);
-  if (!browser || !browser.userKeyJwe) {
+  if (!browser || !browser.userKey) {
     throw new Error('Browser not validated.');
   }
-  const userKeys = await UserKeys.decryptOnBrowser(browser.userKeyJwe, browserKeys.keyPair.privateKey, await userPublicKey);
+  const userKeys = await UserKeys.decryptOnBrowser(browser.userKey, browserKeys.keyPair.privateKey, await userPublicKey);
 
   /* encrypt user key for device */
-  device.userKeyJwe = await userKeys.encryptForDevice(base64url.parse(device.publicKey));
+  device.userKey = await userKeys.encryptForDevice(base64url.parse(device.publicKey));
   await backend.devices.putDevice(device);
 }
 

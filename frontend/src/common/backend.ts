@@ -54,7 +54,7 @@ export type DeviceDto = {
   name: string;
   type: 'BROWSER' | 'DESKTOP' | 'MOBILE';
   publicKey: string; // note: base64url-encoded for historic reasons
-  userKeyJwe: string;
+  userKey: string;
   creationTime: Date;
   lastSeenTime: Date;
 };
@@ -86,7 +86,7 @@ export abstract class AuthorityDto {
 
 export class UserDto extends AuthorityDto {
   constructor(public id: string, public name: string, public type: AuthorityType, public email: string, public devices: DeviceDto[], public accessibleVaults: VaultDto[], pictureUrl?: string,
-    public publicKey?: string, public recoveryJwe?: string, public recoveryPbkdf2?: string, public recoverySalt?: string, public recoveryIterations?: number) {
+    public publicKey?: string, public privateKey?: string, public setupCode?: string) {
     super(id, name, type, pictureUrl);
   }
 
@@ -114,7 +114,7 @@ export class UserDto extends AuthorityDto {
   }
 
   static copy(obj: UserDto): UserDto {
-    return new UserDto(obj.id, obj.name, obj.type, obj.email, obj.devices, obj.accessibleVaults, obj.pictureUrl, obj.publicKey, obj.recoveryJwe, obj.recoveryPbkdf2, obj.recoverySalt, obj.recoveryIterations);
+    return new UserDto(obj.id, obj.name, obj.type, obj.email, obj.devices, obj.accessibleVaults, obj.pictureUrl, obj.publicKey, obj.privateKey, obj.setupCode);
   }
 }
 
@@ -199,7 +199,7 @@ export class AuditLogEntityCache {
 
   private vaults: Map<string, Deferred<VaultDto>>;
   private authorities: Map<string, Deferred<AuthorityDto>>;
-  private devices: Map<string, Deferred<DeviceDto>>;  
+  private devices: Map<string, Deferred<DeviceDto>>;
 
   private constructor() {
     this.vaults = new Map();
@@ -228,7 +228,7 @@ export class AuditLogEntityCache {
 
   private async getEntity<T>(entityId: string, entities: Map<string, Deferred<T>>, debouncedResolvePendingEntities: Function): Promise<T> {
     const cachedEntity = entities.get(entityId);
-    if (!cachedEntity) {  
+    if (!cachedEntity) {
       const deferredEntity = new Deferred<T>();
       entities.set(entityId, deferredEntity);
       debouncedResolvePendingEntities();

@@ -78,7 +78,7 @@ public class DeviceResource {
 		}
 		device.name = dto.name;
 		device.publickey = dto.publicKey;
-		device.userKeyJwe = dto.userKeyJwe;
+		device.userKey = dto.userKey;
 		device.lastSeenTime = Instant.now().truncatedTo(ChronoUnit.MILLIS);
 		try {
 			device.persistAndFlush();
@@ -120,10 +120,10 @@ public class DeviceResource {
 	public String getUserJwe(@PathParam("deviceId") @ValidId String deviceId) {
 		try {
 			var device = Device.findByIdAndUser(deviceId, jwt.getSubject());
-			if (device.userKeyJwe == null) {
+			if (device.userKey == null) {
 				throw new ForbiddenException("Device needs verification");
 			} else {
-				return device.userKeyJwe;
+				return device.userKey;
 			}
 		} catch (NoResultException e) {
 			throw new NotFoundException(e);
@@ -157,13 +157,13 @@ public class DeviceResource {
 							@JsonProperty("name") @NoHtmlOrScriptChars @NotBlank String name,
 							@JsonProperty("type") @NotNull Device.Type type,
 							@JsonProperty("publicKey") @NotNull @OnlyBase64UrlChars String publicKey, // for historic reasons, the device public key is base64url-encoded, instead of base64
-							@JsonProperty("userKeyJwe") @ValidJWE String userKeyJwe,
+							@JsonProperty("userKey") @ValidJWE String userKey,
 							@JsonProperty("owner") @ValidId String ownerId,
 							@JsonProperty("creationTime") Instant creationTime,
 							@JsonProperty("lastSeenTime") Instant lastSeenTime) {
 
 		public static DeviceDto fromEntity(Device entity) {
-			return new DeviceDto(entity.id, entity.name, entity.type, entity.publickey, entity.userKeyJwe, entity.owner.id, entity.creationTime.truncatedTo(ChronoUnit.MILLIS), entity.lastSeenTime.truncatedTo(ChronoUnit.MILLIS));
+			return new DeviceDto(entity.id, entity.name, entity.type, entity.publickey, entity.userKey, entity.owner.id, entity.creationTime.truncatedTo(ChronoUnit.MILLIS), entity.lastSeenTime.truncatedTo(ChronoUnit.MILLIS));
 		}
 
 	}

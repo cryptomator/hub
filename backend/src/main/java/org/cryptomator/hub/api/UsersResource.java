@@ -54,10 +54,8 @@ public class UsersResource {
 		user.email = jwt.getClaim("email");
 		if (dto != null) {
 			user.publicKey = dto.publicKey;
-			user.recoveryJwe = dto.recoveryJwe;
-			user.recoveryPbkdf2 = dto.recoveryPbkdf2;
-			user.recoverySalt = dto.recoverySalt;
-			user.recoveryIterations = dto.recoveryIterations;
+			user.privateKey = dto.privateKey;
+			user.setupCode = dto.setupCode;
 		}
 		user.persist();
 		return Response.created(URI.create(".")).build();
@@ -75,9 +73,9 @@ public class UsersResource {
 	public UserDto getMe(@QueryParam("withDevices") boolean withDevices) {
 		User user = User.findById(jwt.getSubject());
 		Function<AccessToken, VaultResource.VaultDto> mapAccessibleVaults = a -> new VaultResource.VaultDto(a.vault.id, a.vault.name, a.vault.description, a.vault.creationTime.truncatedTo(ChronoUnit.MILLIS), null, 0, null, null, null);
-		Function<Device, DeviceResource.DeviceDto> mapDevices = d -> new DeviceResource.DeviceDto(d.id, d.name, d.type, d.publickey, d.userKeyJwe, d.owner.id, d.creationTime.truncatedTo(ChronoUnit.MILLIS), d.lastSeenTime.truncatedTo(ChronoUnit.MILLIS));
+		Function<Device, DeviceResource.DeviceDto> mapDevices = d -> new DeviceResource.DeviceDto(d.id, d.name, d.type, d.publickey, d.userKey, d.owner.id, d.creationTime.truncatedTo(ChronoUnit.MILLIS), d.lastSeenTime.truncatedTo(ChronoUnit.MILLIS));
 		var devices = withDevices ? user.devices.stream().map(mapDevices).collect(Collectors.toSet()) : Set.<DeviceResource.DeviceDto>of();
-		return new UserDto(user.id, user.name, user.pictureUrl, user.email, devices, user.publicKey, user.recoveryJwe, user.recoveryPbkdf2, user.recoverySalt, user.recoveryIterations);
+		return new UserDto(user.id, user.name, user.pictureUrl, user.email, devices, user.publicKey, user.privateKey, user.setupCode);
 	}
 
 	@GET

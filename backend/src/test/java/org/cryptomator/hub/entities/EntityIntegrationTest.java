@@ -76,6 +76,6 @@ public class EntityIntegrationTest {
 		Assertions.assertEquals(1, tokens.size());
 		Assertions.assertEquals(UUID.fromString("7E57C0DE-0000-4000-8000-000100001111"), token.vault.id);
 		Assertions.assertEquals("user1", token.user.id);
-		Assertions.assertEquals("jwe.jwe.jwe.vault1.user1", token.jwe);
+		Assertions.assertEquals("jwe.jwe.jwe.vault1.user1", token.vaultKey);
 	}
 }

@@ -16,28 +16,22 @@ public final class UserDto extends AuthorityDto {
 	public final Set<DeviceResource.DeviceDto> devices;
 	@JsonProperty("publicKey")
 	public final String publicKey;
-	@JsonProperty("recoveryJwe")
-	public final String recoveryJwe;
-	@JsonProperty("recoveryPbkdf2")
-	public final String recoveryPbkdf2;
-	@JsonProperty("recoverySalt")
-	public final String recoverySalt;
-	@JsonProperty("recoveryIterations")
-	public final int recoveryIterations;
+	@JsonProperty("privateKey")
+	public final String privateKey;
+	@JsonProperty("setupCode")
+	public final String setupCode;
 
 	UserDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("pictureUrl") String pictureUrl, @JsonProperty("email") String email, @JsonProperty("devices") Set<DeviceResource.DeviceDto> devices,
-			@Nullable @JsonProperty("publicKey") @OnlyBase64Chars String publicKey, @Nullable @JsonProperty("recoveryJwe") @ValidJWE String recoveryJwe, @Nullable @JsonProperty("recoveryPbkdf2") @OnlyBase64Chars String recoveryPbkdf2, @Nullable @JsonProperty("recoverySalt") @OnlyBase64Chars String recoverySalt, @JsonProperty("recoveryIterations") int recoveryIterations) {
+			@Nullable @JsonProperty("publicKey") @OnlyBase64Chars String publicKey, @Nullable @JsonProperty("privateKey") @ValidJWE String privateKey, @Nullable @JsonProperty("setupCode") @ValidJWE String setupCode) {
 		super(id, Type.USER, name, pictureUrl);
 		this.email = email;
 		this.devices = devices;
 		this.publicKey = publicKey;
-		this.recoveryJwe = recoveryJwe;
-		this.recoveryPbkdf2 = recoveryPbkdf2;
-		this.recoverySalt = recoverySalt;
-		this.recoveryIterations = recoveryIterations;
+		this.privateKey = privateKey;
+		this.setupCode = setupCode;
 	}
 
 	public static UserDto justPublicInfo(User user) {
-		return new UserDto(user.id, user.name, user.pictureUrl, user.email, Set.of(), user.publicKey,  null,null, null, 0);
+		return new UserDto(user.id, user.name, user.pictureUrl, user.email, Set.of(), user.publicKey, null, null);
 	}
 }
