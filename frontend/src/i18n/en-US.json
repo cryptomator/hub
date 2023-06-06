@@ -124,7 +124,6 @@
   "nav.vaults": "Vaults",
   "nav.profile.signedInAs": "Signed in as",
   "nav.profile.profile": "Your Profile",
-  "nav.profile.settings": "Settings",
   "nav.profile.admin": "Admin",
   "nav.profile.auditlog": "Audit Logs",
   "nav.profile.signOut": "Sign out",
@@ -163,14 +162,7 @@
   "setupUserKey.lostRecoveryCode.resetUserAccount": "Reset my account",
 
   "userProfile.actions.manageAccount": "Manage Account",
-
-  "userSettings.title": "Settings",
-  "userSettings.general.title": "General",
-  "userSettings.general.language.title": "Language",
-  "userSettings.serverInfo.title": "Server Info",
-  "userSettings.serverInfo.description": "For support, always state the displayed Hub and Keycloak version.",
-  "userSettings.serverInfo.hubVersion.title": "Hub Version",
-  "userSettings.serverInfo.keycloakVersion.title": "Keycloak Version",
+  "userProfile.actions.editLanguage": "Edit Language",
 
   "vaultDetails.manageVault": "Manage Vault",
   "vaultDetails.description.header": "Description",

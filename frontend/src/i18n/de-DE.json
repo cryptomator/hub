@@ -123,7 +123,6 @@
   "nav.vaults": "Tresore",
   "nav.profile.signedInAs": "Eingeloggt als",
   "nav.profile.profile": "Dein Profil",
-  "nav.profile.settings": "Einstellungen",
   "nav.profile.admin": "Admin",
   "nav.profile.auditlog": "Audit-Logs",
   "nav.profile.signOut": "Abmelden",
@@ -141,14 +140,7 @@
   "regenerateRecoveryCodeDialog.submit": "Neues Geheimnis generieren",
 
   "userProfile.actions.manageAccount": "Account verwalten",
-
-  "userSettings.title": "Einstellungen",
-  "userSettings.general.title": "Allgemein",
-  "userSettings.general.language.title": "Sprache",
-  "userSettings.serverInfo.title": "Server-Info",
-  "userSettings.serverInfo.description": "Für den Support gib bitte immer die angezeigte Hub- und Keycloak-Version an.",
-  "userSettings.serverInfo.hubVersion.title": "Hub-Version",
-  "userSettings.serverInfo.keycloakVersion.title": "Keycloak-Version",
+  "userProfile.actions.editLanguage": "Sprache ändern",
 
   "vaultDetails.manageVault": "Tresor verwalten",
   "vaultDetails.description.header": "Beschreibung",

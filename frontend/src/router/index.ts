@@ -12,7 +12,6 @@ import SetupUserKey from '../components/SetupUserKey.vue';
 import UnlockError from '../components/UnlockError.vue';
 import UnlockSuccess from '../components/UnlockSuccess.vue';
 import UserProfile from '../components/UserProfile.vue';
-import UserSettings from '../components/UserSettings.vue';
 import VaultDetails from '../components/VaultDetails.vue';
 import VaultList from '../components/VaultList.vue';
 
@@ -68,10 +67,6 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'profile',
         component: UserProfile
-      },
-      {
-        path: 'settings',
-        component: UserSettings
       },
       {
         path: 'admin',
