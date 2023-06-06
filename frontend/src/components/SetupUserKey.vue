@@ -99,7 +99,7 @@
 
     <div v-else-if="state == State.EnterRecoveryCode">
       <form @submit.prevent="recoverUserKey()">
-        <div class="flex justify-center">
+        <div class="flex flex-col items-center">
           <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6 text-center sm:w-full sm:max-w-lg">
             <div class="flex justify-center">
               <img src="/logo.svg" class="h-12" alt="Logo" aria-hidden="true" />
@@ -133,16 +133,25 @@
               </div>
             </div>
           </div>
+          <p class="mt-10 text-center text-sm text-gray-500">
+            {{ t('setupUserKey.lostRecoveryCode.title') }}
+            {{ ' ' }}
+            <a role="button" tabindex="0" class="font-medium leading-6 text-red-600 hover:text-red-900" @click="showResetUserAccountDialog()">
+              {{ t('setupUserKey.lostRecoveryCode.resetUserAccount') }}
+            </a>
+          </p>
         </div>
       </form>
     </div>
   </div>
+
+  <ResetUserAccountDialog v-if="resettingUserAccount" ref="resetUserAccountDialog" @close="resettingUserAccount = false" />
 </template>
 
 <script setup lang="ts">
 import { ClipboardIcon } from '@heroicons/vue/20/solid';
 import { KeyIcon } from '@heroicons/vue/24/outline';
-import { onMounted, ref } from 'vue';
+import { nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { UserDto } from '../common/backend';
 import { BrowserKeys, UserKeys } from '../common/crypto';
@@ -150,6 +159,7 @@ import { JWEBuilder } from '../common/jwe';
 import { debounce } from '../common/util';
 import router from '../router';
 import FetchError from './FetchError.vue';
+import ResetUserAccountDialog from './ResetUserAccountDialog.vue';
 
 enum State {
   Preparing,
@@ -178,6 +188,8 @@ const recoveryCode = ref('');
 const deviceName = ref('');
 const copiedRecoveryCode = ref(false);
 const debouncedCopyFinish = debounce(() => copiedRecoveryCode.value = false, 2000);
+const resettingUserAccount = ref(false);
+const resetUserAccountDialog = ref<typeof ResetUserAccountDialog>();
 
 onMounted(fetchData);
 
@@ -271,5 +283,10 @@ async function copyRecoveryCode() {
   await navigator.clipboard.writeText(recoveryCode.value);
   copiedRecoveryCode.value = true;
   debouncedCopyFinish();
+}
+
+async function showResetUserAccountDialog() {
+  resettingUserAccount.value = true;
+  nextTick(() => resetUserAccountDialog.value?.show());
 }
 </script>

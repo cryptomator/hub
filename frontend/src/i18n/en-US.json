@@ -141,6 +141,10 @@
   "regenerateRecoveryCodeDialog.saveRecoveryCode.recoveryCode": "Personal Hub Secret",
   "regenerateRecoveryCodeDialog.submit": "Regenerate Secret",
 
+  "resetUserAccountDialog.title": "Reset User Account",
+  "resetUserAccountDialog.description": "Only reset your account if you've lost your Personal Hub Secret. You will lose access to all your vaults and the vault owner(s) will have to grant you access again.",
+  "resetUserAccountDialog.submit": "Reset Account",
+
   "setupUserKey.recoveryCode": "Personal Hub Secret",
   "setupUserKey.recoveryCode.description": "Your Personal Hub Secret is required to authorize this browser.",
   "setupUserKey.deviceName": "Browser Name",
@@ -155,6 +159,8 @@
   "setupUserKey.enterRecoveryCode.title": "Authorization Required",
   "setupUserKey.enterRecoveryCode.description": "This is your first login on this browser.",
   "setupUserKey.enterRecoveryCode.submit": "Finish Setup",
+  "setupUserKey.lostRecoveryCode.title": "Lost your Personal Hub Secret?",
+  "setupUserKey.lostRecoveryCode.resetUserAccount": "Reset my account",
 
   "userSettings.title": "Settings",
   "userSettings.general.title": "General",
