@@ -162,6 +162,8 @@
   "setupUserKey.lostRecoveryCode.title": "Lost your Personal Hub Secret?",
   "setupUserKey.lostRecoveryCode.resetUserAccount": "Reset my account",
 
+  "userProfile.actions.manageAccount": "Manage Account",
+
   "userSettings.title": "Settings",
   "userSettings.general.title": "General",
   "userSettings.general.language.title": "Language",

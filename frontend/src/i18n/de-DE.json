@@ -140,6 +140,8 @@
   "regenerateRecoveryCodeDialog.saveRecoveryCode.recoveryCode": "Persönliches Hub-Geheimnis",
   "regenerateRecoveryCodeDialog.submit": "Neues Geheimnis generieren",
 
+  "userProfile.actions.manageAccount": "Account verwalten",
+
   "userSettings.title": "Einstellungen",
   "userSettings.general.title": "Allgemein",
   "userSettings.general.language.title": "Sprache",
