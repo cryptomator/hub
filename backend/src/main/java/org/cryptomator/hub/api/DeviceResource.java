@@ -115,7 +115,7 @@ public class DeviceResource {
 			device.id = id;
 			device.owner = user;
 			device.name = name;
-			device.type = type;
+			device.type = type != null ? type : Device.Type.DESKTOP; // default to desktop for backwards compatibility
 			device.publickey = publicKey;
 			device.creationTime = creationTime;
 			return device;
