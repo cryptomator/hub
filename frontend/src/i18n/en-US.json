@@ -116,8 +116,7 @@
 
   "nav.vaults": "Vaults",
   "nav.profile.signedInAs": "Signed in as",
-  "nav.profile.devices": "Your Devices",
-  "nav.profile.settings": "Settings",
+  "nav.profile.profile": "Your Profile",
   "nav.profile.admin": "Admin",
   "nav.profile.auditlog": "Audit Logs",
   "nav.profile.signOut": "Sign out",
