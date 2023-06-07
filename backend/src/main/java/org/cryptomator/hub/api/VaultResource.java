@@ -2,7 +2,6 @@ package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.security.identity.SecurityIdentity;
-import jakarta.annotation.Nullable;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.persistence.PersistenceException;
@@ -13,7 +12,6 @@ import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.InternalServerErrorException;
@@ -140,7 +138,7 @@ public class VaultResource {
 	@ActiveLicense
 	public Response addUser(@PathParam("vaultId") UUID vaultId, @PathParam("userId") @ValidId String userId) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-		if(vault.archived) {
+		if (vault.archived) {
 			throw new ForbiddenException("Vault is archived.");
 		}
 
@@ -183,7 +181,7 @@ public class VaultResource {
 		}
 
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-		if(vault.archived) {
+		if (vault.archived) {
 			throw new ForbiddenException("Vault is archived.");
 		}
 
@@ -229,7 +227,7 @@ public class VaultResource {
 
 	private Response removeAuthority(UUID vaultId, String authorityId) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-		if(vault.archived) {
+		if (vault.archived) {
 			throw new ForbiddenException("Vault is archived.");
 		}
 
@@ -252,7 +250,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "404", description = "vault not found")
 	public List<DeviceResource.DeviceDto> getDevicesRequiringAccessGrant(@PathParam("vaultId") UUID vaultId) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-		if(vault.archived) {
+		if (vault.archived) {
 			throw new ForbiddenException("Vault is archived.");
 		}
 		return Device.findRequiringAccessGrant(vaultId).map(DeviceResource.DeviceDto::fromEntity).toList();
@@ -271,7 +269,7 @@ public class VaultResource {
 	@ActiveLicense
 	public String unlock(@PathParam("vaultId") UUID vaultId, @PathParam("deviceId") @ValidId String deviceId) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-		if(vault.archived) {
+		if (vault.archived) {
 			throw new ForbiddenException("Vault is archived.");
 		}
 
@@ -306,7 +304,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "409", description = "Access to vault for device already granted")
 	public Response grantAccess(@PathParam("vaultId") UUID vaultId, @PathParam("deviceId") @ValidId String deviceId, @ValidJWE String jwe) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-		if(vault.archived) {
+		if (vault.archived) {
 			throw new ForbiddenException("Vault is archived");
 		}
 		var device = Device.<Device>findByIdOptional(deviceId).orElseThrow(NotFoundException::new);
@@ -388,13 +386,13 @@ public class VaultResource {
 	@APIResponse(responseCode = "403", description = "requesting user is no admin or the vault has been archived.")
 	public VaultDto update(@PathParam("vaultId") UUID vaultId, VaultUpdateDto update) {
 		Vault vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-		if( vault.archived && (update.name !=null || update.description != null)) {
+		if (vault.archived && (update.name != null || update.description != null)) {
 			throw new ForbiddenException("Vault is archived.");
 		}
-		if(update.name != null) {
+		if (update.name != null) {
 			vault.name = update.name;
 		}
-		if(update.description != null) {
+		if (update.description != null) {
 			vault.description = update.description;
 		}
 		vault.archived = update.archived;
@@ -433,7 +431,7 @@ public class VaultResource {
 		}
 	}
 
-	public record VaultUpdateDto(@JsonProperty("name") String name, @JsonProperty("description") String description, @JsonProperty(value = "archived", defaultValue = "false")  boolean archived) {
+	public record VaultUpdateDto(@JsonProperty("name") String name, @JsonProperty("description") String description, @JsonProperty(value = "archived", defaultValue = "false") boolean archived) {
 
 	}
 }
