@@ -104,6 +104,7 @@ public class DeviceResource {
 
 	public record DeviceDto(@JsonProperty("id") @ValidId String id,
 							@JsonProperty("name") @NoHtmlOrScriptChars @NotBlank String name,
+							@JsonProperty("type") Device.Type type,
 							@JsonProperty("publicKey") @OnlyBase64UrlChars String publicKey,
 							@JsonProperty("owner") @ValidId String ownerId,
 							@JsonProperty("accessTo") @Valid Set<VaultResource.VaultDto> accessTo,
@@ -114,13 +115,14 @@ public class DeviceResource {
 			device.id = id;
 			device.owner = user;
 			device.name = name;
+			device.type = type;
 			device.publickey = publicKey;
 			device.creationTime = creationTime;
 			return device;
 		}
 
 		public static DeviceDto fromEntity(Device entity) {
-			return new DeviceDto(entity.id, entity.name, entity.publickey, entity.owner.id, Set.of(), entity.creationTime.truncatedTo(ChronoUnit.MILLIS));
+			return new DeviceDto(entity.id, entity.name, entity.type, entity.publickey, entity.owner.id, Set.of(), entity.creationTime.truncatedTo(ChronoUnit.MILLIS));
 		}
 
 	}

@@ -51,10 +51,17 @@
                       {{ device.name }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <!-- TODO: actual type -->
-                      <span class="inline-flex items-center">
+                      <span v-if="device.type == 'BROWSER'" class="flex items-center">
+                        <WindowIcon class="mr-1 h-5 w-5" aria-hidden="true" />
+                        Browser
+                      </span>
+                      <span v-else-if="device.type == 'DESKTOP'" class="flex items-center">
                         <ComputerDesktopIcon class="mr-1 h-5 w-5" aria-hidden="true" />
-                        Computer
+                        Desktop
+                      </span>
+                      <span v-else-if="device.type == 'MOBILE'" class="flex items-center">
+                        <DevicePhoneMobileIcon class="mr-1 h-5 w-5" aria-hidden="true" />
+                        Mobile
                       </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -81,7 +88,7 @@
 </template>
 
 <script setup lang="ts">
-import { ComputerDesktopIcon } from '@heroicons/vue/24/solid';
+import { ComputerDesktopIcon, DevicePhoneMobileIcon, WindowIcon } from '@heroicons/vue/24/solid';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { DeviceDto, NotFoundError, UserDto } from '../common/backend';
