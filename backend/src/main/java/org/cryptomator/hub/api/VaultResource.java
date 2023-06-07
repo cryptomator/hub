@@ -2,6 +2,7 @@ package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.security.identity.SecurityIdentity;
+import jakarta.annotation.Nullable;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.persistence.PersistenceException;
@@ -12,6 +13,7 @@ import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.InternalServerErrorException;
@@ -381,13 +383,13 @@ public class VaultResource {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "Updates a vault",
-			description = "Changes the vault description, its name or its archive status.")
-	@APIResponse(responseCode = "204", description = "the vault has been archived")
-	@APIResponse(responseCode = "403", description = "requesting user is no admin or the vault has been archived")
+			description = "Changes the vault description, its name or its archive status. Once a vault is archived, it must be reactivated again before the name or description can be changed.")
+	@APIResponse(responseCode = "200", description = "the vault has been updated")
+	@APIResponse(responseCode = "403", description = "requesting user is no admin or the vault has been archived.")
 	public VaultDto update(@PathParam("vaultId") UUID vaultId, VaultUpdateDto update) {
 		Vault vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-		if( vault.archived) {
-			throw new ForbiddenException("vault is achived");
+		if( vault.archived && (update.name !=null || update.description != null)) {
+			throw new ForbiddenException("Vault is archived.");
 		}
 		if(update.name != null) {
 			vault.name = update.name;

@@ -879,7 +879,9 @@ public class VaultResourceTest {
 						INSERT INTO "vault" ("id", "name", "description", "creation_time", "salt", "iterations", "masterkey", "auth_pubkey", "auth_prvkey", "archived")
 						VALUES
 						('7E57C0DE-0000-4000-8000-DADADADADADA', 'Vault U', 'Vault to update.',
-						 '2020-02-20 20:20:20', 'saltU', 42, 'masterkeyU', 'auth_pubkeyU', 'auht_prvkeyU', FALSE);
+						 '2020-02-20 20:20:20', 'saltU', 42, 'masterkeyU', 'auth_pubkeyU', 'auht_prvkeyU', FALSE),
+						('7E57C0DE-0000-4000-8000-ADADADADADAD', 'Vault R', 'Vault to reactivate.',
+						 '2020-02-20 20:20:20', 'saltR', 42, 'masterkeyR', 'auth_pubkeyR', 'auht_prvkeyR', TRUE);
 						""");
 
 			}
@@ -918,7 +920,7 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@DisplayName("PATCH /vaults/{vaultId}} with Body { \"name\":\"Vault X\"} returns 403 if vault is archived")
+		@DisplayName("PATCH /vaults/{vaultId}} with Body { \"name\":\"Vault X\", \"archived\":false } returns 403 if vault is archived")
 		public void testUpdateFailsOnArchived() {
 			given().contentType(ContentType.JSON)
 					.body(new VaultResource.VaultUpdateDto("Vault X", null, false))
@@ -927,12 +929,22 @@ public class VaultResourceTest {
 
 		}
 
+		@Test
+		@DisplayName("PATCH /vaults/{vaultId}} with Body { \"archived\":false } returns 200 if vault is archived")
+		public void testUpdateReactivate() {
+			given().contentType(ContentType.JSON)
+					.body(new VaultResource.VaultUpdateDto(null, null, false))
+					.when().patch("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-AAAAAAAAAAAA")
+					.then().statusCode(200);
+
+		}
+
 		@AfterAll
 		public void deleteData() throws SQLException {
 			try (var s = dataSource.getConnection().createStatement()) {
 				s.execute("""
 						DELETE FROM "vault"
-						WHERE "id" ='7E57C0DE-0000-4000-8000-DADADADADADA';
+						WHERE "id" IN ('7E57C0DE-0000-4000-8000-DADADADADADA','7E57C0DE-0000-4000-8000-ADADADADADAD');
 						""");
 			}
 		}
