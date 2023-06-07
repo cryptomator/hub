@@ -17,13 +17,11 @@
   </div>
 
   <div v-else>
-    <div class="pb-5 border-b border-gray-200">
-      <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-        {{ t('deviceList.title', [me.devices.length]) }}
-      </h2>
-    </div>
+    <h2 class="text-base font-semibold leading-6 text-gray-900">
+      {{ t('deviceList.title') }}
+    </h2>
 
-    <div class="mt-5 flex flex-col">
+    <div class="mt-4 flex flex-col">
       <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
         <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
           <div class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
