@@ -16,6 +16,7 @@ import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;
@@ -577,6 +578,7 @@ public class VaultResourceTest {
 							('user92', 'USER', 'user name 92'),
 							('user93', 'USER', 'user name 93'),
 							('user94', 'USER', 'user name 94'),
+							('userAA', 'USER', 'user name Archived'),
 							('group91', 'GROUP', 'group name 91');
 							
 						INSERT INTO "group_details" ("id")
@@ -589,7 +591,8 @@ public class VaultResourceTest {
 							('user91'),
 							('user92'),
 							('user93'),
-							('user94');
+							('user94'),
+							('userAA');
 							
 						INSERT INTO "group_membership" ("group_id", "member_id")
 						VALUES
@@ -600,10 +603,7 @@ public class VaultResourceTest {
 							
 						INSERT INTO "vault_access" ("vault_id", "authority_id")
 						VALUES
-							('7E57C0DE-0000-4000-8000-AAAAAAAAAAAA', 'user91'),
-							('7E57C0DE-0000-4000-8000-AAAAAAAAAAAA', 'user92'),
-							('7E57C0DE-0000-4000-8000-AAAAAAAAAAAA', 'user93'),
-							('7E57C0DE-0000-4000-8000-AAAAAAAAAAAA', 'user94');
+							('7E57C0DE-0000-4000-8000-AAAAAAAAAAAA', 'userAA');
 						""");
 			}
 		}
@@ -663,7 +663,7 @@ public class VaultResourceTest {
 			try (var s = dataSource.getConnection().createStatement()) {
 				s.execute("""
 						DELETE FROM "authority"
-						WHERE "id" IN ('user91', 'user92', 'user93', 'user94', 'group91');
+						WHERE "id" IN ('user91', 'user92', 'user93', 'user94', 'userAA', 'group91');
 						""");
 			}
 		}
@@ -885,9 +885,28 @@ public class VaultResourceTest {
 			}
 		}
 
+		@BeforeEach
+		public void resetData() throws SQLException {
+			try (var s = dataSource.getConnection().createStatement()) {
+				s.execute("""
+						UPDATE "vault"
+						SET "name" = 'Vault U',
+							"description" = 'Vault to update.',
+							"creation_time" = '2020-02-20 20:20:20',
+							"salt"='saltU',
+							"iterations"=42,
+							"masterkey"='masterkeyU',
+							"auth_pubkey"='auth_pubkeyU',
+							"auth_prvkey"='auth_prvkeyU',
+							"archived"=FALSE
+						WHERE "id" ='7E57C0DE-0000-4000-8000-DADADADADADA';
+						""");
+			}
+		}
+
 		@Test
 		@DisplayName("PATCH /vaults/{vaultId}} with Body { \"name\":\"Vault X\", \"description\":\"Vault updated\", \"archived\":true } returns 200 with updated name")
-		public void testAddGroupArchived() {
+		public void testUpdateAll() {
 			given().contentType(ContentType.JSON)
 					.body(new VaultResource.VaultUpdateDto("Vault X", "Vault updated", true))
 					.when().patch("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-DADADADADADA")
@@ -895,6 +914,16 @@ public class VaultResourceTest {
 					.body("name", equalTo("Vault X"))
 					.body("description", equalTo("Vault updated"))
 					.body("archived", equalTo(true));
+
+		}
+
+		@Test
+		@DisplayName("PATCH /vaults/{vaultId}} with Body { \"name\":\"Vault X\"} returns 403 if vault is archived")
+		public void testUpdateFailsOnArchived() {
+			given().contentType(ContentType.JSON)
+					.body(new VaultResource.VaultUpdateDto("Vault X", null, false))
+					.when().patch("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-AAAAAAAAAAAA")
+					.then().statusCode(403);
 
 		}
 

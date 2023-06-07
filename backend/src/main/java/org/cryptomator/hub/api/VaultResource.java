@@ -383,8 +383,12 @@ public class VaultResource {
 	@Operation(summary = "Updates a vault",
 			description = "Changes the vault description, its name or its archive status.")
 	@APIResponse(responseCode = "204", description = "the vault has been archived")
+	@APIResponse(responseCode = "403", description = "requesting user is no admin or the vault has been archived")
 	public VaultDto update(@PathParam("vaultId") UUID vaultId, VaultUpdateDto update) {
 		Vault vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
+		if( vault.archived) {
+			throw new ForbiddenException("vault is achived");
+		}
 		if(update.name != null) {
 			vault.name = update.name;
 		}
