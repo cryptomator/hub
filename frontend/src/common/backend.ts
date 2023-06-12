@@ -41,12 +41,19 @@ export type VaultDto = {
   id: string;
   name: string;
   description: string;
+  archived: boolean;
   creationTime: Date;
   masterkey: string;
   iterations: number;
   salt: string;
   authPublicKey: string;
   authPrivateKey: string;
+};
+
+export type VaultUpdateDto = {
+  name?: string;
+  description?: string;
+  archived?: string 
 };
 
 export type DeviceDto = {
@@ -323,9 +330,20 @@ class VaultService {
   }
 
   public async createVault(vaultId: string, name: string, description: string, masterkey: string, iterations: number, salt: string, signPubKey: string, signPrvKey: string): Promise<AxiosResponse<any>> {
-    const body: VaultDto = { id: vaultId, name: name, description: description, creationTime: new Date(), masterkey: masterkey, iterations: iterations, salt: salt, authPublicKey: signPubKey, authPrivateKey: signPrvKey };
+    const body: VaultDto = { id: vaultId, name: name, description: description, archived:false, creationTime: new Date(), masterkey: masterkey, iterations: iterations, salt: salt, authPublicKey: signPubKey, authPrivateKey: signPrvKey };
     return axiosAuth.put(`/vaults/${vaultId}`, body)
       .catch((error) => rethrowAndConvertIfExpected(error, 404, 409));
+  }
+
+  public async update(vaultId: string, newName?: string, newDescription?: string, newArchivedState?: string): Promise<VaultDto> {
+    const body : VaultUpdateDto = { name: newName, description: newDescription, archived: newArchivedState };
+    return axiosAuth.patch(`/vaults/${vaultId}`, body)
+      .then(response => {
+        let dateString = response.data.creationTime;
+        response.data.creationTime = new Date(dateString);
+        return response.data;
+      })
+      .catch((error) => rethrowAndConvertIfExpected(error, 404));
   }
 
   public async grantAccess(vaultId: string, deviceId: string, jwe: string, vaultKeys: VaultKeys) {
