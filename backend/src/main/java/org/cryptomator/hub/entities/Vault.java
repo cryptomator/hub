@@ -108,12 +108,13 @@ public class Vault extends PanacheEntityBase {
 				&& Objects.equals(name, vault.name)
 				&& Objects.equals(salt, vault.salt)
 				&& Objects.equals(iterations, vault.iterations)
-				&& Objects.equals(masterkey, vault.masterkey);
+				&& Objects.equals(masterkey, vault.masterkey)
+				&& Objects.equals(archived, vault.archived);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, name, salt, iterations, masterkey);
+		return Objects.hash(id, name, salt, iterations, masterkey, archived);
 	}
 
 	@Override
@@ -123,6 +124,7 @@ public class Vault extends PanacheEntityBase {
 				", members=" + directMembers.stream().map(m -> m.id).collect(Collectors.joining(", ")) +
 				", accessToken=" + accessTokens.stream().map(a -> a.id.toString()).collect(Collectors.joining(", ")) +
 				", name='" + name + '\'' +
+				", archived='" + archived + '\'' +
 				", salt='" + salt + '\'' +
 				", iterations='" + iterations + '\'' +
 				", masterkey='" + masterkey + '\'' +
