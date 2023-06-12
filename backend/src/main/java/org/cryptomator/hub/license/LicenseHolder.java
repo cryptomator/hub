@@ -68,14 +68,12 @@ public class LicenseHolder {
 	}
 
 	/**
-	 * Checks if the license is valid.
+	 * Checks if the license is set.
 	 *
-	 * @return {@code true}, if the license _is set and valid_. Otherwise false.
+	 * @return {@code true}, if the license _is set_. Otherwise false.
 	 */
-	public boolean isValid() {
-		return Optional.ofNullable(license) //
-				.map(l -> Instant.now().isBefore(l.getExpiresAt().toInstant())) //
-				.orElse(false);
+	public boolean isSet() {
+		return license != null;
 	}
 
 	/**

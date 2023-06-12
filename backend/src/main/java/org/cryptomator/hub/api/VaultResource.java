@@ -259,7 +259,9 @@ public class VaultResource {
 		var access = AccessToken.unlock(vaultId, deviceId, jwt.getSubject());
 		if (access != null) {
 			UnlockVaultEvent.log(jwt.getSubject(), vaultId, deviceId, UnlockVaultEvent.Result.SUCCESS);
-			return Response.ok(access.jwe).header("Cryptomator-Mobile-Access", license.isValid() ? "READ_WRITE" : "READ_ONLY").build();
+			var mobileAccessHeaderName = "Cryptomator-Mobile-Access";
+			var mobileAccessHeaderValue = license.isSet() ? "READ_WRITE" : "READ_ONLY"; // license expiration is not checked here, because it is checked in the ActiveLicense filter
+			return Response.ok(access.jwe).header(mobileAccessHeaderName, mobileAccessHeaderValue).build();
 		} else if (Device.findById(deviceId) == null) {
 			throw new NotFoundException("No such device.");
 		} else {
