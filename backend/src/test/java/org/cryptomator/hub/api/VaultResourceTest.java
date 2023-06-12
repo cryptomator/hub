@@ -16,7 +16,6 @@ import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;
@@ -880,63 +879,46 @@ public class VaultResourceTest {
 						VALUES
 						('7E57C0DE-0000-4000-8000-DADADADADADA', 'Vault U', 'Vault to update.',
 						 '2020-02-20 20:20:20', 'saltU', 42, 'masterkeyU', 'auth_pubkeyU', 'auht_prvkeyU', FALSE),
-						('7E57C0DE-0000-4000-8000-ADADADADADAD', 'Vault R', 'Vault to reactivate.',
+						('7E57C0DE-0000-4000-8000-ADADADADADAD', 'Vault R', 'Vault to update2.',
 						 '2020-02-20 20:20:20', 'saltR', 42, 'masterkeyR', 'auth_pubkeyR', 'auht_prvkeyR', TRUE);
 						""");
 
 			}
 		}
 
-		@BeforeEach
-		public void resetData() throws SQLException {
-			try (var s = dataSource.getConnection().createStatement()) {
-				s.execute("""
-						UPDATE "vault"
-						SET "name" = 'Vault U',
-							"description" = 'Vault to update.',
-							"creation_time" = '2020-02-20 20:20:20',
-							"salt"='saltU',
-							"iterations"=42,
-							"masterkey"='masterkeyU',
-							"auth_pubkey"='auth_pubkeyU',
-							"auth_prvkey"='auth_prvkeyU',
-							"archived"=FALSE
-						WHERE "id" ='7E57C0DE-0000-4000-8000-DADADADADADA';
-						""");
-			}
-		}
-
 		@Test
-		@DisplayName("PATCH /vaults/{vaultId}} with Body { \"name\":\"Vault X\", \"description\":\"Vault updated\", \"archived\":true } returns 200 with updated name")
+		@DisplayName("PATCH /vaults/{vaultId}} with Body { \"name\":\"Vault X\", \"description\":\"Vault updated\", \"archived\":true } returns 200 with updated name, description and archive status")
 		public void testUpdateAll() {
 			given().contentType(ContentType.JSON)
-					.body(new VaultResource.VaultUpdateDto("Vault X", "Vault updated", true))
+					.body(new VaultResource.VaultUpdateDto("Vault X", "Vault updated", "true"))
 					.when().patch("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-DADADADADADA")
 					.then().statusCode(200)
+					.body("id", equalToIgnoringCase("7E57C0DE-0000-4000-8000-DADADADADADA"))
 					.body("name", equalTo("Vault X"))
 					.body("description", equalTo("Vault updated"))
 					.body("archived", equalTo(true));
-
 		}
 
 		@Test
-		@DisplayName("PATCH /vaults/{vaultId}} with Body { \"name\":\"Vault X\", \"archived\":false } returns 403 if vault is archived")
-		public void testUpdateFailsOnArchived() {
+		@DisplayName("PATCH /vaults/{vaultId}} with Body { \"name\":\"Vault Y\"} returns 200 with only updated name")
+		public void testUpdateOnlyName() {
 			given().contentType(ContentType.JSON)
-					.body(new VaultResource.VaultUpdateDto("Vault X", null, false))
-					.when().patch("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-AAAAAAAAAAAA")
-					.then().statusCode(403);
-
+					.body(new VaultResource.VaultUpdateDto("Vault Y", null, null))
+					.when().patch("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-ADADADADADAD")
+					.then().statusCode(200)
+					.body("id", equalToIgnoringCase("7E57C0DE-0000-4000-8000-ADADADADADAD"))
+					.body("name", equalTo("Vault Y"))
+					.body("description", equalTo("Vault to update2."))
+					.body("archived", equalTo(true));
 		}
 
 		@Test
-		@DisplayName("PATCH /vaults/{vaultId}} with Body { \"archived\":false } returns 200 if vault is archived")
-		public void testUpdateReactivate() {
+		@DisplayName("PATCH /vaults/{vaultId}} with Body { \"archived\":\"yodelDodel\"} returns 400 ")
+		public void testUpdateBadRequest() {
 			given().contentType(ContentType.JSON)
-					.body(new VaultResource.VaultUpdateDto(null, null, false))
-					.when().patch("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-AAAAAAAAAAAA")
-					.then().statusCode(200);
-
+					.body(new VaultResource.VaultUpdateDto(null, null, "yodelDodel"))
+					.when().patch("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-ADADADADADAD")
+					.then().statusCode(400);
 		}
 
 		@AfterAll

@@ -381,21 +381,26 @@ public class VaultResource {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "Updates a vault",
-			description = "Changes the vault description, its name or its archive status. Once a vault is archived, it must be reactivated again before the name or description can be changed.")
+			description = "Changes the vault description, its name or its archive status.")
 	@APIResponse(responseCode = "200", description = "the vault has been updated")
-	@APIResponse(responseCode = "403", description = "requesting user is no admin or the vault has been archived.")
+	@APIResponse(responseCode = "403", description = "requesting user does not have admin role.")
 	public VaultDto update(@PathParam("vaultId") UUID vaultId, VaultUpdateDto update) {
 		Vault vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-		if (vault.archived && (update.name != null || update.description != null)) {
-			throw new ForbiddenException("Vault is archived.");
-		}
 		if (update.name != null) {
 			vault.name = update.name;
 		}
+
 		if (update.description != null) {
 			vault.description = update.description;
 		}
-		vault.archived = update.archived;
+
+		if (update.archived != null) {
+			if (!("false".equalsIgnoreCase(update.archived) || "true".equalsIgnoreCase(update.archived))) {
+				throw new BadRequestException("Allowed values for field \"archived\" are [true, false]");
+			}
+			vault.archived = Boolean.valueOf(update.archived);
+		}
+
 		vault.persistAndFlush();
 		return VaultDto.fromEntity(vault);
 	}
@@ -431,7 +436,7 @@ public class VaultResource {
 		}
 	}
 
-	public record VaultUpdateDto(@JsonProperty("name") String name, @JsonProperty("description") String description, @JsonProperty(value = "archived", defaultValue = "false") boolean archived) {
+	public record VaultUpdateDto(@JsonProperty("name") String name, @JsonProperty("description") String description, @JsonProperty("archived") String archived) {
 
 	}
 }
