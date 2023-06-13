@@ -747,6 +747,7 @@ public class VaultResourceTest {
 
 	}
 
+	@Nested
 	@DisplayName("/vaults/some")
 	public class GetSomeVaults {
 
@@ -786,7 +787,11 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@DisplayName("GET /vaults/some?ids=7e57c0de-0000-4000-8000-000100001111")
+		@DisplayName("GET /vaults/some?ids=7e57c0de-0000-4000-8000-000100001111 returns 403 as user")
+		@TestSecurity(user = "User Name 1", roles = {"user"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user1")
+		})
 		public void testListSomeVaultsAsUser() {
 			given().param("ids", "7e57c0de-0000-4000-8000-000100001111")
 					.when().get("/vaults/some")
