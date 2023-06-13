@@ -51,6 +51,10 @@
   "admin.licenseInfo.selfHostedNoLicense.description": "Thank you for using Cryptomator Hub! You have been granted the Community License. If you need more seats, upgrade your license.",
   "admin.licenseInfo.managedNoLicense.description": "Thank you for using Cryptomator Hub! You currently have no active license.",
 
+  "archiveVaultDialog.title": "Archive Vault",
+  "archiveVaultDialog.description": "Yada yada",
+  "archiveVaultDialog.confirm": "Archive Vault",
+
   "auditLog.title": "Audit Logs",
   "auditLog.sort.ascending": "Ascending",
   "auditLog.sort.descending": "Descending",
@@ -146,6 +150,7 @@
   "vaultDetails.actions.updatePermissions.reload": "Reload",
   "vaultDetails.actions.downloadVaultTemplate": "Download Vault Template",
   "vaultDetails.actions.showRecoveryKey": "Show Recovery Key",
+  "vaultDetails.actions.archiveVault": "Archive Vault",
 
   "vaultList.title": "Vaults",
   "vaultList.empty.title": "No vaults",
