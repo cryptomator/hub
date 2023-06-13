@@ -66,7 +66,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'close'): void
-  (e: 'archived'): void
+  (e: 'archived', updatedVault: VaultDto): void
 }>();
 
 defineExpose({
@@ -80,8 +80,8 @@ function show() {
 async function archiveVault() {
   onArchiveVaultError.value = null;
   try {
-    await backend.vaults.update(props.vault.id, undefined , undefined, 'true');
-    emit('archived');
+    const updatedVault = await backend.vaults.update(props.vault.id, undefined , undefined, 'true');
+    emit('archived', updatedVault);
     open.value = false;
   } catch (error) {
     console.error('Archiving vault failed.', error);

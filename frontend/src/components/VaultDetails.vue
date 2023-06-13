@@ -86,8 +86,11 @@
           <button type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showRecoveryKey()">
             {{ t('vaultDetails.actions.showRecoveryKey') }}
           </button>
-          <button type="button" class="bg-red-600 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-white  hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showArchiveVaultConfirmation()">
+          <button v-if="vault != null && !vault.archived" type="button" class="bg-red-600 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-white  hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showArchiveVaultConfirmation()">
             {{ t('vaultDetails.actions.archiveVault') }}
+          </button>
+          <button v-else type="button" class="bg-red-600 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-white  hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showReactivateVaultConfirmation()">
+            {{ t('vaultDetails.actions.reactivateVault') }}
           </button>
         </div>
       </div>
@@ -104,7 +107,8 @@
   <GrantPermissionDialog v-if="grantingPermission && vault != null && vaultKeys != null" ref="grantPermissionDialog" :vault="vault" :devices="devicesRequiringAccessGrant" :vault-keys="vaultKeys" @close="grantingPermission = false" @permission-granted="permissionGranted()" />
   <DownloadVaultTemplateDialog v-if="downloadingVaultTemplate && vault != null && vaultKeys != null" ref="downloadVaultTemplateDialog" :vault="vault" :vault-keys="vaultKeys" @close="downloadingVaultTemplate = false" />
   <RecoveryKeyDialog v-if="showingRecoveryKey && vault != null && vaultKeys != null" ref="showRecoveryKeyDialog" :vault="vault" :vault-keys="vaultKeys" @close="showingRecoveryKey = false" />
-  <ArchiveVaultDialog v-if="showingArchiveDialog && vault != null && vaultKeys != null" ref="showArchiveVaultDialog" :vault="vault" @close="showingArchiveDialog = false" />
+  <ArchiveVaultDialog v-if="showingArchiveDialog && vault != null && vaultKeys != null" ref="showArchiveVaultDialog" :vault="vault" @close="showingArchiveDialog = false" @archived="uv => refreshVault(uv)"/>
+  <ReactivateVaultDialog v-if="showingReactivateDialog && vault != null && vaultKeys != null" ref="showReactivateVaultDialog" :vault="vault" @close="showingReactivateDialog = false" @reactivated="uv => refreshVault(uv)" />
 </template>
 
 <script setup lang="ts">
@@ -121,6 +125,7 @@ import GrantPermissionDialog from './GrantPermissionDialog.vue';
 import RecoveryKeyDialog from './RecoveryKeyDialog.vue';
 import SearchInputGroup from './SearchInputGroup.vue';
 import ArchiveVaultDialog from './ArchiveVaultDialog.vue';
+import ReactivateVaultDialog from './ReactivateVaultDialog.vue';
 
 const { t, d } = useI18n({ useScope: 'global' });
 
@@ -145,6 +150,8 @@ const showingRecoveryKey = ref(false);
 const showRecoveryKeyDialog = ref<typeof RecoveryKeyDialog>();
 const showingArchiveDialog = ref(false);
 const showArchiveVaultDialog = ref<typeof ArchiveVaultDialog>();
+const showingReactivateDialog = ref(false);
+const showReactivateVaultDialog = ref<typeof ReactivateVaultDialog>();
 const vault = ref<VaultDto>();
 const members = ref<Map<string, AuthorityDto>>(new Map());
 const devicesRequiringAccessGrant = ref<DeviceDto[]>([]);
@@ -262,8 +269,17 @@ function showArchiveVaultConfirmation() {
   nextTick(() => showArchiveVaultDialog.value?.show());
 }
 
+function showReactivateVaultConfirmation() {
+  showingReactivateDialog.value = true;
+  nextTick(() => showReactivateVaultDialog.value?.show());
+}
+
 function permissionGranted() {
   devicesRequiringAccessGrant.value = [];
+}
+
+function refreshVault(updatedVault: VaultDto) {
+  vault.value = updatedVault;
 }
 
 async function searchAuthority(query: string): Promise<AuthorityDto[]> {

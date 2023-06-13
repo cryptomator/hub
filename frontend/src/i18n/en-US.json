@@ -52,7 +52,7 @@
   "admin.licenseInfo.managedNoLicense.description": "Thank you for using Cryptomator Hub! You currently have no active license.",
 
   "archiveVaultDialog.title": "Archive Vault",
-  "archiveVaultDialog.description": "Yada yada",
+  "archiveVaultDialog.description": "No data will be deleted, can free license seats",
   "archiveVaultDialog.confirm": "Archive Vault",
 
   "auditLog.title": "Audit Logs",
@@ -127,6 +127,10 @@
   "nav.profile.signOut": "Sign out",
   "nav.mobileMenu": "Open main menu",
 
+  "reactivateVaultDialog.title": "Reactivate Vault",
+  "reactivateVaultDialog.description": "Warning: Reactivating a vault can affect free license seats. If the license seats are exceeded, unlock of all vaults will be blocked.",
+  "reactivateVaultDialog.confirm": "Reactivate Vault",
+
   "recoveryKeyDialog.title": "Recovery Key",
   "recoveryKeyDialog.description": "This is your recovery key for \"{0}\". Keep it safe, it is your only chance to regain access to a vault in case of system outage.",
   "recoveryKeyDialog.recoveryKey": "Recovery Key of Your Vault",
@@ -151,6 +155,7 @@
   "vaultDetails.actions.downloadVaultTemplate": "Download Vault Template",
   "vaultDetails.actions.showRecoveryKey": "Show Recovery Key",
   "vaultDetails.actions.archiveVault": "Archive Vault",
+  "vaultDetails.actions.reactivateVault": "Reactivate Vault",
 
   "vaultList.title": "Vaults",
   "vaultList.empty.title": "No vaults",
