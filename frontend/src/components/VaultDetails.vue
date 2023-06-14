@@ -8,6 +8,14 @@
   </div>
 
   <div v-else class="pb-16 space-y-6">
+    <div v-if="vault?.archived" class="rounded-md bg-yellow-50 p-4">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <ExclamationTriangleIcon class="h-5 w-5 text-yellow-400" aria-hidden="true" />
+        </div>
+        <h4 class="ml-3 text-sm font-medium text-yellow-800">This vault is archived</h4>
+      </div>
+    </div>
     <div>
       <h3 class="font-medium text-gray-900">{{ t('vaultDetails.description.header') }}</h3>
       <div class="mt-2 flex items-center justify-between">
@@ -51,7 +59,7 @@
               </p>
             </li>
           </template>
-          <li class="py-2 flex flex-col ">
+          <li v-if="!vault?.archived" class="py-2 flex flex-col">
             <div v-if="!addingUser" class="justify-between items-center">
               <button type="button" class="group -ml-1 bg-white p-1 rounded-md flex items-center focus:outline-none focus:ring-2 focus:ring-primary" @click="addingUser = true">
                 <span class="w-8 h-8 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400">
@@ -72,24 +80,24 @@
         <h3 class="font-medium text-gray-900">{{ t('vaultDetails.actions.title') }}</h3>
         <div class="mt-2 flex flex-col gap-2">
           <div class="flex gap-2">
-            <button :disabled="devicesRequiringAccessGrant.length == 0" type="button" class="flex-1 bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="showGrantPermissionDialog()">
+            <button v-if="!vault?.archived" :disabled="devicesRequiringAccessGrant.length == 0" type="button" class="flex-1 bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="showGrantPermissionDialog()">
               {{ t('vaultDetails.actions.updatePermissions') }}
             </button>
-            <button type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="reloadDevicesRequiringAccessGrant()">
+            <button v-if="!vault?.archived" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="reloadDevicesRequiringAccessGrant()">
               <span class="sr-only">{{ t('vaultDetails.actions.updatePermissions.reload') }}</span>
               <ArrowPathIcon class="h-5 w-5" aria-hidden="true" />
             </button>
           </div>
-          <button type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDownloadVaultTemplate()">
+          <button v-if="!vault?.archived" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDownloadVaultTemplate()">
             {{ t('vaultDetails.actions.downloadVaultTemplate') }}
           </button>
           <button type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showRecoveryKey()">
             {{ t('vaultDetails.actions.showRecoveryKey') }}
           </button>
-          <button v-if="vault != null && !vault.archived" type="button" class="bg-red-600 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-white  hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showArchiveVaultConfirmation()">
+          <button v-if="!vault?.archived" type="button" class="bg-red-600 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-white  hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showArchiveVaultConfirmation()">
             {{ t('vaultDetails.actions.archiveVault') }}
           </button>
-          <button v-else type="button" class="bg-red-600 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-white  hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showReactivateVaultConfirmation()">
+          <button v-if="vault?.archived" type="button" class="bg-red-600 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-white  hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showReactivateVaultConfirmation()">
             {{ t('vaultDetails.actions.reactivateVault') }}
           </button>
         </div>
@@ -126,6 +134,7 @@ import RecoveryKeyDialog from './RecoveryKeyDialog.vue';
 import SearchInputGroup from './SearchInputGroup.vue';
 import ArchiveVaultDialog from './ArchiveVaultDialog.vue';
 import ReactivateVaultDialog from './ReactivateVaultDialog.vue';
+import { ExclamationTriangleIcon } from '@heroicons/vue/20/solid';
 
 const { t, d } = useI18n({ useScope: 'global' });
 
