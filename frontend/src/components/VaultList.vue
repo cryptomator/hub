@@ -111,7 +111,7 @@
   </div>
 
   <SlideOver v-if="selectedVault != null" ref="vaultDetailsSlideOver" :title="selectedVault.name" @close="selectedVault = null">
-    <VaultDetails :vault-id="selectedVault.id"></VaultDetails>
+    <VaultDetails :vault-id="selectedVault.id" @vault-updated="_ => fetchData()"></VaultDetails>
   </SlideOver>
 </template>
 

@@ -142,6 +142,10 @@ const props = defineProps<{
   vaultId: string
 }>();
 
+const emit = defineEmits<{
+  (e: 'vaultUpdated', updatedVault: VaultDto): void
+}>();
+
 const isFetching = ref<boolean>();
 const onFetchError = ref<Error | null>();
 const allowRetryFetch = computed(() => onFetchError.value != null && !(onFetchError.value instanceof NotFoundError));  //fetch requests either list something, or query from th vault. In the latter, a 404 indicates the vault does not exists anymore.
@@ -289,6 +293,7 @@ function permissionGranted() {
 
 function refreshVault(updatedVault: VaultDto) {
   vault.value = updatedVault;
+  emit('vaultUpdated', updatedVault);
 }
 
 async function searchAuthority(query: string): Promise<AuthorityDto[]> {
