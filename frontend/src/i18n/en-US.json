@@ -169,5 +169,6 @@
   "vaultList.filter.result.empty.title": "No vaults",
   "vaultList.filter.result.empty.description.admin": "No results using that search term or filter.",
   "vaultList.filter.result.empty.description.user": "No results using that search term.",
-  "vaultList.search.placeholder": "Search..."
+  "vaultList.search.placeholder": "Search...",
+  "vaultList.badge.archived": "Archived"
 }
