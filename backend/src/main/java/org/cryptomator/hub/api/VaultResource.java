@@ -8,7 +8,7 @@ import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.ws.rs.BadRequestException;
+import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
@@ -16,7 +16,6 @@ import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.PATCH;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -50,6 +49,7 @@ import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 
 @Path("/vaults")
@@ -330,25 +330,44 @@ public class VaultResource {
 	@Path("/{vaultId}")
 	@RolesAllowed("user")
 	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
 	@Operation(summary = "creates a vault",
 			description = "Creates a vault with the given vault id. The creationTime in the vaultDto is ignored and the current server time is used. The archived flag in the vaultDto is ignored and set to false")
-	@APIResponse(responseCode = "201", description = "vault created")
-	@APIResponse(responseCode = "409", description = "vault with given id or name already exists")
-	public Response create(@PathParam("vaultId") UUID vaultId, @Valid VaultDto vaultDto) {
-		if (vaultDto == null) {
-			throw new BadRequestException("Missing vault dto");
+	@APIResponse(responseCode = "200", description = "existing vault updated")
+	@APIResponse(responseCode = "201", description = "new vault created")
+	@APIResponse(responseCode = "409", description = "TODO")
+	public Response createOrUpdate(@PathParam("vaultId") UUID vaultId, @Valid @NotNull VaultDto vaultDto) {
+		var currentUser = User.<User>findById(jwt.getSubject());
+		Vault vault;
+		boolean isCreated = false;
+		try {
+			vault = Vault.<Vault>findByIdOptional(vaultId).get();
+		} catch (NoSuchElementException _e) {
+			isCreated = true;
+			//create new vault
+			vault = new Vault();
+			vault.id = vaultDto.id;
+			vault.creationTime = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+			vault.masterkey = vaultDto.masterkey;
+			vault.iterations = vaultDto.iterations;
+			vault.salt = vaultDto.salt;
+			vault.authenticationPublicKey = vaultDto.authPublicKey;
+			vault.authenticationPrivateKey = vaultDto.authPrivateKey;
+			vault.directMembers.add(currentUser);
 		}
-		User currentUser = User.findById(jwt.getSubject());
-		var vault = vaultDto.toVault(vaultId);
-		vault.creationTime = Instant.now().truncatedTo(ChronoUnit.MILLIS);
-		vault.directMembers.add(currentUser);
-		vault.archived = false;
+		//update new or existing vault
+		vault.name = vaultDto.name;
+		vault.description = vaultDto.description;
+		vault.archived = vaultDto.archived;
+
 		try {
 			vault.persistAndFlush();
 			CreateVaultEvent.log(currentUser.id, vault.id);
-			return Response.created(URI.create(".")).build();
+			if (isCreated) {
+				return Response.created(URI.create(".")).build();
+			} else {
+				return Response.ok(VaultDto.fromEntity(vault), MediaType.APPLICATION_JSON).build();
+			}
 		} catch (PersistenceException e) {
 			if (e instanceof ConstraintViolationException) {
 				throw new ClientErrorException(Response.Status.CONFLICT, e);
@@ -356,37 +375,6 @@ public class VaultResource {
 				throw new InternalServerErrorException(e);
 			}
 		}
-	}
-
-	@PATCH
-	@Path("/{vaultId}")
-	@RolesAllowed("admin")
-	@Transactional
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	@Operation(summary = "Updates a vault",
-			description = "Changes the vault description, its name or its archive status.")
-	@APIResponse(responseCode = "200", description = "the vault has been updated")
-	@APIResponse(responseCode = "403", description = "requesting user does not have admin role.")
-	public VaultDto update(@PathParam("vaultId") UUID vaultId, VaultUpdateDto update) {
-		Vault vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-		if (update.name != null) {
-			vault.name = update.name;
-		}
-
-		if (update.description != null) {
-			vault.description = update.description;
-		}
-
-		if (update.archived != null) {
-			if (!("false".equalsIgnoreCase(update.archived) || "true".equalsIgnoreCase(update.archived))) {
-				throw new BadRequestException("Allowed values for field \"archived\" are [true, false]");
-			}
-			vault.archived = Boolean.valueOf(update.archived);
-		}
-
-		vault.persistAndFlush();
-		return VaultDto.fromEntity(vault);
 	}
 
 
@@ -403,24 +391,6 @@ public class VaultResource {
 		public static VaultDto fromEntity(Vault entity) {
 			return new VaultDto(entity.id, entity.name, entity.description, entity.creationTime.truncatedTo(ChronoUnit.MILLIS), entity.masterkey, entity.iterations, entity.salt, entity.authenticationPublicKey, entity.authenticationPrivateKey, entity.archived);
 		}
-
-		public Vault toVault(UUID id) {
-			var vault = new Vault();
-			vault.id = id;
-			vault.name = name;
-			vault.description = description;
-			vault.creationTime = creationTime;
-			vault.masterkey = masterkey;
-			vault.iterations = iterations;
-			vault.salt = salt;
-			vault.authenticationPublicKey = authPublicKey;
-			vault.authenticationPrivateKey = authPrivateKey;
-			vault.archived = archived;
-			return vault;
-		}
-	}
-
-	public record VaultUpdateDto(@JsonProperty("name") String name, @JsonProperty("description") String description, @JsonProperty("archived") String archived) {
 
 	}
 }

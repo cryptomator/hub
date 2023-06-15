@@ -198,46 +198,6 @@ public class VaultResourceTest {
 					.then().statusCode(400);
 		}
 
-		@Test
-		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111 returns 409")
-		public void testCreateVault1() {
-			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100001111");
-			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", "Test vault 1", Instant.parse("1999-11-19T19:19:19Z"), "masterkey3", 42, "NaCl", "authPubKey3", "authPrvKey3", false);
-
-			given().contentType(ContentType.JSON).body(vaultDto)
-					.when().put("/vaults/{vaultId}", uuid.toString())
-					.then().statusCode(409);
-		}
-
-		@Test
-		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100002222 returns 409")
-		public void testCreateVault2() {
-			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100002222");
-			var vaultDto = new VaultResource.VaultDto(uuid, "Vault 1", "This is a testvault.", Instant.parse("2020-02-20T20:20:20Z"), "masterkey1", 42, "salt1", "authPubKey1", "authPrvKey1", false);
-
-			given().contentType(ContentType.JSON).body(vaultDto)
-					.when().put("/vaults/{vaultId}", uuid.toString())
-					.then().statusCode(409);
-		}
-
-		@Test
-		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100003333 returns 201")
-		public void testCreateVault3() {
-			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100003333");
-			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", "Test vault 3", Instant.parse("2112-12-21T21:12:21Z"), "masterkey3", 42, "NaCl", "authPubKey3", "authPrvKey3", false);
-
-			given().contentType(ContentType.JSON).body(vaultDto)
-					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-BADBADBADBAD")
-					.then().statusCode(201);
-		}
-
-		@Test
-		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-BADBADBADBAD returns 400")
-		public void testCreateVault4() {
-			given().contentType(ContentType.JSON)
-					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-BADBADBADBAD")
-					.then().statusCode(400);
-		}
 
 		@Test
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111/keys/device3 returns 201")
@@ -800,13 +760,13 @@ public class VaultResourceTest {
 	}
 
 	@Nested
-	@DisplayName("PATCH /vaults/{vaultid}")
-	@TestSecurity(user = "User Name 1", roles = {"user", "admin"})
+	@DisplayName("PUT /vaults/{vaultid}")
+	@TestSecurity(user = "User Name 1", roles = {"user"})
 	@OidcSecurity(claims = {
 			@Claim(key = "sub", value = "user1")
 	})
 	@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-	public class Update {
+	public class CreateOrUpdate {
 
 		@BeforeAll
 		public void insertData() throws SQLException {
@@ -814,48 +774,51 @@ public class VaultResourceTest {
 				s.execute("""
 						INSERT INTO "vault" ("id", "name", "description", "creation_time", "salt", "iterations", "masterkey", "auth_pubkey", "auth_prvkey", "archived")
 						VALUES
-						('7E57C0DE-0000-4000-8000-DADADADADADA', 'Vault U', 'Vault to update.',
-						 '2020-02-20 20:20:20', 'saltU', 42, 'masterkeyU', 'auth_pubkeyU', 'auht_prvkeyU', FALSE),
-						('7E57C0DE-0000-4000-8000-ADADADADADAD', 'Vault R', 'Vault to update2.',
-						 '2020-02-20 20:20:20', 'saltR', 42, 'masterkeyR', 'auth_pubkeyR', 'auht_prvkeyR', TRUE);
+						('7E57C0DE-0000-4000-8000-FFFFFFFF1111', 'Vault U', 'Vault to update.',
+						 '2020-02-20T20:20:20Z', 'saltU', 42, 'masterkeyU', 'auth_pubkeyU', 'auth_prvkeyU', FALSE);
 						""");
 
 			}
 		}
 
 		@Test
-		@DisplayName("PATCH /vaults/{vaultId}} with Body { \"name\":\"Vault X\", \"description\":\"Vault updated\", \"archived\":true } returns 200 with updated name, description and archive status")
-		public void testUpdateAll() {
-			given().contentType(ContentType.JSON)
-					.body(new VaultResource.VaultUpdateDto("Vault X", "Vault updated", "true"))
-					.when().patch("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-DADADADADADA")
-					.then().statusCode(200)
-					.body("id", equalToIgnoringCase("7E57C0DE-0000-4000-8000-DADADADADADA"))
-					.body("name", equalTo("Vault X"))
-					.body("description", equalTo("Vault updated"))
-					.body("archived", equalTo(true));
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-FFFFFFFF2222 returns 201")
+		public void testCreateVault1() {
+			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-FFFFFFFF2222");
+			var vaultDto = new VaultResource.VaultDto(uuid, "Test Vault", "Vault to create", Instant.parse("2112-12-21T21:12:21Z"), "masterkeyC", 42, "NaCl", "authPubKeyC", "authPrvKeyC", false);
+
+			given().contentType(ContentType.JSON).body(vaultDto)
+					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-FFFFFFFF2222")
+					.then().statusCode(201);
 		}
 
 		@Test
-		@DisplayName("PATCH /vaults/{vaultId}} with Body { \"name\":\"Vault Y\"} returns 200 with only updated name")
-		public void testUpdateOnlyName() {
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-BADBADBADBAD returns 400")
+		public void testCreateVault2() {
 			given().contentType(ContentType.JSON)
-					.body(new VaultResource.VaultUpdateDto("Vault Y", null, null))
-					.when().patch("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-ADADADADADAD")
-					.then().statusCode(200)
-					.body("id", equalToIgnoringCase("7E57C0DE-0000-4000-8000-ADADADADADAD"))
-					.body("name", equalTo("Vault Y"))
-					.body("description", equalTo("Vault to update2."))
-					.body("archived", equalTo(true));
-		}
-
-		@Test
-		@DisplayName("PATCH /vaults/{vaultId}} with Body { \"archived\":\"yodelDodel\"} returns 400 ")
-		public void testUpdateBadRequest() {
-			given().contentType(ContentType.JSON)
-					.body(new VaultResource.VaultUpdateDto(null, null, "yodelDodel"))
-					.when().patch("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-ADADADADADAD")
+					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-BADBADBADBAD")
 					.then().statusCode(400);
+		}
+
+		@Test
+		@DisplayName("PUT /vaults/{vaultId}} returns 200 with only updated name, description and archive flag")
+		public void testUpdate() {
+			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-FFFFFFFF1111");
+			var vaultDto = new VaultResource.VaultDto(uuid, "VaultUpdated", "Vault updated.", Instant.parse("2112-12-21T21:12:21Z"), "someVaule", -1, "someVaule", "someValue", "someValue", true);
+			given().contentType(ContentType.JSON)
+					.body(vaultDto)
+					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-FFFFFFFF1111")
+					.then().statusCode(200)
+					.body("id", equalToIgnoringCase("7E57C0DE-0000-4000-8000-FFFFFFFF1111"))
+					.body("name", equalTo("VaultUpdated"))
+					.body("description", equalTo("Vault updated."))
+					.body("creationTime", equalTo("2020-02-20T20:20:20Z"))
+					.body("masterkey", equalTo("masterkeyU"))
+					.body("salt", equalTo("saltU"))
+					.body("iterations", equalTo(42))
+					.body("authPublicKey", equalTo("auth_pubkeyU"))
+					.body("authPrivateKey", equalTo("auth_prvkeyU"))
+					.body("archived", equalTo(true));
 		}
 
 		@AfterAll
@@ -863,7 +826,7 @@ public class VaultResourceTest {
 			try (var s = dataSource.getConnection().createStatement()) {
 				s.execute("""
 						DELETE FROM "vault"
-						WHERE "id" IN ('7E57C0DE-0000-4000-8000-DADADADADADA','7E57C0DE-0000-4000-8000-ADADADADADAD');
+						WHERE "id" IN ('7E57C0DE-0000-4000-8000-FFFFFFFF1111','7E57C0DE-0000-4000-8000-FFFFFFFF2222');
 						""");
 			}
 		}
