@@ -577,7 +577,7 @@ public class VaultResourceTest {
 							('user92', 'USER', 'user name 92'),
 							('user93', 'USER', 'user name 93'),
 							('user94', 'USER', 'user name 94'),
-							('userAA', 'USER', 'user name Archived'),
+							('user95_A', 'USER', 'user name Archived'),
 							('group91', 'GROUP', 'group name 91');
 							
 						INSERT INTO "group_details" ("id")
@@ -591,7 +591,7 @@ public class VaultResourceTest {
 							('user92'),
 							('user93'),
 							('user94'),
-							('userAA');
+							('user95_A');
 							
 						INSERT INTO "group_membership" ("group_id", "member_id")
 						VALUES
@@ -602,7 +602,7 @@ public class VaultResourceTest {
 							
 						INSERT INTO "vault_access" ("vault_id", "authority_id")
 						VALUES
-							('7E57C0DE-0000-4000-8000-AAAAAAAAAAAA', 'userAA');
+							('7E57C0DE-0000-4000-8000-AAAAAAAAAAAA', 'user95_A');
 						""");
 			}
 		}
@@ -662,7 +662,7 @@ public class VaultResourceTest {
 			try (var s = dataSource.getConnection().createStatement()) {
 				s.execute("""
 						DELETE FROM "authority"
-						WHERE "id" IN ('user91', 'user92', 'user93', 'user94', 'userAA', 'group91');
+						WHERE "id" IN ('user91', 'user92', 'user93', 'user94', 'user95_A', 'group91');
 						""");
 			}
 		}
