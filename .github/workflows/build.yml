@@ -89,7 +89,7 @@ jobs:
           else
             TAG="snapshot"
           fi
-          echo ::set-output name=tag::${TAG}
+          echo tag=${TAG} >> "$GITHUB_OUTPUT"
       - name: Ensure to use tagged version
         if: startsWith(github.ref, 'refs/tags/')
         run: mvn versions:set --file ./backend/pom.xml -DnewVersion=${GITHUB_REF##*/}
