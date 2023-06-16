@@ -132,13 +132,12 @@ public class VaultResource {
 	@APIResponse(responseCode = "201", description = "member added")
 	@APIResponse(responseCode = "401", description = "VaultAdminAuthorizationJWT not provided")
 	@APIResponse(responseCode = "402", description = "all seats in license used")
-	@APIResponse(responseCode = "403", description = "vaultAdminAuthorizationJWT expired or not yet valid")
+	@APIResponse(responseCode = "403", description = "VaultAdminAuthorizationJWT expired or not yet valid")
 	@APIResponse(responseCode = "404", description = "vault or user not found")
 	@APIResponse(responseCode = "409", description = "user is already a direct member of the vault")
 	@ActiveLicense
 	public Response addUser(@PathParam("vaultId") UUID vaultId, @PathParam("userId") @ValidId String userId) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-
 		var user = User.<User>findByIdOptional(userId).orElseThrow(NotFoundException::new);
 		if (!EffectiveVaultAccess.isUserOccupyingSeat(userId)) {
 			//for new user, we need to check if a license seat is available
@@ -178,7 +177,6 @@ public class VaultResource {
 		}
 
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-
 		var group = Group.<Group>findByIdOptional(groupId).orElseThrow(NotFoundException::new);
 		if (vault.directMembers.contains(group)) {
 			return Response.status(Response.Status.CONFLICT).build();
@@ -198,7 +196,7 @@ public class VaultResource {
 	@Operation(summary = "remove a member from this vault", description = "revokes the given user's access rights from this vault. If the given user is no member, the request is a no-op.")
 	@APIResponse(responseCode = "204", description = "member removed")
 	@APIResponse(responseCode = "401", description = "VaultAdminAuthorizationJWT not provided")
-	@APIResponse(responseCode = "403", description = "Vault archived, VaultAdminAuthorizationJWT expired or not yet valid")
+	@APIResponse(responseCode = "403", description = "VaultAdminAuthorizationJWT expired or not yet valid")
 	@APIResponse(responseCode = "404", description = "vault not found")
 	public Response removeMember(@PathParam("vaultId") UUID vaultId, @PathParam("userId") @ValidId String userId) {
 		return removeAuthority(vaultId, userId);
@@ -221,7 +219,6 @@ public class VaultResource {
 
 	private Response removeAuthority(UUID vaultId, String authorityId) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-
 		vault.directMembers.removeIf(e -> e.id.equals(authorityId));
 		vault.persist();
 		UpdateVaultMembershipEvent.log(jwt.getSubject(), vaultId, authorityId, UpdateVaultMembershipEvent.Operation.REMOVE);
@@ -333,8 +330,8 @@ public class VaultResource {
 	@RolesAllowed("user")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Transactional
-	@Operation(summary = "creates a vault",
-			description = "Creates a vault with the given vault id. The creationTime in the vaultDto is ignored and the current server time is used. The archived flag in the vaultDto is ignored and set to false")
+	@Operation(summary = "creates or updates a vault",
+			description = "Creates or updates a vault with the given vault id. The creationTime in the vaultDto is always ignored. On creation the current server time is used. On update, only the name, description and archived fields are considered.")
 	@APIResponse(responseCode = "200", description = "existing vault updated")
 	@APIResponse(responseCode = "201", description = "new vault created")
 	@APIResponse(responseCode = "409", description = "A vault with the given id or name already exists on persisting a new vault")
