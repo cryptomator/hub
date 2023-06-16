@@ -120,7 +120,7 @@
 </template>
 
 <script setup lang="ts">
-import { ArrowPathIcon } from '@heroicons/vue/20/solid';
+import { ArrowPathIcon, ExclamationTriangleIcon } from '@heroicons/vue/20/solid';
 import { PlusSmallIcon } from '@heroicons/vue/24/solid';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -134,7 +134,6 @@ import RecoveryKeyDialog from './RecoveryKeyDialog.vue';
 import SearchInputGroup from './SearchInputGroup.vue';
 import ArchiveVaultDialog from './ArchiveVaultDialog.vue';
 import ReactivateVaultDialog from './ReactivateVaultDialog.vue';
-import { ExclamationTriangleIcon } from '@heroicons/vue/20/solid';
 
 const { t, d } = useI18n({ useScope: 'global' });
 
