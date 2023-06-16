@@ -11,7 +11,6 @@ ALTER TABLE "access_token_legacy" RENAME CONSTRAINT "ACCESS_FK_VAULT" TO "ACCESS
 
 -- as soon as a device gets verified by its owner, the owner's private key will be encrypted for this device:
 ALTER TABLE "device" ADD "user_key" VARCHAR(2000) UNIQUE; -- private key, encrypted using device's public key (JWE ECDH-ES)
-ALTER TABLE "device" ADD "type" VARCHAR(255) NOT NULL;
 ALTER TABLE "device" ADD "last_seen_time" TIMESTAMP WITH TIME ZONE NOT NULL;
 COMMENT ON COLUMN "device"."publickey" IS 'Note: This contains base64url-encoded data for historic reasons.';
 

@@ -36,7 +36,7 @@ public class EntityIntegrationTest {
 			s.execute("""
 					INSERT INTO "authority" ("id", "type", "name") VALUES ('user999', 'USER', 'User 999');
 					INSERT INTO "user_details" ("id") VALUES ('user999');
-					INSERT INTO "access_token" ("user_id", "vault_id", "vault_key_jwe") VALUES ('user999', '7E57C0DE-0000-4000-8000-000100001111', 'jwe4');
+					INSERT INTO "access_token" ("user_id", "vault_id", "vault_key") VALUES ('user999', '7E57C0DE-0000-4000-8000-000100001111', 'jwe4');
 					""");
 		}
 

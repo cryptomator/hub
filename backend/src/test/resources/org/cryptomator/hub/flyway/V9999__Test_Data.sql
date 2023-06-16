@@ -44,13 +44,13 @@ VALUES
 	('7E57C0DE-0000-4000-8000-000100001111', 'user2', 'MEMBER'),
 	('7E57C0DE-0000-4000-8000-000100002222', 'group1', 'MEMBER');
 
-INSERT INTO "device" ("id", "owner_id", "name", "type", "publickey", "creation_time", "last_seen_time", "user_key_jwe")
+INSERT INTO "device" ("id", "owner_id", "name", "type", "publickey", "creation_time", "last_seen_time", "user_key")
 VALUES
 	('device1', 'user1', 'Computer 1', 'DESKTOP', 'publickey1', '2020-02-20 20:20:20', '2023-01-11 22:33:44', 'jwe.jwe.jwe.user1.device1'),
 	('device2', 'user2', 'Computer 2', 'DESKTOP', 'publickey2', '2020-02-20 20:20:20', '2023-01-11 22:33:44', 'jwe.jwe.jwe.user2.device2'),
 	('device3', 'user1', 'Computer 3', 'DESKTOP', 'publickey3', '2020-02-20 20:20:20', '2023-01-11 22:33:44', NULL);
 
-INSERT INTO "access_token" ("user_id", "vault_id", "vault_key_jwe")
+INSERT INTO "access_token" ("user_id", "vault_id", "vault_key")
 VALUES
 	('user1', '7E57C0DE-0000-4000-8000-000100001111', 'jwe.jwe.jwe.vault1.user1'), -- direct access
 	('user2', '7E57C0DE-0000-4000-8000-000100001111', 'jwe.jwe.jwe.vault1.user2'), -- direct access
