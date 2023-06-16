@@ -74,7 +74,7 @@ public class DeviceResource {
 			device.id = deviceId;
 			device.owner = User.findById(jwt.getSubject());
 			device.creationTime = Instant.now().truncatedTo(ChronoUnit.MILLIS);
-			device.type = dto.type;
+			device.type = dto.type != null ? dto.type : Device.Type.DESKTOP; // default to desktop for backwards compatibility
 		}
 		device.name = dto.name;
 		device.publickey = dto.publicKey;
@@ -155,7 +155,7 @@ public class DeviceResource {
 
 	public record DeviceDto(@JsonProperty("id") @ValidId String id,
 							@JsonProperty("name") @NoHtmlOrScriptChars @NotBlank String name,
-							@JsonProperty("type") @NotNull Device.Type type,
+							@JsonProperty("type") Device.Type type,
 							@JsonProperty("publicKey") @NotNull @OnlyBase64UrlChars String publicKey, // for historic reasons, the device public key is base64url-encoded, instead of base64
 							@JsonProperty("userKey") @ValidJWE String userKey,
 							@JsonProperty("owner") @ValidId String ownerId,
