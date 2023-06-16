@@ -9,17 +9,17 @@
         {{ t('common.refresh') }}
       </button>
 
-      <Listbox v-model="sortDirection" as="div">
+      <Listbox v-model="selectedOrder" as="div">
         <div class="relative w-36">
           <ListboxButton class="relative w-full cursor-default rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary text-sm">
-            <span class="block truncate">{{ sortOptions[sortDirection].label }}</span>
+            <span class="block truncate">{{ orderOptions[selectedOrder].label }}</span>
             <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
               <ChevronUpDownIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
             </span>
           </ListboxButton>
           <transition leave-active-class="transition ease-in duration-100" leave-from-class="opacity-100" leave-to-class="opacity-0">
             <ListboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none text-sm">
-              <ListboxOption v-for="(option, key) in sortOptions" :key="key" v-slot="{ active, selected }" :value="key" as="template" @click="sortDirection = key">
+              <ListboxOption v-for="(option, key) in orderOptions" :key="key" v-slot="{ active, selected }" :value="key" as="template">
                 <li :class="[active ? 'text-white bg-primary' : 'text-gray-900', 'relative cursor-default select-none py-2 pl-3 pr-9']">
                   <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ option.label }}</span>
 
@@ -166,22 +166,20 @@ const endDateFilterIsValid = computed(() => {
 });
 const filterIsValid = computed(() => startDateFilterIsValid.value && endDateFilterIsValid.value);
 
-const sortDirection = ref<'asc' | 'desc'>('desc');
-const sortOptions = {
+const selectedOrder = ref<'asc' | 'desc'>('desc');
+const orderOptions = {
   desc: {
-    label: t('auditLog.sort.descending'),
+    label: t('auditLog.order.descending'),
     sign: 1,
     initialLastIdOfPreviousPage: Number.MAX_SAFE_INTEGER,
-    getAllEventsFunc: backend.auditLogs.getAllEventsBeforeId,
   },
   asc: {
-    label: t('auditLog.sort.ascending'),
+    label: t('auditLog.order.ascending'),
     sign: -1,
     initialLastIdOfPreviousPage: 0,
-    getAllEventsFunc: backend.auditLogs.getAllEventsAfterId,
   },
 };
-watch(sortDirection, () => refreshData());
+watch(selectedOrder, refreshData);
 
 const currentPage = ref(0);
 const pageSize = ref(20);
@@ -196,10 +194,10 @@ async function fetchData() {
   onFetchError.value = null;
   try {
     // Fetch one more event than the page size to determine if there is a next page
-    const events = await sortOptions[sortDirection.value].getAllEventsFunc(startDate.value, endDate.value, lastIdOfPreviousPage[currentPage.value], pageSize.value + 1);
+    const events = await backend.auditLogs.getAllEvents(startDate.value, endDate.value, lastIdOfPreviousPage[currentPage.value], selectedOrder.value, pageSize.value + 1);
     // If the lastIdOfPreviousPage for the first page has not been set yet, set it to an id "before"/"after" the first event
     if (currentPage.value == 0 && lastIdOfPreviousPage[0] == 0 && events.length > 0) {
-      lastIdOfPreviousPage[0] = events[0].id + sortOptions[sortDirection.value].sign;
+      lastIdOfPreviousPage[0] = events[0].id + orderOptions[selectedOrder.value].sign;
     }
     // Determine if there is a next page and discard the last event if there is one
     if (events.length > pageSize.value) {
@@ -220,7 +218,7 @@ async function fetchData() {
 }
 
 async function refreshData() {
-  lastIdOfPreviousPage = [sortOptions[sortDirection.value].initialLastIdOfPreviousPage];
+  lastIdOfPreviousPage = [orderOptions[selectedOrder.value].initialLastIdOfPreviousPage];
   currentPage.value = 0;
   entityCache.invalidateAll();
   await fetchData();

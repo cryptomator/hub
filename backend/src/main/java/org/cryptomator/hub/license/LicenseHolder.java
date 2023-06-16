@@ -68,6 +68,15 @@ public class LicenseHolder {
 	}
 
 	/**
+	 * Checks if the license is set.
+	 *
+	 * @return {@code true}, if the license _is set_. Otherwise false.
+	 */
+	public boolean isSet() {
+		return license != null;
+	}
+
+	/**
 	 * Checks if the license is expired.
 	 *
 	 * @return {@code true}, if the license _is set and expired_. Otherwise false.
