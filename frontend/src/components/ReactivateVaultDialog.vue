@@ -79,9 +79,16 @@ function show() {
 
 async function reactivateVault() {
   onReactivateVaultError.value = null;
+  const v = props.vault;
   try {
-    const updatedVault = await  backend.vaults.update(props.vault.id, undefined , undefined, 'false');
-    emit('reactivated', updatedVault);
+    const updatedVault = await backend.vaults.createOrUpdateVault(v.id, v.name, v.description, false, v.masterkey, v.iterations, v.salt, v.authPublicKey, v.authPrivateKey );
+    if (updatedVault != null){
+      emit('reactivated', updatedVault);
+    } else {
+      //TODO: or throw error in this case? But the "damage" is already done in backend
+      const createdVault: VaultDto = { id: v.id, name: v.name, description: v.description, archived: false, creationTime: v.creationTime, masterkey: v.masterkey, iterations: v.iterations, salt: v.salt, authPublicKey: v.authPublicKey, authPrivateKey: v.authPrivateKey };
+      emit('reactivated', createdVault);
+    }
     open.value = false;
   } catch (error) {
     console.error('Reactivating vault failed.', error);

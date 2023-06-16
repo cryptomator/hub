@@ -319,7 +319,7 @@ async function createVault() {
     const vaultId = crypto.randomUUID();
     vaultConfig.value = await VaultConfig.create(vaultId, vaultKeys.value);
     const wrapped = await vaultKeys.value.wrap(password.value);
-    await backend.vaults.createVault(vaultId, vaultName.value, vaultDescription.value, wrapped.masterkey, wrapped.iterations, wrapped.salt, wrapped.signaturePublicKey, wrapped.signaturePrivateKey);
+    await backend.vaults.createOrUpdateVault(vaultId, vaultName.value, vaultDescription.value, false, wrapped.masterkey, wrapped.iterations, wrapped.salt, wrapped.signaturePublicKey, wrapped.signaturePrivateKey);
     state.value = State.Finished;
   } catch (error) {
     console.error('Creating vault failed.', error);
