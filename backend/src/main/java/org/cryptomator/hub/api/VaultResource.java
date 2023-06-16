@@ -335,7 +335,7 @@ public class VaultResource {
 			description = "Creates a vault with the given vault id. The creationTime in the vaultDto is ignored and the current server time is used. The archived flag in the vaultDto is ignored and set to false")
 	@APIResponse(responseCode = "200", description = "existing vault updated")
 	@APIResponse(responseCode = "201", description = "new vault created")
-	@APIResponse(responseCode = "409", description = "TODO")
+	@APIResponse(responseCode = "409", description = "A vault with the given id or name already exists on persisting a new vault")
 	public Response createOrUpdate(@PathParam("vaultId") UUID vaultId, @Valid @NotNull VaultDto vaultDto) {
 		var currentUser = User.<User>findById(jwt.getSubject());
 		Vault vault;

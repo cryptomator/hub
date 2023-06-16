@@ -801,7 +801,7 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@DisplayName("PUT /vaults/{vaultId}} returns 200 with only updated name, description and archive flag")
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-FFFFFFFF1111 returns 200 with only updated name, description and archive flag")
 		public void testUpdate() {
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-FFFFFFFF1111");
 			var vaultDto = new VaultResource.VaultDto(uuid, "VaultUpdated", "Vault updated.", Instant.parse("2112-12-21T21:12:21Z"), "someVaule", -1, "someVaule", "someValue", "someValue", true);
