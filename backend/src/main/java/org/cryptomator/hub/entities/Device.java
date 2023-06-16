@@ -12,17 +12,11 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.NoResultException;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import org.cryptomator.hub.api.DeviceResource;
 
 import java.time.Instant;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Stream;
 
 @Entity

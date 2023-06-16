@@ -3,7 +3,6 @@ package org.cryptomator.hub.api;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import io.agroal.api.AgroalDataSource;
-import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.quarkus.test.security.oidc.Claim;
@@ -38,7 +37,6 @@ import java.sql.SQLException;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 import static io.restassured.RestAssured.given;

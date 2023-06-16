@@ -269,7 +269,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "403", description = "device not authorized to access this vault")
 	@APIResponse(responseCode = "404", description = "unknown device")
 	@ActiveLicense
-	public String legacyUnlock(@PathParam("vaultId") UUID vaultId, @PathParam("deviceId") @ValidId String deviceId) {
+	public Response legacyUnlock(@PathParam("vaultId") UUID vaultId, @PathParam("deviceId") @ValidId String deviceId) {
 		var usedSeats = EffectiveVaultAccess.countEffectiveVaultUsers();
 		if (usedSeats > license.getAvailableSeats()) {
 			throw new PaymentRequiredException("Number of effective vault users exceeds available license seats");
@@ -278,7 +278,9 @@ public class VaultResource {
 		var access = LegacyAccessToken.unlock(vaultId, deviceId, jwt.getSubject());
 		if (access != null) {
 			UnlockVaultEvent.log(jwt.getSubject(), vaultId, deviceId, UnlockVaultEvent.Result.SUCCESS);
-			return access.jwe;
+			var subscriptionStateHeaderName = "Hub-Subscription-State";
+			var subscriptionStateHeaderValue = license.isSet() ? "ACTIVE" : "INACTIVE"; // license expiration is not checked here, because it is checked in the ActiveLicense filter
+			return Response.ok(access.jwe).header(subscriptionStateHeaderName, subscriptionStateHeaderValue).build();
 		} else if (Device.findById(deviceId) == null) {
 			throw new NotFoundException("No such device.");
 		} else {

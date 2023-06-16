@@ -13,7 +13,6 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.cryptomator.hub.entities.AccessToken;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.User;
 import org.eclipse.microprofile.jwt.JsonWebToken;
@@ -72,7 +71,6 @@ public class UsersResource {
 	@APIResponse(responseCode = "404", description = "no user matching the subject of the JWT passed as Bearer Token")
 	public UserDto getMe(@QueryParam("withDevices") boolean withDevices) {
 		User user = User.findById(jwt.getSubject());
-		Function<AccessToken, VaultResource.VaultDto> mapAccessibleVaults = a -> new VaultResource.VaultDto(a.vault.id, a.vault.name, a.vault.description, a.vault.creationTime.truncatedTo(ChronoUnit.MILLIS), null, 0, null, null, null);
 		Function<Device, DeviceResource.DeviceDto> mapDevices = d -> new DeviceResource.DeviceDto(d.id, d.name, d.type, d.publickey, d.userKey, d.owner.id, d.creationTime.truncatedTo(ChronoUnit.MILLIS), d.lastSeenTime.truncatedTo(ChronoUnit.MILLIS));
 		var devices = withDevices ? user.devices.stream().map(mapDevices).collect(Collectors.toSet()) : Set.<DeviceResource.DeviceDto>of();
 		return new UserDto(user.id, user.name, user.pictureUrl, user.email, devices, user.publicKey, user.privateKey, user.setupCode);
