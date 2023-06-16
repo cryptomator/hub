@@ -101,7 +101,7 @@
 
   "deviceList.empty.message": "Keine Geräte",
   "deviceList.empty.description": "Um ein Gerät hinzuzufügen, füge einen Tresor aus diesem Hub zur Cryptomator-App des Geräts hinzu und entsperre es.",
-  "deviceList.title": "Geräte ({0})",
+  "deviceList.title": "Geräte",
   "deviceList.deviceName": "Gerätename",
   "deviceList.type": "Typ",
   "deviceList.added": "Hinzugefügt",
@@ -115,8 +115,7 @@
 
   "nav.vaults": "Tresore",
   "nav.profile.signedInAs": "Eingeloggt als",
-  "nav.profile.devices": "Deine Geräte",
-  "nav.profile.settings": "Einstellungen",
+  "nav.profile.prpfile": "Dein Profil",
   "nav.profile.admin": "Admin",
   "nav.profile.auditlog": "Audit-Logs",
   "nav.profile.signOut": "Abmelden",
@@ -126,13 +125,9 @@
   "recoveryKeyDialog.description": "Dies ist dein Wiederherstellungsschlüssel für „{0}“. Verwahre ihn gut, er ist im Falle eines Systemausfalls deine einzige Möglichkeit, auf einen Tresor zuzugreifen.",
   "recoveryKeyDialog.recoveryKey": "Wiederherstellungsschlüssel für deinen Tresor",
 
-  "userSettings.title": "Einstellungen",
-  "userSettings.general.title": "Allgemein",
-  "userSettings.general.language.title": "Sprache",
-  "userSettings.serverInfo.title": "Server-Info",
-  "userSettings.serverInfo.description": "Für den Support gib bitte immer die angezeigte Hub- und Keycloak-Version an.",
-  "userSettings.serverInfo.hubVersion.title": "Hub-Version",
-  "userSettings.serverInfo.keycloakVersion.title": "Keycloak-Version",
+  "userProfile.title": "Profil",
+  "userProfile.actions.manageAccount": "Account verwalten",
+  "userProfile.actions.editLanguage": "Sprache ändern",
 
   "vaultDetails.manageVault": "Tresor verwalten",
   "vaultDetails.description.header": "Beschreibung",

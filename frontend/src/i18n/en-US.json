@@ -102,7 +102,7 @@
 
   "deviceList.empty.message": "No devices",
   "deviceList.empty.description": "To add a device, add a vault from this Hub to the Cryptomator app of the device and unlock it.",
-  "deviceList.title": "Devices ({0})",
+  "deviceList.title": "Devices",
   "deviceList.deviceName": "Device Name",
   "deviceList.type": "Type",
   "deviceList.added": "Added",
@@ -116,8 +116,7 @@
 
   "nav.vaults": "Vaults",
   "nav.profile.signedInAs": "Signed in as",
-  "nav.profile.devices": "Your Devices",
-  "nav.profile.settings": "Settings",
+  "nav.profile.profile": "Your Profile",
   "nav.profile.admin": "Admin",
   "nav.profile.auditlog": "Audit Logs",
   "nav.profile.signOut": "Sign out",
@@ -127,13 +126,9 @@
   "recoveryKeyDialog.description": "This is your recovery key for \"{0}\". Keep it safe, it is your only chance to regain access to a vault in case of system outage.",
   "recoveryKeyDialog.recoveryKey": "Recovery Key of Your Vault",
 
-  "userSettings.title": "Settings",
-  "userSettings.general.title": "General",
-  "userSettings.general.language.title": "Language",
-  "userSettings.serverInfo.title": "Server Info",
-  "userSettings.serverInfo.description": "For support, always state the displayed Hub and Keycloak version.",
-  "userSettings.serverInfo.hubVersion.title": "Hub Version",
-  "userSettings.serverInfo.keycloakVersion.title": "Keycloak Version",
+  "userProfile.title": "Profile",
+  "userProfile.actions.manageAccount": "Manage Account",
+  "userProfile.actions.editLanguage": "Edit Language",
 
   "vaultDetails.manageVault": "Manage Vault",
   "vaultDetails.description.header": "Description",

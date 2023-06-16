@@ -52,6 +52,7 @@ export type VaultDto = {
 export type DeviceDto = {
   id: string;
   name: string;
+  type: 'BROWSER' | 'DESKTOP' | 'MOBILE';
   publicKey: string;
   accessTo: VaultDto[];
   creationTime: Date;

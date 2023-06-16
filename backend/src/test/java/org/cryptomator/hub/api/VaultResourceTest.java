@@ -11,6 +11,7 @@ import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
 import jakarta.validation.Validator;
+import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.filters.VaultAdminOnlyFilterProvider;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
@@ -407,7 +408,7 @@ public class VaultResourceTest {
 		@Order(13)
 		@DisplayName("PUT /devices/device9999 returns 201")
 		public void testCreateDevice2() {
-			var deviceDto = new DeviceResource.DeviceDto("device9999", "Computer 9999", "publickey9999", "user2", Set.of(), Instant.parse("2020-02-20T20:20:20Z"));
+			var deviceDto = new DeviceResource.DeviceDto("device9999", "Computer 9999", Device.Type.DESKTOP, "publickey9999", "user2", Set.of(), Instant.parse("2020-02-20T20:20:20Z"));
 
 			given().header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vault2AdminJWT)
 					.given().contentType(ContentType.JSON).body(deviceDto)
