@@ -1,39 +1,35 @@
 <template>
-  <div v-if="isFetching">
-    {{ t('common.loading') }}
-  </div>
-
-  <div v-else-if="onFetchError != null">
-    <FetchError :error="onFetchError" :retry="allowRetryFetch ? fetchData : null"/>
+  <div v-if="vault == null">
+    <div v-if="onFetchError == null">
+      {{ t('common.loading') }}
+    </div>
+    <div v-else>
+      <FetchError :error="onFetchError" :retry="allowRetryFetch ? fetchData : null"/>
+    </div>
   </div>
 
   <div v-else class="pb-16 space-y-6">
-    <div v-if="vault?.archived" class="rounded-md bg-yellow-50 p-4">
+    <div v-if="vault.archived" class="rounded-md bg-yellow-50 p-4">
       <div class="flex">
         <div class="flex-shrink-0">
           <ExclamationTriangleIcon class="h-5 w-5 text-yellow-400" aria-hidden="true" />
         </div>
-        <h4 class="ml-3 text-sm font-medium text-yellow-800">This vault is archived</h4>
+        <p class="ml-3 text-sm text-yellow-700">{{ t('vaultDetails.warning.archived') }}</p>
       </div>
     </div>
+
     <div>
       <h3 class="font-medium text-gray-900">{{ t('vaultDetails.description.header') }}</h3>
       <div class="mt-2 flex items-center justify-between">
-        <p v-if="vault != null && vault.description.length > 0" class="text-sm text-gray-500">{{ vault.description }}</p>
+        <p v-if="vault.description.length > 0" class="text-sm text-gray-500">{{ vault.description }}</p>
         <p v-else class="text-sm text-gray-500 italic">{{ t('vaultDetails.description.empty') }}</p>
-        <!-- TODO: implement calls to change metadata (see backend.ts -> VaultService - update()) 
-        <button v-if="isVaultAdmin" type="button" class="-mr-2 h-8 w-8 bg-white rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary">
-          <PencilIcon class="h-5 w-5" aria-hidden="true" />
-          <span class="sr-only">Add description</span>
-        </button>
-        -->
       </div>
     </div>
 
     <div>
       <h3 class="font-medium text-gray-900">{{ t('vaultDetails.information.header') }}</h3>
       <dl class="mt-2 border-t border-b border-gray-200 divide-y divide-gray-200">
-        <div v-if="vault?.creationTime != null" class="py-3 flex justify-between text-sm font-medium">
+        <div class="py-3 flex justify-between text-sm font-medium">
           <dt class="text-gray-500">{{ t('vaultDetails.information.created') }}</dt>
           <dd class="text-gray-900">{{ d(vault.creationTime, 'short') }}</dd>
         </div>
@@ -59,7 +55,7 @@
               </p>
             </li>
           </template>
-          <li v-if="!vault?.archived" class="py-2 flex flex-col">
+          <li v-if="!vault.archived" class="py-2 flex flex-col">
             <div v-if="!addingUser" class="justify-between items-center">
               <button type="button" class="group -ml-1 bg-white p-1 rounded-md flex items-center focus:outline-none focus:ring-2 focus:ring-primary" @click="addingUser = true">
                 <span class="w-8 h-8 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400">
@@ -78,26 +74,33 @@
 
       <div>
         <h3 class="font-medium text-gray-900">{{ t('vaultDetails.actions.title') }}</h3>
-        <div class="mt-2 flex flex-col gap-2">
+
+        <div v-if="!vault.archived" class="mt-2 flex flex-col gap-2">
           <div class="flex gap-2">
-            <button v-if="!vault?.archived" :disabled="devicesRequiringAccessGrant.length == 0" type="button" class="flex-1 bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="showGrantPermissionDialog()">
+            <button :disabled="devicesRequiringAccessGrant.length == 0" type="button" class="flex-1 bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="showGrantPermissionDialog()">
               {{ t('vaultDetails.actions.updatePermissions') }}
             </button>
-            <button v-if="!vault?.archived" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="reloadDevicesRequiringAccessGrant()">
+            <button type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="reloadDevicesRequiringAccessGrant()">
               <span class="sr-only">{{ t('vaultDetails.actions.updatePermissions.reload') }}</span>
               <ArrowPathIcon class="h-5 w-5" aria-hidden="true" />
             </button>
           </div>
-          <button v-if="!vault?.archived" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDownloadVaultTemplate()">
+          <button type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDownloadVaultTemplateDialog()">
             {{ t('vaultDetails.actions.downloadVaultTemplate') }}
           </button>
-          <button type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showRecoveryKey()">
+          <button type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showRecoveryKeyDialog()">
             {{ t('vaultDetails.actions.showRecoveryKey') }}
           </button>
-          <button v-if="!vault?.archived" type="button" class="bg-red-600 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-white  hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showArchiveVaultConfirmation()">
+          <button type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white  hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showArchiveVaultDialog()">
             {{ t('vaultDetails.actions.archiveVault') }}
           </button>
-          <button v-if="vault?.archived" type="button" class="bg-red-600 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-white  hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showReactivateVaultConfirmation()">
+        </div>
+
+        <div v-else class="mt-2 flex flex-col gap-2">
+          <button type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showRecoveryKeyDialog()">
+            {{ t('vaultDetails.actions.showRecoveryKey') }}
+          </button>
+          <button type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white  hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showReactivateVaultDialog()">
             {{ t('vaultDetails.actions.reactivateVault') }}
           </button>
         </div>
@@ -110,13 +113,13 @@
       </button>
     </div>
   </div>
-  
+
   <AuthenticateVaultAdminDialog v-if="authenticatingVaultAdmin && vault != null" ref="authenticateVaultAdminDialog" :vault="vault" @action="vaultAdminAuthenticated" @close="authenticatingVaultAdmin = false" />
   <GrantPermissionDialog v-if="grantingPermission && vault != null && vaultKeys != null" ref="grantPermissionDialog" :vault="vault" :devices="devicesRequiringAccessGrant" :vault-keys="vaultKeys" @close="grantingPermission = false" @permission-granted="permissionGranted()" />
   <DownloadVaultTemplateDialog v-if="downloadingVaultTemplate && vault != null && vaultKeys != null" ref="downloadVaultTemplateDialog" :vault="vault" :vault-keys="vaultKeys" @close="downloadingVaultTemplate = false" />
-  <RecoveryKeyDialog v-if="showingRecoveryKey && vault != null && vaultKeys != null" ref="showRecoveryKeyDialog" :vault="vault" :vault-keys="vaultKeys" @close="showingRecoveryKey = false" />
-  <ArchiveVaultDialog v-if="showingArchiveDialog && vault != null && vaultKeys != null" ref="showArchiveVaultDialog" :vault="vault" @close="showingArchiveDialog = false" @archived="uv => refreshVault(uv)"/>
-  <ReactivateVaultDialog v-if="showingReactivateDialog && vault != null && vaultKeys != null" ref="showReactivateVaultDialog" :vault="vault" @close="showingReactivateDialog = false" @reactivated="uv => refreshVault(uv)" />
+  <RecoveryKeyDialog v-if="showingRecoveryKey && vault != null && vaultKeys != null" ref="recoveryKeyDialog" :vault="vault" :vault-keys="vaultKeys" @close="showingRecoveryKey = false" />
+  <ArchiveVaultDialog v-if="archivingVault && vault != null" ref="archiveVaultDialog" :vault="vault" @close="archivingVault = false" @archived="v => refreshVault(v)"/>
+  <ReactivateVaultDialog v-if="reactivatingVault && vault != null" ref="reactivateVaultDialog" :vault="vault" @close="reactivatingVault = false" @reactivated="v => refreshVault(v)" />
 </template>
 
 <script setup lang="ts">
@@ -126,14 +129,14 @@ import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { AuthorityDto, ConflictError, DeviceDto, NotFoundError, UserDto, VaultDto } from '../common/backend';
 import { VaultKeys } from '../common/crypto';
+import ArchiveVaultDialog from './ArchiveVaultDialog.vue';
 import AuthenticateVaultAdminDialog from './AuthenticateVaultAdminDialog.vue';
 import DownloadVaultTemplateDialog from './DownloadVaultTemplateDialog.vue';
 import FetchError from './FetchError.vue';
 import GrantPermissionDialog from './GrantPermissionDialog.vue';
+import ReactivateVaultDialog from './ReactivateVaultDialog.vue';
 import RecoveryKeyDialog from './RecoveryKeyDialog.vue';
 import SearchInputGroup from './SearchInputGroup.vue';
-import ArchiveVaultDialog from './ArchiveVaultDialog.vue';
-import ReactivateVaultDialog from './ReactivateVaultDialog.vue';
 
 const { t, d } = useI18n({ useScope: 'global' });
 
@@ -145,7 +148,6 @@ const emit = defineEmits<{
   (e: 'vaultUpdated', updatedVault: VaultDto): void
 }>();
 
-const isFetching = ref<boolean>();
 const onFetchError = ref<Error | null>();
 const allowRetryFetch = computed(() => onFetchError.value != null && !(onFetchError.value instanceof NotFoundError));  //fetch requests either list something, or query from th vault. In the latter, a 404 indicates the vault does not exists anymore.
 
@@ -159,11 +161,11 @@ const grantPermissionDialog = ref<typeof GrantPermissionDialog>();
 const downloadingVaultTemplate = ref(false);
 const downloadVaultTemplateDialog = ref<typeof DownloadVaultTemplateDialog>();
 const showingRecoveryKey = ref(false);
-const showRecoveryKeyDialog = ref<typeof RecoveryKeyDialog>();
-const showingArchiveDialog = ref(false);
-const showArchiveVaultDialog = ref<typeof ArchiveVaultDialog>();
-const showingReactivateDialog = ref(false);
-const showReactivateVaultDialog = ref<typeof ReactivateVaultDialog>();
+const recoveryKeyDialog = ref<typeof RecoveryKeyDialog>();
+const archivingVault = ref(false);
+const archiveVaultDialog = ref<typeof ArchiveVaultDialog>();
+const reactivatingVault = ref(false);
+const reactivateVaultDialog = ref<typeof ReactivateVaultDialog>();
 const vault = ref<VaultDto>();
 const members = ref<Map<string, AuthorityDto>>(new Map());
 const devicesRequiringAccessGrant = ref<DeviceDto[]>([]);
@@ -175,9 +177,7 @@ const me = ref<UserDto>();
 onMounted(fetchData);
 
 async function fetchData() {
-  isFetching.value = true;
   onFetchError.value = null;
-
   try {
     vault.value = await backend.vaults.get(props.vaultId);
     me.value = await backend.users.me(false, false);
@@ -185,8 +185,6 @@ async function fetchData() {
     console.error('Fetching data failed.', error);
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
-
-  isFetching.value = false;
 }
 
 async function vaultAdminAuthenticated(keys: VaultKeys) {
@@ -266,24 +264,24 @@ function showGrantPermissionDialog() {
   nextTick(() => grantPermissionDialog.value?.show());
 }
 
-function showDownloadVaultTemplate() {
+function showDownloadVaultTemplateDialog() {
   downloadingVaultTemplate.value = true;
   nextTick(() => downloadVaultTemplateDialog.value?.show());
 }
 
-function showRecoveryKey() {
+function showRecoveryKeyDialog() {
   showingRecoveryKey.value = true;
-  nextTick(() => showRecoveryKeyDialog.value?.show());
+  nextTick(() => recoveryKeyDialog.value?.show());
 }
 
-function showArchiveVaultConfirmation() {
-  showingArchiveDialog.value = true;
-  nextTick(() => showArchiveVaultDialog.value?.show());
+function showArchiveVaultDialog() {
+  archivingVault.value = true;
+  nextTick(() => archiveVaultDialog.value?.show());
 }
 
-function showReactivateVaultConfirmation() {
-  showingReactivateDialog.value = true;
-  nextTick(() => showReactivateVaultDialog.value?.show());
+function showReactivateVaultDialog() {
+  reactivatingVault.value = true;
+  nextTick(() => reactivateVaultDialog.value?.show());
 }
 
 function permissionGranted() {

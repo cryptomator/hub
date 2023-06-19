@@ -52,8 +52,8 @@
   "admin.licenseInfo.managedNoLicense.description": "Thank you for using Cryptomator Hub! You currently have no active license.",
 
   "archiveVaultDialog.title": "Archive Vault",
-  "archiveVaultDialog.description": "No data will be deleted, can free license seats",
-  "archiveVaultDialog.confirm": "Archive Vault",
+  "archiveVaultDialog.description": "Archiving a vault makes it inactive. This may free up occupied seats. An archived vault can be reactivated later.",
+  "archiveVaultDialog.confirm": "Archive",
 
   "auditLog.title": "Audit Logs",
   "auditLog.order.ascending": "Ascending",
@@ -127,8 +127,8 @@
   "nav.mobileMenu": "Open main menu",
 
   "reactivateVaultDialog.title": "Reactivate Vault",
-  "reactivateVaultDialog.description": "Warning: Reactivating a vault can affect free license seats. If the license seats are exceeded, unlock of all vaults will be blocked.",
-  "reactivateVaultDialog.confirm": "Reactivate Vault",
+  "reactivateVaultDialog.description": "Warning: Reactivating a vault may affect the number of available seats. If the number of available seats is exceeded, unlocking all vaults will be blocked.",
+  "reactivateVaultDialog.confirm": "Reactivate",
 
   "recoveryKeyDialog.title": "Recovery Key",
   "recoveryKeyDialog.description": "This is your recovery key for \"{0}\". Keep it safe, it is your only chance to regain access to a vault in case of system outage.",
@@ -139,6 +139,7 @@
   "userProfile.actions.editLanguage": "Edit Language",
 
   "vaultDetails.manageVault": "Manage Vault",
+  "vaultDetails.warning.archived": "This vault is archived and cannot be unlocked.",
   "vaultDetails.description.header": "Description",
   "vaultDetails.description.empty": "No description provided.",
   "vaultDetails.information.header": "Information",
@@ -164,6 +165,6 @@
   "vaultList.filter.result.empty.title": "No vaults",
   "vaultList.filter.result.empty.description.admin": "No results using that search term or filter.",
   "vaultList.filter.result.empty.description.user": "No results using that search term.",
-  "vaultList.search.placeholder": "Search...",
+  "vaultList.search.placeholder": "Search…",
   "vaultList.badge.archived": "Archived"
 }
