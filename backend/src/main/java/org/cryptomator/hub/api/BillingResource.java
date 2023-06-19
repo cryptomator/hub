@@ -52,7 +52,7 @@ public class BillingResource {
 	@RolesAllowed("admin")
 	@Consumes(MediaType.TEXT_PLAIN)
 	@Operation(summary = "set the token")
-	@APIResponse(responseCode = "204")
+	@APIResponse(responseCode = "204", description = "token set")
 	@APIResponse(responseCode = "400", description = "token is invalid (e.g., expired or invalid signature)")
 	@APIResponse(responseCode = "403", description = "only admins are allowed to set the token")
 	public Response setToken(@NotNull @ValidJWS String token) {
