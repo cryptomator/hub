@@ -329,6 +329,7 @@ public class VaultResource {
 	@Path("/{vaultId}")
 	@RolesAllowed("user")
 	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
 	@Operation(summary = "creates or updates a vault",
 			description = "Creates or updates a vault with the given vault id. The creationTime in the vaultDto is always ignored. On creation the current server time is used. On update, only the name, description and archived fields are considered.")
@@ -363,7 +364,7 @@ public class VaultResource {
 			vault.persistAndFlush();
 			CreateVaultEvent.log(currentUser.id, vault.id);
 			if (isCreated) {
-				return Response.created(URI.create(".")).build();
+				return Response.created(URI.create(".")).contentLocation(URI.create(".")).entity(VaultDto.fromEntity(vault)).type(MediaType.APPLICATION_JSON).build();
 			} else {
 				return Response.ok(VaultDto.fromEntity(vault), MediaType.APPLICATION_JSON).build();
 			}

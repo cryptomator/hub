@@ -127,7 +127,7 @@
   "nav.mobileMenu": "Open main menu",
 
   "reactivateVaultDialog.title": "Reactivate Vault",
-  "reactivateVaultDialog.description": "Warning: Reactivating a vault may affect the number of available seats. If the number of available seats is exceeded, unlocking all vaults will be blocked.",
+  "reactivateVaultDialog.description": "Warning: Reactivating a vault may affect the number of available seats. If the number of available seats is exceeded, unlocking of all vaults will be blocked.",
   "reactivateVaultDialog.confirm": "Reactivate",
 
   "recoveryKeyDialog.title": "Recovery Key",

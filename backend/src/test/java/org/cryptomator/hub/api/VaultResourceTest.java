@@ -776,7 +776,7 @@ public class VaultResourceTest {
 						INSERT INTO "vault" ("id", "name", "description", "creation_time", "salt", "iterations", "masterkey", "auth_pubkey", "auth_prvkey", "archived")
 						VALUES
 						('7E57C0DE-0000-4000-8000-FFFFFFFF1111', 'Vault U', 'Vault to update.',
-						 '2020-02-20T20:20:20Z', 'saltU', 42, 'masterkeyU', 'auth_pubkeyU', 'auth_prvkeyU', FALSE);
+						 '2020-02-20T20:20:20Z', 'saltU', 42, 'masterkeyU', 'authPubKeyU', 'authPrvKeyU', FALSE);
 						""");
 
 			}
@@ -786,11 +786,19 @@ public class VaultResourceTest {
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-FFFFFFFF2222 returns 201")
 		public void testCreateVault1() {
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-FFFFFFFF2222");
-			var vaultDto = new VaultResource.VaultDto(uuid, "Test Vault", "Vault to create", Instant.parse("2112-12-21T21:12:21Z"), "masterkeyC", 42, "NaCl", "authPubKeyC", "authPrvKeyC", false);
-
+			var vaultDto = new VaultResource.VaultDto(uuid, "Test Vault", "Vault to create", Instant.parse("2112-12-21T21:12:21Z"), "masterkeyC", 42, "saltC", "authPubKeyC", "authPrvKeyC", false);
 			given().contentType(ContentType.JSON).body(vaultDto)
 					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-FFFFFFFF2222")
-					.then().statusCode(201);
+					.then().statusCode(201)
+					.body("id", equalToIgnoringCase("7E57C0DE-0000-4000-8000-FFFFFFFF2222"))
+					.body("name", equalTo("Test Vault"))
+					.body("description", equalTo("Vault to create"))
+					.body("masterkey", equalTo("masterkeyC"))
+					.body("salt", equalTo("saltC"))
+					.body("iterations", equalTo(42))
+					.body("authPublicKey", equalTo("authPubKeyC"))
+					.body("authPrivateKey", equalTo("authPrvKeyC"))
+					.body("archived", equalTo(false));
 		}
 
 		@Test
@@ -803,7 +811,7 @@ public class VaultResourceTest {
 
 		@Test
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-FFFFFFFF1111 returns 200 with only updated name, description and archive flag")
-		public void testUpdate() {
+		public void testUpdateVault() {
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-FFFFFFFF1111");
 			var vaultDto = new VaultResource.VaultDto(uuid, "VaultUpdated", "Vault updated.", Instant.parse("2112-12-21T21:12:21Z"), "someVaule", -1, "someVaule", "someValue", "someValue", true);
 			given().contentType(ContentType.JSON)
@@ -817,8 +825,8 @@ public class VaultResourceTest {
 					.body("masterkey", equalTo("masterkeyU"))
 					.body("salt", equalTo("saltU"))
 					.body("iterations", equalTo(42))
-					.body("authPublicKey", equalTo("auth_pubkeyU"))
-					.body("authPrivateKey", equalTo("auth_prvkeyU"))
+					.body("authPublicKey", equalTo("authPubKeyU"))
+					.body("authPrivateKey", equalTo("authPrvKeyU"))
 					.body("archived", equalTo(true));
 		}
 

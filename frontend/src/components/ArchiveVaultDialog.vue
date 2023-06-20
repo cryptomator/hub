@@ -81,14 +81,8 @@ async function archiveVault() {
   onArchiveVaultError.value = null;
   const v = props.vault;
   try {
-    const updatedVault = await backend.vaults.createOrUpdateVault(v.id, v.name, v.description, true, v.masterkey, v.iterations, v.salt, v.authPublicKey, v.authPrivateKey );
-    if (updatedVault != null){
-      emit('archived', updatedVault);
-    } else {
-      //TODO: or throw error in this case? But the "damage" is already done in backend
-      const createdVault: VaultDto = { id: v.id, name: v.name, description: v.description, archived: true, creationTime: v.creationTime, masterkey: v.masterkey, iterations: v.iterations, salt: v.salt, authPublicKey: v.authPublicKey, authPrivateKey: v.authPrivateKey };
-      emit('archived', createdVault);
-    }
+    const vaultDto = await backend.vaults.createOrUpdateVault(v.id, v.name, v.description, true, v.masterkey, v.iterations, v.salt, v.authPublicKey, v.authPrivateKey );
+    emit('archived', vaultDto);
     open.value = false;
   } catch (error) {
     console.error('Archiving vault failed.', error);
