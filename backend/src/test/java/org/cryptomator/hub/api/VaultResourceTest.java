@@ -93,7 +93,7 @@ public class VaultResourceTest {
 
 		@Test
 		public void testValidDto() {
-			var dto = new VaultResource.VaultDto(VALID_ID, VALID_NAME, "foobarbaz", Instant.parse("2020-02-20T20:20:20Z"), VALID_MASTERKEY, 8, VALID_SALT, VALID_AUTH_PUB, VALID_AUTH_PRI, false);
+			var dto = new VaultResource.VaultDto(VALID_ID, VALID_NAME, "foobarbaz", false, Instant.parse("2020-02-20T20:20:20Z"), VALID_MASTERKEY, 8, VALID_SALT, VALID_AUTH_PUB, VALID_AUTH_PRI);
 			var violations = validator.validate(dto);
 			MatcherAssert.assertThat(violations, Matchers.empty());
 		}
@@ -784,7 +784,7 @@ public class VaultResourceTest {
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-0001FFFF2222 returns 201")
 		public void testCreateVault1() {
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-0001FFFF2222");
-			var vaultDto = new VaultResource.VaultDto(uuid, "Test Vault", "Vault to create", Instant.parse("2112-12-21T21:12:21Z"), "masterkeyC", 42, "saltC", "authPubKeyC", "authPrvKeyC", false);
+			var vaultDto = new VaultResource.VaultDto(uuid, "Test Vault", "Vault to create", false, Instant.parse("2112-12-21T21:12:21Z"), "masterkeyC", 42, "saltC", "authPubKeyC", "authPrvKeyC");
 			given().contentType(ContentType.JSON).body(vaultDto)
 					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-0001FFFF2222")
 					.then().statusCode(201)
@@ -811,7 +811,7 @@ public class VaultResourceTest {
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-0001FFFF1111 returns 200 with only updated name, description and archive flag")
 		public void testUpdateVault() {
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-0001FFFF1111");
-			var vaultDto = new VaultResource.VaultDto(uuid, "VaultUpdated", "Vault updated.", Instant.parse("2112-12-21T21:12:21Z"), "someVaule", -1, "someVaule", "someValue", "someValue", true);
+			var vaultDto = new VaultResource.VaultDto(uuid, "VaultUpdated", "Vault updated.", true, Instant.parse("2112-12-21T21:12:21Z"), "someVaule", -1, "someVaule", "someValue", "someValue");
 			given().contentType(ContentType.JSON)
 					.body(vaultDto)
 					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-0001FFFF1111")
