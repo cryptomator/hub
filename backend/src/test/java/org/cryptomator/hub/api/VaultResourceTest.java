@@ -713,28 +713,31 @@ public class VaultResourceTest {
 
 	@Nested
 	@DisplayName("GET /vaults/{vaultid}/keys/{deviceId}")
+	@TestSecurity(user = "User Name 1", roles = {"user"})
+	@OidcSecurity(claims = {
+			@Claim(key = "sub", value = "user1")
+	})
 	public class Unlock {
 
 		@Test
-		@DisplayName("GET /vaults/{vaultid}/keys/{deviceId} returns 404 for not-existing vaults")
-		@TestSecurity(user = "User Name 1", roles = {"user", "admin"})
-		@OidcSecurity(claims = {
-				@Claim(key = "sub", value = "user1")
-		})
+		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/keys/iDoNotExist returns 404 for not-existing device")
+		public void testUnlockNotExistingDevice() {
+			when().get("/vaults/{vaultId}/keys/{deviceId}", "7E57C0DE-0000-4000-8000-BADBADBADBAD", "iDoNotExist")
+					.then().statusCode(404);
+		}
+
+		@Test
+		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-BADBADBADBAD/keys/someDevice returns 404 for not-existing vaults")
 		public void testUnlockNotExistingVault() {
 			when().get("/vaults/{vaultId}/keys/{deviceId}", "7E57C0DE-0000-4000-8000-BADBADBADBAD", "someDevice")
 					.then().statusCode(404);
 		}
 
 		@Test
-		@DisplayName("GET /vaults/{vaultid}/keys/{deviceId} returns 403 for archived vaults")
-		@TestSecurity(user = "User Name 1", roles = {"user", "admin"})
-		@OidcSecurity(claims = {
-				@Claim(key = "sub", value = "user1")
-		})
+		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-0001AAAAAAAA/keys/someDevice returns 410 for archived vaults")
 		public void testUnlockArchived() {
 			when().get("/vaults/{vaultId}/keys/{deviceId}", "7E57C0DE-0000-4000-8000-0001AAAAAAAA", "someDevice")
-					.then().statusCode(403);
+					.then().statusCode(410);
 		}
 
 	}
