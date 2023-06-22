@@ -78,7 +78,10 @@
         <a role="button" tabindex="0" class="block hover:bg-gray-50" :class="{'ring-2 ring-inset ring-primary': selectedVault == vault, 'rounded-t-md': index == 0, 'rounded-b-md': index == filteredVaults.length - 1}" @click="onVaultClick(vault)">
           <div class="px-4 py-4 flex items-center sm:px-6">
             <div class="min-w-0 flex-1">
-              <p class="truncate text-sm font-medium text-primary">{{ vault.name }}</p>
+              <div class="flex items-center gap-3">
+                <p class="truncate text-sm font-medium text-primary">{{ vault.name }}</p>
+                <div v-if="vault.archived" class="inline-flex items-center rounded-md bg-yellow-400/10 px-2 py-1 text-xs font-medium text-yellow-500 ring-1 ring-inset ring-yellow-400/20">{{ t('vaultList.badge.archived') }}</div>
+              </div>
               <p v-if="vault.description.length > 0" class="truncate text-sm text-gray-500 mt-2">{{ vault.description }}</p>
             </div>
             <div class="ml-5 shrink-0">
@@ -108,7 +111,7 @@
   </div>
 
   <SlideOver v-if="selectedVault != null" ref="vaultDetailsSlideOver" :title="selectedVault.name" @close="selectedVault = null">
-    <VaultDetails :vault-id="selectedVault.id"></VaultDetails>
+    <VaultDetails :vault-id="selectedVault.id" @vault-updated="_ => fetchData()"></VaultDetails>
   </SlideOver>
 </template>
 

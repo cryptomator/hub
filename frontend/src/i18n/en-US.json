@@ -51,6 +51,10 @@
   "admin.licenseInfo.selfHostedNoLicense.description": "Thank you for using Cryptomator Hub! You have been granted the Community License. If you need more seats, upgrade your license.",
   "admin.licenseInfo.managedNoLicense.description": "Thank you for using Cryptomator Hub! You currently have no active license.",
 
+  "archiveVaultDialog.title": "Archive Vault",
+  "archiveVaultDialog.description": "Archiving a vault makes it inactive. This may free up occupied seats. An archived vault can be reactivated later.",
+  "archiveVaultDialog.confirm": "Archive",
+
   "auditLog.title": "Audit Logs",
   "auditLog.order.ascending": "Ascending",
   "auditLog.order.descending": "Descending",
@@ -122,6 +126,10 @@
   "nav.profile.signOut": "Sign out",
   "nav.mobileMenu": "Open main menu",
 
+  "reactivateVaultDialog.title": "Reactivate Vault",
+  "reactivateVaultDialog.description": "Warning: Reactivating a vault may affect the number of available seats. If the number of available seats is exceeded, unlocking of all vaults will be blocked.",
+  "reactivateVaultDialog.confirm": "Reactivate",
+
   "recoveryKeyDialog.title": "Recovery Key",
   "recoveryKeyDialog.description": "This is your recovery key for \"{0}\". Keep it safe, it is your only chance to regain access to a vault in case of system outage.",
   "recoveryKeyDialog.recoveryKey": "Recovery Key of Your Vault",
@@ -131,6 +139,7 @@
   "userProfile.actions.editLanguage": "Edit Language",
 
   "vaultDetails.manageVault": "Manage Vault",
+  "vaultDetails.warning.archived": "This vault is archived and cannot be unlocked.",
   "vaultDetails.description.header": "Description",
   "vaultDetails.description.empty": "No description provided.",
   "vaultDetails.information.header": "Information",
@@ -141,6 +150,8 @@
   "vaultDetails.actions.updatePermissions.reload": "Reload",
   "vaultDetails.actions.downloadVaultTemplate": "Download Vault Template",
   "vaultDetails.actions.showRecoveryKey": "Show Recovery Key",
+  "vaultDetails.actions.archiveVault": "Archive Vault",
+  "vaultDetails.actions.reactivateVault": "Reactivate Vault",
 
   "vaultList.title": "Vaults",
   "vaultList.empty.title": "No vaults",
@@ -154,5 +165,6 @@
   "vaultList.filter.result.empty.title": "No vaults",
   "vaultList.filter.result.empty.description.admin": "No results using that search term or filter.",
   "vaultList.filter.result.empty.description.user": "No results using that search term.",
-  "vaultList.search.placeholder": "Search..."
+  "vaultList.search.placeholder": "Search…",
+  "vaultList.badge.archived": "Archived"
 }
