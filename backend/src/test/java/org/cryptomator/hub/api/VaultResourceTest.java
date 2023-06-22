@@ -57,6 +57,7 @@ public class VaultResourceTest {
 
 	private static String vault1AdminJWT;
 	private static String vault2AdminJWT;
+	private static String vaultArchivedAdminJWT;
 
 	@Inject
 	AgroalDataSource dataSource;
@@ -74,6 +75,7 @@ public class VaultResourceTest {
 
 		vault1AdminJWT = JWT.create().withHeader(Map.of("vaultId", "7E57C0DE-0000-4000-8000-000100001111")).withIssuedAt(Instant.now()).sign(algorithmVault1);
 		vault2AdminJWT = JWT.create().withHeader(Map.of("vaultId", "7E57C0DE-0000-4000-8000-000100002222")).withIssuedAt(Instant.now()).sign(algorithmVault2);
+		vaultArchivedAdminJWT = JWT.create().withHeader(Map.of("vaultId", "7E57C0DE-0000-4000-8000-0001AAAAAAAA")).withIssuedAt(Instant.now()).sign(algorithmVaultArchived);
 	}
 
 	private static PrivateKey getPrivateKey(String keyBytes) throws NoSuchAlgorithmException, InvalidKeySpecException {
@@ -176,7 +178,7 @@ public class VaultResourceTest {
 	@OidcSecurity(claims = {
 			@Claim(key = "sub", value = "user1")
 	})
-	public class AsVaultAdmin {
+	public class GetMembers {
 
 		@Test
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/members returns 200")
@@ -196,7 +198,16 @@ public class VaultResourceTest {
 					.when().get("/vaults/{vaultId}/members", "7E57C0DE-0000-4000-8000-000100002222")
 					.then().statusCode(400);
 		}
+	}
 
+	@Nested
+	@DisplayName("As vault admin user1")
+	@TestSecurity(user = "User Name 1", roles = {"user"})
+	@OidcSecurity(claims = {
+			@Claim(key = "sub", value = "user1")
+	})
+	@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+	public class GrantAccess {
 
 		@Test
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111/keys/device3 returns 201")
@@ -237,6 +248,28 @@ public class VaultResourceTest {
 					.contentType(ContentType.TEXT).body("jwe3.jwe3.jwe3.jwe3.jwe3")
 					.when().put("/vaults/{vaultId}/keys/{deviceId}", "7E57C0DE-0000-4000-8000-000100001111", "nonExistingDevice")
 					.then().statusCode(404);
+		}
+
+		@Test
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-0001AAAAAAAA/keys/someDevice returns 410")
+		public void testGrantAccessArchived() {
+			given()
+					.header(VaultAdminOnlyFilterProvider.VAULT_ADMIN_AUTHORIZATION, vaultArchivedAdminJWT)
+					.contentType(ContentType.TEXT).body("jwe3.jwe3.jwe3.jwe3.jwe3")
+					.when().put("/vaults/{vaultId}/keys/{deviceId}", "7E57C0DE-0000-4000-8000-0001AAAAAAAA", "someDevice")
+					.then().statusCode(410);
+		}
+
+
+		@AfterAll
+		public void deleteData() throws SQLException {
+			try (var s = dataSource.getConnection().createStatement()) {
+				s.execute("""
+						DELETE FROM "access_token"
+						WHERE "device_id" = 'device3'
+							AND "vault_id" = '7E57C0DE-0000-4000-8000-000100001111';
+						""");
+			}
 		}
 
 	}

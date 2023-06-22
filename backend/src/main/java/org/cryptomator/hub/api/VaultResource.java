@@ -245,16 +245,17 @@ public class VaultResource {
 	@RolesAllowed("user")
 	@Transactional
 	@Produces(MediaType.TEXT_PLAIN)
-	@Operation(summary = "get the device-specific masterkey")
+	@Operation(summary = "get the device-specific masterkey of a non-archived vault")
 	@APIResponse(responseCode = "200")
 	@APIResponse(responseCode = "402", description = "number of effective vault users exceeds available license seats")
-	@APIResponse(responseCode = "403", description = "vault is archived or device not authorized to access this vault")
+	@APIResponse(responseCode = "403", description = "device not authorized to access this vault")
 	@APIResponse(responseCode = "404", description = "vault or device not found")
+	@APIResponse(responseCode = "410", description = "Vault is archived")
 	@ActiveLicense
 	public Response unlock(@PathParam("vaultId") UUID vaultId, @PathParam("deviceId") @ValidId String deviceId) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		if (vault.archived) {
-			throw new ForbiddenException("Vault is archived.");
+			throw new GoneException("Vault is archived.");
 		}
 
 		var usedSeats = EffectiveVaultAccess.countEffectiveVaultUsers();
@@ -282,14 +283,18 @@ public class VaultResource {
 	@VaultAdminOnlyFilter
 	@Transactional
 	@Consumes(MediaType.TEXT_PLAIN)
-	@Operation(summary = "adds a device-specific masterkey")
+	@Operation(summary = "adds a device-specific masterkey to a non-archived vault")
 	@APIResponse(responseCode = "201", description = "device-specific key stored")
 	@APIResponse(responseCode = "401", description = "VaultAdminAuthorizationJWT not provided")
 	@APIResponse(responseCode = "403", description = "VaultAdminAuthorizationJWT expired or not yet valid")
 	@APIResponse(responseCode = "404", description = "vault or device not found")
 	@APIResponse(responseCode = "409", description = "Access to vault for device already granted")
+	@APIResponse(responseCode = "410", description = "Vault is archived")
 	public Response grantAccess(@PathParam("vaultId") UUID vaultId, @PathParam("deviceId") @ValidId String deviceId, @ValidJWE String jwe) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
+		if (vault.archived) {
+			throw new GoneException("Vault is archived.");
+		}
 		var device = Device.<Device>findByIdOptional(deviceId).orElseThrow(NotFoundException::new);
 
 		var access = new AccessToken();
