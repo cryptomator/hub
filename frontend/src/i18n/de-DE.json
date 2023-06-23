@@ -22,6 +22,7 @@
   "common.retry": "Wiederholen",
   "common.share": "Teilen",
   "common.unexpectedError": "Unerwarteter Fehler: {0}",
+  "common.update": "Aktualisieren",
 
   "admin.title": "Admin",
   "admin.serverInfo.title": "Server.Info",
@@ -113,6 +114,13 @@
   "downloadVaultTemplateDialog.title": "Tresorvorlage herunterladen",
   "downloadVaultTemplateDialog.description": "Lade die gezippte Tresorvorlage herunter und entpacke ihn an einem beliebigen Ort, der für deine Teammitglieder freigegeben ist. Dies ist einmal für die Ersteinrichtung erforderlich.",
 
+  "editVaultMetadataDialog.title": "Tresor-Metadaten bearbeiten",
+  "editVaultMetadataDialog.description": "Aktualisiere den Namen und die Beschreibung des Tresors.",
+  "editVaultMetadataDialog.vaultName": "Tresorname",
+  "editVaultMetadataDialog.vaultDescription": "Beschreibung",
+  "editVaultMetadataDialog.error.formValidationFailed": "Tresorname darf nicht leer sein.",
+  "editVaultMetadataDialog.error.conflict": "Ein Tresor mit dem angegebenen Namen existiert bereits.",
+
   "grantPermissionDialog.title": "Berechtigung erteilen",
   "grantPermissionDialog.description": "Berechtige weitere Geräten auf den Tresor zuzugreifen.",
   "grantPermissionDialog.submit": "Berechtigung für {0} Gerät(e) gewähren",
@@ -145,6 +153,7 @@
   "vaultDetails.sharedWith.title": "Geteilt mit",
   "vaultDetails.actions.updatePermissions": "Berechtigungen aktualisieren",
   "vaultDetails.actions.updatePermissions.reload": "Neu laden",
+  "vaultDetails.actions.editVaultMetadata": "Tresor-Metadaten bearbeiten",
   "vaultDetails.actions.downloadVaultTemplate": "Tresor-Vorlage herunterladen",
   "vaultDetails.actions.showRecoveryKey": "Wiederherstellungsschlüssel anzeigen",
   "vaultDetails.actions.archiveVault": "Tresor archivieren",

@@ -111,7 +111,7 @@
   </div>
 
   <SlideOver v-if="selectedVault != null" ref="vaultDetailsSlideOver" :title="selectedVault.name" @close="selectedVault = null">
-    <VaultDetails :vault-id="selectedVault.id" @vault-updated="_ => fetchData()"></VaultDetails>
+    <VaultDetails :vault-id="selectedVault.id" @vault-updated="v => onSelectedVaultUpdate(v)"></VaultDetails>
   </SlideOver>
 </template>
 
@@ -175,5 +175,18 @@ async function onAllVaultsClick() {
 
 async function onAccessibleVaultsClick() {
   vaults.value = (await backend.vaults.listAccessible()).sort((a, b) => a.name.localeCompare(b.name));
+}
+
+async function onSelectedVaultUpdate(vault: VaultDto) {
+  await fetchData();
+  if (vaults.value == null || vault.id !== selectedVault.value?.id) {
+    return;
+  }
+  const index = vaults.value?.findIndex(v => v.id === vault.id);
+  if (index !== undefined && index !== -1) {
+    selectedVault.value = vaults.value[index];
+  } else {
+    selectedVault.value = vault;
+  }
 }
 </script>

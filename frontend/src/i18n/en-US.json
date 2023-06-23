@@ -23,6 +23,7 @@
   "common.retry": "Retry",
   "common.share": "Share",
   "common.unexpectedError": "Unexpected Error: {0}",
+  "common.update": "Update",
 
   "admin.title": "Admin",
   "admin.serverInfo.title": "Server Info",
@@ -114,6 +115,13 @@
   "downloadVaultTemplateDialog.title": "Download Vault Template",
   "downloadVaultTemplateDialog.description": "Download and unpack the zipped vault template to any location shared with your team members. This is required only once during the initial setup.",
 
+  "editVaultMetadataDialog.title": "Edit Vault Metadata",
+  "editVaultMetadataDialog.description": "Update the name and description of the vault.",
+  "editVaultMetadataDialog.vaultName": "Vault Name",
+  "editVaultMetadataDialog.vaultDescription": "Description",
+  "editVaultMetadataDialog.error.formValidationFailed": "Vault name must not be empty.",
+  "editVaultMetadataDialog.error.vaultAlreadyExists": "A vault with the given name already exists.",
+
   "grantPermissionDialog.title": "Grant Permission",
   "grantPermissionDialog.description": "Grant additional devices permission to access the vault.",
   "grantPermissionDialog.submit": "Grant Permission to {0} Device(s)",
@@ -148,6 +156,7 @@
   "vaultDetails.actions.title": "Actions",
   "vaultDetails.actions.updatePermissions": "Update Permissions",
   "vaultDetails.actions.updatePermissions.reload": "Reload",
+  "vaultDetails.actions.editVaultMetadata": "Edit Vault Metadata",
   "vaultDetails.actions.downloadVaultTemplate": "Download Vault Template",
   "vaultDetails.actions.showRecoveryKey": "Show Recovery Key",
   "vaultDetails.actions.archiveVault": "Archive Vault",
