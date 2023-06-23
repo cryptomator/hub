@@ -85,6 +85,9 @@
               <ArrowPathIcon class="h-5 w-5" aria-hidden="true" />
             </button>
           </div>
+          <button type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showEditVaultMetadataDialog()">
+            {{ t('vaultDetails.actions.editVaultMetadata') }}
+          </button>
           <button type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDownloadVaultTemplateDialog()">
             {{ t('vaultDetails.actions.downloadVaultTemplate') }}
           </button>
@@ -116,9 +119,10 @@
 
   <AuthenticateVaultAdminDialog v-if="authenticatingVaultAdmin && vault != null" ref="authenticateVaultAdminDialog" :vault="vault" @action="vaultAdminAuthenticated" @close="authenticatingVaultAdmin = false" />
   <GrantPermissionDialog v-if="grantingPermission && vault != null && vaultKeys != null" ref="grantPermissionDialog" :vault="vault" :devices="devicesRequiringAccessGrant" :vault-keys="vaultKeys" @close="grantingPermission = false" @permission-granted="permissionGranted()" />
+  <EditVaultMetadataDialog v-if="editingVaultMetadata && vault != null && vaultKeys != null" ref="editVaultMetadataDialog" :vault="vault" @close="editingVaultMetadata = false" @updated="v => refreshVault(v)" />
   <DownloadVaultTemplateDialog v-if="downloadingVaultTemplate && vault != null && vaultKeys != null" ref="downloadVaultTemplateDialog" :vault="vault" :vault-keys="vaultKeys" @close="downloadingVaultTemplate = false" />
   <RecoveryKeyDialog v-if="showingRecoveryKey && vault != null && vaultKeys != null" ref="recoveryKeyDialog" :vault="vault" :vault-keys="vaultKeys" @close="showingRecoveryKey = false" />
-  <ArchiveVaultDialog v-if="archivingVault && vault != null" ref="archiveVaultDialog" :vault="vault" @close="archivingVault = false" @archived="v => refreshVault(v)"/>
+  <ArchiveVaultDialog v-if="archivingVault && vault != null" ref="archiveVaultDialog" :vault="vault" @close="archivingVault = false" @archived="v => refreshVault(v)" />
   <ReactivateVaultDialog v-if="reactivatingVault && vault != null" ref="reactivateVaultDialog" :vault="vault" @close="reactivatingVault = false" @reactivated="v => refreshVault(v)" />
 </template>
 
@@ -132,6 +136,7 @@ import { VaultKeys } from '../common/crypto';
 import ArchiveVaultDialog from './ArchiveVaultDialog.vue';
 import AuthenticateVaultAdminDialog from './AuthenticateVaultAdminDialog.vue';
 import DownloadVaultTemplateDialog from './DownloadVaultTemplateDialog.vue';
+import EditVaultMetadataDialog from './EditVaultMetadataDialog.vue';
 import FetchError from './FetchError.vue';
 import GrantPermissionDialog from './GrantPermissionDialog.vue';
 import ReactivateVaultDialog from './ReactivateVaultDialog.vue';
@@ -158,6 +163,8 @@ const isVaultAdmin = ref(false);
 const addingUser = ref(false);
 const grantingPermission = ref(false);
 const grantPermissionDialog = ref<typeof GrantPermissionDialog>();
+const editingVaultMetadata = ref(false);
+const editVaultMetadataDialog = ref<typeof EditVaultMetadataDialog>();
 const downloadingVaultTemplate = ref(false);
 const downloadVaultTemplateDialog = ref<typeof DownloadVaultTemplateDialog>();
 const showingRecoveryKey = ref(false);
@@ -262,6 +269,11 @@ async function showManageVaultDialog() {
 function showGrantPermissionDialog() {
   grantingPermission.value = true;
   nextTick(() => grantPermissionDialog.value?.show());
+}
+
+function showEditVaultMetadataDialog() {
+  editingVaultMetadata.value = true;
+  nextTick(() => editVaultMetadataDialog.value?.show());
 }
 
 function showDownloadVaultTemplateDialog() {
