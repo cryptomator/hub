@@ -24,11 +24,11 @@
                           {{ t('editVaultMetadataDialog.description') }}
                         </p>
                       </div>
-                      <div class="mt-5 sm:mt-6">      
+                      <div class="mt-5 sm:mt-6 text-left">      
                         <label for="vaultName" class="block text-sm font-medium text-gray-700">{{ t('editVaultMetadataDialog.vaultName') }}</label>
                         <input id="vaultName" v-model="vaultName" type="text" name="vaultName" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onUpdateVaultMetadataError instanceof FormValidationFailedError }" required />
                       </div>
-                      <div class="mt-5 sm:mt-6">      
+                      <div class="mt-5 sm:mt-6 text-left">      
                         <label for="vaultDescription" class="block text-sm font-medium text-gray-700">
                           {{ t('editVaultMetadataDialog.vaultDescription') }}
                           <span class="text-xs text-gray-500">({{ t('common.optional') }})</span>
