@@ -1,4 +1,4 @@
-ALTER TABLE "vault" ADD COLUMN "archived" BOOLEAN NOT NULL;
+ALTER TABLE "vault" ADD COLUMN "archived" BOOLEAN NOT NULL DEFAULT false;
 
 -- @formatter:off
 CREATE OR REPLACE VIEW "effective_vault_access" ("vault_id", "authority_id") AS
