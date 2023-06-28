@@ -22,6 +22,7 @@ export type ConfigDto = {
   keycloakAuthEndpoint: string;
   keycloakTokenEndpoint: string;
   serverTime: string;
+  apiLevel: number;
 };
 
 class ConfigWrapper {
