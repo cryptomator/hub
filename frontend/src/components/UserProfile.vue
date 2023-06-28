@@ -9,7 +9,7 @@
   </div>
 
   <div v-else>
-    <h1 class="sr-only">{{ t('userProfile.title ') }}</h1>
+    <h1 class="sr-only">{{ t('userProfile.title') }}</h1>
     <div class="grid grid-cols-1 items-start gap-4 lg:grid-cols-4 lg:gap-8">
       <div class="grid grid-cols-1 gap-6">
         <div class="text-center">

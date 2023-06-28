@@ -127,7 +127,7 @@
 
   "nav.vaults": "Tresore",
   "nav.profile.signedInAs": "Eingeloggt als",
-  "nav.profile.prpfile": "Dein Profil",
+  "nav.profile.profile": "Dein Profil",
   "nav.profile.admin": "Admin",
   "nav.profile.auditlog": "Audit-Logs",
   "nav.profile.signOut": "Abmelden",
@@ -151,6 +151,7 @@
   "vaultDetails.information.header": "Information",
   "vaultDetails.information.created": "Erstellt",
   "vaultDetails.sharedWith.title": "Geteilt mit",
+  "vaultDetails.actions.title": "Aktionen",
   "vaultDetails.actions.updatePermissions": "Berechtigungen aktualisieren",
   "vaultDetails.actions.updatePermissions.reload": "Neu laden",
   "vaultDetails.actions.editVaultMetadata": "Tresor-Metadaten bearbeiten",
