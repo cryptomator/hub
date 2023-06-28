@@ -10,8 +10,8 @@ class Auth {
       realm: cfg.keycloakRealm,
       clientId: cfg.keycloakClientIdHub
     });
-    keycloak.onTokenExpired = async () => {
-      await keycloak.updateToken(30);
+    keycloak.onTokenExpired = () => {
+      keycloak.updateToken(30);
       return;
     }; // TODO: show notification with .catch(() => notify-user-somehow);
     await keycloak.init({
