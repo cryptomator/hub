@@ -26,7 +26,7 @@ class Auth {
   }
 
   public isAuthenticated(): boolean {
-    return this.keycloak.authenticated || false;
+    return this.keycloak.authenticated ?? false;
   }
 
   public async login(redirectUri: string): Promise<void> {
