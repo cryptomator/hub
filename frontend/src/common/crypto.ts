@@ -28,11 +28,9 @@ export interface VaultConfigHeaderHub {
   clientId: string
   authEndpoint: string
   tokenEndpoint: string
-  apiRoot: string
-  appRoot: string
-  devicesResourceUrl: string // deprecated
-  authSuccessUrl: string // deprecated
-  authErrorUrl: string // deprecated
+  devicesResourceUrl: string,
+  authSuccessUrl: string
+  authErrorUrl: string
 }
 
 interface JWEPayload {

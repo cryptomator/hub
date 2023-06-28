@@ -20,11 +20,9 @@ export class VaultConfig {
       clientId: cfg.keycloakClientIdCryptomator,
       authEndpoint: cfg.keycloakAuthEndpoint,
       tokenEndpoint: cfg.keycloakTokenEndpoint,
-      apiRoot: absBackendBaseURL,
-      appRoot: absFrontendBaseURL,
-      devicesResourceUrl: `${absBackendBaseURL}devices/`, // deprecated
-      authSuccessUrl: `${absFrontendBaseURL}unlock-success?vault=${vaultId}`, // deprecated
-      authErrorUrl: `${absFrontendBaseURL}unlock-error?vault=${vaultId}` // deprecated
+      devicesResourceUrl: `${absBackendBaseURL}devices/`,
+      authSuccessUrl: `${absFrontendBaseURL}unlock-success?vault=${vaultId}`,
+      authErrorUrl: `${absFrontendBaseURL}unlock-error?vault=${vaultId}`
     };
 
     const jwtPayload: VaultConfigPayload = {
