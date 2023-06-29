@@ -91,9 +91,9 @@
                 <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">
                   <code>{{ auditEvent.timestamp.toLocaleString('sv') }}</code>
                 </td>
-                <AuditLogCreateVaultEventDetails v-if="auditEvent.type == 'CREATE_VAULT'" :event="auditEvent" />
-                <AuditLogUnlockVaultEventDetails v-else-if="auditEvent.type == 'UNLOCK_VAULT'" :event="auditEvent" />
-                <AuditLogUpdateVaultMembershipDetails v-else-if="auditEvent.type == 'UPDATE_VAULT_MEMBERSHIP'" :event="auditEvent" />
+                <AuditLogCreateVaultEventDetails v-if="auditEvent.type == 'CREATE_VAULT'" :event="(auditEvent as CreateVaultEventDto)" />
+                <AuditLogUnlockVaultEventDetails v-else-if="auditEvent.type == 'UNLOCK_VAULT'" :event="(auditEvent as UnlockVaultEventDto)" />
+                <AuditLogUpdateVaultMembershipDetails v-else-if="auditEvent.type == 'UPDATE_VAULT_MEMBERSHIP'" :event="(auditEvent as UpdateVaultMembershipEventDto)" />
               </tr>
             </tbody>
             <tfoot class="bg-gray-50">
@@ -132,7 +132,7 @@ import { ChevronDownIcon } from '@heroicons/vue/20/solid';
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/vue/24/solid';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { AuditEventDto, AuditLogEntityCache } from '../common/backend';
+import backend, { AuditEventDto, AuditLogEntityCache, CreateVaultEventDto, UnlockVaultEventDto, UpdateVaultMembershipEventDto } from '../common/backend';
 import AuditLogCreateVaultEventDetails from './AuditLogCreateVaultEventDetails.vue';
 import AuditLogUnlockVaultEventDetails from './AuditLogUnlockVaultEventDetails.vue';
 import AuditLogUpdateVaultMembershipDetails from './AuditLogUpdateVaultMembershipDetails.vue';

@@ -85,7 +85,7 @@ const props = defineProps<{
 }>();
 
 defineEmits<{
-  close: void
+  close: []
 }>();
 
 defineExpose({

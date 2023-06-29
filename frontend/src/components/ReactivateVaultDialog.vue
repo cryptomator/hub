@@ -65,7 +65,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  close: void
+  close: []
   reactivated: [updatedVault: VaultDto]
 }>();
 

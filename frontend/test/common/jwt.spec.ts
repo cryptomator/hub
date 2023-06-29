@@ -3,7 +3,6 @@ import { describe } from 'mocha';
 import { JWT, JWTHeader } from '../../src/common/jwt';
 
 describe('JWT', () => {
-
   before(done => {
     // since this test runs on Node, we need to replace window.crypto:
     Object.defineProperty(global, 'crypto', { value: require('node:crypto').webcrypto });
@@ -13,7 +12,6 @@ describe('JWT', () => {
   });
 
   describe('RFC 7515 / RFC 7519', () => {
-
     let signerPrivateKey: CryptoKey;
 
     beforeEach(async () => {
@@ -62,7 +60,5 @@ describe('JWT', () => {
 
       expect(jwt).to.be.not.null;
     });
-
   });
-
 });

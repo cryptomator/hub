@@ -43,7 +43,7 @@ defineProps<{
 }>();
 
 defineEmits<{
-  close: void
+  close: []
 }>();
 
 defineExpose({

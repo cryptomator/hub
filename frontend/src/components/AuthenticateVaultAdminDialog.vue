@@ -84,7 +84,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  close: void
+  close: []
   action: [vaultKeys: VaultKeys]
 }>();
 

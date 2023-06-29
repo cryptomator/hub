@@ -1,4 +1,4 @@
-import AxiosStatic, { AxiosRequestConfig, AxiosResponse } from 'axios';
+import AxiosStatic, { AxiosRequestConfig, AxiosRequestHeaders, AxiosResponse } from 'axios';
 import { JdenticonConfig, toSvg } from 'jdenticon';
 import { base64 } from 'rfc4648';
 import authPromise from './auth';
@@ -26,7 +26,7 @@ axiosAuth.interceptors.request.use(async request => {
     if (request.headers) {
       request.headers['Authorization'] = `Bearer ${token}`;
     } else {
-      request.headers = { 'Authorization': `Bearer ${token}` };
+      request.headers = { 'Authorization': `Bearer ${token}` } as AxiosRequestHeaders;
     }
     return request;
   } catch (err: unknown) {
