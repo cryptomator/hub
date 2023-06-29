@@ -84,8 +84,8 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'close'): void
-  (e: 'action', vaultKeys: VaultKeys): void
+  close: void
+  action: [vaultKeys: VaultKeys]
 }>();
 
 defineExpose({

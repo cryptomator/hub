@@ -72,8 +72,8 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'close'): void
-  (e: 'permissionGranted'): void
+  close: void
+  permissionGranted: void
 }>();
 
 defineExpose({

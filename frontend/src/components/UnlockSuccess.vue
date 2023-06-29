@@ -71,7 +71,7 @@ import FetchError from './FetchError.vue';
 const { t } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{
-  vaultId: string,
+  vaultId: string
   deviceId: string
 }>();
 

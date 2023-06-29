@@ -46,12 +46,12 @@ interface Item {
 }
 
 const props = defineProps<{
-  actionTitle: string,
-  onSearch: (query: string) => Promise<Item []>,
+  actionTitle: string
+  onSearch: (query: string) => Promise<Item []>
 }>();
 
 const emit = defineEmits<{
-  (e: 'action', authority: Item): void
+  action: [authority: Item]
 }>();
 
 const vFocus = {

@@ -12,7 +12,6 @@ class Auth {
     });
     keycloak.onTokenExpired = () => {
       keycloak.updateToken(30);
-      return;
     }; // TODO: show notification with .catch(() => notify-user-somehow);
     await keycloak.init({
       checkLoginIframe: false,

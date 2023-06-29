@@ -65,8 +65,8 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'close'): void
-  (e: 'archived', updatedVault: VaultDto): void
+  close: void
+  archived: [updatedVault: VaultDto]
 }>();
 
 defineExpose({

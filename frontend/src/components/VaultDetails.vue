@@ -150,7 +150,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'vaultUpdated', updatedVault: VaultDto): void
+  vaultUpdated: [updatedVault: VaultDto]
 }>();
 
 const onFetchError = ref<Error | null>();
