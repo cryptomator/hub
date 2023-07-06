@@ -44,24 +44,30 @@ VALUES
 	('7E57C0DE-0000-4000-8000-000100001111', 'user2', 'MEMBER'),
 	('7E57C0DE-0000-4000-8000-000100002222', 'group1', 'MEMBER');
 
-INSERT INTO "device" ("id", "owner_id", "name", "type", "publickey", "creation_time", "last_seen_time", "user_key")
+INSERT INTO "device" ("id", "owner_id", "name", "type", "publickey", "creation_time", "user_privatekey")
 VALUES
-	('device1', 'user1', 'Computer 1', 'DESKTOP', 'publickey1', '2020-02-20 20:20:20', '2023-01-11 22:33:44', 'jwe.jwe.jwe.user1.device1'),
-	('device2', 'user2', 'Computer 2', 'DESKTOP', 'publickey2', '2020-02-20 20:20:20', '2023-01-11 22:33:44', 'jwe.jwe.jwe.user2.device2'),
-	('device3', 'user1', 'Computer 3', 'DESKTOP', 'publickey3', '2020-02-20 20:20:20', '2023-01-11 22:33:44', NULL);
+	('device1', 'user1', 'Computer 1', 'DESKTOP', 'publickey1', '2020-02-20 20:20:20', 'jwe.jwe.jwe.user1.device1'),
+	('device2', 'user2', 'Computer 2', 'DESKTOP', 'publickey2', '2020-02-20 20:20:20', 'jwe.jwe.jwe.user2.device2'),
+	('device3', 'user1', 'Computer 3', 'DESKTOP', 'publickey3', '2020-02-20 20:20:20', 'jwe.jwe.jwe.user1.device3');
 
-INSERT INTO "access_token" ("user_id", "vault_id", "vault_key")
+INSERT INTO "access_token" ("user_id", "vault_id", "vault_masterkey")
 VALUES
 	('user1', '7E57C0DE-0000-4000-8000-000100001111', 'jwe.jwe.jwe.vault1.user1'), -- direct access
 	('user2', '7E57C0DE-0000-4000-8000-000100001111', 'jwe.jwe.jwe.vault1.user2'), -- direct access
 	('user1', '7E57C0DE-0000-4000-8000-000100002222', 'jwe.jwe.jwe.vault2.user1'); -- access via group1
 
 -- DEPRECATED:
+INSERT INTO "device_legacy" ("id", "owner_id", "name", "type", "publickey", "creation_time")
+VALUES
+	('legacyDevice1', 'user1', 'Computer 1', 'DESKTOP', 'publickey1', '2020-02-20 20:20:20'),
+	('legacyDevice2', 'user2', 'Computer 2', 'DESKTOP', 'publickey2', '2020-02-20 20:20:20'),
+	('legacyDevice3', 'user1', 'Computer 3', 'DESKTOP', 'publickey3', '2020-02-20 20:20:20');
+
 INSERT INTO "access_token_legacy" ("device_id", "vault_id", "jwe")
 VALUES
-	('device1', '7E57C0DE-0000-4000-8000-000100001111', 'legacy.jwe.jwe.vault1.device1'), -- direct access
-	('device2', '7E57C0DE-0000-4000-8000-000100001111', 'legacy.jwe.jwe.vault1.device2'), -- direct access
-	('device3', '7E57C0DE-0000-4000-8000-000100002222', 'legacy.jwe.jwe.vault2.device3'); -- access via group1
+	('legacyDevice1', '7E57C0DE-0000-4000-8000-000100001111', 'legacy.jwe.jwe.vault1.device1'), -- direct access
+	('legacyDevice2', '7E57C0DE-0000-4000-8000-000100001111', 'legacy.jwe.jwe.vault1.device2'), -- direct access
+	('legacyDevice3', '7E57C0DE-0000-4000-8000-000100002222', 'legacy.jwe.jwe.vault2.device3'); -- access via group1
 
 INSERT INTO "audit_event" ("id", "timestamp", "type")
 VALUES

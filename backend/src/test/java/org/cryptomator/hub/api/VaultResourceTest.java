@@ -159,32 +159,32 @@ public class VaultResourceTest {
 		public class Legacy {
 
 			@Test
-			@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/keys/device1 returns 200 using user access")
+			@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/keys/legacyDevice1 returns 200 using user access")
 			public void testUnlock1() {
-				when().get("/vaults/{vaultId}/keys/{deviceId}", "7E57C0DE-0000-4000-8000-000100001111", "device1")
+				when().get("/vaults/{vaultId}/keys/{deviceId}", "7E57C0DE-0000-4000-8000-000100001111", "legacyDevice1")
 						.then().statusCode(200)
 						.body(is("legacy.jwe.jwe.vault1.device1"));
 			}
 
 			@Test
-			@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100002222/keys/device3 returns 200 using group access")
+			@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100002222/keys/legacyDevice3 returns 200 using group access")
 			public void testUnlock2() {
-				when().get("/vaults/{vaultId}/keys/{deviceId}", "7E57C0DE-0000-4000-8000-000100002222", "device3")
+				when().get("/vaults/{vaultId}/keys/{deviceId}", "7E57C0DE-0000-4000-8000-000100002222", "legacyDevice3")
 						.then().statusCode(200)
 						.body(is("legacy.jwe.jwe.vault2.device3"));
 			}
 
 			@Test
-			@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/keys/noSuchDevice returns 404")
+			@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/keys/noSuchDevice returns 403") // legacy unlock must not encourage to register a legacy device by responding with 404 here
 			public void testUnlock3() {
 				when().get("/vaults/{vaultId}/keys/{deviceId}", "7E57C0DE-0000-4000-8000-000100001111", "noSuchDevice")
-						.then().statusCode(404);
+						.then().statusCode(403);
 			}
 
 			@Test
-			@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/keys/device2 returns 403")
+			@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/keys/legacyDevice2 returns 403")
 			public void testUnlock4() {
-				when().get("/vaults/{vaultId}/keys/{deviceId}", "7E57C0DE-0000-4000-8000-000100001111", "device2")
+				when().get("/vaults/{vaultId}/keys/{deviceId}", "7E57C0DE-0000-4000-8000-000100001111", "legacyDevice2")
 						.then().statusCode(403);
 			}
 

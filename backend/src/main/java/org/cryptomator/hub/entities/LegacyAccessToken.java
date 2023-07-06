@@ -10,8 +10,10 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
+import jakarta.persistence.NamedNativeQuery;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.NoResultException;
+import jakarta.persistence.SqlResultSetMapping;
 import jakarta.persistence.Table;
 
 import java.io.Serializable;
@@ -20,14 +22,12 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "access_token_legacy")
-@NamedQuery(name = "LegacyAccessToken.get", query = """
-			SELECT t
-			FROM LegacyAccessToken t
-			INNER JOIN t.device d
-			INNER JOIN EffectiveVaultAccess a ON a.id.vaultId = t.id.vaultId AND a.id.authorityId = d.owner.id
-			WHERE t.id.vaultId = :vaultId
-				AND d.owner.id = :userId
-				AND d.id = :deviceId
+@NamedNativeQuery(name = "LegacyAccessToken.get", resultClass = LegacyAccessToken.class, query = """
+		SELECT t.device_id, t.vault_id, t.jwe
+		FROM access_token_legacy t
+		INNER JOIN device_legacy d ON d.id = t.device_id
+		INNER JOIN effective_vault_access a ON a.vault_id = t.vault_id AND a.authority_id = d.owner_id
+		WHERE t.vault_id = :vaultId AND d.id = :deviceId AND d.owner_id = :userId
 		""")
 @Deprecated
 public class LegacyAccessToken extends PanacheEntityBase {
@@ -35,22 +35,16 @@ public class LegacyAccessToken extends PanacheEntityBase {
 	@EmbeddedId
 	public AccessId id = new AccessId();
 
-	@ManyToOne(optional = false, cascade = {CascadeType.REMOVE})
-	@MapsId("deviceId")
-	@JoinColumn(name = "device_id")
-	public Device device;
-
-	@ManyToOne(optional = false, cascade = {CascadeType.REMOVE})
-	@MapsId("vaultId")
-	@JoinColumn(name = "vault_id")
-	public Vault vault;
-
 	@Column(name = "jwe", nullable = false)
 	public String jwe;
 
 	public static LegacyAccessToken unlock(UUID vaultId, String deviceId, String userId) {
 		try {
-			return find("#LegacyAccessToken.get", Parameters.with("deviceId", deviceId).and("vaultId", vaultId).and("userId", userId)).singleResult();
+			return getEntityManager().createNamedQuery("LegacyAccessToken.get", LegacyAccessToken.class) //
+					.setParameter("deviceId", deviceId) //
+					.setParameter("vaultId", vaultId) //
+					.setParameter("userId", userId) //
+					.getSingleResult();
 		} catch (NoResultException e) {
 			return null;
 		}
@@ -62,22 +56,18 @@ public class LegacyAccessToken extends PanacheEntityBase {
 		if (o == null || getClass() != o.getClass()) return false;
 		LegacyAccessToken other = (LegacyAccessToken) o;
 		return Objects.equals(id, other.id)
-				&& Objects.equals(device, other.device)
-				&& Objects.equals(vault, other.vault)
 				&& Objects.equals(jwe, other.jwe);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, device, vault, jwe);
+		return Objects.hash(id, jwe);
 	}
 
 	@Override
 	public String toString() {
 		return "LegacyAccessToken{" +
 				"id=" + id +
-				", device=" + device.id +
-				", vault=" + vault.id +
 				", jwe='" + jwe + '\'' +
 				'}';
 	}
@@ -85,7 +75,10 @@ public class LegacyAccessToken extends PanacheEntityBase {
 	@Embeddable
 	public static class AccessId implements Serializable {
 
+		@Column(name = "device_id", nullable = false)
 		public String deviceId;
+
+		@Column(name = "vault_id", nullable = false)
 		public UUID vaultId;
 
 		public AccessId(String deviceId, UUID vaultId) {

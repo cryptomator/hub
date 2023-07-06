@@ -79,7 +79,6 @@ public class DeviceResource {
 		device.name = dto.name;
 		device.publickey = dto.publicKey;
 		device.userKey = dto.userKey;
-		device.lastSeenTime = Instant.now().truncatedTo(ChronoUnit.MILLIS);
 		try {
 			device.persistAndFlush();
 			return Response.created(URI.create(".")).build();
@@ -114,17 +113,12 @@ public class DeviceResource {
 	@Transactional
 	@Operation(summary = "get the device-specific user key", description = "retrieves the user jwe for the specified device")
 	@APIResponse(responseCode = "200", description = "Device found")
-	@APIResponse(responseCode = "403", description = "Device not yet verified")
 	@APIResponse(responseCode = "404", description = "Device not found or owned by a different user")
 	@ActiveLicense
 	public String getUserJwe(@PathParam("deviceId") @ValidId String deviceId) {
 		try {
 			var device = Device.findByIdAndUser(deviceId, jwt.getSubject());
-			if (device.userKey == null) {
-				throw new ForbiddenException("Device needs verification");
-			} else {
-				return device.userKey;
-			}
+			return device.userKey;
 		} catch (NoResultException e) {
 			throw new NotFoundException(e);
 		}
@@ -159,11 +153,10 @@ public class DeviceResource {
 							@JsonProperty("publicKey") @NotNull @OnlyBase64UrlChars String publicKey, // for historic reasons, the device public key is base64url-encoded, instead of base64
 							@JsonProperty("userKey") @ValidJWE String userKey,
 							@JsonProperty("owner") @ValidId String ownerId,
-							@JsonProperty("creationTime") Instant creationTime,
-							@JsonProperty("lastSeenTime") Instant lastSeenTime) {
+							@JsonProperty("creationTime") Instant creationTime) {
 
 		public static DeviceDto fromEntity(Device entity) {
-			return new DeviceDto(entity.id, entity.name, entity.type, entity.publickey, entity.userKey, entity.owner.id, entity.creationTime.truncatedTo(ChronoUnit.MILLIS), entity.lastSeenTime.truncatedTo(ChronoUnit.MILLIS));
+			return new DeviceDto(entity.id, entity.name, entity.type, entity.publickey, entity.userKey, entity.owner.id, entity.creationTime.truncatedTo(ChronoUnit.MILLIS));
 		}
 
 	}

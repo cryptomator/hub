@@ -16,6 +16,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Retention(RUNTIME)
 @Constraint(validatedBy = {})
 @Documented
+@Deprecated
 public @interface OnlyBase64UrlChars {
 	String message() default "Input is not a valid base64url encoded string";
 

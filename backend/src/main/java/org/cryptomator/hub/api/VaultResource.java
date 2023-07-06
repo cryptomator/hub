@@ -266,8 +266,7 @@ public class VaultResource {
 	@Operation(summary = "get the device-specific masterkey", deprecated = true)
 	@APIResponse(responseCode = "200")
 	@APIResponse(responseCode = "402", description = "number of effective vault users exceeds available license seats")
-	@APIResponse(responseCode = "403", description = "device not authorized to access this vault")
-	@APIResponse(responseCode = "404", description = "unknown device")
+	@APIResponse(responseCode = "403", description = "not authorized to access this vault")
 	@ActiveLicense
 	public Response legacyUnlock(@PathParam("vaultId") UUID vaultId, @PathParam("deviceId") @ValidId String deviceId) {
 		var usedSeats = EffectiveVaultAccess.countEffectiveVaultUsers();
@@ -281,8 +280,6 @@ public class VaultResource {
 			var subscriptionStateHeaderName = "Hub-Subscription-State";
 			var subscriptionStateHeaderValue = license.isSet() ? "ACTIVE" : "INACTIVE"; // license expiration is not checked here, because it is checked in the ActiveLicense filter
 			return Response.ok(access.jwe).header(subscriptionStateHeaderName, subscriptionStateHeaderValue).build();
-		} else if (Device.findById(deviceId) == null) {
-			throw new NotFoundException("No such device.");
 		} else {
 			UnlockVaultEvent.log(jwt.getSubject(), vaultId, deviceId, UnlockVaultEvent.Result.UNAUTHORIZED);
 			throw new ForbiddenException("Access to this device not granted.");

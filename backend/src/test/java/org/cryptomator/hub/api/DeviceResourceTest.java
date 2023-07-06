@@ -54,7 +54,7 @@ public class DeviceResourceTest {
 		@Order(1)
 		@DisplayName("PUT /devices/  with DTO returns 400")
 		public void testCreateNoDeviceId() {
-			var deviceDto = new DeviceResource.DeviceDto("device1", "Computer 1", Device.Type.DESKTOP, "publickey1", "jwe.jwe.jwe.user1.device1", "user1", Instant.parse("2020-02-20T20:20:20Z"), Instant.parse("2021-02-21T21:21:21Z"));
+			var deviceDto = new DeviceResource.DeviceDto("device1", "Computer 1", Device.Type.DESKTOP, "publickey1", "jwe.jwe.jwe.user1.device1", "user1", Instant.parse("2020-02-20T20:20:20Z"));
 			given().contentType(ContentType.JSON).body(deviceDto)
 					.when().put("/devices/{deviceId}", " ") //a whitespace
 					.then().statusCode(400);
@@ -64,7 +64,7 @@ public class DeviceResourceTest {
 		@Order(1)
 		@DisplayName("PUT /devices/deviceX returns 409 due to non-unique name")
 		public void testCreateX() {
-			var deviceDto = new DeviceResource.DeviceDto("deviceX", "Computer 1", Device.Type.DESKTOP, "publickey1", "jwe.jwe.jwe.user1.deviceX", "user1", Instant.parse("2020-02-20T20:20:20Z"), Instant.parse("2021-02-21T21:21:21Z"));
+			var deviceDto = new DeviceResource.DeviceDto("deviceX", "Computer 1", Device.Type.DESKTOP, "publickey1", "jwe.jwe.jwe.user1.deviceX", "user1", Instant.parse("2020-02-20T20:20:20Z"));
 
 			given().contentType(ContentType.JSON).body(deviceDto)
 					.when().put("/devices/{deviceId}", "deviceX")
@@ -108,14 +108,6 @@ public class DeviceResourceTest {
 
 		@Test
 		@Order(1)
-		@DisplayName("GET /devices/device3/device-token returns 403 (device not yet verified)")
-		public void testGetDeviceToken3() {
-			when().get("/devices/{deviceId}/device-token", "device3")
-					.then().statusCode(403);
-		}
-
-		@Test
-		@Order(1)
 		@DisplayName("GET /devices/noSuchDevice/device-token returns 404 (no such device)")
 		public void testGetNonExistingDeviceToken() {
 			when().get("/devices/{deviceId}/device-token", "noSuchDevice")
@@ -126,7 +118,7 @@ public class DeviceResourceTest {
 		@Order(2)
 		@DisplayName("PUT /devices/device999 returns 201 (creating new device)")
 		public void testCreate999() {
-			var deviceDto = new DeviceResource.DeviceDto("device999", "Computer 999", Device.Type.DESKTOP, "publickey999", "jwe.jwe.jwe.user1.device999", "user1", Instant.parse("2020-02-20T20:20:20Z"), Instant.parse("2021-02-21T21:21:21Z"));
+			var deviceDto = new DeviceResource.DeviceDto("device999", "Computer 999", Device.Type.DESKTOP, "publickey999", "jwe.jwe.jwe.user1.device999", "user1", Instant.parse("2020-02-20T20:20:20Z"));
 
 			given().contentType(ContentType.JSON).body(deviceDto)
 					.when().put("/devices/{deviceId}", "device999")
@@ -147,7 +139,7 @@ public class DeviceResourceTest {
 		@Order(4)
 		@DisplayName("PUT /devices/device999 returns 201 (updating existing device)")
 		public void testUpdate1() {
-			var deviceDto = new DeviceResource.DeviceDto("device999", "Computer 999 got a new name", Device.Type.DESKTOP, "publickey999", "jwe.jwe.jwe.user1.device999", "user1", Instant.parse("2020-02-20T20:20:20Z"), Instant.parse("2021-02-21T21:21:21Z"));
+			var deviceDto = new DeviceResource.DeviceDto("device999", "Computer 999 got a new name", Device.Type.DESKTOP, "publickey999", "jwe.jwe.jwe.user1.device999", "user1", Instant.parse("2020-02-20T20:20:20Z"));
 
 			given().contentType(ContentType.JSON).body(deviceDto)
 					.when().put("/devices/{deviceId}", "device999")
@@ -206,7 +198,7 @@ public class DeviceResourceTest {
 		@Test
 		@DisplayName("PUT /devices/device1 returns 401")
 		public void testCreate1() {
-			var deviceDto = new DeviceResource.DeviceDto("device1", "Device 1", Device.Type.BROWSER, "publickey1", "jwe.jwe.jwe.user1.device1", "user1", Instant.parse("2020-02-20T20:20:20Z"), Instant.parse("2021-02-21T21:21:21Z"));
+			var deviceDto = new DeviceResource.DeviceDto("device1", "Device 1", Device.Type.BROWSER, "publickey1", "jwe.jwe.jwe.user1.device1", "user1", Instant.parse("2020-02-20T20:20:20Z"));
 
 			given().contentType(ContentType.JSON).body(deviceDto)
 					.when().put("/devices/{deviceId}", "device1")

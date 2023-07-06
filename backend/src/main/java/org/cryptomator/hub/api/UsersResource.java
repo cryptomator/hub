@@ -71,7 +71,7 @@ public class UsersResource {
 	@APIResponse(responseCode = "404", description = "no user matching the subject of the JWT passed as Bearer Token")
 	public UserDto getMe(@QueryParam("withDevices") boolean withDevices) {
 		User user = User.findById(jwt.getSubject());
-		Function<Device, DeviceResource.DeviceDto> mapDevices = d -> new DeviceResource.DeviceDto(d.id, d.name, d.type, d.publickey, d.userKey, d.owner.id, d.creationTime.truncatedTo(ChronoUnit.MILLIS), d.lastSeenTime.truncatedTo(ChronoUnit.MILLIS));
+		Function<Device, DeviceResource.DeviceDto> mapDevices = d -> new DeviceResource.DeviceDto(d.id, d.name, d.type, d.publickey, d.userKey, d.owner.id, d.creationTime.truncatedTo(ChronoUnit.MILLIS));
 		var devices = withDevices ? user.devices.stream().map(mapDevices).collect(Collectors.toSet()) : Set.<DeviceResource.DeviceDto>of();
 		return new UserDto(user.id, user.name, user.pictureUrl, user.email, devices, user.publicKey, user.privateKey, user.setupCode);
 	}

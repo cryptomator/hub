@@ -42,7 +42,7 @@ public class AccessToken extends PanacheEntityBase {
 	@JoinColumn(name = "vault_id")
 	public Vault vault;
 
-	@Column(name = "vault_key", nullable = false)
+	@Column(name = "vault_masterkey", nullable = false)
 	public String vaultKey;
 
 	public static AccessToken unlock(UUID vaultId, String userId) {
