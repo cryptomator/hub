@@ -71,7 +71,6 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <a v-if="device.id != myDevice?.id" role="button" tabindex="0" class="text-red-600 hover:text-red-900" @click="removeDevice(device)">{{ t('common.remove') }}</a>
-                      <a v-if="!device.userPrivateKey" role="button" tabindex="0" class="text-primary hover:text-primary-d1" @click="validateDevice(device)">TODO confirm</a>
                     </td>
                   </tr>
                   <!-- TODO: good styling -->
@@ -92,11 +91,10 @@
 
 <script setup lang="ts">
 import { ComputerDesktopIcon, DevicePhoneMobileIcon, WindowIcon } from '@heroicons/vue/24/solid';
-import { base64, base64url } from 'rfc4648';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { DeviceDto, NotFoundError, UserDto } from '../common/backend';
-import { BrowserKeys, UserKeys } from '../common/crypto';
+import { BrowserKeys } from '../common/crypto';
 import FetchError from './FetchError.vue';
 
 const { t, d } = useI18n({ useScope: 'global' });
@@ -130,24 +128,27 @@ async function determineMyDevice() {
   myDevice.value = me.value.devices.find(d => d.id == browserId);
 }
 
-async function validateDevice(device: DeviceDto) {
-  if (!me.value || !me.value.publicKey) {
-    throw new Error('User keys not initialized.');
-  }
-  /* decrypt user key on this browser: */
-  const userPublicKey = crypto.subtle.importKey('spki', base64.parse(me.value.publicKey), UserKeys.KEY_DESIGNATION, false, []);
-  const browserKeys = await BrowserKeys.load(me.value.id);
-  const browserId = await browserKeys.id();
-  const browser = me.value.devices.find(d => d.id === browserId);
-  if (!browser || !browser.userPrivateKey) {
-    throw new Error('Browser not validated.');
-  }
-  const userKeys = await UserKeys.decryptOnBrowser(browser.userPrivateKey, browserKeys.keyPair.privateKey, await userPublicKey);
+/*
+ * Use existing device to authorize another device:
+ */
+// async function validateDevice(device: DeviceDto) {
+//   if (!me.value || !me.value.publicKey) {
+//     throw new Error('User keys not initialized.');
+//   }
+//   /* decrypt user key on this browser: */
+//   const userPublicKey = crypto.subtle.importKey('spki', base64.parse(me.value.publicKey), UserKeys.KEY_DESIGNATION, false, []);
+//   const browserKeys = await BrowserKeys.load(me.value.id);
+//   const browserId = await browserKeys.id();
+//   const browser = me.value.devices.find(d => d.id === browserId);
+//   if (!browser || !browser.userPrivateKey) {
+//     throw new Error('Browser not validated.');
+//   }
+//   const userKeys = await UserKeys.decryptOnBrowser(browser.userPrivateKey, browserKeys.keyPair.privateKey, await userPublicKey);
 
-  /* encrypt user key for device */
-  device.userPrivateKey = await userKeys.encryptForDevice(base64url.parse(device.publicKey));
-  await backend.devices.putDevice(device);
-}
+//   /* encrypt user key for device */
+//   device.userPrivateKey = await userKeys.encryptForDevice(base64url.parse(device.publicKey));
+//   await backend.devices.putDevice(device);
+// }
 
 async function removeDevice(device: DeviceDto) {
   delete onRemoveDeviceError.value[device.id];
