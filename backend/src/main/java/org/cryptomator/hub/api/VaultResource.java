@@ -26,7 +26,6 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.AccessToken;
 import org.cryptomator.hub.entities.CreateVaultEvent;
-import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.EffectiveGroupMembership;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.entities.Group;
@@ -287,16 +286,16 @@ public class VaultResource {
 	}
 
 	@GET
-	@Path("/{vaultId}/user-tokens/me")
+	@Path("/{vaultId}/access-token")
 	@RolesAllowed("user")
 	@Transactional
 	@Produces(MediaType.TEXT_PLAIN)
-	@Operation(summary = "get the user-specific vault key", description = "retrieves the vault jwe for the current user")
+	@Operation(summary = "get the user-specific vault key", description = "retrieves a jwe containing the vault key, encrypted for the current user")
 	@APIResponse(responseCode = "200")
 	@APIResponse(responseCode = "402", description = "number of effective vault users exceeds available license seats")
 	@APIResponse(responseCode = "403", description = "user not authorized to access this vault")
 	@APIResponse(responseCode = "404", description = "unknown vault")
-	@ActiveLicense
+	@ActiveLicense // may throw 402
 	public String unlock(@PathParam("vaultId") UUID vaultId) {
 		var usedSeats = EffectiveVaultAccess.countEffectiveVaultUsers();
 		if (usedSeats > license.getAvailableSeats()) {

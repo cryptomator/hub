@@ -11,7 +11,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.PUT;
@@ -78,7 +77,7 @@ public class DeviceResource {
 		}
 		device.name = dto.name;
 		device.publickey = dto.publicKey;
-		device.userKey = dto.userKey;
+		device.userPrivateKey = dto.userPrivateKey;
 		try {
 			device.persistAndFlush();
 			return Response.created(URI.create(".")).build();
@@ -100,25 +99,6 @@ public class DeviceResource {
 		try {
 			Device device = Device.findByIdAndUser(deviceId, jwt.getSubject());
 			return DeviceDto.fromEntity(device);
-		} catch (NoResultException e) {
-			throw new NotFoundException(e);
-		}
-	}
-
-	@GET
-	@Path("/{deviceId}/device-token")
-	@RolesAllowed("user")
-	@Produces(MediaType.TEXT_PLAIN)
-	@NoCache
-	@Transactional
-	@Operation(summary = "get the device-specific user key", description = "retrieves the user jwe for the specified device")
-	@APIResponse(responseCode = "200", description = "Device found")
-	@APIResponse(responseCode = "404", description = "Device not found or owned by a different user")
-	@ActiveLicense
-	public String getUserJwe(@PathParam("deviceId") @ValidId String deviceId) {
-		try {
-			var device = Device.findByIdAndUser(deviceId, jwt.getSubject());
-			return device.userKey;
 		} catch (NoResultException e) {
 			throw new NotFoundException(e);
 		}
@@ -151,12 +131,12 @@ public class DeviceResource {
 							@JsonProperty("name") @NoHtmlOrScriptChars @NotBlank String name,
 							@JsonProperty("type") Device.Type type,
 							@JsonProperty("publicKey") @NotNull @OnlyBase64Chars String publicKey,
-							@JsonProperty("userKey") @NotNull @ValidJWE String userKey,
+							@JsonProperty("userPrivateKey") @NotNull @ValidJWE String userPrivateKey,
 							@JsonProperty("owner") @ValidId String ownerId,
 							@JsonProperty("creationTime") Instant creationTime) {
 
 		public static DeviceDto fromEntity(Device entity) {
-			return new DeviceDto(entity.id, entity.name, entity.type, entity.publickey, entity.userKey, entity.owner.id, entity.creationTime.truncatedTo(ChronoUnit.MILLIS));
+			return new DeviceDto(entity.id, entity.name, entity.type, entity.publickey, entity.userPrivateKey, entity.owner.id, entity.creationTime.truncatedTo(ChronoUnit.MILLIS));
 		}
 
 	}

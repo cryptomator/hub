@@ -78,7 +78,8 @@ public class DeviceResourceTest {
 			given().when().get("/devices/{deviceId}", "device1")
 					.then().statusCode(200)
 					.body("id", is("device1"))
-					.body("name", is("Computer 1"));
+					.body("name", is("Computer 1"))
+					.body("userPrivateKey", is("jwe.jwe.jwe.user1.device1"));
 		}
 
 		@Test
@@ -91,26 +92,9 @@ public class DeviceResourceTest {
 
 		@Test
 		@Order(1)
-		@DisplayName("GET /devices/device1/device-token returns 200")
-		public void testGetDeviceToken1() {
-			when().get("/devices/{deviceId}/device-token", "device1")
-					.then().statusCode(200)
-					.body(is("jwe.jwe.jwe.user1.device1"));
-		}
-
-		@Test
-		@Order(1)
-		@DisplayName("GET /devices/device2/device-token returns 404 (belongs to other user)")
-		public void testGetDeviceToken2() {
-			when().get("/devices/{deviceId}/device-token", "device2")
-					.then().statusCode(404);
-		}
-
-		@Test
-		@Order(1)
-		@DisplayName("GET /devices/noSuchDevice/device-token returns 404 (no such device)")
+		@DisplayName("GET /devices/noSuchDevice returns 404 (no such device)")
 		public void testGetNonExistingDeviceToken() {
-			when().get("/devices/{deviceId}/device-token", "noSuchDevice")
+			when().get("/devices/{deviceId}", "noSuchDevice")
 					.then().statusCode(404);
 		}
 

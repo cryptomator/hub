@@ -77,7 +77,7 @@ async function fetchData() {
     if (myDevice == null) {
       throw new Error('Device not initialized.');
     }
-    const userKeys = await UserKeys.decryptOnBrowser(myDevice.userKey, browserKeys.keyPair.privateKey, base64.parse(me.publicKey));
+    const userKeys = await UserKeys.decryptOnBrowser(myDevice.userPrivateKey, browserKeys.keyPair.privateKey, base64.parse(me.publicKey));
     const recoveryKey : { setupCode: string } = await JWEParser.parse(me.setupCode).decryptEcdhEs(userKeys.keyPair.privateKey);
     recoveryCode.value = recoveryKey.setupCode;
   } catch (error) {

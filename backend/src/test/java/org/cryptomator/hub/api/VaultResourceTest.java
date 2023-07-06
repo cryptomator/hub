@@ -135,17 +135,17 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/user-tokens/me returns 200 using user access")
+		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/access-token returns 200 using user access")
 		public void testUnlock1() {
-			when().get("/vaults/{vaultId}/user-tokens/me", "7E57C0DE-0000-4000-8000-000100001111")
+			when().get("/vaults/{vaultId}/access-token", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(200)
 					.body(is("jwe.jwe.jwe.vault1.user1"));
 		}
 
 		@Test
-		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100002222/user-tokens/me returns 200 using group access")
+		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100002222/access-token returns 200 using group access")
 		public void testUnlock2() {
-			when().get("/vaults/{vaultId}/user-tokens/me", "7E57C0DE-0000-4000-8000-000100002222")
+			when().get("/vaults/{vaultId}/access-token", "7E57C0DE-0000-4000-8000-000100002222")
 					.then().statusCode(200)
 					.body(is("jwe.jwe.jwe.vault2.user1"));
 		}
@@ -632,7 +632,7 @@ public class VaultResourceTest {
 			}
 			//Assumptions.assumeTrue(EffectiveVaultAccess.countEffectiveVaultUsers() > 5);
 
-			when().get("/vaults/{vaultId}/user-tokens/me", "7E57C0DE-0000-4000-8000-000100001111")
+			when().get("/vaults/{vaultId}/access-token", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(402);
 		}
 
@@ -661,7 +661,7 @@ public class VaultResourceTest {
 				"PUT, /vaults/7E57C0DE-0000-4000-8000-000100001111/users/user1",
 				"DELETE, /vaults/7E57C0DE-0000-4000-8000-000100001111/users/user1",
 				"GET, /vaults/7E57C0DE-0000-4000-8000-000100001111/users-requiring-access-grant",
-				"GET, /vaults/7E57C0DE-0000-4000-8000-000100001111/user-tokens/me"
+				"GET, /vaults/7E57C0DE-0000-4000-8000-000100001111/access-token"
 		})
 		public void testGet(String method, String path) {
 			when().request(method, path)

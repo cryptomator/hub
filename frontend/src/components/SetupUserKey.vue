@@ -272,9 +272,8 @@ async function submitBrowserKeys(browserKeys: BrowserKeys, me: UserDto, userKeys
     name: deviceName.value,
     type: 'BROWSER',
     publicKey: await browserKeys.encodedPublicKey(),
-    userKey: jwe,
-    creationTime: new Date(),
-    lastSeenTime: new Date()
+    userPrivateKey: jwe,
+    creationTime: new Date()
   });
   await backend.users.putMe(me);
 }

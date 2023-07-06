@@ -54,9 +54,8 @@ export type DeviceDto = {
   name: string;
   type: 'BROWSER' | 'DESKTOP' | 'MOBILE';
   publicKey: string;
-  userKey: string;
+  userPrivateKey: string;
   creationTime: Date;
-  lastSeenTime: Date;
 };
 
 enum AuthorityType {
