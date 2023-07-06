@@ -63,6 +63,14 @@ describe('JWE', () => {
       expect(decrypted).to.deep.eq(orig);
     });
 
+    it('encrypt JWE used in Java unit tests', async () => {
+      const orig = { key: 'ME8CAQAwEAYHKoZIzj0CAQYFK4EEACIEODA2AgEBBDEA6QybmBitf94veD5aCLr7nlkF5EZpaXHCfq1AXm57AKQyGOjTDAF9EQB28fMywTDQ' };
+
+      const jwe = await JWEBuilder.pbes2('123456').encrypt(orig);
+
+      expect(jwe).not.to.be.null;
+    });
+
     // TODO: add some more decrypt-only tests with JWE from 3rd party
   });
 

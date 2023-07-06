@@ -221,7 +221,7 @@ async function createUserKey() {
     processing.value = true;
 
     const userKeys = await UserKeys.create();
-    recoveryCode.value = crypto.randomUUID(); // TODO something else?
+    recoveryCode.value = crypto.randomUUID();
     me.publicKey = await userKeys.encodedPublicKey();
     me.privateKey = await userKeys.encryptedPrivateKey(recoveryCode.value);
     me.setupCode = await JWEBuilder.ecdhEs(userKeys.keyPair.publicKey).encrypt({ setupCode: recoveryCode.value });
