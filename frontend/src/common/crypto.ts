@@ -493,6 +493,6 @@ export class BrowserKeys {
 
   public async encodedPublicKey() {
     const publicKey = new Uint8Array(await crypto.subtle.exportKey('spki', this.keyPair.publicKey));
-    return base64url.stringify(publicKey); // device keys use base64url
+    return base64.stringify(publicKey);
   }
 }

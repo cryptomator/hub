@@ -53,7 +53,7 @@ export type DeviceDto = {
   id: string;
   name: string;
   type: 'BROWSER' | 'DESKTOP' | 'MOBILE';
-  publicKey: string; // note: base64url-encoded for historic reasons
+  publicKey: string;
   userKey: string;
   creationTime: Date;
   lastSeenTime: Date;
