@@ -102,17 +102,18 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/app/unlock-success',
     component: UnlockSuccess,
-    props: (route) => ({ vaultId: route.query.vault, deviceId: route.query.device })
+    props: (route) => ({ vaultId: route.query.vault, deviceId: route.query.device }),
+    meta: { skipSetup: true }
   },
   {
     path: '/app/unlock-error',
     component: UnlockError,
-    meta: { skipAuth: true }
+    meta: { skipAuth: true, skipSetup: true }
   },
   {
     path: '/app/:pathMatch(.+)', //necessary due to using history mode in router
     component: NotFound,
-    meta: { skipAuth: true }
+    meta: { skipAuth: true, skipSetup: true }
   },
 ];
 
@@ -156,7 +157,7 @@ router.beforeEach((to, from, next) => {
 
 // THIRD check user/browser keys (requires auth)
 router.beforeEach(async (to, from, next) => {
-  if (!to.meta.skipAuth && await requiresUserKeySetup() && to.path != '/app/setup') {
+  if (!to.meta.skipSetup && await requiresUserKeySetup() && to.path != '/app/setup') {
     next({ path: '/app/setup' });
   } else {
     next();
