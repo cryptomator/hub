@@ -24,6 +24,7 @@
   "common.share": "Teilen",
   "common.show": "Anzeigen",
   "common.unexpectedError": "Unerwarteter Fehler: {0}",
+  "common.update": "Aktualisieren",
 
   "admin.title": "Admin",
   "admin.serverInfo.title": "Server.Info",
@@ -41,7 +42,7 @@
   "admin.licenseInfo.seats.title": "Anzahl der Sitze",
   "admin.licenseInfo.seats.description.enoughSeats": "Du hast {0} unbenutzte Sitze übrig.",
   "admin.licenseInfo.seats.description.zeroSeats": "Du hast keine Sitze mehr frei. Upgrade, wenn nötig.",
-  "admin.licenseInfo.seats.description.undercutSeats": "Du hast mehr Plätze belegt, als du zur Verfügung hast. Entferne ggf. Benutzer oder führe ein Upgrade durch.",
+  "admin.licenseInfo.seats.description.undercutSeats": "Du hast mehr Sitze belegt, als du zur Verfügung hast. Entferne ggf. Benutzer oder führe ein Upgrade durch.",
   "admin.licenseInfo.issuedAt.title": "Ausgestellt am",
   "admin.licenseInfo.expiresAt.title": "Läuft ab am",
   "admin.licenseInfo.expiresAt.description.valid": "Deine Lizenz ist gültig.",
@@ -51,6 +52,10 @@
   "admin.licenseInfo.getLicense": "Lizenz erhalten",
   "admin.licenseInfo.selfHostedNoLicense.description": "Vielen Dank, dass du Cryptomator Hub nutzt! Du hast die Community-Lizenz erhalten. Wenn du mehr Sitze benötigst, erweiter deine Lizenz.",
   "admin.licenseInfo.managedNoLicense.description": "Vielen Dank, dass du Cryptomator Hub nutzt! Du hast aktuell keine aktive Lizenz.",
+
+  "archiveVaultDialog.title": "Tresor archivieren",
+  "archiveVaultDialog.description": "Das Archivieren eines Tresors macht ihn inaktiv. Dadurch können belegte Sitze frei werden. Ein archivierter Tresor kann später wieder aktiviert werden.",
+  "archiveVaultDialog.confirm": "Archivieren",
 
   "auditLog.title": "Audit-Logs",
   "auditLog.order.ascending": "Aufsteigend",
@@ -112,6 +117,13 @@
   "downloadVaultTemplateDialog.title": "Tresorvorlage herunterladen",
   "downloadVaultTemplateDialog.description": "Lade die gezippte Tresorvorlage herunter und entpacke ihn an einem beliebigen Ort, der für deine Teammitglieder freigegeben ist. Dies ist einmal für die Ersteinrichtung erforderlich.",
 
+  "editVaultMetadataDialog.title": "Tresor-Metadaten bearbeiten",
+  "editVaultMetadataDialog.description": "Aktualisiere den Namen und die Beschreibung des Tresors.",
+  "editVaultMetadataDialog.vaultName": "Tresorname",
+  "editVaultMetadataDialog.vaultDescription": "Beschreibung",
+  "editVaultMetadataDialog.error.formValidationFailed": "Tresorname darf nicht leer sein.",
+  "editVaultMetadataDialog.error.conflict": "Ein Tresor mit dem angegebenen Namen existiert bereits.",
+
   "grantPermissionDialog.title": "Berechtigung erteilen",
   "grantPermissionDialog.description": "Berechtige weitere Geräten auf den Tresor zuzugreifen.",
   "grantPermissionDialog.submit": "Berechtigung für {0} Gerät(e) gewähren",
@@ -126,6 +138,10 @@
   "nav.profile.auditlog": "Audit-Logs",
   "nav.profile.signOut": "Abmelden",
   "nav.mobileMenu": "Hauptmenü öffnen",
+
+  "reactivateVaultDialog.title": "Tresor reaktivieren",
+  "reactivateVaultDialog.description": "Warnung: Die Reaktivierung eines Tresors kann die Anzahl der verfügbaren Sitze beeinflussen. Wenn die Anzahl der verfügbaren Sitze überschritten wird, wird das Entsperren aller Tresore blockiert.",
+  "reactivateVaultDialog.confirm": "Reaktivieren",
 
   "recoveryKeyDialog.title": "Wiederherstellungsschlüssel",
   "recoveryKeyDialog.description": "Dies ist dein Wiederherstellungsschlüssel für „{0}“. Verwahre ihn gut, er ist im Falle eines Systemausfalls deine einzige Möglichkeit, auf einen Tresor zuzugreifen.",
@@ -148,10 +164,14 @@
   "vaultDetails.information.header": "Information",
   "vaultDetails.information.created": "Erstellt",
   "vaultDetails.sharedWith.title": "Geteilt mit",
+  "vaultDetails.actions.title": "Aktionen",
   "vaultDetails.actions.updatePermissions": "Berechtigungen aktualisieren",
   "vaultDetails.actions.updatePermissions.reload": "Neu laden",
+  "vaultDetails.actions.editVaultMetadata": "Tresor-Metadaten bearbeiten",
   "vaultDetails.actions.downloadVaultTemplate": "Tresor-Vorlage herunterladen",
   "vaultDetails.actions.showRecoveryKey": "Wiederherstellungsschlüssel anzeigen",
+  "vaultDetails.actions.archiveVault": "Tresor archivieren",
+  "vaultDetails.actions.reactivateVault": "Tresor reaktivieren",
 
   "vaultList.title": "Tresore",
   "vaultList.empty.title": "Keine Tresore",
@@ -166,5 +186,6 @@
   "vaultList.filter.result.empty.title": "Keine Tresore",
   "vaultList.filter.result.empty.description.": "Keinen Treffer mit diesem Suchbegriff oder Filter.",
   "vaultList.search.placeholder": "Suche...",
-  "vaultList.owner": "Besitzer"
+  "vaultList.owner": "Besitzer",
+  "vaultList.badge.archived": "Archiviert"
 }

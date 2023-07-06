@@ -23,7 +23,7 @@ import { useI18n } from 'vue-i18n';
 const { t } = useI18n({ useScope: 'global' });
 
 defineProps<{
-  error: Error,
-  retry: (() => Promise<void>) | null;
+  error: Error
+  retry: (() => Promise<void>) | null
 }>();
 </script>

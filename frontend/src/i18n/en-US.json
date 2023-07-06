@@ -25,6 +25,7 @@
   "common.share": "Share",
   "common.show": "Show",
   "common.unexpectedError": "Unexpected Error: {0}",
+  "common.update": "Update",
 
   "admin.title": "Admin",
   "admin.serverInfo.title": "Server Info",
@@ -52,6 +53,10 @@
   "admin.licenseInfo.getLicense": "Get License",
   "admin.licenseInfo.selfHostedNoLicense.description": "Thank you for using Cryptomator Hub! You have been granted the Community License. If you need more seats, upgrade your license.",
   "admin.licenseInfo.managedNoLicense.description": "Thank you for using Cryptomator Hub! You currently have no active license.",
+
+  "archiveVaultDialog.title": "Archive Vault",
+  "archiveVaultDialog.description": "Archiving a vault makes it inactive. This may free up occupied seats. An archived vault can be reactivated later.",
+  "archiveVaultDialog.confirm": "Archive",
 
   "auditLog.title": "Audit Logs",
   "auditLog.order.ascending": "Ascending",
@@ -113,6 +118,13 @@
   "downloadVaultTemplateDialog.title": "Download Vault Template",
   "downloadVaultTemplateDialog.description": "Download and unpack the zipped vault template to any location shared with your team members. This is required only once during the initial setup.",
 
+  "editVaultMetadataDialog.title": "Edit Vault Metadata",
+  "editVaultMetadataDialog.description": "Update the name and description of the vault.",
+  "editVaultMetadataDialog.vaultName": "Vault Name",
+  "editVaultMetadataDialog.vaultDescription": "Description",
+  "editVaultMetadataDialog.error.formValidationFailed": "Vault name must not be empty.",
+  "editVaultMetadataDialog.error.vaultAlreadyExists": "A vault with the given name already exists.",
+
   "grantPermissionDialog.title": "Grant Permission",
   "grantPermissionDialog.description": "Grant additional devices permission to access the vault.",
   "grantPermissionDialog.submit": "Grant Permission to {0} Device(s)",
@@ -127,6 +139,10 @@
   "nav.profile.auditlog": "Audit Logs",
   "nav.profile.signOut": "Sign out",
   "nav.mobileMenu": "Open main menu",
+
+  "reactivateVaultDialog.title": "Reactivate Vault",
+  "reactivateVaultDialog.description": "Warning: Reactivating a vault may affect the number of available seats. If the number of available seats is exceeded, unlocking of all vaults will be blocked.",
+  "reactivateVaultDialog.confirm": "Reactivate",
 
   "recoveryKeyDialog.title": "Recovery Key",
   "recoveryKeyDialog.description": "This is your recovery key for \"{0}\". Keep it safe, it is your only chance to regain access to a vault in case of system outage.",
@@ -165,6 +181,7 @@
   "userProfile.actions.editLanguage": "Edit Language",
 
   "vaultDetails.manageVault": "Manage Vault",
+  "vaultDetails.warning.archived": "This vault is archived and cannot be unlocked.",
   "vaultDetails.description.header": "Description",
   "vaultDetails.description.empty": "No description provided.",
   "vaultDetails.information.header": "Information",
@@ -173,8 +190,11 @@
   "vaultDetails.actions.title": "Actions",
   "vaultDetails.actions.updatePermissions": "Update Permissions",
   "vaultDetails.actions.updatePermissions.reload": "Reload",
+  "vaultDetails.actions.editVaultMetadata": "Edit Vault Metadata",
   "vaultDetails.actions.downloadVaultTemplate": "Download Vault Template",
   "vaultDetails.actions.showRecoveryKey": "Show Recovery Key",
+  "vaultDetails.actions.archiveVault": "Archive Vault",
+  "vaultDetails.actions.reactivateVault": "Reactivate Vault",
 
   "vaultList.title": "Vaults",
   "vaultList.empty.title": "No vaults",
@@ -189,5 +209,6 @@
   "vaultList.filter.result.empty.title": "No vaults",
   "vaultList.filter.result.empty.description": "No results using that search term or filter.",
   "vaultList.search.placeholder": "Search...",
-  "vaultList.owner": "Owner"
+  "vaultList.owner": "Owner",
+  "vaultList.badge.archived": "Archived"
 }

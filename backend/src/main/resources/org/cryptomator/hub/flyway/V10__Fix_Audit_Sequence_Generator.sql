@@ -1,0 +1,1 @@
+SELECT SETVAL('audit_event_id_seq', (SELECT MAX(id) FROM audit_event), true);

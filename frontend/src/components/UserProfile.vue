@@ -9,7 +9,7 @@
   </div>
 
   <div v-else>
-    <h1 class="sr-only">{{ t('userProfile.title ') }}</h1>
+    <h1 class="sr-only">{{ t('userProfile.title') }}</h1>
     <div class="grid grid-cols-1 items-start gap-4 lg:grid-cols-4 lg:gap-8">
       <div class="grid grid-cols-1 gap-6">
         <div class="text-center">
@@ -33,13 +33,11 @@
               </ListboxButton>
               <transition leave-active-class="transition ease-in duration-100" leave-from-class="opacity-100" leave-to-class="opacity-0">
                 <ListboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none text-sm">
-                  <ListboxOption v-for="locale in Locale" :key="locale" v-slot="{ active, selected }" as="template" :value="locale">
-                    <li :class="[active ? 'text-white bg-primary' : 'text-gray-900', 'relative cursor-default select-none py-2 pl-3 pr-9']">
-                      <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ t(`locale.${locale}`) }}</span>
-                      <span v-if="selected" :class="[active ? 'text-white' : 'text-primary', 'absolute inset-y-0 right-0 flex items-center pr-4']">
-                        <CheckIcon class="h-5 w-5" aria-hidden="true" />
-                      </span>
-                    </li>
+                  <ListboxOption v-for="locale in Locale" :key="locale" v-slot="{ active, selected }" class="relative cursor-default select-none py-2 pl-3 pr-9 ui-not-active:text-gray-900 ui-active:text-white ui-active:bg-primary" :value="locale">
+                    <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ t(`locale.${locale}`) }}</span>
+                    <span v-if="selected" :class="[active ? 'text-white' : 'text-primary', 'absolute inset-y-0 right-0 flex items-center pr-4']">
+                      <CheckIcon class="h-5 w-5" aria-hidden="true" />
+                    </span>
                   </ListboxOption>
                 </ListboxOptions>
               </transition>

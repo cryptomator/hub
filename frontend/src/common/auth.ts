@@ -10,7 +10,9 @@ class Auth {
       realm: cfg.keycloakRealm,
       clientId: cfg.keycloakClientIdHub
     });
-    keycloak.onTokenExpired = () => keycloak.updateToken(30); //TODO: show notification with .catch(() => notify-user-somehow);
+    keycloak.onTokenExpired = () => {
+      keycloak.updateToken(30);
+    }; // TODO: show notification with .catch(() => notify-user-somehow);
     await keycloak.init({
       checkLoginIframe: false,
       pkceMethod: 'S256',
@@ -23,7 +25,7 @@ class Auth {
   }
 
   public isAuthenticated(): boolean {
-    return this.keycloak.authenticated || false;
+    return this.keycloak.authenticated ?? false;
   }
 
   public async login(redirectUri: string): Promise<void> {

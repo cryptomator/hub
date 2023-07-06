@@ -30,13 +30,14 @@ import java.util.stream.Stream;
 				SELECT DISTINCT v
 				FROM Vault v
 				INNER JOIN EffectiveVaultAccess a ON a.id.vaultId = v.id AND a.id.authorityId = :userId
+				WHERE NOT v.archived
 				""")
 @NamedQuery(name = "Vault.accessibleByUserAndRole",
 		query = """
 				SELECT DISTINCT v
 				FROM Vault v
 				INNER JOIN EffectiveVaultAccess a ON a.id.vaultId = v.id AND a.id.authorityId = :userId
-				WHERE a.role = :role
+				WHERE a.role = :role AND NOT v.archived
 				""")
 @NamedQuery(name = "Vault.allInList",
 		query = """
@@ -94,6 +95,9 @@ public class Vault extends PanacheEntityBase {
 	@Column(name = "description")
 	public String description;
 
+	@Column(name = "archived", nullable = false)
+	public boolean archived;
+
 	public static Stream<Vault> findAccessibleByUser(String userId) {
 		return find("#Vault.accessibleByUser", Parameters.with("userId", userId)).stream();
 	}
@@ -115,12 +119,13 @@ public class Vault extends PanacheEntityBase {
 				&& Objects.equals(name, vault.name)
 				&& Objects.equals(salt, vault.salt)
 				&& Objects.equals(iterations, vault.iterations)
-				&& Objects.equals(masterkey, vault.masterkey);
+				&& Objects.equals(masterkey, vault.masterkey)
+				&& Objects.equals(archived, vault.archived);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, name, salt, iterations, masterkey);
+		return Objects.hash(id, name, salt, iterations, masterkey, archived);
 	}
 
 	@Override
@@ -130,6 +135,7 @@ public class Vault extends PanacheEntityBase {
 				", members=" + directMembers.stream().map(m -> m.id).collect(Collectors.joining(", ")) +
 				", accessToken=" + accessTokens.stream().map(a -> a.id.toString()).collect(Collectors.joining(", ")) +
 				", name='" + name + '\'' +
+				", archived='" + archived + '\'' +
 				", salt='" + salt + '\'' +
 				", iterations='" + iterations + '\'' +
 				", masterkey='" + masterkey + '\'' +

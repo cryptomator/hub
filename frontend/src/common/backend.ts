@@ -41,6 +41,7 @@ export type VaultDto = {
   id: string;
   name: string;
   description: string;
+  archived: boolean;
   creationTime: Date;
   masterkey: string;
   iterations: number;
@@ -325,15 +326,16 @@ class VaultService {
       .then(response => response.data).catch(err => rethrowAndConvertIfExpected(err, 403));
   }
 
-  public async createVault(vaultId: string, name: string, description: string, masterkey: string, iterations: number, salt: string, signPubKey: string, signPrvKey: string): Promise<AxiosResponse<any>> {
-    const body: VaultDto = { id: vaultId, name: name, description: description, creationTime: new Date(), masterkey: masterkey, iterations: iterations, salt: salt, authPublicKey: signPubKey, authPrivateKey: signPrvKey };
+  public async createOrUpdateVault(vaultId: string, name: string, description: string, archived: boolean, masterkey: string, iterations: number, salt: string, signPubKey: string, signPrvKey: string): Promise<VaultDto> {
+    const body: VaultDto = { id: vaultId, name: name, description: description, archived: archived, creationTime: new Date(), masterkey: masterkey, iterations: iterations, salt: salt, authPublicKey: signPubKey, authPrivateKey: signPrvKey };
     return axiosAuth.put(`/vaults/${vaultId}`, body)
+      .then(response => response.data)
       .catch((error) => rethrowAndConvertIfExpected(error, 404, 409));
   }
 
   public async grantAccess(vaultId: string, userId: string, jwe: string, vaultKeys: VaultKeys) {
     let vaultAdminAuthorizationJWT = await this.buildVaultAdminAuthorizationJWT(vaultId, vaultKeys);
-    await axiosAuth.put(`/vaults/${vaultId}/user-tokens/${userId}`, jwe, { headers: { 'Content-Type': 'text/plain', 'Cryptomator-Vault-Admin-Authorization': vaultAdminAuthorizationJWT } })
+    await axiosAuth.put(`/vaults/${vaultId}/access-tokens/${userId}`, jwe, { headers: { 'Content-Type': 'text/plain', 'Cryptomator-Vault-Admin-Authorization': vaultAdminAuthorizationJWT } })
       .catch((error) => rethrowAndConvertIfExpected(error, 404, 409));
   }
 

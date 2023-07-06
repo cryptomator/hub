@@ -325,7 +325,7 @@ async function createVault() {
     vaultConfig.value = await VaultConfig.create(vaultId, vaultKeys.value);
     const wrapped = await vaultKeys.value.wrap(password.value);
     const ownerJwe = await vaultKeys.value.encryptForUser(base64.parse(owner.publicKey));
-    await backend.vaults.createVault(vaultId, vaultName.value, vaultDescription.value, wrapped.masterkey, wrapped.iterations, wrapped.salt, wrapped.signaturePublicKey, wrapped.signaturePrivateKey);
+    await backend.vaults.createOrUpdateVault(vaultId, vaultName.value, vaultDescription.value, false, wrapped.masterkey, wrapped.iterations, wrapped.salt, wrapped.signaturePublicKey, wrapped.signaturePrivateKey);
     await backend.vaults.grantAccess(vaultId, owner.id, ownerJwe, vaultKeys.value);
     state.value = State.Finished;
   } catch (error) {

@@ -11,7 +11,7 @@
 
       <Listbox v-model="selectedOrder" as="div">
         <div class="relative w-36">
-          <ListboxButton class="relative w-full cursor-default rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary text-sm">
+          <ListboxButton class="relative w-full rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary text-sm">
             <span class="block truncate">{{ orderOptions[selectedOrder].label }}</span>
             <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
               <ChevronUpDownIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
@@ -19,14 +19,11 @@
           </ListboxButton>
           <transition leave-active-class="transition ease-in duration-100" leave-from-class="opacity-100" leave-to-class="opacity-0">
             <ListboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none text-sm">
-              <ListboxOption v-for="(option, key) in orderOptions" :key="key" v-slot="{ active, selected }" :value="key" as="template">
-                <li :class="[active ? 'text-white bg-primary' : 'text-gray-900', 'relative cursor-default select-none py-2 pl-3 pr-9']">
-                  <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ option.label }}</span>
-
-                  <span v-if="selected" :class="[active ? 'text-white' : 'text-primary', 'absolute inset-y-0 right-0 flex items-center pr-4']">
-                    <CheckIcon class="h-5 w-5" aria-hidden="true" />
-                  </span>
-                </li>
+              <ListboxOption v-for="(option, key) in orderOptions" :key="key" v-slot="{ active, selected }" class="relative cursor-default select-none py-2 pl-3 pr-9 ui-not-active:text-gray-900 ui-active:text-white ui-active:bg-primary" :value="key">
+                <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ option.label }}</span>
+                <span v-if="selected" :class="[active ? 'text-white' : 'text-primary', 'absolute inset-y-0 right-0 flex items-center pr-4']">
+                  <CheckIcon class="h-5 w-5" aria-hidden="true" />
+                </span>
               </ListboxOption>
             </ListboxOptions>
           </transition>
@@ -94,9 +91,9 @@
                 <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">
                   <code>{{ auditEvent.timestamp.toLocaleString('sv') }}</code>
                 </td>
-                <AuditLogCreateVaultEventDetails v-if="auditEvent.type == 'CREATE_VAULT'" :event="auditEvent" />
-                <AuditLogUnlockVaultEventDetails v-else-if="auditEvent.type == 'UNLOCK_VAULT'" :event="auditEvent" />
-                <AuditLogUpdateVaultMembershipDetails v-else-if="auditEvent.type == 'UPDATE_VAULT_MEMBERSHIP'" :event="auditEvent" />
+                <AuditLogCreateVaultEventDetails v-if="auditEvent.type == 'CREATE_VAULT'" :event="(auditEvent as CreateVaultEventDto)" />
+                <AuditLogUnlockVaultEventDetails v-else-if="auditEvent.type == 'UNLOCK_VAULT'" :event="(auditEvent as UnlockVaultEventDto)" />
+                <AuditLogUpdateVaultMembershipDetails v-else-if="auditEvent.type == 'UPDATE_VAULT_MEMBERSHIP'" :event="(auditEvent as UpdateVaultMembershipEventDto)" />
               </tr>
             </tbody>
             <tfoot class="bg-gray-50">
@@ -135,7 +132,7 @@ import { ChevronDownIcon } from '@heroicons/vue/20/solid';
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/vue/24/solid';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { AuditEventDto, AuditLogEntityCache } from '../common/backend';
+import backend, { AuditEventDto, AuditLogEntityCache, CreateVaultEventDto, UnlockVaultEventDto, UpdateVaultMembershipEventDto } from '../common/backend';
 import AuditLogCreateVaultEventDetails from './AuditLogCreateVaultEventDetails.vue';
 import AuditLogUnlockVaultEventDetails from './AuditLogUnlockVaultEventDetails.vue';
 import AuditLogUpdateVaultMembershipDetails from './AuditLogUpdateVaultMembershipDetails.vue';
