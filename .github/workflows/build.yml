@@ -94,7 +94,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         run: mvn versions:set --file ./backend/pom.xml -DnewVersion=${GITHUB_REF##*/}
       - name: Build and push container image
-        if: github.event.inputs.tag != '' || startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/develop'
+        if: github.event.inputs.tag != '' || startsWith(github.ref, 'refs/tags/') || contains(github.event.head_commit.message, '[build image]')
         working-directory: backend
         run: mvn -B clean package -DskipTests
         env:
