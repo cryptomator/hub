@@ -153,21 +153,22 @@ export class JWEBuilder {
    * Prepares a new JWE using alg: PBES2-HS512+A256KW and enc: A256GCM.
    * 
    * @param password The password to feed into the KDF
+   * @param iterations The PBKDF2 iteration count (defaults to {@link PBES2.DEFAULT_ITERATION_COUNT} )
    * @param apu Optional information about the creator
    * @param apv Optional information about the recipient
    * @returns A new JWEBuilder ready to encrypt the payload
    */
-  public static pbes2(password: string, apu: Uint8Array = new Uint8Array(), apv: Uint8Array = new Uint8Array()): JWEBuilder {
+  public static pbes2(password: string, iterations: number = PBES2.DEFAULT_ITERATION_COUNT, apu: Uint8Array = new Uint8Array(), apv: Uint8Array = new Uint8Array()): JWEBuilder {
     const saltInput = crypto.getRandomValues(new Uint8Array(16));
     const header = (async () => <JWEHeader>{
       alg: 'PBES2-HS512+A256KW',
       enc: 'A256GCM',
       p2s: base64url.stringify(saltInput, { pad: false }),
-      p2c: PBES2.DEFAULT_ITERATION_COUNT,
+      p2c: iterations,
       apu: base64url.stringify(apu, { pad: false }),
       apv: base64url.stringify(apv, { pad: false })
     })();
-    const wrappingKey = PBES2.deriveWrappingKey(password, 'PBES2-HS512+A256KW', saltInput, PBES2.DEFAULT_ITERATION_COUNT);
+    const wrappingKey = PBES2.deriveWrappingKey(password, 'PBES2-HS512+A256KW', saltInput, iterations);
     const cek = crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt']);
     const encryptedKey = (async () => new Uint8Array(await crypto.subtle.wrapKey('raw', await cek, await wrappingKey, 'AES-KW')))();
     return new JWEBuilder(header, encryptedKey, cek);

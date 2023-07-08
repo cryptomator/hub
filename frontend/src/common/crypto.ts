@@ -114,6 +114,7 @@ export class VaultKeys {
    * Protects the key material. Must only be called for a newly created masterkey, otherwise it will fail.
    * @param password Password used for wrapping
    * @returns The wrapped key material
+   * @deprecated TO be replaced by ECDH-based key encapsulation
    */
   public async wrap(password: string): Promise<WrappedVaultKeys> {
     // salt:
@@ -152,6 +153,7 @@ export class VaultKeys {
    * @param wrapped The wrapped key material
    * @returns The unwrapped key material.
    * @throws WrongPasswordError, if the wrong password is used
+   * @deprecated TO be replaced by ECDH-based key encapsulation
    */
   public static async unwrap(password: string, wrapped: WrappedVaultKeys): Promise<VaultKeys> {
     const kek = pbkdf2(password, 'SHA-256', base64.parse(wrapped.salt, { loose: true }), wrapped.iterations, VaultKeys.KEK_KEY_DESIGNATION);

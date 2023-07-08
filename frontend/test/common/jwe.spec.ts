@@ -57,7 +57,7 @@ describe('JWE', () => {
     it('x = decrypt(encrypt(x, pass), pass)', async () => {
       const orig = { hello: 'world' };
 
-      const jwe = await JWEBuilder.pbes2('topsecret').encrypt(orig);
+      const jwe = await JWEBuilder.pbes2('topsecret', 1000).encrypt(orig);
 
       const decrypted = await JWEParser.parse(jwe).decryptPbes2('topsecret');
       expect(decrypted).to.deep.eq(orig);
@@ -66,7 +66,7 @@ describe('JWE', () => {
     it('encrypt JWE used in Java unit tests', async () => {
       const orig = { key: 'ME8CAQAwEAYHKoZIzj0CAQYFK4EEACIEODA2AgEBBDEA6QybmBitf94veD5aCLr7nlkF5EZpaXHCfq1AXm57AKQyGOjTDAF9EQB28fMywTDQ' };
 
-      const jwe = await JWEBuilder.pbes2('123456').encrypt(orig);
+      const jwe = await JWEBuilder.pbes2('123456', 1000).encrypt(orig);
 
       expect(jwe).not.to.be.null;
     });
