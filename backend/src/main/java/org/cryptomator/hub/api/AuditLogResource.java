@@ -21,7 +21,6 @@ import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -40,7 +39,7 @@ public class AuditLogResource {
 	@APIResponse(responseCode = "200", description = "Body contains list of events in the specified time interval")
 	@APIResponse(responseCode = "400", description = "startDate or endDate not specified, startDate > endDate, order specified and not in ['asc','desc'] or pageSize not in [1 .. 100]")
 	@APIResponse(responseCode = "403", description = "requesting user is does not have admin role")
-	public EventList getAllEvents(@QueryParam("startDate") Instant startDate, @QueryParam("endDate") Instant endDate, @QueryParam("paginationId") Long paginationId, @QueryParam("order") @DefaultValue("desc") String order, @QueryParam("pageSize") @DefaultValue("20") int pageSize) {
+	public List<AuditEventDto> getAllEvents(@QueryParam("startDate") Instant startDate, @QueryParam("endDate") Instant endDate, @QueryParam("paginationId") Long paginationId, @QueryParam("order") @DefaultValue("desc") String order, @QueryParam("pageSize") @DefaultValue("20") int pageSize) {
 		if (startDate == null || endDate == null) {
 			throw new BadRequestException("startDate and endDate must be specified");
 		} else if (startDate.isAfter(endDate)) {
@@ -53,15 +52,7 @@ public class AuditLogResource {
 			throw new BadRequestException("paginationId must be specified");
 		}
 
-		var events = AuditEvent.findAllInPeriod(startDate, endDate, paginationId, order.equals("asc"), pageSize).map(AuditEventDto::fromEntity).toList();
-		return new EventList(events);
-	}
-
-	// Helper class to prevent type erasure for @JsonTypeInfo, see https://github.com/FasterXML/jackson-databind/issues/336
-	public static class EventList extends ArrayList<AuditEventDto> {
-		EventList(List<AuditEventDto> events) {
-			super(events);
-		}
+		return AuditEvent.findAllInPeriod(startDate, endDate, paginationId, order.equals("asc"), pageSize).map(AuditEventDto::fromEntity).toList();
 	}
 
 	@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
