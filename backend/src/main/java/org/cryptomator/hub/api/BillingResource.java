@@ -70,7 +70,7 @@ public class BillingResource {
 
 		public static BillingDto create(String hubId, LicenseHolder licenseHolder) {
 			var seats = licenseHolder.getNoLicenseSeats();
-			var remainingSeats = Math.max(seats - EffectiveVaultAccess.countEffectiveVaultUsers(), 0);
+			var remainingSeats = Math.max(seats - EffectiveVaultAccess.countSeatOccupyingUsers(), 0);
 			var managedInstance = licenseHolder.isManagedInstance();
 			return new BillingDto(hubId, false, null, (int) seats, (int) remainingSeats, null, null, managedInstance);
 		}
@@ -79,7 +79,7 @@ public class BillingResource {
 			var id = jwt.getId();
 			var email = jwt.getSubject();
 			var totalSeats = jwt.getClaim("seats").asInt();
-			var remainingSeats = Math.max(totalSeats - (int) EffectiveVaultAccess.countEffectiveVaultUsers(), 0);
+			var remainingSeats = Math.max(totalSeats - (int) EffectiveVaultAccess.countSeatOccupyingUsers(), 0);
 			var issuedAt = jwt.getIssuedAt().toInstant();
 			var expiresAt = jwt.getExpiresAt().toInstant();
 			var managedInstance = licenseHolder.isManagedInstance();

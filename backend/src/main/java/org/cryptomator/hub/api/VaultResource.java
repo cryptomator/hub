@@ -149,7 +149,7 @@ public class VaultResource {
 		var user = User.<User>findByIdOptional(userId).orElseThrow(NotFoundException::new);
 		if (!EffectiveVaultAccess.isUserOccupyingSeat(userId)) {
 			//for new user, we need to check if a license seat is available
-			var usedSeats = EffectiveVaultAccess.countEffectiveVaultUsers();
+			var usedSeats = EffectiveVaultAccess.countSeatOccupyingUsers();
 			if (usedSeats >= license.getAvailableSeats()) {
 				throw new PaymentRequiredException("Number of effective vault users greater than or equal to the available license seats");
 			}
@@ -183,7 +183,7 @@ public class VaultResource {
 	@ActiveLicense
 	public Response addGroup(@PathParam("vaultId") UUID vaultId, @PathParam("groupId") @ValidId String groupId, @QueryParam("role") @DefaultValue("MEMBER") VaultAccess.Role role) {
 		//usersInGroup - usersInGroupAndPartOfAtLeastOneVault + usersOfAtLeastOneVault
-		if (EffectiveGroupMembership.countEffectiveGroupUsers(groupId) - EffectiveVaultAccess.countEffectiveVaultUsersOfGroup(groupId) + EffectiveVaultAccess.countEffectiveVaultUsers() > license.getAvailableSeats()) {
+		if (EffectiveGroupMembership.countEffectiveGroupUsers(groupId) - EffectiveVaultAccess.countSeatOccupyingUsersOfGroup(groupId) + EffectiveVaultAccess.countSeatOccupyingUsers() > license.getAvailableSeats()) {
 			throw new PaymentRequiredException("Number of effective vault users greater than or equal to the available license seats");
 		}
 
@@ -275,7 +275,7 @@ public class VaultResource {
 			throw new GoneException("Vault is archived.");
 		}
 
-		var usedSeats = EffectiveVaultAccess.countEffectiveVaultUsers();
+		var usedSeats = EffectiveVaultAccess.countSeatOccupyingUsers();
 		if (usedSeats > license.getAvailableSeats()) {
 			throw new PaymentRequiredException("Number of effective vault users exceeds available license seats");
 		}
@@ -310,7 +310,7 @@ public class VaultResource {
 			throw new GoneException("Vault is archived.");
 		}
 
-		var usedSeats = EffectiveVaultAccess.countEffectiveVaultUsers();
+		var usedSeats = EffectiveVaultAccess.countSeatOccupyingUsers();
 		if (usedSeats > license.getAvailableSeats()) {
 			throw new PaymentRequiredException("Number of effective vault users exceeds available license seats");
 		}

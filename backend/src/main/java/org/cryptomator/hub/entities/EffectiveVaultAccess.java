@@ -21,21 +21,24 @@ import java.util.stream.Collectors;
 @Entity
 @Immutable
 @Table(name = "effective_vault_access")
-@NamedQuery(name = "EffectiveVaultAccess.countVaultAccessesOfUser", query = """
+@NamedQuery(name = "EffectiveVaultAccess.countSeatsOccupiedByUser", query = """
 				SELECT count(eva)
 				FROM EffectiveVaultAccess eva
+				INNER JOIN Vault v ON eva.id.vaultId = v.id AND NOT v.archived
 				WHERE eva.id.authorityId = :userId
 		""")
-@NamedQuery(name = "EffectiveVaultAccess.countEVUs", query = """
+@NamedQuery(name = "EffectiveVaultAccess.countSeatOccupyingUsers", query = """
 				SELECT count(DISTINCT u)
 				FROM User u
 				INNER JOIN EffectiveVaultAccess eva ON u.id = eva.id.authorityId
+				INNER JOIN Vault v ON eva.id.vaultId = v.id AND NOT v.archived
 		""")
-@NamedQuery(name = "EffectiveVaultAccess.countEVUsInGroup", query = """
+@NamedQuery(name = "EffectiveVaultAccess.countSeatOccupyingUsersOfGroup", query = """
 				SELECT count(DISTINCT u)
 				FROM User u
 				INNER JOIN EffectiveVaultAccess eva ON u.id = eva.id.authorityId
 				INNER JOIN EffectiveGroupMembership egm ON u.id = egm.id.memberId
+				INNER JOIN Vault v ON eva.id.vaultId = v.id AND NOT v.archived
 				WHERE egm.id.groupId = :groupId
 		""")
 @NamedQuery(name = "EffectiveVaultAccess.findByUserAndVault", query = """
@@ -49,15 +52,15 @@ public class EffectiveVaultAccess extends PanacheEntityBase {
 	public EffectiveVaultAccess.Id id;
 
 	public static boolean isUserOccupyingSeat(String userId) {
-		return EffectiveVaultAccess.count("#EffectiveVaultAccess.countVaultAccessesOfUser", Parameters.with("userId", userId)) > 0;
+		return EffectiveVaultAccess.count("#EffectiveVaultAccess.countSeatsOccupiedByUser", Parameters.with("userId", userId)) > 0;
 	}
 
-	public static long countEffectiveVaultUsers() {
-		return EffectiveVaultAccess.count("#EffectiveVaultAccess.countEVUs");
+	public static long countSeatOccupyingUsers() {
+		return EffectiveVaultAccess.count("#EffectiveVaultAccess.countSeatOccupyingUsers");
 	}
 
-	public static long countEffectiveVaultUsersOfGroup(String groupId) {
-		return EffectiveVaultAccess.count("#EffectiveVaultAccess.countEVUsInGroup", Parameters.with("groupId", groupId));
+	public static long countSeatOccupyingUsersOfGroup(String groupId) {
+		return EffectiveVaultAccess.count("#EffectiveVaultAccess.countSeatOccupyingUsersOfGroup", Parameters.with("groupId", groupId));
 	}
 
 	public static Collection<VaultAccess.Role> listRoles(UUID vaultId, String authorityId) {
