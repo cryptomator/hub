@@ -3,12 +3,14 @@ package org.cryptomator.hub.filters;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotAuthorizedException;
+import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.container.ResourceInfo;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.ext.Provider;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
+import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.entities.VaultAccess;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 
@@ -32,7 +34,7 @@ public class VaultRoleFilter implements ContainerRequestFilter {
 	ResourceInfo resourceInfo;
 
 	@Override
-	public void filter(ContainerRequestContext requestContext) throws ForbiddenException, NotAuthorizedException {
+	public void filter(ContainerRequestContext requestContext) throws NotFoundException, ForbiddenException, NotAuthorizedException {
 		var annotation = resourceInfo.getResourceMethod().getAnnotation(VaultRole.class);
 		var vaultIdStr = requestContext.getUriInfo().getPathParameters().getFirst(annotation.vaultIdParam());
 		final UUID vaultId;
@@ -47,9 +49,20 @@ public class VaultRoleFilter implements ContainerRequestFilter {
 			throw new NotAuthorizedException("No JWT supplied in request header");
 		}
 
-		var effectiveRoles = EffectiveVaultAccess.listRoles(vaultId, userId);
-		if (Arrays.stream(annotation.value()).noneMatch(effectiveRoles::contains)) {
-			throw new ForbiddenException("Vault role required: " + Arrays.stream(annotation.value()).map(VaultAccess.Role::name).collect(Collectors.joining(", ")));
+		var forbiddenMsg = "Vault role required: " + Arrays.stream(annotation.value()).map(VaultAccess.Role::name).collect(Collectors.joining(", "));
+		if (Vault.findByIdOptional(vaultId).isPresent()) {
+			// check permissions for existing vault:
+			var effectiveRoles = EffectiveVaultAccess.listRoles(vaultId, userId);
+			if (Arrays.stream(annotation.value()).noneMatch(effectiveRoles::contains)) {
+				throw new ForbiddenException(forbiddenMsg);
+			}
+		} else {
+			// how to treat non-existing vault:
+			switch (annotation.onMissingVault()) {
+				case FORBIDDEN -> throw new ForbiddenException(forbiddenMsg);
+				case NOT_FOUND -> throw new NotFoundException("Vault not found");
+				case PASS -> {}
+			}
 		}
 	}
 }

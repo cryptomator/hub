@@ -4,6 +4,7 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.annotation.Nullable;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotAuthorizedException;
+import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ResourceInfo;
 import jakarta.ws.rs.core.MultivaluedHashMap;
@@ -14,6 +15,7 @@ import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -40,7 +42,7 @@ public class VaultRoleFilterTest {
 	@Test
 	@DisplayName("error 403 if annotated resource has no vaultId path param")
 	public void testFilterWithMissingVaultId() throws NoSuchMethodException {
-		Mockito.doReturn(getClass().getMethod("allowMember")).when(resourceInfo).getResourceMethod();
+		Mockito.doReturn(VaultRoleFilterTest.class.getMethod("allowMember")).when(resourceInfo).getResourceMethod();
 		Mockito.doReturn(new MultivaluedHashMap<>()).when(uriInfo).getPathParameters();
 
 		Assertions.assertThrows(ForbiddenException.class, () -> filter.filter(context));
@@ -49,7 +51,7 @@ public class VaultRoleFilterTest {
 	@Test
 	@DisplayName("error 401 if JWT is missing")
 	public void testFilterWithMissingJWT() throws NoSuchMethodException {
-		Mockito.doReturn(getClass().getMethod("allowMember")).when(resourceInfo).getResourceMethod();
+		Mockito.doReturn(VaultRoleFilterTest.class.getMethod("allowMember")).when(resourceInfo).getResourceMethod();
 		Mockito.doReturn(new MultivaluedHashMap<>(Map.of(VaultRole.DEFAULT_VAULT_ID_PARAM, "7E57C0DE-0000-4000-8000-000100001111"))).when(uriInfo).getPathParameters();
 
 		Assertions.assertThrows(NotAuthorizedException.class, () -> filter.filter(context));
@@ -58,7 +60,7 @@ public class VaultRoleFilterTest {
 	@Test
 	@DisplayName("error 403 if user2 tries to access 7E57C0DE-0000-4000-8000-000100001111")
 	public void testFilterWithInsufficientPrivileges() throws NoSuchMethodException {
-		Mockito.doReturn(getClass().getMethod("allowOwner")).when(resourceInfo).getResourceMethod();
+		Mockito.doReturn(VaultRoleFilterTest.class.getMethod("allowOwner")).when(resourceInfo).getResourceMethod();
 		Mockito.doReturn(new MultivaluedHashMap<>(Map.of(VaultRole.DEFAULT_VAULT_ID_PARAM, "7E57C0DE-0000-4000-8000-000100001111"))).when(uriInfo).getPathParameters();
 		Mockito.doReturn("user2").when(jwt).getSubject();
 
@@ -70,7 +72,7 @@ public class VaultRoleFilterTest {
 	@Test
 	@DisplayName("pass if user1 tries to access 7E57C0DE-0000-4000-8000-000100001111 (user1 is OWNER of vault)")
 	public void testFilterSuccess1() throws NoSuchMethodException {
-		Mockito.doReturn(getClass().getMethod("allowOwner")).when(resourceInfo).getResourceMethod();
+		Mockito.doReturn(VaultRoleFilterTest.class.getMethod("allowOwner")).when(resourceInfo).getResourceMethod();
 		Mockito.doReturn(new MultivaluedHashMap<>(Map.of(VaultRole.DEFAULT_VAULT_ID_PARAM, "7E57C0DE-0000-4000-8000-000100001111"))).when(uriInfo).getPathParameters();
 		Mockito.doReturn("user1").when(jwt).getSubject();
 
@@ -80,11 +82,51 @@ public class VaultRoleFilterTest {
 	@Test
 	@DisplayName("pass if user2 tries to access 7E57C0DE-0000-4000-8000-000100002222 (user2 is member of group2, which is OWNER of the vault)")
 	public void testFilterSuccess2() throws NoSuchMethodException {
-		Mockito.doReturn(getClass().getMethod("allowOwner")).when(resourceInfo).getResourceMethod();
+		Mockito.doReturn(VaultRoleFilterTest.class.getMethod("allowOwner")).when(resourceInfo).getResourceMethod();
 		Mockito.doReturn(new MultivaluedHashMap<>(Map.of(VaultRole.DEFAULT_VAULT_ID_PARAM, "7E57C0DE-0000-4000-8000-000100002222"))).when(uriInfo).getPathParameters();
 		Mockito.doReturn("user2").when(jwt).getSubject();
 
 		Assertions.assertDoesNotThrow(() -> filter.filter(context));
+	}
+
+	@Nested
+	@DisplayName("when attempting to access non-existing vault")
+	public class OnMissingVault {
+
+		@BeforeEach
+		public void setup() {
+			Mockito.doReturn(new MultivaluedHashMap<>(Map.of(VaultRole.DEFAULT_VAULT_ID_PARAM, "7E57C0DE-0000-4000-8000-BADBADBADBAD"))).when(uriInfo).getPathParameters();
+			Mockito.doReturn("user1").when(jwt).getSubject();
+		}
+
+		@Test
+		@DisplayName("error 403 if annotated with @VaultRole(onMissingVault = OnMissingVault.FORBIDDEN)")
+		public void testForbidden() throws NoSuchMethodException {
+			Mockito.doReturn(NonExistingVault.class.getMethod("forbidden")).when(resourceInfo).getResourceMethod();
+
+			var e = Assertions.assertThrows(ForbiddenException.class, () -> filter.filter(context));
+
+			Assertions.assertEquals("Vault role required: OWNER", e.getMessage());
+		}
+
+		@Test
+		@DisplayName("error 404 if annotated with @VaultRole(onMissingVault = OnMissingVault.NOT_FOUND)")
+		public void testNotFound() throws NoSuchMethodException {
+			Mockito.doReturn(NonExistingVault.class.getMethod("notFound")).when(resourceInfo).getResourceMethod();
+
+			var e = Assertions.assertThrows(NotFoundException.class, () -> filter.filter(context));
+
+			Assertions.assertEquals("Vault not found", e.getMessage());
+		}
+
+		@Test
+		@DisplayName("pass if annotated with @VaultRole(onMissingVault = OnMissingVault.PASS)")
+		public void testPass() throws NoSuchMethodException {
+			Mockito.doReturn(NonExistingVault.class.getMethod("pass")).when(resourceInfo).getResourceMethod();
+
+			Assertions.assertDoesNotThrow(() -> filter.filter(context));
+		}
+
 	}
 
 	/*
@@ -96,5 +138,17 @@ public class VaultRoleFilterTest {
 
 	@VaultRole({VaultAccess.Role.OWNER})
 	public void allowOwner() {}
+
+	public static class NonExistingVault {
+		@VaultRole(value = {VaultAccess.Role.OWNER}, onMissingVault = VaultRole.OnMissingVault.FORBIDDEN)
+		public void forbidden() {}
+
+		@VaultRole(value = {VaultAccess.Role.OWNER}, onMissingVault = VaultRole.OnMissingVault.NOT_FOUND)
+		public void notFound() {}
+
+		@VaultRole(value = {VaultAccess.Role.OWNER}, onMissingVault = VaultRole.OnMissingVault.PASS)
+		public void pass() {}
+	}
+
 
 }

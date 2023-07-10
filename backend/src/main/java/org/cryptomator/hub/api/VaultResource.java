@@ -50,7 +50,7 @@ import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -367,6 +367,7 @@ public class VaultResource {
 	@PUT
 	@Path("/{vaultId}")
 	@RolesAllowed("user")
+	@VaultRole(value = VaultAccess.Role.OWNER, onMissingVault = VaultRole.OnMissingVault.PASS)
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
@@ -376,13 +377,13 @@ public class VaultResource {
 	@APIResponse(responseCode = "201", description = "vault created")
 	public Response createOrUpdate(@PathParam("vaultId") UUID vaultId, @Valid @NotNull VaultDto vaultDto) {
 		User currentUser = User.findById(jwt.getSubject());
-		Vault vault;
-		boolean isCreated = false;
-		try {
-			vault = Vault.<Vault>findByIdOptional(vaultId).get(); // FIXME: check vault ownership!!! update via POST?
-		} catch (NoSuchElementException e) {
-			isCreated = true;
-			//create new vault
+		Optional<Vault> existingVault = Vault.findByIdOptional(vaultId);
+		final Vault vault;
+		if (existingVault.isPresent()) {
+			// load existing vault:
+			vault = existingVault.get();
+		} else {
+			// create new vault:
 			vault = new Vault();
 			vault.id = vaultDto.id;
 			vault.creationTime = Instant.now().truncatedTo(ChronoUnit.MILLIS);
@@ -392,14 +393,14 @@ public class VaultResource {
 			vault.authenticationPublicKey = vaultDto.authPublicKey;
 			vault.authenticationPrivateKey = vaultDto.authPrivateKey;
 		}
-		//update new or existing vault
+		// set regardless of whether vault is new or existing:
 		vault.name = vaultDto.name;
 		vault.description = vaultDto.description;
 		vault.archived = vaultDto.archived;
 
 		try {
 			vault.persistAndFlush();
-			if (isCreated) {
+			if (existingVault.isEmpty()) {
 				var access = new VaultAccess();
 				access.vault = vault;
 				access.authority = currentUser;

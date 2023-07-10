@@ -23,7 +23,13 @@ public @interface VaultRole {
 	VaultAccess.Role[] value() default { VaultAccess.Role.MEMBER };
 
 	/**
-	 * @return Name of the path parameter containing the {@link org.cryptomator.hub.entities.Vault#id vault id}
+	 * @return Name of the path parameter containing the {@link org.cryptomator.hub.entities.Vault#id vault id}.
 	 */
 	String vaultIdParam() default DEFAULT_VAULT_ID_PARAM;
+
+	/**
+	 * @return How to treat the case when a vault does not exist.
+	 */
+	OnMissingVault onMissingVault() default OnMissingVault.FORBIDDEN;
+	enum OnMissingVault { FORBIDDEN, NOT_FOUND, PASS }
 }
