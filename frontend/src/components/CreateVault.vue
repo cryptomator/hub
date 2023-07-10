@@ -87,8 +87,7 @@
 
       <div class="flex justify-end items-center">
         <div v-if="onCreateError != null">
-          <p v-if="onCreateError instanceof ConflictError" class="text-sm text-red-900 mr-4">{{ t('createVault.error.vaultAlreadyExists') }}</p>
-          <p v-else-if="onCreateError instanceof FormValidationFailedError" class="text-sm text-red-900 mr-4">{{ t('createVault.error.formValidationFailed') }}</p>
+          <p v-if="onCreateError instanceof FormValidationFailedError" class="text-sm text-red-900 mr-4">{{ t('createVault.error.formValidationFailed') }}</p>
           <p v-else-if="onCreateError instanceof PasswordNotMachingError" class="text-sm text-red-900 mr-4">{{ t('createVault.enterVaultDetails.passwordConfirmation.passwordsDoNotMatch') }}</p>
           <p v-else class="text-sm text-red-900 mr-4">{{ t('common.unexpectedError', [onCreateError.message]) }}</p>
         </div>
@@ -151,8 +150,7 @@
                 {{ t('createVault.showRecoveryKey.submit') }}
               </button>
               <div v-if="onCreateError != null">
-                <p v-if="onCreateError instanceof ConflictError" class="text-sm text-red-900 mt-2">{{ t('createVault.error.vaultAlreadyExists') }}</p>
-                <p v-else class="text-sm text-red-900 mt-2">{{ t('common.unexpectedError', [onCreateError.message]) }}</p>
+                <p class="text-sm text-red-900 mt-2">{{ t('common.unexpectedError', [onCreateError.message]) }}</p>
               </div>
             </div>
           </div>
@@ -201,7 +199,7 @@ import { ArrowDownTrayIcon } from '@heroicons/vue/24/solid';
 import { saveAs } from 'file-saver';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { ConflictError } from '../common/backend';
+import backend from '../common/backend';
 import { VaultKeys } from '../common/crypto';
 import { debounce } from '../common/util';
 import { VaultConfig } from '../common/vaultconfig';

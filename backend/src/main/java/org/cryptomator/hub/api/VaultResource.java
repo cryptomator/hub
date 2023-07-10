@@ -340,7 +340,6 @@ public class VaultResource {
 			description = "Creates or updates a vault with the given vault id. The creationTime in the vaultDto is always ignored. On creation the current server time is used. On update, only the name, description and archived fields are considered.")
 	@APIResponse(responseCode = "200", description = "existing vault updated")
 	@APIResponse(responseCode = "201", description = "new vault created")
-	@APIResponse(responseCode = "409", description = "A vault with the given id or name already exists on persisting a new vault")
 	public Response createOrUpdate(@PathParam("vaultId") UUID vaultId, @Valid @NotNull VaultDto vaultDto) {
 		var currentUser = User.<User>findById(jwt.getSubject());
 		Vault vault;
@@ -374,11 +373,7 @@ public class VaultResource {
 				return Response.ok(VaultDto.fromEntity(vault), MediaType.APPLICATION_JSON).build();
 			}
 		} catch (PersistenceException e) {
-			if (e instanceof ConstraintViolationException) {
-				throw new ClientErrorException(Response.Status.CONFLICT, e);
-			} else {
-				throw new InternalServerErrorException(e);
-			}
+			throw new InternalServerErrorException(e);
 		}
 	}
 
