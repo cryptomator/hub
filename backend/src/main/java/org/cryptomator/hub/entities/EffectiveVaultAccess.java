@@ -3,7 +3,6 @@ package org.cryptomator.hub.entities;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.panache.common.Parameters;
 import jakarta.persistence.Column;
-import jakarta.persistence.Embeddable;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -12,32 +11,28 @@ import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.Immutable;
 
-import java.io.Serializable;
-import java.util.Objects;
-import java.util.UUID;
-
 @Entity
 @Immutable
 @Table(name = "effective_vault_access")
 @NamedQuery(name = "EffectiveVaultAccess.countSeatsOccupiedByUser", query = """
-				SELECT count(eva)
-				FROM EffectiveVaultAccess eva
-				INNER JOIN Vault v ON eva.id.vaultId = v.id AND NOT v.archived
-				WHERE eva.id.authorityId = :userId
+		SELECT count(eva)
+		FROM EffectiveVaultAccess eva
+		INNER JOIN Vault v ON eva.id.vaultId = v.id AND NOT v.archived
+		WHERE eva.id.authorityId = :userId
 		""")
 @NamedQuery(name = "EffectiveVaultAccess.countSeatOccupyingUsers", query = """
-				SELECT count(DISTINCT u)
-				FROM User u
-				INNER JOIN EffectiveVaultAccess eva ON u.id = eva.id.authorityId
-				INNER JOIN Vault v ON eva.id.vaultId = v.id AND NOT v.archived
+		SELECT count(DISTINCT u)
+		FROM User u
+		INNER JOIN EffectiveVaultAccess eva ON u.id = eva.id.authorityId
+		INNER JOIN Vault v ON eva.id.vaultId = v.id AND NOT v.archived
 		""")
 @NamedQuery(name = "EffectiveVaultAccess.countSeatOccupyingUsersOfGroup", query = """
-				SELECT count(DISTINCT u)
-				FROM User u
-				INNER JOIN EffectiveVaultAccess eva ON u.id = eva.id.authorityId
-				INNER JOIN EffectiveGroupMembership egm ON u.id = egm.id.memberId
-				INNER JOIN Vault v ON eva.id.vaultId = v.id AND NOT v.archived
-				WHERE egm.id.groupId = :groupId
+		SELECT count(DISTINCT u)
+		FROM User u
+		INNER JOIN EffectiveVaultAccess eva ON u.id = eva.id.authorityId
+		INNER JOIN EffectiveGroupMembership egm ON u.id = egm.id.memberId
+		INNER JOIN Vault v ON eva.id.vaultId = v.id AND NOT v.archived
+		WHERE egm.id.groupId = :groupId
 		""")
 public class EffectiveVaultAccess extends PanacheEntityBase {
 
