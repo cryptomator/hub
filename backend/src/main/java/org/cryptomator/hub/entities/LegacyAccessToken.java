@@ -1,19 +1,12 @@
 package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
-import io.quarkus.panache.common.Parameters;
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.MapsId;
 import jakarta.persistence.NamedNativeQuery;
-import jakarta.persistence.NamedQuery;
 import jakarta.persistence.NoResultException;
-import jakarta.persistence.SqlResultSetMapping;
 import jakarta.persistence.Table;
 
 import java.io.Serializable;

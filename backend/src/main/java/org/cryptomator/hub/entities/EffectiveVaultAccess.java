@@ -22,24 +22,24 @@ import java.util.stream.Collectors;
 @Immutable
 @Table(name = "effective_vault_access")
 @NamedQuery(name = "EffectiveVaultAccess.countSeatsOccupiedByUser", query = """
-				SELECT count(eva)
-				FROM EffectiveVaultAccess eva
-				INNER JOIN Vault v ON eva.id.vaultId = v.id AND NOT v.archived
-				WHERE eva.id.authorityId = :userId
+		SELECT count(eva)
+		FROM EffectiveVaultAccess eva
+		INNER JOIN Vault v ON eva.id.vaultId = v.id AND NOT v.archived
+		WHERE eva.id.authorityId = :userId
 		""")
 @NamedQuery(name = "EffectiveVaultAccess.countSeatOccupyingUsers", query = """
-				SELECT count(DISTINCT u)
-				FROM User u
-				INNER JOIN EffectiveVaultAccess eva ON u.id = eva.id.authorityId
-				INNER JOIN Vault v ON eva.id.vaultId = v.id AND NOT v.archived
+		SELECT count(DISTINCT u)
+		FROM User u
+		INNER JOIN EffectiveVaultAccess eva ON u.id = eva.id.authorityId
+		INNER JOIN Vault v ON eva.id.vaultId = v.id AND NOT v.archived
 		""")
 @NamedQuery(name = "EffectiveVaultAccess.countSeatOccupyingUsersOfGroup", query = """
-				SELECT count(DISTINCT u)
-				FROM User u
-				INNER JOIN EffectiveVaultAccess eva ON u.id = eva.id.authorityId
-				INNER JOIN EffectiveGroupMembership egm ON u.id = egm.id.memberId
-				INNER JOIN Vault v ON eva.id.vaultId = v.id AND NOT v.archived
-				WHERE egm.id.groupId = :groupId
+		SELECT count(DISTINCT u)
+		FROM User u
+		INNER JOIN EffectiveVaultAccess eva ON u.id = eva.id.authorityId
+		INNER JOIN EffectiveGroupMembership egm ON u.id = egm.id.memberId
+		INNER JOIN Vault v ON eva.id.vaultId = v.id AND NOT v.archived
+		WHERE egm.id.groupId = :groupId
 		""")
 @NamedQuery(name = "EffectiveVaultAccess.findByUserAndVault", query = """
 				SELECT eva
