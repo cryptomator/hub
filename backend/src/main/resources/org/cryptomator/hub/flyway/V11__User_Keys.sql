@@ -45,9 +45,7 @@ ALTER TABLE "vault_access" ADD "role" VARCHAR(50) NOT NULL DEFAULT 'MEMBER';
 -- @formatter:off
 CREATE OR REPLACE VIEW "effective_vault_access" ("vault_id", "authority_id", "role") AS
 	SELECT "va"."vault_id", "va"."authority_id", "va"."role" FROM "vault_access" "va"
-	    INNER JOIN "vault" "v" ON "v"."id" = "va"."vault_id" AND NOT "v"."archived"
 	UNION
 	SELECT "va"."vault_id", "gm"."member_id", "va"."role" FROM "vault_access" "va"
-		INNER JOIN "effective_group_membership" "gm" ON "va"."authority_id" = "gm"."group_id"
-		INNER JOIN "vault" "v" ON "v"."id" = "va"."vault_id" AND NOT "v"."archived";
+		INNER JOIN "effective_group_membership" "gm" ON "va"."authority_id" = "gm"."group_id";
 -- @formatter:on
