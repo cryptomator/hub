@@ -180,7 +180,7 @@
   "userProfile.actions.manageAccount": "Manage Account",
   "userProfile.actions.editLanguage": "Edit Language",
 
-  "vaultDetails.manageVault": "Manage Vault",
+  "vaultDetails.claimOwnership": "Claim Ownership",
   "vaultDetails.warning.archived": "This vault is archived and cannot be unlocked.",
   "vaultDetails.description.header": "Description",
   "vaultDetails.description.empty": "No description provided.",

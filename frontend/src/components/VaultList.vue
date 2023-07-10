@@ -108,7 +108,7 @@
   </div>
 
   <SlideOver v-if="selectedVault != null" ref="vaultDetailsSlideOver" :title="selectedVault.name" @close="selectedVault = null">
-    <VaultDetails :vault-id="selectedVault.id" @vault-updated="v => onSelectedVaultUpdate(v)"></VaultDetails>
+    <VaultDetails :vault-id="selectedVault.id" :role="ownsSelectedVault ? 'OWNER' : 'MEMBER'" @vault-updated="v => onSelectedVaultUpdate(v)"></VaultDetails>
   </SlideOver>
 </template>
 
@@ -132,6 +132,9 @@ const onFetchError = ref<Error | null>();
 const vaults = ref<VaultDto[]>();
 const ownedVaults = ref<VaultDto[]>();
 const selectedVault = ref<VaultDto | null>(null);
+const ownsSelectedVault = computed(() => {
+  return ownedVaults.value?.some(ownedVault => ownedVault.id == selectedVault.value?.id);
+});
 
 const isAdmin = ref<boolean>();
 

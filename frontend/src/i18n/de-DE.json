@@ -158,7 +158,7 @@
   "userProfile.actions.manageAccount": "Account verwalten",
   "userProfile.actions.editLanguage": "Sprache ändern",
 
-  "vaultDetails.manageVault": "Tresor verwalten",
+  "vaultDetails.claimOwnership": "Eigentümer werden",
   "vaultDetails.description.header": "Beschreibung",
   "vaultDetails.description.empty": "Keine Beschreibung vorhanden.",
   "vaultDetails.information.header": "Information",

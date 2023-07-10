@@ -1,7 +1,6 @@
 import * as miscreant from 'miscreant';
 import { base16, base32, base64, base64url } from 'rfc4648';
 import { JWEBuilder, JWEParser } from './jwe';
-import { JWT, JWTHeader } from './jwt';
 import { CRC32, wordEncoder } from './util';
 
 export class WrappedVaultKeys {
@@ -108,6 +107,29 @@ export class VaultKeys {
       ['sign', 'verify']
     );
     return new VaultKeys(await key, await keyPair);
+  }
+
+  /**
+   * Decrypts the vault's masterkey using the user's private key
+   * @param jwe JWE containing the vault key
+   * @param userPrivateKey The user's private key
+   * @returns The masterkey
+   */
+  public static async decryptWithUserKey(jwe: string, userPrivateKey: CryptoKey): Promise<VaultKeys> {
+    let rawKey = new Uint8Array();
+    try {
+      const payload: JWEPayload = await JWEParser.parse(jwe).decryptEcdhEs(userPrivateKey);
+      rawKey = base64.parse(payload.key);
+      const masterkey = crypto.subtle.importKey('raw', rawKey, VaultKeys.MASTERKEY_KEY_DESIGNATION, true, ['sign']);
+      const dummyKeyPair = crypto.subtle.generateKey( // TODO: remove!
+        VaultKeys.SIGNATURE_KEY_DESIGNATION,
+        true,
+        ['sign', 'verify']
+      );
+      return new VaultKeys(await masterkey, await dummyKeyPair);
+    } finally {
+      rawKey.fill(0x00);
+    }
   }
 
   /**
@@ -280,10 +302,6 @@ export class VaultKeys {
     } finally {
       rawkey.fill(0x00);
     }
-  }
-
-  public async signVaultEditRequest(jwtHeader: JWTHeader, jwtPayload: any): Promise<string> {
-    return JWT.build(jwtHeader, jwtPayload, this.signatureKeyPair.privateKey);
   }
 
   /**
