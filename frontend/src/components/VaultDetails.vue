@@ -117,7 +117,7 @@
     </div>
   </div>
 
-  <AuthenticateVaultAdminDialog v-if="claimingVaultOwnership && vault != null" ref="claimVaultOwnershipDialog" :vault="vault" @action="claimedVaultOwnership" @close="claimingVaultOwnership = false" />
+  <ClaimVaultOwnershipDialog v-if="claimingVaultOwnership && vault != null" ref="claimVaultOwnershipDialog" :vault="vault" @action="claimedVaultOwnership" @close="claimingVaultOwnership = false" />
   <GrantPermissionDialog v-if="grantingPermission && vault != null && vaultKeys != null" ref="grantPermissionDialog" :vault="vault" :users="usersRequiringAccessGrant" :vault-keys="vaultKeys" @close="grantingPermission = false" @permission-granted="permissionGranted()" />
   <EditVaultMetadataDialog v-if="editingVaultMetadata && vault != null && vaultKeys != null" ref="editVaultMetadataDialog" :vault="vault" @close="editingVaultMetadata = false" @updated="v => refreshVault(v)" />
   <DownloadVaultTemplateDialog v-if="downloadingVaultTemplate && vault != null && vaultKeys != null" ref="downloadVaultTemplateDialog" :vault="vault" :vault-keys="vaultKeys" @close="downloadingVaultTemplate = false" />
@@ -135,7 +135,7 @@ import { useI18n } from 'vue-i18n';
 import backend, { AuthorityDto, ConflictError, NotFoundError, UserDto, VaultDto, VaultRole } from '../common/backend';
 import { BrowserKeys, UserKeys, VaultKeys } from '../common/crypto';
 import ArchiveVaultDialog from './ArchiveVaultDialog.vue';
-import AuthenticateVaultAdminDialog from './AuthenticateVaultAdminDialog.vue';
+import ClaimVaultOwnershipDialog from './ClaimVaultOwnershipDialog.vue';
 import DownloadVaultTemplateDialog from './DownloadVaultTemplateDialog.vue';
 import EditVaultMetadataDialog from './EditVaultMetadataDialog.vue';
 import FetchError from './FetchError.vue';
@@ -178,7 +178,7 @@ const vault = ref<VaultDto>();
 const vaultKeys = ref<VaultKeys>();
 const members = ref<Map<string, AuthorityDto>>(new Map());
 const usersRequiringAccessGrant = ref<UserDto[]>([]);
-const claimVaultOwnershipDialog = ref<typeof AuthenticateVaultAdminDialog>();
+const claimVaultOwnershipDialog = ref<typeof ClaimVaultOwnershipDialog>();
 const claimingVaultOwnership = ref(false);
 const me = ref<UserDto>();
 

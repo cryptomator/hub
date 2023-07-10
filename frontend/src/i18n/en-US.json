@@ -72,11 +72,11 @@
   "auditLog.events.unlockVault": "Unlock Vault",
   "auditLog.events.updateVaultMembership": "Update Vault Membership",
 
-  "authenticateVaultAdminDialog.title": "Manage Vault",
-  "authenticateVaultAdminDialog.description": "Type in the vault admin password to manage it.",
-  "authenticateVaultAdminDialog.password": "Vault Admin Password",
-  "authenticateVaultAdminDialog.error.formValidationFailed": "Password must not be empty",
-  "authenticateVaultAdminDialog.error.wrongPassword": "Wrong password",
+  "claimVaultOwnershipDialog.title": "Claim Ownership",
+  "claimVaultOwnershipDialog.description": "Type in the vault admin password to prove you have permissions to manage this vault.",
+  "claimVaultOwnershipDialog.password": "Vault Admin Password",
+  "claimVaultOwnershipDialog.error.formValidationFailed": "Password must not be empty",
+  "claimVaultOwnershipDialog.error.wrongPassword": "Wrong password",
 
   "fetchError.title": "Fetching data failed",
 

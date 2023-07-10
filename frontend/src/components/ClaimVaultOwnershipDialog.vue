@@ -17,13 +17,13 @@
                     </div>
                     <div class="mt-3 grow text-center sm:mt-0 sm:ml-4 sm:text-left">
                       <DialogTitle as="h3" class="text-lg leading-6 font-medium text-gray-900">
-                        {{ t('authenticateVaultAdminDialog.title') }}
+                        {{ t('claimVaultOwnershipDialog.title') }}
                       </DialogTitle>
                       <div class="mt-2">
                         <p class="text-sm text-gray-500">
-                          {{ t('authenticateVaultAdminDialog.description') }}
+                          {{ t('claimVaultOwnershipDialog.description') }}
                         </p>
-                        <input id="password" v-model="password" type="password" name="password" class="mt-2 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onAuthenticationError instanceof FormValidationFailedError }" :placeholder="t('authenticateVaultAdminDialog.password')" required />
+                        <input id="password" v-model="password" type="password" name="password" class="mt-2 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onAuthenticationError instanceof FormValidationFailedError }" :placeholder="t('claimVaultOwnershipDialog.password')" required />
                       </div>
                     </div>
                   </div>
@@ -37,10 +37,10 @@
                   </button>
                   <div v-if="onAuthenticationError != null">
                     <p v-if="onAuthenticationError instanceof FormValidationFailedError" class="text-sm text-red-900">
-                      {{ t('authenticateVaultAdminDialog.error.formValidationFailed') }}
+                      {{ t('claimVaultOwnershipDialog.error.formValidationFailed') }}
                     </p>
                     <p v-else-if="onAuthenticationError instanceof UnwrapKeyError" class="text-sm text-red-900">
-                      {{ t('authenticateVaultAdminDialog.error.wrongPassword') }}
+                      {{ t('claimVaultOwnershipDialog.error.wrongPassword') }}
                     </p>
                     <p v-else class="text-sm text-red-900">
                       {{ t('common.unexpectedError', [onAuthenticationError.message]) }}

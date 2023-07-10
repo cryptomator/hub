@@ -71,11 +71,11 @@
   "auditLog.events.unlockVault": "Tresor entsperren",
   "auditLog.events.updateVaultMembership": "Tresor-Mitgliedschaft aktualisieren",
 
-  "authenticateVaultAdminDialog.title": "Tresor verwalten",
-  "authenticateVaultAdminDialog.description": "Gib das Tresor-Admin-Passwort des Tresors ein, um ihn zu verwalten.",
-  "authenticateVaultAdminDialog.password": "Tresor-Admin-Passwort",
-  "authenticateVaultAdminDialog.error.formValidationFailed": "Passwort darf nicht leer sein",
-  "authenticateVaultAdminDialog.error.wrongPassword": "Falsches Passwort",
+  "claimVaultOwnershipDialog.title": "Tresor-Eigentümer werden",
+  "claimVaultOwnershipDialog.description": "Gib zur Verifizierung deiner Berechtigung zur Tresorverwaltung das Tresor-Admin-Passwort des Tresors ein.",
+  "claimVaultOwnershipDialog.password": "Tresor-Admin-Passwort",
+  "claimVaultOwnershipDialog.error.formValidationFailed": "Passwort darf nicht leer sein",
+  "claimVaultOwnershipDialog.error.wrongPassword": "Falsches Passwort",
 
   "fetchError.title": "Abruf von Daten fehlgeschlagen",
 
