@@ -169,11 +169,10 @@
   "vaultList.addVault.create": "Create New",
   "vaultList.addVault.recover": "Recover Existing",
   "vaultList.filter": "Filter",
-  "vaultList.filter.entry.allVaults": "All",
   "vaultList.filter.entry.accessibleVaults": "Accessible",
+  "vaultList.filter.entry.allVaults": "All",
   "vaultList.filter.result.empty.title": "No vaults",
-  "vaultList.filter.result.empty.description.admin": "No results using that search term or filter.",
-  "vaultList.filter.result.empty.description.user": "No results using that search term.",
+  "vaultList.filter.result.empty.description": "No results using that search term or filter.",
   "vaultList.search.placeholder": "Search…",
   "vaultList.badge.archived": "Archived"
 }

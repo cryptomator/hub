@@ -167,11 +167,10 @@
   "vaultList.addVault.create": "Neu erstellen",
   "vaultList.addVault.recover": "Wiederherstellen",
   "vaultList.filter": "Filter",
-  "vaultList.filter.entry.allVaults": "Alle",
   "vaultList.filter.entry.accessibleVaults": "Zugreifbar",
+  "vaultList.filter.entry.allVaults": "Alle",
   "vaultList.filter.result.empty.title": "Keine Tresore",
-  "vaultList.filter.result.empty.description.admin": "Keinen Treffer mit diesem Suchbegriff oder filter.",
-  "vaultList.filter.result.empty.description.user": "Keinen Treffer mit diesem Suchbegriff.",
+  "vaultList.filter.result.empty.description.": "Keinen Treffer mit diesem Suchbegriff oder Filter.",
   "vaultList.search.placeholder": "Suche…",
   "vaultList.badge.archived": "Archiviert"
 }
