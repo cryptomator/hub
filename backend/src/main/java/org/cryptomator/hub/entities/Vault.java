@@ -37,7 +37,7 @@ import java.util.stream.Stream;
 				SELECT DISTINCT v
 				FROM Vault v
 				INNER JOIN EffectiveVaultAccess a ON a.id.vaultId = v.id AND a.id.authorityId = :userId
-				WHERE a.role = :role AND NOT v.archived
+				WHERE a.id.role = :role AND NOT v.archived
 				""")
 @NamedQuery(name = "Vault.allInList",
 		query = """

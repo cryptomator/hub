@@ -68,11 +68,21 @@ public class VaultRoleFilterTest {
 	}
 
 	@Test
-	@DisplayName("success if user1 tries to access 7E57C0DE-0000-4000-8000-000100001111")
-	public void testFilterSuccess() throws NoSuchMethodException {
+	@DisplayName("pass if user1 tries to access 7E57C0DE-0000-4000-8000-000100001111 (user1 is OWNER of vault)")
+	public void testFilterSuccess1() throws NoSuchMethodException {
 		Mockito.doReturn(getClass().getMethod("allowOwner")).when(resourceInfo).getResourceMethod();
 		Mockito.doReturn(new MultivaluedHashMap<>(Map.of(VaultRole.DEFAULT_VAULT_ID_PARAM, "7E57C0DE-0000-4000-8000-000100001111"))).when(uriInfo).getPathParameters();
 		Mockito.doReturn("user1").when(jwt).getSubject();
+
+		Assertions.assertDoesNotThrow(() -> filter.filter(context));
+	}
+
+	@Test
+	@DisplayName("pass if user2 tries to access 7E57C0DE-0000-4000-8000-000100002222 (user2 is member of group2, which is OWNER of the vault)")
+	public void testFilterSuccess2() throws NoSuchMethodException {
+		Mockito.doReturn(getClass().getMethod("allowOwner")).when(resourceInfo).getResourceMethod();
+		Mockito.doReturn(new MultivaluedHashMap<>(Map.of(VaultRole.DEFAULT_VAULT_ID_PARAM, "7E57C0DE-0000-4000-8000-000100002222"))).when(uriInfo).getPathParameters();
+		Mockito.doReturn("user2").when(jwt).getSubject();
 
 		Assertions.assertDoesNotThrow(() -> filter.filter(context));
 	}

@@ -47,8 +47,8 @@ public class VaultRoleFilter implements ContainerRequestFilter {
 			throw new NotAuthorizedException("No JWT supplied in request header");
 		}
 
-		EffectiveVaultAccess access = EffectiveVaultAccess.findById(new VaultAccess.Id(vaultId, userId));
-		if (Arrays.stream(annotation.value()).noneMatch(access.role::equals)) {
+		var effectiveRoles = EffectiveVaultAccess.listRoles(vaultId, userId);
+		if (Arrays.stream(annotation.value()).noneMatch(effectiveRoles::contains)) {
 			throw new ForbiddenException("Vault role required: " + Arrays.stream(annotation.value()).map(VaultAccess.Role::name).collect(Collectors.joining(", ")));
 		}
 	}

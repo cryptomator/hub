@@ -49,7 +49,8 @@ VALUES
 	('7E57C0DE-0000-4000-8000-000100001111', 'user1', 'OWNER'),
 	('7E57C0DE-0000-4000-8000-000100001111', 'user2', 'MEMBER'),
 	('7E57C0DE-0000-4000-8000-00010000AAAA', 'user1', 'MEMBER'),
-	('7E57C0DE-0000-4000-8000-000100002222', 'group1', 'MEMBER');
+	('7E57C0DE-0000-4000-8000-000100002222', 'group2', 'OWNER'),
+    ('7E57C0DE-0000-4000-8000-000100002222', 'group1', 'MEMBER');
 
 INSERT INTO "device" ("id", "owner_id", "name", "type", "publickey", "creation_time", "user_privatekey")
 VALUES
