@@ -363,17 +363,13 @@ public class VaultResource {
 		vault.name = vaultDto.name;
 		vault.description = vaultDto.description;
 		vault.archived = vaultDto.archived;
-
-		try {
-			vault.persistAndFlush();
+		vault.persistAndFlush();
+		if (isCreated) {
 			CreateVaultEvent.log(currentUser.id, vault.id);
-			if (isCreated) {
-				return Response.created(URI.create(".")).contentLocation(URI.create(".")).entity(VaultDto.fromEntity(vault)).type(MediaType.APPLICATION_JSON).build();
-			} else {
-				return Response.ok(VaultDto.fromEntity(vault), MediaType.APPLICATION_JSON).build();
-			}
-		} catch (PersistenceException e) {
-			throw new InternalServerErrorException(e);
+			return Response.created(URI.create(".")).contentLocation(URI.create(".")).entity(VaultDto.fromEntity(vault)).type(MediaType.APPLICATION_JSON).build();
+		} else {
+			// TODO: log UpdateVaultEvent
+			return Response.ok(VaultDto.fromEntity(vault), MediaType.APPLICATION_JSON).build();
 		}
 	}
 
