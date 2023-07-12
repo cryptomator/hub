@@ -100,7 +100,7 @@ async function giveUsersAccess(users: UserDto[]) {
   for (const user of users) {
     const publicKey = base64.parse(user.publicKey!); // TODO: can we be sure the user has a public key?
     const jwe = await props.vaultKeys.encryptForUser(publicKey);
-    await backend.vaults.grantAccess(props.vault.id, user.id, jwe, props.vaultKeys);
+    await backend.vaults.grantAccess(props.vault.id, user.id, jwe);
   }
 }
 </script>
