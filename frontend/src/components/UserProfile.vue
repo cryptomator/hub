@@ -52,7 +52,7 @@
       </div>
 
       <div class="grid grid-cols-1 gap-8 lg:col-span-3">
-        <ManageRecoveryCode />
+        <ManageSetupCode />
         <DeviceList />
       </div>
     </div>
@@ -69,7 +69,7 @@ import config from '../common/config';
 import { Locale } from '../i18n';
 import DeviceList from './DeviceList.vue';
 import FetchError from './FetchError.vue';
-import ManageRecoveryCode from './ManageRecoveryCode.vue';
+import ManageSetupCode from './ManageSetupCode.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 

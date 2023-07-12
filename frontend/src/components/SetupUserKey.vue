@@ -44,7 +44,7 @@
       </form>
     </div>
 
-    <div v-else-if="state == State.SaveRecoveryCode">
+    <div v-else-if="state == State.SaveSetupCode">
       <form @submit.prevent="$router.push('/app/vaults')">
         <div class="flex justify-center">
           <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6 text-center sm:w-full sm:max-w-lg">
@@ -53,17 +53,17 @@
             </div>
             <div class="mt-3 sm:mt-5">
               <h3 class="text-lg leading-6 font-medium text-gray-900">
-                {{ t('setupUserKey.saveRecoveryCode.title') }}
+                {{ t('setupUserKey.saveSetupCode.title') }}
               </h3>
               <div class="mt-2">
                 <p class="text-sm text-gray-500">
-                  {{ t('setupUserKey.saveRecoveryCode.description') }}
+                  {{ t('setupUserKey.saveSetupCode.description') }}
                 </p>
               </div>
               <div class="relative mt-5 sm:mt-6">
                 <div class="overflow-hidden rounded-lg border border-gray-300 shadow-sm focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
-                  <label for="recoveryCode" class="sr-only">{{ t('setupUserKey.recoveryCode') }}</label>
-                  <textarea id="recoveryCode" v-model="recoveryCode" rows="1" name="recoveryCode" class="block w-full resize-none border-0 py-3 font-mono text-lg text-center focus:ring-0" readonly />
+                  <label for="setupCode" class="sr-only">{{ t('setupUserKey.setupCode') }}</label>
+                  <textarea id="setupCode" v-model="setupCode" rows="1" name="setupCode" class="block w-full resize-none border-0 py-3 font-mono text-lg text-center focus:ring-0" readonly />
   
                   <!-- Spacer element to match the height of the toolbar -->
                   <div class="py-2" aria-hidden="true">
@@ -74,9 +74,9 @@
                 <div class="absolute inset-x-0 bottom-0">
                   <div class="flex flex-nowrap justify-end space-x-2 py-2 px-2 sm:px-3">
                     <div class="flex-shrink-0">
-                      <button type="button" class="relative inline-flex items-center whitespace-nowrap rounded-full bg-gray-50 py-2 px-2 text-sm font-medium text-gray-500 hover:bg-gray-100 sm:px-3" @click="copyRecoveryCode()">
+                      <button type="button" class="relative inline-flex items-center whitespace-nowrap rounded-full bg-gray-50 py-2 px-2 text-sm font-medium text-gray-500 hover:bg-gray-100 sm:px-3" @click="copySetupCode()">
                         <ClipboardIcon class="h-5 w-5 flex-shrink-0 text-gray-300 sm:-ml-1" aria-hidden="true" />
-                        <span v-if="!copiedRecoveryCode" class="hidden truncate sm:ml-2 sm:block text-gray-900">{{ t('common.copy') }}</span>
+                        <span v-if="!copiedSetupCode" class="hidden truncate sm:ml-2 sm:block text-gray-900">{{ t('common.copy') }}</span>
                         <span v-else class="hidden truncate sm:ml-2 sm:block text-gray-900">{{ t('common.copied') }}</span>
                       </button>
                     </div>
@@ -84,11 +84,11 @@
                 </div>
               </div>
               <div class="mt-2">
-                <p class="text-sm text-gray-500">{{ t('setupUserKey.saveRecoveryCode.recoveryCodeHint') }}</p>
+                <p class="text-sm text-gray-500">{{ t('setupUserKey.saveSetupCode.setupCodeHint') }}</p>
               </div>
               <div class="mt-5 sm:mt-6">
                 <button type="submit" class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:primary focus:ring-offset-2 sm:text-sm">
-                  {{ t('setupUserKey.saveRecoveryCode.submit') }}
+                  {{ t('setupUserKey.saveSetupCode.submit') }}
                 </button>
               </div>
             </div>
@@ -97,7 +97,7 @@
       </form>
     </div>
 
-    <div v-else-if="state == State.EnterRecoveryCode">
+    <div v-else-if="state == State.EnterSetupCode">
       <form @submit.prevent="recoverUserKey()">
         <div class="flex flex-col items-center">
           <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6 text-center sm:w-full sm:max-w-lg">
@@ -106,17 +106,17 @@
             </div>
             <div class="mt-3 sm:mt-5">
               <h3 class="text-lg leading-6 font-medium text-gray-900">
-                {{ t('setupUserKey.enterRecoveryCode.title') }}
+                {{ t('setupUserKey.enterSetupCode.title') }}
               </h3>
               <div class="mt-2">
                 <p class="text-sm text-gray-500">
-                  {{ t('setupUserKey.enterRecoveryCode.description') }}
+                  {{ t('setupUserKey.enterSetupCode.description') }}
                 </p>
               </div>
               <div class="mt-5 sm:mt-6 text-left">      
-                <label for="recoveryCode" class="block text-sm font-medium text-gray-700">{{ t('setupUserKey.recoveryCode') }}</label>
-                <input id="recoveryCode" v-model="recoveryCode" v-focus type="text" name="recoveryCode" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" aria-describedby="recoveryCodeDescription" />
-                <p id="recoveryCodeDescription" class="mt-2 text-sm text-gray-500">{{ t('setupUserKey.recoveryCode.description') }}</p>
+                <label for="setupCode" class="block text-sm font-medium text-gray-700">{{ t('setupUserKey.setupCode') }}</label>
+                <input id="setupCode" v-model="setupCode" v-focus type="text" name="setupCode" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" aria-describedby="setupCodeDescription" />
+                <p id="setupCodeDescription" class="mt-2 text-sm text-gray-500">{{ t('setupUserKey.setupCode.description') }}</p>
               </div>
               <div class="mt-5 sm:mt-6 text-left">      
                 <label for="deviceName" class="block text-sm font-medium text-gray-700">{{ t('setupUserKey.deviceName') }}</label>
@@ -125,7 +125,7 @@
               </div>
               <div class="mt-5 sm:mt-6">
                 <button type="submit" :disabled="processing" class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:primary focus:ring-offset-2 sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
-                  {{ t('setupUserKey.enterRecoveryCode.submit') }}
+                  {{ t('setupUserKey.enterSetupCode.submit') }}
                 </button>
                 <div v-if="onRecoverError != null">
                   <p class="text-sm text-red-900 mt-2">{{ t('common.unexpectedError', [onRecoverError.message]) }}</p>
@@ -134,10 +134,10 @@
             </div>
           </div>
           <p class="mt-10 text-center text-sm text-gray-500">
-            {{ t('setupUserKey.lostRecoveryCode.title') }}
+            {{ t('setupUserKey.lostSetupCode.title') }}
             {{ ' ' }}
             <a role="button" tabindex="0" class="font-medium leading-6 text-red-600 hover:text-red-900" @click="showResetUserAccountDialog()">
-              {{ t('setupUserKey.lostRecoveryCode.resetUserAccount') }}
+              {{ t('setupUserKey.lostSetupCode.resetUserAccount') }}
             </a>
           </p>
         </div>
@@ -164,8 +164,8 @@ import ResetUserAccountDialog from './ResetUserAccountDialog.vue';
 enum State {
   Preparing,
   CreateUserKey,
-  SaveRecoveryCode,
-  EnterRecoveryCode
+  SaveSetupCode,
+  EnterSetupCode
 }
 
 const { t } = useI18n({ useScope: 'global' });
@@ -184,10 +184,10 @@ const state = ref(State.Preparing);
 const processing = ref(false);
 
 const user = ref<UserDto>();
-const recoveryCode = ref('');
+const setupCode = ref('');
 const deviceName = ref('');
-const copiedRecoveryCode = ref(false);
-const debouncedCopyFinish = debounce(() => copiedRecoveryCode.value = false, 2000);
+const copiedSetupCode = ref(false);
+const debouncedCopyFinish = debounce(() => copiedSetupCode.value = false, 2000);
 const resettingUserAccount = ref(false);
 const resetUserAccountDialog = ref<typeof ResetUserAccountDialog>();
 
@@ -201,7 +201,7 @@ async function fetchData() {
     if (!user.value.publicKey) {
       state.value = State.CreateUserKey;
     } else if (!browserKeys.keyPair) {
-      state.value = State.EnterRecoveryCode;
+      state.value = State.EnterSetupCode;
     } else {
       throw new Error('Invalid state');
     }
@@ -221,14 +221,14 @@ async function createUserKey() {
     processing.value = true;
 
     const userKeys = await UserKeys.create();
-    recoveryCode.value = crypto.randomUUID();
+    setupCode.value = crypto.randomUUID();
     me.publicKey = await userKeys.encodedPublicKey();
-    me.privateKey = await userKeys.encryptedPrivateKey(recoveryCode.value);
-    me.setupCode = await JWEBuilder.ecdhEs(userKeys.keyPair.publicKey).encrypt({ setupCode: recoveryCode.value });
+    me.privateKey = await userKeys.encryptedPrivateKey(setupCode.value);
+    me.setupCode = await JWEBuilder.ecdhEs(userKeys.keyPair.publicKey).encrypt({ setupCode: setupCode.value });
     const browserKeys = await createBrowserKeys(me.id);
     await submitBrowserKeys(browserKeys, me, userKeys);
 
-    state.value = State.SaveRecoveryCode;
+    state.value = State.SaveSetupCode;
   } catch (error) {
     console.error('Creating user key failed.', error);
     onCreateError.value = error instanceof Error ? error : new Error('Unknown reason');
@@ -246,7 +246,7 @@ async function recoverUserKey() {
     }
     processing.value = true;
 
-    const userKeys = await UserKeys.recover(me.publicKey, me.privateKey, recoveryCode.value);
+    const userKeys = await UserKeys.recover(me.publicKey, me.privateKey, setupCode.value);
     const browserKeys = await createBrowserKeys(me.id);
     await submitBrowserKeys(browserKeys, me, userKeys);
 
@@ -278,9 +278,9 @@ async function submitBrowserKeys(browserKeys: BrowserKeys, me: UserDto, userKeys
   await backend.users.putMe(me);
 }
 
-async function copyRecoveryCode() {
-  await navigator.clipboard.writeText(recoveryCode.value);
-  copiedRecoveryCode.value = true;
+async function copySetupCode() {
+  await navigator.clipboard.writeText(setupCode.value);
+  copiedSetupCode.value = true;
   debouncedCopyFinish();
 }
 
