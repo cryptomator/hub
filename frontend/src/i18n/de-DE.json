@@ -128,8 +128,8 @@
   "grantPermissionDialog.description": "Berechtige weitere Geräten auf den Tresor zuzugreifen.",
   "grantPermissionDialog.submit": "Berechtigung für {0} Gerät(e) gewähren",
 
-  "manageRecoveryCode.title": "Persönliches Hub-Geheimnis",
-  "manageRecoveryCode.regenerate": "Neues Geheimnis generieren",
+  "manageSetupCode.title": "Persönliches Hub-Geheimnis",
+  "manageSetupCode.regenerate": "Neues Geheimnis generieren",
 
   "nav.vaults": "Tresore",
   "nav.profile.signedInAs": "Eingeloggt als",
@@ -147,12 +147,12 @@
   "recoveryKeyDialog.description": "Dies ist dein Wiederherstellungsschlüssel für „{0}“. Verwahre ihn gut, er ist im Falle eines Systemausfalls deine einzige Möglichkeit, auf einen Tresor zuzugreifen.",
   "recoveryKeyDialog.recoveryKey": "Wiederherstellungsschlüssel für deinen Tresor",
 
-  "regenerateRecoveryCodeDialog.confirmRegenerateRecoveryCode.title": "Neues Geheimnis generieren",
-  "regenerateRecoveryCodeDialog.confirmRegenerateRecoveryCode.description": "Möchtest du ein neues persönliches Hub-Geheimnis generiereren? Dadurch wird das alte Geheimnis ungültig.",
-  "regenerateRecoveryCodeDialog.saveRecoveryCode.title": "Persönliches Hub-Geheimnis speichern",
-  "regenerateRecoveryCodeDialog.saveRecoveryCode.description": "Vergiss nicht, dieses neue Geheimnis zu speichern. Du benötigst es, um dich bei neuen Geräten anzumelden. Das alte Geheimnis kannst du gefahrlos löschen.",
-  "regenerateRecoveryCodeDialog.saveRecoveryCode.recoveryCode": "Persönliches Hub-Geheimnis",
-  "regenerateRecoveryCodeDialog.submit": "Neues Geheimnis generieren",
+  "regenerateSetupCodeDialog.confirmRegenerateSetupCode.title": "Neues Geheimnis generieren",
+  "regenerateSetupCodeDialog.confirmRegenerateSetupCode.description": "Möchtest du ein neues persönliches Hub-Geheimnis generiereren? Dadurch wird das alte Geheimnis ungültig.",
+  "regenerateSetupCodeDialog.saveSetupCode.title": "Persönliches Hub-Geheimnis speichern",
+  "regenerateSetupCodeDialog.saveSetupCode.description": "Vergiss nicht, dieses neue Geheimnis zu speichern. Du benötigst es, um dich bei neuen Geräten anzumelden. Das alte Geheimnis kannst du gefahrlos löschen.",
+  "regenerateSetupCodeDialog.saveSetupCode.setupCode": "Persönliches Hub-Geheimnis",
+  "regenerateSetupCodeDialog.submit": "Neues Geheimnis generieren",
 
   "userProfile.title": "Profil",
   "userProfile.actions.manageAccount": "Account verwalten",
