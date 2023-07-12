@@ -62,7 +62,7 @@ public class DeviceResource {
 	@Transactional
 	@Operation(summary = "creates or updates a device", description = "the device will be owned by the currently logged-in user")
 	@APIResponse(responseCode = "201", description = "Device created or updated")
-	@APIResponse(responseCode = "409", description = "Conflicting device id or name")
+	@APIResponse(responseCode = "409", description = "Conflicting device name")
 	public Response createOrUpdate(@Valid @NotNull DeviceDto dto, @PathParam("deviceId") @ValidId String deviceId) {
 		Device device;
 		try {
