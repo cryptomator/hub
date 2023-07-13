@@ -1,5 +1,8 @@
 package org.cryptomator.hub.api;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.annotation.Nullable;
@@ -14,8 +17,10 @@ import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.ForbiddenException;
+import jakarta.ws.rs.FormParam;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -41,6 +46,7 @@ import org.cryptomator.hub.validation.NoHtmlOrScriptChars;
 import org.cryptomator.hub.validation.OnlyBase64Chars;
 import org.cryptomator.hub.validation.ValidId;
 import org.cryptomator.hub.validation.ValidJWE;
+import org.cryptomator.hub.validation.ValidJWS;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -412,6 +418,55 @@ public class VaultResource {
 			// TODO: log UpdateVaultEvent
 			return Response.ok(VaultDto.fromEntity(vault), MediaType.APPLICATION_JSON).build();
 		}
+	}
+
+	@POST
+	@Path("/{vaultId}/claim-ownership")
+	@RolesAllowed("user")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Transactional
+	@Operation(summary = "claims ownership of a vault",
+			description = "Assigns the OWNER role to the currently logged in user, who proofs this claim by sending a JWT signed with a private key held by users knowing the Vault Admin Password")
+	@APIResponse(responseCode = "200", description = "ownership claimed successfully")
+	@APIResponse(responseCode = "400", description = "incorrect proof")
+	@APIResponse(responseCode = "404", description = "no such vault")
+	@APIResponse(responseCode = "409", description = "owned by another user")
+	public Response claimOwnership(@PathParam("vaultId") UUID vaultId, @FormParam("proof") @Valid @ValidJWS String proof) {
+		User currentUser = User.findById(jwt.getSubject());
+		Vault vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
+
+		// if vault.authenticationPublicKey no longer exists, this vault has already been claimed by a different user
+		var authPubKey = vault.getAuthenticationPublicKey().orElseThrow(() -> new ClientErrorException(Response.Status.CONFLICT));
+
+		try {
+			var verifier = JWT.require(Algorithm.ECDSA384(authPubKey))
+					.acceptLeeway(30)
+					.withClaimPresence("nbf")
+					.withClaimPresence("exp")
+					.withSubject(currentUser.id)
+					.withClaim("vaultId", vaultId.toString().toUpperCase())
+					.build();
+			verifier.verify(proof);
+		} catch (JWTVerificationException e) {
+			throw new ForbiddenException("Invalid proof of ownership", e);
+		}
+
+		var access = new VaultAccess();
+		access.vault = vault;
+		access.authority = currentUser;
+		access.role = VaultAccess.Role.OWNER;
+		access.persist();
+		UpdateVaultMembershipEvent.log(currentUser.id, vaultId, currentUser.id, UpdateVaultMembershipEvent.Operation.ADD);
+
+		vault.salt = null;
+		vault.iterations = null;
+		vault.masterkey = null;
+		vault.authenticationPrivateKey = null;
+		vault.authenticationPublicKey = null;
+		vault.persist();
+
+		// TODO: log some event?
+		return Response.ok().build();
 	}
 
 

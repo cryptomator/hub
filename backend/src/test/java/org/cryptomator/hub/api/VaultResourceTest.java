@@ -1,5 +1,7 @@
 package org.cryptomator.hub.api;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
 import io.agroal.api.AgroalDataSource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
@@ -8,7 +10,9 @@ import io.quarkus.test.security.oidc.OidcSecurity;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import jakarta.validation.Validator;
+import org.cryptomator.hub.entities.Vault;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterAll;
@@ -24,9 +28,13 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
+import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
+import java.security.interfaces.ECPrivateKey;
+import java.security.spec.ECGenParameterSpec;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.sql.SQLException;
@@ -632,6 +640,208 @@ public class VaultResourceTest {
 				s.execute("""
 						DELETE FROM "authority"
 						WHERE "id" IN ('user91', 'user92', 'user93', 'user94', 'user95_A', 'group91');
+						""");
+			}
+		}
+
+	}
+
+	@Nested
+	@DisplayName("Claim Ownership")
+	@TestSecurity(user = "User Name 1", roles = {"user"})
+	@OidcSecurity(claims = {
+			@Claim(key = "sub", value = "user1")
+	})
+	@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+	public class ClaimOwnership {
+
+		private static Algorithm JWT_ALG;
+
+		@BeforeAll
+		@Transactional
+		public static void setup() throws GeneralSecurityException {
+			var keyPairGen = KeyPairGenerator.getInstance("EC");
+			keyPairGen.initialize(new ECGenParameterSpec("secp384r1"));
+			var keyPair = keyPairGen.generateKeyPair();
+			JWT_ALG = Algorithm.ECDSA384((ECPrivateKey) keyPair.getPrivate());
+
+			Vault v = new Vault();
+			v.id = UUID.fromString("7E57C0DE-0000-4000-8000-000100009999");
+			v.name = "ownership-test-vault";
+			v.creationTime = Instant.now();
+			v.authenticationPublicKey = Base64.getEncoder().encodeToString(keyPair.getPublic().getEncoded());
+			v.persist();
+		}
+
+		@Test
+		@Order(1)
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100009999/claim-ownership returns 400 - JWT has wrong SUB")
+		public void testClaimOwnershipIncorrectJWT1() {
+			var proof = JWT.create()
+					.withNotBefore(Instant.now().minusSeconds(10))
+					.withExpiresAt(Instant.now().plusSeconds(10))
+					.withSubject("userBAD")
+					.withClaim("vaultId", "7E57C0DE-0000-4000-8000-000100009999")
+					.sign(JWT_ALG);
+
+			given().param("proof", proof)
+					.when().post("/vaults/{vaultId}/claim-ownership", "7E57C0DE-0000-4000-8000-000100009999")
+					.then().statusCode(400);
+		}
+
+		@Test
+		@Order(1)
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100009999/claim-ownership returns 400 - JWT missing NBF")
+		public void testClaimOwnershipIncorrectJWT2() {
+			var proof = JWT.create()
+					.withExpiresAt(Instant.now().plusSeconds(10))
+					.withSubject("user1")
+					.withClaim("vaultId", "7E57C0DE-0000-4000-8000-000100009999")
+					.sign(JWT_ALG);
+
+			given().param("proof", proof)
+					.when().post("/vaults/{vaultId}/claim-ownership", "7E57C0DE-0000-4000-8000-000100009999")
+					.then().statusCode(400);
+		}
+
+		@Test
+		@Order(1)
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100009999/claim-ownership returns 400 - JWT not yet valid")
+		public void testClaimOwnershipIncorrectJWT3() {
+			var proof = JWT.create()
+					.withNotBefore(Instant.now().plusSeconds(60))
+					.withExpiresAt(Instant.now().plusSeconds(10))
+					.withSubject("user1")
+					.withClaim("vaultId", "7E57C0DE-0000-4000-8000-000100009999")
+					.sign(JWT_ALG);
+
+			given().param("proof", proof)
+					.when().post("/vaults/{vaultId}/claim-ownership", "7E57C0DE-0000-4000-8000-000100009999")
+					.then().statusCode(400);
+		}
+
+		@Test
+		@Order(1)
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100009999/claim-ownership returns 400 - JWT missing EXP")
+		public void testClaimOwnershipIncorrectJWT4() {
+			var proof = JWT.create()
+					.withNotBefore(Instant.now().minusSeconds(10))
+					.withSubject("user1")
+					.withClaim("vaultId", "7E57C0DE-0000-4000-8000-000100009999")
+					.sign(JWT_ALG);
+
+			given().param("proof", proof)
+					.when().post("/vaults/{vaultId}/claim-ownership", "7E57C0DE-0000-4000-8000-000100009999")
+					.then().statusCode(400);
+		}
+
+		@Test
+		@Order(1)
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100009999/claim-ownership returns 400 - JWT expired")
+		public void testClaimOwnershipIncorrectJWT5() {
+			var proof = JWT.create()
+					.withNotBefore(Instant.now().minusSeconds(10))
+					.withExpiresAt(Instant.now().minusSeconds(60))
+					.withSubject("user1")
+					.withClaim("vaultId", "7E57C0DE-0000-4000-8000-000100009999")
+					.sign(JWT_ALG);
+
+			given().param("proof", proof)
+					.when().post("/vaults/{vaultId}/claim-ownership", "7E57C0DE-0000-4000-8000-000100009999")
+					.then().statusCode(400);
+		}
+
+		@Test
+		@Order(1)
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100009999/claim-ownership returns 400 - JWT wrong vaultId")
+		public void testClaimOwnershipIncorrectJWT6() {
+			var proof = JWT.create()
+					.withNotBefore(Instant.now().minusSeconds(10))
+					.withExpiresAt(Instant.now().plusSeconds(10))
+					.withSubject("user1")
+					.withClaim("vaultId", "wrong")
+					.sign(JWT_ALG);
+
+			given().param("proof", proof)
+					.when().post("/vaults/{vaultId}/claim-ownership", "7E57C0DE-0000-4000-8000-000100009999")
+					.then().statusCode(400);
+		}
+
+		@Test
+		@Order(1)
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100009999/claim-ownership returns 400 - JWT wrong signature")
+		public void testClaimOwnershipIncorrectJWT7() throws GeneralSecurityException {
+			var keyPairGen = KeyPairGenerator.getInstance("EC");
+			keyPairGen.initialize(new ECGenParameterSpec("secp384r1"));
+			var differentKey = keyPairGen.generateKeyPair();
+			var alg = Algorithm.ECDSA384((ECPrivateKey) differentKey.getPrivate());
+
+			var proof = JWT.create()
+					.withNotBefore(Instant.now().minusSeconds(10))
+					.withExpiresAt(Instant.now().plusSeconds(10))
+					.withSubject("user1")
+					.withClaim("vaultId", "7E57C0DE-0000-4000-8000-000100009999")
+					.sign(alg);
+
+			given().param("proof", proof)
+					.when().post("/vaults/{vaultId}/claim-ownership", "7E57C0DE-0000-4000-8000-000100009999")
+					.then().statusCode(400);
+		}
+
+		@Test
+		@Order(1)
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-BADBADBADBAD/claim-ownership returns 404")
+		public void testClaimOwnershipNoSuchVault() {
+			var proof = JWT.create()
+					.withJWTId(UUID.randomUUID().toString())
+					.withSubject("user1")
+					.withClaim("vaultId", "7E57C0DE-0000-4000-8000-000100009999")
+					.withIssuedAt(Instant.now())
+					.sign(JWT_ALG);
+
+			given().param("proof", proof)
+					.when().post("/vaults/{vaultId}/claim-ownership", "7E57C0DE-0000-4000-8000-BADBADBADBAD")
+					.then().statusCode(404);
+		}
+
+		@Test
+		@Order(2)
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100009999/claim-ownership returns 200")
+		public void testClaimOwnershipSuccess() {
+			var proof = JWT.create()
+					.withNotBefore(Instant.now().minusSeconds(10))
+					.withExpiresAt(Instant.now().plusSeconds(10))
+					.withSubject("user1")
+					.withClaim("vaultId", "7E57C0DE-0000-4000-8000-000100009999")
+					.sign(JWT_ALG);
+
+			given().param("proof", proof)
+					.when().post("/vaults/{vaultId}/claim-ownership", "7E57C0DE-0000-4000-8000-000100009999")
+					.then().statusCode(200);
+		}
+
+		@Test
+		@Order(3)
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100009999/claim-ownership returns 409")
+		public void testClaimOwnershipAlreadyClaimed() {
+			var proof = JWT.create()
+					.withNotBefore(Instant.now().minusSeconds(10))
+					.withExpiresAt(Instant.now().plusSeconds(10))
+					.withSubject("user1")
+					.withClaim("vaultId", "7E57C0DE-0000-4000-8000-000100009999")
+					.sign(JWT_ALG);
+
+			given().param("proof", proof)
+					.when().post("/vaults/{vaultId}/claim-ownership", "7E57C0DE-0000-4000-8000-000100009999")
+					.then().statusCode(409);
+		}
+
+		@AfterAll
+		public void reset() throws SQLException {
+			try (var s = dataSource.getConnection().createStatement()) {
+				s.execute("""
+						DELETE FROM "vault" WHERE "id" = '7E57C0DE-0000-4000-8000-000100009999';
 						""");
 			}
 		}

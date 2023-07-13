@@ -14,10 +14,17 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.Immutable;
 
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.interfaces.ECPublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
 import java.time.Instant;
+import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -74,19 +81,19 @@ public class Vault extends PanacheEntityBase {
 	@Column(name = "name", nullable = false)
 	public String name;
 
-	@Column(name = "salt", nullable = false)
+	@Column(name = "salt")
 	public String salt;
 
-	@Column(name = "iterations", nullable = false)
-	public int iterations;
+	@Column(name = "iterations")
+	public Integer iterations;
 
-	@Column(name = "masterkey", nullable = false)
+	@Column(name = "masterkey")
 	public String masterkey;
 
-	@Column(name = "auth_pubkey", nullable = false)
+	@Column(name = "auth_pubkey")
 	public String authenticationPublicKey;
 
-	@Column(name = "auth_prvkey", nullable = false)
+	@Column(name = "auth_prvkey")
 	public String authenticationPrivateKey;
 
 	@Column(name = "creation_time", nullable = false)
@@ -97,6 +104,27 @@ public class Vault extends PanacheEntityBase {
 
 	@Column(name = "archived", nullable = false)
 	public boolean archived;
+
+	public Optional<ECPublicKey> getAuthenticationPublicKey() {
+		if (authenticationPublicKey == null) {
+			return Optional.empty();
+		}
+
+		try {
+			var publicKeySpec = new X509EncodedKeySpec(Base64.getDecoder().decode(authenticationPublicKey));
+			var keyFactory = KeyFactory.getInstance("EC");
+			var key = keyFactory.generatePublic(publicKeySpec);
+			if (key instanceof ECPublicKey k) {
+				return Optional.of(k);
+			} else {
+				return Optional.empty();
+			}
+		} catch (InvalidKeySpecException e) {
+			return Optional.empty();
+		} catch (NoSuchAlgorithmException e) {
+			throw new IllegalStateException(e);
+		}
+	}
 
 	public static Stream<Vault> findAccessibleByUser(String userId) {
 		return find("#Vault.accessibleByUser", Parameters.with("userId", userId)).stream();
