@@ -12,6 +12,7 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
@@ -444,19 +445,27 @@ public class VaultResource {
 					.withClaimPresence("nbf")
 					.withClaimPresence("exp")
 					.withSubject(currentUser.id)
-					.withClaim("vaultId", vaultId.toString().toUpperCase())
+					.withClaim("vaultId", vaultId.toString().toLowerCase())
 					.build();
 			verifier.verify(proof);
 		} catch (JWTVerificationException e) {
-			throw new ForbiddenException("Invalid proof of ownership", e);
+			throw new BadRequestException("Invalid proof of ownership", e);
 		}
 
-		var access = new VaultAccess();
-		access.vault = vault;
-		access.authority = currentUser;
-		access.role = VaultAccess.Role.OWNER;
-		access.persist();
-		UpdateVaultMembershipEvent.log(currentUser.id, vaultId, currentUser.id, UpdateVaultMembershipEvent.Operation.ADD);
+		Optional<VaultAccess> existingAccess = VaultAccess.findByIdOptional(new VaultAccess.Id(vaultId, currentUser.id));
+		if (existingAccess.isPresent()) {
+			var access = existingAccess.get();
+			access.role = VaultAccess.Role.OWNER;
+			access.persist();
+			// TODO: log change role event?
+		} else {
+			var access = new VaultAccess();
+			access.vault = vault;
+			access.authority = currentUser;
+			access.role = VaultAccess.Role.OWNER;
+			access.persist();
+			UpdateVaultMembershipEvent.log(currentUser.id, vaultId, currentUser.id, UpdateVaultMembershipEvent.Operation.ADD);
+		}
 
 		vault.salt = null;
 		vault.iterations = null;
@@ -475,9 +484,9 @@ public class VaultResource {
 						   @JsonProperty("description") @NoHtmlOrScriptChars String description,
 						   @JsonProperty("archived") boolean archived,
 						   @JsonProperty("creationTime") Instant creationTime,
-						   @JsonProperty("masterkey") @NotNull @OnlyBase64Chars String masterkey, @JsonProperty("iterations") int iterations,
-						   @JsonProperty("salt") @NotNull @OnlyBase64Chars String salt,
-						   @JsonProperty("authPublicKey") @NotNull @OnlyBase64Chars String authPublicKey, @JsonProperty("authPrivateKey") @NotNull @OnlyBase64Chars String authPrivateKey
+						   @JsonProperty("masterkey") @OnlyBase64Chars String masterkey, @JsonProperty("iterations") Integer iterations,
+						   @JsonProperty("salt") @OnlyBase64Chars String salt,
+						   @JsonProperty("authPublicKey")@OnlyBase64Chars String authPublicKey, @JsonProperty("authPrivateKey") @OnlyBase64Chars String authPrivateKey
 	) {
 
 		public static VaultDto fromEntity(Vault entity) {

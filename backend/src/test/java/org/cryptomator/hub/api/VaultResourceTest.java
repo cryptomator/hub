@@ -682,7 +682,7 @@ public class VaultResourceTest {
 					.withNotBefore(Instant.now().minusSeconds(10))
 					.withExpiresAt(Instant.now().plusSeconds(10))
 					.withSubject("userBAD")
-					.withClaim("vaultId", "7E57C0DE-0000-4000-8000-000100009999")
+					.withClaim("vaultId", "7E57C0DE-0000-4000-8000-000100009999".toLowerCase())
 					.sign(JWT_ALG);
 
 			given().param("proof", proof)
@@ -697,7 +697,7 @@ public class VaultResourceTest {
 			var proof = JWT.create()
 					.withExpiresAt(Instant.now().plusSeconds(10))
 					.withSubject("user1")
-					.withClaim("vaultId", "7E57C0DE-0000-4000-8000-000100009999")
+					.withClaim("vaultId", "7E57C0DE-0000-4000-8000-000100009999".toLowerCase())
 					.sign(JWT_ALG);
 
 			given().param("proof", proof)
@@ -713,7 +713,7 @@ public class VaultResourceTest {
 					.withNotBefore(Instant.now().plusSeconds(60))
 					.withExpiresAt(Instant.now().plusSeconds(10))
 					.withSubject("user1")
-					.withClaim("vaultId", "7E57C0DE-0000-4000-8000-000100009999")
+					.withClaim("vaultId", "7E57C0DE-0000-4000-8000-000100009999".toLowerCase())
 					.sign(JWT_ALG);
 
 			given().param("proof", proof)
@@ -728,7 +728,7 @@ public class VaultResourceTest {
 			var proof = JWT.create()
 					.withNotBefore(Instant.now().minusSeconds(10))
 					.withSubject("user1")
-					.withClaim("vaultId", "7E57C0DE-0000-4000-8000-000100009999")
+					.withClaim("vaultId", "7E57C0DE-0000-4000-8000-000100009999".toLowerCase())
 					.sign(JWT_ALG);
 
 			given().param("proof", proof)
@@ -744,7 +744,7 @@ public class VaultResourceTest {
 					.withNotBefore(Instant.now().minusSeconds(10))
 					.withExpiresAt(Instant.now().minusSeconds(60))
 					.withSubject("user1")
-					.withClaim("vaultId", "7E57C0DE-0000-4000-8000-000100009999")
+					.withClaim("vaultId", "7E57C0DE-0000-4000-8000-000100009999".toLowerCase())
 					.sign(JWT_ALG);
 
 			given().param("proof", proof)
@@ -781,7 +781,7 @@ public class VaultResourceTest {
 					.withNotBefore(Instant.now().minusSeconds(10))
 					.withExpiresAt(Instant.now().plusSeconds(10))
 					.withSubject("user1")
-					.withClaim("vaultId", "7E57C0DE-0000-4000-8000-000100009999")
+					.withClaim("vaultId", "7E57C0DE-0000-4000-8000-000100009999".toLowerCase())
 					.sign(alg);
 
 			given().param("proof", proof)
@@ -796,7 +796,7 @@ public class VaultResourceTest {
 			var proof = JWT.create()
 					.withJWTId(UUID.randomUUID().toString())
 					.withSubject("user1")
-					.withClaim("vaultId", "7E57C0DE-0000-4000-8000-000100009999")
+					.withClaim("vaultId", "7E57C0DE-0000-4000-8000-000100009999".toLowerCase())
 					.withIssuedAt(Instant.now())
 					.sign(JWT_ALG);
 
@@ -813,7 +813,7 @@ public class VaultResourceTest {
 					.withNotBefore(Instant.now().minusSeconds(10))
 					.withExpiresAt(Instant.now().plusSeconds(10))
 					.withSubject("user1")
-					.withClaim("vaultId", "7E57C0DE-0000-4000-8000-000100009999")
+					.withClaim("vaultId", "7E57C0DE-0000-4000-8000-000100009999".toLowerCase())
 					.sign(JWT_ALG);
 
 			given().param("proof", proof)
@@ -829,7 +829,7 @@ public class VaultResourceTest {
 					.withNotBefore(Instant.now().minusSeconds(10))
 					.withExpiresAt(Instant.now().plusSeconds(10))
 					.withSubject("user1")
-					.withClaim("vaultId", "7E57C0DE-0000-4000-8000-000100009999")
+					.withClaim("vaultId", "7E57C0DE-0000-4000-8000-000100009999".toLowerCase())
 					.sign(JWT_ALG);
 
 			given().param("proof", proof)
