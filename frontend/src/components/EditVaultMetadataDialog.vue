@@ -49,9 +49,6 @@
                     <p v-if="onUpdateVaultMetadataError instanceof FormValidationFailedError" class="text-sm text-red-900">
                       {{ t('editVaultMetadataDialog.error.formValidationFailed') }}
                     </p>
-                    <p v-else-if="onUpdateVaultMetadataError instanceof ConflictError" class="text-sm text-red-900">
-                      {{ t('editVaultMetadataDialog.error.vaultAlreadyExists') }}
-                    </p>
                     <p v-else class="text-sm text-red-900">
                       {{ t('common.unexpectedError', [onUpdateVaultMetadataError.message]) }}
                     </p>
@@ -71,7 +68,7 @@ import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, Trans
 import { PencilIcon } from '@heroicons/vue/24/outline';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { ConflictError, VaultDto } from '../common/backend';
+import backend, { VaultDto } from '../common/backend';
 
 class FormValidationFailedError extends Error {
   constructor() {

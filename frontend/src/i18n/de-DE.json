@@ -206,7 +206,7 @@
   "vaultList.filter.entry.allVaults": "Alle",
   "vaultList.filter.result.empty.title": "Keine Tresore",
   "vaultList.filter.result.empty.description.": "Keinen Treffer mit diesem Suchbegriff oder Filter.",
-  "vaultList.search.placeholder": "Suche...",
+  "vaultList.search.placeholder": "Suche…",
   "vaultList.owner": "Besitzer",
   "vaultList.badge.archived": "Archiviert"
 }

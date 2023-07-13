@@ -208,7 +208,7 @@
   "vaultList.filter.entry.allVaults": "All",
   "vaultList.filter.result.empty.title": "No vaults",
   "vaultList.filter.result.empty.description": "No results using that search term or filter.",
-  "vaultList.search.placeholder": "Search...",
+  "vaultList.search.placeholder": "Search…",
   "vaultList.owner": "Owner",
   "vaultList.badge.archived": "Archived"
 }
