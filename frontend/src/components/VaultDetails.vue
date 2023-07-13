@@ -110,14 +110,15 @@
       </div>
     </div>
 
-    <div v-else>
+    <div v-else-if="vault.authPublicKey !== null">
+      <!-- if role !== 'OWNER' -->
       <button type="button" class="bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showClaimOwnershipDialog()">
         {{ t('vaultDetails.claimOwnership') }}
       </button>
     </div>
   </div>
 
-  <ClaimVaultOwnershipDialog v-if="claimingVaultOwnership && vault != null" ref="claimVaultOwnershipDialog" :vault="vault" @action="claimedVaultOwnership" @close="claimingVaultOwnership = false" />
+  <ClaimVaultOwnershipDialog v-if="claimingVaultOwnership && vault != null" ref="claimVaultOwnershipDialog" :vault="vault" @action="provedOwnership" @close="claimingVaultOwnership = false" />
   <GrantPermissionDialog v-if="grantingPermission && vault != null && vaultKeys != null" ref="grantPermissionDialog" :vault="vault" :users="usersRequiringAccessGrant" :vault-keys="vaultKeys" @close="grantingPermission = false" @permission-granted="permissionGranted()" />
   <EditVaultMetadataDialog v-if="editingVaultMetadata && vault != null && vaultKeys != null" ref="editVaultMetadataDialog" :vault="vault" @close="editingVaultMetadata = false" @updated="v => refreshVault(v)" />
   <DownloadVaultTemplateDialog v-if="downloadingVaultTemplate && vault != null && vaultKeys != null" ref="downloadVaultTemplateDialog" :vault="vault" :vault-keys="vaultKeys" @close="downloadingVaultTemplate = false" />
@@ -134,6 +135,7 @@ import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { AuthorityDto, ConflictError, NotFoundError, UserDto, VaultDto, VaultRole } from '../common/backend';
 import { BrowserKeys, UserKeys, VaultKeys } from '../common/crypto';
+import { JWT, JWTHeader } from '../common/jwt';
 import ArchiveVaultDialog from './ArchiveVaultDialog.vue';
 import ClaimVaultOwnershipDialog from './ClaimVaultOwnershipDialog.vue';
 import DownloadVaultTemplateDialog from './DownloadVaultTemplateDialog.vue';
@@ -215,8 +217,37 @@ async function loadVaultKeys(vaultKeyJwe: string): Promise<VaultKeys> {
   return VaultKeys.decryptWithUserKey(vaultKeyJwe, userKeys.keyPair.privateKey);
 }
 
-async function claimedVaultOwnership(keys: VaultKeys) {
-  // TODO
+async function provedOwnership(keys: VaultKeys) {
+  if (!me.value || !me.value.publicKey) {
+    throw new Error('User not initialized.');
+  }
+
+  const vaultKeyJwe = keys.encryptForUser(base64.parse(me.value.publicKey));
+
+  var now = Math.floor(Date.now() / 1000); // seconds since epoch in UTC
+  var expire = now + 10;
+  var header: JWTHeader = { alg: 'ES384', typ: 'JWT', b64: true };
+  var payload = { sub: me.value.id, vaultId: props.vaultId.toLocaleLowerCase(), iat: now, nbf: now, exp: expire };
+  var proof = await JWT.build(header, payload, keys.signatureKeyPair.privateKey);
+
+  try {
+    await backend.vaults.claimOwnership(props.vaultId, proof);
+  } catch (error) {
+    console.error('Failed to claim ownership of vault.', error);
+  }
+
+  try {
+    await backend.vaults.grantAccess(props.vaultId, me.value.id, await vaultKeyJwe);
+  } catch (error) {
+    if (error instanceof ConflictError) {
+      console.debug('User already member of this vault.');
+    } else {
+      console.error('Failed to grant access to self.', error);
+    }
+  }
+
+  // TODO: can we set props.role = 'OWNER'?
+  // TODO: refresh vault list, so it correctly shows the "owner" badge?
 }
 
 async function reloadDevicesRequiringAccessGrant() {
