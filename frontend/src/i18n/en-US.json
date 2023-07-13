@@ -126,8 +126,8 @@
   "editVaultMetadataDialog.error.vaultAlreadyExists": "A vault with the given name already exists.",
 
   "grantPermissionDialog.title": "Grant Permission",
-  "grantPermissionDialog.description": "Grant additional devices permission to access the vault.",
-  "grantPermissionDialog.submit": "Grant Permission to {0} Device(s)",
+  "grantPermissionDialog.description": "Share vault keys with newly added users.",
+  "grantPermissionDialog.submit": "Grant Permission to {0} User(s)",
 
   "manageSetupCode.title": "Personal Hub Secret",
   "manageSetupCode.regenerate": "Regenerate Secret",
@@ -208,7 +208,7 @@
   "vaultList.filter.entry.allVaults": "All",
   "vaultList.filter.result.empty.title": "No vaults",
   "vaultList.filter.result.empty.description": "No results using that search term or filter.",
-  "vaultList.search.placeholder": "Search...",
+  "vaultList.search.placeholder": "Search…",
   "vaultList.owner": "Owner",
   "vaultList.badge.archived": "Archived"
 }

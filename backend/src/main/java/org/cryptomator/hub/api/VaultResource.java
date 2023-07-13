@@ -372,9 +372,9 @@ public class VaultResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
 	@Operation(summary = "creates or updates a vault",
-			description = "Creates a vault with the given vault id, owned by the logged in user. The creationTime in the vaultDto is ignored and the current server time is used. On update, only the name, description and archived fields are considered.")
-	@APIResponse(responseCode = "200", description = "vault updated")
-	@APIResponse(responseCode = "201", description = "vault created")
+			description = "Creates or updates a vault with the given vault id. The creationTime in the vaultDto is always ignored. On creation the current server time is used. On update, only the name, description and archived fields are considered.")
+	@APIResponse(responseCode = "200", description = "existing vault updated")
+	@APIResponse(responseCode = "201", description = "new vault created")
 	public Response createOrUpdate(@PathParam("vaultId") UUID vaultId, @Valid @NotNull VaultDto vaultDto) {
 		User currentUser = User.findById(jwt.getSubject());
 		Optional<Vault> existingVault = Vault.findByIdOptional(vaultId);
@@ -398,22 +398,19 @@ public class VaultResource {
 		vault.description = vaultDto.description;
 		vault.archived = vaultDto.archived;
 
-		try {
-			vault.persistAndFlush();
-			if (existingVault.isEmpty()) {
-				var access = new VaultAccess();
-				access.vault = vault;
-				access.authority = currentUser;
-				access.role = VaultAccess.Role.OWNER;
-				access.persist();
-				CreateVaultEvent.log(currentUser.id, vault.id);
-				UpdateVaultMembershipEvent.log(currentUser.id, vaultId, currentUser.id, UpdateVaultMembershipEvent.Operation.ADD);
-				return Response.created(URI.create(".")).contentLocation(URI.create(".")).entity(VaultDto.fromEntity(vault)).type(MediaType.APPLICATION_JSON).build();
-			} else {
-				return Response.ok(VaultDto.fromEntity(vault), MediaType.APPLICATION_JSON).build();
-			}
-		} catch (ConstraintViolationException e) {
-			throw new ClientErrorException(Response.Status.CONFLICT, e);
+		vault.persistAndFlush(); // trigger PersistenceException before we continue with
+		if (existingVault.isEmpty()) {
+			var access = new VaultAccess();
+			access.vault = vault;
+			access.authority = currentUser;
+			access.role = VaultAccess.Role.OWNER;
+			access.persist();
+			CreateVaultEvent.log(currentUser.id, vault.id);
+			UpdateVaultMembershipEvent.log(currentUser.id, vaultId, currentUser.id, UpdateVaultMembershipEvent.Operation.ADD);
+			return Response.created(URI.create(".")).contentLocation(URI.create(".")).entity(VaultDto.fromEntity(vault)).type(MediaType.APPLICATION_JSON).build();
+		} else {
+			// TODO: log UpdateVaultEvent
+			return Response.ok(VaultDto.fromEntity(vault), MediaType.APPLICATION_JSON).build();
 		}
 	}
 

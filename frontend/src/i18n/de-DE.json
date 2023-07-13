@@ -125,8 +125,8 @@
   "editVaultMetadataDialog.error.conflict": "Ein Tresor mit dem angegebenen Namen existiert bereits.",
 
   "grantPermissionDialog.title": "Berechtigung erteilen",
-  "grantPermissionDialog.description": "Berechtige weitere Geräten auf den Tresor zuzugreifen.",
-  "grantPermissionDialog.submit": "Berechtigung für {0} Gerät(e) gewähren",
+  "grantPermissionDialog.description": "Tresor-Schlüssel mit neu hinzugefügten Nutzern teilen.",
+  "grantPermissionDialog.submit": "Berechtigung für {0} Nutzer gewähren",
 
   "manageSetupCode.title": "Persönliches Hub-Geheimnis",
   "manageSetupCode.regenerate": "Neues Geheimnis generieren",
@@ -206,7 +206,7 @@
   "vaultList.filter.entry.allVaults": "Alle",
   "vaultList.filter.result.empty.title": "Keine Tresore",
   "vaultList.filter.result.empty.description.": "Keinen Treffer mit diesem Suchbegriff oder Filter.",
-  "vaultList.search.placeholder": "Suche...",
+  "vaultList.search.placeholder": "Suche…",
   "vaultList.owner": "Besitzer",
   "vaultList.badge.archived": "Archiviert"
 }
