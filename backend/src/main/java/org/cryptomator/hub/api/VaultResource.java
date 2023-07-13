@@ -28,6 +28,7 @@ import org.cryptomator.hub.entities.CreateVaultEvent;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.EffectiveGroupMembership;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
+import org.cryptomator.hub.entities.GrantVaultAccessEvent;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.UnlockVaultEvent;
 import org.cryptomator.hub.entities.UpdateVaultEvent;
@@ -305,6 +306,7 @@ public class VaultResource {
 
 		try {
 			access.persistAndFlush();
+			GrantVaultAccessEvent.log(jwt.getSubject(), vaultId, device.owner.id);
 			return Response.created(URI.create(".")).build();
 		} catch (PersistenceException e) {
 			if (e instanceof ConstraintViolationException) {

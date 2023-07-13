@@ -92,6 +92,9 @@
                   <code>{{ auditEvent.timestamp.toLocaleString('sv') }}</code>
                 </td>
                 <AuditLogCreateVaultEventDetails v-if="auditEvent.type == 'CREATE_VAULT'" :event="(auditEvent as CreateVaultEventDto)" />
+                <AuditLogGrantVaultAccessDetails v-if="auditEvent.type == 'GRANT_VAULT_ACCESS'" :event="(auditEvent as GrantVaultAccessEventDto)" />
+                <AuditLogRegisterDeviceEventDetails v-if="auditEvent.type == 'REGISTER_DEVICE'" :event="(auditEvent as RegisterDeviceEventDto)" />
+                <AuditLogRemoveDeviceEventDetails v-if="auditEvent.type == 'REMOVE_DEVICE'" :event="(auditEvent as RemoveDeviceEventDto)" />
                 <AuditLogUnlockVaultEventDetails v-else-if="auditEvent.type == 'UNLOCK_VAULT'" :event="(auditEvent as UnlockVaultEventDto)" />
                 <AuditLogUpdateVaultEventDetails v-if="auditEvent.type == 'UPDATE_VAULT'" :event="(auditEvent as UpdateVaultEventDto)" />
                 <AuditLogUpdateVaultMembershipDetails v-else-if="auditEvent.type == 'UPDATE_VAULT_MEMBERSHIP'" :event="(auditEvent as UpdateVaultMembershipEventDto)" />
@@ -133,8 +136,11 @@ import { ChevronDownIcon } from '@heroicons/vue/20/solid';
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/vue/24/solid';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { AuditEventDto, AuditLogEntityCache, CreateVaultEventDto, UnlockVaultEventDto, UpdateVaultEventDto, UpdateVaultMembershipEventDto } from '../common/backend';
+import backend, { AuditEventDto, AuditLogEntityCache, CreateVaultEventDto, GrantVaultAccessEventDto, RegisterDeviceEventDto, RemoveDeviceEventDto, UnlockVaultEventDto, UpdateVaultEventDto, UpdateVaultMembershipEventDto } from '../common/backend';
 import AuditLogCreateVaultEventDetails from './AuditLogCreateVaultEventDetails.vue';
+import AuditLogGrantVaultAccessDetails from './AuditLogGrantVaultAccessDetails.vue';
+import AuditLogRegisterDeviceEventDetails from './AuditLogRegisterDeviceEventDetails.vue';
+import AuditLogRemoveDeviceEventDetails from './AuditLogRemoveDeviceEventDetails.vue';
 import AuditLogUnlockVaultEventDetails from './AuditLogUnlockVaultEventDetails.vue';
 import AuditLogUpdateVaultEventDetails from './AuditLogUpdateVaultEventDetails.vue';
 import AuditLogUpdateVaultMembershipDetails from './AuditLogUpdateVaultMembershipDetails.vue';

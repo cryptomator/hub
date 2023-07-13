@@ -13,6 +13,10 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import org.cryptomator.hub.entities.AuditEvent;
 import org.cryptomator.hub.entities.CreateVaultEvent;
+import org.cryptomator.hub.entities.Device;
+import org.cryptomator.hub.entities.GrantVaultAccessEvent;
+import org.cryptomator.hub.entities.RegisterDeviceEvent;
+import org.cryptomator.hub.entities.RemoveDeviceEvent;
 import org.cryptomator.hub.entities.UnlockVaultEvent;
 import org.cryptomator.hub.entities.UpdateVaultEvent;
 import org.cryptomator.hub.entities.UpdateVaultMembershipEvent;
@@ -74,6 +78,12 @@ public class AuditLogResource {
 		static AuditEventDto fromEntity(AuditEvent entity) {
 			if (entity instanceof CreateVaultEvent cve) {
 				return new CreateVaultEventDto(cve.id, cve.timestamp, CreateVaultEvent.TYPE, cve.userId, cve.vaultId, cve.vaultName, cve.vaultDescription);
+			} else if (entity instanceof GrantVaultAccessEvent gvae) {
+				return new GrantVaultAccessEventDto(gvae.id, gvae.timestamp, GrantVaultAccessEvent.TYPE, gvae.userId, gvae.vaultId, gvae.authorityId);
+			} else if (entity instanceof RegisterDeviceEvent rde) {
+				return new RegisterDeviceEventDto(rde.id, rde.timestamp, RegisterDeviceEvent.TYPE, rde.userId, rde.deviceId, rde.deviceName, rde.deviceType);
+			} else if (entity instanceof RemoveDeviceEvent rde) {
+				return new RemoveDeviceEventDto(rde.id, rde.timestamp, RemoveDeviceEvent.TYPE, rde.userId, rde.deviceId);
 			} else if (entity instanceof UnlockVaultEvent uve) {
 				return new UnlockVaultEventDto(uve.id, uve.timestamp, UnlockVaultEvent.TYPE, uve.userId, uve.vaultId, uve.deviceId, uve.result);
 			} else if (entity instanceof UpdateVaultEvent uve) {
@@ -88,6 +98,17 @@ public class AuditLogResource {
 
 	record CreateVaultEventDto(long id, Instant timestamp, String type, @JsonProperty("userId") String userId, @JsonProperty("vaultId") UUID vaultId, @JsonProperty("vaultName") String vaultName,
 							   @JsonProperty("vaultDescription") String vaultDescription) implements AuditEventDto {
+	}
+
+	record GrantVaultAccessEventDto(long id, Instant timestamp, String type, @JsonProperty("userId") String userId, @JsonProperty("vaultId") UUID vaultId,
+									@JsonProperty("authorityId") String authorityId) implements AuditEventDto {
+	}
+
+	record RegisterDeviceEventDto(long id, Instant timestamp, String type, @JsonProperty("userId") String userId, @JsonProperty("deviceId") String deviceId, @JsonProperty("deviceName") String deviceName,
+								  @JsonProperty("deviceType") Device.Type deviceType) implements AuditEventDto {
+	}
+
+	record RemoveDeviceEventDto(long id, Instant timestamp, String type, @JsonProperty("userId") String userId, @JsonProperty("deviceId") String deviceId) implements AuditEventDto {
 	}
 
 	record UnlockVaultEventDto(long id, Instant timestamp, String type, @JsonProperty("userId") String userId, @JsonProperty("vaultId") UUID vaultId, @JsonProperty("deviceId") String deviceId,

@@ -169,7 +169,7 @@ export type VersionDto = {
 export type AuditEventDto = {
   id: number;
   timestamp: Date;
-  type: 'CREATE_VAULT' | 'UNLOCK_VAULT' | 'UPDATE_VAULT' | 'UPDATE_VAULT_MEMBERSHIP';
+  type: 'CREATE_VAULT' | 'GRANT_VAULT_ACCESS' | 'REGISTER_DEVICE' | 'REMOVE_DEVICE' | 'UNLOCK_VAULT' | 'UPDATE_VAULT' | 'UPDATE_VAULT_MEMBERSHIP';
 }
 
 export type CreateVaultEventDto = AuditEventDto & {
@@ -177,6 +177,24 @@ export type CreateVaultEventDto = AuditEventDto & {
   vaultId: string;
   vaultName: string;
   vaultDescription: string;
+}
+
+export type GrantVaultAccessEventDto = AuditEventDto & {
+  userId: string;
+  vaultId: string;
+  authorityId: string;
+}
+
+export type RegisterDeviceEventDto = AuditEventDto & {
+  userId: string;
+  deviceId: string;
+  deviceName: string;
+  deviceType: 'BROWSER' | 'DESKTOP' | 'MOBILE';
+}
+
+export type RemoveDeviceEventDto = AuditEventDto & {
+  userId: string;
+  deviceId: string;
 }
 
 export type UnlockVaultEventDto = AuditEventDto & {
