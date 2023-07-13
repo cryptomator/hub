@@ -30,6 +30,7 @@ import org.cryptomator.hub.entities.EffectiveGroupMembership;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.UnlockVaultEvent;
+import org.cryptomator.hub.entities.UpdateVaultEvent;
 import org.cryptomator.hub.entities.UpdateVaultMembershipEvent;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
@@ -362,13 +363,14 @@ public class VaultResource {
 		//update new or existing vault
 		vault.name = vaultDto.name;
 		vault.description = vaultDto.description;
-		vault.archived = vaultDto.archived;
+		vault.archived = isCreated ? false : vaultDto.archived;
 		vault.persistAndFlush();
 		if (isCreated) {
-			CreateVaultEvent.log(currentUser.id, vault.id);
+			CreateVaultEvent.log(currentUser.id, vault.id, vault.name, vault.description);
+			UpdateVaultMembershipEvent.log(currentUser.id, vaultId, currentUser.id, UpdateVaultMembershipEvent.Operation.ADD);
 			return Response.created(URI.create(".")).contentLocation(URI.create(".")).entity(VaultDto.fromEntity(vault)).type(MediaType.APPLICATION_JSON).build();
 		} else {
-			// TODO: log UpdateVaultEvent
+			UpdateVaultEvent.log(currentUser.id, vault.id, vault.name, vault.description, vault.archived);
 			return Response.ok(VaultDto.fromEntity(vault), MediaType.APPLICATION_JSON).build();
 		}
 	}

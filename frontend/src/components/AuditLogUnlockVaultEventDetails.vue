@@ -8,27 +8,27 @@
         <dt class="text-xs text-gray-500">
           <code>user</code>
         </dt>
-        <dd class="text-sm text-gray-900">
-          <span v-if="resolvedUser != null" :title="resolvedUser.id">{{ resolvedUser.name }}</span>
-          <code v-else>{{ event.userId }}></code>
+        <dd class="flex items-baseline gap-2 text-sm text-gray-900">
+          <span v-if="resolvedUser != null">{{ resolvedUser.name }}</span>
+          <code class="text-xs" :class="{'text-gray-600': resolvedUser != null}">{{ event.userId }}</code>
         </dd>
       </div>
       <div class="flex items-baseline gap-2">
         <dt class="text-xs text-gray-500">
           <code>vault</code>
         </dt>
-        <dd class="text-sm text-gray-900">
-          <span v-if="resolvedVault != null" :title="resolvedVault.id">{{ resolvedVault.name }}</span>
-          <code v-else>{{ event.vaultId }}</code>
+        <dd class="flex items-baseline gap-2 text-sm text-gray-900">
+          <span v-if="resolvedVault != null">{{ resolvedVault.name }}</span>
+          <code class="text-xs" :class="{'text-gray-600': resolvedVault != null}">{{ event.vaultId }}</code>
         </dd>
       </div>
       <div class="flex items-baseline gap-2">
         <dt class="text-xs text-gray-500">
           <code>device</code>
         </dt>
-        <dd class="text-sm text-gray-900">
-          <span v-if="resolvedDevice != null" :title="resolvedDevice.id">{{ resolvedDevice.name }}</span>
-          <code v-else>{{ event.deviceId }}</code>
+        <dd class="flex items-baseline gap-2 text-sm text-gray-900">
+          <span v-if="resolvedDevice != null">{{ resolvedDevice.name }}</span>
+          <code class="text-xs" :class="{'text-gray-600': resolvedDevice != null}">{{ event.deviceId }}</code>
         </dd>
       </div>
       <div class="flex items-baseline gap-2">

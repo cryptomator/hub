@@ -1,6 +1,6 @@
 <template>
   <td class="whitespace-nowrap px-3 py-4 text-sm font-medium text-gray-900">
-    {{ t('auditLog.events.createVault') }}
+    {{ t('auditLog.events.updateVault') }}
   </td>
   <td class="whitespace-nowrap py-4 pl-3 pr-4 sm:pr-6">
     <dl class="flex flex-col gap-2">
@@ -35,8 +35,15 @@
           <code>description</code>
         </dt>
         <dd class="text-sm text-gray-900">
-          <span v-if="event.description">{{ event.description }}</span>
-          <span v-else class="text-gray-400">&lt;empty&gt;</span>
+          {{ event.description }}
+        </dd>
+      </div>
+      <div class="flex items-baseline gap-2">
+        <dt class="text-xs text-gray-500">
+          <code>archived</code>
+        </dt>
+        <dd class="text-sm text-gray-900">
+          {{ event.archived }}
         </dd>
       </div>
     </dl>
@@ -46,12 +53,12 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { AuditLogEntityCache, AuthorityDto, CreateVaultEventDto, VaultDto } from '../common/backend';
+import { AuditLogEntityCache, AuthorityDto, UpdateVaultEventDto, VaultDto } from '../common/backend';
 
 const { t } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{
-  event: CreateVaultEventDto
+  event: UpdateVaultEventDto
 }>();
 
 const entityCache = AuditLogEntityCache.getInstance();
