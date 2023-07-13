@@ -27,7 +27,7 @@
           <code>name</code>
         </dt>
         <dd class="text-sm text-gray-900">
-          {{ event.name }}
+          {{ event.vaultName }}
         </dd>
       </div>
       <div class="flex items-baseline gap-2">
@@ -35,7 +35,7 @@
           <code>description</code>
         </dt>
         <dd class="text-sm text-gray-900">
-          {{ event.description }}
+          {{ event.vaultDescription }}
         </dd>
       </div>
       <div class="flex items-baseline gap-2">
@@ -43,7 +43,7 @@
           <code>archived</code>
         </dt>
         <dd class="text-sm text-gray-900">
-          {{ event.archived }}
+          {{ event.vaultArchived }}
         </dd>
       </div>
     </dl>

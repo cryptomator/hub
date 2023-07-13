@@ -27,7 +27,7 @@
           <code>name</code>
         </dt>
         <dd class="text-sm text-gray-900">
-          {{ event.name }}
+          {{ event.vaultName }}
         </dd>
       </div>
       <div class="flex items-baseline gap-2">
@@ -35,7 +35,7 @@
           <code>description</code>
         </dt>
         <dd class="text-sm text-gray-900">
-          <span v-if="event.description">{{ event.description }}</span>
+          <span v-if="event.vaultDescription">{{ event.vaultDescription }}</span>
           <span v-else class="text-gray-400">&lt;empty&gt;</span>
         </dd>
       </div>

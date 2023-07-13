@@ -175,8 +175,8 @@ export type AuditEventDto = {
 export type CreateVaultEventDto = AuditEventDto & {
   userId: string;
   vaultId: string;
-  name: string;
-  description: string;
+  vaultName: string;
+  vaultDescription: string;
 }
 
 export type UnlockVaultEventDto = AuditEventDto & {
@@ -189,9 +189,9 @@ export type UnlockVaultEventDto = AuditEventDto & {
 export type UpdateVaultEventDto = AuditEventDto & {
   userId: string;
   vaultId: string;
-  name: string;
-  description: string;
-  archived: boolean;
+  vaultName: string;
+  vaultDescription: string;
+  vaultArchived: boolean;
 }
 
 export type UpdateVaultMembershipEventDto = AuditEventDto & {

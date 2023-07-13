@@ -57,11 +57,11 @@ public class AuditLogResource {
 	}
 
 	@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
-	@JsonSubTypes({
-			@JsonSubTypes.Type(value = CreateVaultEventDto.class, name = CreateVaultEvent.TYPE),
-			@JsonSubTypes.Type(value = UnlockVaultEventDto.class, name = UnlockVaultEvent.TYPE),
-			@JsonSubTypes.Type(value = UpdateVaultEventDto.class, name = UpdateVaultEvent.TYPE),
-			@JsonSubTypes.Type(value = UpdateVaultMembershipEventDto.class, name = UpdateVaultMembershipEvent.TYPE)
+	@JsonSubTypes({ //
+			@JsonSubTypes.Type(value = CreateVaultEventDto.class, name = CreateVaultEvent.TYPE), //
+			@JsonSubTypes.Type(value = UnlockVaultEventDto.class, name = UnlockVaultEvent.TYPE), //
+			@JsonSubTypes.Type(value = UpdateVaultEventDto.class, name = UpdateVaultEvent.TYPE), //
+			@JsonSubTypes.Type(value = UpdateVaultMembershipEventDto.class, name = UpdateVaultMembershipEvent.TYPE) //
 	})
 	public interface AuditEventDto {
 
@@ -73,11 +73,11 @@ public class AuditLogResource {
 
 		static AuditEventDto fromEntity(AuditEvent entity) {
 			if (entity instanceof CreateVaultEvent cve) {
-				return new CreateVaultEventDto(cve.id, cve.timestamp, CreateVaultEvent.TYPE, cve.userId, cve.vaultId, cve.name, cve.description);
+				return new CreateVaultEventDto(cve.id, cve.timestamp, CreateVaultEvent.TYPE, cve.userId, cve.vaultId, cve.vaultName, cve.vaultDescription);
 			} else if (entity instanceof UnlockVaultEvent uve) {
 				return new UnlockVaultEventDto(uve.id, uve.timestamp, UnlockVaultEvent.TYPE, uve.userId, uve.vaultId, uve.deviceId, uve.result);
 			} else if (entity instanceof UpdateVaultEvent uve) {
-				return new UpdateVaultEventDto(uve.id, uve.timestamp, UpdateVaultEvent.TYPE, uve.userId, uve.vaultId, uve.name, uve.description, uve.archived);
+				return new UpdateVaultEventDto(uve.id, uve.timestamp, UpdateVaultEvent.TYPE, uve.userId, uve.vaultId, uve.vaultName, uve.vaultDescription, uve.vaultArchived);
 			} else if (entity instanceof UpdateVaultMembershipEvent uvme) {
 				return new UpdateVaultMembershipEventDto(uvme.id, uvme.timestamp, UpdateVaultMembershipEvent.TYPE, uvme.userId, uvme.vaultId, uvme.authorityId, uvme.operation);
 			} else {
@@ -86,16 +86,16 @@ public class AuditLogResource {
 		}
 	}
 
-	record CreateVaultEventDto(long id, Instant timestamp, String type, @JsonProperty("userId") String userId, @JsonProperty("vaultId") UUID vaultId, @JsonProperty("name") String name,
-							   @JsonProperty("description") String description) implements AuditEventDto {
+	record CreateVaultEventDto(long id, Instant timestamp, String type, @JsonProperty("userId") String userId, @JsonProperty("vaultId") UUID vaultId, @JsonProperty("vaultName") String vaultName,
+							   @JsonProperty("vaultDescription") String vaultDescription) implements AuditEventDto {
 	}
 
 	record UnlockVaultEventDto(long id, Instant timestamp, String type, @JsonProperty("userId") String userId, @JsonProperty("vaultId") UUID vaultId, @JsonProperty("deviceId") String deviceId,
 							   @JsonProperty("result") UnlockVaultEvent.Result result) implements AuditEventDto {
 	}
 
-	record UpdateVaultEventDto(long id, Instant timestamp, String type, @JsonProperty("userId") String userId, @JsonProperty("vaultId") UUID vaultId, @JsonProperty("name") String name,
-							   @JsonProperty("description") String description, @JsonProperty("archived") boolean archived) implements AuditEventDto {
+	record UpdateVaultEventDto(long id, Instant timestamp, String type, @JsonProperty("userId") String userId, @JsonProperty("vaultId") UUID vaultId, @JsonProperty("vaultName") String vaultName,
+							   @JsonProperty("vaultDescription") String vaultDescription, @JsonProperty("vaultArchived") boolean vaultArchived) implements AuditEventDto {
 	}
 
 	record UpdateVaultMembershipEventDto(long id, Instant timestamp, String type, @JsonProperty("userId") String userId, @JsonProperty("vaultId") UUID vaultId, @JsonProperty("authorityId") String authorityId,
