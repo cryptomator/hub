@@ -63,6 +63,9 @@ public class AuditLogResource {
 	@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 	@JsonSubTypes({ //
 			@JsonSubTypes.Type(value = CreateVaultEventDto.class, name = CreateVaultEvent.TYPE), //
+			@JsonSubTypes.Type(value = GrantVaultAccessEventDto.class, name = GrantVaultAccessEvent.TYPE), //
+			@JsonSubTypes.Type(value = RegisterDeviceEventDto.class, name = RegisterDeviceEvent.TYPE), //
+			@JsonSubTypes.Type(value = RemoveDeviceEventDto.class, name = RemoveDeviceEvent.TYPE), //
 			@JsonSubTypes.Type(value = UnlockVaultEventDto.class, name = UnlockVaultEvent.TYPE), //
 			@JsonSubTypes.Type(value = UpdateVaultEventDto.class, name = UpdateVaultEvent.TYPE), //
 			@JsonSubTypes.Type(value = UpdateVaultMembershipEventDto.class, name = UpdateVaultMembershipEvent.TYPE) //
