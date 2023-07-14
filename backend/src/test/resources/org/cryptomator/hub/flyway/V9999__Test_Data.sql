@@ -65,22 +65,66 @@ VALUES
 
 INSERT INTO "audit_event" ("id", "timestamp", "type")
 VALUES
-    (999, '1970-01-01T00:00:02.900Z', 'CREATE_VAULT'),
-    (1000, '1970-01-01T00:00:03Z', 'UPDATE_VAULT_MEMBERSHIP'),
-    (1001, '1970-01-01T00:00:04Z', 'UPDATE_VAULT_MEMBERSHIP'),
-    (1111, '1970-01-01T00:00:04.999Z', 'UNLOCK_VAULT'),
-    (4242, '1970-01-01T00:00:05Z', 'UNLOCK_VAULT');
+    (10, '2020-02-20T20:20:20.010Z', 'CREATE_VAULT'),
+    (11, '2020-02-20T20:20:20.011Z', 'UPDATE_VAULT_MEMBERSHIP'),
+    (12, '2020-02-20T20:20:20.012Z', 'UPDATE_VAULT_MEMBERSHIP'),
+    (20, '2020-02-20T20:20:20.020Z', 'CREATE_VAULT'),
+    (21, '2020-02-20T20:20:20.021Z', 'UPDATE_VAULT_MEMBERSHIP'),
+    (22, '2020-02-20T20:20:20.022Z', 'UPDATE_VAULT_MEMBERSHIP'),
+    (23, '2020-02-20T20:20:20.023Z', 'UPDATE_VAULT_MEMBERSHIP'),
+    (30, '2020-02-20T20:20:20.030Z', 'CREATE_VAULT'),
+    (31, '2020-02-20T20:20:20.031Z', 'UPDATE_VAULT_MEMBERSHIP'),
+    (100, '2020-02-20T20:20:20.100Z', 'REGISTER_DEVICE'),
+    (101, '2020-02-20T20:20:20.101Z', 'REGISTER_DEVICE'),
+    (102, '2020-02-20T20:20:20.102Z', 'REGISTER_DEVICE'),
+    (200, '2020-02-20T20:20:20.200Z', 'REGISTER_DEVICE'),
+    (201, '2020-02-20T20:20:20.201Z', 'REMOVE_DEVICE'),
+    (1111, '2020-02-20T20:20:21.111Z', 'UNLOCK_VAULT'),
+    (2000, '2020-02-20T20:20:22.000Z', 'GRANT_VAULT_ACCESS'),
+    (2001, '2020-02-20T20:20:22.001Z', 'GRANT_VAULT_ACCESS'),
+    (2002, '2020-02-20T20:20:22.002Z', 'GRANT_VAULT_ACCESS'),
+    (2003, '2020-02-20T20:20:22.003Z', 'GRANT_VAULT_ACCESS'),
+    (3000, '2020-02-20T20:20:23.000Z', 'UPDATE_VAULT'),
+    (4242, '2020-02-20T20:20:24.242Z', 'UNLOCK_VAULT');
+
+INSERT INTO "create_vault_event" ("id", "user_id", "vault_id", "vault_name", "vault_description")
+VALUES
+    (10, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'Vault 1', 'This is a testvault.'),
+    (20, 'user1', '7E57C0DE-0000-4000-8000-000100002222', 'Vault 2', 'This is a testvault.'),
+    (30, 'user2', '7E57C0DE-0000-4000-8000-0001AAAAAAAA', 'Vault 3', 'This is a testvault.');
+
+INSERT INTO "grant_vault_access_event" ("id", "user_id", "vault_id", "authority_id")
+VALUES
+    (2000, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'user1'),
+    (2001, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'user2'),
+    (2002, 'user1', '7E57C0DE-0000-4000-8000-0001AAAAAAAA', 'user1'),
+    (2003, 'user1', '7E57C0DE-0000-4000-8000-000100002222', 'group1');
+
+INSERT INTO "register_device_event" ("id", "user_id", "device_id", "device_name", "device_type")
+VALUES
+    (100, 'user1', 'device1', 'Computer 1', 'DESKTOP'),
+    (101, 'user2', 'device2', 'Computer 2', 'DESKTOP'),
+    (102, 'user1', 'device3', 'Computer 3', 'DESKTOP'),
+    (200, 'user2', 'device4', 'Computer 4', 'DESKTOP');
+
+INSERT INTO "remove_device_event" ("id", "user_id", "device_id")
+VALUES
+    (201, 'user2', 'device4');
 
 INSERT INTO "unlock_vault_event" ("id", "user_id", "vault_id", "device_id", "result")
 VALUES
-    (1111, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'device3', 'UNAUTHORIZED'),
+    (1111, 'user2', '7E57C0DE-0000-4000-8000-000100001111', 'device3', 'UNAUTHORIZED'),
     (4242, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'device1', 'SUCCESS');
 
-INSERT INTO "create_vault_event" ("id", "user_id", "vault_id")
+INSERT INTO "update_vault_event" ("id", "user_id", "vault_id", "vault_name", "vault_description", "vault_archived")
 VALUES
-    (999, 'user1', '7E57C0DE-0000-4000-8000-000100001111');
+    (3000, 'user1', '7E57C0DE-0000-4000-8000-0001AAAAAAAA', 'Vault Archived', 'This is a archived vault.', TRUE);
 
 INSERT INTO "update_vault_membership_event" ("id", "user_id", "vault_id", "authority_id", "operation")
 VALUES
-    (1000, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'user2', 'ADD'),
-    (1001, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'user2', 'REMOVE');
+    (11, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'user1', 'ADD'),
+    (12, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'user2', 'ADD'),
+    (21, 'user1', '7E57C0DE-0000-4000-8000-000100002222', 'user1', 'ADD'),
+    (22, 'user1', '7E57C0DE-0000-4000-8000-000100002222', 'group1', 'ADD'),
+    (23, 'user1', '7E57C0DE-0000-4000-8000-000100002222', 'user1', 'REMOVE'),
+    (31, 'user2', '7E57C0DE-0000-4000-8000-0001AAAAAAAA', 'user2', 'ADD');
