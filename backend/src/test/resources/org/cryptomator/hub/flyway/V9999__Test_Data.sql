@@ -87,6 +87,8 @@ VALUES
     (3000, '2020-02-20T20:20:23.000Z', 'UPDATE_VAULT'),
     (4242, '2020-02-20T20:20:24.242Z', 'UNLOCK_VAULT');
 
+SELECT SETVAL('audit_event_id_seq', (SELECT MAX(id) FROM audit_event), true);
+
 INSERT INTO "create_vault_event" ("id", "user_id", "vault_id", "vault_name", "vault_description")
 VALUES
     (10, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'Vault 1', 'This is a testvault.'),
