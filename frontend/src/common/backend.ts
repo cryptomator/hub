@@ -5,7 +5,6 @@ import authPromise from './auth';
 import config, { backendBaseURL } from './config';
 import { VaultKeys } from './crypto';
 import { JWTHeader } from './jwt';
-import { Deferred, debounce } from './util';
 
 const axiosBaseCfg: AxiosRequestConfig = {
   baseURL: backendBaseURL,
@@ -19,7 +18,7 @@ const axiosBaseCfg: AxiosRequestConfig = {
  * which transports the Bearer Token and doubles as a CSRF-Protection.
  * See https://security.stackexchange.com/a/177174/78702
  */
-const axiosAuth = AxiosStatic.create(axiosBaseCfg);
+export const axiosAuth = AxiosStatic.create(axiosBaseCfg);
 axiosAuth.interceptors.request.use(async request => {
   try {
     const token = await authPromise.then(auth => auth.bearerToken());
@@ -164,129 +163,6 @@ export type BillingDto = {
 export type VersionDto = {
   hubVersion: string;
   keycloakVersion: string;
-}
-
-export type AuditEventDto = {
-  id: number;
-  timestamp: Date;
-  type: 'CREATE_VAULT' | 'GRANT_VAULT_ACCESS' | 'REGISTER_DEVICE' | 'REMOVE_DEVICE' | 'UNLOCK_VAULT' | 'UPDATE_VAULT' | 'UPDATE_VAULT_MEMBERSHIP';
-}
-
-export type CreateVaultEventDto = AuditEventDto & {
-  userId: string;
-  vaultId: string;
-  vaultName: string;
-  vaultDescription: string;
-}
-
-export type GrantVaultAccessEventDto = AuditEventDto & {
-  userId: string;
-  vaultId: string;
-  authorityId: string;
-}
-
-export type RegisterDeviceEventDto = AuditEventDto & {
-  userId: string;
-  deviceId: string;
-  deviceName: string;
-  deviceType: 'BROWSER' | 'DESKTOP' | 'MOBILE';
-}
-
-export type RemoveDeviceEventDto = AuditEventDto & {
-  userId: string;
-  deviceId: string;
-}
-
-export type UnlockVaultEventDto = AuditEventDto & {
-  userId: string;
-  vaultId: string;
-  deviceId: string;
-  result: 'SUCCESS' | 'UNAUTHORIZED';
-}
-
-export type UpdateVaultEventDto = AuditEventDto & {
-  userId: string;
-  vaultId: string;
-  vaultName: string;
-  vaultDescription: string;
-  vaultArchived: boolean;
-}
-
-export type UpdateVaultMembershipEventDto = AuditEventDto & {
-  userId: string;
-  vaultId: string;
-  authorityId: string;
-  operation: 'ADD' | 'REMOVE';
-}
-
-/* AuditLogEntityCache */
-
-export class AuditLogEntityCache {
-  private static instance: AuditLogEntityCache;
-
-  private vaults: Map<string, Deferred<VaultDto>>;
-  private authorities: Map<string, Deferred<AuthorityDto>>;
-  private devices: Map<string, Deferred<DeviceDto>>;  
-
-  private constructor() {
-    this.vaults = new Map();
-    this.authorities = new Map();
-    this.devices = new Map();
-  }
-
-  public static getInstance(): AuditLogEntityCache {
-    if (!AuditLogEntityCache.instance) {
-      AuditLogEntityCache.instance = new AuditLogEntityCache();
-    }
-    return AuditLogEntityCache.instance;
-  }
-
-  public async getVault(vaultId: string): Promise<VaultDto> {
-    return this.getEntity<VaultDto>(vaultId, this.vaults, this.debouncedResolvePendingVaults);
-  }
-
-  public async getAuthority(authorityId: string): Promise<AuthorityDto> {
-    return this.getEntity<AuthorityDto>(authorityId, this.authorities, this.debouncedResolvePendingAuthorities);
-  }
-
-  public async getDevice(deviceId: string): Promise<DeviceDto> {
-    return this.getEntity<DeviceDto>(deviceId, this.devices, this.debouncedResolvePendingDevices);
-  }
-
-  private async getEntity<T>(entityId: string, entities: Map<string, Deferred<T>>, debouncedResolvePendingEntities: Function): Promise<T> {
-    const cachedEntity = entities.get(entityId);
-    if (!cachedEntity) {  
-      const deferredEntity = new Deferred<T>();
-      entities.set(entityId, deferredEntity);
-      debouncedResolvePendingEntities();
-      return deferredEntity.promise;
-    } else {
-      return cachedEntity.promise;
-    }
-  }
-
-  private debouncedResolvePendingVaults = debounce(async () => await this.resolvePendingEntities<VaultDto>(this.vaults, services.vaults.listSome), 100);
-  private debouncedResolvePendingAuthorities = debounce(async () => await this.resolvePendingEntities<AuthorityDto>(this.authorities, services.authorities.listSome), 100);
-  private debouncedResolvePendingDevices = debounce(async () => await this.resolvePendingEntities<DeviceDto>(this.devices, services.devices.listSome), 100);
-
-  private async resolvePendingEntities<T extends { id: string }>(entities: Map<string, Deferred<T>>, listSome: (ids: string[]) => Promise<T[]>): Promise<void> {
-    const pendingEntities = Array.from(entities.entries()).filter(([_, v]) => v.status === 'pending');
-    const entitiesResult = await listSome(pendingEntities.map(([k, _]) => k));
-    for (const [entityId, deferredEntity] of pendingEntities) {
-      const entity = entitiesResult.find(v => v.id === entityId);
-      if (entity) {
-        deferredEntity.resolve(entity);
-      } else {
-        deferredEntity.reject(new Error(`Entity ${entityId} not found`));
-      }
-    }
-  }
-
-  public invalidateAll() {
-    this.vaults.clear();
-    this.authorities.clear();
-    this.devices.clear();
-  }
 }
 
 /* Services */
@@ -450,16 +326,6 @@ class VersionService {
   }
 }
 
-class AuditLogService {
-  public async getAllEvents(startDate: Date, endDate: Date, paginationId: number, order: string, pageSize: number): Promise<AuditEventDto[]> {
-    return axiosAuth.get<AuditEventDto[]>(`/auditlog?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}&paginationId=${paginationId}&order=${order}&pageSize=${pageSize}`)
-      .then(response => response.data.map(dto => {
-        dto.timestamp = new Date(dto.timestamp);
-        return dto;
-      }));
-  }
-}
-
 /**
  * Note: Each service can thrown an {@link UnauthorizedError} when the access token is expired!
  */
@@ -469,8 +335,7 @@ const services = {
   authorities: new AuthorityService(),
   devices: new DeviceService(),
   billing: new BillingService(),
-  version: new VersionService(),
-  auditLogs: new AuditLogService()
+  version: new VersionService()
 };
 
 function convertExpectedToBackendError(status: number): BackendError {

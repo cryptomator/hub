@@ -48,7 +48,8 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { AuditLogEntityCache, AuthorityDto, DeviceDto, UnlockVaultEventDto, VaultDto } from '../common/backend';
+import auditlog, { UnlockVaultEventDto } from '../common/auditlog';
+import { AuthorityDto, DeviceDto, VaultDto } from '../common/backend';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -56,14 +57,13 @@ const props = defineProps<{
   event: UnlockVaultEventDto
 }>();
 
-const entityCache = AuditLogEntityCache.getInstance();
 const resolvedUser = ref<AuthorityDto>();
 const resolvedVault = ref<VaultDto>();
 const resolvedDevice = ref<DeviceDto>();
 
 onMounted(async () => {
-  resolvedUser.value = await entityCache.getAuthority(props.event.userId);
-  resolvedVault.value = await entityCache.getVault(props.event.vaultId);
-  resolvedDevice.value = await entityCache.getDevice(props.event.deviceId);
+  resolvedUser.value = await auditlog.entityCache.getAuthority(props.event.userId);
+  resolvedVault.value = await auditlog.entityCache.getVault(props.event.vaultId);
+  resolvedDevice.value = await auditlog.entityCache.getDevice(props.event.deviceId);
 });
 </script>

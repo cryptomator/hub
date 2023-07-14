@@ -136,7 +136,7 @@ import { ChevronDownIcon } from '@heroicons/vue/20/solid';
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/vue/24/solid';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { AuditEventDto, AuditLogEntityCache, CreateVaultEventDto, GrantVaultAccessEventDto, RegisterDeviceEventDto, RemoveDeviceEventDto, UnlockVaultEventDto, UpdateVaultEventDto, UpdateVaultMembershipEventDto } from '../common/backend';
+import auditlog, { AuditEventDto, CreateVaultEventDto, GrantVaultAccessEventDto, RegisterDeviceEventDto, RemoveDeviceEventDto, UnlockVaultEventDto, UpdateVaultEventDto, UpdateVaultMembershipEventDto } from '../common/auditlog';
 import AuditLogCreateVaultEventDetails from './AuditLogCreateVaultEventDetails.vue';
 import AuditLogGrantVaultAccessDetails from './AuditLogGrantVaultAccessDetails.vue';
 import AuditLogRegisterDeviceEventDetails from './AuditLogRegisterDeviceEventDetails.vue';
@@ -148,7 +148,6 @@ import AuditLogUpdateVaultMembershipDetails from './AuditLogUpdateVaultMembershi
 const { t } = useI18n({ useScope: 'global' });
 
 const auditEvents = ref<AuditEventDto[]>([]);
-const entityCache = AuditLogEntityCache.getInstance();
 const onFetchError = ref<Error | null>();
 
 const startDate = ref(beginOfDate(new Date()));
@@ -199,7 +198,7 @@ async function fetchData() {
   onFetchError.value = null;
   try {
     // Fetch one more event than the page size to determine if there is a next page
-    const events = await backend.auditLogs.getAllEvents(startDate.value, endDate.value, lastIdOfPreviousPage[currentPage.value], selectedOrder.value, pageSize.value + 1);
+    const events = await auditlog.service.getAllEvents(startDate.value, endDate.value, lastIdOfPreviousPage[currentPage.value], selectedOrder.value, pageSize.value + 1);
     // If the lastIdOfPreviousPage for the first page has not been set yet, set it to an id "before"/"after" the first event
     if (currentPage.value == 0 && lastIdOfPreviousPage[0] == 0 && events.length > 0) {
       lastIdOfPreviousPage[0] = events[0].id + orderOptions[selectedOrder.value].sign;
@@ -225,7 +224,7 @@ async function fetchData() {
 async function refreshData() {
   lastIdOfPreviousPage = [orderOptions[selectedOrder.value].initialLastIdOfPreviousPage];
   currentPage.value = 0;
-  entityCache.invalidateAll();
+  auditlog.entityCache.invalidateAll();
   await fetchData();
 }
 
