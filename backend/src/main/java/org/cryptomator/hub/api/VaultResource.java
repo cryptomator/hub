@@ -30,6 +30,7 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.AccessToken;
+import org.cryptomator.hub.entities.Authority;
 import org.cryptomator.hub.entities.CreateVaultEvent;
 import org.cryptomator.hub.entities.EffectiveGroupMembership;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
@@ -50,6 +51,8 @@ import org.cryptomator.hub.validation.ValidJWE;
 import org.cryptomator.hub.validation.ValidJWS;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.hibernate.exception.ConstraintViolationException;
 
@@ -141,8 +144,10 @@ public class VaultResource {
 	@VaultRole(VaultAccess.Role.OWNER) // may throw 403
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
-	@Operation(summary = "adds a member to this vault")
-	@APIResponse(responseCode = "201", description = "member added")
+	@Operation(summary = "adds a user to this vault or updates her role")
+	@Parameter(name = "role", in = ParameterIn.QUERY, description = "the role to grant to this user (defaults to MEMBER)")
+	@APIResponse(responseCode = "200", description = "user's role updated")
+	@APIResponse(responseCode = "201", description = "user added")
 	@APIResponse(responseCode = "402", description = "all seats in license used")
 	@APIResponse(responseCode = "403", description = "not a vault owner")
 	@APIResponse(responseCode = "404", description = "user not found")
@@ -158,17 +163,7 @@ public class VaultResource {
 			}
 		}
 
-		var id = new VaultAccess.Id(vaultId, userId);
-		var access = VaultAccess.<VaultAccess>findById(id);
-		if (access == null) {
-			access = new VaultAccess();
-			access.vault = vault;
-			access.authority = user;
-		}
-		access.role = role;
-		access.persist();
-		UpdateVaultMembershipEvent.log(jwt.getSubject(), vaultId, userId, UpdateVaultMembershipEvent.Operation.ADD);
-		return Response.status(Response.Status.CREATED).build();
+		return addAuthority(vault, user, role);
 	}
 
 	@PUT
@@ -177,32 +172,44 @@ public class VaultResource {
 	@VaultRole(VaultAccess.Role.OWNER) // may throw 403
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
-	@Operation(summary = "adds a group to this vault")
-	@APIResponse(responseCode = "201", description = "member added")
+	@Operation(summary = "adds a group to this vault or updates its role")
+	@Parameter(name = "role", in = ParameterIn.QUERY, description = "the role to grant to this group (defaults to MEMBER)")
+	@APIResponse(responseCode = "200", description = "group's role updated")
+	@APIResponse(responseCode = "201", description = "group added")
 	@APIResponse(responseCode = "402", description = "used seats + (number of users in group not occupying a seats) exceeds number of total avaible seats in license")
 	@APIResponse(responseCode = "403", description = "not a vault owner")
 	@APIResponse(responseCode = "404", description = "group not found")
 	@ActiveLicense
 	public Response addGroup(@PathParam("vaultId") UUID vaultId, @PathParam("groupId") @ValidId String groupId, @QueryParam("role") @DefaultValue("MEMBER") VaultAccess.Role role) {
+		var vault = Vault.<Vault>findById(vaultId); // should always be found, since @VaultRole filter would have triggered
+		var group = Group.<Group>findByIdOptional(groupId).orElseThrow(NotFoundException::new);
+
 		//usersInGroup - usersInGroupAndPartOfAtLeastOneVault + usersOfAtLeastOneVault
 		if (EffectiveGroupMembership.countEffectiveGroupUsers(groupId) - EffectiveVaultAccess.countSeatOccupyingUsersOfGroup(groupId) + EffectiveVaultAccess.countSeatOccupyingUsers() > license.getAvailableSeats()) {
 			throw new PaymentRequiredException("Number of effective vault users greater than or equal to the available license seats");
 		}
 
-		var vault = Vault.<Vault>findById(vaultId); // should always be found, since @VaultRole filter would have triggered
-		var group = Group.<Group>findByIdOptional(groupId).orElseThrow(NotFoundException::new);
+		return addAuthority(vault, group, role);
+	}
 
-		var id = new VaultAccess.Id(vaultId, groupId);
-		var access = VaultAccess.<VaultAccess>findById(id);
-		if (access == null) {
-			access = new VaultAccess();
+	private Response addAuthority(Vault vault, Authority authority, VaultAccess.Role role) {
+		var id = new VaultAccess.Id(vault.id, authority.id);
+		var existingAccess = VaultAccess.<VaultAccess>findByIdOptional(id);
+		if (existingAccess.isPresent()) {
+			var access = existingAccess.get();
+			access.role = role;
+			access.persist();
+			// TODO log event?
+			return Response.ok().build();
+		} else {
+			var access = new VaultAccess();
 			access.vault = vault;
-			access.authority = group;
+			access.authority = authority;
+			access.role = role;
+			access.persist();
+			UpdateVaultMembershipEvent.log(jwt.getSubject(), vault.id, authority.id, UpdateVaultMembershipEvent.Operation.ADD);
+			return Response.created(URI.create(".")).build();
 		}
-		access.role = role;
-		access.persist();
-		UpdateVaultMembershipEvent.log(jwt.getSubject(), vaultId, groupId, UpdateVaultMembershipEvent.Operation.ADD);
-		return Response.status(Response.Status.CREATED).build();
 	}
 
 	@DELETE
@@ -214,7 +221,7 @@ public class VaultResource {
 	@Operation(summary = "remove a member from this vault", description = "revokes the given user's access rights from this vault. If the given user is no member, the request is a no-op.")
 	@APIResponse(responseCode = "204", description = "member removed")
 	@APIResponse(responseCode = "403", description = "not a vault owner")
-	public Response removeMember(@PathParam("vaultId") UUID vaultId, @PathParam("userId") @ValidId String userId) {
+	public Response removeUser(@PathParam("vaultId") UUID vaultId, @PathParam("userId") @ValidId String userId) {
 		return removeAuthority(vaultId, userId);
 	}
 
