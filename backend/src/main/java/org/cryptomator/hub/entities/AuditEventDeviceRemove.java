@@ -9,11 +9,11 @@ import java.time.Instant;
 import java.util.Objects;
 
 @Entity
-@Table(name = "remove_device_event")
-@DiscriminatorValue(RemoveDeviceEvent.TYPE)
-public class RemoveDeviceEvent extends AuditEvent {
+@Table(name = "audit_event_device_remove")
+@DiscriminatorValue(AuditEventDeviceRemove.TYPE)
+public class AuditEventDeviceRemove extends AuditEvent {
 
-	public static final String TYPE = "REMOVE_DEVICE";
+	public static final String TYPE = "DEVICE_REMOVE";
 
 	@Column(name = "removed_by")
 	public String removedBy;
@@ -25,7 +25,7 @@ public class RemoveDeviceEvent extends AuditEvent {
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
-		RemoveDeviceEvent that = (RemoveDeviceEvent) o;
+		AuditEventDeviceRemove that = (AuditEventDeviceRemove) o;
 		return super.equals(that) //
 				&& Objects.equals(removedBy, that.removedBy) //
 				&& Objects.equals(deviceId, that.deviceId);
@@ -37,7 +37,7 @@ public class RemoveDeviceEvent extends AuditEvent {
 	}
 
 	public static void log(String removedBy, String deviceId) {
-		var event = new RemoveDeviceEvent();
+		var event = new AuditEventDeviceRemove();
 		event.timestamp = Instant.now();
 		event.removedBy = removedBy;
 		event.deviceId = deviceId;

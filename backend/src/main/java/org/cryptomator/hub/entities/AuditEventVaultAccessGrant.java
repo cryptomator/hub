@@ -10,11 +10,11 @@ import java.util.Objects;
 import java.util.UUID;
 
 @Entity
-@Table(name = "grant_vault_access_event")
-@DiscriminatorValue(GrantVaultAccessEvent.TYPE)
-public class GrantVaultAccessEvent extends AuditEvent {
+@Table(name = "audit_event_vault_access_grant")
+@DiscriminatorValue(AuditEventVaultAccessGrant.TYPE)
+public class AuditEventVaultAccessGrant extends AuditEvent {
 
-	public static final String TYPE = "GRANT_VAULT_ACCESS";
+	public static final String TYPE = "VAULT_ACCESS_GRANT";
 
 	@Column(name = "granted_by")
 	public String grantedBy;
@@ -29,7 +29,7 @@ public class GrantVaultAccessEvent extends AuditEvent {
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
-		GrantVaultAccessEvent that = (GrantVaultAccessEvent) o;
+		AuditEventVaultAccessGrant that = (AuditEventVaultAccessGrant) o;
 		return super.equals(that) //
 				&& Objects.equals(grantedBy, that.grantedBy) //
 				&& Objects.equals(vaultId, that.vaultId) //
@@ -42,7 +42,7 @@ public class GrantVaultAccessEvent extends AuditEvent {
 	}
 
 	public static void log(String grantedBy, UUID vaultId, String authorityId) {
-		var event = new GrantVaultAccessEvent();
+		var event = new AuditEventVaultAccessGrant();
 		event.timestamp = Instant.now();
 		event.grantedBy = grantedBy;
 		event.vaultId = vaultId;

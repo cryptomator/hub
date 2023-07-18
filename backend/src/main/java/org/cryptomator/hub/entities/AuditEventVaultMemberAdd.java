@@ -10,11 +10,11 @@ import java.util.Objects;
 import java.util.UUID;
 
 @Entity
-@Table(name = "add_vault_membership_event")
-@DiscriminatorValue(AddVaultMembershipEvent.TYPE)
-public class AddVaultMembershipEvent extends AuditEvent {
+@Table(name = "audit_event_vault_member_add")
+@DiscriminatorValue(AuditEventVaultMemberAdd.TYPE)
+public class AuditEventVaultMemberAdd extends AuditEvent {
 
-	public static final String TYPE = "ADD_VAULT_MEMBERSHIP";
+	public static final String TYPE = "VAULT_MEMBER_ADD";
 
 	@Column(name = "added_by")
 	public String addedBy;
@@ -29,7 +29,7 @@ public class AddVaultMembershipEvent extends AuditEvent {
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
-		AddVaultMembershipEvent that = (AddVaultMembershipEvent) o;
+		AuditEventVaultMemberAdd that = (AuditEventVaultMemberAdd) o;
 		return super.equals(that) //
 				&& Objects.equals(addedBy, that.addedBy) //
 				&& Objects.equals(vaultId, that.vaultId) //
@@ -42,7 +42,7 @@ public class AddVaultMembershipEvent extends AuditEvent {
 	}
 
 	public static void log(String addedBy, UUID vaultId, String authorityId) {
-		var event = new AddVaultMembershipEvent();
+		var event = new AuditEventVaultMemberAdd();
 		event.timestamp = Instant.now();
 		event.addedBy = addedBy;
 		event.vaultId = vaultId;

@@ -10,11 +10,11 @@ import java.util.Objects;
 import java.util.UUID;
 
 @Entity
-@Table(name = "remove_vault_membership_event")
-@DiscriminatorValue(RemoveVaultMembershipEvent.TYPE)
-public class RemoveVaultMembershipEvent extends AuditEvent {
+@Table(name = "audit_event_vault_member_remove")
+@DiscriminatorValue(AuditEventVaultMemberRemove.TYPE)
+public class AuditEventVaultMemberRemove extends AuditEvent {
 
-	public static final String TYPE = "REMOVE_VAULT_MEMBERSHIP";
+	public static final String TYPE = "VAULT_MEMBER_REMOVE";
 
 	@Column(name = "removed_by")
 	public String removedBy;
@@ -29,7 +29,7 @@ public class RemoveVaultMembershipEvent extends AuditEvent {
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
-		RemoveVaultMembershipEvent that = (RemoveVaultMembershipEvent) o;
+		AuditEventVaultMemberRemove that = (AuditEventVaultMemberRemove) o;
 		return super.equals(that) //
 				&& Objects.equals(removedBy, that.removedBy) //
 				&& Objects.equals(vaultId, that.vaultId) //
@@ -42,7 +42,7 @@ public class RemoveVaultMembershipEvent extends AuditEvent {
 	}
 
 	public static void log(String removedBy, UUID vaultId, String authorityId) {
-		var event = new RemoveVaultMembershipEvent();
+		var event = new AuditEventVaultMemberRemove();
 		event.timestamp = Instant.now();
 		event.removedBy = removedBy;
 		event.vaultId = vaultId;

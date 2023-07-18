@@ -844,8 +844,8 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-0001FFFFAAAA returns 201")
-		public void testCreateArchivedVault() {
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-0001FFFFAAAA returns 201 ignoring archived flag")
+		public void testCreateVaultIgnoringArchived() {
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-0001FFFFAAAA");
 			var vaultDto = new VaultResource.VaultDto(uuid, "Test Vault", "Vault to create", true, Instant.parse("2112-12-21T21:12:21Z"), "masterkeyC", 42, "saltC", "authPubKeyC", "authPrvKeyC");
 			given().contentType(ContentType.JSON).body(vaultDto)

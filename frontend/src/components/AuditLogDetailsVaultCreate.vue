@@ -1,6 +1,6 @@
 <template>
   <td class="whitespace-nowrap px-3 py-4 text-sm font-medium text-gray-900">
-    {{ t('auditLog.events.createVault') }}
+    {{ t('auditLog.details.vault.create') }}
   </td>
   <td class="whitespace-nowrap py-4 pl-3 pr-4 sm:pr-6">
     <dl class="flex flex-col gap-2">
@@ -46,13 +46,13 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import auditlog, { CreateVaultEventDto } from '../common/auditlog';
+import auditlog, { AuditEventVaultCreateDto } from '../common/auditlog';
 import { AuthorityDto, VaultDto } from '../common/backend';
 
 const { t } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{
-  event: CreateVaultEventDto
+  event: AuditEventVaultCreateDto
 }>();
 
 const resolvedCreatedBy = ref<AuthorityDto>();

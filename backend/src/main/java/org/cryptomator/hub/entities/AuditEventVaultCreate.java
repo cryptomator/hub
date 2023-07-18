@@ -10,11 +10,11 @@ import java.util.Objects;
 import java.util.UUID;
 
 @Entity
-@Table(name = "create_vault_event")
-@DiscriminatorValue(CreateVaultEvent.TYPE)
-public class CreateVaultEvent extends AuditEvent {
+@Table(name = "audit_event_vault_create")
+@DiscriminatorValue(AuditEventVaultCreate.TYPE)
+public class AuditEventVaultCreate extends AuditEvent {
 
-	public static final String TYPE = "CREATE_VAULT";
+	public static final String TYPE = "VAULT_CREATE";
 
 	@Column(name = "created_by")
 	public String createdBy;
@@ -32,7 +32,7 @@ public class CreateVaultEvent extends AuditEvent {
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
-		CreateVaultEvent that = (CreateVaultEvent) o;
+		AuditEventVaultCreate that = (AuditEventVaultCreate) o;
 		return super.equals(that) //
 				&& Objects.equals(createdBy, that.createdBy) //
 				&& Objects.equals(vaultId, that.vaultId) //
@@ -46,7 +46,7 @@ public class CreateVaultEvent extends AuditEvent {
 	}
 
 	public static void log(String createdBy, UUID vaultId, String vaultName, String vaultDescription) {
-		var event = new CreateVaultEvent();
+		var event = new AuditEventVaultCreate();
 		event.timestamp = Instant.now();
 		event.createdBy = createdBy;
 		event.vaultId = vaultId;

@@ -91,14 +91,14 @@
                 <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">
                   <code>{{ auditEvent.timestamp.toLocaleString('sv') }}</code>
                 </td>
-                <AuditLogAddVaultMembershipDetails v-if="auditEvent.type == 'ADD_VAULT_MEMBERSHIP'" :event="(auditEvent as AddVaultMembershipEventDto)" />
-                <AuditLogCreateVaultEventDetails v-else-if="auditEvent.type == 'CREATE_VAULT'" :event="(auditEvent as CreateVaultEventDto)" />
-                <AuditLogGrantVaultAccessDetails v-else-if="auditEvent.type == 'GRANT_VAULT_ACCESS'" :event="(auditEvent as GrantVaultAccessEventDto)" />
-                <AuditLogRegisterDeviceEventDetails v-else-if="auditEvent.type == 'REGISTER_DEVICE'" :event="(auditEvent as RegisterDeviceEventDto)" />
-                <AuditLogRemoveDeviceEventDetails v-else-if="auditEvent.type == 'REMOVE_DEVICE'" :event="(auditEvent as RemoveDeviceEventDto)" />
-                <AuditLogRemoveVaultMembershipDetails v-else-if="auditEvent.type == 'REMOVE_VAULT_MEMBERSHIP'" :event="(auditEvent as RemoveVaultMembershipEventDto)" />
-                <AuditLogUnlockVaultEventDetails v-else-if="auditEvent.type == 'UNLOCK_VAULT'" :event="(auditEvent as UnlockVaultEventDto)" />
-                <AuditLogUpdateVaultEventDetails v-else-if="auditEvent.type == 'UPDATE_VAULT'" :event="(auditEvent as UpdateVaultEventDto)" />
+                <AuditLogDetailsDeviceRegister v-if="auditEvent.type == 'DEVICE_REGISTER'" :event="(auditEvent as AuditEventDeviceRegisterDto)" />
+                <AuditLogDetailsDeviceRemove v-else-if="auditEvent.type == 'DEVICE_REMOVE'" :event="(auditEvent as AuditEventDeviceRemoveDto)" />
+                <AuditLogDetailsVaultCreate v-else-if="auditEvent.type == 'VAULT_CREATE'" :event="(auditEvent as AuditEventVaultCreateDto)" />
+                <AuditLogDetailsVaultUnlock v-else-if="auditEvent.type == 'VAULT_UNLOCK'" :event="(auditEvent as AuditEventVaultUnlockDto)" />
+                <AuditLogDetailsVaultUpdate v-else-if="auditEvent.type == 'VAULT_UPDATE'" :event="(auditEvent as AuditEventVaultUpdateDto)" />
+                <AuditLogDetailsVaultAccessGrant v-else-if="auditEvent.type == 'VAULT_ACCESS_GRANT'" :event="(auditEvent as AuditEventVaultAccessGrantDto)" />
+                <AuditLogDetailsVaultMemberAdd v-else-if="auditEvent.type == 'VAULT_MEMBER_ADD'" :event="(auditEvent as AuditEventVaultMemberAddDto)" />
+                <AuditLogDetailsVaultMemberRemove v-else-if="auditEvent.type == 'VAULT_MEMBER_REMOVE'" :event="(auditEvent as AuditEventVaultMemberRemoveDto)" />
               </tr>
             </tbody>
             <tfoot class="bg-gray-50">
@@ -137,15 +137,15 @@ import { ChevronDownIcon } from '@heroicons/vue/20/solid';
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/vue/24/solid';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import auditlog, { AddVaultMembershipEventDto, AuditEventDto, CreateVaultEventDto, GrantVaultAccessEventDto, RegisterDeviceEventDto, RemoveDeviceEventDto, RemoveVaultMembershipEventDto, UnlockVaultEventDto, UpdateVaultEventDto } from '../common/auditlog';
-import AuditLogAddVaultMembershipDetails from './AuditLogAddVaultMembershipDetails.vue';
-import AuditLogCreateVaultEventDetails from './AuditLogCreateVaultEventDetails.vue';
-import AuditLogGrantVaultAccessDetails from './AuditLogGrantVaultAccessDetails.vue';
-import AuditLogRegisterDeviceEventDetails from './AuditLogRegisterDeviceEventDetails.vue';
-import AuditLogRemoveDeviceEventDetails from './AuditLogRemoveDeviceEventDetails.vue';
-import AuditLogRemoveVaultMembershipDetails from './AuditLogRemoveVaultMembershipDetails.vue';
-import AuditLogUnlockVaultEventDetails from './AuditLogUnlockVaultEventDetails.vue';
-import AuditLogUpdateVaultEventDetails from './AuditLogUpdateVaultEventDetails.vue';
+import auditlog, { AuditEventDeviceRegisterDto, AuditEventDeviceRemoveDto, AuditEventDto, AuditEventVaultAccessGrantDto, AuditEventVaultCreateDto, AuditEventVaultMemberAddDto, AuditEventVaultMemberRemoveDto, AuditEventVaultUnlockDto, AuditEventVaultUpdateDto } from '../common/auditlog';
+import AuditLogDetailsDeviceRegister from './AuditLogDetailsDeviceRegister.vue';
+import AuditLogDetailsDeviceRemove from './AuditLogDetailsDeviceRemove.vue';
+import AuditLogDetailsVaultAccessGrant from './AuditLogDetailsVaultAccessGrant.vue';
+import AuditLogDetailsVaultCreate from './AuditLogDetailsVaultCreate.vue';
+import AuditLogDetailsVaultMemberAdd from './AuditLogDetailsVaultMemberAdd.vue';
+import AuditLogDetailsVaultMemberRemove from './AuditLogDetailsVaultMemberRemove.vue';
+import AuditLogDetailsVaultUnlock from './AuditLogDetailsVaultUnlock.vue';
+import AuditLogDetailsVaultUpdate from './AuditLogDetailsVaultUpdate.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 

@@ -24,16 +24,16 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.AccessToken;
-import org.cryptomator.hub.entities.AddVaultMembershipEvent;
-import org.cryptomator.hub.entities.CreateVaultEvent;
+import org.cryptomator.hub.entities.AuditEventVaultMemberAdd;
+import org.cryptomator.hub.entities.AuditEventVaultCreate;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.EffectiveGroupMembership;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
-import org.cryptomator.hub.entities.GrantVaultAccessEvent;
+import org.cryptomator.hub.entities.AuditEventVaultAccessGrant;
 import org.cryptomator.hub.entities.Group;
-import org.cryptomator.hub.entities.RemoveVaultMembershipEvent;
-import org.cryptomator.hub.entities.UnlockVaultEvent;
-import org.cryptomator.hub.entities.UpdateVaultEvent;
+import org.cryptomator.hub.entities.AuditEventVaultMemberRemove;
+import org.cryptomator.hub.entities.AuditEventVaultUnlock;
+import org.cryptomator.hub.entities.AuditEventVaultUpdate;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.filters.ActiveLicense;
@@ -155,7 +155,7 @@ public class VaultResource {
 
 		vault.directMembers.add(user);
 		vault.persist();
-		AddVaultMembershipEvent.log(jwt.getSubject(), vaultId, userId);
+		AuditEventVaultMemberAdd.log(jwt.getSubject(), vaultId, userId);
 		return Response.status(Response.Status.CREATED).build();
 	}
 
@@ -186,7 +186,7 @@ public class VaultResource {
 		}
 		vault.directMembers.add(group);
 		vault.persist();
-		AddVaultMembershipEvent.log(jwt.getSubject(), vaultId, groupId);
+		AuditEventVaultMemberAdd.log(jwt.getSubject(), vaultId, groupId);
 		return Response.status(Response.Status.CREATED).build();
 	}
 
@@ -224,7 +224,7 @@ public class VaultResource {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		vault.directMembers.removeIf(e -> e.id.equals(authorityId));
 		vault.persist();
-		RemoveVaultMembershipEvent.log(jwt.getSubject(), vaultId, authorityId);
+		AuditEventVaultMemberRemove.log(jwt.getSubject(), vaultId, authorityId);
 		return Response.status(Response.Status.NO_CONTENT).build();
 	}
 
@@ -268,14 +268,14 @@ public class VaultResource {
 
 		var access = AccessToken.unlock(vaultId, deviceId, jwt.getSubject());
 		if (access != null) {
-			UnlockVaultEvent.log(jwt.getSubject(), vaultId, deviceId, UnlockVaultEvent.Result.SUCCESS);
+			AuditEventVaultUnlock.log(jwt.getSubject(), vaultId, deviceId, AuditEventVaultUnlock.Result.SUCCESS);
 			var subscriptionStateHeaderName = "Hub-Subscription-State";
 			var subscriptionStateHeaderValue = license.isSet() ? "ACTIVE" : "INACTIVE"; // license expiration is not checked here, because it is checked in the ActiveLicense filter
 			return Response.ok(access.jwe).header(subscriptionStateHeaderName, subscriptionStateHeaderValue).build();
 		} else if (Device.findById(deviceId) == null) {
 			throw new NotFoundException("No such device.");
 		} else {
-			UnlockVaultEvent.log(jwt.getSubject(), vaultId, deviceId, UnlockVaultEvent.Result.UNAUTHORIZED);
+			AuditEventVaultUnlock.log(jwt.getSubject(), vaultId, deviceId, AuditEventVaultUnlock.Result.UNAUTHORIZED);
 			throw new ForbiddenException("Access to this device not granted.");
 		}
 	}
@@ -307,7 +307,7 @@ public class VaultResource {
 
 		try {
 			access.persistAndFlush();
-			GrantVaultAccessEvent.log(jwt.getSubject(), vaultId, device.owner.id);
+			AuditEventVaultAccessGrant.log(jwt.getSubject(), vaultId, device.owner.id);
 			return Response.created(URI.create(".")).build();
 		} catch (PersistenceException e) {
 			if (e instanceof ConstraintViolationException) {
@@ -369,11 +369,11 @@ public class VaultResource {
 		vault.archived = isCreated ? false : vaultDto.archived;
 		vault.persistAndFlush();
 		if (isCreated) {
-			CreateVaultEvent.log(currentUser.id, vault.id, vault.name, vault.description);
-			AddVaultMembershipEvent.log(currentUser.id, vaultId, currentUser.id);
+			AuditEventVaultCreate.log(currentUser.id, vault.id, vault.name, vault.description);
+			AuditEventVaultMemberAdd.log(currentUser.id, vaultId, currentUser.id);
 			return Response.created(URI.create(".")).contentLocation(URI.create(".")).entity(VaultDto.fromEntity(vault)).type(MediaType.APPLICATION_JSON).build();
 		} else {
-			UpdateVaultEvent.log(currentUser.id, vault.id, vault.name, vault.description, vault.archived);
+			AuditEventVaultUpdate.log(currentUser.id, vault.id, vault.name, vault.description, vault.archived);
 			return Response.ok(VaultDto.fromEntity(vault), MediaType.APPLICATION_JSON).build();
 		}
 	}

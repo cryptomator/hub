@@ -12,11 +12,11 @@ import java.util.Objects;
 import java.util.UUID;
 
 @Entity
-@Table(name = "unlock_vault_event")
-@DiscriminatorValue(UnlockVaultEvent.TYPE)
-public class UnlockVaultEvent extends AuditEvent {
+@Table(name = "audit_event_vault_unlock")
+@DiscriminatorValue(AuditEventVaultUnlock.TYPE)
+public class AuditEventVaultUnlock extends AuditEvent {
 
-	public static final String TYPE = "UNLOCK_VAULT";
+	public static final String TYPE = "VAULT_UNLOCK";
 
 	@Column(name = "unlocked_by")
 	public String unlockedBy;
@@ -35,7 +35,7 @@ public class UnlockVaultEvent extends AuditEvent {
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
-		UnlockVaultEvent that = (UnlockVaultEvent) o;
+		AuditEventVaultUnlock that = (AuditEventVaultUnlock) o;
 		return super.equals(that) //
 				&& Objects.equals(unlockedBy, that.unlockedBy) //
 				&& Objects.equals(vaultId, that.vaultId) //
@@ -49,7 +49,7 @@ public class UnlockVaultEvent extends AuditEvent {
 	}
 
 	public static void log(String unlockedBy, UUID vaultId, String deviceId, Result result) {
-		var event = new UnlockVaultEvent();
+		var event = new AuditEventVaultUnlock();
 		event.timestamp = Instant.now();
 		event.unlockedBy = unlockedBy;
 		event.vaultId = vaultId;

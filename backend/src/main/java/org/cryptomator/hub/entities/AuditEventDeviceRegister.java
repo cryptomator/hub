@@ -11,11 +11,11 @@ import java.time.Instant;
 import java.util.Objects;
 
 @Entity
-@Table(name = "register_device_event")
-@DiscriminatorValue(RegisterDeviceEvent.TYPE)
-public class RegisterDeviceEvent extends AuditEvent {
+@Table(name = "audit_event_device_register")
+@DiscriminatorValue(AuditEventDeviceRegister.TYPE)
+public class AuditEventDeviceRegister extends AuditEvent {
 
-	public static final String TYPE = "REGISTER_DEVICE";
+	public static final String TYPE = "DEVICE_REGISTER";
 
 	@Column(name = "registered_by")
 	public String registeredBy;
@@ -34,7 +34,7 @@ public class RegisterDeviceEvent extends AuditEvent {
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
-		RegisterDeviceEvent that = (RegisterDeviceEvent) o;
+		AuditEventDeviceRegister that = (AuditEventDeviceRegister) o;
 		return super.equals(that) //
 				&& Objects.equals(registeredBy, that.registeredBy) //
 				&& Objects.equals(deviceId, that.deviceId) //
@@ -48,7 +48,7 @@ public class RegisterDeviceEvent extends AuditEvent {
 	}
 
 	public static void log(String registeredBy, String deviceId, String deviceName, Device.Type deviceType) {
-		var event = new RegisterDeviceEvent();
+		var event = new AuditEventDeviceRegister();
 		event.timestamp = Instant.now();
 		event.registeredBy = registeredBy;
 		event.deviceId = deviceId;

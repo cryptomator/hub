@@ -20,8 +20,8 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.Device;
-import org.cryptomator.hub.entities.RegisterDeviceEvent;
-import org.cryptomator.hub.entities.RemoveDeviceEvent;
+import org.cryptomator.hub.entities.AuditEventDeviceRegister;
+import org.cryptomator.hub.entities.AuditEventDeviceRemove;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.validation.NoHtmlOrScriptChars;
 import org.cryptomator.hub.validation.OnlyBase64UrlChars;
@@ -71,7 +71,7 @@ public class DeviceResource {
 		var device = deviceDto.toDevice(currentUser, deviceId, Instant.now().truncatedTo(ChronoUnit.MILLIS));
 		try {
 			device.persistAndFlush();
-			RegisterDeviceEvent.log(jwt.getSubject(), deviceId, device.name, device.type);
+			AuditEventDeviceRegister.log(jwt.getSubject(), deviceId, device.name, device.type);
 			return Response.created(URI.create(".")).build();
 		} catch (PersistenceException e) {
 			if (e instanceof ConstraintViolationException) {
@@ -99,7 +99,7 @@ public class DeviceResource {
 		var maybeDevice = Device.<Device>findByIdOptional(deviceId);
 		if (maybeDevice.isPresent() && currentUser.equals(maybeDevice.get().owner)) {
 			maybeDevice.get().delete();
-			RemoveDeviceEvent.log(jwt.getSubject(), deviceId);
+			AuditEventDeviceRemove.log(jwt.getSubject(), deviceId);
 			return Response.status(Response.Status.NO_CONTENT).build();
 		} else {
 			return Response.status(Response.Status.NOT_FOUND).build();

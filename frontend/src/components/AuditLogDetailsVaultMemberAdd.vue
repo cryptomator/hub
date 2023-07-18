@@ -1,16 +1,16 @@
 <template>
   <td class="whitespace-nowrap px-3 py-4 text-sm font-medium text-gray-900">
-    {{ t('auditLog.events.grantVaultAccess') }}
+    {{ t('auditLog.details.vaultMember.add') }}
   </td>
   <td class="whitespace-nowrap py-4 pl-3 pr-4 sm:pr-6">
     <dl class="flex flex-col gap-2">
       <div class="flex items-baseline gap-2">
         <dt class="text-xs text-gray-500">
-          <code>granted by</code>
+          <code>added by</code>
         </dt>
         <dd class="flex items-baseline gap-2 text-sm text-gray-900">
-          <span v-if="resolvedGrantedBy != null">{{ resolvedGrantedBy.name }}</span>
-          <code class="text-xs" :class="{'text-gray-600': resolvedGrantedBy != null}">{{ event.grantedBy }}</code>
+          <span v-if="resolvedAddedBy != null">{{ resolvedAddedBy.name }}</span>
+          <code class="text-xs" :class="{'text-gray-600': resolvedAddedBy != null}">{{ event.addedBy }}</code>
         </dd>
       </div>
       <div class="flex items-baseline gap-2">
@@ -38,21 +38,21 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import auditlog, { GrantVaultAccessEventDto } from '../common/auditlog';
+import auditlog, { AuditEventVaultMemberAddDto } from '../common/auditlog';
 import { AuthorityDto, VaultDto } from '../common/backend';
 
 const { t } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{
-  event: GrantVaultAccessEventDto
+  event: AuditEventVaultMemberAddDto
 }>();
 
-const resolvedGrantedBy = ref<AuthorityDto>();
+const resolvedAddedBy = ref<AuthorityDto>();
 const resolvedVault = ref<VaultDto>();
 const resolvedAuthority = ref<AuthorityDto>();
 
 onMounted(async () => {
-  resolvedGrantedBy.value = await auditlog.entityCache.getAuthority(props.event.grantedBy);
+  resolvedAddedBy.value = await auditlog.entityCache.getAuthority(props.event.addedBy);
   resolvedVault.value = await auditlog.entityCache.getVault(props.event.vaultId);
   resolvedAuthority.value = await auditlog.entityCache.getAuthority(props.event.authorityId);
 });

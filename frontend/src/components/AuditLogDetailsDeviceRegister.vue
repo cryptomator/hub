@@ -1,6 +1,6 @@
 <template>
   <td class="whitespace-nowrap px-3 py-4 text-sm font-medium text-gray-900">
-    {{ t('auditLog.events.registerDevice') }}
+    {{ t('auditLog.details.device.register') }}
   </td>
   <td class="whitespace-nowrap py-4 pl-3 pr-4 sm:pr-6">
     <dl class="flex flex-col gap-2">
@@ -48,13 +48,13 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import auditlog, { RegisterDeviceEventDto } from '../common/auditlog';
+import auditlog, { AuditEventDeviceRegisterDto } from '../common/auditlog';
 import { AuthorityDto, DeviceDto } from '../common/backend';
 
 const { t } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{
-  event: RegisterDeviceEventDto
+  event: AuditEventDeviceRegisterDto
 }>();
 
 const resolvedRegisteredBy = ref<AuthorityDto>();

@@ -6,54 +6,54 @@ import { Deferred, debounce } from './util';
 export type AuditEventDto = {
   id: number;
   timestamp: Date;
-  type: 'ADD_VAULT_MEMBERSHIP' | 'CREATE_VAULT' | 'GRANT_VAULT_ACCESS' | 'REGISTER_DEVICE' | 'REMOVE_DEVICE' | 'REMOVE_VAULT_MEMBERSHIP' | 'UNLOCK_VAULT' | 'UPDATE_VAULT';
+  type: 'DEVICE_REGISTER' | 'DEVICE_REMOVE' | 'VAULT_ACCESS_GRANT' | 'VAULT_CREATE' | 'VAULT_MEMBER_ADD' | 'VAULT_MEMBER_REMOVE' | 'VAULT_UNLOCK' | 'VAULT_UPDATE';
 }
 
-export type AddVaultMembershipEventDto = AuditEventDto & {
-  addedBy: string;
-  vaultId: string;
-  authorityId: string;
-}
-
-export type CreateVaultEventDto = AuditEventDto & {
-  createdBy: string;
-  vaultId: string;
-  vaultName: string;
-  vaultDescription: string;
-}
-
-export type GrantVaultAccessEventDto = AuditEventDto & {
-  grantedBy: string;
-  vaultId: string;
-  authorityId: string;
-}
-
-export type RegisterDeviceEventDto = AuditEventDto & {
+export type AuditEventDeviceRegisterDto = AuditEventDto & {
   registeredBy: string;
   deviceId: string;
   deviceName: string;
   deviceType: 'BROWSER' | 'DESKTOP' | 'MOBILE';
 }
 
-export type RemoveVaultMembershipEventDto = AuditEventDto & {
+export type AuditEventDeviceRemoveDto = AuditEventDto & {
+  removedBy: string;
+  deviceId: string;
+}
+
+export type AuditEventVaultAccessGrantDto = AuditEventDto & {
+  grantedBy: string;
+  vaultId: string;
+  authorityId: string;
+}
+
+export type AuditEventVaultCreateDto = AuditEventDto & {
+  createdBy: string;
+  vaultId: string;
+  vaultName: string;
+  vaultDescription: string;
+}
+
+export type AuditEventVaultMemberAddDto = AuditEventDto & {
+  addedBy: string;
+  vaultId: string;
+  authorityId: string;
+}
+
+export type AuditEventVaultMemberRemoveDto = AuditEventDto & {
   removedBy: string;
   vaultId: string;
   authorityId: string;
 }
 
-export type RemoveDeviceEventDto = AuditEventDto & {
-  removedBy: string;
-  deviceId: string;
-}
-
-export type UnlockVaultEventDto = AuditEventDto & {
+export type AuditEventVaultUnlockDto = AuditEventDto & {
   unlockedBy: string;
   vaultId: string;
   deviceId: string;
   result: 'SUCCESS' | 'UNAUTHORIZED';
 }
 
-export type UpdateVaultEventDto = AuditEventDto & {
+export type AuditEventVaultUpdateDto = AuditEventDto & {
   updatedBy: string;
   vaultId: string;
   vaultName: string;
