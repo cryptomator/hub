@@ -844,6 +844,25 @@ public class VaultResourceTest {
 		}
 
 		@Test
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-0001FFFFAAAA returns 201")
+		public void testCreateArchivedVault() {
+			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-0001FFFFAAAA");
+			var vaultDto = new VaultResource.VaultDto(uuid, "Test Vault", "Vault to create", true, Instant.parse("2112-12-21T21:12:21Z"), "masterkeyC", 42, "saltC", "authPubKeyC", "authPrvKeyC");
+			given().contentType(ContentType.JSON).body(vaultDto)
+					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-0001FFFFAAAA")
+					.then().statusCode(201)
+					.body("id", equalToIgnoringCase("7E57C0DE-0000-4000-8000-0001FFFFAAAA"))
+					.body("name", equalTo("Test Vault"))
+					.body("description", equalTo("Vault to create"))
+					.body("masterkey", equalTo("masterkeyC"))
+					.body("salt", equalTo("saltC"))
+					.body("iterations", equalTo(42))
+					.body("authPublicKey", equalTo("authPubKeyC"))
+					.body("authPrivateKey", equalTo("authPrvKeyC"))
+					.body("archived", equalTo(false));
+		}
+
+		@Test
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-0001FFFF1111 returns 200 with only updated name, description and archive flag")
 		public void testUpdateVault() {
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-0001FFFF1111");
