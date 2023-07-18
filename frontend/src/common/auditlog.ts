@@ -6,54 +6,59 @@ import { Deferred, debounce } from './util';
 export type AuditEventDto = {
   id: number;
   timestamp: Date;
-  type: 'CREATE_VAULT' | 'GRANT_VAULT_ACCESS' | 'REGISTER_DEVICE' | 'REMOVE_DEVICE' | 'UNLOCK_VAULT' | 'UPDATE_VAULT' | 'UPDATE_VAULT_MEMBERSHIP';
+  type: 'ADD_VAULT_MEMBERSHIP' | 'CREATE_VAULT' | 'GRANT_VAULT_ACCESS' | 'REGISTER_DEVICE' | 'REMOVE_DEVICE' | 'REMOVE_VAULT_MEMBERSHIP' | 'UNLOCK_VAULT' | 'UPDATE_VAULT';
+}
+
+export type AddVaultMembershipEventDto = AuditEventDto & {
+  addedBy: string;
+  vaultId: string;
+  authorityId: string;
 }
 
 export type CreateVaultEventDto = AuditEventDto & {
-  userId: string;
+  createdBy: string;
   vaultId: string;
   vaultName: string;
   vaultDescription: string;
 }
 
 export type GrantVaultAccessEventDto = AuditEventDto & {
-  userId: string;
+  grantedBy: string;
   vaultId: string;
   authorityId: string;
 }
 
 export type RegisterDeviceEventDto = AuditEventDto & {
-  userId: string;
+  registeredBy: string;
   deviceId: string;
   deviceName: string;
   deviceType: 'BROWSER' | 'DESKTOP' | 'MOBILE';
 }
 
+export type RemoveVaultMembershipEventDto = AuditEventDto & {
+  removedBy: string;
+  vaultId: string;
+  authorityId: string;
+}
+
 export type RemoveDeviceEventDto = AuditEventDto & {
-  userId: string;
+  removedBy: string;
   deviceId: string;
 }
 
 export type UnlockVaultEventDto = AuditEventDto & {
-  userId: string;
+  unlockedBy: string;
   vaultId: string;
   deviceId: string;
   result: 'SUCCESS' | 'UNAUTHORIZED';
 }
 
 export type UpdateVaultEventDto = AuditEventDto & {
-  userId: string;
+  updatedBy: string;
   vaultId: string;
   vaultName: string;
   vaultDescription: string;
   vaultArchived: boolean;
-}
-
-export type UpdateVaultMembershipEventDto = AuditEventDto & {
-  userId: string;
-  vaultId: string;
-  authorityId: string;
-  operation: 'ADD' | 'REMOVE';
 }
 
 /* Entity Cache */

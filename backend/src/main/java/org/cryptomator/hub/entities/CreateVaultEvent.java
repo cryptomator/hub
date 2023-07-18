@@ -16,8 +16,8 @@ public class CreateVaultEvent extends AuditEvent {
 
 	public static final String TYPE = "CREATE_VAULT";
 
-	@Column(name = "user_id")
-	public String userId;
+	@Column(name = "created_by")
+	public String createdBy;
 
 	@Column(name = "vault_id")
 	public UUID vaultId;
@@ -34,7 +34,7 @@ public class CreateVaultEvent extends AuditEvent {
 		if (o == null || getClass() != o.getClass()) return false;
 		CreateVaultEvent that = (CreateVaultEvent) o;
 		return super.equals(that) //
-				&& Objects.equals(userId, that.userId) //
+				&& Objects.equals(createdBy, that.createdBy) //
 				&& Objects.equals(vaultId, that.vaultId) //
 				&& Objects.equals(vaultName, that.vaultName) //
 				&& Objects.equals(vaultDescription, that.vaultDescription);
@@ -42,13 +42,13 @@ public class CreateVaultEvent extends AuditEvent {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, userId, vaultId, vaultName, vaultDescription);
+		return Objects.hash(id, createdBy, vaultId, vaultName, vaultDescription);
 	}
 
-	public static void log(String userId, UUID vaultId, String vaultName, String vaultDescription) {
+	public static void log(String createdBy, UUID vaultId, String vaultName, String vaultDescription) {
 		var event = new CreateVaultEvent();
 		event.timestamp = Instant.now();
-		event.userId = userId;
+		event.createdBy = createdBy;
 		event.vaultId = vaultId;
 		event.vaultName = vaultName;
 		event.vaultDescription = vaultDescription;

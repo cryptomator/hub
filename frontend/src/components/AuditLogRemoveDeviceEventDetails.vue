@@ -6,11 +6,11 @@
     <dl class="flex flex-col gap-2">
       <div class="flex items-baseline gap-2">
         <dt class="text-xs text-gray-500">
-          <code>user</code>
+          <code>removed by</code>
         </dt>
         <dd class="flex items-baseline gap-2 text-sm text-gray-900">
-          <span v-if="resolvedUser != null">{{ resolvedUser.name }}</span>
-          <code class="text-xs" :class="{'text-gray-600': resolvedUser != null}">{{ event.userId }}</code>
+          <span v-if="resolvedRemovedBy != null">{{ resolvedRemovedBy.name }}</span>
+          <code class="text-xs" :class="{'text-gray-600': resolvedRemovedBy != null}">{{ event.removedBy }}</code>
         </dd>
       </div>
       <div class="flex items-baseline gap-2">
@@ -38,11 +38,11 @@ const props = defineProps<{
   event: RemoveDeviceEventDto
 }>();
 
-const resolvedUser = ref<AuthorityDto>();
+const resolvedRemovedBy = ref<AuthorityDto>();
 const resolvedDevice = ref<DeviceDto>();
 
 onMounted(async () => {
-  resolvedUser.value = await auditlog.entityCache.getAuthority(props.event.userId);
+  resolvedRemovedBy.value = await auditlog.entityCache.getAuthority(props.event.removedBy);
   resolvedDevice.value = await auditlog.entityCache.getDevice(props.event.deviceId);
 });
 </script>

@@ -17,8 +17,8 @@ public class RegisterDeviceEvent extends AuditEvent {
 
 	public static final String TYPE = "REGISTER_DEVICE";
 
-	@Column(name = "user_id")
-	public String userId;
+	@Column(name = "registered_by")
+	public String registeredBy;
 
 	@Column(name = "device_id")
 	public String deviceId;
@@ -36,7 +36,7 @@ public class RegisterDeviceEvent extends AuditEvent {
 		if (o == null || getClass() != o.getClass()) return false;
 		RegisterDeviceEvent that = (RegisterDeviceEvent) o;
 		return super.equals(that) //
-				&& Objects.equals(userId, that.userId) //
+				&& Objects.equals(registeredBy, that.registeredBy) //
 				&& Objects.equals(deviceId, that.deviceId) //
 				&& Objects.equals(deviceName, that.deviceName) //
 				&& Objects.equals(deviceType, that.deviceType);
@@ -44,13 +44,13 @@ public class RegisterDeviceEvent extends AuditEvent {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, userId, deviceId, deviceName, deviceType);
+		return Objects.hash(id, registeredBy, deviceId, deviceName, deviceType);
 	}
 
-	public static void log(String userId, String deviceId, String deviceName, Device.Type deviceType) {
+	public static void log(String registeredBy, String deviceId, String deviceName, Device.Type deviceType) {
 		var event = new RegisterDeviceEvent();
 		event.timestamp = Instant.now();
-		event.userId = userId;
+		event.registeredBy = registeredBy;
 		event.deviceId = deviceId;
 		event.deviceName = deviceName;
 		event.deviceType = deviceType;

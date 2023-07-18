@@ -6,11 +6,11 @@
     <dl class="flex flex-col gap-2">
       <div class="flex items-baseline gap-2">
         <dt class="text-xs text-gray-500">
-          <code>user</code>
+          <code>created by</code>
         </dt>
         <dd class="flex items-baseline gap-2 text-sm text-gray-900">
-          <span v-if="resolvedUser != null">{{ resolvedUser.name }}</span>
-          <code class="text-xs" :class="{'text-gray-600': resolvedUser != null}">{{ event.userId }}</code>
+          <span v-if="resolvedCreatedBy != null">{{ resolvedCreatedBy.name }}</span>
+          <code class="text-xs" :class="{'text-gray-600': resolvedCreatedBy != null}">{{ event.createdBy }}</code>
         </dd>
       </div>
       <div class="flex items-baseline gap-2">
@@ -55,11 +55,11 @@ const props = defineProps<{
   event: CreateVaultEventDto
 }>();
 
-const resolvedUser = ref<AuthorityDto>();
+const resolvedCreatedBy = ref<AuthorityDto>();
 const resolvedVault = ref<VaultDto>();
 
 onMounted(async () => {
-  resolvedUser.value = await auditlog.entityCache.getAuthority(props.event.userId);
+  resolvedCreatedBy.value = await auditlog.entityCache.getAuthority(props.event.createdBy);
   resolvedVault.value = await auditlog.entityCache.getVault(props.event.vaultId);
 });
 </script>

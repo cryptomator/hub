@@ -1,16 +1,16 @@
 <template>
   <td class="whitespace-nowrap px-3 py-4 text-sm font-medium text-gray-900">
-    {{ t('auditLog.events.updateVault') }}
+    {{ t('auditLog.events.removeVaultMembership') }}
   </td>
   <td class="whitespace-nowrap py-4 pl-3 pr-4 sm:pr-6">
     <dl class="flex flex-col gap-2">
       <div class="flex items-baseline gap-2">
         <dt class="text-xs text-gray-500">
-          <code>updated by</code>
+          <code>removed by</code>
         </dt>
         <dd class="flex items-baseline gap-2 text-sm text-gray-900">
-          <span v-if="resolvedUpdatedBy != null">{{ resolvedUpdatedBy.name }}</span>
-          <code class="text-xs" :class="{'text-gray-600': resolvedUpdatedBy != null}">{{ event.updatedBy }}</code>
+          <span v-if="resolvedRemovedBy != null">{{ resolvedRemovedBy.name }}</span>
+          <code class="text-xs" :class="{'text-gray-600': resolvedRemovedBy != null}">{{ event.removedBy }}</code>
         </dd>
       </div>
       <div class="flex items-baseline gap-2">
@@ -24,26 +24,11 @@
       </div>
       <div class="flex items-baseline gap-2">
         <dt class="text-xs text-gray-500">
-          <code>name</code>
+          <code>authority</code>
         </dt>
-        <dd class="text-sm text-gray-900">
-          {{ event.vaultName }}
-        </dd>
-      </div>
-      <div class="flex items-baseline gap-2">
-        <dt class="text-xs text-gray-500">
-          <code>description</code>
-        </dt>
-        <dd class="text-sm text-gray-900">
-          {{ event.vaultDescription }}
-        </dd>
-      </div>
-      <div class="flex items-baseline gap-2">
-        <dt class="text-xs text-gray-500">
-          <code>archived</code>
-        </dt>
-        <dd class="text-sm text-gray-900">
-          {{ event.vaultArchived }}
+        <dd class="flex items-baseline gap-2 text-sm text-gray-900">
+          <span v-if="resolvedAuthority != null">{{ resolvedAuthority.name }}</span>
+          <code class="text-xs" :class="{'text-gray-600': resolvedAuthority != null}">{{ event.authorityId }}</code>
         </dd>
       </div>
     </dl>
@@ -53,20 +38,22 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import auditlog, { UpdateVaultEventDto } from '../common/auditlog';
+import auditlog, { RemoveVaultMembershipEventDto } from '../common/auditlog';
 import { AuthorityDto, VaultDto } from '../common/backend';
 
 const { t } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{
-  event: UpdateVaultEventDto
+  event: RemoveVaultMembershipEventDto
 }>();
 
-const resolvedUpdatedBy = ref<AuthorityDto>();
+const resolvedRemovedBy = ref<AuthorityDto>();
 const resolvedVault = ref<VaultDto>();
+const resolvedAuthority = ref<AuthorityDto>();
 
 onMounted(async () => {
-  resolvedUpdatedBy.value = await auditlog.entityCache.getAuthority(props.event.updatedBy);
+  resolvedRemovedBy.value = await auditlog.entityCache.getAuthority(props.event.removedBy);
   resolvedVault.value = await auditlog.entityCache.getVault(props.event.vaultId);
+  resolvedAuthority.value = await auditlog.entityCache.getAuthority(props.event.authorityId);
 });
 </script>

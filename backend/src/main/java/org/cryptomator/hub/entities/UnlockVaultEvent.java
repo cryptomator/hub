@@ -18,8 +18,8 @@ public class UnlockVaultEvent extends AuditEvent {
 
 	public static final String TYPE = "UNLOCK_VAULT";
 
-	@Column(name = "user_id")
-	public String userId;
+	@Column(name = "unlocked_by")
+	public String unlockedBy;
 
 	@Column(name = "vault_id")
 	public UUID vaultId;
@@ -37,7 +37,7 @@ public class UnlockVaultEvent extends AuditEvent {
 		if (o == null || getClass() != o.getClass()) return false;
 		UnlockVaultEvent that = (UnlockVaultEvent) o;
 		return super.equals(that) //
-				&& Objects.equals(userId, that.userId) //
+				&& Objects.equals(unlockedBy, that.unlockedBy) //
 				&& Objects.equals(vaultId, that.vaultId) //
 				&& Objects.equals(deviceId, that.deviceId) //
 				&& Objects.equals(result, that.result);
@@ -45,13 +45,13 @@ public class UnlockVaultEvent extends AuditEvent {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, userId, vaultId, deviceId, result);
+		return Objects.hash(id, unlockedBy, vaultId, deviceId, result);
 	}
 
-	public static void log(String userId, UUID vaultId, String deviceId, Result result) {
+	public static void log(String unlockedBy, UUID vaultId, String deviceId, Result result) {
 		var event = new UnlockVaultEvent();
 		event.timestamp = Instant.now();
-		event.userId = userId;
+		event.unlockedBy = unlockedBy;
 		event.vaultId = vaultId;
 		event.deviceId = deviceId;
 		event.result = result;

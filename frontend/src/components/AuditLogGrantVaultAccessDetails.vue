@@ -6,11 +6,11 @@
     <dl class="flex flex-col gap-2">
       <div class="flex items-baseline gap-2">
         <dt class="text-xs text-gray-500">
-          <code>user</code>
+          <code>granted by</code>
         </dt>
         <dd class="flex items-baseline gap-2 text-sm text-gray-900">
-          <span v-if="resolvedUser != null">{{ resolvedUser.name }}</span>
-          <code class="text-xs" :class="{'text-gray-600': resolvedUser != null}">{{ event.userId }}</code>
+          <span v-if="resolvedGrantedBy != null">{{ resolvedGrantedBy.name }}</span>
+          <code class="text-xs" :class="{'text-gray-600': resolvedGrantedBy != null}">{{ event.grantedBy }}</code>
         </dd>
       </div>
       <div class="flex items-baseline gap-2">
@@ -47,12 +47,12 @@ const props = defineProps<{
   event: GrantVaultAccessEventDto
 }>();
 
-const resolvedUser = ref<AuthorityDto>();
+const resolvedGrantedBy = ref<AuthorityDto>();
 const resolvedVault = ref<VaultDto>();
 const resolvedAuthority = ref<AuthorityDto>();
 
 onMounted(async () => {
-  resolvedUser.value = await auditlog.entityCache.getAuthority(props.event.userId);
+  resolvedGrantedBy.value = await auditlog.entityCache.getAuthority(props.event.grantedBy);
   resolvedVault.value = await auditlog.entityCache.getVault(props.event.vaultId);
   resolvedAuthority.value = await auditlog.entityCache.getAuthority(props.event.authorityId);
 });

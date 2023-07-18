@@ -16,8 +16,8 @@ public class UpdateVaultEvent extends AuditEvent {
 
 	public static final String TYPE = "UPDATE_VAULT";
 
-	@Column(name = "user_id")
-	public String userId;
+	@Column(name = "updated_by")
+	public String updatedBy;
 
 	@Column(name = "vault_id")
 	public UUID vaultId;
@@ -37,7 +37,7 @@ public class UpdateVaultEvent extends AuditEvent {
 		if (o == null || getClass() != o.getClass()) return false;
 		UpdateVaultEvent that = (UpdateVaultEvent) o;
 		return super.equals(that) //
-				&& Objects.equals(userId, that.userId) //
+				&& Objects.equals(updatedBy, that.updatedBy) //
 				&& Objects.equals(vaultId, that.vaultId) //
 				&& Objects.equals(vaultName, that.vaultName) //
 				&& Objects.equals(vaultDescription, that.vaultDescription) //
@@ -46,13 +46,13 @@ public class UpdateVaultEvent extends AuditEvent {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, userId, vaultId, vaultName, vaultDescription, vaultArchived);
+		return Objects.hash(id, updatedBy, vaultId, vaultName, vaultDescription, vaultArchived);
 	}
 
-	public static void log(String userId, UUID vaultId, String vaultName, String vaultDescription, boolean vaultArchived) {
+	public static void log(String updatedBy, UUID vaultId, String vaultName, String vaultDescription, boolean vaultArchived) {
 		var event = new UpdateVaultEvent();
 		event.timestamp = Instant.now();
-		event.userId = userId;
+		event.updatedBy = updatedBy;
 		event.vaultId = vaultId;
 		event.vaultName = vaultName;
 		event.vaultDescription = vaultDescription;

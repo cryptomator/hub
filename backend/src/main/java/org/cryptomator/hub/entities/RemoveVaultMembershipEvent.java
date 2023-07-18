@@ -10,14 +10,14 @@ import java.util.Objects;
 import java.util.UUID;
 
 @Entity
-@Table(name = "grant_vault_access_event")
-@DiscriminatorValue(GrantVaultAccessEvent.TYPE)
-public class GrantVaultAccessEvent extends AuditEvent {
+@Table(name = "remove_vault_membership_event")
+@DiscriminatorValue(RemoveVaultMembershipEvent.TYPE)
+public class RemoveVaultMembershipEvent extends AuditEvent {
 
-	public static final String TYPE = "GRANT_VAULT_ACCESS";
+	public static final String TYPE = "REMOVE_VAULT_MEMBERSHIP";
 
-	@Column(name = "granted_by")
-	public String grantedBy;
+	@Column(name = "removed_by")
+	public String removedBy;
 
 	@Column(name = "vault_id")
 	public UUID vaultId;
@@ -29,22 +29,22 @@ public class GrantVaultAccessEvent extends AuditEvent {
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
-		GrantVaultAccessEvent that = (GrantVaultAccessEvent) o;
+		RemoveVaultMembershipEvent that = (RemoveVaultMembershipEvent) o;
 		return super.equals(that) //
-				&& Objects.equals(grantedBy, that.grantedBy) //
+				&& Objects.equals(removedBy, that.removedBy) //
 				&& Objects.equals(vaultId, that.vaultId) //
 				&& Objects.equals(authorityId, that.authorityId);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, grantedBy, vaultId, authorityId);
+		return Objects.hash(id, removedBy, vaultId, authorityId);
 	}
 
-	public static void log(String grantedBy, UUID vaultId, String authorityId) {
-		var event = new GrantVaultAccessEvent();
+	public static void log(String removedBy, UUID vaultId, String authorityId) {
+		var event = new RemoveVaultMembershipEvent();
 		event.timestamp = Instant.now();
-		event.grantedBy = grantedBy;
+		event.removedBy = removedBy;
 		event.vaultId = vaultId;
 		event.authorityId = authorityId;
 		event.persist();

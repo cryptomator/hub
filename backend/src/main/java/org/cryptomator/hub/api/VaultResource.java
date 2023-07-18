@@ -24,15 +24,16 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.AccessToken;
+import org.cryptomator.hub.entities.AddVaultMembershipEvent;
 import org.cryptomator.hub.entities.CreateVaultEvent;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.EffectiveGroupMembership;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.entities.GrantVaultAccessEvent;
 import org.cryptomator.hub.entities.Group;
+import org.cryptomator.hub.entities.RemoveVaultMembershipEvent;
 import org.cryptomator.hub.entities.UnlockVaultEvent;
 import org.cryptomator.hub.entities.UpdateVaultEvent;
-import org.cryptomator.hub.entities.UpdateVaultMembershipEvent;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.filters.ActiveLicense;
@@ -154,7 +155,7 @@ public class VaultResource {
 
 		vault.directMembers.add(user);
 		vault.persist();
-		UpdateVaultMembershipEvent.log(jwt.getSubject(), vaultId, userId, UpdateVaultMembershipEvent.Operation.ADD);
+		AddVaultMembershipEvent.log(jwt.getSubject(), vaultId, userId);
 		return Response.status(Response.Status.CREATED).build();
 	}
 
@@ -185,7 +186,7 @@ public class VaultResource {
 		}
 		vault.directMembers.add(group);
 		vault.persist();
-		UpdateVaultMembershipEvent.log(jwt.getSubject(), vaultId, groupId, UpdateVaultMembershipEvent.Operation.ADD);
+		AddVaultMembershipEvent.log(jwt.getSubject(), vaultId, groupId);
 		return Response.status(Response.Status.CREATED).build();
 	}
 
@@ -223,7 +224,7 @@ public class VaultResource {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		vault.directMembers.removeIf(e -> e.id.equals(authorityId));
 		vault.persist();
-		UpdateVaultMembershipEvent.log(jwt.getSubject(), vaultId, authorityId, UpdateVaultMembershipEvent.Operation.REMOVE);
+		RemoveVaultMembershipEvent.log(jwt.getSubject(), vaultId, authorityId);
 		return Response.status(Response.Status.NO_CONTENT).build();
 	}
 
@@ -369,7 +370,7 @@ public class VaultResource {
 		vault.persistAndFlush();
 		if (isCreated) {
 			CreateVaultEvent.log(currentUser.id, vault.id, vault.name, vault.description);
-			UpdateVaultMembershipEvent.log(currentUser.id, vaultId, currentUser.id, UpdateVaultMembershipEvent.Operation.ADD);
+			AddVaultMembershipEvent.log(currentUser.id, vaultId, currentUser.id);
 			return Response.created(URI.create(".")).contentLocation(URI.create(".")).entity(VaultDto.fromEntity(vault)).type(MediaType.APPLICATION_JSON).build();
 		} else {
 			UpdateVaultEvent.log(currentUser.id, vault.id, vault.name, vault.description, vault.archived);

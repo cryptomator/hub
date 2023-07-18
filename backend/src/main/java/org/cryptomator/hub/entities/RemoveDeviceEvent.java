@@ -15,8 +15,8 @@ public class RemoveDeviceEvent extends AuditEvent {
 
 	public static final String TYPE = "REMOVE_DEVICE";
 
-	@Column(name = "user_id")
-	public String userId;
+	@Column(name = "removed_by")
+	public String removedBy;
 
 	@Column(name = "device_id")
 	public String deviceId;
@@ -27,19 +27,19 @@ public class RemoveDeviceEvent extends AuditEvent {
 		if (o == null || getClass() != o.getClass()) return false;
 		RemoveDeviceEvent that = (RemoveDeviceEvent) o;
 		return super.equals(that) //
-				&& Objects.equals(userId, that.userId) //
+				&& Objects.equals(removedBy, that.removedBy) //
 				&& Objects.equals(deviceId, that.deviceId);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, userId, deviceId);
+		return Objects.hash(id, removedBy, deviceId);
 	}
 
-	public static void log(String userId, String deviceId) {
+	public static void log(String removedBy, String deviceId) {
 		var event = new RemoveDeviceEvent();
 		event.timestamp = Instant.now();
-		event.userId = userId;
+		event.removedBy = removedBy;
 		event.deviceId = deviceId;
 		event.persist();
 	}
