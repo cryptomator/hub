@@ -475,7 +475,7 @@ public class VaultResource {
 			access.authority = currentUser;
 			access.role = VaultAccess.Role.OWNER;
 			access.persist();
-			AuditEventVaultMemberAdd.log(currentUser.id, vaultId, currentUser.id);
+			AuditEventVaultMemberAdd.log(currentUser.id, vaultId, currentUser.id, VaultAccess.Role.OWNER);
 		}
 
 		vault.salt = null;
