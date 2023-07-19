@@ -12,14 +12,14 @@ import java.util.Objects;
 import java.util.UUID;
 
 @Entity
-@Table(name = "unlock_vault_event")
-@DiscriminatorValue(UnlockVaultEvent.TYPE)
-public class UnlockVaultEvent extends AuditEvent {
+@Table(name = "audit_event_vault_unlock")
+@DiscriminatorValue(AuditEventVaultUnlock.TYPE)
+public class AuditEventVaultUnlock extends AuditEvent {
 
-	public static final String TYPE = "UNLOCK_VAULT";
+	public static final String TYPE = "VAULT_UNLOCK";
 
-	@Column(name = "user_id")
-	public String userId;
+	@Column(name = "unlocked_by")
+	public String unlockedBy;
 
 	@Column(name = "vault_id")
 	public UUID vaultId;
@@ -35,9 +35,9 @@ public class UnlockVaultEvent extends AuditEvent {
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
-		UnlockVaultEvent that = (UnlockVaultEvent) o;
+		AuditEventVaultUnlock that = (AuditEventVaultUnlock) o;
 		return super.equals(that) //
-				&& Objects.equals(userId, that.userId) //
+				&& Objects.equals(unlockedBy, that.unlockedBy) //
 				&& Objects.equals(vaultId, that.vaultId) //
 				&& Objects.equals(deviceId, that.deviceId) //
 				&& Objects.equals(result, that.result);
@@ -45,13 +45,13 @@ public class UnlockVaultEvent extends AuditEvent {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, userId, vaultId, deviceId, result);
+		return Objects.hash(id, unlockedBy, vaultId, deviceId, result);
 	}
 
-	public static void log(String userId, UUID vaultId, String deviceId, Result result) {
-		var event = new UnlockVaultEvent();
+	public static void log(String unlockedBy, UUID vaultId, String deviceId, Result result) {
+		var event = new AuditEventVaultUnlock();
 		event.timestamp = Instant.now();
-		event.userId = userId;
+		event.unlockedBy = unlockedBy;
 		event.vaultId = vaultId;
 		event.deviceId = deviceId;
 		event.result = result;

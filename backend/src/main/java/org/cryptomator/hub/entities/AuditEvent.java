@@ -41,7 +41,7 @@ import java.util.stream.Stream;
 				AND ae.id > :paginationId
 				ORDER BY ae.id ASC
 				""")
-@SequenceGenerator(name = "audit_event_id_seq", sequenceName = "audit_event_id_seq")
+@SequenceGenerator(name = "audit_event_id_seq", sequenceName = "audit_event_id_seq", allocationSize = 1)
 public class AuditEvent extends PanacheEntityBase {
 
 	@Id
