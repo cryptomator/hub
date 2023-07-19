@@ -21,6 +21,7 @@ import org.cryptomator.hub.entities.AuditEventVaultMemberRemove;
 import org.cryptomator.hub.entities.AuditEventVaultUnlock;
 import org.cryptomator.hub.entities.AuditEventVaultUpdate;
 import org.cryptomator.hub.entities.Device;
+import org.cryptomator.hub.entities.VaultAccess;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
@@ -82,22 +83,22 @@ public class AuditLogResource {
 
 		static AuditEventDto fromEntity(AuditEvent entity) {
 			// TODO: refactor to switch in JDK21
-			if (entity instanceof AuditEventDeviceRegister aedr) {
-				return new AuditEventDeviceRegisterDto(aedr.id, aedr.timestamp, AuditEventDeviceRegister.TYPE, aedr.registeredBy, aedr.deviceId, aedr.deviceName, aedr.deviceType);
-			} else if (entity instanceof AuditEventDeviceRemove aedr) {
-				return new AuditEventDeviceRemoveDto(aedr.id, aedr.timestamp, AuditEventDeviceRemove.TYPE, aedr.removedBy, aedr.deviceId);
-			} else if (entity instanceof AuditEventVaultCreate aevc) {
-				return new AuditEventVaultCreateDto(aevc.id, aevc.timestamp, AuditEventVaultCreate.TYPE, aevc.createdBy, aevc.vaultId, aevc.vaultName, aevc.vaultDescription);
-			} else if (entity instanceof AuditEventVaultUnlock aevu) {
-				return new AuditEventVaultUnlockDto(aevu.id, aevu.timestamp, AuditEventVaultUnlock.TYPE, aevu.unlockedBy, aevu.vaultId, aevu.deviceId, aevu.result);
-			} else if (entity instanceof AuditEventVaultUpdate aevu) {
-				return new AuditEventVaultUpdateDto(aevu.id, aevu.timestamp, AuditEventVaultUpdate.TYPE, aevu.updatedBy, aevu.vaultId, aevu.vaultName, aevu.vaultDescription, aevu.vaultArchived);
-			} else if (entity instanceof AuditEventVaultAccessGrant aevag) {
-				return new AuditEventVaultAccessGrantDto(aevag.id, aevag.timestamp, AuditEventVaultAccessGrant.TYPE, aevag.grantedBy, aevag.vaultId, aevag.authorityId);
-			} else if (entity instanceof AuditEventVaultMemberAdd aevma) {
-				return new AuditEventVaultMemberAddDto(aevma.id, aevma.timestamp, AuditEventVaultMemberAdd.TYPE, aevma.addedBy, aevma.vaultId, aevma.authorityId);
-			} else if (entity instanceof AuditEventVaultMemberRemove aevmr) {
-				return new AuditEventVaultMemberRemoveDto(aevmr.id, aevmr.timestamp, AuditEventVaultMemberRemove.TYPE, aevmr.removedBy, aevmr.vaultId, aevmr.authorityId);
+			if (entity instanceof AuditEventDeviceRegister evt) {
+				return new AuditEventDeviceRegisterDto(evt.id, evt.timestamp, AuditEventDeviceRegister.TYPE, evt.registeredBy, evt.deviceId, evt.deviceName, evt.deviceType);
+			} else if (entity instanceof AuditEventDeviceRemove evt) {
+				return new AuditEventDeviceRemoveDto(evt.id, evt.timestamp, AuditEventDeviceRemove.TYPE, evt.removedBy, evt.deviceId);
+			} else if (entity instanceof AuditEventVaultCreate evt) {
+				return new AuditEventVaultCreateDto(evt.id, evt.timestamp, AuditEventVaultCreate.TYPE, evt.createdBy, evt.vaultId, evt.vaultName, evt.vaultDescription);
+			} else if (entity instanceof AuditEventVaultUnlock evt) {
+				return new AuditEventVaultUnlockDto(evt.id, evt.timestamp, AuditEventVaultUnlock.TYPE, evt.unlockedBy, evt.vaultId, evt.deviceId, evt.result);
+			} else if (entity instanceof AuditEventVaultUpdate evt) {
+				return new AuditEventVaultUpdateDto(evt.id, evt.timestamp, AuditEventVaultUpdate.TYPE, evt.updatedBy, evt.vaultId, evt.vaultName, evt.vaultDescription, evt.vaultArchived);
+			} else if (entity instanceof AuditEventVaultAccessGrant evt) {
+				return new AuditEventVaultAccessGrantDto(evt.id, evt.timestamp, AuditEventVaultAccessGrant.TYPE, evt.grantedBy, evt.vaultId, evt.authorityId);
+			} else if (entity instanceof AuditEventVaultMemberAdd evt) {
+				return new AuditEventVaultMemberAddDto(evt.id, evt.timestamp, AuditEventVaultMemberAdd.TYPE, evt.addedBy, evt.vaultId, evt.authorityId, evt.role);
+			} else if (entity instanceof AuditEventVaultMemberRemove evt) {
+				return new AuditEventVaultMemberRemoveDto(evt.id, evt.timestamp, AuditEventVaultMemberRemove.TYPE, evt.removedBy, evt.vaultId, evt.authorityId);
 			} else {
 				throw new UnsupportedOperationException("conversion not implemented for event type " + entity.getClass());
 			}
@@ -128,7 +129,7 @@ public class AuditLogResource {
 	}
 
 	record AuditEventVaultMemberAddDto(long id, Instant timestamp, String type, @JsonProperty("addedBy") String addedBy, @JsonProperty("vaultId") UUID vaultId,
-									   @JsonProperty("authorityId") String authorityId) implements AuditEventDto {
+									   @JsonProperty("authorityId") String authorityId, @JsonProperty("role") VaultAccess.Role role) implements AuditEventDto {
 	}
 
 	record AuditEventVaultMemberRemoveDto(long id, Instant timestamp, String type, @JsonProperty("removedBy") String removedBy, @JsonProperty("vaultId") UUID vaultId,

@@ -109,13 +109,13 @@ VALUES
     (20, 'user1', '7E57C0DE-0000-4000-8000-000100002222', 'Vault 2', 'This is a testvault.'),
     (30, 'user2', '7E57C0DE-0000-4000-8000-00010000AAAA', 'Vault 3', 'This is a testvault.');
 
-INSERT INTO "audit_event_vault_member_add" ("id", "added_by", "vault_id", "authority_id")
+INSERT INTO "audit_event_vault_member_add" ("id", "added_by", "vault_id", "authority_id", "role")
 VALUES
-    (11, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'user1'),
-    (12, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'user2'),
-    (21, 'user1', '7E57C0DE-0000-4000-8000-000100002222', 'user1'),
-    (22, 'user1', '7E57C0DE-0000-4000-8000-000100002222', 'group1'),
-    (31, 'user2', '7E57C0DE-0000-4000-8000-00010000AAAA', 'user2');
+    (11, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'user1', 'OWNER'),
+    (12, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'user2', 'MEMBER'),
+    (21, 'user1', '7E57C0DE-0000-4000-8000-000100002222', 'user1', 'MEMBER'),
+    (22, 'user1', '7E57C0DE-0000-4000-8000-000100002222', 'group1', 'MEMBER'),
+    (31, 'user2', '7E57C0DE-0000-4000-8000-00010000AAAA', 'user1', 'MEMBER');
 
 INSERT INTO "audit_event_vault_member_remove" ("id", "removed_by", "vault_id", "authority_id")
 VALUES

@@ -210,7 +210,7 @@ public class VaultResource {
 			access.authority = authority;
 			access.role = role;
 			access.persist();
-			AuditEventVaultMemberAdd.log(jwt.getSubject(), vault.id, authority.id);
+			AuditEventVaultMemberAdd.log(jwt.getSubject(), vault.id, authority.id, role);
 			return Response.created(URI.create(".")).build();
 		}
 	}
@@ -424,7 +424,7 @@ public class VaultResource {
 			access.role = VaultAccess.Role.OWNER;
 			access.persist();
 			AuditEventVaultCreate.log(currentUser.id, vault.id, vault.name, vault.description);
-			AuditEventVaultMemberAdd.log(currentUser.id, vaultId, currentUser.id);
+			AuditEventVaultMemberAdd.log(currentUser.id, vaultId, currentUser.id, VaultAccess.Role.OWNER);
 			return Response.created(URI.create(".")).contentLocation(URI.create(".")).entity(VaultDto.fromEntity(vault)).type(MediaType.APPLICATION_JSON).build();
 		} else {
 			AuditEventVaultUpdate.log(currentUser.id, vault.id, vault.name, vault.description, vault.archived);
