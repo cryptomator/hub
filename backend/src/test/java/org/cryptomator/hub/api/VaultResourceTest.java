@@ -255,8 +255,17 @@ public class VaultResourceTest {
 			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", "Test vault 3", false, Instant.parse("2112-12-21T21:12:21Z"), "masterkey3", 42, "NaCl", "authPubKey3", "authPrvKey3");
 
 			given().contentType(ContentType.JSON).body(vaultDto)
-					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-BADBADBADBAD")
-					.then().statusCode(201);
+					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-000100003333")
+					.then().statusCode(201)
+					.body("id", equalToIgnoringCase("7E57C0DE-0000-4000-8000-000100003333"))
+					.body("name", equalTo("My Vault"))
+					.body("description", equalTo("Test vault 3"))
+					.body("archived", equalTo(false))
+					.body("masterkey", equalTo("masterkey3"))
+					.body("iterations", equalTo(42))
+					.body("salt", equalTo("NaCl"))
+					.body("authPublicKey", equalTo("authPubKey3"))
+					.body("authPrivateKey", equalTo("authPrvKey3"));
 		}
 
 		@Test
@@ -266,6 +275,27 @@ public class VaultResourceTest {
 			given().contentType(ContentType.JSON)
 					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-BADBADBADBAD") // invalid body (expected json)
 					.then().statusCode(400);
+		}
+
+		@Test
+		@Order(1)
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100004444 returns 201 ignoring archived flag")
+		public void testCreateVault3() {
+			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100004444");
+			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", "Test vault 4", true, Instant.parse("2112-12-21T21:12:21Z"), "masterkey4", 42, "NaCl", "authPubKey4", "authPrvKey4");
+
+			given().contentType(ContentType.JSON).body(vaultDto)
+					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-000100004444")
+					.then().statusCode(201)
+					.body("id", equalToIgnoringCase("7E57C0DE-0000-4000-8000-000100004444"))
+					.body("name", equalTo("My Vault"))
+					.body("description", equalTo("Test vault 4"))
+					.body("archived", equalTo(false))
+					.body("masterkey", equalTo("masterkey4"))
+					.body("iterations", equalTo(42))
+					.body("salt", equalTo("NaCl"))
+					.body("authPublicKey", equalTo("authPubKey4"))
+					.body("authPrivateKey", equalTo("authPrvKey4"));
 		}
 
 		@Test
