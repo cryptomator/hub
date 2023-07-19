@@ -91,9 +91,14 @@
                 <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">
                   <code>{{ auditEvent.timestamp.toLocaleString('sv') }}</code>
                 </td>
-                <AuditLogCreateVaultEventDetails v-if="auditEvent.type == 'CREATE_VAULT'" :event="(auditEvent as CreateVaultEventDto)" />
-                <AuditLogUnlockVaultEventDetails v-else-if="auditEvent.type == 'UNLOCK_VAULT'" :event="(auditEvent as UnlockVaultEventDto)" />
-                <AuditLogUpdateVaultMembershipDetails v-else-if="auditEvent.type == 'UPDATE_VAULT_MEMBERSHIP'" :event="(auditEvent as UpdateVaultMembershipEventDto)" />
+                <AuditLogDetailsDeviceRegister v-if="auditEvent.type == 'DEVICE_REGISTER'" :event="(auditEvent as AuditEventDeviceRegisterDto)" />
+                <AuditLogDetailsDeviceRemove v-else-if="auditEvent.type == 'DEVICE_REMOVE'" :event="(auditEvent as AuditEventDeviceRemoveDto)" />
+                <AuditLogDetailsVaultCreate v-else-if="auditEvent.type == 'VAULT_CREATE'" :event="(auditEvent as AuditEventVaultCreateDto)" />
+                <AuditLogDetailsVaultUnlock v-else-if="auditEvent.type == 'VAULT_UNLOCK'" :event="(auditEvent as AuditEventVaultUnlockDto)" />
+                <AuditLogDetailsVaultUpdate v-else-if="auditEvent.type == 'VAULT_UPDATE'" :event="(auditEvent as AuditEventVaultUpdateDto)" />
+                <AuditLogDetailsVaultAccessGrant v-else-if="auditEvent.type == 'VAULT_ACCESS_GRANT'" :event="(auditEvent as AuditEventVaultAccessGrantDto)" />
+                <AuditLogDetailsVaultMemberAdd v-else-if="auditEvent.type == 'VAULT_MEMBER_ADD'" :event="(auditEvent as AuditEventVaultMemberAddDto)" />
+                <AuditLogDetailsVaultMemberRemove v-else-if="auditEvent.type == 'VAULT_MEMBER_REMOVE'" :event="(auditEvent as AuditEventVaultMemberRemoveDto)" />
               </tr>
             </tbody>
             <tfoot class="bg-gray-50">
@@ -132,15 +137,19 @@ import { ChevronDownIcon } from '@heroicons/vue/20/solid';
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/vue/24/solid';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { AuditEventDto, AuditLogEntityCache, CreateVaultEventDto, UnlockVaultEventDto, UpdateVaultMembershipEventDto } from '../common/backend';
-import AuditLogCreateVaultEventDetails from './AuditLogCreateVaultEventDetails.vue';
-import AuditLogUnlockVaultEventDetails from './AuditLogUnlockVaultEventDetails.vue';
-import AuditLogUpdateVaultMembershipDetails from './AuditLogUpdateVaultMembershipDetails.vue';
+import auditlog, { AuditEventDeviceRegisterDto, AuditEventDeviceRemoveDto, AuditEventDto, AuditEventVaultAccessGrantDto, AuditEventVaultCreateDto, AuditEventVaultMemberAddDto, AuditEventVaultMemberRemoveDto, AuditEventVaultUnlockDto, AuditEventVaultUpdateDto } from '../common/auditlog';
+import AuditLogDetailsDeviceRegister from './AuditLogDetailsDeviceRegister.vue';
+import AuditLogDetailsDeviceRemove from './AuditLogDetailsDeviceRemove.vue';
+import AuditLogDetailsVaultAccessGrant from './AuditLogDetailsVaultAccessGrant.vue';
+import AuditLogDetailsVaultCreate from './AuditLogDetailsVaultCreate.vue';
+import AuditLogDetailsVaultMemberAdd from './AuditLogDetailsVaultMemberAdd.vue';
+import AuditLogDetailsVaultMemberRemove from './AuditLogDetailsVaultMemberRemove.vue';
+import AuditLogDetailsVaultUnlock from './AuditLogDetailsVaultUnlock.vue';
+import AuditLogDetailsVaultUpdate from './AuditLogDetailsVaultUpdate.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 
 const auditEvents = ref<AuditEventDto[]>([]);
-const entityCache = AuditLogEntityCache.getInstance();
 const onFetchError = ref<Error | null>();
 
 const startDate = ref(beginOfDate(new Date()));
@@ -191,7 +200,7 @@ async function fetchData() {
   onFetchError.value = null;
   try {
     // Fetch one more event than the page size to determine if there is a next page
-    const events = await backend.auditLogs.getAllEvents(startDate.value, endDate.value, lastIdOfPreviousPage[currentPage.value], selectedOrder.value, pageSize.value + 1);
+    const events = await auditlog.service.getAllEvents(startDate.value, endDate.value, lastIdOfPreviousPage[currentPage.value], selectedOrder.value, pageSize.value + 1);
     // If the lastIdOfPreviousPage for the first page has not been set yet, set it to an id "before"/"after" the first event
     if (currentPage.value == 0 && lastIdOfPreviousPage[0] == 0 && events.length > 0) {
       lastIdOfPreviousPage[0] = events[0].id + orderOptions[selectedOrder.value].sign;
@@ -217,7 +226,7 @@ async function fetchData() {
 async function refreshData() {
   lastIdOfPreviousPage = [orderOptions[selectedOrder.value].initialLastIdOfPreviousPage];
   currentPage.value = 0;
-  entityCache.invalidateAll();
+  auditlog.entityCache.invalidateAll();
   await fetchData();
 }
 
