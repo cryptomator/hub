@@ -12,9 +12,15 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import org.cryptomator.hub.entities.AuditEvent;
-import org.cryptomator.hub.entities.CreateVaultEvent;
-import org.cryptomator.hub.entities.UnlockVaultEvent;
-import org.cryptomator.hub.entities.UpdateVaultMembershipEvent;
+import org.cryptomator.hub.entities.AuditEventDeviceRegister;
+import org.cryptomator.hub.entities.AuditEventDeviceRemove;
+import org.cryptomator.hub.entities.AuditEventVaultAccessGrant;
+import org.cryptomator.hub.entities.AuditEventVaultCreate;
+import org.cryptomator.hub.entities.AuditEventVaultMemberAdd;
+import org.cryptomator.hub.entities.AuditEventVaultMemberRemove;
+import org.cryptomator.hub.entities.AuditEventVaultUnlock;
+import org.cryptomator.hub.entities.AuditEventVaultUpdate;
+import org.cryptomator.hub.entities.Device;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
@@ -56,10 +62,15 @@ public class AuditLogResource {
 	}
 
 	@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
-	@JsonSubTypes({
-			@JsonSubTypes.Type(value = CreateVaultEventDto.class, name = CreateVaultEvent.TYPE),
-			@JsonSubTypes.Type(value = UnlockVaultEventDto.class, name = UnlockVaultEvent.TYPE),
-			@JsonSubTypes.Type(value = UpdateVaultMembershipEventDto.class, name = UpdateVaultMembershipEvent.TYPE)
+	@JsonSubTypes({ //
+			@JsonSubTypes.Type(value = AuditEventDeviceRegisterDto.class, name = AuditEventDeviceRegister.TYPE), //
+			@JsonSubTypes.Type(value = AuditEventDeviceRemoveDto.class, name = AuditEventDeviceRemove.TYPE), //
+			@JsonSubTypes.Type(value = AuditEventVaultCreateDto.class, name = AuditEventVaultCreate.TYPE), //
+			@JsonSubTypes.Type(value = AuditEventVaultUnlockDto.class, name = AuditEventVaultUnlock.TYPE), //
+			@JsonSubTypes.Type(value = AuditEventVaultUpdateDto.class, name = AuditEventVaultUpdate.TYPE), //
+			@JsonSubTypes.Type(value = AuditEventVaultAccessGrantDto.class, name = AuditEventVaultAccessGrant.TYPE), //
+			@JsonSubTypes.Type(value = AuditEventVaultMemberAddDto.class, name = AuditEventVaultMemberAdd.TYPE), //
+			@JsonSubTypes.Type(value = AuditEventVaultMemberRemoveDto.class, name = AuditEventVaultMemberRemove.TYPE) //
 	})
 	public interface AuditEventDto {
 
@@ -70,26 +81,58 @@ public class AuditLogResource {
 		Instant timestamp();
 
 		static AuditEventDto fromEntity(AuditEvent entity) {
-			if (entity instanceof CreateVaultEvent cve) {
-				return new CreateVaultEventDto(cve.id, cve.timestamp, CreateVaultEvent.TYPE, cve.userId, cve.vaultId);
-			} else if (entity instanceof UnlockVaultEvent uve) {
-				return new UnlockVaultEventDto(uve.id, uve.timestamp, UnlockVaultEvent.TYPE, uve.userId, uve.vaultId, uve.deviceId, uve.result);
-			} else if (entity instanceof UpdateVaultMembershipEvent uvme) {
-				return new UpdateVaultMembershipEventDto(uvme.id, uvme.timestamp, UpdateVaultMembershipEvent.TYPE, uvme.userId, uvme.vaultId, uvme.authorityId, uvme.operation);
+			// TODO: refactor to switch in JDK21
+			if (entity instanceof AuditEventDeviceRegister aedr) {
+				return new AuditEventDeviceRegisterDto(aedr.id, aedr.timestamp, AuditEventDeviceRegister.TYPE, aedr.registeredBy, aedr.deviceId, aedr.deviceName, aedr.deviceType);
+			} else if (entity instanceof AuditEventDeviceRemove aedr) {
+				return new AuditEventDeviceRemoveDto(aedr.id, aedr.timestamp, AuditEventDeviceRemove.TYPE, aedr.removedBy, aedr.deviceId);
+			} else if (entity instanceof AuditEventVaultCreate aevc) {
+				return new AuditEventVaultCreateDto(aevc.id, aevc.timestamp, AuditEventVaultCreate.TYPE, aevc.createdBy, aevc.vaultId, aevc.vaultName, aevc.vaultDescription);
+			} else if (entity instanceof AuditEventVaultUnlock aevu) {
+				return new AuditEventVaultUnlockDto(aevu.id, aevu.timestamp, AuditEventVaultUnlock.TYPE, aevu.unlockedBy, aevu.vaultId, aevu.deviceId, aevu.result);
+			} else if (entity instanceof AuditEventVaultUpdate aevu) {
+				return new AuditEventVaultUpdateDto(aevu.id, aevu.timestamp, AuditEventVaultUpdate.TYPE, aevu.updatedBy, aevu.vaultId, aevu.vaultName, aevu.vaultDescription, aevu.vaultArchived);
+			} else if (entity instanceof AuditEventVaultAccessGrant aevag) {
+				return new AuditEventVaultAccessGrantDto(aevag.id, aevag.timestamp, AuditEventVaultAccessGrant.TYPE, aevag.grantedBy, aevag.vaultId, aevag.authorityId);
+			} else if (entity instanceof AuditEventVaultMemberAdd aevma) {
+				return new AuditEventVaultMemberAddDto(aevma.id, aevma.timestamp, AuditEventVaultMemberAdd.TYPE, aevma.addedBy, aevma.vaultId, aevma.authorityId);
+			} else if (entity instanceof AuditEventVaultMemberRemove aevmr) {
+				return new AuditEventVaultMemberRemoveDto(aevmr.id, aevmr.timestamp, AuditEventVaultMemberRemove.TYPE, aevmr.removedBy, aevmr.vaultId, aevmr.authorityId);
 			} else {
 				throw new UnsupportedOperationException("conversion not implemented for event type " + entity.getClass());
 			}
 		}
 	}
 
-	record CreateVaultEventDto(long id, Instant timestamp, String type, @JsonProperty("userId") String userId, @JsonProperty("vaultId") UUID vaultId) implements AuditEventDto {
+	record AuditEventDeviceRegisterDto(long id, Instant timestamp, String type, @JsonProperty("registeredBy") String registeredBy, @JsonProperty("deviceId") String deviceId, @JsonProperty("deviceName") String deviceName,
+									   @JsonProperty("deviceType") Device.Type deviceType) implements AuditEventDto {
 	}
 
-	record UnlockVaultEventDto(long id, Instant timestamp, String type, @JsonProperty("userId") String userId, @JsonProperty("vaultId") UUID vaultId, @JsonProperty("deviceId") String deviceId,
-							   @JsonProperty("result") UnlockVaultEvent.Result result) implements AuditEventDto {
+	record AuditEventDeviceRemoveDto(long id, Instant timestamp, String type, @JsonProperty("removedBy") String removedBy, @JsonProperty("deviceId") String deviceId) implements AuditEventDto {
 	}
 
-	record UpdateVaultMembershipEventDto(long id, Instant timestamp, String type, @JsonProperty("userId") String userId, @JsonProperty("vaultId") UUID vaultId, @JsonProperty("authorityId") String authorityId,
-										 @JsonProperty("operation") UpdateVaultMembershipEvent.Operation operation) implements AuditEventDto {
+	record AuditEventVaultCreateDto(long id, Instant timestamp, String type, @JsonProperty("createdBy") String createdBy, @JsonProperty("vaultId") UUID vaultId, @JsonProperty("vaultName") String vaultName,
+									@JsonProperty("vaultDescription") String vaultDescription) implements AuditEventDto {
 	}
+
+	record AuditEventVaultUnlockDto(long id, Instant timestamp, String type, @JsonProperty("unlockedBy") String unlockedBy, @JsonProperty("vaultId") UUID vaultId, @JsonProperty("deviceId") String deviceId,
+									@JsonProperty("result") AuditEventVaultUnlock.Result result) implements AuditEventDto {
+	}
+
+	record AuditEventVaultUpdateDto(long id, Instant timestamp, String type, @JsonProperty("updatedBy") String updatedBy, @JsonProperty("vaultId") UUID vaultId, @JsonProperty("vaultName") String vaultName,
+									@JsonProperty("vaultDescription") String vaultDescription, @JsonProperty("vaultArchived") boolean vaultArchived) implements AuditEventDto {
+	}
+
+	record AuditEventVaultAccessGrantDto(long id, Instant timestamp, String type, @JsonProperty("grantedBy") String grantedBy, @JsonProperty("vaultId") UUID vaultId,
+										 @JsonProperty("authorityId") String authorityId) implements AuditEventDto {
+	}
+
+	record AuditEventVaultMemberAddDto(long id, Instant timestamp, String type, @JsonProperty("addedBy") String addedBy, @JsonProperty("vaultId") UUID vaultId,
+									   @JsonProperty("authorityId") String authorityId) implements AuditEventDto {
+	}
+
+	record AuditEventVaultMemberRemoveDto(long id, Instant timestamp, String type, @JsonProperty("removedBy") String removedBy, @JsonProperty("vaultId") UUID vaultId,
+										  @JsonProperty("authorityId") String authorityId) implements AuditEventDto {
+	}
+
 }

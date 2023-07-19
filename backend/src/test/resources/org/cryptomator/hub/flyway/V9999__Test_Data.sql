@@ -79,22 +79,71 @@ VALUES
 
 INSERT INTO "audit_event" ("id", "timestamp", "type")
 VALUES
-    (999, '1970-01-01T00:00:02.900Z', 'CREATE_VAULT'),
-    (1000, '1970-01-01T00:00:03Z', 'UPDATE_VAULT_MEMBERSHIP'),
-    (1001, '1970-01-01T00:00:04Z', 'UPDATE_VAULT_MEMBERSHIP'),
-    (1111, '1970-01-01T00:00:04.999Z', 'UNLOCK_VAULT'),
-    (4242, '1970-01-01T00:00:05Z', 'UNLOCK_VAULT');
+    (10, '2020-02-20T20:20:20.010Z', 'VAULT_CREATE'),
+    (11, '2020-02-20T20:20:20.011Z', 'VAULT_MEMBER_ADD'),
+    (12, '2020-02-20T20:20:20.012Z', 'VAULT_MEMBER_ADD'),
+    (20, '2020-02-20T20:20:20.020Z', 'VAULT_CREATE'),
+    (21, '2020-02-20T20:20:20.021Z', 'VAULT_MEMBER_ADD'),
+    (22, '2020-02-20T20:20:20.022Z', 'VAULT_MEMBER_ADD'),
+    (23, '2020-02-20T20:20:20.023Z', 'VAULT_MEMBER_REMOVE'),
+    (30, '2020-02-20T20:20:20.030Z', 'VAULT_CREATE'),
+    (31, '2020-02-20T20:20:20.031Z', 'VAULT_MEMBER_ADD'),
+    (100, '2020-02-20T20:20:20.100Z', 'DEVICE_REGISTER'),
+    (101, '2020-02-20T20:20:20.101Z', 'DEVICE_REGISTER'),
+    (102, '2020-02-20T20:20:20.102Z', 'DEVICE_REGISTER'),
+    (200, '2020-02-20T20:20:20.200Z', 'DEVICE_REGISTER'),
+    (201, '2020-02-20T20:20:20.201Z', 'DEVICE_REMOVE'),
+    (1111, '2020-02-20T20:20:21.111Z', 'VAULT_UNLOCK'),
+    (2000, '2020-02-20T20:20:22.000Z', 'VAULT_ACCESS_GRANT'),
+    (2001, '2020-02-20T20:20:22.001Z', 'VAULT_ACCESS_GRANT'),
+    (2002, '2020-02-20T20:20:22.002Z', 'VAULT_ACCESS_GRANT'),
+    (2003, '2020-02-20T20:20:22.003Z', 'VAULT_ACCESS_GRANT'),
+    (3000, '2020-02-20T20:20:23.000Z', 'VAULT_UPDATE'),
+    (4242, '2020-02-20T20:20:24.242Z', 'VAULT_UNLOCK');
 
-INSERT INTO "unlock_vault_event" ("id", "user_id", "vault_id", "device_id", "result")
+SELECT SETVAL('audit_event_id_seq', (SELECT MAX(id) FROM audit_event), true);
+
+INSERT INTO "audit_event_vault_create" ("id", "created_by", "vault_id", "vault_name", "vault_description")
 VALUES
-    (1111, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'device3', 'UNAUTHORIZED'),
+    (10, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'Vault 1', 'This is a testvault.'),
+    (20, 'user1', '7E57C0DE-0000-4000-8000-000100002222', 'Vault 2', 'This is a testvault.'),
+    (30, 'user2', '7E57C0DE-0000-4000-8000-00010000AAAA', 'Vault 3', 'This is a testvault.');
+
+INSERT INTO "audit_event_vault_member_add" ("id", "added_by", "vault_id", "authority_id")
+VALUES
+    (11, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'user1'),
+    (12, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'user2'),
+    (21, 'user1', '7E57C0DE-0000-4000-8000-000100002222', 'user1'),
+    (22, 'user1', '7E57C0DE-0000-4000-8000-000100002222', 'group1'),
+    (31, 'user2', '7E57C0DE-0000-4000-8000-00010000AAAA', 'user2');
+
+INSERT INTO "audit_event_vault_member_remove" ("id", "removed_by", "vault_id", "authority_id")
+VALUES
+    (23, 'user1', '7E57C0DE-0000-4000-8000-000100002222', 'user1');
+
+INSERT INTO "audit_event_device_register" ("id", "registered_by", "device_id", "device_name", "device_type")
+VALUES
+    (100, 'user1', 'device1', 'Computer 1', 'DESKTOP'),
+    (101, 'user2', 'device2', 'Computer 2', 'DESKTOP'),
+    (102, 'user1', 'device3', 'Computer 3', 'DESKTOP'),
+    (200, 'user2', 'device4', 'Computer 4', 'DESKTOP');
+
+INSERT INTO "audit_event_device_remove" ("id", "removed_by", "device_id")
+VALUES
+    (201, 'user2', 'device4');
+
+INSERT INTO "audit_event_vault_unlock" ("id", "unlocked_by", "vault_id", "device_id", "result")
+VALUES
+    (1111, 'user2', '7E57C0DE-0000-4000-8000-000100001111', 'device3', 'UNAUTHORIZED'),
     (4242, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'device1', 'SUCCESS');
 
-INSERT INTO "create_vault_event" ("id", "user_id", "vault_id")
+INSERT INTO "audit_event_vault_access_grant" ("id", "granted_by", "vault_id", "authority_id")
 VALUES
-    (999, 'user1', '7E57C0DE-0000-4000-8000-000100001111');
+    (2000, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'user1'),
+    (2001, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'user2'),
+    (2002, 'user1', '7E57C0DE-0000-4000-8000-00010000AAAA', 'user1'),
+    (2003, 'user1', '7E57C0DE-0000-4000-8000-000100002222', 'group1');
 
-INSERT INTO "update_vault_membership_event" ("id", "user_id", "vault_id", "authority_id", "operation")
+INSERT INTO "audit_event_vault_update" ("id", "updated_by", "vault_id", "vault_name", "vault_description", "vault_archived")
 VALUES
-    (1000, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'user2', 'ADD'),
-    (1001, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'user2', 'REMOVE');
+    (3000, 'user1', '7E57C0DE-0000-4000-8000-00010000AAAA', 'Vault Archived', 'This is a archived vault.', TRUE);

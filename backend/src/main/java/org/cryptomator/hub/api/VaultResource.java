@@ -30,14 +30,17 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.AccessToken;
+import org.cryptomator.hub.entities.AuditEventVaultAccessGrant;
+import org.cryptomator.hub.entities.AuditEventVaultCreate;
+import org.cryptomator.hub.entities.AuditEventVaultMemberAdd;
+import org.cryptomator.hub.entities.AuditEventVaultMemberRemove;
+import org.cryptomator.hub.entities.AuditEventVaultUnlock;
+import org.cryptomator.hub.entities.AuditEventVaultUpdate;
 import org.cryptomator.hub.entities.Authority;
-import org.cryptomator.hub.entities.CreateVaultEvent;
 import org.cryptomator.hub.entities.EffectiveGroupMembership;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.LegacyAccessToken;
-import org.cryptomator.hub.entities.UnlockVaultEvent;
-import org.cryptomator.hub.entities.UpdateVaultMembershipEvent;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.entities.VaultAccess;
@@ -207,7 +210,7 @@ public class VaultResource {
 			access.authority = authority;
 			access.role = role;
 			access.persist();
-			UpdateVaultMembershipEvent.log(jwt.getSubject(), vault.id, authority.id, UpdateVaultMembershipEvent.Operation.ADD);
+			AuditEventVaultMemberAdd.log(jwt.getSubject(), vault.id, authority.id);
 			return Response.created(URI.create(".")).build();
 		}
 	}
@@ -240,7 +243,7 @@ public class VaultResource {
 
 	private Response removeAuthority(UUID vaultId, String authorityId) {
 		if (VaultAccess.deleteById(new VaultAccess.Id(vaultId, authorityId))) {
-			UpdateVaultMembershipEvent.log(jwt.getSubject(), vaultId, authorityId, UpdateVaultMembershipEvent.Operation.REMOVE);
+			AuditEventVaultMemberRemove.log(jwt.getSubject(), vaultId, authorityId);
 			return Response.status(Response.Status.NO_CONTENT).build();
 		} else {
 			throw new NotFoundException();
@@ -285,12 +288,12 @@ public class VaultResource {
 
 		var access = LegacyAccessToken.unlock(vaultId, deviceId, jwt.getSubject());
 		if (access != null) {
-			UnlockVaultEvent.log(jwt.getSubject(), vaultId, deviceId, UnlockVaultEvent.Result.SUCCESS);
+			AuditEventVaultUnlock.log(jwt.getSubject(), vaultId, deviceId, AuditEventVaultUnlock.Result.SUCCESS);
 			var subscriptionStateHeaderName = "Hub-Subscription-State";
 			var subscriptionStateHeaderValue = license.isSet() ? "ACTIVE" : "INACTIVE"; // license expiration is not checked here, because it is checked in the ActiveLicense filter
 			return Response.ok(access.jwe).header(subscriptionStateHeaderName, subscriptionStateHeaderValue).build();
 		} else {
-			UnlockVaultEvent.log(jwt.getSubject(), vaultId, deviceId, UnlockVaultEvent.Result.UNAUTHORIZED);
+			AuditEventVaultUnlock.log(jwt.getSubject(), vaultId, deviceId, AuditEventVaultUnlock.Result.UNAUTHORIZED);
 			throw new ForbiddenException("Access to this device not granted.");
 		}
 	}
@@ -355,6 +358,7 @@ public class VaultResource {
 
 		try {
 			access.persistAndFlush();
+			AuditEventVaultAccessGrant.log(jwt.getSubject(), vaultId, userId);
 			return Response.created(URI.create(".")).build();
 		} catch (ConstraintViolationException e) {
 			throw new ClientErrorException(Response.Status.CONFLICT, e);
@@ -386,7 +390,7 @@ public class VaultResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
 	@Operation(summary = "creates or updates a vault",
-			description = "Creates or updates a vault with the given vault id. The creationTime in the vaultDto is always ignored. On creation the current server time is used. On update, only the name, description and archived fields are considered.")
+			description = "Creates or updates a vault with the given vault id. The creationTime in the vaultDto is always ignored. On creation, the current server time is used and the archived field is ignored. On update, only the name, description, and archived fields are considered.")
 	@APIResponse(responseCode = "200", description = "existing vault updated")
 	@APIResponse(responseCode = "201", description = "new vault created")
 	public Response createOrUpdate(@PathParam("vaultId") UUID vaultId, @Valid @NotNull VaultDto vaultDto) {
@@ -410,7 +414,7 @@ public class VaultResource {
 		// set regardless of whether vault is new or existing:
 		vault.name = vaultDto.name;
 		vault.description = vaultDto.description;
-		vault.archived = vaultDto.archived;
+		vault.archived = existingVault.isEmpty() ? false : vaultDto.archived;
 
 		vault.persistAndFlush(); // trigger PersistenceException before we continue with
 		if (existingVault.isEmpty()) {
@@ -419,11 +423,11 @@ public class VaultResource {
 			access.authority = currentUser;
 			access.role = VaultAccess.Role.OWNER;
 			access.persist();
-			CreateVaultEvent.log(currentUser.id, vault.id);
-			UpdateVaultMembershipEvent.log(currentUser.id, vaultId, currentUser.id, UpdateVaultMembershipEvent.Operation.ADD);
+			AuditEventVaultCreate.log(currentUser.id, vault.id, vault.name, vault.description);
+			AuditEventVaultMemberAdd.log(currentUser.id, vaultId, currentUser.id);
 			return Response.created(URI.create(".")).contentLocation(URI.create(".")).entity(VaultDto.fromEntity(vault)).type(MediaType.APPLICATION_JSON).build();
 		} else {
-			// TODO: log UpdateVaultEvent
+			AuditEventVaultUpdate.log(currentUser.id, vault.id, vault.name, vault.description, vault.archived);
 			return Response.ok(VaultDto.fromEntity(vault), MediaType.APPLICATION_JSON).build();
 		}
 	}
@@ -471,7 +475,7 @@ public class VaultResource {
 			access.authority = currentUser;
 			access.role = VaultAccess.Role.OWNER;
 			access.persist();
-			UpdateVaultMembershipEvent.log(currentUser.id, vaultId, currentUser.id, UpdateVaultMembershipEvent.Operation.ADD);
+			AuditEventVaultMemberAdd.log(currentUser.id, vaultId, currentUser.id);
 		}
 
 		vault.salt = null;
