@@ -31,6 +31,14 @@
           <code class="text-xs" :class="{'text-gray-600': resolvedAuthority != null}">{{ event.authorityId }}</code>
         </dd>
       </div>
+      <div class="flex items-baseline gap-2">
+        <dt class="text-xs text-gray-500">
+          <code>role</code>
+        </dt>
+        <dd class="text-sm text-gray-900">
+          {{ event.role }}
+        </dd>
+      </div>
     </dl>
   </td>
 </template>

@@ -41,6 +41,7 @@ CREATE TABLE "access_token"
 );
 
 ALTER TABLE "vault_access" ADD "role" VARCHAR(50) NOT NULL DEFAULT 'MEMBER';
+ALTER TABLE "audit_event_vault_member_add" ADD "role" VARCHAR(50) NOT NULL DEFAULT 'MEMBER';
 
 -- @formatter:off
 CREATE OR REPLACE VIEW "effective_vault_access" ("vault_id", "authority_id", "role") AS

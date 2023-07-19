@@ -30,6 +30,7 @@ import org.cryptomator.hub.entities.AuditEventVaultMemberAdd;
 import org.cryptomator.hub.entities.AuditEventVaultMemberRemove;
 import org.cryptomator.hub.entities.AuditEventVaultUnlock;
 import org.cryptomator.hub.entities.AuditEventVaultUpdate;
+import org.cryptomator.hub.entities.Authority;
 import org.cryptomator.hub.entities.EffectiveGroupMembership;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.entities.Group;
@@ -46,6 +47,8 @@ import org.cryptomator.hub.validation.ValidId;
 import org.cryptomator.hub.validation.ValidJWE;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.hibernate.exception.ConstraintViolationException;
 
@@ -139,15 +142,16 @@ public class VaultResource {
 	@VaultAdminOnlyFilter
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
-	@Operation(summary = "adds a member to this vault")
-	@APIResponse(responseCode = "201", description = "member added")
-	@APIResponse(responseCode = "401", description = "VaultAdminAuthorizationJWT not provided")
+	@Operation(summary = "adds a user to this vault or updates her role")
+	@Parameter(name = "role", in = ParameterIn.QUERY, description = "the role to grant to this user (defaults to MEMBER)")
+	@APIResponse(responseCode = "200", description = "user's role updated")
+	@APIResponse(responseCode = "201", description = "user added")
 	@APIResponse(responseCode = "402", description = "all seats in license used")
-	@APIResponse(responseCode = "403", description = "VaultAdminAuthorizationJWT expired or not yet valid")
-	@APIResponse(responseCode = "404", description = "vault or user not found")
+	@APIResponse(responseCode = "403", description = "not a vault owner")
+	@APIResponse(responseCode = "404", description = "user not found")
 	@ActiveLicense
 	public Response addUser(@PathParam("vaultId") UUID vaultId, @PathParam("userId") @ValidId String userId, @QueryParam("role") @DefaultValue("MEMBER") VaultAccess.Role role) {
-		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
+		var vault = Vault.<Vault>findById(vaultId); // // should always be found, since @VaultRole filter would have triggered
 		var user = User.<User>findByIdOptional(userId).orElseThrow(NotFoundException::new);
 		if (!EffectiveVaultAccess.isUserOccupyingSeat(userId)) {
 			//for new user, we need to check if a license seat is available
@@ -157,17 +161,7 @@ public class VaultResource {
 			}
 		}
 
-		var id = new VaultAccess.Id(vaultId, userId);
-		var access = VaultAccess.<VaultAccess>findById(id);
-		if (access == null) {
-			access = new VaultAccess();
-			access.vault = vault;
-			access.authority = user;
-		}
-		access.role = role;
-		access.persist();
-		AuditEventVaultMemberAdd.log(jwt.getSubject(), vaultId, userId);
-		return Response.status(Response.Status.CREATED).build();
+		return addAuthority(vault, user, role);
 	}
 
 	@PUT
@@ -176,33 +170,44 @@ public class VaultResource {
 	@VaultAdminOnlyFilter
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
-	@Operation(summary = "adds a group to this vault")
-	@APIResponse(responseCode = "201", description = "member added")
-	@APIResponse(responseCode = "401", description = "VaultAdminAuthorizationJWT not provided")
+	@Operation(summary = "adds a group to this vault or updates its role")
+	@Parameter(name = "role", in = ParameterIn.QUERY, description = "the role to grant to this group (defaults to MEMBER)")
+	@APIResponse(responseCode = "200", description = "group's role updated")
+	@APIResponse(responseCode = "201", description = "group added")
 	@APIResponse(responseCode = "402", description = "used seats + (number of users in group not occupying a seats) exceeds number of total avaible seats in license")
-	@APIResponse(responseCode = "403", description = "VaultAdminAuthorizationJWT expired or not yet valid")
-	@APIResponse(responseCode = "404", description = "vault or group not found")
+	@APIResponse(responseCode = "403", description = "not a vault owner")
+	@APIResponse(responseCode = "404", description = "group not found")
 	@ActiveLicense
 	public Response addGroup(@PathParam("vaultId") UUID vaultId, @PathParam("groupId") @ValidId String groupId, @QueryParam("role") @DefaultValue("MEMBER") VaultAccess.Role role) {
+		var vault = Vault.<Vault>findById(vaultId); // should always be found, since @VaultRole filter would have triggered
+		var group = Group.<Group>findByIdOptional(groupId).orElseThrow(NotFoundException::new);
+
 		//usersInGroup - usersInGroupAndPartOfAtLeastOneVault + usersOfAtLeastOneVault
 		if (EffectiveGroupMembership.countEffectiveGroupUsers(groupId) - EffectiveVaultAccess.countSeatOccupyingUsersOfGroup(groupId) + EffectiveVaultAccess.countSeatOccupyingUsers() > license.getAvailableSeats()) {
 			throw new PaymentRequiredException("Number of effective vault users greater than or equal to the available license seats");
 		}
 
-		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-		var group = Group.<Group>findByIdOptional(groupId).orElseThrow(NotFoundException::new);
+		return addAuthority(vault, group, role);
+	}
 
-		var id = new VaultAccess.Id(vaultId, groupId);
-		var access = VaultAccess.<VaultAccess>findById(id);
-		if (access == null) {
-			access = new VaultAccess();
+	private Response addAuthority(Vault vault, Authority authority, VaultAccess.Role role) {
+		var id = new VaultAccess.Id(vault.id, authority.id);
+		var existingAccess = VaultAccess.<VaultAccess>findByIdOptional(id);
+		if (existingAccess.isPresent()) {
+			var access = existingAccess.get();
+			access.role = role;
+			access.persist();
+			// TODO log event?
+			return Response.ok().build();
+		} else {
+			var access = new VaultAccess();
 			access.vault = vault;
-			access.authority = group;
+			access.authority = authority;
+			access.role = role;
+			access.persist();
+			AuditEventVaultMemberAdd.log(jwt.getSubject(), vault.id, authority.id, role);
+			return Response.created(URI.create(".")).build();
 		}
-		access.role = role;
-		access.persist();
-		AuditEventVaultMemberAdd.log(jwt.getSubject(), vaultId, groupId);
-		return Response.status(Response.Status.CREATED).build();
 	}
 
 	@DELETE
@@ -419,7 +424,7 @@ public class VaultResource {
 			access.role = VaultAccess.Role.OWNER;
 			access.persist();
 			AuditEventVaultCreate.log(currentUser.id, vault.id, vault.name, vault.description);
-			AuditEventVaultMemberAdd.log(currentUser.id, vaultId, currentUser.id);
+			AuditEventVaultMemberAdd.log(currentUser.id, vaultId, currentUser.id, VaultAccess.Role.OWNER);
 			return Response.created(URI.create(".")).contentLocation(URI.create(".")).entity(VaultDto.fromEntity(vault)).type(MediaType.APPLICATION_JSON).build();
 		} else {
 			AuditEventVaultUpdate.log(currentUser.id, vault.id, vault.name, vault.description, vault.archived);

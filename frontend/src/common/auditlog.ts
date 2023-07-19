@@ -38,6 +38,7 @@ export type AuditEventVaultMemberAddDto = AuditEventDto & {
   addedBy: string;
   vaultId: string;
   authorityId: string;
+  role: 'MEMBER' | 'OWNER';
 }
 
 export type AuditEventVaultMemberRemoveDto = AuditEventDto & {
@@ -66,7 +67,7 @@ export type AuditEventVaultUpdateDto = AuditEventDto & {
 export class AuditLogEntityCache {
   private vaults: Map<string, Deferred<VaultDto>>;
   private authorities: Map<string, Deferred<AuthorityDto>>;
-  private devices: Map<string, Deferred<DeviceDto>>;  
+  private devices: Map<string, Deferred<DeviceDto>>;
 
   constructor() {
     this.vaults = new Map();
@@ -88,7 +89,7 @@ export class AuditLogEntityCache {
 
   private async getEntity<T>(entityId: string, entities: Map<string, Deferred<T>>, debouncedResolvePendingEntities: Function): Promise<T> {
     const cachedEntity = entities.get(entityId);
-    if (!cachedEntity) {  
+    if (!cachedEntity) {
       const deferredEntity = new Deferred<T>();
       entities.set(entityId, deferredEntity);
       debouncedResolvePendingEntities();
