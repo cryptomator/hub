@@ -1,12 +1,15 @@
 package org.cryptomator.hub.api;
 
+import io.agroal.api.AgroalDataSource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.quarkus.test.security.oidc.Claim;
 import io.quarkus.test.security.oidc.OidcSecurity;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
+import jakarta.inject.Inject;
 import org.cryptomator.hub.entities.Device;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
@@ -15,6 +18,7 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 
+import java.sql.SQLException;
 import java.time.Instant;
 
 import static io.restassured.RestAssured.given;
@@ -26,6 +30,9 @@ import static org.hamcrest.Matchers.hasSize;
 @QuarkusTest
 @DisplayName("Resource /devices")
 public class DeviceResourceTest {
+
+	@Inject
+	AgroalDataSource dataSource;
 
 	@BeforeAll
 	public static void beforeAll() {
@@ -101,12 +108,27 @@ public class DeviceResourceTest {
 		@Test
 		@Order(2)
 		@DisplayName("PUT /devices/device999 returns 201 (creating new device)")
-		public void testCreate999() {
+		public void testCreate999() throws SQLException {
+			try (var s = dataSource.getConnection().createStatement()) {
+				s.execute("""
+						INSERT INTO "device_legacy" ("id", "owner_id", "name", "type", "publickey", "creation_time")
+						VALUES
+							('device999', 'user1', 'Computer 999', 'DESKTOP', 'publickey999', '2020-02-20 20:20:20')
+						""");
+			}
+
 			var deviceDto = new DeviceResource.DeviceDto("device999", "Computer 999", Device.Type.DESKTOP, "publickey999", "jwe.jwe.jwe.user1.device999", "user1", Instant.parse("2020-02-20T20:20:20Z"));
 
 			given().contentType(ContentType.JSON).body(deviceDto)
 					.when().put("/devices/{deviceId}", "device999")
 					.then().statusCode(201);
+
+			try (var s = dataSource.getConnection().createStatement()) {
+				var rs = s.executeQuery("""
+						SELECT * FROM "device_legacy" WHERE "id" = 'device999';
+						""");
+				Assertions.assertFalse(rs.next());
+			}
 		}
 
 		@Test
