@@ -12,20 +12,17 @@ import java.util.Objects;
 import java.util.UUID;
 
 @Entity
-@Table(name = "audit_event_vault_unlock")
-@DiscriminatorValue(AuditEventVaultUnlock.TYPE)
-public class AuditEventVaultUnlock extends AuditEvent {
+@Table(name = "audit_event_vault_key_retrieve")
+@DiscriminatorValue(AuditEventVaultKeyRetrieve.TYPE)
+public class AuditEventVaultKeyRetrieve extends AuditEvent {
 
-	public static final String TYPE = "VAULT_UNLOCK";
+	public static final String TYPE = "VAULT_KEY_RETRIEVE";
 
-	@Column(name = "unlocked_by")
-	public String unlockedBy;
+	@Column(name = "retrieved_by")
+	public String retrievedBy;
 
 	@Column(name = "vault_id")
 	public UUID vaultId;
-
-	@Column(name = "device_id")
-	public String deviceId;
 
 	@Column(name = "result")
 	@Enumerated(EnumType.STRING)
@@ -35,25 +32,23 @@ public class AuditEventVaultUnlock extends AuditEvent {
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
-		AuditEventVaultUnlock that = (AuditEventVaultUnlock) o;
+		AuditEventVaultKeyRetrieve that = (AuditEventVaultKeyRetrieve) o;
 		return super.equals(that) //
-				&& Objects.equals(unlockedBy, that.unlockedBy) //
+				&& Objects.equals(retrievedBy, that.retrievedBy) //
 				&& Objects.equals(vaultId, that.vaultId) //
-				&& Objects.equals(deviceId, that.deviceId) //
 				&& Objects.equals(result, that.result);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, unlockedBy, vaultId, deviceId, result);
+		return Objects.hash(id, retrievedBy, vaultId, result);
 	}
 
-	public static void log(String unlockedBy, UUID vaultId, String deviceId, Result result) {
-		var event = new AuditEventVaultUnlock();
+	public static void log(String retrievedBy, UUID vaultId, Result result) {
+		var event = new AuditEventVaultKeyRetrieve();
 		event.timestamp = Instant.now();
-		event.unlockedBy = unlockedBy;
+		event.retrievedBy = retrievedBy;
 		event.vaultId = vaultId;
-		event.deviceId = deviceId;
 		event.result = result;
 		event.persist();
 	}

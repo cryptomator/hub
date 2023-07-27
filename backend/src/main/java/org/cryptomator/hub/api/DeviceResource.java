@@ -20,9 +20,10 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.AuditEventDeviceRegister;
 import org.cryptomator.hub.entities.AuditEventDeviceRemove;
+import org.cryptomator.hub.entities.Device;
+import org.cryptomator.hub.entities.LegacyDevice;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.validation.NoHtmlOrScriptChars;
 import org.cryptomator.hub.validation.OnlyBase64Chars;
@@ -32,6 +33,7 @@ import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.hibernate.exception.ConstraintViolationException;
+import org.jboss.logging.Logger;
 import org.jboss.resteasy.reactive.NoCache;
 
 import java.net.URI;
@@ -41,6 +43,8 @@ import java.util.List;
 
 @Path("/devices")
 public class DeviceResource {
+
+	private static final Logger LOG = Logger.getLogger(DeviceResource.class);
 
 	@Inject
 	JsonWebToken jwt;
@@ -75,6 +79,11 @@ public class DeviceResource {
 			device.owner = User.findById(jwt.getSubject());
 			device.creationTime = Instant.now().truncatedTo(ChronoUnit.MILLIS);
 			device.type = dto.type != null ? dto.type : Device.Type.DESKTOP; // default to desktop for backwards compatibility
+
+			if (LegacyDevice.deleteById(device.id)) {
+				assert LegacyDevice.findById(device.id) == null;
+				LOG.info("Deleted Legacy Device during re-registration of Device " + deviceId);
+			}
 		}
 		device.name = dto.name;
 		device.publickey = dto.publicKey;

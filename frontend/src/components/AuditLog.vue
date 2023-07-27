@@ -94,9 +94,9 @@
                 <AuditLogDetailsDeviceRegister v-if="auditEvent.type == 'DEVICE_REGISTER'" :event="(auditEvent as AuditEventDeviceRegisterDto)" />
                 <AuditLogDetailsDeviceRemove v-else-if="auditEvent.type == 'DEVICE_REMOVE'" :event="(auditEvent as AuditEventDeviceRemoveDto)" />
                 <AuditLogDetailsVaultCreate v-else-if="auditEvent.type == 'VAULT_CREATE'" :event="(auditEvent as AuditEventVaultCreateDto)" />
-                <AuditLogDetailsVaultUnlock v-else-if="auditEvent.type == 'VAULT_UNLOCK'" :event="(auditEvent as AuditEventVaultUnlockDto)" />
                 <AuditLogDetailsVaultUpdate v-else-if="auditEvent.type == 'VAULT_UPDATE'" :event="(auditEvent as AuditEventVaultUpdateDto)" />
                 <AuditLogDetailsVaultAccessGrant v-else-if="auditEvent.type == 'VAULT_ACCESS_GRANT'" :event="(auditEvent as AuditEventVaultAccessGrantDto)" />
+                <AuditLogDetailsVaultKeyRetrieve v-else-if="auditEvent.type == 'VAULT_KEY_RETRIEVE'" :event="(auditEvent as AuditEventVaultKeyRetrieveDto)" />
                 <AuditLogDetailsVaultMemberAdd v-else-if="auditEvent.type == 'VAULT_MEMBER_ADD'" :event="(auditEvent as AuditEventVaultMemberAddDto)" />
                 <AuditLogDetailsVaultMemberRemove v-else-if="auditEvent.type == 'VAULT_MEMBER_REMOVE'" :event="(auditEvent as AuditEventVaultMemberRemoveDto)" />
               </tr>
@@ -137,14 +137,14 @@ import { ChevronDownIcon } from '@heroicons/vue/20/solid';
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/vue/24/solid';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import auditlog, { AuditEventDeviceRegisterDto, AuditEventDeviceRemoveDto, AuditEventDto, AuditEventVaultAccessGrantDto, AuditEventVaultCreateDto, AuditEventVaultMemberAddDto, AuditEventVaultMemberRemoveDto, AuditEventVaultUnlockDto, AuditEventVaultUpdateDto } from '../common/auditlog';
+import auditlog, { AuditEventDeviceRegisterDto, AuditEventDeviceRemoveDto, AuditEventDto, AuditEventVaultAccessGrantDto, AuditEventVaultCreateDto, AuditEventVaultKeyRetrieveDto, AuditEventVaultMemberAddDto, AuditEventVaultMemberRemoveDto, AuditEventVaultUpdateDto } from '../common/auditlog';
 import AuditLogDetailsDeviceRegister from './AuditLogDetailsDeviceRegister.vue';
 import AuditLogDetailsDeviceRemove from './AuditLogDetailsDeviceRemove.vue';
 import AuditLogDetailsVaultAccessGrant from './AuditLogDetailsVaultAccessGrant.vue';
 import AuditLogDetailsVaultCreate from './AuditLogDetailsVaultCreate.vue';
+import AuditLogDetailsVaultKeyRetrieve from './AuditLogDetailsVaultKeyRetrieve.vue';
 import AuditLogDetailsVaultMemberAdd from './AuditLogDetailsVaultMemberAdd.vue';
 import AuditLogDetailsVaultMemberRemove from './AuditLogDetailsVaultMemberRemove.vue';
-import AuditLogDetailsVaultUnlock from './AuditLogDetailsVaultUnlock.vue';
 import AuditLogDetailsVaultUpdate from './AuditLogDetailsVaultUpdate.vue';
 
 const { t } = useI18n({ useScope: 'global' });
