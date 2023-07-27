@@ -70,9 +70,9 @@
   "auditLog.details.device.register": "Gerät registrieren",
   "auditLog.details.device.remove": "Gerät entfernen",
   "auditLog.details.vault.create": "Tresor erstellen",
-  "auditLog.details.vault.unlock": "Tresor entsperren",
   "auditLog.details.vault.update": "Tresor aktualisieren",
   "auditLog.details.vaultAccess.grant": "Tresor-Zugriff gewähren",
+  "auditLog.details.vaultKey.retrieve": "Tresor-Schlüssel abrufen",
   "auditLog.details.vaultMember.add": "Tresor-Mitglied hinzufügen",
   "auditLog.details.vaultMember.remove": "Tresor-Mitglied entfernen",
 

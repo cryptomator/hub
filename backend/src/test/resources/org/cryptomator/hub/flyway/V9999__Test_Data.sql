@@ -92,13 +92,13 @@ VALUES
     (102, '2020-02-20T20:20:20.102Z', 'DEVICE_REGISTER'),
     (200, '2020-02-20T20:20:20.200Z', 'DEVICE_REGISTER'),
     (201, '2020-02-20T20:20:20.201Z', 'DEVICE_REMOVE'),
-    (1111, '2020-02-20T20:20:21.111Z', 'VAULT_UNLOCK'),
+    (1111, '2020-02-20T20:20:21.111Z', 'VAULT_KEY_RETRIEVE'),
     (2000, '2020-02-20T20:20:22.000Z', 'VAULT_ACCESS_GRANT'),
     (2001, '2020-02-20T20:20:22.001Z', 'VAULT_ACCESS_GRANT'),
     (2002, '2020-02-20T20:20:22.002Z', 'VAULT_ACCESS_GRANT'),
     (2003, '2020-02-20T20:20:22.003Z', 'VAULT_ACCESS_GRANT'),
     (3000, '2020-02-20T20:20:23.000Z', 'VAULT_UPDATE'),
-    (4242, '2020-02-20T20:20:24.242Z', 'VAULT_UNLOCK');
+    (4242, '2020-02-20T20:20:24.242Z', 'VAULT_KEY_RETRIEVE');
 
 SELECT SETVAL('audit_event_id_seq', (SELECT MAX(id) FROM audit_event), true);
 
@@ -131,10 +131,10 @@ INSERT INTO "audit_event_device_remove" ("id", "removed_by", "device_id")
 VALUES
     (201, 'user2', 'device4');
 
-INSERT INTO "audit_event_vault_unlock" ("id", "unlocked_by", "vault_id", "device_id", "result")
+INSERT INTO "audit_event_vault_key_retrieve" ("id", "retrieved_by", "vault_id", "result")
 VALUES
-    (1111, 'user2', '7E57C0DE-0000-4000-8000-000100001111', 'device3', 'UNAUTHORIZED'),
-    (4242, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'device1', 'SUCCESS');
+    (1111, 'user2', '7E57C0DE-0000-4000-8000-000100001111', 'UNAUTHORIZED'),
+    (4242, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'SUCCESS');
 
 INSERT INTO "audit_event_vault_access_grant" ("id", "granted_by", "vault_id", "authority_id")
 VALUES
