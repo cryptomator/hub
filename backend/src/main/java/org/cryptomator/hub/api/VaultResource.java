@@ -324,10 +324,12 @@ public class VaultResource {
 
 		var access = AccessToken.unlock(vaultId, jwt.getSubject());
 		if (access != null) {
+			AuditEventVaultKeyRetrieve.log(jwt.getSubject(), vaultId, AuditEventVaultKeyRetrieve.Result.SUCCESS);
 			return access.vaultKey;
 		} else if (Vault.findById(vaultId) == null) {
 			throw new NotFoundException("No such vault.");
 		} else {
+			AuditEventVaultKeyRetrieve.log(jwt.getSubject(), vaultId, AuditEventVaultKeyRetrieve.Result.UNAUTHORIZED);
 			throw new ForbiddenException("Access to this vault not granted.");
 		}
 	}
