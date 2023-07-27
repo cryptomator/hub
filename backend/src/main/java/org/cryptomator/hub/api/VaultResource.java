@@ -24,16 +24,16 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.AccessToken;
-import org.cryptomator.hub.entities.AuditEventVaultMemberAdd;
+import org.cryptomator.hub.entities.AuditEventVaultAccessGrant;
 import org.cryptomator.hub.entities.AuditEventVaultCreate;
+import org.cryptomator.hub.entities.AuditEventVaultKeyRetrieve;
+import org.cryptomator.hub.entities.AuditEventVaultMemberAdd;
+import org.cryptomator.hub.entities.AuditEventVaultMemberRemove;
+import org.cryptomator.hub.entities.AuditEventVaultUpdate;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.EffectiveGroupMembership;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
-import org.cryptomator.hub.entities.AuditEventVaultAccessGrant;
 import org.cryptomator.hub.entities.Group;
-import org.cryptomator.hub.entities.AuditEventVaultMemberRemove;
-import org.cryptomator.hub.entities.AuditEventVaultUnlock;
-import org.cryptomator.hub.entities.AuditEventVaultUpdate;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.filters.ActiveLicense;
@@ -268,14 +268,14 @@ public class VaultResource {
 
 		var access = AccessToken.unlock(vaultId, deviceId, jwt.getSubject());
 		if (access != null) {
-			AuditEventVaultUnlock.log(jwt.getSubject(), vaultId, deviceId, AuditEventVaultUnlock.Result.SUCCESS);
+			AuditEventVaultKeyRetrieve.log(jwt.getSubject(), vaultId, AuditEventVaultKeyRetrieve.Result.SUCCESS);
 			var subscriptionStateHeaderName = "Hub-Subscription-State";
 			var subscriptionStateHeaderValue = license.isSet() ? "ACTIVE" : "INACTIVE"; // license expiration is not checked here, because it is checked in the ActiveLicense filter
 			return Response.ok(access.jwe).header(subscriptionStateHeaderName, subscriptionStateHeaderValue).build();
 		} else if (Device.findById(deviceId) == null) {
 			throw new NotFoundException("No such device.");
 		} else {
-			AuditEventVaultUnlock.log(jwt.getSubject(), vaultId, deviceId, AuditEventVaultUnlock.Result.UNAUTHORIZED);
+			AuditEventVaultKeyRetrieve.log(jwt.getSubject(), vaultId, AuditEventVaultKeyRetrieve.Result.UNAUTHORIZED);
 			throw new ForbiddenException("Access to this device not granted.");
 		}
 	}
