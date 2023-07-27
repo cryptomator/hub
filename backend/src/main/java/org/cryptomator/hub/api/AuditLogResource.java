@@ -96,7 +96,7 @@ public class AuditLogResource {
 			} else if (entity instanceof AuditEventVaultKeyRetrieve evt) {
 				return new AuditEventVaultKeyRetrieveDto(evt.id, evt.timestamp, AuditEventVaultKeyRetrieve.TYPE, evt.retrievedBy, evt.vaultId, evt.result);
 			} else if (entity instanceof AuditEventVaultMemberAdd evt) {
-				return new AuditEventVaultMemberAddDto(evt.id, evt.timestamp, AuditEventVaultMemberAdd.TYPE, evt.addedBy, evt.vaultId, evt.authorityId);
+				return new AuditEventVaultMemberAddDto(evt.id, evt.timestamp, AuditEventVaultMemberAdd.TYPE, evt.addedBy, evt.vaultId, evt.authorityId, evt.role);
 			} else if (entity instanceof AuditEventVaultMemberRemove evt) {
 				return new AuditEventVaultMemberRemoveDto(evt.id, evt.timestamp, AuditEventVaultMemberRemove.TYPE, evt.removedBy, evt.vaultId, evt.authorityId);
 			} else {
