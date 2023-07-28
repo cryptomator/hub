@@ -36,7 +36,9 @@
           <code>role</code>
         </dt>
         <dd class="text-sm text-gray-900">
-          {{ event.role }}
+          <span v-if="event.role === 'MEMBER'">Member</span>
+          <span v-else-if="event.role === 'OWNER'">Owner</span>
+          <span v-else>{{ event.role }}</span>
         </dd>
       </div>
     </dl>
