@@ -16,7 +16,7 @@ class UpdatesService {
         'Cryptomator-Hub-Instance': 'TODO' //for future uses
       }
     };
-    return axios.get('https://api.cryptomator.org/updates/hub.json', config)
+    return axios.get('https://api.cryptomator.org/hub/latest-version.json', config)
       .then(response => response.data)
       .catch(error => {
         console.error(error);
