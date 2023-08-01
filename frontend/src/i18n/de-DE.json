@@ -11,7 +11,6 @@
   "common.download": "Herunterladen",
   "common.hide": "Ausblenden",
   "common.loading": "Laden…",
-  "common.manage": "Verwalten",
   "common.next": "Weiter",
   "common.optional": "optional",
   "common.pagination": "Seitennummerierung",
@@ -79,6 +78,7 @@
   "claimVaultOwnershipDialog.title": "Tresor-Eigentümer werden",
   "claimVaultOwnershipDialog.description": "Gib zur Verifizierung deiner Berechtigung zur Tresorverwaltung das Tresor-Admin-Passwort des Tresors ein.",
   "claimVaultOwnershipDialog.password": "Tresor-Admin-Passwort",
+  "claimVaultOwnershipDialog.submit": "Eigentümer werden",
   "claimVaultOwnershipDialog.error.formValidationFailed": "Passwort darf nicht leer sein",
   "claimVaultOwnershipDialog.error.wrongPassword": "Falsches Passwort",
 

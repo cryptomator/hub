@@ -12,7 +12,6 @@
   "common.error.wrongPassword": "Wrong password",
   "common.hide": "Hide",
   "common.loading": "Loading…",
-  "common.manage": "Manage",
   "common.next": "Next",
   "common.optional": "optional",
   "common.pagination": "Pagination",
@@ -77,9 +76,10 @@
   "auditLog.details.vaultMember.remove": "Remove Vault Member",
   "auditLog.pagination.showing": "Showing entries {0} to {1}",
 
-  "claimVaultOwnershipDialog.title": "Claim Ownership",
+  "claimVaultOwnershipDialog.title": "Claim Vault Ownership",
   "claimVaultOwnershipDialog.description": "Type in the vault admin password to prove you have permissions to manage this vault.",
   "claimVaultOwnershipDialog.password": "Vault Admin Password",
+  "claimVaultOwnershipDialog.submit": "Claim Ownership",
   "claimVaultOwnershipDialog.error.formValidationFailed": "Password must not be empty",
   "claimVaultOwnershipDialog.error.wrongPassword": "Wrong password",
 
