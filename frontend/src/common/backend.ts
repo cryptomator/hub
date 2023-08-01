@@ -234,7 +234,7 @@ class VaultService {
       .catch((error) => rethrowAndConvertIfExpected(error, 404));
   }
 
-  public async claimOwnership(vaultId: string, proof: string): Promise<string> {
+  public async claimOwnership(vaultId: string, proof: string): Promise<VaultDto> {
     var params = new URLSearchParams();
     params.append('proof', proof);
     return axiosAuth.post(`/vaults/${vaultId}/claim-ownership`, params, { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } })

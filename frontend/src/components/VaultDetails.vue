@@ -192,15 +192,19 @@ async function fetchData() {
     vault.value = await backend.vaults.get(props.vaultId);
     me.value = await backend.users.me(true);
     if (props.role == 'OWNER') {
-      const vaultKeyJwe = await backend.vaults.accessToken(props.vaultId);
-      vaultKeys.value = await loadVaultKeys(vaultKeyJwe);
-      (await backend.vaults.getMembers(props.vaultId)).forEach(member => members.value.set(member.id, member));
-      usersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
+      await fetchOwnerData();
     }
   } catch (error) {
     console.error('Fetching data failed.', error);
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
+}
+
+async function fetchOwnerData() {
+  const vaultKeyJwe = await backend.vaults.accessToken(props.vaultId);
+  vaultKeys.value = await loadVaultKeys(vaultKeyJwe);
+  (await backend.vaults.getMembers(props.vaultId)).forEach(member => members.value.set(member.id, member));
+  usersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
 }
 
 async function loadVaultKeys(vaultKeyJwe: string): Promise<VaultKeys> {
@@ -222,20 +226,19 @@ async function provedOwnership(keys: VaultKeys) {
     throw new Error('User not initialized.');
   }
 
-  const vaultKeyJwe = keys.encryptForUser(base64.parse(me.value.publicKey));
-
-  var now = Math.floor(Date.now() / 1000); // seconds since epoch in UTC
-  var expire = now + 10;
-  var header: JWTHeader = { alg: 'ES384', typ: 'JWT', b64: true };
-  var payload = { sub: me.value.id, vaultId: props.vaultId.toLocaleLowerCase(), iat: now, nbf: now, exp: expire };
-  var proof = await JWT.build(header, payload, keys.signatureKeyPair.privateKey);
-
+  const header: JWTHeader = { alg: 'ES384', typ: 'JWT', b64: true };
+  const now = Math.floor(Date.now() / 1000); // seconds since epoch in UTC
+  const expire = now + 10;
+  const payload = { sub: me.value.id, vaultId: props.vaultId.toLocaleLowerCase(), iat: now, nbf: now, exp: expire };
+  const proof = await JWT.build(header, payload, keys.signatureKeyPair.privateKey);
   try {
-    await backend.vaults.claimOwnership(props.vaultId, proof);
+    vault.value = await backend.vaults.claimOwnership(props.vaultId, proof);
   } catch (error) {
     console.error('Failed to claim ownership of vault.', error);
+    return;
   }
 
+  const vaultKeyJwe = keys.encryptForUser(base64.parse(me.value.publicKey));
   try {
     await backend.vaults.grantAccess(props.vaultId, me.value.id, await vaultKeyJwe);
   } catch (error) {
@@ -246,8 +249,8 @@ async function provedOwnership(keys: VaultKeys) {
     }
   }
 
-  // TODO: can we set props.role = 'OWNER'?
-  // TODO: refresh vault list, so it correctly shows the "owner" badge?
+  refreshVault(vault.value);
+  await fetchOwnerData();
 }
 
 async function reloadDevicesRequiringAccessGrant() {
