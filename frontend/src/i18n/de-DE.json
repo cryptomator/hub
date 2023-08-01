@@ -190,6 +190,8 @@
   "vaultDetails.information.header": "Information",
   "vaultDetails.information.created": "Erstellt",
   "vaultDetails.sharedWith.title": "Geteilt mit",
+  "vaultDetails.sharedWith.grantOwnership": "Eigentümerrechte gewähren",
+  "vaultDetails.sharedWith.revokeOwnership": "Eigentümerrechte entziehen",
   "vaultDetails.actions.title": "Aktionen",
   "vaultDetails.actions.updatePermissions": "Berechtigungen aktualisieren",
   "vaultDetails.actions.updatePermissions.reload": "Neu laden",

@@ -212,13 +212,13 @@ class VaultService {
     }).catch(err => rethrowAndConvertIfExpected(err, 403));
   }
 
-  public async addUser(vaultId: string, userId: string): Promise<AxiosResponse<void>> {
-    return axiosAuth.put(`/vaults/${vaultId}/users/${userId}`, null)
+  public async addUser(vaultId: string, userId: string, role?: VaultRole): Promise<AxiosResponse<void>> {
+    return axiosAuth.put(`/vaults/${vaultId}/users/${userId}` + (role ? `?role=${role}` : ''))
       .catch((error) => rethrowAndConvertIfExpected(error, 404, 409));
   }
 
-  public async addGroup(vaultId: string, groupId: string): Promise<AxiosResponse<void>> {
-    return axiosAuth.put(`/vaults/${vaultId}/groups/${groupId}`, null)
+  public async addGroup(vaultId: string, groupId: string, role?: VaultRole): Promise<AxiosResponse<void>> {
+    return axiosAuth.put(`/vaults/${vaultId}/groups/${groupId}` + (role ? `?role=${role}` : ''))
       .catch((error) => rethrowAndConvertIfExpected(error, 404, 409));
   }
 
@@ -235,8 +235,7 @@ class VaultService {
   }
 
   public async claimOwnership(vaultId: string, proof: string): Promise<VaultDto> {
-    var params = new URLSearchParams();
-    params.append('proof', proof);
+    const params = new URLSearchParams({ proof: proof });
     return axiosAuth.post(`/vaults/${vaultId}/claim-ownership`, params, { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } })
       .then(response => response.data)
       .catch((error) => rethrowAndConvertIfExpected(error, 400, 404, 409));
@@ -253,7 +252,7 @@ class VaultService {
       .catch((error) => rethrowAndConvertIfExpected(error, 404, 409));
   }
 
-  public async revokeUserAccess(vaultId: string, userId: string) {
+  public async removeUser(vaultId: string, userId: string) {
     await axiosAuth.delete(`/vaults/${vaultId}/users/${userId}`)
       .catch((error) => rethrowAndConvertIfExpected(error, 404));
   }

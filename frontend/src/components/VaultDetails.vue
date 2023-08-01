@@ -47,11 +47,35 @@
                   <img :src="member.pictureUrl" alt="" class="w-8 h-8 rounded-full" />
                   <p class="ml-4 text-sm font-medium text-gray-900">{{ member.name }}</p>
                 </div>
-                <button v-if="member.id != me?.id" type="button" class="ml-6 bg-white rounded-md text-sm font-medium text-red-600 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="revokeUserAccess(member.id)">{{ t('common.remove') }}<span class="sr-only"> {{ member.name }}</span></button>
+                <Menu v-if="member.id != me?.id" as="div" class="relative ml-2 inline-block flex-shrink-0 text-left">
+                  <MenuButton class="group relative inline-flex h-8 w-8 items-center justify-center rounded-full bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+                    <span class="absolute -inset-1.5" />
+                    <span class="sr-only">Open options menu</span>
+                    <span class="flex h-full w-full items-center justify-center rounded-full">
+                      <EllipsisVerticalIcon class="h-5 w-5 text-gray-400 group-hover:text-gray-500" aria-hidden="true" />
+                    </span>
+                  </MenuButton>
+                  <transition enter-active-class="transition ease-out duration-100" enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 scale-100" leave-to-class="transform opacity-0 scale-95">
+                    <MenuItems class="absolute right-9 top-0 z-10 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                      <div class="py-1">
+                        <MenuItem v-slot="{ active }" @click="updateUserOwnership(member.id, 'OWNER')">
+                          <div :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'cursor-pointer block px-4 py-2 text-sm']">
+                            {{ t('vaultDetails.sharedWith.grantOwnership') }}
+                          </div>
+                        </MenuItem>
+                        <MenuItem v-slot="{ active }" @click="removeMember(member.id)">
+                          <div :class="[active ? 'bg-gray-100 text-red-900' : 'text-red-700', 'cursor-pointer block px-4 py-2 text-sm']">
+                            {{ t('common.remove') }}<span class="sr-only"> {{ member.name }}</span>
+                          </div>
+                        </MenuItem>
+                      </div>
+                    </MenuItems>
+                  </transition>
+                </Menu>
               </div>
 
-              <p v-if="onRevokeUserAccessError[member.id] != null" class="text-sm text-red-900 text-right">
-                {{ t('common.unexpectedError', [onRevokeUserAccessError[member.id].message]) }}
+              <p v-if="onUpdateVaultMembershipError[member.id] != null" class="text-sm text-red-900 text-right">
+                {{ t('common.unexpectedError', [onUpdateVaultMembershipError[member.id].message]) }}
               </p>
             </li>
           </template>
@@ -128,7 +152,8 @@
 </template>
 
 <script setup lang="ts">
-import { ArrowPathIcon, ExclamationTriangleIcon } from '@heroicons/vue/20/solid';
+import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
+import { ArrowPathIcon, EllipsisVerticalIcon, ExclamationTriangleIcon } from '@heroicons/vue/20/solid';
 import { PlusSmallIcon } from '@heroicons/vue/24/solid';
 import { base64 } from 'rfc4648';
 import { computed, nextTick, onMounted, ref } from 'vue';
@@ -160,7 +185,7 @@ const emit = defineEmits<{
 const onFetchError = ref<Error | null>();
 const allowRetryFetch = computed(() => onFetchError.value != null && !(onFetchError.value instanceof NotFoundError));  //fetch requests either list something, or query from th vault. In the latter, a 404 indicates the vault does not exists anymore.
 
-const onRevokeUserAccessError = ref< {[id: string]: Error} >({});
+const onUpdateVaultMembershipError = ref< {[id: string]: Error} >({});
 const onAddUserError = ref<Error | null>();
 
 const addingUser = ref(false);
@@ -350,16 +375,27 @@ async function searchAuthority(query: string): Promise<AuthorityDto[]> {
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
-async function revokeUserAccess(userId: string) {
-  delete onRevokeUserAccessError.value[userId];
+async function updateUserOwnership(userId: string, role: VaultRole) {
+  delete onUpdateVaultMembershipError.value[userId];
   try {
-    await backend.vaults.revokeUserAccess(props.vaultId, userId);
-    members.value.delete(userId);
+    await backend.vaults.addUser(props.vaultId, userId, role);
+  } catch (error) {
+    console.error('Updating user ownership failed.', error);
+    //404 not expected from user perspective
+    onUpdateVaultMembershipError.value[userId] = error instanceof Error ? error : new Error('Unknown Error');
+  }
+}
+
+async function removeMember(memberId: string) {
+  delete onUpdateVaultMembershipError.value[memberId];
+  try {
+    await backend.vaults.removeUser(props.vaultId, memberId);
+    members.value.delete(memberId);
     usersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
   } catch (error) {
-    console.error('Revoking user access failed.', error);
+    console.error('Removing member access failed.', error);
     //404 not expected from user perspective
-    onRevokeUserAccessError.value[userId] = error instanceof Error ? error : new Error('Unknown Error');
+    onUpdateVaultMembershipError.value[memberId] = error instanceof Error ? error : new Error('Unknown Error');
   }
 }
 </script>

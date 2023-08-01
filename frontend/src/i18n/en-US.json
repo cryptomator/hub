@@ -192,6 +192,8 @@
   "vaultDetails.information.header": "Information",
   "vaultDetails.information.created": "Created",
   "vaultDetails.sharedWith.title": "Shared with",
+  "vaultDetails.sharedWith.grantOwnership": "Grant Ownership",
+  "vaultDetails.sharedWith.revokeOwnership": "Revoke Ownership",
   "vaultDetails.actions.title": "Actions",
   "vaultDetails.actions.updatePermissions": "Update Permissions",
   "vaultDetails.actions.updatePermissions.reload": "Reload",
