@@ -46,6 +46,7 @@
                 <div class="flex items-center">
                   <img :src="member.pictureUrl" alt="" class="w-8 h-8 rounded-full" />
                   <p class="ml-4 text-sm font-medium text-gray-900">{{ member.name }}</p>
+                  <div v-if="member.role == 'OWNER'" class="ml-3 inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">{{ t('vaultDetails.sharedWith.badge.owner') }}</div>
                 </div>
                 <Menu v-if="member.id != me?.id" as="div" class="relative ml-2 inline-block flex-shrink-0 text-left">
                   <MenuButton class="group relative inline-flex h-8 w-8 items-center justify-center rounded-full bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
@@ -58,9 +59,14 @@
                   <transition enter-active-class="transition ease-out duration-100" enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 scale-100" leave-to-class="transform opacity-0 scale-95">
                     <MenuItems class="absolute right-9 top-0 z-10 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                       <div class="py-1">
-                        <MenuItem v-slot="{ active }" @click="updateUserOwnership(member.id, 'OWNER')">
+                        <MenuItem v-if="member.role == 'MEMBER'" v-slot="{ active }" @click="updateMemberRole(member, 'OWNER')">
                           <div :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'cursor-pointer block px-4 py-2 text-sm']">
                             {{ t('vaultDetails.sharedWith.grantOwnership') }}
+                          </div>
+                        </MenuItem>
+                        <MenuItem v-if="member.role == 'OWNER'" v-slot="{ active }" @click="updateMemberRole(member, 'MEMBER')">
+                          <div :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'cursor-pointer block px-4 py-2 text-sm']">
+                            {{ t('vaultDetails.sharedWith.revokeOwnership') }}
                           </div>
                         </MenuItem>
                         <MenuItem v-slot="{ active }" @click="removeMember(member.id)">
@@ -158,7 +164,7 @@ import { PlusSmallIcon } from '@heroicons/vue/24/solid';
 import { base64 } from 'rfc4648';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { AuthorityDto, ConflictError, NotFoundError, UserDto, VaultDto, VaultRole } from '../common/backend';
+import backend, { AuthorityDto, ConflictError, MemberDto, NotFoundError, UserDto, VaultDto, VaultRole } from '../common/backend';
 import { BrowserKeys, UserKeys, VaultKeys } from '../common/crypto';
 import { JWT, JWTHeader } from '../common/jwt';
 import ArchiveVaultDialog from './ArchiveVaultDialog.vue';
@@ -203,7 +209,7 @@ const reactivatingVault = ref(false);
 const reactivateVaultDialog = ref<typeof ReactivateVaultDialog>();
 const vault = ref<VaultDto>();
 const vaultKeys = ref<VaultKeys>();
-const members = ref<Map<string, AuthorityDto>>(new Map());
+const members = ref<Map<string, MemberDto>>(new Map());
 const usersRequiringAccessGrant = ref<UserDto[]>([]);
 const claimVaultOwnershipDialog = ref<typeof ClaimVaultOwnershipDialog>();
 const claimingVaultOwnership = ref(false);
@@ -299,7 +305,8 @@ async function addAuthority(authority: unknown) {
 
   try {
     await addAuthorityBackend(authority);
-    members.value.set(authority.id, authority);
+    const addedMember = new MemberDto(authority.id, authority.name, authority.type, 'MEMBER', authority.pictureUrl);
+    members.value.set(authority.id, addedMember);
     usersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
   } catch (error) {
     //even if error instanceof NotFoundError, it is not expected from user perspective
@@ -375,14 +382,25 @@ async function searchAuthority(query: string): Promise<AuthorityDto[]> {
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
-async function updateUserOwnership(userId: string, role: VaultRole) {
-  delete onUpdateVaultMembershipError.value[userId];
+async function updateMemberRole(member: MemberDto, role: VaultRole) {
+  delete onUpdateVaultMembershipError.value[member.id];
   try {
-    await backend.vaults.addUser(props.vaultId, userId, role);
+    switch (member.type) {
+      case 'USER':
+        await backend.vaults.addUser(props.vaultId, member.id, role);    
+        break;
+      case 'GROUP':
+        await backend.vaults.addGroup(props.vaultId, member.id, role);
+        break;
+    }
+    const updatedMember = members.value.get(member.id);
+    if (updatedMember) {
+      updatedMember.role = role;
+    }
   } catch (error) {
-    console.error('Updating user ownership failed.', error);
+    console.error('Updating member role failed.', error);
     //404 not expected from user perspective
-    onUpdateVaultMembershipError.value[userId] = error instanceof Error ? error : new Error('Unknown Error');
+    onUpdateVaultMembershipError.value[member.id] = error instanceof Error ? error : new Error('Unknown Error');
   }
 }
 

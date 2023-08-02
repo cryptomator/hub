@@ -90,7 +90,7 @@ export class UserDto extends AuthorityDto {
     super(id, name, type, pictureUrl);
   }
 
-  getIdenticonConfig(): JdenticonConfig {
+  static getIdenticonConfig(): JdenticonConfig {
     return {
       hues: [6, 28, 48, 121, 283],
       saturation: {
@@ -103,6 +103,10 @@ export class UserDto extends AuthorityDto {
       backColor: '#F7F7F7',
       padding: 0
     };
+  }
+
+  getIdenticonConfig(): JdenticonConfig {
+    return UserDto.getIdenticonConfig();
   }
 
   static typeOf(obj: any): obj is UserDto {
@@ -123,7 +127,7 @@ export class GroupDto extends AuthorityDto {
     super(id, name, type, pictureUrl);
   }
 
-  getIdenticonConfig(): JdenticonConfig {
+  static getIdenticonConfig(): JdenticonConfig {
     return {
       hues: [190],
       saturation: {
@@ -138,6 +142,10 @@ export class GroupDto extends AuthorityDto {
     };
   }
 
+  getIdenticonConfig(): JdenticonConfig {
+    return GroupDto.getIdenticonConfig();
+  }
+
   static typeOf(obj: any): obj is GroupDto {
     const groupDto = obj as GroupDto;
     return typeof groupDto.id === 'string'
@@ -148,6 +156,21 @@ export class GroupDto extends AuthorityDto {
 
   static copy(obj: GroupDto): GroupDto {
     return new GroupDto(obj.id, obj.name, obj.type, obj.pictureUrl);
+  }
+}
+
+export class MemberDto extends AuthorityDto {
+  constructor(public id: string, public name: string, public type: AuthorityType, public role: VaultRole, pictureUrl: string) {
+    super(id, name, type, pictureUrl);
+  }
+
+  getIdenticonConfig(): JdenticonConfig {
+    switch (this.type) {
+      case AuthorityType.User:
+        return UserDto.getIdenticonConfig();
+      case AuthorityType.Group:
+        return GroupDto.getIdenticonConfig();
+    }
   }
 }
 
@@ -198,17 +221,9 @@ class VaultService {
       .catch((error) => rethrowAndConvertIfExpected(error, 404));
   }
 
-  public async getMembers(vaultId: string): Promise<(UserDto | GroupDto)[]> {
-    return axiosAuth.get<(UserDto | GroupDto)[]>(`/vaults/${vaultId}/members`).then(response => {
-      return response.data.map(authority => {
-        if (UserDto.typeOf(authority)) {
-          return UserDto.copy(authority);
-        } else if (GroupDto.typeOf(authority)) {
-          return GroupDto.copy(authority);
-        } else {
-          throw new Error('Provided data is not of type UserDTO or GroupDTO');
-        }
-      });
+  public async getMembers(vaultId: string): Promise<MemberDto[]> {
+    return axiosAuth.get<MemberDto[]>(`/vaults/${vaultId}/members`).then(response => {
+      return response.data.map(member => new MemberDto(member.id, member.name, member.type, member.role, member.pictureUrl));
     }).catch(err => rethrowAndConvertIfExpected(err, 403));
   }
 

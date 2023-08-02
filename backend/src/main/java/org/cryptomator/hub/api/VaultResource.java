@@ -127,14 +127,15 @@ public class VaultResource {
 	@Operation(summary = "list vault members", description = "list all users that this vault has been shared with")
 	@APIResponse(responseCode = "200")
 	@APIResponse(responseCode = "403", description = "not a vault owner")
-	public List<AuthorityDto> getMembers(@PathParam("vaultId") UUID vaultId) {
+	public List<MemberDto> getMembers(@PathParam("vaultId") UUID vaultId) {
 		var vault = Vault.<Vault>findById(vaultId); // should always be found, since @VaultRole filter would have triggered
 
 		return vault.directMembers.stream().map(authority -> {
+			VaultAccess access = VaultAccess.findById(new VaultAccess.Id(vaultId, authority.id)); // TODO: inefficient, would be better if role is already part of the query result
 			if (authority instanceof User u) {
-				return UserDto.justPublicInfo(u);
+				return MemberDto.fromEntity(u, access.role);
 			} else if (authority instanceof Group g) {
-				return GroupDto.fromEntity(g);
+				return MemberDto.fromEntity(g, access.role);
 			} else {
 				throw new IllegalStateException();
 			}

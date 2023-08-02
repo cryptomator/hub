@@ -187,6 +187,7 @@
   "vaultDetails.information.header": "Information",
   "vaultDetails.information.created": "Created",
   "vaultDetails.sharedWith.title": "Shared with",
+  "vaultDetails.sharedWith.badge.owner": "Owner",
   "vaultDetails.sharedWith.grantOwnership": "Grant Ownership",
   "vaultDetails.sharedWith.revokeOwnership": "Revoke Ownership",
   "vaultDetails.actions.title": "Actions",
@@ -211,6 +212,6 @@
   "vaultList.filter.result.empty.title": "No vaults",
   "vaultList.filter.result.empty.description": "No results using that search term or filter.",
   "vaultList.search.placeholder": "Search…",
-  "vaultList.owner": "Owner",
+  "vaultList.badge.owner": "Owner",
   "vaultList.badge.archived": "Archived"
 }
