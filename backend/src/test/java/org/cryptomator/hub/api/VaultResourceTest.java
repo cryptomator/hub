@@ -216,12 +216,7 @@ public class VaultResourceTest {
 					.body("id", equalToIgnoringCase("7E57C0DE-0000-4000-8000-000100003333"))
 					.body("name", equalTo("My Vault"))
 					.body("description", equalTo("Test vault 3"))
-					.body("archived", equalTo(false))
-					.body("masterkey", equalTo("masterkey3"))
-					.body("iterations", equalTo(42))
-					.body("salt", equalTo("NaCl"))
-					.body("authPublicKey", equalTo("authPubKey3"))
-					.body("authPrivateKey", equalTo("authPrvKey3"));
+					.body("archived", equalTo(false));
 		}
 
 		@Test
@@ -246,12 +241,7 @@ public class VaultResourceTest {
 					.body("id", equalToIgnoringCase("7E57C0DE-0000-4000-8000-000100004444"))
 					.body("name", equalTo("My Vault"))
 					.body("description", equalTo("Test vault 4"))
-					.body("archived", equalTo(false))
-					.body("masterkey", equalTo("masterkey4"))
-					.body("iterations", equalTo(42))
-					.body("salt", equalTo("NaCl"))
-					.body("authPublicKey", equalTo("authPubKey4"))
-					.body("authPrivateKey", equalTo("authPrvKey4"));
+					.body("archived", equalTo(false));
 		}
 
 		@Test
@@ -268,12 +258,7 @@ public class VaultResourceTest {
 					.body("name", equalTo("VaultUpdated"))
 					.body("description", equalTo("Vault updated."))
 					.body("archived", equalTo(true))
-					.body("creationTime", not("2222-11-11T11:11:11Z"))
-					.body("masterkey", equalTo("masterkey3"))
-					.body("iterations", equalTo(42))
-					.body("salt", equalTo("NaCl"))
-					.body("authPublicKey", equalTo("authPubKey3"))
-					.body("authPrivateKey", equalTo("authPrvKey3"));
+					.body("creationTime", not("2222-11-11T11:11:11Z"));
 		}
 
 	}
