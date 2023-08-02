@@ -407,11 +407,6 @@ public class VaultResource {
 			vault = new Vault();
 			vault.id = vaultDto.id;
 			vault.creationTime = Instant.now().truncatedTo(ChronoUnit.MILLIS);
-			vault.masterkey = vaultDto.masterkey;
-			vault.iterations = vaultDto.iterations;
-			vault.salt = vaultDto.salt;
-			vault.authenticationPublicKey = vaultDto.authPublicKey;
-			vault.authenticationPrivateKey = vaultDto.authPrivateKey;
 		}
 		// set regardless of whether vault is new or existing:
 		vault.name = vaultDto.name;

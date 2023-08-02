@@ -246,7 +246,7 @@ async function loadVaultKeys(vaultKeyJwe: string): Promise<VaultKeys> {
   return VaultKeys.decryptWithUserKey(vaultKeyJwe, userKeys.keyPair.privateKey);
 }
 
-async function provedOwnership(keys: VaultKeys) {
+async function provedOwnership(keys: VaultKeys, ownerKeyPair: CryptoKeyPair) {
   if (!me.value || !me.value.publicKey) {
     throw new Error('User not initialized.');
   }
@@ -255,7 +255,7 @@ async function provedOwnership(keys: VaultKeys) {
   const now = Math.floor(Date.now() / 1000); // seconds since epoch in UTC
   const expire = now + 10;
   const payload = { sub: me.value.id, vaultId: props.vaultId.toLocaleLowerCase(), iat: now, nbf: now, exp: expire };
-  const proof = await JWT.build(header, payload, keys.signatureKeyPair.privateKey);
+  const proof = await JWT.build(header, payload, ownerKeyPair.privateKey);
   try {
     vault.value = await backend.vaults.claimOwnership(props.vaultId, proof);
   } catch (error) {

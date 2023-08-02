@@ -2,7 +2,7 @@ import { use as chaiUse, expect } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { before, describe } from 'mocha';
 import { base64 } from 'rfc4648';
-import { UnwrapKeyError, UserKeys, VaultKeys, WrappedVaultKeys } from '../../src/common/crypto';
+import { UnwrapKeyError, UserKeys, VaultKeys } from '../../src/common/crypto';
 
 chaiUse(chaiAsPromised);
 
@@ -50,14 +50,6 @@ describe('crypto', () => {
   });
 
   describe('VaultKeys', () => {
-    const wrapped: WrappedVaultKeys = {
-      masterkey: 'CMPyJiiOQXBZ8FVvFZs6UOh0kW83+eALeK3bwXfFF2CWsguJZIgCJch94liWCh9xTqW84LUZPyo6IDWbSALqbbdiwDcztT8M81/pgadhTETVtHO5Q1CFNLJ9UvY=',
-      signaturePrivateKey: 'O9snY73/eVElnWRLgM404KH7WwO/Ed30Y0UrQQw6x3vxOdroJcjvPdJeSqLD2x4lVP7ceTjVt3IT2N9Mx+jhUQzqrb1E2EvEYlXrTaID1jSdBXZ6ScrI1RvU0iH9cfXf2cRy2x8QZvJyVMr34gLJ3Di/XGrnc/BrOm+aF2K4F9FJXvJFen3CnAs9ewB3Vk0A1wRLX3hW/Wx7eXt/0i1gxB8T/NcLu7xIU3+uusTHh9uajFkA5+z1+JgNHURaa1bT8j5WTtNWIHYT/sw+erMn6S0Uj1vL',
-      signaturePublicKey: 'MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAESzrRXmyI8VWFJg1dPUNbFcc9jZvjZEfH7ulKI1UkXAltd7RGWrcfFxqyGPcwu6AQhHUag3OvDzEr0uUQND4PXHQTXP5IDGdYhJhL+WLKjnGjQAw0rNGy5V29+aV+yseW',
-      salt: 'IdXyKICznXKm41gSb5OqfQ',
-      iterations: 1
-    };
-
     it('create()', async () => {
       const orig = await VaultKeys.create();
 
@@ -97,24 +89,21 @@ describe('crypto', () => {
       ]);
     });
 
-    it('unwrap() with wrong pw', () => {
-      return expect(VaultKeys.unwrap('wrong', wrapped)).to.eventually.be.rejectedWith(UnwrapKeyError);
-    });
+    describe('Prove Vault Ownership using Vault Admin Password', () => {
+      const wrapped = {
+        wrappedMasterkey: 'CMPyJiiOQXBZ8FVvFZs6UOh0kW83+eALeK3bwXfFF2CWsguJZIgCJch94liWCh9xTqW84LUZPyo6IDWbSALqbbdiwDcztT8M81/pgadhTETVtHO5Q1CFNLJ9UvY=',
+        wrappedOwnerPrivateKey: 'O9snY73/eVElnWRLgM404KH7WwO/Ed30Y0UrQQw6x3vxOdroJcjvPdJeSqLD2x4lVP7ceTjVt3IT2N9Mx+jhUQzqrb1E2EvEYlXrTaID1jSdBXZ6ScrI1RvU0iH9cfXf2cRy2x8QZvJyVMr34gLJ3Di/XGrnc/BrOm+aF2K4F9FJXvJFen3CnAs9ewB3Vk0A1wRLX3hW/Wx7eXt/0i1gxB8T/NcLu7xIU3+uusTHh9uajFkA5+z1+JgNHURaa1bT8j5WTtNWIHYT/sw+erMn6S0Uj1vL',
+        ownerPublicKey: 'MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAESzrRXmyI8VWFJg1dPUNbFcc9jZvjZEfH7ulKI1UkXAltd7RGWrcfFxqyGPcwu6AQhHUag3OvDzEr0uUQND4PXHQTXP5IDGdYhJhL+WLKjnGjQAw0rNGy5V29+aV+yseW',
+        salt: 'IdXyKICznXKm41gSb5OqfQ',
+        iterations: 1
+      };
 
-    it('unwrap() with correct pw', () => {
-      return expect(VaultKeys.unwrap('pass', wrapped)).to.eventually.be.fulfilled;
-    });
-
-    // unwrapped keys are not exportable, therefore they can not be re-wrapped
-    describe('After unwrapping existing key material', () => {
-      let unwrapped: VaultKeys;
-
-      beforeEach(async () => {
-        unwrapped = await VaultKeys.unwrap('pass', wrapped);
+      it('decryptWithAdminPassword() with wrong pw', () => {
+        return expect(VaultKeys.decryptWithAdminPassword('wrong', wrapped.wrappedMasterkey, wrapped.wrappedOwnerPrivateKey, wrapped.ownerPublicKey, wrapped.salt, wrapped.iterations)).to.eventually.be.rejectedWith(UnwrapKeyError);
       });
 
-      it('wrap() fails', () => {
-        return expect(unwrapped.wrap('pass')).to.eventually.be.rejected;
+      it('decryptWithAdminPassword() with correct pw', () => {
+        return expect(VaultKeys.decryptWithAdminPassword('pass', wrapped.wrappedMasterkey, wrapped.wrappedOwnerPrivateKey, wrapped.ownerPublicKey, wrapped.salt, wrapped.iterations)).to.eventually.be.fulfilled;
       });
     });
 
@@ -123,17 +112,6 @@ describe('crypto', () => {
 
       beforeEach(async () => {
         vaultKeys = await TestVaultKeys.create();
-      });
-
-      it('wrap() succeeds', async () => {
-        const wrapped = await vaultKeys.wrap('pass');
-
-        expect(wrapped).to.be.not.null;
-        expect(wrapped.masterkey).to.be.not.null;
-        expect(wrapped.signaturePrivateKey).to.be.not.null;
-        expect(wrapped.signaturePublicKey).to.be.not.null;
-        expect(wrapped.salt).to.be.not.null;
-        expect(wrapped.iterations).to.eq(1000000);
       });
 
       it('encryptForUser()', async () => {
@@ -163,22 +141,6 @@ describe('crypto', () => {
           const newMasterKey = await crypto.subtle.exportKey('jwk', recovered.masterKey);
           expect(newMasterKey).to.deep.include({
             'k': oldMasterKey.k
-          });
-        });
-
-        it('recover() creates new signature key pair', async () => {
-          const recovered = await VaultKeys.recover(recoveryKey);
-
-          const oldSecKey = await crypto.subtle.exportKey('jwk', vaultKeys.signatureKeyPair.privateKey);
-          const newSecKey = await crypto.subtle.exportKey('jwk', recovered.signatureKeyPair.privateKey);
-          const oldPubKey = await crypto.subtle.exportKey('jwk', vaultKeys.signatureKeyPair.publicKey);
-          const newPubKey = await crypto.subtle.exportKey('jwk', recovered.signatureKeyPair.publicKey);
-          expect(newSecKey).to.not.deep.include({
-            'd': oldSecKey.d
-          });
-          expect(newPubKey).to.not.deep.include({
-            'x': oldPubKey.x,
-            'y': oldPubKey.y
           });
         });
       });
@@ -253,8 +215,8 @@ describe('crypto', () => {
 /* ---------- MOCKS ---------- */
 
 class TestVaultKeys extends VaultKeys {
-  constructor(key: CryptoKey, keypair: CryptoKeyPair) {
-    super(key, keypair);
+  constructor(key: CryptoKey) {
+    super(key);
   }
 
   static async create() {
@@ -272,10 +234,7 @@ class TestVaultKeys extends VaultKeys {
       true,
       ['sign']
     );
-    const ecdsaP384: EcKeyImportParams = { name: 'ECDSA', namedCurve: 'P-384' };
-    const priv = crypto.subtle.importKey('jwk', alicePrivate, ecdsaP384, true, ['sign']);
-    const pub = crypto.subtle.importKey('jwk', alicePublic, ecdsaP384, true, ['verify']);
-    return new TestVaultKeys(key, { privateKey: await priv, publicKey: await pub });
+    return new TestVaultKeys(key);
   }
 }
 

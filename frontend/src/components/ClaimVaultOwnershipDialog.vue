@@ -62,7 +62,7 @@ import { KeyIcon } from '@heroicons/vue/24/outline';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { VaultDto } from '../common/backend';
-import { UnwrapKeyError, VaultKeys, WrappedVaultKeys } from '../common/crypto';
+import { UnwrapKeyError, VaultKeys } from '../common/crypto';
 
 class FormValidationFailedError extends Error {
   constructor() {
@@ -85,7 +85,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   close: []
-  action: [vaultKeys: VaultKeys]
+  action: [vaultKeys: VaultKeys, ownerSigningKey: CryptoKeyPair]
 }>();
 
 defineExpose({
@@ -102,10 +102,13 @@ async function authenticateVaultAdmin() {
     if (!form.value?.checkValidity()) {
       throw new FormValidationFailedError();
     }
-    const wrappedKey = new WrappedVaultKeys(props.vault.masterkey, props.vault.authPrivateKey, props.vault.authPublicKey, props.vault.salt, props.vault.iterations);
-    const vaultKeys = await VaultKeys.unwrap(password.value, wrappedKey);
-    emit('action', vaultKeys);
-    open.value = false;
+    if (props.vault.masterkey && props.vault.authPrivateKey && props.vault.authPublicKey && props.vault.salt && props.vault.iterations) {
+      const [vaultKeys, ownerKeyPair] = await VaultKeys.decryptWithAdminPassword(password.value, props.vault.masterkey, props.vault.authPrivateKey, props.vault.authPublicKey, props.vault.salt, props.vault.iterations);
+      emit('action', vaultKeys, ownerKeyPair);
+      open.value = false;
+    } else {
+      throw new Error('Vault is missing legacy "vault admin password" related properties.');
+    }
   } catch (error) {
     console.error('Authentication of vault admin failed.', error);
     onAuthenticationError.value = error instanceof Error ? error : new Error('Unknown Error');

@@ -41,11 +41,11 @@ export type VaultDto = {
   description: string;
   archived: boolean;
   creationTime: Date;
-  masterkey: string;
-  iterations: number;
-  salt: string;
-  authPublicKey: string;
-  authPrivateKey: string;
+  masterkey?: string;
+  iterations?: number;
+  salt?: string;
+  authPublicKey?: string;
+  authPrivateKey?: string;
 };
 
 export type DeviceDto = {
@@ -227,8 +227,8 @@ class VaultService {
       .then(response => response.data).catch(err => rethrowAndConvertIfExpected(err, 403));
   }
 
-  public async createOrUpdateVault(vaultId: string, name: string, description: string, archived: boolean, masterkey: string, iterations: number, salt: string, signPubKey: string, signPrvKey: string): Promise<VaultDto> {
-    const body: VaultDto = { id: vaultId, name: name, description: description, archived: archived, creationTime: new Date(), masterkey: masterkey, iterations: iterations, salt: salt, authPublicKey: signPubKey, authPrivateKey: signPrvKey };
+  public async createOrUpdateVault(vaultId: string, name: string, description: string, archived: boolean): Promise<VaultDto> {
+    const body: VaultDto = { id: vaultId, name: name, description: description, archived: archived, creationTime: new Date() };
     return axiosAuth.put(`/vaults/${vaultId}`, body)
       .then(response => response.data)
       .catch((error) => rethrowAndConvertIfExpected(error, 404));
