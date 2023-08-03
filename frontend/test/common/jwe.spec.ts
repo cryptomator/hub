@@ -47,50 +47,57 @@ describe('JWE', () => {
       expect(result).not.to.be.null; // TODO do some tests
     });
 
-    /**
-     * All these test vectors are taken from https://www.rfc-editor.org/rfc/rfc7518#appendix-C
-     */
-    it('should derive expected key using ECDH-ES', async () => {
-      const alice = await crypto.subtle.importKey(
-        'jwk',
-        {
-          kty: 'EC',
-          crv: 'P-256',
-          x: 'gI0GAILBdu7T53akrFmMyGcsF3n5dO7MmwNBHKW5SV0',
-          y: 'SLW_xSffzlPWrHEVI30DHM_4egVwt3NQqeUD7nMFpps',
-          d: '0_NxaRPUMQoAJt50Gz8YiTr8gRTwyEaCumd-MToTmIo'
-        },
-        {
-          name: 'ECDH',
-          namedCurve: 'P-256'
-        },
-        false,
-        ['deriveBits']
-      );
-      expect(alice.type, 'alice\'s key type').to.eql('private');
-      const bob = await crypto.subtle.importKey(
-        'jwk',
-        {
-          kty: 'EC',
-          crv: 'P-256',
-          x: 'weNJy2HscCSM6AEDTDg04biOvhFhyyWvOHQfeF_PxMQ',
-          y: 'e8lnCO-AlStT-NJVX-crhB7QRYhiix03illJOVAOyck'
-        },
-        {
-          name: 'ECDH',
-          namedCurve: 'P-256'
-        },
-        false,
-        []
-      );
-      expect(bob.type, 'bob\'s key type').to.eql('public');
+    describe('JWE.deriveKey', () => {
+      // Test vectors from https://www.rfc-editor.org/rfc/rfc7518#appendix-C
+      const alicePub: JsonWebKey = {
+        kty: 'EC',
+        crv: 'P-256',
+        x: 'gI0GAILBdu7T53akrFmMyGcsF3n5dO7MmwNBHKW5SV0',
+        y: 'SLW_xSffzlPWrHEVI30DHM_4egVwt3NQqeUD7nMFpps'
+      };
+      const alicePriv: JsonWebKey = {
+        ...alicePub,
+        d: '0_NxaRPUMQoAJt50Gz8YiTr8gRTwyEaCumd-MToTmIo'
+      };
+      let alice: CryptoKey;
+      const bobPub: JsonWebKey = {
+        kty: 'EC',
+        crv: 'P-256',
+        x: 'weNJy2HscCSM6AEDTDg04biOvhFhyyWvOHQfeF_PxMQ',
+        y: 'e8lnCO-AlStT-NJVX-crhB7QRYhiix03illJOVAOyck'
+      };
+      let bob: CryptoKey;
 
-      const apu = new Uint8Array([65, 108, 105, 99, 101]);
-      const apv = new Uint8Array([66, 111, 98]);
-      const header = new JWEHeader('ignored', 'A128GCM', null, base64url.stringify(apu, { pad: false }), base64url.stringify(apv, { pad: false }));
-      const derived = await JWE.deriveKey(bob, alice, 256, 16, header, true);
-      const derivedBytes = await crypto.subtle.exportKey('raw', derived);
-      expect(new Uint8Array(derivedBytes), 'derived key').to.eql(new Uint8Array([86, 170, 141, 234, 248, 35, 109, 32, 92, 34, 40, 205, 113, 167, 16, 26]));
+      beforeEach(async () => {
+        const importParams: EcKeyImportParams = { name: 'ECDH', namedCurve: 'P-256' };
+        alice = await crypto.subtle.importKey('jwk', alicePriv, importParams, false, ['deriveBits']);
+        bob = await crypto.subtle.importKey('jwk', bobPub, importParams, false, []);
+        expect(alice.type, 'alice\'s key type').to.eql('private');
+        expect(bob.type, 'bob\'s key type').to.eql('public');
+      });
+
+      it('should derive expected key using ECDH-ES', async () => {
+        // Test vectors from https://www.rfc-editor.org/rfc/rfc7518#appendix-C
+        const apu = new Uint8Array([65, 108, 105, 99, 101]);
+        const apv = new Uint8Array([66, 111, 98]);
+        const header = new JWEHeader('ignored', 'A128GCM', null, base64url.stringify(apu, { pad: false }), base64url.stringify(apv, { pad: false }));
+        const derived = await JWE.deriveKey(bob, alice, 256, 16, header, true);
+        const derivedBytes = await crypto.subtle.exportKey('raw', derived);
+        expect(new Uint8Array(derivedBytes), 'derived key').to.eql(new Uint8Array([86, 170, 141, 234, 248, 35, 109, 32, 92, 34, 40, 205, 113, 167, 16, 26]));
+      });
+
+      it('should derive content key despite missing apu/apv', async () => {
+        const header: JWEHeader = {
+          alg: 'ECDH-ES', // not relevant for this test
+          enc: 'A128GCM',
+          epk: alicePub,
+          apu: undefined,
+          apv: undefined
+        };
+        const derived = await JWE.deriveKey(bob, alice, 256, 16, header, true);
+        const derivedBytes = await crypto.subtle.exportKey('raw', derived);
+        expect(new Uint8Array(derivedBytes), 'derived key').to.eql(new Uint8Array([187, 151, 171, 93, 14, 133, 109, 143, 143, 192, 62, 38, 91, 36, 42, 125]));
+      });
     });
   });
 });
