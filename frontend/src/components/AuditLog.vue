@@ -4,7 +4,7 @@
       {{ t('auditLog.title') }}
     </h2>
 
-    <div class="flex gap-3">
+    <div v-if="hasLicense" class="flex gap-3">
       <button role="button" class="w-full bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="refreshData()">
         {{ t('common.refresh') }}
       </button>
@@ -69,7 +69,7 @@
   </div>
 
   <div class="mt-5 flow-root">
-    <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+    <div v-if="hasLicense" class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
       <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
         <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
           <table class="min-w-full divide-y divide-gray-300">
@@ -128,13 +128,29 @@
         <p v-if="onFetchError != null" class="text-sm text-red-900 mt-2">{{ onFetchError.message }}</p>
       </div>
     </div>
+    <div v-else class="text-center">
+      <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+        <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+      </svg>
+      <h3 class="mt-2 text-sm font-medium text-gray-900">{{ t('auditLog.community.license.hint.message') }}</h3>
+      <p class="mt-1 text-sm text-gray-500">{{ t('auditLog.community.license.hint.description') }}</p>
+
+      <div class="flex justify-end items-center mt-5">
+        <router-link to="/app/admin/settings" custom v-slot="{ navigate }">
+          <button type="button" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="navigate()">
+              <ArrowTopRightOnSquareIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+              {{ t('auditLog.community.license.hint.admin.section.button') }}
+          </button>
+        </router-link>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions, Popover, PopoverButton, PopoverGroup, PopoverPanel } from '@headlessui/vue';
 import { ChevronDownIcon } from '@heroicons/vue/20/solid';
-import { CheckIcon, ChevronUpDownIcon } from '@heroicons/vue/24/solid';
+import { ArrowTopRightOnSquareIcon, CheckIcon, ChevronUpDownIcon } from '@heroicons/vue/24/solid';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auditlog, { AuditEventDeviceRegisterDto, AuditEventDeviceRemoveDto, AuditEventDto, AuditEventVaultAccessGrantDto, AuditEventVaultCreateDto, AuditEventVaultKeyRetrieveDto, AuditEventVaultMemberAddDto, AuditEventVaultMemberRemoveDto, AuditEventVaultUpdateDto } from '../common/auditlog';
@@ -146,6 +162,7 @@ import AuditLogDetailsVaultKeyRetrieve from './AuditLogDetailsVaultKeyRetrieve.v
 import AuditLogDetailsVaultMemberAdd from './AuditLogDetailsVaultMemberAdd.vue';
 import AuditLogDetailsVaultMemberRemove from './AuditLogDetailsVaultMemberRemove.vue';
 import AuditLogDetailsVaultUpdate from './AuditLogDetailsVaultUpdate.vue';
+import backend from '../common/backend';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -193,33 +210,39 @@ const paginationBegin = computed(() => auditEvents.value ? currentPage.value * p
 const paginationEnd = computed(() => auditEvents.value ? currentPage.value * pageSize.value + auditEvents.value.length : 0);
 const hasNextPage = ref(false);
 let lastIdOfPreviousPage = [Number.MAX_SAFE_INTEGER];
+const hasLicense = ref(false);
 
 onMounted(fetchData);
 
 async function fetchData() {
-  onFetchError.value = null;
-  try {
-    // Fetch one more event than the page size to determine if there is a next page
-    const events = await auditlog.service.getAllEvents(startDate.value, endDate.value, lastIdOfPreviousPage[currentPage.value], selectedOrder.value, pageSize.value + 1);
-    // If the lastIdOfPreviousPage for the first page has not been set yet, set it to an id "before"/"after" the first event
-    if (currentPage.value == 0 && lastIdOfPreviousPage[0] == 0 && events.length > 0) {
-      lastIdOfPreviousPage[0] = events[0].id + orderOptions[selectedOrder.value].sign;
+  let adminDto = backend.billing.get();
+  hasLicense.value = (await adminDto).hasLicense
+
+  if (hasLicense) {
+    onFetchError.value = null;
+    try {
+      // Fetch one more event than the page size to determine if there is a next page
+      const events = await auditlog.service.getAllEvents(startDate.value, endDate.value, lastIdOfPreviousPage[currentPage.value], selectedOrder.value, pageSize.value + 1);
+      // If the lastIdOfPreviousPage for the first page has not been set yet, set it to an id "before"/"after" the first event
+      if (currentPage.value == 0 && lastIdOfPreviousPage[0] == 0 && events.length > 0) {
+        lastIdOfPreviousPage[0] = events[0].id + orderOptions[selectedOrder.value].sign;
+      }
+      // Determine if there is a next page and discard the last event if there is one
+      if (events.length > pageSize.value) {
+        hasNextPage.value = true;
+        events.pop();
+      } else {
+        hasNextPage.value = false;
+      }
+      // Set the lastIdOfPreviousPage for the next page to the id of the last event of the current page
+      if (events.length > 0) {
+        lastIdOfPreviousPage[currentPage.value + 1] = events[events.length - 1].id;
+      }
+      auditEvents.value = events;
+    } catch (error) {
+      console.error('Retrieving audit log events failed.', error);
+      onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
     }
-    // Determine if there is a next page and discard the last event if there is one
-    if (events.length > pageSize.value) {
-      hasNextPage.value = true;
-      events.pop();
-    } else {
-      hasNextPage.value = false;
-    }
-    // Set the lastIdOfPreviousPage for the next page to the id of the last event of the current page
-    if (events.length > 0) {
-      lastIdOfPreviousPage[currentPage.value + 1] = events[events.length - 1].id;
-    }
-    auditEvents.value = events;
-  } catch (error) {
-    console.error('Retrieving audit log events failed.', error);
-    onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
 }
 
