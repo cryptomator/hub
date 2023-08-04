@@ -144,7 +144,7 @@
         <h3 class="mt-2 text-sm font-medium text-gray-900">{{ t('auditLog.community.license.hint.message') }}</h3>
         <p class="mt-1 text-sm text-gray-500">{{ t('auditLog.community.license.hint.description') }}</p>
 
-        <div class="flex justify-end items-center mt-5">
+        <div class="flex justify-center items-center mt-5">
           <router-link to="/app/admin/settings" custom v-slot="{ navigate }">
             <button type="button" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="navigate()">
                 <ArrowTopRightOnSquareIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
@@ -172,7 +172,7 @@ import AuditLogDetailsVaultKeyRetrieve from './AuditLogDetailsVaultKeyRetrieve.v
 import AuditLogDetailsVaultMemberAdd from './AuditLogDetailsVaultMemberAdd.vue';
 import AuditLogDetailsVaultMemberRemove from './AuditLogDetailsVaultMemberRemove.vue';
 import AuditLogDetailsVaultUpdate from './AuditLogDetailsVaultUpdate.vue';
-import backend from '../common/backend';
+import { PaymentRequiredError } from '../common/backend';
 import FetchError from './FetchError.vue';
 
 const { t } = useI18n({ useScope: 'global' });
@@ -226,37 +226,31 @@ const hasLicense = ref<boolean | null>();
 onMounted(fetchData);
 
 async function fetchData() {
+  onFetchError.value = null;
   try {
-    onFetchError.value = null;
-    let adminDto = backend.billing.get();
-    hasLicense.value = (await adminDto).hasLicense
+    // Fetch one more event than the page size to determine if there is a next page
+    const events = await auditlog.service.getAllEvents(startDate.value, endDate.value, lastIdOfPreviousPage[currentPage.value], selectedOrder.value, pageSize.value + 1);
+    // If the lastIdOfPreviousPage for the first page has not been set yet, set it to an id "before"/"after" the first event
+    if (currentPage.value == 0 && lastIdOfPreviousPage[0] == 0 && events.length > 0) {
+      lastIdOfPreviousPage[0] = events[0].id + orderOptions[selectedOrder.value].sign;
+    }
+    // Determine if there is a next page and discard the last event if there is one
+    if (events.length > pageSize.value) {
+      hasNextPage.value = true;
+      events.pop();
+    } else {
+      hasNextPage.value = false;
+    }
+    // Set the lastIdOfPreviousPage for the next page to the id of the last event of the current page
+    if (events.length > 0) {
+      lastIdOfPreviousPage[currentPage.value + 1] = events[events.length - 1].id;
+    }
+    auditEvents.value = events;
+    hasLicense.value = true
   } catch (error) {
-    console.error('Retrieving license failed.', error);
-    onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
-  }
-
-  if (onFetchError.value == null && hasLicense.value == true) {
-    onFetchError.value = null;
-    try {
-      // Fetch one more event than the page size to determine if there is a next page
-      const events = await auditlog.service.getAllEvents(startDate.value, endDate.value, lastIdOfPreviousPage[currentPage.value], selectedOrder.value, pageSize.value + 1);
-      // If the lastIdOfPreviousPage for the first page has not been set yet, set it to an id "before"/"after" the first event
-      if (currentPage.value == 0 && lastIdOfPreviousPage[0] == 0 && events.length > 0) {
-        lastIdOfPreviousPage[0] = events[0].id + orderOptions[selectedOrder.value].sign;
-      }
-      // Determine if there is a next page and discard the last event if there is one
-      if (events.length > pageSize.value) {
-        hasNextPage.value = true;
-        events.pop();
-      } else {
-        hasNextPage.value = false;
-      }
-      // Set the lastIdOfPreviousPage for the next page to the id of the last event of the current page
-      if (events.length > 0) {
-        lastIdOfPreviousPage[currentPage.value + 1] = events[events.length - 1].id;
-      }
-      auditEvents.value = events;
-    } catch (error) {
+    if (error instanceof PaymentRequiredError) {
+      hasLicense.value = false;
+    } else {
       console.error('Retrieving audit log events failed.', error);
       onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
     }
