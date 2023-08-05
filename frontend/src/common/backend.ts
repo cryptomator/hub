@@ -349,7 +349,7 @@ function convertExpectedToBackendError(status: number): BackendError {
     case 409:
       return new ConflictError();
     default:
-      return new BackendError('Status Code ${status} not mapped');
+      return new BackendError(`Status code ${status} not mapped`);
   }
 }
 
@@ -377,13 +377,19 @@ export class BackendError extends Error {
 
 export class UnauthorizedError extends BackendError {
   constructor() {
-    super('Unauthorized');
+    super('Unauthorized to access resource');
+  }
+}
+
+export class PaymentRequiredError extends BackendError {
+  constructor() {
+    super('Payment required to access resource');
   }
 }
 
 export class ForbiddenError extends BackendError {
   constructor() {
-    super('Not authorized to access resource');
+    super('Insufficient rights to access resource');
   }
 }
 
@@ -396,11 +402,5 @@ export class NotFoundError extends BackendError {
 export class ConflictError extends BackendError {
   constructor() {
     super('Resource already exists');
-  }
-}
-
-export class PaymentRequiredError extends BackendError {
-  constructor() {
-    super('Payment required');
   }
 }

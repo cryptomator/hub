@@ -129,7 +129,8 @@ class AuditLogService {
       .then(response => response.data.map(dto => {
         dto.timestamp = new Date(dto.timestamp);
         return dto;
-      })).catch((error) => rethrowAndConvertIfExpected(error, 402));;
+      }))
+      .catch((error) => rethrowAndConvertIfExpected(error, 402));
   }
 }
 
