@@ -231,7 +231,7 @@ class VaultService {
   public async createOrUpdateVault(vaultId: string, name: string, description: string, archived: boolean, masterkey: string, iterations: number, salt: string, signPubKey: string, signPrvKey: string): Promise<VaultDto> {
     const body: VaultDto = { id: vaultId, name: name, description: description, archived: archived, creationTime: new Date(), masterkey: masterkey, iterations: iterations, salt: salt, authPublicKey: signPubKey, authPrivateKey: signPrvKey };
     return axiosAuth.put(`/vaults/${vaultId}`, body)
-      .then(response  => response.data)
+      .then(response => response.data)
       .catch((error) => rethrowAndConvertIfExpected(error, 404));
   }
 
@@ -340,6 +340,8 @@ const services = {
 
 function convertExpectedToBackendError(status: number): BackendError {
   switch (status) {
+    case 402:
+      return new PaymentRequiredError();
     case 403:
       return new ForbiddenError();
     case 404:
@@ -347,7 +349,7 @@ function convertExpectedToBackendError(status: number): BackendError {
     case 409:
       return new ConflictError();
     default:
-      return new BackendError('Status Code ${status} not mapped');
+      return new BackendError(`Status code ${status} not mapped`);
   }
 }
 
@@ -356,7 +358,7 @@ function convertExpectedToBackendError(status: number): BackendError {
  * @param error A thrown object
  * @param expectedStatusCodes The expected http status codes of the backend call
  */
-function rethrowAndConvertIfExpected(error: unknown, ...expectedStatusCodes: number[]): Promise<any> {
+export function rethrowAndConvertIfExpected(error: unknown, ...expectedStatusCodes: number[]): Promise<any> {
   if (AxiosStatic.isAxiosError(error) && error.response != null && expectedStatusCodes.includes(error.response.status)) {
     throw convertExpectedToBackendError(error.response.status);
   } else {
@@ -375,13 +377,19 @@ export class BackendError extends Error {
 
 export class UnauthorizedError extends BackendError {
   constructor() {
-    super('Unauthorized');
+    super('Unauthorized to access resource');
+  }
+}
+
+export class PaymentRequiredError extends BackendError {
+  constructor() {
+    super('Payment required to access resource');
   }
 }
 
 export class ForbiddenError extends BackendError {
   constructor() {
-    super('Not authorized to access resource');
+    super('Insufficient rights to access resource');
   }
 }
 

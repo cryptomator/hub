@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import jakarta.annotation.security.RolesAllowed;
+import jakarta.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
@@ -21,6 +22,7 @@ import org.cryptomator.hub.entities.AuditEventVaultMemberAdd;
 import org.cryptomator.hub.entities.AuditEventVaultMemberRemove;
 import org.cryptomator.hub.entities.AuditEventVaultUpdate;
 import org.cryptomator.hub.entities.Device;
+import org.cryptomator.hub.license.LicenseHolder;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
@@ -33,6 +35,9 @@ import java.util.UUID;
 @Path("/auditlog")
 public class AuditLogResource {
 
+	@Inject
+	LicenseHolder license;
+
 	@GET
 	@RolesAllowed("admin")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -44,8 +49,13 @@ public class AuditLogResource {
 	@Parameter(name = "pageSize", description = "the maximum number of entries to return. Must be between 1 and 100.", in = ParameterIn.QUERY)
 	@APIResponse(responseCode = "200", description = "Body contains list of events in the specified time interval")
 	@APIResponse(responseCode = "400", description = "startDate or endDate not specified, startDate > endDate, order specified and not in ['asc','desc'] or pageSize not in [1 .. 100]")
+	@APIResponse(responseCode = "402", description = "Community license used or license expired")
 	@APIResponse(responseCode = "403", description = "requesting user is does not have admin role")
 	public List<AuditEventDto> getAllEvents(@QueryParam("startDate") Instant startDate, @QueryParam("endDate") Instant endDate, @QueryParam("paginationId") Long paginationId, @QueryParam("order") @DefaultValue("desc") String order, @QueryParam("pageSize") @DefaultValue("20") int pageSize) {
+		if (!license.isSet() || license.isExpired()) {
+			throw new PaymentRequiredException("Community license used or license expired");
+		}
+
 		if (startDate == null || endDate == null) {
 			throw new BadRequestException("startDate and endDate must be specified");
 		} else if (startDate.isAfter(endDate)) {

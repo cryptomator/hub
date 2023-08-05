@@ -1,4 +1,4 @@
-import backend, { AuthorityDto, DeviceDto, VaultDto, axiosAuth } from './backend';
+import backend, { AuthorityDto, DeviceDto, VaultDto, axiosAuth, rethrowAndConvertIfExpected } from './backend';
 import { Deferred, debounce } from './util';
 
 /* DTOs */
@@ -65,7 +65,7 @@ export type AuditEventVaultMemberRemoveDto = AuditEventDto & {
 export class AuditLogEntityCache {
   private vaults: Map<string, Deferred<VaultDto>>;
   private authorities: Map<string, Deferred<AuthorityDto>>;
-  private devices: Map<string, Deferred<DeviceDto>>;  
+  private devices: Map<string, Deferred<DeviceDto>>;
 
   constructor() {
     this.vaults = new Map();
@@ -87,7 +87,7 @@ export class AuditLogEntityCache {
 
   private async getEntity<T>(entityId: string, entities: Map<string, Deferred<T>>, debouncedResolvePendingEntities: Function): Promise<T> {
     const cachedEntity = entities.get(entityId);
-    if (!cachedEntity) {  
+    if (!cachedEntity) {
       const deferredEntity = new Deferred<T>();
       entities.set(entityId, deferredEntity);
       debouncedResolvePendingEntities();
@@ -129,7 +129,8 @@ class AuditLogService {
       .then(response => response.data.map(dto => {
         dto.timestamp = new Date(dto.timestamp);
         return dto;
-      }));
+      }))
+      .catch((error) => rethrowAndConvertIfExpected(error, 402));
   }
 }
 
