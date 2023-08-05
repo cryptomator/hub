@@ -74,10 +74,9 @@
   "auditLog.details.vaultMember.add": "Add Vault Member",
   "auditLog.details.vaultMember.remove": "Remove Vault Member",
   "auditLog.pagination.showing": "Showing entries {0} to {1}",
-  "auditLog.community.license.hint.message": "License required",
-  "auditLog.community.license.hint.description": "Audit Logs is only available in the Standard Plan and above. You can upgrade your licence in the admin section.",
-  "auditLog.community.license.hint.admin.section.button": "Admin section",
-
+  "auditLog.paymentRequired.message": "License Required",
+  "auditLog.paymentRequired.description": "Audit Logs are only available with a paid license. You can get one in the admin section.",
+  "auditLog.paymentRequired.openAdminSection": "Open Admin Section",
 
   "authenticateVaultAdminDialog.title": "Manage Vault",
   "authenticateVaultAdminDialog.description": "Type in the vault admin password to manage it.",
