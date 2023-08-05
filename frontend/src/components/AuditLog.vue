@@ -230,13 +230,13 @@ let lastIdOfPreviousPage = [Number.MAX_SAFE_INTEGER];
 
 onMounted(fetchData);
 
-async function fetchData() {
+async function fetchData(page: number = 0) {
   onFetchError.value = null;
   try {
     // Fetch one more event than the page size to determine if there is a next page
-    const events = await auditlog.service.getAllEvents(startDate.value, endDate.value, lastIdOfPreviousPage[currentPage.value], selectedOrder.value, pageSize.value + 1);
+    const events = await auditlog.service.getAllEvents(startDate.value, endDate.value, lastIdOfPreviousPage[page], selectedOrder.value, pageSize.value + 1);
     // If the lastIdOfPreviousPage for the first page has not been set yet, set it to an id "before"/"after" the first event
-    if (currentPage.value == 0 && lastIdOfPreviousPage[0] == 0 && events.length > 0) {
+    if (page == 0 && lastIdOfPreviousPage[0] == 0 && events.length > 0) {
       lastIdOfPreviousPage[0] = events[0].id + orderOptions[selectedOrder.value].sign;
     }
     // Determine if there is a next page and discard the last event if there is one
@@ -248,9 +248,10 @@ async function fetchData() {
     }
     // Set the lastIdOfPreviousPage for the next page to the id of the last event of the current page
     if (events.length > 0) {
-      lastIdOfPreviousPage[currentPage.value + 1] = events[events.length - 1].id;
+      lastIdOfPreviousPage[page + 1] = events[events.length - 1].id;
     }
     auditEvents.value = events;
+    currentPage.value = page;
     state.value = State.ShowAuditLog;
   } catch (error) {
     if (error instanceof PaymentRequiredError) {
@@ -264,7 +265,6 @@ async function fetchData() {
 
 async function refreshData() {
   lastIdOfPreviousPage = [orderOptions[selectedOrder.value].initialLastIdOfPreviousPage];
-  currentPage.value = 0;
   auditlog.entityCache.invalidateAll();
   await fetchData();
 }
@@ -305,12 +305,10 @@ function validateDateFilterValue(dateFilterValue: string): Date | null {
 }
 
 async function showNextPage() {
-  currentPage.value++;
-  await fetchData();
+  await fetchData(currentPage.value + 1);
 }
 
 async function showPreviousPage() {
-  currentPage.value--;
-  await fetchData();
+  await fetchData(currentPage.value - 1);
 }
 </script>
