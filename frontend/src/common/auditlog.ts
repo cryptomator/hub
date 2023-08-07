@@ -1,4 +1,4 @@
-import backend, { AuthorityDto, DeviceDto, VaultDto, axiosAuth } from './backend';
+import backend, { AuthorityDto, DeviceDto, VaultDto, axiosAuth, rethrowAndConvertIfExpected } from './backend';
 import { Deferred, debounce } from './util';
 
 /* DTOs */
@@ -6,7 +6,7 @@ import { Deferred, debounce } from './util';
 export type AuditEventDto = {
   id: number;
   timestamp: Date;
-  type: 'DEVICE_REGISTER' | 'DEVICE_REMOVE' | 'VAULT_ACCESS_GRANT' | 'VAULT_CREATE' | 'VAULT_MEMBER_ADD' | 'VAULT_MEMBER_REMOVE' | 'VAULT_UNLOCK' | 'VAULT_UPDATE';
+  type: 'DEVICE_REGISTER' | 'DEVICE_REMOVE' | 'VAULT_CREATE' | 'VAULT_UPDATE' | 'VAULT_ACCESS_GRANT' | 'VAULT_KEY_RETRIEVE' | 'VAULT_MEMBER_ADD' | 'VAULT_MEMBER_REMOVE';
 }
 
 export type AuditEventDeviceRegisterDto = AuditEventDto & {
@@ -21,17 +21,31 @@ export type AuditEventDeviceRemoveDto = AuditEventDto & {
   deviceId: string;
 }
 
+export type AuditEventVaultCreateDto = AuditEventDto & {
+  createdBy: string;
+  vaultId: string;
+  vaultName: string;
+  vaultDescription: string;
+}
+
+export type AuditEventVaultUpdateDto = AuditEventDto & {
+  updatedBy: string;
+  vaultId: string;
+  vaultName: string;
+  vaultDescription: string;
+  vaultArchived: boolean;
+}
+
 export type AuditEventVaultAccessGrantDto = AuditEventDto & {
   grantedBy: string;
   vaultId: string;
   authorityId: string;
 }
 
-export type AuditEventVaultCreateDto = AuditEventDto & {
-  createdBy: string;
+export type AuditEventVaultKeyRetrieveDto = AuditEventDto & {
+  retrievedBy: string;
   vaultId: string;
-  vaultName: string;
-  vaultDescription: string;
+  result: 'SUCCESS' | 'UNAUTHORIZED';
 }
 
 export type AuditEventVaultMemberAddDto = AuditEventDto & {
@@ -46,27 +60,12 @@ export type AuditEventVaultMemberRemoveDto = AuditEventDto & {
   authorityId: string;
 }
 
-export type AuditEventVaultUnlockDto = AuditEventDto & {
-  unlockedBy: string;
-  vaultId: string;
-  deviceId: string;
-  result: 'SUCCESS' | 'UNAUTHORIZED';
-}
-
-export type AuditEventVaultUpdateDto = AuditEventDto & {
-  updatedBy: string;
-  vaultId: string;
-  vaultName: string;
-  vaultDescription: string;
-  vaultArchived: boolean;
-}
-
 /* Entity Cache */
 
 export class AuditLogEntityCache {
   private vaults: Map<string, Deferred<VaultDto>>;
   private authorities: Map<string, Deferred<AuthorityDto>>;
-  private devices: Map<string, Deferred<DeviceDto>>;  
+  private devices: Map<string, Deferred<DeviceDto>>;
 
   constructor() {
     this.vaults = new Map();
@@ -88,7 +87,7 @@ export class AuditLogEntityCache {
 
   private async getEntity<T>(entityId: string, entities: Map<string, Deferred<T>>, debouncedResolvePendingEntities: Function): Promise<T> {
     const cachedEntity = entities.get(entityId);
-    if (!cachedEntity) {  
+    if (!cachedEntity) {
       const deferredEntity = new Deferred<T>();
       entities.set(entityId, deferredEntity);
       debouncedResolvePendingEntities();
@@ -130,7 +129,8 @@ class AuditLogService {
       .then(response => response.data.map(dto => {
         dto.timestamp = new Date(dto.timestamp);
         return dto;
-      }));
+      }))
+      .catch((error) => rethrowAndConvertIfExpected(error, 402));
   }
 }
 

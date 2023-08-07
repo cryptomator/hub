@@ -1,13 +1,15 @@
 package org.cryptomator.hub.api;
 
-import io.agroal.api.AgroalDataSource;
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.exceptions.JWTVerificationException;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.mockito.InjectMock;
 import io.quarkus.test.security.TestSecurity;
 import io.quarkus.test.security.oidc.Claim;
 import io.quarkus.test.security.oidc.OidcSecurity;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
-import jakarta.inject.Inject;
+import org.cryptomator.hub.license.LicenseHolder;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
@@ -15,8 +17,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
-
-import java.sql.SQLException;
+import org.mockito.Mockito;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
@@ -27,8 +28,8 @@ import static org.hamcrest.CoreMatchers.nullValue;
 @DisplayName("Resource /billing")
 public class BillingResourceTest {
 
-	@Inject
-	AgroalDataSource dataSource;
+	@InjectMock
+	LicenseHolder licenseHolder;
 
 	@BeforeAll
 	public static void beforeAll() {
@@ -51,17 +52,11 @@ public class BillingResourceTest {
 		private static final String MALFORMED_TOKEN = "hello world";
 
 		@Test
-		@Order(1)
 		@DisplayName("GET /billing returns 200 with empty license self-hosted")
-		public void testGetEmptySelfHosted() throws SQLException {
-			try (var s = dataSource.getConnection().createStatement()) {
-				s.execute("""
-						UPDATE "settings"
-						SET "hub_id" = '42', "license_key" = null
-						WHERE "id" = 0;
-						""");
-			}
-
+		public void testGetEmptySelfHosted() {
+			Mockito.when(licenseHolder.get()).thenReturn(null);
+			Mockito.when(licenseHolder.getNoLicenseSeats()).thenReturn(5L);
+			Mockito.when(licenseHolder.getAvailableSeats()).thenReturn(3L);
 			when().get("/billing")
 					.then().statusCode(200)
 					.body("hubId", is("42"))
@@ -74,7 +69,6 @@ public class BillingResourceTest {
 		}
 
 		@Test
-		@Order(2)
 		@DisplayName("PUT /billing/token returns 204 for initial token")
 		public void testPutInitialToken() {
 			given().contentType(ContentType.TEXT).body(INITIAL_TOKEN)
@@ -86,6 +80,7 @@ public class BillingResourceTest {
 		@Order(3)
 		@DisplayName("GET /billing returns 200 with initial license")
 		public void testGetInitial() {
+			Mockito.when(licenseHolder.get()).thenReturn(JWT.decode(INITIAL_TOKEN));
 			when().get("/billing")
 					.then().statusCode(200)
 					.body("hubId", is("42"))
@@ -98,7 +93,6 @@ public class BillingResourceTest {
 		}
 
 		@Test
-		@Order(4)
 		@DisplayName("PUT /billing/token returns 204 for updated token")
 		public void testPutUpdatedToken() {
 			given().contentType(ContentType.TEXT).body(UPDATED_TOKEN)
@@ -107,9 +101,9 @@ public class BillingResourceTest {
 		}
 
 		@Test
-		@Order(5)
 		@DisplayName("GET /billing returns 200 with updated license")
 		public void testGetUpdated() {
+			Mockito.when(licenseHolder.get()).thenReturn(JWT.decode(UPDATED_TOKEN));
 			when().get("/billing")
 					.then().statusCode(200)
 					.body("hubId", is("42"))
@@ -122,18 +116,18 @@ public class BillingResourceTest {
 		}
 
 		@Test
-		@Order(6)
 		@DisplayName("PUT /billing/token returns 400 due to expired token")
 		public void testPutExpiredToken() {
+			Mockito.doThrow(JWTVerificationException.class).when(licenseHolder).set(EXPIRED_TOKEN);
 			given().contentType(ContentType.TEXT).body(EXPIRED_TOKEN)
 					.when().put("/billing/token")
 					.then().statusCode(400);
 		}
 
 		@Test
-		@Order(7)
 		@DisplayName("PUT /billing/token returns 400 due to invalid signature")
 		public void testPutTokenWithInvalidSignature() {
+			Mockito.doThrow(JWTVerificationException.class).when(licenseHolder).set(TOKEN_WITH_INVALID_SIGNATURE);
 			given().contentType(ContentType.TEXT).body(TOKEN_WITH_INVALID_SIGNATURE)
 					.when().put("/billing/token")
 					.then().statusCode(400);
