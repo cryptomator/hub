@@ -167,6 +167,7 @@
   "vaultDetails.actions.showRecoveryKey": "Wiederherstellungsschlüssel anzeigen",
   "vaultDetails.actions.archiveVault": "Tresor archivieren",
   "vaultDetails.actions.reactivateVault": "Tresor reaktivieren",
+  "vaultDetails.error.paymentRequired": "Deine Cryptomator Hub Lizenz hat die Anzahl der verfügbaren Sitze überschritten oder ist abgelaufen. Bitte informiere einen Hub-Administrator, um die Lizenz zu erneuern oder zu erweitern.",
 
   "vaultList.title": "Tresore",
   "vaultList.empty.title": "Keine Tresore",
