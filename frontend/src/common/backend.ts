@@ -213,13 +213,13 @@ class VaultService {
   public async addUser(vaultId: string, userId: string, vaultKeys: VaultKeys): Promise<AxiosResponse<void>> {
     let vaultAdminAuthorizationJWT = await this.buildVaultAdminAuthorizationJWT(vaultId, vaultKeys);
     return axiosAuth.put(`/vaults/${vaultId}/users/${userId}`, null, { headers: { 'Cryptomator-Vault-Admin-Authorization': vaultAdminAuthorizationJWT } })
-      .catch((error) => rethrowAndConvertIfExpected(error, 404, 409));
+      .catch((error) => rethrowAndConvertIfExpected(error, 402, 404, 409));
   }
 
   public async addGroup(vaultId: string, groupId: string, vaultKeys: VaultKeys): Promise<AxiosResponse<void>> {
     let vaultAdminAuthorizationJWT = await this.buildVaultAdminAuthorizationJWT(vaultId, vaultKeys);
     return axiosAuth.put(`/vaults/${vaultId}/groups/${groupId}`, null, { headers: { 'Cryptomator-Vault-Admin-Authorization': vaultAdminAuthorizationJWT } })
-      .catch((error) => rethrowAndConvertIfExpected(error, 404, 409));
+      .catch((error) => rethrowAndConvertIfExpected(error, 402, 404, 409));
   }
 
   public async getDevicesRequiringAccessGrant(vaultId: string, vaultKeys: VaultKeys): Promise<DeviceDto[]> {
@@ -232,7 +232,7 @@ class VaultService {
     const body: VaultDto = { id: vaultId, name: name, description: description, archived: archived, creationTime: new Date(), masterkey: masterkey, iterations: iterations, salt: salt, authPublicKey: signPubKey, authPrivateKey: signPrvKey };
     return axiosAuth.put(`/vaults/${vaultId}`, body)
       .then(response => response.data)
-      .catch((error) => rethrowAndConvertIfExpected(error, 404));
+      .catch((error) => rethrowAndConvertIfExpected(error, 402, 404));
   }
 
   public async grantAccess(vaultId: string, deviceId: string, jwe: string, vaultKeys: VaultKeys) {

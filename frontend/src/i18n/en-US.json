@@ -9,7 +9,6 @@
   "common.copied": "Copied!",
   "common.copy": "Copy",
   "common.download": "Download",
-  "common.error.wrongPassword": "Wrong password",
   "common.loading": "Loading…",
   "common.manage": "Manage",
   "common.next": "Next",
@@ -108,6 +107,7 @@
   "createVault.error.invalidRecoveryKey": "Recovery key is invalid.",
   "createVault.error.vaultAlreadyExists": "A vault with the given name already exists.",
   "createVault.error.downloadTemplateFailed": "Download of vault template failed: {0}",
+  "createVault.error.paymentRequired": "Your Cryptomator Hub license has exceeded the number of available seats or has expired. Please inform a Hub administrator to upgrade or renew the license.",
   "createVault.success.title": "Vault created",
   "createVault.success.description": "After downloading the zipped vault folder, unpack it to any location shared with your team members.",
   "createVault.success.download": "Download zipped vault folder",
@@ -169,6 +169,7 @@
   "vaultDetails.actions.showRecoveryKey": "Show Recovery Key",
   "vaultDetails.actions.archiveVault": "Archive Vault",
   "vaultDetails.actions.reactivateVault": "Reactivate Vault",
+  "vaultDetails.error.paymentRequired": "Your Cryptomator Hub license has exceeded the number of available seats or has expired. Please inform a Hub administrator to upgrade or renew the license.",
 
   "vaultList.title": "Vaults",
   "vaultList.empty.title": "No vaults",
