@@ -107,6 +107,7 @@
   "createVault.error.invalidRecoveryKey": "Recovery key is invalid.",
   "createVault.error.vaultAlreadyExists": "A vault with the given name already exists.",
   "createVault.error.downloadTemplateFailed": "Download of vault template failed: {0}",
+  "createVault.error.paymentRequired": "Your Cryptomator Hub license has exceeded the number of available seats or has expired. Please inform a Hub administrator to upgrade or renew the license.",
   "createVault.success.title": "Vault created",
   "createVault.success.description": "After downloading the zipped vault folder, unpack it to any location shared with your team members.",
   "createVault.success.download": "Download zipped vault folder",
