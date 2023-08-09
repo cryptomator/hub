@@ -344,6 +344,7 @@ public class VaultResource {
 			description = "Creates or updates a vault with the given vault id. The creationTime in the vaultDto is always ignored. On creation, the current server time is used and the archived field is ignored. On update, only the name, description, and archived fields are considered.")
 	@APIResponse(responseCode = "200", description = "existing vault updated")
 	@APIResponse(responseCode = "201", description = "new vault created")
+	@APIResponse(responseCode = "402", description = "all seats in licence in use during creation of new vault")
 	public Response createOrUpdate(@PathParam("vaultId") UUID vaultId, @Valid @NotNull VaultDto vaultDto) {
 		var currentUser = User.<User>findById(jwt.getSubject());
 		Vault vault;
@@ -351,6 +352,13 @@ public class VaultResource {
 		try {
 			vault = Vault.<Vault>findByIdOptional(vaultId).get();
 		} catch (NoSuchElementException _e) {
+			if (!EffectiveVaultAccess.isUserOccupyingSeat(currentUser.id)) {
+				//for new vaults, we need to check that a licence seat is available if the user does not already have access to a vault.
+				var usedSeats = EffectiveVaultAccess.countEffectiveVaultUsers();
+				if (usedSeats >= license.getAvailableSeats()) {
+					throw new PaymentRequiredException("Number of effective vault users exceeds available license seats");
+				}
+			}
 			isCreated = true;
 			//create new vault
 			vault = new Vault();

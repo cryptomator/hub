@@ -811,6 +811,16 @@ public class VaultResourceTest {
 						VALUES
 						('7E57C0DE-0000-4000-8000-0001FFFF1111', 'Vault U', 'Vault to update.',
 						 '2020-02-20T20:20:20Z', 'saltU', 42, 'masterkeyU', 'authPubKeyU', 'authPrvKeyU', FALSE);
+
+						INSERT INTO "authority" ("id", "type", "name")
+						VALUES
+							('user96', 'USER', 'user name 96'),
+							('user97', 'USER', 'user name 97');
+
+						INSERT INTO "user_details" ("id")
+						VALUES
+							('user96'),
+							('user97');
 						""");
 
 			}
@@ -841,6 +851,88 @@ public class VaultResourceTest {
 			given().contentType(ContentType.JSON)
 					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-BADBADBADBAD")
 					.then().statusCode(400);
+		}
+
+		@Test
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-0001FFFF3333 returns 201 not exceeding seats but user does not have a vault yet")
+		@TestSecurity(user = "User Name 96", roles = {"user"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user96")
+		})
+		public void testCreateVault3() {
+			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-0001FFFF3333");
+			var vaultDto = new VaultResource.VaultDto(uuid, "Test Vault", "Vault to create", false, Instant.parse("2112-12-21T21:12:21Z"), "masterkeyC", 42, "saltC", "authPubKeyC", "authPrvKeyC");
+			given().contentType(ContentType.JSON).body(vaultDto)
+					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-0001FFFF3333")
+					.then().statusCode(201)
+					.body("id", equalToIgnoringCase("7E57C0DE-0000-4000-8000-0001FFFF3333"))
+					.body("name", equalTo("Test Vault"))
+					.body("description", equalTo("Vault to create"))
+					.body("masterkey", equalTo("masterkeyC"))
+					.body("salt", equalTo("saltC"))
+					.body("iterations", equalTo(42))
+					.body("authPublicKey", equalTo("authPubKeyC"))
+					.body("authPrivateKey", equalTo("authPrvKeyC"))
+					.body("archived", equalTo(false));
+		}
+
+		@Test
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-0001FFFF4444 exceeding the license returns 402")
+		@TestSecurity(user = "User Name 97", roles = {"user"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user97")
+		})
+		public void testCreateVault4() throws SQLException {
+			try (var s = dataSource.getConnection().createStatement()) {
+				s.execute("""
+						INSERT INTO "authority" ("id", "type", "name")
+						VALUES
+							('user91', 'USER', 'user name 91'),
+							('user92', 'USER', 'user name 92'),
+							('user93', 'USER', 'user name 93'),
+							('user94', 'USER', 'user name 94'),
+							('user95_A', 'USER', 'user name Archived'),
+							('group91', 'GROUP', 'group name 91');
+
+						INSERT INTO "group_details" ("id")
+						VALUES
+							('group91');
+
+						INSERT INTO "user_details" ("id")
+						VALUES
+							('user91'),
+							('user92'),
+							('user93'),
+							('user94'),
+							('user95_A');
+
+						INSERT INTO "group_membership" ("group_id", "member_id")
+						VALUES
+							('group91', 'user91'),
+							('group91', 'user92'),
+							('group91', 'user93'),
+							('group91', 'user94');
+
+						INSERT INTO "vault_access" ("vault_id", "authority_id")
+						VALUES
+							('7E57C0DE-0000-4000-8000-0001AAAAAAAA', 'user95_A'),
+							('7E57C0DE-0000-4000-8000-000100001111', 'group91');
+						""");
+			}
+			//Assumptions.assumeTrue(EffectiveVaultAccess.countEffectiveVaultUsers() > 5);
+
+			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-0001FFFF4444");
+			var vaultDto = new VaultResource.VaultDto(uuid, "Test Vault", "Vault to create", false, Instant.parse("2112-12-21T21:12:21Z"), "masterkeyC", 42, "saltC", "authPubKeyC", "authPrvKeyC");
+			given().contentType(ContentType.JSON).body(vaultDto)
+					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-0001FFFF4444")
+					.then().statusCode(402);
+
+			try (var s = dataSource.getConnection().createStatement()) {
+				s.execute("""
+						DELETE FROM "authority"
+						WHERE "id" IN ('user91', 'user92', 'user93', 'user94', 'user95_A', 'group91');
+						""");
+			}
 		}
 
 		@Test
@@ -883,12 +975,81 @@ public class VaultResourceTest {
 					.body("archived", equalTo(true));
 		}
 
+		@Test
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-0001FFFF1111 returns 200 with only updated name, description and archive flag, exceeding license")
+		public void testUpdateVault1() throws SQLException {
+			try (var s = dataSource.getConnection().createStatement()) {
+				s.execute("""
+						INSERT INTO "authority" ("id", "type", "name")
+						VALUES
+							('user91', 'USER', 'user name 91'),
+							('user92', 'USER', 'user name 92'),
+							('user93', 'USER', 'user name 93'),
+							('user94', 'USER', 'user name 94'),
+							('user95_A', 'USER', 'user name Archived'),
+							('group91', 'GROUP', 'group name 91');
+
+						INSERT INTO "group_details" ("id")
+						VALUES
+							('group91');
+
+						INSERT INTO "user_details" ("id")
+						VALUES
+							('user91'),
+							('user92'),
+							('user93'),
+							('user94'),
+							('user95_A');
+
+						INSERT INTO "group_membership" ("group_id", "member_id")
+						VALUES
+							('group91', 'user91'),
+							('group91', 'user92'),
+							('group91', 'user93'),
+							('group91', 'user94');
+
+						INSERT INTO "vault_access" ("vault_id", "authority_id")
+						VALUES
+							('7E57C0DE-0000-4000-8000-0001AAAAAAAA', 'user95_A'),
+							('7E57C0DE-0000-4000-8000-000100001111', 'group91');
+						""");
+			}
+			//Assumptions.assumeTrue(EffectiveVaultAccess.countEffectiveVaultUsers() > 5);
+
+			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-0001FFFF1111");
+			var vaultDto = new VaultResource.VaultDto(uuid, "VaultUpdated", "Vault updated.", true, Instant.parse("2112-12-21T21:12:21Z"), "someVaule", -1, "someVaule", "someValue", "someValue");
+			given().contentType(ContentType.JSON)
+					.body(vaultDto)
+					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-0001FFFF1111")
+					.then().statusCode(200)
+					.body("id", equalToIgnoringCase("7E57C0DE-0000-4000-8000-0001FFFF1111"))
+					.body("name", equalTo("VaultUpdated"))
+					.body("description", equalTo("Vault updated."))
+					.body("creationTime", equalTo("2020-02-20T20:20:20Z"))
+					.body("masterkey", equalTo("masterkeyU"))
+					.body("salt", equalTo("saltU"))
+					.body("iterations", equalTo(42))
+					.body("authPublicKey", equalTo("authPubKeyU"))
+					.body("authPrivateKey", equalTo("authPrvKeyU"))
+					.body("archived", equalTo(true));
+
+			try (var s = dataSource.getConnection().createStatement()) {
+				s.execute("""
+						DELETE FROM "authority"
+						WHERE "id" IN ('user91', 'user92', 'user93', 'user94', 'user95_A', 'group91');
+						""");
+			}
+		}
+
 		@AfterAll
 		public void deleteData() throws SQLException {
 			try (var s = dataSource.getConnection().createStatement()) {
 				s.execute("""
 						DELETE FROM "vault"
 						WHERE "id" IN ('7E57C0DE-0000-4000-8000-0001FFFF1111','7E57C0DE-0000-4000-8000-0001FFFF2222');
+
+						DELETE FROM "authority"
+						WHERE "id" IN ('user96', 'user97');
 						""");
 			}
 		}
