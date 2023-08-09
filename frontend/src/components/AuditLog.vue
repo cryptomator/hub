@@ -186,7 +186,7 @@ const state = ref(State.Loading);
 const auditEvents = ref<AuditEventDto[]>([]);
 const onFetchError = ref<Error | null>();
 
-const startDate = ref(beginOfDate(new Date()));
+const startDate = ref(beginOfDate(new Date(new Date().setMonth(new Date().getMonth() - 1))));
 const startDateFilter = ref(startDate.value.toISOString().split('T')[0]);
 const endDate = ref(endOfDate(new Date()));
 const endDateFilter = ref(endDate.value.toISOString().split('T')[0]);
