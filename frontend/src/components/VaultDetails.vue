@@ -47,7 +47,7 @@
                   <img :src="member.pictureUrl" alt="" class="w-8 h-8 rounded-full" />
                   <p class="ml-4 text-sm font-medium text-gray-900">{{ member.name }}</p>
                 </div>
-                <button v-if="member.id != me?.id" type="button" class="ml-6 bg-white rounded-md text-sm font-medium text-red-600 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="revokeUserAccess(member.id)">{{ t('common.remove') }}<span class="sr-only"> {{ member.name }}</span></button>
+                <button v-if="member.id != me?.id && !vault.archived" type="button" class="ml-6 bg-white rounded-md text-sm font-medium text-red-600 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="revokeUserAccess(member.id)">{{ t('common.remove') }}<span class="sr-only"> {{ member.name }}</span></button>
               </div>
 
               <p v-if="onRevokeUserAccessError[member.id] != null" class="text-sm text-red-900 text-right mt-1">
