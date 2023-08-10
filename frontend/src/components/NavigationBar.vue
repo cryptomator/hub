@@ -68,7 +68,7 @@
 
 <script setup lang="ts">
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
-import { ArrowRightOnRectangleIcon, Bars3Icon, Cog8ToothIcon, ComputerDesktopIcon, WrenchIcon, XMarkIcon } from '@heroicons/vue/24/outline';
+import { ArrowRightOnRectangleIcon, Bars3Icon, ListBulletIcon, UserIcon, WrenchIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auth from '../common/auth';
@@ -83,17 +83,17 @@ const navigation = [
 const profileDropdownSections = {
   infoSection :
     [
-      { icon: ComputerDesktopIcon, name: 'nav.profile.devices', to: '/app/devices' }
+      { icon: UserIcon, name: 'nav.profile.profile', to: '/app/profile' }
     ],
 
   adminSection :
     [
-      { icon: WrenchIcon, name: 'nav.profile.admin', to: '/app/admin' }
+      { icon: ListBulletIcon, name: 'nav.profile.auditlog', to: '/app/admin/auditlog' },
+      { icon: WrenchIcon, name: 'nav.profile.admin', to: '/app/admin/settings' }
     ],
 
   hubSection :
     [
-      { icon: Cog8ToothIcon, name: 'nav.profile.settings', to: '/app/settings' },
       { icon: ArrowRightOnRectangleIcon, name: 'nav.profile.signOut', to: '/app/logout' }
     ],
 

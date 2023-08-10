@@ -1,4 +1,4 @@
-import { expect, use as chaiUse } from 'chai';
+import { use as chaiUse, expect } from 'chai';
 import chaiBytes from 'chai-bytes';
 import { describe } from 'mocha';
 import { CRC32, wordEncoder } from '../../src/common/util';

@@ -4,6 +4,8 @@ import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.panache.common.Parameters;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -14,6 +16,7 @@ import jakarta.persistence.Table;
 
 import java.time.Instant;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -31,7 +34,17 @@ import java.util.stream.Stream;
 					WHERE v.id = :vaultId AND a.vault IS NULL
 				"""
 )
+@NamedQuery(name = "Device.allInList",
+		query = """
+				SELECT d
+				FROM Device d
+				WHERE d.id IN :ids
+				""")
 public class Device extends PanacheEntityBase {
+
+	public enum Type {
+		BROWSER, DESKTOP, MOBILE
+	}
 
 	@Id
 	@Column(name = "id", nullable = false)
@@ -47,6 +60,10 @@ public class Device extends PanacheEntityBase {
 	@Column(name = "name", nullable = false)
 	public String name;
 
+	@Column(name = "type", nullable = false)
+	@Enumerated(EnumType.STRING)
+	public Type type;
+
 	@Column(name = "publickey", nullable = false)
 	public String publickey;
 
@@ -59,6 +76,7 @@ public class Device extends PanacheEntityBase {
 				"id='" + id + '\'' +
 				", owner=" + owner.id +
 				", name='" + name + '\'' +
+				", type='" + type + '\'' +
 				", publickey='" + publickey + '\'' +
 				'}';
 	}
@@ -71,16 +89,20 @@ public class Device extends PanacheEntityBase {
 		return Objects.equals(this.id, other.id)
 				&& Objects.equals(this.owner, other.owner)
 				&& Objects.equals(this.name, other.name)
+				&& Objects.equals(this.type, other.type)
 				&& Objects.equals(this.publickey, other.publickey);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, owner, name, publickey);
+		return Objects.hash(id, owner, name, type, publickey);
 	}
 
 	public static Stream<Device> findRequiringAccessGrant(UUID vaultId) {
 		return find("#Device.requiringAccessGrant", Parameters.with("vaultId", vaultId)).stream();
 	}
 
+	public static Stream<Device> findAllInList(List<String> ids) {
+		return find("#Device.allInList", Parameters.with("ids", ids)).stream();
+	}
 }

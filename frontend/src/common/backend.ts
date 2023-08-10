@@ -1,4 +1,4 @@
-import AxiosStatic, { AxiosRequestConfig, AxiosResponse } from 'axios';
+import AxiosStatic, { AxiosRequestConfig, AxiosRequestHeaders, AxiosResponse } from 'axios';
 import { JdenticonConfig, toSvg } from 'jdenticon';
 import { base64 } from 'rfc4648';
 import authPromise from './auth';
@@ -18,14 +18,14 @@ const axiosBaseCfg: AxiosRequestConfig = {
  * which transports the Bearer Token and doubles as a CSRF-Protection.
  * See https://security.stackexchange.com/a/177174/78702
  */
-const axiosAuth = AxiosStatic.create(axiosBaseCfg);
+export const axiosAuth = AxiosStatic.create(axiosBaseCfg);
 axiosAuth.interceptors.request.use(async request => {
   try {
     const token = await authPromise.then(auth => auth.bearerToken());
     if (request.headers) {
       request.headers['Authorization'] = `Bearer ${token}`;
     } else {
-      request.headers = { 'Authorization': `Bearer ${token}` };
+      request.headers = { 'Authorization': `Bearer ${token}` } as AxiosRequestHeaders;
     }
     return request;
   } catch (err: unknown) {
@@ -40,6 +40,7 @@ export type VaultDto = {
   id: string;
   name: string;
   description: string;
+  archived: boolean;
   creationTime: Date;
   masterkey: string;
   iterations: number;
@@ -51,6 +52,7 @@ export type VaultDto = {
 export type DeviceDto = {
   id: string;
   name: string;
+  type: 'BROWSER' | 'DESKTOP' | 'MOBILE';
   publicKey: string;
   accessTo: VaultDto[];
   creationTime: Date;
@@ -174,6 +176,11 @@ class VaultService {
     return axiosAuth.get('/vaults').then(response => response.data);
   }
 
+  public async listSome(vaultsIds: string[]): Promise<VaultDto[]> {
+    const query = `ids=${vaultsIds.join('&ids=')}`;
+    return axiosAuth.get(`/vaults/some?${query}`).then(response => response.data);
+  }
+
   public async listAll(): Promise<VaultDto[]> {
     return axiosAuth.get('/vaults/all').then(response => response.data);
   }
@@ -206,13 +213,13 @@ class VaultService {
   public async addUser(vaultId: string, userId: string, vaultKeys: VaultKeys): Promise<AxiosResponse<void>> {
     let vaultAdminAuthorizationJWT = await this.buildVaultAdminAuthorizationJWT(vaultId, vaultKeys);
     return axiosAuth.put(`/vaults/${vaultId}/users/${userId}`, null, { headers: { 'Cryptomator-Vault-Admin-Authorization': vaultAdminAuthorizationJWT } })
-      .catch((error) => rethrowAndConvertIfExpected(error, 404, 409));
+      .catch((error) => rethrowAndConvertIfExpected(error, 402, 404, 409));
   }
 
   public async addGroup(vaultId: string, groupId: string, vaultKeys: VaultKeys): Promise<AxiosResponse<void>> {
     let vaultAdminAuthorizationJWT = await this.buildVaultAdminAuthorizationJWT(vaultId, vaultKeys);
     return axiosAuth.put(`/vaults/${vaultId}/groups/${groupId}`, null, { headers: { 'Cryptomator-Vault-Admin-Authorization': vaultAdminAuthorizationJWT } })
-      .catch((error) => rethrowAndConvertIfExpected(error, 404, 409));
+      .catch((error) => rethrowAndConvertIfExpected(error, 402, 404, 409));
   }
 
   public async getDevicesRequiringAccessGrant(vaultId: string, vaultKeys: VaultKeys): Promise<DeviceDto[]> {
@@ -221,10 +228,11 @@ class VaultService {
       .then(response => response.data).catch(err => rethrowAndConvertIfExpected(err, 403));
   }
 
-  public async createVault(vaultId: string, name: string, description: string, masterkey: string, iterations: number, salt: string, signPubKey: string, signPrvKey: string): Promise<AxiosResponse<any>> {
-    const body: VaultDto = { id: vaultId, name: name, description: description, creationTime: new Date(), masterkey: masterkey, iterations: iterations, salt: salt, authPublicKey: signPubKey, authPrivateKey: signPrvKey };
+  public async createOrUpdateVault(vaultId: string, name: string, description: string, archived: boolean, masterkey: string, iterations: number, salt: string, signPubKey: string, signPrvKey: string): Promise<VaultDto> {
+    const body: VaultDto = { id: vaultId, name: name, description: description, archived: archived, creationTime: new Date(), masterkey: masterkey, iterations: iterations, salt: salt, authPublicKey: signPubKey, authPrivateKey: signPrvKey };
     return axiosAuth.put(`/vaults/${vaultId}`, body)
-      .catch((error) => rethrowAndConvertIfExpected(error, 404, 409));
+      .then(response => response.data)
+      .catch((error) => rethrowAndConvertIfExpected(error, 402, 404));
   }
 
   public async grantAccess(vaultId: string, deviceId: string, jwe: string, vaultKeys: VaultKeys) {
@@ -250,6 +258,11 @@ class VaultService {
   }
 }
 class DeviceService {
+  public async listSome(deviceIds: string[]): Promise<DeviceDto[]> {
+    const query = `ids=${deviceIds.join('&ids=')}`;
+    return axiosAuth.get<DeviceDto[]>(`/devices?${query}`).then(response => response.data);
+  }
+
   public async removeDevice(deviceId: string): Promise<AxiosResponse<any>> {
     return axiosAuth.delete(`/devices/${deviceId}`)
       .catch((error) => rethrowAndConvertIfExpected(error, 404));
@@ -285,6 +298,11 @@ class AuthorityService {
         }
       });
     });
+  }
+
+  public async listSome(authorityIds: string[]): Promise<AuthorityDto[]> {
+    const query = `ids=${authorityIds.join('&ids=')}`;
+    return axiosAuth.get<AuthorityDto[]>(`/authorities?${query}`).then(response => response.data);
   }
 }
 
@@ -322,6 +340,8 @@ const services = {
 
 function convertExpectedToBackendError(status: number): BackendError {
   switch (status) {
+    case 402:
+      return new PaymentRequiredError();
     case 403:
       return new ForbiddenError();
     case 404:
@@ -329,7 +349,7 @@ function convertExpectedToBackendError(status: number): BackendError {
     case 409:
       return new ConflictError();
     default:
-      return new BackendError('Status Code ${status} not mapped');
+      return new BackendError(`Status code ${status} not mapped`);
   }
 }
 
@@ -338,7 +358,7 @@ function convertExpectedToBackendError(status: number): BackendError {
  * @param error A thrown object
  * @param expectedStatusCodes The expected http status codes of the backend call
  */
-function rethrowAndConvertIfExpected(error: unknown, ...expectedStatusCodes: number[]): Promise<any> {
+export function rethrowAndConvertIfExpected(error: unknown, ...expectedStatusCodes: number[]): Promise<any> {
   if (AxiosStatic.isAxiosError(error) && error.response != null && expectedStatusCodes.includes(error.response.status)) {
     throw convertExpectedToBackendError(error.response.status);
   } else {
@@ -357,13 +377,19 @@ export class BackendError extends Error {
 
 export class UnauthorizedError extends BackendError {
   constructor() {
-    super('Unauthorized');
+    super('Unauthorized to access resource');
+  }
+}
+
+export class PaymentRequiredError extends BackendError {
+  constructor() {
+    super('Payment required to access resource');
   }
 }
 
 export class ForbiddenError extends BackendError {
   constructor() {
-    super('Not authorized to access resource');
+    super('Insufficient rights to access resource');
   }
 }
 

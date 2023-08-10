@@ -13,13 +13,11 @@
         </div>
 
         <ComboboxOptions v-if="selectedItem == null && filteredItems.length > 0" class="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-          <ComboboxOption v-for="item in filteredItems" :key="item.id" v-slot="{ active }" :value="item" as="template">
-            <li :class="['relative cursor-default select-none py-2 pl-3 pr-9', active ? 'bg-primary text-white' : 'text-gray-900']">
-              <div class="flex items-center">
-                <img :src="item.pictureUrl" alt="" class="h-6 w-6 shrink-0 rounded-full" >
-                <span class="ml-3 truncate">{{ item.name }}</span>
-              </div>
-            </li>
+          <ComboboxOption v-for="item in filteredItems" :key="item.id" :value="item" class="relative cursor-default select-none py-2 pl-3 pr-9 ui-not-active:text-gray-900 ui-active:bg-primary ui-active:text-white">
+            <div class="flex items-center">
+              <img :src="item.pictureUrl" alt="" class="h-6 w-6 shrink-0 rounded-full" >
+              <span class="ml-3 truncate">{{ item.name }}</span>
+            </div>
           </ComboboxOption>
         </ComboboxOptions>
       </Combobox>
@@ -38,8 +36,7 @@
 <script setup lang="ts">
 import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions } from '@headlessui/vue';
 import { UsersIcon, XCircleIcon } from '@heroicons/vue/24/solid';
-import { computed } from '@vue/reactivity';
-import { nextTick, ref, watch } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import { debounce } from '../common/util';
 
 interface Item {
@@ -49,12 +46,12 @@ interface Item {
 }
 
 const props = defineProps<{
-  actionTitle: string,
-  onSearch: (query: string) => Promise<Item []>,
+  actionTitle: string
+  onSearch: (query: string) => Promise<Item []>
 }>();
 
 const emit = defineEmits<{
-  (e: 'action', authority: Item): void
+  action: [authority: Item]
 }>();
 
 const vFocus = {

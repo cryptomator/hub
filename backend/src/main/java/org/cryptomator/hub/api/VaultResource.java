@@ -8,8 +8,7 @@ import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
-import jakarta.ws.rs.BadRequestException;
+import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
@@ -21,9 +20,16 @@ import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.AccessToken;
+import org.cryptomator.hub.entities.AuditEventVaultAccessGrant;
+import org.cryptomator.hub.entities.AuditEventVaultCreate;
+import org.cryptomator.hub.entities.AuditEventVaultKeyRetrieve;
+import org.cryptomator.hub.entities.AuditEventVaultMemberAdd;
+import org.cryptomator.hub.entities.AuditEventVaultMemberRemove;
+import org.cryptomator.hub.entities.AuditEventVaultUpdate;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.EffectiveGroupMembership;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
@@ -46,6 +52,7 @@ import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 
 @Path("/vaults")
@@ -65,11 +72,22 @@ public class VaultResource {
 	@RolesAllowed("user")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
-	@Operation(summary = "list all accessible vaults", description = "list all vaults that have been shared with the currently logged in user or a group in wich this user is")
+	@Operation(summary = "list all accessible vaults", description = "list all vaults that are not archived and have been shared with the currently logged in user or a group this user is part of")
 	public List<VaultDto> getAccessible() {
 		var currentUserId = jwt.getSubject();
 		var resultStream = Vault.findAccessibleByUser(currentUserId);
 		return resultStream.map(VaultDto::fromEntity).toList();
+	}
+
+	@GET
+	@Path("/some")
+	@RolesAllowed("admin")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Transactional
+	@Operation(summary = "list all vaults corresponding to the given ids", description = "list for each id in the list its corresponding vault. Ignores all id's where a vault does not exist, ")
+	@APIResponse(responseCode = "200")
+	public List<VaultDto> getSomeVaults(@QueryParam("ids") List<UUID> vaultIds) {
+		return Vault.findAllInList(vaultIds).map(VaultDto::fromEntity).toList();
 	}
 
 	@GET
@@ -89,6 +107,7 @@ public class VaultResource {
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "list vault members", description = "list all users that this vault has been shared with")
+	@APIResponse(responseCode = "200")
 	@APIResponse(responseCode = "401", description = "VaultAdminAuthorizationJWT not provided")
 	@APIResponse(responseCode = "403", description = "VaultAdminAuthorizationJWT expired or not yet valid")
 	@APIResponse(responseCode = "404", description = "vault not found")
@@ -136,6 +155,7 @@ public class VaultResource {
 
 		vault.directMembers.add(user);
 		vault.persist();
+		AuditEventVaultMemberAdd.log(jwt.getSubject(), vaultId, userId);
 		return Response.status(Response.Status.CREATED).build();
 	}
 
@@ -166,6 +186,7 @@ public class VaultResource {
 		}
 		vault.directMembers.add(group);
 		vault.persist();
+		AuditEventVaultMemberAdd.log(jwt.getSubject(), vaultId, groupId);
 		return Response.status(Response.Status.CREATED).build();
 	}
 
@@ -181,7 +202,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "403", description = "VaultAdminAuthorizationJWT expired or not yet valid")
 	@APIResponse(responseCode = "404", description = "vault not found")
 	public Response removeMember(@PathParam("vaultId") UUID vaultId, @PathParam("userId") @ValidId String userId) {
-		return removeAutority(vaultId, userId);
+		return removeAuthority(vaultId, userId);
 	}
 
 	@DELETE
@@ -196,13 +217,14 @@ public class VaultResource {
 	@APIResponse(responseCode = "403", description = "VaultAdminAuthorizationJWT expired or not yet valid")
 	@APIResponse(responseCode = "404", description = "vault not found")
 	public Response removeGroup(@PathParam("vaultId") UUID vaultId, @PathParam("groupId") @ValidId String groupId) {
-		return removeAutority(vaultId, groupId);
+		return removeAuthority(vaultId, groupId);
 	}
 
-	private Response removeAutority(UUID vaultId, String authorityId) {
+	private Response removeAuthority(UUID vaultId, String authorityId) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		vault.directMembers.removeIf(e -> e.id.equals(authorityId));
 		vault.persist();
+		AuditEventVaultMemberRemove.log(jwt.getSubject(), vaultId, authorityId);
 		return Response.status(Response.Status.NO_CONTENT).build();
 	}
 
@@ -213,6 +235,7 @@ public class VaultResource {
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "list devices requiring access rights", description = "lists all devices owned by vault members, that don't have a device-specific masterkey yet")
+	@APIResponse(responseCode = "200")
 	@APIResponse(responseCode = "401", description = "VaultAdminAuthorizationJWT not provided")
 	@APIResponse(responseCode = "403", description = "VaultAdminAuthorizationJWT expired or not yet valid")
 	@APIResponse(responseCode = "404", description = "vault not found")
@@ -225,13 +248,19 @@ public class VaultResource {
 	@RolesAllowed("user")
 	@Transactional
 	@Produces(MediaType.TEXT_PLAIN)
-	@Operation(summary = "get the device-specific masterkey")
+	@Operation(summary = "get the device-specific masterkey of a non-archived vault")
 	@APIResponse(responseCode = "200")
 	@APIResponse(responseCode = "402", description = "number of effective vault users exceeds available license seats")
 	@APIResponse(responseCode = "403", description = "device not authorized to access this vault")
-	@APIResponse(responseCode = "404", description = "unknown device")
+	@APIResponse(responseCode = "404", description = "vault or device not found")
+	@APIResponse(responseCode = "410", description = "Vault is archived")
 	@ActiveLicense
-	public String unlock(@PathParam("vaultId") UUID vaultId, @PathParam("deviceId") @ValidId String deviceId) {
+	public Response unlock(@PathParam("vaultId") UUID vaultId, @PathParam("deviceId") @ValidId String deviceId) {
+		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
+		if (vault.archived) {
+			throw new GoneException("Vault is archived.");
+		}
+
 		var usedSeats = EffectiveVaultAccess.countEffectiveVaultUsers();
 		if (usedSeats > license.getAvailableSeats()) {
 			throw new PaymentRequiredException("Number of effective vault users exceeds available license seats");
@@ -239,10 +268,14 @@ public class VaultResource {
 
 		var access = AccessToken.unlock(vaultId, deviceId, jwt.getSubject());
 		if (access != null) {
-			return access.jwe;
+			AuditEventVaultKeyRetrieve.log(jwt.getSubject(), vaultId, AuditEventVaultKeyRetrieve.Result.SUCCESS);
+			var subscriptionStateHeaderName = "Hub-Subscription-State";
+			var subscriptionStateHeaderValue = license.isSet() ? "ACTIVE" : "INACTIVE"; // license expiration is not checked here, because it is checked in the ActiveLicense filter
+			return Response.ok(access.jwe).header(subscriptionStateHeaderName, subscriptionStateHeaderValue).build();
 		} else if (Device.findById(deviceId) == null) {
 			throw new NotFoundException("No such device.");
 		} else {
+			AuditEventVaultKeyRetrieve.log(jwt.getSubject(), vaultId, AuditEventVaultKeyRetrieve.Result.UNAUTHORIZED);
 			throw new ForbiddenException("Access to this device not granted.");
 		}
 	}
@@ -253,14 +286,18 @@ public class VaultResource {
 	@VaultAdminOnlyFilter
 	@Transactional
 	@Consumes(MediaType.TEXT_PLAIN)
-	@Operation(summary = "adds a device-specific masterkey")
+	@Operation(summary = "adds a device-specific masterkey to a non-archived vault")
 	@APIResponse(responseCode = "201", description = "device-specific key stored")
 	@APIResponse(responseCode = "401", description = "VaultAdminAuthorizationJWT not provided")
 	@APIResponse(responseCode = "403", description = "VaultAdminAuthorizationJWT expired or not yet valid")
 	@APIResponse(responseCode = "404", description = "vault or device not found")
 	@APIResponse(responseCode = "409", description = "Access to vault for device already granted")
+	@APIResponse(responseCode = "410", description = "Vault is archived")
 	public Response grantAccess(@PathParam("vaultId") UUID vaultId, @PathParam("deviceId") @ValidId String deviceId, @ValidJWE String jwe) {
 		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
+		if (vault.archived) {
+			throw new GoneException("Vault is archived.");
+		}
 		var device = Device.<Device>findByIdOptional(deviceId).orElseThrow(NotFoundException::new);
 
 		var access = new AccessToken();
@@ -270,6 +307,7 @@ public class VaultResource {
 
 		try {
 			access.persistAndFlush();
+			AuditEventVaultAccessGrant.log(jwt.getSubject(), vaultId, device.owner.id);
 			return Response.created(URI.create(".")).build();
 		} catch (PersistenceException e) {
 			if (e instanceof ConstraintViolationException) {
@@ -286,6 +324,7 @@ public class VaultResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
 	@Operation(summary = "gets a vault")
+	@APIResponse(responseCode = "200")
 	@APIResponse(responseCode = "403", description = "requesting user is not member of the vault")
 	public VaultDto get(@PathParam("vaultId") UUID vaultId) {
 		Vault vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
@@ -301,33 +340,57 @@ public class VaultResource {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
-	@Operation(summary = "creates a vault",
-			description = "Creates a vault with the given vault id. The creationTime in the vaultDto is ignored and the current server time is used.")
-	@APIResponse(responseCode = "201", description = "vault created")
-	@APIResponse(responseCode = "409", description = "vault with given id or name already exists")
-	public Response create(@PathParam("vaultId") UUID vaultId, @Valid VaultDto vaultDto) {
-		if (vaultDto == null) {
-			throw new BadRequestException("Missing vault dto");
-		}
-		User currentUser = User.findById(jwt.getSubject());
-		var vault = vaultDto.toVault(vaultId);
-		vault.creationTime = Instant.now().truncatedTo(ChronoUnit.MILLIS);
-		vault.directMembers.add(currentUser);
+	@Operation(summary = "creates or updates a vault",
+			description = "Creates or updates a vault with the given vault id. The creationTime in the vaultDto is always ignored. On creation, the current server time is used and the archived field is ignored. On update, only the name, description, and archived fields are considered.")
+	@APIResponse(responseCode = "200", description = "existing vault updated")
+	@APIResponse(responseCode = "201", description = "new vault created")
+	@APIResponse(responseCode = "402", description = "all seats in licence in use during creation of new vault")
+	public Response createOrUpdate(@PathParam("vaultId") UUID vaultId, @Valid @NotNull VaultDto vaultDto) {
+		var currentUser = User.<User>findById(jwt.getSubject());
+		Vault vault;
+		boolean isCreated = false;
 		try {
-			vault.persistAndFlush();
-			return Response.created(URI.create(".")).build();
-		} catch (PersistenceException e) {
-			if (e instanceof ConstraintViolationException) {
-				throw new ClientErrorException(Response.Status.CONFLICT, e);
-			} else {
-				throw new InternalServerErrorException(e);
+			vault = Vault.<Vault>findByIdOptional(vaultId).get();
+		} catch (NoSuchElementException _e) {
+			if (!EffectiveVaultAccess.isUserOccupyingSeat(currentUser.id)) {
+				//for new vaults, we need to check that a licence seat is available if the user does not already have access to a vault.
+				var usedSeats = EffectiveVaultAccess.countEffectiveVaultUsers();
+				if (usedSeats >= license.getAvailableSeats()) {
+					throw new PaymentRequiredException("Number of effective vault users exceeds available license seats");
+				}
 			}
+			isCreated = true;
+			//create new vault
+			vault = new Vault();
+			vault.id = vaultDto.id;
+			vault.creationTime = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+			vault.masterkey = vaultDto.masterkey;
+			vault.iterations = vaultDto.iterations;
+			vault.salt = vaultDto.salt;
+			vault.authenticationPublicKey = vaultDto.authPublicKey;
+			vault.authenticationPrivateKey = vaultDto.authPrivateKey;
+			vault.directMembers.add(currentUser);
+		}
+		//update new or existing vault
+		vault.name = vaultDto.name;
+		vault.description = vaultDto.description;
+		vault.archived = isCreated ? false : vaultDto.archived;
+		vault.persistAndFlush();
+		if (isCreated) {
+			AuditEventVaultCreate.log(currentUser.id, vault.id, vault.name, vault.description);
+			AuditEventVaultMemberAdd.log(currentUser.id, vaultId, currentUser.id);
+			return Response.created(URI.create(".")).contentLocation(URI.create(".")).entity(VaultDto.fromEntity(vault)).type(MediaType.APPLICATION_JSON).build();
+		} else {
+			AuditEventVaultUpdate.log(currentUser.id, vault.id, vault.name, vault.description, vault.archived);
+			return Response.ok(VaultDto.fromEntity(vault), MediaType.APPLICATION_JSON).build();
 		}
 	}
+
 
 	public record VaultDto(@JsonProperty("id") UUID id,
 						   @JsonProperty("name") @NoHtmlOrScriptChars @NotBlank String name,
 						   @JsonProperty("description") @NoHtmlOrScriptChars String description,
+						   @JsonProperty("archived") boolean archived,
 						   @JsonProperty("creationTime") Instant creationTime,
 						   @JsonProperty("masterkey") @OnlyBase64Chars String masterkey, @JsonProperty("iterations") int iterations,
 						   @JsonProperty("salt") @OnlyBase64Chars String salt,
@@ -335,21 +398,7 @@ public class VaultResource {
 	) {
 
 		public static VaultDto fromEntity(Vault entity) {
-			return new VaultDto(entity.id, entity.name, entity.description, entity.creationTime.truncatedTo(ChronoUnit.MILLIS), entity.masterkey, entity.iterations, entity.salt, entity.authenticationPublicKey, entity.authenticationPrivateKey);
-		}
-
-		public Vault toVault(UUID id) {
-			var vault = new Vault();
-			vault.id = id;
-			vault.name = name;
-			vault.description = description;
-			vault.creationTime = creationTime;
-			vault.masterkey = masterkey;
-			vault.iterations = iterations;
-			vault.salt = salt;
-			vault.authenticationPublicKey = authPublicKey;
-			vault.authenticationPrivateKey = authPrivateKey;
-			return vault;
+			return new VaultDto(entity.id, entity.name, entity.description, entity.archived, entity.creationTime.truncatedTo(ChronoUnit.MILLIS), entity.masterkey, entity.iterations, entity.salt, entity.authenticationPublicKey, entity.authenticationPrivateKey);
 		}
 
 	}

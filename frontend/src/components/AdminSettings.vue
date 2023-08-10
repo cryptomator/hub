@@ -209,16 +209,21 @@ const keycloakAdminRealmURL = ref<string>();
 const onFetchError = ref<Error | null>();
 const errorOnFetchingUpdates = ref<boolean>(false);
 
-const isBeta = computed(() => semver.prerelease(version.value?.hubVersion ?? '0.1.0') != null);
+const isBeta = computed(() => {
+  if (version.value && semver.valid(version.value.hubVersion)) {
+    return semver.prerelease(version.value.hubVersion ?? '0.1.0') != null;
+  }
+  return false;
+});
 const stableUpdateExists = computed(() => {
-  if (version.value && latestVersion.value?.stable) {
-    return semver.lt(version.value?.hubVersion, latestVersion.value.stable ?? '0.1.0');
+  if (version.value && semver.valid(version.value.hubVersion) && latestVersion.value?.stable) {
+    return semver.lt(version.value.hubVersion, latestVersion.value.stable ?? '0.1.0');
   }
   return false;
 });
 const betaUpdateExists = computed(() => {
-  if (version.value && latestVersion.value?.beta) {
-    return semver.lt(version.value?.hubVersion, latestVersion.value.beta ?? '0.1.0-beta1');
+  if (version.value && semver.valid(version.value.hubVersion) && latestVersion.value?.beta) {
+    return semver.lt(version.value.hubVersion, latestVersion.value.beta ?? '0.1.0-beta1');
   }
   return false;
 });

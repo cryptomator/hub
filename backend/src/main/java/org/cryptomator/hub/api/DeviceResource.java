@@ -1,7 +1,6 @@
 package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.persistence.PersistenceException;
@@ -11,14 +10,18 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
 import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.Device;
+import org.cryptomator.hub.entities.AuditEventDeviceRegister;
+import org.cryptomator.hub.entities.AuditEventDeviceRemove;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.validation.NoHtmlOrScriptChars;
 import org.cryptomator.hub.validation.OnlyBase64UrlChars;
@@ -31,6 +34,7 @@ import org.hibernate.exception.ConstraintViolationException;
 import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Set;
 
 @Path("/devices")
@@ -38,6 +42,17 @@ public class DeviceResource {
 
 	@Inject
 	JsonWebToken jwt;
+
+	@GET
+	@Path("/")
+	@RolesAllowed("admin")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Transactional
+	@Operation(summary = "lists all devices matching the given ids", description = "lists for each id in the list its corresponding device. Ignores all id's where a device cannot be found")
+	@APIResponse(responseCode = "200")
+	public List<DeviceDto> getSome(@QueryParam("ids") List<String> deviceIds) {
+		return Device.findAllInList(deviceIds).map(DeviceDto::fromEntity).toList();
+	}
 
 	@PUT
 	@Path("/{deviceId}")
@@ -56,6 +71,7 @@ public class DeviceResource {
 		var device = deviceDto.toDevice(currentUser, deviceId, Instant.now().truncatedTo(ChronoUnit.MILLIS));
 		try {
 			device.persistAndFlush();
+			AuditEventDeviceRegister.log(jwt.getSubject(), deviceId, device.name, device.type);
 			return Response.created(URI.create(".")).build();
 		} catch (PersistenceException e) {
 			if (e instanceof ConstraintViolationException) {
@@ -83,6 +99,7 @@ public class DeviceResource {
 		var maybeDevice = Device.<Device>findByIdOptional(deviceId);
 		if (maybeDevice.isPresent() && currentUser.equals(maybeDevice.get().owner)) {
 			maybeDevice.get().delete();
+			AuditEventDeviceRemove.log(jwt.getSubject(), deviceId);
 			return Response.status(Response.Status.NO_CONTENT).build();
 		} else {
 			return Response.status(Response.Status.NOT_FOUND).build();
@@ -91,6 +108,7 @@ public class DeviceResource {
 
 	public record DeviceDto(@JsonProperty("id") @ValidId String id,
 							@JsonProperty("name") @NoHtmlOrScriptChars @NotBlank String name,
+							@JsonProperty("type") Device.Type type,
 							@JsonProperty("publicKey") @OnlyBase64UrlChars String publicKey,
 							@JsonProperty("owner") @ValidId String ownerId,
 							@JsonProperty("accessTo") @Valid Set<VaultResource.VaultDto> accessTo,
@@ -101,13 +119,14 @@ public class DeviceResource {
 			device.id = id;
 			device.owner = user;
 			device.name = name;
+			device.type = type != null ? type : Device.Type.DESKTOP; // default to desktop for backwards compatibility
 			device.publickey = publicKey;
 			device.creationTime = creationTime;
 			return device;
 		}
 
 		public static DeviceDto fromEntity(Device entity) {
-			return new DeviceDto(entity.id, entity.name, entity.publickey, entity.owner.id, Set.of(), entity.creationTime.truncatedTo(ChronoUnit.MILLIS));
+			return new DeviceDto(entity.id, entity.name, entity.type, entity.publickey, entity.owner.id, Set.of(), entity.creationTime.truncatedTo(ChronoUnit.MILLIS));
 		}
 
 	}

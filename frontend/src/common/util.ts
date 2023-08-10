@@ -4,13 +4,14 @@ export class Deferred<T> {
   public promise: Promise<T>;
   public reject: (reason?: any) => void;
   public resolve: (value: T) => void;
+  public status: 'pending' | 'resolved' | 'rejected' = 'pending';
 
   constructor() {
     this.reject = () => { };
     this.resolve = () => { };
     this.promise = new Promise<T>((resolve, reject) => {
-      this.reject = reject;
-      this.resolve = resolve;
+      this.reject = () => { this.status = 'rejected'; reject(); };
+      this.resolve = (t) => { this.status = 'resolved'; resolve(t); };
     });
   }
 }

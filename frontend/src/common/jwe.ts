@@ -44,7 +44,7 @@ export class ConcatKDF {
 }
 
 export class JWEHeader {
-  constructor(readonly alg: string, readonly enc: string, readonly epk: JsonWebKey | null, readonly apu: string, readonly apv: string) { }
+  constructor(readonly alg: string, readonly enc: string, readonly epk: JsonWebKey | null, readonly apu?: string, readonly apv?: string) { }
 }
 
 export class JWE {
@@ -103,8 +103,8 @@ export class JWE {
     let derivedKey = new Uint8Array();
     try {
       const algorithmId = this.lengthPrefixed(new TextEncoder().encode(header.enc));
-      const partyUInfo = this.lengthPrefixed(base64url.parse(header.apu, { loose: true }));
-      const partyVInfo = this.lengthPrefixed(base64url.parse(header.apv, { loose: true }));
+      const partyUInfo = this.lengthPrefixed(base64url.parse(header.apu || '', { loose: true }));
+      const partyVInfo = this.lengthPrefixed(base64url.parse(header.apv || '', { loose: true }));
       const suppPubInfo = new ArrayBuffer(4);
       new DataView(suppPubInfo).setUint32(0, desiredKeyBytes * 8, false);
       agreedKey = new Uint8Array(await crypto.subtle.deriveBits(

@@ -17,22 +17,19 @@
 
     <Listbox v-if="isAdmin" v-model="selectedFilter" as="div">
       <div class="relative w-32">
-        <ListboxButton class="relative w-full cursor-default rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary text-sm">
-          <span class="block truncate">{{ selectedFilter.name }}</span>
+        <ListboxButton class="relative w-full rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary text-sm">
+          <span class="block truncate">{{ filterOptions[selectedFilter] }}</span>
           <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
             <ChevronUpDownIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
           </span>
         </ListboxButton>
         <transition leave-active-class="transition ease-in duration-100" leave-from-class="opacity-100" leave-to-class="opacity-0">
           <ListboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none text-sm">
-            <ListboxOption v-for="filterValue in filterValues" :key="filterValue.id" v-slot="{ active, selected }" :value="filterValue" as="template" @click="filterValue.method">
-              <li :class="[active ? 'text-white bg-primary' : 'text-gray-900', 'relative cursor-default select-none py-2 pl-3 pr-9']">
-                <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ filterValue.name }}</span>
-
-                <span v-if="selected" :class="[active ? 'text-white' : 'text-primary', 'absolute inset-y-0 right-0 flex items-center pr-4']">
-                  <CheckIcon class="h-5 w-5" aria-hidden="true" />
-                </span>
-              </li>
+            <ListboxOption v-for="(name, key) in filterOptions" :key="key" v-slot="{ active, selected }" :value="key" class="relative cursor-default select-none py-2 pl-3 pr-9 ui-not-active:text-gray-900 ui-active:text-white ui-active:bg-primary">
+              <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ name }}</span>
+              <span v-if="selected" :class="[active ? 'text-white' : 'text-primary', 'absolute inset-y-0 right-0 flex items-center pr-4']">
+                <CheckIcon class="h-5 w-5" aria-hidden="true" />
+              </span>
             </ListboxOption>
           </ListboxOptions>
         </transition>
@@ -75,10 +72,13 @@
   <div v-if="filteredVaults != null && filteredVaults.length > 0" class="mt-5 bg-white shadow overflow-hidden rounded-md">
     <ul role="list" class="divide-y divide-gray-200">
       <li v-for="(vault, index) in filteredVaults" :key="vault.masterkey">
-        <a role="button" tabindex="0" class="block hover:bg-gray-50" :class="{'ring-2 ring-inset ring-primary': selectedVault == vault, 'rounded-t-md': index == 0, 'rounded-b-md': index == filteredVaults.length - 1}" @click="onVaultClick(vault)">
+        <a role="button" tabindex="0" class="block hover:bg-gray-50" :class="{'ring-2 ring-inset ring-primary': selectedVault == vault, 'rounded-t-md': index == 0, 'rounded-b-md': index == filteredVaults.length - 1}" @click="showVaultDetails(vault)">
           <div class="px-4 py-4 flex items-center sm:px-6">
             <div class="min-w-0 flex-1">
-              <p class="truncate text-sm font-medium text-primary">{{ vault.name }}</p>
+              <div class="flex items-center gap-3">
+                <p class="truncate text-sm font-medium text-primary">{{ vault.name }}</p>
+                <div v-if="vault.archived" class="inline-flex items-center rounded-md bg-yellow-400/10 px-2 py-1 text-xs font-medium text-yellow-500 ring-1 ring-inset ring-yellow-400/20">{{ t('vaultList.badge.archived') }}</div>
+              </div>
               <p v-if="vault.description.length > 0" class="truncate text-sm text-gray-500 mt-2">{{ vault.description }}</p>
             </div>
             <div class="ml-5 shrink-0">
@@ -103,12 +103,11 @@
       <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 15.75l-2.489-2.489m0 0a3.375 3.375 0 10-4.773-4.773 3.375 3.375 0 004.774 4.774zM21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
     </svg>
     <h3 class="mt-2 text-sm font-medium text-gray-900">{{ t('vaultList.filter.result.empty.title') }}</h3>
-    <p v-if="isAdmin" class="mt-1 text-sm text-gray-500">{{ t('vaultList.filter.result.empty.description.admin') }}</p>
-    <p v-else class="mt-1 text-sm text-gray-500">{{ t('vaultList.filter.result.empty.description.user') }}</p>
+    <p class="mt-1 text-sm text-gray-500">{{ t('vaultList.filter.result.empty.description') }}</p>
   </div>
 
   <SlideOver v-if="selectedVault != null" ref="vaultDetailsSlideOver" :title="selectedVault.name" @close="selectedVault = null">
-    <VaultDetails :vault-id="selectedVault.id"></VaultDetails>
+    <VaultDetails :vault-id="selectedVault.id" @vault-updated="v => onSelectedVaultUpdate(v)"></VaultDetails>
   </SlideOver>
 </template>
 
@@ -116,7 +115,7 @@
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
 import { ArrowPathIcon, ChevronDownIcon, PlusIcon } from '@heroicons/vue/20/solid';
 import { CheckIcon, ChevronRightIcon, ChevronUpDownIcon } from '@heroicons/vue/24/solid';
-import { computed, nextTick, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auth from '../common/auth';
 import backend, { VaultDto } from '../common/backend';
@@ -134,11 +133,12 @@ const selectedVault = ref<VaultDto | null>(null);
 
 const isAdmin = ref<boolean>();
 
-const filterValues = [
-  { id: 1, name: t('vaultList.filter.entry.accessibleVaults'), method: onAccessibleVaultsClick },
-  { id: 2, name: t('vaultList.filter.entry.allVaults'), method: onAllVaultsClick },
-];
-const selectedFilter = ref(filterValues[0]);
+const filterOptions = {
+  accessibleVaults: t('vaultList.filter.entry.accessibleVaults'),
+  allVaults: t('vaultList.filter.entry.allVaults'),
+};
+const selectedFilter = ref<'accessibleVaults' | 'allVaults'>('accessibleVaults');
+watch(selectedFilter, fetchData);
 const query = ref('');
 const filteredVaults = computed(() =>
   query.value === ''
@@ -153,7 +153,16 @@ onMounted(fetchData);
 async function fetchData() {
   onFetchError.value = null;
   try {
-    vaults.value = (await backend.vaults.listAccessible()).sort((a, b) => a.name.localeCompare(b.name));
+    switch (selectedFilter.value) {
+      case 'accessibleVaults':
+        vaults.value = (await backend.vaults.listAccessible()).sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      case 'allVaults':
+        vaults.value = (await backend.vaults.listAll()).sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      default:
+        throw new Error('Unknown filter');
+    }
     isAdmin.value = (await auth).isAdmin();
   } catch (error) {
     console.error('Retrieving vault list failed.', error);
@@ -161,16 +170,21 @@ async function fetchData() {
   }
 }
 
-function onVaultClick(vault: VaultDto) {
+function showVaultDetails(vault: VaultDto) {
   selectedVault.value = vault;
   nextTick(() => vaultDetailsSlideOver.value?.show());
 }
 
-async function onAllVaultsClick() {
-  vaults.value = (await backend.vaults.listAll()).sort((a, b) => a.name.localeCompare(b.name));
-}
-
-async function onAccessibleVaultsClick() {
-  vaults.value = (await backend.vaults.listAccessible()).sort((a, b) => a.name.localeCompare(b.name));
+async function onSelectedVaultUpdate(vault: VaultDto) {
+  await fetchData();
+  if (vaults.value == null || vault.id !== selectedVault.value?.id) {
+    return;
+  }
+  const index = vaults.value?.findIndex(v => v.id === vault.id);
+  if (index !== undefined && index !== -1) {
+    selectedVault.value = vaults.value[index];
+  } else {
+    selectedVault.value = vault;
+  }
 }
 </script>

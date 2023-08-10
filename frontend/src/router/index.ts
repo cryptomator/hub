@@ -3,13 +3,13 @@ import authPromise from '../common/auth';
 import backend from '../common/backend';
 import { baseURL } from '../common/config';
 import AdminSettings from '../components/AdminSettings.vue';
+import AuditLog from '../components/AuditLog.vue';
 import AuthenticatedMain from '../components/AuthenticatedMain.vue';
 import CreateVault from '../components/CreateVault.vue';
-import DeviceList from '../components/DeviceList.vue';
 import NotFound from '../components/NotFound.vue';
 import UnlockError from '../components/UnlockError.vue';
 import UnlockSuccess from '../components/UnlockSuccess.vue';
-import UserSettings from '../components/UserSettings.vue';
+import UserProfile from '../components/UserProfile.vue';
 import VaultDetails from '../components/VaultDetails.vue';
 import VaultList from '../components/VaultList.vue';
 
@@ -63,21 +63,30 @@ const routes: RouteRecordRaw[] = [
         props: (route) => ({ vaultId: route.params.id })
       },
       {
-        path: 'devices',
-        component: DeviceList
-      },
-      {
-        path: 'settings',
-        component: UserSettings
+        path: 'profile',
+        component: UserProfile
       },
       {
         path: 'admin',
-        component: AdminSettings,
-        props: (route) => ({ token: route.query.token }),
         beforeEnter: async () => {
           const auth = await authPromise;
           return auth.isAdmin(); //TODO: reroute to NotFound Screen/ AccessDeniedScreen?
-        }
+        },
+        children: [
+          {
+            path: '',
+            redirect: '/app/admin/settings'
+          },
+          {
+            path: 'settings',
+            component: AdminSettings,
+            props: (route) => ({ token: route.query.token })
+          },
+          {
+            path: 'auditlog',
+            component: AuditLog,
+          },
+        ]
       },
     ]
   },
