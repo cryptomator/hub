@@ -24,5 +24,3 @@ export const datetimeFormats: I18nOptions['datetimeFormats'] = {
     }
   }
 };
-
-export const defaultLocale = Locale.EN;
