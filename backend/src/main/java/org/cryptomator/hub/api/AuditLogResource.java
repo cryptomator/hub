@@ -3,6 +3,7 @@ package org.cryptomator.hub.api;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
@@ -33,6 +34,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Path("/auditlog")
+@RegisterForReflection(targets = {UUID[].class})
 public class AuditLogResource {
 
 	@Inject
