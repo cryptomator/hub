@@ -152,7 +152,7 @@
 
   "userProfile.title": "Profile",
   "userProfile.actions.manageAccount": "Manage Account",
-  "userProfile.actions.editLanguage": "Edit Language",
+  "userProfile.actions.changeLanguage": "Change Language",
 
   "vaultDetails.manageVault": "Manage Vault",
   "vaultDetails.warning.archived": "This vault is archived and cannot be unlocked.",

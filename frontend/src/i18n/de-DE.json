@@ -152,7 +152,7 @@
 
   "userProfile.title": "Profil",
   "userProfile.actions.manageAccount": "Account verwalten",
-  "userProfile.actions.editLanguage": "Sprache ändern",
+  "userProfile.actions.changeLanguage": "Sprache ändern",
 
   "vaultDetails.manageVault": "Tresor verwalten",
   "vaultDetails.description.header": "Beschreibung",
