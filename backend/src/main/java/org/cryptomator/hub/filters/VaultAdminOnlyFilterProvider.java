@@ -9,6 +9,7 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.jwt.interfaces.JWTVerifier;
 import com.auth0.jwt.interfaces.Verification;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
@@ -28,6 +29,7 @@ import java.util.UUID;
 
 @Provider
 @VaultAdminOnlyFilter
+@RegisterForReflection(targets = {UUID[].class})
 public class VaultAdminOnlyFilterProvider implements ContainerRequestFilter {
 
 	public static final String VAULT_ADMIN_AUTHORIZATION = "Cryptomator-Vault-Admin-Authorization";
