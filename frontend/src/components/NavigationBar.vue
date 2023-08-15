@@ -40,8 +40,8 @@
                   <span class="text-sm font-semibold">{{ me.name }}</span>
                 </div>
                 <div v-for="(itemGroup, index) in profileDropdown" :key="`itemGroup-${index}`" class="py-1.5">
-                  <router-link v-for="item in itemGroup" :key="item.name" v-slot="{ navigate }" :to="item.to" >
-                    <MenuItem v-slot="{ active }" @click="navigate">
+                  <router-link v-for="item in itemGroup" :key="item.name" :to="item.to">
+                    <MenuItem v-slot="{ active }">
                       <div :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'flex items-center px-3.5 py-1.5 text-sm text-gray-700']">
                         <component :is="item.icon" :class="[active ? 'text-gray-500' : 'text-gray-400', 'flex-none h-5 w-5 mr-3']" aria-hidden="true" />
                         {{ t(item.name) }}
