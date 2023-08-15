@@ -25,7 +25,7 @@
   "common.update": "Aktualisieren",
 
   "admin.title": "Admin",
-  "admin.serverInfo.title": "Server.Info",
+  "admin.serverInfo.title": "Server-Info",
   "admin.serverInfo.description": "Die Hub-ID dient zur Identifizierung deiner Cryptomator Hub-Instanz für deine Lizenz. Für den Support gib bitte immer die angezeigte Hub- und Keycloak-Version an.",
   "admin.serverInfo.hubId.title": "Hub-ID",
   "admin.serverInfo.hubVersion.title": "Hub-Version",
