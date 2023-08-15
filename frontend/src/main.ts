@@ -12,7 +12,9 @@ const i18n = createI18n({
   fallbackLocale: Locale.EN,
   messages,
   datetimeFormats,
-  globalInjection: true
+  globalInjection: true,
+  missingWarn: false,
+  fallbackWarn: false
 });
 
 createApp(App)
