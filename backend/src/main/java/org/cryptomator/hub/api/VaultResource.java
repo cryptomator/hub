@@ -1,6 +1,7 @@
 package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -56,6 +57,7 @@ import java.util.NoSuchElementException;
 import java.util.UUID;
 
 @Path("/vaults")
+@RegisterForReflection(targets = {UUID[].class})
 public class VaultResource {
 
 	@Inject

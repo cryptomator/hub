@@ -2,6 +2,7 @@ package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.panache.common.Parameters;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EmbeddedId;
@@ -34,6 +35,7 @@ import java.util.UUID;
 				INNER JOIN EffectiveGroupMembership egm ON u.id = egm.id.memberId
 				WHERE egm.id.groupId = :groupId
 		""")
+@RegisterForReflection(targets = {UUID[].class})
 public class EffectiveVaultAccess extends PanacheEntityBase {
 
 	@EmbeddedId
