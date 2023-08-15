@@ -2,6 +2,7 @@ package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.panache.common.Parameters;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
@@ -27,6 +28,7 @@ import java.util.UUID;
 			INNER JOIN u.accessTokens a ON a.id.vaultId = :vaultId AND a.id.userId = u.id
 			WHERE perm.id.vaultId = :vaultId AND u.id = :userId
 		""")
+@RegisterForReflection(targets = {UUID[].class})
 public class AccessToken extends PanacheEntityBase {
 
 	@EmbeddedId

@@ -1,4 +1,4 @@
-import backend, { AuthorityDto, DeviceDto, VaultDto, axiosAuth } from './backend';
+import backend, { AuthorityDto, DeviceDto, VaultDto, axiosAuth, rethrowAndConvertIfExpected } from './backend';
 import { Deferred, debounce } from './util';
 
 /* DTOs */
@@ -130,7 +130,8 @@ class AuditLogService {
       .then(response => response.data.map(dto => {
         dto.timestamp = new Date(dto.timestamp);
         return dto;
-      }));
+      }))
+      .catch((error) => rethrowAndConvertIfExpected(error, 402));
   }
 }
 

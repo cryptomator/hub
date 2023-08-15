@@ -27,7 +27,7 @@
   "common.update": "Aktualisieren",
 
   "admin.title": "Admin",
-  "admin.serverInfo.title": "Server.Info",
+  "admin.serverInfo.title": "Server-Info",
   "admin.serverInfo.description": "Die Hub-ID dient zur Identifizierung deiner Cryptomator Hub-Instanz für deine Lizenz. Für den Support gib bitte immer die angezeigte Hub- und Keycloak-Version an.",
   "admin.serverInfo.hubId.title": "Hub-ID",
   "admin.serverInfo.hubVersion.title": "Hub-Version",
@@ -66,7 +66,6 @@
   "auditLog.timestamp": "Zeitstempel",
   "auditLog.type": "Ereignis",
   "auditLog.details": "Details",
-  "auditLog.pagination.showing": "Zeige Einträge {0} bis {1}",
   "auditLog.details.device.register": "Gerät registrieren",
   "auditLog.details.device.remove": "Gerät entfernen",
   "auditLog.details.vault.create": "Tresor erstellen",
@@ -75,6 +74,10 @@
   "auditLog.details.vaultKey.retrieve": "Tresor-Schlüssel abrufen",
   "auditLog.details.vaultMember.add": "Tresor-Mitglied hinzufügen",
   "auditLog.details.vaultMember.remove": "Tresor-Mitglied entfernen",
+  "auditLog.pagination.showing": "Zeige Einträge {0} bis {1}",
+  "auditLog.paymentRequired.message": "Lizenz erforderlich",
+  "auditLog.paymentRequired.description": "Audit-Logs sind nur mit einer kostenpflichtigen Lizenz verfügbar. Du kannst eine im Admin-Bereich erhalten.",
+  "auditLog.paymentRequired.openAdminSection": "Admin-Bereich öffnen",
 
   "authenticateVaultAdminDialog.title": "Tresor verwalten",
   "authenticateVaultAdminDialog.description": "Gib das Tresor-Admin-Passwort des Tresors ein, um ihn zu verwalten.",
@@ -106,6 +109,7 @@
   "createVault.error.invalidRecoveryKey": "Wiederherstellungsschlüssel ist ungültig.",
   "createVault.error.vaultAlreadyExists": "Ein Tresor mit dem angegebenen Namen existiert bereits.",
   "createVault.error.downloadTemplateFailed": "Download der Tresorvorlage fehlgeschlagen: {0}",
+  "createVault.error.paymentRequired": "Deine Cryptomator Hub Lizenz hat die Anzahl der verfügbaren Sitze überschritten oder ist abgelaufen. Bitte informiere einen Hub-Administrator, um die Lizenz zu erneuern oder zu erweitern.",
   "createVault.success.title": "Tresor erstellt",
   "createVault.success.description": "Nachdem du den gezippten Tresorordner heruntergeladen hast, entpacke ihn an einem beliebigen Ort, der für deine Teammitglieder freigegeben ist.",
   "createVault.success.download": "Gezippten Tresorordner herunterladen",
@@ -182,7 +186,7 @@
 
   "userProfile.title": "Profil",
   "userProfile.actions.manageAccount": "Account verwalten",
-  "userProfile.actions.editLanguage": "Sprache ändern",
+  "userProfile.actions.changeLanguage": "Sprache ändern",
 
   "vaultDetails.manageVault": "Tresor verwalten",
   "vaultDetails.description.header": "Beschreibung",
@@ -198,6 +202,7 @@
   "vaultDetails.actions.showRecoveryKey": "Wiederherstellungsschlüssel anzeigen",
   "vaultDetails.actions.archiveVault": "Tresor archivieren",
   "vaultDetails.actions.reactivateVault": "Tresor reaktivieren",
+  "vaultDetails.error.paymentRequired": "Deine Cryptomator Hub Lizenz hat die Anzahl der verfügbaren Sitze überschritten oder ist abgelaufen. Bitte informiere einen Hub-Administrator, um die Lizenz zu erneuern oder zu erweitern.",
 
   "vaultList.title": "Tresore",
   "vaultList.empty.title": "Keine Tresore",

@@ -47,10 +47,10 @@
                   <img :src="member.pictureUrl" alt="" class="w-8 h-8 rounded-full" />
                   <p class="ml-4 text-sm font-medium text-gray-900">{{ member.name }}</p>
                 </div>
-                <button v-if="member.id != me?.id" type="button" class="ml-6 bg-white rounded-md text-sm font-medium text-red-600 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="revokeUserAccess(member.id)">{{ t('common.remove') }}<span class="sr-only"> {{ member.name }}</span></button>
+                <button v-if="member.id != me?.id && !vault.archived" type="button" class="ml-6 bg-white rounded-md text-sm font-medium text-red-600 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="revokeUserAccess(member.id)">{{ t('common.remove') }}<span class="sr-only"> {{ member.name }}</span></button>
               </div>
 
-              <p v-if="onRevokeUserAccessError[member.id] != null" class="text-sm text-red-900 text-right">
+              <p v-if="onRevokeUserAccessError[member.id] != null" class="text-sm text-red-900 text-right mt-1">
                 {{ t('common.unexpectedError', [onRevokeUserAccessError[member.id].message]) }}
               </p>
             </li>
@@ -65,9 +65,14 @@
               </button>
             </div>
             <SearchInputGroup v-else-if="addingUser" :action-title="t('common.add')" :on-search="searchAuthority" @action="addAuthority" />
-            <p v-if="onAddUserError != null" class="text-sm text-red-900 text-right">
-              {{ t('common.unexpectedError', [onAddUserError.message]) }}
-            </p>
+            <div v-if="onAddUserError != null">
+              <p v-if="onAddUserError instanceof PaymentRequiredError" class="text-sm text-red-900 text-right mt-1">
+                {{ t('vaultDetails.error.paymentRequired') }}
+              </p>
+              <p v-else class="text-sm text-red-900 text-right mt-1">
+                {{ t('common.unexpectedError', [onAddUserError.message]) }}
+              </p>
+            </div>
           </li>
         </ul>
       </div>
@@ -131,7 +136,7 @@ import { ArrowPathIcon, ExclamationTriangleIcon } from '@heroicons/vue/20/solid'
 import { PlusSmallIcon } from '@heroicons/vue/24/solid';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { AuthorityDto, ConflictError, NotFoundError, UserDto, VaultDto } from '../common/backend';
+import backend, { AuthorityDto, ConflictError, NotFoundError, PaymentRequiredError, UserDto, VaultDto } from '../common/backend';
 import { VaultKeys } from '../common/crypto';
 import ArchiveVaultDialog from './ArchiveVaultDialog.vue';
 import AuthenticateVaultAdminDialog from './AuthenticateVaultAdminDialog.vue';

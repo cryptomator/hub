@@ -660,7 +660,6 @@ public class VaultResourceTest {
 						VALUES
 							('group91');
 							
-							
 						INSERT INTO "user_details" ("id")
 						VALUES
 							('user91'),
@@ -731,6 +730,79 @@ public class VaultResourceTest {
 
 			when().get("/vaults/{vaultId}/access-token", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(402);
+		}
+
+		@Test
+		@Order(5)
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-0001FFFF3333 returns 201 not exceeding seats because user already has access to an existing vault")
+		public void testCreateVaultNotExceedingSeats() {
+			//Assumptions.assumeTrue(EffectiveVaultAccess.countEffectiveVaultUsers() > 5);
+
+			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-0001FFFF3333");
+			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", "Test vault 3", false, Instant.parse("2112-12-21T21:12:21Z"), "masterkey3", 42, "NaCl", "authPubKey3", "authPrvKey3");
+			given().contentType(ContentType.JSON).body(vaultDto)
+					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-0001FFFF3333")
+					.then().statusCode(201)
+					.body("id", equalToIgnoringCase("7E57C0DE-0000-4000-8000-0001FFFF3333"))
+					.body("name", equalTo("My Vault"))
+					.body("description", equalTo("Test vault 3"))
+					.body("masterkey", equalTo("masterkey3"))
+					.body("salt", equalTo("NaCl"))
+					.body("iterations", equalTo(42))
+					.body("authPublicKey", equalTo("authPubKey3"))
+					.body("authPrivateKey", equalTo("authPrvKey3"))
+					.body("archived", equalTo(false));
+		}
+
+		@Test
+		@Order(6)
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-0001FFFF4444 exceeding the license returns 402")
+		public void testCreateVaultExceedingSeats() throws SQLException {
+			try (var s = dataSource.getConnection().createStatement()) {
+				s.execute("""
+						DELETE FROM "vault_access"
+						WHERE "authority_id" IN ('user1', 'group1');
+						""");
+			}
+			//Assumptions.assumeTrue(EffectiveVaultAccess.countEffectiveVaultUsers() > 5);
+
+			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-0001FFFF4444");
+			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", "Test vault 4", false, Instant.parse("2112-12-21T21:12:21Z"), "masterkey4", 42, "NaCl", "authPubKey4", "authPrvKey4");
+			given().contentType(ContentType.JSON).body(vaultDto)
+					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-0001FFFF4444")
+					.then().statusCode(402);
+
+			try (var s = dataSource.getConnection().createStatement()) {
+				s.execute("""
+						INSERT INTO "vault_access"
+						VALUES
+							('7E57C0DE-0000-4000-8000-000100001111', 'user1', 'OWNER'),
+							('7E57C0DE-0000-4000-8000-000100002222', 'group1', 'MEMBER');
+						""");
+			}
+		}
+
+		@Test
+		@Order(7)
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-0001FFFF3333 returns 200 with only updated name, description and archive flag, despite exceeding license")
+		public void testUpdateVaultDespiteLicenseExceeded() {
+			//Assumptions.assumeTrue(EffectiveVaultAccess.countEffectiveVaultUsers() > 5);
+
+			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-0001FFFF3333");
+			var vaultDto = new VaultResource.VaultDto(uuid, "VaultUpdated", "Vault updated.", true, Instant.parse("2222-11-11T11:11:11Z"), "someVaule", -1, "doNotUpdate", "doNotUpdate", "doNotUpdate");
+			given().contentType(ContentType.JSON)
+					.body(vaultDto)
+					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-0001FFFF3333")
+					.then().statusCode(200)
+					.body("id", equalToIgnoringCase("7E57C0DE-0000-4000-8000-0001FFFF3333"))
+					.body("name", equalTo("VaultUpdated"))
+					.body("description", equalTo("Vault updated."))
+					.body("masterkey", equalTo("masterkey3"))
+					.body("salt", equalTo("NaCl"))
+					.body("iterations", equalTo(42))
+					.body("authPublicKey", equalTo("authPubKey3"))
+					.body("authPrivateKey", equalTo("authPrvKey3"))
+					.body("archived", equalTo(true));
 		}
 
 		@AfterAll

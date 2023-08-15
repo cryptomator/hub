@@ -26,7 +26,7 @@
             <div class="relative">
               <ListboxButton class="relative w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
                 <LanguageIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
-                {{ t('userProfile.actions.editLanguage') }}
+                {{ t('userProfile.actions.changeLanguage') }}
                 <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                   <ChevronUpDownIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
                 </span>

@@ -2,6 +2,7 @@ package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.panache.common.Parameters;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
@@ -10,6 +11,8 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.Immutable;
+
+import java.util.UUID;
 
 @Entity
 @Immutable
@@ -34,6 +37,7 @@ import org.hibernate.annotations.Immutable;
 		INNER JOIN Vault v ON eva.id.vaultId = v.id AND NOT v.archived
 		WHERE egm.id.groupId = :groupId
 		""")
+@RegisterForReflection(targets = {UUID[].class})
 public class EffectiveVaultAccess extends PanacheEntityBase {
 
 	@EmbeddedId
