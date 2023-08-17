@@ -1,7 +1,6 @@
 package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
-import io.quarkus.panache.common.Parameters;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -11,7 +10,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
-import jakarta.persistence.NamedQuery;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.Table;
 
@@ -21,13 +19,6 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "access_token")
-@NamedQuery(name = "AccessToken.get", query = """
-			SELECT a
-			FROM User u
-			INNER JOIN EffectiveVaultAccess perm ON u.id = perm.id.authorityId
-			INNER JOIN u.accessTokens a ON a.id.vaultId = :vaultId AND a.id.userId = u.id
-			WHERE perm.id.vaultId = :vaultId AND u.id = :userId
-		""")
 @RegisterForReflection(targets = {UUID[].class})
 public class AccessToken extends PanacheEntityBase {
 
@@ -48,8 +39,45 @@ public class AccessToken extends PanacheEntityBase {
 	public String vaultKey;
 
 	public static AccessToken unlock(UUID vaultId, String userId) {
+		/*
+		 * FIXME remove this native query and add the named query again as soon as Hibernate ORM ships version 6.2.8 or 6.3.0
+		 * See https://github.com/quarkusio/quarkus/issues/35386 for further information
+		 */
+
 		try {
-			return find("#AccessToken.get", Parameters.with("vaultId", vaultId).and("userId", userId)).firstResult();
+			var query = getEntityManager()
+					.createNativeQuery("""
+							select
+							    a1_0."user_id",
+							    a1_0."vault_id",
+							    u1_0."id",
+							    u1_1."name",
+							    u1_0."email",
+							    u1_0."picture_url",
+							    u1_0."privatekey",
+							    u1_0."publickey",
+							    u1_0."setupcode",
+							    a1_0."vault_masterkey"
+							from
+							    "user_details" u1_0
+							join
+								"authority" u1_1
+									on u1_0."id"=u1_1."id"
+							join
+							    "effective_vault_access" e1_0
+							        on u1_0."id"=e1_0."authority_id"
+							join
+							    "access_token" a1_0
+							        on u1_0."id"=a1_0."user_id"
+							        and a1_0."vault_id"=:vaultId
+							        and a1_0."user_id"=u1_0."id"
+							where
+							    e1_0."vault_id"=:vaultId
+							    and u1_0."id"=:userId
+									""", AccessToken.class)
+					.setParameter("vaultId", vaultId)
+					.setParameter("userId", userId);
+			return (AccessToken) query.getSingleResult();
 		} catch (NoResultException e) {
 			return null;
 		}
