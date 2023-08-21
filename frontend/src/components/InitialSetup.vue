@@ -9,7 +9,7 @@
       </div>
     </div>
 
-    <div v-else-if="state == State.CreateUserKey">
+    <div v-else-if="state == State.CreateUserKey" class="text-sm text-gray-600">
       <form @submit.prevent="createUserKey()">
         <div class="flex justify-center">
           <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6 text-center sm:w-full sm:max-w-lg">
@@ -18,63 +18,25 @@
             </div>
             <div class="mt-3 sm:mt-5">
               <h3 class="text-lg leading-6 font-medium text-gray-900">
-                {{ t('setupUserKey.createUserKey.title') }}
+                {{ t('initialSetup.title') }}
               </h3>
               <div class="mt-2">
-                <p class="text-sm text-gray-500">
-                  {{ t('setupUserKey.createUserKey.description') }}
+                <p>
+                  {{ t('initialSetup.description') }}
                 </p>
               </div>
-              <div class="mt-5 sm:mt-6 text-left">      
-                <label for="deviceName" class="block text-sm font-medium text-gray-700">{{ t('setupUserKey.deviceName') }}</label>
-                <input id="deviceName" v-model="deviceName" v-focus type="text" name="deviceName" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" aria-describedby="deviceNameDescription" />
-                <p id="deviceNameDescription" class="mt-2 text-sm text-gray-500">{{ t('setupUserKey.deviceName.description') }}</p>
-              </div>
-              <div class="mt-5 sm:mt-6">
-                <button type="submit" :disabled="processing" class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:primary focus:ring-offset-2 sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
-                  {{ t('setupUserKey.createUserKey.submit') }}
-                </button>
-                <div v-if="onCreateError != null">
-                  <p class="text-sm text-red-900 mt-2">{{ t('common.unexpectedError', [onCreateError.message]) }}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </form>
-    </div>
-
-    <div v-else-if="state == State.SaveSetupCode">
-      <form @submit.prevent="$router.push('/app/vaults')">
-        <div class="flex justify-center">
-          <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6 text-center sm:w-full sm:max-w-lg">
-            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-emerald-100">
-              <KeyIcon class="h-6 w-6 text-emerald-600" aria-hidden="true" />
-            </div>
-            <div class="mt-3 sm:mt-5">
-              <h3 class="text-lg leading-6 font-medium text-gray-900">
-                {{ t('setupUserKey.saveSetupCode.title') }}
-              </h3>
-              <div class="mt-2">
-                <p class="text-sm text-gray-500">
-                  {{ t('setupUserKey.saveSetupCode.description') }}
-                </p>
-              </div>
-              <div class="relative mt-5 sm:mt-6">
+              <div class="relative mt-5 sm:mt-6 text-left">
+                <label for="setupCode" class="block font-medium">{{ t('initialSetup.setupCode') }}</label>
                 <div class="overflow-hidden rounded-lg border border-gray-300 shadow-sm focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
-                  <label for="setupCode" class="sr-only">{{ t('setupUserKey.setupCode') }}</label>
                   <textarea id="setupCode" v-model="setupCode" rows="1" name="setupCode" class="block w-full resize-none border-0 py-3 font-mono text-lg text-center focus:ring-0" readonly />
-  
-                  <!-- Spacer element to match the height of the toolbar -->
                   <div class="py-2" aria-hidden="true">
                     <div class="h-9" />
                   </div>
                 </div>
-  
                 <div class="absolute inset-x-0 bottom-0">
                   <div class="flex flex-nowrap justify-end space-x-2 py-2 px-2 sm:px-3">
                     <div class="flex-shrink-0">
-                      <button type="button" class="relative inline-flex items-center whitespace-nowrap rounded-full bg-gray-50 py-2 px-2 text-sm font-medium text-gray-500 hover:bg-gray-100 sm:px-3" @click="copySetupCode()">
+                      <button type="button" class="relative inline-flex items-center whitespace-nowrap rounded-full bg-gray-50 py-2 px-2 font-medium hover:bg-gray-100 sm:px-3" @click="copySetupCode()">
                         <ClipboardIcon class="h-5 w-5 flex-shrink-0 text-gray-300 sm:-ml-1" aria-hidden="true" />
                         <span v-if="!copiedSetupCode" class="hidden truncate sm:ml-2 sm:block text-gray-900">{{ t('common.copy') }}</span>
                         <span v-else class="hidden truncate sm:ml-2 sm:block text-gray-900">{{ t('common.copied') }}</span>
@@ -83,13 +45,34 @@
                   </div>
                 </div>
               </div>
-              <div class="mt-2">
-                <p class="text-sm text-gray-500">{{ t('setupUserKey.saveSetupCode.setupCodeHint') }}</p>
+              <div class="mt-5 flex items-start">
+                <div class="mx-4">
+                  <ExclamationTriangleIcon class="h-8 w-8" aria-hidden="true" />
+                </div>
+                <p class="text-left">
+                  {{ t('initialSetup.dontLooseYourSetupCode') }}
+                </p>
               </div>
+
+              <p class="mt-5 text-left">
+                <span>{{ t('initialSetup.devicesName.0') }}</span>
+                <span ref="deviceNameField" contenteditable class="focus:ring-primary select-all font-mono" @click="editBrowserName()" @keydown.enter.prevent="deviceNameField?.blur()" @blur="changeBrowserName" v-text="deviceName" />
+                <PencilIcon class="inline-block h-4 w-4 ml-1 -mt-1 cursor-pointer" aria-hidden="true" @click="editBrowserName()" />
+                <span>{{ t('initialSetup.devicesName.2') }}</span>
+              </p>
+
+              <div class="text-center mt-5 sm:mt-6">
+                <input id="confirmSetupKey" v-model="confirmSetupKey" name="confirmSetupKey" type="checkbox" class="h-4 w-4 mx-2 rounded border-gray-300 text-primary focus:ring-primary" required>
+                <label for="confirmSetupKey" class="font-medium cursor-pointer">{{ t('initialSetup.confirmSetupKey') }}</label>
+              </div>
+
               <div class="mt-5 sm:mt-6">
-                <button type="submit" class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:primary focus:ring-offset-2 sm:text-sm">
-                  {{ t('setupUserKey.saveSetupCode.submit') }}
+                <button type="submit" :disabled="!confirmSetupKey || processing" class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:primary focus:ring-offset-2 disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
+                  {{ t('initialSetup.submit') }}
                 </button>
+                <div v-if="onCreateError != null">
+                  <p class="text-red-900 mt-2">{{ t('common.unexpectedError', [onCreateError.message]) }}</p>
+                </div>
               </div>
             </div>
           </div>
@@ -106,26 +89,26 @@
             </div>
             <div class="mt-3 sm:mt-5">
               <h3 class="text-lg leading-6 font-medium text-gray-900">
-                {{ t('setupUserKey.enterSetupCode.title') }}
+                {{ t('registerDevice.title') }}
               </h3>
               <div class="mt-2">
                 <p class="text-sm text-gray-500">
-                  {{ t('setupUserKey.enterSetupCode.description') }}
+                  {{ t('registerDevice.description') }}
                 </p>
               </div>
               <div class="mt-5 sm:mt-6 text-left">      
-                <label for="setupCode" class="block text-sm font-medium text-gray-700">{{ t('setupUserKey.setupCode') }}</label>
+                <label for="setupCode" class="block text-sm font-medium text-gray-700">{{ t('registerDevice.setupCode') }}</label>
                 <input id="setupCode" v-model="setupCode" v-focus type="text" name="setupCode" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" aria-describedby="setupCodeDescription" />
-                <p id="setupCodeDescription" class="mt-2 text-sm text-gray-500">{{ t('setupUserKey.setupCode.description') }}</p>
+                <p id="setupCodeDescription" class="mt-2 text-sm text-gray-500">{{ t('registerDevice.setupCode.description') }}</p>
               </div>
               <div class="mt-5 sm:mt-6 text-left">      
-                <label for="deviceName" class="block text-sm font-medium text-gray-700">{{ t('setupUserKey.deviceName') }}</label>
+                <label for="deviceName" class="block text-sm font-medium text-gray-700">{{ t('registerDevice.deviceName') }}</label>
                 <input id="deviceName" v-model="deviceName" type="text" name="deviceName" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" aria-describedby="deviceNameDescription" />
-                <p id="deviceNameDescription" class="mt-2 text-sm text-gray-500">{{ t('setupUserKey.deviceName.description') }}</p>
+                <p id="deviceNameDescription" class="mt-2 text-sm text-gray-500">{{ t('registerDevice.deviceName.description') }}</p>
               </div>
               <div class="mt-5 sm:mt-6">
                 <button type="submit" :disabled="processing" class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:primary focus:ring-offset-2 sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
-                  {{ t('setupUserKey.enterSetupCode.submit') }}
+                  {{ t('registerDevice.submit') }}
                 </button>
                 <div v-if="onRecoverError != null">
                   <p class="text-sm text-red-900 mt-2">{{ t('common.unexpectedError', [onRecoverError.message]) }}</p>
@@ -134,10 +117,10 @@
             </div>
           </div>
           <p class="mt-10 text-center text-sm text-gray-500">
-            {{ t('setupUserKey.lostSetupCode.title') }}
+            {{ t('registerDevice.lostSetupCode.title') }}
             {{ ' ' }}
             <a role="button" tabindex="0" class="font-medium leading-6 text-red-600 hover:text-red-900" @click="showResetUserAccountDialog()">
-              {{ t('setupUserKey.lostSetupCode.resetUserAccount') }}
+              {{ t('registerDevice.lostSetupCode.resetUserAccount') }}
             </a>
           </p>
         </div>
@@ -150,7 +133,7 @@
 
 <script setup lang="ts">
 import { ClipboardIcon } from '@heroicons/vue/20/solid';
-import { KeyIcon } from '@heroicons/vue/24/outline';
+import { ExclamationTriangleIcon, PencilIcon } from '@heroicons/vue/24/outline';
 import { nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { UserDto } from '../common/backend';
@@ -164,7 +147,6 @@ import ResetUserAccountDialog from './ResetUserAccountDialog.vue';
 enum State {
   Preparing,
   CreateUserKey,
-  SaveSetupCode,
   EnterSetupCode
 }
 
@@ -184,10 +166,12 @@ const state = ref(State.Preparing);
 const processing = ref(false);
 
 const user = ref<UserDto>();
-const setupCode = ref('');
+const setupCode = ref<string>('');
 const deviceName = ref(guessBrowserName());
+const deviceNameField = ref<HTMLSpanElement>();
 const copiedSetupCode = ref(false);
 const debouncedCopyFinish = debounce(() => copiedSetupCode.value = false, 2000);
+const confirmSetupKey = ref(false);
 const resettingUserAccount = ref(false);
 const resetUserAccountDialog = ref<typeof ResetUserAccountDialog>();
 
@@ -207,14 +191,38 @@ function guessBrowserName(): string {
   }
 }
 
+function editBrowserName() {
+  const span = deviceNameField.value!;
+  span.focus();
+  const range = document.createRange();
+  range.selectNodeContents(span);
+  const sel = window.getSelection() as Selection;
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
+
+function changeBrowserName(e: Event) {
+  const span = e.target as HTMLElement;
+  let val = span.innerText.trim();
+  if (val == '') {
+    val = guessBrowserName(); // reset to default TODO: or previous value?
+    span.innerText = val;
+    editBrowserName(); // keep editing
+  } else {
+    deviceName.value = val;
+  }
+}
+
 async function fetchData() {
   onFetchError.value = null;
   try {
     user.value = await backend.users.me();
     const browserKeys = await BrowserKeys.load(user.value.id);
+    const browserId = await browserKeys.id();
     if (!user.value.publicKey) {
+      setupCode.value = crypto.randomUUID();
       state.value = State.CreateUserKey;
-    } else if (!browserKeys.keyPair) {
+    } else if (!browserKeys.keyPair || user.value.devices.find(d => d.id == browserId) == null) {
       state.value = State.EnterSetupCode;
     } else {
       throw new Error('Invalid state');
@@ -235,14 +243,13 @@ async function createUserKey() {
     processing.value = true;
 
     const userKeys = await UserKeys.create();
-    setupCode.value = crypto.randomUUID();
     me.publicKey = await userKeys.encodedPublicKey();
     me.privateKey = await userKeys.encryptedPrivateKey(setupCode.value);
     me.setupCode = await JWEBuilder.ecdhEs(userKeys.keyPair.publicKey).encrypt({ setupCode: setupCode.value });
     const browserKeys = await createBrowserKeys(me.id);
     await submitBrowserKeys(browserKeys, me, userKeys);
 
-    state.value = State.SaveSetupCode;
+    await router.push('/app/vaults');
   } catch (error) {
     console.error('Creating user key failed.', error);
     onCreateError.value = error instanceof Error ? error : new Error('Unknown reason');

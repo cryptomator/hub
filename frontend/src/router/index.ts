@@ -158,20 +158,21 @@ router.beforeEach((to, from, next) => {
 });
 
 // THIRD check user/browser keys (requires auth)
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to) => {
   if (to.meta.skipSetup) {
-    next();
     return;
   }
-  const me = await backend.users.me();
+  const me = await backend.users.me(true);
   if (!me.publicKey) {
-    next({ path: '/app/setup' });
-    return;
+    return { path: '/app/setup' };
   }
   const browserKeys = await BrowserKeys.load(me.id);
   if (!browserKeys.keyPair) {
-    next({ path: '/app/setup' });
-    return;
+    return { path: '/app/setup' };
+  }
+  const browserId = await browserKeys.id();
+  if (me.devices.find(d => d.id == browserId) == null) {
+    return { path: '/app/setup' };
   }
 });
 
