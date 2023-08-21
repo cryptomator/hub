@@ -185,13 +185,27 @@ const processing = ref(false);
 
 const user = ref<UserDto>();
 const setupCode = ref('');
-const deviceName = ref('');
+const deviceName = ref(guessBrowserName());
 const copiedSetupCode = ref(false);
 const debouncedCopyFinish = debounce(() => copiedSetupCode.value = false, 2000);
 const resettingUserAccount = ref(false);
 const resetUserAccountDialog = ref<typeof ResetUserAccountDialog>();
 
 onMounted(fetchData);
+
+function guessBrowserName(): string {
+  var match = navigator.userAgent.toLowerCase().match(/(android|iphone|opr|edge|chrome|safari|firefox)/) || [''];
+  switch (match[0]) {
+    case 'android': return 'Android';
+    case 'iphone': return 'iPhone';
+    case 'opr': return 'Opera';
+    case 'edge': return 'Edge';
+    case 'chrome': return 'Chrome';
+    case 'safari': return 'Safari';
+    case 'firefox': return 'Firefox';
+    default: return 'Browser';
+  }
+}
 
 async function fetchData() {
   onFetchError.value = null;
