@@ -7,8 +7,8 @@ import AdminSettings from '../components/AdminSettings.vue';
 import AuditLog from '../components/AuditLog.vue';
 import AuthenticatedMain from '../components/AuthenticatedMain.vue';
 import CreateVault from '../components/CreateVault.vue';
+import InitialSetup from '../components/InitialSetup.vue';
 import NotFound from '../components/NotFound.vue';
-import SetupUserKey from '../components/SetupUserKey.vue';
 import UnlockError from '../components/UnlockError.vue';
 import UnlockSuccess from '../components/UnlockSuccess.vue';
 import UserProfile from '../components/UserProfile.vue';
@@ -94,10 +94,12 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/app/setup',
-    component: SetupUserKey,
-    beforeEnter: async () => {
-      return await requiresUserKeySetup(); //TODO: reroute to NotFound Screen/ AccessDeniedScreen?
-    }
+    component: InitialSetup,
+    meta: { skipSetup: true }, // no setup required to run setup ;)
+    // TODO: move "already set up" case to setup component
+    // beforeEnter: async () => {
+    //   return await requiresUserKeySetup(); //TODO: reroute to NotFound Screen/ AccessDeniedScreen?
+    // },
   },
   {
     path: '/app/unlock-success',
@@ -157,17 +159,20 @@ router.beforeEach((to, from, next) => {
 
 // THIRD check user/browser keys (requires auth)
 router.beforeEach(async (to, from, next) => {
-  if (!to.meta.skipSetup && await requiresUserKeySetup() && to.path != '/app/setup') {
-    next({ path: '/app/setup' });
-  } else {
+  if (to.meta.skipSetup) {
     next();
+    return;
+  }
+  const me = await backend.users.me();
+  if (!me.publicKey) {
+    next({ path: '/app/setup' });
+    return;
+  }
+  const browserKeys = await BrowserKeys.load(me.id);
+  if (!browserKeys.keyPair) {
+    next({ path: '/app/setup' });
+    return;
   }
 });
-
-async function requiresUserKeySetup() {
-  const me = await backend.users.me();
-  const browserKeys = await BrowserKeys.load(me.id);
-  return !me.publicKey || !browserKeys.keyPair;
-}
 
 export default router;
