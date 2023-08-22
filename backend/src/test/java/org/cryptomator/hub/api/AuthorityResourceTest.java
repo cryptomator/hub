@@ -23,9 +23,6 @@ import static org.hamcrest.Matchers.hasSize;
 @DisplayName("Resource /authorities")
 public class AuthorityResourceTest {
 
-	@Inject
-	AgroalDataSource dataSource;
-
 	@BeforeAll
 	public static void beforeAll() {
 		RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();

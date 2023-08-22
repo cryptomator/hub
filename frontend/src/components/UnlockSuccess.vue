@@ -24,7 +24,7 @@
           <h1 class="text-center text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl text-white">
             Welcome back, {{ me.name }}!
           </h1>
-          <div v-if="deviceState == DeviceState.Unknown" class="max-w-lg mx-auto text-center text-xl text-primary-l2 sm:max-w-3xl">
+          <div v-if="deviceState == DeviceState.NoSuchDevice" class="max-w-lg mx-auto text-center text-xl text-primary-l2 sm:max-w-3xl">
             <p class="mt-6">
               This device is unknown to Cryptomator Hub.
             </p>
@@ -32,15 +32,7 @@
               Please return to Cryptomator and register your device.
             </p>
           </div>
-          <div v-else-if="deviceState == DeviceState.Registered" class="max-w-lg mx-auto text-center text-xl text-primary-l2 sm:max-w-3xl">
-            <p class="mt-6">
-              This device is registered, but has no access to the vault.
-            </p>
-            <p class="mt-3">
-              Please contact the vault owner to give your device access to the vault.
-            </p>
-          </div>
-          <div v-else-if="deviceState == DeviceState.AccessDenied" class="max-w-lg mx-auto text-center text-xl text-primary-l2 sm:max-w-3xl">
+          <div v-else-if="vaultAccess == VaultAccess.Denied" class="max-w-lg mx-auto text-center text-xl text-primary-l2 sm:max-w-3xl">
             <p class="mt-6">
               You don't have access to this vault.
             </p>
@@ -63,7 +55,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, shallowRef } from 'vue';
+import { ComputedRef, computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { UserDto, VaultDto } from '../common/backend';
 import FetchError from './FetchError.vue';
@@ -75,28 +67,33 @@ const props = defineProps<{
   deviceId: string
 }>();
 
-const deviceState = computed(() => {
-  const foundDevice = me.value?.devices.find(d => d.id == props.deviceId);
-  if ( accessibleVaults.value?.find(v => v.id == props.vaultId) == undefined ) {
-    return DeviceState.AccessDenied;
-  } else if ( foundDevice?.accessTo.find(v => v.id == props.vaultId) ) {
-    return DeviceState.AccessAllowed;
-  } else if ( foundDevice ) {
-    return DeviceState.Registered;
+const deviceState : ComputedRef<DeviceState> = computed(() => {
+  const foundDevice = me.value?.devices.find(d => d.id === props.deviceId);
+  if (!foundDevice) {
+    return DeviceState.NoSuchDevice;
   } else {
-    return DeviceState.Unknown;
+    return DeviceState.Validated;
   }
 });
 
+const vaultAccess : ComputedRef<VaultAccess> = computed(() => {
+  return accessibleVaults.value?.find(v => v.id === props.vaultId)
+    ? VaultAccess.Allowed
+    : VaultAccess.Denied;
+});
+
 enum DeviceState {
-  Unknown,
-  Registered,
-  AccessDenied,
-  AccessAllowed
+  NoSuchDevice,
+  Validated
+}
+
+enum VaultAccess {
+  Allowed,
+  Denied
 }
 
 const me = ref<UserDto>();
-const accessibleVaults = shallowRef<VaultDto []>();
+const accessibleVaults = ref<VaultDto[]>();
 const onFetchError = ref<Error | null>();
 
 onMounted(fetchData);
@@ -104,7 +101,7 @@ onMounted(fetchData);
 async function fetchData() {
   onFetchError.value = null;
   try {
-    me.value = await backend.users.me(true, true);
+    me.value = await backend.users.me(true);
     accessibleVaults.value = await backend.vaults.listAccessible();
   } catch (error) {
     console.error('Retrieving user information failed.', error);

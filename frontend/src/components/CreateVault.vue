@@ -6,7 +6,7 @@
   <div v-else-if="state == State.EnterRecoveryKey">
     <form ref="form" novalidate @submit.prevent="validateRecoveryKey()">
       <div class="flex justify-center">
-        <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6 text-center sm:max-w-lg">
+        <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6 text-center sm:w-full sm:max-w-lg">
           <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-emerald-100">
             <ArrowPathIcon class="h-6 w-6 text-emerald-600" aria-hidden="true" />
           </div>
@@ -101,7 +101,7 @@
   <div v-else-if="state == State.ShowRecoveryKey">
     <form @submit.prevent="createVault()">
       <div class="flex justify-center">
-        <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6 text-center sm:max-w-lg">
+        <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6 text-center sm:w-full sm:max-w-lg">
           <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-emerald-100">
             <KeyIcon class="h-6 w-6 text-emerald-600" aria-hidden="true" />
           </div>
@@ -162,7 +162,7 @@
 
   <div v-else-if="state == State.Finished">
     <div class="flex justify-center">
-      <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6 text-center sm:max-w-lg">
+      <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6 text-center sm:w-full sm:max-w-lg">
         <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-emerald-100">
           <CheckIcon class="h-6 w-6 text-emerald-600" aria-hidden="true" />
         </div>
@@ -198,6 +198,7 @@ import { ClipboardIcon } from '@heroicons/vue/20/solid';
 import { ArrowPathIcon, CheckIcon, KeyIcon } from '@heroicons/vue/24/outline';
 import { ArrowDownTrayIcon } from '@heroicons/vue/24/solid';
 import { saveAs } from 'file-saver';
+import { base64 } from 'rfc4648';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { PaymentRequiredError } from '../common/backend';
@@ -315,10 +316,16 @@ async function createVault() {
       throw new Error('Invalid state');
     }
     processing.value = true;
+    const owner = await backend.users.me();
+    if (!owner.publicKey) {
+      throw new Error('Invalid state');
+    }
     const vaultId = crypto.randomUUID();
     vaultConfig.value = await VaultConfig.create(vaultId, vaultKeys.value);
     const wrapped = await vaultKeys.value.wrap(password.value);
+    const ownerJwe = await vaultKeys.value.encryptForUser(base64.parse(owner.publicKey));
     await backend.vaults.createOrUpdateVault(vaultId, vaultName.value, vaultDescription.value, false, wrapped.masterkey, wrapped.iterations, wrapped.salt, wrapped.signaturePublicKey, wrapped.signaturePrivateKey);
+    await backend.vaults.grantAccess(vaultId, owner.id, ownerJwe, vaultKeys.value);
     state.value = State.Finished;
   } catch (error) {
     console.error('Creating vault failed.', error);

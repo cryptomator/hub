@@ -9,6 +9,7 @@
   "common.copied": "Copied!",
   "common.copy": "Copy",
   "common.download": "Download",
+  "common.hide": "Hide",
   "common.loading": "Loading…",
   "common.manage": "Manage",
   "common.next": "Next",
@@ -21,6 +22,7 @@
   "common.reset": "Reset",
   "common.retry": "Retry",
   "common.share": "Share",
+  "common.show": "Show",
   "common.unexpectedError": "Unexpected Error: {0}",
   "common.update": "Update",
 
@@ -115,10 +117,11 @@
 
   "deviceList.empty.message": "No devices",
   "deviceList.empty.description": "To add a device, add a vault from this Hub to the Cryptomator app of the device and unlock it.",
-  "deviceList.title": "Devices",
+  "deviceList.title": "Authorized Devices and Browsers",
   "deviceList.deviceName": "Device Name",
   "deviceList.type": "Type",
   "deviceList.added": "Added",
+  "deviceList.thisDevice": "This Device",
 
   "downloadVaultTemplateDialog.title": "Download Vault Template",
   "downloadVaultTemplateDialog.description": "Download and unpack the zipped vault template to any location shared with your team members. This is required only once during the initial setup.",
@@ -131,8 +134,11 @@
   "editVaultMetadataDialog.error.vaultAlreadyExists": "A vault with the given name already exists.",
 
   "grantPermissionDialog.title": "Grant Permission",
-  "grantPermissionDialog.description": "Grant additional devices permission to access the vault.",
-  "grantPermissionDialog.submit": "Grant Permission to {0} Device(s)",
+  "grantPermissionDialog.description": "Share vault keys with newly added users.",
+  "grantPermissionDialog.submit": "Grant Permission to {0} User(s)",
+
+  "manageSetupCode.title": "Setup Code",
+  "manageSetupCode.regenerate": "Regenerate Code",
 
   "nav.vaults": "Vaults",
   "nav.profile.signedInAs": "Signed in as",
@@ -149,6 +155,34 @@
   "recoveryKeyDialog.title": "Recovery Key",
   "recoveryKeyDialog.description": "This is your recovery key for \"{0}\". Keep it safe, it is your only chance to regain access to a vault in case of system outage.",
   "recoveryKeyDialog.recoveryKey": "Recovery Key of Your Vault",
+
+  "regenerateSetupCodeDialog.confirmRegenerateSetupCode.title": "Regenerate Setup Code",
+  "regenerateSetupCodeDialog.confirmRegenerateSetupCode.description": "Do you want to generate a new Setup Code? If you do so, the old one will be invalidated.",
+  "regenerateSetupCodeDialog.saveSetupCode.title": "Save Setup Code",
+  "regenerateSetupCodeDialog.saveSetupCode.description": "Be sure to save this new code. You'll need it to sign in to new devices. You can safely delete the old one.",
+  "regenerateSetupCodeDialog.saveSetupCode.setupCode": "Setup Code",
+  "regenerateSetupCodeDialog.submit": "Regenerate Code",
+
+  "resetUserAccountDialog.title": "Reset User Account",
+  "resetUserAccountDialog.description": "Only reset your account if you've lost your Setup Code. You will lose access to all your vaults and the vault owner(s) will have to grant you access again.",
+  "resetUserAccountDialog.submit": "Reset Account",
+
+  "setupUserKey.setupCode": "Setup Code",
+  "setupUserKey.setupCode.description": "Your Setup Code is required to authorize this browser.",
+  "setupUserKey.deviceName": "Browser Name",
+  "setupUserKey.deviceName.description": "Name this browser for easy identification in your authorized devices list.",
+  "setupUserKey.createUserKey.title": "Initial Setup",
+  "setupUserKey.createUserKey.description": "This is your first login on this browser.",
+  "setupUserKey.createUserKey.submit": "Continue",
+  "setupUserKey.saveSetupCode.title": "Save your Setup Code",
+  "setupUserKey.saveSetupCode.description": "You'll need it to sign in to new devices.",
+  "setupUserKey.saveSetupCode.setupCodeHint": "You can look up your Setup Code later in your profile.",
+  "setupUserKey.saveSetupCode.submit": "Finish Setup",
+  "setupUserKey.enterSetupCode.title": "Authorization Required",
+  "setupUserKey.enterSetupCode.description": "This is your first login on this browser.",
+  "setupUserKey.enterSetupCode.submit": "Finish Setup",
+  "setupUserKey.lostSetupCode.title": "Lost your Setup Code?",
+  "setupUserKey.lostSetupCode.resetUserAccount": "Reset my account",
 
   "userProfile.title": "Profile",
   "userProfile.actions.manageAccount": "Manage Account",
@@ -179,9 +213,11 @@
   "vaultList.addVault.recover": "Recover Existing",
   "vaultList.filter": "Filter",
   "vaultList.filter.entry.accessibleVaults": "Accessible",
+  "vaultList.filter.entry.ownedVaults": "Owned by me",
   "vaultList.filter.entry.allVaults": "All",
   "vaultList.filter.result.empty.title": "No vaults",
   "vaultList.filter.result.empty.description": "No results using that search term or filter.",
   "vaultList.search.placeholder": "Search…",
+  "vaultList.owner": "Owner",
   "vaultList.badge.archived": "Archived"
 }

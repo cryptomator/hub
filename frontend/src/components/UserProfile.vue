@@ -52,6 +52,7 @@
       </div>
 
       <div class="grid grid-cols-1 gap-8 lg:col-span-3">
+        <ManageSetupCode />
         <DeviceList />
       </div>
     </div>
@@ -68,6 +69,7 @@ import config from '../common/config';
 import { Locale } from '../i18n';
 import DeviceList from './DeviceList.vue';
 import FetchError from './FetchError.vue';
+import ManageSetupCode from './ManageSetupCode.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -85,7 +87,7 @@ onMounted(async () => {
 async function fetchData() {
   onFetchError.value = null;
   try {
-    me.value = await backend.users.me(false, false);
+    me.value = await backend.users.me(true);
     version.value = await backend.version.get();
   } catch (error) {
     console.error('Retrieving user information failed.', error);

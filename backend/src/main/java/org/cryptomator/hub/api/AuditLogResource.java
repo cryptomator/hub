@@ -23,6 +23,7 @@ import org.cryptomator.hub.entities.AuditEventVaultMemberAdd;
 import org.cryptomator.hub.entities.AuditEventVaultMemberRemove;
 import org.cryptomator.hub.entities.AuditEventVaultUpdate;
 import org.cryptomator.hub.entities.Device;
+import org.cryptomator.hub.entities.VaultAccess;
 import org.cryptomator.hub.license.LicenseHolder;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
@@ -107,7 +108,7 @@ public class AuditLogResource {
 			} else if (entity instanceof AuditEventVaultKeyRetrieve evt) {
 				return new AuditEventVaultKeyRetrieveDto(evt.id, evt.timestamp, AuditEventVaultKeyRetrieve.TYPE, evt.retrievedBy, evt.vaultId, evt.result);
 			} else if (entity instanceof AuditEventVaultMemberAdd evt) {
-				return new AuditEventVaultMemberAddDto(evt.id, evt.timestamp, AuditEventVaultMemberAdd.TYPE, evt.addedBy, evt.vaultId, evt.authorityId);
+				return new AuditEventVaultMemberAddDto(evt.id, evt.timestamp, AuditEventVaultMemberAdd.TYPE, evt.addedBy, evt.vaultId, evt.authorityId, evt.role);
 			} else if (entity instanceof AuditEventVaultMemberRemove evt) {
 				return new AuditEventVaultMemberRemoveDto(evt.id, evt.timestamp, AuditEventVaultMemberRemove.TYPE, evt.removedBy, evt.vaultId, evt.authorityId);
 			} else {
@@ -140,7 +141,7 @@ public class AuditLogResource {
 	}
 
 	record AuditEventVaultMemberAddDto(long id, Instant timestamp, String type, @JsonProperty("addedBy") String addedBy, @JsonProperty("vaultId") UUID vaultId,
-									   @JsonProperty("authorityId") String authorityId) implements AuditEventDto {
+									   @JsonProperty("authorityId") String authorityId, @JsonProperty("role") VaultAccess.Role role) implements AuditEventDto {
 	}
 
 	record AuditEventVaultMemberRemoveDto(long id, Instant timestamp, String type, @JsonProperty("removedBy") String removedBy, @JsonProperty("vaultId") UUID vaultId,

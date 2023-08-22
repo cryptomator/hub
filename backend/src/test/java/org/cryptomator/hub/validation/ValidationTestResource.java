@@ -29,12 +29,6 @@ public class ValidationTestResource {
 	}
 
 	@GET
-	@Path("/onlybase64urlchars/{b64urlstring}")
-	public Response probeOnlyBase64UrlChars(@PathParam("b64urlstring") @OnlyBase64UrlChars String base64UrlString) {
-		return Response.ok().build();
-	}
-
-	@GET
 	@Path("/validjwe/{jwe}")
 	public Response probeValidJWE(@PathParam("jwe") @ValidJWE String jwe) {
 		return Response.ok().build();

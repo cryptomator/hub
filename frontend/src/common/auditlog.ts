@@ -52,6 +52,7 @@ export type AuditEventVaultMemberAddDto = AuditEventDto & {
   addedBy: string;
   vaultId: string;
   authorityId: string;
+  role: 'MEMBER' | 'OWNER';
 }
 
 export type AuditEventVaultMemberRemoveDto = AuditEventDto & {

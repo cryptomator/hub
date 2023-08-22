@@ -31,12 +31,13 @@ abstract sealed class AuthorityDto permits UserDto, GroupDto {
 	}
 
 	static AuthorityDto fromEntity(Authority a) {
-		if (a instanceof User u) {
-			return new UserDto(u.id, u.name, u.pictureUrl, u.email, null);
-		} else if (a instanceof Group) {
-			return new GroupDto(a.id, a.name);
+		// TODO refactor to JEP 441 in JDK 21
+		if (a instanceof User user) {
+			return UserDto.justPublicInfo(user);
+		} else if (a instanceof Group group) {
+			return GroupDto.fromEntity(group);
 		} else {
-			throw new IllegalArgumentException("Authority of this type does not exist");
+			throw new IllegalStateException("authority is not of type user or group");
 		}
 	}
 

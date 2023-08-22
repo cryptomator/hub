@@ -2,11 +2,13 @@ import { createRouter, createWebHistory, RouteLocationRaw, RouteRecordRaw } from
 import authPromise from '../common/auth';
 import backend from '../common/backend';
 import { baseURL } from '../common/config';
+import { BrowserKeys } from '../common/crypto';
 import AdminSettings from '../components/AdminSettings.vue';
 import AuditLog from '../components/AuditLog.vue';
 import AuthenticatedMain from '../components/AuthenticatedMain.vue';
 import CreateVault from '../components/CreateVault.vue';
 import NotFound from '../components/NotFound.vue';
+import SetupUserKey from '../components/SetupUserKey.vue';
 import UnlockError from '../components/UnlockError.vue';
 import UnlockSuccess from '../components/UnlockSuccess.vue';
 import UserProfile from '../components/UserProfile.vue';
@@ -91,19 +93,27 @@ const routes: RouteRecordRaw[] = [
     ]
   },
   {
+    path: '/app/setup',
+    component: SetupUserKey,
+    beforeEnter: async () => {
+      return await requiresUserKeySetup(); //TODO: reroute to NotFound Screen/ AccessDeniedScreen?
+    }
+  },
+  {
     path: '/app/unlock-success',
     component: UnlockSuccess,
-    props: (route) => ({ vaultId: route.query.vault, deviceId: route.query.device })
+    props: (route) => ({ vaultId: route.query.vault, deviceId: route.query.device }),
+    meta: { skipSetup: true }
   },
   {
     path: '/app/unlock-error',
     component: UnlockError,
-    meta: { skipAuth: true }
+    meta: { skipAuth: true, skipSetup: true }
   },
   {
     path: '/app/:pathMatch(.+)', //necessary due to using history mode in router
     component: NotFound,
-    meta: { skipAuth: true }
+    meta: { skipAuth: true, skipSetup: true }
   },
 ];
 
@@ -134,7 +144,7 @@ router.beforeEach((to, from, next) => {
   if ('sync_me' in to.query) {
     authPromise.then(async auth => {
       if (auth.isAuthenticated()) {
-        await backend.users.syncMe();
+        await backend.users.putMe();
       }
     }).finally(() => {
       delete to.query.sync_me; // remove sync_me query parameter to avoid endless recursion
@@ -144,5 +154,20 @@ router.beforeEach((to, from, next) => {
     next();
   }
 });
+
+// THIRD check user/browser keys (requires auth)
+router.beforeEach(async (to, from, next) => {
+  if (!to.meta.skipSetup && await requiresUserKeySetup() && to.path != '/app/setup') {
+    next({ path: '/app/setup' });
+  } else {
+    next();
+  }
+});
+
+async function requiresUserKeySetup() {
+  const me = await backend.users.me();
+  const browserKeys = await BrowserKeys.load(me.id);
+  return !me.publicKey || !browserKeys.keyPair;
+}
 
 export default router;

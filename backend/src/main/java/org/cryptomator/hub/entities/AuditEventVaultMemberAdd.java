@@ -4,6 +4,8 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 
 import java.time.Instant;
@@ -27,6 +29,10 @@ public class AuditEventVaultMemberAdd extends AuditEvent {
 	@Column(name = "authority_id")
 	public String authorityId;
 
+	@Column(name = "role", nullable = false)
+	@Enumerated(EnumType.STRING)
+	public VaultAccess.Role role;
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
@@ -35,20 +41,22 @@ public class AuditEventVaultMemberAdd extends AuditEvent {
 		return super.equals(that) //
 				&& Objects.equals(addedBy, that.addedBy) //
 				&& Objects.equals(vaultId, that.vaultId) //
-				&& Objects.equals(authorityId, that.authorityId);
+				&& Objects.equals(authorityId, that.authorityId) //
+				&& Objects.equals(role, that.role);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, addedBy, vaultId, authorityId);
+		return Objects.hash(id, addedBy, vaultId, authorityId, role);
 	}
 
-	public static void log(String addedBy, UUID vaultId, String authorityId) {
+	public static void log(String addedBy, UUID vaultId, String authorityId, VaultAccess.Role role) {
 		var event = new AuditEventVaultMemberAdd();
 		event.timestamp = Instant.now();
 		event.addedBy = addedBy;
 		event.vaultId = vaultId;
 		event.authorityId = authorityId;
+		event.role = role;
 		event.persist();
 	}
 

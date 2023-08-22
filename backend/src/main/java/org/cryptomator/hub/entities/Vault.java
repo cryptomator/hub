@@ -30,9 +30,15 @@ import java.util.stream.Stream;
 		query = """
 				SELECT DISTINCT v
 				FROM Vault v
-				LEFT JOIN v.effectiveMembers m
-				WHERE m.id = :userId
-				AND NOT v.archived
+				INNER JOIN EffectiveVaultAccess a ON a.id.vaultId = v.id AND a.id.authorityId = :userId
+				WHERE NOT v.archived
+				""")
+@NamedQuery(name = "Vault.accessibleByUserAndRole",
+		query = """
+				SELECT DISTINCT v
+				FROM Vault v
+				INNER JOIN EffectiveVaultAccess a ON a.id.vaultId = v.id AND a.id.authorityId = :userId
+				WHERE a.role = :role AND NOT v.archived
 				""")
 @NamedQuery(name = "Vault.allInList",
 		query = """
@@ -49,6 +55,7 @@ public class Vault extends PanacheEntityBase {
 	public UUID id;
 
 	@ManyToMany
+	@Immutable
 	@JoinTable(name = "vault_access",
 			joinColumns = @JoinColumn(name = "vault_id", referencedColumnName = "id"),
 			inverseJoinColumns = @JoinColumn(name = "authority_id", referencedColumnName = "id")
@@ -64,7 +71,7 @@ public class Vault extends PanacheEntityBase {
 	public Set<Authority> effectiveMembers = new HashSet<>();
 
 	@OneToMany(mappedBy = "vault", fetch = FetchType.LAZY)
-	public Set<AccessToken> accessTokens = new HashSet<>(); // rename to accesstokens?
+	public Set<AccessToken> accessTokens = new HashSet<>();
 
 	@Column(name = "name", nullable = false)
 	public String name;
@@ -95,6 +102,10 @@ public class Vault extends PanacheEntityBase {
 
 	public static Stream<Vault> findAccessibleByUser(String userId) {
 		return find("#Vault.accessibleByUser", Parameters.with("userId", userId)).stream();
+	}
+
+	public static Stream<Vault> findAccessibleByUser(String userId, VaultAccess.Role role) {
+		return find("#Vault.accessibleByUserAndRole", Parameters.with("userId", userId).and("role", role)).stream();
 	}
 
 	public static Stream<Vault> findAllInList(List<UUID> ids) {

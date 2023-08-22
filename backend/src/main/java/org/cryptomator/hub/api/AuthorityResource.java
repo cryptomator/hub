@@ -33,7 +33,7 @@ public class AuthorityResource {
 	@RolesAllowed("admin")
 	@Produces(MediaType.APPLICATION_JSON)
 	@NoCache
-	@Operation(summary = "lists all authorities matching the given ids", description ="lists for each id in the list its corresponding authority. Ignores all id's where an authority cannot be found")
+	@Operation(summary = "lists all authorities matching the given ids", description = "lists for each id in the list its corresponding authority. Ignores all id's where an authority cannot be found")
 	@APIResponse(responseCode = "200")
 	public List<AuthorityDto> getSome(@QueryParam("ids") List<String> authorityIds) {
 		return Authority.findAllInList(authorityIds).map(AuthorityDto::fromEntity).toList();

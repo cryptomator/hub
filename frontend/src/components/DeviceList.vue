@@ -8,6 +8,7 @@
     </div>
   </div>
 
+  <!-- FIXME: invalid case: list must at least contain current browser: -->
   <div v-else-if="me.devices.length == 0" class="text-center">
     <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
       <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
@@ -46,7 +47,10 @@
                 <template v-for="device in me.devices" :key="device.id">
                   <tr>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {{ device.name }}
+                      <div class="flex items-center gap-3">
+                        <div>{{ device.name }}</div>
+                        <div v-if="device.id == myDevice?.id" class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">{{ t('deviceList.thisDevice') }}</div>
+                      </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <span v-if="device.type == 'BROWSER'" class="flex items-center">
@@ -66,7 +70,7 @@
                       {{ d(device.creationTime, 'short') }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <a role="button" tabindex="0" class="text-red-600 hover:text-red-900" @click="removeDevice(device)">{{ t('common.remove') }}</a>
+                      <a v-if="device.id != myDevice?.id" role="button" tabindex="0" class="text-red-600 hover:text-red-900" @click="removeDevice(device)">{{ t('common.remove') }}</a>
                     </td>
                   </tr>
                   <!-- TODO: good styling -->
@@ -90,25 +94,61 @@ import { ComputerDesktopIcon, DevicePhoneMobileIcon, WindowIcon } from '@heroico
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { DeviceDto, NotFoundError, UserDto } from '../common/backend';
+import { BrowserKeys } from '../common/crypto';
 import FetchError from './FetchError.vue';
 
 const { t, d } = useI18n({ useScope: 'global' });
 
 const me = ref<UserDto>();
+const myDevice = ref<DeviceDto>();
 const onFetchError = ref<Error | null>();
 const onRemoveDeviceError = ref< {[id: string]: Error} >({});
 
-onMounted(fetchData);
+onMounted(async () => {
+  await fetchData();
+  await determineMyDevice();
+});
 
 async function fetchData() {
   onFetchError.value = null;
   try {
-    me.value = await backend.users.me(true, true);
+    me.value = await backend.users.me(true);
   } catch (error) {
     console.error('Retrieving device list failed.', error);
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
 }
+
+async function determineMyDevice() {
+  if (me.value == null) {
+    throw new Error('User not initialized.');
+  }
+  const browserKeys = await BrowserKeys.load(me.value.id);
+  const browserId = await browserKeys.id();
+  myDevice.value = me.value.devices.find(d => d.id == browserId);
+}
+
+/*
+ * Use existing device to authorize another device:
+ */
+// async function validateDevice(device: DeviceDto) {
+//   if (!me.value || !me.value.publicKey) {
+//     throw new Error('User keys not initialized.');
+//   }
+//   /* decrypt user key on this browser: */
+//   const userPublicKey = crypto.subtle.importKey('spki', base64.parse(me.value.publicKey), UserKeys.KEY_DESIGNATION, false, []);
+//   const browserKeys = await BrowserKeys.load(me.value.id);
+//   const browserId = await browserKeys.id();
+//   const browser = me.value.devices.find(d => d.id === browserId);
+//   if (!browser || !browser.userPrivateKey) {
+//     throw new Error('Browser not validated.');
+//   }
+//   const userKeys = await UserKeys.decryptOnBrowser(browser.userPrivateKey, browserKeys.keyPair.privateKey, await userPublicKey);
+
+//   /* encrypt user key for device */
+//   device.userPrivateKey = await userKeys.encryptForDevice(base64url.parse(device.publicKey));
+//   await backend.devices.putDevice(device);
+// }
 
 async function removeDevice(device: DeviceDto) {
   delete onRemoveDeviceError.value[device.id];

@@ -101,28 +101,6 @@ public class ValidationTestResourceTest {
 	}
 
 	@Nested
-	@DisplayName("Test @OnlyBase64UrlChars")
-	public class Base64UrlCharsTest {
-
-		@DisplayName("Strings only containing base64url-chars are accepted")
-		@ParameterizedTest
-		@ValueSource(strings = {"abcdefghijklmnopqrstuvwxyz0123456789-_", "bGln-HQgd2_yaw==", "-======"})
-		public void testOnlyBase64UrlCharsValid(String toTest) {
-			when().get("/test/onlybase64urlchars/{b64String}", toTest)
-					.then().statusCode(200);
-		}
-
-		@DisplayName("Strings containing not-base64url-chars (or wrong order) are rejected")
-		@ParameterizedTest
-		@ValueSource(strings = {"foo+/", "\u5207ä=", "abc==abc", "==="})
-		@ArgumentsSource(MalicousStringsProvider.class)
-		public void testOnlyBase64UrlCharsInvalid(String toTest) {
-			when().get("/test/onlybase64urlchars/{b64String}", toTest)
-					.then().statusCode(400);
-		}
-	}
-
-	@Nested
 	@DisplayName("Test @ValidJWE")
 	public class JWETest {
 
