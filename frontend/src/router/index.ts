@@ -167,7 +167,7 @@ router.beforeEach(async (to) => {
     return { path: '/app/setup' };
   }
   const browserKeys = await BrowserKeys.load(me.id);
-  if (!browserKeys.keyPair) {
+  if (!browserKeys) {
     return { path: '/app/setup' };
   }
   const browserId = await browserKeys.id();

@@ -218,11 +218,11 @@ async function fetchData() {
   try {
     user.value = await backend.users.me();
     const browserKeys = await BrowserKeys.load(user.value.id);
-    const browserId = await browserKeys.id();
+    const browserId = await browserKeys?.id();
     if (!user.value.publicKey) {
       setupCode.value = crypto.randomUUID();
       state.value = State.CreateUserKey;
-    } else if (!browserKeys.keyPair || user.value.devices.find(d => d.id == browserId) == null) {
+    } else if (!browserKeys || user.value.devices.find(d => d.id == browserId) == null) {
       state.value = State.EnterSetupCode;
     } else {
       throw new Error('Invalid state');
