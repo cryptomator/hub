@@ -110,8 +110,9 @@
                 <button type="submit" :disabled="processing" class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:primary focus:ring-offset-2 sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
                   {{ t('registerDevice.submit') }}
                 </button>
-                <div v-if="onRecoverError != null">
-                  <p class="text-sm text-red-900 mt-2">{{ t('common.unexpectedError', [onRecoverError.message]) }}</p>
+                <div class="text-sm text-red-900 mt-2">
+                  <p v-if="onRecoverError instanceof UnwrapKeyError">{{ t('registerDevice.error.wrongSetupCode') }}</p>
+                  <p v-else-if="onRecoverError != null">{{ t('common.unexpectedError', [onRecoverError.message]) }}</p>
                 </div>
               </div>
             </div>
@@ -137,7 +138,7 @@ import { ExclamationTriangleIcon, PencilIcon } from '@heroicons/vue/24/outline';
 import { nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { UserDto } from '../common/backend';
-import { BrowserKeys, UserKeys } from '../common/crypto';
+import { BrowserKeys, UnwrapKeyError, UserKeys } from '../common/crypto';
 import { JWEBuilder } from '../common/jwe';
 import { debounce } from '../common/util';
 import router from '../router';

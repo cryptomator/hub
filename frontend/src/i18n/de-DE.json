@@ -184,6 +184,7 @@
   "registerDevice.deviceName": "Browser-Name",
   "registerDevice.deviceName.description": "Benenne diesen Browser, um ihn in deinem Profil wiedererkennen zu können.",
   "registerDevice.submit": "Finish Setup",
+  "registerDevice.error.wrongSetupCode": "Wrong Account Key",
   "registerDevice.lostSetupCode.title": "Lost your Account Key?",
   "registerDevice.lostSetupCode.resetUserAccount": "Reset my account",
 

@@ -332,7 +332,8 @@ export class UserKeys {
    * @param encodedPublicKey The public key (base64-encoded SPKI)
    * @param encryptedPrivateKey The JWE holding the encrypted private key
    * @param setupCode The password used to protect the private key
-   * @returns 
+   * @returns Decrypted UserKeys
+   * @throws {UnwrapKeyError} when attempting to decrypt the private key using an incorrect setupCode
    */
   public static async recover(encodedPublicKey: string, encryptedPrivateKey: string, setupCode: string): Promise<UserKeys> {
     const jwe: JWEPayload = await JWEParser.parse(encryptedPrivateKey).decryptPbes2(setupCode);

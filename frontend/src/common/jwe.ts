@@ -1,4 +1,5 @@
 import { base64url } from 'rfc4648';
+import { UnwrapKeyError } from './crypto';
 
 // visible for testing
 export class ConcatKDF {
@@ -93,6 +94,7 @@ export class JWEParser {
    * Decrypts the JWE, assuming alg == PBES2-HS512+A256KW and enc == A256GCM.
    * @param password The password to feed into the KDF
    * @returns Decrypted payload
+   * @throws {UnwrapKeyError} if decryption failed (wrong password?)
    */
   public async decryptPbes2(password: string): Promise<any> {
     if (this.header.alg != 'PBES2-HS512+A256KW' || /* this.header.enc != 'A256GCM' || */ !this.header.p2s || !this.header.p2c) {
@@ -100,8 +102,12 @@ export class JWEParser {
     }
     const saltInput = base64url.parse(this.header.p2s, { loose: true });
     const wrappingKey = await PBES2.deriveWrappingKey(password, this.header.alg, saltInput, this.header.p2c);
-    const cek = crypto.subtle.unwrapKey('raw', this.encryptedKey, wrappingKey, 'AES-KW', { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
-    return this.decrypt(await cek);
+    try {
+      const cek = crypto.subtle.unwrapKey('raw', this.encryptedKey, wrappingKey, 'AES-KW', { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+      return this.decrypt(await cek);
+    } catch (error) {
+      throw new UnwrapKeyError(error);
+    }
   }
 
   private async decrypt(cek: CryptoKey): Promise<any> {

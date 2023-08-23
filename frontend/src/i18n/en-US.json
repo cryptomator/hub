@@ -184,6 +184,7 @@
   "registerDevice.deviceName": "Browser-Name",
   "registerDevice.deviceName.description": "Name this browser for easy identification in your authorized devices list.",
   "registerDevice.submit": "Finish Setup",
+  "registerDevice.error.wrongSetupCode": "Wrong Account Key",
   "registerDevice.lostSetupCode.title": "Lost your Account Key?",
   "registerDevice.lostSetupCode.resetUserAccount": "Reset my account",
 
