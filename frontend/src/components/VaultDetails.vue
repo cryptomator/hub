@@ -48,7 +48,7 @@
                   <p class="ml-4 text-sm font-medium text-gray-900">{{ member.name }}</p>
                   <div v-if="member.role == 'OWNER'" class="ml-3 inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">{{ t('vaultDetails.sharedWith.badge.owner') }}</div>
                 </div>
-                <Menu v-if="member.id != me?.id" as="div" class="relative ml-2 inline-block flex-shrink-0 text-left">
+                <Menu v-if="member.id != me?.id && !vault.archived" as="div" class="relative ml-2 inline-block flex-shrink-0 text-left">
                   <MenuButton class="group relative inline-flex h-8 w-8 items-center justify-center rounded-full bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
                     <span class="absolute -inset-1.5" />
                     <span class="sr-only">Open options menu</span>
@@ -80,7 +80,7 @@
                 </Menu>
               </div>
 
-              <p v-if="onUpdateVaultMembershipError[member.id] != null" class="text-sm text-red-900 text-right">
+              <p v-if="onUpdateVaultMembershipError[member.id] != null" class="text-sm text-red-900 text-right mt-1">
                 {{ t('common.unexpectedError', [onUpdateVaultMembershipError[member.id].message]) }}
               </p>
             </li>
@@ -95,9 +95,14 @@
               </button>
             </div>
             <SearchInputGroup v-else-if="addingUser" :action-title="t('common.add')" :on-search="searchAuthority" @action="addAuthority" />
-            <p v-if="onAddUserError != null" class="text-sm text-red-900 text-right">
-              {{ t('common.unexpectedError', [onAddUserError.message]) }}
-            </p>
+            <div v-if="onAddUserError != null">
+              <p v-if="onAddUserError instanceof PaymentRequiredError" class="text-sm text-red-900 text-right mt-1">
+                {{ t('vaultDetails.error.paymentRequired') }}
+              </p>
+              <p v-else class="text-sm text-red-900 text-right mt-1">
+                {{ t('common.unexpectedError', [onAddUserError.message]) }}
+              </p>
+            </div>
           </li>
         </ul>
       </div>
@@ -164,7 +169,7 @@ import { PlusSmallIcon } from '@heroicons/vue/24/solid';
 import { base64 } from 'rfc4648';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { AuthorityDto, ConflictError, MemberDto, NotFoundError, UserDto, VaultDto, VaultRole } from '../common/backend';
+import backend, { AuthorityDto, ConflictError, MemberDto, NotFoundError, PaymentRequiredError, UserDto, VaultDto, VaultRole } from '../common/backend';
 import { BrowserKeys, UserKeys, VaultKeys } from '../common/crypto';
 import { JWT, JWTHeader } from '../common/jwt';
 import ArchiveVaultDialog from './ArchiveVaultDialog.vue';

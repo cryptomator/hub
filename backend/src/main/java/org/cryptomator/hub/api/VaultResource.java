@@ -4,6 +4,7 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.annotation.Nullable;
 import jakarta.annotation.security.RolesAllowed;
@@ -68,6 +69,7 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 @Path("/vaults")
+@RegisterForReflection(targets = {UUID[].class})
 public class VaultResource {
 
 	@Inject
@@ -396,6 +398,7 @@ public class VaultResource {
 			description = "Creates or updates a vault with the given vault id. The creationTime in the vaultDto is always ignored. On creation, the current server time is used and the archived field is ignored. On update, only the name, description, and archived fields are considered.")
 	@APIResponse(responseCode = "200", description = "existing vault updated")
 	@APIResponse(responseCode = "201", description = "new vault created")
+	@APIResponse(responseCode = "402", description = "all seats in licence in use during creation of new vault")
 	public Response createOrUpdate(@PathParam("vaultId") UUID vaultId, @Valid @NotNull VaultDto vaultDto) {
 		User currentUser = User.findById(jwt.getSubject());
 		Optional<Vault> existingVault = Vault.findByIdOptional(vaultId);
@@ -404,6 +407,13 @@ public class VaultResource {
 			// load existing vault:
 			vault = existingVault.get();
 		} else {
+			if (!EffectiveVaultAccess.isUserOccupyingSeat(currentUser.id)) {
+				//for new vaults, we need to check that a licence seat is available if the user does not already have access to a vault.
+				var usedSeats = EffectiveVaultAccess.countSeatOccupyingUsers();
+				if (usedSeats >= license.getAvailableSeats()) {
+					throw new PaymentRequiredException("Number of effective vault users exceeds available license seats");
+				}
+			}
 			// create new vault:
 			vault = new Vault();
 			vault.id = vaultDto.id;
