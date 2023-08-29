@@ -25,11 +25,11 @@ import java.util.Map;
 @QuarkusTest
 public class VaultRoleFilterTest {
 
-	ResourceInfo resourceInfo = Mockito.mock(ResourceInfo.class);
-	UriInfo uriInfo = Mockito.mock(UriInfo.class);
-	ContainerRequestContext context = Mockito.mock(ContainerRequestContext.class);
-	JsonWebToken jwt = Mockito.mock(JsonWebToken.class);
-	VaultRoleFilter filter = new VaultRoleFilter();
+	private final ResourceInfo resourceInfo = Mockito.mock(ResourceInfo.class);
+	private final UriInfo uriInfo = Mockito.mock(UriInfo.class);
+	private final ContainerRequestContext context = Mockito.mock(ContainerRequestContext.class);
+	private final JsonWebToken jwt = Mockito.mock(JsonWebToken.class);
+	private final VaultRoleFilter filter = new VaultRoleFilter();
 
 	@BeforeEach
 	public void setup() {
@@ -87,6 +87,37 @@ public class VaultRoleFilterTest {
 		Mockito.doReturn("user2").when(jwt).getSubject();
 
 		Assertions.assertDoesNotThrow(() -> filter.filter(context));
+	}
+
+	@Nested
+	@DisplayName("when attempting to access archived vault")
+	public class OnArchivedVault {
+
+		@BeforeEach
+		public void setup() {
+			Mockito.doReturn(new MultivaluedHashMap<>(Map.of(VaultRole.DEFAULT_VAULT_ID_PARAM, "7E57C0DE-0000-4000-8000-00010000AAAA"))).when(uriInfo).getPathParameters();
+		}
+
+		@Test
+		@DisplayName("pass if user1 tries to access 7E57C0DE-0000-4000-8000-00010000AAAA (user1 is OWNER of vault)")
+		public void testFilterSuccess() throws NoSuchMethodException {
+			Mockito.doReturn(VaultRoleFilterTest.class.getMethod("allowOwner")).when(resourceInfo).getResourceMethod();
+			Mockito.doReturn("user1").when(jwt).getSubject();
+
+			Assertions.assertDoesNotThrow(() -> filter.filter(context));
+		}
+
+		@Test
+		@DisplayName("error 403 if user2 tries to access 7E57C0DE-0000-4000-8000-00010000AAAA")
+		public void testFilterWithInsufficientPrivileges() throws NoSuchMethodException {
+			Mockito.doReturn(VaultRoleFilterTest.class.getMethod("allowOwner")).when(resourceInfo).getResourceMethod();
+			Mockito.doReturn("user2").when(jwt).getSubject();
+
+			var e = Assertions.assertThrows(ForbiddenException.class, () -> filter.filter(context));
+
+			Assertions.assertEquals("Vault role required: OWNER", e.getMessage());
+		}
+
 	}
 
 	@Nested
