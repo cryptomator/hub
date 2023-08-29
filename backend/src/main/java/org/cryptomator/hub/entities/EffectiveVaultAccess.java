@@ -43,9 +43,9 @@ import java.util.stream.Collectors;
 		WHERE egm.id.groupId = :groupId
 		""")
 @NamedQuery(name = "EffectiveVaultAccess.findByUserAndVault", query = """
-				SELECT eva
-				FROM EffectiveVaultAccess eva
-				WHERE eva.id.vaultId = :vaultId AND eva.id.authorityId = :authorityId
+		SELECT eva
+		FROM EffectiveVaultAccess eva
+		WHERE eva.id.vaultId = :vaultId AND eva.id.authorityId = :authorityId
 		""")
 @RegisterForReflection(targets = {UUID[].class})
 public class EffectiveVaultAccess extends PanacheEntityBase {

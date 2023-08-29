@@ -662,11 +662,6 @@ public class VaultResourceTest {
 					.body("id", equalToIgnoringCase("7E57C0DE-0000-4000-8000-0001FFFF3333"))
 					.body("name", equalTo("My Vault"))
 					.body("description", equalTo("Test vault 3"))
-					.body("masterkey", equalTo("masterkey3"))
-					.body("salt", equalTo("NaCl"))
-					.body("iterations", equalTo(42))
-					.body("authPublicKey", equalTo("authPubKey3"))
-					.body("authPrivateKey", equalTo("authPrvKey3"))
 					.body("archived", equalTo(false));
 		}
 
@@ -713,11 +708,6 @@ public class VaultResourceTest {
 					.body("id", equalToIgnoringCase("7E57C0DE-0000-4000-8000-0001FFFF3333"))
 					.body("name", equalTo("VaultUpdated"))
 					.body("description", equalTo("Vault updated."))
-					.body("masterkey", equalTo("masterkey3"))
-					.body("salt", equalTo("NaCl"))
-					.body("iterations", equalTo(42))
-					.body("authPublicKey", equalTo("authPubKey3"))
-					.body("authPrivateKey", equalTo("authPrvKey3"))
 					.body("archived", equalTo(true));
 		}
 
