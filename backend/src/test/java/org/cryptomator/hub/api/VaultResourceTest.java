@@ -613,7 +613,7 @@ public class VaultResourceTest {
 
 		@Order(2)
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111/users/userXX returns 201")
-		@ParameterizedTest(name = "Adding user {index} succeeds")
+		@ParameterizedTest(name = "Adding user {0} succeeds")
 		@ValueSource(strings = {"user91", "user92", "user93"})
 		public void addUserToVaultNotExceedingSeats(String userId) {
 			//Assumptions.assumeTrue(EffectiveVaultAccess.countEffectiveVaultUsers() == 2);
@@ -633,24 +633,25 @@ public class VaultResourceTest {
 		}
 
 		@Test
+		@TestSecurity(user = "User 94", roles = {"user"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user94")
+		})
 		@Order(4)
-		@DisplayName("Unlock is blocked if exceeding license seats")
-		public void testUnlockBlockedIfLicenseExceeded() throws SQLException {
-			try (var s = dataSource.getConnection().createStatement()) {
-				s.execute("""
-						INSERT INTO "vault_access" ("vault_id", "authority_id")
-							VALUES ('7E57C0DE-0000-4000-8000-000100001111', 'group91');
-						""");
-			}
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-0001FFFF3333 (as user94) exceeding the license returns 402")
+		public void testCreateVaultExceedingSeats() {
 			//Assumptions.assumeTrue(EffectiveVaultAccess.countEffectiveVaultUsers() > 5);
 
-			when().get("/vaults/{vaultId}/access-token", "7E57C0DE-0000-4000-8000-000100001111")
+			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-0001FFFF3333");
+			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", "Test vault 4", false, Instant.parse("2112-12-21T21:12:21Z"), "masterkey3", 42, "NaCl", "authPubKey3", "authPrvKey3");
+			given().contentType(ContentType.JSON).body(vaultDto)
+					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-0001FFFF3333")
 					.then().statusCode(402);
 		}
 
 		@Test
 		@Order(5)
-		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-0001FFFF3333 returns 201 not exceeding seats because user already has access to an existing vault")
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-0001FFFF3333 (as user1) returns 201 not exceeding seats because user already has access to an existing vault")
 		public void testCreateVaultNotExceedingSeats() {
 			//Assumptions.assumeTrue(EffectiveVaultAccess.countEffectiveVaultUsers() > 5);
 
@@ -667,35 +668,7 @@ public class VaultResourceTest {
 
 		@Test
 		@Order(6)
-		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-0001FFFF4444 exceeding the license returns 402")
-		public void testCreateVaultExceedingSeats() throws SQLException {
-			try (var s = dataSource.getConnection().createStatement()) {
-				s.execute("""
-						DELETE FROM "vault_access"
-						WHERE "authority_id" IN ('user1', 'group1');
-						""");
-			}
-			//Assumptions.assumeTrue(EffectiveVaultAccess.countEffectiveVaultUsers() > 5);
-
-			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-0001FFFF4444");
-			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", "Test vault 4", false, Instant.parse("2112-12-21T21:12:21Z"), "masterkey4", 42, "NaCl", "authPubKey4", "authPrvKey4");
-			given().contentType(ContentType.JSON).body(vaultDto)
-					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-0001FFFF4444")
-					.then().statusCode(402);
-
-			try (var s = dataSource.getConnection().createStatement()) {
-				s.execute("""
-						INSERT INTO "vault_access"
-						VALUES
-							('7E57C0DE-0000-4000-8000-000100001111', 'user1', 'OWNER'),
-							('7E57C0DE-0000-4000-8000-000100002222', 'group1', 'MEMBER');
-						""");
-			}
-		}
-
-		@Test
-		@Order(7)
-		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-0001FFFF3333 returns 200 with only updated name, description and archive flag, despite exceeding license")
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-0001FFFF3333 (as user1) returns 200 with only updated name, description and archive flag, despite exceeding license")
 		public void testUpdateVaultDespiteLicenseExceeded() {
 			//Assumptions.assumeTrue(EffectiveVaultAccess.countEffectiveVaultUsers() > 5);
 
@@ -709,6 +682,22 @@ public class VaultResourceTest {
 					.body("name", equalTo("VaultUpdated"))
 					.body("description", equalTo("Vault updated."))
 					.body("archived", equalTo(true));
+		}
+
+		@Test
+		@Order(7)
+		@DisplayName("Unlock is blocked if exceeding license seats")
+		public void testUnlockBlockedIfLicenseExceeded() throws SQLException {
+			try (var s = dataSource.getConnection().createStatement()) {
+				s.execute("""
+						INSERT INTO "vault_access" ("vault_id", "authority_id")
+							VALUES ('7E57C0DE-0000-4000-8000-000100001111', 'group91');
+						""");
+			}
+			//Assumptions.assumeTrue(EffectiveVaultAccess.countEffectiveVaultUsers() > 5);
+
+			when().get("/vaults/{vaultId}/access-token", "7E57C0DE-0000-4000-8000-000100001111")
+					.then().statusCode(402);
 		}
 
 		@AfterAll
