@@ -12,23 +12,21 @@
     <div v-else-if="state == State.CreateUserKey" class="text-sm text-gray-600">
       <form @submit.prevent="createUserKey()">
         <div class="flex justify-center">
-          <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6 text-center sm:w-full sm:max-w-lg">
+          <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6 text-left text-base text-gray-600 sm:w-full sm:max-w-lg">
             <div class="flex justify-center">
               <img src="/logo.svg" class="h-12" alt="Logo" aria-hidden="true" />
             </div>
             <div class="mt-3 sm:mt-5">
-              <h3 class="text-lg leading-6 font-medium text-gray-900">
+              <h3 class="text-lg leading-6 font-medium text-gray-900 text-center">
                 {{ t('initialSetup.title') }}
               </h3>
-              <div class="mt-2">
-                <p>
-                  {{ t('initialSetup.description') }}
-                </p>
-              </div>
+              <p class="mt-2 text-center">
+                {{ t('initialSetup.description') }}
+              </p>
+              
               <div class="relative mt-5 sm:mt-6 text-left">
-                <label for="setupCode" class="block font-medium">{{ t('initialSetup.setupCode') }}</label>
                 <div class="overflow-hidden rounded-lg border border-gray-300 shadow-sm focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
-                  <textarea id="setupCode" v-model="setupCode" rows="1" name="setupCode" class="block w-full resize-none border-0 py-3 font-mono text-lg text-center focus:ring-0" readonly />
+                  <textarea id="setupCode" v-model="setupCode" :aria-label="t('initialSetup.setupCode')" rows="1" name="setupCode" class="block w-full resize-none border-0 py-3 font-mono text-lg text-center focus:ring-0" readonly />
                   <div class="py-2" aria-hidden="true">
                     <div class="h-9" />
                   </div>
@@ -45,21 +43,37 @@
                   </div>
                 </div>
               </div>
+
               <div class="mt-5 flex items-start">
-                <div class="mx-4">
-                  <ExclamationTriangleIcon class="h-8 w-8" aria-hidden="true" />
+                <div class="mx-3">
+                  <KeyIcon class="h-6 w-6 text-primary" aria-hidden="true" />
                 </div>
-                <p class="text-left">
-                  {{ t('initialSetup.dontLooseYourSetupCode') }}
+                <p>
+                  {{ t('initialSetup.details.setupCode') }}
                 </p>
               </div>
 
-              <p class="mt-5 text-left">
-                <span>{{ t('initialSetup.devicesName.0') }}</span>
-                <span ref="deviceNameField" contenteditable class="focus:ring-primary select-all font-mono" @click="editBrowserName()" @keydown.enter.prevent="deviceNameField?.blur()" @blur="changeBrowserName" v-text="deviceName" />
-                <PencilIcon class="inline-block h-4 w-4 ml-1 -mt-1 cursor-pointer" aria-hidden="true" @click="editBrowserName()" />
-                <span>{{ t('initialSetup.devicesName.2') }}</span>
-              </p>
+              <div class="mt-5 flex items-start">
+                <div class="mx-3">
+                  <ListBulletIcon class="h-6 w-6 text-primary" aria-hidden="true" />
+                </div>
+                <p>
+                  {{ t('initialSetup.details.devicesList') }}
+                </p>
+              </div>
+
+              <div class="mt-5 flex items-start">
+                <div class="mx-3">
+                  <ComputerDesktopIcon class="h-6 w-6 text-primary" aria-hidden="true" />
+                </div>
+                <p>
+                  {{ t('initialSetup.details.devicesName.before') }}
+                  <span ref="deviceNameField" :aria-label="t('initialSetup.details.devicesName.label')" contenteditable class="cursor-pointer focus:cursor-text focus:outline-primary focus:selection:bg-primary-l2 focus:selection:text-primary select-all font-mono" @click="editBrowserName()" @keydown.enter.prevent="deviceNameField?.blur()" @blur="changeBrowserName" v-text="deviceName" />
+                  {{ ' ' }}
+                  <PencilIcon class="inline-block h-4 w-4 -mt-1 cursor-pointer" aria-hidden="true" @click="editBrowserName()" />
+                  {{ t('initialSetup.details.devicesName.after') }}
+                </p>
+              </div>
 
               <div class="text-center mt-5 sm:mt-6">
                 <input id="confirmSetupKey" v-model="confirmSetupKey" name="confirmSetupKey" type="checkbox" class="h-4 w-4 mx-2 rounded border-gray-300 text-primary focus:ring-primary" required>
@@ -134,7 +148,8 @@
 
 <script setup lang="ts">
 import { ClipboardIcon } from '@heroicons/vue/20/solid';
-import { ExclamationTriangleIcon, PencilIcon } from '@heroicons/vue/24/outline';
+import { PencilIcon } from '@heroicons/vue/24/outline';
+import { ComputerDesktopIcon, KeyIcon, ListBulletIcon } from '@heroicons/vue/24/solid';
 import { nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { UserDto } from '../common/backend';
