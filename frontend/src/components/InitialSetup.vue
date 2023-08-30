@@ -92,6 +92,10 @@
           </div>
         </div>
       </form>
+
+      <p class="mt-10 text-center text-sm">
+        <router-link to="/app/logout" class="leading-6 text-gray-400 hover:text-gray-700">{{ t('nav.profile.signOut') }}</router-link>
+      </p>
     </div>
 
     <div v-else-if="state == State.EnterSetupCode">

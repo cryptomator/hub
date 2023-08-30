@@ -27,7 +27,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/app/logout',
     component: AuthenticatedMain, // any component will do
-    meta: { skipAuth: true },
+    meta: { skipAuth: true, skipSetup: true },
     beforeEnter: (to, from, next) => {
       authPromise.then(async auth => {
         if (auth.isAuthenticated()) {
