@@ -109,6 +109,7 @@
                   <AuditLogDetailsVaultKeyRetrieve v-else-if="auditEvent.type == 'VAULT_KEY_RETRIEVE'" :event="(auditEvent as AuditEventVaultKeyRetrieveDto)" />
                   <AuditLogDetailsVaultMemberAdd v-else-if="auditEvent.type == 'VAULT_MEMBER_ADD'" :event="(auditEvent as AuditEventVaultMemberAddDto)" />
                   <AuditLogDetailsVaultMemberRemove v-else-if="auditEvent.type == 'VAULT_MEMBER_REMOVE'" :event="(auditEvent as AuditEventVaultMemberRemoveDto)" />
+                  <AuditLogDetailsVaultMemberUpdate v-else-if="auditEvent.type == 'VAULT_MEMBER_UPDATE'" :event="(auditEvent as AuditEventVaultMemberUpdateDto)" />
                 </tr>
               </tbody>
               <tfoot class="bg-gray-50">
@@ -162,7 +163,7 @@ import { ChevronDownIcon } from '@heroicons/vue/20/solid';
 import { CheckIcon, ChevronUpDownIcon, WrenchIcon } from '@heroicons/vue/24/solid';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import auditlog, { AuditEventDeviceRegisterDto, AuditEventDeviceRemoveDto, AuditEventDto, AuditEventVaultAccessGrantDto, AuditEventVaultCreateDto, AuditEventVaultKeyRetrieveDto, AuditEventVaultMemberAddDto, AuditEventVaultMemberRemoveDto, AuditEventVaultUpdateDto } from '../common/auditlog';
+import auditlog, { AuditEventDeviceRegisterDto, AuditEventDeviceRemoveDto, AuditEventDto, AuditEventVaultAccessGrantDto, AuditEventVaultCreateDto, AuditEventVaultKeyRetrieveDto, AuditEventVaultMemberAddDto, AuditEventVaultMemberRemoveDto, AuditEventVaultMemberUpdateDto, AuditEventVaultUpdateDto } from '../common/auditlog';
 import { PaymentRequiredError } from '../common/backend';
 import AuditLogDetailsDeviceRegister from './AuditLogDetailsDeviceRegister.vue';
 import AuditLogDetailsDeviceRemove from './AuditLogDetailsDeviceRemove.vue';
@@ -171,6 +172,7 @@ import AuditLogDetailsVaultCreate from './AuditLogDetailsVaultCreate.vue';
 import AuditLogDetailsVaultKeyRetrieve from './AuditLogDetailsVaultKeyRetrieve.vue';
 import AuditLogDetailsVaultMemberAdd from './AuditLogDetailsVaultMemberAdd.vue';
 import AuditLogDetailsVaultMemberRemove from './AuditLogDetailsVaultMemberRemove.vue';
+import AuditLogDetailsVaultMemberUpdate from './AuditLogDetailsVaultMemberUpdate.vue';
 import AuditLogDetailsVaultUpdate from './AuditLogDetailsVaultUpdate.vue';
 import FetchError from './FetchError.vue';
 

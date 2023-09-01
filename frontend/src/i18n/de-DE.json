@@ -73,6 +73,7 @@
   "auditLog.details.vaultKey.retrieve": "Tresor-Schlüssel abrufen",
   "auditLog.details.vaultMember.add": "Tresor-Mitglied hinzufügen",
   "auditLog.details.vaultMember.remove": "Tresor-Mitglied entfernen",
+  "auditLog.details.vaultMember.update": "Tresor-Mitglied aktualisieren",
   "auditLog.pagination.showing": "Zeige Einträge {0} bis {1}",
   "auditLog.paymentRequired.message": "Lizenz erforderlich",
   "auditLog.paymentRequired.description": "Audit-Logs sind nur mit einer kostenpflichtigen Lizenz verfügbar. Du kannst eine im Admin-Bereich erhalten.",

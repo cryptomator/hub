@@ -61,6 +61,13 @@ export type AuditEventVaultMemberRemoveDto = AuditEventDto & {
   authorityId: string;
 }
 
+export type AuditEventVaultMemberUpdateDto = AuditEventDto & {
+  updatedBy: string;
+  vaultId: string;
+  authorityId: string;
+  role: 'MEMBER' | 'OWNER';
+}
+
 /* Entity Cache */
 
 export class AuditLogEntityCache {

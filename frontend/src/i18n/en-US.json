@@ -73,6 +73,7 @@
   "auditLog.details.vaultKey.retrieve": "Retrieve Vault Key",
   "auditLog.details.vaultMember.add": "Add Vault Member",
   "auditLog.details.vaultMember.remove": "Remove Vault Member",
+  "auditLog.details.vaultMember.update": "Update Vault Member",
   "auditLog.pagination.showing": "Showing entries {0} to {1}",
   "auditLog.paymentRequired.message": "License Required",
   "auditLog.paymentRequired.description": "Audit Logs are only available with a paid license. You can get one in the admin section.",

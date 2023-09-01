@@ -86,6 +86,8 @@ VALUES
     (21, '2020-02-20T20:20:20.021Z', 'VAULT_MEMBER_ADD'),
     (22, '2020-02-20T20:20:20.022Z', 'VAULT_MEMBER_ADD'),
     (23, '2020-02-20T20:20:20.023Z', 'VAULT_MEMBER_REMOVE'),
+    (24, '2020-02-20T20:20:20.024Z', 'VAULT_MEMBER_UPDATE'),
+    (25, '2020-02-20T20:20:20.025Z', 'VAULT_MEMBER_UPDATE'),
     (30, '2020-02-20T20:20:20.030Z', 'VAULT_CREATE'),
     (31, '2020-02-20T20:20:20.031Z', 'VAULT_MEMBER_ADD'),
     (100, '2020-02-20T20:20:20.100Z', 'DEVICE_REGISTER'),
@@ -120,6 +122,11 @@ VALUES
 INSERT INTO "audit_event_vault_member_remove" ("id", "removed_by", "vault_id", "authority_id")
 VALUES
     (23, 'user1', '7E57C0DE-0000-4000-8000-000100002222', 'user1');
+
+INSERT INTO "audit_event_vault_member_update" ("id", "updated_by", "vault_id", "authority_id", "role")
+VALUES
+    (24, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'user2', 'OWNER'),
+    (25, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'user2', 'MEMBER');
 
 INSERT INTO "audit_event_device_register" ("id", "registered_by", "device_id", "device_name", "device_type")
 VALUES

@@ -21,6 +21,7 @@ import org.cryptomator.hub.entities.AuditEventVaultCreate;
 import org.cryptomator.hub.entities.AuditEventVaultKeyRetrieve;
 import org.cryptomator.hub.entities.AuditEventVaultMemberAdd;
 import org.cryptomator.hub.entities.AuditEventVaultMemberRemove;
+import org.cryptomator.hub.entities.AuditEventVaultMemberUpdate;
 import org.cryptomator.hub.entities.AuditEventVaultUpdate;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.VaultAccess;
@@ -83,7 +84,8 @@ public class AuditLogResource {
 			@JsonSubTypes.Type(value = AuditEventVaultAccessGrantDto.class, name = AuditEventVaultAccessGrant.TYPE), //
 			@JsonSubTypes.Type(value = AuditEventVaultKeyRetrieveDto.class, name = AuditEventVaultKeyRetrieve.TYPE), //
 			@JsonSubTypes.Type(value = AuditEventVaultMemberAddDto.class, name = AuditEventVaultMemberAdd.TYPE), //
-			@JsonSubTypes.Type(value = AuditEventVaultMemberRemoveDto.class, name = AuditEventVaultMemberRemove.TYPE) //
+			@JsonSubTypes.Type(value = AuditEventVaultMemberRemoveDto.class, name = AuditEventVaultMemberRemove.TYPE), //
+			@JsonSubTypes.Type(value = AuditEventVaultMemberUpdateDto.class, name = AuditEventVaultMemberAdd.TYPE) //
 	})
 	public interface AuditEventDto {
 
@@ -111,6 +113,8 @@ public class AuditLogResource {
 				return new AuditEventVaultMemberAddDto(evt.id, evt.timestamp, AuditEventVaultMemberAdd.TYPE, evt.addedBy, evt.vaultId, evt.authorityId, evt.role);
 			} else if (entity instanceof AuditEventVaultMemberRemove evt) {
 				return new AuditEventVaultMemberRemoveDto(evt.id, evt.timestamp, AuditEventVaultMemberRemove.TYPE, evt.removedBy, evt.vaultId, evt.authorityId);
+			} else if (entity instanceof AuditEventVaultMemberUpdate evt) {
+				return new AuditEventVaultMemberUpdateDto(evt.id, evt.timestamp, AuditEventVaultMemberUpdate.TYPE, evt.updatedBy, evt.vaultId, evt.authorityId, evt.role);
 			} else {
 				throw new UnsupportedOperationException("conversion not implemented for event type " + entity.getClass());
 			}
@@ -140,12 +144,16 @@ public class AuditLogResource {
 										 @JsonProperty("result") AuditEventVaultKeyRetrieve.Result result) implements AuditEventDto {
 	}
 
-	record AuditEventVaultMemberAddDto(long id, Instant timestamp, String type, @JsonProperty("addedBy") String addedBy, @JsonProperty("vaultId") UUID vaultId,
-									   @JsonProperty("authorityId") String authorityId, @JsonProperty("role") VaultAccess.Role role) implements AuditEventDto {
+	record AuditEventVaultMemberAddDto(long id, Instant timestamp, String type, @JsonProperty("addedBy") String addedBy, @JsonProperty("vaultId") UUID vaultId, @JsonProperty("authorityId") String authorityId,
+									   @JsonProperty("role") VaultAccess.Role role) implements AuditEventDto {
 	}
 
 	record AuditEventVaultMemberRemoveDto(long id, Instant timestamp, String type, @JsonProperty("removedBy") String removedBy, @JsonProperty("vaultId") UUID vaultId,
 										  @JsonProperty("authorityId") String authorityId) implements AuditEventDto {
+	}
+
+	record AuditEventVaultMemberUpdateDto(long id, Instant timestamp, String type, @JsonProperty("updatedBy") String updatedBy, @JsonProperty("vaultId") UUID vaultId, @JsonProperty("authorityId") String authorityId,
+										  @JsonProperty("role") VaultAccess.Role role) implements AuditEventDto {
 	}
 
 }

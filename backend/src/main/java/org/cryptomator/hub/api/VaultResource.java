@@ -36,6 +36,7 @@ import org.cryptomator.hub.entities.AuditEventVaultCreate;
 import org.cryptomator.hub.entities.AuditEventVaultKeyRetrieve;
 import org.cryptomator.hub.entities.AuditEventVaultMemberAdd;
 import org.cryptomator.hub.entities.AuditEventVaultMemberRemove;
+import org.cryptomator.hub.entities.AuditEventVaultMemberUpdate;
 import org.cryptomator.hub.entities.AuditEventVaultUpdate;
 import org.cryptomator.hub.entities.Authority;
 import org.cryptomator.hub.entities.EffectiveGroupMembership;
@@ -205,7 +206,7 @@ public class VaultResource {
 			var access = existingAccess.get();
 			access.role = role;
 			access.persist();
-			// TODO log event?
+			AuditEventVaultMemberUpdate.log(jwt.getSubject(), vault.id, authority.id, role);
 			return Response.ok().build();
 		} else {
 			var access = new VaultAccess();
@@ -476,7 +477,7 @@ public class VaultResource {
 			var access = existingAccess.get();
 			access.role = VaultAccess.Role.OWNER;
 			access.persist();
-			// TODO: log change role event?
+			AuditEventVaultMemberUpdate.log(currentUser.id, vaultId, currentUser.id, VaultAccess.Role.OWNER);
 		} else {
 			var access = new VaultAccess();
 			access.vault = vault;
