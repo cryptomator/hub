@@ -172,10 +172,9 @@
   "initialSetup.setupCode": "Account Key",
   "initialSetup.details.setupCode": "Your Account Key is required to login from other apps or browsers",
   "initialSetup.details.devicesList": "You can see a list of authorized apps on your profile page",
-  "initialSetup.details.devicesName.before": "This browser will be added to this list as:",
+  "initialSetup.details.devicesName": "This browser will be added to this list as: {deviceName}",
   "initialSetup.details.devicesName.label": "Browser Name",
-  "initialSetup.details.devicesName.after": "",
-  "initialSetup.confirmSetupKey": "I stored my Account Key safely",
+  "initialSetup.confirmSetupKey": "I stored my Account Key securely.",
   "initialSetup.submit": "Finish Setup",
 
   "registerDevice.title": "Authorization Required",
@@ -186,7 +185,7 @@
   "registerDevice.deviceName.description": "Name this browser for easy identification in your authorized devices list.",
   "registerDevice.submit": "Finish Setup",
   "registerDevice.error.wrongSetupCode": "Wrong Account Key",
-  "registerDevice.lostSetupCode.title": "Lost your Account Key?",
+  "registerDevice.lostSetupCode": "Lost your Account Key? {0}",
   "registerDevice.lostSetupCode.resetUserAccount": "Reset my account",
 
   "userProfile.title": "Profile",
