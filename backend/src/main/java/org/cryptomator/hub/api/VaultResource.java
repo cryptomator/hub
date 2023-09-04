@@ -37,6 +37,7 @@ import org.cryptomator.hub.entities.AuditEventVaultKeyRetrieve;
 import org.cryptomator.hub.entities.AuditEventVaultMemberAdd;
 import org.cryptomator.hub.entities.AuditEventVaultMemberRemove;
 import org.cryptomator.hub.entities.AuditEventVaultMemberUpdate;
+import org.cryptomator.hub.entities.AuditEventVaultOwnershipClaim;
 import org.cryptomator.hub.entities.AuditEventVaultUpdate;
 import org.cryptomator.hub.entities.Authority;
 import org.cryptomator.hub.entities.EffectiveGroupMembership;
@@ -494,7 +495,7 @@ public class VaultResource {
 		vault.authenticationPublicKey = null;
 		vault.persist();
 
-		// TODO: log some event?
+		AuditEventVaultOwnershipClaim.log(currentUser.id, vaultId);
 		return Response.ok(VaultDto.fromEntity(vault), MediaType.APPLICATION_JSON).build();
 	}
 

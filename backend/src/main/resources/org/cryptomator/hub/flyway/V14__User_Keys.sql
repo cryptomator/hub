@@ -52,6 +52,14 @@ CREATE TABLE "audit_event_vault_member_update"
 	CONSTRAINT "AUDIT_EVENT_VAULT_MEMBER_UPDATE_PK" PRIMARY KEY ("id"),
 	CONSTRAINT "AUDIT_EVENT_VAULT_MEMBER_UPDATE_FK_AUDIT_EVENT" FOREIGN KEY ("id") REFERENCES "audit_event" ("id") ON DELETE CASCADE
 );
+CREATE TABLE "audit_event_vault_ownership_claim"
+(
+	"id"           BIGINT NOT NULL,
+	"claimed_by"   VARCHAR(255) COLLATE "C" NOT NULL,
+	"vault_id"     UUID NOT NULL,
+	CONSTRAINT "AUDIT_EVENT_VAULT_OWNERSHIP_CLAIM_PK" PRIMARY KEY ("id"),
+	CONSTRAINT "AUDIT_EVENT_VAULT_OWNERSGIP_CLAIM_FK_AUDIT_EVENT" FOREIGN KEY ("id") REFERENCES "audit_event" ("id") ON DELETE CASCADE
+);
 
 -- @formatter:off
 CREATE OR REPLACE VIEW "effective_vault_access" ("vault_id", "authority_id", "role") AS
