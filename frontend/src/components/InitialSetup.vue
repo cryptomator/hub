@@ -73,7 +73,7 @@
                 <i18n-t keypath="initialSetup.details.devicesName" scope="global" tag="p" class="text-gray-600">
                   <template #deviceName>
                     <span class="inline-flex items-center gap-1">
-                      <span ref="deviceNameField" :aria-label="t('initialSetup.details.devicesName.label')" contenteditable class="cursor-pointer focus:cursor-text focus:outline-primary focus:selection:bg-primary-l2 focus:selection:text-primary select-all font-mono" @click="!deviceNameFieldIsActive && editBrowserName()" @blur="deviceNameFieldIsActive && revertBrowserName()" @keydown.enter.prevent="confirmBrowserName()" @keydown.esc.prevent="revertBrowserName()" v-text="deviceName" />
+                      <span ref="deviceNameField" :aria-label="t('initialSetup.details.devicesName.label')" :contenteditable="deviceNameFieldIsActive" class="cursor-pointer focus:cursor-text focus:outline-primary focus:selection:bg-primary-l2 focus:selection:text-primary select-all font-mono" @click="!deviceNameFieldIsActive && editBrowserName()" @blur="deviceNameFieldIsActive && revertBrowserName()" @keydown.enter.prevent="confirmBrowserName()" @keydown.esc.prevent="revertBrowserName()" v-text="deviceName" />
                       <PencilIcon v-if="!deviceNameFieldIsActive" class="cursor-pointer inline-block h-4 w-4" aria-hidden="true" @click="editBrowserName()" />
                       <CheckIcon v-else class="cursor-pointer inline-block h-4 w-4 text-primary" aria-hidden="true" @mousedown.prevent="" @click="confirmBrowserName()" />
                     </span>
@@ -306,13 +306,15 @@ function guessBrowserName(): string {
 function editBrowserName() {
   deviceNameFieldIsActive.value = true;
   previousDeviceName.value = deviceName.value;
-  const span = deviceNameField.value!;
-  span.focus();
-  const range = document.createRange();
-  range.selectNodeContents(span);
-  const sel = window.getSelection() as Selection;
-  sel.removeAllRanges();
-  sel.addRange(range);
+  nextTick(() => {
+    const span = deviceNameField.value!;
+    span.focus();
+    const range = document.createRange();
+    range.selectNodeContents(span);
+    const sel = window.getSelection() as Selection;
+    sel.removeAllRanges();
+    sel.addRange(range);
+  });
 }
 
 function confirmBrowserName() {
@@ -323,9 +325,6 @@ function confirmBrowserName() {
     val = guessBrowserName(); // reset to default
   }
   span.innerText = val;
-  span.blur();
-  const sel = window.getSelection() as Selection;
-  sel.removeAllRanges();
   deviceName.value = val;
 }
 
@@ -333,7 +332,6 @@ function revertBrowserName() {
   deviceNameFieldIsActive.value = false;
   const span = deviceNameField.value!;
   span.innerText = previousDeviceName.value;
-  span.blur();
 }
 
 async function copySetupCode() {
