@@ -20,11 +20,11 @@
             </div>
             <div class="mt-3 sm:mt-5">
               <h3 class="text-lg leading-6 font-medium text-gray-900">
-                {{ t('initialSetup.title') }}
+                {{ t('initialSetup.createUserKey.title') }}
               </h3>
               <div class="mt-2">
                 <p class="text-sm text-gray-500">
-                  {{ t('initialSetup.description') }}
+                  {{ t('initialSetup.createUserKey.description') }}
                 </p>
               </div>
 
@@ -54,7 +54,7 @@
                     <KeyIcon class="h-6 w-6 text-primary" aria-hidden="true" />
                   </div>
                   <p class="text-gray-600">
-                    {{ t('initialSetup.details.setupCode') }}
+                    {{ t('initialSetup.createUserKey.details.setupCode') }}
                   </p>
                 </div>
 
@@ -63,7 +63,7 @@
                     <ListBulletIcon class="h-6 w-6 text-primary" aria-hidden="true" />
                   </div>
                   <p class="text-gray-600">
-                    {{ t('initialSetup.details.devicesList') }}
+                    {{ t('initialSetup.createUserKey.details.devicesList') }}
                   </p>
                 </div>
 
@@ -71,10 +71,10 @@
                   <div class="mx-3">
                     <ComputerDesktopIcon class="h-6 w-6 text-primary" aria-hidden="true" />
                   </div>
-                  <i18n-t keypath="initialSetup.details.devicesName" scope="global" tag="p" class="text-gray-600">
+                  <i18n-t keypath="initialSetup.createUserKey.details.devicesName" scope="global" tag="p" class="text-gray-600">
                     <template #deviceName>
                       <span class="inline-flex items-center gap-1">
-                        <span ref="deviceNameField" :aria-label="t('initialSetup.details.devicesName.label')" :contenteditable="deviceNameFieldIsActive" class="cursor-pointer focus:cursor-text focus:outline-primary focus:selection:bg-primary-l2 focus:selection:text-primary select-all font-mono" @click="!deviceNameFieldIsActive && editBrowserName()" @blur="deviceNameFieldIsActive && revertBrowserName()" @keydown.enter.prevent="confirmBrowserName()" @keydown.esc.prevent="revertBrowserName()" v-text="deviceName" />
+                        <span ref="deviceNameField" :aria-label="t('initialSetup.createUserKey.details.devicesName.label')" :contenteditable="deviceNameFieldIsActive" class="cursor-pointer focus:cursor-text focus:outline-primary focus:selection:bg-primary-l2 focus:selection:text-primary select-all font-mono" @click="!deviceNameFieldIsActive && editBrowserName()" @blur="deviceNameFieldIsActive && revertBrowserName()" @keydown.enter.prevent="confirmBrowserName()" @keydown.esc.prevent="revertBrowserName()" v-text="deviceName" />
                         <PencilIcon v-if="!deviceNameFieldIsActive" class="cursor-pointer inline-block h-4 w-4" aria-hidden="true" @click="editBrowserName()" />
                         <CheckIcon v-else class="cursor-pointer inline-block h-4 w-4 text-primary" aria-hidden="true" @mousedown.prevent="" @click="confirmBrowserName()" />
                       </span>
@@ -88,7 +88,7 @@
                   <input id="confirmSetupKey" v-model="confirmSetupKey" name="confirmSetupKey" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary" required>
                 </div>
                 <div class="ml-3 text-sm">
-                  <label for="confirmSetupKey" class="font-medium text-gray-700">{{ t('initialSetup.confirmSetupKey') }}</label>
+                  <label for="confirmSetupKey" class="font-medium text-gray-700">{{ t('initialSetup.createUserKey.confirmSetupCode') }}</label>
                 </div>
               </div>
 
@@ -106,7 +106,7 @@
       </form>
     </div>
 
-    <div v-else-if="state == State.EnterSetupCode">
+    <div v-else-if="state == State.RecoverUserKey">
       <form @submit.prevent="recoverUserKey()">
         <div class="flex flex-col items-center">
           <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6 text-center sm:w-full sm:max-w-lg">
@@ -115,29 +115,29 @@
             </div>
             <div class="mt-3 sm:mt-5">
               <h3 class="text-lg leading-6 font-medium text-gray-900">
-                {{ t('registerDevice.title') }}
+                {{ t('initialSetup.recoverUserKey.title') }}
               </h3>
               <div class="mt-2">
                 <p class="text-sm text-gray-500">
-                  {{ t('registerDevice.description') }}
+                  {{ t('initialSetup.recoverUserKey.description') }}
                 </p>
               </div>
               <div class="mt-5 sm:mt-6 text-left">      
-                <label for="setupCode" class="block text-sm font-medium text-gray-700">{{ t('registerDevice.setupCode') }}</label>
+                <label for="setupCode" class="block text-sm font-medium text-gray-700">{{ t('initialSetup.setupCode') }}</label>
                 <input id="setupCode" v-model="setupCode" v-focus type="text" name="setupCode" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" aria-describedby="setupCodeDescription" />
-                <p id="setupCodeDescription" class="mt-2 text-sm text-gray-500">{{ t('registerDevice.setupCode.description') }}</p>
+                <p id="setupCodeDescription" class="mt-2 text-sm text-gray-500">{{ t('initialSetup.recoverUserKey.setupCode.description') }}</p>
               </div>
               <div class="mt-5 sm:mt-6 text-left">      
-                <label for="deviceName" class="block text-sm font-medium text-gray-700">{{ t('registerDevice.deviceName') }}</label>
+                <label for="deviceName" class="block text-sm font-medium text-gray-700">{{ t('initialSetup.recoverUserKey.deviceName') }}</label>
                 <input id="deviceName" v-model="deviceName" type="text" name="deviceName" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" aria-describedby="deviceNameDescription" />
-                <p id="deviceNameDescription" class="mt-2 text-sm text-gray-500">{{ t('registerDevice.deviceName.description') }}</p>
+                <p id="deviceNameDescription" class="mt-2 text-sm text-gray-500">{{ t('initialSetup.recoverUserKey.deviceName.description') }}</p>
               </div>
               <div class="mt-5 sm:mt-6">
                 <button type="submit" :disabled="processing" class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:primary focus:ring-offset-2 sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
-                  {{ t('registerDevice.submit') }}
+                  {{ t('initialSetup.submit') }}
                 </button>
                 <div class="text-sm text-red-900 mt-2">
-                  <p v-if="onRecoverError instanceof UnwrapKeyError">{{ t('registerDevice.error.wrongSetupCode') }}</p>
+                  <p v-if="onRecoverError instanceof UnwrapKeyError">{{ t('initialSetup.recoverUserKey.error.wrongSetupCode') }}</p>
                   <p v-else-if="onRecoverError != null">{{ t('common.unexpectedError', [onRecoverError.message]) }}</p>
                 </div>
               </div>
@@ -146,9 +146,9 @@
         </div>
       </form>
 
-      <i18n-t keypath="registerDevice.lostSetupCode" scope="global" tag="p" class="mt-10 text-center text-sm text-gray-500">
+      <i18n-t keypath="initialSetup.recoverUserKey.lostSetupCode" scope="global" tag="p" class="mt-10 text-center text-sm text-gray-500">
         <a role="button" tabindex="0" class="font-medium leading-6 text-red-600 hover:text-red-900" @click="showResetUserAccountDialog()">
-          {{ t('registerDevice.lostSetupCode.resetUserAccount') }}
+          {{ t('initialSetup.recoverUserKey.lostSetupCode.resetUserAccount') }}
         </a>
       </i18n-t>
     </div>
@@ -175,7 +175,7 @@ import SimpleNavigationBar from './SimpleNavigationBar.vue';
 enum State {
   Preparing,
   CreateUserKey,
-  EnterSetupCode
+  RecoverUserKey
 }
 
 const { t } = useI18n({ useScope: 'global' });
@@ -217,7 +217,7 @@ async function fetchData() {
       setupCode.value = crypto.randomUUID();
       state.value = State.CreateUserKey;
     } else if (!browserKeys || me.value.devices.find(d => d.id == browserId) == null) {
-      state.value = State.EnterSetupCode;
+      state.value = State.RecoverUserKey;
     } else {
       throw new Error('Invalid state');
     }
