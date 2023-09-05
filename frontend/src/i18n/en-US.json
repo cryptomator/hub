@@ -155,8 +155,8 @@
   "initialSetup.setupCode": "Account Key",
   "initialSetup.submit": "Finish Setup",
 
-  "manageSetupCode.title": "Setup Code",
-  "manageSetupCode.regenerate": "Regenerate Code",
+  "manageSetupCode.title": "Account Key",
+  "manageSetupCode.regenerate": "Regenerate Key",
 
   "nav.vaults": "Vaults",
   "nav.profile.signedInAs": "Signed in as",
@@ -174,15 +174,15 @@
   "recoveryKeyDialog.description": "This is your recovery key for \"{0}\". Keep it safe, it is your only chance to regain access to a vault in case of system outage.",
   "recoveryKeyDialog.recoveryKey": "Recovery Key of Your Vault",
 
-  "regenerateSetupCodeDialog.confirmRegenerateSetupCode.title": "Regenerate Setup Code",
-  "regenerateSetupCodeDialog.confirmRegenerateSetupCode.description": "Do you want to generate a new Setup Code? If you do so, the old one will be invalidated.",
-  "regenerateSetupCodeDialog.saveSetupCode.title": "Save Setup Code",
-  "regenerateSetupCodeDialog.saveSetupCode.description": "Be sure to save this new code. You'll need it to sign in to new devices. You can safely delete the old one.",
-  "regenerateSetupCodeDialog.saveSetupCode.setupCode": "Setup Code",
-  "regenerateSetupCodeDialog.submit": "Regenerate Code",
+  "regenerateSetupCodeDialog.confirmRegenerateSetupCode.title": "Regenerate Account Key",
+  "regenerateSetupCodeDialog.confirmRegenerateSetupCode.description": "Do you want to generate a new Account Key? If you do so, the old one will be invalidated.",
+  "regenerateSetupCodeDialog.saveSetupCode.title": "Save Account Key",
+  "regenerateSetupCodeDialog.saveSetupCode.description": "Be sure to save this new key. You'll need it to sign in to new devices. You can safely delete the old one.",
+  "regenerateSetupCodeDialog.saveSetupCode.setupCode": "Account Key",
+  "regenerateSetupCodeDialog.submit": "Regenerate Key",
 
   "resetUserAccountDialog.title": "Reset User Account",
-  "resetUserAccountDialog.description": "Only reset your account if you've lost your Setup Code. You will lose access to all your vaults and the vault owner(s) will have to grant you access again.",
+  "resetUserAccountDialog.description": "Only reset your account if you've lost your Account Key. You will lose access to all your vaults and the vault owner(s) will have to grant you access again.",
   "resetUserAccountDialog.submit": "Reset Account",
 
   "userProfile.title": "Profile",

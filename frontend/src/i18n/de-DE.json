@@ -155,8 +155,8 @@
   "initialSetup.setupCode": "Account Key",
   "initialSetup.submit": "Einrichtung abschließen",
 
-  "manageSetupCode.title": "Einrichtungscode",
-  "manageSetupCode.regenerate": "Neuen Code generieren",
+  "manageSetupCode.title": "Account Key",
+  "manageSetupCode.regenerate": "Neuen Key generieren",
 
   "nav.vaults": "Tresore",
   "nav.profile.signedInAs": "Eingeloggt als",
@@ -174,15 +174,15 @@
   "recoveryKeyDialog.description": "Dies ist dein Wiederherstellungsschlüssel für „{0}“. Verwahre ihn gut, er ist im Falle eines Systemausfalls deine einzige Möglichkeit, auf einen Tresor zuzugreifen.",
   "recoveryKeyDialog.recoveryKey": "Wiederherstellungsschlüssel für deinen Tresor",
 
-  "regenerateSetupCodeDialog.confirmRegenerateSetupCode.title": "Neuen Code generieren",
-  "regenerateSetupCodeDialog.confirmRegenerateSetupCode.description": "Möchtest du einen neues Einrichtungscode generiereren? Dadurch wird der alte Code ungültig.",
-  "regenerateSetupCodeDialog.saveSetupCode.title": "Einrichtungscode speichern",
-  "regenerateSetupCodeDialog.saveSetupCode.description": "Vergiss nicht, diesen neuen Code zu speichern. Du benötigst ihn, um dich bei neuen Geräten anzumelden. Den alten Code kannst du gefahrlos löschen.",
-  "regenerateSetupCodeDialog.saveSetupCode.setupCode": "Einrichtungscode",
-  "regenerateSetupCodeDialog.submit": "Neuen Code generieren",
+  "regenerateSetupCodeDialog.confirmRegenerateSetupCode.title": "Neuen Key generieren",
+  "regenerateSetupCodeDialog.confirmRegenerateSetupCode.description": "Möchtest du einen neuen Account Key generiereren? Dadurch wird der alte Key ungültig.",
+  "regenerateSetupCodeDialog.saveSetupCode.title": "Account Key speichern",
+  "regenerateSetupCodeDialog.saveSetupCode.description": "Vergiss nicht, diesen neuen Key zu speichern. Du benötigst ihn, um dich bei neuen Geräten anzumelden. Den alten Key kannst du gefahrlos löschen.",
+  "regenerateSetupCodeDialog.saveSetupCode.setupCode": "Account Key",
+  "regenerateSetupCodeDialog.submit": "Neuen Key generieren",
 
   "resetUserAccountDialog.title": "Nutzeraccount zurücksetzen",
-  "resetUserAccountDialog.description": "Setze deinen Nutzeraccount nur zurück, wenn du deinen Einrichtungscode verloren hast. Du wirst Zugriff auf alle Tresore verlieren, so dass deren Besitzer dir erneut Zugriff gewähren müssen.",
+  "resetUserAccountDialog.description": "Setze deinen Nutzeraccount nur zurück, wenn du deinen Account Key verloren hast. Du wirst Zugriff auf alle Tresore verlieren, so dass deren Besitzer dir erneut Zugriff gewähren müssen.",
   "resetUserAccountDialog.submit": "Account zurücksetzen",
 
   "userProfile.title": "Profil",
