@@ -5,7 +5,7 @@ import org.cryptomator.hub.entities.Authority;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
 
-abstract sealed class AuthorityDto permits UserDto, GroupDto {
+abstract sealed class AuthorityDto permits UserDto, GroupDto, MemberDto {
 
 	public enum Type {
 		USER, GROUP

@@ -2,8 +2,7 @@ import AxiosStatic, { AxiosHeaders, AxiosRequestConfig, AxiosResponse } from 'ax
 import { JdenticonConfig, toSvg } from 'jdenticon';
 import { base64 } from 'rfc4648';
 import authPromise from './auth';
-import config, { backendBaseURL } from './config';
-import { VaultKeys } from './crypto';
+import { backendBaseURL } from './config';
 import { JWTHeader } from './jwt';
 
 const axiosBaseCfg: AxiosRequestConfig = {
@@ -42,11 +41,11 @@ export type VaultDto = {
   description: string;
   archived: boolean;
   creationTime: Date;
-  masterkey: string;
-  iterations: number;
-  salt: string;
-  authPublicKey: string;
-  authPrivateKey: string;
+  masterkey?: string;
+  iterations?: number;
+  salt?: string;
+  authPublicKey?: string;
+  authPrivateKey?: string;
 };
 
 export type DeviceDto = {
@@ -57,6 +56,8 @@ export type DeviceDto = {
   userPrivateKey: string;
   creationTime: Date;
 };
+
+export type VaultRole = 'MEMBER' | 'OWNER';
 
 enum AuthorityType {
   User = 'USER',
@@ -89,7 +90,7 @@ export class UserDto extends AuthorityDto {
     super(id, name, type, pictureUrl);
   }
 
-  getIdenticonConfig(): JdenticonConfig {
+  static getIdenticonConfig(): JdenticonConfig {
     return {
       hues: [6, 28, 48, 121, 283],
       saturation: {
@@ -102,6 +103,10 @@ export class UserDto extends AuthorityDto {
       backColor: '#F7F7F7',
       padding: 0
     };
+  }
+
+  getIdenticonConfig(): JdenticonConfig {
+    return UserDto.getIdenticonConfig();
   }
 
   static typeOf(obj: any): obj is UserDto {
@@ -122,7 +127,7 @@ export class GroupDto extends AuthorityDto {
     super(id, name, type, pictureUrl);
   }
 
-  getIdenticonConfig(): JdenticonConfig {
+  static getIdenticonConfig(): JdenticonConfig {
     return {
       hues: [190],
       saturation: {
@@ -137,6 +142,10 @@ export class GroupDto extends AuthorityDto {
     };
   }
 
+  getIdenticonConfig(): JdenticonConfig {
+    return GroupDto.getIdenticonConfig();
+  }
+
   static typeOf(obj: any): obj is GroupDto {
     const groupDto = obj as GroupDto;
     return typeof groupDto.id === 'string'
@@ -147,6 +156,21 @@ export class GroupDto extends AuthorityDto {
 
   static copy(obj: GroupDto): GroupDto {
     return new GroupDto(obj.id, obj.name, obj.type, obj.pictureUrl);
+  }
+}
+
+export class MemberDto extends AuthorityDto {
+  constructor(public id: string, public name: string, public type: AuthorityType, public role: VaultRole, pictureUrl: string) {
+    super(id, name, type, pictureUrl);
+  }
+
+  getIdenticonConfig(): JdenticonConfig {
+    switch (this.type) {
+      case AuthorityType.User:
+        return UserDto.getIdenticonConfig();
+      case AuthorityType.Group:
+        return GroupDto.getIdenticonConfig();
+    }
   }
 }
 
@@ -197,66 +221,55 @@ class VaultService {
       .catch((error) => rethrowAndConvertIfExpected(error, 404));
   }
 
-  public async getMembers(vaultId: string, vaultKeys: VaultKeys): Promise<(UserDto | GroupDto)[]> {
-    let vaultAdminAuthorizationJWT = await this.buildVaultAdminAuthorizationJWT(vaultId, vaultKeys);
-    return axiosAuth.get<(UserDto | GroupDto)[]>(`/vaults/${vaultId}/members`, { headers: { 'Cryptomator-Vault-Admin-Authorization': vaultAdminAuthorizationJWT } }).then(response => {
-      return response.data.map(authority => {
-        if (UserDto.typeOf(authority)) {
-          return UserDto.copy(authority);
-        } else if (GroupDto.typeOf(authority)) {
-          return GroupDto.copy(authority);
-        } else {
-          throw new Error('Provided data is not of type UserDTO or GroupDTO');
-        }
-      });
+  public async getMembers(vaultId: string): Promise<MemberDto[]> {
+    return axiosAuth.get<MemberDto[]>(`/vaults/${vaultId}/members`).then(response => {
+      return response.data.map(member => new MemberDto(member.id, member.name, member.type, member.role, member.pictureUrl));
     }).catch(err => rethrowAndConvertIfExpected(err, 403));
   }
 
-  public async addUser(vaultId: string, userId: string, vaultKeys: VaultKeys): Promise<AxiosResponse<void>> {
-    let vaultAdminAuthorizationJWT = await this.buildVaultAdminAuthorizationJWT(vaultId, vaultKeys);
-    return axiosAuth.put(`/vaults/${vaultId}/users/${userId}`, null, { headers: { 'Cryptomator-Vault-Admin-Authorization': vaultAdminAuthorizationJWT } })
+  public async addUser(vaultId: string, userId: string, role?: VaultRole): Promise<AxiosResponse<void>> {
+    return axiosAuth.put(`/vaults/${vaultId}/users/${userId}` + (role ? `?role=${role}` : ''))
       .catch((error) => rethrowAndConvertIfExpected(error, 402, 404, 409));
   }
 
-  public async addGroup(vaultId: string, groupId: string, vaultKeys: VaultKeys): Promise<AxiosResponse<void>> {
-    let vaultAdminAuthorizationJWT = await this.buildVaultAdminAuthorizationJWT(vaultId, vaultKeys);
-    return axiosAuth.put(`/vaults/${vaultId}/groups/${groupId}`, null, { headers: { 'Cryptomator-Vault-Admin-Authorization': vaultAdminAuthorizationJWT } })
+  public async addGroup(vaultId: string, groupId: string, role?: VaultRole): Promise<AxiosResponse<void>> {
+    return axiosAuth.put(`/vaults/${vaultId}/groups/${groupId}` + (role ? `?role=${role}` : ''))
       .catch((error) => rethrowAndConvertIfExpected(error, 402, 404, 409));
   }
 
-  public async getUsersRequiringAccessGrant(vaultId: string, vaultKeys: VaultKeys): Promise<UserDto[]> {
-    let vaultAdminAuthorizationJWT = await this.buildVaultAdminAuthorizationJWT(vaultId, vaultKeys);
-    return axiosAuth.get(`/vaults/${vaultId}/users-requiring-access-grant`, { headers: { 'Cryptomator-Vault-Admin-Authorization': vaultAdminAuthorizationJWT } })
+  public async getUsersRequiringAccessGrant(vaultId: string): Promise<UserDto[]> {
+    return axiosAuth.get(`/vaults/${vaultId}/users-requiring-access-grant`)
       .then(response => response.data).catch(err => rethrowAndConvertIfExpected(err, 403));
   }
 
-  public async createOrUpdateVault(vaultId: string, name: string, description: string, archived: boolean, masterkey: string, iterations: number, salt: string, signPubKey: string, signPrvKey: string): Promise<VaultDto> {
-    const body: VaultDto = { id: vaultId, name: name, description: description, archived: archived, creationTime: new Date(), masterkey: masterkey, iterations: iterations, salt: salt, authPublicKey: signPubKey, authPrivateKey: signPrvKey };
+  public async createOrUpdateVault(vaultId: string, name: string, description: string, archived: boolean): Promise<VaultDto> {
+    const body: VaultDto = { id: vaultId, name: name, description: description, archived: archived, creationTime: new Date() };
     return axiosAuth.put(`/vaults/${vaultId}`, body)
       .then(response => response.data)
       .catch((error) => rethrowAndConvertIfExpected(error, 402, 404));
   }
 
-  public async grantAccess(vaultId: string, userId: string, jwe: string, vaultKeys: VaultKeys) {
-    let vaultAdminAuthorizationJWT = await this.buildVaultAdminAuthorizationJWT(vaultId, vaultKeys);
-    await axiosAuth.put(`/vaults/${vaultId}/access-tokens/${userId}`, jwe, { headers: { 'Content-Type': 'text/plain', 'Cryptomator-Vault-Admin-Authorization': vaultAdminAuthorizationJWT } })
+  public async claimOwnership(vaultId: string, proof: string): Promise<VaultDto> {
+    const params = new URLSearchParams({ proof: proof });
+    return axiosAuth.post(`/vaults/${vaultId}/claim-ownership`, params, { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } })
+      .then(response => response.data)
+      .catch((error) => rethrowAndConvertIfExpected(error, 400, 404, 409));
+  }
+
+  public async accessToken(vaultId: string): Promise<string> {
+    return axiosAuth.get(`/vaults/${vaultId}/access-token`, { headers: { 'Content-Type': 'text/plain' } })
+      .then(response => response.data)
+      .catch((error) => rethrowAndConvertIfExpected(error, 403));
+  }
+
+  public async grantAccess(vaultId: string, userId: string, jwe: string) {
+    await axiosAuth.put(`/vaults/${vaultId}/access-tokens/${userId}`, jwe, { headers: { 'Content-Type': 'text/plain' } })
       .catch((error) => rethrowAndConvertIfExpected(error, 404, 409));
   }
 
-  public async revokeUserAccess(vaultId: string, userId: string, vaultKeys: VaultKeys) {
-    let vaultAdminAuthorizationJWT = await this.buildVaultAdminAuthorizationJWT(vaultId, vaultKeys);
-    await axiosAuth.delete(`/vaults/${vaultId}/users/${userId}`, { headers: { 'Cryptomator-Vault-Admin-Authorization': vaultAdminAuthorizationJWT } })
+  public async removeUser(vaultId: string, userId: string) {
+    await axiosAuth.delete(`/vaults/${vaultId}/users/${userId}`)
       .catch((error) => rethrowAndConvertIfExpected(error, 404));
-  }
-
-  private async buildVaultAdminAuthorizationJWT(vaultId: string, vaultKeys: VaultKeys): Promise<string> {
-    let vaultIdHeader: VaultIdHeader = { alg: 'ES384', b64: true, typ: 'JWT', vaultId: vaultId };
-    let jwtPayload = { iat: this.secondsSinceEpoch() + config.serverTimeDiff };
-    return vaultKeys.signVaultEditRequest(vaultIdHeader, jwtPayload);
-  }
-
-  private secondsSinceEpoch(): number {
-    return Math.floor(Date.now() / 1000);
   }
 }
 class DeviceService {

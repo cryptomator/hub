@@ -17,30 +17,30 @@
                     </div>
                     <div class="mt-3 grow text-center sm:mt-0 sm:ml-4 sm:text-left">
                       <DialogTitle as="h3" class="text-lg leading-6 font-medium text-gray-900">
-                        {{ t('authenticateVaultAdminDialog.title') }}
+                        {{ t('claimVaultOwnershipDialog.title') }}
                       </DialogTitle>
                       <div class="mt-2">
                         <p class="text-sm text-gray-500">
-                          {{ t('authenticateVaultAdminDialog.description') }}
+                          {{ t('claimVaultOwnershipDialog.description') }}
                         </p>
-                        <input id="password" v-model="password" type="password" name="password" class="mt-2 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onAuthenticationError instanceof FormValidationFailedError }" :placeholder="t('authenticateVaultAdminDialog.password')" required />
+                        <input id="password" v-model="password" type="password" name="password" class="mt-2 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onAuthenticationError instanceof FormValidationFailedError }" :placeholder="t('claimVaultOwnershipDialog.password')" required />
                       </div>
                     </div>
                   </div>
                 </div>
                 <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse items-baseline">
                   <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary  text-base font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm">
-                    {{ t('common.manage') }}
+                    {{ t('claimVaultOwnershipDialog.submit') }}
                   </button>
                   <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" @click="open = false">
                     {{ t('common.cancel') }}
                   </button>
                   <div v-if="onAuthenticationError != null">
                     <p v-if="onAuthenticationError instanceof FormValidationFailedError" class="text-sm text-red-900">
-                      {{ t('authenticateVaultAdminDialog.error.formValidationFailed') }}
+                      {{ t('claimVaultOwnershipDialog.error.formValidationFailed') }}
                     </p>
                     <p v-else-if="onAuthenticationError instanceof UnwrapKeyError" class="text-sm text-red-900">
-                      {{ t('authenticateVaultAdminDialog.error.wrongPassword') }}
+                      {{ t('claimVaultOwnershipDialog.error.wrongPassword') }}
                     </p>
                     <p v-else class="text-sm text-red-900">
                       {{ t('common.unexpectedError', [onAuthenticationError.message]) }}
@@ -62,7 +62,7 @@ import { KeyIcon } from '@heroicons/vue/24/outline';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { VaultDto } from '../common/backend';
-import { UnwrapKeyError, VaultKeys, WrappedVaultKeys } from '../common/crypto';
+import { UnwrapKeyError, VaultKeys } from '../common/crypto';
 
 class FormValidationFailedError extends Error {
   constructor() {
@@ -85,7 +85,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   close: []
-  action: [vaultKeys: VaultKeys]
+  action: [vaultKeys: VaultKeys, ownerSigningKey: CryptoKeyPair]
 }>();
 
 defineExpose({
@@ -102,10 +102,13 @@ async function authenticateVaultAdmin() {
     if (!form.value?.checkValidity()) {
       throw new FormValidationFailedError();
     }
-    const wrappedKey = new WrappedVaultKeys(props.vault.masterkey, props.vault.authPrivateKey, props.vault.authPublicKey, props.vault.salt, props.vault.iterations);
-    const vaultKeys = await VaultKeys.unwrap(password.value, wrappedKey);
-    emit('action', vaultKeys);
-    open.value = false;
+    if (props.vault.masterkey && props.vault.authPrivateKey && props.vault.authPublicKey && props.vault.salt && props.vault.iterations) {
+      const [vaultKeys, ownerKeyPair] = await VaultKeys.decryptWithAdminPassword(password.value, props.vault.masterkey, props.vault.authPrivateKey, props.vault.authPublicKey, props.vault.salt, props.vault.iterations);
+      emit('action', vaultKeys, ownerKeyPair);
+      open.value = false;
+    } else {
+      throw new Error('Vault is missing legacy "vault admin password" related properties.');
+    }
   } catch (error) {
     console.error('Authentication of vault admin failed.', error);
     onAuthenticationError.value = error instanceof Error ? error : new Error('Unknown Error');

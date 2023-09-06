@@ -1,13 +1,7 @@
 import * as miscreant from 'miscreant';
 import { base16, base32, base64, base64url } from 'rfc4648';
 import { JWEBuilder, JWEParser } from './jwe';
-import { JWT, JWTHeader } from './jwt';
 import { CRC32, wordEncoder } from './util';
-
-export class WrappedVaultKeys {
-  constructor(readonly masterkey: string, readonly signaturePrivateKey: string, readonly signaturePublicKey: string, readonly salt: string, readonly iterations: number) { }
-}
-
 export class UnwrapKeyError extends Error {
   readonly actualError: any;
 
@@ -38,37 +32,8 @@ interface JWEPayload {
 }
 
 const GCM_NONCE_LEN = 12;
-const PBKDF2_ITERATION_COUNT = 1000000;
-
-async function pbkdf2(password: string, hash: 'SHA-256' | 'SHA-512', salt: Uint8Array, iterations: number, keyParams: AesDerivedKeyParams): Promise<CryptoKey> {
-  const encodedPw = new TextEncoder().encode(password);
-  const pwKey = await crypto.subtle.importKey(
-    'raw',
-    encodedPw,
-    'PBKDF2',
-    false,
-    ['deriveKey']
-  );
-  return crypto.subtle.deriveKey(
-    {
-      name: 'PBKDF2',
-      hash: hash,
-      salt: salt,
-      iterations: iterations
-    },
-    pwKey,
-    keyParams,
-    false,
-    ['wrapKey', 'unwrapKey']
-  );
-}
 
 export class VaultKeys {
-  private static readonly SIGNATURE_KEY_DESIGNATION: EcKeyImportParams | EcKeyGenParams = { // TODO: remove with "vault admin password"
-    name: 'ECDSA',
-    namedCurve: 'P-384'
-  };
-
   // in this browser application, this 512 bit key is used
   // as a hmac key to sign the vault config.
   // however when used by cryptomator, it gets split into
@@ -79,17 +44,10 @@ export class VaultKeys {
     length: 512
   };
 
-  private static readonly KEK_KEY_DESIGNATION: AesDerivedKeyParams = {
-    name: 'AES-GCM',
-    length: 256
-  };
-
   readonly masterKey: CryptoKey;
-  readonly signatureKeyPair: CryptoKeyPair;
 
-  protected constructor(masterkey: CryptoKey, signatureKeyPair: CryptoKeyPair) {
+  protected constructor(masterkey: CryptoKey) {
     this.masterKey = masterkey;
-    this.signatureKeyPair = signatureKeyPair;
   }
 
   /**
@@ -102,64 +60,59 @@ export class VaultKeys {
       true,
       ['sign']
     );
-    const keyPair = crypto.subtle.generateKey(
-      VaultKeys.SIGNATURE_KEY_DESIGNATION,
-      true,
-      ['sign', 'verify']
-    );
-    return new VaultKeys(await key, await keyPair);
+    return new VaultKeys(await key);
   }
 
   /**
-   * Protects the key material. Must only be called for a newly created masterkey, otherwise it will fail.
-   * @param password Password used for wrapping
-   * @returns The wrapped key material
-   * @deprecated TO be replaced by ECDH-based key encapsulation
+   * Decrypts the vault's masterkey using the user's private key
+   * @param jwe JWE containing the vault key
+   * @param userPrivateKey The user's private key
+   * @returns The masterkey
    */
-  public async wrap(password: string): Promise<WrappedVaultKeys> {
-    // salt:
-    const salt = crypto.getRandomValues(new Uint8Array(16));
-    const encodedSalt = base64.stringify(salt);
-    // kek:
-    const kek = pbkdf2(password, 'SHA-256', salt, PBKDF2_ITERATION_COUNT, VaultKeys.KEK_KEY_DESIGNATION);
-    // masterkey:
-    const masterKeyIv = crypto.getRandomValues(new Uint8Array(GCM_NONCE_LEN));
-    const wrappedMasterKey = new Uint8Array(await crypto.subtle.wrapKey(
-      'raw',
-      this.masterKey,
-      await kek,
-      { name: 'AES-GCM', iv: masterKeyIv }
-    ));
-    const encodedMasterKey = base64.stringify(new Uint8Array([...masterKeyIv, ...wrappedMasterKey]));
-    // secretkey:
-    const secretKeyIv = crypto.getRandomValues(new Uint8Array(GCM_NONCE_LEN));
-    const wrappedSecretKey = new Uint8Array(await crypto.subtle.wrapKey(
-      'pkcs8',
-      this.signatureKeyPair.privateKey,
-      await kek,
-      { name: 'AES-GCM', iv: secretKeyIv }
-    ));
-    const encodedSecretKey = base64.stringify(new Uint8Array([...secretKeyIv, ...wrappedSecretKey]));
-    // publickey:
-    const publicKey = new Uint8Array(await crypto.subtle.exportKey('spki', this.signatureKeyPair.publicKey));
-    const encodedPublicKey = base64.stringify(publicKey);
-    // result:
-    return new WrappedVaultKeys(encodedMasterKey, encodedSecretKey, encodedPublicKey, encodedSalt, PBKDF2_ITERATION_COUNT);
+  public static async decryptWithUserKey(jwe: string, userPrivateKey: CryptoKey): Promise<VaultKeys> {
+    let rawKey = new Uint8Array();
+    try {
+      const payload: JWEPayload = await JWEParser.parse(jwe).decryptEcdhEs(userPrivateKey);
+      rawKey = base64.parse(payload.key);
+      const masterkey = crypto.subtle.importKey('raw', rawKey, VaultKeys.MASTERKEY_KEY_DESIGNATION, true, ['sign']);
+      return new VaultKeys(await masterkey);
+    } finally {
+      rawKey.fill(0x00);
+    }
   }
 
   /**
-   * Unwraps the key material.
-   * @param password Password used for wrapping
-   * @param wrapped The wrapped key material
+   * Unwraps keys protected by the legacy "Vault Admin Password".
+   * @param vaultAdminPassword Vault Admin Password
+   * @param wrappedMasterkey The wrapped masterkey
+   * @param wrappedOwnerPrivateKey The wrapped owner private key
+   * @param ownerPublicKey The owner public key
+   * @param salt PBKDF2 Salt
+   * @param iterations PBKDF2 Iterations
    * @returns The unwrapped key material.
    * @throws WrongPasswordError, if the wrong password is used
-   * @deprecated TO be replaced by ECDH-based key encapsulation
+   * @deprecated Only used during "claim vault ownership" workflow for legacy vaults
    */
-  public static async unwrap(password: string, wrapped: WrappedVaultKeys): Promise<VaultKeys> {
-    const kek = pbkdf2(password, 'SHA-256', base64.parse(wrapped.salt, { loose: true }), wrapped.iterations, VaultKeys.KEK_KEY_DESIGNATION);
-    const decodedMasterKey = base64.parse(wrapped.masterkey, { loose: true });
-    const decodedPrivateKey = base64.parse(wrapped.signaturePrivateKey, { loose: true });
-    const decodedPublicKey = base64.parse(wrapped.signaturePublicKey, { loose: true });
+  public static async decryptWithAdminPassword(vaultAdminPassword: string, wrappedMasterkey: string, wrappedOwnerPrivateKey: string, ownerPublicKey: string, salt: string, iterations: number): Promise<[VaultKeys, CryptoKeyPair]> {
+    // pbkdf2:
+    const encodedPw = new TextEncoder().encode(vaultAdminPassword);
+    const pwKey = crypto.subtle.importKey('raw', encodedPw, 'PBKDF2', false, ['deriveKey']);
+    const kek = crypto.subtle.deriveKey(
+      {
+        name: 'PBKDF2',
+        hash: 'SHA-256',
+        salt: base64.parse(salt, { loose: true }),
+        iterations: iterations
+      },
+      await pwKey,
+      { name: 'AES-GCM', length: 256 },
+      false,
+      ['unwrapKey']
+    );
+    // unwrapping
+    const decodedMasterKey = base64.parse(wrappedMasterkey, { loose: true });
+    const decodedPrivateKey = base64.parse(wrappedOwnerPrivateKey, { loose: true });
+    const decodedPublicKey = base64.parse(ownerPublicKey, { loose: true });
     try {
       const masterkey = crypto.subtle.unwrapKey(
         'raw',
@@ -170,23 +123,23 @@ export class VaultKeys {
         true,
         ['sign']
       );
-      const signPrivKey = crypto.subtle.unwrapKey(
+      const privKey = crypto.subtle.unwrapKey(
         'pkcs8',
         decodedPrivateKey.slice(GCM_NONCE_LEN),
         await kek,
         { name: 'AES-GCM', iv: decodedPrivateKey.slice(0, GCM_NONCE_LEN) },
-        VaultKeys.SIGNATURE_KEY_DESIGNATION,
+        { name: 'ECDSA', namedCurve: 'P-384' },
         false,
         ['sign']
       );
-      const signPubKey = crypto.subtle.importKey(
+      const pubKey = crypto.subtle.importKey(
         'spki',
         decodedPublicKey,
-        VaultKeys.SIGNATURE_KEY_DESIGNATION,
+        { name: 'ECDSA', namedCurve: 'P-384' },
         true,
         ['verify']
       );
-      return new VaultKeys(await masterkey, { privateKey: await signPrivKey, publicKey: await signPubKey });
+      return [new VaultKeys(await masterkey), { privateKey: await privKey, publicKey: await pubKey }];
     } catch (error) {
       throw new UnwrapKeyError(error);
     }
@@ -219,12 +172,7 @@ export class VaultKeys {
       true,
       ['sign']
     );
-    const keyPair = crypto.subtle.generateKey(
-      VaultKeys.SIGNATURE_KEY_DESIGNATION,
-      true,
-      ['sign', 'verify']
-    );
-    return new VaultKeys(await key, await keyPair);
+    return new VaultKeys(await key);
   }
 
   public async createVaultConfig(kid: string, hubConfig: VaultConfigHeaderHub, payload: VaultConfigPayload): Promise<string> {
@@ -280,10 +228,6 @@ export class VaultKeys {
     } finally {
       rawkey.fill(0x00);
     }
-  }
-
-  public async signVaultEditRequest(jwtHeader: JWTHeader, jwtPayload: any): Promise<string> {
-    return JWT.build(jwtHeader, jwtPayload, this.signatureKeyPair.privateKey);
   }
 
   /**

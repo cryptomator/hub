@@ -42,6 +42,24 @@ CREATE TABLE "access_token"
 
 ALTER TABLE "vault_access" ADD "role" VARCHAR(50) NOT NULL DEFAULT 'MEMBER';
 ALTER TABLE "audit_event_vault_member_add" ADD "role" VARCHAR(50) NOT NULL DEFAULT 'MEMBER';
+CREATE TABLE "audit_event_vault_member_update"
+(
+	"id"           BIGINT NOT NULL,
+	"updated_by"   VARCHAR(255) COLLATE "C" NOT NULL,
+	"vault_id"     UUID NOT NULL,
+	"authority_id" VARCHAR(255) COLLATE "C" NOT NULL,
+	"role"         VARCHAR(50) NOT NULL,
+	CONSTRAINT "AUDIT_EVENT_VAULT_MEMBER_UPDATE_PK" PRIMARY KEY ("id"),
+	CONSTRAINT "AUDIT_EVENT_VAULT_MEMBER_UPDATE_FK_AUDIT_EVENT" FOREIGN KEY ("id") REFERENCES "audit_event" ("id") ON DELETE CASCADE
+);
+CREATE TABLE "audit_event_vault_ownership_claim"
+(
+	"id"           BIGINT NOT NULL,
+	"claimed_by"   VARCHAR(255) COLLATE "C" NOT NULL,
+	"vault_id"     UUID NOT NULL,
+	CONSTRAINT "AUDIT_EVENT_VAULT_OWNERSHIP_CLAIM_PK" PRIMARY KEY ("id"),
+	CONSTRAINT "AUDIT_EVENT_VAULT_OWNERSGIP_CLAIM_FK_AUDIT_EVENT" FOREIGN KEY ("id") REFERENCES "audit_event" ("id") ON DELETE CASCADE
+);
 
 -- @formatter:off
 CREATE OR REPLACE VIEW "effective_vault_access" ("vault_id", "authority_id", "role") AS
@@ -50,3 +68,10 @@ CREATE OR REPLACE VIEW "effective_vault_access" ("vault_id", "authority_id", "ro
 	SELECT "va"."vault_id", "gm"."member_id", "va"."role" FROM "vault_access" "va"
 		INNER JOIN "effective_group_membership" "gm" ON "va"."authority_id" = "gm"."group_id";
 -- @formatter:on
+
+-- deprecate vault admin password
+ALTER TABLE "vault" ALTER COLUMN "salt" DROP NOT NULL;
+ALTER TABLE "vault" ALTER COLUMN "iterations" DROP NOT NULL;
+ALTER TABLE "vault" ALTER COLUMN "masterkey" DROP NOT NULL;
+ALTER TABLE "vault" ALTER COLUMN "auth_pubkey" DROP NOT NULL;
+ALTER TABLE "vault" ALTER COLUMN "auth_prvkey" DROP NOT NULL;
