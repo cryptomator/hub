@@ -128,17 +128,15 @@ public class VaultResource {
 	@VaultRole(VaultAccess.Role.OWNER) // may throw 403
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
-	@Operation(summary = "list vault members", description = "list all users that this vault has been shared with")
+	@Operation(summary = "list vault members", description = "list all users or groups that this vault has been shared with directly (not inherited via group membership)")
 	@APIResponse(responseCode = "200")
 	@APIResponse(responseCode = "403", description = "not a vault owner")
-	public List<MemberDto> getMembers(@PathParam("vaultId") UUID vaultId) {
-		var vault = Vault.<Vault>findById(vaultId); // should always be found, since @VaultRole filter would have triggered
-
-		return vault.directMembers.stream().map(authority -> {
-			VaultAccess access = VaultAccess.findById(new VaultAccess.Id(vaultId, authority.id)); // TODO: inefficient, would be better if role is already part of the query result
-			if (authority instanceof User u) {
+	public List<MemberDto> getDirectMembers(@PathParam("vaultId") UUID vaultId) {
+		return VaultAccess.forVault(vaultId).map(access -> {
+			// TODO switch to switch expressions, once we can make Authority sealed
+			if (access.authority instanceof User u) {
 				return MemberDto.fromEntity(u, access.role);
-			} else if (authority instanceof Group g) {
+			} else if (access.authority instanceof Group g) {
 				return MemberDto.fromEntity(g, access.role);
 			} else {
 				throw new IllegalStateException();
