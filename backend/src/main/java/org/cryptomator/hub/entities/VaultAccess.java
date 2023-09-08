@@ -1,6 +1,7 @@
 package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import io.quarkus.panache.common.Parameters;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EmbeddedId;
@@ -10,14 +11,24 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
+import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
 
 import java.io.Serializable;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 @Entity
 @Table(name = "vault_access")
+@NamedQuery(name = "VaultAccess.forVault",
+		query = """
+				SELECT va
+				FROM VaultAccess va
+				INNER JOIN FETCH va.vault
+				INNER JOIN FETCH va.authority
+				WHERE va.id.vaultId = :vaultId
+				""")
 public class VaultAccess extends PanacheEntityBase {
 
 	@EmbeddedId
@@ -47,6 +58,10 @@ public class VaultAccess extends PanacheEntityBase {
 		 * User with administrative privileges on a vault.
 		 */
 		OWNER
+	}
+
+	public static Stream<VaultAccess> forVault(UUID vaultId) {
+		return find("#VaultAccess.forVault", Parameters.with("vaultId", vaultId)).stream();
 	}
 
 	@Embeddable

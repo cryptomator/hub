@@ -101,7 +101,7 @@ async function giveUsersAccess(users: UserDto[]) {
     if (user.publicKey) { // some users might not have set up their key pair, so we can't share secrets with them yet
       const publicKey = base64.parse(user.publicKey);
       const jwe = await props.vaultKeys.encryptForUser(publicKey);
-      await backend.vaults.grantAccess(props.vault.id, user.id, jwe, props.vaultKeys);
+      await backend.vaults.grantAccess(props.vault.id, user.id, jwe);
     }
   }
 }

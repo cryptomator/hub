@@ -1,5 +1,8 @@
 package org.cryptomator.hub.api;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.quarkus.security.identity.SecurityIdentity;
@@ -10,13 +13,16 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.ForbiddenException;
+import jakarta.ws.rs.FormParam;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -30,6 +36,8 @@ import org.cryptomator.hub.entities.AuditEventVaultCreate;
 import org.cryptomator.hub.entities.AuditEventVaultKeyRetrieve;
 import org.cryptomator.hub.entities.AuditEventVaultMemberAdd;
 import org.cryptomator.hub.entities.AuditEventVaultMemberRemove;
+import org.cryptomator.hub.entities.AuditEventVaultMemberUpdate;
+import org.cryptomator.hub.entities.AuditEventVaultOwnershipClaim;
 import org.cryptomator.hub.entities.AuditEventVaultUpdate;
 import org.cryptomator.hub.entities.Authority;
 import org.cryptomator.hub.entities.EffectiveGroupMembership;
@@ -40,12 +48,13 @@ import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.entities.VaultAccess;
 import org.cryptomator.hub.filters.ActiveLicense;
-import org.cryptomator.hub.filters.VaultAdminOnlyFilter;
+import org.cryptomator.hub.filters.VaultRole;
 import org.cryptomator.hub.license.LicenseHolder;
 import org.cryptomator.hub.validation.NoHtmlOrScriptChars;
 import org.cryptomator.hub.validation.OnlyBase64Chars;
 import org.cryptomator.hub.validation.ValidId;
 import org.cryptomator.hub.validation.ValidJWE;
+import org.cryptomator.hub.validation.ValidJWS;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
@@ -57,7 +66,7 @@ import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -116,22 +125,19 @@ public class VaultResource {
 	@GET
 	@Path("/{vaultId}/members")
 	@RolesAllowed("user")
-	@VaultAdminOnlyFilter
+	@VaultRole(VaultAccess.Role.OWNER) // may throw 403
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
-	@Operation(summary = "list vault members", description = "list all users that this vault has been shared with")
+	@Operation(summary = "list vault members", description = "list all users or groups that this vault has been shared with directly (not inherited via group membership)")
 	@APIResponse(responseCode = "200")
-	@APIResponse(responseCode = "401", description = "VaultAdminAuthorizationJWT not provided")
-	@APIResponse(responseCode = "403", description = "VaultAdminAuthorizationJWT expired or not yet valid")
-	@APIResponse(responseCode = "404", description = "vault not found")
-	public List<AuthorityDto> getMembers(@PathParam("vaultId") UUID vaultId) {
-		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-
-		return vault.directMembers.stream().map(authority -> {
-			if (authority instanceof User u) {
-				return UserDto.justPublicInfo(u);
-			} else if (authority instanceof Group g) {
-				return GroupDto.fromEntity(g);
+	@APIResponse(responseCode = "403", description = "not a vault owner")
+	public List<MemberDto> getDirectMembers(@PathParam("vaultId") UUID vaultId) {
+		return VaultAccess.forVault(vaultId).map(access -> {
+			// TODO switch to switch expressions, once we can make Authority sealed
+			if (access.authority instanceof User u) {
+				return MemberDto.fromEntity(u, access.role);
+			} else if (access.authority instanceof Group g) {
+				return MemberDto.fromEntity(g, access.role);
 			} else {
 				throw new IllegalStateException();
 			}
@@ -141,7 +147,7 @@ public class VaultResource {
 	@PUT
 	@Path("/{vaultId}/users/{userId}")
 	@RolesAllowed("user")
-	@VaultAdminOnlyFilter
+	@VaultRole(VaultAccess.Role.OWNER) // may throw 403
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "adds a user to this vault or updates her role")
@@ -169,7 +175,7 @@ public class VaultResource {
 	@PUT
 	@Path("/{vaultId}/groups/{groupId}")
 	@RolesAllowed("user")
-	@VaultAdminOnlyFilter
+	@VaultRole(VaultAccess.Role.OWNER) // may throw 403
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "adds a group to this vault or updates its role")
@@ -199,7 +205,7 @@ public class VaultResource {
 			var access = existingAccess.get();
 			access.role = role;
 			access.persist();
-			// TODO log event?
+			AuditEventVaultMemberUpdate.log(jwt.getSubject(), vault.id, authority.id, role);
 			return Response.ok().build();
 		} else {
 			var access = new VaultAccess();
@@ -215,29 +221,25 @@ public class VaultResource {
 	@DELETE
 	@Path("/{vaultId}/users/{userId}")
 	@RolesAllowed("user")
-	@VaultAdminOnlyFilter
+	@VaultRole(VaultAccess.Role.OWNER) // may throw 403
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "remove a member from this vault", description = "revokes the given user's access rights from this vault. If the given user is no member, the request is a no-op.")
 	@APIResponse(responseCode = "204", description = "member removed")
-	@APIResponse(responseCode = "401", description = "VaultAdminAuthorizationJWT not provided")
-	@APIResponse(responseCode = "403", description = "VaultAdminAuthorizationJWT expired or not yet valid")
-	@APIResponse(responseCode = "404", description = "vault not found")
-	public Response removeMember(@PathParam("vaultId") UUID vaultId, @PathParam("userId") @ValidId String userId) {
+	@APIResponse(responseCode = "403", description = "not a vault owner")
+	public Response removeUser(@PathParam("vaultId") UUID vaultId, @PathParam("userId") @ValidId String userId) {
 		return removeAuthority(vaultId, userId);
 	}
 
 	@DELETE
 	@Path("/{vaultId}/groups/{groupId}")
 	@RolesAllowed("user")
-	@VaultAdminOnlyFilter
+	@VaultRole(VaultAccess.Role.OWNER) // may throw 403
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "remove a group from this vault", description = "revokes the given group's access rights from this vault. If the given group is no member, the request is a no-op.")
 	@APIResponse(responseCode = "204", description = "member removed")
-	@APIResponse(responseCode = "401", description = "VaultAdminAuthorizationJWT not provided")
-	@APIResponse(responseCode = "403", description = "VaultAdminAuthorizationJWT expired or not yet valid")
-	@APIResponse(responseCode = "404", description = "vault not found")
+	@APIResponse(responseCode = "403", description = "not a vault owner")
 	public Response removeGroup(@PathParam("vaultId") UUID vaultId, @PathParam("groupId") @ValidId String groupId) {
 		return removeAuthority(vaultId, groupId);
 	}
@@ -254,14 +256,12 @@ public class VaultResource {
 	@GET
 	@Path("/{vaultId}/users-requiring-access-grant")
 	@RolesAllowed("user")
-	@VaultAdminOnlyFilter
+	@VaultRole(VaultAccess.Role.OWNER) // may throw 403
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "list devices requiring access rights", description = "lists all devices owned by vault members, that don't have a device-specific masterkey yet")
 	@APIResponse(responseCode = "200")
-	@APIResponse(responseCode = "401", description = "VaultAdminAuthorizationJWT not provided")
-	@APIResponse(responseCode = "403", description = "VaultAdminAuthorizationJWT expired or not yet valid")
-	@APIResponse(responseCode = "404", description = "vault not found")
+	@APIResponse(responseCode = "403", description = "not a vault owner")
 	public List<UserDto> getUsersRequiringAccessGrant(@PathParam("vaultId") UUID vaultId) {
 		return User.findRequiringAccessGrant(vaultId).map(UserDto::justPublicInfo).toList();
 	}
@@ -304,17 +304,18 @@ public class VaultResource {
 	@GET
 	@Path("/{vaultId}/access-token")
 	@RolesAllowed("user")
+	@VaultRole({VaultAccess.Role.MEMBER, VaultAccess.Role.OWNER}) // may throw 403
 	@Transactional
 	@Produces(MediaType.TEXT_PLAIN)
 	@Operation(summary = "get the user-specific vault key", description = "retrieves a jwe containing the vault key, encrypted for the current user")
 	@APIResponse(responseCode = "200")
 	@APIResponse(responseCode = "402", description = "number of effective vault users exceeds available license seats")
-	@APIResponse(responseCode = "403", description = "user not authorized to access this vault")
+	@APIResponse(responseCode = "403", description = "not a vault member")
 	@APIResponse(responseCode = "404", description = "unknown vault")
 	@APIResponse(responseCode = "410", description = "Vault is archived")
 	@ActiveLicense // may throw 402
 	public String unlock(@PathParam("vaultId") UUID vaultId) {
-		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
+		var vault = Vault.<Vault>findById(vaultId); // should always be found, since @VaultRole filter would have triggered
 		if (vault.archived) {
 			throw new GoneException("Vault is archived.");
 		}
@@ -339,23 +340,21 @@ public class VaultResource {
 	@PUT
 	@Path("/{vaultId}/access-tokens/{userId}")
 	@RolesAllowed("user")
-	@VaultAdminOnlyFilter
+	@VaultRole(VaultAccess.Role.OWNER) // may throw 403
 	@Transactional
 	@Consumes(MediaType.TEXT_PLAIN)
 	@Operation(summary = "adds a user-specific vault key")
 	@APIResponse(responseCode = "201", description = "user-specific key stored")
-	@APIResponse(responseCode = "401", description = "VaultAdminAuthorizationJWT not provided")
-	@APIResponse(responseCode = "403", description = "VaultAdminAuthorizationJWT expired or not yet valid")
-	@APIResponse(responseCode = "404", description = "vault or userId not found")
-	@APIResponse(responseCode = "409", description = "Access to vault for device already granted")
+	@APIResponse(responseCode = "403", description = "not a vault owner")
+	@APIResponse(responseCode = "404", description = "userId not found")
+	@APIResponse(responseCode = "409", description = "access to vault for device already granted")
 	@APIResponse(responseCode = "410", description = "Vault is archived")
 	public Response grantAccess(@PathParam("vaultId") UUID vaultId, @PathParam("userId") @ValidId String userId, @NotNull @ValidJWE String vaultKey) {
-		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new); // should always be found, since @VaultAdminOnlyFilter already checked the jwt matching this vault
+		var user = User.<User>findByIdOptional(userId).orElseThrow(NotFoundException::new);
+		var vault = Vault.<Vault>findById(vaultId); // should always be found, since @VaultRole filter would have triggered
 		if (vault.archived) {
 			throw new GoneException("Vault is archived.");
 		}
-
-		var user = User.<User>findByIdOptional(userId).orElseThrow(NotFoundException::new);
 
 		var access = new AccessToken();
 		access.vault = vault;
@@ -374,6 +373,7 @@ public class VaultResource {
 	@GET
 	@Path("/{vaultId}")
 	@RolesAllowed("user")
+	// @VaultRole(VaultAccess.Role.MEMBER) // TODO: members and admin may do this...
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
 	@Operation(summary = "gets a vault")
@@ -390,6 +390,7 @@ public class VaultResource {
 	@PUT
 	@Path("/{vaultId}")
 	@RolesAllowed("user")
+	@VaultRole(value = VaultAccess.Role.OWNER, onMissingVault = VaultRole.OnMissingVault.PASS)
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
@@ -400,11 +401,12 @@ public class VaultResource {
 	@APIResponse(responseCode = "402", description = "all seats in licence in use during creation of new vault")
 	public Response createOrUpdate(@PathParam("vaultId") UUID vaultId, @Valid @NotNull VaultDto vaultDto) {
 		User currentUser = User.findById(jwt.getSubject());
-		Vault vault;
-		boolean isCreated = false;
-		try {
-			vault = Vault.<Vault>findByIdOptional(vaultId).get();
-		} catch (NoSuchElementException _e) {
+		Optional<Vault> existingVault = Vault.findByIdOptional(vaultId);
+		final Vault vault;
+		if (existingVault.isPresent()) {
+			// load existing vault:
+			vault = existingVault.get();
+		} else {
 			if (!EffectiveVaultAccess.isUserOccupyingSeat(currentUser.id)) {
 				//for new vaults, we need to check that a licence seat is available if the user does not already have access to a vault.
 				var usedSeats = EffectiveVaultAccess.countSeatOccupyingUsers();
@@ -412,24 +414,18 @@ public class VaultResource {
 					throw new PaymentRequiredException("Number of effective vault users exceeds available license seats");
 				}
 			}
-			isCreated = true;
-			//create new vault
+			// create new vault:
 			vault = new Vault();
 			vault.id = vaultDto.id;
 			vault.creationTime = Instant.now().truncatedTo(ChronoUnit.MILLIS);
-			vault.masterkey = vaultDto.masterkey;
-			vault.iterations = vaultDto.iterations;
-			vault.salt = vaultDto.salt;
-			vault.authenticationPublicKey = vaultDto.authPublicKey;
-			vault.authenticationPrivateKey = vaultDto.authPrivateKey;
 		}
-		//update new or existing vault
+		// set regardless of whether vault is new or existing:
 		vault.name = vaultDto.name;
 		vault.description = vaultDto.description;
-		vault.archived = isCreated ? false : vaultDto.archived;
+		vault.archived = existingVault.isEmpty() ? false : vaultDto.archived;
 
 		vault.persistAndFlush(); // trigger PersistenceException before we continue with
-		if (isCreated) {
+		if (existingVault.isEmpty()) {
 			var access = new VaultAccess();
 			access.vault = vault;
 			access.authority = currentUser;
@@ -444,15 +440,73 @@ public class VaultResource {
 		}
 	}
 
+	@POST
+	@Path("/{vaultId}/claim-ownership")
+	@RolesAllowed("user")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Transactional
+	@Operation(summary = "claims ownership of a vault",
+			description = "Assigns the OWNER role to the currently logged in user, who proofs this claim by sending a JWT signed with a private key held by users knowing the Vault Admin Password")
+	@APIResponse(responseCode = "200", description = "ownership claimed successfully")
+	@APIResponse(responseCode = "400", description = "incorrect proof")
+	@APIResponse(responseCode = "404", description = "no such vault")
+	@APIResponse(responseCode = "409", description = "owned by another user")
+	public Response claimOwnership(@PathParam("vaultId") UUID vaultId, @FormParam("proof") @Valid @ValidJWS String proof) {
+		User currentUser = User.findById(jwt.getSubject());
+		Vault vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
+
+		// if vault.authenticationPublicKey no longer exists, this vault has already been claimed by a different user
+		var authPubKey = vault.getAuthenticationPublicKey().orElseThrow(() -> new ClientErrorException(Response.Status.CONFLICT));
+
+		try {
+			var verifier = JWT.require(Algorithm.ECDSA384(authPubKey))
+					.acceptLeeway(30)
+					.withClaimPresence("nbf")
+					.withClaimPresence("exp")
+					.withSubject(currentUser.id)
+					.withClaim("vaultId", vaultId.toString().toLowerCase())
+					.build();
+			verifier.verify(proof);
+		} catch (JWTVerificationException e) {
+			throw new BadRequestException("Invalid proof of ownership", e);
+		}
+
+		Optional<VaultAccess> existingAccess = VaultAccess.findByIdOptional(new VaultAccess.Id(vaultId, currentUser.id));
+		if (existingAccess.isPresent()) {
+			var access = existingAccess.get();
+			access.role = VaultAccess.Role.OWNER;
+			access.persist();
+			AuditEventVaultMemberUpdate.log(currentUser.id, vaultId, currentUser.id, VaultAccess.Role.OWNER);
+		} else {
+			var access = new VaultAccess();
+			access.vault = vault;
+			access.authority = currentUser;
+			access.role = VaultAccess.Role.OWNER;
+			access.persist();
+			AuditEventVaultMemberAdd.log(currentUser.id, vaultId, currentUser.id, VaultAccess.Role.OWNER);
+		}
+
+		vault.salt = null;
+		vault.iterations = null;
+		vault.masterkey = null;
+		vault.authenticationPrivateKey = null;
+		vault.authenticationPublicKey = null;
+		vault.persist();
+
+		AuditEventVaultOwnershipClaim.log(currentUser.id, vaultId);
+		return Response.ok(VaultDto.fromEntity(vault), MediaType.APPLICATION_JSON).build();
+	}
+
 
 	public record VaultDto(@JsonProperty("id") UUID id,
 						   @JsonProperty("name") @NoHtmlOrScriptChars @NotBlank String name,
 						   @JsonProperty("description") @NoHtmlOrScriptChars String description,
 						   @JsonProperty("archived") boolean archived,
 						   @JsonProperty("creationTime") Instant creationTime,
-						   @JsonProperty("masterkey") @NotNull @OnlyBase64Chars String masterkey, @JsonProperty("iterations") int iterations,
-						   @JsonProperty("salt") @NotNull @OnlyBase64Chars String salt,
-						   @JsonProperty("authPublicKey") @NotNull @OnlyBase64Chars String authPublicKey, @JsonProperty("authPrivateKey") @NotNull @OnlyBase64Chars String authPrivateKey
+						   // Legacy properties ("Vault Admin Password"):
+						   @JsonProperty("masterkey") @OnlyBase64Chars String masterkey, @JsonProperty("iterations") Integer iterations,
+						   @JsonProperty("salt") @OnlyBase64Chars String salt,
+						   @JsonProperty("authPublicKey") @OnlyBase64Chars String authPublicKey, @JsonProperty("authPrivateKey") @OnlyBase64Chars String authPrivateKey
 	) {
 
 		public static VaultDto fromEntity(Vault entity) {
