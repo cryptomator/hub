@@ -25,8 +25,7 @@ CREATE TABLE "device"
 	"user_privatekey" VARCHAR(2000) NOT NULL UNIQUE, -- private key, encrypted using device's public key (JWE ECDH-ES)
 	"creation_time"   TIMESTAMP WITH TIME ZONE NOT NULL,
 	CONSTRAINT "DEVICE_PK" PRIMARY KEY ("id"),
-	CONSTRAINT "DEVICE_FK_USER" FOREIGN KEY ("owner_id") REFERENCES "user_details" ("id") ON DELETE CASCADE,
-	CONSTRAINT "DEVICE_UNIQUE_NAME_PER_OWNER" UNIQUE ("owner_id", "name")
+	CONSTRAINT "DEVICE_FK_USER" FOREIGN KEY ("owner_id") REFERENCES "user_details" ("id") ON DELETE CASCADE
 );
 
 -- new access tokens will be issued for users (not devices):

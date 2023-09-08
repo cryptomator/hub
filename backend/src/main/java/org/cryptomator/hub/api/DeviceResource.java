@@ -8,7 +8,6 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
@@ -32,7 +31,6 @@ import org.cryptomator.hub.validation.ValidJWE;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
-import org.hibernate.exception.ConstraintViolationException;
 import org.jboss.logging.Logger;
 import org.jboss.resteasy.reactive.NoCache;
 
@@ -68,7 +66,6 @@ public class DeviceResource {
 	@Transactional
 	@Operation(summary = "creates or updates a device", description = "the device will be owned by the currently logged-in user")
 	@APIResponse(responseCode = "201", description = "Device created or updated")
-	@APIResponse(responseCode = "409", description = "Conflicting device name")
 	public Response createOrUpdate(@Valid @NotNull DeviceDto dto, @PathParam("deviceId") @ValidId String deviceId) {
 		Device device;
 		try {
@@ -88,13 +85,9 @@ public class DeviceResource {
 		device.name = dto.name;
 		device.publickey = dto.publicKey;
 		device.userPrivateKey = dto.userPrivateKey;
-		try {
-			device.persistAndFlush();
-			AuditEventDeviceRegister.log(jwt.getSubject(), deviceId, device.name, device.type);
-			return Response.created(URI.create(".")).build();
-		} catch (ConstraintViolationException e) {
-			throw new ClientErrorException(Response.Status.CONFLICT, e);
-		}
+		device.persistAndFlush();
+		AuditEventDeviceRegister.log(jwt.getSubject(), deviceId, device.name, device.type);
+		return Response.created(URI.create(".")).build();
 	}
 
 	@GET

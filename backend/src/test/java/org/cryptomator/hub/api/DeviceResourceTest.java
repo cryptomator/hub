@@ -69,17 +69,6 @@ public class DeviceResourceTest {
 
 		@Test
 		@Order(1)
-		@DisplayName("PUT /devices/deviceX returns 409 due to non-unique name")
-		public void testCreateX() {
-			var deviceDto = new DeviceResource.DeviceDto("deviceX", "Computer 1", Device.Type.DESKTOP, "publickey1", "jwe.jwe.jwe.user1.deviceX", "user1", Instant.parse("2020-02-20T20:20:20Z"));
-
-			given().contentType(ContentType.JSON).body(deviceDto)
-					.when().put("/devices/{deviceId}", "deviceX")
-					.then().statusCode(409);
-		}
-
-		@Test
-		@Order(1)
 		@DisplayName("GET /devices/device1 returns 200")
 		public void testGet1() {
 			given().when().get("/devices/{deviceId}", "device1")
@@ -129,6 +118,17 @@ public class DeviceResourceTest {
 						""");
 				Assertions.assertFalse(rs.next());
 			}
+		}
+
+		@Test
+		@Order(2)
+		@DisplayName("PUT /devices/deviceX returns 201 (creating new device with same name as device1)")
+		public void testCreateX() {
+			var deviceDto = new DeviceResource.DeviceDto("deviceX", "Computer 1", Device.Type.DESKTOP, "publickey1", "jwe.jwe.jwe.user1.deviceX", "user1", Instant.parse("2020-02-20T20:20:20Z"));
+
+			given().contentType(ContentType.JSON).body(deviceDto)
+					.when().put("/devices/{deviceId}", "deviceX")
+					.then().statusCode(201);
 		}
 
 		@Test
