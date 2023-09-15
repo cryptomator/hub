@@ -13,7 +13,7 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <quarkus.container-image.group>cryptomator</quarkus.container-image.group>
     <quarkus.container-image.name>hub</quarkus.container-image.name>
-    <quarkus.platform.version>3.2.4.Final</quarkus.platform.version>
+    <quarkus.platform.version>3.2.6.Final</quarkus.platform.version>
     <quarkus.jib.base-jvm-image>eclipse-temurin:17-jre</quarkus.jib.base-jvm-image> <!-- irrelevant for -Pnative -->
     <jwt.version>4.4.0</jwt.version>
     <surefire-plugin.version>3.1.2</surefire-plugin.version>
