@@ -22,28 +22,40 @@ public class LicenseHolder {
 	@ConfigProperty(name = "hub.managed-instance", defaultValue = "false")
 	Boolean managedInstance;
 
+	@Inject
+	@ConfigProperty(name = "hub.initial-id")
+	Optional<String> initialId;
+
+	@Inject
+	@ConfigProperty(name = "hub.initial-license")
+	Optional<String> initialLicense;
+
+	@Inject
+	LicenseValidator licenseValidator;
+
 	private static final Logger LOG = Logger.getLogger(LicenseHolder.class);
-	private final LicenseValidator licenseValidator;
 	private DecodedJWT license;
 
-	LicenseHolder(LicenseValidator licenseValidator) {
-		this.licenseValidator = licenseValidator;
-	}
-
 	/**
-	 * Loads the license from the database, if present
+	 * Loads the license from the database or from init props, if present
 	 */
 	@PostConstruct
 	void init() {
 		var settings = Settings.get();
 		if (settings.licenseKey != null) {
-			try {
-				this.license = licenseValidator.validate(settings.licenseKey, settings.hubId);
-			} catch (JWTVerificationException e) {
-				LOG.warn("License in database is invalid. Deleting entry. Please add the license over the REST API again.");
-				settings.licenseKey = null;
-				settings.persist();
-			}
+			applyLicense(settings.hubId, settings.licenseKey, settings);
+		} else if (initialId.isPresent() && initialLicense.isPresent()) {
+			applyLicense(initialId.get(), initialLicense.get(), settings);
+		}
+	}
+
+	private void applyLicense(String hubId, String licenseKey, Settings settings) {
+		try {
+			this.license = licenseValidator.validate(licenseKey, hubId);
+		} catch (JWTVerificationException e) {
+			LOG.warn("Provided license is invalid. Deleting entry. Please add the license over the REST API again.");
+			settings.licenseKey = null;
+			settings.persist();
 		}
 	}
 
