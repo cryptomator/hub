@@ -4,7 +4,6 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.annotation.Nullable;
 import jakarta.annotation.security.RolesAllowed;
@@ -71,7 +70,6 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 @Path("/vaults")
-@RegisterForReflection(targets = {UUID[].class})
 public class VaultResource {
 
 	@Inject

@@ -1,7 +1,6 @@
 package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
-import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
@@ -19,7 +18,6 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "access_token")
-@RegisterForReflection(targets = {UUID[].class})
 public class AccessToken extends PanacheEntityBase {
 
 	@EmbeddedId

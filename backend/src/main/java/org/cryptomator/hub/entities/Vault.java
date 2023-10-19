@@ -2,7 +2,6 @@ package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.panache.common.Parameters;
-import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -54,7 +53,6 @@ import java.util.stream.Stream;
 				WHERE v.id IN :ids
 				"""
 )
-@RegisterForReflection(targets = {UUID[].class})
 public class Vault extends PanacheEntityBase {
 
 	@Id

@@ -1,6 +1,5 @@
 package org.cryptomator.hub.entities;
 
-import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
@@ -13,7 +12,6 @@ import java.util.UUID;
 @Entity
 @Table(name = "audit_event_vault_create")
 @DiscriminatorValue(AuditEventVaultCreate.TYPE)
-@RegisterForReflection(targets = {UUID[].class})
 public class AuditEventVaultCreate extends AuditEvent {
 
 	public static final String TYPE = "VAULT_CREATE";

@@ -2,7 +2,6 @@ package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.panache.common.Parameters;
-import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EmbeddedId;
@@ -47,7 +46,6 @@ import java.util.stream.Collectors;
 		FROM EffectiveVaultAccess eva
 		WHERE eva.id.vaultId = :vaultId AND eva.id.authorityId = :authorityId
 		""")
-@RegisterForReflection(targets = {UUID[].class})
 public class EffectiveVaultAccess extends PanacheEntityBase {
 
 	@EmbeddedId
