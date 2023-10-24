@@ -412,6 +412,28 @@ export class BrowserKeys {
   }
 
   /**
+   * Deletes the key pair for the given user.
+   * @returns a promise resolving on success
+   */
+  public static async delete(userId: string): Promise<void> {
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const req = indexedDB.open('hub');
+      req.onsuccess = evt => { resolve(req.result); };
+      req.onerror = evt => { reject(req.error); };
+      req.onupgradeneeded = evt => { req.result.createObjectStore('keys'); };
+    });
+    return new Promise<void>((resolve, reject) => {
+      const transaction = db.transaction('keys', 'readwrite');
+      const keyStore = transaction.objectStore('keys');
+      const query = keyStore.delete(userId);
+      query.onsuccess = evt => { resolve(); };
+      query.onerror = evt => { reject(query.error); };
+    }).finally(() => {
+      db.close();
+    });
+  }
+
+  /**
    * Stores the key pair in the browser's IndexedDB. See https://www.w3.org/TR/WebCryptoAPI/#concepts-key-storage
    * @returns a promise that will resolve if the key pair has been saved
    */

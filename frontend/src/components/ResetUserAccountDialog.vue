@@ -52,6 +52,9 @@ import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, Trans
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import backend, { UserDto } from '../common/backend';
+import { BrowserKeys } from '../common/crypto';
+import router from '../router';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -69,6 +72,10 @@ defineExpose({
   show
 });
 
+const props = defineProps<{
+  me : UserDto
+}>();
+
 async function show() {
   open.value = true;
 }
@@ -77,7 +84,9 @@ async function resetUserAccount() {
   onResetError.value = null;
   try {
     processing.value = true;
-    // TODO
+    await backend.users.resetMe();
+    await BrowserKeys.delete(props.me.id);
+    router.go(0); // reload current page
   } catch (error) {
     console.error('Resetting user account failed.', error);
     onResetError.value = error instanceof Error ? error : new Error('Unknown Error');
