@@ -7,12 +7,14 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.cryptomator.hub.entities.AccessToken;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.User;
 import org.eclipse.microprofile.jwt.JsonWebToken;
@@ -74,6 +76,24 @@ public class UsersResource {
 		Function<Device, DeviceResource.DeviceDto> mapDevices = d -> new DeviceResource.DeviceDto(d.id, d.name, d.type, d.publickey, d.userPrivateKey, d.owner.id, d.creationTime.truncatedTo(ChronoUnit.MILLIS));
 		var devices = withDevices ? user.devices.stream().map(mapDevices).collect(Collectors.toSet()) : Set.<DeviceResource.DeviceDto>of();
 		return new UserDto(user.id, user.name, user.pictureUrl, user.email, devices, user.publicKey, user.privateKey, user.setupCode);
+	}
+
+	@POST
+	@Path("/me/reset")
+	@RolesAllowed("user")
+	@NoCache
+	@Transactional
+	@Operation(summary = "resets the user account")
+	@APIResponse(responseCode = "204", description = "deleted keys, devices and access permissions")
+	public Response resetMe() {
+		User user = User.findById(jwt.getSubject());
+		user.publicKey = null;
+		user.privateKey = null;
+		user.setupCode = null;
+		user.persist();
+		Device.deleteByOwner(user.id);
+		AccessToken.deleteByUser(user.id);
+		return Response.noContent().build();
 	}
 
 	@GET

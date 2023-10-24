@@ -24,6 +24,7 @@ import java.util.stream.Stream;
 @NamedQuery(name = "Device.findByIdAndOwner",
 		query = "SELECT d FROM Device d WHERE d.id = :deviceId AND d.owner.id = :userId"
 )
+@NamedQuery(name = "Device.deleteByOwner", query = "DELETE FROM Device d WHERE d.owner.id = :userId")
 @NamedQuery(name = "Device.allInList",
 		query = """
 				SELECT d
@@ -99,4 +100,9 @@ public class Device extends PanacheEntityBase {
 	public static Stream<Device> findAllInList(List<String> ids) {
 		return find("#Device.allInList", Parameters.with("ids", ids)).stream();
 	}
+
+	public static void deleteByOwner(String userId) {
+		delete("#Device.deleteByOwner", Parameters.with("userId", userId));
+	}
+
 }
