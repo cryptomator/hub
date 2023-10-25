@@ -154,7 +154,7 @@
     </div>
   </div>
 
-  <ResetUserAccountDialog v-if="resettingUserAccount" ref="resetUserAccountDialog" @close="resettingUserAccount = false" />
+  <ResetUserAccountDialog v-if="resettingUserAccount" ref="resetUserAccountDialog" :me="me!" @close="resettingUserAccount = false" />
 </template>
 
 <script setup lang="ts">

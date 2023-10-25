@@ -22,9 +22,11 @@ export interface VaultConfigHeaderHub {
   clientId: string
   authEndpoint: string
   tokenEndpoint: string
-  devicesResourceUrl: string,
   authSuccessUrl: string
   authErrorUrl: string
+  apiBaseUrl: string
+  // deprecated:
+  devicesResourceUrl: string
 }
 
 interface JWEPayload {
@@ -400,6 +402,17 @@ export class BrowserKeys {
     } else {
       return undefined;
     }
+  }
+
+  /**
+   * Deletes the key pair for the given user.
+   * @returns a promise resolving on success
+   */
+  public static async delete(userId: string): Promise<void> {
+    await DB.transaction('keys', 'readwrite', tx => {
+      const keyStore = tx.objectStore('keys');
+      return keyStore.delete(userId);
+    });
   }
 
   /**

@@ -1,7 +1,7 @@
 package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
-import io.quarkus.runtime.annotations.RegisterForReflection;
+import io.quarkus.panache.common.Parameters;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
@@ -10,6 +10,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
+import jakarta.persistence.NamedQuery;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.Table;
 
@@ -18,8 +19,8 @@ import java.util.Objects;
 import java.util.UUID;
 
 @Entity
+@NamedQuery(name = "AccessToken.deleteByUser", query = "DELETE FROM AccessToken a WHERE a.id.userId = :userId")
 @Table(name = "access_token")
-@RegisterForReflection(targets = {UUID[].class})
 public class AccessToken extends PanacheEntityBase {
 
 	@EmbeddedId
@@ -81,6 +82,11 @@ public class AccessToken extends PanacheEntityBase {
 		} catch (NoResultException e) {
 			return null;
 		}
+	}
+
+
+	public static void deleteByUser(String userId) {
+		delete("#AccessToken.deleteByUser", Parameters.with("userId", userId));
 	}
 
 	@Override

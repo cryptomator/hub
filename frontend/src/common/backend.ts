@@ -297,6 +297,10 @@ class UserService {
     return axiosAuth.get<UserDto>(`/users/me?withDevices=${withDevices}`).then(response => UserDto.copy(response.data));
   }
 
+  public async resetMe(): Promise<void> {
+    return axiosAuth.post('/users/me/reset');
+  }
+
   public async listAll(): Promise<UserDto[]> {
     return axiosAuth.get<UserDto[]>('/users/').then(response => {
       return response.data.map(dto => UserDto.copy(dto));

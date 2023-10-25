@@ -4,6 +4,18 @@ This custom keycloak image adds a Cryptomator theme and sets some build-time con
 
 ## Theme Development
 
+For local testing, build the changed theme
+
+```shell script
+cd themes/cryptomator/common/resources
+npm install
+npm run build
+```
+
+and then create the docker image.
+
+### Live Coding
+
 For live coding, start Keycloak in dev mode (to disable theme caching) and mounting the theme folder as a volume:
 
 ```shell script
