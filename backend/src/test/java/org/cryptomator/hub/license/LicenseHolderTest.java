@@ -237,7 +237,7 @@ public class LicenseHolderTest {
 		}
 
 		@Test
-		@DisplayName("Setting a valid token validates and and overwrites the init token")
+		@DisplayName("Setting a valid token validates and overwrites the init token")
 		public void testSetValidToken() {
 			var decodedJWT = Mockito.mock(DecodedJWT.class);
 			Mockito.when(validator.validate("token3000", "42")).thenReturn(decodedJWT);
