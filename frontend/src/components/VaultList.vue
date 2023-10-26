@@ -162,7 +162,7 @@ async function fetchData() {
     ownedVaults.value = (await backend.vaults.listAccessible('OWNER')).sort((a, b) => a.name.localeCompare(b.name));
     switch (selectedFilter.value) {
       case 'accessibleVaults':
-        vaults.value = (await backend.vaults.listAccessible()).sort((a, b) => a.name.localeCompare(b.name));
+        vaults.value = (await backend.vaults.listAccessible()).filter(v => !v.archived).sort((a, b) => a.name.localeCompare(b.name));
         break;
       case 'ownedVaults':
         vaults.value = ownedVaults.value;

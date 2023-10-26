@@ -86,7 +86,7 @@ public class VaultResource {
 	@RolesAllowed("user")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
-	@Operation(summary = "list all accessible vaults", description = "list all (non-archived) vaults that have been shared with the currently logged in user or a group in wich this user is")
+	@Operation(summary = "list all accessible vaults", description = "list all vaults that have been shared with the currently logged in user or a group in wich this user is")
 	public List<VaultDto> getAccessible(@Nullable @QueryParam("role") VaultAccess.Role role) {
 		var currentUserId = jwt.getSubject();
 		// TODO refactor to JEP 441 in JDK 21
