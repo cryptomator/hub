@@ -310,7 +310,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "402", description = "number of effective vault users exceeds available license seats")
 	@APIResponse(responseCode = "403", description = "not a vault member")
 	@APIResponse(responseCode = "404", description = "unknown vault")
-	@APIResponse(responseCode = "410", description = "Vault is archived. Only returned if ignoreArchivedVault is false or not set, otherwise the archived flag is ignored")
+	@APIResponse(responseCode = "410", description = "Vault is archived. Only returned if evenIfArchived query param is false or not set, otherwise the archived flag is ignored")
 	@ActiveLicense // may throw 402
 	public String unlock(@PathParam("vaultId") UUID vaultId, @QueryParam("evenIfArchived") @DefaultValue("false") boolean ignoreArchived) {
 		var vault = Vault.<Vault>findById(vaultId); // should always be found, since @VaultRole filter would have triggered
