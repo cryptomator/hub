@@ -237,6 +237,43 @@ public class LicenseHolderTest {
 		}
 
 		@Test
+		@DisplayName("If token is set in DB, ignore valid init token")
+		public void testValidDBTokenIgnoresValidInitToken() {
+			var decodedJWT = Mockito.mock(DecodedJWT.class);
+			Mockito.when(validator.validate("token3000", "3000")).thenReturn(decodedJWT);
+			Settings settingsMock = new Settings();
+			settingsMock.hubId = "3000";
+			settingsMock.licenseKey = "token3000";
+			settingsClass.when(Settings::get).thenReturn(settingsMock);
+
+			holder.init();
+
+			Mockito.verify(validator, Mockito.times(2)).validate("token3000", "3000");
+			Assertions.assertEquals(decodedJWT, holder.get());
+		}
+
+		@Test
+		@DisplayName("If token is set in DB, ignore invalid init token")
+		public void testValidDBTokenIgnoresInvalidInitToken() {
+			Mockito.when(validator.validate("token", "42")).thenAnswer(invocationOnMock -> {
+				throw new JWTVerificationException("");
+			});
+
+			var decodedJWT = Mockito.mock(DecodedJWT.class);
+			Mockito.when(validator.validate("token3000", "3000")).thenReturn(decodedJWT);
+			Settings settingsMock = new Settings();
+			settingsMock.hubId = "3000";
+			settingsMock.licenseKey = "token3000";
+			settingsClass.when(Settings::get).thenReturn(settingsMock);
+
+			holder.init();
+
+			Mockito.verify(validator, Mockito.times(2)).validate("token3000", "3000");
+			Assertions.assertEquals(decodedJWT, holder.get());
+		}
+
+
+		@Test
 		@DisplayName("Setting a valid token validates and overwrites the init token")
 		public void testSetValidToken() {
 			var decodedJWT = Mockito.mock(DecodedJWT.class);
