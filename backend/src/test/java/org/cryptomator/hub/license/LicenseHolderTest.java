@@ -68,6 +68,8 @@ public class LicenseHolderTest {
 
 			holder.init();
 
+			// init implicitly called due to @PostConstruct which increases the times to verify by 1
+			// See https://github.com/cryptomator/hub/pull/229#discussion_r1374694626 for further information
 			Mockito.verify(validator, Mockito.times(2)).validate("token", "42");
 			Assertions.assertEquals(decodedJWT, holder.get());
 		}
@@ -215,6 +217,8 @@ public class LicenseHolderTest {
 
 			holder.init();
 
+			// init implicitly called due to @PostConstruct which increases the times to verify by 1
+			// See https://github.com/cryptomator/hub/pull/229#discussion_r1374694626 for further information
 			Mockito.verify(validator, Mockito.times(2)).validate("token", "42");
 			Assertions.assertEquals(decodedJWT, holder.get());
 		}
@@ -231,6 +235,8 @@ public class LicenseHolderTest {
 
 			holder.init();
 
+			// init implicitly called due to @PostConstruct which increases the times to verify by 1
+			// See https://github.com/cryptomator/hub/pull/229#discussion_r1374694626 for further information
 			Mockito.verify(validator, Mockito.times(2)).validate("token", "42");
 			Mockito.verify(session, Mockito.times(2)).persist(Mockito.eq(settingsMock));
 			Assertions.assertNull(holder.get());
@@ -248,6 +254,8 @@ public class LicenseHolderTest {
 
 			holder.init();
 
+			// init implicitly called due to @PostConstruct which increases the times to verify by 1
+			// See https://github.com/cryptomator/hub/pull/229#discussion_r1374694626 for further information
 			Mockito.verify(validator, Mockito.times(2)).validate("token3000", "3000");
 			Assertions.assertEquals(decodedJWT, holder.get());
 		}
@@ -268,6 +276,8 @@ public class LicenseHolderTest {
 
 			holder.init();
 
+			// init implicitly called due to @PostConstruct which increases the times to verify by 1
+			// See https://github.com/cryptomator/hub/pull/229#discussion_r1374694626 for further information
 			Mockito.verify(validator, Mockito.times(2)).validate("token3000", "3000");
 			Assertions.assertEquals(decodedJWT, holder.get());
 		}
