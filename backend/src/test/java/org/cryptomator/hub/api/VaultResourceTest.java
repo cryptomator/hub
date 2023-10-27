@@ -139,9 +139,9 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/access-token returns 200 using user access with ignoreArchivedFlag set")
+		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/access-token returns 200 using user access with evenIfArchived set")
 		public void testUnlock3() {
-			when().get("/vaults/{vaultId}/access-token?ignoreArchivedFlag=true", "7E57C0DE-0000-4000-8000-000100001111")
+			when().get("/vaults/{vaultId}/access-token?evenIfArchived=true", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(200)
 					.body(is("jwe.jwe.jwe.vault1.user1"));
 		}
@@ -154,16 +154,16 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-00010000AAAA/access-token returns 410 for archived vaults with ignoreArchivedFlag set to false")
+		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-00010000AAAA/access-token returns 410 for archived vaults with evenIfArchived set to false")
 		public void testUnlockArchived2() {
-			when().get("/vaults/{vaultId}/access-token?ignoreArchivedFlag=false", "7E57C0DE-0000-4000-8000-00010000AAAA")
+			when().get("/vaults/{vaultId}/access-token?evenIfArchived=false", "7E57C0DE-0000-4000-8000-00010000AAAA")
 					.then().statusCode(410);
 		}
 
 		@Test
-		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-00010000AAAA/access-token returns 403 for archived vaults with ignoreArchivedFlag set to true")
+		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-00010000AAAA/access-token returns 403 for archived vaults with evenIfArchived set to true")
 		public void testUnlockArchived3() throws SQLException {
-			when().get("/vaults/{vaultId}/access-token?ignoreArchivedFlag=true", "7E57C0DE-0000-4000-8000-00010000AAAA")
+			when().get("/vaults/{vaultId}/access-token?evenIfArchived=true", "7E57C0DE-0000-4000-8000-00010000AAAA")
 					.then().statusCode(403);
 		}
 
