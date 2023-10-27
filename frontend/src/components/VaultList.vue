@@ -15,7 +15,7 @@
   <div class="pb-5 mt-3 border-b border-gray-200 flex flex-wrap sm:flex-nowrap gap-3 items-center whitespace-nowrap">
     <input id="vaultSearch" v-model="query" :placeholder="t('vaultList.search.placeholder')" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-sm text-sm border-gray-300 rounded-md disabled:bg-gray-200"/>
 
-    <Listbox v-if="isAdmin" v-model="selectedFilter" as="div">
+    <Listbox v-model="selectedFilter" as="div">
       <div class="relative w-44">
         <ListboxButton class="relative w-full rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary text-sm">
           <span class="block truncate">{{ filterOptions[selectedFilter] }}</span>
@@ -138,11 +138,10 @@ const ownsSelectedVault = computed(() => {
 
 const isAdmin = ref<boolean>();
 
-const filterOptions = {
+const filterOptions = ref< {[key: string]: string} >({
   accessibleVaults: t('vaultList.filter.entry.accessibleVaults'),
-  ownedVaults: t('vaultList.filter.entry.ownedVaults'),
-  allVaults: t('vaultList.filter.entry.allVaults'),
-};
+  ownedVaults: t('vaultList.filter.entry.ownedVaults')
+});
 const selectedFilter = ref<'accessibleVaults' | 'ownedVaults' | 'allVaults'>('accessibleVaults');
 watch(selectedFilter, fetchData);
 const query = ref('');
@@ -159,10 +158,15 @@ onMounted(fetchData);
 async function fetchData() {
   onFetchError.value = null;
   try {
+    isAdmin.value = (await auth).isAdmin();
+
+    if (isAdmin.value) {
+      filterOptions.value['allVaults'] = t('vaultList.filter.entry.allVaults')
+    }
     ownedVaults.value = (await backend.vaults.listAccessible('OWNER')).sort((a, b) => a.name.localeCompare(b.name));
     switch (selectedFilter.value) {
       case 'accessibleVaults':
-        vaults.value = (await backend.vaults.listAccessible()).sort((a, b) => a.name.localeCompare(b.name));
+        vaults.value = (await backend.vaults.listAccessible()).filter(v => !v.archived).sort((a, b) => a.name.localeCompare(b.name));
         break;
       case 'ownedVaults':
         vaults.value = ownedVaults.value;
@@ -173,7 +177,7 @@ async function fetchData() {
       default:
         throw new Error('Unknown filter');
     }
-    isAdmin.value = (await auth).isAdmin();
+
   } catch (error) {
     console.error('Retrieving vault list failed.', error);
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');

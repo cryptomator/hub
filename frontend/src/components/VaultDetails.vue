@@ -237,7 +237,7 @@ async function fetchData() {
 }
 
 async function fetchOwnerData() {
-  const vaultKeyJwe = await backend.vaults.accessToken(props.vaultId);
+  const vaultKeyJwe = await backend.vaults.accessToken(props.vaultId, true);
   vaultKeys.value = await loadVaultKeys(vaultKeyJwe);
   (await backend.vaults.getMembers(props.vaultId)).forEach(member => members.value.set(member.id, member));
   usersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
