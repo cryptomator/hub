@@ -224,7 +224,7 @@ public class LicenseHolderTest {
 		}
 
 		@Test
-		@DisplayName("If init token is invalid, do net set it in license holder and nullify db entry")
+		@DisplayName("If init token is invalid and no token is set in db, do not modify db")
 		public void testInitTokenOnFailedValidationNotSet() {
 			Mockito.when(validator.validate("token", "42")).thenAnswer(invocationOnMock -> {
 				throw new JWTVerificationException("");
