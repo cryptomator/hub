@@ -257,7 +257,7 @@ class VaultService {
   }
 
   public async accessToken(vaultId: string): Promise<string> {
-    return axiosAuth.get(`/vaults/${vaultId}/access-token?ignoreArchivedFlag=true`, { headers: { 'Content-Type': 'text/plain' } })
+    return axiosAuth.get(`/vaults/${vaultId}/access-token?evenIfArchived=true`, { headers: { 'Content-Type': 'text/plain' } })
       .then(response => response.data)
       .catch((error) => rethrowAndConvertIfExpected(error, 403));
   }
