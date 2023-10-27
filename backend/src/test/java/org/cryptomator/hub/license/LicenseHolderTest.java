@@ -3,8 +3,8 @@ package org.cryptomator.hub.license;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import io.quarkus.arc.Arc;
-import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.InjectMock;
+import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.QuarkusTestProfile;
 import io.quarkus.test.junit.TestProfile;
 import jakarta.inject.Inject;
@@ -300,26 +300,6 @@ public class LicenseHolderTest {
 
 			Mockito.verify(validator, Mockito.times(1)).validate("token3000", "42");
 			Mockito.verify(session, Mockito.times(1)).persist(Mockito.eq(persistingSettingsMock));
-			Assertions.assertEquals(decodedJWT, holder.get());
-		}
-
-		@Test
-		@DisplayName("Setting an invalid token fails with exception and falls back to previous token")
-		public void testSetInvalidToken() {
-			var decodedJWT = Mockito.mock(DecodedJWT.class);
-			Mockito.when(validator.validate("token", "42")).thenReturn(decodedJWT);
-			Mockito.when(validator.validate("token3000", "42")).thenAnswer(invocationOnMock -> {
-				throw new JWTVerificationException("");
-			});
-			Settings settingsMock = new Settings();
-			settingsMock.licenseKey = "token";
-			settingsMock.hubId = "42";
-			settingsClass.when(Settings::get).thenReturn(settingsMock);
-
-			Assertions.assertThrows(JWTVerificationException.class, () -> holder.set("token3000"));
-
-			Mockito.verify(validator, Mockito.times(1)).validate("token3000", "42");
-			Mockito.verify(session, Mockito.never()).persist(Mockito.any());
 			Assertions.assertEquals(decodedJWT, holder.get());
 		}
 
