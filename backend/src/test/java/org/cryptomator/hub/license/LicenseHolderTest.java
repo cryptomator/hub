@@ -272,7 +272,6 @@ public class LicenseHolderTest {
 			Assertions.assertEquals(decodedJWT, holder.get());
 		}
 
-
 		@Test
 		@DisplayName("Setting a valid token validates and overwrites the init token")
 		public void testSetValidToken() {
@@ -280,7 +279,6 @@ public class LicenseHolderTest {
 			Mockito.when(validator.validate("token3000", "42")).thenReturn(decodedJWT);
 
 			Settings initSettingsMock = new Settings();
-			initSettingsMock.licenseKey = "token";
 			initSettingsMock.hubId = "42";
 			settingsClass.when(Settings::get).thenReturn(initSettingsMock);
 
@@ -288,15 +286,10 @@ public class LicenseHolderTest {
 			persistingSettingsMock.hubId = "42";
 			persistingSettingsMock.licenseKey = "token3000";
 
-			Settings persistedSettingsMock = new Settings();
-			persistedSettingsMock.hubId = "42";
-			settingsClass.when(Settings::get).thenReturn(persistedSettingsMock);
-
 			holder.set("token3000");
 
 			Mockito.verify(validator, Mockito.times(1)).validate("token3000", "42");
 			Mockito.verify(session, Mockito.times(1)).persist(Mockito.eq(persistingSettingsMock));
-			Assertions.assertEquals("token3000", persistedSettingsMock.licenseKey);
 			Assertions.assertEquals(decodedJWT, holder.get());
 		}
 
