@@ -152,6 +152,33 @@
         </a>
       </i18n-t>
     </div>
+
+    <div v-else-if="state == State.SetupAlreadyCompleted">
+      <div class="flex flex-col items-center">
+        <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6 text-center sm:w-full sm:max-w-lg">
+          <div class="flex justify-center">
+            <img src="/logo.svg" class="h-12" alt="Logo" aria-hidden="true" />
+          </div>
+          <div class="mt-3 sm:mt-5">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">
+              {{ t('initialSetup.setupAlreadyCompleted.title') }}
+            </h3>
+            <div class="mt-2">
+              <p class="text-sm text-gray-500">
+                {{ t('initialSetup.setupAlreadyCompleted.description') }}
+              </p>
+            </div>
+            <div class="mt-5 sm:mt-6">
+              <router-link v-slot="{ navigate }" to="/app/profile" custom>
+                <button type="button" class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:primary focus:ring-offset-2 sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="navigate()">
+                  {{ t('initialSetup.setupAlreadyCompleted.goToYourProfile') }}
+                </button>
+              </router-link>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <ResetUserAccountDialog v-if="resettingUserAccount" ref="resetUserAccountDialog" :me="me!" @close="resettingUserAccount = false" />
@@ -175,7 +202,8 @@ import SimpleNavigationBar from './SimpleNavigationBar.vue';
 enum State {
   Preparing,
   CreateUserKey,
-  RecoverUserKey
+  RecoverUserKey,
+  SetupAlreadyCompleted
 }
 
 const { t } = useI18n({ useScope: 'global' });
@@ -216,10 +244,10 @@ async function fetchData() {
     if (!me.value.publicKey) {
       setupCode.value = crypto.randomUUID();
       state.value = State.CreateUserKey;
-    } else if (!browserKeys || me.value.devices.find(d => d.id == browserId) == null) {
+    } else if (!browserKeys && me.value.devices.find(d => d.id == browserId) == null) {
       state.value = State.RecoverUserKey;
     } else {
-      throw new Error('Invalid state');
+      state.value = State.SetupAlreadyCompleted;
     }
   } catch (error) {
     console.error('Retrieving setup information failed.', error);

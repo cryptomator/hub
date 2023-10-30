@@ -149,6 +149,9 @@
   "initialSetup.recoverUserKey.error.wrongSetupCode": "Wrong Account Key",
   "initialSetup.recoverUserKey.lostSetupCode": "Lost your Account Key? {0}",
   "initialSetup.recoverUserKey.lostSetupCode.resetUserAccount": "Reset my account",
+  "initialSetup.setupAlreadyCompleted.title": "Setup Already Completed",
+  "initialSetup.setupAlreadyCompleted.description": "You have already completed the initial setup for Cryptomator Hub. Your Account Key can be found in your profile.",
+  "initialSetup.setupAlreadyCompleted.goToYourProfile": "Go to Your Profile",
   "initialSetup.setupCode": "Account Key",
   "initialSetup.submit": "Finish Setup",
 

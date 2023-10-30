@@ -96,10 +96,6 @@ const routes: RouteRecordRaw[] = [
     path: '/app/setup',
     component: InitialSetup,
     meta: { skipSetup: true }, // no setup required to run setup ;)
-    // TODO: move "already set up" case to setup component
-    // beforeEnter: async () => {
-    //   return await requiresUserKeySetup(); //TODO: reroute to NotFound Screen/ AccessDeniedScreen?
-    // },
   },
   {
     path: '/app/unlock-success',
