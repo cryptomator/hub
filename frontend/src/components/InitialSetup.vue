@@ -238,13 +238,13 @@ onMounted(fetchData);
 async function fetchData() {
   onFetchError.value = null;
   try {
-    me.value = await backend.users.me();
+    me.value = await backend.users.me(true);
     const browserKeys = await BrowserKeys.load(me.value.id);
     const browserId = await browserKeys?.id();
     if (!me.value.publicKey) {
       setupCode.value = crypto.randomUUID();
       state.value = State.CreateUserKey;
-    } else if (!browserKeys && me.value.devices.find(d => d.id == browserId) == null) {
+    } else if (me.value.devices.find(d => d.id == browserId) == null) {
       state.value = State.RecoverUserKey;
     } else {
       state.value = State.SetupAlreadyCompleted;
