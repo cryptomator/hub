@@ -74,7 +74,7 @@
                   <i18n-t keypath="initialSetup.createUserKey.details.devicesName" scope="global" tag="p" class="text-gray-600">
                     <template #deviceName>
                       <span class="inline-flex items-center gap-1">
-                        <span ref="deviceNameField" :aria-label="t('initialSetup.createUserKey.details.devicesName.label')" :contenteditable="deviceNameFieldIsActive" class="cursor-pointer focus:cursor-text focus:outline-primary focus:selection:bg-primary-l2 focus:selection:text-primary select-all font-mono" @click="!deviceNameFieldIsActive && editBrowserName()" @blur="deviceNameFieldIsActive && revertBrowserName()" @keydown.enter.prevent="confirmBrowserName()" @keydown.esc.prevent="revertBrowserName()" v-text="deviceName" />
+                        <span ref="deviceNameField" :aria-label="t('initialSetup.createUserKey.details.devicesName.label')" :contenteditable="deviceNameFieldIsActive" class="cursor-pointer focus:cursor-text focus:outline-primary focus:selection:bg-primary-l2 focus:selection:text-primary select-all font-mono break-all" @click="!deviceNameFieldIsActive && editBrowserName()" @blur="deviceNameFieldIsActive && revertBrowserName()" @keydown.enter.prevent="confirmBrowserName()" @keydown.esc.prevent="revertBrowserName()" v-text="deviceName" />
                         <PencilIcon v-if="!deviceNameFieldIsActive" class="cursor-pointer inline-block h-4 w-4" aria-hidden="true" @click="editBrowserName()" />
                         <CheckIcon v-else class="cursor-pointer inline-block h-4 w-4 text-primary" aria-hidden="true" @mousedown.prevent="" @click="confirmBrowserName()" />
                       </span>
