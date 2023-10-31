@@ -1,7 +1,7 @@
 import * as miscreant from 'miscreant';
 import { base16, base32, base64, base64url } from 'rfc4648';
 import { JWEBuilder, JWEParser } from './jwe';
-import { CRC32, wordEncoder } from './util';
+import { CRC32, DB, wordEncoder } from './util';
 export class UnwrapKeyError extends Error {
   readonly actualError: any;
 
@@ -278,7 +278,8 @@ export class UserKeys {
    * @param encodedPublicKey The public key (base64-encoded SPKI)
    * @param encryptedPrivateKey The JWE holding the encrypted private key
    * @param setupCode The password used to protect the private key
-   * @returns 
+   * @returns Decrypted UserKeys
+   * @throws {UnwrapKeyError} when attempting to decrypt the private key using an incorrect setupCode
    */
   public static async recover(encodedPublicKey: string, encryptedPrivateKey: string, setupCode: string): Promise<UserKeys> {
     const jwe: JWEPayload = await JWEParser.parse(encryptedPrivateKey).decryptPbes2(setupCode);
@@ -391,24 +392,16 @@ export class BrowserKeys {
    * Attempts to load previously stored key pair from the browser's IndexedDB.
    * @returns a promise resolving to the loaded browser key pair
    */
-  public static async load(userId: string): Promise<BrowserKeys> {
-    const db = await new Promise<IDBDatabase>((resolve, reject) => {
-      const req = indexedDB.open('hub');
-      req.onsuccess = evt => { resolve(req.result); };
-      req.onerror = evt => { reject(req.error); };
-      req.onupgradeneeded = evt => { req.result.createObjectStore('keys'); };
+  public static async load(userId: string): Promise<BrowserKeys | undefined> {
+    const keyPair: CryptoKeyPair = await DB.transaction('keys', 'readonly', tx => {
+      const keyStore = tx.objectStore('keys');
+      return keyStore.get(userId);
     });
-    return new Promise<CryptoKeyPair>((resolve, reject) => {
-      const transaction = db.transaction('keys', 'readonly');
-      const keyStore = transaction.objectStore('keys');
-      const query = keyStore.get(userId);
-      query.onsuccess = evt => { resolve(query.result); };
-      query.onerror = evt => { reject(query.error); };
-    }).then((keyPair) => {
+    if (keyPair) {
       return new BrowserKeys(keyPair);
-    }).finally(() => {
-      db.close();
-    });
+    } else {
+      return undefined;
+    }
   }
 
   /**
@@ -416,20 +409,9 @@ export class BrowserKeys {
    * @returns a promise resolving on success
    */
   public static async delete(userId: string): Promise<void> {
-    const db = await new Promise<IDBDatabase>((resolve, reject) => {
-      const req = indexedDB.open('hub');
-      req.onsuccess = evt => { resolve(req.result); };
-      req.onerror = evt => { reject(req.error); };
-      req.onupgradeneeded = evt => { req.result.createObjectStore('keys'); };
-    });
-    return new Promise<void>((resolve, reject) => {
-      const transaction = db.transaction('keys', 'readwrite');
-      const keyStore = transaction.objectStore('keys');
-      const query = keyStore.delete(userId);
-      query.onsuccess = evt => { resolve(); };
-      query.onerror = evt => { reject(query.error); };
-    }).finally(() => {
-      db.close();
+    await DB.transaction('keys', 'readwrite', tx => {
+      const keyStore = tx.objectStore('keys');
+      return keyStore.delete(userId);
     });
   }
 
@@ -438,20 +420,9 @@ export class BrowserKeys {
    * @returns a promise that will resolve if the key pair has been saved
    */
   public async store(userId: string): Promise<void> {
-    const db = await new Promise<IDBDatabase>((resolve, reject) => {
-      const req = indexedDB.open('hub');
-      req.onsuccess = evt => { resolve(req.result); };
-      req.onerror = evt => { reject(req.error); };
-      req.onupgradeneeded = evt => { req.result.createObjectStore('keys'); };
-    });
-    return new Promise<void>((resolve, reject) => {
-      const transaction = db.transaction('keys', 'readwrite');
-      const keyStore = transaction.objectStore('keys');
-      const query = keyStore.put(this.keyPair, userId);
-      query.onsuccess = evt => { transaction.commit(); resolve(); };
-      query.onerror = evt => { reject(query.error); };
-    }).finally(() => {
-      db.close();
+    await DB.transaction('keys', 'readwrite', tx => {
+      const keyStore = tx.objectStore('keys');
+      return keyStore.put(this.keyPair, userId);
     });
   }
 

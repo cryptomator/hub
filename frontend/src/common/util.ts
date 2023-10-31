@@ -1,5 +1,26 @@
 import { dictionary } from './4096words_en';
 
+export class DB {
+  private static readonly NAME = 'hub';
+
+  public static async transaction<T = any>(objectStore: string, mode: IDBTransactionMode, query: (transaction: IDBTransaction) => IDBRequest<T>): Promise<T> {
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const req = indexedDB.open(DB.NAME);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+      req.onupgradeneeded = () => req.result.createObjectStore(objectStore);
+    });
+    const transaction = db.transaction(objectStore, mode);
+    return new Promise<T>((resolve, reject) => {
+      const req = query(transaction);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    }).finally(() => {
+      db.close();
+    });
+  }
+}
+
 export class Deferred<T> {
   public promise: Promise<T>;
   public reject: (reason?: any) => void;

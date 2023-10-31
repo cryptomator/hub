@@ -7,8 +7,8 @@ import AdminSettings from '../components/AdminSettings.vue';
 import AuditLog from '../components/AuditLog.vue';
 import AuthenticatedMain from '../components/AuthenticatedMain.vue';
 import CreateVault from '../components/CreateVault.vue';
+import InitialSetup from '../components/InitialSetup.vue';
 import NotFound from '../components/NotFound.vue';
-import SetupUserKey from '../components/SetupUserKey.vue';
 import UnlockError from '../components/UnlockError.vue';
 import UnlockSuccess from '../components/UnlockSuccess.vue';
 import UserProfile from '../components/UserProfile.vue';
@@ -27,7 +27,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/app/logout',
     component: AuthenticatedMain, // any component will do
-    meta: { skipAuth: true },
+    meta: { skipAuth: true, skipSetup: true },
     beforeEnter: (to, from, next) => {
       authPromise.then(async auth => {
         if (auth.isAuthenticated()) {
@@ -94,10 +94,8 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/app/setup',
-    component: SetupUserKey,
-    beforeEnter: async () => {
-      return await requiresUserKeySetup(); //TODO: reroute to NotFound Screen/ AccessDeniedScreen?
-    }
+    component: InitialSetup,
+    meta: { skipSetup: true }, // no setup required to run setup ;)
   },
   {
     path: '/app/unlock-success',
@@ -156,18 +154,22 @@ router.beforeEach((to, from, next) => {
 });
 
 // THIRD check user/browser keys (requires auth)
-router.beforeEach(async (to, from, next) => {
-  if (!to.meta.skipSetup && await requiresUserKeySetup() && to.path != '/app/setup') {
-    next({ path: '/app/setup' });
-  } else {
-    next();
+router.beforeEach(async (to) => {
+  if (to.meta.skipSetup) {
+    return;
+  }
+  const me = await backend.users.me(true);
+  if (!me.publicKey) {
+    return { path: '/app/setup' };
+  }
+  const browserKeys = await BrowserKeys.load(me.id);
+  if (!browserKeys) {
+    return { path: '/app/setup' };
+  }
+  const browserId = await browserKeys.id();
+  if (me.devices.find(d => d.id == browserId) == null) {
+    return { path: '/app/setup' };
   }
 });
-
-async function requiresUserKeySetup() {
-  const me = await backend.users.me();
-  const browserKeys = await BrowserKeys.load(me.id);
-  return !me.publicKey || !browserKeys.keyPair;
-}
 
 export default router;
