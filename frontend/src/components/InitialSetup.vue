@@ -244,7 +244,7 @@ async function fetchData() {
     if (!me.value.publicKey) {
       setupCode.value = crypto.randomUUID();
       state.value = State.CreateUserKey;
-    } else if (me.value.devices.find(d => d.id == browserId) == null) {
+    } else if (me.value.devices.find(d => d.id === browserId) == null) {
       state.value = State.RecoverUserKey;
     } else {
       state.value = State.SetupAlreadyCompleted;
