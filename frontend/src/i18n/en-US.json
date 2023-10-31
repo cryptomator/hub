@@ -175,7 +175,7 @@
   "recoveryKeyDialog.recoveryKey": "Recovery Key of Your Vault",
 
   "regenerateSetupCodeDialog.confirmRegenerateSetupCode.title": "Regenerate Account Key",
-  "regenerateSetupCodeDialog.confirmRegenerateSetupCode.description": "Do you want to generate a new Account Key? If you do so, the old one will be invalidated.",
+  "regenerateSetupCodeDialog.confirmRegenerateSetupCode.description": "If you suspect that your old Account Key has been compromised, you can regenerate it. You will then only be able to add new devices with the new Account Key. Your existing devices will remain intact.",
   "regenerateSetupCodeDialog.saveSetupCode.title": "Save Account Key",
   "regenerateSetupCodeDialog.saveSetupCode.description": "Be sure to save this new key. You'll need it to sign in to new devices. You can safely delete the old one.",
   "regenerateSetupCodeDialog.saveSetupCode.setupCode": "Account Key",
