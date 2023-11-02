@@ -411,10 +411,26 @@ public class VaultResourceTest {
 		@Test
 		@Order(5)
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100002222/users-requiring-access-grant does contains user2 via group membership")
-		public void testGetUsersRequiringAccess1() {
+		public void testGetUsersRequiringAccess1() throws SQLException {
+			try (var s = dataSource.getConnection().createStatement()) {
+				s.execute("""
+						UPDATE
+						"user_details" SET publickey='public2', privatekey='private2', setupcode='setup2'
+						WHERE id='user2';
+						""");
+			}
+
 			given().when().get("/vaults/{vaultId}/users-requiring-access-grant", "7E57C0DE-0000-4000-8000-000100002222")
 					.then().statusCode(200)
 					.body("id", hasItems("user2"));
+
+			try (var s = dataSource.getConnection().createStatement()) {
+				s.execute("""
+						UPDATE
+						"user_details" SET publickey=NULL, privatekey=NULL, setupcode=NULL
+						WHERE id='user2';
+						""");
+			}
 		}
 
 		@Test
@@ -437,10 +453,26 @@ public class VaultResourceTest {
 		@Test
 		@Order(10)
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100002222/users-requiring-access-grant contains user2")
-		public void testGetUsersRequiringAccess2() {
+		public void testGetUsersRequiringAccess2() throws SQLException {
+			try (var s = dataSource.getConnection().createStatement()) {
+				s.execute("""
+						UPDATE
+						"user_details" SET publickey='public2', privatekey='private2', setupcode='setup2'
+						WHERE id='user2';
+						""");
+			}
+
 			given().when().get("/vaults/{vaultId}/users-requiring-access-grant", "7E57C0DE-0000-4000-8000-000100002222")
 					.then().statusCode(200)
 					.body("id", hasItems("user2"));
+
+			try (var s = dataSource.getConnection().createStatement()) {
+				s.execute("""
+						UPDATE
+						"user_details" SET publickey=NULL, privatekey=NULL, setupcode=NULL
+						WHERE id='user2';
+						""");
+			}
 		}
 
 		@Test
@@ -495,7 +527,7 @@ public class VaultResourceTest {
 				// user999 will be deleted in #cleanup()
 				s.execute("""
 						INSERT INTO "authority" ("id", "type", "name") VALUES ('user999', 'USER', 'User 999');
-						INSERT INTO "user_details" ("id") VALUES ('user999');
+						INSERT INTO "user_details" ("id", "publickey", "privatekey", "setupcode") VALUES ('user999', 'public999', 'private999', 'setup999');
 						INSERT INTO "group_membership" ("group_id", "member_id") VALUES ('group2', 'user999')
 						""");
 			}
