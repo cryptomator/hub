@@ -133,6 +133,17 @@ public class DeviceResourceTest {
 
 		@Test
 		@Order(3)
+		@DisplayName("PUT /devices/deviceY returns 409 (creating new device with the key of deviceX conflicts)")
+		public void testCreateYWithKeyOfDeviceX() {
+			var deviceDto = new DeviceResource.DeviceDto("deviceY", "Computer 2", Device.Type.DESKTOP, "publickey1", "jwe.jwe.jwe.user1.deviceX", "user1", Instant.parse("2020-02-20T20:20:20Z"));
+
+			given().contentType(ContentType.JSON).body(deviceDto)
+					.when().put("/devices/{deviceId}", "deviceY")
+					.then().statusCode(409);
+		}
+
+		@Test
+		@Order(4)
 		@DisplayName("GET /devices/device999 returns 200")
 		public void testGet999AfterCreate() {
 			given().when().get("/devices/{deviceId}", "device999")
@@ -142,7 +153,7 @@ public class DeviceResourceTest {
 		}
 
 		@Test
-		@Order(4)
+		@Order(5)
 		@DisplayName("PUT /devices/device999 returns 201 (updating existing device)")
 		public void testUpdate1() {
 			var deviceDto = new DeviceResource.DeviceDto("device999", "Computer 999 got a new name", Device.Type.DESKTOP, "publickey999", "jwe.jwe.jwe.user1.device999", "user1", Instant.parse("2020-02-20T20:20:20Z"));
@@ -153,7 +164,7 @@ public class DeviceResourceTest {
 		}
 
 		@Test
-		@Order(5)
+		@Order(6)
 		@DisplayName("GET /devices/device999 returns 200 (with updated name)")
 		public void testGet999AfterUpdate() {
 			given().when().get("/devices/{deviceId}", "device999")
@@ -163,7 +174,7 @@ public class DeviceResourceTest {
 		}
 
 		@Test
-		@Order(6)
+		@Order(7)
 		@DisplayName("DELETE /devices/  returns 400")
 		public void testDeleteNoDeviceId() {
 			when().delete("/devices/{deviceId}", " ") //a whitespace
@@ -171,7 +182,7 @@ public class DeviceResourceTest {
 		}
 
 		@Test
-		@Order(6)
+		@Order(7)
 		@DisplayName("DELETE /devices/device0 returns 404")
 		public void testDeleteNotExisting() {
 			when().delete("/devices/{deviceId}", "device0") //
@@ -179,7 +190,7 @@ public class DeviceResourceTest {
 		}
 
 		@Test
-		@Order(6)
+		@Order(7)
 		@DisplayName("DELETE /devices/device2 returns 404")
 		public void testDeleteNotOwner() {
 			when().delete("/devices/{deviceId}", "device2") //
@@ -187,7 +198,7 @@ public class DeviceResourceTest {
 		}
 
 		@Test
-		@Order(6)
+		@Order(7)
 		@DisplayName("DELETE /devices/device999 returns 204")
 		public void testDeleteValid() {
 			when().delete("/devices/{deviceId}", "device999") //
