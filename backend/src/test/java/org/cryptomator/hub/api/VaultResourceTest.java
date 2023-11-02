@@ -217,6 +217,22 @@ public class VaultResourceTest {
 	}
 
 	@Nested
+	@DisplayName("As user2")
+	@TestSecurity(user = "User Name 2", roles = {"user"})
+	@OidcSecurity(claims = {
+			@Claim(key = "sub", value = "user2")
+	})
+	public class AsAuthorizedUser2 {
+
+		@Test
+		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/access-token returns 449, because user2 is not initialized")
+		public void testUnlock() {
+			when().get("/vaults/{vaultId}/access-token", "7E57C0DE-0000-4000-8000-000100001111")
+					.then().statusCode(449);
+		}
+	}
+
+	@Nested
 	@DisplayName("As vault admin user1")
 	@TestSecurity(user = "User Name 1", roles = {"user"})
 	@OidcSecurity(claims = {

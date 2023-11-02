@@ -14,10 +14,10 @@ VALUES
 	('group1', 'GROUP', 'Group Name 1'),
     ('group2', 'GROUP', 'Group Name 2');
 
-INSERT INTO "user_details" ("id")
+INSERT INTO "user_details" ("id", "publickey", "privatekey", "setupcode")
 VALUES
-	('user1'),
-	('user2');
+	('user1', 'public1', 'private1', 'setup1'),
+	('user2', NULL, NULL, NULL);
 
 INSERT INTO "group_details" ("id")
 VALUES

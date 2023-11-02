@@ -311,6 +311,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "403", description = "not a vault member")
 	@APIResponse(responseCode = "404", description = "unknown vault")
 	@APIResponse(responseCode = "410", description = "Vault is archived. Only returned if evenIfArchived query param is false or not set, otherwise the archived flag is ignored")
+	@APIResponse(responseCode = "449", description = "User account not yet initialized. Retry after setting up user")
 	@ActiveLicense // may throw 402
 	public String unlock(@PathParam("vaultId") UUID vaultId, @QueryParam("evenIfArchived") @DefaultValue("false") boolean ignoreArchived) {
 		var vault = Vault.<Vault>findById(vaultId); // should always be found, since @VaultRole filter would have triggered
@@ -321,6 +322,11 @@ public class VaultResource {
 		var usedSeats = EffectiveVaultAccess.countSeatOccupyingUsers();
 		if (usedSeats > license.getAvailableSeats()) {
 			throw new PaymentRequiredException("Number of effective vault users exceeds available license seats");
+		}
+
+		var user = User.<User>findById(jwt.getSubject());
+		if (user.publicKey == null) {
+			throw new ActionRequiredException("User account not initialized.");
 		}
 
 		var access = AccessToken.unlock(vaultId, jwt.getSubject());
