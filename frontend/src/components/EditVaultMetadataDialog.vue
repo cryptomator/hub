@@ -112,7 +112,7 @@ async function updateVaultMetadata() {
       throw new FormValidationFailedError();
     }
     const vault = props.vault;
-    const updatedVault = await backend.vaults.createOrUpdateVault(vault.id, vaultName.value, vaultDescription.value, vault.archived, vault.masterkey, vault.iterations, vault.salt, vault.authPublicKey, vault.authPrivateKey);
+    const updatedVault = await backend.vaults.createOrUpdateVault(vault.id, vaultName.value, vaultDescription.value, vault.archived);
     emit('updated', updatedVault);
     open.value = false;
   } catch (error) {
