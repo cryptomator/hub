@@ -96,14 +96,14 @@ defineExpose({
   show
 });
 
-const userKeyFingerprints = ref<Map<string, string>>(new Map());
+const userKeyFingerprints = ref<Map<string, string | undefined>>(new Map());
 
 onMounted(fetchData);
 
 async function fetchData() {
-  props.users.forEach(async function (user) {
+  for (const user of props.users) {
     userKeyFingerprints.value.set(user.id, await getKeyFingerprint(user.publicKey))
-  });
+  }
 }
 
 function show() {
