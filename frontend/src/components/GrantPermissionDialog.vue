@@ -24,6 +24,21 @@
                           {{ t('grantPermissionDialog.description') }}
                         </p>
                       </div>
+                      <div class="mt-2 h-48 overflow-y-auto">
+                        <ul role="list" class="mt-2 border-t border-b border-gray-200 divide-y divide-gray-200">
+                          <template v-for="member in users.values()" :key="member.id">
+                            <li class="py-3 flex flex-col">
+                              <div class="flex justify-between items-center">
+                                <div class="flex items-center">
+                                  <img :src="member.pictureUrl" alt="" class="w-8 h-8 rounded-full" />
+                                  <p class="ml-4 text-sm font-medium text-gray-900">{{ member.name }}</p>
+                                  <p class="ml-3 inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">{{ userKeyFingerprints.get(member.id)?.substring(0, 8) }}</p>
+                                </div>
+                              </div>
+                            </li>
+                          </template>
+                        </ul>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -54,9 +69,10 @@
 import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
 import { base64 } from 'rfc4648';
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { ConflictError, NotFoundError, UserDto, VaultDto } from '../common/backend';
+
 import { VaultKeys } from '../common/crypto';
 
 const { t } = useI18n({ useScope: 'global' });
@@ -79,6 +95,16 @@ const emit = defineEmits<{
 defineExpose({
   show
 });
+
+const userKeyFingerprints = ref<Map<string, string>>(new Map());
+
+onMounted(fetchData);
+
+async function fetchData() {
+  props.users.forEach(async function (user) {
+    userKeyFingerprints.value.set(user.id, await getKeyFingerprint(user.publicKey))
+  });
+}
 
 function show() {
   open.value = true;
@@ -105,4 +131,17 @@ async function giveUsersAccess(users: UserDto[]) {
     }
   }
 }
+
+async function getKeyFingerprint(key: string | undefined) {
+  if (key) {
+    const encodedKey = new TextEncoder().encode(key);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", encodedKey);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray
+      .map((b) => b.toString(16).padStart(2, "0").toUpperCase())
+      .join("");
+    return hashHex;
+  }
+}
+
 </script>
