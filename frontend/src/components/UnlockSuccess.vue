@@ -1,4 +1,6 @@
 <template>
+  <NavigationBar v-if="me != null" :me="me"/>
+
   <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
     <div v-if="me == null">
       <div v-if="onFetchError == null">
@@ -10,12 +12,8 @@
     </div>
 
     <div v-else>
-      <div class="pt-8 pb-4 shrink-0 flex items-center">
-        <img src="/logo.svg" class="h-8" alt="Logo"/>
-        <span class="font-headline font-bold text-primary ml-2 pb-px">CRYPTOMATOR HUB</span>
-      </div>
 
-      <div class="relative shadow-xl sm:rounded-2xl sm:overflow-hidden">
+      <div class="mt-8 pb-4 relative shadow-xl sm:rounded-2xl sm:overflow-hidden">
         <div class="absolute inset-0">
           <div class="absolute inset-0 bg-gradient-to-r from-primary-l1 to-primary mix-blend-multiply" />
         </div>
@@ -59,6 +57,7 @@ import { ComputedRef, computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { UserDto, VaultDto } from '../common/backend';
 import FetchError from './FetchError.vue';
+import NavigationBar from './NavigationBar.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 

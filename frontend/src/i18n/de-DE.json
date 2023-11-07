@@ -156,6 +156,7 @@
   "initialSetup.submit": "Einrichtung abschließen",
 
   "manageSetupCode.title": "Account Key",
+  "manageSetupCode.description": "Dein Account Key wird benötigt, um dich von anderen Apps oder Browsern aus anzumelden.",
   "manageSetupCode.regenerate": "Neuen Key generieren",
 
   "nav.vaults": "Tresore",
@@ -174,8 +175,8 @@
   "recoveryKeyDialog.description": "Dies ist dein Wiederherstellungsschlüssel für „{0}“. Verwahre ihn gut, er ist im Falle eines Systemausfalls deine einzige Möglichkeit, auf einen Tresor zuzugreifen.",
   "recoveryKeyDialog.recoveryKey": "Wiederherstellungsschlüssel für deinen Tresor",
 
-  "regenerateSetupCodeDialog.confirmRegenerateSetupCode.title": "Neuen Key generieren",
-  "regenerateSetupCodeDialog.confirmRegenerateSetupCode.description": "Möchtest du einen neuen Account Key generiereren? Dadurch wird der alte Key ungültig.",
+  "regenerateSetupCodeDialog.confirmRegenerateSetupCode.title": "Neuen Account Key generieren",
+  "regenerateSetupCodeDialog.confirmRegenerateSetupCode.description": "Wenn du den Verdacht hast, dass dein alter Account Key kompromittiert wurde, kannst du ihn neu generieren. Anschließend können neue Geräte nur mit dem neuen Account Key hinzugefügt werden. Deine bestehenden Geräte bleiben davon unberührt.",
   "regenerateSetupCodeDialog.saveSetupCode.title": "Account Key speichern",
   "regenerateSetupCodeDialog.saveSetupCode.description": "Vergiss nicht, diesen neuen Key zu speichern. Du benötigst ihn, um dich bei neuen Geräten anzumelden. Den alten Key kannst du gefahrlos löschen.",
   "regenerateSetupCodeDialog.saveSetupCode.setupCode": "Account Key",

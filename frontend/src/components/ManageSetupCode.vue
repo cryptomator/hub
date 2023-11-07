@@ -12,6 +12,9 @@
     <h2 class="text-base font-semibold leading-6 text-gray-900">
       {{ t('manageSetupCode.title') }}
     </h2>
+    <p class="mt-1 text-sm text-gray-500">
+      {{ t('manageSetupCode.description') }}
+    </p>
 
     <div class="mt-4 bg-white rounded-md shadow-sm flex w-full">
       <div class="rounded-none rounded-l-md px-3 py-2 ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-primary focus-within:z-10 w-full">
