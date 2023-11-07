@@ -29,7 +29,7 @@
                           <template v-for="member in users.values()" :key="member.id">
                             <li class="py-3 flex flex-col">
                               <div class="flex justify-between items-center">
-                                <div class="flex items-center">
+                                <div class="flex items-center" :title="userKeyFingerprints.get(member.id)">
                                   <img :src="member.pictureUrl" alt="" class="w-8 h-8 rounded-full" />
                                   <p class="ml-4 text-sm font-medium text-gray-900">{{ member.name }}</p>
                                   <p class="ml-3 inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">{{ userKeyFingerprints.get(member.id)?.substring(0, 8) }}</p>
