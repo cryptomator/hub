@@ -72,6 +72,7 @@ import { base64 } from 'rfc4648';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { ConflictError, NotFoundError, UserDto, VaultDto } from '../common/backend';
+import { getFingerprint } from '../common/crypto';
 
 import { VaultKeys } from '../common/crypto';
 
@@ -102,7 +103,7 @@ onMounted(fetchData);
 
 async function fetchData() {
   for (const user of props.users) {
-    userKeyFingerprints.value.set(user.id, await getKeyFingerprint(user.publicKey))
+    userKeyFingerprints.value.set(user.id, await getFingerprint(user.publicKey))
   }
 }
 
@@ -129,18 +130,6 @@ async function giveUsersAccess(users: UserDto[]) {
       const jwe = await props.vaultKeys.encryptForUser(publicKey);
       await backend.vaults.grantAccess(props.vault.id, user.id, jwe);
     }
-  }
-}
-
-async function getKeyFingerprint(key: string | undefined) {
-  if (key) {
-    const encodedKey = new TextEncoder().encode(key);
-    const hashBuffer = await crypto.subtle.digest("SHA-256", encodedKey);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray
-      .map((b) => b.toString(16).padStart(2, "0").toUpperCase())
-      .join("");
-    return hashHex;
   }
 }
 

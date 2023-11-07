@@ -186,6 +186,9 @@
   "resetUserAccountDialog.description": "Setze deinen Nutzeraccount nur zurück, wenn du deinen Account Key verloren hast. Du wirst Zugriff auf alle Tresore verlieren, so dass deren Eigentümer dir erneut Zugriff gewähren müssen.",
   "resetUserAccountDialog.submit": "Account zurücksetzen",
 
+  "userkeyFingerprint.title": "User Key Fingerprint",
+  "userkeyFingerprint.description": "Dein User Key Fingerprint kann zur Verifizierung deiner Identität während der Aktualisierung der Tresor-Berechtigung dienen.",
+
   "userProfile.title": "Profil",
   "userProfile.actions.manageAccount": "Account verwalten",
   "userProfile.actions.changeLanguage": "Sprache ändern",
