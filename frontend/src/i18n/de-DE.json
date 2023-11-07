@@ -156,6 +156,7 @@
   "initialSetup.submit": "Einrichtung abschließen",
 
   "manageSetupCode.title": "Account Key",
+  "manageSetupCode.description": "Dein Account Key wird benötigt, um dich von anderen Apps oder Browsern aus anzumelden.",
   "manageSetupCode.regenerate": "Neuen Key generieren",
 
   "nav.vaults": "Tresore",
