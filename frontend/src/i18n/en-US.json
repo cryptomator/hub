@@ -156,7 +156,7 @@
   "initialSetup.submit": "Finish Setup",
 
   "manageSetupCode.title": "Account Key",
-  "manageSetupCode.description": "Your Account Key is required to login from other apps or browsers",
+  "manageSetupCode.description": "Your Account Key is required to login from other apps or browsers.",
   "manageSetupCode.regenerate": "Regenerate Key",
 
   "nav.vaults": "Vaults",
