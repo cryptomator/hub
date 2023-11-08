@@ -85,15 +85,15 @@
 
               <div class="relative flex justify-center text-left mt-5 sm:mt-6">
                 <div class="flex h-5 items-center">
-                  <input id="confirmSetupKey" v-model="confirmSetupKey" name="confirmSetupKey" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary" required>
+                  <input id="confirmSetupCode" v-model="confirmSetupCode" name="confirmSetupCode" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary" required>
                 </div>
                 <div class="ml-3 text-sm">
-                  <label for="confirmSetupKey" class="font-medium text-gray-700">{{ t('initialSetup.createUserKey.confirmAccountKey') }}</label>
+                  <label for="confirmSetupCode" class="font-medium text-gray-700">{{ t('initialSetup.createUserKey.confirmAccountKey') }}</label>
                 </div>
               </div>
 
               <div class="mt-5 sm:mt-6">
-                <button type="submit" :disabled="!confirmSetupKey || processing" class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:primary focus:ring-offset-2 sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
+                <button type="submit" :disabled="!confirmSetupCode || processing" class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:primary focus:ring-offset-2 sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
                   {{ t('initialSetup.submit') }}
                 </button>
                 <div v-if="onCreateError != null">
@@ -229,7 +229,7 @@ const deviceNameField = ref<HTMLSpanElement>();
 const deviceNameFieldIsActive = ref(false);
 const copiedSetupCode = ref(false);
 const debouncedCopyFinish = debounce(() => copiedSetupCode.value = false, 2000);
-const confirmSetupKey = ref(false);
+const confirmSetupCode = ref(false);
 const resettingUserAccount = ref(false);
 const resetUserAccountDialog = ref<typeof ResetUserAccountDialog>();
 
