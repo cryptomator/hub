@@ -36,7 +36,7 @@
       </dl>
     </div>
 
-    <div v-if="role == 'OWNER'" class="space-y-6">
+    <div v-if="role == 'OWNER' && !vaultRecoveryRequired" class="space-y-6">
       <div>
         <h3 class="font-medium text-gray-900">{{ t('vaultDetails.sharedWith.title') }}</h3>
         <ul role="list" class="mt-2 border-t border-b border-gray-200 divide-y divide-gray-200">
@@ -151,15 +151,31 @@
         {{ t('vaultDetails.claimOwnership') }}
       </button>
     </div>
+
+    <div v-else-if="!vault.archived && vaultRecoveryRequired" class="mt-2 flex flex-col gap-2">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <ExclamationTriangleIcon class="mt-1 h-5 w-5 text-yellow-400" aria-hidden="true" />
+        </div>
+        <h3 class="ml-3 font-medium text-gray-900">{{ t('vaultDetails.recoverVault.title') }}</h3>
+      </div>
+      <p class="text-sm text-gray-500">{{ t('vaultDetails.recoverVault.description') }}</p>
+
+      <button type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white  hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showRecoverVaultDialog()">
+        {{ t('vaultDetails.recoverVault') }}
+      </button>
+    </div>
+
   </div>
 
   <ClaimVaultOwnershipDialog v-if="claimingVaultOwnership && vault != null" ref="claimVaultOwnershipDialog" :vault="vault" @action="provedOwnership" @close="claimingVaultOwnership = false" />
-  <GrantPermissionDialog v-if="grantingPermission && vault != null && vaultKeys != null" ref="grantPermissionDialog" :vault="vault" :users="usersRequiringAccessGrant" :vault-keys="vaultKeys" @close="grantingPermission = false" @permission-granted="permissionGranted()" />
-  <EditVaultMetadataDialog v-if="editingVaultMetadata && vault != null && vaultKeys != null" ref="editVaultMetadataDialog" :vault="vault" @close="editingVaultMetadata = false" @updated="v => refreshVault(v)" />
-  <DownloadVaultTemplateDialog v-if="downloadingVaultTemplate && vault != null && vaultKeys != null" ref="downloadVaultTemplateDialog" :vault="vault" :vault-keys="vaultKeys" @close="downloadingVaultTemplate = false" />
-  <RecoveryKeyDialog v-if="showingRecoveryKey && vault != null && vaultKeys != null" ref="recoveryKeyDialog" :vault="vault" :vault-keys="vaultKeys" @close="showingRecoveryKey = false" />
-  <ArchiveVaultDialog v-if="archivingVault && vault != null" ref="archiveVaultDialog" :vault="vault" @close="archivingVault = false" @archived="v => refreshVault(v)" />
+  <GrantPermissionDialog v-if="grantingPermission && vault != null && vaultKeys != null && !vaultRecoveryRequired" ref="grantPermissionDialog" :vault="vault" :users="usersRequiringAccessGrant" :vault-keys="vaultKeys" @close="grantingPermission = false" @permission-granted="permissionGranted()" />
+  <EditVaultMetadataDialog v-if="editingVaultMetadata && vault != null && vaultKeys != null && !vaultRecoveryRequired" ref="editVaultMetadataDialog" :vault="vault" @close="editingVaultMetadata = false" @updated="v => refreshVault(v)" />
+  <DownloadVaultTemplateDialog v-if="downloadingVaultTemplate && vault != null && vaultKeys != null && !vaultRecoveryRequired" ref="downloadVaultTemplateDialog" :vault="vault" :vault-keys="vaultKeys" @close="downloadingVaultTemplate = false" />
+  <RecoveryKeyDialog v-if="showingRecoveryKey && vault != null && vaultKeys != null && !vaultRecoveryRequired" ref="recoveryKeyDialog" :vault="vault" :vault-keys="vaultKeys" @close="showingRecoveryKey = false" />
+  <ArchiveVaultDialog v-if="archivingVault && vault != null && !vaultRecoveryRequired" ref="archiveVaultDialog" :vault="vault" @close="archivingVault = false" @archived="v => refreshVault(v)" />
   <ReactivateVaultDialog v-if="reactivatingVault && vault != null" ref="reactivateVaultDialog" :vault="vault" @close="reactivatingVault = false" @reactivated="v => refreshVault(v)" />
+  <RecoverVaultDialog v-if="vaultRecoveryRequired && vault != null" ref="recoverVaultDialog" :vault="vault" :me="me!" @close="recoverVault = false" @recovered="reloadView()" />
 </template>
 
 <script setup lang="ts">
@@ -169,7 +185,7 @@ import { PlusSmallIcon } from '@heroicons/vue/24/solid';
 import { base64 } from 'rfc4648';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { AuthorityDto, ConflictError, MemberDto, NotFoundError, PaymentRequiredError, UserDto, VaultDto, VaultRole } from '../common/backend';
+import backend, { AuthorityDto, ConflictError, ForbiddenError, MemberDto, NotFoundError, PaymentRequiredError, UserDto, VaultDto, VaultRole } from '../common/backend';
 import { BrowserKeys, UserKeys, VaultKeys } from '../common/crypto';
 import { JWT, JWTHeader } from '../common/jwt';
 import ArchiveVaultDialog from './ArchiveVaultDialog.vue';
@@ -179,6 +195,7 @@ import EditVaultMetadataDialog from './EditVaultMetadataDialog.vue';
 import FetchError from './FetchError.vue';
 import GrantPermissionDialog from './GrantPermissionDialog.vue';
 import ReactivateVaultDialog from './ReactivateVaultDialog.vue';
+import RecoverVaultDialog from './RecoverVaultDialog.vue';
 import RecoveryKeyDialog from './RecoveryKeyDialog.vue';
 import SearchInputGroup from './SearchInputGroup.vue';
 
@@ -190,7 +207,8 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  vaultUpdated: [updatedVault: VaultDto]
+  vaultUpdated: [updatedVault: VaultDto],
+  reloadVaultDetails: [updatedVault: VaultDto]
 }>();
 
 const onFetchError = ref<Error | null>();
@@ -212,6 +230,8 @@ const archivingVault = ref(false);
 const archiveVaultDialog = ref<typeof ArchiveVaultDialog>();
 const reactivatingVault = ref(false);
 const reactivateVaultDialog = ref<typeof ReactivateVaultDialog>();
+const recoverVault = ref(false);
+const recoverVaultDialog = ref<typeof RecoverVaultDialog>();
 const vault = ref<VaultDto>();
 const vaultKeys = ref<VaultKeys>();
 const members = ref<Map<string, MemberDto>>(new Map());
@@ -219,6 +239,8 @@ const usersRequiringAccessGrant = ref<UserDto[]>([]);
 const claimVaultOwnershipDialog = ref<typeof ClaimVaultOwnershipDialog>();
 const claimingVaultOwnership = ref(false);
 const me = ref<UserDto>();
+
+const vaultRecoveryRequired = ref(false);
 
 onMounted(fetchData);
 
@@ -237,10 +259,20 @@ async function fetchData() {
 }
 
 async function fetchOwnerData() {
-  const vaultKeyJwe = await backend.vaults.accessToken(props.vaultId, true);
-  vaultKeys.value = await loadVaultKeys(vaultKeyJwe);
-  (await backend.vaults.getMembers(props.vaultId)).forEach(member => members.value.set(member.id, member));
-  usersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
+    try {
+      const vaultKeyJwe = await backend.vaults.accessToken(props.vaultId, true);
+      vaultKeys.value = await loadVaultKeys(vaultKeyJwe);
+      (await backend.vaults.getMembers(props.vaultId)).forEach(member => members.value.set(member.id, member));
+      usersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
+    } catch(error) {
+      if (error instanceof ForbiddenError) {
+        vaultRecoveryRequired.value = true;
+      } else {
+        console.error('Retrieving ownership failed.', error);
+        onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
+      }
+    }
+
 }
 
 async function loadVaultKeys(vaultKeyJwe: string): Promise<VaultKeys> {
@@ -372,6 +404,11 @@ function showReactivateVaultDialog() {
   nextTick(() => reactivateVaultDialog.value?.show());
 }
 
+function showRecoverVaultDialog() {
+  recoverVault.value = true;
+  nextTick(() => recoverVaultDialog.value?.show());
+}
+
 function permissionGranted() {
   usersRequiringAccessGrant.value = [];
 }
@@ -379,6 +416,11 @@ function permissionGranted() {
 function refreshVault(updatedVault: VaultDto) {
   vault.value = updatedVault;
   emit('vaultUpdated', updatedVault);
+}
+
+async function reloadView() {
+  await fetchOwnerData()
+  vaultRecoveryRequired.value = false;
 }
 
 async function searchAuthority(query: string): Promise<AuthorityDto[]> {
@@ -421,4 +463,5 @@ async function removeMember(memberId: string) {
     onUpdateVaultMembershipError.value[memberId] = error instanceof Error ? error : new Error('Unknown Error');
   }
 }
+
 </script>

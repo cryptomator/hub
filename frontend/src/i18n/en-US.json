@@ -175,6 +175,13 @@
   "recoveryKeyDialog.description": "This is your recovery key for \"{0}\". Keep it safe, it is your only chance to regain access to a vault in case of system outage.",
   "recoveryKeyDialog.recoveryKey": "Recovery Key of Your Vault",
 
+  "recoverVaultDialog.title": "Vault Recovery",
+  "recoverVaultDialog.description": "Type in the Recover Key of this vault to regain access to it.",
+  "recoverVaultDialog.recoveryKey": "Recover Key",
+  "recoverVaultDialog.submit": "Recover Vault",
+  "recoverVaultDialog.error.formValidationFailed": "Recover Key must not be empty",
+  "recoverVaultDialog.error.invalidRecoveryKey": "Invalid Recover Key",
+
   "regenerateSetupCodeDialog.confirmRegenerateSetupCode.title": "Regenerate Account Key",
   "regenerateSetupCodeDialog.confirmRegenerateSetupCode.description": "If you suspect that your old Account Key has been compromised, you can regenerate it. You will then only be able to add new devices with the new Account Key. Your existing devices will remain intact.",
   "regenerateSetupCodeDialog.saveSetupCode.title": "Save Account Key",
@@ -209,6 +216,9 @@
   "vaultDetails.actions.archiveVault": "Archive Vault",
   "vaultDetails.actions.reactivateVault": "Reactivate Vault",
   "vaultDetails.error.paymentRequired": "Your Cryptomator Hub license has exceeded the number of available seats or has expired. Please inform a Hub administrator to upgrade or renew the license.",
+  "vaultDetails.recoverVault.title": "You have Reset Your Account!",
+  "vaultDetails.recoverVault.description": "To regain access to the vault, you must restore your access using the recovery key or another owner must update the access permissions.",
+  "vaultDetails.recoverVault": "Recover Vault Access",
 
   "vaultList.title": "Vaults",
   "vaultList.empty.title": "No vaults",
