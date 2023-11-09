@@ -177,6 +177,7 @@
       "clientId": "cryptomatorhub-cli",
       "name": "Cryptomator Hub CLI",
       "clientAuthenticatorType": "client-secret",
+      "secret": "top-secret",
       "standardFlowEnabled": false,
       "serviceAccountsEnabled": true,
       "publicClient": false,
