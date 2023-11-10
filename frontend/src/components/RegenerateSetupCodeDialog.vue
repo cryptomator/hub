@@ -17,11 +17,11 @@
                     </div>
                     <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
                       <DialogTitle as="h3" class="text-lg leading-6 font-medium text-gray-900">
-                        {{ t('regenerateSetupCodeDialog.confirmRegenerateSetupCode.title') }}
+                        {{ t('regenerateAccountKeyDialog.confirmRegenerateAccountKey.title') }}
                       </DialogTitle>
                       <div class="mt-2">
                         <p class="text-sm text-gray-500">
-                          {{ t('regenerateSetupCodeDialog.confirmRegenerateSetupCode.description') }}
+                          {{ t('regenerateAccountKeyDialog.confirmRegenerateAccountKey.description') }}
                         </p>
                       </div>
                     </div>
@@ -29,7 +29,7 @@
                 </div>
                 <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse sm:items-center">
                   <button type="submit" :disabled="processing" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:hover:bg-red-600 disabled:cursor-not-allowed" >
-                    {{ t('regenerateSetupCodeDialog.submit') }}
+                    {{ t('regenerateAccountKeyDialog.submit') }}
                   </button>
                   <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" @click="open = false">
                     {{ t('common.close') }}
@@ -48,16 +48,16 @@
                     </div>
                     <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
                       <DialogTitle as="h3" class="text-lg leading-6 font-medium text-gray-900">
-                        {{ t('regenerateSetupCodeDialog.saveSetupCode.title') }}
+                        {{ t('regenerateAccountKeyDialog.saveAccountKey.title') }}
                       </DialogTitle>
                       <div class="mt-2">
                         <p class="text-sm text-gray-500">
-                          {{ t('regenerateSetupCodeDialog.saveSetupCode.description') }}
+                          {{ t('regenerateAccountKeyDialog.saveAccountKey.description') }}
                         </p>
                       </div>
                       <div class="relative mt-3">
                         <div class="overflow-hidden rounded-lg border border-gray-300 shadow-sm focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
-                          <label for="setupCode" class="sr-only">{{ t('regenerateSetupCodeDialog.saveSetupCode.setupCode') }}</label>
+                          <label for="setupCode" class="sr-only">{{ t('regenerateAccountKeyDialog.saveAccountKey.accountKey') }}</label>
                           <textarea id="setupCode" v-model="setupCode" rows="1" name="setupCode" class="block w-full resize-none border-0 py-3 font-mono text-center focus:ring-0" readonly />
   
                           <!-- Spacer element to match the height of the toolbar -->

@@ -44,7 +44,22 @@ public class KeycloakRemoteUserProvider implements RemoteUserProvider {
 			users.addAll(currentRequestedUsers);
 		} while (currentRequestedUsers.size() == MAX_COUNT_PER_REQUEST);
 
+		var cliUser = cryptomatorCliUser(realm);
+		cliUser.ifPresent(users::add);
+
 		return users;
+	}
+
+	//visible for testing
+	Optional<User> cryptomatorCliUser(RealmResource realm) {
+		var clients = realm.clients().findByClientId("cryptomatorhub-cli");
+		if (clients.isEmpty()) {
+			return Optional.empty();
+		}
+		var clientId = clients.get(0).getId();
+		var client = realm.clients().get(clientId);
+		var clientUser = client.getServiceAccountUser();
+		return Optional.of(mapToUser(clientUser));
 	}
 
 	private Predicate<UserRepresentation> notSyncerUser() {
