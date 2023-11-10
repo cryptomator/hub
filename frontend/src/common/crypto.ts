@@ -437,3 +437,15 @@ export class BrowserKeys {
     return base64.stringify(publicKey);
   }
 }
+
+export async function getFingerprint(key: string | undefined) {
+  if (key) {
+    const encodedKey = new TextEncoder().encode(key);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", encodedKey);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray
+      .map((b) => b.toString(16).padStart(2, "0").toUpperCase())
+      .join("");
+    return hashHex;
+  }
+}
