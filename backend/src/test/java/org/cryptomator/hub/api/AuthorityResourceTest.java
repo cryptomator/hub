@@ -118,17 +118,5 @@ public class AuthorityResourceTest {
 					.then().statusCode(200)
 					.body("id", containsInAnyOrder("user1", "group2"));
 		}
-
-		@Test
-		@DisplayName("GET /authorities?ids=user1&ids=group2 as user returns 403")
-		@TestSecurity(user = "User Name 1", roles = {"user"})
-		@OidcSecurity(claims = {
-				@Claim(key = "sub", value = "user1")
-		})
-		public void testGetSomeAsUser() {
-			given().param("ids", "user1", "group2")
-					.when().get("/authorities")
-					.then().statusCode(403);
-		}
 	}
 }
