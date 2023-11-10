@@ -30,7 +30,7 @@
 
               <div class="relative mt-5 sm:mt-6">
                 <div class="overflow-hidden rounded-lg border border-gray-300 shadow-sm focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
-                  <textarea id="setupCode" v-model="setupCode" :aria-label="t('initialSetup.setupCode')" rows="1" name="setupCode" class="block w-full resize-none border-0 py-3 font-mono text-lg text-center focus:ring-0" readonly />
+                  <textarea id="setupCode" v-model="setupCode" :aria-label="t('initialSetup.accountKey')" rows="1" name="setupCode" class="block w-full resize-none border-0 py-3 font-mono text-lg text-center focus:ring-0" readonly />
                   <div class="py-2" aria-hidden="true">
                     <div class="h-9" />
                   </div>
@@ -54,7 +54,7 @@
                     <KeyIcon class="h-6 w-6 text-primary" aria-hidden="true" />
                   </div>
                   <p class="text-gray-600">
-                    {{ t('initialSetup.createUserKey.details.setupCode') }}
+                    {{ t('initialSetup.createUserKey.details.accountKey') }}
                   </p>
                 </div>
 
@@ -85,15 +85,15 @@
 
               <div class="relative flex justify-center text-left mt-5 sm:mt-6">
                 <div class="flex h-5 items-center">
-                  <input id="confirmSetupKey" v-model="confirmSetupKey" name="confirmSetupKey" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary" required>
+                  <input id="confirmSetupCode" v-model="confirmSetupCode" name="confirmSetupCode" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary" required>
                 </div>
                 <div class="ml-3 text-sm">
-                  <label for="confirmSetupKey" class="font-medium text-gray-700">{{ t('initialSetup.createUserKey.confirmSetupCode') }}</label>
+                  <label for="confirmSetupCode" class="font-medium text-gray-700">{{ t('initialSetup.createUserKey.confirmAccountKey') }}</label>
                 </div>
               </div>
 
               <div class="mt-5 sm:mt-6">
-                <button type="submit" :disabled="!confirmSetupKey || processing" class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:primary focus:ring-offset-2 sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
+                <button type="submit" :disabled="!confirmSetupCode || processing" class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:primary focus:ring-offset-2 sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
                   {{ t('initialSetup.submit') }}
                 </button>
                 <div v-if="onCreateError != null">
@@ -123,9 +123,9 @@
                 </p>
               </div>
               <div class="mt-5 sm:mt-6 text-left">      
-                <label for="setupCode" class="block text-sm font-medium text-gray-700">{{ t('initialSetup.setupCode') }}</label>
+                <label for="setupCode" class="block text-sm font-medium text-gray-700">{{ t('initialSetup.accountKey') }}</label>
                 <input id="setupCode" v-model="setupCode" v-focus type="text" name="setupCode" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" aria-describedby="setupCodeDescription" />
-                <p id="setupCodeDescription" class="mt-2 text-sm text-gray-500">{{ t('initialSetup.recoverUserKey.setupCode.description') }}</p>
+                <p id="setupCodeDescription" class="mt-2 text-sm text-gray-500">{{ t('initialSetup.recoverUserKey.accountKey.description') }}</p>
               </div>
               <div class="mt-5 sm:mt-6 text-left">      
                 <label for="deviceName" class="block text-sm font-medium text-gray-700">{{ t('initialSetup.recoverUserKey.deviceName') }}</label>
@@ -137,7 +137,7 @@
                   {{ t('initialSetup.submit') }}
                 </button>
                 <div class="text-sm text-red-900 mt-2">
-                  <p v-if="onRecoverError instanceof UnwrapKeyError">{{ t('initialSetup.recoverUserKey.error.wrongSetupCode') }}</p>
+                  <p v-if="onRecoverError instanceof UnwrapKeyError">{{ t('initialSetup.recoverUserKey.error.wrongAccountKey') }}</p>
                   <p v-else-if="onRecoverError != null">{{ t('common.unexpectedError', [onRecoverError.message]) }}</p>
                 </div>
               </div>
@@ -146,9 +146,9 @@
         </div>
       </form>
 
-      <i18n-t keypath="initialSetup.recoverUserKey.lostSetupCode" scope="global" tag="p" class="mt-10 text-center text-sm text-gray-500">
+      <i18n-t keypath="initialSetup.recoverUserKey.lostAccountKey" scope="global" tag="p" class="mt-10 text-center text-sm text-gray-500">
         <a role="button" tabindex="0" class="font-medium leading-6 text-red-600 hover:text-red-900" @click="showResetUserAccountDialog()">
-          {{ t('initialSetup.recoverUserKey.lostSetupCode.resetUserAccount') }}
+          {{ t('initialSetup.recoverUserKey.lostAccountKey.resetUserAccount') }}
         </a>
       </i18n-t>
     </div>
@@ -229,7 +229,7 @@ const deviceNameField = ref<HTMLSpanElement>();
 const deviceNameFieldIsActive = ref(false);
 const copiedSetupCode = ref(false);
 const debouncedCopyFinish = debounce(() => copiedSetupCode.value = false, 2000);
-const confirmSetupKey = ref(false);
+const confirmSetupCode = ref(false);
 const resettingUserAccount = ref(false);
 const resetUserAccountDialog = ref<typeof ResetUserAccountDialog>();
 
