@@ -21,7 +21,7 @@
     <div>
       <h3 class="font-medium text-gray-900">{{ t('vaultDetails.description.header') }}</h3>
       <div class="mt-2 flex items-center justify-between">
-        <p v-if="vault.description.length > 0" class="text-sm text-gray-500">{{ vault.description }}</p>
+        <p v-if="vault.description && vault.description.length > 0" class="text-sm text-gray-500">{{ vault.description }}</p>
         <p v-else class="text-sm text-gray-500 italic">{{ t('vaultDetails.description.empty') }}</p>
       </div>
     </div>

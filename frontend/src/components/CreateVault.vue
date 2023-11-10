@@ -220,7 +220,7 @@ const onDownloadTemplateError = ref<Error | null>(null);
 const state = ref(State.Initial);
 const processing = ref(false);
 const vaultName = ref('');
-const vaultDescription = ref('');
+const vaultDescription = ref<string | undefined>();
 const copiedRecoveryKey = ref(false);
 const debouncedCopyFinish = debounce(() => copiedRecoveryKey.value = false, 2000);
 const confirmRecoveryKey = ref(false);
@@ -294,7 +294,7 @@ async function createVault() {
     const vaultId = crypto.randomUUID();
     vaultConfig.value = await VaultConfig.create(vaultId, vaultKeys.value);
     const ownerJwe = await vaultKeys.value.encryptForUser(base64.parse(owner.publicKey));
-    await backend.vaults.createOrUpdateVault(vaultId, vaultName.value, vaultDescription.value, false);
+    await backend.vaults.createOrUpdateVault(vaultId, vaultName.value, false, vaultDescription.value);
     await backend.vaults.grantAccess(vaultId, owner.id, ownerJwe);
     state.value = State.Finished;
   } catch (error) {

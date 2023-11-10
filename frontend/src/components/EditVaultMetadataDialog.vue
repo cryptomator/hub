@@ -84,7 +84,7 @@ const form = ref<HTMLFormElement>();
 const onUpdateVaultMetadataError = ref<Error|null>();
 
 const vaultName = ref('');
-const vaultDescription = ref('');
+const vaultDescription = ref<string | undefined>();
 
 const props = defineProps<{
   vault: VaultDto
@@ -112,7 +112,7 @@ async function updateVaultMetadata() {
       throw new FormValidationFailedError();
     }
     const vault = props.vault;
-    const updatedVault = await backend.vaults.createOrUpdateVault(vault.id, vaultName.value, vaultDescription.value, vault.archived);
+    const updatedVault = await backend.vaults.createOrUpdateVault(vault.id, vaultName.value, vault.archived, vaultDescription.value);
     emit('updated', updatedVault);
     open.value = false;
   } catch (error) {

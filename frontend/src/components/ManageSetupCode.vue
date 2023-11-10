@@ -10,15 +10,15 @@
   
   <div v-else>
     <h2 class="text-base font-semibold leading-6 text-gray-900">
-      {{ t('manageSetupCode.title') }}
+      {{ t('manageAccountKey.title') }}
     </h2>
     <p class="mt-1 text-sm text-gray-500">
-      {{ t('manageSetupCode.description') }}
+      {{ t('manageAccountKey.description') }}
     </p>
 
     <div class="mt-4 bg-white rounded-md shadow-sm flex w-full">
       <div class="rounded-none rounded-l-md px-3 py-2 ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-primary focus-within:z-10 w-full">
-        <label for="setupCode" class="sr-only">{{ t('manageSetupCode.title') }}</label>
+        <label for="setupCode" class="sr-only">{{ t('manageAccountKey.title') }}</label>
         <input id="setupCode" v-model="setupCode" :type="setupCodeInputType" name="setupCode" class="block w-full border-0 p-0 text-gray-900 font-mono text-lg placeholder:text-gray-400 focus:ring-0" readonly />
       </div>
       <button type="button" class="relative -ml-px inline-flex items-center gap-x-1.5 px-4 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50" @click="toggleSetupCodeVisibility()">
@@ -36,7 +36,7 @@
 
     <div class="flex justify-end mt-4">
       <button type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showRegenerateSetupCodeDialog()">
-        {{ t('manageSetupCode.regenerate') }}
+        {{ t('manageAccountKey.regenerate') }}
       </button>
     </div>
   </div>
