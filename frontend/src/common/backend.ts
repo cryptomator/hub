@@ -238,8 +238,11 @@ class VaultService {
   }
 
   public async getUsersRequiringAccessGrant(vaultId: string): Promise<UserDto[]> {
-    return axiosAuth.get(`/vaults/${vaultId}/users-requiring-access-grant`)
-      .then(response => response.data).catch(err => rethrowAndConvertIfExpected(err, 403));
+    return axiosAuth.get<UserDto[]>(`/vaults/${vaultId}/users-requiring-access-grant`)
+      .then(response => {
+        return response.data.map(dto => UserDto.copy(dto));
+      })
+      .catch(err => rethrowAndConvertIfExpected(err, 403));
   }
 
   public async createOrUpdateVault(vaultId: string, name: string, archived: boolean, description?: string): Promise<VaultDto> {

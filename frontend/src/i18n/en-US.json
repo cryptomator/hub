@@ -186,6 +186,9 @@
   "resetUserAccountDialog.description": "Only reset your account if you've lost your Account Key. You will lose access to all your vaults and the vault owner(s) will have to grant you access again.",
   "resetUserAccountDialog.submit": "Reset Account",
 
+  "userkeyFingerprint.title": "User Key Fingerprint",
+  "userkeyFingerprint.description": "Your User Key Fingerprint can be used to verify your identity when updating the vault permission.",
+
   "userProfile.title": "Profile",
   "userProfile.actions.manageAccount": "Manage Account",
   "userProfile.actions.changeLanguage": "Change Language",

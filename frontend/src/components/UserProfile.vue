@@ -54,6 +54,7 @@
       <div class="grid grid-cols-1 gap-8 lg:col-span-3">
         <ManageSetupCode />
         <DeviceList />
+        <UserkeyFingerprint :user-public-key="me.publicKey"/>
       </div>
     </div>
   </div>
@@ -65,11 +66,13 @@ import { ArrowTopRightOnSquareIcon, CheckIcon, ChevronUpDownIcon, LanguageIcon }
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { UserDto, VersionDto } from '../common/backend';
+
 import config from '../common/config';
 import { Locale } from '../i18n';
 import DeviceList from './DeviceList.vue';
 import FetchError from './FetchError.vue';
 import ManageSetupCode from './ManageSetupCode.vue';
+import UserkeyFingerprint from './UserkeyFingerprint.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -98,4 +101,5 @@ async function fetchData() {
 function openKeycloakUserAccount() {
   window.open(keycloakUserAccountURL.value, '_blank');
 }
+
 </script>
