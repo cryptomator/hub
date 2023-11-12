@@ -217,32 +217,15 @@ public class VaultResource {
 	}
 
 	@DELETE
-	@Path("/{vaultId}/users/{userId}")
+	@Path("/{vaultId}/authority/{authorityId}")
 	@RolesAllowed("user")
 	@VaultRole(VaultAccess.Role.OWNER) // may throw 403
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
-	@Operation(summary = "remove a member from this vault", description = "revokes the given user's access rights from this vault. If the given user is no member, the request is a no-op.")
-	@APIResponse(responseCode = "204", description = "member removed")
+	@Operation(summary = "remove an authority from this vault", description = "revokes the given authority's access rights from this vault. If the given authority is no member, the request is a no-op.")
+	@APIResponse(responseCode = "204", description = "authority removed")
 	@APIResponse(responseCode = "403", description = "not a vault owner")
-	public Response removeUser(@PathParam("vaultId") UUID vaultId, @PathParam("userId") @ValidId String userId) {
-		return removeAuthority(vaultId, userId);
-	}
-
-	@DELETE
-	@Path("/{vaultId}/groups/{groupId}")
-	@RolesAllowed("user")
-	@VaultRole(VaultAccess.Role.OWNER) // may throw 403
-	@Transactional
-	@Produces(MediaType.APPLICATION_JSON)
-	@Operation(summary = "remove a group from this vault", description = "revokes the given group's access rights from this vault. If the given group is no member, the request is a no-op.")
-	@APIResponse(responseCode = "204", description = "member removed")
-	@APIResponse(responseCode = "403", description = "not a vault owner")
-	public Response removeGroup(@PathParam("vaultId") UUID vaultId, @PathParam("groupId") @ValidId String groupId) {
-		return removeAuthority(vaultId, groupId);
-	}
-
-	private Response removeAuthority(UUID vaultId, String authorityId) {
+	public Response removeAuthority(@PathParam("vaultId") UUID vaultId, @PathParam("authorityId") @ValidId String authorityId) {
 		if (VaultAccess.deleteById(new VaultAccess.Id(vaultId, authorityId))) {
 			AuditEventVaultMemberRemove.log(jwt.getSubject(), vaultId, authorityId);
 			return Response.status(Response.Status.NO_CONTENT).build();
