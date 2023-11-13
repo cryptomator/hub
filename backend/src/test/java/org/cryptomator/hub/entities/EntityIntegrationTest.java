@@ -25,12 +25,12 @@ public class EntityIntegrationTest {
 	@TestTransaction
 	@DisplayName("Removing a User cascades to Access")
 	public void removingUserCascadesToAccess() throws SQLException {
-		try (var s = dataSource.getConnection().createStatement()) {
+		try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 			// test data will be removed via @TestTransaction
 			s.execute("""
 					INSERT INTO "authority" ("id", "type", "name") VALUES ('user999', 'USER', 'User 999');
 					INSERT INTO "user_details" ("id") VALUES ('user999');
-					INSERT INTO "access_token" ("user_id", "vault_id", "vault_masterkey") VALUES ('user999', '7E57C0DE-0000-4000-8000-000100001111', 'jwe4');
+					INSERT INTO "access_token" ("user_id", "vault_id", "vault_masterkey") VALUES ('user999', '7E57C0DE-0000-4000-8000-000100001111', 'jwe.jwe.jwe.vault1.user999');
 					""");
 		}
 

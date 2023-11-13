@@ -98,7 +98,7 @@ public class DeviceResourceTest {
 		@Order(2)
 		@DisplayName("PUT /devices/device999 returns 201 (creating new device)")
 		public void testCreate999() throws SQLException {
-			try (var s = dataSource.getConnection().createStatement()) {
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
 						INSERT INTO "device_legacy" ("id", "owner_id", "name", "type", "publickey", "creation_time")
 						VALUES
@@ -112,7 +112,7 @@ public class DeviceResourceTest {
 					.when().put("/devices/{deviceId}", "device999")
 					.then().statusCode(201);
 
-			try (var s = dataSource.getConnection().createStatement()) {
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				var rs = s.executeQuery("""
 						SELECT * FROM "device_legacy" WHERE "id" = 'device999';
 						""");

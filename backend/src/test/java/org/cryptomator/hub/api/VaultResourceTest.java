@@ -314,7 +314,7 @@ public class VaultResourceTest {
 		@Test
 		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100001111/access-tokens returns 404 for [user998, user999, user666]")
 		public void testGrantAccess0() throws SQLException {
-			try (var s = dataSource.getConnection().createStatement()) {
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
 						INSERT INTO "authority" ("id", "type", "name") VALUES ('user998', 'USER', 'User 998');
 						INSERT INTO "authority" ("id", "type", "name") VALUES ('user999', 'USER', 'User 999');
@@ -329,7 +329,7 @@ public class VaultResourceTest {
 					.when().post("/vaults/{vaultId}/access-tokens/", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(404);
 
-			try (var s = dataSource.getConnection().createStatement()) {
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
 						DELETE FROM "authority" WHERE "id" = 'user998';
 						DELETE FROM "authority" WHERE "id" = 'user999';
@@ -340,7 +340,7 @@ public class VaultResourceTest {
 		@Test
 		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100001111/access-tokens returns 200 for [user998, user999]")
 		public void testGrantAccess1() throws SQLException {
-			try (var s = dataSource.getConnection().createStatement()) {
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
 						INSERT INTO "authority" ("id", "type", "name") VALUES ('user998', 'USER', 'User 998');
 						INSERT INTO "authority" ("id", "type", "name") VALUES ('user999', 'USER', 'User 999');
@@ -355,7 +355,7 @@ public class VaultResourceTest {
 					.when().post("/vaults/{vaultId}/access-tokens/", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(200);
 
-			try (var s = dataSource.getConnection().createStatement()) {
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
 						DELETE FROM "authority" WHERE "id" = 'user998';
 						DELETE FROM "authority" WHERE "id" = 'user999';
@@ -451,7 +451,7 @@ public class VaultResourceTest {
 		@Order(5)
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100002222/users-requiring-access-grant does contains user2 via group membership")
 		public void testGetUsersRequiringAccess1() throws SQLException {
-			try (var s = dataSource.getConnection().createStatement()) {
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
 						UPDATE
 						"user_details" SET publickey='public2', privatekey='private2', setupcode='setup2'
@@ -463,7 +463,7 @@ public class VaultResourceTest {
 					.then().statusCode(200)
 					.body("id", hasItems("user2"));
 
-			try (var s = dataSource.getConnection().createStatement()) {
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
 						UPDATE
 						"user_details" SET publickey=NULL, privatekey=NULL, setupcode=NULL
@@ -493,7 +493,7 @@ public class VaultResourceTest {
 		@Order(10)
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100002222/users-requiring-access-grant contains user2")
 		public void testGetUsersRequiringAccess2() throws SQLException {
-			try (var s = dataSource.getConnection().createStatement()) {
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
 						UPDATE
 						"user_details" SET publickey='public2', privatekey='private2', setupcode='setup2'
@@ -505,7 +505,7 @@ public class VaultResourceTest {
 					.then().statusCode(200)
 					.body("id", hasItems("user2"));
 
-			try (var s = dataSource.getConnection().createStatement()) {
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
 						UPDATE
 						"user_details" SET publickey=NULL, privatekey=NULL, setupcode=NULL
@@ -562,7 +562,7 @@ public class VaultResourceTest {
 
 		@BeforeAll
 		public void setup() throws SQLException {
-			try (var s = dataSource.getConnection().createStatement()) {
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				// user999 will be deleted in #cleanup()
 				s.execute("""
 						INSERT INTO "authority" ("id", "type", "name") VALUES ('user999', 'USER', 'User 999');
@@ -651,7 +651,7 @@ public class VaultResourceTest {
 
 		@AfterAll
 		public void cleanup() throws SQLException {
-			try (var s = dataSource.getConnection().createStatement()) {
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
 						DELETE FROM "authority" WHERE ID = 'user999';
 						""");
@@ -673,7 +673,7 @@ public class VaultResourceTest {
 		@BeforeAll
 		public void setup() throws SQLException {
 			//Assumptions.assumeTrue(EffectiveVaultAccess.countEffectiveVaultUsers() == 2);
-			try (var s = dataSource.getConnection().createStatement()) {
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
 						INSERT INTO "authority" ("id", "type", "name")
 						VALUES
@@ -797,7 +797,7 @@ public class VaultResourceTest {
 		@Order(7)
 		@DisplayName("Unlock is blocked if exceeding license seats")
 		public void testUnlockBlockedIfLicenseExceeded() throws SQLException {
-			try (var s = dataSource.getConnection().createStatement()) {
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
 						INSERT INTO "vault_access" ("vault_id", "authority_id")
 							VALUES ('7E57C0DE-0000-4000-8000-000100001111', 'group91');
@@ -811,7 +811,7 @@ public class VaultResourceTest {
 
 		@AfterAll
 		public void reset() throws SQLException {
-			try (var s = dataSource.getConnection().createStatement()) {
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
 						DELETE FROM "authority"
 						WHERE "id" IN ('user91', 'user92', 'user93', 'user94', 'user95_A', 'group91');
@@ -1014,7 +1014,7 @@ public class VaultResourceTest {
 
 		@AfterAll
 		public void reset() throws SQLException {
-			try (var s = dataSource.getConnection().createStatement()) {
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
 						DELETE FROM "vault" WHERE "id" = '7E57C0DE-0000-4000-8000-000100009999';
 						""");
