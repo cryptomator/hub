@@ -348,11 +348,10 @@ public class VaultResource {
 	@VaultRole(VaultAccess.Role.OWNER) // may throw 403
 	@Transactional
 	@Consumes(MediaType.APPLICATION_JSON)
-	@Operation(summary = "adds user-specific vault keys", description = "Stores one or more user-vaultkey-tuples, as defined in the request body ({user1: token1, user2: token2, ...}). Non-existing users are skipped.")
-	@APIResponse(responseCode = "200", description = "at least one key stored")
+	@Operation(summary = "adds user-specific vault keys", description = "Stores one or more user-vaultkey-tuples, as defined in the request body ({user1: token1, user2: token2, ...}).")
+	@APIResponse(responseCode = "200", description = "all keys stored")
 	@APIResponse(responseCode = "403", description = "not a vault owner")
-	@APIResponse(responseCode = "404", description = "none of the specified users have been found")
-	@APIResponse(responseCode = "409", description = "access to vault for device already granted")
+	@APIResponse(responseCode = "404", description = "at least one user has not been found")
 	@APIResponse(responseCode = "410", description = "vault is archived")
 	public Response grantAccess(@PathParam("vaultId") UUID vaultId, @NotEmpty Map<String, String> tokens) {
 		var vault = Vault.<Vault>findById(vaultId); // should always be found, since @VaultRole filter would have triggered
@@ -360,27 +359,19 @@ public class VaultResource {
 			throw new GoneException("Vault is archived.");
 		}
 
-		try {
-			boolean addedAtLeastOne = false;
-			for (var entry : tokens.entrySet()) {
-				var userId = entry.getKey();
-				var user = User.<User>findByIdOptional(userId);
-				if (user.isPresent()) {
-					var access = new AccessToken();
-					access.vault = vault;
-					access.user = user.get();
-					access.vaultKey = entry.getValue();
-					access.persistAndFlush();
-					AuditEventVaultAccessGrant.log(jwt.getSubject(), vaultId, userId);
-					addedAtLeastOne = true;
-				}
+		for (var entry : tokens.entrySet()) {
+			var userId = entry.getKey();
+			var token = AccessToken.<AccessToken>findById(new AccessToken.AccessId(userId, vaultId));
+			if (token == null) {
+				token = new AccessToken();
+				token.vault = vault;
+				token.user = User.<User>findByIdOptional(userId).orElseThrow(NotFoundException::new);
 			}
-			return addedAtLeastOne
-					? Response.ok().build()
-					: Response.status(Response.Status.NOT_FOUND).build();
-		} catch (ConstraintViolationException e) {
-			throw new ClientErrorException(Response.Status.CONFLICT, e);
+			token.vaultKey = entry.getValue();
+			token.persist();
+			AuditEventVaultAccessGrant.log(jwt.getSubject(), vaultId, userId);
 		}
+		return Response.ok().build();
 	}
 
 	@GET

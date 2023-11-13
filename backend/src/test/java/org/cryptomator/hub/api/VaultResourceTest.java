@@ -312,8 +312,8 @@ public class VaultResourceTest {
 	public class GrantAccess {
 
 		@Test
-		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100001111/access-tokens returns 200 for [user998, user999, user666]")
-		public void testGrantAccess1() throws SQLException {
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100001111/access-tokens returns 404 for [user998, user999, user666]")
+		public void testGrantAccess0() throws SQLException {
 			try (var s = dataSource.getConnection().createStatement()) {
 				s.execute("""
 						INSERT INTO "authority" ("id", "type", "name") VALUES ('user998', 'USER', 'User 998');
@@ -327,6 +327,32 @@ public class VaultResourceTest {
 
 			given().contentType(ContentType.JSON).body(Map.of("user998", "jwe.jwe.jwe.vault1.user998", "user999", "jwe.jwe.jwe.vault1.user999", "user666", "jwe.jwe.jwe.vault1.user666"))
 					.when().post("/vaults/{vaultId}/access-tokens/", "7E57C0DE-0000-4000-8000-000100001111")
+					.then().statusCode(404);
+
+			try (var s = dataSource.getConnection().createStatement()) {
+				s.execute("""
+						DELETE FROM "authority" WHERE "id" = 'user998';
+						DELETE FROM "authority" WHERE "id" = 'user999';
+						""");
+			}
+		}
+
+		@Test
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100001111/access-tokens returns 200 for [user998, user999]")
+		public void testGrantAccess1() throws SQLException {
+			try (var s = dataSource.getConnection().createStatement()) {
+				s.execute("""
+						INSERT INTO "authority" ("id", "type", "name") VALUES ('user998', 'USER', 'User 998');
+						INSERT INTO "authority" ("id", "type", "name") VALUES ('user999', 'USER', 'User 999');
+						INSERT INTO "user_details" ("id") VALUES ('user998');
+						INSERT INTO "user_details" ("id") VALUES ('user999');
+						INSERT INTO "group_membership" ("group_id", "member_id") VALUES ('group2', 'user998');
+						INSERT INTO "group_membership" ("group_id", "member_id") VALUES ('group2', 'user999');
+						""");
+			}
+
+			given().contentType(ContentType.JSON).body(Map.of("user998", "jwe.jwe.jwe.vault1.user998", "user999", "jwe.jwe.jwe.vault1.user999"))
+					.when().post("/vaults/{vaultId}/access-tokens/", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(200);
 
 			try (var s = dataSource.getConnection().createStatement()) {
@@ -338,11 +364,11 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100001111/access-tokens returns 409 for user1")
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100001111/access-tokens returns 200 for user1")
 		public void testGrantAccess2() {
 			given().contentType(ContentType.JSON).body(Map.of("user1", "jwe.jwe.jwe.vault1.user1"))
 					.when().post("/vaults/{vaultId}/access-tokens/", "7E57C0DE-0000-4000-8000-000100001111")
-					.then().statusCode(409);
+					.then().statusCode(200);
 		}
 
 		@Test
