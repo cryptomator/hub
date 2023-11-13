@@ -14,7 +14,6 @@ import org.eclipse.microprofile.openapi.annotations.Operation;
 import java.util.List;
 
 @Path("/groups")
-@Produces(MediaType.TEXT_PLAIN)
 public class GroupsResource {
 
 	@GET

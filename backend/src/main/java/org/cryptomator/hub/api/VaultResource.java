@@ -223,7 +223,7 @@ public class VaultResource {
 	@VaultRole(VaultAccess.Role.OWNER) // may throw 403
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
-	@Operation(summary = "remove an authority from this vault", description = "revokes the given authority's access rights from this vault. If the given authority is no member, the request is a no-op.")
+	@Operation(summary = "remove a user or group from this vault", description = "revokes the given authority's access rights from this vault. If the given authority is no member, the request is a no-op.")
 	@APIResponse(responseCode = "204", description = "authority removed")
 	@APIResponse(responseCode = "403", description = "not a vault owner")
 	public Response removeAuthority(@PathParam("vaultId") UUID vaultId, @PathParam("authorityId") @ValidId String authorityId) {
