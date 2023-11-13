@@ -40,6 +40,7 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.Map;
 import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
@@ -311,56 +312,68 @@ public class VaultResourceTest {
 	public class GrantAccess {
 
 		@Test
-		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111/access-tokens/user999 returns 201")
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100001111/access-tokens returns 200 for [user998, user999, user666]")
 		public void testGrantAccess1() throws SQLException {
 			try (var s = dataSource.getConnection().createStatement()) {
 				s.execute("""
+						INSERT INTO "authority" ("id", "type", "name") VALUES ('user998', 'USER', 'User 998');
 						INSERT INTO "authority" ("id", "type", "name") VALUES ('user999', 'USER', 'User 999');
+						INSERT INTO "user_details" ("id") VALUES ('user998');
 						INSERT INTO "user_details" ("id") VALUES ('user999');
-						INSERT INTO "group_membership" ("group_id", "member_id") VALUES ('group2', 'user999')
+						INSERT INTO "group_membership" ("group_id", "member_id") VALUES ('group2', 'user998');
+						INSERT INTO "group_membership" ("group_id", "member_id") VALUES ('group2', 'user999');
 						""");
 			}
 
-			given().contentType(ContentType.TEXT).body("jwe.jwe.jwe.vault1.user999")
-					.when().put("/vaults/{vaultId}/access-tokens/{userId}", "7E57C0DE-0000-4000-8000-000100001111", "user999")
-					.then().statusCode(201);
+			given().contentType(ContentType.JSON).body(Map.of("user998", "jwe.jwe.jwe.vault1.user998", "user999", "jwe.jwe.jwe.vault1.user999", "user666", "jwe.jwe.jwe.vault1.user666"))
+					.when().post("/vaults/{vaultId}/access-tokens/", "7E57C0DE-0000-4000-8000-000100001111")
+					.then().statusCode(200);
 
 			try (var s = dataSource.getConnection().createStatement()) {
 				s.execute("""
+						DELETE FROM "authority" WHERE "id" = 'user998';
 						DELETE FROM "authority" WHERE "id" = 'user999';
 						""");
 			}
 		}
 
 		@Test
-		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111/access-tokens/user1 returns 409 due to user access already granted")
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100001111/access-tokens returns 409 for user1")
 		public void testGrantAccess2() {
-			given().contentType(ContentType.TEXT).body("jwe.jwe.jwe.vault1.user1")
-					.when().put("/vaults/{vaultId}/access-tokens/{userId}", "7E57C0DE-0000-4000-8000-000100001111", "user1")
+			given().contentType(ContentType.JSON).body(Map.of("user1", "jwe.jwe.jwe.vault1.user1"))
+					.when().post("/vaults/{vaultId}/access-tokens/", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(409);
 		}
 
 		@Test
-		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-BADBADBADBAD/access-tokens/user1 returns 403 (not owning a nonexisting vault)")
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-BADBADBADBAD/access-tokens returns 403 (not owning this vault)")
 		public void testGrantAccess3() {
-			given().contentType(ContentType.TEXT).body("jwe.jwe.jwe.vault666.user1")
-					.when().put("/vaults/{vaultId}/access-tokens/{userId}", "7E57C0DE-0000-4000-8000-BADBADBADBAD", "user1")
+			given().contentType(ContentType.JSON).body(Map.of("user1", "jwe.jwe.jwe.vault666.user1"))
+					.when().post("/vaults/{vaultId}/access-tokens/", "7E57C0DE-0000-4000-8000-BADBADBADBAD")
 					.then().statusCode(403);
 		}
 
 		@Test
-		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111/access-tokens/nonExistingUser returns 404 (no such user)")
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100001111/access-tokens returns 404 for nonExistingUser")
 		public void testGrantAccess4() {
-			given().contentType(ContentType.TEXT).body("jwe.jwe.jwe.vault2.user666")
-					.when().put("/vaults/{vaultId}/access-tokens/{userId}", "7E57C0DE-0000-4000-8000-000100001111", "nonExistingUser")
+			given().contentType(ContentType.JSON).body(Map.of("user666", "jwe.jwe.jwe.vault1.user666"))
+					.when().post("/vaults/{vaultId}/access-tokens/", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(404);
 		}
 
 		@Test
-		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-00010000AAAA/access-tokens/user1 returns 410")
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100001111/access-tokens returns 400 for empty body")
+		public void testGrantAccess5() {
+			given().contentType(ContentType.JSON).body(Map.of())
+					.when().post("/vaults/{vaultId}/access-tokens/", "7E57C0DE-0000-4000-8000-000100001111")
+					.then().statusCode(400);
+		}
+
+		@Test
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-00010000AAAA/access-tokens returns 410")
 		public void testGrantAccessArchived() {
-			given().contentType(ContentType.TEXT).body("jwe3.jwe3.jwe3.jwe3.jwe3")
-					.when().put("/vaults/{vaultId}/access-tokens/{userId}", "7E57C0DE-0000-4000-8000-00010000AAAA", "user1")
+			given().contentType(ContentType.JSON).body(Map.of("user1", "jwe.jwe.jwe.vaultAAA.user1"))
+					.when().post("/vaults/{vaultId}/access-tokens/", "7E57C0DE-0000-4000-8000-00010000AAAA")
 					.then().statusCode(410);
 		}
 
@@ -477,11 +490,11 @@ public class VaultResourceTest {
 
 		@Test
 		@Order(11)
-		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100002222/access-tokens/user2 returns 201")
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100002222/access-tokens for user2 returns 200")
 		public void testGrantAccess() {
-			given().contentType(ContentType.TEXT).body("jwe.jwe.jwe.vault2.user2")
-					.when().put("/vaults/{vaultId}/access-tokens/{userId}", "7E57C0DE-0000-4000-8000-000100002222", "user2")
-					.then().statusCode(201);
+			given().contentType(ContentType.JSON).body(Map.of("user2", "jwe.jwe.jwe.vault2.user2"))
+					.when().post("/vaults/{vaultId}/access-tokens/", "7E57C0DE-0000-4000-8000-000100002222")
+					.then().statusCode(200);
 		}
 
 		@Test
@@ -577,11 +590,11 @@ public class VaultResourceTest {
 
 		@Test
 		@Order(5)
-		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111/access-tokens/user999 returns 201")
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100001111/access-tokens for user999 returns 200")
 		public void testGrantAccess2() {
-			given().contentType(ContentType.TEXT).body("jwe.jwe.jwe.vault2.user999")
-					.when().put("/vaults/{vaultId}/access-tokens/{userId}", "7E57C0DE-0000-4000-8000-000100001111", "user999")
-					.then().statusCode(201);
+			given().contentType(ContentType.JSON).body(Map.of("user999", "jwe.jwe.jwe.vault2.user999"))
+					.when().post("/vaults/{vaultId}/access-tokens/", "7E57C0DE-0000-4000-8000-000100001111")
+					.then().statusCode(200);
 		}
 
 		@Test

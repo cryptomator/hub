@@ -11,6 +11,7 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ClientErrorException;
@@ -52,7 +53,6 @@ import org.cryptomator.hub.license.LicenseHolder;
 import org.cryptomator.hub.validation.NoHtmlOrScriptChars;
 import org.cryptomator.hub.validation.OnlyBase64Chars;
 import org.cryptomator.hub.validation.ValidId;
-import org.cryptomator.hub.validation.ValidJWE;
 import org.cryptomator.hub.validation.ValidJWS;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
@@ -65,6 +65,7 @@ import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -341,34 +342,42 @@ public class VaultResource {
 		}
 	}
 
-	@PUT
-	@Path("/{vaultId}/access-tokens/{userId}")
+	@POST
+	@Path("/{vaultId}/access-tokens")
 	@RolesAllowed("user")
 	@VaultRole(VaultAccess.Role.OWNER) // may throw 403
 	@Transactional
-	@Consumes(MediaType.TEXT_PLAIN)
-	@Operation(summary = "adds a user-specific vault key")
-	@APIResponse(responseCode = "201", description = "user-specific key stored")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Operation(summary = "adds user-specific vault keys", description = "Stores one or more user-vaultkey-tuples, as defined in the request body ({user1: token1, user2: token2, ...}). Non-existing users are skipped.")
+	@APIResponse(responseCode = "200", description = "at least one key stored")
 	@APIResponse(responseCode = "403", description = "not a vault owner")
-	@APIResponse(responseCode = "404", description = "userId not found")
+	@APIResponse(responseCode = "404", description = "none of the specified users have been found")
 	@APIResponse(responseCode = "409", description = "access to vault for device already granted")
-	@APIResponse(responseCode = "410", description = "Vault is archived")
-	public Response grantAccess(@PathParam("vaultId") UUID vaultId, @PathParam("userId") @ValidId String userId, @NotNull @ValidJWE String vaultKey) {
-		var user = User.<User>findByIdOptional(userId).orElseThrow(NotFoundException::new);
+	@APIResponse(responseCode = "410", description = "vault is archived")
+	public Response grantAccess(@PathParam("vaultId") UUID vaultId, @NotEmpty Map<String, String> tokens) {
 		var vault = Vault.<Vault>findById(vaultId); // should always be found, since @VaultRole filter would have triggered
 		if (vault.archived) {
 			throw new GoneException("Vault is archived.");
 		}
 
-		var access = new AccessToken();
-		access.vault = vault;
-		access.user = user;
-		access.vaultKey = vaultKey;
-
 		try {
-			access.persistAndFlush();
-			AuditEventVaultAccessGrant.log(jwt.getSubject(), vaultId, userId);
-			return Response.created(URI.create(".")).build();
+			boolean addedAtLeastOne = false;
+			for (var entry : tokens.entrySet()) {
+				var userId = entry.getKey();
+				var user = User.<User>findByIdOptional(userId);
+				if (user.isPresent()) {
+					var access = new AccessToken();
+					access.vault = vault;
+					access.user = user.get();
+					access.vaultKey = entry.getValue();
+					access.persistAndFlush();
+					AuditEventVaultAccessGrant.log(jwt.getSubject(), vaultId, userId);
+					addedAtLeastOne = true;
+				}
+			}
+			return addedAtLeastOne
+					? Response.ok().build()
+					: Response.status(Response.Status.NOT_FOUND).build();
 		} catch (ConstraintViolationException e) {
 			throw new ClientErrorException(Response.Status.CONFLICT, e);
 		}
