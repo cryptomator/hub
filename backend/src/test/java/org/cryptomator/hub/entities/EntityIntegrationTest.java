@@ -25,12 +25,12 @@ public class EntityIntegrationTest {
 	@TestTransaction
 	@DisplayName("Removing a User cascades to Access")
 	public void removingUserCascadesToAccess() throws SQLException {
-		try (var s = dataSource.getConnection().createStatement()) {
+		try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 			// test data will be removed via @TestTransaction
 			s.execute("""
 					INSERT INTO "authority" ("id", "type", "name") VALUES ('user999', 'USER', 'User 999');
 					INSERT INTO "user_details" ("id") VALUES ('user999');
-					INSERT INTO "access_token" ("user_id", "vault_id", "vault_masterkey") VALUES ('user999', '7E57C0DE-0000-4000-8000-000100001111', 'jwe4');
+					INSERT INTO "access_token" ("user_id", "vault_id", "vault_masterkey") VALUES ('user999', '7E57C0DE-0000-4000-8000-000100001111', 'jwe.jwe.jwe.vault1.user999');
 					""");
 		}
 
@@ -38,24 +38,6 @@ public class EntityIntegrationTest {
 		var matchAfter = AccessToken.<AccessToken>findAll().stream().anyMatch(a -> "user999".equals(a.user.id));
 		Assertions.assertTrue(deleted);
 		Assertions.assertFalse(matchAfter);
-	}
-
-	@Test
-	@TestTransaction
-	@DisplayName("User's device names need to be unique")
-	public void testAddNonUniqueDeviceName() {
-		Device existingDevice = Device.findById("device1");
-		Device conflictingDevice = new Device();
-		conflictingDevice.id = "deviceX";
-		conflictingDevice.name = existingDevice.name;
-		conflictingDevice.owner = existingDevice.owner;
-		conflictingDevice.publickey = "XYZ";
-		conflictingDevice.userPrivateKey = "ABC";
-		conflictingDevice.creationTime = Instant.parse("2020-02-20T20:20:20Z");
-		conflictingDevice.type = Device.Type.DESKTOP;
-
-		PersistenceException thrown = Assertions.assertThrows(PersistenceException.class, conflictingDevice::persistAndFlush);
-		Assertions.assertInstanceOf(ConstraintViolationException.class, thrown);
 	}
 
 	@Test

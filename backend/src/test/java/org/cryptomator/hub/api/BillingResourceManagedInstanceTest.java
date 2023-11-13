@@ -47,7 +47,7 @@ public class BillingResourceManagedInstanceTest {
 	@Test
 	@DisplayName("GET /billing returns 401 with empty license managed instance")
 	public void testGetEmptyManagedInstance() throws SQLException {
-		try (var s = dataSource.getConnection().createStatement()) {
+		try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 			s.execute("""
 					UPDATE "settings"
 					SET "hub_id" = '42', "license_key" = null
