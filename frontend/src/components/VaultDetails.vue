@@ -1,5 +1,5 @@
 <template>
-  <div v-if="vault == null">
+  <div v-if="vault == null || vaultRecoveryRequired == null">
     <div v-if="onFetchError == null">
       {{ t('common.loading') }}
     </div>
@@ -239,7 +239,7 @@ const claimVaultOwnershipDialog = ref<typeof ClaimVaultOwnershipDialog>();
 const claimingVaultOwnership = ref(false);
 const me = ref<UserDto>();
 
-const vaultRecoveryRequired = ref(false);
+const vaultRecoveryRequired = ref<boolean | null>(null);
 
 onMounted(fetchData);
 
@@ -250,6 +250,8 @@ async function fetchData() {
     me.value = await backend.users.me(true);
     if (props.role == 'OWNER') {
       await fetchOwnerData();
+    } else {
+      vaultRecoveryRequired.value = false;
     }
   } catch (error) {
     console.error('Fetching data failed.', error);
@@ -263,6 +265,7 @@ async function fetchOwnerData() {
       vaultKeys.value = await loadVaultKeys(vaultKeyJwe);
       (await backend.vaults.getMembers(props.vaultId)).forEach(member => members.value.set(member.id, member));
       usersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
+      vaultRecoveryRequired.value = false;
     } catch(error) {
       if (error instanceof ForbiddenError) {
         vaultRecoveryRequired.value = true;
