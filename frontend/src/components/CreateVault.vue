@@ -295,7 +295,7 @@ async function createVault() {
     vaultConfig.value = await VaultConfig.create(vaultId, vaultKeys.value);
     const ownerJwe = await vaultKeys.value.encryptForUser(base64.parse(owner.publicKey));
     await backend.vaults.createOrUpdateVault(vaultId, vaultName.value, false, vaultDescription.value);
-    await backend.vaults.grantAccess(vaultId, owner.id, ownerJwe);
+    await backend.vaults.grantAccess(vaultId, { userId: owner.id, token: ownerJwe });
     state.value = State.Finished;
   } catch (error) {
     console.error('Creating vault failed.', error);

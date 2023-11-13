@@ -59,6 +59,11 @@ export type DeviceDto = {
 
 export type VaultRole = 'MEMBER' | 'OWNER';
 
+export type AccessGrant = {
+  userId: string,
+  token: string
+};
+
 enum AuthorityType {
   User = 'USER',
   Group = 'GROUP'
@@ -265,8 +270,12 @@ class VaultService {
       .catch((error) => rethrowAndConvertIfExpected(error, 403));
   }
 
-  public async grantAccess(vaultId: string, userId: string, jwe: string) {
-    await axiosAuth.put(`/vaults/${vaultId}/access-tokens/${userId}`, jwe, { headers: { 'Content-Type': 'text/plain' } })
+  public async grantAccess(vaultId: string, ...grants: AccessGrant[]) {
+    var body = grants.reduce<Record<string, string>>((accumulator, curr) => {
+      accumulator[curr.userId] = curr.token;
+      return accumulator;
+    }, {});
+    await axiosAuth.post(`/vaults/${vaultId}/access-tokens`, body)
       .catch((error) => rethrowAndConvertIfExpected(error, 404, 409));
   }
 

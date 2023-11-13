@@ -310,7 +310,7 @@ async function provedOwnership(keys: VaultKeys, ownerKeyPair: CryptoKeyPair) {
 
   const vaultKeyJwe = keys.encryptForUser(base64.parse(me.value.publicKey));
   try {
-    await backend.vaults.grantAccess(props.vaultId, me.value.id, await vaultKeyJwe);
+    await backend.vaults.grantAccess(props.vaultId, { userId: me.value.id, token: await vaultKeyJwe });
   } catch (error) {
     if (error instanceof ConflictError) {
       console.debug('User already member of this vault.');

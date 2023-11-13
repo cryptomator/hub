@@ -108,7 +108,7 @@ async function recoverVault() {
     if (props.me.publicKey && vaultKeys) {
       const publicKey = base64.parse(props.me.publicKey);
       const jwe = await vaultKeys.encryptForUser(publicKey);
-      await backend.vaults.grantAccess(props.vault.id, props.me.id, jwe);
+      await backend.vaults.grantAccess(props.vault.id, { userId: props.me.id, token: jwe });
       emit('recovered');
       open.value = false;
     }
