@@ -27,6 +27,9 @@ import static org.hamcrest.Matchers.empty;
 @DisplayName("Resource /groups")
 public class GroupsResourceTest {
 
+	@Inject
+	AgroalDataSource dataSource;
+
 	@BeforeAll
 	public static void beforeAll() {
 		RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
@@ -50,10 +53,33 @@ public class GroupsResourceTest {
 
 		@Test
 		@DisplayName("GET /groups/group1/effective-members contains direct and subgroup members")
-		public void testGetEffectiveUsers() {
+		public void testGetEffectiveUsers() throws SQLException {
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
+				s.execute("""
+						INSERT INTO "authority" ("id", "type", "name")
+						VALUES
+							('user999', 'USER', 'User 999'),
+							('group999', 'GROUP', 'Group 999');
+
+						INSERT INTO "user_details" ("id") VALUES ('user999');
+						INSERT INTO "group_details" ("id") VALUES ('group999');
+
+						INSERT INTO "group_membership" ("group_id", "member_id")
+						VALUES
+							('group999', 'user999'),
+							('group1', 'group999');
+						""");
+			}
+
 			when().get("/groups/{groupId}/effective-members", "group1")
 					.then().statusCode(200)
-					.body("id", hasItems("user1"));
+					.body("id", hasItems("user1", "user999"));
+
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
+				s.execute("""
+						DELETE FROM "authority" WHERE "id" = 'user999' OR "id" = 'group999';
+						""");
+			}
 		}
 
 	}
