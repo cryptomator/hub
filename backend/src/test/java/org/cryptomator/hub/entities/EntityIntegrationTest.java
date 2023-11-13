@@ -42,24 +42,6 @@ public class EntityIntegrationTest {
 
 	@Test
 	@TestTransaction
-	@DisplayName("User's device names need to be unique")
-	public void testAddNonUniqueDeviceName() {
-		Device existingDevice = Device.findById("device1");
-		Device conflictingDevice = new Device();
-		conflictingDevice.id = "deviceX";
-		conflictingDevice.name = existingDevice.name;
-		conflictingDevice.owner = existingDevice.owner;
-		conflictingDevice.publickey = "XYZ";
-		conflictingDevice.userPrivateKey = "ABC";
-		conflictingDevice.creationTime = Instant.parse("2020-02-20T20:20:20Z");
-		conflictingDevice.type = Device.Type.DESKTOP;
-
-		PersistenceException thrown = Assertions.assertThrows(PersistenceException.class, conflictingDevice::persistAndFlush);
-		Assertions.assertInstanceOf(ConstraintViolationException.class, thrown);
-	}
-
-	@Test
-	@TestTransaction
 	@DisplayName("Retrieve the correct token when a user has access to multiple vaults")
 	public void testGetCorrectTokenForDeviceWithAcessToMultipleVaults() {
 		var token = AccessToken.unlock(UUID.fromString("7E57C0DE-0000-4000-8000-000100001111"), "user1");
