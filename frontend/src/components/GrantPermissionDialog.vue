@@ -71,7 +71,7 @@ import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
 import { base64 } from 'rfc4648';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { ConflictError, NotFoundError, UserDto, VaultDto } from '../common/backend';
+import backend, { AccessGrant, ConflictError, NotFoundError, UserDto, VaultDto } from '../common/backend';
 import { getFingerprint } from '../common/crypto';
 
 import { VaultKeys } from '../common/crypto';
@@ -124,13 +124,15 @@ async function grantAccess() {
 }
 
 async function giveUsersAccess(users: UserDto[]) {
+  let tokens: AccessGrant[] = [];
   for (const user of users) {
     if (user.publicKey) { // some users might not have set up their key pair, so we can't share secrets with them yet
       const publicKey = base64.parse(user.publicKey);
       const jwe = await props.vaultKeys.encryptForUser(publicKey);
-      await backend.vaults.grantAccess(props.vault.id, user.id, jwe);
+      tokens.push({ userId: user.id, token: jwe });
     }
   }
+  await backend.vaults.grantAccess(props.vault.id, ...tokens);
 }
 
 </script>
