@@ -536,7 +536,7 @@ public class VaultResourceTest {
 		@Order(13)
 		@DisplayName("DELETE /vaults/7E57C0DE-0000-4000-8000-000100002222/members/user2 returns 204")
 		public void testRevokeAccess() { // previously added in testGrantAccess()
-			given().when().delete("/vaults/{vaultId}/users/{userId}", "7E57C0DE-0000-4000-8000-000100002222", "user2")
+			given().when().delete("/vaults/{vaultId}/authority/{userId}", "7E57C0DE-0000-4000-8000-000100002222", "user2")
 					.then().statusCode(204);
 		}
 
@@ -636,7 +636,7 @@ public class VaultResourceTest {
 		@Order(7)
 		@DisplayName("DELETE /vaults/7E57C0DE-0000-4000-8000-000100001111/groups/group2 returns 204")
 		public void removeGroup2() {
-			given().when().delete("/vaults/{vaultId}/groups/{groupId}", "7E57C0DE-0000-4000-8000-000100001111", "group2")
+			given().when().delete("/vaults/{vaultId}/authority/{groupId}", "7E57C0DE-0000-4000-8000-000100001111", "group2")
 					.then().statusCode(204);
 		}
 
@@ -1034,7 +1034,7 @@ public class VaultResourceTest {
 				"GET, /vaults/7E57C0DE-0000-4000-8000-000100001111",
 				"GET, /vaults/7E57C0DE-0000-4000-8000-000100001111/members",
 				"PUT, /vaults/7E57C0DE-0000-4000-8000-000100001111/users/user1",
-				"DELETE, /vaults/7E57C0DE-0000-4000-8000-000100001111/users/user1",
+				"DELETE, /vaults/7E57C0DE-0000-4000-8000-000100001111/authority/user1",
 				"GET, /vaults/7E57C0DE-0000-4000-8000-000100001111/users-requiring-access-grant",
 				"GET, /vaults/7E57C0DE-0000-4000-8000-000100001111/access-token"
 		})

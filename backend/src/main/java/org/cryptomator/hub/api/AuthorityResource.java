@@ -30,7 +30,7 @@ public class AuthorityResource {
 
 	@GET
 	@Path("/")
-	@RolesAllowed("admin")
+	@RolesAllowed("user")
 	@Produces(MediaType.APPLICATION_JSON)
 	@NoCache
 	@Operation(summary = "lists all authorities matching the given ids", description = "lists for each id in the list its corresponding authority. Ignores all id's where an authority cannot be found")

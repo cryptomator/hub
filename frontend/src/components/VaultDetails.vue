@@ -456,7 +456,7 @@ async function updateMemberRole(member: MemberDto, role: VaultRole) {
 async function removeMember(memberId: string) {
   delete onUpdateVaultMembershipError.value[memberId];
   try {
-    await backend.vaults.removeUser(props.vaultId, memberId);
+    await backend.vaults.removeAuthority(props.vaultId, memberId);
     members.value.delete(memberId);
     usersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
   } catch (error) {

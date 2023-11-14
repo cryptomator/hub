@@ -279,8 +279,8 @@ class VaultService {
       .catch((error) => rethrowAndConvertIfExpected(error, 404, 409));
   }
 
-  public async removeUser(vaultId: string, userId: string) {
-    await axiosAuth.delete(`/vaults/${vaultId}/users/${userId}`)
+  public async removeAuthority(vaultId: string, authorityId: string) {
+    await axiosAuth.delete(`/vaults/${vaultId}/authority/${authorityId}`)
       .catch((error) => rethrowAndConvertIfExpected(error, 404));
   }
 }
