@@ -1,7 +1,7 @@
 <template>
   <NavigationBar v-if="me != null" :me="me"/>
 
-  <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+  <div class="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8 flex justify-center">
     <div v-if="me == null">
       <div v-if="onFetchError == null">
         {{ t('common.loading') }}
@@ -11,42 +11,42 @@
       </div>
     </div>
 
-    <div v-else>
+    <div v-else class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6 text-center sm:w-full sm:max-w-lg">
+      <div class="flex justify-center mb-3 sm:mb-5">
+        <img src="/logo.svg" class="h-12" alt="Logo" aria-hidden="true" />
+      </div>
 
-      <div class="mt-8 pb-4 relative shadow-xl sm:rounded-2xl sm:overflow-hidden">
-        <div class="absolute inset-0">
-          <div class="absolute inset-0 bg-gradient-to-r from-primary-l1 to-primary mix-blend-multiply" />
-        </div>
-        <!-- TODO: localize-->
-        <div class="relative px-4 py-16 sm:px-6 sm:py-24 lg:py-32 lg:px-8">
-          <h1 class="text-center text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl text-white">
-            Welcome back, {{ me.name }}!
-          </h1>
-          <div v-if="deviceState == DeviceState.NoSuchDevice" class="max-w-lg mx-auto text-center text-xl text-primary-l2 sm:max-w-3xl">
-            <p class="mt-6">
-              This device is unknown to Cryptomator Hub.
-            </p>
-            <p class="mt-3">
-              Please return to Cryptomator and register your device.
-            </p>
-          </div>
-          <div v-else-if="vaultAccess == VaultAccess.Denied" class="max-w-lg mx-auto text-center text-xl text-primary-l2 sm:max-w-3xl">
-            <p class="mt-6">
-              You don't have access to this vault.
-            </p>
-            <p class="mt-3">
-              Please contact the vault owner to add your account to the vault members.
-            </p>
-          </div>
-          <div v-else class="max-w-lg mx-auto text-center text-xl text-primary-l2 sm:max-w-3xl">
-            <p class="mt-6">
-              Your unlock was successful.
-            </p>
-            <p class="mt-3">
-              You can now close this page and continue using Cryptomator.
-            </p>
-          </div>
-        </div>
+      <!-- TODO: localize -->
+
+      <!-- DEVICE SETUP -->
+      <div v-if="deviceState == DeviceState.NoSuchDevice" class="text-sm text-gray-500">
+        <h1 class="text-2xl leading-6 font-medium text-gray-900">
+          New Device
+        </h1>
+        <p class="my-3">
+          Please enter your account key in Cryptomator to authorize it.
+        </p>
+        <router-link v-if="browserKeys" to="/app/profile" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">View Account Key in my Profile</router-link>
+      </div>
+
+      <!-- NO VAULT ACCESS -->
+      <div v-else-if="vaultAccess == VaultAccess.Denied" class="text-sm text-gray-500">
+        <h1 class="text-2xl leading-6 font-medium text-gray-900">
+          No access to this Vault
+        </h1>
+        <p class="mt-2">
+          Please contact the vault owner to add your account to the vault members.
+        </p>
+      </div>
+
+      <!-- SUCCESS -->
+      <div v-else class="text-sm text-gray-500">
+        <h1 class="text-2xl leading-6 font-medium text-gray-900">
+          Vault unlocked successfully
+        </h1>
+        <p class="mt-2">
+          You may now close this browser tab.
+        </p>
       </div>
     </div>
   </div>
