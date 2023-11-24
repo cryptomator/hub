@@ -1,5 +1,5 @@
 <template>
-  <NavigationBar v-if="me?.publicKey && browserKeys" :me="me"/>
+  <NavigationBar v-if="accountState == AccountState.Ready && browserKeys" :me="me!"/>
   <SimpleNavigationBar v-else-if="me" :me="me"/>
 
   <div class="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8 flex justify-center">
@@ -57,7 +57,7 @@
           Vault unlocked successfully
         </h1>
         <p class="mt-2">
-          You may now close this browser tab.
+          You may now close this browser tab and return to Cryptomator.
         </p>
       </div>
     </div>
@@ -68,10 +68,10 @@
 import { ComputedRef, computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { UserDto, VaultDto } from '../common/backend';
+import { BrowserKeys } from '../common/crypto';
 import FetchError from './FetchError.vue';
 import NavigationBar from './NavigationBar.vue';
 import SimpleNavigationBar from './SimpleNavigationBar.vue';
-import { BrowserKeys } from '../common/crypto';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -120,7 +120,7 @@ enum VaultAccess {
 }
 
 const me = ref<UserDto>();
-const browserKeys = ref<BrowserKeys | undefined>();
+const browserKeys = ref<boolean>(false);
 const accessibleVaults = ref<VaultDto[]>();
 const onFetchError = ref<Error | null>();
 
@@ -130,7 +130,7 @@ async function fetchData() {
   onFetchError.value = null;
   try {
     me.value = await backend.users.me(true);
-    browserKeys.value = await BrowserKeys.load(me.value.id);
+    browserKeys.value = await BrowserKeys.load(me.value.id) != null;
     accessibleVaults.value = await backend.vaults.listAccessible();
   } catch (error) {
     console.error('Retrieving user information failed.', error);
