@@ -25,7 +25,7 @@
           Setup Required
         </h1>
         <p class="my-3">
-          To continue, please follow a few simple steps get your account set up.
+          Complete setting up your account and retrieve your account key.
         </p>
         <router-link to="/app/setup" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">Complete Setup</router-link>
       </div>
@@ -47,7 +47,7 @@
           No access to this Vault
         </h1>
         <p class="mt-2">
-          Please contact the vault owner to add your account to the vault members.
+          Please contact the vault owner to add you as a vault member.
         </p>
       </div>
 
