@@ -1,5 +1,6 @@
 <template>
-  <NavigationBar v-if="me != null" :me="me"/>
+  <NavigationBar v-if="me?.publicKey && browserKeys" :me="me"/>
+  <SimpleNavigationBar v-else-if="me" :me="me"/>
 
   <div class="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8 flex justify-center">
     <div v-if="me == null">
@@ -18,8 +19,19 @@
 
       <!-- TODO: localize -->
 
+      <!-- ACCOUNT SETUP -->
+      <div v-if="accountState == AccountState.RequiresSetup" class="text-sm text-gray-500">
+        <h1 class="text-2xl leading-6 font-medium text-gray-900">
+          Setup Required
+        </h1>
+        <p class="my-3">
+          To continue, please follow a few simple steps get your account set up.
+        </p>
+        <router-link to="/app/setup" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">Complete Setup</router-link>
+      </div>
+
       <!-- DEVICE SETUP -->
-      <div v-if="deviceState == DeviceState.NoSuchDevice" class="text-sm text-gray-500">
+      <div v-else-if="deviceState == DeviceState.NoSuchDevice" class="text-sm text-gray-500">
         <h1 class="text-2xl leading-6 font-medium text-gray-900">
           New Device
         </h1>
@@ -58,6 +70,8 @@ import { useI18n } from 'vue-i18n';
 import backend, { UserDto, VaultDto } from '../common/backend';
 import FetchError from './FetchError.vue';
 import NavigationBar from './NavigationBar.vue';
+import SimpleNavigationBar from './SimpleNavigationBar.vue';
+import { BrowserKeys } from '../common/crypto';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -65,6 +79,15 @@ const props = defineProps<{
   vaultId: string
   deviceId: string
 }>();
+
+const accountState : ComputedRef<AccountState> = computed(() => {
+  const publicKey = me.value?.publicKey;
+  if (!publicKey) {
+    return AccountState.RequiresSetup;
+  } else {
+    return AccountState.Ready;
+  }
+});
 
 const deviceState : ComputedRef<DeviceState> = computed(() => {
   const foundDevice = me.value?.devices.find(d => d.id === props.deviceId);
@@ -81,6 +104,11 @@ const vaultAccess : ComputedRef<VaultAccess> = computed(() => {
     : VaultAccess.Denied;
 });
 
+enum AccountState {
+  RequiresSetup,
+  Ready
+}
+
 enum DeviceState {
   NoSuchDevice,
   Validated
@@ -92,6 +120,7 @@ enum VaultAccess {
 }
 
 const me = ref<UserDto>();
+const browserKeys = ref<BrowserKeys | undefined>();
 const accessibleVaults = ref<VaultDto[]>();
 const onFetchError = ref<Error | null>();
 
@@ -101,6 +130,7 @@ async function fetchData() {
   onFetchError.value = null;
   try {
     me.value = await backend.users.me(true);
+    browserKeys.value = await BrowserKeys.load(me.value.id);
     accessibleVaults.value = await backend.vaults.listAccessible();
   } catch (error) {
     console.error('Retrieving user information failed.', error);
