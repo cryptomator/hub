@@ -234,7 +234,7 @@ public class LicenseHolderTest {
 			var refreshTokenContainingSpecialChars = HttpRequest.newBuilder() //
 					.uri(URI.create(refreshURL)) //
 					.headers("Content-Type", "application/x-www-form-urlencoded") //
-					.POST(HttpRequest.BodyPublishers.ofString("token&foo=bar"))  //
+					.POST(HttpRequest.BodyPublishers.ofString("token=token%26foo%3Dbar"))  //
 					.build();
 
 			var httpClient = Mockito.mock(HttpClient.class);
