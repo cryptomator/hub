@@ -21,6 +21,7 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -101,8 +102,7 @@ public class LicenseHolder {
 
 	//visible for testing
 	void refreshLicense(String refreshUrl, String license, HttpClient client) throws InterruptedException {
-		var parameters = new HashMap<String, String>();
-		parameters.put("token", license);
+		var parameters = Map.of("token", license);
 		var body = parameters.entrySet() //
 				.stream() //
 				.map(e -> e.getKey() + "=" + URLEncoder.encode(e.getValue(), StandardCharsets.UTF_8)) //

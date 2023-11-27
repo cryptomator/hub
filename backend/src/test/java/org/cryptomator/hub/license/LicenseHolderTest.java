@@ -27,8 +27,12 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.Flow;
 
 @QuarkusTest
 public class LicenseHolderTest {
@@ -219,19 +223,26 @@ public class LicenseHolderTest {
 		public void testRefreshingExistingValidTokenInculdingRefreshURL() throws IOException, InterruptedException {
 			var existingJWT = Mockito.mock(DecodedJWT.class);
 			var receivedJWT = Mockito.mock(DecodedJWT.class);
-			Mockito.when(existingJWT.getToken()).thenReturn("token");
+			Mockito.when(existingJWT.getToken()).thenReturn("token&foo=bar");
 			Mockito.when(validator.validate("token", "42")).thenReturn(receivedJWT);
-			Mockito.when(validator.validate("oldToken", "42")).thenReturn(existingJWT);
+			Mockito.when(validator.validate("token&foo=bar", "42")).thenReturn(existingJWT);
 			Settings settingsMock = new Settings();
 			settingsMock.hubId = "42";
-			settingsMock.licenseKey = "oldToken";
+			settingsMock.licenseKey = "token&foo=bar";
 			settingsClass.when(Settings::get).thenReturn(settingsMock);
+
+			var refreshTokenContainingSpecialChars = HttpRequest.newBuilder() //
+					.uri(URI.create(refreshURL)) //
+					.headers("Content-Type", "application/x-www-form-urlencoded") //
+					.POST(HttpRequest.BodyPublishers.ofString("token&foo=bar"))  //
+					.build();
 
 			var httpClient = Mockito.mock(HttpClient.class);
 			var response = Mockito.mock(HttpResponse.class);
 			Mockito.doAnswer(invocation -> {
 				HttpRequest httpRequest = invocation.getArgument(0);
-				Assertions.assertEquals(refreshRequst, httpRequest);
+				Assertions.assertEquals(refreshTokenContainingSpecialChars, httpRequest);
+				Assertions.assertEquals("token=token%26foo%3Dbar", getResponseFromRequest(httpRequest));
 				return response;
 			}).when(httpClient).send(Mockito.any(), Mockito.eq(HttpResponse.BodyHandlers.ofString()));
 			Mockito.when(response.body()).thenReturn("token");
@@ -268,6 +279,7 @@ public class LicenseHolderTest {
 			Mockito.doAnswer(invocation -> {
 				HttpRequest httpRequest = invocation.getArgument(0);
 				Assertions.assertEquals(refreshRequst, httpRequest);
+				Assertions.assertEquals("token=token", getResponseFromRequest(httpRequest));
 				return response;
 			}).when(httpClient).send(Mockito.any(), Mockito.eq(HttpResponse.BodyHandlers.ofString()));
 			Mockito.when(response.body()).thenReturn(receivedToken);
@@ -327,6 +339,38 @@ public class LicenseHolderTest {
 			Mockito.verify(validator, Mockito.times(1)).validate(Mockito.any(), Mockito.any());
 			Mockito.verify(session, Mockito.never()).persist(Mockito.any());
 			Assertions.assertEquals(existingJWT, holder.get());
+		}
+
+		private String getResponseFromRequest(HttpRequest httpRequest) {
+			return httpRequest.bodyPublisher().map(p -> {
+				var bodySubscriber = HttpResponse.BodySubscribers.ofString(StandardCharsets.UTF_8);
+				var flowSubscriber = new StringSubscriber(bodySubscriber);
+				p.subscribe(flowSubscriber);
+				return bodySubscriber.getBody().toCompletableFuture().join();
+			}).get();
+		}
+
+		private record StringSubscriber(HttpResponse.BodySubscriber<String> wrapped) implements Flow.Subscriber<ByteBuffer> {
+
+			@Override
+			public void onSubscribe(Flow.Subscription subscription) {
+				wrapped.onSubscribe(subscription);
+			}
+
+			@Override
+			public void onNext(ByteBuffer item) {
+				wrapped.onNext(List.of(item));
+			}
+
+			@Override
+			public void onError(Throwable throwable) {
+				wrapped.onError(throwable);
+			}
+
+			@Override
+			public void onComplete() {
+				wrapped.onComplete();
+			}
 		}
 	}
 
