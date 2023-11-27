@@ -16,6 +16,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.time.Instant;
 import java.util.Objects;
+import java.util.Optional;
 
 @ApplicationScoped
 public class LicenseValidator {
@@ -64,6 +65,11 @@ public class LicenseValidator {
 			}
 		}
 		return jwt;
+	}
+
+	public Optional<String> refreshUrl(String token) throws JWTVerificationException {
+		var jwt = verifier.verify(token);
+		return Optional.ofNullable(jwt.getClaim("refreshUrl").asString());
 	}
 
 }
