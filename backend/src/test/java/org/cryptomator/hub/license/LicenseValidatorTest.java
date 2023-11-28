@@ -7,6 +7,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.Optional;
+
 public class LicenseValidatorTest {
 
 	private static final String VALID_TOKEN = "eyJhbGciOiJFUzUxMiJ9.eyJqdGkiOiI0MiIsImlhdCI6MTY0ODA0OTM2MCwiaXNzIjoiU2t5bWF0aWMiLCJhdWQiOiJDcnlwdG9tYXRvciBIdWIiLCJzdWIiOiJodWJAY3J5cHRvbWF0b3Iub3JnIiwic2VhdHMiOjUsImV4cCI6MjUzNDAyMjE0NDAwLCJyZWZyZXNoVXJsIjoiaHR0cDovL2xvY2FsaG9zdDo4Nzg3L2h1Yi9zdWJzY3JpcHRpb24_aHViX2lkPTQyIn0.AKyoZ0WQ8xhs8vPymWPHCsc6ch6pZpfxBcrF5QjVLSQVnYz2s5QF3nnkwn4AGR7V14TuhkJMZLUZxMdQAYLyL95sAV2Fu0E4-e1v3IVKlNKtze89eqYvEs6Ak9jWjtecOgPWNWjz2itI4MfJBDmbFtTnehOtqRqUdsDoC9NFik2C7tHm";
@@ -58,6 +60,27 @@ public class LicenseValidatorTest {
 	public void testValidateMalformedToken() {
 		Assertions.assertThrows(JWTDecodeException.class, () -> {
 			validator.validate(MALFORMED_TOKEN, "42");
+		});
+	}
+
+	@Test
+	@DisplayName("validate token's refreshURL")
+	public void testGetTokensRefreshUrl() {
+		Assertions.assertEquals(Optional.of("http://localhost:8787/hub/subscription?hub_id=42"), validator.refreshUrl(VALID_TOKEN));
+	}
+
+	@Test
+	@DisplayName("validate expired token's refreshURL")
+	public void testGetExpiredTokensRefreshUrl() {
+		// this should not throw an exception and return a JWT with an expired date
+		Assertions.assertEquals(Optional.of("http://localhost:8787/hub/subscription?hub_id=42"), validator.refreshUrl(EXPIRED_TOKEN));
+	}
+
+	@Test
+	@DisplayName("validate expired token's refreshURL with invalid signature")
+	public void testInvalidSignatureTokensRefreshUrl() {
+		Assertions.assertThrows(SignatureVerificationException.class, () -> {
+			validator.refreshUrl(TOKEN_WITH_INVALID_SIGNATURE);
 		});
 	}
 

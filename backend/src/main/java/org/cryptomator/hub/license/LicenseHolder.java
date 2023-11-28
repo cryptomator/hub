@@ -3,6 +3,7 @@ package org.cryptomator.hub.license;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import io.quarkus.scheduler.Scheduled;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -11,9 +12,19 @@ import org.cryptomator.hub.entities.Settings;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class LicenseHolder {
@@ -73,6 +84,44 @@ public class LicenseHolder {
 		this.license = licenseValidator.validate(token, settings.hubId);
 		settings.licenseKey = token;
 		settings.persist();
+	}
+
+	/**
+	 * Attempts to refresh the Hub licence every day at 01:00 UTC if claim refreshURL is present.
+	 */
+	@Scheduled(cron = "0 1 * * * ?", timeZone = "UTC")
+	void refreshLicenseScheduler() throws InterruptedException {
+		if (license != null) {
+			var refreshUrl = licenseValidator.refreshUrl(license.getToken());
+			if (refreshUrl.isPresent()) {
+				var client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build();
+				refreshLicense(refreshUrl.get(), license.getToken(), client);
+			}
+		}
+	}
+
+	//visible for testing
+	void refreshLicense(String refreshUrl, String license, HttpClient client) throws InterruptedException {
+		var parameters = Map.of("token", license);
+		var body = parameters.entrySet() //
+				.stream() //
+				.map(e -> e.getKey() + "=" + URLEncoder.encode(e.getValue(), StandardCharsets.UTF_8)) //
+				.collect(Collectors.joining("&"));
+		var request = HttpRequest.newBuilder() //
+				.uri(URI.create(refreshUrl)) //
+				.headers("Content-Type", "application/x-www-form-urlencoded") //
+				.POST(HttpRequest.BodyPublishers.ofString(body))  //
+				.build();
+		try {
+			var response = client.send(request, HttpResponse.BodyHandlers.ofString());
+			if (response.statusCode() == 200 && !response.body().isEmpty()) {
+				set(response.body());
+			} else {
+				LOG.error("Failed to refresh license token with response code: " + response.statusCode());
+			}
+		} catch (IOException | JWTVerificationException e) {
+			LOG.error("Failed to refresh license token", e);
+		}
 	}
 
 	public DecodedJWT get() {
