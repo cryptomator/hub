@@ -124,7 +124,8 @@ public class LicenseHolder {
 		var request = HttpRequest.newBuilder() //
 				.uri(URI.create(refreshUrl)) //
 				.headers("Content-Type", "application/x-www-form-urlencoded") //
-				.POST(HttpRequest.BodyPublishers.ofString(body))  //
+				.POST(HttpRequest.BodyPublishers.ofString(body)) //
+				.version(HttpClient.Version.HTTP_1_1) //
 				.build();
 		try {
 			var response = client.send(request, HttpResponse.BodyHandlers.ofString());
