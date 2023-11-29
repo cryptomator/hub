@@ -51,14 +51,18 @@ public class LicenseHolderTest {
 		@InjectMock
 		LicenseValidator validator;
 
+		@InjectMock
+		RandomMinuteSleeper randomMinuteSleeper;
+
 		MockedStatic<Settings> settingsClass;
 
 		@BeforeEach
-		public void setup() {
+		public void setup() throws InterruptedException {
 			Query mockQuery = Mockito.mock(Query.class);
 			Mockito.doNothing().when(session).persist(Mockito.any());
 			Mockito.when(session.createQuery(Mockito.anyString())).thenReturn(mockQuery);
 			Mockito.when(mockQuery.getSingleResult()).thenReturn(0l);
+			Mockito.doNothing().when(randomMinuteSleeper).sleep();
 
 			Arc.container().instance(LicenseHolder.class).destroy();
 
@@ -131,14 +135,18 @@ public class LicenseHolderTest {
 		@InjectMock
 		LicenseValidator validator;
 
+		@InjectMock
+		RandomMinuteSleeper randomMinuteSleeper;
+
 		MockedStatic<Settings> settingsClass;
 
 		@BeforeEach
-		public void setup() {
+		public void setup() throws InterruptedException {
 			Query mockQuery = Mockito.mock(Query.class);
 			Mockito.doNothing().when(session).persist(Mockito.any());
 			Mockito.when(session.createQuery(Mockito.anyString())).thenReturn(mockQuery);
 			Mockito.when(mockQuery.getSingleResult()).thenReturn(0l);
+			Mockito.doNothing().when(randomMinuteSleeper).sleep();
 
 			Arc.container().instance(LicenseHolder.class).destroy();
 
@@ -203,14 +211,18 @@ public class LicenseHolderTest {
 		@InjectMock
 		LicenseValidator validator;
 
+		@InjectMock
+		RandomMinuteSleeper randomMinuteSleeper;
+
 		MockedStatic<Settings> settingsClass;
 
 		@BeforeEach
-		public void setup() {
+		public void setup() throws InterruptedException {
 			Query mockQuery = Mockito.mock(Query.class);
 			Mockito.doNothing().when(session).persist(Mockito.any());
 			Mockito.when(session.createQuery(Mockito.anyString())).thenReturn(mockQuery);
 			Mockito.when(mockQuery.getSingleResult()).thenReturn(0l);
+			Mockito.doNothing().when(randomMinuteSleeper).sleep();
 
 			Arc.container().instance(LicenseHolder.class).destroy();
 
@@ -389,6 +401,9 @@ public class LicenseHolderTest {
 		@InjectMock
 		LicenseValidator validator;
 
+		@InjectMock
+		RandomMinuteSleeper randomMinuteSleeper;
+
 		MockedStatic<Settings> settingsClass;
 
 		public static class ValidInitPropsInstanceTestProfile implements QuarkusTestProfile {
@@ -399,11 +414,12 @@ public class LicenseHolderTest {
 		}
 
 		@BeforeEach
-		public void setup() {
+		public void setup() throws InterruptedException {
 			Query mockQuery = Mockito.mock(Query.class);
 			Mockito.doNothing().when(session).persist(Mockito.any());
 			Mockito.when(session.createQuery(Mockito.anyString())).thenReturn(mockQuery);
 			Mockito.when(mockQuery.getSingleResult()).thenReturn(0l);
+			Mockito.doNothing().when(randomMinuteSleeper).sleep();
 
 			Arc.container().instance(LicenseHolder.class).destroy();
 

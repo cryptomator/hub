@@ -43,6 +43,9 @@ public class LicenseHolder {
 	@Inject
 	LicenseValidator licenseValidator;
 
+	@Inject
+	RandomMinuteSleeper randomMinuteSleeper;
+
 	private static final Logger LOG = Logger.getLogger(LicenseHolder.class);
 	private DecodedJWT license;
 
@@ -106,6 +109,7 @@ public class LicenseHolder {
 	@Scheduled(cron = "0 0 1 * * ?", timeZone = "UTC", concurrentExecution = Scheduled.ConcurrentExecution.SKIP)
 	void refreshLicenseScheduler() throws InterruptedException {
 		if (license != null) {
+			randomMinuteSleeper.sleep();
 			var refreshUrl = licenseValidator.refreshUrl(license.getToken());
 			if (refreshUrl.isPresent()) {
 				var client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build();
