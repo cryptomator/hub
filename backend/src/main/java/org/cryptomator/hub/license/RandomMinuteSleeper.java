@@ -8,9 +8,10 @@ import java.util.Random;
 public class RandomMinuteSleeper {
 
 	private static final long MINUTE_IN_MILLIS = 60 * 1000L;
+	private static final Random RNG = new Random();
 
 	void sleep() throws InterruptedException {
-		Thread.sleep(new Random().nextInt(0, 60) * MINUTE_IN_MILLIS);
+		Thread.sleep(RNG.nextInt(0, 60) * MINUTE_IN_MILLIS);
 	}
 
 }

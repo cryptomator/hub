@@ -440,11 +440,11 @@ public class LicenseHolderTest {
 			settingsMock.hubId = "42";
 			settingsClass.when(Settings::get).thenReturn(settingsMock);
 
-			var newLicensePersited = new AtomicBoolean(false);
+			var newLicensePersisted = new AtomicBoolean(false);
 			Mockito.doAnswer(invocation -> {
 				Settings settings = invocation.getArgument(0);
 				if (settings.hubId.equals("42") && settings.licenseKey.equals("token")) {
-					newLicensePersited.set(true);
+					newLicensePersisted.set(true);
 				}
 				return null;
 			}).when(session).persist(Mockito.any());
@@ -454,7 +454,7 @@ public class LicenseHolderTest {
 			// init implicitly called due to @PostConstruct which increases the times to verify by 1
 			// See https://github.com/cryptomator/hub/pull/229#discussion_r1374694626 for further information
 			Mockito.verify(validator, Mockito.times(2)).validate("token", "42");
-			Assertions.assertTrue(newLicensePersited.get());
+			Assertions.assertTrue(newLicensePersisted.get());
 			Assertions.assertEquals(decodedJWT, holder.get());
 		}
 
@@ -529,11 +529,11 @@ public class LicenseHolderTest {
 			initSettingsMock.hubId = "42";
 			settingsClass.when(Settings::get).thenReturn(initSettingsMock);
 
-			var newLicensePersited = new AtomicBoolean(false);
+			var newLicensePersisted = new AtomicBoolean(false);
 			Mockito.doAnswer(invocation -> {
 				Settings settings = invocation.getArgument(0);
 				if (settings.hubId.equals("42") && settings.licenseKey.equals("token3000")) {
-					newLicensePersited.set(true);
+					newLicensePersisted.set(true);
 				}
 				return null;
 			}).when(session).persist(Mockito.any());
@@ -541,7 +541,7 @@ public class LicenseHolderTest {
 			holder.set("token3000");
 
 			Mockito.verify(validator, Mockito.times(1)).validate("token3000", "42");
-			Assertions.assertTrue(newLicensePersited.get());
+			Assertions.assertTrue(newLicensePersisted.get());
 			Assertions.assertEquals(decodedJWT, holder.get());
 		}
 
