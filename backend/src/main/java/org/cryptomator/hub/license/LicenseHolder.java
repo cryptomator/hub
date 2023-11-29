@@ -20,7 +20,6 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -54,19 +53,34 @@ public class LicenseHolder {
 	void init() {
 		var settings = Settings.get();
 		if (settings.licenseKey != null) {
-			applyLicense(settings.hubId, settings.licenseKey, settings);
+			validateLicense(settings.licenseKey, settings.hubId);
 		} else if (initialId.isPresent() && initialLicense.isPresent()) {
-			applyLicense(initialId.get(), initialLicense.get(), settings);
+			applyInitialHubIdAndLicense(initialId.get(), initialLicense.get());
 		}
 	}
 
-	private void applyLicense(String hubId, String licenseKey, Settings settings) {
+	@Transactional
+	void validateLicense(String licenseKey, String hubId) {
 		try {
 			this.license = licenseValidator.validate(licenseKey, hubId);
 		} catch (JWTVerificationException e) {
 			LOG.warn("Provided license is invalid. Deleting entry. Please add the license over the REST API again.");
+			var settings = Settings.get();
 			settings.licenseKey = null;
-			settings.persist();
+			settings.persistAndFlush();
+		}
+	}
+
+	@Transactional
+	void applyInitialHubIdAndLicense(String initialId, String initialLicense) {
+		try {
+			this.license = licenseValidator.validate(initialLicense, initialId);
+			var settings = Settings.get();
+			settings.licenseKey = initialLicense;
+			settings.hubId = initialId;
+			settings.persistAndFlush();
+		} catch (JWTVerificationException e) {
+			LOG.warn("Provided initial license is invalid.");
 		}
 	}
 
@@ -83,7 +97,7 @@ public class LicenseHolder {
 		var settings = Settings.get();
 		this.license = licenseValidator.validate(token, settings.hubId);
 		settings.licenseKey = token;
-		settings.persist();
+		settings.persistAndFlush();
 	}
 
 	/**
