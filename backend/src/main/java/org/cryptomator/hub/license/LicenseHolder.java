@@ -20,7 +20,6 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -44,6 +43,9 @@ public class LicenseHolder {
 	@Inject
 	LicenseValidator licenseValidator;
 
+	@Inject
+	RandomMinuteSleeper randomMinuteSleeper;
+
 	private static final Logger LOG = Logger.getLogger(LicenseHolder.class);
 	private DecodedJWT license;
 
@@ -54,19 +56,34 @@ public class LicenseHolder {
 	void init() {
 		var settings = Settings.get();
 		if (settings.licenseKey != null) {
-			applyLicense(settings.hubId, settings.licenseKey, settings);
+			validateLicense(settings.licenseKey, settings.hubId);
 		} else if (initialId.isPresent() && initialLicense.isPresent()) {
-			applyLicense(initialId.get(), initialLicense.get(), settings);
+			applyInitialHubIdAndLicense(initialId.get(), initialLicense.get());
 		}
 	}
 
-	private void applyLicense(String hubId, String licenseKey, Settings settings) {
+	@Transactional
+	void validateLicense(String licenseKey, String hubId) {
 		try {
 			this.license = licenseValidator.validate(licenseKey, hubId);
 		} catch (JWTVerificationException e) {
 			LOG.warn("Provided license is invalid. Deleting entry. Please add the license over the REST API again.");
+			var settings = Settings.get();
 			settings.licenseKey = null;
-			settings.persist();
+			settings.persistAndFlush();
+		}
+	}
+
+	@Transactional
+	void applyInitialHubIdAndLicense(String initialId, String initialLicense) {
+		try {
+			this.license = licenseValidator.validate(initialLicense, initialId);
+			var settings = Settings.get();
+			settings.licenseKey = initialLicense;
+			settings.hubId = initialId;
+			settings.persistAndFlush();
+		} catch (JWTVerificationException e) {
+			LOG.warn("Provided initial license is invalid.");
 		}
 	}
 
@@ -83,15 +100,16 @@ public class LicenseHolder {
 		var settings = Settings.get();
 		this.license = licenseValidator.validate(token, settings.hubId);
 		settings.licenseKey = token;
-		settings.persist();
+		settings.persistAndFlush();
 	}
 
 	/**
-	 * Attempts to refresh the Hub licence every day at 01:00 UTC if claim refreshURL is present.
+	 * Attempts to refresh the Hub licence every day between 01:00:00 and 02:00:00 AM UTC if claim refreshURL is present.
 	 */
-	@Scheduled(cron = "0 1 * * * ?", timeZone = "UTC")
+	@Scheduled(cron = "0 0 1 * * ?", timeZone = "UTC", concurrentExecution = Scheduled.ConcurrentExecution.SKIP)
 	void refreshLicenseScheduler() throws InterruptedException {
 		if (license != null) {
+			randomMinuteSleeper.sleep(); // add random sleep between [0,59]min to reduce infrastructure load
 			var refreshUrl = licenseValidator.refreshUrl(license.getToken());
 			if (refreshUrl.isPresent()) {
 				var client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build();
@@ -110,7 +128,8 @@ public class LicenseHolder {
 		var request = HttpRequest.newBuilder() //
 				.uri(URI.create(refreshUrl)) //
 				.headers("Content-Type", "application/x-www-form-urlencoded") //
-				.POST(HttpRequest.BodyPublishers.ofString(body))  //
+				.POST(HttpRequest.BodyPublishers.ofString(body)) //
+				.version(HttpClient.Version.HTTP_1_1) //
 				.build();
 		try {
 			var response = client.send(request, HttpResponse.BodyHandlers.ofString());

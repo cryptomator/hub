@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Flow;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @QuarkusTest
 public class LicenseHolderTest {
@@ -50,14 +51,20 @@ public class LicenseHolderTest {
 		@InjectMock
 		LicenseValidator validator;
 
+		@InjectMock
+		RandomMinuteSleeper randomMinuteSleeper;
+
 		MockedStatic<Settings> settingsClass;
 
 		@BeforeEach
-		public void setup() {
+		public void setup() throws InterruptedException {
 			Query mockQuery = Mockito.mock(Query.class);
 			Mockito.doNothing().when(session).persist(Mockito.any());
 			Mockito.when(session.createQuery(Mockito.anyString())).thenReturn(mockQuery);
 			Mockito.when(mockQuery.getSingleResult()).thenReturn(0l);
+			Mockito.doNothing().when(randomMinuteSleeper).sleep();
+
+			Arc.container().instance(LicenseHolder.class).destroy();
 
 			settingsClass = Mockito.mockStatic(Settings.class);
 		}
@@ -65,7 +72,6 @@ public class LicenseHolderTest {
 		@AfterEach
 		public void teardown() {
 			settingsClass.close();
-			Arc.container().instance(LicenseHolder.class).destroy();
 		}
 
 		@Test
@@ -129,14 +135,20 @@ public class LicenseHolderTest {
 		@InjectMock
 		LicenseValidator validator;
 
+		@InjectMock
+		RandomMinuteSleeper randomMinuteSleeper;
+
 		MockedStatic<Settings> settingsClass;
 
 		@BeforeEach
-		public void setup() {
+		public void setup() throws InterruptedException {
 			Query mockQuery = Mockito.mock(Query.class);
 			Mockito.doNothing().when(session).persist(Mockito.any());
 			Mockito.when(session.createQuery(Mockito.anyString())).thenReturn(mockQuery);
 			Mockito.when(mockQuery.getSingleResult()).thenReturn(0l);
+			Mockito.doNothing().when(randomMinuteSleeper).sleep();
+
+			Arc.container().instance(LicenseHolder.class).destroy();
 
 			settingsClass = Mockito.mockStatic(Settings.class);
 		}
@@ -144,7 +156,6 @@ public class LicenseHolderTest {
 		@AfterEach
 		public void teardown() {
 			settingsClass.close();
-			Arc.container().instance(LicenseHolder.class).destroy();
 		}
 
 		@Test
@@ -200,14 +211,20 @@ public class LicenseHolderTest {
 		@InjectMock
 		LicenseValidator validator;
 
+		@InjectMock
+		RandomMinuteSleeper randomMinuteSleeper;
+
 		MockedStatic<Settings> settingsClass;
 
 		@BeforeEach
-		public void setup() {
+		public void setup() throws InterruptedException {
 			Query mockQuery = Mockito.mock(Query.class);
 			Mockito.doNothing().when(session).persist(Mockito.any());
 			Mockito.when(session.createQuery(Mockito.anyString())).thenReturn(mockQuery);
 			Mockito.when(mockQuery.getSingleResult()).thenReturn(0l);
+			Mockito.doNothing().when(randomMinuteSleeper).sleep();
+
+			Arc.container().instance(LicenseHolder.class).destroy();
 
 			settingsClass = Mockito.mockStatic(Settings.class);
 		}
@@ -215,7 +232,6 @@ public class LicenseHolderTest {
 		@AfterEach
 		public void teardown() {
 			settingsClass.close();
-			Arc.container().instance(LicenseHolder.class).destroy();
 		}
 
 		@Test
@@ -336,7 +352,7 @@ public class LicenseHolderTest {
 
 			// init implicitly called due to @PostConstruct which increases the times to verify by 1
 			// See https://github.com/cryptomator/hub/pull/229#discussion_r1374694626 for further information
-			Mockito.verify(validator, Mockito.times(1)).validate(Mockito.any(), Mockito.any());
+			Mockito.verify(validator, Mockito.times(1)).validate("token", "42");
 			Mockito.verify(session, Mockito.never()).persist(Mockito.any());
 			Assertions.assertEquals(existingJWT, holder.get());
 		}
@@ -385,6 +401,9 @@ public class LicenseHolderTest {
 		@InjectMock
 		LicenseValidator validator;
 
+		@InjectMock
+		RandomMinuteSleeper randomMinuteSleeper;
+
 		MockedStatic<Settings> settingsClass;
 
 		public static class ValidInitPropsInstanceTestProfile implements QuarkusTestProfile {
@@ -395,11 +414,14 @@ public class LicenseHolderTest {
 		}
 
 		@BeforeEach
-		public void setup() {
+		public void setup() throws InterruptedException {
 			Query mockQuery = Mockito.mock(Query.class);
 			Mockito.doNothing().when(session).persist(Mockito.any());
 			Mockito.when(session.createQuery(Mockito.anyString())).thenReturn(mockQuery);
 			Mockito.when(mockQuery.getSingleResult()).thenReturn(0l);
+			Mockito.doNothing().when(randomMinuteSleeper).sleep();
+
+			Arc.container().instance(LicenseHolder.class).destroy();
 
 			settingsClass = Mockito.mockStatic(Settings.class);
 		}
@@ -407,7 +429,6 @@ public class LicenseHolderTest {
 		@AfterEach
 		public void teardown() {
 			settingsClass.close();
-			Arc.container().instance(LicenseHolder.class).destroy();
 		}
 
 		@Test
@@ -419,11 +440,21 @@ public class LicenseHolderTest {
 			settingsMock.hubId = "42";
 			settingsClass.when(Settings::get).thenReturn(settingsMock);
 
+			var newLicensePersisted = new AtomicBoolean(false);
+			Mockito.doAnswer(invocation -> {
+				Settings settings = invocation.getArgument(0);
+				if (settings.hubId.equals("42") && settings.licenseKey.equals("token")) {
+					newLicensePersisted.set(true);
+				}
+				return null;
+			}).when(session).persist(Mockito.any());
+
 			holder.init();
 
 			// init implicitly called due to @PostConstruct which increases the times to verify by 1
 			// See https://github.com/cryptomator/hub/pull/229#discussion_r1374694626 for further information
 			Mockito.verify(validator, Mockito.times(2)).validate("token", "42");
+			Assertions.assertTrue(newLicensePersisted.get());
 			Assertions.assertEquals(decodedJWT, holder.get());
 		}
 
@@ -442,7 +473,7 @@ public class LicenseHolderTest {
 			// init implicitly called due to @PostConstruct which increases the times to verify by 1
 			// See https://github.com/cryptomator/hub/pull/229#discussion_r1374694626 for further information
 			Mockito.verify(validator, Mockito.times(2)).validate("token", "42");
-			Mockito.verify(session, Mockito.times(2)).persist(Mockito.eq(settingsMock));
+			Mockito.verify(session, Mockito.never()).persist(Mockito.eq(settingsMock));
 			Assertions.assertNull(holder.get());
 		}
 
@@ -461,6 +492,7 @@ public class LicenseHolderTest {
 			// init implicitly called due to @PostConstruct which increases the times to verify by 1
 			// See https://github.com/cryptomator/hub/pull/229#discussion_r1374694626 for further information
 			Mockito.verify(validator, Mockito.times(2)).validate("token3000", "3000");
+			Mockito.verify(session, Mockito.never()).persist(Mockito.any());
 			Assertions.assertEquals(decodedJWT, holder.get());
 		}
 
@@ -472,9 +504,9 @@ public class LicenseHolderTest {
 			});
 
 			var decodedJWT = Mockito.mock(DecodedJWT.class);
-			Mockito.when(validator.validate("token3000", "3000")).thenReturn(decodedJWT);
+			Mockito.when(validator.validate("token3000", "42")).thenReturn(decodedJWT);
 			Settings settingsMock = new Settings();
-			settingsMock.hubId = "3000";
+			settingsMock.hubId = "42";
 			settingsMock.licenseKey = "token3000";
 			settingsClass.when(Settings::get).thenReturn(settingsMock);
 
@@ -482,7 +514,8 @@ public class LicenseHolderTest {
 
 			// init implicitly called due to @PostConstruct which increases the times to verify by 1
 			// See https://github.com/cryptomator/hub/pull/229#discussion_r1374694626 for further information
-			Mockito.verify(validator, Mockito.times(2)).validate("token3000", "3000");
+			Mockito.verify(validator, Mockito.times(2)).validate("token3000", "42");
+			Mockito.verify(session, Mockito.never()).persist(Mockito.any());
 			Assertions.assertEquals(decodedJWT, holder.get());
 		}
 
@@ -496,14 +529,19 @@ public class LicenseHolderTest {
 			initSettingsMock.hubId = "42";
 			settingsClass.when(Settings::get).thenReturn(initSettingsMock);
 
-			Settings persistingSettingsMock = new Settings();
-			persistingSettingsMock.hubId = "42";
-			persistingSettingsMock.licenseKey = "token3000";
+			var newLicensePersisted = new AtomicBoolean(false);
+			Mockito.doAnswer(invocation -> {
+				Settings settings = invocation.getArgument(0);
+				if (settings.hubId.equals("42") && settings.licenseKey.equals("token3000")) {
+					newLicensePersisted.set(true);
+				}
+				return null;
+			}).when(session).persist(Mockito.any());
 
 			holder.set("token3000");
 
 			Mockito.verify(validator, Mockito.times(1)).validate("token3000", "42");
-			Mockito.verify(session, Mockito.times(1)).persist(Mockito.eq(persistingSettingsMock));
+			Assertions.assertTrue(newLicensePersisted.get());
 			Assertions.assertEquals(decodedJWT, holder.get());
 		}
 
