@@ -104,12 +104,12 @@ public class LicenseHolder {
 	}
 
 	/**
-	 * Attempts to refresh the Hub licence every day at 01:00:00 UTC if claim refreshURL is present.
+	 * Attempts to refresh the Hub licence every day between 01:00:00 and 02:00:00 AM UTC if claim refreshURL is present.
 	 */
 	@Scheduled(cron = "0 0 1 * * ?", timeZone = "UTC", concurrentExecution = Scheduled.ConcurrentExecution.SKIP)
 	void refreshLicenseScheduler() throws InterruptedException {
 		if (license != null) {
-			randomMinuteSleeper.sleep();
+			randomMinuteSleeper.sleep(); // add random sleep between [0,59]min to reduce infrastructure load
 			var refreshUrl = licenseValidator.refreshUrl(license.getToken());
 			if (refreshUrl.isPresent()) {
 				var client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build();
