@@ -7,14 +7,18 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.keycloak.admin.client.resource.ClientResource;
+import org.keycloak.admin.client.resource.ClientsResource;
 import org.keycloak.admin.client.resource.GroupResource;
 import org.keycloak.admin.client.resource.GroupsResource;
 import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.admin.client.resource.UsersResource;
+import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.mockito.Mockito;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -26,11 +30,24 @@ class KeycloakRemoteUserProviderTest {
 	private KeycloakRemoteUserProvider keycloakRemoteUserProvider;
 	private UserRepresentation user1 = Mockito.mock(UserRepresentation.class);
 	private UserRepresentation user2 = Mockito.mock(UserRepresentation.class);
+
 	private UserRepresentation syncer = Mockito.mock(UserRepresentation.class);
+
+	private UserRepresentation hubCliUser = Mockito.mock(UserRepresentation.class);
+
+	private ClientsResource hubCliClientsResource = Mockito.mock(ClientsResource.class);
+
+	private ClientRepresentation hubCliClientRepresentation = Mockito.mock(ClientRepresentation.class);
+
+	private ClientResource hubCliClientResource = Mockito.mock(ClientResource.class);
+
 
 	@BeforeEach
 	void setUp() {
 		var synerConfig = Mockito.mock(SyncerConfig.class);
+
+		Mockito.when(realm.clients()).thenReturn(hubCliClientsResource);
+		Mockito.when(realm.clients().findByClientId("cryptomatorhub-cli")).thenReturn(List.of());
 
 		Mockito.when(realm.users()).thenReturn(usersResource);
 
@@ -53,7 +70,7 @@ class KeycloakRemoteUserProviderTest {
 
 	@Test
 	@DisplayName("test user listing excludes syncer and returns two users")
-	public void testListUser() {
+	void testListUser() {
 		Mockito.when(usersResource.list(0, KeycloakRemoteUserProvider.MAX_COUNT_PER_REQUEST)).thenReturn(List.of(user1, user2, syncer));
 
 		var result = keycloakRemoteUserProvider.users(realm);
@@ -74,9 +91,51 @@ class KeycloakRemoteUserProviderTest {
 		Assertions.assertNull(resultUser2.pictureUrl);
 	}
 
+	@Test
+	@DisplayName("test user listing excludes syncer, includes Hub CLI user and returns two users")
+	void testListUserIncludingHubCliUser() {
+		Mockito.when(usersResource.list(0, KeycloakRemoteUserProvider.MAX_COUNT_PER_REQUEST)).thenReturn(List.of(user1, user2, syncer));
+
+		Mockito.when(realm.clients()).thenReturn(hubCliClientsResource);
+
+		List<ClientRepresentation> clientRepresentations = Mockito.mock(List.class);
+		Mockito.when(realm.clients().findByClientId("cryptomatorhub-cli")).thenReturn(clientRepresentations);
+		Mockito.when(clientRepresentations.get(0)).thenReturn(hubCliClientRepresentation);
+
+		Mockito.when(hubCliClientRepresentation.getId()).thenReturn("cryptomatorHubCliClientId");
+
+		Mockito.when(realm.clients().get(Mockito.anyString())).thenReturn(hubCliClientResource);
+
+		Mockito.when(hubCliUser.getId()).thenReturn("cryptomatorHubCliUserId");
+		Mockito.when(hubCliUser.getUsername()).thenReturn("cryptomatorHubCliUserUsername");
+		Mockito.when(hubCliClientResource.getServiceAccountUser()).thenReturn(hubCliUser);
+
+		var result = keycloakRemoteUserProvider.users(realm);
+
+		Assertions.assertEquals(3, result.size());
+
+		var resultUser1 = result.get(0);
+		var resultUser2 = result.get(1);
+		var resultUser3 = result.get(2);
+
+		Assertions.assertEquals("id3000", resultUser1.id);
+		Assertions.assertEquals("username3000", resultUser1.name);
+		Assertions.assertEquals("email3000", resultUser1.email);
+		Assertions.assertEquals("picture3000", resultUser1.pictureUrl);
+
+		Assertions.assertEquals("id3001", resultUser2.id);
+		Assertions.assertEquals("username3001", resultUser2.name);
+		Assertions.assertEquals("email3001", resultUser2.email);
+		Assertions.assertNull(resultUser2.pictureUrl);
+
+		Assertions.assertEquals("cryptomatorHubCliUserId", resultUser3.id);
+		Assertions.assertEquals("cryptomatorHubCliUserUsername", resultUser3.name);
+	}
+
+
 	@Nested
 	@DisplayName("Test groups")
-	public class Groups {
+	class Groups {
 
 		private GroupsResource groupsResource = Mockito.mock(GroupsResource.class);
 		private GroupRepresentation group1 = Mockito.mock(GroupRepresentation.class);
@@ -121,9 +180,9 @@ class KeycloakRemoteUserProviderTest {
 			Assertions.assertEquals("grpName3001", resultGroup2.name);
 			Assertions.assertEquals(2, resultGroup2.members.size());
 
-			var membersGroup2 = resultGroup2.members.stream().toList();
-			var member1Group2 = (User) membersGroup2.get(1);
-			var member2Group2 = (User) membersGroup2.get(0);
+			var membersGroup2 = resultGroup2.members.stream().sorted(Comparator.comparing(a -> a.id)).toList();
+			var member1Group2 = (User) membersGroup2.get(0);
+			var member2Group2 = (User) membersGroup2.get(1);
 
 			Assertions.assertEquals("id3000", member1Group2.id);
 			Assertions.assertEquals("username3000", member1Group2.name);

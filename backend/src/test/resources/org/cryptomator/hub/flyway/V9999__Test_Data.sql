@@ -14,10 +14,10 @@ VALUES
 	('group1', 'GROUP', 'Group Name 1'),
     ('group2', 'GROUP', 'Group Name 2');
 
-INSERT INTO "user_details" ("id")
+INSERT INTO "user_details" ("id", "publickey", "privatekey", "setupcode")
 VALUES
-	('user1'),
-	('user2');
+	('user1', 'public1', 'private1', 'setup1'),
+	('user2', NULL, NULL, NULL);
 
 INSERT INTO "group_details" ("id")
 VALUES
@@ -39,29 +39,43 @@ VALUES
 	 'MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAEC1uWSXj2czCDwMTLWV5BFmwxdM6PX9p+Pk9Yf9rIf374m5XP1U8q79dBhLSIuaojsvOT39UUcPJROSD1FqYLued0rXiooIii1D3jaW6pmGVJFhodzC31cy5sfOYotrzF',
 	 'MIG2AgEAMBAGByqGSM49AgEGBSuBBAAiBIGeMIGbAgEBBDCAHpFQ62QnGCEvYh/pE9QmR1C9aLcDItRbslbmhen/h1tt8AyMhskeenT+rAyyPhGhZANiAAQLW5ZJePZzMIPAxMtZXkEWbDF0zo9f2n4+T1h/2sh/fviblc/VTyrv10GEtIi5qiOy85Pf1RRw8lE5IPUWpgu553SteKigiKLUPeNpbqmYZUkWGh3MLfVzLmx85ii2vMU=',
 	 FALSE),
-	('7E57C0DE-0000-4000-8000-0001AAAAAAAA', 'Vault Archived', 'This is a archived vault.', '2020-02-20 20:20:20', 'salt3', 42, 'masterkey3',
+	('7E57C0DE-0000-4000-8000-00010000AAAA', 'Vault Archived', 'This is a archived vault.', '2020-02-20 20:20:20', 'salt3', 42, 'masterkey3',
 	 'MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAEC1uWSXj2czCDwMTLWV5BFmwxdM6PX9p+Pk9Yf9rIf374m5XP1U8q79dBhLSIuaojsvOT39UUcPJROSD1FqYLued0rXiooIii1D3jaW6pmGVJFhodzC31cy5sfOYotrzF',
 	 'MIG2AgEAMBAGByqGSM49AgEGBSuBBAAiBIGeMIGbAgEBBDCAHpFQ62QnGCEvYh/pE9QmR1C9aLcDItRbslbmhen/h1tt8AyMhskeenT+rAyyPhGhZANiAAQLW5ZJePZzMIPAxMtZXkEWbDF0zo9f2n4+T1h/2sh/fviblc/VTyrv10GEtIi5qiOy85Pf1RRw8lE5IPUWpgu553SteKigiKLUPeNpbqmYZUkWGh3MLfVzLmx85ii2vMU=',
 	 TRUE);
 
-INSERT INTO "vault_access" ("vault_id", "authority_id")
+INSERT INTO "vault_access" ("vault_id", "authority_id", "role")
 VALUES
-	('7E57C0DE-0000-4000-8000-000100001111', 'user1'),
-	('7E57C0DE-0000-4000-8000-000100001111', 'user2'),
-	('7E57C0DE-0000-4000-8000-0001AAAAAAAA', 'user1'),
-	('7E57C0DE-0000-4000-8000-000100002222', 'group1'); /* user1, part of group1, has access to vault2 */
+	('7E57C0DE-0000-4000-8000-000100001111', 'user1', 'OWNER'),
+	('7E57C0DE-0000-4000-8000-000100001111', 'user2', 'MEMBER'),
+	('7E57C0DE-0000-4000-8000-00010000AAAA', 'user1', 'OWNER'),
+	('7E57C0DE-0000-4000-8000-000100002222', 'group2', 'OWNER'),
+	('7E57C0DE-0000-4000-8000-000100002222', 'group1', 'MEMBER');
 
-INSERT INTO "device" ("id", "owner_id", "name", "type", "publickey", "creation_time")
+INSERT INTO "device" ("id", "owner_id", "name", "type", "publickey", "creation_time", "user_privatekey")
 VALUES
-	('device1', 'user1', 'Computer 1', 'DESKTOP', 'publickey1', '2020-02-20 20:20:20'),
-	('device2', 'user2', 'Computer 2', 'DESKTOP', 'publickey2', '2020-02-20 20:20:20'),
-	('device3', 'user1', 'Computer 3', 'DESKTOP', 'publickey3', '2020-02-20 20:20:20'); /* user1 is part of group1 */
+	('device1', 'user1', 'Computer 1', 'DESKTOP', 'publickey1', '2020-02-20 20:20:20', 'jwe.jwe.jwe.user1.device1'),
+	('device2', 'user2', 'Computer 2', 'DESKTOP', 'publickey2', '2020-02-20 20:20:20', 'jwe.jwe.jwe.user2.device2'),
+	('device3', 'user1', 'Computer 3', 'DESKTOP', 'publickey3', '2020-02-20 20:20:20', 'jwe.jwe.jwe.user1.device3');
 
-INSERT INTO "access_token" ("device_id", "vault_id", "jwe")
+INSERT INTO "access_token" ("user_id", "vault_id", "vault_masterkey")
 VALUES
-	('device1', '7E57C0DE-0000-4000-8000-000100001111', 'jwe1'),
-	('device2', '7E57C0DE-0000-4000-8000-000100001111', 'jwe2'),
-	('device3', '7E57C0DE-0000-4000-8000-000100002222', 'jwe3'); -- device3 of user1, part of group1, has access to vault2
+	('user1', '7E57C0DE-0000-4000-8000-000100001111', 'jwe.jwe.jwe.vault1.user1'), -- direct access
+	('user2', '7E57C0DE-0000-4000-8000-000100001111', 'jwe.jwe.jwe.vault1.user2'), -- direct access
+	('user1', '7E57C0DE-0000-4000-8000-000100002222', 'jwe.jwe.jwe.vault2.user1'); -- access via group1
+
+-- DEPRECATED:
+INSERT INTO "device_legacy" ("id", "owner_id", "name", "type", "publickey", "creation_time")
+VALUES
+	('legacyDevice1', 'user1', 'Computer 1', 'DESKTOP', 'publickey1', '2020-02-20 20:20:20'),
+	('legacyDevice2', 'user2', 'Computer 2', 'DESKTOP', 'publickey2', '2020-02-20 20:20:20'),
+	('legacyDevice3', 'user1', 'Computer 3', 'DESKTOP', 'publickey3', '2020-02-20 20:20:20');
+
+INSERT INTO "access_token_legacy" ("device_id", "vault_id", "jwe")
+VALUES
+	('legacyDevice1', '7E57C0DE-0000-4000-8000-000100001111', 'legacy.jwe.jwe.vault1.device1'), -- direct access
+	('legacyDevice2', '7E57C0DE-0000-4000-8000-000100001111', 'legacy.jwe.jwe.vault1.device2'), -- direct access
+	('legacyDevice3', '7E57C0DE-0000-4000-8000-000100002222', 'legacy.jwe.jwe.vault2.device3'); -- access via group1
 
 INSERT INTO "audit_event" ("id", "timestamp", "type")
 VALUES
@@ -72,6 +86,8 @@ VALUES
     (21, '2020-02-20T20:20:20.021Z', 'VAULT_MEMBER_ADD'),
     (22, '2020-02-20T20:20:20.022Z', 'VAULT_MEMBER_ADD'),
     (23, '2020-02-20T20:20:20.023Z', 'VAULT_MEMBER_REMOVE'),
+    (24, '2020-02-20T20:20:20.024Z', 'VAULT_MEMBER_UPDATE'),
+    (25, '2020-02-20T20:20:20.025Z', 'VAULT_MEMBER_UPDATE'),
     (30, '2020-02-20T20:20:20.030Z', 'VAULT_CREATE'),
     (31, '2020-02-20T20:20:20.031Z', 'VAULT_MEMBER_ADD'),
     (100, '2020-02-20T20:20:20.100Z', 'DEVICE_REGISTER'),
@@ -93,19 +109,24 @@ INSERT INTO "audit_event_vault_create" ("id", "created_by", "vault_id", "vault_n
 VALUES
     (10, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'Vault 1', 'This is a testvault.'),
     (20, 'user1', '7E57C0DE-0000-4000-8000-000100002222', 'Vault 2', 'This is a testvault.'),
-    (30, 'user2', '7E57C0DE-0000-4000-8000-0001AAAAAAAA', 'Vault 3', 'This is a testvault.');
+    (30, 'user2', '7E57C0DE-0000-4000-8000-00010000AAAA', 'Vault 3', 'This is a testvault.');
 
-INSERT INTO "audit_event_vault_member_add" ("id", "added_by", "vault_id", "authority_id")
+INSERT INTO "audit_event_vault_member_add" ("id", "added_by", "vault_id", "authority_id", "role")
 VALUES
-    (11, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'user1'),
-    (12, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'user2'),
-    (21, 'user1', '7E57C0DE-0000-4000-8000-000100002222', 'user1'),
-    (22, 'user1', '7E57C0DE-0000-4000-8000-000100002222', 'group1'),
-    (31, 'user2', '7E57C0DE-0000-4000-8000-0001AAAAAAAA', 'user2');
+    (11, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'user1', 'OWNER'),
+    (12, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'user2', 'MEMBER'),
+    (21, 'user1', '7E57C0DE-0000-4000-8000-000100002222', 'user1', 'MEMBER'),
+    (22, 'user1', '7E57C0DE-0000-4000-8000-000100002222', 'group1', 'MEMBER'),
+    (31, 'user2', '7E57C0DE-0000-4000-8000-00010000AAAA', 'user1', 'MEMBER');
 
 INSERT INTO "audit_event_vault_member_remove" ("id", "removed_by", "vault_id", "authority_id")
 VALUES
     (23, 'user1', '7E57C0DE-0000-4000-8000-000100002222', 'user1');
+
+INSERT INTO "audit_event_vault_member_update" ("id", "updated_by", "vault_id", "authority_id", "role")
+VALUES
+    (24, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'user2', 'OWNER'),
+    (25, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'user2', 'MEMBER');
 
 INSERT INTO "audit_event_device_register" ("id", "registered_by", "device_id", "device_name", "device_type")
 VALUES
@@ -127,9 +148,9 @@ INSERT INTO "audit_event_vault_access_grant" ("id", "granted_by", "vault_id", "a
 VALUES
     (2000, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'user1'),
     (2001, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'user2'),
-    (2002, 'user1', '7E57C0DE-0000-4000-8000-0001AAAAAAAA', 'user1'),
+    (2002, 'user1', '7E57C0DE-0000-4000-8000-00010000AAAA', 'user1'),
     (2003, 'user1', '7E57C0DE-0000-4000-8000-000100002222', 'group1');
 
 INSERT INTO "audit_event_vault_update" ("id", "updated_by", "vault_id", "vault_name", "vault_description", "vault_archived")
 VALUES
-    (3000, 'user1', '7E57C0DE-0000-4000-8000-0001AAAAAAAA', 'Vault Archived', 'This is a archived vault.', TRUE);
+    (3000, 'user1', '7E57C0DE-0000-4000-8000-00010000AAAA', 'Vault Archived', 'This is a archived vault.', TRUE);

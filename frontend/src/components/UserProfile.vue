@@ -52,7 +52,9 @@
       </div>
 
       <div class="grid grid-cols-1 gap-8 lg:col-span-3">
+        <ManageSetupCode />
         <DeviceList />
+        <UserkeyFingerprint :user-public-key="me.publicKey"/>
       </div>
     </div>
   </div>
@@ -64,10 +66,13 @@ import { ArrowTopRightOnSquareIcon, CheckIcon, ChevronUpDownIcon, LanguageIcon }
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { UserDto, VersionDto } from '../common/backend';
+
 import config from '../common/config';
 import { Locale } from '../i18n';
 import DeviceList from './DeviceList.vue';
 import FetchError from './FetchError.vue';
+import ManageSetupCode from './ManageSetupCode.vue';
+import UserkeyFingerprint from './UserkeyFingerprint.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -85,7 +90,7 @@ onMounted(async () => {
 async function fetchData() {
   onFetchError.value = null;
   try {
-    me.value = await backend.users.me(false, false);
+    me.value = await backend.users.me(true);
     version.value = await backend.version.get();
   } catch (error) {
     console.error('Retrieving user information failed.', error);
@@ -96,4 +101,5 @@ async function fetchData() {
 function openKeycloakUserAccount() {
   window.open(keycloakUserAccountURL.value, '_blank');
 }
+
 </script>

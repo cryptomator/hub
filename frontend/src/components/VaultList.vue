@@ -15,8 +15,8 @@
   <div class="pb-5 mt-3 border-b border-gray-200 flex flex-wrap sm:flex-nowrap gap-3 items-center whitespace-nowrap">
     <input id="vaultSearch" v-model="query" :placeholder="t('vaultList.search.placeholder')" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-sm text-sm border-gray-300 rounded-md disabled:bg-gray-200"/>
 
-    <Listbox v-if="isAdmin" v-model="selectedFilter" as="div">
-      <div class="relative w-32">
+    <Listbox v-model="selectedFilter" as="div">
+      <div class="relative w-44">
         <ListboxButton class="relative w-full rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary text-sm">
           <span class="block truncate">{{ filterOptions[selectedFilter] }}</span>
           <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
@@ -77,9 +77,10 @@
             <div class="min-w-0 flex-1">
               <div class="flex items-center gap-3">
                 <p class="truncate text-sm font-medium text-primary">{{ vault.name }}</p>
+                <div v-if="ownedVaults?.some(ownedVault => ownedVault.id == vault.id)" class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">{{ t('vaultList.badge.owner') }}</div>
                 <div v-if="vault.archived" class="inline-flex items-center rounded-md bg-yellow-400/10 px-2 py-1 text-xs font-medium text-yellow-500 ring-1 ring-inset ring-yellow-400/20">{{ t('vaultList.badge.archived') }}</div>
               </div>
-              <p v-if="vault.description.length > 0" class="truncate text-sm text-gray-500 mt-2">{{ vault.description }}</p>
+              <p v-if="vault.description && vault.description.length > 0" class="truncate text-sm text-gray-500 mt-2">{{ vault.description }}</p>
             </div>
             <div class="ml-5 shrink-0">
               <ChevronRightIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
@@ -107,7 +108,7 @@
   </div>
 
   <SlideOver v-if="selectedVault != null" ref="vaultDetailsSlideOver" :title="selectedVault.name" @close="selectedVault = null">
-    <VaultDetails :vault-id="selectedVault.id" @vault-updated="v => onSelectedVaultUpdate(v)"></VaultDetails>
+    <VaultDetails :vault-id="selectedVault.id" :role="ownsSelectedVault ? 'OWNER' : 'MEMBER'" @vault-updated="v => onSelectedVaultUpdate(v)"></VaultDetails>
   </SlideOver>
 </template>
 
@@ -129,15 +130,19 @@ const vaultDetailsSlideOver = ref<typeof SlideOver>();
 const onFetchError = ref<Error | null>();
 
 const vaults = ref<VaultDto[]>();
+const ownedVaults = ref<VaultDto[]>();
 const selectedVault = ref<VaultDto | null>(null);
+const ownsSelectedVault = computed(() => {
+  return ownedVaults.value?.some(ownedVault => ownedVault.id == selectedVault.value?.id);
+});
 
 const isAdmin = ref<boolean>();
 
-const filterOptions = {
+const filterOptions = ref< {[key: string]: string} >({
   accessibleVaults: t('vaultList.filter.entry.accessibleVaults'),
-  allVaults: t('vaultList.filter.entry.allVaults'),
-};
-const selectedFilter = ref<'accessibleVaults' | 'allVaults'>('accessibleVaults');
+  ownedVaults: t('vaultList.filter.entry.ownedVaults')
+});
+const selectedFilter = ref<'accessibleVaults' | 'ownedVaults' | 'allVaults'>('accessibleVaults');
 watch(selectedFilter, fetchData);
 const query = ref('');
 const filteredVaults = computed(() =>
@@ -153,9 +158,18 @@ onMounted(fetchData);
 async function fetchData() {
   onFetchError.value = null;
   try {
+    isAdmin.value = (await auth).isAdmin();
+
+    if (isAdmin.value) {
+      filterOptions.value['allVaults'] = t('vaultList.filter.entry.allVaults')
+    }
+    ownedVaults.value = (await backend.vaults.listAccessible('OWNER')).sort((a, b) => a.name.localeCompare(b.name));
     switch (selectedFilter.value) {
       case 'accessibleVaults':
-        vaults.value = (await backend.vaults.listAccessible()).sort((a, b) => a.name.localeCompare(b.name));
+        vaults.value = (await backend.vaults.listAccessible()).filter(v => !v.archived).sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      case 'ownedVaults':
+        vaults.value = ownedVaults.value;
         break;
       case 'allVaults':
         vaults.value = (await backend.vaults.listAll()).sort((a, b) => a.name.localeCompare(b.name));
@@ -163,7 +177,7 @@ async function fetchData() {
       default:
         throw new Error('Unknown filter');
     }
-    isAdmin.value = (await auth).isAdmin();
+
   } catch (error) {
     console.error('Retrieving vault list failed.', error);
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');

@@ -33,6 +33,7 @@ module.exports = {
     fontFamily: {
       'headline': 'Quicksand, sans-serif',
       'body': 'Open Sans, sans-serif',
+      'mono': 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
     },
   },
   plugins: [

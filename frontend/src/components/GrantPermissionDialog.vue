@@ -24,12 +24,27 @@
                           {{ t('grantPermissionDialog.description') }}
                         </p>
                       </div>
+                      <div class="mt-2 h-48 overflow-y-auto">
+                        <ul role="list" class="mt-2 border-t border-b border-gray-200 divide-y divide-gray-200">
+                          <template v-for="member in users.values()" :key="member.id">
+                            <li class="py-3 flex flex-col">
+                              <div class="flex justify-between items-center">
+                                <div class="flex items-center" :title="userKeyFingerprints.get(member.id)">
+                                  <img :src="member.pictureUrl" alt="" class="w-8 h-8 rounded-full" />
+                                  <p class="ml-4 text-sm font-medium text-gray-900">{{ member.name }}</p>
+                                  <p class="ml-3 inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">{{ userKeyFingerprints.get(member.id)?.substring(0, 8) }}</p>
+                                </div>
+                              </div>
+                            </li>
+                          </template>
+                        </ul>
+                      </div>
                     </div>
                   </div>
                 </div>
                 <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                   <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm" >
-                    {{ t('grantPermissionDialog.submit', [devices.length]) }}
+                    {{ t('grantPermissionDialog.submit', [users.length]) }}
                   </button>
                   <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" @click="open = false">
                     {{ t('common.cancel') }}
@@ -53,10 +68,12 @@
 <script setup lang="ts">
 import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
-import { base64url } from 'rfc4648';
-import { ref } from 'vue';
+import { base64 } from 'rfc4648';
+import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { ConflictError, DeviceDto, NotFoundError, VaultDto } from '../common/backend';
+import backend, { AccessGrant, ConflictError, NotFoundError, UserDto, VaultDto } from '../common/backend';
+import { getFingerprint } from '../common/crypto';
+
 import { VaultKeys } from '../common/crypto';
 
 const { t } = useI18n({ useScope: 'global' });
@@ -67,7 +84,7 @@ const onGrantPermissionError = ref<Error | null>();
 
 const props = defineProps<{
   vault: VaultDto
-  devices: DeviceDto[]
+  users: UserDto[]
   vaultKeys: VaultKeys
 }>();
 
@@ -80,6 +97,16 @@ defineExpose({
   show
 });
 
+const userKeyFingerprints = ref<Map<string, string | undefined>>(new Map());
+
+onMounted(fetchData);
+
+async function fetchData() {
+  for (const user of props.users) {
+    userKeyFingerprints.value.set(user.id, await getFingerprint(user.publicKey))
+  }
+}
+
 function show() {
   open.value = true;
 }
@@ -87,7 +114,7 @@ function show() {
 async function grantAccess() {
   onGrantPermissionError.value = null;
   try {
-    await giveDevicesAccess(props.devices);
+    await giveUsersAccess(props.users);
     emit('permissionGranted');
     open.value = false;
   } catch (error) {
@@ -96,11 +123,16 @@ async function grantAccess() {
   }
 }
 
-async function giveDevicesAccess(devices: DeviceDto[]) {
-  for (const device of devices) {
-    const publicKey = base64url.parse(device.publicKey);
-    const jwe = await props.vaultKeys.encryptForDevice(publicKey);
-    await backend.vaults.grantAccess(props.vault.id, device.id, jwe, props.vaultKeys);
+async function giveUsersAccess(users: UserDto[]) {
+  let tokens: AccessGrant[] = [];
+  for (const user of users) {
+    if (user.publicKey) { // some users might not have set up their key pair, so we can't share secrets with them yet
+      const publicKey = base64.parse(user.publicKey);
+      const jwe = await props.vaultKeys.encryptForUser(publicKey);
+      tokens.push({ userId: user.id, token: jwe });
+    }
   }
+  await backend.vaults.grantAccess(props.vault.id, ...tokens);
 }
+
 </script>

@@ -6,7 +6,7 @@ import { Deferred, debounce } from './util';
 export type AuditEventDto = {
   id: number;
   timestamp: Date;
-  type: 'DEVICE_REGISTER' | 'DEVICE_REMOVE' | 'VAULT_CREATE' | 'VAULT_UPDATE' | 'VAULT_ACCESS_GRANT' | 'VAULT_KEY_RETRIEVE' | 'VAULT_MEMBER_ADD' | 'VAULT_MEMBER_REMOVE';
+  type: 'DEVICE_REGISTER' | 'DEVICE_REMOVE' | 'VAULT_CREATE' | 'VAULT_UPDATE' | 'VAULT_ACCESS_GRANT' | 'VAULT_KEY_RETRIEVE' | 'VAULT_MEMBER_ADD' | 'VAULT_MEMBER_REMOVE' | 'VAULT_MEMBER_UPDATE' | 'VAULT_OWNERSHIP_CLAIM';
 }
 
 export type AuditEventDeviceRegisterDto = AuditEventDto & {
@@ -52,12 +52,25 @@ export type AuditEventVaultMemberAddDto = AuditEventDto & {
   addedBy: string;
   vaultId: string;
   authorityId: string;
+  role: 'MEMBER' | 'OWNER';
 }
 
 export type AuditEventVaultMemberRemoveDto = AuditEventDto & {
   removedBy: string;
   vaultId: string;
   authorityId: string;
+}
+
+export type AuditEventVaultMemberUpdateDto = AuditEventDto & {
+  updatedBy: string;
+  vaultId: string;
+  authorityId: string;
+  role: 'MEMBER' | 'OWNER';
+}
+
+export type AuditEventVaultOwnershipClaimDto = AuditEventDto & {
+  claimedBy: string;
+  vaultId: string;
 }
 
 /* Entity Cache */

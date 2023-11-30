@@ -11,29 +11,20 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQuery;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.NoResultException;
 import jakarta.persistence.Table;
 
 import java.time.Instant;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Stream;
 
 @Entity
 @Table(name = "device")
-@NamedQuery(name = "Device.requiringAccessGrant",
-		query = """
-				SELECT d
-				FROM Vault v
-					INNER JOIN v.effectiveMembers m
-					INNER JOIN m.devices d
-					LEFT JOIN d.accessTokens a ON a.id.vaultId = :vaultId AND a.id.deviceId = d.id
-					WHERE v.id = :vaultId AND a.vault IS NULL
-				"""
+@NamedQuery(name = "Device.findByIdAndOwner",
+		query = "SELECT d FROM Device d WHERE d.id = :deviceId AND d.owner.id = :userId"
 )
+@NamedQuery(name = "Device.deleteByOwner", query = "DELETE FROM Device d WHERE d.owner.id = :userId")
 @NamedQuery(name = "Device.allInList",
 		query = """
 				SELECT d
@@ -52,10 +43,7 @@ public class Device extends PanacheEntityBase {
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "owner_id", updatable = false, nullable = false)
-	public Authority owner;
-
-	@OneToMany(mappedBy = "device", fetch = FetchType.LAZY)
-	public Set<AccessToken> accessTokens = new HashSet<>();
+	public User owner;
 
 	@Column(name = "name", nullable = false)
 	public String name;
@@ -66,6 +54,9 @@ public class Device extends PanacheEntityBase {
 
 	@Column(name = "publickey", nullable = false)
 	public String publickey;
+
+	@Column(name = "user_privatekey", nullable = false)
+	public String userPrivateKey;
 
 	@Column(name = "creation_time", nullable = false)
 	public Instant creationTime;
@@ -78,6 +69,8 @@ public class Device extends PanacheEntityBase {
 				", name='" + name + '\'' +
 				", type='" + type + '\'' +
 				", publickey='" + publickey + '\'' +
+				", userPrivateKey='" + userPrivateKey + '\'' +
+				", creationTime='" + creationTime + '\'' +
 				'}';
 	}
 
@@ -90,19 +83,26 @@ public class Device extends PanacheEntityBase {
 				&& Objects.equals(this.owner, other.owner)
 				&& Objects.equals(this.name, other.name)
 				&& Objects.equals(this.type, other.type)
-				&& Objects.equals(this.publickey, other.publickey);
+				&& Objects.equals(this.publickey, other.publickey)
+				&& Objects.equals(this.userPrivateKey, other.userPrivateKey)
+				&& Objects.equals(this.creationTime, other.creationTime);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, owner, name, type, publickey);
+		return Objects.hash(id, owner, name, type, publickey, userPrivateKey, creationTime);
 	}
 
-	public static Stream<Device> findRequiringAccessGrant(UUID vaultId) {
-		return find("#Device.requiringAccessGrant", Parameters.with("vaultId", vaultId)).stream();
+	public static Device findByIdAndUser(String deviceId, String userId) throws NoResultException {
+		return find("#Device.findByIdAndOwner", Parameters.with("deviceId", deviceId).and("userId", userId)).singleResult();
 	}
 
 	public static Stream<Device> findAllInList(List<String> ids) {
 		return find("#Device.allInList", Parameters.with("ids", ids)).stream();
 	}
+
+	public static void deleteByOwner(String userId) {
+		delete("#Device.deleteByOwner", Parameters.with("userId", userId));
+	}
+
 }

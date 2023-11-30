@@ -59,18 +59,7 @@ public class UsersResourceTest {
 			when().get("/users/me?withDevices=true")
 					.then().statusCode(200)
 					.body("id", is("user1"))
-					.body("devices.id", hasItems("device1"))
-					.body("devices.accessTo.flatten()", empty());
-		}
-
-		@Test
-		@DisplayName("GET /users/me?withDevices=true&withAccessibleVaults=true returns 200")
-		public void testGetMe3() {
-			when().get("/users/me?withDevices=true&withAccessibleVaults=true")
-					.then().statusCode(200)
-					.body("id", is("user1"))
-					.body("devices.id", hasItems("device1"))
-					.body("devices.accessTo.id.flatten()", hasItems(equalToIgnoringCase("7E57C0DE-0000-4000-8000-000100001111")));
+					.body("devices.id", hasItems("device1"));
 		}
 
 		@Test

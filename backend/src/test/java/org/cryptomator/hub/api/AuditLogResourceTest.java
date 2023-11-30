@@ -30,7 +30,7 @@ public class AuditLogResourceTest {
 				.param("paginationId", 9999L)
 				.when().get("/auditlog")
 				.then().statusCode(200)
-				.body("id", Matchers.containsInRelativeOrder(comparesEqualTo(4242), comparesEqualTo(3000), comparesEqualTo(2003), comparesEqualTo(2002), comparesEqualTo(2001), comparesEqualTo(2000), comparesEqualTo(1111), comparesEqualTo(201), comparesEqualTo(200), comparesEqualTo(102), comparesEqualTo(101), comparesEqualTo(100), comparesEqualTo(31), comparesEqualTo(30), comparesEqualTo(23), comparesEqualTo(22), comparesEqualTo(21), comparesEqualTo(20), comparesEqualTo(12), comparesEqualTo(11)));
+				.body("id", Matchers.containsInRelativeOrder(comparesEqualTo(4242), comparesEqualTo(3000), comparesEqualTo(2003), comparesEqualTo(2002), comparesEqualTo(2001), comparesEqualTo(2000), comparesEqualTo(1111), comparesEqualTo(201), comparesEqualTo(200), comparesEqualTo(102), comparesEqualTo(101), comparesEqualTo(100), comparesEqualTo(31), comparesEqualTo(30), comparesEqualTo(25), comparesEqualTo(24), comparesEqualTo(23), comparesEqualTo(22), comparesEqualTo(21), comparesEqualTo(20)));
 	}
 
 	@Test

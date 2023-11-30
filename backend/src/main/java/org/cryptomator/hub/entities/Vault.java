@@ -2,7 +2,6 @@ package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.panache.common.Parameters;
-import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -15,10 +14,17 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.Immutable;
 
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.interfaces.ECPublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
 import java.time.Instant;
+import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -30,9 +36,14 @@ import java.util.stream.Stream;
 		query = """
 				SELECT DISTINCT v
 				FROM Vault v
-				LEFT JOIN v.effectiveMembers m
-				WHERE m.id = :userId
-				AND NOT v.archived
+				INNER JOIN EffectiveVaultAccess a ON a.id.vaultId = v.id AND a.id.authorityId = :userId
+				""")
+@NamedQuery(name = "Vault.accessibleByUserAndRole",
+		query = """
+				SELECT DISTINCT v
+				FROM Vault v
+				INNER JOIN EffectiveVaultAccess a ON a.id.vaultId = v.id AND a.id.authorityId = :userId
+				WHERE a.id.role = :role
 				""")
 @NamedQuery(name = "Vault.allInList",
 		query = """
@@ -41,7 +52,6 @@ import java.util.stream.Stream;
 				WHERE v.id IN :ids
 				"""
 )
-@RegisterForReflection(targets = {UUID[].class})
 public class Vault extends PanacheEntityBase {
 
 	@Id
@@ -49,6 +59,7 @@ public class Vault extends PanacheEntityBase {
 	public UUID id;
 
 	@ManyToMany
+	@Immutable
 	@JoinTable(name = "vault_access",
 			joinColumns = @JoinColumn(name = "vault_id", referencedColumnName = "id"),
 			inverseJoinColumns = @JoinColumn(name = "authority_id", referencedColumnName = "id")
@@ -64,24 +75,24 @@ public class Vault extends PanacheEntityBase {
 	public Set<Authority> effectiveMembers = new HashSet<>();
 
 	@OneToMany(mappedBy = "vault", fetch = FetchType.LAZY)
-	public Set<AccessToken> accessTokens = new HashSet<>(); // rename to accesstokens?
+	public Set<AccessToken> accessTokens = new HashSet<>();
 
 	@Column(name = "name", nullable = false)
 	public String name;
 
-	@Column(name = "salt", nullable = false)
+	@Column(name = "salt")
 	public String salt;
 
-	@Column(name = "iterations", nullable = false)
-	public int iterations;
+	@Column(name = "iterations")
+	public Integer iterations;
 
-	@Column(name = "masterkey", nullable = false)
+	@Column(name = "masterkey")
 	public String masterkey;
 
-	@Column(name = "auth_pubkey", nullable = false)
+	@Column(name = "auth_pubkey")
 	public String authenticationPublicKey;
 
-	@Column(name = "auth_prvkey", nullable = false)
+	@Column(name = "auth_prvkey")
 	public String authenticationPrivateKey;
 
 	@Column(name = "creation_time", nullable = false)
@@ -93,8 +104,33 @@ public class Vault extends PanacheEntityBase {
 	@Column(name = "archived", nullable = false)
 	public boolean archived;
 
+	public Optional<ECPublicKey> getAuthenticationPublicKey() {
+		if (authenticationPublicKey == null) {
+			return Optional.empty();
+		}
+
+		try {
+			var publicKeySpec = new X509EncodedKeySpec(Base64.getDecoder().decode(authenticationPublicKey));
+			var keyFactory = KeyFactory.getInstance("EC");
+			var key = keyFactory.generatePublic(publicKeySpec);
+			if (key instanceof ECPublicKey k) {
+				return Optional.of(k);
+			} else {
+				return Optional.empty();
+			}
+		} catch (InvalidKeySpecException e) {
+			return Optional.empty();
+		} catch (NoSuchAlgorithmException e) {
+			throw new IllegalStateException(e);
+		}
+	}
+
 	public static Stream<Vault> findAccessibleByUser(String userId) {
 		return find("#Vault.accessibleByUser", Parameters.with("userId", userId)).stream();
+	}
+
+	public static Stream<Vault> findAccessibleByUser(String userId, VaultAccess.Role role) {
+		return find("#Vault.accessibleByUserAndRole", Parameters.with("userId", userId).and("role", role)).stream();
 	}
 
 	public static Stream<Vault> findAllInList(List<UUID> ids) {

@@ -193,9 +193,10 @@ import { useI18n } from 'vue-i18n';
 import backend, { BillingDto, VersionDto } from '../common/backend';
 import config, { absFrontendBaseURL } from '../common/config';
 import { FetchUpdateError, LatestVersionDto, updateChecker } from '../common/updatecheck';
+import { Locale } from '../i18n/index';
 import FetchError from './FetchError.vue';
 
-const { t, d, locale } = useI18n({ useScope: 'global' });
+const { t, d, locale, fallbackLocale } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{
   token?: string
@@ -265,7 +266,9 @@ async function fetchData() {
 
 function manageSubscription() {
   const returnUrl = `${absFrontendBaseURL}admin`;
-  const languagePathComponent = locale.value == 'en' ? '' : `${locale.value}/`;
+  const supportedLanguages = [Locale.EN, Locale.DE];
+  const supportedLanguagePathComponents = Object.fromEntries(supportedLanguages.map(lang => [lang, lang == Locale.EN ? '' : `${lang}/`]));
+  const languagePathComponent = supportedLanguagePathComponents[(locale.value as string).split('-')[0]] ?? supportedLanguagePathComponents[fallbackLocale.value as string] ?? '';
   window.open(`https://cryptomator.org/${languagePathComponent}hub/billing/?hub_id=${admin.value?.hubId}&return_url=${encodeURIComponent(returnUrl)}`, '_self');
 }
 </script>

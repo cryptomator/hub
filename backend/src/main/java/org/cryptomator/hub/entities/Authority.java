@@ -5,18 +5,14 @@ import io.quarkus.panache.common.Parameters;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.NamedQuery;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Stream;
 
 @Entity
@@ -35,14 +31,11 @@ import java.util.stream.Stream;
 				FROM Authority a
 				WHERE a.id IN :ids
 				""")
-public class Authority extends PanacheEntityBase {
+public class Authority extends PanacheEntityBase { // TODO make sealed?
 
 	@Id
 	@Column(name = "id", nullable = false)
 	public String id;
-
-	@OneToMany(mappedBy = "owner", orphanRemoval = true, fetch = FetchType.LAZY)
-	public Set<Device> devices = new HashSet<>();
 
 	@Column(name = "name", nullable = false)
 	public String name;
@@ -59,7 +52,6 @@ public class Authority extends PanacheEntityBase {
 	public String toString() {
 		return "Authority{" +
 				"id='" + id + '\'' +
-				", devices=" + devices.size() +
 				", name='" + name + '\'' +
 				'}';
 	}

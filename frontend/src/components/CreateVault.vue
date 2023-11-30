@@ -6,7 +6,7 @@
   <div v-else-if="state == State.EnterRecoveryKey">
     <form ref="form" novalidate @submit.prevent="validateRecoveryKey()">
       <div class="flex justify-center">
-        <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6 text-center sm:max-w-lg">
+        <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6 text-center sm:w-full sm:max-w-lg">
           <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-emerald-100">
             <ArrowPathIcon class="h-6 w-6 text-emerald-600" aria-hidden="true" />
           </div>
@@ -64,22 +64,6 @@
                   <span class="text-xs text-gray-500">({{ t('common.optional') }})</span></label>
                 <input id="vaultDescription" v-model="vaultDescription" :disabled="processing" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200"/>
               </div>
-
-              <div class="col-span-6 sm:col-span-4">
-                <label for="password" class="block text-sm font-medium text-gray-700">{{ t('createVault.enterVaultDetails.password') }}</label>
-                <input id="password" v-model="password" :disabled="processing" type="password" minlength="8" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onCreateError instanceof FormValidationFailedError }" aria-describedby="password-description" required />
-                <p id="password-description" class="mt-2 text-sm text-gray-500">{{ t('createVault.enterVaultDetails.password.description') }}</p>
-              </div>
-
-              <div class="col-span-6 sm:col-span-4">
-                <label for="passwordConfirmation" class="block text-sm font-medium text-gray-700">{{ t('createVault.enterVaultDetails.passwordConfirmation') }}</label>
-                <input id="passwordConfirmation" v-model="passwordConfirmation" :disabled="processing" type="password" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onCreateError instanceof FormValidationFailedError }" aria-describedby="password-confirmation-description" required />
-                <p id="password-confirmation-description" class="mt-2 text-sm text-gray-500">
-                  <span v-if="passwordMatches && passwordConfirmation.length != 0">{{ t('createVault.enterVaultDetails.passwordConfirmation.passwordsMatch') }}</span>
-                  <span v-else-if="!passwordMatches && passwordConfirmation.length != 0">{{ t('createVault.enterVaultDetails.passwordConfirmation.passwordsDoNotMatch') }}</span>
-                  <span v-else>&nbsp;</span>
-                </p>
-              </div>
             </div>
           </div>
         </div>
@@ -88,7 +72,6 @@
       <div class="flex justify-end items-center">
         <div v-if="onCreateError != null">
           <p v-if="onCreateError instanceof FormValidationFailedError" class="text-sm text-red-900 mr-4">{{ t('createVault.error.formValidationFailed') }}</p>
-          <p v-else-if="onCreateError instanceof PasswordNotMachingError" class="text-sm text-red-900 mr-4">{{ t('createVault.enterVaultDetails.passwordConfirmation.passwordsDoNotMatch') }}</p>
           <p v-else class="text-sm text-red-900 mr-4">{{ t('common.unexpectedError', [onCreateError.message]) }}</p>
         </div>
         <button type="submit" :disabled="processing" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
@@ -101,7 +84,7 @@
   <div v-else-if="state == State.ShowRecoveryKey">
     <form @submit.prevent="createVault()">
       <div class="flex justify-center">
-        <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6 text-center sm:max-w-lg">
+        <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6 text-center sm:w-full sm:max-w-lg">
           <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-emerald-100">
             <KeyIcon class="h-6 w-6 text-emerald-600" aria-hidden="true" />
           </div>
@@ -162,7 +145,7 @@
 
   <div v-else-if="state == State.Finished">
     <div class="flex justify-center">
-      <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6 text-center sm:max-w-lg">
+      <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6 text-center sm:w-full sm:max-w-lg">
         <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-emerald-100">
           <CheckIcon class="h-6 w-6 text-emerald-600" aria-hidden="true" />
         </div>
@@ -198,7 +181,8 @@ import { ClipboardIcon } from '@heroicons/vue/20/solid';
 import { ArrowPathIcon, CheckIcon, KeyIcon } from '@heroicons/vue/24/outline';
 import { ArrowDownTrayIcon } from '@heroicons/vue/24/solid';
 import { saveAs } from 'file-saver';
-import { computed, onMounted, ref } from 'vue';
+import { base64 } from 'rfc4648';
+import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { PaymentRequiredError } from '../common/backend';
 import { VaultKeys } from '../common/crypto';
@@ -225,12 +209,6 @@ class EmptyVaultTemplateError extends Error {
   }
 }
 
-class PasswordNotMachingError extends Error {
-  constructor() {
-    super('Passwords do not match.');
-  }
-}
-
 const { t } = useI18n({ useScope: 'global' });
 
 const form = ref<HTMLFormElement>();
@@ -242,10 +220,7 @@ const onDownloadTemplateError = ref<Error | null>(null);
 const state = ref(State.Initial);
 const processing = ref(false);
 const vaultName = ref('');
-const vaultDescription = ref('');
-const password = ref('');
-const passwordConfirmation = ref('');
-const passwordMatches = computed(() => password.value == passwordConfirmation.value);
+const vaultDescription = ref<string | undefined>();
 const copiedRecoveryKey = ref(false);
 const debouncedCopyFinish = debounce(() => copiedRecoveryKey.value = false, 2000);
 const confirmRecoveryKey = ref(false);
@@ -297,9 +272,6 @@ async function validateVaultDetails() {
   if (!form.value?.checkValidity()) {
     onCreateError.value = new FormValidationFailedError();
     return;
-  } else if (!passwordMatches.value) {
-    onCreateError.value = new PasswordNotMachingError();
-    return;
   }
   if (props.recover) {
     await createVault();
@@ -315,10 +287,15 @@ async function createVault() {
       throw new Error('Invalid state');
     }
     processing.value = true;
+    const owner = await backend.users.me();
+    if (!owner.publicKey) {
+      throw new Error('Invalid state');
+    }
     const vaultId = crypto.randomUUID();
     vaultConfig.value = await VaultConfig.create(vaultId, vaultKeys.value);
-    const wrapped = await vaultKeys.value.wrap(password.value);
-    await backend.vaults.createOrUpdateVault(vaultId, vaultName.value, vaultDescription.value, false, wrapped.masterkey, wrapped.iterations, wrapped.salt, wrapped.signaturePublicKey, wrapped.signaturePrivateKey);
+    const ownerJwe = await vaultKeys.value.encryptForUser(base64.parse(owner.publicKey));
+    await backend.vaults.createOrUpdateVault(vaultId, vaultName.value, false, vaultDescription.value);
+    await backend.vaults.grantAccess(vaultId, { userId: owner.id, token: ownerJwe });
     state.value = State.Finished;
   } catch (error) {
     console.error('Creating vault failed.', error);

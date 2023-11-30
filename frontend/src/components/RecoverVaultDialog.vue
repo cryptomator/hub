@@ -9,41 +9,35 @@
         <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
           <TransitionChild as="template" enter="ease-out duration-300" enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" enter-to="opacity-100 translate-y-0 sm:scale-100" leave="ease-in duration-200" leave-from="opacity-100 translate-y-0 sm:scale-100" leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
             <DialogPanel class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
-              <form ref="form" novalidate @submit.prevent="authenticateVaultAdmin()">
+              <form ref="form" novalidate @submit.prevent="validateRecoveryKey()">
                 <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                   <div class="sm:flex sm:items-start">
-                    <div class="mx-auto shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-gray-100 sm:mx-0 sm:h-10 sm:w-10">
-                      <KeyIcon class="h-6 w-6 text-gray-600" aria-hidden="true" />
-                    </div>
                     <div class="mt-3 grow text-center sm:mt-0 sm:ml-4 sm:text-left">
                       <DialogTitle as="h3" class="text-lg leading-6 font-medium text-gray-900">
-                        {{ t('authenticateVaultAdminDialog.title') }}
+                        {{ t('recoverVaultDialog.title') }}
                       </DialogTitle>
                       <div class="mt-2">
                         <p class="text-sm text-gray-500">
-                          {{ t('authenticateVaultAdminDialog.description') }}
+                          {{ t('recoverVaultDialog.description') }}
                         </p>
-                        <input id="password" v-model="password" type="password" name="password" class="mt-2 shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onAuthenticationError instanceof FormValidationFailedError }" :placeholder="t('authenticateVaultAdminDialog.password')" required />
+                        <textarea id="recoveryKey" v-model="recoveryKey" rows="6" name="recoveryKey" class="mt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onVaultRecoverError instanceof FormValidationFailedError }" required />
                       </div>
                     </div>
                   </div>
                 </div>
                 <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse items-baseline">
                   <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary  text-base font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm">
-                    {{ t('common.manage') }}
+                    {{ t('recoverVaultDialog.submit') }}
                   </button>
                   <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" @click="open = false">
                     {{ t('common.cancel') }}
                   </button>
-                  <div v-if="onAuthenticationError != null">
-                    <p v-if="onAuthenticationError instanceof FormValidationFailedError" class="text-sm text-red-900">
-                      {{ t('authenticateVaultAdminDialog.error.formValidationFailed') }}
-                    </p>
-                    <p v-else-if="onAuthenticationError instanceof UnwrapKeyError" class="text-sm text-red-900">
-                      {{ t('authenticateVaultAdminDialog.error.wrongPassword') }}
+                  <div v-if="onVaultRecoverError != null">
+                    <p v-if="onVaultRecoverError instanceof FormValidationFailedError" class="text-sm text-red-900">
+                      {{ t('recoverVaultDialog.error.formValidationFailed') }}
                     </p>
                     <p v-else class="text-sm text-red-900">
-                      {{ t('common.unexpectedError', [onAuthenticationError.message]) }}
+                      {{ t('recoverVaultDialog.error.invalidRecoveryKey') }}
                     </p>
                   </div>
                 </div>
@@ -58,11 +52,12 @@
 
 <script setup lang="ts">
 import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
-import { KeyIcon } from '@heroicons/vue/24/outline';
+import { base64 } from 'rfc4648';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { VaultDto } from '../common/backend';
-import { UnwrapKeyError, VaultKeys, WrappedVaultKeys } from '../common/crypto';
+import backend, { UserDto, VaultDto } from '../common/backend';
+
+import { VaultKeys } from '../common/crypto';
 
 class FormValidationFailedError extends Error {
   constructor() {
@@ -74,18 +69,20 @@ const { t } = useI18n({ useScope: 'global' });
 
 const form = ref<HTMLFormElement>();
 
-const onAuthenticationError = ref<Error|null>();
+const onVaultRecoverError = ref<Error|null>();
 
 const open = ref(false);
-const password = ref('');
+const recoveryKey = ref('');
+const processingVaultRecovery = ref(false);
 
 const props = defineProps<{
-  vault: VaultDto
+  vault: VaultDto,
+  me: UserDto
 }>();
 
 const emit = defineEmits<{
   close: []
-  action: [vaultKeys: VaultKeys]
+  recovered: []
 }>();
 
 defineExpose({
@@ -96,19 +93,30 @@ function show() {
   open.value = true;
 }
 
-async function authenticateVaultAdmin() {
-  onAuthenticationError.value = null;
+async function validateRecoveryKey() {
+  if (!form.value?.checkValidity()) {
+    throw new FormValidationFailedError();
+  }
+  await recoverVault();
+}
+
+async function recoverVault() {
+  onVaultRecoverError.value = null;
   try {
-    if (!form.value?.checkValidity()) {
-      throw new FormValidationFailedError();
+    processingVaultRecovery.value = true;
+    const vaultKeys = await VaultKeys.recover(recoveryKey.value);
+    if (props.me.publicKey && vaultKeys) {
+      const publicKey = base64.parse(props.me.publicKey);
+      const jwe = await vaultKeys.encryptForUser(publicKey);
+      await backend.vaults.grantAccess(props.vault.id, { userId: props.me.id, token: jwe });
+      emit('recovered');
+      open.value = false;
     }
-    const wrappedKey = new WrappedVaultKeys(props.vault.masterkey, props.vault.authPrivateKey, props.vault.authPublicKey, props.vault.salt, props.vault.iterations);
-    const vaultKeys = await VaultKeys.unwrap(password.value, wrappedKey);
-    emit('action', vaultKeys);
-    open.value = false;
   } catch (error) {
-    console.error('Authentication of vault admin failed.', error);
-    onAuthenticationError.value = error instanceof Error ? error : new Error('Unknown Error');
+    console.error('Recovering vault failed.', error);
+    onVaultRecoverError.value = error instanceof Error ? error : new Error('Unknown reason');
+  } finally {
+    processingVaultRecovery.value = false;
   }
 }
 </script>

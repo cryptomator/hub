@@ -1,9 +1,13 @@
 package org.cryptomator.hub.api;
 
+import jakarta.annotation.Nullable;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
+import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -35,10 +39,11 @@ public class UsersResource {
 	@PUT
 	@Path("/me")
 	@RolesAllowed("user")
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Transactional
-	@Operation(summary = "sync the logged-in user from the remote user provider to hub")
+	@Operation(summary = "update the logged-in user")
 	@APIResponse(responseCode = "201", description = "user created or updated")
-	public Response syncMe() {
+	public Response putMe(@Nullable @Valid UserDto dto) {
 		var userId = jwt.getSubject();
 		User user = User.findById(userId);
 		if (user == null) {
@@ -48,6 +53,11 @@ public class UsersResource {
 		user.name = jwt.getName();
 		user.pictureUrl = jwt.getClaim("picture");
 		user.email = jwt.getClaim("email");
+		if (dto != null) {
+			user.publicKey = dto.publicKey;
+			user.privateKey = dto.privateKey;
+			user.setupCode = dto.setupCode;
+		}
 		user.persist();
 		return Response.created(URI.create(".")).build();
 	}
@@ -59,16 +69,31 @@ public class UsersResource {
 	@NoCache
 	@Transactional
 	@Operation(summary = "get the logged-in user")
-	public UserDto getMe(@QueryParam("withDevices") boolean withDevices, @QueryParam("withAccessibleVaults") boolean withAccessibleVaults) {
+	@APIResponse(responseCode = "200", description = "returns the current user")
+	@APIResponse(responseCode = "404", description = "no user matching the subject of the JWT passed as Bearer Token")
+	public UserDto getMe(@QueryParam("withDevices") boolean withDevices) {
 		User user = User.findById(jwt.getSubject());
-		Function<AccessToken, VaultResource.VaultDto> mapAccessibleVaults =
-				a -> new VaultResource.VaultDto(a.vault.id, a.vault.name, a.vault.description, a.vault.archived, a.vault.creationTime.truncatedTo(ChronoUnit.MILLIS), null, 0, null, null, null);
-		Function<Device, DeviceResource.DeviceDto> mapDevices = withAccessibleVaults //
-				? d -> new DeviceResource.DeviceDto(d.id, d.name, d.type, d.publickey, d.owner.id, d.accessTokens.stream().map(mapAccessibleVaults).collect(Collectors.toSet()), d.creationTime.truncatedTo(ChronoUnit.MILLIS)) //
-				: d -> new DeviceResource.DeviceDto(d.id, d.name, d.type, d.publickey, d.owner.id, Set.of(), d.creationTime.truncatedTo(ChronoUnit.MILLIS));
-		return withDevices //
-				? new UserDto(user.id, user.name, user.pictureUrl, user.email, user.devices.stream().map(mapDevices).collect(Collectors.toSet()))
-				: new UserDto(user.id, user.name, user.pictureUrl, user.email, Set.of());
+		Function<Device, DeviceResource.DeviceDto> mapDevices = d -> new DeviceResource.DeviceDto(d.id, d.name, d.type, d.publickey, d.userPrivateKey, d.owner.id, d.creationTime.truncatedTo(ChronoUnit.MILLIS));
+		var devices = withDevices ? user.devices.stream().map(mapDevices).collect(Collectors.toSet()) : Set.<DeviceResource.DeviceDto>of();
+		return new UserDto(user.id, user.name, user.pictureUrl, user.email, devices, user.publicKey, user.privateKey, user.setupCode);
+	}
+
+	@POST
+	@Path("/me/reset")
+	@RolesAllowed("user")
+	@NoCache
+	@Transactional
+	@Operation(summary = "resets the user account")
+	@APIResponse(responseCode = "204", description = "deleted keys, devices and access permissions")
+	public Response resetMe() {
+		User user = User.findById(jwt.getSubject());
+		user.publicKey = null;
+		user.privateKey = null;
+		user.setupCode = null;
+		user.persist();
+		Device.deleteByOwner(user.id);
+		AccessToken.deleteByUser(user.id);
+		return Response.noContent().build();
 	}
 
 	@GET
@@ -77,7 +102,7 @@ public class UsersResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "list all users")
 	public List<UserDto> getAll() {
-		return User.findAll().<User>stream().map(UserDto::fromEntity).toList();
+		return User.findAll().<User>stream().map(UserDto::justPublicInfo).toList();
 	}
 
 }

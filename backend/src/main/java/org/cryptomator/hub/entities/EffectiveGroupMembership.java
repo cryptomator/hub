@@ -12,6 +12,7 @@ import org.hibernate.annotations.Immutable;
 
 import java.io.Serializable;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 @Entity
 @Immutable
@@ -20,6 +21,12 @@ import java.util.Objects;
 				SELECT count( DISTINCT u)
 				FROM User u
 				INNER JOIN EffectiveGroupMembership egm	ON u.id = egm.id.memberId
+				WHERE egm.id.groupId = :groupId
+		""")
+@NamedQuery(name = "EffectiveGroupMembership.getEGUs", query = """
+				SELECT DISTINCT u
+				FROM User u
+				INNER JOIN EffectiveGroupMembership egm ON u.id = egm.id.memberId
 				WHERE egm.id.groupId = :groupId
 		""")
 public class EffectiveGroupMembership extends PanacheEntityBase {
@@ -31,6 +38,10 @@ public class EffectiveGroupMembership extends PanacheEntityBase {
 
 	public static long countEffectiveGroupUsers(String groupdId) {
 		return EffectiveGroupMembership.count("#EffectiveGroupMembership.countEGUs", Parameters.with("groupId", groupdId));
+	}
+
+	public static Stream<User> getEffectiveGroupUsers(String groupdId) {
+		return EffectiveGroupMembership.find("#EffectiveGroupMembership.getEGUs", Parameters.with("groupId", groupdId)).stream();
 	}
 
 	@Embeddable

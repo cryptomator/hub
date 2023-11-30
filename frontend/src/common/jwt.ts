@@ -1,7 +1,6 @@
 import { base64url } from 'rfc4648';
 
-export interface JWTHeader {
-
+export type JWTHeader = {
   alg: 'ES384';
   typ: 'JWT';
   b64: true;

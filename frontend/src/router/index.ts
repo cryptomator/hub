@@ -2,10 +2,12 @@ import { createRouter, createWebHistory, RouteLocationRaw, RouteRecordRaw } from
 import authPromise from '../common/auth';
 import backend from '../common/backend';
 import { baseURL } from '../common/config';
+import { BrowserKeys } from '../common/crypto';
 import AdminSettings from '../components/AdminSettings.vue';
 import AuditLog from '../components/AuditLog.vue';
 import AuthenticatedMain from '../components/AuthenticatedMain.vue';
 import CreateVault from '../components/CreateVault.vue';
+import InitialSetup from '../components/InitialSetup.vue';
 import NotFound from '../components/NotFound.vue';
 import UnlockError from '../components/UnlockError.vue';
 import UnlockSuccess from '../components/UnlockSuccess.vue';
@@ -25,7 +27,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/app/logout',
     component: AuthenticatedMain, // any component will do
-    meta: { skipAuth: true },
+    meta: { skipAuth: true, skipSetup: true },
     beforeEnter: (to, from, next) => {
       authPromise.then(async auth => {
         if (auth.isAuthenticated()) {
@@ -91,19 +93,25 @@ const routes: RouteRecordRaw[] = [
     ]
   },
   {
+    path: '/app/setup',
+    component: InitialSetup,
+    meta: { skipSetup: true }, // no setup required to run setup ;)
+  },
+  {
     path: '/app/unlock-success',
     component: UnlockSuccess,
-    props: (route) => ({ vaultId: route.query.vault, deviceId: route.query.device })
+    props: (route) => ({ vaultId: route.query.vault, deviceId: route.query.device }),
+    meta: { skipSetup: true }
   },
   {
     path: '/app/unlock-error',
     component: UnlockError,
-    meta: { skipAuth: true }
+    meta: { skipAuth: true, skipSetup: true }
   },
   {
     path: '/app/:pathMatch(.+)', //necessary due to using history mode in router
     component: NotFound,
-    meta: { skipAuth: true }
+    meta: { skipAuth: true, skipSetup: true }
   },
 ];
 
@@ -134,7 +142,7 @@ router.beforeEach((to, from, next) => {
   if ('sync_me' in to.query) {
     authPromise.then(async auth => {
       if (auth.isAuthenticated()) {
-        await backend.users.syncMe();
+        await backend.users.putMe();
       }
     }).finally(() => {
       delete to.query.sync_me; // remove sync_me query parameter to avoid endless recursion
@@ -142,6 +150,25 @@ router.beforeEach((to, from, next) => {
     });
   } else {
     next();
+  }
+});
+
+// THIRD check user/browser keys (requires auth)
+router.beforeEach(async (to) => {
+  if (to.meta.skipSetup) {
+    return;
+  }
+  const me = await backend.users.me(true);
+  if (!me.publicKey) {
+    return { path: '/app/setup' };
+  }
+  const browserKeys = await BrowserKeys.load(me.id);
+  if (!browserKeys) {
+    return { path: '/app/setup' };
+  }
+  const browserId = await browserKeys.id();
+  if (me.devices.find(d => d.id == browserId) == null) {
+    return { path: '/app/setup' };
   }
 });
 
