@@ -16,6 +16,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.time.Instant;
 import java.util.Objects;
+import java.util.Optional;
 
 @ApplicationScoped
 public class LicenseValidator {
@@ -33,8 +34,9 @@ public class LicenseValidator {
 
 	public LicenseValidator() {
 		var algorithm = Algorithm.ECDSA512(decodePublicKey(LICENSE_PUBLIC_KEY), null);
-		var leeway = Instant.now().getEpochSecond(); // this will make sure to accept tokens that expired in the past (beginning from 1970)
-		this.verifier = JWT.require(algorithm).acceptExpiresAt(leeway).build();
+		var expiresleeway = Instant.now().getEpochSecond(); // this will make sure to accept tokens that expired in the past (beginning from 1970)
+		// ignoring issued at will make sure to accept tokens that are issued "in the future" e.g. when the hub time is behind the store time
+		this.verifier = JWT.require(algorithm).acceptExpiresAt(expiresleeway).ignoreIssuedAt().build();
 	}
 
 	private static ECPublicKey decodePublicKey(String pemEncodedPublicKey) {
@@ -64,6 +66,11 @@ public class LicenseValidator {
 			}
 		}
 		return jwt;
+	}
+
+	public Optional<String> refreshUrl(String token) throws JWTVerificationException {
+		var jwt = verifier.verify(token);
+		return Optional.ofNullable(jwt.getClaim("refreshUrl").asString());
 	}
 
 }
