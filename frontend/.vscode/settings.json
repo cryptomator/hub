@@ -1,8 +1,8 @@
 {
   "[typescript]": {
     "editor.codeActionsOnSave": {
-      "source.organizeImports": true,
-      "source.fixAll.tslint": true
+      "source.organizeImports": "explicit",
+      "source.fixAll.tslint": "explicit"
     },
     "editor.foldingStrategy": "indentation",
     "editor.formatOnSave": true,
