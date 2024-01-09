@@ -165,7 +165,6 @@
         {{ t('vaultDetails.recoverVault') }}
       </button>
     </div>
-
   </div>
 
   <ClaimVaultOwnershipDialog v-if="claimingVaultOwnership && vault != null" ref="claimVaultOwnershipDialog" :vault="vault" @action="provedOwnership" @close="claimingVaultOwnership = false" />
@@ -260,21 +259,20 @@ async function fetchData() {
 }
 
 async function fetchOwnerData() {
-    try {
-      const vaultKeyJwe = await backend.vaults.accessToken(props.vaultId, true);
-      vaultKeys.value = await loadVaultKeys(vaultKeyJwe);
-      (await backend.vaults.getMembers(props.vaultId)).forEach(member => members.value.set(member.id, member));
-      usersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
-      vaultRecoveryRequired.value = false;
-    } catch(error) {
-      if (error instanceof ForbiddenError) {
-        vaultRecoveryRequired.value = true;
-      } else {
-        console.error('Retrieving ownership failed.', error);
-        onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
-      }
+  try {
+    const vaultKeyJwe = await backend.vaults.accessToken(props.vaultId, true);
+    vaultKeys.value = await loadVaultKeys(vaultKeyJwe);
+    (await backend.vaults.getMembers(props.vaultId)).forEach(member => members.value.set(member.id, member));
+    usersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
+    vaultRecoveryRequired.value = false;
+  } catch (error) {
+    if (error instanceof ForbiddenError) {
+      vaultRecoveryRequired.value = true;
+    } else {
+      console.error('Retrieving ownership failed.', error);
+      onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
     }
-
+  }
 }
 
 async function loadVaultKeys(vaultKeyJwe: string): Promise<VaultKeys> {
@@ -421,7 +419,7 @@ function refreshVault(updatedVault: VaultDto) {
 }
 
 async function reloadView() {
-  await fetchOwnerData()
+  await fetchOwnerData();
   vaultRecoveryRequired.value = false;
 }
 
