@@ -75,6 +75,9 @@ async function fetchData() {
       throw new Error('User not initialized.');
     }
     const browserKeys = await BrowserKeys.load(me.id);
+    if (browserKeys == null) {
+      throw new Error('Browser keys not found.');
+    }
     const browserId = await browserKeys.id();
     const myDevice = me.devices.find(d => d.id == browserId);
     if (myDevice == null) {

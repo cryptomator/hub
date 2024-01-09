@@ -124,7 +124,7 @@ async function determineMyDevice() {
     throw new Error('User not initialized.');
   }
   const browserKeys = await BrowserKeys.load(me.value.id);
-  const browserId = await browserKeys.id();
+  const browserId = await browserKeys?.id();
   myDevice.value = me.value.devices.find(d => d.id == browserId);
 }
 
@@ -138,7 +138,7 @@ async function determineMyDevice() {
 //   /* decrypt user key on this browser: */
 //   const userPublicKey = crypto.subtle.importKey('spki', base64.parse(me.value.publicKey), UserKeys.KEY_DESIGNATION, false, []);
 //   const browserKeys = await BrowserKeys.load(me.value.id);
-//   const browserId = await browserKeys.id();
+//   const browserId = await browserKeys?.id();
 //   const browser = me.value.devices.find(d => d.id === browserId);
 //   if (!browser || !browser.userPrivateKey) {
 //     throw new Error('Browser not validated.');
