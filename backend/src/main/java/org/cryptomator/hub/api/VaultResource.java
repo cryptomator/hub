@@ -297,7 +297,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "410", description = "Vault is archived. Only returned if evenIfArchived query param is false or not set, otherwise the archived flag is ignored")
 	@APIResponse(responseCode = "449", description = "User account not yet initialized. Retry after setting up user")
 	@ActiveLicense // may throw 402
-	public String unlock(@PathParam("vaultId") UUID vaultId, @QueryParam("evenIfArchived") @DefaultValue("false") boolean ignoreArchived) {
+	public Response unlock(@PathParam("vaultId") UUID vaultId, @QueryParam("evenIfArchived") @DefaultValue("false") boolean ignoreArchived) {
 		var vault = Vault.<Vault>findById(vaultId); // should always be found, since @VaultRole filter would have triggered
 		if (vault.archived && !ignoreArchived) {
 			throw new GoneException("Vault is archived.");
@@ -316,7 +316,7 @@ public class VaultResource {
 		var access = AccessToken.unlock(vaultId, jwt.getSubject());
 		if (access != null) {
 			AuditEventVaultKeyRetrieve.log(jwt.getSubject(), vaultId, AuditEventVaultKeyRetrieve.Result.SUCCESS);
-			return access.vaultKey;
+			return Response.ok(access.vaultKey).build();
 		} else if (Vault.findById(vaultId) == null) {
 			throw new NotFoundException("No such vault.");
 		} else {
