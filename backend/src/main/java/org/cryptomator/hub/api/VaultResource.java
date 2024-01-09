@@ -316,7 +316,9 @@ public class VaultResource {
 		var access = AccessToken.unlock(vaultId, jwt.getSubject());
 		if (access != null) {
 			AuditEventVaultKeyRetrieve.log(jwt.getSubject(), vaultId, AuditEventVaultKeyRetrieve.Result.SUCCESS);
-			return Response.ok(access.vaultKey).build();
+			var subscriptionStateHeaderName = "Hub-Subscription-State";
+			var subscriptionStateHeaderValue = license.isSet() ? "ACTIVE" : "INACTIVE"; // license expiration is not checked here, because it is checked in the ActiveLicense filter
+			return Response.ok(access.vaultKey).header(subscriptionStateHeaderName, subscriptionStateHeaderValue).build();
 		} else if (Vault.findById(vaultId) == null) {
 			throw new NotFoundException("No such vault.");
 		} else {
