@@ -22,8 +22,8 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.AuditEventDeviceRegister;
 import org.cryptomator.hub.entities.AuditEventDeviceRemove;
-import org.cryptomator.hub.entities.AuditEventVaultAccessGrant;
 import org.cryptomator.hub.entities.Device;
+import org.cryptomator.hub.entities.LegacyAccessToken;
 import org.cryptomator.hub.entities.LegacyDevice;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.validation.NoHtmlOrScriptChars;
@@ -41,6 +41,7 @@ import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.UUID;
 
 @Path("/devices")
 public class DeviceResource {
@@ -117,6 +118,21 @@ public class DeviceResource {
 		}
 	}
 
+	@Deprecated
+	@GET
+	@Path("/{deviceId}/legacy-access-tokens")
+	@RolesAllowed("user")
+	@Produces(MediaType.APPLICATION_JSON)
+	@NoCache
+	@Transactional
+	@Operation(summary = "list legacy access tokens", description = "get a list of all legacy access tokens for this device. The device must be owned by the currently logged-in user")
+	@APIResponse(responseCode = "200")
+	public List<LegacyAccessTokenDto> getLegacyAccessTokens(@PathParam("deviceId") @ValidId String deviceId) {
+		return LegacyAccessToken.getByDeviceAndOwner(deviceId, jwt.getSubject())
+				.map(result -> new LegacyAccessTokenDto(result.id.vaultId, result.jwe))
+				.toList();
+	}
+
 	@DELETE
 	@Path("/{deviceId}")
 	@RolesAllowed("user")
@@ -154,4 +170,6 @@ public class DeviceResource {
 		}
 
 	}
+
+	public record LegacyAccessTokenDto(@JsonProperty("vaultId") UUID vaultId, @JsonProperty("token") String token) {}
 }

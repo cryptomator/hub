@@ -12,6 +12,7 @@ import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 @Entity
 @Table(name = "access_token_legacy")
@@ -21,6 +22,13 @@ import java.util.UUID;
 		INNER JOIN device_legacy d ON d.id = t.device_id
 		INNER JOIN effective_vault_access a ON a.vault_id = t.vault_id AND a.authority_id = d.owner_id
 		WHERE t.vault_id = :vaultId AND d.id = :deviceId AND d.owner_id = :userId
+		""")
+@NamedNativeQuery(name = "LegacyAccessToken.getByDevice", resultClass = LegacyAccessToken.class, query = """
+		SELECT t.device_id, t.vault_id, t.jwe
+		FROM access_token_legacy t
+		INNER JOIN device_legacy d ON d.id = t.device_id
+		INNER JOIN effective_vault_access a ON a.vault_id = t.vault_id AND a.authority_id = d.owner_id
+		WHERE d.id = :deviceId AND d.owner_id = :userId
 		""")
 @Deprecated
 public class LegacyAccessToken extends PanacheEntityBase {
@@ -41,6 +49,13 @@ public class LegacyAccessToken extends PanacheEntityBase {
 		} catch (NoResultException e) {
 			return null;
 		}
+	}
+
+	public static Stream<LegacyAccessToken> getByDeviceAndOwner(String deviceId, String userId) {
+		return getEntityManager().createNamedQuery("LegacyAccessToken.getByDevice", LegacyAccessToken.class) //
+				.setParameter("deviceId", deviceId) //
+				.setParameter("userId", userId) //
+				.getResultStream();
 	}
 
 	@Override
