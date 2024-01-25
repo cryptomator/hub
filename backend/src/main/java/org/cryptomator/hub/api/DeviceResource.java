@@ -41,7 +41,9 @@ import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Path("/devices")
 public class DeviceResource {
@@ -125,12 +127,11 @@ public class DeviceResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@NoCache
 	@Transactional
-	@Operation(summary = "list legacy access tokens", description = "get a list of all legacy access tokens for this device. The device must be owned by the currently logged-in user")
+	@Operation(summary = "list legacy access tokens", description = "get all legacy access tokens for this device ({vault1: token1, vault1: token2, ...}). The device must be owned by the currently logged-in user")
 	@APIResponse(responseCode = "200")
-	public List<LegacyAccessTokenDto> getLegacyAccessTokens(@PathParam("deviceId") @ValidId String deviceId) {
+	public Map<UUID, String> getLegacyAccessTokens(@PathParam("deviceId") @ValidId String deviceId) {
 		return LegacyAccessToken.getByDeviceAndOwner(deviceId, jwt.getSubject())
-				.map(result -> new LegacyAccessTokenDto(result.id.vaultId, result.jwe))
-				.toList();
+				.collect(Collectors.toMap(token -> token.id.vaultId , token -> token.jwe));
 	}
 
 	@DELETE
