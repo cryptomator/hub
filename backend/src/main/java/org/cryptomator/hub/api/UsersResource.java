@@ -5,6 +5,7 @@ import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
@@ -15,8 +16,10 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.AccessToken;
+import org.cryptomator.hub.entities.AuditEventVaultAccessGrant;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.User;
+import org.cryptomator.hub.entities.Vault;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -25,6 +28,7 @@ import org.jboss.resteasy.reactive.NoCache;
 import java.net.URI;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -60,6 +64,33 @@ public class UsersResource {
 		}
 		user.persist();
 		return Response.created(URI.create(".")).build();
+	}
+
+	@POST
+	@Path("/me/access-tokens")
+	@RolesAllowed("user")
+	@Transactional
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Operation(summary = "adds/updates user-specific vault keys", description = "Stores one or more vaultid-vaultkey-tuples for the currently logged-in user, as defined in the request body ({vault1: token1, vault2: token2, ...}).")
+	@APIResponse(responseCode = "200", description = "all keys stored")
+	public Response updateMyAccessTokens(@NotEmpty Map<String, String> tokens) {
+		var user = User.<User>findById(jwt.getSubject());
+		for (var entry : tokens.entrySet()) {
+			var vault = Vault.<Vault>findById(entry.getKey());
+			if (vault == null || vault.archived) {
+				continue; // skip
+			}
+			var token = AccessToken.<AccessToken>findById(new AccessToken.AccessId(user.id, vault.id));
+			if (token == null) {
+				token = new AccessToken();
+				token.vault = vault;
+				token.user = user;
+			}
+			token.vaultKey = entry.getValue();
+			token.persist();
+			AuditEventVaultAccessGrant.log(user.id, vault.id, user.id);
+		}
+		return Response.ok().build();
 	}
 
 	@GET
