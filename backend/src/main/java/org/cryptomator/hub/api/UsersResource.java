@@ -30,6 +30,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -73,7 +74,7 @@ public class UsersResource {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Operation(summary = "adds/updates user-specific vault keys", description = "Stores one or more vaultid-vaultkey-tuples for the currently logged-in user, as defined in the request body ({vault1: token1, vault2: token2, ...}).")
 	@APIResponse(responseCode = "200", description = "all keys stored")
-	public Response updateMyAccessTokens(@NotEmpty Map<String, String> tokens) {
+	public Response updateMyAccessTokens(@NotEmpty Map<UUID, String> tokens) {
 		var user = User.<User>findById(jwt.getSubject());
 		for (var entry : tokens.entrySet()) {
 			var vault = Vault.<Vault>findById(entry.getKey());
