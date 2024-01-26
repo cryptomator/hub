@@ -78,7 +78,7 @@ public class UsersResource {
 		var user = User.<User>findById(jwt.getSubject());
 		for (var entry : tokens.entrySet()) {
 			var vault = Vault.<Vault>findById(entry.getKey());
-			if (vault == null || vault.archived) {
+			if (vault == null) {
 				continue; // skip
 			}
 			var token = AccessToken.<AccessToken>findById(new AccessToken.AccessId(user.id, vault.id));
