@@ -20,6 +20,12 @@ import java.util.UUID;
 
 @Entity
 @NamedQuery(name = "AccessToken.deleteByUser", query = "DELETE FROM AccessToken a WHERE a.id.userId = :userId")
+@NamedQuery(name = "AccessToken.get", query = """
+			SELECT token
+			FROM AccessToken token
+			INNER JOIN EffectiveVaultAccess perm ON token.id.vaultId = perm.id.vaultId AND token.id.userId = perm.id.authorityId
+			WHERE token.id.vaultId = :vaultId AND token.id.userId = :userId
+		""")
 @Table(name = "access_token")
 public class AccessToken extends PanacheEntityBase {
 
@@ -40,45 +46,8 @@ public class AccessToken extends PanacheEntityBase {
 	public String vaultKey;
 
 	public static AccessToken unlock(UUID vaultId, String userId) {
-		/*
-		 * FIXME remove this native query and add the named query again as soon as Hibernate ORM ships version 6.2.8 or 6.3.0
-		 * See https://github.com/quarkusio/quarkus/issues/35386 for further information
-		 */
-
 		try {
-			var query = getEntityManager()
-					.createNativeQuery("""
-							select
-							    a1_0."user_id",
-							    a1_0."vault_id",
-							    u1_0."id",
-							    u1_1."name",
-							    u1_0."email",
-							    u1_0."picture_url",
-							    u1_0."privatekey",
-							    u1_0."publickey",
-							    u1_0."setupcode",
-							    a1_0."vault_masterkey"
-							from
-							    "user_details" u1_0
-							join
-								"authority" u1_1
-									on u1_0."id"=u1_1."id"
-							join
-							    "effective_vault_access" e1_0
-							        on u1_0."id"=e1_0."authority_id"
-							join
-							    "access_token" a1_0
-							        on u1_0."id"=a1_0."user_id"
-							        and a1_0."vault_id"=:vaultId
-							        and a1_0."user_id"=u1_0."id"
-							where
-							    e1_0."vault_id"=:vaultId
-							    and u1_0."id"=:userId
-									""", AccessToken.class)
-					.setParameter("vaultId", vaultId)
-					.setParameter("userId", userId);
-			return (AccessToken) query.getSingleResult();
+			return find("#AccessToken.get", Parameters.with("vaultId", vaultId).and("userId", userId)).firstResult();
 		} catch (NoResultException e) {
 			return null;
 		}
