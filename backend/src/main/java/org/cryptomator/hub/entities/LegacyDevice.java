@@ -18,4 +18,6 @@ public class LegacyDevice extends PanacheEntityBase {
 	@Column(name = "owner_id", nullable = false)
 	public String ownerId;
 
+	// Further attributes omitted, as they are no longer used. The above ones are exceptions, as they are referenced via JPQL for joining.
+
 }
