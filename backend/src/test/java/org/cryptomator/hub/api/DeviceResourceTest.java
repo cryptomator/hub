@@ -80,6 +80,42 @@ public class DeviceResourceTest {
 
 		@Test
 		@Order(1)
+		@DisplayName("GET /devices/legacyDevice1/legacy-access-tokens returns 200")
+		public void testGetLegacyAccessTokens1() {
+			given().when().get("/devices/{deviceId}/legacy-access-tokens", "legacyDevice1")
+					.then().statusCode(200)
+					.body("7e57c0de-0000-4000-8000-000100001111", is("legacy.jwe.jwe.vault1.device1"));
+		}
+
+		@Test
+		@Order(1)
+		@DisplayName("GET /devices/legacyDevice2/legacy-access-tokens returns empty list (owned by different user)")
+		public void testGetLegacyAccessTokens2() {
+			given().when().get("/devices/{deviceId}/legacy-access-tokens", "legacyDevice2")
+					.then().statusCode(200)
+					.body(is("{}"));
+		}
+
+		@Test
+		@Order(1)
+		@DisplayName("GET /devices/legacyDevice3/legacy-access-tokens returns 200")
+		public void testGetLegacyAccessTokens3() {
+			given().when().get("/devices/{deviceId}/legacy-access-tokens", "legacyDevice3")
+					.then().statusCode(200)
+					.body("7e57c0de-0000-4000-8000-000100002222", is("legacy.jwe.jwe.vault2.device3"));
+		}
+
+		@Test
+		@Order(1)
+		@DisplayName("GET /devices/noSuchDevice/legacy-access-tokens returns empty list (no such device)")
+		public void testGetLegacyAccessTokens4() {
+			given().when().get("/devices/{deviceId}/legacy-access-tokens", "noSuchDevice")
+					.then().statusCode(200)
+					.body(is("{}"));
+		}
+
+		@Test
+		@Order(1)
 		@DisplayName("GET /devices/device2 returns 404 (owned by other user)")
 		public void testGet2() {
 			given().when().get("/devices/{deviceId}", "device2")
