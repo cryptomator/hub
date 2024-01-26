@@ -15,4 +15,7 @@ public class LegacyDevice extends PanacheEntityBase {
 	@Column(name = "id", nullable = false)
 	public String id;
 
+	@Column(name = "owner_id", nullable = false)
+	public String ownerId;
+
 }
