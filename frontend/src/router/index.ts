@@ -82,7 +82,8 @@ const routes: RouteRecordRaw[] = [
           {
             path: 'settings',
             component: AdminSettings,
-            props: (route) => ({ token: route.query.token })
+            props: (route) => ({ token: route.query.token }),
+            meta: { skipSetup: true }
           },
           {
             path: 'auditlog',
