@@ -71,7 +71,7 @@ public class UsersResourceTest {
 
 		@Test
 		@DisplayName("POST /users/me/access-tokens returns 200")
-		public void testPostAccessTokens() {
+		public void testPostAccessTokens1() {
 			var body = """
 					{
 						"7E57C0DE-0000-4000-8000-000100001111": "jwe.jwe.jwe.vault1.user1",
@@ -81,6 +81,22 @@ public class UsersResourceTest {
 			given().contentType(ContentType.JSON).body(body)
 					.when().post("/users/me/access-tokens")
 					.then().statusCode(200);
+		}
+
+		@Test
+		@DisplayName("POST /users/me/access-tokens returns 200 for empty list")
+		public void testPostAccessTokens2() {
+			given().contentType(ContentType.JSON).body("{}")
+					.when().post("/users/me/access-tokens")
+					.then().statusCode(200);
+		}
+
+		@Test
+		@DisplayName("POST /users/me/access-tokens returns 400 for malformed body")
+		public void testPostAccessTokens3() {
+			given().contentType(ContentType.JSON).body("")
+					.when().post("/users/me/access-tokens")
+					.then().statusCode(400);
 		}
 
 	}
