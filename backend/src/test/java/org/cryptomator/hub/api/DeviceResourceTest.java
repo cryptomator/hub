@@ -107,6 +107,15 @@ public class DeviceResourceTest {
 
 		@Test
 		@Order(1)
+		@DisplayName("GET /devices/noSuchDevice/legacy-access-tokens returns empty list (no such device)")
+		public void testGetLegacyAccessTokens4() {
+			given().when().get("/devices/{deviceId}/legacy-access-tokens", "noSuchDevice")
+					.then().statusCode(200)
+					.body(is("{}"));
+		}
+
+		@Test
+		@Order(1)
 		@DisplayName("GET /devices/device2 returns 404 (owned by other user)")
 		public void testGet2() {
 			given().when().get("/devices/{deviceId}", "device2")
