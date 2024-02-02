@@ -271,7 +271,7 @@ class VaultService {
   }
 
   public async grantAccess(vaultId: string, ...grants: AccessGrant[]) {
-    var body = grants.reduce<Record<string, string>>((accumulator, curr) => {
+    const body = grants.reduce<Record<string, string>>((accumulator, curr) => {
       accumulator[curr.userId] = curr.token;
       return accumulator;
     }, {});

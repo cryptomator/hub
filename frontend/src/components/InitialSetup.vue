@@ -320,7 +320,7 @@ async function submitBrowserKeys(browserKeys: BrowserKeys, me: UserDto, userKeys
 }
 
 function guessBrowserName(): string {
-  var match = navigator.userAgent.toLowerCase().match(/(android|iphone|opr|edge|chrome|safari|firefox)/) || [''];
+  const match = navigator.userAgent.toLowerCase().match(/(android|iphone|opr|edge|chrome|safari|firefox)/) || [''];
   switch (match[0]) {
     case 'android': return 'Android';
     case 'iphone': return 'iPhone';
