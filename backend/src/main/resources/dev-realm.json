@@ -86,9 +86,6 @@
       "email": "cli@localhost",
       "enabled": true,
       "serviceAccountClientId": "cryptomatorhub-cli",
-      "attributes": {
-        "picture": "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBzdGFuZGFsb25lPSJ5ZXMiPz4KPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj4KICAgIDxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9ImJsYWNrIi8+CiAgICA8cGF0aCBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgZD0iTTMwIDM3LjUgbDE1IDEyLjUgbC0xNSAxMi41ICBtMjAgMCBoMjAiIC8+Cjwvc3ZnPgo="
-      },
       "realmRoles": [
         "user"
       ],
