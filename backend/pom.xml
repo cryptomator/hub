@@ -28,6 +28,12 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
+      <dependency>
+        <!-- temporarily pin Flyway version until Quarkus LTS contains Flyway >= 9.21.0; see https://github.com/cryptomator/hub/issues/256 -->
+        <groupId>org.flywaydb</groupId>
+        <artifactId>flyway-core</artifactId>
+        <version>9.22.3</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
