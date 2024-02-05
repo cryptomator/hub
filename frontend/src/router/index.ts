@@ -82,7 +82,8 @@ const routes: RouteRecordRaw[] = [
           {
             path: 'settings',
             component: AdminSettings,
-            props: (route) => ({ token: route.query.token })
+            props: (route) => ({ token: route.query.token }),
+            meta: { skipSetup: true }
           },
           {
             path: 'auditlog',
@@ -129,7 +130,10 @@ router.beforeEach((to, from, next) => {
       if (auth.isAuthenticated()) {
         next();
       } else {
-        const redirect: RouteLocationRaw = { query: { ...to.query, 'sync_me': null } };
+        // secondsSinceEpoch is required for legacy reasons, as caching headers were only introduced in #255
+        // as result, the redirect URI changes and caching does not break updates anymore
+        const secondsSinceEpoch = Math.round(new Date().getTime() / 1000);
+        const redirect: RouteLocationRaw = { query: { ...to.query, 'sync_me': secondsSinceEpoch } };
         const redirectUri = `${location.origin}${router.resolve(redirect, to).href}`;
         auth.login(redirectUri);
       }

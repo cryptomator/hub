@@ -5,22 +5,30 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
-import jakarta.persistence.NamedNativeQuery;
+import jakarta.persistence.NamedQuery;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.Table;
 
 import java.io.Serializable;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 @Entity
 @Table(name = "access_token_legacy")
-@NamedNativeQuery(name = "LegacyAccessToken.get", resultClass = LegacyAccessToken.class, query = """
-		SELECT t.device_id, t.vault_id, t.jwe
-		FROM access_token_legacy t
-		INNER JOIN device_legacy d ON d.id = t.device_id
-		INNER JOIN effective_vault_access a ON a.vault_id = t.vault_id AND a.authority_id = d.owner_id
-		WHERE t.vault_id = :vaultId AND d.id = :deviceId AND d.owner_id = :userId
+@NamedQuery(name = "LegacyAccessToken.get", query = """
+		SELECT token
+		FROM LegacyAccessToken token
+		INNER JOIN LegacyDevice device ON device.id = token.id.deviceId
+		INNER JOIN EffectiveVaultAccess perm ON token.id.vaultId = perm.id.vaultId AND device.ownerId = perm.id.authorityId
+		WHERE token.id.vaultId = :vaultId AND token.id.deviceId = :deviceId AND device.ownerId = :userId
+		""")
+@NamedQuery(name = "LegacyAccessToken.getByDevice", query = """
+		SELECT token
+		FROM LegacyAccessToken token
+		INNER JOIN LegacyDevice device ON device.id = token.id.deviceId
+		INNER JOIN EffectiveVaultAccess perm ON token.id.vaultId = perm.id.vaultId AND device.ownerId = perm.id.authorityId
+		WHERE token.id.deviceId = :deviceId AND device.ownerId = :userId
 		""")
 @Deprecated
 public class LegacyAccessToken extends PanacheEntityBase {
@@ -41,6 +49,13 @@ public class LegacyAccessToken extends PanacheEntityBase {
 		} catch (NoResultException e) {
 			return null;
 		}
+	}
+
+	public static Stream<LegacyAccessToken> getByDeviceAndOwner(String deviceId, String userId) {
+		return getEntityManager().createNamedQuery("LegacyAccessToken.getByDevice", LegacyAccessToken.class) //
+				.setParameter("deviceId", deviceId) //
+				.setParameter("userId", userId) //
+				.getResultStream();
 	}
 
 	@Override

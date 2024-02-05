@@ -5,8 +5,7 @@ import io.quarkus.test.security.TestSecurity;
 import io.quarkus.test.security.oidc.Claim;
 import io.quarkus.test.security.oidc.OidcSecurity;
 import io.restassured.RestAssured;
-import org.hamcrest.CoreMatchers;
-import org.hamcrest.text.IsEqualIgnoringCase;
+import io.restassured.http.ContentType;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -14,11 +13,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.empty;
-import static org.hamcrest.text.IsEqualIgnoringCase.equalToIgnoringCase;
 
 @QuarkusTest
 @DisplayName("Resource /users")
@@ -68,6 +67,36 @@ public class UsersResourceTest {
 			when().get("/users")
 					.then().statusCode(200)
 					.body("id", hasItems("user1", "user2"));
+		}
+
+		@Test
+		@DisplayName("POST /users/me/access-tokens returns 200")
+		public void testPostAccessTokens1() {
+			var body = """
+					{
+						"7E57C0DE-0000-4000-8000-000100001111": "jwe.jwe.jwe.vault1.user1",
+						"7E57C0DE-0000-4000-8000-BADBADBADBAD": "noSuchVault"
+					},
+					""";
+			given().contentType(ContentType.JSON).body(body)
+					.when().post("/users/me/access-tokens")
+					.then().statusCode(200);
+		}
+
+		@Test
+		@DisplayName("POST /users/me/access-tokens returns 200 for empty list")
+		public void testPostAccessTokens2() {
+			given().contentType(ContentType.JSON).body("{}")
+					.when().post("/users/me/access-tokens")
+					.then().statusCode(200);
+		}
+
+		@Test
+		@DisplayName("POST /users/me/access-tokens returns 400 for malformed body")
+		public void testPostAccessTokens3() {
+			given().contentType(ContentType.JSON).body("")
+					.when().post("/users/me/access-tokens")
+					.then().statusCode(400);
 		}
 
 	}
