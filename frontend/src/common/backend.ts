@@ -267,7 +267,7 @@ class VaultService {
   public async accessToken(vaultId: string, evenIfArchived = false): Promise<string> {
     return axiosAuth.get(`/vaults/${vaultId}/access-token?evenIfArchived=${evenIfArchived}`, { headers: { 'Content-Type': 'text/plain' } })
       .then(response => response.data)
-      .catch((error) => rethrowAndConvertIfExpected(error, 403));
+      .catch((error) => rethrowAndConvertIfExpected(error, 402, 403));
   }
 
   public async grantAccess(vaultId: string, ...grants: AccessGrant[]) {

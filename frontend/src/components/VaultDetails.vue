@@ -260,14 +260,16 @@ async function fetchData() {
 
 async function fetchOwnerData() {
   try {
-    const vaultKeyJwe = await backend.vaults.accessToken(props.vaultId, true);
-    vaultKeys.value = await loadVaultKeys(vaultKeyJwe);
     (await backend.vaults.getMembers(props.vaultId)).forEach(member => members.value.set(member.id, member));
     usersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
     vaultRecoveryRequired.value = false;
+    const vaultKeyJwe = await backend.vaults.accessToken(props.vaultId, true);
+    vaultKeys.value = await loadVaultKeys(vaultKeyJwe);
   } catch (error) {
     if (error instanceof ForbiddenError) {
       vaultRecoveryRequired.value = true;
+    } else if (error instanceof PaymentRequiredError) {
+      // TODO set paymentRequiredFlag and adjust UI accordingly
     } else {
       console.error('Retrieving ownership failed.', error);
       onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
