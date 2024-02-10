@@ -40,6 +40,7 @@
       <div>
         <h3 class="font-medium text-gray-900">{{ t('vaultDetails.sharedWith.title') }}</h3>
         <ul role="list" class="mt-2 border-t border-b border-gray-200 divide-y divide-gray-200">
+          <!-- member list -->
           <template v-for="member in members.values()" :key="member.id">
             <li class="py-3 flex flex-col">
               <div class="flex justify-between items-center">
@@ -59,12 +60,12 @@
                   <transition enter-active-class="transition ease-out duration-100" enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 scale-100" leave-to-class="transform opacity-0 scale-95">
                     <MenuItems class="absolute right-9 top-0 z-10 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                       <div class="py-1">
-                        <MenuItem v-if="member.role == 'MEMBER'" v-slot="{ active }" @click="updateMemberRole(member, 'OWNER')">
+                        <MenuItem v-if="member.role == 'MEMBER' && !paymentRequired" v-slot="{ active }" @click="updateMemberRole(member, 'OWNER')">
                           <div :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'cursor-pointer block px-4 py-2 text-sm']">
                             {{ t('vaultDetails.sharedWith.grantOwnership') }}
                           </div>
                         </MenuItem>
-                        <MenuItem v-if="member.role == 'OWNER'" v-slot="{ active }" @click="updateMemberRole(member, 'MEMBER')">
+                        <MenuItem v-if="member.role == 'OWNER' && !paymentRequired" v-slot="{ active }" @click="updateMemberRole(member, 'MEMBER')">
                           <div :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'cursor-pointer block px-4 py-2 text-sm']">
                             {{ t('vaultDetails.sharedWith.revokeOwnership') }}
                           </div>
@@ -85,7 +86,8 @@
               </p>
             </li>
           </template>
-          <li v-if="!vault.archived" class="py-2 flex flex-col">
+          <!-- add member -->
+          <li v-if="!vault.archived && !paymentRequired" class="py-2 flex flex-col">
             <div v-if="!addingUser" class="justify-between items-center">
               <button type="button" class="group -ml-1 bg-white p-1 rounded-md flex items-center focus:outline-none focus:ring-2 focus:ring-primary" @click="addingUser = true">
                 <span class="w-8 h-8 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400">
@@ -107,10 +109,15 @@
         </ul>
       </div>
 
+      <!-- button bar -->
       <div>
         <h3 class="font-medium text-gray-900">{{ t('vaultDetails.actions.title') }}</h3>
 
-        <div v-if="!vault.archived" class="mt-2 flex flex-col gap-2">
+        <p v-if="paymentRequired" class="text-sm text-red-900 mt-1">
+          {{ t('vaultDetails.error.paymentRequired') }}
+        </p>
+
+        <div v-else-if="!vault.archived" class="mt-2 flex flex-col gap-2">
           <div class="flex gap-2">
             <button :disabled="usersRequiringAccessGrant.length == 0" type="button" class="flex-1 bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="showGrantPermissionDialog()">
               {{ t('vaultDetails.actions.updatePermissions') }}
@@ -215,6 +222,7 @@ const allowRetryFetch = computed(() => onFetchError.value != null && !(onFetchEr
 const onUpdateVaultMembershipError = ref< {[id: string]: Error} >({});
 const onAddUserError = ref<Error | null>();
 
+const paymentRequired = ref(false);
 const addingUser = ref(false);
 const grantingPermission = ref(false);
 const grantPermissionDialog = ref<typeof GrantPermissionDialog>();
@@ -269,7 +277,7 @@ async function fetchOwnerData() {
     if (error instanceof ForbiddenError) {
       vaultRecoveryRequired.value = true;
     } else if (error instanceof PaymentRequiredError) {
-      // TODO set paymentRequiredFlag and adjust UI accordingly
+      paymentRequired.value = true;
     } else {
       console.error('Retrieving ownership failed.', error);
       onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
