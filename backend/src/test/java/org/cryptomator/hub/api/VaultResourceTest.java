@@ -693,6 +693,23 @@ public class VaultResourceTest {
 		}
 
 		@Test
+		@Order(0)
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100001111/access-tokens returns 402 for [user91, user92, user93, user94]")
+		public void grantAccessExceedingSeats() {
+			//Assumptions.assumeTrue(EffectiveVaultAccess.countEffectiveVaultUsers() == 2);
+			var body = Map.of(
+					"user91", "jwe.jwe.jwe.vault1.user91", //
+					"user92", "jwe.jwe.jwe.vault1.user92", //
+					"user93", "jwe.jwe.jwe.vault1.user93", //
+					"user94", "jwe.jwe.jwe.vault1.user94" //
+			);
+
+			given().contentType(ContentType.JSON).body(body)
+					.when().post("/vaults/{vaultId}/access-tokens/", "7E57C0DE-0000-4000-8000-000100001111")
+					.then().statusCode(402);
+		}
+
+		@Test
 		@Order(1)
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111/groups/group91 returns 402")
 		public void addGroupToVaultExceedingSeats() {

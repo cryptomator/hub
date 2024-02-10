@@ -276,7 +276,7 @@ class VaultService {
       return accumulator;
     }, {});
     await axiosAuth.post(`/vaults/${vaultId}/access-tokens`, body)
-      .catch((error) => rethrowAndConvertIfExpected(error, 404, 409));
+      .catch((error) => rethrowAndConvertIfExpected(error, 402, 403, 404, 409));
   }
 
   public async removeAuthority(vaultId: string, authorityId: string) {

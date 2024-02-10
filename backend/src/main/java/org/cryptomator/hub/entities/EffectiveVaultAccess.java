@@ -17,6 +17,7 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Entity
 @Immutable
@@ -26,6 +27,12 @@ import java.util.stream.Collectors;
 		FROM EffectiveVaultAccess eva
 		INNER JOIN Vault v ON eva.id.vaultId = v.id AND NOT v.archived
 		WHERE eva.id.authorityId = :userId
+		""")
+@NamedQuery(name = "EffectiveVaultAccess.getSeatOccupyingUserIds", query = """
+		SELECT DISTINCT u.id
+		FROM User u
+		INNER JOIN EffectiveVaultAccess eva ON u.id = eva.id.authorityId
+		INNER JOIN Vault v ON eva.id.vaultId = v.id AND NOT v.archived
 		""")
 @NamedQuery(name = "EffectiveVaultAccess.countSeatOccupyingUsers", query = """
 		SELECT count(DISTINCT u)
@@ -53,6 +60,10 @@ public class EffectiveVaultAccess extends PanacheEntityBase {
 
 	public static boolean isUserOccupyingSeat(String userId) {
 		return EffectiveVaultAccess.count("#EffectiveVaultAccess.countSeatsOccupiedByUser", Parameters.with("userId", userId)) > 0;
+	}
+
+	public static Stream<String> getSeatOccupyingUserIds() {
+		return getEntityManager().createNamedQuery("EffectiveVaultAccess.getSeatOccupyingUserIds", String.class).getResultStream();
 	}
 
 	public static long countSeatOccupyingUsers() {
