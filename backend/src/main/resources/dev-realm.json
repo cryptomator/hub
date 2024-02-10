@@ -65,6 +65,39 @@
       ]
     },
     {
+      "username": "alice",
+      "enabled": true,
+      "credentials": [{"type": "password", "value": "asd"}],
+      "realmRoles": ["user"]
+    },
+    {
+      "username": "bob",
+      "enabled": true,
+      "credentials": [{"type": "password", "value": "asd"}],
+      "realmRoles": ["user"]
+    },
+    {
+      "username": "carol",
+      "enabled": true,
+      "credentials": [{"type": "password", "value": "asd"}],
+      "realmRoles": ["user"],
+      "groups" : [ "/groupies" ]
+    },
+    {
+      "username": "dave",
+      "enabled": true,
+      "credentials": [{"type": "password", "value": "asd"}],
+      "realmRoles": ["user"],
+      "groups" : [ "/groupies" ]
+    },
+    {
+      "username": "erin",
+      "enabled": true,
+      "credentials": [{"type": "password", "value": "asd"}],
+      "realmRoles": ["user"],
+      "groups" : [ "/groupies" ]
+    },
+    {
       "username": "syncer",
       "email": "syncer@localhost",
       "enabled": true,
@@ -92,6 +125,16 @@
       "clientRoles" : {
         "realm-management" : [ "manage-users", "view-users" ]
       }
+    }
+  ],
+  "groups": [
+    {
+      "name": "groupies",
+      "path": "/groupies",
+      "subGroups": [],
+      "attributes": {},
+      "realmRoles": [],
+      "clientRoles": {}
     }
   ],
   "scopeMappings": [
