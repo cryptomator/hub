@@ -273,6 +273,7 @@ async function fetchOwnerData() {
     vaultRecoveryRequired.value = false;
     const vaultKeyJwe = await backend.vaults.accessToken(props.vaultId, true);
     vaultKeys.value = await loadVaultKeys(vaultKeyJwe);
+    paymentRequired.value = false;
   } catch (error) {
     if (error instanceof ForbiddenError) {
       vaultRecoveryRequired.value = true;
@@ -469,7 +470,12 @@ async function removeMember(memberId: string) {
   try {
     await backend.vaults.removeAuthority(props.vaultId, memberId);
     members.value.delete(memberId);
-    usersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
+    if (!paymentRequired.value) {
+      usersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
+    } else {
+      // reload, maybe removing memberId fixed the license issue
+      await fetchData();
+    }
   } catch (error) {
     console.error('Removing member access failed.', error);
     //404 not expected from user perspective
