@@ -155,6 +155,11 @@
   "initialSetup.accountKey": "Account Key",
   "initialSetup.submit": "Finish Setup",
 
+  "licenseAlert.title": "Attention needed",
+  "licenseAlert.noRemainingSeats": "Your Cryptomator Hub license has exceeded the number of available seats. {0} to renew it to manage and unlock your vaults again.",
+  "licenseAlert.licenseExpired": "Your Cryptomator Hub license has expired. {0} to renew it to manage and unlock your vaults again.",
+  "licenseAlert.button": "Open Admin Section",
+
   "manageAccountKey.title": "Account Key",
   "manageAccountKey.description": "Your Account Key is required to login from other apps or browsers.",
   "manageAccountKey.regenerate": "Regenerate Key",
