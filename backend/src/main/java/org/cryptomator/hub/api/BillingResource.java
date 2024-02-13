@@ -65,25 +65,25 @@ public class BillingResource {
 	}
 
 	public record BillingDto(@JsonProperty("hubId") String hubId, @JsonProperty("hasLicense") Boolean hasLicense, @JsonProperty("email") String email,
-							 @JsonProperty("totalSeats") Integer totalSeats, @JsonProperty("remainingSeats") Integer remainingSeats,
+							 @JsonProperty("licensedSeats") Integer licensedSeats, @JsonProperty("usedSeats") Integer usedSeats,
 							 @JsonProperty("issuedAt") Instant issuedAt, @JsonProperty("expiresAt") Instant expiresAt, @JsonProperty("managedInstance") Boolean managedInstance) {
 
 		public static BillingDto create(String hubId, LicenseHolder licenseHolder) {
-			var seats = licenseHolder.getNoLicenseSeats();
-			var remainingSeats = Math.max(seats - EffectiveVaultAccess.countSeatOccupyingUsers(), 0);
+			var licensedSeats = licenseHolder.getNoLicenseSeats();
+			var usedSeats = EffectiveVaultAccess.countSeatOccupyingUsers();
 			var managedInstance = licenseHolder.isManagedInstance();
-			return new BillingDto(hubId, false, null, (int) seats, (int) remainingSeats, null, null, managedInstance);
+			return new BillingDto(hubId, false, null, (int) licensedSeats, (int) usedSeats, null, null, managedInstance);
 		}
 
 		public static BillingDto fromDecodedJwt(DecodedJWT jwt, LicenseHolder licenseHolder) {
 			var id = jwt.getId();
 			var email = jwt.getSubject();
-			var totalSeats = jwt.getClaim("seats").asInt();
-			var remainingSeats = Math.max(totalSeats - (int) EffectiveVaultAccess.countSeatOccupyingUsers(), 0);
+			var licensedSeats = jwt.getClaim("seats").asInt();
+			var usedSeats = (int) EffectiveVaultAccess.countSeatOccupyingUsers();
 			var issuedAt = jwt.getIssuedAt().toInstant();
 			var expiresAt = jwt.getExpiresAt().toInstant();
 			var managedInstance = licenseHolder.isManagedInstance();
-			return new BillingDto(id, true, email, totalSeats, remainingSeats, issuedAt, expiresAt, managedInstance);
+			return new BillingDto(id, true, email, licensedSeats, usedSeats, issuedAt, expiresAt, managedInstance);
 		}
 
 	}

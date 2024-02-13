@@ -41,7 +41,7 @@
   "admin.licenseInfo.seats.title": "Number of Seats",
   "admin.licenseInfo.seats.description.enoughSeats": "You have {0} unused seats remaining.",
   "admin.licenseInfo.seats.description.zeroSeats": "You have no seats remaining. Upgrade if necessary.",
-  "admin.licenseInfo.seats.description.undercutSeats": "You have used more seats than you have available. Remove users or upgrade if necessary.",
+  "admin.licenseInfo.seats.description.undercutSeats": "You have used {0} more seats than you have available. Remove users or upgrade if necessary.",
   "admin.licenseInfo.issuedAt.title": "Issued At",
   "admin.licenseInfo.expiresAt.title": "Expires At",
   "admin.licenseInfo.expiresAt.description.valid": "Your license is valid.",

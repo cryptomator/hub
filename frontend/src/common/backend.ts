@@ -183,8 +183,8 @@ export type BillingDto = {
   hubId: string;
   hasLicense: boolean;
   email: string;
-  totalSeats: number;
-  remainingSeats: number;
+  licensedSeats: number;
+  usedSeats: number;
   issuedAt: Date;
   expiresAt: Date;
   managedInstance: boolean;

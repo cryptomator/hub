@@ -63,8 +63,8 @@ public class BillingResourceManagedInstanceTest {
 				.body("hubId", is("42"))
 				.body("hasLicense", is(false))
 				.body("email", nullValue())
-				.body("totalSeats", is(0))
-				.body("remainingSeats", is(0))
+				.body("licensedSeats", is(0))
+				.body("usedSeats", is(2))
 				.body("issuedAt", nullValue())
 				.body("expiresAt", nullValue());
 	}

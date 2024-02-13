@@ -41,7 +41,7 @@
   "admin.licenseInfo.seats.title": "Anzahl der Sitze",
   "admin.licenseInfo.seats.description.enoughSeats": "Du hast {0} unbenutzte Sitze übrig.",
   "admin.licenseInfo.seats.description.zeroSeats": "Du hast keine Sitze mehr frei. Upgrade, wenn nötig.",
-  "admin.licenseInfo.seats.description.undercutSeats": "Du hast mehr Sitze belegt, als du zur Verfügung hast. Entferne ggf. Benutzer oder führe ein Upgrade durch.",
+  "admin.licenseInfo.seats.description.undercutSeats": "Du hast {0} mehr Sitze belegt, als du zur Verfügung hast. Entferne ggf. Benutzer oder führe ein Upgrade durch.",
   "admin.licenseInfo.issuedAt.title": "Ausgestellt am",
   "admin.licenseInfo.expiresAt.title": "Läuft ab am",
   "admin.licenseInfo.expiresAt.description.valid": "Deine Lizenz ist gültig.",

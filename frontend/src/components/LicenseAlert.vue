@@ -1,5 +1,21 @@
 <template>
-  <div v-if="admin && admin.hasLicense && admin.remainingSeats < 0" class="rounded-md bg-yellow-50 p-4 mb-3">
+    <div v-if="admin && admin.hasLicense && now > admin.expiresAt" class="rounded-md bg-red-50 p-4 mb-3">
+    <div class="flex">
+      <div class="flex-shrink-0">
+        <XCircleIcon class="h-5 w-5 text-red-400" aria-hidden="true" />
+      </div>
+      <div class="ml-3">
+        <h3 class="text-sm font-medium text-red-800">{{ t('licenseAlert.title') }}</h3>
+        <i18n-t keypath="licenseAlert.licenseExpired" scope="global" tag="p" class="mt-2 text-sm text-red-700">
+          <router-link to="/app/admin/settings" class="text-sm text-red-700 underline hover:text-red-600">
+            {{ t('licenseAlert.button') }}
+          </router-link>
+        </i18n-t>
+      </div>
+    </div>
+  </div>
+
+  <div v-else-if="admin && admin.hasLicense && admin.licensedSeats - admin.usedSeats < 0" class="rounded-md bg-yellow-50 p-4 mb-3">
     <div class="flex">
       <div class="flex-shrink-0">
         <ExclamationTriangleIcon class="h-5 w-5 text-yellow-400" aria-hidden="true" />
@@ -15,21 +31,6 @@
     </div>
   </div>
 
-  <div v-else-if="admin && admin.hasLicense && now > admin.expiresAt" class="rounded-md bg-red-50 p-4 mb-3">
-    <div class="flex">
-      <div class="flex-shrink-0">
-        <XCircleIcon class="h-5 w-5 text-red-400" aria-hidden="true" />
-      </div>
-      <div class="ml-3">
-        <h3 class="text-sm font-medium text-red-800">{{ t('licenseAlert.title') }}</h3>
-        <i18n-t keypath="licenseAlert.licenseExpired" scope="global" tag="p" class="mt-2 text-sm text-red-700">
-          <router-link to="/app/admin/settings" class="text-sm text-red-700 underline hover:text-red-600">
-            {{ t('licenseAlert.button') }}
-          </router-link>
-        </i18n-t>
-      </div>
-    </div>
-  </div>
 </template>
 
 <script setup lang="ts">
