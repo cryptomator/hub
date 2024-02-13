@@ -794,8 +794,8 @@ public class VaultResourceTest {
 
 		@Test
 		@Order(7)
-		@DisplayName("Unlock is blocked if exceeding license seats")
-		public void testUnlockBlockedIfLicenseExceeded() throws SQLException {
+		@DisplayName("Unlock is granted if exceeding license seats but not all users have an token")
+		public void testUnlockIfLicenseExceededHittingSoftLimit() throws SQLException {
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
 						INSERT INTO "vault_access" ("vault_id", "authority_id")
@@ -805,8 +805,32 @@ public class VaultResourceTest {
 			//Assumptions.assumeTrue(EffectiveVaultAccess.countEffectiveVaultUsers() > 5);
 
 			when().get("/vaults/{vaultId}/access-token", "7E57C0DE-0000-4000-8000-000100001111")
+					.then().statusCode(200);
+		}
+
+		@Test
+		@Order(8)
+		@DisplayName("Unlock is blocked if exceeding license seats and users have an token")
+		public void testUnlockBlockedIfLicenseExceeded() throws SQLException {
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
+				s.execute("""
+						INSERT INTO "access_token" ("user_id", "vault_id", "vault_masterkey")
+							VALUES ('user91', '7E57C0DE-0000-4000-8000-000100001111', 'jwe.jwe.jwe.vault1.user91');
+						INSERT INTO "access_token" ("user_id", "vault_id", "vault_masterkey")
+							VALUES ('user92', '7E57C0DE-0000-4000-8000-000100001111', 'jwe.jwe.jwe.vault1.user92');
+						INSERT INTO "access_token" ("user_id", "vault_id", "vault_masterkey")
+							VALUES ('user93', '7E57C0DE-0000-4000-8000-000100001111', 'jwe.jwe.jwe.vault1.user93');
+						INSERT INTO "access_token" ("user_id", "vault_id", "vault_masterkey")
+							VALUES ('user94', '7E57C0DE-0000-4000-8000-000100001111', 'jwe.jwe.jwe.vault1.user94');
+						""");
+			}
+			// user1 and user2 does already have an token so we need four more
+			//Assumptions.assumeTrue(EffectiveVaultAccess.countEffectiveVaultUsers() > 5);
+
+			when().get("/vaults/{vaultId}/access-token", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(402);
 		}
+
 
 		@AfterAll
 		public void reset() throws SQLException {

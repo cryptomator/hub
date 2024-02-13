@@ -305,7 +305,7 @@ public class VaultResource {
 			throw new GoneException("Vault is archived.");
 		}
 
-		var usedSeats = EffectiveVaultAccess.countSeatOccupyingUsers();
+		var usedSeats = EffectiveVaultAccess.countSeatOccupyingUsersWithAccessToken();
 		if (usedSeats > license.getAvailableSeats()) {
 			throw new PaymentRequiredException("Number of effective vault users exceeds available license seats");
 		}

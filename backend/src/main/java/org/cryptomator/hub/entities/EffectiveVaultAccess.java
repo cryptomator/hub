@@ -40,6 +40,13 @@ import java.util.stream.Stream;
 		INNER JOIN EffectiveVaultAccess eva ON u.id = eva.id.authorityId
 		INNER JOIN Vault v ON eva.id.vaultId = v.id AND NOT v.archived
 		""")
+@NamedQuery(name = "EffectiveVaultAccess.countSeatOccupyingUsersWithAccessToken", query = """
+		SELECT count(DISTINCT u)
+		FROM User u
+		INNER JOIN EffectiveVaultAccess eva ON u.id = eva.id.authorityId
+		INNER JOIN Vault v ON eva.id.vaultId = v.id AND NOT v.archived
+		INNER JOIN AccessToken at ON eva.id.vaultId = at.id.vaultId AND eva.id.authorityId = at.id.userId
+		""")
 @NamedQuery(name = "EffectiveVaultAccess.countSeatOccupyingUsersOfGroup", query = """
 		SELECT count(DISTINCT u)
 		FROM User u
@@ -68,6 +75,10 @@ public class EffectiveVaultAccess extends PanacheEntityBase {
 
 	public static long countSeatOccupyingUsers() {
 		return EffectiveVaultAccess.count("#EffectiveVaultAccess.countSeatOccupyingUsers");
+	}
+
+	public static long countSeatOccupyingUsersWithAccessToken() {
+		return EffectiveVaultAccess.count("#EffectiveVaultAccess.countSeatOccupyingUsersWithAccessToken");
 	}
 
 	public static long countSeatOccupyingUsersOfGroup(String groupId) {
