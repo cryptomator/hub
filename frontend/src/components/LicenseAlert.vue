@@ -15,7 +15,7 @@
     </div>
   </div>
 
-  <div v-else-if="admin && admin.hasLicense && admin.licensedSeats - admin.usedSeats < 0" class="rounded-md bg-yellow-50 p-4 mb-3">
+  <div v-else-if="admin && admin.licensedSeats - admin.usedSeats < 0" class="rounded-md bg-yellow-50 p-4 mb-3">
     <div class="flex">
       <div class="flex-shrink-0">
         <ExclamationTriangleIcon class="h-5 w-5 text-yellow-400" aria-hidden="true" />
