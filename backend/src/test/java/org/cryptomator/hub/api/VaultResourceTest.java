@@ -794,15 +794,15 @@ public class VaultResourceTest {
 
 		@Test
 		@Order(7)
-		@DisplayName("Unlock is granted if exceeding license seats but not all users have an token")
-		public void testUnlockIfLicenseExceededHittingSoftLimit() throws SQLException {
+		@DisplayName("unlock is granted, if (effective vault user) > license seats but (effective vault user with access token) <= license seat")
+		public void testUnlockAllowedExceedingLicenseSoftLimit() throws SQLException {
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
 						INSERT INTO "vault_access" ("vault_id", "authority_id")
 							VALUES ('7E57C0DE-0000-4000-8000-000100001111', 'group91');
 						""");
 			}
-			//Assumptions.assumeTrue(EffectiveVaultAccess.countEffectiveVaultUsers() > 5);
+			//Assumptions.assumeTrue(EffectiveVaultAccess.countSeatOccupyingUsersWithAccessToken() <= 5);
 
 			when().get("/vaults/{vaultId}/access-token", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(200);
@@ -811,7 +811,7 @@ public class VaultResourceTest {
 		@Test
 		@Order(8)
 		@DisplayName("Unlock is blocked if exceeding license seats and users have an token")
-		public void testUnlockBlockedIfLicenseExceeded() throws SQLException {
+		public void testUnockBlockedExceedingLicenseHardLimit() throws SQLException {
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
 						INSERT INTO "access_token" ("user_id", "vault_id", "vault_masterkey")
@@ -825,12 +825,11 @@ public class VaultResourceTest {
 						""");
 			}
 			// user1 and user2 does already have an token so we need four more
-			//Assumptions.assumeTrue(EffectiveVaultAccess.countEffectiveVaultUsers() > 5);
+			//Assumptions.assumeTrue(EffectiveVaultAccess.countSeatOccupyingUsersWithAccessToken() > 5);
 
 			when().get("/vaults/{vaultId}/access-token", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(402);
 		}
-
 
 		@AfterAll
 		public void reset() throws SQLException {

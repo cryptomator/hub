@@ -293,7 +293,7 @@ public class VaultResource {
 	@Produces(MediaType.TEXT_PLAIN)
 	@Operation(summary = "get the user-specific vault key", description = "retrieves a jwe containing the vault key, encrypted for the current user")
 	@APIResponse(responseCode = "200")
-	@APIResponse(responseCode = "402", description = "number of effective vault users exceeds available license seats")
+	@APIResponse(responseCode = "402", description = "license expired or number of effective vault users that have a token exceeds available license seats")
 	@APIResponse(responseCode = "403", description = "not a vault member")
 	@APIResponse(responseCode = "404", description = "unknown vault")
 	@APIResponse(responseCode = "410", description = "Vault is archived. Only returned if evenIfArchived query param is false or not set, otherwise the archived flag is ignored")
