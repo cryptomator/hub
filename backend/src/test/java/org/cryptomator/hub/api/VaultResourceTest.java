@@ -12,6 +12,7 @@ import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Validator;
+import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.entities.Vault;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
@@ -26,7 +27,6 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.ValueSource;
 
 import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
@@ -654,7 +654,6 @@ public class VaultResourceTest {
 
 		@BeforeAll
 		public void setup() throws SQLException {
-			//Assumptions.assumeTrue(EffectiveVaultAccess.countEffectiveVaultUsers() == 2);
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
 						INSERT INTO "authority" ("id", "type", "name")
@@ -696,7 +695,7 @@ public class VaultResourceTest {
 		@Order(0)
 		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100001111/access-tokens returns 402 for [user91, user92, user93, user94]")
 		public void grantAccessExceedingSeats() {
-			//Assumptions.assumeTrue(EffectiveVaultAccess.countEffectiveVaultUsers() == 2);
+			assert EffectiveVaultAccess.countSeatOccupyingUsers() == 2;
 			var body = Map.of(
 					"user91", "jwe.jwe.jwe.vault1.user91", //
 					"user92", "jwe.jwe.jwe.vault1.user92", //
@@ -713,7 +712,7 @@ public class VaultResourceTest {
 		@Order(1)
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111/groups/group91 returns 402")
 		public void addGroupToVaultExceedingSeats() {
-			//Assumptions.assumeTrue(EffectiveVaultAccess.countEffectiveVaultUsers() == 2);
+			assert EffectiveVaultAccess.countSeatOccupyingUsers() == 2;
 
 			given().when().put("/vaults/{vaultId}/groups/{groupId}", "7E57C0DE-0000-4000-8000-000100001111", "group91")
 					.then().statusCode(402);
@@ -722,9 +721,9 @@ public class VaultResourceTest {
 		@Order(2)
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111/users/userXX returns 201")
 		@ParameterizedTest(name = "Adding user {0} succeeds")
-		@ValueSource(strings = {"user91", "user92", "user93"})
-		public void addUserToVaultNotExceedingSeats(String userId) {
-			//Assumptions.assumeTrue(EffectiveVaultAccess.countEffectiveVaultUsers() == 2);
+		@CsvSource(value = {"0,user91", "1,user92", "2,user93"})
+		public void addUserToVaultNotExceedingSeats(String run, String userId) {
+			assert EffectiveVaultAccess.countSeatOccupyingUsers() == (2 + Integer.valueOf(run));
 
 			given().when().put("/vaults/{vaultId}/users/{usersId}", "7E57C0DE-0000-4000-8000-000100001111", userId)
 					.then().statusCode(201);
@@ -734,7 +733,7 @@ public class VaultResourceTest {
 		@Order(3)
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111/users/user94 returns 402")
 		public void addUserToVaultExceedingSeats() {
-			//Assumptions.assumeTrue(EffectiveVaultAccess.countEffectiveVaultUsers() == 5);
+			assert EffectiveVaultAccess.countSeatOccupyingUsers() == 5;
 
 			given().when().put("/vaults/{vaultId}/users/{usersId}", "7E57C0DE-0000-4000-8000-000100001111", "user94")
 					.then().statusCode(402);
@@ -748,7 +747,7 @@ public class VaultResourceTest {
 		@Order(4)
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-0001FFFF3333 (as user94) exceeding the license returns 402")
 		public void testCreateVaultExceedingSeats() {
-			//Assumptions.assumeTrue(EffectiveVaultAccess.countEffectiveVaultUsers() > 5);
+			assert EffectiveVaultAccess.countSeatOccupyingUsers() == 5;
 
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-0001FFFF3333");
 			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", "Test vault 4", false, Instant.parse("2112-12-21T21:12:21Z"), "masterkey3", 42, "NaCl", "authPubKey3", "authPrvKey3");
@@ -761,7 +760,7 @@ public class VaultResourceTest {
 		@Order(5)
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-0001FFFF3333 (as user1) returns 201 not exceeding seats because user already has access to an existing vault")
 		public void testCreateVaultNotExceedingSeats() {
-			//Assumptions.assumeTrue(EffectiveVaultAccess.countEffectiveVaultUsers() > 5);
+			assert EffectiveVaultAccess.countSeatOccupyingUsers() == 5;
 
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-0001FFFF3333");
 			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", "Test vault 3", false, Instant.parse("2112-12-21T21:12:21Z"), "masterkey3", 42, "NaCl", "authPubKey3", "authPrvKey3");
@@ -778,7 +777,7 @@ public class VaultResourceTest {
 		@Order(6)
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-0001FFFF3333 (as user1) returns 200 with only updated name, description and archive flag, despite exceeding license")
 		public void testUpdateVaultDespiteLicenseExceeded() {
-			//Assumptions.assumeTrue(EffectiveVaultAccess.countEffectiveVaultUsers() > 5);
+			assert EffectiveVaultAccess.countSeatOccupyingUsers() == 5;
 
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-0001FFFF3333");
 			var vaultDto = new VaultResource.VaultDto(uuid, "VaultUpdated", "Vault updated.", true, Instant.parse("2222-11-11T11:11:11Z"), "someVaule", -1, "doNotUpdate", "doNotUpdate", "doNotUpdate");
@@ -794,7 +793,7 @@ public class VaultResourceTest {
 
 		@Test
 		@Order(7)
-		@DisplayName("unlock is granted, if (effective vault user) > license seats but (effective vault user with access token) <= license seat")
+		@DisplayName("unlock/legacyUnlock is granted, if (effective vault user) > license seats but (effective vault user with access token) <= license seat")
 		public void testUnlockAllowedExceedingLicenseSoftLimit() throws SQLException {
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
@@ -802,15 +801,18 @@ public class VaultResourceTest {
 							VALUES ('7E57C0DE-0000-4000-8000-000100001111', 'group91');
 						""");
 			}
-			//Assumptions.assumeTrue(EffectiveVaultAccess.countSeatOccupyingUsersWithAccessToken() <= 5);
+			assert EffectiveVaultAccess.countSeatOccupyingUsersWithAccessToken() <= 5;
 
 			when().get("/vaults/{vaultId}/access-token", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(200);
+			when().get("/vaults/{vaultId}/keys/{deviceId}", "7E57C0DE-0000-4000-8000-000100002222", "legacyDevice3")
+					.then().statusCode(200)
+					.body(is("legacy.jwe.jwe.vault2.device3"));
 		}
 
 		@Test
 		@Order(8)
-		@DisplayName("Unlock is blocked if exceeding license seats and users have an token")
+		@DisplayName("Unlock/legacyUnlock is blocked if (effective vault users with toke) > license seats")
 		public void testUnockBlockedExceedingLicenseHardLimit() throws SQLException {
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
@@ -824,10 +826,11 @@ public class VaultResourceTest {
 							VALUES ('user94', '7E57C0DE-0000-4000-8000-000100001111', 'jwe.jwe.jwe.vault1.user94');
 						""");
 			}
-			// user1 and user2 does already have an token so we need four more
-			//Assumptions.assumeTrue(EffectiveVaultAccess.countSeatOccupyingUsersWithAccessToken() > 5);
+			assert EffectiveVaultAccess.countSeatOccupyingUsersWithAccessToken() > 5;
 
 			when().get("/vaults/{vaultId}/access-token", "7E57C0DE-0000-4000-8000-000100001111")
+					.then().statusCode(402);
+			when().get("/vaults/{vaultId}/keys/{deviceId}", "7E57C0DE-0000-4000-8000-000100002222", "legacyDevice3")
 					.then().statusCode(402);
 		}
 

@@ -72,7 +72,7 @@ public class EffectiveVaultAccess extends PanacheEntityBase {
 	}
 
 	public static long countSeatsOccupiedByUsers(List<String> userIds) {
-		return EffectiveVaultAccess.count("#EffectiveVaultAccess.countSeatOccupiedByUsers", Parameters.with("userIds", userIds));
+		return EffectiveVaultAccess.count("#EffectiveVaultAccess.countSeatsOccupiedByUsers", Parameters.with("userIds", userIds));
 	}
 
 	public static long countSeatOccupyingUsers() {
