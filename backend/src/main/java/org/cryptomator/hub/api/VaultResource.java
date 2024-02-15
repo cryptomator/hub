@@ -66,10 +66,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Path("/vaults")
@@ -348,9 +345,9 @@ public class VaultResource {
 		}
 
 		// check number of available seats
-		Set<String> sittingUsers = EffectiveVaultAccess.getSeatOccupyingUserIds().collect(Collectors.toUnmodifiableSet());
-		long occupiedSeats = sittingUsers.size();
-		long usersWithoutSeat = tokens.keySet().stream().filter(Predicate.not(sittingUsers::contains)).count();
+		long occupiedSeats = EffectiveVaultAccess.countSeatOccupyingUsers();
+		long usersWithoutSeat = tokens.size() - EffectiveVaultAccess.countSeatsOccupiedByUsers(tokens.keySet().stream().toList());
+
 		if (occupiedSeats + usersWithoutSeat > license.getAvailableSeats()) {
 			throw new PaymentRequiredException("Number of effective vault users greater than or equal to the available license seats");
 		}
