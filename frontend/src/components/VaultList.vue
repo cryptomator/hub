@@ -180,7 +180,6 @@ async function fetchData() {
       default:
         throw new Error('Unknown filter');
     }
-
   } catch (error) {
     console.error('Retrieving vault list failed.', error);
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
