@@ -156,8 +156,8 @@
   "initialSetup.submit": "Finish Setup",
 
   "licenseAlert.noRemainingSeats.title": "License exceeded",
-  "licenseAlert.licenseExpired.title": "License expired",
   "licenseAlert.noRemainingSeats.description": "Your Cryptomator Hub instance has exceeded the number of licensed seats. Upgrade it in the {0} in order to manage and unlock your vaults again.",
+  "licenseAlert.licenseExpired.title": "License expired",
   "licenseAlert.licenseExpired.description": "Your Cryptomator Hub license has expired. Renew it in the {0} in order to manage and unlock your vaults again.",
   "licenseAlert.button": "Admin Section",
 
