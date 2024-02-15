@@ -155,6 +155,11 @@
   "initialSetup.accountKey": "Account Key",
   "initialSetup.submit": "Einrichtung abschließen",
 
+  "licenseAlert.noRemainingSeats.title": "Lizenz überschritten",
+  "licenseAlert.licenseExpired.title": "Lizenz abgelaufen",
+  "licenseAlert.description": "Öffne den {0}, um die Lizenz zu erneuern und die Tresore weiter zu verwalten und zu entsperren.",
+  "licenseAlert.button": "Admin-Bereich",
+
   "manageAccountKey.title": "Account Key",
   "manageAccountKey.description": "Dein Account Key wird benötigt, um dich von anderen Apps oder Browsern aus anzumelden.",
   "manageAccountKey.regenerate": "Neuen Key generieren",
