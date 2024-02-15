@@ -229,19 +229,13 @@ const betaUpdateExists = computed(() => {
   return false;
 });
 
-const remainingSeats = computed(() => {
-  if (admin.value) {
-    return admin.value.licensedSeats - admin.value.usedSeats;
-  }
-});
+const remainingSeats = computed(() => admin.value ? admin.value.licensedSeats - admin.value.usedSeats : undefined);
 const numberOfExceededSeats = computed(() => {
-  if (remainingSeats.value != null && remainingSeats.value < 0) {
-    return Math.abs(remainingSeats.value);
-  } else if (remainingSeats.value != null) {
-    return 0;
+  if (remainingSeats.value === undefined) {
+    return undefined;
   }
+  return remainingSeats.value < 0 ? Math.abs(remainingSeats.value) : 0;
 });
-
 
 onMounted(async () => {
   let cfg = config.get();
