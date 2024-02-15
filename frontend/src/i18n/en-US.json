@@ -157,7 +157,8 @@
 
   "licenseAlert.noRemainingSeats.title": "License exceeded",
   "licenseAlert.licenseExpired.title": "License expired",
-  "licenseAlert.description": "Renew it in the {0} in order to manage and unlock your vaults again.",
+  "licenseAlert.noRemainingSeats.description": "Your Cryptomator Hub instance has exceeded the number of licensed seats. Upgrade it in the {0} in order to manage and unlock your vaults again.",
+  "licenseAlert.licenseExpired.description": "Your Cryptomator Hub license has expired. Renew it in the {0} in order to manage and unlock your vaults again.",
   "licenseAlert.button": "Admin Section",
 
   "manageAccountKey.title": "Account Key",
@@ -222,7 +223,7 @@
   "vaultDetails.actions.showRecoveryKey": "Show Recovery Key",
   "vaultDetails.actions.archiveVault": "Archive Vault",
   "vaultDetails.actions.reactivateVault": "Reactivate Vault",
-  "vaultDetails.error.paymentRequired": "Your Cryptomator Hub license has exceeded the number of available seats or has expired. Please inform a Hub administrator to upgrade or renew the license.",
+  "vaultDetails.error.paymentRequired": "Your Cryptomator Hub license has expired or you exceeded the number of licensed seats. Please inform a Hub administrator renew or upgrade the license.",
   "vaultDetails.recoverVault.title": "You have Reset Your Account!",
   "vaultDetails.recoverVault.description": "To regain access to the vault, you must restore your access using the recovery key or another owner must update the access permissions.",
   "vaultDetails.recoverVault": "Recover Vault Access",

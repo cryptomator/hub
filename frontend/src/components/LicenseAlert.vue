@@ -6,7 +6,7 @@
       </div>
       <div class="ml-3">
         <h3 class="text-sm font-medium text-red-800">{{ t('licenseAlert.noRemainingSeats.title') }}</h3>
-        <i18n-t keypath="licenseAlert.description" scope="global" tag="p" class="mt-2 text-sm text-red-700">
+        <i18n-t keypath="licenseAlert.noRemainingSeats.description" scope="global" tag="p" class="mt-2 text-sm text-red-700">
           <router-link to="/app/admin/settings" class="text-sm text-red-700 underline hover:text-red-600">
             {{ t('licenseAlert.button') }}
           </router-link>
@@ -22,7 +22,7 @@
       </div>
       <div class="ml-3">
         <h3 class="text-sm font-medium text-yellow-800">{{ t('licenseAlert.licenseExpired.title') }}</h3>
-        <i18n-t keypath="licenseAlert.description" scope="global" tag="p" class="mt-2 text-sm text-yellow-700">
+        <i18n-t keypath="licenseAlert.licenseExpired.description" scope="global" tag="p" class="mt-2 text-sm text-yellow-700">
           <router-link to="/app/admin/settings" class="text-sm text-yellow-700 underline hover:text-yellow-600">
             {{ t('licenseAlert.button') }}
           </router-link>
