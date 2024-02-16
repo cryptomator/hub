@@ -22,9 +22,9 @@ import java.util.stream.Collectors;
 @Immutable
 @Table(name = "effective_vault_access")
 @NamedQuery(name = "EffectiveVaultAccess.countSeatsOccupiedByUser", query = """
-		SELECT count(eva)
-		FROM EffectiveVaultAccess eva
-		INNER JOIN Vault v ON eva.id.vaultId = v.id AND NOT v.archived
+		SELECT count(u)
+		FROM User u
+		INNER JOIN EffectiveVaultAccess eva ON u.id = eva.id.authorityId
 		WHERE eva.id.authorityId = :userId
 		""")
 @NamedQuery(name = "EffectiveVaultAccess.countSeatOccupyingUsers", query = """
@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 		INNER JOIN Vault v ON eva.id.vaultId = v.id AND NOT v.archived
 		WHERE egm.id.groupId = :groupId
 		""")
-@NamedQuery(name = "EffectiveVaultAccess.findByUserAndVault", query = """
+@NamedQuery(name = "EffectiveVaultAccess.findByAuthorityAndVault", query = """
 		SELECT eva
 		FROM EffectiveVaultAccess eva
 		WHERE eva.id.vaultId = :vaultId AND eva.id.authorityId = :authorityId
@@ -64,7 +64,7 @@ public class EffectiveVaultAccess extends PanacheEntityBase {
 	}
 
 	public static Collection<VaultAccess.Role> listRoles(UUID vaultId, String authorityId) {
-		return EffectiveVaultAccess.<EffectiveVaultAccess>find("#EffectiveVaultAccess.findByUserAndVault", Parameters.with("vaultId", vaultId).and("authorityId", authorityId)).stream()
+		return EffectiveVaultAccess.<EffectiveVaultAccess>find("#EffectiveVaultAccess.findByAuthorityAndVault", Parameters.with("vaultId", vaultId).and("authorityId", authorityId)).stream()
 				.map(eva -> eva.id.role)
 				.collect(Collectors.toUnmodifiableSet());
 	}
