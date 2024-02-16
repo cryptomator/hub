@@ -41,7 +41,7 @@
   "admin.licenseInfo.seats.title": "Anzahl der Sitze",
   "admin.licenseInfo.seats.description.enoughSeats": "Du hast {0} unbenutzte Sitze übrig.",
   "admin.licenseInfo.seats.description.zeroSeats": "Du hast keine Sitze mehr frei. Upgrade, wenn nötig.",
-  "admin.licenseInfo.seats.description.undercutSeats": "Du hast mehr Sitze belegt, als du zur Verfügung hast. Entferne ggf. Benutzer oder führe ein Upgrade durch.",
+  "admin.licenseInfo.seats.description.undercutSeats": "Du hast {0} mehr Sitze belegt, als du zur Verfügung hast. Entferne ggf. Benutzer oder führe ein Upgrade durch.",
   "admin.licenseInfo.issuedAt.title": "Ausgestellt am",
   "admin.licenseInfo.expiresAt.title": "Läuft ab am",
   "admin.licenseInfo.expiresAt.description.valid": "Deine Lizenz ist gültig.",
@@ -154,6 +154,12 @@
   "initialSetup.setupAlreadyCompleted.goToYourProfile": "Zu deinem Profil",
   "initialSetup.accountKey": "Account Key",
   "initialSetup.submit": "Einrichtung abschließen",
+
+  "licenseAlert.noRemainingSeats.title": "Lizenz überschritten",
+  "licenseAlert.noRemainingSeats.description": "Deine Cryptomator Hub Instanz hat die Anzahl an lizensierten Sitzen überschritten. Öffne den {0} und upgrade dort deine Lizenz, um deine Tresore weiterhin verwalten und entsperren zu können.",
+  "licenseAlert.licenseExpired.title": "Lizenz abgelaufen",
+  "licenseAlert.licenseExpired.description": "Deine Cryptomator Hub Lizenz ist abgelaufen. Öffne den {0} und erneuere dort deine Lizenz, um deine Tresore weiterhin verwalten und entsperren zu können.",
+  "licenseAlert.button": "Admin-Bereich",
 
   "manageAccountKey.title": "Account Key",
   "manageAccountKey.description": "Dein Account Key wird benötigt, um dich von anderen Apps oder Browsern aus anzumelden.",

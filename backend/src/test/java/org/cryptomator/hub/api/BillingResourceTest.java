@@ -62,8 +62,8 @@ public class BillingResourceTest {
 					.body("hubId", is("42"))
 					.body("hasLicense", is(false))
 					.body("email", nullValue())
-					.body("totalSeats", is(5)) //community license
-					.body("remainingSeats", is(3)) //depends on the flyway test data migration
+					.body("licensedSeats", is(5)) //community license
+					.body("usedSeats", is(2)) //depends on the flyway test data migration
 					.body("issuedAt", nullValue())
 					.body("expiresAt", nullValue());
 		}
@@ -86,8 +86,8 @@ public class BillingResourceTest {
 					.body("hubId", is("42"))
 					.body("hasLicense", is(true))
 					.body("email", is("hub@cryptomator.org"))
-					.body("totalSeats", is(5))
-					.body("remainingSeats", is(3))
+					.body("licensedSeats", is(5))
+					.body("usedSeats", is(2))
 					.body("issuedAt", is("2022-03-23T15:29:20Z"))
 					.body("expiresAt", is("9999-12-31T00:00:00Z"));
 		}
@@ -109,8 +109,8 @@ public class BillingResourceTest {
 					.body("hubId", is("42"))
 					.body("hasLicense", is(true))
 					.body("email", is("hub@cryptomator.org"))
-					.body("totalSeats", is(5))
-					.body("remainingSeats", is(3))
+					.body("licensedSeats", is(5))
+					.body("usedSeats", is(2))
 					.body("issuedAt", is("2022-03-23T15:43:30Z"))
 					.body("expiresAt", is("9999-12-31T00:00:00Z"));
 		}

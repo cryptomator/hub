@@ -8,6 +8,8 @@
     </div>
   </div>
 
+  <LicenseAlert v-if="isAdmin" />
+
   <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
     {{ t('vaultList.title') }}
   </h2>
@@ -123,6 +125,7 @@ import backend, { VaultDto } from '../common/backend';
 import FetchError from './FetchError.vue';
 import SlideOver from './SlideOver.vue';
 import VaultDetails from './VaultDetails.vue';
+import LicenseAlert from './LicenseAlert.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -177,7 +180,6 @@ async function fetchData() {
       default:
         throw new Error('Unknown filter');
     }
-
   } catch (error) {
     console.error('Retrieving vault list failed.', error);
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');

@@ -183,8 +183,8 @@ export type BillingDto = {
   hubId: string;
   hasLicense: boolean;
   email: string;
-  totalSeats: number;
-  remainingSeats: number;
+  licensedSeats: number;
+  usedSeats: number;
   issuedAt: Date;
   expiresAt: Date;
   managedInstance: boolean;
@@ -267,7 +267,7 @@ class VaultService {
   public async accessToken(vaultId: string, evenIfArchived = false): Promise<string> {
     return axiosAuth.get(`/vaults/${vaultId}/access-token?evenIfArchived=${evenIfArchived}`, { headers: { 'Content-Type': 'text/plain' } })
       .then(response => response.data)
-      .catch((error) => rethrowAndConvertIfExpected(error, 403));
+      .catch((error) => rethrowAndConvertIfExpected(error, 402, 403));
   }
 
   public async grantAccess(vaultId: string, ...grants: AccessGrant[]) {
@@ -276,7 +276,7 @@ class VaultService {
       return accumulator;
     }, {});
     await axiosAuth.post(`/vaults/${vaultId}/access-tokens`, body)
-      .catch((error) => rethrowAndConvertIfExpected(error, 404, 409));
+      .catch((error) => rethrowAndConvertIfExpected(error, 402, 403, 404, 409));
   }
 
   public async removeAuthority(vaultId: string, authorityId: string) {

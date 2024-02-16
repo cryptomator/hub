@@ -59,7 +59,6 @@ import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
-import org.hibernate.exception.ConstraintViolationException;
 
 import java.net.URI;
 import java.time.Instant;
@@ -266,7 +265,7 @@ public class VaultResource {
 			throw new GoneException("Vault is archived.");
 		}
 
-		var usedSeats = EffectiveVaultAccess.countSeatOccupyingUsers();
+		var usedSeats = EffectiveVaultAccess.countSeatOccupyingUsersWithAccessToken();
 		if (usedSeats > license.getAvailableSeats()) {
 			throw new PaymentRequiredException("Number of effective vault users exceeds available license seats");
 		}
@@ -291,7 +290,7 @@ public class VaultResource {
 	@Produces(MediaType.TEXT_PLAIN)
 	@Operation(summary = "get the user-specific vault key", description = "retrieves a jwe containing the vault key, encrypted for the current user")
 	@APIResponse(responseCode = "200")
-	@APIResponse(responseCode = "402", description = "number of effective vault users exceeds available license seats")
+	@APIResponse(responseCode = "402", description = "license expired or number of effective vault users that have a token exceeds available license seats")
 	@APIResponse(responseCode = "403", description = "not a vault member")
 	@APIResponse(responseCode = "404", description = "unknown vault")
 	@APIResponse(responseCode = "410", description = "Vault is archived. Only returned if evenIfArchived query param is false or not set, otherwise the archived flag is ignored")
@@ -303,7 +302,7 @@ public class VaultResource {
 			throw new GoneException("Vault is archived.");
 		}
 
-		var usedSeats = EffectiveVaultAccess.countSeatOccupyingUsers();
+		var usedSeats = EffectiveVaultAccess.countSeatOccupyingUsersWithAccessToken();
 		if (usedSeats > license.getAvailableSeats()) {
 			throw new PaymentRequiredException("Number of effective vault users exceeds available license seats");
 		}
@@ -335,6 +334,7 @@ public class VaultResource {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Operation(summary = "adds user-specific vault keys", description = "Stores one or more user-vaultkey-tuples, as defined in the request body ({user1: token1, user2: token2, ...}).")
 	@APIResponse(responseCode = "200", description = "all keys stored")
+	@APIResponse(responseCode = "402", description = "number of users granted access exceeds available license seats")
 	@APIResponse(responseCode = "403", description = "not a vault owner")
 	@APIResponse(responseCode = "404", description = "at least one user has not been found")
 	@APIResponse(responseCode = "410", description = "vault is archived")
@@ -342,6 +342,14 @@ public class VaultResource {
 		var vault = Vault.<Vault>findById(vaultId); // should always be found, since @VaultRole filter would have triggered
 		if (vault.archived) {
 			throw new GoneException("Vault is archived.");
+		}
+
+		// check number of available seats
+		long occupiedSeats = EffectiveVaultAccess.countSeatOccupyingUsers();
+		long usersWithoutSeat = tokens.size() - EffectiveVaultAccess.countSeatsOccupiedByUsers(tokens.keySet().stream().toList());
+
+		if (occupiedSeats + usersWithoutSeat > license.getAvailableSeats()) {
+			throw new PaymentRequiredException("Number of effective vault users greater than or equal to the available license seats");
 		}
 
 		for (var entry : tokens.entrySet()) {
