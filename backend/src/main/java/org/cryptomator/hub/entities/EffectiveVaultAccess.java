@@ -14,24 +14,40 @@ import org.hibernate.annotations.Immutable;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Entity
 @Immutable
 @Table(name = "effective_vault_access")
 @NamedQuery(name = "EffectiveVaultAccess.countSeatsOccupiedByUser", query = """
-		SELECT count(eva)
-		FROM EffectiveVaultAccess eva
-		INNER JOIN Vault v ON eva.id.vaultId = v.id AND NOT v.archived
+		SELECT count(u)
+		FROM User u
+		INNER JOIN EffectiveVaultAccess eva ON u.id = eva.id.authorityId
 		WHERE eva.id.authorityId = :userId
+		""")
+@NamedQuery(name = "EffectiveVaultAccess.countSeatsOccupiedByUsers", query = """
+		SELECT COUNT(DISTINCT u.id)
+		FROM User u
+		INNER JOIN EffectiveVaultAccess eva ON u.id = eva.id.authorityId
+		INNER JOIN Vault v ON eva.id.vaultId = v.id AND NOT v.archived
+		WHERE u.id IN :userIds
 		""")
 @NamedQuery(name = "EffectiveVaultAccess.countSeatOccupyingUsers", query = """
 		SELECT count(DISTINCT u)
 		FROM User u
 		INNER JOIN EffectiveVaultAccess eva ON u.id = eva.id.authorityId
 		INNER JOIN Vault v ON eva.id.vaultId = v.id AND NOT v.archived
+		""")
+@NamedQuery(name = "EffectiveVaultAccess.countSeatOccupyingUsersWithAccessToken", query = """
+		SELECT count(DISTINCT u)
+		FROM User u
+		INNER JOIN EffectiveVaultAccess eva ON u.id = eva.id.authorityId
+		INNER JOIN Vault v ON eva.id.vaultId = v.id AND NOT v.archived
+		INNER JOIN AccessToken at ON eva.id.vaultId = at.id.vaultId AND eva.id.authorityId = at.id.userId
 		""")
 @NamedQuery(name = "EffectiveVaultAccess.countSeatOccupyingUsersOfGroup", query = """
 		SELECT count(DISTINCT u)
@@ -41,7 +57,7 @@ import java.util.stream.Collectors;
 		INNER JOIN Vault v ON eva.id.vaultId = v.id AND NOT v.archived
 		WHERE egm.id.groupId = :groupId
 		""")
-@NamedQuery(name = "EffectiveVaultAccess.findByUserAndVault", query = """
+@NamedQuery(name = "EffectiveVaultAccess.findByAuthorityAndVault", query = """
 		SELECT eva
 		FROM EffectiveVaultAccess eva
 		WHERE eva.id.vaultId = :vaultId AND eva.id.authorityId = :authorityId
@@ -55,8 +71,16 @@ public class EffectiveVaultAccess extends PanacheEntityBase {
 		return EffectiveVaultAccess.count("#EffectiveVaultAccess.countSeatsOccupiedByUser", Parameters.with("userId", userId)) > 0;
 	}
 
+	public static long countSeatsOccupiedByUsers(List<String> userIds) {
+		return EffectiveVaultAccess.count("#EffectiveVaultAccess.countSeatsOccupiedByUsers", Parameters.with("userIds", userIds));
+	}
+
 	public static long countSeatOccupyingUsers() {
 		return EffectiveVaultAccess.count("#EffectiveVaultAccess.countSeatOccupyingUsers");
+	}
+
+	public static long countSeatOccupyingUsersWithAccessToken() {
+		return EffectiveVaultAccess.count("#EffectiveVaultAccess.countSeatOccupyingUsersWithAccessToken");
 	}
 
 	public static long countSeatOccupyingUsersOfGroup(String groupId) {
@@ -64,7 +88,7 @@ public class EffectiveVaultAccess extends PanacheEntityBase {
 	}
 
 	public static Collection<VaultAccess.Role> listRoles(UUID vaultId, String authorityId) {
-		return EffectiveVaultAccess.<EffectiveVaultAccess>find("#EffectiveVaultAccess.findByUserAndVault", Parameters.with("vaultId", vaultId).and("authorityId", authorityId)).stream()
+		return EffectiveVaultAccess.<EffectiveVaultAccess>find("#EffectiveVaultAccess.findByAuthorityAndVault", Parameters.with("vaultId", vaultId).and("authorityId", authorityId)).stream()
 				.map(eva -> eva.id.role)
 				.collect(Collectors.toUnmodifiableSet());
 	}

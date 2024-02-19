@@ -1,4 +1,4 @@
-[![Build and test](https://github.com/cryptomator/hub/actions/workflows/buildAndTest.yml/badge.svg)](https://github.com/cryptomator/hub/actions/workflows/buildAndTest.yml)
+[![CI Build](https://github.com/cryptomator/hub/actions/workflows/build.yml/badge.svg)](https://github.com/cryptomator/hub/actions/workflows/build.yml)
 
 # Cryptomator Hub
 

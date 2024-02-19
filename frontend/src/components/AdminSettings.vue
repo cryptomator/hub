@@ -70,7 +70,7 @@
         </div>
       </div>
 
-      <div v-if="admin.hasLicense" class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6">
+      <div v-if="admin.hasLicense && remainingSeats != null" class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6">
         <div class="md:grid md:grid-cols-3 md:gap-6">
           <div class="md:col-span-1">
             <h3 class="text-lg font-medium leading-6 text-gray-900">
@@ -89,18 +89,18 @@
 
               <div class="col-span-6 sm:col-span-3">
                 <label for="seats" class="block text-sm font-medium text-gray-700">{{ t('admin.licenseInfo.seats.title') }}</label>
-                <input id="seats" v-model="admin.totalSeats" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-200" aria-describedby="seats-description" readonly />
-                <p v-if="admin.remainingSeats > 0" id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
+                <input id="seats" v-model="admin.licensedSeats" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-200" aria-describedby="seats-description" readonly />
+                <p v-if="remainingSeats > 0" id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
                   <CheckIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
-                  {{ t('admin.licenseInfo.seats.description.enoughSeats', [admin.remainingSeats]) }}
+                  {{ t('admin.licenseInfo.seats.description.enoughSeats', [remainingSeats]) }}
                 </p>
-                <p v-else-if="admin.remainingSeats == 0" id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
+                <p v-else-if="remainingSeats == 0" id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
                   <ExclamationTriangleIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
                   {{ t('admin.licenseInfo.seats.description.zeroSeats') }}
                 </p>
                 <p v-else id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
                   <XMarkIcon class="shrink-0 text-red-500 mr-1 h-5 w-5" aria-hidden="true" />
-                  {{ t('admin.licenseInfo.seats.description.undercutSeats') }}
+                  {{ t('admin.licenseInfo.seats.description.undercutSeats', [numberOfExceededSeats]) }}
                 </p>
               </div>
 
@@ -133,7 +133,7 @@
         </button>
       </div>
 
-      <div v-if="!admin.hasLicense" class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6">
+      <div v-if="!admin.hasLicense && remainingSeats != null" class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6">
         <div class="md:grid md:grid-cols-3 md:gap-6">
           <div class="md:col-span-1">
             <h3 class="text-lg font-medium leading-6 text-gray-900">
@@ -156,18 +156,18 @@
 
               <div class="col-span-6 sm:col-span-3">
                 <label for="seats" class="block text-sm font-medium text-gray-700">{{ t('admin.licenseInfo.seats.title') }}</label>
-                <input id="seats" v-model="admin.totalSeats" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-200" aria-describedby="seats-description" readonly />
-                <p v-if="admin.remainingSeats > 0" id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
+                <input id="seats" v-model="admin.licensedSeats" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-200" aria-describedby="seats-description" readonly />
+                <p v-if="remainingSeats > 0" id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
                   <CheckIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
-                  {{ t('admin.licenseInfo.seats.description.enoughSeats', [admin.remainingSeats]) }}
+                  {{ t('admin.licenseInfo.seats.description.enoughSeats', [remainingSeats]) }}
                 </p>
-                <p v-else-if="admin.remainingSeats == 0" id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
+                <p v-else-if="remainingSeats == 0" id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
                   <ExclamationTriangleIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
                   {{ t('admin.licenseInfo.seats.description.zeroSeats') }}
                 </p>
                 <p v-else id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
                   <XMarkIcon class="shrink-0 text-red-500 mr-1 h-5 w-5" aria-hidden="true" />
-                  {{ t('admin.licenseInfo.seats.description.undercutSeats') }}
+                  {{ t('admin.licenseInfo.seats.description.undercutSeats', [numberOfExceededSeats]) }}
                 </p>
               </div>
             </div>
@@ -229,6 +229,14 @@ const betaUpdateExists = computed(() => {
   return false;
 });
 
+const remainingSeats = computed(() => admin.value ? admin.value.licensedSeats - admin.value.usedSeats : undefined);
+const numberOfExceededSeats = computed(() => {
+  if (remainingSeats.value === undefined) {
+    return undefined;
+  }
+  return remainingSeats.value < 0 ? Math.abs(remainingSeats.value) : 0;
+});
+
 onMounted(async () => {
   let cfg = config.get();
   keycloakAdminRealmURL.value = `${cfg.keycloakUrl}/admin/${cfg.keycloakRealm}/console`;
@@ -250,8 +258,7 @@ async function fetchData() {
   try {
     let versionDto = backend.version.get();
     let versionAvailable = versionDto.then(versionDto => updateChecker.get(versionDto.hubVersion));
-    let adminDto = backend.billing.get();
-    admin.value = await adminDto;
+    admin.value = await backend.billing.get();
     version.value = await versionDto;
     latestVersion.value = await versionAvailable;
   } catch (error) {
