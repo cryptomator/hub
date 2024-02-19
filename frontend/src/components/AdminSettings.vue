@@ -70,7 +70,7 @@
         </div>
       </div>
 
-      <div v-if="admin.hasLicense && remainingSeats" class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6">
+      <div v-if="admin.hasLicense && remainingSeats != null" class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6">
         <div class="md:grid md:grid-cols-3 md:gap-6">
           <div class="md:col-span-1">
             <h3 class="text-lg font-medium leading-6 text-gray-900">
@@ -133,7 +133,7 @@
         </button>
       </div>
 
-      <div v-if="!admin.hasLicense && remainingSeats" class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6">
+      <div v-if="!admin.hasLicense && remainingSeats != null" class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6">
         <div class="md:grid md:grid-cols-3 md:gap-6">
           <div class="md:col-span-1">
             <h3 class="text-lg font-medium leading-6 text-gray-900">
@@ -258,8 +258,7 @@ async function fetchData() {
   try {
     let versionDto = backend.version.get();
     let versionAvailable = versionDto.then(versionDto => updateChecker.get(versionDto.hubVersion));
-    let adminDto = backend.billing.get();
-    admin.value = await adminDto;
+    admin.value = await backend.billing.get();
     version.value = await versionDto;
     latestVersion.value = await versionAvailable;
   } catch (error) {
