@@ -104,6 +104,9 @@ public class Vault extends PanacheEntityBase {
 	@Column(name = "archived", nullable = false)
 	public boolean archived;
 
+	@Column(name = "metadata", nullable = false)
+	public String metadata;
+
 	public Optional<ECPublicKey> getAuthenticationPublicKey() {
 		if (authenticationPublicKey == null) {
 			return Optional.empty();
