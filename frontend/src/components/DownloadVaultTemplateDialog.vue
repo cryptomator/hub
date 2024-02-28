@@ -93,7 +93,7 @@ async function downloadVault() {
 }
 
 async function generateVaultZip(): Promise<Blob> {
-  const config = await VaultConfig.create(props.vault.id, props.vaultKeys);
+  const config = await VaultConfig.create(props.vault.id, props.vaultKeys, props.vault.metadata);
   return await config.exportTemplate();
 }
 </script>

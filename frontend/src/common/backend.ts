@@ -46,6 +46,7 @@ export type VaultDto = {
   salt?: string;
   authPublicKey?: string;
   authPrivateKey?: string;
+  metadata: string;
 };
 
 export type DeviceDto = {
@@ -195,6 +196,18 @@ export type VersionDto = {
   keycloakVersion: string;
 }
 
+export type ConfigDto = {
+    keycloakUrl: string;
+    keycloakRealm: string;
+    keycloakClientIdHub: string;
+    keycloakClientIdCryptomator: string;
+    keycloakAuthEndpoint: string;
+    keycloakTokenEndpoint: string;
+    serverTime: string;
+    apiLevel: number;
+    uuid: string;
+}
+
 /* Services */
 
 export interface VaultIdHeader extends JWTHeader {
@@ -250,8 +263,12 @@ class VaultService {
       .catch(err => rethrowAndConvertIfExpected(err, 403));
   }
 
-  public async createOrUpdateVault(vaultId: string, name: string, archived: boolean, description?: string): Promise<VaultDto> {
-    const body: VaultDto = { id: vaultId, name: name, description: description, archived: archived, creationTime: new Date() };
+  public async createOrUpdateVault(vaultId: string, name: string, archived: boolean
+  , metadata: string
+  , description?: string): Promise<VaultDto> {
+    const body: VaultDto = { id: vaultId, name: name, description: description, archived: archived, creationTime: new Date()
+    , metadata: metadata
+    };
     return axiosAuth.put(`/vaults/${vaultId}`, body)
       .then(response => response.data)
       .catch((error) => rethrowAndConvertIfExpected(error, 402, 404));
@@ -438,4 +455,19 @@ export class ConflictError extends BackendError {
   constructor() {
     super('Resource already exists');
   }
+}
+
+export type VaultMetadataJWEAutomaticAccessGrantDto = {
+    enabled: boolean,
+    maxWotDepth: number
+}
+
+export type VaultMetadataJWEDto = {
+    fileFormat: string;
+    nameFormat: string;
+    keys: Record<string,string>;
+    latestFileKey: string;
+    nameKey: string;
+    kdf: string;
+    automaticAccessGrant: VaultMetadataJWEAutomaticAccessGrantDto;
 }

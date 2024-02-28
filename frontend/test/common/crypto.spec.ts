@@ -3,6 +3,9 @@ import chaiAsPromised from 'chai-as-promised';
 import { before, describe } from 'mocha';
 import { base64 } from 'rfc4648';
 import { UnwrapKeyError, UserKeys, VaultKeys } from '../../src/common/crypto';
+import { VaultMetadata } from '../../src/common/crypto';
+import { VaultMetadataJWEAutomaticAccessGrantDto } from '../../src/common/backend';
+import { JWEParser } from '../../src/common/jwe';
 
 chaiUse(chaiAsPromised);
 
@@ -58,8 +61,8 @@ describe('crypto', () => {
 
     it('recover() succeeds for valid key', async () => {
       let recoveryKey = `
-        pathway lift abuse plenty export texture gentleman landscape beyond ceiling around leaf cafe charity 
-        border breakdown victory surely computer cat linger restrict infer crowd live computer true written amazed 
+        pathway lift abuse plenty export texture gentleman landscape beyond ceiling around leaf cafe charity
+        border breakdown victory surely computer cat linger restrict infer crowd live computer true written amazed
         investor boot depth left theory snow whereby terminal weekly reject happiness circuit partial cup ad
         `;
 
@@ -101,7 +104,6 @@ describe('crypto', () => {
       it('decryptWithAdminPassword() with wrong pw', () => {
         return expect(VaultKeys.decryptWithAdminPassword('wrong', wrapped.wrappedMasterkey, wrapped.wrappedOwnerPrivateKey, wrapped.ownerPublicKey, wrapped.salt, wrapped.iterations)).to.eventually.be.rejectedWith(UnwrapKeyError);
       });
-
       it('decryptWithAdminPassword() with correct pw', () => {
         return expect(VaultKeys.decryptWithAdminPassword('pass', wrapped.wrappedMasterkey, wrapped.wrappedOwnerPrivateKey, wrapped.ownerPublicKey, wrapped.salt, wrapped.iterations)).to.eventually.be.fulfilled;
       });
@@ -133,7 +135,6 @@ describe('crypto', () => {
         beforeEach(async () => {
           recoveryKey = await vaultKeys.createRecoveryKey();
         });
-
         it('recover() imports original key', async () => {
           const recovered = await VaultKeys.recover(recoveryKey);
 
@@ -146,7 +147,6 @@ describe('crypto', () => {
       });
     });
   });
-
   describe('UserKeys', () => {
     it('create()', async () => {
       const orig = await UserKeys.create();
@@ -167,6 +167,30 @@ describe('crypto', () => {
 
         expect(jwe).to.be.not.null;
       });
+    });
+  });
+
+  describe('VaultMetadata', () => {
+    // TODO review @sebi what else should we test?
+    it('encryptWithMasterKey() and decryptWithMasterKey()', async () => {
+      const vaultKeys = await VaultKeys.create();
+      const uvfMasterKey: CryptoKey = vaultKeys.uvfMasterKey;
+      const automaticAccessGrant: VaultMetadataJWEAutomaticAccessGrantDto ={
+        "enabled": true,
+        "maxWotDepth": -1
+      }
+      const orig = await VaultMetadata.create(automaticAccessGrant);
+      expect(orig).to.be.not.null;
+      const jwe: string = await orig.encryptWithMasterKey(uvfMasterKey);
+      expect(jwe).to.be.not.null;
+      const decrypted: VaultMetadata = await VaultMetadata.decryptWithMasterKey(jwe,uvfMasterKey);
+      expect(JSON.stringify(decrypted.automaticAccessGrant)).to.eq(JSON.stringify(automaticAccessGrant));
+      const decryptedRaw: any = await JWEParser.parse(jwe).decryptA256kw(uvfMasterKey);
+      expect(decryptedRaw.fileFormat).to.eq("AES-256-GCM-32k");
+      expect(decryptedRaw.latestFileKey).to.eq(orig.latestFileKey);
+      expect(decryptedRaw.nameKey).to.eq(orig.nameKey);
+      expect(decryptedRaw.kdf).to.eq("1STEP-HMAC-SHA512");
+      expect(decryptedRaw['org.cryptomator.automaticAccessGrant']).to.deep.eq(automaticAccessGrant);
     });
   });
 
@@ -215,8 +239,8 @@ describe('crypto', () => {
 /* ---------- MOCKS ---------- */
 
 class TestVaultKeys extends VaultKeys {
-  constructor(key: CryptoKey) {
-    super(key);
+  constructor(masterKey: CryptoKey, uvfMasterKey: CryptoKey) {
+    super(masterKey, uvfMasterKey);
   }
 
   static async create() {
@@ -234,7 +258,7 @@ class TestVaultKeys extends VaultKeys {
       true,
       ['sign']
     );
-    return new TestVaultKeys(key);
+    return new TestVaultKeys(key, key);
   }
 }
 
