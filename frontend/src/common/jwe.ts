@@ -36,8 +36,8 @@ export class ConcatKDF {
 }
 
 export type JWEHeader = {
-  readonly alg: 'ECDH-ES' | 'PBES2-HS512+A256KW',
-  readonly enc: 'A256GCM' | 'A128GCM',
+  readonly alg: 'ECDH-ES' | 'PBES2-HS512+A256KW' | 'A256KW',
+  readonly enc: 'A256GCM' | 'A128GCM', // A128GCM for testing only, as we use test vectors with 128 bit keys
   readonly apu?: string,
   readonly apv?: string,
   readonly epk?: JsonWebKey,
@@ -97,13 +97,31 @@ export class JWEParser {
    * @throws {UnwrapKeyError} if decryption failed (wrong password?)
    */
   public async decryptPbes2(password: string): Promise<any> {
-    if (this.header.alg != 'PBES2-HS512+A256KW' || /* this.header.enc != 'A256GCM' || */ !this.header.p2s || !this.header.p2c) {
+    if (this.header.alg != 'PBES2-HS512+A256KW' || this.header.enc != 'A256GCM' || !this.header.p2s || !this.header.p2c) {
       throw new Error('unsupported alg or enc');
     }
     const saltInput = base64url.parse(this.header.p2s, { loose: true });
     const wrappingKey = await PBES2.deriveWrappingKey(password, this.header.alg, saltInput, this.header.p2c);
     try {
       const cek = crypto.subtle.unwrapKey('raw', this.encryptedKey, wrappingKey, 'AES-KW', { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+      return this.decrypt(await cek);
+    } catch (error) {
+      throw new UnwrapKeyError(error);
+    }
+  }
+
+  /**
+   * Decrypts the JWE, assuming alg == A256KW and enc == A256GCM.
+   * @param kek The key used to wrap the CEK
+   * @returns Decrypted payload
+   * @throws {UnwrapKeyError} if decryption failed (wrong kek?)
+   */
+  public async decryptA256kw(kek: CryptoKey): Promise<any> {
+    if (this.header.alg != 'A256KW' || this.header.enc != 'A256GCM') {
+      throw new Error('unsupported alg or enc');
+    }
+    try {
+      const cek = crypto.subtle.unwrapKey('raw', this.encryptedKey, kek, 'AES-KW', { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
       return this.decrypt(await cek);
     } catch (error) {
       throw new UnwrapKeyError(error);
@@ -177,6 +195,22 @@ export class JWEBuilder {
     const wrappingKey = PBES2.deriveWrappingKey(password, 'PBES2-HS512+A256KW', saltInput, iterations);
     const cek = crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt']);
     const encryptedKey = (async () => new Uint8Array(await crypto.subtle.wrapKey('raw', await cek, await wrappingKey, 'AES-KW')))();
+    return new JWEBuilder(header, encryptedKey, cek);
+  }
+
+  /**
+   * Prepares a new JWE using alg: A256KW and enc: A256GCM.
+   * 
+   * @param kek The key used to wrap the CEK
+   * @returns A new JWEBuilder ready to encrypt the payload
+   */
+  public static a256kw(kek: CryptoKey): JWEBuilder {
+    const header = (async () => <JWEHeader>{
+      alg: 'A256KW',
+      enc: 'A256GCM'
+    })();
+    const cek = crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt']);
+    const encryptedKey = (async () => new Uint8Array(await crypto.subtle.wrapKey('raw', await cek, kek, 'AES-KW')))();
     return new JWEBuilder(header, encryptedKey, cek);
   }
 
