@@ -110,7 +110,7 @@
   </div>
 
   <SlideOver v-if="selectedVault != null" ref="vaultDetailsSlideOver" :title="selectedVault.name" @close="selectedVault = null">
-    <VaultDetails :vault-id="selectedVault.id" :role="ownsSelectedVault ? 'OWNER' : 'MEMBER'" @vault-updated="v => onSelectedVaultUpdate(v)"></VaultDetails>
+    <VaultDetails :vault-id="selectedVault.id" :vault-role="roleOfSelectedVault" @vault-updated="v => onSelectedVaultUpdate(v)"></VaultDetails>
   </SlideOver>
 </template>
 
@@ -133,10 +133,18 @@ const vaultDetailsSlideOver = ref<typeof SlideOver>();
 const onFetchError = ref<Error | null>();
 
 const vaults = ref<VaultDto[]>();
+const accessibleVaults = ref<VaultDto[]>();
 const ownedVaults = ref<VaultDto[]>();
 const selectedVault = ref<VaultDto | null>(null);
-const ownsSelectedVault = computed(() => {
-  return ownedVaults.value?.some(ownedVault => ownedVault.id == selectedVault.value?.id);
+
+const roleOfSelectedVault = computed(() => {
+  if (ownedVaults.value?.some(ownedVault => ownedVault.id == selectedVault.value?.id)) {
+    return 'OWNER';
+  } else if (accessibleVaults.value?.some(accessibleVault => accessibleVault.id == selectedVault.value?.id)) {
+    return 'MEMBER';
+  } else {
+    return 'NONE';
+  }
 });
 
 const isAdmin = ref<boolean>();
@@ -164,12 +172,13 @@ async function fetchData() {
     isAdmin.value = (await auth).isAdmin();
 
     if (isAdmin.value) {
-      filterOptions.value['allVaults'] = t('vaultList.filter.entry.allVaults')
+      filterOptions.value['allVaults'] = t('vaultList.filter.entry.allVaults');
     }
+    accessibleVaults.value = (await backend.vaults.listAccessible()).filter(v => !v.archived).sort((a, b) => a.name.localeCompare(b.name));
     ownedVaults.value = (await backend.vaults.listAccessible('OWNER')).sort((a, b) => a.name.localeCompare(b.name));
     switch (selectedFilter.value) {
       case 'accessibleVaults':
-        vaults.value = (await backend.vaults.listAccessible()).filter(v => !v.archived).sort((a, b) => a.name.localeCompare(b.name));
+        vaults.value = accessibleVaults.value;
         break;
       case 'ownedVaults':
         vaults.value = ownedVaults.value;
