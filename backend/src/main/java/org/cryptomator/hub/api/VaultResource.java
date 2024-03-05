@@ -152,22 +152,25 @@ public class VaultResource {
 	@Parameter(name = "role", in = ParameterIn.QUERY, description = "the role to grant to this user (defaults to MEMBER)")
 	@APIResponse(responseCode = "200", description = "user's role updated")
 	@APIResponse(responseCode = "201", description = "user added")
-	@APIResponse(responseCode = "402", description = "all seats in license used")
+	@APIResponse(responseCode = "402", description = "license is expired, license seats are exceeded or license would exceed after the operation")
 	@APIResponse(responseCode = "403", description = "not a vault owner")
 	@APIResponse(responseCode = "404", description = "user not found")
 	@ActiveLicense
 	public Response addUser(@PathParam("vaultId") UUID vaultId, @PathParam("userId") @ValidId String userId, @QueryParam("role") @DefaultValue("MEMBER") VaultAccess.Role role) {
 		var vault = Vault.<Vault>findById(vaultId); // // should always be found, since @VaultRole filter would have triggered
 		var user = User.<User>findByIdOptional(userId).orElseThrow(NotFoundException::new);
-		if (!EffectiveVaultAccess.isUserOccupyingSeat(userId)) {
-			//for new user, we need to check if a license seat is available
-			var usedSeats = EffectiveVaultAccess.countSeatOccupyingUsers();
-			if (usedSeats >= license.getAvailableSeats()) {
-				throw new PaymentRequiredException("Number of effective vault users greater than or equal to the available license seats");
-			}
+		var usedSeats = EffectiveVaultAccess.countSeatOccupyingUsers();
+		//check if license seats are free
+		if (usedSeats  < license.getAvailableSeats()) {
+			return addAuthority(vault, user, role);
 		}
+		// else check, if all seats are taken, but the person to add is already sitting
+		if (usedSeats == license.getAvailableSeats() && EffectiveVaultAccess.isUserOccupyingSeat(userId)) {
+			return addAuthority(vault, user, role);
+		}
+		//otherwise block
+		throw new PaymentRequiredException("Number of effective vault users greater than or equal to the available license seats");
 
-		return addAuthority(vault, user, role);
 	}
 
 	@PUT
