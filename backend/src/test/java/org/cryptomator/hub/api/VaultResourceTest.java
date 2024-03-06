@@ -1075,7 +1075,7 @@ public class VaultResourceTest {
 	public class GetAllVaults {
 
 		@Test
-		@DisplayName("GET /vaults/all returns 403 as user")
+		@DisplayName("GET /vaults/all as non-admin returns 403")
 		@TestSecurity(user = "User Name 1", roles = {"user"})
 		@OidcSecurity(claims = {
 				@Claim(key = "sub", value = "user1")
@@ -1086,7 +1086,7 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@DisplayName("GET /vaults/all returns 200 as user")
+		@DisplayName("GET /vaults/all as admin returns 200 and _all_ vaults")
 		@TestSecurity(user = "User Name 1", roles = {"admin"})
 		@OidcSecurity(claims = {
 				@Claim(key = "sub", value = "user1")
@@ -1111,7 +1111,7 @@ public class VaultResourceTest {
 		public class AsAdmin {
 
 			@Test
-			@DisplayName("GET /vaults/some?ids=7e57c0de-0000-4000-8000-000100001111&ids=7e57c0de-0000-4000-8000-000100002222")
+			@DisplayName("GET /vaults/some?ids=7e57c0de-0000-4000-8000-000100001111&ids=7e57c0de-0000-4000-8000-000100002222 returns 200 and the requested vaults")
 			public void testListSomeVaults() {
 				given().param("ids", "7e57c0de-0000-4000-8000-000100001111", "7e57c0de-0000-4000-8000-000100002222")
 						.when().get("/vaults/some")
@@ -1120,7 +1120,7 @@ public class VaultResourceTest {
 			}
 
 			@Test
-			@DisplayName("GET /vaults/some?ids=7e57c0de-0000-4000-8000-BADBADBADBAD")
+			@DisplayName("GET /vaults/some?ids=7e57c0de-0000-4000-8000-BADBADBADBAD returns 200 and ignores not-existing vaults")
 			public void testListSomeVaultsNotExistingId() {
 				given().param("ids", "7e57c0de-0000-4000-8000-BADBADBADBAD")
 						.when().get("/vaults/some")
@@ -1129,7 +1129,7 @@ public class VaultResourceTest {
 			}
 
 			@Test
-			@DisplayName("GET /vaults/some")
+			@DisplayName("GET /vaults/some returns 200 with empty vault list")
 			public void testListSomeVaultsNoParams() {
 				given().when().get("/vaults/some")
 						.then().statusCode(200)
@@ -1138,7 +1138,7 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@DisplayName("GET /vaults/some?ids=7e57c0de-0000-4000-8000-000100001111 returns 403 as user")
+		@DisplayName("GET /vaults/some?ids=7e57c0de-0000-4000-8000-000100001111 as non-admin returns 403")
 		@TestSecurity(user = "User Name 1", roles = {"user"})
 		@OidcSecurity(claims = {
 				@Claim(key = "sub", value = "user1")
