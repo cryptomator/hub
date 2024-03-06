@@ -1149,4 +1149,50 @@ public class VaultResourceTest {
 					.then().statusCode(403);
 		}
 	}
+
+
+	@Nested
+	@DisplayName("GET /vaults/accessible")
+	public class GetAccessible {
+
+		@Test
+		@DisplayName("GET /vaults/accessible as user returns the shared vaults")
+		@TestSecurity(user = "User Name 1", roles = {"user"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user1")
+		})
+		public void testListSomeVaultsAsUser() {
+			given().when().get("/vaults/accessible")
+					.then()
+					.statusCode(200)
+					.body("id", hasItems(equalToIgnoringCase("7E57C0DE-0000-4000-8000-000100001111"),
+							equalToIgnoringCase("7E57C0DE-0000-4000-8000-000100002222")));
+		}
+
+		@Test
+		@DisplayName("GET /vaults/accessible as admin returns the shared vaults")
+		@TestSecurity(user = "User Name 1", roles = {"user", "admin"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user1")
+		})
+		public void testListSomeVaultsAsAdmin() {
+			given().when().get("/vaults/accessible")
+					.then()
+					.statusCode(200)
+					.body("id", hasItems(equalToIgnoringCase("7E57C0DE-0000-4000-8000-000100001111"),
+							equalToIgnoringCase("7E57C0DE-0000-4000-8000-000100002222")));
+		}
+
+		@Test
+		@DisplayName("GET /vaults/accessible as non-user returns 403")
+		@TestSecurity(user = "User Name 1", roles = {"anyOtherRole"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user1")
+		})
+		public void testListSomeVaultsAsAnyOtherRole() {
+			given().when().get("/vaults/accessible")
+					.then().statusCode(403);
+		}
+	}
+
 }
