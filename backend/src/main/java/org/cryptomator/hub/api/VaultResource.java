@@ -378,7 +378,7 @@ public class VaultResource {
 	@Transactional
 	@Operation(summary = "gets a vault")
 	@APIResponse(responseCode = "200")
-	@APIResponse(responseCode = "403", description = "requesting user is not member of the vault")
+	@APIResponse(responseCode = "403", description = "requesting user is neither a member of the vault nor has the admin role")
 	public VaultDto get(@PathParam("vaultId") UUID vaultId) {
 		Vault vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		if (vault.effectiveMembers.stream().noneMatch(u -> u.id.equals(jwt.getSubject())) && !identity.getRoles().contains("admin")) {
