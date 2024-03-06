@@ -1195,4 +1195,57 @@ public class VaultResourceTest {
 		}
 	}
 
+
+	@Nested
+	@DisplayName("GET /{vaultId}/members")
+	public class GetDirectMembers {
+
+		@Test
+		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/members as non-user returns 403")
+		@TestSecurity(user = "User Name 1", roles = {"anyOtherRole"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user1")
+		})
+		public void testGetDirectMembersAsOther() {
+			given().when().get("/vaults/{vaultId}/members", "7E57C0DE-0000-4000-8000-000100001111")
+					.then().statusCode(403);
+		}
+
+		@Test
+		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/members as non-owner returns 403")
+		@TestSecurity(user = "User Name 2", roles = {"user, admin"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user2")
+		})
+		public void testListSomeVaultsAsNonVaultOwner() {
+			given().when().get("/vaults/{vaultId}/members", "7E57C0DE-0000-4000-8000-000100001111")
+					.then().statusCode(403);
+		}
+
+		@Test
+		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/members as direct owner returns 200 and direct-member list")
+		@TestSecurity(user = "User Name 1", roles = {"user"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user1")
+		})
+		public void testListSomeVaultsAsDirectOwner() {
+			given().when().get("/vaults/{vaultId}/members", "7E57C0DE-0000-4000-8000-000100001111")
+					.then().statusCode(200)
+					.body("id", hasItems(equalToIgnoringCase("user1"),
+							equalToIgnoringCase("user2")));
+		}
+
+		@Test
+		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100002222/members as indirect owner returns 200 and direct-member list")
+		@TestSecurity(user = "User Name 2", roles = {"user"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user2")
+		})
+		public void testListSomeVaultsAsIndirectOwner() {
+			given().when().get("/vaults/{vaultId}/members", "7E57C0DE-0000-4000-8000-000100002222")
+					.then().statusCode(200)
+					.body("id", hasItems(equalToIgnoringCase("group2"),
+							equalToIgnoringCase("group1")));
+		}
+	}
 }
