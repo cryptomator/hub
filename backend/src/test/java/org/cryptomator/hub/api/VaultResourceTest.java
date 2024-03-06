@@ -1248,4 +1248,48 @@ public class VaultResourceTest {
 							equalToIgnoringCase("group1")));
 		}
 	}
+
+
+	@Nested
+	@DisplayName("PUT /vaults/{vaultId}/users/{userId}")
+	public class AddUser {
+
+		@Test
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111/users/user2 as non-user returns 403")
+		@TestSecurity(user = "User Name 1", roles = {"anyOtherRole"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user1")
+		})
+		public void testAddUserAsOther() {
+			given().when().put("/vaults/{vaultId}/users/{userId}", "7E57C0DE-0000-4000-8000-000100001111", "user2")
+					.then().statusCode(403);
+		}
+
+		@Test
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111/users/user2 as non-vaultOwner returns 403")
+		@TestSecurity(user = "User Name 2", roles = {"user, admin"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user2")
+		})
+		public void testAddUserAsNonVaultOwner() {
+			given().when().put("/vaults/{vaultId}/users/{userId}", "7E57C0DE-0000-4000-8000-000100001111", "user2")
+					.then().statusCode(403);
+		}
+
+		@Test
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111/users/not-existing-user as vaultOwner returns 404")
+		@TestSecurity(user = "User Name 1", roles = {"user", "admin"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user1")
+		})
+		public void testAddUserNotExisting() {
+			given().when().put("/vaults/{vaultId}/users/{userId}", "7E57C0DE-0000-4000-8000-000100001111", "not-existing-user")
+					.then().statusCode(404);
+		}
+
+
+		//cases:
+		// new user
+		// already-member user
+	}
 }
