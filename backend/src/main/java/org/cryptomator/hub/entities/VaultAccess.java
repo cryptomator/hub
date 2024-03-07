@@ -60,6 +60,11 @@ public class VaultAccess extends PanacheEntityBase {
 		OWNER
 	}
 
+	//for testability
+	public static VaultAccess newInstance(){
+		return new VaultAccess();
+	}
+
 	public static Stream<VaultAccess> forVault(UUID vaultId) {
 		return find("#VaultAccess.forVault", Parameters.with("vaultId", vaultId)).stream();
 	}

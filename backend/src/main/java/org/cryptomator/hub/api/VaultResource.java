@@ -147,7 +147,7 @@ public class VaultResource {
 	@RolesAllowed("user")
 	@VaultRole(VaultAccess.Role.OWNER) // may throw 403
 	@Transactional
-	@Produces(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.TEXT_PLAIN)
 	@Operation(summary = "adds a user to this vault or updates her role")
 	@Parameter(name = "role", in = ParameterIn.QUERY, description = "the role to grant to this user (defaults to MEMBER)")
 	@APIResponse(responseCode = "200", description = "user's role updated")
@@ -175,7 +175,7 @@ public class VaultResource {
 	@RolesAllowed("user")
 	@VaultRole(VaultAccess.Role.OWNER) // may throw 403
 	@Transactional
-	@Produces(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.TEXT_PLAIN)
 	@Operation(summary = "adds a group to this vault or updates its role")
 	@Parameter(name = "role", in = ParameterIn.QUERY, description = "the role to grant to this group (defaults to MEMBER)")
 	@APIResponse(responseCode = "200", description = "group's role updated")
@@ -206,7 +206,7 @@ public class VaultResource {
 			AuditEventVaultMemberUpdate.log(jwt.getSubject(), vault.id, authority.id, role);
 			return Response.ok().build();
 		} else {
-			var access = new VaultAccess();
+			var access = VaultAccess.newInstance();
 			access.vault = vault;
 			access.authority = authority;
 			access.role = role;

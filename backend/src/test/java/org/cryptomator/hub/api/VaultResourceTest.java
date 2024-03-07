@@ -3,6 +3,7 @@ package org.cryptomator.hub.api;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import io.agroal.api.AgroalDataSource;
+import io.quarkus.panache.mock.PanacheMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.quarkus.test.security.oidc.Claim;
@@ -13,10 +14,13 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Validator;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
+import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
+import org.cryptomator.hub.entities.VaultAccess;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
@@ -27,6 +31,8 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.Mockito;
 
 import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
@@ -41,6 +47,7 @@ import java.sql.SQLException;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
@@ -1287,9 +1294,72 @@ public class VaultResourceTest {
 					.then().statusCode(404);
 		}
 
+		@ParameterizedTest
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111/users/new-member-user as vaultOwner returns 201")
+		@TestSecurity(user = "User Name 1", roles = {"user", "admin"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user1")
+		})
+		@ValueSource(strings = {"", "MEMBER", "OWNER"})
+		public void testAddUserNewMember(String vaultRole) {
+			Map<String, VaultAccess.Role> vaultRoleParam = vaultRole.isBlank() ? Map.of() : Map.of("role", VaultAccess.Role.valueOf(vaultRole));
+			var expectedVaultRole = vaultRole.equals("OWNER") ? VaultAccess.Role.OWNER : VaultAccess.Role.MEMBER;
+
+			PanacheMock.mock(User.class);
+			var newMemberUser = new User();
+			newMemberUser.id = "new-member-user";
+			newMemberUser.name = "newMemberUser";
+			Mockito.when(User.findByIdOptional(Mockito.eq("new-member-user"))).thenReturn(Optional.of(newMemberUser));
+
+			PanacheMock.mock(VaultAccess.class);
+			var vaultAccess = new VaultAccess();
+			var vaultAccessSpy = Mockito.spy(vaultAccess);
+			Mockito.when(VaultAccess.newInstance()).thenReturn(vaultAccessSpy);
+			Mockito.doNothing().when(vaultAccessSpy).persist(); //the doNothing equivalent
+
+			given().queryParams(vaultRoleParam)
+					.when().put("/vaults/{vaultId}/users/{userId}", "7E57C0DE-0000-4000-8000-000100001111", "new-member-user")
+					.then().statusCode(201);
+
+			Assertions.assertEquals(UUID.fromString("7E57C0DE-0000-4000-8000-000100001111"), vaultAccessSpy.vault.id);
+			Assertions.assertEquals("new-member-user", vaultAccessSpy.authority.id);
+			Assertions.assertEquals(expectedVaultRole, vaultAccessSpy.role);
+			Mockito.verify(vaultAccessSpy).persist();
+		}
+
+		@ParameterizedTest
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111/users/already-member-user as vaultOwner returns 200")
+		@TestSecurity(user = "User Name 1", roles = {"user", "admin"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user1")
+		})
+		@ValueSource(strings = {"", "MEMBER", "OWNER"})
+		public void testAddUserAlreadyMember(String vaultRole) {
+			Map<String, VaultAccess.Role> vaultRoleParam = vaultRole.isBlank() ? Map.of() : Map.of("role", VaultAccess.Role.valueOf(vaultRole));
+			var expectedVaultRole = vaultRole.equals("OWNER") ? VaultAccess.Role.OWNER : VaultAccess.Role.MEMBER;
+
+			PanacheMock.mock(User.class);
+			User alreadyMemberUser = new User();
+			alreadyMemberUser.id = "already-member-user";
+			alreadyMemberUser.name = "alreadyMemberUser";
+			Mockito.when(User.findByIdOptional(Mockito.eq("already-member-user"))).thenReturn(Optional.of(alreadyMemberUser));
+
+			PanacheMock.mock(VaultAccess.class);
+			var vaultAccess = new VaultAccess();
+			var vaultAccessSpy = Mockito.spy(vaultAccess);
+			Mockito.when(VaultAccess.findByIdOptional(Mockito.<VaultAccess.Id>argThat(vaId -> vaId.authorityId.equals("already-member-user"))))
+					.thenReturn(Optional.of(vaultAccessSpy));
+			Mockito.doNothing().when(vaultAccessSpy).persist();
+
+			given().queryParams(vaultRoleParam)
+					.when().put("/vaults/{vaultId}/users/{userId}", "7E57C0DE-0000-4000-8000-000100001111", "already-member-user")
+					.then().statusCode(200);
+
+			Assertions.assertEquals(expectedVaultRole, vaultAccessSpy.role);
+			Mockito.verify(vaultAccessSpy).persist();
+		}
 
 		//cases:
-		// new user
-		// already-member user
+		// payment required
 	}
 }
