@@ -17,11 +17,14 @@ import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.entities.VaultAccess;
+import org.cryptomator.hub.license.LicenseHolder;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;
@@ -69,6 +72,9 @@ public class VaultResourceTest {
 
 	@Inject
 	Validator validator;
+
+	@Inject
+	LicenseHolder licenseHolder;
 
 	@BeforeAll
 	public static void beforeAll() {
@@ -1359,7 +1365,75 @@ public class VaultResourceTest {
 			Mockito.verify(vaultAccessSpy).persist();
 		}
 
-		//cases:
-		// payment required
+		@Nested
+		class ExpiredLicense {
+
+			@BeforeEach
+			public void setLicense() throws SQLException {
+				TestLicenses.expireLicense(dataSource);
+				licenseHolder.reloadLicense();
+			}
+
+			@Test
+			@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111/users/user2 with expired license returns 402")
+			@TestSecurity(user = "User Name 1", roles = {"user", "admin"})
+			@OidcSecurity(claims = {
+					@Claim(key = "sub", value = "user1")
+			})
+			public void test() {
+				given().when().put("/vaults/{vaultId}/users/{userId}", "7E57C0DE-0000-4000-8000-000100001111", "user2")
+						.then().statusCode(402);
+			}
+
+			@AfterEach
+			public void resetLicense() throws SQLException {
+				TestLicenses.rollbackLicense(dataSource);
+				licenseHolder.reloadLicense();
+			}
+		}
+
+		@Nested
+		class ExceededLicense {
+
+			@BeforeEach
+			public void setLicense() throws SQLException {
+				TestLicenses.exceedLicense(dataSource);
+				licenseHolder.reloadLicense();
+			}
+
+			@Test
+			@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111/users/user2 with exceeded license returns 200")
+			@TestSecurity(user = "User Name 1", roles = {"user", "admin"})
+			@OidcSecurity(claims = {
+					@Claim(key = "sub", value = "user1")
+			})
+			public void userIsSitting() {
+				given().when().put("/vaults/{vaultId}/users/{userId}", "7E57C0DE-0000-4000-8000-000100001111", "user2")
+						.then().statusCode(200);
+			}
+
+			@Test
+			@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111/users/standing-user with exceeded license returns 402")
+			@TestSecurity(user = "User Name 1", roles = {"user", "admin"})
+			@OidcSecurity(claims = {
+					@Claim(key = "sub", value = "user1")
+			})
+			public void userIsStanding() {
+				PanacheMock.mock(User.class);
+				User standingUser = new User();
+				standingUser.id = "standing-user";
+				standingUser.name = "standingUser";
+				Mockito.when(User.findByIdOptional(Mockito.eq("standing-user"))).thenReturn(Optional.of(standingUser));
+
+				given().when().put("/vaults/{vaultId}/users/{userId}", "7E57C0DE-0000-4000-8000-000100001111", "standing-user")
+						.then().statusCode(402);
+			}
+
+			@AfterEach
+			public void resetLicense() throws SQLException {
+				TestLicenses.rollbackLicense(dataSource);
+				licenseHolder.reloadLicense();
+			}
+		}
 	}
 }

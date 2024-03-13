@@ -103,6 +103,12 @@ public class LicenseHolder {
 		settings.persistAndFlush();
 	}
 
+	//used for testing
+	public void reloadLicense() throws JWTVerificationException {
+		var settings = Settings.get();
+		this.license = licenseValidator.validate(settings.licenseKey, settings.hubId);
+	}
+
 	/**
 	 * Attempts to refresh the Hub licence every day between 01:00:00 and 02:00:00 AM UTC if claim refreshURL is present.
 	 */
