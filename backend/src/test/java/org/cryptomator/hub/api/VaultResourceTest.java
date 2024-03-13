@@ -739,7 +739,6 @@ public class VaultResourceTest {
 					.then().statusCode(402);
 		}
 
-
 		@Test
 		@Order(4)
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111 (as user1) returns 200 with only updated name, description and archive flag, despite exceeding license")

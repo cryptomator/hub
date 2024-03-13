@@ -152,7 +152,7 @@ public class VaultResource {
 	@Parameter(name = "role", in = ParameterIn.QUERY, description = "the role to grant to this user (defaults to MEMBER)")
 	@APIResponse(responseCode = "200", description = "user's role updated")
 	@APIResponse(responseCode = "201", description = "user added")
-	@APIResponse(responseCode = "402", description = "license is expired, license seats are exceeded or license would exceed after the operation")
+	@APIResponse(responseCode = "402", description = "license is expired or licensed seats would be exceeded after the operation")
 	@APIResponse(responseCode = "403", description = "not a vault owner")
 	@APIResponse(responseCode = "404", description = "user not found")
 	@ActiveLicense
@@ -183,7 +183,7 @@ public class VaultResource {
 	@Parameter(name = "role", in = ParameterIn.QUERY, description = "the role to grant to this group (defaults to MEMBER)")
 	@APIResponse(responseCode = "200", description = "group's role updated")
 	@APIResponse(responseCode = "201", description = "group added")
-	@APIResponse(responseCode = "402", description = "used seats + (number of users in group not occupying a seats) exceeds number of total avaible seats in license")
+	@APIResponse(responseCode = "402", description = "license is expired or licensed seats would be exceeded after the operation")
 	@APIResponse(responseCode = "403", description = "not a vault owner")
 	@APIResponse(responseCode = "404", description = "group not found")
 	@ActiveLicense
@@ -378,7 +378,7 @@ public class VaultResource {
 	@Transactional
 	@Operation(summary = "gets a vault")
 	@APIResponse(responseCode = "200")
-	@APIResponse(responseCode = "403", description = "requesting user is neither a member of the vault nor has the admin role")
+	@APIResponse(responseCode = "403", description = "requesting user is neither a vault member nor has the admin role")
 	public VaultDto get(@PathParam("vaultId") UUID vaultId) {
 		Vault vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		if (vault.effectiveMembers.stream().noneMatch(u -> u.id.equals(jwt.getSubject())) && !identity.getRoles().contains("admin")) {
@@ -398,7 +398,7 @@ public class VaultResource {
 			description = "Creates or updates a vault with the given vault id. The creationTime in the vaultDto is always ignored. On creation, the current server time is used and the archived field is ignored. On update, only the name, description, and archived fields are considered.")
 	@APIResponse(responseCode = "200", description = "existing vault updated")
 	@APIResponse(responseCode = "201", description = "new vault created")
-	@APIResponse(responseCode = "402", description = "license is expired or number of license seats is exceeded")
+	@APIResponse(responseCode = "402", description = "number of licensed seats is exceeded")
 	public Response createOrUpdate(@PathParam("vaultId") UUID vaultId, @Valid @NotNull VaultDto vaultDto) {
 		User currentUser = User.findById(jwt.getSubject());
 		Optional<Vault> existingVault = Vault.findByIdOptional(vaultId);
