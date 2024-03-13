@@ -157,7 +157,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "404", description = "user not found")
 	@ActiveLicense
 	public Response addUser(@PathParam("vaultId") UUID vaultId, @PathParam("userId") @ValidId String userId, @QueryParam("role") @DefaultValue("MEMBER") VaultAccess.Role role) {
-		var vault = Vault.<Vault>findById(vaultId); // // should always be found, since @VaultRole filter would have triggered
+		var vault = Vault.<Vault>findById(vaultId); // should always be found, since @VaultRole filter would have triggered
 		var user = User.<User>findByIdOptional(userId).orElseThrow(NotFoundException::new);
 		var usedSeats = EffectiveVaultAccess.countSeatOccupyingUsers();
 		//check if license seats are free
