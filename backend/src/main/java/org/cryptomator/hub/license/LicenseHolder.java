@@ -168,11 +168,11 @@ public class LicenseHolder {
 	}
 
 	/**
-	 * Gets the number of available seats of the license
+	 * Gets the number of seats in the license
 	 *
-	 * @return Number of available seats, if license is not null. Otherwise {@value SelfHostedNoLicenseConstants#SEATS}.
+	 * @return Number of seats of the license, if license is not null. Otherwise {@value SelfHostedNoLicenseConstants#SEATS}.
 	 */
-	public long getAvailableSeats() {
+	public long getSeats() {
 		return Optional.ofNullable(license) //
 				.map(l -> l.getClaim("seats")) //
 				.map(Claim::asLong) //

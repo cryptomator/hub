@@ -152,22 +152,25 @@ public class VaultResource {
 	@Parameter(name = "role", in = ParameterIn.QUERY, description = "the role to grant to this user (defaults to MEMBER)")
 	@APIResponse(responseCode = "200", description = "user's role updated")
 	@APIResponse(responseCode = "201", description = "user added")
-	@APIResponse(responseCode = "402", description = "all seats in license used")
+	@APIResponse(responseCode = "402", description = "license is expired or licensed seats would be exceeded after the operation")
 	@APIResponse(responseCode = "403", description = "not a vault owner")
 	@APIResponse(responseCode = "404", description = "user not found")
 	@ActiveLicense
 	public Response addUser(@PathParam("vaultId") UUID vaultId, @PathParam("userId") @ValidId String userId, @QueryParam("role") @DefaultValue("MEMBER") VaultAccess.Role role) {
-		var vault = Vault.<Vault>findById(vaultId); // // should always be found, since @VaultRole filter would have triggered
+		var vault = Vault.<Vault>findById(vaultId); // should always be found, since @VaultRole filter would have triggered
 		var user = User.<User>findByIdOptional(userId).orElseThrow(NotFoundException::new);
-		if (!EffectiveVaultAccess.isUserOccupyingSeat(userId)) {
-			//for new user, we need to check if a license seat is available
-			var usedSeats = EffectiveVaultAccess.countSeatOccupyingUsers();
-			if (usedSeats >= license.getAvailableSeats()) {
-				throw new PaymentRequiredException("Number of effective vault users greater than or equal to the available license seats");
-			}
+		var usedSeats = EffectiveVaultAccess.countSeatOccupyingUsers();
+		//check if license seats are free
+		if (usedSeats  < license.getSeats()) {
+			return addAuthority(vault, user, role);
 		}
+		// else check, if all seats are taken, but the person to add is already sitting
+		if (usedSeats == license.getSeats() && EffectiveVaultAccess.isUserOccupyingSeat(userId)) {
+			return addAuthority(vault, user, role);
+		}
+		//otherwise block
+		throw new PaymentRequiredException("Number of effective vault users greater than or equal to the available license seats");
 
-		return addAuthority(vault, user, role);
 	}
 
 	@PUT
@@ -180,7 +183,7 @@ public class VaultResource {
 	@Parameter(name = "role", in = ParameterIn.QUERY, description = "the role to grant to this group (defaults to MEMBER)")
 	@APIResponse(responseCode = "200", description = "group's role updated")
 	@APIResponse(responseCode = "201", description = "group added")
-	@APIResponse(responseCode = "402", description = "used seats + (number of users in group not occupying a seats) exceeds number of total avaible seats in license")
+	@APIResponse(responseCode = "402", description = "license is expired or licensed seats would be exceeded after the operation")
 	@APIResponse(responseCode = "403", description = "not a vault owner")
 	@APIResponse(responseCode = "404", description = "group not found")
 	@ActiveLicense
@@ -189,7 +192,7 @@ public class VaultResource {
 		var group = Group.<Group>findByIdOptional(groupId).orElseThrow(NotFoundException::new);
 
 		//usersInGroup - usersInGroupAndPartOfAtLeastOneVault + usersOfAtLeastOneVault
-		if (EffectiveGroupMembership.countEffectiveGroupUsers(groupId) - EffectiveVaultAccess.countSeatOccupyingUsersOfGroup(groupId) + EffectiveVaultAccess.countSeatOccupyingUsers() > license.getAvailableSeats()) {
+		if (EffectiveGroupMembership.countEffectiveGroupUsers(groupId) - EffectiveVaultAccess.countSeatOccupyingUsersOfGroup(groupId) + EffectiveVaultAccess.countSeatOccupyingUsers() > license.getSeats()) {
 			throw new PaymentRequiredException("Number of effective vault users greater than or equal to the available license seats");
 		}
 
@@ -265,8 +268,8 @@ public class VaultResource {
 			throw new GoneException("Vault is archived.");
 		}
 
-		var usedSeats = EffectiveVaultAccess.countSeatOccupyingUsersWithAccessToken();
-		if (usedSeats > license.getAvailableSeats()) {
+		var accessTokenSeats = EffectiveVaultAccess.countSeatOccupyingUsersWithAccessToken();
+		if (accessTokenSeats > license.getSeats()) {
 			throw new PaymentRequiredException("Number of effective vault users exceeds available license seats");
 		}
 
@@ -302,8 +305,8 @@ public class VaultResource {
 			throw new GoneException("Vault is archived.");
 		}
 
-		var usedSeats = EffectiveVaultAccess.countSeatOccupyingUsersWithAccessToken();
-		if (usedSeats > license.getAvailableSeats()) {
+		var accessTokenSeats = EffectiveVaultAccess.countSeatOccupyingUsersWithAccessToken();
+		if (accessTokenSeats > license.getSeats()) {
 			throw new PaymentRequiredException("Number of effective vault users exceeds available license seats");
 		}
 
@@ -348,7 +351,7 @@ public class VaultResource {
 		long occupiedSeats = EffectiveVaultAccess.countSeatOccupyingUsers();
 		long usersWithoutSeat = tokens.size() - EffectiveVaultAccess.countSeatsOccupiedByUsers(tokens.keySet().stream().toList());
 
-		if (occupiedSeats + usersWithoutSeat > license.getAvailableSeats()) {
+		if (occupiedSeats + usersWithoutSeat > license.getSeats()) {
 			throw new PaymentRequiredException("Number of effective vault users greater than or equal to the available license seats");
 		}
 
@@ -375,7 +378,7 @@ public class VaultResource {
 	@Transactional
 	@Operation(summary = "gets a vault")
 	@APIResponse(responseCode = "200")
-	@APIResponse(responseCode = "403", description = "requesting user is not member of the vault")
+	@APIResponse(responseCode = "403", description = "requesting user is neither a vault member nor has the admin role")
 	public VaultDto get(@PathParam("vaultId") UUID vaultId) {
 		Vault vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		if (vault.effectiveMembers.stream().noneMatch(u -> u.id.equals(jwt.getSubject())) && !identity.getRoles().contains("admin")) {
@@ -395,7 +398,7 @@ public class VaultResource {
 			description = "Creates or updates a vault with the given vault id. The creationTime in the vaultDto is always ignored. On creation, the current server time is used and the archived field is ignored. On update, only the name, description, and archived fields are considered.")
 	@APIResponse(responseCode = "200", description = "existing vault updated")
 	@APIResponse(responseCode = "201", description = "new vault created")
-	@APIResponse(responseCode = "402", description = "all seats in licence in use during creation of new vault")
+	@APIResponse(responseCode = "402", description = "number of licensed seats is exceeded")
 	public Response createOrUpdate(@PathParam("vaultId") UUID vaultId, @Valid @NotNull VaultDto vaultDto) {
 		User currentUser = User.findById(jwt.getSubject());
 		Optional<Vault> existingVault = Vault.findByIdOptional(vaultId);
@@ -404,12 +407,10 @@ public class VaultResource {
 			// load existing vault:
 			vault = existingVault.get();
 		} else {
-			if (!EffectiveVaultAccess.isUserOccupyingSeat(currentUser.id)) {
-				//for new vaults, we need to check that a licence seat is available if the user does not already have access to a vault.
-				var usedSeats = EffectiveVaultAccess.countSeatOccupyingUsers();
-				if (usedSeats >= license.getAvailableSeats()) {
-					throw new PaymentRequiredException("Number of effective vault users exceeds available license seats");
-				}
+			//if license is exceeded block vault creation, independent if the user is already sitting
+			var usedSeats = EffectiveVaultAccess.countSeatOccupyingUsers();
+			if (usedSeats > license.getSeats()) {
+				throw new PaymentRequiredException("Number of effective vault users exceeds available license seats");
 			}
 			// create new vault:
 			vault = new Vault();
