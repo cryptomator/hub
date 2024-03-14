@@ -176,10 +176,11 @@ public class LicenseHolder {
 		return Optional.ofNullable(license) //
 				.map(l -> l.getClaim("seats")) //
 				.map(Claim::asLong) //
-				.orElseGet(this::getNoLicenseSeats);
+				.orElseGet(this::seatsOnNotExisingLicense);
 	}
 
-	public long getNoLicenseSeats() {
+	//visible for testing
+	public long seatsOnNotExisingLicense() {
 		if (!managedInstance) {
 			return SelfHostedNoLicenseConstants.SEATS;
 		} else {

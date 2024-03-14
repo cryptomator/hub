@@ -69,7 +69,7 @@ public class BillingResource {
 							 @JsonProperty("issuedAt") Instant issuedAt, @JsonProperty("expiresAt") Instant expiresAt, @JsonProperty("managedInstance") Boolean managedInstance) {
 
 		public static BillingDto create(String hubId, LicenseHolder licenseHolder) {
-			var licensedSeats = licenseHolder.getNoLicenseSeats();
+			var licensedSeats = licenseHolder.getSeats();
 			var usedSeats = EffectiveVaultAccess.countSeatOccupyingUsers();
 			var managedInstance = licenseHolder.isManagedInstance();
 			return new BillingDto(hubId, false, null, (int) licensedSeats, (int) usedSeats, null, null, managedInstance);
