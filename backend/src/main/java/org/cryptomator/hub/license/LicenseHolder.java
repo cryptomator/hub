@@ -83,7 +83,7 @@ public class LicenseHolder {
 			settings.hubId = initialId;
 			settings.persistAndFlush();
 		} catch (JWTVerificationException e) {
-			LOG.warn("Provided initial license is invalid.");
+			LOG.warn("Provided initial license is invalid.", e);
 		}
 	}
 
