@@ -170,7 +170,6 @@ public class VaultResource {
 		}
 		//otherwise block
 		throw new PaymentRequiredException("Number of effective vault users greater than or equal to the available license seats");
-
 	}
 
 	@PUT
