@@ -36,7 +36,7 @@ import java.util.concurrent.Flow;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @QuarkusTest
-public class LicenseHolderTest {
+public class LicenseHolderIT {
 
 	@Inject
 	LicenseHolder holder;

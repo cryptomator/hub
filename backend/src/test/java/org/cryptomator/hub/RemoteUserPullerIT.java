@@ -23,7 +23,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @QuarkusTest
-class RemoteUserPullerTest {
+class RemoteUserPullerIT {
 
 	private final RemoteUserProvider remoteUserProvider = Mockito.mock(RemoteUserProvider.class);
 	private final User user = Mockito.mock(User.class);

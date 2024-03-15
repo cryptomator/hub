@@ -14,7 +14,7 @@ import static org.hamcrest.Matchers.comparesEqualTo;
 
 @QuarkusTest
 @DisplayName("Resource /auditlog")
-public class AuditLogResourceTest {
+public class AuditLogResourceIT {
 
 	@BeforeAll
 	public static void beforeAll() {

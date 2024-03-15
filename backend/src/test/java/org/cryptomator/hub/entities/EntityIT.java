@@ -4,19 +4,16 @@ import io.agroal.api.AgroalDataSource;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
-import jakarta.persistence.PersistenceException;
-import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;
-import java.time.Instant;
 import java.util.UUID;
 
 @QuarkusTest
 @DisplayName("Persistent Entities")
-public class EntityIntegrationTest {
+public class EntityIT {
 
 	@Inject
 	AgroalDataSource dataSource;

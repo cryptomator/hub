@@ -26,7 +26,7 @@ import static org.hamcrest.CoreMatchers.nullValue;
 
 @QuarkusTest
 @DisplayName("Resource /billing")
-public class BillingResourceTest {
+public class BillingResourceIT {
 
 	@InjectMock
 	LicenseHolder licenseHolder;

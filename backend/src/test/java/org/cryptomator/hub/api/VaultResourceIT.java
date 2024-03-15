@@ -55,7 +55,7 @@ import static org.hamcrest.text.IsEqualIgnoringCase.equalToIgnoringCase;
 
 @QuarkusTest
 @DisplayName("Resource /vaults")
-public class VaultResourceTest {
+public class VaultResourceIT {
 
 	@Inject
 	AgroalDataSource dataSource;

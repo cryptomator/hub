@@ -29,7 +29,7 @@ import static org.hamcrest.Matchers.hasSize;
 
 @QuarkusTest
 @DisplayName("Resource /devices")
-public class DeviceResourceTest {
+public class DeviceResourceIT {
 
 	@Inject
 	AgroalDataSource dataSource;

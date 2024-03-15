@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 @QuarkusTest
-class KeycloakRemoteUserProviderTest {
+class KeycloakRemoteUserProviderIT {
 
 	private RealmResource realm = Mockito.mock(RealmResource.class);
 	private UsersResource usersResource = Mockito.mock(UsersResource.class);
