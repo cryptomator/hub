@@ -1,6 +1,5 @@
 package org.cryptomator.hub;
 
-import io.quarkus.test.junit.QuarkusTest;
 import org.cryptomator.hub.entities.User;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,7 +21,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
-@QuarkusTest
 class KeycloakRemoteUserProviderTest {
 
 	private RealmResource realm = Mockito.mock(RealmResource.class);

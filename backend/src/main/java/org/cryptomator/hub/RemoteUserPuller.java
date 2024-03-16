@@ -85,6 +85,7 @@ public class RemoteUserPuller {
 
 			dbGroup.members.addAll(diff(kcGroup.members, dbGroup.members));
 			dbGroup.members.removeAll(diff(dbGroup.members, kcGroup.members));
+			// TODO why don't we run dbGroup.persist()?
 		}
 	}
 
