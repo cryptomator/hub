@@ -96,30 +96,19 @@ public class AuditLogResource {
 		Instant timestamp();
 
 		static AuditEventDto fromEntity(AuditEvent entity) {
-			// TODO: refactor to switch in JDK21
-			if (entity instanceof AuditEventDeviceRegister evt) {
-				return new AuditEventDeviceRegisterDto(evt.id, evt.timestamp, AuditEventDeviceRegister.TYPE, evt.registeredBy, evt.deviceId, evt.deviceName, evt.deviceType);
-			} else if (entity instanceof AuditEventDeviceRemove evt) {
-				return new AuditEventDeviceRemoveDto(evt.id, evt.timestamp, AuditEventDeviceRemove.TYPE, evt.removedBy, evt.deviceId);
-			} else if (entity instanceof AuditEventVaultCreate evt) {
-				return new AuditEventVaultCreateDto(evt.id, evt.timestamp, AuditEventVaultCreate.TYPE, evt.createdBy, evt.vaultId, evt.vaultName, evt.vaultDescription);
-			} else if (entity instanceof AuditEventVaultUpdate evt) {
-				return new AuditEventVaultUpdateDto(evt.id, evt.timestamp, AuditEventVaultUpdate.TYPE, evt.updatedBy, evt.vaultId, evt.vaultName, evt.vaultDescription, evt.vaultArchived);
-			} else if (entity instanceof AuditEventVaultAccessGrant evt) {
-				return new AuditEventVaultAccessGrantDto(evt.id, evt.timestamp, AuditEventVaultAccessGrant.TYPE, evt.grantedBy, evt.vaultId, evt.authorityId);
-			} else if (entity instanceof AuditEventVaultKeyRetrieve evt) {
-				return new AuditEventVaultKeyRetrieveDto(evt.id, evt.timestamp, AuditEventVaultKeyRetrieve.TYPE, evt.retrievedBy, evt.vaultId, evt.result);
-			} else if (entity instanceof AuditEventVaultMemberAdd evt) {
-				return new AuditEventVaultMemberAddDto(evt.id, evt.timestamp, AuditEventVaultMemberAdd.TYPE, evt.addedBy, evt.vaultId, evt.authorityId, evt.role);
-			} else if (entity instanceof AuditEventVaultMemberRemove evt) {
-				return new AuditEventVaultMemberRemoveDto(evt.id, evt.timestamp, AuditEventVaultMemberRemove.TYPE, evt.removedBy, evt.vaultId, evt.authorityId);
-			} else if (entity instanceof AuditEventVaultMemberUpdate evt) {
-				return new AuditEventVaultMemberUpdateDto(evt.id, evt.timestamp, AuditEventVaultMemberUpdate.TYPE, evt.updatedBy, evt.vaultId, evt.authorityId, evt.role);
-			} else if (entity instanceof AuditEventVaultOwnershipClaim evt) {
-				return new AuditEventVaultOwnershipClaimDto(evt.id, evt.timestamp, AuditEventVaultOwnershipClaim.TYPE, evt.claimedBy, evt.vaultId);
-			} else {
-				throw new UnsupportedOperationException("conversion not implemented for event type " + entity.getClass());
-			}
+			return switch (entity) {
+				case AuditEventDeviceRegister evt -> new AuditEventDeviceRegisterDto(evt.id, evt.timestamp, AuditEventDeviceRegister.TYPE, evt.registeredBy, evt.deviceId, evt.deviceName, evt.deviceType);
+				case AuditEventDeviceRemove evt -> new AuditEventDeviceRemoveDto(evt.id, evt.timestamp, AuditEventDeviceRemove.TYPE, evt.removedBy, evt.deviceId);
+				case AuditEventVaultCreate evt -> new AuditEventVaultCreateDto(evt.id, evt.timestamp, AuditEventVaultCreate.TYPE, evt.createdBy, evt.vaultId, evt.vaultName, evt.vaultDescription);
+				case AuditEventVaultUpdate evt -> new AuditEventVaultUpdateDto(evt.id, evt.timestamp, AuditEventVaultUpdate.TYPE, evt.updatedBy, evt.vaultId, evt.vaultName, evt.vaultDescription, evt.vaultArchived);
+				case AuditEventVaultAccessGrant evt -> new AuditEventVaultAccessGrantDto(evt.id, evt.timestamp, AuditEventVaultAccessGrant.TYPE, evt.grantedBy, evt.vaultId, evt.authorityId);
+				case AuditEventVaultKeyRetrieve evt -> new AuditEventVaultKeyRetrieveDto(evt.id, evt.timestamp, AuditEventVaultKeyRetrieve.TYPE, evt.retrievedBy, evt.vaultId, evt.result);
+				case AuditEventVaultMemberAdd evt -> new AuditEventVaultMemberAddDto(evt.id, evt.timestamp, AuditEventVaultMemberAdd.TYPE, evt.addedBy, evt.vaultId, evt.authorityId, evt.role);
+				case AuditEventVaultMemberRemove evt -> new AuditEventVaultMemberRemoveDto(evt.id, evt.timestamp, AuditEventVaultMemberRemove.TYPE, evt.removedBy, evt.vaultId, evt.authorityId);
+				case AuditEventVaultMemberUpdate evt -> new AuditEventVaultMemberUpdateDto(evt.id, evt.timestamp, AuditEventVaultMemberUpdate.TYPE, evt.updatedBy, evt.vaultId, evt.authorityId, evt.role);
+				case AuditEventVaultOwnershipClaim evt -> new AuditEventVaultOwnershipClaimDto(evt.id, evt.timestamp, AuditEventVaultOwnershipClaim.TYPE, evt.claimedBy, evt.vaultId);
+				default -> throw new UnsupportedOperationException("conversion not implemented for event type " + entity.getClass());
+			};
 		}
 	}
 
