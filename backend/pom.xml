@@ -7,7 +7,6 @@
   <version>1.4.0-SNAPSHOT</version>
 
   <properties>
-    <compiler-plugin.version>3.12.1</compiler-plugin.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.jdk.version>21</project.jdk.version>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -16,6 +15,8 @@
     <quarkus.platform.version>3.8.2</quarkus.platform.version>
     <quarkus.jib.base-jvm-image>eclipse-temurin:17-jre</quarkus.jib.base-jvm-image> <!-- irrelevant for -Pnative -->
     <jwt.version>4.4.0</jwt.version>
+    <compiler-plugin.version>3.12.1</compiler-plugin.version>
+    <dependency-plugin.version>3.6.1</dependency-plugin.version>
     <surefire-plugin.version>3.2.3</surefire-plugin.version>
     <failsafe-plugin.version>3.2.5</failsafe-plugin.version>
   </properties>
@@ -154,9 +155,22 @@
         </configuration>
       </plugin>
       <plugin>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>${dependency-plugin.version}</version>
+        <executions>
+          <execution>
+            <id>jar-paths-to-properties</id>
+            <goals>
+              <goal>properties</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>${surefire-plugin.version}</version>
         <configuration>
+          <argLine>-javaagent:${net.bytebuddy:byte-buddy-agent:jar}</argLine>
           <systemPropertyVariables>
             <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
             <maven.home>${maven.home}</maven.home>
@@ -166,6 +180,9 @@
       <plugin>
         <artifactId>maven-failsafe-plugin</artifactId>
         <version>${failsafe-plugin.version}</version>
+        <configuration>
+          <argLine>-javaagent:${net.bytebuddy:byte-buddy-agent:jar}</argLine>
+        </configuration>
         <executions>
           <execution>
             <goals>
