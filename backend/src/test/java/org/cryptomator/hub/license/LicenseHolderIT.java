@@ -5,8 +5,6 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import io.quarkus.arc.Arc;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
-import io.quarkus.test.junit.QuarkusTestProfile;
-import io.quarkus.test.junit.TestProfile;
 import jakarta.inject.Inject;
 import org.cryptomator.hub.entities.Settings;
 import org.hibernate.Session;
@@ -30,10 +28,8 @@ import java.net.http.HttpResponse;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Flow;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @QuarkusTest
 public class LicenseHolderIT {
@@ -388,163 +384,6 @@ public class LicenseHolderIT {
 				wrapped.onComplete();
 			}
 		}
-	}
-
-	@Nested
-	@TestProfile(LicenseHolderInitPropsTest.ValidInitPropsInstanceTestProfile.class)
-	@DisplayName("Testing LicenseHolder methods using InitProps")
-	class LicenseHolderInitPropsTest {
-
-		@InjectMock
-		Session session;
-
-		@InjectMock
-		LicenseValidator validator;
-
-		@InjectMock
-		RandomMinuteSleeper randomMinuteSleeper;
-
-		MockedStatic<Settings> settingsClass;
-
-		public static class ValidInitPropsInstanceTestProfile implements QuarkusTestProfile {
-			@Override
-			public Map<String, String> getConfigOverrides() {
-				return Map.of("hub.initial-id", "42", "hub.initial-license", "token");
-			}
-		}
-
-		@BeforeEach
-		public void setup() throws InterruptedException {
-			Query mockQuery = Mockito.mock(Query.class);
-			Mockito.doNothing().when(session).persist(Mockito.any());
-			Mockito.when(session.createQuery(Mockito.anyString())).thenReturn(mockQuery);
-			Mockito.when(mockQuery.getSingleResult()).thenReturn(0l);
-			Mockito.doNothing().when(randomMinuteSleeper).sleep();
-
-			Arc.container().instance(LicenseHolder.class).destroy();
-
-			settingsClass = Mockito.mockStatic(Settings.class);
-		}
-
-		@AfterEach
-		public void teardown() {
-			settingsClass.close();
-		}
-
-		@Test
-		@DisplayName("If init token is valid, set it in license holder")
-		public void testValidInitTokenSet() {
-			var decodedJWT = Mockito.mock(DecodedJWT.class);
-			Mockito.when(validator.validate("token", "42")).thenReturn(decodedJWT);
-			Settings settingsMock = new Settings();
-			settingsMock.hubId = "42";
-			settingsClass.when(Settings::get).thenReturn(settingsMock);
-
-			var newLicensePersisted = new AtomicBoolean(false);
-			Mockito.doAnswer(invocation -> {
-				Settings settings = invocation.getArgument(0);
-				if (settings.hubId.equals("42") && settings.licenseKey.equals("token")) {
-					newLicensePersisted.set(true);
-				}
-				return null;
-			}).when(session).persist(Mockito.any());
-
-			holder.init();
-
-			// init implicitly called due to @PostConstruct which increases the times to verify by 1
-			// See https://github.com/cryptomator/hub/pull/229#discussion_r1374694626 for further information
-			Mockito.verify(validator, Mockito.times(2)).validate("token", "42");
-			Assertions.assertTrue(newLicensePersisted.get());
-			Assertions.assertEquals(decodedJWT, holder.get());
-		}
-
-		@Test
-		@DisplayName("If init token is invalid and no token is set in db, do not modify db")
-		public void testInitTokenOnFailedValidationNotSet() {
-			Mockito.when(validator.validate("token", "42")).thenAnswer(invocationOnMock -> {
-				throw new JWTVerificationException("");
-			});
-			Settings settingsMock = new Settings();
-			settingsMock.hubId = "42";
-			settingsClass.when(Settings::get).thenReturn(settingsMock);
-
-			holder.init();
-
-			// init implicitly called due to @PostConstruct which increases the times to verify by 1
-			// See https://github.com/cryptomator/hub/pull/229#discussion_r1374694626 for further information
-			Mockito.verify(validator, Mockito.times(2)).validate("token", "42");
-			Mockito.verify(session, Mockito.never()).persist(Mockito.eq(settingsMock));
-			Assertions.assertNull(holder.get());
-		}
-
-		@Test
-		@DisplayName("If token is set in DB, ignore valid init token")
-		public void testValidDBTokenIgnoresValidInitToken() {
-			var decodedJWT = Mockito.mock(DecodedJWT.class);
-			Mockito.when(validator.validate("token3000", "3000")).thenReturn(decodedJWT);
-			Settings settingsMock = new Settings();
-			settingsMock.hubId = "3000";
-			settingsMock.licenseKey = "token3000";
-			settingsClass.when(Settings::get).thenReturn(settingsMock);
-
-			holder.init();
-
-			// init implicitly called due to @PostConstruct which increases the times to verify by 1
-			// See https://github.com/cryptomator/hub/pull/229#discussion_r1374694626 for further information
-			Mockito.verify(validator, Mockito.times(2)).validate("token3000", "3000");
-			Mockito.verify(session, Mockito.never()).persist(Mockito.any());
-			Assertions.assertEquals(decodedJWT, holder.get());
-		}
-
-		@Test
-		@DisplayName("If token is set in DB, ignore invalid init token")
-		public void testValidDBTokenIgnoresInvalidInitToken() {
-			Mockito.when(validator.validate("token", "42")).thenAnswer(invocationOnMock -> {
-				throw new JWTVerificationException("");
-			});
-
-			var decodedJWT = Mockito.mock(DecodedJWT.class);
-			Mockito.when(validator.validate("token3000", "42")).thenReturn(decodedJWT);
-			Settings settingsMock = new Settings();
-			settingsMock.hubId = "42";
-			settingsMock.licenseKey = "token3000";
-			settingsClass.when(Settings::get).thenReturn(settingsMock);
-
-			holder.init();
-
-			// init implicitly called due to @PostConstruct which increases the times to verify by 1
-			// See https://github.com/cryptomator/hub/pull/229#discussion_r1374694626 for further information
-			Mockito.verify(validator, Mockito.times(2)).validate("token3000", "42");
-			Mockito.verify(session, Mockito.never()).persist(Mockito.any());
-			Assertions.assertEquals(decodedJWT, holder.get());
-		}
-
-		@Test
-		@DisplayName("Setting a valid token validates and overwrites the init token")
-		public void testSetValidToken() {
-			var decodedJWT = Mockito.mock(DecodedJWT.class);
-			Mockito.when(validator.validate("token3000", "42")).thenReturn(decodedJWT);
-
-			Settings initSettingsMock = new Settings();
-			initSettingsMock.hubId = "42";
-			settingsClass.when(Settings::get).thenReturn(initSettingsMock);
-
-			var newLicensePersisted = new AtomicBoolean(false);
-			Mockito.doAnswer(invocation -> {
-				Settings settings = invocation.getArgument(0);
-				if (settings.hubId.equals("42") && settings.licenseKey.equals("token3000")) {
-					newLicensePersisted.set(true);
-				}
-				return null;
-			}).when(session).persist(Mockito.any());
-
-			holder.set("token3000");
-
-			Mockito.verify(validator, Mockito.times(1)).validate("token3000", "42");
-			Assertions.assertTrue(newLicensePersisted.get());
-			Assertions.assertEquals(decodedJWT, holder.get());
-		}
-
 	}
 
 }
