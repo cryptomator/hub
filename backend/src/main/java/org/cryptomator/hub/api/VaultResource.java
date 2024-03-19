@@ -41,6 +41,7 @@ import org.cryptomator.hub.entities.events.VaultKeyRetrievedEventRepository;
 import org.cryptomator.hub.entities.events.VaultMemberAddedEvent;
 import org.cryptomator.hub.entities.events.VaultMemberAddedEventRepository;
 import org.cryptomator.hub.entities.events.VaultMemberRemovedEvent;
+import org.cryptomator.hub.entities.events.VaultMemberRemovedEventRepository;
 import org.cryptomator.hub.entities.events.VaultMemberUpdatedEvent;
 import org.cryptomator.hub.entities.events.VaultOwnershipClaimedEvent;
 import org.cryptomator.hub.entities.events.VaultUpdatedEvent;
@@ -87,6 +88,8 @@ public class VaultResource {
 	VaultKeyRetrievedEventRepository vaultKeyRetrievedEventRepo;
 	@Inject
 	VaultMemberAddedEventRepository vaultMemberAddedEventRepo;
+	@Inject
+	VaultMemberRemovedEventRepository vaultMemberRemovedEventRepo;
 
 	@Inject
 	JsonWebToken jwt;
@@ -239,7 +242,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "403", description = "not a vault owner")
 	public Response removeAuthority(@PathParam("vaultId") UUID vaultId, @PathParam("authorityId") @ValidId String authorityId) {
 		if (VaultAccess.deleteById(new VaultAccess.Id(vaultId, authorityId))) {
-			VaultMemberRemovedEvent.log(jwt.getSubject(), vaultId, authorityId);
+			vaultMemberRemovedEventRepo.log(jwt.getSubject(), vaultId, authorityId);
 			return Response.status(Response.Status.NO_CONTENT).build();
 		} else {
 			throw new NotFoundException();

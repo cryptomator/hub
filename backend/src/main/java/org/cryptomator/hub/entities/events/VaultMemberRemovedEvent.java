@@ -17,13 +17,37 @@ public class VaultMemberRemovedEvent extends AuditEvent {
 	public static final String TYPE = "VAULT_MEMBER_REMOVE";
 
 	@Column(name = "removed_by")
-	public String removedBy;
+	String removedBy;
 
 	@Column(name = "vault_id")
-	public UUID vaultId;
+	UUID vaultId;
 
 	@Column(name = "authority_id")
-	public String authorityId;
+	String authorityId;
+
+	public String getRemovedBy() {
+		return removedBy;
+	}
+
+	public void setRemovedBy(String removedBy) {
+		this.removedBy = removedBy;
+	}
+
+	public UUID getVaultId() {
+		return vaultId;
+	}
+
+	public void setVaultId(UUID vaultId) {
+		this.vaultId = vaultId;
+	}
+
+	public String getAuthorityId() {
+		return authorityId;
+	}
+
+	public void setAuthorityId(String authorityId) {
+		this.authorityId = authorityId;
+	}
 
 	@Override
 	public boolean equals(Object o) {
@@ -39,15 +63,6 @@ public class VaultMemberRemovedEvent extends AuditEvent {
 	@Override
 	public int hashCode() {
 		return Objects.hash(id, removedBy, vaultId, authorityId);
-	}
-
-	public static void log(String removedBy, UUID vaultId, String authorityId) {
-		var event = new VaultMemberRemovedEvent();
-		event.timestamp = Instant.now();
-		event.removedBy = removedBy;
-		event.vaultId = vaultId;
-		event.authorityId = authorityId;
-		event.persist();
 	}
 
 }
