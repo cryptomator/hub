@@ -39,6 +39,7 @@ import org.cryptomator.hub.entities.events.VaultCreatedEventRepository;
 import org.cryptomator.hub.entities.events.VaultKeyRetrievedEvent;
 import org.cryptomator.hub.entities.events.VaultKeyRetrievedEventRepository;
 import org.cryptomator.hub.entities.events.VaultMemberAddedEvent;
+import org.cryptomator.hub.entities.events.VaultMemberAddedEventRepository;
 import org.cryptomator.hub.entities.events.VaultMemberRemovedEvent;
 import org.cryptomator.hub.entities.events.VaultMemberUpdatedEvent;
 import org.cryptomator.hub.entities.events.VaultOwnershipClaimedEvent;
@@ -84,6 +85,8 @@ public class VaultResource {
 	VaultCreatedEventRepository vaultCreatedEventRepo;
 	@Inject
 	VaultKeyRetrievedEventRepository vaultKeyRetrievedEventRepo;
+	@Inject
+	VaultMemberAddedEventRepository vaultMemberAddedEventRepo;
 
 	@Inject
 	JsonWebToken jwt;
@@ -220,7 +223,7 @@ public class VaultResource {
 			access.authority = authority;
 			access.role = role;
 			access.persist();
-			VaultMemberAddedEvent.log(jwt.getSubject(), vault.id, authority.id, role);
+			vaultMemberAddedEventRepo.log(jwt.getSubject(), vault.id, authority.id, role);
 			return Response.created(URI.create(".")).build();
 		}
 	}
@@ -437,7 +440,7 @@ public class VaultResource {
 			access.authority = currentUser;
 			access.role = VaultAccess.Role.OWNER;
 			access.persist();
-			VaultMemberAddedEvent.log(currentUser.id, vaultId, currentUser.id, VaultAccess.Role.OWNER);
+			vaultMemberAddedEventRepo.log(currentUser.id, vaultId, currentUser.id, VaultAccess.Role.OWNER);
 			return Response.created(URI.create(".")).contentLocation(URI.create(".")).entity(VaultDto.fromEntity(vault)).type(MediaType.APPLICATION_JSON).build();
 		} else {
 			VaultUpdatedEvent.log(currentUser.id, vault.id, vault.name, vault.description, vault.archived);
@@ -488,7 +491,7 @@ public class VaultResource {
 			access.authority = currentUser;
 			access.role = VaultAccess.Role.OWNER;
 			access.persist();
-			VaultMemberAddedEvent.log(currentUser.id, vaultId, currentUser.id, VaultAccess.Role.OWNER);
+			vaultMemberAddedEventRepo.log(currentUser.id, vaultId, currentUser.id, VaultAccess.Role.OWNER);
 		}
 
 		vault.salt = null;
