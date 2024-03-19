@@ -21,6 +21,7 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.events.DeviceRegisteredEvent;
+import org.cryptomator.hub.entities.events.DeviceRegisteredEventRepository;
 import org.cryptomator.hub.entities.events.DeviceRemovedEvent;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.LegacyAccessToken;
@@ -50,6 +51,8 @@ public class DeviceResource {
 
 	private static final Logger LOG = Logger.getLogger(DeviceResource.class);
 
+	@Inject
+	DeviceRegisteredEventRepository deviceRegisteredEventRepo;
 	@Inject
 	JsonWebToken jwt;
 
@@ -95,7 +98,7 @@ public class DeviceResource {
 
 		try {
 			device.persistAndFlush();
-			DeviceRegisteredEvent.log(jwt.getSubject(), deviceId, device.name, device.type);
+			deviceRegisteredEventRepo.log(jwt.getSubject(), deviceId, device.name, device.type);
 			return Response.created(URI.create(".")).build();
 		} catch (ConstraintViolationException e) {
 			throw new ClientErrorException(Response.Status.CONFLICT, e);

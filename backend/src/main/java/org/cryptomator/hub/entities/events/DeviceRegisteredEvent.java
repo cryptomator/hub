@@ -31,6 +31,38 @@ public class DeviceRegisteredEvent extends AuditEvent {
 	@Enumerated(EnumType.STRING)
 	Device.Type deviceType;
 
+	public String getRegisteredBy() {
+		return registeredBy;
+	}
+
+	public void setRegisteredBy(String registeredBy) {
+		this.registeredBy = registeredBy;
+	}
+
+	public String getDeviceId() {
+		return deviceId;
+	}
+
+	public void setDeviceId(String deviceId) {
+		this.deviceId = deviceId;
+	}
+
+	public String getDeviceName() {
+		return deviceName;
+	}
+
+	public void setDeviceName(String deviceName) {
+		this.deviceName = deviceName;
+	}
+
+	public Device.Type getDeviceType() {
+		return deviceType;
+	}
+
+	public void setDeviceType(Device.Type deviceType) {
+		this.deviceType = deviceType;
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
@@ -46,16 +78,6 @@ public class DeviceRegisteredEvent extends AuditEvent {
 	@Override
 	public int hashCode() {
 		return Objects.hash(id, registeredBy, deviceId, deviceName, deviceType);
-	}
-
-	public static void log(String registeredBy, String deviceId, String deviceName, Device.Type deviceType) {
-		var event = new DeviceRegisteredEvent();
-		event.timestamp = Instant.now();
-		event.registeredBy = registeredBy;
-		event.deviceId = deviceId;
-		event.deviceName = deviceName;
-		event.deviceType = deviceType;
-		event.persist();
 	}
 
 }
