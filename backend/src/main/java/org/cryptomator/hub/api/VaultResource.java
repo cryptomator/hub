@@ -31,6 +31,7 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.AccessToken;
+import org.cryptomator.hub.entities.AccessTokenRepository;
 import org.cryptomator.hub.entities.AuditEventVaultAccessGrant;
 import org.cryptomator.hub.entities.AuditEventVaultCreate;
 import org.cryptomator.hub.entities.AuditEventVaultKeyRetrieve;
@@ -71,6 +72,9 @@ import java.util.stream.Stream;
 
 @Path("/vaults")
 public class VaultResource {
+
+	@Inject
+	AccessTokenRepository accessTokenRepo;
 
 	@Inject
 	JsonWebToken jwt;
@@ -308,12 +312,12 @@ public class VaultResource {
 			throw new ActionRequiredException("User account not initialized.");
 		}
 
-		var access = AccessToken.unlock(vaultId, jwt.getSubject());
+		var access = accessTokenRepo.unlock(vaultId, jwt.getSubject());
 		if (access != null) {
 			AuditEventVaultKeyRetrieve.log(jwt.getSubject(), vaultId, AuditEventVaultKeyRetrieve.Result.SUCCESS);
 			var subscriptionStateHeaderName = "Hub-Subscription-State";
 			var subscriptionStateHeaderValue = license.isSet() ? "ACTIVE" : "INACTIVE"; // license expiration is not checked here, because it is checked in the ActiveLicense filter
-			return Response.ok(access.vaultKey).header(subscriptionStateHeaderName, subscriptionStateHeaderValue).build();
+			return Response.ok(access.getVaultKey()).header(subscriptionStateHeaderName, subscriptionStateHeaderValue).build();
 		} else if (Vault.findById(vaultId) == null) {
 			throw new NotFoundException("No such vault.");
 		} else {
@@ -350,14 +354,14 @@ public class VaultResource {
 
 		for (var entry : tokens.entrySet()) {
 			var userId = entry.getKey();
-			var token = AccessToken.<AccessToken>findById(new AccessToken.AccessId(userId, vaultId));
+			var token = accessTokenRepo.findById(new AccessToken.AccessId(userId, vaultId));
 			if (token == null) {
 				token = new AccessToken();
-				token.vault = vault;
-				token.user = User.<User>findByIdOptional(userId).orElseThrow(NotFoundException::new);
+				token.setVault(vault);
+				token.setUser(User.<User>findByIdOptional(userId).orElseThrow(NotFoundException::new));
 			}
-			token.vaultKey = entry.getValue();
-			token.persist();
+			token.setVaultKey(entry.getValue());
+			accessTokenRepo.persist(token);
 			AuditEventVaultAccessGrant.log(jwt.getSubject(), vaultId, userId);
 		}
 		return Response.ok().build();

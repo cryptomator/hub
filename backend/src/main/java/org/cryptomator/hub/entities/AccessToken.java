@@ -1,5 +1,6 @@
 package org.cryptomator.hub.entities;
 
+import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.panache.common.Parameters;
 import jakarta.persistence.CascadeType;
@@ -27,36 +28,23 @@ import java.util.UUID;
 			WHERE token.id.vaultId = :vaultId AND token.id.userId = :userId
 		""")
 @Table(name = "access_token")
-public class AccessToken extends PanacheEntityBase {
+public class AccessToken {
 
 	@EmbeddedId
-	public AccessId id = new AccessId();
+	AccessId id = new AccessId();
 
 	@ManyToOne(optional = false, cascade = {CascadeType.REMOVE})
 	@MapsId("userId")
 	@JoinColumn(name = "user_id")
-	public User user;
+	User user;
 
 	@ManyToOne(optional = false, cascade = {CascadeType.REMOVE})
 	@MapsId("vaultId")
 	@JoinColumn(name = "vault_id")
-	public Vault vault;
+	Vault vault;
 
 	@Column(name = "vault_masterkey", nullable = false)
-	public String vaultKey;
-
-	public static AccessToken unlock(UUID vaultId, String userId) {
-		try {
-			return find("#AccessToken.get", Parameters.with("vaultId", vaultId).and("userId", userId)).firstResult();
-		} catch (NoResultException e) {
-			return null;
-		}
-	}
-
-
-	public static void deleteByUser(String userId) {
-		delete("#AccessToken.deleteByUser", Parameters.with("userId", userId));
-	}
+	String vaultKey;
 
 	@Override
 	public boolean equals(Object o) {
@@ -67,6 +55,38 @@ public class AccessToken extends PanacheEntityBase {
 				&& Objects.equals(user, other.user)
 				&& Objects.equals(vault, other.vault)
 				&& Objects.equals(vaultKey, other.vaultKey);
+	}
+
+	public AccessId getId() {
+		return id;
+	}
+
+	public void setId(AccessId id) {
+		this.id = id;
+	}
+
+	public User getUser() {
+		return user;
+	}
+
+	public void setUser(User user) {
+		this.user = user;
+	}
+
+	public Vault getVault() {
+		return vault;
+	}
+
+	public void setVault(Vault vault) {
+		this.vault = vault;
+	}
+
+	public String getVaultKey() {
+		return vaultKey;
+	}
+
+	public void setVaultKey(String vaultKey) {
+		this.vaultKey = vaultKey;
 	}
 
 	@Override
@@ -87,8 +107,8 @@ public class AccessToken extends PanacheEntityBase {
 	@Embeddable
 	public static class AccessId implements Serializable {
 
-		public String userId;
-		public UUID vaultId;
+		String userId;
+		UUID vaultId;
 
 		public AccessId(String userId, UUID vaultId) {
 			this.userId = userId;

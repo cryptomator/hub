@@ -17,6 +17,7 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.AccessToken;
+import org.cryptomator.hub.entities.AccessTokenRepository;
 import org.cryptomator.hub.entities.AuditEventVaultAccessGrant;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.User;
@@ -38,6 +39,9 @@ import java.util.stream.Collectors;
 @Path("/users")
 @Produces(MediaType.TEXT_PLAIN)
 public class UsersResource {
+
+	@Inject
+	AccessTokenRepository accessTokenRepo;
 
 	@Inject
 	JsonWebToken jwt;
@@ -82,14 +86,14 @@ public class UsersResource {
 			if (vault == null) {
 				continue; // skip
 			}
-			var token = AccessToken.<AccessToken>findById(new AccessToken.AccessId(user.id, vault.id));
+			var token = accessTokenRepo.findById(new AccessToken.AccessId(user.id, vault.id));
 			if (token == null) {
 				token = new AccessToken();
-				token.vault = vault;
-				token.user = user;
+				token.setVault(vault);
+				token.setUser(user);
 			}
-			token.vaultKey = entry.getValue();
-			token.persist();
+			token.setVaultKey(entry.getValue());
+			accessTokenRepo.persist(token);
 			AuditEventVaultAccessGrant.log(user.id, vault.id, user.id);
 		}
 		return Response.ok().build();
@@ -125,7 +129,7 @@ public class UsersResource {
 		user.setupCode = null;
 		user.persist();
 		Device.deleteByOwner(user.id);
-		AccessToken.deleteByUser(user.id);
+		accessTokenRepo.deleteByUser(user.id);
 		return Response.noContent().build();
 	}
 
