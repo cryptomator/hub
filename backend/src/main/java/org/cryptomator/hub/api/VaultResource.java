@@ -33,6 +33,7 @@ import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.AccessToken;
 import org.cryptomator.hub.entities.AccessTokenRepository;
 import org.cryptomator.hub.entities.events.VaultAccessGrantedEvent;
+import org.cryptomator.hub.entities.events.VaultAccessGrantedEventRepository;
 import org.cryptomator.hub.entities.events.VaultCreatedEvent;
 import org.cryptomator.hub.entities.events.VaultKeyRetrievedEvent;
 import org.cryptomator.hub.entities.events.VaultMemberAddedEvent;
@@ -75,6 +76,8 @@ public class VaultResource {
 
 	@Inject
 	AccessTokenRepository accessTokenRepo;
+	@Inject
+	VaultAccessGrantedEventRepository vaultAccessGrantedEventRepo;
 
 	@Inject
 	JsonWebToken jwt;
@@ -362,7 +365,7 @@ public class VaultResource {
 			}
 			token.setVaultKey(entry.getValue());
 			accessTokenRepo.persist(token);
-			VaultAccessGrantedEvent.log(jwt.getSubject(), vaultId, userId);
+			vaultAccessGrantedEventRepo.log(jwt.getSubject(), vaultId, userId);
 		}
 		return Response.ok().build();
 	}

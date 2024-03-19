@@ -21,6 +21,7 @@ import org.cryptomator.hub.entities.events.VaultAccessGrantedEvent;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
+import org.cryptomator.hub.entities.events.VaultAccessGrantedEventRepository;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -41,6 +42,8 @@ public class UsersResource {
 
 	@Inject
 	AccessTokenRepository accessTokenRepo;
+	@Inject
+	VaultAccessGrantedEventRepository vaultAccessGrantedEventRepo;
 
 	@Inject
 	JsonWebToken jwt;
@@ -93,7 +96,7 @@ public class UsersResource {
 			}
 			token.setVaultKey(entry.getValue());
 			accessTokenRepo.persist(token);
-			VaultAccessGrantedEvent.log(user.id, vault.id, user.id);
+			vaultAccessGrantedEventRepo.log(user.id, vault.id, user.id);
 		}
 		return Response.ok().build();
 	}

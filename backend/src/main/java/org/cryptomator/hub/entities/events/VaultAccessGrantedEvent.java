@@ -17,13 +17,37 @@ public class VaultAccessGrantedEvent extends AuditEvent {
 	public static final String TYPE = "VAULT_ACCESS_GRANT";
 
 	@Column(name = "granted_by")
-	public String grantedBy;
+	String grantedBy;
 
 	@Column(name = "vault_id")
-	public UUID vaultId;
+	UUID vaultId;
 
 	@Column(name = "authority_id")
-	public String authorityId;
+	String authorityId;
+
+	public String getGrantedBy() {
+		return grantedBy;
+	}
+
+	public void setGrantedBy(String grantedBy) {
+		this.grantedBy = grantedBy;
+	}
+
+	public UUID getVaultId() {
+		return vaultId;
+	}
+
+	public void setVaultId(UUID vaultId) {
+		this.vaultId = vaultId;
+	}
+
+	public String getAuthorityId() {
+		return authorityId;
+	}
+
+	public void setAuthorityId(String authorityId) {
+		this.authorityId = authorityId;
+	}
 
 	@Override
 	public boolean equals(Object o) {
@@ -39,15 +63,6 @@ public class VaultAccessGrantedEvent extends AuditEvent {
 	@Override
 	public int hashCode() {
 		return Objects.hash(id, grantedBy, vaultId, authorityId);
-	}
-
-	public static void log(String grantedBy, UUID vaultId, String authorityId) {
-		var event = new VaultAccessGrantedEvent();
-		event.timestamp = Instant.now();
-		event.grantedBy = grantedBy;
-		event.vaultId = vaultId;
-		event.authorityId = authorityId;
-		event.persist();
 	}
 
 }
