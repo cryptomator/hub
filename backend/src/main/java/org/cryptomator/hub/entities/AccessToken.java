@@ -1,8 +1,5 @@
 package org.cryptomator.hub.entities;
 
-import io.quarkus.hibernate.orm.panache.PanacheEntity;
-import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
-import io.quarkus.panache.common.Parameters;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
@@ -12,7 +9,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.NamedQuery;
-import jakarta.persistence.NoResultException;
 import jakarta.persistence.Table;
 
 import java.io.Serializable;
@@ -20,14 +16,18 @@ import java.util.Objects;
 import java.util.UUID;
 
 @Entity
-@NamedQuery(name = "AccessToken.deleteByUser", query = "DELETE FROM AccessToken a WHERE a.id.userId = :userId")
+@Table(name = "access_token")
+@NamedQuery(name = "AccessToken.deleteByUser", query = """
+			DELETE 
+			FROM AccessToken a
+			WHERE a.id.userId = :userId
+		""")
 @NamedQuery(name = "AccessToken.get", query = """
 			SELECT token
 			FROM AccessToken token
 			INNER JOIN EffectiveVaultAccess perm ON token.id.vaultId = perm.id.vaultId AND token.id.userId = perm.id.authorityId
 			WHERE token.id.vaultId = :vaultId AND token.id.userId = :userId
 		""")
-@Table(name = "access_token")
 public class AccessToken {
 
 	@EmbeddedId
