@@ -17,16 +17,48 @@ public class VaultCreatedEvent extends AuditEvent {
 	public static final String TYPE = "VAULT_CREATE";
 
 	@Column(name = "created_by")
-	public String createdBy;
+	String createdBy;
 
 	@Column(name = "vault_id")
-	public UUID vaultId;
+	UUID vaultId;
 
 	@Column(name = "vault_name")
-	public String vaultName;
+	String vaultName;
 
 	@Column(name = "vault_description")
-	public String vaultDescription;
+	String vaultDescription;
+
+	public String getCreatedBy() {
+		return createdBy;
+	}
+
+	public void setCreatedBy(String createdBy) {
+		this.createdBy = createdBy;
+	}
+
+	public UUID getVaultId() {
+		return vaultId;
+	}
+
+	public void setVaultId(UUID vaultId) {
+		this.vaultId = vaultId;
+	}
+
+	public String getVaultName() {
+		return vaultName;
+	}
+
+	public void setVaultName(String vaultName) {
+		this.vaultName = vaultName;
+	}
+
+	public String getVaultDescription() {
+		return vaultDescription;
+	}
+
+	public void setVaultDescription(String vaultDescription) {
+		this.vaultDescription = vaultDescription;
+	}
 
 	@Override
 	public boolean equals(Object o) {
@@ -43,16 +75,6 @@ public class VaultCreatedEvent extends AuditEvent {
 	@Override
 	public int hashCode() {
 		return Objects.hash(id, createdBy, vaultId, vaultName, vaultDescription);
-	}
-
-	public static void log(String createdBy, UUID vaultId, String vaultName, String vaultDescription) {
-		var event = new VaultCreatedEvent();
-		event.timestamp = Instant.now();
-		event.createdBy = createdBy;
-		event.vaultId = vaultId;
-		event.vaultName = vaultName;
-		event.vaultDescription = vaultDescription;
-		event.persist();
 	}
 
 }

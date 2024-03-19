@@ -35,6 +35,7 @@ import org.cryptomator.hub.entities.AccessTokenRepository;
 import org.cryptomator.hub.entities.events.VaultAccessGrantedEvent;
 import org.cryptomator.hub.entities.events.VaultAccessGrantedEventRepository;
 import org.cryptomator.hub.entities.events.VaultCreatedEvent;
+import org.cryptomator.hub.entities.events.VaultCreatedEventRepository;
 import org.cryptomator.hub.entities.events.VaultKeyRetrievedEvent;
 import org.cryptomator.hub.entities.events.VaultMemberAddedEvent;
 import org.cryptomator.hub.entities.events.VaultMemberRemovedEvent;
@@ -78,6 +79,8 @@ public class VaultResource {
 	AccessTokenRepository accessTokenRepo;
 	@Inject
 	VaultAccessGrantedEventRepository vaultAccessGrantedEventRepo;
+	@Inject
+	VaultCreatedEventRepository vaultCreatedEventRepo;
 
 	@Inject
 	JsonWebToken jwt;
@@ -424,12 +427,13 @@ public class VaultResource {
 
 		vault.persistAndFlush(); // trigger PersistenceException before we continue with
 		if (existingVault.isEmpty()) {
+			vaultCreatedEventRepo.log(currentUser.id, vault.id, vault.name, vault.description);
+
 			var access = new VaultAccess();
 			access.vault = vault;
 			access.authority = currentUser;
 			access.role = VaultAccess.Role.OWNER;
 			access.persist();
-			VaultCreatedEvent.log(currentUser.id, vault.id, vault.name, vault.description);
 			VaultMemberAddedEvent.log(currentUser.id, vaultId, currentUser.id, VaultAccess.Role.OWNER);
 			return Response.created(URI.create(".")).contentLocation(URI.create(".")).entity(VaultDto.fromEntity(vault)).type(MediaType.APPLICATION_JSON).build();
 		} else {
