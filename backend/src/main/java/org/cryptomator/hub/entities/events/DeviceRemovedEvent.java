@@ -1,4 +1,4 @@
-package org.cryptomator.hub.entities;
+package org.cryptomator.hub.entities.events;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
@@ -10,8 +10,8 @@ import java.util.Objects;
 
 @Entity
 @Table(name = "audit_event_device_remove")
-@DiscriminatorValue(AuditEventDeviceRemove.TYPE)
-public class AuditEventDeviceRemove extends AuditEvent {
+@DiscriminatorValue(DeviceRemovedEvent.TYPE)
+public class DeviceRemovedEvent extends AuditEvent {
 
 	public static final String TYPE = "DEVICE_REMOVE";
 
@@ -25,7 +25,7 @@ public class AuditEventDeviceRemove extends AuditEvent {
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
-		AuditEventDeviceRemove that = (AuditEventDeviceRemove) o;
+		DeviceRemovedEvent that = (DeviceRemovedEvent) o;
 		return super.equals(that) //
 				&& Objects.equals(removedBy, that.removedBy) //
 				&& Objects.equals(deviceId, that.deviceId);
@@ -37,7 +37,7 @@ public class AuditEventDeviceRemove extends AuditEvent {
 	}
 
 	public static void log(String removedBy, String deviceId) {
-		var event = new AuditEventDeviceRemove();
+		var event = new DeviceRemovedEvent();
 		event.timestamp = Instant.now();
 		event.removedBy = removedBy;
 		event.deviceId = deviceId;

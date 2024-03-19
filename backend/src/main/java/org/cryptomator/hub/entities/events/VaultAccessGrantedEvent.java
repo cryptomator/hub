@@ -1,4 +1,4 @@
-package org.cryptomator.hub.entities;
+package org.cryptomator.hub.entities.events;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
@@ -10,14 +10,14 @@ import java.util.Objects;
 import java.util.UUID;
 
 @Entity
-@Table(name = "audit_event_vault_member_remove")
-@DiscriminatorValue(AuditEventVaultMemberRemove.TYPE)
-public class AuditEventVaultMemberRemove extends AuditEvent {
+@Table(name = "audit_event_vault_access_grant")
+@DiscriminatorValue(VaultAccessGrantedEvent.TYPE)
+public class VaultAccessGrantedEvent extends AuditEvent {
 
-	public static final String TYPE = "VAULT_MEMBER_REMOVE";
+	public static final String TYPE = "VAULT_ACCESS_GRANT";
 
-	@Column(name = "removed_by")
-	public String removedBy;
+	@Column(name = "granted_by")
+	public String grantedBy;
 
 	@Column(name = "vault_id")
 	public UUID vaultId;
@@ -29,22 +29,22 @@ public class AuditEventVaultMemberRemove extends AuditEvent {
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
-		AuditEventVaultMemberRemove that = (AuditEventVaultMemberRemove) o;
+		VaultAccessGrantedEvent that = (VaultAccessGrantedEvent) o;
 		return super.equals(that) //
-				&& Objects.equals(removedBy, that.removedBy) //
+				&& Objects.equals(grantedBy, that.grantedBy) //
 				&& Objects.equals(vaultId, that.vaultId) //
 				&& Objects.equals(authorityId, that.authorityId);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, removedBy, vaultId, authorityId);
+		return Objects.hash(id, grantedBy, vaultId, authorityId);
 	}
 
-	public static void log(String removedBy, UUID vaultId, String authorityId) {
-		var event = new AuditEventVaultMemberRemove();
+	public static void log(String grantedBy, UUID vaultId, String authorityId) {
+		var event = new VaultAccessGrantedEvent();
 		event.timestamp = Instant.now();
-		event.removedBy = removedBy;
+		event.grantedBy = grantedBy;
 		event.vaultId = vaultId;
 		event.authorityId = authorityId;
 		event.persist();

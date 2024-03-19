@@ -1,4 +1,4 @@
-package org.cryptomator.hub.entities;
+package org.cryptomator.hub.entities.events;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
@@ -6,20 +6,21 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
+import org.cryptomator.hub.entities.VaultAccess;
 
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 
 @Entity
-@Table(name = "audit_event_vault_member_update")
-@DiscriminatorValue(AuditEventVaultMemberUpdate.TYPE)
-public class AuditEventVaultMemberUpdate extends AuditEvent {
+@Table(name = "audit_event_vault_member_add")
+@DiscriminatorValue(VaultMemberAddedEvent.TYPE)
+public class VaultMemberAddedEvent extends AuditEvent {
 
-	public static final String TYPE = "VAULT_MEMBER_UPDATE";
+	public static final String TYPE = "VAULT_MEMBER_ADD";
 
-	@Column(name = "updated_by")
-	public String updatedBy;
+	@Column(name = "added_by")
+	public String addedBy;
 
 	@Column(name = "vault_id")
 	public UUID vaultId;
@@ -35,9 +36,9 @@ public class AuditEventVaultMemberUpdate extends AuditEvent {
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
-		AuditEventVaultMemberUpdate that = (AuditEventVaultMemberUpdate) o;
+		VaultMemberAddedEvent that = (VaultMemberAddedEvent) o;
 		return super.equals(that) //
-				&& Objects.equals(updatedBy, that.updatedBy) //
+				&& Objects.equals(addedBy, that.addedBy) //
 				&& Objects.equals(vaultId, that.vaultId) //
 				&& Objects.equals(authorityId, that.authorityId) //
 				&& Objects.equals(role, that.role);
@@ -45,13 +46,13 @@ public class AuditEventVaultMemberUpdate extends AuditEvent {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, updatedBy, vaultId, authorityId, role);
+		return Objects.hash(id, addedBy, vaultId, authorityId, role);
 	}
 
-	public static void log(String updatedBy, UUID vaultId, String authorityId, VaultAccess.Role role) {
-		var event = new AuditEventVaultMemberUpdate();
+	public static void log(String addedBy, UUID vaultId, String authorityId, VaultAccess.Role role) {
+		var event = new VaultMemberAddedEvent();
 		event.timestamp = Instant.now();
-		event.updatedBy = updatedBy;
+		event.addedBy = addedBy;
 		event.vaultId = vaultId;
 		event.authorityId = authorityId;
 		event.role = role;

@@ -20,8 +20,8 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.cryptomator.hub.entities.AuditEventDeviceRegister;
-import org.cryptomator.hub.entities.AuditEventDeviceRemove;
+import org.cryptomator.hub.entities.events.DeviceRegisteredEvent;
+import org.cryptomator.hub.entities.events.DeviceRemovedEvent;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.LegacyAccessToken;
 import org.cryptomator.hub.entities.LegacyDevice;
@@ -95,7 +95,7 @@ public class DeviceResource {
 
 		try {
 			device.persistAndFlush();
-			AuditEventDeviceRegister.log(jwt.getSubject(), deviceId, device.name, device.type);
+			DeviceRegisteredEvent.log(jwt.getSubject(), deviceId, device.name, device.type);
 			return Response.created(URI.create(".")).build();
 		} catch (ConstraintViolationException e) {
 			throw new ClientErrorException(Response.Status.CONFLICT, e);
@@ -151,7 +151,7 @@ public class DeviceResource {
 		var maybeDevice = Device.<Device>findByIdOptional(deviceId);
 		if (maybeDevice.isPresent() && currentUser.equals(maybeDevice.get().owner)) {
 			maybeDevice.get().delete();
-			AuditEventDeviceRemove.log(jwt.getSubject(), deviceId);
+			DeviceRemovedEvent.log(jwt.getSubject(), deviceId);
 			return Response.status(Response.Status.NO_CONTENT).build();
 		} else {
 			return Response.status(Response.Status.NOT_FOUND).build();

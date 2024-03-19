@@ -1,4 +1,4 @@
-package org.cryptomator.hub.entities;
+package org.cryptomator.hub.entities.events;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
@@ -11,8 +11,8 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "audit_event_vault_create")
-@DiscriminatorValue(AuditEventVaultCreate.TYPE)
-public class AuditEventVaultCreate extends AuditEvent {
+@DiscriminatorValue(VaultCreatedEvent.TYPE)
+public class VaultCreatedEvent extends AuditEvent {
 
 	public static final String TYPE = "VAULT_CREATE";
 
@@ -32,7 +32,7 @@ public class AuditEventVaultCreate extends AuditEvent {
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
-		AuditEventVaultCreate that = (AuditEventVaultCreate) o;
+		VaultCreatedEvent that = (VaultCreatedEvent) o;
 		return super.equals(that) //
 				&& Objects.equals(createdBy, that.createdBy) //
 				&& Objects.equals(vaultId, that.vaultId) //
@@ -46,7 +46,7 @@ public class AuditEventVaultCreate extends AuditEvent {
 	}
 
 	public static void log(String createdBy, UUID vaultId, String vaultName, String vaultDescription) {
-		var event = new AuditEventVaultCreate();
+		var event = new VaultCreatedEvent();
 		event.timestamp = Instant.now();
 		event.createdBy = createdBy;
 		event.vaultId = vaultId;
