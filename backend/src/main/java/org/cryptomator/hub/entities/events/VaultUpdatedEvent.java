@@ -5,7 +5,6 @@ import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 
-import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -17,19 +16,59 @@ public class VaultUpdatedEvent extends AuditEvent {
 	public static final String TYPE = "VAULT_UPDATE";
 
 	@Column(name = "updated_by")
-	public String updatedBy;
+	String updatedBy;
 
 	@Column(name = "vault_id")
-	public UUID vaultId;
+	UUID vaultId;
 
 	@Column(name = "vault_name")
-	public String vaultName;
+	String vaultName;
 
 	@Column(name = "vault_description")
-	public String vaultDescription;
+	String vaultDescription;
 
 	@Column(name = "vault_archived")
-	public boolean vaultArchived;
+	boolean vaultArchived;
+
+	public String getUpdatedBy() {
+		return updatedBy;
+	}
+
+	public void setUpdatedBy(String updatedBy) {
+		this.updatedBy = updatedBy;
+	}
+
+	public UUID getVaultId() {
+		return vaultId;
+	}
+
+	public void setVaultId(UUID vaultId) {
+		this.vaultId = vaultId;
+	}
+
+	public String getVaultName() {
+		return vaultName;
+	}
+
+	public void setVaultName(String vaultName) {
+		this.vaultName = vaultName;
+	}
+
+	public String getVaultDescription() {
+		return vaultDescription;
+	}
+
+	public void setVaultDescription(String vaultDescription) {
+		this.vaultDescription = vaultDescription;
+	}
+
+	public boolean isVaultArchived() {
+		return vaultArchived;
+	}
+
+	public void setVaultArchived(boolean vaultArchived) {
+		this.vaultArchived = vaultArchived;
+	}
 
 	@Override
 	public boolean equals(Object o) {
@@ -47,17 +86,6 @@ public class VaultUpdatedEvent extends AuditEvent {
 	@Override
 	public int hashCode() {
 		return Objects.hash(id, updatedBy, vaultId, vaultName, vaultDescription, vaultArchived);
-	}
-
-	public static void log(String updatedBy, UUID vaultId, String vaultName, String vaultDescription, boolean vaultArchived) {
-		var event = new VaultUpdatedEvent();
-		event.timestamp = Instant.now();
-		event.updatedBy = updatedBy;
-		event.vaultId = vaultId;
-		event.vaultName = vaultName;
-		event.vaultDescription = vaultDescription;
-		event.vaultArchived = vaultArchived;
-		event.persist();
 	}
 
 }
