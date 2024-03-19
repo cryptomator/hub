@@ -16,10 +16,26 @@ public class DeviceRemovedEvent extends AuditEvent {
 	public static final String TYPE = "DEVICE_REMOVE";
 
 	@Column(name = "removed_by")
-	public String removedBy;
+	String removedBy;
 
 	@Column(name = "device_id")
-	public String deviceId;
+	String deviceId;
+
+	public String getRemovedBy() {
+		return removedBy;
+	}
+
+	public void setRemovedBy(String removedBy) {
+		this.removedBy = removedBy;
+	}
+
+	public String getDeviceId() {
+		return deviceId;
+	}
+
+	public void setDeviceId(String deviceId) {
+		this.deviceId = deviceId;
+	}
 
 	@Override
 	public boolean equals(Object o) {
@@ -34,14 +50,6 @@ public class DeviceRemovedEvent extends AuditEvent {
 	@Override
 	public int hashCode() {
 		return Objects.hash(id, removedBy, deviceId);
-	}
-
-	public static void log(String removedBy, String deviceId) {
-		var event = new DeviceRemovedEvent();
-		event.timestamp = Instant.now();
-		event.removedBy = removedBy;
-		event.deviceId = deviceId;
-		event.persist();
 	}
 
 }

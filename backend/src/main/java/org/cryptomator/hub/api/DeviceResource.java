@@ -27,6 +27,7 @@ import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.LegacyAccessToken;
 import org.cryptomator.hub.entities.LegacyDevice;
 import org.cryptomator.hub.entities.User;
+import org.cryptomator.hub.entities.events.DeviceRemovedEventRepository;
 import org.cryptomator.hub.validation.NoHtmlOrScriptChars;
 import org.cryptomator.hub.validation.OnlyBase64Chars;
 import org.cryptomator.hub.validation.ValidId;
@@ -53,6 +54,8 @@ public class DeviceResource {
 
 	@Inject
 	DeviceRegisteredEventRepository deviceRegisteredEventRepo;
+	@Inject
+	DeviceRemovedEventRepository deviceRemovedEventRepo;
 	@Inject
 	JsonWebToken jwt;
 
@@ -154,7 +157,7 @@ public class DeviceResource {
 		var maybeDevice = Device.<Device>findByIdOptional(deviceId);
 		if (maybeDevice.isPresent() && currentUser.equals(maybeDevice.get().owner)) {
 			maybeDevice.get().delete();
-			DeviceRemovedEvent.log(jwt.getSubject(), deviceId);
+			deviceRemovedEventRepo.log(jwt.getSubject(), deviceId);
 			return Response.status(Response.Status.NO_CONTENT).build();
 		} else {
 			return Response.status(Response.Status.NOT_FOUND).build();
