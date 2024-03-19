@@ -20,17 +20,49 @@ public class VaultMemberUpdatedEvent extends AuditEvent {
 	public static final String TYPE = "VAULT_MEMBER_UPDATE";
 
 	@Column(name = "updated_by")
-	public String updatedBy;
+	String updatedBy;
 
 	@Column(name = "vault_id")
-	public UUID vaultId;
+	UUID vaultId;
 
 	@Column(name = "authority_id")
-	public String authorityId;
+	String authorityId;
 
 	@Column(name = "role", nullable = false)
 	@Enumerated(EnumType.STRING)
-	public VaultAccess.Role role;
+	VaultAccess.Role role;
+
+	public String getUpdatedBy() {
+		return updatedBy;
+	}
+
+	public void setUpdatedBy(String updatedBy) {
+		this.updatedBy = updatedBy;
+	}
+
+	public UUID getVaultId() {
+		return vaultId;
+	}
+
+	public void setVaultId(UUID vaultId) {
+		this.vaultId = vaultId;
+	}
+
+	public String getAuthorityId() {
+		return authorityId;
+	}
+
+	public void setAuthorityId(String authorityId) {
+		this.authorityId = authorityId;
+	}
+
+	public VaultAccess.Role getRole() {
+		return role;
+	}
+
+	public void setRole(VaultAccess.Role role) {
+		this.role = role;
+	}
 
 	@Override
 	public boolean equals(Object o) {
@@ -47,16 +79,6 @@ public class VaultMemberUpdatedEvent extends AuditEvent {
 	@Override
 	public int hashCode() {
 		return Objects.hash(id, updatedBy, vaultId, authorityId, role);
-	}
-
-	public static void log(String updatedBy, UUID vaultId, String authorityId, VaultAccess.Role role) {
-		var event = new VaultMemberUpdatedEvent();
-		event.timestamp = Instant.now();
-		event.updatedBy = updatedBy;
-		event.vaultId = vaultId;
-		event.authorityId = authorityId;
-		event.role = role;
-		event.persist();
 	}
 
 }

@@ -43,6 +43,7 @@ import org.cryptomator.hub.entities.events.VaultMemberAddedEventRepository;
 import org.cryptomator.hub.entities.events.VaultMemberRemovedEvent;
 import org.cryptomator.hub.entities.events.VaultMemberRemovedEventRepository;
 import org.cryptomator.hub.entities.events.VaultMemberUpdatedEvent;
+import org.cryptomator.hub.entities.events.VaultMemberUpdatedEventRepository;
 import org.cryptomator.hub.entities.events.VaultOwnershipClaimedEvent;
 import org.cryptomator.hub.entities.events.VaultUpdatedEvent;
 import org.cryptomator.hub.entities.Authority;
@@ -90,6 +91,8 @@ public class VaultResource {
 	VaultMemberAddedEventRepository vaultMemberAddedEventRepo;
 	@Inject
 	VaultMemberRemovedEventRepository vaultMemberRemovedEventRepo;
+	@Inject
+	VaultMemberUpdatedEventRepository vaultMemberUpdatedEventRepo;
 
 	@Inject
 	JsonWebToken jwt;
@@ -218,7 +221,7 @@ public class VaultResource {
 			var access = existingAccess.get();
 			access.role = role;
 			access.persist();
-			VaultMemberUpdatedEvent.log(jwt.getSubject(), vault.id, authority.id, role);
+			vaultMemberUpdatedEventRepo.log(jwt.getSubject(), vault.id, authority.id, role);
 			return Response.ok().build();
 		} else {
 			var access = new VaultAccess();
@@ -487,7 +490,7 @@ public class VaultResource {
 			var access = existingAccess.get();
 			access.role = VaultAccess.Role.OWNER;
 			access.persist();
-			VaultMemberUpdatedEvent.log(currentUser.id, vaultId, currentUser.id, VaultAccess.Role.OWNER);
+			vaultMemberUpdatedEventRepo.log(currentUser.id, vaultId, currentUser.id, VaultAccess.Role.OWNER);
 		} else {
 			var access = new VaultAccess();
 			access.vault = vault;
