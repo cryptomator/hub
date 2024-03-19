@@ -17,10 +17,26 @@ public class VaultOwnershipClaimedEvent extends AuditEvent {
 	public static final String TYPE = "VAULT_OWNERSHIP_CLAIM";
 
 	@Column(name = "claimed_by")
-	public String claimedBy;
+	String claimedBy;
 
 	@Column(name = "vault_id")
-	public UUID vaultId;
+	UUID vaultId;
+
+	public String getClaimedBy() {
+		return claimedBy;
+	}
+
+	public void setClaimedBy(String claimedBy) {
+		this.claimedBy = claimedBy;
+	}
+
+	public UUID getVaultId() {
+		return vaultId;
+	}
+
+	public void setVaultId(UUID vaultId) {
+		this.vaultId = vaultId;
+	}
 
 	@Override
 	public boolean equals(Object o) {
@@ -35,14 +51,6 @@ public class VaultOwnershipClaimedEvent extends AuditEvent {
 	@Override
 	public int hashCode() {
 		return Objects.hash(id, claimedBy, vaultId);
-	}
-
-	public static void log(String claimedBy, UUID vaultId) {
-		var event = new VaultOwnershipClaimedEvent();
-		event.timestamp = Instant.now();
-		event.claimedBy = claimedBy;
-		event.vaultId = vaultId;
-		event.persist();
 	}
 
 }

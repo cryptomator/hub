@@ -109,7 +109,7 @@ public class AuditLogResource {
 				case VaultMemberAddedEvent evt -> new VaultMemberAddedEventDto(evt.getId(), evt.getTimestamp(), VaultMemberAddedEvent.TYPE, evt.getAddedBy(), evt.getVaultId(), evt.getAuthorityId(), evt.getRole());
 				case VaultMemberRemovedEvent evt -> new VaultMemberRemovedEventDto(evt.getId(), evt.getTimestamp(), VaultMemberRemovedEvent.TYPE, evt.getRemovedBy(), evt.getVaultId(), evt.getAuthorityId());
 				case VaultMemberUpdatedEvent evt -> new VaultMemberUpdatedEventDto(evt.getId(), evt.getTimestamp(), VaultMemberUpdatedEvent.TYPE, evt.getUpdatedBy(), evt.getVaultId(), evt.getAuthorityId(), evt.getRole());
-				case VaultOwnershipClaimedEvent evt -> new VaultOwnershipClaimedEventDto(evt.getId(), evt.getTimestamp(), VaultOwnershipClaimedEvent.TYPE, evt.claimedBy, evt.vaultId);
+				case VaultOwnershipClaimedEvent evt -> new VaultOwnershipClaimedEventDto(evt.getId(), evt.getTimestamp(), VaultOwnershipClaimedEvent.TYPE, evt.getClaimedBy(), evt.getVaultId());
 				default -> throw new UnsupportedOperationException("conversion not implemented for event type " + entity.getClass());
 			};
 		}

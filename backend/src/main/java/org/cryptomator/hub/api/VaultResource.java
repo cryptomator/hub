@@ -45,6 +45,7 @@ import org.cryptomator.hub.entities.events.VaultMemberRemovedEventRepository;
 import org.cryptomator.hub.entities.events.VaultMemberUpdatedEvent;
 import org.cryptomator.hub.entities.events.VaultMemberUpdatedEventRepository;
 import org.cryptomator.hub.entities.events.VaultOwnershipClaimedEvent;
+import org.cryptomator.hub.entities.events.VaultOwnershipClaimedEventRepository;
 import org.cryptomator.hub.entities.events.VaultUpdatedEvent;
 import org.cryptomator.hub.entities.Authority;
 import org.cryptomator.hub.entities.EffectiveGroupMembership;
@@ -93,6 +94,8 @@ public class VaultResource {
 	VaultMemberRemovedEventRepository vaultMemberRemovedEventRepo;
 	@Inject
 	VaultMemberUpdatedEventRepository vaultMemberUpdatedEventRepo;
+	@Inject
+	VaultOwnershipClaimedEventRepository vaultOwnershipClaimedEventRepo;
 
 	@Inject
 	JsonWebToken jwt;
@@ -507,7 +510,7 @@ public class VaultResource {
 		vault.authenticationPublicKey = null;
 		vault.persist();
 
-		VaultOwnershipClaimedEvent.log(currentUser.id, vaultId);
+		vaultOwnershipClaimedEventRepo.log(currentUser.id, vaultId);
 		return Response.ok(VaultDto.fromEntity(vault), MediaType.APPLICATION_JSON).build();
 	}
 
