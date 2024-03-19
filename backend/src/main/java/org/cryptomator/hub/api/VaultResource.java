@@ -37,6 +37,7 @@ import org.cryptomator.hub.entities.events.VaultAccessGrantedEventRepository;
 import org.cryptomator.hub.entities.events.VaultCreatedEvent;
 import org.cryptomator.hub.entities.events.VaultCreatedEventRepository;
 import org.cryptomator.hub.entities.events.VaultKeyRetrievedEvent;
+import org.cryptomator.hub.entities.events.VaultKeyRetrievedEventRepository;
 import org.cryptomator.hub.entities.events.VaultMemberAddedEvent;
 import org.cryptomator.hub.entities.events.VaultMemberRemovedEvent;
 import org.cryptomator.hub.entities.events.VaultMemberUpdatedEvent;
@@ -81,6 +82,8 @@ public class VaultResource {
 	VaultAccessGrantedEventRepository vaultAccessGrantedEventRepo;
 	@Inject
 	VaultCreatedEventRepository vaultCreatedEventRepo;
+	@Inject
+	VaultKeyRetrievedEventRepository vaultKeyRetrievedEventRepo;
 
 	@Inject
 	JsonWebToken jwt;
@@ -278,12 +281,12 @@ public class VaultResource {
 
 		var access = LegacyAccessToken.unlock(vaultId, deviceId, jwt.getSubject());
 		if (access != null) {
-			VaultKeyRetrievedEvent.log(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.SUCCESS);
+			vaultKeyRetrievedEventRepo.log(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.SUCCESS);
 			var subscriptionStateHeaderName = "Hub-Subscription-State";
 			var subscriptionStateHeaderValue = license.isSet() ? "ACTIVE" : "INACTIVE"; // license expiration is not checked here, because it is checked in the ActiveLicense filter
 			return Response.ok(access.jwe).header(subscriptionStateHeaderName, subscriptionStateHeaderValue).build();
 		} else {
-			VaultKeyRetrievedEvent.log(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.UNAUTHORIZED);
+			vaultKeyRetrievedEventRepo.log(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.UNAUTHORIZED);
 			throw new ForbiddenException("Access to this device not granted.");
 		}
 	}
@@ -320,14 +323,14 @@ public class VaultResource {
 
 		var access = accessTokenRepo.unlock(vaultId, jwt.getSubject());
 		if (access != null) {
-			VaultKeyRetrievedEvent.log(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.SUCCESS);
+			vaultKeyRetrievedEventRepo.log(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.SUCCESS);
 			var subscriptionStateHeaderName = "Hub-Subscription-State";
 			var subscriptionStateHeaderValue = license.isSet() ? "ACTIVE" : "INACTIVE"; // license expiration is not checked here, because it is checked in the ActiveLicense filter
 			return Response.ok(access.getVaultKey()).header(subscriptionStateHeaderName, subscriptionStateHeaderValue).build();
 		} else if (Vault.findById(vaultId) == null) {
 			throw new NotFoundException("No such vault.");
 		} else {
-			VaultKeyRetrievedEvent.log(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.UNAUTHORIZED);
+			vaultKeyRetrievedEventRepo.log(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.UNAUTHORIZED);
 			throw new ForbiddenException("Access to this vault not granted.");
 		}
 	}

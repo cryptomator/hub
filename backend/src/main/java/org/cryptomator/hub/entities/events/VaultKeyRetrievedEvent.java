@@ -14,20 +14,43 @@ import java.util.UUID;
 @Entity
 @Table(name = "audit_event_vault_key_retrieve")
 @DiscriminatorValue(VaultKeyRetrievedEvent.TYPE)
-//TODO: bad naming
 public class VaultKeyRetrievedEvent extends AuditEvent {
 
 	public static final String TYPE = "VAULT_KEY_RETRIEVE";
 
 	@Column(name = "retrieved_by")
-	public String retrievedBy;
+	String retrievedBy;
 
 	@Column(name = "vault_id")
-	public UUID vaultId;
+	UUID vaultId;
 
 	@Column(name = "result")
 	@Enumerated(EnumType.STRING)
-	public Result result;
+	Result result;
+
+	public String getRetrievedBy() {
+		return retrievedBy;
+	}
+
+	public void setRetrievedBy(String retrievedBy) {
+		this.retrievedBy = retrievedBy;
+	}
+
+	public UUID getVaultId() {
+		return vaultId;
+	}
+
+	public void setVaultId(UUID vaultId) {
+		this.vaultId = vaultId;
+	}
+
+	public Result getResult() {
+		return result;
+	}
+
+	public void setResult(Result result) {
+		this.result = result;
+	}
 
 	@Override
 	public boolean equals(Object o) {
@@ -43,15 +66,6 @@ public class VaultKeyRetrievedEvent extends AuditEvent {
 	@Override
 	public int hashCode() {
 		return Objects.hash(id, retrievedBy, vaultId, result);
-	}
-
-	public static void log(String retrievedBy, UUID vaultId, Result result) {
-		var event = new VaultKeyRetrievedEvent();
-		event.timestamp = Instant.now();
-		event.retrievedBy = retrievedBy;
-		event.vaultId = vaultId;
-		event.result = result;
-		event.persist();
 	}
 
 	public enum Result {

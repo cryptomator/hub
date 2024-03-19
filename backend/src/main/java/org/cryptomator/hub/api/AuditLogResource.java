@@ -105,7 +105,7 @@ public class AuditLogResource {
 				case VaultCreatedEvent evt -> new VaultCreatedEventDto(evt.getId(), evt.getTimestamp(), VaultCreatedEvent.TYPE, evt.getCreatedBy(), evt.getVaultId(), evt.getVaultName(), evt.getVaultDescription());
 				case VaultUpdatedEvent evt -> new VaultUpdatedEventDto(evt.getId(), evt.getTimestamp(), VaultUpdatedEvent.TYPE, evt.updatedBy, evt.vaultId, evt.vaultName, evt.vaultDescription, evt.vaultArchived);
 				case VaultAccessGrantedEvent evt -> new VaultAccessGrantedEventDto(evt.getId(), evt.getTimestamp(), VaultAccessGrantedEvent.TYPE, evt.getGrantedBy(), evt.getVaultId(), evt.getAuthorityId());
-				case VaultKeyRetrievedEvent evt -> new VaultKeyRetrievedEventDto(evt.getId(), evt.getTimestamp(), VaultKeyRetrievedEvent.TYPE, evt.retrievedBy, evt.vaultId, evt.result);
+				case VaultKeyRetrievedEvent evt -> new VaultKeyRetrievedEventDto(evt.getId(), evt.getTimestamp(), VaultKeyRetrievedEvent.TYPE, evt.getRetrievedBy(), evt.getVaultId(), evt.getResult());
 				case VaultMemberAddedEvent evt -> new VaultMemberAddedEventDto(evt.getId(), evt.getTimestamp(), VaultMemberAddedEvent.TYPE, evt.addedBy, evt.vaultId, evt.authorityId, evt.role);
 				case VaultMemberRemovedEvent evt -> new VaultMemberRemovedEventDto(evt.getId(), evt.getTimestamp(), VaultMemberRemovedEvent.TYPE, evt.removedBy, evt.vaultId, evt.authorityId);
 				case VaultMemberUpdatedEvent evt -> new VaultMemberUpdatedEventDto(evt.getId(), evt.getTimestamp(), VaultMemberUpdatedEvent.TYPE, evt.updatedBy, evt.vaultId, evt.authorityId, evt.role);
