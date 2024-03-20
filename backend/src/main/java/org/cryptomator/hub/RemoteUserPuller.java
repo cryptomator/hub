@@ -5,8 +5,11 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import org.cryptomator.hub.entities.Authority;
+import org.cryptomator.hub.entities.AuthorityRepository;
 import org.cryptomator.hub.entities.Group;
+import org.cryptomator.hub.entities.GroupRepository;
 import org.cryptomator.hub.entities.User;
+import org.cryptomator.hub.entities.UserRepository;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -18,19 +21,25 @@ import java.util.stream.Collectors;
 public class RemoteUserPuller {
 
 	@Inject
+	AuthorityRepository authorityRepo;
+	@Inject
+	GroupRepository groupRepo;
+	@Inject
+	UserRepository userRepo;
+	@Inject
 	RemoteUserProvider remoteUserProvider;
 
 	@Scheduled(every = "{hub.keycloak.syncer-period}")
 	void sync() {
-		var keycloakGroups = remoteUserProvider.groups().stream().collect(Collectors.toMap(g -> g.id, Function.identity()));
-		var keycloakUsers = remoteUserProvider.users().stream().collect(Collectors.toMap(u -> u.id, Function.identity()));
+		var keycloakGroups = remoteUserProvider.groups().stream().collect(Collectors.toMap(Authority::getId, Function.identity()));
+		var keycloakUsers = remoteUserProvider.users().stream().collect(Collectors.toMap(Authority::getId, Function.identity()));
 		sync(keycloakGroups, keycloakUsers);
 	}
 
 	@Transactional
 	void sync(Map<String, Group> keycloakGroups, Map<String, User> keycloakUsers) {
-		var databaseGroups = Group.<Group>findAll().stream().collect(Collectors.toMap(g -> g.id, Function.identity()));
-		var databaseUsers = User.<User>findAll().stream().collect(Collectors.toMap(u -> u.id, Function.identity()));
+		var databaseGroups = groupRepo.findAll().stream().collect(Collectors.toMap(Authority::getId, Function.identity()));
+		var databaseUsers = userRepo.findAll().stream().collect(Collectors.toMap(Authority::getId, Function.identity()));
 		sync(keycloakGroups, keycloakUsers, databaseGroups, databaseUsers);
 	}
 
@@ -48,7 +57,7 @@ public class RemoteUserPuller {
 	<T extends Authority> void syncAddedAuthorities(Map<String, T> keycloakAuthorities, Map<String, T> databaseAuthorities) {
 		var addedAuthority = diff(keycloakAuthorities.keySet(), databaseAuthorities.keySet());
 		for (var id : addedAuthority) {
-			keycloakAuthorities.get(id).persist();
+			authorityRepo.persist(keycloakAuthorities.get(id));
 		}
 	}
 
@@ -56,7 +65,7 @@ public class RemoteUserPuller {
 	<T extends Authority> Set<String> syncDeletedAuthorities(Map<String, T> keycloakAuthorities, Map<String, T> databaseAuthorities) {
 		var deletedAuthorities = diff(databaseAuthorities.keySet(), keycloakAuthorities.keySet());
 		for (var id : deletedAuthorities) {
-			databaseAuthorities.get(id).delete();
+			authorityRepo.delete(keycloakAuthorities.get(id));
 		}
 		return deletedAuthorities;
 	}
@@ -67,10 +76,10 @@ public class RemoteUserPuller {
 		for (var id : updatedUsers) {
 			var dbUser = databaseUsers.get(id);
 			var kcUser = keycloakUsers.get(id);
-			dbUser.pictureUrl = kcUser.pictureUrl;
-			dbUser.name = kcUser.name;
-			dbUser.email = kcUser.email;
-			dbUser.persist();
+			dbUser.setPictureUrl(kcUser.getPictureUrl());
+			dbUser.setName(kcUser.getName());
+			dbUser.setEmail(kcUser.getEmail());
+			userRepo.persist(dbUser);
 		}
 	}
 
@@ -81,10 +90,10 @@ public class RemoteUserPuller {
 			var dbGroup = databaseGroups.get(id);
 			var kcGroup = keycloakGroups.get(id);
 
-			dbGroup.name = kcGroup.name;
+			dbGroup.setName(kcGroup.getName());
 
-			dbGroup.members.addAll(diff(kcGroup.members, dbGroup.members));
-			dbGroup.members.removeAll(diff(dbGroup.members, kcGroup.members));
+			dbGroup.getMembers().addAll(diff(kcGroup.getMembers(), dbGroup.getMembers()));
+			dbGroup.getMembers().removeAll(diff(dbGroup.getMembers(), kcGroup.getMembers()));
 			// TODO why don't we run dbGroup.persist()?
 		}
 	}

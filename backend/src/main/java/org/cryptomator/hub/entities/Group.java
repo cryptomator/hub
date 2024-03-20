@@ -20,6 +20,13 @@ public class Group extends Authority {
 			joinColumns = @JoinColumn(name = "group_id", referencedColumnName = "id"),
 			inverseJoinColumns = @JoinColumn(name = "member_id", referencedColumnName = "id")
 	)
-	public Set<Authority> members = new HashSet<>();
+	Set<Authority> members = new HashSet<>();
 
+	public Set<Authority> getMembers() {
+		return members;
+	}
+
+	public void setMembers(Set<Authority> members) {
+		this.members = members;
+	}
 }

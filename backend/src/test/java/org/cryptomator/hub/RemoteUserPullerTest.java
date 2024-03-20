@@ -1,8 +1,10 @@
 package org.cryptomator.hub;
 
 import org.cryptomator.hub.entities.Authority;
+import org.cryptomator.hub.entities.AuthorityRepository;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
+import org.cryptomator.hub.entities.UserRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -24,6 +26,8 @@ class RemoteUserPullerTest {
 
 	private final RemoteUserProvider remoteUserProvider = Mockito.mock(RemoteUserProvider.class);
 	private final User user = Mockito.mock(User.class);
+	private final AuthorityRepository authorityRepo = Mockito.mock(AuthorityRepository.class);
+	private final UserRepository userRepo = Mockito.mock(UserRepository.class);
 
 	private RemoteUserPuller remoteUserPuller;
 
@@ -65,7 +69,7 @@ class RemoteUserPullerTest {
 			remoteUserPuller.syncAddedAuthorities(keycloakAuthorities, databaseAuthorities);
 
 			for (String authorityId : addedAuthorityIds) {
-				Mockito.verify(keycloakAuthorities.get(authorityId)).persist();
+				Mockito.verify(authorityRepo).persist(keycloakAuthorities.get(authorityId));
 			}
 		}
 
@@ -97,7 +101,7 @@ class RemoteUserPullerTest {
 			remoteUserPuller.syncDeletedAuthorities(keycloakAuthorities, databaseAuthorities);
 
 			for (String authorityId : deletedAuthorityIds) {
-				Mockito.verify(databaseAuthorities.get(authorityId)).delete();
+				Mockito.verify(authorityRepo).delete(databaseAuthorities.get(authorityId));
 			}
 		}
 
@@ -132,9 +136,9 @@ class RemoteUserPullerTest {
 
 			for (String userId : updatedUserIds) {
 				var kcUser = Mockito.mock(User.class);
-				kcUser.pictureUrl = String.format("picture %s", userId);
-				kcUser.name = String.format("name %s", userId);
-				kcUser.email = String.format("email %s", userId);
+				kcUser.setPictureUrl(String.format("picture %s", userId));
+				kcUser.setName(String.format("name %s", userId));
+				kcUser.setEmail(String.format("email %s", userId));
 
 				Mockito.when(keycloakUsers.get(userId)).thenReturn(kcUser);
 				Mockito.when(databaseUsers.get(userId)).thenReturn(Mockito.mock(User.class));
@@ -144,10 +148,10 @@ class RemoteUserPullerTest {
 
 			for (String userId : updatedUserIds) {
 				var dbUser = databaseUsers.get(userId);
-				Mockito.verify(dbUser).persist();
-				Assertions.assertEquals(String.format("picture %s", userId), dbUser.pictureUrl);
-				Assertions.assertEquals(String.format("name %s", userId), dbUser.name);
-				Assertions.assertEquals(String.format("email %s", userId), dbUser.email);
+				Mockito.verify(userRepo).persist(dbUser);
+				Assertions.assertEquals(String.format("picture %s", userId), dbUser.getPictureUrl());
+				Assertions.assertEquals(String.format("name %s", userId), dbUser.getName());
+				Assertions.assertEquals(String.format("email %s", userId), dbUser.getEmail());
 			}
 		}
 
@@ -176,12 +180,12 @@ class RemoteUserPullerTest {
 
 			for (String groupId : updatedGroupIds) {
 				var kcGroup = Mockito.mock(Group.class);
-				kcGroup.name = String.format("name %s", groupId);
-				kcGroup.members = Set.of(user, otherKCUser);
+				kcGroup.setName(String.format("name %s", groupId));
+				kcGroup.setMembers(Set.of(user, otherKCUser));
 
 				var dbGroup = Mockito.mock(Group.class);
-				dbGroup.name = String.format("name %s", groupId);
-				dbGroup.members = new HashSet<>(Set.of(dbOnlyUser));
+				dbGroup.setName(String.format("name %s", groupId));
+				dbGroup.setMembers(new HashSet<>(Set.of(dbOnlyUser)));
 
 				Mockito.when(keycloakGroups.get(groupId)).thenReturn(kcGroup);
 				Mockito.when(databaseGroups.get(groupId)).thenReturn(dbGroup);
@@ -191,8 +195,8 @@ class RemoteUserPullerTest {
 
 			for (String groupId : updatedGroupIds) {
 				var dbGroup = databaseGroups.get(groupId);
-				Assertions.assertEquals(String.format("name %s", groupId), dbGroup.name);
-				Assertions.assertEquals(Set.of(user, otherKCUser), dbGroup.members);
+				Assertions.assertEquals(String.format("name %s", groupId), dbGroup.getName());
+				Assertions.assertEquals(Set.of(user, otherKCUser), dbGroup.getMembers());
 			}
 		}
 	}

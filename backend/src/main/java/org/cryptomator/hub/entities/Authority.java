@@ -1,7 +1,5 @@
 package org.cryptomator.hub.entities;
 
-import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
-import io.quarkus.panache.common.Parameters;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.Entity;
@@ -11,9 +9,7 @@ import jakarta.persistence.InheritanceType;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
 
-import java.util.List;
 import java.util.Objects;
-import java.util.stream.Stream;
 
 @Entity
 @Table(name = "authority")
@@ -31,21 +27,29 @@ import java.util.stream.Stream;
 				FROM Authority a
 				WHERE a.id IN :ids
 				""")
-public class Authority extends PanacheEntityBase { // TODO make sealed?
+public class Authority {
 
 	@Id
 	@Column(name = "id", nullable = false)
-	public String id;
+	String id;
 
 	@Column(name = "name", nullable = false)
-	public String name;
+	String name;
 
-	public static Stream<Authority> byName(String name) {
-		return find("#Authority.byName", Parameters.with("name", '%' + name.toLowerCase() + '%')).stream();
+	public String getId() {
+		return id;
 	}
 
-	public static Stream<Authority> findAllInList(List<String> ids) {
-		return find("#Authority.allInList", Parameters.with("ids", ids)).stream();
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
 	}
 
 	@Override

@@ -18,6 +18,8 @@ public class EntityIT {
 	@Inject
 	AccessTokenRepository accessTokenRepo;
 	@Inject
+	UserRepository userRepo;
+	@Inject
 	AgroalDataSource dataSource;
 
 	@Test
@@ -33,7 +35,7 @@ public class EntityIT {
 					""");
 		}
 
-		var deleted = User.deleteById("user999");
+		var deleted = userRepo.deleteById("user999");
 		var matchAfter = accessTokenRepo.findAll().stream().anyMatch(a -> "user999".equals(a.user.id));
 		Assertions.assertTrue(deleted);
 		Assertions.assertFalse(matchAfter);

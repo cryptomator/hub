@@ -20,13 +20,12 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.cryptomator.hub.entities.events.DeviceRegisteredEvent;
-import org.cryptomator.hub.entities.events.DeviceRegisteredEventRepository;
-import org.cryptomator.hub.entities.events.DeviceRemovedEvent;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.LegacyAccessToken;
 import org.cryptomator.hub.entities.LegacyDevice;
 import org.cryptomator.hub.entities.User;
+import org.cryptomator.hub.entities.UserRepository;
+import org.cryptomator.hub.entities.events.DeviceRegisteredEventRepository;
 import org.cryptomator.hub.entities.events.DeviceRemovedEventRepository;
 import org.cryptomator.hub.validation.NoHtmlOrScriptChars;
 import org.cryptomator.hub.validation.OnlyBase64Chars;
@@ -57,6 +56,8 @@ public class DeviceResource {
 	@Inject
 	DeviceRemovedEventRepository deviceRemovedEventRepo;
 	@Inject
+	UserRepository userRepo;
+	@Inject
 	JsonWebToken jwt;
 
 	@GET
@@ -86,7 +87,7 @@ public class DeviceResource {
 		} catch (NoResultException e) {
 			device = new Device();
 			device.id = deviceId;
-			device.owner = User.findById(jwt.getSubject());
+			device.owner = userRepo.findById(jwt.getSubject());
 			device.creationTime = Instant.now().truncatedTo(ChronoUnit.MILLIS);
 			device.type = dto.type != null ? dto.type : Device.Type.DESKTOP; // default to desktop for backwards compatibility
 
@@ -137,7 +138,7 @@ public class DeviceResource {
 	@APIResponse(responseCode = "200")
 	public Map<UUID, String> getLegacyAccessTokens(@PathParam("deviceId") @ValidId String deviceId) {
 		return LegacyAccessToken.getByDeviceAndOwner(deviceId, jwt.getSubject())
-				.collect(Collectors.toMap(token -> token.id.vaultId , token -> token.jwe));
+				.collect(Collectors.toMap(token -> token.id.vaultId, token -> token.jwe));
 	}
 
 	@DELETE
@@ -153,7 +154,7 @@ public class DeviceResource {
 			return Response.status(Response.Status.BAD_REQUEST).entity("deviceId cannot be empty").build();
 		}
 
-		User currentUser = User.findById(jwt.getSubject());
+		User currentUser = userRepo.findById(jwt.getSubject());
 		var maybeDevice = Device.<Device>findByIdOptional(deviceId);
 		if (maybeDevice.isPresent() && currentUser.equals(maybeDevice.get().owner)) {
 			maybeDevice.get().delete();
@@ -173,10 +174,11 @@ public class DeviceResource {
 							@JsonProperty("creationTime") Instant creationTime) {
 
 		public static DeviceDto fromEntity(Device entity) {
-			return new DeviceDto(entity.id, entity.name, entity.type, entity.publickey, entity.userPrivateKey, entity.owner.id, entity.creationTime.truncatedTo(ChronoUnit.MILLIS));
+			return new DeviceDto(entity.id, entity.name, entity.type, entity.publickey, entity.userPrivateKey, entity.owner.getId(), entity.creationTime.truncatedTo(ChronoUnit.MILLIS));
 		}
 
 	}
 
-	public record LegacyAccessTokenDto(@JsonProperty("vaultId") UUID vaultId, @JsonProperty("token") String token) {}
+	public record LegacyAccessTokenDto(@JsonProperty("vaultId") UUID vaultId, @JsonProperty("token") String token) {
+	}
 }
