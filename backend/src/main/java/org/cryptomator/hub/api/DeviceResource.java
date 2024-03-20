@@ -24,7 +24,7 @@ import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.DeviceRepository;
 import org.cryptomator.hub.entities.LegacyAccessToken;
 import org.cryptomator.hub.entities.LegacyAccessTokenRepository;
-import org.cryptomator.hub.entities.LegacyDevice;
+import org.cryptomator.hub.entities.LegacyDeviceRepository;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.UserRepository;
 import org.cryptomator.hub.entities.events.DeviceRegisteredEventRepository;
