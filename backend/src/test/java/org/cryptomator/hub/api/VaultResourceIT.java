@@ -12,7 +12,7 @@ import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Validator;
-import org.cryptomator.hub.entities.EffectiveVaultAccess;
+import org.cryptomator.hub.entities.EffectiveVaultAccessRepository;
 import org.cryptomator.hub.entities.Vault;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
@@ -59,6 +59,8 @@ public class VaultResourceIT {
 
 	@Inject
 	AgroalDataSource dataSource;
+	@Inject
+	EffectiveVaultAccessRepository effectiveVaultAccessRepo;
 
 	@Inject
 	Validator validator;
@@ -695,7 +697,7 @@ public class VaultResourceIT {
 		@Order(0)
 		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100001111/access-tokens returns 402 for [user91, user92, user93, user94]")
 		public void grantAccessExceedingSeats() {
-			assert EffectiveVaultAccess.countSeatOccupyingUsers() == 2;
+			assert effectiveVaultAccessRepo.countSeatOccupyingUsers() == 2;
 			var body = Map.of(
 					"user91", "jwe.jwe.jwe.vault1.user91", //
 					"user92", "jwe.jwe.jwe.vault1.user92", //
@@ -712,7 +714,7 @@ public class VaultResourceIT {
 		@Order(1)
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111/groups/group91 returns 402")
 		public void addGroupToVaultExceedingSeats() {
-			assert EffectiveVaultAccess.countSeatOccupyingUsers() == 2;
+			assert effectiveVaultAccessRepo.countSeatOccupyingUsers() == 2;
 
 			given().when().put("/vaults/{vaultId}/groups/{groupId}", "7E57C0DE-0000-4000-8000-000100001111", "group91")
 					.then().statusCode(402);
@@ -723,7 +725,7 @@ public class VaultResourceIT {
 		@ParameterizedTest(name = "Adding user {0} succeeds")
 		@CsvSource(value = {"0,user91", "1,user92", "2,user93"})
 		public void addUserToVaultNotExceedingSeats(String run, String userId) {
-			assert EffectiveVaultAccess.countSeatOccupyingUsers() == (2 + Integer.valueOf(run));
+			assert effectiveVaultAccessRepo.countSeatOccupyingUsers() == (2 + Integer.valueOf(run));
 
 			given().when().put("/vaults/{vaultId}/users/{usersId}", "7E57C0DE-0000-4000-8000-000100001111", userId)
 					.then().statusCode(201);
@@ -733,7 +735,7 @@ public class VaultResourceIT {
 		@Order(3)
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111/users/user94 returns 402")
 		public void addUserToVaultExceedingSeats() {
-			assert EffectiveVaultAccess.countSeatOccupyingUsers() == 5;
+			assert effectiveVaultAccessRepo.countSeatOccupyingUsers() == 5;
 
 			given().when().put("/vaults/{vaultId}/users/{usersId}", "7E57C0DE-0000-4000-8000-000100001111", "user94")
 					.then().statusCode(402);
@@ -743,7 +745,7 @@ public class VaultResourceIT {
 		@Order(4)
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111 (as user1) returns 200 with only updated name, description and archive flag, despite exceeding license")
 		public void testUpdateVaultDespiteLicenseExceeded() {
-			assert EffectiveVaultAccess.countSeatOccupyingUsers() == 5;
+			assert effectiveVaultAccessRepo.countSeatOccupyingUsers() == 5;
 			var vaultId = "7E57C0DE-0000-4000-8000-000100001111";
 
 			var vaultDto = new VaultResource.VaultDto(UUID.fromString(vaultId), "Vault 1", "This is a testvault.", false, Instant.parse("2222-11-11T11:11:11Z"), "someVaule", -1, "doNotUpdate", "doNotUpdate", "doNotUpdate");
@@ -769,7 +771,7 @@ public class VaultResourceIT {
 						""");
 			}
 
-			assert EffectiveVaultAccess.countSeatOccupyingUsers() > 5;
+			assert effectiveVaultAccessRepo.countSeatOccupyingUsers() > 5;
 
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-0001FFFF3333");
 			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", "Test vault 4", false, Instant.parse("2112-12-21T21:12:21Z"), "masterkey3", 42, "NaCl", "authPubKey3", "authPrvKey3");
@@ -782,7 +784,7 @@ public class VaultResourceIT {
 		@Order(7)
 		@DisplayName("unlock/legacyUnlock is granted, if (effective vault user) > license seats but (effective vault user with access token) <= license seat")
 		public void testUnlockAllowedExceedingLicenseSoftLimit() throws SQLException {
-			assert EffectiveVaultAccess.countSeatOccupyingUsersWithAccessToken() <= 5;
+			assert effectiveVaultAccessRepo.countSeatOccupyingUsersWithAccessToken() <= 5;
 
 			when().get("/vaults/{vaultId}/access-token", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(200);
@@ -807,7 +809,7 @@ public class VaultResourceIT {
 							VALUES ('user94', '7E57C0DE-0000-4000-8000-000100001111', 'jwe.jwe.jwe.vault1.user94');
 						""");
 			}
-			assert EffectiveVaultAccess.countSeatOccupyingUsersWithAccessToken() > 5;
+			assert effectiveVaultAccessRepo.countSeatOccupyingUsersWithAccessToken() > 5;
 
 			when().get("/vaults/{vaultId}/access-token", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(402);

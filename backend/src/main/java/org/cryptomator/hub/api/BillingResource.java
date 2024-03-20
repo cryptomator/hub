@@ -14,7 +14,7 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.cryptomator.hub.entities.EffectiveVaultAccess;
+import org.cryptomator.hub.entities.EffectiveVaultAccessRepository;
 import org.cryptomator.hub.entities.Settings;
 import org.cryptomator.hub.license.LicenseHolder;
 import org.cryptomator.hub.validation.ValidJWS;
@@ -29,6 +29,8 @@ public class BillingResource {
 
 	@Inject
 	LicenseHolder licenseHolder;
+	@Inject
+	EffectiveVaultAccessRepository effectiveVaultAccessRepo;
 
 	@GET
 	@Path("/")
@@ -39,11 +41,13 @@ public class BillingResource {
 	@APIResponse(responseCode = "200")
 	@APIResponse(responseCode = "403", description = "only admins are allowed to get the billing information")
 	public BillingDto get() {
+		int usedSeats = (int) effectiveVaultAccessRepo.countSeatOccupyingUsers();
+		boolean isManaged = licenseHolder.isManagedInstance();
 		return Optional.ofNullable(licenseHolder.get())
-				.map(jwt -> BillingDto.fromDecodedJwt(jwt, licenseHolder))
+				.map(jwt -> BillingDto.fromDecodedJwt(jwt, usedSeats, isManaged))
 				.orElseGet(() -> {
 					var hubId = Settings.get().hubId;
-					return BillingDto.create(hubId, licenseHolder);
+					return BillingDto.create(hubId, (int) licenseHolder.getNoLicenseSeats(), usedSeats, isManaged);
 				});
 	}
 
@@ -68,22 +72,17 @@ public class BillingResource {
 							 @JsonProperty("licensedSeats") Integer licensedSeats, @JsonProperty("usedSeats") Integer usedSeats,
 							 @JsonProperty("issuedAt") Instant issuedAt, @JsonProperty("expiresAt") Instant expiresAt, @JsonProperty("managedInstance") Boolean managedInstance) {
 
-		public static BillingDto create(String hubId, LicenseHolder licenseHolder) {
-			var licensedSeats = licenseHolder.getNoLicenseSeats();
-			var usedSeats = EffectiveVaultAccess.countSeatOccupyingUsers();
-			var managedInstance = licenseHolder.isManagedInstance();
-			return new BillingDto(hubId, false, null, (int) licensedSeats, (int) usedSeats, null, null, managedInstance);
+		public static BillingDto create(String hubId, int noLicenseSeatCount, int usedSeats, boolean isManaged) {
+			return new BillingDto(hubId, false, null, noLicenseSeatCount, usedSeats, null, null, isManaged);
 		}
 
-		public static BillingDto fromDecodedJwt(DecodedJWT jwt, LicenseHolder licenseHolder) {
+		public static BillingDto fromDecodedJwt(DecodedJWT jwt, int usedSeats, boolean isManaged) {
 			var id = jwt.getId();
 			var email = jwt.getSubject();
 			var licensedSeats = jwt.getClaim("seats").asInt();
-			var usedSeats = (int) EffectiveVaultAccess.countSeatOccupyingUsers();
 			var issuedAt = jwt.getIssuedAt().toInstant();
 			var expiresAt = jwt.getExpiresAt().toInstant();
-			var managedInstance = licenseHolder.isManagedInstance();
-			return new BillingDto(id, true, email, licensedSeats, usedSeats, issuedAt, expiresAt, managedInstance);
+			return new BillingDto(id, true, email, licensedSeats, usedSeats, issuedAt, expiresAt, isManaged);
 		}
 
 	}

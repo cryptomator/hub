@@ -33,7 +33,7 @@ import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.AccessToken;
 import org.cryptomator.hub.entities.AccessTokenRepository;
 import org.cryptomator.hub.entities.Authority;
-import org.cryptomator.hub.entities.EffectiveVaultAccess;
+import org.cryptomator.hub.entities.EffectiveVaultAccessRepository;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.GroupRepository;
 import org.cryptomator.hub.entities.LegacyAccessToken;
@@ -97,6 +97,8 @@ public class VaultResource {
 	GroupRepository groupRepo;
 	@Inject
 	UserRepository userRepo;
+	@Inject
+	EffectiveVaultAccessRepository effectiveVaultAccessRepo;
 
 	@Inject
 	JsonWebToken jwt;
@@ -179,13 +181,13 @@ public class VaultResource {
 	public Response addUser(@PathParam("vaultId") UUID vaultId, @PathParam("userId") @ValidId String userId, @QueryParam("role") @DefaultValue("MEMBER") VaultAccess.Role role) {
 		var vault = Vault.<Vault>findById(vaultId); // should always be found, since @VaultRole filter would have triggered
 		var user = userRepo.findByIdOptional(userId).orElseThrow(NotFoundException::new);
-		var usedSeats = EffectiveVaultAccess.countSeatOccupyingUsers();
+		var usedSeats = effectiveVaultAccessRepo.countSeatOccupyingUsers();
 		//check if license seats are free
 		if (usedSeats < license.getSeats()) {
 			return addAuthority(vault, user, role);
 		}
 		// else check, if all seats are taken, but the person to add is already sitting
-		if (usedSeats == license.getSeats() && EffectiveVaultAccess.isUserOccupyingSeat(userId)) {
+		if (usedSeats == license.getSeats() && effectiveVaultAccessRepo.isUserOccupyingSeat(userId)) {
 			return addAuthority(vault, user, role);
 		}
 		//otherwise block
@@ -211,7 +213,7 @@ public class VaultResource {
 		var group = groupRepo.findByIdOptional(groupId).orElseThrow(NotFoundException::new);
 
 		//usersInGroup - usersInGroupAndPartOfAtLeastOneVault + usersOfAtLeastOneVault
-		if (userRepo.countEffectiveGroupUsers(groupId) - EffectiveVaultAccess.countSeatOccupyingUsersOfGroup(groupId) + EffectiveVaultAccess.countSeatOccupyingUsers() > license.getSeats()) {
+		if (userRepo.countEffectiveGroupUsers(groupId) - effectiveVaultAccessRepo.countSeatOccupyingUsersOfGroup(groupId) + effectiveVaultAccessRepo.countSeatOccupyingUsers() > license.getSeats()) {
 			throw new PaymentRequiredException("Number of effective vault users greater than or equal to the available license seats");
 		}
 
@@ -287,7 +289,7 @@ public class VaultResource {
 			throw new GoneException("Vault is archived.");
 		}
 
-		var accessTokenSeats = EffectiveVaultAccess.countSeatOccupyingUsersWithAccessToken();
+		var accessTokenSeats = effectiveVaultAccessRepo.countSeatOccupyingUsersWithAccessToken();
 		if (accessTokenSeats > license.getSeats()) {
 			throw new PaymentRequiredException("Number of effective vault users exceeds available license seats");
 		}
@@ -324,7 +326,7 @@ public class VaultResource {
 			throw new GoneException("Vault is archived.");
 		}
 
-		var accessTokenSeats = EffectiveVaultAccess.countSeatOccupyingUsersWithAccessToken();
+		var accessTokenSeats = effectiveVaultAccessRepo.countSeatOccupyingUsersWithAccessToken();
 		if (accessTokenSeats > license.getSeats()) {
 			throw new PaymentRequiredException("Number of effective vault users exceeds available license seats");
 		}
@@ -367,8 +369,8 @@ public class VaultResource {
 		}
 
 		// check number of available seats
-		long occupiedSeats = EffectiveVaultAccess.countSeatOccupyingUsers();
-		long usersWithoutSeat = tokens.size() - EffectiveVaultAccess.countSeatsOccupiedByUsers(tokens.keySet().stream().toList());
+		long occupiedSeats = effectiveVaultAccessRepo.countSeatOccupyingUsers();
+		long usersWithoutSeat = tokens.size() - effectiveVaultAccessRepo.countSeatsOccupiedByUsers(tokens.keySet().stream().toList());
 
 		if (occupiedSeats + usersWithoutSeat > license.getSeats()) {
 			throw new PaymentRequiredException("Number of effective vault users greater than or equal to the available license seats");
@@ -427,7 +429,7 @@ public class VaultResource {
 			vault = existingVault.get();
 		} else {
 			//if license is exceeded block vault creation, independent if the user is already sitting
-			var usedSeats = EffectiveVaultAccess.countSeatOccupyingUsers();
+			var usedSeats = effectiveVaultAccessRepo.countSeatOccupyingUsers();
 			if (usedSeats > license.getSeats()) {
 				throw new PaymentRequiredException("Number of effective vault users exceeds available license seats");
 			}
