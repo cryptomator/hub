@@ -1,7 +1,5 @@
 package org.cryptomator.hub.entities;
 
-import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
-import io.quarkus.panache.common.Parameters;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EmbeddedId;
@@ -12,7 +10,6 @@ import org.hibernate.annotations.Immutable;
 
 import java.io.Serializable;
 import java.util.Objects;
-import java.util.stream.Stream;
 
 @Entity
 @Immutable
@@ -32,12 +29,12 @@ import java.util.stream.Stream;
 public class EffectiveGroupMembership {
 
 	@EmbeddedId
-	EffectiveGroupMembershipId id;
+	Id id;
 
 	String path;
 
 	@Embeddable
-	public static class EffectiveGroupMembershipId implements Serializable {
+	public static class Id implements Serializable {
 
 		@Column(name = "group_id")
 		public String groupId;
@@ -48,7 +45,7 @@ public class EffectiveGroupMembership {
 		@Override
 		public boolean equals(Object o) {
 			if (this == o) return true;
-			if (o instanceof EffectiveGroupMembershipId egmId) {
+			if (o instanceof Id egmId) {
 				return Objects.equals(groupId, egmId.groupId) //
 						&& Objects.equals(memberId, egmId.memberId);
 			}
