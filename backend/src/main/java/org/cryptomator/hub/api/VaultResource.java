@@ -37,6 +37,7 @@ import org.cryptomator.hub.entities.EffectiveVaultAccessRepository;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.GroupRepository;
 import org.cryptomator.hub.entities.LegacyAccessToken;
+import org.cryptomator.hub.entities.LegacyAccessTokenRepository;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.UserRepository;
 import org.cryptomator.hub.entities.Vault;
@@ -99,6 +100,8 @@ public class VaultResource {
 	UserRepository userRepo;
 	@Inject
 	EffectiveVaultAccessRepository effectiveVaultAccessRepo;
+	@Inject
+	LegacyAccessTokenRepository legacyAccessTokenRepo;
 
 	@Inject
 	JsonWebToken jwt;
@@ -294,12 +297,12 @@ public class VaultResource {
 			throw new PaymentRequiredException("Number of effective vault users exceeds available license seats");
 		}
 
-		var access = LegacyAccessToken.unlock(vaultId, deviceId, jwt.getSubject());
+		var access = legacyAccessTokenRepo.unlock(vaultId, deviceId, jwt.getSubject());
 		if (access != null) {
 			vaultKeyRetrievedEventRepo.log(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.SUCCESS);
 			var subscriptionStateHeaderName = "Hub-Subscription-State";
 			var subscriptionStateHeaderValue = license.isSet() ? "ACTIVE" : "INACTIVE"; // license expiration is not checked here, because it is checked in the ActiveLicense filter
-			return Response.ok(access.jwe).header(subscriptionStateHeaderName, subscriptionStateHeaderValue).build();
+			return Response.ok(access.getJwe()).header(subscriptionStateHeaderName, subscriptionStateHeaderValue).build();
 		} else {
 			vaultKeyRetrievedEventRepo.log(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.UNAUTHORIZED);
 			throw new ForbiddenException("Access to this device not granted.");

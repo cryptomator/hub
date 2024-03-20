@@ -31,31 +31,28 @@ import java.util.stream.Stream;
 		WHERE token.id.deviceId = :deviceId AND device.ownerId = :userId
 		""")
 @Deprecated
-public class LegacyAccessToken extends PanacheEntityBase {
+public class LegacyAccessToken {
 
 	@EmbeddedId
-	public AccessId id = new AccessId();
+	AccessId id = new AccessId();
 
 	@Column(name = "jwe", nullable = false)
-	public String jwe;
+	String jwe;
 
-	public static LegacyAccessToken unlock(UUID vaultId, String deviceId, String userId) {
-		try {
-			return getEntityManager().createNamedQuery("LegacyAccessToken.get", LegacyAccessToken.class) //
-					.setParameter("deviceId", deviceId) //
-					.setParameter("vaultId", vaultId) //
-					.setParameter("userId", userId) //
-					.getSingleResult();
-		} catch (NoResultException e) {
-			return null;
-		}
+	public AccessId getId() {
+		return id;
 	}
 
-	public static Stream<LegacyAccessToken> getByDeviceAndOwner(String deviceId, String userId) {
-		return getEntityManager().createNamedQuery("LegacyAccessToken.getByDevice", LegacyAccessToken.class) //
-				.setParameter("deviceId", deviceId) //
-				.setParameter("userId", userId) //
-				.getResultStream();
+	public void setId(AccessId id) {
+		this.id = id;
+	}
+
+	public String getJwe() {
+		return jwe;
+	}
+
+	public void setJwe(String jwe) {
+		this.jwe = jwe;
 	}
 
 	@Override
@@ -84,10 +81,26 @@ public class LegacyAccessToken extends PanacheEntityBase {
 	public static class AccessId implements Serializable {
 
 		@Column(name = "device_id", nullable = false)
-		public String deviceId;
+		String deviceId;
 
 		@Column(name = "vault_id", nullable = false)
-		public UUID vaultId;
+		UUID vaultId;
+
+		public String getDeviceId() {
+			return deviceId;
+		}
+
+		public void setDeviceId(String deviceId) {
+			this.deviceId = deviceId;
+		}
+
+		public UUID getVaultId() {
+			return vaultId;
+		}
+
+		public void setVaultId(UUID vaultId) {
+			this.vaultId = vaultId;
+		}
 
 		public AccessId(String deviceId, UUID vaultId) {
 			this.deviceId = deviceId;

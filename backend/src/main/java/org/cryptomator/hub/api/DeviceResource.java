@@ -23,6 +23,7 @@ import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.DeviceRepository;
 import org.cryptomator.hub.entities.LegacyAccessToken;
+import org.cryptomator.hub.entities.LegacyAccessTokenRepository;
 import org.cryptomator.hub.entities.LegacyDevice;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.UserRepository;
@@ -60,6 +61,9 @@ public class DeviceResource {
 	UserRepository userRepo;
 	@Inject
 	DeviceRepository deviceRepo;
+	@Inject
+	LegacyAccessTokenRepository legacyAccessTokenRepo;
+
 	@Inject
 	JsonWebToken jwt;
 
@@ -140,8 +144,8 @@ public class DeviceResource {
 	@Operation(summary = "list legacy access tokens", description = "get all legacy access tokens for this device ({vault1: token1, vault1: token2, ...}). The device must be owned by the currently logged-in user")
 	@APIResponse(responseCode = "200")
 	public Map<UUID, String> getLegacyAccessTokens(@PathParam("deviceId") @ValidId String deviceId) {
-		return LegacyAccessToken.getByDeviceAndOwner(deviceId, jwt.getSubject())
-				.collect(Collectors.toMap(token -> token.id.vaultId, token -> token.jwe));
+		return legacyAccessTokenRepo.getByDeviceAndOwner(deviceId, jwt.getSubject())
+				.collect(Collectors.toMap(token -> token.getId().getVaultId(), LegacyAccessToken::getJwe));
 	}
 
 	@DELETE
