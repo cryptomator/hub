@@ -63,6 +63,8 @@ public class DeviceResource {
 	DeviceRepository deviceRepo;
 	@Inject
 	LegacyAccessTokenRepository legacyAccessTokenRepo;
+	@Inject
+	LegacyDeviceRepository legacyDeviceRepo;
 
 	@Inject
 	JsonWebToken jwt;
@@ -98,8 +100,8 @@ public class DeviceResource {
 			device.setCreationTime(Instant.now().truncatedTo(ChronoUnit.MILLIS));
 			device.setType(dto.type != null ? dto.type : Device.Type.DESKTOP); // default to desktop for backwards compatibilit);
 
-			if (LegacyDevice.deleteById(device.getId())) {
-				assert LegacyDevice.findById(device.getId()) == null;
+			if (legacyDeviceRepo.deleteById(device.getId())) {
+				assert legacyDeviceRepo.findById(device.getId()) == null;
 				LOG.info("Deleted Legacy Device during re-registration of Device " + deviceId);
 			}
 		}
