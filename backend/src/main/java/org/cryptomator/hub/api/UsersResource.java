@@ -18,6 +18,7 @@ import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.AccessToken;
 import org.cryptomator.hub.entities.AccessTokenRepository;
 import org.cryptomator.hub.entities.Device;
+import org.cryptomator.hub.entities.DeviceRepository;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.UserRepository;
 import org.cryptomator.hub.entities.Vault;
@@ -46,6 +47,8 @@ public class UsersResource {
 	VaultAccessGrantedEventRepository vaultAccessGrantedEventRepo;
 	@Inject
 	UserRepository userRepo;
+	@Inject
+	DeviceRepository deviceRepo;
 
 	@Inject
 	JsonWebToken jwt;
@@ -114,7 +117,7 @@ public class UsersResource {
 	@APIResponse(responseCode = "404", description = "no user matching the subject of the JWT passed as Bearer Token")
 	public UserDto getMe(@QueryParam("withDevices") boolean withDevices) {
 		User user = userRepo.findById(jwt.getSubject());
-		Function<Device, DeviceResource.DeviceDto> mapDevices = d -> new DeviceResource.DeviceDto(d.id, d.name, d.type, d.publickey, d.userPrivateKey, d.owner.getId(), d.creationTime.truncatedTo(ChronoUnit.MILLIS));
+		Function<Device, DeviceResource.DeviceDto> mapDevices = d -> new DeviceResource.DeviceDto(d.getId(), d.getName(), d.getType(), d.getPublickey(), d.getUserPrivateKey(), d.getOwner().getId(), d.getCreationTime().truncatedTo(ChronoUnit.MILLIS));
 		var devices = withDevices ? user.devices.stream().map(mapDevices).collect(Collectors.toSet()) : Set.<DeviceResource.DeviceDto>of();
 		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), devices, user.getPublicKey(), user.getPrivateKey(), user.getSetupCode());
 	}
@@ -132,7 +135,7 @@ public class UsersResource {
 		user.setPrivateKey(null);
 		user.setSetupCode(null);
 		userRepo.persist(user);
-		Device.deleteByOwner(user.getId());
+		deviceRepo.deleteByOwner(user.getId());
 		accessTokenRepo.deleteByUser(user.getId());
 		return Response.noContent().build();
 	}
