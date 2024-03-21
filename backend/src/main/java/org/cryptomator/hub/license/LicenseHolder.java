@@ -4,11 +4,14 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import io.quarkus.scheduler.Scheduled;
+import io.quarkus.scheduler.ScheduledExecution;
+import io.smallrye.common.annotation.NonBlocking;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import org.cryptomator.hub.entities.Settings;
+import org.cryptomator.hub.entities.SettingsRepository;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
@@ -20,13 +23,14 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @ApplicationScoped
-public class LicenseHolder {
+public class LicenseHolder implements Scheduled.SkipPredicate {
+
+	private static final int SELFHOSTED_NOLICENSE_SEATS = 5;
+	private static final int MANAGED_NOLICENSE_SEATS = 0;
 
 	@Inject
 	@ConfigProperty(name = "hub.managed-instance", defaultValue = "false")
@@ -38,13 +42,15 @@ public class LicenseHolder {
 
 	@Inject
 	@ConfigProperty(name = "hub.initial-license")
-	Optional<String> initialLicense;
+	Optional<String> initialLicenseToken;
 
 	@Inject
 	LicenseValidator licenseValidator;
 
 	@Inject
 	RandomMinuteSleeper randomMinuteSleeper;
+	@Inject
+	SettingsRepository settingsRepo;
 
 	private static final Logger LOG = Logger.getLogger(LicenseHolder.class);
 	private DecodedJWT license;
@@ -54,36 +60,35 @@ public class LicenseHolder {
 	 */
 	@PostConstruct
 	void init() {
-		var settings = Settings.get();
-		if (settings.licenseKey != null) {
-			validateLicense(settings.licenseKey, settings.hubId);
-		} else if (initialId.isPresent() && initialLicense.isPresent()) {
-			applyInitialHubIdAndLicense(initialId.get(), initialLicense.get());
+		var settings = settingsRepo.get();
+		if (settings.getLicenseKey() != null && settings.getHubId() != null) {
+			validateOrResetExistingLicense(settings);
+		} else if (initialLicenseToken.isPresent() && initialId.isPresent()) {
+			validateAndApplyInitLicense(settings, initialLicenseToken.get(), initialId.get() );
 		}
 	}
 
 	@Transactional
-	void validateLicense(String licenseKey, String hubId) {
+	void validateOrResetExistingLicense(Settings settings) {
 		try {
-			this.license = licenseValidator.validate(licenseKey, hubId);
+			this.license = licenseValidator.validate(settings.getLicenseKey(), settings.getHubId());
 		} catch (JWTVerificationException e) {
-			LOG.warn("Provided license is invalid. Deleting entry. Please add the license over the REST API again.");
-			var settings = Settings.get();
-			settings.licenseKey = null;
-			settings.persistAndFlush();
+			LOG.warn("License in database is invalid or does not match hubId", e);
+			LOG.warn("Deleting license entry. Please add the license over the REST API again.");
+			settings.setLicenseKey(null);
+			settingsRepo.persistAndFlush(settings);
 		}
 	}
 
 	@Transactional
-	void applyInitialHubIdAndLicense(String initialId, String initialLicense) {
+	void validateAndApplyInitLicense(Settings settings, String initialLicenseToken, String initialHubId) {
 		try {
-			this.license = licenseValidator.validate(initialLicense, initialId);
-			var settings = Settings.get();
-			settings.licenseKey = initialLicense;
-			settings.hubId = initialId;
-			settings.persistAndFlush();
+			this.license = licenseValidator.validate(initialLicenseToken, initialHubId);
+			settings.setLicenseKey(initialLicenseToken);
+			settings.setHubId(initialHubId);
+			settingsRepo.persistAndFlush(settings);
 		} catch (JWTVerificationException e) {
-			LOG.warn("Provided initial license is invalid.");
+			LOG.warn("Provided initial license is invalid or does not match inital hubId.", e);
 		}
 	}
 
@@ -95,52 +100,58 @@ public class LicenseHolder {
 	 */
 	@Transactional
 	public void set(String token) throws JWTVerificationException {
-		Objects.requireNonNull(token);
-
-		var settings = Settings.get();
-		this.license = licenseValidator.validate(token, settings.hubId);
-		settings.licenseKey = token;
-		settings.persistAndFlush();
+		var settings = settingsRepo.get();
+		this.license = licenseValidator.validate(token, settings.getHubId());
+		settings.setLicenseKey(token);
+		settingsRepo.persistAndFlush(settings);
 	}
 
 	/**
 	 * Attempts to refresh the Hub licence every day between 01:00:00 and 02:00:00 AM UTC if claim refreshURL is present.
 	 */
-	@Scheduled(cron = "0 0 1 * * ?", timeZone = "UTC", concurrentExecution = Scheduled.ConcurrentExecution.SKIP)
-	void refreshLicenseScheduler() throws InterruptedException {
-		if (license != null) {
-			randomMinuteSleeper.sleep(); // add random sleep between [0,59]min to reduce infrastructure load
-			var refreshUrl = licenseValidator.refreshUrl(license.getToken());
-			if (refreshUrl.isPresent()) {
-				var client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build();
-				refreshLicense(refreshUrl.get(), license.getToken(), client);
+	@Scheduled(cron = "0 0 1 * * ?", timeZone = "UTC", concurrentExecution = Scheduled.ConcurrentExecution.SKIP, skipExecutionIf = LicenseHolder.class)
+	@NonBlocking
+	void refreshLicense() throws InterruptedException {
+		randomMinuteSleeper.sleep(); // add random sleep between [0,59]min to reduce infrastructure load
+		var refreshUrlClaim = get().getClaim("refreshUrl");
+		if (refreshUrlClaim != null) {
+			try {
+				var refreshUrl = URI.create(refreshUrlClaim.asString());
+				var refreshedLicense = requestLicenseRefresh(refreshUrl, get().getToken());
+				set(refreshedLicense);
+			} catch (LicenseRefreshFailedException lrfe) {
+				LOG.errorv("Failed to refresh license token. Request to {0} was answerd with response code {1,number,integer}", refreshUrlClaim, lrfe.statusCode);
+			} catch (IllegalArgumentException | IOException e) {
+				LOG.error("Failed to refresh license token", e);
+			} catch (JWTVerificationException jve) {
+				LOG.error("Failed to refresh license token. Refreshed token is invalid.", jve);
 			}
 		}
 	}
 
 	//visible for testing
-	void refreshLicense(String refreshUrl, String license, HttpClient client) throws InterruptedException {
-		var parameters = Map.of("token", license);
-		var body = parameters.entrySet() //
-				.stream() //
-				.map(e -> e.getKey() + "=" + URLEncoder.encode(e.getValue(), StandardCharsets.UTF_8)) //
-				.collect(Collectors.joining("&"));
-		var request = HttpRequest.newBuilder() //
-				.uri(URI.create(refreshUrl)) //
-				.headers("Content-Type", "application/x-www-form-urlencoded") //
-				.POST(HttpRequest.BodyPublishers.ofString(body)) //
-				.version(HttpClient.Version.HTTP_1_1) //
-				.build();
-		try {
+	String requestLicenseRefresh(URI refreshUrl, String licenseToken) throws InterruptedException, IOException, LicenseRefreshFailedException {
+		try (var client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build()) {
+			var body = "token=" + URLEncoder.encode(licenseToken, StandardCharsets.UTF_8);
+			var request = HttpRequest.newBuilder() //
+					.uri(refreshUrl) //
+					.headers("Content-Type", "application/x-www-form-urlencoded") //
+					.POST(HttpRequest.BodyPublishers.ofString(body)) //
+					.version(HttpClient.Version.HTTP_1_1) //
+					.build();
 			var response = client.send(request, HttpResponse.BodyHandlers.ofString());
 			if (response.statusCode() == 200 && !response.body().isEmpty()) {
-				set(response.body());
+				return response.body();
 			} else {
-				LOG.error("Failed to refresh license token with response code: " + response.statusCode());
+				throw new LicenseRefreshFailedException(response.statusCode(), body);
 			}
-		} catch (IOException | JWTVerificationException e) {
-			LOG.error("Failed to refresh license token", e);
 		}
+	}
+
+	//necessary for skipExecutionIf
+	@Override
+	public boolean test(ScheduledExecution execution) {
+		return license == null;
 	}
 
 	public DecodedJWT get() {
@@ -150,7 +161,7 @@ public class LicenseHolder {
 	/**
 	 * Checks if the license is set.
 	 *
-	 * @return {@code true}, if the license _is set_. Otherwise false.
+	 * @return {@code true}, if the license _is not null_. Otherwise false.
 	 */
 	public boolean isSet() {
 		return license != null;
@@ -159,7 +170,7 @@ public class LicenseHolder {
 	/**
 	 * Checks if the license is expired.
 	 *
-	 * @return {@code true}, if the license _is set and expired_. Otherwise false.
+	 * @return {@code true}, if the license _is not nul and expired_. Otherwise false.
 	 */
 	public boolean isExpired() {
 		return Optional.ofNullable(license) //
@@ -170,7 +181,7 @@ public class LicenseHolder {
 	/**
 	 * Gets the number of seats in the license
 	 *
-	 * @return Number of seats of the license, if license is not null. Otherwise {@value SelfHostedNoLicenseConstants#SEATS}.
+	 * @return Number of seats of the license, if license is not null. Otherwise {@value SELFHOSTED_NOLICENSE_SEATS}.
 	 */
 	public long getSeats() {
 		return Optional.ofNullable(license) //
@@ -179,11 +190,11 @@ public class LicenseHolder {
 				.orElseGet(this::getNoLicenseSeats);
 	}
 
-	public long getNoLicenseSeats() {
+	private long getNoLicenseSeats() {
 		if (!managedInstance) {
-			return SelfHostedNoLicenseConstants.SEATS;
+			return SELFHOSTED_NOLICENSE_SEATS;
 		} else {
-			return ManagedInstanceNoLicenseConstants.SEATS;
+			return MANAGED_NOLICENSE_SEATS;
 		}
 	}
 
@@ -191,20 +202,13 @@ public class LicenseHolder {
 		return managedInstance;
 	}
 
-	public static class SelfHostedNoLicenseConstants {
-		public static final long SEATS = 5;
+	static class LicenseRefreshFailedException extends RuntimeException {
+		final int statusCode;
+		final String body;
 
-		private SelfHostedNoLicenseConstants() {
-			throw new IllegalStateException("Utility class");
+		LicenseRefreshFailedException(int statusCode, String body) {
+			this.statusCode = statusCode;
+			this.body = body;
 		}
 	}
-
-	public static class ManagedInstanceNoLicenseConstants {
-		public static final long SEATS = 0;
-
-		private ManagedInstanceNoLicenseConstants() {
-			throw new IllegalStateException("Utility class");
-		}
-	}
-
 }

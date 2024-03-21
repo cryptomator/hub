@@ -15,7 +15,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.EffectiveVaultAccessRepository;
-import org.cryptomator.hub.entities.Settings;
+import org.cryptomator.hub.entities.SettingsRepository;
 import org.cryptomator.hub.license.LicenseHolder;
 import org.cryptomator.hub.validation.ValidJWS;
 import org.eclipse.microprofile.openapi.annotations.Operation;
@@ -31,6 +31,8 @@ public class BillingResource {
 	LicenseHolder licenseHolder;
 	@Inject
 	EffectiveVaultAccessRepository effectiveVaultAccessRepo;
+	@Inject
+	SettingsRepository settingsRepo;
 
 	@GET
 	@Path("/")
@@ -46,8 +48,8 @@ public class BillingResource {
 		return Optional.ofNullable(licenseHolder.get())
 				.map(jwt -> BillingDto.fromDecodedJwt(jwt, usedSeats, isManaged))
 				.orElseGet(() -> {
-					var hubId = Settings.get().hubId;
-					return BillingDto.create(hubId, (int) licenseHolder.getNoLicenseSeats(), usedSeats, isManaged);
+					var hubId = settingsRepo.get().getHubId();
+					return BillingDto.create(hubId, (int) licenseHolder.getSeats(), usedSeats, isManaged);
 				});
 	}
 

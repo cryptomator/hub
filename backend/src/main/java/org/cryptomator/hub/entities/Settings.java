@@ -1,6 +1,5 @@
 package org.cryptomator.hub.entities;
 
-import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -10,19 +9,43 @@ import java.util.Objects;
 
 @Entity
 @Table(name = "settings")
-public class Settings extends PanacheEntityBase {
+public class Settings {
 
-	private static final int SINGLETON_ID = 0;
+	static final int SINGLETON_ID = 0;
 
 	@Id
 	@Column(name = "id", nullable = false, updatable = false)
-	public int id;
+	int id;
 
 	@Column(name = "hub_id", nullable = false)
-	public String hubId;
+	String hubId;
 
 	@Column(name = "license_key")
-	public String licenseKey;
+	String licenseKey;
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+	public String getHubId() {
+		return hubId;
+	}
+
+	public void setHubId(String hubId) {
+		this.hubId = hubId;
+	}
+
+	public String getLicenseKey() {
+		return licenseKey;
+	}
+
+	public void setLicenseKey(String licenseKey) {
+		this.licenseKey = licenseKey;
+	}
 
 	@Override
 	public String toString() {
@@ -48,8 +71,5 @@ public class Settings extends PanacheEntityBase {
 		return Objects.hash(id, hubId, licenseKey);
 	}
 
-	public static Settings get() {
-		return Objects.requireNonNull(Settings.findById(SINGLETON_ID), "Settings not initialized");
-	}
 
 }
