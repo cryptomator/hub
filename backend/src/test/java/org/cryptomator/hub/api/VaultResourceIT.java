@@ -10,14 +10,15 @@ import io.quarkus.test.security.oidc.OidcSecurity;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
-import jakarta.transaction.Transactional;
 import jakarta.validation.Validator;
 import org.cryptomator.hub.entities.EffectiveVaultAccessRepository;
-import org.cryptomator.hub.entities.Vault;
+import org.cryptomator.hub.rollback.DBRollback;
+import org.flywaydb.core.Flyway;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;
@@ -61,9 +62,10 @@ public class VaultResourceIT {
 	AgroalDataSource dataSource;
 	@Inject
 	EffectiveVaultAccessRepository effectiveVaultAccessRepo;
-
 	@Inject
 	Validator validator;
+	@Inject
+	public Flyway flyway;
 
 	@BeforeAll
 	public static void beforeAll() {
@@ -227,6 +229,12 @@ public class VaultResourceIT {
 	})
 	public class AsAuthorizedUser2 {
 
+		@BeforeEach
+		public void resetDB() {
+			flyway.clean();
+			flyway.migrate();
+		}
+
 		@Test
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/access-token returns 449, because user2 is not initialized")
 		public void testUnlock() {
@@ -288,6 +296,7 @@ public class VaultResourceIT {
 		@Test
 		@Order(2)
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100003333 returns 200, updating only name, description and archive flag")
+		@DBRollback
 		public void testUpdateVault() {
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100003333");
 			var vaultDto = new VaultResource.VaultDto(uuid, "VaultUpdated", "Vault updated.", true, Instant.parse("2222-11-11T11:11:11Z"), "doNotUpdate", 27, "doNotUpdate", "doNotUpdate", "doNotUpdate");
@@ -433,12 +442,12 @@ public class VaultResourceIT {
 
 		@Test
 		@Order(5)
-		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100002222/users-requiring-access-grant does contains user2 via group membership")
+		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100002222/users-requiring-access-grant contains user2 via group membership")
 		public void testGetUsersRequiringAccess1() throws SQLException {
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
-						UPDATE
-						"user_details" SET publickey='public2', privatekey='private2', setupcode='setup2'
+						UPDATE "user_details"
+						SET publickey='public2', privatekey='private2', setupcode='setup2'
 						WHERE id='user2';
 						""");
 			}
@@ -527,6 +536,7 @@ public class VaultResourceIT {
 		@Test
 		@Order(14)
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100002222/members does not contain user2")
+		@DBRollback
 		public void getMembersOfVault2c() {
 			given().when().get("/vaults/{vaultId}/members", "7E57C0DE-0000-4000-8000-000100002222")
 					.then().statusCode(200)
@@ -627,19 +637,11 @@ public class VaultResourceIT {
 		@Test
 		@Order(8)
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/members does not contain group2")
+		@DBRollback
 		public void getMembersOfVault1b() {
 			given().when().get("/vaults/{vaultId}/members", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(200)
 					.body("id", not(hasItems("group2")));
-		}
-
-		@AfterAll
-		public void cleanup() throws SQLException {
-			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
-				s.execute("""
-						DELETE FROM "authority" WHERE ID = 'user999';
-						""");
-			}
 		}
 
 	}
@@ -842,19 +844,23 @@ public class VaultResourceIT {
 		private static Algorithm JWT_ALG;
 
 		@BeforeAll
-		@Transactional
-		public static void setup() throws GeneralSecurityException {
+		public void setup() throws GeneralSecurityException, SQLException {
 			var keyPairGen = KeyPairGenerator.getInstance("EC");
 			keyPairGen.initialize(new ECGenParameterSpec("secp384r1"));
 			var keyPair = keyPairGen.generateKeyPair();
 			JWT_ALG = Algorithm.ECDSA384((ECPrivateKey) keyPair.getPrivate());
+			var authPubKey = Base64.getEncoder().encodeToString(keyPair.getPublic().getEncoded());
 
-			Vault v = new Vault();
-			v.id = UUID.fromString("7E57C0DE-0000-4000-8000-000100009999");
-			v.name = "ownership-test-vault";
-			v.creationTime = Instant.now();
-			v.authenticationPublicKey = Base64.getEncoder().encodeToString(keyPair.getPublic().getEncoded());
-			v.persist();
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
+				s.execute("""
+						INSERT INTO "vault" ("id", "name", "description", "creation_time", "salt", "iterations", "masterkey", "auth_pubkey", "auth_prvkey", "archived")
+						VALUES
+						('7E57C0DE-0000-4000-8000-000100009999', 'ownership-test-vault', 'Testing ownership.', '2020-02-20 20:20:20', NULL, NULL , NULL,
+						 '%s',
+						 NULL,
+						 FALSE);
+						""".formatted(authPubKey));
+			}
 		}
 
 		@Test

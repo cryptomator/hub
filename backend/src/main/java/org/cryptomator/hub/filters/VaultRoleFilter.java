@@ -9,10 +9,9 @@ import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.container.ResourceInfo;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.ext.Provider;
-import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.entities.EffectiveVaultAccessRepository;
-import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.entities.VaultAccess;
+import org.cryptomator.hub.entities.VaultRepository;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 
 import java.util.Arrays;
@@ -33,6 +32,8 @@ public class VaultRoleFilter implements ContainerRequestFilter {
 
 	@Inject
 	EffectiveVaultAccessRepository effectiveVaultAccessRepo;
+	@Inject
+	VaultRepository vaultRepo;
 
 	@Context
 	ResourceInfo resourceInfo;
@@ -54,7 +55,7 @@ public class VaultRoleFilter implements ContainerRequestFilter {
 		}
 
 		var forbiddenMsg = "Vault role required: " + Arrays.stream(annotation.value()).map(VaultAccess.Role::name).collect(Collectors.joining(", "));
-		if (Vault.findByIdOptional(vaultId).isPresent()) {
+		if (vaultRepo.findByIdOptional(vaultId).isPresent()) {
 			// check permissions for existing vault:
 			var effectiveRoles = effectiveVaultAccessRepo.listRoles(vaultId, userId);
 			if (Arrays.stream(annotation.value()).noneMatch(effectiveRoles::contains)) {

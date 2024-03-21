@@ -1,7 +1,5 @@
 package org.cryptomator.hub.entities;
 
-import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
-import io.quarkus.panache.common.Parameters;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -22,13 +20,11 @@ import java.security.spec.X509EncodedKeySpec;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Entity
 @Table(name = "vault")
@@ -52,11 +48,11 @@ import java.util.stream.Stream;
 				WHERE v.id IN :ids
 				"""
 )
-public class Vault extends PanacheEntityBase {
+public class Vault {
 
 	@Id
 	@Column(name = "id", nullable = false)
-	public UUID id;
+	UUID id;
 
 	@ManyToMany
 	@Immutable
@@ -64,7 +60,7 @@ public class Vault extends PanacheEntityBase {
 			joinColumns = @JoinColumn(name = "vault_id", referencedColumnName = "id"),
 			inverseJoinColumns = @JoinColumn(name = "authority_id", referencedColumnName = "id")
 	)
-	public Set<Authority> directMembers = new HashSet<>();
+	Set<Authority> directMembers = new HashSet<>();
 
 	@ManyToMany
 	@Immutable
@@ -72,39 +68,39 @@ public class Vault extends PanacheEntityBase {
 			joinColumns = @JoinColumn(name = "vault_id", referencedColumnName = "id"),
 			inverseJoinColumns = @JoinColumn(name = "authority_id", referencedColumnName = "id")
 	)
-	public Set<Authority> effectiveMembers = new HashSet<>();
+	Set<Authority> effectiveMembers = new HashSet<>();
 
 	@OneToMany(mappedBy = "vault", fetch = FetchType.LAZY)
-	public Set<AccessToken> accessTokens = new HashSet<>();
+	Set<AccessToken> accessTokens = new HashSet<>();
 
 	@Column(name = "name", nullable = false)
-	public String name;
+	String name;
 
 	@Column(name = "salt")
-	public String salt;
+	String salt;
 
 	@Column(name = "iterations")
-	public Integer iterations;
+	Integer iterations;
 
 	@Column(name = "masterkey")
-	public String masterkey;
+	String masterkey;
 
 	@Column(name = "auth_pubkey")
-	public String authenticationPublicKey;
+	String authenticationPublicKey;
 
 	@Column(name = "auth_prvkey")
-	public String authenticationPrivateKey;
+	String authenticationPrivateKey;
 
 	@Column(name = "creation_time", nullable = false)
-	public Instant creationTime;
+	Instant creationTime;
 
 	@Column(name = "description")
-	public String description;
+	String description;
 
 	@Column(name = "archived", nullable = false)
-	public boolean archived;
+	boolean archived;
 
-	public Optional<ECPublicKey> getAuthenticationPublicKey() {
+	public Optional<ECPublicKey> getAuthenticationPublicKeyOptional() {
 		if (authenticationPublicKey == null) {
 			return Optional.empty();
 		}
@@ -125,16 +121,108 @@ public class Vault extends PanacheEntityBase {
 		}
 	}
 
-	public static Stream<Vault> findAccessibleByUser(String userId) {
-		return find("#Vault.accessibleByUser", Parameters.with("userId", userId)).stream();
+	public UUID getId() {
+		return id;
 	}
 
-	public static Stream<Vault> findAccessibleByUser(String userId, VaultAccess.Role role) {
-		return find("#Vault.accessibleByUserAndRole", Parameters.with("userId", userId).and("role", role)).stream();
+	public void setId(UUID id) {
+		this.id = id;
 	}
 
-	public static Stream<Vault> findAllInList(List<UUID> ids) {
-		return find("#Vault.allInList", Parameters.with("ids", ids)).stream();
+	public Set<Authority> getDirectMembers() {
+		return directMembers;
+	}
+
+	public void setDirectMembers(Set<Authority> directMembers) {
+		this.directMembers = directMembers;
+	}
+
+	public Set<Authority> getEffectiveMembers() {
+		return effectiveMembers;
+	}
+
+	public void setEffectiveMembers(Set<Authority> effectiveMembers) {
+		this.effectiveMembers = effectiveMembers;
+	}
+
+	public Set<AccessToken> getAccessTokens() {
+		return accessTokens;
+	}
+
+	public void setAccessTokens(Set<AccessToken> accessTokens) {
+		this.accessTokens = accessTokens;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getSalt() {
+		return salt;
+	}
+
+	public void setSalt(String salt) {
+		this.salt = salt;
+	}
+
+	public Integer getIterations() {
+		return iterations;
+	}
+
+	public void setIterations(Integer iterations) {
+		this.iterations = iterations;
+	}
+
+	public String getMasterkey() {
+		return masterkey;
+	}
+
+	public void setMasterkey(String masterkey) {
+		this.masterkey = masterkey;
+	}
+
+	public void setAuthenticationPublicKey(String authenticationPublicKey) {
+		this.authenticationPublicKey = authenticationPublicKey;
+	}
+
+	public String getAuthenticationPrivateKey() {
+		return authenticationPrivateKey;
+	}
+
+	public String getAuthenticationPublicKey() {
+		return authenticationPublicKey;
+	}
+
+	public void setAuthenticationPrivateKey(String authenticationPrivateKey) {
+		this.authenticationPrivateKey = authenticationPrivateKey;
+	}
+
+	public Instant getCreationTime() {
+		return creationTime;
+	}
+
+	public void setCreationTime(Instant creationTime) {
+		this.creationTime = creationTime;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public boolean isArchived() {
+		return archived;
+	}
+
+	public void setArchived(boolean archived) {
+		this.archived = archived;
 	}
 
 	@Override

@@ -22,6 +22,7 @@ import org.cryptomator.hub.entities.DeviceRepository;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.UserRepository;
 import org.cryptomator.hub.entities.Vault;
+import org.cryptomator.hub.entities.VaultRepository;
 import org.cryptomator.hub.entities.events.VaultAccessGrantedEventRepository;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
@@ -49,6 +50,8 @@ public class UsersResource {
 	UserRepository userRepo;
 	@Inject
 	DeviceRepository deviceRepo;
+	@Inject
+	VaultRepository vaultRepo;
 
 	@Inject
 	JsonWebToken jwt;
@@ -89,11 +92,11 @@ public class UsersResource {
 	public Response updateMyAccessTokens(@NotNull Map<UUID, String> tokens) {
 		var user = userRepo.findById(jwt.getSubject());
 		for (var entry : tokens.entrySet()) {
-			var vault = Vault.<Vault>findById(entry.getKey());
+			var vault = vaultRepo.findById(entry.getKey());
 			if (vault == null) {
 				continue; // skip
 			}
-			var token = accessTokenRepo.findById(new AccessToken.AccessId(user.getId(), vault.id));
+			var token = accessTokenRepo.findById(new AccessToken.AccessId(user.getId(), vault.getId()));
 			if (token == null) {
 				token = new AccessToken();
 				token.setVault(vault);
@@ -101,7 +104,7 @@ public class UsersResource {
 			}
 			token.setVaultKey(entry.getValue());
 			accessTokenRepo.persist(token);
-			vaultAccessGrantedEventRepo.log(user.getId(), vault.id, user.getId());
+			vaultAccessGrantedEventRepo.log(user.getId(), vault.getId(), user.getId());
 		}
 		return Response.ok().build();
 	}
