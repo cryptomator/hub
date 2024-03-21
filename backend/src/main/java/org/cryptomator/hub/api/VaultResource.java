@@ -41,6 +41,7 @@ import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.UserRepository;
 import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.entities.VaultAccess;
+import org.cryptomator.hub.entities.VaultAccessRepository;
 import org.cryptomator.hub.entities.VaultRepository;
 import org.cryptomator.hub.entities.events.VaultAccessGrantedEventRepository;
 import org.cryptomator.hub.entities.events.VaultCreatedEventRepository;
@@ -104,6 +105,8 @@ public class VaultResource {
 	LegacyAccessTokenRepository legacyAccessTokenRepo;
 	@Inject
 	VaultRepository vaultRepo;
+	@Inject
+	VaultAccessRepository vaultAccessRepo;
 
 	@Inject
 	JsonWebToken jwt;
@@ -162,9 +165,9 @@ public class VaultResource {
 	@APIResponse(responseCode = "200")
 	@APIResponse(responseCode = "403", description = "not a vault owner")
 	public List<MemberDto> getDirectMembers(@PathParam("vaultId") UUID vaultId) {
-		return VaultAccess.forVault(vaultId).map(access -> switch (access.authority) {
-			case User u -> MemberDto.fromEntity(u, access.role);
-			case Group g -> MemberDto.fromEntity(g, access.role);
+		return vaultAccessRepo.forVault(vaultId).map(access -> switch (access.getAuthority()) {
+			case User u -> MemberDto.fromEntity(u, access.getRole());
+			case Group g -> MemberDto.fromEntity(g, access.getRole());
 			default -> throw new IllegalStateException();
 		}).toList();
 	}
@@ -227,19 +230,19 @@ public class VaultResource {
 
 	private Response addAuthority(Vault vault, Authority authority, VaultAccess.Role role) {
 		var id = new VaultAccess.Id(vault.getId(), authority.getId());
-		var existingAccess = VaultAccess.<VaultAccess>findByIdOptional(id);
+		var existingAccess = vaultAccessRepo.findByIdOptional(id);
 		if (existingAccess.isPresent()) {
 			var access = existingAccess.get();
-			access.role = role;
-			access.persist();
+			access.setRole(role);
+			vaultAccessRepo.persist(access);
 			vaultMemberUpdatedEventRepo.log(jwt.getSubject(), vault.getId(), authority.getId(), role);
 			return Response.ok().build();
 		} else {
 			var access = new VaultAccess();
-			access.vault = vault;
-			access.authority = authority;
-			access.role = role;
-			access.persist();
+			access.setVault(vault);
+			access.setAuthority(authority);
+			access.setRole(role);
+			vaultAccessRepo.persist(access);
 			vaultMemberAddedEventRepo.log(jwt.getSubject(), vault.getId(), authority.getId(), role);
 			return Response.created(URI.create(".")).build();
 		}
@@ -255,7 +258,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "204", description = "authority removed")
 	@APIResponse(responseCode = "403", description = "not a vault owner")
 	public Response removeAuthority(@PathParam("vaultId") UUID vaultId, @PathParam("authorityId") @ValidId String authorityId) {
-		if (VaultAccess.deleteById(new VaultAccess.Id(vaultId, authorityId))) {
+		if (vaultAccessRepo.deleteById(new VaultAccess.Id(vaultId, authorityId))) {
 			vaultMemberRemovedEventRepo.log(jwt.getSubject(), vaultId, authorityId);
 			return Response.status(Response.Status.NO_CONTENT).build();
 		} else {
@@ -453,10 +456,10 @@ public class VaultResource {
 			vaultCreatedEventRepo.log(currentUser.getId(), vault.getId(), vault.getName(), vault.getDescription());
 
 			var access = new VaultAccess();
-			access.vault = vault;
-			access.authority = currentUser;
-			access.role = VaultAccess.Role.OWNER;
-			access.persist();
+			access.setVault(vault);
+			access.setAuthority(currentUser);
+			access.setRole(VaultAccess.Role.OWNER);
+			vaultAccessRepo.persist(access);
 			vaultMemberAddedEventRepo.log(currentUser.getId(), vaultId, currentUser.getId(), VaultAccess.Role.OWNER);
 			return Response.created(URI.create(".")).contentLocation(URI.create(".")).entity(VaultDto.fromEntity(vault)).type(MediaType.APPLICATION_JSON).build();
 		} else {
@@ -496,18 +499,18 @@ public class VaultResource {
 			throw new BadRequestException("Invalid proof of ownership", e);
 		}
 
-		Optional<VaultAccess> existingAccess = VaultAccess.findByIdOptional(new VaultAccess.Id(vaultId, currentUser.getId()));
+		Optional<VaultAccess> existingAccess = vaultAccessRepo.findByIdOptional(new VaultAccess.Id(vaultId, currentUser.getId()));
 		if (existingAccess.isPresent()) {
 			var access = existingAccess.get();
-			access.role = VaultAccess.Role.OWNER;
-			access.persist();
+			access.setRole(VaultAccess.Role.OWNER);
+			vaultAccessRepo.persist(access);
 			vaultMemberUpdatedEventRepo.log(currentUser.getId(), vaultId, currentUser.getId(), VaultAccess.Role.OWNER);
 		} else {
 			var access = new VaultAccess();
-			access.vault = vault;
-			access.authority = currentUser;
-			access.role = VaultAccess.Role.OWNER;
-			access.persist();
+			access.setVault(vault);
+			access.setAuthority(currentUser);
+			access.setRole(VaultAccess.Role.OWNER);
+			vaultAccessRepo.persist(access);
 			vaultMemberAddedEventRepo.log(currentUser.getId(), vaultId, currentUser.getId(), VaultAccess.Role.OWNER);
 		}
 
