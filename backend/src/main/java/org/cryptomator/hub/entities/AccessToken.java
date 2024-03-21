@@ -18,7 +18,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "access_token")
 @NamedQuery(name = "AccessToken.deleteByUser", query = """
-			DELETE 
+			DELETE
 			FROM AccessToken a
 			WHERE a.id.userId = :userId
 		""")
@@ -109,6 +109,22 @@ public class AccessToken {
 
 		String userId;
 		UUID vaultId;
+
+		public String getUserId() {
+			return userId;
+		}
+
+		public void setUserId(String userId) {
+			this.userId = userId;
+		}
+
+		public UUID getVaultId() {
+			return vaultId;
+		}
+
+		public void setVaultId(UUID vaultId) {
+			this.vaultId = vaultId;
+		}
 
 		public AccessId(String userId, UUID vaultId) {
 			this.userId = userId;

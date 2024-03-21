@@ -14,18 +14,6 @@ import java.util.Objects;
 @Entity
 @Immutable
 @Table(name = "effective_group_membership")
-@NamedQuery(name = "EffectiveGroupMembership.countEGUs", query = """
-				SELECT count( DISTINCT u)
-				FROM User u
-				INNER JOIN EffectiveGroupMembership egm	ON u.id = egm.id.memberId
-				WHERE egm.id.groupId = :groupId
-		""")
-@NamedQuery(name = "EffectiveGroupMembership.getEGUs", query = """
-				SELECT DISTINCT u
-				FROM User u
-				INNER JOIN EffectiveGroupMembership egm ON u.id = egm.id.memberId
-				WHERE egm.id.groupId = :groupId
-		""")
 public class EffectiveGroupMembership {
 
 	@EmbeddedId

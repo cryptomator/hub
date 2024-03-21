@@ -67,10 +67,4 @@ public class LicenseValidator {
 		}
 		return jwt;
 	}
-
-	public Optional<String> refreshUrl(String token) throws JWTVerificationException {
-		var jwt = verifier.verify(token);
-		return Optional.ofNullable(jwt.getClaim("refreshUrl").asString());
-	}
-
 }

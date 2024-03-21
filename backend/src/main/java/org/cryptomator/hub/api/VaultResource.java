@@ -36,7 +36,6 @@ import org.cryptomator.hub.entities.Authority;
 import org.cryptomator.hub.entities.EffectiveVaultAccessRepository;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.GroupRepository;
-import org.cryptomator.hub.entities.LegacyAccessToken;
 import org.cryptomator.hub.entities.LegacyAccessTokenRepository;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.UserRepository;
