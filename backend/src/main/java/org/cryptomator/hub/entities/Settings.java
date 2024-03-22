@@ -1,5 +1,7 @@
 package org.cryptomator.hub.entities;
 
+import io.quarkus.hibernate.orm.panache.PanacheRepository;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -71,5 +73,11 @@ public class Settings {
 		return Objects.hash(id, hubId, licenseKey);
 	}
 
+	@ApplicationScoped
+	public static class Repository implements PanacheRepository<Settings> {
 
+		public Settings get() {
+			return Objects.requireNonNull(findById((long) SINGLETON_ID), "Settings not initialized");
+		}
+	}
 }

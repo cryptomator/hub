@@ -31,27 +31,21 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.AccessToken;
-import org.cryptomator.hub.entities.AccessTokenRepository;
 import org.cryptomator.hub.entities.Authority;
-import org.cryptomator.hub.entities.EffectiveVaultAccessRepository;
+import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.entities.Group;
-import org.cryptomator.hub.entities.GroupRepository;
-import org.cryptomator.hub.entities.LegacyAccessTokenRepository;
+import org.cryptomator.hub.entities.LegacyAccessToken;
 import org.cryptomator.hub.entities.User;
-import org.cryptomator.hub.entities.UserRepository;
 import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.entities.VaultAccess;
-import org.cryptomator.hub.entities.VaultAccessRepository;
-import org.cryptomator.hub.entities.VaultRepository;
-import org.cryptomator.hub.entities.events.VaultAccessGrantedEventRepository;
-import org.cryptomator.hub.entities.events.VaultCreatedEventRepository;
+import org.cryptomator.hub.entities.events.VaultAccessGrantedEvent;
+import org.cryptomator.hub.entities.events.VaultCreatedEvent;
 import org.cryptomator.hub.entities.events.VaultKeyRetrievedEvent;
-import org.cryptomator.hub.entities.events.VaultKeyRetrievedEventRepository;
-import org.cryptomator.hub.entities.events.VaultMemberAddedEventRepository;
-import org.cryptomator.hub.entities.events.VaultMemberRemovedEventRepository;
-import org.cryptomator.hub.entities.events.VaultMemberUpdatedEventRepository;
-import org.cryptomator.hub.entities.events.VaultOwnershipClaimedEventRepository;
-import org.cryptomator.hub.entities.events.VaultUpdatedEventRepository;
+import org.cryptomator.hub.entities.events.VaultMemberAddedEvent;
+import org.cryptomator.hub.entities.events.VaultMemberRemovedEvent;
+import org.cryptomator.hub.entities.events.VaultMemberUpdatedEvent;
+import org.cryptomator.hub.entities.events.VaultOwnershipClaimedEvent;
+import org.cryptomator.hub.entities.events.VaultUpdatedEvent;
 import org.cryptomator.hub.filters.ActiveLicense;
 import org.cryptomator.hub.filters.VaultRole;
 import org.cryptomator.hub.license.LicenseHolder;
@@ -78,35 +72,35 @@ import java.util.stream.Stream;
 public class VaultResource {
 
 	@Inject
-	AccessTokenRepository accessTokenRepo;
+	AccessToken.Repository accessTokenRepo;
 	@Inject
-	VaultAccessGrantedEventRepository vaultAccessGrantedEventRepo;
+	VaultAccessGrantedEvent.Repository vaultAccessGrantedEventRepo;
 	@Inject
-	VaultCreatedEventRepository vaultCreatedEventRepo;
+	VaultCreatedEvent.Repository vaultCreatedEventRepo;
 	@Inject
-	VaultKeyRetrievedEventRepository vaultKeyRetrievedEventRepo;
+	VaultKeyRetrievedEvent.Repository vaultKeyRetrievedEventRepo;
 	@Inject
-	VaultMemberAddedEventRepository vaultMemberAddedEventRepo;
+	VaultMemberAddedEvent.Repository vaultMemberAddedEventRepo;
 	@Inject
-	VaultMemberRemovedEventRepository vaultMemberRemovedEventRepo;
+	VaultMemberRemovedEvent.Repository vaultMemberRemovedEventRepo;
 	@Inject
-	VaultMemberUpdatedEventRepository vaultMemberUpdatedEventRepo;
+	VaultMemberUpdatedEvent.Repository vaultMemberUpdatedEventRepo;
 	@Inject
-	VaultOwnershipClaimedEventRepository vaultOwnershipClaimedEventRepo;
+	VaultOwnershipClaimedEvent.Repository vaultOwnershipClaimedEventRepo;
 	@Inject
-	VaultUpdatedEventRepository vaultUpdatedEventRepo;
+	VaultUpdatedEvent.Repository vaultUpdatedEventRepo;
 	@Inject
-	GroupRepository groupRepo;
+	Group.Repository groupRepo;
 	@Inject
-	UserRepository userRepo;
+	User.Repository userRepo;
 	@Inject
-	EffectiveVaultAccessRepository effectiveVaultAccessRepo;
+	EffectiveVaultAccess.Repository effectiveVaultAccessRepo;
 	@Inject
-	LegacyAccessTokenRepository legacyAccessTokenRepo;
+	LegacyAccessToken.Repository legacyAccessTokenRepo;
 	@Inject
-	VaultRepository vaultRepo;
+	Vault.Repository vaultRepo;
 	@Inject
-	VaultAccessRepository vaultAccessRepo;
+	VaultAccess.Repository vaultAccessRepo;
 
 	@Inject
 	JsonWebToken jwt;

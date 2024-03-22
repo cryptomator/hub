@@ -7,10 +7,9 @@ import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ResourceInfo;
 import jakarta.ws.rs.core.MultivaluedHashMap;
 import jakarta.ws.rs.core.UriInfo;
-import org.cryptomator.hub.entities.EffectiveVaultAccessRepository;
+import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.entities.VaultAccess;
-import org.cryptomator.hub.entities.VaultRepository;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,8 +29,8 @@ public class VaultRoleFilterTest {
 	private final UriInfo uriInfo = Mockito.mock(UriInfo.class);
 	private final ContainerRequestContext context = Mockito.mock(ContainerRequestContext.class);
 	private final JsonWebToken jwt = Mockito.mock(JsonWebToken.class);
-	private final EffectiveVaultAccessRepository effectiveVaultAccessRepo = Mockito.mock(EffectiveVaultAccessRepository.class);
-	private final VaultRepository vaultRepo = Mockito.mock(VaultRepository.class);
+	private final EffectiveVaultAccess.Repository effectiveVaultAccessRepo = Mockito.mock(EffectiveVaultAccess.Repository.class);
+	private final Vault.Repository vaultRepo = Mockito.mock(Vault.Repository.class);
 	private final VaultRoleFilter filter = new VaultRoleFilter();
 
 	@BeforeEach

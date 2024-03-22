@@ -16,14 +16,10 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.AccessToken;
-import org.cryptomator.hub.entities.AccessTokenRepository;
 import org.cryptomator.hub.entities.Device;
-import org.cryptomator.hub.entities.DeviceRepository;
 import org.cryptomator.hub.entities.User;
-import org.cryptomator.hub.entities.UserRepository;
 import org.cryptomator.hub.entities.Vault;
-import org.cryptomator.hub.entities.VaultRepository;
-import org.cryptomator.hub.entities.events.VaultAccessGrantedEventRepository;
+import org.cryptomator.hub.entities.events.VaultAccessGrantedEvent;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -43,15 +39,15 @@ import java.util.stream.Collectors;
 public class UsersResource {
 
 	@Inject
-	AccessTokenRepository accessTokenRepo;
+	AccessToken.Repository accessTokenRepo;
 	@Inject
-	VaultAccessGrantedEventRepository vaultAccessGrantedEventRepo;
+	VaultAccessGrantedEvent.Repository vaultAccessGrantedEventRepo;
 	@Inject
-	UserRepository userRepo;
+	User.Repository userRepo;
 	@Inject
-	DeviceRepository deviceRepo;
+	Device.Repository deviceRepo;
 	@Inject
-	VaultRepository vaultRepo;
+	Vault.Repository vaultRepo;
 
 	@Inject
 	JsonWebToken jwt;

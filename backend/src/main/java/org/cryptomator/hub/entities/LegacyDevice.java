@@ -1,6 +1,7 @@
 package org.cryptomator.hub.entities;
 
-import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -36,4 +37,8 @@ public class LegacyDevice {
 
 	// Further attributes omitted, as they are no longer used. The above ones are exceptions, as they are referenced via JPQL for joining.
 
+	@ApplicationScoped
+	@Deprecated
+	public static class Repository implements PanacheRepositoryBase<LegacyDevice, String> {
+	}
 }

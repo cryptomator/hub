@@ -1,5 +1,8 @@
 package org.cryptomator.hub.entities;
 
+import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
+import io.quarkus.panache.common.Parameters;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -20,11 +23,13 @@ import java.security.spec.X509EncodedKeySpec;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Entity
 @Table(name = "vault")
@@ -259,4 +264,19 @@ public class Vault {
 				'}';
 	}
 
+	@ApplicationScoped
+	public static class Repository implements PanacheRepositoryBase<Vault, UUID> {
+
+		public Stream<Vault> findAccessibleByUser(String userId) {
+			return find("#Vault.accessibleByUser", Parameters.with("userId", userId)).stream();
+		}
+
+		public Stream<Vault> findAccessibleByUser(String userId, VaultAccess.Role role) {
+			return find("#Vault.accessibleByUserAndRole", Parameters.with("userId", userId).and("role", role)).stream();
+		}
+
+		public Stream<Vault> findAllInList(List<UUID> ids) {
+			return find("#Vault.allInList", Parameters.with("ids", ids)).stream();
+		}
+	}
 }

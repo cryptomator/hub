@@ -1,5 +1,7 @@
 package org.cryptomator.hub.entities.events;
 
+import io.quarkus.hibernate.orm.panache.PanacheRepository;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
@@ -52,4 +54,17 @@ public class DeviceRemovedEvent extends AuditEvent {
 		return Objects.hash(id, removedBy, deviceId);
 	}
 
+
+	@ApplicationScoped
+	public static class Repository implements PanacheRepository<DeviceRemovedEvent> {
+
+		public void log(String removedBy, String deviceId) {
+			var event = new DeviceRemovedEvent();
+			event.setTimestamp(Instant.now());
+			event.setRemovedBy(removedBy);
+			event.setDeviceId(deviceId);
+			persist(event);
+		}
+
+	}
 }

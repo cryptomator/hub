@@ -9,9 +9,9 @@ import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.container.ResourceInfo;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.ext.Provider;
-import org.cryptomator.hub.entities.EffectiveVaultAccessRepository;
+import org.cryptomator.hub.entities.EffectiveVaultAccess;
+import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.entities.VaultAccess;
-import org.cryptomator.hub.entities.VaultRepository;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 
 import java.util.Arrays;
@@ -31,9 +31,9 @@ public class VaultRoleFilter implements ContainerRequestFilter {
 	JsonWebToken jwt;
 
 	@Inject
-	EffectiveVaultAccessRepository effectiveVaultAccessRepo;
+	EffectiveVaultAccess.Repository effectiveVaultAccessRepo;
 	@Inject
-	VaultRepository vaultRepo;
+	Vault.Repository vaultRepo;
 
 	@Context
 	ResourceInfo resourceInfo;

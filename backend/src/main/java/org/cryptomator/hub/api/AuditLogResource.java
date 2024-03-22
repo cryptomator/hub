@@ -15,7 +15,6 @@ import jakarta.ws.rs.core.MediaType;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.VaultAccess;
 import org.cryptomator.hub.entities.events.AuditEvent;
-import org.cryptomator.hub.entities.events.AuditEventRepository;
 import org.cryptomator.hub.entities.events.DeviceRegisteredEvent;
 import org.cryptomator.hub.entities.events.DeviceRemovedEvent;
 import org.cryptomator.hub.entities.events.VaultAccessGrantedEvent;
@@ -40,7 +39,7 @@ import java.util.UUID;
 public class AuditLogResource {
 
 	@Inject
-	AuditEventRepository auditEventRepo;
+	AuditEvent.Repository auditEventRepo;
 	@Inject
 	LicenseHolder license;
 

@@ -11,7 +11,7 @@ import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
 import jakarta.validation.Validator;
-import org.cryptomator.hub.entities.EffectiveVaultAccessRepository;
+import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.rollback.DBRollback;
 import org.flywaydb.core.Flyway;
 import org.hamcrest.MatcherAssert;
@@ -61,7 +61,7 @@ public class VaultResourceIT {
 	@Inject
 	AgroalDataSource dataSource;
 	@Inject
-	EffectiveVaultAccessRepository effectiveVaultAccessRepo;
+	EffectiveVaultAccess.Repository effectiveVaultAccessRepo;
 	@Inject
 	Validator validator;
 	@Inject

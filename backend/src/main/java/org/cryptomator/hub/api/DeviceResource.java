@@ -21,14 +21,11 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.Device;
-import org.cryptomator.hub.entities.DeviceRepository;
 import org.cryptomator.hub.entities.LegacyAccessToken;
-import org.cryptomator.hub.entities.LegacyAccessTokenRepository;
-import org.cryptomator.hub.entities.LegacyDeviceRepository;
+import org.cryptomator.hub.entities.LegacyDevice;
 import org.cryptomator.hub.entities.User;
-import org.cryptomator.hub.entities.UserRepository;
-import org.cryptomator.hub.entities.events.DeviceRegisteredEventRepository;
-import org.cryptomator.hub.entities.events.DeviceRemovedEventRepository;
+import org.cryptomator.hub.entities.events.DeviceRegisteredEvent;
+import org.cryptomator.hub.entities.events.DeviceRemovedEvent;
 import org.cryptomator.hub.validation.NoHtmlOrScriptChars;
 import org.cryptomator.hub.validation.OnlyBase64Chars;
 import org.cryptomator.hub.validation.ValidId;
@@ -54,17 +51,17 @@ public class DeviceResource {
 	private static final Logger LOG = Logger.getLogger(DeviceResource.class);
 
 	@Inject
-	DeviceRegisteredEventRepository deviceRegisteredEventRepo;
+	DeviceRegisteredEvent.Repository deviceRegisteredEventRepo;
 	@Inject
-	DeviceRemovedEventRepository deviceRemovedEventRepo;
+	DeviceRemovedEvent.Repository deviceRemovedEventRepo;
 	@Inject
-	UserRepository userRepo;
+	User.Repository userRepo;
 	@Inject
-	DeviceRepository deviceRepo;
+	Device.Repository deviceRepo;
 	@Inject
-	LegacyAccessTokenRepository legacyAccessTokenRepo;
+	LegacyAccessToken.Repository legacyAccessTokenRepo;
 	@Inject
-	LegacyDeviceRepository legacyDeviceRepo;
+	LegacyDevice.Repository legacyDeviceRepo;
 
 	@Inject
 	JsonWebToken jwt;

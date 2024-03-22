@@ -1,5 +1,7 @@
 package org.cryptomator.hub.entities.events;
 
+import io.quarkus.hibernate.orm.panache.PanacheRepository;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
@@ -53,4 +55,15 @@ public class VaultOwnershipClaimedEvent extends AuditEvent {
 		return Objects.hash(id, claimedBy, vaultId);
 	}
 
+	@ApplicationScoped
+	public static class Repository implements PanacheRepository<VaultOwnershipClaimedEvent> {
+
+		public void log(String claimedBy, UUID vaultId) {
+			var event = new VaultOwnershipClaimedEvent();
+			event.setTimestamp(Instant.now());
+			event.setClaimedBy(claimedBy);
+			event.setVaultId(vaultId);
+			persist(event);
+		}
+	}
 }

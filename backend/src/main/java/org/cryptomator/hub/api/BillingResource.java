@@ -14,8 +14,8 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.cryptomator.hub.entities.EffectiveVaultAccessRepository;
-import org.cryptomator.hub.entities.SettingsRepository;
+import org.cryptomator.hub.entities.EffectiveVaultAccess;
+import org.cryptomator.hub.entities.Settings;
 import org.cryptomator.hub.license.LicenseHolder;
 import org.cryptomator.hub.validation.ValidJWS;
 import org.eclipse.microprofile.openapi.annotations.Operation;
@@ -30,9 +30,9 @@ public class BillingResource {
 	@Inject
 	LicenseHolder licenseHolder;
 	@Inject
-	EffectiveVaultAccessRepository effectiveVaultAccessRepo;
+	EffectiveVaultAccess.Repository effectiveVaultAccessRepo;
 	@Inject
-	SettingsRepository settingsRepo;
+	Settings.Repository settingsRepo;
 
 	@GET
 	@Path("/")

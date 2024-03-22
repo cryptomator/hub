@@ -11,7 +11,6 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import org.cryptomator.hub.entities.Settings;
-import org.cryptomator.hub.entities.SettingsRepository;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
@@ -23,7 +22,6 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.Objects;
 import java.util.Optional;
 
 @ApplicationScoped
@@ -50,7 +48,7 @@ public class LicenseHolder implements Scheduled.SkipPredicate {
 	@Inject
 	RandomMinuteSleeper randomMinuteSleeper;
 	@Inject
-	SettingsRepository settingsRepo;
+	Settings.Repository settingsRepo;
 
 	private static final Logger LOG = Logger.getLogger(LicenseHolder.class);
 	private DecodedJWT license;
@@ -64,7 +62,7 @@ public class LicenseHolder implements Scheduled.SkipPredicate {
 		if (settings.getLicenseKey() != null && settings.getHubId() != null) {
 			validateOrResetExistingLicense(settings);
 		} else if (initialLicenseToken.isPresent() && initialId.isPresent()) {
-			validateAndApplyInitLicense(settings, initialLicenseToken.get(), initialId.get() );
+			validateAndApplyInitLicense(settings, initialLicenseToken.get(), initialId.get());
 		}
 	}
 

@@ -1,13 +1,10 @@
 package org.cryptomator.hub;
 
 import org.cryptomator.hub.entities.Authority;
-import org.cryptomator.hub.entities.AuthorityRepository;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
-import org.cryptomator.hub.entities.UserRepository;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -29,8 +26,8 @@ class RemoteUserPullerTest {
 
 	private final RemoteUserProvider remoteUserProvider = Mockito.mock(RemoteUserProvider.class);
 	private final User user = Mockito.mock(User.class);
-	private final AuthorityRepository authorityRepo = Mockito.mock(AuthorityRepository.class);
-	private final UserRepository userRepo = Mockito.mock(UserRepository.class);
+	private final Authority.Repository authorityRepo = Mockito.mock(Authority.Repository.class);
+	private final User.Repository userRepo = Mockito.mock(User.Repository.class);
 
 	private RemoteUserPuller remoteUserPuller;
 

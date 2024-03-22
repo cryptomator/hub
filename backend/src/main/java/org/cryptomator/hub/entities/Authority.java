@@ -1,5 +1,8 @@
 package org.cryptomator.hub.entities;
 
+import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
+import io.quarkus.panache.common.Parameters;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.Entity;
@@ -9,7 +12,9 @@ import jakarta.persistence.InheritanceType;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
 
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 @Entity
 @Table(name = "authority")
@@ -74,4 +79,15 @@ public class Authority {
 		return Objects.hash(id, name);
 	}
 
+	@ApplicationScoped
+	public static class Repository implements PanacheRepositoryBase<Authority, String> {
+
+		public Stream<Authority> byName(String name) {
+			return find("#Authority.byName", Parameters.with("name", '%' + name.toLowerCase() + '%')).stream();
+		}
+
+		public Stream<Authority> findAllInList(List<String> ids) {
+			return find("#Authority.allInList", Parameters.with("ids", ids)).stream();
+		}
+	}
 }

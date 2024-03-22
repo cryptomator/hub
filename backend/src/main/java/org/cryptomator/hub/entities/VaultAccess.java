@@ -1,5 +1,8 @@
 package org.cryptomator.hub.entities;
 
+import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
+import io.quarkus.panache.common.Parameters;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EmbeddedId;
@@ -15,6 +18,7 @@ import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 @Entity
 @Table(name = "vault_access")
@@ -142,6 +146,14 @@ public class VaultAccess {
 					"vaultId='" + vaultId + '\'' +
 					", authorityId='" + authorityId + '\'' +
 					'}';
+		}
+	}
+
+	@ApplicationScoped
+	public static class Repository implements PanacheRepositoryBase<VaultAccess, Id> {
+
+		public Stream<VaultAccess> forVault(UUID vaultId) {
+			return find("#VaultAccess.forVault", Parameters.with("vaultId", vaultId)).stream();
 		}
 	}
 }

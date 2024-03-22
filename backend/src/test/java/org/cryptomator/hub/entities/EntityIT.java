@@ -16,9 +16,9 @@ import java.util.UUID;
 public class EntityIT {
 
 	@Inject
-	AccessTokenRepository accessTokenRepo;
+	AccessToken.Repository accessTokenRepo;
 	@Inject
-	UserRepository userRepo;
+	User.Repository userRepo;
 	@Inject
 	AgroalDataSource dataSource;
 

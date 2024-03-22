@@ -7,8 +7,8 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
-import org.cryptomator.hub.entities.GroupRepository;
-import org.cryptomator.hub.entities.UserRepository;
+import org.cryptomator.hub.entities.Group;
+import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.validation.ValidId;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 
@@ -18,9 +18,9 @@ import java.util.List;
 public class GroupsResource {
 
 	@Inject
-	UserRepository userRepo;
+	User.Repository userRepo;
 	@Inject
-	GroupRepository groupRepo;
+	Group.Repository groupRepo;
 
 	@GET
 	@Path("/")

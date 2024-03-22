@@ -1,15 +1,16 @@
 package org.cryptomator.hub.entities;
 
-import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.NamedQuery;
-import jakarta.persistence.NoResultException;
 import jakarta.persistence.Table;
 
 import java.io.Serializable;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -130,6 +131,20 @@ public class LegacyAccessToken {
 					"deviceId='" + deviceId + '\'' +
 					", vaultId='" + vaultId + '\'' +
 					'}';
+		}
+	}
+
+	@ApplicationScoped
+	@Deprecated
+	public static class Repository implements PanacheRepositoryBase<LegacyAccessToken, AccessId> {
+
+		public LegacyAccessToken unlock(UUID vaultId, String deviceId, String userId) {
+			return find("#LegacyAccessToken.get", Map.of("deviceId", deviceId, "vaultId", vaultId, "userId", userId))
+					.firstResult();
+		}
+
+		public Stream<LegacyAccessToken> getByDeviceAndOwner(String deviceId, String userId) {
+			return stream("#LegacyAccessToken.getByDevice", Map.of("deviceId", deviceId, "userId", userId));
 		}
 	}
 }

@@ -1,5 +1,7 @@
 package org.cryptomator.hub.entities;
 
+import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
@@ -28,5 +30,9 @@ public class Group extends Authority {
 
 	public void setMembers(Set<Authority> members) {
 		this.members = members;
+	}
+
+	@ApplicationScoped
+	public static class Repository implements PanacheRepositoryBase<Group, String> {
 	}
 }

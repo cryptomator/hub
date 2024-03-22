@@ -4,7 +4,6 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import org.cryptomator.hub.entities.Settings;
-import org.cryptomator.hub.entities.SettingsRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -32,7 +31,7 @@ import static org.mockito.Mockito.when;
 
 public class LicenseHolderTest {
 
-	SettingsRepository settingsRepo = mock(SettingsRepository.class);
+	Settings.Repository settingsRepo = mock(Settings.Repository.class);
 	RandomMinuteSleeper randomMinuteSleeper = mock(RandomMinuteSleeper.class);
 	LicenseValidator validator = mock(LicenseValidator.class);
 
@@ -344,7 +343,7 @@ public class LicenseHolderTest {
 		@Test
 		public void testSucess() throws IOException, InterruptedException {
 			URI refreshUrl = URI.create("https://localhost:3000");
-			try( var httpClientMock = Mockito.mockStatic(HttpClient.class)) {
+			try (var httpClientMock = Mockito.mockStatic(HttpClient.class)) {
 				var httpClient = mock(HttpClient.class);
 				var httpBuilder = mock(HttpClient.Builder.class);
 				when(httpBuilder.build()).thenReturn(httpClient);
@@ -364,7 +363,7 @@ public class LicenseHolderTest {
 		@Test
 		public void test500Response() throws IOException, InterruptedException {
 			URI refreshUrl = URI.create("https://localhost:3000");
-			try( var httpClientMock = Mockito.mockStatic(HttpClient.class)) {
+			try (var httpClientMock = Mockito.mockStatic(HttpClient.class)) {
 				var httpClient = mock(HttpClient.class);
 				var httpBuilder = mock(HttpClient.Builder.class);
 				when(httpBuilder.build()).thenReturn(httpClient);
@@ -376,14 +375,14 @@ public class LicenseHolderTest {
 				when(response.body()).thenReturn("newToken");
 				when(httpClient.send(argThat(request -> request.uri().equals(refreshUrl)), any())).thenReturn(response);
 
-				Assertions.assertThrows(LicenseHolder.LicenseRefreshFailedException.class,() -> licenseHolder.requestLicenseRefresh(refreshUrl, "token"));
+				Assertions.assertThrows(LicenseHolder.LicenseRefreshFailedException.class, () -> licenseHolder.requestLicenseRefresh(refreshUrl, "token"));
 			}
 		}
 
 		@Test
 		public void testEmtyBody() throws IOException, InterruptedException {
 			URI refreshUrl = URI.create("https://localhost:3000");
-			try( var httpClientMock = Mockito.mockStatic(HttpClient.class)) {
+			try (var httpClientMock = Mockito.mockStatic(HttpClient.class)) {
 				var httpClient = mock(HttpClient.class);
 				var httpBuilder = mock(HttpClient.Builder.class);
 				when(httpBuilder.build()).thenReturn(httpClient);
@@ -395,7 +394,7 @@ public class LicenseHolderTest {
 				when(response.body()).thenReturn("");
 				when(httpClient.send(argThat(request -> request.uri().equals(refreshUrl)), any())).thenReturn(response);
 
-				Assertions.assertThrows(LicenseHolder.LicenseRefreshFailedException.class,() -> licenseHolder.requestLicenseRefresh(refreshUrl, "token"));
+				Assertions.assertThrows(LicenseHolder.LicenseRefreshFailedException.class, () -> licenseHolder.requestLicenseRefresh(refreshUrl, "token"));
 			}
 		}
 	}

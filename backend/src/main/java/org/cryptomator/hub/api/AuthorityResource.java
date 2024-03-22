@@ -8,7 +8,7 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
-import org.cryptomator.hub.entities.AuthorityRepository;
+import org.cryptomator.hub.entities.Authority;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.jboss.resteasy.reactive.NoCache;
@@ -20,7 +20,7 @@ import java.util.List;
 public class AuthorityResource {
 
 	@Inject
-	AuthorityRepository authorityRepo;
+	Authority.Repository authorityRepo;
 
 	@GET
 	@Path("/search")

@@ -5,11 +5,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import org.cryptomator.hub.entities.Authority;
-import org.cryptomator.hub.entities.AuthorityRepository;
 import org.cryptomator.hub.entities.Group;
-import org.cryptomator.hub.entities.GroupRepository;
 import org.cryptomator.hub.entities.User;
-import org.cryptomator.hub.entities.UserRepository;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -21,11 +18,11 @@ import java.util.stream.Collectors;
 public class RemoteUserPuller {
 
 	@Inject
-	AuthorityRepository authorityRepo;
+	Authority.Repository authorityRepo;
 	@Inject
-	GroupRepository groupRepo;
+	Group.Repository groupRepo;
 	@Inject
-	UserRepository userRepo;
+	User.Repository userRepo;
 	@Inject
 	RemoteUserProvider remoteUserProvider;
 

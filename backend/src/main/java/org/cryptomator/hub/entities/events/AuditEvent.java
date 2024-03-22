@@ -1,5 +1,9 @@
 package org.cryptomator.hub.entities.events;
 
+import io.quarkus.hibernate.orm.panache.PanacheQuery;
+import io.quarkus.hibernate.orm.panache.PanacheRepository;
+import io.quarkus.panache.common.Parameters;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.Entity;
@@ -14,6 +18,7 @@ import jakarta.persistence.Table;
 
 import java.time.Instant;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 @Entity
 @Table(name = "audit_event")
@@ -97,4 +102,21 @@ public class AuditEvent {
 		return Objects.hash(id, timestamp);
 	}
 
+
+	@ApplicationScoped
+	public static class Repository implements PanacheRepository<AuditEvent> {
+
+		public Stream<AuditEvent> findAllInPeriod(Instant startDate, Instant endDate, long paginationId, boolean ascending, int pageSize) {
+			var parameters = Parameters.with("startDate", startDate).and("endDate", endDate).and("paginationId", paginationId);
+
+			final PanacheQuery<AuditEvent> query;
+			if (ascending) {
+				query = find("#AuditEvent.listAllInPeriodAfterId", parameters);
+			} else {
+				query = find("#AuditEvent.listAllInPeriodBeforeId", parameters);
+			}
+			query.page(0, pageSize);
+			return query.stream();
+		}
+	}
 }

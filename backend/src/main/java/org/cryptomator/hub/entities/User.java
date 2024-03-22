@@ -1,5 +1,8 @@
 package org.cryptomator.hub.entities;
 
+import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
+import io.quarkus.panache.common.Parameters;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
@@ -11,6 +14,8 @@ import jakarta.persistence.Table;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Stream;
 
 @Entity
 @Table(name = "user_details")
@@ -133,4 +138,19 @@ public class User extends Authority {
 		return Objects.hash(id, pictureUrl, email, publicKey, privateKey, setupCode);
 	}
 
+	@ApplicationScoped
+	public static class Repository implements PanacheRepositoryBase<User, String> {
+
+		public Stream<User> findRequiringAccessGrant(UUID vaultId) {
+			return find("#User.requiringAccessGrant", Parameters.with("vaultId", vaultId)).stream();
+		}
+
+		public long countEffectiveGroupUsers(String groupdId) {
+			return count("#User.countEffectiveGroupUsers", Parameters.with("groupId", groupdId));
+		}
+
+		public Stream<User> getEffectiveGroupUsers(String groupdId) {
+			return find("#User.getEffectiveGroupUsers", Parameters.with("groupId", groupdId)).stream();
+		}
+	}
 }
