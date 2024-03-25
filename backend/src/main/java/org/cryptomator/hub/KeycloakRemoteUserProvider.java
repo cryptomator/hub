@@ -68,10 +68,10 @@ public class KeycloakRemoteUserProvider implements RemoteUserProvider {
 
 	private User mapToUser(UserRepresentation userRepresentation) {
 		var userEntity = new User();
-		userEntity.id = userRepresentation.getId();
-		userEntity.name = userRepresentation.getUsername();
-		userEntity.email = userRepresentation.getEmail();
-		parsePictureUrl(userRepresentation.getAttributes()).ifPresent(it -> userEntity.pictureUrl = it);
+		userEntity.setId(userRepresentation.getId());
+		userEntity.setName(userRepresentation.getUsername());
+		userEntity.setEmail(userRepresentation.getEmail());
+		parsePictureUrl(userRepresentation.getAttributes()).ifPresent(userEntity::setPictureUrl);
 		return userEntity;
 	}
 
@@ -96,9 +96,9 @@ public class KeycloakRemoteUserProvider implements RemoteUserProvider {
 			// TODO add sub groups and the members of the sub group to it too using `group.getSubGroups()` recursively
 			var members = deepCollectMembers(realm, group.getId());
 			var groupEntity = new Group();
-			groupEntity.id = group.getId();
-			groupEntity.name = group.getName();
-			groupEntity.members = members;
+			groupEntity.setId(group.getId());
+			groupEntity.setName(group.getName());
+			groupEntity.setMembers(members);
 			return groupEntity;
 		}).toList();
 	}

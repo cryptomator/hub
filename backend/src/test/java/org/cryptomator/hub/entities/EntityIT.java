@@ -16,6 +16,10 @@ import java.util.UUID;
 public class EntityIT {
 
 	@Inject
+	AccessToken.Repository accessTokenRepo;
+	@Inject
+	User.Repository userRepo;
+	@Inject
 	AgroalDataSource dataSource;
 
 	@Test
@@ -31,8 +35,8 @@ public class EntityIT {
 					""");
 		}
 
-		var deleted = User.deleteById("user999");
-		var matchAfter = AccessToken.<AccessToken>findAll().stream().anyMatch(a -> "user999".equals(a.user.id));
+		var deleted = userRepo.deleteById("user999");
+		var matchAfter = accessTokenRepo.findAll().stream().anyMatch(a -> "user999".equals(a.user.id));
 		Assertions.assertTrue(deleted);
 		Assertions.assertFalse(matchAfter);
 	}
@@ -41,7 +45,7 @@ public class EntityIT {
 	@TestTransaction
 	@DisplayName("Retrieve the correct token when a user has access to multiple vaults")
 	public void testGetCorrectTokenForDeviceWithAcessToMultipleVaults() {
-		var token = AccessToken.unlock(UUID.fromString("7E57C0DE-0000-4000-8000-000100001111"), "user1");
+		var token = accessTokenRepo.unlock(UUID.fromString("7E57C0DE-0000-4000-8000-000100001111"), "user1");
 		Assertions.assertEquals(UUID.fromString("7E57C0DE-0000-4000-8000-000100001111"), token.vault.id);
 		Assertions.assertEquals("user1", token.user.id);
 		Assertions.assertEquals("jwe.jwe.jwe.vault1.user1", token.vaultKey);

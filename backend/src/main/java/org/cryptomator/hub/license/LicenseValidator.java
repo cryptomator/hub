@@ -58,7 +58,7 @@ public class LicenseValidator {
 	public DecodedJWT validate(String token, String expectedHubId) throws JWTVerificationException {
 		var jwt = verifier.verify(token);
 		if (!jwt.getId().equals(expectedHubId)) {
-			throw new InvalidClaimException("Token ID does not match your Hub ID.");
+			throw new InvalidClaimException("Token ID " + jwt.getId() + " does not match your Hub ID " + expectedHubId);
 		}
 		for (var claim : REQUIRED_CLAIMS) {
 			if (Objects.isNull(jwt.getClaim(claim))) {
@@ -67,10 +67,4 @@ public class LicenseValidator {
 		}
 		return jwt;
 	}
-
-	public Optional<String> refreshUrl(String token) throws JWTVerificationException {
-		var jwt = verifier.verify(token);
-		return Optional.ofNullable(jwt.getClaim("refreshUrl").asString());
-	}
-
 }

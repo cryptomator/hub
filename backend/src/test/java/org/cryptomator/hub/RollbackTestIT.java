@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.sql.SQLException;
 
 @QuarkusTest
-public class RollbackTest {
+public class RollbackTestIT {
 	@Inject
 	public Flyway flyway;
 

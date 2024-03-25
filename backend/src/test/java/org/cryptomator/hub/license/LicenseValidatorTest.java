@@ -71,25 +71,4 @@ public class LicenseValidatorTest {
 		});
 	}
 
-	@Test
-	@DisplayName("validate token's refreshURL")
-	public void testGetTokensRefreshUrl() {
-		Assertions.assertEquals(Optional.of("http://localhost:8787/hub/subscription?hub_id=42"), validator.refreshUrl(VALID_TOKEN));
-	}
-
-	@Test
-	@DisplayName("validate expired token's refreshURL")
-	public void testGetExpiredTokensRefreshUrl() {
-		// this should not throw an exception and return a JWT with an expired date
-		Assertions.assertEquals(Optional.of("http://localhost:8787/hub/subscription?hub_id=42"), validator.refreshUrl(EXPIRED_TOKEN));
-	}
-
-	@Test
-	@DisplayName("validate expired token's refreshURL with invalid signature")
-	public void testInvalidSignatureTokensRefreshUrl() {
-		Assertions.assertThrows(SignatureVerificationException.class, () -> {
-			validator.refreshUrl(TOKEN_WITH_INVALID_SIGNATURE);
-		});
-	}
-
 }

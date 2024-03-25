@@ -1,0 +1,90 @@
+package org.cryptomator.hub.entities.events;
+
+import io.quarkus.hibernate.orm.panache.PanacheRepository;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Table;
+
+import java.time.Instant;
+import java.util.Objects;
+import java.util.UUID;
+
+@Entity
+@Table(name = "audit_event_vault_key_retrieve")
+@DiscriminatorValue(VaultKeyRetrievedEvent.TYPE)
+public class VaultKeyRetrievedEvent extends AuditEvent {
+
+	public static final String TYPE = "VAULT_KEY_RETRIEVE";
+
+	@Column(name = "retrieved_by")
+	String retrievedBy;
+
+	@Column(name = "vault_id")
+	UUID vaultId;
+
+	@Column(name = "result")
+	@Enumerated(EnumType.STRING)
+	Result result;
+
+	public String getRetrievedBy() {
+		return retrievedBy;
+	}
+
+	public void setRetrievedBy(String retrievedBy) {
+		this.retrievedBy = retrievedBy;
+	}
+
+	public UUID getVaultId() {
+		return vaultId;
+	}
+
+	public void setVaultId(UUID vaultId) {
+		this.vaultId = vaultId;
+	}
+
+	public Result getResult() {
+		return result;
+	}
+
+	public void setResult(Result result) {
+		this.result = result;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		VaultKeyRetrievedEvent that = (VaultKeyRetrievedEvent) o;
+		return super.equals(that) //
+				&& Objects.equals(retrievedBy, that.retrievedBy) //
+				&& Objects.equals(vaultId, that.vaultId) //
+				&& Objects.equals(result, that.result);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(id, retrievedBy, vaultId, result);
+	}
+
+	public enum Result {
+		SUCCESS,
+		UNAUTHORIZED
+	}
+
+	@ApplicationScoped
+	public static class Repository implements PanacheRepository<VaultKeyRetrievedEvent> {
+
+		public void log(String retrievedBy, UUID vaultId, VaultKeyRetrievedEvent.Result result) {
+			var event = new VaultKeyRetrievedEvent();
+			event.setTimestamp(Instant.now());
+			event.setRetrievedBy(retrievedBy);
+			event.setVaultId(vaultId);
+			event.setResult(result);
+			persist(event);
+		}
+	}
+}

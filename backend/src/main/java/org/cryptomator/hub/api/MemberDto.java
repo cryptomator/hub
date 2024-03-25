@@ -16,11 +16,11 @@ public final class MemberDto extends AuthorityDto {
 	}
 
 	public static MemberDto fromEntity(User user, VaultAccess.Role role) {
-		return new MemberDto(user.id, Type.USER, user.name, user.pictureUrl, role);
+		return new MemberDto(user.getId(), Type.USER, user.getName(), user.getPictureUrl(), role);
 	}
 
 	public static MemberDto fromEntity(Group group, VaultAccess.Role role) {
-		return new MemberDto(group.id, Type.GROUP, group.name, null, role);
+		return new MemberDto(group.getId(), Type.GROUP, group.getName(), null, role);
 	}
 
 }
