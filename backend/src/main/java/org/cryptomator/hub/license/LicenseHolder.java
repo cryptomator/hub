@@ -5,7 +5,6 @@ import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import io.quarkus.scheduler.Scheduled;
 import io.quarkus.scheduler.ScheduledExecution;
-import io.smallrye.common.annotation.NonBlocking;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -108,7 +107,6 @@ public class LicenseHolder implements Scheduled.SkipPredicate {
 	 * Attempts to refresh the Hub licence every day between 01:00:00 and 02:00:00 AM UTC if claim refreshURL is present.
 	 */
 	@Scheduled(cron = "0 0 1 * * ?", timeZone = "UTC", concurrentExecution = Scheduled.ConcurrentExecution.SKIP, skipExecutionIf = LicenseHolder.class)
-	@NonBlocking
 	void refreshLicense() throws InterruptedException {
 		randomMinuteSleeper.sleep(); // add random sleep between [0,59]min to reduce infrastructure load
 		var refreshUrlClaim = get().getClaim("refreshUrl");

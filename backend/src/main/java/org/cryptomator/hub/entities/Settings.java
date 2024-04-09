@@ -13,7 +13,7 @@ import java.util.Objects;
 @Table(name = "settings")
 public class Settings {
 
-	static final int SINGLETON_ID = 0;
+	private static final long SINGLETON_ID = 0L;
 
 	@Id
 	@Column(name = "id", nullable = false, updatable = false)
@@ -77,7 +77,7 @@ public class Settings {
 	public static class Repository implements PanacheRepository<Settings> {
 
 		public Settings get() {
-			return Objects.requireNonNull(findById((long) SINGLETON_ID), "Settings not initialized");
+			return Objects.requireNonNull(findById(SINGLETON_ID), "Settings not initialized");
 		}
 	}
 }
