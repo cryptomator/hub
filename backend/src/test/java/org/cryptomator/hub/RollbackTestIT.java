@@ -3,7 +3,7 @@ package org.cryptomator.hub;
 import io.agroal.api.AgroalDataSource;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
-import org.cryptomator.hub.rollback.DBRollback;
+import org.cryptomator.hub.rollback.DBRollbackAfter;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Nested;
@@ -23,7 +23,7 @@ public class RollbackTestIT {
 	class WithFlywayCleanup {
 
 		@Test
-		@DBRollback
+		@DBRollbackAfter
 		public void test1() throws SQLException {
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""

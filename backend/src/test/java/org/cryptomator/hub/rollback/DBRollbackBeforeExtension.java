@@ -2,6 +2,7 @@ package org.cryptomator.hub.rollback;
 
 import io.quarkus.test.junit.callback.QuarkusTestAfterConstructCallback;
 import io.quarkus.test.junit.callback.QuarkusTestAfterTestExecutionCallback;
+import io.quarkus.test.junit.callback.QuarkusTestBeforeTestExecutionCallback;
 import io.quarkus.test.junit.callback.QuarkusTestMethodContext;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.Nested;
@@ -11,13 +12,13 @@ import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class DBRollbackExtension implements QuarkusTestAfterConstructCallback, QuarkusTestAfterTestExecutionCallback {
+public class DBRollbackBeforeExtension implements QuarkusTestAfterConstructCallback, QuarkusTestBeforeTestExecutionCallback {
 
 	static final AtomicReference<Flyway> INSTANCE = new AtomicReference<>(null);
 
 	@Override
-	public void afterTestExecution(QuarkusTestMethodContext context) {
-		var isAnnotationPresent = context.getTestMethod().getAnnotation(DBRollback.class) != null;
+	public void beforeTestExecution(QuarkusTestMethodContext context) {
+		var isAnnotationPresent = context.getTestMethod().getAnnotation(DBRollbackAfter.class) != null;
 		if(isAnnotationPresent) {
 			var flyway = INSTANCE.get();
 			if(flyway == null) {

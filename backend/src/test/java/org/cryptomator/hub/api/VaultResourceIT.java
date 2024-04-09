@@ -12,7 +12,8 @@ import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
 import jakarta.validation.Validator;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
-import org.cryptomator.hub.rollback.DBRollback;
+import org.cryptomator.hub.rollback.DBRollbackAfter;
+import org.cryptomator.hub.rollback.DBRollbackBefore;
 import org.flywaydb.core.Flyway;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
@@ -229,14 +230,9 @@ public class VaultResourceIT {
 	})
 	public class AsAuthorizedUser2 {
 
-		@BeforeEach
-		public void resetDB() {
-			flyway.clean();
-			flyway.migrate();
-		}
-
 		@Test
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/access-token returns 449, because user2 is not initialized")
+		@DBRollbackBefore
 		public void testUnlock() {
 			when().get("/vaults/{vaultId}/access-token", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(449);
@@ -296,7 +292,7 @@ public class VaultResourceIT {
 		@Test
 		@Order(2)
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100003333 returns 200, updating only name, description and archive flag")
-		@DBRollback
+		@DBRollbackAfter
 		public void testUpdateVault() {
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100003333");
 			var vaultDto = new VaultResource.VaultDto(uuid, "VaultUpdated", "Vault updated.", true, Instant.parse("2222-11-11T11:11:11Z"), "doNotUpdate", 27, "doNotUpdate", "doNotUpdate", "doNotUpdate");
@@ -536,7 +532,7 @@ public class VaultResourceIT {
 		@Test
 		@Order(14)
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100002222/members does not contain user2")
-		@DBRollback
+		@DBRollbackAfter
 		public void getMembersOfVault2c() {
 			given().when().get("/vaults/{vaultId}/members", "7E57C0DE-0000-4000-8000-000100002222")
 					.then().statusCode(200)
@@ -637,7 +633,7 @@ public class VaultResourceIT {
 		@Test
 		@Order(8)
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/members does not contain group2")
-		@DBRollback
+		@DBRollbackAfter
 		public void getMembersOfVault1b() {
 			given().when().get("/vaults/{vaultId}/members", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(200)
