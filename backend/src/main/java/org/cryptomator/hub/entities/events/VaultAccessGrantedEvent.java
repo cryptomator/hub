@@ -1,13 +1,10 @@
 package org.cryptomator.hub.entities.events;
 
-import io.quarkus.hibernate.orm.panache.PanacheRepository;
-import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 
-import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -67,17 +64,4 @@ public class VaultAccessGrantedEvent extends AuditEvent {
 		return Objects.hash(id, grantedBy, vaultId, authorityId);
 	}
 
-	@ApplicationScoped
-	public static class Repository implements PanacheRepository<VaultAccessGrantedEvent> {
-
-		public void log(String grantedBy, UUID vaultId, String authorityId) {
-			var event = new VaultAccessGrantedEvent();
-			event.setTimestamp(Instant.now());
-			event.setGrantedBy(grantedBy);
-			event.setVaultId(vaultId);
-			event.setAuthorityId(authorityId);
-			persist(event);
-		}
-
-	}
 }

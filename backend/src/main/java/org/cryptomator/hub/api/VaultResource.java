@@ -38,14 +38,8 @@ import org.cryptomator.hub.entities.LegacyAccessToken;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.entities.VaultAccess;
-import org.cryptomator.hub.entities.events.VaultAccessGrantedEvent;
-import org.cryptomator.hub.entities.events.VaultCreatedEvent;
+import org.cryptomator.hub.entities.events.EventLogger;
 import org.cryptomator.hub.entities.events.VaultKeyRetrievedEvent;
-import org.cryptomator.hub.entities.events.VaultMemberAddedEvent;
-import org.cryptomator.hub.entities.events.VaultMemberRemovedEvent;
-import org.cryptomator.hub.entities.events.VaultMemberUpdatedEvent;
-import org.cryptomator.hub.entities.events.VaultOwnershipClaimedEvent;
-import org.cryptomator.hub.entities.events.VaultUpdatedEvent;
 import org.cryptomator.hub.filters.ActiveLicense;
 import org.cryptomator.hub.filters.VaultRole;
 import org.cryptomator.hub.license.LicenseHolder;
@@ -72,23 +66,10 @@ import java.util.stream.Stream;
 public class VaultResource {
 
 	@Inject
+	EventLogger eventLogger;
+
+	@Inject
 	AccessToken.Repository accessTokenRepo;
-	@Inject
-	VaultAccessGrantedEvent.Repository vaultAccessGrantedEventRepo;
-	@Inject
-	VaultCreatedEvent.Repository vaultCreatedEventRepo;
-	@Inject
-	VaultKeyRetrievedEvent.Repository vaultKeyRetrievedEventRepo;
-	@Inject
-	VaultMemberAddedEvent.Repository vaultMemberAddedEventRepo;
-	@Inject
-	VaultMemberRemovedEvent.Repository vaultMemberRemovedEventRepo;
-	@Inject
-	VaultMemberUpdatedEvent.Repository vaultMemberUpdatedEventRepo;
-	@Inject
-	VaultOwnershipClaimedEvent.Repository vaultOwnershipClaimedEventRepo;
-	@Inject
-	VaultUpdatedEvent.Repository vaultUpdatedEventRepo;
 	@Inject
 	Group.Repository groupRepo;
 	@Inject
@@ -229,7 +210,7 @@ public class VaultResource {
 			var access = existingAccess.get();
 			access.setRole(role);
 			vaultAccessRepo.persist(access);
-			vaultMemberUpdatedEventRepo.log(jwt.getSubject(), vault.getId(), authority.getId(), role);
+			eventLogger.logVaultMemberUpdated(jwt.getSubject(), vault.getId(), authority.getId(), role);
 			return Response.ok().build();
 		} else {
 			var access = new VaultAccess();
@@ -237,7 +218,7 @@ public class VaultResource {
 			access.setAuthority(authority);
 			access.setRole(role);
 			vaultAccessRepo.persist(access);
-			vaultMemberAddedEventRepo.log(jwt.getSubject(), vault.getId(), authority.getId(), role);
+			eventLogger.logVaultMemberAdded(jwt.getSubject(), vault.getId(), authority.getId(), role);
 			return Response.created(URI.create(".")).build();
 		}
 	}
@@ -253,7 +234,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "403", description = "not a vault owner")
 	public Response removeAuthority(@PathParam("vaultId") UUID vaultId, @PathParam("authorityId") @ValidId String authorityId) {
 		if (vaultAccessRepo.deleteById(new VaultAccess.Id(vaultId, authorityId))) {
-			vaultMemberRemovedEventRepo.log(jwt.getSubject(), vaultId, authorityId);
+			eventLogger.logVaultMemberRemoved(jwt.getSubject(), vaultId, authorityId);
 			return Response.status(Response.Status.NO_CONTENT).build();
 		} else {
 			throw new NotFoundException();
@@ -298,12 +279,12 @@ public class VaultResource {
 
 		var access = legacyAccessTokenRepo.unlock(vaultId, deviceId, jwt.getSubject());
 		if (access != null) {
-			vaultKeyRetrievedEventRepo.log(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.SUCCESS);
+			eventLogger.logVaultKeyRetrieved(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.SUCCESS);
 			var subscriptionStateHeaderName = "Hub-Subscription-State";
 			var subscriptionStateHeaderValue = license.isSet() ? "ACTIVE" : "INACTIVE"; // license expiration is not checked here, because it is checked in the ActiveLicense filter
 			return Response.ok(access.getJwe()).header(subscriptionStateHeaderName, subscriptionStateHeaderValue).build();
 		} else {
-			vaultKeyRetrievedEventRepo.log(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.UNAUTHORIZED);
+			eventLogger.logVaultKeyRetrieved(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.UNAUTHORIZED);
 			throw new ForbiddenException("Access to this device not granted.");
 		}
 	}
@@ -340,14 +321,14 @@ public class VaultResource {
 
 		var access = accessTokenRepo.unlock(vaultId, jwt.getSubject());
 		if (access != null) {
-			vaultKeyRetrievedEventRepo.log(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.SUCCESS);
+			eventLogger.logVaultKeyRetrieved(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.SUCCESS);
 			var subscriptionStateHeaderName = "Hub-Subscription-State";
 			var subscriptionStateHeaderValue = license.isSet() ? "ACTIVE" : "INACTIVE"; // license expiration is not checked here, because it is checked in the ActiveLicense filter
 			return Response.ok(access.getVaultKey()).header(subscriptionStateHeaderName, subscriptionStateHeaderValue).build();
 		} else if (vaultRepo.findById(vaultId) == null) {
 			throw new NotFoundException("No such vault.");
 		} else {
-			vaultKeyRetrievedEventRepo.log(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.UNAUTHORIZED);
+			eventLogger.logVaultKeyRetrieved(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.UNAUTHORIZED);
 			throw new ForbiddenException("Access to this vault not granted.");
 		}
 	}
@@ -388,7 +369,7 @@ public class VaultResource {
 			}
 			token.setVaultKey(entry.getValue());
 			accessTokenRepo.persist(token);
-			vaultAccessGrantedEventRepo.log(jwt.getSubject(), vaultId, userId);
+			eventLogger.logVaultAccessGranted(jwt.getSubject(), vaultId, userId);
 		}
 		return Response.ok().build();
 	}
@@ -447,17 +428,16 @@ public class VaultResource {
 
 		vaultRepo.persistAndFlush(vault); // trigger PersistenceException before we continue with
 		if (existingVault.isEmpty()) {
-			vaultCreatedEventRepo.log(currentUser.getId(), vault.getId(), vault.getName(), vault.getDescription());
-
+			eventLogger.logVaultCreated(currentUser.getId(), vault.getId(), vault.getName(), vault.getDescription());
 			var access = new VaultAccess();
 			access.setVault(vault);
 			access.setAuthority(currentUser);
 			access.setRole(VaultAccess.Role.OWNER);
 			vaultAccessRepo.persist(access);
-			vaultMemberAddedEventRepo.log(currentUser.getId(), vaultId, currentUser.getId(), VaultAccess.Role.OWNER);
+			eventLogger.logVaultMemberAdded(currentUser.getId(), vaultId, currentUser.getId(), VaultAccess.Role.OWNER);
 			return Response.created(URI.create(".")).contentLocation(URI.create(".")).entity(VaultDto.fromEntity(vault)).type(MediaType.APPLICATION_JSON).build();
 		} else {
-			vaultUpdatedEventRepo.log(currentUser.getId(), vault.getId(), vault.getName(), vault.getDescription(), vault.isArchived());
+			eventLogger.logVaultUpdated(currentUser.getId(), vault.getId(), vault.getName(), vault.getDescription(), vault.isArchived());
 			return Response.ok(VaultDto.fromEntity(vault), MediaType.APPLICATION_JSON).build();
 		}
 	}
@@ -498,14 +478,14 @@ public class VaultResource {
 			var access = existingAccess.get();
 			access.setRole(VaultAccess.Role.OWNER);
 			vaultAccessRepo.persist(access);
-			vaultMemberUpdatedEventRepo.log(currentUser.getId(), vaultId, currentUser.getId(), VaultAccess.Role.OWNER);
+			eventLogger.logVaultMemberUpdated(currentUser.getId(), vaultId, currentUser.getId(), VaultAccess.Role.OWNER);
 		} else {
 			var access = new VaultAccess();
 			access.setVault(vault);
 			access.setAuthority(currentUser);
 			access.setRole(VaultAccess.Role.OWNER);
 			vaultAccessRepo.persist(access);
-			vaultMemberAddedEventRepo.log(currentUser.getId(), vaultId, currentUser.getId(), VaultAccess.Role.OWNER);
+			eventLogger.logVaultMemberAdded(currentUser.getId(), vaultId, currentUser.getId(), VaultAccess.Role.OWNER);
 		}
 
 		vault.setSalt(null);
@@ -515,7 +495,7 @@ public class VaultResource {
 		vault.setAuthenticationPublicKey(null);
 		vaultRepo.persist(vault);
 
-		vaultOwnershipClaimedEventRepo.log(currentUser.getId(), vaultId);
+		eventLogger.logVaultOwnershipClaimed(currentUser.getId(), vaultId);
 		return Response.ok(VaultDto.fromEntity(vault), MediaType.APPLICATION_JSON).build();
 	}
 

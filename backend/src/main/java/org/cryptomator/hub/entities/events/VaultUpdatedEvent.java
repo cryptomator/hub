@@ -91,18 +91,4 @@ public class VaultUpdatedEvent extends AuditEvent {
 		return Objects.hash(id, updatedBy, vaultId, vaultName, vaultDescription, vaultArchived);
 	}
 
-	@ApplicationScoped
-	public static class Repository implements PanacheRepository<VaultUpdatedEvent> {
-
-		public void log(String updatedBy, UUID vaultId, String vaultName, String vaultDescription, boolean vaultArchived) {
-			var event = new VaultUpdatedEvent();
-			event.setTimestamp(Instant.now());
-			event.setUpdatedBy(updatedBy);
-			event.setVaultId(vaultId);
-			event.setVaultName(vaultName);
-			event.setVaultDescription(vaultDescription);
-			event.setVaultArchived(vaultArchived);
-			persist(event);
-		}
-	}
 }

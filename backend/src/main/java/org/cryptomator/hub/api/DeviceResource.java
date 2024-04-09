@@ -24,8 +24,8 @@ import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.LegacyAccessToken;
 import org.cryptomator.hub.entities.LegacyDevice;
 import org.cryptomator.hub.entities.User;
-import org.cryptomator.hub.entities.events.DeviceRegisteredEvent;
 import org.cryptomator.hub.entities.events.DeviceRemovedEvent;
+import org.cryptomator.hub.entities.events.EventLogger;
 import org.cryptomator.hub.validation.NoHtmlOrScriptChars;
 import org.cryptomator.hub.validation.OnlyBase64Chars;
 import org.cryptomator.hub.validation.ValidId;
@@ -51,9 +51,7 @@ public class DeviceResource {
 	private static final Logger LOG = Logger.getLogger(DeviceResource.class);
 
 	@Inject
-	DeviceRegisteredEvent.Repository deviceRegisteredEventRepo;
-	@Inject
-	DeviceRemovedEvent.Repository deviceRemovedEventRepo;
+	EventLogger eventLogger;
 	@Inject
 	User.Repository userRepo;
 	@Inject
@@ -108,7 +106,7 @@ public class DeviceResource {
 
 		try {
 			deviceRepo.persistAndFlush(device);
-			deviceRegisteredEventRepo.log(jwt.getSubject(), deviceId, device.getName(), device.getType());
+			eventLogger.logDeviceRegisted(jwt.getSubject(), deviceId, device.getName(), device.getType());
 			return Response.created(URI.create(".")).build();
 		} catch (ConstraintViolationException e) {
 			throw new ClientErrorException(Response.Status.CONFLICT, e);
@@ -164,7 +162,7 @@ public class DeviceResource {
 		var maybeDevice = deviceRepo.findByIdOptional(deviceId);
 		if (maybeDevice.isPresent() && currentUser.equals(maybeDevice.get().getOwner())) {
 			deviceRepo.delete(maybeDevice.get());
-			deviceRemovedEventRepo.log(jwt.getSubject(), deviceId);
+			eventLogger.logDeviceRemoved(jwt.getSubject(), deviceId);
 			return Response.status(Response.Status.NO_CONTENT).build();
 		} else {
 			return Response.status(Response.Status.NOT_FOUND).build();
