@@ -16,10 +16,10 @@ public class VaultOwnershipClaimedEvent extends AuditEvent {
 	public static final String TYPE = "VAULT_OWNERSHIP_CLAIM";
 
 	@Column(name = "claimed_by")
-	String claimedBy;
+	private String claimedBy;
 
 	@Column(name = "vault_id")
-	UUID vaultId;
+	private UUID vaultId;
 
 	public String getClaimedBy() {
 		return claimedBy;
@@ -49,7 +49,7 @@ public class VaultOwnershipClaimedEvent extends AuditEvent {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, claimedBy, vaultId);
+		return Objects.hash(super.getId(), claimedBy, vaultId);
 	}
 
 }

@@ -65,7 +65,7 @@ import java.util.stream.Collectors;
 public class EffectiveVaultAccess {
 
 	@EmbeddedId
-	EffectiveVaultAccess.Id id;
+	private EffectiveVaultAccess.Id id;
 
 	public Id getId() {
 		return id;
@@ -79,14 +79,14 @@ public class EffectiveVaultAccess {
 	public static class Id implements Serializable {
 
 		@Column(name = "vault_id")
-		UUID vaultId;
+		private UUID vaultId;
 
 		@Column(name = "authority_id")
-		String authorityId;
+		private String authorityId;
 
 		@Column(name = "role", nullable = false)
 		@Enumerated(EnumType.STRING)
-		VaultAccess.Role role;
+		private VaultAccess.Role role;
 
 		public UUID getVaultId() {
 			return vaultId;

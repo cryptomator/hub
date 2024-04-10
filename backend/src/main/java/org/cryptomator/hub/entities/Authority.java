@@ -36,10 +36,10 @@ public class Authority {
 
 	@Id
 	@Column(name = "id", nullable = false)
-	String id;
+	private String id;
 
 	@Column(name = "name", nullable = false)
-	String name;
+	private String name;
 
 	public String getId() {
 		return id;

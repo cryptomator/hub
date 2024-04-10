@@ -14,10 +14,10 @@ public class LegacyDevice {
 
 	@Id
 	@Column(name = "id", nullable = false)
-	String id;
+	private String id;
 
 	@Column(name = "owner_id", nullable = false)
-	String ownerId;
+	private String ownerId;
 
 	public String getId() {
 		return id;

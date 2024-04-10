@@ -15,10 +15,10 @@ public class DeviceRemovedEvent extends AuditEvent {
 	public static final String TYPE = "DEVICE_REMOVE";
 
 	@Column(name = "removed_by")
-	String removedBy;
+	private String removedBy;
 
 	@Column(name = "device_id")
-	String deviceId;
+	private String deviceId;
 
 	public String getRemovedBy() {
 		return removedBy;
@@ -48,7 +48,7 @@ public class DeviceRemovedEvent extends AuditEvent {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, removedBy, deviceId);
+		return Objects.hash(super.getId(), removedBy, deviceId);
 	}
 
 }

@@ -33,21 +33,21 @@ import java.util.stream.Stream;
 public class VaultAccess {
 
 	@EmbeddedId
-	VaultAccess.Id id = new VaultAccess.Id();
+	private VaultAccess.Id id = new VaultAccess.Id();
 
 	@ManyToOne
 	@MapsId("vaultId")
 	@JoinColumn(name = "vault_id")
-	Vault vault;
+	private Vault vault;
 
 	@ManyToOne
 	@MapsId("authorityId")
 	@JoinColumn(name = "authority_id")
-	Authority authority;
+	private Authority authority;
 
 	@Column(name = "role", nullable = false)
 	@Enumerated(EnumType.STRING)
-	Role role;
+	private Role role;
 
 	public enum Role {
 		/**

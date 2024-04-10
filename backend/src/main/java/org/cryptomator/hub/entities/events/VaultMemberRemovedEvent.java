@@ -16,13 +16,13 @@ public class VaultMemberRemovedEvent extends AuditEvent {
 	public static final String TYPE = "VAULT_MEMBER_REMOVE";
 
 	@Column(name = "removed_by")
-	String removedBy;
+	private String removedBy;
 
 	@Column(name = "vault_id")
-	UUID vaultId;
+	private UUID vaultId;
 
 	@Column(name = "authority_id")
-	String authorityId;
+	private String authorityId;
 
 	public String getRemovedBy() {
 		return removedBy;
@@ -61,7 +61,7 @@ public class VaultMemberRemovedEvent extends AuditEvent {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, removedBy, vaultId, authorityId);
+		return Objects.hash(super.getId(), removedBy, vaultId, authorityId);
 	}
 
 }

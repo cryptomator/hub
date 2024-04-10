@@ -18,17 +18,17 @@ public class DeviceRegisteredEvent extends AuditEvent {
 	public static final String TYPE = "DEVICE_REGISTER";
 
 	@Column(name = "registered_by")
-	String registeredBy;
+	private String registeredBy;
 
 	@Column(name = "device_id")
-	String deviceId;
+	private String deviceId;
 
 	@Column(name = "device_name")
-	String deviceName;
+	private String deviceName;
 
 	@Column(name = "device_type")
 	@Enumerated(EnumType.STRING)
-	Device.Type deviceType;
+	private Device.Type deviceType;
 
 	public String getRegisteredBy() {
 		return registeredBy;
@@ -76,6 +76,6 @@ public class DeviceRegisteredEvent extends AuditEvent {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, registeredBy, deviceId, deviceName, deviceType);
+		return Objects.hash(super.getId(), registeredBy, deviceId, deviceName, deviceType);
 	}
 }

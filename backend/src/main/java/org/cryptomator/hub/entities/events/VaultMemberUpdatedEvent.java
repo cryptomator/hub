@@ -19,17 +19,17 @@ public class VaultMemberUpdatedEvent extends AuditEvent {
 	public static final String TYPE = "VAULT_MEMBER_UPDATE";
 
 	@Column(name = "updated_by")
-	String updatedBy;
+	private String updatedBy;
 
 	@Column(name = "vault_id")
-	UUID vaultId;
+	private UUID vaultId;
 
 	@Column(name = "authority_id")
-	String authorityId;
+	private String authorityId;
 
 	@Column(name = "role", nullable = false)
 	@Enumerated(EnumType.STRING)
-	VaultAccess.Role role;
+	private VaultAccess.Role role;
 
 	public String getUpdatedBy() {
 		return updatedBy;
@@ -77,7 +77,7 @@ public class VaultMemberUpdatedEvent extends AuditEvent {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, updatedBy, vaultId, authorityId, role);
+		return Objects.hash(super.getId(), updatedBy, vaultId, authorityId, role);
 	}
 
 }

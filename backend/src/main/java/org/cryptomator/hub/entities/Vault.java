@@ -57,7 +57,7 @@ public class Vault {
 
 	@Id
 	@Column(name = "id", nullable = false)
-	UUID id;
+	private UUID id;
 
 	@ManyToMany
 	@Immutable
@@ -65,7 +65,7 @@ public class Vault {
 			joinColumns = @JoinColumn(name = "vault_id", referencedColumnName = "id"),
 			inverseJoinColumns = @JoinColumn(name = "authority_id", referencedColumnName = "id")
 	)
-	Set<Authority> directMembers = new HashSet<>();
+	private Set<Authority> directMembers = new HashSet<>();
 
 	@ManyToMany
 	@Immutable
@@ -73,37 +73,37 @@ public class Vault {
 			joinColumns = @JoinColumn(name = "vault_id", referencedColumnName = "id"),
 			inverseJoinColumns = @JoinColumn(name = "authority_id", referencedColumnName = "id")
 	)
-	Set<Authority> effectiveMembers = new HashSet<>();
+	private Set<Authority> effectiveMembers = new HashSet<>();
 
 	@OneToMany(mappedBy = "vault", fetch = FetchType.LAZY)
-	Set<AccessToken> accessTokens = new HashSet<>();
+	private Set<AccessToken> accessTokens = new HashSet<>();
 
 	@Column(name = "name", nullable = false)
-	String name;
+	private String name;
 
 	@Column(name = "salt")
-	String salt;
+	private String salt;
 
 	@Column(name = "iterations")
-	Integer iterations;
+	private Integer iterations;
 
 	@Column(name = "masterkey")
-	String masterkey;
+	private String masterkey;
 
 	@Column(name = "auth_pubkey")
-	String authenticationPublicKey;
+	private String authenticationPublicKey;
 
 	@Column(name = "auth_prvkey")
-	String authenticationPrivateKey;
+	private String authenticationPrivateKey;
 
 	@Column(name = "creation_time", nullable = false)
-	Instant creationTime;
+	private Instant creationTime;
 
 	@Column(name = "description")
-	String description;
+	private String description;
 
 	@Column(name = "archived", nullable = false)
-	boolean archived;
+	private boolean archived;
 
 	public Optional<ECPublicKey> getAuthenticationPublicKeyOptional() {
 		if (authenticationPublicKey == null) {
@@ -252,8 +252,8 @@ public class Vault {
 	public String toString() {
 		return "Vault{" +
 				"id='" + id + '\'' +
-				", members=" + directMembers.stream().map(m -> m.id).collect(Collectors.joining(", ")) +
-				", accessToken=" + accessTokens.stream().map(a -> a.id.toString()).collect(Collectors.joining(", ")) +
+				", members=" + directMembers.stream().map(Authority::getId).collect(Collectors.joining(", ")) +
+				", accessToken=" + accessTokens.stream().map(a -> a.getId().toString()).collect(Collectors.joining(", ")) +
 				", name='" + name + '\'' +
 				", archived='" + archived + '\'' +
 				", salt='" + salt + '\'' +

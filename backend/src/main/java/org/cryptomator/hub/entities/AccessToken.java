@@ -35,20 +35,20 @@ import java.util.UUID;
 public class AccessToken {
 
 	@EmbeddedId
-	AccessId id = new AccessId();
+	private AccessId id = new AccessId();
 
 	@ManyToOne(optional = false, cascade = {CascadeType.REMOVE})
 	@MapsId("userId")
 	@JoinColumn(name = "user_id")
-	User user;
+	private User user;
 
 	@ManyToOne(optional = false, cascade = {CascadeType.REMOVE})
 	@MapsId("vaultId")
 	@JoinColumn(name = "vault_id")
-	Vault vault;
+	private Vault vault;
 
 	@Column(name = "vault_masterkey", nullable = false)
-	String vaultKey;
+	private String vaultKey;
 
 	@Override
 	public boolean equals(Object o) {
@@ -102,8 +102,8 @@ public class AccessToken {
 	public String toString() {
 		return "Access{" +
 				"id=" + id +
-				", user=" + user.id +
-				", vault=" + vault.id +
+				", user=" + user.getId() +
+				", vault=" + vault.getId() +
 				", vaultKey='" + vaultKey + '\'' +
 				'}';
 	}

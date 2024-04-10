@@ -17,13 +17,13 @@ public class Settings {
 
 	@Id
 	@Column(name = "id", nullable = false, updatable = false)
-	int id;
+	private int id;
 
 	@Column(name = "hub_id", nullable = false)
-	String hubId;
+	private String hubId;
 
 	@Column(name = "license_key")
-	String licenseKey;
+	private String licenseKey;
 
 	public int getId() {
 		return id;

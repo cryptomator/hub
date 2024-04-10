@@ -1,13 +1,10 @@
 package org.cryptomator.hub.entities.events;
 
-import io.quarkus.hibernate.orm.panache.PanacheRepository;
-import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 
-import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -19,19 +16,19 @@ public class VaultUpdatedEvent extends AuditEvent {
 	public static final String TYPE = "VAULT_UPDATE";
 
 	@Column(name = "updated_by")
-	String updatedBy;
+	private String updatedBy;
 
 	@Column(name = "vault_id")
-	UUID vaultId;
+	private UUID vaultId;
 
 	@Column(name = "vault_name")
-	String vaultName;
+	private String vaultName;
 
 	@Column(name = "vault_description")
-	String vaultDescription;
+	private String vaultDescription;
 
 	@Column(name = "vault_archived")
-	boolean vaultArchived;
+	private boolean vaultArchived;
 
 	public String getUpdatedBy() {
 		return updatedBy;
@@ -88,7 +85,7 @@ public class VaultUpdatedEvent extends AuditEvent {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, updatedBy, vaultId, vaultName, vaultDescription, vaultArchived);
+		return Objects.hash(super.getId(), updatedBy, vaultId, vaultName, vaultDescription, vaultArchived);
 	}
 
 }

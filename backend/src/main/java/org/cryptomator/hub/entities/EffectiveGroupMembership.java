@@ -17,18 +17,18 @@ import java.util.Objects;
 public class EffectiveGroupMembership {
 
 	@EmbeddedId
-	Id id;
+	private Id id;
 
-	String path;
+	private String path;
 
 	@Embeddable
 	public static class Id implements Serializable {
 
 		@Column(name = "group_id")
-		public String groupId;
+		private String groupId;
 
 		@Column(name = "member_id")
-		public String memberId;
+		private String memberId;
 
 		@Override
 		public boolean equals(Object o) {

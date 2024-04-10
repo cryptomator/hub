@@ -48,13 +48,13 @@ public class AuditEvent {
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "audit_event_id_seq")
 	@Column(name = "id", nullable = false, updatable = false)
-	long id;
+	private long id;
 
 	@Column(name = "timestamp", nullable = false, updatable = false)
-	Instant timestamp;
+	private Instant timestamp;
 
 	@Column(name = "type", nullable = false, insertable = false, updatable = false)
-	String type;
+	private String type;
 
 	public long getId() {
 		return id;

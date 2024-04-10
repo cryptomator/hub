@@ -44,19 +44,19 @@ import java.util.stream.Stream;
 public class User extends Authority {
 
 	@Column(name = "picture_url")
-	String pictureUrl;
+	private String pictureUrl;
 
 	@Column(name = "email")
-	String email;
+	private String email;
 
 	@Column(name = "publickey")
-	String publicKey;
+	private String publicKey;
 
 	@Column(name = "privatekey")
-	String privateKey;
+	private String privateKey;
 
 	@Column(name = "setupcode")
-	String setupCode;
+	private String setupCode;
 
 	public String getPictureUrl() {
 		return pictureUrl;
@@ -135,7 +135,7 @@ public class User extends Authority {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, pictureUrl, email, publicKey, privateKey, setupCode);
+		return Objects.hash(super.getId(), pictureUrl, email, publicKey, privateKey, setupCode);
 	}
 
 	@ApplicationScoped

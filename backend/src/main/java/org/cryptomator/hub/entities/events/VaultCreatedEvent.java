@@ -16,16 +16,16 @@ public class VaultCreatedEvent extends AuditEvent {
 	public static final String TYPE = "VAULT_CREATE";
 
 	@Column(name = "created_by")
-	String createdBy;
+	private String createdBy;
 
 	@Column(name = "vault_id")
-	UUID vaultId;
+	private UUID vaultId;
 
 	@Column(name = "vault_name")
-	String vaultName;
+	private String vaultName;
 
 	@Column(name = "vault_description")
-	String vaultDescription;
+	private String vaultDescription;
 
 	public String getCreatedBy() {
 		return createdBy;
@@ -73,7 +73,7 @@ public class VaultCreatedEvent extends AuditEvent {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, createdBy, vaultId, vaultName, vaultDescription);
+		return Objects.hash(super.getId(), createdBy, vaultId, vaultName, vaultDescription);
 	}
 
 }

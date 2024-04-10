@@ -35,10 +35,10 @@ import java.util.stream.Stream;
 public class LegacyAccessToken {
 
 	@EmbeddedId
-	AccessId id = new AccessId();
+	private AccessId id = new AccessId();
 
 	@Column(name = "jwe", nullable = false)
-	String jwe;
+	private String jwe;
 
 	public AccessId getId() {
 		return id;
@@ -82,10 +82,10 @@ public class LegacyAccessToken {
 	public static class AccessId implements Serializable {
 
 		@Column(name = "device_id", nullable = false)
-		String deviceId;
+		private String deviceId;
 
 		@Column(name = "vault_id", nullable = false)
-		UUID vaultId;
+		private UUID vaultId;
 
 		public String getDeviceId() {
 			return deviceId;

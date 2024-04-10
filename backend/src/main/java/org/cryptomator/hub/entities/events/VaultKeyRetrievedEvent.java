@@ -18,14 +18,14 @@ public class VaultKeyRetrievedEvent extends AuditEvent {
 	public static final String TYPE = "VAULT_KEY_RETRIEVE";
 
 	@Column(name = "retrieved_by")
-	String retrievedBy;
+	private String retrievedBy;
 
 	@Column(name = "vault_id")
-	UUID vaultId;
+	private UUID vaultId;
 
 	@Column(name = "result")
 	@Enumerated(EnumType.STRING)
-	Result result;
+	private Result result;
 
 	public String getRetrievedBy() {
 		return retrievedBy;
@@ -64,7 +64,7 @@ public class VaultKeyRetrievedEvent extends AuditEvent {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, retrievedBy, vaultId, result);
+		return Objects.hash(super.getId(), retrievedBy, vaultId, result);
 	}
 
 	public enum Result {

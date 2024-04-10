@@ -16,13 +16,13 @@ public class VaultAccessGrantedEvent extends AuditEvent {
 	public static final String TYPE = "VAULT_ACCESS_GRANT";
 
 	@Column(name = "granted_by")
-	String grantedBy;
+	private String grantedBy;
 
 	@Column(name = "vault_id")
-	UUID vaultId;
+	private UUID vaultId;
 
 	@Column(name = "authority_id")
-	String authorityId;
+	private String authorityId;
 
 	public String getGrantedBy() {
 		return grantedBy;
@@ -61,7 +61,7 @@ public class VaultAccessGrantedEvent extends AuditEvent {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, grantedBy, vaultId, authorityId);
+		return Objects.hash(super.getId(), grantedBy, vaultId, authorityId);
 	}
 
 }

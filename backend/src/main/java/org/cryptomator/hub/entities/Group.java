@@ -22,7 +22,7 @@ public class Group extends Authority {
 			joinColumns = @JoinColumn(name = "group_id", referencedColumnName = "id"),
 			inverseJoinColumns = @JoinColumn(name = "member_id", referencedColumnName = "id")
 	)
-	Set<Authority> members = new HashSet<>();
+	private Set<Authority> members = new HashSet<>();
 
 	public Set<Authority> getMembers() {
 		return members;

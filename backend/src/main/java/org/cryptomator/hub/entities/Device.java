@@ -40,27 +40,27 @@ public class Device {
 
 	@Id
 	@Column(name = "id", nullable = false)
-	String id;
+	private String id;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "owner_id", updatable = false, nullable = false)
-	User owner;
+	private User owner;
 
 	@Column(name = "name", nullable = false)
-	String name;
+	private String name;
 
 	@Column(name = "type", nullable = false)
 	@Enumerated(EnumType.STRING)
-	Type type;
+	private Type type;
 
 	@Column(name = "publickey", nullable = false)
-	String publickey;
+	private String publickey;
 
 	@Column(name = "user_privatekey", nullable = false)
-	String userPrivateKey;
+	private String userPrivateKey;
 
 	@Column(name = "creation_time", nullable = false)
-	Instant creationTime;
+	private Instant creationTime;
 
 	public String getId() {
 		return id;
@@ -122,7 +122,7 @@ public class Device {
 	public String toString() {
 		return "Device{" +
 				"id='" + id + '\'' +
-				", owner=" + owner.id +
+				", owner=" + owner.getId() +
 				", name='" + name + '\'' +
 				", type='" + type + '\'' +
 				", publickey='" + publickey + '\'' +
