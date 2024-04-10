@@ -6,8 +6,11 @@ import jakarta.inject.Inject;
 import org.cryptomator.hub.rollback.DBRollbackAfter;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 
 import java.sql.SQLException;
 
@@ -20,11 +23,13 @@ public class RollbackTestIT {
 	AgroalDataSource dataSource;
 
 	@Nested
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 	class WithFlywayCleanup {
 
 		@Test
+		@Order(1)
 		@DBRollbackAfter
-		public void test1() throws SQLException {
+		public void changeDB() throws SQLException {
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
 						UPDATE "settings"
@@ -35,7 +40,8 @@ public class RollbackTestIT {
 		}
 
 		@Test
-		public void test2() throws SQLException {
+		@Order(2)
+		public void testDB() throws SQLException {
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				var result = s.executeQuery("""
 						SELECT *
@@ -49,10 +55,12 @@ public class RollbackTestIT {
 	}
 
 	@Nested
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 	class NoCleanup {
 
 		@Test
-		public void test1() throws SQLException {
+		@Order(1)
+		public void changeDB() throws SQLException {
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
 						UPDATE "settings"
@@ -63,7 +71,8 @@ public class RollbackTestIT {
 		}
 
 		@Test
-		public void test2() throws SQLException {
+		@Order(2)
+		public void testDB() throws SQLException {
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				var result = s.executeQuery("""
 						SELECT *
