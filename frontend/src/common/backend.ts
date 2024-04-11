@@ -199,12 +199,12 @@ export class LicenseStatusDto {
   constructor(
     public licensedSeats: number,
     public usedSeats: number,
-    public expiresAt: Date) {
+    public expiresAt: Date | null) {
   }
 
   public isExpired(): boolean {
     const now = new Date();
-    return now > this.expiresAt;
+    return now > (this.expiresAt ?? now); //if expired is null, the license cannot expire
   }
 
   public isExceeded(): boolean {
@@ -375,7 +375,7 @@ class BillingService {
 class LicenseService {
   public async getStatus(): Promise<LicenseStatusDto> {
     return axiosAuth.get('/license/status').then(response => {
-      return new LicenseStatusDto(response.data.licensedSeats, response.data.usedSeats, new Date(response.data.expiresAt));
+      return new LicenseStatusDto(response.data.licensedSeats, response.data.usedSeats, response.data.expiresAt ? new Date(response.data.expiresAt) : null);
     });
   }
 }

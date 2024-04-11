@@ -26,7 +26,7 @@ public class LicenseResource {
 	@Path("/status")
 	@Produces(MediaType.APPLICATION_JSON)
 	@RolesAllowed("user")
-	@Operation(summary = "Get license status information", description = "Information includes the license expiration date, the licensed seats and the already used seats")
+	@Operation(summary = "Get license status information", description = "Information includes the licensed seats, the already used seats and if defined, the license expiration date.")
 	@APIResponse(responseCode = "200")
 	public LicenseStatusDto get() {
 		return LicenseStatusDto.create(licenseHolder);
