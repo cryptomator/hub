@@ -24,7 +24,7 @@ import java.time.Instant;
 import java.util.Optional;
 
 @ApplicationScoped
-public class LicenseHolder implements Scheduled.SkipPredicate {
+public class LicenseHolder {
 
 	private static final int SELFHOSTED_NOLICENSE_SEATS = 5;
 	private static final int MANAGED_NOLICENSE_SEATS = 0;
@@ -106,7 +106,7 @@ public class LicenseHolder implements Scheduled.SkipPredicate {
 	/**
 	 * Attempts to refresh the Hub licence every day between 01:00:00 and 02:00:00 AM UTC if claim refreshURL is present.
 	 */
-	@Scheduled(cron = "0 0 1 * * ?", timeZone = "UTC", concurrentExecution = Scheduled.ConcurrentExecution.SKIP, skipExecutionIf = LicenseHolder.class)
+	@Scheduled(cron = "0 0 1 * * ?", timeZone = "UTC", concurrentExecution = Scheduled.ConcurrentExecution.SKIP, skipExecutionIf = LicenseHolder.LicenseRefreshSkipper.class)
 	void refreshLicense() throws InterruptedException {
 		randomMinuteSleeper.sleep(); // add random sleep between [0,59]min to reduce infrastructure load
 		var refreshUrlClaim = get().getClaim("refreshUrl");
@@ -142,12 +142,6 @@ public class LicenseHolder implements Scheduled.SkipPredicate {
 				throw new LicenseRefreshFailedException(response.statusCode(), body);
 			}
 		}
-	}
-
-	//necessary for skipExecutionIf
-	@Override
-	public boolean test(ScheduledExecution execution) {
-		return license == null;
 	}
 
 	public DecodedJWT get() {
@@ -205,6 +199,18 @@ public class LicenseHolder implements Scheduled.SkipPredicate {
 		LicenseRefreshFailedException(int statusCode, String body) {
 			this.statusCode = statusCode;
 			this.body = body;
+		}
+	}
+
+	@ApplicationScoped
+	public static class LicenseRefreshSkipper implements Scheduled.SkipPredicate {
+
+		@Inject
+		LicenseHolder licenseHolder;
+
+		@Override
+		public boolean test(ScheduledExecution execution) {
+			return licenseHolder.license == null;
 		}
 	}
 }
