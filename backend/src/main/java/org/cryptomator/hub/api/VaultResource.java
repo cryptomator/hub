@@ -339,12 +339,8 @@ public class VaultResource {
 	@APIResponse(responseCode = "402", description = "number of users granted access exceeds available license seats")
 	@APIResponse(responseCode = "403", description = "not a vault owner")
 	@APIResponse(responseCode = "404", description = "at least one user has not been found")
-	@APIResponse(responseCode = "410", description = "vault is archived")
 	public Response grantAccess(@PathParam("vaultId") UUID vaultId, @NotEmpty Map<String, String> tokens) {
 		var vault = Vault.<Vault>findById(vaultId); // should always be found, since @VaultRole filter would have triggered
-		if (vault.archived) {
-			throw new GoneException("Vault is archived.");
-		}
 
 		// check number of available seats
 		long occupiedSeats = EffectiveVaultAccess.countSeatOccupyingUsers();
