@@ -1,7 +1,8 @@
 package org.cryptomator.hub.entities;
 
-import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import io.quarkus.panache.common.Parameters;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
@@ -19,44 +20,35 @@ import java.util.Objects;
 import java.util.UUID;
 
 @Entity
-@NamedQuery(name = "AccessToken.deleteByUser", query = "DELETE FROM AccessToken a WHERE a.id.userId = :userId")
+@Table(name = "access_token")
+@NamedQuery(name = "AccessToken.deleteByUser", query = """
+			DELETE
+			FROM AccessToken a
+			WHERE a.id.userId = :userId
+		""")
 @NamedQuery(name = "AccessToken.get", query = """
 			SELECT token
 			FROM AccessToken token
 			INNER JOIN EffectiveVaultAccess perm ON token.id.vaultId = perm.id.vaultId AND token.id.userId = perm.id.authorityId
 			WHERE token.id.vaultId = :vaultId AND token.id.userId = :userId
 		""")
-@Table(name = "access_token")
-public class AccessToken extends PanacheEntityBase {
+public class AccessToken {
 
 	@EmbeddedId
-	public AccessId id = new AccessId();
+	private AccessId id = new AccessId();
 
 	@ManyToOne(optional = false, cascade = {CascadeType.REMOVE})
 	@MapsId("userId")
 	@JoinColumn(name = "user_id")
-	public User user;
+	private User user;
 
 	@ManyToOne(optional = false, cascade = {CascadeType.REMOVE})
 	@MapsId("vaultId")
 	@JoinColumn(name = "vault_id")
-	public Vault vault;
+	private Vault vault;
 
 	@Column(name = "vault_masterkey", nullable = false)
-	public String vaultKey;
-
-	public static AccessToken unlock(UUID vaultId, String userId) {
-		try {
-			return find("#AccessToken.get", Parameters.with("vaultId", vaultId).and("userId", userId)).firstResult();
-		} catch (NoResultException e) {
-			return null;
-		}
-	}
-
-
-	public static void deleteByUser(String userId) {
-		delete("#AccessToken.deleteByUser", Parameters.with("userId", userId));
-	}
+	private String vaultKey;
 
 	@Override
 	public boolean equals(Object o) {
@@ -69,6 +61,38 @@ public class AccessToken extends PanacheEntityBase {
 				&& Objects.equals(vaultKey, other.vaultKey);
 	}
 
+	public AccessId getId() {
+		return id;
+	}
+
+	public void setId(AccessId id) {
+		this.id = id;
+	}
+
+	public User getUser() {
+		return user;
+	}
+
+	public void setUser(User user) {
+		this.user = user;
+	}
+
+	public Vault getVault() {
+		return vault;
+	}
+
+	public void setVault(Vault vault) {
+		this.vault = vault;
+	}
+
+	public String getVaultKey() {
+		return vaultKey;
+	}
+
+	public void setVaultKey(String vaultKey) {
+		this.vaultKey = vaultKey;
+	}
+
 	@Override
 	public int hashCode() {
 		return Objects.hash(id, user, vault, vaultKey);
@@ -78,8 +102,8 @@ public class AccessToken extends PanacheEntityBase {
 	public String toString() {
 		return "Access{" +
 				"id=" + id +
-				", user=" + user.id +
-				", vault=" + vault.id +
+				", user=" + user.getId() +
+				", vault=" + vault.getId() +
 				", vaultKey='" + vaultKey + '\'' +
 				'}';
 	}
@@ -87,8 +111,24 @@ public class AccessToken extends PanacheEntityBase {
 	@Embeddable
 	public static class AccessId implements Serializable {
 
-		public String userId;
-		public UUID vaultId;
+		String userId;
+		UUID vaultId;
+
+		public String getUserId() {
+			return userId;
+		}
+
+		public void setUserId(String userId) {
+			this.userId = userId;
+		}
+
+		public UUID getVaultId() {
+			return vaultId;
+		}
+
+		public void setVaultId(UUID vaultId) {
+			this.vaultId = vaultId;
+		}
 
 		public AccessId(String userId, UUID vaultId) {
 			this.userId = userId;
@@ -118,6 +158,22 @@ public class AccessToken extends PanacheEntityBase {
 					"userId='" + userId + '\'' +
 					", vaultId='" + vaultId + '\'' +
 					'}';
+		}
+	}
+
+	@ApplicationScoped
+	public static class Repository implements PanacheRepositoryBase<AccessToken, AccessId> {
+
+		public AccessToken unlock(UUID vaultId, String userId) {
+			try {
+				return find("#AccessToken.get", Parameters.with("vaultId", vaultId).and("userId", userId)).firstResult();
+			} catch (NoResultException e) {
+				return null;
+			}
+		}
+
+		public void deleteByUser(String userId) {
+			delete("#AccessToken.deleteByUser", Parameters.with("userId", userId));
 		}
 	}
 }

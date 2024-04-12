@@ -3,16 +3,19 @@ package org.cryptomator.hub;
 import io.agroal.api.AgroalDataSource;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
-import org.cryptomator.hub.rollback.DBRollback;
+import org.cryptomator.hub.rollback.DBRollbackAfter;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 
 import java.sql.SQLException;
 
 @QuarkusTest
-public class RollbackTest {
+public class RollbackTestIT {
 	@Inject
 	public Flyway flyway;
 
@@ -20,11 +23,13 @@ public class RollbackTest {
 	AgroalDataSource dataSource;
 
 	@Nested
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 	class WithFlywayCleanup {
 
 		@Test
-		@DBRollback
-		public void test1() throws SQLException {
+		@Order(1)
+		@DBRollbackAfter
+		public void changeDB() throws SQLException {
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
 						UPDATE "settings"
@@ -35,7 +40,8 @@ public class RollbackTest {
 		}
 
 		@Test
-		public void test2() throws SQLException {
+		@Order(2)
+		public void testDB() throws SQLException {
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				var result = s.executeQuery("""
 						SELECT *
@@ -49,10 +55,12 @@ public class RollbackTest {
 	}
 
 	@Nested
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 	class NoCleanup {
 
 		@Test
-		public void test1() throws SQLException {
+		@Order(1)
+		public void changeDB() throws SQLException {
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
 						UPDATE "settings"
@@ -63,7 +71,8 @@ public class RollbackTest {
 		}
 
 		@Test
-		public void test2() throws SQLException {
+		@Order(2)
+		public void testDB() throws SQLException {
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				var result = s.executeQuery("""
 						SELECT *

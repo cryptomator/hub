@@ -1,35 +1,58 @@
-package org.cryptomator.hub.entities;
+package org.cryptomator.hub.entities.events;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 
-import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 
 @Entity
 @Table(name = "audit_event_vault_member_remove")
-@DiscriminatorValue(AuditEventVaultMemberRemove.TYPE)
-public class AuditEventVaultMemberRemove extends AuditEvent {
+@DiscriminatorValue(VaultMemberRemovedEvent.TYPE)
+public class VaultMemberRemovedEvent extends AuditEvent {
 
 	public static final String TYPE = "VAULT_MEMBER_REMOVE";
 
 	@Column(name = "removed_by")
-	public String removedBy;
+	private String removedBy;
 
 	@Column(name = "vault_id")
-	public UUID vaultId;
+	private UUID vaultId;
 
 	@Column(name = "authority_id")
-	public String authorityId;
+	private String authorityId;
+
+	public String getRemovedBy() {
+		return removedBy;
+	}
+
+	public void setRemovedBy(String removedBy) {
+		this.removedBy = removedBy;
+	}
+
+	public UUID getVaultId() {
+		return vaultId;
+	}
+
+	public void setVaultId(UUID vaultId) {
+		this.vaultId = vaultId;
+	}
+
+	public String getAuthorityId() {
+		return authorityId;
+	}
+
+	public void setAuthorityId(String authorityId) {
+		this.authorityId = authorityId;
+	}
 
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
-		AuditEventVaultMemberRemove that = (AuditEventVaultMemberRemove) o;
+		VaultMemberRemovedEvent that = (VaultMemberRemovedEvent) o;
 		return super.equals(that) //
 				&& Objects.equals(removedBy, that.removedBy) //
 				&& Objects.equals(vaultId, that.vaultId) //
@@ -38,16 +61,7 @@ public class AuditEventVaultMemberRemove extends AuditEvent {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, removedBy, vaultId, authorityId);
-	}
-
-	public static void log(String removedBy, UUID vaultId, String authorityId) {
-		var event = new AuditEventVaultMemberRemove();
-		event.timestamp = Instant.now();
-		event.removedBy = removedBy;
-		event.vaultId = vaultId;
-		event.authorityId = authorityId;
-		event.persist();
+		return Objects.hash(super.getId(), removedBy, vaultId, authorityId);
 	}
 
 }

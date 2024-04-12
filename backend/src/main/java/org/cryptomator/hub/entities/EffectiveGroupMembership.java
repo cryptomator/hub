@@ -1,7 +1,5 @@
 package org.cryptomator.hub.entities;
 
-import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
-import io.quarkus.panache.common.Parameters;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EmbeddedId;
@@ -12,51 +10,30 @@ import org.hibernate.annotations.Immutable;
 
 import java.io.Serializable;
 import java.util.Objects;
-import java.util.stream.Stream;
 
 @Entity
 @Immutable
 @Table(name = "effective_group_membership")
-@NamedQuery(name = "EffectiveGroupMembership.countEGUs", query = """
-				SELECT count( DISTINCT u)
-				FROM User u
-				INNER JOIN EffectiveGroupMembership egm	ON u.id = egm.id.memberId
-				WHERE egm.id.groupId = :groupId
-		""")
-@NamedQuery(name = "EffectiveGroupMembership.getEGUs", query = """
-				SELECT DISTINCT u
-				FROM User u
-				INNER JOIN EffectiveGroupMembership egm ON u.id = egm.id.memberId
-				WHERE egm.id.groupId = :groupId
-		""")
-public class EffectiveGroupMembership extends PanacheEntityBase {
+public class EffectiveGroupMembership {
 
 	@EmbeddedId
-	public EffectiveGroupMembershipId id;
+	private Id id;
 
-	public String path;
-
-	public static long countEffectiveGroupUsers(String groupdId) {
-		return EffectiveGroupMembership.count("#EffectiveGroupMembership.countEGUs", Parameters.with("groupId", groupdId));
-	}
-
-	public static Stream<User> getEffectiveGroupUsers(String groupdId) {
-		return EffectiveGroupMembership.find("#EffectiveGroupMembership.getEGUs", Parameters.with("groupId", groupdId)).stream();
-	}
+	private String path;
 
 	@Embeddable
-	public static class EffectiveGroupMembershipId implements Serializable {
+	public static class Id implements Serializable {
 
 		@Column(name = "group_id")
-		public String groupId;
+		private String groupId;
 
 		@Column(name = "member_id")
-		public String memberId;
+		private String memberId;
 
 		@Override
 		public boolean equals(Object o) {
 			if (this == o) return true;
-			if (o instanceof EffectiveGroupMembershipId egmId) {
+			if (o instanceof Id egmId) {
 				return Objects.equals(groupId, egmId.groupId) //
 						&& Objects.equals(memberId, egmId.memberId);
 			}

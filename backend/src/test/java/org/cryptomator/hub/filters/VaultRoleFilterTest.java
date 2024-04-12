@@ -1,15 +1,14 @@
 package org.cryptomator.hub.filters;
 
-import io.quarkus.test.junit.QuarkusTest;
-import jakarta.annotation.Nullable;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ResourceInfo;
 import jakarta.ws.rs.core.MultivaluedHashMap;
-import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.UriInfo;
+import org.cryptomator.hub.entities.EffectiveVaultAccess;
+import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.entities.VaultAccess;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.junit.jupiter.api.Assertions;
@@ -17,24 +16,29 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 
-import java.lang.reflect.Method;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
-@QuarkusTest
 public class VaultRoleFilterTest {
 
 	private final ResourceInfo resourceInfo = Mockito.mock(ResourceInfo.class);
 	private final UriInfo uriInfo = Mockito.mock(UriInfo.class);
 	private final ContainerRequestContext context = Mockito.mock(ContainerRequestContext.class);
 	private final JsonWebToken jwt = Mockito.mock(JsonWebToken.class);
+	private final EffectiveVaultAccess.Repository effectiveVaultAccessRepo = Mockito.mock(EffectiveVaultAccess.Repository.class);
+	private final Vault.Repository vaultRepo = Mockito.mock(Vault.Repository.class);
 	private final VaultRoleFilter filter = new VaultRoleFilter();
 
 	@BeforeEach
 	public void setup() {
 		filter.resourceInfo = resourceInfo;
 		filter.jwt = jwt;
+		filter.effectiveVaultAccessRepo = effectiveVaultAccessRepo;
+		filter.vaultRepo = vaultRepo;
 
 		Mockito.doReturn(uriInfo).when(context).getUriInfo();
 	}
@@ -64,6 +68,9 @@ public class VaultRoleFilterTest {
 		Mockito.doReturn(new MultivaluedHashMap<>(Map.of(VaultRole.DEFAULT_VAULT_ID_PARAM, "7E57C0DE-0000-4000-8000-000100001111"))).when(uriInfo).getPathParameters();
 		Mockito.doReturn("user2").when(jwt).getSubject();
 
+		Mockito.when(vaultRepo.findByIdOptional(ArgumentMatchers.argThat(uuid -> uuid.toString().equalsIgnoreCase("7E57C0DE-0000-4000-8000-000100001111")))).thenReturn(Optional.of(Mockito.mock(Vault.class)));
+		Mockito.when(effectiveVaultAccessRepo.listRoles(Mockito.argThat(uuid -> uuid.toString().equalsIgnoreCase("7E57C0DE-0000-4000-8000-000100001111")), Mockito.eq("user2"))).thenReturn(Set.of());
+
 		var e = Assertions.assertThrows(ForbiddenException.class, () -> filter.filter(context));
 
 		Assertions.assertEquals("Vault role required: OWNER", e.getMessage());
@@ -76,6 +83,9 @@ public class VaultRoleFilterTest {
 		Mockito.doReturn(new MultivaluedHashMap<>(Map.of(VaultRole.DEFAULT_VAULT_ID_PARAM, "7E57C0DE-0000-4000-8000-000100001111"))).when(uriInfo).getPathParameters();
 		Mockito.doReturn("user1").when(jwt).getSubject();
 
+		Mockito.when(vaultRepo.findByIdOptional(ArgumentMatchers.argThat(uuid -> uuid.toString().equalsIgnoreCase("7E57C0DE-0000-4000-8000-000100001111")))).thenReturn(Optional.of(Mockito.mock(Vault.class)));
+		Mockito.when(effectiveVaultAccessRepo.listRoles(Mockito.argThat(uuid -> uuid.toString().equalsIgnoreCase("7E57C0DE-0000-4000-8000-000100001111")), Mockito.eq("user1"))).thenReturn(Set.of(VaultAccess.Role.OWNER));
+
 		Assertions.assertDoesNotThrow(() -> filter.filter(context));
 	}
 
@@ -85,6 +95,9 @@ public class VaultRoleFilterTest {
 		Mockito.doReturn(VaultRoleFilterTest.class.getMethod("allowOwner")).when(resourceInfo).getResourceMethod();
 		Mockito.doReturn(new MultivaluedHashMap<>(Map.of(VaultRole.DEFAULT_VAULT_ID_PARAM, "7E57C0DE-0000-4000-8000-000100002222"))).when(uriInfo).getPathParameters();
 		Mockito.doReturn("user2").when(jwt).getSubject();
+
+		Mockito.when(vaultRepo.findByIdOptional(ArgumentMatchers.argThat(uuid -> uuid.toString().equalsIgnoreCase("7E57C0DE-0000-4000-8000-000100002222")))).thenReturn(Optional.of(Mockito.mock(Vault.class)));
+		Mockito.when(effectiveVaultAccessRepo.listRoles(Mockito.argThat(uuid -> uuid.toString().equalsIgnoreCase("7E57C0DE-0000-4000-8000-000100002222")), Mockito.eq("user2"))).thenReturn(Set.of(VaultAccess.Role.OWNER));
 
 		Assertions.assertDoesNotThrow(() -> filter.filter(context));
 	}
@@ -103,6 +116,8 @@ public class VaultRoleFilterTest {
 		public void testFilterSuccess() throws NoSuchMethodException {
 			Mockito.doReturn(VaultRoleFilterTest.class.getMethod("allowOwner")).when(resourceInfo).getResourceMethod();
 			Mockito.doReturn("user1").when(jwt).getSubject();
+			Mockito.when(vaultRepo.findByIdOptional(ArgumentMatchers.argThat(uuid -> uuid.toString().equalsIgnoreCase("7E57C0DE-0000-4000-8000-00010000AAAA")))).thenReturn(Optional.of(Mockito.mock(Vault.class)));
+			Mockito.when(effectiveVaultAccessRepo.listRoles(Mockito.argThat(uuid -> uuid.toString().equalsIgnoreCase("7E57C0DE-0000-4000-8000-00010000AAAA")), Mockito.eq("user1"))).thenReturn(Set.of(VaultAccess.Role.OWNER));
 
 			Assertions.assertDoesNotThrow(() -> filter.filter(context));
 		}
