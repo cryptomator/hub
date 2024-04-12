@@ -140,7 +140,7 @@ public class LegacyAccessToken {
 
 		public LegacyAccessToken unlock(UUID vaultId, String deviceId, String userId) {
 			return find("#LegacyAccessToken.get", Map.of("deviceId", deviceId, "vaultId", vaultId, "userId", userId))
-					.firstResult();
+					.singleResult();
 		}
 
 		public Stream<LegacyAccessToken> getByDeviceAndOwner(String deviceId, String userId) {

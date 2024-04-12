@@ -8,6 +8,7 @@ import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.annotation.Nullable;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
+import jakarta.persistence.NoResultException;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -277,13 +278,13 @@ public class VaultResource {
 			throw new PaymentRequiredException("Number of effective vault users exceeds available license seats");
 		}
 
-		var access = legacyAccessTokenRepo.unlock(vaultId, deviceId, jwt.getSubject());
-		if (access != null) {
+		try {
+			var access = legacyAccessTokenRepo.unlock(vaultId, deviceId, jwt.getSubject());
 			eventLogger.logVaultKeyRetrieved(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.SUCCESS);
 			var subscriptionStateHeaderName = "Hub-Subscription-State";
 			var subscriptionStateHeaderValue = license.isSet() ? "ACTIVE" : "INACTIVE"; // license expiration is not checked here, because it is checked in the ActiveLicense filter
 			return Response.ok(access.getJwe()).header(subscriptionStateHeaderName, subscriptionStateHeaderValue).build();
-		} else {
+		} catch (NoResultException e){
 			eventLogger.logVaultKeyRetrieved(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.UNAUTHORIZED);
 			throw new ForbiddenException("Access to this device not granted.");
 		}
