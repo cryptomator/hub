@@ -3,6 +3,7 @@ package org.cryptomator.hub.api;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import io.agroal.api.AgroalDataSource;
+import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.quarkus.test.security.oidc.Claim;
@@ -12,6 +13,7 @@ import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
 import jakarta.validation.Validator;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
+import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.rollback.DBRollbackAfter;
 import org.cryptomator.hub.rollback.DBRollbackBefore;
 import org.flywaydb.core.Flyway;
@@ -62,6 +64,8 @@ public class VaultResourceIT {
 	AgroalDataSource dataSource;
 	@Inject
 	EffectiveVaultAccess.Repository effectiveVaultAccessRepo;
+	@Inject
+	Vault.Repository vaultRepo;
 	@Inject
 	Validator validator;
 	@Inject
@@ -838,23 +842,24 @@ public class VaultResourceIT {
 		private static Algorithm JWT_ALG;
 
 		@BeforeAll
-		public void setup() throws GeneralSecurityException, SQLException {
+		public void setup() throws GeneralSecurityException {
 			var keyPairGen = KeyPairGenerator.getInstance("EC");
 			keyPairGen.initialize(new ECGenParameterSpec("secp384r1"));
 			var keyPair = keyPairGen.generateKeyPair();
 			JWT_ALG = Algorithm.ECDSA384((ECPrivateKey) keyPair.getPrivate());
-			var authPubKey = Base64.getEncoder().encodeToString(keyPair.getPublic().getEncoded());
 
-			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
-				s.execute("""
-						INSERT INTO "vault" ("id", "name", "description", "creation_time", "salt", "iterations", "masterkey", "auth_pubkey", "auth_prvkey", "archived")
-						VALUES
-						('7E57C0DE-0000-4000-8000-000100009999', 'ownership-test-vault', 'Testing ownership.', '2020-02-20 20:20:20', NULL, NULL , NULL,
-						 '%s',
-						 NULL,
-						 FALSE);
-						""".formatted(authPubKey));
-			}
+			//transaction context required for persistence
+			QuarkusTransaction.requiringNew()
+					.timeout(10)
+					.call(() -> {
+						Vault v = new Vault();
+						v.setId(UUID.fromString("7E57C0DE-0000-4000-8000-000100009999"));
+						v.setName("ownership-test-vault");
+						v.setCreationTime(Instant.now());
+						v.setAuthenticationPublicKey(Base64.getEncoder().encodeToString(keyPair.getPublic().getEncoded()));
+						vaultRepo.persist(v);
+						return 0;
+					});
 		}
 
 		@Test
@@ -1021,7 +1026,7 @@ public class VaultResourceIT {
 		}
 
 		@AfterAll
-		public void reset() throws SQLException {
+		public void cleanup() throws SQLException {
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
 						DELETE FROM "vault" WHERE "id" = '7E57C0DE-0000-4000-8000-000100009999';
