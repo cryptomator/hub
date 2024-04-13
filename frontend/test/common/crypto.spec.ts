@@ -61,8 +61,8 @@ describe('crypto', () => {
 
     it('recover() succeeds for valid key', async () => {
       let recoveryKey = `
-        pathway lift abuse plenty export texture gentleman landscape beyond ceiling around leaf cafe charity
-        border breakdown victory surely computer cat linger restrict infer crowd live computer true written amazed
+        pathway lift abuse plenty export texture gentleman landscape beyond ceiling around leaf cafe charity 
+        border breakdown victory surely computer cat linger restrict infer crowd live computer true written amazed 
         investor boot depth left theory snow whereby terminal weekly reject happiness circuit partial cup ad
         `;
 
@@ -173,8 +173,11 @@ describe('crypto', () => {
   describe('VaultMetadata', () => {
     // TODO review @sebi what else should we test?
     it('encryptWithMasterKey() and decryptWithMasterKey()', async () => {
-      const vaultKeys = await VaultKeys.create();
-      const uvfMasterKey: CryptoKey = vaultKeys.uvfMasterKey;
+      const uvfMasterKey = await crypto.subtle.generateKey(
+        { name: 'AES-KW', length: 256 },
+        true,
+        ['wrapKey', 'unwrapKey']
+      );
       const automaticAccessGrant: VaultMetadataJWEAutomaticAccessGrantDto ={
         "enabled": true,
         "maxWotDepth": -1
@@ -239,8 +242,8 @@ describe('crypto', () => {
 /* ---------- MOCKS ---------- */
 
 class TestVaultKeys extends VaultKeys {
-  constructor(masterKey: CryptoKey, uvfMasterKey: CryptoKey) {
-    super(masterKey, uvfMasterKey);
+  constructor(masterKey: CryptoKey) {
+    super(masterKey);
   }
 
   static async create() {
@@ -258,7 +261,7 @@ class TestVaultKeys extends VaultKeys {
       true,
       ['sign']
     );
-    return new TestVaultKeys(key, key);
+    return new TestVaultKeys(key);
   }
 }
 

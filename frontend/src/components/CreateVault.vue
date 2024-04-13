@@ -292,14 +292,17 @@ async function createVault() {
       throw new Error('Invalid state');
     }
     const vaultId = crypto.randomUUID();
+    /*
+    FIXME create UVF vault
     const vaultMetadata: VaultMetadata = await VaultMetadata.create({
        enabled: true,
        maxWotDepth: -1
     });
     const vaultMetadataEncrypted = await vaultMetadata.encryptWithMasterKey(vaultKeys.value.uvfMasterKey);
-    vaultConfig.value = await VaultConfig.create(vaultId, vaultKeys.value, vaultMetadataEncrypted);
+    */
+    vaultConfig.value = await VaultConfig.create(vaultId, vaultKeys.value);
     const ownerJwe = await vaultKeys.value.encryptForUser(base64.parse(owner.publicKey));
-    await backend.vaults.createOrUpdateVault(vaultId, vaultName.value, false, vaultMetadataEncrypted, vaultDescription.value);
+    await backend.vaults.createOrUpdateVault(vaultId, vaultName.value, false, '', vaultDescription.value);
     await backend.vaults.grantAccess(vaultId, { userId: owner.id, token: ownerJwe });
     state.value = State.Finished;
   } catch (error) {
