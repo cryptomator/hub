@@ -1,6 +1,6 @@
 import JSZip from 'jszip';
 import config, { absBackendBaseURL, absFrontendBaseURL } from '../common/config';
-import { VaultConfigHeaderHub, VaultConfigPayload, VaultKeys } from '../common/crypto';
+import { VaultConfigHeaderHub, VaultConfigPayload, VaultKeys } from '../common/vaultv8';
 
 export class VaultConfig {
   readonly vaultConfigToken: string;

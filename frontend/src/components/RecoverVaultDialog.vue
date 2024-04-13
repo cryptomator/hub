@@ -56,8 +56,7 @@ import { base64 } from 'rfc4648';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { UserDto, VaultDto } from '../common/backend';
-
-import { VaultKeys } from '../common/crypto';
+import { VaultKeys } from '../common/vaultv8';
 
 class FormValidationFailedError extends Error {
   constructor() {

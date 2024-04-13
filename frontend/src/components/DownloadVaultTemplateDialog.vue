@@ -54,8 +54,8 @@ import { saveAs } from 'file-saver';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { VaultDto } from '../common/backend';
-import { VaultKeys } from '../common/crypto';
 import { VaultConfig } from '../common/vaultconfig';
+import { VaultKeys } from '../common/vaultv8';
 
 const { t } = useI18n({ useScope: 'global' });
 

@@ -185,9 +185,9 @@ import { base64 } from 'rfc4648';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { PaymentRequiredError } from '../common/backend';
-import { VaultKeys, VaultMetadata } from '../common/crypto';
 import { debounce } from '../common/util';
 import { VaultConfig } from '../common/vaultconfig';
+import { VaultKeys } from '../common/vaultv8';
 
 enum State {
   Initial,
