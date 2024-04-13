@@ -440,8 +440,3 @@ export class ConflictError extends BackendError {
     super('Resource already exists');
   }
 }
-
-export type VaultMetadataJWEAutomaticAccessGrantDto = {
-    enabled: boolean,
-    maxWotDepth: number
-}

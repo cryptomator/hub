@@ -1,26 +1,36 @@
-import * as miscreant from 'miscreant';
-import { base32, base64 } from 'rfc4648';
-import { VaultMetadataJWEAutomaticAccessGrantDto } from './backend';
+import { base64url } from 'rfc4648';
 import { JWEBuilder, JWEParser } from './jwe';
 
+export type MetadataPayload = {
+  fileFormat: 'AES-256-GCM-32k';
+  nameFormat: 'AES-SIV-512-B64URL'; // TODO verify after merging https://github.com/encryption-alliance/unified-vault-format/pull/24
+  seeds: Record<string, string>;
+  initialSeed: string;
+  latestSeed: string;
+  kdf: 'HKDF-SHA512';
+  kdfSalt: string;
+  'org.cryptomator.automaticAccessGrant': VaultMetadataJWEAutomaticAccessGrantDto;
+}
+
+export type VaultMetadataJWEAutomaticAccessGrantDto = {
+  enabled: boolean,
+  maxWotDepth: number
+}
+
 export class VaultMetadata {
-  // a 256 bit = 32 byte file key for data encryption
-  private static readonly RAWKEY_KEY_DESIGNATION: HmacImportParams | HmacKeyGenParams = {
-    name: 'HMAC',
-    hash: 'SHA-256',
-    length: 256
-  };
 
   readonly automaticAccessGrant: VaultMetadataJWEAutomaticAccessGrantDto;
-  readonly keys: Record<string, CryptoKey>;
-  readonly latestFileKey: string;
-  readonly nameKey: string;
+  readonly seeds: Map<number, Uint8Array>;
+  readonly initialSeedId: number;
+  readonly latestSeedId: number;
+  readonly kdfSalt: Uint8Array;
 
-  protected constructor(automaticAccessGrant: VaultMetadataJWEAutomaticAccessGrantDto, keys: Record<string, CryptoKey>, latestFileKey: string, nameKey: string) {
+  protected constructor(automaticAccessGrant: VaultMetadataJWEAutomaticAccessGrantDto, seeds: Map<number, Uint8Array>, initialSeedId: number, latestSeedId: number, kdfSalt: Uint8Array) {
     this.automaticAccessGrant = automaticAccessGrant;
-    this.keys = keys;
-    this.latestFileKey = latestFileKey;
-    this.nameKey = nameKey;
+    this.seeds = seeds;
+    this.initialSeedId = initialSeedId;
+    this.latestSeedId = latestSeedId;
+    this.kdfSalt = kdfSalt;
   }
 
   /**
@@ -28,24 +38,16 @@ export class VaultMetadata {
    * @returns new vault metadata
    */
   public static async create(automaticAccessGrant: VaultMetadataJWEAutomaticAccessGrantDto): Promise<VaultMetadata> {
-    const fileKey = crypto.subtle.generateKey(
-      VaultMetadata.RAWKEY_KEY_DESIGNATION,
-      true,
-      // TODO https://github.com/encryption-alliance/unified-vault-format/pull/19 is this correct?
-      ['sign']
-    );
-    const nameKey = crypto.subtle.generateKey(
-      VaultMetadata.RAWKEY_KEY_DESIGNATION,
-      true,
-      // TODO https://github.com/encryption-alliance/unified-vault-format/pull/19 is this correct?
-      ['sign']
-    );
-    const fileKeyId = Array(4).fill(null).map(() => "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".charAt(Math.random() * 62)).join("")
-    const nameKeyId = Array(4).fill(null).map(() => "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".charAt(Math.random() * 62)).join("")
-    const keys: Record<string, CryptoKey> = {};
-    keys[fileKeyId] = await fileKey;
-    keys[nameKeyId] = await nameKey;
-    return new VaultMetadata(automaticAccessGrant, keys, fileKeyId, nameKeyId);
+    const initialSeedId = new Uint32Array(1);
+    const initialSeedValue = new Uint8Array(32);
+    const kdfSalt = new Uint8Array(32);
+    crypto.getRandomValues(initialSeedId);
+    crypto.getRandomValues(initialSeedValue);
+    crypto.getRandomValues(kdfSalt);
+    const initialSeedNo = initialSeedId[0];
+    const seeds: Map<number, Uint8Array> = new Map<number, Uint8Array>();
+    seeds.set(initialSeedNo, initialSeedValue);
+    return new VaultMetadata(automaticAccessGrant, seeds, initialSeedNo, initialSeedNo, kdfSalt);
   }
 
   /**
@@ -56,19 +58,22 @@ export class VaultMetadata {
    */
   public static async decryptWithMasterKey(jwe: string, masterKey: CryptoKey): Promise<VaultMetadata> {
     const payload = await JWEParser.parse(jwe).decryptA256kw(masterKey);
-    const keys: Record<string, string> = payload['keys'];
-    const keysImported: Record<string, CryptoKey> = payload['keys'];
-    for (const k in keys) {
-      // TODO https://github.com/encryption-alliance/unified-vault-format/pull/19 is this correct?
-      keysImported[k] = await crypto.subtle.importKey('raw', base64.parse(keys[k]), VaultMetadata.RAWKEY_KEY_DESIGNATION, true, ['sign']);
+    const encodedSeeds: Record<string, string> = payload['seeds'];
+    const seeds = new Map<number, Uint8Array>();
+    for (const key in encodedSeeds) {
+      const num = parseSeedId(key);
+      const value = base64url.parse(encodedSeeds[key], { loose: true });
+      seeds.set(num, value);
     }
-    const latestFileKey = payload['latestFileKey']
-    const nameKey = payload['nameKey']
+    const initialSeedId = parseSeedId(payload['initialSeed']);
+    const latestSeedId = parseSeedId(payload['latestSeed']);
+    const kdfSalt = base64url.parse(payload['kdfSalt'], { loose: true });
     return new VaultMetadata(
       payload['org.cryptomator.automaticAccessGrant'],
-      keysImported,
-      latestFileKey,
-      nameKey
+      seeds,
+      initialSeedId,
+      latestSeedId,
+      kdfSalt
     );
   }
 
@@ -78,40 +83,48 @@ export class VaultMetadata {
    * @returns a JWE containing this Masterkey
    */
   public async encryptWithMasterKey(masterKey: CryptoKey): Promise<string> {
-    const keysExported: Record<string, string> = {};
-    for (const k in this.keys) {
-      keysExported[k] = base64.stringify(new Uint8Array(await crypto.subtle.exportKey('raw', this.keys[k])));
+    const encodedSeeds: Record<string, string> = {};
+    for (const [key, value] of this.seeds) {
+      const seedId = stringifySeedId(key);
+      encodedSeeds[seedId] = base64url.stringify(value, { pad: false });
     }
-    const payload = {
-      fileFormat: "AES-256-GCM-32k",
-      nameFormat: "AES-256-SIV",
-      keys: keysExported,
-      latestFileKey: this.latestFileKey,
-      nameKey: this.nameKey,
+    const payload: MetadataPayload = {
+      fileFormat: 'AES-256-GCM-32k',
+      nameFormat: 'AES-SIV-512-B64URL',
+      seeds: encodedSeeds,
+      initialSeed: stringifySeedId(this.initialSeedId),
+      latestSeed: stringifySeedId(this.latestSeedId),
       // TODO https://github.com/encryption-alliance/unified-vault-format/pull/21 finalize kdf
-      kdf: "1STEP-HMAC-SHA512",
+      kdf: 'HKDF-SHA512',
+      kdfSalt: base64url.stringify(this.kdfSalt, { pad: false }),
       'org.cryptomator.automaticAccessGrant': this.automaticAccessGrant
     }
     return JWEBuilder.a256kw(masterKey).encrypt(payload);
   }
 
-  public async hashDirectoryId(cleartextDirectoryId: string): Promise<string> {
-    const dirHash = new TextEncoder().encode(cleartextDirectoryId);
-    // TODO https://github.com/encryption-alliance/unified-vault-format/pull/19 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! MUST NEVER BE RELEASED LIKE THIS
-    // TODO https://github.com/encryption-alliance/unified-vault-format/pull/19 use rawFileKey,rawNameKey for rootDirHash for now - should depend on nameKey only!!
-    const rawkey = new Uint8Array([...new Uint8Array(await crypto.subtle.exportKey('raw', this.keys[this.latestFileKey])), ...new Uint8Array(await crypto.subtle.exportKey('raw', this.keys[this.nameKey]))]);
-    try {
-      // miscreant lib requires mac key first and then the enc key
-      const encKey = rawkey.subarray(0, rawkey.length / 2 | 0);
-      const macKey = rawkey.subarray(rawkey.length / 2 | 0);
-      const shiftedRawKey = new Uint8Array([...macKey, ...encKey]);
-      const key = await miscreant.SIV.importKey(shiftedRawKey, 'AES-SIV');
-      const ciphertext = await key.seal(dirHash, []);
-      // hash is only used as deterministic scheme for the root dir
-      const hash = await crypto.subtle.digest('SHA-1', ciphertext);
-      return base32.stringify(new Uint8Array(hash));
-    } finally {
-      rawkey.fill(0x00);
-    }
+}
+
+/**
+ * Parses the 4 byte seed id from its base64url-encoded form to a 32 bit integer.
+ * @param encoded base64url-encoded seed ID
+ * @returns a 32 bit number
+ * @throws Error if the input is invalid
+ */
+function parseSeedId(encoded: string): number {
+  const bytes = base64url.parse(encoded, { loose: true });
+  if (bytes.length != 4) {
+    throw new Error('Malformed seed ID');
   }
+  return new Uint32Array(bytes.buffer)[0];
+}
+
+/**
+ * Encodes a 32 bit integer denoting the 4 byte seed id as a base64url-encoded string.
+ * @param id numeric seed ID
+ * @returns a base6url-encoded seed ID
+ */
+function stringifySeedId(id: number): string {
+  const ints = new Uint32Array([id]);
+  const bytes = new Uint8Array(ints.buffer)
+  return base64url.stringify(bytes, { pad: false });
 }
