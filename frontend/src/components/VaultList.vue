@@ -8,7 +8,7 @@
     </div>
   </div>
 
-  <LicenseAlert v-if="isAdmin" />
+  <LicenseAlert v-if="isLicenseSuspicious" />
 
   <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
     {{ t('vaultList.title') }}
@@ -40,7 +40,7 @@
 
     <Menu as="div" class="relative inline-block text-left">
       <div>
-        <MenuButton class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+        <MenuButton :disabled="isLicenseSuspicious" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" :class="{ 'cursor-not-allowed opacity-50': isLicenseSuspicious }">
           {{ t('vaultList.addVault') }}
           <ChevronDownIcon class="-mr-1 ml-2 h-5 w-5" aria-hidden="true" />
         </MenuButton>
@@ -121,7 +121,7 @@ import { CheckIcon, ChevronRightIcon, ChevronUpDownIcon } from '@heroicons/vue/2
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auth from '../common/auth';
-import backend, { VaultDto } from '../common/backend';
+import backend, { VaultDto, LicenseUserInfoDto } from '../common/backend';
 import FetchError from './FetchError.vue';
 import SlideOver from './SlideOver.vue';
 import VaultDetails from './VaultDetails.vue';
@@ -148,6 +148,14 @@ const roleOfSelectedVault = computed(() => {
 });
 
 const isAdmin = ref<boolean>();
+const licenseStatus = ref<LicenseUserInfoDto>();
+const isLicenseSuspicious = computed(() => {
+  if (licenseStatus.value) {
+    return licenseStatus.value.isExceeded() || licenseStatus.value.isExpired();
+  } else {
+    return false;
+  }
+});
 
 const filterOptions = ref< {[key: string]: string} >({
   accessibleVaults: t('vaultList.filter.entry.accessibleVaults'),
@@ -189,6 +197,7 @@ async function fetchData() {
       default:
         throw new Error('Unknown filter');
     }
+    licenseStatus.value = await backend.license.getUserInfo();
   } catch (error) {
     console.error('Retrieving vault list failed.', error);
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
