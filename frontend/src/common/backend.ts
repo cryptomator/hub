@@ -195,7 +195,7 @@ export type VersionDto = {
   keycloakVersion: string;
 }
 
-export class LicenseStatusDto {
+export class LicenseUserInfoDto {
   constructor(
     public licensedSeats: number,
     public usedSeats: number,
@@ -373,9 +373,9 @@ class BillingService {
 }
 
 class LicenseService {
-  public async getStatus(): Promise<LicenseStatusDto> {
-    return axiosAuth.get('/license/status').then(response => {
-      return new LicenseStatusDto(response.data.licensedSeats, response.data.usedSeats, response.data.expiresAt ? new Date(response.data.expiresAt) : null);
+  public async getUserInfo(): Promise<LicenseUserInfoDto> {
+    return axiosAuth.get('/license/user-info').then(response => {
+      return new LicenseUserInfoDto(response.data.licensedSeats, response.data.usedSeats, response.data.expiresAt ? new Date(response.data.expiresAt) : null);
     });
   }
 }

@@ -23,25 +23,25 @@ public class LicenseResource {
 	LicenseHolder licenseHolder;
 
 	@GET
-	@Path("/status")
+	@Path("/user-info")
 	@Produces(MediaType.APPLICATION_JSON)
 	@RolesAllowed("user")
-	@Operation(summary = "Get license status information", description = "Information includes the licensed seats, the already used seats and if defined, the license expiration date.")
+	@Operation(summary = "Get license information for regular users", description = "Information includes the licensed seats, the already used seats and if defined, the license expiration date.")
 	@APIResponse(responseCode = "200")
-	public LicenseStatusDto get() {
-		return LicenseStatusDto.create(licenseHolder);
+	public LicenseUserInfoDto get() {
+		return LicenseUserInfoDto.create(licenseHolder);
 	}
 
 
-	public record LicenseStatusDto(@JsonProperty("licensedSeats") Integer licensedSeats,
-								   @JsonProperty("usedSeats") Integer usedSeats,
-								   @JsonProperty("expiresAt") Instant expiresAt) {
+	public record LicenseUserInfoDto(@JsonProperty("licensedSeats") Integer licensedSeats,
+									 @JsonProperty("usedSeats") Integer usedSeats,
+									 @JsonProperty("expiresAt") Instant expiresAt) {
 
-		public static LicenseStatusDto create(LicenseHolder licenseHolder) {
+		public static LicenseUserInfoDto create(LicenseHolder licenseHolder) {
 			var licensedSeats = (int) licenseHolder.getSeats();
 			var usedSeats = (int) EffectiveVaultAccess.countSeatOccupyingUsers();
 			var expiresAt = Optional.ofNullable(licenseHolder.get()).map(DecodedJWT::getExpiresAtAsInstant).orElse(null);
-			return new LicenseStatusDto(licensedSeats, usedSeats, expiresAt);
+			return new LicenseUserInfoDto(licensedSeats, usedSeats, expiresAt);
 		}
 
 	}

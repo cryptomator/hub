@@ -121,7 +121,7 @@ import { CheckIcon, ChevronRightIcon, ChevronUpDownIcon } from '@heroicons/vue/2
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auth from '../common/auth';
-import backend, { VaultDto, LicenseStatusDto } from '../common/backend';
+import backend, { VaultDto, LicenseUserInfoDto } from '../common/backend';
 import FetchError from './FetchError.vue';
 import SlideOver from './SlideOver.vue';
 import VaultDetails from './VaultDetails.vue';
@@ -140,7 +140,7 @@ const ownsSelectedVault = computed(() => {
 });
 
 const isAdmin = ref<boolean>();
-const licenseStatus = ref<LicenseStatusDto>();
+const licenseStatus = ref<LicenseUserInfoDto>();
 const isLicenseSuspicious = computed(() => {
   if (licenseStatus.value) {
     return licenseStatus.value.isExceeded() || licenseStatus.value.isExpired();
@@ -188,7 +188,7 @@ async function fetchData() {
       default:
         throw new Error('Unknown filter');
     }
-    licenseStatus.value = await backend.license.getStatus();
+    licenseStatus.value = await backend.license.getUserInfo();
   } catch (error) {
     console.error('Retrieving vault list failed.', error);
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
