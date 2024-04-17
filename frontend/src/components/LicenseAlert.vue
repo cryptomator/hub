@@ -1,5 +1,5 @@
 <template>
-  <div v-if="admin && admin.hasLicense && now > admin.expiresAt" class="rounded-md bg-red-50 p-4 mb-3">
+  <div v-if="license?.expiresAt && now > license.expiresAt" class="rounded-md bg-red-50 p-4 mb-3">
     <div class="flex">
       <div class="flex-shrink-0">
         <XCircleIcon class="h-5 w-5 text-red-400" aria-hidden="true" />
@@ -15,7 +15,7 @@
     </div>
   </div>
 
-  <div v-else-if="admin && (admin.licensedSeats - admin.usedSeats < 0)" class="rounded-md bg-yellow-50 p-4 mb-3">
+  <div v-else-if="license && (license.licensedSeats - license.usedSeats < 0)" class="rounded-md bg-yellow-50 p-4 mb-3">
     <div class="flex">
       <div class="flex-shrink-0">
         <ExclamationTriangleIcon class="h-5 w-5 text-yellow-400" aria-hidden="true" />
@@ -30,27 +30,26 @@
       </div>
     </div>
   </div>
-
 </template>
 
 <script setup lang="ts">
 import { ExclamationTriangleIcon, XCircleIcon } from '@heroicons/vue/20/solid';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { BillingDto } from '../common/backend';
+import backend, { LicenseUserInfoDto } from '../common/backend';
 
 const { t } = useI18n({ useScope: 'global' });
 
 const now = ref<Date>(new Date());
-const admin = ref<BillingDto>();
+const license = ref<LicenseUserInfoDto>();
 
 onMounted(fetchData);
 
 async function fetchData() {
   try {
-    admin.value = await backend.billing.get();
+    license.value = await backend.license.getUserInfo();
   } catch (error) {
-    console.error('Retrieving billing information failed', error);
+    console.error('Retrieving license information failed', error);
   }
 }
 </script>

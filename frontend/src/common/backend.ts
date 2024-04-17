@@ -195,6 +195,23 @@ export type VersionDto = {
   keycloakVersion: string;
 }
 
+export class LicenseUserInfoDto {
+  constructor(
+    public licensedSeats: number,
+    public usedSeats: number,
+    public expiresAt: Date | null) {
+  }
+
+  public isExpired(): boolean {
+    const now = new Date();
+    return now > (this.expiresAt ?? now); //if expired is null, the license cannot expire
+  }
+
+  public isExceeded(): boolean {
+    return this.usedSeats > this.licensedSeats;
+  }
+}
+
 /* Services */
 
 export interface VaultIdHeader extends JWTHeader {
@@ -355,6 +372,14 @@ class BillingService {
   }
 }
 
+class LicenseService {
+  public async getUserInfo(): Promise<LicenseUserInfoDto> {
+    return axiosAuth.get('/license/user-info').then(response => {
+      return new LicenseUserInfoDto(response.data.licensedSeats, response.data.usedSeats, response.data.expiresAt ? new Date(response.data.expiresAt) : null);
+    });
+  }
+}
+
 class VersionService {
   public async get(): Promise<VersionDto> {
     return axiosAuth.get<VersionDto>('/version').then(response => response.data);
@@ -370,7 +395,8 @@ const services = {
   authorities: new AuthorityService(),
   devices: new DeviceService(),
   billing: new BillingService(),
-  version: new VersionService()
+  version: new VersionService(),
+  license: new LicenseService()
 };
 
 function convertExpectedToBackendError(status: number): BackendError {
