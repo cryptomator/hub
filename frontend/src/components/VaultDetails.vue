@@ -120,7 +120,7 @@
       </button>
 
       <!-- vault is archived -->
-      <div v-else-if="vault.archived">
+      <div v-else-if="vault.archived" class="mt-2 flex flex-col gap-2">
         <!-- downloadTemplate button -->
         <button v-if="vaultRole == 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDownloadVaultTemplateDialog()">
           {{ t('vaultDetails.actions.downloadVaultTemplate') }}
@@ -140,7 +140,7 @@
       </div>
 
       <!-- special owner reset stuff -->
-      <div v-else-if="vaultRecoveryRequired">
+      <div v-else-if="vaultRecoveryRequired" class="mt-2 flex flex-col gap-2">
         <div class="flex">
           <div class="flex-shrink-0">
             <ExclamationTriangleIcon class="mt-1 h-5 w-5 text-yellow-400" aria-hidden="true" />
@@ -155,7 +155,7 @@
       </div>
 
       <!-- regular or licenseViolated vault -->
-      <div v-else>
+      <div v-else class="mt-2 flex flex-col gap-2">
         <!-- grantAccess button -->
         <div v-if="!licenseViolated && vaultRole == 'OWNER'" class="flex gap-2">
           <button :disabled="usersRequiringAccessGrant.length == 0" type="button" class="flex-1 bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="showGrantPermissionDialog()">
