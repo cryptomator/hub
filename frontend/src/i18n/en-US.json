@@ -220,7 +220,7 @@
   "vaultDetails.actions.updatePermissions.reload": "Reload",
   "vaultDetails.actions.editVaultMetadata": "Edit Vault Metadata",
   "vaultDetails.actions.downloadVaultTemplate": "Download Vault Template",
-  "vaultDetails.actions.showRecoveryKey": "Show Recovery Key",
+  "vaultDetails.actions.displayRecoveryKey": "Show Recovery Key",
   "vaultDetails.actions.archiveVault": "Archive Vault",
   "vaultDetails.actions.reactivateVault": "Reactivate Vault",
   "vaultDetails.actions.upgradeToVaultOwner": "Become Vault Owner",

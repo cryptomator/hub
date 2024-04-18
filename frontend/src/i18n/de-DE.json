@@ -219,7 +219,7 @@
   "vaultDetails.actions.updatePermissions.reload": "Neu laden",
   "vaultDetails.actions.editVaultMetadata": "Tresor-Metadaten bearbeiten",
   "vaultDetails.actions.downloadVaultTemplate": "Tresor-Vorlage herunterladen",
-  "vaultDetails.actions.showRecoveryKey": "Wiederherstellungsschlüssel anzeigen",
+  "vaultDetails.actions.displayRecoveryKey": "Wiederherstellungsschlüssel anzeigen",
   "vaultDetails.actions.archiveVault": "Tresor archivieren",
   "vaultDetails.actions.reactivateVault": "Tresor reaktivieren",
   "vaultDetails.error.paymentRequired": "Deine Cryptomator Hub Lizenz hat die Anzahl der verfügbaren Sitze überschritten oder ist abgelaufen. Bitte informiere einen Hub-Administrator, um die Lizenz zu erneuern oder zu erweitern.",
