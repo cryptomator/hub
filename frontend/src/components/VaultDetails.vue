@@ -139,33 +139,6 @@
         </button>
       </div>
 
-      <!-- license is invalid or exceeded  -->
-      <div v-else-if="licenseViolated">
-        <p class="text-sm text-red-900 mt-1">
-          {{ t('vaultDetails.error.paymentRequired') }}
-        </p>
-        <!-- editMetadata button -->
-        <button v-if="vaultRole == 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showEditVaultMetadataDialog()">
-          {{ t('vaultDetails.actions.editVaultMetadata') }}
-        </button>
-        <!-- downloadTemplate button -->
-        <button v-if="vaultRole == 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDownloadVaultTemplateDialog()">
-          {{ t('vaultDetails.actions.downloadVaultTemplate') }}
-        </button>
-        <!-- displayRecoveryKey button -->
-        <button v-if="vaultRole == 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDisplayRecoveryKeyDialog()">
-          {{ t('vaultDetails.actions.displayRecoveryKey') }}
-        </button>
-        <!-- becomeOwner button -->
-        <button v-if="vaultRole != 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showRecoverVaultDialog()">
-          {{ t('vaultDetails.actions.becomeOwner') }}
-        </button>
-        <!-- archiveVault button -->
-        <button v-if="(vaultRole == 'OWNER' || isAdmin)" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white  hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showArchiveVaultDialog()">
-          {{ t('vaultDetails.actions.archiveVault') }}
-        </button>
-      </div>
-
       <!-- special owner reset stuff -->
       <div v-else-if="vaultRecoveryRequired">
         <div class="flex">
@@ -181,20 +154,21 @@
         </button>
       </div>
 
-      <!-- regular vault buttons -->
+      <!-- regular or licenseViolated vault -->
       <div v-else>
         <!-- grantAccess button -->
-        <div v-if="vaultRole == 'OWNER'">
-          <div class="flex gap-2">
-            <button :disabled="usersRequiringAccessGrant.length == 0" type="button" class="flex-1 bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="showGrantPermissionDialog()">
-              {{ t('vaultDetails.actions.updatePermissions') }}
-            </button>
-            <button type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="reloadDevicesRequiringAccessGrant()">
-              <span class="sr-only">{{ t('vaultDetails.actions.updatePermissions.reload') }}</span>
-              <ArrowPathIcon class="h-5 w-5" aria-hidden="true" />
-            </button>
-          </div>
+        <div v-if="!licenseViolated && vaultRole == 'OWNER'" class="flex gap-2">
+          <button :disabled="usersRequiringAccessGrant.length == 0" type="button" class="flex-1 bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="showGrantPermissionDialog()">
+            {{ t('vaultDetails.actions.updatePermissions') }}
+          </button>
+          <button type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="reloadDevicesRequiringAccessGrant()">
+            <span class="sr-only">{{ t('vaultDetails.actions.updatePermissions.reload') }}</span>
+            <ArrowPathIcon class="h-5 w-5" aria-hidden="true" />
+          </button>
         </div>
+        <p v-if="licenseViolated" class="text-sm text-red-900 mt-1">
+          {{ t('vaultDetails.error.paymentRequired') }}
+        </p>
         <!-- editMetadata button -->
         <button v-if="vaultRole == 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showEditVaultMetadataDialog()">
           {{ t('vaultDetails.actions.editVaultMetadata') }}
