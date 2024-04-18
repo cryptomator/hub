@@ -269,7 +269,7 @@ const me = ref<UserDto>();
 const vaultRecoveryRequired = ref<boolean>(false);
 const isAdmin = ref<boolean>();
 
-const isLegacyVault = computed(() => vault.value?.authPublicKey == null);
+const isLegacyVault = computed(() => vault.value?.authPublicKey != null);
 const licenseViolated = computed(() => license.value?.isExpired() || license.value?.isExceeded());
 
 onMounted(fetchData);
