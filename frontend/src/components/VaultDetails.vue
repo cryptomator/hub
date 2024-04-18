@@ -99,7 +99,7 @@
             <SearchInputGroup v-else-if="addingUser" :action-title="t('common.add')" :on-search="searchAuthority" @action="addAuthority" />
             <div v-if="onAddUserError != null">
               <p v-if="onAddUserError instanceof PaymentRequiredError" class="text-sm text-red-900 text-right mt-1">
-                {{ t('vaultDetails.error.paymentRequired') }}
+                {{ t('vaultDetails.error.licenseViolated') }}
               </p>
               <p v-else class="text-sm text-red-900 text-right mt-1">
                 {{ t('common.unexpectedError', [onAddUserError.message]) }}
@@ -116,7 +116,7 @@
 
       <!-- required legacy migration stuff, otherwise there is no owner -->
       <button v-if="isLegacyVault" type="button" class="bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showClaimOwnershipDialog()">
-        {{ t('vaultDetails.claimOwnership') }}
+        {{ t('vaultDetails.actions.becomeOwner') }}
       </button>
 
       <!-- vault is archived -->
@@ -150,7 +150,7 @@
         <p class="text-sm text-gray-500">{{ t('vaultDetails.recoverVault.description') }}</p>
 
         <button type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white  hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showRecoverVaultDialog()">
-          {{ t('vaultDetails.recoverVault') }}
+          {{ t('vaultDetails.actions.recoverVault') }}
         </button>
       </div>
 
@@ -167,7 +167,7 @@
           </button>
         </div>
         <p v-if="licenseViolated" class="text-sm text-red-900 mt-1">
-          {{ t('vaultDetails.error.paymentRequired') }}
+          {{ t('vaultDetails.error.licenseViolated') }}
         </p>
         <!-- editMetadata button -->
         <button v-if="vaultRole == 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showEditVaultMetadataDialog()">
