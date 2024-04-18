@@ -115,11 +115,9 @@
       <h3 class="font-medium text-gray-900">{{ t('vaultDetails.actions.title') }}</h3>
 
       <!-- required legacy migration stuff, otherwise there is no owner -->
-      <div v-if="isLegacyVault">
-        <button v-if="vault.authPublicKey != null " type="button" class="bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showClaimOwnershipDialog()">
-          {{ t('vaultDetails.claimOwnership') }}
-        </button>
-      </div>
+      <button v-if="isLegacyVault" type="button" class="bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showClaimOwnershipDialog()">
+        {{ t('vaultDetails.claimOwnership') }}
+      </button>
 
       <!-- vault is archived -->
       <div v-else-if="vault.archived">
