@@ -167,7 +167,7 @@
       </div>
 
       <!-- special owner reset stuff -->
-      <div v-else-if="vaultRole == 'OWNER' && vaultRecoveryRequired">
+      <div v-else-if="vaultRecoveryRequired">
         <div class="flex">
           <div class="flex-shrink-0">
             <ExclamationTriangleIcon class="mt-1 h-5 w-5 text-yellow-400" aria-hidden="true" />
@@ -219,14 +219,14 @@
     </div>
   </div>
 
-  <ClaimVaultOwnershipDialog v-if="claimingVaultOwnership && vault != null" ref="claimVaultOwnershipDialog" :vault="vault" @action="provedOwnership" @close="claimingVaultOwnership = false" />
-  <GrantPermissionDialog v-if="grantingPermission && vault != null && vaultKeys != null && !vaultRecoveryRequired" ref="grantPermissionDialog" :vault="vault" :users="usersRequiringAccessGrant" :vault-keys="vaultKeys" @close="grantingPermission = false" @permission-granted="permissionGranted()" />
-  <EditVaultMetadataDialog v-if="editingVaultMetadata && vault != null && vaultKeys != null && !vaultRecoveryRequired" ref="editVaultMetadataDialog" :vault="vault" @close="editingVaultMetadata = false" @updated="v => refreshVault(v)" />
-  <DownloadVaultTemplateDialog v-if="downloadingVaultTemplate && vault != null && vaultKeys != null && !vaultRecoveryRequired" ref="downloadVaultTemplateDialog" :vault="vault" :vault-keys="vaultKeys" @close="downloadingVaultTemplate = false" />
-  <DisplayRecoveryKeyDialog v-if="displayingRecoveryKey && vault != null && vaultKeys != null && !vaultRecoveryRequired" ref="displayRecoveryKeyDialog" :vault="vault" :vault-keys="vaultKeys" @close="displayingRecoveryKey = false" />
-  <ArchiveVaultDialog v-if="archivingVault && vault != null && !vaultRecoveryRequired" ref="archiveVaultDialog" :vault="vault" @close="archivingVault = false" @archived="v => refreshVault(v)" />
-  <ReactivateVaultDialog v-if="reactivatingVault && vault != null" ref="reactivateVaultDialog" :vault="vault" @close="reactivatingVault = false" @reactivated="v => refreshVault(v)" />
-  <RecoverVaultDialog v-if="vaultRecoveryRequired && vault != null" ref="recoverVaultDialog" :vault="vault" :me="me!" @close="recoveringVault = false" @recovered="reloadView()" />
+  <ClaimVaultOwnershipDialog v-if="claimingVaultOwnership && vault" ref="claimVaultOwnershipDialog" :vault="vault" @action="provedOwnership" @close="claimingVaultOwnership = false" />
+  <GrantPermissionDialog v-if="grantingPermission && vault && vaultKeys " ref="grantPermissionDialog" :vault="vault" :users="usersRequiringAccessGrant" :vault-keys="vaultKeys" @close="grantingPermission = false" @permission-granted="permissionGranted()" />
+  <EditVaultMetadataDialog v-if="editingVaultMetadata && vault && vaultKeys" ref="editVaultMetadataDialog" :vault="vault" @close="editingVaultMetadata = false" @updated="v => refreshVault(v)" />
+  <DownloadVaultTemplateDialog v-if="downloadingVaultTemplate && vault && vaultKeys" ref="downloadVaultTemplateDialog" :vault="vault" :vault-keys="vaultKeys" @close="downloadingVaultTemplate = false" />
+  <DisplayRecoveryKeyDialog v-if="displayingRecoveryKey && vault && vaultKeys" ref="displayRecoveryKeyDialog" :vault="vault" :vault-keys="vaultKeys" @close="displayingRecoveryKey = false" />
+  <ArchiveVaultDialog v-if="archivingVault && vault" ref="archiveVaultDialog" :vault="vault" @close="archivingVault = false" @archived="v => refreshVault(v)" />
+  <ReactivateVaultDialog v-if="reactivatingVault && vault" ref="reactivateVaultDialog" :vault="vault" @close="reactivatingVault = false" @reactivated="v => refreshVault(v)" />
+  <RecoverVaultDialog v-if="recoveringVault && vault && me" ref="recoverVaultDialog" :vault="vault" :me="me" @close="recoveringVault = false" @recovered="reloadView()" />
 </template>
 
 <script setup lang="ts">
@@ -292,7 +292,7 @@ const claimVaultOwnershipDialog = ref<typeof ClaimVaultOwnershipDialog>();
 const claimingVaultOwnership = ref(false);
 const me = ref<UserDto>();
 
-const vaultRecoveryRequired = ref<boolean | null>(null);
+const vaultRecoveryRequired = ref<boolean>(false);
 const isAdmin = ref<boolean>();
 
 const isLegacyVault = computed(() => vault.value?.authPublicKey == null);
@@ -309,8 +309,6 @@ async function fetchData() {
     license.value = await backend.license.getUserInfo();
     if (props.vaultRole == 'OWNER') {
       await fetchOwnerData();
-    } else {
-      vaultRecoveryRequired.value = false;
     }
   } catch (error) {
     console.error('Fetching data failed.', error);
@@ -486,7 +484,6 @@ function refreshVault(updatedVault: VaultDto) {
 
 async function reloadView() {
   await fetchOwnerData();
-  vaultRecoveryRequired.value = false;
 }
 
 async function searchAuthority(query: string): Promise<AuthorityDto[]> {
