@@ -60,12 +60,12 @@
                   <transition enter-active-class="transition ease-out duration-100" enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 scale-100" leave-to-class="transform opacity-0 scale-95">
                     <MenuItems class="absolute right-9 top-0 z-10 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                       <div class="py-1">
-                        <MenuItem v-if="member.role == 'MEMBER' && !paymentRequired" v-slot="{ active }" @click="updateMemberRole(member, 'OWNER')">
+                        <MenuItem v-if="member.role == 'MEMBER' && !licenseViolated" v-slot="{ active }" @click="updateMemberRole(member, 'OWNER')">
                           <div :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'cursor-pointer block px-4 py-2 text-sm']">
                             {{ t('vaultDetails.sharedWith.grantOwnership') }}
                           </div>
                         </MenuItem>
-                        <MenuItem v-if="member.role == 'OWNER' && !paymentRequired" v-slot="{ active }" @click="updateMemberRole(member, 'MEMBER')">
+                        <MenuItem v-if="member.role == 'OWNER' && !licenseViolated" v-slot="{ active }" @click="updateMemberRole(member, 'MEMBER')">
                           <div :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'cursor-pointer block px-4 py-2 text-sm']">
                             {{ t('vaultDetails.sharedWith.revokeOwnership') }}
                           </div>
@@ -87,7 +87,7 @@
             </li>
           </template>
           <!-- add member -->
-          <li v-if="!paymentRequired" class="py-2 flex flex-col">
+          <li v-if="!licenseViolated" class="py-2 flex flex-col">
             <div v-if="!addingUser" class="justify-between items-center">
               <button type="button" class="group -ml-1 bg-white p-1 rounded-md flex items-center focus:outline-none focus:ring-2 focus:ring-primary" @click="addingUser = true">
                 <span class="w-8 h-8 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400">
@@ -132,13 +132,13 @@
           {{ t('vaultDetails.actions.showRecoveryKey') }}
         </button>
         <!-- reactivateVault button -->
-        <button v-if="(vaultRole == 'OWNER' || isAdmin) && !paymentRequired" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white  hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showReactivateVaultDialog()">
+        <button v-if="(vaultRole == 'OWNER' || isAdmin) && !licenseViolated" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white  hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showReactivateVaultDialog()">
           {{ t('vaultDetails.actions.reactivateVault') }}
         </button>
       </div>
 
       <!-- license is invalid or exceeded  -->
-      <div v-else-if="paymentRequired">
+      <div v-else-if="licenseViolated">
         <p class="text-sm text-red-900 mt-1">
           {{ t('vaultDetails.error.paymentRequired') }}
         </p>
@@ -223,7 +223,7 @@ import { PlusSmallIcon } from '@heroicons/vue/24/solid';
 import { base64 } from 'rfc4648';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { AuthorityDto, ConflictError, ForbiddenError, MemberDto, NotFoundError, PaymentRequiredError, UserDto, VaultDto, VaultRole } from '../common/backend';
+import backend, { AuthorityDto, ConflictError, ForbiddenError, LicenseUserInfoDto, MemberDto, NotFoundError, PaymentRequiredError, UserDto, VaultDto, VaultRole } from '../common/backend';
 import { BrowserKeys, UserKeys, VaultKeys } from '../common/crypto';
 import { JWT, JWTHeader } from '../common/jwt';
 import ArchiveVaultDialog from './ArchiveVaultDialog.vue';
@@ -254,7 +254,7 @@ const allowRetryFetch = computed(() => onFetchError.value != null && !(onFetchEr
 const onUpdateVaultMembershipError = ref< {[id: string]: Error} >({});
 const onAddUserError = ref<Error | null>();
 
-const paymentRequired = ref(false);
+const license = ref<LicenseUserInfoDto>();
 const addingUser = ref(false);
 const grantingPermission = ref(false);
 const grantPermissionDialog = ref<typeof GrantPermissionDialog>();
@@ -282,6 +282,7 @@ const vaultRecoveryRequired = ref<boolean | null>(null);
 const isAdmin = ref<boolean>();
 
 const isLegacyVault = computed(() => vault.value?.authPublicKey == null);
+const licenseViolated = computed(() => license.value?.isExpired() || license.value?.isExceeded());
 
 onMounted(fetchData);
 
@@ -291,6 +292,7 @@ async function fetchData() {
     isAdmin.value = (await auth).isAdmin();
     vault.value = await backend.vaults.get(props.vaultId);
     me.value = await backend.users.me(true);
+    license.value = await backend.license.getUserInfo();
     if (props.vaultRole == 'OWNER') {
       await fetchOwnerData();
     } else {
@@ -309,12 +311,12 @@ async function fetchOwnerData() {
     vaultRecoveryRequired.value = false;
     const vaultKeyJwe = await backend.vaults.accessToken(props.vaultId, true);
     vaultKeys.value = await loadVaultKeys(vaultKeyJwe);
-    paymentRequired.value = false;
   } catch (error) {
     if (error instanceof ForbiddenError) {
       vaultRecoveryRequired.value = true;
     } else if (error instanceof PaymentRequiredError) {
-      paymentRequired.value = true;
+      //do nuthin
+      //or refetch license
     } else {
       console.error('Retrieving ownership failed.', error);
       onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
@@ -506,10 +508,11 @@ async function removeMember(memberId: string) {
   try {
     await backend.vaults.removeAuthority(props.vaultId, memberId);
     members.value.delete(memberId);
-    if (!paymentRequired.value) {
+    if (!licenseViolated.value) {
       usersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
     } else {
       // reload, maybe removing memberId fixed the license issue
+      //TODO is license.value = await backend.license.getUserInfo(); enough?
       await fetchData();
     }
   } catch (error) {
