@@ -134,7 +134,7 @@
           {{ t('vaultDetails.actions.becomeOwner') }}
         </button>
         <!-- reactivateVault button -->
-        <button v-if="(vaultRole == 'OWNER' || isAdmin) && !licenseViolated" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white  hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showReactivateVaultDialog()">
+        <button v-if="(vaultRole == 'OWNER' || isAdmin)" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white  hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showReactivateVaultDialog()">
           {{ t('vaultDetails.actions.reactivateVault') }}
         </button>
       </div>
@@ -144,6 +144,10 @@
         <p class="text-sm text-red-900 mt-1">
           {{ t('vaultDetails.error.paymentRequired') }}
         </p>
+        <!-- editMetadata button -->
+        <button v-if="vaultRole == 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showEditVaultMetadataDialog()">
+          {{ t('vaultDetails.actions.editVaultMetadata') }}
+        </button>
         <!-- downloadTemplate button -->
         <button v-if="vaultRole == 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDownloadVaultTemplateDialog()">
           {{ t('vaultDetails.actions.downloadVaultTemplate') }}
@@ -151,6 +155,14 @@
         <!-- displayRecoveryKey button -->
         <button v-if="vaultRole == 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDisplayRecoveryKeyDialog()">
           {{ t('vaultDetails.actions.displayRecoveryKey') }}
+        </button>
+        <!-- becomeOwner button -->
+        <button v-if="vaultRole != 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showRecoverVaultDialog()">
+          {{ t('vaultDetails.actions.becomeOwner') }}
+        </button>
+        <!-- archiveVault button -->
+        <button v-if="(vaultRole == 'OWNER' || isAdmin)" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white  hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showArchiveVaultDialog()">
+          {{ t('vaultDetails.actions.archiveVault') }}
         </button>
       </div>
 
