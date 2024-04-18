@@ -128,7 +128,7 @@
           {{ t('vaultDetails.actions.downloadVaultTemplate') }}
         </button>
         <!-- showRecoveryKey button -->
-        <button v-if="vaultRole == 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showRecoveryKeyDialog()">
+        <button v-if="vaultRole == 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDisplayRecoveryKeyDialog()">
           {{ t('vaultDetails.actions.showRecoveryKey') }}
         </button>
         <!-- reactivateVault button -->
@@ -147,7 +147,7 @@
           {{ t('vaultDetails.actions.downloadVaultTemplate') }}
         </button>
         <!-- showRecoveryKey button -->
-        <button v-if="vaultRole == 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showRecoveryKeyDialog()">
+        <button v-if="vaultRole == 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDisplayRecoveryKeyDialog()">
           {{ t('vaultDetails.actions.showRecoveryKey') }}
         </button>
       </div>
@@ -190,7 +190,7 @@
           {{ t('vaultDetails.actions.downloadVaultTemplate') }}
         </button>
         <!-- showRecoveryKey button -->
-        <button v-if="vaultRole == 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showRecoveryKeyDialog()">
+        <button v-if="vaultRole == 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDisplayRecoveryKeyDialog()">
           {{ t('vaultDetails.actions.showRecoveryKey') }}
         </button>
         <!-- upgradeToOwner button -->
@@ -209,7 +209,7 @@
   <GrantPermissionDialog v-if="grantingPermission && vault != null && vaultKeys != null && !vaultRecoveryRequired" ref="grantPermissionDialog" :vault="vault" :users="usersRequiringAccessGrant" :vault-keys="vaultKeys" @close="grantingPermission = false" @permission-granted="permissionGranted()" />
   <EditVaultMetadataDialog v-if="editingVaultMetadata && vault != null && vaultKeys != null && !vaultRecoveryRequired" ref="editVaultMetadataDialog" :vault="vault" @close="editingVaultMetadata = false" @updated="v => refreshVault(v)" />
   <DownloadVaultTemplateDialog v-if="downloadingVaultTemplate && vault != null && vaultKeys != null && !vaultRecoveryRequired" ref="downloadVaultTemplateDialog" :vault="vault" :vault-keys="vaultKeys" @close="downloadingVaultTemplate = false" />
-  <RecoveryKeyDialog v-if="showingRecoveryKey && vault != null && vaultKeys != null && !vaultRecoveryRequired" ref="recoveryKeyDialog" :vault="vault" :vault-keys="vaultKeys" @close="showingRecoveryKey = false" />
+  <DisplayRecoveryKeyDialog v-if="displayingRecoveryKey && vault != null && vaultKeys != null && !vaultRecoveryRequired" ref="displayRecoveryKeyDialog" :vault="vault" :vault-keys="vaultKeys" @close="displayingRecoveryKey = false" />
   <ArchiveVaultDialog v-if="archivingVault && vault != null && !vaultRecoveryRequired" ref="archiveVaultDialog" :vault="vault" @close="archivingVault = false" @archived="v => refreshVault(v)" />
   <ReactivateVaultDialog v-if="reactivatingVault && vault != null" ref="reactivateVaultDialog" :vault="vault" @close="reactivatingVault = false" @reactivated="v => refreshVault(v)" />
   <RecoverVaultDialog v-if="vaultRecoveryRequired && vault != null" ref="recoverVaultDialog" :vault="vault" :me="me!" @close="recoverVault = false" @recovered="reloadView()" />
@@ -234,7 +234,7 @@ import FetchError from './FetchError.vue';
 import GrantPermissionDialog from './GrantPermissionDialog.vue';
 import ReactivateVaultDialog from './ReactivateVaultDialog.vue';
 import RecoverVaultDialog from './RecoverVaultDialog.vue';
-import RecoveryKeyDialog from './RecoveryKeyDialog.vue';
+import DisplayRecoveryKeyDialog from './DisplayRecoveryKeyDialog.vue';
 import SearchInputGroup from './SearchInputGroup.vue';
 
 const { t, d } = useI18n({ useScope: 'global' });
@@ -262,8 +262,8 @@ const editingVaultMetadata = ref(false);
 const editVaultMetadataDialog = ref<typeof EditVaultMetadataDialog>();
 const downloadingVaultTemplate = ref(false);
 const downloadVaultTemplateDialog = ref<typeof DownloadVaultTemplateDialog>();
-const showingRecoveryKey = ref(false);
-const recoveryKeyDialog = ref<typeof RecoveryKeyDialog>();
+const displayingRecoveryKey = ref(false);
+const displayRecoveryKeyDialog = ref<typeof DisplayRecoveryKeyDialog>();
 const archivingVault = ref(false);
 const archiveVaultDialog = ref<typeof ArchiveVaultDialog>();
 const reactivatingVault = ref(false);
@@ -439,9 +439,9 @@ function showDownloadVaultTemplateDialog() {
   nextTick(() => downloadVaultTemplateDialog.value?.show());
 }
 
-function showRecoveryKeyDialog() {
-  showingRecoveryKey.value = true;
-  nextTick(() => recoveryKeyDialog.value?.show());
+function showDisplayRecoveryKeyDialog() {
+  displayingRecoveryKey.value = true;
+  nextTick(() => displayRecoveryKeyDialog.value?.show());
 }
 
 function showArchiveVaultDialog() {
