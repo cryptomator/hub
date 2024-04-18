@@ -212,7 +212,7 @@
   <DisplayRecoveryKeyDialog v-if="displayingRecoveryKey && vault != null && vaultKeys != null && !vaultRecoveryRequired" ref="displayRecoveryKeyDialog" :vault="vault" :vault-keys="vaultKeys" @close="displayingRecoveryKey = false" />
   <ArchiveVaultDialog v-if="archivingVault && vault != null && !vaultRecoveryRequired" ref="archiveVaultDialog" :vault="vault" @close="archivingVault = false" @archived="v => refreshVault(v)" />
   <ReactivateVaultDialog v-if="reactivatingVault && vault != null" ref="reactivateVaultDialog" :vault="vault" @close="reactivatingVault = false" @reactivated="v => refreshVault(v)" />
-  <RecoverVaultDialog v-if="vaultRecoveryRequired && vault != null" ref="recoverVaultDialog" :vault="vault" :me="me!" @close="recoverVault = false" @recovered="reloadView()" />
+  <RecoverVaultDialog v-if="vaultRecoveryRequired && vault != null" ref="recoverVaultDialog" :vault="vault" :me="me!" @close="recoveringVault = false" @recovered="reloadView()" />
 </template>
 
 <script setup lang="ts">
@@ -268,7 +268,7 @@ const archivingVault = ref(false);
 const archiveVaultDialog = ref<typeof ArchiveVaultDialog>();
 const reactivatingVault = ref(false);
 const reactivateVaultDialog = ref<typeof ReactivateVaultDialog>();
-const recoverVault = ref(false);
+const recoveringVault = ref(false);
 const recoverVaultDialog = ref<typeof RecoverVaultDialog>();
 const vault = ref<VaultDto>();
 const vaultKeys = ref<VaultKeys>();
@@ -455,7 +455,7 @@ function showReactivateVaultDialog() {
 }
 
 function showRecoverVaultDialog() {
-  recoverVault.value = true;
+  recoveringVault.value = true;
   nextTick(() => recoverVaultDialog.value?.show());
 }
 
