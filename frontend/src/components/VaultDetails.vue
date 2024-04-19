@@ -36,7 +36,7 @@
       </dl>
     </div>
 
-    <div v-if="vaultRole == 'OWNER' && !vaultRecoveryRequired && !vault.archived" class="space-y-6">
+    <div v-if="vaultRole == 'OWNER' && !vaultRecoveryRequired " class="space-y-6">
       <div>
         <h3 class="font-medium text-gray-900">{{ t('vaultDetails.sharedWith.title') }}</h3>
         <ul role="list" class="mt-2 border-t border-b border-gray-200 divide-y divide-gray-200">
@@ -49,7 +49,7 @@
                   <p class="ml-4 text-sm font-medium text-gray-900">{{ member.name }}</p>
                   <div v-if="member.role == 'OWNER'" class="ml-3 inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">{{ t('vaultDetails.sharedWith.badge.owner') }}</div>
                 </div>
-                <Menu v-if="member.id != me?.id" as="div" class="relative ml-2 inline-block flex-shrink-0 text-left">
+                <Menu v-if="member.id != me?.id " as="div" class="relative ml-2 inline-block flex-shrink-0 text-left">
                   <MenuButton class="group relative inline-flex h-8 w-8 items-center justify-center rounded-full bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
                     <span class="absolute -inset-1.5" />
                     <span class="sr-only">Open options menu</span>
@@ -60,12 +60,12 @@
                   <transition enter-active-class="transition ease-out duration-100" enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 scale-100" leave-to-class="transform opacity-0 scale-95">
                     <MenuItems class="absolute right-9 top-0 z-10 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                       <div class="py-1">
-                        <MenuItem v-if="member.role == 'MEMBER' && !licenseViolated" v-slot="{ active }" @click="updateMemberRole(member, 'OWNER')">
+                        <MenuItem v-if="member.role == 'MEMBER'" v-slot="{ active }" @click="updateMemberRole(member, 'OWNER')">
                           <div :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'cursor-pointer block px-4 py-2 text-sm']">
                             {{ t('vaultDetails.sharedWith.grantOwnership') }}
                           </div>
                         </MenuItem>
-                        <MenuItem v-if="member.role == 'OWNER' && !licenseViolated" v-slot="{ active }" @click="updateMemberRole(member, 'MEMBER')">
+                        <MenuItem v-if="member.role == 'OWNER'" v-slot="{ active }" @click="updateMemberRole(member, 'MEMBER')">
                           <div :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'cursor-pointer block px-4 py-2 text-sm']">
                             {{ t('vaultDetails.sharedWith.revokeOwnership') }}
                           </div>
@@ -87,7 +87,7 @@
             </li>
           </template>
           <!-- add member -->
-          <li v-if="!licenseViolated" class="py-2 flex flex-col">
+          <li v-if="!licenseViolated && !vault.archived" class="py-2 flex flex-col">
             <div v-if="!addingUser" class="justify-between items-center">
               <button type="button" class="group -ml-1 bg-white p-1 rounded-md flex items-center focus:outline-none focus:ring-2 focus:ring-primary" @click="addingUser = true">
                 <span class="w-8 h-8 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400">
