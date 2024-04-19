@@ -190,7 +190,7 @@
   <DownloadVaultTemplateDialog v-if="downloadingVaultTemplate && vault && vaultKeys" ref="downloadVaultTemplateDialog" :vault="vault" :vault-keys="vaultKeys" @close="downloadingVaultTemplate = false" />
   <DisplayRecoveryKeyDialog v-if="displayingRecoveryKey && vault && vaultKeys" ref="displayRecoveryKeyDialog" :vault="vault" :vault-keys="vaultKeys" @close="displayingRecoveryKey = false" />
   <ArchiveVaultDialog v-if="archivingVault && vault" ref="archiveVaultDialog" :vault="vault" @close="archivingVault = false" @archived="v => refreshVault(v)" />
-  <ReactivateVaultDialog v-if="reactivatingVault && vault" ref="reactivateVaultDialog" :vault="vault" @close="reactivatingVault = false" @reactivated="v => refreshVault(v)" />
+  <ReactivateVaultDialog v-if="reactivatingVault && vault" ref="reactivateVaultDialog" :vault="vault" @close="reactivatingVault = false" @reactivated="v => { refreshVault(v); refreshLicense();}" />
   <RecoverVaultDialog v-if="recoveringVault && vault && me" ref="recoverVaultDialog" :vault="vault" :me="me" @close="recoveringVault = false" @recovered="reloadView()" />
 </template>
 
@@ -294,8 +294,7 @@ async function fetchOwnerData() {
       vaultRecoveryRequired.value = true;
     } else if (error instanceof PaymentRequiredError) {
       //refetch license
-      license.value = await backend.license.getUserInfo();
-      emit('licenseStatusUpdated', license.value);
+      await refreshLicense();
     } else {
       console.error('Retrieving ownership failed.', error);
       onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
@@ -444,6 +443,11 @@ function permissionGranted() {
   usersRequiringAccessGrant.value = [];
 }
 
+async function refreshLicense() {
+  license.value = await backend.license.getUserInfo();
+  emit('licenseStatusUpdated', license.value);
+}
+
 function refreshVault(updatedVault: VaultDto) {
   vault.value = updatedVault;
   emit('vaultUpdated', updatedVault);
@@ -489,8 +493,7 @@ async function removeMember(memberId: string) {
     if (!licenseViolated.value) {
       usersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
     } else {
-      license.value = await backend.license.getUserInfo();
-      emit('licenseStatusUpdated', license.value);
+      await refreshLicense();
     }
   } catch (error) {
     console.error('Removing member access failed.', error);
