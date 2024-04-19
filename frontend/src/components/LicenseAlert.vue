@@ -1,5 +1,5 @@
 <template>
-  <div v-if="license?.expiresAt && now > license.expiresAt" class="rounded-md bg-red-50 p-4 mb-3">
+  <div v-if="license && license.isExpired()" class="rounded-md bg-red-50 p-4 mb-3">
     <div class="flex">
       <div class="flex-shrink-0">
         <XCircleIcon class="h-5 w-5 text-red-400" aria-hidden="true" />
@@ -15,7 +15,7 @@
     </div>
   </div>
 
-  <div v-else-if="license && (license.licensedSeats - license.usedSeats < 0)" class="rounded-md bg-yellow-50 p-4 mb-3">
+  <div v-else-if="license && license.isExceeded()" class="rounded-md bg-yellow-50 p-4 mb-3">
     <div class="flex">
       <div class="flex-shrink-0">
         <ExclamationTriangleIcon class="h-5 w-5 text-yellow-400" aria-hidden="true" />
@@ -40,7 +40,6 @@ import backend, { LicenseUserInfoDto } from '../common/backend';
 
 const { t } = useI18n({ useScope: 'global' });
 
-const now = ref<Date>(new Date());
 const license = ref<LicenseUserInfoDto>();
 
 onMounted(fetchData);
