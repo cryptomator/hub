@@ -116,7 +116,7 @@
 
       <!-- required legacy migration stuff, otherwise there is no owner -->
       <button v-if="isLegacyVault" type="button" class="bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showClaimOwnershipDialog()">
-        {{ t('vaultDetails.actions.becomeOwner') }}
+        {{ t('vaultDetails.actions.claimOwnership') }}
       </button>
 
       <!-- vault is archived -->
@@ -128,10 +128,6 @@
         <!-- displayRecoveryKey button -->
         <button v-if="vaultRole == 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDisplayRecoveryKeyDialog()">
           {{ t('vaultDetails.actions.displayRecoveryKey') }}
-        </button>
-        <!-- becomeOwner button -->
-        <button v-if="vaultRole != 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showRecoverVaultDialog()">
-          {{ t('vaultDetails.actions.becomeOwner') }}
         </button>
         <!-- reactivateVault button -->
         <button v-if="(vaultRole == 'OWNER' || isAdmin)" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white  hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showReactivateVaultDialog()">
@@ -180,10 +176,6 @@
         <!-- displayRecoveryKey button -->
         <button v-if="vaultRole == 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDisplayRecoveryKeyDialog()">
           {{ t('vaultDetails.actions.displayRecoveryKey') }}
-        </button>
-        <!-- becomeOwner button -->
-        <button v-if="vaultRole != 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showRecoverVaultDialog()">
-          {{ t('vaultDetails.actions.becomeOwner') }}
         </button>
         <!-- archiveVault button -->
         <button v-if="(vaultRole == 'OWNER' || isAdmin)" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white  hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showArchiveVaultDialog()">

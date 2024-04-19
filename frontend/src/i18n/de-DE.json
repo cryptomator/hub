@@ -221,7 +221,7 @@
   "vaultDetails.actions.displayRecoveryKey": "Wiederherstellungsschlüssel anzeigen",
   "vaultDetails.actions.archiveVault": "Tresor archivieren",
   "vaultDetails.actions.reactivateVault": "Tresor reaktivieren",
-  "vaultDetails.actions.becomeOwner": "Eigentümer werden",
+  "vaultDetails.actions.claimOwnership": "Eigentümer werden",
   "vaultDetails.error.licenseViolated": "Deine Cryptomator Hub Lizenz hat die Anzahl der verfügbaren Sitze überschritten oder ist abgelaufen. Bitte informiere einen Hub-Administrator, um die Lizenz zu erneuern oder zu erweitern.",
   "vaultDetails.recoverVault.title": "Du hast deinen Account zurückgesetzt!",
   "vaultDetails.recoverVault.description": "Um wieder Zugriff auf den Tresor zu erhalten, musst du deinen Zugriff mit dem Wiederherstellungsschlüssel wiederherstellen oder ein anderer Eigentümer muss die Zugriffsrechte aktualisieren.",
