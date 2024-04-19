@@ -164,9 +164,6 @@
             <ArrowPathIcon class="h-5 w-5" aria-hidden="true" />
           </button>
         </div>
-        <p v-if="licenseViolated" class="text-sm text-red-900 mt-1">
-          {{ t('vaultDetails.error.licenseViolated') }}
-        </p>
         <!-- editMetadata button -->
         <button v-if="vaultRole == 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showEditVaultMetadataDialog()">
           {{ t('vaultDetails.actions.editVaultMetadata') }}
@@ -228,6 +225,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   vaultUpdated: [updatedVault: VaultDto]
+  licenseStatusUpdated: [license: LicenseUserInfoDto]
 }>();
 
 const onFetchError = ref<Error | null>();
@@ -295,8 +293,9 @@ async function fetchOwnerData() {
     if (error instanceof ForbiddenError) {
       vaultRecoveryRequired.value = true;
     } else if (error instanceof PaymentRequiredError) {
-      //do nuthin
-      //or refetch license
+      //refetch license
+      license.value = await backend.license.getUserInfo();
+      emit('licenseStatusUpdated', license.value);
     } else {
       console.error('Retrieving ownership failed.', error);
       onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
@@ -490,9 +489,8 @@ async function removeMember(memberId: string) {
     if (!licenseViolated.value) {
       usersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
     } else {
-      // reload, maybe removing memberId fixed the license issue
-      //TODO is license.value = await backend.license.getUserInfo(); enough?
-      await fetchData();
+      license.value = await backend.license.getUserInfo();
+      emit('licenseStatusUpdated', license.value);
     }
   } catch (error) {
     console.error('Removing member access failed.', error);

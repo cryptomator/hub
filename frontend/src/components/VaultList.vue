@@ -110,7 +110,7 @@
   </div>
 
   <SlideOver v-if="selectedVault != null" ref="vaultDetailsSlideOver" :title="selectedVault.name" @close="selectedVault = null">
-    <VaultDetails :vault-id="selectedVault.id" :vault-role="roleOfSelectedVault" @vault-updated="v => onSelectedVaultUpdate(v)"></VaultDetails>
+    <VaultDetails :vault-id="selectedVault.id" :vault-role="roleOfSelectedVault" @vault-updated="v => onSelectedVaultUpdate(v)" @license-status-updated="l => licenseUpdated(l)"></VaultDetails>
   </SlideOver>
 </template>
 
@@ -220,5 +220,9 @@ async function onSelectedVaultUpdate(vault: VaultDto) {
   } else {
     selectedVault.value = vault;
   }
+}
+
+async function licenseUpdated(license: LicenseUserInfoDto) {
+  licenseStatus.value = license;
 }
 </script>
