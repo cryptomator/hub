@@ -102,7 +102,7 @@ onMounted(fetchData);
 
 async function fetchData() {
   for (const user of props.users) {
-    userKeyFingerprints.value.set(user.id, await getFingerprint(user.publicKey))
+    userKeyFingerprints.value.set(user.id, await getFingerprint(user.publicKey));
   }
 }
 
