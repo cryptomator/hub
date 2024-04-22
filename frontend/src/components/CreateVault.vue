@@ -134,7 +134,7 @@
                 {{ t('createVault.showRecoveryKey.submit') }}
               </button>
               <div v-if="onCreateError != null">
-                <p v-if ="onCreateError instanceof PaymentRequiredError" class="text-sm text-red-900 mt-2">{{ t('createVault.error.paymentRequired') }}</p>
+                <p v-if="onCreateError instanceof PaymentRequiredError" class="text-sm text-red-900 mt-2">{{ t('createVault.error.paymentRequired') }}</p>
                 <p v-else class="text-sm text-red-900 mt-2">{{ t('common.unexpectedError', [onCreateError.message]) }}</p>
               </div>
             </div>
