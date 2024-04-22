@@ -111,7 +111,7 @@
     </div>
 
     <!-- button bar -->
-    <div >
+    <div>
       <h3 class="font-medium text-gray-900">{{ t('vaultDetails.actions.title') }}</h3>
 
       <!-- required legacy migration stuff, otherwise there is no owner -->

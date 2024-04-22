@@ -222,7 +222,7 @@
   "vaultDetails.actions.displayRecoveryKey": "Show Recovery Key",
   "vaultDetails.actions.archiveVault": "Archive Vault",
   "vaultDetails.actions.reactivateVault": "Reactivate Vault",
-  "vaultDetails.actions.claimOwnership": "Become Vault Owner",
+  "vaultDetails.actions.claimOwnership": "Claim Ownership",
   "vaultDetails.actions.recoverVault": "Recover Vault Access",
   "vaultDetails.error.licenseViolated": "Your Cryptomator Hub license has expired or you exceeded the number of licensed seats. Please inform a Hub administrator renew or upgrade the license.",
   "vaultDetails.recoverVault.title": "You have Reset Your Account!",
