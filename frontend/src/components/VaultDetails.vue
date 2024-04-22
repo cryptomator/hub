@@ -44,9 +44,9 @@
           <template v-for="member in members.values()" :key="member.id">
             <li class="py-3 flex flex-col">
               <div class="flex justify-between items-center">
-                <div class="flex items-center">
+                <div class="flex items-center text-ellipsis whitespace-nowrap overflow-hidden" :title="member.name">
                   <img :src="member.pictureUrl" alt="" class="w-8 h-8 rounded-full" />
-                  <p class="ml-4 text-sm font-medium text-gray-900">{{ member.name }}</p>
+                  <p class="w-full ml-4 text-sm font-medium text-gray-900 truncate">{{ member.name }}</p>
                   <div v-if="member.role == 'OWNER'" class="ml-3 inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">{{ t('vaultDetails.sharedWith.badge.owner') }}</div>
                 </div>
                 <Menu v-if="member.id != me?.id && !vault.archived" as="div" class="relative ml-2 inline-block flex-shrink-0 text-left">
