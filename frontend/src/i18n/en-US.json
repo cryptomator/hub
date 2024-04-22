@@ -102,6 +102,7 @@
   "createVault.showRecoveryKey.recoveryKey": "Recovery Key of Your Vault",
   "createVault.showRecoveryKey.confirmRecoveryKey": "I understand that I will lose access to the vault in the event of an emergency if I don't have the recovery key.",
   "createVault.showRecoveryKey.submit": "Create Vault",
+  "createVault.error.illegalVaultName": "The vault name must not contain any of the following characters:",
   "createVault.error.formValidationFailed": "Please check the form and try again.",
   "createVault.error.invalidRecoveryKey": "Recovery key is invalid.",
   "createVault.error.vaultAlreadyExists": "A vault with the given name already exists.",

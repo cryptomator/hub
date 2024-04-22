@@ -102,6 +102,7 @@
   "createVault.showRecoveryKey.recoveryKey": "Wiederherstellungsschlüssel für deinen Tresor",
   "createVault.showRecoveryKey.confirmRecoveryKey": "Mir ist klar, dass ich im Notfall den Zugriff auf den Tresor verliere, wenn ich den Wiederherstellungsschlüssel nicht habe.",
   "createVault.showRecoveryKey.submit": "Tresor erstellen",
+  "createVault.error.illegalVaultName": "Der Tresorname darf keines der folgenden Zeichen beinhalten:",
   "createVault.error.formValidationFailed": "Bitte überprüfe das Formular und versuche es erneut.",
   "createVault.error.invalidRecoveryKey": "Wiederherstellungsschlüssel ist ungültig.",
   "createVault.error.vaultAlreadyExists": "Ein Tresor mit dem angegebenen Namen existiert bereits.",
