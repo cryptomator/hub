@@ -220,7 +220,7 @@ const { t, d } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{
   vaultId: string,
-  vaultRole: string,
+  vaultRole: 'OWNER' | 'MEMBER' | 'NONE',
 }>();
 
 const emit = defineEmits<{
