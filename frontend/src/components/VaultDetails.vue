@@ -191,7 +191,7 @@
   <DisplayRecoveryKeyDialog v-if="displayingRecoveryKey && vault && vaultKeys" ref="displayRecoveryKeyDialog" :vault="vault" :vault-keys="vaultKeys" @close="displayingRecoveryKey = false" />
   <ArchiveVaultDialog v-if="archivingVault && vault" ref="archiveVaultDialog" :vault="vault" @close="archivingVault = false" @archived="v => refreshVault(v)" />
   <ReactivateVaultDialog v-if="reactivatingVault && vault" ref="reactivateVaultDialog" :vault="vault" @close="reactivatingVault = false" @reactivated="v => { refreshVault(v); refreshLicense();}" />
-  <RecoverVaultDialog v-if="recoveringVault && vault && me" ref="recoverVaultDialog" :vault="vault" :me="me" @close="recoveringVault = false" @recovered="reloadView()" />
+  <RecoverVaultDialog v-if="recoveringVault && vault && me" ref="recoverVaultDialog" :vault="vault" :me="me" @close="recoveringVault = false" @recovered="fetchOwnerData()" />
 </template>
 
 <script setup lang="ts">
@@ -451,10 +451,6 @@ async function refreshLicense() {
 function refreshVault(updatedVault: VaultDto) {
   vault.value = updatedVault;
   emit('vaultUpdated', updatedVault);
-}
-
-async function reloadView() {
-  await fetchOwnerData();
 }
 
 async function searchAuthority(query: string): Promise<AuthorityDto[]> {
