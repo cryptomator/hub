@@ -121,7 +121,7 @@ import { CheckIcon, ChevronRightIcon, ChevronUpDownIcon } from '@heroicons/vue/2
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auth from '../common/auth';
-import backend, { VaultDto, LicenseUserInfoDto } from '../common/backend';
+import backend, { VaultDto, LicenseUserInfoDto, VaultRole } from '../common/backend';
 import FetchError from './FetchError.vue';
 import SlideOver from './SlideOver.vue';
 import VaultDetails from './VaultDetails.vue';
@@ -137,7 +137,7 @@ const accessibleVaults = ref<VaultDto[]>();
 const ownedVaults = ref<VaultDto[]>();
 const selectedVault = ref<VaultDto | null>(null);
 
-const roleOfSelectedVault = computed(() => {
+const roleOfSelectedVault = computed<VaultRole | 'NONE'>(() => {
   if (ownedVaults.value?.some(ownedVault => ownedVault.id == selectedVault.value?.id)) {
     return 'OWNER';
   } else if (accessibleVaults.value?.some(accessibleVault => accessibleVault.id == selectedVault.value?.id)) {
