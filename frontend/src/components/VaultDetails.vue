@@ -185,8 +185,8 @@
   </div>
 
   <ClaimVaultOwnershipDialog v-if="claimingVaultOwnership && vault" ref="claimVaultOwnershipDialog" :vault="vault" @action="provedOwnership" @close="claimingVaultOwnership = false" />
-  <GrantPermissionDialog v-if="grantingPermission && vault && vaultKeys " ref="grantPermissionDialog" :vault="vault" :users="usersRequiringAccessGrant" :vault-keys="vaultKeys" @close="grantingPermission = false" @permission-granted="permissionGranted()" />
-  <EditVaultMetadataDialog v-if="editingVaultMetadata && vault && vaultKeys" ref="editVaultMetadataDialog" :vault="vault" @close="editingVaultMetadata = false" @updated="v => refreshVault(v)" />
+  <GrantPermissionDialog v-if="grantingPermission && vault && vaultKeys" ref="grantPermissionDialog" :vault="vault" :users="usersRequiringAccessGrant" :vault-keys="vaultKeys" @close="grantingPermission = false" @permission-granted="permissionGranted()" />
+  <EditVaultMetadataDialog v-if="editingVaultMetadata && vault" ref="editVaultMetadataDialog" :vault="vault" @close="editingVaultMetadata = false" @updated="v => refreshVault(v)" />
   <DownloadVaultTemplateDialog v-if="downloadingVaultTemplate && vault && vaultKeys" ref="downloadVaultTemplateDialog" :vault="vault" :vault-keys="vaultKeys" @close="downloadingVaultTemplate = false" />
   <DisplayRecoveryKeyDialog v-if="displayingRecoveryKey && vault && vaultKeys" ref="displayRecoveryKeyDialog" :vault="vault" :vault-keys="vaultKeys" @close="displayingRecoveryKey = false" />
   <ArchiveVaultDialog v-if="archivingVault && vault" ref="archiveVaultDialog" :vault="vault" @close="archivingVault = false" @archived="v => refreshVault(v)" />
