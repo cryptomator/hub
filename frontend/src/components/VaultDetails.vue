@@ -121,6 +121,18 @@
         </button>
       </div>
 
+      <!-- license violated -->
+      <div v-else-if="licenseViolated" class="mt-2 flex flex-col gap-2">
+        <!-- editMetadata button -->
+        <button v-if="vaultRole == 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showEditVaultMetadataDialog()">
+          {{ t('vaultDetails.actions.editVaultMetadata') }}
+        </button>
+        <!-- archiveVault button -->
+        <button v-if="(vaultRole == 'OWNER' || isAdmin)" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white  hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showArchiveVaultDialog()">
+          {{ t('vaultDetails.actions.archiveVault') }}
+        </button>
+      </div>
+
       <!-- vault is archived -->
       <div v-else-if="vault.archived" class="mt-2 flex flex-col gap-2">
         <!-- downloadTemplate button -->
@@ -146,16 +158,15 @@
           <h3 class="ml-3 font-medium text-gray-900">{{ t('vaultDetails.recoverVault.title') }}</h3>
         </div>
         <p class="text-sm text-gray-500">{{ t('vaultDetails.recoverVault.description') }}</p>
-
         <button type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white  hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showRecoverVaultDialog()">
           {{ t('vaultDetails.actions.recoverVault') }}
         </button>
       </div>
 
-      <!-- regular or licenseViolated vault -->
+      <!-- regular vault -->
       <div v-else class="mt-2 flex flex-col gap-2">
         <!-- grantAccess button -->
-        <div v-if="!licenseViolated && vaultRole == 'OWNER'" class="flex gap-2">
+        <div v-if="vaultRole == 'OWNER'" class="flex gap-2">
           <button :disabled="usersRequiringAccessGrant.length == 0" type="button" class="flex-1 bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="showGrantPermissionDialog()">
             {{ t('vaultDetails.actions.updatePermissions') }}
           </button>
