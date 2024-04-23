@@ -133,6 +133,20 @@
         </button>
       </div>
 
+      <!-- special owner reset stuff -->
+      <div v-else-if="vaultRecoveryRequired" class="mt-2 flex flex-col gap-2">
+        <div class="flex">
+          <div class="flex-shrink-0">
+            <ExclamationTriangleIcon class="mt-1 h-5 w-5 text-yellow-400" aria-hidden="true" />
+          </div>
+          <h3 class="ml-3 font-medium text-gray-900">{{ t('vaultDetails.recoverVault.title') }}</h3>
+        </div>
+        <p class="text-sm text-gray-500">{{ t('vaultDetails.recoverVault.description') }}</p>
+        <button type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white  hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showRecoverVaultDialog()">
+          {{ t('vaultDetails.actions.recoverVault') }}
+        </button>
+      </div>
+
       <!-- vault is archived -->
       <div v-else-if="vault.archived" class="mt-2 flex flex-col gap-2">
         <!-- downloadTemplate button -->
@@ -146,20 +160,6 @@
         <!-- reactivateVault button -->
         <button v-if="(vaultRole == 'OWNER' || isAdmin)" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white  hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showReactivateVaultDialog()">
           {{ t('vaultDetails.actions.reactivateVault') }}
-        </button>
-      </div>
-
-      <!-- special owner reset stuff -->
-      <div v-else-if="vaultRecoveryRequired" class="mt-2 flex flex-col gap-2">
-        <div class="flex">
-          <div class="flex-shrink-0">
-            <ExclamationTriangleIcon class="mt-1 h-5 w-5 text-yellow-400" aria-hidden="true" />
-          </div>
-          <h3 class="ml-3 font-medium text-gray-900">{{ t('vaultDetails.recoverVault.title') }}</h3>
-        </div>
-        <p class="text-sm text-gray-500">{{ t('vaultDetails.recoverVault.description') }}</p>
-        <button type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white  hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showRecoverVaultDialog()">
-          {{ t('vaultDetails.actions.recoverVault') }}
         </button>
       </div>
 
