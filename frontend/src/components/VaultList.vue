@@ -8,7 +8,7 @@
     </div>
   </div>
 
-  <LicenseAlert v-if="isLicenseViolated" />
+  <LicenseAlert v-if="isLicenseViolated && isAdmin != undefined && licenseStatus" :isAdmin="isAdmin" :licenseStatus="licenseStatus" />
 
   <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
     {{ t('vaultList.title') }}
@@ -121,11 +121,11 @@ import { CheckIcon, ChevronRightIcon, ChevronUpDownIcon } from '@heroicons/vue/2
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auth from '../common/auth';
-import backend, { VaultDto, LicenseUserInfoDto } from '../common/backend';
+import backend, { LicenseUserInfoDto, VaultDto } from '../common/backend';
 import FetchError from './FetchError.vue';
+import LicenseAlert from './LicenseAlert.vue';
 import SlideOver from './SlideOver.vue';
 import VaultDetails from './VaultDetails.vue';
-import LicenseAlert from './LicenseAlert.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 

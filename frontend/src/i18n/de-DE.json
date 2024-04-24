@@ -157,9 +157,11 @@
   "initialSetup.submit": "Einrichtung abschließen",
 
   "licenseAlert.noRemainingSeats.title": "Lizenz überschritten",
-  "licenseAlert.noRemainingSeats.description": "Deine Cryptomator Hub Instanz hat die Anzahl an lizensierten Sitzen überschritten. Öffne den {0} und upgrade dort deine Lizenz, um deine Tresore weiterhin verwalten und entsperren zu können.",
+  "licenseAlert.noRemainingSeats.admin.description": "Deine Cryptomator Hub Instanz hat die Anzahl an lizensierten Sitzen überschritten. Öffne den {0} und upgrade dort deine Lizenz, um deine Tresore weiterhin verwalten und entsperren zu können.",
+  "licenseAlert.noRemainingSeats.user.description": "Deine Cryptomator Hub Instanz hat die Anzahl an lizensierten Sitzen überschritten. Bitte informiere einen Hub-Administrator, um die Lizenz zu erweitern.",
   "licenseAlert.licenseExpired.title": "Lizenz abgelaufen",
-  "licenseAlert.licenseExpired.description": "Deine Cryptomator Hub Lizenz ist abgelaufen. Öffne den {0} und erneuere dort deine Lizenz, um deine Tresore weiterhin verwalten und entsperren zu können.",
+  "licenseAlert.licenseExpired.admin.description": "Deine Cryptomator Hub Lizenz ist abgelaufen. Öffne den {0} und erneuere dort deine Lizenz, um deine Tresore weiterhin verwalten und entsperren zu können.",
+  "licenseAlert.licenseExpired.user.description": "Deine Cryptomator Hub Lizenz ist abgelaufen. Bitte informiere einen Hub-Administrator, um die Lizenz zu erweitern.",
   "licenseAlert.button": "Admin-Bereich",
 
   "manageAccountKey.title": "Account Key",
