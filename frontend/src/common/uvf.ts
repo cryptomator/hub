@@ -1,5 +1,5 @@
 import { base64url } from 'rfc4648';
-import { JWEBuilder, JWEParser } from './jwe';
+import { JWE, Recipient } from './jwe';
 
 export type MetadataPayload = {
   fileFormat: 'AES-256-GCM-32k';
@@ -57,7 +57,7 @@ export class VaultMetadata {
    * @returns vault metadata
    */
   public static async decryptWithMasterKey(jwe: string, masterKey: CryptoKey): Promise<VaultMetadata> {
-    const payload = await JWEParser.parse(jwe).decryptA256kw(masterKey);
+    const payload = await JWE.parseCompact(jwe).decrypt(Recipient.a256kw('org.cryptomator.hub.masterkey', masterKey));
     const encodedSeeds: Record<string, string> = payload['seeds'];
     const seeds = new Map<number, Uint8Array>();
     for (const key in encodedSeeds) {
@@ -99,7 +99,8 @@ export class VaultMetadata {
       kdfSalt: base64url.stringify(this.kdfSalt, { pad: false }),
       'org.cryptomator.automaticAccessGrant': this.automaticAccessGrant
     }
-    return JWEBuilder.a256kw(masterKey).encrypt(payload);
+    const jwe = await JWE.build(payload).encrypt(Recipient.a256kw('org.cryptomator.hub.masterkey', masterKey));
+    return jwe.compactSerialization();
   }
 
 }

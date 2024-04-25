@@ -1,7 +1,7 @@
 import * as miscreant from 'miscreant';
 import { base32, base64, base64url } from 'rfc4648';
 import { GCM_NONCE_LEN, UnwrapKeyError, UserKeys } from './crypto';
-import { JWEBuilder, JWEParser } from './jwe';
+import { JWE, Recipient } from './jwe';
 import { CRC32, wordEncoder } from './util';
 
 interface JWEPayload {
@@ -67,7 +67,7 @@ export class VaultKeys {
   public static async decryptWithUserKey(jwe: string, userPrivateKey: CryptoKey): Promise<VaultKeys> {
     let rawKey = new Uint8Array();
     try {
-      const payload: JWEPayload = await JWEParser.parse(jwe).decryptEcdhEs(userPrivateKey);
+      const payload: JWEPayload = await JWE.parseCompact(jwe).decrypt(Recipient.ecdhEs('org.cryptomator.hub.userKey', userPrivateKey));
       rawKey = base64.parse(payload.key);
       const masterKey = crypto.subtle.importKey('raw', rawKey, VaultKeys.MASTERKEY_KEY_DESIGNATION, true, ['sign']);
       return new VaultKeys(await masterKey);
@@ -219,7 +219,8 @@ export class VaultKeys {
       const payload: JWEPayload = {
         key: base64.stringify(rawkey),
       };
-      return JWEBuilder.ecdhEs(publicKey).encrypt(payload);
+      const jwe = await JWE.build(payload).encrypt(Recipient.ecdhEs('org.cryptomator.hub.userKey', publicKey));
+      return jwe.compactSerialization();
     } finally {
       rawkey.fill(0x00);
     }

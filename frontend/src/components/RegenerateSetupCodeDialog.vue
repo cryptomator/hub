@@ -104,7 +104,7 @@ import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend from '../common/backend';
 import { BrowserKeys, UserKeys } from '../common/crypto';
-import { JWEBuilder } from '../common/jwe';
+import { JWE, Recipient } from '../common/jwe';
 import { debounce } from '../common/util';
 
 enum State {
@@ -167,7 +167,7 @@ async function regenerateSetupCode() {
     const newCode = crypto.randomUUID();
     const userKeys = await UserKeys.decryptOnBrowser(myDevice.userPrivateKey, browserKeys.keyPair.privateKey, base64.parse(me.publicKey));
     me.privateKey = await userKeys.encryptedPrivateKey(newCode);
-    me.setupCode = await JWEBuilder.ecdhEs(userKeys.keyPair.publicKey).encrypt({ setupCode: newCode });
+    me.setupCode = (await JWE.build({ setupCode: newCode }).encrypt(Recipient.ecdhEs('org.cryptomator.hub.userKey', userKeys.keyPair.publicKey))).compactSerialization();
     await backend.users.putMe(me);
     setupCode.value = newCode;
 

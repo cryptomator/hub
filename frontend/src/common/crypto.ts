@@ -1,5 +1,5 @@
 import { base16, base64 } from 'rfc4648';
-import { JWEBuilder, JWEParser } from './jwe';
+import { JWE, Recipient } from './jwe';
 import { DB } from './util';
 
 
@@ -50,7 +50,7 @@ export class UserKeys {
    * @throws {UnwrapKeyError} when attempting to decrypt the private key using an incorrect setupCode
    */
   public static async recover(encodedPublicKey: string, encryptedPrivateKey: string, setupCode: string): Promise<UserKeys> {
-    const jwe: UserKeysJWEPayload = await JWEParser.parse(encryptedPrivateKey).decryptPbes2(setupCode);
+    const jwe: UserKeysJWEPayload = await JWE.parseCompact(encryptedPrivateKey).decrypt(Recipient.pbes2('org.cryptomator.hub.setupCode', setupCode));
     const decodedPublicKey = base64.parse(encodedPublicKey, { loose: true });
     const decodedPrivateKey = base64.parse(jwe.key, { loose: true });
     const privateKey = crypto.subtle.importKey('pkcs8', decodedPrivateKey, UserKeys.KEY_DESIGNATION, true, UserKeys.KEY_USAGES);
@@ -71,7 +71,7 @@ export class UserKeys {
    * Encrypts the user's private key using a key derived from the given setupCode
    * @param setupCode The password to protect the private key.
    * @returns A JWE holding the encrypted private key
-   * @see JWEBuilder.pbes2
+   * @see Recipient.pbes2
    */
   public async encryptedPrivateKey(setupCode: string): Promise<string> {
     const rawkey = new Uint8Array(await crypto.subtle.exportKey('pkcs8', this.keyPair.privateKey));
@@ -79,7 +79,8 @@ export class UserKeys {
       const payload: UserKeysJWEPayload = {
         key: base64.stringify(rawkey)
       };
-      return await JWEBuilder.pbes2(setupCode).encrypt(payload);
+      const jwe = await JWE.build(payload).encrypt(Recipient.pbes2('org.cryptomator.hub.setupCode', setupCode));
+      return jwe.compactSerialization();
     } finally {
       rawkey.fill(0x00);
     }
@@ -89,7 +90,7 @@ export class UserKeys {
    * Encrypts the user's private key using the given public key
    * @param devicePublicKey The device's public key (DER-encoded)
    * @returns a JWE containing the PKCS#8-encoded private key
-   * @see JWEBuilder.ecdhEs
+   * @see Recipient.ecdhEs
    */
   public async encryptForDevice(devicePublicKey: CryptoKey | Uint8Array): Promise<string> {
     const publicKey = await UserKeys.publicKey(devicePublicKey);
@@ -98,7 +99,8 @@ export class UserKeys {
       const payload: UserKeysJWEPayload = {
         key: base64.stringify(rawkey)
       };
-      return JWEBuilder.ecdhEs(publicKey).encrypt(payload);
+      const jwe = await JWE.build(payload).encrypt(Recipient.ecdhEs('org.cryptomator.hub.deviceKey', publicKey));
+      return jwe.compactSerialization();
     } finally {
       rawkey.fill(0x00);
     }
@@ -115,7 +117,7 @@ export class UserKeys {
     const publicKey = await UserKeys.publicKey(userPublicKey);
     let rawKey = new Uint8Array();
     try {
-      const payload: UserKeysJWEPayload = await JWEParser.parse(jwe).decryptEcdhEs(browserPrivateKey);
+      const payload: UserKeysJWEPayload = await JWE.parseCompact(jwe).decrypt(Recipient.ecdhEs('org.cryptomator.hub.deviceKey', browserPrivateKey));
       rawKey = base64.parse(payload.key);
       const privateKey = await crypto.subtle.importKey('pkcs8', rawKey, UserKeys.KEY_DESIGNATION, true, UserKeys.KEY_USAGES);
       return new UserKeys({ publicKey: publicKey, privateKey: privateKey });

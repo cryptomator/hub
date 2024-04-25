@@ -1,7 +1,7 @@
 import { use as chaiUse, expect } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { before, describe } from 'mocha';
-import { JWEParser } from '../../src/common/jwe';
+import { JWE, Recipient } from '../../src/common/jwe';
 import { MetadataPayload, VaultMetadata, VaultMetadataJWEAutomaticAccessGrantDto } from '../../src/common/uvf';
 
 chaiUse(chaiAsPromised);
@@ -40,7 +40,7 @@ describe('Universal Vault Format', () => {
       expect(decrypted.initialSeedId).to.eq(orig.initialSeedId)
       expect(decrypted.latestSeedId).to.eq(orig.latestSeedId)
       expect(decrypted.automaticAccessGrant).to.deep.eq(automaticAccessGrant);
-      const decryptedRaw: MetadataPayload = await JWEParser.parse(jwe).decryptA256kw(uvfMasterKey);
+      const decryptedRaw: MetadataPayload = await JWE.parseCompact(jwe).decrypt(Recipient.a256kw('org.cryptomator.hub.masterkey', uvfMasterKey));
       expect(decryptedRaw.fileFormat).to.eq('AES-256-GCM-32k');
       expect(decryptedRaw.initialSeed).to.eq(decryptedRaw.latestSeed);
       expect(decryptedRaw.seeds[decryptedRaw.initialSeed]).to.be.not.empty;

@@ -51,7 +51,7 @@ import { nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend from '../common/backend';
 import { BrowserKeys, UserKeys } from '../common/crypto';
-import { JWEParser } from '../common/jwe';
+import { JWE, Recipient } from '../common/jwe';
 import { debounce } from '../common/util';
 import FetchError from './FetchError.vue';
 import RegenerateSetupCodeDialog from './RegenerateSetupCodeDialog.vue';
@@ -84,7 +84,7 @@ async function fetchData() {
       throw new Error('Device not initialized.');
     }
     const userKeys = await UserKeys.decryptOnBrowser(myDevice.userPrivateKey, browserKeys.keyPair.privateKey, base64.parse(me.publicKey));
-    const payload : { setupCode: string } = await JWEParser.parse(me.setupCode).decryptEcdhEs(userKeys.keyPair.privateKey);
+    const payload : { setupCode: string } = await JWE.parseCompact(me.setupCode).decrypt(Recipient.ecdhEs('org.cryptomator.hub.userKey', userKeys.keyPair.privateKey));
     setupCode.value = payload.setupCode;
   } catch (error) {
     console.error('Retrieving setup code failed.', error);
