@@ -175,7 +175,7 @@ public class VaultResource {
 			return addAuthority(vault, user, role);
 		}
 		//otherwise block
-		throw new PaymentRequiredException("Number of effective vault users greater than or equal to the available license seats");
+		throw new PaymentRequiredException("License seats exceeded. Cannot add more users.");
 	}
 
 	@PUT
@@ -198,7 +198,7 @@ public class VaultResource {
 
 		//usersInGroup - usersInGroupAndPartOfAtLeastOneVault + usersOfAtLeastOneVault
 		if (userRepo.countEffectiveGroupUsers(groupId) - effectiveVaultAccessRepo.countSeatOccupyingUsersOfGroup(groupId) + effectiveVaultAccessRepo.countSeatOccupyingUsers() > license.getSeats()) {
-			throw new PaymentRequiredException("Number of effective vault users greater than or equal to the available license seats");
+			throw new PaymentRequiredException("Adding this group would exceed available license seats.");
 		}
 
 		return addAuthority(vault, group, role);
