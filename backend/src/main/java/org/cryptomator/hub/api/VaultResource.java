@@ -89,7 +89,6 @@ public class VaultResource {
 	@Operation(summary = "list all accessible vaults", description = "list all vaults that have been shared with the currently logged in user or a group in wich this user is")
 	public List<VaultDto> getAccessible(@Nullable @QueryParam("role") VaultAccess.Role role) {
 		var currentUserId = jwt.getSubject();
-		// TODO refactor to JEP 441 in JDK 21
 		final Stream<Vault> resultStream;
 		if (role == null) {
 			resultStream = Vault.findAccessibleByUser(currentUserId);
@@ -130,15 +129,10 @@ public class VaultResource {
 	@APIResponse(responseCode = "200")
 	@APIResponse(responseCode = "403", description = "not a vault owner")
 	public List<MemberDto> getDirectMembers(@PathParam("vaultId") UUID vaultId) {
-		return VaultAccess.forVault(vaultId).map(access -> {
-			// TODO switch to switch expressions, once we can make Authority sealed
-			if (access.authority instanceof User u) {
-				return MemberDto.fromEntity(u, access.role);
-			} else if (access.authority instanceof Group g) {
-				return MemberDto.fromEntity(g, access.role);
-			} else {
-				throw new IllegalStateException();
-			}
+		return VaultAccess.forVault(vaultId).map(access -> switch (access.authority) {
+			case User u -> MemberDto.fromEntity(u, access.role);
+			case Group g -> MemberDto.fromEntity(g, access.role);
+			default -> throw new IllegalStateException();
 		}).toList();
 	}
 

@@ -63,5 +63,5 @@ Tell JIB which executable to use (replace `nerctl` with `podman` etc):
 
 3x smaller but takes longer to build. Docker VM requires sufficient memory during the build:
 ```shell script
-mvn clean package -Pnative -Dquarkus.container-image.build=true -Dquarkus.native.container-build=true -Dquarkus.native.builder-image=quay.io/quarkus/ubi-quarkus-mandrel:22.2-java17 -Dquarkus.container-image.tag=latest
+mvn clean package -Pnative -Dquarkus.container-image.build=true -Dquarkus.native.container-build=true -Dquarkus.native.builder-image=quay.io/quarkus/ubi-quarkus-mandrel-builder-image:23.1-java21 -Dquarkus.container-image.tag=latest
 ```
