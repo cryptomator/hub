@@ -162,10 +162,10 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-00010000AAAA/access-token returns 403 for archived vaults with evenIfArchived set to true")
+		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-00010000AAAA/access-token returns 200 for archived vaults with evenIfArchived set to true")
 		public void testUnlockArchived3() throws SQLException {
 			when().get("/vaults/{vaultId}/access-token?evenIfArchived=true", "7E57C0DE-0000-4000-8000-00010000AAAA")
-					.then().statusCode(403);
+					.then().statusCode(200);
 		}
 
 		@Nested
@@ -378,11 +378,11 @@ public class VaultResourceTest {
 		}
 
 		@Test
-		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-00010000AAAA/access-tokens returns 410")
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-00010000AAAA/access-tokens returns 200 for user1 and vault archived")
 		public void testGrantAccessArchived() {
 			given().contentType(ContentType.JSON).body(Map.of("user1", "jwe.jwe.jwe.vaultAAA.user1"))
 					.when().post("/vaults/{vaultId}/access-tokens/", "7E57C0DE-0000-4000-8000-00010000AAAA")
-					.then().statusCode(410);
+					.then().statusCode(200);
 		}
 
 	}
