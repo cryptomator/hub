@@ -172,7 +172,7 @@ class EcdhRecipient extends Recipient {
         throw new Error('Unsupported curve');
     }
     const epk = await crypto.subtle.importKey('jwk', header.epk!, { name: 'ECDH', namedCurve: header.epk?.crv }, false, []);
-    return ECDH_ES.deriveKey(epk, this.recipientKey, keyBits, 32, header, false, keyAlgorithm, keyUsage);
+    return ECDH_ES.deriveKey(epk, this.recipientKey, keyBits, keyAlgorithm.length / 8, header, false, keyAlgorithm, keyUsage);
   }
 
   async decryptAndUnwrap(header: Header, encryptedKey: string): Promise<CryptoKey> {
@@ -402,10 +402,12 @@ export class ECDH_ES {
   private static async deriveRawKey(publicKey: CryptoKey, privateKey: CryptoKey, ecdhKeyBits: number, desiredKeyBytes: number, header: JWEHeader): Promise<Uint8Array> {
     let agreedKey = new Uint8Array();
     try {
-      const algorithmId = ECDH_ES.lengthPrefixed(new TextEncoder().encode(header.enc));
+      const algOrEnc = header.alg === 'ECDH-ES' ? header.enc : header.alg; // see definition of AlgorithmID in RFC 7518, Section 4.6.2
+      const algorithmId = ECDH_ES.lengthPrefixed(new TextEncoder().encode(algOrEnc));
       const partyUInfo = ECDH_ES.lengthPrefixed(base64url.parse(header.apu || '', { loose: true }));
       const partyVInfo = ECDH_ES.lengthPrefixed(base64url.parse(header.apv || '', { loose: true }));
       const suppPubInfo = new ArrayBuffer(4);
+      const suppPrivInfo = new Uint8Array();
       new DataView(suppPubInfo).setUint32(0, desiredKeyBytes * 8, false);
       agreedKey = new Uint8Array(await crypto.subtle.deriveBits(
         {
@@ -415,7 +417,7 @@ export class ECDH_ES {
         privateKey,
         ecdhKeyBits
       ));
-      const otherInfo = new Uint8Array([...algorithmId, ...partyUInfo, ...partyVInfo, ...new Uint8Array(suppPubInfo)]);
+      const otherInfo = new Uint8Array([...algorithmId, ...partyUInfo, ...partyVInfo, ...new Uint8Array(suppPubInfo), ...suppPrivInfo]);
       return ConcatKDF.kdf(new Uint8Array(agreedKey), desiredKeyBytes, otherInfo);
     } finally {
       agreedKey.fill(0x00);
