@@ -44,10 +44,11 @@ export type JWEHeader = {
   epk?: JsonWebKey,
   p2c?: number,
   p2s?: string,
+  jku?: string,
   [other: string]: undefined | string | number | boolean | object; // allow further properties
 }
 
-type JsonJWE = {
+export type JsonJWE = {
   protected: string,
   recipients: PerRecipientProperties[]
   iv: string,
@@ -98,6 +99,9 @@ export abstract class Recipient {
    * @returns A new recipient
    */
   public static ecdhEs(kid: string, recipientKey: CryptoKey, apu: Uint8Array = new Uint8Array(), apv: Uint8Array = new Uint8Array()): Recipient {
+    if (recipientKey?.type === 'secret' || recipientKey?.algorithm.name !== 'ECDH') {
+      throw new Error('Unsupported recipient key');
+    }
     return new EcdhRecipient(kid, recipientKey, apu, apv);
   }
 
@@ -121,6 +125,9 @@ export abstract class Recipient {
    * @returns A new recipient
    */
   public static a256kw(kid: string, wrappingKey: CryptoKey): Recipient {
+    if (wrappingKey?.type !== 'secret' || wrappingKey?.algorithm.name !== 'AES-KW') {
+      throw new Error('Unsupported wrapping key');
+    }
     return new A256kwRecipient(kid, wrappingKey);
   }
 
@@ -139,6 +146,7 @@ class EcdhRecipient extends Recipient {
     const ephemeralKey = await crypto.subtle.generateKey(ECDH_P384, false, ['deriveBits']);
     const header: JWEHeader = {
       ...commonHeader,
+      kid: this.kid,
       alg: 'ECDH-ES+A256KW',
       epk: await crypto.subtle.exportKey('jwk', ephemeralKey.publicKey),
       apu: base64url.stringify(this.apu, { pad: false }),
@@ -201,6 +209,7 @@ class A256kwRecipient extends Recipient {
   async encrypt(cek: CryptoKey, commonHeader: JWEHeader): Promise<PerRecipientProperties> {
     const header: JWEHeader = {
       ...commonHeader,
+      kid: this.kid,
       alg: 'A256KW'
     };
     const encryptedKey = new Uint8Array(await crypto.subtle.wrapKey('raw', cek, this.wrappingKey, 'AES-KW'));
@@ -266,10 +275,10 @@ class Pbes2Recipient extends Recipient {
 
 export class JWE {
 
-  private constructor(private payload: object) { }
+  private constructor(private payload: object, private protectedHeader: JWEHeader) { }
 
-  public static build(payload: object): JWE {
-    return new JWE(payload);
+  public static build(payload: object, protectedHeader: JWEHeader = {}): JWE {
+    return new JWE(payload, protectedHeader);
   }
 
   public static parseCompact(token: string): EncryptedJWE {
@@ -289,6 +298,7 @@ export class JWE {
 
   public async encrypt(recipient: Recipient, ...moreRecipients: Recipient[]): Promise<EncryptedJWE> {
     let protectedHeader: JWEHeader = {
+      ...this.protectedHeader,
       enc: 'A256GCM'
     }
     const cek = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt']);
@@ -297,14 +307,15 @@ export class JWE {
 
     if (perRecipientData.length === 1) {
       protectedHeader = {
+        ...protectedHeader,
         ...perRecipientData[0].header
       };
     } else {
-      protectedHeader = {
-        enc: perRecipientData[0].header.enc
+      protectedHeader.enc = perRecipientData[0].header.enc;
+      for (let key of Object.keys(protectedHeader)) {
+        perRecipientData.forEach(r => delete r.header[key]);
       }
     }
-    perRecipientData.forEach(r => delete r.header.enc);
 
     const utf8enc = new TextEncoder();
     const encodedProtectedHeader = base64url.stringify(utf8enc.encode(JSON.stringify(protectedHeader)), { pad: false });

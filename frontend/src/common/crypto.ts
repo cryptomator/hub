@@ -1,4 +1,4 @@
-import { base16, base64 } from 'rfc4648';
+import { base16, base64, base64url } from 'rfc4648';
 import { JWE, Recipient } from './jwe';
 import { DB } from './util';
 
@@ -220,3 +220,19 @@ export async function getFingerprint(key: string | undefined) {
   }
 }
 
+/**
+ * Computes the JWK Thumbprint (RFC 7638) using SHA-256.
+ * @param key An EC key
+ */
+export async function getJwkThumbprint(key: CryptoKey): Promise<string> {
+  // see https://datatracker.ietf.org/doc/html/rfc7638#section-3.2
+  if (key.algorithm.name !== 'ECDH') {
+    throw new Error('Method only implemented for EC keys.');
+  }
+  const jwk = await crypto.subtle.exportKey('jwk', key);
+  const algo = key.algorithm as EcKeyAlgorithm;
+  const orderedJson = `{"crv":"${algo.namedCurve}","kty":"${jwk.kty}","x":${jwk.x},"y":${jwk.y}}`;
+  const bytes = new TextEncoder().encode(orderedJson);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', bytes);
+  return base64url.stringify(new Uint8Array(hashBuffer), { pad: false });
+}

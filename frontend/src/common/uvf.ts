@@ -1,7 +1,8 @@
 import { base64url } from 'rfc4648';
-import { JWE, Recipient } from './jwe';
+import { getJwkThumbprint } from './crypto';
+import { JWE, JWEHeader, JsonJWE, Recipient } from './jwe';
 
-export type MetadataPayload = {
+type MetadataPayload = {
   fileFormat: 'AES-256-GCM-32k';
   nameFormat: 'AES-SIV-512-B64URL'; // TODO verify after merging https://github.com/encryption-alliance/unified-vault-format/pull/24
   seeds: Record<string, string>;
@@ -12,30 +13,32 @@ export type MetadataPayload = {
   'org.cryptomator.automaticAccessGrant': VaultMetadataJWEAutomaticAccessGrantDto;
 }
 
-export type VaultMetadataJWEAutomaticAccessGrantDto = {
+type VaultMetadataJWEAutomaticAccessGrantDto = {
   enabled: boolean,
   maxWotDepth: number
 }
 
+// const MEMBER_KEY_DESIGNATION: AesKeyGenParams = {
+//   name: 'AES',
+//   length: 256
+// };
+
+// const MEMBER_KEY_USAGE: KeyUsage[] = ['wrapKey', 'unwrapKey'];
+
 export class VaultMetadata {
 
-  readonly automaticAccessGrant: VaultMetadataJWEAutomaticAccessGrantDto;
-  readonly seeds: Map<number, Uint8Array>;
-  readonly initialSeedId: number;
-  readonly latestSeedId: number;
-  readonly kdfSalt: Uint8Array;
-
-  protected constructor(automaticAccessGrant: VaultMetadataJWEAutomaticAccessGrantDto, seeds: Map<number, Uint8Array>, initialSeedId: number, latestSeedId: number, kdfSalt: Uint8Array) {
-    this.automaticAccessGrant = automaticAccessGrant;
-    this.seeds = seeds;
-    this.initialSeedId = initialSeedId;
-    this.latestSeedId = latestSeedId;
-    this.kdfSalt = kdfSalt;
+  private constructor(
+    readonly automaticAccessGrant: VaultMetadataJWEAutomaticAccessGrantDto,
+    readonly seeds: Map<number, Uint8Array>,
+    readonly initialSeedId: number,
+    readonly latestSeedId: number,
+    readonly kdfSalt: Uint8Array) {
   }
 
   /**
-   * Creates new vault metadata with a new file key and name key
-   * @returns new vault metadata
+   * Creates a new UVF vault
+   * @param automaticAccessGrant Configuration instructing the client how to automatically deal with permission requests
+   * @returns new vault
    */
   public static async create(automaticAccessGrant: VaultMetadataJWEAutomaticAccessGrantDto): Promise<VaultMetadata> {
     const initialSeedId = new Uint32Array(1);
@@ -46,23 +49,24 @@ export class VaultMetadata {
     crypto.getRandomValues(kdfSalt);
     const initialSeedNo = initialSeedId[0];
     const seeds: Map<number, Uint8Array> = new Map<number, Uint8Array>();
+    // const memberKey = await crypto.subtle.generateKey(MEMBER_KEY_DESIGNATION, false, MEMBER_KEY_USAGE);
     seeds.set(initialSeedNo, initialSeedValue);
     return new VaultMetadata(automaticAccessGrant, seeds, initialSeedNo, initialSeedNo, kdfSalt);
   }
 
   /**
-   * Decrypts the vault metadata using the vault masterkey
-   * @param jwe JWE containing the vault key
-   * @param masterKey the vault masterKey
-   * @returns vault metadata
+   * Decrypts the vault metadata using the members' vault key
+   * @param uvfMetadataFile contents of the `vault.uvf` file
+   * @param memberKey the vault members' wrapping key
+   * @returns Decrypted vault metadata
    */
-  public static async decryptWithMasterKey(jwe: string, masterKey: CryptoKey): Promise<VaultMetadata> {
-    const payload = await JWE.parseCompact(jwe).decrypt(Recipient.a256kw('org.cryptomator.hub.masterkey', masterKey));
-    const encodedSeeds: Record<string, string> = payload['seeds'];
+  public static async decryptWithMemberKey(uvfMetadataFile: string, memberKey: CryptoKey): Promise<VaultMetadata> {
+    const json: JsonJWE = JSON.parse(uvfMetadataFile);
+    const payload: MetadataPayload = await JWE.parseJson(json).decrypt(Recipient.a256kw('org.cryptomator.hub.memberkey', memberKey));
     const seeds = new Map<number, Uint8Array>();
-    for (const key in encodedSeeds) {
+    for (const key in payload.seeds) {
       const num = parseSeedId(key);
-      const value = base64url.parse(encodedSeeds[key], { loose: true });
+      const value = base64url.parse(payload.seeds[key], { loose: true });
       seeds.set(num, value);
     }
     const initialSeedId = parseSeedId(payload['initialSeed']);
@@ -78,29 +82,37 @@ export class VaultMetadata {
   }
 
   /**
-   * Encrypts the vault metadata using the given vault masterKey
-   * @param userPublicKey The recipient's public key (DER-encoded)
-   * @returns a JWE containing this Masterkey
+   * Encrypts the vault metadata
+   * @param memberKey the vault members' AES wrapping key
+   * @param recoveryKey the public part of the recovery EC key pair
+   * @returns `vault.uvf` file contents
    */
-  public async encryptWithMasterKey(masterKey: CryptoKey): Promise<string> {
+  public async encrypt(memberKey: CryptoKey, recoveryKey: CryptoKey): Promise<string> {
+    const recoveryKeyID = `org.cryptomator.hub.recoverykey.${await getJwkThumbprint(recoveryKey)}`;
+    const protectedHeader: JWEHeader = {
+      jku: 'jku.jwks' // URL relative to /api/vaults/{vaultid}/
+    };
+    const jwe = await JWE.build(this.payload(), protectedHeader).encrypt(Recipient.a256kw('org.cryptomator.hub.memberkey', memberKey), Recipient.ecdhEs(recoveryKeyID, recoveryKey)); // TODO
+    const json = jwe.jsonSerialization();
+    return JSON.stringify(json);
+  }
+
+  public payload(): MetadataPayload {
     const encodedSeeds: Record<string, string> = {};
     for (const [key, value] of this.seeds) {
       const seedId = stringifySeedId(key);
       encodedSeeds[seedId] = base64url.stringify(value, { pad: false });
     }
-    const payload: MetadataPayload = {
+    return {
       fileFormat: 'AES-256-GCM-32k',
       nameFormat: 'AES-SIV-512-B64URL',
       seeds: encodedSeeds,
       initialSeed: stringifySeedId(this.initialSeedId),
       latestSeed: stringifySeedId(this.latestSeedId),
-      // TODO https://github.com/encryption-alliance/unified-vault-format/pull/21 finalize kdf
       kdf: 'HKDF-SHA512',
       kdfSalt: base64url.stringify(this.kdfSalt, { pad: false }),
       'org.cryptomator.automaticAccessGrant': this.automaticAccessGrant
-    }
-    const jwe = await JWE.build(payload).encrypt(Recipient.a256kw('org.cryptomator.hub.masterkey', masterKey));
-    return jwe.compactSerialization();
+    };
   }
 
 }
