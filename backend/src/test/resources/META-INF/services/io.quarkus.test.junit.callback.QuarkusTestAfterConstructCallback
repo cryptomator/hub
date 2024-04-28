@@ -1,0 +1,2 @@
+org.cryptomator.hub.rollback.DBRollbackAfterExtension
+org.cryptomator.hub.rollback.DBRollbackBeforeExtension

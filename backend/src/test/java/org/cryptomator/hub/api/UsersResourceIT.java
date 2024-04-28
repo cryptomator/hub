@@ -21,7 +21,7 @@ import static org.hamcrest.Matchers.empty;
 
 @QuarkusTest
 @DisplayName("Resource /users")
-public class UsersResourceTest {
+public class UsersResourceIT {
 
 	@BeforeAll
 	public static void beforeAll() {

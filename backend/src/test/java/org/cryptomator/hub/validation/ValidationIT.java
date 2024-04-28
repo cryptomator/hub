@@ -21,7 +21,7 @@ import java.util.stream.Stream;
 import static io.restassured.RestAssured.when;
 
 @QuarkusTest
-public class ValidationTestResourceTest {
+public class ValidationIT {
 
 	private static final String[] MALICOUS_STRINGS = {"§$%&*", "<bar>", "\"; DELETE * FROM USERS;--", "\" src=\"http://evil.corp\""};
 

@@ -1,8 +1,9 @@
-package org.cryptomator.hub.entities;
+package org.cryptomator.hub.entities.events;
 
-import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
+import io.quarkus.hibernate.orm.panache.PanacheRepository;
 import io.quarkus.panache.common.Parameters;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.Entity;
@@ -42,18 +43,42 @@ import java.util.stream.Stream;
 				ORDER BY ae.id ASC
 				""")
 @SequenceGenerator(name = "audit_event_id_seq", sequenceName = "audit_event_id_seq", allocationSize = 1)
-public class AuditEvent extends PanacheEntityBase {
+public class AuditEvent {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "audit_event_id_seq")
 	@Column(name = "id", nullable = false, updatable = false)
-	public long id;
+	private long id;
 
 	@Column(name = "timestamp", nullable = false, updatable = false)
-	public Instant timestamp;
+	private Instant timestamp;
 
 	@Column(name = "type", nullable = false, insertable = false, updatable = false)
-	public String type;
+	private String type;
+
+	public long getId() {
+		return id;
+	}
+
+	public void setId(long id) {
+		this.id = id;
+	}
+
+	public Instant getTimestamp() {
+		return timestamp;
+	}
+
+	public void setTimestamp(Instant timestamp) {
+		this.timestamp = timestamp;
+	}
+
+	public String getType() {
+		return type;
+	}
+
+	public void setType(String type) {
+		this.type = type;
+	}
 
 	@Override
 	public String toString() {
@@ -77,17 +102,21 @@ public class AuditEvent extends PanacheEntityBase {
 		return Objects.hash(id, timestamp);
 	}
 
-	public static Stream<AuditEvent> findAllInPeriod(Instant startDate, Instant endDate, long paginationId, boolean ascending, int pageSize) {
-		var parameters = Parameters.with("startDate", startDate).and("endDate", endDate).and("paginationId", paginationId);
 
-		final PanacheQuery<AuditEvent> query;
-		if (ascending) {
-			query = find("#AuditEvent.listAllInPeriodAfterId", parameters);
-		} else {
-			query = find("#AuditEvent.listAllInPeriodBeforeId", parameters);
+	@ApplicationScoped
+	public static class Repository implements PanacheRepository<AuditEvent> {
+
+		public Stream<AuditEvent> findAllInPeriod(Instant startDate, Instant endDate, long paginationId, boolean ascending, int pageSize) {
+			var parameters = Parameters.with("startDate", startDate).and("endDate", endDate).and("paginationId", paginationId);
+
+			final PanacheQuery<AuditEvent> query;
+			if (ascending) {
+				query = find("#AuditEvent.listAllInPeriodAfterId", parameters);
+			} else {
+				query = find("#AuditEvent.listAllInPeriodBeforeId", parameters);
+			}
+			query.page(0, pageSize);
+			return query.stream();
 		}
-		query.page(0, pageSize);
-		return query.stream();
 	}
-
 }

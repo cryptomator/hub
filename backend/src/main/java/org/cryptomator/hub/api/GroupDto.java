@@ -10,7 +10,7 @@ public final class GroupDto extends AuthorityDto {
 	}
 
 	public static GroupDto fromEntity(Group group) {
-		return new GroupDto(group.id, group.name);
+		return new GroupDto(group.getId(), group.getName());
 	}
 
 }

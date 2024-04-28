@@ -28,8 +28,8 @@ import static org.hamcrest.CoreMatchers.nullValue;
 @OidcSecurity(claims = {
 		@Claim(key = "sub", value = "admin")
 })
-@TestProfile(BillingResourceManagedInstanceTest.ManagedInstanceTestProfile.class)
-public class BillingResourceManagedInstanceTest {
+@TestProfile(BillingResourceManagedInstanceIT.ManagedInstanceTestProfile.class)
+public class BillingResourceManagedInstanceIT {
 
 	@Inject
 	AgroalDataSource dataSource;

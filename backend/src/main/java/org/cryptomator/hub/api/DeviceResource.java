@@ -20,12 +20,12 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.cryptomator.hub.entities.AuditEventDeviceRegister;
-import org.cryptomator.hub.entities.AuditEventDeviceRemove;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.LegacyAccessToken;
 import org.cryptomator.hub.entities.LegacyDevice;
 import org.cryptomator.hub.entities.User;
+import org.cryptomator.hub.entities.events.DeviceRemovedEvent;
+import org.cryptomator.hub.entities.events.EventLogger;
 import org.cryptomator.hub.validation.NoHtmlOrScriptChars;
 import org.cryptomator.hub.validation.OnlyBase64Chars;
 import org.cryptomator.hub.validation.ValidId;
@@ -51,6 +51,17 @@ public class DeviceResource {
 	private static final Logger LOG = Logger.getLogger(DeviceResource.class);
 
 	@Inject
+	EventLogger eventLogger;
+	@Inject
+	User.Repository userRepo;
+	@Inject
+	Device.Repository deviceRepo;
+	@Inject
+	LegacyAccessToken.Repository legacyAccessTokenRepo;
+	@Inject
+	LegacyDevice.Repository legacyDeviceRepo;
+
+	@Inject
 	JsonWebToken jwt;
 
 	@GET
@@ -61,7 +72,7 @@ public class DeviceResource {
 	@Operation(summary = "lists all devices matching the given ids", description = "lists for each id in the list its corresponding device. Ignores all id's where a device cannot be found")
 	@APIResponse(responseCode = "200")
 	public List<DeviceDto> getSome(@QueryParam("ids") List<String> deviceIds) {
-		return Device.findAllInList(deviceIds).map(DeviceDto::fromEntity).toList();
+		return deviceRepo.findAllInList(deviceIds).map(DeviceDto::fromEntity).toList();
 	}
 
 	@PUT
@@ -76,26 +87,26 @@ public class DeviceResource {
 	public Response createOrUpdate(@Valid @NotNull DeviceDto dto, @PathParam("deviceId") @ValidId String deviceId) {
 		Device device;
 		try {
-			device = Device.findByIdAndUser(deviceId, jwt.getSubject());
+			device = deviceRepo.findByIdAndUser(deviceId, jwt.getSubject());
 		} catch (NoResultException e) {
 			device = new Device();
-			device.id = deviceId;
-			device.owner = User.findById(jwt.getSubject());
-			device.creationTime = Instant.now().truncatedTo(ChronoUnit.MILLIS);
-			device.type = dto.type != null ? dto.type : Device.Type.DESKTOP; // default to desktop for backwards compatibility
+			device.setId(deviceId);
+			device.setOwner(userRepo.findById(jwt.getSubject()));
+			device.setCreationTime(Instant.now().truncatedTo(ChronoUnit.MILLIS));
+			device.setType(dto.type != null ? dto.type : Device.Type.DESKTOP); // default to desktop for backwards compatibilit);
 
-			if (LegacyDevice.deleteById(device.id)) {
-				assert LegacyDevice.findById(device.id) == null;
+			if (legacyDeviceRepo.deleteById(device.getId())) {
+				assert legacyDeviceRepo.findById(device.getId()) == null;
 				LOG.info("Deleted Legacy Device during re-registration of Device " + deviceId);
 			}
 		}
-		device.name = dto.name;
-		device.publickey = dto.publicKey;
-		device.userPrivateKey = dto.userPrivateKey;
+		device.setName(dto.name);
+		device.setPublickey(dto.publicKey);
+		device.setUserPrivateKey(dto.userPrivateKey);
 
 		try {
-			device.persistAndFlush();
-			AuditEventDeviceRegister.log(jwt.getSubject(), deviceId, device.name, device.type);
+			deviceRepo.persistAndFlush(device);
+			eventLogger.logDeviceRegisted(jwt.getSubject(), deviceId, device.getName(), device.getType());
 			return Response.created(URI.create(".")).build();
 		} catch (ConstraintViolationException e) {
 			throw new ClientErrorException(Response.Status.CONFLICT, e);
@@ -113,7 +124,7 @@ public class DeviceResource {
 	@APIResponse(responseCode = "404", description = "Device not found or owned by a different user")
 	public DeviceDto get(@PathParam("deviceId") @ValidId String deviceId) {
 		try {
-			Device device = Device.findByIdAndUser(deviceId, jwt.getSubject());
+			Device device = deviceRepo.findByIdAndUser(deviceId, jwt.getSubject());
 			return DeviceDto.fromEntity(device);
 		} catch (NoResultException e) {
 			throw new NotFoundException(e);
@@ -130,8 +141,8 @@ public class DeviceResource {
 	@Operation(summary = "list legacy access tokens", description = "get all legacy access tokens for this device ({vault1: token1, vault1: token2, ...}). The device must be owned by the currently logged-in user")
 	@APIResponse(responseCode = "200")
 	public Map<UUID, String> getLegacyAccessTokens(@PathParam("deviceId") @ValidId String deviceId) {
-		return LegacyAccessToken.getByDeviceAndOwner(deviceId, jwt.getSubject())
-				.collect(Collectors.toMap(token -> token.id.vaultId , token -> token.jwe));
+		return legacyAccessTokenRepo.getByDeviceAndOwner(deviceId, jwt.getSubject())
+				.collect(Collectors.toMap(token -> token.getId().getVaultId(), LegacyAccessToken::getJwe));
 	}
 
 	@DELETE
@@ -143,15 +154,15 @@ public class DeviceResource {
 	@APIResponse(responseCode = "204", description = "device removed")
 	@APIResponse(responseCode = "404", description = "device not found with current user")
 	public Response remove(@PathParam("deviceId") @ValidId String deviceId) {
-		if (deviceId == null || deviceId.trim().length() == 0) {
+		if (deviceId == null || deviceId.trim().isEmpty()) {
 			return Response.status(Response.Status.BAD_REQUEST).entity("deviceId cannot be empty").build();
 		}
 
-		User currentUser = User.findById(jwt.getSubject());
-		var maybeDevice = Device.<Device>findByIdOptional(deviceId);
-		if (maybeDevice.isPresent() && currentUser.equals(maybeDevice.get().owner)) {
-			maybeDevice.get().delete();
-			AuditEventDeviceRemove.log(jwt.getSubject(), deviceId);
+		User currentUser = userRepo.findById(jwt.getSubject());
+		var maybeDevice = deviceRepo.findByIdOptional(deviceId);
+		if (maybeDevice.isPresent() && currentUser.equals(maybeDevice.get().getOwner())) {
+			deviceRepo.delete(maybeDevice.get());
+			eventLogger.logDeviceRemoved(jwt.getSubject(), deviceId);
 			return Response.status(Response.Status.NO_CONTENT).build();
 		} else {
 			return Response.status(Response.Status.NOT_FOUND).build();
@@ -167,10 +178,11 @@ public class DeviceResource {
 							@JsonProperty("creationTime") Instant creationTime) {
 
 		public static DeviceDto fromEntity(Device entity) {
-			return new DeviceDto(entity.id, entity.name, entity.type, entity.publickey, entity.userPrivateKey, entity.owner.id, entity.creationTime.truncatedTo(ChronoUnit.MILLIS));
+			return new DeviceDto(entity.getId(), entity.getName(), entity.getType(), entity.getPublickey(), entity.getUserPrivateKey(), entity.getOwner().getId(), entity.getCreationTime().truncatedTo(ChronoUnit.MILLIS));
 		}
 
 	}
 
-	public record LegacyAccessTokenDto(@JsonProperty("vaultId") UUID vaultId, @JsonProperty("token") String token) {}
+	public record LegacyAccessTokenDto(@JsonProperty("vaultId") UUID vaultId, @JsonProperty("token") String token) {
+	}
 }
