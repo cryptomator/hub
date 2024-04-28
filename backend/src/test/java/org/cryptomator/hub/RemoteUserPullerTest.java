@@ -1,10 +1,10 @@
 package org.cryptomator.hub;
 
-import io.quarkus.test.junit.QuarkusTest;
 import org.cryptomator.hub.entities.Authority;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
-import org.junit.jupiter.api.Assertions;
+import org.hamcrest.MatcherAssert;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -16,17 +16,18 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mockito;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@QuarkusTest
 class RemoteUserPullerTest {
 
 	private final RemoteUserProvider remoteUserProvider = Mockito.mock(RemoteUserProvider.class);
 	private final User user = Mockito.mock(User.class);
+	private final Authority.Repository authorityRepo = Mockito.mock(Authority.Repository.class);
+	private final User.Repository userRepo = Mockito.mock(User.Repository.class);
 
 	private RemoteUserPuller remoteUserPuller;
 
@@ -34,6 +35,10 @@ class RemoteUserPullerTest {
 	void setUp() {
 		remoteUserPuller = new RemoteUserPuller();
 		remoteUserPuller.remoteUserProvider = remoteUserProvider;
+		remoteUserPuller.authorityRepo = authorityRepo;
+		remoteUserPuller.userRepo = userRepo;
+		Mockito.doNothing().when(authorityRepo).persist((Authority) Mockito.any());
+		Mockito.doNothing().when(userRepo).persist((User) Mockito.any());
 	}
 
 	@Nested
@@ -62,17 +67,19 @@ class RemoteUserPullerTest {
 			Mockito.when(databaseAuthorities.keySet()).thenReturn(databaseAuthorityIds);
 
 			for (String authorityId : addedAuthorityIds) {
-				Mockito.when(keycloakAuthorities.get(authorityId)).thenReturn(Mockito.mock(TestAuthority.class));
+				var authorityMock = Mockito.mock(TestAuthority.class);
+				Mockito.when(authorityMock.getId()).thenReturn(authorityId);
+				Mockito.when(keycloakAuthorities.get(authorityId)).thenReturn(authorityMock);
 			}
 
 			remoteUserPuller.syncAddedAuthorities(keycloakAuthorities, databaseAuthorities);
 
 			for (String authorityId : addedAuthorityIds) {
-				Mockito.verify(keycloakAuthorities.get(authorityId)).persist();
+				Mockito.verify(authorityRepo).persist(keycloakAuthorities.get(authorityId));
 			}
 		}
 
-		@DisplayName("test delete users/groups")
+		@DisplayName("test delete authorities")
 		@ParameterizedTest(name = "KCUAuthorities: {0} DBAuthorities: {1} DeletedAuthorities: {2}")
 		@CsvSource(value = {
 				"foo,bar,baz;,;,",
@@ -88,20 +95,19 @@ class RemoteUserPullerTest {
 
 			Set<String> keycloakAuthorityIds = Arrays.stream(keycloakAuthorityIdString).collect(Collectors.toSet());
 			Set<String> databaseAuthorityIds = Arrays.stream(databaseAuthorityIdString).collect(Collectors.toSet());
-			Set<String> deletedAuthorityIds = Arrays.stream(deletedAuthorityIdString).collect(Collectors.toSet());
+			Map<String, TestAuthority> deletedAuthorityIds = Arrays.stream(deletedAuthorityIdString).collect(Collectors.toMap(Function.identity(), (id) -> Mockito.mock(TestAuthority.class)));
+
 
 			Mockito.when(keycloakAuthorities.keySet()).thenReturn(keycloakAuthorityIds);
 			Mockito.when(databaseAuthorities.keySet()).thenReturn(databaseAuthorityIds);
 
-			for (String authorityId : deletedAuthorityIds) {
-				Mockito.when(databaseAuthorities.get(authorityId)).thenReturn(Mockito.mock(TestAuthority.class));
-			}
+			deletedAuthorityIds.forEach((id, authority) ->
+					Mockito.when(keycloakAuthorities.get(id)).thenReturn(authority));
 
 			remoteUserPuller.syncDeletedAuthorities(keycloakAuthorities, databaseAuthorities);
 
-			for (String authorityId : deletedAuthorityIds) {
-				Mockito.verify(databaseAuthorities.get(authorityId)).delete();
-			}
+			deletedAuthorityIds.forEach((id, authority) ->
+					Mockito.verify(authorityRepo).delete(authority));
 		}
 
 		private static class TestAuthority extends Authority {
@@ -135,9 +141,9 @@ class RemoteUserPullerTest {
 
 			for (String userId : updatedUserIds) {
 				var kcUser = Mockito.mock(User.class);
-				Mockito.when(kcUser.pictureUrl).thenReturn(String.format("picture %s", userId));
-				Mockito.when(kcUser.name).thenReturn(String.format("name %s", userId));
-				Mockito.when(kcUser.email).thenReturn(String.format("email %s", userId));
+				Mockito.when(kcUser.getPictureUrl()).thenReturn(String.format("picture %s", userId));
+				Mockito.when(kcUser.getName()).thenReturn(String.format("name %s", userId));
+				Mockito.when(kcUser.getEmail()).thenReturn(String.format("email %s", userId));
 
 				Mockito.when(keycloakUsers.get(userId)).thenReturn(kcUser);
 				Mockito.when(databaseUsers.get(userId)).thenReturn(Mockito.mock(User.class));
@@ -146,10 +152,11 @@ class RemoteUserPullerTest {
 			remoteUserPuller.syncUpdatedUsers(keycloakUsers, databaseUsers, deletedUserIds);
 
 			for (String userId : updatedUserIds) {
-				Mockito.verify(databaseUsers.get(userId)).persist();
-				Mockito.verify(databaseUsers.get(userId)).pictureUrl = String.format("picture %s", userId);
-				Mockito.verify(databaseUsers.get(userId)).name = String.format("name %s", userId);
-				Mockito.verify(databaseUsers.get(userId)).email = String.format("email %s", userId);
+				var dbUser = databaseUsers.get(userId);
+				Mockito.verify(userRepo).persist(dbUser);
+				Mockito.verify(dbUser).setPictureUrl(String.format("picture %s", userId));
+				Mockito.verify(dbUser).setName(String.format("name %s", userId));
+				Mockito.verify(dbUser).setEmail(String.format("email %s", userId));
 			}
 		}
 
@@ -176,16 +183,14 @@ class RemoteUserPullerTest {
 			Mockito.when(keycloakGroups.keySet()).thenReturn(keycloakGroupIds);
 			Mockito.when(databaseGroups.keySet()).thenReturn(databaseGroupIds);
 
+			var dbGroupMembers = new HashSet<Authority>(Set.of(dbOnlyUser));
 			for (String groupId : updatedGroupIds) {
-				var kcGroup = Mockito.mock(Group.class);
-				Mockito.when(kcGroup.name).thenReturn(String.format("name %s", groupId));
-				Set<Authority> kcMembers = new HashSet<>(Arrays.asList(user, otherKCUser));
-				Mockito.when(kcGroup.members).thenReturn(kcMembers);
+				var kcGroup = Mockito.mock(Group.class, "kcGroup");
+				Mockito.when(kcGroup.getName()).thenReturn(String.format("name %s", groupId));
+				Mockito.when(kcGroup.getMembers()).thenReturn(Set.of(user, otherKCUser));
 
-				var dbGroup = Mockito.mock(Group.class);
-				Mockito.when(dbGroup.name).thenReturn(String.format("name %s", groupId));
-				Set<Authority> dbMembers = new HashSet<>(Collections.singletonList(dbOnlyUser));
-				Mockito.when(dbGroup.members).thenReturn(dbMembers);
+				var dbGroup = Mockito.mock(Group.class, "dbGroup");
+				Mockito.when(dbGroup.getMembers()).thenReturn(dbGroupMembers);
 
 				Mockito.when(keycloakGroups.get(groupId)).thenReturn(kcGroup);
 				Mockito.when(databaseGroups.get(groupId)).thenReturn(dbGroup);
@@ -194,8 +199,9 @@ class RemoteUserPullerTest {
 			remoteUserPuller.syncUpdatedGroups(keycloakGroups, databaseGroups, deletedGroupIds);
 
 			for (String groupId : updatedGroupIds) {
-				Mockito.verify(databaseGroups.get(groupId)).name = String.format("name %s", groupId);
-				Assertions.assertEquals(Set.of(user, otherKCUser), databaseGroups.get(groupId).members);
+				var dbGroup = databaseGroups.get(groupId);
+				Mockito.verify(dbGroup).setName(String.format("name %s", groupId));
+				MatcherAssert.assertThat(dbGroupMembers, Matchers.containsInAnyOrder(user, otherKCUser));
 			}
 		}
 	}

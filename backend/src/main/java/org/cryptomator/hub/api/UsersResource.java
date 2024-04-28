@@ -5,7 +5,6 @@ import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
@@ -17,10 +16,11 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.AccessToken;
-import org.cryptomator.hub.entities.AuditEventVaultAccessGrant;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
+import org.cryptomator.hub.entities.events.EventLogger;
+import org.cryptomator.hub.entities.events.VaultAccessGrantedEvent;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -40,6 +40,17 @@ import java.util.stream.Collectors;
 public class UsersResource {
 
 	@Inject
+	AccessToken.Repository accessTokenRepo;
+	@Inject
+	EventLogger eventLogger;
+	@Inject
+	User.Repository userRepo;
+	@Inject
+	Device.Repository deviceRepo;
+	@Inject
+	Vault.Repository vaultRepo;
+
+	@Inject
 	JsonWebToken jwt;
 
 	@PUT
@@ -51,20 +62,20 @@ public class UsersResource {
 	@APIResponse(responseCode = "201", description = "user created or updated")
 	public Response putMe(@Nullable @Valid UserDto dto) {
 		var userId = jwt.getSubject();
-		User user = User.findById(userId);
+		User user = userRepo.findById(userId);
 		if (user == null) {
 			user = new User();
-			user.id = userId;
+			user.setId(userId);
 		}
-		user.name = jwt.getName();
-		user.pictureUrl = jwt.getClaim("picture");
-		user.email = jwt.getClaim("email");
+		user.setName(jwt.getName());
+		user.setPictureUrl(jwt.getClaim("picture"));
+		user.setEmail(jwt.getClaim("email"));
 		if (dto != null) {
-			user.publicKey = dto.publicKey;
-			user.privateKey = dto.privateKey;
-			user.setupCode = dto.setupCode;
+			user.setPublicKey(dto.publicKey);
+			user.setPrivateKey(dto.privateKey);
+			user.setSetupCode(dto.setupCode);
 		}
-		user.persist();
+		userRepo.persist(user);
 		return Response.created(URI.create(".")).build();
 	}
 
@@ -76,21 +87,21 @@ public class UsersResource {
 	@Operation(summary = "adds/updates user-specific vault keys", description = "Stores one or more vaultid-vaultkey-tuples for the currently logged-in user, as defined in the request body ({vault1: token1, vault2: token2, ...}).")
 	@APIResponse(responseCode = "200", description = "all keys stored")
 	public Response updateMyAccessTokens(@NotNull Map<UUID, String> tokens) {
-		var user = User.<User>findById(jwt.getSubject());
+		var user = userRepo.findById(jwt.getSubject());
 		for (var entry : tokens.entrySet()) {
-			var vault = Vault.<Vault>findById(entry.getKey());
+			var vault = vaultRepo.findById(entry.getKey());
 			if (vault == null) {
 				continue; // skip
 			}
-			var token = AccessToken.<AccessToken>findById(new AccessToken.AccessId(user.id, vault.id));
+			var token = accessTokenRepo.findById(new AccessToken.AccessId(user.getId(), vault.getId()));
 			if (token == null) {
 				token = new AccessToken();
-				token.vault = vault;
-				token.user = user;
+				token.setVault(vault);
+				token.setUser(user);
 			}
-			token.vaultKey = entry.getValue();
-			token.persist();
-			AuditEventVaultAccessGrant.log(user.id, vault.id, user.id);
+			token.setVaultKey(entry.getValue());
+			accessTokenRepo.persist(token);
+			eventLogger.logVaultAccessGranted(user.getId(), vault.getId(), user.getId());
 		}
 		return Response.ok().build();
 	}
@@ -105,10 +116,10 @@ public class UsersResource {
 	@APIResponse(responseCode = "200", description = "returns the current user")
 	@APIResponse(responseCode = "404", description = "no user matching the subject of the JWT passed as Bearer Token")
 	public UserDto getMe(@QueryParam("withDevices") boolean withDevices) {
-		User user = User.findById(jwt.getSubject());
-		Function<Device, DeviceResource.DeviceDto> mapDevices = d -> new DeviceResource.DeviceDto(d.id, d.name, d.type, d.publickey, d.userPrivateKey, d.owner.id, d.creationTime.truncatedTo(ChronoUnit.MILLIS));
+		User user = userRepo.findById(jwt.getSubject());
+		Function<Device, DeviceResource.DeviceDto> mapDevices = d -> new DeviceResource.DeviceDto(d.getId(), d.getName(), d.getType(), d.getPublickey(), d.getUserPrivateKey(), d.getOwner().getId(), d.getCreationTime().truncatedTo(ChronoUnit.MILLIS));
 		var devices = withDevices ? user.devices.stream().map(mapDevices).collect(Collectors.toSet()) : Set.<DeviceResource.DeviceDto>of();
-		return new UserDto(user.id, user.name, user.pictureUrl, user.email, devices, user.publicKey, user.privateKey, user.setupCode);
+		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), devices, user.getPublicKey(), user.getPrivateKey(), user.getSetupCode());
 	}
 
 	@POST
@@ -119,13 +130,13 @@ public class UsersResource {
 	@Operation(summary = "resets the user account")
 	@APIResponse(responseCode = "204", description = "deleted keys, devices and access permissions")
 	public Response resetMe() {
-		User user = User.findById(jwt.getSubject());
-		user.publicKey = null;
-		user.privateKey = null;
-		user.setupCode = null;
-		user.persist();
-		Device.deleteByOwner(user.id);
-		AccessToken.deleteByUser(user.id);
+		User user = userRepo.findById(jwt.getSubject());
+		user.setPublicKey(null);
+		user.setPrivateKey(null);
+		user.setSetupCode(null);
+		userRepo.persist(user);
+		deviceRepo.deleteByOwner(user.getId());
+		accessTokenRepo.deleteByUser(user.getId());
 		return Response.noContent().build();
 	}
 
@@ -135,7 +146,7 @@ public class UsersResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "list all users")
 	public List<UserDto> getAll() {
-		return User.findAll().<User>stream().map(UserDto::justPublicInfo).toList();
+		return userRepo.findAll().<User>stream().map(UserDto::justPublicInfo).toList();
 	}
 
 }

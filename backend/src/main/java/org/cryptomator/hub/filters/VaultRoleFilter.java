@@ -30,6 +30,11 @@ public class VaultRoleFilter implements ContainerRequestFilter {
 	@Inject
 	JsonWebToken jwt;
 
+	@Inject
+	EffectiveVaultAccess.Repository effectiveVaultAccessRepo;
+	@Inject
+	Vault.Repository vaultRepo;
+
 	@Context
 	ResourceInfo resourceInfo;
 
@@ -50,9 +55,9 @@ public class VaultRoleFilter implements ContainerRequestFilter {
 		}
 
 		var forbiddenMsg = "Vault role required: " + Arrays.stream(annotation.value()).map(VaultAccess.Role::name).collect(Collectors.joining(", "));
-		if (Vault.findByIdOptional(vaultId).isPresent()) {
+		if (vaultRepo.findByIdOptional(vaultId).isPresent()) {
 			// check permissions for existing vault:
-			var effectiveRoles = EffectiveVaultAccess.listRoles(vaultId, userId);
+			var effectiveRoles = effectiveVaultAccessRepo.listRoles(vaultId, userId);
 			if (Arrays.stream(annotation.value()).noneMatch(effectiveRoles::contains)) {
 				throw new ForbiddenException(forbiddenMsg);
 			}

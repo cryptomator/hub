@@ -1,6 +1,5 @@
 package org.cryptomator.hub.filters;
 
-import io.quarkus.test.junit.QuarkusTest;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.license.LicenseHolder;
@@ -10,7 +9,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 
-@QuarkusTest
 public class ActiveLicenseFilterTest {
 
 	ContainerRequestContext context = Mockito.mock(ContainerRequestContext.class);

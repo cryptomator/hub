@@ -8,6 +8,7 @@ import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.annotation.Nullable;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
+import jakarta.persistence.NoResultException;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -31,22 +32,15 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.AccessToken;
-import org.cryptomator.hub.entities.AuditEventVaultAccessGrant;
-import org.cryptomator.hub.entities.AuditEventVaultCreate;
-import org.cryptomator.hub.entities.AuditEventVaultKeyRetrieve;
-import org.cryptomator.hub.entities.AuditEventVaultMemberAdd;
-import org.cryptomator.hub.entities.AuditEventVaultMemberRemove;
-import org.cryptomator.hub.entities.AuditEventVaultMemberUpdate;
-import org.cryptomator.hub.entities.AuditEventVaultOwnershipClaim;
-import org.cryptomator.hub.entities.AuditEventVaultUpdate;
 import org.cryptomator.hub.entities.Authority;
-import org.cryptomator.hub.entities.EffectiveGroupMembership;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.LegacyAccessToken;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.entities.VaultAccess;
+import org.cryptomator.hub.entities.events.EventLogger;
+import org.cryptomator.hub.entities.events.VaultKeyRetrievedEvent;
 import org.cryptomator.hub.filters.ActiveLicense;
 import org.cryptomator.hub.filters.VaultRole;
 import org.cryptomator.hub.license.LicenseHolder;
@@ -73,6 +67,25 @@ import java.util.stream.Stream;
 public class VaultResource {
 
 	@Inject
+	EventLogger eventLogger;
+
+	@Inject
+	AccessToken.Repository accessTokenRepo;
+	@Inject
+	Group.Repository groupRepo;
+	@Inject
+	User.Repository userRepo;
+	@Inject
+	EffectiveVaultAccess.Repository effectiveVaultAccessRepo;
+	@Inject
+	@Deprecated
+	LegacyAccessToken.Repository legacyAccessTokenRepo;
+	@Inject
+	Vault.Repository vaultRepo;
+	@Inject
+	VaultAccess.Repository vaultAccessRepo;
+
+	@Inject
 	JsonWebToken jwt;
 
 	@Inject
@@ -89,12 +102,11 @@ public class VaultResource {
 	@Operation(summary = "list all accessible vaults", description = "list all vaults that have been shared with the currently logged in user or a group in wich this user is")
 	public List<VaultDto> getAccessible(@Nullable @QueryParam("role") VaultAccess.Role role) {
 		var currentUserId = jwt.getSubject();
-		// TODO refactor to JEP 441 in JDK 21
 		final Stream<Vault> resultStream;
 		if (role == null) {
-			resultStream = Vault.findAccessibleByUser(currentUserId);
+			resultStream = vaultRepo.findAccessibleByUser(currentUserId);
 		} else {
-			resultStream = Vault.findAccessibleByUser(currentUserId, role);
+			resultStream = vaultRepo.findAccessibleByUser(currentUserId, role);
 		}
 		return resultStream.map(VaultDto::fromEntity).toList();
 	}
@@ -107,7 +119,7 @@ public class VaultResource {
 	@Operation(summary = "list all vaults corresponding to the given ids", description = "list for each id in the list its corresponding vault. Ignores all id's where a vault does not exist, ")
 	@APIResponse(responseCode = "200")
 	public List<VaultDto> getSomeVaults(@QueryParam("ids") List<UUID> vaultIds) {
-		return Vault.findAllInList(vaultIds).map(VaultDto::fromEntity).toList();
+		return vaultRepo.findAllInList(vaultIds).map(VaultDto::fromEntity).toList();
 	}
 
 	@GET
@@ -117,7 +129,7 @@ public class VaultResource {
 	@Transactional
 	@Operation(summary = "list all vaults", description = "list all vaults in the system")
 	public List<VaultDto> getAllVaults() {
-		return Vault.findAll().<Vault>stream().map(VaultDto::fromEntity).toList();
+		return vaultRepo.findAll().stream().map(VaultDto::fromEntity).toList();
 	}
 
 	@GET
@@ -130,15 +142,10 @@ public class VaultResource {
 	@APIResponse(responseCode = "200")
 	@APIResponse(responseCode = "403", description = "not a vault owner")
 	public List<MemberDto> getDirectMembers(@PathParam("vaultId") UUID vaultId) {
-		return VaultAccess.forVault(vaultId).map(access -> {
-			// TODO switch to switch expressions, once we can make Authority sealed
-			if (access.authority instanceof User u) {
-				return MemberDto.fromEntity(u, access.role);
-			} else if (access.authority instanceof Group g) {
-				return MemberDto.fromEntity(g, access.role);
-			} else {
-				throw new IllegalStateException();
-			}
+		return vaultAccessRepo.forVault(vaultId).map(access -> switch (access.getAuthority()) {
+			case User u -> MemberDto.fromEntity(u, access.getRole());
+			case Group g -> MemberDto.fromEntity(g, access.getRole());
+			default -> throw new IllegalStateException();
 		}).toList();
 	}
 
@@ -157,19 +164,15 @@ public class VaultResource {
 	@APIResponse(responseCode = "404", description = "user not found")
 	@ActiveLicense
 	public Response addUser(@PathParam("vaultId") UUID vaultId, @PathParam("userId") @ValidId String userId, @QueryParam("role") @DefaultValue("MEMBER") VaultAccess.Role role) {
-		var vault = Vault.<Vault>findById(vaultId); // should always be found, since @VaultRole filter would have triggered
-		var user = User.<User>findByIdOptional(userId).orElseThrow(NotFoundException::new);
-		var usedSeats = EffectiveVaultAccess.countSeatOccupyingUsers();
-		//check if license seats are free
-		if (usedSeats  < license.getSeats()) {
+		var vault = vaultRepo.findById(vaultId); // should always be found, since @VaultRole filter would have triggered
+		var user = userRepo.findByIdOptional(userId).orElseThrow(NotFoundException::new);
+		var usedSeats = effectiveVaultAccessRepo.countSeatOccupyingUsers();
+		if (usedSeats < license.getSeats() // free seats available
+				|| effectiveVaultAccessRepo.isUserOccupyingSeat(userId)) { // or user already sitting
 			return addAuthority(vault, user, role);
+		} else {
+			throw new PaymentRequiredException("License seats exceeded. Cannot add more users.");
 		}
-		// else check, if all seats are taken, but the person to add is already sitting
-		if (usedSeats == license.getSeats() && EffectiveVaultAccess.isUserOccupyingSeat(userId)) {
-			return addAuthority(vault, user, role);
-		}
-		//otherwise block
-		throw new PaymentRequiredException("Number of effective vault users greater than or equal to the available license seats");
 	}
 
 	@PUT
@@ -187,33 +190,33 @@ public class VaultResource {
 	@APIResponse(responseCode = "404", description = "group not found")
 	@ActiveLicense
 	public Response addGroup(@PathParam("vaultId") UUID vaultId, @PathParam("groupId") @ValidId String groupId, @QueryParam("role") @DefaultValue("MEMBER") VaultAccess.Role role) {
-		var vault = Vault.<Vault>findById(vaultId); // should always be found, since @VaultRole filter would have triggered
-		var group = Group.<Group>findByIdOptional(groupId).orElseThrow(NotFoundException::new);
+		var vault = vaultRepo.findById(vaultId); // should always be found, since @VaultRole filter would have triggered
+		var group = groupRepo.findByIdOptional(groupId).orElseThrow(NotFoundException::new);
 
 		//usersInGroup - usersInGroupAndPartOfAtLeastOneVault + usersOfAtLeastOneVault
-		if (EffectiveGroupMembership.countEffectiveGroupUsers(groupId) - EffectiveVaultAccess.countSeatOccupyingUsersOfGroup(groupId) + EffectiveVaultAccess.countSeatOccupyingUsers() > license.getSeats()) {
-			throw new PaymentRequiredException("Number of effective vault users greater than or equal to the available license seats");
+		if (userRepo.countEffectiveGroupUsers(groupId) - effectiveVaultAccessRepo.countSeatOccupyingUsersOfGroup(groupId) + effectiveVaultAccessRepo.countSeatOccupyingUsers() > license.getSeats()) {
+			throw new PaymentRequiredException("Adding this group would exceed available license seats.");
 		}
 
 		return addAuthority(vault, group, role);
 	}
 
 	private Response addAuthority(Vault vault, Authority authority, VaultAccess.Role role) {
-		var id = new VaultAccess.Id(vault.id, authority.id);
-		var existingAccess = VaultAccess.<VaultAccess>findByIdOptional(id);
+		var id = new VaultAccess.Id(vault.getId(), authority.getId());
+		var existingAccess = vaultAccessRepo.findByIdOptional(id);
 		if (existingAccess.isPresent()) {
 			var access = existingAccess.get();
-			access.role = role;
-			access.persist();
-			AuditEventVaultMemberUpdate.log(jwt.getSubject(), vault.id, authority.id, role);
+			access.setRole(role);
+			vaultAccessRepo.persist(access);
+			eventLogger.logVaultMemberUpdated(jwt.getSubject(), vault.getId(), authority.getId(), role);
 			return Response.ok().build();
 		} else {
 			var access = new VaultAccess();
-			access.vault = vault;
-			access.authority = authority;
-			access.role = role;
-			access.persist();
-			AuditEventVaultMemberAdd.log(jwt.getSubject(), vault.id, authority.id, role);
+			access.setVault(vault);
+			access.setAuthority(authority);
+			access.setRole(role);
+			vaultAccessRepo.persist(access);
+			eventLogger.logVaultMemberAdded(jwt.getSubject(), vault.getId(), authority.getId(), role);
 			return Response.created(URI.create(".")).build();
 		}
 	}
@@ -228,8 +231,8 @@ public class VaultResource {
 	@APIResponse(responseCode = "204", description = "authority removed")
 	@APIResponse(responseCode = "403", description = "not a vault owner")
 	public Response removeAuthority(@PathParam("vaultId") UUID vaultId, @PathParam("authorityId") @ValidId String authorityId) {
-		if (VaultAccess.deleteById(new VaultAccess.Id(vaultId, authorityId))) {
-			AuditEventVaultMemberRemove.log(jwt.getSubject(), vaultId, authorityId);
+		if (vaultAccessRepo.deleteById(new VaultAccess.Id(vaultId, authorityId))) {
+			eventLogger.logVaultMemberRemoved(jwt.getSubject(), vaultId, authorityId);
 			return Response.status(Response.Status.NO_CONTENT).build();
 		} else {
 			throw new NotFoundException();
@@ -246,7 +249,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "200")
 	@APIResponse(responseCode = "403", description = "not a vault owner")
 	public List<UserDto> getUsersRequiringAccessGrant(@PathParam("vaultId") UUID vaultId) {
-		return User.findRequiringAccessGrant(vaultId).map(UserDto::justPublicInfo).toList();
+		return userRepo.findRequiringAccessGrant(vaultId).map(UserDto::justPublicInfo).toList();
 	}
 
 	@Deprecated(forRemoval = true)
@@ -262,24 +265,24 @@ public class VaultResource {
 	@APIResponse(responseCode = "410", description = "Vault is archived")
 	@ActiveLicense
 	public Response legacyUnlock(@PathParam("vaultId") UUID vaultId, @PathParam("deviceId") @ValidId String deviceId) {
-		var vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-		if (vault.archived) {
+		var vault = vaultRepo.findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
+		if (vault.isArchived()) {
 			throw new GoneException("Vault is archived.");
 		}
 
-		var accessTokenSeats = EffectiveVaultAccess.countSeatOccupyingUsersWithAccessToken();
+		var accessTokenSeats = effectiveVaultAccessRepo.countSeatOccupyingUsersWithAccessToken();
 		if (accessTokenSeats > license.getSeats()) {
 			throw new PaymentRequiredException("Number of effective vault users exceeds available license seats");
 		}
 
-		var access = LegacyAccessToken.unlock(vaultId, deviceId, jwt.getSubject());
-		if (access != null) {
-			AuditEventVaultKeyRetrieve.log(jwt.getSubject(), vaultId, AuditEventVaultKeyRetrieve.Result.SUCCESS);
+		try {
+			var access = legacyAccessTokenRepo.unlock(vaultId, deviceId, jwt.getSubject());
+			eventLogger.logVaultKeyRetrieved(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.SUCCESS);
 			var subscriptionStateHeaderName = "Hub-Subscription-State";
 			var subscriptionStateHeaderValue = license.isSet() ? "ACTIVE" : "INACTIVE"; // license expiration is not checked here, because it is checked in the ActiveLicense filter
-			return Response.ok(access.jwe).header(subscriptionStateHeaderName, subscriptionStateHeaderValue).build();
-		} else {
-			AuditEventVaultKeyRetrieve.log(jwt.getSubject(), vaultId, AuditEventVaultKeyRetrieve.Result.UNAUTHORIZED);
+			return Response.ok(access.getJwe()).header(subscriptionStateHeaderName, subscriptionStateHeaderValue).build();
+		} catch (NoResultException e){
+			eventLogger.logVaultKeyRetrieved(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.UNAUTHORIZED);
 			throw new ForbiddenException("Access to this device not granted.");
 		}
 	}
@@ -299,31 +302,31 @@ public class VaultResource {
 	@APIResponse(responseCode = "449", description = "User account not yet initialized. Retry after setting up user")
 	@ActiveLicense // may throw 402
 	public Response unlock(@PathParam("vaultId") UUID vaultId, @QueryParam("evenIfArchived") @DefaultValue("false") boolean ignoreArchived) {
-		var vault = Vault.<Vault>findById(vaultId); // should always be found, since @VaultRole filter would have triggered
-		if (vault.archived && !ignoreArchived) {
+		var vault = vaultRepo.findById(vaultId); // should always be found, since @VaultRole filter would have triggered
+		if (vault.isArchived() && !ignoreArchived) {
 			throw new GoneException("Vault is archived.");
 		}
 
-		var accessTokenSeats = EffectiveVaultAccess.countSeatOccupyingUsersWithAccessToken();
+		var accessTokenSeats = effectiveVaultAccessRepo.countSeatOccupyingUsersWithAccessToken();
 		if (accessTokenSeats > license.getSeats()) {
 			throw new PaymentRequiredException("Number of effective vault users exceeds available license seats");
 		}
 
-		var user = User.<User>findById(jwt.getSubject());
-		if (user.publicKey == null) {
+		var user = userRepo.findById(jwt.getSubject());
+		if (user.getPublicKey() == null) {
 			throw new ActionRequiredException("User account not initialized.");
 		}
 
-		var access = AccessToken.unlock(vaultId, jwt.getSubject());
+		var access = accessTokenRepo.unlock(vaultId, jwt.getSubject());
 		if (access != null) {
-			AuditEventVaultKeyRetrieve.log(jwt.getSubject(), vaultId, AuditEventVaultKeyRetrieve.Result.SUCCESS);
+			eventLogger.logVaultKeyRetrieved(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.SUCCESS);
 			var subscriptionStateHeaderName = "Hub-Subscription-State";
 			var subscriptionStateHeaderValue = license.isSet() ? "ACTIVE" : "INACTIVE"; // license expiration is not checked here, because it is checked in the ActiveLicense filter
-			return Response.ok(access.vaultKey).header(subscriptionStateHeaderName, subscriptionStateHeaderValue).build();
-		} else if (Vault.findById(vaultId) == null) {
+			return Response.ok(access.getVaultKey()).header(subscriptionStateHeaderName, subscriptionStateHeaderValue).build();
+		} else if (vaultRepo.findById(vaultId) == null) {
 			throw new NotFoundException("No such vault.");
 		} else {
-			AuditEventVaultKeyRetrieve.log(jwt.getSubject(), vaultId, AuditEventVaultKeyRetrieve.Result.UNAUTHORIZED);
+			eventLogger.logVaultKeyRetrieved(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.UNAUTHORIZED);
 			throw new ForbiddenException("Access to this vault not granted.");
 		}
 	}
@@ -340,11 +343,11 @@ public class VaultResource {
 	@APIResponse(responseCode = "403", description = "not a vault owner")
 	@APIResponse(responseCode = "404", description = "at least one user has not been found")
 	public Response grantAccess(@PathParam("vaultId") UUID vaultId, @NotEmpty Map<String, String> tokens) {
-		var vault = Vault.<Vault>findById(vaultId); // should always be found, since @VaultRole filter would have triggered
+		var vault = vaultRepo.findById(vaultId); // should always be found, since @VaultRole filter would have triggered
 
 		// check number of available seats
-		long occupiedSeats = EffectiveVaultAccess.countSeatOccupyingUsers();
-		long usersWithoutSeat = tokens.size() - EffectiveVaultAccess.countSeatsOccupiedByUsers(tokens.keySet().stream().toList());
+		long occupiedSeats = effectiveVaultAccessRepo.countSeatOccupyingUsers();
+		long usersWithoutSeat = tokens.size() - effectiveVaultAccessRepo.countSeatsOccupiedByUsers(tokens.keySet().stream().toList());
 
 		if (occupiedSeats + usersWithoutSeat > license.getSeats()) {
 			throw new PaymentRequiredException("Number of effective vault users greater than or equal to the available license seats");
@@ -352,15 +355,15 @@ public class VaultResource {
 
 		for (var entry : tokens.entrySet()) {
 			var userId = entry.getKey();
-			var token = AccessToken.<AccessToken>findById(new AccessToken.AccessId(userId, vaultId));
+			var token = accessTokenRepo.findById(new AccessToken.AccessId(userId, vaultId));
 			if (token == null) {
 				token = new AccessToken();
-				token.vault = vault;
-				token.user = User.<User>findByIdOptional(userId).orElseThrow(NotFoundException::new);
+				token.setVault(vault);
+				token.setUser(userRepo.findByIdOptional(userId).orElseThrow(NotFoundException::new));
 			}
-			token.vaultKey = entry.getValue();
-			token.persist();
-			AuditEventVaultAccessGrant.log(jwt.getSubject(), vaultId, userId);
+			token.setVaultKey(entry.getValue());
+			accessTokenRepo.persist(token);
+			eventLogger.logVaultAccessGranted(jwt.getSubject(), vaultId, userId);
 		}
 		return Response.ok().build();
 	}
@@ -375,8 +378,8 @@ public class VaultResource {
 	@APIResponse(responseCode = "200")
 	@APIResponse(responseCode = "403", description = "requesting user is neither a vault member nor has the admin role")
 	public VaultDto get(@PathParam("vaultId") UUID vaultId) {
-		Vault vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-		if (vault.effectiveMembers.stream().noneMatch(u -> u.id.equals(jwt.getSubject())) && !identity.getRoles().contains("admin")) {
+		Vault vault = vaultRepo.findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
+		if (vault.getEffectiveMembers().stream().noneMatch(u -> u.getId().equals(jwt.getSubject())) && !identity.getRoles().contains("admin")) {
 			throw new ForbiddenException("Requesting user is not a member of the vault");
 		}
 		return VaultDto.fromEntity(vault);
@@ -395,42 +398,41 @@ public class VaultResource {
 	@APIResponse(responseCode = "201", description = "new vault created")
 	@APIResponse(responseCode = "402", description = "number of licensed seats is exceeded")
 	public Response createOrUpdate(@PathParam("vaultId") UUID vaultId, @Valid @NotNull VaultDto vaultDto) {
-		User currentUser = User.findById(jwt.getSubject());
-		Optional<Vault> existingVault = Vault.findByIdOptional(vaultId);
+		User currentUser = userRepo.findById(jwt.getSubject());
+		Optional<Vault> existingVault = vaultRepo.findByIdOptional(vaultId);
 		final Vault vault;
 		if (existingVault.isPresent()) {
 			// load existing vault:
 			vault = existingVault.get();
 		} else {
 			//if license is exceeded block vault creation, independent if the user is already sitting
-			var usedSeats = EffectiveVaultAccess.countSeatOccupyingUsers();
+			var usedSeats = effectiveVaultAccessRepo.countSeatOccupyingUsers();
 			if (usedSeats > license.getSeats()) {
 				throw new PaymentRequiredException("Number of effective vault users exceeds available license seats");
 			}
 			// create new vault:
 			vault = new Vault();
-			vault.id = vaultDto.id;
-			vault.creationTime = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+			vault.setId(vaultDto.id);
+			vault.setCreationTime(Instant.now().truncatedTo(ChronoUnit.MILLIS));
 		}
 		// set regardless of whether vault is new or existing:
-		vault.name = vaultDto.name;
-		vault.description = vaultDto.description;
-		vault.archived = existingVault.isEmpty() ? false : vaultDto.archived;
+		vault.setName(vaultDto.name);
+		vault.setDescription(vaultDto.description);
+		vault.setArchived(existingVault.isEmpty() ? false : vaultDto.archived);
+		vault.setMetadata(vaultDto.metadata);
 
-		vault.metadata = vaultDto.metadata;
-
-		vault.persistAndFlush(); // trigger PersistenceException before we continue with
+		vaultRepo.persistAndFlush(vault); // trigger PersistenceException before we continue with
 		if (existingVault.isEmpty()) {
+			eventLogger.logVaultCreated(currentUser.getId(), vault.getId(), vault.getName(), vault.getDescription());
 			var access = new VaultAccess();
-			access.vault = vault;
-			access.authority = currentUser;
-			access.role = VaultAccess.Role.OWNER;
-			access.persist();
-			AuditEventVaultCreate.log(currentUser.id, vault.id, vault.name, vault.description);
-			AuditEventVaultMemberAdd.log(currentUser.id, vaultId, currentUser.id, VaultAccess.Role.OWNER);
+			access.setVault(vault);
+			access.setAuthority(currentUser);
+			access.setRole(VaultAccess.Role.OWNER);
+			vaultAccessRepo.persist(access);
+			eventLogger.logVaultMemberAdded(currentUser.getId(), vaultId, currentUser.getId(), VaultAccess.Role.OWNER);
 			return Response.created(URI.create(".")).contentLocation(URI.create(".")).entity(VaultDto.fromEntity(vault)).type(MediaType.APPLICATION_JSON).build();
 		} else {
-			AuditEventVaultUpdate.log(currentUser.id, vault.id, vault.name, vault.description, vault.archived);
+			eventLogger.logVaultUpdated(currentUser.getId(), vault.getId(), vault.getName(), vault.getDescription(), vault.isArchived());
 			return Response.ok(VaultDto.fromEntity(vault), MediaType.APPLICATION_JSON).build();
 		}
 	}
@@ -447,18 +449,18 @@ public class VaultResource {
 	@APIResponse(responseCode = "404", description = "no such vault")
 	@APIResponse(responseCode = "409", description = "owned by another user")
 	public Response claimOwnership(@PathParam("vaultId") UUID vaultId, @FormParam("proof") @Valid @ValidJWS String proof) {
-		User currentUser = User.findById(jwt.getSubject());
-		Vault vault = Vault.<Vault>findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
+		User currentUser = userRepo.findById(jwt.getSubject());
+		Vault vault = vaultRepo.findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 
 		// if vault.authenticationPublicKey no longer exists, this vault has already been claimed by a different user
-		var authPubKey = vault.getAuthenticationPublicKey().orElseThrow(() -> new ClientErrorException(Response.Status.CONFLICT));
+		var authPubKey = vault.getAuthenticationPublicKeyOptional().orElseThrow(() -> new ClientErrorException(Response.Status.CONFLICT));
 
 		try {
 			var verifier = JWT.require(Algorithm.ECDSA384(authPubKey))
 					.acceptLeeway(30)
 					.withClaimPresence("nbf")
 					.withClaimPresence("exp")
-					.withSubject(currentUser.id)
+					.withSubject(currentUser.getId())
 					.withClaim("vaultId", vaultId.toString().toLowerCase())
 					.build();
 			verifier.verify(proof);
@@ -466,29 +468,29 @@ public class VaultResource {
 			throw new BadRequestException("Invalid proof of ownership", e);
 		}
 
-		Optional<VaultAccess> existingAccess = VaultAccess.findByIdOptional(new VaultAccess.Id(vaultId, currentUser.id));
+		Optional<VaultAccess> existingAccess = vaultAccessRepo.findByIdOptional(new VaultAccess.Id(vaultId, currentUser.getId()));
 		if (existingAccess.isPresent()) {
 			var access = existingAccess.get();
-			access.role = VaultAccess.Role.OWNER;
-			access.persist();
-			AuditEventVaultMemberUpdate.log(currentUser.id, vaultId, currentUser.id, VaultAccess.Role.OWNER);
+			access.setRole(VaultAccess.Role.OWNER);
+			vaultAccessRepo.persist(access);
+			eventLogger.logVaultMemberUpdated(currentUser.getId(), vaultId, currentUser.getId(), VaultAccess.Role.OWNER);
 		} else {
 			var access = new VaultAccess();
-			access.vault = vault;
-			access.authority = currentUser;
-			access.role = VaultAccess.Role.OWNER;
-			access.persist();
-			AuditEventVaultMemberAdd.log(currentUser.id, vaultId, currentUser.id, VaultAccess.Role.OWNER);
+			access.setVault(vault);
+			access.setAuthority(currentUser);
+			access.setRole(VaultAccess.Role.OWNER);
+			vaultAccessRepo.persist(access);
+			eventLogger.logVaultMemberAdded(currentUser.getId(), vaultId, currentUser.getId(), VaultAccess.Role.OWNER);
 		}
 
-		vault.salt = null;
-		vault.iterations = null;
-		vault.masterkey = null;
-		vault.authenticationPrivateKey = null;
-		vault.authenticationPublicKey = null;
-		vault.persist();
+		vault.setSalt(null);
+		vault.setIterations(null);
+		vault.setMasterkey(null);
+		vault.setAuthenticationPrivateKey(null);
+		vault.setAuthenticationPublicKey(null);
+		vaultRepo.persist(vault);
 
-		AuditEventVaultOwnershipClaim.log(currentUser.id, vaultId);
+		eventLogger.logVaultOwnershipClaimed(currentUser.getId(), vaultId);
 		return Response.ok(VaultDto.fromEntity(vault), MediaType.APPLICATION_JSON).build();
 	}
 
@@ -506,7 +508,7 @@ public class VaultResource {
 	) {
 
 		public static VaultDto fromEntity(Vault entity) {
-			return new VaultDto(entity.id, entity.name, entity.description, entity.archived, entity.creationTime.truncatedTo(ChronoUnit.MILLIS), entity.masterkey, entity.iterations, entity.salt, entity.authenticationPublicKey, entity.authenticationPrivateKey, entity.metadata);
+			return new VaultDto(entity.getId(), entity.getName(), entity.getDescription(), entity.isArchived(), entity.getCreationTime().truncatedTo(ChronoUnit.MILLIS), entity.getMasterkey(), entity.getIterations(), entity.getSalt(), entity.getAuthenticationPublicKey(), entity.getAuthenticationPrivateKey(), entity.getMetadata());
 		}
 
 	}

@@ -55,7 +55,8 @@
             <div class="grid grid-cols-6 gap-6">
               <div class="col-span-6 sm:col-span-3">
                 <label for="vaultName" class="block text-sm font-medium text-gray-700">{{ t('createVault.enterVaultDetails.vaultName') }}</label>
-                <input id="vaultName" v-model="vaultName" :disabled="processing" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onCreateError instanceof FormValidationFailedError }" pattern="^(?! )([^\\\/:*?\x22<>|])*(?<! |\.)$" required />
+                <input id="vaultName" v-model="vaultName" :disabled="processing" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onCreateError instanceof FormValidationFailedError }" pattern="^(?! )([^\x5C\x2F:*?\x22<>\x7C])+(?<![ \x2E])$" required />
+                <p v-if="onCreateError instanceof FormValidationFailedError" class="text-sm text-red-900 mt-2">{{ t('createVault.error.illegalVaultName') }} \, /, :, *, ?, ", &lt;, >, |</p>
               </div>
 
               <div class="col-span-6 sm:col-span-4">
@@ -133,7 +134,7 @@
                 {{ t('createVault.showRecoveryKey.submit') }}
               </button>
               <div v-if="onCreateError != null">
-                <p v-if ="onCreateError instanceof PaymentRequiredError" class="text-sm text-red-900 mt-2">{{ t('createVault.error.paymentRequired') }}</p>
+                <p v-if="onCreateError instanceof PaymentRequiredError" class="text-sm text-red-900 mt-2">{{ t('createVault.error.paymentRequired') }}</p>
                 <p v-else class="text-sm text-red-900 mt-2">{{ t('common.unexpectedError', [onCreateError.message]) }}</p>
               </div>
             </div>

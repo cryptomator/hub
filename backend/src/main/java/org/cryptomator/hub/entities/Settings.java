@@ -1,6 +1,7 @@
 package org.cryptomator.hub.entities;
 
-import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import io.quarkus.hibernate.orm.panache.PanacheRepository;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -10,19 +11,43 @@ import java.util.Objects;
 
 @Entity
 @Table(name = "settings")
-public class Settings extends PanacheEntityBase {
+public class Settings {
 
-	private static final int SINGLETON_ID = 0;
+	private static final long SINGLETON_ID = 0L;
 
 	@Id
 	@Column(name = "id", nullable = false, updatable = false)
-	public int id;
+	private int id;
 
 	@Column(name = "hub_id", nullable = false)
-	public String hubId;
+	private String hubId;
 
 	@Column(name = "license_key")
-	public String licenseKey;
+	private String licenseKey;
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+	public String getHubId() {
+		return hubId;
+	}
+
+	public void setHubId(String hubId) {
+		this.hubId = hubId;
+	}
+
+	public String getLicenseKey() {
+		return licenseKey;
+	}
+
+	public void setLicenseKey(String licenseKey) {
+		this.licenseKey = licenseKey;
+	}
 
 	@Override
 	public String toString() {
@@ -48,8 +73,11 @@ public class Settings extends PanacheEntityBase {
 		return Objects.hash(id, hubId, licenseKey);
 	}
 
-	public static Settings get() {
-		return Objects.requireNonNull(Settings.findById(SINGLETON_ID), "Settings not initialized");
-	}
+	@ApplicationScoped
+	public static class Repository implements PanacheRepository<Settings> {
 
+		public Settings get() {
+			return Objects.requireNonNull(findById(SINGLETON_ID), "Settings not initialized");
+		}
+	}
 }

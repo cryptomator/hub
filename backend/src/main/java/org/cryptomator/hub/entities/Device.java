@@ -1,7 +1,8 @@
 package org.cryptomator.hub.entities;
 
-import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import io.quarkus.panache.common.Parameters;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -31,7 +32,7 @@ import java.util.stream.Stream;
 				FROM Device d
 				WHERE d.id IN :ids
 				""")
-public class Device extends PanacheEntityBase {
+public class Device {
 
 	public enum Type {
 		BROWSER, DESKTOP, MOBILE
@@ -39,33 +40,89 @@ public class Device extends PanacheEntityBase {
 
 	@Id
 	@Column(name = "id", nullable = false)
-	public String id;
+	private String id;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "owner_id", updatable = false, nullable = false)
-	public User owner;
+	private User owner;
 
 	@Column(name = "name", nullable = false)
-	public String name;
+	private String name;
 
 	@Column(name = "type", nullable = false)
 	@Enumerated(EnumType.STRING)
-	public Type type;
+	private Type type;
 
 	@Column(name = "publickey", nullable = false)
-	public String publickey;
+	private String publickey;
 
 	@Column(name = "user_privatekey", nullable = false)
-	public String userPrivateKey;
+	private String userPrivateKey;
 
 	@Column(name = "creation_time", nullable = false)
-	public Instant creationTime;
+	private Instant creationTime;
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public User getOwner() {
+		return owner;
+	}
+
+	public void setOwner(User owner) {
+		this.owner = owner;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public Type getType() {
+		return type;
+	}
+
+	public void setType(Type type) {
+		this.type = type;
+	}
+
+	public String getPublickey() {
+		return publickey;
+	}
+
+	public void setPublickey(String publickey) {
+		this.publickey = publickey;
+	}
+
+	public String getUserPrivateKey() {
+		return userPrivateKey;
+	}
+
+	public void setUserPrivateKey(String userPrivateKey) {
+		this.userPrivateKey = userPrivateKey;
+	}
+
+	public Instant getCreationTime() {
+		return creationTime;
+	}
+
+	public void setCreationTime(Instant creationTime) {
+		this.creationTime = creationTime;
+	}
 
 	@Override
 	public String toString() {
 		return "Device{" +
 				"id='" + id + '\'' +
-				", owner=" + owner.id +
+				", owner=" + owner.getId() +
 				", name='" + name + '\'' +
 				", type='" + type + '\'' +
 				", publickey='" + publickey + '\'' +
@@ -93,16 +150,19 @@ public class Device extends PanacheEntityBase {
 		return Objects.hash(id, owner, name, type, publickey, userPrivateKey, creationTime);
 	}
 
-	public static Device findByIdAndUser(String deviceId, String userId) throws NoResultException {
-		return find("#Device.findByIdAndOwner", Parameters.with("deviceId", deviceId).and("userId", userId)).singleResult();
-	}
+	@ApplicationScoped
+	public static class Repository implements PanacheRepositoryBase<Device, String> {
 
-	public static Stream<Device> findAllInList(List<String> ids) {
-		return find("#Device.allInList", Parameters.with("ids", ids)).stream();
-	}
+		public Device findByIdAndUser(String deviceId, String userId) throws NoResultException {
+			return find("#Device.findByIdAndOwner", Parameters.with("deviceId", deviceId).and("userId", userId)).singleResult();
+		}
 
-	public static void deleteByOwner(String userId) {
-		delete("#Device.deleteByOwner", Parameters.with("userId", userId));
-	}
+		public Stream<Device> findAllInList(List<String> ids) {
+			return find("#Device.allInList", Parameters.with("ids", ids)).stream();
+		}
 
+		public void deleteByOwner(String userId) {
+			delete("#Device.deleteByOwner", Parameters.with("userId", userId));
+		}
+	}
 }

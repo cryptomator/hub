@@ -1,7 +1,8 @@
 package org.cryptomator.hub.entities;
 
-import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import io.quarkus.panache.common.Parameters;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -52,11 +53,11 @@ import java.util.stream.Stream;
 				WHERE v.id IN :ids
 				"""
 )
-public class Vault extends PanacheEntityBase {
+public class Vault {
 
 	@Id
 	@Column(name = "id", nullable = false)
-	public UUID id;
+	private UUID id;
 
 	@ManyToMany
 	@Immutable
@@ -64,7 +65,7 @@ public class Vault extends PanacheEntityBase {
 			joinColumns = @JoinColumn(name = "vault_id", referencedColumnName = "id"),
 			inverseJoinColumns = @JoinColumn(name = "authority_id", referencedColumnName = "id")
 	)
-	public Set<Authority> directMembers = new HashSet<>();
+	private Set<Authority> directMembers = new HashSet<>();
 
 	@ManyToMany
 	@Immutable
@@ -72,42 +73,42 @@ public class Vault extends PanacheEntityBase {
 			joinColumns = @JoinColumn(name = "vault_id", referencedColumnName = "id"),
 			inverseJoinColumns = @JoinColumn(name = "authority_id", referencedColumnName = "id")
 	)
-	public Set<Authority> effectiveMembers = new HashSet<>();
+	private Set<Authority> effectiveMembers = new HashSet<>();
 
 	@OneToMany(mappedBy = "vault", fetch = FetchType.LAZY)
-	public Set<AccessToken> accessTokens = new HashSet<>();
+	private Set<AccessToken> accessTokens = new HashSet<>();
 
 	@Column(name = "name", nullable = false)
-	public String name;
+	private String name;
 
 	@Column(name = "salt")
-	public String salt;
+	private String salt;
 
 	@Column(name = "iterations")
-	public Integer iterations;
+	private Integer iterations;
 
 	@Column(name = "masterkey")
-	public String masterkey;
+	private String masterkey;
 
 	@Column(name = "auth_pubkey")
-	public String authenticationPublicKey;
+	private String authenticationPublicKey;
 
 	@Column(name = "auth_prvkey")
-	public String authenticationPrivateKey;
+	private String authenticationPrivateKey;
 
 	@Column(name = "creation_time", nullable = false)
-	public Instant creationTime;
+	private Instant creationTime;
 
 	@Column(name = "description")
-	public String description;
+	private String description;
 
 	@Column(name = "archived", nullable = false)
-	public boolean archived;
+	private boolean archived;
 
 	@Column(name = "metadata", nullable = false)
-	public String metadata;
+	private String metadata;
 
-	public Optional<ECPublicKey> getAuthenticationPublicKey() {
+	public Optional<ECPublicKey> getAuthenticationPublicKeyOptional() {
 		if (authenticationPublicKey == null) {
 			return Optional.empty();
 		}
@@ -128,16 +129,116 @@ public class Vault extends PanacheEntityBase {
 		}
 	}
 
-	public static Stream<Vault> findAccessibleByUser(String userId) {
-		return find("#Vault.accessibleByUser", Parameters.with("userId", userId)).stream();
+	public UUID getId() {
+		return id;
 	}
 
-	public static Stream<Vault> findAccessibleByUser(String userId, VaultAccess.Role role) {
-		return find("#Vault.accessibleByUserAndRole", Parameters.with("userId", userId).and("role", role)).stream();
+	public void setId(UUID id) {
+		this.id = id;
 	}
 
-	public static Stream<Vault> findAllInList(List<UUID> ids) {
-		return find("#Vault.allInList", Parameters.with("ids", ids)).stream();
+	public Set<Authority> getDirectMembers() {
+		return directMembers;
+	}
+
+	public void setDirectMembers(Set<Authority> directMembers) {
+		this.directMembers = directMembers;
+	}
+
+	public Set<Authority> getEffectiveMembers() {
+		return effectiveMembers;
+	}
+
+	public void setEffectiveMembers(Set<Authority> effectiveMembers) {
+		this.effectiveMembers = effectiveMembers;
+	}
+
+	public Set<AccessToken> getAccessTokens() {
+		return accessTokens;
+	}
+
+	public void setAccessTokens(Set<AccessToken> accessTokens) {
+		this.accessTokens = accessTokens;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getSalt() {
+		return salt;
+	}
+
+	public void setSalt(String salt) {
+		this.salt = salt;
+	}
+
+	public Integer getIterations() {
+		return iterations;
+	}
+
+	public void setIterations(Integer iterations) {
+		this.iterations = iterations;
+	}
+
+	public String getMasterkey() {
+		return masterkey;
+	}
+
+	public void setMasterkey(String masterkey) {
+		this.masterkey = masterkey;
+	}
+
+	public void setAuthenticationPublicKey(String authenticationPublicKey) {
+		this.authenticationPublicKey = authenticationPublicKey;
+	}
+
+	public String getAuthenticationPrivateKey() {
+		return authenticationPrivateKey;
+	}
+
+	public String getAuthenticationPublicKey() {
+		return authenticationPublicKey;
+	}
+
+	public void setAuthenticationPrivateKey(String authenticationPrivateKey) {
+		this.authenticationPrivateKey = authenticationPrivateKey;
+	}
+
+	public Instant getCreationTime() {
+		return creationTime;
+	}
+
+	public void setCreationTime(Instant creationTime) {
+		this.creationTime = creationTime;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public boolean isArchived() {
+		return archived;
+	}
+
+	public void setArchived(boolean archived) {
+		this.archived = archived;
+	}
+
+	public String getMetadata() {
+		return metadata;
+	}
+
+	public void setMetadata(String metadata) {
+		this.metadata = metadata;
 	}
 
 	@Override
@@ -162,8 +263,8 @@ public class Vault extends PanacheEntityBase {
 	public String toString() {
 		return "Vault{" +
 				"id='" + id + '\'' +
-				", members=" + directMembers.stream().map(m -> m.id).collect(Collectors.joining(", ")) +
-				", accessToken=" + accessTokens.stream().map(a -> a.id.toString()).collect(Collectors.joining(", ")) +
+				", members=" + directMembers.stream().map(Authority::getId).collect(Collectors.joining(", ")) +
+				", accessToken=" + accessTokens.stream().map(a -> a.getId().toString()).collect(Collectors.joining(", ")) +
 				", name='" + name + '\'' +
 				", archived='" + archived + '\'' +
 				", salt='" + salt + '\'' +
@@ -174,4 +275,19 @@ public class Vault extends PanacheEntityBase {
 				'}';
 	}
 
+	@ApplicationScoped
+	public static class Repository implements PanacheRepositoryBase<Vault, UUID> {
+
+		public Stream<Vault> findAccessibleByUser(String userId) {
+			return find("#Vault.accessibleByUser", Parameters.with("userId", userId)).stream();
+		}
+
+		public Stream<Vault> findAccessibleByUser(String userId, VaultAccess.Role role) {
+			return find("#Vault.accessibleByUserAndRole", Parameters.with("userId", userId).and("role", role)).stream();
+		}
+
+		public Stream<Vault> findAllInList(List<UUID> ids) {
+			return find("#Vault.allInList", Parameters.with("ids", ids)).stream();
+		}
+	}
 }

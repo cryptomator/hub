@@ -1,7 +1,8 @@
 package org.cryptomator.hub.entities;
 
-import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import io.quarkus.panache.common.Parameters;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EmbeddedId;
@@ -18,12 +19,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Entity
 @Immutable
 @Table(name = "effective_vault_access")
-@NamedQuery(name = "EffectiveVaultAccess.countSeatsOccupiedByUser", query = """
+@NamedQuery(name = "EffectiveVaultAccess.countSeatsOccupiedBySingleUser", query = """
 		SELECT count(u)
 		FROM User u
 		INNER JOIN EffectiveVaultAccess eva ON u.id = eva.id.authorityId
@@ -62,49 +62,55 @@ import java.util.stream.Stream;
 		FROM EffectiveVaultAccess eva
 		WHERE eva.id.vaultId = :vaultId AND eva.id.authorityId = :authorityId
 		""")
-public class EffectiveVaultAccess extends PanacheEntityBase {
+public class EffectiveVaultAccess {
 
 	@EmbeddedId
-	public EffectiveVaultAccess.Id id;
+	private EffectiveVaultAccess.Id id;
 
-	public static boolean isUserOccupyingSeat(String userId) {
-		return EffectiveVaultAccess.count("#EffectiveVaultAccess.countSeatsOccupiedByUser", Parameters.with("userId", userId)) > 0;
+	public Id getId() {
+		return id;
 	}
 
-	public static long countSeatsOccupiedByUsers(List<String> userIds) {
-		return EffectiveVaultAccess.count("#EffectiveVaultAccess.countSeatsOccupiedByUsers", Parameters.with("userIds", userIds));
-	}
-
-	public static long countSeatOccupyingUsers() {
-		return EffectiveVaultAccess.count("#EffectiveVaultAccess.countSeatOccupyingUsers");
-	}
-
-	public static long countSeatOccupyingUsersWithAccessToken() {
-		return EffectiveVaultAccess.count("#EffectiveVaultAccess.countSeatOccupyingUsersWithAccessToken");
-	}
-
-	public static long countSeatOccupyingUsersOfGroup(String groupId) {
-		return EffectiveVaultAccess.count("#EffectiveVaultAccess.countSeatOccupyingUsersOfGroup", Parameters.with("groupId", groupId));
-	}
-
-	public static Collection<VaultAccess.Role> listRoles(UUID vaultId, String authorityId) {
-		return EffectiveVaultAccess.<EffectiveVaultAccess>find("#EffectiveVaultAccess.findByAuthorityAndVault", Parameters.with("vaultId", vaultId).and("authorityId", authorityId)).stream()
-				.map(eva -> eva.id.role)
-				.collect(Collectors.toUnmodifiableSet());
+	public void setId(Id id) {
+		this.id = id;
 	}
 
 	@Embeddable
 	public static class Id implements Serializable {
 
 		@Column(name = "vault_id")
-		public UUID vaultId;
+		private UUID vaultId;
 
 		@Column(name = "authority_id")
-		public String authorityId;
+		private String authorityId;
 
 		@Column(name = "role", nullable = false)
 		@Enumerated(EnumType.STRING)
-		public VaultAccess.Role role;
+		private VaultAccess.Role role;
+
+		public UUID getVaultId() {
+			return vaultId;
+		}
+
+		public void setVaultId(UUID vaultId) {
+			this.vaultId = vaultId;
+		}
+
+		public String getAuthorityId() {
+			return authorityId;
+		}
+
+		public void setAuthorityId(String authorityId) {
+			this.authorityId = authorityId;
+		}
+
+		public VaultAccess.Role getRole() {
+			return role;
+		}
+
+		public void setRole(VaultAccess.Role role) {
+			this.role = role;
+		}
 
 		public Id(UUID vaultId, String authorityId, VaultAccess.Role role) {
 			this.vaultId = vaultId;
@@ -139,4 +145,33 @@ public class EffectiveVaultAccess extends PanacheEntityBase {
 		}
 	}
 
+	@ApplicationScoped
+	public static class Repository implements PanacheRepositoryBase<EffectiveVaultAccess, Id> {
+
+		public boolean isUserOccupyingSeat(String userId) {
+			return count("#EffectiveVaultAccess.countSeatsOccupiedBySingleUser", Parameters.with("userId", userId)) > 0;
+		}
+
+		public long countSeatsOccupiedByUsers(List<String> userIds) {
+			return count("#EffectiveVaultAccess.countSeatsOccupiedByUsers", Parameters.with("userIds", userIds));
+		}
+
+		public long countSeatOccupyingUsers() {
+			return count("#EffectiveVaultAccess.countSeatOccupyingUsers");
+		}
+
+		public long countSeatOccupyingUsersWithAccessToken() {
+			return count("#EffectiveVaultAccess.countSeatOccupyingUsersWithAccessToken");
+		}
+
+		public long countSeatOccupyingUsersOfGroup(String groupId) {
+			return count("#EffectiveVaultAccess.countSeatOccupyingUsersOfGroup", Parameters.with("groupId", groupId));
+		}
+
+		public Collection<VaultAccess.Role> listRoles(UUID vaultId, String authorityId) {
+			return find("#EffectiveVaultAccess.findByAuthorityAndVault", Parameters.with("vaultId", vaultId).and("authorityId", authorityId)).stream()
+					.map(eva -> eva.getId().getRole())
+					.collect(Collectors.toUnmodifiableSet());
+		}
+	}
 }

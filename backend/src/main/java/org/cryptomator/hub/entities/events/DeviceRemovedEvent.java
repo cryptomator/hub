@@ -1,31 +1,46 @@
-package org.cryptomator.hub.entities;
+package org.cryptomator.hub.entities.events;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 
-import java.time.Instant;
 import java.util.Objects;
 
 @Entity
 @Table(name = "audit_event_device_remove")
-@DiscriminatorValue(AuditEventDeviceRemove.TYPE)
-public class AuditEventDeviceRemove extends AuditEvent {
+@DiscriminatorValue(DeviceRemovedEvent.TYPE)
+public class DeviceRemovedEvent extends AuditEvent {
 
 	public static final String TYPE = "DEVICE_REMOVE";
 
 	@Column(name = "removed_by")
-	public String removedBy;
+	private String removedBy;
 
 	@Column(name = "device_id")
-	public String deviceId;
+	private String deviceId;
+
+	public String getRemovedBy() {
+		return removedBy;
+	}
+
+	public void setRemovedBy(String removedBy) {
+		this.removedBy = removedBy;
+	}
+
+	public String getDeviceId() {
+		return deviceId;
+	}
+
+	public void setDeviceId(String deviceId) {
+		this.deviceId = deviceId;
+	}
 
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
-		AuditEventDeviceRemove that = (AuditEventDeviceRemove) o;
+		DeviceRemovedEvent that = (DeviceRemovedEvent) o;
 		return super.equals(that) //
 				&& Objects.equals(removedBy, that.removedBy) //
 				&& Objects.equals(deviceId, that.deviceId);
@@ -33,15 +48,7 @@ public class AuditEventDeviceRemove extends AuditEvent {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, removedBy, deviceId);
-	}
-
-	public static void log(String removedBy, String deviceId) {
-		var event = new AuditEventDeviceRemove();
-		event.timestamp = Instant.now();
-		event.removedBy = removedBy;
-		event.deviceId = deviceId;
-		event.persist();
+		return Objects.hash(super.getId(), removedBy, deviceId);
 	}
 
 }

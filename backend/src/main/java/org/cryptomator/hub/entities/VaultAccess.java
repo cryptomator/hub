@@ -1,7 +1,8 @@
 package org.cryptomator.hub.entities;
 
-import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import io.quarkus.panache.common.Parameters;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EmbeddedId;
@@ -29,24 +30,24 @@ import java.util.stream.Stream;
 				INNER JOIN FETCH va.authority
 				WHERE va.id.vaultId = :vaultId
 				""")
-public class VaultAccess extends PanacheEntityBase {
+public class VaultAccess {
 
 	@EmbeddedId
-	public VaultAccess.Id id = new VaultAccess.Id();
+	private VaultAccess.Id id = new VaultAccess.Id();
 
 	@ManyToOne
 	@MapsId("vaultId")
 	@JoinColumn(name = "vault_id")
-	public Vault vault;
+	private Vault vault;
 
 	@ManyToOne
 	@MapsId("authorityId")
 	@JoinColumn(name = "authority_id")
-	public Authority authority;
+	private Authority authority;
 
 	@Column(name = "role", nullable = false)
 	@Enumerated(EnumType.STRING)
-	public Role role;
+	private Role role;
 
 	public enum Role {
 		/**
@@ -60,18 +61,46 @@ public class VaultAccess extends PanacheEntityBase {
 		OWNER
 	}
 
-	public static Stream<VaultAccess> forVault(UUID vaultId) {
-		return find("#VaultAccess.forVault", Parameters.with("vaultId", vaultId)).stream();
+	public Id getId() {
+		return id;
+	}
+
+	public void setId(Id id) {
+		this.id = id;
+	}
+
+	public Vault getVault() {
+		return vault;
+	}
+
+	public void setVault(Vault vault) {
+		this.vault = vault;
+	}
+
+	public Authority getAuthority() {
+		return authority;
+	}
+
+	public void setAuthority(Authority authority) {
+		this.authority = authority;
+	}
+
+	public Role getRole() {
+		return role;
+	}
+
+	public void setRole(Role role) {
+		this.role = role;
 	}
 
 	@Embeddable
 	public static class Id implements Serializable {
 
 		@Column(name = "vault_id")
-		public UUID vaultId;
+		UUID vaultId;
 
 		@Column(name = "authority_id")
-		public String authorityId;
+		String authorityId;
 
 		public Id(UUID vaultId, String authorityId) {
 			this.vaultId = vaultId;
@@ -79,6 +108,22 @@ public class VaultAccess extends PanacheEntityBase {
 		}
 
 		public Id() {
+		}
+
+		public UUID getVaultId() {
+			return vaultId;
+		}
+
+		public void setVaultId(UUID vaultId) {
+			this.vaultId = vaultId;
+		}
+
+		public String getAuthorityId() {
+			return authorityId;
+		}
+
+		public void setAuthorityId(String authorityId) {
+			this.authorityId = authorityId;
 		}
 
 		@Override
@@ -101,6 +146,14 @@ public class VaultAccess extends PanacheEntityBase {
 					"vaultId='" + vaultId + '\'' +
 					", authorityId='" + authorityId + '\'' +
 					'}';
+		}
+	}
+
+	@ApplicationScoped
+	public static class Repository implements PanacheRepositoryBase<VaultAccess, Id> {
+
+		public Stream<VaultAccess> forVault(UUID vaultId) {
+			return find("#VaultAccess.forVault", Parameters.with("vaultId", vaultId)).stream();
 		}
 	}
 }

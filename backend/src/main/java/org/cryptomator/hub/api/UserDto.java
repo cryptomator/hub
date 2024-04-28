@@ -32,6 +32,6 @@ public final class UserDto extends AuthorityDto {
 	}
 
 	public static UserDto justPublicInfo(User user) {
-		return new UserDto(user.id, user.name, user.pictureUrl, user.email, Set.of(), user.publicKey, null, null);
+		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), Set.of(), user.getPublicKey(), null, null);
 	}
 }
