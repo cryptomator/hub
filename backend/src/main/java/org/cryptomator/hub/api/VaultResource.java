@@ -78,6 +78,7 @@ public class VaultResource {
 	@Inject
 	EffectiveVaultAccess.Repository effectiveVaultAccessRepo;
 	@Inject
+	@Deprecated
 	LegacyAccessToken.Repository legacyAccessTokenRepo;
 	@Inject
 	Vault.Repository vaultRepo;
@@ -166,16 +167,12 @@ public class VaultResource {
 		var vault = vaultRepo.findById(vaultId); // should always be found, since @VaultRole filter would have triggered
 		var user = userRepo.findByIdOptional(userId).orElseThrow(NotFoundException::new);
 		var usedSeats = effectiveVaultAccessRepo.countSeatOccupyingUsers();
-		//check if license seats are free
-		if (usedSeats < license.getSeats()) {
+		if (usedSeats < license.getSeats() // free seats available
+				|| effectiveVaultAccessRepo.isUserOccupyingSeat(userId)) { // or user already sitting
 			return addAuthority(vault, user, role);
+		} else {
+			throw new PaymentRequiredException("License seats exceeded. Cannot add more users.");
 		}
-		// else check, if all seats are taken, but the person to add is already sitting
-		if (usedSeats == license.getSeats() && effectiveVaultAccessRepo.isUserOccupyingSeat(userId)) {
-			return addAuthority(vault, user, role);
-		}
-		//otherwise block
-		throw new PaymentRequiredException("License seats exceeded. Cannot add more users.");
 	}
 
 	@PUT
