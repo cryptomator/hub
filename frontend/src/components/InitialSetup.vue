@@ -266,7 +266,7 @@ async function createUserKey() {
     const userKeys = await UserKeys.create();
     me.value.publicKey = await userKeys.encodedPublicKey();
     me.value.privateKey = await userKeys.encryptedPrivateKey(setupCode.value);
-    me.value.setupCode = (await JWE.build({ setupCode: setupCode.value }).encrypt(Recipient.ecdhEs('org.cryptomator.hub.userKey', userKeys.keyPair.publicKey))).compactSerialization();
+    me.value.setupCode = (await JWE.build({ setupCode: setupCode.value }).encrypt(Recipient.ecdhEs('org.cryptomator.hub.userkey', userKeys.keyPair.publicKey))).compactSerialization();
     const browserKeys = await createBrowserKeys(me.value.id);
     await submitBrowserKeys(browserKeys, me.value, userKeys);
 

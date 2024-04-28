@@ -167,7 +167,7 @@ async function regenerateSetupCode() {
     const newCode = crypto.randomUUID();
     const userKeys = await UserKeys.decryptOnBrowser(myDevice.userPrivateKey, browserKeys.keyPair.privateKey, base64.parse(me.publicKey));
     me.privateKey = await userKeys.encryptedPrivateKey(newCode);
-    me.setupCode = (await JWE.build({ setupCode: newCode }).encrypt(Recipient.ecdhEs('org.cryptomator.hub.userKey', userKeys.keyPair.publicKey))).compactSerialization();
+    me.setupCode = (await JWE.build({ setupCode: newCode }).encrypt(Recipient.ecdhEs('org.cryptomator.hub.userkey', userKeys.keyPair.publicKey))).compactSerialization();
     await backend.users.putMe(me);
     setupCode.value = newCode;
 

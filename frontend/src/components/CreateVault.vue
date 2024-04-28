@@ -22,7 +22,7 @@
           </div>
           <div class="mt-5 sm:mt-6">
             <label for="recoveryKey" class="sr-only">{{ t('createVault.enterRecoveryKey.recoveryKey') }}</label>
-            <textarea id="recoveryKey" v-model="recoveryKey" rows="6" name="recoveryKey" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onRecoverError instanceof FormValidationFailedError }" required />
+            <textarea id="recoveryKey" v-model="recoveryKeyStr" rows="6" name="recoveryKey" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onRecoverError instanceof FormValidationFailedError }" required />
           </div>
           <div class="mt-5 sm:mt-6">
             <button type="submit" :disabled="processing" class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:primary focus:ring-offset-2 sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
@@ -101,7 +101,7 @@
             <div class="relative mt-5 sm:mt-6">
               <div class="overflow-hidden rounded-lg border border-gray-300 shadow-sm focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
                 <label for="recoveryKey" class="sr-only">{{ t('createVault.showRecoveryKey.recoveryKey') }}</label>
-                <textarea id="recoveryKey" v-model="recoveryKey" rows="6" name="recoveryKey" class="block w-full resize-none border-0 py-3 focus:ring-0 sm:text-sm" readonly />
+                <textarea id="recoveryKey" v-model="recoveryKeyStr" rows="6" name="recoveryKey" class="block w-full resize-none border-0 py-3 focus:ring-0 sm:text-sm" readonly />
 
                 <!-- Spacer element to match the height of the toolbar -->
                 <div class="py-2" aria-hidden="true">
@@ -187,6 +187,7 @@ import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { PaymentRequiredError } from '../common/backend';
 import { debounce } from '../common/util';
+import { MemberKey, RecoveryKey, VaultMetadata } from '../common/uvf';
 import { VaultConfig } from '../common/vaultconfig';
 import { VaultKeys } from '../common/vaultv8';
 
@@ -197,6 +198,13 @@ enum State {
   ShowRecoveryKey,
   Finished
 }
+
+enum VaultType {
+  VaultFormat8,
+  UniversalVaultFormat
+}
+
+const vaultType: VaultType = VaultType.UniversalVaultFormat;
 
 class FormValidationFailedError extends Error {
   constructor() {
@@ -225,8 +233,10 @@ const vaultDescription = ref<string | undefined>();
 const copiedRecoveryKey = ref(false);
 const debouncedCopyFinish = debounce(() => copiedRecoveryKey.value = false, 2000);
 const confirmRecoveryKey = ref(false);
-const vaultKeys = ref<VaultKeys>();
-const recoveryKey = ref<string>('');
+const format8VaultKeys = ref<VaultKeys>();
+const recoveryKeyStr = ref<string>('');
+const uvfMetadata = ref<VaultMetadata>();
+const uvfRecoveryKey = ref<RecoveryKey>();
 const vaultConfig = ref<VaultConfig>();
 
 const props = defineProps<{
@@ -239,8 +249,17 @@ async function initialize() {
   if (props.recover) {
     state.value = State.EnterRecoveryKey;
   } else {
-    vaultKeys.value = await VaultKeys.create();
-    recoveryKey.value = await vaultKeys.value.createRecoveryKey();
+    switch(vaultType) {
+      case VaultType.VaultFormat8:
+        format8VaultKeys.value = await VaultKeys.create();
+        recoveryKeyStr.value = await format8VaultKeys.value.createRecoveryKey();
+        break;
+      case VaultType.UniversalVaultFormat:
+        uvfMetadata.value = await VaultMetadata.create({enabled: false, maxWotDepth: 0});
+        uvfRecoveryKey.value = await RecoveryKey.create();
+        recoveryKeyStr.value = uvfRecoveryKey.value.serialize();
+        break;
+    }
     state.value = State.EnterVaultDetails;
   }
 }
@@ -258,7 +277,7 @@ async function recoverVault() {
   onRecoverError.value = null;
   try {
     processing.value = true;
-    vaultKeys.value = await VaultKeys.recover(recoveryKey.value);
+    format8VaultKeys.value = await VaultKeys.recover(recoveryKeyStr.value);
     state.value = State.EnterVaultDetails;
   } catch (error) {
     console.error('Recovering vault failed.', error);
@@ -284,27 +303,35 @@ async function validateVaultDetails() {
 async function createVault() {
   onCreateError.value = null;
   try {
-    if (!vaultKeys.value) {
-      throw new Error('Invalid state');
-    }
     processing.value = true;
     const owner = await backend.users.me();
     if (!owner.publicKey) {
       throw new Error('Invalid state');
     }
     const vaultId = crypto.randomUUID();
-    /*
-    FIXME create UVF vault
-    const vaultMetadata: VaultMetadata = await VaultMetadata.create({
-       enabled: true,
-       maxWotDepth: -1
-    });
-    const vaultMetadataEncrypted = await vaultMetadata.encryptWithMasterKey(vaultKeys.value.uvfMasterKey);
-    */
-    vaultConfig.value = await VaultConfig.create(vaultId, vaultKeys.value);
-    const ownerJwe = await vaultKeys.value.encryptForUser(base64.parse(owner.publicKey));
-    await backend.vaults.createOrUpdateVault(vaultId, vaultName.value, false, '', vaultDescription.value);
-    await backend.vaults.grantAccess(vaultId, { userId: owner.id, token: ownerJwe });
+    switch(vaultType) {
+      case VaultType.VaultFormat8: {
+        if (!format8VaultKeys.value) {
+          throw new Error('Invalid state');
+        }
+        vaultConfig.value = await VaultConfig.create(vaultId, format8VaultKeys.value);
+        const ownerJwe = await format8VaultKeys.value.encryptForUser(base64.parse(owner.publicKey));
+        await backend.vaults.createOrUpdateVault(vaultId, vaultName.value, false, '', vaultDescription.value);
+        await backend.vaults.grantAccess(vaultId, { userId: owner.id, token: ownerJwe });
+        break;
+      }
+      case VaultType.UniversalVaultFormat: {
+        if (!uvfMetadata.value || !uvfRecoveryKey.value) {
+          throw new Error('Invalid state');
+        }
+        const memberKey = await MemberKey.create();
+        const ownerJwe = await memberKey.encryptForUser(base64.parse(owner.publicKey));
+        const vaultUvfContents = await uvfMetadata.value.encrypt(memberKey, uvfRecoveryKey.value);
+        await backend.vaults.createOrUpdateVault(vaultId, vaultName.value, false, vaultUvfContents, vaultDescription.value);
+        await backend.vaults.grantAccess(vaultId, { userId: owner.id, token: ownerJwe });
+        break;
+      }
+    }
     state.value = State.Finished;
   } catch (error) {
     console.error('Creating vault failed.', error);
@@ -315,7 +342,7 @@ async function createVault() {
 }
 
 async function copyRecoveryKey() {
-  await navigator.clipboard.writeText(recoveryKey.value);
+  await navigator.clipboard.writeText(recoveryKeyStr.value);
   copiedRecoveryKey.value = true;
   debouncedCopyFinish();
 }

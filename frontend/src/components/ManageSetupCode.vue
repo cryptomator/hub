@@ -84,7 +84,7 @@ async function fetchData() {
       throw new Error('Device not initialized.');
     }
     const userKeys = await UserKeys.decryptOnBrowser(myDevice.userPrivateKey, browserKeys.keyPair.privateKey, base64.parse(me.publicKey));
-    const payload : { setupCode: string } = await JWE.parseCompact(me.setupCode).decrypt(Recipient.ecdhEs('org.cryptomator.hub.userKey', userKeys.keyPair.privateKey));
+    const payload : { setupCode: string } = await JWE.parseCompact(me.setupCode).decrypt(Recipient.ecdhEs('org.cryptomator.hub.userkey', userKeys.keyPair.privateKey));
     setupCode.value = payload.setupCode;
   } catch (error) {
     console.error('Retrieving setup code failed.', error);

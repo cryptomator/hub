@@ -1,5 +1,5 @@
-import { base64url } from 'rfc4648';
-import { getJwkThumbprint } from './crypto';
+import { base64, base64url } from 'rfc4648';
+import { UserKeys, getJwkThumbprint } from './crypto';
 import { JWE, JWEHeader, JsonJWE, Recipient } from './jwe';
 
 type MetadataPayload = {
@@ -18,13 +18,128 @@ type VaultMetadataJWEAutomaticAccessGrantDto = {
   maxWotDepth: number
 }
 
-// const MEMBER_KEY_DESIGNATION: AesKeyGenParams = {
-//   name: 'AES',
-//   length: 256
-// };
+type MemberKeyPayload = {
+  key: string
+}
 
-// const MEMBER_KEY_USAGE: KeyUsage[] = ['wrapKey', 'unwrapKey'];
+// #region Member Key
+/**
+ * The AES Key Wrap Key used to encapsulate the UVF Vault Metadata CEK for a vault member.
+ * This key is encrypted for each vault member individually, using the user's public key.
+ */
+export class MemberKey {
+  public static readonly KEY_DESIGNATION: AesKeyGenParams = { name: 'AES-KW', length: 256 };
 
+  public static readonly KEY_USAGE: KeyUsage[] = ['wrapKey', 'unwrapKey'];
+
+  protected constructor(readonly key: CryptoKey) { }
+
+  /**
+   * Creates a new vault member key
+   * @returns new key
+   */
+  public static async create(): Promise<MemberKey> {
+    const key = await crypto.subtle.generateKey(MemberKey.KEY_DESIGNATION, true, MemberKey.KEY_USAGE);
+    return new MemberKey(key);
+  }
+
+  /**
+   * Decrypts the vault's member key using the member's private key
+   * @param jwe JWE containing the encrypted member key
+   * @param userPrivateKey The user's private key
+   * @returns The masterkey
+   */
+  public static async decryptWithUserKey(jwe: string, userPrivateKey: CryptoKey): Promise<MemberKey> {
+    let rawKey = new Uint8Array();
+    try {
+      const payload: MemberKeyPayload = await JWE.parseCompact(jwe).decrypt(Recipient.ecdhEs('org.cryptomator.hub.userkey', userPrivateKey));
+      rawKey = base64url.parse(payload.key);
+      const masterKey = crypto.subtle.importKey('raw', rawKey, MemberKey.KEY_DESIGNATION, true, MemberKey.KEY_USAGE);
+      return new MemberKey(await masterKey);
+    } finally {
+      rawKey.fill(0x00);
+    }
+  }
+
+  /**
+   * Encrypts this member key using the given public key
+   * @param userPublicKey The user's public key (DER-encoded)
+   * @returns a JWE containing this member key
+   */
+  public async encryptForUser(userPublicKey: CryptoKey | Uint8Array): Promise<string> {
+    // TODO: remove Uint8Array support?
+    if (userPublicKey instanceof Uint8Array) {
+      userPublicKey = await crypto.subtle.importKey('spki', userPublicKey, UserKeys.KEY_DESIGNATION, false, []);
+    }
+    const rawkey = new Uint8Array(await crypto.subtle.exportKey('raw', this.key));
+    try {
+      const payload: MemberKeyPayload = {
+        key: base64.stringify(rawkey),
+      };
+      const jwe = await JWE.build(payload).encrypt(Recipient.ecdhEs('org.cryptomator.hub.userkey', userPublicKey));
+      return jwe.compactSerialization();
+    } finally {
+      rawkey.fill(0x00);
+    }
+  }
+
+}
+// #endregion
+
+// #region Recovery Key
+/**
+ * The Recovery Key Pair used to encapsulate the UVF Vault Metadata CEK for recovery purposes.
+ */
+export class RecoveryKey {
+  public static readonly KEY_DESIGNATION: EcKeyGenParams = { name: 'ECDH', namedCurve: 'P-384' };
+
+  public static readonly KEY_USAGE: KeyUsage[] = ['deriveKey', 'deriveBits'];
+
+  protected constructor(readonly publicKey: CryptoKey, readonly privateKey?: CryptoKey) { }
+
+  /**
+   * Creates a new vault member key
+   * @returns new key
+   */
+  public static async create(): Promise<RecoveryKey> {
+    const keypair = await crypto.subtle.generateKey(RecoveryKey.KEY_DESIGNATION, false, RecoveryKey.KEY_USAGE);
+    return new RecoveryKey(keypair.publicKey, keypair.privateKey);
+  }
+
+  /**
+   * Loads the public key of the recovery key pair.
+   * @param publicKey the JWK-encoded public key
+   * @returns recovery key for encrypting vault metadata
+   */
+  public static async loadJwk(publicKey: JsonWebKey): Promise<RecoveryKey> {
+    const key = await crypto.subtle.importKey('jwk', publicKey, RecoveryKey.KEY_DESIGNATION, false, RecoveryKey.KEY_USAGE);
+    return new RecoveryKey(key);
+  }
+
+  /**
+   * Restores the Recovery Key Pair
+   * @param recoveryKey the encoded recovery key
+   * @returns complete recovery key for decrypting vault metadata
+   */
+  public static recover(recoveryKey: string) {
+    // TODO
+  }
+
+  /**
+   * Encodes the private key
+   * @returns private key in a human-readable encoding
+   */
+  public serialize(): string {
+    return 'TODO'; // TODO
+  }
+
+}
+// #endregion
+
+// #region Vault metadata
+/**
+ * The UVF Metadata file
+ */
 export class VaultMetadata {
 
   private constructor(
@@ -49,7 +164,6 @@ export class VaultMetadata {
     crypto.getRandomValues(kdfSalt);
     const initialSeedNo = initialSeedId[0];
     const seeds: Map<number, Uint8Array> = new Map<number, Uint8Array>();
-    // const memberKey = await crypto.subtle.generateKey(MEMBER_KEY_DESIGNATION, false, MEMBER_KEY_USAGE);
     seeds.set(initialSeedNo, initialSeedValue);
     return new VaultMetadata(automaticAccessGrant, seeds, initialSeedNo, initialSeedNo, kdfSalt);
   }
@@ -60,9 +174,9 @@ export class VaultMetadata {
    * @param memberKey the vault members' wrapping key
    * @returns Decrypted vault metadata
    */
-  public static async decryptWithMemberKey(uvfMetadataFile: string, memberKey: CryptoKey): Promise<VaultMetadata> {
+  public static async decryptWithMemberKey(uvfMetadataFile: string, memberKey: MemberKey): Promise<VaultMetadata> {
     const json: JsonJWE = JSON.parse(uvfMetadataFile);
-    const payload: MetadataPayload = await JWE.parseJson(json).decrypt(Recipient.a256kw('org.cryptomator.hub.memberkey', memberKey));
+    const payload: MetadataPayload = await JWE.parseJson(json).decrypt(Recipient.a256kw('org.cryptomator.hub.memberkey', memberKey.key));
     const seeds = new Map<number, Uint8Array>();
     for (const key in payload.seeds) {
       const num = parseSeedId(key);
@@ -87,12 +201,12 @@ export class VaultMetadata {
    * @param recoveryKey the public part of the recovery EC key pair
    * @returns `vault.uvf` file contents
    */
-  public async encrypt(memberKey: CryptoKey, recoveryKey: CryptoKey): Promise<string> {
-    const recoveryKeyID = `org.cryptomator.hub.recoverykey.${await getJwkThumbprint(recoveryKey)}`;
+  public async encrypt(memberKey: MemberKey, recoveryKey: RecoveryKey): Promise<string> {
+    const recoveryKeyID = `org.cryptomator.hub.recoverykey.${await getJwkThumbprint(recoveryKey.publicKey)}`;
     const protectedHeader: JWEHeader = {
       jku: 'jku.jwks' // URL relative to /api/vaults/{vaultid}/
     };
-    const jwe = await JWE.build(this.payload(), protectedHeader).encrypt(Recipient.a256kw('org.cryptomator.hub.memberkey', memberKey), Recipient.ecdhEs(recoveryKeyID, recoveryKey)); // TODO
+    const jwe = await JWE.build(this.payload(), protectedHeader).encrypt(Recipient.a256kw('org.cryptomator.hub.memberkey', memberKey.key), Recipient.ecdhEs(recoveryKeyID, recoveryKey.publicKey));
     const json = jwe.jsonSerialization();
     return JSON.stringify(json);
   }
@@ -116,6 +230,7 @@ export class VaultMetadata {
   }
 
 }
+// #endregion
 
 /**
  * Parses the 4 byte seed id from its base64url-encoded form to a 32 bit integer.

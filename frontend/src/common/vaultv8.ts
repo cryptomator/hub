@@ -59,7 +59,7 @@ export class VaultKeys {
 
 
   /**
-   * Decrypts the vault's masterkey (vault8 and uvf) using the user's private key
+   * Decrypts the vault's masterkey using the user's private key
    * @param jwe JWE containing the vault key
    * @param userPrivateKey The user's private key
    * @returns The masterkey
@@ -67,7 +67,7 @@ export class VaultKeys {
   public static async decryptWithUserKey(jwe: string, userPrivateKey: CryptoKey): Promise<VaultKeys> {
     let rawKey = new Uint8Array();
     try {
-      const payload: JWEPayload = await JWE.parseCompact(jwe).decrypt(Recipient.ecdhEs('org.cryptomator.hub.userKey', userPrivateKey));
+      const payload: JWEPayload = await JWE.parseCompact(jwe).decrypt(Recipient.ecdhEs('org.cryptomator.hub.userkey', userPrivateKey));
       rawKey = base64.parse(payload.key);
       const masterKey = crypto.subtle.importKey('raw', rawKey, VaultKeys.MASTERKEY_KEY_DESIGNATION, true, ['sign']);
       return new VaultKeys(await masterKey);
@@ -219,7 +219,7 @@ export class VaultKeys {
       const payload: JWEPayload = {
         key: base64.stringify(rawkey),
       };
-      const jwe = await JWE.build(payload).encrypt(Recipient.ecdhEs('org.cryptomator.hub.userKey', publicKey));
+      const jwe = await JWE.build(payload).encrypt(Recipient.ecdhEs('org.cryptomator.hub.userkey', publicKey));
       return jwe.compactSerialization();
     } finally {
       rawkey.fill(0x00);
