@@ -27,7 +27,7 @@ describe('JWE', () => {
   });
 
   describe('JWE serialization for single recipient', () => {
-    const jwe = new EncryptedJWE('protectedHeader', [{ encryptedKey: 'encryptedKey', header: { kid: 'alice' } }], 'iv', 'ciphertext', 'tag');
+    const jwe = new EncryptedJWE('protectedHeader', [{ encrypted_key: 'encryptedKey', header: { kid: 'alice' } }], 'iv', 'ciphertext', 'tag');
 
     it('compactSerialization', () => {
       const token = jwe.compactSerialization();
@@ -49,8 +49,8 @@ describe('JWE', () => {
 
   describe('JWE serialization for multiple recipients', () => {
     const recipients = [
-      { encryptedKey: 'encryptedKey1', header: { kid: 'alice' } },
-      { encryptedKey: 'encryptedKey2', header: { kid: 'bob' } }
+      { encrypted_key: 'encryptedKey1', header: { kid: 'alice' } },
+      { encrypted_key: 'encryptedKey2', header: { kid: 'bob' } }
     ];
     const jwe = new EncryptedJWE('protectedHeader', recipients, 'iv', 'ciphertext', 'tag');
 
