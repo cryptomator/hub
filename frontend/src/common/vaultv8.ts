@@ -1,6 +1,6 @@
 import * as miscreant from 'miscreant';
 import { base32, base64, base64url } from 'rfc4648';
-import { GCM_NONCE_LEN, UnwrapKeyError, UserKeys } from './crypto';
+import { GCM_NONCE_LEN, UnwrapKeyError, UserEncryptable, UserKeys } from './crypto';
 import { JWE, Recipient } from './jwe';
 import { CRC32, wordEncoder } from './util';
 
@@ -27,7 +27,7 @@ export interface VaultConfigHeaderHub {
 }
 
 
-export class VaultKeys {
+export class VaultKeys implements UserEncryptable {
   // in this browser application, this 512 bit key is used
   // as a hmac key to sign the vault config.
   // however when used by cryptomator, it gets split into

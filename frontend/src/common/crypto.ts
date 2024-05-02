@@ -18,6 +18,11 @@ interface UserKeysJWEPayload {
 
 export const GCM_NONCE_LEN = 12;
 
+export interface UserEncryptable {
+  encryptForUser(userPublicKey: CryptoKey | Uint8Array): Promise<string>;
+
+}
+
 export class UserKeys {
   public static readonly KEY_USAGES: KeyUsage[] = ['deriveBits'];
 

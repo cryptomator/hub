@@ -72,8 +72,7 @@ import { base64 } from 'rfc4648';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { AccessGrant, ConflictError, NotFoundError, UserDto, VaultDto } from '../common/backend';
-import { getFingerprint } from '../common/crypto';
-import { VaultKeys } from '../common/vaultv8';
+import { UserEncryptable, getFingerprint } from '../common/crypto';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -84,7 +83,7 @@ const onGrantPermissionError = ref<Error | null>();
 const props = defineProps<{
   vault: VaultDto
   users: UserDto[]
-  vaultKeys: VaultKeys
+  vaultKeys: UserEncryptable
 }>();
 
 const emit = defineEmits<{

@@ -1,5 +1,5 @@
 import { base64, base64url } from 'rfc4648';
-import { UserKeys, getJwkThumbprint } from './crypto';
+import { UserEncryptable, UserKeys, getJwkThumbprint } from './crypto';
 import { JWE, JWEHeader, JsonJWE, Recipient } from './jwe';
 
 type MetadataPayload = {
@@ -27,8 +27,8 @@ type MemberKeyPayload = {
  * The AES Key Wrap Key used to encapsulate the UVF Vault Metadata CEK for a vault member.
  * This key is encrypted for each vault member individually, using the user's public key.
  */
-export class MemberKey {
-  public static readonly KEY_DESIGNATION: AesKeyGenParams = { name: 'AES-KW', length: 256 };
+export class MemberKey implements UserEncryptable {
+  public static readonly KEY_DESIGNATION: AesKeyGenParams | AesKeyAlgorithm = { name: 'AES-KW', length: 256 };
 
   public static readonly KEY_USAGE: KeyUsage[] = ['wrapKey', 'unwrapKey'];
 
@@ -53,9 +53,9 @@ export class MemberKey {
     let rawKey = new Uint8Array();
     try {
       const payload: MemberKeyPayload = await JWE.parseCompact(jwe).decrypt(Recipient.ecdhEs('org.cryptomator.hub.userkey', userPrivateKey));
-      rawKey = base64url.parse(payload.key);
-      const masterKey = crypto.subtle.importKey('raw', rawKey, MemberKey.KEY_DESIGNATION, true, MemberKey.KEY_USAGE);
-      return new MemberKey(await masterKey);
+      rawKey = base64.parse(payload.key);
+      const memberKey = await crypto.subtle.importKey('raw', rawKey, MemberKey.KEY_DESIGNATION, true, MemberKey.KEY_USAGE);
+      return new MemberKey(memberKey);
     } finally {
       rawKey.fill(0x00);
     }
