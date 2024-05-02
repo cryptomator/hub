@@ -1,5 +1,7 @@
+import JSZip from 'jszip';
 import { base64, base64url } from 'rfc4648';
-import { UserEncryptable, UserKeys, getJwkThumbprint } from './crypto';
+import { VaultDto } from './backend';
+import { AccessTokenProducing, UserKeys, VaultTemplateProducing, getJwkThumbprint } from './crypto';
 import { JWE, JWEHeader, JsonJWE, Recipient } from './jwe';
 
 type MetadataPayload = {
@@ -27,7 +29,7 @@ type MemberKeyPayload = {
  * The AES Key Wrap Key used to encapsulate the UVF Vault Metadata CEK for a vault member.
  * This key is encrypted for each vault member individually, using the user's public key.
  */
-export class MemberKey implements UserEncryptable {
+export class MemberKey {
   public static readonly KEY_DESIGNATION: AesKeyGenParams | AesKeyAlgorithm = { name: 'AES-KW', length: 256 };
 
   public static readonly KEY_USAGE: KeyUsage[] = ['wrapKey', 'unwrapKey'];
@@ -95,7 +97,7 @@ export class RecoveryKey {
 
   public static readonly KEY_USAGE: KeyUsage[] = ['deriveKey', 'deriveBits'];
 
-  protected constructor(readonly publicKey: CryptoKey, readonly privateKey?: CryptoKey) { }
+  protected constructor(private publicKey: CryptoKey, private privateKey?: CryptoKey) { }
 
   /**
    * Creates a new vault member key
@@ -108,12 +110,14 @@ export class RecoveryKey {
 
   /**
    * Loads the public key of the recovery key pair.
-   * @param publicKey the JWK-encoded public key
+   * @param publicKey the DER-encoded public key
    * @returns recovery key for encrypting vault metadata
    */
-  public static async loadJwk(publicKey: JsonWebKey): Promise<RecoveryKey> {
-    const key = await crypto.subtle.importKey('jwk', publicKey, RecoveryKey.KEY_DESIGNATION, false, RecoveryKey.KEY_USAGE);
-    return new RecoveryKey(key);
+  public static async load(publicKey: CryptoKey | Uint8Array): Promise<RecoveryKey> {
+    if (publicKey instanceof Uint8Array) {
+      publicKey = await crypto.subtle.importKey('spki', publicKey, RecoveryKey.KEY_DESIGNATION, true, []);
+    }
+    return new RecoveryKey(publicKey);
   }
 
   /**
@@ -240,6 +244,46 @@ export class VaultMetadata {
 
 }
 // #endregion
+// #region Vault metadata
+
+/**
+ * A UVF-formatted Vault
+ */
+export class UniversalVaultFormat implements AccessTokenProducing, VaultTemplateProducing {
+  private constructor(readonly metadata: VaultMetadata, readonly memberKey: MemberKey, readonly recoveryKey: RecoveryKey) { }
+
+  public static async create(automaticAccessGrant: VaultMetadataJWEAutomaticAccessGrantDto): Promise<UniversalVaultFormat> {
+    const metadata = await VaultMetadata.create(automaticAccessGrant);
+    const memberKey = await MemberKey.create();
+    const recoveryKey = await RecoveryKey.create();
+    return new UniversalVaultFormat(metadata, memberKey, recoveryKey);
+  }
+
+  public static async decrypt(vault: VaultDto, memberKey: MemberKey): Promise<UniversalVaultFormat> {
+    if (!vault.uvfMetadataFile || !vault.uvfRecoveryPublicKey) {
+      throw new Error('Not a UVF vault.');
+    }
+    const metadata = await VaultMetadata.decryptWithMemberKey(vault.uvfMetadataFile, memberKey);
+    const recoveryKey = await RecoveryKey.load(base64.parse(vault.uvfRecoveryPublicKey));
+    return new UniversalVaultFormat(metadata, memberKey, recoveryKey);
+  }
+
+  public async createMetadataFile(): Promise<string> {
+    return this.metadata.encrypt(this.memberKey, this.recoveryKey);
+  }
+
+  public async exportTemplate(vault: VaultDto): Promise<Blob> {
+    const zip = new JSZip();
+    zip.file('vault.uvf', this.createMetadataFile());
+    // TODO: add root folder
+    //zip.folder('d')?.folder(rootDirHash.substring(0, 2))?.folder(rootDirHash.substring(2));
+    return zip.generateAsync({ type: 'blob' });
+  }
+
+  public async encryptForUser(userPublicKey: CryptoKey | Uint8Array): Promise<string> {
+    return this.memberKey.encryptForUser(userPublicKey);
+  }
+}
 
 /**
  * Parses the 4 byte seed id from its base64url-encoded form to a 32 bit integer.

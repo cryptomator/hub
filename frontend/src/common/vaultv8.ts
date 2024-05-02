@@ -1,6 +1,9 @@
+import JSZip from 'jszip';
 import * as miscreant from 'miscreant';
 import { base32, base64, base64url } from 'rfc4648';
-import { GCM_NONCE_LEN, UnwrapKeyError, UserEncryptable, UserKeys } from './crypto';
+import { VaultDto } from './backend';
+import config, { absBackendBaseURL, absFrontendBaseURL } from './config';
+import { AccessTokenProducing, GCM_NONCE_LEN, UnwrapKeyError, UserKeys, VaultTemplateProducing } from './crypto';
 import { JWE, Recipient } from './jwe';
 import { CRC32, wordEncoder } from './util';
 
@@ -8,14 +11,14 @@ interface JWEPayload {
   key: string
 }
 
-export interface VaultConfigPayload {
+interface VaultConfigPayload {
   jti: string
   format: number
   cipherCombo: string
   shorteningThreshold: number
 }
 
-export interface VaultConfigHeaderHub {
+interface VaultConfigHeaderHub {
   clientId: string
   authEndpoint: string
   tokenEndpoint: string
@@ -27,7 +30,7 @@ export interface VaultConfigHeaderHub {
 }
 
 
-export class VaultKeys implements UserEncryptable {
+export class VaultKeys implements AccessTokenProducing, VaultTemplateProducing {
   // in this browser application, this 512 bit key is used
   // as a hmac key to sign the vault config.
   // however when used by cryptomator, it gets split into
@@ -170,7 +173,38 @@ export class VaultKeys implements UserEncryptable {
     return new VaultKeys(await key);
   }
 
-  public async createVaultConfig(kid: string, hubConfig: VaultConfigHeaderHub, payload: VaultConfigPayload): Promise<string> {
+  public async exportTemplate(vault: VaultDto): Promise<Blob> {
+    const cfg = config.get();
+
+    const kid = `hub+${absBackendBaseURL}vaults/${vault.id}`;
+
+    const hubConfig: VaultConfigHeaderHub = {
+      clientId: cfg.keycloakClientIdCryptomator,
+      authEndpoint: cfg.keycloakAuthEndpoint,
+      tokenEndpoint: cfg.keycloakTokenEndpoint,
+      authSuccessUrl: `${absFrontendBaseURL}unlock-success?vault=${vault.id}`,
+      authErrorUrl: `${absFrontendBaseURL}unlock-error?vault=${vault.id}`,
+      apiBaseUrl: absBackendBaseURL,
+      devicesResourceUrl: `${absBackendBaseURL}devices/`,
+    };
+
+    const jwtPayload: VaultConfigPayload = {
+      jti: vault.id,
+      format: 8,
+      cipherCombo: 'SIV_GCM',
+      shorteningThreshold: 220
+    };
+
+    const vaultConfigToken = await this.createVaultConfig(kid, hubConfig, jwtPayload);
+    const rootDirHash = await this.hashDirectoryId('');
+
+    const zip = new JSZip();
+    zip.file('vault.cryptomator', vaultConfigToken);
+    zip.folder('d')?.folder(rootDirHash.substring(0, 2))?.folder(rootDirHash.substring(2));
+    return zip.generateAsync({ type: 'blob' });
+  }
+
+  private async createVaultConfig(kid: string, hubConfig: VaultConfigHeaderHub, payload: VaultConfigPayload): Promise<string> {
     const header = JSON.stringify({
       kid: kid,
       typ: 'jwt',
@@ -189,7 +223,7 @@ export class VaultKeys implements UserEncryptable {
     return unsignedToken + '.' + base64url.stringify(new Uint8Array(signature), { pad: false });
   }
 
-  public async hashDirectoryId(cleartextDirectoryId: string): Promise<string> {
+  private async hashDirectoryId(cleartextDirectoryId: string): Promise<string> {
     const dirHash = new TextEncoder().encode(cleartextDirectoryId);
     const rawkey = new Uint8Array(await crypto.subtle.exportKey('raw', this.masterKey));
     try {

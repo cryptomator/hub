@@ -1,4 +1,5 @@
 import { base16, base64, base64url } from 'rfc4648';
+import { VaultDto } from './backend';
 import { JWE, Recipient } from './jwe';
 import { DB } from './util';
 
@@ -18,8 +19,23 @@ interface UserKeysJWEPayload {
 
 export const GCM_NONCE_LEN = 12;
 
-export interface UserEncryptable {
+export interface AccessTokenProducing {
+
+  /**
+   * Creates a user-specific access token for the given vault.
+   * @param userPublicKey the public key of the user
+   */
   encryptForUser(userPublicKey: CryptoKey | Uint8Array): Promise<string>;
+
+}
+
+export interface VaultTemplateProducing {
+
+  /**
+   * Produces a zip file containing the vault template.
+   * @param vault The vault
+   */
+  exportTemplate(vault: VaultDto): Promise<Blob>;
 
 }
 

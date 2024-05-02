@@ -61,7 +61,7 @@
               <div class="col-span-6 sm:col-span-3">
                 <label for="vaultName" class="block text-sm font-medium text-gray-700">{{
     t('createVault.enterVaultDetails.vaultName') }}</label>
-                <input id="vaultName" v-model="vaultName" :disabled="processing" type="text"
+                <input id="vaultName" v-model="vault.name" :disabled="processing" type="text"
                   class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200"
                   :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onCreateError instanceof FormValidationFailedError }"
                   pattern="^(?! )([^\x5C\x2F:*?\x22<>\x7C])+(?<![ \x2E])$" required />
@@ -73,7 +73,7 @@
                 <label for="vaultDescription" class="block text-sm font-medium text-gray-700">
                   {{ t('createVault.enterVaultDetails.vaultDescription') }}
                   <span class="text-xs text-gray-500">({{ t('common.optional') }})</span></label>
-                <input id="vaultDescription" v-model="vaultDescription" :disabled="processing" type="text"
+                <input id="vaultDescription" v-model="vault.description" :disabled="processing" type="text"
                   class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" />
               </div>
             </div>
@@ -214,9 +214,9 @@ import { base64 } from 'rfc4648';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { AccessGrant, PaymentRequiredError, VaultDto } from '../common/backend';
+import { VaultTemplateProducing } from '../common/crypto';
 import { debounce } from '../common/util';
-import { MemberKey, RecoveryKey, VaultMetadata } from '../common/uvf';
-import { VaultConfig } from '../common/vaultconfig';
+import { UniversalVaultFormat } from '../common/uvf';
 import { VaultKeys } from '../common/vaultv8';
 
 enum State {
@@ -256,16 +256,19 @@ const onDownloadTemplateError = ref<Error | null>(null);
 
 const state = ref(State.Initial);
 const processing = ref(false);
-const vaultName = ref('');
-const vaultDescription = ref<string | undefined>();
+const vault = ref<VaultDto>({
+      id: crypto.randomUUID(),
+      name: '',
+      description: '',
+      archived: false,
+      creationTime: new Date()
+    });
 const copiedRecoveryKey = ref(false);
 const debouncedCopyFinish = debounce(() => copiedRecoveryKey.value = false, 2000);
 const confirmRecoveryKey = ref(false);
 const format8VaultKeys = ref<VaultKeys>();
 const recoveryKeyStr = ref<string>('');
-const uvfMetadata = ref<VaultMetadata>();
-const uvfRecoveryKey = ref<RecoveryKey>();
-const vaultConfig = ref<VaultConfig>();
+const uvfVault = ref<UniversalVaultFormat>();
 
 const props = defineProps<{
   recover: boolean
@@ -283,9 +286,8 @@ async function initialize() {
         recoveryKeyStr.value = await format8VaultKeys.value.createRecoveryKey();
         break;
       case VaultType.UniversalVaultFormat:
-        uvfMetadata.value = await VaultMetadata.create({ enabled: false, maxWotDepth: 0 });
-        uvfRecoveryKey.value = await RecoveryKey.create();
-        recoveryKeyStr.value = uvfRecoveryKey.value.serializePrivateKey();
+        uvfVault.value = await UniversalVaultFormat.create({ enabled: false, maxWotDepth: 0 });
+        recoveryKeyStr.value = uvfVault.value.recoveryKey.serializePrivateKey();
         break;
     }
     state.value = State.EnterVaultDetails;
@@ -336,36 +338,27 @@ async function createVault() {
     if (!owner.publicKey) {
       throw new Error('Invalid state');
     }
-    const vault: VaultDto = {
-      id: crypto.randomUUID(),
-      name: vaultName.value,
-      description: vaultDescription.value,
-      archived: false,
-      creationTime: new Date()
-    };
     const ownerGrant: AccessGrant = { userId: owner.id, token: '' };
     switch (vaultType) {
       case VaultType.VaultFormat8: {
         if (!format8VaultKeys.value) {
           throw new Error('Invalid state');
         }
-        vaultConfig.value = await VaultConfig.create(vault.id, format8VaultKeys.value);
         ownerGrant.token = await format8VaultKeys.value.encryptForUser(base64.parse(owner.publicKey));
         break;
       }
       case VaultType.UniversalVaultFormat: {
-        if (!uvfMetadata.value || !uvfRecoveryKey.value) {
+        if (!uvfVault.value) {
           throw new Error('Invalid state');
         }
-        const memberKey = await MemberKey.create();
-        ownerGrant.token = await memberKey.encryptForUser(base64.parse(owner.publicKey));
-        vault.uvfMetadataFile = await uvfMetadata.value.encrypt(memberKey, uvfRecoveryKey.value);
-        vault.uvfRecoveryPublicKey = await uvfRecoveryKey.value.serializePublicKey();
+        ownerGrant.token = await uvfVault.value.encryptForUser(base64.parse(owner.publicKey));
+        vault.value.uvfMetadataFile = await uvfVault.value.createMetadataFile();
+        vault.value.uvfRecoveryPublicKey = await uvfVault.value.recoveryKey.serializePublicKey();
         break;
       }
     }
-    await backend.vaults.createOrUpdateVault(vault);
-    await backend.vaults.grantAccess(vault.id, ownerGrant);
+    await backend.vaults.createOrUpdateVault(vault.value);
+    await backend.vaults.grantAccess(vault.value.id, ownerGrant);
     state.value = State.Finished;
   } catch (error) {
     console.error('Creating vault failed.', error);
@@ -382,11 +375,15 @@ async function copyRecoveryKey() {
 }
 
 async function downloadVaultTemplate() {
+  if (!format8VaultKeys.value && !uvfVault.value) {
+    throw new Error('Invalid state');
+  }
   onDownloadTemplateError.value = null;
   try {
-    const blob = await vaultConfig.value?.exportTemplate();
+    const templateProducer: VaultTemplateProducing = format8VaultKeys.value || uvfVault.value!;
+    const blob = await templateProducer.exportTemplate(vault.value);
     if (blob != null) {
-      saveAs(blob, `${vaultName.value}.zip`);
+      saveAs(blob, `${vault.value.name}.zip`);
     } else {
       throw new EmptyVaultTemplateError();
     }
