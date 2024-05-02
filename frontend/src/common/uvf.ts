@@ -134,8 +134,27 @@ export class RecoveryKey {
    * Encodes the private key
    * @returns private key in a human-readable encoding
    */
-  public serializePrivateKey(): string {
-    return 'TODO'; // TODO
+  public async serializePrivateKey(): Promise<string> {
+    if (!this.privateKey) {
+      throw new Error('Private key not available');
+    }
+    const rawkey = new Uint8Array(await crypto.subtle.exportKey('pkcs8', this.privateKey));
+
+    // add 16 bit checksum:
+    const crc32 = CRC32.compute(rawkey);
+    const checksum = new Uint8Array(2);
+    checksum[0] = crc32 & 0xff;      // append the least significant byte of the crc
+    checksum[1] = crc32 >> 8 & 0xff; // followed by the second-least significant byte
+    const combined = new Uint8Array([...rawkey, ...checksum]);
+
+    // add 1-3 bytes of padding:
+    const numPaddingBytes = 3 - (combined.length % 3);
+    const padding = new Uint8Array(numPaddingBytes);
+    padding.fill(numPaddingBytes & 0xFF); // 01 or 02 02 or 03 03 03
+    const padded = new Uint8Array([...combined, ...padding]);
+
+    // encode using human-readable words:
+    return wordEncoder.encodePadded(padded);
   }
 
   /**
