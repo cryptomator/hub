@@ -3,6 +3,7 @@ import { base64, base64url } from 'rfc4648';
 import { VaultDto } from './backend';
 import { AccessTokenProducing, UserKeys, VaultTemplateProducing, getJwkThumbprint } from './crypto';
 import { JWE, JWEHeader, JsonJWE, Recipient } from './jwe';
+import { CRC32, wordEncoder } from './util';
 
 type MetadataPayload = {
   fileFormat: 'AES-256-GCM-32k';
@@ -97,14 +98,14 @@ export class RecoveryKey {
 
   public static readonly KEY_USAGE: KeyUsage[] = ['deriveKey', 'deriveBits'];
 
-  protected constructor(private publicKey: CryptoKey, private privateKey?: CryptoKey) { }
+  protected constructor(readonly publicKey: CryptoKey, private privateKey?: CryptoKey) { }
 
   /**
    * Creates a new vault member key
    * @returns new key
    */
   public static async create(): Promise<RecoveryKey> {
-    const keypair = await crypto.subtle.generateKey(RecoveryKey.KEY_DESIGNATION, false, RecoveryKey.KEY_USAGE);
+    const keypair = await crypto.subtle.generateKey(RecoveryKey.KEY_DESIGNATION, true, RecoveryKey.KEY_USAGE);
     return new RecoveryKey(keypair.publicKey, keypair.privateKey);
   }
 

@@ -223,7 +223,8 @@ export class VaultKeys implements AccessTokenProducing, VaultTemplateProducing {
     return unsignedToken + '.' + base64url.stringify(new Uint8Array(signature), { pad: false });
   }
 
-  private async hashDirectoryId(cleartextDirectoryId: string): Promise<string> {
+  // visible for testing
+  public async hashDirectoryId(cleartextDirectoryId: string): Promise<string> {
     const dirHash = new TextEncoder().encode(cleartextDirectoryId);
     const rawkey = new Uint8Array(await crypto.subtle.exportKey('raw', this.masterKey));
     try {
