@@ -129,8 +129,17 @@ export class RecoveryKey {
    * Encodes the private key
    * @returns private key in a human-readable encoding
    */
-  public serialize(): string {
+  public serializePrivateKey(): string {
     return 'TODO'; // TODO
+  }
+
+  /**
+   * Encodes the public key
+   * @returns public key in base64-encoded DER format
+   */
+  public async serializePublicKey(): Promise<string> {
+    const bytes = await crypto.subtle.exportKey('spki', this.publicKey);
+    return base64.stringify(new Uint8Array(bytes), { pad: true });
   }
 
 }

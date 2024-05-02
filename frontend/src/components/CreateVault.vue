@@ -22,14 +22,19 @@
           </div>
           <div class="mt-5 sm:mt-6">
             <label for="recoveryKey" class="sr-only">{{ t('createVault.enterRecoveryKey.recoveryKey') }}</label>
-            <textarea id="recoveryKey" v-model="recoveryKeyStr" rows="6" name="recoveryKey" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onRecoverError instanceof FormValidationFailedError }" required />
+            <textarea id="recoveryKey" v-model="recoveryKeyStr" rows="6" name="recoveryKey"
+              class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+              :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onRecoverError instanceof FormValidationFailedError }"
+              required />
           </div>
           <div class="mt-5 sm:mt-6">
-            <button type="submit" :disabled="processing" class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:primary focus:ring-offset-2 sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
+            <button type="submit" :disabled="processing"
+              class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:primary focus:ring-offset-2 sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
               {{ t('createVault.enterRecoveryKey.submit') }}
             </button>
             <div v-if="onRecoverError != null">
-              <p v-if="onRecoverError instanceof FormValidationFailedError" class="text-sm text-red-900 mt-2">{{ t('createVault.error.formValidationFailed') }}</p>
+              <p v-if="onRecoverError instanceof FormValidationFailedError" class="text-sm text-red-900 mt-2">{{
+    t('createVault.error.formValidationFailed') }}</p>
               <p v-else class="text-sm text-red-900 mt-2">{{ t('createVault.error.invalidRecoveryKey') }}</p>
             </div>
           </div>
@@ -54,16 +59,22 @@
           <div class="mt-5 md:mt-0 md:col-span-2">
             <div class="grid grid-cols-6 gap-6">
               <div class="col-span-6 sm:col-span-3">
-                <label for="vaultName" class="block text-sm font-medium text-gray-700">{{ t('createVault.enterVaultDetails.vaultName') }}</label>
-                <input id="vaultName" v-model="vaultName" :disabled="processing" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onCreateError instanceof FormValidationFailedError }" pattern="^(?! )([^\x5C\x2F:*?\x22<>\x7C])+(?<![ \x2E])$" required />
-                <p v-if="onCreateError instanceof FormValidationFailedError" class="text-sm text-red-900 mt-2">{{ t('createVault.error.illegalVaultName') }} \, /, :, *, ?, ", &lt;, >, |</p>
+                <label for="vaultName" class="block text-sm font-medium text-gray-700">{{
+    t('createVault.enterVaultDetails.vaultName') }}</label>
+                <input id="vaultName" v-model="vaultName" :disabled="processing" type="text"
+                  class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200"
+                  :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onCreateError instanceof FormValidationFailedError }"
+                  pattern="^(?! )([^\x5C\x2F:*?\x22<>\x7C])+(?<![ \x2E])$" required />
+                <p v-if="onCreateError instanceof FormValidationFailedError" class="text-sm text-red-900 mt-2">{{
+    t('createVault.error.illegalVaultName') }} \, /, :, *, ?, ", &lt;, >, |</p>
               </div>
 
               <div class="col-span-6 sm:col-span-4">
                 <label for="vaultDescription" class="block text-sm font-medium text-gray-700">
                   {{ t('createVault.enterVaultDetails.vaultDescription') }}
                   <span class="text-xs text-gray-500">({{ t('common.optional') }})</span></label>
-                <input id="vaultDescription" v-model="vaultDescription" :disabled="processing" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200"/>
+                <input id="vaultDescription" v-model="vaultDescription" :disabled="processing" type="text"
+                  class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" />
               </div>
             </div>
           </div>
@@ -72,10 +83,12 @@
 
       <div class="flex justify-end items-center">
         <div v-if="onCreateError != null">
-          <p v-if="onCreateError instanceof FormValidationFailedError" class="text-sm text-red-900 mr-4">{{ t('createVault.error.formValidationFailed') }}</p>
+          <p v-if="onCreateError instanceof FormValidationFailedError" class="text-sm text-red-900 mr-4">{{
+    t('createVault.error.formValidationFailed') }}</p>
           <p v-else class="text-sm text-red-900 mr-4">{{ t('common.unexpectedError', [onCreateError.message]) }}</p>
         </div>
-        <button type="submit" :disabled="processing" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
+        <button type="submit" :disabled="processing"
+          class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
           {{ t('common.next') }}
         </button>
       </div>
@@ -99,9 +112,11 @@
               </p>
             </div>
             <div class="relative mt-5 sm:mt-6">
-              <div class="overflow-hidden rounded-lg border border-gray-300 shadow-sm focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
+              <div
+                class="overflow-hidden rounded-lg border border-gray-300 shadow-sm focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
                 <label for="recoveryKey" class="sr-only">{{ t('createVault.showRecoveryKey.recoveryKey') }}</label>
-                <textarea id="recoveryKey" v-model="recoveryKeyStr" rows="6" name="recoveryKey" class="block w-full resize-none border-0 py-3 focus:ring-0 sm:text-sm" readonly />
+                <textarea id="recoveryKey" v-model="recoveryKeyStr" rows="6" name="recoveryKey"
+                  class="block w-full resize-none border-0 py-3 focus:ring-0 sm:text-sm" readonly />
 
                 <!-- Spacer element to match the height of the toolbar -->
                 <div class="py-2" aria-hidden="true">
@@ -112,10 +127,14 @@
               <div class="absolute inset-x-0 bottom-0">
                 <div class="flex flex-nowrap justify-end space-x-2 py-2 px-2 sm:px-3">
                   <div class="flex-shrink-0">
-                    <button type="button" class="relative inline-flex items-center whitespace-nowrap rounded-full bg-gray-50 py-2 px-2 text-sm font-medium text-gray-500 hover:bg-gray-100 sm:px-3" @click="copyRecoveryKey()">
+                    <button type="button"
+                      class="relative inline-flex items-center whitespace-nowrap rounded-full bg-gray-50 py-2 px-2 text-sm font-medium text-gray-500 hover:bg-gray-100 sm:px-3"
+                      @click="copyRecoveryKey()">
                       <ClipboardIcon class="h-5 w-5 flex-shrink-0 text-gray-300 sm:-ml-1" aria-hidden="true" />
-                      <span v-if="!copiedRecoveryKey" class="hidden truncate sm:ml-2 sm:block text-gray-900">{{ t('common.copy') }}</span>
-                      <span v-else class="hidden truncate sm:ml-2 sm:block text-gray-900">{{ t('common.copied') }}</span>
+                      <span v-if="!copiedRecoveryKey" class="hidden truncate sm:ml-2 sm:block text-gray-900">{{
+    t('common.copy') }}</span>
+                      <span v-else class="hidden truncate sm:ml-2 sm:block text-gray-900">{{ t('common.copied')
+                        }}</span>
                     </button>
                   </div>
                 </div>
@@ -123,19 +142,24 @@
             </div>
             <div class="relative flex items-start text-left mt-5 sm:mt-6">
               <div class="flex h-5 items-center">
-                <input id="confirmRecoveryKey" v-model="confirmRecoveryKey" name="confirmRecoveryKey" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary" required>
+                <input id="confirmRecoveryKey" v-model="confirmRecoveryKey" name="confirmRecoveryKey" type="checkbox"
+                  class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary" required>
               </div>
               <div class="ml-3 text-sm">
-                <label for="confirmRecoveryKey" class="font-medium text-gray-700">{{ t('createVault.showRecoveryKey.confirmRecoveryKey') }}</label>
+                <label for="confirmRecoveryKey" class="font-medium text-gray-700">{{
+    t('createVault.showRecoveryKey.confirmRecoveryKey') }}</label>
               </div>
             </div>
             <div class="mt-5 sm:mt-6">
-              <button type="submit" :disabled="!confirmRecoveryKey || processing" class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:primary focus:ring-offset-2 sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
+              <button type="submit" :disabled="!confirmRecoveryKey || processing"
+                class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:primary focus:ring-offset-2 sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
                 {{ t('createVault.showRecoveryKey.submit') }}
               </button>
               <div v-if="onCreateError != null">
-                <p v-if="onCreateError instanceof PaymentRequiredError" class="text-sm text-red-900 mt-2">{{ t('createVault.error.paymentRequired') }}</p>
-                <p v-else class="text-sm text-red-900 mt-2">{{ t('common.unexpectedError', [onCreateError.message]) }}</p>
+                <p v-if="onCreateError instanceof PaymentRequiredError" class="text-sm text-red-900 mt-2">{{
+    t('createVault.error.paymentRequired') }}</p>
+                <p v-else class="text-sm text-red-900 mt-2">{{ t('common.unexpectedError', [onCreateError.message]) }}
+                </p>
               </div>
             </div>
           </div>
@@ -161,11 +185,15 @@
           </div>
         </div>
         <div class="mt-5 sm:mt-6">
-          <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="downloadVaultTemplate()">
+          <button type="button"
+            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+            @click="downloadVaultTemplate()">
             <ArrowDownTrayIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
             {{ t('createVault.success.download') }}
           </button>
-          <p v-if="onDownloadTemplateError != null " class="text-sm text-red-900 mr-4">{{ t('createVault.error.downloadTemplateFailed', [onDownloadTemplateError.message]) }}</p> <!-- TODO: not beautiful-->
+          <p v-if="onDownloadTemplateError != null" class="text-sm text-red-900 mr-4">{{
+            t('createVault.error.downloadTemplateFailed', [onDownloadTemplateError.message]) }}</p>
+          <!-- TODO: not beautiful-->
         </div>
         <div class="mt-2">
           <router-link to="/app/vaults" class="text-sm text-gray-500">
@@ -185,7 +213,7 @@ import { saveAs } from 'file-saver';
 import { base64 } from 'rfc4648';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { PaymentRequiredError } from '../common/backend';
+import backend, { AccessGrant, PaymentRequiredError, VaultDto } from '../common/backend';
 import { debounce } from '../common/util';
 import { MemberKey, RecoveryKey, VaultMetadata } from '../common/uvf';
 import { VaultConfig } from '../common/vaultconfig';
@@ -222,8 +250,8 @@ const { t } = useI18n({ useScope: 'global' });
 
 const form = ref<HTMLFormElement>();
 
-const onCreateError = ref<Error | null >(null);
-const onRecoverError = ref<Error | null >(null);
+const onCreateError = ref<Error | null>(null);
+const onRecoverError = ref<Error | null>(null);
 const onDownloadTemplateError = ref<Error | null>(null);
 
 const state = ref(State.Initial);
@@ -249,15 +277,15 @@ async function initialize() {
   if (props.recover) {
     state.value = State.EnterRecoveryKey;
   } else {
-    switch(vaultType) {
+    switch (vaultType) {
       case VaultType.VaultFormat8:
         format8VaultKeys.value = await VaultKeys.create();
         recoveryKeyStr.value = await format8VaultKeys.value.createRecoveryKey();
         break;
       case VaultType.UniversalVaultFormat:
-        uvfMetadata.value = await VaultMetadata.create({enabled: false, maxWotDepth: 0});
+        uvfMetadata.value = await VaultMetadata.create({ enabled: false, maxWotDepth: 0 });
         uvfRecoveryKey.value = await RecoveryKey.create();
-        recoveryKeyStr.value = uvfRecoveryKey.value.serialize();
+        recoveryKeyStr.value = uvfRecoveryKey.value.serializePrivateKey();
         break;
     }
     state.value = State.EnterVaultDetails;
@@ -308,16 +336,21 @@ async function createVault() {
     if (!owner.publicKey) {
       throw new Error('Invalid state');
     }
-    const vaultId = crypto.randomUUID();
-    switch(vaultType) {
+    const vault: VaultDto = {
+      id: crypto.randomUUID(),
+      name: vaultName.value,
+      description: vaultDescription.value,
+      archived: false,
+      creationTime: new Date()
+    };
+    const ownerGrant: AccessGrant = { userId: owner.id, token: '' };
+    switch (vaultType) {
       case VaultType.VaultFormat8: {
         if (!format8VaultKeys.value) {
           throw new Error('Invalid state');
         }
-        vaultConfig.value = await VaultConfig.create(vaultId, format8VaultKeys.value);
-        const ownerJwe = await format8VaultKeys.value.encryptForUser(base64.parse(owner.publicKey));
-        await backend.vaults.createOrUpdateVault(vaultId, vaultName.value, false, '', vaultDescription.value);
-        await backend.vaults.grantAccess(vaultId, { userId: owner.id, token: ownerJwe });
+        vaultConfig.value = await VaultConfig.create(vault.id, format8VaultKeys.value);
+        ownerGrant.token = await format8VaultKeys.value.encryptForUser(base64.parse(owner.publicKey));
         break;
       }
       case VaultType.UniversalVaultFormat: {
@@ -325,13 +358,14 @@ async function createVault() {
           throw new Error('Invalid state');
         }
         const memberKey = await MemberKey.create();
-        const ownerJwe = await memberKey.encryptForUser(base64.parse(owner.publicKey));
-        const vaultUvfContents = await uvfMetadata.value.encrypt(memberKey, uvfRecoveryKey.value);
-        await backend.vaults.createOrUpdateVault(vaultId, vaultName.value, false, vaultUvfContents, vaultDescription.value);
-        await backend.vaults.grantAccess(vaultId, { userId: owner.id, token: ownerJwe });
+        ownerGrant.token = await memberKey.encryptForUser(base64.parse(owner.publicKey));
+        vault.uvfMetadataFile = await uvfMetadata.value.encrypt(memberKey, uvfRecoveryKey.value);
+        vault.uvfRecoveryPublicKey = await uvfRecoveryKey.value.serializePublicKey();
         break;
       }
     }
+    await backend.vaults.createOrUpdateVault(vault);
+    await backend.vaults.grantAccess(vault.id, ownerGrant);
     state.value = State.Finished;
   } catch (error) {
     console.error('Creating vault failed.', error);

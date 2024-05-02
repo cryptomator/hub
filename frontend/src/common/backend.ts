@@ -46,7 +46,8 @@ export type VaultDto = {
   salt?: string;
   authPublicKey?: string;
   authPrivateKey?: string;
-  metadata: string;
+  uvfMetadataFile?: string;
+  uvfRecoveryPublicKey?: string;
 };
 
 export type DeviceDto = {
@@ -268,9 +269,8 @@ class VaultService {
       .catch(err => rethrowAndConvertIfExpected(err, 403));
   }
 
-  public async createOrUpdateVault(vaultId: string, name: string, archived: boolean, metadata: string, description?: string): Promise<VaultDto> {
-    const body: VaultDto = { id: vaultId, name: name, description: description, archived: archived, creationTime: new Date(), metadata: metadata };
-    return axiosAuth.put(`/vaults/${vaultId}`, body)
+  public async createOrUpdateVault(vault: VaultDto): Promise<VaultDto> {
+    return axiosAuth.put(`/vaults/${vault.id}`, vault)
       .then(response => response.data)
       .catch((error) => rethrowAndConvertIfExpected(error, 402, 404));
   }
