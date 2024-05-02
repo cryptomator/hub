@@ -105,8 +105,11 @@ public class Vault {
 	@Column(name = "archived", nullable = false)
 	private boolean archived;
 
-	@Column(name = "metadata", nullable = false)
-	private String metadata;
+	@Column(name = "uvf_metadata_file")
+	private String uvfMetadataFile;
+
+	@Column(name = "uvf_recovery_pubkey")
+	private String uvfRecoveryPubKey;
 
 	public Optional<ECPublicKey> getAuthenticationPublicKeyOptional() {
 		if (authenticationPublicKey == null) {
@@ -233,12 +236,20 @@ public class Vault {
 		this.archived = archived;
 	}
 
-	public String getMetadata() {
-		return metadata;
+	public String getUvfMetadataFile() {
+		return uvfMetadataFile;
 	}
 
-	public void setMetadata(String metadata) {
-		this.metadata = metadata;
+	public void setUvfMetadataFile(String uvfMetadataFile) {
+		this.uvfMetadataFile = uvfMetadataFile;
+	}
+
+	public String getUvfRecoveryPubKey() {
+		return uvfRecoveryPubKey;
+	}
+
+	public void setUvfRecoveryPubKey(String uvfRecoveryPubKey) {
+		this.uvfRecoveryPubKey = uvfRecoveryPubKey;
 	}
 
 	@Override
@@ -251,12 +262,14 @@ public class Vault {
 				&& Objects.equals(salt, vault.salt)
 				&& Objects.equals(iterations, vault.iterations)
 				&& Objects.equals(masterkey, vault.masterkey)
-				&& Objects.equals(archived, vault.archived);
+				&& Objects.equals(archived, vault.archived)
+				&& Objects.equals(uvfMetadataFile, vault.uvfMetadataFile)
+				&& Objects.equals(uvfRecoveryPubKey, vault.uvfRecoveryPubKey);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, name, salt, iterations, masterkey, archived);
+		return Objects.hash(id, name, salt, iterations, masterkey, archived, uvfMetadataFile, uvfRecoveryPubKey);
 	}
 
 	@Override
@@ -266,12 +279,12 @@ public class Vault {
 				", members=" + directMembers.stream().map(Authority::getId).collect(Collectors.joining(", ")) +
 				", accessToken=" + accessTokens.stream().map(a -> a.getId().toString()).collect(Collectors.joining(", ")) +
 				", name='" + name + '\'' +
-				", archived='" + archived + '\'' +
 				", salt='" + salt + '\'' +
 				", iterations='" + iterations + '\'' +
 				", masterkey='" + masterkey + '\'' +
-				", authenticationPublicKey='" + authenticationPublicKey + '\'' +
-				", authenticationPrivateKey='" + authenticationPrivateKey + '\'' +
+				", archived='" + archived + '\'' +
+				", uvfMetadataFile='" + uvfMetadataFile + '\'' +
+				", uvfRecoveryPubKey='" + uvfRecoveryPubKey + '\'' +
 				'}';
 	}
 

@@ -418,8 +418,9 @@ public class VaultResource {
 		// set regardless of whether vault is new or existing:
 		vault.setName(vaultDto.name);
 		vault.setDescription(vaultDto.description);
-		vault.setArchived(existingVault.isEmpty() ? false : vaultDto.archived);
-		vault.setMetadata(vaultDto.metadata);
+		vault.setArchived(existingVault.isPresent() && vaultDto.archived);
+		vault.setUvfMetadataFile(vaultDto.uvfMetadataFile);
+		vault.setUvfRecoveryPubKey(vaultDto.uvfRecoveryPublicKey);
 
 		vaultRepo.persistAndFlush(vault); // trigger PersistenceException before we continue with
 		if (existingVault.isEmpty()) {
@@ -503,12 +504,12 @@ public class VaultResource {
 						   // Legacy properties ("Vault Admin Password"):
 						   @JsonProperty("masterkey") @OnlyBase64Chars String masterkey, @JsonProperty("iterations") Integer iterations,
 						   @JsonProperty("salt") @OnlyBase64Chars String salt,
-						   @JsonProperty("authPublicKey") @OnlyBase64Chars String authPublicKey, @JsonProperty("authPrivateKey") @OnlyBase64Chars String authPrivateKey
-							,@JsonProperty("metadata") @NotNull String metadata
+						   @JsonProperty("authPublicKey") @OnlyBase64Chars String authPublicKey, @JsonProperty("authPrivateKey") @OnlyBase64Chars String authPrivateKey,
+						   @JsonProperty("uvfMetadataFile") String uvfMetadataFile, @JsonProperty("uvfRecoveryPublicKey") @OnlyBase64Chars String uvfRecoveryPublicKey
 	) {
 
 		public static VaultDto fromEntity(Vault entity) {
-			return new VaultDto(entity.getId(), entity.getName(), entity.getDescription(), entity.isArchived(), entity.getCreationTime().truncatedTo(ChronoUnit.MILLIS), entity.getMasterkey(), entity.getIterations(), entity.getSalt(), entity.getAuthenticationPublicKey(), entity.getAuthenticationPrivateKey(), entity.getMetadata());
+			return new VaultDto(entity.getId(), entity.getName(), entity.getDescription(), entity.isArchived(), entity.getCreationTime().truncatedTo(ChronoUnit.MILLIS), entity.getMasterkey(), entity.getIterations(), entity.getSalt(), entity.getAuthenticationPublicKey(), entity.getAuthenticationPrivateKey(), entity.getUvfMetadataFile(), entity.getAuthenticationPublicKey());
 		}
 
 	}
