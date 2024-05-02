@@ -174,7 +174,7 @@ export class VaultKeys implements AccessTokenProducing, VaultTemplateProducing {
   }
 
   public async exportTemplate(vault: VaultDto): Promise<Blob> {
-    const cfg = config.get();
+    const cfg = await config;
 
     const kid = `hub+${absBackendBaseURL}vaults/${vault.id}`;
 

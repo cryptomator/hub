@@ -12,7 +12,7 @@ describe('Vault Format 8', () => {
   before(async () => {
     // since this test runs on Node, we need to replace window.crypto:
     Object.defineProperty(global, 'crypto', { value: require('node:crypto').webcrypto });
-    // @ts-ignore: global not defined (but will be available within Node)
+    // @ts-ignore: we only need a subset of the properties available in global.window
     global.window = { crypto: global.crypto };
   });
 

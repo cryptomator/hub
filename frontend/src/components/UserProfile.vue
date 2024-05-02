@@ -82,7 +82,7 @@ const version = ref<VersionDto>();
 const onFetchError = ref<Error | null>();
 
 onMounted(async () => {
-  let cfg = config.get();
+  let cfg = await config;
   keycloakUserAccountURL.value = `${cfg.keycloakUrl}/realms/${cfg.keycloakRealm}/account`;
   await fetchData();
 });

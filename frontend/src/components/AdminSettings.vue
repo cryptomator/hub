@@ -238,7 +238,7 @@ const numberOfExceededSeats = computed(() => {
 });
 
 onMounted(async () => {
-  let cfg = config.get();
+  let cfg = await config;
   keycloakAdminRealmURL.value = `${cfg.keycloakUrl}/admin/${cfg.keycloakRealm}/console`;
   if (props.token) {
     await setToken(props.token);

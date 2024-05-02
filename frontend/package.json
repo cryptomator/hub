@@ -10,7 +10,7 @@
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
     "lint": "eslint -c .eslintrc.js",
-    "test": "nyc --reporter lcov mocha -r ts-node/register test/**/*.spec.ts",
+    "test": "nyc --reporter lcov mocha -r jsdom-global/register -r ts-node/register test/**/*.spec.ts",
     "serve": "vite preview",
     "dist": "vue-tsc --noEmit && vite build --sourcemap --outDir=\"../backend/src/main/resources/META-INF/resources\" --emptyOutDir"
   },
@@ -38,6 +38,7 @@
     "chai-bytes": "^0.1.2",
     "eslint": "^8.57.0",
     "eslint-plugin-vue": "^9.25.0",
+    "jsdom-global": "^3.0.2",
     "mocha": "^10.4.0",
     "nyc": "^15.1.0",
     "postcss": "^8.4.38",
