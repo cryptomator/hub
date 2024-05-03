@@ -1,6 +1,7 @@
 import { use as chaiUse, expect } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { before, describe } from 'mocha';
+import { UserKeys } from '../../src/common/crypto';
 import { MemberKey, RecoveryKey, VaultMetadata } from '../../src/common/uvf';
 
 chaiUse(chaiAsPromised);
@@ -28,20 +29,20 @@ describe('Universal Vault Format', () => {
       d: 'wouCtU7Nw4E8_7n5C1-xBjB4xqSb_liZhYMsy8MGgxUny6Q8NCoH9xSiviwLFfK_',
     };
 
-    let alice: CryptoKeyPair;
+    let alice: TestUserKeys;
 
     before(async () => {
       // prepare some test key pairs:
       let ecdhP384: EcKeyImportParams = { name: 'ECDH', namedCurve: 'P-384' };
       const alicePrv = crypto.subtle.importKey('jwk', alicePrivate, ecdhP384, true, ['deriveKey']);
       const alicePub = crypto.subtle.importKey('jwk', alicePublic, ecdhP384, true, []);
-      alice = { privateKey: await alicePrv, publicKey: await alicePub };
+      alice = new TestUserKeys({ privateKey: await alicePrv, publicKey: await alicePub });
     });
 
     it('encryptForUser()', async () => {
       const memberKey = await TestMemberKey.create();
 
-      const encrypted = await memberKey.encryptForUser(alice.publicKey);
+      const encrypted = await memberKey.encryptForUser(alice.keyPair.publicKey);
 
       expect(encrypted).to.be.not.null;
     });
@@ -49,7 +50,7 @@ describe('Universal Vault Format', () => {
     it('decryptWithUserKey()', async () => {
       const jwe = 'eyJlbmMiOiJBMjU2R0NNIiwia2lkIjoib3JnLmNyeXB0b21hdG9yLmh1Yi51c2Vya2V5IiwiYWxnIjoiRUNESC1FUytBMjU2S1ciLCJlcGsiOnsia2V5X29wcyI6W10sImV4dCI6dHJ1ZSwia3R5IjoiRUMiLCJ4IjoicFotVXExTjNOVElRcHNpZC11UGZMaW95bVVGVFJLM1dkTXVkLWxDcGh5MjQ4bUlJelpDc3RPRzZLTGloZnBkZyIsInkiOiJzMnl6eF9Ca2QweFhIcENnTlJFOWJiQUIyQkNNTF80cWZwcFEza1N2LXhqcEROVWZZdmlxQS1xRERCYnZkNDdYIiwiY3J2IjoiUC0zODQifSwiYXB1IjoiIiwiYXB2IjoiIn0.I_rXJagNrrCa9zISf0DZJLQbIZDxEpGxCyjFbNE0iZs6yFeVayNOGQ.7rASe4SqyKJJLHZ4.l6T2N_ATytZUyh1IZTIJJDY4dXCyQVsRB19QIIPrAi0QQiS4gl4.fnOtAJhdvPFFHVi6L5Ma_R8iL3IXq1_xAq2PvdEfx0A';
 
-      const decrypted = MemberKey.decryptWithUserKey(jwe, alice.privateKey);
+      const decrypted = MemberKey.decryptWithUserKey(jwe, alice);
 
       expect(decrypted).to.be.not.null;
     });
@@ -97,6 +98,12 @@ class TestMemberKey extends MemberKey {
     raw.fill(0x55);
     const key = await crypto.subtle.importKey('raw', raw, MemberKey.KEY_DESIGNATION, true, MemberKey.KEY_USAGE);
     return new TestMemberKey(key);
+  }
+}
+
+class TestUserKeys extends UserKeys {
+  public constructor(keyPair: CryptoKeyPair) {
+    super(keyPair);
   }
 }
 

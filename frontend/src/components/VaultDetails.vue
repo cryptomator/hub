@@ -338,7 +338,7 @@ async function loadVaultKeys(vaultKeyJwe: string): Promise<VaultKeys> {
     throw new Error('Device not initialized.');
   }
   const userKeys = await UserKeys.decryptOnBrowser(myDevice.userPrivateKey, browserKeys.keyPair.privateKey, base64.parse(me.value.publicKey));
-  return VaultKeys.decryptWithUserKey(vaultKeyJwe, userKeys.keyPair.privateKey);
+  return VaultKeys.decryptWithUserKey(vaultKeyJwe, userKeys);
 }
 
 async function loadUvfVault(memberKeyJwe: string): Promise<UniversalVaultFormat> {
@@ -358,7 +358,7 @@ async function loadUvfVault(memberKeyJwe: string): Promise<UniversalVaultFormat>
     throw new Error('Device not initialized.');
   }
   const userKeys = await UserKeys.decryptOnBrowser(myDevice.userPrivateKey, browserKeys.keyPair.privateKey, base64.parse(me.value.publicKey));
-  const memberKey = await MemberKey.decryptWithUserKey(memberKeyJwe, userKeys.keyPair.privateKey);
+  const memberKey = await MemberKey.decryptWithUserKey(memberKeyJwe, userKeys);
   return UniversalVaultFormat.decrypt(vault.value, memberKey);
 }
 

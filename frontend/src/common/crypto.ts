@@ -17,6 +17,14 @@ interface UserKeysJWEPayload {
   key: string
 }
 
+export interface AccessTokenPayload {
+  /**
+   * The vault key (base64-encoded DER-formatted)
+   */
+  key: string,
+  [key: string]: string | number | boolean | object
+}
+
 export const GCM_NONCE_LEN = 12;
 
 export interface AccessTokenProducing {
@@ -39,19 +47,51 @@ export interface VaultTemplateProducing {
 
 }
 
-export class UserKeys {
+/**
+ * Represents a vault member by their public key.
+ */
+export class OtherVaultMember {
+
+  protected constructor(readonly publicKey: Promise<CryptoKey>) { }
+
+  /**
+   * Creates a new vault member with the given public key
+   * @param publicKey The public key of the vault member
+   * @returns A vault member with the given public key
+   */
+  public static withPublicKey(publicKey: CryptoKey | Uint8Array): OtherVaultMember {
+    let keyPromise: Promise<CryptoKey>;
+    if (publicKey instanceof Uint8Array) {
+      keyPromise = crypto.subtle.importKey('spki', publicKey, UserKeys.KEY_DESIGNATION, false, []);
+    } else {
+      keyPromise = Promise.resolve(publicKey);
+    }
+    return new OtherVaultMember(keyPromise);
+  }
+
+  /**
+   * Creates an access token for this vault member.
+   * @param payload The payload to encrypt
+   * @return A ECDH-ES encrypted JWE containing the encrypted payload
+   */
+  public async createAccessToken(payload: AccessTokenPayload): Promise<string> {
+    const jwe = await JWE.build(payload).encrypt(Recipient.ecdhEs('org.cryptomator.hub.userkey', await this.publicKey));
+    return jwe.compactSerialization();
+  }
+
+}
+
+/**
+ * The current user's key pair.
+ */
+export class UserKeys { // TODO: rename to CurrentUserKeyPair
   public static readonly KEY_USAGES: KeyUsage[] = ['deriveBits'];
 
   public static readonly KEY_DESIGNATION: EcKeyImportParams | EcKeyGenParams = {
     name: 'ECDH',
     namedCurve: 'P-384'
   };
-
-  readonly keyPair: CryptoKeyPair;
-
-  protected constructor(keyPair: CryptoKeyPair) {
-    this.keyPair = keyPair;
-  }
+  protected constructor(readonly keyPair: CryptoKeyPair) { }
 
   /**
    * Creates a new user key pair
@@ -77,6 +117,16 @@ export class UserKeys {
     const privateKey = crypto.subtle.importKey('pkcs8', decodedPrivateKey, UserKeys.KEY_DESIGNATION, true, UserKeys.KEY_USAGES);
     const publicKey = crypto.subtle.importKey('spki', decodedPublicKey, UserKeys.KEY_DESIGNATION, true, []);
     return new UserKeys({ privateKey: await privateKey, publicKey: await publicKey });
+  }
+
+  /**
+   * Decrypts the access token using the user's private key
+   * @param jwe The encrypted access token
+   * @returns The token's payload
+   */
+  public async decryptAccessToken(jwe: string): Promise<AccessTokenPayload> {
+    const payload = await JWE.parseCompact(jwe).decrypt(Recipient.ecdhEs('org.cryptomator.hub.userkey', this.keyPair.privateKey));
+    return payload;
   }
 
   /**

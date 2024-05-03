@@ -1,7 +1,7 @@
 import JSZip from 'jszip';
 import { base64, base64url } from 'rfc4648';
 import { VaultDto } from './backend';
-import { AccessTokenProducing, UserKeys, VaultTemplateProducing, getJwkThumbprint } from './crypto';
+import { AccessTokenProducing, OtherVaultMember, UserKeys, VaultTemplateProducing, getJwkThumbprint } from './crypto';
 import { JWE, JWEHeader, JsonJWE, Recipient } from './jwe';
 import { CRC32, wordEncoder } from './util';
 
@@ -19,10 +19,6 @@ type MetadataPayload = {
 type VaultMetadataJWEAutomaticAccessGrantDto = {
   enabled: boolean,
   maxWotDepth: number
-}
-
-type MemberKeyPayload = {
-  key: string
 }
 
 // #region Member Key
@@ -49,13 +45,13 @@ export class MemberKey {
   /**
    * Decrypts the vault's member key using the member's private key
    * @param jwe JWE containing the encrypted member key
-   * @param userPrivateKey The user's private key
-   * @returns The masterkey
+   * @param userKeyPair The current user's key pair
+   * @returns The member key
    */
-  public static async decryptWithUserKey(jwe: string, userPrivateKey: CryptoKey): Promise<MemberKey> {
+  public static async decryptWithUserKey(jwe: string, userKeyPair: UserKeys): Promise<MemberKey> {
     let rawKey = new Uint8Array();
     try {
-      const payload: MemberKeyPayload = await JWE.parseCompact(jwe).decrypt(Recipient.ecdhEs('org.cryptomator.hub.userkey', userPrivateKey));
+      const payload = await userKeyPair.decryptAccessToken(jwe);
       rawKey = base64.parse(payload.key);
       const memberKey = await crypto.subtle.importKey('raw', rawKey, MemberKey.KEY_DESIGNATION, true, MemberKey.KEY_USAGE);
       return new MemberKey(memberKey);
@@ -70,20 +66,18 @@ export class MemberKey {
    * @returns a JWE containing this member key
    */
   public async encryptForUser(userPublicKey: CryptoKey | Uint8Array): Promise<string> {
-    // TODO: remove Uint8Array support?
-    if (userPublicKey instanceof Uint8Array) {
-      userPublicKey = await crypto.subtle.importKey('spki', userPublicKey, UserKeys.KEY_DESIGNATION, false, []);
-    }
-    const rawkey = new Uint8Array(await crypto.subtle.exportKey('raw', this.key));
-    try {
-      const payload: MemberKeyPayload = {
-        key: base64.stringify(rawkey),
-      };
-      const jwe = await JWE.build(payload).encrypt(Recipient.ecdhEs('org.cryptomator.hub.userkey', userPublicKey));
-      return jwe.compactSerialization();
-    } finally {
-      rawkey.fill(0x00);
-    }
+    return OtherVaultMember.withPublicKey(userPublicKey).createAccessToken({
+      key: await this.serializeKey()
+    });
+  }
+
+  /**
+   * Encodes the key
+   * @returns member key in base64-encoded raw format
+   */
+  public async serializeKey(): Promise<string> {
+    const bytes = await crypto.subtle.exportKey('raw', this.key);
+    return base64.stringify(new Uint8Array(bytes), { pad: true });
   }
 
 }
@@ -264,7 +258,7 @@ export class VaultMetadata {
 
 }
 // #endregion
-// #region Vault metadata
+// #region UVF
 
 /**
  * A UVF-formatted Vault

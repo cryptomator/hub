@@ -3,13 +3,8 @@ import * as miscreant from 'miscreant';
 import { base32, base64, base64url } from 'rfc4648';
 import { VaultDto } from './backend';
 import config, { absBackendBaseURL, absFrontendBaseURL } from './config';
-import { AccessTokenProducing, GCM_NONCE_LEN, UnwrapKeyError, UserKeys, VaultTemplateProducing } from './crypto';
-import { JWE, Recipient } from './jwe';
+import { AccessTokenProducing, GCM_NONCE_LEN, OtherVaultMember, UnwrapKeyError, UserKeys, VaultTemplateProducing } from './crypto';
 import { CRC32, wordEncoder } from './util';
-
-interface JWEPayload {
-  key: string
-}
 
 interface VaultConfigPayload {
   jti: string
@@ -30,6 +25,7 @@ interface VaultConfigHeaderHub {
 }
 
 
+// TODO: rename to VaultFormat8Keys
 export class VaultKeys implements AccessTokenProducing, VaultTemplateProducing {
   // in this browser application, this 512 bit key is used
   // as a hmac key to sign the vault config.
@@ -64,13 +60,13 @@ export class VaultKeys implements AccessTokenProducing, VaultTemplateProducing {
   /**
    * Decrypts the vault's masterkey using the user's private key
    * @param jwe JWE containing the vault key
-   * @param userPrivateKey The user's private key
+   * @param userKeyPair The current user's key pair
    * @returns The masterkey
    */
-  public static async decryptWithUserKey(jwe: string, userPrivateKey: CryptoKey): Promise<VaultKeys> {
+  public static async decryptWithUserKey(jwe: string, userKeyPair: UserKeys): Promise<VaultKeys> {
     let rawKey = new Uint8Array();
     try {
-      const payload: JWEPayload = await JWE.parseCompact(jwe).decrypt(Recipient.ecdhEs('org.cryptomator.hub.userkey', userPrivateKey));
+      const payload = await userKeyPair.decryptAccessToken(jwe);
       rawKey = base64.parse(payload.key);
       const masterKey = crypto.subtle.importKey('raw', rawKey, VaultKeys.MASTERKEY_KEY_DESIGNATION, true, ['sign']);
       return new VaultKeys(await masterKey);
@@ -243,22 +239,23 @@ export class VaultKeys implements AccessTokenProducing, VaultTemplateProducing {
   }
 
   /**
+   * Encodes the key masterkey
+   * @returns master key in base64-encoded raw format
+   */
+  public async serializeMasterKey(): Promise<string> {
+    const bytes = await crypto.subtle.exportKey('raw', this.masterKey);
+    return base64.stringify(new Uint8Array(bytes), { pad: true });
+  }
+
+  /**
    * Encrypts this masterkey using the given public key
    * @param userPublicKey The recipient's public key (DER-encoded)
    * @returns a JWE containing this Masterkey
    */
   public async encryptForUser(userPublicKey: Uint8Array): Promise<string> {
-    const publicKey = await crypto.subtle.importKey('spki', userPublicKey, UserKeys.KEY_DESIGNATION, false, []);
-    const rawkey = new Uint8Array(await crypto.subtle.exportKey('raw', this.masterKey));
-    try {
-      const payload: JWEPayload = {
-        key: base64.stringify(rawkey),
-      };
-      const jwe = await JWE.build(payload).encrypt(Recipient.ecdhEs('org.cryptomator.hub.userkey', publicKey));
-      return jwe.compactSerialization();
-    } finally {
-      rawkey.fill(0x00);
-    }
+    return OtherVaultMember.withPublicKey(userPublicKey).createAccessToken({
+      key: await this.serializeMasterKey(),
+    });
   }
 
   /**
