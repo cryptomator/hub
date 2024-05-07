@@ -83,7 +83,7 @@ public class LicenseHolder {
 			settings.hubId = initialId;
 			settings.persistAndFlush();
 		} catch (JWTVerificationException e) {
-			LOG.warn("Provided initial license is invalid.");
+			LOG.warn("Provided initial license is invalid.", e);
 		}
 	}
 
@@ -168,18 +168,19 @@ public class LicenseHolder {
 	}
 
 	/**
-	 * Gets the number of available seats of the license
+	 * Gets the number of seats in the license
 	 *
-	 * @return Number of available seats, if license is not null. Otherwise {@value SelfHostedNoLicenseConstants#SEATS}.
+	 * @return Number of seats of the license, if license is not null. Otherwise {@value SelfHostedNoLicenseConstants#SEATS}.
 	 */
-	public long getAvailableSeats() {
+	public long getSeats() {
 		return Optional.ofNullable(license) //
 				.map(l -> l.getClaim("seats")) //
 				.map(Claim::asLong) //
-				.orElseGet(this::getNoLicenseSeats);
+				.orElseGet(this::seatsOnNotExisingLicense);
 	}
 
-	public long getNoLicenseSeats() {
+	//visible for testing
+	public long seatsOnNotExisingLicense() {
 		if (!managedInstance) {
 			return SelfHostedNoLicenseConstants.SEATS;
 		} else {

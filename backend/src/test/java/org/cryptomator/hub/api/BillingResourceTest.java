@@ -55,8 +55,7 @@ public class BillingResourceTest {
 		@DisplayName("GET /billing returns 200 with empty license self-hosted")
 		public void testGetEmptySelfHosted() {
 			Mockito.when(licenseHolder.get()).thenReturn(null);
-			Mockito.when(licenseHolder.getNoLicenseSeats()).thenReturn(5L);
-			Mockito.when(licenseHolder.getAvailableSeats()).thenReturn(3L);
+			Mockito.when(licenseHolder.getSeats()).thenReturn(5L);
 			when().get("/billing")
 					.then().statusCode(200)
 					.body("hubId", is("42"))

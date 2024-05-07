@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.cryptomator</groupId>
   <artifactId>hub-backend</artifactId>
-  <version>1.3.3</version>
+  <version>1.3.4</version>
 
   <properties>
     <compiler-plugin.version>3.11.0</compiler-plugin.version>
@@ -13,7 +13,7 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <quarkus.container-image.group>cryptomator</quarkus.container-image.group>
     <quarkus.container-image.name>hub</quarkus.container-image.name>
-    <quarkus.platform.version>3.2.10.Final</quarkus.platform.version>
+    <quarkus.platform.version>3.2.12.Final</quarkus.platform.version>
     <quarkus.jib.base-jvm-image>eclipse-temurin:17-jre</quarkus.jib.base-jvm-image> <!-- irrelevant for -Pnative -->
     <jwt.version>4.4.0</jwt.version>
     <surefire-plugin.version>3.1.2</surefire-plugin.version>
