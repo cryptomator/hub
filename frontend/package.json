@@ -10,9 +10,17 @@
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
     "lint": "eslint -c .eslintrc.js",
-    "test": "nyc --reporter lcov mocha -r jsdom-global/register -r ts-node/register test/**/*.spec.ts",
+    "test": "nyc --reporter lcov mocha",
     "serve": "vite preview",
     "dist": "vue-tsc --noEmit && vite build --sourcemap --outDir=\"../backend/src/main/resources/META-INF/resources\" --emptyOutDir"
+  },
+  "mocha": {
+    "require": [
+      "ts-node/register",
+      "jsdom-global/register"
+    ],
+    "spec": "test/**/*.spec.ts",
+    "timeout": 10000
   },
   "directories": {
     "src": "./src",
