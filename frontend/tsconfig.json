@@ -9,7 +9,7 @@
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "lib": ["esnext", "dom"],
-    "noUnusedLocals": true,
+    "noUnusedLocals": false,
     "useUnknownInCatchVariables": false, // Workaround for `node_modules/miscreant/src/providers/webcrypto.ts:21:11 - error TS18046: 'e' is of type 'unknown'.`
   },
   "ts-node": {

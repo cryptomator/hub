@@ -30,6 +30,7 @@
 		"editor.codeActionsOnSave": {
 			"source.organizeImports": "explicit",
 			"source.fixAll.eslint": "explicit"
-		}
+		},
+		"testExplorer.useNativeTesting": true
 	}
 }
