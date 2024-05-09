@@ -95,7 +95,7 @@ export class MemberKey {
 export class RecoveryKey {
   public static readonly KEY_DESIGNATION: EcKeyGenParams = { name: 'ECDH', namedCurve: 'P-384' };
 
-  public static readonly KEY_USAGE: KeyUsage[] = ['deriveKey', 'deriveBits'];
+  public static readonly KEY_USAGES: KeyUsage[] = ['deriveKey', 'deriveBits'];
 
   protected constructor(readonly publicKey: CryptoKey, readonly privateKey?: CryptoKey) { }
 
@@ -104,7 +104,7 @@ export class RecoveryKey {
    * @returns new key
    */
   public static async create(): Promise<RecoveryKey> {
-    const keypair = await crypto.subtle.generateKey(RecoveryKey.KEY_DESIGNATION, true, RecoveryKey.KEY_USAGE);
+    const keypair = await crypto.subtle.generateKey(RecoveryKey.KEY_DESIGNATION, true, RecoveryKey.KEY_USAGES);
     return new RecoveryKey(keypair.publicKey, keypair.privateKey);
   }
 
@@ -119,7 +119,7 @@ export class RecoveryKey {
       publicKey = await crypto.subtle.importKey('spki', publicKey, RecoveryKey.KEY_DESIGNATION, true, []);
     }
     if (privateKey instanceof Uint8Array) {
-      privateKey = await crypto.subtle.importKey('pkcs8', privateKey, RecoveryKey.KEY_DESIGNATION, true, RecoveryKey.KEY_USAGE);
+      privateKey = await crypto.subtle.importKey('pkcs8', privateKey, RecoveryKey.KEY_DESIGNATION, true, RecoveryKey.KEY_USAGES);
     }
     return new RecoveryKey(publicKey, privateKey);
   }

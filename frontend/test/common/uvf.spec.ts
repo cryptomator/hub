@@ -6,6 +6,18 @@ import { MemberKey, RecoveryKey, VaultMetadata } from '../../src/common/uvf';
 
 chaiUse(chaiAsPromised);
 
+// key coordinates from MDN examples:
+const alicePublic: JsonWebKey = {
+  kty: 'EC',
+  crv: 'P-384',
+  x: 'SzrRXmyI8VWFJg1dPUNbFcc9jZvjZEfH7ulKI1UkXAltd7RGWrcfFxqyGPcwu6AQ',
+  y: 'hHUag3OvDzEr0uUQND4PXHQTXP5IDGdYhJhL-WLKjnGjQAw0rNGy5V29-aV-yseW'
+};
+const alicePrivate: JsonWebKey = {
+  ...alicePublic,
+  d: 'wouCtU7Nw4E8_7n5C1-xBjB4xqSb_liZhYMsy8MGgxUny6Q8NCoH9xSiviwLFfK_',
+};
+
 describe('Universal Vault Format', () => {
 
   before(async () => {
@@ -17,18 +29,6 @@ describe('Universal Vault Format', () => {
 
   describe('UVF Member Key', () => {
 
-    // key coordinates from MDN examples:
-    const alicePublic: JsonWebKey = {
-      kty: 'EC',
-      crv: 'P-384',
-      x: 'SzrRXmyI8VWFJg1dPUNbFcc9jZvjZEfH7ulKI1UkXAltd7RGWrcfFxqyGPcwu6AQ',
-      y: 'hHUag3OvDzEr0uUQND4PXHQTXP5IDGdYhJhL-WLKjnGjQAw0rNGy5V29-aV-yseW'
-    };
-    const alicePrivate: JsonWebKey = {
-      ...alicePublic,
-      d: 'wouCtU7Nw4E8_7n5C1-xBjB4xqSb_liZhYMsy8MGgxUny6Q8NCoH9xSiviwLFfK_',
-    };
-
     let alice: TestUserKeys;
 
     before(async () => {
@@ -38,10 +38,10 @@ describe('Universal Vault Format', () => {
       alice = new TestUserKeys({ privateKey: await alicePrv, publicKey: await alicePub });
     });
 
-    it('encryptForUser()', async () => {
+    it('serializeKey()', async () => {
       const memberKey = await TestMemberKey.create();
 
-      const encrypted = await memberKey.encryptForUser(alice.keyPair.publicKey);
+      const encrypted = await memberKey.serializeKey();
 
       expect(encrypted).to.be.not.null;
     });
@@ -83,6 +83,42 @@ describe('Universal Vault Format', () => {
       expect(decryptedPayload.kdf).to.eq('HKDF-SHA512');
     });
   });
+
+  describe('UVF Recovery Key', () => {
+
+    it('create()', async () => {
+      const recoveryKey = await RecoveryKey.create();
+      expect(recoveryKey).to.be.not.null;
+    });
+
+    describe('instance methods', () => {
+      let recoveryKey: RecoveryKey;
+
+      beforeEach(async () => {
+        // prepare some test key pairs:
+        const alicePrv = await crypto.subtle.importKey('jwk', alicePrivate, RecoveryKey.KEY_DESIGNATION, true, RecoveryKey.KEY_USAGES);
+        const alicePub = await crypto.subtle.importKey('jwk', alicePublic, RecoveryKey.KEY_DESIGNATION, true, []);
+        recoveryKey = new TestRecoveryKey(alicePub, alicePrv);
+      });
+
+      it('serializePrivateKey()', async () => {
+        const serialized = await recoveryKey.serializePrivateKey();
+        expect(serialized).to.eq('MIG2AgEAMBAGByqGSM49AgEGBSuBBAAiBIGeMIGbAgEBBDDCi4K1Ts3DgTz/ufkLX7EGMHjGpJv+WJmFgyzLwwaDFSfLpDw0Kgf3FKK+LAsV8r+hZANiAARLOtFebIjxVYUmDV09Q1sVxz2Nm+NkR8fu6UojVSRcCW13tEZatx8XGrIY9zC7oBCEdRqDc68PMSvS5RA0Pg9cdBNc/kgMZ1iEmEv5YsqOcaNADDSs0bLlXb35pX7Kx5Y=');
+      });
+
+      it('serializePublicKey()', async () => {
+        const serialized = await recoveryKey.serializePublicKey();
+        expect(serialized).to.eq('MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAESzrRXmyI8VWFJg1dPUNbFcc9jZvjZEfH7ulKI1UkXAltd7RGWrcfFxqyGPcwu6AQhHUag3OvDzEr0uUQND4PXHQTXP5IDGdYhJhL+WLKjnGjQAw0rNGy5V29+aV+yseW');
+      });
+
+      it('createRecoveryKey()', async () => {
+        const result = await recoveryKey.createRecoveryKey();
+        expect(result).to.eq('cult hold all away buck do law relaxed other stimulus all bank fit indulge dad any ear grey cult golf all baby dig war linear tour sleep humanity threat question neglect stance radar bank coup misery painter tragedy buddy compare winter national approval budget deep screen outdoor audience tear stream cure type ugly chamber supporter franchise accept sexy ad imply being drug doctor regime where thick dam training grass chamber domestic dictator educate sigh music spoken connected measure voice lemon pig comprise disturb appear greatly satisfied heat news curiosity top impress nor method reflect lesson recommend dual revenge thorough bus count broadband living riot prejudice target blonde excess company thereby tribe respond horror mere way proud shopping wise liver mortgage plastic gentleman eighteen terms worry melt');
+      });
+
+    });
+
+  });
 });
 
 
@@ -104,6 +140,12 @@ class TestMemberKey extends MemberKey {
 class TestUserKeys extends UserKeys {
   public constructor(keyPair: CryptoKeyPair) {
     super(keyPair);
+  }
+}
+
+class TestRecoveryKey extends RecoveryKey {
+  public constructor(readonly publicKey: CryptoKey, readonly privateKey?: CryptoKey) {
+    super(publicKey, privateKey);
   }
 }
 
