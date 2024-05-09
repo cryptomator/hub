@@ -214,7 +214,7 @@ import { base64 } from 'rfc4648';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { AccessGrant, PaymentRequiredError, VaultDto } from '../common/backend';
-import { OtherVaultMember, VaultTemplateProducing } from '../common/crypto';
+import { VaultTemplateProducing } from '../common/crypto';
 import { debounce } from '../common/util';
 import { UniversalVaultFormat } from '../common/uvf';
 import { VaultKeys } from '../common/vaultv8';
@@ -344,19 +344,14 @@ async function createVault() {
         if (!format8VaultKeys.value) {
           throw new Error('Invalid state');
         }
-        ownerGrant.token = await OtherVaultMember.withPublicKey(base64.parse(owner.publicKey)).createAccessToken({
-          key: await format8VaultKeys.value.serializeMasterKey()
-        });
+        ownerGrant.token = await format8VaultKeys.value.encryptForUser(base64.parse(owner.publicKey));
         break;
       }
       case VaultType.UniversalVaultFormat: {
         if (!uvfVault.value) {
           throw new Error('Invalid state');
         }
-        ownerGrant.token = await OtherVaultMember.withPublicKey(base64.parse(owner.publicKey)).createAccessToken({
-          key: await uvfVault.value.memberKey.serializeKey(),
-          recoveryKey: await uvfVault.value.recoveryKey.serializePrivateKey()
-        });
+        ownerGrant.token = await uvfVault.value.encryptForUser(base64.parse(owner.publicKey), true);
         vault.value.uvfMetadataFile = await uvfVault.value.createMetadataFile();
         vault.value.uvfRecoveryPublicKey = await uvfVault.value.recoveryKey.serializePublicKey();
         break;

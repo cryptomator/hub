@@ -18,7 +18,7 @@ export interface AccessTokenPayload {
    * The vault key (base64-encoded DER-formatted)
    */
   key: string,
-  [key: string]: string | number | boolean | object
+  [key: string]: string | number | boolean | object | undefined
 }
 
 export const GCM_NONCE_LEN = 12;

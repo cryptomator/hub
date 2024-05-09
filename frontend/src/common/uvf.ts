@@ -66,17 +66,6 @@ export class MemberKey {
   }
 
   /**
-   * Encrypts this member key using the given public key
-   * @param userPublicKey The user's public key (DER-encoded)
-   * @returns a JWE containing this member key
-   */
-  public async encryptForUser(userPublicKey: CryptoKey | Uint8Array): Promise<string> {
-    return OtherVaultMember.withPublicKey(userPublicKey).createAccessToken({
-      key: await this.serializeKey()
-    });
-  }
-
-  /**
    * Encodes the key
    * @returns member key in base64-encoded raw format
    */
@@ -322,8 +311,12 @@ export class UniversalVaultFormat implements AccessTokenProducing, VaultTemplate
     return zip.generateAsync({ type: 'blob' });
   }
 
-  public async encryptForUser(userPublicKey: CryptoKey | Uint8Array): Promise<string> {
-    return this.memberKey.encryptForUser(userPublicKey);
+  public async encryptForUser(userPublicKey: CryptoKey | Uint8Array, isOwner?: boolean): Promise<string> {
+    const payload: UvfAccessTokenPayload = {
+      key: await this.memberKey.serializeKey(),
+      recoveryKey: isOwner && this.recoveryKey.privateKey ? await this.recoveryKey.serializePrivateKey() : undefined
+    };
+    return OtherVaultMember.withPublicKey(userPublicKey).createAccessToken(payload);
   }
 }
 
