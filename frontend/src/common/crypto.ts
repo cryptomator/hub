@@ -137,16 +137,17 @@ export class UserKeys { // TODO: rename to CurrentUserKeyPair
   /**
    * Encrypts the user's private key using a key derived from the given setupCode
    * @param setupCode The password to protect the private key.
+   * @param p2c Optional number of iterations for PBKDF2.
    * @returns A JWE holding the encrypted private key
    * @see Recipient.pbes2
    */
-  public async encryptedPrivateKey(setupCode: string): Promise<string> {
+  public async encryptedPrivateKey(setupCode: string, p2c?: number): Promise<string> {
     const rawkey = new Uint8Array(await crypto.subtle.exportKey('pkcs8', this.keyPair.privateKey));
     try {
       const payload: AccessTokenPayload = {
         key: base64.stringify(rawkey)
       };
-      const jwe = await JWE.build(payload).encrypt(Recipient.pbes2('org.cryptomator.hub.setupCode', setupCode));
+      const jwe = await JWE.build(payload).encrypt(Recipient.pbes2('org.cryptomator.hub.setupCode', setupCode, p2c));
       return jwe.compactSerialization();
     } finally {
       rawkey.fill(0x00);

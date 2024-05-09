@@ -57,7 +57,7 @@ describe('crypto', () => {
 
     it('recover()', async () => {
       const encodedPublicKey = 'MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAESzrRXmyI8VWFJg1dPUNbFcc9jZvjZEfH7ulKI1UkXAltd7RGWrcfFxqyGPcwu6AQhHUag3OvDzEr0uUQND4PXHQTXP5IDGdYhJhL+WLKjnGjQAw0rNGy5V29+aV+yseW';
-      const jwe = 'eyJlbmMiOiJBMjU2R0NNIiwia2lkIjoib3JnLmNyeXB0b21hdG9yLmh1Yi5zZXR1cENvZGUiLCJhbGciOiJQQkVTMi1IUzUxMitBMjU2S1ciLCJwMmMiOjEwMDAwMDAsInAycyI6InJRV09pcl82VU9fMjE0eFJsQS02UEEifQ._cMSJto2fFJ9ixEmchid4VRAt-Al6GNVxjo114XdeJktm3WctXShSQ.kwOeIpnXmyZXt4n3.sYx6ZjCkkf8bXdHY-NGrZzG6hsd11Ze97cfuEay3glfJkOyKQgV7TURyKguJWrc-s7m67cq35uE9KUUB6SGLoUMs1ebmRx8emCxVBRjvia5e_gWnjCzIsS0Z3C67R8Tyvh1EadigRfE57HTrP7kJXV5zRf2L1OYOeI1QmmN44Cga2HW0B3zDOG3EXvN3tv3bMu83L3Css1_CZABWyPkrwOBt8LytzEeTWaV8SItdVolPUH9OmW7l0hS3dBMgS4haXlbLR0OxmL3Ag-tZ1G_WxLliWxLMUNAsqWOVzedkRhc9VichvD0KCZ8J5_O18sBPnMQ._2i2LUEV3T1nmY49oq7n_7EqADqAhnmzmTwLPWgqxOw';
+      const jwe = 'eyJlbmMiOiJBMjU2R0NNIiwia2lkIjoib3JnLmNyeXB0b21hdG9yLmh1Yi5zZXR1cENvZGUiLCJhbGciOiJQQkVTMi1IUzUxMitBMjU2S1ciLCJwMmMiOjEwMDAsInAycyI6ImVJcEZ6d204eUxpQmxkY3R0OFRZRncifQ.xmC_aS7q_9dGXa7m2Oss_iaG24VDH9GS4M6m_63T9ZuZvI2WK2XWTA.84MrANVkMNuFlY0p.NZl7miGsbIAIdNpZaFz3JCyYyMfC4rKe3ThT1j8Kg_LFIvLb0GzguU2towJAZcGpdgtUkbDvUrOVoTa1u6Izjh-U0M7beWUrqw6RjXb82PT1fwL0ySEGm8Na4gZ_hVoK4wxQDswmFNFP_Z8_RLVroo3w0KgEnI8QKzG8G6bJ-taqW5ZV8hn8-Zz4MndeBtB4YjsLPWa37Vdrae0KGKEOXfIPwOVX1nrFyIYxIB-hwJY5fPEXJ1lqzA9mhliMjg0VpMdqQsagHPm2XyKtxjkRrFh7e2vMkqcLoBY6pdGNpKzKOQ6aaRmX60zjTleqIOrxhYs.Yn1HgK5Ot3sEJ3qRVH6yagYsZ46MRrcUxd_jVz4eJTI';
 
       const result = await UserKeys.recover(encodedPublicKey, jwe, 'password');
 
@@ -66,7 +66,7 @@ describe('crypto', () => {
 
     it('recover() with incorrect password', async () => {
       const encodedPublicKey = 'MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAESzrRXmyI8VWFJg1dPUNbFcc9jZvjZEfH7ulKI1UkXAltd7RGWrcfFxqyGPcwu6AQhHUag3OvDzEr0uUQND4PXHQTXP5IDGdYhJhL+WLKjnGjQAw0rNGy5V29+aV+yseW';
-      const jwe = 'eyJlbmMiOiJBMjU2R0NNIiwia2lkIjoib3JnLmNyeXB0b21hdG9yLmh1Yi5zZXR1cENvZGUiLCJhbGciOiJQQkVTMi1IUzUxMitBMjU2S1ciLCJwMmMiOjEwMDAwMDAsInAycyI6InJRV09pcl82VU9fMjE0eFJsQS02UEEifQ._cMSJto2fFJ9ixEmchid4VRAt-Al6GNVxjo114XdeJktm3WctXShSQ.kwOeIpnXmyZXt4n3.sYx6ZjCkkf8bXdHY-NGrZzG6hsd11Ze97cfuEay3glfJkOyKQgV7TURyKguJWrc-s7m67cq35uE9KUUB6SGLoUMs1ebmRx8emCxVBRjvia5e_gWnjCzIsS0Z3C67R8Tyvh1EadigRfE57HTrP7kJXV5zRf2L1OYOeI1QmmN44Cga2HW0B3zDOG3EXvN3tv3bMu83L3Css1_CZABWyPkrwOBt8LytzEeTWaV8SItdVolPUH9OmW7l0hS3dBMgS4haXlbLR0OxmL3Ag-tZ1G_WxLliWxLMUNAsqWOVzedkRhc9VichvD0KCZ8J5_O18sBPnMQ._2i2LUEV3T1nmY49oq7n_7EqADqAhnmzmTwLPWgqxOw';
+      const jwe = 'eyJlbmMiOiJBMjU2R0NNIiwia2lkIjoib3JnLmNyeXB0b21hdG9yLmh1Yi5zZXR1cENvZGUiLCJhbGciOiJQQkVTMi1IUzUxMitBMjU2S1ciLCJwMmMiOjEwMDAsInAycyI6ImVJcEZ6d204eUxpQmxkY3R0OFRZRncifQ.xmC_aS7q_9dGXa7m2Oss_iaG24VDH9GS4M6m_63T9ZuZvI2WK2XWTA.84MrANVkMNuFlY0p.NZl7miGsbIAIdNpZaFz3JCyYyMfC4rKe3ThT1j8Kg_LFIvLb0GzguU2towJAZcGpdgtUkbDvUrOVoTa1u6Izjh-U0M7beWUrqw6RjXb82PT1fwL0ySEGm8Na4gZ_hVoK4wxQDswmFNFP_Z8_RLVroo3w0KgEnI8QKzG8G6bJ-taqW5ZV8hn8-Zz4MndeBtB4YjsLPWa37Vdrae0KGKEOXfIPwOVX1nrFyIYxIB-hwJY5fPEXJ1lqzA9mhliMjg0VpMdqQsagHPm2XyKtxjkRrFh7e2vMkqcLoBY6pdGNpKzKOQ6aaRmX60zjTleqIOrxhYs.Yn1HgK5Ot3sEJ3qRVH6yagYsZ46MRrcUxd_jVz4eJTI';
 
       const attempt = UserKeys.recover(encodedPublicKey, jwe, 'wrong');
 
@@ -112,7 +112,7 @@ describe('crypto', () => {
       });
 
       it('encryptedPrivateKey() creates JWE', async () => {
-        const result = await userKeys.encryptedPrivateKey('password');
+        const result = await userKeys.encryptedPrivateKey('password', 1000);
 
         expect(result).to.be.a('string');
       });
