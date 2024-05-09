@@ -1,8 +1,9 @@
 import { use as chaiUse, expect } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { before, describe } from 'mocha';
+import { VaultDto } from '../../src/common/backend';
 import { UserKeys } from '../../src/common/crypto';
-import { MemberKey, RecoveryKey, VaultMetadata } from '../../src/common/uvf';
+import { MemberKey, RecoveryKey, UniversalVaultFormat, VaultMetadata } from '../../src/common/uvf';
 
 chaiUse(chaiAsPromised);
 
@@ -18,7 +19,7 @@ const alicePrivate: JsonWebKey = {
   d: 'wouCtU7Nw4E8_7n5C1-xBjB4xqSb_liZhYMsy8MGgxUny6Q8NCoH9xSiviwLFfK_',
 };
 
-describe('Universal Vault Format', () => {
+describe('UVF', () => {
 
   before(async () => {
     // since this test runs on Node, we need to replace window.crypto:
@@ -27,9 +28,8 @@ describe('Universal Vault Format', () => {
     global.window = { crypto: global.crypto };
   });
 
-  describe('UVF Member Key', () => {
-
-    let alice: TestUserKeys;
+  describe('MemberKey', () => {
+    let alice: UserKeys;
 
     before(async () => {
       // prepare some test key pairs:
@@ -53,10 +53,11 @@ describe('Universal Vault Format', () => {
       const decrypted = await MemberKey.load(payload.key);
 
       expect(decrypted).to.be.not.null;
+      expect(decrypted.serializeKey()).to.eventually.eq('VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU=');
     });
   });
 
-  describe('UVF Metadata', () => {
+  describe('VaultMetadata', () => {
     // TODO review @sebi what else should we test?
     it('encrypt() and decryptWithMemberKey()', async () => {
       const vaultMemberKey = await MemberKey.create();
@@ -84,7 +85,7 @@ describe('Universal Vault Format', () => {
     });
   });
 
-  describe('UVF Recovery Key', () => {
+  describe('RecoveryKey', () => {
 
     it('create()', async () => {
       const recoveryKey = await RecoveryKey.create();
@@ -118,6 +119,67 @@ describe('Universal Vault Format', () => {
 
     });
 
+  });
+
+  describe('UniversalVaultFormat', () => {
+    let alice: UserKeys;
+
+    beforeEach(async () => {
+      // prepare some test key pairs:
+      const alicePrv = await crypto.subtle.importKey('jwk', alicePrivate, RecoveryKey.KEY_DESIGNATION, true, RecoveryKey.KEY_USAGES);
+      const alicePub = await crypto.subtle.importKey('jwk', alicePublic, RecoveryKey.KEY_DESIGNATION, true, []);
+      alice = new TestUserKeys({ privateKey: alicePrv, publicKey: alicePub });
+    });
+
+    it('create()', async () => {
+      const uvf = await UniversalVaultFormat.create({ enabled: true, maxWotDepth: -1 });
+      expect(uvf).to.be.not.null;
+      expect(uvf.metadata).to.be.not.null;
+      expect(uvf.memberKey).to.be.not.null;
+      expect(uvf.recoveryKey).to.be.not.null;
+    });
+
+    it('decrypt()', async () => {
+      const dto: VaultDto = {
+        id: '123',
+        name: 'test',
+        archived: false,
+        creationTime: new Date(),
+        uvfMetadataFile: '{"protected":"eyJqa3UiOiJqa3UuandrcyIsImVuYyI6IkEyNTZHQ00ifQ","recipients":[{"header":{"kid":"org.cryptomator.hub.memberkey","alg":"A256KW"},"encrypted_key":"WyLgMABBhRtsTE4PGJc-o8ZlhmoBB3uwCfNgs2wLqnmvCak9ZWoeww"},{"header":{"kid":"org.cryptomator.hub.recoverykey.7gnV24ftRgvx7eq-MeV4Pr_K9KlxdRl9EThXQ08XrA8","alg":"ECDH-ES+A256KW","epk":{"key_ops":[],"ext":true,"kty":"EC","x":"6DEeEYrLi7mz4a1QftEOXIia6wL2OblQioOiR081diHe1T_CbSP_OLnTXgQX2Ark","y":"qLY9M8mWj6kE5rzshqV-c2ioUvV82Gp7RLfolW_Yd4bMYTL142MQX7F7TSYIt1P3","crv":"P-384"},"apu":"","apv":""},"encrypted_key":"1bd-7tqhB6y3F2CxJxdoe3lRhvizbL7VyhlZjRSzGLxoBm7bELQBdQ"}],"iv":"aAFzuQNAO5NlO0eP","ciphertext":"C6ZhAuKv46ydOQ215-hm9ei18EHi5sVBdwYKBBL1XXpC852e8HWprA1HBPXBd_aKw_0wimpIiTxgJLK8V3YZIHlECHM2T-q7em7kPT-NUWHL9rnXKQrdFkuwXiKiVRvlYKQAG8r52-SHl-mm4cMVXFIwWyks36bt87ngQ1vWih9qYqpvxJ6DozHveR8jODxe_itGx8aYm6pbjlT56vAb10in7s-Y_Xya1pLSdVHmMyZf90fe9X7cY9qv6Jnybi2SvWLr8H3wIpp_3-T_zLMzJB1SpGo-BhZqcoon2SzYACx4TFh9eMydlTEi0DEqSs3NoqXAN8uBEEcSeDfTAAr5J9BjvIF7wq5FHomJcfPjW5qhSmqyxi3JXnF0UjP7jy0aPWqZtKqIkedlQb62oR4bPoKk9vrp","tag":"zK_nd4E8g25v3qq5ayVviogORUvQDS1Mi11dCkuxUgc"}',
+        uvfRecoveryPublicKey: 'MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAEu35Pxi7dz4zbnOeU41N3Rkr3UDfpXlQPZYj/45+15K2wcKgGw7q8n8LCWHvSZ2XyXhUKsAeuosCsgEyw7LOji1J0yAvCASr44majKi9lyQ2gabxHPkPaHRJV/9QGO6id'
+      };
+      const accessToken = 'eyJlbmMiOiJBMjU2R0NNIiwia2lkIjoib3JnLmNyeXB0b21hdG9yLmh1Yi51c2Vya2V5IiwiYWxnIjoiRUNESC1FUytBMjU2S1ciLCJlcGsiOnsia2V5X29wcyI6W10sImV4dCI6dHJ1ZSwia3R5IjoiRUMiLCJ4IjoiWGJxOGozRXpXWlBuVDNnUDBzR2s3dkQxWVo5NUMyeUFRWEJoZlpLbE9sQnF5QlN6UlJsdUdOckZSTi10MHFIdCIsInkiOiJPb1VzcW04V0tCdUt6MzdKaGZhU3Y5OGk5SzVnS3hBYlNlQnBFSHdRTU9qSTlNZ0VSZmdDX2NqZWdKNnhqYlFjIiwiY3J2IjoiUC0zODQifSwiYXB1IjoiIiwiYXB2IjoiIn0.i8sw4wq6q-XH-rdbhsnOhJCw4WIFgrpDWIttyrRQk3Bhx4NhW1VwzA.HvVu3ujO_ckTBlCl.7nNWKXpy4kfAwxB7JDmPGrfjO9dDvB_w8FrGesfWlEXKf-WJBHo.eGUXkTJawp8EmVbXca3NarXaQ6_qS2_MxeuLLlKN_Ck';
+      const uvf = await UniversalVaultFormat.decrypt(dto, accessToken, alice);
+
+      expect(uvf).to.be.not.null;
+      expect(uvf.metadata).to.be.not.null;
+      expect(uvf.memberKey).to.be.not.null;
+      expect(uvf.recoveryKey).to.be.not.null;
+      expect(uvf.recoveryKey.privateKey).to.be.undefined;
+    });
+
+    describe('instance methods', () => {
+      let uvf: UniversalVaultFormat;
+
+      before(async () => {
+        uvf = await UniversalVaultFormat.create({ enabled: true, maxWotDepth: -1 });
+      });
+
+      it('encryptForUser() creates an access token', async () => {
+        const token = await uvf.encryptForUser(alice.keyPair.publicKey);
+        expect(token).to.be.not.null;
+      });
+
+      it('createMetadataFile() creates a vault.uvf file', async () => {
+        const file = await uvf.createMetadataFile();
+        expect(file).to.be.not.null;
+      });
+
+      it('serializePublicKey() creates a PEM-encoded representation', async () => {
+        const pem = await uvf.recoveryKey.serializePublicKey();
+        expect(pem).to.be.not.null;
+      });
+    });
   });
 });
 
