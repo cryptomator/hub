@@ -33,9 +33,8 @@ describe('Universal Vault Format', () => {
 
     before(async () => {
       // prepare some test key pairs:
-      let ecdhP384: EcKeyImportParams = { name: 'ECDH', namedCurve: 'P-384' };
-      const alicePrv = crypto.subtle.importKey('jwk', alicePrivate, ecdhP384, true, ['deriveKey']);
-      const alicePub = crypto.subtle.importKey('jwk', alicePublic, ecdhP384, true, []);
+      const alicePrv = crypto.subtle.importKey('jwk', alicePrivate, UserKeys.KEY_DESIGNATION, true, UserKeys.KEY_USAGES);
+      const alicePub = crypto.subtle.importKey('jwk', alicePublic, UserKeys.KEY_DESIGNATION, true, []);
       alice = new TestUserKeys({ privateKey: await alicePrv, publicKey: await alicePub });
     });
 
@@ -47,10 +46,11 @@ describe('Universal Vault Format', () => {
       expect(encrypted).to.be.not.null;
     });
 
-    it('decryptWithUserKey()', async () => {
+    it('load(userKeyPair.decryptAccessToken(...))', async () => {
       const jwe = 'eyJlbmMiOiJBMjU2R0NNIiwia2lkIjoib3JnLmNyeXB0b21hdG9yLmh1Yi51c2Vya2V5IiwiYWxnIjoiRUNESC1FUytBMjU2S1ciLCJlcGsiOnsia2V5X29wcyI6W10sImV4dCI6dHJ1ZSwia3R5IjoiRUMiLCJ4IjoicFotVXExTjNOVElRcHNpZC11UGZMaW95bVVGVFJLM1dkTXVkLWxDcGh5MjQ4bUlJelpDc3RPRzZLTGloZnBkZyIsInkiOiJzMnl6eF9Ca2QweFhIcENnTlJFOWJiQUIyQkNNTF80cWZwcFEza1N2LXhqcEROVWZZdmlxQS1xRERCYnZkNDdYIiwiY3J2IjoiUC0zODQifSwiYXB1IjoiIiwiYXB2IjoiIn0.I_rXJagNrrCa9zISf0DZJLQbIZDxEpGxCyjFbNE0iZs6yFeVayNOGQ.7rASe4SqyKJJLHZ4.l6T2N_ATytZUyh1IZTIJJDY4dXCyQVsRB19QIIPrAi0QQiS4gl4.fnOtAJhdvPFFHVi6L5Ma_R8iL3IXq1_xAq2PvdEfx0A';
 
-      const decrypted = MemberKey.decryptWithUserKey(jwe, alice);
+      const payload = await alice.decryptAccessToken(jwe);
+      const decrypted = await MemberKey.load(payload.key);
 
       expect(decrypted).to.be.not.null;
     });

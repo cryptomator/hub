@@ -287,7 +287,7 @@ async function initialize() {
         break;
       case VaultType.UniversalVaultFormat:
         uvfVault.value = await UniversalVaultFormat.create({ enabled: false, maxWotDepth: 0 });
-        recoveryKeyStr.value = await uvfVault.value.recoveryKey.serializePrivateKey();
+        recoveryKeyStr.value = await uvfVault.value.recoveryKey.createRecoveryKey();
         break;
     }
     state.value = State.EnterVaultDetails;

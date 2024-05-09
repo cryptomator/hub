@@ -1,7 +1,7 @@
 import JSZip from 'jszip';
 import { base64, base64url } from 'rfc4648';
 import { VaultDto } from './backend';
-import { AccessTokenProducing, OtherVaultMember, UserKeys, VaultTemplateProducing, getJwkThumbprint } from './crypto';
+import { AccessTokenPayload, AccessTokenProducing, OtherVaultMember, UserKeys, VaultTemplateProducing, getJwkThumbprint } from './crypto';
 import { JWE, JWEHeader, JsonJWE, Recipient } from './jwe';
 import { CRC32, wordEncoder } from './util';
 
@@ -19,6 +19,13 @@ type MetadataPayload = {
 type VaultMetadataJWEAutomaticAccessGrantDto = {
   enabled: boolean,
   maxWotDepth: number
+}
+
+type UvfAccessTokenPayload = AccessTokenPayload & {
+  /**
+   * optional private key of the recovery key pair (PKCS8-encoded; only shared with vault owners)
+   */
+  recoveryKey?: string;
 }
 
 // #region Member Key
@@ -43,16 +50,14 @@ export class MemberKey {
   }
 
   /**
-   * Decrypts the vault's member key using the member's private key
-   * @param jwe JWE containing the encrypted member key
-   * @param userKeyPair The current user's key pair
-   * @returns The member key
+   * Creates a new vault member key
+   * @param encodedKey base64-encoded raw 256 bit key (as retrieved from {@link AccessTokenPayload#foo})
+   * @returns new key
    */
-  public static async decryptWithUserKey(jwe: string, userKeyPair: UserKeys): Promise<MemberKey> {
+  public static async load(encodedKey: string): Promise<MemberKey> {
     let rawKey = new Uint8Array();
     try {
-      const payload = await userKeyPair.decryptAccessToken(jwe);
-      rawKey = base64.parse(payload.key);
+      rawKey = base64.parse(encodedKey);
       const memberKey = await crypto.subtle.importKey('raw', rawKey, MemberKey.KEY_DESIGNATION, true, MemberKey.KEY_USAGE);
       return new MemberKey(memberKey);
     } finally {
@@ -92,7 +97,7 @@ export class RecoveryKey {
 
   public static readonly KEY_USAGE: KeyUsage[] = ['deriveKey', 'deriveBits'];
 
-  protected constructor(readonly publicKey: CryptoKey, private privateKey?: CryptoKey) { }
+  protected constructor(readonly publicKey: CryptoKey, readonly privateKey?: CryptoKey) { }
 
   /**
    * Creates a new vault member key
@@ -106,13 +111,17 @@ export class RecoveryKey {
   /**
    * Loads the public key of the recovery key pair.
    * @param publicKey the DER-encoded public key
+   * @param publicKey the PKCS8-encoded private key
    * @returns recovery key for encrypting vault metadata
    */
-  public static async load(publicKey: CryptoKey | Uint8Array): Promise<RecoveryKey> {
+  public static async load(publicKey: CryptoKey | Uint8Array, privateKey?: CryptoKey | Uint8Array): Promise<RecoveryKey> {
     if (publicKey instanceof Uint8Array) {
       publicKey = await crypto.subtle.importKey('spki', publicKey, RecoveryKey.KEY_DESIGNATION, true, []);
     }
-    return new RecoveryKey(publicKey);
+    if (privateKey instanceof Uint8Array) {
+      privateKey = await crypto.subtle.importKey('pkcs8', privateKey, RecoveryKey.KEY_DESIGNATION, true, RecoveryKey.KEY_USAGE);
+    }
+    return new RecoveryKey(publicKey, privateKey);
   }
 
   /**
@@ -125,10 +134,10 @@ export class RecoveryKey {
   }
 
   /**
-   * Encodes the private key
+   * Encodes the private key as a list of words
    * @returns private key in a human-readable encoding
    */
-  public async serializePrivateKey(): Promise<string> {
+  public async createRecoveryKey(): Promise<string> {
     if (!this.privateKey) {
       throw new Error('Private key not available');
     }
@@ -149,6 +158,18 @@ export class RecoveryKey {
 
     // encode using human-readable words:
     return wordEncoder.encodePadded(padded);
+  }
+
+  /**
+   * Encodes the private key
+   * @returns private key in base64-encoded DER format
+   */
+  public async serializePrivateKey(): Promise<string> {
+    if (!this.privateKey) {
+      throw new Error('Private key not available');
+    }
+    const bytes = await crypto.subtle.exportKey('pkcs8', this.privateKey);
+    return base64.stringify(new Uint8Array(bytes), { pad: true });
   }
 
   /**
@@ -273,12 +294,19 @@ export class UniversalVaultFormat implements AccessTokenProducing, VaultTemplate
     return new UniversalVaultFormat(metadata, memberKey, recoveryKey);
   }
 
-  public static async decrypt(vault: VaultDto, memberKey: MemberKey): Promise<UniversalVaultFormat> {
+  public static async decrypt(vault: VaultDto, accessToken: string, userKeyPair: UserKeys): Promise<UniversalVaultFormat> {
     if (!vault.uvfMetadataFile || !vault.uvfRecoveryPublicKey) {
       throw new Error('Not a UVF vault.');
     }
+    const payload = await userKeyPair.decryptAccessToken(accessToken) as UvfAccessTokenPayload;
+    const memberKey = await MemberKey.load(payload.key);
     const metadata = await VaultMetadata.decryptWithMemberKey(vault.uvfMetadataFile, memberKey);
-    const recoveryKey = await RecoveryKey.load(base64.parse(vault.uvfRecoveryPublicKey));
+    let recoveryKey: RecoveryKey;
+    if (payload.recoveryKey) {
+      recoveryKey = await RecoveryKey.load(base64.parse(vault.uvfRecoveryPublicKey), base64.parse(payload.recoveryKey));
+    } else {
+      recoveryKey = await RecoveryKey.load(base64.parse(vault.uvfRecoveryPublicKey));
+    }
     return new UniversalVaultFormat(metadata, memberKey, recoveryKey);
   }
 

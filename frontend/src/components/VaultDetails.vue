@@ -184,9 +184,13 @@
         <button v-if="vaultRole == 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDownloadVaultTemplateDialog()">
           {{ t('vaultDetails.actions.downloadVaultTemplate') }}
         </button>
-        <!-- displayRecoveryKey button -->
-        <button v-if="vaultRole == 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDisplayRecoveryKeyDialog()">
+        <!-- displayRecoveryKey button (Vault Format 8 only) -->
+        <button v-if="vaultRole == 'OWNER' && vaultKeys" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDisplayRecoveryKeyDialog()">
           {{ t('vaultDetails.actions.displayRecoveryKey') }}
+        </button>
+        <!-- TODO: regenerateRecoveryKey button (UVF only) -->
+        <button v-if="vaultRole == 'OWNER' && uvfVault?.recoveryKey.privateKey" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showUvfRecoveryKey()">
+          {{ t('vaultDetails.actions.displayRecoveryKey') }} UVF TODO see console
         </button>
         <!-- archiveVault button -->
         <button v-if="(vaultRole == 'OWNER' || isAdmin)" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white  hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showArchiveVaultDialog()">
@@ -217,7 +221,7 @@ import auth from '../common/auth';
 import backend, { AuthorityDto, ConflictError, ForbiddenError, LicenseUserInfoDto, MemberDto, NotFoundError, PaymentRequiredError, UserDto, VaultDto, VaultRole } from '../common/backend';
 import { BrowserKeys, UserKeys } from '../common/crypto';
 import { JWT, JWTHeader } from '../common/jwt';
-import { MemberKey, UniversalVaultFormat } from '../common/uvf';
+import { UniversalVaultFormat } from '../common/uvf';
 import { VaultKeys } from '../common/vaultv8';
 import ArchiveVaultDialog from './ArchiveVaultDialog.vue';
 import ClaimVaultOwnershipDialog from './ClaimVaultOwnershipDialog.vue';
@@ -341,7 +345,7 @@ async function loadVaultKeys(vaultKeyJwe: string): Promise<VaultKeys> {
   return VaultKeys.decryptWithUserKey(vaultKeyJwe, userKeys);
 }
 
-async function loadUvfVault(memberKeyJwe: string): Promise<UniversalVaultFormat> {
+async function loadUvfVault(accessToken: string): Promise<UniversalVaultFormat> {
   if (!vault.value || !vault.value.uvfMetadataFile) {
     throw new Error('Vault not initialized.');
   }
@@ -358,8 +362,7 @@ async function loadUvfVault(memberKeyJwe: string): Promise<UniversalVaultFormat>
     throw new Error('Device not initialized.');
   }
   const userKeys = await UserKeys.decryptOnBrowser(myDevice.userPrivateKey, browserKeys.keyPair.privateKey, base64.parse(me.value.publicKey));
-  const memberKey = await MemberKey.decryptWithUserKey(memberKeyJwe, userKeys);
-  return UniversalVaultFormat.decrypt(vault.value, memberKey);
+  return UniversalVaultFormat.decrypt(vault.value, accessToken, userKeys);
 }
 
 async function provedOwnership(keys: VaultKeys, ownerKeyPair: CryptoKeyPair) {
@@ -465,6 +468,10 @@ function showDownloadVaultTemplateDialog() {
 function showDisplayRecoveryKeyDialog() {
   displayingRecoveryKey.value = true;
   nextTick(() => displayRecoveryKeyDialog.value?.show());
+}
+
+async function showUvfRecoveryKey() {
+  console.log(await uvfVault.value?.recoveryKey.createRecoveryKey()); //TODO: implement
 }
 
 function showArchiveVaultDialog() {
