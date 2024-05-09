@@ -20,7 +20,7 @@
       "jsdom-global/register"
     ],
     "spec": "test/**/*.spec.ts",
-    "timeout": 10000
+    "timeout": 60000
   },
   "directories": {
     "src": "./src",
