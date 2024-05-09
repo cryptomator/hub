@@ -252,7 +252,7 @@ export class VaultKeys implements AccessTokenProducing, VaultTemplateProducing {
    * @param userPublicKey The recipient's public key (DER-encoded)
    * @returns a JWE containing this Masterkey
    */
-  public async encryptForUser(userPublicKey: Uint8Array): Promise<string> {
+  public async encryptForUser(userPublicKey: CryptoKey | Uint8Array): Promise<string> {
     return OtherVaultMember.withPublicKey(userPublicKey).createAccessToken({
       key: await this.serializeMasterKey(),
     });
