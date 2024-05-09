@@ -13,10 +13,6 @@ export class UnwrapKeyError extends Error {
   }
 }
 
-interface UserKeysJWEPayload {
-  key: string
-}
-
 export interface AccessTokenPayload {
   /**
    * The vault key (base64-encoded DER-formatted)
@@ -111,7 +107,7 @@ export class UserKeys { // TODO: rename to CurrentUserKeyPair
    * @throws {UnwrapKeyError} when attempting to decrypt the private key using an incorrect setupCode
    */
   public static async recover(encodedPublicKey: string, encryptedPrivateKey: string, setupCode: string): Promise<UserKeys> {
-    const jwe: UserKeysJWEPayload = await JWE.parseCompact(encryptedPrivateKey).decrypt(Recipient.pbes2('org.cryptomator.hub.setupCode', setupCode));
+    const jwe: AccessTokenPayload = await JWE.parseCompact(encryptedPrivateKey).decrypt(Recipient.pbes2('org.cryptomator.hub.setupCode', setupCode));
     const decodedPublicKey = base64.parse(encodedPublicKey, { loose: true });
     const decodedPrivateKey = base64.parse(jwe.key, { loose: true });
     const privateKey = crypto.subtle.importKey('pkcs8', decodedPrivateKey, UserKeys.KEY_DESIGNATION, true, UserKeys.KEY_USAGES);
@@ -147,7 +143,7 @@ export class UserKeys { // TODO: rename to CurrentUserKeyPair
   public async encryptedPrivateKey(setupCode: string): Promise<string> {
     const rawkey = new Uint8Array(await crypto.subtle.exportKey('pkcs8', this.keyPair.privateKey));
     try {
-      const payload: UserKeysJWEPayload = {
+      const payload: AccessTokenPayload = {
         key: base64.stringify(rawkey)
       };
       const jwe = await JWE.build(payload).encrypt(Recipient.pbes2('org.cryptomator.hub.setupCode', setupCode));
@@ -167,7 +163,7 @@ export class UserKeys { // TODO: rename to CurrentUserKeyPair
     const publicKey = await UserKeys.publicKey(devicePublicKey);
     const rawkey = new Uint8Array(await crypto.subtle.exportKey('pkcs8', this.keyPair.privateKey));
     try {
-      const payload: UserKeysJWEPayload = {
+      const payload: AccessTokenPayload = {
         key: base64.stringify(rawkey)
       };
       const jwe = await JWE.build(payload).encrypt(Recipient.ecdhEs('org.cryptomator.hub.deviceKey', publicKey));
@@ -188,7 +184,7 @@ export class UserKeys { // TODO: rename to CurrentUserKeyPair
     const publicKey = await UserKeys.publicKey(userPublicKey);
     let rawKey = new Uint8Array();
     try {
-      const payload: UserKeysJWEPayload = await JWE.parseCompact(jwe).decrypt(Recipient.ecdhEs('org.cryptomator.hub.deviceKey', browserPrivateKey));
+      const payload: AccessTokenPayload = await JWE.parseCompact(jwe).decrypt(Recipient.ecdhEs('org.cryptomator.hub.deviceKey', browserPrivateKey));
       rawKey = base64.parse(payload.key);
       const privateKey = await crypto.subtle.importKey('pkcs8', rawKey, UserKeys.KEY_DESIGNATION, true, UserKeys.KEY_USAGES);
       return new UserKeys({ publicKey: publicKey, privateKey: privateKey });
