@@ -1,11 +1,14 @@
 import { use as chaiUse, expect } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
+import chaiBytes from 'chai-bytes';
 import { before, describe } from 'mocha';
+import { base64 } from 'rfc4648';
 import { VaultDto } from '../../src/common/backend';
 import { UserKeys } from '../../src/common/crypto';
 import { MemberKey, RecoveryKey, UniversalVaultFormat, VaultMetadata } from '../../src/common/universalVaultFormat';
 
 chaiUse(chaiAsPromised);
+chaiUse(chaiBytes);
 
 // key coordinates from MDN examples:
 const alicePublic: JsonWebKey = {
@@ -56,30 +59,46 @@ describe('UVF', () => {
   });
 
   describe('VaultMetadata', () => {
-    // TODO review @sebi what else should we test?
-    it('encrypt() and decryptWithMemberKey()', async () => {
-      const vaultMemberKey = await MemberKey.create();
-      const recoveryKey = await RecoveryKey.create();
 
+    it('create()', async () => {
       const orig = await VaultMetadata.create({ enabled: true, maxWotDepth: -1 });
       expect(orig).to.be.not.null;
       expect(orig.seeds.get(orig.initialSeedId)).to.not.be.undefined
       expect(orig.seeds.get(orig.initialSeedId)!.length).to.eq(32)
       expect(orig.initialSeedId).to.eq(orig.latestSeedId)
       expect(orig.kdfSalt.length).to.eq(32)
+    });
 
-      const uvfMetadata: string = await orig.encrypt(vaultMemberKey, recoveryKey);
-      expect(uvfMetadata).to.be.not.null;
+    describe('instance methods', () => {
+      let original: VaultMetadata;
 
-      const decrypted: VaultMetadata = await VaultMetadata.decryptWithMemberKey(uvfMetadata, vaultMemberKey);
-      const decryptedPayload = decrypted.payload();
-      expect(decrypted.seeds).to.deep.eq(orig.seeds)
-      expect(decrypted.initialSeedId).to.eq(orig.initialSeedId)
-      expect(decrypted.latestSeedId).to.eq(orig.latestSeedId)
-      expect(decrypted.automaticAccessGrant).to.deep.eq(orig.automaticAccessGrant);
-      expect(decryptedPayload.fileFormat).to.eq('AES-256-GCM-32k');
-      expect(decryptedPayload.nameFormat).to.eq('AES-SIV-512-B64URL');
-      expect(decryptedPayload.kdf).to.eq('HKDF-SHA512');
+      beforeEach(async () => {
+        // prepare some test metadata:
+        original = await VaultMetadata.create({ enabled: true, maxWotDepth: -1 });
+      });
+
+      it('decrypt(encrypt(orig)) == orig', async () => {
+        const vaultMemberKey = await MemberKey.create();
+        const recoveryKey = await RecoveryKey.create();
+
+        const uvfFile: string = await original.encrypt(vaultMemberKey, recoveryKey);
+        expect(uvfFile).to.be.not.null;
+        const json = JSON.parse(uvfFile);
+        expect(json).to.have.property('protected');
+        expect(json).to.have.property('recipients');
+        expect(json).to.have.property('iv');
+        expect(json).to.have.property('ciphertext');
+        expect(json).to.have.property('tag');
+
+        const decrypted: VaultMetadata = await VaultMetadata.decryptWithMemberKey(uvfFile, vaultMemberKey);
+        expect(decrypted.seeds).to.deep.eq(original.seeds)
+        expect(decrypted.initialSeedId).to.eq(original.initialSeedId)
+        expect(decrypted.latestSeedId).to.eq(original.latestSeedId)
+        expect(decrypted.automaticAccessGrant).to.deep.eq(original.automaticAccessGrant);
+        expect(decrypted.payload().fileFormat).to.eq('AES-256-GCM-32k');
+        expect(decrypted.payload().nameFormat).to.eq('AES-SIV-512-B64URL');
+        expect(decrypted.payload().kdf).to.eq('HKDF-SHA512');
+      });
     });
   });
 
@@ -143,6 +162,10 @@ describe('UVF', () => {
 
       expect(uvf).to.be.not.null;
       expect(uvf.metadata).to.be.not.null;
+      expect(uvf.metadata.initialSeedId).to.eq(731870158);
+      expect(uvf.metadata.latestSeedId).to.eq(731870158);
+      expect(uvf.metadata.kdfSalt).to.equalBytes(base64.parse('BENqfHpG1FE8zlmBOfadoKMpsPxCJR1OqLz5H+yO2ls='));
+      expect(uvf.metadata.seeds.get(731870158)).to.equalBytes(base64.parse('D9anaJ+7ASDdGWNeTG3JuoVLoI1IWzYGjTUVxW0215s='));
       expect(uvf.memberKey).to.be.not.null;
       expect(uvf.recoveryKey).to.be.not.null;
       expect(uvf.recoveryKey.privateKey).to.be.undefined;
