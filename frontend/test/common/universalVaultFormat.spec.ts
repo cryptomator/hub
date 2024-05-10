@@ -20,23 +20,21 @@ const alicePrivate: JsonWebKey = {
 };
 
 describe('UVF', () => {
+  let alice: UserKeys;
 
   before(async () => {
     // since this test runs on Node, we need to replace window.crypto:
     Object.defineProperty(global, 'crypto', { value: require('node:crypto').webcrypto });
     // @ts-ignore: global not defined (but will be available within Node)
     global.window = { crypto: global.crypto };
+
+    // prepare some test key pairs:
+    const alicePrv = crypto.subtle.importKey('jwk', alicePrivate, UserKeys.KEY_DESIGNATION, true, UserKeys.KEY_USAGES);
+    const alicePub = crypto.subtle.importKey('jwk', alicePublic, UserKeys.KEY_DESIGNATION, true, []);
+    alice = new TestUserKeys({ privateKey: await alicePrv, publicKey: await alicePub });
   });
 
   describe('MemberKey', () => {
-    let alice: UserKeys;
-
-    before(async () => {
-      // prepare some test key pairs:
-      const alicePrv = crypto.subtle.importKey('jwk', alicePrivate, UserKeys.KEY_DESIGNATION, true, UserKeys.KEY_USAGES);
-      const alicePub = crypto.subtle.importKey('jwk', alicePublic, UserKeys.KEY_DESIGNATION, true, []);
-      alice = new TestUserKeys({ privateKey: await alicePrv, publicKey: await alicePub });
-    });
 
     it('serializeKey()', async () => {
       const memberKey = await TestMemberKey.create();
@@ -122,14 +120,6 @@ describe('UVF', () => {
   });
 
   describe('UniversalVaultFormat', () => {
-    let alice: UserKeys;
-
-    beforeEach(async () => {
-      // prepare some test key pairs:
-      const alicePrv = await crypto.subtle.importKey('jwk', alicePrivate, RecoveryKey.KEY_DESIGNATION, true, RecoveryKey.KEY_USAGES);
-      const alicePub = await crypto.subtle.importKey('jwk', alicePublic, RecoveryKey.KEY_DESIGNATION, true, []);
-      alice = new TestUserKeys({ privateKey: alicePrv, publicKey: alicePub });
-    });
 
     it('create()', async () => {
       const uvf = await UniversalVaultFormat.create({ enabled: true, maxWotDepth: -1 });
