@@ -51,7 +51,7 @@ describe('UVF', () => {
       const decrypted = await MemberKey.load(payload.key);
 
       expect(decrypted).to.be.not.null;
-      expect(decrypted.serializeKey()).to.eventually.eq('VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU=');
+      return expect(decrypted.serializeKey()).to.eventually.eq('VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU=');
     });
   });
 
