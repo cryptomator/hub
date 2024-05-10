@@ -109,6 +109,41 @@ describe('UVF', () => {
       expect(recoveryKey).to.be.not.null;
     });
 
+    it('recover() succeeds for valid recovery key', async () => {
+      const serialized = `cult hold all away buck do law relaxed other stimulus all bank fit indulge dad any ear grey cult golf
+      all baby dig war linear tour sleep humanity threat question neglect stance radar bank coup misery painter tragedy buddy
+      compare winter national approval budget deep screen outdoor audience tear stream cure type ugly chamber supporter franchise
+      accept sexy ad imply being drug doctor regime where thick dam training grass chamber domestic dictator educate sigh music spoken
+      connected measure voice lemon pig comprise disturb appear greatly satisfied heat news curiosity top impress nor method reflect
+      lesson recommend dual revenge thorough bus count broadband living riot prejudice target blonde excess company thereby tribe
+      respond horror mere way proud shopping wise liver mortgage plastic gentleman eighteen terms worry melt`;
+
+      const recoveryKey = await RecoveryKey.recover(serialized);
+
+      return Promise.all([
+        expect(recoveryKey.serializePublicKey()).to.eventually.eq('MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAESzrRXmyI8VWFJg1dPUNbFcc9jZvjZEfH7ulKI1UkXAltd7RGWrcfFxqyGPcwu6AQhHUag3OvDzEr0uUQND4PXHQTXP5IDGdYhJhL+WLKjnGjQAw0rNGy5V29+aV+yseW'),
+        expect(recoveryKey.serializePrivateKey()).to.eventually.eq('MIG2AgEAMBAGByqGSM49AgEGBSuBBAAiBIGeMIGbAgEBBDDCi4K1Ts3DgTz/ufkLX7EGMHjGpJv+WJmFgyzLwwaDFSfLpDw0Kgf3FKK+LAsV8r+hZANiAARLOtFebIjxVYUmDV09Q1sVxz2Nm+NkR8fu6UojVSRcCW13tEZatx8XGrIY9zC7oBCEdRqDc68PMSvS5RA0Pg9cdBNc/kgMZ1iEmEv5YsqOcaNADDSs0bLlXb35pX7Kx5Y=')
+      ]);
+    });
+
+    it('recover() fails for invalid recovery key', async () => {
+      const notInDict = RecoveryKey.recover('hallo bonjour');
+      const invalidPadding = RecoveryKey.recover('cult hold all away buck do law relaxed other stimulus');
+      const invalidCrc = RecoveryKey.recover(`wrong hold all away buck do law relaxed other stimulus all bank fit indulge dad any ear grey cult golf
+      all baby dig war linear tour sleep humanity threat question neglect stance radar bank coup misery painter tragedy buddy
+      compare winter national approval budget deep screen outdoor audience tear stream cure type ugly chamber supporter franchise
+      accept sexy ad imply being drug doctor regime where thick dam training grass chamber domestic dictator educate sigh music spoken
+      connected measure voice lemon pig comprise disturb appear greatly satisfied heat news curiosity top impress nor method reflect
+      lesson recommend dual revenge thorough bus count broadband living riot prejudice target blonde excess company thereby tribe
+      respond horror mere way proud shopping wise liver mortgage plastic gentleman eighteen terms worry melt`);
+
+      return Promise.all([
+        expect(notInDict).to.be.rejectedWith(Error, /Word not in dictionary/),
+        expect(invalidPadding).to.be.rejectedWith(Error, /Invalid padding/),
+        expect(invalidCrc).to.be.rejectedWith(Error, /Invalid recovery key checksum/),
+      ]);
+    });
+
     describe('instance methods', () => {
       let recoveryKey: RecoveryKey;
 

@@ -98,12 +98,12 @@ export class RecoveryKey {
   }
 
   /**
-   * Loads the public key of the recovery key pair.
+   * Imports the public key of the recovery key pair.
    * @param publicKey the DER-encoded public key
    * @param publicKey the PKCS8-encoded private key
    * @returns recovery key for encrypting vault metadata
    */
-  public static async load(publicKey: CryptoKey | Uint8Array, privateKey?: CryptoKey | Uint8Array): Promise<RecoveryKey> {
+  public static async import(publicKey: CryptoKey | Uint8Array, privateKey?: CryptoKey | Uint8Array): Promise<RecoveryKey> {
     if (publicKey instanceof Uint8Array) {
       publicKey = await crypto.subtle.importKey('spki', publicKey, RecoveryKey.KEY_DESIGNATION, true, []);
     }
@@ -118,8 +118,28 @@ export class RecoveryKey {
    * @param recoveryKey the encoded recovery key
    * @returns complete recovery key for decrypting vault metadata
    */
-  public static recover(recoveryKey: string) {
-    // TODO
+  public static async recover(recoveryKey: string): Promise<RecoveryKey> {
+    // decode and check recovery key:
+    const decoded = wordEncoder.decode(recoveryKey);
+    const paddingLength = decoded[decoded.length - 1];
+    if (paddingLength > 0x03) {
+      throw new Error('Invalid padding');
+    }
+    const unpadded = decoded.subarray(0, -paddingLength);
+    const checksum = unpadded.subarray(-2);
+    const rawkey = unpadded.subarray(0, -2);
+    const crc32 = CRC32.compute(rawkey);
+    if (checksum[0] !== (crc32 & 0xFF)
+      || checksum[1] !== (crc32 >> 8 & 0xFF)) {
+      throw new Error('Invalid recovery key checksum.');
+    }
+
+    // construct new RecoveryKey from recovered key
+    const privateKey = await crypto.subtle.importKey('pkcs8', rawkey, RecoveryKey.KEY_DESIGNATION, true, RecoveryKey.KEY_USAGES);
+    const jwk = await crypto.subtle.exportKey('jwk', privateKey);
+    delete jwk.d; // remove private part
+    const publicKey = await crypto.subtle.importKey('jwk', jwk, RecoveryKey.KEY_DESIGNATION, true, []);
+    return new RecoveryKey(publicKey, privateKey);
   }
 
   /**
@@ -292,9 +312,9 @@ export class UniversalVaultFormat implements AccessTokenProducing, VaultTemplate
     const metadata = await VaultMetadata.decryptWithMemberKey(vault.uvfMetadataFile, memberKey);
     let recoveryKey: RecoveryKey;
     if (payload.recoveryKey) {
-      recoveryKey = await RecoveryKey.load(base64.parse(vault.uvfRecoveryPublicKey), base64.parse(payload.recoveryKey));
+      recoveryKey = await RecoveryKey.import(base64.parse(vault.uvfRecoveryPublicKey), base64.parse(payload.recoveryKey));
     } else {
-      recoveryKey = await RecoveryKey.load(base64.parse(vault.uvfRecoveryPublicKey));
+      recoveryKey = await RecoveryKey.import(base64.parse(vault.uvfRecoveryPublicKey));
     }
     return new UniversalVaultFormat(metadata, memberKey, recoveryKey);
   }
