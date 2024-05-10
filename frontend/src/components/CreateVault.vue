@@ -215,9 +215,9 @@ import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { AccessGrant, PaymentRequiredError, VaultDto } from '../common/backend';
 import { VaultTemplateProducing } from '../common/crypto';
+import { UniversalVaultFormat } from '../common/universalVaultFormat';
 import { debounce } from '../common/util';
-import { UniversalVaultFormat } from '../common/uvf';
-import { VaultKeys } from '../common/vaultv8';
+import { VaultFormat8 } from '../common/vaultFormat8';
 
 enum State {
   Initial,
@@ -266,7 +266,7 @@ const vault = ref<VaultDto>({
 const copiedRecoveryKey = ref(false);
 const debouncedCopyFinish = debounce(() => copiedRecoveryKey.value = false, 2000);
 const confirmRecoveryKey = ref(false);
-const format8VaultKeys = ref<VaultKeys>();
+const vaultFormat8 = ref<VaultFormat8>();
 const recoveryKeyStr = ref<string>('');
 const uvfVault = ref<UniversalVaultFormat>();
 
@@ -282,8 +282,8 @@ async function initialize() {
   } else {
     switch (vaultType) {
       case VaultType.VaultFormat8:
-        format8VaultKeys.value = await VaultKeys.create();
-        recoveryKeyStr.value = await format8VaultKeys.value.createRecoveryKey();
+        vaultFormat8.value = await VaultFormat8.create();
+        recoveryKeyStr.value = await vaultFormat8.value.createRecoveryKey();
         break;
       case VaultType.UniversalVaultFormat:
         uvfVault.value = await UniversalVaultFormat.create({ enabled: false, maxWotDepth: 0 });
@@ -307,7 +307,7 @@ async function recoverVault() {
   onRecoverError.value = null;
   try {
     processing.value = true;
-    format8VaultKeys.value = await VaultKeys.recover(recoveryKeyStr.value);
+    vaultFormat8.value = await VaultFormat8.recover(recoveryKeyStr.value);
     state.value = State.EnterVaultDetails;
   } catch (error) {
     console.error('Recovering vault failed.', error);
@@ -341,10 +341,10 @@ async function createVault() {
     const ownerGrant: AccessGrant = { userId: owner.id, token: '' };
     switch (vaultType) {
       case VaultType.VaultFormat8: {
-        if (!format8VaultKeys.value) {
+        if (!vaultFormat8.value) {
           throw new Error('Invalid state');
         }
-        ownerGrant.token = await format8VaultKeys.value.encryptForUser(base64.parse(owner.publicKey));
+        ownerGrant.token = await vaultFormat8.value.encryptForUser(base64.parse(owner.publicKey));
         break;
       }
       case VaultType.UniversalVaultFormat: {
@@ -375,12 +375,12 @@ async function copyRecoveryKey() {
 }
 
 async function downloadVaultTemplate() {
-  if (!format8VaultKeys.value && !uvfVault.value) {
+  if (!vaultFormat8.value && !uvfVault.value) {
     throw new Error('Invalid state');
   }
   onDownloadTemplateError.value = null;
   try {
-    const templateProducer: VaultTemplateProducing = format8VaultKeys.value || uvfVault.value!;
+    const templateProducer: VaultTemplateProducing = vaultFormat8.value || uvfVault.value!;
     const blob = await templateProducer.exportTemplate(vault.value);
     if (blob != null) {
       saveAs(blob, `${vault.value.name}.zip`);

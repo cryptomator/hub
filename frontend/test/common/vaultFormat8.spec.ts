@@ -3,7 +3,7 @@ import chaiAsPromised from 'chai-as-promised';
 import { before, describe } from 'mocha';
 import { base64 } from 'rfc4648';
 import { UnwrapKeyError } from '../../src/common/crypto';
-import { VaultKeys } from '../../src/common/vaultv8';
+import { VaultFormat8 } from '../../src/common/vaultFormat8';
 
 chaiUse(chaiAsPromised);
 
@@ -16,9 +16,9 @@ describe('Vault Format 8', () => {
     global.window = { crypto: global.crypto };
   });
 
-  describe('VaultKeys', () => {
+  describe('VaultFormat8', () => {
     it('create()', async () => {
-      const orig = await VaultKeys.create();
+      const orig = await VaultFormat8.create();
 
       expect(orig).to.be.not.null;
     });
@@ -30,7 +30,7 @@ describe('Vault Format 8', () => {
         investor boot depth left theory snow whereby terminal weekly reject happiness circuit partial cup ad
         `;
 
-      const recovered = await VaultKeys.recover(recoveryKey);
+      const recovered = await VaultFormat8.recover(recoveryKey);
 
       const newMasterKey = await crypto.subtle.exportKey('jwk', recovered.masterKey);
       expect(newMasterKey).to.deep.include({
@@ -39,10 +39,10 @@ describe('Vault Format 8', () => {
     });
 
     it('recover() fails for invalid recovery key', async () => {
-      const noMultipleOfTwo = VaultKeys.recover('pathway');
-      const notInDict = VaultKeys.recover('hallo bonjour');
-      const wrongLength = VaultKeys.recover('pathway lift');
-      const invalidCrc = VaultKeys.recover(`
+      const noMultipleOfTwo = VaultFormat8.recover('pathway');
+      const notInDict = VaultFormat8.recover('hallo bonjour');
+      const wrongLength = VaultFormat8.recover('pathway lift');
+      const invalidCrc = VaultFormat8.recover(`
         pathway lift abuse plenty export texture gentleman landscape beyond ceiling around leaf cafe charity 
         border breakdown victory surely computer cat linger restrict infer crowd live computer true written amazed 
         investor boot depth left theory snow whereby terminal weekly reject happiness circuit partial cup wrong
@@ -66,15 +66,15 @@ describe('Vault Format 8', () => {
       };
 
       it('decryptWithAdminPassword() with wrong pw', () => {
-        return expect(VaultKeys.decryptWithAdminPassword('wrong', wrapped.wrappedMasterkey, wrapped.wrappedOwnerPrivateKey, wrapped.ownerPublicKey, wrapped.salt, wrapped.iterations)).to.eventually.be.rejectedWith(UnwrapKeyError);
+        return expect(VaultFormat8.decryptWithAdminPassword('wrong', wrapped.wrappedMasterkey, wrapped.wrappedOwnerPrivateKey, wrapped.ownerPublicKey, wrapped.salt, wrapped.iterations)).to.eventually.be.rejectedWith(UnwrapKeyError);
       });
       it('decryptWithAdminPassword() with correct pw', () => {
-        return expect(VaultKeys.decryptWithAdminPassword('pass', wrapped.wrappedMasterkey, wrapped.wrappedOwnerPrivateKey, wrapped.ownerPublicKey, wrapped.salt, wrapped.iterations)).to.eventually.be.fulfilled;
+        return expect(VaultFormat8.decryptWithAdminPassword('pass', wrapped.wrappedMasterkey, wrapped.wrappedOwnerPrivateKey, wrapped.ownerPublicKey, wrapped.salt, wrapped.iterations)).to.eventually.be.fulfilled;
       });
     });
 
     describe('After creating new key material', () => {
-      let vaultKeys: VaultKeys;
+      let vaultKeys: VaultFormat8;
 
       beforeEach(async () => {
         vaultKeys = await TestVaultKeys.create();
@@ -100,7 +100,7 @@ describe('Vault Format 8', () => {
           recoveryKey = await vaultKeys.createRecoveryKey();
         });
         it('recover() imports original key', async () => {
-          const recovered = await VaultKeys.recover(recoveryKey);
+          const recovered = await VaultFormat8.recover(recoveryKey);
 
           const oldMasterKey = await crypto.subtle.exportKey('jwk', vaultKeys.masterKey);
           const newMasterKey = await crypto.subtle.exportKey('jwk', recovered.masterKey);
@@ -129,7 +129,7 @@ describe('Vault Format 8', () => {
 
 /* ---------- MOCKS ---------- */
 
-class TestVaultKeys extends VaultKeys {
+class TestVaultKeys extends VaultFormat8 {
   constructor(masterKey: CryptoKey) {
     super(masterKey);
   }

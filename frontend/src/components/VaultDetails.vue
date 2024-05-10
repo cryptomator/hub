@@ -154,7 +154,7 @@
           {{ t('vaultDetails.actions.downloadVaultTemplate') }}
         </button>
         <!-- displayRecoveryKey button (Vault Format 8 only) -->
-        <button v-if="vaultRole == 'OWNER' && vaultKeys" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDisplayRecoveryKeyDialog()">
+        <button v-if="vaultRole == 'OWNER' && vaultFormat8" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDisplayRecoveryKeyDialog()">
           {{ t('vaultDetails.actions.displayRecoveryKey') }}
         </button>
         <!-- TODO: regenerateRecoveryKey button (UVF only) -->
@@ -185,7 +185,7 @@
           {{ t('vaultDetails.actions.downloadVaultTemplate') }}
         </button>
         <!-- displayRecoveryKey button (Vault Format 8 only) -->
-        <button v-if="vaultRole == 'OWNER' && vaultKeys" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDisplayRecoveryKeyDialog()">
+        <button v-if="vaultRole == 'OWNER' && vaultFormat8" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDisplayRecoveryKeyDialog()">
           {{ t('vaultDetails.actions.displayRecoveryKey') }}
         </button>
         <!-- TODO: regenerateRecoveryKey button (UVF only) -->
@@ -201,10 +201,10 @@
   </div>
 
   <ClaimVaultOwnershipDialog v-if="claimingVaultOwnership && vault" ref="claimVaultOwnershipDialog" :vault="vault" @action="provedOwnership" @close="claimingVaultOwnership = false" />
-  <GrantPermissionDialog v-if="grantingPermission && vault && (vaultKeys || uvfVault)" ref="grantPermissionDialog" :vault="vault" :users="usersRequiringAccessGrant" :vault-keys="(vaultKeys || uvfVault)!" @close="grantingPermission = false" @permission-granted="permissionGranted()" />
+  <GrantPermissionDialog v-if="grantingPermission && vault && (vaultFormat8 || uvfVault)" ref="grantPermissionDialog" :vault="vault" :users="usersRequiringAccessGrant" :vault-keys="(vaultFormat8 || uvfVault)!" @close="grantingPermission = false" @permission-granted="permissionGranted()" />
   <EditVaultMetadataDialog v-if="editingVaultMetadata && vault" ref="editVaultMetadataDialog" :vault="vault" @close="editingVaultMetadata = false" @updated="v => refreshVault(v)" />
-  <DownloadVaultTemplateDialog v-if="downloadingVaultTemplate && vault && (vaultKeys || uvfVault)" ref="downloadVaultTemplateDialog" :vault="vault" :vault-keys="(vaultKeys || uvfVault)!" @close="downloadingVaultTemplate = false" />
-  <DisplayRecoveryKeyDialog v-if="displayingRecoveryKey && vault && vaultKeys" ref="displayRecoveryKeyDialog" :vault="vault" :vault-keys="vaultKeys" @close="displayingRecoveryKey = false" />
+  <DownloadVaultTemplateDialog v-if="downloadingVaultTemplate && vault && (vaultFormat8 || uvfVault)" ref="downloadVaultTemplateDialog" :vault="vault" :vault-keys="(vaultFormat8 || uvfVault)!" @close="downloadingVaultTemplate = false" />
+  <DisplayRecoveryKeyDialog v-if="displayingRecoveryKey && vault && vaultFormat8" ref="displayRecoveryKeyDialog" :vault="vault" :vault-keys="vaultFormat8" @close="displayingRecoveryKey = false" />
   <ArchiveVaultDialog v-if="archivingVault && vault" ref="archiveVaultDialog" :vault="vault" @close="archivingVault = false" @archived="v => refreshVault(v)" />
   <ReactivateVaultDialog v-if="reactivatingVault && vault" ref="reactivateVaultDialog" :vault="vault" @close="reactivatingVault = false" @reactivated="v => { refreshVault(v); refreshLicense();}" />
   <RecoverVaultDialog v-if="recoveringVault && vault && me" ref="recoverVaultDialog" :vault="vault" :me="me" @close="recoveringVault = false" @recovered="fetchOwnerData()" />
@@ -221,8 +221,8 @@ import auth from '../common/auth';
 import backend, { AuthorityDto, ConflictError, ForbiddenError, LicenseUserInfoDto, MemberDto, NotFoundError, PaymentRequiredError, UserDto, VaultDto, VaultRole } from '../common/backend';
 import { BrowserKeys, UserKeys } from '../common/crypto';
 import { JWT, JWTHeader } from '../common/jwt';
-import { UniversalVaultFormat } from '../common/uvf';
-import { VaultKeys } from '../common/vaultv8';
+import { UniversalVaultFormat } from '../common/universalVaultFormat';
+import { VaultFormat8 } from '../common/vaultFormat8';
 import ArchiveVaultDialog from './ArchiveVaultDialog.vue';
 import ClaimVaultOwnershipDialog from './ClaimVaultOwnershipDialog.vue';
 import DisplayRecoveryKeyDialog from './DisplayRecoveryKeyDialog.vue';
@@ -269,7 +269,7 @@ const reactivateVaultDialog = ref<typeof ReactivateVaultDialog>();
 const recoveringVault = ref(false);
 const recoverVaultDialog = ref<typeof RecoverVaultDialog>();
 const vault = ref<VaultDto>();
-const vaultKeys = ref<VaultKeys>();
+const vaultFormat8 = ref<VaultFormat8>();
 const uvfVault = ref<UniversalVaultFormat>();
 const members = ref<Map<string, MemberDto>>(new Map());
 const usersRequiringAccessGrant = ref<UserDto[]>([]);
@@ -311,9 +311,9 @@ async function fetchOwnerData() {
     vaultRecoveryRequired.value = false;
     const accessToken = await backend.vaults.accessToken(props.vaultId, true);
     if (vault.value.uvfMetadataFile) {
-      uvfVault.value = await loadUvfVault(accessToken);
+      uvfVault.value = await loadUvfMetadata(accessToken);
     } else {
-      vaultKeys.value = await loadVaultKeys(accessToken);
+      vaultFormat8.value = await loadVaultFormat8Keys(accessToken);
     }
   } catch (error) {
     if (error instanceof ForbiddenError) {
@@ -328,7 +328,7 @@ async function fetchOwnerData() {
   }
 }
 
-async function loadVaultKeys(vaultKeyJwe: string): Promise<VaultKeys> {
+async function loadVaultFormat8Keys(vaultKeyJwe: string): Promise<VaultFormat8> {
   if (!me.value || !me.value.publicKey) {
     throw new Error('User not initialized.');
   }
@@ -342,10 +342,10 @@ async function loadVaultKeys(vaultKeyJwe: string): Promise<VaultKeys> {
     throw new Error('Device not initialized.');
   }
   const userKeys = await UserKeys.decryptOnBrowser(myDevice.userPrivateKey, browserKeys.keyPair.privateKey, base64.parse(me.value.publicKey));
-  return VaultKeys.decryptWithUserKey(vaultKeyJwe, userKeys);
+  return VaultFormat8.decryptWithUserKey(vaultKeyJwe, userKeys);
 }
 
-async function loadUvfVault(accessToken: string): Promise<UniversalVaultFormat> {
+async function loadUvfMetadata(accessToken: string): Promise<UniversalVaultFormat> {
   if (!vault.value || !vault.value.uvfMetadataFile) {
     throw new Error('Vault not initialized.');
   }
@@ -365,7 +365,7 @@ async function loadUvfVault(accessToken: string): Promise<UniversalVaultFormat> 
   return UniversalVaultFormat.decrypt(vault.value, accessToken, userKeys);
 }
 
-async function provedOwnership(keys: VaultKeys, ownerKeyPair: CryptoKeyPair) {
+async function provedOwnership(keys: VaultFormat8, ownerKeyPair: CryptoKeyPair) {
   if (!me.value || !me.value.publicKey) {
     throw new Error('User not initialized.');
   }

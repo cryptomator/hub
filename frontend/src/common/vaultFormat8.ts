@@ -25,8 +25,7 @@ interface VaultConfigHeaderHub {
 }
 
 
-// TODO: rename to VaultFormat8Keys
-export class VaultKeys implements AccessTokenProducing, VaultTemplateProducing {
+export class VaultFormat8 implements AccessTokenProducing, VaultTemplateProducing {
   // in this browser application, this 512 bit key is used
   // as a hmac key to sign the vault config.
   // however when used by cryptomator, it gets split into
@@ -47,13 +46,13 @@ export class VaultKeys implements AccessTokenProducing, VaultTemplateProducing {
    * Creates a new masterkey
    * @returns A new masterkey
    */
-  public static async create(): Promise<VaultKeys> {
+  public static async create(): Promise<VaultFormat8> {
     const key = crypto.subtle.generateKey(
-      VaultKeys.MASTERKEY_KEY_DESIGNATION,
+      VaultFormat8.MASTERKEY_KEY_DESIGNATION,
       true,
       ['sign']
     );
-    return new VaultKeys(await key);
+    return new VaultFormat8(await key);
   }
 
 
@@ -63,13 +62,13 @@ export class VaultKeys implements AccessTokenProducing, VaultTemplateProducing {
    * @param userKeyPair The current user's key pair
    * @returns The masterkey
    */
-  public static async decryptWithUserKey(jwe: string, userKeyPair: UserKeys): Promise<VaultKeys> {
+  public static async decryptWithUserKey(jwe: string, userKeyPair: UserKeys): Promise<VaultFormat8> {
     let rawKey = new Uint8Array();
     try {
       const payload = await userKeyPair.decryptAccessToken(jwe);
       rawKey = base64.parse(payload.key);
-      const masterKey = crypto.subtle.importKey('raw', rawKey, VaultKeys.MASTERKEY_KEY_DESIGNATION, true, ['sign']);
-      return new VaultKeys(await masterKey);
+      const masterKey = crypto.subtle.importKey('raw', rawKey, VaultFormat8.MASTERKEY_KEY_DESIGNATION, true, ['sign']);
+      return new VaultFormat8(await masterKey);
     } finally {
       rawKey.fill(0x00);
     }
@@ -87,7 +86,7 @@ export class VaultKeys implements AccessTokenProducing, VaultTemplateProducing {
    * @throws WrongPasswordError, if the wrong password is used
    * @deprecated Only used during "claim vault ownership" workflow for legacy vaults
    */
-  public static async decryptWithAdminPassword(vaultAdminPassword: string, wrappedMasterkey: string, wrappedOwnerPrivateKey: string, ownerPublicKey: string, salt: string, iterations: number): Promise<[VaultKeys, CryptoKeyPair]> {
+  public static async decryptWithAdminPassword(vaultAdminPassword: string, wrappedMasterkey: string, wrappedOwnerPrivateKey: string, ownerPublicKey: string, salt: string, iterations: number): Promise<[VaultFormat8, CryptoKeyPair]> {
     // pbkdf2:
     const encodedPw = new TextEncoder().encode(vaultAdminPassword);
     const pwKey = crypto.subtle.importKey('raw', encodedPw, 'PBKDF2', false, ['deriveKey']);
@@ -113,7 +112,7 @@ export class VaultKeys implements AccessTokenProducing, VaultTemplateProducing {
         decodedMasterKey.slice(GCM_NONCE_LEN),
         await kek,
         { name: 'AES-GCM', iv: decodedMasterKey.slice(0, GCM_NONCE_LEN) },
-        VaultKeys.MASTERKEY_KEY_DESIGNATION,
+        VaultFormat8.MASTERKEY_KEY_DESIGNATION,
         true,
         ['sign']
       );
@@ -133,7 +132,7 @@ export class VaultKeys implements AccessTokenProducing, VaultTemplateProducing {
         true,
         ['verify']
       );
-      return [new VaultKeys(await masterkey), { privateKey: await privKey, publicKey: await pubKey }];
+      return [new VaultFormat8(await masterkey), { privateKey: await privKey, publicKey: await pubKey }];
     } catch (error) {
       throw new UnwrapKeyError(error);
     }
@@ -145,7 +144,7 @@ export class VaultKeys implements AccessTokenProducing, VaultTemplateProducing {
    * @returns The recovered master key
    * @throws Error, if passing a malformed recovery key
    */
-  public static async recover(recoveryKey: string): Promise<VaultKeys> {
+  public static async recover(recoveryKey: string): Promise<VaultFormat8> {
     // decode and check recovery key:
     const decoded = wordEncoder.decode(recoveryKey);
     if (decoded.length !== 66) {
@@ -162,11 +161,11 @@ export class VaultKeys implements AccessTokenProducing, VaultTemplateProducing {
     const key = crypto.subtle.importKey(
       'raw',
       decodedKey,
-      VaultKeys.MASTERKEY_KEY_DESIGNATION,
+      VaultFormat8.MASTERKEY_KEY_DESIGNATION,
       true,
       ['sign']
     );
-    return new VaultKeys(await key);
+    return new VaultFormat8(await key);
   }
 
   public async exportTemplate(vault: VaultDto): Promise<Blob> {

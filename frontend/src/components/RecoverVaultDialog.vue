@@ -56,7 +56,7 @@ import { base64 } from 'rfc4648';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { UserDto, VaultDto } from '../common/backend';
-import { VaultKeys } from '../common/vaultv8';
+import { VaultFormat8 } from '../common/vaultFormat8';
 
 class FormValidationFailedError extends Error {
   constructor() {
@@ -103,10 +103,10 @@ async function recoverVault() {
   onVaultRecoverError.value = null;
   try {
     processingVaultRecovery.value = true;
-    const vaultKeys = await VaultKeys.recover(recoveryKey.value);
-    if (props.me.publicKey && vaultKeys) {
+    const vaultFormat8 = await VaultFormat8.recover(recoveryKey.value);
+    if (props.me.publicKey && vaultFormat8) {
       const publicKey = base64.parse(props.me.publicKey);
-      const jwe = await vaultKeys.encryptForUser(publicKey);
+      const jwe = await vaultFormat8.encryptForUser(publicKey);
       await backend.vaults.grantAccess(props.vault.id, { userId: props.me.id, token: jwe });
       emit('recovered');
       open.value = false;

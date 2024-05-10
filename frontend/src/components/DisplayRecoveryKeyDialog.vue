@@ -70,7 +70,7 @@ import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { VaultDto } from '../common/backend';
 import { debounce } from '../common/util';
-import { VaultKeys } from '../common/vaultv8';
+import { VaultFormat8 } from '../common/vaultFormat8';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -81,7 +81,7 @@ const debouncedCopyFinish = debounce(() => copiedRecoveryKey.value = false, 2000
 
 const props = defineProps<{
   vault: VaultDto
-  vaultKeys: VaultKeys
+  vaultKeys: VaultFormat8
 }>();
 
 defineEmits<{

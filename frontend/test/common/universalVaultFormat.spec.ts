@@ -3,7 +3,7 @@ import chaiAsPromised from 'chai-as-promised';
 import { before, describe } from 'mocha';
 import { VaultDto } from '../../src/common/backend';
 import { UserKeys } from '../../src/common/crypto';
-import { MemberKey, RecoveryKey, UniversalVaultFormat, VaultMetadata } from '../../src/common/uvf';
+import { MemberKey, RecoveryKey, UniversalVaultFormat, VaultMetadata } from '../../src/common/universalVaultFormat';
 
 chaiUse(chaiAsPromised);
 
