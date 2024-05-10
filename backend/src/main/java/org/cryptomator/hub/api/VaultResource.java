@@ -331,6 +331,38 @@ public class VaultResource {
 		}
 	}
 
+	@GET
+	@Path("/{vaultId}/uvf/vault.uvf")
+	@RolesAllowed("user")
+	@Transactional
+	@Produces(MediaType.APPLICATION_JSON)
+	@Operation(summary = "get the vault.uvf file")
+	@APIResponse(responseCode = "200")
+	@APIResponse(responseCode = "404", description = "unknown vault")
+	public String getUvfMetadata(@PathParam("vaultId") UUID vaultId) {
+		var vault = vaultRepo.findById(vaultId);
+		if (vault == null || vault.getUvfMetadataFile() == null) {
+			throw new NotFoundException();
+		}
+		return vault.getUvfMetadataFile();
+	}
+
+	@GET
+	@Path("/{vaultId}/uvf/jwks.json")
+	@RolesAllowed("user")
+	@Transactional
+	@Produces(MediaType.APPLICATION_JSON)
+	@Operation(summary = "get public vault keys", description = "retrieves a JWK Set containing public keys related to this vault")
+	@APIResponse(responseCode = "200")
+	@APIResponse(responseCode = "404", description = "unknown vault")
+	public String getUvfKeys(@PathParam("vaultId") UUID vaultId) {
+		var vault = vaultRepo.findById(vaultId);
+		if (vault == null || vault.getUvfMetadataFile() == null) {
+			throw new NotFoundException();
+		}
+		return vault.getUvfKeySet();
+	}
+
 	@POST
 	@Path("/{vaultId}/access-tokens")
 	@RolesAllowed("user")
