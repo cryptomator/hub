@@ -108,8 +108,8 @@ public class Vault {
 	@Column(name = "uvf_metadata_file")
 	private String uvfMetadataFile;
 
-	@Column(name = "uvf_recovery_pubkey")
-	private String uvfRecoveryPubKey;
+	@Column(name = "uvf_jwks")
+	private String uvfKeySet;
 
 	public Optional<ECPublicKey> getAuthenticationPublicKeyOptional() {
 		if (authenticationPublicKey == null) {
@@ -244,12 +244,12 @@ public class Vault {
 		this.uvfMetadataFile = uvfMetadataFile;
 	}
 
-	public String getUvfRecoveryPubKey() {
-		return uvfRecoveryPubKey;
+	public String getUvfKeySet() {
+		return uvfKeySet;
 	}
 
-	public void setUvfRecoveryPubKey(String uvfRecoveryPubKey) {
-		this.uvfRecoveryPubKey = uvfRecoveryPubKey;
+	public void setUvfKeySet(String uvfKeySet) {
+		this.uvfKeySet = uvfKeySet;
 	}
 
 	@Override
@@ -264,12 +264,12 @@ public class Vault {
 				&& Objects.equals(masterkey, vault.masterkey)
 				&& Objects.equals(archived, vault.archived)
 				&& Objects.equals(uvfMetadataFile, vault.uvfMetadataFile)
-				&& Objects.equals(uvfRecoveryPubKey, vault.uvfRecoveryPubKey);
+				&& Objects.equals(uvfKeySet, vault.uvfKeySet);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, name, salt, iterations, masterkey, archived, uvfMetadataFile, uvfRecoveryPubKey);
+		return Objects.hash(id, name, salt, iterations, masterkey, archived, uvfMetadataFile, uvfKeySet);
 	}
 
 	@Override
@@ -284,7 +284,7 @@ public class Vault {
 				", masterkey='" + masterkey + '\'' +
 				", archived='" + archived + '\'' +
 				", uvfMetadataFile='" + uvfMetadataFile + '\'' +
-				", uvfRecoveryPubKey='" + uvfRecoveryPubKey + '\'' +
+				", uvfKeySet='" + uvfKeySet + '\'' +
 				'}';
 	}
 

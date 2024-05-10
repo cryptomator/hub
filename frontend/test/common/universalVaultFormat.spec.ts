@@ -5,6 +5,7 @@ import { before, describe } from 'mocha';
 import { base64 } from 'rfc4648';
 import { VaultDto } from '../../src/common/backend';
 import { UserKeys } from '../../src/common/crypto';
+import { JsonJWE } from '../../src/common/jwe';
 import { MemberKey, RecoveryKey, UniversalVaultFormat, VaultMetadata } from '../../src/common/universalVaultFormat';
 
 chaiUse(chaiAsPromised);
@@ -121,7 +122,7 @@ describe('UVF', () => {
       const recoveryKey = await RecoveryKey.recover(serialized);
 
       return Promise.all([
-        expect(recoveryKey.serializePublicKey()).to.eventually.eq('MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAESzrRXmyI8VWFJg1dPUNbFcc9jZvjZEfH7ulKI1UkXAltd7RGWrcfFxqyGPcwu6AQhHUag3OvDzEr0uUQND4PXHQTXP5IDGdYhJhL+WLKjnGjQAw0rNGy5V29+aV+yseW'),
+        expect(recoveryKey.serializePublicKey()).to.eventually.eq('{"kid":"org.cryptomator.hub.recoverykey.T-LR82IaI1_TGHwcyn1u8vAYakGPz4upg1lPnE0xBZQ","kty":"EC","crv":"P-384","x":"SzrRXmyI8VWFJg1dPUNbFcc9jZvjZEfH7ulKI1UkXAltd7RGWrcfFxqyGPcwu6AQ","y":"hHUag3OvDzEr0uUQND4PXHQTXP5IDGdYhJhL-WLKjnGjQAw0rNGy5V29-aV-yseW"}'),
         expect(recoveryKey.serializePrivateKey()).to.eventually.eq('MIG2AgEAMBAGByqGSM49AgEGBSuBBAAiBIGeMIGbAgEBBDDCi4K1Ts3DgTz/ufkLX7EGMHjGpJv+WJmFgyzLwwaDFSfLpDw0Kgf3FKK+LAsV8r+hZANiAARLOtFebIjxVYUmDV09Q1sVxz2Nm+NkR8fu6UojVSRcCW13tEZatx8XGrIY9zC7oBCEdRqDc68PMSvS5RA0Pg9cdBNc/kgMZ1iEmEv5YsqOcaNADDSs0bLlXb35pX7Kx5Y=')
       ]);
     });
@@ -161,7 +162,7 @@ describe('UVF', () => {
 
       it('serializePublicKey()', async () => {
         const serialized = await recoveryKey.serializePublicKey();
-        expect(serialized).to.eq('MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAESzrRXmyI8VWFJg1dPUNbFcc9jZvjZEfH7ulKI1UkXAltd7RGWrcfFxqyGPcwu6AQhHUag3OvDzEr0uUQND4PXHQTXP5IDGdYhJhL+WLKjnGjQAw0rNGy5V29+aV+yseW');
+        expect(serialized).to.eq('{"kid":"org.cryptomator.hub.recoverykey.T-LR82IaI1_TGHwcyn1u8vAYakGPz4upg1lPnE0xBZQ","kty":"EC","crv":"P-384","x":"SzrRXmyI8VWFJg1dPUNbFcc9jZvjZEfH7ulKI1UkXAltd7RGWrcfFxqyGPcwu6AQ","y":"hHUag3OvDzEr0uUQND4PXHQTXP5IDGdYhJhL-WLKjnGjQAw0rNGy5V29-aV-yseW"}');
       });
 
       it('createRecoveryKey()', async () => {
@@ -189,21 +190,23 @@ describe('UVF', () => {
         name: 'test',
         archived: false,
         creationTime: new Date(),
-        uvfMetadataFile: '{"protected":"eyJqa3UiOiJqa3UuandrcyIsImVuYyI6IkEyNTZHQ00ifQ","recipients":[{"header":{"kid":"org.cryptomator.hub.memberkey","alg":"A256KW"},"encrypted_key":"WyLgMABBhRtsTE4PGJc-o8ZlhmoBB3uwCfNgs2wLqnmvCak9ZWoeww"},{"header":{"kid":"org.cryptomator.hub.recoverykey.7gnV24ftRgvx7eq-MeV4Pr_K9KlxdRl9EThXQ08XrA8","alg":"ECDH-ES+A256KW","epk":{"key_ops":[],"ext":true,"kty":"EC","x":"6DEeEYrLi7mz4a1QftEOXIia6wL2OblQioOiR081diHe1T_CbSP_OLnTXgQX2Ark","y":"qLY9M8mWj6kE5rzshqV-c2ioUvV82Gp7RLfolW_Yd4bMYTL142MQX7F7TSYIt1P3","crv":"P-384"},"apu":"","apv":""},"encrypted_key":"1bd-7tqhB6y3F2CxJxdoe3lRhvizbL7VyhlZjRSzGLxoBm7bELQBdQ"}],"iv":"aAFzuQNAO5NlO0eP","ciphertext":"C6ZhAuKv46ydOQ215-hm9ei18EHi5sVBdwYKBBL1XXpC852e8HWprA1HBPXBd_aKw_0wimpIiTxgJLK8V3YZIHlECHM2T-q7em7kPT-NUWHL9rnXKQrdFkuwXiKiVRvlYKQAG8r52-SHl-mm4cMVXFIwWyks36bt87ngQ1vWih9qYqpvxJ6DozHveR8jODxe_itGx8aYm6pbjlT56vAb10in7s-Y_Xya1pLSdVHmMyZf90fe9X7cY9qv6Jnybi2SvWLr8H3wIpp_3-T_zLMzJB1SpGo-BhZqcoon2SzYACx4TFh9eMydlTEi0DEqSs3NoqXAN8uBEEcSeDfTAAr5J9BjvIF7wq5FHomJcfPjW5qhSmqyxi3JXnF0UjP7jy0aPWqZtKqIkedlQb62oR4bPoKk9vrp","tag":"zK_nd4E8g25v3qq5ayVviogORUvQDS1Mi11dCkuxUgc"}',
-        uvfRecoveryPublicKey: 'MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAEu35Pxi7dz4zbnOeU41N3Rkr3UDfpXlQPZYj/45+15K2wcKgGw7q8n8LCWHvSZ2XyXhUKsAeuosCsgEyw7LOji1J0yAvCASr44majKi9lyQ2gabxHPkPaHRJV/9QGO6id'
+        uvfMetadataFile: '{"protected":"eyJvcmlnaW4iOiJodHRwczovL2V4YW1wbGUuY29tL2FwaS92YXVsdHMvVE9ETy91dmYvdmF1bHQudXZmIiwiamt1Ijoiandrcy5qc29uIiwiZW5jIjoiQTI1NkdDTSJ9","recipients":[{"header":{"kid":"org.cryptomator.hub.memberkey","alg":"A256KW"},"encrypted_key":"7FtABJ5BpSM9Ft8wUPfLQc-12WF57kX0tWtRWiVwA_N_gJBa9iwhzw"},{"header":{"kid":"org.cryptomator.hub.recoverykey.1h24rxLxIlNRPQAn5NBP0fL3VKNTmqS6NEnt2clI5ko","alg":"ECDH-ES+A256KW","epk":{"key_ops":[],"ext":true,"kty":"EC","x":"oNu46YFrgrGSvl98HyDD3_iPkfZBnpYgEHmPL3qbO4AdwBsycpIqcHwKhT8Lt7B8","y":"P80VgJFml85v_F2-aPYdgDQX_DPGZr1s_p8gWF4Idkp13QfKdhi32C7Zoy5kzPWO","crv":"P-384"},"apu":"","apv":""},"encrypted_key":"QaJn0TP7mGAc5ukOpZ0gNAuBtCW7hPCkj8Jp4bhMftQfJefHNyqE7Q"}],"iv":"Wgif0WP21-MAwvWs","ciphertext":"-n5CePmmN99I4KqlnR64Fuu5b2Md9s4CGxLMm7KQqu65H0ug7Fs5HHnrx_gkpFiv1Mn-jwrkoEtiixyQcYX6UcoyT2dY1MkLQB7QU9mdMpZU3n19Q2sAx1-gfTCd7IzVXef7SEfuscdQL1QTKJW454Dy8L3WwPiDpUgt9ED7mMFdJ6lJ3_EFYstN0VFAVf_jwtIILmQrjkM_LI0FFKfqkOCH2nuE9xG8ihPH9X9OStllPp00G9_onYu9mrg-smiNNK2Ib19CZJ2E6mAp7F_LGiz6p203fsprj4XY9J6t8zl5Vpc61NmFvzvY4j3_5FpD_BmpVr8tyyVT9zqWn4vsBAHORQ1V_b9v68O7CekCebpQvpmzEPZwZN1Ma_T6oI7Ydn1rtBnDruVrpWm01RL8XpHnFbko","tag":"vPLd65IEcexmhGbYPM0cYI53H4Pp1OfTaAq_QGrneLM"}',
+        uvfKeySet: '{"keys": [{"kid":"org.cryptomator.hub.recoverykey.1h24rxLxIlNRPQAn5NBP0fL3VKNTmqS6NEnt2clI5ko","kty":"EC","crv":"P-384","x":"DczdNhPQnpgP8FV6qa372LDLJF2w2bMKXzea5cjxslaMjM6w7NGqrF498LYHU-Jt","y":"vH9bc-Ow_O1EQmd6N5pKmDoPyE6ziKsrlpuck5aLXwV4fSMV_8Ro1a872j5ClsPe"}]}'
       };
-      const accessToken = 'eyJlbmMiOiJBMjU2R0NNIiwia2lkIjoib3JnLmNyeXB0b21hdG9yLmh1Yi51c2Vya2V5IiwiYWxnIjoiRUNESC1FUytBMjU2S1ciLCJlcGsiOnsia2V5X29wcyI6W10sImV4dCI6dHJ1ZSwia3R5IjoiRUMiLCJ4IjoiWGJxOGozRXpXWlBuVDNnUDBzR2s3dkQxWVo5NUMyeUFRWEJoZlpLbE9sQnF5QlN6UlJsdUdOckZSTi10MHFIdCIsInkiOiJPb1VzcW04V0tCdUt6MzdKaGZhU3Y5OGk5SzVnS3hBYlNlQnBFSHdRTU9qSTlNZ0VSZmdDX2NqZWdKNnhqYlFjIiwiY3J2IjoiUC0zODQifSwiYXB1IjoiIiwiYXB2IjoiIn0.i8sw4wq6q-XH-rdbhsnOhJCw4WIFgrpDWIttyrRQk3Bhx4NhW1VwzA.HvVu3ujO_ckTBlCl.7nNWKXpy4kfAwxB7JDmPGrfjO9dDvB_w8FrGesfWlEXKf-WJBHo.eGUXkTJawp8EmVbXca3NarXaQ6_qS2_MxeuLLlKN_Ck';
+      const accessToken = 'eyJlbmMiOiJBMjU2R0NNIiwia2lkIjoib3JnLmNyeXB0b21hdG9yLmh1Yi51c2Vya2V5IiwiYWxnIjoiRUNESC1FUytBMjU2S1ciLCJlcGsiOnsia2V5X29wcyI6W10sImV4dCI6dHJ1ZSwia3R5IjoiRUMiLCJ4IjoiUXZRWUpUd3dSVEg2MWRFS3ZoNDI4ZG9nN3pRTFFxY3I0NUhwZTRqZFQ5Qno2bjcyVzQ4dTJ3WXk0UXlyZ0kxciIsInkiOiJZS1RtQ04zZXNKNDJVbUpzLU44NTFKamsyUFVPUU0zZXpCTkJvZGk4RnRNUDlUeUhoXzc0aHpxTC1EYTZkMXlwIiwiY3J2IjoiUC0zODQifSwiYXB1IjoiIiwiYXB2IjoiIn0.rdysEEQN0FidglDtK5yyaEpQtv4CsYLOQd__y7REkb_3BLP9nD4Blw.dFb9JOdveiw3LmIs.rSMkz8VoB_LspnvxvmRzCWNVLShTWfbzHfqe5lwrWwumYCdeRPM.xsS2tDUr2khJrLxHex8gZhBgO_CMA_PxFlR-ku3JiT8';
       const uvf = await UniversalVaultFormat.decrypt(dto, accessToken, alice);
 
       expect(uvf).to.be.not.null;
       expect(uvf.metadata).to.be.not.null;
-      expect(uvf.metadata.initialSeedId).to.eq(731870158);
-      expect(uvf.metadata.latestSeedId).to.eq(731870158);
-      expect(uvf.metadata.kdfSalt).to.equalBytes(base64.parse('BENqfHpG1FE8zlmBOfadoKMpsPxCJR1OqLz5H+yO2ls='));
-      expect(uvf.metadata.seeds.get(731870158)).to.equalBytes(base64.parse('D9anaJ+7ASDdGWNeTG3JuoVLoI1IWzYGjTUVxW0215s='));
+      expect(uvf.metadata.initialSeedId).to.eq(2754894775);
+      expect(uvf.metadata.latestSeedId).to.eq(2754894775);
+      expect(uvf.metadata.seeds.get(2754894775)).to.not.be.empty;
+      expect(base64.stringify(uvf.metadata.kdfSalt)).to.eq('HE4OP+2vyfLLURicF1XmdIIsWv0Zs6MobLKROUIEhQY=');
+      expect(base64.stringify(uvf.metadata.seeds.get(2754894775)!)).to.eq('fP4V4oAjsUw5DqackAvLzA0oP1kAQZ0f5YFZQviXSuU=');
       expect(uvf.memberKey).to.be.not.null;
       expect(uvf.recoveryKey).to.be.not.null;
       expect(uvf.recoveryKey.privateKey).to.be.undefined;
+      expect(uvf.recoveryKey.publicKey).to.be.not.null;
     });
 
     describe('instance methods', () => {
@@ -219,13 +222,26 @@ describe('UVF', () => {
       });
 
       it('createMetadataFile() creates a vault.uvf file', async () => {
-        const file = await uvf.createMetadataFile();
-        expect(file).to.be.not.null;
+        const json = await uvf.createMetadataFile();
+        expect(json).to.be.not.null;
+        const jwe = JSON.parse(json) as JsonJWE;
+        expect(jwe.protected).to.not.be.empty;
+        expect(jwe.recipients).to.have.lengthOf(2);
+        expect(jwe.iv).to.not.be.empty;
+        expect(jwe.ciphertext).to.not.be.empty;
+        expect(jwe.tag).to.not.be.empty;
       });
 
-      it('serializePublicKey() creates a PEM-encoded representation', async () => {
-        const pem = await uvf.recoveryKey.serializePublicKey();
-        expect(pem).to.be.not.null;
+      it('serializePublicKey() creates a JWK-encoded representation', async () => {
+        const json = await uvf.recoveryKey.serializePublicKey();
+        expect(json).to.be.not.null;
+        const jwk = JSON.parse(json) as JsonWebKey & { kid: string };
+        expect(jwk.kty).to.eq('EC');
+        expect(jwk.crv).to.eq('P-384');
+        expect(jwk.x).to.not.be.empty;
+        expect(jwk.y).to.not.be.empty;
+        expect(jwk.d).to.be.undefined;
+        expect(jwk.kid).to.not.be.empty;
       });
     });
   });

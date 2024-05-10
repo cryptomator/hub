@@ -1,7 +1,7 @@
 import JSZip from 'jszip';
 import { base64, base64url } from 'rfc4648';
 import { VaultDto } from './backend';
-import { AccessTokenPayload, AccessTokenProducing, OtherVaultMember, UserKeys, VaultTemplateProducing, getJwkThumbprint } from './crypto';
+import { AccessTokenPayload, AccessTokenProducing, JsonWebKeySet, OtherVaultMember, UserKeys, VaultTemplateProducing, getJwkThumbprint } from './crypto';
 import { JWE, JWEHeader, JsonJWE, Recipient } from './jwe';
 import { CRC32, wordEncoder } from './util';
 
@@ -183,11 +183,18 @@ export class RecoveryKey {
 
   /**
    * Encodes the public key
-   * @returns public key in base64-encoded DER format
+   * @returns public key in JWK format
    */
   public async serializePublicKey(): Promise<string> {
-    const bytes = await crypto.subtle.exportKey('spki', this.publicKey);
-    return base64.stringify(new Uint8Array(bytes), { pad: true });
+    const jwk = await crypto.subtle.exportKey('jwk', this.publicKey);
+    const thumbprint = await getJwkThumbprint(jwk);
+    return JSON.stringify({
+      kid: `org.cryptomator.hub.recoverykey.${thumbprint}`,
+      kty: jwk.kty,
+      crv: jwk.crv,
+      x: jwk.x,
+      y: jwk.y
+    });
   }
 
 }
@@ -261,7 +268,8 @@ export class VaultMetadata {
   public async encrypt(memberKey: MemberKey, recoveryKey: RecoveryKey): Promise<string> {
     const recoveryKeyID = `org.cryptomator.hub.recoverykey.${await getJwkThumbprint(recoveryKey.publicKey)}`;
     const protectedHeader: JWEHeader = {
-      jku: 'jku.jwks' // URL relative to /api/vaults/{vaultid}/
+      origin: `https://example.com/api/vaults/TODO/uvf/vault.uvf`, // TODO use ${absBackendBaseURL}. Couldn't do this, because tests fail for mysterious reasons
+      jku: 'jwks.json' // URL relative to origin
     };
     const jwe = await JWE.build(this.payload(), protectedHeader).encrypt(Recipient.a256kw('org.cryptomator.hub.memberkey', memberKey.key), Recipient.ecdhEs(recoveryKeyID, recoveryKey.publicKey));
     const json = jwe.jsonSerialization();
@@ -304,19 +312,33 @@ export class UniversalVaultFormat implements AccessTokenProducing, VaultTemplate
   }
 
   public static async decrypt(vault: VaultDto, accessToken: string, userKeyPair: UserKeys): Promise<UniversalVaultFormat> {
-    if (!vault.uvfMetadataFile || !vault.uvfRecoveryPublicKey) {
+    if (!vault.uvfMetadataFile || !vault.uvfKeySet) {
       throw new Error('Not a UVF vault.');
     }
+    const jwks = JSON.parse(vault.uvfKeySet) as JsonWebKeySet;
+    const recoveryPublicKey = await this.getRecoveryPublicKeyFromJwks(jwks);
     const payload = await userKeyPair.decryptAccessToken(accessToken) as UvfAccessTokenPayload;
     const memberKey = await MemberKey.load(payload.key);
     const metadata = await VaultMetadata.decryptWithMemberKey(vault.uvfMetadataFile, memberKey);
     let recoveryKey: RecoveryKey;
     if (payload.recoveryKey) {
-      recoveryKey = await RecoveryKey.import(base64.parse(vault.uvfRecoveryPublicKey), base64.parse(payload.recoveryKey));
+      recoveryKey = await RecoveryKey.import(recoveryPublicKey, base64.parse(payload.recoveryKey));
     } else {
-      recoveryKey = await RecoveryKey.import(base64.parse(vault.uvfRecoveryPublicKey));
+      recoveryKey = await RecoveryKey.import(recoveryPublicKey);
     }
     return new UniversalVaultFormat(metadata, memberKey, recoveryKey);
+  }
+
+  private static async getRecoveryPublicKeyFromJwks(jwks: JsonWebKeySet): Promise<CryptoKey> {
+    for (const key of jwks.keys) {
+      if (key.kid?.startsWith('org.cryptomator.hub.recoverykey.')) {
+        const thumbprint = await getJwkThumbprint(key as JsonWebKey);
+        if (key.kid === `org.cryptomator.hub.recoverykey.${thumbprint}`) {
+          return await crypto.subtle.importKey('jwk', key as JsonWebKey, RecoveryKey.KEY_DESIGNATION, true, []);
+        }
+      }
+    }
+    throw new Error('Recovery key not found in JWKS');
   }
 
   public async createMetadataFile(): Promise<string> {

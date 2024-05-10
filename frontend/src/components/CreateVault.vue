@@ -352,8 +352,9 @@ async function createVault() {
           throw new Error('Invalid state');
         }
         ownerGrant.token = await uvfVault.value.encryptForUser(base64.parse(owner.publicKey), true);
+        const recoveryPublicKey = await uvfVault.value.recoveryKey.serializePublicKey();
         vault.value.uvfMetadataFile = await uvfVault.value.createMetadataFile();
-        vault.value.uvfRecoveryPublicKey = await uvfVault.value.recoveryKey.serializePublicKey();
+        vault.value.uvfKeySet = `{"keys": [${recoveryPublicKey}]}`;
         break;
       }
     }

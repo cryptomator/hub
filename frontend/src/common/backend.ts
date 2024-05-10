@@ -47,7 +47,7 @@ export type VaultDto = {
   authPublicKey?: string;
   authPrivateKey?: string;
   uvfMetadataFile?: string;
-  uvfRecoveryPublicKey?: string;
+  uvfKeySet?: string;
 };
 
 export type DeviceDto = {

@@ -420,7 +420,7 @@ public class VaultResource {
 		vault.setDescription(vaultDto.description);
 		vault.setArchived(existingVault.isPresent() && vaultDto.archived);
 		vault.setUvfMetadataFile(vaultDto.uvfMetadataFile);
-		vault.setUvfRecoveryPubKey(vaultDto.uvfRecoveryPublicKey);
+		vault.setUvfKeySet(vaultDto.uvfKeySet);
 
 		vaultRepo.persistAndFlush(vault); // trigger PersistenceException before we continue with
 		if (existingVault.isEmpty()) {
@@ -502,7 +502,7 @@ public class VaultResource {
 						   @JsonProperty("archived") boolean archived,
 						   @JsonProperty("creationTime") Instant creationTime,
 						   @JsonProperty("uvfMetadataFile") String uvfMetadataFile,
-						   @JsonProperty("uvfRecoveryPublicKey") @OnlyBase64Chars String uvfRecoveryPublicKey,
+						   @JsonProperty("uvfKeySet") String uvfKeySet,
 						   // Legacy properties ("Vault Admin Password"):
 						   @JsonProperty("masterkey") @OnlyBase64Chars String masterkey, @JsonProperty("iterations") Integer iterations, @JsonProperty("salt") @OnlyBase64Chars String salt,
 						   @JsonProperty("authPublicKey") @OnlyBase64Chars String authPublicKey, @JsonProperty("authPrivateKey") @OnlyBase64Chars String authPrivateKey
@@ -510,7 +510,7 @@ public class VaultResource {
 	) {
 
 		public static VaultDto fromEntity(Vault entity) {
-			return new VaultDto(entity.getId(), entity.getName(), entity.getDescription(), entity.isArchived(), entity.getCreationTime().truncatedTo(ChronoUnit.MILLIS), entity.getUvfMetadataFile(), entity.getUvfRecoveryPubKey(),
+			return new VaultDto(entity.getId(), entity.getName(), entity.getDescription(), entity.isArchived(), entity.getCreationTime().truncatedTo(ChronoUnit.MILLIS), entity.getUvfMetadataFile(), entity.getUvfKeySet(),
 					// legacy properties:
 					entity.getMasterkey(), entity.getIterations(), entity.getSalt(), entity.getAuthenticationPublicKey(), entity.getAuthenticationPrivateKey());
 		}

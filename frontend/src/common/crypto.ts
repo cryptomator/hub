@@ -3,6 +3,13 @@ import { VaultDto } from './backend';
 import { JWE, Recipient } from './jwe';
 import { DB } from './util';
 
+/**
+ * Represents a JSON Web Key (JWK) as defined in RFC 7517.
+ * @see https://datatracker.ietf.org/doc/html/rfc7517#section-5
+ */
+export type JsonWebKeySet = {
+  keys: JsonWebKey & { kid?: string }[] // RFC defines kid, but webcrypto spec does not
+}
 
 export class UnwrapKeyError extends Error {
   readonly actualError: any;
@@ -290,16 +297,30 @@ export async function getFingerprint(key: string | undefined) {
 
 /**
  * Computes the JWK Thumbprint (RFC 7638) using SHA-256.
- * @param key An EC key
+ * @param key A key to compute the thumbprint for
+ * @throws Error if the key is not supported
  */
-export async function getJwkThumbprint(key: CryptoKey): Promise<string> {
-  // see https://datatracker.ietf.org/doc/html/rfc7638#section-3.2
-  if (key.algorithm.name !== 'ECDH') {
-    throw new Error('Method only implemented for EC keys.');
+export async function getJwkThumbprint(key: JsonWebKey | CryptoKey): Promise<string> {
+  let jwk: JsonWebKey;
+  if (key instanceof CryptoKey) {
+    jwk = await crypto.subtle.exportKey('jwk', key);
+  } else {
+    jwk = key;
   }
-  const jwk = await crypto.subtle.exportKey('jwk', key);
-  const algo = key.algorithm as EcKeyAlgorithm;
-  const orderedJson = `{"crv":"${algo.namedCurve}","kty":"${jwk.kty}","x":${jwk.x},"y":${jwk.y}}`;
+  // see https://datatracker.ietf.org/doc/html/rfc7638#section-3.2
+  let orderedJson: string;
+  switch (jwk.kty) {
+    case 'EC':
+      orderedJson = `{"crv":"${jwk.crv}","kty":"${jwk.kty}","x":"${jwk.x}","y":"${jwk.y}"}`;
+      break;
+    case 'RSA':
+      orderedJson = `{"e":"${jwk.e}","kty":"${jwk.kty}","n":"${jwk.n}"}`;
+      break;
+    case 'oct':
+      orderedJson = `{"k":"${jwk.k}","kty":"${jwk.kty}"}`;
+      break;
+    default: throw new Error('Unsupported key type');
+  }
   const bytes = new TextEncoder().encode(orderedJson);
   const hashBuffer = await crypto.subtle.digest('SHA-256', bytes);
   return base64url.stringify(new Uint8Array(hashBuffer), { pad: false });
