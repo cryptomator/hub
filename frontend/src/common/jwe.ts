@@ -289,7 +289,7 @@ export class JWE {
     return new EncryptedJWE(protectedHeader, [{ encrypted_key: encryptedKey, header: header }], iv, ciphertext, tag);
   }
 
-  public static parseJson(jwe: JsonJWE): EncryptedJWE { // TODO: json:
+  public static parseJson(jwe: JsonJWE): EncryptedJWE {
     if (!jwe.protected || !jwe.recipients || !jwe.iv || !jwe.ciphertext || !jwe.tag) {
       throw new Error('Malformed JWE');
     }
@@ -473,7 +473,6 @@ export class PBES2 {
   public static readonly DEFAULT_ITERATION_COUNT = 1000000;
   private static readonly NULL_BYTE = Uint8Array.of(0x00);
 
-  // TODO: can we dedup this with crypto.ts's PBKDF2? Or is the latter unused anyway, once we migrate all ciphertext to JWE containers
   public static async deriveWrappingKey(password: string, alg: 'PBES2-HS512+A256KW' | 'PBES2-HS256+A128KW', salt: Uint8Array, iterations: number, extractable: boolean = false): Promise<CryptoKey> {
     let hash, keyLen;
     if (alg == 'PBES2-HS512+A256KW') {

@@ -14,7 +14,7 @@
   },
   "ts-node": {
     "compilerOptions": {
-      "module": "CommonJS" // TODO change to es2022?
+      "module": "CommonJS"
     }
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"]
