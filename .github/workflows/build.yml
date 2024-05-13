@@ -22,7 +22,6 @@ jobs:
   test:
     name: Build and Test
     runs-on: ubuntu-latest
-    if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')" # can the if also be est for all jobs?
     steps:
       - uses: actions/checkout@v3
         with:
