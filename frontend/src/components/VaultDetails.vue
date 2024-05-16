@@ -524,6 +524,11 @@ async function updateMemberRole(member: MemberDto, role: VaultRole) {
     if (updatedMember) {
       updatedMember.role = role;
     }
+    if (uvfVault.value && member.publicKey) { // atm only users have public keys
+      const includeOwnerKeys = role == 'OWNER';
+      const updatedAccessToken = await uvfVault.value.encryptForUser(base64.parse(member.publicKey), includeOwnerKeys);
+      await backend.vaults.grantAccess(props.vaultId, { userId: member.id, token: updatedAccessToken });
+    }
   } catch (error) {
     console.error('Updating member role failed.', error);
     //404 not expected from user perspective

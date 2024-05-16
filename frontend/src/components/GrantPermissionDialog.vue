@@ -121,13 +121,14 @@ async function grantAccess() {
   }
 }
 
-async function giveUsersAccess(users: UserDto[]) {
+async function giveUsersAccess(members: MemberDto[]) {
   let tokens: AccessGrant[] = [];
-  for (const user of users) {
-    if (user.publicKey) { // some users might not have set up their key pair, so we can't share secrets with them yet
-      const publicKey = base64.parse(user.publicKey);
-      const jwe = await props.vaultKeys.encryptForUser(publicKey);
-      tokens.push({ userId: user.id, token: jwe });
+  for (const member of members) {
+    if (member.publicKey) { // some users might not have set up their key pair, so we can't share secrets with them yet
+      const publicKey = base64.parse(member.publicKey);
+      const includeOwnerKeys = member.role === 'OWNER';
+      const jwe = await props.vaultKeys.encryptForUser(publicKey, includeOwnerKeys);
+      tokens.push({ userId: member.id, token: jwe });
     }
   }
   await backend.vaults.grantAccess(props.vault.id, ...tokens);
