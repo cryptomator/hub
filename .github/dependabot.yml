@@ -1,0 +1,31 @@
+version: 2
+updates:
+  - package-ecosystem: "maven"
+    directory: "/backend"
+    schedule:
+      interval: "monthly"
+    groups:
+      maven-build-plugins:
+        patterns:
+          - "org.apache.maven.plugins:*"
+          - "me.fabriciorby:maven-surefire-junit5-tree-reporter"
+      java-production-dependencies:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "org.apache.maven.plugins:*"
+          - "me.fabriciorby:maven-surefire-junit5-tree-reporter"
+    ignore:
+      - dependency-name: "io.quarkus:*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/" # even for `.github/workflows`
+    schedule:
+      interval: "monthly"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+    labels:
+      - "ci"
