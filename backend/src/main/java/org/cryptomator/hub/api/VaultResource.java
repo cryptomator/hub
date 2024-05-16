@@ -245,11 +245,18 @@ public class VaultResource {
 	@VaultRole(VaultAccess.Role.OWNER) // may throw 403
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
-	@Operation(summary = "list devices requiring access rights", description = "lists all devices owned by vault members, that don't have a device-specific masterkey yet")
+	@Operation(summary = "list members requiring access tokens", description = "lists all members, that have permissions but lack an access token")
 	@APIResponse(responseCode = "200")
 	@APIResponse(responseCode = "403", description = "not a vault owner")
-	public List<UserDto> getUsersRequiringAccessGrant(@PathParam("vaultId") UUID vaultId) {
-		return userRepo.findRequiringAccessGrant(vaultId).map(UserDto::justPublicInfo).toList();
+	public List<MemberDto> getUsersRequiringAccessGrant(@PathParam("vaultId") UUID vaultId) {
+		return effectiveVaultAccessRepo.findMembersWithoutAccessTokens(vaultId).map(access -> {
+			if (access.getAuthority() instanceof User u) {
+				return MemberDto.fromEntity(u, access.getRole());
+			} else {
+				// findMembersWithoutAccessTokens() should only return users, not groups.
+				throw new IllegalStateException();
+			}
+		}).toList();
 	}
 
 	@Deprecated(forRemoval = true)

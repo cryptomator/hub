@@ -167,7 +167,7 @@ export class GroupDto extends AuthorityDto {
 }
 
 export class MemberDto extends AuthorityDto {
-  constructor(public id: string, public name: string, public type: AuthorityType, public role: VaultRole, pictureUrl: string) {
+  constructor(public id: string, public name: string, public type: AuthorityType, public role: VaultRole, pictureUrl?: string, public publicKey?: string) {
     super(id, name, type, pictureUrl);
   }
 
@@ -247,7 +247,7 @@ class VaultService {
 
   public async getMembers(vaultId: string): Promise<MemberDto[]> {
     return axiosAuth.get<MemberDto[]>(`/vaults/${vaultId}/members`).then(response => {
-      return response.data.map(member => new MemberDto(member.id, member.name, member.type, member.role, member.pictureUrl));
+      return response.data.map(member => new MemberDto(member.id, member.name, member.type, member.role, member.pictureUrl, member.publicKey));
     }).catch(err => rethrowAndConvertIfExpected(err, 403));
   }
 
@@ -261,10 +261,10 @@ class VaultService {
       .catch((error) => rethrowAndConvertIfExpected(error, 402, 404, 409));
   }
 
-  public async getUsersRequiringAccessGrant(vaultId: string): Promise<UserDto[]> {
-    return axiosAuth.get<UserDto[]>(`/vaults/${vaultId}/users-requiring-access-grant`)
+  public async getUsersRequiringAccessGrant(vaultId: string): Promise<MemberDto[]> {
+    return axiosAuth.get<MemberDto[]>(`/vaults/${vaultId}/users-requiring-access-grant`)
       .then(response => {
-        return response.data.map(dto => UserDto.copy(dto));
+        return response.data.map(member => new MemberDto(member.id, member.name, member.type, member.role, member.pictureUrl, member.publicKey));
       })
       .catch(err => rethrowAndConvertIfExpected(err, 403));
   }

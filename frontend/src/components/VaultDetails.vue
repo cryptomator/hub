@@ -168,7 +168,7 @@
       <div v-else class="mt-2 flex flex-col gap-2">
         <!-- grantAccess button -->
         <div v-if="vaultRole == 'OWNER'" class="flex gap-2">
-          <button :disabled="usersRequiringAccessGrant.length == 0" type="button" class="flex-1 bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="showGrantPermissionDialog()">
+          <button :disabled="membersRequiringAccessGrant.length == 0" type="button" class="flex-1 bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="showGrantPermissionDialog()">
             {{ t('vaultDetails.actions.updatePermissions') }}
           </button>
           <button type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="reloadDevicesRequiringAccessGrant()">
@@ -201,7 +201,7 @@
   </div>
 
   <ClaimVaultOwnershipDialog v-if="claimingVaultOwnership && vault" ref="claimVaultOwnershipDialog" :vault="vault" @action="provedOwnership" @close="claimingVaultOwnership = false" />
-  <GrantPermissionDialog v-if="grantingPermission && vault && (vaultFormat8 || uvfVault)" ref="grantPermissionDialog" :vault="vault" :users="usersRequiringAccessGrant" :vault-keys="(vaultFormat8 || uvfVault)!" @close="grantingPermission = false" @permission-granted="permissionGranted()" />
+  <GrantPermissionDialog v-if="grantingPermission && vault && (vaultFormat8 || uvfVault)" ref="grantPermissionDialog" :vault="vault" :users="membersRequiringAccessGrant" :vault-keys="(vaultFormat8 || uvfVault)!" @close="grantingPermission = false" @permission-granted="permissionGranted()" />
   <EditVaultMetadataDialog v-if="editingVaultMetadata && vault" ref="editVaultMetadataDialog" :vault="vault" @close="editingVaultMetadata = false" @updated="v => refreshVault(v)" />
   <DownloadVaultTemplateDialog v-if="downloadingVaultTemplate && vault && (vaultFormat8 || uvfVault)" ref="downloadVaultTemplateDialog" :vault="vault" :vault-keys="(vaultFormat8 || uvfVault)!" @close="downloadingVaultTemplate = false" />
   <DisplayRecoveryKeyDialog v-if="displayingRecoveryKey && vault && vaultFormat8" ref="displayRecoveryKeyDialog" :vault="vault" :vault-keys="vaultFormat8" @close="displayingRecoveryKey = false" />
@@ -272,7 +272,7 @@ const vault = ref<VaultDto>();
 const vaultFormat8 = ref<VaultFormat8>();
 const uvfVault = ref<UniversalVaultFormat>();
 const members = ref<Map<string, MemberDto>>(new Map());
-const usersRequiringAccessGrant = ref<UserDto[]>([]);
+const membersRequiringAccessGrant = ref<MemberDto[]>([]);
 const claimVaultOwnershipDialog = ref<typeof ClaimVaultOwnershipDialog>();
 const claimingVaultOwnership = ref(false);
 const me = ref<UserDto>();
@@ -307,7 +307,7 @@ async function fetchOwnerData() {
   }
   try {
     (await backend.vaults.getMembers(props.vaultId)).forEach(member => members.value.set(member.id, member));
-    usersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
+    membersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
     vaultRecoveryRequired.value = false;
     const accessToken = await backend.vaults.accessToken(props.vaultId, true);
     if (vault.value.uvfMetadataFile) {
@@ -399,7 +399,7 @@ async function provedOwnership(keys: VaultFormat8, ownerKeyPair: CryptoKeyPair) 
 
 async function reloadDevicesRequiringAccessGrant() {
   try {
-    usersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
+    membersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
   } catch (error) {
     console.error('Getting devices requiring access grant failed.', error);
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
@@ -420,7 +420,7 @@ async function addAuthority(authority: unknown) {
     await addAuthorityBackend(authority);
     const addedMember = new MemberDto(authority.id, authority.name, authority.type, 'MEMBER', authority.pictureUrl);
     members.value.set(authority.id, addedMember);
-    usersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
+    membersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
   } catch (error) {
     //even if error instanceof NotFoundError, it is not expected from user perspective
     console.error('Adding member failed.', error);
@@ -490,7 +490,7 @@ function showRecoverVaultDialog() {
 }
 
 function permissionGranted() {
-  usersRequiringAccessGrant.value = [];
+  membersRequiringAccessGrant.value = [];
 }
 
 async function refreshLicense() {
@@ -537,7 +537,7 @@ async function removeMember(memberId: string) {
     await backend.vaults.removeAuthority(props.vaultId, memberId);
     members.value.delete(memberId);
     if (!licenseViolated.value) {
-      usersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
+      membersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
     } else {
       await refreshLicense();
     }
