@@ -241,6 +241,26 @@ export class VaultMetadata {
   public static async decryptWithMemberKey(uvfMetadataFile: string, memberKey: MemberKey): Promise<VaultMetadata> {
     const json: JsonJWE = JSON.parse(uvfMetadataFile);
     const payload: MetadataPayload = await JWE.parseJson(json).decrypt(Recipient.a256kw('org.cryptomator.hub.memberkey', memberKey.key));
+    return VaultMetadata.createFromJson(payload);
+  }
+
+  /**
+   * Decrypts the vault metadata using the recovery key
+   * @param uvfMetadataFile contents of the `vault.uvf` file
+   * @param recoveryKey the vault's recovery key
+   * @returns Decrypted vault metadata
+   */
+  public static async decryptWithRecoveryKey(uvfMetadataFile: string, recoveryKey: RecoveryKey): Promise<VaultMetadata> {
+    if (!recoveryKey.privateKey) {
+      throw new Error('Recovery key does not have a private key');
+    }
+    const recoveryKeyID = `org.cryptomator.hub.recoverykey.${await getJwkThumbprint(recoveryKey.publicKey)}`;
+    const json: JsonJWE = JSON.parse(uvfMetadataFile);
+    const payload: MetadataPayload = await JWE.parseJson(json).decrypt(Recipient.ecdhEs(recoveryKeyID, recoveryKey.privateKey));
+    return VaultMetadata.createFromJson(payload);
+  }
+
+  public static async createFromJson(payload: MetadataPayload): Promise<VaultMetadata> {
     const seeds = new Map<number, Uint8Array>();
     for (const key in payload.seeds) {
       const num = parseSeedId(key);
@@ -311,6 +331,13 @@ export class UniversalVaultFormat implements AccessTokenProducing, VaultTemplate
     return new UniversalVaultFormat(metadata, memberKey, recoveryKey);
   }
 
+  /**
+   * Decrypts a UVF vault.
+   * @param vault The vault to decrypt
+   * @param accessToken The vault member's access token
+   * @param userKeyPair THe vault member's key pair
+   * @returns The decrypted vault
+   */
   public static async decrypt(vault: VaultDto, accessToken: string, userKeyPair: UserKeys): Promise<UniversalVaultFormat> {
     if (!vault.uvfMetadataFile || !vault.uvfKeySet) {
       throw new Error('Not a UVF vault.');
@@ -327,6 +354,19 @@ export class UniversalVaultFormat implements AccessTokenProducing, VaultTemplate
       recoveryKey = await RecoveryKey.import(recoveryPublicKey);
     }
     return new UniversalVaultFormat(metadata, memberKey, recoveryKey);
+  }
+
+  /**
+   * Recovery the `vault.uvf` file using the recovery key. After recovery, all access tokens need to be re-issued.
+   * @param uvfMetadataFile contents of the `vault.uvf` file
+   * @param recoveryKey the vault's recovery key encoded into human-readable words
+   * @returns The recovered vault
+   */
+  public static async recover(uvfMetadataFile: string, recoveryKey: string): Promise<UniversalVaultFormat> {
+    const recoveryKeyPair = await RecoveryKey.recover(recoveryKey);
+    const metadata = await VaultMetadata.decryptWithRecoveryKey(uvfMetadataFile, recoveryKeyPair);
+    const memberKey = await MemberKey.create();
+    return new UniversalVaultFormat(metadata, memberKey, recoveryKeyPair);
   }
 
   private static async getRecoveryPublicKeyFromJwks(jwks: JsonWebKeySet): Promise<CryptoKey> {

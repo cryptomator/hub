@@ -206,6 +206,24 @@ describe('UVF', () => {
       expect(uvf.memberKey).to.be.not.null;
       expect(uvf.recoveryKey).to.be.not.null;
       expect(uvf.recoveryKey.privateKey).to.be.undefined;
+    });
+
+    it('recover()', async () => {
+      const vaultUvfFileContents = '{"protected":"eyJvcmlnaW4iOiJodHRwczovL2V4YW1wbGUuY29tL2FwaS92YXVsdHMvVE9ETy91dmYvdmF1bHQudXZmIiwiamt1Ijoiandrcy5qc29uIiwiZW5jIjoiQTI1NkdDTSJ9","recipients":[{"header":{"kid":"org.cryptomator.hub.memberkey","alg":"A256KW"},"encrypted_key":"XLoNIWvDKQqaDurrGt7VK9s2aggSMir7fS4ZdBUxdTxceCOHndo4kA"},{"header":{"kid":"org.cryptomator.hub.recoverykey.v2nb-mGX4POKMWCQKOogMWTlAn7DDqEOjjEGCsPEeco","alg":"ECDH-ES+A256KW","epk":{"key_ops":[],"ext":true,"kty":"EC","x":"j6Retxx-L-rURQ4WNc8LvoqjbdPtGS6n9pCJgcm1U-NAWuWEvwJ_qi2tlrv_4w4p","y":"wS-Emo-Q9qdtkHMJiDfVDAaxhF2-nSkDRn2Eg9CbG0pVwGEpaDybx_YYJwIaYooO","crv":"P-384"},"apu":"","apv":""},"encrypted_key":"iNGgybMqmiXn_lbKLMMTpg38i1f00O6Zj65d5nzsLw3hyzuylGWpvA"}],"iv":"Pfy90C9SSq2gJr6B","ciphertext":"ogYR1pZN9k97zEgO9Fj3ePQramtaUdHWq95geXD7FH1oB6T7fEOvdU2AEGWOcbIbQihn-eOqG2_5oTol16O_nQ4HcDOJ9w4R9EdpByuWG-kVNh_fpWeQjIuH4kO-Rtbf05JRVG2jexWopbIA8uHuoiOXSNpSYPTzTKirp2hU7w3sE01zycsu06HiasUX-tKZH_hbyiUEdTlFFLcvKpRwnYOQf6QMw0uY1IbUTX1cJY9LO5SpD8bZFZOd6hg_Qnsdcq52I8KkZyxocgqdW7P5OSUrv5z8DCLMPdByEpaz9cCOzQQvtZwHxJy82O4vDAh89QA_AzfK8J7TI5zJRlTGQgrNhiaVBC85fN3tMSv8sLfJs7rC_5LiVW5ZeqbQ52sAZQw0lfwgGpMmxsdMzPoVOLD8OxvX","tag":"3Jiv6kI4Qoso60T0dRv9vIlca-P4UFyHqh-TEZvargM"}';
+      const recoveryKey = 'cult hold all away buck do law relaxed other stimulus all bank fit indulge dad any ear grey cult golf all baby dig adv convict seldom dancer funding refusal shop final ceremony brush fire stick pound seldom shower tobacco wealth secret dispose session intend host elite fasten compound pants original drug hurricane bat noble lovely half accept sexy ad mouth current sound tie freedom musical ought shatter minimum density broadcast locate argument explosive manager colour numerous biscuit die absurd jury sole steel pub listener tempt creative plug everybody power constant recall lord camera dawn elbow chairman sit organic united morning dry feedback marine keep charm face cloud giant pull eternal withdraw probable canal coal heal large less flight gig hockey pit weed identify object boom melt';
+
+      const uvf = await UniversalVaultFormat.recover(vaultUvfFileContents, recoveryKey);
+
+      expect(uvf).to.be.not.null;
+      expect(uvf.metadata).to.be.not.null;
+      expect(uvf.metadata.initialSeedId).to.eq(4157009252);
+      expect(uvf.metadata.latestSeedId).to.eq(4157009252);
+      expect(uvf.metadata.seeds.get(4157009252)).to.not.be.empty;
+      expect(base64.stringify(uvf.metadata.kdfSalt)).to.eq('pNxWJ5R5TO0mbkmL5pv7M3tAi6Etoh/SK73Q0KvfKMY=');
+      expect(base64.stringify(uvf.metadata.seeds.get(4157009252)!)).to.eq('p6zznin4zSGt7gH6T95/kZj6HndpyUdY+1QVfxR2k20=');
+      expect(uvf.memberKey).to.be.not.null;
+      expect(uvf.recoveryKey).to.be.not.null;
+      expect(uvf.recoveryKey.privateKey).to.be.not.null;
       expect(uvf.recoveryKey.publicKey).to.be.not.null;
     });
 
