@@ -168,6 +168,7 @@ export class VaultFormat8 implements AccessTokenProducing, VaultTemplateProducin
     return new VaultFormat8(await key);
   }
 
+  /** @inheritdoc */
   public async exportTemplate(vault: VaultDto): Promise<Blob> {
     const cfg = await config;
 
@@ -246,11 +247,7 @@ export class VaultFormat8 implements AccessTokenProducing, VaultTemplateProducin
     return base64.stringify(new Uint8Array(bytes), { pad: true });
   }
 
-  /**
-   * Encrypts this masterkey using the given public key
-   * @param userPublicKey The recipient's public key (DER-encoded)
-   * @returns a JWE containing this Masterkey
-   */
+  /** @inheritdoc */
   public async encryptForUser(userPublicKey: CryptoKey | Uint8Array): Promise<string> {
     return OtherVaultMember.withPublicKey(userPublicKey).createAccessToken({
       key: await this.serializeMasterKey(),

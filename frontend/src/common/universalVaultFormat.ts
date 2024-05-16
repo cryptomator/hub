@@ -345,6 +345,7 @@ export class UniversalVaultFormat implements AccessTokenProducing, VaultTemplate
     return this.metadata.encrypt(this.memberKey, this.recoveryKey);
   }
 
+  /** @inheritdoc */
   public async exportTemplate(vault: VaultDto): Promise<Blob> {
     const zip = new JSZip();
     zip.file('vault.uvf', this.createMetadataFile());
@@ -353,6 +354,7 @@ export class UniversalVaultFormat implements AccessTokenProducing, VaultTemplate
     return zip.generateAsync({ type: 'blob' });
   }
 
+  /** @inheritdoc */
   public async encryptForUser(userPublicKey: CryptoKey | Uint8Array, isOwner?: boolean): Promise<string> {
     const payload: UvfAccessTokenPayload = {
       key: await this.memberKey.serializeKey(),

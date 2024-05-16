@@ -35,8 +35,9 @@ export interface AccessTokenProducing {
   /**
    * Creates a user-specific access token for the given vault.
    * @param userPublicKey the public key of the user
+   * @param isOwner whether to also include owner secrets for this user (UVF only)
    */
-  encryptForUser(userPublicKey: CryptoKey | Uint8Array): Promise<string>;
+  encryptForUser(userPublicKey: CryptoKey | Uint8Array, isOwner?: boolean): Promise<string>;
 
 }
 
