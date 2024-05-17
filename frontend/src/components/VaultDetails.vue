@@ -39,7 +39,7 @@
     <div v-if="vaultRole == 'OWNER' && !vaultRecoveryRequired" class="space-y-6">
       <div>
         <h3 class="font-medium text-gray-900">{{ t('vaultDetails.sharedWith.title') }}</h3>
-        <ul role="list" class="mt-2 border-t border-b border-gray-200 divide-y divide-gray-200">
+        <ul class="mt-2 border-t border-b border-gray-200 divide-y divide-gray-200">
           <!-- member list -->
           <template v-for="member in members.values()" :key="member.id">
             <li class="py-3 flex flex-col">

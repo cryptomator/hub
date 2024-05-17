@@ -422,8 +422,8 @@ export class ECDH_ES {
     try {
       const algOrEnc = header.alg === 'ECDH-ES' ? header.enc : header.alg; // see definition of AlgorithmID in RFC 7518, Section 4.6.2
       const algorithmId = ECDH_ES.lengthPrefixed(new TextEncoder().encode(algOrEnc));
-      const partyUInfo = ECDH_ES.lengthPrefixed(base64url.parse(header.apu || '', { loose: true }));
-      const partyVInfo = ECDH_ES.lengthPrefixed(base64url.parse(header.apv || '', { loose: true }));
+      const partyUInfo = ECDH_ES.lengthPrefixed(base64url.parse(header.apu ?? '', { loose: true }));
+      const partyVInfo = ECDH_ES.lengthPrefixed(base64url.parse(header.apv ?? '', { loose: true }));
       const suppPubInfo = new ArrayBuffer(4);
       const suppPrivInfo = new Uint8Array();
       new DataView(suppPubInfo).setUint32(0, desiredKeyBytes * 8, false);

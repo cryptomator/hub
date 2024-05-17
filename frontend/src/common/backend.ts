@@ -379,11 +379,7 @@ export function rethrowAndConvertIfExpected(error: unknown, ...expectedStatusCod
   }
 }
 
-export class BackendError extends Error {
-  constructor(msg: string) {
-    super(msg);
-  }
-}
+export class BackendError extends Error { }
 
 export class UnauthorizedError extends BackendError {
   constructor() {

@@ -25,7 +25,7 @@
                         </p>
                       </div>
                       <div class="mt-2 h-48 overflow-y-auto">
-                        <ul role="list" class="mt-2 border-t border-b border-gray-200 divide-y divide-gray-200">
+                        <ul class="mt-2 border-t border-b border-gray-200 divide-y divide-gray-200">
                           <template v-for="member in users.values()" :key="member.id">
                             <li class="py-3 flex flex-col">
                               <div class="flex justify-between items-center">

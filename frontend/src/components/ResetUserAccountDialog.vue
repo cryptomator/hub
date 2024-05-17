@@ -65,7 +65,7 @@ const processing = ref(false);
 const open = ref(false);
 
 defineEmits<{
-  (e: 'close'): void
+  close: []
 }>();
 
 defineExpose({

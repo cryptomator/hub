@@ -128,8 +128,8 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'update:setupCode', setupCode: string): void 
-  (e: 'close'): void
+  close: [],
+  'update:setupCode': [setupCode: string],
 }>();
 
 defineExpose({

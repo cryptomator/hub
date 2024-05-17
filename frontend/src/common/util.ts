@@ -7,14 +7,14 @@ export class DB {
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
       const req = indexedDB.open(DB.NAME);
       req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
+      req.onerror = () => reject(req.error!);
       req.onupgradeneeded = () => req.result.createObjectStore(objectStore);
     });
     const transaction = db.transaction(objectStore, mode);
     return new Promise<T>((resolve, reject) => {
       const req = query(transaction);
       req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
+      req.onerror = () => reject(req.error!);
     }).finally(() => {
       db.close();
     });
@@ -31,7 +31,7 @@ export class Deferred<T> {
     this.reject = () => { };
     this.resolve = () => { };
     this.promise = new Promise<T>((resolve, reject) => {
-      this.reject = () => { this.status = 'rejected'; reject(); };
+      this.reject = (r) => { this.status = 'rejected'; reject(r); };
       this.resolve = (t) => { this.status = 'resolved'; resolve(t); };
     });
   }
@@ -58,7 +58,7 @@ export const debounce = (func: Function, wait = 300) => {
 
 // based on https://stackoverflow.com/a/18639903/4014509
 export class CRC32 {
-  static TABLE = new Uint32Array(256);
+  static readonly TABLE = new Uint32Array(256);
 
   static {
     for (let i = 256; i--;) {
@@ -80,8 +80,8 @@ export class CRC32 {
 }
 
 class WordEncoder {
-  static WORD_COUNT = 4096;
-  static DELIMITER = ' ';
+  static readonly WORD_COUNT = 4096;
+  static readonly DELIMITER = ' ';
 
   private readonly words: string[];
   private readonly indices: Map<string, number>;
