@@ -8,16 +8,7 @@
     </div>
   </div>
 
-  <!-- FIXME: invalid case: list must at least contain current browser: -->
-  <div v-else-if="me.devices.length == 0" class="text-center">
-    <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-      <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
-    </svg>
-    <h3 class="mt-2 text-sm font-medium text-gray-900">{{ t('deviceList.empty.message') }}</h3>
-    <p class="mt-1 text-sm text-gray-500">{{ t('deviceList.empty.description') }}</p>
-  </div>
-
-  <div v-else>
+  <div v-if="me?.devices">
     <h2 id="deviceListTitle" class="text-base font-semibold leading-6 text-gray-900">
       {{ t('deviceList.title') }}
     </h2>
@@ -127,28 +118,6 @@ async function determineMyDevice() {
   const browserId = await browserKeys?.id();
   myDevice.value = me.value.devices.find(d => d.id == browserId);
 }
-
-/*
- * Use existing device to authorize another device:
- */
-// async function validateDevice(device: DeviceDto) {
-//   if (!me.value || !me.value.publicKey) {
-//     throw new Error('User keys not initialized.');
-//   }
-//   /* decrypt user key on this browser: */
-//   const userPublicKey = crypto.subtle.importKey('spki', base64.parse(me.value.publicKey), UserKeys.KEY_DESIGNATION, false, []);
-//   const browserKeys = await BrowserKeys.load(me.value.id);
-//   const browserId = await browserKeys?.id();
-//   const browser = me.value.devices.find(d => d.id === browserId);
-//   if (!browser || !browser.userPrivateKey) {
-//     throw new Error('Browser not validated.');
-//   }
-//   const userKeys = await UserKeys.decryptOnBrowser(browser.userPrivateKey, browserKeys.keyPair.privateKey, await userPublicKey);
-
-//   /* encrypt user key for device */
-//   device.userPrivateKey = await userKeys.encryptForDevice(base64url.parse(device.publicKey));
-//   await backend.devices.putDevice(device);
-// }
 
 async function removeDevice(device: DeviceDto) {
   delete onRemoveDeviceError.value[device.id];
