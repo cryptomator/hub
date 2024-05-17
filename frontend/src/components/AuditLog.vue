@@ -15,7 +15,7 @@
       </h2>
 
       <div class="flex gap-3">
-        <button role="button" class="w-full bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="refreshData()">
+        <button class="w-full bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="refreshData()">
           {{ t('common.refresh') }}
         </button>
 

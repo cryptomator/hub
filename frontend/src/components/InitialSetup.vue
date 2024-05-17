@@ -147,7 +147,7 @@
       </form>
 
       <i18n-t keypath="initialSetup.recoverUserKey.lostAccountKey" scope="global" tag="p" class="mt-10 text-center text-sm text-gray-500">
-        <a role="button" tabindex="0" class="font-medium leading-6 text-red-600 hover:text-red-900" @click="showResetUserAccountDialog()">
+        <a tabindex="0" class="font-medium leading-6 text-red-600 hover:text-red-900" @click="showResetUserAccountDialog()">
           {{ t('initialSetup.recoverUserKey.lostAccountKey.resetUserAccount') }}
         </a>
       </i18n-t>

@@ -70,7 +70,7 @@
                       {{ d(device.creationTime, 'short') }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <a v-if="device.id != myDevice?.id" role="button" tabindex="0" class="text-red-600 hover:text-red-900" @click="removeDevice(device)">{{ t('common.remove') }}</a>
+                      <a v-if="device.id != myDevice?.id" tabindex="0" class="text-red-600 hover:text-red-900" @click="removeDevice(device)">{{ t('common.remove') }}</a>
                     </td>
                   </tr>
                   <!-- TODO: good styling -->
