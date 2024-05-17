@@ -259,8 +259,8 @@ class Pbes2Recipient extends Recipient {
     if (header.alg != 'PBES2-HS512+A256KW' || !header.p2s || !header.p2c) {
       throw new Error('Missing or invalid header parameters.');
     }
-    const salt = base64url.parse(header.p2s!, { loose: true });
-    const wrappingKey = await PBES2.deriveWrappingKey(this.password, 'PBES2-HS512+A256KW', salt, header.p2c!);
+    const salt = base64url.parse(header.p2s, { loose: true });
+    const wrappingKey = await PBES2.deriveWrappingKey(this.password, 'PBES2-HS512+A256KW', salt, header.p2c);
     try {
       return await crypto.subtle.unwrapKey('raw', base64url.parse(encryptedKey, { loose: true }), wrappingKey, 'AES-KW', { name: 'AES-GCM' }, false, ['decrypt']);
     } catch (error) {
