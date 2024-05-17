@@ -96,7 +96,7 @@
                 <span class="ml-4 text-sm font-medium text-primary group-hover:text-primary-l1">{{ t('common.share') }}</span>
               </button>
             </div>
-            <SearchInputGroup v-else-if="addingUser" :action-title="t('common.add')" :on-search="searchAuthority" @action="addAuthority" />
+            <SearchInputGroup v-else-if="addingUser" :action-title="t('common.add')" :on-search="searchAuthority" :resolve-picture-url="item => item.pictureUrl || ''" @action="addAuthority" />
             <div v-if="onAddUserError != null">
               <p v-if="onAddUserError instanceof PaymentRequiredError" class="text-sm text-red-900 text-right mt-1">
                 {{ t('vaultDetails.error.licenseViolated') }}
@@ -206,25 +206,25 @@
 </template>
 
 <script setup lang="ts">
-import auth from '../common/auth';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
 import { ArrowPathIcon, EllipsisVerticalIcon, ExclamationTriangleIcon } from '@heroicons/vue/20/solid';
 import { PlusSmallIcon } from '@heroicons/vue/24/solid';
 import { base64 } from 'rfc4648';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import auth from '../common/auth';
 import backend, { AuthorityDto, ConflictError, ForbiddenError, LicenseUserInfoDto, MemberDto, NotFoundError, PaymentRequiredError, UserDto, VaultDto, VaultRole } from '../common/backend';
 import { BrowserKeys, UserKeys, VaultKeys } from '../common/crypto';
 import { JWT, JWTHeader } from '../common/jwt';
 import ArchiveVaultDialog from './ArchiveVaultDialog.vue';
 import ClaimVaultOwnershipDialog from './ClaimVaultOwnershipDialog.vue';
+import DisplayRecoveryKeyDialog from './DisplayRecoveryKeyDialog.vue';
 import DownloadVaultTemplateDialog from './DownloadVaultTemplateDialog.vue';
 import EditVaultMetadataDialog from './EditVaultMetadataDialog.vue';
 import FetchError from './FetchError.vue';
 import GrantPermissionDialog from './GrantPermissionDialog.vue';
 import ReactivateVaultDialog from './ReactivateVaultDialog.vue';
 import RecoverVaultDialog from './RecoverVaultDialog.vue';
-import DisplayRecoveryKeyDialog from './DisplayRecoveryKeyDialog.vue';
 import SearchInputGroup from './SearchInputGroup.vue';
 
 const { t, d } = useI18n({ useScope: 'global' });
@@ -375,7 +375,7 @@ function isAuthorityDto(toCheck: any): toCheck is AuthorityDto {
   return (toCheck as AuthorityDto).type != null;
 }
 
-async function addAuthority(authority: unknown) {
+async function addAuthority(authority: AuthorityDto) {
   onAddUserError.value = null;
   if (!isAuthorityDto(authority)) {
     throw new Error('Parameter authority is not of type AuthorityDto.');
@@ -383,7 +383,10 @@ async function addAuthority(authority: unknown) {
 
   try {
     await addAuthorityBackend(authority);
-    const addedMember = new MemberDto(authority.id, authority.name, authority.type, 'MEMBER', authority.pictureUrl);
+    const addedMember: MemberDto = {
+      ...authority,
+      role: 'MEMBER'
+    };
     members.value.set(authority.id, addedMember);
     usersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
   } catch (error) {
@@ -395,12 +398,13 @@ async function addAuthority(authority: unknown) {
 
 async function addAuthorityBackend(authority: AuthorityDto) {
   try {
-    if (authority.type.toLowerCase() == 'user') {
-      await backend.vaults.addUser(props.vaultId, authority.id);
-    } else if (authority.type.toLowerCase() == 'group') {
-      await backend.vaults.addGroup(props.vaultId, authority.id);
-    } else {
-      throw new Error('Unknown authority type \'' + authority.type + '\'');
+    switch(authority.type) {
+      case 'USER':
+        await backend.vaults.addUser(props.vaultId, authority.id);
+        break;
+      case 'GROUP':
+        await backend.vaults.addGroup(props.vaultId, authority.id);
+        break;
     }
   } catch (error) {
     if (! (error instanceof ConflictError)) {
