@@ -71,7 +71,7 @@ import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
 import { base64 } from 'rfc4648';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { AccessGrant, ConflictError, MemberDto, NotFoundError, VaultDto } from '../common/backend';
+import backend, { AccessGrant, ConflictError, MemberDto, NotFoundError, UserDto, VaultDto } from '../common/backend';
 import { AccessTokenProducing, getFingerprint } from '../common/crypto';
 
 const { t } = useI18n({ useScope: 'global' });
@@ -82,7 +82,7 @@ const onGrantPermissionError = ref<Error | null>();
 
 const props = defineProps<{
   vault: VaultDto
-  users: MemberDto[]
+  users: (MemberDto & UserDto)[]
   vaultKeys: AccessTokenProducing
 }>();
 
@@ -121,7 +121,7 @@ async function grantAccess() {
   }
 }
 
-async function giveUsersAccess(members: MemberDto[]) {
+async function giveUsersAccess(members: (MemberDto & UserDto)[]) {
   let tokens: AccessGrant[] = [];
   for (const member of members) {
     if (member.publicKey) { // some users might not have set up their key pair, so we can't share secrets with them yet

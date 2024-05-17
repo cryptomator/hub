@@ -33,7 +33,7 @@ axiosAuth.interceptors.request.use(async request => {
   }
 });
 
-/* DTOs */
+// #region DTOs
 
 export type VaultDto = {
   id: string;
@@ -66,119 +66,30 @@ export type AccessGrant = {
   token: string
 };
 
-enum AuthorityType {
-  User = 'USER',
-  Group = 'GROUP'
+export type UserDto = {
+  type: 'USER';
+  id: string;
+  name: string;
+  pictureUrl?: string;
+  email: string;
+  devices: DeviceDto[];
+  accessibleVaults: VaultDto[];
+  publicKey?: string;
+  privateKey?: string;
+  setupCode?: string;
 }
 
-export abstract class AuthorityDto {
-  private _pictureUrl?: string;
-
-  constructor(public id: string, public name: string, public type: AuthorityType, pictureUrl?: string) {
-    this._pictureUrl = pictureUrl;
-  }
-
-  public get pictureUrl() {
-    if (this._pictureUrl) {
-      return this._pictureUrl;
-    } else {
-      const svg = toSvg(this.id, 100, this.getIdenticonConfig());
-      const bytes = new TextEncoder().encode(svg);
-      return `data:image/svg+xml;base64,${base64.stringify(bytes)}`;
-    }
-  }
-
-  abstract getIdenticonConfig(): JdenticonConfig;
+export type GroupDto = {
+  type: 'GROUP';
+  id: string;
+  name: string;
+  pictureUrl?: string;
 }
 
-export class UserDto extends AuthorityDto {
-  constructor(public id: string, public name: string, public type: AuthorityType, public email: string, public devices: DeviceDto[], public accessibleVaults: VaultDto[], pictureUrl?: string,
-    public publicKey?: string, public privateKey?: string, public setupCode?: string) {
-    super(id, name, type, pictureUrl);
-  }
+export type AuthorityDto = UserDto | GroupDto;
 
-  static getIdenticonConfig(): JdenticonConfig {
-    return {
-      hues: [6, 28, 48, 121, 283],
-      saturation: {
-        color: 0.59,
-      },
-      lightness: {
-        color: [0.32, 0.49],
-        grayscale: [0.32, 0.49]
-      },
-      backColor: '#F7F7F7',
-      padding: 0
-    };
-  }
-
-  getIdenticonConfig(): JdenticonConfig {
-    return UserDto.getIdenticonConfig();
-  }
-
-  static typeOf(obj: any): obj is UserDto {
-    const userDto = obj as UserDto;
-    return typeof userDto.id === 'string'
-      && typeof userDto.name === 'string'
-      && (typeof userDto.pictureUrl === 'string' || userDto.pictureUrl === null)
-      && userDto.type === AuthorityType.User;
-  }
-
-  static copy(obj: UserDto): UserDto {
-    return new UserDto(obj.id, obj.name, obj.type, obj.email, obj.devices, obj.accessibleVaults, obj.pictureUrl, obj.publicKey, obj.privateKey, obj.setupCode);
-  }
-}
-
-export class GroupDto extends AuthorityDto {
-  constructor(public id: string, public name: string, public type: AuthorityType, pictureUrl: string) {
-    super(id, name, type, pictureUrl);
-  }
-
-  static getIdenticonConfig(): JdenticonConfig {
-    return {
-      hues: [190],
-      saturation: {
-        color: 0.59
-      },
-      lightness: {
-        color: [0.81, 0.97],
-        grayscale: [0.81, 0.97]
-      },
-      backColor: '#005E71',
-      padding: 0
-    };
-  }
-
-  getIdenticonConfig(): JdenticonConfig {
-    return GroupDto.getIdenticonConfig();
-  }
-
-  static typeOf(obj: any): obj is GroupDto {
-    const groupDto = obj as GroupDto;
-    return typeof groupDto.id === 'string'
-      && typeof groupDto.name === 'string'
-      && (typeof groupDto.pictureUrl === 'string' || groupDto.pictureUrl === null)
-      && groupDto.type === AuthorityType.Group;
-  }
-
-  static copy(obj: GroupDto): GroupDto {
-    return new GroupDto(obj.id, obj.name, obj.type, obj.pictureUrl);
-  }
-}
-
-export class MemberDto extends AuthorityDto {
-  constructor(public id: string, public name: string, public type: AuthorityType, public role: VaultRole, pictureUrl?: string, public publicKey?: string) {
-    super(id, name, type, pictureUrl);
-  }
-
-  getIdenticonConfig(): JdenticonConfig {
-    switch (this.type) {
-      case AuthorityType.User:
-        return UserDto.getIdenticonConfig();
-      case AuthorityType.Group:
-        return GroupDto.getIdenticonConfig();
-    }
-  }
+export type MemberDto = AuthorityDto & {
+  role: VaultRole
 }
 
 export type BillingDto = {
@@ -214,11 +125,12 @@ export class LicenseUserInfoDto {
   }
 }
 
-/* Services */
-
 export interface VaultIdHeader extends JWTHeader {
   vaultId: string;
 }
+
+// #endregion DTOs
+// #region Services
 
 class VaultService {
   public async listAccessible(role?: 'MEMBER' | 'OWNER'): Promise<VaultDto[]> {
@@ -246,9 +158,7 @@ class VaultService {
   }
 
   public async getMembers(vaultId: string): Promise<MemberDto[]> {
-    return axiosAuth.get<MemberDto[]>(`/vaults/${vaultId}/members`).then(response => {
-      return response.data.map(member => new MemberDto(member.id, member.name, member.type, member.role, member.pictureUrl, member.publicKey));
-    }).catch(err => rethrowAndConvertIfExpected(err, 403));
+    return axiosAuth.get<MemberDto[]>(`/vaults/${vaultId}/members`).then(response => response.data.map(AuthorityService.fillInMissingPicture)).catch(err => rethrowAndConvertIfExpected(err, 403));
   }
 
   public async addUser(vaultId: string, userId: string, role?: VaultRole): Promise<AxiosResponse<void>> {
@@ -261,11 +171,9 @@ class VaultService {
       .catch((error) => rethrowAndConvertIfExpected(error, 402, 404, 409));
   }
 
-  public async getUsersRequiringAccessGrant(vaultId: string): Promise<MemberDto[]> {
-    return axiosAuth.get<MemberDto[]>(`/vaults/${vaultId}/users-requiring-access-grant`)
-      .then(response => {
-        return response.data.map(member => new MemberDto(member.id, member.name, member.type, member.role, member.pictureUrl, member.publicKey));
-      })
+  public async getUsersRequiringAccessGrant(vaultId: string): Promise<(MemberDto & UserDto)[]> {
+    return axiosAuth.get<(MemberDto & UserDto)[]>(`/vaults/${vaultId}/users-requiring-access-grant`)
+      .then(response => response.data.map(AuthorityService.fillInMissingPicture))
       .catch(err => rethrowAndConvertIfExpected(err, 403));
   }
 
@@ -302,6 +210,7 @@ class VaultService {
       .catch((error) => rethrowAndConvertIfExpected(error, 404));
   }
 }
+
 class DeviceService {
   public async listSome(deviceIds: string[]): Promise<DeviceDto[]> {
     const query = `ids=${deviceIds.join('&ids=')}`;
@@ -324,7 +233,7 @@ class UserService {
   }
 
   public async me(withDevices: boolean = false): Promise<UserDto> {
-    return axiosAuth.get<UserDto>(`/users/me?withDevices=${withDevices}`).then(response => UserDto.copy(response.data));
+    return axiosAuth.get<UserDto>(`/users/me?withDevices=${withDevices}`).then(response => AuthorityService.fillInMissingPicture(response.data));
   }
 
   public async resetMe(): Promise<void> {
@@ -332,30 +241,64 @@ class UserService {
   }
 
   public async listAll(): Promise<UserDto[]> {
-    return axiosAuth.get<UserDto[]>('/users/').then(response => {
-      return response.data.map(dto => UserDto.copy(dto));
-    });
+    return axiosAuth.get<UserDto[]>('/users/').then(response => response.data.map(AuthorityService.fillInMissingPicture));
   }
 }
 
 class AuthorityService {
-  public async search(query: string): Promise<(UserDto | GroupDto)[]> {
-    return axiosAuth.get<(UserDto | GroupDto)[]>(`/authorities/search?query=${query}`).then(response => {
-      return response.data.map(authority => {
-        if (UserDto.typeOf(authority)) {
-          return UserDto.copy(authority);
-        } else if (GroupDto.typeOf(authority)) {
-          return GroupDto.copy(authority);
-        } else {
-          throw new Error('Provided data is not of type UserDTO or GroupDTO');
-        }
-      });
-    });
+  public async search(query: string): Promise<AuthorityDto[]> {
+    return axiosAuth.get<AuthorityDto[]>(`/authorities/search?query=${query}`).then(response => response.data.map(AuthorityService.fillInMissingPicture));
   }
 
   public async listSome(authorityIds: string[]): Promise<AuthorityDto[]> {
     const query = `ids=${authorityIds.join('&ids=')}`;
-    return axiosAuth.get<AuthorityDto[]>(`/authorities?${query}`).then(response => response.data);
+    return axiosAuth.get<AuthorityDto[]>(`/authorities?${query}`).then(response => response.data.map(AuthorityService.fillInMissingPicture));
+  }
+
+  public static fillInMissingPicture<T extends AuthorityDto>(authority: T): T & { pictureUrl: string } {
+    if (authority.pictureUrl) {
+      return {
+        ...authority,
+        pictureUrl: authority.pictureUrl
+      }
+    } else {
+      let cfg: JdenticonConfig;
+      switch (authority.type) {
+        case 'USER':
+          cfg = {
+            hues: [6, 28, 48, 121, 283],
+            saturation: {
+              color: 0.59,
+            },
+            lightness: {
+              color: [0.32, 0.49],
+              grayscale: [0.32, 0.49]
+            },
+            backColor: '#F7F7F7',
+            padding: 0
+          };
+        case 'GROUP':
+          cfg = {
+            hues: [190],
+            saturation: {
+              color: 0.59
+            },
+            lightness: {
+              color: [0.81, 0.97],
+              grayscale: [0.81, 0.97]
+            },
+            backColor: '#005E71',
+            padding: 0
+          };
+      }
+      const svg = toSvg(authority.id, 100, cfg);
+      const bytes = new TextEncoder().encode(svg);
+      const url = `data:image/svg+xml;base64,${base64.stringify(bytes)}`;
+      return {
+        ...authority,
+        pictureUrl: url
+      };
+    }
   }
 }
 
@@ -400,6 +343,11 @@ const services = {
   license: new LicenseService()
 };
 
+export default services;
+
+// #endregion Services
+// #region Error handling
+
 function convertExpectedToBackendError(status: number): BackendError {
   switch (status) {
     case 402:
@@ -428,9 +376,6 @@ export function rethrowAndConvertIfExpected(error: unknown, ...expectedStatusCod
   }
 }
 
-export default services;
-
-//-- Error thrown by this module --
 export class BackendError extends Error {
   constructor(msg: string) {
     super(msg);
@@ -466,3 +411,5 @@ export class ConflictError extends BackendError {
     super('Resource already exists');
   }
 }
+
+// #endregion Error handling

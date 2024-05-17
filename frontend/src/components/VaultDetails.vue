@@ -96,7 +96,7 @@
                 <span class="ml-4 text-sm font-medium text-primary group-hover:text-primary-l1">{{ t('common.share') }}</span>
               </button>
             </div>
-            <SearchInputGroup v-else-if="addingUser" :action-title="t('common.add')" :on-search="searchAuthority" @action="addAuthority" />
+            <SearchInputGroup v-else-if="addingUser" :action-title="t('common.add')" :on-search="searchAuthority" :resolve-picture-url="item => item.pictureUrl || ''" @action="addAuthority" />
             <div v-if="onAddUserError != null">
               <p v-if="onAddUserError instanceof PaymentRequiredError" class="text-sm text-red-900 text-right mt-1">
                 {{ t('vaultDetails.error.licenseViolated') }}
@@ -272,7 +272,7 @@ const vault = ref<VaultDto>();
 const vaultFormat8 = ref<VaultFormat8>();
 const uvfVault = ref<UniversalVaultFormat>();
 const members = ref<Map<string, MemberDto>>(new Map());
-const membersRequiringAccessGrant = ref<MemberDto[]>([]);
+const membersRequiringAccessGrant = ref<(MemberDto & UserDto)[]>([]);
 const claimVaultOwnershipDialog = ref<typeof ClaimVaultOwnershipDialog>();
 const claimingVaultOwnership = ref(false);
 const me = ref<UserDto>();
@@ -410,7 +410,7 @@ function isAuthorityDto(toCheck: any): toCheck is AuthorityDto {
   return (toCheck as AuthorityDto).type != null;
 }
 
-async function addAuthority(authority: unknown) {
+async function addAuthority(authority: AuthorityDto) {
   onAddUserError.value = null;
   if (!isAuthorityDto(authority)) {
     throw new Error('Parameter authority is not of type AuthorityDto.');
@@ -418,7 +418,10 @@ async function addAuthority(authority: unknown) {
 
   try {
     await addAuthorityBackend(authority);
-    const addedMember = new MemberDto(authority.id, authority.name, authority.type, 'MEMBER', authority.pictureUrl);
+    const addedMember: MemberDto = {
+      ...authority,
+      role: 'MEMBER'
+    };
     members.value.set(authority.id, addedMember);
     membersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
   } catch (error) {
@@ -430,12 +433,13 @@ async function addAuthority(authority: unknown) {
 
 async function addAuthorityBackend(authority: AuthorityDto) {
   try {
-    if (authority.type.toLowerCase() == 'user') {
-      await backend.vaults.addUser(props.vaultId, authority.id);
-    } else if (authority.type.toLowerCase() == 'group') {
-      await backend.vaults.addGroup(props.vaultId, authority.id);
-    } else {
-      throw new Error('Unknown authority type \'' + authority.type + '\'');
+    switch(authority.type) {
+      case 'USER':
+        await backend.vaults.addUser(props.vaultId, authority.id);
+        break;
+      case 'GROUP':
+        await backend.vaults.addGroup(props.vaultId, authority.id);
+        break;
     }
   } catch (error) {
     if (! (error instanceof ConflictError)) {
@@ -524,7 +528,7 @@ async function updateMemberRole(member: MemberDto, role: VaultRole) {
     if (updatedMember) {
       updatedMember.role = role;
     }
-    if (uvfVault.value && member.publicKey) { // atm only users have public keys
+    if (uvfVault.value && member.type == 'USER' && member.publicKey) {
       const includeOwnerKeys = role == 'OWNER';
       const updatedAccessToken = await uvfVault.value.encryptForUser(base64.parse(member.publicKey), includeOwnerKeys);
       await backend.vaults.grantAccess(props.vaultId, { userId: member.id, token: updatedAccessToken });
