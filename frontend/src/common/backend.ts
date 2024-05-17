@@ -262,35 +262,7 @@ class AuthorityService {
         pictureUrl: authority.pictureUrl
       }
     } else {
-      let cfg: JdenticonConfig;
-      switch (authority.type) {
-        case 'USER':
-          cfg = {
-            hues: [6, 28, 48, 121, 283],
-            saturation: {
-              color: 0.59,
-            },
-            lightness: {
-              color: [0.32, 0.49],
-              grayscale: [0.32, 0.49]
-            },
-            backColor: '#F7F7F7',
-            padding: 0
-          };
-        case 'GROUP':
-          cfg = {
-            hues: [190],
-            saturation: {
-              color: 0.59
-            },
-            lightness: {
-              color: [0.81, 0.97],
-              grayscale: [0.81, 0.97]
-            },
-            backColor: '#005E71',
-            padding: 0
-          };
-      }
+      let cfg = AuthorityService.getJdenticonConfig(authority.type);
       const svg = toSvg(authority.id, 100, cfg);
       const bytes = new TextEncoder().encode(svg);
       const url = `data:image/svg+xml;base64,${base64.stringify(bytes)}`;
@@ -298,6 +270,37 @@ class AuthorityService {
         ...authority,
         pictureUrl: url
       };
+    }
+  }
+
+  private static getJdenticonConfig(type: 'USER' | 'GROUP'): JdenticonConfig {
+    switch (type) {
+      case 'USER':
+        return {
+          hues: [6, 28, 48, 121, 283],
+          saturation: {
+            color: 0.59,
+          },
+          lightness: {
+            color: [0.32, 0.49],
+            grayscale: [0.32, 0.49]
+          },
+          backColor: '#F7F7F7',
+          padding: 0
+        };
+      case 'GROUP':
+        return {
+          hues: [190],
+          saturation: {
+            color: 0.59
+          },
+          lightness: {
+            color: [0.81, 0.97],
+            grayscale: [0.81, 0.97]
+          },
+          backColor: '#005E71',
+          padding: 0
+        };
     }
   }
 }
