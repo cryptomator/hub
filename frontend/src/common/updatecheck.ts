@@ -25,10 +25,6 @@ class UpdatesService {
   }
 }
 
-export class FetchUpdateError extends Error {
-  constructor(msg: string) {
-    super(msg);
-  }
-}
+export class FetchUpdateError extends Error { }
 
 export const updateChecker = new UpdatesService();
