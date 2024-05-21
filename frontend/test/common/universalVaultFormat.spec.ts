@@ -199,9 +199,9 @@ describe('UVF', () => {
       expect(uvf.metadata).to.be.not.null;
       expect(uvf.metadata.initialSeedId).to.eq(2754894775);
       expect(uvf.metadata.latestSeedId).to.eq(2754894775);
-      expect(uvf.metadata.seeds.get(2754894775)).to.not.be.empty;
       expect(base64.stringify(uvf.metadata.kdfSalt)).to.eq('HE4OP+2vyfLLURicF1XmdIIsWv0Zs6MobLKROUIEhQY=');
-      expect(base64.stringify(uvf.metadata.seeds.get(2754894775)!)).to.eq('fP4V4oAjsUw5DqackAvLzA0oP1kAQZ0f5YFZQviXSuU=');
+      expect(base64.stringify(uvf.metadata.initialSeed)).to.eq('fP4V4oAjsUw5DqackAvLzA0oP1kAQZ0f5YFZQviXSuU=');
+      expect(base64.stringify(uvf.metadata.latestSeed)).to.eq('fP4V4oAjsUw5DqackAvLzA0oP1kAQZ0f5YFZQviXSuU=');
       expect(uvf.memberKey).to.be.not.null;
       expect(uvf.recoveryKey).to.be.not.null;
       expect(uvf.recoveryKey.privateKey).to.be.undefined;
@@ -217,9 +217,9 @@ describe('UVF', () => {
       expect(uvf.metadata).to.be.not.null;
       expect(uvf.metadata.initialSeedId).to.eq(4157009252);
       expect(uvf.metadata.latestSeedId).to.eq(4157009252);
-      expect(uvf.metadata.seeds.get(4157009252)).to.not.be.empty;
       expect(base64.stringify(uvf.metadata.kdfSalt)).to.eq('pNxWJ5R5TO0mbkmL5pv7M3tAi6Etoh/SK73Q0KvfKMY=');
-      expect(base64.stringify(uvf.metadata.seeds.get(4157009252)!)).to.eq('p6zznin4zSGt7gH6T95/kZj6HndpyUdY+1QVfxR2k20=');
+      expect(base64.stringify(uvf.metadata.initialSeed!)).to.eq('p6zznin4zSGt7gH6T95/kZj6HndpyUdY+1QVfxR2k20=');
+      expect(base64.stringify(uvf.metadata.latestSeed!)).to.eq('p6zznin4zSGt7gH6T95/kZj6HndpyUdY+1QVfxR2k20=');
       expect(uvf.memberKey).to.be.not.null;
       expect(uvf.recoveryKey).to.be.not.null;
       expect(uvf.recoveryKey.privateKey).to.be.not.null;
@@ -230,7 +230,16 @@ describe('UVF', () => {
       let uvf: UniversalVaultFormat;
 
       before(async () => {
-        uvf = await UniversalVaultFormat.create({ enabled: true, maxWotDepth: -1 });
+        const dto: VaultDto = {
+          id: '123',
+          name: 'test',
+          archived: false,
+          creationTime: new Date(),
+          uvfMetadataFile: '{"protected":"eyJvcmlnaW4iOiJodHRwczovL2V4YW1wbGUuY29tL2FwaS92YXVsdHMvVE9ETy91dmYvdmF1bHQudXZmIiwiamt1Ijoiandrcy5qc29uIiwiZW5jIjoiQTI1NkdDTSJ9","recipients":[{"header":{"kid":"org.cryptomator.hub.memberkey","alg":"A256KW"},"encrypted_key":"7FtABJ5BpSM9Ft8wUPfLQc-12WF57kX0tWtRWiVwA_N_gJBa9iwhzw"},{"header":{"kid":"org.cryptomator.hub.recoverykey.1h24rxLxIlNRPQAn5NBP0fL3VKNTmqS6NEnt2clI5ko","alg":"ECDH-ES+A256KW","epk":{"key_ops":[],"ext":true,"kty":"EC","x":"oNu46YFrgrGSvl98HyDD3_iPkfZBnpYgEHmPL3qbO4AdwBsycpIqcHwKhT8Lt7B8","y":"P80VgJFml85v_F2-aPYdgDQX_DPGZr1s_p8gWF4Idkp13QfKdhi32C7Zoy5kzPWO","crv":"P-384"},"apu":"","apv":""},"encrypted_key":"QaJn0TP7mGAc5ukOpZ0gNAuBtCW7hPCkj8Jp4bhMftQfJefHNyqE7Q"}],"iv":"Wgif0WP21-MAwvWs","ciphertext":"-n5CePmmN99I4KqlnR64Fuu5b2Md9s4CGxLMm7KQqu65H0ug7Fs5HHnrx_gkpFiv1Mn-jwrkoEtiixyQcYX6UcoyT2dY1MkLQB7QU9mdMpZU3n19Q2sAx1-gfTCd7IzVXef7SEfuscdQL1QTKJW454Dy8L3WwPiDpUgt9ED7mMFdJ6lJ3_EFYstN0VFAVf_jwtIILmQrjkM_LI0FFKfqkOCH2nuE9xG8ihPH9X9OStllPp00G9_onYu9mrg-smiNNK2Ib19CZJ2E6mAp7F_LGiz6p203fsprj4XY9J6t8zl5Vpc61NmFvzvY4j3_5FpD_BmpVr8tyyVT9zqWn4vsBAHORQ1V_b9v68O7CekCebpQvpmzEPZwZN1Ma_T6oI7Ydn1rtBnDruVrpWm01RL8XpHnFbko","tag":"vPLd65IEcexmhGbYPM0cYI53H4Pp1OfTaAq_QGrneLM"}',
+          uvfKeySet: '{"keys": [{"kid":"org.cryptomator.hub.recoverykey.1h24rxLxIlNRPQAn5NBP0fL3VKNTmqS6NEnt2clI5ko","kty":"EC","crv":"P-384","x":"DczdNhPQnpgP8FV6qa372LDLJF2w2bMKXzea5cjxslaMjM6w7NGqrF498LYHU-Jt","y":"vH9bc-Ow_O1EQmd6N5pKmDoPyE6ziKsrlpuck5aLXwV4fSMV_8Ro1a872j5ClsPe"}]}'
+        };
+        const accessToken = 'eyJlbmMiOiJBMjU2R0NNIiwia2lkIjoib3JnLmNyeXB0b21hdG9yLmh1Yi51c2Vya2V5IiwiYWxnIjoiRUNESC1FUytBMjU2S1ciLCJlcGsiOnsia2V5X29wcyI6W10sImV4dCI6dHJ1ZSwia3R5IjoiRUMiLCJ4IjoiUXZRWUpUd3dSVEg2MWRFS3ZoNDI4ZG9nN3pRTFFxY3I0NUhwZTRqZFQ5Qno2bjcyVzQ4dTJ3WXk0UXlyZ0kxciIsInkiOiJZS1RtQ04zZXNKNDJVbUpzLU44NTFKamsyUFVPUU0zZXpCTkJvZGk4RnRNUDlUeUhoXzc0aHpxTC1EYTZkMXlwIiwiY3J2IjoiUC0zODQifSwiYXB1IjoiIiwiYXB2IjoiIn0.rdysEEQN0FidglDtK5yyaEpQtv4CsYLOQd__y7REkb_3BLP9nD4Blw.dFb9JOdveiw3LmIs.rSMkz8VoB_LspnvxvmRzCWNVLShTWfbzHfqe5lwrWwumYCdeRPM.xsS2tDUr2khJrLxHex8gZhBgO_CMA_PxFlR-ku3JiT8';
+        uvf = await UniversalVaultFormat.decrypt(dto, accessToken, alice);
       });
 
       it('encryptForUser() creates an access token', async () => {

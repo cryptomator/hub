@@ -212,6 +212,12 @@ export class VaultMetadata {
     readonly initialSeedId: number,
     readonly latestSeedId: number,
     readonly kdfSalt: Uint8Array) {
+    if (!seeds.has(initialSeedId)) {
+      throw new Error('Initial seed is missing');
+    }
+    if (!seeds.has(latestSeedId)) {
+      throw new Error('Latest seed is missing');
+    }
   }
 
   /**
@@ -230,6 +236,20 @@ export class VaultMetadata {
     const seeds: Map<number, Uint8Array> = new Map<number, Uint8Array>();
     seeds.set(initialSeedNo, initialSeedValue);
     return new VaultMetadata(automaticAccessGrant, seeds, initialSeedNo, initialSeedNo, kdfSalt);
+  }
+
+  public get initialSeed(): Uint8Array {
+    if (!this.seeds.has(this.initialSeedId)) {
+      throw new Error('Illegal State');
+    }
+    return this.seeds.get(this.initialSeedId)!;
+  }
+
+  public get latestSeed(): Uint8Array {
+    if (!this.seeds.has(this.latestSeedId)) {
+      throw new Error('Illegal State');
+    }
+    return this.seeds.get(this.latestSeedId)!;
   }
 
   /**
