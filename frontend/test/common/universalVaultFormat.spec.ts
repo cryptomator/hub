@@ -282,6 +282,12 @@ describe('UVF', () => {
         expect(hash).to.have.a.lengthOf(32);
         expect(hash).to.eq('6DYU3E5BTPAZ4DWEQPQK3AIHX2DXSPHG');
       });
+
+      it('encryptFile() creates some ciphertext', async () => {
+        const rootDirId = base64.parse('24UBEDeGu5taq7U4GqyA0MXUXb9HTYS6p3t9vvHGJAc=');
+        const fileContent = await uvf.encryptFile(rootDirId, uvf.metadata.initialSeedId);
+        expect(fileContent).to.have.a.lengthOf(128);
+      });
     });
   });
 });

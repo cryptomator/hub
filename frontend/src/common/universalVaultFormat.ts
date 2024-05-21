@@ -428,14 +428,52 @@ export class UniversalVaultFormat implements AccessTokenProducing, VaultTemplate
     return base32.stringify(new Uint8Array(rootDirHash).slice(0, 20));
   }
 
+  public async encryptFile(content: Uint8Array, seedId: number): Promise<Uint8Array> {
+    const seed = this.metadata.seeds.get(seedId);
+    if (!seed) {
+      throw new Error('Seed not found');
+    }
+    if (content.length > 32 * 1024) {
+      throw new Error('Only files up to 32k are supported.');
+    }
+    const textencoder = new TextEncoder();
+    const fileKey = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt']);
+
+    // general header:
+    const generalHeader = new ArrayBuffer(8);
+    const view = new DataView(generalHeader);
+    view.setUint32(0, 0x75766601); // magic bytes "uvf1"
+    view.setUint32(4, seedId);
+
+    // format-specific header:
+    const initialSeed = await crypto.subtle.importKey('raw', this.metadata.initialSeed, { name: 'HKDF' }, false, ['deriveKey']);
+    const headerKey = await crypto.subtle.deriveKey({ name: 'HKDF', hash: 'SHA-512', salt: this.metadata.kdfSalt, info: textencoder.encode('fileHeader') }, initialSeed, { name: 'AES-GCM', length: 256 }, false, ['wrapKey']);
+    const headerNonce = new Uint8Array(12);
+    crypto.getRandomValues(headerNonce);
+    const encryptedFileKeyAndTag = await crypto.subtle.wrapKey('raw', fileKey, headerKey, { name: 'AES-GCM', iv: headerNonce, additionalData: generalHeader });
+
+    // complete header:
+    const header = new Uint8Array([...new Uint8Array(generalHeader), ...headerNonce, ...new Uint8Array(encryptedFileKeyAndTag)]);
+
+    // encrypt chunk 0:
+    const blockNonce = new Uint8Array(12);
+    crypto.getRandomValues(blockNonce);
+    const blockAd = new Uint8Array([0x00, 0x00, 0x00, 0x00, ...headerNonce]);
+    const blockCiphertext = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: blockNonce, additionalData: blockAd }, fileKey, content);
+
+    // result:
+    return new Uint8Array([...header, ...blockNonce, ...new Uint8Array(blockCiphertext)]);
+  }
+
   /** @inheritdoc */
   public async exportTemplate(apiURL: string, vault: VaultDto): Promise<Blob> {
     const rootDirId = await this.computeRootDirId();
     const rootDirHash = await this.computeRootDirIdHash(rootDirId);
+    const dirFile = await this.encryptFile(rootDirId, this.metadata.initialSeedId);
     const zip = new JSZip();
     zip.file('vault.uvf', this.createMetadataFile(apiURL, vault));
-    zip.folder('d')?.folder(rootDirHash.substring(0, 2))?.folder(rootDirHash.substring(2)); // TODO verify after merging https://github.com/encryption-alliance/unified-vault-format/pull/24
-    // TODO: add `dir.uvf`
+    const rootDir = zip.folder('d')?.folder(rootDirHash.substring(0, 2))?.folder(rootDirHash.substring(2)); // TODO verify after merging https://github.com/encryption-alliance/unified-vault-format/pull/24
+    rootDir?.file('dir.uvf', dirFile);
     return zip.generateAsync({ type: 'blob' });
   }
 
