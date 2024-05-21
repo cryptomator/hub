@@ -1,6 +1,5 @@
 import { use as chaiUse, expect } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import chaiBytes from 'chai-bytes';
 import { before, describe } from 'mocha';
 import { base64 } from 'rfc4648';
 import { VaultDto } from '../../src/common/backend';
@@ -9,7 +8,6 @@ import { JsonJWE } from '../../src/common/jwe';
 import { MemberKey, RecoveryKey, UniversalVaultFormat, VaultMetadata } from '../../src/common/universalVaultFormat';
 
 chaiUse(chaiAsPromised);
-chaiUse(chaiBytes);
 
 // key coordinates from MDN examples:
 const alicePublic: JsonWebKey = {
@@ -79,10 +77,11 @@ describe('UVF', () => {
       });
 
       it('decrypt(encrypt(orig)) == orig', async () => {
+        const dto: VaultDto = { id: '123', name: 'test', archived: false, creationTime: new Date() };
         const vaultMemberKey = await MemberKey.create();
         const recoveryKey = await RecoveryKey.create();
 
-        const uvfFile: string = await original.encrypt(vaultMemberKey, recoveryKey);
+        const uvfFile: string = await original.encrypt('https://example.com/api/', dto, vaultMemberKey, recoveryKey);
         expect(uvfFile).to.be.not.null;
         const json = JSON.parse(uvfFile);
         expect(json).to.have.property('protected');
@@ -240,7 +239,7 @@ describe('UVF', () => {
       });
 
       it('createMetadataFile() creates a vault.uvf file', async () => {
-        const json = await uvf.createMetadataFile();
+        const json = await uvf.createMetadataFile('https.//example.com/api/', { id: '123', name: 'test', archived: false, creationTime: new Date() });
         expect(json).to.be.not.null;
         const jwe = JSON.parse(json) as JsonJWE;
         expect(jwe.protected).to.not.be.empty;

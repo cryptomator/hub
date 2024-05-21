@@ -2,7 +2,7 @@ import JSZip from 'jszip';
 import * as miscreant from 'miscreant';
 import { base32, base64, base64url } from 'rfc4648';
 import { VaultDto } from './backend';
-import config, { absBackendBaseURL, absFrontendBaseURL } from './config';
+import config, { absFrontendBaseURL } from './config';
 import { AccessTokenProducing, GCM_NONCE_LEN, OtherVaultMember, UnwrapKeyError, UserKeys, VaultTemplateProducing } from './crypto';
 import { CRC32, wordEncoder } from './util';
 
@@ -169,10 +169,10 @@ export class VaultFormat8 implements AccessTokenProducing, VaultTemplateProducin
   }
 
   /** @inheritdoc */
-  public async exportTemplate(vault: VaultDto): Promise<Blob> {
+  public async exportTemplate(apiURL: string, vault: VaultDto): Promise<Blob> {
     const cfg = await config;
 
-    const kid = `hub+${absBackendBaseURL}vaults/${vault.id}`;
+    const kid = `hub+${apiURL}vaults/${vault.id}`;
 
     const hubConfig: VaultConfigHeaderHub = {
       clientId: cfg.keycloakClientIdCryptomator,
@@ -180,8 +180,8 @@ export class VaultFormat8 implements AccessTokenProducing, VaultTemplateProducin
       tokenEndpoint: cfg.keycloakTokenEndpoint,
       authSuccessUrl: `${absFrontendBaseURL}unlock-success?vault=${vault.id}`,
       authErrorUrl: `${absFrontendBaseURL}unlock-error?vault=${vault.id}`,
-      apiBaseUrl: absBackendBaseURL,
-      devicesResourceUrl: `${absBackendBaseURL}devices/`,
+      apiBaseUrl: apiURL,
+      devicesResourceUrl: `${apiURL}devices/`,
     };
 
     const jwtPayload: VaultConfigPayload = {

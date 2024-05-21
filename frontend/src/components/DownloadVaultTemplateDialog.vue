@@ -54,6 +54,7 @@ import { saveAs } from 'file-saver';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { VaultDto } from '../common/backend';
+import { absBackendBaseURL } from '../common/config';
 import { VaultTemplateProducing } from '../common/crypto';
 
 const { t } = useI18n({ useScope: 'global' });
@@ -82,7 +83,7 @@ function show() {
 async function downloadVault() {
   onDownloadError.value = null;
   try {
-    const blob = await props.vaultKeys.exportTemplate(props.vault);
+    const blob = await props.vaultKeys.exportTemplate(absBackendBaseURL, props.vault);
     saveAs(blob, `${props.vault.name}.zip`);
     open.value = false;
   } catch (error) {

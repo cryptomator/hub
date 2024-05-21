@@ -214,6 +214,7 @@ import { base64 } from 'rfc4648';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { AccessGrant, PaymentRequiredError, VaultDto } from '../common/backend';
+import { absBackendBaseURL } from '../common/config';
 import { VaultTemplateProducing } from '../common/crypto';
 import { UniversalVaultFormat } from '../common/universalVaultFormat';
 import { debounce } from '../common/util';
@@ -353,7 +354,7 @@ async function createVault() {
         }
         ownerGrant.token = await uvfVault.value.encryptForUser(base64.parse(owner.publicKey), true);
         const recoveryPublicKey = await uvfVault.value.recoveryKey.serializePublicKey();
-        vault.value.uvfMetadataFile = await uvfVault.value.createMetadataFile();
+        vault.value.uvfMetadataFile = await uvfVault.value.createMetadataFile(absBackendBaseURL, vault.value);
         vault.value.uvfKeySet = `{"keys": [${recoveryPublicKey}]}`;
         break;
       }
@@ -382,7 +383,7 @@ async function downloadVaultTemplate() {
   onDownloadTemplateError.value = null;
   try {
     const templateProducer: VaultTemplateProducing = vaultFormat8.value || uvfVault.value!;
-    const blob = await templateProducer.exportTemplate(vault.value);
+    const blob = await templateProducer.exportTemplate(absBackendBaseURL, vault.value);
     if (blob != null) {
       saveAs(blob, `${vault.value.name}.zip`);
     } else {

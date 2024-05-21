@@ -281,14 +281,16 @@ export class VaultMetadata {
 
   /**
    * Encrypts the vault metadata
+   * @param apiURL absolute base URL of the API
+   * @param vault the corresponding vault
    * @param memberKey the vault members' AES wrapping key
    * @param recoveryKey the public part of the recovery EC key pair
    * @returns `vault.uvf` file contents
    */
-  public async encrypt(memberKey: MemberKey, recoveryKey: RecoveryKey): Promise<string> {
+  public async encrypt(apiURL: string, vault: VaultDto, memberKey: MemberKey, recoveryKey: RecoveryKey): Promise<string> {
     const recoveryKeyID = `org.cryptomator.hub.recoverykey.${await getJwkThumbprint(recoveryKey.publicKey)}`;
     const protectedHeader: JWEHeader = {
-      origin: `https://example.com/api/vaults/TODO/uvf/vault.uvf`, // TODO use ${absBackendBaseURL}. Couldn't do this, because tests fail for mysterious reasons
+      origin: `${apiURL}/vaults/${vault.id}/uvf/vault.uvf`,
       jku: 'jwks.json' // URL relative to origin
     };
     const jwe = await JWE.build(this.payload(), protectedHeader).encrypt(Recipient.a256kw('org.cryptomator.hub.memberkey', memberKey.key), Recipient.ecdhEs(recoveryKeyID, recoveryKey.publicKey));
@@ -381,14 +383,20 @@ export class UniversalVaultFormat implements AccessTokenProducing, VaultTemplate
     throw new Error('Recovery key not found in JWKS');
   }
 
-  public async createMetadataFile(): Promise<string> {
-    return this.metadata.encrypt(this.memberKey, this.recoveryKey);
+  /**
+   * Creates the `vault.uvf` file
+   * @param apiURL absolute base URL of the API
+   * @param vault the vault
+   * @returns `vault.uvf` file contents
+   */
+  public async createMetadataFile(apiURL: string, vault: VaultDto): Promise<string> {
+    return this.metadata.encrypt(apiURL, vault, this.memberKey, this.recoveryKey);
   }
 
   /** @inheritdoc */
-  public async exportTemplate(vault: VaultDto): Promise<Blob> {
+  public async exportTemplate(apiURL: string, vault: VaultDto): Promise<Blob> {
     const zip = new JSZip();
-    zip.file('vault.uvf', this.createMetadataFile());
+    zip.file('vault.uvf', this.createMetadataFile(apiURL, vault));
     // TODO: add root folder
     //zip.folder('d')?.folder(rootDirHash.substring(0, 2))?.folder(rootDirHash.substring(2));
     return zip.generateAsync({ type: 'blob' });

@@ -45,9 +45,10 @@ export interface VaultTemplateProducing {
 
   /**
    * Produces a zip file containing the vault template.
+   * @param apiURL absolute base URL of the API
    * @param vault The vault
    */
-  exportTemplate(vault: VaultDto): Promise<Blob>;
+  exportTemplate(apiURL: string, vault: VaultDto): Promise<Blob>;
 
 }
 
