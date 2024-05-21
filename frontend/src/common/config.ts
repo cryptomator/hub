@@ -1,6 +1,11 @@
 import AxiosStatic from 'axios';
 
-const url = (typeof document !== 'undefined') ? new URL(document.baseURI) : new URL('http://localhost/'); // workaround for testing in Node environment
+let url: URL;
+if (typeof document === 'undefined' || document.baseURI === 'about:blank') {
+  url = new URL('http://localhost/'); // workaround for testing in Node environment
+} else {
+  url = new URL(document.baseURI);
+}
 
 // these URLs must end on '/':
 export const baseURL = url.pathname;
