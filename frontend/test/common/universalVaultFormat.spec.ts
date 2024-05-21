@@ -270,8 +270,16 @@ describe('UVF', () => {
         expect(jwk.kid).to.not.be.empty;
       });
 
-      it('computeRootDirIdHash() creates a hash', async () => {
-        const hash = await uvf.computeRootDirIdHash();
+      it('computeRootDirId() deterministically creates a dir ID', async () => {
+        const dirId = await uvf.computeRootDirId();
+        expect(dirId).to.have.a.lengthOf(32);
+        expect(base64.stringify(dirId)).to.eq('24UBEDeGu5taq7U4GqyA0MXUXb9HTYS6p3t9vvHGJAc=');
+      });
+
+      it('computeRootDirIdHash() creates a truncated hmac', async () => {
+        const rootDirId = base64.parse('24UBEDeGu5taq7U4GqyA0MXUXb9HTYS6p3t9vvHGJAc=');
+        const hash = await uvf.computeRootDirIdHash(rootDirId);
+        expect(hash).to.have.a.lengthOf(32);
         expect(hash).to.eq('6DYU3E5BTPAZ4DWEQPQK3AIHX2DXSPHG');
       });
     });

@@ -413,10 +413,16 @@ export class UniversalVaultFormat implements AccessTokenProducing, VaultTemplate
     return this.metadata.encrypt(apiURL, vault, this.memberKey, this.recoveryKey);
   }
 
-  public async computeRootDirIdHash(): Promise<string> {
+  public async computeRootDirId(): Promise<Uint8Array> {
     const textencoder = new TextEncoder();
-    const initialSeed = await crypto.subtle.importKey('raw', this.metadata.initialSeed, { name: 'HKDF' }, false, ['deriveBits', 'deriveKey']);
+    const initialSeed = await crypto.subtle.importKey('raw', this.metadata.initialSeed, { name: 'HKDF' }, false, ['deriveBits']);
     const rootDirId = await crypto.subtle.deriveBits({ name: 'HKDF', hash: 'SHA-512', salt: this.metadata.kdfSalt, info: textencoder.encode('rootDirId') }, initialSeed, 256);
+    return new Uint8Array(rootDirId);
+  }
+
+  public async computeRootDirIdHash(rootDirId: Uint8Array): Promise<string> {
+    const textencoder = new TextEncoder();
+    const initialSeed = await crypto.subtle.importKey('raw', this.metadata.initialSeed, { name: 'HKDF' }, false, ['deriveKey']);
     const hmacKey = await crypto.subtle.deriveKey({ name: 'HKDF', hash: 'SHA-512', salt: this.metadata.kdfSalt, info: textencoder.encode('hmac') }, initialSeed, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
     const rootDirHash = await crypto.subtle.sign("HMAC", hmacKey, rootDirId);
     return base32.stringify(new Uint8Array(rootDirHash).slice(0, 20));
@@ -424,7 +430,8 @@ export class UniversalVaultFormat implements AccessTokenProducing, VaultTemplate
 
   /** @inheritdoc */
   public async exportTemplate(apiURL: string, vault: VaultDto): Promise<Blob> {
-    const rootDirHash = await this.computeRootDirIdHash();
+    const rootDirId = await this.computeRootDirId();
+    const rootDirHash = await this.computeRootDirIdHash(rootDirId);
     const zip = new JSZip();
     zip.file('vault.uvf', this.createMetadataFile(apiURL, vault));
     zip.folder('d')?.folder(rootDirHash.substring(0, 2))?.folder(rootDirHash.substring(2)); // TODO verify after merging https://github.com/encryption-alliance/unified-vault-format/pull/24
