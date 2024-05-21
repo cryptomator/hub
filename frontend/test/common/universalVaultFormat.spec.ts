@@ -269,6 +269,11 @@ describe('UVF', () => {
         expect(jwk.d).to.be.undefined;
         expect(jwk.kid).to.not.be.empty;
       });
+
+      it('computeRootDirIdHash() creates a hash', async () => {
+        const hash = await uvf.computeRootDirIdHash();
+        expect(hash).to.eq('6DYU3E5BTPAZ4DWEQPQK3AIHX2DXSPHG');
+      });
     });
   });
 });

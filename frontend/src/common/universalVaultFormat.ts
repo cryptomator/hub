@@ -1,5 +1,5 @@
 import JSZip from 'jszip';
-import { base64, base64url } from 'rfc4648';
+import { base32, base64, base64url } from 'rfc4648';
 import { VaultDto } from './backend';
 import { AccessTokenPayload, AccessTokenProducing, JsonWebKeySet, OtherVaultMember, UserKeys, VaultTemplateProducing, getJwkThumbprint } from './crypto';
 import { JWE, JWEHeader, JsonJWE, Recipient } from './jwe';
@@ -413,12 +413,22 @@ export class UniversalVaultFormat implements AccessTokenProducing, VaultTemplate
     return this.metadata.encrypt(apiURL, vault, this.memberKey, this.recoveryKey);
   }
 
+  public async computeRootDirIdHash(): Promise<string> {
+    const textencoder = new TextEncoder();
+    const initialSeed = await crypto.subtle.importKey('raw', this.metadata.initialSeed, { name: 'HKDF' }, false, ['deriveBits', 'deriveKey']);
+    const rootDirId = await crypto.subtle.deriveBits({ name: 'HKDF', hash: 'SHA-512', salt: this.metadata.kdfSalt, info: textencoder.encode('rootDirId') }, initialSeed, 256);
+    const hmacKey = await crypto.subtle.deriveKey({ name: 'HKDF', hash: 'SHA-512', salt: this.metadata.kdfSalt, info: textencoder.encode('hmac') }, initialSeed, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+    const rootDirHash = await crypto.subtle.sign("HMAC", hmacKey, rootDirId);
+    return base32.stringify(new Uint8Array(rootDirHash).slice(0, 20));
+  }
+
   /** @inheritdoc */
   public async exportTemplate(apiURL: string, vault: VaultDto): Promise<Blob> {
+    const rootDirHash = await this.computeRootDirIdHash();
     const zip = new JSZip();
     zip.file('vault.uvf', this.createMetadataFile(apiURL, vault));
-    // TODO: add root folder
-    //zip.folder('d')?.folder(rootDirHash.substring(0, 2))?.folder(rootDirHash.substring(2));
+    zip.folder('d')?.folder(rootDirHash.substring(0, 2))?.folder(rootDirHash.substring(2)); // TODO verify after merging https://github.com/encryption-alliance/unified-vault-format/pull/24
+    // TODO: add `dir.uvf`
     return zip.generateAsync({ type: 'blob' });
   }
 
