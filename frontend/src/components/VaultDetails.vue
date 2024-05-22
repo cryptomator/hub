@@ -184,13 +184,9 @@
         <button v-if="vaultRole == 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDownloadVaultTemplateDialog()">
           {{ t('vaultDetails.actions.downloadVaultTemplate') }}
         </button>
-        <!-- displayRecoveryKey button (Vault Format 8 only) -->
-        <button v-if="vaultRole == 'OWNER' && vaultFormat8" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDisplayRecoveryKeyDialog()">
+        <!-- displayRecoveryKey button -->
+        <button v-if="vaultRole == 'OWNER' && (vaultFormat8 || uvfVault?.recoveryKey.privateKey)" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDisplayRecoveryKeyDialog()">
           {{ t('vaultDetails.actions.displayRecoveryKey') }}
-        </button>
-        <!-- TODO: regenerateRecoveryKey button (UVF only) -->
-        <button v-if="vaultRole == 'OWNER' && uvfVault?.recoveryKey.privateKey" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showUvfRecoveryKey()">
-          {{ t('vaultDetails.actions.displayRecoveryKey') }} UVF TODO see console
         </button>
         <!-- archiveVault button -->
         <button v-if="(vaultRole == 'OWNER' || isAdmin)" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white  hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showArchiveVaultDialog()">
@@ -204,7 +200,7 @@
   <GrantPermissionDialog v-if="grantingPermission && vault && (vaultFormat8 || uvfVault)" ref="grantPermissionDialog" :vault="vault" :users="membersRequiringAccessGrant" :vault-keys="(vaultFormat8 || uvfVault)!" @close="grantingPermission = false" @permission-granted="permissionGranted()" />
   <EditVaultMetadataDialog v-if="editingVaultMetadata && vault" ref="editVaultMetadataDialog" :vault="vault" @close="editingVaultMetadata = false" @updated="v => refreshVault(v)" />
   <DownloadVaultTemplateDialog v-if="downloadingVaultTemplate && vault && (vaultFormat8 || uvfVault)" ref="downloadVaultTemplateDialog" :vault="vault" :vault-keys="(vaultFormat8 || uvfVault)!" @close="downloadingVaultTemplate = false" />
-  <DisplayRecoveryKeyDialog v-if="displayingRecoveryKey && vault && vaultFormat8" ref="displayRecoveryKeyDialog" :vault="vault" :vault-keys="vaultFormat8" @close="displayingRecoveryKey = false" />
+  <DisplayRecoveryKeyDialog v-if="displayingRecoveryKey && vault && (vaultFormat8 || uvfVault?.recoveryKey.privateKey)" ref="displayRecoveryKeyDialog" :vault="vault" @close="displayingRecoveryKey = false" />
   <ArchiveVaultDialog v-if="archivingVault && vault" ref="archiveVaultDialog" :vault="vault" @close="archivingVault = false" @archived="v => refreshVault(v)" />
   <ReactivateVaultDialog v-if="reactivatingVault && vault" ref="reactivateVaultDialog" :vault="vault" @close="reactivatingVault = false" @reactivated="v => { refreshVault(v); refreshLicense();}" />
   <RecoverVaultDialog v-if="recoveringVault && vault && me" ref="recoverVaultDialog" :vault="vault" :me="me" @close="recoveringVault = false" @recovered="fetchOwnerData()" />
@@ -471,11 +467,10 @@ function showDownloadVaultTemplateDialog() {
 
 function showDisplayRecoveryKeyDialog() {
   displayingRecoveryKey.value = true;
-  nextTick(() => displayRecoveryKeyDialog.value?.show());
-}
-
-async function showUvfRecoveryKey() {
-  console.log(await uvfVault.value?.recoveryKey.createRecoveryKey()); //TODO: implement
+  const recoveryKey: Promise<string> = uvfVault.value?.recoveryKey.createRecoveryKey()
+    ?? vaultFormat8.value?.createRecoveryKey()
+    ?? Promise.reject('No private key material present');
+  nextTick(() => displayRecoveryKeyDialog.value?.show(recoveryKey));
 }
 
 function showArchiveVaultDialog() {

@@ -26,7 +26,7 @@
                     <div class="relative mt-3">
                       <div class="overflow-hidden rounded-lg border border-gray-300 shadow-sm focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
                         <label for="recoveryKey" class="sr-only">{{ t('recoveryKeyDialog.recoveryKey') }}</label>
-                        <textarea id="recoveryKey" v-model="recoveryKey" rows="6" name="recoveryKey" class="block w-full resize-none border-0 py-3 focus:ring-0 sm:text-sm" readonly />
+                        <textarea id="recoveryKey" v-model="recoveryKey" :rows="textAreaRows" name="recoveryKey" class="block w-full resize-none border-0 py-3 focus:ring-0 sm:text-sm" readonly />
 
                         <!-- Spacer element to match the height of the toolbar -->
                         <div class="py-2" aria-hidden="true">
@@ -70,7 +70,7 @@ import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { VaultDto } from '../common/backend';
 import { debounce } from '../common/util';
-import { VaultFormat8 } from '../common/vaultFormat8';
+import { computed } from 'vue';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -78,10 +78,10 @@ const open = ref(false);
 const recoveryKey = ref<string>('');
 const copiedRecoveryKey = ref(false);
 const debouncedCopyFinish = debounce(() => copiedRecoveryKey.value = false, 2000);
+const textAreaRows = computed(() => recoveryKey.value.length > 390 ? 14 : 6);
 
 const props = defineProps<{
   vault: VaultDto
-  vaultKeys: VaultFormat8
 }>();
 
 defineEmits<{
@@ -92,9 +92,9 @@ defineExpose({
   show
 });
 
-async function show() {
+async function show(recoveryKeyPromise: Promise<string>) {
   open.value = true;
-  recoveryKey.value = await props.vaultKeys.createRecoveryKey();
+  recoveryKey.value = await recoveryKeyPromise;
 }
 
 async function copyRecoveryKey() {
