@@ -429,7 +429,7 @@ async function addAuthority(authority: AuthorityDto) {
 
 async function addAuthorityBackend(authority: AuthorityDto) {
   try {
-    switch(authority.type) {
+    switch (authority.type) {
       case 'USER':
         await backend.vaults.addUser(props.vaultId, authority.id);
         break;
