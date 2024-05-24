@@ -11,6 +11,7 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
@@ -19,8 +20,8 @@ import org.cryptomator.hub.entities.AccessToken;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
+import org.cryptomator.hub.entities.WotEntry;
 import org.cryptomator.hub.entities.events.EventLogger;
-import org.cryptomator.hub.entities.events.VaultAccessGrantedEvent;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -49,6 +50,8 @@ public class UsersResource {
 	Device.Repository deviceRepo;
 	@Inject
 	Vault.Repository vaultRepo;
+	@Inject
+	WotEntry.Repository wotRepo;
 
 	@Inject
 	JsonWebToken jwt;
@@ -149,4 +152,24 @@ public class UsersResource {
 		return userRepo.findAll().<User>stream().map(UserDto::justPublicInfo).toList();
 	}
 
+	@PUT
+	@Path("/trusted/{userId}")
+	@RolesAllowed("user")
+	@Transactional
+	@Consumes(MediaType.TEXT_PLAIN)
+	@Operation(summary = "adds/updates trust", description = "Stores a signature for the given user.")
+	@APIResponse(responseCode = "204", description = "signature stored")
+	public Response putSignature(@PathParam("userId") String userId, @NotNull String signature) {
+		var id = new WotEntry.Id();
+		id.setUserId(userId);
+		id.setSignerId(jwt.getSubject());
+		var entry = wotRepo.findById(id);
+		if (entry == null) {
+			entry = new WotEntry();
+			entry.setId(id);
+		}
+		entry.setSignature(signature);
+		wotRepo.persist(entry);
+		return Response.status(Response.Status.NO_CONTENT).build();
+	}
 }

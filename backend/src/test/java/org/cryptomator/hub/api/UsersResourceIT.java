@@ -1,27 +1,40 @@
 package org.cryptomator.hub.api;
 
+import io.agroal.api.AgroalDataSource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.quarkus.test.security.oidc.Claim;
 import io.quarkus.test.security.oidc.OidcSecurity;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
+import jakarta.inject.Inject;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+
+import java.sql.SQLException;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.hasSize;
 
 @QuarkusTest
 @DisplayName("Resource /users")
 public class UsersResourceIT {
+
+	@Inject
+	AgroalDataSource dataSource;
 
 	@BeforeAll
 	public static void beforeAll() {
@@ -115,6 +128,77 @@ public class UsersResourceIT {
 		public void testGet(String method, String path) {
 			when().request(method, path)
 					.then().statusCode(401);
+		}
+
+	}
+
+	@Nested
+	@DisplayName("Test Web of Trust")
+	@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+	public class WebOfTrust {
+
+		@BeforeAll
+		public void setup() throws SQLException {
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
+				s.execute("""
+						INSERT INTO "authority" ("id", "type", "name") VALUES ('user997', 'USER', 'User 997');
+						INSERT INTO "authority" ("id", "type", "name") VALUES ('user998', 'USER', 'User 998');
+						INSERT INTO "authority" ("id", "type", "name") VALUES ('user999', 'USER', 'User 999');
+						INSERT INTO "user_details" ("id") VALUES ('user997');
+						INSERT INTO "user_details" ("id") VALUES ('user998');
+						INSERT INTO "user_details" ("id") VALUES ('user999');
+						""");
+			}
+		}
+
+		@Test
+		@Order(1)
+		@DisplayName("PUT /users/trusted/user998 as user 997")
+		@TestSecurity(user = "User 997", roles = {"user"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user997")
+		})
+		public void test997Trusts998() {
+			given().contentType(ContentType.TEXT).body("997 trusts 998")
+					.when().put("/users/trusted/user998")
+					.then().statusCode(204);
+		}
+
+		@Test
+		@Order(1)
+		@DisplayName("PUT /users/trusted/user999 as user 998")
+		@TestSecurity(user = "User 998", roles = {"user"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user998")
+		})
+		public void test998Trusts999() {
+			given().contentType(ContentType.TEXT).body("998 trusts 999")
+					.when().put("/users/trusted/user999")
+					.then().statusCode(204);
+		}
+
+		@Test
+		@Order(1)
+		@DisplayName("PUT /users/trusted/user999 as user 998")
+		@TestSecurity(user = "User 998", roles = {"user"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user998")
+		})
+		public void test998Trusts997() {
+			given().contentType(ContentType.TEXT).body("998 trusts 997")
+					.when().put("/users/trusted/user997")
+					.then().statusCode(204);
+		}
+
+
+		@AfterAll
+		public void tearDown() throws SQLException {
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
+				s.execute("""
+						DELETE FROM "authority" WHERE "id" IN ('user997', 'user998', 'user999');
+						""");
+			}
 		}
 
 	}
