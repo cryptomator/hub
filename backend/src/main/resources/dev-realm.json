@@ -49,6 +49,8 @@
   "users": [
     {
       "username": "admin",
+      "firstName": "admin",
+      "lastName": "admin",
       "email": "admin@localhost",
       "enabled": true,
       "attributes": {
@@ -66,18 +68,27 @@
     },
     {
       "username": "alice",
+      "firstName": "alice",
+      "lastName": "alice",
+      "email": "alice@localhost",
       "enabled": true,
       "credentials": [{"type": "password", "value": "asd"}],
       "realmRoles": ["user"]
     },
     {
       "username": "bob",
+      "firstName": "bob",
+      "lastName": "bob",
+      "email": "bob@localhost",
       "enabled": true,
       "credentials": [{"type": "password", "value": "asd"}],
       "realmRoles": ["user"]
     },
     {
       "username": "carol",
+      "firstName": "carol",
+      "lastName": "carol",
+      "email": "carol@localhost",
       "enabled": true,
       "credentials": [{"type": "password", "value": "asd"}],
       "realmRoles": ["user"],
@@ -85,6 +96,9 @@
     },
     {
       "username": "dave",
+      "firstName": "dave",
+      "lastName": "dave",
+      "email": "dave@localhost",
       "enabled": true,
       "credentials": [{"type": "password", "value": "asd"}],
       "realmRoles": ["user"],
@@ -92,6 +106,9 @@
     },
     {
       "username": "erin",
+      "firstName": "erin",
+      "lastName": "erin",
+      "email": "erin@localhost",
       "enabled": true,
       "credentials": [{"type": "password", "value": "asd"}],
       "realmRoles": ["user"],
@@ -99,6 +116,8 @@
     },
     {
       "username": "syncer",
+      "firstName": "syncer",
+      "lastName": "syncer",
       "email": "syncer@localhost",
       "enabled": true,
       "attributes": {
