@@ -19,10 +19,10 @@ WITH RECURSIVE "r" ("trusting_user_id", "trusted_user_id", "depth", "signer_chai
 	-- Recursive member: Transitive trust
 	SELECT "r"."trusting_user_id", "wot"."user_id", "r"."depth" + 1, ("r"."signer_chain" || "wot"."signer_id")::varchar[], ("r"."signature_chain" || "wot"."signature")::varchar[]
 	FROM  "wot"
-	INNER JOIN "r" ON "wot"."signer_id" = "r"."trusted_user_id"
-	WHERE
-		NOT "wot"."user_id" = ANY("r"."signer_chain")
-		AND "r"."depth" < 10 -- TODO: reduce max depth?
+	INNER JOIN "r"
+	    ON "wot"."signer_id" = "r"."trusted_user_id"  -- primary recursion criteria
+	    AND "wot"."user_id" <> ALL("r"."signer_chain") -- only if user isn't part of signature chain already (avoid loops)
+	WHERE "r"."depth" < 10 -- TODO: reduce max depth?
 )
 SELECT
     DISTINCT ON ("trusting_user_id", "trusted_user_id") -- keep only one relation (ordered by depth), i.e. the shortest path
