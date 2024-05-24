@@ -191,6 +191,51 @@ public class UsersResourceIT {
 					.then().statusCode(204);
 		}
 
+		@Test
+		@Order(2)
+		@DisplayName("GET /users/trusted as user 997")
+		@TestSecurity(user = "User 997", roles = {"user"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user997")
+		})
+		public void testGetTrustedBy997() {
+			given().when().get("/users/trusted")
+					.then().statusCode(200)
+					.body("$", hasSize(2))
+					.body("trustedUserId", hasItems("user998", "user999"))
+					.body("find{it.trustedUserId==\"user998\"}.signatureChain", hasItems("997 trusts 998"))
+					.body("find{it.trustedUserId==\"user999\"}.signatureChain", hasItems("997 trusts 998", "998 trusts 999"));
+		}
+
+		@Test
+		@Order(2)
+		@DisplayName("GET /users/trusted as user 998")
+		@TestSecurity(user = "User 998", roles = {"user"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user998")
+		})
+		public void testGetTrustedBy998() {
+			given().when().get("/users/trusted")
+					.then().statusCode(200)
+					.body("$", hasSize(2))
+					.body("trustedUserId", hasItems("user997", "user999"))
+					.body("find{it.trustedUserId==\"user997\"}.signatureChain", hasItems("998 trusts 997"))
+					.body("find{it.trustedUserId==\"user999\"}.signatureChain", hasItems("998 trusts 999"));
+		}
+
+		@Test
+		@Order(2)
+		@DisplayName("GET /users/trusted as user 999")
+		@TestSecurity(user = "User 999", roles = {"user"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user999")
+		})
+		public void testGetTrustedBy999() {
+			given().when().get("/users/trusted")
+					.then().statusCode(200)
+					.body("$", hasSize(0));
+		}
+
 
 		@AfterAll
 		public void tearDown() throws SQLException {

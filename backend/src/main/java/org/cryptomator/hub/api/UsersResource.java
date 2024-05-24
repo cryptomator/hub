@@ -1,5 +1,6 @@
 package org.cryptomator.hub.api;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.annotation.Nullable;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -18,6 +19,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.AccessToken;
 import org.cryptomator.hub.entities.Device;
+import org.cryptomator.hub.entities.EffectiveWot;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.entities.WotEntry;
@@ -52,6 +54,8 @@ public class UsersResource {
 	Vault.Repository vaultRepo;
 	@Inject
 	WotEntry.Repository wotRepo;
+	@Inject
+	EffectiveWot.Repository effectiveWotRepo;
 
 	@Inject
 	JsonWebToken jwt;
@@ -171,5 +175,27 @@ public class UsersResource {
 		entry.setSignature(signature);
 		wotRepo.persist(entry);
 		return Response.status(Response.Status.NO_CONTENT).build();
+	}
+
+	@GET
+	@Path("/trusted")
+	@RolesAllowed("user")
+	@NoCache
+	@Transactional
+	@Produces(MediaType.APPLICATION_JSON)
+	@Operation(summary = "get trusted users", description = "returns a list of users trusted by the currently logged-in user")
+	@APIResponse(responseCode = "200")
+	public List<TrustedUserDto> getTrustedUsers() {
+		var trustingUserId = jwt.getSubject();
+		return effectiveWotRepo.findTrusted(trustingUserId).stream().map(TrustedUserDto::fromEntity).toList();
+	}
+
+	public record TrustedUserDto(@JsonProperty("trustedUserId") String trustedUserId,
+								 @JsonProperty("signatureChain") String[] signatureChain) {
+
+
+		public static TrustedUserDto fromEntity(EffectiveWot entity) {
+			return new TrustedUserDto(entity.getId().getTrustedUserId(), entity.getSignatureChain());
+		}
 	}
 }
