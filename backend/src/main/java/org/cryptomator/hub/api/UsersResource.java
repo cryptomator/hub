@@ -191,11 +191,11 @@ public class UsersResource {
 	}
 
 	public record TrustedUserDto(@JsonProperty("trustedUserId") String trustedUserId,
-								 @JsonProperty("signatureChain") String[] signatureChain) {
+								 @JsonProperty("signatureChain") List<String> signatureChain) {
 
 
 		public static TrustedUserDto fromEntity(EffectiveWot entity) {
-			return new TrustedUserDto(entity.getId().getTrustedUserId(), entity.getSignatureChain());
+			return new TrustedUserDto(entity.getId().getTrustedUserId(), List.of(entity.getSignatureChain()));
 		}
 	}
 }
