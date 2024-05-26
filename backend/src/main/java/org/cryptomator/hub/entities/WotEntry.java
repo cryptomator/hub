@@ -7,7 +7,6 @@ import jakarta.persistence.Embeddable;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
-import org.hibernate.annotations.Immutable;
 
 import java.io.Serializable;
 import java.util.Objects;
