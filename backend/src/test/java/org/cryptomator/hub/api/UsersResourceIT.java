@@ -236,6 +236,44 @@ public class UsersResourceIT {
 					.body("$", hasSize(0));
 		}
 
+		@Test
+		@Order(3)
+		@DisplayName("GET /users/trusted/user998 as user 997")
+		@TestSecurity(user = "User 997", roles = {"user"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user997")
+		})
+		public void test997Gets998() {
+			given().when().get("/users/trusted/user998")
+					.then().statusCode(200)
+					.body("signatureChain", hasItems("997 trusts 998"));
+		}
+
+		@Test
+		@Order(3)
+		@DisplayName("GET /users/trusted/user999 as user 997")
+		@TestSecurity(user = "User 997", roles = {"user"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user997")
+		})
+		public void test997Gets999() {
+			given().when().get("/users/trusted/user999")
+					.then().statusCode(200)
+					.body("signatureChain", hasItems("997 trusts 998", "998 trusts 999"));
+		}
+
+		@Test
+		@Order(3)
+		@DisplayName("GET /users/trusted/user998 as user 999")
+		@TestSecurity(user = "User 999", roles = {"user"})
+		@OidcSecurity(claims = {
+				@Claim(key = "sub", value = "user999")
+		})
+		public void test999Gets998() {
+			given().when().get("/users/trusted/user998")
+					.then().statusCode(404);
+		}
+
 
 		@AfterAll
 		public void tearDown() throws SQLException {

@@ -24,6 +24,11 @@ import java.util.Objects;
 		FROM EffectiveWot wot
 		WHERE wot.id.trustingUserId = :trustingUserId
 		""")
+@NamedQuery(name = "EffectiveWot.findTrustedUser", query = """
+		SELECT wot
+		FROM EffectiveWot wot
+		WHERE wot.id.trustingUserId = :trustingUserId AND wot.id.trustedUserId = :trustedUserId
+		""")
 public class EffectiveWot {
 
 	@EmbeddedId
@@ -94,6 +99,10 @@ public class EffectiveWot {
 	public static class Repository implements PanacheRepositoryBase<EffectiveWot, Id> {
 		public PanacheQuery<EffectiveWot> findTrusted(String trustingUserId) {
 			return find("#EffectiveWot.findTrustedUsers", Parameters.with("trustingUserId", trustingUserId));
+		}
+
+		public PanacheQuery<EffectiveWot> findTrusted(String trustingUserId, String trustedUserId) {
+			return find("#EffectiveWot.findTrustedUser", Parameters.with("trustingUserId", trustingUserId).and("trustedUserId", trustedUserId));
 		}
 	}
 }

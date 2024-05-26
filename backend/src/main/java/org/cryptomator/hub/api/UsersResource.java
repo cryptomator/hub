@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
@@ -175,6 +176,20 @@ public class UsersResource {
 		entry.setSignature(signature);
 		wotRepo.persist(entry);
 		return Response.status(Response.Status.NO_CONTENT).build();
+	}
+
+	@GET
+	@Path("/trusted/{userId}")
+	@RolesAllowed("user")
+	@NoCache
+	@Transactional
+	@Produces(MediaType.APPLICATION_JSON)
+	@Operation(summary = "get trust detail for given user", description = "returns the shortest found signature chain for the given user")
+	@APIResponse(responseCode = "200")
+	@APIResponse(responseCode = "404")
+	public TrustedUserDto getTrustedUser(@PathParam("userId") String trustedUserId) {
+		var trustingUserId = jwt.getSubject();
+		return effectiveWotRepo.findTrusted(trustingUserId, trustedUserId).singleResultOptional().map(TrustedUserDto::fromEntity).orElseThrow(NotFoundException::new);
 	}
 
 	@GET
