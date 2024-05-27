@@ -3,7 +3,10 @@
     {{ t('common.loading') }}
   </div>
 
-  <div v-else-if="state == State.EnterRecoveryKey">
+  <div v-else-if="state == State.EnterRecoveryKey"
+    @drop.prevent=""
+    @dragover.prevent=""
+  >
     <form ref="form" novalidate @submit.prevent="validateRecoveryKey()">
       <div class="flex justify-center">
         <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6 text-center sm:w-full sm:max-w-lg">
@@ -15,23 +18,68 @@
               {{ t('createVault.enterRecoveryKey.title') }}
             </h3>
             <div class="mt-2">
+              <!-- TODO: this text must be altered -->
               <p class="text-sm text-gray-500">
                 {{ t('createVault.enterRecoveryKey.description') }}
               </p>
             </div>
           </div>
+          <!-- Textarea -->
           <div class="mt-5 sm:mt-6">
             <label for="recoveryKey" class="sr-only">{{ t('createVault.enterRecoveryKey.recoveryKey') }}</label>
-            <!-- Textarea -->
+            <label for="metadata-file" class="block text-sm font-medium leading-6 text-gray-900">{{ t('createVault.enterRecoveryKey.recoveryKey') }}</label>
             <textarea
               id="recoveryKey" v-model="recoveryKeyStr" rows="6" name="recoveryKey"
               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
               :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onRecoverError instanceof FormValidationFailedError }"
-              required />
+              required
+            />
           </div>
+          <!-- Dropzone -->
           <div class="mt-5 sm:mt-6">
-            <button type="submit" :disabled="processing"
-              class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:primary focus:ring-offset-2 sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
+            <label for="metadata-file" class="block text-sm font-medium leading-6 text-gray-900">Vault Metadata File</label>
+            <div
+              class="relative mt-2 flex justify-center rounded-lg border-2  px-6 py-10 border-gray-300 hover:border-gray-400 active:border-primary focus-within:border-primary focus-within:ring-primary  focus-within:ring-offset-2"
+              :class="{ 'border-primary': isDraggingOver, 'border-dashed': (vaultMetadata?.length ?? 0) == 0 }"
+              @dragenter.prevent="handleDragEnterAndOver"
+              @dragover.prevent="handleDragEnterAndOver"
+              @dragleave="handleDragLeave"
+              @drop.prevent="handleDrop"
+            >
+              <input id="file-upload" ref="fileUpload" name="file-upload" type="file" class="cursor-pointer absolute inset-0 opacity-0" accept=".cryptomator, .uvf" @change="handleUpload" >
+              <div v-if="(vaultMetadata?.length ?? 0) == 0" class="text-center">
+                <ArrowUpOnSquareIcon class="mx-auto h-12 w-12 text-gray-300" aria-hidden="true" />
+                <p class="mt-2 block text-sm font-semibold text-gray-900">
+                  Upload vault metadata file or drag and drop
+                </p>
+                <p class="text-xs leading-5 text-gray-600">vault.cryptomator or vault.uvf</p>
+              </div>
+              <div v-else class="text-center">
+                <DocumentCheckIcon class="mx-auto h-12 w-12 text-primary" aria-hidden="true" />
+                <p class="mt-2 block text-sm font-semibold text-gray-900">
+                  Upload successful
+                </p>
+                <p class="text-xs leading-5 text-gray-600">To replace, click and select or drag and drop a different file. </p>
+              </div>
+            </div>
+            <div v-if="onUploadError" class="rounded-md bg-red-50 p-4">
+              <div class="flex">
+                <div class="flex-shrink-0">
+                  <XCircleIcon class="h-5 w-5 text-red-400" aria-hidden="true" />
+                </div>
+                <div class="ml-3 flex-1 md:flex md:justify-between">
+                  <p v-if="onUploadError instanceof FileTooBigError" class="text-sm text-red-700">TODO Too big!</p>
+                  <p v-else-if="onUploadError instanceof NoFileError" class="text-sm text-red-700">File could not be uploaded</p>
+                  <p v-else-if="onUploadError instanceof WrongFileNameError" class="text-sm text-red-700">TODO Wrong files!</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Button -->
+          <div class="mt-5 sm:mt-6">
+            <button
+              type="submit" :disabled="processing" class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:bg-primary focus:ring-offset-2 sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed"
+            >
               {{ t('createVault.enterRecoveryKey.submit') }}
             </button>
             <div v-if="onRecoverError != null">
@@ -215,8 +263,8 @@
 </template>
 
 <script setup lang="ts">
-import { ClipboardIcon } from '@heroicons/vue/20/solid';
-import { ArrowPathIcon, CheckIcon, KeyIcon } from '@heroicons/vue/24/outline';
+import { ClipboardIcon, XCircleIcon } from '@heroicons/vue/20/solid';
+import { ArrowPathIcon, CheckIcon, KeyIcon, ArrowUpOnSquareIcon, DocumentCheckIcon } from '@heroicons/vue/24/outline';
 import { ArrowDownTrayIcon } from '@heroicons/vue/24/solid';
 import { saveAs } from 'file-saver';
 import { base64 } from 'rfc4648';
@@ -242,7 +290,7 @@ enum VaultType {
   UniversalVaultFormat
 }
 
-const vaultType: VaultType = VaultType.UniversalVaultFormat;
+const vaultType = ref(VaultType.UniversalVaultFormat);
 
 class FormValidationFailedError extends Error {
   constructor() {
@@ -259,6 +307,7 @@ class EmptyVaultTemplateError extends Error {
 const { t } = useI18n({ useScope: 'global' });
 
 const form = ref<HTMLFormElement>();
+const fileUpload = ref<HTMLInputElement>();
 
 const onCreateError = ref<Error | null>(null);
 const onRecoverError = ref<Error | null>(null);
@@ -280,6 +329,77 @@ const vaultFormat8 = ref<VaultFormat8>();
 const recoveryKeyStr = ref<string>('');
 const uvfVault = ref<UniversalVaultFormat>();
 
+const vaultMetadata = ref<string>('');
+const isDraggingOver = ref<boolean>(false);
+const onUploadError = ref<Error | null>(null);
+
+const handleDragEnterAndOver = (event: DragEvent): void => {
+  isDraggingOver.value = true;
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'copy';
+    event.dataTransfer.dropEffect = 'copy';
+  }
+};
+const handleDragLeave = (): void => {
+  isDraggingOver.value = false;
+};
+const handleDrop = (event: DragEvent): void => {
+  onUploadError.value = null;
+  vaultMetadata.value = '';
+  isDraggingOver.value = false;
+  let file: File | null = null;
+  try {
+    if (event.dataTransfer?.items && event.dataTransfer.items.length >= 1) {
+      //new DataTransferItemList API
+      var item = event.dataTransfer.items[0];
+      if (item.kind == 'file') {
+        file = item.getAsFile();
+      }
+    } else {
+      file = event.dataTransfer?.files[0] ?? null;
+    }
+
+    validateAndSetMetadataFile(file);
+  } catch (error: any) {
+    onUploadError.value = error instanceof Error ? error : new Error('Unknown reason');
+  }
+};
+const handleUpload = (event: Event)  => {
+  onUploadError.value = null;
+  vaultMetadata.value = '';
+  validateAndSetMetadataFile(fileUpload.value?.files?.item(0) ?? null);
+};
+
+function validateAndSetMetadataFile(file: File | null): void {
+  if (!file) {
+    throw new NoFileError();
+  } else if (!file.name.match(/vault\.(cryptomator|uvf)/)) {
+    throw new WrongFileNameError();
+  } else if (file.size > 8000) {
+    throw new FileTooBigError();
+  }
+
+  file.text().then(text => vaultMetadata.value = text, err => console.log('error reading file'));
+}
+
+class UploadFileError extends Error {
+}
+class NoFileError extends UploadFileError {
+  constructor() {
+    super('Drag and drop operation has no file.');
+  }
+}
+class WrongFileNameError extends Error {
+  constructor() {
+    super('Dropped file is not named "vault.cryptomator" or "vault.uvf"');
+  }
+}
+class FileTooBigError extends Error {
+  constructor() {
+    super('Dropped file exceeds size limit of 8KB');
+  }
+}
+
 const props = defineProps<{
   recover: boolean
 }>();
@@ -290,7 +410,7 @@ async function initialize() {
   if (props.recover) {
     state.value = State.EnterRecoveryKey;
   } else {
-    switch (vaultType) {
+    switch (vaultType.value) {
       case VaultType.VaultFormat8:
         vaultFormat8.value = await VaultFormat8.create();
         recoveryKeyStr.value = await vaultFormat8.value.createRecoveryKey();
@@ -317,7 +437,12 @@ async function recoverVault() {
   onRecoverError.value = null;
   try {
     processing.value = true;
-    vaultFormat8.value = await VaultFormat8.recover(recoveryKeyStr.value);
+    if (vaultMetadata.value.startsWith('{')) {
+      //uvfVault.value = await UniversalVaultFormat.recover(uvfMetadataFile, recoveryKeyStr.value);
+      console.log('HELLO');
+    } else {
+      vaultFormat8.value = await VaultFormat8.recover(recoveryKeyStr.value);
+    }
     state.value = State.EnterVaultDetails;
   } catch (error) {
     console.error('Recovering vault failed.', error);
@@ -349,7 +474,7 @@ async function createVault() {
       throw new Error('Invalid state');
     }
     const ownerGrant: AccessGrant = { userId: owner.id, token: '' };
-    switch (vaultType) {
+    switch (vaultType.value) {
       case VaultType.VaultFormat8: {
         if (!vaultFormat8.value) {
           throw new Error('Invalid state');
