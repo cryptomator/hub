@@ -4,6 +4,7 @@ export type JWTHeader = {
   alg: 'ES384';
   typ: 'JWT';
   b64: true;
+  [other: string]: undefined | string | number | boolean | object; // allow further properties
 }
 
 export class JWT {

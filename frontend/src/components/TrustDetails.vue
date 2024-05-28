@@ -4,7 +4,7 @@
       {{ t('common.loading') }}
     </div>
     <div v-else>
-      <FetchError :error="onFetchError" :retry="checkTrust"/>
+      <FetchError :error="onFetchError" :retry="loadTrust"/>
     </div>
   </div>
   <Popover v-else-if="state === State.ShowTrust" as="div" class="relative inline-block text-left">
@@ -27,9 +27,12 @@
 <script setup lang="ts">
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/vue';
 import { ShieldCheckIcon, ShieldExclamationIcon } from '@heroicons/vue/20/solid';
+import { base64 } from 'rfc4648';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { TrustDto, UserDto } from '../common/backend';
+import { BrowserKeys, UserKeys } from '../common/crypto';
+import { JWT } from '../common/jwt';
 import FetchError from './FetchError.vue';
 
 enum State {
@@ -47,11 +50,11 @@ const props = defineProps<{
 const state = ref(State.Loading);
 const onFetchError = ref<Error | null>();
 const trust = ref<TrustDto | undefined>();
-const trustLevel = computed(() => props.me.id === props.userId ? 0 : trust.value?.signatureChain.length || -1);
+const trustLevel = computed(computeTrustLevel);
 
-onMounted(checkTrust);
+onMounted(loadTrust);
 
-async function checkTrust() {
+async function loadTrust() {
   try {
     trust.value = await backend.trust.get(props.userId);
     state.value = State.ShowTrust;
@@ -61,8 +64,42 @@ async function checkTrust() {
   }
 }
 
-const sign = () => {
-  console.log('Sign');
+function computeTrustLevel() {
+  if (props.me.id === props.userId) {
+    return 0; // Self
+  } else if (trust.value) {
+    return trust.value.signatureChain.length;
+  } else {
+    return -1; // Unverified
+  }
+}
+
+async function sign() {
+  // TODO: begin dedup and cache
+  if (props.me.publicKey == null || props.me.setupCode == null) {
+    throw new Error('User not initialized.');
+  }
+  const browserKeys = await BrowserKeys.load(props.me.id);
+  if (browserKeys == null) {
+    throw new Error('Browser keys not found.');
+  }
+  const browserId = await browserKeys.id();
+  const myDevice = props.me.devices.find(d => d.id == browserId);
+  if (myDevice == null) {
+    throw new Error('Device not initialized.');
+  }
+  const userKeys = await UserKeys.decryptOnBrowser(myDevice.userPrivateKey, browserKeys.keyPair.privateKey, base64.parse(props.me.publicKey));
+  // TODO: end dedup
+  const signature = JWT.build({
+    alg: 'ES384',
+    typ: 'JWT',
+    b64: true,
+    iss: props.me.id,
+    sub: props.userId,
+    iat: Math.floor(Date.now() / 1000)
+  }, props.userId, userKeys.keyPair.privateKey);
+  // backend.trust.trustUser(props.userId, signature);
+  console.log('Sign', signature);
 };
 
 </script>
