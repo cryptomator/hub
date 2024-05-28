@@ -37,7 +37,7 @@
             <label for="metadata-file" class="block text-sm font-medium leading-6 text-gray-900">Vault Metadata File</label>
             <div
               class="relative mt-2 flex justify-center rounded-lg border-2  px-6 py-10 border-gray-300 hover:border-gray-400 active:border-primary focus-within:border-primary focus-within:ring-primary  focus-within:ring-offset-2"
-              :class="{ 'border-primary': isDraggingOver, 'border-dashed': (vaultMetadata?.length ?? 0) == 0 }"
+              :class="{ 'border-primary': isDraggingOver, 'border-dashed': (vaultMetadata?.length ?? 0) == 0, 'border-red-300 active:border-red-500 focus-within:ring-red-500 focus-within:border-red-500': (vaultMetadata?.length ?? 0) == 0 && onRecoverError instanceof FormValidationFailedError}"
               @dragenter.prevent="event => handleDragEnterAndOver(event)"
               @dragover.prevent="event => handleDragEnterAndOver(event)"
               @dragleave="handleDragLeave()"
@@ -326,8 +326,9 @@ const form = ref<HTMLFormElement>();
 const fileUpload = ref<HTMLInputElement>();
 
 const onCreateError = ref<Error | null>(null);
-const onRecoverError = ref<Error | null>(null);
 const onDownloadTemplateError = ref<Error | null>(null);
+const onRecoverError = ref<Error | null>(null);
+const onUploadError = ref<Error | null>(null);
 
 const state = ref(State.Initial);
 const processing = ref(false);
@@ -347,7 +348,6 @@ const uvfVault = ref<UniversalVaultFormat>();
 
 const vaultMetadata = ref<string>('');
 const isDraggingOver = ref<boolean>(false);
-const onUploadError = ref<Error | null>(null);
 
 const props = defineProps<{
   recover: boolean
