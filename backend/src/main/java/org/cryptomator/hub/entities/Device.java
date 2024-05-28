@@ -56,8 +56,8 @@ public class Device {
 	@Column(name = "publickey", nullable = false)
 	private String publickey;
 
-	@Column(name = "user_privatekey", nullable = false)
-	private String userPrivateKey;
+	@Column(name = "user_privatekeys", nullable = false)
+	private String userPrivateKeys;
 
 	@Column(name = "creation_time", nullable = false)
 	private Instant creationTime;
@@ -102,12 +102,12 @@ public class Device {
 		this.publickey = publickey;
 	}
 
-	public String getUserPrivateKey() {
-		return userPrivateKey;
+	public String getUserPrivateKeys() {
+		return userPrivateKeys;
 	}
 
-	public void setUserPrivateKey(String userPrivateKey) {
-		this.userPrivateKey = userPrivateKey;
+	public void setUserPrivateKeys(String userPrivateKeys) {
+		this.userPrivateKeys = userPrivateKeys;
 	}
 
 	public Instant getCreationTime() {
@@ -126,7 +126,7 @@ public class Device {
 				", name='" + name + '\'' +
 				", type='" + type + '\'' +
 				", publickey='" + publickey + '\'' +
-				", userPrivateKey='" + userPrivateKey + '\'' +
+				", userPrivateKey='" + userPrivateKeys + '\'' +
 				", creationTime='" + creationTime + '\'' +
 				'}';
 	}
@@ -141,13 +141,13 @@ public class Device {
 				&& Objects.equals(this.name, other.name)
 				&& Objects.equals(this.type, other.type)
 				&& Objects.equals(this.publickey, other.publickey)
-				&& Objects.equals(this.userPrivateKey, other.userPrivateKey)
+				&& Objects.equals(this.userPrivateKeys, other.userPrivateKeys)
 				&& Objects.equals(this.creationTime, other.creationTime);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, owner, name, type, publickey, userPrivateKey, creationTime);
+		return Objects.hash(id, owner, name, type, publickey, userPrivateKeys, creationTime);
 	}
 
 	@ApplicationScoped

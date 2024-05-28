@@ -14,10 +14,10 @@ VALUES
 	('group1', 'GROUP', 'Group Name 1'),
     ('group2', 'GROUP', 'Group Name 2');
 
-INSERT INTO "user_details" ("id", "publickey", "privatekey", "setupcode")
+INSERT INTO "user_details" ("id", "ecdh_publickey", "ecdsa_publickey", "privatekeys", "setupcode")
 VALUES
-	('user1', 'public1', 'private1', 'setup1'),
-	('user2', NULL, NULL, NULL);
+	('user1', 'ecdh_public1', 'ecdsa_public1', 'private1', 'setup1'),
+	('user2', NULL, NULL, NULL, NULL);
 
 INSERT INTO "group_details" ("id")
 VALUES
@@ -52,7 +52,7 @@ VALUES
 	('7E57C0DE-0000-4000-8000-000100002222', 'group2', 'OWNER'),
 	('7E57C0DE-0000-4000-8000-000100002222', 'group1', 'MEMBER');
 
-INSERT INTO "device" ("id", "owner_id", "name", "type", "publickey", "creation_time", "user_privatekey")
+INSERT INTO "device" ("id", "owner_id", "name", "type", "publickey", "creation_time", "user_privatekeys")
 VALUES
 	('device1', 'user1', 'Computer 1', 'DESKTOP', 'publickey1', '2020-02-20 20:20:20', 'jwe.jwe.jwe.user1.device1'),
 	('device2', 'user2', 'Computer 2', 'DESKTOP', 'publickey2', '2020-02-20 20:20:20', 'jwe.jwe.jwe.user2.device2'),

@@ -24,7 +24,6 @@ import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.LegacyAccessToken;
 import org.cryptomator.hub.entities.LegacyDevice;
 import org.cryptomator.hub.entities.User;
-import org.cryptomator.hub.entities.events.DeviceRemovedEvent;
 import org.cryptomator.hub.entities.events.EventLogger;
 import org.cryptomator.hub.validation.NoHtmlOrScriptChars;
 import org.cryptomator.hub.validation.OnlyBase64Chars;
@@ -102,7 +101,7 @@ public class DeviceResource {
 		}
 		device.setName(dto.name);
 		device.setPublickey(dto.publicKey);
-		device.setUserPrivateKey(dto.userPrivateKey);
+		device.setUserPrivateKeys(dto.userPrivateKeys);
 
 		try {
 			deviceRepo.persistAndFlush(device);
@@ -173,12 +172,12 @@ public class DeviceResource {
 							@JsonProperty("name") @NoHtmlOrScriptChars @NotBlank String name,
 							@JsonProperty("type") Device.Type type,
 							@JsonProperty("publicKey") @NotNull @OnlyBase64Chars String publicKey,
-							@JsonProperty("userPrivateKey") @NotNull @ValidJWE String userPrivateKey,
+							@JsonProperty("userPrivateKeys") @NotNull @ValidJWE String userPrivateKeys,
 							@JsonProperty("owner") @ValidId String ownerId,
 							@JsonProperty("creationTime") Instant creationTime) {
 
 		public static DeviceDto fromEntity(Device entity) {
-			return new DeviceDto(entity.getId(), entity.getName(), entity.getType(), entity.getPublickey(), entity.getUserPrivateKey(), entity.getOwner().getId(), entity.getCreationTime().truncatedTo(ChronoUnit.MILLIS));
+			return new DeviceDto(entity.getId(), entity.getName(), entity.getType(), entity.getPublickey(), entity.getUserPrivateKeys(), entity.getOwner().getId(), entity.getCreationTime().truncatedTo(ChronoUnit.MILLIS));
 		}
 
 	}

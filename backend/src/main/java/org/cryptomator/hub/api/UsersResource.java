@@ -20,7 +20,6 @@ import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.entities.events.EventLogger;
-import org.cryptomator.hub.entities.events.VaultAccessGrantedEvent;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -71,8 +70,9 @@ public class UsersResource {
 		user.setPictureUrl(jwt.getClaim("picture"));
 		user.setEmail(jwt.getClaim("email"));
 		if (dto != null) {
-			user.setPublicKey(dto.publicKey);
-			user.setPrivateKey(dto.privateKey);
+			user.setEcdhPublicKey(dto.ecdhPublicKey);
+			user.setEcdsaPublicKey(dto.ecdsaPublicKey);
+			user.setPrivateKeys(dto.privateKeys);
 			user.setSetupCode(dto.setupCode);
 		}
 		userRepo.persist(user);
@@ -117,9 +117,9 @@ public class UsersResource {
 	@APIResponse(responseCode = "404", description = "no user matching the subject of the JWT passed as Bearer Token")
 	public UserDto getMe(@QueryParam("withDevices") boolean withDevices) {
 		User user = userRepo.findById(jwt.getSubject());
-		Function<Device, DeviceResource.DeviceDto> mapDevices = d -> new DeviceResource.DeviceDto(d.getId(), d.getName(), d.getType(), d.getPublickey(), d.getUserPrivateKey(), d.getOwner().getId(), d.getCreationTime().truncatedTo(ChronoUnit.MILLIS));
+		Function<Device, DeviceResource.DeviceDto> mapDevices = d -> new DeviceResource.DeviceDto(d.getId(), d.getName(), d.getType(), d.getPublickey(), d.getUserPrivateKeys(), d.getOwner().getId(), d.getCreationTime().truncatedTo(ChronoUnit.MILLIS));
 		var devices = withDevices ? user.devices.stream().map(mapDevices).collect(Collectors.toSet()) : Set.<DeviceResource.DeviceDto>of();
-		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), devices, user.getPublicKey(), user.getPrivateKey(), user.getSetupCode());
+		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), devices, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
 	}
 
 	@POST
@@ -131,8 +131,8 @@ public class UsersResource {
 	@APIResponse(responseCode = "204", description = "deleted keys, devices and access permissions")
 	public Response resetMe() {
 		User user = userRepo.findById(jwt.getSubject());
-		user.setPublicKey(null);
-		user.setPrivateKey(null);
+		user.setEcdhPublicKey(null);
+		user.setPrivateKeys(null);
 		user.setSetupCode(null);
 		userRepo.persist(user);
 		deviceRepo.deleteByOwner(user.getId());

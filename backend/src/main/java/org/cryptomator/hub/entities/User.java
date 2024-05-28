@@ -26,7 +26,7 @@ import java.util.stream.Stream;
 				FROM User u
 					INNER JOIN EffectiveVaultAccess perm ON u.id = perm.id.authorityId
 					LEFT JOIN u.accessTokens token ON token.id.vaultId = :vaultId AND token.id.userId = u.id
-					WHERE perm.id.vaultId = :vaultId AND token.vault IS NULL AND u.publicKey IS NOT NULL
+					WHERE perm.id.vaultId = :vaultId AND token.vault IS NULL AND u.ecdhPublicKey IS NOT NULL
 				"""
 )
 @NamedQuery(name = "User.getEffectiveGroupUsers", query = """
@@ -49,11 +49,14 @@ public class User extends Authority {
 	@Column(name = "email")
 	private String email;
 
-	@Column(name = "publickey")
-	private String publicKey;
+	@Column(name = "ecdh_publickey")
+	private String ecdhPublicKey;
 
-	@Column(name = "privatekey")
-	private String privateKey;
+	@Column(name = "ecdsa_publickey")
+	private String ecdsaPublicKey;
+
+	@Column(name = "privatekeys")
+	private String privateKeys;
 
 	@Column(name = "setupcode")
 	private String setupCode;
@@ -74,20 +77,28 @@ public class User extends Authority {
 		this.email = email;
 	}
 
-	public String getPublicKey() {
-		return publicKey;
+	public String getEcdhPublicKey() {
+		return ecdhPublicKey;
 	}
 
-	public void setPublicKey(String publicKey) {
-		this.publicKey = publicKey;
+	public void setEcdhPublicKey(String ecdhPublicKey) {
+		this.ecdhPublicKey = ecdhPublicKey;
 	}
 
-	public String getPrivateKey() {
-		return privateKey;
+	public String getEcdsaPublicKey() {
+		return ecdsaPublicKey;
 	}
 
-	public void setPrivateKey(String privateKey) {
-		this.privateKey = privateKey;
+	public void setEcdsaPublicKey(String ecdsaPublicKey) {
+		this.ecdsaPublicKey = ecdsaPublicKey;
+	}
+
+	public String getPrivateKeys() {
+		return privateKeys;
+	}
+
+	public void setPrivateKeys(String privateKeys) {
+		this.privateKeys = privateKeys;
 	}
 
 	public String getSetupCode() {
@@ -128,14 +139,15 @@ public class User extends Authority {
 		return super.equals(that) //
 				&& Objects.equals(pictureUrl, that.pictureUrl) //
 				&& Objects.equals(email, that.email) //
-				&& Objects.equals(publicKey, that.publicKey) //
-				&& Objects.equals(privateKey, that.privateKey) //
+				&& Objects.equals(ecdhPublicKey, that.ecdhPublicKey) //
+				&& Objects.equals(ecdsaPublicKey, that.ecdsaPublicKey) //
+				&& Objects.equals(privateKeys, that.privateKeys) //
 				&& Objects.equals(setupCode, that.setupCode);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(super.getId(), pictureUrl, email, publicKey, privateKey, setupCode);
+		return Objects.hash(super.getId(), pictureUrl, email, ecdhPublicKey, privateKeys, setupCode);
 	}
 
 	@ApplicationScoped
