@@ -3,10 +3,7 @@
     {{ t('common.loading') }}
   </div>
 
-  <div v-else-if="state == State.EnterRecoveryKey"
-    @drop.prevent=""
-    @dragover.prevent=""
-  >
+  <div v-else-if="state == State.EnterRecoveryKey" @drop.prevent="" @dragover.prevent="">
     <form ref="form" novalidate @submit.prevent="validateRecoveryKey()">
       <div class="flex justify-center">
         <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6 text-center sm:w-full sm:max-w-lg">
@@ -41,12 +38,12 @@
             <div
               class="relative mt-2 flex justify-center rounded-lg border-2  px-6 py-10 border-gray-300 hover:border-gray-400 active:border-primary focus-within:border-primary focus-within:ring-primary  focus-within:ring-offset-2"
               :class="{ 'border-primary': isDraggingOver, 'border-dashed': (vaultMetadata?.length ?? 0) == 0 }"
-              @dragenter.prevent="handleDragEnterAndOver"
-              @dragover.prevent="handleDragEnterAndOver"
-              @dragleave="handleDragLeave"
-              @drop.prevent="handleDrop"
+              @dragenter.prevent="event => handleDragEnterAndOver(event)"
+              @dragover.prevent="event => handleDragEnterAndOver(event)"
+              @dragleave="handleDragLeave()"
+              @drop.prevent="event => handleDrop(event)"
             >
-              <input id="file-upload" ref="fileUpload" name="file-upload" type="file" class="cursor-pointer absolute inset-0 opacity-0" accept=".cryptomator, .uvf" @change="handleUpload" >
+              <input id="file-upload" ref="fileUpload" name="file-upload" type="file" class="cursor-pointer absolute inset-0 opacity-0" accept=".cryptomator, .uvf" @change="event => handleUpload(event)" >
               <div v-if="(vaultMetadata?.length ?? 0) == 0" class="text-center">
                 <ArrowUpOnSquareIcon class="mx-auto h-12 w-12 text-gray-300" aria-hidden="true" />
                 <p class="mt-2 block text-sm font-semibold text-gray-900">
@@ -305,6 +302,24 @@ class EmptyVaultTemplateError extends Error {
   }
 }
 
+class UploadFileError extends Error {
+}
+class NoFileError extends UploadFileError {
+  constructor() {
+    super('Drag and drop operation has no file.');
+  }
+}
+class WrongFileNameError extends Error {
+  constructor() {
+    super('Dropped file is not named "vault.cryptomator" or "vault.uvf"');
+  }
+}
+class FileTooBigError extends Error {
+  constructor() {
+    super('Dropped file exceeds size limit of 8KB');
+  }
+}
+
 const { t } = useI18n({ useScope: 'global' });
 
 const form = ref<HTMLFormElement>();
@@ -334,72 +349,6 @@ const vaultMetadata = ref<string>('');
 const isDraggingOver = ref<boolean>(false);
 const onUploadError = ref<Error | null>(null);
 
-const handleDragEnterAndOver = (event: DragEvent): void => {
-  isDraggingOver.value = true;
-  if (event.dataTransfer) {
-    event.dataTransfer.effectAllowed = 'copy';
-    event.dataTransfer.dropEffect = 'copy';
-  }
-};
-const handleDragLeave = (): void => {
-  isDraggingOver.value = false;
-};
-const handleDrop = (event: DragEvent): void => {
-  onUploadError.value = null;
-  isDraggingOver.value = false;
-  let file: File | null = null;
-  if (event.dataTransfer?.items && event.dataTransfer.items.length >= 1) {
-    //new DataTransferItemList API
-    var item = event.dataTransfer.items[0];
-    if (item.kind == 'file') {
-      file = item.getAsFile();
-    }
-  } else {
-    file = event.dataTransfer?.files[0] ?? null;
-  }
-
-  validateAndSetMetadataFile(file);
-};
-const handleUpload = (event: Event)  => {
-  onUploadError.value = null;
-  validateAndSetMetadataFile(fileUpload.value?.files?.item(0) ?? null);
-};
-
-function validateAndSetMetadataFile(file: File | null): void {
-  try {
-    if (!file) {
-      throw new NoFileError();
-    } else if (!file.name.match(/vault\.(cryptomator|uvf)/)) {
-      throw new WrongFileNameError();
-    } else if (file.size > 8000) {
-      throw new FileTooBigError();
-    }
-
-    file.text().then(text => vaultMetadata.value = text,
-      error => onUploadError.value = error instanceof Error ? error : new Error('Error reading file as UTF-8 encoded text.'));
-  } catch (error) {
-    onUploadError.value = error instanceof Error ? error : new Error('Unknown reason');
-  }
-}
-
-class UploadFileError extends Error {
-}
-class NoFileError extends UploadFileError {
-  constructor() {
-    super('Drag and drop operation has no file.');
-  }
-}
-class WrongFileNameError extends Error {
-  constructor() {
-    super('Dropped file is not named "vault.cryptomator" or "vault.uvf"');
-  }
-}
-class FileTooBigError extends Error {
-  constructor() {
-    super('Dropped file exceeds size limit of 8KB');
-  }
-}
-
 const props = defineProps<{
   recover: boolean
 }>();
@@ -421,6 +370,55 @@ async function initialize() {
         break;
     }
     state.value = State.EnterVaultDetails;
+  }
+}
+
+async function handleDragEnterAndOver (event: DragEvent){
+  isDraggingOver.value = true;
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'copy';
+    event.dataTransfer.dropEffect = 'copy';
+  }
+}
+
+async function handleDragLeave() {
+  isDraggingOver.value = false;
+}
+
+async function handleDrop(event: DragEvent) {
+  onUploadError.value = null;
+  isDraggingOver.value = false;
+  let file: File | null = null;
+  if (event.dataTransfer?.items && event.dataTransfer.items.length >= 1) {
+    //new DataTransferItemList API
+    var item = event.dataTransfer.items[0];
+    if (item.kind == 'file') {
+      file = item.getAsFile();
+    }
+  } else {
+    file = event.dataTransfer?.files[0] ?? null;
+  }
+  validateAndSetMetadataFile(file);
+}
+
+async function handleUpload(event: Event) {
+  onUploadError.value = null;
+  validateAndSetMetadataFile(fileUpload.value?.files?.item(0) ?? null);
+}
+
+async function validateAndSetMetadataFile(file: File | null) {
+  try {
+    if (!file) {
+      throw new NoFileError();
+    } else if (!file.name.match(/vault\.(cryptomator|uvf)/)) {
+      throw new WrongFileNameError();
+    } else if (file.size > 8000) {
+      throw new FileTooBigError();
+    }
+
+    vaultMetadata.value = await file.text();
+  } catch (error) {
+    onUploadError.value = error instanceof Error ? error : new Error('Error reading file as UTF-8 encoded text.');
   }
 }
 
