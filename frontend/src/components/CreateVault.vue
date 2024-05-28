@@ -345,7 +345,6 @@ const handleDragLeave = (): void => {
 };
 const handleDrop = (event: DragEvent): void => {
   onUploadError.value = null;
-  vaultMetadata.value = '';
   isDraggingOver.value = false;
   let file: File | null = null;
   try {
@@ -366,7 +365,6 @@ const handleDrop = (event: DragEvent): void => {
 };
 const handleUpload = (event: Event)  => {
   onUploadError.value = null;
-  vaultMetadata.value = '';
   validateAndSetMetadataFile(fileUpload.value?.files?.item(0) ?? null);
 };
 
