@@ -416,6 +416,7 @@ async function validateAndSetMetadataFile(file: File | null) {
       throw new FileTooBigError();
     }
 
+    vaultType.value = file.name.endsWith('.uvf') ? VaultType.UniversalVaultFormat : VaultType.VaultFormat8;
     vaultMetadata.value = await file.text();
   } catch (error) {
     onUploadError.value = error instanceof Error ? error : new Error('Error reading file as UTF-8 encoded text.');
@@ -435,11 +436,12 @@ async function recoverVault() {
   onRecoverError.value = null;
   try {
     processing.value = true;
-    if (vaultMetadata.value.startsWith('{')) {
+    if (vaultType.value == VaultType.UniversalVaultFormat) {
       //uvfVault.value = await UniversalVaultFormat.recover(uvfMetadataFile, recoveryKeyStr.value);
-      console.log('HELLO');
+      console.log('TODO UVF Recover');
     } else {
       vaultFormat8.value = await VaultFormat8.recover(recoveryKeyStr.value);
+      //TODO: implement function to validate
     }
     state.value = State.EnterVaultDetails;
   } catch (error) {
