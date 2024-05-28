@@ -69,8 +69,9 @@
                 </div>
                 <div class="ml-3 flex-1 md:flex md:justify-between">
                   <p v-if="onUploadError instanceof FileTooBigError" class="text-sm text-red-700">TODO Too big!</p>
-                  <p v-else-if="onUploadError instanceof NoFileError" class="text-sm text-red-700">File could not be uploaded</p>
+                  <p v-else-if="onUploadError instanceof NoFileError" class="text-sm text-red-700">TODO File could not be uploaded</p>
                   <p v-else-if="onUploadError instanceof WrongFileNameError" class="text-sm text-red-700">TODO Wrong files!</p>
+                  <p v-else class="text-sm text-red-700">TODO Error uploading and reading file</p>
                 </div>
               </div>
             </div>
@@ -347,21 +348,17 @@ const handleDrop = (event: DragEvent): void => {
   onUploadError.value = null;
   isDraggingOver.value = false;
   let file: File | null = null;
-  try {
-    if (event.dataTransfer?.items && event.dataTransfer.items.length >= 1) {
-      //new DataTransferItemList API
-      var item = event.dataTransfer.items[0];
-      if (item.kind == 'file') {
-        file = item.getAsFile();
-      }
-    } else {
-      file = event.dataTransfer?.files[0] ?? null;
+  if (event.dataTransfer?.items && event.dataTransfer.items.length >= 1) {
+    //new DataTransferItemList API
+    var item = event.dataTransfer.items[0];
+    if (item.kind == 'file') {
+      file = item.getAsFile();
     }
-
-    validateAndSetMetadataFile(file);
-  } catch (error: any) {
-    onUploadError.value = error instanceof Error ? error : new Error('Unknown reason');
+  } else {
+    file = event.dataTransfer?.files[0] ?? null;
   }
+
+  validateAndSetMetadataFile(file);
 };
 const handleUpload = (event: Event)  => {
   onUploadError.value = null;
@@ -369,15 +366,20 @@ const handleUpload = (event: Event)  => {
 };
 
 function validateAndSetMetadataFile(file: File | null): void {
-  if (!file) {
-    throw new NoFileError();
-  } else if (!file.name.match(/vault\.(cryptomator|uvf)/)) {
-    throw new WrongFileNameError();
-  } else if (file.size > 8000) {
-    throw new FileTooBigError();
-  }
+  try {
+    if (!file) {
+      throw new NoFileError();
+    } else if (!file.name.match(/vault\.(cryptomator|uvf)/)) {
+      throw new WrongFileNameError();
+    } else if (file.size > 8000) {
+      throw new FileTooBigError();
+    }
 
-  file.text().then(text => vaultMetadata.value = text, err => console.log('error reading file'));
+    file.text().then(text => vaultMetadata.value = text,
+      error => onUploadError.value = error instanceof Error ? error : new Error('Error reading file as UTF-8 encoded text.'));
+  } catch (error) {
+    onUploadError.value = error instanceof Error ? error : new Error('Unknown reason');
+  }
 }
 
 class UploadFileError extends Error {
