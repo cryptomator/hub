@@ -302,18 +302,18 @@ class EmptyVaultTemplateError extends Error {
   }
 }
 
-class UploadFileError extends Error {
-}
-class NoFileError extends UploadFileError {
+class NoFileError extends Error {
   constructor() {
     super('Drag and drop operation has no file.');
   }
 }
+
 class WrongFileNameError extends Error {
   constructor() {
     super('Dropped file is not named "vault.cryptomator" or "vault.uvf"');
   }
 }
+
 class FileTooBigError extends Error {
   constructor() {
     super('Dropped file exceeds size limit of 8KB');
