@@ -87,6 +87,19 @@ describe('Vault Format 8', () => {
     ]);
   });
 
+  it('verifyAndRecover() succeeds for key and corresponding metadata', async () => {
+    const recoveryKey = `
+      exotic ghost cooperate rain writing purple bicycle fixed first elite treaty friendly screen pull middle seventeen passport
+      correctly bored remains give profound ultimate charm haunt retired viable ray delegate indicator race cause aluminium
+      obesity site tactical root rumour theology glory consist comic terribly substance
+      `;
+    const vaultMetadata = 'eyJraWQiOiJtYXN0ZXJrZXlmaWxlOm1hc3RlcmtleS5jcnlwdG9tYXRvciIsInR5cCI6IkpXVCIsImFsZyI6IkhTMjU2In0.eyJmb3JtYXQiOjgsInNob3J0ZW5pbmdUaHJlc2hvbGQiOjIyMCwianRpIjoiZmI0N2IyMDYtM2FjMS00Y2RkLThkNTMtYWE0OWM4NjY4Nzk5IiwiY2lwaGVyQ29tYm8iOiJTSVZfQ1RSTUFDIn0.oSMdTtcC6LtoC37knQpNoPo3biUNFCRfxownXIFf_GM';
+
+    const recovered = await VaultFormat8.verifyAndRecover(vaultMetadata, recoveryKey);
+    const recoveredKey = await crypto.subtle.exportKey('jwk', recovered.masterKey);
+    //TODO: expect(recoveredKey.k).to.eq('VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3dw');
+  });
+
   it('encryptForUser()', async () => {
     const encrypted = await testVault.encryptForUser(alice.keyPair.publicKey);
 

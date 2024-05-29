@@ -7,6 +7,16 @@ export type JWTHeader = {
 }
 
 export class JWT {
+  public header: any;
+  public payload: any;
+  public signature: Uint8Array;
+
+  private constructor(header: any, payload: any, signature: Uint8Array) {
+    this.header = header;
+    this.payload = payload;
+    this.signature = signature;
+  }
+
   /**
    * Creates a ES384 JWT (signed with ECDSA using P-384 and SHA-384).
    * 
@@ -36,5 +46,17 @@ export class JWT {
       headerAndPayload
     );
     return base64url.stringify(new Uint8Array(signature), { pad: false });
+  }
+
+  public static async parse(token: string): Promise<JWT> {
+    const jwtSections = token.split('.');
+    if (jwtSections.length != 3 || !jwtSections[0] || !jwtSections[1] || !jwtSections[2]) {
+      throw new Error('Invalid JWT');
+    }
+
+    const header = JSON.parse(new TextDecoder().decode(base64url.parse(jwtSections[0], { loose: true })));
+    const payload = JSON.parse(new TextDecoder().decode(base64url.parse(jwtSections[1], { loose: true })));
+    const signature = base64url.parse(jwtSections[2], { loose: true });
+    return new JWT(header, payload, signature);
   }
 }

@@ -5,6 +5,7 @@ import { VaultDto } from './backend';
 import config, { absFrontendBaseURL } from './config';
 import { AccessTokenProducing, GCM_NONCE_LEN, OtherVaultMember, UnwrapKeyError, UserKeys, VaultTemplateProducing } from './crypto';
 import { CRC32, wordEncoder } from './util';
+import { JWT } from './jwt';
 
 interface VaultConfigPayload {
   jti: string
@@ -138,6 +139,29 @@ export class VaultFormat8 implements AccessTokenProducing, VaultTemplateProducin
     }
   }
 
+  public static async verifyAndRecover(vaultMetadataToken: string, recoveryKey: string) {
+    //basic validation
+    const vaultMetadata = JWT.parse(vaultMetadataToken);
+
+    const sigSeparatorIndex = vaultMetadataToken.lastIndexOf('.');
+    const headerPlusPayload = vaultMetadataToken.slice(0,sigSeparatorIndex);
+    const signature = vaultMetadataToken.slice(sigSeparatorIndex + 1,vaultMetadataToken.length);
+
+    const message = new TextEncoder().encode(headerPlusPayload);
+    const key = await this.transcodeKey(recoveryKey);
+    var digest = await crypto.subtle.sign(
+      VaultFormat8.MASTERKEY_KEY_DESIGNATION,
+      key,
+      message
+    );
+    const base64urlDigest = base64url.stringify(new Uint8Array(digest), { pad: false });
+    if (!(signature === base64urlDigest)) {
+      throw new Error('Verification failed.');
+    }
+
+    return new VaultFormat8(key);
+  }
+
   /**
    * Restore the master key from a given recovery key, create a new admin signature key pair.
    * @param recoveryKey The recovery key
@@ -145,6 +169,10 @@ export class VaultFormat8 implements AccessTokenProducing, VaultTemplateProducin
    * @throws Error, if passing a malformed recovery key
    */
   public static async recover(recoveryKey: string): Promise<VaultFormat8> {
+    return new VaultFormat8(await this.transcodeKey(recoveryKey));
+  }
+
+  public static async transcodeKey(recoveryKey: string): Promise<CryptoKey> {
     // decode and check recovery key:
     const decoded = wordEncoder.decode(recoveryKey);
     if (decoded.length !== 66) {
@@ -158,14 +186,13 @@ export class VaultFormat8 implements AccessTokenProducing, VaultTemplateProducin
     }
 
     // construct new VaultKeys from recovered key
-    const key = crypto.subtle.importKey(
+    return crypto.subtle.importKey(
       'raw',
       decodedKey,
       VaultFormat8.MASTERKEY_KEY_DESIGNATION,
       true,
       ['sign']
     );
-    return new VaultFormat8(await key);
   }
 
   /** @inheritdoc */
