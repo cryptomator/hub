@@ -214,8 +214,9 @@ import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auth from '../common/auth';
 import backend, { AuthorityDto, ConflictError, ForbiddenError, LicenseUserInfoDto, MemberDto, NotFoundError, PaymentRequiredError, UserDto, VaultDto, VaultRole } from '../common/backend';
-import { BrowserKeys, UserKeys, VaultKeys } from '../common/crypto';
+import { VaultKeys } from '../common/crypto';
 import { JWT, JWTHeader } from '../common/jwt';
+import userdata from '../common/userdata';
 import ArchiveVaultDialog from './ArchiveVaultDialog.vue';
 import ClaimVaultOwnershipDialog from './ClaimVaultOwnershipDialog.vue';
 import DisplayRecoveryKeyDialog from './DisplayRecoveryKeyDialog.vue';
@@ -282,7 +283,7 @@ async function fetchData() {
   try {
     isAdmin.value = (await auth).isAdmin();
     vault.value = await backend.vaults.get(props.vaultId);
-    me.value = await backend.users.me(true);
+    me.value = await userdata.me;
     license.value = await backend.license.getUserInfo();
     if (props.vaultRole == 'OWNER') {
       await fetchOwnerData();
@@ -314,19 +315,7 @@ async function fetchOwnerData() {
 }
 
 async function loadVaultKeys(vaultKeyJwe: string): Promise<VaultKeys> {
-  if (!me.value || !me.value.ecdhPublicKey || !me.value.ecdsaPublicKey) {
-    throw new Error('User not initialized.');
-  }
-  const browserKeys = await BrowserKeys.load(me.value.id);
-  if (browserKeys == null) {
-    throw new Error('Browser keys not found.');
-  }
-  const browserId = await browserKeys.id();
-  const myDevice = me.value.devices.find(d => d.id == browserId);
-  if (myDevice == null) {
-    throw new Error('Device not initialized.');
-  }
-  const userKeys = await UserKeys.decryptOnBrowser(myDevice.userPrivateKey, browserKeys.keyPair.privateKey, base64.parse(me.value.ecdhPublicKey), base64.parse(me.value.ecdsaPublicKey));
+  const userKeys = await userdata.decryptUserKeysWithBrowser();
   return VaultKeys.decryptWithUserKey(vaultKeyJwe, userKeys.ecdhKeyPair.privateKey);
 }
 

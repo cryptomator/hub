@@ -2,7 +2,7 @@ import { createRouter, createWebHistory, RouteLocationRaw, RouteRecordRaw } from
 import authPromise from '../common/auth';
 import backend from '../common/backend';
 import { baseURL } from '../common/config';
-import { BrowserKeys } from '../common/crypto';
+import userdata from '../common/userdata';
 import AdminSettings from '../components/AdminSettings.vue';
 import AuditLog from '../components/AuditLog.vue';
 import AuthenticatedMain from '../components/AuthenticatedMain.vue';
@@ -162,16 +162,16 @@ router.beforeEach(async (to) => {
   if (to.meta.skipSetup) {
     return;
   }
-  const me = await backend.users.me(true);
+  const me = await userdata.me;
   if (!me.setupCode) {
     return { path: '/app/setup' };
   }
-  const browserKeys = await BrowserKeys.load(me.id);
+  const browserKeys = await userdata.browserKeys;
   if (!browserKeys) {
     return { path: '/app/setup' };
   }
-  const browserId = await browserKeys.id();
-  if (me.devices.find(d => d.id == browserId) == null) {
+  const browser = await userdata.browser;
+  if (!browser) {
     return { path: '/app/setup' };
   }
 });

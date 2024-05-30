@@ -85,7 +85,7 @@ import { ComputerDesktopIcon, DevicePhoneMobileIcon, WindowIcon } from '@heroico
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { DeviceDto, NotFoundError, UserDto } from '../common/backend';
-import { BrowserKeys } from '../common/crypto';
+import userdata from '../common/userdata';
 import FetchError from './FetchError.vue';
 
 const { t, d } = useI18n({ useScope: 'global' });
@@ -97,32 +97,24 @@ const onRemoveDeviceError = ref< {[id: string]: Error} >({});
 
 onMounted(async () => {
   await fetchData();
-  await determineMyDevice();
 });
 
 async function fetchData() {
   onFetchError.value = null;
   try {
-    me.value = await backend.users.me(true);
+    me.value = await userdata.me;
+    myDevice.value = await userdata.browser;
   } catch (error) {
     console.error('Retrieving device list failed.', error);
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
 }
 
-async function determineMyDevice() {
-  if (me.value == null) {
-    throw new Error('User not initialized.');
-  }
-  const browserKeys = await BrowserKeys.load(me.value.id);
-  const browserId = await browserKeys?.id();
-  myDevice.value = me.value.devices.find(d => d.id == browserId);
-}
-
 async function removeDevice(device: DeviceDto) {
   delete onRemoveDeviceError.value[device.id];
   try {
     await backend.devices.removeDevice(device.id);
+    userdata.reload();
   } catch (error) {
     console.error('Removing device failed.', error);
     if (error instanceof NotFoundError) {

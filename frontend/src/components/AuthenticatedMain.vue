@@ -21,7 +21,8 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { UserDto } from '../common/backend';
+import { UserDto } from '../common/backend';
+import userdata from '../common/userdata';
 import FetchError from './FetchError.vue';
 import NavigationBar from './NavigationBar.vue';
 
@@ -35,7 +36,7 @@ onMounted(fetchData);
 async function fetchData() {
   onFetchError.value = null;
   try {
-    me.value = await backend.users.me();
+    me.value = await userdata.me;
   } catch (error) {
     console.error('Retrieving logged in user failed.', error);
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');

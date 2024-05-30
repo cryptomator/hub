@@ -46,12 +46,10 @@
 
 <script setup lang="ts">
 import { ClipboardIcon, EyeIcon, EyeSlashIcon } from '@heroicons/vue/20/solid';
-import { base64 } from 'rfc4648';
 import { nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend from '../common/backend';
-import { BrowserKeys, UserKeys } from '../common/crypto';
 import { JWEParser } from '../common/jwe';
+import userdata from '../common/userdata';
 import { debounce } from '../common/util';
 import FetchError from './FetchError.vue';
 import RegenerateSetupCodeDialog from './RegenerateSetupCodeDialog.vue';
@@ -70,20 +68,11 @@ onMounted(fetchData);
 async function fetchData() {
   onFetchError.value = null;
   try {
-    const me = await backend.users.me(true);
-    if (me.ecdhPublicKey == null || me.ecdsaPublicKey == null || me.setupCode == null) {
-      throw new Error('User not initialized.');
+    const me = await userdata.me;
+    if (!me.setupCode) {
+      throw new Error('Invalid state');
     }
-    const browserKeys = await BrowserKeys.load(me.id);
-    if (browserKeys == null) {
-      throw new Error('Browser keys not found.');
-    }
-    const browserId = await browserKeys.id();
-    const myDevice = me.devices.find(d => d.id == browserId);
-    if (myDevice == null) {
-      throw new Error('Device not initialized.');
-    }
-    const userKeys = await UserKeys.decryptOnBrowser(myDevice.userPrivateKey, browserKeys.keyPair.privateKey, base64.parse(me.ecdhPublicKey), base64.parse(me.ecdsaPublicKey));
+    const userKeys = await userdata.decryptUserKeysWithBrowser();
     const payload : { setupCode: string } = await JWEParser.parse(me.setupCode).decryptEcdhEs(userKeys.ecdhKeyPair.privateKey);
     setupCode.value = payload.setupCode;
   } catch (error) {
