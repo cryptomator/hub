@@ -156,7 +156,7 @@ export class VaultFormat8 implements AccessTokenProducing, VaultTemplateProducin
     );
     const base64urlDigest = base64url.stringify(new Uint8Array(digest), { pad: false });
     if (!(signature === base64urlDigest)) {
-      throw new Error('Verification failed.');
+      throw new Error('Recovery key does not match vault file.');
     }
 
     return new VaultFormat8(key);
