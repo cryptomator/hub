@@ -139,19 +139,19 @@ export class VaultFormat8 implements AccessTokenProducing, VaultTemplateProducin
     }
   }
 
-  public static async verifyAndRecover(vaultMetadataToken: string, recoveryKey: string) {
+  public static async recoverAndVerify(vaultMetadataToken: string, recoveryKey: string) {
     //basic validation
     const vaultMetadata = JWT.parse(vaultMetadataToken);
+
+    const vault = await this.recover(recoveryKey);
 
     const sigSeparatorIndex = vaultMetadataToken.lastIndexOf('.');
     const headerPlusPayload = vaultMetadataToken.slice(0,sigSeparatorIndex);
     const signature = vaultMetadataToken.slice(sigSeparatorIndex + 1,vaultMetadataToken.length);
-
     const message = new TextEncoder().encode(headerPlusPayload);
-    const key = await this.transcodeKey(recoveryKey);
     var digest = await crypto.subtle.sign(
       VaultFormat8.MASTERKEY_KEY_DESIGNATION,
-      key,
+      vault.masterKey,
       message
     );
     const base64urlDigest = base64url.stringify(new Uint8Array(digest), { pad: false });
@@ -159,7 +159,7 @@ export class VaultFormat8 implements AccessTokenProducing, VaultTemplateProducin
       throw new Error('Recovery key does not match vault file.');
     }
 
-    return new VaultFormat8(key);
+    return vault;
   }
 
   /**
@@ -169,10 +169,6 @@ export class VaultFormat8 implements AccessTokenProducing, VaultTemplateProducin
    * @throws Error, if passing a malformed recovery key
    */
   public static async recover(recoveryKey: string): Promise<VaultFormat8> {
-    return new VaultFormat8(await this.transcodeKey(recoveryKey));
-  }
-
-  public static async transcodeKey(recoveryKey: string): Promise<CryptoKey> {
     // decode and check recovery key:
     const decoded = wordEncoder.decode(recoveryKey);
     if (decoded.length !== 66) {
@@ -186,13 +182,14 @@ export class VaultFormat8 implements AccessTokenProducing, VaultTemplateProducin
     }
 
     // construct new VaultKeys from recovered key
-    return crypto.subtle.importKey(
+    const key = crypto.subtle.importKey(
       'raw',
       decodedKey,
       VaultFormat8.MASTERKEY_KEY_DESIGNATION,
       true,
       ['sign']
     );
+    return new VaultFormat8(await key);
   }
 
   /** @inheritdoc */
