@@ -187,6 +187,7 @@ import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { PaymentRequiredError } from '../common/backend';
 import { VaultKeys } from '../common/crypto';
+import userdata from '../common/userdata';
 import { debounce } from '../common/util';
 import { VaultConfig } from '../common/vaultconfig';
 
@@ -288,7 +289,7 @@ async function createVault() {
       throw new Error('Invalid state');
     }
     processing.value = true;
-    const owner = await backend.users.me();
+    const owner = await userdata.me;
     if (!owner.ecdhPublicKey) {
       throw new Error('Invalid state');
     }
