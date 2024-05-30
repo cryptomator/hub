@@ -297,6 +297,19 @@ export class UserKeys {
     return UserKeys.createFromJwe(jwe, ecdhPublicKey, ecdsaPublicKey);
   }
 
+  /**
+   * Decrypts the user's private key using the browser's private key
+   * @param jwe JWE containing the PKCS#8-encoded private key
+   * @param browserPrivateKey The browser's private key
+   * @param userEcdhPublicKey User's public ECDH key
+   * @param userEcdsaPublicKey User's public ECDSA key
+   * @returns The user's key pair
+   */
+  public static async decryptOnBrowser(jwe: string, browserPrivateKey: CryptoKey, userEcdhPublicKey: CryptoKey | BufferSource, userEcdsaPublicKey: CryptoKey | BufferSource): Promise<UserKeys> {
+    const payload: UserKeyPayload = await JWEParser.parse(jwe).decryptEcdhEs(browserPrivateKey);
+    return UserKeys.createFromJwe(payload, userEcdhPublicKey, userEcdsaPublicKey);
+  }
+
   private static async createFromJwe(jwe: UserKeyPayload, ecdhPublicKey: CryptoKey | BufferSource, ecdsaPublicKey?: CryptoKey | BufferSource): Promise<UserKeys> {
     const ecdhKeyPair: CryptoKeyPair = {
       publicKey: await asPublicKey(ecdhPublicKey, UserKeys.ECDH_KEY_DESIGNATION),
@@ -372,19 +385,6 @@ export class UserKeys {
       encodedEcdhPrivateKey.fill(0x00);
       encodedEcdsaPrivateKey.fill(0x00);
     }
-  }
-
-  /**
-   * Decrypts the user's private key using the browser's private key
-   * @param jwe JWE containing the PKCS#8-encoded private key
-   * @param browserPrivateKey The browser's private key
-   * @param userEcdhPublicKey User's public ECDH key
-   * @param userEcdsaPublicKey User's public ECDSA key
-   * @returns The user's key pair
-   */
-  public static async decryptOnBrowser(jwe: string, browserPrivateKey: CryptoKey, userEcdhPublicKey: CryptoKey | BufferSource, userEcdsaPublicKey: CryptoKey | BufferSource): Promise<UserKeys> {
-    const payload: UserKeyPayload = await JWEParser.parse(jwe).decryptEcdhEs(browserPrivateKey);
-    return UserKeys.createFromJwe(payload, userEcdhPublicKey, userEcdsaPublicKey);
   }
 }
 
