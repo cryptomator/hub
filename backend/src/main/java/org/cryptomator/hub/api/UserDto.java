@@ -18,10 +18,14 @@ public final class UserDto extends AuthorityDto {
 	public final String ecdhPublicKey;
 	@JsonProperty("ecdsaPublicKey")
 	public final String ecdsaPublicKey;
-	@JsonProperty("privateKeys")
+	@JsonProperty("privateKey") // singular name for history reasons (don't break client compatibility)
 	public final String privateKeys;
 	@JsonProperty("setupCode")
 	public final String setupCode;
+
+	@Deprecated
+	@JsonProperty("publicKey")
+	public final String legacyEcdhPublicKey;
 
 	UserDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("pictureUrl") String pictureUrl, @JsonProperty("email") String email, @JsonProperty("devices") Set<DeviceResource.DeviceDto> devices,
 			@Nullable @JsonProperty("ecdhPublicKey") @OnlyBase64Chars String ecdhPublicKey, @Nullable @JsonProperty("ecdsaPublicKey") @OnlyBase64Chars String ecdsaPublicKey, @Nullable @JsonProperty("privateKeys") @ValidJWE String privateKeys, @Nullable @JsonProperty("setupCode") @ValidJWE String setupCode) {
@@ -32,6 +36,9 @@ public final class UserDto extends AuthorityDto {
 		this.ecdsaPublicKey = ecdsaPublicKey;
 		this.privateKeys = privateKeys;
 		this.setupCode = setupCode;
+
+		// duplicate fields to maintain backwards compatibility:
+		this.legacyEcdhPublicKey = ecdhPublicKey;
 	}
 
 	public static UserDto justPublicInfo(User user) {

@@ -165,8 +165,8 @@ async function regenerateSetupCode() {
       throw new Error('Device not initialized.');
     }
     const newCode = crypto.randomUUID();
-    const userKeys = await UserKeys.decryptOnBrowser(myDevice.userPrivateKeys, browserKeys.keyPair.privateKey, base64.parse(me.ecdhPublicKey), base64.parse(me.ecdsaPublicKey));
-    me.privateKeys = await userKeys.encryptWithSetupCode(newCode);
+    const userKeys = await UserKeys.decryptOnBrowser(myDevice.userPrivateKey, browserKeys.keyPair.privateKey, base64.parse(me.ecdhPublicKey), base64.parse(me.ecdsaPublicKey));
+    me.privateKey = await userKeys.encryptWithSetupCode(newCode);
     me.setupCode = await JWEBuilder.ecdhEs(userKeys.ecdhKeyPair.publicKey).encrypt({ setupCode: newCode });
     await backend.users.putMe(me);
     setupCode.value = newCode;

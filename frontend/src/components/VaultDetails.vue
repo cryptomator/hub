@@ -326,7 +326,7 @@ async function loadVaultKeys(vaultKeyJwe: string): Promise<VaultKeys> {
   if (myDevice == null) {
     throw new Error('Device not initialized.');
   }
-  const userKeys = await UserKeys.decryptOnBrowser(myDevice.userPrivateKeys, browserKeys.keyPair.privateKey, base64.parse(me.value.ecdhPublicKey), base64.parse(me.value.ecdsaPublicKey));
+  const userKeys = await UserKeys.decryptOnBrowser(myDevice.userPrivateKey, browserKeys.keyPair.privateKey, base64.parse(me.value.ecdhPublicKey), base64.parse(me.value.ecdsaPublicKey));
   return VaultKeys.decryptWithUserKey(vaultKeyJwe, userKeys.ecdhKeyPair.privateKey);
 }
 

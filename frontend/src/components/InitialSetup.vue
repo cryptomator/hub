@@ -267,7 +267,7 @@ async function createUserKey() {
     const userKeys = await UserKeys.create();
     me.value.ecdhPublicKey = await userKeys.encodedEcdhPublicKey();
     me.value.ecdsaPublicKey = await userKeys.encodedEcdsaPublicKey();
-    me.value.privateKeys = await userKeys.encryptWithSetupCode(setupCode.value);
+    me.value.privateKey = await userKeys.encryptWithSetupCode(setupCode.value);
     me.value.setupCode = await JWEBuilder.ecdhEs(userKeys.ecdhKeyPair.publicKey).encrypt({ setupCode: setupCode.value });
     const browserKeys = await createBrowserKeys(me.value.id);
     await submitBrowserKeys(browserKeys, me.value, userKeys);
@@ -284,14 +284,14 @@ async function createUserKey() {
 async function recoverUserKey() {
   onRecoverError.value = null;
   try {
-    if (!me.value || !me.value.ecdhPublicKey || !me.value.ecdsaPublicKey || !me.value.privateKeys) {
+    if (!me.value || !me.value.ecdhPublicKey || !me.value.ecdsaPublicKey || !me.value.privateKey) {
       throw new Error('Invalid state');
     }
     processing.value = true;
 
     const ecdhPublicKey = base64.parse(me.value.ecdhPublicKey);
     const ecdsaPublicKey = me.value.ecdsaPublicKey ? base64.parse(me.value.ecdsaPublicKey) : undefined;
-    const userKeys = await UserKeys.recover(me.value.privateKeys, setupCode.value, ecdhPublicKey, ecdsaPublicKey);
+    const userKeys = await UserKeys.recover(me.value.privateKey, setupCode.value, ecdhPublicKey, ecdsaPublicKey);
     const browserKeys = await createBrowserKeys(me.value.id);
     await submitBrowserKeys(browserKeys, me.value, userKeys);
 
@@ -317,7 +317,7 @@ async function submitBrowserKeys(browserKeys: BrowserKeys, me: UserDto, userKeys
     name: deviceName.value,
     type: 'BROWSER',
     publicKey: await browserKeys.encodedPublicKey(),
-    userPrivateKeys: jwe,
+    userPrivateKey: jwe,
     creationTime: new Date()
   });
   await backend.users.putMe(me);

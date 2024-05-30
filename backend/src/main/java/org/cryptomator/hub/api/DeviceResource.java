@@ -172,7 +172,7 @@ public class DeviceResource {
 							@JsonProperty("name") @NoHtmlOrScriptChars @NotBlank String name,
 							@JsonProperty("type") Device.Type type,
 							@JsonProperty("publicKey") @NotNull @OnlyBase64Chars String publicKey,
-							@JsonProperty("userPrivateKeys") @NotNull @ValidJWE String userPrivateKeys,
+							@JsonProperty("userPrivateKey") @NotNull @ValidJWE String userPrivateKeys, // singular name for history reasons (don't break client compatibility)
 							@JsonProperty("owner") @ValidId String ownerId,
 							@JsonProperty("creationTime") Instant creationTime) {
 
