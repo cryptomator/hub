@@ -228,8 +228,8 @@ export class VaultKeys {
    * @param userPublicKey The recipient's public key (DER-encoded)
    * @returns a JWE containing this Masterkey
    */
-  public async encryptForUser(userPublicKey: Uint8Array): Promise<string> {
-    const publicKey = await crypto.subtle.importKey('spki', userPublicKey, UserKeys.ECDH_KEY_DESIGNATION, false, []);
+  public async encryptForUser(userPublicKey: CryptoKey | BufferSource): Promise<string> {
+    const publicKey = await asPublicKey(userPublicKey, UserKeys.ECDH_KEY_DESIGNATION);
     const rawkey = new Uint8Array(await crypto.subtle.exportKey('raw', this.masterKey));
     try {
       const payload: JWEPayload = {
@@ -300,10 +300,10 @@ export class UserKeys {
    * @param jwe JWE containing the PKCS#8-encoded private key
    * @param browserPrivateKey The browser's private key
    * @param userEcdhPublicKey User's public ECDH key
-   * @param userEcdsaPublicKey User's public ECDSA key
+   * @param userEcdsaPublicKey User's public ECDSA key (will be generated if missing - added in Hub 1.4.0)
    * @returns The user's key pair
    */
-  public static async decryptOnBrowser(jwe: string, browserPrivateKey: CryptoKey, userEcdhPublicKey: CryptoKey | BufferSource, userEcdsaPublicKey: CryptoKey | BufferSource): Promise<UserKeys> {
+  public static async decryptOnBrowser(jwe: string, browserPrivateKey: CryptoKey, userEcdhPublicKey: CryptoKey | BufferSource, userEcdsaPublicKey?: CryptoKey | BufferSource): Promise<UserKeys> {
     const payload: UserKeyPayload = await JWEParser.parse(jwe).decryptEcdhEs(browserPrivateKey);
     return UserKeys.createFromJwe(payload, userEcdhPublicKey, userEcdsaPublicKey);
   }
@@ -320,7 +320,7 @@ export class UserKeys {
         privateKey: await crypto.subtle.importKey('pkcs8', base64.parse(jwe.ecdsaPrivateKey, { loose: true }), UserKeys.ECDSA_KEY_DESIGNATION, true, UserKeys.ECDSA_KEY_USAGES)
       };
     } else {
-      // if user doesn't have a ECDSA key yet, generate a new one
+      // ECDSA key was added in Hub 1.4.0. If it's missing, we generate a new one.
       ecdsaKeyPair = await crypto.subtle.generateKey(UserKeys.ECDSA_KEY_DESIGNATION, true, UserKeys.ECDSA_KEY_USAGES);
     }
     return new UserKeys(ecdhKeyPair, ecdsaKeyPair);

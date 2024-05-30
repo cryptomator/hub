@@ -54,13 +54,18 @@ class UserData {
       throw new Error('User not initialized.');
     }
     const ecdhPublicKey = base64.parse(me.ecdhPublicKey);
-    const ecdsaPublicKey = me.ecdsaPublicKey ? base64.parse(me.ecdsaPublicKey) : undefined; // TODO keep ecdsa key optional?
-    return await UserKeys.recover(me.privateKey, setupCode, ecdhPublicKey, ecdsaPublicKey);
+    const ecdsaPublicKey = me.ecdsaPublicKey ? base64.parse(me.ecdsaPublicKey) : undefined;
+    const userKeys = await UserKeys.recover(me.privateKey, setupCode, ecdhPublicKey, ecdsaPublicKey);
+    if (!me.ecdsaPublicKey) { // Update user, if ECDSA key was missing before (added in 1.4.0)
+      me.ecdsaPublicKey = await userKeys.encodedEcdsaPublicKey();
+      await backend.users.putMe(me);
+    }
+    return userKeys;
   }
 
   public async decryptUserKeysWithBrowser(): Promise<UserKeys> {
     const me = await this.me;
-    if (!me.privateKey || !me.ecdhPublicKey || !me.ecdsaPublicKey) {
+    if (!me.ecdhPublicKey) {
       throw new Error('User not initialized.');
     }
     const browserKeys = await this.browserKeys;
@@ -71,7 +76,14 @@ class UserData {
     if (!browser) {
       throw new Error('Device not initialized.');
     }
-    return await UserKeys.decryptOnBrowser(browser.userPrivateKey, browserKeys.keyPair.privateKey, base64.parse(me.ecdhPublicKey), base64.parse(me.ecdsaPublicKey));
+    const ecdhPublicKey = base64.parse(me.ecdhPublicKey);
+    const ecdsaPublicKey = me.ecdsaPublicKey ? base64.parse(me.ecdsaPublicKey) : undefined;
+    const userKeys = await UserKeys.decryptOnBrowser(browser.userPrivateKey, browserKeys.keyPair.privateKey, ecdhPublicKey, ecdsaPublicKey);
+    if (!me.ecdsaPublicKey) { // Update user, if ECDSA key was missing before (added in 1.4.0)
+      me.ecdsaPublicKey = await userKeys.encodedEcdsaPublicKey();
+      await backend.users.putMe(me);
+    }
+    return userKeys;
   }
 
 }
