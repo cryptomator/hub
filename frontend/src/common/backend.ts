@@ -53,7 +53,7 @@ export type DeviceDto = {
   name: string;
   type: 'BROWSER' | 'DESKTOP' | 'MOBILE';
   publicKey: string;
-  userPrivateKey: string;
+  userPrivateKeys: string;
   creationTime: Date;
 };
 
@@ -72,8 +72,9 @@ export type UserDto = {
   email: string;
   devices: DeviceDto[];
   accessibleVaults: VaultDto[];
-  publicKey?: string;
-  privateKey?: string;
+  ecdhPublicKey?: string;
+  ecdsaPublicKey?: string;
+  privateKeys?: string;
   setupCode?: string;
 }
 

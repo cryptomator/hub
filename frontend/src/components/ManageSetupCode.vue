@@ -71,7 +71,7 @@ async function fetchData() {
   onFetchError.value = null;
   try {
     const me = await backend.users.me(true);
-    if (me.publicKey == null || me.setupCode == null) {
+    if (me.ecdhPublicKey == null || me.ecdsaPublicKey == null || me.setupCode == null) {
       throw new Error('User not initialized.');
     }
     const browserKeys = await BrowserKeys.load(me.id);
@@ -83,8 +83,8 @@ async function fetchData() {
     if (myDevice == null) {
       throw new Error('Device not initialized.');
     }
-    const userKeys = await UserKeys.decryptOnBrowser(myDevice.userPrivateKey, browserKeys.keyPair.privateKey, base64.parse(me.publicKey));
-    const payload : { setupCode: string } = await JWEParser.parse(me.setupCode).decryptEcdhEs(userKeys.keyPair.privateKey);
+    const userKeys = await UserKeys.decryptOnBrowser(myDevice.userPrivateKeys, browserKeys.keyPair.privateKey, base64.parse(me.ecdhPublicKey), base64.parse(me.ecdsaPublicKey));
+    const payload : { setupCode: string } = await JWEParser.parse(me.setupCode).decryptEcdhEs(userKeys.ecdhKeyPair.privateKey);
     setupCode.value = payload.setupCode;
   } catch (error) {
     console.error('Retrieving setup code failed.', error);

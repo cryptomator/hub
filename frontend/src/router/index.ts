@@ -163,7 +163,7 @@ router.beforeEach(async (to) => {
     return;
   }
   const me = await backend.users.me(true);
-  if (!me.publicKey) {
+  if (!me.setupCode) {
     return { path: '/app/setup' };
   }
   const browserKeys = await BrowserKeys.load(me.id);

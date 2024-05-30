@@ -54,7 +54,7 @@
       <div class="grid grid-cols-1 gap-8 lg:col-span-3">
         <ManageSetupCode />
         <DeviceList />
-        <UserkeyFingerprint :user-public-key="me.publicKey"/>
+        <UserkeyFingerprint :user-public-key="me.ecdhPublicKey"/>
       </div>
     </div>
   </div>

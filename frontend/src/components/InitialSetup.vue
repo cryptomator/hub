@@ -241,7 +241,7 @@ async function fetchData() {
     me.value = await backend.users.me(true);
     const browserKeys = await BrowserKeys.load(me.value.id);
     const browserId = await browserKeys?.id();
-    if (!me.value.publicKey) {
+    if (!me.value.ecdhPublicKey) {
       setupCode.value = crypto.randomUUID();
       state.value = State.CreateUserKey;
     } else if (me.value.devices.find(d => d.id === browserId) == null) {
@@ -264,9 +264,10 @@ async function createUserKey() {
     processing.value = true;
 
     const userKeys = await UserKeys.create();
-    me.value.publicKey = await userKeys.encodedPublicKey();
-    me.value.privateKey = await userKeys.encryptedPrivateKey(setupCode.value);
-    me.value.setupCode = await JWEBuilder.ecdhEs(userKeys.keyPair.publicKey).encrypt({ setupCode: setupCode.value });
+    me.value.ecdhPublicKey = await userKeys.encodedEcdhPublicKey();
+    me.value.ecdsaPublicKey = await userKeys.encodedEcdsaPublicKey();
+    me.value.privateKeys = await userKeys.encryptedPrivateKey(setupCode.value);
+    me.value.setupCode = await JWEBuilder.ecdhEs(userKeys.ecdhKeyPair.publicKey).encrypt({ setupCode: setupCode.value });
     const browserKeys = await createBrowserKeys(me.value.id);
     await submitBrowserKeys(browserKeys, me.value, userKeys);
 
@@ -282,12 +283,12 @@ async function createUserKey() {
 async function recoverUserKey() {
   onRecoverError.value = null;
   try {
-    if (!me.value || !me.value.publicKey || !me.value.privateKey) {
+    if (!me.value || !me.value.ecdhPublicKey || !me.value.ecdsaPublicKey || !me.value.privateKeys) {
       throw new Error('Invalid state');
     }
     processing.value = true;
 
-    const userKeys = await UserKeys.recover(me.value.publicKey, me.value.privateKey, setupCode.value);
+    const userKeys = await UserKeys.recover(me.value.privateKeys, setupCode.value, me.value.ecdhPublicKey, me.value.ecdsaPublicKey);
     const browserKeys = await createBrowserKeys(me.value.id);
     await submitBrowserKeys(browserKeys, me.value, userKeys);
 
@@ -313,7 +314,7 @@ async function submitBrowserKeys(browserKeys: BrowserKeys, me: UserDto, userKeys
     name: deviceName.value,
     type: 'BROWSER',
     publicKey: await browserKeys.encodedPublicKey(),
-    userPrivateKey: jwe,
+    userPrivateKeys: jwe,
     creationTime: new Date()
   });
   await backend.users.putMe(me);

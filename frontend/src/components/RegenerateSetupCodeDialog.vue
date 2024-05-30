@@ -152,7 +152,7 @@ async function regenerateSetupCode() {
     processing.value = true;
 
     const me = await backend.users.me(true);
-    if (me.publicKey == null || me.setupCode == null) {
+    if (me.ecdhPublicKey == null || me.ecdsaPublicKey == null || me.setupCode == null) {
       throw new Error('User not initialized.');
     }
     const browserKeys = await BrowserKeys.load(me.id);
@@ -165,9 +165,9 @@ async function regenerateSetupCode() {
       throw new Error('Device not initialized.');
     }
     const newCode = crypto.randomUUID();
-    const userKeys = await UserKeys.decryptOnBrowser(myDevice.userPrivateKey, browserKeys.keyPair.privateKey, base64.parse(me.publicKey));
-    me.privateKey = await userKeys.encryptedPrivateKey(newCode);
-    me.setupCode = await JWEBuilder.ecdhEs(userKeys.keyPair.publicKey).encrypt({ setupCode: newCode });
+    const userKeys = await UserKeys.decryptOnBrowser(myDevice.userPrivateKeys, browserKeys.keyPair.privateKey, base64.parse(me.ecdhPublicKey), base64.parse(me.ecdsaPublicKey));
+    me.privateKeys = await userKeys.encryptedPrivateKey(newCode);
+    me.setupCode = await JWEBuilder.ecdhEs(userKeys.ecdhKeyPair.publicKey).encrypt({ setupCode: newCode });
     await backend.users.putMe(me);
     setupCode.value = newCode;
 

@@ -31,7 +31,7 @@ const bobPrivate: JsonWebKey = {
 };
 
 describe('crypto', () => {
-  let alice: CryptoKeyPair, bob: CryptoKeyPair;
+  let aliceEcdh: CryptoKeyPair, aliceEcdsa: CryptoKeyPair, bobEcdh: CryptoKeyPair;
 
   before(async () => {
     // since this test runs on Node, we need to replace window.crypto:
@@ -41,12 +41,16 @@ describe('crypto', () => {
 
     // prepare some test key pairs:
     let ecdhP384: EcKeyImportParams = { name: 'ECDH', namedCurve: 'P-384' };
-    const alicePrv = crypto.subtle.importKey('jwk', alicePrivate, ecdhP384, true, ['deriveKey']);
-    const alicePub = crypto.subtle.importKey('jwk', alicePublic, ecdhP384, true, []);
-    const bobPrv = crypto.subtle.importKey('jwk', bobPrivate, ecdhP384, true, ['deriveKey']);
-    const bobPub = crypto.subtle.importKey('jwk', bobPublic, ecdhP384, true, []);
-    alice = { privateKey: await alicePrv, publicKey: await alicePub };
-    bob = { privateKey: await bobPrv, publicKey: await bobPub };
+    let ecdsaP384: EcKeyImportParams = { name: 'ECDSA', namedCurve: 'P-384' };
+    const aliceEcdhPrv = crypto.subtle.importKey('jwk', alicePrivate, ecdhP384, true, ['deriveKey']);
+    const aliceEcdhPub = crypto.subtle.importKey('jwk', alicePublic, ecdhP384, true, []);
+    const aliceEcdsaPrv = crypto.subtle.importKey('jwk', alicePrivate, ecdsaP384, true, ['sign']);
+    const aliceEcdsaPub = crypto.subtle.importKey('jwk', alicePublic, ecdsaP384, true, []);
+    const bobEcdhPrv = crypto.subtle.importKey('jwk', bobPrivate, ecdhP384, true, ['deriveKey']);
+    const bobEcdhPub = crypto.subtle.importKey('jwk', bobPublic, ecdhP384, true, []);
+    aliceEcdh = { privateKey: await aliceEcdhPrv, publicKey: await aliceEcdhPub };
+    aliceEcdsa = { privateKey: await aliceEcdsaPrv, publicKey: await aliceEcdsaPub };
+    bobEcdh = { privateKey: await bobEcdhPrv, publicKey: await bobEcdhPub };
   });
 
   describe('VaultKeys', () => {
@@ -158,11 +162,11 @@ describe('crypto', () => {
       let userKeys: UserKeys;
 
       beforeEach(async () => {
-        userKeys = new TestUserKeys(alice);
+        userKeys = new TestUserKeys(aliceEcdh, aliceEcdsa);
       });
 
       it('encryptForDevice() creates JWE', async () => {
-        const deviceKey = bob;
+        const deviceKey = bobEcdh;
         const jwe = await userKeys.encryptForDevice(deviceKey.publicKey);
 
         expect(jwe).to.be.not.null;
@@ -173,25 +177,25 @@ describe('crypto', () => {
   // base64-encoded test key pairs for use in other implementations (Java, Swift, ...)
   describe('Test Key Pairs', () => {
     it('alice private key (PKCS8)', async () => {
-      const bytes = new Uint8Array(await crypto.subtle.exportKey('pkcs8', alice.privateKey));
+      const bytes = new Uint8Array(await crypto.subtle.exportKey('pkcs8', aliceEcdh.privateKey));
       const encoded = base64.stringify(bytes);
       expect(encoded).to.eq('MIG2AgEAMBAGByqGSM49AgEGBSuBBAAiBIGeMIGbAgEBBDDCi4K1Ts3DgTz/ufkLX7EGMHjGpJv+WJmFgyzLwwaDFSfLpDw0Kgf3FKK+LAsV8r+hZANiAARLOtFebIjxVYUmDV09Q1sVxz2Nm+NkR8fu6UojVSRcCW13tEZatx8XGrIY9zC7oBCEdRqDc68PMSvS5RA0Pg9cdBNc/kgMZ1iEmEv5YsqOcaNADDSs0bLlXb35pX7Kx5Y=');
     });
 
     it('alice public key (SPKI)', async () => {
-      const bytes = new Uint8Array(await crypto.subtle.exportKey('spki', alice.publicKey));
+      const bytes = new Uint8Array(await crypto.subtle.exportKey('spki', aliceEcdh.publicKey));
       const encoded = base64.stringify(bytes);
       expect(encoded).to.eq('MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAESzrRXmyI8VWFJg1dPUNbFcc9jZvjZEfH7ulKI1UkXAltd7RGWrcfFxqyGPcwu6AQhHUag3OvDzEr0uUQND4PXHQTXP5IDGdYhJhL+WLKjnGjQAw0rNGy5V29+aV+yseW');
     });
 
     it('bob private key (PKCS8)', async () => {
-      const bytes = new Uint8Array(await crypto.subtle.exportKey('pkcs8', bob.privateKey));
+      const bytes = new Uint8Array(await crypto.subtle.exportKey('pkcs8', bobEcdh.privateKey));
       const encoded = base64.stringify(bytes);
       expect(encoded).to.eq('MIG2AgEAMBAGByqGSM49AgEGBSuBBAAiBIGeMIGbAgEBBDB2bmFCWy2p+EbAn8NWS5Om+GA7c5LHhRZb8g2pSMSf0fsd7k7dZDVrnyHFiLdd/YGhZANiAAR6bsjTEdXKWIuu1Bvj6Y8wySlIROy7YpmVZTY128ItovCD8pcR4PnFljvAIb2MshCdr1alX4g6cgDOqcTeREiObcSfucOU9Ry1pJ/GnX6KA0eSljrk6rxjSDos8aiZ6Mg=');
     });
 
     it('bob public key (SPKI)', async () => {
-      const bytes = new Uint8Array(await crypto.subtle.exportKey('spki', bob.publicKey));
+      const bytes = new Uint8Array(await crypto.subtle.exportKey('spki', bobEcdh.publicKey));
       const encoded = base64.stringify(bytes);
       expect(encoded).to.eq('MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAEem7I0xHVyliLrtQb4+mPMMkpSETsu2KZlWU2NdvCLaLwg/KXEeD5xZY7wCG9jLIQna9WpV+IOnIAzqnE3kRIjm3En7nDlPUctaSfxp1+igNHkpY65Oq8Y0g6LPGomejI');
     });
@@ -239,7 +243,7 @@ class TestVaultKeys extends VaultKeys {
 }
 
 class TestUserKeys extends UserKeys {
-  constructor(keypair: CryptoKeyPair) {
-    super(keypair);
+  constructor(ecdhKeyPair: CryptoKeyPair, ecdsaKeyPair: CryptoKeyPair) {
+    super(ecdhKeyPair, ecdsaKeyPair);
   }
 }

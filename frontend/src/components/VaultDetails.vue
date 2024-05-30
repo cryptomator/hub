@@ -314,7 +314,7 @@ async function fetchOwnerData() {
 }
 
 async function loadVaultKeys(vaultKeyJwe: string): Promise<VaultKeys> {
-  if (!me.value || !me.value.publicKey) {
+  if (!me.value || !me.value.ecdhPublicKey || !me.value.ecdsaPublicKey) {
     throw new Error('User not initialized.');
   }
   const browserKeys = await BrowserKeys.load(me.value.id);
@@ -326,12 +326,12 @@ async function loadVaultKeys(vaultKeyJwe: string): Promise<VaultKeys> {
   if (myDevice == null) {
     throw new Error('Device not initialized.');
   }
-  const userKeys = await UserKeys.decryptOnBrowser(myDevice.userPrivateKey, browserKeys.keyPair.privateKey, base64.parse(me.value.publicKey));
-  return VaultKeys.decryptWithUserKey(vaultKeyJwe, userKeys.keyPair.privateKey);
+  const userKeys = await UserKeys.decryptOnBrowser(myDevice.userPrivateKeys, browserKeys.keyPair.privateKey, base64.parse(me.value.ecdhPublicKey), base64.parse(me.value.ecdsaPublicKey));
+  return VaultKeys.decryptWithUserKey(vaultKeyJwe, userKeys.ecdhKeyPair.privateKey);
 }
 
 async function provedOwnership(keys: VaultKeys, ownerKeyPair: CryptoKeyPair) {
-  if (!me.value || !me.value.publicKey) {
+  if (!me.value || !me.value.ecdhPublicKey) {
     throw new Error('User not initialized.');
   }
 
@@ -347,7 +347,7 @@ async function provedOwnership(keys: VaultKeys, ownerKeyPair: CryptoKeyPair) {
     return;
   }
 
-  const vaultKeyJwe = keys.encryptForUser(base64.parse(me.value.publicKey));
+  const vaultKeyJwe = keys.encryptForUser(base64.parse(me.value.ecdhPublicKey));
   try {
     await backend.vaults.grantAccess(props.vaultId, { userId: me.value.id, token: await vaultKeyJwe });
   } catch (error) {
