@@ -75,7 +75,7 @@ public class DeviceResourceIT {
 					.then().statusCode(200)
 					.body("id", is("device1"))
 					.body("name", is("Computer 1"))
-					.body("userPrivateKeys", is("jwe.jwe.jwe.user1.device1"));
+					.body("userPrivateKey", is("jwe.jwe.jwe.user1.device1"));
 		}
 
 		@Test
