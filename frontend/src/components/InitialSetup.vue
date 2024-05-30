@@ -188,6 +188,7 @@
 import { ClipboardIcon } from '@heroicons/vue/20/solid';
 import { CheckIcon, PencilIcon } from '@heroicons/vue/24/outline';
 import { ComputerDesktopIcon, KeyIcon, ListBulletIcon } from '@heroicons/vue/24/solid';
+import { base64 } from 'rfc4648';
 import { nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { UserDto } from '../common/backend';
@@ -266,7 +267,7 @@ async function createUserKey() {
     const userKeys = await UserKeys.create();
     me.value.ecdhPublicKey = await userKeys.encodedEcdhPublicKey();
     me.value.ecdsaPublicKey = await userKeys.encodedEcdsaPublicKey();
-    me.value.privateKeys = await userKeys.encryptedPrivateKey(setupCode.value);
+    me.value.privateKeys = await userKeys.encryptWithSetupCode(setupCode.value);
     me.value.setupCode = await JWEBuilder.ecdhEs(userKeys.ecdhKeyPair.publicKey).encrypt({ setupCode: setupCode.value });
     const browserKeys = await createBrowserKeys(me.value.id);
     await submitBrowserKeys(browserKeys, me.value, userKeys);
@@ -288,7 +289,9 @@ async function recoverUserKey() {
     }
     processing.value = true;
 
-    const userKeys = await UserKeys.recover(me.value.privateKeys, setupCode.value, me.value.ecdhPublicKey, me.value.ecdsaPublicKey);
+    const ecdhPublicKey = base64.parse(me.value.ecdhPublicKey);
+    const ecdsaPublicKey = me.value.ecdsaPublicKey ? base64.parse(me.value.ecdsaPublicKey) : undefined;
+    const userKeys = await UserKeys.recover(me.value.privateKeys, setupCode.value, ecdhPublicKey, ecdsaPublicKey);
     const browserKeys = await createBrowserKeys(me.value.id);
     await submitBrowserKeys(browserKeys, me.value, userKeys);
 

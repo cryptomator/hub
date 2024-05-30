@@ -290,11 +290,9 @@ export class UserKeys {
    * @returns Decrypted UserKeys
    * @throws {UnwrapKeyError} when attempting to decrypt the private key using an incorrect setupCode
    */
-  public static async recover(privateKeys: string, setupCode: string, encodedEcdhPublicKey: string, encodedEcdsaPublicKey?: string): Promise<UserKeys> {
+  public static async recover(privateKeys: string, setupCode: string, userEcdhPublicKey: CryptoKey | BufferSource, userEcdsaPublicKey?: CryptoKey | BufferSource): Promise<UserKeys> {
     const jwe: UserKeyPayload = await JWEParser.parse(privateKeys).decryptPbes2(setupCode);
-    const ecdhPublicKey = base64.parse(encodedEcdhPublicKey, { loose: true });
-    const ecdsaPublicKey = encodedEcdsaPublicKey ? base64.parse(encodedEcdsaPublicKey, { loose: true }) : undefined;
-    return UserKeys.createFromJwe(jwe, ecdhPublicKey, ecdsaPublicKey);
+    return UserKeys.createFromJwe(jwe, userEcdhPublicKey, userEcdsaPublicKey);
   }
 
   /**
@@ -352,16 +350,9 @@ export class UserKeys {
    * @returns A JWE holding the encrypted private key
    * @see JWEBuilder.pbes2
    */
-  public async encryptedPrivateKey(setupCode: string): Promise<string> {
-    const rawkey = new Uint8Array(await crypto.subtle.exportKey('pkcs8', this.ecdhKeyPair.privateKey));
-    try {
-      const payload: JWEPayload = {
-        key: base64.stringify(rawkey)
-      };
-      return await JWEBuilder.pbes2(setupCode).encrypt(payload);
-    } finally {
-      rawkey.fill(0x00);
-    }
+  public async encryptWithSetupCode(setupCode: string, iterations?: number): Promise<string> {
+    const payload = await this.prepareForEncryption();
+    return await JWEBuilder.pbes2(setupCode, iterations).encrypt(payload);
   }
 
   /**
@@ -372,15 +363,19 @@ export class UserKeys {
    */
   public async encryptForDevice(devicePublicKey: CryptoKey | Uint8Array): Promise<string> {
     const publicKey = await asPublicKey(devicePublicKey, BrowserKeys.KEY_DESIGNATION);
+    const payload = await this.prepareForEncryption();
+    return JWEBuilder.ecdhEs(publicKey).encrypt(payload);
+  }
+
+  private async prepareForEncryption(): Promise<UserKeyPayload> {
     const encodedEcdhPrivateKey = new Uint8Array(await crypto.subtle.exportKey('pkcs8', this.ecdhKeyPair.privateKey));
     const encodedEcdsaPrivateKey = new Uint8Array(await crypto.subtle.exportKey('pkcs8', this.ecdsaKeyPair.privateKey));
     try {
-      const payload: UserKeyPayload = {
-        key: base64.stringify(encodedEcdhPrivateKey),
+      return {
+        key: base64.stringify(encodedEcdhPrivateKey), // redundant for backwards compatibility
         ecdhPrivateKey: base64.stringify(encodedEcdhPrivateKey),
         ecdsaPrivateKey: base64.stringify(encodedEcdsaPrivateKey)
       };
-      return JWEBuilder.ecdhEs(publicKey).encrypt(payload);
     } finally {
       encodedEcdhPrivateKey.fill(0x00);
       encodedEcdsaPrivateKey.fill(0x00);
