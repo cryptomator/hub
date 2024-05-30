@@ -81,8 +81,7 @@ const props = defineProps<{
 }>();
 
 const accountState : ComputedRef<AccountState> = computed(() => {
-  const publicKey = me.value?.publicKey;
-  if (!publicKey) {
+  if (!me.value?.setupCode) {
     return AccountState.RequiresSetup;
   } else {
     return AccountState.Ready;
