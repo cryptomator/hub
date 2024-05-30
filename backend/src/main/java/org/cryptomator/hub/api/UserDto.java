@@ -18,7 +18,7 @@ public final class UserDto extends AuthorityDto {
 	public final String ecdhPublicKey;
 	@JsonProperty("ecdsaPublicKey")
 	public final String ecdsaPublicKey;
-	@JsonProperty("privateKey")
+	@JsonProperty("privateKeys")
 	public final String privateKeys;
 	@JsonProperty("setupCode")
 	public final String setupCode;
