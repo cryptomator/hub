@@ -1,6 +1,7 @@
 import { base64 } from 'rfc4648';
 import backend, { DeviceDto, UserDto } from './backend';
 import { BrowserKeys, UserKeys } from './crypto';
+import { JWEParser } from './jwe';
 
 class UserData {
 
@@ -56,10 +57,7 @@ class UserData {
     const ecdhPublicKey = base64.parse(me.ecdhPublicKey);
     const ecdsaPublicKey = me.ecdsaPublicKey ? base64.parse(me.ecdsaPublicKey) : undefined;
     const userKeys = await UserKeys.recover(me.privateKey, setupCode, ecdhPublicKey, ecdsaPublicKey);
-    if (!me.ecdsaPublicKey) { // Update user, if ECDSA key was missing before (added in 1.4.0)
-      me.ecdsaPublicKey = await userKeys.encodedEcdsaPublicKey();
-      await backend.users.putMe(me);
-    }
+    await this.addEcdsaKeyIfMissing(userKeys);
     return userKeys;
   }
 
@@ -79,11 +77,26 @@ class UserData {
     const ecdhPublicKey = base64.parse(me.ecdhPublicKey);
     const ecdsaPublicKey = me.ecdsaPublicKey ? base64.parse(me.ecdsaPublicKey) : undefined;
     const userKeys = await UserKeys.decryptOnBrowser(browser.userPrivateKey, browserKeys.keyPair.privateKey, ecdhPublicKey, ecdsaPublicKey);
-    if (!me.ecdsaPublicKey) { // Update user, if ECDSA key was missing before (added in 1.4.0)
-      me.ecdsaPublicKey = await userKeys.encodedEcdsaPublicKey();
-      await backend.users.putMe(me);
-    }
+    await this.addEcdsaKeyIfMissing(userKeys);
     return userKeys;
+  }
+
+  /**
+   * Updates the stored user keys, if the ECDSA key was missing before (added in 1.4.0)
+   * @param userKeys The user keys that contain the ECDSA key
+   */
+  private async addEcdsaKeyIfMissing(userKeys: UserKeys) {
+    const me = await this.me;
+    if (me.setupCode && !me.ecdsaPublicKey) {
+      const payload: { setupCode: string } = await JWEParser.parse(me.setupCode).decryptEcdhEs(userKeys.ecdhKeyPair.privateKey);
+      me.ecdsaPublicKey = await userKeys.encodedEcdsaPublicKey();
+      me.privateKey = await userKeys.encryptWithSetupCode(payload.setupCode);
+      await backend.users.putMe(me); // TODO: update user and devices in single transaction!
+      for (let device of me.devices) {
+        device.userPrivateKey = await userKeys.encryptForDevice(base64.parse(device.publicKey));
+        await backend.devices.putDevice(device); // TODO: update user and devices in single transaction!
+      }
+    }
   }
 
 }
