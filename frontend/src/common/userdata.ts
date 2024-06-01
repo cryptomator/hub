@@ -31,7 +31,7 @@ class UserData {
         return undefined;
       } else {
         const browserId = await browserKeys.id();
-        return me.devices.find(d => d.id == browserId);
+        return me.devices.find(d => d.id === browserId);
       }
     });
   }
@@ -92,7 +92,7 @@ class UserData {
       me.ecdsaPublicKey = await userKeys.encodedEcdsaPublicKey();
       me.privateKey = await userKeys.encryptWithSetupCode(payload.setupCode);
       await backend.users.putMe(me); // TODO: update user and devices in single transaction!
-      for (let device of me.devices) {
+      for (const device of me.devices) {
         device.userPrivateKey = await userKeys.encryptForDevice(base64.parse(device.publicKey));
         await backend.devices.putDevice(device); // TODO: update user and devices in single transaction!
       }

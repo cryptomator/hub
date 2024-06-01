@@ -161,9 +161,9 @@ describe('crypto', () => {
     it('decrypt with device key', async () => {
       const jwe = 'eyJhbGciOiJFQ0RILUVTIiwiZW5jIjoiQTI1NkdDTSIsImVwayI6eyJrZXlfb3BzIjpbXSwiZXh0Ijp0cnVlLCJrdHkiOiJFQyIsIngiOiJiOTJEU0EwOW1FcW53cVBsMTBKdlhiV3BzRllHbndoclVkd21BYWFrdTB3SGdmNGotUzJVNnlLZ2hjU1VRX2RlIiwieSI6ImV0b21LamxCUzc3MmJ1OEFDdmlEX3VGZ2FNNkQyWG9ZR0xTNkkzNTRWXzVvZ3d0akNZNlZjX1h0Z3IzOWhMZ3QiLCJjcnYiOiJQLTM4NCJ9LCJhcHUiOiIiLCJhcHYiOiIifQ..hQyVi7d-S5Qr3z3W.k3Vo14FFoE2vH1tVD16ErYkCcIDqyPxzcO4Snfn9HFNswYchpFsK0jZFREZnJUaaVxX44oPou16uNDCHZoahwNqJfBC6oTN950al9VeP8kufqt7yABavN4pmPSFi_zSZBaJAkMgtOK23UW5bILRx-EjdhXfBZ-BEu1tzsbZV0sDMrAdP3VdMlRV3JYUgokTMJBhY6EzvAK8qO5QBfkQ5VomJW8Ju59Gt1LJAKwKPN36f3WSu8A3xYxSgQXJMh-qcsHvEA4O31gvmAFBeNKNm2ovZNAwizQrQGPFPfBF269_2YK_YSxpWk5-o5SITFUBcCVq8jBVXLZhfmqDWubbmTcS9nRF-UtuVuvMy_bIjg-4KcCQyLSPKoPw9e3tKs6t4KzKu4DB9Qfo8TSp2L1UpZETKD9HExgi1RLdBJEMCydrdPVPjBrMjQvkeEyMLFUeZ3xXXdspPeJN60QskqVdLaF9S0Xx8W8eHhv4DA6nnEEWn_IeS4K1IBhJ3DkDVVZJiQdTANHlkVgZagGzErP0aLwtgbZUHPiMr1bFw81veQxAK2FxsyDgkFaX6rW2eJl6Y2TTDpBCUY9Fj42Q8pFejnrvBvoDDOI_aB9n-2pGcK_nTzntP2aV5InNu5voBYEUJeJjpfwhoTsg_vzfU3zea1CpM3RC_FyuY1mze6PEdL3jR5S6xC4BrGfABKBKNA33XC4rh7ddLkeX-fRFj6MPXzOZOkeDHECbBC_aIutjYVVhWnuQQONLmpBPhzmaCTzztEnZ5f-YGGqTBOQj3cuuGCA7pAjqBei5bgqhOW3spHuB3XM3Ays4nyAc0DgkDtpa0FP2Sp70hT7loCVfjWGZWbuBVuIuChYDVtQgQmZ0gTqES1cRJGhx_HbxoEycZKmKPHdEZEtDOXNNyzjJ7XKugeW4xumcJvAIF5VpXyBoR4AL2Qmb2P-VSzDtNoeGL070Cr55Ux9vJvVZlXWWR6pTqjzLtJcQV9cvDHznogaRtERXqL5zcPTveorUOb4pM5UpCH07qUHQtFPW6eLyMorGBrSuSJJi831idR26o.h6xiowYII-lLOZ8YM32bng';
 
-      const foo = await UserKeys.decryptOnBrowser(jwe, bobEcdh.privateKey, aliceEcdh.publicKey, aliceEcdsa.publicKey);
+      const decrypted = await UserKeys.decryptOnBrowser(jwe, bobEcdh.privateKey, aliceEcdh.publicKey, aliceEcdsa.publicKey);
 
-      expect(jwe).to.be.not.null;
+      expect(decrypted).to.be.not.null;
     });
 
     it('recover() with setup code', async () => {
@@ -265,7 +265,7 @@ class TestVaultKeys extends VaultKeys {
 }
 
 class TestUserKeys extends UserKeys {
-  constructor(ecdhKeyPair: CryptoKeyPair, ecdsaKeyPair: CryptoKeyPair) {
+  public constructor(ecdhKeyPair: CryptoKeyPair, ecdsaKeyPair: CryptoKeyPair) {
     super(ecdhKeyPair, ecdsaKeyPair);
   }
 }
