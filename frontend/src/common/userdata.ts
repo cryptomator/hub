@@ -134,11 +134,10 @@ class UserData {
       const payload: { setupCode: string } = await JWEParser.parse(me.setupCode).decryptEcdhEs(userKeys.ecdhKeyPair.privateKey);
       me.ecdsaPublicKey = await userKeys.encodedEcdsaPublicKey();
       me.privateKey = await userKeys.encryptWithSetupCode(payload.setupCode);
-      await backend.users.putMe(me); // TODO: update user and devices in single transaction!
       for (const device of me.devices) {
         device.userPrivateKey = await userKeys.encryptForDevice(base64.parse(device.publicKey));
-        await backend.devices.putDevice(device); // TODO: update user and devices in single transaction!
       }
+      await backend.users.putMe(me);
     }
   }
 

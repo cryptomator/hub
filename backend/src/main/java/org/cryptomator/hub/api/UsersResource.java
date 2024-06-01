@@ -74,9 +74,27 @@ public class UsersResource {
 			user.setEcdsaPublicKey(dto.ecdsaPublicKey);
 			user.setPrivateKeys(dto.privateKeys);
 			user.setSetupCode(dto.setupCode);
+			updateDevices(user, dto);
 		}
 		userRepo.persist(user);
 		return Response.created(URI.create(".")).build();
+	}
+
+	/**
+	 * updates those devices that are present in both the entity and the dto. No devices are added or removed.
+	 * @param userEntity The persistent entity
+	 * @param userDto The DTO
+	 */
+	private void updateDevices(User userEntity, UserDto userDto) {
+		var dtos = userDto.devices.stream().collect(Collectors.toMap(DeviceResource.DeviceDto::id, Function.identity()));
+		var updatedDevices = userEntity.devices.stream().filter(d -> dtos.containsKey(d.getId())).peek(device -> {
+			var dto = dtos.get(device.getId());
+			device.setType(dto.type());
+			device.setName(dto.name());
+			device.setPublickey(dto.publicKey());
+			device.setUserPrivateKeys(dto.userPrivateKeys());
+		});
+		deviceRepo.persist(updatedDevices);
 	}
 
 	@POST
