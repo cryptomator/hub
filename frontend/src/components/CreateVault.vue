@@ -182,7 +182,6 @@ import { ClipboardIcon } from '@heroicons/vue/20/solid';
 import { ArrowPathIcon, CheckIcon, KeyIcon } from '@heroicons/vue/24/outline';
 import { ArrowDownTrayIcon } from '@heroicons/vue/24/solid';
 import { saveAs } from 'file-saver';
-import { base64 } from 'rfc4648';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { PaymentRequiredError } from '../common/backend';
@@ -290,12 +289,9 @@ async function createVault() {
     }
     processing.value = true;
     const owner = await userdata.me;
-    if (!owner.ecdhPublicKey) {
-      throw new Error('Invalid state');
-    }
     const vaultId = crypto.randomUUID();
     vaultConfig.value = await VaultConfig.create(vaultId, vaultKeys.value);
-    const ownerJwe = await vaultKeys.value.encryptForUser(base64.parse(owner.ecdhPublicKey));
+    const ownerJwe = await vaultKeys.value.encryptForUser(await userdata.ecdhPublicKey);
     await backend.vaults.createOrUpdateVault(vaultId, vaultName.value, false, vaultDescription.value);
     await backend.vaults.grantAccess(vaultId, { userId: owner.id, token: ownerJwe });
     state.value = State.Finished;

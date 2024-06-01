@@ -202,14 +202,13 @@
   <DisplayRecoveryKeyDialog v-if="displayingRecoveryKey && vault && vaultKeys" ref="displayRecoveryKeyDialog" :vault="vault" :vault-keys="vaultKeys" @close="displayingRecoveryKey = false" />
   <ArchiveVaultDialog v-if="archivingVault && vault" ref="archiveVaultDialog" :vault="vault" @close="archivingVault = false" @archived="v => refreshVault(v)" />
   <ReactivateVaultDialog v-if="reactivatingVault && vault" ref="reactivateVaultDialog" :vault="vault" @close="reactivatingVault = false" @reactivated="v => { refreshVault(v); refreshLicense();}" />
-  <RecoverVaultDialog v-if="recoveringVault && vault && me" ref="recoverVaultDialog" :vault="vault" :me="me" @close="recoveringVault = false" @recovered="fetchOwnerData()" />
+  <RecoverVaultDialog v-if="recoveringVault && vault" ref="recoverVaultDialog" :vault="vault" @close="recoveringVault = false" @recovered="fetchOwnerData()" />
 </template>
 
 <script setup lang="ts">
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
 import { ArrowPathIcon, EllipsisVerticalIcon, ExclamationTriangleIcon } from '@heroicons/vue/20/solid';
 import { PlusSmallIcon } from '@heroicons/vue/24/solid';
-import { base64 } from 'rfc4648';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auth from '../common/auth';
@@ -320,8 +319,8 @@ async function loadVaultKeys(vaultKeyJwe: string): Promise<VaultKeys> {
 }
 
 async function provedOwnership(keys: VaultKeys, ownerKeyPair: CryptoKeyPair) {
-  if (!me.value || !me.value.ecdhPublicKey) {
-    throw new Error('User not initialized.');
+  if (!me.value) {
+    throw new Error('illegal state');
   }
 
   const header: JWTHeader = { alg: 'ES384', typ: 'JWT', b64: true };
@@ -336,7 +335,8 @@ async function provedOwnership(keys: VaultKeys, ownerKeyPair: CryptoKeyPair) {
     return;
   }
 
-  const vaultKeyJwe = keys.encryptForUser(base64.parse(me.value.ecdhPublicKey));
+  const myPublicKey = await userdata.ecdhPublicKey;
+  const vaultKeyJwe = keys.encryptForUser(myPublicKey);
   try {
     await backend.vaults.grantAccess(props.vaultId, { userId: me.value.id, token: await vaultKeyJwe });
   } catch (error) {

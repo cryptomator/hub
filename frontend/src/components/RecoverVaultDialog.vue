@@ -52,12 +52,12 @@
 
 <script setup lang="ts">
 import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
-import { base64 } from 'rfc4648';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { UserDto, VaultDto } from '../common/backend';
+import backend, { VaultDto } from '../common/backend';
 
 import { VaultKeys } from '../common/crypto';
+import userdata from '../common/userdata';
 
 class FormValidationFailedError extends Error {
   constructor() {
@@ -76,8 +76,7 @@ const recoveryKey = ref('');
 const processingVaultRecovery = ref(false);
 
 const props = defineProps<{
-  vault: VaultDto,
-  me: UserDto
+  vault: VaultDto
 }>();
 
 const emit = defineEmits<{
@@ -105,10 +104,11 @@ async function recoverVault() {
   try {
     processingVaultRecovery.value = true;
     const vaultKeys = await VaultKeys.recover(recoveryKey.value);
-    if (props.me.ecdhPublicKey && vaultKeys) {
-      const publicKey = base64.parse(props.me.ecdhPublicKey);
+    const me = await userdata.me;
+    if (vaultKeys) {
+      const publicKey = await userdata.ecdhPublicKey;
       const jwe = await vaultKeys.encryptForUser(publicKey);
-      await backend.vaults.grantAccess(props.vault.id, { userId: props.me.id, token: jwe });
+      await backend.vaults.grantAccess(props.vault.id, { userId: me.id, token: jwe });
       emit('recovered');
       open.value = false;
     }

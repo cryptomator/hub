@@ -8,6 +8,9 @@ class UserData {
   #me?: Promise<UserDto>;
   #browserKeys?: Promise<BrowserKeys | undefined>;
 
+  /**
+   * Gets the user DTO representing the currently logged in user.
+   */
   public get me(): Promise<UserDto> {
     if (!this.#me) {
       this.#me = backend.users.me(true);
@@ -15,6 +18,9 @@ class UserData {
     return this.#me;
   }
 
+  /**
+   * Gets the device key pair stored for this user in the currently used browser.
+   */
   public get browserKeys(): Promise<BrowserKeys | undefined> {
     return this.me.then(me => {
       if (!this.#browserKeys) {
@@ -24,23 +30,59 @@ class UserData {
     });
   }
 
+  /**
+   * Gets the device that represents the currently used browser.
+   */
   public get browser(): Promise<DeviceDto | undefined> {
     return this.me.then(async me => {
       const browserKeys = await this.browserKeys;
-      if (browserKeys == null) {
-        return undefined;
+      const browserId = await browserKeys?.id();
+      return browserId ? me.devices.find(d => d.id === browserId) : undefined;
+    });
+  }
+
+  /**
+   * Gets the ECDH public key of the user.
+   * 
+   * @see UserDto.ecdhPublicKey
+   */
+  public get ecdhPublicKey(): Promise<Uint8Array> {
+    return this.me.then(me => {
+      if (!me.ecdhPublicKey) {
+        throw new Error('User not initialized.');
+      }
+      return base64.parse(me.ecdhPublicKey);
+    });
+  }
+
+  /**
+   * Gets the ECDSA public key of the user, if available.
+   * 
+   * @see UserDto.ecdsaPublicKey
+   */
+  public get ecdsaPublicKey(): Promise<Uint8Array | undefined> {
+    return this.me.then(me => {
+      if (me.ecdsaPublicKey) {
+        return base64.parse(me.ecdsaPublicKey);
       } else {
-        const browserId = await browserKeys.id();
-        return me.devices.find(d => d.id === browserId);
+        return undefined;
       }
     });
   }
 
+  /**
+   * Invalidates the cached user data and reloads it in the backend.
+   */
   public async reload() {
     this.#me = backend.users.me(true);
     this.#browserKeys = undefined;
   }
 
+  /**
+   * Creates a new browser key pair for the user.
+   * This does not change the device DTO stored in the backend.
+   * @returns A new browser key pair for the user.
+   */
   public async createBrowserKeys(): Promise<BrowserKeys> {
     const me = await this.me;
     const browserKeys = await BrowserKeys.create();
@@ -49,23 +91,26 @@ class UserData {
     return browserKeys;
   }
 
+  /**
+   * Decrypts the user keys using the setup code.
+   * @param setupCode the setup code
+   * @returns The user's key pairs
+   */
   public async decryptUserKeysWithSetupCode(setupCode: string): Promise<UserKeys> {
     const me = await this.me;
-    if (!me.privateKey || !me.ecdhPublicKey) {
+    if (!me.privateKey) {
       throw new Error('User not initialized.');
     }
-    const ecdhPublicKey = base64.parse(me.ecdhPublicKey);
-    const ecdsaPublicKey = me.ecdsaPublicKey ? base64.parse(me.ecdsaPublicKey) : undefined;
-    const userKeys = await UserKeys.recover(me.privateKey, setupCode, ecdhPublicKey, ecdsaPublicKey);
+    const userKeys = await UserKeys.recover(me.privateKey, setupCode, await this.ecdhPublicKey, await this.ecdsaPublicKey);
     await this.addEcdsaKeyIfMissing(userKeys);
     return userKeys;
   }
 
+  /**
+   * Decrypts the user keys using the device key stored in the currently used browser.
+   * @returns The user's key pairs
+   */
   public async decryptUserKeysWithBrowser(): Promise<UserKeys> {
-    const me = await this.me;
-    if (!me.ecdhPublicKey) {
-      throw new Error('User not initialized.');
-    }
     const browserKeys = await this.browserKeys;
     if (!browserKeys) {
       throw new Error('Browser keys not found.');
@@ -74,9 +119,7 @@ class UserData {
     if (!browser) {
       throw new Error('Device not initialized.');
     }
-    const ecdhPublicKey = base64.parse(me.ecdhPublicKey);
-    const ecdsaPublicKey = me.ecdsaPublicKey ? base64.parse(me.ecdsaPublicKey) : undefined;
-    const userKeys = await UserKeys.decryptOnBrowser(browser.userPrivateKey, browserKeys.keyPair.privateKey, ecdhPublicKey, ecdsaPublicKey);
+    const userKeys = await UserKeys.decryptOnBrowser(browser.userPrivateKey, browserKeys.keyPair.privateKey, await this.ecdhPublicKey, await this.ecdsaPublicKey);
     await this.addEcdsaKeyIfMissing(userKeys);
     return userKeys;
   }
