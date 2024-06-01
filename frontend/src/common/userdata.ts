@@ -62,11 +62,7 @@ class UserData {
    */
   public get ecdsaPublicKey(): Promise<Uint8Array | undefined> {
     return this.me.then(me => {
-      if (me.ecdsaPublicKey) {
-        return base64.parse(me.ecdsaPublicKey);
-      } else {
-        return undefined;
-      }
+      return me.ecdsaPublicKey ? base64.parse(me.ecdsaPublicKey) : undefined;
     });
   }
 
