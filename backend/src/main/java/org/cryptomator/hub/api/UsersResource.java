@@ -81,19 +81,23 @@ public class UsersResource {
 	}
 
 	/**
-	 * updates those devices that are present in both the entity and the dto. No devices are added or removed.
+	 * Updates those devices that are present in both the entity and the DTO. No devices are added or removed.
+	 *
 	 * @param userEntity The persistent entity
-	 * @param userDto The DTO
+	 * @param userDto    The DTO
 	 */
 	private void updateDevices(User userEntity, UserDto userDto) {
-		var dtos = userDto.devices.stream().collect(Collectors.toMap(DeviceResource.DeviceDto::id, Function.identity()));
-		var updatedDevices = userEntity.devices.stream().filter(d -> dtos.containsKey(d.getId())).peek(device -> {
-			var dto = dtos.get(device.getId());
-			device.setType(dto.type());
-			device.setName(dto.name());
-			device.setPublickey(dto.publicKey());
-			device.setUserPrivateKeys(dto.userPrivateKeys());
-		});
+		var devices = userEntity.devices.stream().collect(Collectors.toUnmodifiableMap(Device::getId, Function.identity()));
+		var updatedDevices = userDto.devices.stream()
+				.filter(d -> devices.containsKey(d.id())) // only look at DTOs for which we find a matching existing entity
+				.map(dto -> {
+					var device = devices.get(dto.id());
+					device.setType(dto.type());
+					device.setName(dto.name());
+					device.setPublickey(dto.publicKey());
+					device.setUserPrivateKeys(dto.userPrivateKeys());
+					return device;
+				});
 		deviceRepo.persist(updatedDevices);
 	}
 
