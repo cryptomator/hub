@@ -139,6 +139,13 @@ export class VaultFormat8 implements AccessTokenProducing, VaultTemplateProducin
     }
   }
 
+  /**
+   * Restore the master key from a given recovery key and verify the masterkey matches with the given vault config. On success, creates a new admin signature key pair.
+   * @param vaultMetadataToken Content of the alleged matching vault metadata file vault.cryptomator
+   * @param recoveryKey The recovery key
+   * @returns The recovered master key
+   * @throws Error, if passing a malformed recovery key or the recovery key does not match with the vault metadata
+   */
   public static async recoverAndVerify(vaultMetadataToken: string, recoveryKey: string) {
     //basic validation
     const vaultMetadata = JWT.parse(vaultMetadataToken);
