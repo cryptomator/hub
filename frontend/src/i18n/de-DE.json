@@ -90,8 +90,9 @@
   "fetchError.title": "Abruf von Daten fehlgeschlagen",
 
   "createVault.enterRecoveryKey.title": "Tresor wiederherstellen",
-  "createVault.enterRecoveryKey.description": "Gib den Wiederherstellungsschlüssel deines bestehenden Tresors ein, um daraus eine neue Tresorvorlage zu erstellen.",
+  "createVault.enterRecoveryKey.description": "Gib den Wiederherstellungsschlüssel deines bestehenden Tresors ein und lade die dazugehörige Tresormetadatendatei hoch, um daraus einen neue Tresor mit gleichem Schlüssel zu erstellen.",
   "createVault.enterRecoveryKey.recoveryKey": "Wiederherstellungsschlüssel für deinen Tresor",
+  "createVault.enterRecoveryKey.vaultMetadataFile": "Tresormetadatendatei deines Tresors",
   "createVault.enterRecoveryKey.submit": "Tresor wiederherstellen",
   "createVault.enterVaultDetails.title": "Tresor erstellen",
   "createVault.enterVaultDetails.description": "Gib einen Namen und eine Beschreibung für deinen neuen Tresor ein. Du kannst diese später ändern.",
@@ -104,7 +105,11 @@
   "createVault.showRecoveryKey.submit": "Tresor erstellen",
   "createVault.error.illegalVaultName": "Der Tresorname darf keines der folgenden Zeichen beinhalten:",
   "createVault.error.formValidationFailed": "Bitte überprüfe das Formular und versuche es erneut.",
+  "createVault.error.uploadTooBig": "Die Tresormetadatendatei ist zu groß. Es werden nur Dateien bis zu 8KB akzeptiert.",
+  "createVault.error.failedUpload": "Die Tresormetadatendatei konnte nicht hochgeladen werden.",
+  "createVault.error.wrongFileName": "Die hochgeladene Datei ist nicht wie eine Tresormetadatendatei benannt. Erlaubte Namen sind 'vault.cryptomator' oder 'vault.uvf'.",
   "createVault.error.invalidRecoveryKey": "Wiederherstellungsschlüssel ist ungültig.",
+  "createVault.error.keyDoesNotMatchMetadata": "Der eingegebene Wiederherstellungsschlüssel passt nicht zur hochgeladenen Tresormetadatendatei.",
   "createVault.error.vaultAlreadyExists": "Ein Tresor mit dem angegebenen Namen existiert bereits.",
   "createVault.error.downloadTemplateFailed": "Download der Tresorvorlage fehlgeschlagen: {0}",
   "createVault.error.paymentRequired": "Deine Cryptomator Hub Lizenz hat die Anzahl der verfügbaren Sitze überschritten oder ist abgelaufen. Bitte informiere einen Hub-Administrator, um die Lizenz zu erneuern oder zu erweitern.",
@@ -182,7 +187,7 @@
 
   "recoveryKeyDialog.title": "Wiederherstellungsschlüssel",
   "recoveryKeyDialog.description": "Dies ist dein Wiederherstellungsschlüssel für „{0}“. Verwahre ihn gut, er ist im Falle eines Systemausfalls deine einzige Möglichkeit, auf einen Tresor zuzugreifen.",
-  "recoveryKeyDialog.recoveryKey": "Wiederherstellungsschlüssel für deinen Tresor",
+  "recoveryKeyDialog.recoveryKey": "Wiederherstellungsschlüssel",
 
   "recoverVaultDialog.title": "Tresor Wiederherstellung",
   "recoverVaultDialog.description": "Gib den Wiederherstellungsschlüssel für den Tresor ein, um den Zugriff auf den Tresor wiederherzustellen.",

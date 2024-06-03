@@ -4,7 +4,7 @@
   </div>
 
   <div v-else-if="state == State.EnterRecoveryKey" @drop.prevent="" @dragover.prevent="">
-    <form ref="form" novalidate @submit.prevent="validateRecoveryKey()">
+    <form ref="form" novalidate @submit.prevent="validateRecoveryKey()" >
       <div class="flex justify-center">
         <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6 text-center sm:w-full sm:max-w-lg">
           <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-emerald-100">
@@ -15,7 +15,6 @@
               {{ t('createVault.enterRecoveryKey.title') }}
             </h3>
             <div class="mt-2">
-              <!-- TODO: this text must be altered -->
               <p class="text-sm text-gray-500">
                 {{ t('createVault.enterRecoveryKey.description') }}
               </p>
@@ -65,10 +64,9 @@
                   <XCircleIcon class="h-5 w-5 text-red-400" aria-hidden="true" />
                 </div>
                 <div class="ml-3 flex-1 md:flex md:justify-between">
-                  <p v-if="onUploadError instanceof FileTooBigError" class="text-sm text-red-700">TODO Too big!</p>
-                  <p v-else-if="onUploadError instanceof NoFileError" class="text-sm text-red-700">TODO File could not be uploaded</p>
-                  <p v-else-if="onUploadError instanceof WrongFileNameError" class="text-sm text-red-700">TODO Wrong files!</p>
-                  <p v-else class="text-sm text-red-700">TODO Error uploading and reading file</p>
+                  <p v-if="onUploadError instanceof FileTooBigError" class="text-sm text-red-700">{{ t('createVault.error.uploadTooBig') }}</p>
+                  <p v-else-if="onUploadError instanceof WrongFileNameError" class="text-sm text-red-700">{{ t('createVault.error.wrongFileName') }}</p>
+                  <p v-else class="text-sm text-red-700">{{ t('createVault.error.failedUpload') }}</p>
                 </div>
               </div>
             </div>
@@ -83,7 +81,7 @@
             <div v-if="onRecoverError != null">
               <p v-if="onRecoverError instanceof FormValidationFailedError" class="text-sm text-red-900 mt-2">{{ t('createVault.error.formValidationFailed') }}</p>
               <p v-if="onRecoverError instanceof DecodeUvfRecoveryKeyError || onRecoverError instanceof DecodeVf8RecoveryKeyError" class="text-sm text-red-900 mt-2">{{ t('createVault.error.invalidRecoveryKey') }}</p>
-              <p v-else class="text-sm text-red-900 mt-2">TODO: illegal vault metadata</p>
+              <p v-else class="text-sm text-red-900 mt-2">{{ t('createVault.error.keyDoesNotMatchMetadata') }}</p>
             </div>
           </div>
         </div>
