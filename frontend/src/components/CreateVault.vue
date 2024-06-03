@@ -82,7 +82,8 @@
             </button>
             <div v-if="onRecoverError != null">
               <p v-if="onRecoverError instanceof FormValidationFailedError" class="text-sm text-red-900 mt-2">{{ t('createVault.error.formValidationFailed') }}</p>
-              <p v-else class="text-sm text-red-900 mt-2">{{ t('createVault.error.invalidRecoveryKey') }}</p>
+              <p v-if="onRecoverError instanceof DecodeUvfRecoveryKeyError || onRecoverError instanceof DecodeVf8RecoveryKeyError" class="text-sm text-red-900 mt-2">{{ t('createVault.error.invalidRecoveryKey') }}</p>
+              <p v-else class="text-sm text-red-900 mt-2">TODO: illegal vault metadata</p>
             </div>
           </div>
         </div>
@@ -271,9 +272,9 @@ import { useI18n } from 'vue-i18n';
 import backend, { AccessGrant, PaymentRequiredError, VaultDto } from '../common/backend';
 import { absBackendBaseURL } from '../common/config';
 import { VaultTemplateProducing } from '../common/crypto';
-import { UniversalVaultFormat } from '../common/universalVaultFormat';
+import { DecodeUvfRecoveryKeyError, UniversalVaultFormat } from '../common/universalVaultFormat';
 import { debounce } from '../common/util';
-import { VaultFormat8 } from '../common/vaultFormat8';
+import { DecodeVf8RecoveryKeyError, VaultFormat8 } from '../common/vaultFormat8';
 
 enum State {
   Initial,
@@ -425,7 +426,7 @@ async function validateAndSetMetadataFile(file: File | null) {
 
 async function validateRecoveryKey() {
   onRecoverError.value = null;
-  if (!form.value?.checkValidity()) {
+  if (!form.value?.checkValidity() || !vaultMetadata.value ) {
     onRecoverError.value = new FormValidationFailedError();
     return;
   }
@@ -437,11 +438,9 @@ async function recoverVault() {
   try {
     processing.value = true;
     if (vaultType.value == VaultType.UniversalVaultFormat) {
-      //uvfVault.value = await UniversalVaultFormat.recover(uvfMetadataFile, recoveryKeyStr.value);
-      console.log('TODO UVF Recover');
+      uvfVault.value = await UniversalVaultFormat.recover(vaultMetadata.value, recoveryKeyStr.value);
     } else {
-      vaultFormat8.value = await VaultFormat8.recover(recoveryKeyStr.value);
-      //TODO: implement function to validate
+      vaultFormat8.value = await VaultFormat8.recoverAndVerify(vaultMetadata.value, recoveryKeyStr.value);
     }
     state.value = State.EnterVaultDetails;
   } catch (error) {

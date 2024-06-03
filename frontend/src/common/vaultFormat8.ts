@@ -173,19 +173,25 @@ export class VaultFormat8 implements AccessTokenProducing, VaultTemplateProducin
    * Restore the master key from a given recovery key, create a new admin signature key pair.
    * @param recoveryKey The recovery key
    * @returns The recovered master key
-   * @throws Error, if passing a malformed recovery key
+   * @throws DecodeVf8RecoveryKeyError, if passing a malformed recovery key
    */
   public static async recover(recoveryKey: string): Promise<VaultFormat8> {
     // decode and check recovery key:
-    const decoded = wordEncoder.decode(recoveryKey);
+    let decoded;
+    try {
+      decoded = wordEncoder.decode(recoveryKey);
+    } catch (error) {
+      throw new DecodeVf8RecoveryKeyError( error instanceof Error ? error.message : 'Internal error');
+    }
+
     if (decoded.length !== 66) {
-      throw new Error('Invalid recovery key length.');
+      throw new DecodeVf8RecoveryKeyError('Invalid recovery key length.');
     }
     const decodedKey = decoded.subarray(0, 64);
     const crc32 = CRC32.compute(decodedKey);
     if (decoded[64] !== (crc32 & 0xFF)
       || decoded[65] !== (crc32 >> 8 & 0xFF)) {
-      throw new Error('Invalid recovery key checksum.');
+      throw new DecodeVf8RecoveryKeyError('Invalid recovery key checksum.');
     }
 
     // construct new VaultKeys from recovered key
@@ -300,5 +306,12 @@ export class VaultFormat8 implements AccessTokenProducing, VaultTemplateProducin
 
     // encode using human-readable words:
     return wordEncoder.encodePadded(combined);
+  }
+}
+
+
+export class DecodeVf8RecoveryKeyError extends Error {
+  constructor(message: string) {
+    super(message);
   }
 }

@@ -117,13 +117,20 @@ export class RecoveryKey {
    * Restores the Recovery Key Pair
    * @param recoveryKey the encoded recovery key
    * @returns complete recovery key for decrypting vault metadata
+   * @throws DecodeUvfRecoveryKeyError, if passing a malformed recovery key
    */
   public static async recover(recoveryKey: string): Promise<RecoveryKey> {
     // decode and check recovery key:
-    const decoded = wordEncoder.decode(recoveryKey);
+    let decoded;
+    try {
+      decoded = wordEncoder.decode(recoveryKey);
+    } catch (error) {
+      throw new DecodeUvfRecoveryKeyError( error instanceof Error ? error.message : 'Internal error');
+    }
+
     const paddingLength = decoded[decoded.length - 1];
     if (paddingLength > 0x03) {
-      throw new Error('Invalid padding');
+      throw new DecodeUvfRecoveryKeyError('Invalid padding');
     }
     const unpadded = decoded.subarray(0, -paddingLength);
     const checksum = unpadded.subarray(-2);
@@ -131,7 +138,7 @@ export class RecoveryKey {
     const crc32 = CRC32.compute(rawkey);
     if (checksum[0] !== (crc32 & 0xFF)
       || checksum[1] !== (crc32 >> 8 & 0xFF)) {
-      throw new Error('Invalid recovery key checksum.');
+      throw new DecodeUvfRecoveryKeyError('Invalid recovery key checksum.');
     }
 
     // construct new RecoveryKey from recovered key
@@ -196,8 +203,14 @@ export class RecoveryKey {
       y: jwk.y
     });
   }
-
 }
+
+export class DecodeUvfRecoveryKeyError extends Error {
+  constructor(message: string) {
+    super(message);
+  }
+}
+
 // #endregion
 
 // #region Vault metadata
