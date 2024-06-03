@@ -1,4 +1,4 @@
-import { expect } from 'chai';
+import { expect, should } from 'chai';
 import { describe } from 'mocha';
 import { JWT, JWTHeader } from '../../src/common/jwt';
 
@@ -59,6 +59,47 @@ describe('JWT', () => {
       const jwt = await JWT.build(header, payload, signerPrivateKey);
 
       expect(jwt).to.be.not.null;
+    });
+  });
+
+  describe('Simple JWT parsing',() => {
+    it('parse() accepts any valid base64url encoded *JWT-likeish* string.', () => {
+      const validJSON = 'eyJmb28iOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYmFyIjp0cnVlfQ'; // '{"foo":"1234567890","name":"John Doe","bar":true}'
+
+      const parseResult = JWT.parse(validJSON + '.' + validJSON + '.' + validJSON);
+      expect(parseResult).to.be.fulfilled;
+    }),
+
+    it('parse() throws error on invalid base64url encoded jwt string', () => {
+      const invalidJSON = 'eyJhbGciOiJIUzI1NiIsInR5cH0'; //{"foo":"bar","error}
+      const validJSON = 'eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ'; //{"sub":"1234567890","name":"John Doe","iat":1516239022}
+      const noBase64 = 'foob$r';
+      const validBase64 = 'SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
+
+      const notEnoughSections = JWT.parse('a.b');
+      const emptyHeader = JWT.parse('.a.b');
+      const emptyPayload = JWT.parse('a..b');
+      const emptySignature = JWT.parse('a.b.');
+      const tooManySections = JWT.parse('a.b.c.d');
+
+      const headerNoBase64 = JWT.parse(noBase64 + '.' + validJSON + '.' + validBase64);
+      const payloadNoBase64 = JWT.parse(validJSON + '.' + noBase64 + '.' + validBase64);
+      const signatureNoBase64 = JWT.parse(validJSON + '.' + validJSON + '.' + noBase64);
+
+      const headerInvalidJSON = JWT.parse(invalidJSON + '.' + validJSON + '.' + validBase64);
+      const payloadInvalidJSON = JWT.parse(validJSON + '.' + invalidJSON + '.' + validBase64);
+      return Promise.all([
+        expect(notEnoughSections).to.be.rejectedWith(Error, /Invalid JWT/),
+        expect(emptyHeader).to.be.rejectedWith(Error, /Invalid JWT/),
+        expect(emptyPayload).to.be.rejectedWith(Error, /Invalid JWT/),
+        expect(emptySignature).to.be.rejectedWith(Error, /Invalid JWT/),
+        expect(tooManySections).to.be.rejectedWith(Error, /Invalid JWT/),
+        expect(headerNoBase64).to.be.rejected,
+        expect(payloadNoBase64).to.be.rejected,
+        expect(signatureNoBase64).to.be.rejected,
+        expect(headerInvalidJSON).to.be.rejected,
+        expect(payloadInvalidJSON).to.be.rejected,
+      ]);
     });
   });
 });

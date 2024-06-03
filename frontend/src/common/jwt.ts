@@ -48,6 +48,12 @@ export class JWT {
     return base64url.stringify(new Uint8Array(signature), { pad: false });
   }
 
+  /**
+   * Parses an encoded JWT token.
+   * Note that only basic JSON /encoding checks are made, neither the header nor the payload are checked for required attributes.
+   * @param token The encoded JWT.
+   * @returns A generic, and maybe still invalid JWT object
+   */
   public static async parse(token: string): Promise<JWT> {
     const jwtSections = token.split('.');
     if (jwtSections.length != 3 || !jwtSections[0] || !jwtSections[1] || !jwtSections[2]) {
