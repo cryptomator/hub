@@ -80,7 +80,7 @@
             </button>
             <div v-if="onRecoverError != null">
               <p v-if="onRecoverError instanceof FormValidationFailedError" class="text-sm text-red-900 mt-2">{{ t('createVault.error.formValidationFailed') }}</p>
-              <p v-if="onRecoverError instanceof DecodeUvfRecoveryKeyError || onRecoverError instanceof DecodeVf8RecoveryKeyError" class="text-sm text-red-900 mt-2">{{ t('createVault.error.invalidRecoveryKey') }}</p>
+              <p v-else-if="onRecoverError instanceof DecodeUvfRecoveryKeyError || onRecoverError instanceof DecodeVf8RecoveryKeyError" class="text-sm text-red-900 mt-2">{{ t('createVault.error.invalidRecoveryKey') }}</p>
               <p v-else class="text-sm text-red-900 mt-2">{{ t('createVault.error.keyDoesNotMatchMetadata') }}</p>
             </div>
           </div>
