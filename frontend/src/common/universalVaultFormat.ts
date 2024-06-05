@@ -125,7 +125,8 @@ export class RecoveryKey {
     try {
       decoded = wordEncoder.decode(recoveryKey);
     } catch (error) {
-      throw new DecodeUvfRecoveryKeyError( error instanceof Error ? error.message : 'Internal error');
+      console.error(error);
+      throw new DecodeUvfRecoveryKeyError( error instanceof Error ? error.message : 'Internal error. See console log for more info.');
     }
 
     const paddingLength = decoded[decoded.length - 1];

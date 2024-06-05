@@ -46,16 +46,16 @@
               <div v-if="(vaultMetadata?.length ?? 0) == 0" class="text-center">
                 <ArrowUpOnSquareIcon class="mx-auto h-12 w-12 text-gray-300" aria-hidden="true" />
                 <p class="mt-2 block text-sm font-semibold text-gray-900">
-                  Upload vault metadata file or drag and drop
+                  {{ t('createVault.enterRecoveryKey.uploadCaption') }}
                 </p>
-                <p class="text-xs leading-5 text-gray-600">vault.cryptomator or vault.uvf</p>
+                <p class="text-xs leading-5 text-gray-600">{{ t('createVault.enterRecoveryKey.uploadSubcaption') }}</p>
               </div>
               <div v-else class="text-center">
                 <DocumentCheckIcon class="mx-auto h-12 w-12 text-primary" aria-hidden="true" />
                 <p class="mt-2 block text-sm font-semibold text-gray-900">
-                  Upload successful
+                  {{ t('createVault.enterRecoveryKey.uploadSuccessCaption', [metadataFilename]) }}
                 </p>
-                <p class="text-xs leading-5 text-gray-600">To replace, click and select or drag and drop a different file. </p>
+                <p class="text-xs leading-5 text-gray-600">{{ t('createVault.enterRecoveryKey.uploadSuccessSubcaption') }}</p>
               </div>
             </div>
             <div v-if="onUploadError" class="rounded-md bg-red-50 p-4">
@@ -273,6 +273,7 @@ import { VaultTemplateProducing } from '../common/crypto';
 import { DecodeUvfRecoveryKeyError, UniversalVaultFormat } from '../common/universalVaultFormat';
 import { debounce } from '../common/util';
 import { DecodeVf8RecoveryKeyError, VaultFormat8 } from '../common/vaultFormat8';
+import { computed } from 'vue';
 
 enum State {
   Initial,
@@ -345,6 +346,7 @@ const vaultFormat8 = ref<VaultFormat8>();
 const recoveryKeyStr = ref<string>('');
 const uvfVault = ref<UniversalVaultFormat>();
 
+const metadataFilename = computed(() => vaultType.value == VaultType.VaultFormat8 ? 'vault.cryptomator' : 'vault.uvf');
 const vaultMetadata = ref<string>('');
 const isDraggingOver = ref<boolean>(false);
 

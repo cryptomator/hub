@@ -181,7 +181,8 @@ export class VaultFormat8 implements AccessTokenProducing, VaultTemplateProducin
     try {
       decoded = wordEncoder.decode(recoveryKey);
     } catch (error) {
-      throw new DecodeVf8RecoveryKeyError( error instanceof Error ? error.message : 'Internal error');
+      console.error(error);
+      throw new DecodeVf8RecoveryKeyError( error instanceof Error ? error.message : 'Internal error. See console log for more info.');
     }
 
     if (decoded.length !== 66) {
