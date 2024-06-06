@@ -203,7 +203,7 @@
   <DisplayRecoveryKeyDialog v-if="displayingRecoveryKey && vault && (vaultFormat8 || uvfVault?.recoveryKey.privateKey)" ref="displayRecoveryKeyDialog" :vault="vault" @close="displayingRecoveryKey = false" />
   <ArchiveVaultDialog v-if="archivingVault && vault" ref="archiveVaultDialog" :vault="vault" @close="archivingVault = false" @archived="v => refreshVault(v)" />
   <ReactivateVaultDialog v-if="reactivatingVault && vault" ref="reactivateVaultDialog" :vault="vault" @close="reactivatingVault = false" @reactivated="v => { refreshVault(v); refreshLicense();}" />
-  <RecoverVaultDialog v-if="recoveringVault && vault && me" ref="recoverVaultDialog" :vault="vault" :me="me" @close="recoveringVault = false" @recovered="fetchOwnerData()" />
+  <RecoverVaultDialog v-if="recoveringVault && vault" ref="recoverVaultDialog" :vault="vault" @close="recoveringVault = false" @recovered="fetchOwnerData()" />
 </template>
 
 <script setup lang="ts">
@@ -215,9 +215,9 @@ import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auth from '../common/auth';
 import backend, { AuthorityDto, ConflictError, ForbiddenError, LicenseUserInfoDto, MemberDto, NotFoundError, PaymentRequiredError, UserDto, VaultDto, VaultRole } from '../common/backend';
-import { BrowserKeys, UserKeys } from '../common/crypto';
 import { JWT, JWTHeader } from '../common/jwt';
 import { UniversalVaultFormat } from '../common/universalVaultFormat';
+import userdata from '../common/userdata';
 import { VaultFormat8 } from '../common/vaultFormat8';
 import ArchiveVaultDialog from './ArchiveVaultDialog.vue';
 import ClaimVaultOwnershipDialog from './ClaimVaultOwnershipDialog.vue';
@@ -286,7 +286,7 @@ async function fetchData() {
   try {
     isAdmin.value = (await auth).isAdmin();
     vault.value = await backend.vaults.get(props.vaultId);
-    me.value = await backend.users.me(true);
+    me.value = await userdata.me;
     license.value = await backend.license.getUserInfo();
     if (props.vaultRole == 'OWNER') {
       await fetchOwnerData();
@@ -325,19 +325,7 @@ async function fetchOwnerData() {
 }
 
 async function loadVaultFormat8Keys(vaultKeyJwe: string): Promise<VaultFormat8> {
-  if (!me.value || !me.value.publicKey) {
-    throw new Error('User not initialized.');
-  }
-  const browserKeys = await BrowserKeys.load(me.value.id);
-  if (browserKeys == null) {
-    throw new Error('Browser keys not found.');
-  }
-  const browserId = await browserKeys.id();
-  const myDevice = me.value.devices.find(d => d.id == browserId);
-  if (myDevice == null) {
-    throw new Error('Device not initialized.');
-  }
-  const userKeys = await UserKeys.decryptOnBrowser(myDevice.userPrivateKey, browserKeys.keyPair.privateKey, base64.parse(me.value.publicKey));
+  const userKeys = await userdata.decryptUserKeysWithBrowser();
   return VaultFormat8.decryptWithUserKey(vaultKeyJwe, userKeys);
 }
 
@@ -345,25 +333,13 @@ async function loadUvfMetadata(accessToken: string): Promise<UniversalVaultForma
   if (!vault.value || !vault.value.uvfMetadataFile) {
     throw new Error('Vault not initialized.');
   }
-  if (!me.value || !me.value.publicKey) {
-    throw new Error('User not initialized.');
-  }
-  const browserKeys = await BrowserKeys.load(me.value.id);
-  if (browserKeys == null) {
-    throw new Error('Browser keys not found.');
-  }
-  const browserId = await browserKeys.id();
-  const myDevice = me.value.devices.find(d => d.id == browserId);
-  if (myDevice == null) {
-    throw new Error('Device not initialized.');
-  }
-  const userKeys = await UserKeys.decryptOnBrowser(myDevice.userPrivateKey, browserKeys.keyPair.privateKey, base64.parse(me.value.publicKey));
+  const userKeys = await userdata.decryptUserKeysWithBrowser();
   return UniversalVaultFormat.decrypt(vault.value, accessToken, userKeys);
 }
 
 async function provedOwnership(keys: VaultFormat8, ownerKeyPair: CryptoKeyPair) {
-  if (!me.value || !me.value.publicKey) {
-    throw new Error('User not initialized.');
+  if (!me.value) {
+    throw new Error('illegal state.');
   }
 
   const header: JWTHeader = { alg: 'ES384', typ: 'JWT', b64: true };
@@ -378,7 +354,8 @@ async function provedOwnership(keys: VaultFormat8, ownerKeyPair: CryptoKeyPair) 
     return;
   }
 
-  const vaultKeyJwe = keys.encryptForUser(base64.parse(me.value.publicKey));
+  const myPublicKey = await userdata.ecdhPublicKey;
+  const vaultKeyJwe = keys.encryptForUser(myPublicKey);
   try {
     await backend.vaults.grantAccess(props.vaultId, { userId: me.value.id, token: await vaultKeyJwe });
   } catch (error) {
@@ -523,9 +500,9 @@ async function updateMemberRole(member: MemberDto, role: VaultRole) {
     if (updatedMember) {
       updatedMember.role = role;
     }
-    if (uvfVault.value && member.type == 'USER' && member.publicKey) {
+    if (uvfVault.value && member.type == 'USER' && member.ecdhPublicKey) {
       const includeOwnerKeys = role == 'OWNER';
-      const updatedAccessToken = await uvfVault.value.encryptForUser(base64.parse(member.publicKey), includeOwnerKeys);
+      const updatedAccessToken = await uvfVault.value.encryptForUser(base64.parse(member.ecdhPublicKey), includeOwnerKeys);
       await backend.vaults.grantAccess(props.vaultId, { userId: member.id, token: updatedAccessToken });
     }
   } catch (error) {

@@ -52,10 +52,10 @@
 
 <script setup lang="ts">
 import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
-import { base64 } from 'rfc4648';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { UserDto, VaultDto } from '../common/backend';
+import backend, { VaultDto } from '../common/backend';
+import userdata from '../common/userdata';
 import { VaultFormat8 } from '../common/vaultFormat8';
 
 class FormValidationFailedError extends Error {
@@ -75,8 +75,7 @@ const recoveryKey = ref('');
 const processingVaultRecovery = ref(false);
 
 const props = defineProps<{
-  vault: VaultDto,
-  me: UserDto
+  vault: VaultDto
 }>();
 
 const emit = defineEmits<{
@@ -103,11 +102,13 @@ async function recoverVault() {
   onVaultRecoverError.value = null;
   try {
     processingVaultRecovery.value = true;
+    // TODO: check whether Vault Format 8 or UVF
     const vaultFormat8 = await VaultFormat8.recover(recoveryKey.value);
-    if (props.me.publicKey && vaultFormat8) {
-      const publicKey = base64.parse(props.me.publicKey);
+    const me = await userdata.me;
+    if (vaultFormat8) {
+      const publicKey = await userdata.ecdhPublicKey;
       const jwe = await vaultFormat8.encryptForUser(publicKey);
-      await backend.vaults.grantAccess(props.vault.id, { userId: props.me.id, token: jwe });
+      await backend.vaults.grantAccess(props.vault.id, { userId: me.id, token: jwe });
       emit('recovered');
       open.value = false;
     }

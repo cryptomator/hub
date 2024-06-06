@@ -320,7 +320,7 @@ public class VaultResource {
 		}
 
 		var user = userRepo.findById(jwt.getSubject());
-		if (user.getPublicKey() == null) {
+		if (user.getEcdhPublicKey() == null) {
 			throw new ActionRequiredException("User account not initialized.");
 		}
 

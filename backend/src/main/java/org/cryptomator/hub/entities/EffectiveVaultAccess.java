@@ -71,7 +71,7 @@ import java.util.stream.Stream;
 		FROM EffectiveVaultAccess eva
 			INNER JOIN User u ON u.id = eva.id.authorityId
 			LEFT JOIN AccessToken token ON token.id.vaultId = eva.id.vaultId AND token.id.userId = eva.id.authorityId
-			WHERE eva.id.vaultId = :vaultId AND token.vault IS NULL AND u.publicKey IS NOT NULL
+			WHERE eva.id.vaultId = :vaultId AND token.vault IS NULL AND u.ecdhPublicKey IS NOT NULL
 		"""
 )
 public class EffectiveVaultAccess {

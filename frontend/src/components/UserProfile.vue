@@ -54,7 +54,7 @@
       <div class="grid grid-cols-1 gap-8 lg:col-span-3">
         <ManageSetupCode />
         <DeviceList />
-        <UserkeyFingerprint :user-public-key="me.publicKey"/>
+        <UserkeyFingerprint :user-public-key="me.ecdhPublicKey"/>
       </div>
     </div>
   </div>
@@ -68,6 +68,7 @@ import { useI18n } from 'vue-i18n';
 import backend, { UserDto, VersionDto } from '../common/backend';
 
 import config from '../common/config';
+import userdata from '../common/userdata';
 import { Locale } from '../i18n';
 import DeviceList from './DeviceList.vue';
 import FetchError from './FetchError.vue';
@@ -90,7 +91,7 @@ onMounted(async () => {
 async function fetchData() {
   onFetchError.value = null;
   try {
-    me.value = await backend.users.me(true);
+    me.value = await userdata.me;
     version.value = await backend.version.get();
   } catch (error) {
     console.error('Retrieving user information failed.', error);

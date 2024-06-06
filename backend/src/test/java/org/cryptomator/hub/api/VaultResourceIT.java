@@ -448,7 +448,7 @@ public class VaultResourceIT {
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
 						UPDATE "user_details"
-						SET publickey='public2', privatekey='private2', setupcode='setup2'
+						SET ecdh_publickey='public2', ecdsa_publickey='ecdsa_public2', privatekeys='private2', setupcode='setup2'
 						WHERE id='user2';
 						""");
 			}
@@ -460,7 +460,7 @@ public class VaultResourceIT {
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
 						UPDATE
-						"user_details" SET publickey=NULL, privatekey=NULL, setupcode=NULL
+						"user_details" SET ecdh_publickey=NULL, ecdsa_publickey=NULL, privatekeys=NULL, setupcode=NULL
 						WHERE id='user2';
 						""");
 			}
@@ -490,7 +490,7 @@ public class VaultResourceIT {
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
 						UPDATE
-						"user_details" SET publickey='public2', privatekey='private2', setupcode='setup2'
+						"user_details" SET ecdh_publickey='ecdh_public2', ecdsa_publickey='ecdsa_public2', privatekeys='private2', setupcode='setup2'
 						WHERE id='user2';
 						""");
 			}
@@ -502,7 +502,7 @@ public class VaultResourceIT {
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
 						UPDATE
-						"user_details" SET publickey=NULL, privatekey=NULL, setupcode=NULL
+						"user_details" SET ecdh_publickey=NULL, ecdsa_publickey=NULL, privatekeys=NULL, setupcode=NULL
 						WHERE id='user2';
 						""");
 			}
@@ -561,7 +561,7 @@ public class VaultResourceIT {
 				// user999 will be deleted in #cleanup()
 				s.execute("""
 						INSERT INTO "authority" ("id", "type", "name") VALUES ('user999', 'USER', 'User 999');
-						INSERT INTO "user_details" ("id", "publickey", "privatekey", "setupcode") VALUES ('user999', 'public999', 'private999', 'setup999');
+						INSERT INTO "user_details" ("id", "ecdh_publickey", "ecdsa_publickey", "privatekeys", "setupcode") VALUES ('user999', 'ecdh_public999', 'ecdsa_public999', 'private999', 'setup999');
 						INSERT INTO "group_membership" ("group_id", "member_id") VALUES ('group2', 'user999')
 						""");
 			}

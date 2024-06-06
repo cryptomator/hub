@@ -28,6 +28,15 @@ export interface AccessTokenPayload {
   [key: string]: string | number | boolean | object | undefined
 }
 
+interface UserKeyPayload extends AccessTokenPayload {
+  /**
+   * @deprecated use `ecdhPrivateKey` instead
+   */
+  key: string,
+  ecdhPrivateKey: string,
+  ecdsaPrivateKey: string,
+}
+
 export const GCM_NONCE_LEN = 12;
 
 export interface AccessTokenProducing {
@@ -64,13 +73,8 @@ export class OtherVaultMember {
    * @param publicKey The public key of the vault member
    * @returns A vault member with the given public key
    */
-  public static withPublicKey(publicKey: CryptoKey | Uint8Array): OtherVaultMember {
-    let keyPromise: Promise<CryptoKey>;
-    if (publicKey instanceof Uint8Array) {
-      keyPromise = crypto.subtle.importKey('spki', publicKey, UserKeys.KEY_DESIGNATION, false, []);
-    } else {
-      keyPromise = Promise.resolve(publicKey);
-    }
+  public static withPublicKey(publicKey: CryptoKey | BufferSource): OtherVaultMember {
+    const keyPromise = asPublicKey(publicKey, UserKeys.ECDH_KEY_DESIGNATION);
     return new OtherVaultMember(keyPromise);
   }
 
@@ -89,57 +93,88 @@ export class OtherVaultMember {
 /**
  * The current user's key pair.
  */
-export class UserKeys { // TODO: rename to CurrentUserKeyPair
-  public static readonly KEY_USAGES: KeyUsage[] = ['deriveBits'];
+export class UserKeys {
+  public static readonly ECDH_KEY_USAGES: KeyUsage[] = ['deriveBits'];
 
-  public static readonly KEY_DESIGNATION: EcKeyImportParams | EcKeyGenParams = {
-    name: 'ECDH',
-    namedCurve: 'P-384'
-  };
-  protected constructor(readonly keyPair: CryptoKeyPair) { }
+  public static readonly ECDH_KEY_DESIGNATION: EcKeyImportParams | EcKeyGenParams = { name: 'ECDH', namedCurve: 'P-384' };
+
+  public static readonly ECDSA_KEY_USAGES: KeyUsage[] = ['sign'];
+
+  public static readonly ECDSA_KEY_DESIGNATION: EcKeyImportParams | EcKeyGenParams = { name: 'ECDSA', namedCurve: 'P-384' };
+
+
+  protected constructor(readonly ecdhKeyPair: CryptoKeyPair, readonly ecdsaKeyPair: CryptoKeyPair) { }
 
   /**
-   * Creates a new user key pair
-   * @returns A new user key pair
+   * Creates new user key pairs
+   * @returns A set of new user key pairs
    */
   public static async create(): Promise<UserKeys> {
-    const keyPair = crypto.subtle.generateKey(UserKeys.KEY_DESIGNATION, true, UserKeys.KEY_USAGES);
-    return new UserKeys(await keyPair);
+    const ecdhKeyPair = crypto.subtle.generateKey(UserKeys.ECDH_KEY_DESIGNATION, true, UserKeys.ECDH_KEY_USAGES);
+    const ecdsaKeyPair = crypto.subtle.generateKey(UserKeys.ECDSA_KEY_DESIGNATION, true, UserKeys.ECDSA_KEY_USAGES);
+    return new UserKeys(await ecdhKeyPair, await ecdsaKeyPair);
   }
 
   /**
-   * Recovers the user key pair using a recovery code. All other information can be retrieved from the backend.
-   * @param encodedPublicKey The public key (base64-encoded SPKI)
-   * @param encryptedPrivateKey The JWE holding the encrypted private key
-   * @param setupCode The password used to protect the private key
+   * Recovers the user key pairs using a recovery code. All other information can be retrieved from the backend.
+   * @param encodedEcdhPublicKey The ECDH public key (base64-encoded SPKI)
+   * @param encodedEcdsaPublicKey The ECDSA public key (base64-encoded SPKI)
+   * @param privateKeys The JWE holding the encrypted private keys
+   * @param setupCode The password used to protect the private keys
    * @returns Decrypted UserKeys
    * @throws {UnwrapKeyError} when attempting to decrypt the private key using an incorrect setupCode
    */
-  public static async recover(encodedPublicKey: string, encryptedPrivateKey: string, setupCode: string): Promise<UserKeys> {
-    const jwe: AccessTokenPayload = await JWE.parseCompact(encryptedPrivateKey).decrypt(Recipient.pbes2('org.cryptomator.hub.setupCode', setupCode));
-    const decodedPublicKey = base64.parse(encodedPublicKey, { loose: true });
-    const decodedPrivateKey = base64.parse(jwe.key, { loose: true });
-    const privateKey = crypto.subtle.importKey('pkcs8', decodedPrivateKey, UserKeys.KEY_DESIGNATION, true, UserKeys.KEY_USAGES);
-    const publicKey = crypto.subtle.importKey('spki', decodedPublicKey, UserKeys.KEY_DESIGNATION, true, []);
-    return new UserKeys({ privateKey: await privateKey, publicKey: await publicKey });
+  public static async recover(privateKeys: string, setupCode: string, userEcdhPublicKey: CryptoKey | BufferSource, userEcdsaPublicKey?: CryptoKey | BufferSource): Promise<UserKeys> {
+    const jwe: UserKeyPayload = await JWE.parseCompact(privateKeys).decrypt(Recipient.pbes2('org.cryptomator.hub.setupCode', setupCode));
+    return UserKeys.createFromJwe(jwe, userEcdhPublicKey, userEcdsaPublicKey);
   }
 
   /**
-   * Decrypts the access token using the user's private key
-   * @param jwe The encrypted access token
-   * @returns The token's payload
+   * Decrypts the user's private key using the browser's private key
+   * @param jwe JWE containing the PKCS#8-encoded private key
+   * @param browserPrivateKey The browser's private key
+   * @param userEcdhPublicKey User's public ECDH key
+   * @param userEcdsaPublicKey User's public ECDSA key (will be generated if missing - added in Hub 1.4.0)
+   * @returns The user's key pair
    */
-  public async decryptAccessToken(jwe: string): Promise<AccessTokenPayload> {
-    const payload = await JWE.parseCompact(jwe).decrypt(Recipient.ecdhEs('org.cryptomator.hub.userkey', this.keyPair.privateKey));
-    return payload;
+  public static async decryptOnBrowser(jwe: string, browserPrivateKey: CryptoKey, userEcdhPublicKey: CryptoKey | BufferSource, userEcdsaPublicKey?: CryptoKey | BufferSource): Promise<UserKeys> {
+    const payload: UserKeyPayload = await JWE.parseCompact(jwe).decrypt(Recipient.ecdhEs('org.cryptomator.hub.deviceKey', browserPrivateKey));
+    return UserKeys.createFromJwe(payload, userEcdhPublicKey, userEcdsaPublicKey);
+  }
+
+  private static async createFromJwe(jwe: UserKeyPayload, ecdhPublicKey: CryptoKey | BufferSource, ecdsaPublicKey?: CryptoKey | BufferSource): Promise<UserKeys> {
+    const ecdhKeyPair: CryptoKeyPair = {
+      publicKey: await asPublicKey(ecdhPublicKey, UserKeys.ECDH_KEY_DESIGNATION),
+      privateKey: await crypto.subtle.importKey('pkcs8', base64.parse(jwe.ecdhPrivateKey ?? jwe.key, { loose: true }), UserKeys.ECDH_KEY_DESIGNATION, true, UserKeys.ECDH_KEY_USAGES)
+    };
+    let ecdsaKeyPair: CryptoKeyPair;
+    if (jwe.ecdsaPrivateKey && ecdsaPublicKey) {
+      ecdsaKeyPair = {
+        publicKey: await asPublicKey(ecdsaPublicKey, UserKeys.ECDSA_KEY_DESIGNATION),
+        privateKey: await crypto.subtle.importKey('pkcs8', base64.parse(jwe.ecdsaPrivateKey, { loose: true }), UserKeys.ECDSA_KEY_DESIGNATION, true, UserKeys.ECDSA_KEY_USAGES)
+      };
+    } else {
+      // ECDSA key was added in Hub 1.4.0. If it's missing, we generate a new one.
+      ecdsaKeyPair = await crypto.subtle.generateKey(UserKeys.ECDSA_KEY_DESIGNATION, true, UserKeys.ECDSA_KEY_USAGES);
+    }
+    return new UserKeys(ecdhKeyPair, ecdsaKeyPair);
   }
 
   /**
-   * Gets the base64-encoded public key in SPKI format.
+   * Gets the base64-encoded ECDH public key in SPKI format.
    * @returns base64-encoded public key
    */
-  public async encodedPublicKey(): Promise<string> {
-    const publicKey = new Uint8Array(await crypto.subtle.exportKey('spki', this.keyPair.publicKey));
+  public async encodedEcdhPublicKey(): Promise<string> {
+    const publicKey = new Uint8Array(await crypto.subtle.exportKey('spki', this.ecdhKeyPair.publicKey));
+    return base64.stringify(publicKey);
+  }
+
+  /**
+   * Gets the base64-encoded ECDSA public key in SPKI format.
+   * @returns base64-encoded public key
+   */
+  public async encodedEcdsaPublicKey(): Promise<string> {
+    const publicKey = new Uint8Array(await crypto.subtle.exportKey('spki', this.ecdsaKeyPair.publicKey));
     return base64.stringify(publicKey);
   }
 
@@ -150,17 +185,10 @@ export class UserKeys { // TODO: rename to CurrentUserKeyPair
    * @returns A JWE holding the encrypted private key
    * @see Recipient.pbes2
    */
-  public async encryptedPrivateKey(setupCode: string, p2c?: number): Promise<string> {
-    const rawkey = new Uint8Array(await crypto.subtle.exportKey('pkcs8', this.keyPair.privateKey));
-    try {
-      const payload: AccessTokenPayload = {
-        key: base64.stringify(rawkey)
-      };
-      const jwe = await JWE.build(payload).encrypt(Recipient.pbes2('org.cryptomator.hub.setupCode', setupCode, p2c));
-      return jwe.compactSerialization();
-    } finally {
-      rawkey.fill(0x00);
-    }
+  public async encryptWithSetupCode(setupCode: string, p2c?: number): Promise<string> {
+    const payload = await this.prepareForEncryption();
+    const jwe = await JWE.build(payload).encrypt(Recipient.pbes2('org.cryptomator.hub.setupCode', setupCode, p2c));
+    return jwe.compactSerialization();
   }
 
   /**
@@ -170,44 +198,34 @@ export class UserKeys { // TODO: rename to CurrentUserKeyPair
    * @see Recipient.ecdhEs
    */
   public async encryptForDevice(devicePublicKey: CryptoKey | Uint8Array): Promise<string> {
-    const publicKey = await UserKeys.publicKey(devicePublicKey);
-    const rawkey = new Uint8Array(await crypto.subtle.exportKey('pkcs8', this.keyPair.privateKey));
-    try {
-      const payload: AccessTokenPayload = {
-        key: base64.stringify(rawkey)
-      };
-      const jwe = await JWE.build(payload).encrypt(Recipient.ecdhEs('org.cryptomator.hub.deviceKey', publicKey));
-      return jwe.compactSerialization();
-    } finally {
-      rawkey.fill(0x00);
-    }
+    const publicKey = await asPublicKey(devicePublicKey, BrowserKeys.KEY_DESIGNATION);
+    const payload = await this.prepareForEncryption();
+    const jwe = await JWE.build(payload).encrypt(Recipient.ecdhEs('org.cryptomator.hub.deviceKey', publicKey));
+    return jwe.compactSerialization();
   }
 
   /**
-   * Decrypts the user's private key using the browser's private key
-   * @param jwe JWE containing the PKCS#8-encoded private key
-   * @param browserPrivateKey The browser's private key
-   * @param userPublicKey User public key
-   * @returns The user's key pair
+   * Decrypts the access token using the user's ECDH private key
+   * @param jwe The encrypted access token
+   * @returns The token's payload
    */
-  public static async decryptOnBrowser(jwe: string, browserPrivateKey: CryptoKey, userPublicKey: CryptoKey | BufferSource): Promise<UserKeys> {
-    const publicKey = await UserKeys.publicKey(userPublicKey);
-    let rawKey = new Uint8Array();
-    try {
-      const payload: AccessTokenPayload = await JWE.parseCompact(jwe).decrypt(Recipient.ecdhEs('org.cryptomator.hub.deviceKey', browserPrivateKey));
-      rawKey = base64.parse(payload.key);
-      const privateKey = await crypto.subtle.importKey('pkcs8', rawKey, UserKeys.KEY_DESIGNATION, true, UserKeys.KEY_USAGES);
-      return new UserKeys({ publicKey: publicKey, privateKey: privateKey });
-    } finally {
-      rawKey.fill(0x00);
-    }
+  public async decryptAccessToken(jwe: string): Promise<AccessTokenPayload> {
+    const payload = await JWE.parseCompact(jwe).decrypt(Recipient.ecdhEs('org.cryptomator.hub.userkey', this.ecdhKeyPair.privateKey));
+    return payload;
   }
 
-  private static async publicKey(publicKey: CryptoKey | BufferSource): Promise<CryptoKey> {
-    if (publicKey instanceof CryptoKey) {
-      return publicKey;
-    } else {
-      return await crypto.subtle.importKey('spki', publicKey, UserKeys.KEY_DESIGNATION, true, []);
+  private async prepareForEncryption(): Promise<UserKeyPayload> {
+    const encodedEcdhPrivateKey = new Uint8Array(await crypto.subtle.exportKey('pkcs8', this.ecdhKeyPair.privateKey));
+    const encodedEcdsaPrivateKey = new Uint8Array(await crypto.subtle.exportKey('pkcs8', this.ecdsaKeyPair.privateKey));
+    try {
+      return {
+        key: base64.stringify(encodedEcdhPrivateKey), // redundant for backwards compatibility
+        ecdhPrivateKey: base64.stringify(encodedEcdhPrivateKey),
+        ecdsaPrivateKey: base64.stringify(encodedEcdsaPrivateKey)
+      };
+    } finally {
+      encodedEcdhPrivateKey.fill(0x00);
+      encodedEcdsaPrivateKey.fill(0x00);
     }
   }
 }
@@ -215,7 +233,7 @@ export class UserKeys { // TODO: rename to CurrentUserKeyPair
 export class BrowserKeys {
   public static readonly KEY_USAGES: KeyUsage[] = ['deriveBits'];
 
-  private static readonly KEY_DESIGNATION: EcKeyImportParams | EcKeyGenParams = {
+  public static readonly KEY_DESIGNATION: EcKeyImportParams | EcKeyGenParams = {
     name: 'ECDH',
     namedCurve: 'P-384'
   };
@@ -282,6 +300,14 @@ export class BrowserKeys {
   public async encodedPublicKey() {
     const publicKey = new Uint8Array(await crypto.subtle.exportKey('spki', this.keyPair.publicKey));
     return base64.stringify(publicKey);
+  }
+}
+
+async function asPublicKey(publicKey: CryptoKey | BufferSource, keyDesignation: EcKeyImportParams): Promise<CryptoKey> {
+  if (publicKey instanceof CryptoKey) {
+    return publicKey;
+  } else {
+    return await crypto.subtle.importKey('spki', publicKey, keyDesignation, true, []);
   }
 }
 

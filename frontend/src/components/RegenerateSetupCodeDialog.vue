@@ -99,12 +99,11 @@
 import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import { ClipboardIcon } from '@heroicons/vue/20/solid';
 import { ArrowPathIcon, KeyIcon } from '@heroicons/vue/24/outline';
-import { base64 } from 'rfc4648';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend from '../common/backend';
-import { BrowserKeys, UserKeys } from '../common/crypto';
 import { JWE, Recipient } from '../common/jwe';
+import userdata from '../common/userdata';
 import { debounce } from '../common/util';
 
 enum State {
@@ -151,23 +150,11 @@ async function regenerateSetupCode() {
   try {
     processing.value = true;
 
-    const me = await backend.users.me(true);
-    if (me.publicKey == null || me.setupCode == null) {
-      throw new Error('User not initialized.');
-    }
-    const browserKeys = await BrowserKeys.load(me.id);
-    if (browserKeys == null) {
-      throw new Error('Browser keys not found.');
-    }
-    const browserId = await browserKeys.id();
-    const myDevice = me.devices.find(d => d.id == browserId);
-    if (myDevice == null) {
-      throw new Error('Device not initialized.');
-    }
+    const me = await userdata.me;
     const newCode = crypto.randomUUID();
-    const userKeys = await UserKeys.decryptOnBrowser(myDevice.userPrivateKey, browserKeys.keyPair.privateKey, base64.parse(me.publicKey));
-    me.privateKey = await userKeys.encryptedPrivateKey(newCode);
-    me.setupCode = (await JWE.build({ setupCode: newCode }).encrypt(Recipient.ecdhEs('org.cryptomator.hub.userkey', userKeys.keyPair.publicKey))).compactSerialization();
+    const userKeys = await userdata.decryptUserKeysWithBrowser();
+    me.privateKey = await userKeys.encryptWithSetupCode(newCode);
+    me.setupCode = (await JWE.build({ setupCode: newCode }).encrypt(Recipient.ecdhEs('org.cryptomator.hub.userkey', userKeys.ecdhKeyPair.publicKey))).compactSerialization();
     await backend.users.putMe(me);
     setupCode.value = newCode;
 

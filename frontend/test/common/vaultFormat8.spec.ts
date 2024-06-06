@@ -32,9 +32,15 @@ describe('Vault Format 8', () => {
     testVault = await TestVaultKeys.create();
 
     // prepare some test key pairs:
-    const alicePrv = crypto.subtle.importKey('jwk', alicePrivate, UserKeys.KEY_DESIGNATION, true, UserKeys.KEY_USAGES);
-    const alicePub = crypto.subtle.importKey('jwk', alicePublic, UserKeys.KEY_DESIGNATION, true, []);
-    alice = new TestUserKeys({ privateKey: await alicePrv, publicKey: await alicePub });
+    let ecdhP384: EcKeyImportParams = { name: 'ECDH', namedCurve: 'P-384' };
+    let ecdsaP384: EcKeyImportParams = { name: 'ECDSA', namedCurve: 'P-384' };
+    const aliceEcdhPrv = crypto.subtle.importKey('jwk', alicePrivate, ecdhP384, true, ['deriveKey', 'deriveBits']);
+    const aliceEcdhPub = crypto.subtle.importKey('jwk', alicePublic, ecdhP384, true, []);
+    const aliceEcdsaPrv = crypto.subtle.importKey('jwk', alicePrivate, ecdsaP384, true, ['sign']);
+    const aliceEcdsaPub = crypto.subtle.importKey('jwk', alicePublic, ecdsaP384, true, []);
+    const aliceEcdh: CryptoKeyPair = { privateKey: await aliceEcdhPrv, publicKey: await aliceEcdhPub };
+    const aliceEcdsa: CryptoKeyPair = { privateKey: await aliceEcdsaPrv, publicKey: await aliceEcdsaPub };
+    alice = new TestUserKeys(aliceEcdh, aliceEcdsa);
   });
 
   it('create()', async () => {
@@ -111,7 +117,7 @@ describe('Vault Format 8', () => {
   });
 
   it('encryptForUser()', async () => {
-    const encrypted = await testVault.encryptForUser(alice.keyPair.publicKey);
+    const encrypted = await testVault.encryptForUser(alice.ecdhKeyPair.publicKey);
 
     expect(encrypted).to.be.not.null;
   });
@@ -180,8 +186,8 @@ class TestVaultKeys extends VaultFormat8 {
 }
 
 class TestUserKeys extends UserKeys {
-  public constructor(keyPair: CryptoKeyPair) {
-    super(keyPair);
+  public constructor(ecdhKeyPair: CryptoKeyPair, ecdsaKeyPair: CryptoKeyPair) {
+    super(ecdhKeyPair, ecdsaKeyPair);
   }
 }
 

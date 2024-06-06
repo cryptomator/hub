@@ -261,19 +261,18 @@
 
 <script setup lang="ts">
 import { ClipboardIcon, XCircleIcon } from '@heroicons/vue/20/solid';
-import { ArrowPathIcon, CheckIcon, KeyIcon, ArrowUpOnSquareIcon, DocumentCheckIcon } from '@heroicons/vue/24/outline';
+import { ArrowPathIcon, ArrowUpOnSquareIcon, CheckIcon, DocumentCheckIcon, KeyIcon } from '@heroicons/vue/24/outline';
 import { ArrowDownTrayIcon } from '@heroicons/vue/24/solid';
 import { saveAs } from 'file-saver';
-import { base64 } from 'rfc4648';
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { AccessGrant, PaymentRequiredError, VaultDto } from '../common/backend';
 import { absBackendBaseURL } from '../common/config';
 import { VaultTemplateProducing } from '../common/crypto';
 import { DecodeUvfRecoveryKeyError, UniversalVaultFormat } from '../common/universalVaultFormat';
+import userdata from '../common/userdata';
 import { debounce } from '../common/util';
 import { DecodeVf8RecoveryKeyError, VaultFormat8 } from '../common/vaultFormat8';
-import { computed } from 'vue';
 
 enum State {
   Initial,
@@ -468,9 +467,9 @@ async function createVault() {
   onCreateError.value = null;
   try {
     processing.value = true;
-    const owner = await backend.users.me();
-    if (!owner.publicKey) {
-      throw new Error('Invalid state');
+    const owner = await userdata.me;
+    if (!owner.setupCode) {
+      throw new Error('User not set up');
     }
     const ownerGrant: AccessGrant = { userId: owner.id, token: '' };
     switch (vaultType.value) {
@@ -478,14 +477,14 @@ async function createVault() {
         if (!vaultFormat8.value) {
           throw new Error('Invalid state');
         }
-        ownerGrant.token = await vaultFormat8.value.encryptForUser(base64.parse(owner.publicKey));
+        ownerGrant.token = await vaultFormat8.value.encryptForUser(await userdata.ecdhPublicKey);
         break;
       }
       case VaultType.UniversalVaultFormat: {
         if (!uvfVault.value) {
           throw new Error('Invalid state');
         }
-        ownerGrant.token = await uvfVault.value.encryptForUser(base64.parse(owner.publicKey), true);
+        ownerGrant.token = await uvfVault.value.encryptForUser(await userdata.ecdhPublicKey, true);
         const recoveryPublicKey = await uvfVault.value.recoveryKey.serializePublicKey();
         vault.value.uvfMetadataFile = await uvfVault.value.createMetadataFile(absBackendBaseURL, vault.value);
         vault.value.uvfKeySet = `{"keys": [${recoveryPublicKey}]}`;

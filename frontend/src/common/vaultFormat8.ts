@@ -4,8 +4,8 @@ import { base32, base64, base64url } from 'rfc4648';
 import { VaultDto } from './backend';
 import config, { absFrontendBaseURL } from './config';
 import { AccessTokenProducing, GCM_NONCE_LEN, OtherVaultMember, UnwrapKeyError, UserKeys, VaultTemplateProducing } from './crypto';
-import { CRC32, wordEncoder } from './util';
 import { JWT } from './jwt';
+import { CRC32, wordEncoder } from './util';
 
 interface VaultConfigPayload {
   jti: string
@@ -153,8 +153,8 @@ export class VaultFormat8 implements AccessTokenProducing, VaultTemplateProducin
     const vault = await this.recover(recoveryKey);
 
     const sigSeparatorIndex = vaultMetadataToken.lastIndexOf('.');
-    const headerPlusPayload = vaultMetadataToken.slice(0,sigSeparatorIndex);
-    const signature = vaultMetadataToken.slice(sigSeparatorIndex + 1,vaultMetadataToken.length);
+    const headerPlusPayload = vaultMetadataToken.slice(0, sigSeparatorIndex);
+    const signature = vaultMetadataToken.slice(sigSeparatorIndex + 1, vaultMetadataToken.length);
     const message = new TextEncoder().encode(headerPlusPayload);
     var digest = await crypto.subtle.sign(
       VaultFormat8.MASTERKEY_KEY_DESIGNATION,
@@ -181,8 +181,7 @@ export class VaultFormat8 implements AccessTokenProducing, VaultTemplateProducin
     try {
       decoded = wordEncoder.decode(recoveryKey);
     } catch (error) {
-      console.error(error);
-      throw new DecodeVf8RecoveryKeyError( error instanceof Error ? error.message : 'Internal error. See console log for more info.');
+      throw new DecodeVf8RecoveryKeyError(error instanceof Error ? error.message : 'Internal error. See console log for more info.');
     }
 
     if (decoded.length !== 66) {
