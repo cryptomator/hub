@@ -193,6 +193,7 @@ import { useI18n } from 'vue-i18n';
 import backend, { UserDto } from '../common/backend';
 import { BrowserKeys, UnwrapKeyError, UserKeys } from '../common/crypto';
 import { JWEBuilder } from '../common/jwe';
+import userdata from '../common/userdata';
 import { debounce } from '../common/util';
 import router from '../router';
 import FetchError from './FetchError.vue';
@@ -238,13 +239,11 @@ onMounted(fetchData);
 async function fetchData() {
   onFetchError.value = null;
   try {
-    me.value = await backend.users.me(true);
-    const browserKeys = await BrowserKeys.load(me.value.id);
-    const browserId = await browserKeys?.id();
-    if (!me.value.publicKey) {
+    me.value = await userdata.me;
+    if (!me.value.setupCode) {
       setupCode.value = crypto.randomUUID();
       state.value = State.CreateUserKey;
-    } else if (me.value.devices.find(d => d.id === browserId) == null) {
+    } else if (!await userdata.browser) {
       state.value = State.RecoverUserKey;
     } else {
       state.value = State.SetupAlreadyCompleted;
@@ -258,17 +257,16 @@ async function fetchData() {
 async function createUserKey() {
   onCreateError.value = null;
   try {
-    if (!me.value) {
-      throw new Error('Invalid state');
-    }
     processing.value = true;
+    const me = await userdata.me;
 
     const userKeys = await UserKeys.create();
-    me.value.publicKey = await userKeys.encodedPublicKey();
-    me.value.privateKey = await userKeys.encryptedPrivateKey(setupCode.value);
-    me.value.setupCode = await JWEBuilder.ecdhEs(userKeys.keyPair.publicKey).encrypt({ setupCode: setupCode.value });
-    const browserKeys = await createBrowserKeys(me.value.id);
-    await submitBrowserKeys(browserKeys, me.value, userKeys);
+    me.ecdhPublicKey = await userKeys.encodedEcdhPublicKey();
+    me.ecdsaPublicKey = await userKeys.encodedEcdsaPublicKey();
+    me.privateKey = await userKeys.encryptWithSetupCode(setupCode.value);
+    me.setupCode = await JWEBuilder.ecdhEs(userKeys.ecdhKeyPair.publicKey).encrypt({ setupCode: setupCode.value });
+    const browserKeys = await userdata.createBrowserKeys();
+    await submitBrowserKeys(browserKeys, me, userKeys);
 
     await router.push('/app/vaults');
   } catch (error) {
@@ -282,14 +280,12 @@ async function createUserKey() {
 async function recoverUserKey() {
   onRecoverError.value = null;
   try {
-    if (!me.value || !me.value.publicKey || !me.value.privateKey) {
-      throw new Error('Invalid state');
-    }
     processing.value = true;
 
-    const userKeys = await UserKeys.recover(me.value.publicKey, me.value.privateKey, setupCode.value);
-    const browserKeys = await createBrowserKeys(me.value.id);
-    await submitBrowserKeys(browserKeys, me.value, userKeys);
+    const me = await userdata.me;
+    const userKeys = await userdata.decryptUserKeysWithSetupCode(setupCode.value);
+    const browserKeys = await userdata.createBrowserKeys();
+    await submitBrowserKeys(browserKeys, me, userKeys);
 
     await router.push('/app/vaults');
   } catch (error) {
@@ -298,12 +294,6 @@ async function recoverUserKey() {
   } finally {
     processing.value = false;
   }
-}
-
-async function createBrowserKeys(userId: string): Promise<BrowserKeys> {
-  const browserKeys = await BrowserKeys.create();
-  await browserKeys.store(userId);
-  return browserKeys;
 }
 
 async function submitBrowserKeys(browserKeys: BrowserKeys, me: UserDto, userKeys: UserKeys) {
@@ -317,6 +307,7 @@ async function submitBrowserKeys(browserKeys: BrowserKeys, me: UserDto, userKeys
     creationTime: new Date()
   });
   await backend.users.putMe(me);
+  userdata.reload();
 }
 
 function guessBrowserName(): string {

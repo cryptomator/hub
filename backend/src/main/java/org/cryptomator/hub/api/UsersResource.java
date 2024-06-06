@@ -79,12 +79,35 @@ public class UsersResource {
 		user.setPictureUrl(jwt.getClaim("picture"));
 		user.setEmail(jwt.getClaim("email"));
 		if (dto != null) {
-			user.setPublicKey(dto.publicKey);
-			user.setPrivateKey(dto.privateKey);
+			user.setEcdhPublicKey(dto.ecdhPublicKey);
+			user.setEcdsaPublicKey(dto.ecdsaPublicKey);
+			user.setPrivateKeys(dto.privateKeys);
 			user.setSetupCode(dto.setupCode);
+			updateDevices(user, dto);
 		}
 		userRepo.persist(user);
 		return Response.created(URI.create(".")).build();
+	}
+
+	/**
+	 * Updates those devices that are present in both the entity and the DTO. No devices are added or removed.
+	 *
+	 * @param userEntity The persistent entity
+	 * @param userDto    The DTO
+	 */
+	private void updateDevices(User userEntity, UserDto userDto) {
+		var devices = userEntity.devices.stream().collect(Collectors.toUnmodifiableMap(Device::getId, Function.identity()));
+		var updatedDevices = userDto.devices.stream()
+				.filter(d -> devices.containsKey(d.id())) // only look at DTOs for which we find a matching existing entity
+				.map(dto -> {
+					var device = devices.get(dto.id());
+					device.setType(dto.type());
+					device.setName(dto.name());
+					device.setPublickey(dto.publicKey());
+					device.setUserPrivateKeys(dto.userPrivateKeys());
+					return device;
+				});
+		deviceRepo.persist(updatedDevices);
 	}
 
 	@POST
@@ -125,9 +148,9 @@ public class UsersResource {
 	@APIResponse(responseCode = "404", description = "no user matching the subject of the JWT passed as Bearer Token")
 	public UserDto getMe(@QueryParam("withDevices") boolean withDevices) {
 		User user = userRepo.findById(jwt.getSubject());
-		Function<Device, DeviceResource.DeviceDto> mapDevices = d -> new DeviceResource.DeviceDto(d.getId(), d.getName(), d.getType(), d.getPublickey(), d.getUserPrivateKey(), d.getOwner().getId(), d.getCreationTime().truncatedTo(ChronoUnit.MILLIS));
+		Function<Device, DeviceResource.DeviceDto> mapDevices = d -> new DeviceResource.DeviceDto(d.getId(), d.getName(), d.getType(), d.getPublickey(), d.getUserPrivateKeys(), d.getOwner().getId(), d.getCreationTime().truncatedTo(ChronoUnit.MILLIS));
 		var devices = withDevices ? user.devices.stream().map(mapDevices).collect(Collectors.toSet()) : Set.<DeviceResource.DeviceDto>of();
-		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), devices, user.getPublicKey(), user.getPrivateKey(), user.getSetupCode());
+		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), devices, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
 	}
 
 	@POST
@@ -139,8 +162,8 @@ public class UsersResource {
 	@APIResponse(responseCode = "204", description = "deleted keys, devices and access permissions")
 	public Response resetMe() {
 		User user = userRepo.findById(jwt.getSubject());
-		user.setPublicKey(null);
-		user.setPrivateKey(null);
+		user.setEcdhPublicKey(null);
+		user.setPrivateKeys(null);
 		user.setSetupCode(null);
 		userRepo.persist(user);
 		deviceRepo.deleteByOwner(user.getId());

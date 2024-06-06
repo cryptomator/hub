@@ -27,12 +27,11 @@
 <script setup lang="ts">
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/vue';
 import { ShieldCheckIcon, ShieldExclamationIcon } from '@heroicons/vue/20/solid';
-import { base64 } from 'rfc4648';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { TrustDto, UserDto } from '../common/backend';
-import { BrowserKeys, UserKeys } from '../common/crypto';
 import { JWT } from '../common/jwt';
+import userdata from '../common/userdata';
 import FetchError from './FetchError.vue';
 
 enum State {
@@ -43,7 +42,6 @@ enum State {
 const { t } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{
-  me: UserDto,
   userId: string
 }>();
 
@@ -51,11 +49,13 @@ const state = ref(State.Loading);
 const onFetchError = ref<Error | null>();
 const trust = ref<TrustDto | undefined>();
 const trustLevel = computed(computeTrustLevel);
+const me = ref<UserDto>();
 
-onMounted(loadTrust);
+onMounted(fetchData);
 
-async function loadTrust() {
+async function fetchData() {
   try {
+    me.value = await userdata.me;
     trust.value = await backend.trust.get(props.userId);
     state.value = State.ShowTrust;
   } catch (error) {
@@ -65,7 +65,7 @@ async function loadTrust() {
 }
 
 function computeTrustLevel() {
-  if (props.me.id === props.userId) {
+  if (me.value?.id === props.userId) {
     return 0; // Self
   } else if (trust.value) {
     return trust.value.signatureChain.length;
@@ -75,31 +75,20 @@ function computeTrustLevel() {
 }
 
 async function sign() {
-  // TODO: begin dedup and cache
-  if (props.me.publicKey == null || props.me.setupCode == null) {
-    throw new Error('User not initialized.');
-  }
-  const browserKeys = await BrowserKeys.load(props.me.id);
-  if (browserKeys == null) {
-    throw new Error('Browser keys not found.');
-  }
-  const browserId = await browserKeys.id();
-  const myDevice = props.me.devices.find(d => d.id == browserId);
-  if (myDevice == null) {
-    throw new Error('Device not initialized.');
-  }
-  const userKeys = await UserKeys.decryptOnBrowser(myDevice.userPrivateKey, browserKeys.keyPair.privateKey, base64.parse(props.me.publicKey));
-  // TODO: end dedup
-  const signature = JWT.build({
+  const userKeys = await userdata.decryptUserKeysWithBrowser();
+  const signature = await JWT.build({
     alg: 'ES384',
     typ: 'JWT',
     b64: true,
-    iss: props.me.id,
+    iss: me.value?.id,
     sub: props.userId,
     iat: Math.floor(Date.now() / 1000)
-  }, props.userId, userKeys.keyPair.privateKey);
+  }, props.userId, userKeys.ecdsaKeyPair.privateKey);
   // backend.trust.trustUser(props.userId, signature);
-  console.log('Sign', signature);
+
+  // TODO: remove debug output (for verifification onbly)
+  console.log('Signature: ', signature);
+  console.log('Signer\'s Public Key: ', await crypto.subtle.exportKey('jwk', userKeys.ecdsaKeyPair.publicKey));
 };
 
 </script>
