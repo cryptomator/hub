@@ -48,7 +48,6 @@
 import { ClipboardIcon, EyeIcon, EyeSlashIcon } from '@heroicons/vue/20/solid';
 import { nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { JWE, Recipient } from '../common/jwe';
 import userdata from '../common/userdata';
 import { debounce } from '../common/util';
 import FetchError from './FetchError.vue';
@@ -73,8 +72,7 @@ async function fetchData() {
       throw new Error('Invalid state');
     }
     const userKeys = await userdata.decryptUserKeysWithBrowser();
-    const payload : { setupCode: string } = await JWE.parseCompact(me.setupCode).decrypt(Recipient.ecdhEs('org.cryptomator.hub.userkey', userKeys.ecdhKeyPair.privateKey));
-    setupCode.value = payload.setupCode;
+    setupCode.value = await userdata.decryptSetupCode(userKeys);
   } catch (error) {
     console.error('Retrieving setup code failed.', error);
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
