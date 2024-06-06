@@ -101,7 +101,7 @@ onMounted(fetchData);
 
 async function fetchData() {
   for (const user of props.users) {
-    userKeyFingerprints.value.set(user.id, await getFingerprint(user.publicKey));
+    userKeyFingerprints.value.set(user.id, await getFingerprint(user.ecdhPublicKey));
   }
 }
 
@@ -124,8 +124,8 @@ async function grantAccess() {
 async function giveUsersAccess(users: UserDto[]) {
   let tokens: AccessGrant[] = [];
   for (const user of users) {
-    if (user.publicKey) { // some users might not have set up their key pair, so we can't share secrets with them yet
-      const publicKey = base64.parse(user.publicKey);
+    if (user.ecdhPublicKey) { // some users might not have set up their key pair, so we can't share secrets with them yet
+      const publicKey = base64.parse(user.ecdhPublicKey);
       const jwe = await props.vaultKeys.encryptForUser(publicKey);
       tokens.push({ userId: user.id, token: jwe });
     }

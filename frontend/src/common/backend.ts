@@ -72,7 +72,8 @@ export type UserDto = {
   email: string;
   devices: DeviceDto[];
   accessibleVaults: VaultDto[];
-  publicKey?: string;
+  ecdhPublicKey?: string;
+  ecdsaPublicKey?: string;
   privateKey?: string;
   setupCode?: string;
 }

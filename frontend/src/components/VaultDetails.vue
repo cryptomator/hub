@@ -202,20 +202,20 @@
   <DisplayRecoveryKeyDialog v-if="displayingRecoveryKey && vault && vaultKeys" ref="displayRecoveryKeyDialog" :vault="vault" :vault-keys="vaultKeys" @close="displayingRecoveryKey = false" />
   <ArchiveVaultDialog v-if="archivingVault && vault" ref="archiveVaultDialog" :vault="vault" @close="archivingVault = false" @archived="v => refreshVault(v)" />
   <ReactivateVaultDialog v-if="reactivatingVault && vault" ref="reactivateVaultDialog" :vault="vault" @close="reactivatingVault = false" @reactivated="v => { refreshVault(v); refreshLicense();}" />
-  <RecoverVaultDialog v-if="recoveringVault && vault && me" ref="recoverVaultDialog" :vault="vault" :me="me" @close="recoveringVault = false" @recovered="fetchOwnerData()" />
+  <RecoverVaultDialog v-if="recoveringVault && vault" ref="recoverVaultDialog" :vault="vault" @close="recoveringVault = false" @recovered="fetchOwnerData()" />
 </template>
 
 <script setup lang="ts">
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
 import { ArrowPathIcon, EllipsisVerticalIcon, ExclamationTriangleIcon } from '@heroicons/vue/20/solid';
 import { PlusSmallIcon } from '@heroicons/vue/24/solid';
-import { base64 } from 'rfc4648';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auth from '../common/auth';
 import backend, { AuthorityDto, ConflictError, ForbiddenError, LicenseUserInfoDto, MemberDto, NotFoundError, PaymentRequiredError, UserDto, VaultDto, VaultRole } from '../common/backend';
-import { BrowserKeys, UserKeys, VaultKeys } from '../common/crypto';
+import { VaultKeys } from '../common/crypto';
 import { JWT, JWTHeader } from '../common/jwt';
+import userdata from '../common/userdata';
 import ArchiveVaultDialog from './ArchiveVaultDialog.vue';
 import ClaimVaultOwnershipDialog from './ClaimVaultOwnershipDialog.vue';
 import DisplayRecoveryKeyDialog from './DisplayRecoveryKeyDialog.vue';
@@ -282,7 +282,7 @@ async function fetchData() {
   try {
     isAdmin.value = (await auth).isAdmin();
     vault.value = await backend.vaults.get(props.vaultId);
-    me.value = await backend.users.me(true);
+    me.value = await userdata.me;
     license.value = await backend.license.getUserInfo();
     if (props.vaultRole == 'OWNER') {
       await fetchOwnerData();
@@ -314,25 +314,13 @@ async function fetchOwnerData() {
 }
 
 async function loadVaultKeys(vaultKeyJwe: string): Promise<VaultKeys> {
-  if (!me.value || !me.value.publicKey) {
-    throw new Error('User not initialized.');
-  }
-  const browserKeys = await BrowserKeys.load(me.value.id);
-  if (browserKeys == null) {
-    throw new Error('Browser keys not found.');
-  }
-  const browserId = await browserKeys.id();
-  const myDevice = me.value.devices.find(d => d.id == browserId);
-  if (myDevice == null) {
-    throw new Error('Device not initialized.');
-  }
-  const userKeys = await UserKeys.decryptOnBrowser(myDevice.userPrivateKey, browserKeys.keyPair.privateKey, base64.parse(me.value.publicKey));
-  return VaultKeys.decryptWithUserKey(vaultKeyJwe, userKeys.keyPair.privateKey);
+  const userKeys = await userdata.decryptUserKeysWithBrowser();
+  return VaultKeys.decryptWithUserKey(vaultKeyJwe, userKeys.ecdhKeyPair.privateKey);
 }
 
 async function provedOwnership(keys: VaultKeys, ownerKeyPair: CryptoKeyPair) {
-  if (!me.value || !me.value.publicKey) {
-    throw new Error('User not initialized.');
+  if (!me.value) {
+    throw new Error('illegal state');
   }
 
   const header: JWTHeader = { alg: 'ES384', typ: 'JWT', b64: true };
@@ -347,7 +335,8 @@ async function provedOwnership(keys: VaultKeys, ownerKeyPair: CryptoKeyPair) {
     return;
   }
 
-  const vaultKeyJwe = keys.encryptForUser(base64.parse(me.value.publicKey));
+  const myPublicKey = await userdata.ecdhPublicKey;
+  const vaultKeyJwe = keys.encryptForUser(myPublicKey);
   try {
     await backend.vaults.grantAccess(props.vaultId, { userId: me.value.id, token: await vaultKeyJwe });
   } catch (error) {
