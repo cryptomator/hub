@@ -1,7 +1,7 @@
 import { base64 } from 'rfc4648';
 import backend, { DeviceDto, UserDto } from './backend';
 import { BrowserKeys, UserKeys } from './crypto';
-import { JWEParser } from './jwe';
+import { JWE, Recipient } from './jwe';
 
 class UserData {
 
@@ -120,6 +120,16 @@ class UserData {
     return userKeys;
   }
 
+  public async decryptSetupCode(userKeys: UserKeys): Promise<string> {
+    const me = await this.me;
+    if (me.setupCode) {
+      const payload: { setupCode: string } = await JWE.parseCompact(me.setupCode).decrypt(Recipient.ecdhEs('org.cryptomator.hub.userkey', userKeys.ecdhKeyPair.privateKey));
+      return payload.setupCode;
+    } else {
+      throw new Error('User not set up yet.');
+    }
+  }
+
   /**
    * Updates the stored user keys, if the ECDSA key was missing before (added in 1.4.0)
    * @param userKeys The user keys that contain the ECDSA key
@@ -127,9 +137,9 @@ class UserData {
   private async addEcdsaKeyIfMissing(userKeys: UserKeys) {
     const me = await this.me;
     if (me.setupCode && !me.ecdsaPublicKey) {
-      const payload: { setupCode: string } = await JWEParser.parse(me.setupCode).decryptEcdhEs(userKeys.ecdhKeyPair.privateKey);
+      const setupCode = await this.decryptSetupCode(userKeys);
       me.ecdsaPublicKey = await userKeys.encodedEcdsaPublicKey();
-      me.privateKey = await userKeys.encryptWithSetupCode(payload.setupCode);
+      me.privateKey = await userKeys.encryptWithSetupCode(setupCode);
       for (const device of me.devices) {
         device.userPrivateKey = await userKeys.encryptForDevice(base64.parse(device.publicKey));
       }
