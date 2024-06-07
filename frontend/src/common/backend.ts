@@ -252,7 +252,7 @@ class UserService {
 
 class TrustService {
   public async trustUser(userId: string, signature: string): Promise<void> {
-    return axiosAuth.put(`/users/trusted/${userId}`, signature);
+    return axiosAuth.put(`/users/trusted/${userId}`, signature, { headers: { 'Content-Type': 'text/plain' } });
   }
   public async get(userId: string): Promise<TrustDto | undefined> {
     return axiosAuth.get<TrustDto>(`/users/trusted/${userId}`).then(response => response.data)

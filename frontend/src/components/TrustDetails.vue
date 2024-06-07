@@ -16,7 +16,7 @@
     <transition enter-active-class="transition ease-out duration-100" enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 scale-100" leave-to-class="transform opacity-0 scale-95">
         <PopoverPanel class="absolute right-0 z-10 mt-2 origin-top-right rounded-md bg-white p-4 shadow-2xl ring-1 ring-black ring-opacity-5 focus:outline-none">
           <p class="text-sm">Trust Level {{ trustLevel }}</p>
-          <button v-if="trustLevel === -1" @click="sign()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary  text-base font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm">
+          <button v-if="trustLevel === -1 && trustedUser.ecdsaPublicKey" @click="sign()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary  text-base font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm">
             TODO sign
           </button>
         </PopoverPanel>
@@ -42,7 +42,7 @@ enum State {
 const { t } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{
-  userId: string
+  trustedUser: UserDto
 }>();
 
 const state = ref(State.Loading);
@@ -56,7 +56,7 @@ onMounted(fetchData);
 async function fetchData() {
   try {
     me.value = await userdata.me;
-    trust.value = await backend.trust.get(props.userId);
+    trust.value = await backend.trust.get(props.trustedUser.id);
     state.value = State.ShowTrust;
   } catch (error) {
     console.error('Fetching data failed.', error);
@@ -65,9 +65,10 @@ async function fetchData() {
 }
 
 function computeTrustLevel() {
-  if (me.value?.id === props.userId) {
+  if (me.value?.id === props.trustedUser.id) {
     return 0; // Self
   } else if (trust.value) {
+    // TODO: check signature
     return trust.value.signatureChain.length;
   } else {
     return -1; // Unverified
@@ -75,20 +76,20 @@ function computeTrustLevel() {
 }
 
 async function sign() {
+  if (!props.trustedUser.ecdsaPublicKey) {
+    throw new Error('No public key to sign');
+  }
   const userKeys = await userdata.decryptUserKeysWithBrowser();
   const signature = await JWT.build({
     alg: 'ES384',
     typ: 'JWT',
     b64: true,
     iss: me.value?.id,
-    sub: props.userId,
+    sub: props.trustedUser.id,
     iat: Math.floor(Date.now() / 1000)
-  }, props.userId, userKeys.ecdsaKeyPair.privateKey);
-  // backend.trust.trustUser(props.userId, signature);
-
-  // TODO: remove debug output (for verifification onbly)
-  console.log('Signature: ', signature);
-  console.log('Signer\'s Public Key: ', await crypto.subtle.exportKey('jwk', userKeys.ecdsaKeyPair.publicKey));
+  }, props.trustedUser.ecdsaPublicKey, userKeys.ecdsaKeyPair.privateKey);
+  await backend.trust.trustUser(props.trustedUser.id, signature);
+  trust.value = await backend.trust.get(props.trustedUser.id);
 };
 
 </script>
