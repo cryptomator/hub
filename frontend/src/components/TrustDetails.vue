@@ -4,7 +4,7 @@
       {{ t('common.loading') }}
     </div>
     <div v-else>
-      <FetchError :error="onFetchError" :retry="loadTrust"/>
+      <FetchError :error="onFetchError" :retry="fetchData"/>
     </div>
   </div>
   <Popover v-else-if="state === State.ShowTrust" as="div" class="relative inline-block text-left">
