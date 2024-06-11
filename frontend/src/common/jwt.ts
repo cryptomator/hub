@@ -9,7 +9,7 @@ export type JWTHeader = {
 
 export class JWT {
   /**
-   * Creates a ES384 JWT (signed with ECDSA using P-384 and SHA-384).
+   * Creates an ES384 JWT (signed with ECDSA using P-384 and SHA-384).
    * 
    * See <a href="https://datatracker.ietf.org/doc/html/rfc7519">RFC 7519</a>,
    * <a href="https://datatracker.ietf.org/doc/html/rfc7515">RFC 7515</a> and
@@ -37,5 +37,42 @@ export class JWT {
       headerAndPayload
     );
     return base64url.stringify(new Uint8Array(signature), { pad: false });
+  }
+
+  /**
+   * Decodes and verifies an ES384 JWT (signed with ECDSA using P-384 and SHA-384).
+   * @param jwt 
+   * @param signerPublicKey 
+   * @returns header and payload
+   * @throws Error if the JWT is invalid
+   */
+  public static async parse(jwt: string, signerPublicKey: CryptoKey): Promise<[JWTHeader, any]> {
+    const [encodedHeader, encodedPayload, encodedSignature] = jwt.split('.');
+    const header: JWTHeader = JSON.parse(new TextDecoder().decode(base64url.parse(encodedHeader, { loose: true })));
+    if (header.alg !== 'ES384') {
+      throw new Error('Unsupported algorithm');
+    }
+    const validSignature = await this.es384verify(jwt, signerPublicKey);
+    if (!validSignature) {
+      throw new Error('Invalid signature');
+    }
+    const payload = JSON.parse(new TextDecoder().decode(base64url.parse(encodedPayload, { loose: true })));
+    return [header, payload];
+  }
+
+  // visible for testing
+  public static async es384verify(jwt: string, signerPublicKey: CryptoKey): Promise<boolean> {
+    const [encodedHeader, encodedPayload, encodedSignature] = jwt.split('.');
+    const headerAndPayload = new TextEncoder().encode(encodedHeader + '.' + encodedPayload);
+    const signature = base64url.parse(encodedSignature);
+    return window.crypto.subtle.verify(
+      {
+        name: 'ECDSA',
+        hash: { name: 'SHA-384' },
+      },
+      signerPublicKey,
+      signature,
+      headerAndPayload
+    );
   }
 }
