@@ -483,7 +483,7 @@ export async function getFingerprint(key: string | undefined) {
  * @param key A key to compute the thumbprint for
  * @throws Error if the key is not supported
  */
-export async function getJwkThumbprint(key: JsonWebKey | CryptoKey): Promise<string> {
+export async function getJwkThumbprint(key: JsonWebKey | CryptoKey): Promise<Uint8Array> {
   let jwk: JsonWebKey;
   if (key instanceof CryptoKey) {
     jwk = await crypto.subtle.exportKey('jwk', key);
@@ -505,6 +505,5 @@ export async function getJwkThumbprint(key: JsonWebKey | CryptoKey): Promise<str
     default: throw new Error('Unsupported key type');
   }
   const bytes = new TextEncoder().encode(orderedJson);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', bytes);
-  return base64url.stringify(new Uint8Array(hashBuffer), { pad: false });
+  return new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
 }

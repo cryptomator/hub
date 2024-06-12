@@ -1,7 +1,7 @@
 import { use as chaiUse, expect } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { before, describe } from 'mocha';
-import { base64 } from 'rfc4648';
+import { base64, base64url } from 'rfc4648';
 import { UnwrapKeyError, UserKeys, VaultKeys, getJwkThumbprint } from '../../src/common/crypto';
 
 chaiUse(chaiAsPromised);
@@ -252,7 +252,7 @@ describe('crypto', () => {
 
       const thumbprint = await getJwkThumbprint(input);
 
-      expect(thumbprint).to.eq('NzbLsXh8uDCcd-6MNwXF4W_7noWXFZAfHkxZsRGC9Xs');
+      expect(base64url.stringify(thumbprint, { pad: false })).to.eq('NzbLsXh8uDCcd-6MNwXF4W_7noWXFZAfHkxZsRGC9Xs');
     });
 
   });
