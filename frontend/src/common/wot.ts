@@ -1,6 +1,6 @@
 import { base64 } from 'rfc4648';
 import backend, { TrustDto, UserDto } from './backend';
-import { UserKeys, asPublicKey } from './crypto';
+import { UserKeys, asPublicKey, getJwkThumbprint } from './crypto';
 import { JWT, JWTHeader } from './jwt';
 import userdata from './userdata';
 
@@ -75,4 +75,22 @@ async function verifyRescursive(signatureChain: string[], signerPublicKey: Crypt
   }
 }
 
-export default { sign, verify };
+async function computeFingerprint(user: UserDto) {
+  if (!user.ecdhPublicKey || !user.ecdsaPublicKey) {
+    throw new Error('User has no public keys');
+  }
+  const ecdhPublicKey = await asPublicKey(base64.parse(user.ecdhPublicKey), UserKeys.ECDH_KEY_DESIGNATION);
+  const ecdsaPublicKey = await asPublicKey(base64.parse(user.ecdsaPublicKey), UserKeys.ECDSA_KEY_DESIGNATION, UserKeys.ECDSA_PUB_KEY_USAGES);
+  const concatenatedThumbprints = new Uint8Array([
+    ...await getJwkThumbprint(ecdhPublicKey),
+    ...await getJwkThumbprint(ecdsaPublicKey)
+  ]);
+  const digest = await crypto.subtle.digest('SHA-256', concatenatedThumbprints);
+  const digestBytes = Array.from(new Uint8Array(digest));
+  const digestHexStr = digestBytes
+    .map((b) => b.toString(16).padStart(2, '0').toUpperCase())
+    .join('');
+  return digestHexStr;
+}
+
+export default { sign, verify, computeFingerprint };

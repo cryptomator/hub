@@ -466,18 +466,6 @@ export async function asPublicKey(publicKey: CryptoKey | BufferSource, keyDesign
   }
 }
 
-export async function getFingerprint(key: string | undefined) {
-  if (key) {
-    const encodedKey = new TextEncoder().encode(key);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', encodedKey);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray
-      .map((b) => b.toString(16).padStart(2, '0').toUpperCase())
-      .join('');
-    return hashHex;
-  }
-}
-
 /**
  * Computes the JWK Thumbprint (RFC 7638) using SHA-256.
  * @param key A key to compute the thumbprint for

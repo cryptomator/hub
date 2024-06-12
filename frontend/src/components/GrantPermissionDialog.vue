@@ -72,7 +72,8 @@ import { base64 } from 'rfc4648';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { AccessGrant, ConflictError, NotFoundError, UserDto, VaultDto } from '../common/backend';
-import { VaultKeys, getFingerprint } from '../common/crypto';
+import { VaultKeys } from '../common/crypto';
+import wot from '../common/wot';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -101,7 +102,7 @@ onMounted(fetchData);
 
 async function fetchData() {
   for (const user of props.users) {
-    userKeyFingerprints.value.set(user.id, await getFingerprint(user.ecdhPublicKey));
+    userKeyFingerprints.value.set(user.id, await wot.computeFingerprint(user));
   }
 }
 
