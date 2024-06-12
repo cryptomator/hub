@@ -477,3 +477,34 @@ export async function getFingerprint(key: string | undefined) {
     return hashHex;
   }
 }
+
+/**
+ * Computes the JWK Thumbprint (RFC 7638) using SHA-256.
+ * @param key A key to compute the thumbprint for
+ * @throws Error if the key is not supported
+ */
+export async function getJwkThumbprint(key: JsonWebKey | CryptoKey): Promise<string> {
+  let jwk: JsonWebKey;
+  if (key instanceof CryptoKey) {
+    jwk = await crypto.subtle.exportKey('jwk', key);
+  } else {
+    jwk = key;
+  }
+  // see https://datatracker.ietf.org/doc/html/rfc7638#section-3.2
+  let orderedJson: string;
+  switch (jwk.kty) {
+    case 'EC':
+      orderedJson = `{"crv":"${jwk.crv}","kty":"${jwk.kty}","x":"${jwk.x}","y":"${jwk.y}"}`;
+      break;
+    case 'RSA':
+      orderedJson = `{"e":"${jwk.e}","kty":"${jwk.kty}","n":"${jwk.n}"}`;
+      break;
+    case 'oct':
+      orderedJson = `{"k":"${jwk.k}","kty":"${jwk.kty}"}`;
+      break;
+    default: throw new Error('Unsupported key type');
+  }
+  const bytes = new TextEncoder().encode(orderedJson);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', bytes);
+  return base64url.stringify(new Uint8Array(hashBuffer), { pad: false });
+}

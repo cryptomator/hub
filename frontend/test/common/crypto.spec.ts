@@ -2,7 +2,7 @@ import { use as chaiUse, expect } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { before, describe } from 'mocha';
 import { base64 } from 'rfc4648';
-import { UnwrapKeyError, UserKeys, VaultKeys } from '../../src/common/crypto';
+import { UnwrapKeyError, UserKeys, VaultKeys, getJwkThumbprint } from '../../src/common/crypto';
 
 chaiUse(chaiAsPromised);
 
@@ -235,6 +235,26 @@ describe('crypto', () => {
       const result = await vaultKeys.hashDirectoryId('918acfbd-a467-3f77-93f1-f4a44f9cfe9c');
       expect(result).to.eql('7C3USOO3VU7IVQRKFMRFV3QE4VEZJECV');
     });
+  });
+
+
+  describe('JWK Thumbprint', () => {
+
+    // https://datatracker.ietf.org/doc/html/rfc7638#section-3.1
+    it('compute example thumbprint from RFC 7638, Section 3.1', async () => {
+      const input: JsonWebKey & any = {
+        kty: 'RSA',
+        n: '0vx7agoebGcQSuuPiLJXZptN9nndrQmbXEps2aiAFbWhM78LhWx4cbbfAAtVT86zwu1RK7aPFFxuhDR1L6tSoc_BJECPebWKRXjBZCiFV4n3oknjhMstn64tZ_2W-5JsGY4Hc5n9yBXArwl93lqt7_RN5w6Cf0h4QyQ5v-65YGjQR0_FDW2QvzqY368QQMicAtaSqzs8KJZgnYb9c7d0zgdAZHzu6qMQvRL5hajrn1n91CbOpbISD08qNLyrdkt-bFTWhAI4vMQFh6WeZu0fM4lFd2NcRwr3XPksINHaQ-G_xBniIqbw0Ls1jF44-csFCur-kEgU8awapJzKnqDKgw',
+        e: 'AQAB',
+        alg: 'RS256',
+        kid: '2011-04-29'
+      };
+
+      const thumbprint = await getJwkThumbprint(input);
+
+      expect(thumbprint).to.eq('NzbLsXh8uDCcd-6MNwXF4W_7noWXFZAfHkxZsRGC9Xs');
+    });
+
   });
 });
 
