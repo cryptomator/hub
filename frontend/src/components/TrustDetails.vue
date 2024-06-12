@@ -27,13 +27,11 @@
 <script setup lang="ts">
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/vue';
 import { ShieldCheckIcon, ShieldExclamationIcon } from '@heroicons/vue/20/solid';
-import { base64 } from 'rfc4648';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { TrustDto, UserDto } from '../common/backend';
-import { UserKeys, asPublicKey } from '../common/crypto';
-import { JWT, JWTHeader } from '../common/jwt';
 import userdata from '../common/userdata';
+import wot from '../common/wot';
 import FetchError from './FetchError.vue';
 
 enum State {
@@ -71,7 +69,7 @@ async function computeTrustLevel(trust?: TrustDto) {
     return 0; // Self
   } else if (trust && props.trustedUser.ecdsaPublicKey) {
     try {
-      await verify(trust.signatureChain, props.trustedUser.ecdsaPublicKey);
+      await wot.verify(trust.signatureChain, props.trustedUser.ecdsaPublicKey);
       return trust.signatureChain.length;
     } catch (error) {
       console.error('WoT signature verification failed.', error);
@@ -83,54 +81,7 @@ async function computeTrustLevel(trust?: TrustDto) {
 }
 
 async function sign() {
-  if (!props.trustedUser.ecdsaPublicKey) {
-    throw new Error('No public key to sign');
-  }
-  const me = await userdata.me;
-  const userKeys = await userdata.decryptUserKeysWithBrowser();
-  const signature = await JWT.build({
-    alg: 'ES384',
-    typ: 'JWT',
-    b64: true,
-    iss: me.id,
-    sub: props.trustedUser.id,
-    iat: Math.floor(Date.now() / 1000)
-  }, props.trustedUser.ecdsaPublicKey, userKeys.ecdsaKeyPair.privateKey);
-  await backend.trust.trustUser(props.trustedUser.id, signature);
-  trust.value = await backend.trust.get(props.trustedUser.id);
-
-
-  // TODO: remove debug output (for verifification onbly)
-  console.log('Signature: ', signature);
-  console.log('Signer\'s Public Key: ', await crypto.subtle.exportKey('jwk', userKeys.ecdsaKeyPair.publicKey));
-}
-
-async function verify(signatureChain: string[], allegedSignedKey: string) {
-  let signerPublicKey = await userdata.decryptUserKeysWithBrowser().then(keys => keys.ecdsaKeyPair.publicKey);
-  await verifyRescursive(signatureChain, signerPublicKey, allegedSignedKey);
-}
-
-/**
- * Recursively verifies a chain of signatures, where each signature signs the public key of the next signature.
- * @param signatureChain The chain of signatures to verify
- * @param signerPublicKey A trusted public key to verify the first signature in the chain
- * @param allegedSignedKey The public key that should be signed by the last signature in the chain
- * @throws Error if the signature chain is invalid
- */
-async function verifyRescursive(signatureChain: string[], signerPublicKey: CryptoKey, allegedSignedKey: string) {
-  // get first element of signature chain:
-  const [signature, ...remainingChain] = signatureChain;
-  const [_, signedPublicKey] = await JWT.parse(signature, signerPublicKey) as [JWTHeader, string];
-  if (remainingChain.length === 0) {
-    // last element in chain should match signed public key
-    if (signedPublicKey !== allegedSignedKey) {
-      throw new Error('Alleged public key does not match signed public key');
-    }
-  } else {
-    // otherwise, the payload is an intermediate public key used to sign the next element
-    const nextTrustedPublicKey = await asPublicKey(base64.parse(signedPublicKey), UserKeys.ECDSA_KEY_DESIGNATION, UserKeys.ECDSA_PUB_KEY_USAGES);
-    await verifyRescursive(remainingChain, nextTrustedPublicKey, allegedSignedKey);
-  }
+  trust.value = await wot.sign(props.trustedUser);
 }
 
 </script>
