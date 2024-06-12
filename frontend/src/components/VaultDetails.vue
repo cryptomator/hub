@@ -47,7 +47,7 @@
                 <div class="flex items-center whitespace-nowrap w-full" :title="member.name">
                   <img :src="member.pictureUrl" alt="" class="w-8 h-8 rounded-full" />
                   <p class="w-full ml-4 text-sm font-medium text-gray-900 truncate">{{ member.name }}</p>
-                  <TrustDetails v-if="member.type === 'USER'" :trusted-user="member"/>
+                  <TrustDetails v-if="member.type === 'USER'" :trusted-user="member" :trusts="trusts" @trust-changed="refreshTrusts()"/>
                   <div v-if="member.role == 'OWNER'" class="ml-3 inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">{{ t('vaultDetails.sharedWith.badge.owner') }}</div>
                 </div>
                 <Menu v-if="member.id != me?.id" as="div" class="relative ml-2 inline-block flex-shrink-0 text-left">
@@ -213,7 +213,7 @@ import { PlusSmallIcon } from '@heroicons/vue/24/solid';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auth from '../common/auth';
-import backend, { AuthorityDto, ConflictError, ForbiddenError, LicenseUserInfoDto, MemberDto, NotFoundError, PaymentRequiredError, UserDto, VaultDto, VaultRole } from '../common/backend';
+import backend, { AuthorityDto, ConflictError, ForbiddenError, LicenseUserInfoDto, MemberDto, NotFoundError, PaymentRequiredError, TrustDto, UserDto, VaultDto, VaultRole } from '../common/backend';
 import { VaultKeys } from '../common/crypto';
 import { JWT, JWTHeader } from '../common/jwt';
 import userdata from '../common/userdata';
@@ -266,6 +266,7 @@ const recoverVaultDialog = ref<typeof RecoverVaultDialog>();
 const vault = ref<VaultDto>();
 const vaultKeys = ref<VaultKeys>();
 const members = ref<Map<string, MemberDto>>(new Map());
+const trusts = ref<TrustDto[]>([]);
 const usersRequiringAccessGrant = ref<UserDto[]>([]);
 const claimVaultOwnershipDialog = ref<typeof ClaimVaultOwnershipDialog>();
 const claimingVaultOwnership = ref(false);
@@ -298,6 +299,7 @@ async function fetchData() {
 async function fetchOwnerData() {
   try {
     (await backend.vaults.getMembers(props.vaultId)).forEach(member => members.value.set(member.id, member));
+    await refreshTrusts();
     usersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
     vaultRecoveryRequired.value = false;
     const vaultKeyJwe = await backend.vaults.accessToken(props.vaultId, true);
@@ -447,6 +449,10 @@ function showRecoverVaultDialog() {
 
 function permissionGranted() {
   usersRequiringAccessGrant.value = [];
+}
+
+async function refreshTrusts() {
+  trusts.value = await backend.trust.listTrusted();
 }
 
 async function refreshLicense() {
