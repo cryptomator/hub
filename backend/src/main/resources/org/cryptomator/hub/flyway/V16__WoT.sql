@@ -1,4 +1,5 @@
 ALTER TABLE "settings" ADD "wot_max_depth" INTEGER NOT NULL DEFAULT 3;
+ALTER TABLE "settings" ADD "wot_id_verify_len" INTEGER NOT NULL DEFAULT 2;
 ALTER TABLE "settings" ADD CONSTRAINT "check_wot_max_depth" CHECK ("wot_max_depth" >= 0 AND "wot_max_depth" < 10);
 
 CREATE TABLE "wot" (
