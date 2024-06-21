@@ -100,6 +100,16 @@ public class EventLogger {
 		auditEventRepository.persist(event);
 	}
 
+	public void logWotIdSigned(String userId, String signerId, String signerKey, String signature) {
+		var event = new SignedWotIdEvent();
+		event.setTimestamp(Instant.now());
+		event.setUserId(userId);
+		event.setSignerId(signerId);
+		event.setSignerKey(signerKey);
+		event.setSignature(signature);
+		auditEventRepository.persist(event);
+	}
+
 	//legacy
 	public void logVaultOwnershipClaimed(String claimedBy, UUID vaultId) {
 		var event = new VaultOwnershipClaimedEvent();

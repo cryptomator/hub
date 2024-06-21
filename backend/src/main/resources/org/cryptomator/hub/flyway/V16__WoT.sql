@@ -11,6 +11,17 @@ CREATE TABLE "wot" (
     CONSTRAINT "fk_signer_id" FOREIGN KEY ("signer_id") REFERENCES "user_details" ("id") ON DELETE CASCADE
 );
 
+CREATE TABLE "audit_event_sign_wot_id"
+(
+	"id"          BIGINT NOT NULL,
+	"user_id"     VARCHAR(255) COLLATE "C" NOT NULL,
+	"signer_id"   VARCHAR(255) COLLATE "C" NOT NULL,
+	"signer_key"  VARCHAR NOT NULL,
+	"signature"   VARCHAR NOT NULL,
+	CONSTRAINT "AUDIT_EVENT_SIGN_WOT_ID_PK" PRIMARY KEY ("id"),
+	CONSTRAINT "AUDIT_EVENT_SIGN_WOT_ID_FK_AUDIT_EVENT" FOREIGN KEY ("id") REFERENCES "audit_event" ("id") ON DELETE CASCADE
+);
+
 -- @formatter:off
 CREATE VIEW "effective_wot" ("trusting_user_id", "trusted_user_id", "signature_chain") AS
 WITH RECURSIVE "r" ("trusting_user_id", "trusted_user_id", "depth", "signer_chain", "signature_chain") AS (

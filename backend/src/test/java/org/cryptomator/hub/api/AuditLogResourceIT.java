@@ -1,12 +1,16 @@
 package org.cryptomator.hub.api;
 
+import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.restassured.RestAssured;
+import org.cryptomator.hub.license.LicenseHolder;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
@@ -16,9 +20,18 @@ import static org.hamcrest.Matchers.comparesEqualTo;
 @DisplayName("Resource /auditlog")
 public class AuditLogResourceIT {
 
+	@InjectMock
+	LicenseHolder licenseHolder;
+
 	@BeforeAll
 	public static void beforeAll() {
 		RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
+	}
+
+	@BeforeEach
+	public void beforeEach() {
+		Mockito.doReturn(true).when(licenseHolder).isSet();
+		Mockito.doReturn(false).when(licenseHolder).isExpired();
 	}
 
 	@Test

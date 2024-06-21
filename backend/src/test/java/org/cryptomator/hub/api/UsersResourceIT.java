@@ -1,6 +1,7 @@
 package org.cryptomator.hub.api;
 
 import io.agroal.api.AgroalDataSource;
+import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.quarkus.test.security.oidc.Claim;
@@ -8,6 +9,8 @@ import io.quarkus.test.security.oidc.OidcSecurity;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
+import org.cryptomator.hub.license.LicenseHolder;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -19,13 +22,18 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.mockito.Mockito;
 
 import java.sql.SQLException;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.comparesEqualTo;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
 
@@ -35,6 +43,9 @@ public class UsersResourceIT {
 
 	@Inject
 	AgroalDataSource dataSource;
+
+	@InjectMock
+	LicenseHolder licenseHolder;
 
 	@BeforeAll
 	public static void beforeAll() {
@@ -138,16 +149,19 @@ public class UsersResourceIT {
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 	public class WebOfTrust {
 
+		private Instant testStart;
+
 		@BeforeAll
 		public void setup() throws SQLException {
+			testStart = Instant.now();
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
 						INSERT INTO "authority" ("id", "type", "name") VALUES ('user997', 'USER', 'User 997');
 						INSERT INTO "authority" ("id", "type", "name") VALUES ('user998', 'USER', 'User 998');
 						INSERT INTO "authority" ("id", "type", "name") VALUES ('user999', 'USER', 'User 999');
-						INSERT INTO "user_details" ("id") VALUES ('user997');
-						INSERT INTO "user_details" ("id") VALUES ('user998');
-						INSERT INTO "user_details" ("id") VALUES ('user999');
+						INSERT INTO "user_details" ("id", "ecdsa_publickey") VALUES ('user997', 'ecdsa_public997');
+						INSERT INTO "user_details" ("id", "ecdsa_publickey") VALUES ('user998', 'ecdsa_public998');
+						INSERT INTO "user_details" ("id", "ecdsa_publickey") VALUES ('user999', 'ecdsa_public999');
 						""");
 			}
 		}
@@ -180,7 +194,7 @@ public class UsersResourceIT {
 
 		@Test
 		@Order(1)
-		@DisplayName("PUT /users/trusted/user999 as user 998")
+		@DisplayName("PUT /users/trusted/user997 as user 998")
 		@TestSecurity(user = "User 998", roles = {"user"})
 		@OidcSecurity(claims = {
 				@Claim(key = "sub", value = "user998")
@@ -272,6 +286,22 @@ public class UsersResourceIT {
 		public void test999Gets998() {
 			given().when().get("/users/trusted/user998")
 					.then().statusCode(404);
+		}
+
+		@Test
+		@Order(4)
+		@TestSecurity(user = "Admin", roles = {"admin"})
+		@DisplayName("As admin, GET /auditlog contains signature events")
+		public void testGetAuditLogEntries() {
+			Mockito.doReturn(true).when(licenseHolder).isSet();
+			Mockito.doReturn(false).when(licenseHolder).isExpired();
+
+			given().param("startDate", DateTimeFormatter.ISO_INSTANT.format(testStart))
+					.param("endDate", DateTimeFormatter.ISO_INSTANT.format(Instant.now()))
+					.param("paginationId", 9999L)
+					.when().get("/auditlog")
+					.then().statusCode(200)
+					.body("signature", contains("997 trusts 998", "998 trusts 999", "998 trusts 997"));
 		}
 
 

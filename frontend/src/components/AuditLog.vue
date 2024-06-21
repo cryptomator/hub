@@ -103,6 +103,7 @@
                   </td>
                   <AuditLogDetailsDeviceRegister v-if="auditEvent.type == 'DEVICE_REGISTER'" :event="auditEvent" />
                   <AuditLogDetailsDeviceRemove v-else-if="auditEvent.type == 'DEVICE_REMOVE'" :event="auditEvent" />
+                  <AuditLogDetailsSignedWotId v-else-if="auditEvent.type == 'SIGN_WOT_ID'" :event="auditEvent" />
                   <AuditLogDetailsVaultCreate v-else-if="auditEvent.type == 'VAULT_CREATE'" :event="auditEvent" />
                   <AuditLogDetailsVaultUpdate v-else-if="auditEvent.type == 'VAULT_UPDATE'" :event="auditEvent" />
                   <AuditLogDetailsVaultAccessGrant v-else-if="auditEvent.type == 'VAULT_ACCESS_GRANT'" :event="auditEvent" />
@@ -164,10 +165,11 @@ import { ChevronDownIcon } from '@heroicons/vue/20/solid';
 import { CheckIcon, ChevronUpDownIcon, WrenchIcon } from '@heroicons/vue/24/solid';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import auditlog, { AuditEventDeviceRegisterDto, AuditEventDeviceRemoveDto, AuditEventDto, AuditEventVaultAccessGrantDto, AuditEventVaultCreateDto, AuditEventVaultKeyRetrieveDto, AuditEventVaultMemberAddDto, AuditEventVaultMemberRemoveDto, AuditEventVaultMemberUpdateDto, AuditEventVaultOwnershipClaimDto, AuditEventVaultUpdateDto } from '../common/auditlog';
+import auditlog, { AuditEventDto } from '../common/auditlog';
 import { PaymentRequiredError } from '../common/backend';
 import AuditLogDetailsDeviceRegister from './AuditLogDetailsDeviceRegister.vue';
 import AuditLogDetailsDeviceRemove from './AuditLogDetailsDeviceRemove.vue';
+import AuditLogDetailsSignedWotId from './AuditLogDetailsSignedWotId.vue';
 import AuditLogDetailsVaultAccessGrant from './AuditLogDetailsVaultAccessGrant.vue';
 import AuditLogDetailsVaultCreate from './AuditLogDetailsVaultCreate.vue';
 import AuditLogDetailsVaultKeyRetrieve from './AuditLogDetailsVaultKeyRetrieve.vue';

@@ -177,7 +177,7 @@ public class UsersResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "list all users")
 	public List<UserDto> getAll() {
-		return userRepo.findAll().<User>stream().map(UserDto::justPublicInfo).toList();
+		return userRepo.findAll().stream().map(UserDto::justPublicInfo).toList();
 	}
 
 	@PUT
@@ -188,9 +188,10 @@ public class UsersResource {
 	@Operation(summary = "adds/updates trust", description = "Stores a signature for the given user.")
 	@APIResponse(responseCode = "204", description = "signature stored")
 	public Response putSignature(@PathParam("userId") String userId, @NotNull String signature) {
+		var signer = userRepo.findById(jwt.getSubject());
 		var id = new WotEntry.Id();
 		id.setUserId(userId);
-		id.setSignerId(jwt.getSubject());
+		id.setSignerId(signer.getId());
 		var entry = wotRepo.findById(id);
 		if (entry == null) {
 			entry = new WotEntry();
@@ -198,6 +199,7 @@ public class UsersResource {
 		}
 		entry.setSignature(signature);
 		wotRepo.persist(entry);
+		eventLogger.logWotIdSigned(userId, signer.getId(), signer.getEcdsaPublicKey(), signature);
 		return Response.status(Response.Status.NO_CONTENT).build();
 	}
 
