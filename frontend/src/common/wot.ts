@@ -75,6 +75,11 @@ async function verifyRescursive(signatureChain: string[], signerPublicKey: Crypt
   }
 }
 
+/**
+ * Creates a unique fingerprint for a user by hashing the concatenated thumbprints of their public keys.
+ * @param user The user whose fingerprint to compute
+ * @returns Hexadecimal representation of the fingerprint
+ */
 async function computeFingerprint(user: UserDto) {
   if (!user.ecdhPublicKey || !user.ecdsaPublicKey) {
     throw new Error('User has no public keys');

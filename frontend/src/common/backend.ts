@@ -112,6 +112,12 @@ export type VersionDto = {
   keycloakVersion: string;
 }
 
+export type SettingsDto = {
+  hubId: string,
+  wotMaxDepth: number,
+  wotIdVerifyLen: number
+}
+
 export class LicenseUserInfoDto {
   constructor(
     public licensedSeats: number,
@@ -355,6 +361,12 @@ class VersionService {
   }
 }
 
+class SettingsService {
+  public async get(): Promise<SettingsDto> {
+    return axiosAuth.get<SettingsDto>('/settings').then(response => response.data);
+  }
+}
+
 /**
  * Note: Each service can thrown an {@link UnauthorizedError} when the access token is expired!
  */
@@ -366,7 +378,8 @@ const services = {
   devices: new DeviceService(),
   billing: new BillingService(),
   version: new VersionService(),
-  license: new LicenseService()
+  license: new LicenseService(),
+  settings: new SettingsService()
 };
 
 export default services;

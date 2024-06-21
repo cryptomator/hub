@@ -136,6 +136,10 @@
   "grantPermissionDialog.description": "Tresor-Schlüssel mit neu hinzugefügten Nutzern teilen.",
   "grantPermissionDialog.submit": "Berechtigung für {0} Nutzer gewähren",
 
+  "signUserKeysDialog.title": "{0}s Identität bestätigen",
+  "signUserKeysDialog.description": "Gib die ersten {0} Zeichen von {1}s Fingerprint ein, um die Authentizität der Public Keys dieses Nutzers zu bestätigen.",
+  "signUserKeysDialog.submit": "Identität bestätigen",
+
   "initialSetup.createUserKey.title": "Willkommen bei Cryptomator Hub",
   "initialSetup.createUserKey.description": "Bei der ersten Anmeldung erhält jeder Nutzer einen eindeutigen Account Key:",
   "initialSetup.createUserKey.details.accountKey": "Dein Account Key wird benötigt, um dich von anderen Apps oder Browsern aus anzumelden",

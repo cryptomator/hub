@@ -136,6 +136,10 @@
   "grantPermissionDialog.description": "Share vault keys with newly added users.",
   "grantPermissionDialog.submit": "Grant Permission to {0} User(s)",
 
+  "signUserKeysDialog.title": "Verify {0}'s Identity",
+  "signUserKeysDialog.description": "Enter the first {0} characters of {1}'s fingerprint in order to confirm the authenticity of their public keys.",
+  "signUserKeysDialog.submit": "Confirm this User's Identity",
+
   "initialSetup.createUserKey.title": "Welcome to Cryptomator Hub",
   "initialSetup.createUserKey.description": "On first login, every user gets a unique Account Key:",
   "initialSetup.createUserKey.details.accountKey": "Your Account Key is required to login from other apps or browsers",

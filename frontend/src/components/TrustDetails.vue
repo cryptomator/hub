@@ -8,22 +8,25 @@
     <transition enter-active-class="transition ease-out duration-100" enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 scale-100" leave-to-class="transform opacity-0 scale-95">
         <PopoverPanel class="absolute right-0 z-10 mt-2 origin-top-right rounded-md bg-white p-4 shadow-2xl ring-1 ring-black ring-opacity-5 focus:outline-none">
           <p class="text-sm">Trust Level {{ trustLevel }}</p>
-          <button v-if="trustLevel !== 0 && trustedUser.ecdhPublicKey && trustedUser.ecdsaPublicKey" @click="sign()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary  text-base font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm">
-            TODO sign
+          <button v-if="trustLevel !== 0 && trustedUser.ecdhPublicKey && trustedUser.ecdsaPublicKey" @click="showSignUserKeysDialog()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary  text-base font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm">
+            Sign
           </button>
         </PopoverPanel>
     </transition>
   </Popover>
+
+  <SignUserKeysDialog v-if="signingUserKeys" ref="signUserKeysDialog" :user="trustedUser" :trust="trust" @close="signingUserKeys = false" @signed="successfullySigned" />
 </template>
 
 <script setup lang="ts">
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/vue';
 import { ShieldCheckIcon, ShieldExclamationIcon } from '@heroicons/vue/20/solid';
-import { computed, ref, watch } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { TrustDto, UserDto } from '../common/backend';
 import userdata from '../common/userdata';
 import wot from '../common/wot';
+import SignUserKeysDialog from './SignUserKeysDialog.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -36,6 +39,8 @@ const emit = defineEmits<{
   trustChanged: [TrustDto]
 }>();
 
+const signUserKeysDialog = ref<typeof SignUserKeysDialog>();
+const signingUserKeys = ref<boolean>(false);
 const trust = computed(() => props.trusts.find(trust => trust.trustedUserId === props.trustedUser.id));
 const trustLevel = ref<number>(-1);
 
@@ -58,8 +63,12 @@ async function computeTrustLevel(trust?: TrustDto) {
   }
 }
 
-async function sign() {
-  const newTrust = await wot.sign(props.trustedUser);
+function showSignUserKeysDialog() {
+  signingUserKeys.value = true;
+  nextTick(() => signUserKeysDialog.value?.show());
+}
+
+function successfullySigned(newTrust: TrustDto) {
   emit('trustChanged', newTrust);
 }
 
