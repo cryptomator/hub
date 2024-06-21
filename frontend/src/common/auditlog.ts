@@ -3,32 +3,34 @@ import { Deferred, debounce } from './util';
 
 /* DTOs */
 
-export type AuditEventDto = {
+type AuditEventDtoBase = {
   id: number;
   timestamp: Date;
-  type: 'DEVICE_REGISTER' | 'DEVICE_REMOVE' | 'VAULT_CREATE' | 'VAULT_UPDATE' | 'VAULT_ACCESS_GRANT' | 'VAULT_KEY_RETRIEVE' | 'VAULT_MEMBER_ADD' | 'VAULT_MEMBER_REMOVE' | 'VAULT_MEMBER_UPDATE' | 'VAULT_OWNERSHIP_CLAIM';
 }
-
-export type AuditEventDeviceRegisterDto = AuditEventDto & {
+export type AuditEventDeviceRegisterDto = AuditEventDtoBase & {
+  type: 'DEVICE_REGISTER',
   registeredBy: string;
   deviceId: string;
   deviceName: string;
   deviceType: 'BROWSER' | 'DESKTOP' | 'MOBILE';
 }
 
-export type AuditEventDeviceRemoveDto = AuditEventDto & {
+export type AuditEventDeviceRemoveDto = AuditEventDtoBase & {
+  type: 'DEVICE_REMOVE',
   removedBy: string;
   deviceId: string;
 }
 
-export type AuditEventVaultCreateDto = AuditEventDto & {
+export type AuditEventVaultCreateDto = AuditEventDtoBase & {
+  type: 'VAULT_CREATE',
   createdBy: string;
   vaultId: string;
   vaultName: string;
   vaultDescription: string;
 }
 
-export type AuditEventVaultUpdateDto = AuditEventDto & {
+export type AuditEventVaultUpdateDto = AuditEventDtoBase & {
+  type: 'VAULT_UPDATE',
   updatedBy: string;
   vaultId: string;
   vaultName: string;
@@ -36,42 +38,50 @@ export type AuditEventVaultUpdateDto = AuditEventDto & {
   vaultArchived: boolean;
 }
 
-export type AuditEventVaultAccessGrantDto = AuditEventDto & {
+export type AuditEventVaultAccessGrantDto = AuditEventDtoBase & {
+  type: 'VAULT_ACCESS_GRANT',
   grantedBy: string;
   vaultId: string;
   authorityId: string;
 }
 
-export type AuditEventVaultKeyRetrieveDto = AuditEventDto & {
+export type AuditEventVaultKeyRetrieveDto = AuditEventDtoBase & {
+  type: 'VAULT_KEY_RETRIEVE',
   retrievedBy: string;
   vaultId: string;
   result: 'SUCCESS' | 'UNAUTHORIZED';
 }
 
-export type AuditEventVaultMemberAddDto = AuditEventDto & {
+export type AuditEventVaultMemberAddDto = AuditEventDtoBase & {
+  type: 'VAULT_MEMBER_ADD',
   addedBy: string;
   vaultId: string;
   authorityId: string;
   role: 'MEMBER' | 'OWNER';
 }
 
-export type AuditEventVaultMemberRemoveDto = AuditEventDto & {
+export type AuditEventVaultMemberRemoveDto = AuditEventDtoBase & {
+  type: 'VAULT_MEMBER_REMOVE',
   removedBy: string;
   vaultId: string;
   authorityId: string;
 }
 
-export type AuditEventVaultMemberUpdateDto = AuditEventDto & {
+export type AuditEventVaultMemberUpdateDto = AuditEventDtoBase & {
+  type: 'VAULT_MEMBER_UPDATE',
   updatedBy: string;
   vaultId: string;
   authorityId: string;
   role: 'MEMBER' | 'OWNER';
 }
 
-export type AuditEventVaultOwnershipClaimDto = AuditEventDto & {
+export type AuditEventVaultOwnershipClaimDto = AuditEventDtoBase & {
+  type: 'VAULT_OWNERSHIP_CLAIM',
   claimedBy: string;
   vaultId: string;
 }
+
+export type AuditEventDto = AuditEventDeviceRegisterDto | AuditEventDeviceRemoveDto | AuditEventVaultCreateDto | AuditEventVaultUpdateDto | AuditEventVaultAccessGrantDto | AuditEventVaultKeyRetrieveDto | AuditEventVaultMemberAddDto | AuditEventVaultMemberRemoveDto | AuditEventVaultMemberUpdateDto | AuditEventVaultOwnershipClaimDto;
 
 /* Entity Cache */
 

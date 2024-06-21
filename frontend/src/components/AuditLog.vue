@@ -101,16 +101,16 @@
                   <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">
                     <code>{{ auditEvent.timestamp.toLocaleString('sv') }}</code>
                   </td>
-                  <AuditLogDetailsDeviceRegister v-if="auditEvent.type == 'DEVICE_REGISTER'" :event="(auditEvent as AuditEventDeviceRegisterDto)" />
-                  <AuditLogDetailsDeviceRemove v-else-if="auditEvent.type == 'DEVICE_REMOVE'" :event="(auditEvent as AuditEventDeviceRemoveDto)" />
-                  <AuditLogDetailsVaultCreate v-else-if="auditEvent.type == 'VAULT_CREATE'" :event="(auditEvent as AuditEventVaultCreateDto)" />
-                  <AuditLogDetailsVaultUpdate v-else-if="auditEvent.type == 'VAULT_UPDATE'" :event="(auditEvent as AuditEventVaultUpdateDto)" />
-                  <AuditLogDetailsVaultAccessGrant v-else-if="auditEvent.type == 'VAULT_ACCESS_GRANT'" :event="(auditEvent as AuditEventVaultAccessGrantDto)" />
-                  <AuditLogDetailsVaultKeyRetrieve v-else-if="auditEvent.type == 'VAULT_KEY_RETRIEVE'" :event="(auditEvent as AuditEventVaultKeyRetrieveDto)" />
-                  <AuditLogDetailsVaultMemberAdd v-else-if="auditEvent.type == 'VAULT_MEMBER_ADD'" :event="(auditEvent as AuditEventVaultMemberAddDto)" />
-                  <AuditLogDetailsVaultMemberRemove v-else-if="auditEvent.type == 'VAULT_MEMBER_REMOVE'" :event="(auditEvent as AuditEventVaultMemberRemoveDto)" />
-                  <AuditLogDetailsVaultMemberUpdate v-else-if="auditEvent.type == 'VAULT_MEMBER_UPDATE'" :event="(auditEvent as AuditEventVaultMemberUpdateDto)" />
-                  <AuditLogDetailsVaultOwnershipClaim v-else-if="auditEvent.type == 'VAULT_OWNERSHIP_CLAIM'" :event="(auditEvent as AuditEventVaultOwnershipClaimDto)" />
+                  <AuditLogDetailsDeviceRegister v-if="auditEvent.type == 'DEVICE_REGISTER'" :event="auditEvent" />
+                  <AuditLogDetailsDeviceRemove v-else-if="auditEvent.type == 'DEVICE_REMOVE'" :event="auditEvent" />
+                  <AuditLogDetailsVaultCreate v-else-if="auditEvent.type == 'VAULT_CREATE'" :event="auditEvent" />
+                  <AuditLogDetailsVaultUpdate v-else-if="auditEvent.type == 'VAULT_UPDATE'" :event="auditEvent" />
+                  <AuditLogDetailsVaultAccessGrant v-else-if="auditEvent.type == 'VAULT_ACCESS_GRANT'" :event="auditEvent" />
+                  <AuditLogDetailsVaultKeyRetrieve v-else-if="auditEvent.type == 'VAULT_KEY_RETRIEVE'" :event="auditEvent" />
+                  <AuditLogDetailsVaultMemberAdd v-else-if="auditEvent.type == 'VAULT_MEMBER_ADD'" :event="auditEvent" />
+                  <AuditLogDetailsVaultMemberRemove v-else-if="auditEvent.type == 'VAULT_MEMBER_REMOVE'" :event="auditEvent" />
+                  <AuditLogDetailsVaultMemberUpdate v-else-if="auditEvent.type == 'VAULT_MEMBER_UPDATE'" :event="auditEvent" />
+                  <AuditLogDetailsVaultOwnershipClaim v-else-if="auditEvent.type == 'VAULT_OWNERSHIP_CLAIM'" :event="auditEvent" />
                 </tr>
               </tbody>
               <tfoot class="bg-gray-50">
