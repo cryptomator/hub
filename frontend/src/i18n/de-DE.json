@@ -136,6 +136,9 @@
   "grantPermissionDialog.description": "Tresor-Schlüssel mit neu hinzugefügten Nutzern teilen.",
   "grantPermissionDialog.submit": "Berechtigung für {0} Nutzer gewähren",
 
+  "trustDetails.trustLevel": "Vertrauenslevel {0}",
+  "trustDetails.showSignDialogBtn": "Identität prüfen...",
+
   "signUserKeysDialog.title": "{0}s Identität bestätigen",
   "signUserKeysDialog.description": "Gib die ersten {0} Zeichen von {1}s Fingerprint ein, um die Authentizität der Public Keys dieses Nutzers zu bestätigen.",
   "signUserKeysDialog.submit": "Identität bestätigen",

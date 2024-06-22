@@ -136,6 +136,9 @@
   "grantPermissionDialog.description": "Share vault keys with newly added users.",
   "grantPermissionDialog.submit": "Grant Permission to {0} User(s)",
 
+  "trustDetails.trustLevel": "Trust Level {0}",
+  "trustDetails.showSignDialogBtn": "Check Identity...",
+
   "signUserKeysDialog.title": "Verify {0}'s Identity",
   "signUserKeysDialog.description": "Enter the first {0} characters of {1}'s fingerprint in order to confirm the authenticity of their public keys.",
   "signUserKeysDialog.submit": "Confirm this User's Identity",
