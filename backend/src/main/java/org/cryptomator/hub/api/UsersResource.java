@@ -211,7 +211,7 @@ public class UsersResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "get trust detail for given user", description = "returns the shortest found signature chain for the given user")
 	@APIResponse(responseCode = "200")
-	@APIResponse(responseCode = "404")
+	@APIResponse(responseCode = "404", description = "if no sufficiently short trust chain between the invoking user and the user with the given id has been found")
 	public TrustedUserDto getTrustedUser(@PathParam("userId") String trustedUserId) {
 		var trustingUserId = jwt.getSubject();
 		return effectiveWotRepo.findTrusted(trustingUserId, trustedUserId).singleResultOptional().map(TrustedUserDto::fromEntity).orElseThrow(NotFoundException::new);
@@ -230,9 +230,7 @@ public class UsersResource {
 		return effectiveWotRepo.findTrusted(trustingUserId).stream().map(TrustedUserDto::fromEntity).toList();
 	}
 
-	public record TrustedUserDto(@JsonProperty("trustedUserId") String trustedUserId,
-								 @JsonProperty("signatureChain") List<String> signatureChain) {
-
+	public record TrustedUserDto(@JsonProperty("trustedUserId") String trustedUserId, @JsonProperty("signatureChain") List<String> signatureChain) {
 
 		public static TrustedUserDto fromEntity(EffectiveWot entity) {
 			return new TrustedUserDto(entity.getId().getTrustedUserId(), List.of(entity.getSignatureChain()));

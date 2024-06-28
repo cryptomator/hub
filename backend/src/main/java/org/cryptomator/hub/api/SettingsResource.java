@@ -51,7 +51,7 @@ public class SettingsResource {
 		return Response.status(Response.Status.NO_CONTENT).build();
 	}
 
-	public record SettingsDto(@JsonProperty("hubId") String hubId, @JsonProperty("wotMaxDepth") @Min(0) @Max(10) int wotMaxDepth, @JsonProperty("wotIdVerifyLen") @Min(0) int wotIdVerifyLen) {
+	public record SettingsDto(@JsonProperty("hubId") String hubId, @JsonProperty("wotMaxDepth") @Min(0) @Max(9) int wotMaxDepth, @JsonProperty("wotIdVerifyLen") @Min(0) int wotIdVerifyLen) {
 
 		public static SettingsDto fromEntity(Settings entity) {
 			return new SettingsDto(entity.getHubId(), entity.getWotMaxDepth(), entity.getWotIdVerifyLen());
