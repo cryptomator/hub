@@ -62,7 +62,7 @@ public class RemoteUserPuller {
 	<T extends Authority> Set<String> syncDeletedAuthorities(Map<String, T> keycloakAuthorities, Map<String, T> databaseAuthorities) {
 		var deletedAuthorities = diff(databaseAuthorities.keySet(), keycloakAuthorities.keySet());
 		for (var id : deletedAuthorities) {
-			authorityRepo.delete(keycloakAuthorities.get(id));
+			authorityRepo.delete(databaseAuthorities.get(id));
 		}
 		return deletedAuthorities;
 	}
