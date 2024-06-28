@@ -137,10 +137,12 @@
   "grantPermissionDialog.submit": "Berechtigung für {0} Nutzer gewähren",
 
   "trustDetails.trustLevel": "Vertrauenslevel {0}",
+  "trustDetails.trustLevel.untrusted": "Unverifiziert",
   "trustDetails.showSignDialogBtn": "Identität prüfen...",
+  "trustDetails.userNotSetUp": "Benutzeraccount noch nicht eingerichtet.",
 
   "signUserKeysDialog.title": "{0}s Identität bestätigen",
-  "signUserKeysDialog.description": "Gib die ersten {0} Zeichen von {1}s Fingerprint ein, um die Authentizität der Public Keys dieses Nutzers zu bestätigen.",
+  "signUserKeysDialog.description": "Gib die ersten {0} Zeichen von {1}s Fingerprint ein, um die Authentizität der Public Keys dieses Nutzers zu bestätigen. Der Fingerprint wird im persönlichen Nutzerprofil angezeigt.",
   "signUserKeysDialog.submit": "Identität bestätigen",
 
   "initialSetup.createUserKey.title": "Willkommen bei Cryptomator Hub",
