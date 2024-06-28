@@ -27,7 +27,10 @@
           <code>signature</code>
         </dt>
         <dd class="text-sm text-gray-900">
-          <a :href="jwtLink" target="_blank" class="underline text-gray-500 hover:text-gray-900">check on jwt.io</a>
+          <span v-if="signatureStatus === SignatureStatus.STILL_VALID" class="text-primary">still valid</span>
+          <span v-else-if="signatureStatus === SignatureStatus.SIGNER_KEY_CHANGED" class="text-amber-500">was valid; signer key changed by now</span>
+          <span v-else-if="signatureStatus === SignatureStatus.SIGNED_KEY_CHANGED" class="text-amber-500">was valid; signed key changed by now</span>
+          <span v-else class="text-red-600">invalid</span>
         </dd>
       </div>
     </dl>
@@ -35,10 +38,14 @@
 </template>
 
 <script setup lang="ts">
+import { base64 } from 'rfc4648';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auditlog, { AuditEventSignedWotIdDto } from '../common/auditlog';
 import { UserDto } from '../common/backend';
+import { UserKeys, asPublicKey } from '../common/crypto';
+import { JWT, JWTHeader } from '../common/jwt';
+import wot, { SignedKeys } from '../common/wot';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -46,12 +53,53 @@ const props = defineProps<{
   event: AuditEventSignedWotIdDto
 }>();
 
+enum SignatureStatus {
+  STILL_VALID,
+  SIGNER_KEY_CHANGED,
+  SIGNED_KEY_CHANGED,
+  INVALID
+}
+
 const resolvedUser = ref<UserDto>();
 const resolvedSigner = ref<UserDto>();
-const jwtLink = ref<string>(`https://jwt.io/#debugger-io?token=${props.event.signature}&publicKey=-----BEGIN%20PUBLIC%20KEY-----%0A${encodeURIComponent(props.event.signerKey)}%0A-----END%20PUBLIC%20KEY-----`);
+const signatureStatus = ref<SignatureStatus>(SignatureStatus.INVALID);
+const signedFingerprint = ref<string>();
+const currentFingerprint = ref<string>();
 
 onMounted(async () => {
-  resolvedUser.value = await auditlog.entityCache.getAuthority(props.event.userId) as UserDto;
-  resolvedSigner.value = await auditlog.entityCache.getAuthority(props.event.signerId) as UserDto;
+  const trustedUser = await auditlog.entityCache.getAuthority(props.event.userId) as UserDto;
+  const signingUser = await auditlog.entityCache.getAuthority(props.event.signerId) as UserDto;
+
+  if (trustedUser) {
+    currentFingerprint.value = await wot.computeFingerprint(trustedUser);
+  }
+
+  try {
+    const signerPublicKey = await asPublicKey(base64.parse(props.event.signerKey), UserKeys.ECDSA_KEY_DESIGNATION, UserKeys.ECDSA_PUB_KEY_USAGES);
+    const [_, signedKeys] = await JWT.parse(props.event.signature, signerPublicKey) as [JWTHeader, SignedKeys];
+    const signedUser: UserDto = {
+      id: props.event.userId,
+      type: 'USER',
+      email: '', // irrelevant for this purpose
+      name: '', // irrelevant for this purpose
+      devices: [], // irrelevant for this purpose
+      accessibleVaults: [], // irrelevant for this purpose
+      ecdhPublicKey: signedKeys.ecdhPublicKey,
+      ecdsaPublicKey: signedKeys.ecdsaPublicKey
+    };
+    signedFingerprint.value = await wot.computeFingerprint(signedUser);
+    if (props.event.signerKey === signingUser?.ecdsaPublicKey && signedFingerprint.value === currentFingerprint.value) {
+      signatureStatus.value = SignatureStatus.STILL_VALID;
+    } else if (props.event.signerKey !== signingUser?.ecdsaPublicKey) {
+      signatureStatus.value = SignatureStatus.SIGNER_KEY_CHANGED;
+    } else if (signedFingerprint.value !== currentFingerprint.value) {
+      signatureStatus.value = SignatureStatus.SIGNED_KEY_CHANGED;
+    }
+  } catch (e) {
+    signatureStatus.value = SignatureStatus.INVALID;
+  } finally {
+    resolvedUser.value = trustedUser;
+    resolvedSigner.value = signingUser;
+  }
 });
 </script>
