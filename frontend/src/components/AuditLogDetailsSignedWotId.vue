@@ -77,17 +77,7 @@ onMounted(async () => {
   try {
     const signerPublicKey = await asPublicKey(base64.parse(props.event.signerKey), UserKeys.ECDSA_KEY_DESIGNATION, UserKeys.ECDSA_PUB_KEY_USAGES);
     const [_, signedKeys] = await JWT.parse(props.event.signature, signerPublicKey) as [JWTHeader, SignedKeys];
-    const signedUser: UserDto = {
-      id: props.event.userId,
-      type: 'USER',
-      email: '', // irrelevant for this purpose
-      name: '', // irrelevant for this purpose
-      devices: [], // irrelevant for this purpose
-      accessibleVaults: [], // irrelevant for this purpose
-      ecdhPublicKey: signedKeys.ecdhPublicKey,
-      ecdsaPublicKey: signedKeys.ecdsaPublicKey
-    };
-    signedFingerprint.value = await wot.computeFingerprint(signedUser);
+    signedFingerprint.value = await wot.computeFingerprint({ecdhPublicKey: signedKeys.ecdhPublicKey, ecdsaPublicKey: signedKeys.ecdsaPublicKey});
     if (props.event.signerKey === signingUser?.ecdsaPublicKey && signedFingerprint.value === currentFingerprint.value) {
       signatureStatus.value = SignatureStatus.STILL_VALID;
     } else if (props.event.signerKey !== signingUser?.ecdsaPublicKey) {

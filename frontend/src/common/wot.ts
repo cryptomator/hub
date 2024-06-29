@@ -80,7 +80,7 @@ async function verifyRescursive(signatureChain: string[], signerPublicKey: Crypt
  * @param user The user whose fingerprint to compute
  * @returns Hexadecimal representation of the fingerprint
  */
-async function computeFingerprint(user: UserDto) {
+async function computeFingerprint(user: { ecdhPublicKey?: string; ecdsaPublicKey?: string }) {
   if (!user.ecdhPublicKey || !user.ecdsaPublicKey) {
     throw new Error('User has no public keys');
   }
