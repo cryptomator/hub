@@ -260,11 +260,13 @@ export class VaultKeys {
 }
 
 export class UserKeys {
-  public static readonly ECDH_KEY_USAGES: KeyUsage[] = ['deriveBits'];
+  public static readonly ECDH_PRIV_KEY_USAGES: KeyUsage[] = ['deriveBits'];
 
   public static readonly ECDH_KEY_DESIGNATION: EcKeyImportParams | EcKeyGenParams = { name: 'ECDH', namedCurve: 'P-384' };
 
-  public static readonly ECDSA_KEY_USAGES: KeyUsage[] = ['sign'];
+  public static readonly ECDSA_PRIV_KEY_USAGES: KeyUsage[] = ['sign'];
+
+  public static readonly ECDSA_PUB_KEY_USAGES: KeyUsage[] = ['verify'];
 
   public static readonly ECDSA_KEY_DESIGNATION: EcKeyImportParams | EcKeyGenParams = { name: 'ECDSA', namedCurve: 'P-384' };
 
@@ -276,8 +278,8 @@ export class UserKeys {
    * @returns A set of new user key pairs
    */
   public static async create(): Promise<UserKeys> {
-    const ecdhKeyPair = crypto.subtle.generateKey(UserKeys.ECDH_KEY_DESIGNATION, true, UserKeys.ECDH_KEY_USAGES);
-    const ecdsaKeyPair = crypto.subtle.generateKey(UserKeys.ECDSA_KEY_DESIGNATION, true, UserKeys.ECDSA_KEY_USAGES);
+    const ecdhKeyPair = crypto.subtle.generateKey(UserKeys.ECDH_KEY_DESIGNATION, true, UserKeys.ECDH_PRIV_KEY_USAGES);
+    const ecdsaKeyPair = crypto.subtle.generateKey(UserKeys.ECDSA_KEY_DESIGNATION, true, UserKeys.ECDSA_PRIV_KEY_USAGES);
     return new UserKeys(await ecdhKeyPair, await ecdsaKeyPair);
   }
 
@@ -311,17 +313,17 @@ export class UserKeys {
   private static async createFromJwe(jwe: UserKeyPayload, ecdhPublicKey: CryptoKey | BufferSource, ecdsaPublicKey?: CryptoKey | BufferSource): Promise<UserKeys> {
     const ecdhKeyPair: CryptoKeyPair = {
       publicKey: await asPublicKey(ecdhPublicKey, UserKeys.ECDH_KEY_DESIGNATION),
-      privateKey: await crypto.subtle.importKey('pkcs8', base64.parse(jwe.ecdhPrivateKey ?? jwe.key, { loose: true }), UserKeys.ECDH_KEY_DESIGNATION, true, UserKeys.ECDH_KEY_USAGES)
+      privateKey: await crypto.subtle.importKey('pkcs8', base64.parse(jwe.ecdhPrivateKey ?? jwe.key, { loose: true }), UserKeys.ECDH_KEY_DESIGNATION, true, UserKeys.ECDH_PRIV_KEY_USAGES)
     };
     let ecdsaKeyPair: CryptoKeyPair;
     if (jwe.ecdsaPrivateKey && ecdsaPublicKey) {
       ecdsaKeyPair = {
-        publicKey: await asPublicKey(ecdsaPublicKey, UserKeys.ECDSA_KEY_DESIGNATION),
-        privateKey: await crypto.subtle.importKey('pkcs8', base64.parse(jwe.ecdsaPrivateKey, { loose: true }), UserKeys.ECDSA_KEY_DESIGNATION, true, UserKeys.ECDSA_KEY_USAGES)
+        publicKey: await asPublicKey(ecdsaPublicKey, UserKeys.ECDSA_KEY_DESIGNATION, UserKeys.ECDSA_PUB_KEY_USAGES),
+        privateKey: await crypto.subtle.importKey('pkcs8', base64.parse(jwe.ecdsaPrivateKey, { loose: true }), UserKeys.ECDSA_KEY_DESIGNATION, true, UserKeys.ECDSA_PRIV_KEY_USAGES)
       };
     } else {
       // ECDSA key was added in Hub 1.4.0. If it's missing, we generate a new one.
-      ecdsaKeyPair = await crypto.subtle.generateKey(UserKeys.ECDSA_KEY_DESIGNATION, true, UserKeys.ECDSA_KEY_USAGES);
+      ecdsaKeyPair = await crypto.subtle.generateKey(UserKeys.ECDSA_KEY_DESIGNATION, true, UserKeys.ECDSA_PRIV_KEY_USAGES);
     }
     return new UserKeys(ecdhKeyPair, ecdsaKeyPair);
   }
@@ -456,22 +458,40 @@ export class BrowserKeys {
   }
 }
 
-async function asPublicKey(publicKey: CryptoKey | BufferSource, keyDesignation: EcKeyImportParams): Promise<CryptoKey> {
+export async function asPublicKey(publicKey: CryptoKey | BufferSource, keyDesignation: EcKeyImportParams, keyUsages: KeyUsage[] = []): Promise<CryptoKey> {
   if (publicKey instanceof CryptoKey) {
     return publicKey;
   } else {
-    return await crypto.subtle.importKey('spki', publicKey, keyDesignation, true, []);
+    return await crypto.subtle.importKey('spki', publicKey, keyDesignation, true, keyUsages);
   }
 }
 
-export async function getFingerprint(key: string | undefined) {
-  if (key) {
-    const encodedKey = new TextEncoder().encode(key);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', encodedKey);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray
-      .map((b) => b.toString(16).padStart(2, '0').toUpperCase())
-      .join('');
-    return hashHex;
+/**
+ * Computes the JWK Thumbprint (RFC 7638) using SHA-256.
+ * @param key A key to compute the thumbprint for
+ * @throws Error if the key is not supported
+ */
+export async function getJwkThumbprint(key: JsonWebKey | CryptoKey): Promise<Uint8Array> {
+  let jwk: JsonWebKey;
+  if (key instanceof CryptoKey) {
+    jwk = await crypto.subtle.exportKey('jwk', key);
+  } else {
+    jwk = key;
   }
+  // see https://datatracker.ietf.org/doc/html/rfc7638#section-3.2
+  let orderedJson: string;
+  switch (jwk.kty) {
+    case 'EC':
+      orderedJson = `{"crv":"${jwk.crv}","kty":"${jwk.kty}","x":"${jwk.x}","y":"${jwk.y}"}`;
+      break;
+    case 'RSA':
+      orderedJson = `{"e":"${jwk.e}","kty":"${jwk.kty}","n":"${jwk.n}"}`;
+      break;
+    case 'oct':
+      orderedJson = `{"k":"${jwk.k}","kty":"${jwk.kty}"}`;
+      break;
+    default: throw new Error('Unsupported key type');
+  }
+  const bytes = new TextEncoder().encode(orderedJson);
+  return new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
 }

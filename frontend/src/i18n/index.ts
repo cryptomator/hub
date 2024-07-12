@@ -24,3 +24,16 @@ export const datetimeFormats: I18nOptions['datetimeFormats'] = {
     }
   }
 };
+
+export const numberFormats: I18nOptions['numberFormats'] = {
+  [Locale.EN]: {
+    percent: {
+      style: 'percent', useGrouping: false
+    }
+  },
+  [Locale.DE]: {
+    percent: {
+      style: 'percent', useGrouping: false
+    }
+  }
+}

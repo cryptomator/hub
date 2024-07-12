@@ -23,7 +23,11 @@ public final class UserDto extends AuthorityDto {
 	@JsonProperty("setupCode")
 	public final String setupCode;
 
-	@Deprecated
+	/**
+	 * Same as {@link #ecdhPublicKey}, kept for compatibility purposes
+	 * @deprecated to be removed when all clients moved to the new DTO field names
+	 */
+	@Deprecated(forRemoval = true)
 	@JsonProperty("publicKey")
 	public final String legacyEcdhPublicKey;
 

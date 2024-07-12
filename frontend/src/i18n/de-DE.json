@@ -67,6 +67,7 @@
   "auditLog.details": "Details",
   "auditLog.details.device.register": "Gerät registrieren",
   "auditLog.details.device.remove": "Gerät entfernen",
+  "auditLog.details.wot.signedIdentity": "Identität beglaubigt",
   "auditLog.details.vault.create": "Tresor erstellen",
   "auditLog.details.vault.update": "Tresor aktualisieren",
   "auditLog.details.vaultAccess.grant": "Tresor-Zugriff gewähren",
@@ -134,6 +135,15 @@
   "grantPermissionDialog.title": "Berechtigung erteilen",
   "grantPermissionDialog.description": "Tresor-Schlüssel mit neu hinzugefügten Nutzern teilen.",
   "grantPermissionDialog.submit": "Berechtigung für {0} Nutzer gewähren",
+
+  "trustDetails.trustLevel": "Vertrauenslevel {0}",
+  "trustDetails.trustLevel.untrusted": "Unverifiziert",
+  "trustDetails.showSignDialogBtn": "Identität prüfen...",
+  "trustDetails.userNotSetUp": "Benutzeraccount noch nicht eingerichtet.",
+
+  "signUserKeysDialog.title": "{0}s Identität bestätigen",
+  "signUserKeysDialog.description": "Gib die ersten {0} Zeichen von {1}s Fingerprint ein, um die Authentizität der Public Keys dieses Nutzers zu bestätigen. Der Fingerprint wird im persönlichen Nutzerprofil angezeigt.",
+  "signUserKeysDialog.submit": "Identität bestätigen",
 
   "initialSetup.createUserKey.title": "Willkommen bei Cryptomator Hub",
   "initialSetup.createUserKey.description": "Bei der ersten Anmeldung erhält jeder Nutzer einen eindeutigen Account Key:",

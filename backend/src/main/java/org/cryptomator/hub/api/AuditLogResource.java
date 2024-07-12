@@ -17,6 +17,7 @@ import org.cryptomator.hub.entities.VaultAccess;
 import org.cryptomator.hub.entities.events.AuditEvent;
 import org.cryptomator.hub.entities.events.DeviceRegisteredEvent;
 import org.cryptomator.hub.entities.events.DeviceRemovedEvent;
+import org.cryptomator.hub.entities.events.SignedWotIdEvent;
 import org.cryptomator.hub.entities.events.VaultAccessGrantedEvent;
 import org.cryptomator.hub.entities.events.VaultCreatedEvent;
 import org.cryptomator.hub.entities.events.VaultKeyRetrievedEvent;
@@ -80,6 +81,7 @@ public class AuditLogResource {
 	@JsonSubTypes({ //
 			@JsonSubTypes.Type(value = DeviceRegisteredEventDto.class, name = DeviceRegisteredEvent.TYPE), //
 			@JsonSubTypes.Type(value = DeviceRemovedEventDto.class, name = DeviceRemovedEvent.TYPE), //
+			@JsonSubTypes.Type(value = SignedWotIdEvent.class, name = SignedWotIdEvent.TYPE), //
 			@JsonSubTypes.Type(value = VaultCreatedEventDto.class, name = VaultCreatedEvent.TYPE), //
 			@JsonSubTypes.Type(value = VaultUpdatedEventDto.class, name = VaultUpdatedEvent.TYPE), //
 			@JsonSubTypes.Type(value = VaultAccessGrantedEventDto.class, name = VaultAccessGrantedEvent.TYPE), //
@@ -101,6 +103,7 @@ public class AuditLogResource {
 			return switch (entity) {
 				case DeviceRegisteredEvent evt -> new DeviceRegisteredEventDto(evt.getId(), evt.getTimestamp(), DeviceRegisteredEvent.TYPE, evt.getRegisteredBy(), evt.getDeviceId(), evt.getDeviceName(), evt.getDeviceType());
 				case DeviceRemovedEvent evt -> new DeviceRemovedEventDto(evt.getId(), evt.getTimestamp(), DeviceRemovedEvent.TYPE, evt.getRemovedBy(), evt.getDeviceId());
+				case SignedWotIdEvent evt -> new SignedWotIdEventDto(evt.getId(), evt.getTimestamp(), SignedWotIdEvent.TYPE, evt.getUserId(), evt.getSignerId(), evt.getSignerKey(), evt.getSignature());
 				case VaultCreatedEvent evt -> new VaultCreatedEventDto(evt.getId(), evt.getTimestamp(), VaultCreatedEvent.TYPE, evt.getCreatedBy(), evt.getVaultId(), evt.getVaultName(), evt.getVaultDescription());
 				case VaultUpdatedEvent evt -> new VaultUpdatedEventDto(evt.getId(), evt.getTimestamp(), VaultUpdatedEvent.TYPE, evt.getUpdatedBy(), evt.getVaultId(), evt.getVaultName(), evt.getVaultDescription(), evt.isVaultArchived());
 				case VaultAccessGrantedEvent evt -> new VaultAccessGrantedEventDto(evt.getId(), evt.getTimestamp(), VaultAccessGrantedEvent.TYPE, evt.getGrantedBy(), evt.getVaultId(), evt.getAuthorityId());
@@ -119,6 +122,9 @@ public class AuditLogResource {
 	}
 
 	record DeviceRemovedEventDto(long id, Instant timestamp, String type, @JsonProperty("removedBy") String removedBy, @JsonProperty("deviceId") String deviceId) implements AuditEventDto {
+	}
+
+	record SignedWotIdEventDto(long id, Instant timestamp, String type, @JsonProperty("userId") String userId, @JsonProperty("signerId") String signerId, @JsonProperty("signerKey") String signerKey, @JsonProperty("signature") String signature) implements AuditEventDto {
 	}
 
 	record VaultCreatedEventDto(long id, Instant timestamp, String type, @JsonProperty("createdBy") String createdBy, @JsonProperty("vaultId") UUID vaultId, @JsonProperty("vaultName") String vaultName,
