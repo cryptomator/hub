@@ -4,7 +4,6 @@ import { base32, base64, base64url } from 'rfc4648';
 import { VaultDto } from './backend';
 import config, { absFrontendBaseURL } from './config';
 import { AccessTokenProducing, GCM_NONCE_LEN, OtherVaultMember, UnwrapKeyError, UserKeys, VaultTemplateProducing } from './crypto';
-import { JWT } from './jwt';
 import { CRC32, wordEncoder } from './util';
 
 interface VaultConfigPayload {
@@ -147,9 +146,6 @@ export class VaultFormat8 implements AccessTokenProducing, VaultTemplateProducin
    * @throws Error, if passing a malformed recovery key or the recovery key does not match with the vault metadata
    */
   public static async recoverAndVerify(vaultMetadataToken: string, recoveryKey: string) {
-    //basic validation
-    const vaultMetadata = JWT.parse(vaultMetadataToken);
-
     const vault = await this.recover(recoveryKey);
 
     const sigSeparatorIndex = vaultMetadataToken.lastIndexOf('.');

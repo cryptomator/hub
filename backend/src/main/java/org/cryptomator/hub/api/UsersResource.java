@@ -1,5 +1,6 @@
 package org.cryptomator.hub.api;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.annotation.Nullable;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -8,17 +9,21 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.AccessToken;
 import org.cryptomator.hub.entities.Device;
+import org.cryptomator.hub.entities.EffectiveWot;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
+import org.cryptomator.hub.entities.WotEntry;
 import org.cryptomator.hub.entities.events.EventLogger;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
@@ -48,6 +53,10 @@ public class UsersResource {
 	Device.Repository deviceRepo;
 	@Inject
 	Vault.Repository vaultRepo;
+	@Inject
+	WotEntry.Repository wotRepo;
+	@Inject
+	EffectiveWot.Repository effectiveWotRepo;
 
 	@Inject
 	JsonWebToken jwt;
@@ -168,7 +177,63 @@ public class UsersResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "list all users")
 	public List<UserDto> getAll() {
-		return userRepo.findAll().<User>stream().map(UserDto::justPublicInfo).toList();
+		return userRepo.findAll().stream().map(UserDto::justPublicInfo).toList();
 	}
 
+	@PUT
+	@Path("/trusted/{userId}")
+	@RolesAllowed("user")
+	@Transactional
+	@Consumes(MediaType.TEXT_PLAIN)
+	@Operation(summary = "adds/updates trust", description = "Stores a signature for the given user.")
+	@APIResponse(responseCode = "204", description = "signature stored")
+	public Response putSignature(@PathParam("userId") String userId, @NotNull String signature) {
+		var signer = userRepo.findById(jwt.getSubject());
+		var id = new WotEntry.Id();
+		id.setUserId(userId);
+		id.setSignerId(signer.getId());
+		var entry = wotRepo.findById(id);
+		if (entry == null) {
+			entry = new WotEntry();
+			entry.setId(id);
+		}
+		entry.setSignature(signature);
+		wotRepo.persist(entry);
+		eventLogger.logWotIdSigned(userId, signer.getId(), signer.getEcdsaPublicKey(), signature);
+		return Response.status(Response.Status.NO_CONTENT).build();
+	}
+
+	@GET
+	@Path("/trusted/{userId}")
+	@RolesAllowed("user")
+	@NoCache
+	@Transactional
+	@Produces(MediaType.APPLICATION_JSON)
+	@Operation(summary = "get trust detail for given user", description = "returns the shortest found signature chain for the given user")
+	@APIResponse(responseCode = "200")
+	@APIResponse(responseCode = "404", description = "if no sufficiently short trust chain between the invoking user and the user with the given id has been found")
+	public TrustedUserDto getTrustedUser(@PathParam("userId") String trustedUserId) {
+		var trustingUserId = jwt.getSubject();
+		return effectiveWotRepo.findTrusted(trustingUserId, trustedUserId).singleResultOptional().map(TrustedUserDto::fromEntity).orElseThrow(NotFoundException::new);
+	}
+
+	@GET
+	@Path("/trusted")
+	@RolesAllowed("user")
+	@NoCache
+	@Transactional
+	@Produces(MediaType.APPLICATION_JSON)
+	@Operation(summary = "get trusted users", description = "returns a list of users trusted by the currently logged-in user")
+	@APIResponse(responseCode = "200")
+	public List<TrustedUserDto> getTrustedUsers() {
+		var trustingUserId = jwt.getSubject();
+		return effectiveWotRepo.findTrusted(trustingUserId).stream().map(TrustedUserDto::fromEntity).toList();
+	}
+
+	public record TrustedUserDto(@JsonProperty("trustedUserId") String trustedUserId, @JsonProperty("signatureChain") List<String> signatureChain) {
+
+		public static TrustedUserDto fromEntity(EffectiveWot entity) {
+			return new TrustedUserDto(entity.getId().getTrustedUserId(), List.of(entity.getSignatureChain()));
+		}
+	}
 }

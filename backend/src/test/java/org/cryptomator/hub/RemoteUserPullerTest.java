@@ -102,7 +102,7 @@ class RemoteUserPullerTest {
 			Mockito.when(databaseAuthorities.keySet()).thenReturn(databaseAuthorityIds);
 
 			deletedAuthorityIds.forEach((id, authority) ->
-					Mockito.when(keycloakAuthorities.get(id)).thenReturn(authority));
+					Mockito.when(databaseAuthorities.get(id)).thenReturn(authority));
 
 			remoteUserPuller.syncDeletedAuthorities(keycloakAuthorities, databaseAuthorities);
 

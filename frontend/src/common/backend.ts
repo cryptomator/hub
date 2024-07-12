@@ -93,6 +93,11 @@ export type MemberDto = AuthorityDto & {
   role: VaultRole
 }
 
+export type TrustDto = {
+  trustedUserId: string,
+  signatureChain: string[]
+}
+
 export type BillingDto = {
   hubId: string;
   hasLicense: boolean;
@@ -107,6 +112,12 @@ export type BillingDto = {
 export type VersionDto = {
   hubVersion: string;
   keycloakVersion: string;
+}
+
+export type SettingsDto = {
+  hubId: string,
+  wotMaxDepth: number,
+  wotIdVerifyLen: number
 }
 
 export class LicenseUserInfoDto {
@@ -246,6 +257,23 @@ class UserService {
   }
 }
 
+class TrustService {
+  public async trustUser(userId: string, signature: string): Promise<void> {
+    return axiosAuth.put(`/users/trusted/${userId}`, signature, { headers: { 'Content-Type': 'text/plain' } });
+  }
+  public async get(userId: string): Promise<TrustDto | undefined> {
+    return axiosAuth.get<TrustDto>(`/users/trusted/${userId}`).then(response => response.data)
+      .catch(e => {
+        if (e.response.status === 404) return undefined;
+        else throw e;
+      });
+  }
+
+  public async listTrusted(): Promise<TrustDto[]> {
+    return axiosAuth.get<TrustDto[]>('/users/trusted').then(response => response.data);
+  }
+}
+
 class AuthorityService {
   public async search(query: string): Promise<AuthorityDto[]> {
     return axiosAuth.get<AuthorityDto[]>(`/authorities/search?query=${query}`).then(response => response.data.map(AuthorityService.fillInMissingPicture));
@@ -334,17 +362,25 @@ class VersionService {
   }
 }
 
+class SettingsService {
+  public async get(): Promise<SettingsDto> {
+    return axiosAuth.get<SettingsDto>('/settings').then(response => response.data);
+  }
+}
+
 /**
  * Note: Each service can thrown an {@link UnauthorizedError} when the access token is expired!
  */
 const services = {
   vaults: new VaultService(),
   users: new UserService(),
+  trust: new TrustService(),
   authorities: new AuthorityService(),
   devices: new DeviceService(),
   billing: new BillingService(),
   version: new VersionService(),
-  license: new LicenseService()
+  license: new LicenseService(),
+  settings: new SettingsService()
 };
 
 export default services;

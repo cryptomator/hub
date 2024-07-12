@@ -4,6 +4,7 @@ export type JWTHeader = {
   alg: 'ES384';
   typ: 'JWT';
   b64: true;
+  [other: string]: undefined | string | number | boolean | object; // allow further properties
 }
 
 export class JWT {
@@ -18,7 +19,7 @@ export class JWT {
   }
 
   /**
-   * Creates a ES384 JWT (signed with ECDSA using P-384 and SHA-384).
+   * Creates an ES384 JWT (signed with ECDSA using P-384 and SHA-384).
    * 
    * See <a href="https://datatracker.ietf.org/doc/html/rfc7519">RFC 7519</a>,
    * <a href="https://datatracker.ietf.org/doc/html/rfc7515">RFC 7515</a> and
@@ -49,20 +50,39 @@ export class JWT {
   }
 
   /**
-   * Parses an encoded JWT token.
-   * Note that only basic JSON /encoding checks are made, neither the header nor the payload are checked for required attributes.
-   * @param token The encoded JWT.
-   * @returns A generic, and maybe still invalid JWT object
+   * Decodes and verifies an ES384 JWT (signed with ECDSA using P-384 and SHA-384).
+   * @param jwt 
+   * @param signerPublicKey 
+   * @returns header and payload
+   * @throws Error if the JWT is invalid
    */
-  public static async parse(token: string): Promise<JWT> {
-    const jwtSections = token.split('.');
-    if (jwtSections.length != 3 || !jwtSections[0] || !jwtSections[1] || !jwtSections[2]) {
-      throw new Error('Invalid JWT');
+  public static async parse(jwt: string, signerPublicKey: CryptoKey): Promise<[JWTHeader, any]> {
+    const [encodedHeader, encodedPayload, encodedSignature] = jwt.split('.');
+    const header: JWTHeader = JSON.parse(new TextDecoder().decode(base64url.parse(encodedHeader, { loose: true })));
+    if (header.alg !== 'ES384') {
+      throw new Error('Unsupported algorithm');
     }
+    const validSignature = await this.es384verify(jwt, signerPublicKey);
+    if (!validSignature) {
+      throw new Error('Invalid signature');
+    }
+    const payload = JSON.parse(new TextDecoder().decode(base64url.parse(encodedPayload, { loose: true })));
+    return [header, payload];
+  }
 
-    const header = JSON.parse(new TextDecoder().decode(base64url.parse(jwtSections[0], { loose: true })));
-    const payload = JSON.parse(new TextDecoder().decode(base64url.parse(jwtSections[1], { loose: true })));
-    const signature = base64url.parse(jwtSections[2], { loose: true });
-    return new JWT(header, payload, signature);
+  // visible for testing
+  public static async es384verify(jwt: string, signerPublicKey: CryptoKey): Promise<boolean> {
+    const [encodedHeader, encodedPayload, encodedSignature] = jwt.split('.');
+    const headerAndPayload = new TextEncoder().encode(encodedHeader + '.' + encodedPayload);
+    const signature = base64url.parse(encodedSignature);
+    return window.crypto.subtle.verify(
+      {
+        name: 'ECDSA',
+        hash: { name: 'SHA-384' },
+      },
+      signerPublicKey,
+      signature,
+      headerAndPayload
+    );
   }
 }

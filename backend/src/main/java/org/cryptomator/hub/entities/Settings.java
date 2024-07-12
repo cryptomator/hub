@@ -25,6 +25,12 @@ public class Settings {
 	@Column(name = "license_key")
 	private String licenseKey;
 
+	@Column(name = "wot_max_depth", nullable = false)
+	private int wotMaxDepth;
+
+	@Column(name = "wot_id_verify_len", nullable = false)
+	private int wotIdVerifyLen;
+
 	public int getId() {
 		return id;
 	}
@@ -49,12 +55,30 @@ public class Settings {
 		this.licenseKey = licenseKey;
 	}
 
+	public int getWotMaxDepth() {
+		return wotMaxDepth;
+	}
+
+	public void setWotMaxDepth(int wotMaxDepth) {
+		this.wotMaxDepth = wotMaxDepth;
+	}
+
+	public int getWotIdVerifyLen() {
+		return wotIdVerifyLen;
+	}
+
+	public void setWotIdVerifyLen(int wotIdVerifyLen) {
+		this.wotIdVerifyLen = wotIdVerifyLen;
+	}
+
 	@Override
 	public String toString() {
 		return "Settings{" +
 				"id=" + id +
 				", hubId='" + hubId + '\'' +
 				", licenseKey='" + licenseKey + '\'' +
+				", wotMaxDepth='" + wotMaxDepth + '\'' +
+				", wotIdVerifyLen='" + wotIdVerifyLen + '\'' +
 				'}';
 	}
 
@@ -65,12 +89,14 @@ public class Settings {
 		Settings settings = (Settings) o;
 		return id == settings.id
 				&& Objects.equals(hubId, settings.hubId)
-				&& Objects.equals(licenseKey, settings.licenseKey);
+				&& Objects.equals(licenseKey, settings.licenseKey)
+				&& Objects.equals(wotMaxDepth, settings.wotMaxDepth)
+				&& Objects.equals(wotIdVerifyLen, settings.wotIdVerifyLen);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, hubId, licenseKey);
+		return Objects.hash(id, hubId, licenseKey, wotMaxDepth, wotIdVerifyLen);
 	}
 
 	@ApplicationScoped

@@ -44,9 +44,10 @@
           <template v-for="member in members.values()" :key="member.id">
             <li class="py-3 flex flex-col">
               <div class="flex justify-between items-center">
-                <div class="flex items-center text-ellipsis whitespace-nowrap overflow-hidden" :title="member.name">
+                <div class="flex items-center whitespace-nowrap w-full" :title="member.name">
                   <img :src="member.pictureUrl" alt="" class="w-8 h-8 rounded-full" />
                   <p class="w-full ml-4 text-sm font-medium text-gray-900 truncate">{{ member.name }}</p>
+                  <TrustDetails v-if="member.type === 'USER'" :trusted-user="member" :trusts="trusts" @trust-changed="refreshTrusts()"/>
                   <div v-if="member.role == 'OWNER'" class="ml-3 inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">{{ t('vaultDetails.sharedWith.badge.owner') }}</div>
                 </div>
                 <Menu v-if="member.id != me?.id" as="div" class="relative ml-2 inline-block flex-shrink-0 text-left">
@@ -171,7 +172,7 @@
           <button :disabled="membersRequiringAccessGrant.length == 0" type="button" class="flex-1 bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="showGrantPermissionDialog()">
             {{ t('vaultDetails.actions.updatePermissions') }}
           </button>
-          <button type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="reloadDevicesRequiringAccessGrant()">
+          <button type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="reloadMembersRequiringAccessGrant()">
             <span class="sr-only">{{ t('vaultDetails.actions.updatePermissions.reload') }}</span>
             <ArrowPathIcon class="h-5 w-5" aria-hidden="true" />
           </button>
@@ -214,7 +215,7 @@ import { base64 } from 'rfc4648';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auth from '../common/auth';
-import backend, { AuthorityDto, ConflictError, ForbiddenError, LicenseUserInfoDto, MemberDto, NotFoundError, PaymentRequiredError, UserDto, VaultDto, VaultRole } from '../common/backend';
+import backend, { AuthorityDto, ConflictError, ForbiddenError, LicenseUserInfoDto, MemberDto, NotFoundError, PaymentRequiredError, TrustDto, UserDto, VaultDto, VaultRole } from '../common/backend';
 import { JWT, JWTHeader } from '../common/jwt';
 import { UniversalVaultFormat } from '../common/universalVaultFormat';
 import userdata from '../common/userdata';
@@ -229,6 +230,7 @@ import GrantPermissionDialog from './GrantPermissionDialog.vue';
 import ReactivateVaultDialog from './ReactivateVaultDialog.vue';
 import RecoverVaultDialog from './RecoverVaultDialog.vue';
 import SearchInputGroup from './SearchInputGroup.vue';
+import TrustDetails from './TrustDetails.vue';
 
 const { t, d } = useI18n({ useScope: 'global' });
 
@@ -269,6 +271,7 @@ const vaultFormat8 = ref<VaultFormat8>();
 const uvfVault = ref<UniversalVaultFormat>();
 const members = ref<Map<string, MemberDto>>(new Map());
 const membersRequiringAccessGrant = ref<(MemberDto & UserDto)[]>([]);
+const trusts = ref<TrustDto[]>([]);
 const claimVaultOwnershipDialog = ref<typeof ClaimVaultOwnershipDialog>();
 const claimingVaultOwnership = ref(false);
 const me = ref<UserDto>();
@@ -303,6 +306,7 @@ async function fetchOwnerData() {
   }
   try {
     (await backend.vaults.getMembers(props.vaultId)).forEach(member => members.value.set(member.id, member));
+    await refreshTrusts();
     membersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
     vaultRecoveryRequired.value = false;
     const accessToken = await backend.vaults.accessToken(props.vaultId, true);
@@ -370,7 +374,7 @@ async function provedOwnership(keys: VaultFormat8, ownerKeyPair: CryptoKeyPair) 
   await fetchOwnerData();
 }
 
-async function reloadDevicesRequiringAccessGrant() {
+async function reloadMembersRequiringAccessGrant() {
   try {
     membersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
   } catch (error) {
@@ -467,6 +471,10 @@ function showRecoverVaultDialog() {
 
 function permissionGranted() {
   membersRequiringAccessGrant.value = [];
+}
+
+async function refreshTrusts() {
+  trusts.value = await backend.trust.listTrusted();
 }
 
 async function refreshLicense() {

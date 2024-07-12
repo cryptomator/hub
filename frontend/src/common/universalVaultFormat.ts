@@ -1,7 +1,7 @@
 import JSZip from 'jszip';
 import { base32, base64, base64url } from 'rfc4648';
 import { VaultDto } from './backend';
-import { AccessTokenPayload, AccessTokenProducing, JsonWebKeySet, OtherVaultMember, UserKeys, VaultTemplateProducing, getJwkThumbprint } from './crypto';
+import { AccessTokenPayload, AccessTokenProducing, JsonWebKeySet, OtherVaultMember, UserKeys, VaultTemplateProducing, getJwkThumbprintStr } from './crypto';
 import { JWE, JWEHeader, JsonJWE, Recipient } from './jwe';
 import { CRC32, wordEncoder } from './util';
 
@@ -194,7 +194,7 @@ export class RecoveryKey {
    */
   public async serializePublicKey(): Promise<string> {
     const jwk = await crypto.subtle.exportKey('jwk', this.publicKey);
-    const thumbprint = await getJwkThumbprint(jwk);
+    const thumbprint = await getJwkThumbprintStr(jwk);
     return JSON.stringify({
       kid: `org.cryptomator.hub.recoverykey.${thumbprint}`,
       kty: jwk.kty,
@@ -287,7 +287,7 @@ export class VaultMetadata {
     if (!recoveryKey.privateKey) {
       throw new Error('Recovery key does not have a private key');
     }
-    const recoveryKeyID = `org.cryptomator.hub.recoverykey.${await getJwkThumbprint(recoveryKey.publicKey)}`;
+    const recoveryKeyID = `org.cryptomator.hub.recoverykey.${await getJwkThumbprintStr(recoveryKey.publicKey)}`;
     const json: JsonJWE = JSON.parse(uvfMetadataFile);
     const payload: MetadataPayload = await JWE.parseJson(json).decrypt(Recipient.ecdhEs(recoveryKeyID, recoveryKey.privateKey));
     return VaultMetadata.createFromJson(payload);
@@ -321,7 +321,7 @@ export class VaultMetadata {
    * @returns `vault.uvf` file contents
    */
   public async encrypt(apiURL: string, vault: VaultDto, memberKey: MemberKey, recoveryKey: RecoveryKey): Promise<string> {
-    const recoveryKeyID = `org.cryptomator.hub.recoverykey.${await getJwkThumbprint(recoveryKey.publicKey)}`;
+    const recoveryKeyID = `org.cryptomator.hub.recoverykey.${await getJwkThumbprintStr(recoveryKey.publicKey)}`;
     const protectedHeader: JWEHeader = {
       origin: `${apiURL}/vaults/${vault.id}/uvf/vault.uvf`,
       jku: 'jwks.json' // URL relative to origin
@@ -407,7 +407,7 @@ export class UniversalVaultFormat implements AccessTokenProducing, VaultTemplate
   private static async getRecoveryPublicKeyFromJwks(jwks: JsonWebKeySet): Promise<CryptoKey> {
     for (const key of jwks.keys) {
       if (key.kid?.startsWith('org.cryptomator.hub.recoverykey.')) {
-        const thumbprint = await getJwkThumbprint(key as JsonWebKey);
+        const thumbprint = await getJwkThumbprintStr(key as JsonWebKey);
         if (key.kid === `org.cryptomator.hub.recoverykey.${thumbprint}`) {
           return await crypto.subtle.importKey('jwk', key as JsonWebKey, RecoveryKey.KEY_DESIGNATION, true, []);
         }

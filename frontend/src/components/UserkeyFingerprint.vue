@@ -20,20 +20,22 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { getFingerprint } from '../common/crypto';
+import { UserDto } from '../common/backend';
+import wot from '../common/wot';
 
 const { t } = useI18n({ useScope: 'global' });
 
 const keyFingerprint = ref<string | undefined>();
 
 const props = defineProps<{
-  userPublicKey?: string
+  user: UserDto
 }>();
 
 onMounted(fetchData);
 
 async function fetchData() {
-  keyFingerprint.value = await getFingerprint(props.userPublicKey).then((key) => key?.replace(/.{8}/g, "$&" + " "))
+  const fingerprint = await wot.computeFingerprint(props.user);
+  keyFingerprint.value = fingerprint?.replace(/.{8}/g, "$&" + " ").trim(); // Add space after every 8 characters
 }
 
 </script>
