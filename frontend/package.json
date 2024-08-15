@@ -68,5 +68,8 @@
     "vue": "^3.4.38",
     "vue-i18n": "^9.13.1",
     "vue-router": "^4.4.3"
+  },
+  "optionalDependencies": {
+    "@rollup/rollup-linux-x64-gnu": "4.20.0"
   }
 }
