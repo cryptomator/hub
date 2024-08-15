@@ -6,6 +6,7 @@ import { ConcatKDF, ECDH_ES, ECDH_P384, JWEBuilder, JWEHeader, JWEParser, PBES2 
 describe('JWE', () => {
   before(done => {
     // since this test runs on Node, we need to replace window.crypto:
+    // @ts-ignore: global not defined (but will be available within Node)
     Object.defineProperty(global, 'crypto', { value: require('node:crypto').webcrypto });
     // @ts-ignore: global not defined (but will be available within Node)
     global.window = { crypto: global.crypto };

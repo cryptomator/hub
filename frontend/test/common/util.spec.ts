@@ -1,9 +1,6 @@
-import { use as chaiUse, expect } from 'chai';
-import chaiBytes from 'chai-bytes';
+import { expect } from 'chai';
 import { describe } from 'mocha';
 import { CRC32, wordEncoder } from '../../src/common/util';
-
-chaiUse(chaiBytes);
 
 describe('WordEncoder', () => {
   describe('decode(encode(x)) == x', () => {
@@ -17,7 +14,7 @@ describe('WordEncoder', () => {
         const encoded = wordEncoder.encodePadded(bytes);
         const decoded = wordEncoder.decode(encoded);
 
-        expect(decoded).to.equalBytes(bytes);
+        expect(decoded).to.deep.eq(bytes);
       });
     });
   });

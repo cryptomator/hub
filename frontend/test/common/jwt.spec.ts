@@ -5,6 +5,7 @@ import { JWT, JWTHeader } from '../../src/common/jwt';
 describe('JWT', () => {
   before(done => {
     // since this test runs on Node, we need to replace window.crypto:
+    // @ts-ignore: global not defined (but will be available within Node)
     Object.defineProperty(global, 'crypto', { value: require('node:crypto').webcrypto });
     // @ts-ignore: global not defined (but will be available within Node)
     global.window = { crypto: global.crypto };
