@@ -2,12 +2,13 @@ import { expect } from 'chai';
 import { describe } from 'mocha';
 import { base64url } from 'rfc4648';
 import { ConcatKDF, ECDH_ES, ECDH_P384, JWEBuilder, JWEHeader, JWEParser, PBES2 } from '../../src/common/jwe';
+import { webcrypto } from 'node:crypto';
 
 describe('JWE', () => {
   before(done => {
     // since this test runs on Node, we need to replace window.crypto:
     // @ts-ignore: global not defined (but will be available within Node)
-    Object.defineProperty(global, 'crypto', { value: require('node:crypto').webcrypto });
+    Object.defineProperty(global, 'crypto', { value: webcrypto });
     // @ts-ignore: global not defined (but will be available within Node)
     global.window = { crypto: global.crypto };
     done();

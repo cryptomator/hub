@@ -3,6 +3,7 @@ import chaiAsPromised from 'chai-as-promised';
 import { before, describe } from 'mocha';
 import { base64, base64url } from 'rfc4648';
 import { UnwrapKeyError, UserKeys, VaultKeys, getJwkThumbprint } from '../../src/common/crypto';
+import { webcrypto } from 'node:crypto';
 
 chaiUse(chaiAsPromised);
 
@@ -36,7 +37,7 @@ describe('crypto', () => {
   before(async () => {
     // since this test runs on Node, we need to replace window.crypto:
     // @ts-ignore: global not defined (but will be available within Node)
-    Object.defineProperty(global, 'crypto', { value: require('node:crypto').webcrypto });
+    Object.defineProperty(global, 'crypto', { value: webcrypto });
     // @ts-ignore: global not defined (but will be available within Node)
     global.window = { crypto: global.crypto };
 

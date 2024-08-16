@@ -14,9 +14,8 @@
     "useUnknownInCatchVariables": false, // Workaround for `node_modules/miscreant/src/providers/webcrypto.ts:21:11 - error TS18046: 'e' is of type 'unknown'.`
   },
   "ts-node": {
-    "compilerOptions": {
-      "module": "CommonJS"
-    }
+    "esm": true,
+    "experimentalSpecifierResolution": "node"
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"]
+  "include": ["src/**/*.ts", "src/**/*.vue", "test/**/*.ts"]
 }

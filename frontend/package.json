@@ -1,4 +1,5 @@
 {
+  "type": "module",
   "name": "cryptomator-hub",
   "version": "1.4.0",
   "description": "Web-Frontend for Cryptomator Hub",
@@ -9,7 +10,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
-    "lint": "eslint -c .eslintrc.js",
+    "lint": "eslint -c .eslintrc.cjs",
     "test": "nyc --reporter lcov mocha",
     "serve": "vite preview",
     "dist": "vue-tsc --noEmit && vite build --sourcemap --outDir=\"../backend/src/main/resources/META-INF/resources\" --emptyOutDir"
@@ -19,9 +20,7 @@
     "test": "./test"
   },
   "mocha": {
-    "require": [
-      "ts-node/register"
-    ],
+    "loader": "ts-node/esm",
     "spec": "test/**/*.spec.ts",
     "timeout": 60000
   },
