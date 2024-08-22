@@ -25,10 +25,6 @@
     "--no-warnings=ExperimentalWarning",
     "--experimental-specifier-resolution=node"
   ],
-  "mochaExplorer.env": {
-    //"TS_NODE_COMPILER_OPTIONS": "{\"module\": \"commonjs\" }",
-    // "TS_NODE_PROJECT": "./test/tsconfig.json"
-  },
   "mochaExplorer.files": "test/**/*.spec.ts",
   "mochaExplorer.require": "ts-node/register",
   "eslint.validate": ["typescript", "javascript", "vue"],
