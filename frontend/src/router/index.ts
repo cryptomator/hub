@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory, RouteLocationRaw, RouteLocationResolvedGeneric, RouteRecordRaw } from 'vue-router';
+import { createRouter, createWebHistory, RouteLocationRaw, RouteRecordRaw } from 'vue-router';
 import authPromise from '../common/auth';
 import backend from '../common/backend';
 import { baseURL } from '../common/config';
@@ -149,7 +149,7 @@ router.beforeEach((to, from, next) => {
         await backend.users.putMe();
       }
     }).finally(() => {
-      let {sync_me: _, ...remainingQuery} = to.query; // remove sync_me query parameter to avoid endless recursion
+      const { sync_me: _, ...remainingQuery } = to.query; // remove sync_me query parameter to avoid endless recursion
       next({ path: to.path, query: remainingQuery, replace: true });
     });
   } else {

@@ -8,7 +8,7 @@
     </div>
   </div>
 
-  <LicenseAlert v-if="isLicenseViolated && isAdmin != undefined && licenseStatus" :isAdmin="isAdmin" :licenseStatus="licenseStatus" />
+  <LicenseAlert v-if="isLicenseViolated && isAdmin != undefined && licenseStatus" :is-admin="isAdmin" :license-status="licenseStatus" />
 
   <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
     {{ t('vaultList.title') }}

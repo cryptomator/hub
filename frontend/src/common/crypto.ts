@@ -3,9 +3,9 @@ import { base16, base32, base64, base64url } from 'rfc4648';
 import { JWEBuilder, JWEParser } from './jwe';
 import { CRC32, DB, wordEncoder } from './util';
 export class UnwrapKeyError extends Error {
-  readonly actualError: any;
+  readonly actualError: unknown;
 
-  constructor(actualError: any) {
+  constructor(actualError: unknown) {
     super('Unwrapping key failed');
     this.actualError = actualError;
   }
@@ -269,7 +269,6 @@ export class UserKeys {
   public static readonly ECDSA_PUB_KEY_USAGES: KeyUsage[] = ['verify'];
 
   public static readonly ECDSA_KEY_DESIGNATION: EcKeyImportParams | EcKeyGenParams = { name: 'ECDSA', namedCurve: 'P-384' };
-
 
   protected constructor(readonly ecdhKeyPair: CryptoKeyPair, readonly ecdsaKeyPair: CryptoKeyPair) { }
 

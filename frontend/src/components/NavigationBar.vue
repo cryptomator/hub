@@ -68,8 +68,8 @@
 
 <script setup lang="ts">
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
-import { ArrowRightOnRectangleIcon, Bars3Icon, ListBulletIcon, UserIcon, WrenchIcon, XMarkIcon } from '@heroicons/vue/24/outline';
-import { onMounted, ref } from 'vue';
+import { ArrowRightStartOnRectangleIcon, Bars3Icon, ListBulletIcon, UserIcon, WrenchIcon, XMarkIcon } from '@heroicons/vue/24/outline';
+import { FunctionalComponent, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auth from '../common/auth';
 import { UserDto } from '../common/backend';
@@ -79,6 +79,8 @@ const { t } = useI18n({ useScope: 'global' });
 const navigation = [
   { name: 'nav.vaults', to: '/app/vaults' },
 ];
+
+type ProfileDropdownItem = { icon: FunctionalComponent, name: string, to: string };
 
 const profileDropdownSections = {
   infoSection :
@@ -94,12 +96,12 @@ const profileDropdownSections = {
 
   hubSection :
     [
-      { icon: ArrowRightOnRectangleIcon, name: 'nav.profile.signOut', to: '/app/logout' }
+      { icon: ArrowRightStartOnRectangleIcon, name: 'nav.profile.signOut', to: '/app/logout' }
     ],
 
 };
 
-const profileDropdown = ref<any []>([]);
+const profileDropdown = ref<ProfileDropdownItem[][]>([]);
 const props = defineProps<{
   me : UserDto
 }>();
