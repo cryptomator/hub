@@ -13,6 +13,7 @@
 		"recommendations": [
 			"dbaeumer.vscode-eslint",
 			"hbenl.vscode-mocha-test-adapter",
+			"hbenl.vscode-test-explorer",
 			"vue.volar"
 		],
 		"unwantedRecommendations": [
