@@ -3,7 +3,7 @@ import { dictionary } from './4096words_en';
 export class DB {
   private static readonly NAME = 'hub';
 
-  public static async transaction<T = any>(objectStore: string, mode: IDBTransactionMode, query: (transaction: IDBTransaction) => IDBRequest<T>): Promise<T> {
+  public static async transaction<T>(objectStore: string, mode: IDBTransactionMode, query: (transaction: IDBTransaction) => IDBRequest<T>): Promise<T> {
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
       const req = indexedDB.open(DB.NAME);
       req.onsuccess = () => resolve(req.result);
@@ -23,7 +23,7 @@ export class DB {
 
 export class Deferred<T> {
   public promise: Promise<T>;
-  public reject: (reason?: any) => void;
+  public reject: (reason?: unknown) => void;
   public resolve: (value: T) => void;
   public status: 'pending' | 'resolved' | 'rejected' = 'pending';
 
@@ -43,9 +43,10 @@ export class Deferred<T> {
  * @param wait time to wait before calling function
  * @returns debounced function
  */
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 export const debounce = (func: Function, wait = 300) => {
   let timeoutId: ReturnType<typeof setTimeout>;
-  function debounceCore(this: any, ...args: any[]) {
+  function debounceCore(this: unknown, ...args: unknown[]) {
     cancel();
     timeoutId = setTimeout(() => func.apply(this, args), wait);
   }

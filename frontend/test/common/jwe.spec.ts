@@ -1,14 +1,14 @@
 import { expect } from 'chai';
 import { describe } from 'mocha';
+import { webcrypto } from 'node:crypto';
 import { base64url } from 'rfc4648';
 import { ConcatKDF, ECDH_ES, ECDH_P384, JWEBuilder, JWEHeader, JWEParser, PBES2 } from '../../src/common/jwe';
 
 describe('JWE', () => {
   before(done => {
     // since this test runs on Node, we need to replace window.crypto:
-    // @ts-ignore: global not defined (but will be available within Node)
-    Object.defineProperty(global, 'crypto', { value: require('node:crypto').webcrypto });
-    // @ts-ignore: global not defined (but will be available within Node)
+    Object.defineProperty(global, 'crypto', { value: webcrypto });
+    // @ts-expect-error: incomplete 'window' type
     global.window = { crypto: global.crypto };
     done();
   });
@@ -22,7 +22,7 @@ describe('JWE', () => {
       const suppPubInfo = new Uint8Array([0, 0, 0, 128]);
 
       const otherInfo = new Uint8Array([...algorithmId, ...partyUInfo, ...partyVInfo, ...new Uint8Array(suppPubInfo)]);
-      let derivedKey = await ConcatKDF.kdf(z, 16, otherInfo);
+      const derivedKey = await ConcatKDF.kdf(z, 16, otherInfo);
       expect(new Uint8Array(derivedKey), 'derived key').to.eql(new Uint8Array([86, 170, 141, 234, 248, 35, 109, 32, 92, 34, 40, 205, 113, 167, 16, 26]));
     });
   });

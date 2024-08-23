@@ -120,7 +120,7 @@ async function removeDevice(device: DeviceDto) {
     if (error instanceof NotFoundError) {
       // if device is already missing in backend → ignore and proceed to then()
     } else {
-      let e = error instanceof Error ? error : new Error('Unknown Error');
+      const e = error instanceof Error ? error : new Error('Unknown Error');
       onRemoveDeviceError.value[device.id] = e;
       throw e;
     }

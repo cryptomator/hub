@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated to Java 21 (#272)
 - Updated to Quarkus 3.8.x LTS (#272)
 - Bumpd build time dependencies
+- Migrated remaining commonjs modules in frontend build to ESM
 - Memoize infrequently changing data, reducing XHR roundtrips
 - Switched to JWK thumbprint format in user profile
 - Switched to Repository Pattern (#273)

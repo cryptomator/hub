@@ -20,11 +20,13 @@
   "html.format.wrapLineLength": 0,
   "typescript.preferences.importModuleSpecifier": "relative",
   "typescript.preferences.quoteStyle": "single",
-  "mochaExplorer.env": {
-    "TS_NODE_COMPILER_OPTIONS": "{\"module\": \"commonjs\" }",
-    // "TS_NODE_PROJECT": "./test/tsconfig.json"
-  },
+  "mochaExplorer.nodeArgv": [
+    "--loader=ts-node/esm",
+    "--no-warnings=ExperimentalWarning",
+    "--experimental-specifier-resolution=node"
+  ],
   "mochaExplorer.files": "test/**/*.spec.ts",
   "mochaExplorer.require": "ts-node/register",
-  "eslint.validate": ["typescript", "javascript", "vue"]
+  "eslint.validate": ["typescript", "javascript", "vue"],
+  "eslint.useFlatConfig": true
 }

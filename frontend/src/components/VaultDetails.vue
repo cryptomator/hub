@@ -364,7 +364,7 @@ async function reloadDevicesRequiringAccessGrant() {
   }
 }
 
-function isAuthorityDto(toCheck: any): toCheck is AuthorityDto {
+function isAuthorityDto(toCheck: unknown): toCheck is AuthorityDto {
   return (toCheck as AuthorityDto).type != null;
 }
 
@@ -391,7 +391,7 @@ async function addAuthority(authority: AuthorityDto) {
 
 async function addAuthorityBackend(authority: AuthorityDto) {
   try {
-    switch(authority.type) {
+    switch (authority.type) {
       case 'USER':
         await backend.vaults.addUser(props.vaultId, authority.id);
         break;

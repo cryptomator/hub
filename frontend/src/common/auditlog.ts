@@ -116,7 +116,7 @@ export class AuditLogEntityCache {
     return this.getEntity<DeviceDto>(deviceId, this.devices, this.debouncedResolvePendingDevices);
   }
 
-  private async getEntity<T>(entityId: string, entities: Map<string, Deferred<T>>, debouncedResolvePendingEntities: Function): Promise<T> {
+  private async getEntity<T>(entityId: string, entities: Map<string, Deferred<T>>, debouncedResolvePendingEntities: () => void): Promise<T> {
     const cachedEntity = entities.get(entityId);
     if (!cachedEntity) {
       const deferredEntity = new Deferred<T>();
@@ -133,8 +133,8 @@ export class AuditLogEntityCache {
   private debouncedResolvePendingDevices = debounce(async () => await this.resolvePendingEntities<DeviceDto>(this.devices, backend.devices.listSome), 100);
 
   private async resolvePendingEntities<T extends { id: string }>(entities: Map<string, Deferred<T>>, listSome: (ids: string[]) => Promise<T[]>): Promise<void> {
-    const pendingEntities = Array.from(entities.entries()).filter(([_, v]) => v.status === 'pending');
-    const entitiesResult = await listSome(pendingEntities.map(([k, _]) => k));
+    const pendingEntities = Array.from(entities.entries()).filter(([, v]) => v.status === 'pending');
+    const entitiesResult = await listSome(pendingEntities.map(([k,]) => k));
     for (const [entityId, deferredEntity] of pendingEntities) {
       const entity = entitiesResult.find(v => v.id === entityId);
       if (entity) {

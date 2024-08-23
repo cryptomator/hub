@@ -27,9 +27,9 @@
                       <div class="my-2">
                         <label for="fingerprint" class="block text-sm font-medium leading-6 text-gray-900">Fingerprint</label>
                         <div class="relative mt-2 rounded-md shadow-sm">
-                          <input type="text" name="fingerprint" v-model="enteredFingerprint" :readonly="minVerificationLen === 0" @keyup="tryAutocomplete()" id="fingerprint" class="block w-full rounded-md border-0 py-1.5 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-primary text-sm sm:leading-6" />
+                          <input id="fingerprint" v-model="enteredFingerprint" type="text" name="fingerprint" :readonly="minVerificationLen === 0" class="block w-full rounded-md border-0 py-1.5 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-primary text-sm sm:leading-6" @keyup="tryAutocomplete()" />
                           <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                            <CheckIcon class="h-5 w-5 text-primary" aria-hidden="true" v-if="fingerprintMatches"/>
+                            <CheckIcon v-if="fingerprintMatches" class="h-5 w-5 text-primary" aria-hidden="true"/>
                           </div>
                         </div>
                       </div>
@@ -94,7 +94,7 @@ async function fetchData() {
   expectedFingerprint.value = await wot.computeFingerprint(props.user);
   minVerificationLen.value = (await backend.settings.get()).wotIdVerifyLen;
   if (minVerificationLen.value === 0) {
-    enteredFingerprint.value = expectedFingerprint.value.replace(/.{8}/g, "$&" + " ").trim();
+    enteredFingerprint.value = expectedFingerprint.value.replace(/.{8}/g, '$&' + ' ').trim();
   }
 }
 
@@ -105,7 +105,7 @@ function show() {
 async function tryAutocomplete() {
   if (enteredFingerprint.value.length >= minVerificationLen.value) {
     if (expectedFingerprint.value?.startsWith(enteredFingerprint.value)) {
-      enteredFingerprint.value = expectedFingerprint.value.replace(/.{8}/g, "$&" + " ").trim();
+      enteredFingerprint.value = expectedFingerprint.value.replace(/.{8}/g, '$&' + ' ').trim();
     }
   }
 }

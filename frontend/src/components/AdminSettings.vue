@@ -238,7 +238,7 @@ const numberOfExceededSeats = computed(() => {
 });
 
 onMounted(async () => {
-  let cfg = config.get();
+  const cfg = config.get();
   keycloakAdminRealmURL.value = `${cfg.keycloakUrl}/admin/${cfg.keycloakRealm}/console`;
   if (props.token) {
     await setToken(props.token);
@@ -256,8 +256,8 @@ async function setToken(token: string) {
 
 async function fetchData() {
   try {
-    let versionDto = backend.version.get();
-    let versionAvailable = versionDto.then(versionDto => updateChecker.get(versionDto.hubVersion));
+    const versionDto = backend.version.get();
+    const versionAvailable = versionDto.then(versionDto => updateChecker.get(versionDto.hubVersion));
     admin.value = await backend.billing.get();
     version.value = await versionDto;
     latestVersion.value = await versionAvailable;
