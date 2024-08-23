@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fixed incorrect ARIA roles improving accessibility
+- Fixed incorrect `Content-Type` header for `/api/vaults/{vaultId}/access-token` (#284)
 
 ### Security
 
