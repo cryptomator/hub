@@ -51,6 +51,8 @@ import org.cryptomator.hub.validation.ValidJWS;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 
@@ -293,7 +295,7 @@ public class VaultResource {
 	@VaultRole({VaultAccess.Role.MEMBER, VaultAccess.Role.OWNER}) // may throw 403
 	@Transactional
 	@Operation(summary = "get the user-specific vault key", description = "retrieves a jwe containing the vault key, encrypted for the current user")
-	@APIResponse(responseCode = "200")
+	@APIResponse(responseCode = "200", content = {@Content(mediaType = MediaType.TEXT_PLAIN, schema = @Schema(implementation = String.class))})
 	@APIResponse(responseCode = "402", description = "license expired or number of effective vault users that have a token exceeds available license seats")
 	@APIResponse(responseCode = "403", description = "not a vault member")
 	@APIResponse(responseCode = "404", description = "unknown vault")
