@@ -59,7 +59,7 @@
     "file-saver": "^2.0.5",
     "jdenticon": "^3.3.0",
     "jszip": "^3.10.1",
-    "keycloak-js": "^25.0.4",
+    "keycloak-js": "^25.0.6",
     "miscreant": "^0.3.2",
     "rfc4648": "^1.5.3",
     "semver": "^7.6.3",
