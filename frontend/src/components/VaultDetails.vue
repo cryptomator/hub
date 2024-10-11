@@ -283,7 +283,7 @@ onMounted(fetchData);
 async function fetchData() {
   onFetchError.value = null;
   try {
-    isAdmin.value = (await auth).isAdmin();
+    isAdmin.value = (await auth).hasRole('admin');
     vault.value = await backend.vaults.get(props.vaultId);
     me.value = await userdata.me;
     license.value = await backend.license.getUserInfo();

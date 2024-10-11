@@ -72,7 +72,7 @@ const routes: RouteRecordRaw[] = [
         path: 'admin',
         beforeEnter: async () => {
           const auth = await authPromise;
-          return auth.isAdmin(); //TODO: reroute to NotFound Screen/ AccessDeniedScreen?
+          return auth.hasRole('admin'); //TODO: reroute to NotFound Screen/ AccessDeniedScreen?
         },
         children: [
           {

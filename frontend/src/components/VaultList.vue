@@ -177,7 +177,7 @@ onMounted(fetchData);
 async function fetchData() {
   onFetchError.value = null;
   try {
-    isAdmin.value = (await auth).isAdmin();
+    isAdmin.value = (await auth).hasRole('admin');
 
     if (isAdmin.value) {
       filterOptions.value['allVaults'] = t('vaultList.filter.entry.allVaults');
