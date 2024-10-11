@@ -17,11 +17,12 @@ import VaultList from '../components/VaultList.vue';
 import Forbidden from '../components/Forbidden.vue';
 
 function checkRole(role: string): NavigationGuardWithThis<undefined> {
-  return async () => {
+  return async (to, _) => {
     const auth = await authPromise;
     if (auth.hasRole(role)) {
       return true;
     } else {
+      console.warn(`Access denied: User requires role ${role} to access ${to.fullPath}`);
       return { path: '/app/forbidden', replace: true };
     }
   };
