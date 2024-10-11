@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory, RouteLocationRaw, RouteRecordRaw } from 'vue-router';
+import { createRouter, createWebHistory, NavigationGuardWithThis, RouteLocationRaw, RouteRecordRaw } from 'vue-router';
 import authPromise from '../common/auth';
 import backend from '../common/backend';
 import { baseURL } from '../common/config';
@@ -14,6 +14,18 @@ import UnlockSuccess from '../components/UnlockSuccess.vue';
 import UserProfile from '../components/UserProfile.vue';
 import VaultDetails from '../components/VaultDetails.vue';
 import VaultList from '../components/VaultList.vue';
+import Forbidden from '../components/Forbidden.vue';
+
+function checkRole(role: string): NavigationGuardWithThis<undefined> {
+  return async () => {
+    const auth = await authPromise;
+    if (auth.hasRole(role)) {
+      return true;
+    } else {
+      return { path: '/app/forbidden', replace: true };
+    }
+  };
+}
 
 const routes: RouteRecordRaw[] = [
   {
@@ -52,12 +64,14 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'vaults/create',
         component: CreateVault,
-        props: () => ({ recover: false })
+        props: () => ({ recover: false }),
+        beforeEnter: checkRole('create-vaults'),
       },
       {
         path: 'vaults/recover',
         component: CreateVault,
-        props: () => ({ recover: true })
+        props: () => ({ recover: true }),
+        beforeEnter: checkRole('create-vaults'),
       },
       {
         path: 'vaults/:id',
@@ -70,10 +84,7 @@ const routes: RouteRecordRaw[] = [
       },
       {
         path: 'admin',
-        beforeEnter: async () => {
-          const auth = await authPromise;
-          return auth.hasRole('admin'); //TODO: reroute to NotFound Screen/ AccessDeniedScreen?
-        },
+        beforeEnter: checkRole('admin'),
         children: [
           {
             path: '',
@@ -112,6 +123,11 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/app/:pathMatch(.+)', //necessary due to using history mode in router
     component: NotFound,
+    meta: { skipAuth: true, skipSetup: true }
+  },
+  {
+    path: '/app/forbidden',
+    component: Forbidden,
     meta: { skipAuth: true, skipSetup: true }
   },
 ];
