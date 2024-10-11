@@ -245,12 +245,25 @@ public class VaultResourceIT {
 
 	@Nested
 	@DisplayName("As vault admin user1")
-	@TestSecurity(user = "User Name 1", roles = {"user"})
+	@TestSecurity(user = "User Name 1", roles = {"create-vaults"})
 	@OidcSecurity(claims = {
 			@Claim(key = "sub", value = "user1")
 	})
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 	public class CreateVaults {
+
+		@Test
+		@Order(1)
+		@TestSecurity(user = "User Name 1", roles = {"user"})
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100003333 returns 403 for missing role")
+		public void testCreteVaultWithMissingRole() {
+			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100003333");
+			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", "Test vault 3", false, Instant.parse("2112-12-21T21:12:21Z"), "masterkey3", 42, "NaCl", "authPubKey3", "authPrvKey3");
+
+			given().contentType(ContentType.JSON).body(vaultDto)
+					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-000100003333")
+					.then().statusCode(403);
+		}
 
 		@Test
 		@Order(1)
@@ -647,7 +660,7 @@ public class VaultResourceIT {
 
 	@Nested
 	@DisplayName("When exceeding 5 seats in license")
-	@TestSecurity(user = "User Name 1", roles = {"user"})
+	@TestSecurity(user = "User Name 1", roles = {"user", "create-vaults"})
 	@OidcSecurity(claims = {
 			@Claim(key = "sub", value = "user1")
 	})
@@ -832,7 +845,7 @@ public class VaultResourceIT {
 
 	@Nested
 	@DisplayName("Claim Ownership")
-	@TestSecurity(user = "User Name 1", roles = {"user"})
+	@TestSecurity(user = "User Name 1", roles = {"create-vaults"})
 	@OidcSecurity(claims = {
 			@Claim(key = "sub", value = "user1")
 	})
@@ -992,6 +1005,23 @@ public class VaultResourceIT {
 			given().param("proof", proof)
 					.when().post("/vaults/{vaultId}/claim-ownership", "7E57C0DE-0000-4000-8000-BADBADBADBAD")
 					.then().statusCode(404);
+		}
+
+		@Test
+		@Order(1)
+		@TestSecurity(user = "User Name 1", roles = {"user"})
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100009999/claim-ownership returns 403 for missing role")
+		public void testClaimOwnershipWithMissingRole() {
+			var proof = JWT.create()
+					.withNotBefore(Instant.now().minusSeconds(10))
+					.withExpiresAt(Instant.now().plusSeconds(10))
+					.withSubject("user1")
+					.withClaim("vaultId", "7E57C0DE-0000-4000-8000-000100009999".toLowerCase())
+					.sign(JWT_ALG);
+
+			given().param("proof", proof)
+					.when().post("/vaults/{vaultId}/claim-ownership", "7E57C0DE-0000-4000-8000-000100009999")
+					.then().statusCode(403);
 		}
 
 		@Test

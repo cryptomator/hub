@@ -388,7 +388,7 @@ public class VaultResource {
 
 	@PUT
 	@Path("/{vaultId}")
-	@RolesAllowed("user")
+	@RolesAllowed("create-vaults")
 	@VaultRole(value = VaultAccess.Role.OWNER, onMissingVault = VaultRole.OnMissingVault.PASS)
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
@@ -439,7 +439,7 @@ public class VaultResource {
 
 	@POST
 	@Path("/{vaultId}/claim-ownership")
-	@RolesAllowed("user")
+	@RolesAllowed("create-vaults")
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	@Transactional
 	@Operation(summary = "claims ownership of a vault",
