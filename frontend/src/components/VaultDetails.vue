@@ -49,37 +49,37 @@
                   <p class="w-full ml-4 text-sm font-medium text-gray-900 truncate">{{ member.name }}</p>
                   <TrustDetails v-if="member.type === 'USER'" :trusted-user="member" :trusts="trusts" @trust-changed="refreshTrusts()"/>
                   <div v-if="member.role == 'OWNER'" class="ml-3 inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">{{ t('vaultDetails.sharedWith.badge.owner') }}</div>
+                  <Menu v-if="member.id != me?.id" as="div" class="relative ml-2 inline-block flex-shrink-0 text-left">
+                    <MenuButton class="group relative inline-flex h-8 w-8 items-center justify-center rounded-full bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+                      <span class="absolute -inset-1.5" />
+                      <span class="sr-only">Open options menu</span>
+                      <span class="flex h-full w-full items-center justify-center rounded-full">
+                        <EllipsisVerticalIcon class="h-5 w-5 text-gray-400 group-hover:text-gray-500" aria-hidden="true" />
+                      </span>
+                    </MenuButton>
+                    <transition enter-active-class="transition ease-out duration-100" enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 scale-100" leave-to-class="transform opacity-0 scale-95">
+                      <MenuItems class="absolute right-9 top-0 z-10 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                        <div class="py-1">
+                          <MenuItem v-if="member.role == 'MEMBER'" v-slot="{ active }" @click="updateMemberRole(member, 'OWNER')">
+                            <div :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'cursor-pointer block px-4 py-2 text-sm']">
+                              {{ t('vaultDetails.sharedWith.grantOwnership') }}
+                            </div>
+                          </MenuItem>
+                          <MenuItem v-if="member.role == 'OWNER'" v-slot="{ active }" @click="updateMemberRole(member, 'MEMBER')">
+                            <div :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'cursor-pointer block px-4 py-2 text-sm']">
+                              {{ t('vaultDetails.sharedWith.revokeOwnership') }}
+                            </div>
+                          </MenuItem>
+                          <MenuItem v-slot="{ active }" @click="removeMember(member.id)">
+                            <div :class="[active ? 'bg-gray-100 text-red-900' : 'text-red-700', 'cursor-pointer block px-4 py-2 text-sm']">
+                              {{ t('common.remove') }}<span class="sr-only"> {{ member.name }}</span>
+                            </div>
+                          </MenuItem>
+                        </div>
+                      </MenuItems>
+                    </transition>
+                  </Menu>
                 </div>
-                <Menu v-if="member.id != me?.id" as="div" class="relative ml-2 inline-block flex-shrink-0 text-left">
-                  <MenuButton class="group relative inline-flex h-8 w-8 items-center justify-center rounded-full bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
-                    <span class="absolute -inset-1.5" />
-                    <span class="sr-only">Open options menu</span>
-                    <span class="flex h-full w-full items-center justify-center rounded-full">
-                      <EllipsisVerticalIcon class="h-5 w-5 text-gray-400 group-hover:text-gray-500" aria-hidden="true" />
-                    </span>
-                  </MenuButton>
-                  <transition enter-active-class="transition ease-out duration-100" enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 scale-100" leave-to-class="transform opacity-0 scale-95">
-                    <MenuItems class="absolute right-9 top-0 z-10 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                      <div class="py-1">
-                        <MenuItem v-if="member.role == 'MEMBER'" v-slot="{ active }" @click="updateMemberRole(member, 'OWNER')">
-                          <div :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'cursor-pointer block px-4 py-2 text-sm']">
-                            {{ t('vaultDetails.sharedWith.grantOwnership') }}
-                          </div>
-                        </MenuItem>
-                        <MenuItem v-if="member.role == 'OWNER'" v-slot="{ active }" @click="updateMemberRole(member, 'MEMBER')">
-                          <div :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'cursor-pointer block px-4 py-2 text-sm']">
-                            {{ t('vaultDetails.sharedWith.revokeOwnership') }}
-                          </div>
-                        </MenuItem>
-                        <MenuItem v-slot="{ active }" @click="removeMember(member.id)">
-                          <div :class="[active ? 'bg-gray-100 text-red-900' : 'text-red-700', 'cursor-pointer block px-4 py-2 text-sm']">
-                            {{ t('common.remove') }}<span class="sr-only"> {{ member.name }}</span>
-                          </div>
-                        </MenuItem>
-                      </div>
-                    </MenuItems>
-                  </transition>
-                </Menu>
               </div>
 
               <p v-if="onUpdateVaultMembershipError[member.id] != null" class="text-sm text-red-900 text-right mt-1">
