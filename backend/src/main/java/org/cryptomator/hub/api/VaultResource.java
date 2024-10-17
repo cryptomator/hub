@@ -388,8 +388,8 @@ public class VaultResource {
 
 	@PUT
 	@Path("/{vaultId}")
-	@RolesAllowed("create-vaults")
-	@VaultRole(value = VaultAccess.Role.OWNER, onMissingVault = VaultRole.OnMissingVault.PASS)
+	@RolesAllowed("user") // general authentication. VaultRole filter will check for specific access rights
+	@VaultRole(value = VaultAccess.Role.OWNER, onMissingVault = VaultRole.OnMissingVault.REQUIRE_REALM_ROLE, realmRole = "create-vaults")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
@@ -439,7 +439,7 @@ public class VaultResource {
 
 	@POST
 	@Path("/{vaultId}/claim-ownership")
-	@RolesAllowed("create-vaults")
+	@RolesAllowed("user")
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	@Transactional
 	@Operation(summary = "claims ownership of a vault",
