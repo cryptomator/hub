@@ -244,6 +244,8 @@
   "vaultList.empty.title": "Keine Tresore",
   "vaultList.empty.description": "Beginne mit der Erstellung eines neuen Tresors.",
   "vaultList.addVault": "Hinzufügen",
+  "vaultList.addVault.disabled.licenseViolation": "Lizenz überschritten.",
+  "vaultList.addVault.disabled.missingPermission": "Die fehlt die Berechtigung zur Erstellung von Tresoren.",
   "vaultList.addVault.create": "Neu erstellen",
   "vaultList.addVault.recover": "Wiederherstellen",
   "vaultList.filter": "Filter",
