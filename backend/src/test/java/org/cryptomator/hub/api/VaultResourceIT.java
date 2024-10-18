@@ -241,11 +241,23 @@ public class VaultResourceIT {
 			when().get("/vaults/{vaultId}/access-token", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(449);
 		}
+
+		@Test
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100003333 returns 403 for missing role")
+		public void testCreateVaultWithMissingRole() {
+			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100003333");
+			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", "Test vault 3", false, Instant.parse("2112-12-21T21:12:21Z"), "masterkey3", 42, "NaCl", "authPubKey3", "authPrvKey3");
+
+			given().contentType(ContentType.JSON).body(vaultDto)
+					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-000100003333")
+					.then().statusCode(403);
+		}
+
 	}
 
 	@Nested
 	@DisplayName("As vault admin user1")
-	@TestSecurity(user = "User Name 1", roles = {"user"})
+	@TestSecurity(user = "User Name 1", roles = {"user", "create-vaults"})
 	@OidcSecurity(claims = {
 			@Claim(key = "sub", value = "user1")
 	})
@@ -647,7 +659,7 @@ public class VaultResourceIT {
 
 	@Nested
 	@DisplayName("When exceeding 5 seats in license")
-	@TestSecurity(user = "User Name 1", roles = {"user"})
+	@TestSecurity(user = "User Name 1", roles = {"user", "create-vaults"})
 	@OidcSecurity(claims = {
 			@Claim(key = "sub", value = "user1")
 	})

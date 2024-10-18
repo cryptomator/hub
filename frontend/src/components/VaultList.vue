@@ -40,7 +40,7 @@
 
     <Menu as="div" class="relative inline-block text-left">
       <div>
-        <MenuButton :disabled="isLicenseViolated" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" :class="{ 'cursor-not-allowed opacity-50': isLicenseViolated }">
+        <MenuButton :disabled="isLicenseViolated || !canCreateVaults" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50" :title="isLicenseViolated ? t('vaultList.addVault.disabled.licenseViolation') : canCreateVaults ? undefined : t('vaultList.addVault.disabled.missingPermission')">
           {{ t('vaultList.addVault') }}
           <ChevronDownIcon class="-mr-1 ml-2 h-5 w-5" aria-hidden="true" />
         </MenuButton>
@@ -98,7 +98,7 @@
       <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10.5v6m3-3H9m4.06-7.19l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
     </svg>
     <h3 class="mt-2 text-sm font-medium text-gray-900">{{ t('vaultList.empty.title') }}</h3>
-    <p class="mt-1 text-sm text-gray-500">{{ t('vaultList.empty.description') }}</p>
+    <p v-if="canCreateVaults" class="mt-1 text-sm text-gray-500">{{ t('vaultList.empty.description') }}</p>
   </div>
 
   <div v-else-if="query !== '' && filteredVaults != null && filteredVaults.length == 0" class="mt-3 text-center">
@@ -147,7 +147,8 @@ const roleOfSelectedVault = computed<VaultRole | 'NONE'>(() => {
   }
 });
 
-const isAdmin = ref<boolean>();
+const isAdmin = ref<boolean>(false);
+const canCreateVaults = ref<boolean>(false);
 const licenseStatus = ref<LicenseUserInfoDto>();
 const isLicenseViolated = computed(() => {
   if (licenseStatus.value) {
@@ -177,7 +178,8 @@ onMounted(fetchData);
 async function fetchData() {
   onFetchError.value = null;
   try {
-    isAdmin.value = (await auth).isAdmin();
+    isAdmin.value = (await auth).hasRole('admin');
+    canCreateVaults.value = (await auth).hasRole('create-vaults');
 
     if (isAdmin.value) {
       filterOptions.value['allVaults'] = t('vaultList.filter.entry.allVaults');
