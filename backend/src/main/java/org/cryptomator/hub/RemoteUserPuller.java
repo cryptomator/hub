@@ -54,7 +54,7 @@ public class RemoteUserPuller {
 	<T extends Authority> void syncAddedAuthorities(Map<String, T> keycloakAuthorities, Map<String, T> databaseAuthorities) {
 		var addedAuthority = diff(keycloakAuthorities.keySet(), databaseAuthorities.keySet());
 		for (var id : addedAuthority) {
-			authorityRepo.persist(keycloakAuthorities.get(id));
+			authorityRepo.persistAndFlush(keycloakAuthorities.get(id));
 		}
 	}
 
@@ -76,7 +76,7 @@ public class RemoteUserPuller {
 			dbUser.setPictureUrl(kcUser.getPictureUrl());
 			dbUser.setName(kcUser.getName());
 			dbUser.setEmail(kcUser.getEmail());
-			userRepo.persist(dbUser);
+			userRepo.persistAndFlush(dbUser);
 		}
 	}
 
@@ -91,7 +91,7 @@ public class RemoteUserPuller {
 
 			dbGroup.getMembers().addAll(diff(kcGroup.getMembers(), dbGroup.getMembers()));
 			dbGroup.getMembers().removeAll(diff(dbGroup.getMembers(), kcGroup.getMembers()));
-			// TODO why don't we run dbGroup.persist()?
+			groupRepo.persistAndFlush(dbGroup);
 		}
 	}
 
