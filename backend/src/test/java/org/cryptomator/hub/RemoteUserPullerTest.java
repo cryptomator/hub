@@ -40,8 +40,8 @@ class RemoteUserPullerTest {
 		remoteUserPuller.userRepo = userRepo;
 		remoteUserPuller.groupRepo = groupRepo;
 		Mockito.doNothing().when(authorityRepo).persistAndFlush(Mockito.any());
-		Mockito.doNothing().when(userRepo).persistAndFlush(Mockito.any());
-		Mockito.doNothing().when(groupRepo).persistAndFlush(Mockito.any());
+		Mockito.doNothing().when(userRepo).persist((User) Mockito.any());
+		Mockito.doNothing().when(groupRepo).persist((Group) Mockito.any());
 	}
 
 	@Nested
@@ -156,7 +156,7 @@ class RemoteUserPullerTest {
 
 			for (String userId : updatedUserIds) {
 				var dbUser = databaseUsers.get(userId);
-				Mockito.verify(userRepo).persistAndFlush(dbUser);
+				Mockito.verify(userRepo).persist(dbUser);
 				Mockito.verify(dbUser).setPictureUrl(String.format("picture %s", userId));
 				Mockito.verify(dbUser).setName(String.format("name %s", userId));
 				Mockito.verify(dbUser).setEmail(String.format("email %s", userId));
@@ -205,7 +205,7 @@ class RemoteUserPullerTest {
 				var dbGroup = databaseGroups.get(groupId);
 				Mockito.verify(dbGroup).setName(String.format("name %s", groupId));
 				MatcherAssert.assertThat(dbGroupMembers, Matchers.containsInAnyOrder(user, otherKCUser));
-				Mockito.verify(groupRepo).persistAndFlush(dbGroup);
+				Mockito.verify(groupRepo).persist(dbGroup);
 			}
 		}
 	}
