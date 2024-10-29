@@ -76,7 +76,7 @@ public class RemoteUserPuller {
 			dbUser.setPictureUrl(kcUser.getPictureUrl());
 			dbUser.setName(kcUser.getName());
 			dbUser.setEmail(kcUser.getEmail());
-			userRepo.persistAndFlush(dbUser);
+			userRepo.persist(dbUser);
 		}
 	}
 
@@ -91,7 +91,7 @@ public class RemoteUserPuller {
 
 			dbGroup.getMembers().addAll(diff(kcGroup.getMembers(), dbGroup.getMembers()));
 			dbGroup.getMembers().removeAll(diff(dbGroup.getMembers(), kcGroup.getMembers()));
-			groupRepo.persistAndFlush(dbGroup);
+			groupRepo.persist(dbGroup);
 		}
 	}
 

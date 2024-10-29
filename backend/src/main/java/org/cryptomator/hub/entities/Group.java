@@ -18,7 +18,7 @@ import java.util.Set;
 @DiscriminatorValue("GROUP")
 public class Group extends Authority {
 
-	@ManyToMany(cascade = {CascadeType.MERGE, CascadeType.REFRESH})
+	@ManyToMany(cascade = {CascadeType.REMOVE})
 	@JoinTable(name = "group_membership",
 			joinColumns = @JoinColumn(name = "group_id", referencedColumnName = "id"),
 			inverseJoinColumns = @JoinColumn(name = "member_id", referencedColumnName = "id")
