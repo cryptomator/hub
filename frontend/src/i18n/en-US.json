@@ -245,6 +245,8 @@
   "vaultList.empty.title": "No vaults",
   "vaultList.empty.description": "Get started by creating a new vault.",
   "vaultList.addVault": "Add",
+  "vaultList.addVault.disabled.licenseViolation": "License limit exceeded.",
+  "vaultList.addVault.disabled.missingPermission": "You don't have permission to create a vault.",
   "vaultList.addVault.create": "Create New",
   "vaultList.addVault.recover": "Recover Existing",
   "vaultList.filter": "Filter",

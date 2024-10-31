@@ -107,7 +107,7 @@ const props = defineProps<{
 }>();
 
 onMounted(async () => {
-  if ((await auth).isAdmin()) {
+  if ((await auth).hasRole('admin')) {
     profileDropdown.value = [profileDropdownSections.infoSection, profileDropdownSections.adminSection, profileDropdownSections.hubSection];
   } else {
     profileDropdown.value = [profileDropdownSections.infoSection, profileDropdownSections.hubSection];

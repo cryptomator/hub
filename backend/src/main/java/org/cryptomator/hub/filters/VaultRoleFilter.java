@@ -32,6 +32,7 @@ public class VaultRoleFilter implements ContainerRequestFilter {
 
 	@Inject
 	EffectiveVaultAccess.Repository effectiveVaultAccessRepo;
+
 	@Inject
 	Vault.Repository vaultRepo;
 
@@ -67,6 +68,11 @@ public class VaultRoleFilter implements ContainerRequestFilter {
 				case FORBIDDEN -> throw new ForbiddenException(forbiddenMsg);
 				case NOT_FOUND -> throw new NotFoundException("Vault not found");
 				case PASS -> {}
+				case REQUIRE_REALM_ROLE -> {
+					if (!requestContext.getSecurityContext().isUserInRole(annotation.realmRole())) {
+						throw new ForbiddenException("Missing role " + annotation.realmRole());
+					}
+				}
 			}
 		}
 	}

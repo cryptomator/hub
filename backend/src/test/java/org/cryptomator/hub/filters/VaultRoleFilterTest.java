@@ -6,6 +6,7 @@ import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ResourceInfo;
 import jakarta.ws.rs.core.MultivaluedHashMap;
+import jakarta.ws.rs.core.SecurityContext;
 import jakarta.ws.rs.core.UriInfo;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.entities.Vault;
@@ -28,6 +29,7 @@ public class VaultRoleFilterTest {
 	private final ResourceInfo resourceInfo = Mockito.mock(ResourceInfo.class);
 	private final UriInfo uriInfo = Mockito.mock(UriInfo.class);
 	private final ContainerRequestContext context = Mockito.mock(ContainerRequestContext.class);
+	private final SecurityContext securityContext = Mockito.mock(SecurityContext.class);
 	private final JsonWebToken jwt = Mockito.mock(JsonWebToken.class);
 	private final EffectiveVaultAccess.Repository effectiveVaultAccessRepo = Mockito.mock(EffectiveVaultAccess.Repository.class);
 	private final Vault.Repository vaultRepo = Mockito.mock(Vault.Repository.class);
@@ -41,6 +43,7 @@ public class VaultRoleFilterTest {
 		filter.vaultRepo = vaultRepo;
 
 		Mockito.doReturn(uriInfo).when(context).getUriInfo();
+		Mockito.doReturn(securityContext).when(context).getSecurityContext();
 	}
 
 	@Test
@@ -173,6 +176,34 @@ public class VaultRoleFilterTest {
 			Assertions.assertDoesNotThrow(() -> filter.filter(context));
 		}
 
+		@Nested
+		@DisplayName("if @VaultRole(onMissingVault = OnMissingVault.REQUIRE_REALM_ROLE)")
+		public class RequireRealmRole {
+
+			@BeforeEach
+			public void setup() throws NoSuchMethodException {
+				Mockito.doReturn(NonExistingVault.class.getMethod("requireRealmRole")).when(resourceInfo).getResourceMethod();
+			}
+
+			@Test
+			@DisplayName("error 403 if user lacks realm role required by @VaultRole(realmRole = \"foobar\")")
+			public void testMissesRole() {
+				Mockito.doReturn(false).when(securityContext).isUserInRole("foobar");
+
+				Assertions.assertThrows(ForbiddenException.class, () -> filter.filter(context));
+			}
+
+
+			@Test
+			@DisplayName("pass if user has realm role required by @VaultRole(realmRole = \"foobar\")")
+			public void testHasRole() {
+				Mockito.doReturn(true).when(securityContext).isUserInRole("foobar");
+
+				Assertions.assertDoesNotThrow(() -> filter.filter(context));
+			}
+
+		}
+
 	}
 
 	/*
@@ -194,6 +225,9 @@ public class VaultRoleFilterTest {
 
 		@VaultRole(value = {VaultAccess.Role.OWNER}, onMissingVault = VaultRole.OnMissingVault.PASS)
 		public void pass() {}
+
+		@VaultRole(value = {VaultAccess.Role.OWNER}, onMissingVault = VaultRole.OnMissingVault.REQUIRE_REALM_ROLE, realmRole = "foobar")
+		public void requireRealmRole() {}
 	}
 
 

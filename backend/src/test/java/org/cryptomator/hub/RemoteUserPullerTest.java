@@ -28,6 +28,7 @@ class RemoteUserPullerTest {
 	private final User user = Mockito.mock(User.class);
 	private final Authority.Repository authorityRepo = Mockito.mock(Authority.Repository.class);
 	private final User.Repository userRepo = Mockito.mock(User.Repository.class);
+	private final Group.Repository groupRepo = Mockito.mock(Group.Repository.class);
 
 	private RemoteUserPuller remoteUserPuller;
 
@@ -37,8 +38,10 @@ class RemoteUserPullerTest {
 		remoteUserPuller.remoteUserProvider = remoteUserProvider;
 		remoteUserPuller.authorityRepo = authorityRepo;
 		remoteUserPuller.userRepo = userRepo;
-		Mockito.doNothing().when(authorityRepo).persist((Authority) Mockito.any());
+		remoteUserPuller.groupRepo = groupRepo;
+		Mockito.doNothing().when(authorityRepo).persistAndFlush(Mockito.any());
 		Mockito.doNothing().when(userRepo).persist((User) Mockito.any());
+		Mockito.doNothing().when(groupRepo).persist((Group) Mockito.any());
 	}
 
 	@Nested
@@ -75,7 +78,7 @@ class RemoteUserPullerTest {
 			remoteUserPuller.syncAddedAuthorities(keycloakAuthorities, databaseAuthorities);
 
 			for (String authorityId : addedAuthorityIds) {
-				Mockito.verify(authorityRepo).persist(keycloakAuthorities.get(authorityId));
+				Mockito.verify(authorityRepo).persistAndFlush(keycloakAuthorities.get(authorityId));
 			}
 		}
 
@@ -202,6 +205,7 @@ class RemoteUserPullerTest {
 				var dbGroup = databaseGroups.get(groupId);
 				Mockito.verify(dbGroup).setName(String.format("name %s", groupId));
 				MatcherAssert.assertThat(dbGroupMembers, Matchers.containsInAnyOrder(user, otherKCUser));
+				Mockito.verify(groupRepo).persist(dbGroup);
 			}
 		}
 	}
