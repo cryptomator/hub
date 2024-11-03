@@ -73,7 +73,6 @@ export class MemberKey {
     const bytes = await crypto.subtle.exportKey('raw', this.key);
     return base64.stringify(new Uint8Array(bytes), { pad: true });
   }
-
 }
 // #endregion
 
@@ -218,7 +217,6 @@ export class DecodeUvfRecoveryKeyError extends Error {
  * The UVF Metadata file
  */
 export class VaultMetadata {
-
   private constructor(
     readonly automaticAccessGrant: VaultMetadataJWEAutomaticAccessGrantDto,
     readonly seeds: Map<number, Uint8Array>,
@@ -348,7 +346,6 @@ export class VaultMetadata {
       'org.cryptomator.automaticAccessGrant': this.automaticAccessGrant
     };
   }
-
 }
 // #endregion
 // #region UVF
@@ -437,7 +434,7 @@ export class UniversalVaultFormat implements AccessTokenProducing, VaultTemplate
     const textencoder = new TextEncoder();
     const initialSeed = await crypto.subtle.importKey('raw', this.metadata.initialSeed, { name: 'HKDF' }, false, ['deriveKey']);
     const hmacKey = await crypto.subtle.deriveKey({ name: 'HKDF', hash: 'SHA-512', salt: this.metadata.kdfSalt, info: textencoder.encode('hmac') }, initialSeed, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
-    const rootDirHash = await crypto.subtle.sign("HMAC", hmacKey, rootDirId);
+    const rootDirHash = await crypto.subtle.sign('HMAC', hmacKey, rootDirId);
     return base32.stringify(new Uint8Array(rootDirHash).slice(0, 20));
   }
 
@@ -521,6 +518,6 @@ function parseSeedId(encoded: string): number {
  */
 function stringifySeedId(id: number): string {
   const ints = new Uint32Array([id]);
-  const bytes = new Uint8Array(ints.buffer)
+  const bytes = new Uint8Array(ints.buffer);
   return base64url.stringify(bytes, { pad: false });
 }
