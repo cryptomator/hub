@@ -1,12 +1,13 @@
 import { expect } from 'chai';
 import { describe } from 'mocha';
+import { webcrypto } from 'node:crypto';
 import { JWT, JWTHeader } from '../../src/common/jwt';
 
 describe('JWT', () => {
   before(done => {
     // since this test runs on Node, we need to replace window.crypto:
-    Object.defineProperty(global, 'crypto', { value: require('node:crypto').webcrypto });
-    // @ts-ignore: global not defined (but will be available within Node)
+    Object.defineProperty(global, 'crypto', { value: webcrypto });
+    // @ts-expect-error: incomplete 'window' type
     global.window = { crypto: global.crypto };
     done();
   });
@@ -84,6 +85,5 @@ describe('JWT', () => {
       expect(header).to.deep.equal({ alg: 'ES384', typ: 'JWT', b64: true });
       expect(payload).to.deep.equal({ foo: 42, bar: 'lol', obj: { nested: true } });
     });
-
   });
 });

@@ -129,16 +129,12 @@ public class User extends Authority {
 		User that = (User) o;
 		return super.equals(that) //
 				&& Objects.equals(pictureUrl, that.pictureUrl) //
-				&& Objects.equals(email, that.email) //
-				&& Objects.equals(ecdhPublicKey, that.ecdhPublicKey) //
-				&& Objects.equals(ecdsaPublicKey, that.ecdsaPublicKey) //
-				&& Objects.equals(privateKeys, that.privateKeys) //
-				&& Objects.equals(setupCode, that.setupCode);
+				&& Objects.equals(email, that.email);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(super.getId(), pictureUrl, email, ecdhPublicKey, privateKeys, setupCode);
+		return Objects.hash(super.getId(), pictureUrl, email);
 	}
 
 	@ApplicationScoped

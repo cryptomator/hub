@@ -27,7 +27,7 @@ axiosAuth.interceptors.request.use(async request => {
       request.headers = AxiosHeaders.from({ 'Authorization': `Bearer ${token}` });
     }
     return request;
-  } catch (err: unknown) {
+  } catch {
     // only things from auth module can throw errors here
     throw new UnauthorizedError();
   }
@@ -162,7 +162,7 @@ class VaultService {
   public async get(vaultId: string): Promise<VaultDto> {
     return axiosAuth.get(`/vaults/${vaultId}`)
       .then(response => {
-        let dateString = response.data.creationTime;
+        const dateString = response.data.creationTime;
         response.data.creationTime = new Date(dateString);
         return response.data;
       })
@@ -229,12 +229,12 @@ class DeviceService {
     return axiosAuth.get<DeviceDto[]>(`/devices?${query}`).then(response => response.data);
   }
 
-  public async removeDevice(deviceId: string): Promise<AxiosResponse<any>> {
+  public async removeDevice(deviceId: string): Promise<AxiosResponse<unknown>> {
     return axiosAuth.delete(`/devices/${deviceId}`)
       .catch((error) => rethrowAndConvertIfExpected(error, 404));
   }
 
-  public async putDevice(device: DeviceDto): Promise<AxiosResponse<any>> {
+  public async putDevice(device: DeviceDto): Promise<AxiosResponse<unknown>> {
     return axiosAuth.put(`/devices/${device.id}`, device);
   }
 }
@@ -261,6 +261,7 @@ class TrustService {
   public async trustUser(userId: string, signature: string): Promise<void> {
     return axiosAuth.put(`/users/trusted/${userId}`, signature, { headers: { 'Content-Type': 'text/plain' } });
   }
+
   public async get(userId: string): Promise<TrustDto | undefined> {
     return axiosAuth.get<TrustDto>(`/users/trusted/${userId}`).then(response => response.data)
       .catch(e => {
@@ -289,9 +290,9 @@ class AuthorityService {
       return {
         ...authority,
         pictureUrl: authority.pictureUrl
-      }
+      };
     } else {
-      let cfg = AuthorityService.getJdenticonConfig(authority.type);
+      const cfg = AuthorityService.getJdenticonConfig(authority.type);
       const svg = toSvg(authority.id, 100, cfg);
       const bytes = new TextEncoder().encode(svg);
       const url = `data:image/svg+xml;base64,${base64.stringify(bytes)}`;
@@ -408,7 +409,7 @@ function convertExpectedToBackendError(status: number): BackendError {
  * @param error A thrown object
  * @param expectedStatusCodes The expected http status codes of the backend call
  */
-export function rethrowAndConvertIfExpected(error: unknown, ...expectedStatusCodes: number[]): Promise<any> {
+export function rethrowAndConvertIfExpected(error: unknown, ...expectedStatusCodes: number[]): never {
   if (AxiosStatic.isAxiosError(error) && error.response != null && expectedStatusCodes.includes(error.response.status)) {
     throw convertExpectedToBackendError(error.response.status);
   } else {

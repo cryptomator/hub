@@ -9,7 +9,7 @@ export type LatestVersionDto = {
 
 class UpdatesService {
   public async get(localVersion: string): Promise<LatestVersionDto> {
-    let config = {
+    const config = {
       headers: {
         'Content-Type': 'application/json',
         'Cryptomator-Hub-Version': localVersion,

@@ -45,12 +45,8 @@ class Auth {
     return this.keycloak.token;
   }
 
-  public isAdmin(): boolean {
-    return this.keycloak.tokenParsed?.realm_access?.roles.includes('admin') ?? false;
-  }
-
-  public isUser(): boolean {
-    return this.keycloak.tokenParsed?.realm_access?.roles.includes('user') ?? false;
+  public hasRole(role: string): boolean {
+    return this.keycloak.tokenParsed?.realm_access?.roles.includes(role) ?? false;
   }
 }
 

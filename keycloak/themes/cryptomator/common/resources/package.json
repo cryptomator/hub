@@ -10,10 +10,10 @@
     "dev": "tailwindcss build -i ./css/tailwind.css -o ./css/tailwind.min.css --watch"
   },
   "devDependencies": {
-    "@tailwindcss/forms": "^0.5.6",
-    "tailwindcss": "^3.3.3"
+    "@tailwindcss/forms": "^0.5.7",
+    "tailwindcss": "^3.4.10"
   },
   "dependencies": {
-    "@fortawesome/fontawesome-free": "^6.4.2"
+    "@fortawesome/fontawesome-free": "^6.6.0"
   }
 }

@@ -1,7 +1,7 @@
 import { use as chaiUse, expect } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import chaiBytes from 'chai-bytes';
 import { before, describe } from 'mocha';
+import { webcrypto } from 'node:crypto';
 import { base64 } from 'rfc4648';
 import { VaultDto } from '../../src/common/backend';
 import { UserKeys } from '../../src/common/crypto';
@@ -9,7 +9,6 @@ import { JsonJWE } from '../../src/common/jwe';
 import { MemberKey, RecoveryKey, UniversalVaultFormat, VaultMetadata } from '../../src/common/universalVaultFormat';
 
 chaiUse(chaiAsPromised);
-chaiUse(chaiBytes);
 
 // key coordinates from MDN examples:
 const alicePublic: JsonWebKey = {
@@ -28,8 +27,8 @@ describe('UVF', () => {
 
   before(async () => {
     // since this test runs on Node, we need to replace window.crypto:
-    Object.defineProperty(global, 'crypto', { value: require('node:crypto').webcrypto });
-    // @ts-ignore: global not defined (but will be available within Node)
+    Object.defineProperty(global, 'crypto', { value: webcrypto });
+    // @ts-expect-error: incomplete 'window' type
     global.window = { crypto: global.crypto };
 
     // prepare some test key pairs:
@@ -295,7 +294,7 @@ describe('UVF', () => {
         const rootDirId = base64.parse('24UBEDeGu5taq7U4GqyA0MXUXb9HTYS6p3t9vvHGJAc=');
         const fileContent = await uvf.encryptFile(rootDirId, uvf.metadata.initialSeedId);
         expect(fileContent).to.have.a.lengthOf(128);
-        expect(fileContent.slice(0, 4)).to.equalBytes(new Uint8Array([0x75, 0x76, 0x66, 0x01])); // magic bytes
+        expect(fileContent.slice(0, 4)).to.eql(new Uint8Array([0x75, 0x76, 0x66, 0x01])); // magic bytes
       });
     });
   });

@@ -48,7 +48,7 @@ async function sign(user: UserDto): Promise<TrustDto> {
  * @param allegedSignedKey The public key that should be signed by the last signature in the chain
  */
 async function verify(signatureChain: string[], allegedSignedKey: SignedKeys) {
-  let signerPublicKey = await userdata.decryptUserKeysWithBrowser().then(keys => keys.ecdsaKeyPair.publicKey);
+  const signerPublicKey = await userdata.decryptUserKeysWithBrowser().then(keys => keys.ecdsaKeyPair.publicKey);
   await verifyRescursive(signatureChain, signerPublicKey, allegedSignedKey);
 }
 
@@ -62,7 +62,7 @@ async function verify(signatureChain: string[], allegedSignedKey: SignedKeys) {
 async function verifyRescursive(signatureChain: string[], signerPublicKey: CryptoKey, allegedSignedKey: SignedKeys) {
   // get first element of signature chain:
   const [signature, ...remainingChain] = signatureChain;
-  const [_, signedKeys] = await JWT.parse(signature, signerPublicKey) as [JWTHeader, SignedKeys];
+  const [, signedKeys] = await JWT.parse(signature, signerPublicKey) as [JWTHeader, SignedKeys];
   if (remainingChain.length === 0) {
     // last element in chain should match signed public key
     if (!deeplyEqual(signedKeys, allegedSignedKey)) {

@@ -1,6 +1,7 @@
 import { use as chaiUse, expect } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { before, describe } from 'mocha';
+import { webcrypto } from 'node:crypto';
 import { base64, base64url } from 'rfc4648';
 import { UnwrapKeyError, UserKeys, getJwkThumbprint, getJwkThumbprintStr } from '../../src/common/crypto';
 
@@ -35,13 +36,13 @@ describe('crypto', () => {
 
   before(async () => {
     // since this test runs on Node, we need to replace window.crypto:
-    Object.defineProperty(global, 'crypto', { value: require('node:crypto').webcrypto });
-    // @ts-ignore: global not defined (but will be available within Node)
+    Object.defineProperty(global, 'crypto', { value: webcrypto });
+    // @ts-expect-error: incomplete 'window' type
     global.window = { crypto: global.crypto };
 
     // prepare some test key pairs:
-    let ecdhP384: EcKeyImportParams = { name: 'ECDH', namedCurve: 'P-384' };
-    let ecdsaP384: EcKeyImportParams = { name: 'ECDSA', namedCurve: 'P-384' };
+    const ecdhP384: EcKeyImportParams = { name: 'ECDH', namedCurve: 'P-384' };
+    const ecdsaP384: EcKeyImportParams = { name: 'ECDSA', namedCurve: 'P-384' };
     const aliceEcdhPrv = crypto.subtle.importKey('jwk', alicePrivate, ecdhP384, true, ['deriveKey', 'deriveBits']);
     const aliceEcdhPub = crypto.subtle.importKey('jwk', alicePublic, ecdhP384, true, []);
     const aliceEcdsaPrv = crypto.subtle.importKey('jwk', alicePrivate, ecdsaP384, true, ['sign']);
@@ -158,8 +159,7 @@ describe('crypto', () => {
   });
 
   describe('JWK Thumbprint', () => {
-
-    const input: JsonWebKey & any = {
+    const input: JsonWebKey & Record<string, string> = {
       kty: 'RSA',
       n: '0vx7agoebGcQSuuPiLJXZptN9nndrQmbXEps2aiAFbWhM78LhWx4cbbfAAtVT86zwu1RK7aPFFxuhDR1L6tSoc_BJECPebWKRXjBZCiFV4n3oknjhMstn64tZ_2W-5JsGY4Hc5n9yBXArwl93lqt7_RN5w6Cf0h4QyQ5v-65YGjQR0_FDW2QvzqY368QQMicAtaSqzs8KJZgnYb9c7d0zgdAZHzu6qMQvRL5hajrn1n91CbOpbISD08qNLyrdkt-bFTWhAI4vMQFh6WeZu0fM4lFd2NcRwr3XPksINHaQ-G_xBniIqbw0Ls1jF44-csFCur-kEgU8awapJzKnqDKgw',
       e: 'AQAB',
@@ -179,7 +179,6 @@ describe('crypto', () => {
 
       expect(thumbprintStr).to.eq('NzbLsXh8uDCcd-6MNwXF4W_7noWXFZAfHkxZsRGC9Xs');
     });
-
   });
 });
 

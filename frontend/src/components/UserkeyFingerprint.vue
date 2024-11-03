@@ -14,7 +14,6 @@
       </div>
     </div>
   </div>
-
 </template>
 
 <script setup lang="ts">
@@ -35,7 +34,7 @@ onMounted(fetchData);
 
 async function fetchData() {
   const fingerprint = await wot.computeFingerprint(props.user);
-  keyFingerprint.value = fingerprint?.replace(/.{8}/g, "$&" + " ").trim(); // Add space after every 8 characters
+  keyFingerprint.value = fingerprint?.replace(/.{8}/g, '$&' + ' ').trim(); // Add space after every 8 characters
 }
 
 </script>

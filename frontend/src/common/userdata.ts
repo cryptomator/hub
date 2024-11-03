@@ -4,7 +4,6 @@ import { BrowserKeys, UserKeys } from './crypto';
 import { JWE, Recipient } from './jwe';
 
 class UserData {
-
   #me?: Promise<UserDto>;
   #browserKeys?: Promise<BrowserKeys | undefined>;
 
@@ -146,7 +145,6 @@ class UserData {
       await backend.users.putMe(me);
     }
   }
-
 }
 
 const instance = new UserData();

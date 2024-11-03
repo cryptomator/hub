@@ -1,6 +1,7 @@
 import { use as chaiUse, expect } from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { before, describe } from 'mocha';
+import { webcrypto } from 'node:crypto';
 import { UnwrapKeyError, UserKeys } from '../../src/common/crypto';
 import { VaultFormat8 } from '../../src/common/vaultFormat8';
 
@@ -24,16 +25,16 @@ describe('Vault Format 8', () => {
 
   before(async () => {
     // since this test runs on Node, we need to replace window.crypto:
-    Object.defineProperty(global, 'crypto', { value: require('node:crypto').webcrypto });
-    // @ts-ignore: we only need a subset of the properties available in global.window
+    Object.defineProperty(global, 'crypto', { value: webcrypto });
+    // @ts-expect-error: incomplete 'window' type
     global.window = { crypto: global.crypto };
 
     // prepare test vault with hard-coded symmetric key:
     testVault = await TestVaultKeys.create();
 
     // prepare some test key pairs:
-    let ecdhP384: EcKeyImportParams = { name: 'ECDH', namedCurve: 'P-384' };
-    let ecdsaP384: EcKeyImportParams = { name: 'ECDSA', namedCurve: 'P-384' };
+    const ecdhP384: EcKeyImportParams = { name: 'ECDH', namedCurve: 'P-384' };
+    const ecdsaP384: EcKeyImportParams = { name: 'ECDSA', namedCurve: 'P-384' };
     const aliceEcdhPrv = crypto.subtle.importKey('jwk', alicePrivate, ecdhP384, true, ['deriveKey', 'deriveBits']);
     const aliceEcdhPub = crypto.subtle.importKey('jwk', alicePublic, ecdhP384, true, []);
     const aliceEcdsaPrv = crypto.subtle.importKey('jwk', alicePrivate, ecdsaP384, true, ['sign']);

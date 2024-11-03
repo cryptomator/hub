@@ -73,7 +73,6 @@ import backend, { AccessGrant, ConflictError, MemberDto, NotFoundError, TrustDto
 import { AccessTokenProducing } from '../common/crypto';
 import TrustDetails from './TrustDetails.vue';
 
-
 const { t } = useI18n({ useScope: 'global' });
 
 const open = ref(false);
@@ -122,7 +121,7 @@ async function grantAccess() {
 }
 
 async function giveUsersAccess(members: (MemberDto & UserDto)[]) {
-  let tokens: AccessGrant[] = [];
+  const tokens: AccessGrant[] = [];
   for (const member of members) {
     if (member.ecdhPublicKey) { // some users might not have set up their key pair, so we can't share secrets with them yet
       const publicKey = base64.parse(member.ecdhPublicKey);

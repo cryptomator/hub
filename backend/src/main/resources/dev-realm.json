@@ -17,12 +17,18 @@
         "composite": false
       },
       {
+        "name": "create-vaults",
+        "description": "Can create vaults",
+        "composite": false
+      },
+      {
         "name": "admin",
         "description": "Administrator",
         "composite": true,
         "composites": {
           "realm": [
-            "user"
+            "user",
+            "create-vaults"
           ],
           "client": {
             "realm-management": [
@@ -73,7 +79,7 @@
       "email": "alice@localhost",
       "enabled": true,
       "credentials": [{"type": "password", "value": "asd"}],
-      "realmRoles": ["user"]
+      "realmRoles": ["user", "create-vaults"]
     },
     {
       "username": "bob",
@@ -82,7 +88,7 @@
       "email": "bob@localhost",
       "enabled": true,
       "credentials": [{"type": "password", "value": "asd"}],
-      "realmRoles": ["user"]
+      "realmRoles": ["user", "create-vaults"]
     },
     {
       "username": "carol",

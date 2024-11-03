@@ -5,7 +5,7 @@
         <div class="relative">
           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <UsersIcon v-if="selectedItem == null" class="h-5 w-5 text-gray-400" aria-hidden="true" />
-            <img v-else :src="resolvePictureUrl(selectedItem)" alt="" class="w-5 h-5 rounded-full" >
+            <img v-else :src="selectedItem.pictureUrl ?? ''" alt="" class="w-5 h-5 rounded-full" >
           </div>
 
           <ComboboxInput v-if="selectedItem == null" v-focus class="w-full h-10 rounded-l-md border border-gray-300 bg-white py-2 px-10 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm disabled:bg-primary-l2" placeholder="John Doe" @change="query = $event.target.value"/>
@@ -15,7 +15,7 @@
         <ComboboxOptions v-if="selectedItem == null && filteredItems.length > 0" class="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
           <ComboboxOption v-for="item in filteredItems" :key="item.id" :value="item" class="relative cursor-default select-none py-2 pl-3 pr-9 ui-not-active:text-gray-900 ui-active:bg-primary ui-active:text-white">
             <div class="flex items-center">
-              <img :src="resolvePictureUrl(item)" alt="" class="h-6 w-6 shrink-0 rounded-full" >
+              <img :src="item.pictureUrl ?? ''" alt="" class="h-6 w-6 shrink-0 rounded-full" >
               <span class="ml-3 truncate">{{ item.name }}</span>
             </div>
           </ComboboxOption>
@@ -42,12 +42,12 @@ import { debounce } from '../common/util';
 export type Item = {
   id: string;
   name: string;
+  pictureUrl?: string;
 }
 
 const props = defineProps<{
   actionTitle: string
-  onSearch: (query: string) => Promise<T[]>,
-  resolvePictureUrl: (item: T) => string
+  onSearch: (query: string) => Promise<T[]>
 }>();
 
 const emit = defineEmits<{

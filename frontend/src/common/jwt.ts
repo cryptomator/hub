@@ -28,7 +28,7 @@ export class JWT {
    * @param payload The payload
    * @param signerPrivateKey The signers's private key
    */
-  public static async build(header: JWTHeader, payload: any, signerPrivateKey: CryptoKey): Promise<string> {
+  public static async build(header: JWTHeader, payload: object, signerPrivateKey: CryptoKey): Promise<string> {
     const encodedHeader = base64url.stringify(new TextEncoder().encode(JSON.stringify(header)), { pad: false });
     const encodedPayload = base64url.stringify(new TextEncoder().encode(JSON.stringify(payload)), { pad: false });
     const encodedSignature = await this.es384sign(encodedHeader, encodedPayload, signerPrivateKey);
@@ -56,8 +56,8 @@ export class JWT {
    * @returns header and payload
    * @throws Error if the JWT is invalid
    */
-  public static async parse(jwt: string, signerPublicKey: CryptoKey): Promise<[JWTHeader, any]> {
-    const [encodedHeader, encodedPayload, encodedSignature] = jwt.split('.');
+  public static async parse(jwt: string, signerPublicKey: CryptoKey): Promise<[JWTHeader, object]> {
+    const [encodedHeader, encodedPayload] = jwt.split('.');
     const header: JWTHeader = JSON.parse(new TextDecoder().decode(base64url.parse(encodedHeader, { loose: true })));
     if (header.alg !== 'ES384') {
       throw new Error('Unsupported algorithm');

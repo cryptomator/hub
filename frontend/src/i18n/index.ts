@@ -36,4 +36,4 @@ export const numberFormats: I18nOptions['numberFormats'] = {
       style: 'percent', useGrouping: false
     }
   }
-}
+};
