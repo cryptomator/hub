@@ -16,9 +16,9 @@
     <quarkus.jib.base-jvm-image>eclipse-temurin:21-jre</quarkus.jib.base-jvm-image> <!-- irrelevant for -Pnative -->
     <jwt.version>4.4.0</jwt.version>
     <compiler-plugin.version>3.13.0</compiler-plugin.version>
-    <dependency-plugin.version>3.8.0</dependency-plugin.version>
-    <surefire-plugin.version>3.5.0</surefire-plugin.version>
-    <failsafe-plugin.version>3.5.0</failsafe-plugin.version>
+    <dependency-plugin.version>3.8.1</dependency-plugin.version>
+    <surefire-plugin.version>3.5.2</surefire-plugin.version>
+    <failsafe-plugin.version>3.5.2</failsafe-plugin.version>
     <junit-tree-reporter.version>1.3.0</junit-tree-reporter.version>
   </properties>
 
