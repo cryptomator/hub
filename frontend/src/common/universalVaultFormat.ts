@@ -7,7 +7,7 @@ import { CRC32, wordEncoder } from './util';
 
 type MetadataPayload = {
   fileFormat: 'AES-256-GCM-32k';
-  nameFormat: 'AES-SIV-512-B64URL'; // TODO verify after merging https://github.com/encryption-alliance/unified-vault-format/pull/24
+  nameFormat: 'AES-SIV-512-B64URL';
   seeds: Record<string, string>;
   initialSeed: string;
   latestSeed: string;
