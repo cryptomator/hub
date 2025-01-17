@@ -12,8 +12,7 @@
 	"extensions": {
 		"recommendations": [
 			"dbaeumer.vscode-eslint",
-			"hbenl.vscode-mocha-test-adapter",
-			"hbenl.vscode-test-explorer",
+			"felixjb.testify",
 			"vue.volar"
 		],
 		"unwantedRecommendations": [
@@ -31,7 +30,6 @@
 		"editor.codeActionsOnSave": {
 			"source.organizeImports": "explicit",
 			"source.fixAll.eslint": "explicit"
-		},
-		"testExplorer.useNativeTesting": true
+		}
 	}
 }
