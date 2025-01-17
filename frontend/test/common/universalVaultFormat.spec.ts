@@ -32,8 +32,8 @@ describe('UVF', () => {
     global.window = { crypto: global.crypto };
 
     // prepare some test key pairs:
-    let ecdhP384: EcKeyImportParams = { name: 'ECDH', namedCurve: 'P-384' };
-    let ecdsaP384: EcKeyImportParams = { name: 'ECDSA', namedCurve: 'P-384' };
+    const ecdhP384: EcKeyImportParams = { name: 'ECDH', namedCurve: 'P-384' };
+    const ecdsaP384: EcKeyImportParams = { name: 'ECDSA', namedCurve: 'P-384' };
     const aliceEcdhPrv = crypto.subtle.importKey('jwk', alicePrivate, ecdhP384, true, ['deriveKey', 'deriveBits']);
     const aliceEcdhPub = crypto.subtle.importKey('jwk', alicePublic, ecdhP384, true, []);
     const aliceEcdsaPrv = crypto.subtle.importKey('jwk', alicePrivate, ecdsaP384, true, ['sign']);
@@ -44,7 +44,6 @@ describe('UVF', () => {
   });
 
   describe('MemberKey', () => {
-
     it('serializeKey()', async () => {
       const memberKey = await TestMemberKey.create();
 
@@ -65,14 +64,13 @@ describe('UVF', () => {
   });
 
   describe('VaultMetadata', () => {
-
     it('create()', async () => {
       const orig = await VaultMetadata.create({ enabled: true, maxWotDepth: -1 });
       expect(orig).to.be.not.null;
-      expect(orig.seeds.get(orig.initialSeedId)).to.not.be.undefined
-      expect(orig.seeds.get(orig.initialSeedId)!.length).to.eq(32)
-      expect(orig.initialSeedId).to.eq(orig.latestSeedId)
-      expect(orig.kdfSalt.length).to.eq(32)
+      expect(orig.seeds.get(orig.initialSeedId)).to.not.be.undefined;
+      expect(orig.seeds.get(orig.initialSeedId)!.length).to.eq(32);
+      expect(orig.initialSeedId).to.eq(orig.latestSeedId);
+      expect(orig.kdfSalt.length).to.eq(32);
     });
 
     describe('instance methods', () => {
@@ -98,9 +96,9 @@ describe('UVF', () => {
         expect(json).to.have.property('tag');
 
         const decrypted: VaultMetadata = await VaultMetadata.decryptWithMemberKey(uvfFile, vaultMemberKey);
-        expect(decrypted.seeds).to.deep.eq(original.seeds)
-        expect(decrypted.initialSeedId).to.eq(original.initialSeedId)
-        expect(decrypted.latestSeedId).to.eq(original.latestSeedId)
+        expect(decrypted.seeds).to.deep.eq(original.seeds);
+        expect(decrypted.initialSeedId).to.eq(original.initialSeedId);
+        expect(decrypted.latestSeedId).to.eq(original.latestSeedId);
         expect(decrypted.automaticAccessGrant).to.deep.eq(original.automaticAccessGrant);
         expect(decrypted.payload().fileFormat).to.eq('AES-256-GCM-32k');
         expect(decrypted.payload().nameFormat).to.eq('AES-SIV-512-B64URL');
@@ -110,7 +108,6 @@ describe('UVF', () => {
   });
 
   describe('RecoveryKey', () => {
-
     it('create()', async () => {
       const recoveryKey = await RecoveryKey.create();
       expect(recoveryKey).to.be.not.null;
@@ -175,13 +172,10 @@ describe('UVF', () => {
         const result = await recoveryKey.createRecoveryKey();
         expect(result).to.eq('cult hold all away buck do law relaxed other stimulus all bank fit indulge dad any ear grey cult golf all baby dig war linear tour sleep humanity threat question neglect stance radar bank coup misery painter tragedy buddy compare winter national approval budget deep screen outdoor audience tear stream cure type ugly chamber supporter franchise accept sexy ad imply being drug doctor regime where thick dam training grass chamber domestic dictator educate sigh music spoken connected measure voice lemon pig comprise disturb appear greatly satisfied heat news curiosity top impress nor method reflect lesson recommend dual revenge thorough bus count broadband living riot prejudice target blonde excess company thereby tribe respond horror mere way proud shopping wise liver mortgage plastic gentleman eighteen terms worry melt');
       });
-
     });
-
   });
 
   describe('UniversalVaultFormat', () => {
-
     it('create()', async () => {
       const uvf = await UniversalVaultFormat.create({ enabled: true, maxWotDepth: -1 });
       expect(uvf).to.be.not.null;
@@ -196,37 +190,37 @@ describe('UVF', () => {
         name: 'test',
         archived: false,
         creationTime: new Date(),
-        uvfMetadataFile: '{"protected":"eyJvcmlnaW4iOiJodHRwczovL2V4YW1wbGUuY29tL2FwaS92YXVsdHMvVE9ETy91dmYvdmF1bHQudXZmIiwiamt1Ijoiandrcy5qc29uIiwiZW5jIjoiQTI1NkdDTSJ9","recipients":[{"header":{"kid":"org.cryptomator.hub.memberkey","alg":"A256KW"},"encrypted_key":"7FtABJ5BpSM9Ft8wUPfLQc-12WF57kX0tWtRWiVwA_N_gJBa9iwhzw"},{"header":{"kid":"org.cryptomator.hub.recoverykey.1h24rxLxIlNRPQAn5NBP0fL3VKNTmqS6NEnt2clI5ko","alg":"ECDH-ES+A256KW","epk":{"key_ops":[],"ext":true,"kty":"EC","x":"oNu46YFrgrGSvl98HyDD3_iPkfZBnpYgEHmPL3qbO4AdwBsycpIqcHwKhT8Lt7B8","y":"P80VgJFml85v_F2-aPYdgDQX_DPGZr1s_p8gWF4Idkp13QfKdhi32C7Zoy5kzPWO","crv":"P-384"},"apu":"","apv":""},"encrypted_key":"QaJn0TP7mGAc5ukOpZ0gNAuBtCW7hPCkj8Jp4bhMftQfJefHNyqE7Q"}],"iv":"Wgif0WP21-MAwvWs","ciphertext":"-n5CePmmN99I4KqlnR64Fuu5b2Md9s4CGxLMm7KQqu65H0ug7Fs5HHnrx_gkpFiv1Mn-jwrkoEtiixyQcYX6UcoyT2dY1MkLQB7QU9mdMpZU3n19Q2sAx1-gfTCd7IzVXef7SEfuscdQL1QTKJW454Dy8L3WwPiDpUgt9ED7mMFdJ6lJ3_EFYstN0VFAVf_jwtIILmQrjkM_LI0FFKfqkOCH2nuE9xG8ihPH9X9OStllPp00G9_onYu9mrg-smiNNK2Ib19CZJ2E6mAp7F_LGiz6p203fsprj4XY9J6t8zl5Vpc61NmFvzvY4j3_5FpD_BmpVr8tyyVT9zqWn4vsBAHORQ1V_b9v68O7CekCebpQvpmzEPZwZN1Ma_T6oI7Ydn1rtBnDruVrpWm01RL8XpHnFbko","tag":"vPLd65IEcexmhGbYPM0cYI53H4Pp1OfTaAq_QGrneLM"}',
-        uvfKeySet: '{"keys": [{"kid":"org.cryptomator.hub.recoverykey.1h24rxLxIlNRPQAn5NBP0fL3VKNTmqS6NEnt2clI5ko","kty":"EC","crv":"P-384","x":"DczdNhPQnpgP8FV6qa372LDLJF2w2bMKXzea5cjxslaMjM6w7NGqrF498LYHU-Jt","y":"vH9bc-Ow_O1EQmd6N5pKmDoPyE6ziKsrlpuck5aLXwV4fSMV_8Ro1a872j5ClsPe"}]}'
+        uvfMetadataFile: '{"protected":"eyJvcmlnaW4iOiJodHRwcy4vL2V4YW1wbGUuY29tL2FwaS8vdmF1bHRzLzEyMy91dmYvdmF1bHQudXZmIiwiamt1Ijoiandrcy5qc29uIiwiZW5jIjoiQTI1NkdDTSJ9","recipients":[{"header":{"kid":"org.cryptomator.hub.memberkey","alg":"A256KW"},"encrypted_key":"6Jmq4Uje1Njp6UOZhMC8EQySIhb82OGqJ3LT_CNGtfS3PTVAanFTkw"},{"header":{"kid":"org.cryptomator.hub.recoverykey.gRQZJlBF8UOUry_viZdNFrIG02r12zKPfKPJjg1z0gc","alg":"ECDH-ES+A256KW","epk":{"key_ops":[],"ext":true,"kty":"EC","x":"ZIM3rAYg1CPMJgYD2-8M04n00tvUnXjx6QBjXMdZJZwozEjo6ns1aI3WVjGb71HC","y":"iYiX7Qs6JV8AxW-W9pRp_wFUqiwD22L7ytbr91eazmKDK0Uuk72K8xWdz0x3TZHB","crv":"P-384"},"apu":"","apv":""},"encrypted_key":"UDe4WL6fkZCMhLQaNYMGvbRFGGNum8Nk7ahiaORnPi9BlUxPCCArkg"}],"iv":"DW6-c25BXTxJ-wF4","ciphertext":"5yhWvQwZPb6ss_b30pFxxpQPKC_-QIKgK1sdTQUUggl5yL6gzfFSOeERDjuD5WSFiLSisMi1BZwI-GPzclpG4SsjIMtOakfe_OcKQGBqpPAfJLiRUePg4CmptBTY205dbqFZfJvFK-jVxUP8oc7mYg3Z8kUovhUAeoIkyubaeiGcV49NLF-_UgV5smPouAxVBBroBpnJ76BDM0UfanfTzHZ_ekynwZDK7HFw4lJZ3xxrBkIbimB5NQU6cL8lviOGbaSQ8dAGCGcSuafKrAXlzOItCUdK4w5cBUTFJV6LILkKEmxy8atYNJdh-4VoJmOwv-LwGhwJyv20yrq5RrV-flgN4_jjFmh71ne_XchWy8MH7vdY8ShkT1KI6waFPcfU2PglEYQn6qaDBJ3igMsLUnNL1SRxrFY3ov6--mJdGlz-0eFny0Nz8Qy2bjxIOxCaKMRTQz41d1N7uiXcEa4","tag":"PZFk3Lw2XxZu2_ZooqV0lyI0ALRB8l6YuKDeH3jYBtQ"}',
+        uvfKeySet: '{"keys": [{"kid":"org.cryptomator.hub.recoverykey.gRQZJlBF8UOUry_viZdNFrIG02r12zKPfKPJjg1z0gc","kty":"EC","crv":"P-384","x":"PKwD88lrI0LBwC0p5IKcHCaubRLNPCueNi_mfGrp83Y09MOIX3wIH63At0Lm897r","y":"d7TKPTkh4DURRrMGZp6Vig_cVAWjOa_nwurJ36Gp8SEiJbB6eK0uWxZL_tTESq9K"}]}'
       };
-      const accessToken = 'eyJlbmMiOiJBMjU2R0NNIiwia2lkIjoib3JnLmNyeXB0b21hdG9yLmh1Yi51c2Vya2V5IiwiYWxnIjoiRUNESC1FUytBMjU2S1ciLCJlcGsiOnsia2V5X29wcyI6W10sImV4dCI6dHJ1ZSwia3R5IjoiRUMiLCJ4IjoiUXZRWUpUd3dSVEg2MWRFS3ZoNDI4ZG9nN3pRTFFxY3I0NUhwZTRqZFQ5Qno2bjcyVzQ4dTJ3WXk0UXlyZ0kxciIsInkiOiJZS1RtQ04zZXNKNDJVbUpzLU44NTFKamsyUFVPUU0zZXpCTkJvZGk4RnRNUDlUeUhoXzc0aHpxTC1EYTZkMXlwIiwiY3J2IjoiUC0zODQifSwiYXB1IjoiIiwiYXB2IjoiIn0.rdysEEQN0FidglDtK5yyaEpQtv4CsYLOQd__y7REkb_3BLP9nD4Blw.dFb9JOdveiw3LmIs.rSMkz8VoB_LspnvxvmRzCWNVLShTWfbzHfqe5lwrWwumYCdeRPM.xsS2tDUr2khJrLxHex8gZhBgO_CMA_PxFlR-ku3JiT8';
+      const accessToken = 'eyJlbmMiOiJBMjU2R0NNIiwia2lkIjoib3JnLmNyeXB0b21hdG9yLmh1Yi51c2Vya2V5IiwiYWxnIjoiRUNESC1FUytBMjU2S1ciLCJlcGsiOnsia2V5X29wcyI6W10sImV4dCI6dHJ1ZSwia3R5IjoiRUMiLCJ4IjoiSDZ3M1VWbXJ1VTcwRnUwWHFqN0FLekNkZl95dVF1SXVHa0FvVEljaHBaUWNpV0JkbnRjOE93TGhTSU5xZFNGeiIsInkiOiIyWjlqbE5pX0lXa3lCbU1ycDhMbEttamg1WDUwWExGQTNsNzNVYVJ3bHRZSlpOVzdoTTVHTkZsX21XNmxBbWVlIiwiY3J2IjoiUC0zODQifSwiYXB1IjoiIiwiYXB2IjoiIn0.1YGRThFLsu6XjoUhTkxzX6DTbyhEmjl2l07hjCl4qBynFv9hrZIpHg.3HMszd5g8-6FPrcX.ngw9_D6xpRKWNeALK2oW6d314JXnUYjYDhohAnRBjNezTdOgbLw.1E1tcGvv4wFfarSsL_atcCS47uDKjU7MT0C9wFBQIjk';
       const uvf = await UniversalVaultFormat.decrypt(dto, accessToken, alice);
 
       expect(uvf).to.be.not.null;
       expect(uvf.metadata).to.be.not.null;
-      expect(uvf.metadata.initialSeedId).to.eq(2754894775);
-      expect(uvf.metadata.latestSeedId).to.eq(2754894775);
-      expect(base64.stringify(uvf.metadata.kdfSalt)).to.eq('HE4OP+2vyfLLURicF1XmdIIsWv0Zs6MobLKROUIEhQY=');
-      expect(base64.stringify(uvf.metadata.initialSeed)).to.eq('fP4V4oAjsUw5DqackAvLzA0oP1kAQZ0f5YFZQviXSuU=');
-      expect(base64.stringify(uvf.metadata.latestSeed)).to.eq('fP4V4oAjsUw5DqackAvLzA0oP1kAQZ0f5YFZQviXSuU=');
+      expect(uvf.metadata.initialSeedId).to.eq(4072093980);
+      expect(uvf.metadata.latestSeedId).to.eq(369695552);
+      expect(base64.stringify(uvf.metadata.kdfSalt)).to.eq('NIlr89R7FhochyP4yuXZmDqCnQ0dBB3UZ2D+6oiIjr8=');
+      expect(base64.stringify(uvf.metadata.initialSeed)).to.eq('ypeBEsobvcr6wjGzmiPcTaeG7/gUfE5yuYB3ha/uSLs=');
+      expect(base64.stringify(uvf.metadata.latestSeed)).to.eq('Ln0sA6lQeuJl7PW1NWiFpTOTogKdJBOUmXJloaJa78Y=');
       expect(uvf.memberKey).to.be.not.null;
       expect(uvf.recoveryKey).to.be.not.null;
       expect(uvf.recoveryKey.privateKey).to.be.undefined;
     });
 
     it('recover()', async () => {
-      const vaultUvfFileContents = '{"protected":"eyJvcmlnaW4iOiJodHRwczovL2V4YW1wbGUuY29tL2FwaS92YXVsdHMvVE9ETy91dmYvdmF1bHQudXZmIiwiamt1Ijoiandrcy5qc29uIiwiZW5jIjoiQTI1NkdDTSJ9","recipients":[{"header":{"kid":"org.cryptomator.hub.memberkey","alg":"A256KW"},"encrypted_key":"XLoNIWvDKQqaDurrGt7VK9s2aggSMir7fS4ZdBUxdTxceCOHndo4kA"},{"header":{"kid":"org.cryptomator.hub.recoverykey.v2nb-mGX4POKMWCQKOogMWTlAn7DDqEOjjEGCsPEeco","alg":"ECDH-ES+A256KW","epk":{"key_ops":[],"ext":true,"kty":"EC","x":"j6Retxx-L-rURQ4WNc8LvoqjbdPtGS6n9pCJgcm1U-NAWuWEvwJ_qi2tlrv_4w4p","y":"wS-Emo-Q9qdtkHMJiDfVDAaxhF2-nSkDRn2Eg9CbG0pVwGEpaDybx_YYJwIaYooO","crv":"P-384"},"apu":"","apv":""},"encrypted_key":"iNGgybMqmiXn_lbKLMMTpg38i1f00O6Zj65d5nzsLw3hyzuylGWpvA"}],"iv":"Pfy90C9SSq2gJr6B","ciphertext":"ogYR1pZN9k97zEgO9Fj3ePQramtaUdHWq95geXD7FH1oB6T7fEOvdU2AEGWOcbIbQihn-eOqG2_5oTol16O_nQ4HcDOJ9w4R9EdpByuWG-kVNh_fpWeQjIuH4kO-Rtbf05JRVG2jexWopbIA8uHuoiOXSNpSYPTzTKirp2hU7w3sE01zycsu06HiasUX-tKZH_hbyiUEdTlFFLcvKpRwnYOQf6QMw0uY1IbUTX1cJY9LO5SpD8bZFZOd6hg_Qnsdcq52I8KkZyxocgqdW7P5OSUrv5z8DCLMPdByEpaz9cCOzQQvtZwHxJy82O4vDAh89QA_AzfK8J7TI5zJRlTGQgrNhiaVBC85fN3tMSv8sLfJs7rC_5LiVW5ZeqbQ52sAZQw0lfwgGpMmxsdMzPoVOLD8OxvX","tag":"3Jiv6kI4Qoso60T0dRv9vIlca-P4UFyHqh-TEZvargM"}';
-      const recoveryKey = 'cult hold all away buck do law relaxed other stimulus all bank fit indulge dad any ear grey cult golf all baby dig adv convict seldom dancer funding refusal shop final ceremony brush fire stick pound seldom shower tobacco wealth secret dispose session intend host elite fasten compound pants original drug hurricane bat noble lovely half accept sexy ad mouth current sound tie freedom musical ought shatter minimum density broadcast locate argument explosive manager colour numerous biscuit die absurd jury sole steel pub listener tempt creative plug everybody power constant recall lord camera dawn elbow chairman sit organic united morning dry feedback marine keep charm face cloud giant pull eternal withdraw probable canal coal heal large less flight gig hockey pit weed identify object boom melt';
+      const vaultUvfFileContents = '{"protected":"eyJvcmlnaW4iOiJodHRwcy4vL2V4YW1wbGUuY29tL2FwaS8vdmF1bHRzLzEyMy91dmYvdmF1bHQudXZmIiwiamt1Ijoiandrcy5qc29uIiwiZW5jIjoiQTI1NkdDTSJ9","recipients":[{"header":{"kid":"org.cryptomator.hub.memberkey","alg":"A256KW"},"encrypted_key":"6Jmq4Uje1Njp6UOZhMC8EQySIhb82OGqJ3LT_CNGtfS3PTVAanFTkw"},{"header":{"kid":"org.cryptomator.hub.recoverykey.gRQZJlBF8UOUry_viZdNFrIG02r12zKPfKPJjg1z0gc","alg":"ECDH-ES+A256KW","epk":{"key_ops":[],"ext":true,"kty":"EC","x":"ZIM3rAYg1CPMJgYD2-8M04n00tvUnXjx6QBjXMdZJZwozEjo6ns1aI3WVjGb71HC","y":"iYiX7Qs6JV8AxW-W9pRp_wFUqiwD22L7ytbr91eazmKDK0Uuk72K8xWdz0x3TZHB","crv":"P-384"},"apu":"","apv":""},"encrypted_key":"UDe4WL6fkZCMhLQaNYMGvbRFGGNum8Nk7ahiaORnPi9BlUxPCCArkg"}],"iv":"DW6-c25BXTxJ-wF4","ciphertext":"5yhWvQwZPb6ss_b30pFxxpQPKC_-QIKgK1sdTQUUggl5yL6gzfFSOeERDjuD5WSFiLSisMi1BZwI-GPzclpG4SsjIMtOakfe_OcKQGBqpPAfJLiRUePg4CmptBTY205dbqFZfJvFK-jVxUP8oc7mYg3Z8kUovhUAeoIkyubaeiGcV49NLF-_UgV5smPouAxVBBroBpnJ76BDM0UfanfTzHZ_ekynwZDK7HFw4lJZ3xxrBkIbimB5NQU6cL8lviOGbaSQ8dAGCGcSuafKrAXlzOItCUdK4w5cBUTFJV6LILkKEmxy8atYNJdh-4VoJmOwv-LwGhwJyv20yrq5RrV-flgN4_jjFmh71ne_XchWy8MH7vdY8ShkT1KI6waFPcfU2PglEYQn6qaDBJ3igMsLUnNL1SRxrFY3ov6--mJdGlz-0eFny0Nz8Qy2bjxIOxCaKMRTQz41d1N7uiXcEa4","tag":"PZFk3Lw2XxZu2_ZooqV0lyI0ALRB8l6YuKDeH3jYBtQ"}';
+      const recoveryKey = 'cult hold all away buck do law relaxed other stimulus all bank fit indulge dad any ear grey cult golf all baby dig rip may southern bar super use emotional punk pathway who infection bet sporting colleague buffer neutral corporate stand mud desire rob mortgage actually tackle browser killing month minority company editorial escalate expense emission accept sexy ad guest symptom dirty friendly condemn ghost idea warn forever visual workout seat architect call tomorrow true situated bind branch critic heavily nature smoke birthday clinic rubber unique village tin glass female militant harmony embrace officer alive less pole core custody attend funding burst arms convince gap limb apology safety discovery firstly limited hearing nail oven balloon quickly uniform upcoming east tragedy wildlife image abolish nervous till melt';
 
       const uvf = await UniversalVaultFormat.recover(vaultUvfFileContents, recoveryKey);
 
       expect(uvf).to.be.not.null;
       expect(uvf.metadata).to.be.not.null;
-      expect(uvf.metadata.initialSeedId).to.eq(4157009252);
-      expect(uvf.metadata.latestSeedId).to.eq(4157009252);
-      expect(base64.stringify(uvf.metadata.kdfSalt)).to.eq('pNxWJ5R5TO0mbkmL5pv7M3tAi6Etoh/SK73Q0KvfKMY=');
-      expect(base64.stringify(uvf.metadata.initialSeed!)).to.eq('p6zznin4zSGt7gH6T95/kZj6HndpyUdY+1QVfxR2k20=');
-      expect(base64.stringify(uvf.metadata.latestSeed!)).to.eq('p6zznin4zSGt7gH6T95/kZj6HndpyUdY+1QVfxR2k20=');
+      expect(uvf.metadata.initialSeedId).to.eq(4072093980);
+      expect(uvf.metadata.latestSeedId).to.eq(369695552);
+      expect(base64.stringify(uvf.metadata.kdfSalt)).to.eq('NIlr89R7FhochyP4yuXZmDqCnQ0dBB3UZ2D+6oiIjr8=');
+      expect(base64.stringify(uvf.metadata.initialSeed)).to.eq('ypeBEsobvcr6wjGzmiPcTaeG7/gUfE5yuYB3ha/uSLs=');
+      expect(base64.stringify(uvf.metadata.latestSeed)).to.eq('Ln0sA6lQeuJl7PW1NWiFpTOTogKdJBOUmXJloaJa78Y=');
       expect(uvf.memberKey).to.be.not.null;
       expect(uvf.recoveryKey).to.be.not.null;
       expect(uvf.recoveryKey.privateKey).to.be.not.null;
@@ -237,16 +231,22 @@ describe('UVF', () => {
       let uvf: UniversalVaultFormat;
 
       before(async () => {
-        const dto: VaultDto = {
-          id: '123',
-          name: 'test',
-          archived: false,
-          creationTime: new Date(),
-          uvfMetadataFile: '{"protected":"eyJvcmlnaW4iOiJodHRwczovL2V4YW1wbGUuY29tL2FwaS92YXVsdHMvVE9ETy91dmYvdmF1bHQudXZmIiwiamt1Ijoiandrcy5qc29uIiwiZW5jIjoiQTI1NkdDTSJ9","recipients":[{"header":{"kid":"org.cryptomator.hub.memberkey","alg":"A256KW"},"encrypted_key":"7FtABJ5BpSM9Ft8wUPfLQc-12WF57kX0tWtRWiVwA_N_gJBa9iwhzw"},{"header":{"kid":"org.cryptomator.hub.recoverykey.1h24rxLxIlNRPQAn5NBP0fL3VKNTmqS6NEnt2clI5ko","alg":"ECDH-ES+A256KW","epk":{"key_ops":[],"ext":true,"kty":"EC","x":"oNu46YFrgrGSvl98HyDD3_iPkfZBnpYgEHmPL3qbO4AdwBsycpIqcHwKhT8Lt7B8","y":"P80VgJFml85v_F2-aPYdgDQX_DPGZr1s_p8gWF4Idkp13QfKdhi32C7Zoy5kzPWO","crv":"P-384"},"apu":"","apv":""},"encrypted_key":"QaJn0TP7mGAc5ukOpZ0gNAuBtCW7hPCkj8Jp4bhMftQfJefHNyqE7Q"}],"iv":"Wgif0WP21-MAwvWs","ciphertext":"-n5CePmmN99I4KqlnR64Fuu5b2Md9s4CGxLMm7KQqu65H0ug7Fs5HHnrx_gkpFiv1Mn-jwrkoEtiixyQcYX6UcoyT2dY1MkLQB7QU9mdMpZU3n19Q2sAx1-gfTCd7IzVXef7SEfuscdQL1QTKJW454Dy8L3WwPiDpUgt9ED7mMFdJ6lJ3_EFYstN0VFAVf_jwtIILmQrjkM_LI0FFKfqkOCH2nuE9xG8ihPH9X9OStllPp00G9_onYu9mrg-smiNNK2Ib19CZJ2E6mAp7F_LGiz6p203fsprj4XY9J6t8zl5Vpc61NmFvzvY4j3_5FpD_BmpVr8tyyVT9zqWn4vsBAHORQ1V_b9v68O7CekCebpQvpmzEPZwZN1Ma_T6oI7Ydn1rtBnDruVrpWm01RL8XpHnFbko","tag":"vPLd65IEcexmhGbYPM0cYI53H4Pp1OfTaAq_QGrneLM"}',
-          uvfKeySet: '{"keys": [{"kid":"org.cryptomator.hub.recoverykey.1h24rxLxIlNRPQAn5NBP0fL3VKNTmqS6NEnt2clI5ko","kty":"EC","crv":"P-384","x":"DczdNhPQnpgP8FV6qa372LDLJF2w2bMKXzea5cjxslaMjM6w7NGqrF498LYHU-Jt","y":"vH9bc-Ow_O1EQmd6N5pKmDoPyE6ziKsrlpuck5aLXwV4fSMV_8Ro1a872j5ClsPe"}]}'
-        };
-        const accessToken = 'eyJlbmMiOiJBMjU2R0NNIiwia2lkIjoib3JnLmNyeXB0b21hdG9yLmh1Yi51c2Vya2V5IiwiYWxnIjoiRUNESC1FUytBMjU2S1ciLCJlcGsiOnsia2V5X29wcyI6W10sImV4dCI6dHJ1ZSwia3R5IjoiRUMiLCJ4IjoiUXZRWUpUd3dSVEg2MWRFS3ZoNDI4ZG9nN3pRTFFxY3I0NUhwZTRqZFQ5Qno2bjcyVzQ4dTJ3WXk0UXlyZ0kxciIsInkiOiJZS1RtQ04zZXNKNDJVbUpzLU44NTFKamsyUFVPUU0zZXpCTkJvZGk4RnRNUDlUeUhoXzc0aHpxTC1EYTZkMXlwIiwiY3J2IjoiUC0zODQifSwiYXB1IjoiIiwiYXB2IjoiIn0.rdysEEQN0FidglDtK5yyaEpQtv4CsYLOQd__y7REkb_3BLP9nD4Blw.dFb9JOdveiw3LmIs.rSMkz8VoB_LspnvxvmRzCWNVLShTWfbzHfqe5lwrWwumYCdeRPM.xsS2tDUr2khJrLxHex8gZhBgO_CMA_PxFlR-ku3JiT8';
-        uvf = await UniversalVaultFormat.decrypt(dto, accessToken, alice);
+        const json = `{
+            "fileFormat": "AES-256-GCM-32k",
+            "nameFormat": "AES-SIV-512-B64URL",
+            "seeds": {
+                "HDm38g": "ypeBEsobvcr6wjGzmiPcTaeG7/gUfE5yuYB3ha/uSLs=",
+                "gBryKw": "PiPoFgA5WUoziU9lZOGxNIu9egCI1CxKy3PurtWcAJ0=",
+                "QBsJFg": "Ln0sA6lQeuJl7PW1NWiFpTOTogKdJBOUmXJloaJa78Y="
+            },
+            "initialSeed": "HDm38g",
+            "latestSeed": "QBsJFg",
+            "kdf": "HKDF-SHA512",
+            "kdfSalt": "NIlr89R7FhochyP4yuXZmDqCnQ0dBB3UZ2D+6oiIjr8=",
+            "org.example.customfield": 42
+        }`;
+        const metadata = await VaultMetadata.createFromJson(JSON.parse(json));
+        uvf = await UniversalVaultFormat.forTesting(metadata);
       });
 
       it('encryptForUser() creates an access token', async () => {
@@ -280,14 +280,14 @@ describe('UVF', () => {
       it('computeRootDirId() deterministically creates a dir ID', async () => {
         const dirId = await uvf.computeRootDirId();
         expect(dirId).to.have.a.lengthOf(32);
-        expect(base64.stringify(dirId)).to.eq('24UBEDeGu5taq7U4GqyA0MXUXb9HTYS6p3t9vvHGJAc=');
+        expect(base64.stringify(dirId)).to.eq('5WEGzwKkAHPwVSjT2Brr3P3zLz7oMiNpMn/qBvht7eM=');
       });
 
       it('computeRootDirIdHash() creates a truncated hmac', async () => {
-        const rootDirId = base64.parse('24UBEDeGu5taq7U4GqyA0MXUXb9HTYS6p3t9vvHGJAc=');
+        const rootDirId = base64.parse('5WEGzwKkAHPwVSjT2Brr3P3zLz7oMiNpMn/qBvht7eM=');
         const hash = await uvf.computeRootDirIdHash(rootDirId);
         expect(hash).to.have.a.lengthOf(32);
-        expect(hash).to.eq('6DYU3E5BTPAZ4DWEQPQK3AIHX2DXSPHG');
+        expect(hash).to.eq('RKHZLENL3PQIW6GZHE3KRRRGLFBHWHRU');
       });
 
       it('encryptFile() creates some ciphertext', async () => {
@@ -299,7 +299,6 @@ describe('UVF', () => {
     });
   });
 });
-
 
 // #region Mocks
 

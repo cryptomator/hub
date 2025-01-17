@@ -363,6 +363,12 @@ export class UniversalVaultFormat implements AccessTokenProducing, VaultTemplate
     return new UniversalVaultFormat(metadata, memberKey, recoveryKey);
   }
 
+  public static async forTesting(metadata: VaultMetadata) {
+    const memberKey = await MemberKey.create();
+    const recoveryKey = await RecoveryKey.create();
+    return new UniversalVaultFormat(metadata, memberKey, recoveryKey);
+  }
+
   /**
    * Decrypts a UVF vault.
    * @param vault The vault to decrypt
