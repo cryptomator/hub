@@ -55,7 +55,7 @@ export class MemberKey {
    * @returns new key
    */
   public static async load(encodedKey: string): Promise<MemberKey> {
-    let rawKey = new Uint8Array();
+    let rawKey: Uint8Array = new Uint8Array();
     try {
       rawKey = base64.parse(encodedKey);
       const memberKey = await crypto.subtle.importKey('raw', rawKey, MemberKey.KEY_DESIGNATION, true, MemberKey.KEY_USAGE);
