@@ -51,6 +51,13 @@
   "admin.licenseInfo.getLicense": "Lizenz erhalten",
   "admin.licenseInfo.selfHostedNoLicense.description": "Vielen Dank, dass du Cryptomator Hub nutzt! Du hast die Community-Lizenz erhalten. Wenn du mehr Sitze benötigst, erweiter deine Lizenz.",
   "admin.licenseInfo.managedNoLicense.description": "Vielen Dank, dass du Cryptomator Hub nutzt! Du hast aktuell keine aktive Lizenz.",
+  "admin.webOfTrust.title": "Web of Trust",
+  "admin.webOfTrust.description": "Konfigurieren Sie die Web of Trust-Einstellungen, um zu verwalten, wie Vertrauen zwischen Benutzern im System aufgebaut wird. Diese Einstellungen beeinflussen die Überprüfung von Benutzeridentitäten und Schlüssel-Signaturen.",
+  "admin.webOfTrust.trustLevel.error": "Das Vertrauensniveau muss zwischen 0 und 10 liegen.",
+  "admin.webOfTrust.trustLevel.title": "Vertrauensniveau",
+  "admin.webOfTrust.maxChainLength.error": "Die maximale Kettenlänge muss größer als 0 sein.",
+  "admin.webOfTrust.maxChainLength.title": "Maximale Kettenlänge",
+  "admin.webOfTrust.save": "Speichern",
 
   "archiveVaultDialog.title": "Tresor archivieren",
   "archiveVaultDialog.description": "Das Archivieren eines Tresors macht ihn inaktiv. Dadurch können belegte Sitze frei werden. Ein archivierter Tresor kann später wieder aktiviert werden.",

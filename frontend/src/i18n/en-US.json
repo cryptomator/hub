@@ -51,7 +51,14 @@
   "admin.licenseInfo.getLicense": "Get License",
   "admin.licenseInfo.selfHostedNoLicense.description": "Thank you for using Cryptomator Hub! You have been granted the Community License. If you need more seats, upgrade your license.",
   "admin.licenseInfo.managedNoLicense.description": "Thank you for using Cryptomator Hub! You currently have no active license.",
-
+  "admin.webOfTrust.title": "Web of Trust",
+  "admin.webOfTrust.description": "Configure the Web of Trust settings to manage how trust is established between users in the system. These settings affect the verification of user identities and key signatures.",
+  "admin.webOfTrust.trustLevel.error": "Trust level must be between 0 and 10.",
+  "admin.webOfTrust.trustLevel.title": "Trust Level",
+  "admin.webOfTrust.maxChainLength.error": "Maximum chain length must be greater than 0.",
+  "admin.webOfTrust.maxChainLength.title": "Maximum Chain Length",
+  "admin.webOfTrust.save": "Save",
+  
   "archiveVaultDialog.title": "Archive Vault",
   "archiveVaultDialog.description": "Archiving a vault makes it inactive. This may free up occupied seats. An archived vault can be reactivated later.",
   "archiveVaultDialog.confirm": "Archive",

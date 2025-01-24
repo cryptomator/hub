@@ -121,16 +121,31 @@
                   {{ t('admin.licenseInfo.expiresAt.description.expired') }}
                 </p>
               </div>
+
+              <div class="col-span-6 sm:col-span-3">
+                <label for="trustLevel" class="block text-sm font-medium text-gray-700">{{ t('admin.webOfTrust.trustLevel.title') }}</label>
+                <input id="trustLevel" v-model="trustLevel" type="number" min="0" max="10" step="1" class="mt-1 block w-full shadow-sm sm:text-sm rounded-md border-gray-300 focus:ring-primary focus:border-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': trustLevelError }" />
+                <p v-if="trustLevelError" class="mt-1 text-sm text-red-900">
+                  {{ t('admin.webOfTrust.trustLevel.error') }}
+                </p>
+              </div>
+
+              <div class="col-span-6 sm:col-span-3">
+                <label for="maxChainLength" class="block text-sm font-medium text-gray-700">{{ t('admin.webOfTrust.maxChainLength.title') }}</label>
+                <input id="maxChainLength" v-model="maxChainLength" type="number" min="0" step="1" class="mt-1 block w-full shadow-sm sm:text-sm rounded-md border-gray-300 focus:ring-primary focus:border-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': maxChainLengthError }" />
+                <p v-if="maxChainLengthError" class="mt-1 text-sm text-red-900">
+                  {{ t('admin.webOfTrust.maxChainLength.error') }}
+                </p>
+              </div>
+
+              <div class="col-span-6 flex justify-end space-x-3">
+                <button type="button" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="saveWebOfTrust">
+                  {{ t('admin.webOfTrust.save') }}
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-      
-      <div v-if="admin.hasLicense" class="flex justify-end items-center">
-        <button type="button" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="manageSubscription()">
-          <ArrowTopRightOnSquareIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
-          {{ t('admin.licenseInfo.manageSubscription') }}
-        </button>
       </div>
 
       <div v-if="!admin.hasLicense && remainingSeats != null" class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6">
@@ -170,16 +185,66 @@
                   {{ t('admin.licenseInfo.seats.description.undercutSeats', [numberOfExceededSeats]) }}
                 </p>
               </div>
+
+              <div class="col-span-6 flex justify-end space-x-3">
+                <button type="button" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="manageSubscription()">
+                  <ArrowTopRightOnSquareIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+                  {{ t('admin.licenseInfo.getLicense') }}
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div v-if="!admin.hasLicense" class="flex justify-end items-center">
-        <button type="button" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="manageSubscription()">
-          <ArrowTopRightOnSquareIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
-          {{ t('admin.licenseInfo.getLicense') }}
-        </button>
+      <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6">
+        <div class="md:grid md:grid-cols-3 md:gap-6">
+          <div class="md:col-span-1">
+            <h3 class="text-lg font-medium leading-6 text-gray-900">
+              {{ t('admin.webOfTrust.title') }}
+            </h3>
+            <p class="mt-1 text-sm text-gray-500">
+              {{ t('admin.webOfTrust.description') }}
+            </p>
+          </div>
+          <div class="mt-5 md:mt-0 md:col-span-2">
+            <div class="grid grid-cols-6 gap-6">
+              <div class="col-span-6 sm:col-span-3">
+                <label for="trustLevel" class="block text-sm font-medium text-gray-700">
+                  {{ t('admin.webOfTrust.trustLevel.title') }}
+                </label>
+                <input id="trustLevel" v-model="trustLevel" type="number" min="0" max="10" step="1" class="mt-1 block w-full shadow-sm sm:text-sm rounded-md border-gray-300 focus:ring-primary focus:border-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': trustLevelError }" />
+                <p v-if="trustLevelError" class="mt-1 text-sm text-red-900">
+                  {{ t('admin.webOfTrust.trustLevel.error') }}
+                </p>
+              </div>
+
+              <div class="col-span-6 sm:col-span-3">
+                <label for="maxChainLength" class="block text-sm font-medium text-gray-700">
+                  {{ t('admin.webOfTrust.maxChainLength.title') }}
+                </label>
+                <input id="maxChainLength" v-model="maxChainLength" type="number" min="0" step="1" class="mt-1 block w-full shadow-sm sm:text-sm rounded-md border-gray-300 focus:ring-primary focus:border-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': maxChainLengthError }" />
+                <p v-if="maxChainLengthError" class="mt-1 text-sm text-red-900">
+                  {{ t('admin.webOfTrust.maxChainLength.error') }}
+                </p>
+              </div>
+
+              <div class="col-span-6 flex justify-end space-x-3">
+                <div v-if="onSaveError != null && !(onSaveError instanceof FormValidationFailedError)">
+                  <p class="text-sm text-red-900 mr-4">{{ t('common.unexpectedError', [onSaveError.message]) }}</p>
+                </div>
+                <button 
+                  type="button" 
+                  :disabled="processing"
+                  class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" 
+                  @click="saveWebOfTrust"
+                >
+                  {{ t('admin.webOfTrust.save') }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -209,6 +274,13 @@ const now = ref<Date>(new Date());
 const keycloakAdminRealmURL = ref<string>();
 const onFetchError = ref<Error | null>();
 const errorOnFetchingUpdates = ref<boolean>(false);
+const trustLevel = ref<number>(0);
+const maxChainLength = ref<number>(0);
+
+// Add validation refs
+const trustLevelError = ref(false);
+const maxChainLengthError = ref(false);
+const showErrors = ref(false);  // New ref to control error display
 
 const isBeta = computed(() => {
   if (version.value && semver.valid(version.value.hubVersion)) {
@@ -261,6 +333,11 @@ async function fetchData() {
     admin.value = await backend.billing.get();
     version.value = await versionDto;
     latestVersion.value = await versionAvailable;
+    
+    // Get the settings and set the values
+    const settings = await backend.settings.get();
+    trustLevel.value = settings.wotMaxDepth;
+    maxChainLength.value = settings.wotIdVerifyLen;
   } catch (error) {
     if (error instanceof FetchUpdateError) {
       errorOnFetchingUpdates.value = true;
@@ -277,5 +354,66 @@ function manageSubscription() {
   const supportedLanguagePathComponents = Object.fromEntries(supportedLanguages.map(lang => [lang, lang == Locale.EN ? '' : `${lang}/`]));
   const languagePathComponent = supportedLanguagePathComponents[(locale.value as string).split('-')[0]] ?? supportedLanguagePathComponents[fallbackLocale.value as string] ?? '';
   window.open(`https://cryptomator.org/${languagePathComponent}hub/billing/?hub_id=${admin.value?.hubId}&return_url=${encodeURIComponent(returnUrl)}`, '_self');
+}
+
+// Add validation functions
+function validateTrustLevel(value: number) {
+  return value < 0 || value > 10;
+}
+
+function validateMaxChainLength(value: number) {
+  return value < 0;
+}
+
+class FormValidationFailedError extends Error {
+  constructor() {
+    super('The form is invalid.');
+  }
+}
+
+const form = ref<HTMLFormElement>();
+const onSaveError = ref<Error | null>(null);
+const processing = ref(false);
+
+async function saveWebOfTrust() {
+  onSaveError.value = null;
+  trustLevelError.value = false;
+  maxChainLengthError.value = false;
+  
+  // Validate inputs separately
+  let hasError = false;
+  
+  if (Number(trustLevel.value) < 0 || Number(trustLevel.value) > 10) {
+    trustLevelError.value = true;
+    hasError = true;
+  }
+  
+  if (Number(maxChainLength.value) < 0) {
+    maxChainLengthError.value = true;
+    hasError = true;
+  }
+
+  if (hasError) {
+    return;
+  }
+
+  try {
+    processing.value = true;
+    const settings = {
+      wotMaxDepth: trustLevel.value,
+      wotIdVerifyLen: maxChainLength.value,
+      hubId: '' //TODO: Fix
+    };
+    await backend.settings.put(settings);
+  } catch (error) {
+    console.error('Failed to save settings:', error);
+    onSaveError.value = error instanceof Error ? error : new Error('Unknown reason');
+  } finally {
+    processing.value = false;
+  }
+}
+
+async function getLicense() {
+  await manageSubscription();
 }
 </script>
