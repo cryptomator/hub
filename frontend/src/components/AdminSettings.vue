@@ -233,12 +233,7 @@
                 <div v-if="onSaveError != null && !(onSaveError instanceof FormValidationFailedError)">
                   <p class="text-sm text-red-900 mr-4">{{ t('common.unexpectedError', [onSaveError.message]) }}</p>
                 </div>
-                <button 
-                  type="button" 
-                  :disabled="processing"
-                  class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" 
-                  @click="saveWebOfTrust"
-                >
+                <button type="button" :disabled="processing" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="saveWebOfTrust">
                   {{ t('admin.webOfTrust.save') }}
                 </button>
               </div>
@@ -377,34 +372,21 @@ const processing = ref(false);
 
 async function saveWebOfTrust() {
   onSaveError.value = null;
-  trustLevelError.value = false;
-  maxChainLengthError.value = false;
-  
-  // Validate inputs separately
-  let hasError = false;
-  
-  if (Number(trustLevel.value) < 0 || Number(trustLevel.value) > 10) {
-    trustLevelError.value = true;
-    hasError = true;
-  }
-  
-  if (Number(maxChainLength.value) < 0) {
-    maxChainLengthError.value = true;
-    hasError = true;
-  }
+  trustLevelError.value = trustLevel.value < 0 || trustLevel.value > 10;
+  maxChainLengthError.value = maxChainLength.value < 0;
 
-  if (hasError) {
+  if (trustLevelError.value || maxChainLengthError.value) {
     return;
   }
-
   try {
     processing.value = true;
     const settings = {
       wotMaxDepth: trustLevel.value,
       wotIdVerifyLen: maxChainLength.value,
-      hubId: '' //TODO: Fix
+      hubId: admin.value?.hubId ?? ''
     };
     await backend.settings.put(settings);
+    await new Promise(resolve => setTimeout(resolve, 500));
   } catch (error) {
     console.error('Failed to save settings:', error);
     onSaveError.value = error instanceof Error ? error : new Error('Unknown reason');
