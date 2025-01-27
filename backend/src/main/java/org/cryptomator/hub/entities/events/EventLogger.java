@@ -100,6 +100,15 @@ public class EventLogger {
 		auditEventRepository.persist(event);
 	}
 
+	public void logWotSettingUpdated(String userId, int wotIdVerifyLen, int wotMaxDepth) {
+		var event = new SettingWotUpdateEvent();
+		event.setTimestamp(Instant.now());
+		event.setWotIdVerifyLen(wotIdVerifyLen);
+		event.setWotMaxDepth(wotMaxDepth);
+		event.setUpdatedBy(userId);
+		auditEventRepository.persist(event);
+	}
+
 	public void logWotIdSigned(String userId, String signerId, String signerKey, String signature) {
 		var event = new SignedWotIdEvent();
 		event.setTimestamp(Instant.now());
