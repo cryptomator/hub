@@ -100,12 +100,12 @@ public class EventLogger {
 		auditEventRepository.persist(event);
 	}
 
-	public void logWotSettingUpdated(String userId, int wotIdVerifyLen, int wotMaxDepth) {
+	public void logWotSettingUpdated(String updatedBy, int wotIdVerifyLen, int wotMaxDepth) {
 		var event = new SettingWotUpdateEvent();
 		event.setTimestamp(Instant.now());
 		event.setWotIdVerifyLen(wotIdVerifyLen);
 		event.setWotMaxDepth(wotMaxDepth);
-		event.setUpdatedBy(userId);
+		event.setUpdatedBy(updatedBy);
 		auditEventRepository.persist(event);
 	}
 
