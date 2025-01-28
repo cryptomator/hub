@@ -1,5 +1,5 @@
 <template>
-  <div v-if="admin == null || version == null">
+  <div v-if="admin == null || version == null || wotMaxDepth == null || wotIdVerifyLen == null">
     <div v-if="onFetchError == null">
       {{ t('common.loading') }}
     </div>
@@ -192,25 +192,25 @@
               {{ t('admin.webOfTrust.description') }}
             </p>
           </div>
-          <form class="mt-5 md:mt-0 md:col-span-2">
+          <form ref="form" class="mt-5 md:mt-0 md:col-span-2" novalidate @submit.prevent="saveWebOfTrust()">
             <div class="grid grid-cols-6 gap-6">
               <div class="col-span-6 sm:col-span-3">
                 <label for="wotMaxDepth" class="block text-sm font-medium text-gray-700 flex items-center">
                   {{ t('admin.webOfTrust.wotMaxDepth.title') }}
                   <div class="relative group ml-1">
                     <InformationCircleIcon class="shrink-0 text-primary h-5 w-5 cursor-pointer" aria-hidden="true" />
-                    <div class="absolute hidden group-hover:block bg-white text-gray-600 text-xs rounded shadow-md w-40 p-2 left-1/2 transform -translate-x-1/2 bottom-full z-10 mt-1">
+                    <div class="absolute hidden group-hover:block bg-white text-gray-600 text-xs rounded shadow-md w-48 p-2 left-1/2 transform -translate-x-1/2 bottom-full z-10 mt-1">
                       {{ t('admin.webOfTrust.wotMaxDepth.description') }}
                       <div class="mt-2">
                         <a href="https://docs.cryptomator.org/en/latest/security/hub/#web-of-trust" target="_blank" class="text-primary underline hover:text-primary-darker">
                           {{ t('admin.webOfTrust.wotMaxDepth.information') }}
                         </a>
                       </div>
-                      <div class="absolute left-1/2 translate-x-[-50%] top-full w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-gray-600"></div>
+                      <div class="absolute left-1/2 transform -translate-x-1/2 top-full w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-white shadow-md"></div>
                     </div>
                   </div>
                 </label>
-                <input id="wotMaxDepth" v-model="wotMaxDepth" type="number" min="0" max="10" step="1" class="mt-1 block w-full shadow-sm sm:text-sm rounded-md border-gray-300 focus:ring-primary focus:border-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': wotMaxDepthError }" />
+                <input id="wotMaxDepth" v-model="wotMaxDepth" type="number" min="0" max="9" step="1" class="mt-1 block w-full shadow-sm sm:text-sm rounded-md border-gray-300 focus:ring-primary focus:border-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': wotMaxDepthError instanceof FormValidationFailedError }"/>
                 <p v-if="wotMaxDepthError" class="mt-1 text-sm text-red-900">
                   {{ t('admin.webOfTrust.wotMaxDepth.error') }}
                 </p>
@@ -221,30 +221,31 @@
                   {{ t('admin.webOfTrust.wotIdVerifyLen.title') }}
                   <div class="relative group ml-1">
                     <InformationCircleIcon class="shrink-0 text-primary h-5 w-5 cursor-pointer" aria-hidden="true" />
-                    <div class="absolute hidden group-hover:block bg-white text-gray-600 text-xs rounded shadow-md w-40 p-2 left-1/2 transform -translate-x-1/2 bottom-full z-10 mt-1">
+                    <div class="absolute hidden group-hover:block bg-white text-gray-600 text-xs rounded shadow-md w-48 p-2 left-1/2 transform -translate-x-1/2 bottom-full z-10 mt-1">
                       {{ t('admin.webOfTrust.wotIdVerifyLen.description') }}
                       <div class="mt-2">
                         <a href="https://docs.cryptomator.org/en/latest/security/hub/#web-of-trust" target="_blank" class="text-primary underline hover:text-primary-darker">
                           {{ t('admin.webOfTrust.wotIdVerifyLen.information') }}
                         </a>
                       </div>
-                      <div class="absolute left-1/2 translate-x-[-50%] top-full w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-gray-600"></div>
+                      <div class="absolute left-1/2 transform -translate-x-1/2 top-full w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-white shadow-md"></div>
                     </div>
                   </div>
                 </label>
-                <input id="wotIdVerifyLen" v-model="wotIdVerifyLen" type="number" min="0" step="1" class="mt-1 block w-full shadow-sm sm:text-sm rounded-md border-gray-300 focus:ring-primary focus:border-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': wotIdVerifyLenError }" />
+                <input id="wotIdVerifyLen" v-model="wotIdVerifyLen" type="number" min="0" step="1" class="mt-1 block w-full shadow-sm sm:text-sm rounded-md border-gray-300 focus:ring-primary focus:border-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': wotIdVerifyLenError instanceof FormValidationFailedError }"/>
                 <p v-if="wotIdVerifyLenError" class="mt-1 text-sm text-red-900">
                   {{ t('admin.webOfTrust.wotIdVerifyLen.error') }}
                 </p>
               </div>
 
               <div class="col-span-6 flex justify-end space-x-3">
+                <button type="submit" :disabled="processing" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
+                  <span v-if="!wotUpdated" class="hidden truncate sm:block">{{ t('admin.webOfTrust.save') }}</span>
+                  <span v-else class="hidden truncate sm:block">{{ t('admin.webOfTrust.saved') }}</span>
+                </button>
                 <div v-if="onSaveError != null && !(onSaveError instanceof FormValidationFailedError)">
                   <p class="text-sm text-red-900 mr-4">{{ t('common.unexpectedError', [onSaveError.message]) }}</p>
                 </div>
-                <button type="button" :disabled="processing" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="saveWebOfTrust">
-                  {{ t('admin.webOfTrust.save') }}
-                </button>
               </div>
             </div>
           </form>
@@ -262,6 +263,7 @@ import { useI18n } from 'vue-i18n';
 import backend, { BillingDto, VersionDto } from '../common/backend';
 import config, { absFrontendBaseURL } from '../common/config';
 import { FetchUpdateError, LatestVersionDto, updateChecker } from '../common/updatecheck';
+import { debounce } from '../common/util';
 import { Locale } from '../i18n/index';
 import FetchError from './FetchError.vue';
 
@@ -278,12 +280,11 @@ const now = ref<Date>(new Date());
 const keycloakAdminRealmURL = ref<string>();
 const onFetchError = ref<Error | null>();
 const errorOnFetchingUpdates = ref<boolean>(false);
-const wotMaxDepth = ref<number>(0);
-const wotIdVerifyLen = ref<number>(0);
+const wotMaxDepth = ref<number>();
+const wotIdVerifyLen = ref<number>();
 
-// Add validation refs
-const wotMaxDepthError = ref(false);
-const wotIdVerifyLenError = ref(false);
+const wotUpdated = ref(false);
+const debouncedWotUpdated = debounce(() => wotUpdated.value = false, 2000);
 
 const isBeta = computed(() => {
   if (version.value && semver.valid(version.value.hubVersion)) {
@@ -337,7 +338,6 @@ async function fetchData() {
     version.value = await versionDto;
     latestVersion.value = await versionAvailable;
     
-    // Get the settings and set the values
     const settings = await backend.settings.get();
     wotMaxDepth.value = settings.wotMaxDepth;
     wotIdVerifyLen.value = settings.wotIdVerifyLen;
@@ -359,15 +359,6 @@ function manageSubscription() {
   window.open(`https://cryptomator.org/${languagePathComponent}hub/billing/?hub_id=${admin.value?.hubId}&return_url=${encodeURIComponent(returnUrl)}`, '_self');
 }
 
-// Add validation functions
-function validateTrustLevel(value: number) {
-  return value < 0 || value > 10;
-}
-
-function validateMaxChainLength(value: number) {
-  return value < 0;
-}
-
 class FormValidationFailedError extends Error {
   constructor() {
     super('The form is invalid.');
@@ -377,13 +368,23 @@ class FormValidationFailedError extends Error {
 const form = ref<HTMLFormElement>();
 const onSaveError = ref<Error | null>(null);
 const processing = ref(false);
+const wotMaxDepthError = ref<Error | null >(null);
+const wotIdVerifyLenError = ref<Error | null >(null);
 
 async function saveWebOfTrust() {
   onSaveError.value = null;
-  wotMaxDepthError.value = wotMaxDepth.value < 0 || wotMaxDepth.value > 10;
-  wotIdVerifyLenError.value = wotIdVerifyLen.value < 0;
-
-  if (wotMaxDepthError.value || wotIdVerifyLenError.value) {
+  wotMaxDepthError.value = null;
+  wotIdVerifyLenError.value = null;
+  if (admin.value == null || wotMaxDepth.value == null || wotIdVerifyLen.value == null) {
+    throw new Error('No data available.');
+  }
+  if (!form.value?.checkValidity()) {
+    if (wotMaxDepth.value < 0 || wotMaxDepth.value > 9) {
+      wotMaxDepthError.value = new FormValidationFailedError();
+    }
+    if (wotIdVerifyLen.value < 0) {
+      wotIdVerifyLenError.value = new FormValidationFailedError();
+    }
     return;
   }
   try {
@@ -391,10 +392,11 @@ async function saveWebOfTrust() {
     const settings = {
       wotMaxDepth: wotMaxDepth.value,
       wotIdVerifyLen: wotIdVerifyLen.value,
-      hubId: admin.value?.hubId ?? ''
+      hubId: admin.value.hubId
     };
     await backend.settings.put(settings);
-    await new Promise(resolve => setTimeout(resolve, 500));
+    wotUpdated.value = true;
+    debouncedWotUpdated();
   } catch (error) {
     console.error('Failed to save settings:', error);
     onSaveError.value = error instanceof Error ? error : new Error('Unknown reason');
@@ -403,7 +405,4 @@ async function saveWebOfTrust() {
   }
 }
 
-async function getLicense() {
-  await manageSubscription();
-}
 </script>

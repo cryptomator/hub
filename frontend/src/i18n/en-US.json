@@ -51,9 +51,10 @@
   "admin.licenseInfo.getLicense": "Get License",
   "admin.licenseInfo.selfHostedNoLicense.description": "Thank you for using Cryptomator Hub! You have been granted the Community License. If you need more seats, upgrade your license.",
   "admin.licenseInfo.managedNoLicense.description": "Thank you for using Cryptomator Hub! You currently have no active license.",
+
   "admin.webOfTrust.title": "Web of Trust",
   "admin.webOfTrust.description": "Configure the Web of Trust settings to manage how trust is established between users in the system. These settings affect the verification of user identities and key signatures.",
-  "admin.webOfTrust.wotMaxDepth.error": "Maximum WoT Depth must be between 0 and 10.",
+  "admin.webOfTrust.wotMaxDepth.error": "Maximum WoT Depth must be between 0 and 9.",
   "admin.webOfTrust.wotMaxDepth.information":"Learn more about Maximum WoT Depth",
   "admin.webOfTrust.wotMaxDepth.title": "Maximum WoT Depth",
   "admin.webOfTrust.wotMaxDepth.description": "Maximum distance between two users, so an indirect acquaintanceship is still considered trustworthy (assuming intermediate identities have been verified).",
@@ -62,6 +63,7 @@
   "admin.webOfTrust.wotIdVerifyLen.title": "Fingerprint Verification Preciseness",
   "admin.webOfTrust.wotIdVerifyLen.description": "How many digits of another users fingerprint one needs to enter to verify their identity.",
   "admin.webOfTrust.save": "Save",
+  "admin.webOfTrust.saved": "Saved!",
   
   "archiveVaultDialog.title": "Archive Vault",
   "archiveVaultDialog.description": "Archiving a vault makes it inactive. This may free up occupied seats. An archived vault can be reactivated later.",

@@ -51,9 +51,10 @@
   "admin.licenseInfo.getLicense": "Lizenz erhalten",
   "admin.licenseInfo.selfHostedNoLicense.description": "Vielen Dank, dass du Cryptomator Hub nutzt! Du hast die Community-Lizenz erhalten. Wenn du mehr Sitze benötigst, erweiter deine Lizenz.",
   "admin.licenseInfo.managedNoLicense.description": "Vielen Dank, dass du Cryptomator Hub nutzt! Du hast aktuell keine aktive Lizenz.",
+
   "admin.webOfTrust.title": "Web of Trust",
   "admin.webOfTrust.description": "Konfiguriere die Web of Trust-Einstellungen, um zu verwalten, wie Vertrauen zwischen Benutzern im System aufgebaut wird. Diese Einstellungen beeinflussen die Überprüfung von Benutzeridentitäten und Schlüssel-Signaturen.",
-  "admin.webOfTrust.wotMaxDepth.error": "Die maximale WoT-Tiefe muss zwischen 0 und 10 liegen.",
+  "admin.webOfTrust.wotMaxDepth.error": "Die maximale WoT-Tiefe muss zwischen 0 und 9 liegen.",
   "admin.webOfTrust.wotMaxDepth.information":"Erfahre mehr über die maximale WoT-Tiefe",
   "admin.webOfTrust.wotMaxDepth.title": "Maximale WoT-Tiefe",
   "admin.webOfTrust.wotMaxDepth.description": "Maximale Entfernung zwischen zwei Nutzern, sodass eine indirekte Bekanntschaft noch als vertrauenswürdig gilt (vorausgesetzt, die Zwischenidentitäten wurden verifiziert).",
@@ -62,6 +63,7 @@
   "admin.webOfTrust.wotIdVerifyLen.title": "Genauigkeit der Fingerabdrucküberprüfung",
   "admin.webOfTrust.wotIdVerifyLen.description": "Wie viele Ziffern des Fingerabdrucks eines anderen Nutzers eingegeben werden müssen, um ihre Identität zu verifizieren.",
   "admin.webOfTrust.save": "Speichern",
+  "admin.webOfTrust.saved": "Gespeichert!",
 
   "archiveVaultDialog.title": "Tresor archivieren",
   "archiveVaultDialog.description": "Das Archivieren eines Tresors macht ihn inaktiv. Dadurch können belegte Sitze frei werden. Ein archivierter Tresor kann später wieder aktiviert werden.",
