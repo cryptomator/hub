@@ -278,13 +278,23 @@ const latestVersion = ref<LatestVersionDto>();
 const admin = ref<BillingDto>();
 const now = ref<Date>(new Date());
 const keycloakAdminRealmURL = ref<string>();
-const onFetchError = ref<Error | null>();
-const errorOnFetchingUpdates = ref<boolean>(false);
 const wotMaxDepth = ref<number>();
 const wotIdVerifyLen = ref<number>();
-
 const wotUpdated = ref(false);
 const debouncedWotUpdated = debounce(() => wotUpdated.value = false, 2000);
+const form = ref<HTMLFormElement>();
+const processing = ref(false);
+const onFetchError = ref<Error | null>();
+const errorOnFetchingUpdates = ref<boolean>(false);
+const onSaveError = ref<Error | null>(null);
+const wotMaxDepthError = ref<Error | null >(null);
+const wotIdVerifyLenError = ref<Error | null >(null);
+
+class FormValidationFailedError extends Error {
+  constructor() {
+    super('The form is invalid.');
+  }
+}
 
 const isBeta = computed(() => {
   if (version.value && semver.valid(version.value.hubVersion)) {
@@ -358,18 +368,6 @@ function manageSubscription() {
   const languagePathComponent = supportedLanguagePathComponents[(locale.value as string).split('-')[0]] ?? supportedLanguagePathComponents[fallbackLocale.value as string] ?? '';
   window.open(`https://cryptomator.org/${languagePathComponent}hub/billing/?hub_id=${admin.value?.hubId}&return_url=${encodeURIComponent(returnUrl)}`, '_self');
 }
-
-class FormValidationFailedError extends Error {
-  constructor() {
-    super('The form is invalid.');
-  }
-}
-
-const form = ref<HTMLFormElement>();
-const onSaveError = ref<Error | null>(null);
-const processing = ref(false);
-const wotMaxDepthError = ref<Error | null >(null);
-const wotIdVerifyLenError = ref<Error | null >(null);
 
 async function saveWebOfTrust() {
   onSaveError.value = null;
