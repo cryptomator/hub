@@ -61,7 +61,7 @@
   "admin.webOfTrust.wotIdVerifyLen.error": "Die Genauigkeit der Fingerabdrucküberprüfung muss positiv sein.",
   "admin.webOfTrust.wotIdVerifyLen.information":"Erfahre mehr über die Fingerabdrucküberprüfung",
   "admin.webOfTrust.wotIdVerifyLen.title": "Genauigkeit der Fingerabdrucküberprüfung",
-  "admin.webOfTrust.wotIdVerifyLen.description": "Wie viele Ziffern des Fingerabdrucks eines anderen Nutzers eingegeben werden müssen, um ihre Identität zu verifizieren.",
+  "admin.webOfTrust.wotIdVerifyLen.description": "Wie viel des Fingerabdrucks eines anderen Nutzers eingegeben werden muss, um dessen Identität zu verifizieren.",
   "admin.webOfTrust.save": "Speichern",
   "admin.webOfTrust.saved": "Gespeichert!",
 
