@@ -6,7 +6,7 @@
     <dl class="flex flex-col gap-2">
       <div class="flex items-baseline gap-2">
         <dt class="text-xs text-gray-500">
-          <code>registered by</code>
+          <code>updated by</code>
         </dt>
         <dd class="flex items-baseline gap-2 text-sm text-gray-900">
           <span v-if="resolvedUpdatedBy != null">{{ resolvedUpdatedBy.name }}</span>
