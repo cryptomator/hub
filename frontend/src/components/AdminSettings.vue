@@ -120,28 +120,13 @@
                   <XMarkIcon class="shrink-0 text-red-500 mr-1 h-5 w-5" aria-hidden="true" />
                   {{ t('admin.licenseInfo.expiresAt.description.expired') }}
                 </p>
-              </div>
 
-              <div class="col-span-6 sm:col-span-3">
-                <label for="trustLevel" class="block text-sm font-medium text-gray-700">{{ t('admin.webOfTrust.trustLevel.title') }}</label>
-                <input id="trustLevel" v-model="trustLevel" type="number" min="0" max="10" step="1" class="mt-1 block w-full shadow-sm sm:text-sm rounded-md border-gray-300 focus:ring-primary focus:border-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': trustLevelError }" />
-                <p v-if="trustLevelError" class="mt-1 text-sm text-red-900">
-                  {{ t('admin.webOfTrust.trustLevel.error') }}
-                </p>
-              </div>
-
-              <div class="col-span-6 sm:col-span-3">
-                <label for="maxChainLength" class="block text-sm font-medium text-gray-700">{{ t('admin.webOfTrust.maxChainLength.title') }}</label>
-                <input id="maxChainLength" v-model="maxChainLength" type="number" min="0" step="1" class="mt-1 block w-full shadow-sm sm:text-sm rounded-md border-gray-300 focus:ring-primary focus:border-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': maxChainLengthError }" />
-                <p v-if="maxChainLengthError" class="mt-1 text-sm text-red-900">
-                  {{ t('admin.webOfTrust.maxChainLength.error') }}
-                </p>
-              </div>
-
-              <div class="col-span-6 flex justify-end space-x-3">
-                <button type="button" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="saveWebOfTrust">
-                  {{ t('admin.webOfTrust.save') }}
-                </button>
+                <div v-if="admin.hasLicense" class="col-span-6 flex justify-end space-x-3">
+                  <button type="button" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="manageSubscription()">
+                    <ArrowTopRightOnSquareIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+                    {{ t('admin.licenseInfo.manageSubscription') }}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -207,25 +192,49 @@
               {{ t('admin.webOfTrust.description') }}
             </p>
           </div>
-          <div class="mt-5 md:mt-0 md:col-span-2">
+          <form class="mt-5 md:mt-0 md:col-span-2">
             <div class="grid grid-cols-6 gap-6">
               <div class="col-span-6 sm:col-span-3">
-                <label for="trustLevel" class="block text-sm font-medium text-gray-700">
-                  {{ t('admin.webOfTrust.trustLevel.title') }}
+                <label for="wotMaxDepth" class="block text-sm font-medium text-gray-700 flex items-center">
+                  {{ t('admin.webOfTrust.wotMaxDepth.title') }}
+                  <div class="relative group ml-1">
+                    <InformationCircleIcon class="shrink-0 text-primary h-5 w-5 cursor-pointer" aria-hidden="true" />
+                    <div class="absolute hidden group-hover:block bg-gray-600 text-white text-xs rounded px-2 py-2 left-1/2 bottom-full z-10" style="white-space: normal; width: 350px; transform: translateX(-50%); margin-bottom: 0.5rem; pointer-events: auto;">
+                      {{ t('admin.webOfTrust.wotMaxDepth.description') }}
+                      <div class="mt-2">
+                        <a href="https://docs.cryptomator.org/en/latest/security/hub/#web-of-trust" target="_blank" class="text-primary underline hover:text-primary-darker">
+                          {{ t('admin.webOfTrust.wotMaxDepth.information') }}
+                        </a>
+                      </div>
+                      <div class="absolute left-1/2 translate-x-[-50%] top-full w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-gray-600"></div>
+                    </div>
+                  </div>
                 </label>
-                <input id="trustLevel" v-model="trustLevel" type="number" min="0" max="10" step="1" class="mt-1 block w-full shadow-sm sm:text-sm rounded-md border-gray-300 focus:ring-primary focus:border-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': trustLevelError }" />
-                <p v-if="trustLevelError" class="mt-1 text-sm text-red-900">
-                  {{ t('admin.webOfTrust.trustLevel.error') }}
+                <input id="wotMaxDepth" v-model="wotMaxDepth" type="number" min="0" max="10" step="1" class="mt-1 block w-full shadow-sm sm:text-sm rounded-md border-gray-300 focus:ring-primary focus:border-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': wotMaxDepthError }" />
+                <p v-if="wotMaxDepthError" class="mt-1 text-sm text-red-900">
+                  {{ t('admin.webOfTrust.wotMaxDepth.error') }}
                 </p>
               </div>
 
               <div class="col-span-6 sm:col-span-3">
-                <label for="maxChainLength" class="block text-sm font-medium text-gray-700">
-                  {{ t('admin.webOfTrust.maxChainLength.title') }}
+                <label for="wotIdVerifyLen" class="block text-sm font-medium text-gray-700 flex items-center">
+                  {{ t('admin.webOfTrust.wotIdVerifyLen.title') }}
+                  <div class="relative group ml-1">
+                    <InformationCircleIcon class="shrink-0 text-primary h-5 w-5 cursor-pointer" aria-hidden="true" />
+                    <div class="absolute hidden group-hover:block bg-gray-600 text-white text-xs rounded px-2 py-2 left-1/2 bottom-full z-10" style="white-space: normal; width: 350px; transform: translateX(-50%); margin-bottom: 0.5rem; pointer-events: auto;">
+                      {{ t('admin.webOfTrust.wotIdVerifyLen.description') }}
+                      <div class="mt-2">
+                        <a href="https://docs.cryptomator.org/en/latest/security/hub/#web-of-trust" target="_blank" class="text-primary underline hover:text-primary-darker">
+                          {{ t('admin.webOfTrust.wotIdVerifyLen.information') }}
+                        </a>
+                      </div>
+                      <div class="absolute left-1/2 translate-x-[-50%] top-full w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-gray-600"></div>
+                    </div>
+                  </div>
                 </label>
-                <input id="maxChainLength" v-model="maxChainLength" type="number" min="0" step="1" class="mt-1 block w-full shadow-sm sm:text-sm rounded-md border-gray-300 focus:ring-primary focus:border-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': maxChainLengthError }" />
-                <p v-if="maxChainLengthError" class="mt-1 text-sm text-red-900">
-                  {{ t('admin.webOfTrust.maxChainLength.error') }}
+                <input id="wotIdVerifyLen" v-model="wotIdVerifyLen" type="number" min="0" step="1" class="mt-1 block w-full shadow-sm sm:text-sm rounded-md border-gray-300 focus:ring-primary focus:border-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': wotIdVerifyLenError }" />
+                <p v-if="wotIdVerifyLenError" class="mt-1 text-sm text-red-900">
+                  {{ t('admin.webOfTrust.wotIdVerifyLen.error') }}
                 </p>
               </div>
 
@@ -238,7 +247,7 @@
                 </button>
               </div>
             </div>
-          </div>
+          </form>
         </div>
       </div>
     </div>
@@ -269,12 +278,12 @@ const now = ref<Date>(new Date());
 const keycloakAdminRealmURL = ref<string>();
 const onFetchError = ref<Error | null>();
 const errorOnFetchingUpdates = ref<boolean>(false);
-const trustLevel = ref<number>(0);
-const maxChainLength = ref<number>(0);
+const wotMaxDepth = ref<number>(0);
+const wotIdVerifyLen = ref<number>(0);
 
 // Add validation refs
-const trustLevelError = ref(false);
-const maxChainLengthError = ref(false);
+const wotMaxDepthError = ref(false);
+const wotIdVerifyLenError = ref(false);
 const showErrors = ref(false);  // New ref to control error display
 
 const isBeta = computed(() => {
@@ -331,8 +340,8 @@ async function fetchData() {
     
     // Get the settings and set the values
     const settings = await backend.settings.get();
-    trustLevel.value = settings.wotMaxDepth;
-    maxChainLength.value = settings.wotIdVerifyLen;
+    wotMaxDepth.value = settings.wotMaxDepth;
+    wotIdVerifyLen.value = settings.wotIdVerifyLen;
   } catch (error) {
     if (error instanceof FetchUpdateError) {
       errorOnFetchingUpdates.value = true;
@@ -372,17 +381,17 @@ const processing = ref(false);
 
 async function saveWebOfTrust() {
   onSaveError.value = null;
-  trustLevelError.value = trustLevel.value < 0 || trustLevel.value > 10;
-  maxChainLengthError.value = maxChainLength.value < 0;
+  wotMaxDepthError.value = wotMaxDepth.value < 0 || wotMaxDepth.value > 10;
+  wotIdVerifyLenError.value = wotIdVerifyLen.value < 0;
 
-  if (trustLevelError.value || maxChainLengthError.value) {
+  if (wotMaxDepthError.value || wotIdVerifyLenError.value) {
     return;
   }
   try {
     processing.value = true;
     const settings = {
-      wotMaxDepth: trustLevel.value,
-      wotIdVerifyLen: maxChainLength.value,
+      wotMaxDepth: wotMaxDepth.value,
+      wotIdVerifyLen: wotIdVerifyLen.value,
       hubId: admin.value?.hubId ?? ''
     };
     await backend.settings.put(settings);
