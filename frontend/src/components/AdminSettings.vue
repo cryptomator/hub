@@ -199,7 +199,7 @@
                   {{ t('admin.webOfTrust.wotMaxDepth.title') }}
                   <div class="relative group ml-1">
                     <InformationCircleIcon class="shrink-0 text-primary h-5 w-5 cursor-pointer" aria-hidden="true" />
-                    <div class="absolute hidden group-hover:block bg-gray-600 text-white text-xs rounded px-2 py-2 left-1/2 bottom-full z-10" style="white-space: normal; width: 350px; transform: translateX(-50%); margin-bottom: 0.5rem; pointer-events: auto;">
+                    <div class="absolute hidden group-hover:block bg-white text-gray-600 text-xs rounded shadow-md w-40 p-2 left-1/2 transform -translate-x-1/2 bottom-full z-10 mt-1">
                       {{ t('admin.webOfTrust.wotMaxDepth.description') }}
                       <div class="mt-2">
                         <a href="https://docs.cryptomator.org/en/latest/security/hub/#web-of-trust" target="_blank" class="text-primary underline hover:text-primary-darker">
@@ -221,7 +221,7 @@
                   {{ t('admin.webOfTrust.wotIdVerifyLen.title') }}
                   <div class="relative group ml-1">
                     <InformationCircleIcon class="shrink-0 text-primary h-5 w-5 cursor-pointer" aria-hidden="true" />
-                    <div class="absolute hidden group-hover:block bg-gray-600 text-white text-xs rounded px-2 py-2 left-1/2 bottom-full z-10" style="white-space: normal; width: 350px; transform: translateX(-50%); margin-bottom: 0.5rem; pointer-events: auto;">
+                    <div class="absolute hidden group-hover:block bg-white text-gray-600 text-xs rounded shadow-md w-40 p-2 left-1/2 transform -translate-x-1/2 bottom-full z-10 mt-1">
                       {{ t('admin.webOfTrust.wotIdVerifyLen.description') }}
                       <div class="mt-2">
                         <a href="https://docs.cryptomator.org/en/latest/security/hub/#web-of-trust" target="_blank" class="text-primary underline hover:text-primary-darker">
@@ -284,7 +284,6 @@ const wotIdVerifyLen = ref<number>(0);
 // Add validation refs
 const wotMaxDepthError = ref(false);
 const wotIdVerifyLenError = ref(false);
-const showErrors = ref(false);  // New ref to control error display
 
 const isBeta = computed(() => {
   if (version.value && semver.valid(version.value.hubVersion)) {
