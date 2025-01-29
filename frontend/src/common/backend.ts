@@ -366,6 +366,10 @@ class SettingsService {
   public async get(): Promise<SettingsDto> {
     return axiosAuth.get<SettingsDto>('/settings').then(response => response.data);
   }
+
+  public async put(settings: SettingsDto): Promise<void> {
+    return axiosAuth.put('/settings', settings);
+  }
 }
 
 /**

@@ -1,5 +1,5 @@
 <template>
-  <div v-if="admin == null || version == null">
+  <div v-if="admin == null || version == null || wotMaxDepth == null || wotIdVerifyLen == null">
     <div v-if="onFetchError == null">
       {{ t('common.loading') }}
     </div>
@@ -120,17 +120,17 @@
                   <XMarkIcon class="shrink-0 text-red-500 mr-1 h-5 w-5" aria-hidden="true" />
                   {{ t('admin.licenseInfo.expiresAt.description.expired') }}
                 </p>
+
+                <div v-if="admin.hasLicense" class="col-span-6 flex justify-end space-x-3">
+                  <button type="button" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="manageSubscription()">
+                    <ArrowTopRightOnSquareIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+                    {{ t('admin.licenseInfo.manageSubscription') }}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-      
-      <div v-if="admin.hasLicense" class="flex justify-end items-center">
-        <button type="button" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="manageSubscription()">
-          <ArrowTopRightOnSquareIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
-          {{ t('admin.licenseInfo.manageSubscription') }}
-        </button>
       </div>
 
       <div v-if="!admin.hasLicense && remainingSeats != null" class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6">
@@ -170,16 +170,80 @@
                   {{ t('admin.licenseInfo.seats.description.undercutSeats', [numberOfExceededSeats]) }}
                 </p>
               </div>
+
+              <div class="col-span-6 flex justify-end space-x-3">
+                <button type="button" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="manageSubscription()">
+                  <ArrowTopRightOnSquareIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+                  {{ t('admin.licenseInfo.getLicense') }}
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div v-if="!admin.hasLicense" class="flex justify-end items-center">
-        <button type="button" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="manageSubscription()">
-          <ArrowTopRightOnSquareIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
-          {{ t('admin.licenseInfo.getLicense') }}
-        </button>
+      <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6">
+        <div class="md:grid md:grid-cols-3 md:gap-6">
+          <div class="md:col-span-1">
+            <h3 class="text-lg font-medium leading-6 text-gray-900">
+              {{ t('admin.webOfTrust.title') }}
+            </h3>
+            <p class="mt-1 text-sm text-gray-500">
+              {{ t('admin.webOfTrust.description') }}
+            </p>
+          </div>
+          <form ref="form" class="mt-5 md:mt-0 md:col-span-2" novalidate @submit.prevent="saveWebOfTrust()">
+            <div class="grid grid-cols-6 gap-6">
+              <div class="col-span-6 sm:col-span-3">
+                <label for="wotMaxDepth" class="block text-sm font-medium text-gray-700 flex items-center">
+                  {{ t('admin.webOfTrust.wotMaxDepth.title') }}
+                  <div class="relative group ml-1">
+                    <InformationCircleIcon class="shrink-0 text-primary h-5 w-5 cursor-pointer" aria-hidden="true" />
+                    <div class="absolute hidden group-hover:block bg-white text-gray-600 text-xs rounded shadow-md w-48 p-2 left-1/2 transform -translate-x-1/2 bottom-full z-10 mt-1">
+                      {{ t('admin.webOfTrust.wotMaxDepth.description') }}
+                      <a href="https://docs.cryptomator.org/en/latest/security/hub/#web-of-trust" target="_blank" class="mt-2 block text-primary underline hover:text-primary-darker">
+                        {{ t('admin.webOfTrust.wotMaxDepth.information') }}
+                      </a>
+                    </div>
+                  </div>
+                </label>
+                <input id="wotMaxDepth" v-model="wotMaxDepth" type="number" min="0" max="9" step="1" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': wotMaxDepthError instanceof FormValidationFailedError }"/>
+                <p v-if="wotMaxDepthError" class="mt-1 text-sm text-red-900">
+                  {{ t('admin.webOfTrust.wotMaxDepth.error') }}
+                </p>
+              </div>
+
+              <div class="col-span-6 sm:col-span-3">
+                <label for="wotIdVerifyLen" class="block text-sm font-medium text-gray-700 flex items-center">
+                  {{ t('admin.webOfTrust.wotIdVerifyLen.title') }}
+                  <div class="relative group ml-1">
+                    <InformationCircleIcon class="shrink-0 text-primary h-5 w-5 cursor-pointer" aria-hidden="true" />
+                    <div class="absolute hidden group-hover:block bg-white text-gray-600 text-xs rounded shadow-md w-48 p-2 left-1/2 transform -translate-x-1/2 bottom-full z-10 mt-1">
+                      {{ t('admin.webOfTrust.wotIdVerifyLen.description') }}
+                      <a href="https://docs.cryptomator.org/en/latest/security/hub/#web-of-trust" target="_blank" class="mt-2 block text-primary underline hover:text-primary-darker">
+                        {{ t('admin.webOfTrust.wotIdVerifyLen.information') }}
+                      </a>
+                    </div>
+                  </div>
+                </label>
+                <input id="wotIdVerifyLen" v-model="wotIdVerifyLen" type="number" min="0" step="1" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': wotIdVerifyLenError instanceof FormValidationFailedError }"/>
+                <p v-if="wotIdVerifyLenError" class="mt-1 text-sm text-red-900">
+                  {{ t('admin.webOfTrust.wotIdVerifyLen.error') }}
+                </p>
+              </div>
+
+              <div class="col-span-6 flex justify-end space-x-3">
+                <button type="submit" :disabled="processing" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
+                  <span v-if="!wotUpdated" class="hidden truncate sm:block">{{ t('admin.webOfTrust.save') }}</span>
+                  <span v-else class="hidden truncate sm:block">{{ t('admin.webOfTrust.saved') }}</span>
+                </button>
+                <div v-if="onSaveError != null && !(onSaveError instanceof FormValidationFailedError)">
+                  <p class="text-sm text-red-900 mr-4">{{ t('common.unexpectedError', [onSaveError.message]) }}</p>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   </div>
@@ -193,6 +257,7 @@ import { useI18n } from 'vue-i18n';
 import backend, { BillingDto, VersionDto } from '../common/backend';
 import config, { absFrontendBaseURL } from '../common/config';
 import { FetchUpdateError, LatestVersionDto, updateChecker } from '../common/updatecheck';
+import { debounce } from '../common/util';
 import { Locale } from '../i18n/index';
 import FetchError from './FetchError.vue';
 
@@ -207,8 +272,23 @@ const latestVersion = ref<LatestVersionDto>();
 const admin = ref<BillingDto>();
 const now = ref<Date>(new Date());
 const keycloakAdminRealmURL = ref<string>();
+const wotMaxDepth = ref<number>();
+const wotIdVerifyLen = ref<number>();
+const wotUpdated = ref(false);
+const debouncedWotUpdated = debounce(() => wotUpdated.value = false, 2000);
+const form = ref<HTMLFormElement>();
+const processing = ref(false);
 const onFetchError = ref<Error | null>();
 const errorOnFetchingUpdates = ref<boolean>(false);
+const onSaveError = ref<Error | null>(null);
+const wotMaxDepthError = ref<Error | null >(null);
+const wotIdVerifyLenError = ref<Error | null >(null);
+
+class FormValidationFailedError extends Error {
+  constructor() {
+    super('The form is invalid.');
+  }
+}
 
 const isBeta = computed(() => {
   if (version.value && semver.valid(version.value.hubVersion)) {
@@ -261,6 +341,10 @@ async function fetchData() {
     admin.value = await backend.billing.get();
     version.value = await versionDto;
     latestVersion.value = await versionAvailable;
+    
+    const settings = await backend.settings.get();
+    wotMaxDepth.value = settings.wotMaxDepth;
+    wotIdVerifyLen.value = settings.wotIdVerifyLen;
   } catch (error) {
     if (error instanceof FetchUpdateError) {
       errorOnFetchingUpdates.value = true;
@@ -278,4 +362,39 @@ function manageSubscription() {
   const languagePathComponent = supportedLanguagePathComponents[(locale.value as string).split('-')[0]] ?? supportedLanguagePathComponents[fallbackLocale.value as string] ?? '';
   window.open(`https://cryptomator.org/${languagePathComponent}hub/billing/?hub_id=${admin.value?.hubId}&return_url=${encodeURIComponent(returnUrl)}`, '_self');
 }
+
+async function saveWebOfTrust() {
+  onSaveError.value = null;
+  wotMaxDepthError.value = null;
+  wotIdVerifyLenError.value = null;
+  if (admin.value == null || wotMaxDepth.value == null || wotIdVerifyLen.value == null) {
+    throw new Error('No data available.');
+  }
+  if (!form.value?.checkValidity()) {
+    if (wotMaxDepth.value < 0 || wotMaxDepth.value > 9) {
+      wotMaxDepthError.value = new FormValidationFailedError();
+    }
+    if (wotIdVerifyLen.value < 0) {
+      wotIdVerifyLenError.value = new FormValidationFailedError();
+    }
+    return;
+  }
+  try {
+    processing.value = true;
+    const settings = {
+      wotMaxDepth: wotMaxDepth.value,
+      wotIdVerifyLen: wotIdVerifyLen.value,
+      hubId: admin.value.hubId
+    };
+    await backend.settings.put(settings);
+    wotUpdated.value = true;
+    debouncedWotUpdated();
+  } catch (error) {
+    console.error('Failed to save settings:', error);
+    onSaveError.value = error instanceof Error ? error : new Error('Unknown reason');
+  } finally {
+    processing.value = false;
+  }
+}
+
 </script>
