@@ -201,16 +201,13 @@
                     <InformationCircleIcon class="shrink-0 text-primary h-5 w-5 cursor-pointer" aria-hidden="true" />
                     <div class="absolute hidden group-hover:block bg-white text-gray-600 text-xs rounded shadow-md w-48 p-2 left-1/2 transform -translate-x-1/2 bottom-full z-10 mt-1">
                       {{ t('admin.webOfTrust.wotMaxDepth.description') }}
-                      <div class="mt-2">
-                        <a href="https://docs.cryptomator.org/en/latest/security/hub/#web-of-trust" target="_blank" class="text-primary underline hover:text-primary-darker">
-                          {{ t('admin.webOfTrust.wotMaxDepth.information') }}
-                        </a>
-                      </div>
-                      <div class="absolute left-1/2 transform -translate-x-1/2 top-full w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-white shadow-md"></div>
+                      <a href="https://docs.cryptomator.org/en/latest/security/hub/#web-of-trust" target="_blank" class="mt-2 block text-primary underline hover:text-primary-darker">
+                        {{ t('admin.webOfTrust.wotMaxDepth.information') }}
+                      </a>
                     </div>
                   </div>
                 </label>
-                <input id="wotMaxDepth" v-model="wotMaxDepth" type="number" min="0" max="9" step="1" class="mt-1 block w-full shadow-sm sm:text-sm rounded-md border-gray-300 focus:ring-primary focus:border-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': wotMaxDepthError instanceof FormValidationFailedError }"/>
+                <input id="wotMaxDepth" v-model="wotMaxDepth" type="number" min="0" max="9" step="1" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': wotMaxDepthError instanceof FormValidationFailedError }"/>
                 <p v-if="wotMaxDepthError" class="mt-1 text-sm text-red-900">
                   {{ t('admin.webOfTrust.wotMaxDepth.error') }}
                 </p>
@@ -223,16 +220,13 @@
                     <InformationCircleIcon class="shrink-0 text-primary h-5 w-5 cursor-pointer" aria-hidden="true" />
                     <div class="absolute hidden group-hover:block bg-white text-gray-600 text-xs rounded shadow-md w-48 p-2 left-1/2 transform -translate-x-1/2 bottom-full z-10 mt-1">
                       {{ t('admin.webOfTrust.wotIdVerifyLen.description') }}
-                      <div class="mt-2">
-                        <a href="https://docs.cryptomator.org/en/latest/security/hub/#web-of-trust" target="_blank" class="text-primary underline hover:text-primary-darker">
-                          {{ t('admin.webOfTrust.wotIdVerifyLen.information') }}
-                        </a>
-                      </div>
-                      <div class="absolute left-1/2 transform -translate-x-1/2 top-full w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-white shadow-md"></div>
+                      <a href="https://docs.cryptomator.org/en/latest/security/hub/#web-of-trust" target="_blank" class="mt-2 block text-primary underline hover:text-primary-darker">
+                        {{ t('admin.webOfTrust.wotIdVerifyLen.information') }}
+                      </a>
                     </div>
                   </div>
                 </label>
-                <input id="wotIdVerifyLen" v-model="wotIdVerifyLen" type="number" min="0" step="1" class="mt-1 block w-full shadow-sm sm:text-sm rounded-md border-gray-300 focus:ring-primary focus:border-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': wotIdVerifyLenError instanceof FormValidationFailedError }"/>
+                <input id="wotIdVerifyLen" v-model="wotIdVerifyLen" type="number" min="0" step="1" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': wotIdVerifyLenError instanceof FormValidationFailedError }"/>
                 <p v-if="wotIdVerifyLenError" class="mt-1 text-sm text-red-900">
                   {{ t('admin.webOfTrust.wotIdVerifyLen.error') }}
                 </p>
