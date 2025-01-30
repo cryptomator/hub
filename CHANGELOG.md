@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated Keycloak to 25.0.6
 - Updated to Java 21 (#272)
 - Updated to Quarkus 3.8.x LTS (#272)
+- Updated to tailwindcss 4
+- Updated to Vite 6
 - Bumped build time dependencies
 - Migrated remaining commonjs modules in frontend build to ESM (#291)
 - Memoize infrequently changing data, reducing XHR roundtrips
