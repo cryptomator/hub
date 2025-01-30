@@ -1,6 +1,6 @@
 <template>
-  <div class="flex rounded-md shadow-sm">
-    <div class="relative flex items-stretch flex-grow focus-within:z-10">
+  <div class="flex rounded-md shadow-xs">
+    <div class="relative flex items-stretch grow focus-within:z-10">
       <Combobox as="div" class="w-full" @update:model-value="item => selectedItem = item">
         <div class="relative">
           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -8,11 +8,11 @@
             <img v-else :src="selectedItem.pictureUrl ?? ''" alt="" class="w-5 h-5 rounded-full" >
           </div>
 
-          <ComboboxInput v-if="selectedItem == null" v-focus class="w-full h-10 rounded-l-md border border-gray-300 bg-white py-2 px-10 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm disabled:bg-primary-l2" placeholder="John Doe" @change="query = $event.target.value"/>
-          <input v-else v-model="selectedItem.name" class="w-full h-10 rounded-l-md border border-gray-300 bg-primary-l2 py-2 px-10 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm" readonly />
+          <ComboboxInput v-if="selectedItem == null" v-focus class="w-full h-10 rounded-l-md border border-gray-300 bg-white py-2 px-10 shadow-xs focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary sm:text-sm disabled:bg-primary-l2" placeholder="John Doe" @change="query = $event.target.value"/>
+          <input v-else v-model="selectedItem.name" class="w-full h-10 rounded-l-md border border-gray-300 bg-primary-l2 py-2 px-10 shadow-xs focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary sm:text-sm" readonly />
         </div>
 
-        <ComboboxOptions v-if="selectedItem == null && filteredItems.length > 0" class="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+        <ComboboxOptions v-if="selectedItem == null && filteredItems.length > 0" class="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-hidden sm:text-sm">
           <ComboboxOption v-for="item in filteredItems" :key="item.id" :value="item" class="relative cursor-default select-none py-2 pl-3 pr-9 ui-not-active:text-gray-900 ui-active:bg-primary ui-active:text-white">
             <div class="flex items-center">
               <img :src="item.pictureUrl ?? ''" alt="" class="h-6 w-6 shrink-0 rounded-full" >
@@ -27,7 +27,7 @@
       </button>
     </div>
 
-    <button ref="actionButton" :disabled="selectedItem == null" type="button" class="-ml-px relative inline-flex items-center space-x-2 px-4 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="onAction()">
+    <button ref="actionButton" :disabled="selectedItem == null" type="button" class="-ml-px relative inline-flex items-center space-x-2 px-4 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="onAction()">
       {{ actionTitle }}
     </button>
   </div>

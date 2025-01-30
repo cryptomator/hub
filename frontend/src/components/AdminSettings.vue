@@ -16,7 +16,7 @@
     </div>
 
     <div class="space-y-6 mt-5">
-      <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6">
+      <div class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6">
         <div class="md:grid md:grid-cols-3 md:gap-6">
           <div class="md:col-span-1">
             <h3 class="text-lg font-medium leading-6 text-gray-900">
@@ -30,11 +30,11 @@
             <div class="grid grid-cols-6 gap-6">
               <div class="col-span-6 sm:col-span-4">
                 <label for="hubId" class="block text-sm font-medium text-gray-700">{{ t('admin.serverInfo.hubId.title') }}</label>
-                <input id="hubId" v-model="admin.hubId" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
+                <input id="hubId" v-model="admin.hubId" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
               </div>
               <div class="col-span-6 sm:col-span-3">
                 <label for="hubVersion" class="block text-sm font-medium text-gray-700">{{ t('admin.serverInfo.hubVersion.title') }}</label>
-                <input id="hubVersion" v-model="version.hubVersion" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
+                <input id="hubVersion" v-model="version.hubVersion" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
 
                 <p v-if="errorOnFetchingUpdates" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
                   <ExclamationTriangleIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
@@ -59,7 +59,7 @@
               </div>
               <div class="col-span-6 sm:col-span-3">
                 <label for="keycloakVersion" class="block text-sm font-medium text-gray-700">{{ t('admin.serverInfo.keycloakVersion.title') }}</label>
-                <input id="keycloakVersion" v-model="version.keycloakVersion" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
+                <input id="keycloakVersion" v-model="version.keycloakVersion" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
                 <p id="keycloakAdminRealmURL" class="inline-flex mt-2 text-sm">
                   <LinkIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
                   <a :href="keycloakAdminRealmURL" target="_blank" class="underline text-gray-500 hover:text-gray-900">{{ $t('admin.serverInfo.keycloakVersion.description') }}</a>
@@ -70,7 +70,7 @@
         </div>
       </div>
 
-      <div v-if="admin.hasLicense && remainingSeats != null" class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6">
+      <div v-if="admin.hasLicense && remainingSeats != null" class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6">
         <div class="md:grid md:grid-cols-3 md:gap-6">
           <div class="md:col-span-1">
             <h3 class="text-lg font-medium leading-6 text-gray-900">
@@ -84,12 +84,12 @@
             <div class="grid grid-cols-6 gap-6">
               <div class="col-span-6 sm:col-span-3">
                 <label for="email" class="block text-sm font-medium text-gray-700">{{ t('admin.licenseInfo.email.title') }}</label>
-                <input id="email" v-model="admin.email" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
+                <input id="email" v-model="admin.email" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
               </div>
 
               <div class="col-span-6 sm:col-span-3">
                 <label for="seats" class="block text-sm font-medium text-gray-700">{{ t('admin.licenseInfo.seats.title') }}</label>
-                <input id="seats" v-model="admin.licensedSeats" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-200" aria-describedby="seats-description" readonly />
+                <input id="seats" v-model="admin.licensedSeats" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" aria-describedby="seats-description" readonly />
                 <p v-if="remainingSeats > 0" id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
                   <CheckIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
                   {{ t('admin.licenseInfo.seats.description.enoughSeats', [remainingSeats]) }}
@@ -106,12 +106,12 @@
 
               <div class="col-span-6 sm:col-span-3">
                 <label for="issuedAt" class="block text-sm font-medium text-gray-700">{{ t('admin.licenseInfo.issuedAt.title') }}</label>
-                <input id="issuedAt" :value="d(admin.issuedAt, 'short')" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
+                <input id="issuedAt" :value="d(admin.issuedAt, 'short')" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
               </div>
 
               <div class="col-span-6 sm:col-span-3">
                 <label for="expiresAt" class="block text-sm font-medium text-gray-700">{{ t('admin.licenseInfo.expiresAt.title') }}</label>
-                <input id="expiresAt" :value="d(admin.expiresAt, 'short')" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-200" aria-describedby="expiresAt-description" readonly />
+                <input id="expiresAt" :value="d(admin.expiresAt, 'short')" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" aria-describedby="expiresAt-description" readonly />
                 <p v-if="now < admin.expiresAt" id="expiresAt-description" class="inline-flex mt-2 text-sm text-gray-500">
                   <CheckIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
                   {{ t('admin.licenseInfo.expiresAt.description.valid') }}
@@ -122,7 +122,7 @@
                 </p>
 
                 <div v-if="admin.hasLicense" class="col-span-6 flex justify-end space-x-3">
-                  <button type="button" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="manageSubscription()">
+                  <button type="button" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-xs text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="manageSubscription()">
                     <ArrowTopRightOnSquareIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
                     {{ t('admin.licenseInfo.manageSubscription') }}
                   </button>
@@ -133,7 +133,7 @@
         </div>
       </div>
 
-      <div v-if="!admin.hasLicense && remainingSeats != null" class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6">
+      <div v-if="!admin.hasLicense && remainingSeats != null" class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6">
         <div class="md:grid md:grid-cols-3 md:gap-6">
           <div class="md:col-span-1">
             <h3 class="text-lg font-medium leading-6 text-gray-900">
@@ -150,13 +150,13 @@
             <div class="grid grid-cols-6 gap-6">
               <div class="col-span-6 sm:col-span-3">
                 <label for="licenseType" class="block text-sm font-medium text-gray-700">{{ t('admin.licenseInfo.type.title') }}</label>
-                <input v-if="!admin.managedInstance" id="licenseType" value="Community License" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
-                <input v-else id="licenseType" value="Managed" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
+                <input v-if="!admin.managedInstance" id="licenseType" value="Community License" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
+                <input v-else id="licenseType" value="Managed" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
               </div>
 
               <div class="col-span-6 sm:col-span-3">
                 <label for="seats" class="block text-sm font-medium text-gray-700">{{ t('admin.licenseInfo.seats.title') }}</label>
-                <input id="seats" v-model="admin.licensedSeats" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-200" aria-describedby="seats-description" readonly />
+                <input id="seats" v-model="admin.licensedSeats" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" aria-describedby="seats-description" readonly />
                 <p v-if="remainingSeats > 0" id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
                   <CheckIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
                   {{ t('admin.licenseInfo.seats.description.enoughSeats', [remainingSeats]) }}
@@ -172,7 +172,7 @@
               </div>
 
               <div class="col-span-6 flex justify-end space-x-3">
-                <button type="button" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="manageSubscription()">
+                <button type="button" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-xs text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="manageSubscription()">
                   <ArrowTopRightOnSquareIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
                   {{ t('admin.licenseInfo.getLicense') }}
                 </button>
@@ -182,7 +182,7 @@
         </div>
       </div>
 
-      <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6">
+      <div class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6">
         <div class="md:grid md:grid-cols-3 md:gap-6">
           <div class="md:col-span-1">
             <h3 class="text-lg font-medium leading-6 text-gray-900">
@@ -199,7 +199,7 @@
                   {{ t('admin.webOfTrust.wotMaxDepth.title') }}
                   <div class="relative group ml-1">
                     <InformationCircleIcon class="shrink-0 text-primary h-5 w-5 cursor-pointer" aria-hidden="true" />
-                    <div class="absolute hidden group-hover:block bg-white text-gray-600 text-xs rounded shadow-md w-48 p-2 left-1/2 transform -translate-x-1/2 bottom-full z-10 mt-1">
+                    <div class="absolute hidden group-hover:block bg-white text-gray-600 text-xs rounded-sm shadow-md w-48 p-2 left-1/2 transform -translate-x-1/2 bottom-full z-10 mt-1">
                       {{ t('admin.webOfTrust.wotMaxDepth.description') }}
                       <a href="https://docs.cryptomator.org/en/latest/security/hub/#web-of-trust" target="_blank" class="mt-2 block text-primary underline hover:text-primary-darker">
                         {{ t('admin.webOfTrust.wotMaxDepth.information') }}
@@ -207,7 +207,7 @@
                     </div>
                   </div>
                 </label>
-                <input id="wotMaxDepth" v-model="wotMaxDepth" type="number" min="0" max="9" step="1" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': wotMaxDepthError instanceof FormValidationFailedError }"/>
+                <input id="wotMaxDepth" v-model="wotMaxDepth" type="number" min="0" max="9" step="1" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': wotMaxDepthError instanceof FormValidationFailedError }"/>
                 <p v-if="wotMaxDepthError" class="mt-1 text-sm text-red-900">
                   {{ t('admin.webOfTrust.wotMaxDepth.error') }}
                 </p>
@@ -218,7 +218,7 @@
                   {{ t('admin.webOfTrust.wotIdVerifyLen.title') }}
                   <div class="relative group ml-1">
                     <InformationCircleIcon class="shrink-0 text-primary h-5 w-5 cursor-pointer" aria-hidden="true" />
-                    <div class="absolute hidden group-hover:block bg-white text-gray-600 text-xs rounded shadow-md w-48 p-2 left-1/2 transform -translate-x-1/2 bottom-full z-10 mt-1">
+                    <div class="absolute hidden group-hover:block bg-white text-gray-600 text-xs rounded-sm shadow-md w-48 p-2 left-1/2 transform -translate-x-1/2 bottom-full z-10 mt-1">
                       {{ t('admin.webOfTrust.wotIdVerifyLen.description') }}
                       <a href="https://docs.cryptomator.org/en/latest/security/hub/#web-of-trust" target="_blank" class="mt-2 block text-primary underline hover:text-primary-darker">
                         {{ t('admin.webOfTrust.wotIdVerifyLen.information') }}
@@ -226,14 +226,14 @@
                     </div>
                   </div>
                 </label>
-                <input id="wotIdVerifyLen" v-model="wotIdVerifyLen" type="number" min="0" step="1" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': wotIdVerifyLenError instanceof FormValidationFailedError }"/>
+                <input id="wotIdVerifyLen" v-model="wotIdVerifyLen" type="number" min="0" step="1" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': wotIdVerifyLenError instanceof FormValidationFailedError }"/>
                 <p v-if="wotIdVerifyLenError" class="mt-1 text-sm text-red-900">
                   {{ t('admin.webOfTrust.wotIdVerifyLen.error') }}
                 </p>
               </div>
 
               <div class="col-span-6 flex justify-end space-x-3">
-                <button type="submit" :disabled="processing" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
+                <button type="submit" :disabled="processing" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-xs text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
                   <span v-if="!wotUpdated" class="hidden truncate sm:block">{{ t('admin.webOfTrust.save') }}</span>
                   <span v-else class="hidden truncate sm:block">{{ t('admin.webOfTrust.saved') }}</span>
                 </button>

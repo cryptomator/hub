@@ -1,3 +1,51 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+@plugin '@tailwindcss/forms';
+
+@theme {
+  --font-*: initial;
+  --font-headline: Quicksand, sans-serif;
+  --font-body: Open Sans, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+
+  --color-current: currentColor;
+  --color-primary: #49b04a;
+  --color-primary2: #009f69;
+  --color-primary-l1: #66cc68;
+  --color-primary-l2: #ebf5eb;
+  --color-primary-d1: #407f41;
+  --color-primary-d2: #2d4d2e;
+  --color-secondary: #008a7b;
+  --color-secondary2: #00747e;
+  --color-tertiary: #005e71;
+  --color-tertiary2: #2f4858;
+  --color-dark: #1f2122;
+  --color-gray_0: #222222;
+  --color-gray_1: #3b3b3b;
+  --color-gray_2: #515151;
+  --color-gray_3: #626262;
+  --color-gray_4: #7e7e7e;
+  --color-gray_5: #9e9e9e;
+  --color-gray_6: #b1b1b1;
+  --color-gray_7: #cfcfcf;
+  --color-gray_8: #e1e1e1;
+  --color-gray_9: #f7f7f7;
+}
+
+/*
+  The default border color has changed to `currentColor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentColor);
+  }
+}
