@@ -25,8 +25,8 @@
     "timeout": 60000
   },
   "devDependencies": {
-    "@intlify/devtools-types": "^10.0.4",
-    "@intlify/unplugin-vue-i18n": "^5.2.0",
+    "@intlify/devtools-types": "^11.0.1",
+    "@intlify/unplugin-vue-i18n": "^6.0.3",
     "@tailwindcss/forms": "^0.5.9",
     "@types/blueimp-md5": "^2.18.2",
     "@types/chai": "^5.0.1",
@@ -65,10 +65,10 @@
     "rfc4648": "^1.5.3",
     "semver": "^7.6.3",
     "vue": "^3.5.12",
-    "vue-i18n": "^10.0.4",
+    "vue-i18n": "^11.0.1",
     "vue-router": "^4.4.5"
   },
   "optionalDependencies": {
-    "@rollup/rollup-linux-x64-gnu": "4.24.3"
+    "@rollup/rollup-linux-x64-gnu": "4.32.1"
   }
 }
