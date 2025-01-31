@@ -1,14 +1,18 @@
 {
   "compilerOptions": {
     "target": "ES2023",
-    "module": "ES2022",
-    "moduleResolution": "bundler",
-    "strict": true,
-    "jsx": "preserve",
-    "sourceMap": true,
-    "resolveJsonModule": true,
-    "esModuleInterop": true,
     "lib": ["ES2023", "dom"],
+    "module": "ES2022",
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+
+    /* Linting */
+    "strict": true,
+    "resolveJsonModule": true,
     "noUnusedLocals": false,
     "noFallthroughCasesInSwitch": true,
     "useUnknownInCatchVariables": false, // Workaround for `node_modules/miscreant/src/providers/webcrypto.ts:21:11 - error TS18046: 'e' is of type 'unknown'.`
