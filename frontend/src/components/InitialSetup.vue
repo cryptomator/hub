@@ -283,6 +283,7 @@ async function recoverUserKey() {
     processing.value = true;
 
     setupCode.value = setupCode.value.trim();
+    
     const me = await userdata.me;
     const userKeys = await userdata.decryptUserKeysWithSetupCode(setupCode.value);
     const browserKeys = await userdata.createBrowserKeys();
