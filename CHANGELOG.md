@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - This CHANGELOG file
 - WoT: Users will now have an ECDH as well as ECDSA key (#282)
 - WoT: Users can now mutually verify their identity, hardening Hub against injection of malicious public keys (#281)
+- WoT: Admins can adjust WoT parameters (#297)
 - Permission to create new vaults can now be controlled via the `create-vaults` role in Keycloak (#206)
 
 ### Changed
