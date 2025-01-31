@@ -1,16 +1,16 @@
 <template>
   <Popover as="div" class="relative inline-block text-left overflow-visible">
-    <PopoverButton class="inline-flex items-center bg-gray-50 ring-1 ring-inset ring-gray-500/10 mx-1 p-1 rounded-full focus:outline-none focus:ring-primary">
+    <PopoverButton class="inline-flex items-center bg-gray-50 ring-1 ring-inset ring-gray-500/10 mx-1 p-1 rounded-full focus:outline-hidden focus:ring-primary">
       <ShieldExclamationIcon v-if="trustLevel === -1" class="h-4 w-4 text-red-500" aria-label="Unverified" />
       <ShieldCheckIcon v-else class="h-4 w-4 text-primary" aria-label="Verified" />
     </PopoverButton>
 
     <transition enter-active-class="transition ease-out duration-100" enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 scale-100" leave-to-class="transform opacity-0 scale-95">
-      <PopoverPanel class="absolute right-0 z-10 mt-2 origin-top-right rounded-md bg-white p-4 shadow-2xl ring-1 ring-black ring-opacity-5 focus:outline-none">
+      <PopoverPanel class="absolute right-0 z-10 mt-2 origin-top-right rounded-md bg-white p-4 shadow-2xl ring-1 ring-black/5 focus:outline-hidden">
         <p v-if="trustLevel === -1" class="text-sm mb-2">{{ t('trustDetails.trustLevel.untrusted') }}</p>
         <p v-else-if="trustLevel === 0" class="text-sm mb-2">{{ t('trustDetails.trustLevel', [ n(1, 'percent')]) }}</p>
         <p v-else-if="trustLevel > 0" class="text-sm mb-2">{{ t('trustDetails.trustLevel', [ n(1 / trustLevel, 'percent')]) }}</p>
-        <button v-if="trustLevel !== 0 && trustedUser.ecdhPublicKey && trustedUser.ecdsaPublicKey" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary text-base font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:w-auto sm:text-sm" @click="showSignUserKeysDialog()">
+        <button v-if="trustLevel !== 0 && trustedUser.ecdhPublicKey && trustedUser.ecdsaPublicKey" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-xs px-4 py-2 bg-primary text-base font-medium text-white hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:w-auto sm:text-sm" @click="showSignUserKeysDialog()">
           {{ t('trustDetails.showSignDialogBtn') }}
         </button>
         <p v-if="!trustedUser.ecdhPublicKey || !trustedUser.ecdsaPublicKey" class="text-sm mb-2">{{ t('trustDetails.userNotSetUp') }}</p>

@@ -2,7 +2,7 @@
   <TransitionRoot as="template" :show="open" @after-leave="$emit('close')">
     <Dialog as="div" class="fixed z-10 inset-0 overflow-y-auto" @close="open = false">
       <TransitionChild as="template" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100" leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
-        <DialogOverlay class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+        <DialogOverlay class="fixed inset-0 bg-gray-500/75 transition-opacity" />
       </TransitionChild>
 
       <div class="fixed inset-0 z-10 overflow-y-auto">
@@ -26,23 +26,23 @@
                       </div>
                       <div class="mt-5 sm:mt-6 text-left">      
                         <label for="vaultName" class="block text-sm font-medium text-gray-700">{{ t('editVaultMetadataDialog.vaultName') }}</label>
-                        <input id="vaultName" v-model="vaultName" type="text" name="vaultName" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onUpdateVaultMetadataError instanceof FormValidationFailedError }" required />
+                        <input id="vaultName" v-model="vaultName" type="text" name="vaultName" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onUpdateVaultMetadataError instanceof FormValidationFailedError }" required />
                       </div>
                       <div class="mt-5 sm:mt-6 text-left">      
                         <label for="vaultDescription" class="block text-sm font-medium text-gray-700">
                           {{ t('editVaultMetadataDialog.vaultDescription') }}
                           <span class="text-xs text-gray-500">({{ t('common.optional') }})</span>
                         </label>
-                        <input id="vaultDescription" v-model="vaultDescription" type="text" name="vaultDescription" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onUpdateVaultMetadataError instanceof FormValidationFailedError }" />
+                        <input id="vaultDescription" v-model="vaultDescription" type="text" name="vaultDescription" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onUpdateVaultMetadataError instanceof FormValidationFailedError }" />
                       </div>
                     </div>
                   </div>
                 </div>
                 <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse items-baseline">
-                  <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary  text-base font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm">
+                  <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-xs px-4 py-2 bg-primary  text-base font-medium text-white hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm">
                     {{ t('common.update') }}
                   </button>
-                  <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" @click="open = false">
+                  <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-xs px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" @click="open = false">
                     {{ t('common.cancel') }}
                   </button>
                   <div v-if="onUpdateVaultMetadataError != null">

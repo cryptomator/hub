@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - This CHANGELOG file
 - WoT: Users will now have an ECDH as well as ECDSA key (#282)
 - WoT: Users can now mutually verify their identity, hardening Hub against injection of malicious public keys (#281)
+- WoT: Admins can adjust WoT parameters (#297)
 - Permission to create new vaults can now be controlled via the `create-vaults` role in Keycloak (#206)
 
 ### Changed
@@ -19,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated Keycloak to 25.0.6
 - Updated to Java 21 (#272)
 - Updated to Quarkus 3.8.x LTS (#272)
+- Updated to tailwindcss 4
+- Updated to Vite 6
 - Bumped build time dependencies
 - Migrated remaining commonjs modules in frontend build to ESM (#291)
 - Memoize infrequently changing data, reducing XHR roundtrips

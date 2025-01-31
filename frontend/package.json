@@ -11,7 +11,7 @@
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
     "lint": "eslint",
-    "test": "nyc --reporter lcov mocha",
+    "test": "nyc --reporter=lcov mocha",
     "serve": "vite preview",
     "dist": "vue-tsc --noEmit && vite build --sourcemap --outDir=\"../backend/src/main/resources/META-INF/resources\" --emptyOutDir"
   },
@@ -25,8 +25,9 @@
     "test": "./test"
   },
   "devDependencies": {
-    "@intlify/devtools-types": "^10.0.4",
-    "@intlify/unplugin-vue-i18n": "^5.2.0",
+    "@intlify/devtools-types": "^11.0.1",
+    "@intlify/unplugin-vue-i18n": "^6.0.3",
+    "@tailwindcss/vite": "^4.0.1",
     "@tailwindcss/forms": "^0.5.9",
     "@types/blueimp-md5": "^2.18.2",
     "@types/chai": "^5.0.1",
@@ -37,23 +38,20 @@
     "@types/semver": "^7.5.8",
     "@vitejs/plugin-vue": "^5.1.4",
     "@vue/compiler-sfc": "^3.5.12",
-    "autoprefixer": "^10.4.20",
     "chai": "^5.1.2",
     "chai-as-promised": "^8.0.0",
     "eslint": "^9.13.0",
     "eslint-plugin-vue": "^9.30.0",
-    "mocha": "^10.8.2",
+    "mocha": "^11.1.0",
     "nyc": "^17.1.0",
-    "postcss": "^8.4.47",
-    "tailwindcss": "^3.4.14",
+    "tailwindcss": "^4.0.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.3",
     "typescript-eslint": "^8.12.2",
-    "vite": "^5.4.10",
+    "vite": "^6.0.11",
     "vue-tsc": "^2.1.10"
   },
   "dependencies": {
-    "@headlessui/tailwindcss": "^0.2.1",
     "@headlessui/vue": "^1.7.23",
     "@heroicons/vue": "^2.1.5",
     "axios": "^1.7.7",
@@ -65,10 +63,10 @@
     "rfc4648": "^1.5.3",
     "semver": "^7.6.3",
     "vue": "^3.5.12",
-    "vue-i18n": "^10.0.4",
+    "vue-i18n": "^11.0.1",
     "vue-router": "^4.4.5"
   },
   "optionalDependencies": {
-    "@rollup/rollup-linux-x64-gnu": "4.24.3"
+    "@rollup/rollup-linux-x64-gnu": "4.32.1"
   }
 }

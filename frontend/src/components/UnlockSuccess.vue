@@ -12,7 +12,7 @@
       </div>
     </div>
 
-    <div v-else class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6 text-center sm:w-full sm:max-w-lg">
+    <div v-else class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6 text-center sm:w-full sm:max-w-lg">
       <div class="flex justify-center mb-3 sm:mb-5">
         <img src="/logo.svg" class="h-12" alt="Logo" aria-hidden="true" />
       </div>
@@ -27,7 +27,7 @@
         <p class="my-3">
           Complete setting up your account and retrieve your account key.
         </p>
-        <router-link to="/app/setup" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">Complete Setup</router-link>
+        <router-link to="/app/setup" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-xs text-white bg-primary focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary">Complete Setup</router-link>
       </div>
 
       <!-- DEVICE SETUP -->
@@ -38,7 +38,7 @@
         <p class="my-3">
           Please enter your account key in Cryptomator to authorize it.
         </p>
-        <router-link v-if="hasBrowserKeys" to="/app/profile" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">View Account Key in my Profile</router-link>
+        <router-link v-if="hasBrowserKeys" to="/app/profile" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-xs text-white bg-primary focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary">View Account Key in my Profile</router-link>
       </div>
 
       <!-- NO VAULT ACCESS -->
