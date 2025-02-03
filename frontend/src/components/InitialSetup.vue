@@ -281,6 +281,7 @@ async function recoverUserKey() {
   onRecoverError.value = null;
   try {
     processing.value = true;
+    setupCode.value = setupCode.value.trim();
 
     const me = await userdata.me;
     const userKeys = await userdata.decryptUserKeysWithSetupCode(setupCode.value);
