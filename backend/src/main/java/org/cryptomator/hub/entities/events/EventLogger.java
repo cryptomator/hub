@@ -53,6 +53,13 @@ public class EventLogger {
 		auditEventRepository.persist(event);
 	}
 
+	public void logUserAccountSetupComplete(String completedBy) {
+		var event = new UserAccountSetupCompleteEvent();
+		event.setTimestamp(Instant.now());
+		event.setCompletedBy(completedBy);
+		auditEventRepository.persist(event);
+	}
+
 	public void logVaultAccessGranted(String grantedBy, UUID vaultId, String authorityId) {
 		var event = new VaultAccessGrantedEvent();
 		event.setTimestamp(Instant.now());

@@ -83,6 +83,7 @@ public class UsersResource {
 			user.setEcdsaPublicKey(dto.ecdsaPublicKey);
 			user.setPrivateKeys(dto.privateKeys);
 			user.setSetupCode(dto.setupCode);
+			eventLogger.logUserAccountSetupComplete(jwt.getSubject());
 			updateDevices(user, dto);
 		}
 		userRepo.persist(user);
