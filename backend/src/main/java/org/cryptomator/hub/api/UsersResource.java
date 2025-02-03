@@ -169,6 +169,7 @@ public class UsersResource {
 		userRepo.persist(user);
 		deviceRepo.deleteByOwner(user.getId());
 		accessTokenRepo.deleteByUser(user.getId());
+		eventLogger.logUserAccountReset(jwt.getSubject());
 		return Response.noContent().build();
 	}
 

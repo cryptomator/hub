@@ -53,6 +53,13 @@ public class EventLogger {
 		auditEventRepository.persist(event);
 	}
 
+	public void logUserAccountReset(String resetBy) {
+		var event = new UserAccountResetEvent();
+		event.setTimestamp(Instant.now());
+		event.setResetBy(resetBy);
+		auditEventRepository.persist(event);
+	}
+
 	public void logUserAccountSetupComplete(String completedBy) {
 		var event = new UserAccountSetupCompleteEvent();
 		event.setTimestamp(Instant.now());
