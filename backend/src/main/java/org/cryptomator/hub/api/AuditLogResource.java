@@ -106,7 +106,7 @@ public class AuditLogResource {
 				case DeviceRegisteredEvent evt -> new DeviceRegisteredEventDto(evt.getId(), evt.getTimestamp(), DeviceRegisteredEvent.TYPE, evt.getRegisteredBy(), evt.getDeviceId(), evt.getDeviceName(), evt.getDeviceType());
 				case DeviceRemovedEvent evt -> new DeviceRemovedEventDto(evt.getId(), evt.getTimestamp(), DeviceRemovedEvent.TYPE, evt.getRemovedBy(), evt.getDeviceId());
 				case SignedWotIdEvent evt -> new SignedWotIdEventDto(evt.getId(), evt.getTimestamp(), SignedWotIdEvent.TYPE, evt.getUserId(), evt.getSignerId(), evt.getSignerKey(), evt.getSignature());
-				case SettingWotUpdateEvent evt -> new SettingWotUpdateDto(evt.getId(), evt.getTimestamp(), SettingWotUpdateEvent.TYPE, evt.getUpdatedBy(), evt.getWotMaxDepth(), evt.getWotIdVerifyLen());
+				case SettingWotUpdateEvent evt -> new SettingWotUpdateEventDto(evt.getId(), evt.getTimestamp(), SettingWotUpdateEvent.TYPE, evt.getUpdatedBy(), evt.getWotMaxDepth(), evt.getWotIdVerifyLen());
 				case VaultCreatedEvent evt -> new VaultCreatedEventDto(evt.getId(), evt.getTimestamp(), VaultCreatedEvent.TYPE, evt.getCreatedBy(), evt.getVaultId(), evt.getVaultName(), evt.getVaultDescription());
 				case VaultUpdatedEvent evt -> new VaultUpdatedEventDto(evt.getId(), evt.getTimestamp(), VaultUpdatedEvent.TYPE, evt.getUpdatedBy(), evt.getVaultId(), evt.getVaultName(), evt.getVaultDescription(), evt.isVaultArchived());
 				case VaultAccessGrantedEvent evt -> new VaultAccessGrantedEventDto(evt.getId(), evt.getTimestamp(), VaultAccessGrantedEvent.TYPE, evt.getGrantedBy(), evt.getVaultId(), evt.getAuthorityId());
@@ -127,10 +127,12 @@ public class AuditLogResource {
 	record DeviceRemovedEventDto(long id, Instant timestamp, String type, @JsonProperty("removedBy") String removedBy, @JsonProperty("deviceId") String deviceId) implements AuditEventDto {
 	}
 
-	record SignedWotIdEventDto(long id, Instant timestamp, String type, @JsonProperty("userId") String userId, @JsonProperty("signerId") String signerId, @JsonProperty("signerKey") String signerKey, @JsonProperty("signature") String signature) implements AuditEventDto {
+	record SignedWotIdEventDto(long id, Instant timestamp, String type, @JsonProperty("userId") String userId, @JsonProperty("signerId") String signerId, @JsonProperty("signerKey") String signerKey,
+							   @JsonProperty("signature") String signature) implements AuditEventDto {
 	}
 
-	record SettingWotUpdateDto(long id, Instant timestamp, String type, @JsonProperty("updatedBy") String updatedBy, @JsonProperty("wotMaxDepth") int wotMaxDepth, @JsonProperty("wotIdVerifyLen") int wotIdVerifyLen) implements AuditEventDto {
+	record SettingWotUpdateEventDto(long id, Instant timestamp, String type, @JsonProperty("updatedBy") String updatedBy, @JsonProperty("wotMaxDepth") int wotMaxDepth,
+									@JsonProperty("wotIdVerifyLen") int wotIdVerifyLen) implements AuditEventDto {
 	}
 
 	record VaultCreatedEventDto(long id, Instant timestamp, String type, @JsonProperty("createdBy") String createdBy, @JsonProperty("vaultId") UUID vaultId, @JsonProperty("vaultName") String vaultName,
