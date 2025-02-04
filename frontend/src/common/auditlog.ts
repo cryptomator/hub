@@ -36,6 +36,16 @@ export type AuditEventSignedWotIdDto = AuditEventDtoBase & {
   signature: string;
 }
 
+export type AuditEventUserAccountResetDto = AuditEventDtoBase & {
+  type: 'USER_ACCOUNT_RESET',
+  resetBy: string;
+}
+
+export type AuditEventUserAccountSetupCompleteDto = AuditEventDtoBase & {
+  type: 'USER_ACCOUNT_SETUP_COMPLETE',
+  completedBy: string;
+}
+
 export type AuditEventVaultCreateDto = AuditEventDtoBase & {
   type: 'VAULT_CREATE',
   createdBy: string;
@@ -96,7 +106,7 @@ export type AuditEventVaultOwnershipClaimDto = AuditEventDtoBase & {
   vaultId: string;
 }
 
-export type AuditEventDto = AuditEventDeviceRegisterDto | AuditEventDeviceRemoveDto | AuditEventSettingWotUpdateDto | AuditEventSignedWotIdDto | AuditEventVaultCreateDto | AuditEventVaultUpdateDto | AuditEventVaultAccessGrantDto | AuditEventVaultKeyRetrieveDto | AuditEventVaultMemberAddDto | AuditEventVaultMemberRemoveDto | AuditEventVaultMemberUpdateDto | AuditEventVaultOwnershipClaimDto;
+export type AuditEventDto = AuditEventDeviceRegisterDto | AuditEventDeviceRemoveDto | AuditEventSettingWotUpdateDto | AuditEventSignedWotIdDto | AuditEventUserAccountResetDto | AuditEventUserAccountSetupCompleteDto | AuditEventVaultCreateDto | AuditEventVaultUpdateDto | AuditEventVaultAccessGrantDto | AuditEventVaultKeyRetrieveDto | AuditEventVaultMemberAddDto | AuditEventVaultMemberRemoveDto | AuditEventVaultMemberUpdateDto | AuditEventVaultOwnershipClaimDto;
 
 /* Entity Cache */
 
