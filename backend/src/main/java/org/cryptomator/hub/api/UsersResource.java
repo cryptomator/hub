@@ -79,11 +79,13 @@ public class UsersResource {
 		user.setPictureUrl(jwt.getClaim("picture"));
 		user.setEmail(jwt.getClaim("email"));
 		if (dto != null) {
-			user.setEcdhPublicKey(dto.ecdhPublicKey);
-			user.setEcdsaPublicKey(dto.ecdsaPublicKey);
-			user.setPrivateKeys(dto.privateKeys);
+			if (user.getEcdhPublicKey() == null && user.getEcdsaPublicKey() == null && user.getPrivateKeys() == null) {
+				user.setEcdhPublicKey(dto.ecdhPublicKey);
+				user.setEcdsaPublicKey(dto.ecdsaPublicKey);
+				user.setPrivateKeys(dto.privateKeys);
+				eventLogger.logUserAccountSetupComplete(jwt.getSubject());
+			}
 			user.setSetupCode(dto.setupCode);
-			eventLogger.logUserAccountSetupComplete(jwt.getSubject());
 			updateDevices(user, dto);
 		}
 		userRepo.persist(user);
