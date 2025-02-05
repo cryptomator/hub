@@ -78,6 +78,7 @@
   "auditLog.timestamp": "Timestamp",
   "auditLog.type": "Event",
   "auditLog.details": "Details",
+  "auditLog.details.all": "All",
   "auditLog.details.device.register": "Register Device",
   "auditLog.details.device.remove": "Remove Device",
   "auditLog.details.setting.wot.update": "Update Wot Settings",
