@@ -43,7 +43,8 @@ export type AuditEventUserAccountResetDto = AuditEventDtoBase & {
 
 export type AuditEventUserAccountSetupCompleteDto = AuditEventDtoBase & {
   type: 'USER_ACCOUNT_SETUP_COMPLETE',
-  completedBy: string;
+  completedBy: string,
+  userName: string;
 }
 
 export type AuditEventVaultCreateDto = AuditEventDtoBase & {

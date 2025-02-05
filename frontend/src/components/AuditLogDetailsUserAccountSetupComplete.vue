@@ -13,6 +13,14 @@
           <code class="text-xs" :class="{'text-gray-600': resolvedCompletedBy != null}">{{ event.completedBy }}</code>
         </dd>
       </div>
+      <div class="flex items-baseline gap-2">
+        <dt class="text-xs text-gray-500">
+          <code>name</code>
+        </dt>
+        <dd class="text-sm text-gray-900">
+          {{ event.userName }}
+        </dd>
+      </div>
     </dl>
   </td>
 </template>
