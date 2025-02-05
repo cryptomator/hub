@@ -84,10 +84,10 @@ public class AuditLogResource {
 	@JsonSubTypes({ //
 			@JsonSubTypes.Type(value = DeviceRegisteredEventDto.class, name = DeviceRegisteredEvent.TYPE), //
 			@JsonSubTypes.Type(value = DeviceRemovedEventDto.class, name = DeviceRemovedEvent.TYPE), //
-			@JsonSubTypes.Type(value = SettingWotUpdateEvent.class, name = SettingWotUpdateEvent.TYPE), //
-			@JsonSubTypes.Type(value = SignedWotIdEvent.class, name = SignedWotIdEvent.TYPE), //
-			@JsonSubTypes.Type(value = UserAccountResetEvent.class, name = UserAccountResetEvent.TYPE), //
-			@JsonSubTypes.Type(value = UserAccountSetupCompleteEvent.class, name = UserAccountSetupCompleteEvent.TYPE), //
+			@JsonSubTypes.Type(value = SettingWotUpdateEventDto.class, name = SettingWotUpdateEvent.TYPE), //
+			@JsonSubTypes.Type(value = SignedWotIdEventDto.class, name = SignedWotIdEvent.TYPE), //
+			@JsonSubTypes.Type(value = UserAccountResetEventDto.class, name = UserAccountResetEvent.TYPE), //
+			@JsonSubTypes.Type(value = UserAccountSetupCompleteEventDto.class, name = UserAccountSetupCompleteEvent.TYPE), //
 			@JsonSubTypes.Type(value = VaultCreatedEventDto.class, name = VaultCreatedEvent.TYPE), //
 			@JsonSubTypes.Type(value = VaultUpdatedEventDto.class, name = VaultUpdatedEvent.TYPE), //
 			@JsonSubTypes.Type(value = VaultAccessGrantedEventDto.class, name = VaultAccessGrantedEvent.TYPE), //
