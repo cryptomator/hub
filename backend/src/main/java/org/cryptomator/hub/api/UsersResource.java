@@ -166,6 +166,7 @@ public class UsersResource {
 	public Response resetMe() {
 		User user = userRepo.findById(jwt.getSubject());
 		user.setEcdhPublicKey(null);
+		user.setEcdsaPublicKey(null);
 		user.setPrivateKeys(null);
 		user.setSetupCode(null);
 		userRepo.persist(user);
