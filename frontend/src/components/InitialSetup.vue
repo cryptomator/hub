@@ -297,6 +297,7 @@ async function recoverUserKey() {
 }
 
 async function submitBrowserKeys(browserKeys: BrowserKeys, me: UserDto, userKeys: UserKeys) {
+  await backend.users.putMe(me);
   const jwe = await userKeys.encryptForDevice(browserKeys.keyPair.publicKey);
   await backend.devices.putDevice({
     id: await browserKeys.id(),
@@ -306,7 +307,6 @@ async function submitBrowserKeys(browserKeys: BrowserKeys, me: UserDto, userKeys
     userPrivateKey: jwe,
     creationTime: new Date()
   });
-  await backend.users.putMe(me);
   userdata.reload();
 }
 
