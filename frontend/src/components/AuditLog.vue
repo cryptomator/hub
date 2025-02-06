@@ -92,7 +92,7 @@
                       </ListboxButton>
                       
                       <transition leave-active-class="transition ease-in duration-100" leave-from-class="opacity-100" leave-to-class="opacity-0">
-                        <ListboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none text-sm">
+                        <ListboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 ring-opacity-5 focus:outline-none text-sm">
                           <ListboxOption 
                             v-for="(label, key) in eventTypeOptions" 
                             :key="key" 
