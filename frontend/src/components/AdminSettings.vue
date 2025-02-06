@@ -20,71 +20,69 @@
         <h3 class="text-lg font-medium leading-6 text-gray-900">
           {{ t('admin.serverInfo.title') }}
         </h3>
-        <p class="mt-1 text-sm text-gray-500 w-full md:w-1/2">
+        <p class="mt-1 text-sm text-gray-500 w-full">
           {{ t('admin.serverInfo.description') }}
         </p>
         <hr class="my-4 pb-6 border-gray-200"/>
-        <div class="md:grid md:grid-cols-3 md:gap-6">
-          <div class="space-y-6 md:col-span-3">
-            <div class="md:grid md:grid-cols-3 md:gap-6">
-              <label for="hubId" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.serverInfo.hubId.title') }}</label>
-              <div class="mt-1 md:mt-0 md:col-span-2">
-                <div class="md:w-1/2">
-                  <input id="hubId" v-model="admin.hubId" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
-                </div>
-              </div>
-            </div>
-
-            <div class="md:grid md:grid-cols-3 md:gap-6">
-              <label for="hubVersion" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.serverInfo.hubVersion.title') }}</label>
-              <div class="mt-1 md:mt-0 md:col-span-2">
-                <div class="md:w-1/2">
-                  <input id="hubVersion" v-model="version.hubVersion" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
-                  <p v-if="errorOnFetchingUpdates" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
-                    <ExclamationTriangleIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
-                    {{ t('admin.serverInfo.hubVersion.description.fetchingUpdatesFailed') }}
-                  </p>
-                  <p v-else-if="!stableUpdateExists && !betaUpdateExists" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
-                    <CheckIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
-                    {{ t('admin.serverInfo.hubVersion.description.upToDate') }}
-                  </p>
-                  <p v-else-if="stableUpdateExists" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
-                    <ExclamationTriangleIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
-                    {{ t('admin.serverInfo.hubVersion.description.updateExists', [latestVersion?.stable]) }}
-                  </p>
-                  <p v-else-if="betaUpdateExists && isBeta" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
-                    <ExclamationTriangleIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
-                    {{ t('admin.serverInfo.hubVersion.description.updateExists', [latestVersion?.beta]) }}
-                  </p>
-                  <p v-else-if="betaUpdateExists && !isBeta" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
-                    <InformationCircleIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
-                    {{ t('admin.serverInfo.hubVersion.description.updateExists', [latestVersion?.beta]) }}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div class="md:grid md:grid-cols-3 md:gap-6">
-              <label for="keycloakVersion" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.serverInfo.keycloakVersion.title') }}</label>
-              <div class="mt-1 md:mt-0 md:col-span-2">
-                <div class="md:w-1/2">
-                  <input id="keycloakVersion" v-model="version.keycloakVersion" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
-                  <p id="keycloakAdminRealmURL" class="inline-flex mt-2 text-sm">
-                    <LinkIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
-                    <a :href="keycloakAdminRealmURL" target="_blank" class="underline text-gray-500 hover:text-gray-900">{{ $t('admin.serverInfo.keycloakVersion.description') }}</a>
-                  </p>
-                </div>
+        <form class="space-y-6 md:gap-6" novalidate>
+          <div class="md:grid md:grid-cols-3 md:gap-6">
+            <label for="hubId" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.serverInfo.hubId.title') }}</label>
+            <div class="mt-1 md:mt-0 md:col-span-2">
+              <div class="md:w-1/2">
+                <input id="hubId" v-model="admin.hubId" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
               </div>
             </div>
           </div>
-        </div>
+
+          <div class="md:grid md:grid-cols-3 md:gap-6">
+            <label for="hubVersion" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.serverInfo.hubVersion.title') }}</label>
+            <div class="mt-1 md:mt-0 md:col-span-2">
+              <div class="md:w-1/2">
+                <input id="hubVersion" v-model="version.hubVersion" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
+                <p v-if="errorOnFetchingUpdates" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
+                  <ExclamationTriangleIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
+                  {{ t('admin.serverInfo.hubVersion.description.fetchingUpdatesFailed') }}
+                </p>
+                <p v-else-if="!stableUpdateExists && !betaUpdateExists" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
+                  <CheckIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
+                  {{ t('admin.serverInfo.hubVersion.description.upToDate') }}
+                </p>
+                <p v-else-if="stableUpdateExists" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
+                  <ExclamationTriangleIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
+                  {{ t('admin.serverInfo.hubVersion.description.updateExists', [latestVersion?.stable]) }}
+                </p>
+                <p v-else-if="betaUpdateExists && isBeta" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
+                  <ExclamationTriangleIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
+                  {{ t('admin.serverInfo.hubVersion.description.updateExists', [latestVersion?.beta]) }}
+                </p>
+                <p v-else-if="betaUpdateExists && !isBeta" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
+                  <InformationCircleIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
+                  {{ t('admin.serverInfo.hubVersion.description.updateExists', [latestVersion?.beta]) }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="md:grid md:grid-cols-3 md:gap-6">
+            <label for="keycloakVersion" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.serverInfo.keycloakVersion.title') }}</label>
+            <div class="mt-1 md:mt-0 md:col-span-2">
+              <div class="md:w-1/2">
+                <input id="keycloakVersion" v-model="version.keycloakVersion" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
+                <p id="keycloakAdminRealmURL" class="inline-flex mt-2 text-sm">
+                  <LinkIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
+                  <a :href="keycloakAdminRealmURL" target="_blank" class="underline text-gray-500 hover:text-gray-900">{{ $t('admin.serverInfo.keycloakVersion.description') }}</a>
+                </p>
+              </div>
+            </div>
+          </div>
+        </form>
       </div>
 
       <div v-if="admin.hasLicense && remainingSeats != null" class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6">
         <h3 class="text-lg font-medium leading-6 text-gray-900">
           {{ t('admin.licenseInfo.title') }}
         </h3>
-        <p class="mt-1 text-sm text-gray-500 w-full md:w-1/2">
+        <p class="mt-1 text-sm text-gray-500 w-full">
           {{ t('admin.licenseInfo.description') }}
         </p>
         <hr class="my-4 pb-6 border-gray-200"/>
@@ -160,10 +158,10 @@
         <h3 class="text-lg font-medium leading-6 text-gray-900">
           {{ t('admin.licenseInfo.title') }}
         </h3>
-        <p v-if="!admin.managedInstance" class="mt-1 text-sm text-gray-500 w-full md:w-1/2">
+        <p v-if="!admin.managedInstance" class="mt-1 text-sm text-gray-500 w-full">
           {{ t('admin.licenseInfo.selfHostedNoLicense.description') }}
         </p>
-        <p v-else class="mt-1 text-sm text-gray-500 w-full md:w-1/2">
+        <p v-else class="mt-1 text-sm text-gray-500 w-full">
           {{ t('admin.licenseInfo.managedNoLicense.description') }}
         </p>
         <hr class="my-4 pb-6 border-gray-200"/>
@@ -216,7 +214,7 @@
         <h3 class="text-lg font-medium leading-6 text-gray-900">
           {{ t('admin.webOfTrust.title') }}
         </h3>
-        <p class="mt-1 text-sm text-gray-500 w-full md:w-1/2">
+        <p class="mt-1 text-sm text-gray-500 w-full">
           {{ t('admin.webOfTrust.description') }}
         </p>
         <hr class="my-4 pb-6 border-gray-200"/>
