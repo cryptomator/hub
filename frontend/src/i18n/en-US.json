@@ -83,6 +83,7 @@
   "auditLog.details.setting.wot.update": "Update Wot Settings",
   "auditLog.details.user.account.reset": "Reset User Account",
   "auditLog.details.user.keys.change": "User Keys Change",
+  "auditLog.details.user.setupCode.change": "Account Key Change",
   "auditLog.details.vault.create": "Create Vault",
   "auditLog.details.vault.update": "Update Vault",
   "auditLog.details.vaultAccess.grant": "Grant Vault Access",

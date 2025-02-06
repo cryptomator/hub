@@ -68,6 +68,13 @@ public class EventLogger {
 		auditEventRepository.persist(event);
 	}
 
+	public void logUsersetupCodeChanged(String changedBy) {
+		var event = new UserSetupCodeChangeEvent();
+		event.setTimestamp(Instant.now());
+		event.setChangedBy(changedBy);
+		auditEventRepository.persist(event);
+	}
+
 	public void logVaultAccessGranted(String grantedBy, UUID vaultId, String authorityId) {
 		var event = new VaultAccessGrantedEvent();
 		event.setTimestamp(Instant.now());

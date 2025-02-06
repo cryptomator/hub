@@ -107,6 +107,7 @@
                   <AuditLogDetailsSignedWotId v-else-if="auditEvent.type == 'SIGN_WOT_ID'" :event="auditEvent" />
                   <AuditLogDetailsUserAccountReset v-else-if="auditEvent.type == 'USER_ACCOUNT_RESET'" :event="auditEvent" />
                   <AuditLogUserKeysChange v-else-if="auditEvent.type == 'USER_KEYS_CHANGE'" :event="auditEvent" />
+                  <AuditLogUserSetupCodeChanged v-else-if="auditEvent.type == 'USER_SETUP_CODE_CHANGE'" :event="auditEvent" />
                   <AuditLogDetailsVaultCreate v-else-if="auditEvent.type == 'VAULT_CREATE'" :event="auditEvent" />
                   <AuditLogDetailsVaultUpdate v-else-if="auditEvent.type == 'VAULT_UPDATE'" :event="auditEvent" />
                   <AuditLogDetailsVaultAccessGrant v-else-if="auditEvent.type == 'VAULT_ACCESS_GRANT'" :event="auditEvent" />
@@ -184,6 +185,7 @@ import AuditLogDetailsVaultMemberUpdate from './AuditLogDetailsVaultMemberUpdate
 import AuditLogDetailsVaultOwnershipClaim from './AuditLogDetailsVaultOwnershipClaim.vue';
 import AuditLogDetailsVaultUpdate from './AuditLogDetailsVaultUpdate.vue';
 import AuditLogUserKeysChange from './AuditLogUserKeysChange.vue';
+import AuditLogUserSetupCodeChanged from './AuditLogUserSetupCodeChanged.vue';
 import FetchError from './FetchError.vue';
 
 enum State {

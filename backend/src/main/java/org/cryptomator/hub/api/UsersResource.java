@@ -80,13 +80,16 @@ public class UsersResource {
 		user.setPictureUrl(jwt.getClaim("picture"));
 		user.setEmail(jwt.getClaim("email"));
 		if (dto != null) {
-			if (user.getEcdhPublicKey() == null && user.getEcdsaPublicKey() == null && user.getPrivateKeys() == null) {
+			if (!Objects.equals(user.getSetupCode(), dto.setupCode)) {
+				user.setSetupCode(dto.setupCode);
+				eventLogger.logUsersetupCodeChanged(jwt.getSubject());
+			}
+			if (!Objects.equals(user.getEcdhPublicKey(), dto.ecdhPublicKey) || !Objects.equals(user.getEcdsaPublicKey(), dto.ecdsaPublicKey) || !Objects.equals(user.getPrivateKeys(), dto.privateKeys)) {
 				user.setEcdhPublicKey(dto.ecdhPublicKey);
 				user.setEcdsaPublicKey(dto.ecdsaPublicKey);
 				user.setPrivateKeys(dto.privateKeys);
 				eventLogger.logUserKeysChanged(jwt.getSubject(), jwt.getName());
 			}
-			user.setSetupCode(dto.setupCode);
 			updateDevices(user, dto);
 		}
 		userRepo.persist(user);
