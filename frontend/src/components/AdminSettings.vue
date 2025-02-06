@@ -16,7 +16,7 @@
     </div>
 
     <div class="space-y-6 mt-5">
-      <div class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6">
+      <section class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6">
         <h3 class="text-lg font-medium leading-6 text-gray-900">
           {{ t('admin.serverInfo.title') }}
         </h3>
@@ -76,9 +76,9 @@
             </div>
           </div>
         </form>
-      </div>
+      </section>
 
-      <div v-if="admin.hasLicense && remainingSeats != null" class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6">
+      <section v-if="admin.hasLicense && remainingSeats != null" class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6">
         <h3 class="text-lg font-medium leading-6 text-gray-900">
           {{ t('admin.licenseInfo.title') }}
         </h3>
@@ -86,7 +86,7 @@
           {{ t('admin.licenseInfo.description') }}
         </p>
         <hr class="my-4 pb-6 border-gray-200"/>
-        <div class="space-y-6 md:col-span-3">
+        <form class="space-y-6 md:gap-6" novalidate>
           <div class="md:grid md:grid-cols-3 md:gap-6">
             <label for="email" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.licenseInfo.email.title') }}</label>
             <div class="mt-1 md:mt-0 md:col-span-2">
@@ -151,10 +151,10 @@
               </div>
             </div>
           </div>
-        </div>
-      </div>
+        </form>
+      </section>
 
-      <div v-if="!admin.hasLicense && remainingSeats != null" class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6">
+      <section v-if="!admin.hasLicense && remainingSeats != null" class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6">
         <h3 class="text-lg font-medium leading-6 text-gray-900">
           {{ t('admin.licenseInfo.title') }}
         </h3>
@@ -165,52 +165,50 @@
           {{ t('admin.licenseInfo.managedNoLicense.description') }}
         </p>
         <hr class="my-4 pb-6 border-gray-200"/>
-        <div class="md:grid md:grid-cols-3 md:gap-6">
-          <div class="space-y-6 md:col-span-3">
-            <div class="md:grid md:grid-cols-3 md:gap-6">
-              <label for="licenseType" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.licenseInfo.type.title') }}</label>
-              <div class="mt-1 md:mt-0 md:col-span-2">
-                <div class="md:w-1/2">
-                  <input v-if="!admin.managedInstance" id="licenseType" value="Community License" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
-                  <input v-else id="licenseType" value="Managed" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
-                </div>
-              </div>
-            </div>
-
-            <div class="md:grid md:grid-cols-3 md:gap-6">
-              <label for="seats" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.licenseInfo.seats.title') }}</label>
-              <div class="mt-1 md:mt-0 md:col-span-2">
-                <div class="md:w-1/2">
-                  <input id="seats" v-model="admin.licensedSeats" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" aria-describedby="seats-description" readonly />
-                  <p v-if="remainingSeats > 0" id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
-                    <CheckIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
-                    {{ t('admin.licenseInfo.seats.description.enoughSeats', [remainingSeats]) }}
-                  </p>
-                  <p v-else-if="remainingSeats == 0" id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
-                    <ExclamationTriangleIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
-                    {{ t('admin.licenseInfo.seats.description.zeroSeats') }}
-                  </p>
-                  <p v-else id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
-                    <XMarkIcon class="shrink-0 text-red-500 mr-1 h-5 w-5" aria-hidden="true" />
-                    {{ t('admin.licenseInfo.seats.description.undercutSeats', [numberOfExceededSeats]) }}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div class="md:grid md:grid-cols-3 md:gap-6">
-              <div class="md:col-start-2 md:col-span-2">
-                <button type="button" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="manageSubscription()">
-                  <ArrowTopRightOnSquareIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
-                  {{ t('admin.licenseInfo.getLicense') }}
-                </button>
+        <form class="space-y-6 md:gap-6" novalidate>
+          <div class="md:grid md:grid-cols-3 md:gap-6">
+            <label for="licenseType" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.licenseInfo.type.title') }}</label>
+            <div class="mt-1 md:mt-0 md:col-span-2">
+              <div class="md:w-1/2">
+                <input v-if="!admin.managedInstance" id="licenseType" value="Community License" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
+                <input v-else id="licenseType" value="Managed" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
               </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      <div class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6">
+          <div class="md:grid md:grid-cols-3 md:gap-6">
+            <label for="seats" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.licenseInfo.seats.title') }}</label>
+            <div class="mt-1 md:mt-0 md:col-span-2">
+              <div class="md:w-1/2">
+                <input id="seats" v-model="admin.licensedSeats" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" aria-describedby="seats-description" readonly />
+                <p v-if="remainingSeats > 0" id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
+                  <CheckIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
+                  {{ t('admin.licenseInfo.seats.description.enoughSeats', [remainingSeats]) }}
+                </p>
+                <p v-else-if="remainingSeats == 0" id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
+                  <ExclamationTriangleIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
+                  {{ t('admin.licenseInfo.seats.description.zeroSeats') }}
+                </p>
+                <p v-else id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
+                  <XMarkIcon class="shrink-0 text-red-500 mr-1 h-5 w-5" aria-hidden="true" />
+                  {{ t('admin.licenseInfo.seats.description.undercutSeats', [numberOfExceededSeats]) }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="md:grid md:grid-cols-3 md:gap-6">
+            <div class="md:col-start-2 md:col-span-2">
+              <button type="button" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="manageSubscription()">
+                <ArrowTopRightOnSquareIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+                {{ t('admin.licenseInfo.getLicense') }}
+              </button>
+            </div>
+          </div>
+        </form>
+      </section>
+
+      <section class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6">
         <h3 class="text-lg font-medium leading-6 text-gray-900">
           {{ t('admin.webOfTrust.title') }}
         </h3>
@@ -218,72 +216,68 @@
           {{ t('admin.webOfTrust.description') }}
         </p>
         <hr class="my-4 pb-6 border-gray-200"/>
-        <div class="md:grid md:grid-cols-3 md:gap-6">
-          <form ref="form" class="md:col-span-3" novalidate @submit.prevent="saveWebOfTrust()">
-            <div class="space-y-6 md:col-span-3">
-              <div class="md:grid md:grid-cols-3 md:gap-6">
-                <label for="wotMaxDepth" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
-                  {{ t('admin.webOfTrust.wotMaxDepth.title') }}
-                </label>
-                <div class="mt-1 md:mt-0 md:col-span-2">
-                  <div class="relative md:w-1/2">
-                    <input id="wotMaxDepth" v-model="wotMaxDepth" type="number" min="0" max="9" step="1" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': wotMaxDepthError instanceof FormValidationFailedError }"/>
-                    <div v-if="wotMaxDepthError" class="absolute left-1/2 -translate-x-1/2 -top-2 transform translate-y-[-100%]">
-                      <div class="bg-red-50 border border-red-300 text-red-900 px-2 py-1 rounded shadow-sm text-sm whitespace-nowrap">
-                        {{ t('admin.webOfTrust.wotMaxDepth.error') }}
-                        <div class="absolute bottom-0 left-1/2 transform translate-y-1/2 rotate-45 w-2 h-2 bg-red-50 border-r border-b border-red-300"></div>
-                      </div>
-                    </div>
-                    <p class="mt-2 text-sm text-gray-500">
-                      {{ t('admin.webOfTrust.wotMaxDepth.description') }}
-                      <a href="https://docs.cryptomator.org/en/latest/security/hub/#web-of-trust" target="_blank" class="inline-flex items-center text-primary underline hover:text-primary-darker">
-                        {{ t('admin.webOfTrust.information') }}
-                        <ArrowRightIcon class="ml-1 h-4 w-4" aria-hidden="true" />
-                      </a>
-                    </p>
+        <form ref="form" class="space-y-6 md:gap-6" novalidate @submit.prevent="saveWebOfTrust()">
+          <div class="md:grid md:grid-cols-3 md:gap-6">
+            <label for="wotMaxDepth" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
+              {{ t('admin.webOfTrust.wotMaxDepth.title') }}
+            </label>
+            <div class="mt-1 md:mt-0 md:col-span-2">
+              <div class="relative md:w-1/2">
+                <input id="wotMaxDepth" v-model="wotMaxDepth" type="number" min="0" max="9" step="1" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': wotMaxDepthError instanceof FormValidationFailedError }"/>
+                <div v-if="wotMaxDepthError" class="absolute left-1/2 -translate-x-1/2 -top-2 transform translate-y-[-100%]">
+                  <div class="bg-red-50 border border-red-300 text-red-900 px-2 py-1 rounded shadow-sm text-sm whitespace-nowrap">
+                    {{ t('admin.webOfTrust.wotMaxDepth.error') }}
+                    <div class="absolute bottom-0 left-1/2 transform translate-y-1/2 rotate-45 w-2 h-2 bg-red-50 border-r border-b border-red-300"></div>
                   </div>
                 </div>
+                <p class="mt-2 text-sm text-gray-500">
+                  {{ t('admin.webOfTrust.wotMaxDepth.description') }}
+                  <a href="https://docs.cryptomator.org/en/latest/security/hub/#web-of-trust" target="_blank" class="inline-flex items-center text-primary underline hover:text-primary-darker">
+                    {{ t('admin.webOfTrust.information') }}
+                    <ArrowRightIcon class="ml-1 h-4 w-4" aria-hidden="true" />
+                  </a>
+                </p>
               </div>
+            </div>
 
-              <div class="md:grid md:grid-cols-3 md:gap-6">
-                <label for="wotIdVerifyLen" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
-                  {{ t('admin.webOfTrust.wotIdVerifyLen.title') }}
-                </label>
-                <div class="mt-1 md:mt-0 md:col-span-2">
-                  <div class="relative md:w-1/2">
-                    <input id="wotIdVerifyLen" v-model="wotIdVerifyLen" type="number" min="0" max="9" step="1" class="focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': wotIdVerifyLenError instanceof FormValidationFailedError }"/>
-                    <div v-if="wotIdVerifyLenError" class="absolute left-1/2 -translate-x-1/2 -top-2 transform translate-y-[-100%]">
-                      <div class="bg-red-50 border border-red-300 text-red-900 px-2 py-1 rounded shadow-sm text-sm whitespace-nowrap">
-                        {{ t('admin.webOfTrust.wotIdVerifyLen.error') }}
-                        <div class="absolute bottom-0 left-1/2 transform translate-y-1/2 rotate-45 w-2 h-2 bg-red-50 border-r border-b border-red-300"></div>
-                      </div>
+            <div class="md:grid md:grid-cols-3 md:gap-6">
+              <label for="wotIdVerifyLen" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
+                {{ t('admin.webOfTrust.wotIdVerifyLen.title') }}
+              </label>
+              <div class="mt-1 md:mt-0 md:col-span-2">
+                <div class="relative md:w-1/2">
+                  <input id="wotIdVerifyLen" v-model="wotIdVerifyLen" type="number" min="0" max="9" step="1" class="focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': wotIdVerifyLenError instanceof FormValidationFailedError }"/>
+                  <div v-if="wotIdVerifyLenError" class="absolute left-1/2 -translate-x-1/2 -top-2 transform translate-y-[-100%]">
+                    <div class="bg-red-50 border border-red-300 text-red-900 px-2 py-1 rounded shadow-sm text-sm whitespace-nowrap">
+                      {{ t('admin.webOfTrust.wotIdVerifyLen.error') }}
+                      <div class="absolute bottom-0 left-1/2 transform translate-y-1/2 rotate-45 w-2 h-2 bg-red-50 border-r border-b border-red-300"></div>
                     </div>
-                    <p class="mt-2 text-sm text-gray-500">
-                      {{ t('admin.webOfTrust.wotIdVerifyLen.description') }}
-                      <a href="https://docs.cryptomator.org/en/latest/security/hub/#web-of-trust" target="_blank" class="inline-flex items-center text-primary underline hover:text-primary-darker">
-                        {{ t('admin.webOfTrust.information') }}
-                        <ArrowRightIcon class="ml-1 h-4 w-4" aria-hidden="true" />
-                      </a>
-                    </p>
                   </div>
-                </div>
-              </div>
-
-              <div class="md:grid md:grid-cols-3 md:gap-6">
-                <div class="md:col-start-2">
-                  <button type="submit" :disabled="processing" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
-                    <span v-if="!wotUpdated">{{ t('admin.webOfTrust.save') }}</span>
-                    <span v-else>{{ t('admin.webOfTrust.saved') }}</span>
-                  </button>
-                  <p v-if="onSaveError != null && !(onSaveError instanceof FormValidationFailedError)" class="mt-2 text-sm text-red-900">
-                    {{ t('common.unexpectedError', [onSaveError.message]) }}
+                  <p class="mt-2 text-sm text-gray-500">
+                    {{ t('admin.webOfTrust.wotIdVerifyLen.description') }}
+                    <a href="https://docs.cryptomator.org/en/latest/security/hub/#web-of-trust" target="_blank" class="inline-flex items-center text-primary underline hover:text-primary-darker">
+                      {{ t('admin.webOfTrust.information') }}
+                      <ArrowRightIcon class="ml-1 h-4 w-4" aria-hidden="true" />
+                    </a>
                   </p>
                 </div>
               </div>
             </div>
-          </form>
-        </div>
-      </div>
+
+            <div class="md:grid md:grid-cols-3 md:gap-6">
+              <div class="md:col-start-2">
+                <button type="submit" :disabled="processing" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
+                  <span v-if="!wotUpdated">{{ t('admin.webOfTrust.save') }}</span>
+                  <span v-else>{{ t('admin.webOfTrust.saved') }}</span>
+                </button>
+                <p v-if="onSaveError != null && !(onSaveError instanceof FormValidationFailedError)" class="mt-2 text-sm text-red-900">
+                  {{ t('common.unexpectedError', [onSaveError.message]) }}
+                </p>
+              </div>
+            </div>
+          </div>
+        </form>
+      </section>
     </div>
   </div>
 </template>
