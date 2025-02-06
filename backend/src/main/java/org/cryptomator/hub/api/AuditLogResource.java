@@ -20,7 +20,7 @@ import org.cryptomator.hub.entities.events.DeviceRemovedEvent;
 import org.cryptomator.hub.entities.events.SettingWotUpdateEvent;
 import org.cryptomator.hub.entities.events.SignedWotIdEvent;
 import org.cryptomator.hub.entities.events.UserAccountResetEvent;
-import org.cryptomator.hub.entities.events.UserAccountSetupCompleteEvent;
+import org.cryptomator.hub.entities.events.UserKeysChangeEvent;
 import org.cryptomator.hub.entities.events.VaultAccessGrantedEvent;
 import org.cryptomator.hub.entities.events.VaultCreatedEvent;
 import org.cryptomator.hub.entities.events.VaultKeyRetrievedEvent;
@@ -87,7 +87,7 @@ public class AuditLogResource {
 			@JsonSubTypes.Type(value = SettingWotUpdateEventDto.class, name = SettingWotUpdateEvent.TYPE), //
 			@JsonSubTypes.Type(value = SignedWotIdEventDto.class, name = SignedWotIdEvent.TYPE), //
 			@JsonSubTypes.Type(value = UserAccountResetEventDto.class, name = UserAccountResetEvent.TYPE), //
-			@JsonSubTypes.Type(value = UserAccountSetupCompleteEventDto.class, name = UserAccountSetupCompleteEvent.TYPE), //
+			@JsonSubTypes.Type(value = UserKeysChangeEventDto.class, name = UserKeysChangeEvent.TYPE), //
 			@JsonSubTypes.Type(value = VaultCreatedEventDto.class, name = VaultCreatedEvent.TYPE), //
 			@JsonSubTypes.Type(value = VaultUpdatedEventDto.class, name = VaultUpdatedEvent.TYPE), //
 			@JsonSubTypes.Type(value = VaultAccessGrantedEventDto.class, name = VaultAccessGrantedEvent.TYPE), //
@@ -112,7 +112,7 @@ public class AuditLogResource {
 				case SignedWotIdEvent evt -> new SignedWotIdEventDto(evt.getId(), evt.getTimestamp(), SignedWotIdEvent.TYPE, evt.getUserId(), evt.getSignerId(), evt.getSignerKey(), evt.getSignature());
 				case SettingWotUpdateEvent evt -> new SettingWotUpdateEventDto(evt.getId(), evt.getTimestamp(), SettingWotUpdateEvent.TYPE, evt.getUpdatedBy(), evt.getWotMaxDepth(), evt.getWotIdVerifyLen());
 				case UserAccountResetEvent evt -> new UserAccountResetEventDto(evt.getId(), evt.getTimestamp(), UserAccountResetEvent.TYPE, evt.getResetBy());
-				case UserAccountSetupCompleteEvent evt -> new UserAccountSetupCompleteEventDto(evt.getId(), evt.getTimestamp(), UserAccountSetupCompleteEvent.TYPE, evt.getCompletedBy(), evt.getUserName());
+				case UserKeysChangeEvent evt -> new UserKeysChangeEventDto(evt.getId(), evt.getTimestamp(), UserKeysChangeEvent.TYPE, evt.getChangedBy(), evt.getUserName());
 				case VaultCreatedEvent evt -> new VaultCreatedEventDto(evt.getId(), evt.getTimestamp(), VaultCreatedEvent.TYPE, evt.getCreatedBy(), evt.getVaultId(), evt.getVaultName(), evt.getVaultDescription());
 				case VaultUpdatedEvent evt -> new VaultUpdatedEventDto(evt.getId(), evt.getTimestamp(), VaultUpdatedEvent.TYPE, evt.getUpdatedBy(), evt.getVaultId(), evt.getVaultName(), evt.getVaultDescription(), evt.isVaultArchived());
 				case VaultAccessGrantedEvent evt -> new VaultAccessGrantedEventDto(evt.getId(), evt.getTimestamp(), VaultAccessGrantedEvent.TYPE, evt.getGrantedBy(), evt.getVaultId(), evt.getAuthorityId());
@@ -144,7 +144,7 @@ public class AuditLogResource {
 	record UserAccountResetEventDto(long id, Instant timestamp, String type, @JsonProperty("resetBy") String resetBy) implements AuditEventDto {
 	}
 
-	record UserAccountSetupCompleteEventDto(long id, Instant timestamp, String type, @JsonProperty("completedBy") String completedBy, @JsonProperty("userName") String userName) implements AuditEventDto {
+	record UserKeysChangeEventDto(long id, Instant timestamp, String type, @JsonProperty("changedBy") String changedBy, @JsonProperty("userName") String userName) implements AuditEventDto {
 	}
 
 	record VaultCreatedEventDto(long id, Instant timestamp, String type, @JsonProperty("createdBy") String createdBy, @JsonProperty("vaultId") UUID vaultId, @JsonProperty("vaultName") String vaultName,

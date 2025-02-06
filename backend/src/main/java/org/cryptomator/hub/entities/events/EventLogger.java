@@ -60,10 +60,10 @@ public class EventLogger {
 		auditEventRepository.persist(event);
 	}
 
-	public void logUserAccountSetupComplete(String completedBy, String userName) {
-		var event = new UserAccountSetupCompleteEvent();
+	public void logUserKeysChanged(String changedBy, String userName) {
+		var event = new UserKeysChangeEvent();
 		event.setTimestamp(Instant.now());
-		event.setCompletedBy(completedBy);
+		event.setChangedBy(changedBy);
 		event.setUserName(userName);
 		auditEventRepository.persist(event);
 	}

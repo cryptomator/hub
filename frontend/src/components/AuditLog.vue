@@ -106,7 +106,7 @@
                   <AuditLogDetailsSettingWotUpdate v-else-if="auditEvent.type == 'SETTING_WOT_UPDATE'" :event="auditEvent" />
                   <AuditLogDetailsSignedWotId v-else-if="auditEvent.type == 'SIGN_WOT_ID'" :event="auditEvent" />
                   <AuditLogDetailsUserAccountReset v-else-if="auditEvent.type == 'USER_ACCOUNT_RESET'" :event="auditEvent" />
-                  <AuditLogDetailsUserAccountSetupComplete v-else-if="auditEvent.type == 'USER_ACCOUNT_SETUP_COMPLETE'" :event="auditEvent" />
+                  <AuditLogUserKeysChange v-else-if="auditEvent.type == 'USER_KEYS_CHANGE'" :event="auditEvent" />
                   <AuditLogDetailsVaultCreate v-else-if="auditEvent.type == 'VAULT_CREATE'" :event="auditEvent" />
                   <AuditLogDetailsVaultUpdate v-else-if="auditEvent.type == 'VAULT_UPDATE'" :event="auditEvent" />
                   <AuditLogDetailsVaultAccessGrant v-else-if="auditEvent.type == 'VAULT_ACCESS_GRANT'" :event="auditEvent" />
@@ -175,7 +175,6 @@ import AuditLogDetailsDeviceRemove from './AuditLogDetailsDeviceRemove.vue';
 import AuditLogDetailsSettingWotUpdate from './AuditLogDetailsSettingWotUpdate.vue';
 import AuditLogDetailsSignedWotId from './AuditLogDetailsSignedWotId.vue';
 import AuditLogDetailsUserAccountReset from './AuditLogDetailsUserAccountReset.vue';
-import AuditLogDetailsUserAccountSetupComplete from './AuditLogDetailsUserAccountSetupComplete.vue';
 import AuditLogDetailsVaultAccessGrant from './AuditLogDetailsVaultAccessGrant.vue';
 import AuditLogDetailsVaultCreate from './AuditLogDetailsVaultCreate.vue';
 import AuditLogDetailsVaultKeyRetrieve from './AuditLogDetailsVaultKeyRetrieve.vue';
@@ -184,6 +183,7 @@ import AuditLogDetailsVaultMemberRemove from './AuditLogDetailsVaultMemberRemove
 import AuditLogDetailsVaultMemberUpdate from './AuditLogDetailsVaultMemberUpdate.vue';
 import AuditLogDetailsVaultOwnershipClaim from './AuditLogDetailsVaultOwnershipClaim.vue';
 import AuditLogDetailsVaultUpdate from './AuditLogDetailsVaultUpdate.vue';
+import AuditLogUserKeysChange from './AuditLogUserKeysChange.vue';
 import FetchError from './FetchError.vue';
 
 enum State {

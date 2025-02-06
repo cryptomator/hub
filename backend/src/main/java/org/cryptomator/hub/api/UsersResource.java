@@ -34,6 +34,7 @@ import java.net.URI;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
@@ -83,7 +84,7 @@ public class UsersResource {
 				user.setEcdhPublicKey(dto.ecdhPublicKey);
 				user.setEcdsaPublicKey(dto.ecdsaPublicKey);
 				user.setPrivateKeys(dto.privateKeys);
-				eventLogger.logUserAccountSetupComplete(jwt.getSubject(), jwt.getName());
+				eventLogger.logUserKeysChanged(jwt.getSubject(), jwt.getName());
 			}
 			user.setSetupCode(dto.setupCode);
 			updateDevices(user, dto);

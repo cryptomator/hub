@@ -1,7 +1,7 @@
-CREATE TABLE "audit_event_user_account_setup_complete"
+CREATE TABLE "audit_event_user_keys_change"
 (
 	"id"           BIGINT NOT NULL,
-	"completed_by" VARCHAR(255) COLLATE "C" NOT NULL,
+	"changed_by"   VARCHAR(255) COLLATE "C" NOT NULL,
 	"user_name"    VARCHAR NOT NULL,
 	CONSTRAINT "AUDIT_EVENT_USER_ACCOUNT_SETUP_COMPLETE_PK" PRIMARY KEY ("id"),
 	CONSTRAINT "AUDIT_EVENT_USER_ACCOUNT_SETUP_COMPLETE_FK_AUDIT_EVENT" FOREIGN KEY ("id") REFERENCES "audit_event" ("id") ON DELETE CASCADE
