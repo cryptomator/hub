@@ -82,7 +82,7 @@ public class UsersResource {
 		if (dto != null) {
 			if (!Objects.equals(user.getSetupCode(), dto.setupCode)) {
 				user.setSetupCode(dto.setupCode);
-				eventLogger.logUsersetupCodeChanged(jwt.getSubject());
+				eventLogger.logUserSetupCodeChanged(jwt.getSubject());
 			}
 			if (!Objects.equals(user.getEcdhPublicKey(), dto.ecdhPublicKey) || !Objects.equals(user.getEcdsaPublicKey(), dto.ecdsaPublicKey) || !Objects.equals(user.getPrivateKeys(), dto.privateKeys)) {
 				user.setEcdhPublicKey(dto.ecdhPublicKey);

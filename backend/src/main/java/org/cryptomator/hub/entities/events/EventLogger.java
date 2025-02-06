@@ -68,7 +68,7 @@ public class EventLogger {
 		auditEventRepository.persist(event);
 	}
 
-	public void logUsersetupCodeChanged(String changedBy) {
+	public void logUserSetupCodeChanged(String changedBy) {
 		var event = new UserSetupCodeChangeEvent();
 		event.setTimestamp(Instant.now());
 		event.setChangedBy(changedBy);
