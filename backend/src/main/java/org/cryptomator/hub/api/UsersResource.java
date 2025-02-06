@@ -34,6 +34,7 @@ import java.net.URI;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
@@ -79,10 +80,16 @@ public class UsersResource {
 		user.setPictureUrl(jwt.getClaim("picture"));
 		user.setEmail(jwt.getClaim("email"));
 		if (dto != null) {
-			user.setEcdhPublicKey(dto.ecdhPublicKey);
-			user.setEcdsaPublicKey(dto.ecdsaPublicKey);
-			user.setPrivateKeys(dto.privateKeys);
-			user.setSetupCode(dto.setupCode);
+			if (!Objects.equals(user.getSetupCode(), dto.setupCode)) {
+				user.setSetupCode(dto.setupCode);
+				eventLogger.logUserSetupCodeChanged(jwt.getSubject());
+			}
+			if (!Objects.equals(user.getEcdhPublicKey(), dto.ecdhPublicKey) || !Objects.equals(user.getEcdsaPublicKey(), dto.ecdsaPublicKey) || !Objects.equals(user.getPrivateKeys(), dto.privateKeys)) {
+				user.setEcdhPublicKey(dto.ecdhPublicKey);
+				user.setEcdsaPublicKey(dto.ecdsaPublicKey);
+				user.setPrivateKeys(dto.privateKeys);
+				eventLogger.logUserKeysChanged(jwt.getSubject(), jwt.getName());
+			}
 			updateDevices(user, dto);
 		}
 		userRepo.persist(user);
@@ -163,11 +170,13 @@ public class UsersResource {
 	public Response resetMe() {
 		User user = userRepo.findById(jwt.getSubject());
 		user.setEcdhPublicKey(null);
+		user.setEcdsaPublicKey(null);
 		user.setPrivateKeys(null);
 		user.setSetupCode(null);
 		userRepo.persist(user);
 		deviceRepo.deleteByOwner(user.getId());
 		accessTokenRepo.deleteByUser(user.getId());
+		eventLogger.logUserAccountReset(jwt.getSubject());
 		return Response.noContent().build();
 	}
 
