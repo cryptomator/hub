@@ -27,52 +27,46 @@
         <form class="space-y-6 md:gap-6" novalidate>
           <div class="md:grid md:grid-cols-3 md:gap-6">
             <label for="hubId" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.serverInfo.hubId.title') }}</label>
-            <div class="mt-1 md:mt-0 md:col-span-2">
-              <div class="md:w-1/2">
-                <input id="hubId" v-model="admin.hubId" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
-              </div>
+            <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
+              <input id="hubId" v-model="admin.hubId" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
             </div>
           </div>
 
           <div class="md:grid md:grid-cols-3 md:gap-6">
             <label for="hubVersion" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.serverInfo.hubVersion.title') }}</label>
-            <div class="mt-1 md:mt-0 md:col-span-2">
-              <div class="md:w-1/2">
-                <input id="hubVersion" v-model="version.hubVersion" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
-                <p v-if="errorOnFetchingUpdates" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
-                  <ExclamationTriangleIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
-                  {{ t('admin.serverInfo.hubVersion.description.fetchingUpdatesFailed') }}
-                </p>
-                <p v-else-if="!stableUpdateExists && !betaUpdateExists" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
-                  <CheckIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
-                  {{ t('admin.serverInfo.hubVersion.description.upToDate') }}
-                </p>
-                <p v-else-if="stableUpdateExists" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
-                  <ExclamationTriangleIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
-                  {{ t('admin.serverInfo.hubVersion.description.updateExists', [latestVersion?.stable]) }}
-                </p>
-                <p v-else-if="betaUpdateExists && isBeta" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
-                  <ExclamationTriangleIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
-                  {{ t('admin.serverInfo.hubVersion.description.updateExists', [latestVersion?.beta]) }}
-                </p>
-                <p v-else-if="betaUpdateExists && !isBeta" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
-                  <InformationCircleIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
-                  {{ t('admin.serverInfo.hubVersion.description.updateExists', [latestVersion?.beta]) }}
-                </p>
-              </div>
+            <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
+              <input id="hubVersion" v-model="version.hubVersion" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
+              <p v-if="errorOnFetchingUpdates" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
+                <ExclamationTriangleIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
+                {{ t('admin.serverInfo.hubVersion.description.fetchingUpdatesFailed') }}
+              </p>
+              <p v-else-if="!stableUpdateExists && !betaUpdateExists" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
+                <CheckIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
+                {{ t('admin.serverInfo.hubVersion.description.upToDate') }}
+              </p>
+              <p v-else-if="stableUpdateExists" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
+                <ExclamationTriangleIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
+                {{ t('admin.serverInfo.hubVersion.description.updateExists', [latestVersion?.stable]) }}
+              </p>
+              <p v-else-if="betaUpdateExists && isBeta" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
+                <ExclamationTriangleIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
+                {{ t('admin.serverInfo.hubVersion.description.updateExists', [latestVersion?.beta]) }}
+              </p>
+              <p v-else-if="betaUpdateExists && !isBeta" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
+                <InformationCircleIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
+                {{ t('admin.serverInfo.hubVersion.description.updateExists', [latestVersion?.beta]) }}
+              </p>
             </div>
           </div>
 
           <div class="md:grid md:grid-cols-3 md:gap-6">
             <label for="keycloakVersion" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.serverInfo.keycloakVersion.title') }}</label>
-            <div class="mt-1 md:mt-0 md:col-span-2">
-              <div class="md:w-1/2">
-                <input id="keycloakVersion" v-model="version.keycloakVersion" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
-                <p id="keycloakAdminRealmURL" class="inline-flex mt-2 text-sm">
-                  <LinkIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
-                  <a :href="keycloakAdminRealmURL" target="_blank" class="underline text-gray-500 hover:text-gray-900">{{ $t('admin.serverInfo.keycloakVersion.description') }}</a>
-                </p>
-              </div>
+            <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
+              <input id="keycloakVersion" v-model="version.keycloakVersion" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
+              <p id="keycloakAdminRealmURL" class="inline-flex mt-2 text-sm">
+                <LinkIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
+                <a :href="keycloakAdminRealmURL" target="_blank" class="underline text-gray-500 hover:text-gray-900">{{ $t('admin.serverInfo.keycloakVersion.description') }}</a>
+              </p>
             </div>
           </div>
         </form>
@@ -89,66 +83,58 @@
         <form class="space-y-6 md:gap-6" novalidate>
           <div class="md:grid md:grid-cols-3 md:gap-6">
             <label for="email" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.licenseInfo.email.title') }}</label>
-            <div class="mt-1 md:mt-0 md:col-span-2">
-              <div class="md:w-1/2">
-                <input id="email" v-model="admin.email" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
-              </div>
+            <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
+              <input id="email" v-model="admin.email" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
             </div>
+          </div>
 
-            <div class="md:grid md:grid-cols-3 md:gap-6">
-              <label for="seats" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.licenseInfo.seats.title') }}</label>
-              <div class="mt-1 md:mt-0 md:col-span-2">
-                <div class="md:w-1/2">
-                  <input id="seats" v-model="admin.licensedSeats" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" aria-describedby="seats-description" readonly />
-                  <p v-if="remainingSeats > 0" id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
-                    <CheckIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
-                    {{ t('admin.licenseInfo.seats.description.enoughSeats', [remainingSeats]) }}
-                  </p>
-                  <p v-else-if="remainingSeats == 0" id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
-                    <ExclamationTriangleIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
-                    {{ t('admin.licenseInfo.seats.description.zeroSeats') }}
-                  </p>
-                  <p v-else id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
-                    <XMarkIcon class="shrink-0 text-red-500 mr-1 h-5 w-5" aria-hidden="true" />
-                    {{ t('admin.licenseInfo.seats.description.undercutSeats', [numberOfExceededSeats]) }}
-                  </p>
-                </div>
-              </div>
+          <div class="md:grid md:grid-cols-3 md:gap-6">
+            <label for="seats" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.licenseInfo.seats.title') }}</label>
+            <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
+              <input id="seats" v-model="admin.licensedSeats" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" aria-describedby="seats-description" readonly />
+              <p v-if="remainingSeats > 0" id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
+                <CheckIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
+                {{ t('admin.licenseInfo.seats.description.enoughSeats', [remainingSeats]) }}
+              </p>
+              <p v-else-if="remainingSeats == 0" id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
+                <ExclamationTriangleIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
+                {{ t('admin.licenseInfo.seats.description.zeroSeats') }}
+              </p>
+              <p v-else id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
+                <XMarkIcon class="shrink-0 text-red-500 mr-1 h-5 w-5" aria-hidden="true" />
+                {{ t('admin.licenseInfo.seats.description.undercutSeats', [numberOfExceededSeats]) }}
+              </p>
             </div>
+          </div>
 
-            <div class="md:grid md:grid-cols-3 md:gap-6">
-              <label for="issuedAt" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.licenseInfo.issuedAt.title') }}</label>
-              <div class="mt-1 md:mt-0 md:col-span-2">
-                <div class="md:w-1/2">
-                  <input id="issuedAt" :value="d(admin.issuedAt, 'short')" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
-                </div>
-              </div>
+          <div class="md:grid md:grid-cols-3 md:gap-6">
+            <label for="issuedAt" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.licenseInfo.issuedAt.title') }}</label>
+            <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
+              <input id="issuedAt" :value="d(admin.issuedAt, 'short')" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
             </div>
+          </div>
 
-            <div class="md:grid md:grid-cols-3 md:gap-6">
-              <label for="expiresAt" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.licenseInfo.expiresAt.title') }}</label>
-              <div class="mt-1 md:mt-0 md:col-span-2">
-                <div class="md:w-1/2">
-                  <input id="expiresAt" :value="d(admin.expiresAt, 'short')" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" aria-describedby="expiresAt-description" readonly />
-                  <p v-if="now < admin.expiresAt" id="expiresAt-description" class="inline-flex mt-2 text-sm text-gray-500">
-                    <CheckIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
-                    {{ t('admin.licenseInfo.expiresAt.description.valid') }}
-                  </p>
-                  <p v-else id="expiresAt-description" class="inline-flex mt-2 text-sm text-gray-500">
-                    <XMarkIcon class="shrink-0 text-red-500 mr-1 h-5 w-5" aria-hidden="true" />
-                    {{ t('admin.licenseInfo.expiresAt.description.expired') }}
-                  </p>
-                </div>
-              </div>
+          <div class="md:grid md:grid-cols-3 md:gap-6">
+            <label for="expiresAt" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.licenseInfo.expiresAt.title') }}</label>
+            <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
+              <input id="expiresAt" :value="d(admin.expiresAt, 'short')" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" aria-describedby="expiresAt-description" readonly />
+              <p v-if="now < admin.expiresAt" id="expiresAt-description" class="inline-flex mt-2 text-sm text-gray-500">
+                <CheckIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
+                {{ t('admin.licenseInfo.expiresAt.description.valid') }}
+              </p>
+              <p v-else id="expiresAt-description" class="inline-flex mt-2 text-sm text-gray-500">
+                <XMarkIcon class="shrink-0 text-red-500 mr-1 h-5 w-5" aria-hidden="true" />
+                {{ t('admin.licenseInfo.expiresAt.description.expired') }}
+              </p>
             </div>
+          </div>
 
-            <div class="md:grid md:grid-cols-3 md:gap-6">
-              <div class="md:col-start-2 md:col-span-2">
-                <button type="button" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="manageSubscription()">
-                  <ArrowTopRightOnSquareIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
-                  {{ t('admin.licenseInfo.manageSubscription') }}
-                </button>
-              </div>
+          <div class="md:grid md:grid-cols-3 md:gap-6">
+            <div class="md:col-start-2">
+              <button type="button" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="manageSubscription()">
+                <ArrowTopRightOnSquareIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+                {{ t('admin.licenseInfo.manageSubscription') }}
+              </button>
             </div>
           </div>
         </form>
@@ -168,37 +154,33 @@
         <form class="space-y-6 md:gap-6" novalidate>
           <div class="md:grid md:grid-cols-3 md:gap-6">
             <label for="licenseType" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.licenseInfo.type.title') }}</label>
-            <div class="mt-1 md:mt-0 md:col-span-2">
-              <div class="md:w-1/2">
-                <input v-if="!admin.managedInstance" id="licenseType" value="Community License" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
-                <input v-else id="licenseType" value="Managed" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
-              </div>
+            <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
+              <input v-if="!admin.managedInstance" id="licenseType" value="Community License" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
+              <input v-else id="licenseType" value="Managed" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
             </div>
           </div>
 
           <div class="md:grid md:grid-cols-3 md:gap-6">
             <label for="seats" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.licenseInfo.seats.title') }}</label>
-            <div class="mt-1 md:mt-0 md:col-span-2">
-              <div class="md:w-1/2">
-                <input id="seats" v-model="admin.licensedSeats" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" aria-describedby="seats-description" readonly />
-                <p v-if="remainingSeats > 0" id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
-                  <CheckIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
-                  {{ t('admin.licenseInfo.seats.description.enoughSeats', [remainingSeats]) }}
-                </p>
-                <p v-else-if="remainingSeats == 0" id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
-                  <ExclamationTriangleIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
-                  {{ t('admin.licenseInfo.seats.description.zeroSeats') }}
-                </p>
-                <p v-else id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
-                  <XMarkIcon class="shrink-0 text-red-500 mr-1 h-5 w-5" aria-hidden="true" />
-                  {{ t('admin.licenseInfo.seats.description.undercutSeats', [numberOfExceededSeats]) }}
-                </p>
-              </div>
+            <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
+              <input id="seats" v-model="admin.licensedSeats" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" aria-describedby="seats-description" readonly />
+              <p v-if="remainingSeats > 0" id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
+                <CheckIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
+                {{ t('admin.licenseInfo.seats.description.enoughSeats', [remainingSeats]) }}
+              </p>
+              <p v-else-if="remainingSeats == 0" id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
+                <ExclamationTriangleIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
+                {{ t('admin.licenseInfo.seats.description.zeroSeats') }}
+              </p>
+              <p v-else id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
+                <XMarkIcon class="shrink-0 text-red-500 mr-1 h-5 w-5" aria-hidden="true" />
+                {{ t('admin.licenseInfo.seats.description.undercutSeats', [numberOfExceededSeats]) }}
+              </p>
             </div>
           </div>
 
           <div class="md:grid md:grid-cols-3 md:gap-6">
-            <div class="md:col-start-2 md:col-span-2">
+            <div class="md:col-start-2">
               <button type="button" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="manageSubscription()">
                 <ArrowTopRightOnSquareIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
                 {{ t('admin.licenseInfo.getLicense') }}
@@ -221,59 +203,55 @@
             <label for="wotMaxDepth" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
               {{ t('admin.webOfTrust.wotMaxDepth.title') }}
             </label>
-            <div class="mt-1 md:mt-0 md:col-span-2">
-              <div class="relative md:w-1/2">
-                <input id="wotMaxDepth" v-model="wotMaxDepth" type="number" min="0" max="9" step="1" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': wotMaxDepthError instanceof FormValidationFailedError }"/>
-                <div v-if="wotMaxDepthError" class="absolute left-1/2 -translate-x-1/2 -top-2 transform translate-y-[-100%]">
-                  <div class="bg-red-50 border border-red-300 text-red-900 px-2 py-1 rounded shadow-sm text-sm whitespace-nowrap">
-                    {{ t('admin.webOfTrust.wotMaxDepth.error') }}
-                    <div class="absolute bottom-0 left-1/2 transform translate-y-1/2 rotate-45 w-2 h-2 bg-red-50 border-r border-b border-red-300"></div>
-                  </div>
-                </div>
-                <p class="mt-2 text-sm text-gray-500">
-                  {{ t('admin.webOfTrust.wotMaxDepth.description') }}
-                  <a href="https://docs.cryptomator.org/en/latest/security/hub/#web-of-trust" target="_blank" class="inline-flex items-center text-primary underline hover:text-primary-darker">
-                    {{ t('admin.webOfTrust.information') }}
-                    <ArrowRightIcon class="ml-1 h-4 w-4" aria-hidden="true" />
-                  </a>
-                </p>
-              </div>
-            </div>
-
-            <div class="md:grid md:grid-cols-3 md:gap-6">
-              <label for="wotIdVerifyLen" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
-                {{ t('admin.webOfTrust.wotIdVerifyLen.title') }}
-              </label>
-              <div class="mt-1 md:mt-0 md:col-span-2">
-                <div class="relative md:w-1/2">
-                  <input id="wotIdVerifyLen" v-model="wotIdVerifyLen" type="number" min="0" max="9" step="1" class="focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': wotIdVerifyLenError instanceof FormValidationFailedError }"/>
-                  <div v-if="wotIdVerifyLenError" class="absolute left-1/2 -translate-x-1/2 -top-2 transform translate-y-[-100%]">
-                    <div class="bg-red-50 border border-red-300 text-red-900 px-2 py-1 rounded shadow-sm text-sm whitespace-nowrap">
-                      {{ t('admin.webOfTrust.wotIdVerifyLen.error') }}
-                      <div class="absolute bottom-0 left-1/2 transform translate-y-1/2 rotate-45 w-2 h-2 bg-red-50 border-r border-b border-red-300"></div>
-                    </div>
-                  </div>
-                  <p class="mt-2 text-sm text-gray-500">
-                    {{ t('admin.webOfTrust.wotIdVerifyLen.description') }}
-                    <a href="https://docs.cryptomator.org/en/latest/security/hub/#web-of-trust" target="_blank" class="inline-flex items-center text-primary underline hover:text-primary-darker">
-                      {{ t('admin.webOfTrust.information') }}
-                      <ArrowRightIcon class="ml-1 h-4 w-4" aria-hidden="true" />
-                    </a>
-                  </p>
+            <div class="mt-1 md:mt-0 relative md:col-span-2 lg:col-span-1">
+              <input id="wotMaxDepth" v-model="wotMaxDepth" type="number" min="0" max="9" step="1" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': wotMaxDepthError instanceof FormValidationFailedError }"/>
+              <div v-if="wotMaxDepthError" class="absolute left-1/2 -translate-x-1/2 -top-2 transform translate-y-[-100%] w-5/6">
+                <div class="bg-red-50 border border-red-300 text-red-900 px-2 py-1 rounded shadow-sm text-sm hyphens-auto">
+                  {{ t('admin.webOfTrust.wotMaxDepth.error') }}
+                  <div class="absolute bottom-0 left-1/2 transform translate-y-1/2 rotate-45 w-2 h-2 bg-red-50 border-r border-b border-red-300"></div>
                 </div>
               </div>
+              <p class="mt-2 text-sm text-gray-500">
+                {{ t('admin.webOfTrust.wotMaxDepth.description') }}
+                <a href="https://docs.cryptomator.org/en/latest/security/hub/#web-of-trust" target="_blank" class="inline-flex items-center text-primary underline hover:text-primary-darker">
+                  {{ t('admin.webOfTrust.information') }}
+                  <ArrowRightIcon class="ml-1 h-4 w-4" aria-hidden="true" />
+                </a>
+              </p>
             </div>
+          </div>
 
-            <div class="md:grid md:grid-cols-3 md:gap-6">
-              <div class="md:col-start-2">
-                <button type="submit" :disabled="processing" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
-                  <span v-if="!wotUpdated">{{ t('admin.webOfTrust.save') }}</span>
-                  <span v-else>{{ t('admin.webOfTrust.saved') }}</span>
-                </button>
-                <p v-if="onSaveError != null && !(onSaveError instanceof FormValidationFailedError)" class="mt-2 text-sm text-red-900">
-                  {{ t('common.unexpectedError', [onSaveError.message]) }}
-                </p>
+          <div class="md:grid md:grid-cols-3 md:gap-6">
+            <label for="wotIdVerifyLen" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
+              {{ t('admin.webOfTrust.wotIdVerifyLen.title') }}
+            </label>
+            <div class="mt-1 md:mt-0 relative md:col-span-2 lg:col-span-1">
+              <input id="wotIdVerifyLen" v-model="wotIdVerifyLen" type="number" min="0" max="9" step="1" class="focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': wotIdVerifyLenError instanceof FormValidationFailedError }"/>
+              <div v-if="wotIdVerifyLenError" class="absolute left-1/2 -translate-x-1/2 -top-2 transform translate-y-[-100%] w-5/6">
+                <div class="bg-red-50 border border-red-300 text-red-900 px-2 py-1 rounded shadow-sm text-sm hyphens-auto">
+                  {{ t('admin.webOfTrust.wotIdVerifyLen.error') }}
+                  <div class="absolute bottom-0 left-1/2 transform translate-y-1/2 rotate-45 w-2 h-2 bg-red-50 border-r border-b border-red-300"></div>
+                </div>
               </div>
+              <p class="mt-2 text-sm text-gray-500">
+                {{ t('admin.webOfTrust.wotIdVerifyLen.description') }}
+                <a href="https://docs.cryptomator.org/en/latest/security/hub/#web-of-trust" target="_blank" class="inline-flex items-center text-primary underline hover:text-primary-darker">
+                  {{ t('admin.webOfTrust.information') }}
+                  <ArrowRightIcon class="ml-1 h-4 w-4" aria-hidden="true" />
+                </a>
+              </p>
+            </div>
+          </div>
+
+          <div class="md:grid md:grid-cols-3 md:gap-6">
+            <div class="md:col-start-2">
+              <button type="submit" :disabled="processing" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
+                <span v-if="!wotUpdated">{{ t('admin.webOfTrust.save') }}</span>
+                <span v-else>{{ t('admin.webOfTrust.saved') }}</span>
+              </button>
+              <p v-if="onSaveError != null && !(onSaveError instanceof FormValidationFailedError)" class="mt-2 text-sm text-red-900">
+                {{ t('common.unexpectedError', [onSaveError.message]) }}
+              </p>
             </div>
           </div>
         </form>
