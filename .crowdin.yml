@@ -2,7 +2,5 @@ commit_message: '[ci skip]'
 files:
   - source: /frontend/src/i18n/en-US.json
     translation: /frontend/src/i18n/%locale%.json
-    skip_untranslated_strings: false
-    skip_untranslated_files: true
     escape_quotes: 0
     escape_special_characters: 0
