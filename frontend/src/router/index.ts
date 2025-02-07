@@ -178,17 +178,11 @@ router.beforeEach((to, from, next) => {
 
 // THIRD check user/browser keys (requires auth)
 router.beforeEach(async (to) => {
-  let me = undefined;
-  if (!to.meta.skipAuth) {
-    me = await userdata.me;
-    if (me.language) {
-      i18n.global.locale.value = mapToLocale(me.language);
-    }
-  }
   if (to.meta.skipSetup) {
     return;
   }
-  if (!me?.setupCode) {
+  const me = await userdata.me;
+  if (!me.setupCode) {
     return { path: '/app/setup' };
   }
   const browserKeys = await userdata.browserKeys;
@@ -198,6 +192,16 @@ router.beforeEach(async (to) => {
   const browser = await userdata.browser;
   if (!browser) {
     return { path: '/app/setup' };
+  }
+});
+
+// FOURTH apply user language
+router.beforeEach(async (to) => {
+  if (!to.meta.skipAuth) {
+    const me = await userdata.me;
+    if (me.language) {
+      i18n.global.locale.value = mapToLocale(me.language);
+    }
   }
 });
 
