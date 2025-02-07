@@ -15,13 +15,13 @@
       </h2>
 
       <div class="flex gap-3">
-        <button class="w-full bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="refreshData()">
+        <button class="w-full bg-primary py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="refreshData()">
           {{ t('common.refresh') }}
         </button>
 
         <Listbox v-model="selectedOrder" as="div">
           <div class="relative w-36">
-            <ListboxButton class="relative w-full rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary text-sm">
+            <ListboxButton class="relative w-full rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-xs focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary text-sm">
               <span class="block truncate">{{ orderOptions[selectedOrder].label }}</span>
               <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                 <ChevronUpDownIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
@@ -48,19 +48,19 @@
             </PopoverButton>
 
             <transition enter-active-class="transition ease-out duration-100" enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 scale-100" leave-to-class="transform opacity-0 scale-95">
-              <PopoverPanel class="absolute right-0 z-10 mt-2 origin-top-right rounded-md bg-white p-4 shadow-2xl ring-1 ring-black/5 ring-opacity-5 focus:outline-none w-96">
+              <PopoverPanel class="absolute right-0 z-10 mt-2 origin-top-right rounded-md bg-white p-4 shadow-2xl ring-1 ring-black/5 focus:outline-hidden w-96">
                 <form class="space-y-4">
                   <div class="sm:grid sm:grid-cols-2 sm:items-center sm:gap-2">
                     <label for="filter-start-date" class="block text-sm font-medium text-gray-700">
                       {{ t('auditLog.filter.startDate') }}
                     </label>
-                    <input id="filter-start-date" v-model="startDateFilter" type="text" class="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': !startDateFilterIsValid }" placeholder="yyyy-MM-dd" />
+                    <input id="filter-start-date" v-model="startDateFilter" type="text" class="shadow-xs focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': !startDateFilterIsValid }" placeholder="yyyy-MM-dd" />
                   </div>
                   <div class="sm:grid sm:grid-cols-2 sm:items-center sm:gap-2">
                     <label for="filter-end-date" class="block text-sm font-medium text-gray-700">
                       {{ t('auditLog.filter.endDate') }}
                     </label>
-                    <input id="filter-end-date" v-model="endDateFilter" type="text" class="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': !endDateFilterIsValid }" placeholder="yyyy-MM-dd" />
+                    <input id="filter-end-date" v-model="endDateFilter" type="text" class="shadow-xs focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': !endDateFilterIsValid }" placeholder="yyyy-MM-dd" />
                   </div>
                   <div class="sm:grid sm:grid-cols-2 sm:items-center sm:gap-2">
                     <label class="block text-sm font-medium text-gray-700">
@@ -109,10 +109,10 @@
                     </div>
                   </Listbox>
                   <div class="flex flex-col sm:flex-row gap-2 pt-4 border-t border-gray-200">
-                    <button type="button" class="w-full border border-gray-300 rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50 disabled:hover:bg-white disabled:cursor-not-allowed" :disabled="filterIsReset" @click="resetFilter()">
+                    <button type="button" class="w-full border border-gray-300 rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50 disabled:hover:bg-white disabled:cursor-not-allowed" :disabled="filterIsReset" @click="resetFilter()">
                       {{ t('common.reset') }}
                     </button>
-                    <button type="button" class="w-full rounded-md bg-primary px-3 py-2 text-sm font-medium text-white shadow hover:bg-primary-d1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" :disabled="!filterIsValid" @click="applyFilter()">
+                    <button type="button" class="w-full rounded-md bg-primary px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-d1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" :disabled="!filterIsValid" @click="applyFilter()">
                       {{ t('common.apply') }}
                     </button>
                   </div>
@@ -198,7 +198,7 @@
     <h3 class="mt-2 text-sm font-medium text-gray-900">{{ t('auditLog.paymentRequired.message') }}</h3>
     <p class="mt-1 text-sm text-gray-500">{{ t('auditLog.paymentRequired.description') }}</p>
     <router-link v-slot="{ navigate }" to="/app/admin/settings" custom>
-      <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary mt-6" @click="navigate()">
+      <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent shadow-xs text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary mt-6" @click="navigate()">
         <WrenchIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
         {{ t('auditLog.paymentRequired.openAdminSection') }}
       </button>
@@ -323,7 +323,6 @@ async function refreshData() {
   await fetchData();
 }
 const selectedEventTypes = ref<string[]>(['ALL']);
-
 
 const eventTypeOptions = Object.fromEntries(
   Object.entries({
