@@ -178,12 +178,15 @@ router.beforeEach((to, from, next) => {
 
 // THIRD check user/browser keys (requires auth)
 router.beforeEach(async (to) => {
-  const me = await userdata.me;
-  i18n.global.locale.value = mapToLocale(me.language);
+  let me = undefined;
+  if (!to.meta.skipAuth) {
+    me = await userdata.me;
+    i18n.global.locale.value = mapToLocale(me.language);
+  }
   if (to.meta.skipSetup) {
     return;
   }
-  if (!me.setupCode) {
+  if (!me?.setupCode) {
     return { path: '/app/setup' };
   }
   const browserKeys = await userdata.browserKeys;
