@@ -12,6 +12,8 @@ public final class UserDto extends AuthorityDto {
 
 	@JsonProperty("email")
 	public final String email;
+	@JsonProperty("language")
+	public final String language;
 	@JsonProperty("devices")
 	public final Set<DeviceResource.DeviceDto> devices;
 	@JsonProperty("ecdhPublicKey")
@@ -31,10 +33,11 @@ public final class UserDto extends AuthorityDto {
 	@JsonProperty("publicKey")
 	public final String legacyEcdhPublicKey;
 
-	UserDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("pictureUrl") String pictureUrl, @JsonProperty("email") String email, @JsonProperty("devices") Set<DeviceResource.DeviceDto> devices,
+	UserDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("pictureUrl") String pictureUrl, @JsonProperty("email") String email, @JsonProperty("language") String language, @JsonProperty("devices") Set<DeviceResource.DeviceDto> devices,
 			@Nullable @JsonProperty("ecdhPublicKey") @OnlyBase64Chars String ecdhPublicKey, @Nullable @JsonProperty("ecdsaPublicKey") @OnlyBase64Chars String ecdsaPublicKey, @Nullable @JsonProperty("privateKeys") @ValidJWE String privateKeys, @Nullable @JsonProperty("setupCode") @ValidJWE String setupCode) {
 		super(id, Type.USER, name, pictureUrl);
 		this.email = email;
+		this.language = language;
 		this.devices = devices;
 		this.ecdhPublicKey = ecdhPublicKey;
 		this.ecdsaPublicKey = ecdsaPublicKey;
@@ -46,6 +49,6 @@ public final class UserDto extends AuthorityDto {
 	}
 
 	public static UserDto justPublicInfo(User user) {
-		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), Set.of(), user.getEcdhPublicKey(), user.getEcdsaPublicKey(),null, null);
+		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getLanguage(), Set.of(), user.getEcdhPublicKey(), user.getEcdsaPublicKey(),null, null);
 	}
 }
