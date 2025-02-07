@@ -78,12 +78,12 @@
                             <button 
                               v-for="type in selectedEventTypes" 
                               :key="type" 
-                              :disabled="type === 'ALL'"
+                              :disabled="type === ALL"
                               class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20"
-                              @click.stop="type !== 'ALL' && removeEventType(type)"
+                              @click.stop="type !== ALL && removeEventType(type)"
                             >
                               <span class="mr-1">{{ eventTypeOptions[type] }}</span>
-                              <span v-if="type !== 'ALL'" class="text-green-800 font-bold">&times;</span>
+                              <span v-if="type !== ALL" class="text-green-800 font-bold">&times;</span>
                             </button>
                           </template>
                         </div>
@@ -324,7 +324,9 @@ async function refreshData() {
   auditlog.entityCache.invalidateAll();
   await fetchData();
 }
-const selectedEventTypes = ref<string[]>(['ALL']);
+
+const ALL = 'ALL';
+const selectedEventTypes = ref<string[]>([ALL]);
 const eventTypeOptions = Object.fromEntries(
   Object.entries({
     ALL: t('auditLog.details.all'),
@@ -341,19 +343,19 @@ const eventTypeOptions = Object.fromEntries(
     VAULT_OWNERSHIP_CLAIM: t('auditLog.details.vaultOwnership.claim'),
     VAULT_UPDATE: t('auditLog.details.vault.update')
   }).sort((a, b) => {
-    if (a[0] === 'ALL') return -1;
-    if (b[0] === 'ALL') return 1;
+    if (a[0] === ALL) return -1;
+    if (b[0] === ALL) return 1;
     return a[1].localeCompare(b[1]);
   })
 );
 
 watch(selectedEventTypes, (newSelection, oldSelection) => {
-  if (!oldSelection.includes('ALL') && newSelection.includes('ALL')) {
-    selectedEventTypes.value = ['ALL'];
-  } else if (newSelection.includes('ALL') && newSelection.length > 1) {
-    selectedEventTypes.value = newSelection.filter(type => type !== 'ALL');
+  if (!oldSelection.includes(ALL) && newSelection.includes(ALL)) {
+    selectedEventTypes.value = [ALL];
+  } else if (newSelection.includes(ALL) && newSelection.length > 1) {
+    selectedEventTypes.value = newSelection.filter(type => type !== ALL);
   } else if (selectedEventTypes.value.length === 0) {
-    selectedEventTypes.value = ['ALL'];
+    selectedEventTypes.value = [ALL];
   }
   selectedEventTypes.value.sort((a, b) => eventTypeOptions[a].localeCompare(eventTypeOptions[b]));
 });
@@ -364,14 +366,14 @@ async function applyFilter() {
     endDate.value = endOfDate(new Date(endDateFilter.value));
     await fetchData();
 
-    if (!selectedEventTypes.value.includes('ALL')) {
+    if (!selectedEventTypes.value.includes(ALL)) {
       auditEvents.value = auditEvents.value.filter(event => selectedEventTypes.value.includes(event.type));
     }
   }
 }
 
 function removeEventType(type: string): void {
-  if (type !== 'ALL') {
+  if (type !== ALL) {
     selectedEventTypes.value = selectedEventTypes.value.filter(t => t !== type);
   }
 }
