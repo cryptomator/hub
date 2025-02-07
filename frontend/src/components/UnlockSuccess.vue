@@ -47,7 +47,7 @@
           {{ t('unlockSuccess.noVaultAccess.title') }}
         </h1>
         <p class="mt-2">
-          {{ t('unlockSuccess.noVaultAccess.descritpion') }}
+          {{ t('unlockSuccess.noVaultAccess.description') }}
         </p>
       </div>
 
@@ -57,7 +57,7 @@
           {{ t('unlockSuccess.title') }}
         </h1>
         <p class="mt-2">
-          {{ t('unlockSuccess.descritpion') }}
+          {{ t('unlockSuccess.description') }}
         </p>
       </div>
     </div>

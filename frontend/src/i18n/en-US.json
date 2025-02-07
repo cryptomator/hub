@@ -235,7 +235,7 @@
   "userProfile.actions.changeLanguage": "Change Language",
 
   "unlockSuccess.title": "Vault unlocked successfully",
-  "unlockSuccess.descritpion": "You may now close this browser tab and return to Cryptomator.",
+  "unlockSuccess.description": "You may now close this browser tab and return to Cryptomator.",
   "unlockSuccess.accountSetup.title": "Setup Required",
   "unlockSuccess.accountSetup.description": "Complete setting up your account and retrieve your account key.",
   "unlockSuccess.accountSetup.goToSetup": "Complete Setup",
@@ -243,7 +243,7 @@
   "unlockSuccess.deviceSetup.description": "Please enter your account key in Cryptomator to authorize it.",
   "unlockSuccess.deviceSetup.goToProfile": "View Account Key in my Profile",
   "unlockSuccess.noVaultAccess.title": "No access to this Vault",
-  "unlockSuccess.noVaultAccess.descritpion": "Please contact the vault owner to add you as a vault member.",
+  "unlockSuccess.noVaultAccess.description": "Please contact the vault owner to add you as a vault member.",
 
   "vaultDetails.warning.archived": "This vault is archived and cannot be unlocked.",
   "vaultDetails.description.header": "Description",

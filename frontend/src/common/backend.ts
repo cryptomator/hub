@@ -70,7 +70,7 @@ export type UserDto = {
   name: string;
   pictureUrl?: string;
   email: string;
-  language: string;
+  language?: string;
   devices: DeviceDto[];
   accessibleVaults: VaultDto[];
   ecdhPublicKey?: string;

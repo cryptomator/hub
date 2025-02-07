@@ -181,7 +181,9 @@ router.beforeEach(async (to) => {
   let me = undefined;
   if (!to.meta.skipAuth) {
     me = await userdata.me;
-    i18n.global.locale.value = mapToLocale(me.language);
+    if (me.language) {
+      i18n.global.locale.value = mapToLocale(me.language);
+    }
   }
   if (to.meta.skipSetup) {
     return;
