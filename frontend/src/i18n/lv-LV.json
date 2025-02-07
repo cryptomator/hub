@@ -1,0 +1,21 @@
+{
+  "common.apply": "Pielietot",
+  "common.cancel": "Atcelt",
+  "common.close": "Aizvērt",
+  "common.copied": "Ievietots starpliktuvē",
+  "common.copy": "Ievietot starpliktuvē",
+  "common.next": "Tālāk",
+  "common.previous": "Atpakaļ",
+  "common.remove": "Noņemt",
+  "common.reset": "Atiestatīt",
+  "common.share": "Kopīgot",
+  "common.show": "Rādīt",
+  "admin.webOfTrust.save": "Saglabāt",
+  "auditLog.details.vault.create": "Izveidot glabātavu",
+  "claimVaultOwnershipDialog.error.wrongPassword": "Nepareiza parole",
+  "createVault.enterVaultDetails.title": "Izveidot glabātavu",
+  "createVault.enterVaultDetails.vaultName": "Glabātavas nosaukums",
+  "createVault.showRecoveryKey.submit": "Izveidot glabātavu",
+  "deviceList.deviceName": "Ierīces nosaukums",
+  "editVaultMetadataDialog.vaultName": "Glabātavas nosaukums"
+}
