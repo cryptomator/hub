@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - WoT: Users can now mutually verify their identity, hardening Hub against injection of malicious public keys (#281)
 - WoT: Admins can adjust WoT parameters (#297)
 - Permission to create new vaults can now be controlled via the `create-vaults` role in Keycloak (#206)
+- Preserver user locale setting (#313)
 
 ### Changed
 
