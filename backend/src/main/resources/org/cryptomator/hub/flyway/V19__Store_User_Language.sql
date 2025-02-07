@@ -1,1 +1,1 @@
-ALTER TABLE "user_details" add "language" VARCHAR;
+ALTER TABLE "user_details" add "language" VARCHAR(2);

@@ -4,6 +4,7 @@ import en from './en-US.json';
 
 import { createI18n } from 'vue-i18n';
 
+// ISO 639‑1 two letter code
 export enum Locale {
   EN = 'en',
   DE = 'de'
