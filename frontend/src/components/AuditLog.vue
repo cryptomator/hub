@@ -42,7 +42,7 @@
 
         <PopoverGroup class="flex items-baseline space-x-8">
           <Popover as="div" class="relative inline-block text-left">
-            <PopoverButton class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+            <PopoverButton class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-xs text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary">
               <span>{{ t('auditLog.filter') }}</span>
               <ChevronDownIcon class="-mr-1 ml-2 h-5 w-5" aria-hidden="true" />
             </PopoverButton>
@@ -78,9 +78,10 @@
                             <button 
                               v-for="type in selectedEventTypes" 
                               :key="type" 
-                              @click.stop="type !== 'ALL' && removeEventType(type)"
                               :disabled="type === 'ALL'"
-                              class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
+                              class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20"
+                              @click.stop="type !== 'ALL' && removeEventType(type)"
+                            >
                               <span class="mr-1">{{ eventTypeOptions[type] }}</span>
                               <span v-if="type !== 'ALL'" class="text-green-800 font-bold">&times;</span>
                             </button>
@@ -98,7 +99,8 @@
                             :key="key" 
                             v-slot="{ active, selected }" 
                             class="relative cursor-default select-none py-2 pl-3 pr-9 ui-not-active:text-gray-900 ui-active:text-white ui-active:bg-primary" 
-                            :value="key">
+                            :value="key"
+                          >
                             <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ label }}</span>
                             <span v-if="selected" :class="[selected ? 'text-primary' : active ? 'text-white' : 'text-primary', 'absolute inset-y-0 right-0 flex items-center pr-4']">
                               <CheckIcon class="h-5 w-5" aria-hidden="true" />
@@ -127,7 +129,7 @@
     <div class="mt-5 flow-root">
       <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
         <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-          <div class="shadow-sm overflow-hidden border-b border-gray-200 sm:rounded-lg">
+          <div class="overflow-hidden shadow-sm ring-1 ring-black/5 sm:rounded-lg">
             <table class="min-w-full divide-y divide-gray-300" aria-describedby="title">
               <thead class="bg-gray-50">
                 <tr>
@@ -323,7 +325,6 @@ async function refreshData() {
   await fetchData();
 }
 const selectedEventTypes = ref<string[]>(['ALL']);
-
 const eventTypeOptions = Object.fromEntries(
   Object.entries({
     ALL: t('auditLog.details.all'),
@@ -340,8 +341,8 @@ const eventTypeOptions = Object.fromEntries(
     VAULT_OWNERSHIP_CLAIM: t('auditLog.details.vaultOwnership.claim'),
     VAULT_UPDATE: t('auditLog.details.vault.update')
   }).sort((a, b) => {
-    if (a[0] === "ALL") return -1;
-    if (b[0] === "ALL") return 1;
+    if (a[0] === 'ALL') return -1;
+    if (b[0] === 'ALL') return 1;
     return a[1].localeCompare(b[1]);
   })
 );
