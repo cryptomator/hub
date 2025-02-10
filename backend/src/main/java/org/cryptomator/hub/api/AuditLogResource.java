@@ -54,11 +54,12 @@ public class AuditLogResource {
 	@Parameter(name = "paginationId", description = "The smallest (asc ordering) or highest (desc ordering) audit entry id, not included in results. Used for pagination. ", in = ParameterIn.QUERY)
 	@Parameter(name = "order", description = "The order of the queried table. Determines if most recent (desc) or oldest entries (asc) are considered first. Allowed Values are 'desc' (default) or 'asc'. Used for pagination.", in = ParameterIn.QUERY)
 	@Parameter(name = "pageSize", description = "the maximum number of entries to return. Must be between 1 and 100.", in = ParameterIn.QUERY)
+	@Parameter(name = "type", description = "the list of type of events to return. Empty list is all events.", in = ParameterIn.QUERY)
 	@APIResponse(responseCode = "200", description = "Body contains list of events in the specified time interval")
 	@APIResponse(responseCode = "400", description = "startDate or endDate not specified, startDate > endDate, order specified and not in ['asc','desc'] or pageSize not in [1 .. 100]")
 	@APIResponse(responseCode = "402", description = "Community license used or license expired")
 	@APIResponse(responseCode = "403", description = "requesting user does not have admin role")
-	public List<AuditEventDto> getAllEvents(@QueryParam("startDate") Instant startDate, @QueryParam("endDate") Instant endDate, @QueryParam("paginationId") Long paginationId, @QueryParam("order") @DefaultValue("desc") String order, @QueryParam("pageSize") @DefaultValue("20") int pageSize) {
+	public List<AuditEventDto> getAllEvents(@QueryParam("startDate") Instant startDate, @QueryParam("endDate") Instant endDate, @QueryParam("type") List<String> type, @QueryParam("paginationId") Long paginationId, @QueryParam("order") @DefaultValue("desc") String order, @QueryParam("pageSize") @DefaultValue("20") int pageSize) {
 		if (!license.isSet() || license.isExpired()) {
 			throw new PaymentRequiredException("Community license used or license expired");
 		}
@@ -71,11 +72,13 @@ public class AuditLogResource {
 			throw new BadRequestException("order must be either 'asc' or 'desc'");
 		} else if (pageSize < 1 || pageSize > 100) {
 			throw new BadRequestException("pageSize must be between 1 and 100");
+		} else if (type == null) {
+			throw new BadRequestException("type must be specified");
 		} else if (paginationId == null) {
 			throw new BadRequestException("paginationId must be specified");
 		}
 
-		return auditEventRepo.findAllInPeriod(startDate, endDate, paginationId, order.equals("asc"), pageSize).map(AuditEventDto::fromEntity).toList();
+		return auditEventRepo.findAllInPeriod(startDate, endDate, type, paginationId, order.equals("asc"), pageSize).map(AuditEventDto::fromEntity).toList();
 	}
 
 	@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")

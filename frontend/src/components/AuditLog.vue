@@ -290,7 +290,8 @@ async function fetchData(page: number = 0) {
   onFetchError.value = null;
   try {
     // Fetch one more event than the page size to determine if there is a next page
-    const events = await auditlog.service.getAllEvents(startDate.value, endDate.value, lastIdOfPreviousPage[page], selectedOrder.value, pageSize.value + 1);
+    // TODO pass here as [] the filter types to the backend
+    const events = await auditlog.service.getAllEvents(startDate.value, endDate.value, [], lastIdOfPreviousPage[page], selectedOrder.value, pageSize.value + 1);
     // If the lastIdOfPreviousPage for the first page has not been set yet, set it to an id "before"/"after" the first event
     if (page == 0 && lastIdOfPreviousPage[0] == 0 && events.length > 0) {
       lastIdOfPreviousPage[0] = events[0].id + orderOptions[selectedOrder.value].sign;
