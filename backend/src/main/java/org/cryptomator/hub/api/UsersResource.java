@@ -104,18 +104,20 @@ public class UsersResource {
 	 * @param userDto    The DTO
 	 */
 	private void updateDevices(User userEntity, UserDto userDto) {
-		var devices = userEntity.devices.stream().collect(Collectors.toUnmodifiableMap(Device::getId, Function.identity()));
-		var updatedDevices = userDto.devices.stream()
-				.filter(d -> devices.containsKey(d.id())) // only look at DTOs for which we find a matching existing entity
-				.map(dto -> {
-					var device = devices.get(dto.id());
-					device.setType(dto.type());
-					device.setName(dto.name());
-					device.setPublickey(dto.publicKey());
-					device.setUserPrivateKeys(dto.userPrivateKeys());
-					return device;
-				});
-		deviceRepo.persist(updatedDevices);
+		if (userDto.devices != null) {
+			var devices = userEntity.devices.stream().collect(Collectors.toUnmodifiableMap(Device::getId, Function.identity()));
+			var updatedDevices = userDto.devices.stream()
+					.filter(d -> devices.containsKey(d.id())) // only look at DTOs for which we find a matching existing entity
+					.map(dto -> {
+						var device = devices.get(dto.id());
+						device.setType(dto.type());
+						device.setName(dto.name());
+						device.setPublickey(dto.publicKey());
+						device.setUserPrivateKeys(dto.userPrivateKeys());
+						return device;
+					});
+			deviceRepo.persist(updatedDevices);
+		}
 	}
 
 	@POST
