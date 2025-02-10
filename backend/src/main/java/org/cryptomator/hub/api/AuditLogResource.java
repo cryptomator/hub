@@ -35,6 +35,7 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Path("/auditlog")
@@ -74,6 +75,14 @@ public class AuditLogResource {
 			throw new BadRequestException("pageSize must be between 1 and 100");
 		} else if (type == null) {
 			throw new BadRequestException("type must be specified");
+		} else if (!type.isEmpty()) {
+			var validTypes = Set.of(DeviceRegisteredEvent.TYPE, DeviceRemovedEvent.TYPE, SettingWotUpdateEvent.TYPE,
+					SignedWotIdEvent.TYPE, VaultCreatedEvent.TYPE, VaultUpdatedEvent.TYPE, VaultAccessGrantedEvent.TYPE,
+					VaultKeyRetrievedEvent.TYPE, VaultMemberAddedEvent.TYPE, VaultMemberRemovedEvent.TYPE,
+					VaultMemberUpdatedEvent.TYPE, VaultOwnershipClaimedEvent.TYPE);
+			if (!validTypes.containsAll(type)) {
+				throw new BadRequestException("Invalid event type provided");
+			}
 		} else if (paginationId == null) {
 			throw new BadRequestException("paginationId must be specified");
 		}
