@@ -263,7 +263,7 @@ async function createUserKey() {
     const userKeys = await UserKeys.create();
     me.ecdhPublicKey = await userKeys.encodedEcdhPublicKey();
     me.ecdsaPublicKey = await userKeys.encodedEcdsaPublicKey();
-    me.privateKey = await userKeys.encryptWithSetupCode(setupCode.value);
+    me.privateKeys = await userKeys.encryptWithSetupCode(setupCode.value);
     me.setupCode = await JWEBuilder.ecdhEs(userKeys.ecdhKeyPair.publicKey).encrypt({ setupCode: setupCode.value });
     const browserKeys = await userdata.createBrowserKeys();
     await submitBrowserKeys(browserKeys, me, userKeys);

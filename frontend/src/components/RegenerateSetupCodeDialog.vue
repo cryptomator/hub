@@ -153,7 +153,7 @@ async function regenerateSetupCode() {
     const me = await userdata.me;
     const newCode = crypto.randomUUID();
     const userKeys = await userdata.decryptUserKeysWithBrowser();
-    me.privateKey = await userKeys.encryptWithSetupCode(newCode);
+    me.privateKeys = await userKeys.encryptWithSetupCode(newCode);
     me.setupCode = await JWEBuilder.ecdhEs(userKeys.ecdhKeyPair.publicKey).encrypt({ setupCode: newCode });
     await backend.users.putMe(me);
     setupCode.value = newCode;
