@@ -74,13 +74,15 @@ public final class UserDto extends AuthorityDto {
 		return devices;
 	}
 
-	// Primary getter for the new key name.
 	@JsonProperty("ecdhPublicKey")
 	public String getEcdhPublicKey() {
 		return ecdhPublicKey;
 	}
 
-	// Legacy getter for compatibility. Both getters return the same value.
+	/**
+	 * Same as {@link #ecdhPublicKey}, kept for compatibility purposes
+	 * @deprecated to be removed in Hub 2.0.0, tracked in <a href="https://github.com/cryptomator/hub/issues/316">#316</a>
+	 */
 	@Deprecated(forRemoval = true)
 	@JsonProperty("publicKey")
 	public String getPublicKey() {
@@ -92,13 +94,15 @@ public final class UserDto extends AuthorityDto {
 		return ecdsaPublicKey;
 	}
 
-	// Primary getter for private keys.
 	@JsonProperty("privateKeys")
 	public String getPrivateKeys() {
 		return privateKeys;
 	}
 
-	// Legacy getter for private keys.
+	/**
+	 * Same as {@link #privateKeys}, kept for compatibility purposes
+	 * @deprecated to be removed in Hub 2.0.0, tracked in <a href="https://github.com/cryptomator/hub/issues/316">#316</a>
+	 */
 	@Deprecated(forRemoval = true)
 	@JsonProperty("privateKey")
 	public String getPrivateKey() {
