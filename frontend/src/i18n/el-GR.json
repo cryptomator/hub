@@ -92,6 +92,10 @@
   "trustDetails.trustLevel": "Επίπεδο Εμπιστοσύνης {0}",
   "trustDetails.trustLevel.untrusted": "Μη επαληθευμένος",
   "trustDetails.showSignDialogBtn": "Έλεγχος Ταυτότητας...",
+  "trustDetails.userNotSetUp": "Ο χρήστης δεν έχει ρυθμίσει ακόμα το λογαριασμό του.",
+  "signUserKeysDialog.title": "Επαλήθευση {0}΄s Ταυτότητας",
+  "signUserKeysDialog.description": "Εισαγάγετε τους πρώτους {0} χαρακτήρες του δακτυλικού αποτυπώματος του χρήστη {1}'s για να επιβεβαιώσετε την αυθεντικότητα των δημόσιων κλειδιών του. Το δακτυλικό αποτύπωμα βρίσκεται στο προφίλ του χρήστη.",
+  "signUserKeysDialog.submit": "Επιβεβαιώστε αυτήν την Ταυτότητα Χρήστη(ες)",
   "initialSetup.accountKey": "Κλειδί Λογαριασμού",
   "manageAccountKey.title": "Κλειδί Λογαριασμού",
   "nav.vaults": "Κρύπτες",
@@ -100,6 +104,9 @@
   "recoveryKeyDialog.recoveryKey": "Κλειδί Ανάκτησης της Κρύπτης Σας",
   "recoverVaultDialog.submit": "Ανάκτηση Κρύπτης",
   "regenerateAccountKeyDialog.saveAccountKey.accountKey": "Κλειδί Λογαριασμού",
+  "userProfile.title": "Προφίλ",
+  "userProfile.actions.manageAccount": "Διαχείριση Λογαριασμού",
+  "userProfile.actions.changeLanguage": "Αλλαγή Γλώσσας",
   "unlockSuccess.deviceSetup.title": "Νέα Συσκευή",
   "vaultDetails.description.header": "Περιγραφή",
   "vaultDetails.actions.updatePermissions.reload": "Επαναφόρτωση",
@@ -109,5 +116,6 @@
   "vaultDetails.actions.claimOwnership": "Διεκδίκηση Ιδιοκτησίας",
   "vaultList.title": "Κρύπτες",
   "vaultList.addVault": "Προσθήκη",
-  "vaultList.filter": "Φίλτρο"
+  "vaultList.filter": "Φίλτρο",
+  "vaultList.badge.owner": "Κάτοχος"
 }
