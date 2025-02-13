@@ -1,6 +1,10 @@
 {
   "locale.en": "Engels",
   "locale.de": "Duits",
+  "locale.it": "Italiaans",
+  "locale.ko": "Koreaans",
+  "locale.nl": "Nederlands",
+  "locale.pt": "Portugees",
   "common.add": "Toevoegen",
   "common.apply": "Toepassen",
   "common.cancel": "Annuleren",
