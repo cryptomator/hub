@@ -75,7 +75,7 @@ export type UserDto = {
   accessibleVaults: VaultDto[];
   ecdhPublicKey?: string;
   ecdsaPublicKey?: string;
-  privateKey?: string;
+  privateKeys?: string;
   setupCode?: string;
 }
 
