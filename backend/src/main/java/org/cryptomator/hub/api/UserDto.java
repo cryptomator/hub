@@ -130,9 +130,7 @@ public final class UserDto extends AuthorityDto {
 				user.getLanguage(),
 				Set.of(),
 				user.getEcdhPublicKey(),
-				user.getEcdhPublicKey(),
 				user.getEcdsaPublicKey(),
-				null,
 				null,
 				null);
 	}
