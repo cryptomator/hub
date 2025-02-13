@@ -1,44 +1,63 @@
 import { I18nOptions } from 'vue-i18n';
 import de from './de-DE.json';
 import en from './en-US.json';
+import it from './it-IT.json';
+import ko from './ko-KR.json';
+import nl from './nl-NL.json';
+import pt from './pt-PT.json';
 
 import { createI18n } from 'vue-i18n';
 
 // ISO 639‑1 two letter code
 export enum Locale {
   EN = 'en',
-  DE = 'de'
+  DE = 'de',
+  IT = 'it',
+  KO = 'ko',
+  NL = 'nl',
+  PT = 'pt'
 }
 
 export const messages = {
   [Locale.EN]: en,
-  [Locale.DE]: de
+  [Locale.DE]: de,
+  [Locale.IT]: it,
+  [Locale.KO]: ko,
+  [Locale.NL]: nl,
+  [Locale.PT]: pt
 };
+
+const defaultShortDatetimeFormat = {
+  short: {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  }
+} as const;
 
 export const datetimeFormats: I18nOptions['datetimeFormats'] = {
-  [Locale.EN]: {
-    short: {
-      year: 'numeric', month: 'long', day: 'numeric'
-    }
-  },
-  [Locale.DE]: {
-    short: {
-      year: 'numeric', month: 'long', day: 'numeric'
-    }
-  }
+  [Locale.EN]: defaultShortDatetimeFormat,
+  [Locale.DE]: defaultShortDatetimeFormat,
+  [Locale.IT]: defaultShortDatetimeFormat,
+  [Locale.KO]: defaultShortDatetimeFormat,
+  [Locale.NL]: defaultShortDatetimeFormat,
+  [Locale.PT]: defaultShortDatetimeFormat,
 };
 
-export const numberFormats: I18nOptions['numberFormats'] = {
-  [Locale.EN]: {
-    percent: {
-      style: 'percent', useGrouping: false
-    }
-  },
-  [Locale.DE]: {
-    percent: {
-      style: 'percent', useGrouping: false
-    }
+const defaultNumberFormat = {
+  percent: {
+    style: 'percent',
+    useGrouping: false
   }
+} as const;
+
+export const numberFormats: I18nOptions['numberFormats'] = {
+  [Locale.EN]: defaultNumberFormat,
+  [Locale.DE]: defaultNumberFormat,
+  [Locale.IT]: defaultNumberFormat,
+  [Locale.KO]: defaultNumberFormat,
+  [Locale.NL]: defaultNumberFormat,
+  [Locale.PT]: defaultNumberFormat,
 };
 
 export const mapToLocale = (local: string): Locale =>
