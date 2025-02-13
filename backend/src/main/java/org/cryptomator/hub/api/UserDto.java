@@ -56,14 +56,7 @@ public final class UserDto extends AuthorityDto {
 			String ecdsaPublicKey,
 			String privateKeys,
 			String setupCode) {
-		super(id, Type.USER, name, pictureUrl);
-		this.email = email;
-		this.language = language;
-		this.devices = devices;
-		this.ecdhPublicKey = ecdhPublicKey;
-		this.ecdsaPublicKey = ecdsaPublicKey;
-		this.privateKeys = privateKeys;
-		this.setupCode = setupCode;
+		this(id, name, pictureUrl, email, language, devices, ecdhPublicKey, ecdhPublicKey, ecdsaPublicKey, privateKeys, privateKeys, setupCode);
 	}
 
 	@JsonProperty("email")
