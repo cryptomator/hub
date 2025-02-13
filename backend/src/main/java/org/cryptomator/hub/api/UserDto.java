@@ -28,34 +28,41 @@ public final class UserDto extends AuthorityDto {
 			@JsonProperty("language") String language,
 			@JsonProperty("devices") Set<DeviceResource.DeviceDto> devices,
 			// Accept either "ecdhPublicKey" or the legacy "publicKey" on input
-			@Nullable
-			@JsonProperty("ecdhPublicKey") @OnlyBase64Chars String ecdhPublicKey,
-			@Nullable
-			@JsonProperty("publicKey") @OnlyBase64Chars String publicKey,
-			@Nullable
-			@JsonProperty("ecdsaPublicKey") @OnlyBase64Chars String ecdsaPublicKey,
+			@Nullable @JsonProperty("ecdhPublicKey") @OnlyBase64Chars String ecdhPublicKey,
+			@Nullable @JsonProperty("publicKey") @OnlyBase64Chars String publicKey,
+			@Nullable @JsonProperty("ecdsaPublicKey") @OnlyBase64Chars String ecdsaPublicKey,
 			// Accept either "privateKeys" or the legacy "privateKey" on input
-			@Nullable
-			@JsonProperty("privateKeys") @ValidJWE String privateKeys,
-			@Nullable
-			@JsonProperty("privateKey") @ValidJWE String privateKey,
-			@Nullable
-			@JsonProperty("setupCode") @ValidJWE String setupCode) {
+			@Nullable @JsonProperty("privateKeys") @ValidJWE String privateKeys,
+			@Nullable @JsonProperty("privateKey") @ValidJWE String privateKey,
+			@Nullable @JsonProperty("setupCode") @ValidJWE String setupCode) {
 		super(id, Type.USER, name, pictureUrl);
 		this.email = email;
 		this.language = language;
 		this.devices = devices;
-		if (ecdhPublicKey != null) {
-			this.ecdhPublicKey = ecdhPublicKey;
-		} else {
-			this.ecdhPublicKey = publicKey;
-		}
+		this.ecdhPublicKey = ecdhPublicKey != null ? ecdhPublicKey : publicKey;
 		this.ecdsaPublicKey = ecdsaPublicKey;
-		if (privateKeys != null) {
-			this.privateKeys = privateKeys;
-		} else {
-			this.privateKeys = privateKey;
-		}
+		this.privateKeys = privateKeys != null ? privateKeys : privateKey;
+		this.setupCode = setupCode;
+	}
+
+	public UserDto(
+			String id,
+			String name,
+			String pictureUrl,
+			String email,
+			String language,
+			Set<DeviceResource.DeviceDto> devices,
+			String ecdhPublicKey,
+			String ecdsaPublicKey,
+			String privateKeys,
+			String setupCode) {
+		super(id, Type.USER, name, pictureUrl);
+		this.email = email;
+		this.language = language;
+		this.devices = devices;
+		this.ecdhPublicKey = ecdhPublicKey;
+		this.ecdsaPublicKey = ecdsaPublicKey;
+		this.privateKeys = privateKeys;
 		this.setupCode = setupCode;
 	}
 
