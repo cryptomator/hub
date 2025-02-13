@@ -34,6 +34,7 @@ import java.net.URI;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
@@ -79,11 +80,18 @@ public class UsersResource {
 		user.setPictureUrl(jwt.getClaim("picture"));
 		user.setEmail(jwt.getClaim("email"));
 		if (dto != null) {
-			user.setEcdhPublicKey(dto.ecdhPublicKey);
-			user.setEcdsaPublicKey(dto.ecdsaPublicKey);
-			user.setPrivateKeys(dto.privateKeys);
-			user.setSetupCode(dto.setupCode);
+			if (!Objects.equals(user.getSetupCode(), dto.getSetupCode())) {
+				user.setSetupCode(dto.getSetupCode());
+				eventLogger.logUserSetupCodeChanged(jwt.getSubject());
+			}
+			if (!Objects.equals(user.getEcdhPublicKey(), dto.getEcdhPublicKey()) || !Objects.equals(user.getEcdsaPublicKey(), dto.getEcdsaPublicKey()) || !Objects.equals(user.getPrivateKeys(), dto.getPrivateKeys())) {
+				user.setEcdhPublicKey(dto.getEcdhPublicKey());
+				user.setEcdsaPublicKey(dto.getEcdsaPublicKey());
+				user.setPrivateKeys(dto.getPrivateKeys());
+				eventLogger.logUserKeysChanged(jwt.getSubject(), jwt.getName());
+			}
 			updateDevices(user, dto);
+			user.setLanguage(dto.getLanguage());
 		}
 		userRepo.persist(user);
 		return Response.created(URI.create(".")).build();
@@ -96,18 +104,20 @@ public class UsersResource {
 	 * @param userDto    The DTO
 	 */
 	private void updateDevices(User userEntity, UserDto userDto) {
-		var devices = userEntity.devices.stream().collect(Collectors.toUnmodifiableMap(Device::getId, Function.identity()));
-		var updatedDevices = userDto.devices.stream()
-				.filter(d -> devices.containsKey(d.id())) // only look at DTOs for which we find a matching existing entity
-				.map(dto -> {
-					var device = devices.get(dto.id());
-					device.setType(dto.type());
-					device.setName(dto.name());
-					device.setPublickey(dto.publicKey());
-					device.setUserPrivateKeys(dto.userPrivateKeys());
-					return device;
-				});
-		deviceRepo.persist(updatedDevices);
+		if (userDto.getDevices() != null) {
+			var devices = userEntity.devices.stream().collect(Collectors.toUnmodifiableMap(Device::getId, Function.identity()));
+			var updatedDevices = userDto.getDevices().stream()
+					.filter(d -> devices.containsKey(d.id())) // only look at DTOs for which we find a matching existing entity
+					.map(dto -> {
+						var device = devices.get(dto.id());
+						device.setType(dto.type());
+						device.setName(dto.name());
+						device.setPublickey(dto.publicKey());
+						device.setUserPrivateKeys(dto.userPrivateKeys());
+						return device;
+					});
+			deviceRepo.persist(updatedDevices);
+		}
 	}
 
 	@POST
@@ -150,7 +160,7 @@ public class UsersResource {
 		User user = userRepo.findById(jwt.getSubject());
 		Function<Device, DeviceResource.DeviceDto> mapDevices = d -> new DeviceResource.DeviceDto(d.getId(), d.getName(), d.getType(), d.getPublickey(), d.getUserPrivateKeys(), d.getOwner().getId(), d.getCreationTime().truncatedTo(ChronoUnit.MILLIS));
 		var devices = withDevices ? user.devices.stream().map(mapDevices).collect(Collectors.toSet()) : Set.<DeviceResource.DeviceDto>of();
-		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), devices, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
+		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getLanguage(), devices, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
 	}
 
 	@POST
@@ -163,11 +173,13 @@ public class UsersResource {
 	public Response resetMe() {
 		User user = userRepo.findById(jwt.getSubject());
 		user.setEcdhPublicKey(null);
+		user.setEcdsaPublicKey(null);
 		user.setPrivateKeys(null);
 		user.setSetupCode(null);
 		userRepo.persist(user);
 		deviceRepo.deleteByOwner(user.getId());
 		accessTokenRepo.deleteByUser(user.getId());
+		eventLogger.logUserAccountReset(jwt.getSubject());
 		return Response.noContent().build();
 	}
 

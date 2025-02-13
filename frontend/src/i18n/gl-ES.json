@@ -1,0 +1,15 @@
+{
+  "common.apply": "Aplicar",
+  "common.cancel": "Cancelar",
+  "common.close": "Pechar",
+  "common.copied": "Copiado!",
+  "common.copy": "Copiar",
+  "common.next": "Seguinte",
+  "common.previous": "Anterior",
+  "common.refresh": "Actualizar",
+  "common.remove": "Eliminar",
+  "common.retry": "Tentar de novo",
+  "common.share": "Compartir",
+  "admin.webOfTrust.save": "Gardar",
+  "claimVaultOwnershipDialog.error.wrongPassword": "Contrasinal incorrecto"
+}

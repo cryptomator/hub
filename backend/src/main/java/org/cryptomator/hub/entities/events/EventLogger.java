@@ -53,6 +53,28 @@ public class EventLogger {
 		auditEventRepository.persist(event);
 	}
 
+	public void logUserAccountReset(String resetBy) {
+		var event = new UserAccountResetEvent();
+		event.setTimestamp(Instant.now());
+		event.setResetBy(resetBy);
+		auditEventRepository.persist(event);
+	}
+
+	public void logUserKeysChanged(String changedBy, String userName) {
+		var event = new UserKeysChangeEvent();
+		event.setTimestamp(Instant.now());
+		event.setChangedBy(changedBy);
+		event.setUserName(userName);
+		auditEventRepository.persist(event);
+	}
+
+	public void logUserSetupCodeChanged(String changedBy) {
+		var event = new UserSetupCodeChangeEvent();
+		event.setTimestamp(Instant.now());
+		event.setChangedBy(changedBy);
+		auditEventRepository.persist(event);
+	}
+
 	public void logVaultAccessGranted(String grantedBy, UUID vaultId, String authorityId) {
 		var event = new VaultAccessGrantedEvent();
 		event.setTimestamp(Instant.now());
@@ -97,6 +119,15 @@ public class EventLogger {
 		event.setVaultId(vaultId);
 		event.setAuthorityId(authorityId);
 		event.setRole(role);
+		auditEventRepository.persist(event);
+	}
+
+	public void logWotSettingUpdated(String updatedBy, int wotIdVerifyLen, int wotMaxDepth) {
+		var event = new SettingWotUpdateEvent();
+		event.setTimestamp(Instant.now());
+		event.setWotIdVerifyLen(wotIdVerifyLen);
+		event.setWotMaxDepth(wotMaxDepth);
+		event.setUpdatedBy(updatedBy);
 		auditEventRepository.persist(event);
 	}
 

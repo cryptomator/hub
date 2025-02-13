@@ -21,12 +21,35 @@ export type AuditEventDeviceRemoveDto = AuditEventDtoBase & {
   deviceId: string;
 }
 
+export type AuditEventSettingWotUpdateDto = AuditEventDtoBase & {
+  type: 'SETTING_WOT_UPDATE',
+  updatedBy: string;
+  wotMaxDepth: number;
+  wotIdVerifyLen: number;
+}
+
 export type AuditEventSignedWotIdDto = AuditEventDtoBase & {
   type: 'SIGN_WOT_ID',
   userId: string;
   signerId: string;
   signerKey: string;
   signature: string;
+}
+
+export type AuditEventUserAccountResetDto = AuditEventDtoBase & {
+  type: 'USER_ACCOUNT_RESET',
+  resetBy: string;
+}
+
+export type AuditEventUserKeysChangeDto = AuditEventDtoBase & {
+  type: 'USER_KEYS_CHANGE',
+  changedBy: string,
+  userName: string;
+}
+
+export type AuditEventUserSetupCodeChangeDto = AuditEventDtoBase & {
+  type: 'USER_SETUP_CODE_CHANGE',
+  changedBy: string;
 }
 
 export type AuditEventVaultCreateDto = AuditEventDtoBase & {
@@ -89,7 +112,7 @@ export type AuditEventVaultOwnershipClaimDto = AuditEventDtoBase & {
   vaultId: string;
 }
 
-export type AuditEventDto = AuditEventDeviceRegisterDto | AuditEventDeviceRemoveDto | AuditEventSignedWotIdDto | AuditEventVaultCreateDto | AuditEventVaultUpdateDto | AuditEventVaultAccessGrantDto | AuditEventVaultKeyRetrieveDto | AuditEventVaultMemberAddDto | AuditEventVaultMemberRemoveDto | AuditEventVaultMemberUpdateDto | AuditEventVaultOwnershipClaimDto;
+export type AuditEventDto = AuditEventDeviceRegisterDto | AuditEventDeviceRemoveDto | AuditEventSettingWotUpdateDto | AuditEventSignedWotIdDto | AuditEventUserAccountResetDto | AuditEventUserKeysChangeDto | AuditEventUserSetupCodeChangeDto | AuditEventVaultCreateDto | AuditEventVaultUpdateDto | AuditEventVaultAccessGrantDto | AuditEventVaultKeyRetrieveDto | AuditEventVaultMemberAddDto | AuditEventVaultMemberRemoveDto | AuditEventVaultMemberUpdateDto | AuditEventVaultOwnershipClaimDto;
 
 /* Entity Cache */
 

@@ -145,7 +145,8 @@
       "enabled": true,
       "serviceAccountClientId": "cryptomatorhub-cli",
       "realmRoles": [
-        "user"
+        "user",
+        "create-vaults"
       ],
       "clientRoles" : {
         "realm-management" : [ "manage-users", "view-users" ]

@@ -93,10 +93,10 @@ class UserData {
    */
   public async decryptUserKeysWithSetupCode(setupCode: string): Promise<UserKeys> {
     const me = await this.me;
-    if (!me.privateKey) {
+    if (!me.privateKeys) {
       throw new Error('User not initialized.');
     }
-    const userKeys = await UserKeys.recover(me.privateKey, setupCode, await this.ecdhPublicKey, await this.ecdsaPublicKey);
+    const userKeys = await UserKeys.recover(me.privateKeys, setupCode, await this.ecdhPublicKey, await this.ecdsaPublicKey);
     await this.addEcdsaKeyIfMissing(userKeys);
     return userKeys;
   }
@@ -128,7 +128,7 @@ class UserData {
     if (me.setupCode && !me.ecdsaPublicKey) {
       const payload: { setupCode: string } = await JWEParser.parse(me.setupCode).decryptEcdhEs(userKeys.ecdhKeyPair.privateKey);
       me.ecdsaPublicKey = await userKeys.encodedEcdsaPublicKey();
-      me.privateKey = await userKeys.encryptWithSetupCode(payload.setupCode);
+      me.privateKeys = await userKeys.encryptWithSetupCode(payload.setupCode);
       for (const device of me.devices) {
         device.userPrivateKey = await userKeys.encryptForDevice(base64.parse(device.publicKey));
       }

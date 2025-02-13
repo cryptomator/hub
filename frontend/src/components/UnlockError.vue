@@ -9,7 +9,7 @@
   </nav>
 
   <div class="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8 flex justify-center">
-    <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:p-6 text-center sm:w-full sm:max-w-lg">
+    <div class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6 text-center sm:w-full sm:max-w-lg">
       <div class="flex justify-center mb-3 sm:mb-5">
         <img src="/logo.svg" class="h-12" alt="Logo" aria-hidden="true" />
       </div>
