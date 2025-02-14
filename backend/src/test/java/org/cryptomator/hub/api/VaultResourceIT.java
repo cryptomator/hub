@@ -2,8 +2,10 @@ package org.cryptomator.hub.api;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import io.agroal.api.AgroalDataSource;
 import io.quarkus.narayana.jta.QuarkusTransaction;
+import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.quarkus.test.security.oidc.Claim;
@@ -14,6 +16,7 @@ import jakarta.inject.Inject;
 import jakarta.validation.Validator;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.entities.Vault;
+import org.cryptomator.hub.license.LicenseHolder;
 import org.cryptomator.hub.rollback.DBRollbackAfter;
 import org.cryptomator.hub.rollback.DBRollbackBefore;
 import org.flywaydb.core.Flyway;
@@ -22,6 +25,7 @@ import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;
@@ -31,6 +35,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.mockito.Mockito;
 
 import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
@@ -69,12 +74,24 @@ public class VaultResourceIT {
 	Vault.Repository vaultRepo;
 	@Inject
 	Validator validator;
+	@InjectMock
+	LicenseHolder licenseHolder;
+
+	@SuppressWarnings("unused") // used by @DBRollbackAfter annotation
 	@Inject
 	public Flyway flyway;
 
 	@BeforeAll
 	public static void beforeAll() {
 		RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
+	}
+
+	@BeforeEach
+	public void setup() {
+//		var decodedJWT = Mockito.mock(DecodedJWT.class);
+//		Mockito.doReturn(decodedJWT).when(licenseHolder).get();
+		Mockito.doReturn(false).when(licenseHolder).isExpired();
+		Mockito.doReturn(5L).when(licenseHolder).getSeats();
 	}
 
 	private static PrivateKey getPrivateKey(String keyBytes) throws NoSuchAlgorithmException, InvalidKeySpecException {
@@ -172,7 +189,7 @@ public class VaultResourceIT {
 
 		@Test
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-00010000AAAA/access-token returns 200 for archived vaults with evenIfArchived set to true")
-		public void testUnlockArchived3() throws SQLException {
+		public void testUnlockArchived3() {
 			when().get("/vaults/{vaultId}/access-token?evenIfArchived=true", "7E57C0DE-0000-4000-8000-00010000AAAA")
 					.then().statusCode(200);
 		}

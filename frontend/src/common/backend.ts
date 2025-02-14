@@ -99,7 +99,7 @@ export type TrustDto = {
 
 export type BillingDto = {
   hubId: string;
-  hasLicense: boolean;
+  hasLicense: boolean; // TODO remove
   email: string;
   licensedSeats: number;
   usedSeats: number;
@@ -132,7 +132,7 @@ export class LicenseUserInfoDto {
   }
 
   public isExceeded(): boolean {
-    return this.usedSeats > this.licensedSeats;
+    return this.licensedSeats == 0 || this.usedSeats > this.licensedSeats;
   }
 }
 

@@ -293,7 +293,7 @@ public class UsersResourceIT {
 		@TestSecurity(user = "Admin", roles = {"admin"})
 		@DisplayName("As admin, GET /auditlog contains signature events")
 		public void testGetAuditLogEntries() {
-			Mockito.doReturn(true).when(licenseHolder).isSet();
+			Mockito.doReturn(true).when(licenseHolder).isSet(); // TODO
 			Mockito.doReturn(false).when(licenseHolder).isExpired();
 
 			given().param("startDate", DateTimeFormatter.ISO_INSTANT.format(testStart))
