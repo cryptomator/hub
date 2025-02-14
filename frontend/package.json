@@ -38,7 +38,7 @@
     "@types/semver": "^7.5.8",
     "@vitejs/plugin-vue": "^5.1.4",
     "@vue/compiler-sfc": "^3.5.12",
-    "chai": "^5.1.2",
+    "chai": "^5.2.0",
     "chai-as-promised": "^8.0.0",
     "eslint": "^9.13.0",
     "eslint-plugin-vue": "^9.30.0",
@@ -48,7 +48,7 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.6.3",
     "typescript-eslint": "^8.12.2",
-    "vite": "^6.0.11",
+    "vite": "^6.1.0",
     "vue-tsc": "^2.1.10"
   },
   "dependencies": {
