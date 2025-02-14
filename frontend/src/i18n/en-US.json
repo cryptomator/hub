@@ -215,10 +215,10 @@
   "recoveryKeyDialog.recoveryKey": "Recovery Key of Your Vault",
 
   "recoverVaultDialog.title": "Vault Recovery",
-  "recoverVaultDialog.description": "Type in the Recover Key of this vault to regain access to it.",
+  "recoverVaultDialog.description": "Type in the Recovery Key of this vault to regain access to it.",
   "recoverVaultDialog.submit": "Recover Vault",
   "recoverVaultDialog.error.formValidationFailed": "Recovery Key must not be empty",
-  "recoverVaultDialog.error.invalidRecoveryKey": "Invalid Recover Key",
+  "recoverVaultDialog.error.invalidRecoveryKey": "Invalid Recovery Key",
   
   "regenerateAccountKeyDialog.confirmRegenerateAccountKey.title": "Regenerate Account Key",
   "regenerateAccountKeyDialog.confirmRegenerateAccountKey.description": "If you suspect that your old Account Key has been compromised, you can regenerate it. You will then only be able to add new devices with the new Account Key. Your existing devices will remain intact.",
