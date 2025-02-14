@@ -41,7 +41,7 @@
         </Listbox>
 
         <PopoverGroup class="flex items-baseline space-x-8">
-          <Popover as="div" class="relative inline-block text-left">
+          <Popover v-slot="{ close }" as="div" class="relative inline-block text-left">
             <PopoverButton class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-xs text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary">
               <span>{{ t('auditLog.filter') }}</span>
               <ChevronDownIcon class="-mr-1 ml-2 h-5 w-5" aria-hidden="true" />
@@ -91,7 +91,6 @@
                           <ChevronUpDownIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
                         </span>
                       </ListboxButton>
-                      
                       <transition leave-active-class="transition ease-in duration-100" leave-from-class="opacity-100" leave-to-class="opacity-0">
                         <ListboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 ring-opacity-5 focus:outline-none text-sm">
                           <ListboxOption 
@@ -114,7 +113,7 @@
                     <button type="button" class="w-full border border-gray-300 rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50 disabled:hover:bg-white disabled:cursor-not-allowed" :disabled="filterIsReset" @click="resetFilter()">
                       {{ t('common.reset') }}
                     </button>
-                    <button type="button" class="w-full rounded-md bg-primary px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-d1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" :disabled="!filterIsValid" @click="applyFilter()">
+                    <button type="button" class="w-full rounded-md bg-primary px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-d1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" :disabled="!filterIsValid" @click="async () => { close(); await applyFilter(); }">
                       {{ t('common.apply') }}
                     </button>
                   </div>
@@ -253,7 +252,12 @@ const startDateFilter = ref(startDate.value.toISOString().split('T')[0]);
 const endDate = ref(endOfDate(new Date()));
 const endDateFilter = ref(endDate.value.toISOString().split('T')[0]);
 
-const filterIsReset = computed(() => startDateFilter.value == startDate.value.toISOString().split('T')[0] && endDateFilter.value == endDate.value.toISOString().split('T')[0]);
+const filterIsReset = computed(() =>
+  startDateFilter.value == startDate.value.toISOString().split('T')[0] &&
+  endDateFilter.value == endDate.value.toISOString().split('T')[0] &&
+  selectedEventTypes.value.length == 1 &&
+  selectedEventTypes.value[0] == ALL
+);
 const startDateFilterIsValid = computed(() => validateDateFilterValue(startDateFilter.value) != null);
 const endDateFilterIsValid = computed(() => {
   const endDate = validateDateFilterValue(endDateFilter.value);
@@ -295,9 +299,9 @@ onMounted(fetchData);
 async function fetchData(page: number = 0) {
   onFetchError.value = null;
   try {
+    const filterEventTypes = selectedEventTypes.value.includes(ALL) ? [] : selectedEventTypes.value;
     // Fetch one more event than the page size to determine if there is a next page
-    // TODO pass here as [] the filter types to the backend
-    const events = await auditlog.service.getAllEvents(startDate.value, endDate.value, [], lastIdOfPreviousPage[page], selectedOrder.value, pageSize.value + 1);
+    const events = await auditlog.service.getAllEvents(startDate.value, endDate.value, filterEventTypes, lastIdOfPreviousPage[page], selectedOrder.value, pageSize.value + 1);
     // If the lastIdOfPreviousPage for the first page has not been set yet, set it to an id "before"/"after" the first event
     if (page == 0 && lastIdOfPreviousPage[0] == 0 && events.length > 0) {
       lastIdOfPreviousPage[0] = events[0].id + orderOptions[selectedOrder.value].sign;
@@ -372,10 +376,6 @@ async function applyFilter() {
     startDate.value = beginOfDate(new Date(startDateFilter.value));
     endDate.value = endOfDate(new Date(endDateFilter.value));
     await fetchData();
-
-    if (!selectedEventTypes.value.includes(ALL)) {
-      auditEvents.value = auditEvents.value.filter(event => selectedEventTypes.value.includes(event.type));
-    }
   }
 }
 
@@ -388,6 +388,7 @@ function removeEventType(type: string): void {
 function resetFilter() {
   startDateFilter.value = startDate.value.toISOString().split('T')[0];
   endDateFilter.value = endDate.value.toISOString().split('T')[0];
+  selectedEventTypes.value = [ALL];
 }
 
 function beginOfDate(date: Date): Date {
