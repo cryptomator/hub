@@ -70,11 +70,12 @@ export type UserDto = {
   name: string;
   pictureUrl?: string;
   email: string;
+  language?: string;
   devices: DeviceDto[];
   accessibleVaults: VaultDto[];
   ecdhPublicKey?: string;
   ecdsaPublicKey?: string;
-  privateKey?: string;
+  privateKeys?: string;
   setupCode?: string;
 }
 

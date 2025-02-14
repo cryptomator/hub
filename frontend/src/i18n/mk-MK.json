@@ -1,0 +1,12 @@
+{
+  "common.apply": "Примени",
+  "common.cancel": "Откажи",
+  "common.close": "Затвори",
+  "common.copied": "Копирано!",
+  "common.copy": "Копирај",
+  "common.next": "Продолжи",
+  "common.show": "Покажи",
+  "admin.webOfTrust.information": "Дознајте повеќе.",
+  "createVault.enterVaultDetails.vaultName": "Име на сеф",
+  "editVaultMetadataDialog.vaultName": "Име на сеф"
+}

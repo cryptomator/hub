@@ -7,6 +7,7 @@ import AdminSettings from '../components/AdminSettings.vue';
 import AuditLog from '../components/AuditLog.vue';
 import AuthenticatedMain from '../components/AuthenticatedMain.vue';
 import CreateVault from '../components/CreateVault.vue';
+import Forbidden from '../components/Forbidden.vue';
 import InitialSetup from '../components/InitialSetup.vue';
 import NotFound from '../components/NotFound.vue';
 import UnlockError from '../components/UnlockError.vue';
@@ -14,7 +15,8 @@ import UnlockSuccess from '../components/UnlockSuccess.vue';
 import UserProfile from '../components/UserProfile.vue';
 import VaultDetails from '../components/VaultDetails.vue';
 import VaultList from '../components/VaultList.vue';
-import Forbidden from '../components/Forbidden.vue';
+
+import i18n, { mapToLocale } from '../i18n';
 
 function checkRole(role: string): NavigationGuardWithThis<undefined> {
   return async (to, _) => {
@@ -190,6 +192,16 @@ router.beforeEach(async (to) => {
   const browser = await userdata.browser;
   if (!browser) {
     return { path: '/app/setup' };
+  }
+});
+
+// FOURTH apply user language
+router.beforeEach(async (to) => {
+  if (!to.meta.skipAuth) {
+    const me = await userdata.me;
+    if (me.language) {
+      i18n.global.locale.value = mapToLocale(me.language);
+    }
   }
 });
 

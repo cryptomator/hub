@@ -263,7 +263,7 @@ async function createUserKey() {
     const userKeys = await UserKeys.create();
     me.ecdhPublicKey = await userKeys.encodedEcdhPublicKey();
     me.ecdsaPublicKey = await userKeys.encodedEcdsaPublicKey();
-    me.privateKey = await userKeys.encryptWithSetupCode(setupCode.value);
+    me.privateKeys = await userKeys.encryptWithSetupCode(setupCode.value);
     me.setupCode = await JWEBuilder.ecdhEs(userKeys.ecdhKeyPair.publicKey).encrypt({ setupCode: setupCode.value });
     const browserKeys = await userdata.createBrowserKeys();
     await submitBrowserKeys(browserKeys, me, userKeys);
@@ -298,6 +298,7 @@ async function recoverUserKey() {
 }
 
 async function submitBrowserKeys(browserKeys: BrowserKeys, me: UserDto, userKeys: UserKeys) {
+  await backend.users.putMe(me);
   const jwe = await userKeys.encryptForDevice(browserKeys.keyPair.publicKey);
   await backend.devices.putDevice({
     id: await browserKeys.id(),
@@ -307,7 +308,6 @@ async function submitBrowserKeys(browserKeys: BrowserKeys, me: UserDto, userKeys
     userPrivateKey: jwe,
     creationTime: new Date()
   });
-  await backend.users.putMe(me);
   userdata.reload();
 }
 
