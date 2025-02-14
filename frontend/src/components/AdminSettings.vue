@@ -322,7 +322,7 @@ const betaUpdateExists = computed(() => {
   return false;
 });
 
-const remainingSeats = computed(() => billing.value ? billing.value.licensedSeats - billing.value.usedSeats : undefined);
+const remainingSeats = computed(() => billing.value ? billing.value.licensedSeats - billing.value.usedSeats : 0);
 const numberOfExceededSeats = computed(() => {
   if (remainingSeats.value === undefined) {
     return undefined;
