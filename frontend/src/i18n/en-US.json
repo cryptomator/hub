@@ -217,7 +217,7 @@
   "recoverVaultDialog.title": "Vault Recovery",
   "recoverVaultDialog.description": "Type in the Recover Key of this vault to regain access to it.",
   "recoverVaultDialog.submit": "Recover Vault",
-  "recoverVaultDialog.error.formValidationFailed": "Recover Key must not be empty",
+  "recoverVaultDialog.error.formValidationFailed": "Recovery Key must not be empty",
   "recoverVaultDialog.error.invalidRecoveryKey": "Invalid Recover Key",
   
   "regenerateAccountKeyDialog.confirmRegenerateAccountKey.title": "Regenerate Account Key",
