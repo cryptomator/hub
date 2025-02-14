@@ -69,6 +69,7 @@
   "unlockSuccess.noVaultAccess.description": "Lūgums sazināties ar glabātavas īpašnieku, lai pievienotu Tevi kā tās dalībnieku.",
   "vaultDetails.description.header": "Apraksts",
   "vaultDetails.actions.downloadVaultTemplate": "Lejupielādēt glabātavas sagatavi",
+  "vaultDetails.actions.displayRecoveryKey": "Parādīt atkopes atslēgu",
   "vaultList.title": "Glabātavas",
   "vaultList.empty.title": "Nav glabātavu",
   "vaultList.addVault": "Pievienot",
