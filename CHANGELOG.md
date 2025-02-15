@@ -55,7 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CVE-2025-24010: Vite development server responded to arbitrary requests
 
 
-## [1.4.0-beta2](https://github.com/cryptomator/hub/compare/1.4.0-beta1...1.4.0-beta2)
+## [1.4.0-beta2](https://github.com/cryptomator/hub/compare/1.4.0-beta1...1.4.0-beta2) (2025-02-13)
 
 ### Added
 
@@ -87,7 +87,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CVE-2025-24010: Vite development server responded to arbitrary requests
 
 
-## [1.4.0-beta1](https://github.com/cryptomator/hub/compare/1.3.4...1.4.0-beta1)
+## [1.4.0-beta1](https://github.com/cryptomator/hub/compare/1.3.4...1.4.0-beta1) (2024-10-31)
 
 ### Added
 
