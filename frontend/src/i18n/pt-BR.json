@@ -1,4 +1,6 @@
 {
+  "locale.en": "Inglês",
+  "locale.de": "Alemão",
   "common.add": "Adicionar",
   "common.apply": "Aplicar",
   "common.cancel": "Cancelar",
@@ -6,7 +8,11 @@
   "common.copied": "Copiado!",
   "common.copy": "Copiar",
   "common.download": "Baixar",
+  "common.hide": "Ocultar",
+  "common.loading": "Carregando…",
   "common.next": "Próximo",
+  "common.optional": "opcional",
+  "common.pagination": "Paginação",
   "common.previous": "Anterior",
   "common.refresh": "Atualizar",
   "common.remove": "Remover",
