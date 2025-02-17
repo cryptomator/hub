@@ -71,20 +71,19 @@
                     <div class="relative w-88">
                       <ListboxButton class="relative w-full rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary text-sm">
                         <div class="flex flex-wrap gap-2">
-                          <template v-if="selectedEventTypes.length === 0">
-                            <span class="text-gray-500">{{ t('auditLog.all') }}</span>
-                          </template>
-                          <template v-else>
+                          <template v-if="selectedEventTypes.length > 0">
                             <button 
                               v-for="type in selectedEventTypes" 
-                              :key="type" 
-                              :disabled="type === ALL"
+                              :key="type"
                               class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20"
-                              @click.stop="type !== ALL && removeEventType(type)"
+                              @click.stop="removeEventType(type)"
                             >
                               <span class="mr-1">{{ eventTypeOptions[type] }}</span>
-                              <span v-if="type !== ALL" class="text-green-800 font-bold">&times;</span>
+                              <span class="text-green-800 font-bold">&times;</span>
                             </button>
+                          </template>
+                          <template v-else>
+                            <span class="text-gray-500">{{ t('auditLog.filter.emptyEventTypeList') }}</span>
                           </template>
                         </div>
                         <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
@@ -255,8 +254,8 @@ const endDateFilter = ref(endDate.value.toISOString().split('T')[0]);
 const filterIsReset = computed(() =>
   startDateFilter.value == startDate.value.toISOString().split('T')[0] &&
   endDateFilter.value == endDate.value.toISOString().split('T')[0] &&
-  selectedEventTypes.value.length == 1 &&
-  selectedEventTypes.value[0] == ALL
+  selectedEventTypes.value.length === allEventTypes.length &&
+  selectedEventTypes.value.every(t => allEventTypes.includes(t))
 );
 const startDateFilterIsValid = computed(() => validateDateFilterValue(startDateFilter.value) != null);
 const endDateFilterIsValid = computed(() => {
@@ -287,6 +286,30 @@ const orderOptions = {
 };
 watch(selectedOrder, refreshData);
 
+const eventTypeOptions = Object.fromEntries(
+  Object.entries({
+    DEVICE_REGISTER: t('auditLog.details.device.register'),
+    DEVICE_REMOVE: t('auditLog.details.device.remove'),
+    SETTING_WOT_UPDATE: t('auditLog.details.setting.wot.update'),
+    SIGN_WOT_ID: t('auditLog.details.wot.signedIdentity'),
+    USER_ACCOUNT_RESET: t('auditLog.details.user.account.reset'),
+    USER_KEYS_CHANGE: t('auditLog.details.user.keys.change'),
+    USER_SETUP_CODE_CHANGE: t('auditLog.details.user.setupCode.change'),
+    VAULT_ACCESS_GRANT: t('auditLog.details.vaultAccess.grant'),
+    VAULT_CREATE: t('auditLog.details.vault.create'),
+    VAULT_KEY_RETRIEVE: t('auditLog.details.vaultKey.retrieve'),
+    VAULT_MEMBER_ADD: t('auditLog.details.vaultMember.add'),
+    VAULT_MEMBER_REMOVE: t('auditLog.details.vaultMember.remove'),
+    VAULT_MEMBER_UPDATE: t('auditLog.details.vaultMember.update'),
+    VAULT_OWNERSHIP_CLAIM: t('auditLog.details.vaultOwnership.claim'),
+    VAULT_UPDATE: t('auditLog.details.vault.update')
+  }).sort((a, b) => {
+    return a[0].localeCompare(b[0]);
+  })
+);
+const allEventTypes = Object.keys(eventTypeOptions);
+const selectedEventTypes = ref<string[]>([...allEventTypes]);
+
 const currentPage = ref(0);
 const pageSize = ref(20);
 const paginationBegin = computed(() => auditEvents.value ? currentPage.value * pageSize.value + Math.min(1, auditEvents.value.length) : 0);
@@ -299,9 +322,8 @@ onMounted(fetchData);
 async function fetchData(page: number = 0) {
   onFetchError.value = null;
   try {
-    const filterEventTypes = selectedEventTypes.value.includes(ALL) ? [] : selectedEventTypes.value;
     // Fetch one more event than the page size to determine if there is a next page
-    const events = await auditlog.service.getAllEvents(startDate.value, endDate.value, filterEventTypes, lastIdOfPreviousPage[page], selectedOrder.value, pageSize.value + 1);
+    const events = await auditlog.service.getAllEvents(startDate.value, endDate.value, selectedEventTypes.value, lastIdOfPreviousPage[page], selectedOrder.value, pageSize.value + 1);
     // If the lastIdOfPreviousPage for the first page has not been set yet, set it to an id "before"/"after" the first event
     if (page == 0 && lastIdOfPreviousPage[0] == 0 && events.length > 0) {
       lastIdOfPreviousPage[0] = events[0].id + orderOptions[selectedOrder.value].sign;
@@ -336,41 +358,6 @@ async function refreshData() {
   await fetchData();
 }
 
-const ALL = 'ALL';
-const selectedEventTypes = ref<string[]>([ALL]);
-const eventTypeOptions = Object.fromEntries(
-  Object.entries({
-    ALL: t('auditLog.details.all'),
-    DEVICE_REGISTER: t('auditLog.details.device.register'),
-    DEVICE_REMOVE: t('auditLog.details.device.remove'),
-    SETTING_WOT_UPDATE: t('auditLog.details.setting.wot.update'),
-    SIGN_WOT_ID: t('auditLog.details.wot.signedIdentity'),
-    VAULT_ACCESS_GRANT: t('auditLog.details.vaultAccess.grant'),
-    VAULT_CREATE: t('auditLog.details.vault.create'),
-    VAULT_KEY_RETRIEVE: t('auditLog.details.vaultKey.retrieve'),
-    VAULT_MEMBER_ADD: t('auditLog.details.vaultMember.add'),
-    VAULT_MEMBER_REMOVE: t('auditLog.details.vaultMember.remove'),
-    VAULT_MEMBER_UPDATE: t('auditLog.details.vaultMember.update'),
-    VAULT_OWNERSHIP_CLAIM: t('auditLog.details.vaultOwnership.claim'),
-    VAULT_UPDATE: t('auditLog.details.vault.update')
-  }).sort((a, b) => {
-    if (a[0] === ALL) return -1;
-    if (b[0] === ALL) return 1;
-    return a[1].localeCompare(b[1]);
-  })
-);
-
-watch(selectedEventTypes, (newSelection, oldSelection) => {
-  if (!oldSelection.includes(ALL) && newSelection.includes(ALL)) {
-    selectedEventTypes.value = [ALL];
-  } else if (newSelection.includes(ALL) && newSelection.length > 1) {
-    selectedEventTypes.value = newSelection.filter(type => type !== ALL);
-  } else if (selectedEventTypes.value.length === 0) {
-    selectedEventTypes.value = [ALL];
-  }
-  selectedEventTypes.value.sort((a, b) => eventTypeOptions[a].localeCompare(eventTypeOptions[b]));
-});
-
 async function applyFilter() {
   if (filterIsValid.value) {
     startDate.value = beginOfDate(new Date(startDateFilter.value));
@@ -380,15 +367,13 @@ async function applyFilter() {
 }
 
 function removeEventType(type: string): void {
-  if (type !== ALL) {
-    selectedEventTypes.value = selectedEventTypes.value.filter(t => t !== type);
-  }
+  selectedEventTypes.value = selectedEventTypes.value.filter(t => t !== type);
 }
 
 function resetFilter() {
   startDateFilter.value = startDate.value.toISOString().split('T')[0];
   endDateFilter.value = endDate.value.toISOString().split('T')[0];
-  selectedEventTypes.value = [ALL];
+  selectedEventTypes.value = [...allEventTypes];
 }
 
 function beginOfDate(date: Date): Date {
