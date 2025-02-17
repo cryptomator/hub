@@ -63,8 +63,17 @@
                     <input id="filter-end-date" v-model="endDateFilter" type="text" class="shadow-xs focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': !endDateFilterIsValid }" placeholder="yyyy-MM-dd" />
                   </div>
                   <div class="sm:grid sm:grid-cols-2 sm:items-center sm:gap-2">
-                    <label class="block text-sm font-medium text-gray-700">
+                    <label class="block text-sm font-medium text-gray-700 flex items-center">
                       {{ t('auditLog.type') }}
+                      <button 
+                        type="button" 
+                        class="ml-2 p-1 flex items-center justify-center focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-30 disabled:cursor-not-allowed"
+                        :disabled="selectedEventTypes.length === 0"
+                        :title="selectedEventTypes.length > 0 ? t('auditLog.filter.clerEventFilter') : ''"
+                        @click="selectedEventTypes = []"
+                      >
+                        <TrashIcon class="h-5 w-5 text-gray-500 hover:text-gray-700 disabled:text-gray-300" aria-hidden="true" />
+                      </button>
                     </label>
                   </div>
                   <Listbox v-model="selectedEventTypes" as="div" multiple>
@@ -83,7 +92,7 @@
                             </button>
                           </template>
                           <template v-else>
-                            <span class="text-gray-500">{{ t('auditLog.filter.emptyEventTypeList') }}</span>
+                            <span class="text-gray-500">{{ t('auditLog.filter.selectEventFilter') }}</span>
                           </template>
                         </div>
                         <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
@@ -212,7 +221,7 @@
 <script setup lang="ts">
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions, Popover, PopoverButton, PopoverGroup, PopoverPanel } from '@headlessui/vue';
 import { ChevronDownIcon } from '@heroicons/vue/20/solid';
-import { CheckIcon, ChevronUpDownIcon, WrenchIcon } from '@heroicons/vue/24/solid';
+import { CheckIcon, ChevronUpDownIcon, WrenchIcon, TrashIcon } from '@heroicons/vue/24/solid';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auditlog, { AuditEventDto } from '../common/auditlog';
@@ -254,8 +263,7 @@ const endDateFilter = ref(endDate.value.toISOString().split('T')[0]);
 const filterIsReset = computed(() =>
   startDateFilter.value == startDate.value.toISOString().split('T')[0] &&
   endDateFilter.value == endDate.value.toISOString().split('T')[0] &&
-  selectedEventTypes.value.length === allEventTypes.length &&
-  selectedEventTypes.value.every(t => allEventTypes.includes(t))
+  selectedEventTypes.value.length == 0
 );
 const startDateFilterIsValid = computed(() => validateDateFilterValue(startDateFilter.value) != null);
 const endDateFilterIsValid = computed(() => {
@@ -303,12 +311,10 @@ const eventTypeOptions = Object.fromEntries(
     VAULT_MEMBER_UPDATE: t('auditLog.details.vaultMember.update'),
     VAULT_OWNERSHIP_CLAIM: t('auditLog.details.vaultOwnership.claim'),
     VAULT_UPDATE: t('auditLog.details.vault.update')
-  }).sort((a, b) => {
-    return a[0].localeCompare(b[0]);
-  })
+  }).sort(([,valueA], [,valueB]) => valueA.localeCompare(valueB))
 );
 const allEventTypes = Object.keys(eventTypeOptions);
-const selectedEventTypes = ref<string[]>([...allEventTypes]);
+const selectedEventTypes = ref<string[]>([]);
 
 const currentPage = ref(0);
 const pageSize = ref(20);
@@ -318,6 +324,10 @@ const hasNextPage = ref(false);
 let lastIdOfPreviousPage = [Number.MAX_SAFE_INTEGER];
 
 onMounted(fetchData);
+
+watch(selectedEventTypes, (newSelection, oldSelection) => {
+  selectedEventTypes.value.sort((a, b) => eventTypeOptions[a].localeCompare(eventTypeOptions[b]));
+});
 
 async function fetchData(page: number = 0) {
   onFetchError.value = null;
@@ -373,7 +383,7 @@ function removeEventType(type: string): void {
 function resetFilter() {
   startDateFilter.value = startDate.value.toISOString().split('T')[0];
   endDateFilter.value = endDate.value.toISOString().split('T')[0];
-  selectedEventTypes.value = [...allEventTypes];
+  selectedEventTypes.value = [];
 }
 
 function beginOfDate(date: Date): Date {
