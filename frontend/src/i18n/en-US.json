@@ -257,6 +257,7 @@
   "vaultDetails.sharedWith.title": "Shared with",
   "vaultDetails.sharedWith.badge.owner": "Owner",
   "vaultDetails.sharedWith.grantOwnership": "Grant Ownership",
+  "vaultDetails.sharedWith.members": "Members",
   "vaultDetails.sharedWith.revokeOwnership": "Revoke Ownership",
   "vaultDetails.actions.title": "Actions",
   "vaultDetails.actions.updatePermissions": "Update Permissions",

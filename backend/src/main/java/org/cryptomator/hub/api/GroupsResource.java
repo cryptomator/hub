@@ -7,11 +7,15 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
+
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.validation.ValidId;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 
+import jakarta.ws.rs.core.Response;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.List;
 
 @Path("/groups")
@@ -28,7 +32,21 @@ public class GroupsResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "list all groups")
 	public List<GroupDto> getAll() {
-		return groupRepo.findAll().stream().map(GroupDto::fromEntity).toList();
+		List<Group> groups = groupRepo.findAll().list();
+		return groups.stream().map(group -> {
+			long memberCount = groupRepo.countMembers(group.getId());
+			return new GroupDto(group.getId(), group.getName(), (int) memberCount);
+		}).toList();
+	}
+
+	@GET
+	@Path("/{groupId}/memberCount")
+	@RolesAllowed("user")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Operation(summary = "Get member count of a group")
+	public Response getMemberCount(@PathParam("groupId") String groupId) {
+		long count = userRepo.getEffectiveGroupUsers(groupId).count();
+		return Response.ok(Map.of("count", count)).build();
 	}
 
 	@GET

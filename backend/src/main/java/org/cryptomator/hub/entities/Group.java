@@ -33,7 +33,18 @@ public class Group extends Authority {
 		this.members = members;
 	}
 
+	public int getMemberCount() {
+		return members != null ? members.size() : 0;
+	}
+
 	@ApplicationScoped
 	public static class Repository implements PanacheRepositoryBase<Group, String> {
+
+		public long countMembers(String groupId) {
+			return getEntityManager()
+					.createQuery("SELECT COUNT(m) FROM Group g JOIN g.members m WHERE g.id = :groupId", Long.class)
+					.setParameter("groupId", groupId)
+					.getSingleResult();
+		}
 	}
 }

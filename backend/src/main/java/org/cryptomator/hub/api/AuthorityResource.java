@@ -29,7 +29,10 @@ public class AuthorityResource {
 	@NoCache
 	@Operation(summary = "search authority by name")
 	public List<AuthorityDto> search(@QueryParam("query") @NotBlank String query) {
-		return authorityRepo.byName(query).map(AuthorityDto::fromEntity).toList();
+		List<Authority> authorities = authorityRepo.byName(query).toList(); 
+		return authorities.stream()
+			.map(AuthorityDto::fromEntity)
+			.toList();
 	}
 
 	@GET

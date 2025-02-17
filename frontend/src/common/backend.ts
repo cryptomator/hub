@@ -84,6 +84,15 @@ export type GroupDto = {
   id: string;
   name: string;
   pictureUrl?: string;
+  memberCount: number;
+}
+
+class GroupService {
+  public async getMemberCount(groupId: string): Promise<number> {
+    return axiosAuth.get<{ count: number }>(`/groups/${groupId}/memberCount`)
+      .then(response => response.data.count)
+      .catch(error => rethrowAndConvertIfExpected(error, 404));
+  }
 }
 
 export type AuthorityDto = UserDto | GroupDto;
@@ -385,7 +394,8 @@ const services = {
   billing: new BillingService(),
   version: new VersionService(),
   license: new LicenseService(),
-  settings: new SettingsService()
+  settings: new SettingsService(),
+  groups: new GroupService()
 };
 
 export default services;

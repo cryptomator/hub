@@ -33,7 +33,7 @@ abstract sealed class AuthorityDto permits UserDto, GroupDto, MemberDto {
 	static AuthorityDto fromEntity(Authority a) {
 		return switch (a) {
 			case User u -> UserDto.justPublicInfo(u);
-			case Group g -> GroupDto.fromEntity(g);
+			case Group g -> new GroupDto(g.getId(), g.getName(), (int) g.getMemberCount());
 			default -> throw new IllegalStateException("authority is not of type user or group");
 		};
 	}
