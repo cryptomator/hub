@@ -69,7 +69,6 @@
   "auditLog.timestamp": "Zeitstempel",
   "auditLog.type": "Ereignis",
   "auditLog.details": "Details",
-  "auditLog.details.all": "Alle",
   "auditLog.details.device.register": "Gerät registrieren",
   "auditLog.details.device.remove": "Gerät entfernen",
   "auditLog.details.setting.wot.update": "WoT-Einstellung aktualisieren",
