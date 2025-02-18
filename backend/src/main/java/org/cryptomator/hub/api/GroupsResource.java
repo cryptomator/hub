@@ -33,20 +33,7 @@ public class GroupsResource {
 	@Operation(summary = "list all groups")
 	public List<GroupDto> getAll() {
 		List<Group> groups = groupRepo.findAll().list();
-		return groups.stream().map(group -> {
-			long memberCount = groupRepo.countMembers(group.getId());
-			return new GroupDto(group.getId(), group.getName(), (int) memberCount);
-		}).toList();
-	}
-
-	@GET
-	@Path("/{groupId}/memberCount")
-	@RolesAllowed("user")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Operation(summary = "Get member count of a group")
-	public Response getMemberCount(@PathParam("groupId") String groupId) {
-		long count = userRepo.getEffectiveGroupUsers(groupId).count();
-		return Response.ok(Map.of("count", count)).build();
+		return groups.stream().map(group -> GroupDto.fromEntity(group, groupRepo.countMembers(group.getId()))).toList();
 	}
 
 	@GET

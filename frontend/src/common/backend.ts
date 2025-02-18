@@ -89,9 +89,9 @@ export type GroupDto = {
 
 class GroupService {
   public async getMemberCount(groupId: string): Promise<number> {
-    return axiosAuth.get<{ count: number }>(`/groups/${groupId}/memberCount`)
-      .then(response => response.data.count)
-      .catch(error => rethrowAndConvertIfExpected(error, 404));
+    return axiosAuth.get<UserDto[]>(`/groups/${groupId}/effective-members`)
+      .then(response => response.data.length)
+      .catch(() => 0);
   }
 }
 

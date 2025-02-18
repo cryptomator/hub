@@ -5,6 +5,8 @@ import org.cryptomator.hub.entities.Authority;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
 
+import jakarta.inject.Inject;
+
 abstract sealed class AuthorityDto permits UserDto, GroupDto, MemberDto {
 
 	public enum Type {
@@ -30,10 +32,13 @@ abstract sealed class AuthorityDto permits UserDto, GroupDto, MemberDto {
 		this.pictureUrl = pictureUrl;
 	}
 
+	@Inject
+	static User.Repository userRepo; // Inject User Repository für die neue Berechnung
+
 	static AuthorityDto fromEntity(Authority a) {
 		return switch (a) {
 			case User u -> UserDto.justPublicInfo(u);
-			case Group g -> new GroupDto(g.getId(), g.getName(), (int) g.getMemberCount());
+			case Group g -> new GroupDto(g.getId(), g.getName(), (int) userRepo.getEffectiveGroupUsers(g.getId()).count()); 
 			default -> throw new IllegalStateException("authority is not of type user or group");
 		};
 	}

@@ -2,13 +2,8 @@ package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.DiscriminatorValue;
-import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.Table;
+import jakarta.inject.Inject;
+import jakarta.persistence.*;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -18,12 +13,15 @@ import java.util.Set;
 @DiscriminatorValue("GROUP")
 public class Group extends Authority {
 
-	@ManyToMany(cascade = {CascadeType.REMOVE})
+	@ManyToMany(cascade = {CascadeType.REMOVE}, fetch = FetchType.LAZY)
 	@JoinTable(name = "group_membership",
 			joinColumns = @JoinColumn(name = "group_id", referencedColumnName = "id"),
 			inverseJoinColumns = @JoinColumn(name = "member_id", referencedColumnName = "id")
 	)
 	private Set<Authority> members = new HashSet<>();
+
+	@Inject
+	transient Repository groupRepo;
 
 	public Set<Authority> getMembers() {
 		return members;
@@ -33,16 +31,17 @@ public class Group extends Authority {
 		this.members = members;
 	}
 
+
 	public int getMemberCount() {
-		return members != null ? members.size() : 0;
+		return groupRepo.countMembers(this.getId()); // Verwende das injectete Repository
 	}
 
 	@ApplicationScoped
 	public static class Repository implements PanacheRepositoryBase<Group, String> {
 
-		public long countMembers(String groupId) {
+		public int countMembers(String groupId) {
 			return getEntityManager()
-					.createQuery("SELECT COUNT(m) FROM Group g JOIN g.members m WHERE g.id = :groupId", Long.class)
+					.createQuery("SELECT SIZE(g.members) FROM Group g WHERE g.id = :groupId", Integer.class)
 					.setParameter("groupId", groupId)
 					.getSingleResult();
 		}

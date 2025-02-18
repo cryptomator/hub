@@ -308,8 +308,7 @@ async function fetchOwnerData() {
     for (const member of fetchedMembers) {
       if (member.type === "GROUP") {
         try {
-          const res = await backend.groups.getMemberCount(member.id);
-          const count = typeof res === "number" ? res : (res as { count: number })?.count ?? 0;
+          const count = await backend.groups.getMemberCount(member.id);
           members.value.set(member.id, { ...member, memberCount: count });
         } catch (error) {
           members.value.set(member.id, { ...member, memberCount: 0 });
@@ -339,14 +338,15 @@ async function fetchOwnerData() {
 }
 
 const groupMemberCounts = computed(() => {
-  const counts = new Map<string, number>();
-  members.value.forEach((member) => {
-    if (member.type === 'GROUP') {
-      counts.set(member.id, member.memberCount ?? 0);
-    }
-  });
-  return counts;
+    const counts = new Map<string, number>();
+    members.value.forEach((member) => {
+        if (member.type === 'GROUP' && 'memberCount' in member) {
+            counts.set(member.id, member.memberCount);
+        }
+    });
+    return counts;
 });
+
 
 async function loadVaultKeys(vaultKeyJwe: string): Promise<VaultKeys> {
   const userKeys = await userdata.decryptUserKeysWithBrowser();
@@ -515,8 +515,7 @@ async function searchAuthority(query: string): Promise<(AuthorityDto & { memberC
     filtered.map(async authority => {
       if (authority.type === "GROUP") {
         try {
-          const res = await backend.groups.getMemberCount(authority.id);
-          const count = typeof res === "number" ? res : (res as { count: number })?.count ?? 0;
+          const count = await backend.groups.getMemberCount(authority.id);
           return { ...authority, memberCount: count };
         } catch (error) {
           return { ...authority, memberCount: 0 };
