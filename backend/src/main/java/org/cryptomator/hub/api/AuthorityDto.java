@@ -33,7 +33,7 @@ abstract sealed class AuthorityDto permits UserDto, GroupDto, MemberDto {
 	}
 
 	@Inject
-	static User.Repository userRepo; // Inject User Repository für die neue Berechnung
+	static User.Repository userRepo;
 
 	static AuthorityDto fromEntity(Authority a) {
 		return switch (a) {

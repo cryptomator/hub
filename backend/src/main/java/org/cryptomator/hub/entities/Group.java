@@ -13,7 +13,7 @@ import java.util.Set;
 @DiscriminatorValue("GROUP")
 public class Group extends Authority {
 
-	@ManyToMany(cascade = {CascadeType.REMOVE}, fetch = FetchType.LAZY)
+	@ManyToMany(cascade = {CascadeType.REMOVE})
 	@JoinTable(name = "group_membership",
 			joinColumns = @JoinColumn(name = "group_id", referencedColumnName = "id"),
 			inverseJoinColumns = @JoinColumn(name = "member_id", referencedColumnName = "id")
@@ -31,14 +31,12 @@ public class Group extends Authority {
 		this.members = members;
 	}
 
-
 	public int getMemberCount() {
-		return groupRepo.countMembers(this.getId()); // Verwende das injectete Repository
+		return groupRepo.countMembers(this.getId());
 	}
 
 	@ApplicationScoped
 	public static class Repository implements PanacheRepositoryBase<Group, String> {
-
 		public int countMembers(String groupId) {
 			return getEntityManager()
 					.createQuery("SELECT SIZE(g.members) FROM Group g WHERE g.id = :groupId", Integer.class)

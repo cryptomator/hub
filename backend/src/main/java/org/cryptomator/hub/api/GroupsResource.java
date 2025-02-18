@@ -2,21 +2,20 @@ package org.cryptomator.hub.api;
 
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
-
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.validation.ValidId;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 
-import jakarta.ws.rs.core.Response;
-import java.util.Map;
-import java.util.HashMap;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 @Path("/groups")
 public class GroupsResource {

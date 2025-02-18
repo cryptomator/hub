@@ -25,7 +25,7 @@ public class AuthorityResource {
 	Authority.Repository authorityRepo;
 	
 	@Inject
-	User.Repository userRepo; // UserRepo wird hier für die Gruppen-Mitgliederanzahl benötigt
+	User.Repository userRepo;
 
 	@GET
 	@Path("/search")
@@ -36,7 +36,7 @@ public class AuthorityResource {
 	public List<AuthorityDto> search(@QueryParam("query") @NotBlank String query) {
 		List<Authority> authorities = authorityRepo.byName(query).toList(); 
 		return authorities.stream()
-			.map(this::convertToDto) // Neue Methode für die Konvertierung mit Member-Anzahl
+			.map(this::convertToDto)
 			.toList();
 	}
 
@@ -49,14 +49,10 @@ public class AuthorityResource {
 	@APIResponse(responseCode = "200")
 	public List<AuthorityDto> getSome(@QueryParam("ids") List<String> authorityIds) {
 		return authorityRepo.findAllInList(authorityIds)
-			.map(this::convertToDto) // Neue Methode wird hier genutzt
+			.map(this::convertToDto)
 			.toList();
 	}
 
-	/**
-	 * Konvertiert eine Authority-Entity in das passende DTO,
-	 * inklusive der Gruppen-Mitgliederanzahl für Gruppen.
-	 */
 	private AuthorityDto convertToDto(Authority a) {
 		if (a instanceof User u) {
 			return UserDto.justPublicInfo(u);

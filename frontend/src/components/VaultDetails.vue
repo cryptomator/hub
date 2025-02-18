@@ -347,7 +347,6 @@ const groupMemberCounts = computed(() => {
     return counts;
 });
 
-
 async function loadVaultKeys(vaultKeyJwe: string): Promise<VaultKeys> {
   const userKeys = await userdata.decryptUserKeysWithBrowser();
   return VaultKeys.decryptWithUserKey(vaultKeyJwe, userKeys.ecdhKeyPair.privateKey);
@@ -496,16 +495,7 @@ function refreshVault(updatedVault: VaultDto) {
   emit('vaultUpdated', updatedVault);
 }
 
-const searchQuery = ref('');
 const searchResults = ref<Array<AuthorityDto & { memberCount?: number }>>([]);
-
-async function onSearch() {
-  if (!searchQuery.value) {
-    searchResults.value = [];
-    return;
-  }
-  searchResults.value = await searchAuthority(searchQuery.value);
-}
 
 async function searchAuthority(query: string): Promise<(AuthorityDto & { memberCount?: number })[]> {
   const results = await backend.authorities.search(query);
@@ -526,16 +516,6 @@ async function searchAuthority(query: string): Promise<(AuthorityDto & { memberC
   );
   return enhanced.sort((a, b) => a.name.localeCompare(b.name));
 }
-
-const searchGroupMemberCounts = computed(() => {
-  const counts = new Map<string, number>();
-  searchResults.value.forEach((result) => {
-    if (result.type === 'GROUP') {
-      counts.set(result.id, result.memberCount ?? 0);
-    }
-  });
-  return counts;
-});
 
 async function updateMemberRole(member: MemberDto, role: VaultRole) {
   delete onUpdateVaultMembershipError.value[member.id];
