@@ -202,8 +202,9 @@ class VaultService {
       .catch((error) => rethrowAndConvertIfExpected(error, 400, 404, 409));
   }
 
-  public async accessToken(vaultId: string, evenIfArchived = false): Promise<string> {
-    return axiosAuth.get(`/vaults/${vaultId}/access-token?evenIfArchived=${evenIfArchived}`, { headers: { 'Content-Type': 'text/plain' } })
+  public async accessToken(vaultId: string, deviceId?: string, evenIfArchived = false): Promise<string> {
+    const deviceIdQueryParam = deviceId !== undefined ? `&deviceId=${deviceId}` : '';
+    return axiosAuth.get(`/vaults/${vaultId}/access-token?evenIfArchived=${evenIfArchived}${deviceIdQueryParam}`, { headers: { 'Content-Type': 'text/plain', 'deviceId': deviceId } })
       .then(response => response.data)
       .catch((error) => rethrowAndConvertIfExpected(error, 402, 403));
   }
