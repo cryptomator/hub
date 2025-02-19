@@ -85,10 +85,11 @@
                               v-for="type in selectedEventTypes" 
                               :key="type"
                               class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20"
+                              :aria-label="t('auditLog.filter.removeEventType', { type: eventTypeOptions[type] })"
                               @click.stop="removeEventType(type)"
                             >
                               <span class="mr-1">{{ eventTypeOptions[type] }}</span>
-                              <span class="text-green-800 font-bold">&times;</span>
+                              <span class="text-green-800 font-bold" aria-hidden="true">&times;</span>
                             </button>
                           </template>
                           <template v-else>
@@ -104,7 +105,7 @@
                           <ListboxOption 
                             v-for="(label, key) in eventTypeOptions" 
                             :key="key" 
-                            v-slot="{ active, selected }" 
+                            v-slot="{ selected }" 
                             class="relative cursor-default select-none py-2 pl-3 pr-9 ui-not-active:text-gray-900 ui-active:text-white ui-active:bg-primary" 
                             :value="key"
                           >
