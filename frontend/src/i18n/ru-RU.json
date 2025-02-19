@@ -73,6 +73,8 @@
   "auditLog.filter": "Фильтр",
   "auditLog.filter.startDate": "Дата начала",
   "auditLog.filter.endDate": "Дата окончания",
+  "auditLog.filter.selectEventFilter": "Выбрать фильтр событий",
+  "auditLog.filter.clerEventFilter": "Очистить фильтр событий",
   "auditLog.timestamp": "Время",
   "auditLog.type": "Событие",
   "auditLog.details": "Подробно",
