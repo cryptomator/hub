@@ -15,7 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - WoT: Admins can adjust WoT parameters (#297)
 - Permission to create new vaults can now be controlled via the `create-vaults` role in Keycloak (#206)
 - Preserver user locale setting (#313)
-- Add Italian, Korean, Dutch and Portuguese translation
+- Italian, Korean, Dutch and Portuguese translation
+- Audit log filter by event type
 
 ### Changed
 

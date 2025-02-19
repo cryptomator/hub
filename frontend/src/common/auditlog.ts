@@ -180,8 +180,9 @@ export class AuditLogEntityCache {
 /* Service */
 
 class AuditLogService {
-  public async getAllEvents(startDate: Date, endDate: Date, paginationId: number, order: string, pageSize: number): Promise<AuditEventDto[]> {
-    return axiosAuth.get<AuditEventDto[]>(`/auditlog?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}&paginationId=${paginationId}&order=${order}&pageSize=${pageSize}`)
+  public async getAllEvents(startDate: Date, endDate: Date, type: string[], paginationId: number, order: string, pageSize: number): Promise<AuditEventDto[]> {
+    const typeQuery = type.length > 0 ? `&type=${type.join('&type=')}` : '';
+    return axiosAuth.get<AuditEventDto[]>(`/auditlog?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}&paginationId=${paginationId}${typeQuery}&order=${order}&pageSize=${pageSize}`)
       .then(response => response.data.map(dto => {
         dto.timestamp = new Date(dto.timestamp);
         return dto;

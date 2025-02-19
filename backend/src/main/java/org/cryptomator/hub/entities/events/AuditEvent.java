@@ -32,6 +32,7 @@ import java.util.stream.Stream;
 				WHERE ae.timestamp >= :startDate
 				AND ae.timestamp < :endDate
 				AND ae.id < :paginationId
+				AND (:allTypes = true OR ae.type IN :types)
 				ORDER BY ae.id DESC
 				""")
 @NamedQuery(name = "AuditEvent.listAllInPeriodAfterId",
@@ -41,6 +42,7 @@ import java.util.stream.Stream;
 				WHERE ae.timestamp >= :startDate
 				AND ae.timestamp < :endDate
 				AND ae.id > :paginationId
+				AND (:allTypes = true OR ae.type IN :types)
 				ORDER BY ae.id ASC
 				""")
 @NamedQuery(name = "AuditEvent.lastVaultKeyRetrieve",
@@ -118,8 +120,14 @@ public class AuditEvent {
 	@ApplicationScoped
 	public static class Repository implements PanacheRepository<AuditEvent> {
 
-		public Stream<AuditEvent> findAllInPeriod(Instant startDate, Instant endDate, long paginationId, boolean ascending, int pageSize) {
-			var parameters = Parameters.with("startDate", startDate).and("endDate", endDate).and("paginationId", paginationId);
+		public Stream<AuditEvent> findAllInPeriod(Instant startDate, Instant endDate, List<String> type, long paginationId, boolean ascending, int pageSize) {
+			var allTypes = type.isEmpty();
+
+			var parameters = Parameters.with("startDate", startDate)
+					.and("endDate", endDate)
+					.and("paginationId", paginationId)
+					.and("types", type)
+					.and("allTypes", allTypes);
 
 			final PanacheQuery<AuditEvent> query;
 			if (ascending) {
