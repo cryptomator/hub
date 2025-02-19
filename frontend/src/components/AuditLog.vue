@@ -72,7 +72,7 @@
                         :title="selectedEventTypes.length > 0 ? t('auditLog.filter.clerEventFilter') : ''"
                         @click="selectedEventTypes = []"
                       >
-                        <TrashIcon class="h-5 w-5 text-gray-500 hover:text-gray-700 disabled:text-gray-300" aria-hidden="true" />
+                        <TrashIcon class="h-4 w-4 text-gray-500 hover:text-gray-700 disabled:text-gray-300" aria-hidden="true" />
                       </button>
                     </label>
                   </div>
@@ -222,7 +222,7 @@
 <script setup lang="ts">
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions, Popover, PopoverButton, PopoverGroup, PopoverPanel } from '@headlessui/vue';
 import { ChevronDownIcon } from '@heroicons/vue/20/solid';
-import { CheckIcon, ChevronUpDownIcon, WrenchIcon, TrashIcon } from '@heroicons/vue/24/solid';
+import { CheckIcon, ChevronUpDownIcon, TrashIcon, WrenchIcon } from '@heroicons/vue/24/solid';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auditlog, { AuditEventDto } from '../common/auditlog';
