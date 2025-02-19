@@ -323,7 +323,7 @@ public class VaultResource {
 			throw new ActionRequiredException("User account not initialized.");
 		}
 		var ipAddress = request.remoteAddress().host();
-		var deviceId = request.getHeader("deviceId");
+		var deviceId = request.getHeader("Hub-Device-ID");
 		var access = accessTokenRepo.unlock(vaultId, jwt.getSubject());
 		if (access != null) {
 			eventLogger.logVaultKeyRetrieved(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.SUCCESS, ipAddress, deviceId);
