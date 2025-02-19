@@ -67,7 +67,7 @@
                       {{ t('auditLog.type') }}
                       <button 
                         type="button" 
-                        class="ml-2 p-1 flex items-center justify-center focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-30 disabled:cursor-not-allowed"
+                        class="ml-2 p-1 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-30 disabled:cursor-not-allowed"
                         :disabled="selectedEventTypes.length === 0"
                         :title="selectedEventTypes.length > 0 ? t('auditLog.filter.clerEventFilter') : ''"
                         @click="selectedEventTypes = []"
@@ -100,7 +100,7 @@
                         </span>
                       </ListboxButton>
                       <transition leave-active-class="transition ease-in duration-100" leave-from-class="opacity-100" leave-to-class="opacity-0">
-                        <ListboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 ring-opacity-5 focus:outline-none text-sm">
+                        <ListboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-none text-sm">
                           <ListboxOption 
                             v-for="(label, key) in eventTypeOptions" 
                             :key="key" 
@@ -109,7 +109,7 @@
                             :value="key"
                           >
                             <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ label }}</span>
-                            <span v-if="selected" :class="[selected ? 'text-primary' : active ? 'text-white' : 'text-primary', 'absolute inset-y-0 right-0 flex items-center pr-4']">
+                            <span v-if="selected" :class="['absolute inset-y-0 right-0 flex items-center pr-4', selected ? 'text-primary' : 'text-gray-400']">
                               <CheckIcon class="h-5 w-5" aria-hidden="true" />
                             </span>
                           </ListboxOption>
