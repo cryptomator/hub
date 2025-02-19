@@ -73,6 +73,8 @@
   "auditLog.filter": "Filtro",
   "auditLog.filter.startDate": "Data de início",
   "auditLog.filter.endDate": "Data de fim",
+  "auditLog.filter.selectEventFilter": "Selecionar filtro de eventos",
+  "auditLog.filter.clerEventFilter": "Limpar filtro de eventos",
   "auditLog.timestamp": "Data e hora",
   "auditLog.type": "Evento",
   "auditLog.details": "Detalhes",
