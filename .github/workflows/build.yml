@@ -68,7 +68,7 @@ jobs:
       - name: Build and test backend
         working-directory: backend
         run: >
-          mvn -B clean verify
+          ./mvnw -B clean verify
           org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
           -Dsonar.projectKey=cryptomator_hub_backend
           -Dsonar.organization=cryptomator
@@ -89,11 +89,11 @@ jobs:
           echo tag=${TAG} >> "$GITHUB_OUTPUT"
       - name: Ensure to use tagged version
         if: startsWith(github.ref, 'refs/tags/')
-        run: mvn versions:set --file ./backend/pom.xml -DnewVersion=${GITHUB_REF##*/}
+        run: ./mvnw versions:set --file ./backend/pom.xml -DnewVersion=${GITHUB_REF##*/}
       - name: Build and push container image
         if: github.event.inputs.tag != '' || startsWith(github.ref, 'refs/tags/') || contains(github.event.head_commit.message, '[build image]')
         working-directory: backend
-        run: mvn -B clean package -DskipTests
+        run: ./mvnw -B clean package -DskipTests
         env:
           QUARKUS_JIB_PLATFORMS: linux/amd64,linux/arm64/v8
           QUARKUS_CONTAINER_IMAGE_TAG: ${{ steps.get_tag.outputs.tag }}
