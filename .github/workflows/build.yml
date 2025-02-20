@@ -115,7 +115,8 @@ jobs:
         working-directory: frontend
         run: npm run dist
       - name: Ensure to use tagged version
-        run: ./mvnw versions:set --file ./backend/pom.xml -DnewVersion=${GITHUB_REF##*/}
+        working-directory: backend
+        run: ./mvnw versions:set --file pom.xml -DnewVersion=${GITHUB_REF##*/}
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
