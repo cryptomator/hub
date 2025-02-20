@@ -169,9 +169,7 @@ public class UsersResource {
 			var events = auditEventRepo.findLastVaultKeyRetrieve(deviceIds).collect(Collectors.toMap(VaultKeyRetrievedEvent::getDeviceId, Function.identity()));
 			devices = deviceEntities.stream().map(d -> {
 				var event = events.get(d.getId());
-				var lastIpAddress = (event != null) ? event.getIpAddress() : null;
-				var lastAccessTime = (event != null) ? event.getTimestamp() : null;
-				return new DeviceResource.DeviceDto(d.getId(), d.getName(), d.getType(), d.getPublickey(), d.getUserPrivateKeys(), d.getOwner().getId(), d.getCreationTime().truncatedTo(ChronoUnit.MILLIS), lastIpAddress, lastAccessTime);
+				return DeviceResource.DeviceDto.fromEntity(d, event);
 			}).collect(Collectors.toSet());
 		} else {
 			Function<Device, DeviceResource.DeviceDto> mapDevices = d -> new DeviceResource.DeviceDto(d.getId(), d.getName(), d.getType(), d.getPublickey(), d.getUserPrivateKeys(), d.getOwner().getId(), d.getCreationTime().truncatedTo(ChronoUnit.MILLIS), null, null);
