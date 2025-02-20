@@ -40,7 +40,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Function;
 
 @Path("/auditlog")
 public class AuditLogResource {
@@ -91,23 +90,6 @@ public class AuditLogResource {
 		}
 
 		return auditEventRepo.findAllInPeriod(startDate, endDate, type, paginationId, order.equals("asc"), pageSize).map(AuditEventDto::fromEntity).toList();
-	}
-
-	@GET
-	@Path("/last-vault-key-retrieve")
-	@RolesAllowed("admin")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Operation(summary = "list last vault key retrieve auditlog entry by device id", description = "list last vault key retrieve auditlog entry by device id")
-	@Parameter(name = "deviceIds", description = "list of deviceIds", in = ParameterIn.QUERY)
-	@APIResponse(responseCode = "200", description = "Body contains list of events")
-	@APIResponse(responseCode = "402", description = "Community license used or license expired")
-	@APIResponse(responseCode = "403", description = "requesting user does not have admin role")
-	public List<VaultKeyRetrievedEventDto> lastVaultKeyRetrieve(@QueryParam("deviceIds") List<String> deviceIds) {
-		if (!license.isSet() || license.isExpired()) {
-			throw new PaymentRequiredException("Community license used or license expired");
-		}
-		Function<VaultKeyRetrievedEvent, VaultKeyRetrievedEventDto> mapper = e -> new VaultKeyRetrievedEventDto(e.getId(), e.getTimestamp(), e.getType(), e.getRetrievedBy(), e.getVaultId(), e.getResult(), e.getIpAddress(), e.getDeviceId());
-		return auditEventRepo.findLastVaultKeyRetrieve(deviceIds).map(mapper).toList();
 	}
 
 	@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
