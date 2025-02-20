@@ -281,7 +281,7 @@ public class VaultResource {
 		if (accessTokenSeats > license.getSeats()) {
 			throw new PaymentRequiredException("Number of effective vault users exceeds available license seats");
 		}
-		var ipAddress = request.remoteAddress().toString();
+		var ipAddress = request.remoteAddress().hostAddress();
 		try {
 			var access = legacyAccessTokenRepo.unlock(vaultId, deviceId, jwt.getSubject());
 			eventLogger.logVaultKeyRetrieved(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.SUCCESS, ipAddress, deviceId);
@@ -322,7 +322,7 @@ public class VaultResource {
 		if (user.getEcdhPublicKey() == null) {
 			throw new ActionRequiredException("User account not initialized.");
 		}
-		var ipAddress = request.remoteAddress().host();
+		var ipAddress = request.remoteAddress().hostAddress();
 		var deviceId = request.getHeader("Hub-Device-ID");
 		var access = accessTokenRepo.unlock(vaultId, jwt.getSubject());
 		if (access != null) {

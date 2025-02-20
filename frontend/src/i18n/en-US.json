@@ -144,7 +144,7 @@
   "deviceList.added": "Added",
   "deviceList.thisDevice": "This Device",
   "deviceList.ipAddress": "IP Address",
-  "deviceList.ipaAddress.toolTip": "May not be set for legacy reasons.",
+  "deviceList.ipAddress.toolTip": "May not be set for legacy reasons.",
   "deviceList.lastAccess": "Last Access",
   "deviceList.lastAccess.toolTip": "May not be set for legacy reasons.",
 
