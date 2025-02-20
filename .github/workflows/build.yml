@@ -97,9 +97,7 @@ jobs:
       digest_amd64: ${{ steps.digest.outputs.digest_amd64 }}
       digest_arm64: ${{ steps.digest.outputs.digest_arm64 }}
     permissions:
-      id-token: write
       contents: read
-      attestations: write
       packages: write
     steps:
       - uses: actions/checkout@v4
@@ -147,6 +145,9 @@ jobs:
     needs: build-native-image
     runs-on: ubuntu-latest
     permissions:
+      id-token: write
+      contents: read
+      attestations: write
       packages: write
     steps:
       - id: get_tag
