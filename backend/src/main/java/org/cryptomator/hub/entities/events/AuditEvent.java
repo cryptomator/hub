@@ -32,6 +32,7 @@ import java.util.stream.Stream;
 				WHERE ae.timestamp >= :startDate
 				AND ae.timestamp < :endDate
 				AND ae.id < :paginationId
+				AND (:allTypes = true OR ae.type IN :types)
 				ORDER BY ae.id DESC
 				""")
 @NamedQuery(name = "AuditEvent.listAllInPeriodAfterId",
@@ -41,17 +42,18 @@ import java.util.stream.Stream;
 				WHERE ae.timestamp >= :startDate
 				AND ae.timestamp < :endDate
 				AND ae.id > :paginationId
+				AND (:allTypes = true OR ae.type IN :types)
 				ORDER BY ae.id ASC
 				""")
 @NamedQuery(name = "AuditEvent.lastVaultKeyRetrieve",
 		query = """
-				SELECT v1
-				FROM VaultKeyRetrievedEvent v1
-				WHERE v1.deviceId IN (:deviceIds)
-				AND v1.timestamp = (
-					SELECT MAX(v2.timestamp)
-					FROM VaultKeyRetrievedEvent v2
-					WHERE v2.deviceId = v1.deviceId
+				SELECT e1
+				FROM VaultKeyRetrievedEvent e1
+				WHERE e1.deviceId IN (:deviceIds)
+				AND e1.timestamp = (
+					SELECT MAX(e2.timestamp)
+					FROM VaultKeyRetrievedEvent e2
+					WHERE e2.deviceId = e1.deviceId
 				  )
 				""")
 @SequenceGenerator(name = "audit_event_id_seq", sequenceName = "audit_event_id_seq", allocationSize = 1)
@@ -118,8 +120,14 @@ public class AuditEvent {
 	@ApplicationScoped
 	public static class Repository implements PanacheRepository<AuditEvent> {
 
-		public Stream<AuditEvent> findAllInPeriod(Instant startDate, Instant endDate, long paginationId, boolean ascending, int pageSize) {
-			var parameters = Parameters.with("startDate", startDate).and("endDate", endDate).and("paginationId", paginationId);
+		public Stream<AuditEvent> findAllInPeriod(Instant startDate, Instant endDate, List<String> type, long paginationId, boolean ascending, int pageSize) {
+			var allTypes = type.isEmpty();
+
+			var parameters = Parameters.with("startDate", startDate)
+					.and("endDate", endDate)
+					.and("paginationId", paginationId)
+					.and("types", type)
+					.and("allTypes", allTypes);
 
 			final PanacheQuery<AuditEvent> query;
 			if (ascending) {

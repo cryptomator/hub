@@ -203,8 +203,11 @@ class VaultService {
   }
 
   public async accessToken(vaultId: string, deviceId?: string, evenIfArchived = false): Promise<string> {
-    const deviceIdQueryParam = deviceId !== undefined ? `&deviceId=${deviceId}` : '';
-    return axiosAuth.get(`/vaults/${vaultId}/access-token?evenIfArchived=${evenIfArchived}${deviceIdQueryParam}`, { headers: { 'Content-Type': 'text/plain', 'deviceId': deviceId } })
+    const headers: Record<string, string> = { 'Content-Type': 'text/plain' };
+    if (deviceId) {
+      headers['Hub-Device-ID'] = deviceId;
+    }
+    return axiosAuth.get(`/vaults/${vaultId}/access-token?evenIfArchived=${evenIfArchived}`, { headers })
       .then(response => response.data)
       .catch((error) => rethrowAndConvertIfExpected(error, 402, 403));
   }
