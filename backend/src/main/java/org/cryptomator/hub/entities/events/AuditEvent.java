@@ -47,13 +47,13 @@ import java.util.stream.Stream;
 				""")
 @NamedQuery(name = "AuditEvent.lastVaultKeyRetrieve",
 		query = """
-				SELECT v1
-				FROM VaultKeyRetrievedEvent v1
-				WHERE v1.deviceId IN (:deviceIds)
-				AND v1.timestamp = (
-					SELECT MAX(v2.timestamp)
-					FROM VaultKeyRetrievedEvent v2
-					WHERE v2.deviceId = v1.deviceId
+				SELECT e1
+				FROM VaultKeyRetrievedEvent e1
+				WHERE e1.deviceId IN (:deviceIds)
+				AND e1.timestamp = (
+					SELECT MAX(e2.timestamp)
+					FROM VaultKeyRetrievedEvent e2
+					WHERE e2.deviceId = e1.deviceId
 				  )
 				""")
 @SequenceGenerator(name = "audit_event_id_seq", sequenceName = "audit_event_id_seq", allocationSize = 1)
