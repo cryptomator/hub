@@ -77,48 +77,107 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      - id: get_tag
-        if: inputs.tag != '' || github.ref_type == 'tag' || contains(github.event.head_commit.message, '[build image]')
-        run: |
-          if [[ ! -z "${{ inputs.tag }}" ]]; then
-            TAG="${{ inputs.tag }}"
-          elif [[ ${{ github.ref_type }} == 'tag' || ${{ github.ref_name }} == 'develop' ]]; then
-            TAG="${{ github.ref_name }}"
-          else
-            TAG="commit-${{ github.sha }}"
-          fi
-          echo tag=${TAG} >> "$GITHUB_OUTPUT"
+
+  build-native-image:
+    name: Build Native Image
+    needs: test
+    if: startsWith(github.ref, 'refs/tags/') || contains(github.event.head_commit.message, '[build image]')
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux/amd64
+            image-suffix: amd64
+          - os: ubuntu-24.04-arm
+            platform: linux/arm64
+            image-suffix: arm64
+    runs-on: ${{ matrix.os }}
+    outputs:
+      digest_amd64: ${{ steps.digest.outputs.digest_amd64 }}
+      digest_arm64: ${{ steps.digest.outputs.digest_arm64 }}
+    permissions:
+      id-token: write
+      contents: read
+      attestations: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      - name: NPM install
+        working-directory: frontend
+        run: npm ci --ignore-scripts
+      - name: Deploy frontend
+        working-directory: frontend
+        run: npm run dist
       - name: Ensure to use tagged version
-        if: startsWith(github.ref, 'refs/tags/')
         run: ./mvnw versions:set --file ./backend/pom.xml -DnewVersion=${GITHUB_REF##*/}
       - name: Set up QEMU
-        if: github.event.inputs.tag != '' || startsWith(github.ref, 'refs/tags/') || contains(github.event.head_commit.message, '[build image]')
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
-        if: github.event.inputs.tag != '' || startsWith(github.ref, 'refs/tags/') || contains(github.event.head_commit.message, '[build image]')
         uses: docker/setup-buildx-action@v3
       - name: Login to GHCR
-        if: github.event.inputs.tag != '' || startsWith(github.ref, 'refs/tags/') || contains(github.event.head_commit.message, '[build image]')
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and Push Container Image
-        if: github.event.inputs.tag != '' || startsWith(github.ref, 'refs/tags/') || contains(github.event.head_commit.message, '[build image]')
         id: push
         uses: docker/build-push-action@v6
         with:
           context: backend
           file: backend/src/main/docker/Dockerfile.native
-          platforms: linux/amd64,linux/arm64/v8
+          platforms: ${{ matrix.platform }}
           push: true
           tags: |
-            ghcr.io/cryptomator/hub:${{ steps.get_tag.outputs.tag }}
+            ghcr.io/cryptomator/hub:${{ github.sha }}-${{ matrix.image-suffix }}
+      - name: Export Digest
+        id: digest
+        run: |
+          echo "digest_${{ matrix.image-suffix }}=${{ steps.push.outputs.digest }}" >> "$GITHUB_OUTPUT"
+
+  create-manifest:
+    name: Create Manifest
+    needs: build-native-image
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - id: get_tag
+        run: |
+          if [[ ! -z "${{ inputs.tag }}" ]]; then
+            TAG="${{ inputs.tag }}"
+          elif [[ ${{ github.ref_type }} == 'tag' ]]; then
+            TAG="${{ github.ref_name }}"
+          else
+            TAG="commit-${{ github.sha }}"
+          fi
+          echo tag=${TAG} >> "$GITHUB_OUTPUT"
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create Manifest for ghcr.io/cryptomator/hub:${{ github.sha }}
+        run: |
+          docker buildx imagetools create -t ghcr.io/cryptomator/hub:${{ github.sha }} \
+            --amend ghcr.io/cryptomator/hub:${{ github.sha }}-amd64 \
+            --amend ghcr.io/cryptomator/hub:${{ github.sha }}-arm64
+      - name: Create checksum file
+        run: |
+          echo "${{ needs.build-native-image.outputs.digest_amd64 }} *ghcr.io/cryptomator/hub:${{ github.sha }}-amd64" > ${{ runner.temp }}/checksums.txt
+          echo "${{ needs.build-native-image.outputs.digest_arm64 }} *ghcr.io/cryptomator/hub:${{ github.sha }}-arm64" >> ${{ runner.temp }}/checksums.txt
       - name: Generate artifact attestation
-        if: github.event.inputs.tag != '' || startsWith(github.ref, 'refs/tags/') || contains(github.event.head_commit.message, '[build image]')
         uses: actions/attest-build-provenance@v2
         with:
-          subject-name: ghcr.io/cryptomator/hub
-          subject-digest: ${{ steps.push.outputs.digest }}
+          subject-name: ghcr.io/cryptomator/hub:${{ github.sha }}
+          subject-checksums: ${{ runner.temp }}/checksums.txt
           push-to-registry: true
