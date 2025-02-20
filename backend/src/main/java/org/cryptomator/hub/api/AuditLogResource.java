@@ -39,6 +39,7 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Function;
 
 @Path("/auditlog")
 public class AuditLogResource {
@@ -90,11 +91,12 @@ public class AuditLogResource {
 	@APIResponse(responseCode = "200", description = "Body contains list of events")
 	@APIResponse(responseCode = "402", description = "Community license used or license expired")
 	@APIResponse(responseCode = "403", description = "requesting user does not have admin role")
-	public List<AuditEventDto> lastVaultKeyRetrieve(@QueryParam("deviceIds") List<String> deviceIds) {
+	public List<VaultKeyRetrievedEventDto> lastVaultKeyRetrieve(@QueryParam("deviceIds") List<String> deviceIds) {
 		if (!license.isSet() || license.isExpired()) {
 			throw new PaymentRequiredException("Community license used or license expired");
 		}
-		return auditEventRepo.findLastVaultKeyRetrieve(deviceIds).map(AuditEventDto::fromEntity).toList();
+		Function<VaultKeyRetrievedEvent, VaultKeyRetrievedEventDto> mapper = e -> new VaultKeyRetrievedEventDto(e.getId(), e.getTimestamp(), e.getType(), e.getRetrievedBy(), e.getVaultId(), e.getResult(), e.getIpAddress(), e.getDeviceId());
+		return auditEventRepo.findLastVaultKeyRetrieve(deviceIds).map(mapper).toList();
 	}
 
 	@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")

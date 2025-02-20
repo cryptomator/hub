@@ -65,7 +65,6 @@ import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headless
 import { ArrowTopRightOnSquareIcon, CheckIcon, ChevronUpDownIcon, LanguageIcon } from '@heroicons/vue/24/solid';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import auditlog from '../common/auditlog';
 import backend, { UserDto, VersionDto } from '../common/backend';
 
 import config from '../common/config';
@@ -94,9 +93,6 @@ async function fetchData() {
   try {
     me.value = await userdata.me;
     version.value = await backend.version.get();
-    const deviceIds = me.value.devices.map(d => d.id);
-    const lastVaultKeyRetrieveEvents = await auditlog.service.lastVaultKeyRetrieveEvents(deviceIds);
-    console.log(lastVaultKeyRetrieveEvents);
   } catch (error) {
     console.error('Retrieving user information failed.', error);
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');

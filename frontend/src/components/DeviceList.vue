@@ -29,6 +29,22 @@
                   <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     {{ t('deviceList.added') }}
                   </th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap" :title="t('deviceList.lastAccess.toolTip')">
+                    <span class="inline-flex items-center gap-1">
+                      {{ t('deviceList.lastAccess') }}
+                      <div class="relative group">
+                        <QuestionMarkCircleIcon class="h-4 w-4 text-gray-400 cursor-help"/>
+                      </div>
+                    </span>
+                  </th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap" :title="t('deviceList.ipaAddress.toolTip')">
+                    <span class="inline-flex items-center gap-1">
+                      {{ t('deviceList.ipAddress') }}
+                      <span class="relative group">
+                        <QuestionMarkCircleIcon class="h-4 w-4 text-gray-400 cursor-help" />
+                      </span>
+                    </span>
+                  </th>
                   <th scope="col" class="relative px-6 py-3">
                     <span class="sr-only">{{ t('common.remove') }}</span>
                   </th>
@@ -60,6 +76,12 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {{ d(device.creationTime, 'short') }}
                     </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <div v-if="lastVaultKeyRetrieveEvents.has(device.id)">{{ d(lastVaultKeyRetrieveEvents.get(device.id)!.timestamp, 'short') }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <div v-if="lastVaultKeyRetrieveEvents.has(device.id) && lastVaultKeyRetrieveEvents.get(device.id)?.ipAddress">{{ lastVaultKeyRetrieveEvents.get(device.id)!.ipAddress! }}</div>
+                    </td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <a v-if="device.id != myDevice?.id" tabindex="0" class="text-red-600 hover:text-red-900" @click="removeDevice(device)">{{ t('common.remove') }}</a>
                     </td>
@@ -81,9 +103,10 @@
 </template>
 
 <script setup lang="ts">
-import { ComputerDesktopIcon, DevicePhoneMobileIcon, WindowIcon } from '@heroicons/vue/24/solid';
+import { ComputerDesktopIcon, DevicePhoneMobileIcon, QuestionMarkCircleIcon, WindowIcon } from '@heroicons/vue/24/solid';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import auditlog, { AuditEventVaultKeyRetrieveDto } from '../common/auditlog';
 import backend, { DeviceDto, NotFoundError, UserDto } from '../common/backend';
 import userdata from '../common/userdata';
 import FetchError from './FetchError.vue';
@@ -95,6 +118,8 @@ const myDevice = ref<DeviceDto>();
 const onFetchError = ref<Error | null>();
 const onRemoveDeviceError = ref< {[id: string]: Error} >({});
 
+const lastVaultKeyRetrieveEvents = ref<Map<string, AuditEventVaultKeyRetrieveDto>>(new Map());
+
 onMounted(async () => {
   await fetchData();
 });
@@ -104,6 +129,13 @@ async function fetchData() {
   try {
     me.value = await userdata.me;
     myDevice.value = await userdata.browser;
+    const deviceIds = me.value.devices.map(d => d.id);
+    const events = await auditlog.service.lastVaultKeyRetrieveEvents(deviceIds);
+    events.forEach(e => {
+      if (e.deviceId != undefined) {
+        lastVaultKeyRetrieveEvents.value.set(e.deviceId, e);
+      }
+    });
   } catch (error) {
     console.error('Retrieving device list failed.', error);
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');

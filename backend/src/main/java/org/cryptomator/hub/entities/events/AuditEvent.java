@@ -131,7 +131,7 @@ public class AuditEvent {
 			return query.stream();
 		}
 
-		public Stream<AuditEvent> findLastVaultKeyRetrieve(List<String> deviceIds) {
+		public Stream<VaultKeyRetrievedEvent> findLastVaultKeyRetrieve(List<String> deviceIds) {
 			return find("#AuditEvent.lastVaultKeyRetrieve", Parameters.with("deviceIds", deviceIds)).stream();
 		}
 	}
