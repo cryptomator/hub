@@ -174,10 +174,12 @@ public class DeviceResource {
 							@JsonProperty("publicKey") @NotNull @OnlyBase64Chars String publicKey,
 							@JsonProperty("userPrivateKey") @NotNull @ValidJWE String userPrivateKeys, // singular name for history reasons (don't break client compatibility)
 							@JsonProperty("owner") @ValidId String ownerId,
-							@JsonProperty("creationTime") Instant creationTime) {
+							@JsonProperty("creationTime") Instant creationTime,
+							@JsonProperty("lastIpAddress") String lastIpAddress,
+							@JsonProperty("lastAccessTime") Instant lastAccessTime) {
 
 		public static DeviceDto fromEntity(Device entity) {
-			return new DeviceDto(entity.getId(), entity.getName(), entity.getType(), entity.getPublickey(), entity.getUserPrivateKeys(), entity.getOwner().getId(), entity.getCreationTime().truncatedTo(ChronoUnit.MILLIS));
+			return new DeviceDto(entity.getId(), entity.getName(), entity.getType(), entity.getPublickey(), entity.getUserPrivateKeys(), entity.getOwner().getId(), entity.getCreationTime().truncatedTo(ChronoUnit.MILLIS), null, null);
 		}
 
 	}

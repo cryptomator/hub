@@ -55,6 +55,8 @@ export type DeviceDto = {
   publicKey: string;
   userPrivateKey: string;
   creationTime: Date;
+  lastIpAddress?: string;
+  lastAccessTime?: Date;
 };
 
 export type VaultRole = 'MEMBER' | 'OWNER';
@@ -248,8 +250,8 @@ class UserService {
     return axiosAuth.put('/users/me', dto);
   }
 
-  public async me(withDevices: boolean = false): Promise<UserDto> {
-    return axiosAuth.get<UserDto>(`/users/me?withDevices=${withDevices}`).then(response => AuthorityService.fillInMissingPicture(response.data));
+  public async me(withDevices: boolean = false, withLastAccess: boolean = false): Promise<UserDto> {
+    return axiosAuth.get<UserDto>(`/users/me?withDevices=${withDevices}&withLastAccess=${withLastAccess}`).then(response => AuthorityService.fillInMissingPicture(response.data));
   }
 
   public async resetMe(): Promise<void> {

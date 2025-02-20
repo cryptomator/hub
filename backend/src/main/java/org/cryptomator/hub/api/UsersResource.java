@@ -24,7 +24,9 @@ import org.cryptomator.hub.entities.EffectiveWot;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.entities.WotEntry;
+import org.cryptomator.hub.entities.events.AuditEvent;
 import org.cryptomator.hub.entities.events.EventLogger;
+import org.cryptomator.hub.entities.events.VaultKeyRetrievedEvent;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -58,6 +60,8 @@ public class UsersResource {
 	WotEntry.Repository wotRepo;
 	@Inject
 	EffectiveWot.Repository effectiveWotRepo;
+	@Inject
+	AuditEvent.Repository auditEventRepo;
 
 	@Inject
 	JsonWebToken jwt;
@@ -156,10 +160,23 @@ public class UsersResource {
 	@Operation(summary = "get the logged-in user")
 	@APIResponse(responseCode = "200", description = "returns the current user")
 	@APIResponse(responseCode = "404", description = "no user matching the subject of the JWT passed as Bearer Token")
-	public UserDto getMe(@QueryParam("withDevices") boolean withDevices) {
+	public UserDto getMe(@QueryParam("withDevices") boolean withDevices, @QueryParam("withLastAccess") boolean withLastAccess) {
 		User user = userRepo.findById(jwt.getSubject());
-		Function<Device, DeviceResource.DeviceDto> mapDevices = d -> new DeviceResource.DeviceDto(d.getId(), d.getName(), d.getType(), d.getPublickey(), d.getUserPrivateKeys(), d.getOwner().getId(), d.getCreationTime().truncatedTo(ChronoUnit.MILLIS));
-		var devices = withDevices ? user.devices.stream().map(mapDevices).collect(Collectors.toSet()) : Set.<DeviceResource.DeviceDto>of();
+		Set<DeviceResource.DeviceDto> devices;
+		if (withLastAccess) {
+			var deviceEntities = user.devices.stream().toList();
+			var deviceIds = deviceEntities.stream().map(Device::getId).toList();
+			var events = auditEventRepo.findLastVaultKeyRetrieve(deviceIds).collect(Collectors.toMap(VaultKeyRetrievedEvent::getDeviceId, Function.identity()));
+			devices = deviceEntities.stream().map(d -> {
+				var event = events.get(d.getId());
+				var lastIpAddress = (event != null) ? event.getIpAddress() : null;
+				var lastAccessTime = (event != null) ? event.getTimestamp() : null;
+				return new DeviceResource.DeviceDto(d.getId(), d.getName(), d.getType(), d.getPublickey(), d.getUserPrivateKeys(), d.getOwner().getId(), d.getCreationTime().truncatedTo(ChronoUnit.MILLIS), lastIpAddress, lastAccessTime);
+			}).collect(Collectors.toSet());
+		} else {
+			Function<Device, DeviceResource.DeviceDto> mapDevices = d -> new DeviceResource.DeviceDto(d.getId(), d.getName(), d.getType(), d.getPublickey(), d.getUserPrivateKeys(), d.getOwner().getId(), d.getCreationTime().truncatedTo(ChronoUnit.MILLIS), null, null);
+			devices = withDevices ? user.devices.stream().map(mapDevices).collect(Collectors.toSet()) : Set.of();
+		}
 		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getLanguage(), devices, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
 	}
 

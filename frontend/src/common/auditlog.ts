@@ -189,16 +189,6 @@ class AuditLogService {
       }))
       .catch((error) => rethrowAndConvertIfExpected(error, 402));
   }
-
-  public async lastVaultKeyRetrieveEvents(deviceIds: string[]): Promise<AuditEventVaultKeyRetrieveDto[]> {
-    const query = `deviceIds=${deviceIds.join('&deviceIds=')}`;
-    return axiosAuth.get<AuditEventVaultKeyRetrieveDto[]>(`/auditlog/last-vault-key-retrieve?${query}`)
-      .then(response => response.data.map(dto => {
-        dto.timestamp = new Date(dto.timestamp);
-        return dto;
-      }))
-      .catch((error) => rethrowAndConvertIfExpected(error, 402));
-  }
 }
 
 /* Export */
