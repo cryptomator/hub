@@ -145,7 +145,7 @@
   "deviceList.thisDevice": "This Device",
   "deviceList.ipAddress": "IP Address",
   "deviceList.ipAddress.toolTip": "May not be set for legacy reasons.",
-  "deviceList.lastAccess": "Last Access",
+  "deviceList.lastAccess": "Last Vault Access",
   "deviceList.lastAccess.toolTip": "May not be set for legacy reasons.",
 
   "downloadVaultTemplateDialog.title": "Download Vault Template",
