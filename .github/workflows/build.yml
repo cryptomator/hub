@@ -169,10 +169,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Create Manifest for ghcr.io/cryptomator/hub:${{ github.sha }}
-        run: |
-          docker buildx imagetools create -t ghcr.io/cryptomator/hub:${{ github.sha }} \
-            ghcr.io/cryptomator/hub:${{ github.sha }}-amd64 \
-            ghcr.io/cryptomator/hub:${{ github.sha }}-arm64
+        run: >
+          docker buildx imagetools create -t ghcr.io/cryptomator/hub:${{ github.sha }}
+          ghcr.io/cryptomator/hub:${{ github.sha }}-amd64
+          ghcr.io/cryptomator/hub:${{ github.sha }}-arm64
       - name: Create checksum file
         run: |
           echo "${{ needs.build-native-image.outputs.digest_amd64 }} *ghcr.io/cryptomator/hub:${{ github.sha }}-amd64" > ${{ runner.temp }}/checksums.txt
