@@ -1,0 +1,30 @@
+## Stage 1 : build with maven builder image with native capabilities
+FROM quay.io/quarkus/ubi-quarkus-mandrel-builder-image:jdk-21 AS builder
+COPY --chown=quarkus:quarkus --chmod=0755 mvnw /code/mvnw
+COPY --chown=quarkus:quarkus .mvn /code/.mvn
+COPY --chown=quarkus:quarkus pom.xml /code/
+USER quarkus
+WORKDIR /code
+RUN ./mvnw -B quarkus:go-offline --no-transfer-progress
+COPY src /code/src
+RUN ./mvnw -B package -Dnative -DskipTests --no-transfer-progress --strict-checksums
+
+## Stage 2 : create the docker final image
+FROM quay.io/quarkus/quarkus-micro-image:2.0
+COPY --from=builder /code/target/*-runner /work/application
+WORKDIR /work/
+
+# set up permissions for user `1001`
+RUN chmod 775 /work /work/application \
+  && chown -R 1001 /work \
+  && chmod -R "g+rwX" /work \
+  && chown -R 1001:root /work
+
+LABEL org.opencontainers.image.url="https://cryptomator.org/hub/"
+LABEL org.opencontainers.image.source="https://github.com/cryptomator/hub"
+LABEL org.opencontainers.image.vendor="Skymatic GmbH"
+EXPOSE 8080
+USER 1001
+ENV QUARKUS_HTTP_HOST=0.0.0.0
+
+CMD ["./application"]

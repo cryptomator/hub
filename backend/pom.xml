@@ -10,10 +10,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.jdk.version>21</project.jdk.version>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <quarkus.container-image.group>cryptomator</quarkus.container-image.group>
-    <quarkus.container-image.name>hub</quarkus.container-image.name>
     <quarkus.platform.version>3.15.2</quarkus.platform.version>
-    <quarkus.jib.base-jvm-image>eclipse-temurin:21-jre</quarkus.jib.base-jvm-image> <!-- irrelevant for -Pnative -->
     <jwt.version>4.4.0</jwt.version>
     <compiler-plugin.version>3.13.0</compiler-plugin.version>
     <dependency-plugin.version>3.8.1</dependency-plugin.version>
@@ -269,14 +266,11 @@
           </plugin>
         </plugins>
       </build>
-      <properties>
-        <quarkus.package.type>native</quarkus.package.type>
-      </properties>
     </profile>
     <profile>
       <id>uber-jar</id>
       <properties>
-        <quarkus.package.type>uber-jar</quarkus.package.type>
+        <quarkus.package.jar.type>uber-jar</quarkus.package.jar.type>
       </properties>
     </profile>
   </profiles>
