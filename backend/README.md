@@ -48,20 +48,12 @@ Make sure a container engine is running (required to register the built image lo
 Then run this command to build the image:
 
 ```shell script
-./mvnw clean package -Dquarkus.container-image.build=true -Dquarkus.container-image.tag=latest
-```
-
-### Using containerd or podman
-
-Tell JIB which executable to use (replace `nerctl` with `podman` etc):
-
-```shell script
- -Dquarkus.jib.docker-executable-name=$(which nerdctl)
+docker build -f src/main/docker/Dockerfile.jvm -t ghcr.io/cryptomator/hub .
 ```
 
 ### Building native images
 
 3x smaller but takes longer to build. Docker VM requires sufficient memory during the build:
 ```shell script
-./mvnw clean package -Pnative -Dquarkus.container-image.build=true -Dquarkus.native.container-build=true -Dquarkus.native.builder-image=quay.io/quarkus/ubi-quarkus-mandrel-builder-image:23.1-java21 -Dquarkus.container-image.tag=latest
+docker build -f src/main/docker/Dockerfile.native -t ghcr.io/cryptomator/hub .
 ```
