@@ -4,11 +4,6 @@ on:
   push:
   pull_request_target:
     types: [labeled]
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Image Tag'
-        required: false
 
 env:
   NODE_VERSION: 20
@@ -88,10 +83,10 @@ jobs:
         include:
           - os: ubuntu-latest
             platform: linux/amd64
-            image-suffix: amd64
+            arch: amd64
           - os: ubuntu-24.04-arm
             platform: linux/arm64
-            image-suffix: arm64
+            arch: arm64
     runs-on: ${{ matrix.os }}
     outputs:
       digest_amd64: ${{ steps.digest.outputs.digest_amd64 }}
@@ -133,12 +128,10 @@ jobs:
           file: backend/src/main/docker/Dockerfile.native
           platforms: ${{ matrix.platform }}
           push: true
-          tags: |
-            ghcr.io/cryptomator/hub:${{ github.sha }}-${{ matrix.image-suffix }}
       - name: Export Digest
         id: digest
         run: |
-          echo "digest_${{ matrix.image-suffix }}=${{ steps.push.outputs.digest }}" >> "$GITHUB_OUTPUT"
+          echo "digest_${{ matrix.arch }}=${{ steps.push.outputs.digest }}" >> "$GITHUB_OUTPUT"
 
   create-manifest:
     name: Create Manifest
@@ -150,16 +143,6 @@ jobs:
       attestations: write
       packages: write
     steps:
-      - id: get_tag
-        run: |
-          if [[ ! -z "${{ inputs.tag }}" ]]; then
-            TAG="${{ inputs.tag }}"
-          elif [[ ${{ github.ref_type }} == 'tag' ]]; then
-            TAG="${{ github.ref_name }}"
-          else
-            TAG="commit-${{ github.sha }}"
-          fi
-          echo tag=${TAG} >> "$GITHUB_OUTPUT"
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Login to GHCR
@@ -168,18 +151,19 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Create Manifest for ghcr.io/cryptomator/hub:${{ github.sha }}
+      - name: Create Multi-Arch Manifest for ghcr.io/cryptomator/hub:${{ github.sha }}
         run: >
-          docker buildx imagetools create -t ghcr.io/cryptomator/hub:${{ github.sha }}
-          ghcr.io/cryptomator/hub:${{ github.sha }}-amd64
-          ghcr.io/cryptomator/hub:${{ github.sha }}-arm64
-      - name: Create checksum file
+          docker buildx imagetools create --tag ghcr.io/cryptomator/hub:${{ github.sha }}
+          ghcr.io/cryptomator/hub@${{ needs.build-native-image.outputs.digest_amd64 }}
+          ghcr.io/cryptomator/hub@${{ needs.build-native-image.outputs.digest_arm64 }}
+      - name: Retrieve Multi-Arch Digest
+        id: inspect
         run: |
-          echo "${{ needs.build-native-image.outputs.digest_amd64 }} *ghcr.io/cryptomator/hub:${{ github.sha }}-amd64" > ${{ runner.temp }}/checksums.txt
-          echo "${{ needs.build-native-image.outputs.digest_arm64 }} *ghcr.io/cryptomator/hub:${{ github.sha }}-arm64" >> ${{ runner.temp }}/checksums.txt
+          DIGEST=$(docker buildx imagetools inspect ghcr.io/cryptomator/hub:${{ github.sha }} --format "{{json .Manifest}}" | jq -r .digest)
+          echo "digest_multiarch=${DIGEST}" >> "$GITHUB_OUTPUT"
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v2
         with:
-          subject-name: ghcr.io/cryptomator/hub:${{ github.sha }}
-          subject-checksums: ${{ runner.temp }}/checksums.txt
+          subject-name: ghcr.io/cryptomator/hub
+          subject-digest: ${{ steps.inspect.outcome.digest_multiarch }}
           push-to-registry: true
