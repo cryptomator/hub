@@ -81,6 +81,8 @@ export type AuditEventVaultKeyRetrieveDto = AuditEventDtoBase & {
   retrievedBy: string;
   vaultId: string;
   result: 'SUCCESS' | 'UNAUTHORIZED';
+  ipAddress?: string;
+  deviceId?: string;
 }
 
 export type AuditEventVaultMemberAddDto = AuditEventDtoBase & {

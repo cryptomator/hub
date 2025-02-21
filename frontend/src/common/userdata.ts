@@ -5,6 +5,7 @@ import { JWEParser } from './jwe';
 
 class UserData {
   #me?: Promise<UserDto>;
+  #meWithLastAccess?: Promise<UserDto>;
   #browserKeys?: Promise<BrowserKeys | undefined>;
 
   /**
@@ -15,6 +16,14 @@ class UserData {
       this.#me = backend.users.me(true);
     }
     return this.#me;
+  }
+
+  public get meWithLastAccess(): Promise<UserDto> {
+    if (!this.#meWithLastAccess) {
+      this.#meWithLastAccess = backend.users.me(true, true);
+      this.#me = this.#meWithLastAccess;
+    }
+    return this.#meWithLastAccess;
   }
 
   /**

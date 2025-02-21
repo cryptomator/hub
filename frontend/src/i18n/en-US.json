@@ -143,6 +143,10 @@
   "deviceList.type": "Type",
   "deviceList.added": "Added",
   "deviceList.thisDevice": "This Device",
+  "deviceList.ipAddress": "IP Address",
+  "deviceList.ipAddress.toolTip": "May not be set for legacy reasons.",
+  "deviceList.lastAccess": "Last Vault Access",
+  "deviceList.lastAccess.toolTip": "May not be set for legacy reasons.",
 
   "downloadVaultTemplateDialog.title": "Download Vault Template",
   "downloadVaultTemplateDialog.description": "Download and unpack the zipped vault template to any location shared with your team members. This is required only once during the initial setup.",

@@ -130,7 +130,7 @@ public class AuditLogResource {
 				case VaultCreatedEvent evt -> new VaultCreatedEventDto(evt.getId(), evt.getTimestamp(), VaultCreatedEvent.TYPE, evt.getCreatedBy(), evt.getVaultId(), evt.getVaultName(), evt.getVaultDescription());
 				case VaultUpdatedEvent evt -> new VaultUpdatedEventDto(evt.getId(), evt.getTimestamp(), VaultUpdatedEvent.TYPE, evt.getUpdatedBy(), evt.getVaultId(), evt.getVaultName(), evt.getVaultDescription(), evt.isVaultArchived());
 				case VaultAccessGrantedEvent evt -> new VaultAccessGrantedEventDto(evt.getId(), evt.getTimestamp(), VaultAccessGrantedEvent.TYPE, evt.getGrantedBy(), evt.getVaultId(), evt.getAuthorityId());
-				case VaultKeyRetrievedEvent evt -> new VaultKeyRetrievedEventDto(evt.getId(), evt.getTimestamp(), VaultKeyRetrievedEvent.TYPE, evt.getRetrievedBy(), evt.getVaultId(), evt.getResult());
+				case VaultKeyRetrievedEvent evt -> new VaultKeyRetrievedEventDto(evt.getId(), evt.getTimestamp(), VaultKeyRetrievedEvent.TYPE, evt.getRetrievedBy(), evt.getVaultId(), evt.getResult(), evt.getIpAddress(), evt.getDeviceId());
 				case VaultMemberAddedEvent evt -> new VaultMemberAddedEventDto(evt.getId(), evt.getTimestamp(), VaultMemberAddedEvent.TYPE, evt.getAddedBy(), evt.getVaultId(), evt.getAuthorityId(), evt.getRole());
 				case VaultMemberRemovedEvent evt -> new VaultMemberRemovedEventDto(evt.getId(), evt.getTimestamp(), VaultMemberRemovedEvent.TYPE, evt.getRemovedBy(), evt.getVaultId(), evt.getAuthorityId());
 				case VaultMemberUpdatedEvent evt -> new VaultMemberUpdatedEventDto(evt.getId(), evt.getTimestamp(), VaultMemberUpdatedEvent.TYPE, evt.getUpdatedBy(), evt.getVaultId(), evt.getAuthorityId(), evt.getRole());
@@ -177,7 +177,7 @@ public class AuditLogResource {
 	}
 
 	record VaultKeyRetrievedEventDto(long id, Instant timestamp, String type, @JsonProperty("retrievedBy") String retrievedBy, @JsonProperty("vaultId") UUID vaultId,
-									 @JsonProperty("result") VaultKeyRetrievedEvent.Result result) implements AuditEventDto {
+									 @JsonProperty("result") VaultKeyRetrievedEvent.Result result, @JsonProperty("ipAddress") String ipAddress, @JsonProperty("deviceId") String deviceId) implements AuditEventDto {
 	}
 
 	record VaultMemberAddedEventDto(long id, Instant timestamp, String type, @JsonProperty("addedBy") String addedBy, @JsonProperty("vaultId") UUID vaultId, @JsonProperty("authorityId") String authorityId,

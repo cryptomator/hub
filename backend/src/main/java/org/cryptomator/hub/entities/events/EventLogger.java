@@ -84,12 +84,14 @@ public class EventLogger {
 		auditEventRepository.persist(event);
 	}
 
-	public void logVaultKeyRetrieved(String retrievedBy, UUID vaultId, VaultKeyRetrievedEvent.Result result) {
+	public void logVaultKeyRetrieved(String retrievedBy, UUID vaultId, VaultKeyRetrievedEvent.Result result, String ipAddress, String deviceId) {
 		var event = new VaultKeyRetrievedEvent();
 		event.setTimestamp(Instant.now());
 		event.setRetrievedBy(retrievedBy);
 		event.setVaultId(vaultId);
 		event.setResult(result);
+		event.setIpAddress(ipAddress);
+		event.setDeviceId(deviceId);
 		auditEventRepository.persist(event);
 	}
 
