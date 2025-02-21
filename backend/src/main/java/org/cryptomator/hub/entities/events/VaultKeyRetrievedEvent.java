@@ -27,6 +27,12 @@ public class VaultKeyRetrievedEvent extends AuditEvent {
 	@Enumerated(EnumType.STRING)
 	private Result result;
 
+	@Column(name = "ip_address")
+	private String ipAddress;
+
+	@Column(name = "device_id")
+	private String deviceId;
+
 	public String getRetrievedBy() {
 		return retrievedBy;
 	}
@@ -51,20 +57,20 @@ public class VaultKeyRetrievedEvent extends AuditEvent {
 		this.result = result;
 	}
 
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
-		VaultKeyRetrievedEvent that = (VaultKeyRetrievedEvent) o;
-		return super.equals(that) //
-				&& Objects.equals(retrievedBy, that.retrievedBy) //
-				&& Objects.equals(vaultId, that.vaultId) //
-				&& Objects.equals(result, that.result);
+	public String getIpAddress() {
+		return ipAddress;
 	}
 
-	@Override
-	public int hashCode() {
-		return Objects.hash(super.getId(), retrievedBy, vaultId, result);
+	public void setIpAddress(String ipAddress) {
+		this.ipAddress = ipAddress;
+	}
+
+	public String getDeviceId() {
+		return deviceId;
+	}
+
+	public void setDeviceId(String device) {
+		this.deviceId = device;
 	}
 
 	public enum Result {
@@ -72,4 +78,16 @@ public class VaultKeyRetrievedEvent extends AuditEvent {
 		UNAUTHORIZED
 	}
 
+	@Override
+	public boolean equals(Object o) {
+		if (o == null || getClass() != o.getClass()) return false;
+		if (!super.equals(o)) return false;
+		VaultKeyRetrievedEvent that = (VaultKeyRetrievedEvent) o;
+		return Objects.equals(retrievedBy, that.retrievedBy) && Objects.equals(vaultId, that.vaultId) && result == that.result && Objects.equals(ipAddress, that.ipAddress) && Objects.equals(deviceId, that.deviceId);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(super.hashCode(), retrievedBy, vaultId, result, ipAddress, deviceId);
+	}
 }

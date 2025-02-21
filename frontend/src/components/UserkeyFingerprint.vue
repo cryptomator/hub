@@ -8,7 +8,7 @@
     </p>
 
     <div class="mt-4 bg-white rounded-md shadow-xs flex w-full">
-      <div class="rounded-none rounded-l-md px-3 py-2 ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-primary focus-within:z-10 w-full">
+      <div class="rounded-md px-3 py-2 ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-primary focus-within:z-10 w-full">
         <label for="keyFingerprint" class="sr-only">{{ t('userkeyFingerprint.title') }}</label>
         <input id="keyFingerprint" v-model="keyFingerprint" name="keyFingerprint" class="block w-full border-0 p-0 text-gray-900 font-mono text-lg placeholder:text-gray-400 focus:ring-0" readonly />
       </div>

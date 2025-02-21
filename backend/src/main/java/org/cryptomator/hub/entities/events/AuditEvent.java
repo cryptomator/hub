@@ -19,6 +19,7 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Stream;
 
 @Entity
@@ -44,6 +45,17 @@ import java.util.stream.Stream;
 				AND ae.id > :paginationId
 				AND (:allTypes = true OR ae.type IN :types)
 				ORDER BY ae.id ASC
+				""")
+@NamedQuery(name = "AuditEvent.lastVaultKeyRetrieve",
+		query = """
+				SELECT e1
+				FROM VaultKeyRetrievedEvent e1
+				WHERE e1.deviceId IN (:deviceIds)
+				AND e1.timestamp = (
+					SELECT MAX(e2.timestamp)
+					FROM VaultKeyRetrievedEvent e2
+					WHERE e2.deviceId = e1.deviceId
+				  )
 				""")
 @SequenceGenerator(name = "audit_event_id_seq", sequenceName = "audit_event_id_seq", allocationSize = 1)
 public class AuditEvent {
@@ -126,6 +138,10 @@ public class AuditEvent {
 			}
 			query.page(0, pageSize);
 			return query.stream();
+		}
+
+		public Stream<VaultKeyRetrievedEvent> findLastVaultKeyRetrieve(Set<String> deviceIds) {
+			return find("#AuditEvent.lastVaultKeyRetrieve", Parameters.with("deviceIds", deviceIds)).stream();
 		}
 	}
 }
