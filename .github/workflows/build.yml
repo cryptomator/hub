@@ -110,8 +110,6 @@ jobs:
       - name: Ensure to use tagged version
         working-directory: backend
         run: ./mvnw versions:set --file pom.xml -DnewVersion=${GITHUB_REF##*/}
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
       - name: Docker metadata
         id: meta
         uses: docker/metadata-action@v5
