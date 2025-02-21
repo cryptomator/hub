@@ -179,5 +179,5 @@ jobs:
         uses: actions/attest-build-provenance@v2
         with:
           subject-name: ghcr.io/cryptomator/hub
-          subject-digest: ${{ steps.inspect.outcome.digest_multiarch }}
+          subject-digest: ${{ steps.inspect.outputs.digest_multiarch }}
           push-to-registry: true
