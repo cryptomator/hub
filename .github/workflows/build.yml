@@ -74,7 +74,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   build-native-image:
-    name: Build Native Image
+    name: Build ${{ matrix.arch }} Image
     needs: test
     if: startsWith(github.ref, 'refs/tags/') || contains(github.event.head_commit.message, '[build image]')
     strategy:
@@ -112,6 +112,18 @@ jobs:
         run: ./mvnw versions:set --file pom.xml -DnewVersion=${GITHUB_REF##*/}
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/cryptomator/hub
+          tags: |
+            type=sha,prefix=,format=short
+          flavor: |
+            suffix=-${{ matrix.arch }}
+          labels: |
+            org.opencontainers.image.title=Cryptomator Hub
+            org.opencontainers.image.vendor=Skymatic GmbH
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Login to GHCR
@@ -127,14 +139,16 @@ jobs:
           context: backend
           file: backend/src/main/docker/Dockerfile.native
           platforms: ${{ matrix.platform }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           push: true
       - name: Export Digest
         id: digest
         run: |
           echo "digest_${{ matrix.arch }}=${{ steps.push.outputs.digest }}" >> "$GITHUB_OUTPUT"
 
-  create-manifest:
-    name: Create Manifest
+  multi-arch-image:
+    name: Build Multi-Arch Image
     needs: build-native-image
     runs-on: ubuntu-latest
     permissions:
