@@ -157,21 +157,26 @@ jobs:
     steps:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+      - name: Determine short Commit SHA
+        id: sha
+        run: echo "short_sha=${LONG_SHA:0:7}" >> "$GITHUB_OUTPUT"
+        env:
+          LONG_SHA: ${{ github.sha }}
       - name: Login to GHCR
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Create Multi-Arch Manifest for ghcr.io/cryptomator/hub:${{ github.sha }}
+      - name: Create Multi-Arch Manifest for ghcr.io/cryptomator/hub:${{ steps.sha.outputs.short_sha }}
         run: >
-          docker buildx imagetools create --tag ghcr.io/cryptomator/hub:${{ github.sha }}
+          docker buildx imagetools create --tag ghcr.io/cryptomator/hub:${{ steps.sha.outputs.short_sha }}
           ghcr.io/cryptomator/hub@${{ needs.build-native-image.outputs.digest_amd64 }}
           ghcr.io/cryptomator/hub@${{ needs.build-native-image.outputs.digest_arm64 }}
       - name: Retrieve Multi-Arch Digest
         id: inspect
         run: |
-          DIGEST=$(docker buildx imagetools inspect ghcr.io/cryptomator/hub:${{ github.sha }} --format "{{json .Manifest}}" | jq -r .digest)
+          DIGEST=$(docker buildx imagetools inspect ghcr.io/cryptomator/hub:${{ steps.sha.outputs.short_sha }} --format "{{json .Manifest}}" | jq -r .digest)
           echo "digest_multiarch=${DIGEST}" >> "$GITHUB_OUTPUT"
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v2
