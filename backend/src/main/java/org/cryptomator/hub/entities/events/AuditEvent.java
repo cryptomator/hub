@@ -19,6 +19,7 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Stream;
 
 @Entity
@@ -139,7 +140,7 @@ public class AuditEvent {
 			return query.stream();
 		}
 
-		public Stream<VaultKeyRetrievedEvent> findLastVaultKeyRetrieve(List<String> deviceIds) {
+		public Stream<VaultKeyRetrievedEvent> findLastVaultKeyRetrieve(Set<String> deviceIds) {
 			return find("#AuditEvent.lastVaultKeyRetrieve", Parameters.with("deviceIds", deviceIds)).stream();
 		}
 	}

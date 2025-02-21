@@ -162,20 +162,18 @@ public class UsersResource {
 	@APIResponse(responseCode = "404", description = "no user matching the subject of the JWT passed as Bearer Token")
 	public UserDto getMe(@QueryParam("withDevices") boolean withDevices, @QueryParam("withLastAccess") boolean withLastAccess) {
 		User user = userRepo.findById(jwt.getSubject());
-		Set<DeviceResource.DeviceDto> devices;
+		Set<DeviceResource.DeviceDto> deviceDtos;
 		if (withLastAccess) {
-			var deviceEntities = user.devices.stream().toList();
-			var deviceIds = deviceEntities.stream().map(Device::getId).toList();
-			var events = auditEventRepo.findLastVaultKeyRetrieve(deviceIds).collect(Collectors.toMap(VaultKeyRetrievedEvent::getDeviceId, Function.identity()));
-			devices = deviceEntities.stream().map(d -> {
+			var devices = user.devices.stream().collect(Collectors.toMap(Device::getId, Function.identity()));
+			var events = auditEventRepo.findLastVaultKeyRetrieve(devices.keySet()).collect(Collectors.toMap(VaultKeyRetrievedEvent::getDeviceId, Function.identity()));
+			deviceDtos = devices.values().stream().map(d -> {
 				var event = events.get(d.getId());
 				return DeviceResource.DeviceDto.fromEntity(d, event);
 			}).collect(Collectors.toSet());
 		} else {
-			Function<Device, DeviceResource.DeviceDto> mapDevices = d -> new DeviceResource.DeviceDto(d.getId(), d.getName(), d.getType(), d.getPublickey(), d.getUserPrivateKeys(), d.getOwner().getId(), d.getCreationTime().truncatedTo(ChronoUnit.MILLIS), null, null);
-			devices = withDevices ? user.devices.stream().map(mapDevices).collect(Collectors.toSet()) : Set.of();
+			deviceDtos = withDevices ? user.devices.stream().map(DeviceResource.DeviceDto::fromEntity).collect(Collectors.toSet()) : Set.of();
 		}
-		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getLanguage(), devices, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
+		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getLanguage(), deviceDtos, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
 	}
 
 	@POST

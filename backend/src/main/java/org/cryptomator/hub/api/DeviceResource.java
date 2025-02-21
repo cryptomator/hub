@@ -1,6 +1,7 @@
 package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.annotation.Nullable;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.persistence.NoResultException;
@@ -183,7 +184,7 @@ public class DeviceResource {
 			return new DeviceDto(entity.getId(), entity.getName(), entity.getType(), entity.getPublickey(), entity.getUserPrivateKeys(), entity.getOwner().getId(), entity.getCreationTime().truncatedTo(ChronoUnit.MILLIS), null, null);
 		}
 
-		public static DeviceDto fromEntity(Device d, VaultKeyRetrievedEvent event) {
+		public static DeviceDto fromEntity(Device d, @Nullable VaultKeyRetrievedEvent event) {
 			var lastIpAddress = (event != null) ? event.getIpAddress() : null;
 			var lastAccessTime = (event != null) ? event.getTimestamp() : null;
 			return new DeviceResource.DeviceDto(d.getId(), d.getName(), d.getType(), d.getPublickey(), d.getUserPrivateKeys(), d.getOwner().getId(), d.getCreationTime().truncatedTo(ChronoUnit.MILLIS), lastIpAddress, lastAccessTime);
