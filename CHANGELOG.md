@@ -15,8 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - WoT: Admins can adjust WoT parameters (#297)
 - Permission to create new vaults can now be controlled via the `create-vaults` role in Keycloak (#206)
 - Preserver user locale setting (#313)
+- New log event entries: UserAccountReset, UserKeysChange and UserSetupCodeChange (#310)
+- Audit log filter by event type (#312)
+- Show last IP address and last vault access timestamp of devices in user profile (#320)
 - Italian, Korean, Dutch and Portuguese translation
-- Audit log filter by event type
 
 ### Changed
 
@@ -32,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Switched to JWK thumbprint format in user profile
 - Switched to Repository Pattern (#273)
 - Redesigned Admin Panel (#308)
+- Enhanced audit log VaultKeyRetrievedEvent, contains now IP address and device ID (#320)
 
 ### Fixed
 
