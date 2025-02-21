@@ -22,10 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Updated Keycloak to 25.0.6
+- Updated Keycloak to 26.1.2
 - Updated to Java 21 (#272)
-- Updated to Quarkus 3.8.x LTS (#272)
-- Updated to tailwindcss 4
+- Updated to Quarkus 3.15.3 LTS
+- Updated to Tailwind CSS 4
 - Updated to Vite 6
 - Reduced number of transitive dependencies
 - Bumped build time dependencies
