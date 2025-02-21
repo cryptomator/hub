@@ -134,6 +134,8 @@
   "deviceList.type": "Tipo",
   "deviceList.added": "Aggiunto",
   "deviceList.thisDevice": "Questo dispositivo",
+  "deviceList.ipAddress": "Indirizzo IP",
+  "deviceList.lastAccess": "Ultimo accesso alla cassaforte",
   "downloadVaultTemplateDialog.title": "Scarica modello della cassaforte",
   "downloadVaultTemplateDialog.description": "Scarica e scompatta il modello di cassaforte in qualsiasi posizione condivisa con i membri del tuo team. È necessario solo la prima volta durante la configurazione iniziale.",
   "editVaultMetadataDialog.title": "Modifica i metadati della cassaforte",
