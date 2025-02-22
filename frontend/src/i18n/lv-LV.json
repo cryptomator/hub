@@ -70,6 +70,8 @@
   "deviceList.deviceName": "Ierīces nosaukums",
   "deviceList.type": "Veids",
   "deviceList.thisDevice": "Šī ierīce",
+  "deviceList.ipAddress": "IP adrese",
+  "deviceList.lastAccess": "Pēdējā piekļuve glabātavai",
   "downloadVaultTemplateDialog.title": "Lejupielādēt glabātavas sagatavi",
   "editVaultMetadataDialog.vaultName": "Glabātavas nosaukums",
   "editVaultMetadataDialog.vaultDescription": "Apraksts",
