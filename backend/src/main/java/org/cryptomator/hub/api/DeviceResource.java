@@ -1,6 +1,7 @@
 package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.annotation.Nullable;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.persistence.NoResultException;
@@ -25,6 +26,7 @@ import org.cryptomator.hub.entities.LegacyAccessToken;
 import org.cryptomator.hub.entities.LegacyDevice;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.events.EventLogger;
+import org.cryptomator.hub.entities.events.VaultKeyRetrievedEvent;
 import org.cryptomator.hub.validation.NoHtmlOrScriptChars;
 import org.cryptomator.hub.validation.OnlyBase64Chars;
 import org.cryptomator.hub.validation.ValidId;
@@ -174,10 +176,18 @@ public class DeviceResource {
 							@JsonProperty("publicKey") @NotNull @OnlyBase64Chars String publicKey,
 							@JsonProperty("userPrivateKey") @NotNull @ValidJWE String userPrivateKeys, // singular name for history reasons (don't break client compatibility)
 							@JsonProperty("owner") @ValidId String ownerId,
-							@JsonProperty("creationTime") Instant creationTime) {
+							@JsonProperty("creationTime") Instant creationTime,
+							@JsonProperty("lastIpAddress") String lastIpAddress,
+							@JsonProperty("lastAccessTime") Instant lastAccessTime) {
 
 		public static DeviceDto fromEntity(Device entity) {
-			return new DeviceDto(entity.getId(), entity.getName(), entity.getType(), entity.getPublickey(), entity.getUserPrivateKeys(), entity.getOwner().getId(), entity.getCreationTime().truncatedTo(ChronoUnit.MILLIS));
+			return new DeviceDto(entity.getId(), entity.getName(), entity.getType(), entity.getPublickey(), entity.getUserPrivateKeys(), entity.getOwner().getId(), entity.getCreationTime().truncatedTo(ChronoUnit.MILLIS), null, null);
+		}
+
+		public static DeviceDto fromEntity(Device d, @Nullable VaultKeyRetrievedEvent event) {
+			var lastIpAddress = (event != null) ? event.getIpAddress() : null;
+			var lastAccessTime = (event != null) ? event.getTimestamp() : null;
+			return new DeviceResource.DeviceDto(d.getId(), d.getName(), d.getType(), d.getPublickey(), d.getUserPrivateKeys(), d.getOwner().getId(), d.getCreationTime().truncatedTo(ChronoUnit.MILLIS), lastIpAddress, lastAccessTime);
 		}
 
 	}

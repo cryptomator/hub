@@ -29,6 +29,22 @@
                   <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     {{ t('deviceList.added') }}
                   </th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap" :title="t('deviceList.lastAccess.toolTip')">
+                    <span class="inline-flex items-center gap-1">
+                      {{ t('deviceList.lastAccess') }}
+                      <div class="relative group">
+                        <QuestionMarkCircleIcon class="h-4 w-4 text-gray-400 cursor-help"/>
+                      </div>
+                    </span>
+                  </th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap" :title="t('deviceList.ipAddress.toolTip')">
+                    <span class="inline-flex items-center gap-1">
+                      {{ t('deviceList.ipAddress') }}
+                      <span class="relative group">
+                        <QuestionMarkCircleIcon class="h-4 w-4 text-gray-400 cursor-help" />
+                      </span>
+                    </span>
+                  </th>
                   <th scope="col" class="relative px-6 py-3">
                     <span class="sr-only">{{ t('common.remove') }}</span>
                   </th>
@@ -60,6 +76,12 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {{ d(device.creationTime, 'short') }}
                     </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <div v-if="device.lastAccessTime">{{ d(device.lastAccessTime, 'short') }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <div v-if="device.lastIpAddress">{{ device.lastIpAddress }}</div>
+                    </td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <a v-if="device.id != myDevice?.id" tabindex="0" class="text-red-600 hover:text-red-900" @click="removeDevice(device)">{{ t('common.remove') }}</a>
                     </td>
@@ -81,7 +103,7 @@
 </template>
 
 <script setup lang="ts">
-import { ComputerDesktopIcon, DevicePhoneMobileIcon, WindowIcon } from '@heroicons/vue/24/solid';
+import { ComputerDesktopIcon, DevicePhoneMobileIcon, QuestionMarkCircleIcon, WindowIcon } from '@heroicons/vue/24/solid';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { DeviceDto, NotFoundError, UserDto } from '../common/backend';
@@ -102,7 +124,7 @@ onMounted(async () => {
 async function fetchData() {
   onFetchError.value = null;
   try {
-    me.value = await userdata.me;
+    me.value = await userdata.meWithLastAccess;
     myDevice.value = await userdata.browser;
   } catch (error) {
     console.error('Retrieving device list failed.', error);
