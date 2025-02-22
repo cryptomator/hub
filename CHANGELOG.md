@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Audit log filter by event type (#312)
 - Show last IP address and last vault access timestamp of devices in user profile (#320)
 - Italian, Korean, Dutch and Portuguese translation
+- Added provenance attestation for our container images (#322)
 
 ### Changed
 
