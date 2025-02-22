@@ -18,6 +18,8 @@
   "admin.webOfTrust.information": "معرفة المزيد.",
   "admin.webOfTrust.save": "حفظ",
   "auditLog.filter": "التصفية",
+  "auditLog.filter.selectEventFilter": "حدد فلتر الحدث",
+  "auditLog.filter.clerEventFilter": "مسح فلتر الحدث",
   "auditLog.details": "تفاصيل",
   "auditLog.details.vault.create": "إنشاء المخزن",
   "claimVaultOwnershipDialog.error.wrongPassword": "كلمة المرور خاطئة",
