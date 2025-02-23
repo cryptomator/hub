@@ -63,6 +63,8 @@
   "createVault.showRecoveryKey.submit": "金庫を作成",
   "deviceList.deviceName": "デバイス名",
   "deviceList.type": "種類",
+  "deviceList.ipAddress": "IPアドレス",
+  "deviceList.lastAccess": "金庫の最終アクセス",
   "editVaultMetadataDialog.vaultName": "金庫の名前",
   "initialSetup.accountKey": "アカウントキー",
   "manageAccountKey.title": "アカウントキー",
