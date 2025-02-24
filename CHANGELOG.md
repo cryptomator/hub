@@ -15,14 +15,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - WoT: Admins can adjust WoT parameters (#297)
 - Permission to create new vaults can now be controlled via the `create-vaults` role in Keycloak (#206)
 - Preserver user locale setting (#313)
-- Add Italian, Korean, Dutch and Portuguese translation
+- New log event entries: UserAccountReset, UserKeysChange and UserSetupCodeChange (#310)
+- Audit log filter by event type (#312)
+- Show last IP address and last vault access timestamp of devices in user profile (#320)
+- Italian, Korean, Dutch and Portuguese translation
+- Added provenance attestation for our container images (#322)
 
 ### Changed
 
-- Updated Keycloak to 25.0.6
+- Updated Keycloak to 26.1.2
 - Updated to Java 21 (#272)
-- Updated to Quarkus 3.8.x LTS (#272)
-- Updated to tailwindcss 4
+- Updated to Quarkus 3.15.3 LTS
+- Updated to Tailwind CSS 4
 - Updated to Vite 6
 - Reduced number of transitive dependencies
 - Bumped build time dependencies
@@ -31,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Switched to JWK thumbprint format in user profile
 - Switched to Repository Pattern (#273)
 - Redesigned Admin Panel (#308)
+- Enhanced audit log VaultKeyRetrievedEvent, contains now IP address and device ID (#320)
 
 ### Fixed
 

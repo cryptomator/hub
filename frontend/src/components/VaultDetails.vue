@@ -302,7 +302,8 @@ async function fetchOwnerData() {
     await refreshTrusts();
     usersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
     vaultRecoveryRequired.value = false;
-    const vaultKeyJwe = await backend.vaults.accessToken(props.vaultId, true);
+    const deviceId = await (await userdata.browserKeys)?.id();
+    const vaultKeyJwe = await backend.vaults.accessToken(props.vaultId, deviceId, true);
     vaultKeys.value = await loadVaultKeys(vaultKeyJwe);
   } catch (error) {
     if (error instanceof ForbiddenError) {

@@ -78,6 +78,8 @@
   "auditLog.filter": "Filter",
   "auditLog.filter.startDate": "Start Date",
   "auditLog.filter.endDate": "End Date",
+  "auditLog.filter.selectEventFilter": "Select event filter",
+  "auditLog.filter.clerEventFilter": "Clear event filter",
   "auditLog.timestamp": "Timestamp",
   "auditLog.type": "Event",
   "auditLog.details": "Details",
@@ -141,6 +143,10 @@
   "deviceList.type": "Type",
   "deviceList.added": "Added",
   "deviceList.thisDevice": "This Device",
+  "deviceList.ipAddress": "IP Address",
+  "deviceList.ipAddress.toolTip": "May not be set for legacy reasons.",
+  "deviceList.lastAccess": "Last Vault Access",
+  "deviceList.lastAccess.toolTip": "May not be set for legacy reasons.",
 
   "downloadVaultTemplateDialog.title": "Download Vault Template",
   "downloadVaultTemplateDialog.description": "Download and unpack the zipped vault template to any location shared with your team members. This is required only once during the initial setup.",
@@ -215,10 +221,10 @@
   "recoveryKeyDialog.recoveryKey": "Recovery Key of Your Vault",
 
   "recoverVaultDialog.title": "Vault Recovery",
-  "recoverVaultDialog.description": "Type in the Recover Key of this vault to regain access to it.",
+  "recoverVaultDialog.description": "Type in the Recovery Key of this vault to regain access to it.",
   "recoverVaultDialog.submit": "Recover Vault",
-  "recoverVaultDialog.error.formValidationFailed": "Recover Key must not be empty",
-  "recoverVaultDialog.error.invalidRecoveryKey": "Invalid Recover Key",
+  "recoverVaultDialog.error.formValidationFailed": "Recovery Key must not be empty",
+  "recoverVaultDialog.error.invalidRecoveryKey": "Invalid Recovery Key",
   
   "regenerateAccountKeyDialog.confirmRegenerateAccountKey.title": "Regenerate Account Key",
   "regenerateAccountKeyDialog.confirmRegenerateAccountKey.description": "If you suspect that your old Account Key has been compromised, you can regenerate it. You will then only be able to add new devices with the new Account Key. Your existing devices will remain intact.",

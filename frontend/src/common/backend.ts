@@ -55,6 +55,8 @@ export type DeviceDto = {
   publicKey: string;
   userPrivateKey: string;
   creationTime: Date;
+  lastIpAddress?: string;
+  lastAccessTime?: Date;
 };
 
 export type VaultRole = 'MEMBER' | 'OWNER';
@@ -202,8 +204,12 @@ class VaultService {
       .catch((error) => rethrowAndConvertIfExpected(error, 400, 404, 409));
   }
 
-  public async accessToken(vaultId: string, evenIfArchived = false): Promise<string> {
-    return axiosAuth.get(`/vaults/${vaultId}/access-token?evenIfArchived=${evenIfArchived}`, { headers: { 'Content-Type': 'text/plain' } })
+  public async accessToken(vaultId: string, deviceId?: string, evenIfArchived = false): Promise<string> {
+    const headers: Record<string, string> = { 'Content-Type': 'text/plain' };
+    if (deviceId) {
+      headers['Hub-Device-ID'] = deviceId;
+    }
+    return axiosAuth.get(`/vaults/${vaultId}/access-token?evenIfArchived=${evenIfArchived}`, { headers })
       .then(response => response.data)
       .catch((error) => rethrowAndConvertIfExpected(error, 402, 403));
   }
@@ -244,8 +250,8 @@ class UserService {
     return axiosAuth.put('/users/me', dto);
   }
 
-  public async me(withDevices: boolean = false): Promise<UserDto> {
-    return axiosAuth.get<UserDto>(`/users/me?withDevices=${withDevices}`).then(response => AuthorityService.fillInMissingPicture(response.data));
+  public async me(withDevices: boolean = false, withLastAccess: boolean = false): Promise<UserDto> {
+    return axiosAuth.get<UserDto>(`/users/me?withDevices=${withDevices}&withLastAccess=${withLastAccess}`).then(response => AuthorityService.fillInMissingPicture(response.data));
   }
 
   public async resetMe(): Promise<void> {

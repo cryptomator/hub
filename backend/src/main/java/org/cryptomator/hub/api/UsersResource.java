@@ -24,7 +24,9 @@ import org.cryptomator.hub.entities.EffectiveWot;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.entities.WotEntry;
+import org.cryptomator.hub.entities.events.AuditEvent;
 import org.cryptomator.hub.entities.events.EventLogger;
+import org.cryptomator.hub.entities.events.VaultKeyRetrievedEvent;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -58,6 +60,8 @@ public class UsersResource {
 	WotEntry.Repository wotRepo;
 	@Inject
 	EffectiveWot.Repository effectiveWotRepo;
+	@Inject
+	AuditEvent.Repository auditEventRepo;
 
 	@Inject
 	JsonWebToken jwt;
@@ -156,11 +160,20 @@ public class UsersResource {
 	@Operation(summary = "get the logged-in user")
 	@APIResponse(responseCode = "200", description = "returns the current user")
 	@APIResponse(responseCode = "404", description = "no user matching the subject of the JWT passed as Bearer Token")
-	public UserDto getMe(@QueryParam("withDevices") boolean withDevices) {
+	public UserDto getMe(@QueryParam("withDevices") boolean withDevices, @QueryParam("withLastAccess") boolean withLastAccess) {
 		User user = userRepo.findById(jwt.getSubject());
-		Function<Device, DeviceResource.DeviceDto> mapDevices = d -> new DeviceResource.DeviceDto(d.getId(), d.getName(), d.getType(), d.getPublickey(), d.getUserPrivateKeys(), d.getOwner().getId(), d.getCreationTime().truncatedTo(ChronoUnit.MILLIS));
-		var devices = withDevices ? user.devices.stream().map(mapDevices).collect(Collectors.toSet()) : Set.<DeviceResource.DeviceDto>of();
-		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getLanguage(), devices, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
+		Set<DeviceResource.DeviceDto> deviceDtos;
+		if (withLastAccess) {
+			var devices = user.devices.stream().collect(Collectors.toMap(Device::getId, Function.identity()));
+			var events = auditEventRepo.findLastVaultKeyRetrieve(devices.keySet()).collect(Collectors.toMap(VaultKeyRetrievedEvent::getDeviceId, Function.identity()));
+			deviceDtos = devices.values().stream().map(d -> {
+				var event = events.get(d.getId());
+				return DeviceResource.DeviceDto.fromEntity(d, event);
+			}).collect(Collectors.toSet());
+		} else {
+			deviceDtos = withDevices ? user.devices.stream().map(DeviceResource.DeviceDto::fromEntity).collect(Collectors.toSet()) : Set.of();
+		}
+		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getLanguage(), deviceDtos, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
 	}
 
 	@POST
