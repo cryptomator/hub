@@ -1,0 +1,14 @@
+{
+  "common.apply": "Bruk",
+  "common.cancel": "Avbryt",
+  "common.close": "Lukk",
+  "common.copied": "Kopiert!",
+  "common.copy": "Kopiera",
+  "common.next": "Neste",
+  "common.show": "Vis",
+  "auditLog.details.vault.create": "Opprett kvelven",
+  "createVault.enterVaultDetails.title": "Opprett kvelven",
+  "createVault.enterVaultDetails.vaultName": "Namn på kvelven",
+  "createVault.showRecoveryKey.submit": "Opprett kvelven",
+  "editVaultMetadataDialog.vaultName": "Namn på kvelven"
+}

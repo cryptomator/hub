@@ -20,6 +20,7 @@ import org.flywaydb.core.Flyway;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -155,6 +156,23 @@ public class VaultResourceIT {
 			when().get("/vaults/{vaultId}/access-token?evenIfArchived=true", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(200)
 					.body(is("jwe.jwe.jwe.vault1.user1"));
+		}
+
+		@Test
+		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/access-token with remote IP and device ID stores it in audit log")
+		public void testUnlock4() throws SQLException {
+			given().header("HUB-DEVICE-ID", "123456789123456789")
+					.header("X-Forwarded-For", "1.2.3.4")
+					.when().get("/vaults/{vaultId}/access-token", "7E57C0DE-0000-4000-8000-000100001111")
+					.then().statusCode(200)
+					.body(is("jwe.jwe.jwe.vault1.user1"));
+
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
+				var rs = s.executeQuery("""
+						SELECT * FROM "audit_event_vault_key_retrieve" WHERE "device_id" = '123456789123456789' AND "ip_address" = '1.2.3.4';
+						""");
+				Assertions.assertTrue(rs.next());
+			}
 		}
 
 		@Test

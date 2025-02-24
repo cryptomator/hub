@@ -1,0 +1,18 @@
+{
+  "common.apply": "Primjeni",
+  "common.cancel": "Odustani",
+  "common.close": "Zatvori",
+  "common.copied": "Kopirano!",
+  "common.copy": "Kopiraj",
+  "common.next": "Sljedeće",
+  "common.remove": "Ukloni",
+  "common.show": "Pokaži",
+  "admin.webOfTrust.information": "Saznaj više.",
+  "auditLog.details.vault.create": "Kreiraj novi sef",
+  "createVault.enterVaultDetails.title": "Kreiraj novi sef",
+  "createVault.enterVaultDetails.vaultName": "Ime sefa",
+  "createVault.showRecoveryKey.submit": "Kreiraj novi sef",
+  "editVaultMetadataDialog.vaultName": "Ime sefa",
+  "nav.vaults": "Sef",
+  "vaultList.title": "Sef"
+}

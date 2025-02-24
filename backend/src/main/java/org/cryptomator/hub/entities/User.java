@@ -40,6 +40,9 @@ public class User extends Authority {
 	@Column(name = "email")
 	private String email;
 
+	@Column(name = "language")
+	private String language;
+
 	@Column(name = "ecdh_publickey")
 	private String ecdhPublicKey;
 
@@ -66,6 +69,14 @@ public class User extends Authority {
 
 	public void setEmail(String email) {
 		this.email = email;
+	}
+
+	public String getLanguage() {
+		return language;
+	}
+
+	public void setLanguage(String language) {
+		this.language = language;
 	}
 
 	public String getEcdhPublicKey() {

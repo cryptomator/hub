@@ -1,6 +1,10 @@
 {
   "locale.en": "English",
   "locale.de": "German",
+  "locale.it": "Italian",
+  "locale.ko": "Korean",
+  "locale.nl": "Dutch",
+  "locale.pt": "Portuguese",
 
   "common.add": "Add",
   "common.apply": "Apply",
@@ -74,6 +78,8 @@
   "auditLog.filter": "Filter",
   "auditLog.filter.startDate": "Start Date",
   "auditLog.filter.endDate": "End Date",
+  "auditLog.filter.selectEventFilter": "Select event filter",
+  "auditLog.filter.clerEventFilter": "Clear event filter",
   "auditLog.timestamp": "Timestamp",
   "auditLog.type": "Event",
   "auditLog.details": "Details",
@@ -146,6 +152,10 @@
   "deviceList.type": "Type",
   "deviceList.added": "Added",
   "deviceList.thisDevice": "This Device",
+  "deviceList.ipAddress": "IP Address",
+  "deviceList.ipAddress.toolTip": "May not be set for legacy reasons.",
+  "deviceList.lastAccess": "Last Vault Access",
+  "deviceList.lastAccess.toolTip": "May not be set for legacy reasons.",
 
   "downloadVaultTemplateDialog.title": "Download Vault Template",
   "downloadVaultTemplateDialog.description": "Download and unpack the zipped vault template to any location shared with your team members. This is required only once during the initial setup.",
@@ -220,10 +230,10 @@
   "recoveryKeyDialog.recoveryKey": "Recovery Key of Your Vault",
 
   "recoverVaultDialog.title": "Vault Recovery",
-  "recoverVaultDialog.description": "Type in the Recover Key of this vault to regain access to it.",
+  "recoverVaultDialog.description": "Type in the Recovery Key of this vault to regain access to it.",
   "recoverVaultDialog.submit": "Recover Vault",
-  "recoverVaultDialog.error.formValidationFailed": "Recover Key must not be empty",
-  "recoverVaultDialog.error.invalidRecoveryKey": "Invalid Recover Key",
+  "recoverVaultDialog.error.formValidationFailed": "Recovery Key must not be empty",
+  "recoverVaultDialog.error.invalidRecoveryKey": "Invalid Recovery Key",
   
   "regenerateAccountKeyDialog.confirmRegenerateAccountKey.title": "Regenerate Account Key",
   "regenerateAccountKeyDialog.confirmRegenerateAccountKey.description": "If you suspect that your old Account Key has been compromised, you can regenerate it. You will then only be able to add new devices with the new Account Key. Your existing devices will remain intact.",
@@ -242,6 +252,17 @@
   "userProfile.title": "Profile",
   "userProfile.actions.manageAccount": "Manage Account",
   "userProfile.actions.changeLanguage": "Change Language",
+
+  "unlockSuccess.title": "Vault unlocked successfully",
+  "unlockSuccess.description": "You may now close this browser tab and return to Cryptomator.",
+  "unlockSuccess.accountSetup.title": "Setup Required",
+  "unlockSuccess.accountSetup.description": "Complete setting up your account and retrieve your account key.",
+  "unlockSuccess.accountSetup.goToSetup": "Complete Setup",
+  "unlockSuccess.deviceSetup.title": "New Device",
+  "unlockSuccess.deviceSetup.description": "Please enter your account key in Cryptomator to authorize it.",
+  "unlockSuccess.deviceSetup.goToProfile": "View Account Key in my Profile",
+  "unlockSuccess.noVaultAccess.title": "No access to this Vault",
+  "unlockSuccess.noVaultAccess.description": "Please contact the vault owner to add you as a vault member.",
 
   "vaultDetails.warning.archived": "This vault is archived and cannot be unlocked.",
   "vaultDetails.description.header": "Description",

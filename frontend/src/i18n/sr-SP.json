@@ -1,0 +1,15 @@
+{
+  "common.apply": "Primeni",
+  "common.cancel": "Otkaži",
+  "common.close": "Zatvori",
+  "common.copied": "Kopirano!",
+  "common.copy": "Kopiraj",
+  "common.next": "Dalje",
+  "common.remove": "Уклони",
+  "common.show": "Prikaži",
+  "auditLog.details.vault.create": "Napravi sef",
+  "createVault.enterVaultDetails.title": "Napravi sef",
+  "createVault.enterVaultDetails.vaultName": "Naziv sefa",
+  "createVault.showRecoveryKey.submit": "Napravi sef",
+  "editVaultMetadataDialog.vaultName": "Naziv sefa"
+}

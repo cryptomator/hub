@@ -309,7 +309,8 @@ async function fetchOwnerData() {
     await refreshTrusts();
     membersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
     vaultRecoveryRequired.value = false;
-    const accessToken = await backend.vaults.accessToken(props.vaultId, true);
+    const deviceId = await (await userdata.browserKeys)?.id();
+    const accessToken = await backend.vaults.accessToken(props.vaultId, deviceId, true);
     if (vault.value.uvfMetadataFile) {
       uvfVault.value = await loadUvfMetadata(accessToken);
     } else {

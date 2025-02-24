@@ -153,7 +153,7 @@ async function regenerateSetupCode() {
     const me = await userdata.me;
     const newCode = crypto.randomUUID();
     const userKeys = await userdata.decryptUserKeysWithBrowser();
-    me.privateKey = await userKeys.encryptWithSetupCode(newCode);
+    me.privateKeys = await userKeys.encryptWithSetupCode(newCode);
     me.setupCode = (await JWE.build({ setupCode: newCode }).encrypt(Recipient.ecdhEs('org.cryptomator.hub.userkey', userKeys.ecdhKeyPair.publicKey))).compactSerialization();
     await backend.users.putMe(me);
     setupCode.value = newCode;
