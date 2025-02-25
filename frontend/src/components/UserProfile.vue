@@ -22,7 +22,7 @@
             <ArrowTopRightOnSquareIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
             {{ t('userProfile.actions.manageAccount') }}
           </button>
-          <Listbox v-model="$i18n.locale" as="div">
+          <Listbox v-model="currentLocale" as="div">
             <div class="relative">
               <ListboxButton class="relative w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 shadow-xs text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary">
                 <LanguageIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
@@ -33,9 +33,19 @@
               </ListboxButton>
               <transition leave-active-class="transition ease-in duration-100" leave-from-class="opacity-100" leave-to-class="opacity-0">
                 <ListboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-hidden text-sm">
+                  <ListboxOption v-slot="{ active, selected }" :value="browserLocale" class="relative cursor-default select-none py-2 pl-3 pr-9 ui-not-active:text-gray-900 ui-active:text-white ui-active:bg-primary" @click="setBrowserLanguage(locale)">
+                    <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">
+                      {{ t('userProfile.actions.useBrowserLanguage') }} ({{ browserLocale }})                
+                    </span>
+                    <span v-if="currentLocale === browserLocale" :class="[active ? 'text-white' : 'text-primary', 'absolute inset-y-0 right-0 flex items-center pr-4']">
+                      <CheckIcon class="h-5 w-5" aria-hidden="true" />
+                    </span>
+                  </ListboxOption>
                   <ListboxOption v-for="locale in Locale" :key="locale" v-slot="{ active, selected }" class="relative cursor-default select-none py-2 pl-3 pr-9 ui-not-active:text-gray-900 ui-active:text-white ui-active:bg-primary" :value="locale" @click="saveLanguage(locale)">
-                    <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ t(`locale.${locale}`) }}</span>
-                    <span v-if="selected" :class="[active ? 'text-white' : 'text-primary', 'absolute inset-y-0 right-0 flex items-center pr-4']">
+                    <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">
+                      {{ t(`locale.${locale}`) }}
+                    </span>
+                    <span v-if="currentLocale === locale" :class="[active ? 'text-white' : 'text-primary', 'absolute inset-y-0 right-0 flex items-center pr-4']">
                       <CheckIcon class="h-5 w-5" aria-hidden="true" />
                     </span>
                   </ListboxOption>
@@ -75,12 +85,14 @@ import FetchError from './FetchError.vue';
 import ManageSetupCode from './ManageSetupCode.vue';
 import UserkeyFingerprint from './UserkeyFingerprint.vue';
 
-const { t } = useI18n({ useScope: 'global' });
+const { t, locale } = useI18n({ useScope: 'global' });
 
 const me = ref<UserDto>();
 const keycloakUserAccountURL = ref<string>();
 const version = ref<VersionDto>();
 const onFetchError = ref<Error | null>();
+const browserLocale = ref<string>(navigator.language);
+const currentLocale = ref<string>(locale.value);
 
 onMounted(async () => {
   const cfg = config.get();
@@ -99,10 +111,23 @@ async function fetchData() {
   }
 }
 
-async function saveLanguage(locale: Locale) {
+async function saveLanguage(selectedLocale: Locale) {
+  currentLocale.value = selectedLocale;
+  locale.value = selectedLocale;
   const updatedUser = me.value;
   if (updatedUser !== undefined) {
-    updatedUser.language = locale.toString();
+    updatedUser.language = selectedLocale.toString();
+    await backend.users.putMe(updatedUser);
+    me.value = updatedUser;
+  }
+}
+
+async function setBrowserLanguage() {
+  locale.value = browserLocale.value;
+  
+  const updatedUser = me.value;
+  if (updatedUser !== undefined) {
+    updatedUser.language = '';
     await backend.users.putMe(updatedUser);
     me.value = updatedUser;
   }
@@ -111,5 +136,4 @@ async function saveLanguage(locale: Locale) {
 function openKeycloakUserAccount() {
   window.open(keycloakUserAccountURL.value, '_blank');
 }
-
 </script>
