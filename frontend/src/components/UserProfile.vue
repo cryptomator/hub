@@ -33,7 +33,7 @@
               </ListboxButton>
               <transition leave-active-class="transition ease-in duration-100" leave-from-class="opacity-100" leave-to-class="opacity-0">
                 <ListboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-hidden text-sm">
-                  <ListboxOption v-slot="{ active, selected }" :value="browserLocale" class="relative cursor-default select-none py-2 pl-3 pr-9 ui-not-active:text-gray-900 ui-active:text-white ui-active:bg-primary" @click="setBrowserLanguage(locale)">
+                  <ListboxOption v-slot="{ active, selected }" :value="browserLocale" class="relative cursor-default select-none py-2 pl-3 pr-9 ui-not-active:text-gray-900 ui-active:text-white ui-active:bg-primary" @click="setBrowserLanguage()">
                     <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">
                       {{ t('userProfile.actions.useBrowserLanguage') }} ({{ browserLocale }})                
                     </span>
