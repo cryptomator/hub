@@ -243,7 +243,7 @@
   "userProfile.title": "Profile",
   "userProfile.actions.manageAccount": "Manage Account",
   "userProfile.actions.changeLanguage": "Change Language",
-  "userProfile.actions.useBrowserLanguage": "Browser Default",
+  "userProfile.actions.useBrowserLanguage": "Browser Language",
 
   "unlockSuccess.title": "Vault unlocked successfully",
   "unlockSuccess.description": "You may now close this browser tab and return to Cryptomator.",
