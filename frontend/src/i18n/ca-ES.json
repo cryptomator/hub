@@ -1,4 +1,6 @@
 {
+  "locale.en": "Anglès",
+  "locale.de": "Alemany",
   "common.add": "Afegir",
   "common.apply": "Aplica",
   "common.cancel": "Cancel·la",
@@ -6,7 +8,11 @@
   "common.copied": "Copiat!",
   "common.copy": "Copia",
   "common.download": "Descarrega",
+  "common.hide": "Amaga",
+  "common.loading": "Carregant…",
   "common.next": "Següent",
+  "common.optional": "opcional",
+  "common.pagination": "Paginació",
   "common.previous": "Anterior",
   "common.refresh": "Refresca",
   "common.remove": "Elimina",
