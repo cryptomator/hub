@@ -26,6 +26,7 @@
   "admin.licenseInfo.expiresAt.title": "到期時間",
   "admin.licenseInfo.manageSubscription": "管理訂閱",
   "admin.licenseInfo.type.title": "類別",
+  "admin.licenseInfo.getLicense": "",
   "admin.webOfTrust.information": "了解更多。",
   "admin.webOfTrust.save": "儲存",
   "admin.webOfTrust.saved": "已儲存！",
