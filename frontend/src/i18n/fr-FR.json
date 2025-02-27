@@ -58,6 +58,8 @@
   "admin.webOfTrust.information": "En savoir plus.",
   "admin.webOfTrust.wotMaxDepth.error": "La profondeur maximale du RdC doit être comprise entre 0 et 9.",
   "admin.webOfTrust.wotMaxDepth.title": "Profondeur maximale du RdC",
+  "admin.webOfTrust.wotMaxDepth.description": "Distance maximale entre deux utilisateurs, afin qu'une relation indirecte soit toujours considérée comme digne de confiance (en supposant que les identités intermédiaires ont été vérifiées).",
+  "admin.webOfTrust.wotIdVerifyLen.error": "La précision de la vérification de l'empreinte digitale doit être positive.",
   "admin.webOfTrust.save": "Enregistrer",
   "admin.webOfTrust.saved": "Enregistré !",
   "archiveVaultDialog.title": "Archiver le coffre",
