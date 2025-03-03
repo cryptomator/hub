@@ -172,6 +172,7 @@
   "initialSetup.recoverUserKey.lostAccountKey": "Vous avez perdu votre Clé de Compte ? {0}",
   "initialSetup.recoverUserKey.lostAccountKey.resetUserAccount": "Réinitialiser mon compte",
   "initialSetup.setupAlreadyCompleted.title": "Configuration déjà terminée",
+  "initialSetup.setupAlreadyCompleted.goToYourProfile": "Accéder à Votre Profil",
   "initialSetup.accountKey": "Clé de compte",
   "manageAccountKey.title": "Clé de compte",
   "nav.vaults": "Coffres",
