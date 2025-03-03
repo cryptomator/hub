@@ -79,6 +79,7 @@
   "downloadVaultTemplateDialog.description": "Saspiestā glabātavas sagatave ir lejupielādējama un izvēršama jebkurā ar komandas dalībniekiem koplietotā vietā. Tas ir nepieciešams tikai vienreiz sākotnējās iestatīšanas laikā.",
   "editVaultMetadataDialog.vaultName": "Glabātavas nosaukums",
   "editVaultMetadataDialog.vaultDescription": "Apraksts",
+  "grantPermissionDialog.description": "Kopīgo glabātavas atslēgas ar jaunizveidotajiem lietotājiem.",
   "signUserKeysDialog.description": "Jāievada pirmās {0} rakstzīmes no {1} pirkstu nospieduma, lai apliecinātu publisko atslēgu autentiskumu. Pirkstu nospiedumu var atrast lietotāja profilā.",
   "initialSetup.createUserKey.details.accountKey": "Konta atslēga ir nepieciešama, lai pieteiktos citās lietotnēs vai pārlūkos",
   "initialSetup.createUserKey.details.devicesList": "Pilnvaroto lietotņu sarakstu var redzēt sava profila lapā",
