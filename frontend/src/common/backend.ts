@@ -86,6 +86,7 @@ export type GroupDto = {
   id: string;
   name: string;
   pictureUrl?: string;
+  memberSize?: number;
 }
 
 export type AuthorityDto = UserDto | GroupDto;
@@ -283,7 +284,7 @@ class TrustService {
 
 class AuthorityService {
   public async search(query: string): Promise<AuthorityDto[]> {
-    return axiosAuth.get<AuthorityDto[]>(`/authorities/search?query=${query}`).then(response => response.data.map(AuthorityService.fillInMissingPicture));
+    return axiosAuth.get<AuthorityDto[]>(`/authorities/search?query=${query}&withMemberSize=true`).then(response => response.data.map(AuthorityService.fillInMissingPicture));
   }
 
   public async listSome(authorityIds: string[]): Promise<AuthorityDto[]> {
