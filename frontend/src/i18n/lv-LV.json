@@ -72,6 +72,7 @@
   "createVault.success.download": "Lejupielādēt saspiestu glabātavas mapi",
   "createVault.success.return": "Atgriezties uz glabātavu sarakstu",
   "deviceList.empty.message": "Nav ierīču",
+  "deviceList.empty.description": "Lai pievienotu ierīci, ierīces Cryptomator lietotnē jāpievieno glabātava no šī Hub un jāatslēdz tā.",
   "deviceList.title": "Pilnvarotās ierīces un pārlūki",
   "deviceList.deviceName": "Ierīces nosaukums",
   "deviceList.type": "Veids",
