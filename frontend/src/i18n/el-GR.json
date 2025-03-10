@@ -1,10 +1,12 @@
 {
   "locale.en": "Αγγλικά",
   "locale.de": "Γερμανικά",
+  "locale.fr": "Γαλλικά",
   "locale.it": "Ιταλικά",
   "locale.ko": "Κορεάτικα",
   "locale.nl": "Ολλανδικά",
   "locale.pt": "Πορτογαλικά",
+  "locale.tr": "Τούρκικα",
   "common.add": "Προσθήκη",
   "common.apply": "Εφαρμογή",
   "common.cancel": "Ακύρωση",
