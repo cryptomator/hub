@@ -1,8 +1,10 @@
 {
+  "locale.fr": "Francés",
   "locale.it": "Italiano",
   "locale.ko": "Coreano",
   "locale.nl": "Holandés",
   "locale.pt": "Portugués",
+  "locale.tr": "Turco",
   "common.add": "Añadir",
   "common.apply": "Aplicar",
   "common.cancel": "Cancelar",
