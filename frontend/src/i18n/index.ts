@@ -1,10 +1,12 @@
 import { I18nOptions } from 'vue-i18n';
 import de from './de-DE.json';
 import en from './en-US.json';
+import fr from './fr-FR.json';
 import it from './it-IT.json';
 import ko from './ko-KR.json';
 import nl from './nl-NL.json';
 import pt from './pt-PT.json';
+import tr from './tr-TR.json';
 
 import { createI18n } from 'vue-i18n';
 
@@ -12,19 +14,23 @@ import { createI18n } from 'vue-i18n';
 export enum Locale {
   EN = 'en',
   DE = 'de',
+  FR = 'fr',
   IT = 'it',
   KO = 'ko',
   NL = 'nl',
-  PT = 'pt'
+  PT = 'pt',
+  TR = 'tr'
 }
 
 export const messages = {
   [Locale.EN]: en,
   [Locale.DE]: de,
+  [Locale.FR]: fr,
   [Locale.IT]: it,
   [Locale.KO]: ko,
   [Locale.NL]: nl,
-  [Locale.PT]: pt
+  [Locale.PT]: pt,
+  [Locale.TR]: tr
 };
 
 const defaultShortDatetimeFormat = {
@@ -38,10 +44,12 @@ const defaultShortDatetimeFormat = {
 export const datetimeFormats: I18nOptions['datetimeFormats'] = {
   [Locale.EN]: defaultShortDatetimeFormat,
   [Locale.DE]: defaultShortDatetimeFormat,
+  [Locale.FR]: defaultShortDatetimeFormat,
   [Locale.IT]: defaultShortDatetimeFormat,
   [Locale.KO]: defaultShortDatetimeFormat,
   [Locale.NL]: defaultShortDatetimeFormat,
   [Locale.PT]: defaultShortDatetimeFormat,
+  [Locale.TR]: defaultShortDatetimeFormat
 };
 
 const defaultNumberFormat = {
@@ -54,10 +62,12 @@ const defaultNumberFormat = {
 export const numberFormats: I18nOptions['numberFormats'] = {
   [Locale.EN]: defaultNumberFormat,
   [Locale.DE]: defaultNumberFormat,
+  [Locale.FR]: defaultNumberFormat,
   [Locale.IT]: defaultNumberFormat,
   [Locale.KO]: defaultNumberFormat,
   [Locale.NL]: defaultNumberFormat,
   [Locale.PT]: defaultNumberFormat,
+  [Locale.TR]: defaultNumberFormat
 };
 
 export const mapToLocale = (local: string): Locale =>
