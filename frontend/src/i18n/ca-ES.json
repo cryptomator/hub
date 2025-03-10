@@ -1,6 +1,8 @@
 {
   "locale.en": "Anglès",
   "locale.de": "Alemany",
+  "locale.fr": "Francès",
+  "locale.tr": "Turc",
   "common.add": "Afegir",
   "common.apply": "Aplica",
   "common.cancel": "Cancel·la",
