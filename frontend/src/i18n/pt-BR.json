@@ -53,6 +53,8 @@
   "auditLog.order.descending": "Decrescente",
   "auditLog.filter": "Filtro",
   "auditLog.filter.startDate": "Data Inicial",
+  "auditLog.filter.selectEventFilter": "Selecionar filtro de eventos",
+  "auditLog.filter.clerEventFilter": "Limpar filtro de eventos",
   "auditLog.details": "Detalhes",
   "auditLog.details.vault.create": "Criar Cofre",
   "claimVaultOwnershipDialog.error.wrongPassword": "Senha incorreta",
