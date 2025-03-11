@@ -21,6 +21,7 @@ import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.AccessToken;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.EffectiveWot;
+import org.cryptomator.hub.entities.LegacyDevice;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.entities.WotEntry;
@@ -33,7 +34,7 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.jboss.resteasy.reactive.NoCache;
 
 import java.net.URI;
-import java.time.temporal.ChronoUnit;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -41,6 +42,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Path("/users")
 @Produces(MediaType.TEXT_PLAIN)
@@ -54,6 +56,8 @@ public class UsersResource {
 	User.Repository userRepo;
 	@Inject
 	Device.Repository deviceRepo;
+	@Inject
+	LegacyDevice.Repository legacyDeviceRepo;
 	@Inject
 	Vault.Repository vaultRepo;
 	@Inject
@@ -160,20 +164,30 @@ public class UsersResource {
 	@Operation(summary = "get the logged-in user")
 	@APIResponse(responseCode = "200", description = "returns the current user")
 	@APIResponse(responseCode = "404", description = "no user matching the subject of the JWT passed as Bearer Token")
-	public UserDto getMe(@QueryParam("withDevices") boolean withDevices, @QueryParam("withLastAccess") boolean withLastAccess) {
+	public UserDto getMe(@QueryParam("withDevices") boolean withDevices, @QueryParam("withLastAccessAndLegacyDevices") boolean withLastAccessAndLegacyDevices) {
 		User user = userRepo.findById(jwt.getSubject());
-		Set<DeviceResource.DeviceDto> deviceDtos;
-		if (withLastAccess) {
-			var devices = user.devices.stream().collect(Collectors.toMap(Device::getId, Function.identity()));
-			var events = auditEventRepo.findLastVaultKeyRetrieve(devices.keySet()).collect(Collectors.toMap(VaultKeyRetrievedEvent::getDeviceId, Function.identity()));
-			deviceDtos = devices.values().stream().map(d -> {
-				var event = events.get(d.getId());
-				return DeviceResource.DeviceDto.fromEntity(d, event);
-			}).collect(Collectors.toSet());
-		} else {
-			deviceDtos = withDevices ? user.devices.stream().map(DeviceResource.DeviceDto::fromEntity).collect(Collectors.toSet()) : Set.of();
+		Set<DeviceResource.DeviceDto> deviceDtos = new HashSet<>();
+		if (withLastAccessAndLegacyDevices) {
+			deviceDtos = getLegacyDevicesWithAccess(user);
+		} else if (withDevices) {
+			deviceDtos = user.getDevices().stream().map(DeviceResource.DeviceDto::fromEntity).collect(Collectors.toSet());
 		}
 		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getLanguage(), deviceDtos, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
+	}
+
+	private Set<DeviceResource.DeviceDto> getLegacyDevicesWithAccess(User user) {
+		Set<DeviceResource.DeviceDto> deviceDtos = new HashSet<>();
+		var devices = user.getDevices().stream().collect(Collectors.toMap(Device::getId, Function.identity()));
+		var legacyDevices = user.getLegacyDevices().stream().collect(Collectors.toMap(LegacyDevice::getId, Function.identity()));
+		var allDeviceIds = Stream.concat(devices.keySet().stream(), legacyDevices.keySet().stream()).collect(Collectors.toSet());
+		var events = auditEventRepo.findLastVaultKeyRetrieve(allDeviceIds).collect(Collectors.toMap(VaultKeyRetrievedEvent::getDeviceId, Function.identity()));
+		deviceDtos.addAll(devices.values().stream()
+				.map(device -> DeviceResource.DeviceDto.fromEntity(device, events.get(device.getId())))
+				.collect(Collectors.toSet()));
+		deviceDtos.addAll(legacyDevices.values().stream()
+				.map(legacyDevice -> DeviceResource.DeviceDto.fromEntity(legacyDevice, events.get(legacyDevice.getId())))
+				.collect(Collectors.toSet()));
+		return deviceDtos;
 	}
 
 	@POST

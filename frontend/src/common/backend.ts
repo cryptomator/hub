@@ -57,6 +57,7 @@ export type DeviceDto = {
   creationTime: Date;
   lastIpAddress?: string;
   lastAccessTime?: Date;
+  legacyDevice?: boolean;
 };
 
 export type VaultRole = 'MEMBER' | 'OWNER';
@@ -235,8 +236,9 @@ class DeviceService {
     return axiosAuth.get<DeviceDto[]>(`/devices?${query}`).then(response => response.data);
   }
 
-  public async removeDevice(deviceId: string): Promise<AxiosResponse<unknown>> {
-    return axiosAuth.delete(`/devices/${deviceId}`)
+  public async removeDevice(device: DeviceDto): Promise<AxiosResponse<unknown>> {
+    const query = device.legacyDevice == false ? '' : '?legacyDevice=true';
+    return axiosAuth.delete(`/devices/${device.id}${query}`)
       .catch((error) => rethrowAndConvertIfExpected(error, 404));
   }
 
@@ -251,7 +253,7 @@ class UserService {
   }
 
   public async me(withDevices: boolean = false, withLastAccess: boolean = false): Promise<UserDto> {
-    return axiosAuth.get<UserDto>(`/users/me?withDevices=${withDevices}&withLastAccess=${withLastAccess}`).then(response => AuthorityService.fillInMissingPicture(response.data));
+    return axiosAuth.get<UserDto>(`/users/me?withDevices=${withDevices}&withLastAccessAndLegacyDevices=${withLastAccess}`).then(response => AuthorityService.fillInMissingPicture(response.data));
   }
 
   public async resetMe(): Promise<void> {

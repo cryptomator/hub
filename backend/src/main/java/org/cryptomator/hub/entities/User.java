@@ -136,11 +136,20 @@ public class User extends Authority {
 		this.devices = devices;
 	}
 
+	@Deprecated
+	public Set<LegacyDevice> getLegacyDevices() {
+		return legacyDevices;
+	}
+
 	@OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
 	public Set<AccessToken> accessTokens = new HashSet<>();
 
 	@OneToMany(mappedBy = "owner", orphanRemoval = true, fetch = FetchType.LAZY)
 	public Set<Device> devices = new HashSet<>();
+
+	@Deprecated
+	@OneToMany(mappedBy = "owner", orphanRemoval = true, fetch = FetchType.LAZY)
+	public Set<LegacyDevice> legacyDevices = new HashSet<>();
 
 	@Override
 	public boolean equals(Object o) {

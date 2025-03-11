@@ -56,6 +56,7 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       <div class="flex items-center gap-3">
                         <div>{{ device.name }}</div>
+                        <div v-if="device.legacyDevice == true" class="inline-flex items-center rounded-md bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-700 ring-1 ring-inset ring-yellow-600/20">Legacy</div>
                         <div v-if="device.id == myDevice?.id" class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">{{ t('deviceList.thisDevice') }}</div>
                       </div>
                     </td>
@@ -135,7 +136,7 @@ async function fetchData() {
 async function removeDevice(device: DeviceDto) {
   delete onRemoveDeviceError.value[device.id];
   try {
-    await backend.devices.removeDevice(device.id);
+    await backend.devices.removeDevice(device);
     userdata.reload();
   } catch (error) {
     console.error('Removing device failed.', error);

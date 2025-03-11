@@ -61,7 +61,7 @@ public class DeviceResourceIT {
 		@Order(1)
 		@DisplayName("PUT /devices/  with DTO returns 400")
 		public void testCreateNoDeviceId() {
-			var deviceDto = new DeviceResource.DeviceDto("device1", "Computer 1", Device.Type.DESKTOP, "publickey1", "jwe.jwe.jwe.user1.device1", "user1", Instant.parse("2020-02-20T20:20:20Z"), null, null);
+			var deviceDto = new DeviceResource.DeviceDto("device1", "Computer 1", Device.Type.DESKTOP, "publickey1", "jwe.jwe.jwe.user1.device1", "user1", Instant.parse("2020-02-20T20:20:20Z"), null, null, false);
 			given().contentType(ContentType.JSON).body(deviceDto)
 					.when().put("/devices/{deviceId}", " ") //a whitespace
 					.then().statusCode(400);
@@ -142,7 +142,7 @@ public class DeviceResourceIT {
 						""");
 			}
 
-			var deviceDto = new DeviceResource.DeviceDto("device999", "Computer 999", Device.Type.DESKTOP, "publickey999", "jwe.jwe.jwe.user1.device999", "user1", Instant.parse("2020-02-20T20:20:20Z"), null, null);
+			var deviceDto = new DeviceResource.DeviceDto("device999", "Computer 999", Device.Type.DESKTOP, "publickey999", "jwe.jwe.jwe.user1.device999", "user1", Instant.parse("2020-02-20T20:20:20Z"), null, null, false);
 
 			given().contentType(ContentType.JSON).body(deviceDto)
 					.when().put("/devices/{deviceId}", "device999")
@@ -160,7 +160,7 @@ public class DeviceResourceIT {
 		@Order(2)
 		@DisplayName("PUT /devices/deviceX returns 201 (creating new device with same name as device1)")
 		public void testCreateX() {
-			var deviceDto = new DeviceResource.DeviceDto("deviceX", "Computer 1", Device.Type.DESKTOP, "publickey1", "jwe.jwe.jwe.user1.deviceX", "user1", Instant.parse("2020-02-20T20:20:20Z"), null, null);
+			var deviceDto = new DeviceResource.DeviceDto("deviceX", "Computer 1", Device.Type.DESKTOP, "publickey1", "jwe.jwe.jwe.user1.deviceX", "user1", Instant.parse("2020-02-20T20:20:20Z"), null, null, false);
 
 			given().contentType(ContentType.JSON).body(deviceDto)
 					.when().put("/devices/{deviceId}", "deviceX")
@@ -171,7 +171,7 @@ public class DeviceResourceIT {
 		@Order(3)
 		@DisplayName("PUT /devices/deviceY returns 409 (creating new device with the key of deviceX conflicts)")
 		public void testCreateYWithKeyOfDeviceX() {
-			var deviceDto = new DeviceResource.DeviceDto("deviceY", "Computer 2", Device.Type.DESKTOP, "publickey1", "jwe.jwe.jwe.user1.deviceX", "user1", Instant.parse("2020-02-20T20:20:20Z"), null, null);
+			var deviceDto = new DeviceResource.DeviceDto("deviceY", "Computer 2", Device.Type.DESKTOP, "publickey1", "jwe.jwe.jwe.user1.deviceX", "user1", Instant.parse("2020-02-20T20:20:20Z"), null, null, false);
 
 			given().contentType(ContentType.JSON).body(deviceDto)
 					.when().put("/devices/{deviceId}", "deviceY")
@@ -192,7 +192,7 @@ public class DeviceResourceIT {
 		@Order(5)
 		@DisplayName("PUT /devices/device999 returns 201 (updating existing device)")
 		public void testUpdate1() {
-			var deviceDto = new DeviceResource.DeviceDto("device999", "Computer 999 got a new name", Device.Type.DESKTOP, "publickey999", "jwe.jwe.jwe.user1.device999", "user1", Instant.parse("2020-02-20T20:20:20Z"), null, null);
+			var deviceDto = new DeviceResource.DeviceDto("device999", "Computer 999 got a new name", Device.Type.DESKTOP, "publickey999", "jwe.jwe.jwe.user1.device999", "user1", Instant.parse("2020-02-20T20:20:20Z"), null, null, false);
 
 			given().contentType(ContentType.JSON).body(deviceDto)
 					.when().put("/devices/{deviceId}", "device999")
@@ -235,12 +235,69 @@ public class DeviceResourceIT {
 
 		@Test
 		@Order(7)
+		@DisplayName("DELETE /devices/device999 with legacy flag and non legacy device returns 404")
+		public void testDeleteExistingDeviceAsLegacyDevice() {
+			when().delete("/devices/{deviceId}?legacyDevice=true", "device999") //
+					.then().statusCode(404);
+		}
+
+		@Test
+		@Order(7)
+		@DisplayName("DELETE /devices/device15000 without legacy flag and legacy device returns 404")
+		public void testDeleteExistingLegacyDeviceAsDevice() throws SQLException {
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
+				s.execute("""
+						INSERT INTO "device_legacy" ("id", "owner_id", "name", "type", "publickey", "creation_time")
+						VALUES
+							('device15000', 'user1', 'Computer 15000', 'DESKTOP', 'publickey15000', '2020-02-20 20:20:20')
+						""");
+			}
+
+			when().delete("/devices/{deviceId}", "device15000") //
+					.then().statusCode(404);
+
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
+				var rs = s.executeQuery("""
+						SELECT * FROM "device_legacy" WHERE "id" = 'device15000';
+						""");
+				Assertions.assertTrue(rs.next());
+
+				s.execute("""
+						DELETE FROM "device_legacy" WHERE "id" = 'device15000';
+						""");
+			}
+		}
+
+		@Test
+		@Order(7)
 		@DisplayName("DELETE /devices/device999 returns 204")
 		public void testDeleteValid() {
 			when().delete("/devices/{deviceId}", "device999") //
 					.then().statusCode(204);
 		}
 
+		@Test
+		@Order(7)
+		@DisplayName("DELETE /devices/device15000 returns 204")
+		public void testDeleteValidLegacyDevice() throws SQLException {
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
+				s.execute("""
+						INSERT INTO "device_legacy" ("id", "owner_id", "name", "type", "publickey", "creation_time")
+						VALUES
+							('device15000', 'user1', 'Computer 15000', 'DESKTOP', 'publickey15000', '2020-02-20 20:20:20')
+						""");
+			}
+
+			when().delete("/devices/{deviceId}?legacyDevice=true", "device15000") //
+					.then().statusCode(204);
+
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
+				var rs = s.executeQuery("""
+						SELECT * FROM "device_legacy" WHERE "id" = 'device15000';
+						""");
+				Assertions.assertFalse(rs.next());
+			}
+		}
 
 	}
 
@@ -251,7 +308,7 @@ public class DeviceResourceIT {
 		@Test
 		@DisplayName("PUT /devices/device1 returns 401")
 		public void testCreate1() {
-			var deviceDto = new DeviceResource.DeviceDto("device1", "Device 1", Device.Type.BROWSER, "publickey1", "jwe.jwe.jwe.user1.device1", "user1", Instant.parse("2020-02-20T20:20:20Z"), null, null);
+			var deviceDto = new DeviceResource.DeviceDto("device1", "Device 1", Device.Type.BROWSER, "publickey1", "jwe.jwe.jwe.user1.device1", "user1", Instant.parse("2020-02-20T20:20:20Z"), null, null, false);
 
 			given().contentType(ContentType.JSON).body(deviceDto)
 					.when().put("/devices/{deviceId}", "device1")

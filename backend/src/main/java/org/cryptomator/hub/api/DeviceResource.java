@@ -33,6 +33,8 @@ import org.cryptomator.hub.validation.ValidId;
 import org.cryptomator.hub.validation.ValidJWE;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.hibernate.exception.ConstraintViolationException;
 import org.jboss.logging.Logger;
@@ -43,7 +45,10 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Path("/devices")
@@ -152,22 +157,33 @@ public class DeviceResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
 	@Operation(summary = "removes a device", description = "the device will be only be removed if the current user is the owner")
+	@Parameter(name = "legacyDevice", in = ParameterIn.QUERY, description = "defines if a legacy device is to be removed (default is new device)")
 	@APIResponse(responseCode = "204", description = "device removed")
 	@APIResponse(responseCode = "404", description = "device not found with current user")
-	public Response remove(@PathParam("deviceId") @ValidId String deviceId) {
+	public Response remove(@PathParam("deviceId") @ValidId String deviceId, @Deprecated @QueryParam("legacyDevice") boolean legacyDevice) {
 		if (deviceId == null || deviceId.trim().isEmpty()) {
 			return Response.status(Response.Status.BAD_REQUEST).entity("deviceId cannot be empty").build();
 		}
-
 		User currentUser = userRepo.findById(jwt.getSubject());
-		var maybeDevice = deviceRepo.findByIdOptional(deviceId);
-		if (maybeDevice.isPresent() && currentUser.equals(maybeDevice.get().getOwner())) {
-			deviceRepo.delete(maybeDevice.get());
+		boolean removed = legacyDevice
+				? remove(deviceId, currentUser, legacyDeviceRepo::findByIdOptional, legacyDeviceRepo::delete, LegacyDevice::getOwner)
+				: remove(deviceId, currentUser, deviceRepo::findByIdOptional, deviceRepo::delete, Device::getOwner);
+		if (removed) {
 			eventLogger.logDeviceRemoved(jwt.getSubject(), deviceId);
 			return Response.status(Response.Status.NO_CONTENT).build();
 		} else {
 			return Response.status(Response.Status.NOT_FOUND).build();
 		}
+	}
+
+
+	private <T> boolean remove(String deviceId, User currentUser, Function<String, Optional<T>> findById, Consumer<T> delete, Function<T, User> getOwner) {
+		Optional<T> maybeDevice = findById.apply(deviceId);
+		if (maybeDevice.isPresent() && currentUser.equals(getOwner.apply(maybeDevice.get()))) {
+			delete.accept(maybeDevice.get());
+			return true;
+		}
+		return false;
 	}
 
 	public record DeviceDto(@JsonProperty("id") @ValidId String id,
@@ -178,16 +194,23 @@ public class DeviceResource {
 							@JsonProperty("owner") @ValidId String ownerId,
 							@JsonProperty("creationTime") Instant creationTime,
 							@JsonProperty("lastIpAddress") String lastIpAddress,
-							@JsonProperty("lastAccessTime") Instant lastAccessTime) {
+							@JsonProperty("lastAccessTime") Instant lastAccessTime,
+							@JsonProperty("legacyDevice") boolean legacyDevice) {
 
 		public static DeviceDto fromEntity(Device entity) {
-			return new DeviceDto(entity.getId(), entity.getName(), entity.getType(), entity.getPublickey(), entity.getUserPrivateKeys(), entity.getOwner().getId(), entity.getCreationTime().truncatedTo(ChronoUnit.MILLIS), null, null);
+			return new DeviceDto(entity.getId(), entity.getName(), entity.getType(), entity.getPublickey(), entity.getUserPrivateKeys(), entity.getOwner().getId(), entity.getCreationTime().truncatedTo(ChronoUnit.MILLIS), null, null, false);
 		}
 
 		public static DeviceDto fromEntity(Device d, @Nullable VaultKeyRetrievedEvent event) {
 			var lastIpAddress = (event != null) ? event.getIpAddress() : null;
 			var lastAccessTime = (event != null) ? event.getTimestamp() : null;
-			return new DeviceResource.DeviceDto(d.getId(), d.getName(), d.getType(), d.getPublickey(), d.getUserPrivateKeys(), d.getOwner().getId(), d.getCreationTime().truncatedTo(ChronoUnit.MILLIS), lastIpAddress, lastAccessTime);
+			return new DeviceResource.DeviceDto(d.getId(), d.getName(), d.getType(), d.getPublickey(), d.getUserPrivateKeys(), d.getOwner().getId(), d.getCreationTime().truncatedTo(ChronoUnit.MILLIS), lastIpAddress, lastAccessTime, false);
+		}
+
+		public static DeviceDto fromEntity(LegacyDevice d, @Nullable VaultKeyRetrievedEvent event) {
+			var lastIpAddress = (event != null) ? event.getIpAddress() : null;
+			var lastAccessTime = (event != null) ? event.getTimestamp() : null;
+			return new DeviceResource.DeviceDto(d.getId(), d.getName(), d.getType(), null, null, d.getOwner().getId(), d.getCreationTime().truncatedTo(ChronoUnit.MILLIS), lastIpAddress, lastAccessTime, true);
 		}
 
 	}
