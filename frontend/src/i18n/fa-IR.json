@@ -24,5 +24,6 @@
   "deviceList.ipAddress.toolTip": "ممکن است به دلیل قدیمی بودن نسخه تنظیم نشود.",
   "deviceList.lastAccess.toolTip": "ممکن است به دلیل قدیمی بودن نسخه تنظیم نشود.",
   "editVaultMetadataDialog.vaultName": "نام گاوصندوق",
+  "unlockSuccess.deviceSetup.title": "دستگاه جدید",
   "vaultList.addVault": "اضافه کردن"
 }
