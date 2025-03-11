@@ -1,4 +1,6 @@
 {
+  "locale.fr": "فرانسوی",
+  "locale.tr": "ترکی",
   "common.add": "اضافه کردن",
   "common.apply": "درخواست",
   "common.cancel": "انصراف",
@@ -18,6 +20,9 @@
   "createVault.enterVaultDetails.title": "ایجاد گاوصندوق",
   "createVault.enterVaultDetails.vaultName": "نام گاوصندوق",
   "createVault.showRecoveryKey.submit": "ایجاد گاوصندوق",
+  "deviceList.ipAddress": "آدرس IP",
+  "deviceList.ipAddress.toolTip": "ممکن است به دلیل قدیمی بودن نسخه تنظیم نشود.",
+  "deviceList.lastAccess.toolTip": "ممکن است به دلیل قدیمی بودن نسخه تنظیم نشود.",
   "editVaultMetadataDialog.vaultName": "نام گاوصندوق",
   "vaultList.addVault": "اضافه کردن"
 }
