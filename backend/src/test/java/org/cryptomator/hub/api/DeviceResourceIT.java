@@ -350,12 +350,27 @@ public class DeviceResourceIT {
 		}
 
 		@Test
-		@DisplayName("GET /devices?ids=device2&ids=device3 returns 200 with body containing device2 and device3")
+		@DisplayName("GET /devices?ids=device2&ids=device3&ids=legacyDevice1 returns 200 with body containing device2 and device3")
 		public void testGetSome() {
-			given().param("ids", "device2", "device3")
+			given().param("ids", "device2", "device3", "legacyDevice1")
 					.when().get("/devices")
 					.then().statusCode(200)
-					.body("id", containsInAnyOrder("device2", "device3"));
+					.body("id", containsInAnyOrder("device2", "device3"))
+					.body("find { it.id == 'device2' }.legacyDevice", is(false))
+					.body("find { it.id == 'device3' }.legacyDevice", is(false));
+		}
+
+		@Test
+		@DisplayName("GET /devices?ids=device2&ids=device3&ids=legacyDevice1&withLegacyDevices=true returns 200 with body containing device2, device3 and legacyDevice1")
+		public void testGetSomeWithLegacyDevices() {
+			given().param("ids", "device2", "device3", "legacyDevice1")
+					.param("withLegacyDevices", true)
+					.when().get("/devices")
+					.then().statusCode(200)
+					.body("id", containsInAnyOrder("device2", "device3", "legacyDevice1"))
+					.body("find { it.id == 'device2' }.legacyDevice", is(false))
+					.body("find { it.id == 'device3' }.legacyDevice", is(false))
+					.body("find { it.id == 'legacyDevice1' }.legacyDevice", is(true));
 		}
 
 		@Test

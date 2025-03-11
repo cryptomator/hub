@@ -50,6 +50,7 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Path("/devices")
 public class DeviceResource {
@@ -77,8 +78,12 @@ public class DeviceResource {
 	@Transactional
 	@Operation(summary = "lists all devices matching the given ids", description = "lists for each id in the list its corresponding device. Ignores all id's where a device cannot be found")
 	@APIResponse(responseCode = "200")
-	public List<DeviceDto> getSome(@QueryParam("ids") List<String> deviceIds) {
-		return deviceRepo.findAllInList(deviceIds).map(DeviceDto::fromEntity).toList();
+	public List<DeviceDto> getSome(@QueryParam("ids") List<String> deviceIds, @QueryParam("withLegacyDevices") boolean withLegacyDevices) {
+		var devices = deviceRepo.findAllInList(deviceIds).map(DeviceDto::fromEntity);
+		if (withLegacyDevices) {
+			devices = Stream.concat(devices, legacyDeviceRepo.findAllInList(deviceIds).map(DeviceDto::fromEntity));
+		}
+		return devices.collect(Collectors.toList());
 	}
 
 	@PUT
@@ -199,6 +204,10 @@ public class DeviceResource {
 
 		public static DeviceDto fromEntity(Device entity) {
 			return new DeviceDto(entity.getId(), entity.getName(), entity.getType(), entity.getPublickey(), entity.getUserPrivateKeys(), entity.getOwner().getId(), entity.getCreationTime().truncatedTo(ChronoUnit.MILLIS), null, null, false);
+		}
+
+		public static DeviceDto fromEntity(LegacyDevice entity) {
+			return new DeviceDto(entity.getId(), entity.getName(), entity.getType(), null, null, entity.getOwner().getId(), entity.getCreationTime().truncatedTo(ChronoUnit.MILLIS), null, null, true);
 		}
 
 		public static DeviceDto fromEntity(Device d, @Nullable VaultKeyRetrievedEvent event) {

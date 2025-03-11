@@ -15,9 +15,16 @@ import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
 
 import java.time.Instant;
+import java.util.List;
+import java.util.stream.Stream;
 
+@NamedQuery(name = "LegacyDevice.allInList",
+		query = """
+				SELECT d
+				FROM LegacyDevice d
+				WHERE d.id IN :ids
+				""")
 @NamedQuery(name = "LegacyDevice.deleteByOwner", query = "DELETE FROM LegacyDevice d WHERE d.owner.id = :userId")
-
 @Deprecated
 @Entity
 @Table(name = "device_legacy")
@@ -70,6 +77,10 @@ public class LegacyDevice {
 	@ApplicationScoped
 	@Deprecated
 	public static class Repository implements PanacheRepositoryBase<LegacyDevice, String> {
+
+		public Stream<LegacyDevice> findAllInList(List<String> ids) {
+			return find("#LegacyDevice.allInList", Parameters.with("ids", ids)).stream();
+		}
 
 		public void deleteByOwner(String userId) {
 			delete("#LegacyDevice.deleteByOwner", Parameters.with("userId", userId));

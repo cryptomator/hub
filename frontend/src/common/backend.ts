@@ -231,8 +231,8 @@ class VaultService {
 }
 
 class DeviceService {
-  public async listSome(deviceIds: string[]): Promise<DeviceDto[]> {
-    const query = `ids=${deviceIds.join('&ids=')}`;
+  public async listSome(deviceIds: string[], withLegacyDevices: boolean = false): Promise<DeviceDto[]> {
+    const query = `ids=${deviceIds.join('&ids=')}&withLegacyDevices=${withLegacyDevices}`;
     return axiosAuth.get<DeviceDto[]>(`/devices?${query}`).then(response => response.data);
   }
 

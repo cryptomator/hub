@@ -155,7 +155,7 @@ export class AuditLogEntityCache {
 
   private debouncedResolvePendingVaults = debounce(async () => await this.resolvePendingEntities<VaultDto>(this.vaults, backend.vaults.listSome), 100);
   private debouncedResolvePendingAuthorities = debounce(async () => await this.resolvePendingEntities<AuthorityDto>(this.authorities, backend.authorities.listSome), 100);
-  private debouncedResolvePendingDevices = debounce(async () => await this.resolvePendingEntities<DeviceDto>(this.devices, backend.devices.listSome), 100);
+  private debouncedResolvePendingDevices = debounce(async () => await this.resolvePendingEntities<DeviceDto>(this.devices, (deviceIds: string[]) => backend.devices.listSome(deviceIds, true)), 100);
 
   private async resolvePendingEntities<T extends { id: string }>(entities: Map<string, Deferred<T>>, listSome: (ids: string[]) => Promise<T[]>): Promise<void> {
     const pendingEntities = Array.from(entities.entries()).filter(([, v]) => v.status === 'pending');
