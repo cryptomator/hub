@@ -19,7 +19,7 @@
 
     <Listbox v-model="selectedFilter" as="div">
       <div class="relative w-auto whitespace-nowrap">
-        <ListboxButton :style="{ width: maxOptionWidth + 'px' }" class="relative w-full rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-xs focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary text-sm">
+        <ListboxButton class="relative w-full rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-xs focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary text-sm">
           <span class="block whitespace-nowrap">{{ filterOptions[selectedFilter] }}</span>
           <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
             <ChevronUpDownIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
@@ -163,8 +163,6 @@ const filterOptions = ref< {[key: string]: string} >({
   ownedVaults: t('vaultList.filter.entry.ownedVaults')
 });
 const selectedFilter = ref<'accessibleVaults' | 'ownedVaults' | 'allVaults'>('accessibleVaults');
-const maxOptionWidth = ref<number>(0);
-
 watch(selectedFilter, fetchData);
 const query = ref('');
 const filteredVaults = computed(() =>
@@ -175,12 +173,7 @@ const filteredVaults = computed(() =>
     })
 );
 
-onMounted(() => {
-  nextTick(() => {
-    calculateMaxOptionWidth();
-  });
-  fetchData();
-});
+onMounted(fetchData);
 
 async function fetchData() {
   onFetchError.value = null;
@@ -233,25 +226,5 @@ async function onSelectedVaultUpdate(vault: VaultDto) {
 
 async function licenseUpdated(license: LicenseUserInfoDto) {
   licenseStatus.value = license;
-}
-
-function calculateMaxOptionWidth() {
-  const container = document.createElement('div');
-  container.style.position = 'absolute';
-  container.style.visibility = 'hidden';
-  container.style.whiteSpace = 'nowrap';
-  document.body.appendChild(container);
-
-  let maxWidth = 0;
-  for (const key in filterOptions.value) {
-    const option = document.createElement('div');
-    option.textContent = filterOptions.value[key];
-    container.appendChild(option);
-    maxWidth = Math.max(maxWidth, option.clientWidth);
-    container.removeChild(option);
-  }
-
-  document.body.removeChild(container);
-  maxOptionWidth.value = maxWidth + 40;
 }
 </script>
