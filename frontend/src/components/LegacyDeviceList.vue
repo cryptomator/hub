@@ -15,7 +15,7 @@
 
     <p class="mt-1 text-sm text-gray-500">
       {{ t('legacyDeviceList.description') }}
-      <a href="https://docs.cryptomator.org/en/latest/security/hub/#web-of-trust" target="_blank" class="inline-flex items-center text-primary underline hover:text-primary-darker">
+      <a href="https://docs.cryptomator.org/hub/your-account/#legacy-devices" target="_blank" class="inline-flex items-center text-primary underline hover:text-primary-darker">
         Learn more
         <ArrowRightIcon class="ml-1 h-4 w-4" aria-hidden="true" />
       </a>
