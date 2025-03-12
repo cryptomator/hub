@@ -105,7 +105,7 @@ public class UsersResourceIT {
 		}
 
 		@Test
-		@DisplayName("GET /users/me?withLastAccessAndLegacyDevices=true returns 200")
+		@DisplayName("GET /users/me-with-legacy-devices-and-access returns 200")
 		public void testGetMe3() throws SQLException {
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
@@ -116,12 +116,9 @@ public class UsersResourceIT {
 						""");
 			}
 
-			when().get("/users/me?withLastAccessAndLegacyDevices=true")
+			when().get("/users/me-with-legacy-devices-and-access")
 					.then().statusCode(200)
 					.body("id", is("user1"))
-					.body("devices.find { it.id == 'device1' }.lastAccessTime", equalTo("2020-02-20T20:20:24.242Z"))
-					.body("devices.find { it.id == 'device1' }.lastIpAddress", equalTo("1.2.3.4"))
-					.body("devices.find { it.id == 'device1' }.legacyDevice", equalTo(false))
 					.body("devices.find { it.id == 'legacyDevice1' }.lastAccessTime", equalTo("2020-02-20T20:20:24.242Z"))
 					.body("devices.find { it.id == 'legacyDevice1' }.lastIpAddress", equalTo("1.2.3.4"))
 					.body("devices.find { it.id == 'legacyDevice1' }.legacyDevice", equalTo(true));

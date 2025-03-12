@@ -146,7 +146,6 @@
   "deviceList.added": "Added",
   "deviceList.thisDevice": "This Device",
   "deviceList.ipAddress": "IP Address",
-  "deviceList.ipAddress.toolTip": "May not be set for legacy reasons.",
   "deviceList.lastAccess": "Last Vault Access",
   "deviceList.lastAccess.toolTip": "May not be set for legacy reasons.",
 
@@ -201,6 +200,16 @@
   "licenseAlert.licenseExpired.admin.description": "Your Cryptomator Hub license has expired. Renew it in the {0} in order to manage and unlock your vaults again.",
   "licenseAlert.licenseExpired.user.description": "Your Cryptomator Hub license has expired. Please inform a Hub administrator to renew the license.",
   "licenseAlert.button": "Admin Section",
+
+  "legacyDeviceList.title": "Legacy Devices",
+  "legacyDeviceList.description": "These devices were created with an older version of Hub and will not be able to unlock vaults in a future update. If you no longer need them, please remove them. If you are still using them, please update Cryptomator Desktop and your devices will be migrated to actively supported devices.",
+  "legacyDeviceList.deviceName": "Device Name",
+  "legacyDeviceList.type": "Type",
+  "legacyDeviceList.added": "Added",
+  "legacyDeviceList.thisDevice": "This Device",
+  "legacyDeviceList.ipAddress": "IP Address",
+  "legacyDeviceList.lastAccess": "Last Vault Access",
+  "legacyDeviceList.lastAccess.toolTip": "May not be set for legacy reasons.",
 
   "manageAccountKey.title": "Account Key",
   "manageAccountKey.description": "Your Account Key is required to login from other apps or browsers.",

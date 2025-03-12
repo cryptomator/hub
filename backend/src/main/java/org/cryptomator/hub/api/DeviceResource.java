@@ -33,8 +33,6 @@ import org.cryptomator.hub.validation.ValidId;
 import org.cryptomator.hub.validation.ValidJWE;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
-import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
-import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.hibernate.exception.ConstraintViolationException;
 import org.jboss.logging.Logger;
@@ -50,7 +48,6 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Path("/devices")
 public class DeviceResource {
@@ -78,12 +75,20 @@ public class DeviceResource {
 	@Transactional
 	@Operation(summary = "lists all devices matching the given ids", description = "lists for each id in the list its corresponding device. Ignores all id's where a device cannot be found")
 	@APIResponse(responseCode = "200")
-	public List<DeviceDto> getSome(@QueryParam("ids") List<String> deviceIds, @QueryParam("withLegacyDevices") boolean withLegacyDevices) {
-		var devices = deviceRepo.findAllInList(deviceIds).map(DeviceDto::fromEntity);
-		if (withLegacyDevices) {
-			devices = Stream.concat(devices, legacyDeviceRepo.findAllInList(deviceIds).map(DeviceDto::fromEntity));
-		}
-		return devices.collect(Collectors.toList());
+	public List<DeviceDto> getSome(@QueryParam("ids") List<String> deviceIds) {
+		return deviceRepo.findAllInList(deviceIds).map(DeviceDto::fromEntity).toList();
+	}
+
+	@Deprecated
+	@GET
+	@Path("/legacy-devices")
+	@RolesAllowed("admin")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Transactional
+	@Operation(summary = "lists all legacy devices matching the given ids", description = "lists for each id in the list its corresponding legacy device. Ignores all id's where a device cannot be found")
+	@APIResponse(responseCode = "200")
+	public List<DeviceDto> getSomeLegacy(@QueryParam("ids") List<String> deviceIds) {
+		return legacyDeviceRepo.findAllInList(deviceIds).map(DeviceDto::fromEntity).toList();
 	}
 
 	@PUT
@@ -162,10 +167,26 @@ public class DeviceResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
 	@Operation(summary = "removes a device", description = "the device will be only be removed if the current user is the owner")
-	@Parameter(name = "legacyDevice", in = ParameterIn.QUERY, description = "defines if a legacy device is to be removed (default is new device)")
 	@APIResponse(responseCode = "204", description = "device removed")
 	@APIResponse(responseCode = "404", description = "device not found with current user")
-	public Response remove(@PathParam("deviceId") @ValidId String deviceId, @Deprecated @QueryParam("legacyDevice") boolean legacyDevice) {
+	public Response remove(@PathParam("deviceId") @ValidId String deviceId) {
+		return remove(deviceId, false);
+	}
+
+	@Deprecated
+	@DELETE
+	@Path("/{deviceId}/legacy-device")
+	@RolesAllowed("user")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Transactional
+	@Operation(summary = "removes a legacy device", description = "the legacy device will be only be removed if the current user is the owner")
+	@APIResponse(responseCode = "204", description = "legacy device removed")
+	@APIResponse(responseCode = "404", description = "legacy device not found with current user")
+	public Response removeLegacyDevice(@PathParam("deviceId") @ValidId String deviceId) {
+		return remove(deviceId, true);
+	}
+
+	private Response remove(String deviceId, boolean legacyDevice) {
 		if (deviceId == null || deviceId.trim().isEmpty()) {
 			return Response.status(Response.Status.BAD_REQUEST).entity("deviceId cannot be empty").build();
 		}
@@ -180,7 +201,6 @@ public class DeviceResource {
 			return Response.status(Response.Status.NOT_FOUND).build();
 		}
 	}
-
 
 	private <T> boolean remove(String deviceId, User currentUser, Function<String, Optional<T>> findById, Consumer<T> delete, Function<T, User> getOwner) {
 		Optional<T> maybeDevice = findById.apply(deviceId);
@@ -206,6 +226,7 @@ public class DeviceResource {
 			return new DeviceDto(entity.getId(), entity.getName(), entity.getType(), entity.getPublickey(), entity.getUserPrivateKeys(), entity.getOwner().getId(), entity.getCreationTime().truncatedTo(ChronoUnit.MILLIS), null, null, false);
 		}
 
+		@Deprecated
 		public static DeviceDto fromEntity(LegacyDevice entity) {
 			return new DeviceDto(entity.getId(), entity.getName(), entity.getType(), null, null, entity.getOwner().getId(), entity.getCreationTime().truncatedTo(ChronoUnit.MILLIS), null, null, true);
 		}
@@ -216,6 +237,7 @@ public class DeviceResource {
 			return new DeviceResource.DeviceDto(d.getId(), d.getName(), d.getType(), d.getPublickey(), d.getUserPrivateKeys(), d.getOwner().getId(), d.getCreationTime().truncatedTo(ChronoUnit.MILLIS), lastIpAddress, lastAccessTime, false);
 		}
 
+		@Deprecated
 		public static DeviceDto fromEntity(LegacyDevice d, @Nullable VaultKeyRetrievedEvent event) {
 			var lastIpAddress = (event != null) ? event.getIpAddress() : null;
 			var lastAccessTime = (event != null) ? event.getTimestamp() : null;

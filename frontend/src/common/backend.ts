@@ -231,14 +231,25 @@ class VaultService {
 }
 
 class DeviceService {
-  public async listSome(deviceIds: string[], withLegacyDevices: boolean = false): Promise<DeviceDto[]> {
-    const query = `ids=${deviceIds.join('&ids=')}&withLegacyDevices=${withLegacyDevices}`;
+  public async listSome(deviceIds: string[]): Promise<DeviceDto[]> {
+    const query = `ids=${deviceIds.join('&ids=')}`;
     return axiosAuth.get<DeviceDto[]>(`/devices?${query}`).then(response => response.data);
   }
 
-  public async removeDevice(device: DeviceDto): Promise<AxiosResponse<unknown>> {
-    const query = device.legacyDevice == false ? '' : '?legacyDevice=true';
-    return axiosAuth.delete(`/devices/${device.id}${query}`)
+  /** @deprecated use `listSome` instead */
+  public async listSomeLegacyDevices(deviceIds: string[]): Promise<DeviceDto[]> {
+    const query = `ids=${deviceIds.join('&ids=')}`;
+    return axiosAuth.get<DeviceDto[]>(`/devices/legacy-devices?${query}`).then(response => response.data);
+  }
+
+  public async removeDevice(deviceId: string): Promise<AxiosResponse<unknown>> {
+    return axiosAuth.delete(`/devices/${deviceId}`)
+      .catch((error) => rethrowAndConvertIfExpected(error, 404));
+  }
+
+  /** @deprecated use `removeDevice` instead */
+  public async removeLegacyDevice(deviceId: string): Promise<AxiosResponse<unknown>> {
+    return axiosAuth.delete(`/devices/${deviceId}/legacy-device`)
       .catch((error) => rethrowAndConvertIfExpected(error, 404));
   }
 
@@ -253,7 +264,12 @@ class UserService {
   }
 
   public async me(withDevices: boolean = false, withLastAccess: boolean = false): Promise<UserDto> {
-    return axiosAuth.get<UserDto>(`/users/me?withDevices=${withDevices}&withLastAccessAndLegacyDevices=${withLastAccess}`).then(response => AuthorityService.fillInMissingPicture(response.data));
+    return axiosAuth.get<UserDto>(`/users/me?withDevices=${withDevices}&withLastAccess=${withLastAccess}`).then(response => AuthorityService.fillInMissingPicture(response.data));
+  }
+
+  /** @deprecated use `me` instead */
+  public async meWithLegacyDevicesAndAccess(): Promise<UserDto> {
+    return axiosAuth.get<UserDto>('/users/me-with-legacy-devices-and-access').then(response => AuthorityService.fillInMissingPicture(response.data));
   }
 
   public async resetMe(): Promise<void> {

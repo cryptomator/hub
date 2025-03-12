@@ -8,6 +8,9 @@ class UserData {
   #meWithLastAccess?: Promise<UserDto>;
   #browserKeys?: Promise<BrowserKeys | undefined>;
 
+  /** @deprecated use `meWithLastAccess` instead */
+  #meWithLegacyDevicesAndLastAccess?: Promise<UserDto>;
+
   /**
    * Gets the user DTO representing the currently logged in user.
    */
@@ -24,6 +27,14 @@ class UserData {
       this.#me = this.#meWithLastAccess;
     }
     return this.#meWithLastAccess;
+  }
+
+  /** @deprecated use `meWithLastAccess` instead */
+  public get meWithLegacyDevicesAndLastAccess(): Promise<UserDto> {
+    if (!this.#meWithLegacyDevicesAndLastAccess) {
+      this.#meWithLegacyDevicesAndLastAccess = backend.users.meWithLegacyDevicesAndAccess();
+    }
+    return this.#meWithLegacyDevicesAndLastAccess;
   }
 
   /**

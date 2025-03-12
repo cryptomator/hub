@@ -235,15 +235,15 @@ public class DeviceResourceIT {
 
 		@Test
 		@Order(7)
-		@DisplayName("DELETE /devices/device999 with legacy flag and non legacy device returns 404")
+		@DisplayName("DELETE /devices/device999/legacy-device as legacy device returns 404")
 		public void testDeleteExistingDeviceAsLegacyDevice() {
-			when().delete("/devices/{deviceId}?legacyDevice=true", "device999") //
+			when().delete("/devices/{deviceId}/legacy-device", "device999") //
 					.then().statusCode(404);
 		}
 
 		@Test
 		@Order(7)
-		@DisplayName("DELETE /devices/device15000 without legacy flag and legacy device returns 404")
+		@DisplayName("DELETE /devices/device15000 as non legacy device returns 404")
 		public void testDeleteExistingLegacyDeviceAsDevice() throws SQLException {
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
@@ -288,7 +288,7 @@ public class DeviceResourceIT {
 						""");
 			}
 
-			when().delete("/devices/{deviceId}?legacyDevice=true", "device15000") //
+			when().delete("/devices/{deviceId}/legacy-device", "device15000") //
 					.then().statusCode(204);
 
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
@@ -361,15 +361,12 @@ public class DeviceResourceIT {
 		}
 
 		@Test
-		@DisplayName("GET /devices?ids=device2&ids=device3&ids=legacyDevice1&withLegacyDevices=true returns 200 with body containing device2, device3 and legacyDevice1")
-		public void testGetSomeWithLegacyDevices() {
+		@DisplayName("GET /devices/legacy-devices?ids=legacyDevice1&ids=device2&ids=device3 returns 200 with body containing device2, device3 and legacyDevice1")
+		public void testGetSomeLegacyDevices() {
 			given().param("ids", "device2", "device3", "legacyDevice1")
-					.param("withLegacyDevices", true)
-					.when().get("/devices")
+					.when().get("/devices/legacy-devices")
 					.then().statusCode(200)
-					.body("id", containsInAnyOrder("device2", "device3", "legacyDevice1"))
-					.body("find { it.id == 'device2' }.legacyDevice", is(false))
-					.body("find { it.id == 'device3' }.legacyDevice", is(false))
+					.body("id", containsInAnyOrder("legacyDevice1"))
 					.body("find { it.id == 'legacyDevice1' }.legacyDevice", is(true));
 		}
 
