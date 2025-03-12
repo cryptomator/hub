@@ -57,6 +57,8 @@
   "auditLog.paymentRequired.openAdminSection": "Atvērt pārvaldīšanas sadaļu",
   "claimVaultOwnershipDialog.title": "Pieteikt īpašumtiesības uz glabātavu",
   "claimVaultOwnershipDialog.description": "Jāievada glabātavas pārvaldītāja parole, lai pierādītu, ka ir nepieciešamās atļaujas pārvaldīt šo glabātavu.",
+  "claimVaultOwnershipDialog.password": "Glabātavas pārvaldītāja parole",
+  "claimVaultOwnershipDialog.error.formValidationFailed": "Parole nedrīkst būt tukša",
   "claimVaultOwnershipDialog.error.wrongPassword": "Nepareiza parole",
   "createVault.enterRecoveryKey.title": "Atkopt glabātavu",
   "createVault.enterRecoveryKey.description": "Jāievada esošas glabātavas atkopes atslēga, lai no tās izveidotu jaunu glabātavu sagatavi.",
