@@ -20,29 +20,19 @@
             <table class="min-w-full divide-y divide-gray-200" aria-describedby="deviceListTitle">
               <thead class="bg-gray-50">
                 <tr>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" class="w-12 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
+                  <th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider flex-grow">
                     {{ t('deviceList.deviceName') }}
                   </th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {{ t('deviceList.type') }}
-                  </th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                     {{ t('deviceList.added') }}
                   </th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap" :title="t('deviceList.lastAccess.toolTip')">
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                     <span class="inline-flex items-center gap-1">
                       {{ t('deviceList.lastAccess') }}
-                      <div class="relative group">
-                        <QuestionMarkCircleIcon class="h-4 w-4 text-gray-400 cursor-help"/>
+                      <div class="relative group" :title="t('deviceList.lastAccess.toolTip')">
+                        <QuestionMarkCircleIcon class="h-4 w-4 text-gray-400"/>
                       </div>
-                    </span>
-                  </th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap" :title="t('deviceList.ipAddress.toolTip')">
-                    <span class="inline-flex items-center gap-1">
-                      {{ t('deviceList.ipAddress') }}
-                      <span class="relative group">
-                        <QuestionMarkCircleIcon class="h-4 w-4 text-gray-400 cursor-help" />
-                      </span>
                     </span>
                   </th>
                   <th scope="col" class="relative px-6 py-3">
@@ -51,9 +41,22 @@
                 </tr>
               </thead>
               <tbody class="bg-white divide-y divide-gray-200">
-                <template v-for="device in me.devices" :key="device.id">
+                <template v-for="device in sortedDevices" :key="device.id">
                   <tr>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <td class="py-4 text-sm text-gray-500">
+                      <div class="grid place-items-center h-12 aspect-square">
+                        <span v-if="device.type == 'BROWSER'" :title="'Browser'">
+                          <WindowIcon class="size-5" aria-hidden="true" />
+                        </span>
+                        <span v-else-if="device.type == 'DESKTOP'" :title="'Desktop'">
+                          <ComputerDesktopIcon class="size-5" aria-hidden="true" />
+                        </span>
+                        <span v-else-if="device.type == 'MOBILE'" :title="'Mobile'">
+                          <DevicePhoneMobileIcon class="size-5" aria-hidden="true" />
+                        </span>
+                      </div>
+                    </td>
+                    <td class="px-2 py-4 whitespace-nowrap text-sm font-medium text-gray-900 flex-grow">
                       <div class="flex items-center gap-3">
                         <div>{{ device.name }}</div>
                         <div v-if="device.legacyDevice == true" class="inline-flex items-center rounded-md bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-700 ring-1 ring-inset ring-yellow-600/20">Legacy</div>
@@ -61,27 +64,15 @@
                       </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <span v-if="device.type == 'BROWSER'" class="flex items-center">
-                        <WindowIcon class="mr-1 h-5 w-5" aria-hidden="true" />
-                        Browser
-                      </span>
-                      <span v-else-if="device.type == 'DESKTOP'" class="flex items-center">
-                        <ComputerDesktopIcon class="mr-1 h-5 w-5" aria-hidden="true" />
-                        Desktop
-                      </span>
-                      <span v-else-if="device.type == 'MOBILE'" class="flex items-center">
-                        <DevicePhoneMobileIcon class="mr-1 h-5 w-5" aria-hidden="true" />
-                        Mobile
-                      </span>
+                      {{ d(device.creationTime, 'long') }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {{ d(device.creationTime, 'short') }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <div v-if="device.lastAccessTime">{{ d(device.lastAccessTime, 'short') }}</div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <div v-if="device.lastIpAddress">{{ device.lastIpAddress }}</div>
+                      <div v-if="device.lastAccessTime">
+                        {{ d(device.lastAccessTime, 'long') }}
+                      </div>
+                      <div v-if="device.lastIpAddress" class="text-xs text-gray-400">
+                        {{ device.lastIpAddress }}
+                      </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <a v-if="device.id != myDevice?.id" tabindex="0" class="text-red-600 hover:text-red-900" @click="removeDevice(device)">{{ t('common.remove') }}</a>
@@ -105,7 +96,7 @@
 
 <script setup lang="ts">
 import { ComputerDesktopIcon, DevicePhoneMobileIcon, QuestionMarkCircleIcon, WindowIcon } from '@heroicons/vue/24/solid';
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { DeviceDto, NotFoundError, UserDto } from '../common/backend';
 import userdata from '../common/userdata';
@@ -150,4 +141,13 @@ async function removeDevice(device: DeviceDto) {
   }
   await fetchData(); // already handle errors
 }
+
+const sortedDevices = computed(() => {
+  return (me.value?.devices || []).slice().sort((a, b) => {
+    const aCreationTime = new Date(a.creationTime).getTime();
+    const bCreationTime = new Date(b.creationTime).getTime();
+    return bCreationTime - aCreationTime;
+  });
+});
+
 </script>
