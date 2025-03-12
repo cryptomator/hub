@@ -45,6 +45,9 @@ public class LegacyDevice {
 	@Enumerated(EnumType.STRING)
 	private Device.Type type;
 
+	@Column(name = "publickey", nullable = false)
+	private String publickey;
+
 	@Column(name = "creation_time", nullable = false)
 	private Instant creationTime;
 
@@ -70,6 +73,10 @@ public class LegacyDevice {
 
 	public Device.Type getType() {
 		return type;
+	}
+
+	public String getPublickey() {
+		return publickey;
 	}
 
 	// Further attributes omitted, as they are no longer used. The above ones are exceptions, as they are referenced via JPQL for joining and required for the device list.

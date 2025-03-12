@@ -202,7 +202,7 @@
   "licenseAlert.button": "Admin Section",
 
   "legacyDeviceList.title": "Legacy Devices",
-  "legacyDeviceList.description": "These devices were created with an older version of Hub and will not be able to unlock vaults in a future update. If you no longer need them, please remove them. If you are still using them, please update Cryptomator Desktop and your devices will be migrated to actively supported devices.",
+  "legacyDeviceList.description": "These devices were created with an older version of Hub and need to be updated to unlock vaults in future versions. If you no longer need them, please remove them. Otherwise, please update Cryptomator on that device. Your next unlock will trigger the update automatically.",
   "legacyDeviceList.description.information": "Learn more.",
   "legacyDeviceList.deviceName": "Device Name",
   "legacyDeviceList.type": "Type",

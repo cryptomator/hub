@@ -228,7 +228,7 @@ public class DeviceResource {
 
 		@Deprecated
 		public static DeviceDto fromEntity(LegacyDevice entity) {
-			return new DeviceDto(entity.getId(), entity.getName(), entity.getType(), null, null, entity.getOwner().getId(), entity.getCreationTime().truncatedTo(ChronoUnit.MILLIS), null, null, true);
+			return new DeviceDto(entity.getId(), entity.getName(), entity.getType(), entity.getPublickey(), null, entity.getOwner().getId(), entity.getCreationTime().truncatedTo(ChronoUnit.MILLIS), null, null, true);
 		}
 
 		public static DeviceDto fromEntity(Device d, @Nullable VaultKeyRetrievedEvent event) {
@@ -241,7 +241,7 @@ public class DeviceResource {
 		public static DeviceDto fromEntity(LegacyDevice d, @Nullable VaultKeyRetrievedEvent event) {
 			var lastIpAddress = (event != null) ? event.getIpAddress() : null;
 			var lastAccessTime = (event != null) ? event.getTimestamp() : null;
-			return new DeviceResource.DeviceDto(d.getId(), d.getName(), d.getType(), null, null, d.getOwner().getId(), d.getCreationTime().truncatedTo(ChronoUnit.MILLIS), lastIpAddress, lastAccessTime, true);
+			return new DeviceResource.DeviceDto(d.getId(), d.getName(), d.getType(), d.getPublickey(), null, d.getOwner().getId(), d.getCreationTime().truncatedTo(ChronoUnit.MILLIS), lastIpAddress, lastAccessTime, true);
 		}
 
 	}

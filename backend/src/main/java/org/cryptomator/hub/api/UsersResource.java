@@ -36,7 +36,6 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.jboss.resteasy.reactive.NoCache;
 
 import java.net.URI;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -57,8 +56,6 @@ public class UsersResource {
 	User.Repository userRepo;
 	@Inject
 	Device.Repository deviceRepo;
-	@Inject
-	LegacyDevice.Repository legacyDeviceRepo;
 	@Inject
 	Vault.Repository vaultRepo;
 	@Inject
@@ -168,7 +165,7 @@ public class UsersResource {
 	@APIResponse(responseCode = "404", description = "no user matching the subject of the JWT passed as Bearer Token")
 	public UserDto getMe(@QueryParam("withDevices") boolean withDevices, @QueryParam("withLastAccess") boolean withLastAccess) {
 		User user = userRepo.findById(jwt.getSubject());
-		Set<DeviceResource.DeviceDto> deviceDtos = new HashSet<>();
+		Set<DeviceResource.DeviceDto> deviceDtos;
 		if (withLastAccess) {
 			var devices = user.devices.stream().collect(Collectors.toMap(Device::getId, Function.identity()));
 			var events = auditEventRepo.findLastVaultKeyRetrieve(devices.keySet()).collect(Collectors.toMap(VaultKeyRetrievedEvent::getDeviceId, Function.identity()));
@@ -178,6 +175,8 @@ public class UsersResource {
 			}).collect(Collectors.toSet());
 		} else if (withDevices) {
 			deviceDtos = user.getDevices().stream().map(DeviceResource.DeviceDto::fromEntity).collect(Collectors.toSet());
+		} else {
+			deviceDtos = Set.of();
 		}
 		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getLanguage(), deviceDtos, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
 	}
