@@ -15,6 +15,10 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+/**
+ * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
+ */
+@Deprecated(since = "1.3.0", forRemoval = true)
 @Entity
 @Table(name = "access_token_legacy")
 @NamedQuery(name = "LegacyAccessToken.get", query = """
@@ -31,10 +35,6 @@ import java.util.stream.Stream;
 		INNER JOIN EffectiveVaultAccess perm ON token.id.vaultId = perm.id.vaultId AND device.owner.id = perm.id.authorityId
 		WHERE token.id.deviceId = :deviceId AND device.owner.id = :userId
 		""")
-/**
- * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
- */
-@Deprecated(since = "1.3.0", forRemoval = true)
 public class LegacyAccessToken {
 
 	@EmbeddedId

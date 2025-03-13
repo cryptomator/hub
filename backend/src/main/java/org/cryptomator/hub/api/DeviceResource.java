@@ -63,11 +63,13 @@ public class DeviceResource {
 	/**
 	 * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
 	 */
+	@Deprecated(since = "1.3.0", forRemoval = true)
 	@Inject
 	LegacyAccessToken.Repository legacyAccessTokenRepo;
 	/**
 	 * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
 	 */
+	@Deprecated(since = "1.3.0", forRemoval = true)
 	@Inject
 	LegacyDevice.Repository legacyDeviceRepo;
 
