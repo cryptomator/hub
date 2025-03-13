@@ -8,7 +8,7 @@ class UserData {
   #meWithLastAccess?: Promise<UserDto>;
   #browserKeys?: Promise<BrowserKeys | undefined>;
 
-  /** @deprecated use `meWithLastAccess` instead */
+  /** @deprecated since version 1.3.0, to be removed in https://github.com/cryptomator/hub/issues/333 */
   #meWithLegacyDevicesAndLastAccess?: Promise<UserDto>;
 
   /**
@@ -29,7 +29,7 @@ class UserData {
     return this.#meWithLastAccess;
   }
 
-  /** @deprecated use `meWithLastAccess` instead */
+  /** @deprecated since version 1.3.0, to be removed in https://github.com/cryptomator/hub/issues/333 */
   public get meWithLegacyDevicesAndLastAccess(): Promise<UserDto> {
     if (!this.#meWithLegacyDevicesAndLastAccess) {
       this.#meWithLegacyDevicesAndLastAccess = backend.users.meWithLegacyDevicesAndAccess();

@@ -18,6 +18,10 @@ import java.time.Instant;
 import java.util.List;
 import java.util.stream.Stream;
 
+/**
+ * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
+ */
+@Deprecated(since = "1.3.0", forRemoval = true)
 @NamedQuery(name = "LegacyDevice.allInList",
 		query = """
 				SELECT d
@@ -25,7 +29,6 @@ import java.util.stream.Stream;
 				WHERE d.id IN :ids
 				""")
 @NamedQuery(name = "LegacyDevice.deleteByOwner", query = "DELETE FROM LegacyDevice d WHERE d.owner.id = :userId")
-@Deprecated
 @Entity
 @Table(name = "device_legacy")
 public class LegacyDevice {
@@ -81,8 +84,11 @@ public class LegacyDevice {
 
 	// Further attributes omitted, as they are no longer used. The above ones are exceptions, as they are referenced via JPQL for joining and required for the device list.
 
+	/**
+	 * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
+	 */
+	@Deprecated(since = "1.3.0", forRemoval = true)
 	@ApplicationScoped
-	@Deprecated
 	public static class Repository implements PanacheRepositoryBase<LegacyDevice, String> {
 
 		public Stream<LegacyDevice> findAllInList(List<String> ids) {

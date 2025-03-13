@@ -181,7 +181,10 @@ public class UsersResource {
 		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getLanguage(), deviceDtos, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
 	}
 
-	@Deprecated
+	/**
+	 * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
+	 */
+	@Deprecated(since = "1.3.0", forRemoval = true)
 	@GET
 	@Path("/me-with-legacy-devices-and-access")
 	@RolesAllowed("user")

@@ -136,7 +136,10 @@ public class User extends Authority {
 		this.devices = devices;
 	}
 
-	@Deprecated
+	/**
+	 * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
+	 */
+	@Deprecated(since = "1.3.0", forRemoval = true)
 	public Set<LegacyDevice> getLegacyDevices() {
 		return legacyDevices;
 	}
@@ -147,7 +150,10 @@ public class User extends Authority {
 	@OneToMany(mappedBy = "owner", orphanRemoval = true, fetch = FetchType.LAZY)
 	public Set<Device> devices = new HashSet<>();
 
-	@Deprecated
+	/**
+	 * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
+	 */
+	@Deprecated(since = "1.3.0", forRemoval = true)
 	@OneToMany(mappedBy = "owner", orphanRemoval = true, fetch = FetchType.LAZY)
 	public Set<LegacyDevice> legacyDevices = new HashSet<>();
 

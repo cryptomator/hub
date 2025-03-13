@@ -79,7 +79,10 @@ public class DeviceResource {
 		return deviceRepo.findAllInList(deviceIds).map(DeviceDto::fromEntity).toList();
 	}
 
-	@Deprecated
+	/**
+	 * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
+	 */
+	@Deprecated(since = "1.3.0", forRemoval = true)
 	@GET
 	@Path("/legacy-devices")
 	@RolesAllowed("admin")
@@ -147,7 +150,10 @@ public class DeviceResource {
 		}
 	}
 
-	@Deprecated
+	/**
+	 * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
+	 */
+	@Deprecated(since = "1.3.0", forRemoval = true)
 	@GET
 	@Path("/{deviceId}/legacy-access-tokens")
 	@RolesAllowed("user")
@@ -173,7 +179,10 @@ public class DeviceResource {
 		return remove(deviceId, false);
 	}
 
-	@Deprecated
+	/**
+	 * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
+	 */
+	@Deprecated(since = "1.3.0", forRemoval = true)
 	@DELETE
 	@Path("/{deviceId}/legacy-device")
 	@RolesAllowed("user")
@@ -226,7 +235,10 @@ public class DeviceResource {
 			return new DeviceDto(entity.getId(), entity.getName(), entity.getType(), entity.getPublickey(), entity.getUserPrivateKeys(), entity.getOwner().getId(), entity.getCreationTime().truncatedTo(ChronoUnit.MILLIS), null, null, false);
 		}
 
-		@Deprecated
+		/**
+		 * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
+		 */
+		@Deprecated(since = "1.3.0", forRemoval = true)
 		public static DeviceDto fromEntity(LegacyDevice entity) {
 			return new DeviceDto(entity.getId(), entity.getName(), entity.getType(), entity.getPublickey(), null, entity.getOwner().getId(), entity.getCreationTime().truncatedTo(ChronoUnit.MILLIS), null, null, true);
 		}
@@ -237,7 +249,10 @@ public class DeviceResource {
 			return new DeviceResource.DeviceDto(d.getId(), d.getName(), d.getType(), d.getPublickey(), d.getUserPrivateKeys(), d.getOwner().getId(), d.getCreationTime().truncatedTo(ChronoUnit.MILLIS), lastIpAddress, lastAccessTime, false);
 		}
 
-		@Deprecated
+		/**
+		 * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
+		 */
+		@Deprecated(since = "1.3.0", forRemoval = true)
 		public static DeviceDto fromEntity(LegacyDevice d, @Nullable VaultKeyRetrievedEvent event) {
 			var lastIpAddress = (event != null) ? event.getIpAddress() : null;
 			var lastAccessTime = (event != null) ? event.getTimestamp() : null;
