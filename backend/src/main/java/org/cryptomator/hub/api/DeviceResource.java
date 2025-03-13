@@ -60,8 +60,14 @@ public class DeviceResource {
 	User.Repository userRepo;
 	@Inject
 	Device.Repository deviceRepo;
+	/**
+	 * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
+	 */
 	@Inject
 	LegacyAccessToken.Repository legacyAccessTokenRepo;
+	/**
+	 * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
+	 */
 	@Inject
 	LegacyDevice.Repository legacyDeviceRepo;
 
