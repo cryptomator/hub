@@ -25,15 +25,15 @@ import java.util.stream.Stream;
 		SELECT token
 		FROM LegacyAccessToken token
 		INNER JOIN LegacyDevice device ON device.id = token.id.deviceId
-		INNER JOIN EffectiveVaultAccess perm ON token.id.vaultId = perm.id.vaultId AND device.owner.id = perm.id.authorityId
-		WHERE token.id.vaultId = :vaultId AND token.id.deviceId = :deviceId AND device.owner.id = :userId
+		INNER JOIN EffectiveVaultAccess perm ON token.id.vaultId = perm.id.vaultId AND device.ownerId = perm.id.authorityId
+		WHERE token.id.vaultId = :vaultId AND token.id.deviceId = :deviceId AND device.ownerId = :userId
 		""")
 @NamedQuery(name = "LegacyAccessToken.getByDevice", query = """
 		SELECT token
 		FROM LegacyAccessToken token
 		INNER JOIN LegacyDevice device ON device.id = token.id.deviceId
-		INNER JOIN EffectiveVaultAccess perm ON token.id.vaultId = perm.id.vaultId AND device.owner.id = perm.id.authorityId
-		WHERE token.id.deviceId = :deviceId AND device.owner.id = :userId
+		INNER JOIN EffectiveVaultAccess perm ON token.id.vaultId = perm.id.vaultId AND device.ownerId = perm.id.authorityId
+		WHERE token.id.deviceId = :deviceId AND device.ownerId = :userId
 		""")
 public class LegacyAccessToken {
 

@@ -28,7 +28,7 @@ import java.util.stream.Stream;
 				FROM LegacyDevice d
 				WHERE d.id IN :ids
 				""")
-@NamedQuery(name = "LegacyDevice.deleteByOwner", query = "DELETE FROM LegacyDevice d WHERE d.owner.id = :userId")
+@NamedQuery(name = "LegacyDevice.deleteByOwner", query = "DELETE FROM LegacyDevice d WHERE d.ownerId = :userId")
 @Entity
 @Table(name = "device_legacy")
 public class LegacyDevice {
@@ -40,6 +40,9 @@ public class LegacyDevice {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "owner_id", updatable = false, nullable = false)
 	private User owner;
+
+	@Column(name = "owner_id", insertable = false, updatable = false, nullable = false)
+	private String ownerId;
 
 	@Column(name = "name", nullable = false)
 	private String name;
