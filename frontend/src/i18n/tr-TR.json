@@ -138,7 +138,6 @@
   "deviceList.thisDevice": "Bu Cihaz",
   "deviceList.ipAddress": "IP Adres",
   "deviceList.lastAccess": "Son Kasa Erişimi",
-  "deviceList.lastAccess.toolTip": "Eski nedenlerden dolayı ayarlanamayabilir.",
   "downloadVaultTemplateDialog.title": "Kasa Şablonunu İndir",
   "downloadVaultTemplateDialog.description": "Sıkıştırılmış kasa şablonunu indirin ve ekip üyelerinizle paylaşılan herhangi bir konuma açın. Bu, ilk kurulum sırasında yalnızca bir kez gereklidir.",
   "editVaultMetadataDialog.title": "Kasa Meta Verilerini Düzenle",
