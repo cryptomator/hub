@@ -8,5 +8,6 @@
   "common.show": "Покажи",
   "admin.webOfTrust.information": "Дознајте повеќе.",
   "createVault.enterVaultDetails.vaultName": "Име на сеф",
-  "editVaultMetadataDialog.vaultName": "Име на сеф"
+  "editVaultMetadataDialog.vaultName": "Име на сеф",
+  "legacyDeviceList.description.information": "Дознајте повеќе."
 }
