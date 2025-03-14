@@ -22,6 +22,7 @@
   "createVault.showRecoveryKey.submit": "Стварыць скарбніцу",
   "deviceList.deviceName": "Назва прылады",
   "editVaultMetadataDialog.vaultName": "Назва скарбніцы",
+  "legacyDeviceList.deviceName": "Назва прылады",
   "unlockSuccess.deviceSetup.title": "Новая прылада",
   "vaultDetails.actions.updatePermissions.reload": "Перазагрузіць",
   "vaultDetails.actions.displayRecoveryKey": "Паказаць пароль аднаўлення",
