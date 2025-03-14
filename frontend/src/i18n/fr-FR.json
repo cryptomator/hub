@@ -138,7 +138,6 @@
   "deviceList.thisDevice": "Cet appareil",
   "deviceList.ipAddress": "Adresse IP",
   "deviceList.lastAccess": "Dernier accès au coffre",
-  "deviceList.lastAccess.toolTip": "Peut ne pas être paramétré pour des raisons d'héritage.",
   "downloadVaultTemplateDialog.title": "Télécharger le modèle de coffre",
   "downloadVaultTemplateDialog.description": "Téléchargez et décompressez le modèle de coffre zippé à n'importe quel endroit partagé avec les membres de votre équipe. Ceci n'est requis qu'une seule fois lors de la configuration initiale.",
   "editVaultMetadataDialog.title": "Modifier les métadonnées du coffre",
