@@ -33,7 +33,6 @@
   "deviceList.deviceName": "Nombre del dispositivo",
   "deviceList.ipAddress": "Dirección IP",
   "deviceList.lastAccess": "Último acceso a la Bóveda",
-  "deviceList.lastAccess.toolTip": "No se puede establecer por razones heredadas.",
   "editVaultMetadataDialog.vaultName": "Nombre de la bóveda",
   "initialSetup.accountKey": "Account Key",
   "legacyDeviceList.description.information": "Más información.",
