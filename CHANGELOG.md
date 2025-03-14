@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Show last IP address and last vault access timestamp of devices in user profile (#320)
 - Dutch, French, Italian, Korean, Portuguese and Turkish translation
 - Added provenance attestation for our container images (#322)
+- Show legacy devices in user profile (#331)
 
 ### Changed
 
@@ -41,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed incorrect ARIA roles improving accessibility
 - Fixed incorrect `Content-Type` header for `/api/vaults/{vaultId}/access-token` (#284)
+- Show legacy device name in audit log (#331)
 
 ### Security
 
