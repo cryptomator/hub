@@ -19,6 +19,8 @@
   "createVault.showRecoveryKey.submit": "Luo Uusi Vault",
   "deviceList.deviceName": "Laitteen Nimi",
   "editVaultMetadataDialog.vaultName": "Holvin nimi",
+  "legacyDeviceList.description.information": "Lue Lisää.",
+  "legacyDeviceList.deviceName": "Laitteen Nimi",
   "unlockSuccess.deviceSetup.title": "Uusi laite",
   "vaultDetails.actions.updatePermissions.reload": "Päivitä",
   "vaultDetails.actions.displayRecoveryKey": "Näytä palautusavain",

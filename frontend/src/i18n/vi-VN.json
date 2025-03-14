@@ -25,6 +25,8 @@
   "createVault.showRecoveryKey.submit": "Tạo Vault",
   "deviceList.deviceName": "Tên thiết bị",
   "editVaultMetadataDialog.vaultName": "Tên Vault",
+  "legacyDeviceList.description.information": "Tìm hiểu thêm.",
+  "legacyDeviceList.deviceName": "Tên thiết bị",
   "nav.vaults": "Danh sách Vault",
   "unlockSuccess.deviceSetup.title": "Thiết bị mới",
   "vaultDetails.actions.updatePermissions.reload": "Tải lại",

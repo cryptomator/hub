@@ -23,6 +23,8 @@
   "createVault.showRecoveryKey.submit": "वॉल्ट बनाएं",
   "deviceList.deviceName": "डिवाइस का नाम",
   "editVaultMetadataDialog.vaultName": "वॉल्ट का नाम",
+  "legacyDeviceList.description.information": "अधिक जानें",
+  "legacyDeviceList.deviceName": "डिवाइस का नाम",
   "nav.vaults": "कक्षों का नाम",
   "unlockSuccess.deviceSetup.title": "नया उपकरण",
   "vaultList.title": "कक्षों का नाम",

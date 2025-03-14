@@ -27,6 +27,8 @@
   "deviceList.deviceName": "Nama Perangkat",
   "editVaultMetadataDialog.vaultName": "Nama Brankas",
   "initialSetup.accountKey": "Kunci Akun",
+  "legacyDeviceList.description.information": "Selengkapnya.",
+  "legacyDeviceList.deviceName": "Nama Perangkat",
   "manageAccountKey.title": "Kunci Akun",
   "nav.vaults": "Vault",
   "regenerateAccountKeyDialog.saveAccountKey.accountKey": "Kunci Akun",

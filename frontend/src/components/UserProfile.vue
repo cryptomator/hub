@@ -54,6 +54,7 @@
       <div class="grid grid-cols-1 gap-8 lg:col-span-3">
         <ManageSetupCode />
         <DeviceList />
+        <LegacyDeviceList />
         <UserkeyFingerprint :user="me"/>
       </div>
     </div>
@@ -72,6 +73,7 @@ import userdata from '../common/userdata';
 import { Locale } from '../i18n';
 import DeviceList from './DeviceList.vue';
 import FetchError from './FetchError.vue';
+import LegacyDeviceList from './LegacyDeviceList.vue';
 import ManageSetupCode from './ManageSetupCode.vue';
 import UserkeyFingerprint from './UserkeyFingerprint.vue';
 

@@ -1,4 +1,3 @@
-
 # Changelog
 
 All notable changes to this project will be documented in this file.
@@ -19,14 +18,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New log event entries: UserAccountReset, UserKeysChange and UserSetupCodeChange (#310)
 - Audit log filter by event type (#312)
 - Show last IP address and last vault access timestamp of devices in user profile (#320)
-- Italian, Korean, Dutch and Portuguese translation
+- Dutch, French, Italian, Korean, Portuguese and Turkish translation
 - Added provenance attestation for our container images (#322)
+- Show legacy devices in user profile (#331)
 
 ### Changed
 
-- Updated Keycloak to 26.1.2
+- Updated Keycloak to 26.1.4
 - Updated to Java 21 (#272)
-- Updated to Quarkus 3.15.3 LTS
+- Updated to Quarkus 3.15.3.1 LTS
 - Updated to Tailwind CSS 4
 - Updated to Vite 6
 - Reduced number of transitive dependencies
@@ -42,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed incorrect ARIA roles improving accessibility
 - Fixed incorrect `Content-Type` header for `/api/vaults/{vaultId}/access-token` (#284)
+- Show legacy device name in audit log (#331)
 
 ### Security
 
@@ -58,6 +59,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CVE-2024-52810: @intlify/shared Prototype Pollution vulnerability
 - CVE-2024-55565: Predictable results in nanoid generation when given non-integer values
 - CVE-2025-24010: Vite development server responded to arbitrary requests
+- CVE-2025-27597: Vue I18n Allows Prototype Pollution in `handleFlatJson`
+- CVE-2025-27152: axios Requests Vulnerable To Possible SSRF and Credential Leakage via Absolute URL
+
+## [1.4.0-rc1](https://github.com/cryptomator/hub/compare/1.4.0-beta3...1.4.0-rc1) (2025-03-14)
+
+### Added
+
+- Show legacy devices in user profile (#331)
+
+### Changed
+
+- Updated to Quarkus 3.15.3.1 LTS
+- Updated Keycloak to 26.1.4
+
+### Fixed
+
+- Show legacy device name in audit log (#331)
+
+### Security
+
+- CVE-2025-27597: Vue I18n Allows Prototype Pollution in `handleFlatJson`
+- CVE-2025-27152: axios Requests Vulnerable To Possible SSRF and Credential Leakage via Absolute URL
 
 ## [1.4.0-beta3](https://github.com/cryptomator/hub/compare/1.4.0-beta2...1.4.0-beta3) (2025-02-22)
 
