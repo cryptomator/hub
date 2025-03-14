@@ -26,6 +26,8 @@
   "createVault.showRecoveryKey.submit": "Gumawa ng bagong Vault",
   "deviceList.deviceName": "Pangalan ng device",
   "editVaultMetadataDialog.vaultName": "Pangalan ng Vault",
+  "legacyDeviceList.description.information": "Matuto pa.",
+  "legacyDeviceList.deviceName": "Pangalan ng device",
   "nav.vaults": "Mga Vault",
   "unlockSuccess.deviceSetup.title": "Bagong Device",
   "vaultDetails.actions.updatePermissions.reload": "Reload",

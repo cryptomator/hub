@@ -29,6 +29,8 @@
   "deviceList.deviceName": "اسم الجهاز",
   "editVaultMetadataDialog.vaultName": "اسم الخزينة",
   "initialSetup.accountKey": "Account Key",
+  "legacyDeviceList.description.information": "معرفة المزيد.",
+  "legacyDeviceList.deviceName": "اسم الجهاز",
   "manageAccountKey.title": "Account Key",
   "nav.vaults": "المخازن",
   "regenerateAccountKeyDialog.saveAccountKey.accountKey": "Account Key",

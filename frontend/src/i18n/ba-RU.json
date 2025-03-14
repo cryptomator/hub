@@ -26,6 +26,8 @@
   "createVault.showRecoveryKey.submit": "Һаҡлағыс яһа",
   "deviceList.deviceName": "Йыһаз исеме",
   "editVaultMetadataDialog.vaultName": "Һаҡлағыс исеме",
+  "legacyDeviceList.description.information": "Артабан уҡырға.",
+  "legacyDeviceList.deviceName": "Йыһаз исеме",
   "nav.vaults": "Һаҡлағыстар",
   "unlockSuccess.deviceSetup.title": "Яңы йыһаз",
   "vaultDetails.actions.updatePermissions.reload": "Яңынан тейә",

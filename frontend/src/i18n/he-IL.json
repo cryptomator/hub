@@ -26,6 +26,8 @@
   "createVault.showRecoveryKey.submit": "צור כספת חדשה",
   "deviceList.deviceName": "שם מכשיר",
   "editVaultMetadataDialog.vaultName": "שם הכספת",
+  "legacyDeviceList.description.information": "למידע נוסף.",
+  "legacyDeviceList.deviceName": "שם מכשיר",
   "nav.vaults": "כספות",
   "vaultDetails.actions.updatePermissions.reload": "ריענון",
   "vaultDetails.actions.displayRecoveryKey": "הצגת מפתח השחזור",
