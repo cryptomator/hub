@@ -27,6 +27,8 @@
   "deviceList.deviceName": "Készülék neve",
   "editVaultMetadataDialog.vaultName": "A széf neve",
   "initialSetup.accountKey": "Account Key",
+  "legacyDeviceList.description.information": "További információk.",
+  "legacyDeviceList.deviceName": "Készülék neve",
   "manageAccountKey.title": "Account Key",
   "nav.vaults": "Széfek",
   "regenerateAccountKeyDialog.saveAccountKey.accountKey": "Account Key",
