@@ -21,9 +21,8 @@
   "createVault.enterVaultDetails.vaultName": "نام گاوصندوق",
   "createVault.showRecoveryKey.submit": "ایجاد گاوصندوق",
   "deviceList.ipAddress": "آدرس IP",
-  "deviceList.ipAddress.toolTip": "ممکن است به دلیل قدیمی بودن نسخه تنظیم نشود.",
-  "deviceList.lastAccess.toolTip": "ممکن است به دلیل قدیمی بودن نسخه تنظیم نشود.",
   "editVaultMetadataDialog.vaultName": "نام گاوصندوق",
+  "legacyDeviceList.ipAddress": "آدرس IP",
   "unlockSuccess.deviceSetup.title": "دستگاه جدید",
   "vaultList.addVault": "اضافه کردن"
 }
