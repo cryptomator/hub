@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Updated Keycloak to 26.1.3
+- Updated Keycloak to 26.1.4
 - Updated to Java 21 (#272)
 - Updated to Quarkus 3.15.3.1 LTS
 - Updated to Tailwind CSS 4
