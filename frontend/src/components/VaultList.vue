@@ -19,7 +19,7 @@
 
     <Listbox v-model="selectedFilter" as="div">
       <div class="relative w-auto whitespace-nowrap">
-        <ListboxButton class="min-w-[250px] relative w-full rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-xs focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary text-sm">
+        <ListboxButton class="min-w-60 relative w-full rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-xs focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary text-sm">
           <span class="block whitespace-nowrap">{{ filterOptions[selectedFilter] }}</span>
           <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
             <ChevronUpDownIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
