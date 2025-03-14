@@ -126,7 +126,7 @@ async function removeDevice(device: DeviceDto) {
   delete onRemoveDeviceError.value[device.id];
   try {
     await backend.devices.removeLegacyDevice(device.id);
-    userdata.reload();
+    userdata.reloadLegacyAccess();
   } catch (error) {
     console.error('Removing legacy device failed.', error);
     if (error instanceof NotFoundError) {
