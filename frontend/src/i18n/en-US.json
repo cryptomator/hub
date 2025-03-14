@@ -60,7 +60,7 @@
 
   "admin.webOfTrust.title": "Web of Trust",
   "admin.webOfTrust.description": "Configure the Web of Trust settings to manage how trust is established between users in the system. These settings affect the verification of user identities and key signatures.",
-  "admin.webOfTrust.information":"Learn more.",
+  "admin.webOfTrust.information": "Learn more.",
   "admin.webOfTrust.wotMaxDepth.error": "Maximum WoT Depth must be between 0 and 9.",
   "admin.webOfTrust.wotMaxDepth.title": "Maximum WoT Depth",
   "admin.webOfTrust.wotMaxDepth.description": "Maximum distance between two users, so an indirect acquaintanceship is still considered trustworthy (assuming intermediate identities have been verified).",
@@ -146,7 +146,6 @@
   "deviceList.added": "Added",
   "deviceList.thisDevice": "This Device",
   "deviceList.ipAddress": "IP Address",
-  "deviceList.ipAddress.toolTip": "May not be set for legacy reasons.",
   "deviceList.lastAccess": "Last Vault Access",
   "deviceList.lastAccess.toolTip": "May not be set for legacy reasons.",
 
@@ -201,6 +200,18 @@
   "licenseAlert.licenseExpired.admin.description": "Your Cryptomator Hub license has expired. Renew it in the {0} in order to manage and unlock your vaults again.",
   "licenseAlert.licenseExpired.user.description": "Your Cryptomator Hub license has expired. Please inform a Hub administrator to renew the license.",
   "licenseAlert.button": "Admin Section",
+
+  "legacyDeviceList.title": "Legacy Devices",
+  "legacyDeviceList.description": "These devices were created with an older version of Hub and need to be updated to unlock vaults in future versions. If you no longer need them, please remove them. Otherwise, please update Cryptomator on that device. Your next unlock will trigger the update automatically.",
+  "legacyDeviceList.description.information": "Learn more.",
+  "legacyDeviceList.deviceName": "Device Name",
+  "legacyDeviceList.type": "Type",
+  "legacyDeviceList.added": "Added",
+  "legacyDeviceList.thisDevice": "This Device",
+  "legacyDeviceList.ipAddress": "IP Address",
+  "legacyDeviceList.lastAccess": "Last Vault Access",
+  "legacyDeviceList.lastAccess.toolTip": "May not be set for legacy reasons.",
+
 
   "manageAccountKey.title": "Account Key",
   "manageAccountKey.description": "Your Account Key is required to login from other apps or browsers.",
