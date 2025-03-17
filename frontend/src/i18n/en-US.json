@@ -30,6 +30,7 @@
   "common.show": "Show",
   "common.unexpectedError": "Unexpected Error: {0}",
   "common.update": "Update",
+  "common.xMembers": "{0} Members",
 
   "admin.title": "Admin",
   "admin.serverInfo.title": "Server Info",

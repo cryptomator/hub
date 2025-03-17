@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dutch, French, Italian, Korean, Portuguese and Turkish translation
 - Added provenance attestation for our container images (#322)
 - Show legacy devices in user profile (#331)
+- Show direct member count of groups in vault details (#329)
 
 ### Changed
 

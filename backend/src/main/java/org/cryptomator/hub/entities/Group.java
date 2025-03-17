@@ -9,6 +9,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -31,6 +32,11 @@ public class Group extends Authority {
 
 	public void setMembers(Set<Authority> members) {
 		this.members = members;
+	}
+
+	@Transient
+	public int getMemberSize() {
+		return members.size();
 	}
 
 	@ApplicationScoped
