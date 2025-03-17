@@ -283,8 +283,8 @@ class TrustService {
 }
 
 class AuthorityService {
-  public async search(query: string): Promise<AuthorityDto[]> {
-    return axiosAuth.get<AuthorityDto[]>(`/authorities/search?query=${query}&withMemberSize=true`).then(response => response.data.map(AuthorityService.fillInMissingPicture));
+  public async search(query: string, withMemberSize: boolean = false): Promise<AuthorityDto[]> {
+    return axiosAuth.get<AuthorityDto[]>(`/authorities/search?query=${query}&withMemberSize=${withMemberSize}`).then(response => response.data.map(AuthorityService.fillInMissingPicture));
   }
 
   public async listSome(authorityIds: string[]): Promise<AuthorityDto[]> {

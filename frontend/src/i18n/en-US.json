@@ -28,6 +28,7 @@
   "common.show": "Show",
   "common.unexpectedError": "Unexpected Error: {0}",
   "common.update": "Update",
+  "common.xMembers": "{0} Members",
 
   "admin.title": "Admin",
   "admin.serverInfo.title": "Server Info",
@@ -263,7 +264,6 @@
   "vaultDetails.sharedWith.title": "Shared with",
   "vaultDetails.sharedWith.badge.owner": "Owner",
   "vaultDetails.sharedWith.grantOwnership": "Grant Ownership",
-  "vaultDetails.sharedWith.members": "Members",
   "vaultDetails.sharedWith.revokeOwnership": "Revoke Ownership",
   "vaultDetails.actions.title": "Actions",
   "vaultDetails.actions.updatePermissions": "Update Permissions",

@@ -48,7 +48,7 @@
                   <img :src="member.pictureUrl" alt="" class="w-8 h-8 rounded-full" />
                   <p class="w-full ml-4 text-sm font-medium text-gray-900 truncate">{{ member.name }}</p>
                   <span v-if="member.type === 'GROUP'" class="ml-auto text-xs text-gray-500 italic">
-                    {{ member.memberSize }} {{ t('vaultDetails.sharedWith.members') }}
+                    {{ t('common.xMembers', [member.memberSize]) }}
                   </span>
                   <TrustDetails v-if="member.type === 'USER'" :trusted-user="member" :trusts="trusts" @trust-changed="refreshTrusts()"/>
                   <div v-if="member.role == 'OWNER'" class="ml-3 inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">{{ t('vaultDetails.sharedWith.badge.owner') }}</div>
@@ -470,7 +470,7 @@ function refreshVault(updatedVault: VaultDto) {
 }
 
 async function searchAuthority(query: string): Promise<AuthorityDto[]> {
-  return (await backend.authorities.search(query))
+  return (await backend.authorities.search(query,true))
     .filter(authority => !members.value.has(authority.id))
     .sort((a, b) => a.name.localeCompare(b.name));
 }
