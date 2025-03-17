@@ -11,9 +11,7 @@
           <ComboboxInput v-if="selectedItem == null" v-focus class="w-full h-10 rounded-l-md border border-gray-300 bg-white py-2 px-10 shadow-xs focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary sm:text-sm disabled:bg-primary-l2" placeholder="John Doe" @change="query = $event.target.value"/>
           <div v-else class="w-full h-10 rounded-l-md border border-gray-300 bg-primary-l2 py-2 px-10 flex items-center justify-between shadow-xs sm:text-sm">
             <span class="truncate">{{ selectedItem.name }}</span>
-            <span v-if="selectedItem.type === 'GROUP'" class="text-gray-500 text-xs italic mr-6">
-              {{ t('common.xMembers', [selectedItem.memberSize]) }}
-            </span>
+            <span v-if="selectedItem.type === 'GROUP'" class="ml-3 text-gray-500 text-xs italic whitespace-nowrap">{{ t('common.xMembers', [selectedItem.memberSize]) }}</span>
           </div>
         </div>
 
@@ -22,9 +20,7 @@
             <div class="flex items-center">
               <img :src="item.pictureUrl ?? ''" alt="" class="h-6 w-6 shrink-0 rounded-full" >
               <span class="ml-3 truncate">{{ item.name }}</span>
-              <span v-if="item.type === 'GROUP'" class="ml-auto text-xs text-gray-500 italic">
-                {{ t('common.xMembers', [item.memberSize]) }}
-              </span>
+              <span v-if="item.type === 'GROUP'" class="ml-3 text-gray-500 text-xs italic whitespace-nowrap">{{ t('common.xMembers', [item.memberSize]) }}</span>
             </div>
           </ComboboxOption>
         </ComboboxOptions>
@@ -45,8 +41,8 @@
 import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions } from '@headlessui/vue';
 import { UsersIcon, XCircleIcon } from '@heroicons/vue/24/solid';
 import { computed, nextTick, ref, shallowRef, watch } from 'vue';
-import { debounce } from '../common/util';
 import { useI18n } from 'vue-i18n';
+import { debounce } from '../common/util';
 
 export type Item = {
   id: string;
