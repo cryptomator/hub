@@ -67,6 +67,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CVE-2025-27597: Vue I18n Allows Prototype Pollution in `handleFlatJson`
 - CVE-2025-27152: axios Requests Vulnerable To Possible SSRF and Credential Leakage via Absolute URL
 
+## [1.4.0-rc2](https://github.com/cryptomator/hub/compare/1.4.0-rc1...1.4.0-rc2) (2025-03-17)
+
+### Added
+
+- Show direct member count of groups in vault details (#329)
+
+### Fixed
+
+- Added "Browser Language" option to language selection dropdown, enabling users to revert to browser default language (#324)
+- Reload device lists upon device removal
+- Added pointer cursor to device remove "button" text
+- Show device only when available in audit log vault key retrieve event
+
 ## [1.4.0-rc1](https://github.com/cryptomator/hub/compare/1.4.0-beta3...1.4.0-rc1) (2025-03-14)
 
 ### Added
