@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dutch, French, Italian, Korean, Portuguese and Turkish translation
 - Added provenance attestation for our container images (#322)
 - Show legacy devices in user profile (#331)
+- Show direct member count of groups in vault details (#329)
 
 ### Changed
 
@@ -43,6 +44,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed incorrect ARIA roles improving accessibility
 - Fixed incorrect `Content-Type` header for `/api/vaults/{vaultId}/access-token` (#284)
 - Show legacy device name in audit log (#331)
+- Added "Browser Language" option to language selection dropdown, enabling users to revert to browser default language (#324)
+- Reload device lists upon device removal
+- Added pointer cursor to device remove "button" text
+- Show device only when available in audit log vault key retrieve event
 
 ### Security
 

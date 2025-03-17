@@ -30,6 +30,7 @@
   "common.show": "Show",
   "common.unexpectedError": "Unexpected Error: {0}",
   "common.update": "Update",
+  "common.xMembers": "{0} Members",
 
   "admin.title": "Admin",
   "admin.serverInfo.title": "Server Info",
@@ -256,6 +257,7 @@
   "userProfile.title": "Profile",
   "userProfile.actions.manageAccount": "Manage Account",
   "userProfile.actions.changeLanguage": "Change Language",
+  "userProfile.actions.changeLanguage.entry.browser": "Browser Language",
 
   "unlockSuccess.title": "Vault unlocked successfully",
   "unlockSuccess.description": "You may now close this browser tab and return to Cryptomator.",

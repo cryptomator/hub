@@ -94,6 +94,21 @@ class UserData {
   }
 
   /**
+   * Invalidates the cached user data with devices and last access and reloads it in the backend.
+   */
+  public async reloadAccess() {
+    this.#meWithLastAccess = backend.users.me(true, true);
+  }
+
+  /**
+   * Invalidates the cached user data with legacy devices and last access and reloads it in the backend.
+   * @deprecated since version 1.3.0, to be removed in https://github.com/cryptomator/hub/issues/333
+   */
+  public async reloadLegacyAccess() {
+    this.#meWithLegacyDevicesAndLastAccess = backend.users.meWithLegacyDevicesAndAccess();
+  }
+
+  /**
    * Creates a new browser key pair for the user.
    * This does not change the device DTO stored in the backend.
    * @returns A new browser key pair for the user.

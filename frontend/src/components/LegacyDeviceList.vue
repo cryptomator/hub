@@ -75,7 +75,7 @@
                       </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <a tabindex="0" class="text-red-600 hover:text-red-900" @click="removeDevice(device)">{{ t('common.remove') }}</a>
+                      <a tabindex="0" class="cursor-pointer text-red-600 hover:text-red-900" @click="removeDevice(device)">{{ t('common.remove') }}</a>
                     </td>
                   </tr>
                   <!-- TODO: good styling -->
@@ -126,7 +126,7 @@ async function removeDevice(device: DeviceDto) {
   delete onRemoveDeviceError.value[device.id];
   try {
     await backend.devices.removeLegacyDevice(device.id);
-    userdata.reload();
+    userdata.reloadLegacyAccess();
   } catch (error) {
     console.error('Removing legacy device failed.', error);
     if (error instanceof NotFoundError) {

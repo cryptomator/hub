@@ -229,6 +229,7 @@
   "userProfile.title": "Profilo",
   "userProfile.actions.manageAccount": "Gestisci account",
   "userProfile.actions.changeLanguage": "Cambia lingua",
+  "userProfile.actions.changeLanguage.entry.browser": "Lingua del browser",
   "unlockSuccess.title": "Cassaforte sbloccato con successo",
   "unlockSuccess.description": "Ora puoi chiudere questa scheda del browser e tornare a Cryptomator.",
   "unlockSuccess.accountSetup.title": "Configurazione necessaria",
