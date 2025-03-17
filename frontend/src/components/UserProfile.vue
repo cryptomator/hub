@@ -37,13 +37,13 @@
                     <span :class="[selected || active ? 'font-semibold' : 'font-normal', 'block truncate']">{{ t('userProfile.actions.changeLanguage.entry.browser') }}</span>
                     <span v-if="selected" :class="['absolute inset-y-0 right-0 flex items-center pr-4', selected ? 'text-primary' : 'text-gray-400']">
                       <CheckIcon class="h-5 w-5" aria-hidden="true" />
-                    </span>   
+                    </span>
                   </ListboxOption>
                   <ListboxOption v-for="availableLocale in Locale" :key="availableLocale" v-slot="{ active, selected }" class="relative cursor-default select-none py-2 pl-3 pr-9 ui-not-active:text-gray-900 ui-active:text-white ui-active:bg-primary" :value="availableLocale" @click="saveLanguage(availableLocale)">
                     <span :class="[selected || active ? 'font-semibold' : 'font-normal', 'block truncate']">{{ t(`locale.${availableLocale}`) }}</span>
                     <span v-if="selected" :class="['absolute inset-y-0 right-0 flex items-center pr-4', selected ? 'text-primary' : 'text-gray-400']">
                       <CheckIcon class="h-5 w-5" aria-hidden="true" />
-                    </span>   
+                    </span>
                   </ListboxOption>
                 </ListboxOptions>
               </transition>
@@ -81,7 +81,7 @@ import FetchError from './FetchError.vue';
 import ManageSetupCode from './ManageSetupCode.vue';
 import UserkeyFingerprint from './UserkeyFingerprint.vue';
 
-const { t, locale } = useI18n({ useScope: 'global' });
+const { locale, t } = useI18n({ useScope: 'global' });
 
 const me = ref<UserDto>();
 const keycloakUserAccountURL = ref<string>();
