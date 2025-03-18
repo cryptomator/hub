@@ -33,6 +33,7 @@
   "admin.title": "Pārvaldītājs",
   "admin.serverInfo.title": "Informācija par serveri",
   "admin.serverInfo.description": "Hub Id tiek izmantots, lai licencē identificētu CryptomatorHub. Lai iegūtu atbalstu, vienmēr ir jānorāda attēlotā Hub un Keycloak versija.",
+  "admin.serverInfo.hubId.title": "Hub Id",
   "admin.serverInfo.hubVersion.title": "Hub versija",
   "admin.serverInfo.hubVersion.description.upToDate": "Hub ir atjaunināts.",
   "admin.serverInfo.hubVersion.description.updateExists": "Iespējams atjauninājums uz versiju {0}.",
