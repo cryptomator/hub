@@ -19,5 +19,6 @@
   "createVault.enterVaultDetails.title": "ভোল্ট তৈরি করুন",
   "createVault.enterVaultDetails.vaultName": "ভোল্ট এর নাম",
   "createVault.showRecoveryKey.submit": "ভোল্ট তৈরি করুন",
-  "editVaultMetadataDialog.vaultName": "ভোল্ট এর নাম"
+  "editVaultMetadataDialog.vaultName": "ভোল্ট এর নাম",
+  "legacyDeviceList.description.information": "আরও জানুন।"
 }

@@ -59,6 +59,7 @@ export type DeviceDto = {
   creationTime: Date;
   lastIpAddress?: string;
   lastAccessTime?: Date;
+  legacyDevice?: boolean;
 };
 
 export type VaultRole = 'MEMBER' | 'OWNER';
@@ -88,6 +89,7 @@ export type GroupDto = {
   id: string;
   name: string;
   pictureUrl?: string;
+  memberSize?: number;
 }
 
 export type AuthorityDto = UserDto | GroupDto;
@@ -236,8 +238,20 @@ class DeviceService {
     return axiosAuth.get<DeviceDto[]>(`/devices?${query}`).then(response => response.data);
   }
 
+  /** @deprecated since version 1.3.0, to be removed in https://github.com/cryptomator/hub/issues/333 */
+  public async listSomeLegacyDevices(deviceIds: string[]): Promise<DeviceDto[]> {
+    const query = `ids=${deviceIds.join('&ids=')}`;
+    return axiosAuth.get<DeviceDto[]>(`/devices/legacy-devices?${query}`).then(response => response.data);
+  }
+
   public async removeDevice(deviceId: string): Promise<AxiosResponse<unknown>> {
     return axiosAuth.delete(`/devices/${deviceId}`)
+      .catch((error) => rethrowAndConvertIfExpected(error, 404));
+  }
+
+  /** @deprecated since version 1.3.0, to be removed in https://github.com/cryptomator/hub/issues/333 */
+  public async removeLegacyDevice(deviceId: string): Promise<AxiosResponse<unknown>> {
+    return axiosAuth.delete(`/devices/${deviceId}/legacy-device`)
       .catch((error) => rethrowAndConvertIfExpected(error, 404));
   }
 
@@ -253,6 +267,11 @@ class UserService {
 
   public async me(withDevices: boolean = false, withLastAccess: boolean = false): Promise<UserDto> {
     return axiosAuth.get<UserDto>(`/users/me?withDevices=${withDevices}&withLastAccess=${withLastAccess}`).then(response => AuthorityService.fillInMissingPicture(response.data));
+  }
+
+  /** @deprecated since version 1.3.0, to be removed in https://github.com/cryptomator/hub/issues/333 */
+  public async meWithLegacyDevicesAndAccess(): Promise<UserDto> {
+    return axiosAuth.get<UserDto>('/users/me-with-legacy-devices-and-access').then(response => AuthorityService.fillInMissingPicture(response.data));
   }
 
   public async resetMe(): Promise<void> {
@@ -283,8 +302,8 @@ class TrustService {
 }
 
 class AuthorityService {
-  public async search(query: string): Promise<AuthorityDto[]> {
-    return axiosAuth.get<AuthorityDto[]>(`/authorities/search?query=${query}`).then(response => response.data.map(AuthorityService.fillInMissingPicture));
+  public async search(query: string, withMemberSize: boolean = false): Promise<AuthorityDto[]> {
+    return axiosAuth.get<AuthorityDto[]>(`/authorities/search?query=${query}&withMemberSize=${withMemberSize}`).then(response => response.data.map(AuthorityService.fillInMissingPicture));
   }
 
   public async listSome(authorityIds: string[]): Promise<AuthorityDto[]> {

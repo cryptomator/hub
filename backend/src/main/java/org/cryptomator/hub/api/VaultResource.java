@@ -81,8 +81,11 @@ public class VaultResource {
 	User.Repository userRepo;
 	@Inject
 	EffectiveVaultAccess.Repository effectiveVaultAccessRepo;
+	/**
+	 * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
+	 */
 	@Inject
-	@Deprecated
+	@Deprecated(since = "1.3.0", forRemoval = true)
 	LegacyAccessToken.Repository legacyAccessTokenRepo;
 	@Inject
 	Vault.Repository vaultRepo;
@@ -266,7 +269,10 @@ public class VaultResource {
 		}).toList();
 	}
 
-	@Deprecated(forRemoval = true)
+	/**
+	 * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
+	 */
+	@Deprecated(since = "1.3.0", forRemoval = true)
 	@GET
 	@Path("/{vaultId}/keys/{deviceId}")
 	@RolesAllowed("user")

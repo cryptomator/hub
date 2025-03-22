@@ -26,6 +26,8 @@
   "createVault.showRecoveryKey.submit": "Opret boks",
   "deviceList.deviceName": "Enheds-navn",
   "editVaultMetadataDialog.vaultName": "Boks-navn",
+  "legacyDeviceList.description.information": "Læs mere.",
+  "legacyDeviceList.deviceName": "Enheds-navn",
   "nav.vaults": "Bokse",
   "unlockSuccess.deviceSetup.title": "Ny Enhed",
   "vaultDetails.actions.updatePermissions.reload": "Genindlæs",
