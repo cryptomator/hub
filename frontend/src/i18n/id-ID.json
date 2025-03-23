@@ -43,6 +43,8 @@
   "admin.licenseInfo.description": "Verifikasi informasi lisensi Anda. Bila Anda ingin membuat perubahan atau memeriksa status berlangganan Anda, tekan \"Kelola Berlangganan\".",
   "admin.licenseInfo.email.title": "Dilisensikan Kepada",
   "admin.licenseInfo.seats.title": "Berapa Tempat",
+  "admin.licenseInfo.seats.description.enoughSeats": "Anda memiliki sisa {0} tempat tak terpakai.",
+  "admin.licenseInfo.seats.description.zeroSeats": "Anda tidak punya sisa tempat. Tingkatkan bila perlu.",
   "admin.licenseInfo.issuedAt.title": "Diterbitkan Pada",
   "admin.licenseInfo.expiresAt.title": "Kedaluwarsa Pada",
   "admin.licenseInfo.expiresAt.description.valid": "Lisensi Anda valid.",
