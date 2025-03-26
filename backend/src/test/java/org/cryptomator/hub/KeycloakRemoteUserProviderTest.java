@@ -41,8 +41,6 @@ class KeycloakRemoteUserProviderTest {
 
 	@BeforeEach
 	void setUp() {
-		var synerConfig = Mockito.mock(SyncerConfig.class);
-
 		Mockito.when(realm.clients()).thenReturn(hubCliClientsResource);
 		Mockito.when(realm.clients().findByClientId("cryptomatorhub-cli")).thenReturn(List.of());
 
@@ -61,7 +59,7 @@ class KeycloakRemoteUserProviderTest {
 	}
 
 	@Test
-	@DisplayName("test user listing excludes syncer and returns two users")
+	@DisplayName("test user listing returns two users")
 	void testListUser() {
 		Mockito.when(usersResource.list(0, KeycloakRemoteUserProvider.MAX_COUNT_PER_REQUEST)).thenReturn(List.of(user1, user2));
 
@@ -84,7 +82,7 @@ class KeycloakRemoteUserProviderTest {
 	}
 
 	@Test
-	@DisplayName("test user listing excludes syncer, includes Hub CLI user and returns two users")
+	@DisplayName("test user listing includes Hub CLI user and returns two users")
 	void testListUserIncludingHubCliUser() {
 		Mockito.when(usersResource.list(0, KeycloakRemoteUserProvider.MAX_COUNT_PER_REQUEST)).thenReturn(List.of(user1, user2));
 

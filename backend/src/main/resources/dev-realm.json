@@ -36,19 +36,6 @@
             ]
           }
         }
-      },
-      {
-        "name": "syncer",
-        "description": "Syncer",
-        "composite": true,
-        "composites": {
-          "client": {
-            "realm-management": [
-              "view-users",
-              "view-clients"
-            ]
-          }
-        }
       }
     ]
   },
@@ -121,13 +108,13 @@
       "groups" : [ "/groupies" ]
     },
     {
-      "username": "syncer",
-      "email": "syncer@localhost",
+      "username": "hub",
+      "email": "hub@localhost",
       "enabled": true,
-      "serviceAccountClientId": "cryptomatorhub-syncer",
-      "realmRoles": [
-        "syncer"
-      ]
+      "serviceAccountClientId": "hub",
+      "clientRoles" : {
+        "realm-management" : [ "view-clients", "view-users" ]
+      }
     },
     {
       "username": "cli",
@@ -230,8 +217,8 @@
       }
     },
     {
-      "clientId": "cryptomatorhub-syncer",
-      "name": "Cryptomator Hub Syncer",
+      "clientId": "hub",
+      "name": "Hub",
       "clientAuthenticatorType": "client-secret",
       "secret": "top-secret",
       "standardFlowEnabled": false,
