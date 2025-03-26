@@ -116,7 +116,7 @@
         "picture": "https://static.cryptomator.org/hub/system.svg"
       },
       "clientRoles" : {
-        "realm-management" : [ "view-clients", "view-users" ]
+        "realm-management" : [ "realm-admin" ]
       }
     },
     {
