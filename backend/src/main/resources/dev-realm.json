@@ -122,19 +122,9 @@
     },
     {
       "username": "syncer",
-      "firstName": "syncer",
-      "lastName": "syncer",
       "email": "syncer@localhost",
       "enabled": true,
-      "attributes": {
-        "picture": "https://cryptomator.org/img/logo.svg"
-      },
-      "credentials": [
-        {
-          "type": "password",
-          "value": "syncer"
-        }
-      ],
+      "serviceAccountClientId": "cryptomatorhub-syncer",
       "realmRoles": [
         "syncer"
       ]
@@ -238,6 +228,16 @@
       "attributes": {
         "pkce.code.challenge.method": "S256"
       }
+    },
+    {
+      "clientId": "cryptomatorhub-syncer",
+      "name": "Cryptomator Hub Syncer",
+      "clientAuthenticatorType": "client-secret",
+      "secret": "top-secret",
+      "standardFlowEnabled": false,
+      "serviceAccountsEnabled": true,
+      "publicClient": false,
+      "enabled": true
     },
     {
       "clientId": "cryptomatorhub-cli",

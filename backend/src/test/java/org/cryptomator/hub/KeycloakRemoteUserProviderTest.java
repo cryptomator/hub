@@ -30,8 +30,6 @@ class KeycloakRemoteUserProviderTest {
 	private UserRepresentation user1 = Mockito.mock(UserRepresentation.class);
 	private UserRepresentation user2 = Mockito.mock(UserRepresentation.class);
 
-	private UserRepresentation syncer = Mockito.mock(UserRepresentation.class);
-
 	private UserRepresentation hubCliUser = Mockito.mock(UserRepresentation.class);
 
 	private ClientsResource hubCliClientsResource = Mockito.mock(ClientsResource.class);
@@ -59,18 +57,13 @@ class KeycloakRemoteUserProviderTest {
 		Mockito.when(user2.getUsername()).thenReturn("username3001");
 		Mockito.when(user2.getEmail()).thenReturn("email3001");
 
-		Mockito.when(syncer.getId()).thenReturn("idSyncer");
-		Mockito.when(syncer.getUsername()).thenReturn("usernameSyncer");
-		Mockito.when(synerConfig.getUsername()).thenReturn("usernameSyncer");
-
 		keycloakRemoteUserProvider = new KeycloakRemoteUserProvider();
-		keycloakRemoteUserProvider.syncerConfig = synerConfig;
 	}
 
 	@Test
 	@DisplayName("test user listing excludes syncer and returns two users")
 	void testListUser() {
-		Mockito.when(usersResource.list(0, KeycloakRemoteUserProvider.MAX_COUNT_PER_REQUEST)).thenReturn(List.of(user1, user2, syncer));
+		Mockito.when(usersResource.list(0, KeycloakRemoteUserProvider.MAX_COUNT_PER_REQUEST)).thenReturn(List.of(user1, user2));
 
 		var result = keycloakRemoteUserProvider.users(realm);
 
@@ -93,7 +86,7 @@ class KeycloakRemoteUserProviderTest {
 	@Test
 	@DisplayName("test user listing excludes syncer, includes Hub CLI user and returns two users")
 	void testListUserIncludingHubCliUser() {
-		Mockito.when(usersResource.list(0, KeycloakRemoteUserProvider.MAX_COUNT_PER_REQUEST)).thenReturn(List.of(user1, user2, syncer));
+		Mockito.when(usersResource.list(0, KeycloakRemoteUserProvider.MAX_COUNT_PER_REQUEST)).thenReturn(List.of(user1, user2));
 
 		Mockito.when(realm.clients()).thenReturn(hubCliClientsResource);
 
@@ -156,7 +149,7 @@ class KeycloakRemoteUserProviderTest {
 			Mockito.when(realm.groups().group("grpId3001")).thenReturn(groupResource2);
 
 			Mockito.when(groupResource1.members(0, KeycloakRemoteUserProvider.MAX_COUNT_PER_REQUEST)).thenReturn(List.of());
-			Mockito.when(groupResource2.members(0, KeycloakRemoteUserProvider.MAX_COUNT_PER_REQUEST)).thenReturn(List.of(user1, user2, syncer));
+			Mockito.when(groupResource2.members(0, KeycloakRemoteUserProvider.MAX_COUNT_PER_REQUEST)).thenReturn(List.of(user1, user2));
 		}
 
 		@Test

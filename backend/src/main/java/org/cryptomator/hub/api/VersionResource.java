@@ -6,7 +6,6 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
-import org.cryptomator.hub.SyncerConfig;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -19,17 +18,15 @@ public class VersionResource {
 	String hubVersion;
 
 	@Inject
-	SyncerConfig syncerConfig;
+	Keycloak keycloak;
 
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "get version of hub and keycloak")
 	@APIResponse(responseCode = "200")
 	public VersionDto getVersion() {
-		try (Keycloak keycloak = Keycloak.getInstance(syncerConfig.getKeycloakUrl(), syncerConfig.getKeycloakRealm(), syncerConfig.getUsername(), syncerConfig.getPassword(), syncerConfig.getKeycloakClientId())) {
-			var keycloakVersion = keycloak.serverInfo().getInfo().getSystemInfo().getVersion();
-			return new VersionDto(hubVersion, keycloakVersion);
-		}
+		var keycloakVersion = keycloak.serverInfo().getInfo().getSystemInfo().getVersion();
+		return new VersionDto(hubVersion, keycloakVersion);
 	}
 
 	public record VersionDto(@JsonProperty("hubVersion") String hubVersion, @JsonProperty("keycloakVersion") String keycloakVersion) {
