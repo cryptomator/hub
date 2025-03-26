@@ -108,10 +108,13 @@
       "groups" : [ "/groupies" ]
     },
     {
-      "username": "hub",
-      "email": "hub@localhost",
+      "username": "system",
+      "email": "system@localhost",
       "enabled": true,
-      "serviceAccountClientId": "hub",
+      "serviceAccountClientId": "cryptomatorhub-system",
+      "attributes": {
+        "picture": "https://static.cryptomator.org/hub/system.svg"
+      },
       "clientRoles" : {
         "realm-management" : [ "view-clients", "view-users" ]
       }
@@ -121,6 +124,9 @@
       "email": "cli@localhost",
       "enabled": true,
       "serviceAccountClientId": "cryptomatorhub-cli",
+      "attributes": {
+        "picture": "https://static.cryptomator.org/hub/cli.svg"
+      },
       "realmRoles": [
         "user",
         "create-vaults"
@@ -217,8 +223,8 @@
       }
     },
     {
-      "clientId": "hub",
-      "name": "Hub",
+      "clientId": "cryptomatorhub-system",
+      "name": "Cryptomator Hub System",
       "clientAuthenticatorType": "client-secret",
       "secret": "top-secret",
       "standardFlowEnabled": false,

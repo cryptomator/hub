@@ -11,10 +11,10 @@ import org.keycloak.admin.client.KeycloakBuilder;
 @ApplicationScoped
 public class KeycloakProducer {
 
-	@ConfigProperty(name = "hub.keycloak.client-id")
+	@ConfigProperty(name = "hub.keycloak.system-client-id")
 	String clientId;
 
-	@ConfigProperty(name = "hub.keycloak.client-secret")
+	@ConfigProperty(name = "hub.keycloak.system-client-secret")
 	String clientSecret;
 
 	@ConfigProperty(name = "hub.keycloak.local-url")
