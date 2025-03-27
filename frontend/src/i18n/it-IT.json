@@ -29,6 +29,7 @@
   "common.show": "Visualizza",
   "common.unexpectedError": "Errore imprevisto: {0}",
   "common.update": "Aggiorna",
+  "common.xMembers": "# Membri: {0}",
   "admin.title": "Amministratore",
   "admin.serverInfo.title": "Informazioni Server",
   "admin.serverInfo.description": "ID Hub viene utilizzato per identificare l'istanza di Cryptomator Hub relativa alla tua licenza. Nelle richieste di assistenza indica sempre la versione di Hub e Keycloak visualizzate.",

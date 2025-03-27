@@ -27,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Updated Keycloak to 26.1.4
 - Updated to Java 21 (#272)
-- Updated to Quarkus 3.15.3.1 LTS
+- Updated to Quarkus 3.15.4 LTS
 - Updated to Tailwind CSS 4
 - Updated to Vite 6
 - Reduced number of transitive dependencies
@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Switched to Repository Pattern (#273)
 - Redesigned Admin Panel (#308)
 - Enhanced audit log VaultKeyRetrievedEvent, contains now IP address and device ID (#320)
+- Migrate syncer user to cryptomatorhub-system client (#336)
 
 ### Fixed
 
