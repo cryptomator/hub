@@ -68,6 +68,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CVE-2025-27597: Vue I18n Allows Prototype Pollution in `handleFlatJson`
 - CVE-2025-27152: axios Requests Vulnerable To Possible SSRF and Credential Leakage via Absolute URL
 
+## [1.4.0-rc3](https://github.com/cryptomator/hub/compare/1.4.0-rc2...1.4.0-rc3) (2025-03-27)
+
+### Changed
+
+- Migrate syncer user to cryptomatorhub-system client (#336)
+- Updated to Quarkus 3.15.4 LTS
+
 ## [1.4.0-rc2](https://github.com/cryptomator/hub/compare/1.4.0-rc1...1.4.0-rc2) (2025-03-17)
 
 ### Added
