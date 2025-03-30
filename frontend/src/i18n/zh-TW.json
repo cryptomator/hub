@@ -29,6 +29,8 @@
   "common.update": "更新",
   "admin.serverInfo.title": "伺服器資訊",
   "admin.serverInfo.hubVersion.description.updateExists": "可更新到版本 {0}。",
+  "admin.licenseInfo.title": "授權訊息",
+  "admin.licenseInfo.issuedAt.title": "授權日",
   "admin.licenseInfo.expiresAt.title": "到期時間",
   "admin.licenseInfo.manageSubscription": "管理訂閱",
   "admin.licenseInfo.type.title": "類別",
