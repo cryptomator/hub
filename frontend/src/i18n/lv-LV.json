@@ -71,6 +71,7 @@
   "auditLog.filter": "Atlasīt",
   "auditLog.filter.selectEventFilter": "Atlasīt notikumu atlasītāju",
   "auditLog.filter.clerEventFilter": "Notīrīt notikumu atlasītāju",
+  "auditLog.details.setting.wot.update": "Atjaunināt Wot iestatījumus",
   "auditLog.details.user.keys.change": "Lietotāja atslēgu nomaiņa",
   "auditLog.details.user.setupCode.change": "Konta atslēgas nomaiņa",
   "auditLog.details.vault.create": "Izveidot glabātavu",
