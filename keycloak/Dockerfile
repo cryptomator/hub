@@ -16,5 +16,9 @@ LABEL maintainer="info@skymatic.de"
 COPY --from=builder /opt/keycloak/ /opt/keycloak/
 COPY --from=ubi-micro-build /mnt/rootfs /
 COPY /themes/cryptomator /opt/keycloak/themes/cryptomator
+
+# temporariy fix for M4 Macs: https://github.com/keycloak/keycloak/issues/36008
+ENV JAVA_OPTS_APPEND="-XX:UseSVE=0"
+
 WORKDIR /opt/keycloak
 ENTRYPOINT ["/opt/keycloak/bin/kc.sh"]
