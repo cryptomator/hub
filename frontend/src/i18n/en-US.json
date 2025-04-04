@@ -164,6 +164,9 @@
   "grantPermissionDialog.description": "Share vault keys with newly added users.",
   "grantPermissionDialog.submit": "Grant Permission to {0} User(s)",
 
+  "groupList.title": "Name",
+  "groupList.members.count": "Members",
+ 
   "trustDetails.trustLevel": "Trust Level {0}",
   "trustDetails.trustLevel.untrusted": "Unverified",
   "trustDetails.showSignDialogBtn": "Check Identity...",
@@ -224,6 +227,7 @@
   "nav.profile.admin": "Admin",
   "nav.profile.auditlog": "Audit Logs",
   "nav.profile.signOut": "Sign out",
+  "nav.authority": "Users & Groups",
   "nav.mobileMenu": "Open main menu",
 
   "reactivateVaultDialog.title": "Reactivate Vault",
@@ -253,6 +257,13 @@
 
   "userkeyFingerprint.title": "User Key Fingerprint",
   "userkeyFingerprint.description": "Your User Key Fingerprint can be used to verify your identity when updating the vault permission.",
+
+  "userList.title": "Users",
+  "userList.userName": "Name",
+  "userList.groups.count": "Groups",
+  "userList.device.count": "Devices",
+  "userList.vaults.count": "Vaults",
+  "userList.user.created": "Created on",
 
   "userProfile.title": "Profile",
   "userProfile.actions.manageAccount": "Manage Account",
