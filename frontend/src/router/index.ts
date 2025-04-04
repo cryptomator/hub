@@ -6,6 +6,7 @@ import userdata from '../common/userdata';
 import AdminSettings from '../components/AdminSettings.vue';
 import AuditLog from '../components/AuditLog.vue';
 import AuthenticatedMain from '../components/AuthenticatedMain.vue';
+import AuthorityList from '../components/AuthorityList.vue';
 import CreateVault from '../components/CreateVault.vue';
 import Forbidden from '../components/Forbidden.vue';
 import InitialSetup from '../components/InitialSetup.vue';
@@ -60,6 +61,10 @@ const routes: RouteRecordRaw[] = [
     path: '/app', /* required but unused */
     component: AuthenticatedMain,
     children: [
+      {
+        path: 'authority',
+        component: AuthorityList,
+      },
       {
         path: 'vaults',
         component: VaultList
