@@ -23,6 +23,7 @@
   "createVault.enterVaultDetails.vaultName": "Ime trezora",
   "createVault.showRecoveryKey.submit": "Izradi trezor",
   "editVaultMetadataDialog.vaultName": "Ime trezora",
+  "legacyDeviceList.description.information": "Saznaj više.",
   "nav.vaults": "Trezori",
   "vaultDetails.actions.updatePermissions.reload": "Ponovno učitaj",
   "vaultList.title": "Trezori",

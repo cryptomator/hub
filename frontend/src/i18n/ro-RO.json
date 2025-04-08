@@ -26,6 +26,8 @@
   "createVault.showRecoveryKey.submit": "Crează seif",
   "deviceList.deviceName": "Numele dispozitivului",
   "editVaultMetadataDialog.vaultName": "Nume seif",
+  "legacyDeviceList.description.information": "Aflați mai multe.",
+  "legacyDeviceList.deviceName": "Numele dispozitivului",
   "nav.vaults": "Seifuri",
   "unlockSuccess.deviceSetup.title": "Dispozitiv nou",
   "vaultDetails.actions.updatePermissions.reload": "Reîncărcare",

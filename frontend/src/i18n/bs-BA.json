@@ -13,6 +13,7 @@
   "createVault.enterVaultDetails.vaultName": "Ime sefa",
   "createVault.showRecoveryKey.submit": "Kreiraj novi sef",
   "editVaultMetadataDialog.vaultName": "Ime sefa",
+  "legacyDeviceList.description.information": "Saznaj više.",
   "nav.vaults": "Sef",
   "vaultList.title": "Sef"
 }

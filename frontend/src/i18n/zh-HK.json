@@ -26,6 +26,8 @@
   "createVault.showRecoveryKey.submit": "建立加密庫",
   "deviceList.deviceName": "設備名稱",
   "editVaultMetadataDialog.vaultName": "加密庫名稱",
+  "legacyDeviceList.description.information": "了解更多。",
+  "legacyDeviceList.deviceName": "設備名稱",
   "nav.vaults": "加密庫",
   "unlockSuccess.deviceSetup.title": "新裝置",
   "vaultDetails.actions.updatePermissions.reload": "重新載入",

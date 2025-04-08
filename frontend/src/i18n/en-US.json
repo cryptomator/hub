@@ -30,6 +30,7 @@
   "common.show": "Show",
   "common.unexpectedError": "Unexpected Error: {0}",
   "common.update": "Update",
+  "common.xMembers": "{0} Members",
 
   "admin.title": "Admin",
   "admin.serverInfo.title": "Server Info",
@@ -147,7 +148,7 @@
   "deviceList.thisDevice": "This Device",
   "deviceList.ipAddress": "IP Address",
   "deviceList.lastAccess": "Last Vault Access",
-  "deviceList.lastAccess.toolTip": "May not be set for legacy reasons.",
+  "deviceList.lastAccess.toolTip": "May be missing for devices accessed with older versions.",
 
   "downloadVaultTemplateDialog.title": "Download Vault Template",
   "downloadVaultTemplateDialog.description": "Download and unpack the zipped vault template to any location shared with your team members. This is required only once during the initial setup.",
@@ -210,7 +211,7 @@
   "legacyDeviceList.thisDevice": "This Device",
   "legacyDeviceList.ipAddress": "IP Address",
   "legacyDeviceList.lastAccess": "Last Vault Access",
-  "legacyDeviceList.lastAccess.toolTip": "May not be set for legacy reasons.",
+  "legacyDeviceList.lastAccess.toolTip": "May be missing for devices accessed with older versions.",
 
 
   "manageAccountKey.title": "Account Key",
@@ -256,6 +257,7 @@
   "userProfile.title": "Profile",
   "userProfile.actions.manageAccount": "Manage Account",
   "userProfile.actions.changeLanguage": "Change Language",
+  "userProfile.actions.changeLanguage.entry.browser": "Browser Language",
 
   "unlockSuccess.title": "Vault unlocked successfully",
   "unlockSuccess.description": "You may now close this browser tab and return to Cryptomator.",

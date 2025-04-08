@@ -15,6 +15,7 @@
   "createVault.showRecoveryKey.submit": "ئامبار قۇر",
   "deviceList.deviceName": "ئۈسكۈنە ئىسمى",
   "editVaultMetadataDialog.vaultName": "ئامبار ئىسمى",
+  "legacyDeviceList.deviceName": "ئۈسكۈنە ئىسمى",
   "unlockSuccess.deviceSetup.title": "يېڭى ئۈسكۈنە",
   "vaultDetails.actions.updatePermissions.reload": "قايتا يۈكلەش",
   "vaultDetails.actions.displayRecoveryKey": "ئەسلىگە كەلتۈرۈش ئاچقۇچىنى كۆرۈش",

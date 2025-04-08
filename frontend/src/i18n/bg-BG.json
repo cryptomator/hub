@@ -22,6 +22,7 @@
   "createVault.showRecoveryKey.submit": "Създаване",
   "deviceList.deviceName": "Име на устройството",
   "editVaultMetadataDialog.vaultName": "Наименование",
+  "legacyDeviceList.deviceName": "Име на устройството",
   "unlockSuccess.deviceSetup.title": "Ново устройство",
   "vaultDetails.actions.updatePermissions.reload": "Презареждане",
   "vaultDetails.actions.displayRecoveryKey": "Показване на ключ за възстановяване",
