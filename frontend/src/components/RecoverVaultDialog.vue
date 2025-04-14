@@ -2,7 +2,7 @@
   <TransitionRoot as="template" :show="open" @after-leave="$emit('close')">
     <Dialog as="div" class="fixed z-10 inset-0 overflow-y-auto" @close="open = false">
       <TransitionChild as="template" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100" leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
-        <DialogOverlay class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+        <DialogOverlay class="fixed inset-0 bg-gray-500/75 transition-opacity" />
       </TransitionChild>
 
       <div class="fixed inset-0 z-10 overflow-y-auto">
@@ -20,16 +20,16 @@
                         <p class="text-sm text-gray-500">
                           {{ t('recoverVaultDialog.description') }}
                         </p>
-                        <textarea id="recoveryKey" v-model="recoveryKey" rows="6" name="recoveryKey" class="mt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onVaultRecoverError instanceof FormValidationFailedError }" required />
+                        <textarea id="recoveryKey" v-model="recoveryKey" rows="6" name="recoveryKey" class="mt-2 block w-full rounded-md border-gray-300 shadow-xs focus:border-primary focus:ring-primary sm:text-sm" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onVaultRecoverError instanceof FormValidationFailedError }" required />
                       </div>
                     </div>
                   </div>
                 </div>
                 <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse items-baseline">
-                  <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary  text-base font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm">
+                  <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-xs px-4 py-2 bg-primary  text-base font-medium text-white hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm">
                     {{ t('recoverVaultDialog.submit') }}
                   </button>
-                  <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" @click="open = false">
+                  <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-xs px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" @click="open = false">
                     {{ t('common.cancel') }}
                   </button>
                   <div v-if="onVaultRecoverError != null">
@@ -52,12 +52,12 @@
 
 <script setup lang="ts">
 import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
-import { base64 } from 'rfc4648';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { UserDto, VaultDto } from '../common/backend';
+import backend, { VaultDto } from '../common/backend';
 
 import { VaultKeys } from '../common/crypto';
+import userdata from '../common/userdata';
 
 class FormValidationFailedError extends Error {
   constructor() {
@@ -76,8 +76,7 @@ const recoveryKey = ref('');
 const processingVaultRecovery = ref(false);
 
 const props = defineProps<{
-  vault: VaultDto,
-  me: UserDto
+  vault: VaultDto
 }>();
 
 const emit = defineEmits<{
@@ -105,10 +104,11 @@ async function recoverVault() {
   try {
     processingVaultRecovery.value = true;
     const vaultKeys = await VaultKeys.recover(recoveryKey.value);
-    if (props.me.publicKey && vaultKeys) {
-      const publicKey = base64.parse(props.me.publicKey);
+    const me = await userdata.me;
+    if (vaultKeys) {
+      const publicKey = await userdata.ecdhPublicKey;
       const jwe = await vaultKeys.encryptForUser(publicKey);
-      await backend.vaults.grantAccess(props.vault.id, { userId: props.me.id, token: jwe });
+      await backend.vaults.grantAccess(props.vault.id, { userId: me.id, token: jwe });
       emit('recovered');
       open.value = false;
     }

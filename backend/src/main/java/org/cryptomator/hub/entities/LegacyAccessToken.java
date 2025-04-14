@@ -1,19 +1,24 @@
 package org.cryptomator.hub.entities;
 
-import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.NamedQuery;
-import jakarta.persistence.NoResultException;
 import jakarta.persistence.Table;
 
 import java.io.Serializable;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+/**
+ * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
+ */
+@Deprecated(since = "1.3.0", forRemoval = true)
 @Entity
 @Table(name = "access_token_legacy")
 @NamedQuery(name = "LegacyAccessToken.get", query = """
@@ -30,32 +35,28 @@ import java.util.stream.Stream;
 		INNER JOIN EffectiveVaultAccess perm ON token.id.vaultId = perm.id.vaultId AND device.ownerId = perm.id.authorityId
 		WHERE token.id.deviceId = :deviceId AND device.ownerId = :userId
 		""")
-@Deprecated
-public class LegacyAccessToken extends PanacheEntityBase {
+public class LegacyAccessToken {
 
 	@EmbeddedId
-	public AccessId id = new AccessId();
+	private AccessId id = new AccessId();
 
 	@Column(name = "jwe", nullable = false)
-	public String jwe;
+	private String jwe;
 
-	public static LegacyAccessToken unlock(UUID vaultId, String deviceId, String userId) {
-		try {
-			return getEntityManager().createNamedQuery("LegacyAccessToken.get", LegacyAccessToken.class) //
-					.setParameter("deviceId", deviceId) //
-					.setParameter("vaultId", vaultId) //
-					.setParameter("userId", userId) //
-					.getSingleResult();
-		} catch (NoResultException e) {
-			return null;
-		}
+	public AccessId getId() {
+		return id;
 	}
 
-	public static Stream<LegacyAccessToken> getByDeviceAndOwner(String deviceId, String userId) {
-		return getEntityManager().createNamedQuery("LegacyAccessToken.getByDevice", LegacyAccessToken.class) //
-				.setParameter("deviceId", deviceId) //
-				.setParameter("userId", userId) //
-				.getResultStream();
+	public void setId(AccessId id) {
+		this.id = id;
+	}
+
+	public String getJwe() {
+		return jwe;
+	}
+
+	public void setJwe(String jwe) {
+		this.jwe = jwe;
 	}
 
 	@Override
@@ -84,10 +85,26 @@ public class LegacyAccessToken extends PanacheEntityBase {
 	public static class AccessId implements Serializable {
 
 		@Column(name = "device_id", nullable = false)
-		public String deviceId;
+		private String deviceId;
 
 		@Column(name = "vault_id", nullable = false)
-		public UUID vaultId;
+		private UUID vaultId;
+
+		public String getDeviceId() {
+			return deviceId;
+		}
+
+		public void setDeviceId(String deviceId) {
+			this.deviceId = deviceId;
+		}
+
+		public UUID getVaultId() {
+			return vaultId;
+		}
+
+		public void setVaultId(UUID vaultId) {
+			this.vaultId = vaultId;
+		}
 
 		public AccessId(String deviceId, UUID vaultId) {
 			this.deviceId = deviceId;
@@ -117,6 +134,23 @@ public class LegacyAccessToken extends PanacheEntityBase {
 					"deviceId='" + deviceId + '\'' +
 					", vaultId='" + vaultId + '\'' +
 					'}';
+		}
+	}
+
+	/**
+	 * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
+	 */
+	@Deprecated(since = "1.3.0", forRemoval = true)
+	@ApplicationScoped
+	public static class Repository implements PanacheRepositoryBase<LegacyAccessToken, AccessId> {
+
+		public LegacyAccessToken unlock(UUID vaultId, String deviceId, String userId) {
+			return find("#LegacyAccessToken.get", Map.of("deviceId", deviceId, "vaultId", vaultId, "userId", userId))
+					.singleResult();
+		}
+
+		public Stream<LegacyAccessToken> getByDeviceAndOwner(String deviceId, String userId) {
+			return stream("#LegacyAccessToken.getByDevice", Map.of("deviceId", deviceId, "userId", userId));
 		}
 	}
 }

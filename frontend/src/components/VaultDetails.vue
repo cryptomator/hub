@@ -11,7 +11,7 @@
   <div v-else class="pb-16 space-y-6">
     <div v-if="vault.archived" class="rounded-md bg-yellow-50 p-4">
       <div class="flex">
-        <div class="flex-shrink-0">
+        <div class="shrink-0">
           <ExclamationTriangleIcon class="h-5 w-5 text-yellow-400" aria-hidden="true" />
         </div>
         <p class="ml-3 text-sm text-yellow-700">{{ t('vaultDetails.warning.archived') }}</p>
@@ -39,46 +39,48 @@
     <div v-if="vaultRole == 'OWNER' && !vaultRecoveryRequired" class="space-y-6">
       <div>
         <h3 class="font-medium text-gray-900">{{ t('vaultDetails.sharedWith.title') }}</h3>
-        <ul role="list" class="mt-2 border-t border-b border-gray-200 divide-y divide-gray-200">
+        <ul class="mt-2 border-t border-b border-gray-200 divide-y divide-gray-200">
           <!-- member list -->
           <template v-for="member in members.values()" :key="member.id">
             <li class="py-3 flex flex-col">
               <div class="flex justify-between items-center">
-                <div class="flex items-center text-ellipsis whitespace-nowrap overflow-hidden" :title="member.name">
+                <div class="flex items-center whitespace-nowrap w-full" :title="member.name">
                   <img :src="member.pictureUrl" alt="" class="w-8 h-8 rounded-full" />
                   <p class="w-full ml-4 text-sm font-medium text-gray-900 truncate">{{ member.name }}</p>
+                  <span v-if="member.type === 'GROUP'" class="ml-3 text-xs text-gray-500 italic whitespace-nowrap">{{ t('common.xMembers', [member.memberSize]) }}</span>
+                  <TrustDetails v-if="member.type === 'USER'" :trusted-user="member" :trusts="trusts" @trust-changed="refreshTrusts()"/>
                   <div v-if="member.role == 'OWNER'" class="ml-3 inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">{{ t('vaultDetails.sharedWith.badge.owner') }}</div>
+                  <Menu v-if="member.id != me?.id" as="div" class="relative ml-2 inline-block shrink-0 text-left">
+                    <MenuButton class="group relative inline-flex h-8 w-8 items-center justify-center rounded-full bg-white focus:outline-hidden focus:ring-2 focus:ring-primary focus:ring-offset-2">
+                      <span class="absolute -inset-1.5" />
+                      <span class="sr-only">Open options menu</span>
+                      <span class="flex h-full w-full items-center justify-center rounded-full">
+                        <EllipsisVerticalIcon class="h-5 w-5 text-gray-400 group-hover:text-gray-500" aria-hidden="true" />
+                      </span>
+                    </MenuButton>
+                    <transition enter-active-class="transition ease-out duration-100" enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 scale-100" leave-to-class="transform opacity-0 scale-95">
+                      <MenuItems class="absolute right-9 top-0 z-10 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-hidden">
+                        <div class="py-1">
+                          <MenuItem v-if="member.role == 'MEMBER'" v-slot="{ active }" @click="updateMemberRole(member, 'OWNER')">
+                            <div :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'cursor-pointer block px-4 py-2 text-sm']">
+                              {{ t('vaultDetails.sharedWith.grantOwnership') }}
+                            </div>
+                          </MenuItem>
+                          <MenuItem v-if="member.role == 'OWNER'" v-slot="{ active }" @click="updateMemberRole(member, 'MEMBER')">
+                            <div :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'cursor-pointer block px-4 py-2 text-sm']">
+                              {{ t('vaultDetails.sharedWith.revokeOwnership') }}
+                            </div>
+                          </MenuItem>
+                          <MenuItem v-slot="{ active }" @click="removeMember(member.id)">
+                            <div :class="[active ? 'bg-gray-100 text-red-900' : 'text-red-700', 'cursor-pointer block px-4 py-2 text-sm']">
+                              {{ t('common.remove') }}<span class="sr-only"> {{ member.name }}</span>
+                            </div>
+                          </MenuItem>
+                        </div>
+                      </MenuItems>
+                    </transition>
+                  </Menu>
                 </div>
-                <Menu v-if="member.id != me?.id" as="div" class="relative ml-2 inline-block flex-shrink-0 text-left">
-                  <MenuButton class="group relative inline-flex h-8 w-8 items-center justify-center rounded-full bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
-                    <span class="absolute -inset-1.5" />
-                    <span class="sr-only">Open options menu</span>
-                    <span class="flex h-full w-full items-center justify-center rounded-full">
-                      <EllipsisVerticalIcon class="h-5 w-5 text-gray-400 group-hover:text-gray-500" aria-hidden="true" />
-                    </span>
-                  </MenuButton>
-                  <transition enter-active-class="transition ease-out duration-100" enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 scale-100" leave-to-class="transform opacity-0 scale-95">
-                    <MenuItems class="absolute right-9 top-0 z-10 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                      <div class="py-1">
-                        <MenuItem v-if="member.role == 'MEMBER'" v-slot="{ active }" @click="updateMemberRole(member, 'OWNER')">
-                          <div :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'cursor-pointer block px-4 py-2 text-sm']">
-                            {{ t('vaultDetails.sharedWith.grantOwnership') }}
-                          </div>
-                        </MenuItem>
-                        <MenuItem v-if="member.role == 'OWNER'" v-slot="{ active }" @click="updateMemberRole(member, 'MEMBER')">
-                          <div :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'cursor-pointer block px-4 py-2 text-sm']">
-                            {{ t('vaultDetails.sharedWith.revokeOwnership') }}
-                          </div>
-                        </MenuItem>
-                        <MenuItem v-slot="{ active }" @click="removeMember(member.id)">
-                          <div :class="[active ? 'bg-gray-100 text-red-900' : 'text-red-700', 'cursor-pointer block px-4 py-2 text-sm']">
-                            {{ t('common.remove') }}<span class="sr-only"> {{ member.name }}</span>
-                          </div>
-                        </MenuItem>
-                      </div>
-                    </MenuItems>
-                  </transition>
-                </Menu>
               </div>
 
               <p v-if="onUpdateVaultMembershipError[member.id] != null" class="text-sm text-red-900 text-right mt-1">
@@ -89,7 +91,7 @@
           <!-- add member -->
           <li v-if="!vault.archived && !licenseViolated" class="py-2 flex flex-col">
             <div v-if="!addingUser" class="justify-between items-center">
-              <button type="button" class="group -ml-1 bg-white p-1 rounded-md flex items-center focus:outline-none focus:ring-2 focus:ring-primary" @click="addingUser = true">
+              <button type="button" class="group -ml-1 bg-white p-1 rounded-md flex items-center focus:outline-hidden focus:ring-2 focus:ring-primary" @click="addingUser = true">
                 <span class="w-8 h-8 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400">
                   <PlusSmallIcon class="h-5 w-5" aria-hidden="true" />
                 </span>
@@ -116,7 +118,7 @@
 
       <!-- required legacy migration stuff, otherwise there is no owner -->
       <div v-if="isLegacyVault" class="mt-2 flex flex-col gap-2">
-        <button type="button" class="bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showClaimOwnershipDialog()">
+        <button type="button" class="bg-primary py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showClaimOwnershipDialog()">
           {{ t('vaultDetails.actions.claimOwnership') }}
         </button>
       </div>
@@ -124,11 +126,11 @@
       <!-- license violated -->
       <div v-else-if="licenseViolated" class="mt-2 flex flex-col gap-2">
         <!-- editMetadata button -->
-        <button v-if="vaultRole == 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showEditVaultMetadataDialog()">
+        <button v-if="vaultRole == 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-xs text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showEditVaultMetadataDialog()">
           {{ t('vaultDetails.actions.editVaultMetadata') }}
         </button>
         <!-- archiveVault button -->
-        <button v-if="(vaultRole == 'OWNER' || isAdmin)" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white  hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showArchiveVaultDialog()">
+        <button v-if="(vaultRole == 'OWNER' || isAdmin)" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white  hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showArchiveVaultDialog()">
           {{ t('vaultDetails.actions.archiveVault') }}
         </button>
       </div>
@@ -136,13 +138,13 @@
       <!-- special owner reset stuff -->
       <div v-else-if="vaultRecoveryRequired" class="mt-2 flex flex-col gap-2">
         <div class="flex">
-          <div class="flex-shrink-0">
+          <div class="shrink-0">
             <ExclamationTriangleIcon class="mt-1 h-5 w-5 text-yellow-400" aria-hidden="true" />
           </div>
           <h3 class="ml-3 font-medium text-gray-900">{{ t('vaultDetails.recoverVault.title') }}</h3>
         </div>
         <p class="text-sm text-gray-500">{{ t('vaultDetails.recoverVault.description') }}</p>
-        <button type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white  hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showRecoverVaultDialog()">
+        <button type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white  hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showRecoverVaultDialog()">
           {{ t('vaultDetails.actions.recoverVault') }}
         </button>
       </div>
@@ -150,15 +152,15 @@
       <!-- vault is archived -->
       <div v-else-if="vault.archived" class="mt-2 flex flex-col gap-2">
         <!-- downloadTemplate button -->
-        <button v-if="vaultRole == 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDownloadVaultTemplateDialog()">
+        <button v-if="vaultRole == 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-xs text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDownloadVaultTemplateDialog()">
           {{ t('vaultDetails.actions.downloadVaultTemplate') }}
         </button>
         <!-- displayRecoveryKey button -->
-        <button v-if="vaultRole == 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDisplayRecoveryKeyDialog()">
+        <button v-if="vaultRole == 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-xs text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDisplayRecoveryKeyDialog()">
           {{ t('vaultDetails.actions.displayRecoveryKey') }}
         </button>
         <!-- reactivateVault button -->
-        <button v-if="(vaultRole == 'OWNER' || isAdmin)" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white  hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showReactivateVaultDialog()">
+        <button v-if="(vaultRole == 'OWNER' || isAdmin)" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white  hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showReactivateVaultDialog()">
           {{ t('vaultDetails.actions.reactivateVault') }}
         </button>
       </div>
@@ -167,28 +169,28 @@
       <div v-else class="mt-2 flex flex-col gap-2">
         <!-- grantAccess button -->
         <div v-if="vaultRole == 'OWNER'" class="flex gap-2">
-          <button :disabled="usersRequiringAccessGrant.length == 0" type="button" class="flex-1 bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="showGrantPermissionDialog()">
+          <button :disabled="usersRequiringAccessGrant.length == 0" type="button" class="flex-1 bg-primary py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="showGrantPermissionDialog()">
             {{ t('vaultDetails.actions.updatePermissions') }}
           </button>
-          <button type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="reloadDevicesRequiringAccessGrant()">
+          <button type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-xs text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="reloadDevicesRequiringAccessGrant()">
             <span class="sr-only">{{ t('vaultDetails.actions.updatePermissions.reload') }}</span>
             <ArrowPathIcon class="h-5 w-5" aria-hidden="true" />
           </button>
         </div>
         <!-- editMetadata button -->
-        <button v-if="vaultRole == 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showEditVaultMetadataDialog()">
+        <button v-if="vaultRole == 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-xs text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showEditVaultMetadataDialog()">
           {{ t('vaultDetails.actions.editVaultMetadata') }}
         </button>
         <!-- downloadTemplate button -->
-        <button v-if="vaultRole == 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDownloadVaultTemplateDialog()">
+        <button v-if="vaultRole == 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-xs text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDownloadVaultTemplateDialog()">
           {{ t('vaultDetails.actions.downloadVaultTemplate') }}
         </button>
         <!-- displayRecoveryKey button -->
-        <button v-if="vaultRole == 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDisplayRecoveryKeyDialog()">
+        <button v-if="vaultRole == 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-xs text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDisplayRecoveryKeyDialog()">
           {{ t('vaultDetails.actions.displayRecoveryKey') }}
         </button>
         <!-- archiveVault button -->
-        <button v-if="(vaultRole == 'OWNER' || isAdmin)" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white  hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showArchiveVaultDialog()">
+        <button v-if="(vaultRole == 'OWNER' || isAdmin)" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white  hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showArchiveVaultDialog()">
           {{ t('vaultDetails.actions.archiveVault') }}
         </button>
       </div>
@@ -202,30 +204,31 @@
   <DisplayRecoveryKeyDialog v-if="displayingRecoveryKey && vault && vaultKeys" ref="displayRecoveryKeyDialog" :vault="vault" :vault-keys="vaultKeys" @close="displayingRecoveryKey = false" />
   <ArchiveVaultDialog v-if="archivingVault && vault" ref="archiveVaultDialog" :vault="vault" @close="archivingVault = false" @archived="v => refreshVault(v)" />
   <ReactivateVaultDialog v-if="reactivatingVault && vault" ref="reactivateVaultDialog" :vault="vault" @close="reactivatingVault = false" @reactivated="v => { refreshVault(v); refreshLicense();}" />
-  <RecoverVaultDialog v-if="recoveringVault && vault && me" ref="recoverVaultDialog" :vault="vault" :me="me" @close="recoveringVault = false" @recovered="fetchOwnerData()" />
+  <RecoverVaultDialog v-if="recoveringVault && vault" ref="recoverVaultDialog" :vault="vault" @close="recoveringVault = false" @recovered="fetchOwnerData()" />
 </template>
 
 <script setup lang="ts">
-import auth from '../common/auth';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
 import { ArrowPathIcon, EllipsisVerticalIcon, ExclamationTriangleIcon } from '@heroicons/vue/20/solid';
 import { PlusSmallIcon } from '@heroicons/vue/24/solid';
-import { base64 } from 'rfc4648';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { AuthorityDto, ConflictError, ForbiddenError, LicenseUserInfoDto, MemberDto, NotFoundError, PaymentRequiredError, UserDto, VaultDto, VaultRole } from '../common/backend';
-import { BrowserKeys, UserKeys, VaultKeys } from '../common/crypto';
+import auth from '../common/auth';
+import backend, { AuthorityDto, ConflictError, ForbiddenError, LicenseUserInfoDto, MemberDto, NotFoundError, PaymentRequiredError, TrustDto, UserDto, VaultDto, VaultRole } from '../common/backend';
+import { VaultKeys } from '../common/crypto';
 import { JWT, JWTHeader } from '../common/jwt';
+import userdata from '../common/userdata';
 import ArchiveVaultDialog from './ArchiveVaultDialog.vue';
 import ClaimVaultOwnershipDialog from './ClaimVaultOwnershipDialog.vue';
+import DisplayRecoveryKeyDialog from './DisplayRecoveryKeyDialog.vue';
 import DownloadVaultTemplateDialog from './DownloadVaultTemplateDialog.vue';
 import EditVaultMetadataDialog from './EditVaultMetadataDialog.vue';
 import FetchError from './FetchError.vue';
 import GrantPermissionDialog from './GrantPermissionDialog.vue';
 import ReactivateVaultDialog from './ReactivateVaultDialog.vue';
 import RecoverVaultDialog from './RecoverVaultDialog.vue';
-import DisplayRecoveryKeyDialog from './DisplayRecoveryKeyDialog.vue';
 import SearchInputGroup from './SearchInputGroup.vue';
+import TrustDetails from './TrustDetails.vue';
 
 const { t, d } = useI18n({ useScope: 'global' });
 
@@ -264,6 +267,7 @@ const recoverVaultDialog = ref<typeof RecoverVaultDialog>();
 const vault = ref<VaultDto>();
 const vaultKeys = ref<VaultKeys>();
 const members = ref<Map<string, MemberDto>>(new Map());
+const trusts = ref<TrustDto[]>([]);
 const usersRequiringAccessGrant = ref<UserDto[]>([]);
 const claimVaultOwnershipDialog = ref<typeof ClaimVaultOwnershipDialog>();
 const claimingVaultOwnership = ref(false);
@@ -280,9 +284,9 @@ onMounted(fetchData);
 async function fetchData() {
   onFetchError.value = null;
   try {
-    isAdmin.value = (await auth).isAdmin();
+    isAdmin.value = (await auth).hasRole('admin');
     vault.value = await backend.vaults.get(props.vaultId);
-    me.value = await backend.users.me(true);
+    me.value = await userdata.me;
     license.value = await backend.license.getUserInfo();
     if (props.vaultRole == 'OWNER') {
       await fetchOwnerData();
@@ -296,9 +300,11 @@ async function fetchData() {
 async function fetchOwnerData() {
   try {
     (await backend.vaults.getMembers(props.vaultId)).forEach(member => members.value.set(member.id, member));
+    await refreshTrusts();
     usersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
     vaultRecoveryRequired.value = false;
-    const vaultKeyJwe = await backend.vaults.accessToken(props.vaultId, true);
+    const deviceId = await (await userdata.browserKeys)?.id();
+    const vaultKeyJwe = await backend.vaults.accessToken(props.vaultId, deviceId, true);
     vaultKeys.value = await loadVaultKeys(vaultKeyJwe);
   } catch (error) {
     if (error instanceof ForbiddenError) {
@@ -314,25 +320,13 @@ async function fetchOwnerData() {
 }
 
 async function loadVaultKeys(vaultKeyJwe: string): Promise<VaultKeys> {
-  if (!me.value || !me.value.publicKey) {
-    throw new Error('User not initialized.');
-  }
-  const browserKeys = await BrowserKeys.load(me.value.id);
-  if (browserKeys == null) {
-    throw new Error('Browser keys not found.');
-  }
-  const browserId = await browserKeys.id();
-  const myDevice = me.value.devices.find(d => d.id == browserId);
-  if (myDevice == null) {
-    throw new Error('Device not initialized.');
-  }
-  const userKeys = await UserKeys.decryptOnBrowser(myDevice.userPrivateKey, browserKeys.keyPair.privateKey, base64.parse(me.value.publicKey));
-  return VaultKeys.decryptWithUserKey(vaultKeyJwe, userKeys.keyPair.privateKey);
+  const userKeys = await userdata.decryptUserKeysWithBrowser();
+  return VaultKeys.decryptWithUserKey(vaultKeyJwe, userKeys.ecdhKeyPair.privateKey);
 }
 
 async function provedOwnership(keys: VaultKeys, ownerKeyPair: CryptoKeyPair) {
-  if (!me.value || !me.value.publicKey) {
-    throw new Error('User not initialized.');
+  if (!me.value) {
+    throw new Error('illegal state');
   }
 
   const header: JWTHeader = { alg: 'ES384', typ: 'JWT', b64: true };
@@ -347,7 +341,8 @@ async function provedOwnership(keys: VaultKeys, ownerKeyPair: CryptoKeyPair) {
     return;
   }
 
-  const vaultKeyJwe = keys.encryptForUser(base64.parse(me.value.publicKey));
+  const myPublicKey = await userdata.ecdhPublicKey;
+  const vaultKeyJwe = keys.encryptForUser(myPublicKey);
   try {
     await backend.vaults.grantAccess(props.vaultId, { userId: me.value.id, token: await vaultKeyJwe });
   } catch (error) {
@@ -371,11 +366,11 @@ async function reloadDevicesRequiringAccessGrant() {
   }
 }
 
-function isAuthorityDto(toCheck: any): toCheck is AuthorityDto {
+function isAuthorityDto(toCheck: unknown): toCheck is AuthorityDto {
   return (toCheck as AuthorityDto).type != null;
 }
 
-async function addAuthority(authority: unknown) {
+async function addAuthority(authority: AuthorityDto) {
   onAddUserError.value = null;
   if (!isAuthorityDto(authority)) {
     throw new Error('Parameter authority is not of type AuthorityDto.');
@@ -383,7 +378,10 @@ async function addAuthority(authority: unknown) {
 
   try {
     await addAuthorityBackend(authority);
-    const addedMember = new MemberDto(authority.id, authority.name, authority.type, 'MEMBER', authority.pictureUrl);
+    const addedMember: MemberDto = {
+      ...authority,
+      role: 'MEMBER'
+    };
     members.value.set(authority.id, addedMember);
     usersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
   } catch (error) {
@@ -395,12 +393,13 @@ async function addAuthority(authority: unknown) {
 
 async function addAuthorityBackend(authority: AuthorityDto) {
   try {
-    if (authority.type.toLowerCase() == 'user') {
-      await backend.vaults.addUser(props.vaultId, authority.id);
-    } else if (authority.type.toLowerCase() == 'group') {
-      await backend.vaults.addGroup(props.vaultId, authority.id);
-    } else {
-      throw new Error('Unknown authority type \'' + authority.type + '\'');
+    switch (authority.type) {
+      case 'USER':
+        await backend.vaults.addUser(props.vaultId, authority.id);
+        break;
+      case 'GROUP':
+        await backend.vaults.addGroup(props.vaultId, authority.id);
+        break;
     }
   } catch (error) {
     if (! (error instanceof ConflictError)) {
@@ -454,6 +453,10 @@ function permissionGranted() {
   usersRequiringAccessGrant.value = [];
 }
 
+async function refreshTrusts() {
+  trusts.value = await backend.trust.listTrusted();
+}
+
 async function refreshLicense() {
   license.value = await backend.license.getUserInfo();
   emit('licenseStatusUpdated', license.value);
@@ -465,7 +468,7 @@ function refreshVault(updatedVault: VaultDto) {
 }
 
 async function searchAuthority(query: string): Promise<AuthorityDto[]> {
-  return (await backend.authorities.search(query))
+  return (await backend.authorities.search(query, true))
     .filter(authority => !members.value.has(authority.id))
     .sort((a, b) => a.name.localeCompare(b.name));
 }

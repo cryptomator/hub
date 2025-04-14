@@ -81,7 +81,7 @@ export class JWEParser {
    * @param recipientPrivateKey The recipient's private key
    * @returns Decrypted payload
    */
-  public async decryptEcdhEs(recipientPrivateKey: CryptoKey): Promise<any> {
+  public async decryptEcdhEs<T>(recipientPrivateKey: CryptoKey): Promise<T> {
     if (this.header.alg != 'ECDH-ES' || this.header.enc != 'A256GCM' || !this.header.epk) {
       throw new Error('unsupported alg or enc');
     }
@@ -96,7 +96,7 @@ export class JWEParser {
    * @returns Decrypted payload
    * @throws {UnwrapKeyError} if decryption failed (wrong password?)
    */
-  public async decryptPbes2(password: string): Promise<any> {
+  public async decryptPbes2<T>(password: string): Promise<T> {
     if (this.header.alg != 'PBES2-HS512+A256KW' || /* this.header.enc != 'A256GCM' || */ !this.header.p2s || !this.header.p2c) {
       throw new Error('unsupported alg or enc');
     }
@@ -110,7 +110,7 @@ export class JWEParser {
     }
   }
 
-  private async decrypt(cek: CryptoKey): Promise<any> {
+  private async decrypt<T>(cek: CryptoKey): Promise<T> {
     const utf8enc = new TextEncoder();
     const m = new Uint8Array(this.ciphertext.length + this.tag.length);
     m.set(this.ciphertext, 0);
@@ -219,8 +219,8 @@ export class ECDH_ES {
     let derivedKey = new Uint8Array();
     try {
       const algorithmId = ECDH_ES.lengthPrefixed(new TextEncoder().encode(header.enc));
-      const partyUInfo = ECDH_ES.lengthPrefixed(base64url.parse(header.apu || '', { loose: true }));
-      const partyVInfo = ECDH_ES.lengthPrefixed(base64url.parse(header.apv || '', { loose: true }));
+      const partyUInfo = ECDH_ES.lengthPrefixed(base64url.parse(header.apu ?? '', { loose: true }));
+      const partyVInfo = ECDH_ES.lengthPrefixed(base64url.parse(header.apv ?? '', { loose: true }));
       const suppPubInfo = new ArrayBuffer(4);
       new DataView(suppPubInfo).setUint32(0, desiredKeyBytes * 8, false);
       agreedKey = new Uint8Array(await crypto.subtle.deriveBits(

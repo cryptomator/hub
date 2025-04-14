@@ -8,7 +8,7 @@ If you want to learn more about Quarkus, please visit its website: https://quark
 
 You can run your application in dev mode that enables live coding using:
 ```shell script
-mvn clean quarkus:dev
+./mvnw clean quarkus:dev
 ```
 
 > **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at http://localhost:8080/q/dev/.
@@ -48,20 +48,12 @@ Make sure a container engine is running (required to register the built image lo
 Then run this command to build the image:
 
 ```shell script
-mvn clean package -Dquarkus.container-image.build=true -Dquarkus.container-image.tag=latest
-```
-
-### Using containerd or podman
-
-Tell JIB which executable to use (replace `nerctl` with `podman` etc):
-
-```shell script
- -Dquarkus.jib.docker-executable-name=$(which nerdctl)
+docker build -f src/main/docker/Dockerfile.jvm -t ghcr.io/cryptomator/hub .
 ```
 
 ### Building native images
 
 3x smaller but takes longer to build. Docker VM requires sufficient memory during the build:
 ```shell script
-mvn clean package -Pnative -Dquarkus.container-image.build=true -Dquarkus.native.container-build=true -Dquarkus.native.builder-image=quay.io/quarkus/ubi-quarkus-mandrel:22.2-java17 -Dquarkus.container-image.tag=latest
+docker build -f src/main/docker/Dockerfile.native -t ghcr.io/cryptomator/hub .
 ```

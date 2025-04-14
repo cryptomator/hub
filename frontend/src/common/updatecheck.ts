@@ -9,7 +9,7 @@ export type LatestVersionDto = {
 
 class UpdatesService {
   public async get(localVersion: string): Promise<LatestVersionDto> {
-    let config = {
+    const config = {
       headers: {
         'Content-Type': 'application/json',
         'Cryptomator-Hub-Version': localVersion,
@@ -25,10 +25,6 @@ class UpdatesService {
   }
 }
 
-export class FetchUpdateError extends Error {
-  constructor(msg: string) {
-    super(msg);
-  }
-}
+export class FetchUpdateError extends Error { }
 
 export const updateChecker = new UpdatesService();

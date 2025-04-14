@@ -12,7 +12,7 @@
 	"extensions": {
 		"recommendations": [
 			"dbaeumer.vscode-eslint",
-			"hbenl.vscode-mocha-test-adapter",
+			"felixjb.testify",
 			"vue.volar"
 		],
 		"unwantedRecommendations": [
@@ -26,6 +26,7 @@
 		},
 		"typescript.referencesCodeLens.enabled": true,
 		"typescript.implementationsCodeLens.enabled": true,
+		"workbench.editor.enablePreviewFromQuickOpen": false,
 		"editor.codeActionsOnSave": {
 			"source.organizeImports": "explicit",
 			"source.fixAll.eslint": "explicit"

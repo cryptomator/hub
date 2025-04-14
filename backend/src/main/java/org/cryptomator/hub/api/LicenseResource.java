@@ -22,6 +22,9 @@ public class LicenseResource {
 	@Inject
 	LicenseHolder licenseHolder;
 
+	@Inject
+	EffectiveVaultAccess.Repository effectiveVaultAccessRepo;
+
 	@GET
 	@Path("/user-info")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -29,17 +32,16 @@ public class LicenseResource {
 	@Operation(summary = "Get license information for regular users", description = "Information includes the licensed seats, the already used seats and if defined, the license expiration date.")
 	@APIResponse(responseCode = "200")
 	public LicenseUserInfoDto get() {
-		return LicenseUserInfoDto.create(licenseHolder);
+		int usedSeats = (int) effectiveVaultAccessRepo.countSeatOccupyingUsers();
+		return LicenseUserInfoDto.create(licenseHolder, usedSeats);
 	}
-
 
 	public record LicenseUserInfoDto(@JsonProperty("licensedSeats") Integer licensedSeats,
 									 @JsonProperty("usedSeats") Integer usedSeats,
 									 @JsonProperty("expiresAt") Instant expiresAt) {
 
-		public static LicenseUserInfoDto create(LicenseHolder licenseHolder) {
+		public static LicenseUserInfoDto create(LicenseHolder licenseHolder, int usedSeats) {
 			var licensedSeats = (int) licenseHolder.getSeats();
-			var usedSeats = (int) EffectiveVaultAccess.countSeatOccupyingUsers();
 			var expiresAt = Optional.ofNullable(licenseHolder.get()).map(DecodedJWT::getExpiresAtAsInstant).orElse(null);
 			return new LicenseUserInfoDto(licensedSeats, usedSeats, expiresAt);
 		}

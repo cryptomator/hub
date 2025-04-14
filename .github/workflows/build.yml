@@ -4,15 +4,10 @@ on:
   push:
   pull_request_target:
     types: [labeled]
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Image Tag'
-        required: false
 
 env:
   NODE_VERSION: 20
-  JAVA_VERSION: 17
+  JAVA_VERSION: 21
 
 defaults:
   run:
@@ -20,21 +15,20 @@ defaults:
 
 jobs:
   test:
-    name: Build and Test
+    name: Run Tests
     runs-on: ubuntu-latest
-    if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')" # can the if also be est for all jobs?
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
-      - name: Install npm dependencies
+      - name: NPM install
         working-directory: frontend
-        run: npm install
+        run: npm ci --ignore-scripts
       - name: Build and test frontend
         working-directory: frontend
         run: npm test
@@ -42,7 +36,7 @@ jobs:
         working-directory: frontend
         run: npm run dist
       - name: SonarCloud Scan Frontend
-        uses: SonarSource/sonarcloud-github-action@master
+        uses: SonarSource/sonarqube-scan-action@v4
         with:
           projectBaseDir: frontend
           args: >
@@ -55,13 +49,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      - uses: actions/setup-java@v2
+      - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: ${{ env.JAVA_VERSION }}
           cache: 'maven'
       - name: Cache SonarCloud packages
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar
@@ -69,37 +63,124 @@ jobs:
       - name: Build and test backend
         working-directory: backend
         run: >
-          mvn -B clean verify
+          ./mvnw -B clean verify
           org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
           -Dsonar.projectKey=cryptomator_hub_backend
           -Dsonar.organization=cryptomator
           -Dsonar.host.url=https://sonarcloud.io
+          --no-transfer-progress
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      - id: get_tag
-        if: inputs.tag != '' || github.ref_type == 'tag' || contains(github.event.head_commit.message, '[build image]')
-        run: |
-          if [[ ! -z "${{ inputs.tag }}" ]]; then
-            TAG="${{ inputs.tag }}"
-          elif [[ ${{ github.ref_type }} == 'tag' || ${{ github.ref_name }} == 'develop' ]]; then
-            TAG="${{ github.ref_name }}"
-          else
-            TAG="commit-${{ github.sha }}"
-          fi
-          echo tag=${TAG} >> "$GITHUB_OUTPUT"
+
+  build-native-image:
+    name: Build and Push ${{ matrix.arch }} Image
+    needs: test
+    if: startsWith(github.ref, 'refs/tags/') || contains(github.event.head_commit.message, '[build image]')
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux/amd64
+            arch: amd64
+          - os: ubuntu-24.04-arm
+            platform: linux/arm64
+            arch: arm64
+    runs-on: ${{ matrix.os }}
+    outputs:
+      digest_amd64: ${{ steps.digest.outputs.digest_amd64 }}
+      digest_arm64: ${{ steps.digest.outputs.digest_arm64 }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      - name: NPM install
+        working-directory: frontend
+        run: npm ci --ignore-scripts
+      - name: Deploy frontend
+        working-directory: frontend
+        run: npm run dist
       - name: Ensure to use tagged version
-        if: startsWith(github.ref, 'refs/tags/')
-        run: mvn versions:set --file ./backend/pom.xml -DnewVersion=${GITHUB_REF##*/}
-      - name: Build and push container image
-        if: github.event.inputs.tag != '' || startsWith(github.ref, 'refs/tags/') || contains(github.event.head_commit.message, '[build image]')
         working-directory: backend
-        run: mvn -B clean package -DskipTests
+        run: ./mvnw versions:set --file pom.xml -DnewVersion=${GITHUB_REF##*/}
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/cryptomator/hub
+          tags: |
+            type=sha,prefix=,format=short
+          flavor: |
+            suffix=-${{ matrix.arch }}
+          labels: |
+            org.opencontainers.image.title=Cryptomator Hub
+            org.opencontainers.image.vendor=Skymatic GmbH
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and Push Container Image
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          file: backend/src/main/docker/Dockerfile.native
+          platforms: ${{ matrix.platform }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          push: true
+      - name: Export Digest
+        id: digest
+        run: |
+          echo "digest_${{ matrix.arch }}=${{ steps.push.outputs.digest }}" >> "$GITHUB_OUTPUT"
+
+  multi-arch-image:
+    name: Build and Push Multi-Arch Image
+    needs: build-native-image
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+      attestations: write
+      packages: write
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Determine short Commit SHA
+        id: sha
+        run: echo "short_sha=${LONG_SHA:0:7}" >> "$GITHUB_OUTPUT"
         env:
-          QUARKUS_JIB_PLATFORMS: linux/amd64,linux/arm64/v8
-          QUARKUS_CONTAINER_IMAGE_TAG: ${{ steps.get_tag.outputs.tag }}
-          QUARKUS_CONTAINER_IMAGE_BUILD: true
-          QUARKUS_CONTAINER_IMAGE_PUSH: true
-          QUARKUS_CONTAINER_IMAGE_REGISTRY: ghcr.io
-          QUARKUS_CONTAINER_IMAGE_USERNAME: ${{ github.actor }}
-          QUARKUS_CONTAINER_IMAGE_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          LONG_SHA: ${{ github.sha }}
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create Multi-Arch Manifest for ghcr.io/cryptomator/hub:${{ steps.sha.outputs.short_sha }}
+        run: >
+          docker buildx imagetools create --tag ghcr.io/cryptomator/hub:${{ steps.sha.outputs.short_sha }}
+          ghcr.io/cryptomator/hub@${{ needs.build-native-image.outputs.digest_amd64 }}
+          ghcr.io/cryptomator/hub@${{ needs.build-native-image.outputs.digest_arm64 }}
+      - name: Retrieve Multi-Arch Digest
+        id: inspect
+        run: |
+          DIGEST=$(docker buildx imagetools inspect ghcr.io/cryptomator/hub:${{ steps.sha.outputs.short_sha }} --format "{{json .Manifest}}" | jq -r .digest)
+          echo "digest_multiarch=${DIGEST}" >> "$GITHUB_OUTPUT"
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ghcr.io/cryptomator/hub
+          subject-digest: ${{ steps.inspect.outputs.digest_multiarch }}
+          push-to-registry: true

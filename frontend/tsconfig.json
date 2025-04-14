@@ -1,21 +1,25 @@
 {
   "compilerOptions": {
-    "target": "esnext",
-    "module": "esnext",
-    "moduleResolution": "node",
+    "target": "ES2023",
+    "lib": ["ES2023", "dom"],
+    "module": "ES2022",
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+
+    /* Linting */
     "strict": true,
-    "jsx": "preserve",
-    "sourceMap": true,
     "resolveJsonModule": true,
-    "esModuleInterop": true,
-    "lib": ["esnext", "dom"],
-    "noUnusedLocals": true,
+    "noUnusedLocals": false,
+    "noFallthroughCasesInSwitch": true,
     "useUnknownInCatchVariables": false, // Workaround for `node_modules/miscreant/src/providers/webcrypto.ts:21:11 - error TS18046: 'e' is of type 'unknown'.`
   },
   "ts-node": {
-    "compilerOptions": {
-      "module": "CommonJS"
-    }
+    "esm": true,
+    "experimentalSpecifierResolution": "node"
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"]
+  "include": ["src/**/*.ts", "src/**/*.vue", "test/**/*.ts"]
 }

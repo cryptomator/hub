@@ -1,6 +1,8 @@
 package org.cryptomator.hub.api;
 
 import jakarta.annotation.security.RolesAllowed;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -18,14 +20,18 @@ import java.util.List;
 @Produces(MediaType.TEXT_PLAIN)
 public class AuthorityResource {
 
+	@Inject
+	Authority.Repository authorityRepo;
+
 	@GET
 	@Path("/search")
 	@RolesAllowed("user")
 	@Produces(MediaType.APPLICATION_JSON)
 	@NoCache
 	@Operation(summary = "search authority by name")
-	public List<AuthorityDto> search(@QueryParam("query") @NotBlank String query) {
-		return Authority.byName(query).map(AuthorityDto::fromEntity).toList();
+	@Transactional
+	public List<AuthorityDto> search(@QueryParam("query") @NotBlank String query, @QueryParam("withMemberSize") boolean withMemberSize) {
+		return authorityRepo.byName(query).map(authority -> AuthorityDto.fromEntity(authority, withMemberSize)).toList();
 	}
 
 	@GET
@@ -36,7 +42,7 @@ public class AuthorityResource {
 	@Operation(summary = "lists all authorities matching the given ids", description = "lists for each id in the list its corresponding authority. Ignores all id's where an authority cannot be found")
 	@APIResponse(responseCode = "200")
 	public List<AuthorityDto> getSome(@QueryParam("ids") List<String> authorityIds) {
-		return Authority.findAllInList(authorityIds).map(AuthorityDto::fromEntity).toList();
+		return authorityRepo.findAllInList(authorityIds).map(AuthorityDto::fromEntity).toList();
 	}
 
 }

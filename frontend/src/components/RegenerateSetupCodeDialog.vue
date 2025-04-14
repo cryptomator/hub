@@ -2,7 +2,7 @@
   <TransitionRoot as="template" :show="open" @after-leave="$emit('close')">
     <Dialog as="div" class="fixed z-10 inset-0 overflow-y-auto" @close="open = false">
       <TransitionChild as="template" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100" leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
-        <DialogOverlay class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+        <DialogOverlay class="fixed inset-0 bg-gray-500/75 transition-opacity" />
       </TransitionChild>
 
       <div class="fixed inset-0 z-10 overflow-y-auto">
@@ -28,10 +28,10 @@
                   </div>
                 </div>
                 <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse sm:items-center">
-                  <button type="submit" :disabled="processing" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:hover:bg-red-600 disabled:cursor-not-allowed" >
+                  <button type="submit" :disabled="processing" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-xs px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:hover:bg-red-600 disabled:cursor-not-allowed" >
                     {{ t('regenerateAccountKeyDialog.submit') }}
                   </button>
-                  <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" @click="open = false">
+                  <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-xs px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" @click="open = false">
                     {{ t('common.close') }}
                   </button>
                   <p v-if="onRegenerateError != null" class="mt-3 text-center text-sm text-red-900 sm:mt-0 sm:text-right">
@@ -56,7 +56,7 @@
                         </p>
                       </div>
                       <div class="relative mt-3">
-                        <div class="overflow-hidden rounded-lg border border-gray-300 shadow-sm focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
+                        <div class="overflow-hidden rounded-lg border border-gray-300 shadow-xs focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
                           <label for="setupCode" class="sr-only">{{ t('regenerateAccountKeyDialog.saveAccountKey.accountKey') }}</label>
                           <textarea id="setupCode" v-model="setupCode" rows="1" name="setupCode" class="block w-full resize-none border-0 py-3 font-mono text-center focus:ring-0" readonly />
   
@@ -68,9 +68,9 @@
 
                         <div class="absolute inset-x-0 bottom-0">
                           <div class="flex flex-nowrap justify-end space-x-2 py-2 px-2 sm:px-3">
-                            <div class="flex-shrink-0">
+                            <div class="shrink-0">
                               <button type="button" class="relative inline-flex items-center whitespace-nowrap rounded-full bg-gray-50 py-2 px-2 text-sm font-medium text-gray-500 hover:bg-gray-100 sm:px-3" @click="copySetupCode()">
-                                <ClipboardIcon class="h-5 w-5 flex-shrink-0 text-gray-300 sm:-ml-1" aria-hidden="true" />
+                                <ClipboardIcon class="h-5 w-5 shrink-0 text-gray-300 sm:-ml-1" aria-hidden="true" />
                                 <span v-if="!copiedSetupCode" class="hidden truncate sm:ml-2 sm:block text-gray-900">{{ t('common.copy') }}</span>
                                 <span v-else class="hidden truncate sm:ml-2 sm:block text-gray-900">{{ t('common.copied') }}</span>
                               </button>
@@ -82,7 +82,7 @@
                   </div>
                 </div>
                 <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse sm:items-center">
-                  <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" @click="open = false">
+                  <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-xs px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" @click="open = false">
                     {{ t('common.close') }}
                   </button>
                 </div>
@@ -99,12 +99,11 @@
 import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import { ClipboardIcon } from '@heroicons/vue/20/solid';
 import { ArrowPathIcon, KeyIcon } from '@heroicons/vue/24/outline';
-import { base64 } from 'rfc4648';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend from '../common/backend';
-import { BrowserKeys, UserKeys } from '../common/crypto';
 import { JWEBuilder } from '../common/jwe';
+import userdata from '../common/userdata';
 import { debounce } from '../common/util';
 
 enum State {
@@ -128,8 +127,8 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'update:setupCode', setupCode: string): void 
-  (e: 'close'): void
+  close: [],
+  'update:setupCode': [setupCode: string],
 }>();
 
 defineExpose({
@@ -151,23 +150,11 @@ async function regenerateSetupCode() {
   try {
     processing.value = true;
 
-    const me = await backend.users.me(true);
-    if (me.publicKey == null || me.setupCode == null) {
-      throw new Error('User not initialized.');
-    }
-    const browserKeys = await BrowserKeys.load(me.id);
-    if (browserKeys == null) {
-      throw new Error('Browser keys not found.');
-    }
-    const browserId = await browserKeys.id();
-    const myDevice = me.devices.find(d => d.id == browserId);
-    if (myDevice == null) {
-      throw new Error('Device not initialized.');
-    }
+    const me = await userdata.me;
     const newCode = crypto.randomUUID();
-    const userKeys = await UserKeys.decryptOnBrowser(myDevice.userPrivateKey, browserKeys.keyPair.privateKey, base64.parse(me.publicKey));
-    me.privateKey = await userKeys.encryptedPrivateKey(newCode);
-    me.setupCode = await JWEBuilder.ecdhEs(userKeys.keyPair.publicKey).encrypt({ setupCode: newCode });
+    const userKeys = await userdata.decryptUserKeysWithBrowser();
+    me.privateKeys = await userKeys.encryptWithSetupCode(newCode);
+    me.setupCode = await JWEBuilder.ecdhEs(userKeys.ecdhKeyPair.publicKey).encrypt({ setupCode: newCode });
     await backend.users.putMe(me);
     setupCode.value = newCode;
 

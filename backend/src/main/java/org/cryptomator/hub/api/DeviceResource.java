@@ -1,6 +1,7 @@
 package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.annotation.Nullable;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.persistence.NoResultException;
@@ -20,12 +21,12 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.cryptomator.hub.entities.AuditEventDeviceRegister;
-import org.cryptomator.hub.entities.AuditEventDeviceRemove;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.LegacyAccessToken;
 import org.cryptomator.hub.entities.LegacyDevice;
 import org.cryptomator.hub.entities.User;
+import org.cryptomator.hub.entities.events.EventLogger;
+import org.cryptomator.hub.entities.events.VaultKeyRetrievedEvent;
 import org.cryptomator.hub.validation.NoHtmlOrScriptChars;
 import org.cryptomator.hub.validation.OnlyBase64Chars;
 import org.cryptomator.hub.validation.ValidId;
@@ -42,13 +43,35 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Path("/devices")
 public class DeviceResource {
 
 	private static final Logger LOG = Logger.getLogger(DeviceResource.class);
+
+	@Inject
+	EventLogger eventLogger;
+	@Inject
+	User.Repository userRepo;
+	@Inject
+	Device.Repository deviceRepo;
+	/**
+	 * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
+	 */
+	@Deprecated(since = "1.3.0", forRemoval = true)
+	@Inject
+	LegacyAccessToken.Repository legacyAccessTokenRepo;
+	/**
+	 * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
+	 */
+	@Deprecated(since = "1.3.0", forRemoval = true)
+	@Inject
+	LegacyDevice.Repository legacyDeviceRepo;
 
 	@Inject
 	JsonWebToken jwt;
@@ -61,7 +84,22 @@ public class DeviceResource {
 	@Operation(summary = "lists all devices matching the given ids", description = "lists for each id in the list its corresponding device. Ignores all id's where a device cannot be found")
 	@APIResponse(responseCode = "200")
 	public List<DeviceDto> getSome(@QueryParam("ids") List<String> deviceIds) {
-		return Device.findAllInList(deviceIds).map(DeviceDto::fromEntity).toList();
+		return deviceRepo.findAllInList(deviceIds).map(DeviceDto::fromEntity).toList();
+	}
+
+	/**
+	 * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
+	 */
+	@Deprecated(since = "1.3.0", forRemoval = true)
+	@GET
+	@Path("/legacy-devices")
+	@RolesAllowed("admin")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Transactional
+	@Operation(summary = "lists all legacy devices matching the given ids", description = "lists for each id in the list its corresponding legacy device. Ignores all id's where a device cannot be found")
+	@APIResponse(responseCode = "200")
+	public List<DeviceDto> getSomeLegacy(@QueryParam("ids") List<String> deviceIds) {
+		return legacyDeviceRepo.findAllInList(deviceIds).map(DeviceDto::fromEntity).toList();
 	}
 
 	@PUT
@@ -76,26 +114,26 @@ public class DeviceResource {
 	public Response createOrUpdate(@Valid @NotNull DeviceDto dto, @PathParam("deviceId") @ValidId String deviceId) {
 		Device device;
 		try {
-			device = Device.findByIdAndUser(deviceId, jwt.getSubject());
+			device = deviceRepo.findByIdAndUser(deviceId, jwt.getSubject());
 		} catch (NoResultException e) {
 			device = new Device();
-			device.id = deviceId;
-			device.owner = User.findById(jwt.getSubject());
-			device.creationTime = Instant.now().truncatedTo(ChronoUnit.MILLIS);
-			device.type = dto.type != null ? dto.type : Device.Type.DESKTOP; // default to desktop for backwards compatibility
+			device.setId(deviceId);
+			device.setOwner(userRepo.findById(jwt.getSubject()));
+			device.setCreationTime(Instant.now().truncatedTo(ChronoUnit.MILLIS));
+			device.setType(dto.type != null ? dto.type : Device.Type.DESKTOP); // default to desktop for backwards compatibilit);
 
-			if (LegacyDevice.deleteById(device.id)) {
-				assert LegacyDevice.findById(device.id) == null;
+			if (legacyDeviceRepo.deleteById(device.getId())) {
+				assert legacyDeviceRepo.findById(device.getId()) == null;
 				LOG.info("Deleted Legacy Device during re-registration of Device " + deviceId);
 			}
 		}
-		device.name = dto.name;
-		device.publickey = dto.publicKey;
-		device.userPrivateKey = dto.userPrivateKey;
+		device.setName(dto.name);
+		device.setPublickey(dto.publicKey);
+		device.setUserPrivateKeys(dto.userPrivateKeys);
 
 		try {
-			device.persistAndFlush();
-			AuditEventDeviceRegister.log(jwt.getSubject(), deviceId, device.name, device.type);
+			deviceRepo.persistAndFlush(device);
+			eventLogger.logDeviceRegisted(jwt.getSubject(), deviceId, device.getName(), device.getType());
 			return Response.created(URI.create(".")).build();
 		} catch (ConstraintViolationException e) {
 			throw new ClientErrorException(Response.Status.CONFLICT, e);
@@ -113,14 +151,17 @@ public class DeviceResource {
 	@APIResponse(responseCode = "404", description = "Device not found or owned by a different user")
 	public DeviceDto get(@PathParam("deviceId") @ValidId String deviceId) {
 		try {
-			Device device = Device.findByIdAndUser(deviceId, jwt.getSubject());
+			Device device = deviceRepo.findByIdAndUser(deviceId, jwt.getSubject());
 			return DeviceDto.fromEntity(device);
 		} catch (NoResultException e) {
 			throw new NotFoundException(e);
 		}
 	}
 
-	@Deprecated
+	/**
+	 * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
+	 */
+	@Deprecated(since = "1.3.0", forRemoval = true)
 	@GET
 	@Path("/{deviceId}/legacy-access-tokens")
 	@RolesAllowed("user")
@@ -130,8 +171,8 @@ public class DeviceResource {
 	@Operation(summary = "list legacy access tokens", description = "get all legacy access tokens for this device ({vault1: token1, vault1: token2, ...}). The device must be owned by the currently logged-in user")
 	@APIResponse(responseCode = "200")
 	public Map<UUID, String> getLegacyAccessTokens(@PathParam("deviceId") @ValidId String deviceId) {
-		return LegacyAccessToken.getByDeviceAndOwner(deviceId, jwt.getSubject())
-				.collect(Collectors.toMap(token -> token.id.vaultId , token -> token.jwe));
+		return legacyAccessTokenRepo.getByDeviceAndOwner(deviceId, jwt.getSubject())
+				.collect(Collectors.toMap(token -> token.getId().getVaultId(), LegacyAccessToken::getJwe));
 	}
 
 	@DELETE
@@ -143,34 +184,91 @@ public class DeviceResource {
 	@APIResponse(responseCode = "204", description = "device removed")
 	@APIResponse(responseCode = "404", description = "device not found with current user")
 	public Response remove(@PathParam("deviceId") @ValidId String deviceId) {
-		if (deviceId == null || deviceId.trim().length() == 0) {
+		return remove(deviceId, false);
+	}
+
+	/**
+	 * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
+	 */
+	@Deprecated(since = "1.3.0", forRemoval = true)
+	@DELETE
+	@Path("/{deviceId}/legacy-device")
+	@RolesAllowed("user")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Transactional
+	@Operation(summary = "removes a legacy device", description = "the legacy device will be only be removed if the current user is the owner")
+	@APIResponse(responseCode = "204", description = "legacy device removed")
+	@APIResponse(responseCode = "404", description = "legacy device not found with current user")
+	public Response removeLegacyDevice(@PathParam("deviceId") @ValidId String deviceId) {
+		return remove(deviceId, true);
+	}
+
+	private Response remove(String deviceId, boolean legacyDevice) {
+		if (deviceId == null || deviceId.trim().isEmpty()) {
 			return Response.status(Response.Status.BAD_REQUEST).entity("deviceId cannot be empty").build();
 		}
-
-		User currentUser = User.findById(jwt.getSubject());
-		var maybeDevice = Device.<Device>findByIdOptional(deviceId);
-		if (maybeDevice.isPresent() && currentUser.equals(maybeDevice.get().owner)) {
-			maybeDevice.get().delete();
-			AuditEventDeviceRemove.log(jwt.getSubject(), deviceId);
+		User currentUser = userRepo.findById(jwt.getSubject());
+		boolean removed = legacyDevice
+				? remove(deviceId, currentUser, legacyDeviceRepo::findByIdOptional, legacyDeviceRepo::delete, LegacyDevice::getOwner)
+				: remove(deviceId, currentUser, deviceRepo::findByIdOptional, deviceRepo::delete, Device::getOwner);
+		if (removed) {
+			eventLogger.logDeviceRemoved(jwt.getSubject(), deviceId);
 			return Response.status(Response.Status.NO_CONTENT).build();
 		} else {
 			return Response.status(Response.Status.NOT_FOUND).build();
 		}
 	}
 
+	private <T> boolean remove(String deviceId, User currentUser, Function<String, Optional<T>> findById, Consumer<T> delete, Function<T, User> getOwner) {
+		Optional<T> maybeDevice = findById.apply(deviceId);
+		if (maybeDevice.isPresent() && currentUser.equals(getOwner.apply(maybeDevice.get()))) {
+			delete.accept(maybeDevice.get());
+			return true;
+		}
+		return false;
+	}
+
 	public record DeviceDto(@JsonProperty("id") @ValidId String id,
 							@JsonProperty("name") @NoHtmlOrScriptChars @NotBlank String name,
 							@JsonProperty("type") Device.Type type,
 							@JsonProperty("publicKey") @NotNull @OnlyBase64Chars String publicKey,
-							@JsonProperty("userPrivateKey") @NotNull @ValidJWE String userPrivateKey,
+							@JsonProperty("userPrivateKey") @NotNull @ValidJWE String userPrivateKeys, // singular name for history reasons (don't break client compatibility)
 							@JsonProperty("owner") @ValidId String ownerId,
-							@JsonProperty("creationTime") Instant creationTime) {
+							@JsonProperty("creationTime") Instant creationTime,
+							@JsonProperty("lastIpAddress") String lastIpAddress,
+							@JsonProperty("lastAccessTime") Instant lastAccessTime,
+							@JsonProperty("legacyDevice") boolean legacyDevice) {
 
 		public static DeviceDto fromEntity(Device entity) {
-			return new DeviceDto(entity.id, entity.name, entity.type, entity.publickey, entity.userPrivateKey, entity.owner.id, entity.creationTime.truncatedTo(ChronoUnit.MILLIS));
+			return new DeviceDto(entity.getId(), entity.getName(), entity.getType(), entity.getPublickey(), entity.getUserPrivateKeys(), entity.getOwner().getId(), entity.getCreationTime().truncatedTo(ChronoUnit.MILLIS), null, null, false);
+		}
+
+		/**
+		 * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
+		 */
+		@Deprecated(since = "1.3.0", forRemoval = true)
+		public static DeviceDto fromEntity(LegacyDevice entity) {
+			return new DeviceDto(entity.getId(), entity.getName(), entity.getType(), entity.getPublickey(), null, entity.getOwner().getId(), entity.getCreationTime().truncatedTo(ChronoUnit.MILLIS), null, null, true);
+		}
+
+		public static DeviceDto fromEntity(Device d, @Nullable VaultKeyRetrievedEvent event) {
+			var lastIpAddress = (event != null) ? event.getIpAddress() : null;
+			var lastAccessTime = (event != null) ? event.getTimestamp() : null;
+			return new DeviceResource.DeviceDto(d.getId(), d.getName(), d.getType(), d.getPublickey(), d.getUserPrivateKeys(), d.getOwner().getId(), d.getCreationTime().truncatedTo(ChronoUnit.MILLIS), lastIpAddress, lastAccessTime, false);
+		}
+
+		/**
+		 * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
+		 */
+		@Deprecated(since = "1.3.0", forRemoval = true)
+		public static DeviceDto fromEntity(LegacyDevice d, @Nullable VaultKeyRetrievedEvent event) {
+			var lastIpAddress = (event != null) ? event.getIpAddress() : null;
+			var lastAccessTime = (event != null) ? event.getTimestamp() : null;
+			return new DeviceResource.DeviceDto(d.getId(), d.getName(), d.getType(), d.getPublickey(), null, d.getOwner().getId(), d.getCreationTime().truncatedTo(ChronoUnit.MILLIS), lastIpAddress, lastAccessTime, true);
 		}
 
 	}
 
-	public record LegacyAccessTokenDto(@JsonProperty("vaultId") UUID vaultId, @JsonProperty("token") String token) {}
+	public record LegacyAccessTokenDto(@JsonProperty("vaultId") UUID vaultId, @JsonProperty("token") String token) {
+	}
 }

@@ -30,6 +30,12 @@ public class VaultRoleFilter implements ContainerRequestFilter {
 	@Inject
 	JsonWebToken jwt;
 
+	@Inject
+	EffectiveVaultAccess.Repository effectiveVaultAccessRepo;
+
+	@Inject
+	Vault.Repository vaultRepo;
+
 	@Context
 	ResourceInfo resourceInfo;
 
@@ -50,9 +56,9 @@ public class VaultRoleFilter implements ContainerRequestFilter {
 		}
 
 		var forbiddenMsg = "Vault role required: " + Arrays.stream(annotation.value()).map(VaultAccess.Role::name).collect(Collectors.joining(", "));
-		if (Vault.findByIdOptional(vaultId).isPresent()) {
+		if (vaultRepo.findByIdOptional(vaultId).isPresent()) {
 			// check permissions for existing vault:
-			var effectiveRoles = EffectiveVaultAccess.listRoles(vaultId, userId);
+			var effectiveRoles = effectiveVaultAccessRepo.listRoles(vaultId, userId);
 			if (Arrays.stream(annotation.value()).noneMatch(effectiveRoles::contains)) {
 				throw new ForbiddenException(forbiddenMsg);
 			}
@@ -62,6 +68,11 @@ public class VaultRoleFilter implements ContainerRequestFilter {
 				case FORBIDDEN -> throw new ForbiddenException(forbiddenMsg);
 				case NOT_FOUND -> throw new NotFoundException("Vault not found");
 				case PASS -> {}
+				case REQUIRE_REALM_ROLE -> {
+					if (!requestContext.getSecurityContext().isUserInRole(annotation.realmRole())) {
+						throw new ForbiddenException("Missing role " + annotation.realmRole());
+					}
+				}
 			}
 		}
 	}

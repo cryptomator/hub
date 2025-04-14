@@ -8,16 +8,7 @@
     </div>
   </div>
 
-  <!-- FIXME: invalid case: list must at least contain current browser: -->
-  <div v-else-if="me.devices.length == 0" class="text-center">
-    <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-      <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
-    </svg>
-    <h3 class="mt-2 text-sm font-medium text-gray-900">{{ t('deviceList.empty.message') }}</h3>
-    <p class="mt-1 text-sm text-gray-500">{{ t('deviceList.empty.description') }}</p>
-  </div>
-
-  <div v-else>
+  <div v-if="me?.devices">
     <h2 id="deviceListTitle" class="text-base font-semibold leading-6 text-gray-900">
       {{ t('deviceList.title') }}
     </h2>
@@ -25,18 +16,24 @@
     <div class="mt-4 flex flex-col">
       <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
         <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
-          <div class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
+          <div class="shadow-sm overflow-hidden border-b border-gray-200 sm:rounded-lg">
             <table class="min-w-full divide-y divide-gray-200" aria-describedby="deviceListTitle">
               <thead class="bg-gray-50">
                 <tr>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" class="w-12 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
+                  <th scope="col" class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider flex-grow">
                     {{ t('deviceList.deviceName') }}
                   </th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {{ t('deviceList.type') }}
-                  </th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                     {{ t('deviceList.added') }}
+                  </th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                    <span class="inline-flex items-center gap-1">
+                      {{ t('deviceList.lastAccess') }}
+                      <div class="relative group" :title="t('deviceList.lastAccess.toolTip')">
+                        <QuestionMarkCircleIcon class="h-4 w-4 text-gray-400"/>
+                      </div>
+                    </span>
                   </th>
                   <th scope="col" class="relative px-6 py-3">
                     <span class="sr-only">{{ t('common.remove') }}</span>
@@ -44,33 +41,40 @@
                 </tr>
               </thead>
               <tbody class="bg-white divide-y divide-gray-200">
-                <template v-for="device in me.devices" :key="device.id">
+                <template v-for="device in sortedDevices" :key="device.id">
                   <tr>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <td class="py-4 text-sm text-gray-500">
+                      <div class="grid place-items-center h-12 aspect-square">
+                        <span v-if="device.type == 'BROWSER'" :title="'Browser'">
+                          <WindowIcon class="size-5" aria-hidden="true" />
+                        </span>
+                        <span v-else-if="device.type == 'DESKTOP'" :title="'Desktop'">
+                          <ComputerDesktopIcon class="size-5" aria-hidden="true" />
+                        </span>
+                        <span v-else-if="device.type == 'MOBILE'" :title="'Mobile'">
+                          <DevicePhoneMobileIcon class="size-5" aria-hidden="true" />
+                        </span>
+                      </div>
+                    </td>
+                    <td class="px-2 py-4 whitespace-nowrap text-sm font-medium text-gray-900 flex-grow">
                       <div class="flex items-center gap-3">
                         <div>{{ device.name }}</div>
                         <div v-if="device.id == myDevice?.id" class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">{{ t('deviceList.thisDevice') }}</div>
                       </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <span v-if="device.type == 'BROWSER'" class="flex items-center">
-                        <WindowIcon class="mr-1 h-5 w-5" aria-hidden="true" />
-                        Browser
-                      </span>
-                      <span v-else-if="device.type == 'DESKTOP'" class="flex items-center">
-                        <ComputerDesktopIcon class="mr-1 h-5 w-5" aria-hidden="true" />
-                        Desktop
-                      </span>
-                      <span v-else-if="device.type == 'MOBILE'" class="flex items-center">
-                        <DevicePhoneMobileIcon class="mr-1 h-5 w-5" aria-hidden="true" />
-                        Mobile
-                      </span>
+                      {{ d(device.creationTime, 'long') }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {{ d(device.creationTime, 'short') }}
+                      <div v-if="device.lastAccessTime">
+                        {{ d(device.lastAccessTime, 'long') }}
+                      </div>
+                      <div v-if="device.lastIpAddress" class="text-xs text-gray-400">
+                        {{ device.lastIpAddress }}
+                      </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <a v-if="device.id != myDevice?.id" role="button" tabindex="0" class="text-red-600 hover:text-red-900" @click="removeDevice(device)">{{ t('common.remove') }}</a>
+                      <a v-if="device.id != myDevice?.id" tabindex="0" class="cursor-pointer text-red-600 hover:text-red-900" @click="removeDevice(device)">{{ t('common.remove') }}</a>
                     </td>
                   </tr>
                   <!-- TODO: good styling -->
@@ -90,11 +94,11 @@
 </template>
 
 <script setup lang="ts">
-import { ComputerDesktopIcon, DevicePhoneMobileIcon, WindowIcon } from '@heroicons/vue/24/solid';
-import { onMounted, ref } from 'vue';
+import { ComputerDesktopIcon, DevicePhoneMobileIcon, QuestionMarkCircleIcon, WindowIcon } from '@heroicons/vue/24/solid';
+import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { DeviceDto, NotFoundError, UserDto } from '../common/backend';
-import { BrowserKeys } from '../common/crypto';
+import userdata from '../common/userdata';
 import FetchError from './FetchError.vue';
 
 const { t, d } = useI18n({ useScope: 'global' });
@@ -106,64 +110,43 @@ const onRemoveDeviceError = ref< {[id: string]: Error} >({});
 
 onMounted(async () => {
   await fetchData();
-  await determineMyDevice();
 });
 
 async function fetchData() {
   onFetchError.value = null;
   try {
-    me.value = await backend.users.me(true);
+    me.value = await userdata.meWithLastAccess;
+    myDevice.value = await userdata.browser;
   } catch (error) {
     console.error('Retrieving device list failed.', error);
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
 }
 
-async function determineMyDevice() {
-  if (me.value == null) {
-    throw new Error('User not initialized.');
-  }
-  const browserKeys = await BrowserKeys.load(me.value.id);
-  const browserId = await browserKeys?.id();
-  myDevice.value = me.value.devices.find(d => d.id == browserId);
-}
-
-/*
- * Use existing device to authorize another device:
- */
-// async function validateDevice(device: DeviceDto) {
-//   if (!me.value || !me.value.publicKey) {
-//     throw new Error('User keys not initialized.');
-//   }
-//   /* decrypt user key on this browser: */
-//   const userPublicKey = crypto.subtle.importKey('spki', base64.parse(me.value.publicKey), UserKeys.KEY_DESIGNATION, false, []);
-//   const browserKeys = await BrowserKeys.load(me.value.id);
-//   const browserId = await browserKeys?.id();
-//   const browser = me.value.devices.find(d => d.id === browserId);
-//   if (!browser || !browser.userPrivateKey) {
-//     throw new Error('Browser not validated.');
-//   }
-//   const userKeys = await UserKeys.decryptOnBrowser(browser.userPrivateKey, browserKeys.keyPair.privateKey, await userPublicKey);
-
-//   /* encrypt user key for device */
-//   device.userPrivateKey = await userKeys.encryptForDevice(base64url.parse(device.publicKey));
-//   await backend.devices.putDevice(device);
-// }
-
 async function removeDevice(device: DeviceDto) {
   delete onRemoveDeviceError.value[device.id];
   try {
     await backend.devices.removeDevice(device.id);
+    userdata.reloadAccess();
   } catch (error) {
     console.error('Removing device failed.', error);
     if (error instanceof NotFoundError) {
       // if device is already missing in backend → ignore and proceed to then()
     } else {
-      let e = error instanceof Error ? error : new Error('Unknown Error');
+      const e = error instanceof Error ? error : new Error('Unknown Error');
       onRemoveDeviceError.value[device.id] = e;
       throw e;
     }
   }
   await fetchData(); // already handle errors
 }
+
+const sortedDevices = computed(() => {
+  return (me.value?.devices || []).slice().sort((a, b) => {
+    const aCreationTime = new Date(a.creationTime).getTime();
+    const bCreationTime = new Date(b.creationTime).getTime();
+    return bCreationTime - aCreationTime;
+  });
+});
+
 </script>

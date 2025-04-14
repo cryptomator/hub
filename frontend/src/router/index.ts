@@ -1,12 +1,13 @@
-import { createRouter, createWebHistory, RouteLocationRaw, RouteRecordRaw } from 'vue-router';
+import { createRouter, createWebHistory, NavigationGuardWithThis, RouteLocationRaw, RouteRecordRaw } from 'vue-router';
 import authPromise from '../common/auth';
 import backend from '../common/backend';
 import { baseURL } from '../common/config';
-import { BrowserKeys } from '../common/crypto';
+import userdata from '../common/userdata';
 import AdminSettings from '../components/AdminSettings.vue';
 import AuditLog from '../components/AuditLog.vue';
 import AuthenticatedMain from '../components/AuthenticatedMain.vue';
 import CreateVault from '../components/CreateVault.vue';
+import Forbidden from '../components/Forbidden.vue';
 import InitialSetup from '../components/InitialSetup.vue';
 import NotFound from '../components/NotFound.vue';
 import UnlockError from '../components/UnlockError.vue';
@@ -14,6 +15,20 @@ import UnlockSuccess from '../components/UnlockSuccess.vue';
 import UserProfile from '../components/UserProfile.vue';
 import VaultDetails from '../components/VaultDetails.vue';
 import VaultList from '../components/VaultList.vue';
+
+import i18n, { mapToLocale } from '../i18n';
+
+function checkRole(role: string): NavigationGuardWithThis<undefined> {
+  return async (to, _) => {
+    const auth = await authPromise;
+    if (auth.hasRole(role)) {
+      return true;
+    } else {
+      console.warn(`Access denied: User requires role ${role} to access ${to.fullPath}`);
+      return { path: '/app/forbidden', replace: true };
+    }
+  };
+}
 
 const routes: RouteRecordRaw[] = [
   {
@@ -52,12 +67,14 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'vaults/create',
         component: CreateVault,
-        props: () => ({ recover: false })
+        props: () => ({ recover: false }),
+        beforeEnter: checkRole('create-vaults'),
       },
       {
         path: 'vaults/recover',
         component: CreateVault,
-        props: () => ({ recover: true })
+        props: () => ({ recover: true }),
+        beforeEnter: checkRole('create-vaults'),
       },
       {
         path: 'vaults/:id',
@@ -70,10 +87,7 @@ const routes: RouteRecordRaw[] = [
       },
       {
         path: 'admin',
-        beforeEnter: async () => {
-          const auth = await authPromise;
-          return auth.isAdmin(); //TODO: reroute to NotFound Screen/ AccessDeniedScreen?
-        },
+        beforeEnter: checkRole('admin'),
         children: [
           {
             path: '',
@@ -114,6 +128,11 @@ const routes: RouteRecordRaw[] = [
     component: NotFound,
     meta: { skipAuth: true, skipSetup: true }
   },
+  {
+    path: '/app/forbidden',
+    component: Forbidden,
+    meta: { skipAuth: true, skipSetup: true }
+  },
 ];
 
 const router = createRouter({
@@ -149,8 +168,8 @@ router.beforeEach((to, from, next) => {
         await backend.users.putMe();
       }
     }).finally(() => {
-      delete to.query.sync_me; // remove sync_me query parameter to avoid endless recursion
-      next({ path: to.path, query: to.query, params: to.params, replace: true });
+      const { sync_me: _, ...remainingQuery } = to.query; // remove sync_me query parameter to avoid endless recursion
+      next({ path: to.path, query: remainingQuery, replace: true });
     });
   } else {
     next();
@@ -162,17 +181,27 @@ router.beforeEach(async (to) => {
   if (to.meta.skipSetup) {
     return;
   }
-  const me = await backend.users.me(true);
-  if (!me.publicKey) {
+  const me = await userdata.me;
+  if (!me.setupCode) {
     return { path: '/app/setup' };
   }
-  const browserKeys = await BrowserKeys.load(me.id);
+  const browserKeys = await userdata.browserKeys;
   if (!browserKeys) {
     return { path: '/app/setup' };
   }
-  const browserId = await browserKeys.id();
-  if (me.devices.find(d => d.id == browserId) == null) {
+  const browser = await userdata.browser;
+  if (!browser) {
     return { path: '/app/setup' };
+  }
+});
+
+// FOURTH apply user language
+router.beforeEach(async (to) => {
+  if (!to.meta.skipAuth) {
+    const me = await userdata.me;
+    if (me.language) {
+      i18n.global.locale.value = mapToLocale(me.language);
+    }
   }
 });
 

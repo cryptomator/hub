@@ -15,20 +15,20 @@
       </h2>
 
       <div class="flex gap-3">
-        <button role="button" class="w-full bg-primary py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="refreshData()">
+        <button class="w-full bg-primary py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="refreshData()">
           {{ t('common.refresh') }}
         </button>
 
         <Listbox v-model="selectedOrder" as="div">
           <div class="relative w-36">
-            <ListboxButton class="relative w-full rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary text-sm">
+            <ListboxButton class="relative w-full rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-xs focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary text-sm">
               <span class="block truncate">{{ orderOptions[selectedOrder].label }}</span>
               <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                 <ChevronUpDownIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
               </span>
             </ListboxButton>
             <transition leave-active-class="transition ease-in duration-100" leave-from-class="opacity-100" leave-to-class="opacity-0">
-              <ListboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none text-sm">
+              <ListboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-hidden text-sm">
                 <ListboxOption v-for="(option, key) in orderOptions" :key="key" v-slot="{ active, selected }" class="relative cursor-default select-none py-2 pl-3 pr-9 ui-not-active:text-gray-900 ui-active:text-white ui-active:bg-primary" :value="key">
                   <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ option.label }}</span>
                   <span v-if="selected" :class="[active ? 'text-white' : 'text-primary', 'absolute inset-y-0 right-0 flex items-center pr-4']">
@@ -41,32 +41,88 @@
         </Listbox>
 
         <PopoverGroup class="flex items-baseline space-x-8">
-          <Popover as="div" class="relative inline-block text-left">
-            <PopoverButton class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+          <Popover v-slot="{ close }" as="div" class="relative inline-block text-left">
+            <PopoverButton class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-xs text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary">
               <span>{{ t('auditLog.filter') }}</span>
               <ChevronDownIcon class="-mr-1 ml-2 h-5 w-5" aria-hidden="true" />
             </PopoverButton>
 
             <transition enter-active-class="transition ease-out duration-100" enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 scale-100" leave-to-class="transform opacity-0 scale-95">
-              <PopoverPanel class="absolute right-0 z-10 mt-2 origin-top-right rounded-md bg-white p-4 shadow-2xl ring-1 ring-black ring-opacity-5 focus:outline-none w-80">
+              <PopoverPanel class="absolute right-0 z-10 mt-2 origin-top-right rounded-md bg-white p-4 shadow-2xl ring-1 ring-black/5 focus:outline-hidden w-96">
                 <form class="space-y-4">
                   <div class="sm:grid sm:grid-cols-2 sm:items-center sm:gap-2">
                     <label for="filter-start-date" class="block text-sm font-medium text-gray-700">
                       {{ t('auditLog.filter.startDate') }}
                     </label>
-                    <input id="filter-start-date" v-model="startDateFilter" type="text" class="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': !startDateFilterIsValid }" placeholder="yyyy-MM-dd" />
+                    <input id="filter-start-date" v-model="startDateFilter" type="text" class="shadow-xs focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': !startDateFilterIsValid }" placeholder="yyyy-MM-dd" />
                   </div>
                   <div class="sm:grid sm:grid-cols-2 sm:items-center sm:gap-2">
                     <label for="filter-end-date" class="block text-sm font-medium text-gray-700">
                       {{ t('auditLog.filter.endDate') }}
                     </label>
-                    <input id="filter-end-date" v-model="endDateFilter" type="text" class="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': !endDateFilterIsValid }" placeholder="yyyy-MM-dd" />
+                    <input id="filter-end-date" v-model="endDateFilter" type="text" class="shadow-xs focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': !endDateFilterIsValid }" placeholder="yyyy-MM-dd" />
                   </div>
+                  <div class="sm:grid sm:grid-cols-2 sm:items-center sm:gap-2">
+                    <label class="block text-sm font-medium text-gray-700 flex items-center">
+                      {{ t('auditLog.type') }}
+                      <button 
+                        type="button" 
+                        class="ml-2 p-1 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-30 disabled:cursor-not-allowed"
+                        :disabled="selectedEventTypes.length === 0"
+                        :title="selectedEventTypes.length > 0 ? t('auditLog.filter.clerEventFilter') : ''"
+                        @click="selectedEventTypes = []"
+                      >
+                        <TrashIcon class="h-4 w-4 text-gray-500 hover:text-gray-700 disabled:text-gray-300" aria-hidden="true" />
+                      </button>
+                    </label>
+                  </div>
+                  <Listbox v-model="selectedEventTypes" as="div" multiple>
+                    <div class="relative w-88">
+                      <ListboxButton class="relative w-full rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary text-sm">
+                        <div class="flex flex-wrap gap-2">
+                          <template v-if="selectedEventTypes.length > 0">
+                            <button 
+                              v-for="type in selectedEventTypes" 
+                              :key="type"
+                              class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20"
+                              :aria-label="t('auditLog.filter.removeEventType', { type: eventTypeOptions[type] })"
+                              @click.stop="removeEventType(type)"
+                            >
+                              <span class="mr-1">{{ eventTypeOptions[type] }}</span>
+                              <span class="text-green-800 font-bold" aria-hidden="true">&times;</span>
+                            </button>
+                          </template>
+                          <template v-else>
+                            <span class="text-gray-500">{{ t('auditLog.filter.selectEventFilter') }}</span>
+                          </template>
+                        </div>
+                        <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                          <ChevronUpDownIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                        </span>
+                      </ListboxButton>
+                      <transition leave-active-class="transition ease-in duration-100" leave-from-class="opacity-100" leave-to-class="opacity-0">
+                        <ListboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-none text-sm">
+                          <ListboxOption 
+                            v-for="(label, key) in eventTypeOptions" 
+                            :key="key" 
+                            v-slot="{ selected }" 
+                            class="relative cursor-default select-none py-2 pl-3 pr-9 ui-not-active:text-gray-900 ui-active:text-white ui-active:bg-primary" 
+                            :value="key"
+                          >
+                            <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ label }}</span>
+                            <span v-if="selected" :class="['absolute inset-y-0 right-0 flex items-center pr-4', selected ? 'text-primary' : 'text-gray-400']">
+                              <CheckIcon class="h-5 w-5" aria-hidden="true" />
+                            </span>
+                          </ListboxOption>
+                        </ListboxOptions>
+                      </transition>
+                    </div>
+                  </Listbox>
                   <div class="flex flex-col sm:flex-row gap-2 pt-4 border-t border-gray-200">
-                    <button type="button" class="w-full border border-gray-300 rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50 disabled:hover:bg-white disabled:cursor-not-allowed" :disabled="filterIsReset" @click="resetFilter()">
+                    <button type="button" class="w-full border border-gray-300 rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50 disabled:hover:bg-white disabled:cursor-not-allowed" :disabled="filterIsReset" @click="resetFilter()">
                       {{ t('common.reset') }}
                     </button>
-                    <button type="button" class="w-full rounded-md bg-primary px-3 py-2 text-sm font-medium text-white shadow hover:bg-primary-d1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" :disabled="!filterIsValid" @click="applyFilter()">
+                    <button type="button" class="w-full rounded-md bg-primary px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-d1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" :disabled="!filterIsValid" @click="async () => { close(); await applyFilter(); }">
                       {{ t('common.apply') }}
                     </button>
                   </div>
@@ -81,7 +137,7 @@
     <div class="mt-5 flow-root">
       <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
         <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-          <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
+          <div class="overflow-hidden shadow-sm ring-1 ring-black/5 sm:rounded-lg">
             <table class="min-w-full divide-y divide-gray-300" aria-describedby="title">
               <thead class="bg-gray-50">
                 <tr>
@@ -101,16 +157,21 @@
                   <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">
                     <code>{{ auditEvent.timestamp.toLocaleString('sv') }}</code>
                   </td>
-                  <AuditLogDetailsDeviceRegister v-if="auditEvent.type == 'DEVICE_REGISTER'" :event="(auditEvent as AuditEventDeviceRegisterDto)" />
-                  <AuditLogDetailsDeviceRemove v-else-if="auditEvent.type == 'DEVICE_REMOVE'" :event="(auditEvent as AuditEventDeviceRemoveDto)" />
-                  <AuditLogDetailsVaultCreate v-else-if="auditEvent.type == 'VAULT_CREATE'" :event="(auditEvent as AuditEventVaultCreateDto)" />
-                  <AuditLogDetailsVaultUpdate v-else-if="auditEvent.type == 'VAULT_UPDATE'" :event="(auditEvent as AuditEventVaultUpdateDto)" />
-                  <AuditLogDetailsVaultAccessGrant v-else-if="auditEvent.type == 'VAULT_ACCESS_GRANT'" :event="(auditEvent as AuditEventVaultAccessGrantDto)" />
-                  <AuditLogDetailsVaultKeyRetrieve v-else-if="auditEvent.type == 'VAULT_KEY_RETRIEVE'" :event="(auditEvent as AuditEventVaultKeyRetrieveDto)" />
-                  <AuditLogDetailsVaultMemberAdd v-else-if="auditEvent.type == 'VAULT_MEMBER_ADD'" :event="(auditEvent as AuditEventVaultMemberAddDto)" />
-                  <AuditLogDetailsVaultMemberRemove v-else-if="auditEvent.type == 'VAULT_MEMBER_REMOVE'" :event="(auditEvent as AuditEventVaultMemberRemoveDto)" />
-                  <AuditLogDetailsVaultMemberUpdate v-else-if="auditEvent.type == 'VAULT_MEMBER_UPDATE'" :event="(auditEvent as AuditEventVaultMemberUpdateDto)" />
-                  <AuditLogDetailsVaultOwnershipClaim v-else-if="auditEvent.type == 'VAULT_OWNERSHIP_CLAIM'" :event="(auditEvent as AuditEventVaultOwnershipClaimDto)" />
+                  <AuditLogDetailsDeviceRegister v-if="auditEvent.type == 'DEVICE_REGISTER'" :event="auditEvent" />
+                  <AuditLogDetailsDeviceRemove v-else-if="auditEvent.type == 'DEVICE_REMOVE'" :event="auditEvent" />
+                  <AuditLogDetailsSettingWotUpdate v-else-if="auditEvent.type == 'SETTING_WOT_UPDATE'" :event="auditEvent" />
+                  <AuditLogDetailsSignedWotId v-else-if="auditEvent.type == 'SIGN_WOT_ID'" :event="auditEvent" />
+                  <AuditLogDetailsUserAccountReset v-else-if="auditEvent.type == 'USER_ACCOUNT_RESET'" :event="auditEvent" />
+                  <AuditLogUserKeysChange v-else-if="auditEvent.type == 'USER_KEYS_CHANGE'" :event="auditEvent" />
+                  <AuditLogUserSetupCodeChanged v-else-if="auditEvent.type == 'USER_SETUP_CODE_CHANGE'" :event="auditEvent" />
+                  <AuditLogDetailsVaultCreate v-else-if="auditEvent.type == 'VAULT_CREATE'" :event="auditEvent" />
+                  <AuditLogDetailsVaultUpdate v-else-if="auditEvent.type == 'VAULT_UPDATE'" :event="auditEvent" />
+                  <AuditLogDetailsVaultAccessGrant v-else-if="auditEvent.type == 'VAULT_ACCESS_GRANT'" :event="auditEvent" />
+                  <AuditLogDetailsVaultKeyRetrieve v-else-if="auditEvent.type == 'VAULT_KEY_RETRIEVE'" :event="auditEvent" />
+                  <AuditLogDetailsVaultMemberAdd v-else-if="auditEvent.type == 'VAULT_MEMBER_ADD'" :event="auditEvent" />
+                  <AuditLogDetailsVaultMemberRemove v-else-if="auditEvent.type == 'VAULT_MEMBER_REMOVE'" :event="auditEvent" />
+                  <AuditLogDetailsVaultMemberUpdate v-else-if="auditEvent.type == 'VAULT_MEMBER_UPDATE'" :event="auditEvent" />
+                  <AuditLogDetailsVaultOwnershipClaim v-else-if="auditEvent.type == 'VAULT_OWNERSHIP_CLAIM'" :event="auditEvent" />
                 </tr>
               </tbody>
               <tfoot class="bg-gray-50">
@@ -150,7 +211,7 @@
     <h3 class="mt-2 text-sm font-medium text-gray-900">{{ t('auditLog.paymentRequired.message') }}</h3>
     <p class="mt-1 text-sm text-gray-500">{{ t('auditLog.paymentRequired.description') }}</p>
     <router-link v-slot="{ navigate }" to="/app/admin/settings" custom>
-      <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary mt-6" @click="navigate()">
+      <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent shadow-xs text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary mt-6" @click="navigate()">
         <WrenchIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
         {{ t('auditLog.paymentRequired.openAdminSection') }}
       </button>
@@ -161,13 +222,16 @@
 <script setup lang="ts">
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions, Popover, PopoverButton, PopoverGroup, PopoverPanel } from '@headlessui/vue';
 import { ChevronDownIcon } from '@heroicons/vue/20/solid';
-import { CheckIcon, ChevronUpDownIcon, WrenchIcon } from '@heroicons/vue/24/solid';
+import { CheckIcon, ChevronUpDownIcon, TrashIcon, WrenchIcon } from '@heroicons/vue/24/solid';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import auditlog, { AuditEventDeviceRegisterDto, AuditEventDeviceRemoveDto, AuditEventDto, AuditEventVaultAccessGrantDto, AuditEventVaultCreateDto, AuditEventVaultKeyRetrieveDto, AuditEventVaultMemberAddDto, AuditEventVaultMemberRemoveDto, AuditEventVaultMemberUpdateDto, AuditEventVaultOwnershipClaimDto, AuditEventVaultUpdateDto } from '../common/auditlog';
+import auditlog, { AuditEventDto } from '../common/auditlog';
 import { PaymentRequiredError } from '../common/backend';
 import AuditLogDetailsDeviceRegister from './AuditLogDetailsDeviceRegister.vue';
 import AuditLogDetailsDeviceRemove from './AuditLogDetailsDeviceRemove.vue';
+import AuditLogDetailsSettingWotUpdate from './AuditLogDetailsSettingWotUpdate.vue';
+import AuditLogDetailsSignedWotId from './AuditLogDetailsSignedWotId.vue';
+import AuditLogDetailsUserAccountReset from './AuditLogDetailsUserAccountReset.vue';
 import AuditLogDetailsVaultAccessGrant from './AuditLogDetailsVaultAccessGrant.vue';
 import AuditLogDetailsVaultCreate from './AuditLogDetailsVaultCreate.vue';
 import AuditLogDetailsVaultKeyRetrieve from './AuditLogDetailsVaultKeyRetrieve.vue';
@@ -176,6 +240,8 @@ import AuditLogDetailsVaultMemberRemove from './AuditLogDetailsVaultMemberRemove
 import AuditLogDetailsVaultMemberUpdate from './AuditLogDetailsVaultMemberUpdate.vue';
 import AuditLogDetailsVaultOwnershipClaim from './AuditLogDetailsVaultOwnershipClaim.vue';
 import AuditLogDetailsVaultUpdate from './AuditLogDetailsVaultUpdate.vue';
+import AuditLogUserKeysChange from './AuditLogUserKeysChange.vue';
+import AuditLogUserSetupCodeChanged from './AuditLogUserSetupCodeChanged.vue';
 import FetchError from './FetchError.vue';
 
 enum State {
@@ -195,7 +261,11 @@ const startDateFilter = ref(startDate.value.toISOString().split('T')[0]);
 const endDate = ref(endOfDate(new Date()));
 const endDateFilter = ref(endDate.value.toISOString().split('T')[0]);
 
-const filterIsReset = computed(() => startDateFilter.value == startDate.value.toISOString().split('T')[0] && endDateFilter.value == endDate.value.toISOString().split('T')[0]);
+const filterIsReset = computed(() =>
+  startDateFilter.value == startDate.value.toISOString().split('T')[0] &&
+  endDateFilter.value == endDate.value.toISOString().split('T')[0] &&
+  selectedEventTypes.value.length == 0
+);
 const startDateFilterIsValid = computed(() => validateDateFilterValue(startDateFilter.value) != null);
 const endDateFilterIsValid = computed(() => {
   const endDate = validateDateFilterValue(endDateFilter.value);
@@ -225,6 +295,27 @@ const orderOptions = {
 };
 watch(selectedOrder, refreshData);
 
+const eventTypeOptions = Object.fromEntries(
+  Object.entries({
+    DEVICE_REGISTER: t('auditLog.details.device.register'),
+    DEVICE_REMOVE: t('auditLog.details.device.remove'),
+    SETTING_WOT_UPDATE: t('auditLog.details.setting.wot.update'),
+    SIGN_WOT_ID: t('auditLog.details.wot.signedIdentity'),
+    USER_ACCOUNT_RESET: t('auditLog.details.user.account.reset'),
+    USER_KEYS_CHANGE: t('auditLog.details.user.keys.change'),
+    USER_SETUP_CODE_CHANGE: t('auditLog.details.user.setupCode.change'),
+    VAULT_ACCESS_GRANT: t('auditLog.details.vaultAccess.grant'),
+    VAULT_CREATE: t('auditLog.details.vault.create'),
+    VAULT_KEY_RETRIEVE: t('auditLog.details.vaultKey.retrieve'),
+    VAULT_MEMBER_ADD: t('auditLog.details.vaultMember.add'),
+    VAULT_MEMBER_REMOVE: t('auditLog.details.vaultMember.remove'),
+    VAULT_MEMBER_UPDATE: t('auditLog.details.vaultMember.update'),
+    VAULT_OWNERSHIP_CLAIM: t('auditLog.details.vaultOwnership.claim'),
+    VAULT_UPDATE: t('auditLog.details.vault.update')
+  }).sort(([,valueA], [,valueB]) => valueA.localeCompare(valueB))
+);
+const selectedEventTypes = ref<string[]>([]);
+
 const currentPage = ref(0);
 const pageSize = ref(20);
 const paginationBegin = computed(() => auditEvents.value ? currentPage.value * pageSize.value + Math.min(1, auditEvents.value.length) : 0);
@@ -234,11 +325,15 @@ let lastIdOfPreviousPage = [Number.MAX_SAFE_INTEGER];
 
 onMounted(fetchData);
 
+watch(selectedEventTypes, (newSelection, oldSelection) => {
+  selectedEventTypes.value.sort((a, b) => eventTypeOptions[a].localeCompare(eventTypeOptions[b]));
+});
+
 async function fetchData(page: number = 0) {
   onFetchError.value = null;
   try {
     // Fetch one more event than the page size to determine if there is a next page
-    const events = await auditlog.service.getAllEvents(startDate.value, endDate.value, lastIdOfPreviousPage[page], selectedOrder.value, pageSize.value + 1);
+    const events = await auditlog.service.getAllEvents(startDate.value, endDate.value, selectedEventTypes.value, lastIdOfPreviousPage[page], selectedOrder.value, pageSize.value + 1);
     // If the lastIdOfPreviousPage for the first page has not been set yet, set it to an id "before"/"after" the first event
     if (page == 0 && lastIdOfPreviousPage[0] == 0 && events.length > 0) {
       lastIdOfPreviousPage[0] = events[0].id + orderOptions[selectedOrder.value].sign;
@@ -281,9 +376,14 @@ async function applyFilter() {
   }
 }
 
+function removeEventType(type: string): void {
+  selectedEventTypes.value = selectedEventTypes.value.filter(t => t !== type);
+}
+
 function resetFilter() {
   startDateFilter.value = startDate.value.toISOString().split('T')[0];
   endDateFilter.value = endDate.value.toISOString().split('T')[0];
+  selectedEventTypes.value = [];
 }
 
 function beginOfDate(date: Date): Date {

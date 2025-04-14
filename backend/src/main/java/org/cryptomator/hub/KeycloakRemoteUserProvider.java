@@ -5,6 +5,7 @@ import jakarta.inject.Inject;
 import org.cryptomator.hub.entities.Authority;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.representations.idm.GroupRepresentation;
@@ -15,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @ApplicationScoped
@@ -25,13 +25,14 @@ public class KeycloakRemoteUserProvider implements RemoteUserProvider {
 	static final int MAX_COUNT_PER_REQUEST = 5_000;
 
 	@Inject
-	SyncerConfig syncerConfig;
+	Keycloak keycloak;
+
+	@ConfigProperty(name = "hub.keycloak.realm")
+	String keycloakRealm;
 
 	@Override
 	public List<User> users() {
-		try (Keycloak keycloak = Keycloak.getInstance(syncerConfig.getKeycloakUrl(), syncerConfig.getKeycloakRealm(), syncerConfig.getUsername(), syncerConfig.getPassword(), syncerConfig.getKeycloakClientId())) {
-			return users(keycloak.realm(syncerConfig.getKeycloakRealm()));
-		}
+		return users(keycloak.realm(keycloakRealm));
 	}
 
 	//visible for testing
@@ -40,7 +41,7 @@ public class KeycloakRemoteUserProvider implements RemoteUserProvider {
 		List<User> currentRequestedUsers;
 
 		do {
-			currentRequestedUsers = realm.users().list(users.size(), MAX_COUNT_PER_REQUEST).stream().filter(notSyncerUser()).map(this::mapToUser).toList();
+			currentRequestedUsers = realm.users().list(users.size(), MAX_COUNT_PER_REQUEST).stream().map(this::mapToUser).toList();
 			users.addAll(currentRequestedUsers);
 		} while (currentRequestedUsers.size() == MAX_COUNT_PER_REQUEST);
 
@@ -62,16 +63,12 @@ public class KeycloakRemoteUserProvider implements RemoteUserProvider {
 		return Optional.of(mapToUser(clientUser));
 	}
 
-	private Predicate<UserRepresentation> notSyncerUser() {
-		return user -> !user.getUsername().equals(syncerConfig.getUsername());
-	}
-
 	private User mapToUser(UserRepresentation userRepresentation) {
 		var userEntity = new User();
-		userEntity.id = userRepresentation.getId();
-		userEntity.name = userRepresentation.getUsername();
-		userEntity.email = userRepresentation.getEmail();
-		parsePictureUrl(userRepresentation.getAttributes()).ifPresent(it -> userEntity.pictureUrl = it);
+		userEntity.setId(userRepresentation.getId());
+		userEntity.setName(userRepresentation.getUsername());
+		userEntity.setEmail(userRepresentation.getEmail());
+		parsePictureUrl(userRepresentation.getAttributes()).ifPresent(userEntity::setPictureUrl);
 		return userEntity;
 	}
 
@@ -85,9 +82,7 @@ public class KeycloakRemoteUserProvider implements RemoteUserProvider {
 
 	@Override
 	public List<Group> groups() {
-		try (Keycloak keycloak = Keycloak.getInstance(syncerConfig.getKeycloakUrl(), syncerConfig.getKeycloakRealm(), syncerConfig.getUsername(), syncerConfig.getPassword(), syncerConfig.getKeycloakClientId())) {
-			return groups(keycloak.realm(syncerConfig.getKeycloakRealm()));
-		}
+		return groups(keycloak.realm(keycloakRealm));
 	}
 
 	//visible for testing
@@ -96,9 +91,9 @@ public class KeycloakRemoteUserProvider implements RemoteUserProvider {
 			// TODO add sub groups and the members of the sub group to it too using `group.getSubGroups()` recursively
 			var members = deepCollectMembers(realm, group.getId());
 			var groupEntity = new Group();
-			groupEntity.id = group.getId();
-			groupEntity.name = group.getName();
-			groupEntity.members = members;
+			groupEntity.setId(group.getId());
+			groupEntity.setName(group.getName());
+			groupEntity.setMembers(members);
 			return groupEntity;
 		}).toList();
 	}
@@ -128,6 +123,6 @@ public class KeycloakRemoteUserProvider implements RemoteUserProvider {
 			members.addAll(currentRequestedMemebers);
 		} while (currentRequestedMemebers.size() == MAX_COUNT_PER_REQUEST);
 
-		return members.stream().filter(notSyncerUser()).map(this::mapToUser).collect(Collectors.toSet());
+		return members.stream().map(this::mapToUser).collect(Collectors.toSet());
 	}
 }

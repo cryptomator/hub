@@ -22,6 +22,23 @@
           <code class="text-xs" :class="{'text-gray-600': resolvedVault != null}">{{ event.vaultId }}</code>
         </dd>
       </div>
+      <div v-if="event.ipAddress != null" class="flex items-baseline gap-2">
+        <dt class="text-xs text-gray-500">
+          <code>ip address</code>
+        </dt>
+        <dd class="text-sm text-gray-900">
+          {{ event.ipAddress }}
+        </dd>
+      </div>
+      <div v-if="event.deviceId != null" class="flex items-baseline gap-2">
+        <dt class="text-xs text-gray-500">
+          <code>device</code>
+        </dt>
+        <dd class="flex items-baseline gap-2 text-sm text-gray-900">
+          <span v-if="resolvedDevice != null">{{ resolvedDevice.name }}</span>
+          <code class="text-xs" :class="{'text-gray-600': resolvedDevice != null}">{{ event.deviceId }}</code>
+        </dd>
+      </div>
       <div class="flex items-baseline gap-2">
         <dt class="text-xs text-gray-500">
           <code>result</code>
@@ -40,7 +57,7 @@
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auditlog, { AuditEventVaultKeyRetrieveDto } from '../common/auditlog';
-import { AuthorityDto, VaultDto } from '../common/backend';
+import { AuthorityDto, DeviceDto, VaultDto } from '../common/backend';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -50,9 +67,13 @@ const props = defineProps<{
 
 const resolvedRetrievedBy = ref<AuthorityDto>();
 const resolvedVault = ref<VaultDto>();
+const resolvedDevice = ref<DeviceDto>();
 
 onMounted(async () => {
   resolvedRetrievedBy.value = await auditlog.entityCache.getAuthority(props.event.retrievedBy);
   resolvedVault.value = await auditlog.entityCache.getVault(props.event.vaultId);
+  if (props.event.deviceId) {
+    resolvedDevice.value = await auditlog.entityCache.getDevice(props.event.deviceId);
+  }
 });
 </script>
