@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/cryptomator/hub/compare/1.3.4...HEAD)
+## [1.4.0](https://github.com/cryptomator/hub/compare/1.3.4...1.4.0)
 
 ### Added
 
@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Updated Keycloak to 26.1.4
+- Updated Keycloak to 26.1.5
 - Updated to Java 21 (#272)
 - Updated to Quarkus 3.15.4 LTS
 - Updated to Tailwind CSS 4
@@ -46,9 +46,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed incorrect `Content-Type` header for `/api/vaults/{vaultId}/access-token` (#284)
 - Show legacy device name in audit log (#331)
 - Added "Browser Language" option to language selection dropdown, enabling users to revert to browser default language (#324)
-- Reload device lists upon device removal
-- Added pointer cursor to device remove "button" text
-- Show device only when available in audit log vault key retrieve event
 
 ### Security
 
