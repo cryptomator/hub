@@ -122,6 +122,9 @@
   "createUserDialog.passwordsDontMatch": "Passwords do not match",
   "createUserDialog.picture": "Profile Picture",
 
+  "createGroupDialog.button":"Create Group",
+  "createGroupDialog.title": "Create New Group",
+
   "claimVaultOwnershipDialog.title": "Claim Vault Ownership",
   "claimVaultOwnershipDialog.description": "Type in the vault admin password to prove you have permissions to manage this vault.",
   "claimVaultOwnershipDialog.password": "Vault Admin Password",
