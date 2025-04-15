@@ -27,6 +27,7 @@
   "common.remove": "Remove",
   "common.reset": "Reset",
   "common.retry": "Retry",
+  "common.save":"Save",
   "common.share": "Share",
   "common.show": "Show",
   "common.unexpectedError": "Unexpected Error: {0}",
@@ -124,6 +125,13 @@
 
   "createGroupDialog.button":"Create Group",
   "createGroupDialog.title": "Create New Group",
+
+  "editGroupDialog.button":"Edit Group",
+  "editGroupDialog.title":"Edit Group",
+  "editGroupDialog.name":"Name",
+  "editGroupDialog.members.title":"Members",
+  "editGroupDialog.addMember":"Add Member",
+  "editGroupDialog.title":"",
 
   "claimVaultOwnershipDialog.title": "Claim Vault Ownership",
   "claimVaultOwnershipDialog.description": "Type in the vault admin password to prove you have permissions to manage this vault.",
