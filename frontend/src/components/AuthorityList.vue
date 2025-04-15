@@ -14,12 +14,18 @@
         {{ t('createUserDialog.button') }}
       </button>
     </div>
+    <div class="flex justify-end mb-4">
+      <button type="button" class="ml-auto bg-primary text-white text-sm font-medium px-4 py-2 rounded-md shadow-xs hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showCreateGroupDialog()">
+        {{ t('createGroupDialog.button') }}
+      </button>
+    </div>
   </div>
 
   <!-- Change components based on the active tab -->
   <UserList v-if="tab === 'users'" />
   <GroupList v-else />
   <UserCreateDialog ref="createUserDialog" />
+  <GroupCreateDialog ref="createGroupDialog" />
 </template>
 
 <script setup lang="ts">
@@ -28,12 +34,18 @@ import GroupList from './GroupList.vue';
 import UserList from './UserList.vue';
 import { useI18n } from 'vue-i18n';
 import UserCreateDialog from './UserCreateDialog.vue';
+import GroupCreateDialog from './GroupCreateDialog.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 
 const createUserDialog = ref<typeof UserCreateDialog>();
 function showCreateUserDialog() {
   createUserDialog.value?.show();
+}
+
+const createGroupDialog = ref<typeof GroupCreateDialog>();
+function showCreateGroupDialog() {
+  createGroupDialog.value?.show();
 }
 
 const tab = ref<'users' | 'groups'>('users');

@@ -153,8 +153,11 @@ const emailValidColor = computed(() => {
 function show() {
   open.value = true;
   name.value = '';
+  email.value = '';
   password.value = '';
+  confirmPassword.value = '';
   passwordStrength.value = '';
+  removePicture();
 }
 
 watch(password, (newVal) => {
