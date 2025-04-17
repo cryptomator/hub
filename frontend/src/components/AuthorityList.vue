@@ -1,64 +1,28 @@
 <template>
-  <h1 class="text-2xl font-bold text-gray-900 mb-4">User & Groups</h1>
+  <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl mb-4">
+    Users & Groups
+  </h2>
 
-  <!-- Tab Navigation -->
-  <div class="flex gap-4 border-b border-gray-200 mb-6">
+  <div class="flex gap-4 mb-2">
     <button :class="tab === 'users' ? activeClass : inactiveClass" @click="tab = 'users'">
       Users
     </button>
     <button :class="tab === 'groups' ? activeClass : inactiveClass" @click="tab = 'groups'">
       Groups
     </button>
-    <div class="flex justify-end mb-4">
-      <button type="button" class="ml-auto bg-primary text-white text-sm font-medium px-4 py-2 rounded-md shadow-xs hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showCreateUserDialog()">
-        {{ t('createUserDialog.button') }}
-      </button>
-    </div>
-    <div class="flex justify-end mb-4">
-      <button type="button" class="ml-auto bg-primary text-white text-sm font-medium px-4 py-2 rounded-md shadow-xs hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showCreateGroupDialog()">
-        {{ t('createGroupDialog.button') }}
-      </button>
-    </div>
-    <div class="flex justify-end mb-4">
-      <button type="button" class="ml-auto bg-primary text-white text-sm font-medium px-4 py-2 rounded-md shadow-xs hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showEditGroupDialog()">
-        {{ t('editGroupDialog.button') }}
-      </button>
-    </div>
   </div>
 
-  <!-- Change components based on the active tab -->
   <UserList v-if="tab === 'users'" />
   <GroupList v-else />
-  <UserCreateDialog ref="createUserDialog" />
-  <GroupCreateDialog ref="createGroupDialog" />
-  <GroupEditDialog ref="editGroupDialog" />
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import GroupList from './GroupList.vue';
 import UserList from './UserList.vue';
-import { useI18n } from 'vue-i18n';
-import UserCreateDialog from './UserCreateDialog.vue';
-import GroupCreateDialog from './GroupCreateDialog.vue';
-import GroupEditDialog from './GroupEditDialog.vue';
 
 const { t } = useI18n({ useScope: 'global' });
-
-const createUserDialog = ref<typeof UserCreateDialog>();
-function showCreateUserDialog() {
-  createUserDialog.value?.show();
-}
-
-const createGroupDialog = ref<typeof GroupCreateDialog>();
-function showCreateGroupDialog() {
-  createGroupDialog.value?.show();
-}
-
-const editGroupDialog = ref<typeof GroupEditDialog>();
-function showEditGroupDialog() {
-  editGroupDialog.value?.show();
-}
 
 const tab = ref<'users' | 'groups'>('users');
 

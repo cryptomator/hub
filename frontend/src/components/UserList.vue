@@ -5,45 +5,62 @@
     </div>
 
     <div v-else class="mt-4 flex flex-col">
+      <!-- Searchbar + Createbutton -->
+      <div class="flex flex-wrap sm:flex-nowrap justify-between items-center gap-3 mb-4">
+        <input v-model="query" type="text" :placeholder="t('userList.search.placeholder')" class="flex-1 focus:ring-primary focus:border-primary shadow-xs text-sm border-gray-300 rounded-md"/>
+        <button type="button" class="bg-primary text-white text-sm font-medium px-4 py-2 rounded-md shadow-xs hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showCreateUserDialog()">
+          {{ t('createUserDialog.button') }}
+        </button>
+      </div>
+      <div class="border-b border-gray-200 mb-6"></div>
       <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
         <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
           <div class="shadow-sm overflow-hidden border-b border-gray-200 sm:rounded-lg">
             <table class="min-w-full divide-y divide-gray-200" aria-describedby="userListTitle">
               <thead class="bg-gray-50">
                 <tr>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th class="px-6 py-3 w-1/3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     {{ t('userList.userName') }}
                   </th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                  <th class="px-6 py-3 w-1/6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                     {{ t('userList.groups.count') }}
                   </th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                  <th class="px-6 py-3 w-1/6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                     {{ t('userList.device.count') }}
                   </th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                  <th class="px-6 py-3 w-1/6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                     {{ t('userList.vaults.count') }}
                   </th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                  <th class="px-6 py-3 w-1/6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                     {{ t('userList.user.created') }}
                   </th>
-                  <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap"></th>
+                  <th class="px-3 py-3 w-1/6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap"></th>
                 </tr>
               </thead>
 
               <tbody class="bg-white divide-y divide-gray-200">
                 <template v-for="user in sortedUsers" :key="user.id">
                   <tr>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 flex items-center gap-3 w-auto">
-                      <img :src="user.avatarUrl" alt="Profilbild" class="w-10 h-10 rounded-full object-cover border border-gray-300"/>
-                      <span>{{ user.name }}</span>
-                    </td>                    
+                    <td class="px-6 py-4 text-sm font-medium text-gray-900">
+                      <div class="flex items-center gap-3 max-w-xs">
+                        <img :src="user.userPicture" alt="Profilbild" class="w-10 h-10 rounded-full object-cover border border-gray-300"/>
+                        <span class="truncate block" :title="user.name">{{ user.name }}</span>
+                      </div>
+                    </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.groups?.length ?? 0 }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.devices?.length ?? 0 }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.vaults?.length ?? 0 }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ d(new Date(user.creationTime), 'short') }}</td>
-                    <td class="px-12 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div class="flex justify-end gap-2">
-                        <button class="text-red-600 hover:text-red-900">Delete</button>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ d(new Date(user.creationTime), 'long') }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div class="flex justify-end gap-3">
+                        <button type="button" class="inline-flex items-center gap-2 px-2.5 py-1.5 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                          <PencilIcon class="h-4 w-4 text-gray-500" aria-hidden="true" />
+                          {{ t('userList.edit.user.button') }}
+                        </button>
+                        <button type="button" class="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showDeleteUserDialog(user)">
+                          <TrashIcon class="h-4 w-4 text-white" aria-hidden="true" />
+                          {{ t('userList.delete.user.button') }}
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -59,64 +76,100 @@
   <div v-else>
     <FetchError :error="onFetchError" :retry="fetchData" />
   </div>
+
+  <!-- Delete Dialog -->
+  <DeleteUserDialog v-if="deletingUser != null" ref="deleteUserDialog" :user="deletingUser" @close="deletingUser = null" @delete="onUserDeleted"/>
+  <UserCreateDialog ref="createUserDialog" />
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { PencilIcon, TrashIcon } from '@heroicons/vue/24/solid';
+import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import DeleteUserDialog from './DeleteUserDialog.vue';
 import FetchError from './FetchError.vue';
+import UserCreateDialog from './UserCreateDialog.vue';
 
-// Dummy data for demonstration purposes
 interface UserDto {
   id: string;
   name: string;
-  avatarUrl: string;
-  groups?: string[];
+  email: string;
+  userPicture?: string;
+  language?: string;
   devices?: { id: string }[];
+  groups?: string[];
   vaults?: { id: string }[];
+  accessibleVaults?: string[];
   creationTime: string;
+  type?: 'USER';
 }
 
 const { t, d } = useI18n({ useScope: 'global' });
 
 const users = ref<UserDto[]>([]);
 const onFetchError = ref<Error | null>(null);
+const deleteUserDialog = ref<typeof DeleteUserDialog>();
+const deletingUser = ref<UserDto | null>(null);
+const createUserDialog = ref<typeof UserCreateDialog>();
+const query = ref('');
+
+const showDeleteUserDialog = (user: UserDto) => {
+  deletingUser.value = user;
+  nextTick(() => deleteUserDialog.value?.show());
+};
+
+const onUserDeleted = (deletedUser: UserDto) => {
+  users.value = users.value.filter(u => u.id !== deletedUser.id);
+  deletingUser.value = null;
+};
+
+function showCreateUserDialog() {
+  createUserDialog.value?.show();
+}
 
 onMounted(() => {
   fetchData();
 });
 
-// Simulate an API call with Dummy Data to fetch users
 async function fetchData() {
   try {
     await new Promise((resolve) => setTimeout(resolve, 500));
     users.value = [
       {
         id: '1',
-        name: 'Anna Schmidt',
-        avatarUrl: 'https://i.pravatar.cc/150?u=anna',
+        name: 'Anna Marie Schmidtson',
+        email: 'anna@example.com',
+        userPicture: 'https://i.pravatar.cc/150?u=anna',
         groups: ['Admin', 'Support'],
         devices: [{ id: 'd1' }, { id: 'd2' }],
         vaults: [{ id: 'v1' }],
+        accessibleVaults: [],
         creationTime: '2023-05-01T10:00:00Z',
+        type: 'USER',
       },
       {
         id: '2',
-        name: 'Max Mustermann',
-        avatarUrl: 'https://i.pravatar.cc/150?u=max',
+        name: 'Abdelmajid Achhoud',
+        email: 'majid@example.com',
+        userPicture: 'https://i.pravatar.cc/150?u=majid',
         groups: [],
         devices: [{ id: 'd3' }],
         vaults: [{ id: 'v2' }, { id: 'v3' }],
+        accessibleVaults: [],
         creationTime: '2024-01-10T15:30:00Z',
+        type: 'USER',
       },
       {
-        id: '2',
-        name: 'Max Mustermann',
-        avatarUrl: 'https://i.pravatar.cc/150?u=max',
+        id: '3',
+        name: 'Dr. Alexander von der Heide',
+        email: 'dralex@example.com',
+        userPicture: 'https://i.pravatar.cc/150?u=alex',
         groups: [],
-        devices: [{ id: 'd3' }],
-        vaults: [{ id: 'v2' }, { id: 'v3' }],
-        creationTime: '2024-01-10T15:30:00Z',
+        devices: [{ id: 'd4' }],
+        vaults: [{ id: 'v4' }],
+        accessibleVaults: [],
+        creationTime: '2024-03-10T09:00:00Z',
+        type: 'USER',
       },
     ];
   } catch (error) {
@@ -124,7 +177,17 @@ async function fetchData() {
   }
 }
 
+const filteredUsers = computed(() =>
+  query.value === ''
+    ? users.value
+    : users.value.filter((u) =>
+      u.name.toLowerCase().includes(query.value.toLowerCase())
+    )
+);
+
 const sortedUsers = computed(() =>
-  users.value.slice().sort((a, b) => new Date(b.creationTime).getTime() - new Date(a.creationTime).getTime())
+  filteredUsers.value.slice().sort((a, b) =>
+    new Date(b.creationTime).getTime() - new Date(a.creationTime).getTime()
+  )
 );
 </script>
