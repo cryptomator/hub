@@ -126,12 +126,10 @@
   "createGroupDialog.button":"Create Group",
   "createGroupDialog.title": "Create New Group",
 
-  "editGroupDialog.button":"Edit Group",
   "editGroupDialog.title":"Edit Group",
   "editGroupDialog.name":"Name",
   "editGroupDialog.members.title":"Members",
   "editGroupDialog.addMember":"Add Member",
-  "editGroupDialog.title":"",
 
   "claimVaultOwnershipDialog.title": "Claim Vault Ownership",
   "claimVaultOwnershipDialog.description": "Type in the vault admin password to prove you have permissions to manage this vault.",
@@ -166,6 +164,14 @@
   "createVault.success.download": "Download zipped vault folder",
   "createVault.success.return": "Return to vault list",
 
+  "deleteGroupDialog.title": "Delete Group",
+  "deleteGroupDialog.description": "Are you sure you want to permanently delete this group? It will be removed from all associated vaults. This action cannot be undone.",
+  "deleteGroupDialog.confirm": "Yes, delete group",
+
+  "deleteUserDialog.title": "Delete User Account",
+  "deleteUserDialog.description": "Are you sure you want to permanently delete this user? All associated vaults and devices will be removed. This action cannot be undone.",
+  "deleteUserDialog.confirm": "Yes, delete user",
+
   "deviceList.empty.message": "No devices",
   "deviceList.empty.description": "To add a device, add a vault from this Hub to the Cryptomator app of the device and unlock it.",
   "deviceList.title": "Authorized Devices and Browsers",
@@ -191,9 +197,12 @@
   "grantPermissionDialog.description": "Share vault keys with newly added users.",
   "grantPermissionDialog.submit": "Grant Permission to {0} User(s)",
 
-  "groupList.title": "Name",
-  "groupList.members.count": "Members",
- 
+  "groupList.name": "Name",
+  "groupList.members.count": "Users",
+  "groupList.edit.group.button": "Edit",
+  "groupList.delete.group.button": "Delete",
+  "groupList.search.placeholder": "Search…",
+
   "trustDetails.trustLevel": "Trust Level {0}",
   "trustDetails.trustLevel.untrusted": "Unverified",
   "trustDetails.showSignDialogBtn": "Check Identity...",
@@ -286,11 +295,14 @@
   "userkeyFingerprint.description": "Your User Key Fingerprint can be used to verify your identity when updating the vault permission.",
 
   "userList.title": "Users",
+  "userList.edit.user.button": "Edit",
+  "userList.delete.user.button": "Delete",
   "userList.userName": "Name",
   "userList.groups.count": "Groups",
   "userList.device.count": "Devices",
   "userList.vaults.count": "Vaults",
   "userList.user.created": "Created on",
+  "userList.search.placeholder": "Search…",
 
   "userProfile.title": "Profile",
   "userProfile.actions.manageAccount": "Manage Account",

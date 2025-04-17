@@ -86,10 +86,9 @@
 
 <script setup lang="ts">
 import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
+import { EyeIcon, EyeSlashIcon, PlusIcon, TrashIcon, UserIcon } from '@heroicons/vue/24/outline';
 import { computed, ref, watch } from 'vue';
-import { useI18n } from 'vue-i18n';  
-import { PencilIcon, EyeIcon, EyeSlashIcon } from '@heroicons/vue/24/outline';
-import { UserIcon, PlusIcon, TrashIcon } from '@heroicons/vue/24/outline';
+import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n({ useScope: 'global' });  
 

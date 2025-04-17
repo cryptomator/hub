@@ -259,6 +259,12 @@ class DeviceService {
   }
 }
 
+class GroupService {
+  public async removeGroup(groupId: string): Promise<GroupDto> {
+    return axiosAuth.delete<GroupDto>(`/groups/${groupId}`).then(res => res.data);
+  }
+}
+
 class UserService {
   public async putMe(dto?: UserDto): Promise<void> {
     return axiosAuth.put('/users/me', dto);
@@ -271,6 +277,10 @@ class UserService {
   /** @deprecated since version 1.3.0, to be removed in https://github.com/cryptomator/hub/issues/333 */
   public async meWithLegacyDevicesAndAccess(): Promise<UserDto> {
     return axiosAuth.get<UserDto>('/users/me-with-legacy-devices-and-access').then(response => AuthorityService.fillInMissingPicture(response.data));
+  }
+
+  public async removeUser(userId: string): Promise<UserDto> {
+    return axiosAuth.delete(`/users/${userId}`).then(response => response.data);
   }
 
   public async resetMe(): Promise<void> {
@@ -410,7 +420,8 @@ const services = {
   billing: new BillingService(),
   version: new VersionService(),
   license: new LicenseService(),
-  settings: new SettingsService()
+  settings: new SettingsService(),
+  groups: new GroupService(),
 };
 
 export default services;
