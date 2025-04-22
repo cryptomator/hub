@@ -35,7 +35,7 @@
                     <td class="px-6 py-4 text-sm font-medium text-gray-900">
                       <div class="flex items-center gap-3 max-w-xs">
                         <img :src="group.groupPicture" alt="Gruppenbild" class="w-10 h-10 rounded-full object-cover border border-gray-300"/>
-                        <span class="truncate block" :title="group.name">{{ group.name }}</span>
+                        <button type="button" @click="router.push('authority/group/1')" class="truncate block hover:underline" :title="group.name"> {{ group.name }} </button>
                       </div>
                     </td>                
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ group.members?.length ?? 0 }}</td>
@@ -80,6 +80,9 @@ import GroupCreateDialog from './GroupCreateDialog.vue';
 import GroupEditDialog from './GroupEditDialog.vue';
 
 import FetchError from './FetchError.vue';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
 
 interface GroupDto {
   name: string;

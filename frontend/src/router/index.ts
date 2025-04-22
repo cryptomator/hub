@@ -66,6 +66,14 @@ const routes: RouteRecordRaw[] = [
         component: AuthorityList,
       },
       {
+        path: 'authority/user/1',
+        component: () => import('../components/UserDetail.vue'),
+      },
+      {
+        path: 'authority/group/1',
+        component: () => import('../components/GroupDetail.vue'),
+      },
+      {
         path: 'vaults',
         component: VaultList
       },
