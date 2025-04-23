@@ -41,10 +41,6 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ group.members?.length ?? 0 }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div class="flex justify-end gap-3">
-                        <button type="button" class="inline-flex items-center gap-2 px-2.5 py-1.5 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showEditGroupDialog()">
-                          <PencilIcon class="h-4 w-4 text-gray-500" aria-hidden="true" />
-                          {{ t('groupList.edit.group.button') }}
-                        </button>
                         <button type="button" class="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showDeleteDialog(group)">
                           <TrashIcon class="h-4 w-4 text-white" aria-hidden="true" />
                           {{ t('groupList.delete.group.button') }}
@@ -67,7 +63,6 @@
 
   <!-- Delete Dialog -->
   <DeleteGroupDialog v-if="deletingGroup != null" ref="deleteGroupDialog" :group="deletingGroup" @close="deletingGroup = null" @delete="onGroupDeleted"/>
-  <GroupEditDialog ref="editGroupDialog" />
   <GroupCreateDialog ref="createGroupDialog" />
 </template>
 
@@ -77,7 +72,6 @@ import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import DeleteGroupDialog from './DeleteGroupDialog.vue';
 import GroupCreateDialog from './GroupCreateDialog.vue';
-import GroupEditDialog from './GroupEditDialog.vue';
 
 import FetchError from './FetchError.vue';
 import { useRouter } from 'vue-router';
@@ -96,7 +90,6 @@ const groups = ref<GroupDto[]>([]);
 const onFetchError = ref<Error | null>(null);
 const deleteGroupDialog = ref<typeof DeleteGroupDialog>();
 const deletingGroup = ref<GroupDto | null>(null);
-const editGroupDialog = ref<typeof GroupEditDialog>();
 const createGroupDialog = ref<typeof GroupCreateDialog>();
 const query = ref('');
 
@@ -108,10 +101,6 @@ function showDeleteDialog(group: GroupDto) {
 function onGroupDeleted(deletedGroup: GroupDto) {
   groups.value = groups.value.filter(g => g.name !== deletedGroup.name);
   deletingGroup.value = null;
-}
-
-function showEditGroupDialog() {
-  editGroupDialog.value?.show();
 }
 
 function showCreateGroupDialog() {
