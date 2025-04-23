@@ -30,46 +30,6 @@
                       </label>
                       <input id="name" v-model="name" type="text" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm" required />
                     </div>
-                    <div class="mt-6">
-                      <h3 class="font-medium text-gray-900">
-                        {{ t('editGroupDialog.members.title') }}
-                      </h3>
-                      <ul class="mt-2 border-t border-b border-gray-200 divide-y divide-gray-200">
-                        <template v-for="member in groupMembers" :key="member.id">
-                          <li class="py-3 flex flex-col">
-                            <div class="flex justify-between items-center">
-                              <div class="flex items-center whitespace-nowrap w-full" :title="member.name">
-                                <img :src="member.pictureUrl" alt="" class="w-8 h-8 rounded-full" />
-                                <p class="w-full ml-4 text-sm font-medium text-gray-900 truncate">
-                                  {{ member.name }}
-                                </p>
-                              </div>
-                              <button type="button" class="ml-3 text-red-600 hover:text-red-800" @click="removeGroupMember(member.id)">
-                                {{ t('common.remove') }}
-                              </button>
-                            </div>
-                          </li>
-                        </template>
-                        <li class="py-2 flex flex-col">
-                          <div v-if="!addingUser" class="flex justify-between items-center">
-                            <button type="button" class="group -ml-1 bg-white p-1 rounded-md flex items-center focus:outline-hidden focus:ring-2 focus:ring-primary" @click="addingUser = true">
-                              <span class="w-8 h-8 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400">
-                                <PlusSmallIcon class="h-5 w-5" aria-hidden="true" />
-                              </span>
-                              <span class="ml-4 text-sm font-medium text-primary group-hover:text-primary-l1">
-                                {{ t('editGroupDialog.addMember') }}
-                              </span>
-                            </button>
-                          </div>
-                          <SearchInputGroup v-else :action-title="t('common.add')" :on-search="searchUser" @action="addUser" />
-                          <div v-if="onAddUserError" class="mt-1">
-                            <p class="text-sm text-red-900 text-right">
-                              {{ t('common.unexpectedError', [onAddUserError.message]) }}
-                            </p>
-                          </div>
-                        </li>
-                      </ul>
-                    </div>
                   </div>
                 </div>
                 <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
@@ -92,10 +52,8 @@
 <script setup lang="ts">
 import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import { PlusIcon, TrashIcon, UserIcon } from '@heroicons/vue/24/outline';
-import { PlusSmallIcon } from '@heroicons/vue/24/solid';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import SearchInputGroup from './SearchInputGroup.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -104,11 +62,6 @@ const name = ref('');
 const fileInputRef = ref<HTMLInputElement | null>(null);
 const selectedPicture = ref<File | null>(null);
 const previewUrl = ref<string | null>(null);
-
-type User = { id: string; name: string; pictureUrl: string };
-const groupMembers = ref<User[]>([]);
-const addingUser = ref(false);
-const onAddUserError = ref<Error | null>(null);
 
 function triggerFileSelect() {
   fileInputRef.value?.click();
@@ -148,18 +101,6 @@ async function fetchExampleData(): Promise<{ name: string; previewUrl: string }>
   });
 }
 
-async function fetchGroupMembersExample(): Promise<User[]> {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve([
-        { id: '1', name: 'Julian', pictureUrl: 'https://skymatic.de/img/team-julian.jpg' },
-        { id: '2', name: 'Armin', pictureUrl: 'https://skymatic.de/img/team-armin.jpg' },
-        { id: '3', name: 'Tobi', pictureUrl: 'https://skymatic.de/img/team-tobias.jpg' }
-      ]);
-    }, 300);
-  });
-}
-
 async function show() {
   name.value = '';
   removePicture();
@@ -167,7 +108,6 @@ async function show() {
   name.value = data.name;
   previewUrl.value = data.previewUrl;
   selectedPicture.value = new File(['NeuerInhalt'], 'neuedatei.jpg', { type: 'image/jpeg' });
-  groupMembers.value = await fetchGroupMembersExample();
   open.value = true;
 }
 
@@ -176,32 +116,8 @@ function onSubmit() {
     name: name.value,
     selectedPicture: selectedPicture.value,
     previewUrl: previewUrl.value,
-    groupMembers: groupMembers.value
   });
   open.value = false;
-}
-
-async function searchUser(query: string): Promise<User[]> {
-  if (query.trim().length === 0) return [];
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve([{ id: '4', name: 'Sebi', pictureUrl: 'https://skymatic.de/img/team-sebastian.jpg' }]);
-    }, 300);
-  });
-}
-
-async function addUser(user: User) {
-  onAddUserError.value = null;
-  try {
-    groupMembers.value.push(user);
-    addingUser.value = false;
-  } catch (error) {
-    onAddUserError.value = error instanceof Error ? error : new Error('Unknown Error');
-  }
-}
-
-function removeGroupMember(memberId: string) {
-  groupMembers.value = groupMembers.value.filter(member => member.id !== memberId);
 }
 
 defineExpose({
