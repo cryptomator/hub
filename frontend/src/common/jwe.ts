@@ -69,7 +69,6 @@ export const ECDH_P384: EcKeyImportParams | EcKeyGenParams = {
 // #region Recipients
 
 export abstract class Recipient {
-
   constructor(readonly kid: string) { };
 
   /**
@@ -130,11 +129,9 @@ export abstract class Recipient {
     }
     return new A256kwRecipient(kid, wrappingKey);
   }
-
 }
 
 class EcdhRecipient extends Recipient {
-
   constructor(readonly kid: string, private recipientKey: CryptoKey, private apu: Uint8Array = new Uint8Array(), private apv: Uint8Array = new Uint8Array()) {
     super(kid);
   }
@@ -157,7 +154,7 @@ class EcdhRecipient extends Recipient {
     return {
       header: header,
       encrypted_key: base64url.stringify(encryptedKey, { pad: false })
-    }
+    };
   }
 
   async decrypt(header: JWEHeader, encryptedKey: string): Promise<CryptoKey> {
@@ -197,11 +194,9 @@ class EcdhRecipient extends Recipient {
       throw new UnwrapKeyError(error);
     }
   }
-
 }
 
 class A256kwRecipient extends Recipient {
-
   constructor(readonly kid: string, private wrappingKey: CryptoKey) {
     super(kid);
   }
@@ -216,7 +211,7 @@ class A256kwRecipient extends Recipient {
     return {
       header: header,
       encrypted_key: base64url.stringify(encryptedKey, { pad: false })
-    }
+    };
   }
 
   async decrypt(header: JWEHeader, encryptedKey: string): Promise<CryptoKey> {
@@ -229,11 +224,9 @@ class A256kwRecipient extends Recipient {
       throw new UnwrapKeyError(error);
     }
   }
-
 }
 
 class Pbes2Recipient extends Recipient {
-
   constructor(readonly kid: string, private password: string, private iterations: number) {
     super(kid);
   }
@@ -252,7 +245,7 @@ class Pbes2Recipient extends Recipient {
     return {
       header: header,
       encrypted_key: base64url.stringify(encryptedKey, { pad: false })
-    }
+    };
   }
 
   async decrypt(header: JWEHeader, encryptedKey: string): Promise<CryptoKey> {
@@ -267,14 +260,12 @@ class Pbes2Recipient extends Recipient {
       throw new UnwrapKeyError(error);
     }
   }
-
 }
 
 // #endregion
 // #region JWE
 
 export class JWE {
-
   private constructor(private payload: object, private protectedHeader: JWEHeader) { }
 
   public static build(payload: object, protectedHeader: JWEHeader = {}): JWE {
@@ -300,7 +291,7 @@ export class JWE {
     let protectedHeader: JWEHeader = {
       ...this.protectedHeader,
       enc: 'A256GCM'
-    }
+    };
     const cek = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt']);
     const iv = crypto.getRandomValues(new Uint8Array(12));
     const perRecipientData = await Promise.all([recipient, ...moreRecipients].map(r => r.encrypt(cek, protectedHeader)));
@@ -312,7 +303,7 @@ export class JWE {
       };
     } else {
       protectedHeader.enc = perRecipientData[0].header.enc;
-      for (let key of Object.keys(protectedHeader)) {
+      for (const key of Object.keys(protectedHeader)) {
         perRecipientData.forEach(r => delete r.header[key]);
       }
     }
@@ -337,15 +328,12 @@ export class JWE {
     const encodedIv = base64url.stringify(iv, { pad: false });
     const encodedCiphertext = base64url.stringify(ciphertext, { pad: false });
     const encodedTag = base64url.stringify(tag, { pad: false });
-    return new EncryptedJWE(encodedProtectedHeader, perRecipientData, encodedIv, encodedCiphertext, encodedTag)
+    return new EncryptedJWE(encodedProtectedHeader, perRecipientData, encodedIv, encodedCiphertext, encodedTag);
   }
-
 }
-
 
 // visible for testing
 export class EncryptedJWE {
-
   constructor(private protectedHeader: string, private perRecipient: PerRecipientProperties[], private iv: string, private ciphertext: string, private tag: string) {
     if (perRecipient.length < 1) {
       throw new Error('Expected at least one recipient.');
@@ -385,7 +373,7 @@ export class EncryptedJWE {
       : this.perRecipientWithKid(recipient.kid);
     const combinedHeader: JWEHeader = { ...perRecipientData.header, ...protectedHeader };
     const cek = await recipient.decrypt(combinedHeader, perRecipientData.encrypted_key);
-    const ciphertext = base64url.parse(this.ciphertext, { loose: true })
+    const ciphertext = base64url.parse(this.ciphertext, { loose: true });
     const tag = base64url.parse(this.tag, { loose: true });
     const ciphertextAndTag = new Uint8Array([...ciphertext, ...tag]);
     const cleartext = new Uint8Array(await crypto.subtle.decrypt(
@@ -409,7 +397,6 @@ export class EncryptedJWE {
       throw new Error(`JWE does not contain recipient with kid: ${kid}`);
     }
   }
-
 }
 
 // #endregion
