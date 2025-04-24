@@ -333,7 +333,7 @@ export class VaultMetadata {
     const encodedSeeds: Record<string, string> = {};
     for (const [key, value] of this.seeds) {
       const seedId = stringifySeedId(key);
-      encodedSeeds[seedId] = base64url.stringify(value);
+      encodedSeeds[seedId] = base64url.stringify(value, { pad: false });
     }
     return {
       fileFormat: 'AES-256-GCM-32k',
@@ -342,7 +342,7 @@ export class VaultMetadata {
       initialSeed: stringifySeedId(this.initialSeedId),
       latestSeed: stringifySeedId(this.latestSeedId),
       kdf: 'HKDF-SHA512',
-      kdfSalt: base64url.stringify(this.kdfSalt),
+      kdfSalt: base64url.stringify(this.kdfSalt, { pad: false }),
       'org.cryptomator.automaticAccessGrant': this.automaticAccessGrant
     };
   }
@@ -395,7 +395,7 @@ export class UniversalVaultFormat implements AccessTokenProducing, VaultTemplate
   }
 
   /**
-   * Recovery the `vault.uvf` file using the recovery key. After recovery, all access tokens need to be re-issued.
+   * Recover the `vault.uvf` file using the recovery key. After recovery, all access tokens need to be re-issued.
    * @param uvfMetadataFile contents of the `vault.uvf` file
    * @param recoveryKey the vault's recovery key encoded into human-readable words
    * @returns The recovered vault
