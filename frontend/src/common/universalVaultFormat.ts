@@ -51,7 +51,7 @@ export class MemberKey {
 
   /**
    * Creates a new vault member key
-   * @param encodedKey base64-encoded raw 256 bit key (as retrieved from {@link AccessTokenPayload#foo})
+   * @param encodedKey base64-encoded raw 256 bit key (as retrieved from {@link AccessTokenPayload#key})
    * @returns new key
    */
   public static async load(encodedKey: string): Promise<MemberKey> {
@@ -295,12 +295,12 @@ export class VaultMetadata {
     const seeds = new Map<number, Uint8Array>();
     for (const key in payload.seeds) {
       const num = parseSeedId(key);
-      const value = base64.parse(payload.seeds[key], { loose: true });
+      const value = base64url.parse(payload.seeds[key], { loose: true });
       seeds.set(num, value);
     }
     const initialSeedId = parseSeedId(payload['initialSeed']);
     const latestSeedId = parseSeedId(payload['latestSeed']);
-    const kdfSalt = base64.parse(payload['kdfSalt'], { loose: true });
+    const kdfSalt = base64url.parse(payload['kdfSalt'], { loose: true });
     return new VaultMetadata(
       payload['org.cryptomator.automaticAccessGrant'],
       seeds,
@@ -333,7 +333,7 @@ export class VaultMetadata {
     const encodedSeeds: Record<string, string> = {};
     for (const [key, value] of this.seeds) {
       const seedId = stringifySeedId(key);
-      encodedSeeds[seedId] = base64.stringify(value);
+      encodedSeeds[seedId] = base64url.stringify(value);
     }
     return {
       fileFormat: 'AES-256-GCM-32k',
@@ -342,7 +342,7 @@ export class VaultMetadata {
       initialSeed: stringifySeedId(this.initialSeedId),
       latestSeed: stringifySeedId(this.latestSeedId),
       kdf: 'HKDF-SHA512',
-      kdfSalt: base64.stringify(this.kdfSalt),
+      kdfSalt: base64url.stringify(this.kdfSalt),
       'org.cryptomator.automaticAccessGrant': this.automaticAccessGrant
     };
   }
