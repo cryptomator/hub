@@ -75,40 +75,50 @@
     <!-- Users -->
     <section class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
       <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-        <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">
-          {{ t('group.detail.users') }}
-        </h3>
+        <div class="flex items-baseline gap-1">
+          <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+            {{ t('group.detail.members') }}
+          </h3>
+          <span class="text-xs text-gray-500">{{ group.users.length }}</span>
+        </div>
         <button class="inline-flex items-center gap-2 px-2.5 py-1.5 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="openAccessDialog">
-          <PencilIcon class="h-4 w-4 text-gray-500" aria-hidden="true" />
-          {{ t('group.detail.edit') }}
+          <PlusIcon class="h-4 w-4 text-gray-500" aria-hidden="true" />
+          {{ t('group.members.add') }}
         </button>
       </div>
+
+      <!-- Search bar -->
+      <div class="px-6 py-3 border-b border-gray-200">
+        <input id="memberSearch" v-model="userQuery" :placeholder="t('common.search.placeholder')" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs text-sm border-gray-300 rounded-md disabled:bg-gray-200" />
+      </div>
+
+      <!-- User table -->
       <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-300" aria-describedby="usersTitle">
           <tbody class="divide-y divide-gray-200 bg-white">
             <tr v-for="user in paginatedUsers" :key="user.id + user.name">
-              <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 flex items-center gap-3 sm:pl-6" >
+              <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 flex items-center gap-3 sm:pl-6">
                 <img :src="user.userPicture" class="w-8 h-8 rounded-full object-cover border border-gray-300" />
-                <span class="truncate"> 
-                  {{ user.name }}
-                </span>
+                <span class="truncate">{{ user.name }}</span>
               </td>
-              <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                <span v-if="user.role" class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20 capitalize">
-                  {{ user.role }}
-                </span>
-                <span v-else>&nbsp;</span>
+
+              <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+                <button type="button" class="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" :title="t('common.remove')" @click="showDeleteDialog(user)">
+                  <TrashIcon class="h-4 w-4 text-white" aria-hidden="true" />
+                  {{ t('common.remove') }}
+                </button>
               </td>
             </tr>
-            <tr v-if="!group.users.length">
-              <td colspan="2" class="py-4 px-4 text-sm text-center text-gray-500">
-                {{ t('common.none') }}
+            <tr v-if="!filteredUsers.length">
+              <td colspan="3" class="py-4 px-4 text-sm text-center text-gray-500">
+                {{ t(userQuery ? 'group.members.search.empty' : 'common.none') }}
               </td>
             </tr>
           </tbody>
-          <tfoot class="bg-gray-50" v-if="group.users.length">
+
+          <tfoot v-if="filteredUsers.length" class="bg-gray-50" >
             <tr>
-              <td colspan="2">
+              <td colspan="3">
                 <nav class="flex items-center justify-between px-4 py-3 sm:px-6" :aria-label="t('common.pagination')">
                   <div class="hidden sm:block">
                     <i18n-t keypath="auditLog.pagination.showing" scope="global" tag="p" class="text-sm text-gray-700">
@@ -133,16 +143,22 @@
     </section>
   </div>
 
+  <!-- Dialogs -->
   <GroupEditDialog ref="editGroupDialog" />
-  <GroupAccessDialog ref="accessGroupDialog" />
+  <GroupAddMemberDialog ref="addMemberDialog" :members="group.users" @saved="onMembersSaved" />
+  <GroupMemberRemoveDialog v-if="deletingGroupMember != null" ref="deleteGroupMemberDialog" :group="deletingGroupMember" @close="deletingGroupMember = null" @delete="onGroupMemberDeleted" />
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, nextTick, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { PencilIcon } from '@heroicons/vue/24/outline';
+import { PlusIcon } from '@heroicons/vue/20/solid';
+import { TrashIcon } from '@heroicons/vue/24/solid';
 import GroupEditDialog from './GroupEditDialog.vue';
-import GroupAccessDialog from './GroupAccessDialog.vue';
+import GroupAddMemberDialog from './GroupAddMemberDialog.vue';
+import GroupMemberRemoveDialog from './GroupMemberRemoveDialog.vue';
+import type { UserDto } from '../common/backend';
 
 interface User {
   id: string;
@@ -157,6 +173,9 @@ interface Vault {
   path: string;
 }
 
+const deleteGroupMemberDialog = ref<typeof GroupMemberRemoveDialog>();
+const deletingGroupMember     = ref<UserDto | null>(null);
+
 interface DetailGroup {
   id: string;
   name: string;
@@ -167,10 +186,17 @@ interface DetailGroup {
   description?: string;
 }
 
-const props = defineProps<{ id: string }>();
+function showDeleteDialog(u: UserDto) {
+  deletingGroupMember.value = u;
+  nextTick(() => deleteGroupMemberDialog.value?.show());
+}
+function onGroupMemberDeleted() {
+  deletingGroupMember.value = null;
+}
+
+const props  = defineProps<{ id: string }>();
 const { t, d } = useI18n({ useScope: 'global' });
 const editGroupDialog = ref<InstanceType<typeof GroupEditDialog> | null>(null);
-const accessGroupDialog = ref<InstanceType<typeof GroupAccessDialog> | null>(null);
 
 const group = ref<DetailGroup>({
   id: props.id,
@@ -180,32 +206,30 @@ const group = ref<DetailGroup>({
   description: 'Das Frontend-Team ist für die Entwicklung der Benutzeroberfläche verantwortlich.',
   users: [
     { id: '1', name: 'Anna Marie Schmidtson', userPicture: 'https://i.pravatar.cc/50?u=anna', role: 'admin' },
-    { id: '2', name: 'Abdelmajid Achhoud', userPicture: 'https://i.pravatar.cc/50?u=majid', role: 'admin' },
-    { id: '3', name: 'Dr. Alexander v. d. Heide', userPicture: 'https://i.pravatar.cc/50?u=alex', role: 'admin' },
-    { id: '4', name: 'Max Mustermann', userPicture: 'https://i.pravatar.cc/50?u=max', role: 'admin' },
-    { id: '5', name: 'Erika Mustermann', userPicture: 'https://i.pravatar.cc/50?u=erika', role: 'admin' },
-    { id: '6', name: 'John Doe', userPicture: 'https://i.pravatar.cc/50?u=john', role: 'admin' },
-    { id: '7', name: 'Jane Doe', userPicture: 'https://i.pravatar.cc/50?u=jane', role: 'admin' },
-    { id: '8', name: 'Abdelmajid Achhoud', userPicture: 'https://i.pravatar.cc/50?u=majid', role: 'admin' },
-    { id: '9', name: 'Dr. Alexander v. d. Heide', userPicture: 'https://i.pravatar.cc/50?u=alex', role: 'admin' },
-    { id: '10', name: 'Max Mustermann', userPicture: 'https://i.pravatar.cc/50?u=max', role: 'admin' },
-    { id: '11', name: 'Erika Mustermann', userPicture: 'https://i.pravatar.cc/50?u=erika', role: 'admin' },
-    { id: '12', name: 'John Doe', userPicture: 'https://i.pravatar.cc/50?u=john', role: 'admin' },
-    { id: '13', name: 'Jane Doe', userPicture: 'https://i.pravatar.cc/50?u=jane', role: 'admin' },
-    { id: '14', name: 'John Doe', userPicture: 'https://i.pravatar.cc/50?u=john', role: 'admin' },
-    { id: '15', name: 'Jane Doe', userPicture: 'https://i.pravatar.cc/50?u=jane', role: 'admin' },
-    { id: '16', name: 'John Doe', userPicture: 'https://i.pravatar.cc/50?u=john', role: 'admin' },
-    { id: '17', name: 'Jane Doe', userPicture: 'https://i.pravatar.cc/50?u=jane', role: 'admin' },
-    { id: '18', name: 'John Doe', userPicture: 'https://i.pravatar.cc/50?u=john', role: 'admin' },
-    { id: '19', name: 'Jane Doe', userPicture: 'https://i.pravatar.cc/50?u=jane', role: 'admin' },
-    { id: '20', name: 'John Doe', userPicture: 'https://i.pravatar.cc/50?u=john', role: 'admin' },
-    { id: '21', name: 'Jane Doe', userPicture: 'https://i.pravatar.cc/50?u=jane', role: 'admin' },
-    { id: '22', name: 'John Doe', userPicture: 'https://i.pravatar.cc/50?u=john', role: 'admin' },
-    { id: '23', name: 'Jane Doe', userPicture: 'https://i.pravatar.cc/50?u=jane', role: 'admin' },
-    { id: '24', name: 'John Doe', userPicture: 'https://i.pravatar.cc/50?u=john', role: 'admin' },
-    { id: '25', name: 'Jane Doe', userPicture: 'https://i.pravatar.cc/50?u=jane', role: 'admin' },
-    { id: '26', name: 'John Doe', userPicture: 'https://i.pravatar.cc/50?u=john', role: 'admin' },
-    { id: '27', name: 'Jane Doe', userPicture: 'https://i.pravatar.cc/50?u=jane', role: 'admin' },
+    { id: '2',  name: 'Liu Wei', userPicture: 'https://i.pravatar.cc/50?u=liuwei', role: 'admin' },
+    { id: '3',  name: 'Carlos Gómez', userPicture: 'https://i.pravatar.cc/50?u=carlosgomez', role: 'admin' },
+    { id: '4',  name: 'Fatima Al-Hassan', userPicture: 'https://i.pravatar.cc/50?u=fatimaalhassan', role: 'admin' },
+    { id: '5',  name: 'Giulia Rossi', userPicture: 'https://i.pravatar.cc/50?u=giuliarossi', role: 'admin' },
+    { id: '6',  name: 'Noah Johansson', userPicture: 'https://i.pravatar.cc/50?u=noahjohansson', role: 'admin' },
+    { id: '7',  name: 'Aisha Khan', userPicture: 'https://i.pravatar.cc/50?u=aishakhan', role: 'admin' },
+    { id: '8',  name: 'Hiroshi Tanaka', userPicture: 'https://i.pravatar.cc/50?u=hiroshitanaka', role: 'admin' },
+    { id: '9',  name: 'Elena Petrov', userPicture: 'https://i.pravatar.cc/50?u=elenapetrov', role: 'admin' },
+    { id: '10', name: 'Samuel Osei', userPicture: 'https://i.pravatar.cc/50?u=samuelosei', role: 'admin' },
+    { id: '11', name: 'Marie Dubois', userPicture: 'https://i.pravatar.cc/50?u=mariedubois', role: 'admin' },
+    { id: '12', name: 'Javier Morales', userPicture: 'https://i.pravatar.cc/50?u=javiermorales', role: 'admin' },
+    { id: '13', name: 'Sofia Almeida', userPicture: 'https://i.pravatar.cc/50?u=sofiaalmeida', role: 'admin' },
+    { id: '14', name: 'Chen Mei', userPicture: 'https://i.pravatar.cc/50?u=chenmei', role: 'admin' },
+    { id: '15', name: 'Michael O\'Connor', userPicture: 'https://i.pravatar.cc/50?u=michaeloconnor', role: 'admin' },
+    { id: '16', name: 'Zanele Dlamini', userPicture: 'https://i.pravatar.cc/50?u=zaneledlamini', role: 'admin' },
+    { id: '17', name: 'Anna Kovár', userPicture: 'https://i.pravatar.cc/50?u=annakovar', role: 'admin' },
+    { id: '18', name: 'Timur Iskanderov', userPicture: 'https://i.pravatar.cc/50?u=timuriskanderov', role: 'admin' },
+    { id: '19', name: 'Lara Müller', userPicture: 'https://i.pravatar.cc/50?u=laramuller', role: 'admin' },
+    { id: '20', name: 'Ahmed Nasser', userPicture: 'https://i.pravatar.cc/50?u=ahmednasser', role: 'admin' },
+    { id: '21', name: 'Isabella Costa', userPicture: 'https://i.pravatar.cc/50?u=isabellacosta', role: 'admin' },
+    { id: '22', name: 'Oliver Smith', userPicture: 'https://i.pravatar.cc/50?u=oliversmith', role: 'admin' },
+    { id: '23', name: 'Yuki Sato', userPicture: 'https://i.pravatar.cc/50?u=yukisato', role: 'admin' },
+    { id: '24', name: 'Priya Reddy', userPicture: 'https://i.pravatar.cc/50?u=priyareddy', role: 'admin' },
+    { id: '25', name: 'Juanita Rivera', userPicture: 'https://i.pravatar.cc/50?u=juanitarivera', role: 'admin' }
   ],
   vaults: [
     { id: 'v1', name: 'cryptobot-os', path: 'cryptomator/cryptobot-os.git' },
@@ -221,45 +245,51 @@ const group = ref<DetailGroup>({
 function openEditDialog() {
   editGroupDialog.value?.show();
 }
+const addMemberDialog = ref<InstanceType<typeof GroupAddMemberDialog> | null>(null);
 
 function openAccessDialog() {
-  accessGroupDialog.value?.show();
+  addMemberDialog.value?.show();
+}
+
+function onMembersSaved(newMembers: User[]) {
+  const ids = new Set(group.value.users.map(u => u.id));
+  newMembers.forEach(u => { if (!ids.has(u.id)) group.value.users.push(u); });
+  group.value.users.sort((a, b) => a.name.localeCompare(b.name, 'de', { sensitivity: 'base' }));
 }
 
 const loading = ref(false);
-const pageSize    = ref(10);
+const pageSize = ref(10);
 const currentPage = ref(0);
+const userQuery = ref('');
+
+const filteredUsers = computed(() => {
+  const q = userQuery.value.trim().toLowerCase();
+  return [...group.value.users]
+    .filter(u => !q || u.name.toLowerCase().includes(q))
+    .sort((a, b) => a.name.localeCompare(b.name, 'de', { sensitivity: 'base' }));
+});
 
 const paginatedUsers = computed(() =>
-  group.value.users.slice(
-    currentPage.value * pageSize.value,
-    currentPage.value * pageSize.value + pageSize.value,
-  ),
+  filteredUsers.value.slice(currentPage.value * pageSize.value,currentPage.value * pageSize.value + pageSize.value)
 );
 
 const hasNextPage = computed(
-  () => (currentPage.value + 1) * pageSize.value < group.value.users.length,
+  () => (currentPage.value + 1) * pageSize.value < filteredUsers.value.length,
 );
 
 const paginationBegin = computed(() =>
-  group.value.users.length ? currentPage.value * pageSize.value + 1 : 0,
+  filteredUsers.value.length ? currentPage.value * pageSize.value + 1 : 0,
 );
 const paginationEnd = computed(() =>
-  Math.min((currentPage.value + 1) * pageSize.value, group.value.users.length),
+  Math.min((currentPage.value + 1) * pageSize.value, filteredUsers.value.length),
 );
 
 function showNextPage() {
   if (hasNextPage.value) currentPage.value += 1;
 }
-
 function showPreviousPage() {
   if (currentPage.value > 0) currentPage.value -= 1;
 }
 
-watch(
-  () => group.value.users.length,
-  () => {
-    currentPage.value = 0;
-  },
-);
+watch(() => [filteredUsers.value.length, userQuery.value],() => (currentPage.value = 0));
 </script>

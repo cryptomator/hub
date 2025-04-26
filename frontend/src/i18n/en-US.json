@@ -19,6 +19,7 @@
   "common.hide": "Hide",
   "common.loading": "Loading…",
   "common.next": "Next",
+  "common.none": "None",
   "common.optional": "optional",
   "common.pagination": "Pagination",
   "common.previous": "Previous",
@@ -28,6 +29,7 @@
   "common.reset": "Reset",
   "common.retry": "Retry",
   "common.save":"Save",
+  "common.search.placeholder":"Search…",
   "common.share": "Share",
   "common.show": "Show",
   "common.unexpectedError": "Unexpected Error: {0}",
@@ -202,6 +204,14 @@
   "groupList.edit.group.button": "Edit",
   "groupList.delete.group.button": "Delete",
   "groupList.search.placeholder": "Search…",
+
+  "group.detail.members": "Members",
+  "group.members.add":"Add Members",
+  "group.members.search.empty": "Nothing found",
+
+  "group.member.remove.title" : "Remove Group Member",
+  "group.member.remove.description": "Are you sure you want to remove this group member?",
+  "group.member.remove.confirm": "Yes, remove member",
 
   "trustDetails.trustLevel": "Trust Level {0}",
   "trustDetails.trustLevel.untrusted": "Unverified",
