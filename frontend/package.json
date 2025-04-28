@@ -52,6 +52,7 @@
     "vue-tsc": "^2.2.8"
   },
   "dependencies": {
+    "@headlessui/tailwindcss": "^0.2.2",
     "@headlessui/vue": "^1.7.23",
     "@heroicons/vue": "^2.2.0",
     "axios": "^1.8.4",
