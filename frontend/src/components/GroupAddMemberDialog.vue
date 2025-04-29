@@ -30,8 +30,8 @@
                             <img :src="member.userPicture" class="w-8 h-8 rounded-full" />
                             <p class="ml-4 text-sm font-medium truncate">{{ member.name }}</p>
                           </div>
-                          <button type="button" class="ml-3 text-red-600 hover:text-red-800" @click="removeTempMember(member.id)">
-                            {{ t('common.remove') }}
+                          <button type="button" class="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" :title="t('common.remove')" @click="removeTempMember(member.id)">
+                            <TrashIcon class="h-4 w-4 text-white" aria-hidden="true" />
                           </button>
                         </div>
                       </li>
@@ -63,6 +63,7 @@ import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, Trans
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import SearchInputGroup from './SearchInputGroup.vue';
+import { TrashIcon } from '@heroicons/vue/24/solid';
 import { PlusSmallIcon } from '@heroicons/vue/24/solid';
 
 type User = { id: string; name: string; userPicture: string; role: string };
@@ -77,11 +78,7 @@ const newMembers = ref<User[]>([]);
 const onAddUserError = ref<Error | null>(null);  
 const selectedCount = computed(() => newMembers.value.length);
 
-const sortedNewMembers = computed(() =>
-  [...newMembers.value].sort((a, b) =>
-    a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
-  )
-);
+const sortedNewMembers = computed(() => [...newMembers.value].reverse());
 
 function isKnown(id: string) {
   return props.members.some(u => u.id === id);
