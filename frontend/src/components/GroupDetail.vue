@@ -11,15 +11,17 @@
           <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">
             {{ t('group.detail.info') }}
           </h3>
-          <button class="inline-flex items-center gap-2 px-2.5 py-1.5 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="openEditDialog">
+          <button
+            class="inline-flex items-center gap-2 px-2.5 py-1.5 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+            @click="openEditDialog">
             <PencilIcon class="h-4 w-4 text-gray-500" aria-hidden="true" />
-            {{ t('group.detail.edit') }}
+            {{ t('common.edit') }}
           </button>
         </div>
 
         <div class="px-6 py-6">
           <div class="flex gap-6 items-start mb-6">
-            <img :src="group.picture" alt="Group" class="w-20 h-20 rounded-full object-cover border border-gray-300"/>
+            <img :src="group.picture" alt="Group" class="w-20 h-20 rounded-full object-cover border border-gray-300" />
             <div>
               <h2 class="text-xl font-semibold text-gray-900">{{ group.name }}</h2>
               <p v-if="group.description" class="text-sm text-gray-500 mt-1 whitespace-pre-wrap">
@@ -34,20 +36,16 @@
               <dd class="text-sm text-gray-900 font-medium">{{ group.name }}</dd>
             </div>
             <div class="py-3 flex justify-between">
-              <dt class="text-sm text-gray-500">{{ t('group.detail.visibility') }}</dt>
-              <dd class="text-sm text-gray-900 font-medium">Private</dd>
-            </div>
-            <div class="py-3 flex justify-between">
-              <dt class="text-sm text-gray-500">{{ t('group.detail.createdOn') }}</dt>
-              <dd class="text-sm text-gray-900 font-medium">{{ d(group.createdAt, 'long') }}</dd>
-            </div>
-            <div class="py-3 flex justify-between">
               <dt class="text-sm text-gray-500">{{ t('group.detail.roles') }}</dt>
               <dd class="flex flex-wrap justify-end gap-2">
                 <span v-for="role in ['create-vault', 'admin']" :key="role" class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20 capitalize">
                   {{ role }}
                 </span>
               </dd>
+            </div>
+            <div class="py-3 flex justify-between">
+              <dt class="text-sm text-gray-500">{{ t('group.detail.createdOn') }}</dt>
+              <dd class="text-sm text-gray-900 font-medium">{{ d(group.createdAt, 'long') }}</dd>
             </div>
           </div>
         </div>
@@ -57,17 +55,46 @@
       <section class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
         <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
           <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">
-            {{ t('group.detail.vaults') }}
+            {{ t('nav.vaults') }}
           </h3>
         </div>
+
+        <!-- Search bar -->
+        <div class="px-6 py-3 border-b border-gray-200">
+          <input id="vaultSearch" v-model="vaultQuery" :placeholder="t('common.search.placeholder')" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs text-sm border-gray-300 rounded-md disabled:bg-gray-200" />
+        </div>
+
+        <!-- Vault list -->
         <div class="px-6 py-6">
           <ul class="divide-y divide-gray-100">
-            <li v-for="vault in group.vaults" :key="vault.id" class="py-2">
+            <li v-for="vault in paginatedVaults" :key="vault.id" class="py-2">
               <div class="text-sm font-medium text-primary truncate">{{ vault.name }}</div>
-              <div class="text-sm text-gray-500 truncate">{{ vault.path }}</div>
+              <div class="text-sm text-gray-500 truncate">{{ vault.description }}</div>
             </li>
-            <li v-if="!group.vaults?.length" class="text-sm text-gray-500">{{ t('common.none') }}</li>
+            <li v-if="!filteredVaults.length" class="text-sm text-gray-500">
+              {{ t(vaultQuery ? 'common.nothingFound' : 'common.none') }}
+            </li>
           </ul>
+        </div>
+
+        <!-- Pagination -->
+        <div v-if="filteredVaults.length" class="bg-gray-50 border-t border-gray-200">
+          <nav class="flex items-center justify-between px-4 py-3 sm:px-6" :aria-label="t('common.pagination')">
+            <div class="hidden sm:block">
+              <i18n-t keypath="auditLog.pagination.showing" scope="global" tag="p" class="text-sm text-gray-700">
+                <span class="font-medium">{{ paginationBeginVault }}</span>
+                <span class="font-medium">{{ paginationEndVault }}</span>
+              </i18n-t>
+            </div>
+            <div class="flex flex-1 justify-between sm:justify-end">
+              <button type="button" class="relative inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0 disabled:opacity-50 disabled:hover:bg-white disabled:cursor-not-allowed" :disabled="currentPageVault === 0" @click="showPreviousPageVault">
+                {{ t('common.previous') }}
+              </button>
+              <button type="button" class="relative ml-3 inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0 disabled:opacity-50 disabled:hover:bg-white disabled:cursor-not-allowed" :disabled="!hasNextPageVault" @click="showNextPageVault">
+                {{ t('common.next') }}
+              </button>
+            </div>
+          </nav>
         </div>
       </section>
     </div>
@@ -105,7 +132,6 @@
               <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                 <button type="button" class="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" :title="t('common.remove')" @click="showDeleteDialog(user)">
                   <TrashIcon class="h-4 w-4 text-white" aria-hidden="true" />
-                  {{ t('common.remove') }}
                 </button>
               </td>
             </tr>
@@ -116,7 +142,7 @@
             </tr>
           </tbody>
 
-          <tfoot v-if="filteredUsers.length" class="bg-gray-50" >
+          <tfoot v-if="filteredUsers.length" class="bg-gray-50">
             <tr>
               <td colspan="3">
                 <nav class="flex items-center justify-between px-4 py-3 sm:px-6" :aria-label="t('common.pagination')">
@@ -170,11 +196,11 @@ interface User {
 interface Vault {
   id: string;
   name: string;
-  path: string;
+  description: string;
 }
 
 const deleteGroupMemberDialog = ref<typeof GroupMemberRemoveDialog>();
-const deletingGroupMember     = ref<UserDto | null>(null);
+const deletingGroupMember = ref<UserDto | null>(null);
 
 interface DetailGroup {
   id: string;
@@ -194,7 +220,7 @@ function onGroupMemberDeleted() {
   deletingGroupMember.value = null;
 }
 
-const props  = defineProps<{ id: string }>();
+const props = defineProps<{ id: string }>();
 const { t, d } = useI18n({ useScope: 'global' });
 const editGroupDialog = ref<InstanceType<typeof GroupEditDialog> | null>(null);
 
@@ -206,14 +232,14 @@ const group = ref<DetailGroup>({
   description: 'Das Frontend-Team ist für die Entwicklung der Benutzeroberfläche verantwortlich.',
   users: [
     { id: '1', name: 'Anna Marie Schmidtson', userPicture: 'https://i.pravatar.cc/50?u=anna', role: 'admin' },
-    { id: '2',  name: 'Liu Wei', userPicture: 'https://i.pravatar.cc/50?u=liuwei', role: 'admin' },
-    { id: '3',  name: 'Carlos Gómez', userPicture: 'https://i.pravatar.cc/50?u=carlosgomez', role: 'admin' },
-    { id: '4',  name: 'Fatima Al-Hassan', userPicture: 'https://i.pravatar.cc/50?u=fatimaalhassan', role: 'admin' },
-    { id: '5',  name: 'Giulia Rossi', userPicture: 'https://i.pravatar.cc/50?u=giuliarossi', role: 'admin' },
-    { id: '6',  name: 'Noah Johansson', userPicture: 'https://i.pravatar.cc/50?u=noahjohansson', role: 'admin' },
-    { id: '7',  name: 'Aisha Khan', userPicture: 'https://i.pravatar.cc/50?u=aishakhan', role: 'admin' },
-    { id: '8',  name: 'Hiroshi Tanaka', userPicture: 'https://i.pravatar.cc/50?u=hiroshitanaka', role: 'admin' },
-    { id: '9',  name: 'Elena Petrov', userPicture: 'https://i.pravatar.cc/50?u=elenapetrov', role: 'admin' },
+    { id: '2', name: 'Liu Wei', userPicture: 'https://i.pravatar.cc/50?u=liuwei', role: 'admin' },
+    { id: '3', name: 'Carlos Gómez', userPicture: 'https://i.pravatar.cc/50?u=carlosgomez', role: 'admin' },
+    { id: '4', name: 'Fatima Al-Hassan', userPicture: 'https://i.pravatar.cc/50?u=fatimaalhassan', role: 'admin' },
+    { id: '5', name: 'Giulia Rossi', userPicture: 'https://i.pravatar.cc/50?u=giuliarossi', role: 'admin' },
+    { id: '6', name: 'Noah Johansson', userPicture: 'https://i.pravatar.cc/50?u=noahjohansson', role: 'admin' },
+    { id: '7', name: 'Aisha Khan', userPicture: 'https://i.pravatar.cc/50?u=aishakhan', role: 'admin' },
+    { id: '8', name: 'Hiroshi Tanaka', userPicture: 'https://i.pravatar.cc/50?u=hiroshitanaka', role: 'admin' },
+    { id: '9', name: 'Elena Petrov', userPicture: 'https://i.pravatar.cc/50?u=elenapetrov', role: 'admin' },
     { id: '10', name: 'Samuel Osei', userPicture: 'https://i.pravatar.cc/50?u=samuelosei', role: 'admin' },
     { id: '11', name: 'Marie Dubois', userPicture: 'https://i.pravatar.cc/50?u=mariedubois', role: 'admin' },
     { id: '12', name: 'Javier Morales', userPicture: 'https://i.pravatar.cc/50?u=javiermorales', role: 'admin' },
@@ -232,13 +258,12 @@ const group = ref<DetailGroup>({
     { id: '25', name: 'Juanita Rivera', userPicture: 'https://i.pravatar.cc/50?u=juanitarivera', role: 'admin' }
   ],
   vaults: [
-    { id: 'v1', name: 'cryptobot-os', path: 'cryptomator/cryptobot-os.git' },
-    { id: 'v2', name: 'ios', path: 'cryptomator/ios.git' },
-    { id: 'v2', name: 'ios', path: 'cryptomator/ios.git' },
-    { id: 'v3', name: 'android', path: 'cryptomator/android.git' },
-    { id: 'v4', name: 'web', path: 'cryptomator/web.git' },
-    { id: 'v5', name: 'desktop', path: 'cryptomator/desktop.git' },
-    { id: 'v6', name: 'vaults', path: 'cryptomator/vaults.git' },
+    { id: 'v1', name: 'HR', description: '...' },
+    { id: 'v2', name: 'Finances', description: '...' },
+    { id: 'v2', name: 'Products', description: '...' },
+    { id: 'v3', name: 'Tax', description: '...' },
+    { id: 'v4', name: 'Orga', description: '...' },
+    { id: 'v5', name: 'Sales', description: '...' },
   ]
 });
 
@@ -258,6 +283,8 @@ function onMembersSaved(newMembers: User[]) {
 }
 
 const loading = ref(false);
+
+// --- USERS pagination & search ------------------------------------------------
 const pageSize = ref(10);
 const currentPage = ref(0);
 const userQuery = ref('');
@@ -270,7 +297,7 @@ const filteredUsers = computed(() => {
 });
 
 const paginatedUsers = computed(() =>
-  filteredUsers.value.slice(currentPage.value * pageSize.value,currentPage.value * pageSize.value + pageSize.value)
+  filteredUsers.value.slice(currentPage.value * pageSize.value, currentPage.value * pageSize.value + pageSize.value)
 );
 
 const hasNextPage = computed(
@@ -291,5 +318,46 @@ function showPreviousPage() {
   if (currentPage.value > 0) currentPage.value -= 1;
 }
 
-watch(() => [filteredUsers.value.length, userQuery.value],() => (currentPage.value = 0));
+watch(() => [filteredUsers.value.length, userQuery.value], () => (currentPage.value = 0));
+
+// --- VAULTS pagination & search ----------------------------------------------
+const pageSizeVault = ref(10);
+const currentPageVault = ref(0);
+const vaultQuery = ref('');
+
+const filteredVaults = computed(() => {
+  const q = vaultQuery.value.trim().toLowerCase();
+  return [...group.value.vaults]
+    .filter(v => {
+      if (!q) return true;
+      const nameMatch = v.name.toLowerCase().includes(q);
+      const descMatch = v.description ? v.description.toLowerCase().includes(q) : false;
+      return nameMatch || descMatch;
+    })
+    .sort((a, b) => a.name.localeCompare(b.name, 'de', { sensitivity: 'base' }));
+});
+
+const paginatedVaults = computed(() =>
+  filteredVaults.value.slice(currentPageVault.value * pageSizeVault.value, currentPageVault.value * pageSizeVault.value + pageSizeVault.value)
+);
+
+const hasNextPageVault = computed(() =>
+  (currentPageVault.value + 1) * pageSizeVault.value < filteredVaults.value.length,
+);
+
+const paginationBeginVault = computed(() =>
+  filteredVaults.value.length ? currentPageVault.value * pageSizeVault.value + 1 : 0,
+);
+const paginationEndVault = computed(() =>
+  Math.min((currentPageVault.value + 1) * pageSizeVault.value, filteredVaults.value.length),
+);
+
+function showNextPageVault() {
+  if (hasNextPageVault.value) currentPageVault.value += 1;
+}
+function showPreviousPageVault() {
+  if (currentPageVault.value > 0) currentPageVault.value -= 1;
+}
+
+watch(() => [filteredVaults.value.length, vaultQuery.value], () => (currentPageVault.value = 0));
 </script>
