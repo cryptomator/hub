@@ -16,10 +16,12 @@
   "common.copy": "Copy",
   "common.create": "Create",
   "common.download": "Download",
+  "common.edit": "Edit",
   "common.hide": "Hide",
   "common.loading": "Loading…",
   "common.next": "Next",
   "common.none": "None",
+  "common.nothingFound": "Nothing found",
   "common.optional": "optional",
   "common.pagination": "Pagination",
   "common.previous": "Previous",
@@ -206,6 +208,10 @@
   "groupList.search.placeholder": "Search…",
 
   "group.detail.members": "Members",
+  "group.detail.name": "Name",
+  "group.detail.createdOn": "Created on",
+  "group.detail.info": "Group",
+  "group.detail.roles": "Roles",
   "group.members.add":"Add Members",
   "group.members.search.empty": "Nothing found",
 
