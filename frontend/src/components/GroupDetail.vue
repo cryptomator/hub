@@ -11,9 +11,7 @@
           <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">
             {{ t('group.detail.info') }}
           </h3>
-          <button
-            class="inline-flex items-center gap-2 px-2.5 py-1.5 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-            @click="router.push('1/edit')">
+          <button class="inline-flex items-center gap-2 px-2.5 py-1.5 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="openEditDialog">
             <PencilIcon class="h-4 w-4 text-gray-500" aria-hidden="true" />
             {{ t('common.edit') }}
           </button>
@@ -28,6 +26,10 @@
             <div class="py-3 flex justify-between">
               <dt class="text-sm text-gray-500">{{ t('group.detail.name') }}</dt>
               <dd class="text-sm text-gray-900 font-medium">{{ group.name }}</dd>
+            </div>
+            <div class="py-3 flex justify-between">
+              <dt class="text-sm text-gray-500">{{ t('group.detail.createdOn') }}</dt>
+              <dd class="text-sm text-gray-900 font-medium">{{ d(group.createdAt, 'long') }}</dd>
             </div>
             <div class="py-3 flex justify-between">
               <dt class="text-sm text-gray-500">{{ t('group.detail.roles') }}</dt>
@@ -170,18 +172,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, watch } from 'vue';
-import { useI18n } from 'vue-i18n';
-import { PencilIcon } from '@heroicons/vue/24/outline';
 import { PlusIcon } from '@heroicons/vue/20/solid';
+import { PencilIcon } from '@heroicons/vue/24/outline';
 import { TrashIcon } from '@heroicons/vue/24/solid';
-import GroupEditDialog from './GroupEditDialog.vue';
-import GroupAddMemberDialog from './GroupAddMemberDialog.vue';
-import GroupMemberRemoveDialog from './GroupMemberRemoveDialog.vue';
+import { computed, nextTick, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import type { UserDto } from '../common/backend';
-import { useRouter } from 'vue-router';
-
-const router = useRouter();
+import GroupAddMemberDialog from './GroupAddMemberDialog.vue';
+import GroupEditDialog from './GroupEditDialog.vue';
+import GroupMemberRemoveDialog from './GroupMemberRemoveDialog.vue';
 
 interface User {
   id: string;

@@ -70,6 +70,11 @@ const routes: RouteRecordRaw[] = [
         component: () => import('../components/UserDetail.vue'),
       },
       {
+        path: 'authority/user/:id/edit',
+        component: () => import('../components/UserEdit.vue'),
+        props: true,
+      },
+      {
         path: 'authority/group/1',
         component: () => import('../components/GroupDetail.vue'),
       },
