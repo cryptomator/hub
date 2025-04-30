@@ -202,6 +202,15 @@
   "grantPermissionDialog.description": "Share vault keys with newly added users.",
   "grantPermissionDialog.submit": "Grant Permission to {0} User(s)",
 
+  "group.detail.info": "Group Details",
+  "group.detail.members": "Members",
+  "group.detail.vaults": "Vaults",
+  "group.detail.edit": "Edit Group",
+  "group.detail.add.member": "Add Member",
+  "group.detail.name": "Name:",
+  "group.detail.createdOn": "Created on:",
+  "group.detail.roles": "Roles:",
+
   "groupList.name": "Name",
   "groupList.members.count": "Users",
   "groupList.edit.group.button": "Edit",
@@ -209,10 +218,6 @@
   "groupList.search.placeholder": "Search…",
 
   "group.detail.members": "Members",
-  "group.detail.name": "Name",
-  "group.detail.createdOn": "Created on",
-  "group.detail.info": "Group",
-  "group.detail.roles": "Roles",
   "group.members.add":"Add Members",
   "group.members.search.empty": "Nothing found",
 
@@ -319,6 +324,24 @@
 
   "userkeyFingerprint.title": "User Key Fingerprint",
   "userkeyFingerprint.description": "Your User Key Fingerprint can be used to verify your identity when updating the vault permission.",
+
+  "user.detail.info": "User Details",
+  "user.detail.groups": "Groups",
+  "user.detail.devices": "Devices",
+  "user.detail.name": "Name:",
+  "user.detail.email": "Email:",
+  "user.detail.username": "Username:",
+  "user.detail.roles": "Roles:",
+
+  "user.edit.firstName": "First Name",
+  "user.edit.lastName": "Last Name",
+  "user.edit.username": "Username",
+  "user.edit.email": "Email",
+  "user.edit.roles": "Roles",
+  "user.edit.selectRolesPlaceholder": "Select role(s)",
+  "user.edit.password": "Password",
+  "user.edit.passwordRepeat": "Repeat Password",
+  "user.edit.passwordInfo": "This is a temporary password. The user must change it on first login.",
 
   "userList.title": "Users",
   "userList.edit.user.button": "Edit",
