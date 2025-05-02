@@ -79,10 +79,11 @@ function show() {
 
 async function archiveVault() {
   onArchiveVaultError.value = null;
-  const v = props.vault;
+  const dto = { ...props.vault };
+  dto.archived = true;
   try {
-    const vaultDto = await backend.vaults.createOrUpdateVault(v.id, v.name, true, v.description);
-    emit('archived', vaultDto);
+    const updatedVault = await backend.vaults.createOrUpdateVault(dto);
+    emit('archived', updatedVault);
     open.value = false;
   } catch (error) {
     console.error('Archiving vault failed.', error);

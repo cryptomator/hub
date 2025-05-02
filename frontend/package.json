@@ -15,14 +15,14 @@
     "serve": "vite preview",
     "dist": "vue-tsc --noEmit && vite build --sourcemap --outDir=\"../backend/src/main/resources/META-INF/resources\" --emptyOutDir"
   },
-  "directories": {
-    "src": "./src",
-    "test": "./test"
-  },
   "mocha": {
     "loader": "ts-node/esm",
     "spec": "test/**/*.spec.ts",
     "timeout": 60000
+  },
+  "directories": {
+    "src": "./src",
+    "test": "./test"
   },
   "devDependencies": {
     "@intlify/devtools-types": "^11.1.3",

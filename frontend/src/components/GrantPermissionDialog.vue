@@ -69,8 +69,8 @@ import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
 import { base64 } from 'rfc4648';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { AccessGrant, ConflictError, NotFoundError, TrustDto, UserDto, VaultDto } from '../common/backend';
-import { VaultKeys } from '../common/crypto';
+import backend, { AccessGrant, ConflictError, MemberDto, NotFoundError, TrustDto, UserDto, VaultDto } from '../common/backend';
+import { AccessTokenProducing } from '../common/crypto';
 import TrustDetails from './TrustDetails.vue';
 
 const { t } = useI18n({ useScope: 'global' });
@@ -81,8 +81,8 @@ const onGrantPermissionError = ref<Error | null>();
 
 const props = defineProps<{
   vault: VaultDto
-  users: UserDto[]
-  vaultKeys: VaultKeys
+  users: (MemberDto & UserDto)[]
+  vaultKeys: AccessTokenProducing
 }>();
 
 const emit = defineEmits<{
@@ -120,13 +120,14 @@ async function grantAccess() {
   }
 }
 
-async function giveUsersAccess(users: UserDto[]) {
+async function giveUsersAccess(members: (MemberDto & UserDto)[]) {
   const tokens: AccessGrant[] = [];
-  for (const user of users) {
-    if (user.ecdhPublicKey) { // some users might not have set up their key pair, so we can't share secrets with them yet
-      const publicKey = base64.parse(user.ecdhPublicKey);
-      const jwe = await props.vaultKeys.encryptForUser(publicKey);
-      tokens.push({ userId: user.id, token: jwe });
+  for (const member of members) {
+    if (member.ecdhPublicKey) { // some users might not have set up their key pair, so we can't share secrets with them yet
+      const publicKey = base64.parse(member.ecdhPublicKey);
+      const includeOwnerKeys = member.role === 'OWNER';
+      const jwe = await props.vaultKeys.encryptForUser(publicKey, includeOwnerKeys);
+      tokens.push({ userId: member.id, token: jwe });
     }
   }
   await backend.vaults.grantAccess(props.vault.id, ...tokens);

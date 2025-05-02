@@ -62,7 +62,8 @@ import { KeyIcon } from '@heroicons/vue/24/outline';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { VaultDto } from '../common/backend';
-import { UnwrapKeyError, VaultKeys } from '../common/crypto';
+import { UnwrapKeyError } from '../common/crypto';
+import { VaultFormat8 } from '../common/vaultFormat8';
 
 class FormValidationFailedError extends Error {
   constructor() {
@@ -85,7 +86,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   close: []
-  action: [vaultKeys: VaultKeys, ownerSigningKey: CryptoKeyPair]
+  action: [vaultKeys: VaultFormat8, ownerSigningKey: CryptoKeyPair]
 }>();
 
 defineExpose({
@@ -103,7 +104,7 @@ async function authenticateVaultAdmin() {
       throw new FormValidationFailedError();
     }
     if (props.vault.masterkey && props.vault.authPrivateKey && props.vault.authPublicKey && props.vault.salt && props.vault.iterations) {
-      const [vaultKeys, ownerKeyPair] = await VaultKeys.decryptWithAdminPassword(password.value, props.vault.masterkey, props.vault.authPrivateKey, props.vault.authPublicKey, props.vault.salt, props.vault.iterations);
+      const [vaultKeys, ownerKeyPair] = await VaultFormat8.decryptWithAdminPassword(password.value, props.vault.masterkey, props.vault.authPrivateKey, props.vault.authPublicKey, props.vault.salt, props.vault.iterations);
       emit('action', vaultKeys, ownerKeyPair);
       open.value = false;
     } else {
