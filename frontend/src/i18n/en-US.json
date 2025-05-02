@@ -32,6 +32,7 @@
   "common.retry": "Retry",
   "common.save":"Save",
   "common.search.placeholder":"Search…",
+  "common.select.placeholder":"Select…",
   "common.share": "Share",
   "common.show": "Show",
   "common.unexpectedError": "Unexpected Error: {0}",
@@ -218,6 +219,15 @@
   "group.member.remove.title" : "Remove Group Member",
   "group.member.remove.description": "Are you sure you want to remove this group member?",
   "group.member.remove.confirm": "Yes, remove member",
+
+  "group.edit.title" : "Group Edit",
+  "group.edit.profileImage" : "Profile Image",
+  "group.edit.role" : "Role",
+  "group.edit.removePicture" : "Remove Picture",
+  "group.edit.addPicture" : "Add Picture",
+  "group.edit.roles.remove": "Remove roles",
+  "group.edit.roles.chose": "Choose roles",
+  "group.edit.roles.addMore": "Add more",
 
   "trustDetails.trustLevel": "Trust Level {0}",
   "trustDetails.trustLevel.untrusted": "Unverified",

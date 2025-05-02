@@ -3,7 +3,7 @@
     {{ t('common.loading') }}
   </div>
 
-  <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6 items-start">
+  <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
     <div class="flex flex-col gap-6">
       <!-- Group Info -->
       <section class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
@@ -13,21 +13,15 @@
           </h3>
           <button
             class="inline-flex items-center gap-2 px-2.5 py-1.5 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-            @click="openEditDialog">
+            @click="router.push('1/edit')">
             <PencilIcon class="h-4 w-4 text-gray-500" aria-hidden="true" />
             {{ t('common.edit') }}
           </button>
         </div>
 
         <div class="px-6 py-6">
-          <div class="flex gap-6 items-start mb-6">
-            <img :src="group.picture" alt="Group" class="w-20 h-20 rounded-full object-cover border border-gray-300" />
-            <div>
-              <h2 class="text-xl font-semibold text-gray-900">{{ group.name }}</h2>
-              <p v-if="group.description" class="text-sm text-gray-500 mt-1 whitespace-pre-wrap">
-                {{ group.description }}
-              </p>
-            </div>
+          <div class="flex items-center justify-center h-full">
+            <img :src="group.picture" alt="Profilbild" class="w-48 h-48 rounded-full object-cover border border-gray-300 mb-4"/>
           </div>
 
           <div class="divide-y divide-gray-100">
@@ -185,6 +179,9 @@ import GroupEditDialog from './GroupEditDialog.vue';
 import GroupAddMemberDialog from './GroupAddMemberDialog.vue';
 import GroupMemberRemoveDialog from './GroupMemberRemoveDialog.vue';
 import type { UserDto } from '../common/backend';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
 
 interface User {
   id: string;

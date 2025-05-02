@@ -74,6 +74,10 @@ const routes: RouteRecordRaw[] = [
         component: () => import('../components/GroupDetail.vue'),
       },
       {
+        path: 'authority/group/1/edit',
+        component: () => import('../components/GroupEdit.vue'),
+      },
+      {
         path: 'vaults',
         component: VaultList
       },
