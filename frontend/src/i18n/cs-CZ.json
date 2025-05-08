@@ -26,6 +26,8 @@
   "createVault.showRecoveryKey.submit": "Vytvořit trezor",
   "deviceList.deviceName": "Název zařízení",
   "editVaultMetadataDialog.vaultName": "Název trezoru",
+  "legacyDeviceList.description.information": "Více informací.",
+  "legacyDeviceList.deviceName": "Název zařízení",
   "nav.vaults": "Trezory",
   "unlockSuccess.deviceSetup.title": "Nové zařízení",
   "vaultDetails.actions.updatePermissions.reload": "Obnovit",

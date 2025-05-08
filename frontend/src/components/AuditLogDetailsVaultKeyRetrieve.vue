@@ -22,21 +22,21 @@
           <code class="text-xs" :class="{'text-gray-600': resolvedVault != null}">{{ event.vaultId }}</code>
         </dd>
       </div>
-      <div v-if="event.ipAddress" class="flex items-baseline gap-2">
+      <div v-if="event.ipAddress != null" class="flex items-baseline gap-2">
         <dt class="text-xs text-gray-500">
           <code>ip address</code>
         </dt>
-        <dd class="flex items-baseline gap-2 text-sm text-gray-900">
-          <code class="text-xs" :class="{'text-gray-600': resolvedVault != null}">{{ event.ipAddress }}</code>
+        <dd class="text-sm text-gray-900">
+          {{ event.ipAddress }}
         </dd>
       </div>
-      <div class="flex items-baseline gap-2">
+      <div v-if="event.deviceId != null" class="flex items-baseline gap-2">
         <dt class="text-xs text-gray-500">
           <code>device</code>
         </dt>
         <dd class="flex items-baseline gap-2 text-sm text-gray-900">
           <span v-if="resolvedDevice != null">{{ resolvedDevice.name }}</span>
-          <code v-if="event.deviceId" class="text-xs" :class="{'text-gray-600': resolvedDevice != null}">{{ event.deviceId }}</code>
+          <code class="text-xs" :class="{'text-gray-600': resolvedDevice != null}">{{ event.deviceId }}</code>
         </dd>
       </div>
       <div class="flex items-baseline gap-2">

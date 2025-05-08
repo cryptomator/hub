@@ -5,6 +5,7 @@ import io.quarkus.test.security.TestSecurity;
 import io.quarkus.test.security.oidc.Claim;
 import io.quarkus.test.security.oidc.OidcSecurity;
 import io.restassured.RestAssured;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -13,9 +14,7 @@ import org.junit.jupiter.api.Test;
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
 import static org.hamcrest.CoreMatchers.hasItems;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.empty;
-import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.*;
 
 @QuarkusTest
 @DisplayName("Resource /authorities")
@@ -79,7 +78,17 @@ public class AuthorityResourceIT {
 		public void testGetSameUserGroupName() {
 			when().get("/authorities/search?query=1")
 					.then().statusCode(200)
-					.body("id", hasItems("user1", "group1"));
+					.body("find { it.id == 'user1' }.memberSize", nullValue())
+					.body("find { it.id == 'group1' }.memberSize", nullValue());
+		}
+
+		@Test
+		@DisplayName("GET /search?query=1&withMemberSize=true returns 200 with \"group1\" and \"memberSize\"=true")
+		public void testGetSameUserGroupNameWithMemberSize() {
+			when().get("/authorities/search?query=1&withMemberSize=true")
+					.then().statusCode(200)
+					.body("find { it.id == 'user1' }.memberSize", nullValue())
+					.body("find { it.id == 'group1' }.memberSize", equalTo(1));
 		}
 	}
 

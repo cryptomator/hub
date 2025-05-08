@@ -61,6 +61,7 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.comparesEqualTo;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.text.IsEqualIgnoringCase.equalToIgnoringCase;
 
 @QuarkusTest
@@ -630,11 +631,11 @@ public class VaultResourceIT {
 
 		@Test
 		@Order(3)
-		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/members does contain group2")
+		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/members does contain group2 with memberSize=2")
 		public void getMembersOfVault1a() {
 			given().when().get("/vaults/{vaultId}/members", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(200)
-					.body("id", hasItems("group2"));
+					.body("find { it.id == 'group2' }.memberSize", equalTo(2));
 		}
 
 		@Test

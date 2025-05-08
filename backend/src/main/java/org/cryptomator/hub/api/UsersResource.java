@@ -21,6 +21,7 @@ import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.AccessToken;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.EffectiveWot;
+import org.cryptomator.hub.entities.LegacyDevice;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.entities.WotEntry;
@@ -29,11 +30,12 @@ import org.cryptomator.hub.entities.events.EventLogger;
 import org.cryptomator.hub.entities.events.VaultKeyRetrievedEvent;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
+import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.jboss.resteasy.reactive.NoCache;
 
 import java.net.URI;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -158,6 +160,7 @@ public class UsersResource {
 	@NoCache
 	@Transactional
 	@Operation(summary = "get the logged-in user")
+	@Parameter(name = "withLastAccess", in = ParameterIn.QUERY, description = "adds last access values to the devices (if present)")
 	@APIResponse(responseCode = "200", description = "returns the current user")
 	@APIResponse(responseCode = "404", description = "no user matching the subject of the JWT passed as Bearer Token")
 	public UserDto getMe(@QueryParam("withDevices") boolean withDevices, @QueryParam("withLastAccess") boolean withLastAccess) {
@@ -170,9 +173,35 @@ public class UsersResource {
 				var event = events.get(d.getId());
 				return DeviceResource.DeviceDto.fromEntity(d, event);
 			}).collect(Collectors.toSet());
+		} else if (withDevices) {
+			deviceDtos = user.getDevices().stream().map(DeviceResource.DeviceDto::fromEntity).collect(Collectors.toSet());
 		} else {
-			deviceDtos = withDevices ? user.devices.stream().map(DeviceResource.DeviceDto::fromEntity).collect(Collectors.toSet()) : Set.of();
+			deviceDtos = Set.of();
 		}
+		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getLanguage(), deviceDtos, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
+	}
+
+	/**
+	 * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
+	 */
+	@Deprecated(since = "1.3.0", forRemoval = true)
+	@GET
+	@Path("/me-with-legacy-devices-and-access")
+	@RolesAllowed("user")
+	@Produces(MediaType.APPLICATION_JSON)
+	@NoCache
+	@Transactional
+	@Operation(summary = "get the logged-in user")
+	@APIResponse(responseCode = "200", description = "returns the current user")
+	@APIResponse(responseCode = "404", description = "no user matching the subject of the JWT passed as Bearer Token")
+	public UserDto getMeWithLegacyDevicesAndAccess() {
+		User user = userRepo.findById(jwt.getSubject());
+		var legacyDevices = user.legacyDevices.stream().collect(Collectors.toMap(LegacyDevice::getId, Function.identity()));
+		var events = auditEventRepo.findLastVaultKeyRetrieve(legacyDevices.keySet()).collect(Collectors.toMap(VaultKeyRetrievedEvent::getDeviceId, Function.identity()));
+		var deviceDtos = legacyDevices.values().stream().map(d -> {
+			var event = events.get(d.getId());
+			return DeviceResource.DeviceDto.fromEntity(d, event);
+		}).collect(Collectors.toSet());
 		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getLanguage(), deviceDtos, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
 	}
 

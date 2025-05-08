@@ -26,6 +26,8 @@
   "createVault.showRecoveryKey.submit": "สร้าง Vault",
   "deviceList.deviceName": "ชื่ออุปกรณ์",
   "editVaultMetadataDialog.vaultName": "ชื่อ Vault",
+  "legacyDeviceList.description.information": "เรียนรู้เพิ่มเติม",
+  "legacyDeviceList.deviceName": "ชื่ออุปกรณ์",
   "nav.vaults": "Vaults",
   "unlockSuccess.deviceSetup.title": "อุปกรณ์ใหม่",
   "vaultDetails.actions.updatePermissions.reload": "รีโหลด",

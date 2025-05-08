@@ -26,6 +26,8 @@
   "createVault.showRecoveryKey.submit": "Opprett hvelv",
   "deviceList.deviceName": "Enhetsnavn",
   "editVaultMetadataDialog.vaultName": "Navn på hvelvet",
+  "legacyDeviceList.description.information": "Finn ut mer.",
+  "legacyDeviceList.deviceName": "Enhetsnavn",
   "nav.vaults": "Hvelv",
   "unlockSuccess.deviceSetup.title": "Ny Enhet",
   "vaultDetails.actions.updatePermissions.reload": "Last på nytt",

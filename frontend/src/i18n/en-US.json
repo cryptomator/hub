@@ -1,10 +1,12 @@
 {
   "locale.en": "English",
   "locale.de": "German",
+  "locale.fr": "French",
   "locale.it": "Italian",
   "locale.ko": "Korean",
   "locale.nl": "Dutch",
   "locale.pt": "Portuguese",
+  "locale.tr": "Turkish",
 
   "common.add": "Add",
   "common.apply": "Apply",
@@ -28,6 +30,7 @@
   "common.show": "Show",
   "common.unexpectedError": "Unexpected Error: {0}",
   "common.update": "Update",
+  "common.xMembers": "{0} Members",
 
   "admin.title": "Admin",
   "admin.serverInfo.title": "Server Info",
@@ -58,7 +61,7 @@
 
   "admin.webOfTrust.title": "Web of Trust",
   "admin.webOfTrust.description": "Configure the Web of Trust settings to manage how trust is established between users in the system. These settings affect the verification of user identities and key signatures.",
-  "admin.webOfTrust.information":"Learn more.",
+  "admin.webOfTrust.information": "Learn more.",
   "admin.webOfTrust.wotMaxDepth.error": "Maximum WoT Depth must be between 0 and 9.",
   "admin.webOfTrust.wotMaxDepth.title": "Maximum WoT Depth",
   "admin.webOfTrust.wotMaxDepth.description": "Maximum distance between two users, so an indirect acquaintanceship is still considered trustworthy (assuming intermediate identities have been verified).",
@@ -144,9 +147,8 @@
   "deviceList.added": "Added",
   "deviceList.thisDevice": "This Device",
   "deviceList.ipAddress": "IP Address",
-  "deviceList.ipAddress.toolTip": "May not be set for legacy reasons.",
   "deviceList.lastAccess": "Last Vault Access",
-  "deviceList.lastAccess.toolTip": "May not be set for legacy reasons.",
+  "deviceList.lastAccess.toolTip": "May be missing for devices accessed with older versions.",
 
   "downloadVaultTemplateDialog.title": "Download Vault Template",
   "downloadVaultTemplateDialog.description": "Download and unpack the zipped vault template to any location shared with your team members. This is required only once during the initial setup.",
@@ -200,6 +202,18 @@
   "licenseAlert.licenseExpired.user.description": "Your Cryptomator Hub license has expired. Please inform a Hub administrator to renew the license.",
   "licenseAlert.button": "Admin Section",
 
+  "legacyDeviceList.title": "Legacy Devices",
+  "legacyDeviceList.description": "These devices were created with an older version of Hub and need to be updated to unlock vaults in future versions. If you no longer need them, please remove them. Otherwise, please update Cryptomator on that device. Your next unlock will trigger the update automatically.",
+  "legacyDeviceList.description.information": "Learn more.",
+  "legacyDeviceList.deviceName": "Device Name",
+  "legacyDeviceList.type": "Type",
+  "legacyDeviceList.added": "Added",
+  "legacyDeviceList.thisDevice": "This Device",
+  "legacyDeviceList.ipAddress": "IP Address",
+  "legacyDeviceList.lastAccess": "Last Vault Access",
+  "legacyDeviceList.lastAccess.toolTip": "May be missing for devices accessed with older versions.",
+
+
   "manageAccountKey.title": "Account Key",
   "manageAccountKey.description": "Your Account Key is required to login from other apps or browsers.",
   "manageAccountKey.regenerate": "Regenerate Key",
@@ -243,6 +257,7 @@
   "userProfile.title": "Profile",
   "userProfile.actions.manageAccount": "Manage Account",
   "userProfile.actions.changeLanguage": "Change Language",
+  "userProfile.actions.changeLanguage.entry.browser": "Browser Language",
 
   "unlockSuccess.title": "Vault unlocked successfully",
   "unlockSuccess.description": "You may now close this browser tab and return to Cryptomator.",

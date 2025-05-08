@@ -314,7 +314,6 @@ const eventTypeOptions = Object.fromEntries(
     VAULT_UPDATE: t('auditLog.details.vault.update')
   }).sort(([,valueA], [,valueB]) => valueA.localeCompare(valueB))
 );
-const allEventTypes = Object.keys(eventTypeOptions);
 const selectedEventTypes = ref<string[]>([]);
 
 const currentPage = ref(0);
