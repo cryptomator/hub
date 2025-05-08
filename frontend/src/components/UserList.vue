@@ -8,7 +8,7 @@
       <!-- Searchbar + Createbutton -->
       <div class="flex flex-wrap sm:flex-nowrap justify-between items-center gap-3 mb-4">
         <input v-model="query" type="text" :placeholder="t('userList.search.placeholder')" class="flex-1 focus:ring-primary focus:border-primary shadow-xs text-sm border-gray-300 rounded-md"/>
-        <button type="button" class="bg-primary text-white text-sm font-medium px-4 py-2 rounded-md shadow-xs hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showCreateUserDialog()">
+        <button type="button" class="bg-primary text-white text-sm font-medium px-4 py-2 rounded-md shadow-xs hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showCreateUser()">
           {{ t('createUserDialog.button') }}
         </button>
       </div>
@@ -44,7 +44,7 @@
                     <td class="px-6 py-4 text-sm font-medium text-gray-900">
                       <div class="flex items-center gap-3 max-w-xs">
                         <img :src="user.userPicture" alt="Profilbild" class="w-10 h-10 rounded-full object-cover border border-gray-300"/>
-                        <button type="button" @click="router.push('authority/user/1')" class="truncate block hover:underline" :title="user.name"> {{ user.name }} </button>
+                        <button type="button" class="truncate block hover:underline" :title="user.name" @click="router.push(`authority/user/${user.id}`)"> {{ user.name }} </button>
                       </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.groups?.length ?? 0 }}</td>
@@ -75,17 +75,15 @@
 
   <!-- Delete Dialog -->
   <DeleteUserDialog v-if="deletingUser != null" ref="deleteUserDialog" :user="deletingUser" @close="deletingUser = null" @delete="onUserDeleted"/>
-  <UserCreateDialog ref="createUserDialog" />
 </template>
 
 <script setup lang="ts">
 import { TrashIcon } from '@heroicons/vue/24/solid';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router';
 import DeleteUserDialog from './DeleteUserDialog.vue';
 import FetchError from './FetchError.vue';
-import UserCreateDialog from './UserCreateDialog.vue';
-import { useRouter } from 'vue-router';
 
 const router = useRouter();
 
@@ -109,7 +107,6 @@ const users = ref<UserDto[]>([]);
 const onFetchError = ref<Error | null>(null);
 const deleteUserDialog = ref<typeof DeleteUserDialog>();
 const deletingUser = ref<UserDto | null>(null);
-const createUserDialog = ref<typeof UserCreateDialog>();
 const query = ref('');
 
 const showDeleteUserDialog = (user: UserDto) => {
@@ -122,8 +119,8 @@ const onUserDeleted = (deletedUser: UserDto) => {
   deletingUser.value = null;
 };
 
-function showCreateUserDialog() {
-  createUserDialog.value?.show();
+function showCreateUser() {
+  router.push('/app/authority/user/create');
 }
 
 onMounted(() => {
