@@ -3,6 +3,7 @@ package org.cryptomator.hub.license;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import io.quarkus.test.InjectMock;
 import org.cryptomator.hub.entities.Settings;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,16 +26,14 @@ import java.util.stream.Stream;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class LicenseHolderTest {
 
 	Settings.Repository settingsRepo = mock(Settings.Repository.class);
 	RandomMinuteSleeper randomMinuteSleeper = mock(RandomMinuteSleeper.class);
 	LicenseValidator validator = mock(LicenseValidator.class);
+	LicenseApi licenseApi = mock(LicenseApi.class);
 
 	LicenseHolder licenseHolder;
 
@@ -44,6 +43,7 @@ public class LicenseHolderTest {
 		licenseHolder.licenseValidator = validator;
 		licenseHolder.settingsRepo = settingsRepo;
 		licenseHolder.randomMinuteSleeper = randomMinuteSleeper;
+		licenseHolder.licenseApi = licenseApi;
 	}
 
 	@Nested
@@ -60,7 +60,7 @@ public class LicenseHolderTest {
 			Mockito.doReturn(settings).when(settingsRepo).get();
 			Mockito.doNothing().when(licenseHolderSpy).validateExistingLicense(any());
 			Mockito.doNothing().when(licenseHolderSpy).validateAndApplyInitLicense(any(), any(), any());
-			Mockito.doNothing().when(licenseHolderSpy).requestAnonTrialLicense();
+			Mockito.doNothing().when(licenseHolderSpy).requestAnonTrialLicense(settings);
 		}
 
 		@Test
@@ -76,7 +76,7 @@ public class LicenseHolderTest {
 
 			verify(licenseHolderSpy).validateExistingLicense(settings);
 			verify(licenseHolderSpy, never()).validateAndApplyInitLicense(any(), any(), any());
-			verify(licenseHolderSpy, never()).requestAnonTrialLicense();
+			verify(licenseHolderSpy, never()).requestAnonTrialLicense(settings);
 		}
 
 		@DisplayName("call validateAndApplyInitLicense(), if DB doesn't contain token but init config does")
@@ -96,7 +96,7 @@ public class LicenseHolderTest {
 
 			verify(licenseHolderSpy, never()).validateExistingLicense(any());
 			verify(licenseHolderSpy).validateAndApplyInitLicense(settings, "token", "43");
-			verify(licenseHolderSpy, never()).requestAnonTrialLicense();
+			verify(licenseHolderSpy, never()).requestAnonTrialLicense(settings);
 		}
 
 		@DisplayName("call requestAnonTrialLicense(), if neither DB nor init config contains token")
@@ -116,7 +116,7 @@ public class LicenseHolderTest {
 
 			verify(licenseHolderSpy, never()).validateExistingLicense(settings);
 			verify(licenseHolderSpy, never()).validateAndApplyInitLicense(Mockito.eq(settings), any(), any());
-			verify(licenseHolderSpy).requestAnonTrialLicense();
+			verify(licenseHolderSpy).requestAnonTrialLicense(settings);
 		}
 	}
 
@@ -127,10 +127,10 @@ public class LicenseHolderTest {
 		when(settings.getLicenseKey()).thenReturn("token");
 		when(settings.getHubId()).thenReturn("42");
 		when(settingsRepo.get()).thenReturn(settings);
-
 		when(validator.validate("token", "42")).thenReturn(Mockito.mock(DecodedJWT.class));
 
 		licenseHolder.validateExistingLicense(settings);
+
 		verify(settings, never()).setHubId(any());
 		verify(settings, never()).setLicenseKey(any());
 	}
@@ -142,7 +142,6 @@ public class LicenseHolderTest {
 		when(settings.getLicenseKey()).thenReturn("token");
 		when(settings.getHubId()).thenReturn("42");
 		when(settingsRepo.get()).thenReturn(settings);
-
 		when(validator.validate("token", "42")).thenThrow(JWTVerificationException.class);
 
 		Assertions.assertThrows(JWTVerificationException.class, () -> licenseHolder.validateExistingLicense(settings));
@@ -152,10 +151,10 @@ public class LicenseHolderTest {
 	@DisplayName("Valid init token is persisted with hubID to db")
 	public void testApplyInitSuccess() {
 		Settings settings = mock(Settings.class);
-
 		when(validator.validate("token", "42")).thenReturn(Mockito.mock(DecodedJWT.class));
 
 		licenseHolder.validateAndApplyInitLicense(settings, "token", "42");
+
 		verify(settings).setHubId("42");
 		verify(settings).setLicenseKey("token");
 		verify(settingsRepo).persistAndFlush(settings);
@@ -168,10 +167,10 @@ public class LicenseHolderTest {
 		when(settings.getLicenseKey()).thenReturn("token");
 		when(settings.getHubId()).thenReturn("42");
 		when(settingsRepo.get()).thenReturn(settings);
-
 		when(validator.validate("token", "42")).thenThrow(JWTVerificationException.class);
 
 		Assertions.assertThrows(JWTVerificationException.class, () -> licenseHolder.validateAndApplyInitLicense(settings, "token", "42"));
+
 		verify(settings, never()).setHubId(any());
 		verify(settings, never()).setLicenseKey(any());
 	}
@@ -179,7 +178,21 @@ public class LicenseHolderTest {
 	@Test
 	@DisplayName("Requesting a trial license contacts the license server")
 	public void testRequestAnonTrialLicense() {
-		// TODO
+		LicenseHolder licenseHolderSpy = Mockito.spy(licenseHolder);
+		Settings settings = mock(Settings.class);
+		LicenseApi.Challenge challenge = mock(LicenseApi.Challenge.class);
+		doReturn(challenge).when(licenseApi).generateTrialChallenge(Mockito.any());
+		doReturn(1337).when(licenseHolderSpy).solveChallenge(challenge);
+		doReturn("token").when(licenseApi).verifyTrialChallenge(Mockito.any(), Mockito.eq(1337));
+		doReturn(mock(DecodedJWT.class)).when(validator).validate(Mockito.eq("token"), Mockito.any());
+
+		licenseHolderSpy.requestAnonTrialLicense(settings);
+
+		verify(licenseApi).generateTrialChallenge(Mockito.any());
+		verify(licenseApi).verifyTrialChallenge(Mockito.any(), Mockito.eq(1337));
+		verify(settings).setHubId(Mockito.any());
+		verify(settings).setLicenseKey("token");
+		verify(settingsRepo).persistAndFlush(settings);
 	}
 
 	@Nested

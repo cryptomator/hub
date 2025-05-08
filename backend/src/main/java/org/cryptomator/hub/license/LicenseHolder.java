@@ -12,6 +12,7 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.NotNull;
 import org.cryptomator.hub.entities.Settings;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.logging.Logger;
 
 import java.io.IOException;
@@ -20,9 +21,14 @@ import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Optional;
+import java.util.UUID;
 
 @ApplicationScoped
 public class LicenseHolder {
@@ -50,6 +56,9 @@ public class LicenseHolder {
 	@Inject
 	Settings.Repository settingsRepo;
 
+	@RestClient
+	LicenseApi licenseApi;
+
 	private DecodedJWT license;
 
 	/**
@@ -67,7 +76,7 @@ public class LicenseHolder {
 		} else if (initialLicenseToken.isPresent() && initialId.isPresent()) {
 			validateAndApplyInitLicense(settings, initialLicenseToken.get(), initialId.get());
 		} else {
-			requestAnonTrialLicense();
+			requestAnonTrialLicense(settings);
 		}
 	}
 
@@ -97,12 +106,36 @@ public class LicenseHolder {
 		}
 	}
 
-
 	@Transactional(Transactional.TxType.MANDATORY)
-	void requestAnonTrialLicense() {
+	void requestAnonTrialLicense(Settings settings) {
 		LOG.info("No license found. Requesting trial license...");
-		// TODO
-		throw new UnsupportedOperationException("Not yet implemented");
+		var hubId = UUID.randomUUID().toString();
+		var challenge = licenseApi.generateTrialChallenge(hubId);
+		int solution = solveChallenge(challenge);
+		var trialLicense = licenseApi.verifyTrialChallenge(hubId, solution);
+		this.license = licenseValidator.validate(trialLicense, hubId);
+		settings.setLicenseKey(trialLicense);
+		settings.setHubId(hubId);
+		settingsRepo.persistAndFlush(settings);
+		LOG.info("Successfully retrieved trial license.");
+	}
+
+	// visible for testing
+	int solveChallenge(LicenseApi.Challenge challenge) {
+		MessageDigest sha256;
+		try {
+			sha256 = MessageDigest.getInstance("SHA-256");
+		} catch (NoSuchAlgorithmException e) {
+			throw new AssertionError("Every implementation of the Java platform is required to support [...] SHA-256", e);
+		}
+		for (int i = challenge.minCounter(); i < challenge.maxCounter(); i++) {
+			sha256.update(challenge.salt());
+			sha256.update(ByteBuffer.allocate(Integer.BYTES).putInt(0, i));
+			if (Arrays.equals(challenge.digest(), sha256.digest())) {
+				return i;
+			}
+		}
+		throw new IllegalArgumentException("Unsolvable challenge");
 	}
 
 	/**
