@@ -66,12 +66,18 @@ const routes: RouteRecordRaw[] = [
         component: AuthorityList,
       },
       {
-        path: 'authority/user/1',
-        component: () => import('../components/UserDetail.vue'),
+        path: 'authority/user/create',
+        component: () => import('../components/UserEditCreate.vue'),
+        props: true,
       },
       {
         path: 'authority/user/:id/edit',
-        component: () => import('../components/UserEdit.vue'),
+        component: () => import('../components/UserEditCreate.vue'),
+        props: true,
+      },
+      {
+        path: 'authority/user/:id',
+        component: () => import('../components/UserDetail.vue'),
         props: true,
       },
       {
