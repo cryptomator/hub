@@ -4,106 +4,45 @@
   </div>
 
   <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-    <div class="flex flex-col gap-6">
-      <!-- Group Info -->
-      <section class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-        <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-          <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">
-            {{ t('group.detail.info') }}
-          </h3>
-          <button
-            class="inline-flex items-center gap-2 px-2.5 py-1.5 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-            @click="router.push('1/edit')"
-          >
-            <PencilIcon class="h-4 w-4 text-gray-500" aria-hidden="true" />
-            {{ t('group.detail.edit') }}
-          </button>
+    <!-- Group Info -->
+    <section class="order-1 lg:col-start-1 lg:row-start-1 bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+      <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+        <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+          {{ t('group.detail.info') }}
+        </h3>
+        <button class="inline-flex items-center gap-2 px-2.5 py-1.5 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="router.push('1/edit')">
+          <PencilIcon class="h-4 w-4 text-gray-500" aria-hidden="true" />
+          {{ t('group.detail.edit') }}
+        </button>
+      </div>
+
+      <div class="px-6 py-6">
+        <div class="flex items-center justify-center h-full">
+          <img :src="group.picture" alt="Profilbild" class="w-48 h-48 rounded-full object-cover border border-gray-300 mb-4"/>
         </div>
 
-        <div class="px-6 py-6">
-          <div class="flex items-center justify-center h-full">
-            <img :src="group.picture" alt="Profilbild" class="w-48 h-48 rounded-full object-cover border border-gray-300 mb-4"/>
+        <div class="divide-y divide-gray-100">
+          <div class="py-3 flex justify-between">
+            <dt class="text-sm text-gray-500">{{ t('group.detail.name') }}</dt>
+            <dd class="text-sm text-gray-900 font-medium">{{ group.name }}</dd>
           </div>
-
-          <div class="divide-y divide-gray-100">
-            <div class="py-3 flex justify-between">
-              <dt class="text-sm text-gray-500">{{ t('group.detail.name') }}</dt>
-              <dd class="text-sm text-gray-900 font-medium">{{ group.name }}</dd>
-            </div>
-            <div class="py-3 flex justify-between">
-              <dt class="text-sm text-gray-500">{{ t('group.detail.roles') }}</dt>
-              <dd class="flex flex-wrap justify-end gap-2">
-                <span v-for="role in ['create-vault', 'admin']" :key="role" class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20 capitalize">
-                  {{ role }}
-                </span>
-              </dd>
-            </div>
-            <div class="py-3 flex justify-between">
-              <dt class="text-sm text-gray-500">{{ t('group.detail.createdOn') }}</dt>
-              <dd class="text-sm text-gray-900 font-medium">{{ d(group.createdAt, 'long') }}</dd>
-            </div>
+          <div class="py-3 flex justify-between">
+            <dt class="text-sm text-gray-500">{{ t('group.detail.roles') }}</dt>
+            <dd class="flex flex-wrap justify-end gap-2">
+              <span v-for="role in ['create-vault', 'admin']" :key="role" class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20 capitalize">
+                {{ role }}
+              </span>
+            </dd>
+          </div>
+          <div class="py-3 flex justify-between">
+            <dt class="text-sm text-gray-500">{{ t('group.detail.createdOn') }}</dt>
+            <dd class="text-sm text-gray-900 font-medium">{{ d(group.createdAt, 'long') }}</dd>
           </div>
         </div>
-      </section>
-
-      <!-- Vaults -->
-      <section class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-        <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
-          <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">
-            {{ t('nav.vaults') }}
-          </h3>
-        </div>
-
-        <!-- Search bar -->
-        <div class="px-6 py-3 border-b border-gray-200">
-          <input id="vaultSearch" v-model="vaultQuery" :placeholder="t('common.search.placeholder')" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs text-sm border-gray-300 rounded-md disabled:bg-gray-200" />
-        </div>
-
-        <!-- Vault list -->
-        <div class="px-6 py-6">
-          <ul class="divide-y divide-gray-100">
-            <li v-for="vault in paginatedVaults" :key="vault.id" class="py-2">
-              <div class="text-sm font-medium text-primary truncate">{{ vault.name }}</div>
-              <div class="text-sm text-gray-500 truncate">{{ vault.description }}</div>
-            </li>
-            <li v-if="!filteredVaults.length" class="text-sm text-gray-500">
-              {{ t(vaultQuery ? 'common.nothingFound' : 'common.none') }}
-            </li>
-          </ul>
-        </div>
-
-        <!-- Pagination -->
-        <div v-if="filteredVaults.length" class="bg-gray-50 border-t border-gray-200">
-          <nav class="flex items-center justify-between px-4 py-3 sm:px-6" :aria-label="t('common.pagination')">
-            <div class="hidden sm:block">
-              <i18n-t keypath="auditLog.pagination.showing" scope="global" tag="p" class="text-sm text-gray-700">
-                <span class="font-medium">{{ paginationBeginVault }}</span>
-                <span class="font-medium">{{ paginationEndVault }}</span>
-              </i18n-t>
-            </div>
-            <div class="flex flex-1 justify-between sm:justify-end">
-              <button 
-                type="button"
-                class="relative inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0 disabled:opacity-50 disabled:hover:bg-white disabled:cursor-not-allowed"
-                :disabled="currentPageVault === 0" @click="showPreviousPageVault"
-              >
-                {{ t('common.previous') }}
-              </button>
-              <button 
-                type="button"
-                class="relative ml-3 inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0 disabled:opacity-50 disabled:hover:bg-white disabled:cursor-not-allowed"
-                :disabled="!hasNextPageVault" @click="showNextPageVault"
-              >
-                {{ t('common.next') }}
-              </button>
-            </div>
-          </nav>
-        </div>
-      </section>
-    </div>
-
+      </div>
+    </section>
     <!-- Users -->
-    <section class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+    <section class="order-2 lg:col-start-2 lg:row-start-1 lg:row-span-2 bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
       <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex items-center justify-between">
         <div class="flex items-baseline gap-1">
           <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">
@@ -156,19 +95,11 @@
                       <span class="font-medium">{{ paginationEnd }}</span>
                     </i18n-t>
                   </div>
-                  <div class="flex flex-1 justify-between sm:justify-end">
-                    <button 
-                      v-if="currentPage > 0" type="button"
-                      class="relative inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0"
-                      @click="showPreviousPage"
-                    >
+                  <div class="flex flex-1 justify-end space-x-3">
+                    <button v-if="currentPage > 0" type="button" class="relative inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0" @click="showPreviousPage">
                       {{ t('common.previous') }}
                     </button>
-                    <button 
-                      v-if="hasNextPage" type="button"
-                      class="relative ml-3 inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0"
-                      @click="showNextPage"
-                    >
+                    <button v-if="hasNextPage" type="button" class="relative inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0" @click="showNextPage">
                       {{ t('common.next') }}
                     </button>
                   </div>
@@ -177,6 +108,52 @@
             </tr>
           </tfoot>
         </table>
+      </div>
+    </section>
+    <!-- Vaults -->
+    <section class="order-3 lg:col-start-1 lg:row-start-2 bg-white bg-white bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+      <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+        <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+          {{ t('nav.vaults') }}
+        </h3>
+      </div>
+
+      <!-- Search bar -->
+      <div class="px-6 py-3 border-b border-gray-200">
+        <input id="vaultSearch" v-model="vaultQuery" :placeholder="t('common.search.placeholder')" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs text-sm border-gray-300 rounded-md disabled:bg-gray-200" />
+      </div>
+
+      <!-- Vault list -->
+      <div class="px-6 py-6">
+        <ul class="divide-y divide-gray-100">
+          <li v-for="vault in paginatedVaults" :key="vault.id" class="py-2">
+            <div class="text-sm font-medium text-primary truncate">{{ vault.name }}</div>
+            <div class="text-sm text-gray-500 truncate">{{ vault.description }}</div>
+          </li>
+          <li v-if="!filteredVaults.length" class="text-sm text-gray-500">
+            {{ t(vaultQuery ? 'common.nothingFound' : 'common.none') }}
+          </li>
+        </ul>
+      </div>
+
+      <!-- Pagination -->
+      <div v-if="filteredVaults.length" class="bg-gray-50 border-t border-gray-200">
+        <nav class="flex items-center justify-between px-4 py-3 sm:px-6" :aria-label="t('common.pagination')">
+          <div class="hidden sm:block">
+            <i18n-t keypath="auditLog.pagination.showing" scope="global" tag="p" class="text-sm text-gray-700">
+              <span class="font-medium">{{ paginationBeginVault }}</span>
+              <span class="font-medium">{{ paginationEndVault }}</span>
+            </i18n-t>
+          </div>
+          <div class="flex flex-1 justify-between sm:justify-end">
+            <button type="button" class="relative inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0 disabled:opacity-50 disabled:hover:bg-white disabled:cursor-not-allowed" :disabled="currentPageVault === 0" @click="showPreviousPageVault">
+              {{ t('common.previous') }}
+            </button>
+            <button type="button" class="relative ml-3 inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0 disabled:opacity-50 disabled:hover:bg-white disabled:cursor-not-allowed" :disabled="!hasNextPageVault" @click="showNextPageVault">
+              {{ t('common.next') }}
+            </button>
+          </div>
+        </nav>
       </div>
     </section>
   </div>
