@@ -11,9 +11,12 @@
           <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">
             {{ t('group.detail.info') }}
           </h3>
-          <button class="inline-flex items-center gap-2 px-2.5 py-1.5 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="openEditDialog">
+          <button
+            class="inline-flex items-center gap-2 px-2.5 py-1.5 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+            @click="router.push('1/edit')"
+          >
             <PencilIcon class="h-4 w-4 text-gray-500" aria-hidden="true" />
-            {{ t('common.edit') }}
+            {{ t('group.detail.edit') }}
           </button>
         </div>
 
@@ -26,10 +29,6 @@
             <div class="py-3 flex justify-between">
               <dt class="text-sm text-gray-500">{{ t('group.detail.name') }}</dt>
               <dd class="text-sm text-gray-900 font-medium">{{ group.name }}</dd>
-            </div>
-            <div class="py-3 flex justify-between">
-              <dt class="text-sm text-gray-500">{{ t('group.detail.createdOn') }}</dt>
-              <dd class="text-sm text-gray-900 font-medium">{{ d(group.createdAt, 'long') }}</dd>
             </div>
             <div class="py-3 flex justify-between">
               <dt class="text-sm text-gray-500">{{ t('group.detail.roles') }}</dt>
@@ -181,6 +180,9 @@ import type { UserDto } from '../common/backend';
 import GroupAddMemberDialog from './GroupAddMemberDialog.vue';
 import GroupEditDialog from './GroupEditDialog.vue';
 import GroupMemberRemoveDialog from './GroupMemberRemoveDialog.vue';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
 
 interface User {
   id: string;
