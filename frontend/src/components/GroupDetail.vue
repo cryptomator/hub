@@ -82,10 +82,18 @@
               </i18n-t>
             </div>
             <div class="flex flex-1 justify-between sm:justify-end">
-              <button type="button" class="relative inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0 disabled:opacity-50 disabled:hover:bg-white disabled:cursor-not-allowed" :disabled="currentPageVault === 0" @click="showPreviousPageVault">
+              <button 
+                type="button"
+                class="relative inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0 disabled:opacity-50 disabled:hover:bg-white disabled:cursor-not-allowed"
+                :disabled="currentPageVault === 0" @click="showPreviousPageVault"
+              >
                 {{ t('common.previous') }}
               </button>
-              <button type="button" class="relative ml-3 inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0 disabled:opacity-50 disabled:hover:bg-white disabled:cursor-not-allowed" :disabled="!hasNextPageVault" @click="showNextPageVault">
+              <button 
+                type="button"
+                class="relative ml-3 inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0 disabled:opacity-50 disabled:hover:bg-white disabled:cursor-not-allowed"
+                :disabled="!hasNextPageVault" @click="showNextPageVault"
+              >
                 {{ t('common.next') }}
               </button>
             </div>
@@ -137,7 +145,8 @@
             </tr>
           </tbody>
 
-          <tfoot v-if="filteredUsers.length" class="bg-gray-50">
+          <!-- USERS – Pagination ----------------------------->
+          <tfoot v-if="showPaginationUsers" class="bg-gray-50">
             <tr>
               <td colspan="3">
                 <nav class="flex items-center justify-between px-4 py-3 sm:px-6" :aria-label="t('common.pagination')">
@@ -148,10 +157,18 @@
                     </i18n-t>
                   </div>
                   <div class="flex flex-1 justify-between sm:justify-end">
-                    <button type="button" class="relative inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0 disabled:opacity-50 disabled:hover:bg-white disabled:cursor-not-allowed" :disabled="currentPage === 0" @click="showPreviousPage">
+                    <button 
+                      v-if="currentPage > 0" type="button"
+                      class="relative inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0"
+                      @click="showPreviousPage"
+                    >
                       {{ t('common.previous') }}
                     </button>
-                    <button type="button" class="relative ml-3 inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0 disabled:opacity-50 disabled:hover:bg-white disabled:cursor-not-allowed" :disabled="!hasNextPage" @click="showNextPage">
+                    <button 
+                      v-if="hasNextPage" type="button"
+                      class="relative ml-3 inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0"
+                      @click="showNextPage"
+                    >
                       {{ t('common.next') }}
                     </button>
                   </div>
@@ -208,6 +225,7 @@ interface DetailGroup {
   users: User[];
   vaults: Vault[];
   description?: string;
+  memberSize: number;
 }
 
 function showDeleteDialog(u: UserDto) {
@@ -262,12 +280,14 @@ const group = ref<DetailGroup>({
     { id: 'v3', name: 'Tax', description: '...' },
     { id: 'v4', name: 'Orga', description: '...' },
     { id: 'v5', name: 'Sales', description: '...' },
-  ]
+  ],
+  memberSize: 25
 });
 
 function openEditDialog() {
   editGroupDialog.value?.show();
 }
+
 const addMemberDialog = ref<InstanceType<typeof GroupAddMemberDialog> | null>(null);
 
 function openAccessDialog() {
@@ -287,6 +307,10 @@ const pageSize = ref(10);
 const currentPage = ref(0);
 const userQuery = ref('');
 
+const showPaginationUsers = computed(
+  () => filteredUsers.value.length > pageSize.value
+);
+
 const filteredUsers = computed(() => {
   const q = userQuery.value.trim().toLowerCase();
   return [...group.value.users]
@@ -299,7 +323,7 @@ const paginatedUsers = computed(() =>
 );
 
 const hasNextPage = computed(
-  () => (currentPage.value + 1) * pageSize.value < filteredUsers.value.length,
+  () => (currentPage.value + 1) * pageSize.value < filteredUsers.value.length
 );
 
 const paginationBegin = computed(() =>
