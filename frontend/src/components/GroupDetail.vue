@@ -17,20 +17,22 @@
       </div>
 
       <div class="px-6 py-6">
-        <div class="flex items-center justify-center h-full">
-          <img :src="group.picture" alt="Profilbild" class="w-48 h-48 rounded-full object-cover border border-gray-300 mb-4"/>
+        <div class="flex flex-col items-center justify-center h-full text-center">
+          <img :src="group.picture" :alt="t('group.edit.profileImage')" class="w-48 h-48 rounded-full object-cover border border-gray-300 mb-4" />
+          <h2 class="text-xl font-semibold text-gray-900">{{ group.name }}</h2>
         </div>
 
         <div class="divide-y divide-gray-100">
-          <div class="py-3 flex justify-between">
-            <dt class="text-sm text-gray-500">{{ t('group.detail.name') }}</dt>
-            <dd class="text-sm text-gray-900 font-medium">{{ group.name }}</dd>
-          </div>
-          <div class="py-3 flex justify-between">
+          <div class="flex justify-between py-3">
             <dt class="text-sm text-gray-500">{{ t('group.detail.roles') }}</dt>
             <dd class="flex flex-wrap justify-end gap-2">
-              <span v-for="role in ['create-vault', 'admin']" :key="role" class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20 capitalize">
-                {{ role }}
+              <template v-if="group.roles?.length">
+                <span v-for="role in sortedRoles" :key="role.id" class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20 capitalize">
+                  {{ role.name }}
+                </span>
+              </template>
+              <span v-else class="text-sm text-gray-500">
+                {{ t('common.none') }}
               </span>
             </dd>
           </div>
@@ -184,6 +186,10 @@ interface User {
   userPicture?: string;
   role?: string;
 }
+interface Role {
+  id: string;
+  name: string;
+}
 
 interface Vault {
   id: string;
@@ -199,6 +205,7 @@ interface DetailGroup {
   name: string;
   picture?: string;
   createdAt: string;
+  roles: Role[];
   users: User[];
   vaults: Vault[];
   description?: string;
@@ -220,9 +227,13 @@ const editGroupDialog = ref<InstanceType<typeof GroupEditDialog> | null>(null);
 const group = ref<DetailGroup>({
   id: props.id,
   name: 'Frontend‑Team',
-  picture: 'https://i.pravatar.cc/150?u=group',
+  picture: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iIzAwNUU3MSIgb3BhY2l0eT0iMS4wMCIvPjxwYXRoIGZpbGw9IiNmNmY2ZjYiIGQ9Ik0yNSAyNUwyNSAwTDUwIDBaTTUwIDBMNzUgMEw3NSAyNVpNNzUgNzVMNzUgMTAwTDUwIDEwMFpNNTAgMTAwTDI1IDEwMEwyNSA3NVpNMCA1MEwwIDI1TDI1IDI1Wk03NSAyNUwxMDAgMjVMMTAwIDUwWk0xMDAgNTBMMTAwIDc1TDc1IDc1Wk0yNSA3NUwwIDc1TDAgNTBaIi8+PHBhdGggZmlsbD0iI2NlZWNmMiIgZD0iTTI1IDI1TDAgMjVMMCAwWk03NSAyNUw3NSAwTDEwMCAwWk03NSA3NUwxMDAgNzVMMTAwIDEwMFpNMjUgNzVMMjUgMTAwTDAgMTAwWiIvPjxwYXRoIGZpbGw9IiNhYmRmZTkiIGQ9Ik0yNSAyNUw1MCAyNUw1MCA1MEwyNSA1MFpNMzEuMyA0MC42TDQwLjYgNTBMNTAgNDAuNkw0MC42IDMxLjNaTTc1IDI1TDc1IDUwTDUwIDUwTDUwIDI1Wk01OS40IDMxLjNMNTAgNDAuNkw1OS40IDUwTDY4LjggNDAuNlpNNzUgNzVMNTAgNzVMNTAgNTBMNzUgNTBaTTY4LjggNTkuNEw1OS40IDUwTDUwIDU5LjRMNTkuNCA2OC44Wk0yNSA3NUwyNSA1MEw1MCA1MEw1MCA3NVpNNDAuNiA2OC44TDUwIDU5LjRMNDAuNiA1MEwzMS4zIDU5LjRaIi8+PC9zdmc+',
   createdAt: '2017-02-15T13:12:00Z',
   description: 'Das Frontend-Team ist für die Entwicklung der Benutzeroberfläche verantwortlich.',
+  roles: [
+    { id: '1', name: 'User' },
+    { id: '2', name: 'Create-Vault' }
+  ],
   users: [
     { id: '1', name: 'Anna Marie Schmidtson', userPicture: 'https://i.pravatar.cc/50?u=anna', role: 'admin' },
     { id: '2', name: 'Liu Wei', userPicture: 'https://i.pravatar.cc/50?u=liuwei', role: 'admin' },
@@ -278,6 +289,10 @@ function onMembersSaved(newMembers: User[]) {
 }
 
 const loading = ref(false);
+
+const sortedRoles = computed(() =>
+  [...group.value.roles].sort((a, b) => a.name.localeCompare(b.name))
+);
 
 // --- USERS pagination & search ------------------------------------------------
 const pageSize = ref(10);
