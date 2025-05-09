@@ -124,9 +124,9 @@
       </div>
 
       <!-- Vault list -->
-      <div class="px-6 py-6">
-        <ul class="divide-y divide-gray-100">
-          <li v-for="vault in paginatedVaults" :key="vault.id" class="py-2">
+      <div class="py-0">
+        <ul class="divide-y divide-gray-200 bg-white">
+          <li v-for="vault in paginatedVaults" :key="vault.id" class="py-2 px-6">
             <div class="text-sm font-medium text-primary truncate">{{ vault.name }}</div>
             <div class="text-sm text-gray-500 truncate">{{ vault.description }}</div>
           </li>
@@ -137,7 +137,7 @@
       </div>
 
       <!-- Pagination -->
-      <div v-if="filteredVaults.length" class="bg-gray-50 border-t border-gray-200">
+      <div v-if="showPaginationVault" class="bg-gray-50 border-t border-gray-200">
         <nav class="flex items-center justify-between px-4 py-3 sm:px-6" :aria-label="t('common.pagination')">
           <div class="hidden sm:block">
             <i18n-t keypath="auditLog.pagination.showing" scope="global" tag="p" class="text-sm text-gray-700">
@@ -146,10 +146,10 @@
             </i18n-t>
           </div>
           <div class="flex flex-1 justify-between sm:justify-end">
-            <button type="button" class="relative inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0 disabled:opacity-50 disabled:hover:bg-white disabled:cursor-not-allowed" :disabled="currentPageVault === 0" @click="showPreviousPageVault">
+            <button v-if="currentPageVault > 0" type="button" class="relative inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0" @click="showPreviousPageVault">
               {{ t('common.previous') }}
             </button>
-            <button type="button" class="relative ml-3 inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0 disabled:opacity-50 disabled:hover:bg-white disabled:cursor-not-allowed" :disabled="!hasNextPageVault" @click="showNextPageVault">
+            <button v-if="hasNextPageVault" type="button" class="relative inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0" @click="showNextPageVault">
               {{ t('common.next') }}
             </button>
           </div>
@@ -320,7 +320,12 @@ function showPreviousPage() {
 watch(() => [filteredUsers.value.length, userQuery.value], () => (currentPage.value = 0));
 
 // --- VAULTS pagination & search ----------------------------------------------
-const pageSizeVault = ref(10);
+const pageSizeVault = pageSize;
+
+const showPaginationVault = computed(
+  () => filteredVaults.value.length > pageSizeVault.value
+);
+
 const currentPageVault = ref(0);
 const vaultQuery = ref('');
 
