@@ -106,21 +106,23 @@ public class LicenseHolder {
 	/**
 	 * Attempts to refresh the Hub licence every day between 01:00:00 and 02:00:00 AM UTC if claim refreshURL is present.
 	 */
-	@Scheduled(cron = "0 0 1 * * ?", timeZone = "UTC", concurrentExecution = Scheduled.ConcurrentExecution.SKIP, skipExecutionIf = LicenseHolder.LicenseRefreshSkipper.class)
+	@Scheduled(cron = "0 0 1 * * ?", timeZone = "UTC", concurrentExecution = Scheduled.ConcurrentExecution.SKIP)
 	void refreshLicense() throws InterruptedException {
-		randomMinuteSleeper.sleep(); // add random sleep between [0,59]min to reduce infrastructure load
-		var refreshUrlClaim = get().getClaim("refreshUrl");
-		if (refreshUrlClaim != null) {
-			try {
-				var refreshUrl = URI.create(refreshUrlClaim.asString());
-				var refreshedLicense = requestLicenseRefresh(refreshUrl, get().getToken());
-				set(refreshedLicense);
-			} catch (LicenseRefreshFailedException lrfe) {
-				LOG.errorv("Failed to refresh license token. Request to {0} was answerd with response code {1,number,integer}", refreshUrlClaim, lrfe.statusCode);
-			} catch (IllegalArgumentException | IOException e) {
-				LOG.error("Failed to refresh license token", e);
-			} catch (JWTVerificationException jve) {
-				LOG.error("Failed to refresh license token. Refreshed token is invalid.", jve);
+		if (license != null) {
+			randomMinuteSleeper.sleep(); // add random sleep between [0,59]min to reduce infrastructure load
+			var refreshUrlClaim = get().getClaim("refreshUrl");
+			if (refreshUrlClaim != null) {
+				try {
+					var refreshUrl = URI.create(refreshUrlClaim.asString());
+					var refreshedLicense = requestLicenseRefresh(refreshUrl, get().getToken());
+					set(refreshedLicense);
+				} catch (LicenseRefreshFailedException lrfe) {
+					LOG.errorv("Failed to refresh license token. Request to {0} was answerd with response code {1,number,integer}", refreshUrlClaim, lrfe.statusCode);
+				} catch (IllegalArgumentException | IOException e) {
+					LOG.error("Failed to refresh license token", e);
+				} catch (JWTVerificationException jve) {
+					LOG.error("Failed to refresh license token. Refreshed token is invalid.", jve);
+				}
 			}
 		}
 	}
@@ -200,18 +202,6 @@ public class LicenseHolder {
 		LicenseRefreshFailedException(int statusCode, String body) {
 			this.statusCode = statusCode;
 			this.body = body;
-		}
-	}
-
-	@ApplicationScoped
-	public static class LicenseRefreshSkipper implements Scheduled.SkipPredicate {
-
-		@Inject
-		LicenseHolder licenseHolder;
-
-		@Override
-		public boolean test(ScheduledExecution execution) {
-			return licenseHolder.license == null;
 		}
 	}
 }
