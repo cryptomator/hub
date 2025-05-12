@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "cryptomator-hub",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Web-Frontend for Cryptomator Hub",
   "author": "Skymatic GmbH",
   "license": "AGPL-3.0-or-later",
