@@ -108,7 +108,7 @@ public class LicenseHolder {
 	 */
 	@Scheduled(cron = "0 0 1 * * ?", timeZone = "UTC", concurrentExecution = Scheduled.ConcurrentExecution.SKIP)
 	void refreshLicense() throws InterruptedException {
-		if (license != null) {
+		if (get() != null) {
 			randomMinuteSleeper.sleep(); // add random sleep between [0,59]min to reduce infrastructure load
 			var refreshUrlClaim = get().getClaim("refreshUrl");
 			if (refreshUrlClaim != null) {
