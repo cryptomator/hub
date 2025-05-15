@@ -70,7 +70,10 @@
             <tr v-for="user in paginatedUsers" :key="user.id + user.name">
               <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 flex items-center gap-3 sm:pl-6">
                 <img :src="user.userPicture" class="w-8 h-8 rounded-full object-cover border border-gray-300" />
-                <span class="truncate">{{ user.name }}</span>
+                <div class="flex flex-col truncate">
+                  <span class="font-medium truncate">{{ user.name }}</span>
+                  <span class="text-xs text-gray-500 truncate">{{ user.username }}</span>
+                </div>
               </td>
 
               <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
@@ -185,6 +188,8 @@ interface User {
   name: string;
   userPicture?: string;
   role?: string;
+  username?: string;
+  email?: string;
 }
 interface Role {
   id: string;
@@ -235,31 +240,31 @@ const group = ref<DetailGroup>({
     { id: '2', name: 'Create-Vault' }
   ],
   users: [
-    { id: '1', name: 'Anna Marie Schmidtson', userPicture: 'https://i.pravatar.cc/50?u=anna', role: 'admin' },
-    { id: '2', name: 'Liu Wei', userPicture: 'https://i.pravatar.cc/50?u=liuwei', role: 'admin' },
-    { id: '3', name: 'Carlos Gómez', userPicture: 'https://i.pravatar.cc/50?u=carlosgomez', role: 'admin' },
-    { id: '4', name: 'Fatima Al-Hassan', userPicture: 'https://i.pravatar.cc/50?u=fatimaalhassan', role: 'admin' },
-    { id: '5', name: 'Giulia Rossi', userPicture: 'https://i.pravatar.cc/50?u=giuliarossi', role: 'admin' },
-    { id: '6', name: 'Noah Johansson', userPicture: 'https://i.pravatar.cc/50?u=noahjohansson', role: 'admin' },
-    { id: '7', name: 'Aisha Khan', userPicture: 'https://i.pravatar.cc/50?u=aishakhan', role: 'admin' },
-    { id: '8', name: 'Hiroshi Tanaka', userPicture: 'https://i.pravatar.cc/50?u=hiroshitanaka', role: 'admin' },
-    { id: '9', name: 'Elena Petrov', userPicture: 'https://i.pravatar.cc/50?u=elenapetrov', role: 'admin' },
-    { id: '10', name: 'Samuel Osei', userPicture: 'https://i.pravatar.cc/50?u=samuelosei', role: 'admin' },
-    { id: '11', name: 'Marie Dubois', userPicture: 'https://i.pravatar.cc/50?u=mariedubois', role: 'admin' },
-    { id: '12', name: 'Javier Morales', userPicture: 'https://i.pravatar.cc/50?u=javiermorales', role: 'admin' },
-    { id: '13', name: 'Sofia Almeida', userPicture: 'https://i.pravatar.cc/50?u=sofiaalmeida', role: 'admin' },
-    { id: '14', name: 'Chen Mei', userPicture: 'https://i.pravatar.cc/50?u=chenmei', role: 'admin' },
-    { id: '15', name: 'Michael O\'Connor', userPicture: 'https://i.pravatar.cc/50?u=michaeloconnor', role: 'admin' },
-    { id: '16', name: 'Zanele Dlamini', userPicture: 'https://i.pravatar.cc/50?u=zaneledlamini', role: 'admin' },
-    { id: '17', name: 'Anna Kovár', userPicture: 'https://i.pravatar.cc/50?u=annakovar', role: 'admin' },
-    { id: '18', name: 'Timur Iskanderov', userPicture: 'https://i.pravatar.cc/50?u=timuriskanderov', role: 'admin' },
-    { id: '19', name: 'Lara Müller', userPicture: 'https://i.pravatar.cc/50?u=laramuller', role: 'admin' },
-    { id: '20', name: 'Ahmed Nasser', userPicture: 'https://i.pravatar.cc/50?u=ahmednasser', role: 'admin' },
-    { id: '21', name: 'Isabella Costa', userPicture: 'https://i.pravatar.cc/50?u=isabellacosta', role: 'admin' },
-    { id: '22', name: 'Oliver Smith', userPicture: 'https://i.pravatar.cc/50?u=oliversmith', role: 'admin' },
-    { id: '23', name: 'Yuki Sato', userPicture: 'https://i.pravatar.cc/50?u=yukisato', role: 'admin' },
-    { id: '24', name: 'Priya Reddy', userPicture: 'https://i.pravatar.cc/50?u=priyareddy', role: 'admin' },
-    { id: '25', name: 'Juanita Rivera', userPicture: 'https://i.pravatar.cc/50?u=juanitarivera', role: 'admin' }
+    { id: '1', name: 'Anna Marie Schmidtson', username: 'anna.schmidtson', email: 'anna.schmidtson@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=anna', role: 'admin' },
+    { id: '2', name: 'Liu Wei', username: 'liu.wei', email: 'liu.wei@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=liuwei', role: 'admin' },
+    { id: '3', name: 'Carlos Gómez', username: 'carlos.gomez', email: 'carlos.gomez@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=carlosgomez', role: 'admin' },
+    { id: '4', name: 'Fatima Al-Hassan', username: 'fatima.alhassan', email: 'fatima.alhassan@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=fatimaalhassan', role: 'admin' },
+    { id: '5', name: 'Giulia Rossi', username: 'giulia.rossi', email: 'giulia.rossi@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=giuliarossi', role: 'admin' },
+    { id: '6', name: 'Noah Johansson', username: 'noah.johansson', email: 'noah.johansson@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=noahjohansson', role: 'admin' },
+    { id: '7', name: 'Aisha Khan', username: 'aisha.khan', email: 'aisha.khan@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=aishakhan', role: 'admin' },
+    { id: '8', name: 'Hiroshi Tanaka', username: 'hiroshi.tanaka', email: 'hiroshi.tanaka@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=hiroshitanaka', role: 'admin' },
+    { id: '9', name: 'Elena Petrov', username: 'elena.petrov', email: 'elena.petrov@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=elenapetrov', role: 'admin' },
+    { id: '10', name: 'Samuel Osei', username: 'samuel.osei', email: 'samuel.osei@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=samuelosei', role: 'admin' },
+    { id: '11', name: 'Marie Dubois', username: 'marie.dubois', email: 'marie.dubois@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=mariedubois', role: 'admin' },
+    { id: '12', name: 'Javier Morales', username: 'javier.morales', email: 'javier.morales@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=javiermorales', role: 'admin' },
+    { id: '13', name: 'Sofia Almeida', username: 'sofia.almeida', email: 'sofia.almeida@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=sofiaalmeida', role: 'admin' },
+    { id: '14', name: 'Chen Mei', username: 'chen.mei', email: 'chen.mei@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=chenmei', role: 'admin' },
+    { id: '15', name: 'Michael O\'Connor', username: 'michael.oconnor', email: 'michael.oconnor@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=michaeloconnor', role: 'admin' },
+    { id: '16', name: 'Zanele Dlamini', username: 'zanele.dlamini', email: 'zanele.dlamini@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=zaneledlamini', role: 'admin' },
+    { id: '17', name: 'Anna Kovár', username: 'anna.kovar', email: 'anna.kovar@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=annakovar', role: 'admin' },
+    { id: '18', name: 'Timur Iskanderov', username: 'timur.iskanderov', email: 'timur.iskanderov@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=timuriskanderov', role: 'admin' },
+    { id: '19', name: 'Lara Müller', username: 'lara.mueller', email: 'lara.mueller@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=laramuller', role: 'admin' },
+    { id: '20', name: 'Ahmed Nasser', username: 'ahmed.nasser', email: 'ahmed.nasser@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=ahmednasser', role: 'admin' },
+    { id: '21', name: 'Isabella Costa', username: 'isabella.costa', email: 'isabella.costa@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=isabellacosta', role: 'admin' },
+    { id: '22', name: 'Oliver Smith', username: 'oliver.smith', email: 'oliver.smith@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=oliversmith', role: 'admin' },
+    { id: '23', name: 'Yuki Sato', username: 'yuki.sato', email: 'yuki.sato@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=yukisato', role: 'admin' },
+    { id: '24', name: 'Priya Reddy', username: 'priya.reddy', email: 'priya.reddy@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=priyareddy', role: 'admin' },
+    { id: '25', name: 'Juanita Rivera', username: 'juanita.rivera', email: 'juanita.rivera@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=juanitarivera', role: 'admin' }
   ],
   vaults: [
     { id: 'v1', name: 'HR', description: '...' },
@@ -306,7 +311,12 @@ const showPaginationUsers = computed(
 const filteredUsers = computed(() => {
   const q = userQuery.value.trim().toLowerCase();
   return [...group.value.users]
-    .filter(u => !q || u.name.toLowerCase().includes(q))
+    .filter(u => {
+      if (!q) return true;
+      const nameMatch = u.name.toLowerCase().includes(q);
+      const usernameMatch = u.username?.toLowerCase().includes(q);
+      return nameMatch || usernameMatch;
+    })
     .sort((a, b) => a.name.localeCompare(b.name, 'de', { sensitivity: 'base' }));
 });
 
