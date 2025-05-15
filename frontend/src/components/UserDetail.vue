@@ -2,7 +2,7 @@
   <div v-if="loading" class="text-center p-8 text-gray-500 text-sm">
     {{ t('common.loading') }}
   </div>
-  <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-6  items-start ">
+  <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start ">
     <section class="lg:col-start-1 grid gap-6">
       <!-- User Info -->
       <section class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
@@ -10,8 +10,7 @@
           <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">
             {{ t('user.detail.info') }}
           </h3>
-          <button class="inline-flex items-center gap-2 px-2.5 py-1.5 border rounded-md shadow-sm text-sm font-medium bg-white text-gray-700 border-primary hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showUserEdit">
-            <PencilIcon class="h-4 w-4 text-primary" aria-hidden="true" />
+          <button type="button" class="bg-primary text-white text-sm font-medium px-4 py-2 rounded-md shadow-xs hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showUserEdit">
             {{ t('user.detail.edit') }}
           </button>
         </div>
@@ -19,13 +18,22 @@
           <div class="flex flex-col items-center text-center mb-6">
             <span class="sr-only">{{ t('user.edit.profileImage') }}</span>
             <img :src="user.userPicture" :alt="t('user.edit.profileImage')" class="h-40 w-40 rounded-full object-contain bg-tertiary-2 border border-gray-300" />
-            <h2 class="text-xl font-semibold text-gray-900 mt-4">{{ user.firstName }} {{ user.lastName }}</h2>
-            <p class="text-sm text-gray-500 mt-1">{{ user.email }}</p>
+            <h2 class="text-xl font-semibold text-gray-900 mt-4">
+              <template v-if="user.firstName || user.lastName">
+                {{ user.firstName }} {{ user.lastName }}
+              </template>
+              <template v-else>
+                {{ user.username }}
+              </template>
+            </h2>
+            <p v-if="user.firstName || user.lastName" class="text-sm text-gray-500 mt-1">
+              {{ user.username }}
+            </p>
           </div>
           <dl class="divide-y divide-gray-100">
             <div class="py-3 flex justify-between">
-              <dt class="text-sm text-gray-500">{{ t('user.detail.username') }}</dt>
-              <dd class="text-sm text-gray-900 font-medium">{{ user.username }}</dd>
+              <dt class="text-sm text-gray-500">{{ t('user.detail.email') }}</dt>
+              <dd class="text-sm text-gray-900 font-medium">{{ user.email }}</dd>
             </div>
             <div class="py-3 flex justify-between">
               <dt class="text-sm text-gray-500">{{ t('user.detail.roles') }}</dt>
@@ -61,14 +69,13 @@
           <table class="w-full table-fixed divide-y divide-gray-200" aria-describedby="deviceListTitle">
             <thead class="bg-gray-50">
               <tr>
-                <th scope="col" class="w-12 px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
-                <th scope="col" class="px-2 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider flex-grow">
-                  {{ t('legacyDeviceList.deviceName') }}
+                <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {{ t('common.device') }}
                 </th>
-                <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider flex-grow">
+                <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   {{ t('legacyDeviceList.added') }}
                 </th>
-                <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider flex-grow">
+                <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <span class="inline-flex items-center gap-1">
                     {{ t('legacyDeviceList.lastAccess') }}
                     <div class="relative group" :title="t('legacyDeviceList.lastAccess.toolTip')">
@@ -81,28 +88,26 @@
             <tbody class="bg-white divide-y divide-gray-200">
               <template v-for="device in paginatedDevices" :key="device.id">
                 <tr>
-                  <td class="py-2 text-sm text-gray-500">
-                    <div class="grid place-items-center h-12 aspect-square">
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <div class="flex items-center gap-2">
                       <span v-if="device.type == 'TABLET'" :title="'Browser'">
-                        <WindowIcon class="size-5" aria-hidden="true" />
+                        <WindowIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
                       </span>
                       <span v-else-if="device.type == 'DESKTOP'" :title="'Desktop'">
-                        <ComputerDesktopIcon class="size-5" aria-hidden="true" />
+                        <ComputerDesktopIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
                       </span>
                       <span v-else-if="device.type == 'MOBILE'" :title="'Mobile'">
-                        <DevicePhoneMobileIcon class="size-5" aria-hidden="true" />
+                        <DevicePhoneMobileIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
                       </span>
-                    </div>
-                  </td>
-                  <td class="px-2 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    <div class="flex items-center gap-3">
-                      <div class="truncate max-w-xs" :title="device.name">{{ device.name }}</div>
+                      <span class="truncate max-w-xs" :title="device.name">
+                        {{ device.name }}
+                      </span>
                     </div>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {{ new Date(device.creationTime).toISOString().slice(0, 16).replace('T', ' ') }}
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td class="h-17 px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <div v-if="device.lastAccessTime">
                       {{ new Date(device.lastAccessTime).toISOString().slice(0, 16).replace('T', ' ') }}
                     </div>
@@ -131,19 +136,19 @@
               </i18n-t>
             </div>
             <div class="flex flex-1 justify-between sm:justify-end space-x-3">
-              <button v-if="currentPageDevice > 0" type="button" class="relative inline-flex items-center rounded-md bg-white px-3 py-2 shadow-sm text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0" @click="showPreviousPageDevice">
+              <button v-if="currentPageDevice > 0" type="button" class="relative inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0" @click="showPreviousPageDevice">
                 {{ t('common.previous') }}
               </button>
-              <button v-if="hasNextPageDevice" type="button" class="relative inline-flex items-center rounded-md bg-white px-3 py-2 shadow-sm text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0" @click="showNextPageDevice">
+              <button v-if="hasNextPageDevice" type="button" class="relative inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0" @click="showNextPageDevice">
                 {{ t('common.next') }}
               </button>
             </div>
           </nav>
         </div>
-      </section>
+      </section>      
       <!-- Legacy Devices -->
       <section v-if="user.legacyDevices.length != 0" class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-        <div class="flex bg-gray-50 px-6 py-4 border-b border-gray-200 ">
+        <div class="flex items-center bg-gray-50 px-6 py-4 border-b border-gray-200 space-x-2">
           <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">
             {{ t('legacyDeviceList.title') }}
           </h3>
@@ -157,19 +162,17 @@
           <input id="legacyDeviceSearch" v-model="legacyDeviceQuery" :placeholder="t('common.search.placeholder')" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs text-sm border-gray-300 rounded-md disabled:bg-gray-200" />
         </div>
 
-        <!-- Device Table -->
         <div>
           <table class="w-full table-fixed divide-y divide-gray-200" aria-describedby="deviceListTitle">
             <thead class="bg-gray-50">
               <tr>
-                <th scope="col" class="w-12 px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
-                <th scope="col" class="px-2 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider flex-grow">
-                  {{ t('legacyDeviceList.deviceName') }}
+                <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {{ t('common.device') }}
                 </th>
-                <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider flex-grow">
+                <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   {{ t('legacyDeviceList.added') }}
                 </th>
-                <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider flex-grow">
+                <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <span class="inline-flex items-center gap-1">
                     {{ t('legacyDeviceList.lastAccess') }}
                     <div class="relative group" :title="t('legacyDeviceList.lastAccess.toolTip')">
@@ -182,28 +185,26 @@
             <tbody class="bg-white divide-y divide-gray-200">
               <template v-for="device in paginatedLegacyDevices" :key="device.id">
                 <tr>
-                  <td class="py-2 text-sm text-gray-500">
-                    <div class="grid place-items-center h-12 aspect-square">
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <div class="flex items-center gap-2">
                       <span v-if="device.type == 'TABLET'" :title="'Browser'">
-                        <WindowIcon class="size-5" aria-hidden="true" />
+                        <WindowIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
                       </span>
                       <span v-else-if="device.type == 'DESKTOP'" :title="'Desktop'">
-                        <ComputerDesktopIcon class="size-5" aria-hidden="true" />
+                        <ComputerDesktopIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
                       </span>
                       <span v-else-if="device.type == 'MOBILE'" :title="'Mobile'">
-                        <DevicePhoneMobileIcon class="size-5" aria-hidden="true" />
+                        <DevicePhoneMobileIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
                       </span>
-                    </div>
-                  </td>
-                  <td class="px-2 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    <div class="flex items-center gap-3">
-                      <div class="truncate max-w-xs" :title="device.name">{{ device.name }}</div>
+                      <span class="truncate max-w-xs" :title="device.name">
+                        {{ device.name }}
+                      </span>
                     </div>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {{ new Date(device.creationTime).toISOString().slice(0, 16).replace('T', ' ') }}
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td class="h-17 px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <div v-if="device.lastAccessTime">
                       {{ new Date(device.lastAccessTime).toISOString().slice(0, 16).replace('T', ' ') }}
                     </div>
@@ -213,9 +214,9 @@
                   </td>
                 </tr>
               </template>
-              <tr v-if="!filteredLegacyDevices.length">
+              <tr v-if="!filteredDevices.length">
                 <td colspan="5" class="py-4 px-6 text-sm text-gray-500 text-center">
-                  {{ t(legacyDeviceQuery ? 'common.nothingFound' : 'common.none') }}
+                  {{ t(deviceQuery ? 'common.nothingFound' : 'common.none') }}
                 </td>
               </tr>
             </tbody>
@@ -232,10 +233,10 @@
               </i18n-t>
             </div>
             <div class="flex flex-1 justify-between sm:justify-end space-x-3">
-              <button v-if="currentPageLegacyDevice > 0" type="button" class="relative inline-flex items-center rounded-md bg-white px-3 py-2 shadow-sm text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0" @click="showPreviousPageLegacyDevice">
+              <button v-if="currentPageLegacyDevice > 0" type="button" class="relative inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0" @click="showPreviousPageLegacyDevice">
                 {{ t('common.previous') }}
               </button>
-              <button v-if="hasNextPageLegacyDevice" type="button" class="relative inline-flex items-center rounded-md bg-white px-3 py-2 shadow-sm text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0" @click="showNextPageLegacyDevice">
+              <button v-if="hasNextPageLegacyDevice" type="button" class="relative inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0" @click="showNextPageLegacyDevice">
                 {{ t('common.next') }}
               </button>
             </div>
@@ -253,9 +254,8 @@
             </h3>
             <span class="text-xs text-gray-500">{{ user.groups.length }}</span>
           </div>
-          <button type="button" class="inline-flex items-center gap-2 px-2.5 py-1.5 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="openAddGroupDialog">
-            <PlusIcon class="h-4 w-4 text-gray-500" aria-hidden="true" />
-            {{ t('user.detail.groups.add') }}
+          <button type="button" class="bg-primary text-white text-sm font-medium px-4 py-2 rounded-md shadow-xs hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="openAddGroupDialog">
+            {{ t('user.detail.groups.join') }}
           </button>
         </div>
 
@@ -274,10 +274,8 @@
                   <span class="truncate">{{ group.name }}</span>
                 </td>
 
-                <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
-                  <button type="button" class="group inline-flex items-center gap-2 px-2.5 py-1.5 rounded-md shadow-sm text-sm font-medium text-red-600 bg-white border-1 border-red-600 hover:bg-red-50 hover:border-red-700 hover:text-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" :title="t('common.remove')" @click="showDeleteDialog(group)">
-                    <TrashIcon class="h-4 w-4 text-red-600 group-hover:text-red-700" aria-hidden="true" />
-                  </button>
+                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <a tabindex="0" class="cursor-pointer text-red-600 hover:text-red-900" :title="t('common.leave')" @click="showDeleteDialog(group)">{{ t('common.leave') }}</a>
                 </td>
               </tr>
               <tr v-if="!filteredGroups.length">
@@ -299,10 +297,10 @@
                       </i18n-t>
                     </div>
                     <div class="flex flex-1 justify-end space-x-3">
-                      <button v-if="currentPageGroup > 0" type="button" class="relative inline-flex items-center rounded-md bg-white px-3 py-2 shadow-sm text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0" @click="showPreviousPageGroup">
+                      <button v-if="currentPageGroup > 0" type="button" class="relative inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0" @click="showPreviousPageGroup">
                         {{ t('common.previous') }}
                       </button>
-                      <button v-if="hasNextPageGroup" type="button" class="relative inline-flex items-center rounded-md bg-white px-3 py-2 shadow-sm text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0" @click="showNextPageGroup">
+                      <button v-if="hasNextPageGroup" type="button" class="relative inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0" @click="showNextPageGroup">
                         {{ t('common.next') }}
                       </button>
                     </div>
@@ -330,7 +328,7 @@
         <div class="py-0">
           <ul class="divide-y divide-gray-200 bg-white">
             <li v-for="vault in paginatedVaults" :key="vault.id" class="py-2 px-6">
-              <div class="text-sm font-medium text-primary truncate">{{ vault.name }}</div>
+              <div class="text-sm font-medium text-gray-900 truncate">{{ vault.name }}</div>
               <div v-if="vault.description" class="text-sm text-gray-500 truncate">{{ vault.description }}</div>
             </li>
             <li v-if="!filteredVaults.length" class="text-sm text-gray-500">
@@ -349,10 +347,10 @@
               </i18n-t>
             </div>
             <div class="flex flex-1 justify-between sm:justify-end space-x-3">
-              <button v-if="currentPageVault > 0" type="button" class="relative inline-flex items-center rounded-md bg-white px-3 py-2 shadow-sm text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0" @click="showPreviousPageVault">
+              <button v-if="currentPageVault > 0" type="button" class="relative inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0" @click="showPreviousPageVault">
                 {{ t('common.previous') }}
               </button>
-              <button v-if="hasNextPageVault" type="button" class="relative inline-flex items-center rounded-md bg-white px-3 py-2 shadow-sm text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0" @click="showNextPageVault">
+              <button v-if="hasNextPageVault" type="button" class="relative inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0" @click="showNextPageVault">
                 {{ t('common.next') }}
               </button>
             </div>
@@ -368,7 +366,6 @@
 </template>
 
 <script setup lang="ts">
-import { PencilIcon, PlusIcon, TrashIcon } from '@heroicons/vue/24/outline';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
@@ -402,8 +399,8 @@ interface Device {
 }
 
 interface DetailUser {
-  firstName: string;
-  lastName: string;
+  firstName?: string;
+  lastName?: string;
   username: string;
   roles: string[];
   password: string;
@@ -421,12 +418,12 @@ const { t, d } = useI18n({ useScope: 'global' });
 const router = useRouter();
 
 const user = ref<DetailUser>({
-  firstName: 'Max',
-  lastName: 'Mustermann',
-  username: 'maxmustermann',
+  firstName: 'Edgar',
+  lastName: 'Frank',
+  username: 'edgar.frank',
   roles: ['create-vault', 'admin'],
   password: 'password123',
-  email: 'max@example.com',
+  email: 'edgar.frank@example.com',
   userPicture: 'https://i.pravatar.cc/150?u=alex',
   //userPicture: 'https://cryptomator.org/img/logo.svg',
   //userPicture: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI0Y3RjdGNyIgb3BhY2l0eT0iMS4wMCIvPjxwYXRoIGZpbGw9IiM1MTUxNTEiIGQ9Ik0yOS4yIDEyLjVhOC4zLDguMyAwIDEsMSAxNi43LDBhOC4zLDguMyAwIDEsMSAtMTYuNywwTTU0LjIgMTIuNWE4LjMsOC4zIDAgMSwxIDE2LjcsMGE4LjMsOC4zIDAgMSwxIC0xNi43LDBNNTQuMiA4Ny41YTguMyw4LjMgMCAxLDEgMTYuNywwYTguMyw4LjMgMCAxLDEgLTE2LjcsME0yOS4yIDg3LjVhOC4zLDguMyAwIDEsMSAxNi43LDBhOC4zLDguMyAwIDEsMSAtMTYuNywwTTQuMiAzNy41YTguMyw4LjMgMCAxLDEgMTYuNywwYTguMyw4LjMgMCAxLDEgLTE2LjcsME03OS4yIDM3LjVhOC4zLDguMyAwIDEsMSAxNi43LDBhOC4zLDguMyAwIDEsMSAtMTYuNywwTTc5LjIgNjIuNWE4LjMsOC4zIDAgMSwxIDE2LjcsMGE4LjMsOC4zIDAgMSwxIC0xNi43LDBNNC4yIDYyLjVhOC4zLDguMyAwIDEsMSAxNi43LDBhOC4zLDguMyAwIDEsMSAtMTYuNywwIi8+PHBhdGggZmlsbD0iI2E0OGIyYSIgZD0iTTI1IDBMMjUgMjVMMTIuNSAyNVpNMTAwIDI1TDc1IDI1TDc1IDEyLjVaTTc1IDEwMEw3NSA3NUw4Ny41IDc1Wk0wIDc1TDI1IDc1TDI1IDg3LjVaTTUwIDM3LjVMNTAgNTBMMzcuNSA1MFpNNjIuNSA1MEw1MCA1MEw1MCAzNy41Wk01MCA2Mi41TDUwIDUwTDYyLjUgNTBaTTM3LjUgNTBMNTAgNTBMNTAgNjIuNVoiLz48L3N2Zz4=',        
@@ -463,9 +460,9 @@ const user = ref<DetailUser>({
   ],
   devices: [
     { id: 'd1', name: 'MacBook Pro M3 2023 - Work', type: 'DESKTOP', creationTime: '2023-02-10T09:30:00Z', lastAccessTime: '2024-11-01T15:12:00Z', lastIpAddress: '192.168.178.23' },
-    { id: 'd2', name: 'iPhone 13', type: 'MOBILE', creationTime: '2022-12-01T11:00:00Z', lastAccessTime: '2025-04-20T08:20:00Z', lastIpAddress: '192.168.178.45' },
+    { id: 'd2', name: 'iPhone 13', type: 'MOBILE', creationTime: '2022-12-01T11:00:00Z' },
     { id: 'd3', name: 'iPad Air', type: 'TABLET', creationTime: '2023-06-15T14:00:00Z', lastAccessTime: '2025-03-10T12:10:00Z', lastIpAddress: '192.168.178.88' },
-    { id: 'd4', name: 'Office Desktop', type: 'DESKTOP', creationTime: '2023-10-01T09:15:00Z', lastAccessTime: '2025-05-10T17:00:00Z', lastIpAddress: '10.0.0.101' }
+    { id: 'd4', name: 'Office Desktop', type: 'DESKTOP', creationTime: '2023-10-01T09:15:00Z', lastAccessTime: '2025-05-10T17:00:00Z', lastIpAddress: '10.0.0.101' },
   ],
   legacyDevices: [
     { id: 'd1', name: 'MacBook 2012', type: 'DESKTOP', creationTime: '2023-02-10T09:30:00Z', lastAccessTime: '2024-11-01T15:12:00Z', lastIpAddress: '192.168.178.23' },
