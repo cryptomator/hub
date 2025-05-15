@@ -332,6 +332,10 @@
   "user.detail.email": "Email:",
   "user.detail.username": "Username:",
   "user.detail.roles": "Roles:",
+  "user.detail.groups.add": "Add Groups",
+  "user.detail.edit": "Edit User",
+  "user.detail.createdOn": "Created on:",
+  "user.detail.legacyDeviceList.info": "These devices were created with an older version of Hub and need to be updated to unlock vaults in future versions.",
 
   "userEditCreate.title.create": "Create New User",
   "userEditCreate.title.edit": "Edit User",
