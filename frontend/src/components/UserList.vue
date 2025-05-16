@@ -9,10 +9,9 @@
       <div class="flex flex-wrap sm:flex-nowrap justify-between items-center gap-3 mb-4">
         <input v-model="query" type="text" :placeholder="t('userList.search.placeholder')" class="flex-1 focus:ring-primary focus:border-primary shadow-xs text-sm border-gray-300 rounded-md"/>
         <button type="button" class="bg-primary text-white text-sm font-medium px-4 py-2 rounded-md shadow-xs hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showCreateUser()">
-          {{ t('createUserDialog.button') }}
+          {{ t('userList.create.button') }}
         </button>
       </div>
-      <div class="border-b border-gray-200 mb-6"></div>
       <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
         <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
           <div class="shadow-sm overflow-hidden border-b border-gray-200 sm:rounded-lg">
@@ -43,8 +42,13 @@
                   <tr>
                     <td class="px-6 py-4 text-sm font-medium text-gray-900">
                       <div class="flex items-center gap-3 max-w-xs">
-                        <img :src="user.userPicture" alt="Profilbild" class="w-10 h-10 rounded-full object-cover border border-gray-300"/>
-                        <button type="button" class="truncate block hover:underline" :title="user.name" @click="router.push(`authority/user/${user.id}`)"> {{ user.name }} </button>
+                        <img :src="user.userPicture" :alt="t('userList.profileImage')" class="w-10 h-10 rounded-full object-cover border border-gray-300"/>
+                        <div class="flex flex-col">
+                          <button type="button" class="truncate block hover:underline text-left" :title="user.name" @click="router.push(`authority/user/${user.id}`)"> 
+                            {{ user.name }} 
+                          </button>
+                          <span class="text-xs text-gray-500 truncate" :title="user.email">{{ user.email }}</span>
+                        </div>
                       </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.groups?.length ?? 0 }}</td>
@@ -55,7 +59,6 @@
                       <div class="flex justify-end gap-3">
                         <button type="button" class="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showDeleteUserDialog(user)">
                           <TrashIcon class="h-4 w-4 text-white" aria-hidden="true" />
-                          {{ t('userList.delete.user.button') }}
                         </button>
                       </div>
                     </td>

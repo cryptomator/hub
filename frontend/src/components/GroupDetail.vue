@@ -10,7 +10,7 @@
         <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">
           {{ t('group.detail.info') }}
         </h3>
-        <button class="inline-flex items-center gap-2 px-2.5 py-1.5 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="router.push('1/edit')">
+        <button class="inline-flex items-center gap-2 px-2.5 py-1.5 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showGroupEdit">
           <PencilIcon class="h-4 w-4 text-gray-500" aria-hidden="true" />
           {{ t('group.detail.edit') }}
         </button>
@@ -164,7 +164,6 @@
   </div>
 
   <!-- Dialogs -->
-  <GroupEditDialog ref="editGroupDialog" />
   <GroupAddMemberDialog ref="addMemberDialog" :members="group.users" @saved="onMembersSaved" />
   <GroupMemberRemoveDialog v-if="deletingGroupMember != null" ref="deleteGroupMemberDialog" :group="deletingGroupMember" @close="deletingGroupMember = null" @delete="onGroupMemberDeleted" />
 </template>
@@ -175,11 +174,10 @@ import { PencilIcon } from '@heroicons/vue/24/outline';
 import { TrashIcon } from '@heroicons/vue/24/solid';
 import { computed, nextTick, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router';
 import type { UserDto } from '../common/backend';
 import GroupAddMemberDialog from './GroupAddMemberDialog.vue';
-import GroupEditDialog from './GroupEditDialog.vue';
 import GroupMemberRemoveDialog from './GroupMemberRemoveDialog.vue';
-import { useRouter } from 'vue-router';
 
 const router = useRouter();
 
@@ -225,9 +223,12 @@ function onGroupMemberDeleted() {
   deletingGroupMember.value = null;
 }
 
+function showGroupEdit() {
+  router.push(`/app/authority/group/${group.value.id}/edit`);
+}
+
 const props = defineProps<{ id: string }>();
 const { t, d } = useI18n({ useScope: 'global' });
-const editGroupDialog = ref<InstanceType<typeof GroupEditDialog> | null>(null);
 
 const group = ref<DetailGroup>({
   id: props.id,
@@ -276,10 +277,6 @@ const group = ref<DetailGroup>({
   ],
   memberSize: 25
 });
-
-function openEditDialog() {
-  editGroupDialog.value?.show();
-}
 
 const addMemberDialog = ref<InstanceType<typeof GroupAddMemberDialog> | null>(null);
 

@@ -81,12 +81,19 @@ const routes: RouteRecordRaw[] = [
         props: true,
       },
       {
-        path: 'authority/group/1',
-        component: () => import('../components/GroupDetail.vue'),
+        path: 'authority/group/create',
+        component: () => import('../components/GroupEditCreate.vue'),
+        props: true,
       },
       {
-        path: 'authority/group/1/edit',
-        component: () => import('../components/GroupEdit.vue'),
+        path: 'authority/group/:id/edit',
+        component: () => import('../components/GroupEditCreate.vue'),
+        props: true,
+      },
+      {
+        path: 'authority/group/:id',
+        component: () => import('../components/GroupDetail.vue'),
+        props: true,
       },
       {
         path: 'vaults',

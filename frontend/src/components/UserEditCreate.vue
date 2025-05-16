@@ -1,36 +1,38 @@
 <template>
+  <!-- Loading placeholder -->
   <div v-if="loading" class="text-center p-8 text-gray-500 text-sm">
     {{ t('common.loading') }}
   </div>
 
+  <!-- Edit/Create page -->
   <div v-else>
     <div class="-my-2 -mx-4 sm:-mx-6 lg:-mx-8 overflow-hidden">
       <div class="py-2 align-middle inline-block min-w-full px-4 sm:px-6 lg:px-8">
-        <div class="shadow overflow-hidden border-b border-gray-200 rounded-lg bg-white p-6 space-y-8">
+        <div class="shadow overflow-hidden border-b border-gray-200 rounded-lg bg-white p-6 space-y-8 relative">
           <div>
             <h3 class="text-lg font-medium leading-6 text-gray-900">
               {{ isEditMode ? t('userEditCreate.title.edit') : t('userEditCreate.title.create') }}
             </h3>
-            <p class="mt-1 text-sm text-gray-500 w-full">
-              {{ isEditMode ? t('userEditCreate.description.edit') : t('userEditCreate.description.create') }}
-            </p>
             <hr class="my-4 border-gray-200"/>
           </div>
           
+          <!-- Profile Picture -->
           <div class="flex flex-col items-center gap-4">
             <div class="relative w-32 h-32">
-              <img v-if="previewUrl" :src="previewUrl" class="w-full h-full rounded-full object-cover border border-gray-300" alt="Profile Picture"/>
+              <img v-if="previewUrl" :src="previewUrl" class="w-full h-full rounded-full object-cover border border-gray-300" :alt="t('userEditCreate.profilePicture')"/>
               <div v-else class="w-full h-full rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
                 <UserIcon class="w-12 h-12" />
               </div>
               <button type="button" class="absolute bottom-0 right-0 bg-white rounded-full p-1 shadow-md hover:bg-gray-100" :aria-label="previewUrl ? t('userEditCreate.removePicture') : t('userEditCreate.addPicture')" @click="previewUrl ? removePicture() : triggerFileSelect()">
-                <component :is="previewUrl ? TrashIcon : PlusIcon" class="w-5 h-5 text-gray-600" />
+                <component :is="previewUrl ? TrashIcon : PhotoIcon" class="w-5 h-5 text-gray-600" />
               </button>
               <input ref="fileInputRef" type="file" accept="image/*" class="hidden" @change="onPictureChange" />
             </div>
           </div>
-          
-          <form id="user-edit-form" novalidate class="space-y-6 md:space-y-8" @submit.prevent="saveUser">
+
+          <!-- Form -->
+          <form class="space-y-6 md:space-y-8" novalidate @submit.prevent="onSubmit">
+            <!-- First Name row -->
             <div class="md:grid md:grid-cols-3 md:gap-6">
               <label for="firstName" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
                 {{ t('userEditCreate.firstName') }}
@@ -40,6 +42,8 @@
                 <p v-if="errors.firstName" class="mt-1 text-sm text-red-600">{{ errors.firstName }}</p>
               </div>
             </div>
+
+            <!-- Last Name row -->
             <div class="md:grid md:grid-cols-3 md:gap-6">
               <label for="lastName" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
                 {{ t('userEditCreate.lastName') }}
@@ -49,6 +53,8 @@
                 <p v-if="errors.lastName" class="mt-1 text-sm text-red-600">{{ errors.lastName }}</p>
               </div>
             </div>
+
+            <!-- Username row -->
             <div class="md:grid md:grid-cols-3 md:gap-6">
               <label for="username" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
                 {{ t('userEditCreate.username') }}
@@ -58,6 +64,8 @@
                 <p v-if="errors.username" class="mt-1 text-sm text-red-600">{{ errors.username }}</p>
               </div>
             </div>
+
+            <!-- Email row -->
             <div class="md:grid md:grid-cols-3 md:gap-6">
               <label for="email" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
                 {{ t('userEditCreate.email') }}
@@ -70,6 +78,8 @@
                 </p>
               </div>
             </div>
+
+            <!-- Roles row -->
             <div class="md:grid md:grid-cols-3 md:gap-6">
               <label for="roles" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
                 {{ t('userEditCreate.roles') }}
@@ -108,18 +118,21 @@
                 </Listbox>
               </div>
             </div>
+
+            <!-- Password Info -->
             <div class="md:grid md:grid-cols-3 md:gap-6">
               <div></div>
               <div class="md:col-span-2 lg:col-span-1">
                 <div class="bg-blue-50 text-gray-900 text-sm rounded-md p-4 flex gap-3 items-start">
                   <InformationCircleIcon class="w-5 h-5 mt-0.5 text-blue-400 flex-shrink-0" aria-hidden="true" />
                   <p>
-                    <!-- Unterschiedlicher Hilfetext je nach Modus -->
                     {{ isEditMode ? t('userEditCreate.edit.passwordInfo') : t('userEditCreate.create.passwordInfo') }}
                   </p>
                 </div>
               </div>
             </div>
+
+            <!-- Password row -->
             <div class="md:grid md:grid-cols-3 md:gap-6">
               <label for="password" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
                 {{ t('userEditCreate.password') }}
@@ -149,6 +162,8 @@
                 </div>
               </div>
             </div>
+
+            <!-- Password Confirm row -->
             <div class="md:grid md:grid-cols-3 md:gap-6">
               <label for="passwordConfirm" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
                 {{ t('userEditCreate.passwordConfirm') }}
@@ -166,13 +181,20 @@
                 </p>
               </div>
             </div>
+
+            <!-- Actions -->
             <div class="md:grid md:grid-cols-3 md:gap-6">
               <div></div>
               <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
-                <button type="submit" :disabled="processing" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
-                  <span v-if="!userSaved">{{ isEditMode ? t('userEditCreate.button.save') : t('userEditCreate.button.create') }}</span>
-                  <span v-else>{{ t('userEditCreate.button.saved') }}</span>
-                </button>
+                <div class="flex space-x-3">
+                  <button type="submit" :disabled="processing" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
+                    <span v-if="!userSaved">{{ isEditMode ? t('common.save') : t('common.create') }}</span>
+                    <span v-else>{{ t('common.saved') }}</span>
+                  </button>
+                  <button type="button" class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="cancelAction">
+                    {{ t('common.cancel') }}
+                  </button>
+                </div>
               </div>
             </div>
           </form>
@@ -184,11 +206,22 @@
 
 <script setup lang="ts">
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue';
-import { CheckIcon, ChevronUpDownIcon, EyeIcon, EyeSlashIcon, InformationCircleIcon, PlusIcon, TrashIcon, UserIcon } from '@heroicons/vue/24/outline';
+import { CheckIcon, ChevronUpDownIcon, EyeIcon, EyeSlashIcon, InformationCircleIcon, PhotoIcon, TrashIcon, UserIcon } from '@heroicons/vue/24/outline';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
+import { FormValidator } from '../common/formvalidator';
 import { debounce } from '../common/util';
+
+interface UserData {
+  firstName: string;
+  lastName: string;
+  username: string;
+  email: string;
+  roles: Role[];
+  picture?: File | null;
+  previewUrl?: string | null;
+}
 
 const { t } = useI18n({ useScope: 'global' });
 const route = useRoute();
@@ -203,70 +236,71 @@ const firstName = ref('');
 const lastName = ref('');
 const username = ref('');
 const email = ref('');
-const errors = ref<Record<string, string>>({});
-type UserRole = 'Admin' | 'Create-Vault';
 
-const selectedRoles = ref<UserRole[]>([]);
-const roleOptions: Record<UserRole, string> = {
+type Role = 'Admin' | 'Create-Vault';
+const selectedRoles = ref<Role[]>([]);
+const roleOptions: Record<Role, string> = {
   'Admin': 'Admin',
   'Create-Vault': 'Create-Vault',
 };
 
-function removeRole(role: UserRole) {
-  selectedRoles.value = selectedRoles.value.filter(r => r !== role);
-}
+const errors = ref<Record<string, string>>({});
+const processing = ref(false);
+const userSaved = ref(false);
+const debouncedUserSaved = debounce(() => userSaved.value = false, 2000);
 
 const password = ref('');
 const passwordConfirm = ref('');
-const showPassword = ref(false);
 const passwordInputType = ref<'password' | 'text'>('password');
 const passwordStrength = ref<'weak' | 'medium' | 'strong' | ''>('');
 const previewUrl = ref<string | null>(null);
 const fileInputRef = ref<HTMLInputElement | null>(null);
-const userSaved = ref(false);
-const processing = ref(false);
-const debouncedUserSaved = debounce(() => userSaved.value = false, 2000);
+
+onMounted(() => {
+  if (isEditMode.value) {
+    setTimeout(() => {
+      firstName.value = 'Max';
+      lastName.value = 'Mustermann';
+      username.value = 'mustermannmax';
+      email.value = 'max.mustermann@mustermail.de';
+      previewUrl.value = 'https://i.pravatar.cc/150?u=placeholder';
+      selectedRoles.value = ['Admin']; 
+      loading.value = false;
+    }, 300);
+  } else {
+    firstName.value = '';
+    lastName.value = '';
+    username.value = '';
+    email.value = '';
+    password.value = '';
+    passwordConfirm.value = '';
+    previewUrl.value = null;
+    selectedRoles.value = [];
+    loading.value = false;
+  }
+});
+
+function removeRole(role: Role) {
+  selectedRoles.value = selectedRoles.value.filter(r => r !== role);
+}
 
 function togglePasswordVisibility() {
   passwordInputType.value = passwordInputType.value === 'password' ? 'text' : 'password';
 }
 
-function evaluatePasswordStrength(pw: string): 'weak' | 'medium' | 'strong' | '' {
-  if (!pw) return '';
-  const strong = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{10,}$/;
-  const medium = /^(?=.*[a-zA-Z])(?=.*\d).{6,}$/;
-  if (strong.test(pw)) return 'strong';
-  if (medium.test(pw)) return 'medium';
-  return 'weak';
-}
-
 function validateForm() {
-  const newErrors: Record<string, string> = {};
+  const result = FormValidator.validateUser({
+    firstName: firstName.value,
+    lastName: lastName.value,
+    username: username.value,
+    email: email.value,
+    password: password.value,
+    passwordConfirm: passwordConfirm.value,
+    isEditMode: isEditMode.value
+  });
   
-  // Required fields validation
-  if (!firstName.value.trim()) newErrors.firstName = t('userEditCreate.validation.required');
-  if (!lastName.value.trim()) newErrors.lastName = t('userEditCreate.validation.required');
-  if (!username.value.trim()) newErrors.username = t('userEditCreate.validation.required');
-  
-  // Email validation
-  if (!email.value.trim()) {
-    newErrors.email = t('userEditCreate.validation.required');
-  } else if (!isValidEmail(email.value.trim())) {
-    newErrors.email = t('userEditCreate.invalidEmail'); 
-  }
-  
-  // Password confirmation validation
-  if (password.value && password.value !== passwordConfirm.value) {
-    newErrors.passwordConfirm = t('userEditCreate.validation.passwordMismatch');
-  }
-  
-  // For create mode, require password
-  if (!isEditMode.value && !password.value) {
-    newErrors.password = t('userEditCreate.validation.required');
-  }
-  
-  errors.value = newErrors;
-  return Object.keys(newErrors).length === 0;
+  errors.value = result.errors;
+  return result.valid;
 }
 
 const passwordStrengthLabel = computed(() => {
@@ -287,9 +321,11 @@ const passwordStrengthColor = computed(() => {
   }
 });
 
-const isValidEmail = (val: string): boolean => {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
-};
+const isValidEmail = FormValidator.isValidEmail;
+
+function evaluatePasswordStrength(pw: string): 'weak' | 'medium' | 'strong' | '' {
+  return FormValidator.evaluatePasswordStrength(pw);
+}
 
 watch(password, (newVal) => {
   passwordStrength.value = evaluatePasswordStrength(newVal);
@@ -317,7 +353,7 @@ function removePicture() {
   }
 }
 
-function saveUser() {
+function onSubmit() {
   if (!validateForm()) {
     return;
   }
@@ -358,27 +394,11 @@ function saveUser() {
   }
 }
 
-onMounted(() => {
+function cancelAction() {
   if (isEditMode.value) {
-    setTimeout(() => {
-      firstName.value = 'Max';
-      lastName.value = 'Mustermann';
-      username.value = 'mustermannmax';
-      email.value = 'max.mustermann@mustermail.de';
-      previewUrl.value = 'https://i.pravatar.cc/150?u=placeholder';
-      selectedRoles.value = ['Admin']; 
-      loading.value = false;
-    }, 300);
+    router.push(`/app/authority/user/${userId}`);
   } else {
-    firstName.value = '';
-    lastName.value = '';
-    username.value = '';
-    email.value = '';
-    password.value = '';
-    passwordConfirm.value = '';
-    previewUrl.value = null;
-    selectedRoles.value = [];
-    loading.value = false;
+    router.push('/app/authority');
   }
-});
+}
 </script>
