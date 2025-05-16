@@ -67,7 +67,7 @@
         <!-- Device Table -->
         <div>
           <table class="w-full table-fixed divide-y divide-gray-200" aria-describedby="deviceListTitle">
-            <thead class="bg-gray-50">
+            <thead v-if="filteredDevices.length != 0" class="bg-gray-50">
               <tr>
                 <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   {{ t('common.device') }}
@@ -164,7 +164,7 @@
 
         <div>
           <table class="w-full table-fixed divide-y divide-gray-200" aria-describedby="deviceListTitle">
-            <thead class="bg-gray-50">
+            <thead v-if="filteredLegacyDevices.length != 0" class="bg-gray-50">
               <tr>
                 <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   {{ t('common.device') }}
@@ -214,9 +214,9 @@
                   </td>
                 </tr>
               </template>
-              <tr v-if="!filteredDevices.length">
+              <tr v-if="!filteredLegacyDevices.length">
                 <td colspan="5" class="py-4 px-6 text-sm text-gray-500 text-center">
-                  {{ t(deviceQuery ? 'common.nothingFound' : 'common.none') }}
+                  {{ t(legacyDeviceQuery ? 'common.nothingFound' : 'common.none') }}
                 </td>
               </tr>
             </tbody>
@@ -331,7 +331,7 @@
               <div class="text-sm font-medium text-gray-900 truncate">{{ vault.name }}</div>
               <div v-if="vault.description" class="text-sm text-gray-500 truncate">{{ vault.description }}</div>
             </li>
-            <li v-if="!filteredVaults.length" class="text-sm text-gray-500">
+            <li v-if="!filteredVaults.length" class="flex items-center justify-center py-4 px-6 w-full text-sm text-gray-500">
               {{ t(vaultQuery ? 'common.nothingFound' : 'common.none') }}
             </li>
           </ul>
