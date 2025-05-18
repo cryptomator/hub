@@ -93,9 +93,16 @@
   "resetUserAccountDialog.title": "إعادة تعيين حساب المستخدم",
   "unlockSuccess.deviceSetup.title": "جهاز جديد",
   "vaultDetails.description.header": "الوصف",
+  "vaultDetails.information.header": "معلومات",
+  "vaultDetails.sharedWith.badge.owner": "المالك",
+  "vaultDetails.actions.updatePermissions": "تحديث الأذونات",
   "vaultDetails.actions.updatePermissions.reload": "إعادة تحميل",
   "vaultDetails.actions.displayRecoveryKey": "إظهار مفتاح الاسترداد",
   "vaultList.title": "المخازن",
   "vaultList.addVault": "إضافة",
-  "vaultList.filter": "التصفية"
+  "vaultList.filter": "التصفية",
+  "vaultList.filter.entry.ownedVaults": "ملكي",
+  "vaultList.search.placeholder": "بحث…",
+  "vaultList.badge.owner": "المالك",
+  "vaultList.badge.archived": "مؤرشف"
 }
