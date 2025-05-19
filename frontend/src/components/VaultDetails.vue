@@ -98,7 +98,7 @@
                 <span class="ml-4 text-sm font-medium text-primary group-hover:text-primary-l1">{{ t('common.share') }}</span>
               </button>
             </div>
-            <SearchInputGroup v-else-if="addingUser" :action-title="t('common.add')" :on-search="searchAuthority" @action="addAuthority" />
+            <SearchInputGroup v-else-if="addingUser" :action-title="t('common.add')" place-holder="John Doe" :on-search="searchAuthority" @action="addAuthority" />
             <div v-if="onAddUserError != null">
               <p v-if="onAddUserError instanceof PaymentRequiredError" class="text-sm text-red-900 text-right mt-1">
                 {{ t('vaultDetails.error.licenseViolated') }}

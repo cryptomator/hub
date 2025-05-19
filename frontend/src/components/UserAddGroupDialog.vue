@@ -1,6 +1,6 @@
 <template>
   <TransitionRoot as="template" :show="open">
-    <Dialog as="div" class="fixed inset-0 z-10 overflow-y-auto">
+    <Dialog as="div" class="fixed inset-0 z-10 overflow-y-auto" @close="open = false">
       <!-- Backdrop ---------------------------------------------------->
       <TransitionChild as="template" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100" leave="ease-in  duration-200" leave-from="opacity-100" leave-to="opacity-0">
         <DialogOverlay class="fixed inset-0 bg-gray-500/75" @click.stop />
@@ -9,24 +9,19 @@
       <!-- Panel ------------------------------------------------------->
       <div class="flex min-h-full items-end justify-center p-4 sm:items-center sm:p-0">
         <TransitionChild as="template" enter="ease-out duration-300" enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" enter-to="opacity-100 translate-y-0 sm:scale-100" leave="ease-in duration-200" leave-from="opacity-100 translate-y-0 sm:scale-100" leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
-          <DialogPanel
-            class="relative flex w-full max-h-[80vh] min-h-[30rem] transform flex-col overflow-hidden rounded-lg bg-white shadow-xl transition-all sm:my-8 sm:max-w-lg">
+          <DialogPanel class="relative flex w-full h-[32rem] transform flex-col overflow-hidden rounded-lg bg-white shadow-xl transition-all sm:my-8 sm:max-w-lg">
             <form novalidate class="flex flex-1 min-h-0 flex-col" @submit.prevent="onSubmit">
               <!-- Body -->
               <div class="flex flex-1 min-h-0 flex-col overflow-hidden bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                 <DialogTitle class="text-lg font-medium text-gray-900">
-                  {{ t('user.groups.addDialog.title', 'Add Groups') }}
+                  {{ t('user.joinGroups.title') }}
                 </DialogTitle>
 
                 <div class="mt-6 flex flex-1 min-h-0 flex-col overflow-y-auto">
-                  <h3 class="font-medium text-gray-900">
-                    {{ t('user.groups.addDialog.searchLabel', 'Search by group name or description') }}
-                  </h3>
-
-                  <ul class="mt-2 flex-1 min-h-0 divide-y divide-gray-200">
+                  <ul class="flex-1 min-h-0 divide-y divide-gray-200">
                     <!-- Search input row -->
                     <li class="py-2 flex flex-col p-1">
-                      <SearchInputGroup :action-title="t('common.add')" :on-search="searchGroup" @action="addGroup" />
+                      <SearchInputGroup :action-title="t('common.add')" :place-holder="t('user.joinGroups.searchLabel')" :on-search="searchGroup" @action="addGroup" />
                       <p v-if="onAddGroupError" class="mt-1 text-sm text-red-900 text-right">
                         {{ t('common.unexpectedError', [onAddGroupError.message]) }}
                       </p>
@@ -34,17 +29,18 @@
 
                     <!-- Selected groups list -->
                     <template v-for="group in sortedNewGroups" :key="group.id">
-                      <li class="py-3 flex flex-col">
+                      <li class="py-3 flex flex-col p-1">
                         <div class="flex items-center justify-between">
                           <div class="flex items-center w-full" :title="group.name">
-                            <img :src="group.userPicture" class="w-8 h-8 rounded-full object-cover border border-gray-300" />
+                            <div class="w-8 h-8 rounded-full border border-gray-300 bg-white flex items-center justify-center overflow-hidden">
+                              <img v-if="group.userPicture" :src="group.userPicture" class="w-full h-full object-cover" alt="group icon" />
+                              <UserGroupIcon v-else class="w-5 h-5 text-gray-400" aria-hidden="true" />
+                            </div>
                             <p class="ml-4 text-sm font-medium truncate">
                               {{ group.name }}
                             </p>
                           </div>
-                          <button type="button" class="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" :title="t('common.remove')" @click="removeTempGroup(group.id)">
-                            <TrashIcon class="h-4 w-4 text-white" aria-hidden="true" />
-                          </button>
+                          <a tabindex="0" class="cursor-pointer text-red-600 hover:text-red-900" :title="t('common.remove')" @click="removeTempGroup(group.id)">{{ t('common.remove') }}</a>
                         </div>
                       </li>
                     </template>
@@ -63,7 +59,7 @@
                 </button>
                 <span class="mt-3 sm:mt-0 flex items-center text-sm text-gray-600 sm:mr-auto">
                   {{ selectedCount }}
-                  {{ t('user.groups.addDialog.selected', 'Group(s) selected') }}
+                  {{ t('user.joinGroups.selectedGroups') }}
                 </span>
               </div>
             </form>
@@ -89,7 +85,7 @@ import {
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import SearchInputGroup from './SearchInputGroup.vue';
-import { TrashIcon } from '@heroicons/vue/24/solid';
+import { UserGroupIcon } from '@heroicons/vue/20/solid';
 
 /* -------------------------------------------------------------------------- */
 /* Types & Props                                                               */
@@ -141,7 +137,27 @@ async function searchGroup(query: string): Promise<Group[]> {
           { id: 'g105', name: 'Localization', description: 'i18n Team', userPicture:'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iIzAwNUU3MSIgb3BhY2l0eT0iMS4wMCIvPjxwYXRoIGZpbGw9IiNmNmY2ZjYiIGQ9Ik0yOS4yIDEyLjVhOC4zLDguMyAwIDEsMSAxNi43LDBhOC4zLDguMyAwIDEsMSAtMTYuNywwTTU0LjIgMTIuNWE4LjMsOC4zIDAgMSwxIDE2LjcsMGE4LjMsOC4zIDAgMSwxIC0xNi43LDBNNTQuMiA4Ny41YTguMyw4LjMgMCAxLDEgMTYuNywwYTguMyw4LjMgMCAxLDEgLTE2LjcsME0yOS4yIDg3LjVhOC4zLDguMyAwIDEsMSAxNi43LDBhOC4zLDguMyAwIDEsMSAtMTYuNywwTTQuMiAzNy41YTguMyw4LjMgMCAxLDEgMTYuNywwYTguMyw4LjMgMCAxLDEgLTE2LjcsME03OS4yIDM3LjVhOC4zLDguMyAwIDEsMSAxNi43LDBhOC4zLDguMyAwIDEsMSAtMTYuNywwTTc5LjIgNjIuNWE4LjMsOC4zIDAgMSwxIDE2LjcsMGE4LjMsOC4zIDAgMSwxIC0xNi43LDBNNC4yIDYyLjVhOC4zLDguMyAwIDEsMSAxNi43LDBhOC4zLDguMyAwIDEsMSAtMTYuNywwIi8+PHBhdGggZmlsbD0iI2NhY2FjYSIgZD0iTTAgMEwyNSAwTDI1IDI1Wk0xMDAgMEwxMDAgMjVMNzUgMjVaTTEwMCAxMDBMNzUgMTAwTDc1IDc1Wk0wIDEwMEwwIDc1TDI1IDc1WiIvPjxwYXRoIGZpbGw9IiNjZWVjZjIiIGQ9Ik0yNSAyNUw1MCAyNUw1MCA1MEwyNSA1MFpNMzQgNDAuNWE2LjUsNi41IDAgMSwwIDEzLDBhNi41LDYuNSAwIDEsMCAtMTMsME03NSAyNUw3NSA1MEw1MCA1MEw1MCAyNVpNNTMgNDAuNWE2LjUsNi41IDAgMSwwIDEzLDBhNi41LDYuNSAwIDEsMCAtMTMsME03NSA3NUw1MCA3NUw1MCA1MEw3NSA1MFpNNTMgNTkuNWE2LjUsNi41IDAgMSwwIDEzLDBhNi41LDYuNSAwIDEsMCAtMTMsME0yNSA3NUwyNSA1MEw1MCA1MEw1MCA3NVpNMzQgNTkuNWE2LjUsNi41IDAgMSwwIDEzLDBhNi41LDYuNSAwIDEsMCAtMTMsMCIvPjwvc3ZnPg==' },
           { id: 'g106', name: 'Design', description: 'UX/UI Designers', userPicture:'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iIzAwNUU3MSIgb3BhY2l0eT0iMS4wMCIvPjxwYXRoIGZpbGw9IiNmMWY5ZmIiIGQ9Ik0yNSAxMi41TDM3LjUgMEw1MCAxMi41TDM3LjUgMjVaTTYyLjUgMEw3NSAxMi41TDYyLjUgMjVMNTAgMTIuNVpNNzUgODcuNUw2Mi41IDEwMEw1MCA4Ny41TDYyLjUgNzVaTTM3LjUgMTAwTDI1IDg3LjVMMzcuNSA3NUw1MCA4Ny41Wk0wIDM3LjVMMTIuNSAyNUwyNSAzNy41TDEyLjUgNTBaTTg3LjUgMjVMMTAwIDM3LjVMODcuNSA1MEw3NSAzNy41Wk0xMDAgNjIuNUw4Ny41IDc1TDc1IDYyLjVMODcuNSA1MFpNMTIuNSA3NUwwIDYyLjVMMTIuNSA1MEwyNSA2Mi41WiIvPjxwYXRoIGZpbGw9IiNjZWVjZjIiIGQ9Ik0xMi41IDBMMjUgMTIuNUwxMi41IDI1TDAgMTIuNVpNMTAwIDEyLjVMODcuNSAyNUw3NSAxMi41TDg3LjUgMFpNODcuNSAxMDBMNzUgODcuNUw4Ny41IDc1TDEwMCA4Ny41Wk0wIDg3LjVMMTIuNSA3NUwyNSA4Ny41TDEyLjUgMTAwWiIvPjxwYXRoIGZpbGw9IiNjYWNhY2EiIGQ9Ik01MCAzNy41TDUwIDUwTDM3LjUgNTBaTTYyLjUgNTBMNTAgNTBMNTAgMzcuNVpNNTAgNjIuNUw1MCA1MEw2Mi41IDUwWk0zNy41IDUwTDUwIDUwTDUwIDYyLjVaIi8+PC9zdmc+' },
           { id: 'g107', name: 'QA', description: 'Quality Assurance', userPicture:'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iIzAwNUU3MSIgb3BhY2l0eT0iMS4wMCIvPjxwYXRoIGZpbGw9IiNhYmRmZTkiIGQ9Ik01MCAwTDUwIDI1TDI1IDI1Wk03NSAyNUw1MCAyNUw1MCAwWk01MCAxMDBMNTAgNzVMNzUgNzVaTTI1IDc1TDUwIDc1TDUwIDEwMFpNMjUgMjVMMjUgNTBMMCA1MFpNMTAwIDUwTDc1IDUwTDc1IDI1Wk03NSA3NUw3NSA1MEwxMDAgNTBaTTAgNTBMMjUgNTBMMjUgNzVaIi8+PHBhdGggZmlsbD0iI2NlZWNmMiIgZD0iTTEyLjUgMjVMMCAxMi41TDEyLjUgMEwyNSAxMi41Wk03NSAxMi41TDg3LjUgMEwxMDAgMTIuNUw4Ny41IDI1Wk04Ny41IDc1TDEwMCA4Ny41TDg3LjUgMTAwTDc1IDg3LjVaTTI1IDg3LjVMMTIuNSAxMDBMMCA4Ny41TDEyLjUgNzVaIi8+PHBhdGggZmlsbD0iI2Y2ZjZmNiIgZD0iTTI1IDI1TDUwIDI1TDUwIDUwTDI1IDUwWk00MS4zIDQ3LjVMNDcuNSAzNUwzNSAzNVpNNzUgMjVMNzUgNTBMNTAgNTBMNTAgMjVaTTUyLjUgNDEuM0w2NSA0Ny41TDY1IDM1Wk03NSA3NUw1MCA3NUw1MCA1MEw3NSA1MFpNNTguOCA1Mi41TDUyLjUgNjVMNjUgNjVaTTI1IDc1TDI1IDUwTDUwIDUwTDUwIDc1Wk00Ny41IDU4LjhMMzUgNTIuNUwzNSA2NVoiLz48L3N2Zz4=' },
-          { id: 'g108', name: 'Legal', description: 'Legal Department', userPicture:'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iIzAwNUU3MSIgb3BhY2l0eT0iMS4wMCIvPjxwYXRoIGZpbGw9IiNjYWNhY2EiIGQ9Ik0yNSAwTDUwIDBMNTAgMTIuNVpNNzUgMEw3NSAyNUw2Mi41IDI1Wk03NSAxMDBMNTAgMTAwTDUwIDg3LjVaTTI1IDEwMEwyNSA3NUwzNy41IDc1Wk0wIDI1TDI1IDI1TDI1IDM3LjVaTTEwMCAyNUwxMDAgNTBMODcuNSA1MFpNMTAwIDc1TDc1IDc1TDc1IDYyLjVaTTAgNzVMMCA1MEwxMi41IDUwWiIvPjxwYXRoIGZpbGw9IiNmNmY2ZjYiIGQ9Ik0xMi41IDBMMjUgMTIuNUwxMi41IDI1TDAgMTIuNVpNMTAwIDEyLjVMODcuNSAyNUw3NSAxMi41TDg3LjUgMFpNODcuNSAxMDBMNzUgODcuNUw4Ny41IDc1TDEwMCA4Ny41Wk0wIDg3LjVMMTIuNSA3NUwyNSA4Ny41TDEyLjUgMTAwWiIvPjxwYXRoIGZpbGw9IiNjZWVjZjIiIGQ9Ik0yNSAyNUw1MCAyNUw1MCAyOUwzOS41IDUwTDI1IDUwWk03NSAyNUw3NSA1MEw3MSA1MEw1MCAzOS41TDUwIDI1Wk03NSA3NUw1MCA3NUw1MCA3MUw2MC41IDUwTDc1IDUwWk0yNSA3NUwyNSA1MEwyOSA1MEw1MCA2MC41TDUwIDc1WiIvPjwvc3ZnPg==' }
+          { id: 'g108', name: 'Legal', description: 'Legal Department', userPicture:'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iIzAwNUU3MSIgb3BhY2l0eT0iMS4wMCIvPjxwYXRoIGZpbGw9IiNjYWNhY2EiIGQ9Ik0yNSAwTDUwIDBMNTAgMTIuNVpNNzUgMEw3NSAyNUw2Mi41IDI1Wk03NSAxMDBMNTAgMTAwTDUwIDg3LjVaTTI1IDEwMEwyNSA3NUwzNy41IDc1Wk0wIDI1TDI1IDI1TDI1IDM3LjVaTTEwMCAyNUwxMDAgNTBMODcuNSA1MFpNMTAwIDc1TDc1IDc1TDc1IDYyLjVaTTAgNzVMMCA1MEwxMi41IDUwWiIvPjxwYXRoIGZpbGw9IiNmNmY2ZjYiIGQ9Ik0xMi41IDBMMjUgMTIuNUwxMi41IDI1TDAgMTIuNVpNMTAwIDEyLjVMODcuNSAyNUw3NSAxMi41TDg3LjUgMFpNODcuNSAxMDBMNzUgODcuNUw4Ny41IDc1TDEwMCA4Ny41Wk0wIDg3LjVMMTIuNSA3NUwyNSA4Ny41TDEyLjUgMTAwWiIvPjxwYXRoIGZpbGw9IiNjZWVjZjIiIGQ9Ik0yNSAyNUw1MCAyNUw1MCAyOUwzOS41IDUwTDI1IDUwWk03NSAyNUw3NSA1MEw3MSA1MEw1MCAzOS41TDUwIDI1Wk03NSA3NUw1MCA3NUw1MCA3MUw2MC41IDUwTDc1IDUwWk0yNSA3NUwyNSA1MEwyOSA1MEw1MCA2MC41TDUwIDc1WiIvPjwvc3ZnPg==' },
+          { id: 'g109', name: 'Engineering', description: 'Engineering Team', userPicture: '' },
+          { id: 'g110', name: 'Finance', description: 'Financial Planning and Analysis', userPicture: '' },
+          { id: 'g111', name: 'Product', description: 'Product Management Team', userPicture: '' },
+          { id: 'g112', name: 'Analytics', description: 'Data & Analytics Team', userPicture: '' },
+          { id: 'g113', name: 'Support', description: 'Customer Support Team', userPicture: '' },
+          { id: 'g114', name: 'HR', description: 'Human Resources', userPicture: '' },
+          { id: 'g115', name: 'Executive', description: 'Executive Leadership Team', userPicture: '' },
+          { id: 'g116', name: 'Sales', description: 'Sales & Business Development', userPicture: '' },
+          { id: 'g117', name: 'Content', description: 'Content Marketing & Editorial', userPicture: '' },
+          { id: 'g118', name: 'Community', description: 'Community Engagement', userPicture: '' },
+          { id: 'g119', name: 'Partners', description: 'Partner & Channel Management', userPicture: '' },
+          { id: 'g120', name: 'Events', description: 'Event Planning Team', userPicture: '' },
+          { id: 'g121', name: 'Internal IT', description: 'Internal Infrastructure & IT', userPicture: '' },
+          { id: 'g122', name: 'BI', description: 'Business Intelligence', userPicture: '' },
+          { id: 'g123', name: 'Academy', description: 'Training & Certification', userPicture: '' },
+          { id: 'g124', name: 'Mobile', description: 'Mobile App Development', userPicture: '' },
+          { id: 'g125', name: 'Frontend', description: 'Frontend Development', userPicture: '' },
+          { id: 'g126', name: 'Backend', description: 'Backend Development', userPicture: '' },
+          { id: 'g127', name: 'Ops', description: 'Operations Team', userPicture: '' },
+          { id: 'g128', name: 'Strategy', description: 'Strategy & Innovation', userPicture: '' },
         ]),
       300
     )

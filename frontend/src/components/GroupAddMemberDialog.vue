@@ -1,6 +1,6 @@
 <template>
   <TransitionRoot as="template" :show="open">
-    <Dialog as="div" class="fixed inset-0 z-10 overflow-y-auto">
+    <Dialog as="div" class="fixed inset-0 z-10 overflow-y-auto" @close="open = false">
       <TransitionChild as="template" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100" leave="ease-in  duration-200" leave-from="opacity-100" leave-to="opacity-0">
         <DialogOverlay class="fixed inset-0 bg-gray-500/75" @click.stop />
       </TransitionChild>
@@ -10,29 +10,24 @@
             <form novalidate class="flex flex-1 min-h-0 flex-col" @submit.prevent="onSubmit">
               <div class="flex flex-1 min-h-0 flex-col overflow-hidden bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                 <DialogTitle class="text-lg font-medium text-gray-900">
-                  Add Members
+                  {{ t('group.addMembers.title') }}
                 </DialogTitle>
                 <div class="mt-6 flex flex-1 min-h-0 flex-col overflow-y-auto">
-                  <h3 class="font-medium text-gray-900">
-                    Search by username, full name or email address
-                  </h3>
-                  <ul class="mt-2 flex-1 min-h-0 divide-y divide-gray-200">
+                  <ul class=" flex-1 min-h-0 divide-y divide-gray-200">
                     <li class="py-2 flex flex-col p-1">
-                      <SearchInputGroup :action-title="t('common.add')" :on-search="searchUser" @action="addUser"/>
+                      <SearchInputGroup :action-title="t('common.add')" :place-holder="t('group.addMembers.searchLabel')" :on-search="searchUser" @action="addUser" />
                       <p v-if="onAddUserError" class="mt-1 text-sm text-red-900 text-right">
                         {{ t('common.unexpectedError', [onAddUserError.message]) }}
                       </p>
                     </li>
                     <template v-for="member in sortedNewMembers" :key="member.id" >
-                      <li class="py-3 flex flex-col">
+                      <li class="py-3 flex flex-col p-1">
                         <div class="flex items-center justify-between">
                           <div class="flex items-center w-full" :title="member.name">
                             <img :src="member.userPicture" class="w-8 h-8 rounded-full" />
                             <p class="ml-4 text-sm font-medium truncate">{{ member.name }}</p>
                           </div>
-                          <button type="button" class="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" :title="t('common.remove')" @click="removeTempMember(member.id)">
-                            <TrashIcon class="h-4 w-4 text-white" aria-hidden="true" />
-                          </button>
+                          <a tabindex="0" class="cursor-pointer text-red-600 hover:text-red-900" :title="t('common.remove')" @click="removeTempMember(member.id)">{{ t('common.remove') }}</a>
                         </div>
                       </li>
                     </template>
@@ -47,7 +42,7 @@
                   {{ t('common.cancel') }}
                 </button>
                 <span class="mt-3 sm:mt-0 flex items-center text-sm text-gray-600 sm:mr-auto">
-                  {{ selectedCount }} Member(s) selected
+                  {{ selectedCount }} {{ t('group.addMembers.selectedUser') }}
                 </span>
               </div>
             </form>
@@ -63,10 +58,8 @@ import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, Trans
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import SearchInputGroup from './SearchInputGroup.vue';
-import { TrashIcon } from '@heroicons/vue/24/solid';
-import { PlusSmallIcon } from '@heroicons/vue/24/solid';
 
-type User = { id: string; name: string; userPicture: string; role: string };
+type User = { id: string; name: string; username: string, userPicture: string; role: string };
 
 const props = defineProps<{ members: User[] }>();
 const emit  = defineEmits<{ saved: (added: User[]) => void }>();
@@ -94,32 +87,32 @@ async function searchUser(query: string): Promise<User[]> {
 
   const results: User[] = await new Promise(resolve =>
     setTimeout(() => resolve([
-      { id: '26', name: 'Nikolai Ivanov', userPicture: 'https://i.pravatar.cc/50?u=nikolaiivanov', role: 'admin' },
-      { id: '27', name: 'Grace Kim', userPicture: 'https://i.pravatar.cc/50?u=gracekim', role: 'admin' },
-      { id: '28', name: 'Pedro Martins', userPicture: 'https://i.pravatar.cc/50?u=pedromartins', role: 'admin' },
-      { id: '29', name: 'Miriam Ndulu', userPicture: 'https://i.pravatar.cc/50?u=miriamndulu', role: 'admin' },
-      { id: '30', name: 'Thomas Berg', userPicture: 'https://i.pravatar.cc/50?u=thomasberg', role: 'admin' },
-      { id: '31', name: 'Shiho Nakamura', userPicture: 'https://i.pravatar.cc/50?u=shihonakamura', role: 'admin' },
-      { id: '32', name: 'Abdul Rahman', userPicture: 'https://i.pravatar.cc/50?u=abdulrahman', role: 'admin' },
-      { id: '33', name: 'Lucia Caruso', userPicture: 'https://i.pravatar.cc/50?u=luciacaruso', role: 'admin' },
-      { id: '34', name: 'Andrei Popescu', userPicture: 'https://i.pravatar.cc/50?u=andreipopescu', role: 'admin' },
-      { id: '35', name: 'Maya Patel', userPicture: 'https://i.pravatar.cc/50?u=mayapatel', role: 'admin' },
-      { id: '36', name: 'Joon Park', userPicture: 'https://i.pravatar.cc/50?u=joonpark', role: 'admin' },
-      { id: '37', name: 'Selma Öztürk', userPicture: 'https://i.pravatar.cc/50?u=selmaozturk', role: 'admin' },
-      { id: '38', name: 'Luka Kovačić', userPicture: 'https://i.pravatar.cc/50?u=lukakovacic', role: 'admin' },
-      { id: '39', name: 'Clara Jensen', userPicture: 'https://i.pravatar.cc/50?u=clarajensen', role: 'admin' },
-      { id: '40', name: 'Igor Petrescu', userPicture: 'https://i.pravatar.cc/50?u=igorpetrescu', role: 'admin' },
-      { id: '41', name: 'Leila Haddad', userPicture: 'https://i.pravatar.cc/50?u=leilahaddad', role: 'admin' },
-      { id: '42', name: 'Mateusz Nowak', userPicture: 'https://i.pravatar.cc/50?u=mateusznowak', role: 'admin' },
-      { id: '43', name: 'Sienna Brown', userPicture: 'https://i.pravatar.cc/50?u=siennabrown', role: 'admin' },
-      { id: '44', name: 'Rashid Aliyev', userPicture: 'https://i.pravatar.cc/50?u=rashidaliyev', role: 'admin' },
-      { id: '45', name: 'Emily Thompson', userPicture: 'https://i.pravatar.cc/50?u=emilythompson', role: 'admin' },
-      { id: '46', name: 'Sergei Kuznetsov', userPicture: 'https://i.pravatar.cc/50?u=sergeikuznetsov', role: 'admin' },
-      { id: '47', name: 'Chloe Wilson', userPicture: 'https://i.pravatar.cc/50?u=chloewilson', role: 'admin' },
-      { id: '48', name: 'Omar Farouk', userPicture: 'https://i.pravatar.cc/50?u=omarfarouk', role: 'admin' },
-      { id: '49', name: 'Camille Laurent', userPicture: 'https://i.pravatar.cc/50?u=camillelaurent', role: 'admin' },
-      { id: '50', name: 'Jonas Sørensen', userPicture: 'https://i.pravatar.cc/50?u=jonassorensen', role: 'admin' },
-      { id: '51', name: 'Zoya Ahmed', userPicture: 'https://i.pravatar.cc/50?u=zoyaahmed', role: 'admin' }
+      { id: '26', name: 'Nikolai Ivanov', username: 'nikolai.ivanov', userPicture: 'https://i.pravatar.cc/50?u=nikolaiivanov', role: 'admin' },
+      { id: '27', name: 'Grace Kim', username: 'grace.kim', userPicture: 'https://i.pravatar.cc/50?u=gracekim', role: 'admin' },
+      { id: '28', name: 'Pedro Martins', username: 'pedro.martins', userPicture: 'https://i.pravatar.cc/50?u=pedromartins', role: 'admin' },
+      { id: '29', name: 'Miriam Ndulu', username: 'miriam.ndulu', userPicture: 'https://i.pravatar.cc/50?u=miriamndulu', role: 'admin' },
+      { id: '30', name: 'Thomas Berg', username: 'thomas.berg', userPicture: 'https://i.pravatar.cc/50?u=thomasberg', role: 'admin' },
+      { id: '31', name: 'Shiho Nakamura', username: 'shiho.nakamura', userPicture: 'https://i.pravatar.cc/50?u=shihonakamura', role: 'admin' },
+      { id: '32', name: 'Abdul Rahman', username: 'abdul.rahman', userPicture: 'https://i.pravatar.cc/50?u=abdulrahman', role: 'admin' },
+      { id: '33', name: 'Lucia Caruso', username: 'lucia.caruso', userPicture: 'https://i.pravatar.cc/50?u=luciacaruso', role: 'admin' },
+      { id: '34', name: 'Andrei Popescu', username: 'andrei.popescu', userPicture: 'https://i.pravatar.cc/50?u=andreipopescu', role: 'admin' },
+      { id: '35', name: 'Maya Patel', username: 'maya.patel', userPicture: 'https://i.pravatar.cc/50?u=mayapatel', role: 'admin' },
+      { id: '36', name: 'Joon Park', username: 'joon.park', userPicture: 'https://i.pravatar.cc/50?u=joonpark', role: 'admin' },
+      { id: '37', name: 'Selma Öztürk', username: 'selma.ozturk', userPicture: 'https://i.pravatar.cc/50?u=selmaozturk', role: 'admin' },
+      { id: '38', name: 'Luka Kovačić', username: 'luka.kovacic', userPicture: 'https://i.pravatar.cc/50?u=lukakovacic', role: 'admin' },
+      { id: '39', name: 'Clara Jensen', username: 'clara.jensen', userPicture: 'https://i.pravatar.cc/50?u=clarajensen', role: 'admin' },
+      { id: '40', name: 'Igor Petrescu', username: 'igor.petrescu', userPicture: 'https://i.pravatar.cc/50?u=igorpetrescu', role: 'admin' },
+      { id: '41', name: 'Leila Haddad', username: 'leila.haddad', userPicture: 'https://i.pravatar.cc/50?u=leilahaddad', role: 'admin' },
+      { id: '42', name: 'Mateusz Nowak', username: 'mateusz.nowak', userPicture: 'https://i.pravatar.cc/50?u=mateusznowak', role: 'admin' },
+      { id: '43', name: 'Sienna Brown', username: 'sienna.brown', userPicture: 'https://i.pravatar.cc/50?u=siennabrown', role: 'admin' },
+      { id: '44', name: 'Rashid Aliyev', username: 'rashid.aliyev', userPicture: 'https://i.pravatar.cc/50?u=rashidaliyev', role: 'admin' },
+      { id: '45', name: 'Emily Thompson', username: 'emily.thompson', userPicture: 'https://i.pravatar.cc/50?u=emilythompson', role: 'admin' },
+      { id: '46', name: 'Sergei Kuznetsov', username: 'sergei.kuznetsov', userPicture: 'https://i.pravatar.cc/50?u=sergeikuznetsov', role: 'admin' },
+      { id: '47', name: 'Chloe Wilson', username: 'chloe.wilson', userPicture: 'https://i.pravatar.cc/50?u=chloewilson', role: 'admin' },
+      { id: '48', name: 'Omar Farouk', username: 'omar.farouk', userPicture: 'https://i.pravatar.cc/50?u=omarfarouk', role: 'admin' },
+      { id: '49', name: 'Camille Laurent', username: 'camille.laurent', userPicture: 'https://i.pravatar.cc/50?u=camillelaurent', role: 'admin' },
+      { id: '50', name: 'Jonas Sørensen', username: 'jonas.sorensen', userPicture: 'https://i.pravatar.cc/50?u=jonassorensen', role: 'admin' },
+      { id: '51', name: 'Zoya Ahmed', username: 'zoya.ahmed', userPicture: 'https://i.pravatar.cc/50?u=zoyaahmed', role: 'admin' }
     ]), 300)
   );
 

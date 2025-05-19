@@ -2,380 +2,111 @@
   <div v-if="loading" class="text-center p-8 text-gray-500 text-sm">
     {{ t('common.loading') }}
   </div>
-  <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start ">
-    <section class="lg:col-start-1 grid gap-6">
-      <!-- User Info -->
-      <section class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-        <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-          <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">
-            {{ t('user.detail.info') }}
-          </h3>
-          <button type="button" class="bg-primary text-white text-sm font-medium px-4 py-2 rounded-md shadow-xs hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showUserEdit">
-            {{ t('user.detail.edit') }}
-          </button>
-        </div>
-        <div class="px-6 py-6">
-          <div class="flex flex-col items-center text-center mb-6">
-            <span class="sr-only">{{ t('user.edit.profileImage') }}</span>
-            <img :src="user.userPicture" :alt="t('user.edit.profileImage')" class="h-40 w-40 rounded-full object-contain bg-tertiary-2 border border-gray-300" />
-            <h2 class="text-xl font-semibold text-gray-900 mt-4">
-              <template v-if="user.firstName || user.lastName">
-                {{ user.firstName }} {{ user.lastName }}
-              </template>
-              <template v-else>
-                {{ user.username }}
-              </template>
-            </h2>
-            <p v-if="user.firstName || user.lastName" class="text-sm text-gray-500 mt-1">
-              {{ user.username }}
-            </p>
-          </div>
-          <dl class="divide-y divide-gray-100">
-            <div class="py-3 flex justify-between">
-              <dt class="text-sm text-gray-500">{{ t('user.detail.email') }}</dt>
-              <dd class="text-sm text-gray-900 font-medium">{{ user.email }}</dd>
-            </div>
-            <div class="py-3 flex justify-between">
-              <dt class="text-sm text-gray-500">{{ t('user.detail.roles') }}</dt>
-              <dd class="flex flex-wrap justify-end gap-2">
-                <span v-for="role in sortedRoles" :key="role" class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20 capitalize">
-                  {{ role }}
-                </span>
-                <span v-if="!sortedRoles.length" class="text-sm text-gray-500">{{ t('common.none') }}</span>
-              </dd>
-            </div>
-            <div class="py-3 flex justify-between">
-              <dt class="text-sm text-gray-500">{{ t('user.detail.createdOn') }}</dt>
-              <dd class="text-sm text-gray-900 font-medium">{{ d(user.creationTime, 'long') }}</dd>
-            </div>
-          </dl>
-        </div>
-      </section>
-      <!-- Devices -->
-      <section class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-        <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
-          <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">
-            {{ t('user.detail.devices') }}
-          </h3>
-        </div>
+  <div v-else>
+    <!-- Headline -->
+    <div class="flex flex-col sm:flex-row sm:justify-between gap-3 pb-5 w-full">
+      <h2 id="title" class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+        Headline
+      </h2>
 
-        <!-- Search bar -->
-        <div class="px-6 py-3 border-b border-gray-200">
-          <input id="deviceSearch" v-model="deviceQuery" :placeholder="t('common.search.placeholder')" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs text-sm border-gray-300 rounded-md disabled:bg-gray-200" />
-        </div>
-        
-        <!-- Device Table -->
-        <div>
-          <table class="w-full table-fixed divide-y divide-gray-200" aria-describedby="deviceListTitle">
-            <thead v-if="filteredDevices.length != 0" class="bg-gray-50">
-              <tr>
-                <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {{ t('common.device') }}
-                </th>
-                <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {{ t('legacyDeviceList.added') }}
-                </th>
-                <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  <span class="inline-flex items-center gap-1">
-                    {{ t('legacyDeviceList.lastAccess') }}
-                    <div class="relative group" :title="t('legacyDeviceList.lastAccess.toolTip')">
-                      <QuestionMarkCircleIcon class="h-4 w-4 text-gray-400"/>
-                    </div>
-                  </span>
-                </th>
-              </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-              <template v-for="device in paginatedDevices" :key="device.id">
-                <tr>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    <div class="flex items-center gap-2">
-                      <span v-if="device.type == 'TABLET'" :title="'Browser'">
-                        <WindowIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
-                      </span>
-                      <span v-else-if="device.type == 'DESKTOP'" :title="'Desktop'">
-                        <ComputerDesktopIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
-                      </span>
-                      <span v-else-if="device.type == 'MOBILE'" :title="'Mobile'">
-                        <DevicePhoneMobileIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
-                      </span>
-                      <span class="truncate max-w-xs" :title="device.name">
-                        {{ device.name }}
-                      </span>
-                    </div>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {{ new Date(device.creationTime).toISOString().slice(0, 16).replace('T', ' ') }}
-                  </td>
-                  <td class="h-17 px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <div v-if="device.lastAccessTime">
-                      {{ new Date(device.lastAccessTime).toISOString().slice(0, 16).replace('T', ' ') }}
-                    </div>
-                    <div v-if="device.lastIpAddress" class="text-xs text-gray-400">
-                      {{ device.lastIpAddress }}
-                    </div>
-                  </td>
-                </tr>
-              </template>
-              <tr v-if="!filteredDevices.length">
-                <td colspan="5" class="py-4 px-6 text-sm text-gray-500 text-center">
-                  {{ t(deviceQuery ? 'common.nothingFound' : 'common.none') }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+      <div class="flex gap-3 items-center">
+        <!-- Edit-Button -->
+        <button class="w-full bg-primary py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showUserEdit()">
+          {{ t('common.edit') }}
+        </button>
 
-        <!-- Pagination -->
-        <div v-if="showPaginationDevice" class="bg-gray-50 border-t border-gray-200">
-          <nav class="flex items-center justify-between px-4 py-3 sm:px-6" :aria-label="t('common.pagination')">
-            <div class="hidden sm:block">
-              <i18n-t keypath="auditLog.pagination.showing" scope="global" tag="p" class="text-sm text-gray-700">
-                <span class="font-medium">{{ paginationBeginDevice }}</span>
-                <span class="font-medium">{{ paginationEndDevice }}</span>
-              </i18n-t>
-            </div>
-            <div class="flex flex-1 justify-between sm:justify-end space-x-3">
-              <button v-if="currentPageDevice > 0" type="button" class="relative inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0" @click="showPreviousPageDevice">
-                {{ t('common.previous') }}
-              </button>
-              <button v-if="hasNextPageDevice" type="button" class="relative inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0" @click="showNextPageDevice">
-                {{ t('common.next') }}
-              </button>
-            </div>
-          </nav>
-        </div>
-      </section>      
-      <!-- Legacy Devices -->
-      <section v-if="user.legacyDevices.length != 0" class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-        <div class="flex items-center bg-gray-50 px-6 py-4 border-b border-gray-200 space-x-2">
-          <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">
-            {{ t('legacyDeviceList.title') }}
-          </h3>
-          <div class="relative group" :title="t('user.detail.legacyDeviceList.info')">
-            <QuestionMarkCircleIcon class="h-4 w-4 text-gray-400"/>
-          </div>
-        </div>
+        <!-- Ellipsis-Menü -->
+        <Menu as="div" class="relative inline-block shrink-0 text-left">
+          <MenuButton class="group p-1 focus:outline-hidden focus:ring-2 focus:ring-primary focus:ring-offset-2">
+            <span class="sr-only">Open options menu</span>
+            <EllipsisVerticalIcon class="h-5 w-5 text-gray-400 group-hover:text-gray-500" aria-hidden="true" />
+          </MenuButton>
 
-        <!-- Search bar -->
-        <div class="px-6 py-3 border-b border-gray-200">
-          <input id="legacyDeviceSearch" v-model="legacyDeviceQuery" :placeholder="t('common.search.placeholder')" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs text-sm border-gray-300 rounded-md disabled:bg-gray-200" />
-        </div>
-
-        <div>
-          <table class="w-full table-fixed divide-y divide-gray-200" aria-describedby="deviceListTitle">
-            <thead v-if="filteredLegacyDevices.length != 0" class="bg-gray-50">
-              <tr>
-                <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {{ t('common.device') }}
-                </th>
-                <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {{ t('legacyDeviceList.added') }}
-                </th>
-                <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  <span class="inline-flex items-center gap-1">
-                    {{ t('legacyDeviceList.lastAccess') }}
-                    <div class="relative group" :title="t('legacyDeviceList.lastAccess.toolTip')">
-                      <QuestionMarkCircleIcon class="h-4 w-4 text-gray-400"/>
-                    </div>
-                  </span>
-                </th>
-              </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-              <template v-for="device in paginatedLegacyDevices" :key="device.id">
-                <tr>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    <div class="flex items-center gap-2">
-                      <span v-if="device.type == 'TABLET'" :title="'Browser'">
-                        <WindowIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
-                      </span>
-                      <span v-else-if="device.type == 'DESKTOP'" :title="'Desktop'">
-                        <ComputerDesktopIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
-                      </span>
-                      <span v-else-if="device.type == 'MOBILE'" :title="'Mobile'">
-                        <DevicePhoneMobileIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
-                      </span>
-                      <span class="truncate max-w-xs" :title="device.name">
-                        {{ device.name }}
-                      </span>
-                    </div>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {{ new Date(device.creationTime).toISOString().slice(0, 16).replace('T', ' ') }}
-                  </td>
-                  <td class="h-17 px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <div v-if="device.lastAccessTime">
-                      {{ new Date(device.lastAccessTime).toISOString().slice(0, 16).replace('T', ' ') }}
-                    </div>
-                    <div v-if="device.lastIpAddress" class="text-xs text-gray-400">
-                      {{ device.lastIpAddress }}
-                    </div>
-                  </td>
-                </tr>
-              </template>
-              <tr v-if="!filteredLegacyDevices.length">
-                <td colspan="5" class="py-4 px-6 text-sm text-gray-500 text-center">
-                  {{ t(legacyDeviceQuery ? 'common.nothingFound' : 'common.none') }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Pagination -->
-        <div v-if="showPaginationLegacyDevice" class="bg-gray-50 border-t border-gray-200">
-          <nav class="flex items-center justify-between px-4 py-3 sm:px-6" :aria-label="t('common.pagination')">
-            <div class="hidden sm:block">
-              <i18n-t keypath="auditLog.pagination.showing" scope="global" tag="p" class="text-sm text-gray-700">
-                <span class="font-medium">{{ paginationBeginLegacyDevice }}</span>
-                <span class="font-medium">{{ paginationEndLegacyDevice }}</span>
-              </i18n-t>
-            </div>
-            <div class="flex flex-1 justify-between sm:justify-end space-x-3">
-              <button v-if="currentPageLegacyDevice > 0" type="button" class="relative inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0" @click="showPreviousPageLegacyDevice">
-                {{ t('common.previous') }}
-              </button>
-              <button v-if="hasNextPageLegacyDevice" type="button" class="relative inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0" @click="showNextPageLegacyDevice">
-                {{ t('common.next') }}
-              </button>
-            </div>
-          </nav>
-        </div>
-      </section>
-    </section>
-    <section class="lg:col-start-2 grid gap-6">
-      <!-- Groups -->
-      <section class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-        <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-          <div class="flex items-baseline gap-1">
-            <h3 id="groupsTitle" class="text-sm font-semibold text-gray-900 uppercase tracking-wide">
-              {{ t('user.detail.groups') }}
+          <transition enter-active-class="transition ease-out duration-100" enter-from-class="transform opacity-0 translate-y-1 scale-95" enter-to-class="transform opacity-100 translate-y-0 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 translate-y-0 scale-100" leave-to-class="transform opacity-0 translate-y-1 scale-95">
+            <MenuItems class="absolute right-0 mt-2 z-10 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-hidden">
+              <div class="py-1">
+                <MenuItem v-slot="{ active }">
+                  <div :class="[ active ? 'bg-gray-100 text-red-900' : 'text-red-700', 'cursor-pointer block px-4 py-2 text-sm']">
+                    {{ t('common.remove') }}
+                  </div>
+                </MenuItem>
+              </div>
+            </MenuItems>
+          </transition>
+        </Menu>
+      </div>
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+      <section class="lg:col-start-1 grid gap-6">
+        <!-- User Info -->
+        <section class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+          <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+            <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+              {{ t('user.detail.info') }}
             </h3>
-            <span class="text-xs text-gray-500">{{ user.groups.length }}</span>
           </div>
-          <button type="button" class="bg-primary text-white text-sm font-medium px-4 py-2 rounded-md shadow-xs hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="openAddGroupDialog">
-            {{ t('user.detail.groups.join') }}
-          </button>
-        </div>
-
-        <!-- Search bar -->
-        <div class="px-6 py-3 border-b border-gray-200">
-          <input id="groupSearch" v-model="groupQuery" :placeholder="t('common.search.placeholder')" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs text-sm border-gray-300 rounded-md disabled:bg-gray-200" />
-        </div>
-
-        <!-- Group table -->
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-300" aria-describedby="groupsTitle">
-            <tbody class="divide-y divide-gray-200 bg-white">
-              <tr v-for="group in paginatedGroups" :key="group.id">
-                <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 flex items-center gap-3 sm:pl-6">
-                  <img :src="group.userPicture" class="w-8 h-8 rounded-full object-cover border border-gray-300" />
-                  <span class="truncate">{{ group.name }}</span>
-                </td>
-
-                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <a tabindex="0" class="cursor-pointer text-red-600 hover:text-red-900" :title="t('common.leave')" @click="showDeleteDialog(group)">{{ t('common.leave') }}</a>
-                </td>
-              </tr>
-              <tr v-if="!filteredGroups.length">
-                <td colspan="2" class="py-4 px-4 text-sm text-center text-gray-500">
-                  {{ t(groupQuery ? 'group.members.search.empty' : 'common.none') }}
-                </td>
-              </tr>
-            </tbody>
-
-            <!-- GROUP pagination -->
-            <tfoot v-if="showPaginationGroup" class="bg-gray-50">
-              <tr>
-                <td colspan="2">
-                  <nav class="flex items-center justify-between px-4 py-3 sm:px-6" :aria-label="t('common.pagination')">
-                    <div class="hidden sm:block">
-                      <i18n-t keypath="auditLog.pagination.showing" scope="global" tag="p" class="text-sm text-gray-700">
-                        <span class="font-medium">{{ paginationBeginGroup }}</span>
-                        <span class="font-medium">{{ paginationEndGroup }}</span>
-                      </i18n-t>
-                    </div>
-                    <div class="flex flex-1 justify-end space-x-3">
-                      <button v-if="currentPageGroup > 0" type="button" class="relative inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0" @click="showPreviousPageGroup">
-                        {{ t('common.previous') }}
-                      </button>
-                      <button v-if="hasNextPageGroup" type="button" class="relative inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0" @click="showNextPageGroup">
-                        {{ t('common.next') }}
-                      </button>
-                    </div>
-                  </nav>
-                </td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-      </section>
-      <!-- Vaults -->
-      <section class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-        <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
-          <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">
-            {{ t('nav.vaults') }}
-          </h3>
-        </div>
-
-        <!-- Search bar -->
-        <div class="px-6 py-3 border-b border-gray-200">
-          <input id="vaultSearch" v-model="vaultQuery" :placeholder="t('common.search.placeholder')" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs text-sm border-gray-300 rounded-md disabled:bg-gray-200" />
-        </div>
-
-        <!-- Vault list -->
-        <div class="py-0">
-          <ul class="divide-y divide-gray-200 bg-white">
-            <li v-for="vault in paginatedVaults" :key="vault.id" class="py-2 px-6">
-              <div class="text-sm font-medium text-gray-900 truncate">{{ vault.name }}</div>
-              <div v-if="vault.description" class="text-sm text-gray-500 truncate">{{ vault.description }}</div>
-            </li>
-            <li v-if="!filteredVaults.length" class="flex items-center justify-center py-4 px-6 w-full text-sm text-gray-500">
-              {{ t(vaultQuery ? 'common.nothingFound' : 'common.none') }}
-            </li>
-          </ul>
-        </div>
-
-        <!-- Pagination -->
-        <div v-if="showPaginationVault" class="bg-gray-50 border-t border-gray-200">
-          <nav class="flex items-center justify-between px-4 py-3 sm:px-6" :aria-label="t('common.pagination')">
-            <div class="hidden sm:block">
-              <i18n-t keypath="auditLog.pagination.showing" scope="global" tag="p" class="text-sm text-gray-700">
-                <span class="font-medium">{{ paginationBeginVault }}</span>
-                <span class="font-medium">{{ paginationEndVault }}</span>
-              </i18n-t>
+          <div class="px-6 py-6">
+            <div class="flex flex-col items-center text-center mb-6">
+              <span class="sr-only">{{ t('user.edit.profileImage') }}</span>
+              <img :src="user.userPicture" :alt="t('user.edit.profileImage')" class="h-40 w-40 rounded-full object-contain bg-tertiary-2 border border-gray-300" />
+              <h2 class="text-xl font-semibold text-gray-900 mt-4">
+                <template v-if="user.firstName || user.lastName">
+                  {{ user.firstName }} {{ user.lastName }}
+                </template>
+                <template v-else>
+                  {{ user.username }}
+                </template>
+              </h2>
+              <p v-if="user.firstName || user.lastName" class="text-sm text-gray-500 mt-1">
+                {{ user.username }}
+              </p>
             </div>
-            <div class="flex flex-1 justify-between sm:justify-end space-x-3">
-              <button v-if="currentPageVault > 0" type="button" class="relative inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0" @click="showPreviousPageVault">
-                {{ t('common.previous') }}
-              </button>
-              <button v-if="hasNextPageVault" type="button" class="relative inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0" @click="showNextPageVault">
-                {{ t('common.next') }}
-              </button>
-            </div>
-          </nav>
-        </div>
+            <dl class="divide-y divide-gray-100">
+              <div class="py-3 flex justify-between">
+                <dt class="text-sm text-gray-500">{{ t('user.detail.email') }}</dt>
+                <dd class="text-sm text-gray-900 font-medium">{{ user.email }}</dd>
+              </div>
+              <div class="py-3 flex justify-between">
+                <dt class="text-sm text-gray-500">{{ t('user.detail.roles') }}</dt>
+                <dd class="flex flex-wrap justify-end gap-2">
+                  <span v-for="role in sortedRoles" :key="role" class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20 capitalize">
+                    {{ role }}
+                  </span>
+                  <span v-if="!sortedRoles.length" class="text-sm text-gray-500">{{ t('common.none') }}</span>
+                </dd>
+              </div>
+              <div class="py-3 flex justify-between">
+                <dt class="text-sm text-gray-500">{{ t('user.detail.createdOn') }}</dt>
+                <dd class="text-sm text-gray-900 font-medium">{{ d(user.creationTime, 'long') }}</dd>
+              </div>
+            </dl>
+          </div>
+        </section>
+        <!-- Devices -->
+        <AuthorityDeviceList :devices="user.devices" :page-size="10" :title="t('user.detail.devices')"/>      
+        <AuthorityDeviceList :devices="user.legacyDevices" :page-size="10" :visible="user.legacyDevices.length != 0" :title="t('legacyDeviceList.title')" :info="t('legacyDeviceList.title')"/>
       </section>
-    </section>
+      <section class="lg:col-start-2 grid gap-6">
+        <!-- Groups -->
+        <AuthorityUserGroupsList :user="user" :groups="user.groups" :page-size="10" :on-saved="handleGroupsSaved"></AuthorityUserGroupsList>
+        <!-- Vaults -->
+        <AuthorityVaultList :vaults="user.vaults" :page-size="10" :visible="user.legacyDevices.length != 0"></AuthorityVaultList>
+      </section>
+    </div>
   </div>
 
   <!-- Dialogs -->
-  <UserAddGroupDialog ref="addGroupDialog" :groups="user.groups" @saved="onGroupsSaved" />
-  <UserGroupRemoveDialog ref="deleteGroupMemberDialog" :group="deletingGroup" @close="deletingGroup = null" @delete="onGroupRemoved"/>
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import { EllipsisVerticalIcon } from '@heroicons/vue/20/solid';
+import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
+import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import UserAddGroupDialog from './UserAddGroupDialog.vue';
-import { GroupDto } from '../common/backend';
-import UserGroupRemoveDialog from './UserGroupRemoveDialog.vue';
-import { ComputerDesktopIcon, QuestionMarkCircleIcon, DevicePhoneMobileIcon, WindowIcon } from '@heroicons/vue/24/solid';
-
-const deletingGroup = ref<Group | null>(null);
-const deleteGroupMemberDialog = ref<InstanceType<typeof UserGroupRemoveDialog> | null>(null);
+import AuthorityVaultList from './AuthorityVaultList.vue';
+import AuthorityDeviceList from './AuthorityDeviceList.vue';
+import AuthorityUserGroupsList from './AuthorityUserGroupsList.vue';
 
 interface Group {
   id: string;
@@ -476,16 +207,12 @@ const user = ref<DetailUser>({
 
 const loading = ref<boolean>(true);
 
-function showDeleteDialog(g: Group) {
-  deletingGroup.value = g;
-  nextTick(() => {
-    deleteGroupMemberDialog.value?.show();
+function handleGroupsSaved(newGroups: Group[]) {
+  const ids = new Set(user.value.groups.map(g => g.id));
+  newGroups.forEach(g => {
+    if (!ids.has(g.id)) user.value.groups.push(g);
   });
-}
-
-function onGroupRemoved(removed: GroupDto) {
-  user.value.groups = user.value.groups.filter(g => g.id !== removed.id);
-  deletingGroup.value = null;
+  user.value.groups.sort((a, b) => a.name.localeCompare(b.name, 'de', { sensitivity: 'base' }));
 }
 
 onMounted(async () => {
@@ -501,168 +228,6 @@ onMounted(async () => {
 // Sorted roles
 // ---------------------------------------------------------------------------
 const sortedRoles = computed(() => [...user.value.roles ?? []].sort((a, b) => a.localeCompare(b, 'de', { sensitivity: 'base' })));
-
-// ---------------------------------------------------------------------------
-// DEVICES – search & pagination
-// ---------------------------------------------------------------------------
-
-// Filter und Pagination
-const deviceQuery = ref('');
-const filteredDevices = computed(() =>
-  user.value.devices.filter((device) =>
-    device.name.toLowerCase().includes(deviceQuery.value.toLowerCase())
-  )
-);
-
-const pageSize = 10;
-const currentPageDevice = ref(0);
-
-const paginatedDevices = computed(() =>
-  filteredDevices.value.slice(
-    currentPageDevice.value * pageSize,
-    (currentPageDevice.value + 1) * pageSize
-  )
-);
-
-const showPaginationDevice = computed(() => filteredDevices.value.length > pageSize);
-const hasNextPageDevice = computed(() =>
-  (currentPageDevice.value + 1) * pageSize < filteredDevices.value.length
-);
-const paginationBeginDevice = computed(() => currentPageDevice.value * pageSize + 1);
-const paginationEndDevice = computed(() =>
-  Math.min((currentPageDevice.value + 1) * pageSize, filteredDevices.value.length)
-);
-
-function showPreviousPageDevice() {
-  if (currentPageDevice.value > 0) currentPageDevice.value--;
-}
-
-function showNextPageDevice() {
-  if (hasNextPageDevice.value) currentPageDevice.value++;
-}
-
-watch(() => [filteredDevices.value.length, deviceQuery.value], () => (currentPageDevice.value = 0));
-
-// ---------------------------------------------------------------------------
-// LEGACY DEVICES – search & pagination
-// ---------------------------------------------------------------------------
-
-// Filter und Pagination
-const legacyDeviceQuery = ref('');
-const filteredLegacyDevices = computed(() =>
-  user.value.legacyDevices.filter((device) =>
-    device.name.toLowerCase().includes(legacyDeviceQuery.value.toLowerCase())
-  )
-);
-
-const currentPageLegacyDevice = ref(0);
-
-const paginatedLegacyDevices = computed(() =>
-  filteredLegacyDevices.value.slice(
-    currentPageLegacyDevice.value * pageSize,
-    (currentPageLegacyDevice.value + 1) * pageSize
-  )
-);
-
-const showPaginationLegacyDevice = computed(() => filteredLegacyDevices.value.length > pageSize);
-const hasNextPageLegacyDevice = computed(() =>
-  (currentPageLegacyDevice.value + 1) * pageSize < filteredLegacyDevices.value.length
-);
-const paginationBeginLegacyDevice = computed(() => currentPageLegacyDevice.value * pageSize + 1);
-const paginationEndLegacyDevice = computed(() =>
-  Math.min((currentPageLegacyDevice.value + 1) * pageSize, filteredLegacyDevices.value.length)
-);
-
-function showPreviousPageLegacyDevice() {
-  if (currentPageLegacyDevice.value > 0) currentPageLegacyDevice.value--;
-}
-
-function showNextPageLegacyDevice() {
-  if (hasNextPageLegacyDevice.value) currentPageLegacyDevice.value++;
-}
-
-watch(() => [filteredLegacyDevices.value.length, legacyDeviceQuery.value], () => (currentPageLegacyDevice.value = 0));
-
-// Vaults – search & pagination
-const pageSizeVault = ref(10);
-const currentPageVault = ref(0);
-const vaultQuery = ref('');
-
-const filteredVaults = computed(() => {
-  const q = vaultQuery.value.trim().toLowerCase();
-  return user.value.vaults
-    .filter(v => !q || v.name.toLowerCase().includes(q) || (v.description && v.description.toLowerCase().includes(q)))
-    .sort((a, b) => a.name.localeCompare(b.name, 'de', { sensitivity: 'base' }));
-});
-
-const showPaginationVault = computed(() => filteredVaults.value.length > pageSizeVault.value);
-
-const paginatedVaults = computed(() =>
-  filteredVaults.value.slice(currentPageVault.value * pageSizeVault.value, (currentPageVault.value + 1) * pageSizeVault.value)
-);
-
-const hasNextPageVault = computed(() => (currentPageVault.value + 1) * pageSizeVault.value < filteredVaults.value.length);
-
-const paginationBeginVault = computed(() => (filteredVaults.value.length ? currentPageVault.value * pageSizeVault.value + 1 : 0));
-const paginationEndVault = computed(() => Math.min((currentPageVault.value + 1) * pageSizeVault.value, filteredVaults.value.length));
-
-function showNextPageVault() {
-  if (hasNextPageVault.value) currentPageVault.value++;
-}
-function showPreviousPageVault() {
-  if (currentPageVault.value > 0) currentPageVault.value--;
-}
-
-watch(() => [filteredVaults.value.length, vaultQuery.value], () => (currentPageVault.value = 0));
-
-// ---------------------------------------------------------------------------
-// GROUPS – search & pagination (member-list style)
-// ---------------------------------------------------------------------------
-const pageSizeGroup = ref(10);
-const currentPageGroup = ref(0);
-const groupQuery = ref('');
-
-const filteredGroups = computed(() => {
-  const q = groupQuery.value.trim().toLowerCase();
-  return (user.value.groups ?? [])
-    .filter((g) => !q || g.name.toLowerCase().includes(q))
-    .sort((a, b) => a.name.localeCompare(b.name, 'de', { sensitivity: 'base' }));
-});
-
-const showPaginationGroup = computed(() => filteredGroups.value.length > pageSizeGroup.value);
-
-const paginatedGroups = computed(() =>
-  filteredGroups.value.slice(currentPageGroup.value * pageSizeGroup.value, (currentPageGroup.value + 1) * pageSizeGroup.value)
-);
-
-const hasNextPageGroup = computed(() => (currentPageGroup.value + 1) * pageSizeGroup.value < filteredGroups.value.length);
-
-const paginationBeginGroup = computed(() => (filteredGroups.value.length ? currentPageGroup.value * pageSizeGroup.value + 1 : 0));
-const paginationEndGroup = computed(() => Math.min((currentPageGroup.value + 1) * pageSizeGroup.value, filteredGroups.value.length));
-
-function showNextPageGroup() {
-  if (hasNextPageGroup.value) currentPageGroup.value++;
-}
-function showPreviousPageGroup() {
-  if (currentPageGroup.value > 0) currentPageGroup.value--;
-}
-
-watch(() => [filteredGroups.value.length, groupQuery.value], () => (currentPageGroup.value = 0));
-
-// ---------------------------------------------------------------------------
-// GROUP dialog actions
-// ---------------------------------------------------------------------------
-const addGroupDialog = ref<InstanceType<typeof UserAddGroupDialog> | null>(null);
-
-function openAddGroupDialog() {
-  addGroupDialog.value?.show();
-}
-
-function onGroupsSaved(newGroups: Group[]) {
-  const ids = new Set(user.value.groups.map(g => g.id));
-  newGroups.forEach(g => { if (!ids.has(g.id)) user.value.groups.push(g); });
-  user.value.groups.sort((a, b) => a.name.localeCompare(b.name, 'de', { sensitivity: 'base' }));
-}
 
 // ---------------------------------------------------------------------------
 // Navigation

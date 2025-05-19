@@ -24,6 +24,10 @@
                           {{ t('group.member.remove.description') }}
                         </p>
                       </div>
+                      <div class="mt-4 flex items-center gap-2">
+                        <img :src="member.userPicture" class="w-8 h-8 rounded-full border" />
+                        <span class="text-sm font-medium text-gray-900">{{ member.name }}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -59,9 +63,12 @@ const { t } = useI18n({ useScope: 'global' });
 const open = ref(false);
 const onDeleteGroupError = ref<Error | null>();
 
+import type { UserDto } from '../common/backend';
+
 const props = defineProps<{
-    group: GroupDto;
-}>();
+   member: UserDto;
+   groupId: string;
+ }>();
 
 const emit = defineEmits<{
     close: [];
@@ -79,7 +86,7 @@ function show() {
 async function deleteGroup() {
   onDeleteGroupError.value = null;
   try {
-    const groupDto = await backend.groups.removeGroup(props.group.id);
+    const groupDto = await backend.groups.removeGroup(props.groupId);
     emit('delete', groupDto);
     open.value = false;
   } catch (error) {
