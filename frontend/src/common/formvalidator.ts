@@ -18,7 +18,9 @@ export class FormValidator {
     email: string,
     password: string,
     passwordConfirm: string,
-    isEditMode: boolean
+    isEditMode: boolean,
+    pictureUrl?: string | null,
+    isValidImageUrl?: boolean
   }): ValidationResult {
     const errors: Record<string, string> = {};
 
@@ -44,6 +46,10 @@ export class FormValidator {
       errors.password = t('userEditCreate.validation.required');
     }
 
+    // Validate picture URL
+    const pictureUrlError = this.validatePictureUrl(data.pictureUrl, data.isValidImageUrl, 'userEditCreate.invalidImageUrl');
+    if (pictureUrlError) errors.pictureUrl = pictureUrlError;
+
     return {
       valid: Object.keys(errors).length === 0,
       errors
@@ -54,18 +60,34 @@ export class FormValidator {
    * Validates group form data
    */
   static validateGroup(data: {
-    name: string
+    name: string,
+    pictureUrl?: string | null,
+    isValidImageUrl?: boolean
   }): ValidationResult {
     const errors: Record<string, string> = {};
 
-    if (!data.name.trim()) {
-      errors.name = t('group.edit.validation.nameRequired');
-    }
+    // Required field validation
+    if (!data.name.trim()) errors.name = t('groupEditCreate.validation.required');
+
+    // Validate picture URL
+    const pictureUrlError = this.validatePictureUrl(data.pictureUrl, data.isValidImageUrl, 'groupEditCreate.invalidImageUrl');
+    if (pictureUrlError) errors.pictureUrl = pictureUrlError;
 
     return {
       valid: Object.keys(errors).length === 0,
       errors
     };
+  }
+
+  /**
+   * Common validation for picture URLs
+   * @private
+   */
+  private static validatePictureUrl(pictureUrl: string | undefined | null, isValidImageUrl: boolean | undefined, errorKey: string): string | null {
+    if (pictureUrl && !isValidImageUrl) {
+      return t(errorKey);
+    }
+    return null;
   }
 
   /**
@@ -87,5 +109,22 @@ export class FormValidator {
     if (strong.test(password)) return 'strong';
     if (medium.test(password)) return 'medium';
     return 'weak';
+  }
+
+  /**
+   * Validates image URL by attempting to load it
+   */
+  static validateImageUrl(url: string): Promise<boolean> {
+    return new Promise((resolve) => {
+      if (!url) {
+        resolve(false);
+        return;
+      }
+
+      const img = new Image();
+      img.onload = () => resolve(true);
+      img.onerror = () => resolve(false);
+      img.src = url;
+    });
   }
 }

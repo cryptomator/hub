@@ -16,22 +16,34 @@
             <hr class="my-4 border-gray-200"/>
           </div>
 
-          <!-- Profile Picture -->
-          <div class="flex flex-col items-center gap-4">
+          <!-- Profile Picture Preview -->
+          <div class="flex flex-col items-center gap-4 mb-8">
             <div class="relative w-32 h-32">
-              <img v-if="previewUrl" :src="previewUrl" class="w-full h-full rounded-full object-cover border border-gray-300" :alt="t('groupEditCreate.profilePicture')" />
+              <img v-if="isValidImageUrl" :src="pictureUrl" class="w-full h-full rounded-full object-cover border border-gray-300" :alt="t('groupEditCreate.profilePicture')" />
               <div v-else class="w-full h-full rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
                 <UserIcon class="w-12 h-12" />
               </div>
-              <button type="button" class="absolute bottom-0 right-0 bg-white rounded-full p-1 shadow-md hover:bg-gray-100" :aria-label="previewUrl ? t('groupEditCreate.removePicture') : t('groupEditCreate.addPicture')" @click="previewUrl ? removePicture() : triggerFileSelect()">
-                <component :is="previewUrl ? TrashIcon : PhotoIcon" class="w-5 h-5 text-gray-600" />
-              </button>
-              <input ref="fileInputRef" type="file" accept="image/*" class="hidden" @change="onPictureChange" />
             </div>
           </div>
 
           <!-- Form -->
           <form class="space-y-6 md:space-y-8" novalidate @submit.prevent="onSubmit">
+            <!-- Profile Picture URL row -->
+            <div class="md:grid md:grid-cols-3 md:gap-6">
+              <label for="pictureUrl" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
+                {{ t('groupEditCreate.profilePictureUrl') }}
+              </label>
+              <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
+                <div class="relative">
+                  <input id="pictureUrl" v-model="pictureUrl" type="url" :class="[errors.pictureUrl ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-primary focus:border-primary', 'block w-full max-w-md shadow-sm sm:text-sm rounded-md pr-10']"/>
+                  <button v-if="pictureUrl" type="button" class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600 focus:outline-none" :aria-label="t('groupEditCreate.removePicture')" @click="removePicture">
+                    <TrashIcon class="w-5 h-5 text-gray-600" />
+                  </button>
+                </div>
+                <p v-if="errors.pictureUrl" class="mt-1 text-sm text-red-600">{{ errors.pictureUrl }}</p>
+              </div>
+            </div>
+
             <!-- Name row -->
             <div class="md:grid md:grid-cols-3 md:gap-6">
               <label for="name" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
@@ -111,8 +123,7 @@
 
 <script setup lang="ts">
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue';
-import { PhotoIcon, TrashIcon, UserIcon } from '@heroicons/vue/24/outline';
-import { CheckIcon, ChevronUpDownIcon } from '@heroicons/vue/24/solid';
+import { CheckIcon, ChevronUpDownIcon, TrashIcon, UserIcon } from '@heroicons/vue/24/outline';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
@@ -123,8 +134,7 @@ interface GroupData {
   id?: string;
   name: string;
   roles: Role[];
-  picture?: File | null;
-  previewUrl?: string | null;
+  pictureUrl?: string;
 }
 
 const { t } = useI18n({ useScope: 'global' });
@@ -150,58 +160,46 @@ const processing = ref(false);
 const groupSaved = ref(false);
 const debouncedGroupSaved = debounce(() => groupSaved.value = false, 2000);
 
-const fileInputRef = ref<HTMLInputElement | null>(null);
-const selectedPicture = ref<File | null>(null);
-const previewUrl = ref<string | null>(null);
+const pictureUrl = ref<string>('');
+const isValidImageUrl = ref<boolean>(false);
+
+watch(pictureUrl, 
+  async (newUrl) => {
+    isValidImageUrl.value = await FormValidator.validateImageUrl(newUrl);
+  },
+  { immediate: true }
+);
 
 onMounted(() => {
+  // TODO: Replace with actual API call to fetch group data
+  // This is temporary mock data for development purposes
   setTimeout(() => {
     if (isEditMode.value) {
       name.value = 'Frontend-Team';
       selectedRoles.value = ['Admin', 'Create-Vault'];
-      previewUrl.value = 'https://i.pravatar.cc/200?u=group';
+      pictureUrl.value = 'https://i.pravatar.cc/200?u=group';
     } else {
       name.value = '';
       selectedRoles.value = [];
-      previewUrl.value = null;
+      pictureUrl.value = '';
     }
     loading.value = false;
   }, 300);
 });
 
+function removePicture() {
+  pictureUrl.value = '';
+}
+
 function validateForm() {
   const result = FormValidator.validateGroup({
-    name: name.value
+    name: name.value,
+    pictureUrl: pictureUrl.value,
+    isValidImageUrl: isValidImageUrl.value
   });
   
   errors.value = result.errors;
   return result.valid;
-}
-
-function triggerFileSelect() {
-  fileInputRef.value?.click();
-}
-
-function removePicture() {
-  selectedPicture.value = null;
-  if (previewUrl.value && previewUrl.value.startsWith('blob:')) {
-    URL.revokeObjectURL(previewUrl.value);
-  }
-  previewUrl.value = null;
-  if (fileInputRef.value) fileInputRef.value.value = '';
-}
-
-function onPictureChange(event: Event) {
-  const file = (event.target as HTMLInputElement).files?.[0];
-  if (file) {
-    selectedPicture.value = file;
-    if (previewUrl.value && previewUrl.value.startsWith('blob:')) {
-      URL.revokeObjectURL(previewUrl.value);
-    }
-    previewUrl.value = URL.createObjectURL(file);
-  } else {
-    removePicture();
-  }
 }
 
 function removeRole(role: Role) {
@@ -224,11 +222,11 @@ function onSubmit() {
   name.value = name.value.trim();
   
   try {
-    const payload: GroupData = {
+    const payload = {
       ...(isEditMode.value && { id: groupId.value }),
       name: name.value,
       roles: [...selectedRoles.value],
-      picture: selectedPicture.value ?? null,
+      pictureUrl: pictureUrl.value
     };
     
     console.log(`${isEditMode.value ? 'Updating' : 'Creating'} group:`, payload);
