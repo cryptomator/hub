@@ -23,7 +23,7 @@
                 <UserGroupIcon class="w-4 h-4 shrink-0 text-gray-400" aria-hidden="true" />
               </div>
               <span class="ml-3 truncate">{{ item.name }}</span>
-              <span v-if="item.type === 'GROUP'" class="ml-3 text-gray-500 text-xs italic whitespace-nowrap">{{ t('common.xMembers', [item.memberSize]) }}</span>
+              <span v-if="item.type === 'GROUP'" class="ml-3 text-gray-500 text-xs italic whitespace-nowrap ui-active:text-white">{{ t('common.xMembers', [item.memberSize]) }}</span>
             </div>
           </ComboboxOption>
         </ComboboxOptions>

@@ -3,13 +3,13 @@
     {{ t('common.loading') }}
   </div>
   <div v-else>
-    <!-- Headline -->
-    <div class="flex flex-col sm:flex-row sm:justify-between gap-3 pb-5 w-full">
-      <h2 id="title" class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-        Headline
+    <div class="flex flex-row items-center justify-between gap-3 pb-1 w-full border-b border-gray-200 mb-2">
+      <!-- Headline -->
+      <h2 id="title" class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl mb-4">
+        {{ t('user.detail.info') }}
       </h2>
 
-      <div class="flex gap-3 items-center">
+      <div class="flex gap-3 items-center -mt-4">
         <!-- Edit-Button -->
         <button class="w-full bg-primary py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showUserEdit()">
           {{ t('common.edit') }}
@@ -36,52 +36,10 @@
         </Menu>
       </div>
     </div>
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+    <div class="hidden lg:grid grid-cols-1 lg:grid-cols-2 gap-6 items-start pt-3">
       <section class="lg:col-start-1 grid gap-6">
         <!-- User Info -->
-        <section class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-          <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-            <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">
-              {{ t('user.detail.info') }}
-            </h3>
-          </div>
-          <div class="px-6 py-6">
-            <div class="flex flex-col items-center text-center mb-6">
-              <span class="sr-only">{{ t('user.edit.profileImage') }}</span>
-              <img :src="user.userPicture" :alt="t('user.edit.profileImage')" class="h-40 w-40 rounded-full object-contain bg-tertiary-2 border border-gray-300" />
-              <h2 class="text-xl font-semibold text-gray-900 mt-4">
-                <template v-if="user.firstName || user.lastName">
-                  {{ user.firstName }} {{ user.lastName }}
-                </template>
-                <template v-else>
-                  {{ user.username }}
-                </template>
-              </h2>
-              <p v-if="user.firstName || user.lastName" class="text-sm text-gray-500 mt-1">
-                {{ user.username }}
-              </p>
-            </div>
-            <dl class="divide-y divide-gray-100">
-              <div class="py-3 flex justify-between">
-                <dt class="text-sm text-gray-500">{{ t('user.detail.email') }}</dt>
-                <dd class="text-sm text-gray-900 font-medium">{{ user.email }}</dd>
-              </div>
-              <div class="py-3 flex justify-between">
-                <dt class="text-sm text-gray-500">{{ t('user.detail.roles') }}</dt>
-                <dd class="flex flex-wrap justify-end gap-2">
-                  <span v-for="role in sortedRoles" :key="role" class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20 capitalize">
-                    {{ role }}
-                  </span>
-                  <span v-if="!sortedRoles.length" class="text-sm text-gray-500">{{ t('common.none') }}</span>
-                </dd>
-              </div>
-              <div class="py-3 flex justify-between">
-                <dt class="text-sm text-gray-500">{{ t('user.detail.createdOn') }}</dt>
-                <dd class="text-sm text-gray-900 font-medium">{{ d(user.creationTime, 'long') }}</dd>
-              </div>
-            </dl>
-          </div>
-        </section>
+        <AuthorityUserInfo :user="user"/>
         <!-- Devices -->
         <AuthorityDeviceList :devices="user.devices" :page-size="10" :title="t('user.detail.devices')"/>      
         <AuthorityDeviceList :devices="user.legacyDevices" :page-size="10" :visible="user.legacyDevices.length != 0" :title="t('legacyDeviceList.title')" :info="t('legacyDeviceList.title')"/>
@@ -93,6 +51,17 @@
         <AuthorityVaultList :vaults="user.vaults" :page-size="10" :visible="user.legacyDevices.length != 0"></AuthorityVaultList>
       </section>
     </div>
+    <div class="grid lg:hidden grid-cols-1 gap-6 items-start pt-3">
+      <!-- User Info -->
+      <AuthorityUserInfo :user="user"/>
+      <!-- Groups -->
+      <AuthorityUserGroupsList :user="user" :groups="user.groups" :page-size="10" :on-saved="handleGroupsSaved"></AuthorityUserGroupsList>
+      <!-- Devices -->
+      <AuthorityDeviceList :devices="user.devices" :page-size="10" :title="t('user.detail.devices')"/>      
+      <AuthorityDeviceList :devices="user.legacyDevices" :page-size="10" :visible="user.legacyDevices.length != 0" :title="t('legacyDeviceList.title')" :info="t('legacyDeviceList.title')"/>
+      <!-- Vaults -->
+      <AuthorityVaultList :vaults="user.vaults" :page-size="10" :visible="user.legacyDevices.length != 0"></AuthorityVaultList>
+    </div>
   </div>
 
   <!-- Dialogs -->
@@ -101,12 +70,13 @@
 <script setup lang="ts">
 import { EllipsisVerticalIcon } from '@heroicons/vue/20/solid';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
-import { computed, onMounted, ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import AuthorityVaultList from './AuthorityVaultList.vue';
 import AuthorityDeviceList from './AuthorityDeviceList.vue';
 import AuthorityUserGroupsList from './AuthorityUserGroupsList.vue';
+import AuthorityUserInfo from './AuthorityUserInfo.vue';
 
 interface Group {
   id: string;
@@ -145,7 +115,7 @@ interface DetailUser {
 }
 
 const props = defineProps<{ id: string }>();
-const { t, d } = useI18n({ useScope: 'global' });
+const { t } = useI18n({ useScope: 'global' });
 const router = useRouter();
 
 const user = ref<DetailUser>({
@@ -155,9 +125,7 @@ const user = ref<DetailUser>({
   roles: ['create-vault', 'admin'],
   password: 'password123',
   email: 'edgar.frank@example.com',
-  userPicture: 'https://i.pravatar.cc/150?u=alex',
-  //userPicture: 'https://cryptomator.org/img/logo.svg',
-  //userPicture: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI0Y3RjdGNyIgb3BhY2l0eT0iMS4wMCIvPjxwYXRoIGZpbGw9IiM1MTUxNTEiIGQ9Ik0yOS4yIDEyLjVhOC4zLDguMyAwIDEsMSAxNi43LDBhOC4zLDguMyAwIDEsMSAtMTYuNywwTTU0LjIgMTIuNWE4LjMsOC4zIDAgMSwxIDE2LjcsMGE4LjMsOC4zIDAgMSwxIC0xNi43LDBNNTQuMiA4Ny41YTguMyw4LjMgMCAxLDEgMTYuNywwYTguMyw4LjMgMCAxLDEgLTE2LjcsME0yOS4yIDg3LjVhOC4zLDguMyAwIDEsMSAxNi43LDBhOC4zLDguMyAwIDEsMSAtMTYuNywwTTQuMiAzNy41YTguMyw4LjMgMCAxLDEgMTYuNywwYTguMyw4LjMgMCAxLDEgLTE2LjcsME03OS4yIDM3LjVhOC4zLDguMyAwIDEsMSAxNi43LDBhOC4zLDguMyAwIDEsMSAtMTYuNywwTTc5LjIgNjIuNWE4LjMsOC4zIDAgMSwxIDE2LjcsMGE4LjMsOC4zIDAgMSwxIC0xNi43LDBNNC4yIDYyLjVhOC4zLDguMyAwIDEsMSAxNi43LDBhOC4zLDguMyAwIDEsMSAtMTYuNywwIi8+PHBhdGggZmlsbD0iI2E0OGIyYSIgZD0iTTI1IDBMMjUgMjVMMTIuNSAyNVpNMTAwIDI1TDc1IDI1TDc1IDEyLjVaTTc1IDEwMEw3NSA3NUw4Ny41IDc1Wk0wIDc1TDI1IDc1TDI1IDg3LjVaTTUwIDM3LjVMNTAgNTBMMzcuNSA1MFpNNjIuNSA1MEw1MCA1MEw1MCAzNy41Wk01MCA2Mi41TDUwIDUwTDYyLjUgNTBaTTM3LjUgNTBMNTAgNTBMNTAgNjIuNVoiLz48L3N2Zz4=',        
+  userPicture: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI0Y3RjdGNyIgb3BhY2l0eT0iMS4wMCIvPjxwYXRoIGZpbGw9IiM1MTUxNTEiIGQ9Ik0yOS4yIDEyLjVhOC4zLDguMyAwIDEsMSAxNi43LDBhOC4zLDguMyAwIDEsMSAtMTYuNywwTTU0LjIgMTIuNWE4LjMsOC4zIDAgMSwxIDE2LjcsMGE4LjMsOC4zIDAgMSwxIC0xNi43LDBNNTQuMiA4Ny41YTguMyw4LjMgMCAxLDEgMTYuNywwYTguMyw4LjMgMCAxLDEgLTE2LjcsME0yOS4yIDg3LjVhOC4zLDguMyAwIDEsMSAxNi43LDBhOC4zLDguMyAwIDEsMSAtMTYuNywwTTQuMiAzNy41YTguMyw4LjMgMCAxLDEgMTYuNywwYTguMyw4LjMgMCAxLDEgLTE2LjcsME03OS4yIDM3LjVhOC4zLDguMyAwIDEsMSAxNi43LDBhOC4zLDguMyAwIDEsMSAtMTYuNywwTTc5LjIgNjIuNWE4LjMsOC4zIDAgMSwxIDE2LjcsMGE4LjMsOC4zIDAgMSwxIC0xNi43LDBNNC4yIDYyLjVhOC4zLDguMyAwIDEsMSAxNi43LDBhOC4zLDguMyAwIDEsMSAtMTYuNywwIi8+PHBhdGggZmlsbD0iI2E0OGIyYSIgZD0iTTI1IDBMMjUgMjVMMTIuNSAyNVpNMTAwIDI1TDc1IDI1TDc1IDEyLjVaTTc1IDEwMEw3NSA3NUw4Ny41IDc1Wk0wIDc1TDI1IDc1TDI1IDg3LjVaTTUwIDM3LjVMNTAgNTBMMzcuNSA1MFpNNjIuNSA1MEw1MCA1MEw1MCAzNy41Wk01MCA2Mi41TDUwIDUwTDYyLjUgNTBaTTM3LjUgNTBMNTAgNTBMNTAgNjIuNVoiLz48L3N2Zz4=',        
   creationTime: '2023-05-01T10:00:00Z',
   groups: [
     { id: 'g1', name: 'Admin', userPicture: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iIzAwNUU3MSIgb3BhY2l0eT0iMS4wMCIvPjxwYXRoIGZpbGw9IiNmMWY5ZmIiIGQ9Ik0yOS4yIDEyLjVhOC4zLDguMyAwIDEsMSAxNi43LDBhOC4zLDguMyAwIDEsMSAtMTYuNywwTTU0LjIgMTIuNWE4LjMsOC4zIDAgMSwxIDE2LjcsMGE4LjMsOC4zIDAgMSwxIC0xNi43LDBNNTQuMiA4Ny41YTguMyw4LjMgMCAxLDEgMTYuNywwYTguMyw4LjMgMCAxLDEgLTE2LjcsME0yOS4yIDg3LjVhOC4zLDguMyAwIDEsMSAxNi43LDBhOC4zLDguMyAwIDEsMSAtMTYuNywwTTQuMiAzNy41YTguMyw4LjMgMCAxLDEgMTYuNywwYTguMyw4LjMgMCAxLDEgLTE2LjcsME03OS4yIDM3LjVhOC4zLDguMyAwIDEsMSAxNi43LDBhOC4zLDguMyAwIDEsMSAtMTYuNywwTTc5LjIgNjIuNWE4LjMsOC4zIDAgMSwxIDE2LjcsMGE4LjMsOC4zIDAgMSwxIC0xNi43LDBNNC4yIDYyLjVhOC4zLDguMyAwIDEsMSAxNi43LDBhOC4zLDguMyAwIDEsMSAtMTYuNywwIi8+PHBhdGggZmlsbD0iI2NlZWNmMiIgZD0iTTI1IDI1TDAgMjVMMCAxMi41Wk03NSAyNUw3NSAwTDg3LjUgMFpNNzUgNzVMMTAwIDc1TDEwMCA4Ny41Wk0yNSA3NUwyNSAxMDBMMTIuNSAxMDBaIi8+PHBhdGggZmlsbD0iI2NhY2FjYSIgZD0iTTI1IDI1TDUwIDI1TDUwIDI5TDM5LjUgNTBMMjUgNTBaTTc1IDI1TDc1IDUwTDcxIDUwTDUwIDM5LjVMNTAgMjVaTTc1IDc1TDUwIDc1TDUwIDcxTDYwLjUgNTBMNzUgNTBaTTI1IDc1TDI1IDUwTDI5IDUwTDUwIDYwLjVMNTAgNzVaIi8+PC9zdmc+' },
@@ -201,10 +169,6 @@ const user = ref<DetailUser>({
   ]
 });
 
-// ---------------------------------------------------------------------------
-// State
-// ---------------------------------------------------------------------------
-
 const loading = ref<boolean>(true);
 
 function handleGroupsSaved(newGroups: Group[]) {
@@ -224,14 +188,6 @@ onMounted(async () => {
   }
 });
 
-// ---------------------------------------------------------------------------
-// Sorted roles
-// ---------------------------------------------------------------------------
-const sortedRoles = computed(() => [...user.value.roles ?? []].sort((a, b) => a.localeCompare(b, 'de', { sensitivity: 'base' })));
-
-// ---------------------------------------------------------------------------
-// Navigation
-// ---------------------------------------------------------------------------
 function showUserEdit() {
   router.push(`/app/authority/user/${props.id}/edit`);
 }
