@@ -43,10 +43,8 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ group.members?.length ?? 0 }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ group.vaults?.length ?? 0 }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div class="flex justify-end">
-                        <button type="button" class="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showDeleteDialog(group)">
-                          <TrashIcon class="h-4 w-4 text-white" aria-hidden="true" />
-                        </button>
+                      <div class="cursor-pointer text-sm font-medium text-red-700 hover:text-red-900" @click="showDeleteGroupDialog(group)">
+                        {{ t('common.remove') }}
                       </div>
                     </td>
                   </tr>
@@ -68,7 +66,6 @@
 </template>
 
 <script setup lang="ts">
-import { TrashIcon } from '@heroicons/vue/24/solid';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
@@ -93,7 +90,7 @@ const deleteGroupDialog = ref<typeof DeleteGroupDialog>();
 const deletingGroup = ref<GroupDto | null>(null);
 const query = ref('');
 
-function showDeleteDialog(group: GroupDto) {
+function showDeleteGroupDialog(group: GroupDto) {
   deletingGroup.value = group;
   nextTick(() => deleteGroupDialog.value?.show());
 }
@@ -113,6 +110,8 @@ onMounted(() => {
 
 async function fetchData() {
   try {
+    // TODO: Replace with actual API call
+    // This is temporary mock data for development purposes
     await new Promise((resolve) => setTimeout(resolve, 500));
     groups.value = [
       {

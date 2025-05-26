@@ -57,9 +57,9 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ d(new Date(user.creationTime), 'long') }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div class="flex justify-end gap-3">
-                        <button type="button" class="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showDeleteUserDialog(user)">
-                          <TrashIcon class="h-4 w-4 text-white" aria-hidden="true" />
-                        </button>
+                        <div class="cursor-pointer text-sm font-medium text-red-700 hover:text-red-900" @click="showDeleteUserDialog(user)">
+                          {{ t('common.remove') }}
+                        </div>
                       </div>
                     </td>
                   </tr>
@@ -81,7 +81,6 @@
 </template>
 
 <script setup lang="ts">
-import { TrashIcon } from '@heroicons/vue/24/solid';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
@@ -132,6 +131,8 @@ onMounted(() => {
 
 async function fetchData() {
   try {
+    // TODO: Replace with actual API call
+    // This is temporary mock data for development purposes
     await new Promise((resolve) => setTimeout(resolve, 500));
     users.value = [
       {

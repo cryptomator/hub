@@ -16,22 +16,34 @@
             <hr class="my-4 border-gray-200"/>
           </div>
           
-          <!-- Profile Picture -->
-          <div class="flex flex-col items-center gap-4">
+          <!-- Profile Picture Preview -->
+          <div class="flex flex-col items-center gap-4 mb-8">
             <div class="relative w-32 h-32">
-              <img v-if="previewUrl" :src="previewUrl" class="w-full h-full rounded-full object-cover border border-gray-300" :alt="t('userEditCreate.profilePicture')"/>
+              <img v-if="isValidImageUrl" :src="pictureUrl" class="w-full h-full rounded-full object-cover border border-gray-300"/>
               <div v-else class="w-full h-full rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
                 <UserIcon class="w-12 h-12" />
               </div>
-              <button type="button" class="absolute bottom-0 right-0 bg-white rounded-full p-1 shadow-md hover:bg-gray-100" :aria-label="previewUrl ? t('userEditCreate.removePicture') : t('userEditCreate.addPicture')" @click="previewUrl ? removePicture() : triggerFileSelect()">
-                <component :is="previewUrl ? TrashIcon : PhotoIcon" class="w-5 h-5 text-gray-600" />
-              </button>
-              <input ref="fileInputRef" type="file" accept="image/*" class="hidden" @change="onPictureChange" />
             </div>
           </div>
 
           <!-- Form -->
           <form class="space-y-6 md:space-y-8" novalidate @submit.prevent="onSubmit">
+            <!-- Profile Picture URL row -->
+            <div class="md:grid md:grid-cols-3 md:gap-6">
+              <label for="pictureUrl" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
+                {{ t('userEditCreate.profilePictureUrl') }}
+              </label>
+              <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
+                <div class="relative">
+                  <input id="pictureUrl" v-model="pictureUrl" type="url" :class="[errors.pictureUrl ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-primary focus:border-primary', 'block w-full max-w-md shadow-sm sm:text-sm rounded-md pr-10']"/>
+                  <button v-if="pictureUrl" type="button" class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600 focus:outline-none" :aria-label="t('userEditCreate.removePicture')" @click="removePicture">
+                    <TrashIcon class="w-5 h-5 text-gray-600" />
+                  </button>
+                </div>
+                <p v-if="errors.pictureUrl" class="mt-1 text-sm text-red-600">{{ errors.pictureUrl }}</p>
+              </div>
+            </div>
+
             <!-- First Name row -->
             <div class="md:grid md:grid-cols-3 md:gap-6">
               <label for="firstName" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
@@ -206,7 +218,7 @@
 
 <script setup lang="ts">
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue';
-import { CheckIcon, ChevronUpDownIcon, EyeIcon, EyeSlashIcon, InformationCircleIcon, PhotoIcon, TrashIcon, UserIcon } from '@heroicons/vue/24/outline';
+import { CheckIcon, ChevronUpDownIcon, EyeIcon, EyeSlashIcon, InformationCircleIcon, TrashIcon, UserIcon } from '@heroicons/vue/24/outline';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
@@ -253,17 +265,26 @@ const password = ref('');
 const passwordConfirm = ref('');
 const passwordInputType = ref<'password' | 'text'>('password');
 const passwordStrength = ref<'weak' | 'medium' | 'strong' | ''>('');
-const previewUrl = ref<string | null>(null);
-const fileInputRef = ref<HTMLInputElement | null>(null);
+const pictureUrl = ref<string>('');
+const isValidImageUrl = ref<boolean>(false);
+
+watch(pictureUrl, 
+  async (newUrl) => {
+    isValidImageUrl.value = await FormValidator.validateImageUrl(newUrl);
+  },
+  { immediate: true }
+);
 
 onMounted(() => {
   if (isEditMode.value) {
+    // TODO: Replace with actual API call to fetch user data
+    // This is temporary mock data for development purposes
     setTimeout(() => {
       firstName.value = 'Max';
       lastName.value = 'Mustermann';
       username.value = 'mustermannmax';
       email.value = 'max.mustermann@mustermail.de';
-      previewUrl.value = 'https://i.pravatar.cc/150?u=placeholder';
+      pictureUrl.value = 'https://i.pravatar.cc/150?u=placeholder';
       selectedRoles.value = ['Admin']; 
       loading.value = false;
     }, 300);
@@ -274,7 +295,7 @@ onMounted(() => {
     email.value = '';
     password.value = '';
     passwordConfirm.value = '';
-    previewUrl.value = null;
+    pictureUrl.value = '';
     selectedRoles.value = [];
     loading.value = false;
   }
@@ -296,7 +317,9 @@ function validateForm() {
     email: email.value,
     password: password.value,
     passwordConfirm: passwordConfirm.value,
-    isEditMode: isEditMode.value
+    isEditMode: isEditMode.value,
+    pictureUrl: pictureUrl.value,      
+    isValidImageUrl: isValidImageUrl.value 
   });
   
   errors.value = result.errors;
@@ -331,26 +354,9 @@ watch(password, (newVal) => {
   passwordStrength.value = evaluatePasswordStrength(newVal);
 });
 
-function triggerFileSelect() {
-  fileInputRef.value?.click();
-}
-
-function onPictureChange(event: Event) {
-  const target = event.target as HTMLInputElement;
-  const file = target.files?.[0];
-  if (file) {
-    previewUrl.value = URL.createObjectURL(file);
-  }
-}
-
 function removePicture() {
-  if (previewUrl.value) {
-    URL.revokeObjectURL(previewUrl.value);
-  }
-  previewUrl.value = null;
-  if (fileInputRef.value) {
-    fileInputRef.value.value = '';
-  }
+  pictureUrl.value = '';
+  isValidImageUrl.value = false;
 }
 
 function onSubmit() {
@@ -358,12 +364,13 @@ function onSubmit() {
     return;
   }
   
-  processing.value = true;
+  processing.value = true;     
   
   firstName.value = firstName.value.trim();
   lastName.value = lastName.value.trim();
   username.value = username.value.trim();
   email.value = email.value.trim();
+  pictureUrl.value = pictureUrl.value.trim();
   
   try {
     // Here would be the actual API call to save the user
