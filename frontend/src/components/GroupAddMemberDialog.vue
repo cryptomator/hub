@@ -6,35 +6,38 @@
       </TransitionChild>
       <div class="flex min-h-full items-end justify-center p-4 sm:items-center sm:p-0">
         <TransitionChild as="template" enter="ease-out duration-300" enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" enter-to="opacity-100 translate-y-0 sm:scale-100" leave="ease-in duration-200" leave-from="opacity-100 translate-y-0 sm:scale-100" leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
-          <DialogPanel class="relative flex w-full max-h-[80vh] min-h-[30rem] transform flex-col overflow-hidden rounded-lg bg-white shadow-xl transition-all sm:my-8 sm:max-w-lg">
-            <form novalidate class="flex flex-1 min-h-0 flex-col" @submit.prevent="onSubmit">
-              <div class="flex flex-1 min-h-0 flex-col overflow-hidden bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+          <DialogPanel class="relative flex w-full h-[32rem] transform flex-col overflow-hidden rounded-lg bg-white shadow-xl transition-all sm:my-8 sm:max-w-lg">
+            <form novalidate class="flex flex-1 min-h-0 flex-col p-4" @submit.prevent="onSubmit">
+              <div class="flex flex-1 min-h-0 flex-col overflow-hidden bg-white p-1 mb-4">
                 <DialogTitle class="text-lg font-medium text-gray-900">
                   {{ t('group.addMembers.title') }}
                 </DialogTitle>
-                <div class="mt-6 flex flex-1 min-h-0 flex-col overflow-y-auto">
-                  <ul class=" flex-1 min-h-0 divide-y divide-gray-200">
-                    <li class="py-2 flex flex-col p-1">
-                      <SearchInputGroup :action-title="t('common.add')" :place-holder="t('group.addMembers.searchLabel')" :on-search="searchUser" @action="addUser" />
-                      <p v-if="onAddUserError" class="mt-1 text-sm text-red-900 text-right">
-                        {{ t('common.unexpectedError', [onAddUserError.message]) }}
-                      </p>
-                    </li>
-                    <template v-for="member in sortedNewMembers" :key="member.id" >
-                      <li class="py-3 flex flex-col p-1">
-                        <div class="flex items-center justify-between">
-                          <div class="flex items-center w-full" :title="member.name">
-                            <img :src="member.userPicture" class="w-8 h-8 rounded-full" />
-                            <p class="ml-4 text-sm font-medium truncate">{{ member.name }}</p>
+                <div class="flex flex-col p-1 mt-4">
+                  <SearchInputGroup :action-title="t('common.add')" :place-holder="t('group.addMembers.searchLabel')" :on-search="searchUser" @action="addUser" />
+                  <p v-if="onAddUserError" class="mt-1 text-sm text-red-900 text-right">
+                    {{ t('common.unexpectedError', [onAddUserError.message]) }}
+                  </p>
+                </div>
+                <div ref="scrollContainer" class="mt-4 flex flex-1 min-h-0 flex-col overflow-y-auto">
+                  <TransitionGroup tag="ul" class="flex-1 min-h-0 divide-y divide-gray-200" enter-active-class="transition-all duration-250 ease-out" enter-from-class="bg-green-50 opacity-0 scale-95" enter-to-class="bg-white opacity-100 scale-100" leave-active-class="transition-all duration-250 ease-in" leave-from-class="bg-white opacity-100 scale-100" leave-to-class="bg-red-50 opacity-0 scale-95">
+                    <li v-for="member in sortedNewMembers" :key="member.id" class="flex flex-col py-2 border-b border-gray-200 border-l-4 border-transparent mx-1 last:border-b-0 transform transition">
+                      <div class="flex items-center justify-between">
+                        <div class="flex items-center w-full" :title="member.name">
+                          <div class="w-8 h-8 rounded-full border border-gray-300 bg-white flex items-center justify-center overflow-hidden">
+                            <img v-if="member.userPicture" :src="member.userPicture" class="w-full h-full object-cover" alt="group icon" />
+                            <UserGroupIcon v-else class="w-5 h-5 text-gray-400" aria-hidden="true" />
                           </div>
-                          <a tabindex="0" class="cursor-pointer text-red-600 hover:text-red-900" :title="t('common.remove')" @click="removeTempMember(member.id)">{{ t('common.remove') }}</a>
+                          <p class="ml-4 text-sm font-medium truncate">
+                            {{ member.name }}
+                          </p>
                         </div>
-                      </li>
-                    </template>
-                  </ul>
+                        <a tabindex="0" class="cursor-pointer text-red-600 hover:text-red-900" :title="t('common.remove')" @click="removeTempMember(member.id)">{{ t('common.remove') }}</a>
+                      </div>
+                    </li>
+                  </TransitionGroup>
                 </div>
               </div>
-              <div class="flex-shrink-0 bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:space-x-4 sm:space-x-reverse sm:px-6">
+              <div class="flex-shrink-0 bg-gray-50 -m-4 py-3 px-6 sm:flex sm:flex-row-reverse sm:space-x-4 sm:space-x-reverse">
                 <button type="submit" class="w-full sm:w-auto inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary text-base font-medium text-white hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary">
                   {{ t('common.save') }}
                 </button>
@@ -66,20 +69,14 @@ const emit  = defineEmits<{ saved: (added: User[]) => void }>();
 
 const { t } = useI18n({ useScope: 'global' });
 const open = ref(false);
-const addingUser = ref(false);
 const newMembers = ref<User[]>([]);
 const onAddUserError = ref<Error | null>(null);  
-const selectedCount = computed(() => newMembers.value.length);
 
+const selectedCount = computed(() => newMembers.value.length);
 const sortedNewMembers = computed(() => [...newMembers.value].reverse());
 
 function isKnown(id: string) {
   return props.members.some(u => u.id === id);
-}
-
-function show() {
-  newMembers.value = [];
-  open.value = true;
 }
 
 async function searchUser(query: string): Promise<User[]> {
@@ -125,12 +122,10 @@ async function searchUser(query: string): Promise<User[]> {
 function addUser(user: User) {
   try {
     if (isKnown(user.id) || newMembers.value.some(u => u.id === user.id)) {
-      addingUser.value = false;
       return;
     }
     newMembers.value.push(user);
   } catch (e) { onAddUserError.value = e as Error; }
-  finally { addingUser.value = false; }
 }
 
 function removeTempMember(id: string) {
@@ -140,6 +135,11 @@ function removeTempMember(id: string) {
 function onSubmit() {
   emit('saved', [...newMembers.value]);
   open.value = false;
+}
+
+function show() {
+  newMembers.value = [];
+  open.value = true;
 }
 
 defineExpose({ show });

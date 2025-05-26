@@ -3,15 +3,15 @@
     {{ t('common.loading') }}
   </div>
   <div v-else>
-    <div class="flex flex-row items-center justify-between gap-3 pb-5 w-full">
+    <div class="flex flex-row items-center justify-between gap-3 pb-1 w-full border-b border-gray-200 mb-2">
       <!-- Headline -->
-      <h2 id="title" class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-        Headline
+      <h2 id="title" class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl mb-4">
+        {{ t('group.detail.info') }}
       </h2>
 
-      <div class="flex gap-3 items-center flex-shrink-0">
+      <div class="flex gap-3 items-center -mt-4">
         <!-- Edit-Button -->
-        <button class="bg-primary py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showGroupEdit">
+        <button class="w-full bg-primary py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showGroupEdit">
           {{ t('common.edit') }}
         </button>
 
@@ -36,50 +36,25 @@
         </Menu>
       </div>
     </div>
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+    <div class="hidden lg:grid grid-cols-1 lg:grid-cols-2 gap-6 items-start pt-3">
       <section class="lg:col-start-1 grid gap-6">
         <!-- Group Info -->
-        <section class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-          <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-            <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">
-              {{ t('group.detail.info') }}
-            </h3>
-          </div>
-
-          <div class="px-6 py-6">
-            <div class="flex flex-col items-center justify-center h-full text-center">
-              <img :src="group.picture" :alt="t('group.edit.profileImage')" class="w-48 h-48 rounded-full object-cover border border-gray-300 mb-4" />
-              <h2 class="text-xl font-semibold text-gray-900">{{ group.name }}</h2>
-            </div>
-
-            <div class="divide-y divide-gray-100">
-              <div class="flex justify-between py-3">
-                <dt class="text-sm text-gray-500">{{ t('group.detail.roles') }}</dt>
-                <dd class="flex flex-wrap justify-end gap-2">
-                  <template v-if="group.roles?.length">
-                    <span v-for="role in sortedRoles" :key="role.id" class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20 capitalize">
-                      {{ role.name }}
-                    </span>
-                  </template>
-                  <span v-else class="text-sm text-gray-500">
-                    {{ t('common.none') }}
-                  </span>
-                </dd>
-              </div>
-              <div class="py-3 flex justify-between">
-                <dt class="text-sm text-gray-500">{{ t('group.detail.createdOn') }}</dt>
-                <dd class="text-sm text-gray-900 font-medium">{{ d(group.createdAt, 'long') }}</dd>
-              </div>
-            </div>
-          </div>
-        </section>
+        <AuthorityGroupInfo :group="group"/>
         <!-- Vaults -->
         <AuthorityVaultList :vaults="group.vaults" :page-size="10" :visible="true" />
       </section>
       <section class="lg:col-start-2 grid gap-6">
         <!-- Members -->
-        <AuthorityGroupMemberList :group="group" :members="group.users" :page-size="10" :on-saved="onMembersSaved" />
+        <AuthorityGroupMemberList :group="group" :page-size="10" :on-saved="onMembersSaved" />
       </section>
+    </div>
+    <div class="grid lg:hidden grid-cols-1 gap-6 items-start pt-3">
+      <!-- Group Info -->
+      <AuthorityGroupInfo :group="group"/>
+      <!-- Members -->
+      <AuthorityGroupMemberList :group="group" :page-size="10" :on-saved="onMembersSaved" />
+      <!-- Vaults -->
+      <AuthorityVaultList :vaults="group.vaults" :page-size="10" :visible="true" />
     </div>
   </div>
 </template>
@@ -87,11 +62,12 @@
 <script setup lang="ts">
 import { EllipsisVerticalIcon } from '@heroicons/vue/20/solid';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import AuthorityVaultList from './AuthorityVaultList.vue';
 import AuthorityGroupMemberList from './AuthorityGroupMemberList.vue';
+import AuthorityGroupInfo from './AuthorityGroupInfo.vue';
 
 const router = useRouter();
 
@@ -131,7 +107,7 @@ function showGroupEdit() {
 }
 
 const props = defineProps<{ id: string }>();
-const { t, d } = useI18n({ useScope: 'global' });
+const { t } = useI18n({ useScope: 'global' });
 
 const group = ref<DetailGroup>({
   id: props.id,
@@ -188,9 +164,5 @@ function onMembersSaved(newMembers: User[]) {
 }
 
 const loading = ref(false);
-
-const sortedRoles = computed(() =>
-  [...group.value.roles].sort((a, b) => a.name.localeCompare(b.name))
-);
 
 </script>

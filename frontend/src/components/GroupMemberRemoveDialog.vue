@@ -26,7 +26,17 @@
                       </div>
                       <div class="mt-4 flex items-center gap-2">
                         <img :src="member.userPicture" class="w-8 h-8 rounded-full border" />
-                        <span class="text-sm font-medium text-gray-900">{{ member.name }}</span>
+                        <div class="flex flex-col truncate">
+                          <span class="font-medium truncate text-sm">
+                            <template v-if="member.name" >
+                              {{ member.name }}
+                            </template>
+                            <template v-else>
+                              {{ member.email }}
+                            </template>
+                          </span>
+                          <span v-if="member.name" class="text-xs text-gray-500 truncate">{{ member.email }}</span>
+                        </div>
                       </div>
                     </div>
                   </div>

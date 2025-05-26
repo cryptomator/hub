@@ -1,5 +1,5 @@
 <template>
-  <section class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+  <section class="bg-white rounded-lg shadow-sm overflow-hidden">
     <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex items-center justify-between">
       <div class="flex items-baseline gap-1">
         <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">

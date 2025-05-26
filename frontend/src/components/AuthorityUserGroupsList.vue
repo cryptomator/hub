@@ -1,5 +1,5 @@
 <template>
-  <section class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+  <section class="bg-white rounded-lg shadow-sm overflow-hidden">
     <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex items-center justify-between">
       <div class="flex items-baseline gap-1">
         <h3 id="groupsTitle" class="text-sm font-semibold text-gray-900 uppercase tracking-wide">
@@ -8,7 +8,7 @@
         <span class="text-xs text-gray-500">{{ groups.length }}</span>
       </div>
       <button class="inline-flex items-center gap-2 px-2.5 py-1.5 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="openAddGroupDialog">
-        {{ t('user.detail.groups.join') }}
+        {{ t('common.add') }}
       </button>
     </div>
 
@@ -31,7 +31,7 @@
             </td>
 
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-              <a tabindex="0" class="cursor-pointer text-red-600 hover:text-red-900" :title="t('common.leave')" @click="showDeleteDialog(group)">{{ t('common.leave') }}</a>
+              <a tabindex="0" class="cursor-pointer text-red-600 hover:text-red-900" :title="t('common.remove')" @click="showDeleteDialog(group)">{{ t('common.remove') }}</a>
             </td>
           </tr>
           <tr v-if="!filteredGroups.length">

@@ -207,7 +207,7 @@
   "group.members.search.empty": "Nothing found",
 
   "group.addMembers.title": "Add Members",
-  "group.addMembers.searchLabel": "Search by username, full name or email address",
+  "group.addMembers.searchLabel": "Search by username or full name",
   "group.addMembers.selectedUser": "User(s) selected",
 
 
@@ -333,9 +333,9 @@
   "user.detail.roles": "Roles",
   "user.detail.username": "Username",
 
-  "user.joinGroups.title": "Join Groups",
-  "user.joinGroups.searchLabel": "Search by group name",
-  "user.joinGroups.selectedGroups": "Group(s) selected",
+  "user.addGroups.title": "Add Groups",
+  "user.addGroups.searchLabel": "Search by group name",
+  "user.addGroups.selectedGroups": "Group(s) selected",
 
   "userEditCreate.title.create": "Create New User",
   "userEditCreate.title.edit": "Edit User",
