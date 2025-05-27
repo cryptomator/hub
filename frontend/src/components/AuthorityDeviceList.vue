@@ -13,10 +13,10 @@
     <div class="px-6 py-3 border-b border-gray-200">
       <input id="legacyDeviceSearch" v-model="deviceQuery" :placeholder="t('common.search.placeholder')" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs text-sm border-gray-300 rounded-md disabled:bg-gray-200" />
     </div>
-
     <div>
       <table class="w-full table-fixed divide-y divide-gray-200" aria-describedby="deviceListTitle">
-        <thead v-if="filteredDevices.length != 0" class="bg-gray-50">
+        <!-- Desktop Header -->
+        <thead v-if="filteredDevices.length != 0" class="bg-gray-50 hidden sm:table-header-group">
           <tr>
             <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               {{ t('common.device') }}
@@ -34,9 +34,11 @@
             </th>
           </tr>
         </thead>
+
         <tbody class="bg-white divide-y divide-gray-200">
           <template v-for="device in paginatedDevices" :key="device.id">
-            <tr>
+            <!-- Desktop -->
+            <tr class="hidden sm:table-row">
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                 <div class="flex items-center gap-2">
                   <span v-if="device.type == 'TABLET'" :title="'Browser'">
@@ -65,7 +67,59 @@
                 </div>
               </td>
             </tr>
+            <!-- Mobile -->
+            <tr class="sm:hidden">
+              <td class="px-4 py-4 text-sm text-gray-900">
+                <div class="flex items-top gap-2">
+                  <span v-if="device.type == 'TABLET'" :title="'Browser'">
+                    <WindowIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
+                  </span>
+                  <span v-else-if="device.type == 'DESKTOP'" :title="'Desktop'">
+                    <ComputerDesktopIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
+                  </span>
+                  <span v-else-if="device.type == 'MOBILE'" :title="'Mobile'">
+                    <DevicePhoneMobileIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
+                  </span>
+                  <div>
+                    <div class="font-medium truncate max-w-xs" :title="device.name">
+                      {{ device.name }}
+                    </div>
+                  </div>
+                </div>
+                <table class="text-xs text-gray-400 mt-2 ml-8">
+                  <tbody>
+                    <tr>
+                      <td class="pr-2 align-top text-left whitespace-nowrap font-normal text-gray-500">
+                        {{ t('legacyDeviceList.added') }}
+                      </td>
+                      <td class="text-left">
+                        {{ new Date(device.creationTime).toISOString().slice(0, 16).replace('T', ' ') }}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="inline-flex pr-2 align-top text-left whitespace-nowrap font-normal text-gray-500">
+                        {{ t('legacyDeviceList.lastAccess') }}
+                        <div class="relative group" :title="t('legacyDeviceList.lastAccess.toolTip')">
+                          <QuestionMarkCircleIcon class="h-3 w-3 text-gray-400 m-0.5"/>
+                        </div>
+                      </td>
+                      <td v-if="device.lastAccessTime" class="text-left">
+                        {{ new Date(device.lastAccessTime).toISOString().slice(0, 16).replace('T', ' ') }}
+                      </td>
+                    </tr>
+                    <tr v-if="device.lastIpAddress">
+                      <td class="pr-2 align-top text-right whitespace-nowrap font-normal text-gray-500">
+                      </td>
+                      <td class="text-left">
+                        {{ device.lastIpAddress }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </td>
+            </tr>
           </template>
+
           <tr v-if="!filteredDevices.length">
             <td colspan="5" class="py-4 px-6 text-sm text-gray-500 text-center">
               {{ t(deviceQuery ? 'common.nothingFound' : 'common.none') }}
