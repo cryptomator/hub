@@ -1,4 +1,4 @@
-package org.cryptomator.hub;
+package org.cryptomator.hub.keycloak;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Disposes;
@@ -9,7 +9,7 @@ import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
 
 @ApplicationScoped
-public class KeycloakProducer {
+public class KeycloakClientProducer {
 
 	@ConfigProperty(name = "hub.keycloak.system-client-id")
 	String clientId;
