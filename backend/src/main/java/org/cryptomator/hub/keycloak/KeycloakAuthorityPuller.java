@@ -89,6 +89,10 @@ public class KeycloakAuthorityPuller {
 			Set<Authority> members = new HashSet<>();
 			for (var keycloakMember : keycloakGroup.members()) {
 				var databaseUser = databaseUsers.get(keycloakMember.id());
+				if (databaseUser == null) {
+					// User might have been just added, fetch from database
+					databaseUser = userRepo.findById(keycloakMember.id());
+				}
 				members.add(databaseUser);
 			}
 			databaseGroup.setMembers(members);
@@ -117,6 +121,10 @@ public class KeycloakAuthorityPuller {
 			databaseGroup.setName(keycloakGroup.name());
 			for (var addId : diff(wantIds, haveIds)) {
 				var databaseUser = databaseUsers.get(addId);
+				if (databaseUser == null) {
+					// User might have been just added, fetch from database
+					databaseUser = userRepo.findById(addId);
+				}
 				databaseGroup.getMembers().add(databaseUser);
 			}
 			for (var removeId : diff(haveIds, wantIds)) {
