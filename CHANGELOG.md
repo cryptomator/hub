@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated Keycloak to 26.2.4
 - Updated to Quarkus 3.20.0 LTS
 
+## [1.4.2](https://github.com/cryptomator/hub/compare/1.4.1...1.4.2)
+
+### Fixed
+
+- Fixed an issue where syncing of Keycloak users/groups would fail in very rare circumstances (#343)
+
 ## [1.4.1](https://github.com/cryptomator/hub/compare/1.4.0...1.4.1)
 
 ### Fixed
