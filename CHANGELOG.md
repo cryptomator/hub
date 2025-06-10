@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Updated Keycloak to 26.2.4
-- Updated to Quarkus 3.20.0 LTS
+- Updated to Quarkus 3.20.1 LTS
 
 ## [1.4.2](https://github.com/cryptomator/hub/compare/1.4.1...1.4.2)
 
