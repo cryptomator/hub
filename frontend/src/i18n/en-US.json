@@ -202,6 +202,7 @@
   "groupList.groupImage": "Group Image",
   "groupList.vaults.count": "Vaults",
   "groupList.create.button": "Create Group",
+  "groupList.group.created": "Created on",
 
   "group.members.add":"Add Members",
   "group.members.search.empty": "Nothing found",
