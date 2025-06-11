@@ -105,12 +105,12 @@
                           <ListboxOption 
                             v-for="(label, key) in eventTypeOptions" 
                             :key="key" 
-                            v-slot="{ selected }" 
+                            v-slot="{ active, selected }" 
                             class="relative cursor-default select-none py-2 pl-3 pr-9 ui-not-active:text-gray-900 ui-active:text-white ui-active:bg-primary" 
                             :value="key"
                           >
                             <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ label }}</span>
-                            <span v-if="selected" :class="['absolute inset-y-0 right-0 flex items-center pr-4', selected ? 'text-primary' : 'text-gray-400']">
+                            <span v-if="selected" :class="[active ? 'text-white' : 'text-primary', 'absolute inset-y-0 right-0 flex items-center pr-4']">
                               <CheckIcon class="h-5 w-5" aria-hidden="true" />
                             </span>
                           </ListboxOption>

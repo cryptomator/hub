@@ -150,7 +150,7 @@ export class JWEBuilder {
       apu: base64url.stringify(apu, { pad: false }),
       apv: base64url.stringify(apv, { pad: false })
     })();
-    const encryptedKey = (async () => Uint8Array.of())(); // empty for Direct Key Agreement as per spec
+    const encryptedKey = Promise.resolve(Uint8Array.of()); // empty for Direct Key Agreement as per spec
     const cek = (async () => ECDH_ES.deriveContentKey(recipientPublicKey, (await ephemeralKey).privateKey, 384, 32, await header))();
     return new JWEBuilder(header, encryptedKey, cek);
   }
