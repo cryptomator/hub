@@ -9,9 +9,17 @@ RUN ./mvnw -B quarkus:go-offline --no-transfer-progress
 COPY src /code/src
 RUN ./mvnw -B package -Dnative -DskipTests --no-transfer-progress --strict-checksums
 
+# install additional packages
+FROM registry.access.redhat.com/ubi9 AS installer
+RUN mkdir -p /mnt/rootfs
+RUN dnf install --installroot /mnt/rootfs curl --releasever 9 --setopt install_weak_deps=false --nodocs -y \
+    && dnf --installroot /mnt/rootfs clean all \
+    && rpm --root /mnt/rootfs -e --nodeps setup
+
 ## Stage 2 : create the docker final image
 FROM quay.io/quarkus/quarkus-micro-image:2.0
 COPY --from=builder /code/target/*-runner /work/application
+COPY --from=installer /mnt/rootfs /
 WORKDIR /work/
 
 # set up permissions for user `1001`
