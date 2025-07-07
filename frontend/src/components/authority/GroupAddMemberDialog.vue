@@ -60,7 +60,7 @@
 import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import SearchInputGroup from './SearchInputGroup.vue';
+import SearchInputGroup from '../SearchInputGroup.vue';
 
 type User = { id: string; name: string; username: string, userPicture: string; role: string };
 

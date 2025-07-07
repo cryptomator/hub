@@ -3,6 +3,7 @@
     {{ t('common.loading') }}
   </div>
   <div v-else>
+    <BreadcrumbNav :crumbs="[ { label: t('nav.groups'), to: '/app/groups' }, { label: group.name } ]"/>
     <div class="flex flex-row items-center justify-between gap-3 pb-1 w-full border-b border-gray-200 mb-2">
       <!-- Headline -->
       <h2 id="title" class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl mb-4">
@@ -26,7 +27,7 @@
             <MenuItems class="absolute right-0 mt-2 z-10 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-hidden">
               <div class="py-1">
                 <MenuItem v-slot="{ active }">
-                  <div :class="[ active ? 'bg-gray-100 text-red-900' : 'text-red-700', 'cursor-pointer block px-4 py-2 text-sm']">
+                  <div :class="[ active ? 'bg-gray-100 text-red-900' : 'text-red-700', 'cursor-pointer block px-4 py-2 text-sm']" @click="showDeleteGroupDialog(group)">
                     {{ t('common.remove') }}
                   </div>
                 </MenuItem>
@@ -39,37 +40,58 @@
     <div class="hidden lg:grid grid-cols-1 lg:grid-cols-2 gap-6 items-start pt-3">
       <section class="lg:col-start-1 grid gap-6">
         <!-- Group Info -->
-        <AuthorityGroupInfo :group="group"/>
+        <GroupInfo :group="group"/>
         <!-- Vaults -->
-        <AuthorityVaultList :vaults="group.vaults" :page-size="10" :visible="true" />
+        <VaultList :vaults="group.vaults" :page-size="10" :visible="true" />
       </section>
       <section class="lg:col-start-2 grid gap-6">
         <!-- Members -->
-        <AuthorityGroupMemberList :group="group" :page-size="10" :on-saved="onMembersSaved" />
+        <GroupMemberList :group="group" :page-size="10" :on-saved="onMembersSaved" />
       </section>
     </div>
     <div class="grid lg:hidden grid-cols-1 gap-6 items-start pt-3">
       <!-- Group Info -->
-      <AuthorityGroupInfo :group="group"/>
+      <GroupInfo :group="group"/>
       <!-- Members -->
-      <AuthorityGroupMemberList :group="group" :page-size="10" :on-saved="onMembersSaved" />
+      <GroupMemberList :group="group" :page-size="10" :on-saved="onMembersSaved" />
       <!-- Vaults -->
-      <AuthorityVaultList :vaults="group.vaults" :page-size="10" :visible="true" />
+      <VaultList :vaults="group.vaults" :page-size="10" :visible="true" />
     </div>
   </div>
+  <!-- Delete Dialog -->
+  <GroupDeleteDialog v-if="deletingGroup != null" ref="deleteGroupDialog" :group="deletingGroup" @close="deletingGroup = null" @delete="onGroupDeleted"/>
 </template>
 
 <script setup lang="ts">
 import { EllipsisVerticalIcon } from '@heroicons/vue/20/solid';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
-import { ref } from 'vue';
+import { ref, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import AuthorityVaultList from './AuthorityVaultList.vue';
-import AuthorityGroupMemberList from './AuthorityGroupMemberList.vue';
-import AuthorityGroupInfo from './AuthorityGroupInfo.vue';
+import VaultList from './VaultList.vue';
+import GroupDeleteDialog from './GroupDeleteDialog.vue';
+import GroupMemberList from './GroupMemberList.vue';
+import GroupInfo from './GroupInfo.vue';
+import BreadcrumbNav from '../BreadcrumbNav.vue';
 
 const router = useRouter();
+
+interface GroupDto {
+  id: string;
+  name: string;
+  groupPicture: string;
+  members: string[];
+  vaults?: { id: string }[];
+  creationTime: string;
+}
+const deletingGroup = ref<GroupDto | null>(null);
+
+function showDeleteGroupDialog(group: GroupDto) {
+  deletingGroup.value = group;
+  nextTick(() => deleteGroupDialog.value?.show());
+}
+
+const deleteGroupDialog = ref<typeof GroupDeleteDialog>();
 
 interface User {
   id: string;
@@ -103,7 +125,7 @@ interface DetailGroup {
 }
 
 function showGroupEdit() {
-  router.push(`/app/authority/group/${group.value.id}/edit`);
+  router.push(`/app/groups/${group.value.id}/edit`);
 }
 
 const props = defineProps<{ id: string }>();

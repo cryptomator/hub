@@ -116,10 +116,6 @@
   "auditLog.paymentRequired.description": "Audit Logs are only available with a paid license. You can get one in the admin section.",
   "auditLog.paymentRequired.openAdminSection": "Open Admin Section",
 
-  "authorityList.title": "Users & Groups",
-  "authorityList.users": "Users",
-  "authorityList.groups": "Groups",
-
   "claimVaultOwnershipDialog.title": "Claim Vault Ownership",
   "claimVaultOwnershipDialog.description": "Type in the vault admin password to prove you have permissions to manage this vault.",
   "claimVaultOwnershipDialog.password": "Vault Admin Password",
@@ -186,6 +182,7 @@
   "grantPermissionDialog.description": "Share vault keys with newly added users.",
   "grantPermissionDialog.submit": "Grant Permission to {0} User(s)",
 
+  "groups.title": "Groups",
   "group.detail.info": "Group Details",
   "group.detail.members": "Members",
   "group.detail.vaults": "Vaults",
@@ -293,6 +290,8 @@
   "nav.profile.auditlog": "Audit Logs",
   "nav.profile.signOut": "Sign out",
   "nav.authority": "Users & Groups",
+  "nav.groups": "Groups",
+  "nav.users": "Users",
   "nav.mobileMenu": "Open main menu",
 
   "reactivateVaultDialog.title": "Reactivate Vault",
@@ -323,6 +322,7 @@
   "userkeyFingerprint.title": "User Key Fingerprint",
   "userkeyFingerprint.description": "Your User Key Fingerprint can be used to verify your identity when updating the vault permission.",
 
+  "users.title": "Users",
   "user.detail.createdOn": "Created on",
   "user.detail.devices": "Devices",
   "user.detail.edit": "Edit",

@@ -4,7 +4,10 @@
       {{ t('common.loading') }}
     </div>
 
-    <div v-else class="mt-4 flex flex-col">
+    <div v-else class="flex flex-col">
+      <h2 class="text-2xl font-bold leading-9 text-gray-900 sm:text-3xl sm:truncate mb-4">
+        {{ t('groups.title') }}
+      </h2>
       <!-- Searchbar + Create button -->
       <div class="flex flex-wrap sm:flex-nowrap justify-between items-center gap-3 mb-4">
         <input v-model="query" type="text" :placeholder="t('groupList.search.placeholder')" class="flex-1 focus:ring-primary focus:border-primary shadow-xs text-sm border-gray-300 rounded-md"/>
@@ -13,7 +16,7 @@
       
       <!-- Mobile Card Layout (visible on small screens) -->
       <div class="block md:hidden space-y-3">
-        <div v-for="group in sortedGroups" :key="group.id" class="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer" @click="router.push(`/app/authority/group/${group.id}`)">
+        <div v-for="group in sortedGroups" :key="group.id" class="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer" @click="router.push(`/app/groups/${group.id}`)">
           <div class="px-4 py-4">
             <div class="flex items-start justify-between mb-4">
               <div class="flex items-center min-w-0 flex-1" :title="group.name">
@@ -73,7 +76,7 @@
                     <td class="px-6 py-4 text-sm font-medium text-gray-900">
                       <div class="flex items-center gap-3 max-w-xs">
                         <img :src="group.groupPicture" :alt="t('groupList.profileImage')" class="w-10 h-10 rounded-full object-cover border border-gray-300"/>
-                        <button type="button" class="truncate block hover:underline" :title="group.name" @click="router.push(`/app/authority/group/${group.id}`)"> {{ group.name }} </button>
+                        <button type="button" class="truncate block hover:underline" :title="group.name" @click="router.push(`/app/groups/${group.id}`)"> {{ group.name }} </button>
                       </div>
                     </td>                
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ group.members?.length ?? 0 }}</td>
@@ -97,7 +100,7 @@
   </div>
 
   <!-- Delete Dialog -->
-  <DeleteGroupDialog v-if="deletingGroup != null" ref="deleteGroupDialog" :group="deletingGroup" @close="deletingGroup = null" @delete="onGroupDeleted"/>
+  <GroupDeleteDialog v-if="deletingGroup != null" ref="deleteGroupDialog" :group="deletingGroup" @close="deletingGroup = null" @delete="onGroupDeleted"/>
 </template>
 
 <script setup lang="ts">
@@ -106,8 +109,8 @@ import { EllipsisVerticalIcon } from '@heroicons/vue/20/solid';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import DeleteGroupDialog from './DeleteGroupDialog.vue';
-import FetchError from './FetchError.vue';
+import GroupDeleteDialog from './GroupDeleteDialog.vue';
+import FetchError from '../FetchError.vue';
 
 const router = useRouter();
 
@@ -124,7 +127,7 @@ const { t, d } = useI18n({ useScope: 'global' });
 
 const groups = ref<GroupDto[]>([]);
 const onFetchError = ref<Error | null>(null);
-const deleteGroupDialog = ref<typeof DeleteGroupDialog>();
+const deleteGroupDialog = ref<typeof GroupDeleteDialog>();
 const deletingGroup = ref<GroupDto | null>(null);
 const query = ref('');
 
@@ -139,7 +142,7 @@ function onGroupDeleted(deletedGroup: GroupDto) {
 }
 
 function showCreateGroup() {
-  router.push('/app/authority/group/create');
+  router.push('/app/groups/create');
 }
 
 onMounted(() => {

@@ -4,7 +4,10 @@
       {{ t('common.loading') }}
     </div>
 
-    <div v-else class="mt-4 flex flex-col">
+    <div v-else class="flex flex-col">
+      <h2 class="text-2xl font-bold leading-9 text-gray-900 sm:text-3xl sm:truncate mb-4">
+        {{ t('users.title') }}
+      </h2>
       <!-- Searchbar + Createbutton -->
       <div class="flex flex-wrap sm:flex-nowrap justify-between items-center gap-3 mb-4">
         <input v-model="query" type="text" :placeholder="t('userList.search.placeholder')" class="flex-1 focus:ring-primary focus:border-primary shadow-xs text-sm border-gray-300 rounded-md"/>
@@ -13,7 +16,7 @@
       
       <!-- Mobile Card Layout (visible on small screens) -->
       <div class="block md:hidden space-y-3">
-        <div v-for="user in sortedUsers" :key="user.id" class="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer" @click="router.push(`authority/user/${user.id}`)">
+        <div v-for="user in sortedUsers" :key="user.id" class="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer" @click="router.push(`users/${user.id}`)">
           <div class="px-4 py-4">
             <div class="flex items-start justify-between mb-4">
               <div class="flex items-center min-w-0 flex-1" :title="user.name">
@@ -78,7 +81,7 @@
                       <div class="flex items-center gap-3 max-w-sm">
                         <img :src="user.userPicture" :alt="t('userList.profileImage')" class="w-10 h-10 rounded-full object-cover border border-gray-300"/>
                         <div class="flex flex-col min-w-0 flex-1">
-                          <button type="button" class="truncate block hover:underline text-left" :title="user.name" @click="router.push(`authority/user/${user.id}`)">{{ user.name }}</button>
+                          <button type="button" class="truncate block hover:underline text-left" :title="user.name" @click="router.push(`users/${user.id}`)">{{ user.name }}</button>
                           <span class="text-xs text-gray-500 truncate" :title="user.email">{{ user.email }}</span>
                         </div>
                       </div>
@@ -107,7 +110,7 @@
   </div>
 
   <!-- Delete Dialog -->
-  <DeleteUserDialog v-if="deletingUser != null" ref="deleteUserDialog" :user="deletingUser" @close="deletingUser = null" @delete="onUserDeleted"/>
+  <UserDeleteDialog v-if="deletingUser != null" ref="deleteUserDialog" :user="deletingUser" @close="deletingUser = null" @delete="onUserDeleted"/>
 </template>
 
 <script setup lang="ts">
@@ -116,8 +119,8 @@ import { EllipsisVerticalIcon } from '@heroicons/vue/20/solid';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import DeleteUserDialog from './DeleteUserDialog.vue';
-import FetchError from './FetchError.vue';
+import UserDeleteDialog from './UserDeleteDialog.vue';
+import FetchError from '../FetchError.vue';
 
 const router = useRouter();
 
@@ -139,7 +142,7 @@ const { t, d } = useI18n({ useScope: 'global' });
 
 const users = ref<UserDto[]>([]);
 const onFetchError = ref<Error | null>(null);
-const deleteUserDialog = ref<typeof DeleteUserDialog>();
+const deleteUserDialog = ref<typeof UserDeleteDialog>();
 const deletingUser = ref<UserDto | null>(null);
 const query = ref('');
 
@@ -154,7 +157,7 @@ const onUserDeleted = (deletedUser: UserDto) => {
 };
 
 function showCreateUser() {
-  router.push('/app/authority/user/create');
+  router.push('/app/users/create');
 }
 
 onMounted(() => {
