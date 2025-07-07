@@ -78,7 +78,8 @@ const { t } = useI18n({ useScope: 'global' });
 
 const navigation = [
   { name: 'nav.vaults', to: '/app/vaults' },
-  { name: 'nav.authority', to: '/app/authority' }
+  { name: 'nav.users', to: '/app/users' },
+  { name: 'nav.groups', to: '/app/groups' }
 ];
 
 type ProfileDropdownItem = { icon: FunctionalComponent, name: string, to: string };

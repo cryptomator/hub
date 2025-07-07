@@ -3,6 +3,7 @@
     {{ t('common.loading') }}
   </div>
   <div v-else>
+    <BreadcrumbNav :crumbs="[ { label: t('nav.users'), to: '/app/users' }, { label: user.username } ]" />
     <div class="flex flex-row items-center justify-between gap-3 pb-1 w-full border-b border-gray-200 mb-2">
       <!-- Headline -->
       <h2 id="title" class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl mb-4">
@@ -26,7 +27,7 @@
             <MenuItems class="absolute right-0 mt-2 z-10 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-hidden">
               <div class="py-1">
                 <MenuItem v-slot="{ active }">
-                  <div :class="[ active ? 'bg-gray-100 text-red-900' : 'text-red-700', 'cursor-pointer block px-4 py-2 text-sm']">
+                  <div :class="[ active ? 'bg-gray-100 text-red-900' : 'text-red-700', 'cursor-pointer block px-4 py-2 text-sm']" @click="showDeleteUserDialog(user)">
                     {{ t('common.remove') }}
                   </div>
                 </MenuItem>
@@ -39,44 +40,47 @@
     <div class="hidden lg:grid grid-cols-1 lg:grid-cols-2 gap-6 items-start pt-3">
       <section class="lg:col-start-1 grid gap-6">
         <!-- User Info -->
-        <AuthorityUserInfo :user="user"/>
+        <UserInfo :user="user"/>
         <!-- Devices -->
-        <AuthorityDeviceList :devices="user.devices" :page-size="10" :title="t('user.detail.devices')"/>      
-        <AuthorityDeviceList :devices="user.legacyDevices" :page-size="10" :visible="user.legacyDevices.length != 0" :title="t('legacyDeviceList.title')" :info="t('legacyDeviceList.title')"/>
+        <UserDeviceList :devices="user.devices" :page-size="10" :title="t('user.detail.devices')"/>      
+        <UserDeviceList :devices="user.legacyDevices" :page-size="10" :visible="user.legacyDevices.length != 0" :title="t('legacyDeviceList.title')" :info="t('legacyDeviceList.title')"/>
       </section>
       <section class="lg:col-start-2 grid gap-6">
         <!-- Groups -->
-        <AuthorityUserGroupsList :user="user" :groups="user.groups" :page-size="10" :on-saved="handleGroupsSaved"></AuthorityUserGroupsList>
+        <UserGroupsList :user="user" :groups="user.groups" :page-size="10" :on-saved="handleGroupsSaved"/>
         <!-- Vaults -->
-        <AuthorityVaultList :vaults="user.vaults" :page-size="10" :visible="user.legacyDevices.length != 0"></AuthorityVaultList>
+        <VaultList :vaults="user.vaults" :page-size="10" :visible="user.legacyDevices.length != 0"/>
       </section>
     </div>
     <div class="grid lg:hidden grid-cols-1 gap-6 items-start pt-3">
       <!-- User Info -->
-      <AuthorityUserInfo :user="user"/>
+      <UserInfo :user="user"/>
       <!-- Groups -->
-      <AuthorityUserGroupsList :user="user" :groups="user.groups" :page-size="10" :on-saved="handleGroupsSaved"></AuthorityUserGroupsList>
+      <UserGroupsList :user="user" :groups="user.groups" :page-size="10" :on-saved="handleGroupsSaved"/>
       <!-- Devices -->
-      <AuthorityDeviceList :devices="user.devices" :page-size="10" :title="t('user.detail.devices')"/>      
-      <AuthorityDeviceList :devices="user.legacyDevices" :page-size="10" :visible="user.legacyDevices.length != 0" :title="t('legacyDeviceList.title')" :info="t('legacyDeviceList.title')"/>
+      <UserDeviceList :devices="user.devices" :page-size="10" :title="t('user.detail.devices')"/>      
+      <UserDeviceList :devices="user.legacyDevices" :page-size="10" :visible="user.legacyDevices.length != 0" :title="t('legacyDeviceList.title')" :info="t('legacyDeviceList.title')"/>
       <!-- Vaults -->
-      <AuthorityVaultList :vaults="user.vaults" :page-size="10" :visible="user.legacyDevices.length != 0"></AuthorityVaultList>
+      <VaultList :vaults="user.vaults" :page-size="10" :visible="user.legacyDevices.length != 0"/>
     </div>
   </div>
 
   <!-- Dialogs -->
+  <UserDeleteDialog v-if="deletingUser != null" ref="deleteUserDialog" :user="deletingUser" @close="deletingUser = null" @delete="onUserDeleted"/>
 </template>
 
 <script setup lang="ts">
 import { EllipsisVerticalIcon } from '@heroicons/vue/20/solid';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import AuthorityVaultList from './AuthorityVaultList.vue';
-import AuthorityDeviceList from './AuthorityDeviceList.vue';
-import AuthorityUserGroupsList from './AuthorityUserGroupsList.vue';
-import AuthorityUserInfo from './AuthorityUserInfo.vue';
+import BreadcrumbNav from '../BreadcrumbNav.vue';
+import UserDeleteDialog from './UserDeleteDialog.vue';
+import UserDeviceList from './UserDeviceList.vue';
+import UserGroupsList from './UserGroupsList.vue';
+import UserInfo from './UserInfo.vue';
+import VaultList from './VaultList.vue';
 
 interface Group {
   id: string;
@@ -117,6 +121,32 @@ interface DetailUser {
 const props = defineProps<{ id: string }>();
 const { t } = useI18n({ useScope: 'global' });
 const router = useRouter();
+
+interface UserDto {
+  id: string;
+  name: string;
+  email: string;
+  userPicture?: string;
+  language?: string;
+  devices?: { id: string }[];
+  groups?: string[];
+  vaults?: { id: string }[];
+  accessibleVaults?: string[];
+  creationTime: string;
+  type?: 'USER';
+}
+
+const deleteUserDialog = ref<typeof UserDeleteDialog>();
+const deletingUser = ref<UserDto | null>(null);
+
+const showDeleteUserDialog = (user: UserDto) => {
+  deletingUser.value = user;
+  nextTick(() => deleteUserDialog.value?.show());
+};
+
+const onUserDeleted = (deletedUser: UserDto) => {
+  
+};
 
 const user = ref<DetailUser>({
   firstName: 'Edgar',
@@ -189,6 +219,6 @@ onMounted(async () => {
 });
 
 function showUserEdit() {
-  router.push(`/app/authority/user/${props.id}/edit`);
+  router.push(`/app/users/${props.id}/edit`);
 }
 </script>

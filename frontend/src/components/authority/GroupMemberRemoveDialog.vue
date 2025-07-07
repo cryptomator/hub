@@ -66,14 +66,14 @@ import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, Trans
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { GroupDto } from '../common/backend';
+import backend, { GroupDto } from '../../common/backend';
 
 const { t } = useI18n({ useScope: 'global' });
 
 const open = ref(false);
 const onDeleteGroupError = ref<Error | null>();
 
-import type { UserDto } from '../common/backend';
+import type { UserDto } from '../../common/backend';
 
 const props = defineProps<{
    member: UserDto;

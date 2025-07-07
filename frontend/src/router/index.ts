@@ -6,13 +6,18 @@ import userdata from '../common/userdata';
 import AdminSettings from '../components/AdminSettings.vue';
 import AuditLog from '../components/AuditLog.vue';
 import AuthenticatedMain from '../components/AuthenticatedMain.vue';
-import AuthorityList from '../components/AuthorityList.vue';
 import CreateVault from '../components/CreateVault.vue';
 import Forbidden from '../components/Forbidden.vue';
+import GroupDetail from '../components/authority/GroupDetail.vue';
+import GroupEditCreate from '../components/authority/GroupEditCreate.vue';
+import GroupList from '../components/authority/GroupList.vue';
 import InitialSetup from '../components/InitialSetup.vue';
 import NotFound from '../components/NotFound.vue';
 import UnlockError from '../components/UnlockError.vue';
 import UnlockSuccess from '../components/UnlockSuccess.vue';
+import UserDetail from '../components/authority/UserDetail.vue';
+import UserEditCreate from '../components/authority/UserEditCreate.vue';
+import UserList from '../components/authority/UserList.vue';
 import UserProfile from '../components/UserProfile.vue';
 import VaultDetails from '../components/VaultDetails.vue';
 import VaultList from '../components/VaultList.vue';
@@ -62,37 +67,41 @@ const routes: RouteRecordRaw[] = [
     component: AuthenticatedMain,
     children: [
       {
-        path: 'authority',
-        component: AuthorityList,
+        path: 'users',
+        component: UserList
       },
       {
-        path: 'authority/user/create',
-        component: () => import('../components/UserEditCreate.vue'),
+        path: 'users/create',
+        component: UserEditCreate,
         props: true,
       },
       {
-        path: 'authority/user/:id/edit',
-        component: () => import('../components/UserEditCreate.vue'),
+        path: 'users/:id',
+        component: UserDetail,
         props: true,
       },
       {
-        path: 'authority/user/:id',
-        component: () => import('../components/UserDetail.vue'),
+        path: 'users/:id/edit',
+        component: UserEditCreate,
         props: true,
       },
       {
-        path: 'authority/group/create',
-        component: () => import('../components/GroupEditCreate.vue'),
+        path: 'groups',
+        component: GroupList
+      },
+      {
+        path: 'groups/create',
+        component: GroupEditCreate,
         props: true,
       },
       {
-        path: 'authority/group/:id/edit',
-        component: () => import('../components/GroupEditCreate.vue'),
+        path: 'groups/:id',
+        component: GroupDetail,
         props: true,
       },
       {
-        path: 'authority/group/:id',
-        component: () => import('../components/GroupDetail.vue'),
+        path: 'groups/:id/edit',
+        component: GroupEditCreate,
         props: true,
       },
       {

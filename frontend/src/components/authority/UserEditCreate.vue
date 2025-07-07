@@ -6,6 +6,8 @@
 
   <!-- Edit/Create page -->
   <div v-else>
+    <BreadcrumbNav v-if="isEditMode" :crumbs="[ { label: t('nav.users'), to: '/app/users' }, { label: username, to:'/app/users/' + userId }, { label: t('common.edit') } ]"/>
+    <BreadcrumbNav v-else :crumbs="[ { label: t('nav.users'), to: '/app/users' }, { label: t('common.create') } ]"/>
     <div class="-my-2 -mx-4 sm:-mx-6 lg:-mx-8 overflow-hidden">
       <div class="py-2 align-middle inline-block min-w-full px-4 sm:px-6 lg:px-8">
         <div class="shadow overflow-hidden border-b border-gray-200 rounded-lg bg-white p-6 space-y-8 relative">
@@ -222,8 +224,9 @@ import { CheckIcon, ChevronUpDownIcon, EyeIcon, EyeSlashIcon, InformationCircleI
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
-import { FormValidator } from '../common/formvalidator';
-import { debounce } from '../common/util';
+import { FormValidator } from '../../common/formvalidator';
+import { debounce } from '../../common/util';
+import BreadcrumbNav from '../BreadcrumbNav.vue';
 
 interface UserData {
   firstName: string;
@@ -388,10 +391,10 @@ function onSubmit() {
     setTimeout(() => {
       if (isEditMode.value) {
         // For edit mode, redirect to user details
-        router.push(`/app/authority/user/${userId}`);
+        router.push(`/app/users/${userId}`);
       } else {
         // For create mode, redirect to user list
-        router.push('/app/authority');
+        router.push('/app/users');
       }
     }, 1000);
   } catch (error) {
@@ -403,9 +406,9 @@ function onSubmit() {
 
 function cancelAction() {
   if (isEditMode.value) {
-    router.push(`/app/authority/user/${userId}`);
+    router.push(`/app/users/${userId}`);
   } else {
-    router.push('/app/authority');
+    router.push('/app/users');
   }
 }
 </script>

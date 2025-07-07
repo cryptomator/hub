@@ -6,6 +6,8 @@
 
   <!-- Edit/Create page -->
   <div v-else>
+    <BreadcrumbNav v-if="isEditMode" :crumbs="[ { label: t('nav.groups'), to: '/app/groups' }, { label: name, to:'/app/groups/' + groupId }, { label: t('common.edit') } ]"/>
+    <BreadcrumbNav v-else :crumbs="[ { label: t('nav.groups'), to: '/app/groups' }, { label: t('common.create') } ]"/>
     <div class="-my-2 -mx-4 sm:-mx-6 lg:-mx-8 overflow-hidden">
       <div class="py-2 align-middle inline-block min-w-full px-4 sm:px-6 lg:px-8">
         <div class="shadow overflow-hidden border-b border-gray-200 rounded-lg bg-white p-6 space-y-8">
@@ -127,8 +129,9 @@ import { CheckIcon, ChevronUpDownIcon, TrashIcon, UserIcon } from '@heroicons/vu
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
-import { FormValidator } from '../common/formvalidator';
-import { debounce } from '../common/util';
+import { FormValidator } from '../../common/formvalidator';
+import { debounce } from '../../common/util';
+import BreadcrumbNav from '../BreadcrumbNav.vue';
 
 interface GroupData {
   id?: string;
@@ -237,7 +240,7 @@ function onSubmit() {
     
     // Redirect after successful save
     setTimeout(() => {
-      router.push('/app/authority');
+      router.push('/app/groups');
     }, 1000);
   } catch (error) {
     console.error('Failed to save group:', error);
@@ -248,9 +251,9 @@ function onSubmit() {
 
 function cancelAction() {
   if (isEditMode.value) {
-    router.push(`/app/authority/group/${groupId.value}`);
+    router.push(`/app/groups/${groupId.value}`);
   } else {
-    router.push('/app/authority');
+    router.push('/app/groups');
   }
 }
 </script>

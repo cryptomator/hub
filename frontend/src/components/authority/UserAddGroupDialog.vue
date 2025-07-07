@@ -61,7 +61,7 @@
 import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import { ref, computed, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
-import SearchInputGroup from './SearchInputGroup.vue';
+import SearchInputGroup from '../SearchInputGroup.vue';
 
 interface Group {
   id: string;

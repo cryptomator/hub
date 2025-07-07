@@ -76,7 +76,7 @@ import { computed, ref, watch, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import UserAddGroupDialog from './UserAddGroupDialog.vue';
 import UserGroupRemoveDialog from './UserGroupRemoveDialog.vue';
-import { GroupDto } from '../common/backend';
+import { GroupDto } from '../../common/backend';
 import { UserGroupIcon } from '@heroicons/vue/20/solid'; 
 const { t } = useI18n({ useScope: 'global' });
 interface Group {
