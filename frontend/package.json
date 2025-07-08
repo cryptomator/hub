@@ -48,7 +48,7 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.29.1",
-    "vite": "^6.2.6",
+    "vite": "^6.3.5",
     "vue-tsc": "^2.2.8"
   },
   "dependencies": {
@@ -59,7 +59,7 @@
     "file-saver": "^2.0.5",
     "jdenticon": "^3.3.0",
     "jszip": "^3.10.1",
-    "keycloak-js": "^26.1.5",
+    "keycloak-js": "^26.2.0",
     "miscreant": "^0.3.2",
     "rfc4648": "^1.5.4",
     "semver": "^7.7.1",

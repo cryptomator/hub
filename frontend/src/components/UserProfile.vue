@@ -35,13 +35,13 @@
                 <ListboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-hidden text-sm">
                   <ListboxOption v-slot="{ active, selected }" :value="browserLocale" class="relative cursor-default select-none py-2 pl-3 pr-9 ui-not-active:text-gray-900 ui-active:text-white ui-active:bg-primary" @click="saveLanguage(undefined)">
                     <span :class="[selected || active ? 'font-semibold' : 'font-normal', 'block truncate']">{{ t('userProfile.actions.changeLanguage.entry.browser') }}</span>
-                    <span v-if="selected" :class="['absolute inset-y-0 right-0 flex items-center pr-4', selected ? 'text-primary' : 'text-gray-400']">
+                    <span v-if="selected" :class="[active ? 'text-white' : 'text-primary', 'absolute inset-y-0 right-0 flex items-center pr-4']">
                       <CheckIcon class="h-5 w-5" aria-hidden="true" />
                     </span>
                   </ListboxOption>
                   <ListboxOption v-for="availableLocale in Locale" :key="availableLocale" v-slot="{ active, selected }" class="relative cursor-default select-none py-2 pl-3 pr-9 ui-not-active:text-gray-900 ui-active:text-white ui-active:bg-primary" :value="availableLocale" @click="saveLanguage(availableLocale)">
                     <span :class="[selected || active ? 'font-semibold' : 'font-normal', 'block truncate']">{{ t(`locale.${availableLocale}`) }}</span>
-                    <span v-if="selected" :class="['absolute inset-y-0 right-0 flex items-center pr-4', selected ? 'text-primary' : 'text-gray-400']">
+                    <span v-if="selected" :class="[active ? 'text-white' : 'text-primary', 'absolute inset-y-0 right-0 flex items-center pr-4']">
                       <CheckIcon class="h-5 w-5" aria-hidden="true" />
                     </span>
                   </ListboxOption>
