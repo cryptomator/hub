@@ -292,11 +292,11 @@ describe('UVF', () => {
         const rootDirId = base64.parse('5WEGzwKkAHPwVSjT2Brr3P3zLz7oMiNpMn/qBvht7eM=');
         const hash = await uvf.computeRootDirIdHash(rootDirId);
         expect(hash).to.have.a.lengthOf(32);
-        expect(hash).to.eq('RKHZLENL3PQIW6GZHE3KRRRGLFBHWHRU');
+        expect(hash).to.eq('RZK7ZH7KBXULNEKBMGX3CU42PGUIAIX4');
       });
 
       it('encryptFile() creates some ciphertext', async () => {
-        const rootDirId = base64.parse('24UBEDeGu5taq7U4GqyA0MXUXb9HTYS6p3t9vvHGJAc=');
+        const rootDirId = base64.parse('5WEGzwKkAHPwVSjT2Brr3P3zLz7oMiNpMn/qBvht7eM=');
         const fileContent = await uvf.encryptFile(rootDirId, uvf.metadata.initialSeedId);
         expect(fileContent).to.have.a.lengthOf(128);
         expect(fileContent.slice(0, 4)).to.eql(new Uint8Array([0x75, 0x76, 0x66, 0x01])); // magic bytes

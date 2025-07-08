@@ -439,7 +439,7 @@ export class UniversalVaultFormat implements AccessTokenProducing, VaultTemplate
   public async computeRootDirIdHash(rootDirId: Uint8Array): Promise<string> {
     const textencoder = new TextEncoder();
     const initialSeed = await crypto.subtle.importKey('raw', this.metadata.initialSeed, { name: 'HKDF' }, false, ['deriveKey']);
-    const hmacKey = await crypto.subtle.deriveKey({ name: 'HKDF', hash: 'SHA-512', salt: this.metadata.kdfSalt, info: textencoder.encode('hmac') }, initialSeed, { name: 'HMAC', hash: 'SHA-256', length: 256 }, false, ['sign']);
+    const hmacKey = await crypto.subtle.deriveKey({ name: 'HKDF', hash: 'SHA-512', salt: this.metadata.kdfSalt, info: textencoder.encode('hmac') }, initialSeed, { name: 'HMAC', hash: 'SHA-256', length: 512 }, false, ['sign']);
     const rootDirHash = await crypto.subtle.sign('HMAC', hmacKey, rootDirId);
     return base32.stringify(new Uint8Array(rootDirHash).slice(0, 20));
   }
