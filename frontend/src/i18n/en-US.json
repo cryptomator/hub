@@ -71,6 +71,15 @@
   "admin.webOfTrust.save": "Save",
   "admin.webOfTrust.saved": "Saved!",
   
+  "admin.recover.title": "Recover Title",
+  "admin.recover.description": "Recover Desc",
+  "admin.recover.userFilter.placeholder": "Platzhalter",
+  "admin.recover.userFilter.description": "Beschreibung",
+
+  "admin.recover.amount.title": "Amount Title",
+  "admin.recover.amount.description": "Beschreibung",
+  "admin.recover.amount.error": "Error",
+
   "archiveVaultDialog.title": "Archive Vault",
   "archiveVaultDialog.description": "Archiving a vault makes it inactive. This may free up occupied seats. An archived vault can be reactivated later.",
   "archiveVaultDialog.confirm": "Archive",
