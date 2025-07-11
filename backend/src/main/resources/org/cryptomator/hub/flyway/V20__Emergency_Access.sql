@@ -1,4 +1,4 @@
-ALTER TABLE "settings" ADD "default_requried_emergency_key_shares" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "settings" ADD "default_required_emergency_key_shares" INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE "settings" ADD "allow_choosing_emergency_council" BOOLEAN NOT NULL DEFAULT FALSE;
 
 ALTER TABLE "vault" ADD "requried_emergency_key_shares" INTEGER NOT NULL DEFAULT 0;

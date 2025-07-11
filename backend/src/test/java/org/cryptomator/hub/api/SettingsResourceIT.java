@@ -43,14 +43,16 @@ public class SettingsResourceIT {
 			when().get("/settings")
 					.then().statusCode(200)
 					.body("wotMaxDepth", is(3))
-					.body("wotIdVerifyLen", is(2));
+					.body("wotIdVerifyLen", is(2))
+					.body("defaultRequiredEmergencyKeyShares", is(2))
+					.body("allowChoosingEmergencyCouncil", is(false));
 		}
 
 		@Test
 		@Order(2)
 		@DisplayName("PUT /settings returns 204 No Content")
 		public void testPut() {
-			var dto = new SettingsResource.SettingsDto("42", 5, 8);
+			var dto = new SettingsResource.SettingsDto("42", 5, 8, 2, false);
 			given().contentType(ContentType.JSON).body(dto)
 					.when().put("/settings")
 					.then().statusCode(204);
@@ -70,7 +72,7 @@ public class SettingsResourceIT {
 		@Order(4)
 		@DisplayName("PUT /settings returns 204 No Content")
 		public void testPutBackToDefault() {
-			var dto = new SettingsResource.SettingsDto("42", 3, 2);
+			var dto = new SettingsResource.SettingsDto("42", 3, 2, 2, false);
 			given().contentType(ContentType.JSON).body(dto)
 					.when().put("/settings")
 					.then().statusCode(204);

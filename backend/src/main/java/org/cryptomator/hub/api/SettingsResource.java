@@ -57,6 +57,8 @@ public class SettingsResource {
 		var oldWotMaxDepth = settings.getWotMaxDepth();
 		settings.setWotMaxDepth(dto.wotMaxDepth);
 		settings.setWotIdVerifyLen(dto.wotIdVerifyLen);
+		settings.setDefaultRequiredEmergencyKeyShares(dto.defaultRequiredEmergencyKeyShares);
+		settings.setAllowChoosingEmergencyCouncil(dto.allowChoosingEmergencyCouncil);
 		settingsRepo.persist(settings);
 		if (oldWotMaxDepth != dto.wotMaxDepth || oldWotIdVerifyLen != dto.wotIdVerifyLen) {
 			eventLogger.logWotSettingUpdated(jwt.getSubject(), dto.wotIdVerifyLen, dto.wotMaxDepth);
@@ -64,10 +66,14 @@ public class SettingsResource {
 		return Response.status(Response.Status.NO_CONTENT).build();
 	}
 
-	public record SettingsDto(@JsonProperty("hubId") String hubId, @JsonProperty("wotMaxDepth") @Min(0) @Max(9) int wotMaxDepth, @JsonProperty("wotIdVerifyLen") @Min(0) int wotIdVerifyLen) {
+	public record SettingsDto(@JsonProperty("hubId") String hubId,
+							  @JsonProperty("wotMaxDepth") @Min(0) @Max(9) int wotMaxDepth,
+							  @JsonProperty("wotIdVerifyLen") @Min(0) int wotIdVerifyLen,
+							  @JsonProperty("defaultRequiredEmergencyKeyShares") @Min(0) int defaultRequiredEmergencyKeyShares,
+							  @JsonProperty("allowChoosingEmergencyCouncil") boolean allowChoosingEmergencyCouncil) {
 
 		public static SettingsDto fromEntity(Settings entity) {
-			return new SettingsDto(entity.getHubId(), entity.getWotMaxDepth(), entity.getWotIdVerifyLen());
+			return new SettingsDto(entity.getHubId(), entity.getWotMaxDepth(), entity.getWotIdVerifyLen(), entity.getDefaultRequiredEmergencyKeyShares(), entity.isAllowChoosingEmergencyCouncil());
 		}
 
 	}

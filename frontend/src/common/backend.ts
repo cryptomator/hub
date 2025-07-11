@@ -120,7 +120,9 @@ export type VersionDto = {
 export type SettingsDto = {
   hubId: string,
   wotMaxDepth: number,
-  wotIdVerifyLen: number
+  wotIdVerifyLen: number,
+  defaultRequiredEmergencyKeyShares: number,
+  allowChoosingEmergencyCouncil: boolean
 }
 
 export class LicenseUserInfoDto {
