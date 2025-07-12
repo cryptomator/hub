@@ -21,6 +21,8 @@ import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 
+import java.util.Set;
+
 @Path("/settings")
 public class SettingsResource {
 
@@ -59,6 +61,7 @@ public class SettingsResource {
 		settings.setWotIdVerifyLen(dto.wotIdVerifyLen);
 		settings.setDefaultRequiredEmergencyKeyShares(dto.defaultRequiredEmergencyKeyShares);
 		settings.setAllowChoosingEmergencyCouncil(dto.allowChoosingEmergencyCouncil);
+		settings.setEmergencyCouncilMemberIds(dto.emergencyCouncilMemberIds);
 		settingsRepo.persist(settings);
 		if (oldWotMaxDepth != dto.wotMaxDepth || oldWotIdVerifyLen != dto.wotIdVerifyLen) {
 			eventLogger.logWotSettingUpdated(jwt.getSubject(), dto.wotIdVerifyLen, dto.wotMaxDepth);
@@ -70,10 +73,11 @@ public class SettingsResource {
 							  @JsonProperty("wotMaxDepth") @Min(0) @Max(9) int wotMaxDepth,
 							  @JsonProperty("wotIdVerifyLen") @Min(0) int wotIdVerifyLen,
 							  @JsonProperty("defaultRequiredEmergencyKeyShares") @Min(0) int defaultRequiredEmergencyKeyShares,
-							  @JsonProperty("allowChoosingEmergencyCouncil") boolean allowChoosingEmergencyCouncil) {
+							  @JsonProperty("allowChoosingEmergencyCouncil") boolean allowChoosingEmergencyCouncil,
+							  @JsonProperty("emergencyCouncilMemberIds") Set<String> emergencyCouncilMemberIds) {
 
 		public static SettingsDto fromEntity(Settings entity) {
-			return new SettingsDto(entity.getHubId(), entity.getWotMaxDepth(), entity.getWotIdVerifyLen(), entity.getDefaultRequiredEmergencyKeyShares(), entity.isAllowChoosingEmergencyCouncil());
+			return new SettingsDto(entity.getHubId(), entity.getWotMaxDepth(), entity.getWotIdVerifyLen(), entity.getDefaultRequiredEmergencyKeyShares(), entity.isAllowChoosingEmergencyCouncil(), entity.getEmergencyCouncilMemberIds());
 		}
 
 	}

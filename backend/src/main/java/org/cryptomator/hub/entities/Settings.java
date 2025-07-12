@@ -2,12 +2,19 @@ package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheRepository;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
 
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "settings")
@@ -36,6 +43,14 @@ public class Settings {
 
 	@Column(name = "allow_choosing_emergency_council", nullable = false)
 	private boolean allowChoosingEmergencyCouncil;
+
+	@ElementCollection
+	@CollectionTable(
+			name = "default_emergency_council",
+			joinColumns = @JoinColumn(name = "settings_id")
+	)
+	@Column(name = "member_id")
+	private Set<String> emergencyCouncilMemberIds = new HashSet<>();
 
 	public int getId() {
 		return id;
@@ -93,6 +108,15 @@ public class Settings {
 		this.allowChoosingEmergencyCouncil = allowChoosingEmergencyCouncil;
 	}
 
+	public Set<String> getEmergencyCouncilMemberIds() {
+		return Set.copyOf(emergencyCouncilMemberIds);
+	}
+
+	public void setEmergencyCouncilMemberIds(Collection<String> emergencyCouncilMemberIds) {
+		this.emergencyCouncilMemberIds.clear();
+		this.emergencyCouncilMemberIds.addAll(emergencyCouncilMemberIds);
+	}
+
 	@Override
 	public String toString() {
 		return "Settings{" +
@@ -103,6 +127,7 @@ public class Settings {
 				", wotIdVerifyLen='" + wotIdVerifyLen + '\'' +
 				", defaultRequiredEmergencyKeyShares=" + defaultRequiredEmergencyKeyShares +
 				", allowChoosingEmergencyCouncil=" + allowChoosingEmergencyCouncil +
+				", emergencyCouncilMemberIds= [" + String.join(", ", emergencyCouncilMemberIds) + "]" +
 				'}';
 	}
 
@@ -117,12 +142,13 @@ public class Settings {
 				&& Objects.equals(wotMaxDepth, settings.wotMaxDepth)
 				&& Objects.equals(wotIdVerifyLen, settings.wotIdVerifyLen)
 				&& defaultRequiredEmergencyKeyShares == settings.defaultRequiredEmergencyKeyShares
-				&& allowChoosingEmergencyCouncil == settings.allowChoosingEmergencyCouncil;
+				&& allowChoosingEmergencyCouncil == settings.allowChoosingEmergencyCouncil
+				&& Objects.equals(emergencyCouncilMemberIds, settings.emergencyCouncilMemberIds);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, hubId, licenseKey, wotMaxDepth, wotIdVerifyLen, defaultRequiredEmergencyKeyShares, allowChoosingEmergencyCouncil);
+		return Objects.hash(id, hubId, licenseKey, wotMaxDepth, wotIdVerifyLen, defaultRequiredEmergencyKeyShares, allowChoosingEmergencyCouncil, emergencyCouncilMemberIds);
 	}
 
 	@ApplicationScoped

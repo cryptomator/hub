@@ -545,7 +545,7 @@ async function saveWebOfTrust() {
       wotIdVerifyLen: wotIdVerifyLen.value,
       hubId: admin.value.hubId
     };
-    await backend.settings.put(settings);
+    await backend.settings.update(settings);
     wotUpdated.value = true;
     debouncedWotUpdated();
   } catch (error) {

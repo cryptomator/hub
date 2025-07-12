@@ -122,7 +122,8 @@ export type SettingsDto = {
   wotMaxDepth: number,
   wotIdVerifyLen: number,
   defaultRequiredEmergencyKeyShares: number,
-  allowChoosingEmergencyCouncil: boolean
+  allowChoosingEmergencyCouncil: boolean,
+  emergencyCouncilMemberIds: string[]
 }
 
 export class LicenseUserInfoDto {
@@ -397,6 +398,15 @@ class SettingsService {
 
   public async put(settings: SettingsDto): Promise<void> {
     return axiosAuth.put('/settings', settings);
+  }
+
+  public async update(settings: Partial<SettingsDto>): Promise<void> {
+    const originalSettings = await this.get();
+    const updatedSettings = {
+      ...originalSettings,
+      ...settings
+    };
+    return axiosAuth.put('/settings', updatedSettings);
   }
 }
 
