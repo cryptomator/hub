@@ -3,13 +3,16 @@ package org.cryptomator.hub.entities;
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import io.quarkus.panache.common.Parameters;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.MapKeyColumn;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -22,8 +25,10 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -104,6 +109,18 @@ public class Vault {
 
 	@Column(name = "archived", nullable = false)
 	private boolean archived;
+
+	@Column(name = "requried_emergency_key_shares", nullable = false)
+	private int requiredEmergencyKeyShares;
+
+	@ElementCollection(fetch = FetchType.EAGER)
+	@CollectionTable(
+			name = "emergency_key_shares",
+			joinColumns = @JoinColumn(name = "vault_id")
+	)
+	@MapKeyColumn(name = "council_member_id")
+	@Column(name = "emergency_key_share")
+	private Map<String, String> emergencyKeyShares = new HashMap<>();
 
 	public Optional<ECPublicKey> getAuthenticationPublicKeyOptional() {
 		if (authenticationPublicKey == null) {
@@ -230,6 +247,23 @@ public class Vault {
 		this.archived = archived;
 	}
 
+	public int getRequiredEmergencyKeyShares() {
+		return requiredEmergencyKeyShares;
+	}
+
+	public void setRequiredEmergencyKeyShares(int requiredEmergencyKeyShares) {
+		this.requiredEmergencyKeyShares = requiredEmergencyKeyShares;
+	}
+
+	public Map<String, String> getEmergencyKeyShares() {
+		return Map.copyOf(emergencyKeyShares);
+	}
+
+	public void setEmergencyKeyShares(Map<String, String> emergencyKeyShares) {
+		this.emergencyKeyShares.clear();
+		this.emergencyKeyShares.putAll(emergencyKeyShares);
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
@@ -240,12 +274,14 @@ public class Vault {
 				&& Objects.equals(salt, vault.salt)
 				&& Objects.equals(iterations, vault.iterations)
 				&& Objects.equals(masterkey, vault.masterkey)
-				&& Objects.equals(archived, vault.archived);
+				&& Objects.equals(archived, vault.archived)
+				&& Objects.equals(requiredEmergencyKeyShares, vault.requiredEmergencyKeyShares)
+				&& Objects.equals(emergencyKeyShares, vault.emergencyKeyShares);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, name, salt, iterations, masterkey, archived);
+		return Objects.hash(id, name, salt, iterations, masterkey, archived, requiredEmergencyKeyShares, emergencyKeyShares);
 	}
 
 	@Override
@@ -261,6 +297,8 @@ public class Vault {
 				", masterkey='" + masterkey + '\'' +
 				", authenticationPublicKey='" + authenticationPublicKey + '\'' +
 				", authenticationPrivateKey='" + authenticationPrivateKey + '\'' +
+				", requiredEmergencyKeyShares='" + requiredEmergencyKeyShares + '\'' +
+				", emergencyKeyShares=" + emergencyKeyShares.keySet().stream().collect(Collectors.joining(", ")) +
 				'}';
 	}
 

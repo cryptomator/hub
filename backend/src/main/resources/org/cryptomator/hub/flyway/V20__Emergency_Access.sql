@@ -16,6 +16,7 @@ CREATE TABLE "emergency_key_shares"
 (
 	"vault_id" UUID NOT NULL,
 	"council_member_id" VARCHAR(255) COLLATE "C" NOT NULL,
+	"emergency_key_share" VARCHAR(255) COLLATE "C" NOT NULL,
 	CONSTRAINT "EMERGENCY_KEYS_PK" PRIMARY KEY ("vault_id", "council_member_id"),
 	CONSTRAINT "EMERGENCY_KEYS_FK_VAULT" FOREIGN KEY ("vault_id") REFERENCES "vault" ("id") ON DELETE CASCADE,
 	CONSTRAINT "EMERGENCY_KEYS_FK_USER" FOREIGN KEY ("council_member_id") REFERENCES "user_details" ("id") ON DELETE CASCADE

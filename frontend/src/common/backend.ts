@@ -38,9 +38,13 @@ axiosAuth.interceptors.request.use(async request => {
 export type VaultDto = {
   id: string;
   name: string;
+  creationTime: Date;
   description?: string;
   archived: boolean;
-  creationTime: Date;
+  requiredEmergencyKeyShares: number;
+  emergencyKeyShares: Record<string, string>;
+  
+  // Legacy properties ("Vault Admin Password"):
   masterkey?: string;
   iterations?: number;
   salt?: string;
@@ -195,8 +199,16 @@ class VaultService {
       .catch(err => rethrowAndConvertIfExpected(err, 403));
   }
 
-  public async createOrUpdateVault(vaultId: string, name: string, archived: boolean, description?: string): Promise<VaultDto> {
-    const body: VaultDto = { id: vaultId, name: name, description: description, archived: archived, creationTime: new Date() };
+  public async createOrUpdateVault(vaultId: string, name: string, archived: boolean, requiredEmergencyKeyShares: number, emergencyKeyShares: Record<string, string>, description?: string): Promise<VaultDto> {
+    const body: VaultDto = {
+      id: vaultId,
+      name: name,
+      creationTime: new Date(),
+      description: description,
+      archived: archived,
+      requiredEmergencyKeyShares: requiredEmergencyKeyShares,
+      emergencyKeyShares: emergencyKeyShares
+    };
     return axiosAuth.put(`/vaults/${vaultId}`, body)
       .then(response => response.data)
       .catch((error) => rethrowAndConvertIfExpected(error, 402, 404));

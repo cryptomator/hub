@@ -12,6 +12,7 @@ import jakarta.inject.Inject;
 import jakarta.persistence.NoResultException;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -432,6 +433,8 @@ public class VaultResource {
 		vault.setName(vaultDto.name);
 		vault.setDescription(vaultDto.description);
 		vault.setArchived(existingVault.isEmpty() ? false : vaultDto.archived);
+		vault.setRequiredEmergencyKeyShares(vaultDto.requiredEmergencyKeyShares);
+		vault.setEmergencyKeyShares(vaultDto.emergencyKeyShares);
 
 		vaultRepo.persistAndFlush(vault); // trigger PersistenceException before we continue with
 		if (existingVault.isEmpty()) {
@@ -509,9 +512,10 @@ public class VaultResource {
 
 	public record VaultDto(@JsonProperty("id") UUID id,
 						   @JsonProperty("name") @NoHtmlOrScriptChars @NotBlank String name,
-						   @JsonProperty("description") @NoHtmlOrScriptChars String description,
+						   @JsonProperty("creationTime") Instant creationTime, @JsonProperty("description") @NoHtmlOrScriptChars String description,
 						   @JsonProperty("archived") boolean archived,
-						   @JsonProperty("creationTime") Instant creationTime,
+						   @JsonProperty("requiredEmergencyKeyShares") @Min(0) int requiredEmergencyKeyShares,
+						   @JsonProperty("emergencyKeyShares") Map<String, String> emergencyKeyShares,
 						   // Legacy properties ("Vault Admin Password"):
 						   @JsonProperty("masterkey") @OnlyBase64Chars String masterkey, @JsonProperty("iterations") Integer iterations,
 						   @JsonProperty("salt") @OnlyBase64Chars String salt,
@@ -519,7 +523,7 @@ public class VaultResource {
 	) {
 
 		public static VaultDto fromEntity(Vault entity) {
-			return new VaultDto(entity.getId(), entity.getName(), entity.getDescription(), entity.isArchived(), entity.getCreationTime().truncatedTo(ChronoUnit.MILLIS), entity.getMasterkey(), entity.getIterations(), entity.getSalt(), entity.getAuthenticationPublicKey(), entity.getAuthenticationPrivateKey());
+			return new VaultDto(entity.getId(), entity.getName(), entity.getCreationTime().truncatedTo(ChronoUnit.MILLIS), entity.getDescription(), entity.isArchived(), entity.getRequiredEmergencyKeyShares(), entity.getEmergencyKeyShares(), entity.getMasterkey(), entity.getIterations(), entity.getSalt(), entity.getAuthenticationPublicKey(), entity.getAuthenticationPrivateKey());
 		}
 
 	}
