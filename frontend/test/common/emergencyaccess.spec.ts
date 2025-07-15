@@ -6,7 +6,7 @@ import { EmergencyAccess, RecoveryProcess } from '../../src/common/emergencyacce
 const toUint8Array = (data: string) => new TextEncoder().encode(data);
 const fromUint8Array = (data: AllowSharedBufferSource, options?: TextDecodeOptions) => new TextDecoder().decode(data, options);
 
-describe('emergencyaccess', () => {
+describe('Emergency Access', () => {
   const originalSecret = 'Hello World!';
 
   let alice: CryptoKeyPair, bob: CryptoKeyPair, carol: CryptoKeyPair, dave: CryptoKeyPair;
@@ -18,20 +18,20 @@ describe('emergencyaccess', () => {
     global.window = { crypto: global.crypto };
 
     // prepare some test key pairs:
-    alice = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-384' }, true, ['deriveKey', 'deriveBits']);
-    bob = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-384' }, true, ['deriveKey', 'deriveBits']);
-    carol = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-384' }, true, ['deriveKey', 'deriveBits']);
-    dave = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-384' }, true, ['deriveKey', 'deriveBits']);
+    alice = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-384' }, false, ['deriveBits']);
+    bob = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-384' }, false, ['deriveBits']);
+    carol = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-384' }, false, ['deriveBits']);
+    dave = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-384' }, false, ['deriveBits']);
   });
 
-  it('split()', async () => {
+  it('Split Secret, requiring any 3 of [alice, bob, carol, dave]', async () => {
     const secretBytes = toUint8Array(originalSecret);
     const shares = await EmergencyAccess.split(secretBytes, 3, alice.publicKey, bob.publicKey, carol.publicKey, dave.publicKey);
 
     expect(shares).to.have.length(4);
   });
 
-  it('startRecovery()', async () => {
+  it('Start Recovery Process', async () => {
     const councilMembers = {
       alice: alice.publicKey,
       bob: bob.publicKey,
@@ -48,7 +48,7 @@ describe('emergencyaccess', () => {
     expect(recoveryProcess.recoveryPrivateKeys).to.have.property('dave');
   });
 
-  describe('Recovery', () => {
+  describe('Finish Recovery', () => {
     let aliceShare: string, bobShare: string, carolShare: string, daveShare: string;
     let recoveryProcess: RecoveryProcess;
 
@@ -66,6 +66,15 @@ describe('emergencyaccess', () => {
         dave: dave.publicKey
       };
       recoveryProcess = await EmergencyAccess.startRecovery(councilMembers);
+    });
+
+    it('recover fails as Alice + Bob', async () => {
+      const recoveredAlice = await EmergencyAccess.recoverShare(aliceShare, alice.privateKey, recoveryProcess.recoveryPublicKey);
+      const recoveredBob = await EmergencyAccess.recoverShare(bobShare, bob.privateKey, recoveryProcess.recoveryPublicKey);
+
+      const recovered = await EmergencyAccess.combineRecoveredShares([recoveredAlice, recoveredBob], recoveryProcess.recoveryPrivateKeys.alice, alice.privateKey);
+
+      expect(fromUint8Array(recovered)).not.to.eq(originalSecret);
     });
 
     it('recover as Alice + Bob + Carol', async () => {
