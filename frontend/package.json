@@ -63,6 +63,7 @@
     "miscreant": "^0.3.2",
     "rfc4648": "^1.5.4",
     "semver": "^7.7.2",
+    "shamir-secret-sharing": "^0.0.4",
     "vue": "^3.5.17",
     "vue-i18n": "^11.1.9",
     "vue-router": "^4.5.1"

@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2023",
     "lib": ["ES2023", "dom"],
-    "module": "ES2022",
+    "module": "esnext",
 
     /* Bundler mode */
     "moduleResolution": "bundler",
