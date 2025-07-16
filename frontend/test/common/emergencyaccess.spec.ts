@@ -2,12 +2,10 @@ import { expect } from 'chai';
 import { before, describe } from 'mocha';
 import { webcrypto } from 'node:crypto';
 import { EmergencyAccess, RecoveryProcess } from '../../src/common/emergencyaccess';
-
-const toUint8Array = (data: string) => new TextEncoder().encode(data);
-const fromUint8Array = (data: AllowSharedBufferSource, options?: TextDecodeOptions) => new TextDecoder().decode(data, options);
+import { UTF8 } from '../../src/common/util';
 
 describe('Emergency Access', () => {
-  const originalSecret = 'Hello World!';
+  const originalSecret = UTF8.encode('Hello World!');
 
   let alice: CryptoKeyPair, bob: CryptoKeyPair, carol: CryptoKeyPair, dave: CryptoKeyPair;
 
@@ -25,8 +23,7 @@ describe('Emergency Access', () => {
   });
 
   it('Split Secret, requiring any 3 of [alice, bob, carol, dave]', async () => {
-    const secretBytes = toUint8Array(originalSecret);
-    const shares = await EmergencyAccess.split(secretBytes, 3, alice.publicKey, bob.publicKey, carol.publicKey, dave.publicKey);
+    const shares = await EmergencyAccess.split(originalSecret, 3, alice.publicKey, bob.publicKey, carol.publicKey, dave.publicKey);
 
     expect(shares).to.have.length(4);
   });
@@ -55,7 +52,7 @@ describe('Emergency Access', () => {
     beforeEach(async () => {
       // split some secret:
       const secret = 'Hello World!';
-      const secretBytes = new TextEncoder().encode(secret);
+      const secretBytes = UTF8.encode(secret);
       [aliceShare, bobShare, carolShare, daveShare] = await EmergencyAccess.split(secretBytes, 3, alice.publicKey, bob.publicKey, carol.publicKey, dave.publicKey);
 
       // start recovery:
@@ -74,7 +71,7 @@ describe('Emergency Access', () => {
 
       const recovered = await EmergencyAccess.combineRecoveredShares([recoveredAlice, recoveredBob], recoveryProcess.recoveryPrivateKeys.alice, alice.privateKey);
 
-      expect(fromUint8Array(recovered)).not.to.eq(originalSecret);
+      expect(recovered).not.to.deep.eq(originalSecret);
     });
 
     it('recover as Alice + Bob + Carol', async () => {
@@ -84,7 +81,7 @@ describe('Emergency Access', () => {
 
       const recovered = await EmergencyAccess.combineRecoveredShares([recoveredAlice, recoveredBob, recoveredCarol], recoveryProcess.recoveryPrivateKeys.alice, alice.privateKey);
 
-      expect(fromUint8Array(recovered)).to.eq(originalSecret);
+      expect(recovered).to.deep.eq(originalSecret);
     });
 
     it('recover as Alice + Carol + Dave', async () => {
@@ -94,7 +91,7 @@ describe('Emergency Access', () => {
 
       const recovered = await EmergencyAccess.combineRecoveredShares([recoveredAlice, recoveredCarol, recoveredDave], recoveryProcess.recoveryPrivateKeys.carol, carol.privateKey);
 
-      expect(fromUint8Array(recovered)).to.eq(originalSecret);
+      expect(recovered).to.deep.eq(originalSecret);
     });
 
     it('recover as Alice + Bob + Carol + Dave', async () => {
@@ -105,7 +102,7 @@ describe('Emergency Access', () => {
 
       const recovered = await EmergencyAccess.combineRecoveredShares([recoveredAlice, recoveredBob, recoveredCarol, recoveredDave], recoveryProcess.recoveryPrivateKeys.dave, dave.privateKey);
 
-      expect(fromUint8Array(recovered)).to.eq(originalSecret);
+      expect(recovered).to.deep.eq(originalSecret);
     });
   });
 });
