@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { describe } from 'mocha';
-import { CRC32, wordEncoder } from '../../src/common/util';
+import { UTF8, CRC32, wordEncoder } from '../../src/common/util';
 
 describe('WordEncoder', () => {
   describe('decode(encode(x)) == x', () => {
@@ -22,7 +22,7 @@ describe('WordEncoder', () => {
 
 describe('CRC32', () => {
   it('crc32(\'123456789\') == 0xCBF43926', () => {
-    const input = new TextEncoder().encode('123456789');
+    const input = UTF8.encode('123456789');
 
     const result = CRC32.compute(input);
 
