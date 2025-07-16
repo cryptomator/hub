@@ -24,6 +24,32 @@
         <p v-if="vault.description && vault.description.length > 0" class="text-sm text-gray-500">{{ vault.description }}</p>
         <p v-else class="text-sm text-gray-500 italic">{{ t('vaultDetails.description.empty') }}</p>
       </div>
+      <div class="mt-2 space-y-1">
+        <p class="text-sm text-gray-500">
+          {{ t('requiredEmergencyKeyShares') }}:
+          <span class="font-medium text-gray-900">{{ vault.requiredEmergencyKeyShares }}</span>
+        </p>
+
+        <div v-if="Object.keys(vault.emergencyKeyShares).length > 0">
+          <p class="text-sm text-gray-500">
+            {{ t('vaultDetails.information.emergencyKeyShares') }}:
+          </p>
+          <ul class="mt-1 pl-4 list-disc text-sm text-gray-700">
+            <li v-for="(share, memberId) in vault.emergencyKeyShares" :key="memberId" class="flex items-center gap-2">
+              <img v-if="emergencyKeyShareAuthorities.get(memberId)?.pictureUrl" :src="emergencyKeyShareAuthorities.get(memberId)?.pictureUrl" alt="" class="w-4 h-4 rounded-full" />
+              <span class="font-medium">
+                {{ emergencyKeyShareAuthorities.get(memberId)?.name || memberId }}
+              </span>:
+              <span class="font-mono break-all">
+                {{ EmergencyKeyShare.parse(share) ? EmergencyKeyShare.toDisplayString(EmergencyKeyShare.parse(share)!) : 'Unknown' }}
+              </span>
+            </li>
+          </ul>
+        </div>
+        <p v-else class="text-sm text-gray-500 italic">
+          {{ t('noEmergencyKeyShares') }}
+        </p>
+      </div>
     </div>
 
     <div>
@@ -189,6 +215,22 @@
         <button v-if="vaultRole == 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-xs text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDisplayRecoveryKeyDialog()">
           {{ t('vaultDetails.actions.displayRecoveryKey') }}
         </button>
+        <!-- emergencyAccess button -->
+        <button v-if="(isEmergencyCouncilMember || isEmergencyKeyShareHolder) && vaultRole == 'OWNER' && isSetupDone" type="button" :disabled="isRecoveryInProgress" class="w-full flex p-2 py-2 px-4 rounded-md border border-gray-300 shadow-xs text-sm font-medium flex justify-center items-center focus:outline-hidden focus:ring-2 focus:ring-offset-2" :class="isRecoveryInProgress ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-white text-gray-900 hover:bg-gray-50 focus:ring-primary'" @click="isRecoveryInProgress ? null : showRecoveryApprovDialog()">
+          <span>
+            {{ isRecoveryInProgress ? 'Emergency Access in Progress' : recoveryButtonLabel }}
+          </span>
+          <svg class="absolute right-8" width="24" height="24" viewBox="0 0 36 36">
+            <g>
+              <path v-for="i in totalSegments" :key="i" :d="describeSegment(i - 1, totalSegments!, 16)" :fill="i <= filledSegments ? '#22c55e' : recoverySegmentColor" stroke="white" stroke-width="1" />
+            </g>
+          </svg>
+        </button>
+        <!-- setup emergencyAccess button -->
+        <button v-if="vaultRole == 'OWNER'" type="button" class="inline-flex items-center justify-center gap-2 bg-white py-2 px-4 border border-gray-300 rounded-md shadow-xs text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showGrantEmergencyAccessDialog()">
+          <ExclamationTriangleIcon class="h-5 w-5 text-yellow-500" />
+          <span>Setup Emergency Access Council</span>
+        </button>
         <!-- archiveVault button -->
         <button v-if="(vaultRole == 'OWNER' || isAdmin)" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white  hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showArchiveVaultDialog()">
           {{ t('vaultDetails.actions.archiveVault') }}
@@ -205,6 +247,8 @@
   <ArchiveVaultDialog v-if="archivingVault && vault" ref="archiveVaultDialog" :vault="vault" @close="archivingVault = false" @archived="v => refreshVault(v)" />
   <ReactivateVaultDialog v-if="reactivatingVault && vault" ref="reactivateVaultDialog" :vault="vault" @close="reactivatingVault = false" @reactivated="v => { refreshVault(v); refreshLicense();}" />
   <RecoverVaultDialog v-if="recoveringVault && vault" ref="recoverVaultDialog" :vault="vault" @close="recoveringVault = false" @recovered="fetchOwnerData()" />
+  <RecoveryApprovDialog v-if="recoveryApprov && vault && me && totalSegments" ref="recoveryApprovDialog" :vault="vault" :me="me" :total-segments="totalSegments" :approved-segments="filledSegments" @updated="refreshVault" @close="recoveryApprov = false" />
+  <GrantEmergencyAccessDialog v-if="grantingEmergencyAccess && vault" ref="grantEmergencyAccessDialog" :vault="vault" @close="grantingEmergencyAccess = false" @updated="v => refreshVault(v)" />
 </template>
 
 <script setup lang="ts">
@@ -229,6 +273,10 @@ import ReactivateVaultDialog from './ReactivateVaultDialog.vue';
 import RecoverVaultDialog from './RecoverVaultDialog.vue';
 import SearchInputGroup from './SearchInputGroup.vue';
 import TrustDetails from './TrustDetails.vue';
+import RecoveryApprovDialog from './RecoveryApprovDialog.vue';
+import GrantEmergencyAccessDialog from './emergencyaccess/GrantEmergencyAccessDialog.vue';
+import { describeSegment } from '../common/svgUtils';
+import { EmergencyKeyShare } from '../common/EmergencyKeyShare';
 
 const { t, d } = useI18n({ useScope: 'global' });
 
@@ -272,12 +320,75 @@ const usersRequiringAccessGrant = ref<UserDto[]>([]);
 const claimVaultOwnershipDialog = ref<typeof ClaimVaultOwnershipDialog>();
 const claimingVaultOwnership = ref(false);
 const me = ref<UserDto>();
+const recoveryApprov = ref(false);
+const recoveryApprovDialog = ref<typeof RecoveryApprovDialog>();
+const grantingEmergencyAccess = ref(false);
+const grantEmergencyAccessDialog = ref<typeof GrantEmergencyAccessDialog>();
+
+const emergencyCouncilMemberIds = ref<string[]>([]);
+const defaultRequiredEmergencyKeyShares = ref<number>();
 
 const vaultRecoveryRequired = ref<boolean>(false);
 const isAdmin = ref<boolean>();
 
 const isLegacyVault = computed(() => vault.value?.authPublicKey != null);
 const licenseViolated = computed(() => license.value?.isExpired() || license.value?.isExceeded());
+
+const emergencyKeyShareAuthorities = ref<Map<string, AuthorityDto>>(new Map());
+
+const isEmergencyKeyShareHolder = computed(() => {
+  if (!vault.value || !me.value) return false;
+  return Object.keys(vault.value.emergencyKeyShares).includes(me.value.id);
+});
+
+const recoverySegmentColor = computed(() => {
+  return isRecoveryInProgress.value ? '#eee' : '#e5e7eb';
+});
+const totalSegments = computed(() =>
+  vault.value?.requiredEmergencyKeyShares ?? defaultRequiredEmergencyKeyShares.value
+);
+const filledSegments = computed(() =>
+  Object.values(vault.value?.emergencyKeyShares ?? {}).filter(s => {
+    const parsed = EmergencyKeyShare.parse(s);
+    return parsed != null;
+  }).length
+);
+
+const recoveryButtonLabel = computed(() => {
+  if (filledSegments.value === 0) {
+    return t('vaultDetails.actions.startEmergencyAccess');
+  } else if (filledSegments.value + 1 == totalSegments.value) {
+    return t('vaultDetails.actions.completeEmergencyAccess');
+  } else {
+    return t('vaultDetails.actions.approveEmergencyAccess');
+  }
+});
+
+const isRecoveryInProgress = computed(() => {
+  if (!vault.value || !me.value) return false;
+  const raw = vault.value.emergencyKeyShares?.[me.value.id];
+  if (!raw) return false;
+  const parsed = EmergencyKeyShare.parse(raw);
+  return parsed != null;
+});
+
+const isSetupDone = computed(() => {
+  if (!vault.value) return false;
+  
+  const hasRequiredShares = vault.value.requiredEmergencyKeyShares != null;
+  const hasEmergencyKeyShares = vault.value.emergencyKeyShares && Object.keys(vault.value.emergencyKeyShares).length > 0;
+  
+  return hasRequiredShares && hasEmergencyKeyShares;
+});
+
+const isEmergencyCouncilMember = computed(() =>
+  emergencyCouncilMemberIds.value.includes(me.value?.id ?? '')
+);
+
+onMounted(async () => {
+  const settings = await backend.settings.get();
+  emergencyCouncilMemberIds.value = settings.emergencyCouncilMemberIds;
+});
 
 onMounted(fetchData);
 
@@ -286,8 +397,16 @@ async function fetchData() {
   try {
     isAdmin.value = (await auth).hasRole('admin');
     vault.value = await backend.vaults.get(props.vaultId);
+
+    if (vault.value && Object.keys(vault.value.emergencyKeyShares).length > 0) {
+      const authorities = await backend.authorities.listSome(Object.keys(vault.value.emergencyKeyShares));
+      emergencyKeyShareAuthorities.value = new Map(authorities.map(a => [a.id, a]));
+    }
+
     me.value = await userdata.me;
     license.value = await backend.license.getUserInfo();
+    const settings = await backend.settings.get();
+    defaultRequiredEmergencyKeyShares.value = settings.defaultRequiredEmergencyKeyShares;
     if (props.vaultRole == 'OWNER') {
       await fetchOwnerData();
     }
@@ -432,6 +551,16 @@ function showDownloadVaultTemplateDialog() {
 function showDisplayRecoveryKeyDialog() {
   displayingRecoveryKey.value = true;
   nextTick(() => displayRecoveryKeyDialog.value?.show());
+}
+
+function showGrantEmergencyAccessDialog() {
+  grantingEmergencyAccess.value = true;
+  nextTick(() => grantEmergencyAccessDialog.value?.show?.());
+}
+
+function showRecoveryApprovDialog() {
+  recoveryApprov.value = true;
+  nextTick(() => recoveryApprovDialog.value?.show());
 }
 
 function showArchiveVaultDialog() {
