@@ -4,6 +4,7 @@ import { base64 } from 'rfc4648';
 import authPromise from './auth';
 import { backendBaseURL } from './config';
 import { JWTHeader } from './jwt';
+import { UTF8 } from './util';
 
 const axiosBaseCfg: AxiosRequestConfig = {
   baseURL: backendBaseURL,
@@ -334,7 +335,7 @@ class AuthorityService {
     } else {
       const cfg = AuthorityService.getJdenticonConfig(authority.type);
       const svg = toSvg(authority.id, 100, cfg);
-      const bytes = new TextEncoder().encode(svg);
+      const bytes = UTF8.encode(svg);
       const url = `data:image/svg+xml;base64,${base64.stringify(bytes)}`;
       return {
         ...authority,
