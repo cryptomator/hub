@@ -1,11 +1,6 @@
-import { use as chaiUse, expect } from 'chai';
-import chaiAsPromised from 'chai-as-promised';
-import { before, describe } from 'mocha';
-import { webcrypto } from 'node:crypto';
 import { base64, base64url } from 'rfc4648';
+import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { UnwrapKeyError, UserKeys, VaultKeys, getJwkThumbprint } from '../../src/common/crypto';
-
-chaiUse(chaiAsPromised);
 
 // key coordinates from MDN examples:
 const alicePublic: JsonWebKey = {
@@ -34,12 +29,7 @@ const bobPrivate: JsonWebKey = {
 describe('crypto', () => {
   let aliceEcdh: CryptoKeyPair, aliceEcdsa: CryptoKeyPair, bobEcdh: CryptoKeyPair;
 
-  before(async () => {
-    // since this test runs on Node, we need to replace window.crypto:
-    Object.defineProperty(global, 'crypto', { value: webcrypto });
-    // @ts-expect-error: incomplete 'window' type
-    global.window = { crypto: global.crypto };
-
+  beforeAll(async () => {
     // prepare some test key pairs:
     const ecdhP384: EcKeyImportParams = { name: 'ECDH', namedCurve: 'P-384' };
     const ecdsaP384: EcKeyImportParams = { name: 'ECDSA', namedCurve: 'P-384' };
@@ -58,7 +48,7 @@ describe('crypto', () => {
     it('create()', async () => {
       const orig = await VaultKeys.create();
 
-      expect(orig).to.be.not.null;
+      expect(orig).not.toBeNull();
     });
 
     it('recover() succeeds for valid key', async () => {
@@ -71,7 +61,7 @@ describe('crypto', () => {
       const recovered = await VaultKeys.recover(recoveryKey);
 
       const newMasterKey = await crypto.subtle.exportKey('jwk', recovered.masterKey);
-      expect(newMasterKey).to.deep.include({
+      expect(newMasterKey).toMatchObject({
         'k': 'uwHiVreDbmv47K7oZzlwZbHcEql2Z29brbgFxKA7i54pXVPoHoxKK5rzZS3VEhPxHegQKCwa5Mk4ep7OsYutAw'
       });
     });
@@ -87,10 +77,10 @@ describe('crypto', () => {
         `);
 
       return Promise.all([
-        expect(noMultipleOfTwo).to.be.rejectedWith(Error, /input needs to be a multiple of two words/),
-        expect(notInDict).to.be.rejectedWith(Error, /Word not in dictionary/),
-        expect(wrongLength).to.be.rejectedWith(Error, /Invalid recovery key length/),
-        expect(invalidCrc).to.be.rejectedWith(Error, /Invalid recovery key checksum/),
+        expect(noMultipleOfTwo).rejects.toThrow(/input needs to be a multiple of two words/),
+        expect(notInDict).rejects.toThrow(/Word not in dictionary/),
+        expect(wrongLength).rejects.toThrow(/Invalid recovery key length/),
+        expect(invalidCrc).rejects.toThrow(/Invalid recovery key checksum/),
       ]);
     });
 
@@ -103,12 +93,12 @@ describe('crypto', () => {
         iterations: 1
       };
 
-      it('decryptWithAdminPassword() with wrong pw', () => {
-        return expect(VaultKeys.decryptWithAdminPassword('wrong', wrapped.wrappedMasterkey, wrapped.wrappedOwnerPrivateKey, wrapped.ownerPublicKey, wrapped.salt, wrapped.iterations)).to.eventually.be.rejectedWith(UnwrapKeyError);
+      it('decryptWithAdminPassword() with wrong pw', async () => {
+        await expect(VaultKeys.decryptWithAdminPassword('wrong', wrapped.wrappedMasterkey, wrapped.wrappedOwnerPrivateKey, wrapped.ownerPublicKey, wrapped.salt, wrapped.iterations)).rejects.toThrow(UnwrapKeyError);
       });
 
-      it('decryptWithAdminPassword() with correct pw', () => {
-        return expect(VaultKeys.decryptWithAdminPassword('pass', wrapped.wrappedMasterkey, wrapped.wrappedOwnerPrivateKey, wrapped.ownerPublicKey, wrapped.salt, wrapped.iterations)).to.eventually.be.fulfilled;
+      it('decryptWithAdminPassword() with correct pw', async () => {
+        await expect(VaultKeys.decryptWithAdminPassword('pass', wrapped.wrappedMasterkey, wrapped.wrappedOwnerPrivateKey, wrapped.ownerPublicKey, wrapped.salt, wrapped.iterations)).resolves.toBeDefined();
       });
     });
 
@@ -123,13 +113,13 @@ describe('crypto', () => {
         const userKey = base64.parse('MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAERxQR+NRN6Wga01370uBBzr2NHDbKIC56tPUEq2HX64RhITGhii8Zzbkb1HnRmdF0aq6uqmUy4jUhuxnKxsv59A6JeK7Unn+mpmm3pQAygjoGc9wrvoH4HWJSQYUlsXDu');
 
         const encrypted = await vaultKeys.encryptForUser(userKey);
-        expect(encrypted).to.be.not.null;
+        expect(encrypted).not.toBeNull();
       });
 
       it('createRecoveryKey()', async () => {
         const recoveryKey = await vaultKeys.createRecoveryKey();
 
-        expect(recoveryKey).to.eql('water water water water water water water water water water water water water water water water water water water water water asset partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly option twist');
+        expect(recoveryKey).toEqual('water water water water water water water water water water water water water water water water water water water water water asset partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly partly option twist');
       });
 
       describe('After creating a valid recovery key', () => {
@@ -144,7 +134,7 @@ describe('crypto', () => {
 
           const oldMasterKey = await crypto.subtle.exportKey('jwk', vaultKeys.masterKey);
           const newMasterKey = await crypto.subtle.exportKey('jwk', recovered.masterKey);
-          expect(newMasterKey).to.deep.include({
+          expect(newMasterKey).toMatchObject({
             'k': oldMasterKey.k
           });
         });
@@ -156,7 +146,7 @@ describe('crypto', () => {
     it('create()', async () => {
       const orig = await UserKeys.create();
 
-      expect(orig).to.be.not.null;
+      expect(orig).not.toBeNull();
     });
 
     it('decrypt with device key', async () => {
@@ -164,7 +154,7 @@ describe('crypto', () => {
 
       const decrypted = await UserKeys.decryptOnBrowser(jwe, bobEcdh.privateKey, aliceEcdh.publicKey, aliceEcdsa.publicKey);
 
-      expect(decrypted).to.be.not.null;
+      expect(decrypted).not.toBeNull();
     });
 
     it('recover() with setup code', async () => {
@@ -172,7 +162,7 @@ describe('crypto', () => {
 
       const recovered = await UserKeys.recover(jwe, 'foo', aliceEcdh.publicKey, aliceEcdsa.publicKey);
 
-      expect(recovered).to.be.not.null;
+      expect(recovered).not.toBeNull();
     });
 
     describe('After creating new key material', () => {
@@ -186,13 +176,13 @@ describe('crypto', () => {
         const deviceKey = bobEcdh;
         const jwe = await userKeys.encryptForDevice(deviceKey.publicKey);
 
-        expect(jwe).to.be.not.null;
+        expect(jwe).not.toBeNull();
       });
 
       it('encryptWithSetupCode() creates JWE', async () => {
         const jwe = await userKeys.encryptWithSetupCode('foo', 1000);
 
-        expect(jwe).to.be.not.null;
+        expect(jwe).not.toBeNull();
       });
     });
   });
@@ -202,25 +192,25 @@ describe('crypto', () => {
     it('alice private key (PKCS8)', async () => {
       const bytes = new Uint8Array(await crypto.subtle.exportKey('pkcs8', aliceEcdh.privateKey));
       const encoded = base64.stringify(bytes);
-      expect(encoded).to.eq('MIG2AgEAMBAGByqGSM49AgEGBSuBBAAiBIGeMIGbAgEBBDDCi4K1Ts3DgTz/ufkLX7EGMHjGpJv+WJmFgyzLwwaDFSfLpDw0Kgf3FKK+LAsV8r+hZANiAARLOtFebIjxVYUmDV09Q1sVxz2Nm+NkR8fu6UojVSRcCW13tEZatx8XGrIY9zC7oBCEdRqDc68PMSvS5RA0Pg9cdBNc/kgMZ1iEmEv5YsqOcaNADDSs0bLlXb35pX7Kx5Y=');
+      expect(encoded).toBe('MIG2AgEAMBAGByqGSM49AgEGBSuBBAAiBIGeMIGbAgEBBDDCi4K1Ts3DgTz/ufkLX7EGMHjGpJv+WJmFgyzLwwaDFSfLpDw0Kgf3FKK+LAsV8r+hZANiAARLOtFebIjxVYUmDV09Q1sVxz2Nm+NkR8fu6UojVSRcCW13tEZatx8XGrIY9zC7oBCEdRqDc68PMSvS5RA0Pg9cdBNc/kgMZ1iEmEv5YsqOcaNADDSs0bLlXb35pX7Kx5Y=');
     });
 
     it('alice public key (SPKI)', async () => {
       const bytes = new Uint8Array(await crypto.subtle.exportKey('spki', aliceEcdh.publicKey));
       const encoded = base64.stringify(bytes);
-      expect(encoded).to.eq('MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAESzrRXmyI8VWFJg1dPUNbFcc9jZvjZEfH7ulKI1UkXAltd7RGWrcfFxqyGPcwu6AQhHUag3OvDzEr0uUQND4PXHQTXP5IDGdYhJhL+WLKjnGjQAw0rNGy5V29+aV+yseW');
+      expect(encoded).toBe('MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAESzrRXmyI8VWFJg1dPUNbFcc9jZvjZEfH7ulKI1UkXAltd7RGWrcfFxqyGPcwu6AQhHUag3OvDzEr0uUQND4PXHQTXP5IDGdYhJhL+WLKjnGjQAw0rNGy5V29+aV+yseW');
     });
 
     it('bob private key (PKCS8)', async () => {
       const bytes = new Uint8Array(await crypto.subtle.exportKey('pkcs8', bobEcdh.privateKey));
       const encoded = base64.stringify(bytes);
-      expect(encoded).to.eq('MIG2AgEAMBAGByqGSM49AgEGBSuBBAAiBIGeMIGbAgEBBDB2bmFCWy2p+EbAn8NWS5Om+GA7c5LHhRZb8g2pSMSf0fsd7k7dZDVrnyHFiLdd/YGhZANiAAR6bsjTEdXKWIuu1Bvj6Y8wySlIROy7YpmVZTY128ItovCD8pcR4PnFljvAIb2MshCdr1alX4g6cgDOqcTeREiObcSfucOU9Ry1pJ/GnX6KA0eSljrk6rxjSDos8aiZ6Mg=');
+      expect(encoded).toBe('MIG2AgEAMBAGByqGSM49AgEGBSuBBAAiBIGeMIGbAgEBBDB2bmFCWy2p+EbAn8NWS5Om+GA7c5LHhRZb8g2pSMSf0fsd7k7dZDVrnyHFiLdd/YGhZANiAAR6bsjTEdXKWIuu1Bvj6Y8wySlIROy7YpmVZTY128ItovCD8pcR4PnFljvAIb2MshCdr1alX4g6cgDOqcTeREiObcSfucOU9Ry1pJ/GnX6KA0eSljrk6rxjSDos8aiZ6Mg=');
     });
 
     it('bob public key (SPKI)', async () => {
       const bytes = new Uint8Array(await crypto.subtle.exportKey('spki', bobEcdh.publicKey));
       const encoded = base64.stringify(bytes);
-      expect(encoded).to.eq('MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAEem7I0xHVyliLrtQb4+mPMMkpSETsu2KZlWU2NdvCLaLwg/KXEeD5xZY7wCG9jLIQna9WpV+IOnIAzqnE3kRIjm3En7nDlPUctaSfxp1+igNHkpY65Oq8Y0g6LPGomejI');
+      expect(encoded).toBe('MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAEem7I0xHVyliLrtQb4+mPMMkpSETsu2KZlWU2NdvCLaLwg/KXEeD5xZY7wCG9jLIQna9WpV+IOnIAzqnE3kRIjm3En7nDlPUctaSfxp1+igNHkpY65Oq8Y0g6LPGomejI');
     });
   });
 
@@ -228,13 +218,13 @@ describe('crypto', () => {
     it('root directory', async () => {
       const vaultKeys = await TestVaultKeys.create();
       const result = await vaultKeys.hashDirectoryId('');
-      expect(result).to.eql('VLWEHT553J5DR7OZLRJAYDIWFCXZABOD');
+      expect(result).toEqual('VLWEHT553J5DR7OZLRJAYDIWFCXZABOD');
     });
 
     it('specific directory', async () => {
       const vaultKeys = await TestVaultKeys.create();
       const result = await vaultKeys.hashDirectoryId('918acfbd-a467-3f77-93f1-f4a44f9cfe9c');
-      expect(result).to.eql('7C3USOO3VU7IVQRKFMRFV3QE4VEZJECV');
+      expect(result).toEqual('7C3USOO3VU7IVQRKFMRFV3QE4VEZJECV');
     });
   });
 
@@ -251,7 +241,7 @@ describe('crypto', () => {
 
       const thumbprint = await getJwkThumbprint(input);
 
-      expect(base64url.stringify(thumbprint, { pad: false })).to.eq('NzbLsXh8uDCcd-6MNwXF4W_7noWXFZAfHkxZsRGC9Xs');
+      expect(base64url.stringify(thumbprint, { pad: false })).toBe('NzbLsXh8uDCcd-6MNwXF4W_7noWXFZAfHkxZsRGC9Xs');
     });
   });
 });
