@@ -87,6 +87,18 @@ export type UserDto = {
   setupCode?: string;
 }
 
+/**
+ * Represents a user who generated key pairs during the setup process.
+ */
+export type ActivatedUser = UserDto & {
+  ecdhPublicKey: string;
+  ecdsaPublicKey: string;
+}
+
+export function didCompleteSetup(user: UserDto): user is ActivatedUser {
+  return user.ecdhPublicKey !== undefined && user.ecdsaPublicKey !== undefined;
+}
+
 export type GroupDto = {
   type: 'GROUP';
   id: string;

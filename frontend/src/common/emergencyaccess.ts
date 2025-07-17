@@ -1,6 +1,8 @@
 import { split, combine } from 'shamir-secret-sharing';
 import { base64 } from 'rfc4648';
 import { JWEBuilder, JWEParser } from './jwe';
+import { ActivatedUser } from './backend';
+import { asPublicKey, UserKeys } from './crypto';
 
 type KeySharePayload = {
     keyShare: string; // base64 encoded share
@@ -21,10 +23,10 @@ export class EmergencyAccess {
    * The shares are encrypted for each recipient using ECDH-ES.
    * @param secret The secret to be split, as a Uint8Array.
    * @param k Minimum number of shares needed to reconstruct the secret.
-   * @param recipients Array of CryptoKey objects representing the recipients.
+   * @param recipients Array of emergency access council members for whom to create key shares.
    * @returns one JWE for each recipient (in the same order as the recipients).
    */
-  public static async split(secret: Uint8Array, k: number, ...recipients: CryptoKey[]): Promise<string[]> {
+  public static async split(secret: Uint8Array, k: number, ...recipients: ActivatedUser[]): Promise<Record<string, string>> {
     const n = recipients.length;
     let shares : Uint8Array[];
     if (k < 1) {
@@ -39,16 +41,18 @@ export class EmergencyAccess {
     } else {
       shares = await split(secret, n, k);
     }
-    const jwes = [];
+    const result: Record<string, string> = {};
     for (let i = 0; i < n; i++) {
       const recipient = recipients[i];
       const payload: KeySharePayload = {
         keyShare: base64.stringify(shares[i])
       };
-      const jwe = await JWEBuilder.ecdhEs(recipient).encrypt(payload);
-      jwes.push(jwe);
+      const keyBytes = base64.parse(recipient.ecdhPublicKey!);
+      const key = await asPublicKey(keyBytes, UserKeys.ECDH_KEY_DESIGNATION);
+      const jwe = await JWEBuilder.ecdhEs(key).encrypt(payload);
+      result[recipient.id] = jwe;
     }
-    return jwes;
+    return result;
   }
 
   /**

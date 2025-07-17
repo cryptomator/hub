@@ -239,9 +239,13 @@ import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, Trans
 import { ExclamationTriangleIcon, TrashIcon, PlusIcon } from '@heroicons/vue/24/outline';
 import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { TrustDto, MemberDto, UserDto, AuthorityDto, VaultDto } from '../../common/backend';
+import backend, { TrustDto, MemberDto, UserDto, AuthorityDto, VaultDto, didCompleteSetup, ActivatedUser } from '../../common/backend';
 import TrustDetails from '../TrustDetails.vue';
 import SearchInputGroup from '../SearchInputGroup.vue';
+import { asPublicKey, UserKeys, VaultKeys } from '../../common/crypto';
+import { wordEncoder } from '../../common/util';
+import { EmergencyAccess, UserWithECDHKey } from '../../common/emergencyaccess';
+import { base64 } from 'rfc4648';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -249,7 +253,8 @@ const open = ref(false);
 const trusts = ref<TrustDto[]>([]);
 
 const props = defineProps<{
-  vault: VaultDto
+  vault: VaultDto,
+  vaultKeys: VaultKeys
 }>();
 
 const emit = defineEmits<{
@@ -263,7 +268,7 @@ defineExpose({
 
 const randomCouncilSelection = ref<UserDto[]>([]);
 
-const emergencyCouncilMembers = ref<AuthorityDto[]>([]);
+const emergencyCouncilMembers = ref<ActivatedUser[]>([]);
 const allowChoosingEmergencyCouncil = ref<boolean>(false);
 const addingCouncilMember = ref(false);
 const onAddCouncilMemberError = ref<Error | null>();
@@ -272,8 +277,8 @@ const userQuery = ref('');
 const searchResults = ref<UserDto[]>([]);
 
 const defaultRequiredEmergencyKeyShares = ref<number>();
-const editableKeyShares = ref<number>();
-const editableEmergencyCouncilMembers = ref<AuthorityDto[]>([]);
+const editableKeyShares = ref<number>(0);
+const editableEmergencyCouncilMembers = ref<ActivatedUser[]>([]);
 
 watch(userQuery, (newQuery) => {
   if (newQuery && newQuery.trim().length > 0) {
@@ -296,15 +301,18 @@ async function searchCouncilAuthority(query: string): Promise<void> {
   const authorities = await backend.authorities.search(query, true);
   searchResults.value = authorities
     .filter(a => a.type === 'USER')
+    .filter(a => didCompleteSetup(a)) // only include users with a public key
     .filter(a => !existingIds.has(a.id))
     .sort((a, b) => a.name.localeCompare(b.name)) as UserDto[];
 }
 
+// TODO: dedup?
 async function searchCouncilAuthorityForInputGroup(query: string): Promise<UserDto[]> {
   const existingIds = new Set(editableEmergencyCouncilMembers.value.map(m => m.id));
   const authorities = await backend.authorities.search(query, true);
   return authorities
     .filter(a => a.type === 'USER')
+    .filter(a => didCompleteSetup(a)) // only include users with a public key
     .filter(a => !existingIds.has(a.id))
     .sort((a, b) => a.name.localeCompare(b.name)) as UserDto[];
 }
@@ -313,7 +321,7 @@ function removeCouncilMember(user: UserDto) {
   editableEmergencyCouncilMembers.value = editableEmergencyCouncilMembers.value.filter(u => u.id !== user.id);
 }
 
-async function addCouncilAuthority(authority: AuthorityDto) {
+async function addCouncilAuthority(authority: ActivatedUser) {
   onAddCouncilMemberError.value = null;
   try {
     editableEmergencyCouncilMembers.value = [...editableEmergencyCouncilMembers.value, authority];
@@ -345,11 +353,11 @@ async function grant() {
   try {
     onAddCouncilMemberError.value = null;
 
-    if (editableKeyShares.value == null || editableKeyShares.value < 2) {
+    if (editableKeyShares.value == null || editableKeyShares.value < 1) {
       throw new Error(t('grantEmergencyAccessDialog.error.invalidKeyShares'));
     }
 
-    if (editableEmergencyCouncilMembers.value.length < 2) {
+    if (editableEmergencyCouncilMembers.value.length < 1) {
       throw new Error(t('grantEmergencyAccessDialog.error.invalidCouncilMemberLengt'));
     }
 
@@ -371,20 +379,16 @@ async function grant() {
       );
     }
 
-    const dummyEmergencyKeyShares = editableEmergencyCouncilMembers.value.reduce<Record<string, string>>(
-      (acc, member) => {
-        acc[member.id] = 'null';
-        return acc;
-      },
-      {}
-    );
+    const recoveryKey = await props.vaultKeys.createRecoveryKey();
+    const recoveryKeyBytes = wordEncoder.decode(recoveryKey); // TODO: skip word encode/decode, once merged with UVF branch
+    const keyShares = await EmergencyAccess.split(recoveryKeyBytes, editableKeyShares.value, ...editableEmergencyCouncilMembers.value);
 
     const updatedVault = await backend.vaults.createOrUpdateVault(
       props.vault.id,
       props.vault.name,
       props.vault.archived,
       editableKeyShares.value,
-      dummyEmergencyKeyShares,
+      keyShares,
       props.vault.description
     );
 
@@ -407,7 +411,9 @@ function closeDialog() {
 async function loadEmergencyCouncilMembers() {
   try {
     const settings = await backend.settings.get();
-    emergencyCouncilMembers.value = await backend.authorities.listSome(settings.emergencyCouncilMemberIds);
+    emergencyCouncilMembers.value = (await backend.authorities.listSome(settings.emergencyCouncilMemberIds)).filter(
+      (a): a is UserDto => a.type === 'USER'
+    );
     allowChoosingEmergencyCouncil.value = settings.allowChoosingEmergencyCouncil;
     defaultRequiredEmergencyKeyShares.value = settings.defaultRequiredEmergencyKeyShares;
   } catch (error) {

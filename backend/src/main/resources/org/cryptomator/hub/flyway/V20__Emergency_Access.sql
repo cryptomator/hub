@@ -16,7 +16,7 @@ CREATE TABLE "emergency_key_shares"
 (
 	"vault_id" UUID NOT NULL,
 	"council_member_id" VARCHAR(255) COLLATE "C" NOT NULL,
-	"emergency_key_share" VARCHAR(255) COLLATE "C" NOT NULL,
+	"emergency_key_share" TEXT NOT NULL,
 	CONSTRAINT "EMERGENCY_KEYS_PK" PRIMARY KEY ("vault_id", "council_member_id"),
 	CONSTRAINT "EMERGENCY_KEYS_FK_VAULT" FOREIGN KEY ("vault_id") REFERENCES "vault" ("id") ON DELETE CASCADE,
 	CONSTRAINT "EMERGENCY_KEYS_FK_USER" FOREIGN KEY ("council_member_id") REFERENCES "user_details" ("id") ON DELETE CASCADE
@@ -38,8 +38,8 @@ CREATE TABLE "recovered_emergency_key_shares"
 (
     "recovery_process_id" UUID NOT NULL,
 	"council_member_id" VARCHAR(255) COLLATE "C" NOT NULL,
-    "process_private_key" VARCHAR(255) NOT NULL,
-    "recovered_key_share" VARCHAR(255),
+    "process_private_key" TEXT NOT NULL,
+    "recovered_key_share" TEXT,
     CONSTRAINT "RECOVERED_EMERGENCY_KEY_SHARES_PK" PRIMARY KEY ("recovery_process_id", "council_member_id"),
     CONSTRAINT "RECOVERED_EMERGENCY_KEY_SHARES_FK_PROCESS" FOREIGN KEY ("recovery_process_id") REFERENCES "emergency_recovery_processes" ("id") ON DELETE CASCADE,
 	CONSTRAINT "RECOVERED_EMERGENCY_KEY_SHARES_FK_USER" FOREIGN KEY ("council_member_id") REFERENCES "user_details" ("id") ON DELETE CASCADE

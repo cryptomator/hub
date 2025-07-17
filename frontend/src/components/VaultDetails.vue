@@ -248,7 +248,7 @@
   <ReactivateVaultDialog v-if="reactivatingVault && vault" ref="reactivateVaultDialog" :vault="vault" @close="reactivatingVault = false" @reactivated="v => { refreshVault(v); refreshLicense();}" />
   <RecoverVaultDialog v-if="recoveringVault && vault" ref="recoverVaultDialog" :vault="vault" @close="recoveringVault = false" @recovered="fetchOwnerData()" />
   <RecoveryApprovDialog v-if="recoveryApprov && vault && me && totalSegments" ref="recoveryApprovDialog" :vault="vault" :me="me" :total-segments="totalSegments" :approved-segments="filledSegments" @updated="refreshVault" @close="recoveryApprov = false" />
-  <GrantEmergencyAccessDialog v-if="grantingEmergencyAccess && vault" ref="grantEmergencyAccessDialog" :vault="vault" @close="grantingEmergencyAccess = false" @updated="v => refreshVault(v)" />
+  <GrantEmergencyAccessDialog v-if="grantingEmergencyAccess && vault && vaultKeys" ref="grantEmergencyAccessDialog" :vault="vault" :vault-keys="vaultKeys" @close="grantingEmergencyAccess = false" @updated="v => refreshVault(v)" />
 </template>
 
 <script setup lang="ts">
