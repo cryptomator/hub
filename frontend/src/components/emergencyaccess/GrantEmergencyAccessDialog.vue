@@ -50,28 +50,28 @@
                           <button 
                             type="button" 
                             class="ml-2 p-1 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-30 disabled:cursor-not-allowed"
-                            :disabled="editableEmergencyCouncilMembers.length == 0"
-                            :title="editableEmergencyCouncilMembers.length > 0 ? 'Reset' : ''"
-                            @click="editableEmergencyCouncilMembers = []"
+                            :disabled="emergencyCouncilMembers.length == 0"
+                            :title="emergencyCouncilMembers.length > 0 ? 'Reset' : ''"
+                            @click="emergencyCouncilMembers = []"
                           >
-                            <TrashIcon v-if="allowChoosingEmergencyCouncil" class="h-4 w-4 text-gray-500 hover:text-gray-700 disabled:text-gray-300" aria-hidden="true" />
+                            <TrashIcon v-if="allowChangingDefaults" class="h-4 w-4 text-gray-500 hover:text-gray-700 disabled:text-gray-300" aria-hidden="true" />
                           </button>
                         </label>
                       </div>
 
                       <!-- Suchfeld -->
                       <SearchInputGroup
-                        v-if="allowChoosingEmergencyCouncil"
+                        v-if="allowChangingDefaults"
                         :action-title="t('common.add')"
-                        :on-search="searchCouncilAuthorityForInputGroup"
-                        @action="addCouncilAuthority"
+                        :on-search="searchCouncilMembers"
+                        @action="addCouncilMember"
                       />
 
                       <!-- Ausgewählte Nutzer als Chips -->
                       <div class="mt-2 min-h-[66px]">
                         <div class="flex flex-wrap gap-2">
                           <span
-                            v-for="user in editableEmergencyCouncilMembers"
+                            v-for="user in emergencyCouncilMembers"
                             :key="user.id"
                             class="inline-flex items-center border border-primary bg-white text-gray-800 text-sm font-medium px-3 py-1 rounded-full shadow-sm"
                           >
@@ -80,7 +80,7 @@
                             <TrustDetails v-if="user.type === 'USER'" :trusted-user="user" :trusts="trusts" @trust-changed="refreshTrusts()"/>
 
                             <button
-                              v-if="user.type === 'USER' && allowChoosingEmergencyCouncil"
+                              v-if="user.type === 'USER' && allowChangingDefaults"
                               type="button"
                               class="ml-2 text-gray-400 hover:text-red-500"
                               :aria-label="t('grantEmergencyAccessDialog.removeUser', { name: user.name })"
@@ -93,16 +93,16 @@
                       </div>
                     </div>
                     <div class="mt-4">
-                      <template v-if="allowChoosingEmergencyCouncil">
+                      <template v-if="allowChangingDefaults">
                         <label for="keyshares" class="block text-sm font-medium text-gray-700">
                           Required Emergeny Key Shares
                         </label>
                         <div class="mt-1">
                           <input
                             id="keyshares"
-                            v-model.number="editableKeyShares"
+                            v-model.number="requiredKeyShares"
                             type="number"
-                            min="2"
+                            min="1"
                             class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
                           />
                         </div>
@@ -118,7 +118,7 @@
                       <label class="block text-sm font-medium text-gray-700 pb-2" >
                         {{ t('grantEmergencyAccessDialog.possibleEmergencyScenario') }}
                       </label>
-                      <template v-if="editableEmergencyCouncilMembers.length != editableKeyShares || randomCouncilSelection.length > 3">
+                      <template v-if="emergencyCouncilMembers.length != requiredKeyShares || randomCouncilSelection.length > 3">
                         <Transition
                           mode="out-in"
                           enter-active-class="transition duration-0 ease-out"
@@ -171,7 +171,7 @@
                             :key="randomCouncilSelection.map(u => u.id).join('-')"
                             class="flex flex-wrap gap-2"
                           >
-                            <template v-for="(user, index) in editableEmergencyCouncilMembers" :key="user.id">
+                            <template v-for="(user, index) in emergencyCouncilMembers" :key="user.id">
                               <span
                                 class="inline-flex items-center border border-indigo-300 bg-indigo-50 text-indigo-800 text-sm font-medium px-2 py-1 rounded-full shadow-sm max-w-[80px]"
                                 :style="{ maxWidth: randomCouncilSelection.length <= 3 ? '120px' : '102px' }"
@@ -191,7 +191,7 @@
                             </template>
 
                             <span
-                              v-if="randomCouncilSelection.length > 3 && editableEmergencyCouncilMembers.length != editableKeyShares"
+                              v-if="randomCouncilSelection.length > 3 && emergencyCouncilMembers.length != requiredKeyShares"
                               class="inline-flex items-center border border-gray-300 bg-gray-100 text-gray-700 text-sm font-medium px-3 py-1 rounded-full shadow-sm"
                             >
                               +{{ randomCouncilSelection.length - 3 }}
@@ -213,7 +213,7 @@
                 <button
                   type="button"
                   class="w-full inline-flex justify-center rounded-md border border-transparent shadow-xs px-4 py-2 bg-primary text-base font-medium text-white hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm"
-                  @click="grant()"
+                  @click="splitRecoveryKey()"
                 >
                   {{ t('common.grant') }}
                 </button>
@@ -242,15 +242,11 @@ import { useI18n } from 'vue-i18n';
 import backend, { TrustDto, MemberDto, UserDto, AuthorityDto, VaultDto, didCompleteSetup, ActivatedUser } from '../../common/backend';
 import TrustDetails from '../TrustDetails.vue';
 import SearchInputGroup from '../SearchInputGroup.vue';
-import { asPublicKey, UserKeys, VaultKeys } from '../../common/crypto';
+import { VaultKeys } from '../../common/crypto';
 import { wordEncoder } from '../../common/util';
-import { EmergencyAccess, UserWithECDHKey } from '../../common/emergencyaccess';
-import { base64 } from 'rfc4648';
+import { EmergencyAccess } from '../../common/emergencyaccess';
 
 const { t } = useI18n({ useScope: 'global' });
-
-const open = ref(false);
-const trusts = ref<TrustDto[]>([]);
 
 const props = defineProps<{
   vault: VaultDto,
@@ -266,79 +262,47 @@ defineExpose({
   show,
 });
 
-const randomCouncilSelection = ref<UserDto[]>([]);
+const open = ref(false);
+const trusts = ref<TrustDto[]>([]);
 
-const emergencyCouncilMembers = ref<ActivatedUser[]>([]);
-const allowChoosingEmergencyCouncil = ref<boolean>(false);
+const defaultEmergencyCouncilMembers = ref<ActivatedUser[]>([]);
+const defaultRequiredEmergencyKeyShares = ref<number>(0);
+const allowChangingDefaults = ref<boolean>(false);
+
 const addingCouncilMember = ref(false);
 const onAddCouncilMemberError = ref<Error | null>();
 
 const userQuery = ref('');
 const searchResults = ref<UserDto[]>([]);
 
-const defaultRequiredEmergencyKeyShares = ref<number>();
-const editableKeyShares = ref<number>(0);
-const editableEmergencyCouncilMembers = ref<ActivatedUser[]>([]);
+const requiredKeyShares = ref<number>(0);
+const emergencyCouncilMembers = ref<ActivatedUser[]>([]);
+const randomCouncilSelection = ref<UserDto[]>([]);
 
-watch(userQuery, (newQuery) => {
-  if (newQuery && newQuery.trim().length > 0) {
-    searchCouncilAuthority(newQuery.trim());
+watch(userQuery, async (newQuery) => {
+  const trimmedQuery = newQuery.trim();
+  if (trimmedQuery.length > 0) {
+    searchResults.value = await searchCouncilMembers(trimmedQuery);
   } else {
     searchResults.value = [];
   }
 });
 
 watch(
-  [editableEmergencyCouncilMembers, editableKeyShares],
+  [emergencyCouncilMembers, requiredKeyShares],
   () => {
     pickRandomCouncilMembers();
   },
   { immediate: true }
 );
 
-async function searchCouncilAuthority(query: string): Promise<void> {
-  const existingIds = new Set(editableEmergencyCouncilMembers.value.map(m => m.id));
-  const authorities = await backend.authorities.search(query, true);
-  searchResults.value = authorities
-    .filter(a => a.type === 'USER')
-    .filter(a => didCompleteSetup(a)) // only include users with a public key
-    .filter(a => !existingIds.has(a.id))
-    .sort((a, b) => a.name.localeCompare(b.name)) as UserDto[];
-}
-
-// TODO: dedup?
-async function searchCouncilAuthorityForInputGroup(query: string): Promise<UserDto[]> {
-  const existingIds = new Set(editableEmergencyCouncilMembers.value.map(m => m.id));
-  const authorities = await backend.authorities.search(query, true);
-  return authorities
-    .filter(a => a.type === 'USER')
-    .filter(a => didCompleteSetup(a)) // only include users with a public key
-    .filter(a => !existingIds.has(a.id))
-    .sort((a, b) => a.name.localeCompare(b.name)) as UserDto[];
-}
-
-function removeCouncilMember(user: UserDto) {
-  editableEmergencyCouncilMembers.value = editableEmergencyCouncilMembers.value.filter(u => u.id !== user.id);
-}
-
-async function addCouncilAuthority(authority: ActivatedUser) {
-  onAddCouncilMemberError.value = null;
-  try {
-    editableEmergencyCouncilMembers.value = [...editableEmergencyCouncilMembers.value, authority];
-    addingCouncilMember.value = false;
-  } catch (error) {
-    console.error('Adding council member failed.', error);
-    onAddCouncilMemberError.value = error instanceof Error ? error : new Error('Unknown Error');
-  }
-}
-
 let randomSelectionInterval: ReturnType<typeof setInterval> | null = null;
 
 async function show() {
   open.value = true;
-  await loadEmergencyCouncilMembers();
-  editableKeyShares.value = defaultRequiredEmergencyKeyShares.value ?? 2;
-  editableEmergencyCouncilMembers.value = [...emergencyCouncilMembers.value];
+  await loadDefaultSettings();
+  requiredKeyShares.value = defaultRequiredEmergencyKeyShares.value;
+  emergencyCouncilMembers.value = [...defaultEmergencyCouncilMembers.value];
   await refreshTrusts();
 
   pickRandomCouncilMembers();
@@ -349,45 +313,70 @@ async function show() {
   }, 2000);
 }
 
-async function grant() {
+async function searchCouncilMembers(query: string): Promise<ActivatedUser[]> {
+  const existingIds = new Set(emergencyCouncilMembers.value.map(m => m.id));
+  const authorities = await backend.authorities.search(query, true);
+  return authorities
+    .filter(a => a.type === 'USER')
+    .filter(a => didCompleteSetup(a)) // only include users with a public key
+    .filter(a => !existingIds.has(a.id))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function removeCouncilMember(user: UserDto) {
+  emergencyCouncilMembers.value = emergencyCouncilMembers.value.filter(u => u.id !== user.id);
+}
+
+async function addCouncilMember(authority: ActivatedUser) {
+  onAddCouncilMemberError.value = null;
+  try {
+    emergencyCouncilMembers.value = [...emergencyCouncilMembers.value, authority];
+    addingCouncilMember.value = false;
+  } catch (error) {
+    console.error('Adding council member failed.', error);
+    onAddCouncilMemberError.value = error instanceof Error ? error : new Error('Unknown Error');
+  }
+}
+
+async function splitRecoveryKey() {
   try {
     onAddCouncilMemberError.value = null;
 
-    if (editableKeyShares.value == null || editableKeyShares.value < 1) {
+    if (requiredKeyShares.value == null || requiredKeyShares.value < 1) {
       throw new Error(t('grantEmergencyAccessDialog.error.invalidKeyShares'));
     }
 
-    if (editableEmergencyCouncilMembers.value.length < 1) {
+    if (emergencyCouncilMembers.value.length < 1) {
       throw new Error(t('grantEmergencyAccessDialog.error.invalidCouncilMemberLengt'));
     }
 
-    if (editableEmergencyCouncilMembers.value.length < editableKeyShares.value) {
+    if (emergencyCouncilMembers.value.length < requiredKeyShares.value) {
       throw new Error(
         t('grantEmergencyAccessDialog.error.notEnoughCouncilMembers', {
-          required: editableKeyShares.value,
-          actual: editableEmergencyCouncilMembers.value.length,
+          required: requiredKeyShares.value,
+          actual: emergencyCouncilMembers.value.length,
         })
       );
     }
 
-    if (editableEmergencyCouncilMembers.value.length < editableKeyShares.value) {
+    if (emergencyCouncilMembers.value.length < requiredKeyShares.value) {
       throw new Error(
         t('grantEmergencyAccessDialog.error.notEnoughCouncilMembers', {
-          required: editableKeyShares.value,
-          actual: editableEmergencyCouncilMembers.value.length,
+          required: requiredKeyShares.value,
+          actual: emergencyCouncilMembers.value.length,
         })
       );
     }
 
     const recoveryKey = await props.vaultKeys.createRecoveryKey();
     const recoveryKeyBytes = wordEncoder.decode(recoveryKey); // TODO: skip word encode/decode, once merged with UVF branch
-    const keyShares = await EmergencyAccess.split(recoveryKeyBytes, editableKeyShares.value, ...editableEmergencyCouncilMembers.value);
+    const keyShares = await EmergencyAccess.split(recoveryKeyBytes, requiredKeyShares.value, ...emergencyCouncilMembers.value);
 
     const updatedVault = await backend.vaults.createOrUpdateVault(
       props.vault.id,
       props.vault.name,
       props.vault.archived,
-      editableKeyShares.value,
+      requiredKeyShares.value,
       keyShares,
       props.vault.description
     );
@@ -408,27 +397,26 @@ function closeDialog() {
   }
 }
 
-async function loadEmergencyCouncilMembers() {
+async function loadDefaultSettings() {
   try {
     const settings = await backend.settings.get();
-    emergencyCouncilMembers.value = (await backend.authorities.listSome(settings.emergencyCouncilMemberIds)).filter(
-      (a): a is UserDto => a.type === 'USER'
-    );
-    allowChoosingEmergencyCouncil.value = settings.allowChoosingEmergencyCouncil;
+    defaultEmergencyCouncilMembers.value = (await backend.authorities.listSome(settings.emergencyCouncilMemberIds))
+      .filter(a => a.type === 'USER')
+      .filter(a => didCompleteSetup(a)); // only include users with a public key
+    allowChangingDefaults.value = settings.allowChoosingEmergencyCouncil;
     defaultRequiredEmergencyKeyShares.value = settings.defaultRequiredEmergencyKeyShares;
   } catch (error) {
     console.error('Loading emergency council members failed:', error);
-    emergencyCouncilMembers.value = [];
-    defaultRequiredEmergencyKeyShares.value = undefined;
-    allowChoosingEmergencyCouncil.value = false;
+    // TODO: don't set defaults, hard-fail with error message instead
+    defaultEmergencyCouncilMembers.value = [];
+    defaultRequiredEmergencyKeyShares.value = 0;
+    allowChangingDefaults.value = false;
   }
 }
 
 function pickRandomCouncilMembers() {
-  const available = editableEmergencyCouncilMembers.value.filter(
-    (m): m is UserDto => m.type === 'USER'
-  );
-  const required = editableKeyShares.value ?? 2;
+  const available = emergencyCouncilMembers.value;
+  const required = requiredKeyShares.value ?? 2;
 
   if (available.length >= required) {
     const shuffled = [...available].sort(() => 0.5 - Math.random());
