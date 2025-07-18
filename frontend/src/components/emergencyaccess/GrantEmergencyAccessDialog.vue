@@ -118,87 +118,63 @@
                       <label class="block text-sm font-medium text-gray-700 pb-2" >
                         {{ t('grantEmergencyAccessDialog.possibleEmergencyScenario') }}
                       </label>
-                      <template v-if="emergencyCouncilMembers.length != requiredKeyShares || randomCouncilSelection.length > 3">
-                        <Transition
-                          mode="out-in"
-                          enter-active-class="transition duration-0 ease-out"
-                          leave-active-class="transition duration-500 ease-in"
-                          enter-from-class="opacity-0 transform translate-y-2 scale-95"
-                          enter-to-class="opacity-100 transform translate-y-0 scale-100"
-                          leave-from-class="opacity-100 transform translate-y-0 scale-100"
-                          leave-to-class="opacity-0 transform -translate-y-2 scale-95"
-                        >
-                          <div
-                            v-if="randomCouncilSelection.length > 0"
-                            :key="randomCouncilSelection.map(u => u.id).join('-')"
-                            class="flex flex-wrap gap-2"
-                          >
-                            <template v-for="(user, index) in randomCouncilSelection.slice(0,3)" :key="user.id">
+                      <div class="relative flex flex-wrap gap-2 min-h-[40px]">
+                        <template v-if="loadingCouncilSelection">
+                          <!-- Loading Spinner -->
+                          <div class="w-full flex py-2">
+                            <svg class="animate-spin h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
+                          </div>
+                        </template>
+                        <template v-else>
+                          <template v-if="isGrantButtonDisabled">
+                            <div class="relative flex flex-wrap gap-2 min-h-[40px]">
                               <span
-                                class="inline-flex items-center border border-indigo-300 bg-indigo-50 text-indigo-800 text-sm font-medium px-2 py-1 rounded-full shadow-sm max-w-[80px]"
-                                :style="{ maxWidth: randomCouncilSelection.length <= 3 ? '120px' : '102px' }"
+                                class="pill inline-flex items-center border border-red-300 bg-red-50 text-red-800 text-sm font-medium px-2 py-1 rounded-full shadow-sm absolute"
                               >
-                                <img :src="user.pictureUrl" class="w-4 h-4 rounded-full mr-1 shrink-0" />
-                                <span class="truncate">
-                                  {{ user.name }}
+                                <span class="truncate">                        
+                                  not possible
                                 </span>
                               </span>
-                              <span
-                                v-if="index < randomCouncilSelection.slice(0,3).length - 1 || (index === randomCouncilSelection.slice(0,3).length - 1 && randomCouncilSelection.length > 3)"
-                                class="inline-flex items-center justify-center text-gray-500 font-medium"
-                                style="line-height: 1; margin: 0 -5px;"
-                              >
-                                +
-                              </span>
-                            </template>
-
-                            <span
-                              v-if="randomCouncilSelection.length > 3"
-                              class="inline-flex items-center border border-gray-300 bg-gray-100 text-gray-700 text-sm font-medium px-3 py-1 rounded-full shadow-sm"
+                            </div>
+                          </template>
+                          <template v-else>
+                            <TransitionGroup
+                              name="pill"
+                              tag="div"
+                              class="relative flex flex-wrap gap-2 min-h-[40px]"
                             >
-                              +{{ randomCouncilSelection.length - 3 }}
-                            </span>
-                          </div>
-                        </Transition>
-                      </template>
-                      <template v-else>
-                        <div
-                          v-if="randomCouncilSelection.length > 0"
-                          class="flex flex-wrap gap-2"
-                        >
-                          <div
-                            v-if="randomCouncilSelection.length > 0"
-                            :key="randomCouncilSelection.map(u => u.id).join('-')"
-                            class="flex flex-wrap gap-2"
-                          >
-                            <template v-for="(user, index) in emergencyCouncilMembers" :key="user.id">
-                              <span
-                                class="inline-flex items-center border border-indigo-300 bg-indigo-50 text-indigo-800 text-sm font-medium px-2 py-1 rounded-full shadow-sm max-w-[80px]"
-                                :style="{ maxWidth: randomCouncilSelection.length <= 3 ? '120px' : '102px' }"
-                              >
-                                <img :src="user.pictureUrl" class="w-4 h-4 rounded-full mr-1 shrink-0" />
-                                <span class="truncate">
-                                  {{ user.name }}
+                              <template v-for="(item, index) in randomCouncilSelectionWithPluses" :key="item.id">
+                                <span
+                                  v-if="item.type === 'user' && index <= 5 "
+                                  class="pill inline-flex items-center border border-indigo-300 bg-indigo-50 text-indigo-800 text-sm font-medium px-2 py-1 rounded-full shadow-sm absolute"
+                                  :style="{ left: `${calcLeft(index)}px`, width: '100px', zIndex: 1 }"
+                                >
+                                  <img :src="item.user!.pictureUrl" class="w-4 h-4 rounded-full mr-1 shrink-0" />
+                                  <span class="truncate">{{ item.user!.name }}</span>
                                 </span>
-                              </span>
-                              <span
-                                v-if="index < randomCouncilSelection.slice(0,3).length - 1 || (index === randomCouncilSelection.slice(0,3).length - 1 && randomCouncilSelection.length > 3)"
-                                class="inline-flex items-center justify-center text-gray-500 font-medium"
-                                style="line-height: 1; margin: 0 -5px;"
-                              >
-                                +
-                              </span>
-                            </template>
 
-                            <span
-                              v-if="randomCouncilSelection.length > 3 && emergencyCouncilMembers.length != requiredKeyShares"
-                              class="inline-flex items-center border border-gray-300 bg-gray-100 text-gray-700 text-sm font-medium px-3 py-1 rounded-full shadow-sm"
-                            >
-                              +{{ randomCouncilSelection.length - 3 }}
-                            </span>
-                          </div>
-                        </div>
-                      </template>
+                                <span
+                                  v-else-if="item.type !== 'user' && index <= 5"
+                                  class="pill inline-flex items-center justify-center text-gray-500 font-medium absolute"
+                                  :style="{ left: `${calcLeft(index)}px`, zIndex: 0 }"
+                                >
+                                  +
+                                </span>
+                              </template>
+                              <span 
+                                v-if="requiredKeyShares > 3"
+                                class="pill inline-flex items-center border border-gray-300 bg-gray-100 text-gray-700 text-sm font-medium px-3 py-1 rounded-full shadow-sm absolute"
+                                :style="{ left: `${calcLeft(3 + 2)}px`, zIndex: 1 }"
+                              >
+                                +{{ requiredKeyShares - 3 }}
+                              </span>
+                            </TransitionGroup>
+                          </template>
+                        </template>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -212,7 +188,8 @@
                 <!-- Grant-Button -->
                 <button
                   type="button"
-                  class="w-full inline-flex justify-center rounded-md border border-transparent shadow-xs px-4 py-2 bg-primary text-base font-medium text-white hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm"
+                  class="w-full inline-flex justify-center rounded-md border border-transparent shadow-xs px-4 py-2 bg-primary text-base font-medium text-white hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed"
+                  :disabled="isGrantButtonDisabled"
                   @click="splitRecoveryKey()"
                 >
                   {{ t('common.grant') }}
@@ -236,10 +213,10 @@
 
 <script setup lang="ts">
 import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
-import { ExclamationTriangleIcon, TrashIcon, PlusIcon } from '@heroicons/vue/24/outline';
-import { ref, watch } from 'vue';
+import { ExclamationTriangleIcon, TrashIcon } from '@heroicons/vue/24/outline';
+import { ref, watch, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { TrustDto, MemberDto, UserDto, AuthorityDto, VaultDto, didCompleteSetup, ActivatedUser } from '../../common/backend';
+import backend, { TrustDto, UserDto, VaultDto, didCompleteSetup, ActivatedUser } from '../../common/backend';
 import TrustDetails from '../TrustDetails.vue';
 import SearchInputGroup from '../SearchInputGroup.vue';
 import { VaultKeys } from '../../common/crypto';
@@ -277,7 +254,48 @@ const searchResults = ref<UserDto[]>([]);
 
 const requiredKeyShares = ref<number>(0);
 const emergencyCouncilMembers = ref<ActivatedUser[]>([]);
+const loadingCouncilSelection = ref(false);
 const randomCouncilSelection = ref<UserDto[]>([]);
+const randomSelectionInterval = ref<ReturnType<typeof setInterval> | null>(null);
+
+const randomCouncilSelectionWithPluses = computed(() => {
+  const items: { type: 'user' | 'plus', user?: UserDto, id: string }[] = [];
+
+  randomCouncilSelection.value.forEach((user, i) => {
+    items.push({ type: 'user', user, id: user.id });
+    if (i < randomCouncilSelection.value.length - 1) {
+      items.push({ type: 'plus', id: `plus-${i}` });
+    }
+  });
+
+  return items;
+});
+
+const PILL_WIDTH = 100;
+const PLUS_WIDTH = 8;
+const GAP = 8;
+
+let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+const isInvalidKeyShares = computed(() => {
+  return requiredKeyShares.value < 1;
+});
+
+const isInvaildCouncilMembers = computed(() => {
+  return emergencyCouncilMembers.value.length < 1;
+});
+
+const hasTooFewCouncilMembers = computed(() => {
+  return emergencyCouncilMembers.value.length < requiredKeyShares.value;
+});
+
+const isEmergencyCouncilMembersRequiredKeySharesNotEqual = computed(() =>
+  emergencyCouncilMembers.value.length !== requiredKeyShares.value
+);
+
+const isGrantButtonDisabled = computed(() => {
+  return isInvalidKeyShares.value || isInvaildCouncilMembers.value || hasTooFewCouncilMembers.value;
+});
 
 watch(userQuery, async (newQuery) => {
   const trimmedQuery = newQuery.trim();
@@ -288,15 +306,31 @@ watch(userQuery, async (newQuery) => {
   }
 });
 
+watch(isEmergencyCouncilMembersRequiredKeySharesNotEqual, (isNotEqual) => {
+  if (isNotEqual) {
+    startRandomCouncilInterval();
+  } else {
+    stopRandomCouncilInterval();
+  }
+});
+
 watch(
   [emergencyCouncilMembers, requiredKeyShares],
   () => {
-    pickRandomCouncilMembers();
+    loadingCouncilSelection.value = true;
+
+    if (timeoutId !== null) {
+      clearTimeout(timeoutId);
+    }
+
+    timeoutId = setTimeout(() => {
+      pickRandomCouncilMembers();
+      loadingCouncilSelection.value = false;
+      timeoutId = null;
+    }, 300);
   },
   { immediate: true }
 );
-
-let randomSelectionInterval: ReturnType<typeof setInterval> | null = null;
 
 async function show() {
   open.value = true;
@@ -306,11 +340,14 @@ async function show() {
   await refreshTrusts();
 
   pickRandomCouncilMembers();
+}
 
-  if (randomSelectionInterval) clearInterval(randomSelectionInterval);
-  randomSelectionInterval = setInterval(() => {
-    pickRandomCouncilMembers();
-  }, 2000);
+function closeDialog() {
+  open.value = false;
+  if (randomSelectionInterval.value) {
+    clearInterval(randomSelectionInterval.value);
+    randomSelectionInterval.value = null;
+  }
 }
 
 async function searchCouncilMembers(query: string): Promise<ActivatedUser[]> {
@@ -323,10 +360,6 @@ async function searchCouncilMembers(query: string): Promise<ActivatedUser[]> {
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
-function removeCouncilMember(user: UserDto) {
-  emergencyCouncilMembers.value = emergencyCouncilMembers.value.filter(u => u.id !== user.id);
-}
-
 async function addCouncilMember(authority: ActivatedUser) {
   onAddCouncilMemberError.value = null;
   try {
@@ -336,6 +369,10 @@ async function addCouncilMember(authority: ActivatedUser) {
     console.error('Adding council member failed.', error);
     onAddCouncilMemberError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
+}
+
+function removeCouncilMember(user: ActivatedUser) {
+  emergencyCouncilMembers.value = emergencyCouncilMembers.value.filter(u => u.id !== user.id);
 }
 
 async function splitRecoveryKey() {
@@ -389,14 +426,6 @@ async function splitRecoveryKey() {
   }
 }
 
-function closeDialog() {
-  open.value = false;
-  if (randomSelectionInterval) {
-    clearInterval(randomSelectionInterval);
-    randomSelectionInterval = null;
-  }
-}
-
 async function loadDefaultSettings() {
   try {
     const settings = await backend.settings.get();
@@ -418,15 +447,94 @@ function pickRandomCouncilMembers() {
   const available = emergencyCouncilMembers.value;
   const required = requiredKeyShares.value ?? 2;
 
-  if (available.length >= required) {
+  if (available.length < required) {
+    randomCouncilSelection.value = [];
+    return;
+  }
+
+  if (randomCouncilSelection.value.length !== required) {
     const shuffled = [...available].sort(() => 0.5 - Math.random());
     randomCouncilSelection.value = shuffled.slice(0, required);
-  } else {
-    randomCouncilSelection.value = [];
+    return;
   }
+
+  const maxPills = (requiredKeyShares.value < 3) ? requiredKeyShares.value : 3 ; 
+  const current = randomCouncilSelection.value;
+  const currentIds = new Set(current.map(u => u.id));
+
+  const candidates = available.filter(u => !currentIds.has(u.id));
+  if (candidates.length === 0) return;
+
+  const newUser = candidates[Math.floor(Math.random() * candidates.length)];
+  const replaceIndex = Math.floor(Math.random() * maxPills);
+
+  randomCouncilSelection.value = [
+    ...current.slice(0, replaceIndex),
+    newUser,
+    ...current.slice(replaceIndex + 1)
+  ];
+}
+
+function startRandomCouncilInterval() {
+  stopRandomCouncilInterval();
+  randomSelectionInterval.value = setInterval(() => {
+    pickRandomCouncilMembers();
+  }, 2000);
+}
+
+function stopRandomCouncilInterval() {
+  if (randomSelectionInterval.value) {
+    clearInterval(randomSelectionInterval.value);
+    randomSelectionInterval.value = null;
+  }
+}
+
+function calcLeft(index: number): number {
+  let x = 0;
+
+  for (let i = 0; i < index; i++) {
+    const el = randomCouncilSelectionWithPluses.value[i];
+    if (el.type === 'user') {
+      x += PILL_WIDTH + GAP;
+    } else {
+      x += PLUS_WIDTH + GAP;
+    }
+  }
+
+  return x;
 }
 
 async function refreshTrusts() {
   trusts.value = await backend.trust.listTrusted();
 }
 </script>
+
+<style scoped>
+.pill-enter-active,
+.pill-leave-active {
+  transition: all 0.5s ease;
+}
+
+.pill-enter-from {
+  opacity: 0;
+  transform: translateY(-10px) scale(1.05);
+  filter: blur(2px);
+}
+.pill-enter-to {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: blur(0);
+}
+
+.pill-leave-from {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: blur(0);
+}
+.pill-leave-to {
+  opacity: 0;
+  transform: translateY(15px) scale(0.95);
+  filter: blur(2px);
+}
+
+</style>
