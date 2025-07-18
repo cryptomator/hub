@@ -58,39 +58,13 @@
                           </button>
                         </label>
                       </div>
-
-                      <!-- Suchfeld -->
-                      <SearchInputGroup
-                        v-if="allowChangingDefaults"
-                        :action-title="t('common.add')"
+                      <MultiUserSelectInputGroup
+                        :selected-users="emergencyCouncilMembers"
                         :on-search="searchCouncilMembers"
+                        :input-visible="allowChangingDefaults"
                         @action="addCouncilMember"
+                        @remove="removeCouncilMember"
                       />
-
-                      <!-- Ausgewählte Nutzer als Chips -->
-                      <div class="mt-2 min-h-[66px]">
-                        <div class="flex flex-wrap gap-2">
-                          <span
-                            v-for="user in emergencyCouncilMembers"
-                            :key="user.id"
-                            class="inline-flex items-center border border-primary bg-white text-gray-800 text-sm font-medium px-3 py-1 rounded-full shadow-sm"
-                          >
-                            <img :src="user.pictureUrl" class="w-4 h-4 rounded-full mr-2" />
-                            {{ user.name }}
-                            <TrustDetails v-if="user.type === 'USER'" :trusted-user="user" :trusts="trusts" @trust-changed="refreshTrusts()"/>
-
-                            <button
-                              v-if="user.type === 'USER' && allowChangingDefaults"
-                              type="button"
-                              class="ml-2 text-gray-400 hover:text-red-500"
-                              :aria-label="t('grantEmergencyAccessDialog.removeUser', { name: user.name })"
-                              @click="removeCouncilMember(user)"
-                            >
-                              &times;
-                            </button>
-                          </span>
-                        </div>
-                      </div>
                     </div>
                     <div class="mt-4">
                       <template v-if="allowChangingDefaults">
@@ -217,11 +191,10 @@ import { ExclamationTriangleIcon, TrashIcon } from '@heroicons/vue/24/outline';
 import { ref, watch, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { TrustDto, UserDto, VaultDto, didCompleteSetup, ActivatedUser } from '../../common/backend';
-import TrustDetails from '../TrustDetails.vue';
-import SearchInputGroup from '../SearchInputGroup.vue';
 import { VaultKeys } from '../../common/crypto';
 import { wordEncoder } from '../../common/util';
 import { EmergencyAccess } from '../../common/emergencyaccess';
+import MultiUserSelectInputGroup from '../MultiUserSelectInputGroup.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 
