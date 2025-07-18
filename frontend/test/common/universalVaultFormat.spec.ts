@@ -1,14 +1,9 @@
-import { use as chaiUse, expect } from 'chai';
-import chaiAsPromised from 'chai-as-promised';
-import { before, describe } from 'mocha';
-import { webcrypto } from 'node:crypto';
 import { base64, base64url } from 'rfc4648';
+import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { VaultDto } from '../../src/common/backend';
 import { UserKeys } from '../../src/common/crypto';
 import { JsonJWE } from '../../src/common/jwe';
 import { MemberKey, RecoveryKey, UniversalVaultFormat, VaultMetadata } from '../../src/common/universalVaultFormat';
-
-chaiUse(chaiAsPromised);
 
 // key coordinates from MDN examples:
 const alicePublic: JsonWebKey = {
@@ -25,12 +20,7 @@ const alicePrivate: JsonWebKey = {
 describe('UVF', () => {
   let alice: UserKeys;
 
-  before(async () => {
-    // since this test runs on Node, we need to replace window.crypto:
-    Object.defineProperty(global, 'crypto', { value: webcrypto });
-    // @ts-expect-error: incomplete 'window' type
-    global.window = { crypto: global.crypto };
-
+  beforeAll(async () => {
     // prepare some test key pairs:
     const ecdhP384: EcKeyImportParams = { name: 'ECDH', namedCurve: 'P-384' };
     const ecdsaP384: EcKeyImportParams = { name: 'ECDSA', namedCurve: 'P-384' };
@@ -59,7 +49,7 @@ describe('UVF', () => {
       const decrypted = await MemberKey.load(payload.key);
 
       expect(decrypted).to.be.not.null;
-      return expect(decrypted.serializeKey()).to.eventually.eq('VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU=');
+      await expect(decrypted.serializeKey()).resolves.toBe('VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU=');
     });
   });
 
@@ -124,9 +114,9 @@ describe('UVF', () => {
 
       const recoveryKey = await RecoveryKey.recover(serialized);
 
-      return Promise.all([
-        expect(recoveryKey.serializePublicKey()).to.eventually.eq('{"kid":"org.cryptomator.hub.recoverykey.T-LR82IaI1_TGHwcyn1u8vAYakGPz4upg1lPnE0xBZQ","kty":"EC","crv":"P-384","x":"SzrRXmyI8VWFJg1dPUNbFcc9jZvjZEfH7ulKI1UkXAltd7RGWrcfFxqyGPcwu6AQ","y":"hHUag3OvDzEr0uUQND4PXHQTXP5IDGdYhJhL-WLKjnGjQAw0rNGy5V29-aV-yseW"}'),
-        expect(recoveryKey.serializePrivateKey()).to.eventually.eq('MIG2AgEAMBAGByqGSM49AgEGBSuBBAAiBIGeMIGbAgEBBDDCi4K1Ts3DgTz/ufkLX7EGMHjGpJv+WJmFgyzLwwaDFSfLpDw0Kgf3FKK+LAsV8r+hZANiAARLOtFebIjxVYUmDV09Q1sVxz2Nm+NkR8fu6UojVSRcCW13tEZatx8XGrIY9zC7oBCEdRqDc68PMSvS5RA0Pg9cdBNc/kgMZ1iEmEv5YsqOcaNADDSs0bLlXb35pX7Kx5Y=')
+      await Promise.all([
+        expect(recoveryKey.serializePublicKey()).resolves.toBe('{"kid":"org.cryptomator.hub.recoverykey.T-LR82IaI1_TGHwcyn1u8vAYakGPz4upg1lPnE0xBZQ","kty":"EC","crv":"P-384","x":"SzrRXmyI8VWFJg1dPUNbFcc9jZvjZEfH7ulKI1UkXAltd7RGWrcfFxqyGPcwu6AQ","y":"hHUag3OvDzEr0uUQND4PXHQTXP5IDGdYhJhL-WLKjnGjQAw0rNGy5V29-aV-yseW"}'),
+        expect(recoveryKey.serializePrivateKey()).resolves.toBe('MIG2AgEAMBAGByqGSM49AgEGBSuBBAAiBIGeMIGbAgEBBDDCi4K1Ts3DgTz/ufkLX7EGMHjGpJv+WJmFgyzLwwaDFSfLpDw0Kgf3FKK+LAsV8r+hZANiAARLOtFebIjxVYUmDV09Q1sVxz2Nm+NkR8fu6UojVSRcCW13tEZatx8XGrIY9zC7oBCEdRqDc68PMSvS5RA0Pg9cdBNc/kgMZ1iEmEv5YsqOcaNADDSs0bLlXb35pX7Kx5Y=')
       ]);
     });
 
@@ -141,10 +131,10 @@ describe('UVF', () => {
       lesson recommend dual revenge thorough bus count broadband living riot prejudice target blonde excess company thereby tribe
       respond horror mere way proud shopping wise liver mortgage plastic gentleman eighteen terms worry melt`);
 
-      return Promise.all([
-        expect(notInDict).to.be.rejectedWith(Error, /Word not in dictionary/),
-        expect(invalidPadding).to.be.rejectedWith(Error, /Invalid padding/),
-        expect(invalidCrc).to.be.rejectedWith(Error, /Invalid recovery key checksum/),
+      await Promise.all([
+        expect(notInDict).rejects.toThrow(/Word not in dictionary/),
+        expect(invalidPadding).rejects.toThrow(/Invalid padding/),
+        expect(invalidCrc).rejects.toThrow(/Invalid recovery key checksum/),
       ]);
     });
 
@@ -230,7 +220,7 @@ describe('UVF', () => {
     describe('instance methods', () => {
       let uvf: UniversalVaultFormat;
 
-      before(async () => {
+      beforeAll(async () => {
         const json = `{
             "fileFormat": "AES-256-GCM-32k",
             "nameFormat": "AES-SIV-512-B64URL",

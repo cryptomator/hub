@@ -90,6 +90,7 @@
   </div>
 
   <div v-else-if="state == State.EnterVaultDetails">
+    <BreadcrumbNav :crumbs="[ { label: t('vaultList.title'), to: '/app/vaults' }, { label: t('createVault.enterVaultDetails.title') } ]"/>
     <form ref="form" class="space-y-6" novalidate @submit.prevent="validateVaultDetails()">
       <div class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6">
         <div class="md:grid md:grid-cols-3 md:gap-6">
@@ -147,6 +148,7 @@
   </div>
 
   <div v-else-if="state == State.ShowRecoveryKey">
+    <BreadcrumbNav :crumbs="[ { label: t('vaultList.title'), to: '/app/vaults' }, { label: t('createVault.enterVaultDetails.title') } ]"/>
     <form @submit.prevent="createVault()">
       <div class="flex justify-center">
         <div class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6 text-center sm:w-full sm:max-w-lg">
@@ -220,6 +222,7 @@
   </div>
 
   <div v-else-if="state == State.Finished">
+    <BreadcrumbNav :crumbs="[ { label: t('vaultList.title'), to: '/app/vaults' }, { label: t('createVault.enterVaultDetails.title') } ]"/>
     <div class="flex justify-center">
       <div class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6 text-center sm:w-full sm:max-w-lg">
         <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-emerald-100">

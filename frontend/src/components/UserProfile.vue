@@ -92,7 +92,7 @@ const onFetchError = ref<Error | null>();
 const browserLocale = ref<string>(navigator.language);
 
 onMounted(async () => {
-  const cfg = await config;
+  const cfg = config.get();
   keycloakUserAccountURL.value = `${cfg.keycloakUrl}/realms/${cfg.keycloakRealm}/account`;
   await fetchData();
 });

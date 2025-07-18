@@ -4,7 +4,7 @@ import { base32, base64, base64url } from 'rfc4648';
 import { VaultDto } from './backend';
 import config, { absFrontendBaseURL } from './config';
 import { AccessTokenProducing, GCM_NONCE_LEN, OtherVaultMember, UnwrapKeyError, UserKeys, VaultTemplateProducing } from './crypto';
-import { CRC32, wordEncoder } from './util';
+import { CRC32, UTF8, wordEncoder } from './util';
 
 interface VaultConfigPayload {
   jti: string
@@ -23,7 +23,6 @@ interface VaultConfigHeaderHub {
   // deprecated:
   devicesResourceUrl: string
 }
-
 
 export class VaultFormat8 implements AccessTokenProducing, VaultTemplateProducing {
   // in this browser application, this 512 bit key is used
@@ -54,7 +53,6 @@ export class VaultFormat8 implements AccessTokenProducing, VaultTemplateProducin
     );
     return new VaultFormat8(await key);
   }
-
 
   /**
    * Decrypts the vault's masterkey using the user's private key
@@ -88,7 +86,7 @@ export class VaultFormat8 implements AccessTokenProducing, VaultTemplateProducin
    */
   public static async decryptWithAdminPassword(vaultAdminPassword: string, wrappedMasterkey: string, wrappedOwnerPrivateKey: string, ownerPublicKey: string, salt: string, iterations: number): Promise<[VaultFormat8, CryptoKeyPair]> {
     // pbkdf2:
-    const encodedPw = new TextEncoder().encode(vaultAdminPassword);
+    const encodedPw = UTF8.encode(vaultAdminPassword);
     const pwKey = crypto.subtle.importKey('raw', encodedPw, 'PBKDF2', false, ['deriveKey']);
     const kek = crypto.subtle.deriveKey(
       {
@@ -107,7 +105,7 @@ export class VaultFormat8 implements AccessTokenProducing, VaultTemplateProducin
     const decodedPrivateKey = base64.parse(wrappedOwnerPrivateKey, { loose: true });
     const decodedPublicKey = base64.parse(ownerPublicKey, { loose: true });
     try {
-      const masterkey = crypto.subtle.unwrapKey(
+      const masterkey = await crypto.subtle.unwrapKey(
         'raw',
         decodedMasterKey.slice(GCM_NONCE_LEN),
         await kek,
@@ -116,7 +114,7 @@ export class VaultFormat8 implements AccessTokenProducing, VaultTemplateProducin
         true,
         ['sign']
       );
-      const privKey = crypto.subtle.unwrapKey(
+      const privKey = await crypto.subtle.unwrapKey(
         'pkcs8',
         decodedPrivateKey.slice(GCM_NONCE_LEN),
         await kek,
@@ -125,14 +123,14 @@ export class VaultFormat8 implements AccessTokenProducing, VaultTemplateProducin
         false,
         ['sign']
       );
-      const pubKey = crypto.subtle.importKey(
+      const pubKey = await crypto.subtle.importKey(
         'spki',
         decodedPublicKey,
         { name: 'ECDSA', namedCurve: 'P-384' },
         true,
         ['verify']
       );
-      return [new VaultFormat8(await masterkey), { privateKey: await privKey, publicKey: await pubKey }];
+      return [new VaultFormat8(masterkey), { privateKey: privKey, publicKey: pubKey }];
     } catch (error) {
       throw new UnwrapKeyError(error);
     }
@@ -151,8 +149,8 @@ export class VaultFormat8 implements AccessTokenProducing, VaultTemplateProducin
     const sigSeparatorIndex = vaultMetadataToken.lastIndexOf('.');
     const headerPlusPayload = vaultMetadataToken.slice(0, sigSeparatorIndex);
     const signature = vaultMetadataToken.slice(sigSeparatorIndex + 1, vaultMetadataToken.length);
-    const message = new TextEncoder().encode(headerPlusPayload);
-    var digest = await crypto.subtle.sign(
+    const message = UTF8.encode(headerPlusPayload);
+    const digest = await crypto.subtle.sign(
       VaultFormat8.MASTERKEY_KEY_DESIGNATION,
       vault.masterKey,
       message
@@ -203,7 +201,7 @@ export class VaultFormat8 implements AccessTokenProducing, VaultTemplateProducin
 
   /** @inheritdoc */
   public async exportTemplate(apiURL: string, vault: VaultDto): Promise<Blob> {
-    const cfg = await config;
+    const cfg = config.get();
 
     const kid = `hub+${apiURL}vaults/${vault.id}`;
 
@@ -241,9 +239,8 @@ export class VaultFormat8 implements AccessTokenProducing, VaultTemplateProducin
       hub: hubConfig
     });
     const payloadJson = JSON.stringify(payload);
-    const encoder = new TextEncoder();
-    const unsignedToken = base64url.stringify(encoder.encode(header), { pad: false }) + '.' + base64url.stringify(encoder.encode(payloadJson), { pad: false });
-    const encodedUnsignedToken = new TextEncoder().encode(unsignedToken);
+    const unsignedToken = base64url.stringify(UTF8.encode(header), { pad: false }) + '.' + base64url.stringify(UTF8.encode(payloadJson), { pad: false });
+    const encodedUnsignedToken = UTF8.encode(unsignedToken);
     const signature = await crypto.subtle.sign(
       'HMAC',
       this.masterKey,
@@ -254,7 +251,7 @@ export class VaultFormat8 implements AccessTokenProducing, VaultTemplateProducin
 
   // visible for testing
   public async hashDirectoryId(cleartextDirectoryId: string): Promise<string> {
-    const dirHash = new TextEncoder().encode(cleartextDirectoryId);
+    const dirHash = UTF8.encode(cleartextDirectoryId);
     const rawkey = new Uint8Array(await crypto.subtle.exportKey('raw', this.masterKey));
     try {
       // miscreant lib requires mac key first and then the enc key
@@ -304,7 +301,6 @@ export class VaultFormat8 implements AccessTokenProducing, VaultTemplateProducin
     return wordEncoder.encodePadded(combined);
   }
 }
-
 
 export class DecodeVf8RecoveryKeyError extends Error {
   constructor(message: string) {

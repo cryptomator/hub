@@ -1,7 +1,7 @@
 import { base16, base64, base64url } from 'rfc4648';
 import { VaultDto } from './backend';
 import { JWE, Recipient } from './jwe';
-import { DB } from './util';
+import { DB, UTF8 } from './util';
 
 /**
  * Represents a JSON Web Key (JWK) as defined in RFC 7517.
@@ -65,7 +65,6 @@ export interface VaultTemplateProducing {
  * Represents a vault member by their public key.
  */
 export class OtherVaultMember {
-
   protected constructor(readonly publicKey: Promise<CryptoKey>) { }
 
   /**
@@ -87,7 +86,6 @@ export class OtherVaultMember {
     const jwe = await JWE.build(payload).encrypt(Recipient.ecdhEs('org.cryptomator.hub.userkey', await this.publicKey));
     return jwe.compactSerialization();
   }
-
 }
 
 /**
@@ -350,6 +348,6 @@ export async function getJwkThumbprint(key: JsonWebKey | CryptoKey): Promise<Uin
       break;
     default: throw new Error('Unsupported key type');
   }
-  const bytes = new TextEncoder().encode(orderedJson);
+  const bytes = UTF8.encode(orderedJson);
   return new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
 }

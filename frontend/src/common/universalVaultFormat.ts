@@ -3,7 +3,7 @@ import { base32, base64, base64url } from 'rfc4648';
 import { VaultDto } from './backend';
 import { AccessTokenPayload, AccessTokenProducing, JsonWebKeySet, OtherVaultMember, UserKeys, VaultTemplateProducing, getJwkThumbprintStr } from './crypto';
 import { JWE, JWEHeader, JsonJWE, Recipient } from './jwe';
-import { CRC32, wordEncoder } from './util';
+import { CRC32, UTF8, wordEncoder } from './util';
 
 type MetadataPayload = {
   fileFormat: 'AES-256-GCM-32k';
@@ -430,16 +430,14 @@ export class UniversalVaultFormat implements AccessTokenProducing, VaultTemplate
   }
 
   public async computeRootDirId(): Promise<Uint8Array> {
-    const textencoder = new TextEncoder();
     const initialSeed = await crypto.subtle.importKey('raw', this.metadata.initialSeed, { name: 'HKDF' }, false, ['deriveBits']);
-    const rootDirId = await crypto.subtle.deriveBits({ name: 'HKDF', hash: 'SHA-512', salt: this.metadata.kdfSalt, info: textencoder.encode('rootDirId') }, initialSeed, 256);
+    const rootDirId = await crypto.subtle.deriveBits({ name: 'HKDF', hash: 'SHA-512', salt: this.metadata.kdfSalt, info: UTF8.encode('rootDirId') }, initialSeed, 256);
     return new Uint8Array(rootDirId);
   }
 
   public async computeRootDirIdHash(rootDirId: Uint8Array): Promise<string> {
-    const textencoder = new TextEncoder();
     const initialSeed = await crypto.subtle.importKey('raw', this.metadata.initialSeed, { name: 'HKDF' }, false, ['deriveKey']);
-    const hmacKey = await crypto.subtle.deriveKey({ name: 'HKDF', hash: 'SHA-512', salt: this.metadata.kdfSalt, info: textencoder.encode('hmac') }, initialSeed, { name: 'HMAC', hash: 'SHA-256', length: 512 }, false, ['sign']);
+    const hmacKey = await crypto.subtle.deriveKey({ name: 'HKDF', hash: 'SHA-512', salt: this.metadata.kdfSalt, info: UTF8.encode('hmac') }, initialSeed, { name: 'HMAC', hash: 'SHA-256', length: 512 }, false, ['sign']);
     const rootDirHash = await crypto.subtle.sign('HMAC', hmacKey, rootDirId);
     return base32.stringify(new Uint8Array(rootDirHash).slice(0, 20));
   }
@@ -452,7 +450,6 @@ export class UniversalVaultFormat implements AccessTokenProducing, VaultTemplate
     if (content.length > 32 * 1024) {
       throw new Error('Only files up to 32k are supported.');
     }
-    const textencoder = new TextEncoder();
     const fileKey = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt']);
 
     // general header:
@@ -463,7 +460,7 @@ export class UniversalVaultFormat implements AccessTokenProducing, VaultTemplate
 
     // format-specific header:
     const initialSeed = await crypto.subtle.importKey('raw', this.metadata.initialSeed, { name: 'HKDF' }, false, ['deriveKey']);
-    const headerKey = await crypto.subtle.deriveKey({ name: 'HKDF', hash: 'SHA-512', salt: this.metadata.kdfSalt, info: textencoder.encode('fileHeader') }, initialSeed, { name: 'AES-GCM', length: 256 }, false, ['wrapKey']);
+    const headerKey = await crypto.subtle.deriveKey({ name: 'HKDF', hash: 'SHA-512', salt: this.metadata.kdfSalt, info: UTF8.encode('fileHeader') }, initialSeed, { name: 'AES-GCM', length: 256 }, false, ['wrapKey']);
     const headerNonce = new Uint8Array(12);
     crypto.getRandomValues(headerNonce);
     const encryptedFileKeyAndTag = await crypto.subtle.wrapKey('raw', fileKey, headerKey, { name: 'AES-GCM', iv: headerNonce, additionalData: generalHeader });

@@ -1,5 +1,6 @@
 import { base64url } from 'rfc4648';
 import { UnwrapKeyError } from './crypto';
+import { UTF8 } from './util';
 
 // visible for testing
 export class ConcatKDF {
@@ -308,14 +309,13 @@ export class JWE {
       }
     }
 
-    const utf8enc = new TextEncoder();
-    const encodedProtectedHeader = base64url.stringify(utf8enc.encode(JSON.stringify(protectedHeader)), { pad: false });
-    const m = utf8enc.encode(JSON.stringify(this.payload));
+    const encodedProtectedHeader = base64url.stringify(UTF8.encode(JSON.stringify(protectedHeader)), { pad: false });
+    const m = UTF8.encode(JSON.stringify(this.payload));
     const ciphertextAndTag = new Uint8Array(await crypto.subtle.encrypt(
       {
         name: 'AES-GCM',
         iv: iv,
-        additionalData: utf8enc.encode(encodedProtectedHeader),
+        additionalData: UTF8.encode(encodedProtectedHeader),
         tagLength: 128
       },
       cek,
@@ -365,9 +365,7 @@ export class EncryptedJWE {
   }
 
   public async decrypt(recipient: Recipient): Promise<any> {
-    const utf8dec = new TextDecoder();
-    const utf8enc = new TextEncoder();
-    const protectedHeader: JWEHeader = JSON.parse(utf8dec.decode(base64url.parse(this.protectedHeader, { loose: true })));
+    const protectedHeader: JWEHeader = JSON.parse(UTF8.decode(base64url.parse(this.protectedHeader, { loose: true })));
     const perRecipientData = (this.perRecipient.length === 1)
       ? this.perRecipient[0]
       : this.perRecipientWithKid(recipient.kid);
@@ -380,13 +378,13 @@ export class EncryptedJWE {
       {
         name: 'AES-GCM',
         iv: base64url.parse(this.iv, { loose: true }),
-        additionalData: utf8enc.encode(this.protectedHeader),
+        additionalData: UTF8.encode(this.protectedHeader),
         tagLength: 128
       },
       cek,
       ciphertextAndTag
     ));
-    return JSON.parse(utf8dec.decode(cleartext));
+    return JSON.parse(UTF8.decode(cleartext));
   }
 
   private perRecipientWithKid(kid: string): PerRecipientProperties {
@@ -408,7 +406,10 @@ export class ECDH_ES {
     let agreedKey = new Uint8Array();
     try {
       const algOrEnc = header.alg === 'ECDH-ES' ? header.enc : header.alg; // see definition of AlgorithmID in RFC 7518, Section 4.6.2
-      const algorithmId = ECDH_ES.lengthPrefixed(new TextEncoder().encode(algOrEnc));
+      if (!algOrEnc) {
+        throw new Error('Missing alg or enc header parameter');
+      }
+      const algorithmId = ECDH_ES.lengthPrefixed(UTF8.encode(algOrEnc));
       const partyUInfo = ECDH_ES.lengthPrefixed(base64url.parse(header.apu ?? '', { loose: true }));
       const partyVInfo = ECDH_ES.lengthPrefixed(base64url.parse(header.apv ?? '', { loose: true }));
       const suppPubInfo = new ArrayBuffer(4);
@@ -471,8 +472,7 @@ export class PBES2 {
     } else {
       throw new Error('only PBES2-HS512+A256KW and PBES2-HS256+A128KW supported');
     }
-    const utf8enc = new TextEncoder();
-    const encodedPw = utf8enc.encode(password);
+    const encodedPw = UTF8.encode(password);
     const pwKey = crypto.subtle.importKey(
       'raw',
       encodedPw,
@@ -484,7 +484,7 @@ export class PBES2 {
       {
         name: 'PBKDF2',
         hash: hash,
-        salt: new Uint8Array([...utf8enc.encode(alg), ...PBES2.NULL_BYTE, ...salt]), // see https://www.rfc-editor.org/rfc/rfc7518#section-4.8.1.1
+        salt: new Uint8Array([...UTF8.encode(alg), ...PBES2.NULL_BYTE, ...salt]), // see https://www.rfc-editor.org/rfc/rfc7518#section-4.8.1.1
         iterations: iterations
       },
       await pwKey,

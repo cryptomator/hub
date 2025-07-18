@@ -52,7 +52,7 @@ class Auth {
 
 // this is a lazy singleton:
 const instance: Promise<Auth> = (async () => {
-  return await Auth.build(await config);
+  return await Auth.build(config.get());
 })();
 
 export default instance;

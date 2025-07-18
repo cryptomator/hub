@@ -213,7 +213,7 @@
               </div>
               <p class="mt-2 text-sm text-gray-500">
                 {{ t('admin.webOfTrust.wotMaxDepth.description') }}
-                <a href="https://docs.cryptomator.org/en/latest/security/hub/#web-of-trust" target="_blank" class="inline-flex items-center text-primary underline hover:text-primary-darker">
+                <a href="https://docs.cryptomator.org/hub/admin/#web-of-trust" target="_blank" class="inline-flex items-center text-primary underline hover:text-primary-darker">
                   {{ t('admin.webOfTrust.information') }}
                   <ArrowRightIcon class="ml-1 h-4 w-4" aria-hidden="true" />
                 </a>
@@ -235,7 +235,7 @@
               </div>
               <p class="mt-2 text-sm text-gray-500">
                 {{ t('admin.webOfTrust.wotIdVerifyLen.description') }}
-                <a href="https://docs.cryptomator.org/en/latest/security/hub/#web-of-trust" target="_blank" class="inline-flex items-center text-primary underline hover:text-primary-darker">
+                <a href="https://docs.cryptomator.org/hub/admin/#web-of-trust" target="_blank" class="inline-flex items-center text-primary underline hover:text-primary-darker">
                   {{ t('admin.webOfTrust.information') }}
                   <ArrowRightIcon class="ml-1 h-4 w-4" aria-hidden="true" />
                 </a>
@@ -329,7 +329,7 @@ const numberOfExceededSeats = computed(() => {
 });
 
 onMounted(async () => {
-  const cfg = await config;
+  const cfg = config.get();
   keycloakAdminRealmURL.value = `${cfg.keycloakUrl}/admin/${cfg.keycloakRealm}/console`;
   if (props.token) {
     await setToken(props.token);

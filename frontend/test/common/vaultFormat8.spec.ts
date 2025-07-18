@@ -1,11 +1,18 @@
-import { use as chaiUse, expect } from 'chai';
-import chaiAsPromised from 'chai-as-promised';
-import { before, describe } from 'mocha';
-import { webcrypto } from 'node:crypto';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { UnwrapKeyError, UserKeys } from '../../src/common/crypto';
 import { VaultFormat8 } from '../../src/common/vaultFormat8';
 
-chaiUse(chaiAsPromised);
+// Mock the config module to prevent HTTP requests during tests
+vi.mock('../../src/common/config', () => ({
+  default: {
+    get: () => ({
+      keycloakClientIdCryptomator: 'test-client',
+      keycloakAuthEndpoint: 'http://test/auth',
+      keycloakTokenEndpoint: 'http://test/token'
+    })
+  },
+  absFrontendBaseURL: 'http://localhost/app/'
+}));
 
 // key coordinates from MDN examples:
 const alicePublic: JsonWebKey = {
@@ -23,12 +30,7 @@ describe('Vault Format 8', () => {
   let testVault: VaultFormat8;
   let alice: UserKeys;
 
-  before(async () => {
-    // since this test runs on Node, we need to replace window.crypto:
-    Object.defineProperty(global, 'crypto', { value: webcrypto });
-    // @ts-expect-error: incomplete 'window' type
-    global.window = { crypto: global.crypto };
-
+  beforeAll(async () => {
     // prepare test vault with hard-coded symmetric key:
     testVault = await TestVaultKeys.create();
 
@@ -51,7 +53,7 @@ describe('Vault Format 8', () => {
   });
 
   it('recover() succeeds for valid actual key', async () => {
-    let recoveryKey = `
+    const recoveryKey = `
       pathway lift abuse plenty export texture gentleman landscape beyond ceiling around leaf cafe charity
       border breakdown victory surely computer cat linger restrict infer crowd live computer true written amazed
       investor boot depth left theory snow whereby terminal weekly reject happiness circuit partial cup ad
@@ -64,7 +66,7 @@ describe('Vault Format 8', () => {
   });
 
   it('recover() succeeds for valid test key', async () => {
-    let recoveryKey = `
+    const recoveryKey = `
       water water water water water water water water water water water water water water water water water
       water water water water asset partly partly partly partly partly partly partly partly partly partly
       partly partly partly partly partly partly partly partly partly partly option twist
@@ -86,11 +88,11 @@ describe('Vault Format 8', () => {
       investor boot depth left theory snow whereby terminal weekly reject happiness circuit partial cup wrong
       `);
 
-    return Promise.all([
-      expect(noMultipleOfTwo).to.be.rejectedWith(Error, /input needs to be a multiple of two words/),
-      expect(notInDict).to.be.rejectedWith(Error, /Word not in dictionary/),
-      expect(wrongLength).to.be.rejectedWith(Error, /Invalid recovery key length/),
-      expect(invalidCrc).to.be.rejectedWith(Error, /Invalid recovery key checksum/),
+    await Promise.all([
+      expect(noMultipleOfTwo).rejects.toThrow(/input needs to be a multiple of two words/),
+      expect(notInDict).rejects.toThrow(/Word not in dictionary/),
+      expect(wrongLength).rejects.toThrow(/Invalid recovery key length/),
+      expect(invalidCrc).rejects.toThrow(/Invalid recovery key checksum/),
     ]);
   });
 
@@ -114,7 +116,7 @@ describe('Vault Format 8', () => {
     const vaultMetdataB = 'eyJraWQiOiJtYXN0ZXJrZXlmaWxlOm1hc3RlcmtleS5jcnlwdG9tYXRvciIsInR5cCI6IkpXVCIsImFsZyI6IkhTMjU2In0.eyJmb3JtYXQiOjgsInNob3J0ZW5pbmdUaHJlc2hvbGQiOjIyMCwianRpIjoiYzU2YmJlNTMtMTYxYS00YjRkLWEyYjktMzE0ODMxYzAxNWJjIiwiY2lwaGVyQ29tYm8iOiJTSVZfR0NNIn0.zPCDsnrBEOT1-X7MVmcMEuP2eqOiqS63V9oM_CcNppg';
     const keyDoesNotCorrespondToSignature = VaultFormat8.recoverAndVerify(vaultMetdataB, recoveryKeyA);
 
-    expect(keyDoesNotCorrespondToSignature).to.be.rejectedWith(Error, /Recovery key does not match vault file/);
+    await expect(keyDoesNotCorrespondToSignature).rejects.toThrow(/Recovery key does not match vault file/);
   });
 
   it('encryptForUser()', async () => {
@@ -138,12 +140,12 @@ describe('Vault Format 8', () => {
       iterations: 1
     };
 
-    it('decryptWithAdminPassword() fails with wrong pw', () => {
-      return expect(VaultFormat8.decryptWithAdminPassword('wrong', wrapped.wrappedMasterkey, wrapped.wrappedOwnerPrivateKey, wrapped.ownerPublicKey, wrapped.salt, wrapped.iterations)).to.eventually.be.rejectedWith(UnwrapKeyError);
+    it('decryptWithAdminPassword() fails with wrong pw', async () => {
+      await expect(VaultFormat8.decryptWithAdminPassword('wrong', wrapped.wrappedMasterkey, wrapped.wrappedOwnerPrivateKey, wrapped.ownerPublicKey, wrapped.salt, wrapped.iterations)).rejects.toThrow(UnwrapKeyError);
     });
 
-    it('decryptWithAdminPassword() succeeds with correct pw', () => {
-      return expect(VaultFormat8.decryptWithAdminPassword('pass', wrapped.wrappedMasterkey, wrapped.wrappedOwnerPrivateKey, wrapped.ownerPublicKey, wrapped.salt, wrapped.iterations)).to.eventually.be.fulfilled;
+    it('decryptWithAdminPassword() succeeds with correct pw', async () => {
+      await expect(VaultFormat8.decryptWithAdminPassword('pass', wrapped.wrappedMasterkey, wrapped.wrappedOwnerPrivateKey, wrapped.ownerPublicKey, wrapped.salt, wrapped.iterations)).resolves.toBeDefined();
     });
   });
 
