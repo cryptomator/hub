@@ -335,10 +335,10 @@ const numberOfExceededSeats = computed(() => {
   return remainingSeats.value < 0 ? Math.abs(remainingSeats.value) : 0;
 });
 
-const initialWebOfTrustSettings = ref<{ wotMaxDepth: number; wotIdVerifyLen: number } | null>(null);
+type WotSettings = { wotMaxDepth: number; wotIdVerifyLen: number };
+const initialWebOfTrustSettings = ref<WotSettings>({ wotMaxDepth: 0, wotIdVerifyLen: 0 });
 
 const wotHasUnsavedChanges = computed(() => {
-  if (!initialWebOfTrustSettings.value) return false;
   return (
     initialWebOfTrustSettings.value.wotMaxDepth !== wotMaxDepth.value ||
     initialWebOfTrustSettings.value.wotIdVerifyLen !== wotIdVerifyLen.value
@@ -434,10 +434,8 @@ async function saveWebOfTrust() {
 }
 
 function resetWebOfTrust() {
-  if (initialWebOfTrustSettings.value) {
-    wotMaxDepth.value = initialWebOfTrustSettings.value.wotMaxDepth;
-    wotIdVerifyLen.value = initialWebOfTrustSettings.value.wotIdVerifyLen;
-  }
+  wotMaxDepth.value = initialWebOfTrustSettings.value.wotMaxDepth;
+  wotIdVerifyLen.value = initialWebOfTrustSettings.value.wotIdVerifyLen;
 }
 
 </script>
