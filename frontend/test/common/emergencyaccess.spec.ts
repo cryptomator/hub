@@ -1,6 +1,4 @@
-import { expect } from 'chai';
-import { before, describe } from 'mocha';
-import { webcrypto } from 'node:crypto';
+import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { EmergencyAccess, RecoveryProcess } from '../../src/common/emergencyaccess';
 import { UTF8 } from '../../src/common/util';
 import { base64 } from 'rfc4648';
@@ -12,12 +10,7 @@ describe('Emergency Access', () => {
   let alice: CryptoKeyPair, bob: CryptoKeyPair, carol: CryptoKeyPair, dave: CryptoKeyPair;
   let aliceDto: ActivatedUser, bobDto: ActivatedUser, carolDto: ActivatedUser, daveDto: ActivatedUser;
 
-  before(async () => {
-    // since this test runs on Node, we need to replace window.crypto:
-    Object.defineProperty(global, 'crypto', { value: webcrypto });
-    // @ts-expect-error: incomplete 'window' type
-    global.window = { crypto: global.crypto };
-
+  beforeAll(async () => {
     // prepare some test key pairs:
     alice = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-384' }, false, ['deriveBits']);
     bob = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-384' }, false, ['deriveBits']);

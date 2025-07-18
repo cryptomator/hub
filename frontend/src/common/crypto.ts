@@ -125,7 +125,7 @@ export class VaultKeys {
     const decodedPrivateKey = base64.parse(wrappedOwnerPrivateKey, { loose: true });
     const decodedPublicKey = base64.parse(ownerPublicKey, { loose: true });
     try {
-      const masterkey = crypto.subtle.unwrapKey(
+      const masterkey = await crypto.subtle.unwrapKey(
         'raw',
         decodedMasterKey.slice(GCM_NONCE_LEN),
         await kek,
@@ -134,7 +134,7 @@ export class VaultKeys {
         true,
         ['sign']
       );
-      const privKey = crypto.subtle.unwrapKey(
+      const privKey = await crypto.subtle.unwrapKey(
         'pkcs8',
         decodedPrivateKey.slice(GCM_NONCE_LEN),
         await kek,
@@ -143,14 +143,14 @@ export class VaultKeys {
         false,
         ['sign']
       );
-      const pubKey = crypto.subtle.importKey(
+      const pubKey = await crypto.subtle.importKey(
         'spki',
         decodedPublicKey,
         { name: 'ECDSA', namedCurve: 'P-384' },
         true,
         ['verify']
       );
-      return [new VaultKeys(await masterkey), { privateKey: await privKey, publicKey: await pubKey }];
+      return [new VaultKeys(masterkey), { privateKey: privKey, publicKey: pubKey }];
     } catch (error) {
       throw new UnwrapKeyError(error);
     }

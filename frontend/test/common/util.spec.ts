@@ -1,6 +1,5 @@
-import { expect } from 'chai';
-import { describe } from 'mocha';
-import { UTF8, CRC32, wordEncoder } from '../../src/common/util';
+import { describe, expect, it } from 'vitest';
+import { CRC32, UTF8, wordEncoder } from '../../src/common/util';
 
 describe('WordEncoder', () => {
   describe('decode(encode(x)) == x', () => {
@@ -14,7 +13,7 @@ describe('WordEncoder', () => {
         const encoded = wordEncoder.encodePadded(bytes);
         const decoded = wordEncoder.decode(encoded);
 
-        expect(decoded).to.deep.eq(bytes);
+        expect(decoded).toEqual(bytes);
       });
     });
   });
@@ -26,6 +25,6 @@ describe('CRC32', () => {
 
     const result = CRC32.compute(input);
 
-    expect(result).to.eql(0xCBF43926);
+    expect(result).toEqual(0xCBF43926);
   });
 });
