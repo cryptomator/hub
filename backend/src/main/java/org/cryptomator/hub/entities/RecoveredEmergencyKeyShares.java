@@ -1,0 +1,107 @@
+package org.cryptomator.hub.entities;
+
+import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
+import io.quarkus.panache.common.Parameters;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
+import jakarta.persistence.NoResultException;
+import jakarta.persistence.Table;
+
+import java.io.Serializable;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.stream.Stream;
+
+@Entity
+@Table(name = "recovered_emergency_key_shares")
+public class RecoveredEmergencyKeyShares {
+
+	@EmbeddedId
+	private Id id = new RecoveredEmergencyKeyShares.Id();
+
+	@Column(name = "process_private_key", nullable = false)
+	private String processPrivateKey;
+
+	@Column(name = "recovered_key_share")
+	private String recoveredKeyShare;
+
+	public Id getId() {
+		return id;
+	}
+
+	public void setId(Id id) {
+		this.id = id;
+	}
+
+	public String getProcessPrivateKey() {
+		return processPrivateKey;
+	}
+
+	public void setProcessPrivateKey(String processPrivateKey) {
+		this.processPrivateKey = processPrivateKey;
+	}
+
+	public String getRecoveredKeyShare() {
+		return recoveredKeyShare;
+	}
+
+	public void setRecoveredKeyShare(String recoveredKeyShare) {
+		this.recoveredKeyShare = recoveredKeyShare;
+	}
+
+	@Embeddable
+	public static class Id implements Serializable {
+
+		@Column(name = "council_member_id")
+		private String councilMemberId;
+
+		@Column(name = "recovery_process_id")
+		private UUID recoveryId;
+
+		public String getCouncilMemberId() {
+			return councilMemberId;
+		}
+
+		public void setCouncilMemberId(String councilMemberId) {
+			this.councilMemberId = councilMemberId;
+		}
+
+		public UUID getRecoveryId() {
+			return recoveryId;
+		}
+
+		public void setRecoveryId(UUID recoveryId) {
+			this.recoveryId = recoveryId;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o instanceof Id other) {
+				return Objects.equals(councilMemberId, other.councilMemberId) //
+						&& Objects.equals(recoveryId, other.recoveryId);
+			}
+			return false;
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(councilMemberId, recoveryId);
+		}
+
+		@Override
+		public String toString() {
+			return "RecoveredEmergencyKeySharesId{" +
+					"councilMemberId='" + councilMemberId + '\'' +
+					", recoveryId='" + recoveryId + '\'' +
+					'}';
+		}
+	}
+
+	@ApplicationScoped
+	public static class Repository implements PanacheRepositoryBase<RecoveredEmergencyKeyShares, Id> {
+	}
+}

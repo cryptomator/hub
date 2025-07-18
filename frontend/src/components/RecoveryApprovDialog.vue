@@ -33,10 +33,10 @@
                     <svg width="36" height="36" viewBox="0 0 36 36">
                       <g>
                         <path
-                          v-for="i in props.totalSegments"
+                          v-for="i in requiredSegments"
                           :key="i"
-                          :d="describeSegment(i - 1, props.totalSegments, 16)"
-                          :fill="i <= phaseSegmentCount ? '#49b04a' : '#e5e7eb'"
+                          :d="describeSegment(i - 1, requiredSegments, 16)"
+                          :fill="i <= completedSegments ? '#49b04a' : '#e5e7eb'"
                           stroke="white"
                           stroke-width="1"
                         />
@@ -48,19 +48,22 @@
                       {{ phaseTitle }}
                     </DialogTitle>
                     <div class="mt-2">
+                      <p v-if="didAddMyShare" class="text-sm text-gray-500">
+                        TODO LOCALIZE: You have already added your part of the emergency key.
+                      </p>
                       <p class="text-sm text-gray-500">
                         {{ phaseDescription }}
                       </p>
                     </div>
                     <select v-if="phase === 'start'" v-model="selectedType">
-                      <option value="ownership">Ownership</option>
-                      <option value="voteNewCouncilMembers">Vote New Council Members</option>
+                      <option value="RECOVERY">Ownership</option>
+                      <option value="COUNCIL_CHANGE">Vote New Council Members</option>
                     </select> 
-                    <div v-else-if="phase === 'approve'">
-                      <div v-if="selectedType === 'ownership'">
+                    <div v-else>
+                      <div v-if="selectedType === 'RECOVERY'">
                         Ownership
                       </div>
-                      <div v-if="selectedType === 'voteNewCouncilMembers'">
+                      <div v-if="selectedType === 'COUNCIL_CHANGE'">
                         Vote New Council Members
                       </div>
                     </div>
@@ -79,7 +82,7 @@
                   </button>
                 </template>
 
-                <template v-else-if="phase === 'approve'">
+                <template v-else-if="phase === 'approve' && !didAddMyShare">
                   <button
                     type="button"
                     class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm"
@@ -89,7 +92,7 @@
                   </button>
                 </template>
 
-                <template v-else-if="phase === 'complete'">                
+                <template v-else-if="phase === 'complete' && !didAddMyShare">                
                   <p v-if="onError != null" class="text-sm text-red-900 px-4 sm:px-6 text-right bg-red-50">
                     {{ t('common.unexpectedError', [onError.message]) }}
                   </p>
@@ -119,25 +122,25 @@
 </template>
 
 <script setup lang="ts">
-import backend, { VaultDto, UserDto } from '../common/backend';
-import { ref, computed } from 'vue';
+import backend, { VaultDto, UserDto, RecoveryProcessDto, didCompleteSetup } from '../common/backend';
+import { ref, computed, toRaw } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
-import { EmergencyKeyShare, EmergencyKeyShareData } from '../common/EmergencyKeyShare';
 import { describeSegment } from '../common/svgUtils';
+import { EmergencyAccess } from '../common/emergencyaccess';
+import userdata from '../common/userdata';
 
 const { t } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{
   vault: VaultDto;
   me: UserDto;
-  totalSegments: number;
-  approvedSegments: number;
+  recoveryProcess?: RecoveryProcessDto;
 }>();
 
 const emit = defineEmits<{
   close: [];
-  updated: [updatedVault: VaultDto];
+  updated: [recoveryProcess?: RecoveryProcessDto];
 }>();
 
 defineExpose({
@@ -145,46 +148,27 @@ defineExpose({
 });
 
 type PhaseType = 'start' | 'approve' | 'complete';
-const selectedType = ref<'ownership' | 'voteNewCouncilMembers'>('ownership');
+const selectedType = ref<RecoveryProcessDto['type']>(props.recoveryProcess?.type ?? 'RECOVERY');
 
-const selectedNewCouncilMembers = ref<string[]>([]);
-const phase = ref<PhaseType>('start');
-const phaseSegmentCount = computed(() => {
-  return Math.min(props.approvedSegments, props.totalSegments);
+const selectedNewCouncilMembers = ref<string[]>([]); // TODO store type-specific process details in `details` field of `RecoveryProcessDto`
+const phase = computed<PhaseType>(() => {
+  const p = props.recoveryProcess;
+  if (!p) {
+    return 'start';
+  } else if (completedSegments.value + 1 < p.requiredKeyShares) {
+    return 'approve';
+  } else {
+    return 'complete';
+  }
 });
+const requiredSegments = computed(() => props.recoveryProcess?.requiredKeyShares ?? props.vault.requiredEmergencyKeyShares );
+const completedSegments = computed(() => Object.values(props.recoveryProcess?.recoveredKeyShares ?? {}).filter(ks => ks.recoveredKeyShare !== undefined).length );
+const didAddMyShare = computed(() => props.recoveryProcess?.recoveredKeyShares[props.me.id].recoveredKeyShare !== undefined);
 
 const open = ref(false);
 const onError = ref<Error | null>();
 
-async function show(initialPhase?: PhaseType) {
-  if (initialPhase) {
-    phase.value = initialPhase;
-  } else {
-    if (props.approvedSegments === 0) {
-      phase.value = 'start';
-    } else if (props.approvedSegments + 1 === props.totalSegments) {
-      phase.value = 'complete';
-    } else {
-      phase.value = 'approve';
-    }
-  }
-
-  if (phase.value === 'approve' || phase.value === 'complete') {
-    const parsedEntry = Object.entries(props.vault.emergencyKeyShares).find(([_, raw]) => EmergencyKeyShare.parse(raw) != null);
-
-    if (parsedEntry) {
-      const [, raw] = parsedEntry;
-      const parsed = EmergencyKeyShare.parse(raw)!;
-
-      if (parsed.typ === 'ownership' || parsed.typ === 'voteNewCouncilMembers') {
-        selectedType.value = parsed.typ;
-        if (parsed.typ === 'voteNewCouncilMembers' && Array.isArray(parsed.newCouncilMembers)) {
-          selectedNewCouncilMembers.value = parsed.newCouncilMembers;
-        }
-      }
-    }
-  }
-
+async function show() {
   open.value = true;
 }
 
@@ -192,40 +176,39 @@ async function startRecovery() {
   try {
     onError.value = null;
 
-    let share: EmergencyKeyShareData;
-
-    if (selectedType.value === 'ownership') {
-      share = {
-        typ: 'ownership',
-        newowner: 'admin', //props.me.id,
-        timestamp: new Date().toISOString()
-      };
-    } else if (selectedType.value === 'voteNewCouncilMembers') {
-      selectedNewCouncilMembers.value = ['bela','rod','farin'];
-      share = {
-        typ: 'voteNewCouncilMembers',
-        newCouncilMembers: selectedNewCouncilMembers.value,
-        timestamp: new Date().toISOString()
-      };
-    } else {
-      throw new Error(`Unsupported type: ${selectedType.value}`);
+    // load council members:
+    const recoveryCouncilMemberIds = Object.keys(props.vault.emergencyKeyShares);
+    const authorities = await backend.authorities.listSome(recoveryCouncilMemberIds);
+    const councilMembers = authorities.filter(a => a.type == 'USER').filter(u => didCompleteSetup(u)); // we can basically assume this
+    if (councilMembers.length < props.vault.requiredEmergencyKeyShares) {
+      throw new Error(`Inconsistent data: Insufficient council members (${councilMembers.length}) to recovery this vault (${props.vault.requiredEmergencyKeyShares}).`);
     }
 
-    const updatedShares: Record<string, string> = {
-      ...props.vault.emergencyKeyShares,
-      [props.me.id]: EmergencyKeyShare.create(share)
+    // create recovery process:
+    const processKeyPair = await EmergencyAccess.startRecovery(councilMembers);
+    const process: RecoveryProcessDto = {
+      id: crypto.randomUUID(),
+      vaultId: props.vault.id,
+      type: selectedType.value,
+      details: '', // TODO: used to store type-specific details such as `selectedNewCouncilMembers`
+      requiredKeyShares: props.vault.requiredEmergencyKeyShares,
+      processPublicKey: processKeyPair.recoveryPublicKey,
+      recoveredKeyShares: {}
     };
+    for (const [memberId, jwe] of Object.entries(processKeyPair.recoveryPrivateKeys)) {
+      process.recoveredKeyShares[memberId] = {
+        processPrivateKey: jwe,
+      };
+    }
 
-    const updatedVault = await backend.vaults.createOrUpdateVault(
-      props.vault.id,
-      props.vault.name,
-      props.vault.archived,
-      props.vault.requiredEmergencyKeyShares,
-      updatedShares,
-      props.vault.description
-    );
+    // get my user private key:
+    const userKeys = await userdata.decryptUserKeysWithBrowser();
 
-    emit('updated', updatedVault);
+    // add my part of the emergency key::
+    await addMyShare(process, userKeys.ecdhKeyPair.privateKey);
+    await backend.emergencyAccess.startRecovery(process);
+
+    emit('updated', process);
     open.value = false;
   } catch (error) {
     console.error('Starting emergency recovery failed.', error);
@@ -234,35 +217,21 @@ async function startRecovery() {
 }
 
 async function approveRecovery() {
+  if (!props.recoveryProcess) {
+    throw new Error('No recovery process to approve.');
+  }
   try {
     onError.value = null;
 
-    const parsedEntry = Object.entries(props.vault.emergencyKeyShares).find(([_, raw]) =>
-      EmergencyKeyShare.parse(raw) != null
-    );
+    // get my user private key:
+    const userKeys = await userdata.decryptUserKeysWithBrowser();
 
-    if (!parsedEntry) {
-      throw new Error('No valid emergency access data found.');
-    }
+    // add my part of the emergency key:
+    const process = structuredClone(toRaw(props.recoveryProcess));
+    const myRecoveredShare = await addMyShare(process, userKeys.ecdhKeyPair.privateKey);
+    await backend.emergencyAccess.addMyShare(process.id, myRecoveredShare);
 
-    const [, firstShareRaw] = parsedEntry;
-    const parsed = EmergencyKeyShare.parse(firstShareRaw)!;
-
-    const updatedShares: Record<string, string> = {
-      ...props.vault.emergencyKeyShares,
-      [props.me.id]: EmergencyKeyShare.create(parsed)
-    };
-
-    const updatedVault = await backend.vaults.createOrUpdateVault(
-      props.vault.id,
-      props.vault.name,
-      props.vault.archived,
-      props.vault.requiredEmergencyKeyShares,
-      updatedShares,
-      props.vault.description
-    );
-
-    emit('updated', updatedVault);
+    emit('updated', process);
     open.value = false;
   } catch (error) {
     console.error('Approving emergency recovery failed.', error);
@@ -271,37 +240,45 @@ async function approveRecovery() {
 }
 
 async function completeRecovery() {
+  if (!props.recoveryProcess) {
+    throw new Error('No recovery process to complete.');
+  }
   try {
     onError.value = null;
 
-    const parsedEntry = Object.entries(props.vault.emergencyKeyShares).find(([_, raw]) => EmergencyKeyShare.parse(raw) != null);
-    if (!parsedEntry) {
-      throw new Error('No valid emergency access data found.');
-    }
+    // get my user private key:
+    const userKeys = await userdata.decryptUserKeysWithBrowser();
 
-    const [, firstShareRaw] = parsedEntry;
-    const parsed = EmergencyKeyShare.parse(firstShareRaw)!;
+    // add my part of the emergency key:
+    const process = structuredClone(toRaw(props.recoveryProcess));
+    await addMyShare(process, userKeys.ecdhKeyPair.privateKey);
 
-    const updatedShares: Record<string, string> = {
-      ...props.vault.emergencyKeyShares,
-      [props.me.id]: EmergencyKeyShare.create(parsed)
-    };
+    // collect key parts:
+    const keyShares = Object.values(process.recoveredKeyShares).filter(p => p.recoveredKeyShare !== undefined).map(p => p.recoveredKeyShare!);
 
-    const updatedVault = await backend.vaults.createOrUpdateVault(
-      props.vault.id,
-      props.vault.name,
-      props.vault.archived,
-      props.vault.requiredEmergencyKeyShares,
-      updatedShares,
-      props.vault.description
-    );
+    // get process private key:
+    const processPrivateKey = process.recoveredKeyShares[props.me.id].processPrivateKey;
+    const recoveredKey = await EmergencyAccess.combineRecoveredShares(keyShares, processPrivateKey, userKeys.ecdhKeyPair.privateKey);
 
-    emit('updated', updatedVault);
+    // TODO: reset vault key...
+    console.debug('Recovered key:', recoveredKey);
+
+    // delete process:
+    await backend.emergencyAccess.delete(process.id);
+
+    emit('updated');
     open.value = false;
   } catch (error) {
     console.error('Completing emergency recovery failed.', error);
     onError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
+}
+
+async function addMyShare(process: RecoveryProcessDto, userPrivateKey: CryptoKey): Promise<string> {
+  const encryptedShare = props.vault.emergencyKeyShares[props.me.id];
+  const recoveredShare = await EmergencyAccess.recoverShare(encryptedShare, userPrivateKey, process.processPublicKey);
+  process.recoveredKeyShares[props.me.id].recoveredKeyShare = recoveredShare;
+  return recoveredShare;
 }
 
 function closeDialog() {

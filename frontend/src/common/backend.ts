@@ -143,6 +143,21 @@ export type SettingsDto = {
   emergencyCouncilMemberIds: string[]
 }
 
+export type RecoveryProcessDto = {
+  id: string;
+  vaultId: string;
+  type: 'RECOVERY' | 'COUNCIL_CHANGE';
+  details?: string;
+  requiredKeyShares: number;
+  processPublicKey: string;
+  recoveredKeyShares: {
+    [councilMemberId: string]: {
+      processPrivateKey: string;
+      recoveredKeyShare?: string;
+    }
+  }
+}
+
 export class LicenseUserInfoDto {
   constructor(
     public licensedSeats: number,
@@ -435,6 +450,24 @@ class SettingsService {
   }
 }
 
+class EmergencyAccessService {
+  public async findProcessesForVault(vaultId: string): Promise<RecoveryProcessDto[]> {
+    return axiosAuth.get<RecoveryProcessDto[]>(`/emergency-access/${vaultId}`).then(response => response.data);
+  }
+
+  public async startRecovery(recoveryProcess: RecoveryProcessDto): Promise<void> {
+    return axiosAuth.put(`/emergency-access/${recoveryProcess.id}`, recoveryProcess);
+  }
+
+  public async addMyShare(recoveryProcessId: string, recoveredKeyShareJwe: string): Promise<void> {
+    return axiosAuth.post(`/emergency-access/${recoveryProcessId}/recovered-key-shares`, recoveredKeyShareJwe, { headers: { 'Content-Type': 'text/plain' } });
+  }
+
+  public async delete(recoveryProcessId: string): Promise<void> {
+    return axiosAuth.delete(`/emergency-access/${recoveryProcessId}`);
+  }
+}
+
 /**
  * Note: Each service can thrown an {@link UnauthorizedError} when the access token is expired!
  */
@@ -447,7 +480,8 @@ const services = {
   billing: new BillingService(),
   version: new VersionService(),
   license: new LicenseService(),
-  settings: new SettingsService()
+  settings: new SettingsService(),
+  emergencyAccess: new EmergencyAccessService()
 };
 
 export default services;

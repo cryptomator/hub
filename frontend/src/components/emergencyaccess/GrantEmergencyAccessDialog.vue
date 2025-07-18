@@ -45,7 +45,7 @@
                     </div>
                     <div class="relative">
                       <div class="sm:grid sm:grid-cols-2 sm:items-center sm:gap-2 pt-2 pb-2">
-                        <label for="coundcilMembers" class="block text-sm font-medium text-gray-700 flex items-center">
+                        <label for="coundcilMembers" class="text-sm font-medium text-gray-700 flex items-center">
                           {{ t('admin.emergencyAccess.councilMembers.title') }}
                           <button 
                             type="button" 

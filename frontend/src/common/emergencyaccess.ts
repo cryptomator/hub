@@ -5,7 +5,7 @@ import { ActivatedUser } from './backend';
 import { asPublicKey, UserKeys } from './crypto';
 
 type KeySharePayload = {
-    keyShare: string; // base64 encoded share
+    keyShare: string;
 }
 
 type ProcessPrivateKeyPayload = {
@@ -13,11 +13,14 @@ type ProcessPrivateKeyPayload = {
 }
 
 export type RecoveryProcess = {
-    recoveryPublicKey: CryptoKey;
+    recoveryPublicKey: string;
     recoveryPrivateKeys: Record<string, string>;
 }
 
 export class EmergencyAccess {
+  private static readonly PROCESS_KEY_DESIGNATION: EcKeyImportParams | EcKeyGenParams = { name: 'ECDH', namedCurve: 'P-384' };
+  private static readonly PROCESS_KEY_USAGE: KeyUsage[] = ['deriveBits'];
+
   /**
    * Splits a secret into [1..255] shares, where at least `k` shares are needed to reconstruct the secret.
    * The shares are encrypted for each recipient using ECDH-ES.
@@ -60,20 +63,23 @@ export class EmergencyAccess {
    * @param councilMembers The involved council members
    * @returns The recovery process, containing the public key and encrypted private keys for each council member.
    */
-  public static async startRecovery(councilMembers: Record<string, CryptoKey>): Promise<RecoveryProcess> {
+  public static async startRecovery(councilMembers: ActivatedUser[]): Promise<RecoveryProcess> {
     // Generate a new key pair for the recovery process:
-    const processKeyPair = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-384' }, true, ['deriveBits']);
+    const processKeyPair = await crypto.subtle.generateKey(EmergencyAccess.PROCESS_KEY_DESIGNATION, true, EmergencyAccess.PROCESS_KEY_USAGE);
     // Encrypt the process private key for each council member:
     const encryptedPrivateKeys = new Map<string, string>();
     const jwk = await crypto.subtle.exportKey('jwk', processKeyPair.privateKey);
     const payload: ProcessPrivateKeyPayload = { privateKey: jwk };
-    for (const [memberId, memberKey] of Object.entries(councilMembers)) {
-      const jwe = await JWEBuilder.ecdhEs(memberKey).encrypt(payload);
-      encryptedPrivateKeys.set(memberId, jwe);
+    for (const member of councilMembers) {
+      const keyBytes = base64.parse(member.ecdhPublicKey!);
+      const key = await asPublicKey(keyBytes, UserKeys.ECDH_KEY_DESIGNATION);
+      const jwe = await JWEBuilder.ecdhEs(key).encrypt(payload);
+      encryptedPrivateKeys.set(member.id, jwe);
     }
     // return public key and encrypted private keys:
+    const publicKeyJwk = JSON.stringify(await crypto.subtle.exportKey('jwk', processKeyPair.publicKey)); // TODO: JWK? or SPKI?
     return {
-      recoveryPublicKey: processKeyPair.publicKey,
+      recoveryPublicKey: publicKeyJwk,
       recoveryPrivateKeys: Object.fromEntries(encryptedPrivateKeys)
     };
   }
@@ -85,9 +91,11 @@ export class EmergencyAccess {
    * @param recoveryProcessPublicKey The public key of the recovery process.
    * @returns A new JWE containing the key share, encrypted for the recovery process.
    */
-  public static async recoverShare(share: string, userPrivateKey: CryptoKey, recoveryProcessPublicKey: CryptoKey): Promise<string> {
+  public static async recoverShare(share: string, userPrivateKey: CryptoKey, recoveryProcessPublicKey: string): Promise<string> {
     const decrypted: KeySharePayload = await JWEParser.parse(share).decryptEcdhEs(userPrivateKey);
-    return await JWEBuilder.ecdhEs(recoveryProcessPublicKey).encrypt(decrypted);
+    const processPublicKeyJwk = JSON.parse(recoveryProcessPublicKey);
+    const processPublicKey = await crypto.subtle.importKey('jwk', processPublicKeyJwk, EmergencyAccess.PROCESS_KEY_DESIGNATION, false, []);
+    return await JWEBuilder.ecdhEs(processPublicKey).encrypt(decrypted);
   }
 
   /**
@@ -99,7 +107,7 @@ export class EmergencyAccess {
    */
   public static async combineRecoveredShares(recoveredShares: string[], recoveryProcessPrivateKeyJwe: string, userPrivateKey: CryptoKey): Promise<Uint8Array> {
     const jwePayload = await JWEParser.parse(recoveryProcessPrivateKeyJwe).decryptEcdhEs<ProcessPrivateKeyPayload>(userPrivateKey);
-    const recoveryProcessPrivateKey = await crypto.subtle.importKey('jwk', jwePayload.privateKey, { name: 'ECDH', namedCurve: 'P-384' }, false, ['deriveBits']);
+    const recoveryProcessPrivateKey = await crypto.subtle.importKey('jwk', jwePayload.privateKey, EmergencyAccess.PROCESS_KEY_DESIGNATION, false, EmergencyAccess.PROCESS_KEY_USAGE);
     const decryptedShares = await Promise.all(recoveredShares.map(share => JWEParser.parse(share).decryptEcdhEs<KeySharePayload>(recoveryProcessPrivateKey)));
     const keyShares = decryptedShares.map(share => base64.parse(share.keyShare));
     return combine(keyShares);

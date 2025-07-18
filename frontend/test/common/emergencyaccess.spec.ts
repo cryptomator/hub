@@ -39,12 +39,7 @@ describe('Emergency Access', () => {
   });
 
   it('Start Recovery Process', async () => {
-    const councilMembers = {
-      alice: alice.publicKey,
-      bob: bob.publicKey,
-      carol: carol.publicKey,
-      dave: dave.publicKey
-    };
+    const councilMembers = [aliceDto, bobDto, carolDto, daveDto];
     const recoveryProcess = await EmergencyAccess.startRecovery(councilMembers);
 
     expect(recoveryProcess).to.have.property('recoveryPublicKey');
@@ -66,12 +61,7 @@ describe('Emergency Access', () => {
       keyShares = await EmergencyAccess.split(secretBytes, 3, aliceDto, bobDto, carolDto, daveDto);
 
       // start recovery:
-      const councilMembers = {
-        alice: alice.publicKey,
-        bob: bob.publicKey,
-        carol: carol.publicKey,
-        dave: dave.publicKey
-      };
+      const councilMembers = [aliceDto, bobDto, carolDto, daveDto];
       recoveryProcess = await EmergencyAccess.startRecovery(councilMembers);
     });
 
