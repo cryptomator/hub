@@ -2,9 +2,9 @@
   <div class="relative w-full">
     <div
       :class="[
-        'flex items-center flex-wrap min-h-[42px] rounded-md  bg-white',
+        'flex items-center flex-wrap min-h-[42px] rounded-md bg-white',
         { 
-          'px-2 py-1 shadow-xs border border-gray-300 focus-within:ring-1 focus-within:ring-primary': inputVisible 
+          'px-2 py-1 shadow-xs border border-gray-300 focus-within:ring-1 focus-within:ring-primary cursor-text': inputVisible 
         }
       ]"
       @click="focusInput"
@@ -24,41 +24,45 @@
         {{ user.name }}
         <div v-if="inputVisible" class="ml-1 text-gray-500 hover:text-red-600">&times;</div>
       </button>
-
       <!-- Combobox -->
-      <Combobox v-if="inputVisible" as="div" class="flex-1 min-w-[120px] relative" @update:model-value="onSelect">
-        <ComboboxInput
-          ref="inputEl"
-          v-model="query"
-          class="w-full h-7 border-none focus:ring-0 text-sm placeholder-gray-400"
-          :class="{
-            'caret-transparent': selectedPillIndex !== null,
-            'caret-black': selectedPillIndex === null
-          }"
-          :placeholder="props.selectedUsers.length === 0 ? 'Nutzer suchen…' : ''"
-          @change="e => query = e.target.value"
-          @keydown="onKeyDown"
-        />
-
-        <!-- DROPDOWN -->
-        <ComboboxOptions
-          v-if="query && filteredUsers.length > 0"
-          class="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm"
-        >
-          <ComboboxOption
-            v-for="(user, index) in filteredUsers"
-            :key="user.id"
-            :value="user"
-            :class="[
-              'cursor-pointer select-none py-2 px-3 flex items-center',
-              index === activeIndex ? 'bg-blue-500 text-white' : 'hover:bg-blue-500 hover:text-white'
-            ]"
-          >
-            <img :src="user.pictureUrl" alt="" class="h-5 w-5 rounded-full mr-2" />
-            {{ user.name }}
-          </ComboboxOption>
-        </ComboboxOptions>
+      <Combobox v-show="inputVisible" as="div" class="flex-1 min-w-[120px] relative" @update:model-value="onSelect">
+        <ComboboxInput v-if="inputVisible" as="template">
+          <input
+            ref="inputEl"
+            v-model="query"
+            autocomplete="off"
+            class="w-full h-9 border-none focus:ring-0 text-sm px-1 placeholder-gray-400"
+            :class="{
+              'caret-transparent': selectedPillIndex !== null,
+              'caret-black': selectedPillIndex === null
+            }"
+            :placeholder="props.selectedUsers.length === 0 ? 'Nutzer suchen…' : ''"
+            @keydown="onKeyDown"
+          />
+        </ComboboxInput>
       </Combobox>
+    </div>
+    <!-- DROPDOWN -->
+    <div
+      v-if="inputVisible && query && filteredUsers.length > 0"
+      class="absolute z-10 mt-1 w-full overflow-auto rounded-md border border-gray-300 bg-white shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm"
+    >
+      <div
+        v-for="(user, index) in filteredUsers"
+        :key="user.id"
+        :class="[
+          'cursor-pointer select-none py-2 px-3 flex items-center',
+          (hoveredIndex === index || (hoveredIndex === null && activeIndex === index))
+            ? 'bg-blue-500 text-white'
+            : 'hover:bg-blue-100'
+        ]"
+        @click="onSelect(user as T)"
+        @mouseenter="hoveredIndex = index"
+        @mouseleave="hoveredIndex = null"
+      >
+        <img :src="user.pictureUrl" alt="" class="h-5 w-5 rounded-full mr-2" />
+        {{ user.name }}
+      </div>
     </div>
   </div>
 </template>
@@ -93,10 +97,14 @@ const searchResults = ref<T[]>([]);
 const inputEl = ref<HTMLInputElement | null>(null);
 
 const focusInput = () => {
-  inputEl.value?.focus();
+  selectedPillIndex.value = null;
+  nextTick(() => {
+    inputEl.value?.focus();
+  });
 };
 
 const activeIndex = ref(0);
+const hoveredIndex = ref<number | null>(null); // 👈 NEU
 const selectedPillIndex = ref<number | null>(null);
 
 watch(query, async (newQuery) => {
@@ -142,7 +150,7 @@ function onKeyDown(e: KeyboardEvent) {
     } else if (selectedPillIndex.value !== null) {
       const user = props.selectedUsers[selectedPillIndex.value];
       removeUser(user);
-      selectedPillIndex.value = selectedPillIndex.value == 0 ? null : selectedPillIndex.value - 1;
+      selectedPillIndex.value = selectedPillIndex.value == 0 ? (props.selectedUsers.length == 1 ? null : 0) : selectedPillIndex.value - 1;
       e.preventDefault();
     }
   } else if (e.key === 'ArrowLeft') {
@@ -166,11 +174,13 @@ function onKeyDown(e: KeyboardEvent) {
     }
   } else if (e.key === 'ArrowDown') {
     e.preventDefault();
+    hoveredIndex.value = null;
     if (filteredUsers.value.length > 0) {
       activeIndex.value = (activeIndex.value + 1) % filteredUsers.value.length;
     }
   } else if (e.key === 'ArrowUp') {
     e.preventDefault();
+    hoveredIndex.value = null;
     if (filteredUsers.value.length > 0) {
       activeIndex.value = (activeIndex.value - 1 + filteredUsers.value.length) % filteredUsers.value.length;
     }

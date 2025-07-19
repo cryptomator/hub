@@ -274,23 +274,13 @@
             </label>
             <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
               <div class="relative">
-                <input v-model="userQuery" type="text" class="w-full rounded-md border border-gray-300 shadow-sm text-sm focus:ring-primary focus:border-primary" :placeholder="t('admin.emergencyAccess.councilMembers.placeholder')"/>
-                <ul v-if="userQuery && searchResults.length > 0" class="absolute z-10 mt-1 max-h-60 w-full overflow-auto bg-white border border-gray-200 shadow-md rounded-md text-sm" >
-                  <li v-for="user in searchResults" :key="user.id" class="flex items-center px-3 py-2 hover:bg-primary hover:text-white cursor-pointer" @click="selectUser(user)">
-                    <img :src="user.pictureUrl" class="w-6 h-6 rounded-full mr-2" />
-                    <span class="truncate">{{ user.name }} ({{ user.email }})</span>
-                  </li>
-                </ul>
-
-                <div class="flex flex-wrap gap-2 mt-2">
-                  <span v-for="user in selectedUsers" :key="user.id" class="inline-flex items-center bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded" >
-                    <img :src="user.pictureUrl" class="w-4 h-4 rounded-full mr-1"/>
-                    {{ user.name }}
-                    <button type="button" class="ml-1 text-green-700 hover:text-red-500" :aria-label="t('admin.recover.userFilter.remove', { name: user.name })" @click="removeUser(user)" >
-                      &times;
-                    </button>
-                  </span>
-                </div>
+                <MultiUserSelectInputGroup
+                  :selected-users="selectedUsers"
+                  :on-search="searchCouncilMembers"
+                  :input-visible="true"
+                  @action="selectUser"
+                  @remove="removeUser"
+                />
                 <p class="mt-2 text-sm text-gray-500">
                   {{ t('admin.emergencyAccess.councilMembers.description') }}
                 </p>
@@ -347,12 +337,13 @@ import { ArrowRightIcon, ArrowTopRightOnSquareIcon, CheckIcon, ExclamationTriang
 import semver from 'semver';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { BillingDto, VersionDto, UserDto } from '../common/backend';
+import backend, { BillingDto, VersionDto, UserDto, didCompleteSetup, ActivatedUser } from '../common/backend';
 import config, { absFrontendBaseURL } from '../common/config';
 import { FetchUpdateError, LatestVersionDto, updateChecker } from '../common/updatecheck';
 import { debounce } from '../common/util';
 import { Locale } from '../i18n/index';
 import FetchError from './FetchError.vue';
+import MultiUserSelectInputGroup from './MultiUserSelectInputGroup.vue';
 
 const { t, d, locale, fallbackLocale } = useI18n({ useScope: 'global' });
 
@@ -363,7 +354,6 @@ const props = defineProps<{
 const userQuery = ref('');
 const allUsers = ref<UserDto[]>([]);
 const searchResults = ref<UserDto[]>([]);
-const selectedUsers = ref<UserDto[]>([]);
 
 const recoveryUpdated = ref(false);
 const debouncedRecoveryUpdated = debounce(() => recoveryUpdated.value = false, 2000);
@@ -449,9 +439,13 @@ async function fetchData() {
     latestVersion.value = await versionAvailable;
     allUsers.value = await backend.users.listAll();
     const settings = await backend.settings.get();
-    selectedUsers.value = settings.emergencyCouncilMemberIds
+    const selected = settings.emergencyCouncilMemberIds
       .map(id => allUsers.value.find(u => u.id === id))
       .filter((u): u is UserDto => u != null);
+
+    // Sortiert speichern
+    initialCouncilMembers.value = [...selected].sort((a, b) => a.name.localeCompare(b.name));
+    addedCouncilMembers.value = [];
     wotMaxDepth.value = settings.wotMaxDepth;
     wotIdVerifyLen.value = settings.wotIdVerifyLen;
     defaultRequiredEmergencyKeyShares.value = settings.defaultRequiredEmergencyKeyShares;
@@ -468,29 +462,41 @@ async function fetchData() {
 
 watch(userQuery, (newQuery) => {
   if (newQuery && newQuery.trim().length > 0) {
-    searchAuthority(newQuery.trim());
+    searchCouncilMembers(newQuery.trim());
   } else {
     searchResults.value = [];
   }
 });
 
-function searchAuthority(query: string) {
-  searchResults.value = allUsers.value
-    .filter(user =>
-      user.name.toLowerCase().includes(query.toLowerCase()) &&
-      !selectedUsers.value.some(su => su.id === user.id)
-    )
+async function searchCouncilMembers(query: string): Promise<ActivatedUser[]> {
+  const existingIds = new Set(selectedUsers.value.map(m => m.id));
+  const authorities = await backend.authorities.search(query, true);
+  return authorities
+    .filter(a => a.type === 'USER')
+    .filter(a => didCompleteSetup(a)) // only include users with a public key
+    .filter(a => !existingIds.has(a.id))
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
+const initialCouncilMembers = ref<UserDto[]>([]);
+const addedCouncilMembers = ref<UserDto[]>([]);
+
+const selectedUsers = computed(() =>
+  [...initialCouncilMembers.value, ...addedCouncilMembers.value]
+);
+
 function selectUser(user: UserDto) {
-  selectedUsers.value.push(user);
+  const alreadySelected = selectedUsers.value.some(u => u.id === user.id);
+  if (!alreadySelected) {
+    addedCouncilMembers.value.push(user);
+  }
   userQuery.value = '';
   searchResults.value = [];
 }
 
 function removeUser(user: UserDto) {
-  selectedUsers.value = selectedUsers.value.filter(u => u.id !== user.id);
+  initialCouncilMembers.value = initialCouncilMembers.value.filter(u => u.id !== user.id);
+  addedCouncilMembers.value = addedCouncilMembers.value.filter(u => u.id !== user.id);
 }
 
 function manageSubscription() {

@@ -48,13 +48,14 @@
                         <label for="coundcilMembers" class="text-sm font-medium text-gray-700 flex items-center">
                           {{ t('admin.emergencyAccess.councilMembers.title') }}
                           <button 
+                            v-if="allowChangingDefaults"
                             type="button" 
                             class="ml-2 p-1 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-30 disabled:cursor-not-allowed"
                             :disabled="emergencyCouncilMembers.length == 0"
                             :title="emergencyCouncilMembers.length > 0 ? 'Reset' : ''"
-                            @click="emergencyCouncilMembers = []"
+                            @click="resetCouncilMembers()"
                           >
-                            <TrashIcon v-if="allowChangingDefaults" class="h-4 w-4 text-gray-500 hover:text-gray-700 disabled:text-gray-300" aria-hidden="true" />
+                            <TrashIcon class="h-4 w-4 text-gray-500 hover:text-gray-700 disabled:text-gray-300" aria-hidden="true" />
                           </button>
                         </label>
                       </div>
@@ -226,7 +227,14 @@ const userQuery = ref('');
 const searchResults = ref<UserDto[]>([]);
 
 const requiredKeyShares = ref<number>(0);
-const emergencyCouncilMembers = ref<ActivatedUser[]>([]);
+
+const initialEmergencyCouncilMembers = ref<ActivatedUser[]>([]);
+const addedEmergencyCouncilMembers = ref<ActivatedUser[]>([]);
+
+const emergencyCouncilMembers = computed(() =>
+  [...initialEmergencyCouncilMembers.value, ...addedEmergencyCouncilMembers.value]
+);
+
 const loadingCouncilSelection = ref(false);
 const randomCouncilSelection = ref<UserDto[]>([]);
 const randomSelectionInterval = ref<ReturnType<typeof setInterval> | null>(null);
@@ -309,7 +317,8 @@ async function show() {
   open.value = true;
   await loadDefaultSettings();
   requiredKeyShares.value = defaultRequiredEmergencyKeyShares.value;
-  emergencyCouncilMembers.value = [...defaultEmergencyCouncilMembers.value];
+  initialEmergencyCouncilMembers.value = [...defaultEmergencyCouncilMembers.value];
+  addedEmergencyCouncilMembers.value = [];
   await refreshTrusts();
 
   pickRandomCouncilMembers();
@@ -336,7 +345,13 @@ async function searchCouncilMembers(query: string): Promise<ActivatedUser[]> {
 async function addCouncilMember(authority: ActivatedUser) {
   onAddCouncilMemberError.value = null;
   try {
-    emergencyCouncilMembers.value = [...emergencyCouncilMembers.value, authority];
+    const alreadyExists =
+      initialEmergencyCouncilMembers.value.some(u => u.id === authority.id) ||
+      addedEmergencyCouncilMembers.value.some(u => u.id === authority.id);
+
+    if (!alreadyExists) {
+      addedEmergencyCouncilMembers.value = [...addedEmergencyCouncilMembers.value, authority];
+    }   
     addingCouncilMember.value = false;
   } catch (error) {
     console.error('Adding council member failed.', error);
@@ -345,7 +360,13 @@ async function addCouncilMember(authority: ActivatedUser) {
 }
 
 function removeCouncilMember(user: ActivatedUser) {
-  emergencyCouncilMembers.value = emergencyCouncilMembers.value.filter(u => u.id !== user.id);
+  initialEmergencyCouncilMembers.value = initialEmergencyCouncilMembers.value.filter(u => u.id !== user.id);
+  addedEmergencyCouncilMembers.value = addedEmergencyCouncilMembers.value.filter(u => u.id !== user.id);
+}
+
+function resetCouncilMembers() {
+  initialEmergencyCouncilMembers.value = [];
+  addedEmergencyCouncilMembers.value = [];
 }
 
 async function splitRecoveryKey() {
@@ -405,12 +426,21 @@ async function loadDefaultSettings() {
     defaultEmergencyCouncilMembers.value = (await backend.authorities.listSome(settings.emergencyCouncilMemberIds))
       .filter(a => a.type === 'USER')
       .filter(a => didCompleteSetup(a)); // only include users with a public key
+    
+    const authorities = await backend.authorities.listSome(settings.emergencyCouncilMemberIds);
+    const sortedActivatedUsers = authorities
+      .filter((a): a is ActivatedUser => a.type === 'USER' && didCompleteSetup(a))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    defaultEmergencyCouncilMembers.value = [...sortedActivatedUsers];
+    initialEmergencyCouncilMembers.value = [...sortedActivatedUsers];
+
     allowChangingDefaults.value = settings.allowChoosingEmergencyCouncil;
     defaultRequiredEmergencyKeyShares.value = settings.defaultRequiredEmergencyKeyShares;
   } catch (error) {
     console.error('Loading emergency council members failed:', error);
     // TODO: don't set defaults, hard-fail with error message instead
-    defaultEmergencyCouncilMembers.value = [];
+    resetCouncilMembers();
     defaultRequiredEmergencyKeyShares.value = 0;
     allowChangingDefaults.value = false;
   }
