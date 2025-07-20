@@ -55,16 +55,85 @@
                         {{ phaseDescription }}
                       </p>
                     </div>
-                    <select v-if="phase === 'start'" v-model="selectedType">
-                      <option value="RECOVERY">Ownership</option>
-                      <option value="COUNCIL_CHANGE">Vote New Council Members</option>
-                    </select> 
+                    <div v-if="phase === 'start'" class="mt-4 space-y-4">
+                      <div>
+                        <label class="block text-sm font-medium text-gray-700">
+                          {{ t('recoveryDialog.selectRecoveryType') }}
+                        </label>
+                        <select
+                          v-model="selectedType"
+                          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                        >
+                          <option value="RECOVERY">{{ t('recoveryDialog.ownership') }}</option>
+                          <option value="COUNCIL_CHANGE">{{ t('recoveryDialog.voteCouncil') }}</option>
+                        </select>
+                      </div>
+
+                      <div v-if="selectedType === 'RECOVERY'">
+                        <label class="block text-sm font-medium text-gray-700">
+                          {{ t('recoveryDialog.selectNewOwner') }}
+                        </label>
+                        <MultiUserSelectInputGroup
+                          :selected-users="selectedNewOwner ? [selectedNewOwner] : []"
+                          :on-search="searchUsers"
+                          :input-visible="true"
+                          @action="user => selectedNewOwner = user"
+                          @remove="() => selectedNewOwner = null"
+                        />
+                      </div>
+
+                      <div v-if="selectedType === 'COUNCIL_CHANGE'">
+                        <label class="block text-sm font-medium text-gray-700">
+                          {{ t('recoveryDialog.selectNewCouncil') }}
+                        </label>
+                        <MultiUserSelectInputGroup
+                          :selected-users="selectedNewCouncilMembers"
+                          :on-search="searchUsers"
+                          :input-visible="true"
+                          @action="addCouncilMember"
+                          @remove="removeCouncilMember"
+                        />
+                        <div>
+                          <label for="requiredKeySharesInput" class="block text-sm font-medium text-gray-700">
+                            {{ t('recoveryDialog.requiredKeyShares') }}
+                          </label>
+                          <input
+                            id="requiredKeySharesInput"
+                            v-model.number="requiredKeySharesInput"
+                            type="number"
+                            min="1"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
                     <div v-else>
                       <div v-if="selectedType === 'RECOVERY'">
                         Ownership
                       </div>
                       <div v-if="selectedType === 'COUNCIL_CHANGE'">
                         Vote New Council Members
+                      </div>
+
+                      <div v-if="selectedType === 'RECOVERY' && parsedDetails.newOwnerId" class="mt-4 space-y-1 text-sm text-gray-500">
+                        <div>
+                          <span class="font-medium text-gray-700">{{ t('recoveryDialog.selectedOwner') }}:</span>
+                          {{ parsedDetails.newOwnerId }}
+                        </div>
+                      </div>
+
+                      <div v-if="selectedType === 'COUNCIL_CHANGE'" class="mt-4 space-y-1 text-sm text-gray-500">
+                        <div v-if="parsedDetails.newCouncilMemberIds && parsedDetails.newCouncilMemberIds.length">
+                          <span class="font-medium text-gray-700">{{ t('recoveryDialog.selectedCouncil') }}:</span>
+                          <ul class="list-disc list-inside">
+                            <li v-for="id in parsedDetails.newCouncilMemberIds" :key="id">{{ id }}</li>
+                          </ul>
+                        </div>
+                        <div v-if="parsedDetails.newRequiredKeyShares">
+                          <span class="font-medium text-gray-700">{{ t('recoveryDialog.requiredKeyShares') }}:</span>
+                          {{ parsedDetails.newRequiredKeyShares }}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -75,7 +144,8 @@
                 <template v-if="phase === 'start'">
                   <button
                     type="button"
-                    class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm"
+                    class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed"
+                    :disabled="!canStartRecovery"
                     @click="startRecovery()"
                   >
                     {{ t('common.start') }}
@@ -129,6 +199,7 @@ import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, Trans
 import { describeSegment } from '../common/svgUtils';
 import { EmergencyAccess } from '../common/emergencyaccess';
 import userdata from '../common/userdata';
+import MultiUserSelectInputGroup from './MultiUserSelectInputGroup.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -147,10 +218,11 @@ defineExpose({
   show,
 });
 
+const requiredKeySharesInput = ref<number>(props.vault.requiredEmergencyKeyShares);
+
 type PhaseType = 'start' | 'approve' | 'complete';
 const selectedType = ref<RecoveryProcessDto['type']>(props.recoveryProcess?.type ?? 'RECOVERY');
 
-const selectedNewCouncilMembers = ref<string[]>([]); // TODO store type-specific process details in `details` field of `RecoveryProcessDto`
 const phase = computed<PhaseType>(() => {
   const p = props.recoveryProcess;
   if (!p) {
@@ -168,9 +240,49 @@ const didAddMyShare = computed(() => props.recoveryProcess?.recoveredKeyShares[p
 const open = ref(false);
 const onError = ref<Error | null>();
 
+const selectedNewOwner = ref<UserDto | null>(null);
+const selectedNewCouncilMembers = ref<UserDto[]>([]);
+
+async function searchUsers(query: string): Promise<UserDto[]> {
+  const authorities = await backend.authorities.search(query, true);
+  return authorities
+    .filter((a): a is UserDto => a.type === 'USER' && didCompleteSetup(a))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function addCouncilMember(user: UserDto) {
+  if (!selectedNewCouncilMembers.value.find(u => u.id === user.id)) {
+    selectedNewCouncilMembers.value.push(user);
+  }
+}
+
+function removeCouncilMember(user: UserDto) {
+  selectedNewCouncilMembers.value = selectedNewCouncilMembers.value.filter(u => u.id !== user.id);
+}
+
+const canStartRecovery = computed(() => {
+  if (selectedType.value === 'RECOVERY') {
+    return selectedNewOwner.value != null;
+  } else if (selectedType.value === 'COUNCIL_CHANGE') {
+    return (
+      selectedNewCouncilMembers.value.length >= requiredKeySharesInput.value &&
+      requiredKeySharesInput.value > 0
+    );
+  }
+  return false;
+});
+
 async function show() {
   open.value = true;
 }
+
+const parsedDetails = computed(() => {
+  try {
+    return props.recoveryProcess?.details ? JSON.parse(props.recoveryProcess.details) : {};
+  } catch {
+    return {};
+  }
+});
 
 async function startRecovery() {
   try {
@@ -184,13 +296,29 @@ async function startRecovery() {
       throw new Error(`Inconsistent data: Insufficient council members (${councilMembers.length}) to recovery this vault (${props.vault.requiredEmergencyKeyShares}).`);
     }
 
+    let details = '';
+    if (selectedType.value === 'RECOVERY') {
+      if (!selectedNewOwner.value) {
+        throw new Error(t('recoveryDialog.error.noOwnerSelected'));
+      }
+      details = JSON.stringify({ newOwnerId: selectedNewOwner.value.id });
+    } else if (selectedType.value === 'COUNCIL_CHANGE') {
+      if (selectedNewCouncilMembers.value.length < requiredKeySharesInput.value) {
+        throw new Error(t('recoveryDialog.error.notEnoughCouncilMembers'));
+      }
+      details = JSON.stringify({
+        newCouncilMemberIds: selectedNewCouncilMembers.value.map(u => u.id),
+        newRequiredKeyShares: requiredKeySharesInput.value
+      });
+    }
+
     // create recovery process:
     const processKeyPair = await EmergencyAccess.startRecovery(councilMembers);
     const process: RecoveryProcessDto = {
       id: crypto.randomUUID(),
       vaultId: props.vault.id,
       type: selectedType.value,
-      details: '', // TODO: used to store type-specific details such as `selectedNewCouncilMembers`
+      details: details, // TODO: used to store type-specific details such as `selectedNewCouncilMembers`
       requiredKeyShares: props.vault.requiredEmergencyKeyShares,
       processPublicKey: processKeyPair.recoveryPublicKey,
       recoveredKeyShares: {}
