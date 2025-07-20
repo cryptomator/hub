@@ -4,7 +4,7 @@
       {{ t('grantEmergencyAccessDialog.possibleEmergencyScenario') }}
     </label>
     <div class="relative flex flex-wrap gap-2 min-h-[40px]">
-      <template v-if="loading">
+      <template v-if="loadingCouncilSelection">
         <div class="w-full flex py-2">
           <svg class="animate-spin h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
@@ -63,26 +63,113 @@
   </div>
 </template>
 
-<script setup lang="ts">
-import { computed, } from 'vue';
+<script setup lang="ts" generic="T extends UserDto">
+import { computed, watch, ref, toRefs } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { UserDto } from '../../common/backend';
+
+export type Item = {
+  id: string;
+  name: string;
+  pictureUrl?: string;
+  type?: string;
+  memberSize?: number;
+}
 
 const { t } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{
-  loading: boolean,
+  selectedUsers: T[];
   grantButtonDisabled: boolean,
-  requiredKeyShares: number,
-  randomCouncilSelection: UserDto[]
+  requiredKeyShares: number
 }>();
+
+let timeoutId: ReturnType<typeof setTimeout> | null = null;
+const loadingCouncilSelection = ref(true);
+const randomCouncilSelection = ref<UserDto[]>([]);
+const randomSelectionInterval = ref<ReturnType<typeof setInterval> | null>(null);
+
+const { selectedUsers, requiredKeyShares, grantButtonDisabled } = toRefs(props);
+
+watch(
+  [selectedUsers, requiredKeyShares],
+  () => {
+    loadingCouncilSelection.value = true;
+
+    if (timeoutId !== null) {
+      clearTimeout(timeoutId);
+    }
+
+    timeoutId = setTimeout(() => {
+      pickRandomCouncilMembers();
+      loadingCouncilSelection.value = false;
+      timeoutId = null;
+    }, 100);
+  },
+  { immediate: true }
+);
+
+watch([grantButtonDisabled], () => {
+  if (!grantButtonDisabled.value) {
+    pickRandomCouncilMembers();
+    startRandomCouncilInterval();
+  } 
+}, { immediate: true });
+
+function startRandomCouncilInterval() {
+  stopRandomCouncilInterval();
+  pickRandomCouncilMembers();
+  randomSelectionInterval.value = setInterval(() => {
+    pickRandomCouncilMembers();
+  }, 2000);
+}
+
+function stopRandomCouncilInterval() {
+  if (randomSelectionInterval.value) {
+    clearInterval(randomSelectionInterval.value);
+    randomSelectionInterval.value = null;
+  }
+}
+
+function pickRandomCouncilMembers() {
+  const available = props.selectedUsers as T[];
+  const required = props.requiredKeyShares ?? 1;
+
+  if (available.length < required) {
+    randomCouncilSelection.value = [];
+    return;
+  }
+
+  if (randomCouncilSelection.value.length !== required) {
+    const shuffled = [...available].sort(() => 0.5 - Math.random());
+    randomCouncilSelection.value = shuffled.slice(0, required) as T[];
+
+    return;
+  }
+
+  const maxPills = (props.requiredKeyShares < 3) ? props.requiredKeyShares : 3 ; 
+  const current = randomCouncilSelection.value;
+  const currentIds = new Set(current.map(u => u.id));
+
+  const candidates = available.filter(u => !currentIds.has(u.id));
+  if (candidates.length === 0) return;
+
+  const newUser = candidates[Math.floor(Math.random() * candidates.length)];
+  const replaceIndex = Math.floor(Math.random() * maxPills);
+
+  randomCouncilSelection.value = [
+    ...current.slice(0, replaceIndex),
+    newUser,
+    ...current.slice(replaceIndex + 1)
+  ];
+}
 
 const randomCouncilSelectionWithPluses = computed(() => {
   const items: { type: 'user' | 'plus', user?: UserDto, id: string }[] = [];
 
-  props.randomCouncilSelection.forEach((user, i) => {
+  randomCouncilSelection.value.forEach((user, i) => {
     items.push({ type: 'user', user, id: user.id });
-    if (i < props.randomCouncilSelection.length - 1) {
+    if (i < randomCouncilSelection.value.length - 1) {
       items.push({ type: 'plus', id: `plus-${i}` });
     }
   });

@@ -64,10 +64,9 @@
                     />
 
                     <EmergencyScenarioVisualization
-                      :loading="loadingCouncilSelection"
+                      :selected-users="emergencyCouncilMembers"
                       :grant-button-disabled="isGrantButtonDisabled"
                       :required-key-shares="requiredKeyShares"
-                      :random-council-selection="randomCouncilSelection"
                     />
                   </div>
                 </div>
@@ -155,11 +154,7 @@ const emergencyCouncilMembers = computed(() =>
   [...initialEmergencyCouncilMembers.value, ...addedEmergencyCouncilMembers.value]
 );
 
-const loadingCouncilSelection = ref(false);
-const randomCouncilSelection = ref<UserDto[]>([]);
 const randomSelectionInterval = ref<ReturnType<typeof setInterval> | null>(null);
-
-let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
 const isInvalidKeyShares = computed(() => {
   return requiredKeyShares.value < 1;
@@ -172,10 +167,6 @@ const isInvaildCouncilMembers = computed(() => {
 const hasTooFewCouncilMembers = computed(() => {
   return emergencyCouncilMembers.value.length < requiredKeyShares.value;
 });
-
-const isEmergencyCouncilMembersRequiredKeySharesNotEqual = computed(() =>
-  emergencyCouncilMembers.value.length !== requiredKeyShares.value
-);
 
 const isGrantButtonDisabled = computed(() => {
   return isInvalidKeyShares.value || isInvaildCouncilMembers.value || hasTooFewCouncilMembers.value;
@@ -190,32 +181,6 @@ watch(userQuery, async (newQuery) => {
   }
 });
 
-watch(isEmergencyCouncilMembersRequiredKeySharesNotEqual, (isNotEqual) => {
-  if (isNotEqual) {
-    startRandomCouncilInterval();
-  } else {
-    stopRandomCouncilInterval();
-  }
-});
-
-watch(
-  [emergencyCouncilMembers, requiredKeyShares],
-  () => {
-    loadingCouncilSelection.value = true;
-
-    if (timeoutId !== null) {
-      clearTimeout(timeoutId);
-    }
-
-    timeoutId = setTimeout(() => {
-      pickRandomCouncilMembers();
-      loadingCouncilSelection.value = false;
-      timeoutId = null;
-    }, 300);
-  },
-  { immediate: true }
-);
-
 async function show() {
   open.value = true;
   await loadDefaultSettings();
@@ -223,8 +188,6 @@ async function show() {
   initialEmergencyCouncilMembers.value = [...defaultEmergencyCouncilMembers.value];
   addedEmergencyCouncilMembers.value = [];
   await refreshTrusts();
-
-  pickRandomCouncilMembers();
 }
 
 function closeDialog() {
@@ -346,52 +309,6 @@ async function loadDefaultSettings() {
     resetCouncilMembers();
     defaultRequiredEmergencyKeyShares.value = 0;
     allowChangingDefaults.value = false;
-  }
-}
-
-function pickRandomCouncilMembers() {
-  const available = emergencyCouncilMembers.value;
-  const required = requiredKeyShares.value ?? 2;
-
-  if (available.length < required) {
-    randomCouncilSelection.value = [];
-    return;
-  }
-
-  if (randomCouncilSelection.value.length !== required) {
-    const shuffled = [...available].sort(() => 0.5 - Math.random());
-    randomCouncilSelection.value = shuffled.slice(0, required);
-    return;
-  }
-
-  const maxPills = (requiredKeyShares.value < 3) ? requiredKeyShares.value : 3 ; 
-  const current = randomCouncilSelection.value;
-  const currentIds = new Set(current.map(u => u.id));
-
-  const candidates = available.filter(u => !currentIds.has(u.id));
-  if (candidates.length === 0) return;
-
-  const newUser = candidates[Math.floor(Math.random() * candidates.length)];
-  const replaceIndex = Math.floor(Math.random() * maxPills);
-
-  randomCouncilSelection.value = [
-    ...current.slice(0, replaceIndex),
-    newUser,
-    ...current.slice(replaceIndex + 1)
-  ];
-}
-
-function startRandomCouncilInterval() {
-  stopRandomCouncilInterval();
-  randomSelectionInterval.value = setInterval(() => {
-    pickRandomCouncilMembers();
-  }, 2000);
-}
-
-function stopRandomCouncilInterval() {
-  if (randomSelectionInterval.value) {
-    clearInterval(randomSelectionInterval.value);
-    randomSelectionInterval.value = null;
   }
 }
 

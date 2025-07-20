@@ -99,10 +99,9 @@
                           :default-key-shares="vault.requiredEmergencyKeyShares"
                         />
                         <EmergencyScenarioVisualization
-                          :loading="loadingCouncilSelection"
+                          :selected-users="selectedNewCouncilMembers"
                           :grant-button-disabled="isGrantButtonDisabled"
                           :required-key-shares="requiredKeySharesInput"
-                          :random-council-selection="randomCouncilSelection"
                         />
                       </div>
                     </div>
@@ -255,7 +254,6 @@ const isGrantButtonDisabled = computed(() => {
 watch([selectedNewCouncilMembers, requiredKeySharesInput], () => {
   loadingCouncilSelection.value = true;
   setTimeout(() => {
-    // Auswahl neu "durchmischen"
     const shuffled = [...selectedNewCouncilMembers.value].sort(() => 0.5 - Math.random());
     randomCouncilSelection.value = shuffled.slice(0, requiredKeySharesInput.value);
     loadingCouncilSelection.value = false;
