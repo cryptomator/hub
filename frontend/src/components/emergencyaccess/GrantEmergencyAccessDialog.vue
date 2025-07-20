@@ -47,16 +47,6 @@
                       <div class="sm:grid sm:grid-cols-2 sm:items-center sm:gap-2 pt-2 pb-2">
                         <label for="coundcilMembers" class="text-sm font-medium text-gray-700 flex items-center">
                           {{ t('admin.emergencyAccess.councilMembers.title') }}
-                          <button 
-                            v-if="allowChangingDefaults"
-                            type="button" 
-                            class="ml-2 p-1 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-30 disabled:cursor-not-allowed"
-                            :disabled="emergencyCouncilMembers.length == 0"
-                            :title="emergencyCouncilMembers.length > 0 ? 'Reset' : ''"
-                            @click="resetCouncilMembers()"
-                          >
-                            <TrashIcon class="h-4 w-4 text-gray-500 hover:text-gray-700 disabled:text-gray-300" aria-hidden="true" />
-                          </button>
                         </label>
                       </div>
                       <MultiUserSelectInputGroup
