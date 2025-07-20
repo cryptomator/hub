@@ -25,7 +25,7 @@
         <div v-if="inputVisible" class="ml-1 text-gray-500 hover:text-red-600">&times;</div>
       </button>
       <!-- Combobox -->
-      <Combobox v-show="inputVisible" as="div" class="flex-1 min-w-[120px] relative" @update:model-value="onSelect">
+      <Combobox v-show="inputVisible" as="div" class="flex-1 relative" @update:model-value="onSelect">
         <ComboboxInput v-if="inputVisible" as="template">
           <input
             ref="inputEl"
