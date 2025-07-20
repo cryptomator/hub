@@ -57,90 +57,18 @@
                         @remove="removeCouncilMember"
                       />
                     </div>
-                    <div class="mt-4">
-                      <template v-if="allowChangingDefaults">
-                        <label for="keyshares" class="block text-sm font-medium text-gray-700">
-                          Required Emergeny Key Shares
-                        </label>
-                        <div class="mt-1">
-                          <input
-                            id="keyshares"
-                            v-model.number="requiredKeyShares"
-                            type="number"
-                            min="1"
-                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
-                          />
-                        </div>
-                      </template>
-                      <template v-else>
-                        <div class="text-sm text-gray-500">
-                          {{ t('vaultDetails.actions.requiredEmergencyKeyShares') }}:
-                          <span class="font-medium text-gray-900">{{ defaultRequiredEmergencyKeyShares }}</span>
-                        </div>
-                      </template>
-                    </div>
-                    <div class="mt-4">
-                      <label class="block text-sm font-medium text-gray-700 pb-2" >
-                        {{ t('grantEmergencyAccessDialog.possibleEmergencyScenario') }}
-                      </label>
-                      <div class="relative flex flex-wrap gap-2 min-h-[40px]">
-                        <template v-if="loadingCouncilSelection">
-                          <!-- Loading Spinner -->
-                          <div class="w-full flex py-2">
-                            <svg class="animate-spin h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                            </svg>
-                          </div>
-                        </template>
-                        <template v-else>
-                          <template v-if="isGrantButtonDisabled">
-                            <div class="relative flex flex-wrap gap-2 min-h-[40px]">
-                              <span
-                                class="pill inline-flex items-center border border-red-300 bg-red-50 text-red-800 text-sm font-medium px-2 py-1 rounded-full shadow-sm absolute"
-                              >
-                                <span class="truncate">                        
-                                  not possible
-                                </span>
-                              </span>
-                            </div>
-                          </template>
-                          <template v-else>
-                            <TransitionGroup
-                              name="pill"
-                              tag="div"
-                              class="relative flex flex-wrap gap-2 min-h-[40px]"
-                            >
-                              <template v-for="(item, index) in randomCouncilSelectionWithPluses" :key="item.id">
-                                <span
-                                  v-if="item.type === 'user' && index <= 5 "
-                                  class="pill inline-flex items-center border border-indigo-300 bg-indigo-50 text-indigo-800 text-sm font-medium px-2 py-1 rounded-full shadow-sm absolute"
-                                  :style="{ left: `${calcLeft(index)}px`, width: '100px', zIndex: 1 }"
-                                >
-                                  <img :src="item.user!.pictureUrl" class="w-4 h-4 rounded-full mr-1 shrink-0" />
-                                  <span class="truncate">{{ item.user!.name }}</span>
-                                </span>
+                    <RequiredKeySharesInput
+                      v-model="requiredKeyShares"
+                      :allow-changing-defaults="allowChangingDefaults"
+                      :default-key-shares="defaultRequiredEmergencyKeyShares"
+                    />
 
-                                <span
-                                  v-else-if="item.type !== 'user' && index <= 5"
-                                  class="pill inline-flex items-center justify-center text-gray-500 font-medium absolute"
-                                  :style="{ left: `${calcLeft(index)}px`, zIndex: 0 }"
-                                >
-                                  +
-                                </span>
-                              </template>
-                              <span 
-                                v-if="requiredKeyShares > 3"
-                                class="pill inline-flex items-center border border-gray-300 bg-gray-100 text-gray-700 text-sm font-medium px-3 py-1 rounded-full shadow-sm absolute"
-                                :style="{ left: `${calcLeft(3 + 2)}px`, zIndex: 1 }"
-                              >
-                                +{{ requiredKeyShares - 3 }}
-                              </span>
-                            </TransitionGroup>
-                          </template>
-                        </template>
-                      </div>
-                    </div>
+                    <EmergencyScenarioVisualization
+                      :loading="loadingCouncilSelection"
+                      :grant-button-disabled="isGrantButtonDisabled"
+                      :required-key-shares="requiredKeyShares"
+                      :random-council-selection="randomCouncilSelection"
+                    />
                   </div>
                 </div>
 
@@ -178,7 +106,7 @@
 
 <script setup lang="ts">
 import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
-import { ExclamationTriangleIcon, TrashIcon } from '@heroicons/vue/24/outline';
+import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
 import { ref, watch, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { TrustDto, UserDto, VaultDto, didCompleteSetup, ActivatedUser } from '../../common/backend';
@@ -186,6 +114,8 @@ import { VaultKeys } from '../../common/crypto';
 import { wordEncoder } from '../../common/util';
 import { EmergencyAccess } from '../../common/emergencyaccess';
 import MultiUserSelectInputGroup from '../MultiUserSelectInputGroup.vue';
+import RequiredKeySharesInput from './RequiredKeySharesInput.vue';
+import EmergencyScenarioVisualization from './EmergencyScenarioVisualization.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -228,23 +158,6 @@ const emergencyCouncilMembers = computed(() =>
 const loadingCouncilSelection = ref(false);
 const randomCouncilSelection = ref<UserDto[]>([]);
 const randomSelectionInterval = ref<ReturnType<typeof setInterval> | null>(null);
-
-const randomCouncilSelectionWithPluses = computed(() => {
-  const items: { type: 'user' | 'plus', user?: UserDto, id: string }[] = [];
-
-  randomCouncilSelection.value.forEach((user, i) => {
-    items.push({ type: 'user', user, id: user.id });
-    if (i < randomCouncilSelection.value.length - 1) {
-      items.push({ type: 'plus', id: `plus-${i}` });
-    }
-  });
-
-  return items;
-});
-
-const PILL_WIDTH = 100;
-const PLUS_WIDTH = 8;
-const GAP = 8;
 
 let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
@@ -482,52 +395,7 @@ function stopRandomCouncilInterval() {
   }
 }
 
-function calcLeft(index: number): number {
-  let x = 0;
-
-  for (let i = 0; i < index; i++) {
-    const el = randomCouncilSelectionWithPluses.value[i];
-    if (el.type === 'user') {
-      x += PILL_WIDTH + GAP;
-    } else {
-      x += PLUS_WIDTH + GAP;
-    }
-  }
-
-  return x;
-}
-
 async function refreshTrusts() {
   trusts.value = await backend.trust.listTrusted();
 }
 </script>
-
-<style scoped>
-.pill-enter-active,
-.pill-leave-active {
-  transition: all 0.5s ease;
-}
-
-.pill-enter-from {
-  opacity: 0;
-  transform: translateY(-10px) scale(1.05);
-  filter: blur(2px);
-}
-.pill-enter-to {
-  opacity: 1;
-  transform: translateY(0) scale(1);
-  filter: blur(0);
-}
-
-.pill-leave-from {
-  opacity: 1;
-  transform: translateY(0) scale(1);
-  filter: blur(0);
-}
-.pill-leave-to {
-  opacity: 0;
-  transform: translateY(15px) scale(0.95);
-  filter: blur(2px);
-}
-
-</style>

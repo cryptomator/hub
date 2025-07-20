@@ -93,18 +93,17 @@
                           @action="addCouncilMember"
                           @remove="removeCouncilMember"
                         />
-                        <div>
-                          <label for="requiredKeySharesInput" class="block text-sm font-medium text-gray-700">
-                            {{ t('recoveryDialog.requiredKeyShares') }}
-                          </label>
-                          <input
-                            id="requiredKeySharesInput"
-                            v-model.number="requiredKeySharesInput"
-                            type="number"
-                            min="1"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
-                          />
-                        </div>
+                        <RequiredKeySharesInput
+                          v-model="requiredKeySharesInput"
+                          :allow-changing-defaults="true"
+                          :default-key-shares="vault.requiredEmergencyKeyShares"
+                        />
+                        <EmergencyScenarioVisualization
+                          :loading="loadingCouncilSelection"
+                          :grant-button-disabled="isGrantButtonDisabled"
+                          :required-key-shares="requiredKeySharesInput"
+                          :random-council-selection="randomCouncilSelection"
+                        />
                       </div>
                     </div>
 
@@ -193,13 +192,15 @@
 
 <script setup lang="ts">
 import backend, { VaultDto, UserDto, RecoveryProcessDto, didCompleteSetup } from '../common/backend';
-import { ref, computed, toRaw } from 'vue';
+import { ref, computed, toRaw, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import { describeSegment } from '../common/svgUtils';
 import { EmergencyAccess } from '../common/emergencyaccess';
 import userdata from '../common/userdata';
 import MultiUserSelectInputGroup from './MultiUserSelectInputGroup.vue';
+import RequiredKeySharesInput from './emergencyaccess/RequiredKeySharesInput.vue';
+import EmergencyScenarioVisualization from './emergencyaccess/EmergencyScenarioVisualization.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -242,6 +243,24 @@ const onError = ref<Error | null>();
 
 const selectedNewOwner = ref<UserDto | null>(null);
 const selectedNewCouncilMembers = ref<UserDto[]>([]);
+
+const randomCouncilSelection = ref<UserDto[]>([]);
+
+const loadingCouncilSelection = ref(false);
+
+const isGrantButtonDisabled = computed(() => {
+  return selectedNewCouncilMembers.value.length < requiredKeySharesInput.value;
+});
+
+watch([selectedNewCouncilMembers, requiredKeySharesInput], () => {
+  loadingCouncilSelection.value = true;
+  setTimeout(() => {
+    // Auswahl neu "durchmischen"
+    const shuffled = [...selectedNewCouncilMembers.value].sort(() => 0.5 - Math.random());
+    randomCouncilSelection.value = shuffled.slice(0, requiredKeySharesInput.value);
+    loadingCouncilSelection.value = false;
+  }, 300);
+});
 
 async function searchUsers(query: string): Promise<UserDto[]> {
   const authorities = await backend.authorities.search(query, true);
