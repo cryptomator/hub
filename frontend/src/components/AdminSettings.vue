@@ -244,14 +244,21 @@
           </div>
 
           <div class="md:grid md:grid-cols-3 md:gap-6">
-            <div class="md:col-start-2">
-              <button type="submit" :disabled="processingWot" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
+            <div class="md:col-start-2 flex items-center gap-2">
+              <button type="submit" :disabled="processing || !wotHasUnsavedChanges" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
                 <span v-if="!wotUpdated">{{ t('admin.webOfTrust.save') }}</span>
                 <span v-else>{{ t('admin.webOfTrust.saved') }}</span>
               </button>
               <p v-if="onSaveErrorWot != null && !(onSaveErrorWot instanceof FormValidationFailedError)" class="mt-2 text-sm text-red-900">
                 {{ t('common.unexpectedError', [onSaveErrorWot.message]) }}
               </p>
+              <div v-if="wotHasUnsavedChanges" class="flex items-center whitespace-nowrap gap-1 text-sm text-yellow-700">
+                <ExclamationTriangleIcon class="w-4 h-4 m-1 text-yellow-500" />
+                {{ t('common.unsavedChanges') }}&nbsp;
+                <button type="button" class="underline hover:text-yellow-900" @click="resetWebOfTrust()">
+                  {{ t('common.undo') }}
+                </button>
+              </div>
             </div>
           </div>
         </form>
@@ -324,6 +331,13 @@
               <p v-if="onSaveErrorRecovery && !(onSaveErrorRecovery instanceof FormValidationFailedError)" class="mt-2 text-sm text-red-900">
                 {{ t('common.unexpectedError', [onSaveErrorRecovery.message]) }}
               </p>
+              <div v-if="wotHasUnsavedChanges" class="flex items-center whitespace-nowrap gap-1 text-sm text-yellow-700">
+                <ExclamationTriangleIcon class="w-4 h-4 m-1 text-yellow-500" />
+                {{ t('common.unsavedChanges') }}&nbsp;
+                <button type="button" class="underline hover:text-yellow-900" @click="resetWebOfTrust()">
+                  {{ t('common.undo') }}
+                </button>
+              </div>
             </div>
           </div>
         </form>
@@ -413,6 +427,16 @@ const numberOfExceededSeats = computed(() => {
   return remainingSeats.value < 0 ? Math.abs(remainingSeats.value) : 0;
 });
 
+type WotSettings = { wotMaxDepth: number; wotIdVerifyLen: number };
+const initialWebOfTrustSettings = ref<WotSettings>({ wotMaxDepth: 0, wotIdVerifyLen: 0 });
+
+const wotHasUnsavedChanges = computed(() => {
+  return (
+    initialWebOfTrustSettings.value.wotMaxDepth !== wotMaxDepth.value ||
+    initialWebOfTrustSettings.value.wotIdVerifyLen !== wotIdVerifyLen.value
+  );
+});
+
 onMounted(async () => {
   const cfg = config.get();
   keycloakAdminRealmURL.value = `${cfg.keycloakUrl}/admin/${cfg.keycloakRealm}/console`;
@@ -448,6 +472,10 @@ async function fetchData() {
     addedCouncilMembers.value = [];
     wotMaxDepth.value = settings.wotMaxDepth;
     wotIdVerifyLen.value = settings.wotIdVerifyLen;
+    initialWebOfTrustSettings.value = {
+      wotMaxDepth: wotMaxDepth.value,
+      wotIdVerifyLen: wotIdVerifyLen.value
+    };
     defaultRequiredEmergencyKeyShares.value = settings.defaultRequiredEmergencyKeyShares;
     allowChoosingEmergencyCouncil.value = settings.allowChoosingEmergencyCouncil;
   } catch (error) {
@@ -532,6 +560,10 @@ async function saveWebOfTrust() {
       wotIdVerifyLen: wotIdVerifyLen.value,
       hubId: admin.value.hubId
     };
+    initialWebOfTrustSettings.value = {
+      wotMaxDepth: wotMaxDepth.value,
+      wotIdVerifyLen: wotIdVerifyLen.value
+    };
     await backend.settings.update(settings);
     wotUpdated.value = true;
     debouncedWotUpdated();
@@ -541,6 +573,11 @@ async function saveWebOfTrust() {
   } finally {
     processingWot.value = false;
   }
+}
+
+function resetWebOfTrust() {
+  wotMaxDepth.value = initialWebOfTrustSettings.value.wotMaxDepth;
+  wotIdVerifyLen.value = initialWebOfTrustSettings.value.wotIdVerifyLen;
 }
 
 async function saveRecoverySettings() {

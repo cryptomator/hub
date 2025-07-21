@@ -32,7 +32,9 @@
   "common.saved": "Saved!",
   "common.share": "Share",
   "common.show": "Show",
+  "common.undo": "Undo",
   "common.unexpectedError": "Unexpected Error: {0}",
+  "common.unsavedChanges": "Unsaved changes.",
   "common.update": "Update",
   "common.xMembers": "{0} Members",
 
