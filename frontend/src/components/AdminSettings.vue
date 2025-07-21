@@ -446,14 +446,18 @@ type EmergencyAccessSettings = {
 };
 
 const initialEmergencyAccessSettings = ref<EmergencyAccessSettings>({ defaultRequiredEmergencyKeyShares: 0, allowChoosingEmergencyCouncil: false, selectedUsers: [] });
+const selectedCouncilUserIds = computed(() => selectedUsers.value.map(u => u.id).sort().join(','));
+const initialCouncilUserIds = computed(() => initialEmergencyAccessSettings.value.selectedUsers.map(u => u.id).sort().join(','));
+
+const sameCouncilMemberIds = computed(() => {
+  return initialCouncilUserIds.value === selectedCouncilUserIds.value;
+});
 
 const emergencyAccessHasUnsavedChanges = computed(() => {
-  const sameIds = initialEmergencyAccessSettings.value.selectedUsers.map(u => u.id).sort().join(',') === selectedUsers.value.map(u => u.id).sort().join(',');
-  
   return (
     initialEmergencyAccessSettings.value.defaultRequiredEmergencyKeyShares !== defaultRequiredEmergencyKeyShares.value ||
     initialEmergencyAccessSettings.value.allowChoosingEmergencyCouncil !== allowChoosingEmergencyCouncil.value ||
-    !sameIds
+    !sameCouncilMemberIds.value
   );
 });
 
