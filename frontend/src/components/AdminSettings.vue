@@ -245,7 +245,7 @@
 
           <div class="md:grid md:grid-cols-3 md:gap-6">
             <div class="md:col-start-2 flex items-center gap-2">
-              <button type="submit" :disabled="processing || !wotHasUnsavedChanges" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
+              <button type="submit" :disabled="processingWot || !wotHasUnsavedChanges" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
                 <span v-if="!wotUpdated">{{ t('admin.webOfTrust.save') }}</span>
                 <span v-else>{{ t('admin.webOfTrust.saved') }}</span>
               </button>
@@ -323,18 +323,18 @@
 
           <!-- Save Button -->
           <div class="md:grid md:grid-cols-3 md:gap-6">
-            <div class="md:col-start-2">
-              <button type="submit" :disabled="processingRecovery" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed">
-                <span v-if="!recoveryUpdated">{{ t('common.save') }}</span>
-                <span v-else>{{ t('common.saved') }}</span>
+            <div class="md:col-start-2 flex items-center gap-2">
+              <button type="submit" :disabled="processingRecovery || !emergencyAccessHasUnsavedChanges" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
+                <span v-if="!recoveryUpdated">{{ t('admin.webOfTrust.save') }}</span>
+                <span v-else>{{ t('admin.webOfTrust.saved') }}</span>
               </button>
-              <p v-if="onSaveErrorRecovery && !(onSaveErrorRecovery instanceof FormValidationFailedError)" class="mt-2 text-sm text-red-900">
+              <p v-if="onSaveErrorRecovery != null && !(onSaveErrorRecovery instanceof FormValidationFailedError)" class="mt-2 text-sm text-red-900">
                 {{ t('common.unexpectedError', [onSaveErrorRecovery.message]) }}
               </p>
-              <div v-if="wotHasUnsavedChanges" class="flex items-center whitespace-nowrap gap-1 text-sm text-yellow-700">
+              <div v-if="emergencyAccessHasUnsavedChanges" class="flex items-center whitespace-nowrap gap-1 text-sm text-yellow-700">
                 <ExclamationTriangleIcon class="w-4 h-4 m-1 text-yellow-500" />
                 {{ t('common.unsavedChanges') }}&nbsp;
-                <button type="button" class="underline hover:text-yellow-900" @click="resetWebOfTrust()">
+                <button type="button" class="underline hover:text-yellow-900" @click="resetEmergencyAccess()">
                   {{ t('common.undo') }}
                 </button>
               </div>
@@ -379,8 +379,10 @@ const now = ref<Date>(new Date());
 const keycloakAdminRealmURL = ref<string>();
 const wotMaxDepth = ref<number>();
 const wotIdVerifyLen = ref<number>();
+
 const defaultRequiredEmergencyKeyShares = ref<number>();
 const allowChoosingEmergencyCouncil = ref<boolean>();
+
 const wotUpdated = ref(false);
 const debouncedWotUpdated = debounce(() => wotUpdated.value = false, 2000);
 const form = ref<HTMLFormElement>();
@@ -437,6 +439,24 @@ const wotHasUnsavedChanges = computed(() => {
   );
 });
 
+type EmergencyAccessSettings = {
+  defaultRequiredEmergencyKeyShares: number;
+  allowChoosingEmergencyCouncil: boolean;
+  selectedUsers: UserDto[];
+};
+
+const initialEmergencyAccessSettings = ref<EmergencyAccessSettings>({ defaultRequiredEmergencyKeyShares: 0, allowChoosingEmergencyCouncil: false, selectedUsers: [] });
+
+const emergencyAccessHasUnsavedChanges = computed(() => {
+  const sameIds = initialEmergencyAccessSettings.value.selectedUsers.map(u => u.id).sort().join(',') === selectedUsers.value.map(u => u.id).sort().join(',');
+  
+  return (
+    initialEmergencyAccessSettings.value.defaultRequiredEmergencyKeyShares !== defaultRequiredEmergencyKeyShares.value ||
+    initialEmergencyAccessSettings.value.allowChoosingEmergencyCouncil !== allowChoosingEmergencyCouncil.value ||
+    !sameIds
+  );
+});
+
 onMounted(async () => {
   const cfg = config.get();
   keycloakAdminRealmURL.value = `${cfg.keycloakUrl}/admin/${cfg.keycloakRealm}/console`;
@@ -478,6 +498,11 @@ async function fetchData() {
     };
     defaultRequiredEmergencyKeyShares.value = settings.defaultRequiredEmergencyKeyShares;
     allowChoosingEmergencyCouncil.value = settings.allowChoosingEmergencyCouncil;
+    initialEmergencyAccessSettings.value = {
+      defaultRequiredEmergencyKeyShares: defaultRequiredEmergencyKeyShares.value,
+      allowChoosingEmergencyCouncil: allowChoosingEmergencyCouncil.value,
+      selectedUsers: [...selectedUsers.value]
+    };
   } catch (error) {
     if (error instanceof FetchUpdateError) {
       errorOnFetchingUpdates.value = true;
@@ -486,6 +511,13 @@ async function fetchData() {
       onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
     }
   }
+}
+
+function resetEmergencyAccess() {
+  defaultRequiredEmergencyKeyShares.value = initialEmergencyAccessSettings.value.defaultRequiredEmergencyKeyShares;
+  allowChoosingEmergencyCouncil.value = initialEmergencyAccessSettings.value.allowChoosingEmergencyCouncil;
+  initialCouncilMembers.value = [...initialEmergencyAccessSettings.value.selectedUsers];
+  addedCouncilMembers.value = [];
 }
 
 watch(userQuery, (newQuery) => {
@@ -601,6 +633,12 @@ async function saveRecoverySettings() {
       allowChoosingEmergencyCouncil: allowChoosingEmergencyCouncil.value,
       emergencyCouncilMemberIds: selectedUsers.value.map(u => u.id)
     };
+    initialEmergencyAccessSettings.value = {
+      defaultRequiredEmergencyKeyShares: defaultRequiredEmergencyKeyShares.value,
+      allowChoosingEmergencyCouncil: allowChoosingEmergencyCouncil.value,
+      selectedUsers: selectedUsers.value
+    }; 
+    addedCouncilMembers.value = [];
     await backend.settings.update(settings);
     recoveryUpdated.value = true;
     debouncedRecoveryUpdated();
