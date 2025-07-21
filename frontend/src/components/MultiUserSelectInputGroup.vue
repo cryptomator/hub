@@ -13,6 +13,7 @@
       <button
         v-for="(user, index) in selectedUsers"
         :key="user.id"
+        tabindex="-1"
         class="inline-flex items-center text-sm rounded-full px-2 py-1 mr-1 mb-1 border transition-colors shadow-sm"
         :class="{
           'bg-white text-gray-800': selectedPillIndex !== index,
@@ -38,6 +39,7 @@
             }"
             :placeholder="props.selectedUsers.length === 0 ? t('recoveryDialog.searchUser') : ''"
             @keydown="onKeyDown"
+            @blur="onBlur"
           />
         </ComboboxInput>
       </Combobox>
@@ -109,6 +111,10 @@ const focusInput = () => {
 const activeIndex = ref(0);
 const hoveredIndex = ref<number | null>(null); // 👈 NEU
 const selectedPillIndex = ref<number | null>(null);
+
+function onBlur() {
+  selectedPillIndex.value = null;
+}
 
 watch(query, async (newQuery) => {
   if (newQuery.trim() === '') {
