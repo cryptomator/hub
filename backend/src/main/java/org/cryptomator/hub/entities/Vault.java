@@ -51,6 +51,12 @@ import java.util.stream.Stream;
 				INNER JOIN EffectiveVaultAccess a ON a.id.vaultId = v.id AND a.id.authorityId = :userId
 				WHERE a.id.role = :role
 				""")
+@NamedQuery(name = "Vault.recoverableByUser",
+		query = """
+				SELECT DISTINCT v
+				FROM Vault v
+				INNER JOIN v.emergencyKeyShares keyShares WHERE KEY(keyShares) = :councilMemberId
+				""")
 @NamedQuery(name = "Vault.allInList",
 		query = """
 				SELECT v
@@ -307,6 +313,10 @@ public class Vault {
 
 		public Stream<Vault> findAccessibleByUser(String userId) {
 			return find("#Vault.accessibleByUser", Parameters.with("userId", userId)).stream();
+		}
+
+		public Stream<Vault> findRecoverable(String userId) {
+			return find("#Vault.recoverableByUser", Parameters.with("councilMemberId", userId)).stream();
 		}
 
 		public Stream<Vault> findAccessibleByUser(String userId, VaultAccess.Role role) {

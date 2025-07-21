@@ -188,6 +188,10 @@ class VaultService {
     return axiosAuth.get('/vaults/accessible', { params: queryParams }).then(response => response.data);
   }
 
+  public async listRecoverable(): Promise<VaultDto[]> {
+    return axiosAuth.get('/vaults/recoverable').then(response => response.data);
+  }
+
   public async listSome(vaultsIds: string[]): Promise<VaultDto[]> {
     const query = `ids=${vaultsIds.join('&ids=')}`;
     return axiosAuth.get(`/vaults/some?${query}`).then(response => response.data);

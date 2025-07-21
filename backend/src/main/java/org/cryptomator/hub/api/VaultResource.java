@@ -123,6 +123,18 @@ public class VaultResource {
 	}
 
 	@GET
+	@Path("/recoverable")
+	@RolesAllowed("user")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Transactional
+	@Operation(summary = "list all recoverable vaults", description = "list all vaults that can be recovered by the currently logged in user")
+	public List<VaultDto> getRecoverable() {
+		var currentUserId = jwt.getSubject();
+		final Stream<Vault> resultStream = vaultRepo.findRecoverable(currentUserId);
+		return resultStream.map(VaultDto::fromEntity).toList();
+	}
+
+	@GET
 	@Path("/some")
 	@RolesAllowed("admin")
 	@Produces(MediaType.APPLICATION_JSON)

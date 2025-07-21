@@ -134,6 +134,7 @@ const onFetchError = ref<Error | null>();
 
 const vaults = ref<VaultDto[]>();
 const accessibleVaults = ref<VaultDto[]>();
+const recoverableVaults = ref<VaultDto[]>();
 const ownedVaults = ref<VaultDto[]>();
 const selectedVault = ref<VaultDto | null>(null);
 
@@ -160,9 +161,10 @@ const isLicenseViolated = computed(() => {
 
 const filterOptions = ref< {[key: string]: string} >({
   accessibleVaults: t('vaultList.filter.entry.accessibleVaults'),
-  ownedVaults: t('vaultList.filter.entry.ownedVaults')
+  ownedVaults: t('vaultList.filter.entry.ownedVaults'),
+  recoverableVaults: 'TODO LOCALIZE recoverable vaults'
 });
-const selectedFilter = ref<'accessibleVaults' | 'ownedVaults' | 'allVaults'>('accessibleVaults');
+const selectedFilter = ref<'accessibleVaults' | 'ownedVaults' | 'recoverableVaults' | 'allVaults'>('accessibleVaults');
 watch(selectedFilter, fetchData);
 const query = ref('');
 const filteredVaults = computed(() =>
@@ -185,6 +187,7 @@ async function fetchData() {
       filterOptions.value['allVaults'] = t('vaultList.filter.entry.allVaults');
     }
     accessibleVaults.value = (await backend.vaults.listAccessible()).filter(v => !v.archived).sort((a, b) => a.name.localeCompare(b.name));
+    recoverableVaults.value = (await backend.vaults.listRecoverable()).sort((a, b) => a.name.localeCompare(b.name));
     ownedVaults.value = (await backend.vaults.listAccessible('OWNER')).sort((a, b) => a.name.localeCompare(b.name));
     switch (selectedFilter.value) {
       case 'accessibleVaults':
@@ -192,6 +195,9 @@ async function fetchData() {
         break;
       case 'ownedVaults':
         vaults.value = ownedVaults.value;
+        break;
+      case 'recoverableVaults':
+        vaults.value = recoverableVaults.value;
         break;
       case 'allVaults':
         vaults.value = (await backend.vaults.listAll()).sort((a, b) => a.name.localeCompare(b.name));
