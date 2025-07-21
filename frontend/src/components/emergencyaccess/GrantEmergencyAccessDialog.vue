@@ -62,10 +62,8 @@
                       :allow-changing-defaults="allowChangingDefaults"
                       :default-key-shares="defaultRequiredEmergencyKeyShares"
                     />
-
                     <EmergencyScenarioVisualization
                       :selected-users="emergencyCouncilMembers"
-                      :grant-button-disabled="isGrantButtonDisabled"
                       :required-key-shares="requiredKeyShares"
                     />
                   </div>

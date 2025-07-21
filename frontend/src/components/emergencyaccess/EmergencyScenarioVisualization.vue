@@ -14,7 +14,7 @@
       </template>
 
       <template v-else>
-        <template v-if="grantButtonDisabled">
+        <template v-if="isGrantButtonDisabled">
           <div class="relative flex flex-wrap gap-2 min-h-[40px]">
             <span
               class="pill inline-flex items-center border border-red-300 bg-red-50 text-red-800 text-sm font-medium px-2 py-1 rounded-full shadow-sm absolute"
@@ -80,7 +80,6 @@ const { t } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{
   selectedUsers: T[];
-  grantButtonDisabled: boolean,
   requiredKeyShares: number
 }>();
 
@@ -89,7 +88,7 @@ const loadingCouncilSelection = ref(true);
 const randomCouncilSelection = ref<UserDto[]>([]);
 const randomSelectionInterval = ref<ReturnType<typeof setInterval> | null>(null);
 
-const { selectedUsers, requiredKeyShares, grantButtonDisabled } = toRefs(props);
+const { selectedUsers, requiredKeyShares } = toRefs(props);
 
 watch(
   [selectedUsers, requiredKeyShares],
@@ -109,13 +108,6 @@ watch(
   { immediate: true }
 );
 
-watch([grantButtonDisabled], () => {
-  if (!grantButtonDisabled.value) {
-    pickRandomCouncilMembers();
-    startRandomCouncilInterval();
-  } 
-}, { immediate: true });
-
 function startRandomCouncilInterval() {
   stopRandomCouncilInterval();
   pickRandomCouncilMembers();
@@ -130,6 +122,16 @@ function stopRandomCouncilInterval() {
     randomSelectionInterval.value = null;
   }
 }
+const isGrantButtonDisabled = computed(() => {
+  return selectedUsers.value.length < requiredKeyShares.value;
+});
+
+watch([isGrantButtonDisabled], () => {
+  if (!isGrantButtonDisabled.value) {
+    pickRandomCouncilMembers();
+    startRandomCouncilInterval();
+  } 
+}, { immediate: true });
 
 function pickRandomCouncilMembers() {
   const available = props.selectedUsers as T[];
