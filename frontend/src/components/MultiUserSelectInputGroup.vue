@@ -13,10 +13,10 @@
       <button
         v-for="(user, index) in selectedUsers"
         :key="user.id"
-        class="inline-flex items-center text-sm rounded-full px-2 py-1 mr-1 mb-1 border transition-colors"
+        class="inline-flex items-center text-sm rounded-full px-2 py-1 mr-1 mb-1 border transition-colors shadow-sm"
         :class="{
-          'bg-blue-100 text-gray-800': selectedPillIndex !== index,
-          'bg-blue-200 ring-2 ring-blue-500': selectedPillIndex === index
+          'bg-white text-gray-800': selectedPillIndex !== index,
+          'bg-white ring-2 ring-primary': selectedPillIndex === index
         }"
         @click.stop="inputVisible && removeUser(user)"
       >
@@ -36,7 +36,7 @@
               'caret-transparent': selectedPillIndex !== null,
               'caret-black': selectedPillIndex === null
             }"
-            :placeholder="props.selectedUsers.length === 0 ? 'Nutzer suchen…' : ''"
+            :placeholder="props.selectedUsers.length === 0 ? t('recoveryDialog.searchUser') : ''"
             @keydown="onKeyDown"
           />
         </ComboboxInput>
@@ -70,6 +70,7 @@
 <script setup lang="ts" generic="T extends Item">
 import { ref, computed, watch, nextTick } from 'vue';
 import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions } from '@headlessui/vue';
+import { useI18n } from 'vue-i18n';
 
 export type Item = {
   id: string;
@@ -78,6 +79,8 @@ export type Item = {
   type?: string;
   memberSize?: number;
 }
+
+const { t } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{
   selectedUsers: T[];
@@ -134,6 +137,7 @@ function onSelect(user: T) {
   query.value = '';
   searchResults.value = [];
   activeIndex.value = 0;
+  nextTick(() => inputEl.value?.focus());
 }
 
 function removeUser(user: T) {

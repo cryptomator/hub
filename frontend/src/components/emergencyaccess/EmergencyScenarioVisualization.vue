@@ -19,7 +19,7 @@
             <span
               class="pill inline-flex items-center border border-red-300 bg-red-50 text-red-800 text-sm font-medium px-2 py-1 rounded-full shadow-sm absolute"
             >
-              <span class="truncate">not possible</span>
+              <span class="truncate">{{ t('recoveryDialog.notPossible') }}</span>
             </span>
           </div>
         </template>
@@ -33,7 +33,7 @@
             <template v-for="(item, index) in displayItems.value" :key="item.id">
               <span
                 v-if="item.type === 'user' && index <= 5"
-                class="pill inline-flex items-center border border-indigo-300 bg-indigo-50 text-indigo-800 text-sm font-medium px-2 py-1 rounded-full shadow-sm absolute"
+                class="pill inline-flex items-center border border-grey bg-white text-sm font-medium px-2 py-1 rounded-full shadow-sm absolute"
                 :style="{ left: `${calcLeft(index)}px`, width: '100px', zIndex: 1 }"
               >
                 <img :src="item.user!.pictureUrl" class="w-4 h-4 rounded-full mr-1 shrink-0" />
@@ -143,7 +143,10 @@ function pickRandomCouncilMembers() {
   }
 
   if (randomCouncilSelection.value.length !== required) {
-    const shuffled = [...available].sort(() => 0.5 - Math.random());
+    const shuffled = [...available].sort(
+      () => 0.5 - 
+      Math.random() //NOSONAR
+    );
     randomCouncilSelection.value = shuffled.slice(0, required) as T[];
 
     return;
@@ -156,8 +159,16 @@ function pickRandomCouncilMembers() {
   const candidates = available.filter(u => !currentIds.has(u.id));
   if (candidates.length === 0) return;
 
-  const newUser = candidates[Math.floor(Math.random() * candidates.length)];
-  const replaceIndex = Math.floor(Math.random() * maxPills);
+  const newUser = candidates[
+    Math.floor(
+      Math.random() //NOSONAR
+      * candidates.length
+    )
+  ];
+  const replaceIndex = Math.floor(
+    Math.random() //NOSONAR
+    * maxPills
+  );
 
   randomCouncilSelection.value = [
     ...current.slice(0, replaceIndex),

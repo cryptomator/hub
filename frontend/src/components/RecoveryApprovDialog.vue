@@ -48,11 +48,11 @@
                       {{ phaseTitle }}
                     </DialogTitle>
                     <div class="mt-2">
-                      <p v-if="didAddMyShare" class="text-sm text-gray-500">
-                        TODO LOCALIZE: You have already added your part of the emergency key.
-                      </p>
                       <p class="text-sm text-gray-500">
                         {{ phaseDescription }}
+                      </p>
+                      <p v-if="didAddMyShare" class="text-sm text-gray-500">
+                        {{ t('recoveryDialog.alreadyAddedKeyShare') }}
                       </p>
                     </div>
                     <div v-if="phase === 'start'" class="mt-4 space-y-4">
@@ -104,6 +104,17 @@
                           :required-key-shares="requiredKeySharesInput"
                         />
                       </div>
+                      <div class="flex items-center mt-2">
+                        <input
+                          id="addMyShare"
+                          v-model="addMyKeyShare"
+                          type="checkbox"
+                          class="h-4 w-4 text-primary border-gray-300 rounded focus:ring-primary"
+                        />
+                        <label for="addMyShare" class="ml-2 block text-sm text-gray-700">
+                          {{ t('recoveryDialog.addMyKeyShare') }}
+                        </label>
+                      </div>
                     </div>
 
                     <div v-else>
@@ -146,7 +157,12 @@
                     :disabled="!canStartRecovery"
                     @click="startRecovery()"
                   >
-                    {{ t('common.start') }}
+                    <div v-if="!addMyKeyShare">
+                      {{ t('common.start') }}
+                    </div>
+                    <div v-else>
+                      {{ t('recoveryDialog.startAndAprrove') }}
+                    </div>
                   </button>
                 </template>
 
@@ -191,7 +207,7 @@
 
 <script setup lang="ts">
 import backend, { VaultDto, UserDto, RecoveryProcessDto, didCompleteSetup } from '../common/backend';
-import { ref, computed, toRaw, watch } from 'vue';
+import { ref, computed, toRaw } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import { describeSegment } from '../common/svgUtils';
@@ -222,6 +238,7 @@ const requiredKeySharesInput = ref<number>(props.vault.requiredEmergencyKeyShare
 
 type PhaseType = 'start' | 'approve' | 'complete';
 const selectedType = ref<RecoveryProcessDto['type']>(props.recoveryProcess?.type ?? 'RECOVERY');
+const addMyKeyShare = ref(false);
 
 const phase = computed<PhaseType>(() => {
   const p = props.recoveryProcess;
@@ -243,21 +260,8 @@ const onError = ref<Error | null>();
 const selectedNewOwner = ref<UserDto | null>(null);
 const selectedNewCouncilMembers = ref<UserDto[]>([]);
 
-const randomCouncilSelection = ref<UserDto[]>([]);
-
-const loadingCouncilSelection = ref(false);
-
 const isGrantButtonDisabled = computed(() => {
   return selectedNewCouncilMembers.value.length < requiredKeySharesInput.value;
-});
-
-watch([selectedNewCouncilMembers, requiredKeySharesInput], () => {
-  loadingCouncilSelection.value = true;
-  setTimeout(() => {
-    const shuffled = [...selectedNewCouncilMembers.value].sort(() => 0.5 - Math.random());
-    randomCouncilSelection.value = shuffled.slice(0, requiredKeySharesInput.value);
-    loadingCouncilSelection.value = false;
-  }, 300);
 });
 
 async function searchUsers(query: string): Promise<UserDto[]> {
@@ -350,7 +354,9 @@ async function startRecovery() {
     const userKeys = await userdata.decryptUserKeysWithBrowser();
 
     // add my part of the emergency key::
-    await addMyShare(process, userKeys.ecdhKeyPair.privateKey);
+    if (addMyKeyShare.value) {
+      await addMyShare(process, userKeys.ecdhKeyPair.privateKey);
+    }
     await backend.emergencyAccess.startRecovery(process);
 
     emit('updated', process);
