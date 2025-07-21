@@ -29,7 +29,7 @@
   "common.show": "Показать",
   "common.undo": "Отменить",
   "common.unexpectedError": "Неизвестная ошибка: {0}",
-  "common.unsavedChanges": "Несохраненные изменения.",
+  "common.unsavedChanges": "Несохранённые изменения.",
   "common.update": "Обновить",
   "common.xMembers": "Участников: {0}",
   "admin.title": "Администратор",
