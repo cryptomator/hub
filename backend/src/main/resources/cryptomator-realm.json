@@ -65,8 +65,16 @@
       "lastName": "alice",
       "email": "alice@localhost",
       "enabled": true,
-      "credentials": [{"type": "password", "value": "asd"}],
-      "realmRoles": ["user", "create-vaults"]
+      "credentials": [
+        {
+          "type": "password",
+          "value": "asd"
+        }
+      ],
+      "realmRoles": [
+        "user",
+        "create-vaults"
+      ]
     },
     {
       "username": "bob",
@@ -74,8 +82,16 @@
       "lastName": "bob",
       "email": "bob@localhost",
       "enabled": true,
-      "credentials": [{"type": "password", "value": "asd"}],
-      "realmRoles": ["user", "create-vaults"]
+      "credentials": [
+        {
+          "type": "password",
+          "value": "asd"
+        }
+      ],
+      "realmRoles": [
+        "user",
+        "create-vaults"
+      ]
     },
     {
       "username": "carol",
@@ -83,9 +99,18 @@
       "lastName": "carol",
       "email": "carol@localhost",
       "enabled": true,
-      "credentials": [{"type": "password", "value": "asd"}],
-      "realmRoles": ["user"],
-      "groups" : [ "/groupies" ]
+      "credentials": [
+        {
+          "type": "password",
+          "value": "asd"
+        }
+      ],
+      "realmRoles": [
+        "user"
+      ],
+      "groups": [
+        "/groupies"
+      ]
     },
     {
       "username": "dave",
@@ -93,9 +118,18 @@
       "lastName": "dave",
       "email": "dave@localhost",
       "enabled": true,
-      "credentials": [{"type": "password", "value": "asd"}],
-      "realmRoles": ["user"],
-      "groups" : [ "/groupies" ]
+      "credentials": [
+        {
+          "type": "password",
+          "value": "asd"
+        }
+      ],
+      "realmRoles": [
+        "user"
+      ],
+      "groups": [
+        "/groupies"
+      ]
     },
     {
       "username": "erin",
@@ -103,9 +137,18 @@
       "lastName": "erin",
       "email": "erin@localhost",
       "enabled": true,
-      "credentials": [{"type": "password", "value": "asd"}],
-      "realmRoles": ["user"],
-      "groups" : [ "/groupies" ]
+      "credentials": [
+        {
+          "type": "password",
+          "value": "asd"
+        }
+      ],
+      "realmRoles": [
+        "user"
+      ],
+      "groups": [
+        "/groupies"
+      ]
     },
     {
       "username": "system",
@@ -115,8 +158,10 @@
       "attributes": {
         "picture": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGZpbGw9IiMwMDAiIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj4KCTxtYXNrIGlkPSJjbGlwIj4KCQk8Y2lyY2xlIGZpbGw9IiNGRkYiIHI9IjUwIiBjeD0iNTAiIGN5PSI1MCIvPgoJCTxnIGZpbGw9IiMwMDAiPgoJCTxjaXJjbGUgcj0iMjUiIGN4PSI1MCIgY3k9IjUwIiAvPgoJCTxjaXJjbGUgcj0iMTIiIGN4PSIwIiBjeT0iNTAiIC8+CgkJPGNpcmNsZSByPSIxMiIgY3g9IjUwIiBjeT0iMCIgLz4KCQk8Y2lyY2xlIHI9IjEyIiBjeD0iODUiIGN5PSIxNSIgLz4KCQk8Y2lyY2xlIHI9IjEyIiBjeD0iMTAwIiBjeT0iNTAiIC8+CgkJPGNpcmNsZSByPSIxMiIgY3g9Ijg1IiBjeT0iODUiIC8+CgkJPGNpcmNsZSByPSIxMiIgY3g9IjUwIiBjeT0iMTAwIiAvPgoJCTxjaXJjbGUgcj0iMTIiIGN4PSIxNSIgY3k9Ijg1IiAvPgoJCTxjaXJjbGUgcj0iMTIiIGN4PSIwIiBjeT0iNTAiIC8+CgkJPGNpcmNsZSByPSIxMiIgY3g9IjE1IiBjeT0iMTUiIC8+CgkJPC9nPgoJPC9tYXNrPgoJPGNpcmNsZSByPSI1MCIgY3g9IjUwIiBjeT0iNTAiIG1hc2s9InVybCgjY2xpcCkiIC8+Cjwvc3ZnPg=="
       },
-      "clientRoles" : {
-        "realm-management" : [ "realm-admin" ]
+      "clientRoles": {
+        "realm-management": [
+          "realm-admin"
+        ]
       }
     },
     {
@@ -131,8 +176,11 @@
         "user",
         "create-vaults"
       ],
-      "clientRoles" : {
-        "realm-management" : [ "manage-users", "view-users" ]
+      "clientRoles": {
+        "realm-management": [
+          "manage-users",
+          "view-users"
+        ]
       }
     }
   ],

@@ -1,7 +1,7 @@
 import * as miscreant from 'miscreant';
 import { base16, base32, base64, base64url } from 'rfc4648';
 import { JWEBuilder, JWEParser } from './jwe';
-import { CRC32, DB, wordEncoder } from './util';
+import { UTF8, CRC32, DB, wordEncoder } from './util';
 export class UnwrapKeyError extends Error {
   readonly actualError: unknown;
 
@@ -106,7 +106,7 @@ export class VaultKeys {
    */
   public static async decryptWithAdminPassword(vaultAdminPassword: string, wrappedMasterkey: string, wrappedOwnerPrivateKey: string, ownerPublicKey: string, salt: string, iterations: number): Promise<[VaultKeys, CryptoKeyPair]> {
     // pbkdf2:
-    const encodedPw = new TextEncoder().encode(vaultAdminPassword);
+    const encodedPw = UTF8.encode(vaultAdminPassword);
     const pwKey = crypto.subtle.importKey('raw', encodedPw, 'PBKDF2', false, ['deriveKey']);
     const kek = crypto.subtle.deriveKey(
       {
@@ -125,7 +125,7 @@ export class VaultKeys {
     const decodedPrivateKey = base64.parse(wrappedOwnerPrivateKey, { loose: true });
     const decodedPublicKey = base64.parse(ownerPublicKey, { loose: true });
     try {
-      const masterkey = crypto.subtle.unwrapKey(
+      const masterkey = await crypto.subtle.unwrapKey(
         'raw',
         decodedMasterKey.slice(GCM_NONCE_LEN),
         await kek,
@@ -134,7 +134,7 @@ export class VaultKeys {
         true,
         ['sign']
       );
-      const privKey = crypto.subtle.unwrapKey(
+      const privKey = await crypto.subtle.unwrapKey(
         'pkcs8',
         decodedPrivateKey.slice(GCM_NONCE_LEN),
         await kek,
@@ -143,14 +143,14 @@ export class VaultKeys {
         false,
         ['sign']
       );
-      const pubKey = crypto.subtle.importKey(
+      const pubKey = await crypto.subtle.importKey(
         'spki',
         decodedPublicKey,
         { name: 'ECDSA', namedCurve: 'P-384' },
         true,
         ['verify']
       );
-      return [new VaultKeys(await masterkey), { privateKey: await privKey, publicKey: await pubKey }];
+      return [new VaultKeys(masterkey), { privateKey: privKey, publicKey: pubKey }];
     } catch (error) {
       throw new UnwrapKeyError(error);
     }
@@ -194,9 +194,8 @@ export class VaultKeys {
       hub: hubConfig
     });
     const payloadJson = JSON.stringify(payload);
-    const encoder = new TextEncoder();
-    const unsignedToken = base64url.stringify(encoder.encode(header), { pad: false }) + '.' + base64url.stringify(encoder.encode(payloadJson), { pad: false });
-    const encodedUnsignedToken = new TextEncoder().encode(unsignedToken);
+    const unsignedToken = base64url.stringify(UTF8.encode(header), { pad: false }) + '.' + base64url.stringify(UTF8.encode(payloadJson), { pad: false });
+    const encodedUnsignedToken = UTF8.encode(unsignedToken);
     const signature = await crypto.subtle.sign(
       'HMAC',
       this.masterKey,
@@ -206,7 +205,7 @@ export class VaultKeys {
   }
 
   public async hashDirectoryId(cleartextDirectoryId: string): Promise<string> {
-    const dirHash = new TextEncoder().encode(cleartextDirectoryId);
+    const dirHash = UTF8.encode(cleartextDirectoryId);
     const rawkey = new Uint8Array(await crypto.subtle.exportKey('raw', this.masterKey));
     try {
       // miscreant lib requires mac key first and then the enc key
@@ -491,6 +490,6 @@ export async function getJwkThumbprint(key: JsonWebKey | CryptoKey): Promise<Uin
       break;
     default: throw new Error('Unsupported key type');
   }
-  const bytes = new TextEncoder().encode(orderedJson);
+  const bytes = UTF8.encode(orderedJson);
   return new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
 }
