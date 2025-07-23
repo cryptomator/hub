@@ -45,7 +45,6 @@
             <div class="min-w-0 flex-1">
               <div class="flex items-center gap-3">
                 <p class="truncate text-sm font-medium text-primary">{{ vault.name }}</p>
-                <div v-if="vault.archived" class="inline-flex items-center rounded-md bg-yellow-400/10 px-2 py-1 text-xs font-medium text-yellow-500 ring-1 ring-inset ring-yellow-400/20">{{ t('vaultList.badge.archived') }}</div>
               </div>
               <p v-if="vault.description" class="truncate text-sm text-gray-500 mt-2">{{ vault.description }}</p>
             </div>
@@ -129,9 +128,7 @@ import { CheckIcon, ChevronUpDownIcon, ExclamationTriangleIcon } from '@heroicon
 import userdata from '../common/userdata';
 import { UserDto } from '../common/backend';
 import { describeSegment } from '../common/svgUtils';
-import GrantEmergencyAccessDialog from './emergencyaccess/GrantEmergencyAccessDialog.vue';
 import RecoveryApprovDialog from './RecoveryApprovDialog.vue';
-import { VaultKeys } from '../common/crypto';
 
 export type Item = {
   id: string;
@@ -205,7 +202,7 @@ async function fetchData() {
   onFetchError.value = null;
   try {
     me.value = await userdata.me;
-    vaults.value = (await backend.vaults.listRecoverable()).sort((a, b) => a.name.localeCompare(b.name));
+    vaults.value = (await backend.vaults.listRecoverable()).filter(v => !v.archived).sort((a, b) => a.name.localeCompare(b.name));
     for (const vault of vaults.value ?? []) {
       const processes = await backend.emergencyAccess.findProcessesForVault(vault.id);
       if (processes.length > 0) {
