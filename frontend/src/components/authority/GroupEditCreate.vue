@@ -104,15 +104,22 @@
               <div></div>
               <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
                 <div class="flex space-x-3">
-                  <button type="submit" :disabled="processing" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
+                  <button type="button" class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md bg-white text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="cancelAction">
+                    {{ t('common.cancel') }}
+                  </button>
+                  <button type="submit" :disabled="processing || !groupDataHasUnsavedChanges" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
                     <span v-if="!groupSaved">
                       {{ isEditMode ? t('common.save') : t('common.create') }}
                     </span>
                     <span v-else>{{ t('common.saved') }}</span>
                   </button>
-                  <button type="button" class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md bg-white text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="cancelAction">
-                    {{ t('common.cancel') }}
-                  </button>
+                  <div v-if="groupDataHasUnsavedChanges && isEditMode" class="flex items-center whitespace-nowrap gap-1 text-sm text-yellow-700">
+                    <ExclamationTriangleIcon class="w-4 h-4 m-1 text-yellow-500" />
+                    {{ t('common.unsavedChanges') }}&nbsp;
+                    <button type="button" class="underline hover:text-yellow-900" @click="resetGroupData()">
+                      {{ t('common.undo') }}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -125,7 +132,7 @@
 
 <script setup lang="ts">
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue';
-import { CheckIcon, ChevronUpDownIcon, TrashIcon, UserIcon } from '@heroicons/vue/24/outline';
+import { CheckIcon, ChevronUpDownIcon, ExclamationTriangleIcon, TrashIcon, UserIcon } from '@heroicons/vue/24/outline';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
@@ -138,6 +145,22 @@ interface GroupData {
   name: string;
   roles: Role[];
   pictureUrl?: string;
+}
+
+const initialGroupData = ref<GroupData>({ name: '', roles: [], pictureUrl:'' });
+
+const groupDataHasUnsavedChanges = computed(() => {
+  return (
+    initialGroupData.value.name !== name.value ||
+    initialGroupData.value.roles !== selectedRoles.value ||
+    initialGroupData.value.pictureUrl !== pictureUrl.value
+  );
+});
+
+function resetGroupData() {
+  name.value = initialGroupData.value.name;
+  selectedRoles.value = initialGroupData.value.roles;
+  pictureUrl.value = initialGroupData.value.pictureUrl ?? '';
 }
 
 const { t } = useI18n({ useScope: 'global' });
@@ -181,6 +204,11 @@ onMounted(() => {
       name.value = 'Frontend-Team';
       selectedRoles.value = ['Admin', 'Create-Vault'];
       pictureUrl.value = 'https://i.pravatar.cc/200?u=group';
+      initialGroupData.value = {
+        name: name.value,
+        roles: selectedRoles.value,
+        pictureUrl: pictureUrl.value
+      };
     } else {
       name.value = '';
       selectedRoles.value = [];
@@ -224,6 +252,12 @@ function onSubmit() {
   
   name.value = name.value.trim();
   
+  initialGroupData.value = {
+    name: name.value,
+    roles: selectedRoles.value,
+    pictureUrl: pictureUrl.value
+  };
+
   try {
     const payload = {
       ...(isEditMode.value && { id: groupId.value }),

@@ -201,13 +201,20 @@
               <div></div>
               <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
                 <div class="flex space-x-3">
-                  <button type="submit" :disabled="processing" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
-                    <span v-if="!userSaved">{{ isEditMode ? t('common.save') : t('common.create') }}</span>
-                    <span v-else>{{ t('common.saved') }}</span>
-                  </button>
                   <button type="button" class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="cancelAction">
                     {{ t('common.cancel') }}
                   </button>
+                  <button type="submit" :disabled="processing || !userDataHasUnsavedChanges || password !== passwordConfirm" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
+                    <span v-if="!userSaved">{{ isEditMode ? t('common.save') : t('common.create') }}</span>
+                    <span v-else>{{ t('common.saved') }}</span>
+                  </button>
+                  <div v-if="userDataHasUnsavedChanges && isEditMode" class="flex items-center whitespace-nowrap gap-1 text-sm text-yellow-700">
+                    <ExclamationTriangleIcon class="w-4 h-4 m-1 text-yellow-500" />
+                    {{ t('common.unsavedChanges') }}&nbsp;
+                    <button type="button" class="underline hover:text-yellow-900" @click="resetUserData()">
+                      {{ t('common.undo') }}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -220,7 +227,7 @@
 
 <script setup lang="ts">
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue';
-import { CheckIcon, ChevronUpDownIcon, EyeIcon, EyeSlashIcon, InformationCircleIcon, TrashIcon, UserIcon } from '@heroicons/vue/24/outline';
+import { CheckIcon, ChevronUpDownIcon, EyeIcon, EyeSlashIcon, ExclamationTriangleIcon, InformationCircleIcon, TrashIcon, UserIcon } from '@heroicons/vue/24/outline';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
@@ -236,6 +243,28 @@ interface UserData {
   roles: Role[];
   picture?: File | null;
   previewUrl?: string | null;
+}
+
+const initialUserData = ref<UserData>({ firstName: '', lastName: '', username: '', email: '', roles: [], previewUrl:'' });
+
+const userDataHasUnsavedChanges = computed(() => {
+  return (
+    initialUserData.value.firstName !== firstName.value ||
+    initialUserData.value.lastName !== lastName.value ||
+    initialUserData.value.username !== username.value ||
+    initialUserData.value.email !== email.value ||
+    initialUserData.value.roles !== selectedRoles.value ||
+    initialUserData.value.previewUrl !== pictureUrl.value 
+  );
+});
+
+function resetUserData() {
+  firstName.value = initialUserData.value.firstName;
+  lastName.value = initialUserData.value.lastName;
+  username.value = initialUserData.value.username;
+  email.value = initialUserData.value.email;
+  selectedRoles.value  = initialUserData.value.roles;
+  pictureUrl.value = initialUserData.value.previewUrl ?? '';
 }
 
 const { t } = useI18n({ useScope: 'global' });
@@ -290,6 +319,14 @@ onMounted(() => {
       pictureUrl.value = 'https://i.pravatar.cc/150?u=placeholder';
       selectedRoles.value = ['Admin']; 
       loading.value = false;
+      initialUserData.value = {
+        firstName: firstName.value,
+        lastName: lastName.value,
+        username: username.value,
+        email: email.value,
+        roles: selectedRoles.value,
+        previewUrl: pictureUrl.value
+      };
     }, 300);
   } else {
     firstName.value = '';
@@ -374,6 +411,15 @@ function onSubmit() {
   username.value = username.value.trim();
   email.value = email.value.trim();
   pictureUrl.value = pictureUrl.value.trim();
+
+  initialUserData.value = {
+    firstName: firstName.value,
+    lastName: lastName.value,
+    username: username.value,
+    email: email.value,
+    roles: selectedRoles.value,
+    previewUrl: pictureUrl.value
+  };
   
   try {
     // Here would be the actual API call to save the user
