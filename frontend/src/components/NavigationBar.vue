@@ -72,13 +72,15 @@ import { ArrowRightStartOnRectangleIcon, Bars3Icon, ListBulletIcon, UserIcon, Wr
 import { FunctionalComponent, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auth from '../common/auth';
-import { UserDto } from '../common/backend';
+import backend, { UserDto, VaultDto } from '../common/backend';
+
+const recoverableVaults = ref<VaultDto[]>([]);
 
 const { t } = useI18n({ useScope: 'global' });
 
-const navigation = [
+const navigation = ref([
   { name: 'nav.vaults', to: '/app/vaults' },
-];
+]);
 
 type ProfileDropdownItem = { icon: FunctionalComponent, name: string, to: string };
 
@@ -107,6 +109,17 @@ const props = defineProps<{
 }>();
 
 onMounted(async () => {
+  try {
+    recoverableVaults.value = await backend.vaults.listRecoverable();
+  } catch (e) {
+    console.error('Failed to load recoverable vaults:', e);
+    recoverableVaults.value = [];
+  }
+
+  if (recoverableVaults.value.length > 0) {
+    navigation.value.push({ name: 'nav.emergencyAccess', to: '/app/emergencyaccess' });
+  }
+
   if ((await auth).hasRole('admin')) {
     profileDropdown.value = [profileDropdownSections.infoSection, profileDropdownSections.adminSection, profileDropdownSections.hubSection];
   } else {

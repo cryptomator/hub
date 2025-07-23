@@ -3,7 +3,10 @@
     <label class="block text-sm font-medium text-gray-700 pb-2">
       {{ t('grantEmergencyAccessDialog.possibleEmergencyScenario') }}
     </label>
-    <div class="relative flex flex-wrap gap-2 min-h-[40px]">
+    <div
+      class="relative flex flex-wrap gap-2 min-h-[40px] p-2 border border-gray-300 rounded-md bg-gray-100 opacity-60 cursor-not-allowed"
+      aria-disabled="true"
+    >
       <template v-if="loadingCouncilSelection">
         <div class="w-full flex py-2">
           <svg class="animate-spin h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

@@ -2,7 +2,7 @@
   <div class="relative w-full">
     <div
       :class="[
-        'flex items-center flex-wrap min-h-[42px] rounded-md bg-white',
+        'flex items-center flex-wrap min-h-[42px] rounded-md',
         { 
           'px-2 py-1 shadow-xs border border-gray-300 focus-within:ring-1 focus-within:ring-primary cursor-text': inputVisible 
         }
@@ -55,8 +55,8 @@
         :class="[
           'cursor-pointer select-none py-2 px-3 flex items-center',
           (hoveredIndex === index || (hoveredIndex === null && activeIndex === index))
-            ? 'bg-blue-500 text-white'
-            : 'hover:bg-blue-100'
+            ? 'bg-primary text-white'
+            : 'hover:bg-primary'
         ]"
         @click="onSelect(user as T)"
         @mouseenter="hoveredIndex = index"

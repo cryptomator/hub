@@ -15,6 +15,7 @@ import UnlockSuccess from '../components/UnlockSuccess.vue';
 import UserProfile from '../components/UserProfile.vue';
 import VaultDetails from '../components/VaultDetails.vue';
 import VaultList from '../components/VaultList.vue';
+import RecoverableVaultList from '../components/RecoverableVaultList.vue';
 
 import i18n, { mapToLocale } from '../i18n';
 
@@ -60,6 +61,10 @@ const routes: RouteRecordRaw[] = [
     path: '/app', /* required but unused */
     component: AuthenticatedMain,
     children: [
+      {
+        path: 'emergencyaccess',
+        component: RecoverableVaultList
+      },
       {
         path: 'vaults',
         component: VaultList

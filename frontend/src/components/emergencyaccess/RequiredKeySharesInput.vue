@@ -9,7 +9,7 @@
           id="keyshares"
           v-model.number="localValue"
           type="number"
-          min="1"
+          min="2"
           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
         />
       </div>
