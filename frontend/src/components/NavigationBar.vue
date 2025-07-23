@@ -16,8 +16,8 @@
             <span class="font-headline font-bold text-primary ml-2 pb-px">CRYPTOMATOR HUB</span>
           </router-link>
           <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
-            <router-link v-for="item in navigation" :key="item.name" v-slot="{ isActive, href, navigate }" :to="item.to" custom>
-              <a :href="href" :class="[isActive ? 'border-primary text-white' : 'border-transparent text-gray-300 hover:border-gray-300 hover:text-white', ' inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium']" @click="navigate">
+            <router-link v-for="item in navigation" :key="item.name" v-slot="{ href, navigate }" :to="item.to" custom>
+              <a :href="href" :class="[route.path.startsWith(item.to) ? 'border-primary text-white' : 'border-transparent text-gray-300 hover:border-gray-300 hover:text-white', 'inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium']" @click="navigate">
                 {{ t(item.name) }}
               </a>
             </router-link>
@@ -73,8 +73,10 @@ import { FunctionalComponent, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auth from '../common/auth';
 import { UserDto } from '../common/backend';
+import { useRoute } from 'vue-router';
 
 const { t } = useI18n({ useScope: 'global' });
+const route = useRoute();
 
 const navigation = [
   { name: 'nav.vaults', to: '/app/vaults' },
