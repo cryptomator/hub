@@ -105,6 +105,12 @@ public class Vault {
 	@Column(name = "archived", nullable = false)
 	private boolean archived;
 
+	@Column(name = "uvf_metadata_file")
+	private String uvfMetadataFile;
+
+	@Column(name = "uvf_jwks")
+	private String uvfKeySet;
+
 	public Optional<ECPublicKey> getAuthenticationPublicKeyOptional() {
 		if (authenticationPublicKey == null) {
 			return Optional.empty();
@@ -230,6 +236,22 @@ public class Vault {
 		this.archived = archived;
 	}
 
+	public String getUvfMetadataFile() {
+		return uvfMetadataFile;
+	}
+
+	public void setUvfMetadataFile(String uvfMetadataFile) {
+		this.uvfMetadataFile = uvfMetadataFile;
+	}
+
+	public String getUvfKeySet() {
+		return uvfKeySet;
+	}
+
+	public void setUvfKeySet(String uvfKeySet) {
+		this.uvfKeySet = uvfKeySet;
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
@@ -240,12 +262,14 @@ public class Vault {
 				&& Objects.equals(salt, vault.salt)
 				&& Objects.equals(iterations, vault.iterations)
 				&& Objects.equals(masterkey, vault.masterkey)
-				&& Objects.equals(archived, vault.archived);
+				&& Objects.equals(archived, vault.archived)
+				&& Objects.equals(uvfMetadataFile, vault.uvfMetadataFile)
+				&& Objects.equals(uvfKeySet, vault.uvfKeySet);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, name, salt, iterations, masterkey, archived);
+		return Objects.hash(id, name, salt, iterations, masterkey, archived, uvfMetadataFile, uvfKeySet);
 	}
 
 	@Override
@@ -255,12 +279,12 @@ public class Vault {
 				", members=" + directMembers.stream().map(Authority::getId).collect(Collectors.joining(", ")) +
 				", accessToken=" + accessTokens.stream().map(a -> a.getId().toString()).collect(Collectors.joining(", ")) +
 				", name='" + name + '\'' +
-				", archived='" + archived + '\'' +
 				", salt='" + salt + '\'' +
 				", iterations='" + iterations + '\'' +
 				", masterkey='" + masterkey + '\'' +
-				", authenticationPublicKey='" + authenticationPublicKey + '\'' +
-				", authenticationPrivateKey='" + authenticationPrivateKey + '\'' +
+				", archived='" + archived + '\'' +
+				", uvfMetadataFile='" + uvfMetadataFile + '\'' +
+				", uvfKeySet='" + uvfKeySet + '\'' +
 				'}';
 	}
 
