@@ -313,7 +313,7 @@ async function resolveEmergencyKeyShareUsers(vaults: VaultDto[]) {
 }
 
 function handleRecoveryUpdated(updatedProcess?: RecoveryProcessDto) {
-  if (!updatedProcess || !recoveryApprovVault.value) return;
+  if (!updatedProcess || !recoveryApprovVault.value) return; // FIXME: updatedProcess == undefined is an expected case when recovery completed
   vaultRecoveryProcesses.value[recoveryApprovVault.value.id] = updatedProcess;
 }
 

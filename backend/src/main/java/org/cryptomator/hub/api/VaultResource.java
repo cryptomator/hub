@@ -176,7 +176,7 @@ public class VaultResource {
 	@PUT
 	@Path("/{vaultId}/users/{userId}")
 	@RolesAllowed("user")
-	@VaultRole(VaultAccess.Role.OWNER) // may throw 403
+	@VaultRole(value = VaultAccess.Role.OWNER, bypassForEmergencyAccess = true) // may throw 403
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "adds a user to this vault or updates her role")
@@ -361,13 +361,13 @@ public class VaultResource {
 	@POST
 	@Path("/{vaultId}/access-tokens")
 	@RolesAllowed("user")
-	@VaultRole(VaultAccess.Role.OWNER) // may throw 403
+	@VaultRole(value = VaultAccess.Role.OWNER, bypassForEmergencyAccess = true) // may throw 403
 	@Transactional
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Operation(summary = "adds user-specific vault keys", description = "Stores one or more user-vaultkey-tuples, as defined in the request body ({user1: token1, user2: token2, ...}).")
 	@APIResponse(responseCode = "200", description = "all keys stored")
 	@APIResponse(responseCode = "402", description = "number of users granted access exceeds available license seats")
-	@APIResponse(responseCode = "403", description = "not a vault owner")
+	@APIResponse(responseCode = "403", description = "not a vault owner or emergency access council member")
 	@APIResponse(responseCode = "404", description = "at least one user has not been found")
 	public Response grantAccess(@PathParam("vaultId") UUID vaultId, @NotEmpty Map<String, String> tokens) {
 		var vault = vaultRepo.findById(vaultId); // should always be found, since @VaultRole filter would have triggered

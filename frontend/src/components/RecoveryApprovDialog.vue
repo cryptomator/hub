@@ -209,6 +209,8 @@ import userdata from '../common/userdata';
 import MultiUserSelectInputGroup from './MultiUserSelectInputGroup.vue';
 import RequiredKeySharesInput from './emergencyaccess/RequiredKeySharesInput.vue';
 import EmergencyScenarioVisualization from './emergencyaccess/EmergencyScenarioVisualization.vue';
+import { VaultKeys } from '../common/crypto';
+import { wordEncoder } from '../common/util';
 const { t } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{
@@ -446,13 +448,20 @@ async function completeRecovery() {
 
     // get process private key:
     const processPrivateKey = process.recoveredKeyShares[props.me.id].processPrivateKey;
-    const recoveredKey = await EmergencyAccess.combineRecoveredShares(keyShares, processPrivateKey, userKeys.ecdhKeyPair.privateKey);
+    const recoveredKeyBytes = await EmergencyAccess.combineRecoveredShares(keyShares, processPrivateKey, userKeys.ecdhKeyPair.privateKey);
+    const recoveredKey = wordEncoder.encodePadded(recoveredKeyBytes); // TODO remove word encoding crap:
 
-    // TODO: reset vault key...
-    console.debug('Recovered key:', recoveredKey);
-
-    // delete process:
-    await backend.emergencyAccess.delete(process.id);
+    // recover vault key:
+    const vaultKeys = await VaultKeys.recover(recoveredKey);
+    const me = await userdata.me;
+    if (vaultKeys) {
+      const publicKey = await userdata.ecdhPublicKey;
+      const jwe = await vaultKeys.encryptForUser(publicKey);
+      await backend.vaults.grantAccess(props.vault.id, { userId: me.id, token: jwe });
+      await backend.vaults.addUser(props.vault.id, me.id, 'OWNER'); // FIXME: parse process.details to get new owner (don't set "me")
+      // TODO: shall we remove other owners?
+      await backend.emergencyAccess.delete(process.id);
+    }
 
     emit('updated');
     open.value = false;
