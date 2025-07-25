@@ -23,6 +23,8 @@
   "common.retry": "Reintenta",
   "common.share": "Comparteix",
   "common.show": "Mostra",
+  "common.undo": "Desfer",
+  "common.unsavedChanges": "Canvis no desats.",
   "admin.licenseInfo.manageSubscription": "Gestionar Subscripcions",
   "admin.webOfTrust.information": "Més informació.",
   "admin.webOfTrust.save": "Desa",
