@@ -1,14 +1,12 @@
 <template>
-  <div class="mt-4">
-    <label class="block text-sm font-medium text-gray-700 pb-2">
-      {{ t('grantEmergencyAccessDialog.possibleEmergencyScenario') }}
-    </label>
+  <div class="mt-2">
     <div
+      ref="pillContainer"
       class="relative flex flex-wrap gap-2 min-h-[40px] p-2 border border-gray-300 rounded-md bg-gray-100 opacity-60 cursor-not-allowed"
       aria-disabled="true"
     >
       <template v-if="loadingCouncilSelection">
-        <div class="w-full flex py-2">
+        <div class="w-full flex py-2.5">
           <svg class="animate-spin h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -22,6 +20,7 @@
             <span
               class="pill inline-flex items-center border border-red-300 bg-red-50 text-red-800 text-sm font-medium px-2 py-1 rounded-full shadow-sm absolute"
             >
+              <ExclamationTriangleIcon class="h-4 w-4 text-red-500 mr-1" />
               <span class="truncate">{{ t('recoveryDialog.notPossible') }}</span>
             </span>
           </div>
@@ -37,7 +36,7 @@
               <span
                 v-if="item.type === 'user' && index <= 5"
                 class="pill inline-flex items-center border border-grey bg-white text-sm font-medium px-2 py-1 rounded-full shadow-sm absolute"
-                :style="{ left: `${calcLeft(index)}px`, width: '100px', zIndex: 1 }"
+                :style="{ left: `${calcLeft(index)}px`, width: pillWidth + 'px', zIndex: 1 }"
               >
                 <img :src="item.user!.pictureUrl" class="w-4 h-4 rounded-full mr-1 shrink-0" />
                 <span class="truncate">{{ item.user!.name }}</span>
@@ -54,7 +53,7 @@
 
             <span
               v-if="requiredKeyShares > 3"
-              class="pill inline-flex items-center border border-gray-300 bg-gray-100 text-gray-700 text-sm font-medium px-3 py-1 rounded-full shadow-sm absolute"
+              class="inline-flex items-center border border-gray-300 bg-gray-100 text-gray-700 text-sm font-medium px-3 py-1 rounded-full shadow-sm absolute"
               :style="{ left: `${calcLeft(5)}px`, zIndex: 1 }"
             >
               +{{ requiredKeyShares - 3 }}
@@ -67,9 +66,11 @@
 </template>
 
 <script setup lang="ts" generic="T extends UserDto">
-import { computed, watch, ref, toRefs } from 'vue';
+import { computed, watch, ref, toRefs, onMounted, onBeforeUnmount } from 'vue';
+import { ExclamationTriangleIcon } from '@heroicons/vue/20/solid';
 import { useI18n } from 'vue-i18n';
 import { UserDto } from '../../common/backend';
+import { nextTick } from 'vue';
 
 export type Item = {
   id: string;
@@ -93,17 +94,44 @@ const randomSelectionInterval = ref<ReturnType<typeof setInterval> | null>(null)
 
 const { selectedUsers, requiredKeyShares } = toRefs(props);
 
+const pillContainer = ref<HTMLElement | null>(null);
+const containerWidth = ref(0);
+const maxVisiblePills = 3;
+
+function updateContainerWidth() {
+  if (pillContainer.value) {
+    containerWidth.value = pillContainer.value.clientWidth;
+  }
+}
+
+onMounted(() => {
+  nextTick(() => {
+    updateContainerWidth();
+    window.addEventListener('resize', updateContainerWidth);
+  });
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', updateContainerWidth);
+});
+
+const pillWidth = computed(() => {
+  const totalGap = (maxVisiblePills - 1) * 8;
+  const usableWidth = Math.max(containerWidth.value - totalGap, 0) - 100;
+  return Math.floor(usableWidth / maxVisiblePills) || 200;
+});
+
 watch(
   [selectedUsers, requiredKeyShares],
   () => {
     loadingCouncilSelection.value = true;
-
+   
+    pickRandomCouncilMembers();
+    updateContainerWidth();
     if (timeoutId !== null) {
       clearTimeout(timeoutId);
     }
-
     timeoutId = setTimeout(() => {
-      pickRandomCouncilMembers();
       loadingCouncilSelection.value = false;
       timeoutId = null;
     }, 100);
@@ -145,38 +173,61 @@ function pickRandomCouncilMembers() {
     return;
   }
 
-  if (randomCouncilSelection.value.length !== required) {
-    const shuffled = [...available].sort(
-      () => 0.5 - 
-      Math.random() //NOSONAR
-    );
-    randomCouncilSelection.value = shuffled.slice(0, required) as T[];
-
+  if (needsInitialSelection(available, required)) {
+    setInitialCouncil(available, required);
     return;
   }
+  if (selectedUsers.value.length != requiredKeyShares.value)
+    rotateCouncilMember(available, required);
+}
 
-  const maxPills = (props.requiredKeyShares < 3) ? props.requiredKeyShares : 3 ; 
+function needsInitialSelection(available: T[], required: number): boolean {
+  if (randomCouncilSelection.value.length !== required) return true;
+
+  const currentIds = randomCouncilSelection.value.map(u => u.id);
+  const availableIds = new Set(available.map(u => u.id));
+
+  return currentIds.some(id => !availableIds.has(id));
+}
+
+function setInitialCouncil(available: T[], required: number) {
+  const shuffled = [...available].sort(() => 0.5 - 
+    Math.random() // NOSONAR
+  ); 
+  randomCouncilSelection.value = shuffled.slice(0, required);
+}
+
+function rotateCouncilMember(available: T[], required: number) {
   const current = randomCouncilSelection.value;
   const currentIds = new Set(current.map(u => u.id));
-
   const candidates = available.filter(u => !currentIds.has(u.id));
-  if (candidates.length === 0) return;
 
-  const newUser = candidates[
-    Math.floor(
-      Math.random() //NOSONAR
-      * candidates.length
-    )
-  ];
+  const maxPills = Math.min(required, 3);
   const replaceIndex = Math.floor(
-    Math.random() //NOSONAR
+    Math.random() // NOSONAR
     * maxPills
   );
+
+  let newUser: T;
+
+  if (candidates.length > 0) {
+    newUser = candidates[Math.floor(
+      Math.random() // NOSONAR
+      * candidates.length
+    )];
+  } else {
+    const alternatives = available.filter(u => u.id !== current[replaceIndex].id);
+    if (alternatives.length === 0) return;
+    newUser = alternatives[Math.floor(
+      Math.random() // NOSONAR
+      * alternatives.length
+    )];
+  }
 
   randomCouncilSelection.value = [
     ...current.slice(0, replaceIndex),
     newUser,
-    ...current.slice(replaceIndex + 1)
+    ...current.slice(replaceIndex + 1),
   ];
 }
 
@@ -194,11 +245,11 @@ const randomCouncilSelectionWithPluses = computed(() => {
 });
 
 function calcLeft(index: number): number {
-  const PILL_WIDTH = 100;
-  const PLUS_WIDTH = 8;
   const GAP = 8;
-  let x = 0;
+  const PILL_WIDTH = pillWidth.value;
+  const PLUS_WIDTH = 8;
 
+  let x = 0;
   for (let i = 0; i < index; i++) {
     const el = randomCouncilSelectionWithPluses.value[i];
     if (el.type === 'user') {
