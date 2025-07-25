@@ -98,6 +98,9 @@
                           :allow-changing-defaults="true"
                           :default-key-shares="vault.requiredEmergencyKeyShares"
                         />
+                        <label class="block text-sm font-medium text-gray-700 pt-4">
+                          {{ t('grantEmergencyAccessDialog.possibleEmergencyScenario') }}
+                        </label>
                         <EmergencyScenarioVisualization
                           :selected-users="selectedNewCouncilMembers"
                           :grant-button-disabled="isGrantButtonDisabled"

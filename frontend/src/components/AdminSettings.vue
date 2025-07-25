@@ -301,13 +301,23 @@
               {{ t('admin.emergencyAccess.defaultShares.title') }}
             </label>
             <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
-              <input v-model="defaultRequiredEmergencyKeyShares" type="number" min="0" class="block w-full rounded-md border-gray-300 shadow-sm sm:text-sm focus:ring-primary focus:border-primary" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': defaultRequiredEmergencyKeySharesError instanceof FormValidationFailedError }" />
+              <input v-model="defaultRequiredEmergencyKeyShares" type="number" min="2" class="block w-full rounded-md border-gray-300 shadow-sm sm:text-sm focus:ring-primary focus:border-primary" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': defaultRequiredEmergencyKeySharesError instanceof FormValidationFailedError }" />
               <p class="mt-2 text-sm text-gray-500">
                 {{ t('admin.emergencyAccess.defaultShares.description') }}
               </p>
             </div>
           </div>
-
+          <div class="md:grid md:grid-cols-3 md:gap-6">
+            <label class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
+              {{ t('grantEmergencyAccessDialog.possibleEmergencyScenario') }}
+            </label>
+            <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
+              <EmergencyScenarioVisualization
+                :selected-users="selectedUsers"
+                :required-key-shares="defaultRequiredEmergencyKeyShares!"
+              />
+            </div>
+          </div>
           <!-- Allow Choosing Council -->
           <div class="md:grid md:grid-cols-3 md:gap-6">
             <label class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
@@ -358,6 +368,7 @@ import { debounce } from '../common/util';
 import { Locale } from '../i18n/index';
 import FetchError from './FetchError.vue';
 import MultiUserSelectInputGroup from './MultiUserSelectInputGroup.vue';
+import EmergencyScenarioVisualization from '../components/emergencyaccess/EmergencyScenarioVisualization.vue';
 
 const { t, d, locale, fallbackLocale } = useI18n({ useScope: 'global' });
 
@@ -517,13 +528,6 @@ async function fetchData() {
   }
 }
 
-function resetEmergencyAccess() {
-  defaultRequiredEmergencyKeyShares.value = initialEmergencyAccessSettings.value.defaultRequiredEmergencyKeyShares;
-  allowChoosingEmergencyCouncil.value = initialEmergencyAccessSettings.value.allowChoosingEmergencyCouncil;
-  initialCouncilMembers.value = [...initialEmergencyAccessSettings.value.selectedUsers];
-  addedCouncilMembers.value = [];
-}
-
 watch(userQuery, (newQuery) => {
   if (newQuery && newQuery.trim().length > 0) {
     searchCouncilMembers(newQuery.trim());
@@ -642,7 +646,6 @@ async function saveRecoverySettings() {
       allowChoosingEmergencyCouncil: allowChoosingEmergencyCouncil.value,
       selectedUsers: selectedUsers.value
     }; 
-    addedCouncilMembers.value = [];
     await backend.settings.update(settings);
     recoveryUpdated.value = true;
     debouncedRecoveryUpdated();
@@ -652,5 +655,12 @@ async function saveRecoverySettings() {
   } finally {
     processingRecovery.value = false;
   }
+}
+
+function resetEmergencyAccess() {
+  defaultRequiredEmergencyKeyShares.value = initialEmergencyAccessSettings.value.defaultRequiredEmergencyKeyShares;
+  allowChoosingEmergencyCouncil.value = initialEmergencyAccessSettings.value.allowChoosingEmergencyCouncil;
+  initialCouncilMembers.value = [...initialEmergencyAccessSettings.value.selectedUsers];
+  addedCouncilMembers.value = [];
 }
 </script>
