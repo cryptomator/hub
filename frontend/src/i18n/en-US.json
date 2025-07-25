@@ -150,6 +150,8 @@
   "createVault.enterVaultDetails.description": "Enter a name and description for your new vault. You can change these later.",
   "createVault.enterVaultDetails.vaultName": "Vault Name",
   "createVault.enterVaultDetails.vaultDescription": "Description",
+  "createVault.emergencyAccessDetails.title": "Define Emergency Access Conditions",
+  "createVault.emergencyAccessDetails.description": "Desc",
   "createVault.showRecoveryKey.title": "Recovery Key",
   "createVault.showRecoveryKey.description": "The following recovery key can be used to restore access to the vault.",
   "createVault.showRecoveryKey.recoveryKey": "Recovery Key of Your Vault",
