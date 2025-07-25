@@ -46,3 +46,58 @@ CREATE TABLE "recovered_emergency_key_shares"
     CONSTRAINT "RECOVERED_EMERGENCY_KEY_SHARES_FK_PROCESS" FOREIGN KEY ("recovery_process_id") REFERENCES "emergency_recovery_processes" ("id") ON DELETE CASCADE,
 	CONSTRAINT "RECOVERED_EMERGENCY_KEY_SHARES_FK_USER" FOREIGN KEY ("council_member_id") REFERENCES "user_details" ("id") ON DELETE CASCADE
 );
+
+-- Events
+
+CREATE TABLE "audit_event_emergaccess_settings_updated"
+(
+	"id"                     BIGINT NOT NULL,
+	"admin_id"               VARCHAR(255) COLLATE "C" NOT NULL,
+	"council_member_ids"     TEXT NOT NULL,
+	"required_key_shares"    INTEGER NOT NULL,
+	"allow_choosing_council" BOOLEAN NOT NULL,
+	CONSTRAINT "AUDIT_EVENT_EMERGACCESS_SETTINGS_UPDATED_PK" PRIMARY KEY ("id"),
+	CONSTRAINT "AUDIT_EVENT_EMERGACCESS_SETTINGS_UPDATED_FK_AUDIT_EVENT" FOREIGN KEY ("id") REFERENCES "audit_event" ("id") ON DELETE CASCADE
+);
+
+CREATE TABLE "audit_event_emergaccess_setup"
+(
+	"id"           BIGINT NOT NULL,
+	"vault_id"     UUID NOT NULL,
+	"owner_id"     VARCHAR(255) COLLATE "C" NOT NULL,
+	"settings"     TEXT NOT NULL,
+	"ip_address"   VARCHAR(46) NOT NULL,
+	CONSTRAINT "AUDIT_EVENT_EMERGACCESS_SETUP_PK" PRIMARY KEY ("id"),
+	CONSTRAINT "AUDIT_EVENT_EMERGACCESS_SETUP_FK_AUDIT_EVENT" FOREIGN KEY ("id") REFERENCES "audit_event" ("id") ON DELETE CASCADE
+);
+
+CREATE TABLE "audit_event_emergaccess_recovery_started"
+(
+	"id"                BIGINT NOT NULL,
+	"vault_id"          UUID NOT NULL,
+	"process_id"        UUID NOT NULL,
+	"council_member_id" VARCHAR(255) COLLATE "C" NOT NULL,
+	"process_type"      VARCHAR(50) NOT NULL,
+	"details"           TEXT NOT NULL,
+	CONSTRAINT "AUDIT_EVENT_EMERGACCESS_RECOVERY_STARTED_PK" PRIMARY KEY ("id"),
+	CONSTRAINT "AUDIT_EVENT_EMERGACCESS_RECOVERY_STARTED_FK_AUDIT_EVENT" FOREIGN KEY ("id") REFERENCES "audit_event" ("id") ON DELETE CASCADE
+);
+
+CREATE TABLE "audit_event_emergaccess_recovery_approved"
+(
+	"id"                BIGINT NOT NULL,
+	"process_id"        UUID NOT NULL,
+	"council_member_id" VARCHAR(255) COLLATE "C" NOT NULL,
+	"ip_address"        VARCHAR(46) NOT NULL,
+	CONSTRAINT "AUDIT_EVENT_EMERGACCESS_RECOVERY_APPROVED_PK" PRIMARY KEY ("id"),
+	CONSTRAINT "AUDIT_EVENT_EMERGACCESS_RECOVERY_APPROVED_FK_AUDIT_EVENT" FOREIGN KEY ("id") REFERENCES "audit_event" ("id") ON DELETE CASCADE
+);
+
+CREATE TABLE "audit_event_emergaccess_recovery_completed"
+(
+	"id"                BIGINT NOT NULL,
+	"process_id"        UUID NOT NULL,
+	"council_member_id" VARCHAR(255) COLLATE "C" NOT NULL,
+	CONSTRAINT "AUDIT_EVENT_EMERGACCESS_RECOVERY_COMPLETED_PK" PRIMARY KEY ("id"),
+	CONSTRAINT "AUDIT_EVENT_EMERGACCESS_RECOVERY_COMPLETED_FK_AUDIT_EVENT" FOREIGN KEY ("id") REFERENCES "audit_event" ("id") ON DELETE CASCADE
+);

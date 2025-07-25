@@ -143,6 +143,58 @@ public class EventLogger {
 		auditEventRepository.persist(event);
 	}
 
+	//region Emergency Access
+
+	public void logEmergencyAccessSetup(UUID vaultId, String ownerId, String settings, String ipAddress) {
+		var event = new EmergencyAccessSetupEvent();
+		event.setTimestamp(Instant.now());
+		event.setVaultId(vaultId);
+		event.setOwnerId(ownerId);
+		event.setSettings(settings);
+		event.setIpAddress(ipAddress);
+		auditEventRepository.persist(event);
+	}
+
+	public void logEmergencyAccessSettingsUpdated(String adminId, String councilMemberIds, int requiredKeyShares, boolean allowChoosingCouncil) {
+		var event = new EmergencyAccessSettingsUpdatedEvent();
+		event.setTimestamp(Instant.now());
+		event.setAdminId(adminId);
+		event.setCouncilMemberIds(councilMemberIds);
+		event.setRequiredKeyShares(requiredKeyShares);
+		event.setAllowChoosingCouncil(allowChoosingCouncil);
+		auditEventRepository.persist(event);
+	}
+
+	public void logEmergencyAccessRecoveryStarted(UUID vaultId, UUID processId, String councilMemberId, String type, String details) {
+		var event = new EmergencyAccessRecoveryStartedEvent();
+		event.setTimestamp(Instant.now());
+		event.setVaultId(vaultId);
+		event.setProcessId(processId);
+		event.setCouncilMemberId(councilMemberId);
+		event.setProcessType(type);
+		event.setDetails(details);
+		auditEventRepository.persist(event);
+	}
+
+	public void logEmergencyAccessRecoveryApproved(UUID processId, String councilMemberId, String ipAddress) {
+		var event = new EmergencyAccessRecoveryApprovedEvent();
+		event.setTimestamp(Instant.now());
+		event.setProcessId(processId);
+		event.setCouncilMemberId(councilMemberId);
+		event.setIpAddress(ipAddress);
+		auditEventRepository.persist(event);
+	}
+
+	public void logEmergencyAccessRecoveryCompleted(UUID processId, String councilMemberId) {
+		var event = new EmergencyAccessRecoveryCompletedEvent();
+		event.setTimestamp(Instant.now());
+		event.setProcessId(processId);
+		event.setCouncilMemberId(councilMemberId);
+		auditEventRepository.persist(event);
+	}
+
+	//endregion
+
 	//legacy
 	public void logVaultOwnershipClaimed(String claimedBy, UUID vaultId) {
 		var event = new VaultOwnershipClaimedEvent();

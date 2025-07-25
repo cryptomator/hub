@@ -57,6 +57,9 @@ public class SettingsResource {
 		var settings = settingsRepo.get();
 		var oldWotIdVerifyLen = settings.getWotIdVerifyLen();
 		var oldWotMaxDepth = settings.getWotMaxDepth();
+		var oldEmergencyCouncilMemberIds = settings.getEmergencyCouncilMemberIds();
+		var oldRequiredEmergencyKeyShares = settings.getDefaultRequiredEmergencyKeyShares();
+		var oldAllowChoosingEmergencyCouncil = settings.isAllowChoosingEmergencyCouncil();
 		settings.setWotMaxDepth(dto.wotMaxDepth);
 		settings.setWotIdVerifyLen(dto.wotIdVerifyLen);
 		settings.setDefaultRequiredEmergencyKeyShares(dto.defaultRequiredEmergencyKeyShares);
@@ -65,6 +68,11 @@ public class SettingsResource {
 		settingsRepo.persist(settings);
 		if (oldWotMaxDepth != dto.wotMaxDepth || oldWotIdVerifyLen != dto.wotIdVerifyLen) {
 			eventLogger.logWotSettingUpdated(jwt.getSubject(), dto.wotIdVerifyLen, dto.wotMaxDepth);
+		}
+		if (!oldEmergencyCouncilMemberIds.containsAll(dto.emergencyCouncilMemberIds) || !dto.emergencyCouncilMemberIds.containsAll(oldEmergencyCouncilMemberIds)
+		|| oldRequiredEmergencyKeyShares != dto.defaultRequiredEmergencyKeyShares || oldAllowChoosingEmergencyCouncil != dto.allowChoosingEmergencyCouncil) {
+			var councilMemberIds = "[\"" + String.join("\", \"", dto.emergencyCouncilMemberIds) + "\"]";
+			eventLogger.logEmergencyAccessSettingsUpdated(jwt.getSubject(), councilMemberIds, dto.defaultRequiredEmergencyKeyShares, dto.allowChoosingEmergencyCouncil);
 		}
 		return Response.status(Response.Status.NO_CONTENT).build();
 	}

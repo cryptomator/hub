@@ -66,6 +66,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Path("/vaults")
@@ -445,10 +446,21 @@ public class VaultResource {
 		vault.setName(vaultDto.name);
 		vault.setDescription(vaultDto.description);
 		vault.setArchived(existingVault.isEmpty() ? false : vaultDto.archived);
+		var oldEmergencyKeyShares = vault.getEmergencyKeyShares().values();
 		vault.setRequiredEmergencyKeyShares(vaultDto.requiredEmergencyKeyShares);
 		vault.setEmergencyKeyShares(vaultDto.emergencyKeyShares);
 
 		vaultRepo.persistAndFlush(vault); // trigger PersistenceException before we continue with
+
+		// does this request update emergency key shares?
+		if (!oldEmergencyKeyShares.containsAll(vaultDto.emergencyKeyShares.values())) {
+			var emergencyAccessCouncilMembers = String.join("\", \"", vaultDto.emergencyKeyShares.keySet());
+			var settings = """
+					{ "requiredEmergencyKeyShares": %d, "emergencyCouncilMemberIds": ["%s"] }
+					""".formatted(vaultDto.requiredEmergencyKeyShares, emergencyAccessCouncilMembers);
+			eventLogger.logEmergencyAccessSetup(vault.getId(), currentUser.getId(), settings, request.remoteAddress().hostAddress());
+		}
+
 		if (existingVault.isEmpty()) {
 			eventLogger.logVaultCreated(currentUser.getId(), vault.getId(), vault.getName(), vault.getDescription());
 			var access = new VaultAccess();

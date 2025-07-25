@@ -2,6 +2,7 @@ package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.vertx.core.http.HttpServerRequest;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -18,12 +19,14 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.Authority;
 import org.cryptomator.hub.entities.EmergencyRecoveryProcess;
 import org.cryptomator.hub.entities.RecoveredEmergencyKeyShares;
 import org.cryptomator.hub.entities.Vault;
+import org.cryptomator.hub.entities.events.EventLogger;
 import org.cryptomator.hub.validation.ValidJWE;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
@@ -49,6 +52,12 @@ public class EmergencyAccessResource {
 	@Inject
 	JsonWebToken jwt;
 
+	@Context
+	HttpServerRequest request;
+
+	@Inject
+	EventLogger eventLogger;
+
 	@PUT
 	@Path("/{processId}")
 	@RolesAllowed("user")
@@ -60,23 +69,30 @@ public class EmergencyAccessResource {
 	public Response startRecovery(@PathParam("processId") UUID processId, RecoveryProcessDto dto) {
 		var process = new EmergencyRecoveryProcess();
 		process.setId(processId);
-		process.setVaultId(dto.vaultId());
+		process.setVaultId(dto.vaultId);
 		process.setType(dto.type);
-		process.setDetails(dto.details());
-		process.setRequiredKeyShares(dto.requiredKeyShares());
-		process.setProcessPublicKey(dto.processPublicKey());
-		Map<String, RecoveredEmergencyKeyShares> keyShares = dto.recoveredKeyShares.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> {
+		process.setDetails(dto.details);
+		process.setRequiredKeyShares(dto.requiredKeyShares);
+		process.setProcessPublicKey(dto.processPublicKey);
+		var keyShares = dto.recoveredKeyShares.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> {
 			var memberId = e.getKey();
 			var keyShareDto = e.getValue();
 			var keyShareEntity = new RecoveredEmergencyKeyShares();
 			keyShareEntity.getId().setRecoveryId(processId);
 			keyShareEntity.getId().setCouncilMemberId(memberId);
-			keyShareEntity.setProcessPrivateKey(keyShareDto.processPrivateKey());
-			keyShareEntity.setRecoveredKeyShare(keyShareDto.recoveredKeyShare());
+			keyShareEntity.setProcessPrivateKey(keyShareDto.processPrivateKey);
+			keyShareEntity.setRecoveredKeyShare(keyShareDto.recoveredKeyShare);
 			return keyShareEntity;
 		}));
 		process.setRecoveredKeyShares(keyShares);
 		recoverProcessRepo.persist(process);
+		var currentUser = jwt.getSubject();
+
+		// audit logging
+		eventLogger.logEmergencyAccessRecoveryStarted(dto.vaultId, processId, currentUser, dto.type.name(), dto.details);
+		if (keyShares.get(currentUser).getRecoveredKeyShare() != null) { // usually, the council member who starts the process also adds their key share
+			eventLogger.logEmergencyAccessRecoveryApproved(processId, currentUser, request.remoteAddress().hostAddress());
+		}
 		return Response.status(Response.Status.NO_CONTENT).build();
 	}
 
@@ -96,6 +112,9 @@ public class EmergencyAccessResource {
 		var myKeyShare = recoveredKeySharesRepo.findById(id);
 		myKeyShare.setRecoveredKeyShare(recoveredKeyShareJwe);
 		recoveredKeySharesRepo.persist(myKeyShare);
+
+		// audit logging
+		eventLogger.logEmergencyAccessRecoveryApproved(processId, jwt.getSubject(), request.remoteAddress().hostAddress());
 
 		return Response.status(Response.Status.NO_CONTENT).build();
 	}
