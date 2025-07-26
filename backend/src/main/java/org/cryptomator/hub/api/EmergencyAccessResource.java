@@ -18,25 +18,20 @@ import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.cryptomator.hub.entities.Authority;
 import org.cryptomator.hub.entities.EmergencyRecoveryProcess;
 import org.cryptomator.hub.entities.RecoveredEmergencyKeyShares;
-import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.entities.events.EventLogger;
+import org.cryptomator.hub.util.RawJson;
 import org.cryptomator.hub.validation.ValidJWE;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
-import org.jboss.resteasy.reactive.NoCache;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -168,7 +163,7 @@ public class EmergencyAccessResource {
 			@JsonProperty("id") @NotBlank UUID id,
 			@JsonProperty("vaultId") @NotBlank UUID vaultId,
 			@JsonProperty("type") @NotBlank EmergencyRecoveryProcess.Type type,
-			@JsonProperty("details") String details,
+			@JsonProperty("details") @RawJson String details,
 			@JsonProperty("requiredKeyShares") @Min(2) int requiredKeyShares,
 			@JsonProperty("processPublicKey") @ValidJWE String processPublicKey,
 			@JsonProperty("recoveredKeyShares") @NotEmpty Map<String, RecoveredKeyShareDto> recoveredKeyShares) {

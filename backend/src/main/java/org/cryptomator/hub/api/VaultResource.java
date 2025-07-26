@@ -415,7 +415,7 @@ public class VaultResource {
 	@PUT
 	@Path("/{vaultId}")
 	@RolesAllowed("user") // general authentication. VaultRole filter will check for specific access rights
-	@VaultRole(value = VaultAccess.Role.OWNER, onMissingVault = VaultRole.OnMissingVault.REQUIRE_REALM_ROLE, realmRole = "create-vaults")
+	@VaultRole(value = VaultAccess.Role.OWNER, onMissingVault = VaultRole.OnMissingVault.REQUIRE_REALM_ROLE, realmRole = "create-vaults", bypassForEmergencyAccess = true)
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional

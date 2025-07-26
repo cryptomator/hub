@@ -61,7 +61,7 @@
                           {{ t('recoveryDialog.selectRecoveryType') }}
                         </label>
                         <select
-                          v-model="selectedType"
+                          v-model="processType"
                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
                         >
                           <option value="RECOVERY">{{ t('recoveryDialog.ownership') }}</option>
@@ -69,32 +69,32 @@
                         </select>
                       </div>
 
-                      <div v-if="selectedType === 'RECOVERY'">
+                      <div v-if="processType === 'RECOVERY'">
                         <label class="block text-sm font-medium text-gray-700">
                           {{ t('recoveryDialog.selectNewOwner') }}
                         </label>
                         <MultiUserSelectInputGroup
-                          :selected-users="selectedNewOwner ? [selectedNewOwner] : []"
+                          :selected-users="newOwners"
                           :on-search="searchUsers"
                           :input-visible="true"
-                          @action="user => selectedNewOwner = user"
-                          @remove="() => selectedNewOwner = null"
+                          @action="addNewOwner"
+                          @remove="removeNewOwner"
                         />
                       </div>
 
-                      <div v-if="selectedType === 'COUNCIL_CHANGE'">
+                      <div v-if="processType === 'COUNCIL_CHANGE'">
                         <label class="block text-sm font-medium text-gray-700">
                           {{ t('recoveryDialog.selectNewCouncil') }}
                         </label>
                         <MultiUserSelectInputGroup
-                          :selected-users="selectedNewCouncilMembers"
+                          :selected-users="newCouncilMembers"
                           :on-search="searchUsers"
                           :input-visible="true"
                           @action="addCouncilMember"
                           @remove="removeCouncilMember"
                         />
                         <RequiredKeySharesInput
-                          v-model="requiredKeySharesInput"
+                          v-model="newRequiredKeyShares"
                           :allow-changing-defaults="true"
                           :default-key-shares="vault.requiredEmergencyKeyShares"
                         />
@@ -102,44 +102,49 @@
                           {{ t('grantEmergencyAccessDialog.possibleEmergencyScenario') }}
                         </label>
                         <EmergencyScenarioVisualization
-                          :selected-users="selectedNewCouncilMembers"
+                          :selected-users="newCouncilMembers"
                           :grant-button-disabled="isGrantButtonDisabled"
-                          :required-key-shares="requiredKeySharesInput"
+                          :required-key-shares="newRequiredKeyShares"
                         />
                       </div>
+                    </div><!-- if="phase === start" -->
+
+                    <div v-else-if="!recoveryProcess">
+                      <!-- every other phase should have a non-null recovery process -->
+                      Internal error: No recovery process available. <!-- no need to localize this. -->
                     </div>
 
                     <div v-else>
-                      <div v-if="selectedType === 'RECOVERY'">
+                      <div v-if="recoveryProcess.type === 'RECOVERY'">
                         Ownership
                       </div>
-                      <div v-if="selectedType === 'COUNCIL_CHANGE'">
+                      <div v-if="recoveryProcess.type === 'COUNCIL_CHANGE'">
                         Vote New Council Members
                       </div>
 
-                      <div v-if="selectedType === 'RECOVERY' && parsedDetails.newOwnerId" class="mt-4 space-y-1 text-sm text-gray-500">
+                      <div v-if="recoveryProcess.type === 'RECOVERY'" class="mt-4 space-y-1 text-sm text-gray-500">
                         <div>
                           <span class="font-medium text-gray-700">{{ t('recoveryDialog.selectedOwner') }}:</span>
                           <MultiUserSelectInputGroup
-                            :selected-users="parsedNewOwner ? [parsedNewOwner] : []"
+                            :selected-users="newOwners"
                             :on-search="noopSearch"
                             :input-visible="false"
                           />
                         </div>
                       </div>
 
-                      <div v-if="selectedType === 'COUNCIL_CHANGE'" class="mt-4 space-y-1 text-sm text-gray-500">
-                        <div v-if="parsedDetails.newCouncilMemberIds && parsedDetails.newCouncilMemberIds.length">
+                      <div v-if="recoveryProcess.type === 'COUNCIL_CHANGE'" class="mt-4 space-y-1 text-sm text-gray-500">
+                        <div v-if="recoveryProcess.details.newCouncilMemberIds.length > 0">
                           <span class="font-medium text-gray-700">{{ t('recoveryDialog.selectedCouncil') }}:</span>
                           <MultiUserSelectInputGroup
-                            :selected-users="parsedCouncilMembers"
+                            :selected-users="newCouncilMembers"
                             :on-search="noopSearch"
                             :input-visible="false"
                           />
                         </div>
-                        <div v-if="parsedDetails.newRequiredKeyShares">
+                        <div>
                           <span class="font-medium text-gray-700">{{ t('recoveryDialog.requiredKeyShares') }}:</span>
-                          {{ parsedDetails.newRequiredKeyShares }}
+                          {{ recoveryProcess.details.newRequiredKeyShares }}
                         </div>
                       </div>
                     </div>
@@ -185,7 +190,7 @@
                 <button
                   type="button"
                   class="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:w-auto sm:text-sm"
-                  @click="closeDialog()" 
+                  @click="open = false" 
                 >
                   {{ t('common.close') }}
                 </button>
@@ -199,8 +204,8 @@
 </template>
 
 <script setup lang="ts">
-import backend, { VaultDto, UserDto, RecoveryProcessDto, didCompleteSetup } from '../common/backend';
-import { ref, computed, toRaw } from 'vue';
+import backend, { VaultDto, UserDto, RecoveryProcessDto, didCompleteSetup, RecoveryProcessSetNewOwner, RecoveryProcessChangeCouncil, ActivatedUser, AccessGrant } from '../common/backend';
+import { ref, computed, toRaw, Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import { describeSegment } from '../common/svgUtils';
@@ -211,6 +216,7 @@ import RequiredKeySharesInput from './emergencyaccess/RequiredKeySharesInput.vue
 import EmergencyScenarioVisualization from './emergencyaccess/EmergencyScenarioVisualization.vue';
 import { VaultKeys } from '../common/crypto';
 import { wordEncoder } from '../common/util';
+import { base64 } from 'rfc4648';
 const { t } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{
@@ -228,44 +234,38 @@ defineExpose({
   show,
 });
 
-const requiredKeySharesInput = ref<number>(props.vault.requiredEmergencyKeyShares);
-
-const selectedType = ref<RecoveryProcessDto['type']>(props.recoveryProcess?.type ?? 'RECOVERY');
+const processType = ref<RecoveryProcessDto['type']>(props.recoveryProcess?.type ?? 'RECOVERY');
 
 type PhaseType = 'start' | 'approve' | 'complete';
 const phase = computed<PhaseType>(() => {
   const p = props.recoveryProcess;
   if (!p) {
     return 'start';
-  } else if (completedSegments.value + 1 < p.requiredKeyShares) {
+  } else if (completedSegments + 1 < p.requiredKeyShares) {
     return 'approve';
   } else {
     return 'complete';
   }
 });
-const requiredSegments = computed(() => props.recoveryProcess?.requiredKeyShares ?? props.vault.requiredEmergencyKeyShares );
-const completedSegments = computed(() => Object.values(props.recoveryProcess?.recoveredKeyShares ?? {}).filter(ks => ks.recoveredKeyShare !== undefined).length );
-const didAddMyShare = computed(() => props.recoveryProcess?.recoveredKeyShares[props.me.id].recoveredKeyShare !== undefined);
+const requiredSegments = props.recoveryProcess?.requiredKeyShares ?? props.vault.requiredEmergencyKeyShares;
+const completedSegments = Object.values(props.recoveryProcess?.recoveredKeyShares ?? {}).filter(ks => ks.recoveredKeyShare !== undefined).length;
+const didAddMyShare = props.recoveryProcess?.recoveredKeyShares[props.me.id].recoveredKeyShare !== undefined;
 
 const open = ref(false);
 const onError = ref<Error | null>();
 
-const selectedNewOwner = ref<UserDto | null>(null);
-const selectedNewCouncilMembers = ref<UserDto[]>([]);
+// NEW OWNER
+const newOwners = ref<ActivatedUser[]>([]);
+const addNewOwner = addUser.bind(newOwners);
+const removeNewOwner = removeUser.bind(newOwners);
 
-const isGrantButtonDisabled = computed(() => {
-  return selectedNewCouncilMembers.value.length < requiredKeySharesInput.value;
-});
+// COUNCIL CHANGE
+const newRequiredKeyShares = ref<number>(props.vault.requiredEmergencyKeyShares);
+const newCouncilMembers = ref<ActivatedUser[]>([]);
+const addCouncilMember = addUser.bind(newCouncilMembers);
+const removeCouncilMember = removeUser.bind(newCouncilMembers);
 
-const councilUserMap = ref<Map<string, UserDto>>(new Map());
-
-const parsedCouncilMembers = computed<UserDto[]>(() => {
-  return (parsedDetails.value.newCouncilMemberIds ?? [])
-    .map((id: string) => councilUserMap.value.get(id))
-    .filter((u: UserDto | undefined): u is UserDto => u !== undefined);
-});
-
-const parsedNewOwner = ref<UserDto | null>(null);
+const isGrantButtonDisabled = computed(() => newCouncilMembers.value.length < newRequiredKeyShares.value);
 
 const noopSearch = async () => [];
 async function searchUsers(query: string): Promise<UserDto[]> {
@@ -275,59 +275,40 @@ async function searchUsers(query: string): Promise<UserDto[]> {
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
-function addCouncilMember(user: UserDto) {
-  if (!selectedNewCouncilMembers.value.find(u => u.id === user.id)) {
-    selectedNewCouncilMembers.value.push(user);
+function addUser(this: Ref<UserDto[]>, user: UserDto) {
+  if (!this.value.find(u => u.id === user.id)) {
+    this.value.push(user);
   }
 }
 
-function removeCouncilMember(user: UserDto) {
-  selectedNewCouncilMembers.value = selectedNewCouncilMembers.value.filter(u => u.id !== user.id);
+function removeUser(this: Ref<UserDto[]>, user: UserDto) {
+  this.value = this.value.filter(u => u.id !== user.id);
 }
 
 const canStartRecovery = computed(() => {
-  if (selectedType.value === 'RECOVERY') {
-    return selectedNewOwner.value != null;
-  } else if (selectedType.value === 'COUNCIL_CHANGE') {
-    return (
-      selectedNewCouncilMembers.value.length >= requiredKeySharesInput.value &&
-      requiredKeySharesInput.value > 0
-    );
+  if (processType.value === 'RECOVERY') {
+    return newOwners.value.length > 0;
+  } else if (processType.value === 'COUNCIL_CHANGE') {
+    return newCouncilMembers.value.length >= newRequiredKeyShares.value && newRequiredKeyShares.value > 0;
+  } else {
+    return false;
   }
-  return false;
 });
 
 async function show() {
   if (props.recoveryProcess?.type === 'COUNCIL_CHANGE') {
-    const ids = parsedDetails.value.newCouncilMemberIds ?? [];
-    if (ids.length > 0) {
-      const authorities = await backend.authorities.listSome(ids);
-      const users = authorities.filter(
-        (a): a is UserDto => a.type === 'USER' && didCompleteSetup(a)
-      );
-      councilUserMap.value = new Map(users.map(u => [u.id, u]));
-    }
+    const authorities = await backend.authorities.listSome(props.recoveryProcess.details.newCouncilMemberIds);
+    const users = authorities.filter(a => a.type === 'USER').filter(u => didCompleteSetup(u));
+    newCouncilMembers.value = users;
   }
   else if (props.recoveryProcess?.type === 'RECOVERY') {
-    const ownerId = parsedDetails.value.newOwnerId;
-    if (ownerId) {
-      const [authority] = await backend.authorities.listSome([ownerId]);
-      if (authority?.type === 'USER' && didCompleteSetup(authority)) {
-        parsedNewOwner.value = authority;
-      }
-    }
+    const authorities = await backend.authorities.listSome(props.recoveryProcess.details.newOwnerIds);
+    const users = authorities.filter(a => a.type === 'USER').filter(u => didCompleteSetup(u));
+    newOwners.value = users;
   }
 
   open.value = true;
 }
-
-const parsedDetails = computed(() => {
-  try {
-    return props.recoveryProcess?.details ? JSON.parse(props.recoveryProcess.details) : {};
-  } catch {
-    return {};
-  }
-});
 
 const phaseTitle = computed(() => {
   switch (phase.value) {
@@ -347,6 +328,9 @@ const phaseDescription = computed(() => {
   }
 });
 
+/**
+ * PHASE ONE: Starting the recovery process and adding the first share.
+ */
 async function startRecovery() {
   try {
     onError.value = null;
@@ -359,20 +343,31 @@ async function startRecovery() {
       throw new Error(`Inconsistent data: Insufficient council members (${councilMembers.length}) to recovery this vault (${props.vault.requiredEmergencyKeyShares}).`);
     }
 
-    let details = '';
-    if (selectedType.value === 'RECOVERY') {
-      if (!selectedNewOwner.value) {
+    // depending on the process type, we need different data:
+    let data: RecoveryProcessSetNewOwner | RecoveryProcessChangeCouncil;
+    if (processType.value === 'RECOVERY') {
+      if (!newOwners.value) {
         throw new Error(t('recoveryDialog.error.noOwnerSelected'));
       }
-      details = JSON.stringify({ newOwnerId: selectedNewOwner.value.id });
-    } else if (selectedType.value === 'COUNCIL_CHANGE') {
-      if (selectedNewCouncilMembers.value.length < requiredKeySharesInput.value) {
+      data = {
+        type: 'RECOVERY',
+        details: {
+          newOwnerIds: newOwners.value.map(u => u.id)
+        }
+      };
+    } else if (processType.value === 'COUNCIL_CHANGE') {
+      if (newCouncilMembers.value.length < newRequiredKeyShares.value) {
         throw new Error(t('recoveryDialog.error.notEnoughCouncilMembers'));
       }
-      details = JSON.stringify({
-        newCouncilMemberIds: selectedNewCouncilMembers.value.map(u => u.id),
-        newRequiredKeyShares: requiredKeySharesInput.value
-      });
+      data = {
+        type: 'COUNCIL_CHANGE',
+        details: {
+          newCouncilMemberIds: newCouncilMembers.value.map(u => u.id),
+          newRequiredKeyShares: newRequiredKeyShares.value
+        }
+      };
+    } else {
+      throw new Error(t('recoveryDialog.error.invalidRecoveryType'));
     }
 
     // create recovery process:
@@ -380,24 +375,24 @@ async function startRecovery() {
     const process: RecoveryProcessDto = {
       id: crypto.randomUUID(),
       vaultId: props.vault.id,
-      type: selectedType.value,
-      details: details, // TODO: used to store type-specific details such as `selectedNewCouncilMembers`
+      ...data,
       requiredKeyShares: props.vault.requiredEmergencyKeyShares,
       processPublicKey: processKeyPair.recoveryPublicKey,
       recoveredKeyShares: {}
     };
+    // initialize recovered key shares for all council members:
     for (const [memberId, jwe] of Object.entries(processKeyPair.recoveryPrivateKeys)) {
       process.recoveredKeyShares[memberId] = {
         processPrivateKey: jwe,
       };
     }
 
-    // get my user private key:
+    // add my part of the emergency key:
     const userKeys = await userdata.decryptUserKeysWithBrowser();
-
     await addMyShare(process, userKeys.ecdhKeyPair.privateKey);
-    await backend.emergencyAccess.startRecovery(process);
 
+    // save and exit:
+    await backend.emergencyAccess.startRecovery(process);
     emit('updated', process);
     open.value = false;
   } catch (error) {
@@ -406,6 +401,9 @@ async function startRecovery() {
   }
 }
 
+/**
+ * PHASE TWO: Adding further shares to the recovery process.
+ */
 async function approveRecovery() {
   if (!props.recoveryProcess) {
     throw new Error('No recovery process to approve.');
@@ -421,6 +419,7 @@ async function approveRecovery() {
     const myRecoveredShare = await addMyShare(process, userKeys.ecdhKeyPair.privateKey);
     await backend.emergencyAccess.addMyShare(process.id, myRecoveredShare);
 
+    // done:
     emit('updated', process);
     open.value = false;
   } catch (error) {
@@ -429,6 +428,9 @@ async function approveRecovery() {
   }
 }
 
+/**
+ * PHASE THREE: By adding the last required share, we can complete the recovery process.
+ */
 async function completeRecovery() {
   if (!props.recoveryProcess) {
     throw new Error('No recovery process to complete.');
@@ -451,18 +453,37 @@ async function completeRecovery() {
     const recoveredKeyBytes = await EmergencyAccess.combineRecoveredShares(keyShares, processPrivateKey, userKeys.ecdhKeyPair.privateKey);
     const recoveredKey = wordEncoder.encodePadded(recoveredKeyBytes); // TODO remove word encoding crap:
 
-    // recover vault key:
-    const vaultKeys = await VaultKeys.recover(recoveredKey);
-    const me = await userdata.me;
-    if (vaultKeys) {
-      const publicKey = await userdata.ecdhPublicKey;
-      const jwe = await vaultKeys.encryptForUser(publicKey);
-      await backend.vaults.grantAccess(props.vault.id, { userId: me.id, token: jwe });
-      await backend.vaults.addUser(props.vault.id, me.id, 'OWNER'); // FIXME: parse process.details to get new owner (don't set "me")
-      // TODO: shall we remove other owners?
-      await backend.emergencyAccess.delete(process.id);
+    if (process.type === 'COUNCIL_CHANGE' && newCouncilMembers.value.length > process.details.newRequiredKeyShares) {
+      // split recovered key into new shares for new council members:
+      const keyShares = await EmergencyAccess.split(recoveredKeyBytes, process.details.newRequiredKeyShares, ...newCouncilMembers.value);
+      await backend.vaults.createOrUpdateVault(
+        props.vault.id,
+        props.vault.name,
+        props.vault.archived,
+        process.details.newRequiredKeyShares,
+        keyShares,
+        props.vault.description
+      );
+    } else if (process.type === 'RECOVERY' && newOwners.value.length > 0) {
+      // grant access to new owners using recovered key:
+      const vaultKeys = await VaultKeys.recover(recoveredKey);
+      const accessGrants: AccessGrant[] = await Promise.all(newOwners.value.map(async u => {
+        console.log(`Granting access to user ${u.email}.`);
+        const publicKey = base64.parse(u.ecdhPublicKey);
+        const jwe = vaultKeys.encryptForUser(publicKey);
+        await backend.vaults.addUser(props.vault.id, u.id, 'OWNER');
+        return { userId: u.id, token: await jwe };
+      }));
+      await backend.vaults.grantAccess(props.vault.id, ...accessGrants);
+      // TODO: shall we remove other owners or is that up to the new owner?
+    } else {
+      throw new Error(`Unsupported state for recovery process type: ${process.type}`);
     }
 
+    console.log(`Successfully completed recovery process ${process.id} for vault ${props.vault.id}.`);
+    await backend.emergencyAccess.delete(process.id);
+
+    // done:
     emit('updated');
     open.value = false;
   } catch (error) {
@@ -476,9 +497,5 @@ async function addMyShare(process: RecoveryProcessDto, userPrivateKey: CryptoKey
   const recoveredShare = await EmergencyAccess.recoverShare(encryptedShare, userPrivateKey, process.processPublicKey);
   process.recoveredKeyShares[props.me.id].recoveredKeyShare = recoveredShare;
   return recoveredShare;
-}
-
-function closeDialog() {
-  open.value = false;
 }
 </script>

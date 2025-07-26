@@ -143,11 +143,24 @@ export type SettingsDto = {
   emergencyCouncilMemberIds: string[]
 }
 
-export type RecoveryProcessDto = {
+export type RecoveryProcessSetNewOwner = {
+  type: 'RECOVERY',
+  details: {
+    newOwnerIds: string[];
+  }
+}
+
+export type RecoveryProcessChangeCouncil = {
+  type: 'COUNCIL_CHANGE',
+  details: {
+    newCouncilMemberIds: string[];
+    newRequiredKeyShares: number;
+  }
+}
+
+export type RecoveryProcessDto = (RecoveryProcessSetNewOwner | RecoveryProcessChangeCouncil) & {
   id: string;
   vaultId: string;
-  type: 'RECOVERY' | 'COUNCIL_CHANGE';
-  details?: string;
   requiredKeyShares: number;
   processPublicKey: string;
   recoveredKeyShares: {
@@ -353,6 +366,10 @@ class AuthorityService {
   }
 
   public async listSome(authorityIds: string[]): Promise<AuthorityDto[]> {
+    if (authorityIds.length === 0) {
+      // safe roundtrip for empty list
+      return [];
+    }
     const query = `ids=${authorityIds.join('&ids=')}`;
     return axiosAuth.get<AuthorityDto[]>(`/authorities?${query}`).then(response => response.data.map(AuthorityService.fillInMissingPicture));
   }
