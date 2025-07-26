@@ -216,30 +216,26 @@ async function fetchData() {
     for (const vault of vaults.value ?? []) {
       const processes = await backend.emergencyAccess.findProcessesForVault(vault.id);
       if (processes.length > 0) {
-        const process = processes[0];
+        const process = processes[0]; // TODO: handle multiple parallel processes (database allows one per vault and type)
         
         vaultRecoveryProcesses.value[vault.id] = process;
 
         // Details analysieren
-        try {
-          const details = JSON.parse(process.details ?? '{}');
-          if (process.type === 'COUNCIL_CHANGE') {
-            const ids: string[] = details.newCouncilMemberIds ?? [];
-            ids.forEach(id => allUserIds.add(id));
-            vaultCouncilMap.set(vault.id, ids);
-          } else if (process.type === 'RECOVERY' && details.newOwnerId) {
-            allUserIds.add(details.newOwnerId);
-            vaultCouncilMap.set(vault.id, [details.newOwnerId]);
-          }
-        } catch (e) {
-          console.warn('Invalid recovery details JSON', e);
+        if (process.type === 'COUNCIL_CHANGE') {
+          const ids: string[] = process.details.newCouncilMemberIds;
+          ids.forEach(id => allUserIds.add(id));
+          vaultCouncilMap.set(vault.id, ids);
+        } else if (process.type === 'RECOVERY') {
+          const ids: string[] = process.details.newOwnerIds;
+          ids.forEach(id => allUserIds.add(id));
+          vaultCouncilMap.set(vault.id, ids);
         }
       }
     }
 
     const authorities = await backend.authorities.listSome(Array.from(allUserIds));
     const usersById: Record<string, Item> = Object.fromEntries(
-      authorities.map((u) => [u.id, { id: u.id, name: u.name, pictureUrl: u.pictureUrl }])
+      authorities.map((u) => [u.id, u])
     );
 
     pendingOwnerOrCouncilByVaultId.value = Object.fromEntries(
