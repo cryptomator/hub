@@ -105,6 +105,21 @@ public class VaultRoleFilterTest {
 		Assertions.assertDoesNotThrow(() -> filter.filter(context));
 	}
 
+	@Test
+	@DisplayName("pass if user3 tries to access 7E57C0DE-0000-4000-8000-000100001111 (user3 is recovery council member)")
+	public void testFilterSuccess3() throws NoSuchMethodException {
+		Mockito.doReturn(VaultRoleFilterTest.class.getMethod("byPassRecoveryCouncilMembers")).when(resourceInfo).getResourceMethod();
+		Mockito.doReturn(new MultivaluedHashMap<>(Map.of(VaultRole.DEFAULT_VAULT_ID_PARAM, "7E57C0DE-0000-4000-8000-000100001111"))).when(uriInfo).getPathParameters();
+		Mockito.doReturn("user3").when(jwt).getSubject();
+		var vault = Mockito.mock(Vault.class);
+		Mockito.doReturn(Map.of("user3", "recovery-key-share-3000")).when(vault).getEmergencyKeyShares();
+
+		Mockito.when(vaultRepo.findById(ArgumentMatchers.argThat(uuid -> uuid.toString().equalsIgnoreCase("7E57C0DE-0000-4000-8000-000100001111")))).thenReturn(vault);
+
+		Assertions.assertDoesNotThrow(() -> filter.filter(context));
+		Mockito.verify(effectiveVaultAccessRepo, Mockito.never()).listRoles(Mockito.any(), Mockito.any());
+	}
+
 	@Nested
 	@DisplayName("when attempting to access archived vault")
 	public class OnArchivedVault {
@@ -209,6 +224,9 @@ public class VaultRoleFilterTest {
 	/*
 	 * "real" methods for testing below, as we can not mock Method.class without breaking Mockito
 	 */
+
+	@VaultRole(value = {VaultAccess.Role.OWNER}, bypassForEmergencyAccess = true)
+	public void byPassRecoveryCouncilMembers() {}
 
 	@VaultRole({VaultAccess.Role.MEMBER})
 	public void allowMember() {}
