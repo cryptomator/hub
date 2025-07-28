@@ -455,7 +455,7 @@ async function completeRecovery() {
     const recoveredKeyBytes = await EmergencyAccess.combineRecoveredShares(keyShares, processPrivateKey, userKeys.ecdhKeyPair.privateKey);
     const recoveredKey = wordEncoder.encodePadded(recoveredKeyBytes); // TODO remove word encoding crap:
 
-    if (process.type === 'COUNCIL_CHANGE' && newCouncilMembers.value.length > process.details.newRequiredKeyShares) {
+    if (process.type === 'COUNCIL_CHANGE' && newCouncilMembers.value.length >= process.details.newRequiredKeyShares) {
       // split recovered key into new shares for new council members:
       const keyShares = await EmergencyAccess.split(recoveredKeyBytes, process.details.newRequiredKeyShares, ...newCouncilMembers.value);
       await backend.vaults.createOrUpdateVault(
