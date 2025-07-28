@@ -32,7 +32,7 @@
             ref="inputEl"
             v-model="query"
             autocomplete="off"
-            class="w-full h-9 border-none focus:ring-0 text-sm px-1 placeholder-gray-400"
+            class="w-full min-w-[60px] h-9 border-none focus:ring-0 text-sm px-1 placeholder-gray-400"
             :class="{
               'caret-transparent': selectedPillIndex !== null,
               'caret-black': selectedPillIndex === null
