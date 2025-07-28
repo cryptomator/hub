@@ -151,6 +151,11 @@
                   </div>
                 </div>
               </div>
+              <div v-if="onError != null" class="w-full sm:w-auto mb-2 text-right">
+                <p class="inline-block text-sm text-red-700 bg-red-100 rounded px-3 py-1">
+                  {{ t('common.unexpectedError', [onError.message]) }}
+                </p>
+              </div>
 
               <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                 <template v-if="phase === 'start'">
@@ -174,16 +179,13 @@
                   </button>
                 </template>
 
-                <template v-else-if="phase === 'complete' && !didAddMyShare">                
-                  <p v-if="onError != null" class="text-sm text-red-900 px-4 sm:px-6 text-right bg-red-50">
-                    {{ t('common.unexpectedError', [onError.message]) }}
-                  </p>
+                <template v-else-if="phase === 'complete' && !didAddMyShare">
                   <button
                     type="button"
-                    class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm"
+                    class="inline-flex w-full sm:w-auto justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:text-sm"
                     @click="completeRecovery()"
                   >
-                    Complete
+                    {{ t('common.complete') }}
                   </button>
                 </template>
 
