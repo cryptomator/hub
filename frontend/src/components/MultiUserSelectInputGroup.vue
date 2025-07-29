@@ -33,22 +33,24 @@
         <div v-if="inputVisible" class="ml-1 text-gray-500 hover:text-red-600">&times;</div>
       </button>
       <!-- Combobox -->
-      <Combobox v-show="inputVisible" as="div" class="flex-1 relative" @update:model-value="onSelect">
-        <ComboboxInput v-if="inputVisible" as="template">
-          <input
-            ref="inputEl"
-            v-model="query"
-            autocomplete="off"
-            class="w-full min-w-[60px] h-9 border-none focus:ring-0 text-sm px-1 placeholder-gray-400"
-            :class="{
-              'caret-transparent': selectedPillIndex !== null,
-              'caret-black': selectedPillIndex === null
-            }"
-            :placeholder="props.selectedUsers.length === 0 ? t('recoveryDialog.searchUser') : ''"
-            @keydown="onKeyDown"
-            @blur="onBlur"
-          />
-        </ComboboxInput>
+      <Combobox v-model="inputVisible" @update:model-value="onSelect">
+        <div class="flex-1 relative"> 
+          <ComboboxInput v-if="inputVisible" as="template">
+            <input
+              ref="inputEl"
+              v-model="query"
+              autocomplete="off"
+              class="w-full min-w-[60px] h-9 border-none focus:ring-0 text-sm px-1 placeholder-gray-400"
+              :class="{
+                'caret-transparent': selectedPillIndex !== null,
+                'caret-black': selectedPillIndex === null
+              }"
+              :placeholder="props.selectedUsers.length === 0 ? t('recoveryDialog.searchUser') : ''"
+              @keydown="onKeyDown"
+              @blur="onBlur"
+            />
+          </ComboboxInput>
+        </div>
       </Combobox>
     </div>
     <!-- DROPDOWN -->

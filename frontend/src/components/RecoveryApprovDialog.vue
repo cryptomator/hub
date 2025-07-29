@@ -488,8 +488,6 @@ async function completeRecovery() {
 
     console.log(`Successfully completed recovery process ${process.id} for vault ${props.vault.id}.`);
     await backend.emergencyAccess.delete(process.id);
-
-    // done:
     emit('updated');
     open.value = false;
   } catch (error) {

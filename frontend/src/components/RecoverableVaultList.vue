@@ -119,12 +119,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick, watch } from 'vue';
+import { ref, computed, onMounted, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { VaultDto, RecoveryProcessDto } from '../common/backend';
 import FetchError from './FetchError.vue';
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue';
-import { CheckIcon, ChevronUpDownIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/solid';
+import { CheckIcon, ChevronUpDownIcon } from '@heroicons/vue/24/solid';
 import userdata from '../common/userdata';
 import { UserDto } from '../common/backend';
 import { describeSegment } from '../common/svgUtils';
@@ -158,7 +158,6 @@ const filteredVaults = computed<VaultDto[]>(() => {
     case 'approved':
       result = result.filter((vault) => hasSubmittedEmergencyKeyShare(vault));
       break;
-
     case 'approvable':
       result = result.filter((vault) => {
         const proc = vaultRecoveryProcesses.value[vault.id];
@@ -174,9 +173,7 @@ const filteredVaults = computed<VaultDto[]>(() => {
           Object.keys(proc.recoveredKeyShares).length === 0;
         return hasNoKeyShares && !hasSubmittedEmergencyKeyShare(vault);
       });
-      break;
-
-    // default: 'recoverableVaults' – alle
+      break;  
   }
 
   if (query.value !== '') {
@@ -214,23 +211,9 @@ async function fetchData() {
     const vaultCouncilMap = new Map<string, string[]>();
 
     for (const vault of vaults.value ?? []) {
-      const processes = await backend.emergencyAccess.findProcessesForVault(vault.id);
-      if (processes.length > 0) {
-        const process = processes[0]; // TODO: handle multiple parallel processes (database allows one per vault and type)
-        
-        vaultRecoveryProcesses.value[vault.id] = process;
-
-        // Details analysieren
-        if (process.type === 'COUNCIL_CHANGE') {
-          const ids: string[] = process.details.newCouncilMemberIds;
-          ids.forEach(id => allUserIds.add(id));
-          vaultCouncilMap.set(vault.id, ids);
-        } else if (process.type === 'RECOVERY') {
-          const ids: string[] = process.details.newOwnerIds;
-          ids.forEach(id => allUserIds.add(id));
-          vaultCouncilMap.set(vault.id, ids);
-        }
-      }
+      const process = await loadVaultRecoveryProcess(vault.id);
+      await loadEmergencyKeyShareUsers(vault);
+      if (process) await loadPendingCouncilOrOwnerUsers(process, vault.id);
     }
 
     const authorities = await backend.authorities.listSome(Array.from(allUserIds));
@@ -308,9 +291,66 @@ async function resolveEmergencyKeyShareUsers(vaults: VaultDto[]) {
   );
 }
 
-function handleRecoveryUpdated(updatedProcess?: RecoveryProcessDto) {
-  if (!updatedProcess || !recoveryApprovVault.value) return; // FIXME: updatedProcess == undefined is an expected case when recovery completed
-  vaultRecoveryProcesses.value[recoveryApprovVault.value.id] = updatedProcess;
+async function loadVaultRecoveryProcess(vaultId: string): Promise<RecoveryProcessDto | null> {
+  const processes = await backend.emergencyAccess.findProcessesForVault(vaultId);
+  const process = processes[0] ?? null; // TODO: handle multiple parallel processes (database allows one per vault and type)
+  if (process) {
+    vaultRecoveryProcesses.value[vaultId] = process;
+  } else {
+    delete vaultRecoveryProcesses.value[vaultId];
+  }
+  return process;
+}
+
+async function loadEmergencyKeyShareUsers(vault: VaultDto) {
+  const userIds = Object.keys(vault.emergencyKeyShares);
+  const users = await backend.authorities.listSome(userIds);
+  emergencyKeyShareUsersByVaultId.value[vault.id] = users.map(u => ({
+    id: u.id,
+    name: u.name,
+    pictureUrl: u.pictureUrl,
+  }));
+}
+
+async function loadPendingCouncilOrOwnerUsers(process: RecoveryProcessDto, vaultId: string) {
+  const ids =
+    process.type === 'COUNCIL_CHANGE'
+      ? process.details.newCouncilMemberIds
+      : process.details.newOwnerIds;
+
+  const users = await backend.authorities.listSome(ids);
+  const usersById = Object.fromEntries(users.map(u => [u.id, u]));
+  pendingOwnerOrCouncilByVaultId.value[vaultId] = ids.map(id => usersById[id]).filter(Boolean);
+}
+
+async function reloadVaultData(vaultId: string) {
+  try {
+    const updatedVault = await backend.vaults.get(vaultId);
+
+    if (!vaults.value) vaults.value = [];
+    const index = vaults.value.findIndex(v => v.id === vaultId);
+    if (index >= 0) vaults.value[index] = updatedVault;
+    else vaults.value.push(updatedVault);
+
+    const process = await loadVaultRecoveryProcess(vaultId);
+    await loadEmergencyKeyShareUsers(updatedVault);
+    if (process) await loadPendingCouncilOrOwnerUsers(process, vaultId);
+  } catch (err) {
+    console.error('Fehler beim Nachladen eines Vaults:', err);
+  }
+}
+
+async function handleRecoveryUpdated(updatedProcess?: RecoveryProcessDto) {
+  const vaultId = recoveryApprovVault.value?.id;
+  try {
+    if (vaultId) {
+      await reloadVaultData(vaultId);
+    }
+  } catch (e) {
+    console.error('Fehler beim gezielten Nachladen nach Recovery:', e);
+  } finally {
+    recoveryApprovVault.value = null;
+  }
 }
 
 function openRecoveryDialog(vault: VaultDto) {
