@@ -77,32 +77,40 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" generic="T extends Item">
 import backend, { TrustDto, UserDto } from '../common/backend';
 import { ref, computed, watch, nextTick, onMounted } from 'vue';
 import { Combobox, ComboboxInput } from '@headlessui/vue';
 import { useI18n } from 'vue-i18n';
 import TrustDetails from './TrustDetails.vue';
 
+export type Item = {
+  id: string;
+  name: string;
+  pictureUrl?: string;
+  type?: string;
+  memberSize?: number;
+}
+
 const trusts = ref<TrustDto[]>([]);
 
 const { t } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{
-  selectedUsers: UserDto[];
-  onSearch: (query: string) => Promise<UserDto[]>;
+  selectedUsers: T[];
+  onSearch: (query: string) => Promise<T[]>;
   inputVisible: boolean;
 }>();
 
 const emit = defineEmits<{
-  action: [item: UserDto];
-  remove: [item: UserDto];
+  action: [item: T];
+  remove: [item: T];
 }>();
 
 const inputVisible = computed(() => props.inputVisible !== false);
 
 const query = ref('');
-const searchResults = ref<UserDto[]>([]);
+const searchResults = ref<T[]>([]);
 const inputEl = ref<HTMLInputElement | null>(null);
 
 const focusInput = () => {
@@ -126,7 +134,7 @@ async function refreshTrusts() {
   trusts.value = await backend.trust.listTrusted();
 }
 
-function onPillClick(event: MouseEvent, user: UserDto) {
+function onPillClick(event: MouseEvent, user: T) {
   const target = event.target as HTMLElement;
   if (target.closest('.trust-details')) {
     return;
@@ -156,7 +164,7 @@ onMounted(async () => {
   await refreshTrusts();
 });
 
-function onSelect(user: UserDto) {
+function onSelect(user: T) {
   emit('action', user);
   query.value = '';
   searchResults.value = [];
@@ -164,7 +172,7 @@ function onSelect(user: UserDto) {
   nextTick(() => inputEl.value?.focus());
 }
 
-function removeUser(user: UserDto) {
+function removeUser(user: T) {
   emit('remove', user);
 }
 
@@ -219,7 +227,7 @@ function onKeyDown(e: KeyboardEvent) {
   } else if (e.key === 'Enter' || e.key === 'Tab') {
     if (activeIndex.value >= 0 && filteredUsers.value[activeIndex.value]) {
       e.preventDefault();
-      onSelect(filteredUsers.value[activeIndex.value]);
+      onSelect(filteredUsers.value[activeIndex.value] as T);
     }
   } else {
     selectedPillIndex.value = null;
