@@ -187,7 +187,6 @@ const filteredVaults = computed<VaultDto[]>(() => {
 
 const vaultRecoveryProcesses = ref<Record<string, RecoveryProcessDto>>({});
 
-const pendingOwnerOrCouncilByVaultId = ref<Record<string, Item[]>>({}); //Only set not read at the moment - remove or use maybe later
 const emergencyKeyShareUsersByVaultId = ref<Record<string, Item[]>>({});
 
 const recoveryApprovVault = ref<VaultDto | null>(null);
@@ -213,19 +212,11 @@ async function fetchData() {
     for (const vault of vaults.value ?? []) {
       const process = await loadVaultRecoveryProcess(vault.id);
       await loadEmergencyKeyShareUsers(vault);
-      if (process) await loadPendingCouncilOrOwnerUsers(process, vault.id);
     }
 
     const authorities = await backend.authorities.listSome(Array.from(allUserIds));
     const usersById: Record<string, Item> = Object.fromEntries(
       authorities.map((u) => [u.id, u])
-    );
-
-    pendingOwnerOrCouncilByVaultId.value = Object.fromEntries(
-      Array.from(vaultCouncilMap.entries()).map(([vaultId, ids]) => [
-        vaultId,
-        ids.map((id) => usersById[id]).filter(Boolean),
-      ])
     );
   } catch (error) {
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
@@ -312,17 +303,6 @@ async function loadEmergencyKeyShareUsers(vault: VaultDto) {
   }));
 }
 
-async function loadPendingCouncilOrOwnerUsers(process: RecoveryProcessDto, vaultId: string) {
-  const ids =
-    process.type === 'COUNCIL_CHANGE'
-      ? process.details.newCouncilMemberIds
-      : process.details.newOwnerIds;
-
-  const users = await backend.authorities.listSome(ids);
-  const usersById = Object.fromEntries(users.map(u => [u.id, u]));
-  pendingOwnerOrCouncilByVaultId.value[vaultId] = ids.map(id => usersById[id]).filter(Boolean);
-}
-
 async function reloadVaultData(vaultId: string) {
   try {
     const updatedVault = await backend.vaults.get(vaultId);
@@ -332,9 +312,7 @@ async function reloadVaultData(vaultId: string) {
     if (index >= 0) vaults.value[index] = updatedVault;
     else vaults.value.push(updatedVault);
 
-    const process = await loadVaultRecoveryProcess(vaultId);
     await loadEmergencyKeyShareUsers(updatedVault);
-    if (process) await loadPendingCouncilOrOwnerUsers(process, vaultId);
   } catch (err) {
     console.error('Fehler beim Nachladen eines Vaults:', err);
   }
