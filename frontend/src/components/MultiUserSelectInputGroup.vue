@@ -25,8 +25,7 @@
         {{ user.name }}
         <span class="ml-1 trust-details">
           <TrustDetails
-            v-if="user.type === 'USER'"
-            :trusted-user="user"
+            :trusted-user="user as UserDto"
             :trusts="trusts"
             @trust-changed="refreshTrusts"
           />
@@ -66,7 +65,7 @@
             ? 'bg-primary text-white'
             : 'hover:bg-primary'
         ]"
-        @click="onSelect(user)"
+        @click="onSelect(user as T)"
         @mouseenter="hoveredIndex = index"
         @mouseleave="hoveredIndex = null"
       >
@@ -88,8 +87,12 @@ export type Item = {
   id: string;
   name: string;
   pictureUrl?: string;
-  type?: string;
+  type: 'USER';
   memberSize?: number;
+
+  email?: string;
+  devices?: unknown[];
+  accessibleVaults?: unknown[];
 }
 
 const trusts = ref<TrustDto[]>([]);
