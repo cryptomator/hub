@@ -25,177 +25,181 @@
             leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
           >
             <DialogPanel
-              class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg"
+              class="relative transform overflow-visible transition-all sm:my-8 sm:w-full sm:max-w-lg"
             >
-              <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <div class="sm:flex sm:items-start">
-                  <div class="mx-auto shrink-0 flex items-center justify-center h-12 w-12 sm:mx-0 sm:h-10 sm:w-10 relative">
-                    <svg width="36" height="36" viewBox="0 0 36 36">
-                      <g>
-                        <path
-                          v-for="i in requiredSegments"
-                          :key="i"
-                          :d="describeSegment(i - 1, requiredSegments, 16)"
-                          :fill="i <= completedSegments ? '#49b04a' : '#e5e7eb'"
-                          stroke="white"
-                          stroke-width="1"
-                        />
-                      </g>
-                    </svg>
+              <div class="relative rounded-lg bg-white">
+                <div class="relative z-10">
+                  <div class="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                      <div class="mx-auto shrink-0 flex items-center justify-center h-12 w-12 sm:mx-0 sm:h-10 sm:w-10 relative">
+                        <svg width="36" height="36" viewBox="0 0 36 36">
+                          <g>
+                            <path
+                              v-for="i in requiredSegments"
+                              :key="i"
+                              :d="describeSegment(i - 1, requiredSegments, 16)"
+                              :fill="i <= completedSegments ? '#49b04a' : '#e5e7eb'"
+                              stroke="white"
+                              stroke-width="1"
+                            />
+                          </g>
+                        </svg>
+                      </div>
+                      <div class="mt-3 grow text-center sm:mt-0 sm:ml-4 sm:text-left">
+                        <DialogTitle as="h3" class="text-lg leading-6 font-medium text-gray-900">
+                          {{ phaseTitle }}
+                        </DialogTitle>
+                        <div class="mt-2">
+                          <p class="text-sm text-gray-500">
+                            {{ phaseDescription }}
+                          </p>
+                          <p v-if="didAddMyShare" class="text-sm text-gray-500">
+                            {{ t('recoveryDialog.alreadyAddedKeyShare') }}
+                          </p>
+                        </div>
+                        <div v-if="phase === 'start'" class="mt-4 space-y-4">
+                          <div>
+                            <label class="block text-sm font-medium text-gray-700">
+                              {{ t('recoveryDialog.selectRecoveryType') }}
+                            </label>
+                            <select
+                              v-model="processType"
+                              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                            >
+                              <option value="RECOVERY">{{ t('recoveryDialog.ownership') }}</option>
+                              <option value="COUNCIL_CHANGE">{{ t('recoveryDialog.voteCouncil') }}</option>
+                            </select>
+                          </div>
+
+                          <div v-if="processType === 'RECOVERY'">
+                            <label class="block text-sm font-medium text-gray-700">
+                              {{ t('recoveryDialog.selectNewOwner') }}
+                            </label>
+                            <MultiUserSelectInputGroup
+                              :selected-users="newOwners"
+                              :on-search="searchUsers"
+                              :input-visible="true"
+                              @action="addNewOwner"
+                              @remove="removeNewOwner"
+                            />
+                          </div>
+
+                          <div v-if="processType === 'COUNCIL_CHANGE'">
+                            <label class="block text-sm font-medium text-gray-700">
+                              {{ t('recoveryDialog.selectNewCouncil') }}
+                            </label>
+                            <MultiUserSelectInputGroup
+                              :selected-users="newCouncilMembers"
+                              :on-search="searchUsers"
+                              :input-visible="true"
+                              @action="addCouncilMember"
+                              @remove="removeCouncilMember"
+                            />
+                            <RequiredKeySharesInput
+                              v-model="newRequiredKeyShares"
+                              :allow-changing-defaults="true"
+                              :default-key-shares="vault.requiredEmergencyKeyShares"
+                            />
+                            <label class="block text-sm font-medium text-gray-700 pt-4">
+                              {{ t('grantEmergencyAccessDialog.possibleEmergencyScenario') }}
+                            </label>
+                            <EmergencyScenarioVisualization
+                              :selected-users="newCouncilMembers"
+                              :grant-button-disabled="isGrantButtonDisabled"
+                              :required-key-shares="newRequiredKeyShares"
+                            />
+                          </div>
+                        </div><!-- if="phase === start" -->
+
+                        <div v-else-if="!recoveryProcess">
+                          <!-- every other phase should have a non-null recovery process -->
+                          Internal error: No recovery process available. <!-- no need to localize this. -->
+                        </div>
+
+                        <div v-else>
+                          <div v-if="recoveryProcess.type === 'RECOVERY'">
+                            Ownership
+                          </div>
+                          <div v-if="recoveryProcess.type === 'COUNCIL_CHANGE'">
+                            Vote New Council Members
+                          </div>
+
+                          <div v-if="recoveryProcess.type === 'RECOVERY'" class="mt-4 space-y-1 text-sm text-gray-500">
+                            <div>
+                              <span class="font-medium text-gray-700">{{ t('recoveryDialog.selectedOwner') }}:</span>
+                              <MultiUserSelectInputGroup
+                                :selected-users="newOwners"
+                                :on-search="noopSearch"
+                                :input-visible="false"
+                              />
+                            </div>
+                          </div>
+
+                          <div v-if="recoveryProcess.type === 'COUNCIL_CHANGE'" class="mt-4 space-y-1 text-sm text-gray-500">
+                            <div v-if="recoveryProcess.details.newCouncilMemberIds.length > 0">
+                              <span class="font-medium text-gray-700">{{ t('recoveryDialog.selectedCouncil') }}:</span>
+                              <MultiUserSelectInputGroup
+                                :selected-users="newCouncilMembers"
+                                :on-search="noopSearch"
+                                :input-visible="false"
+                              />
+                            </div>
+                            <div>
+                              <span class="font-medium text-gray-700">{{ t('recoveryDialog.requiredKeyShares') }}:</span>
+                              {{ recoveryProcess.details.newRequiredKeyShares }}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div class="mt-3 grow text-center sm:mt-0 sm:ml-4 sm:text-left">
-                    <DialogTitle as="h3" class="text-lg leading-6 font-medium text-gray-900">
-                      {{ phaseTitle }}
-                    </DialogTitle>
-                    <div class="mt-2">
-                      <p class="text-sm text-gray-500">
-                        {{ phaseDescription }}
-                      </p>
-                      <p v-if="didAddMyShare" class="text-sm text-gray-500">
-                        {{ t('recoveryDialog.alreadyAddedKeyShare') }}
-                      </p>
-                    </div>
-                    <div v-if="phase === 'start'" class="mt-4 space-y-4">
-                      <div>
-                        <label class="block text-sm font-medium text-gray-700">
-                          {{ t('recoveryDialog.selectRecoveryType') }}
-                        </label>
-                        <select
-                          v-model="processType"
-                          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
-                        >
-                          <option value="RECOVERY">{{ t('recoveryDialog.ownership') }}</option>
-                          <option value="COUNCIL_CHANGE">{{ t('recoveryDialog.voteCouncil') }}</option>
-                        </select>
-                      </div>
+                
+                  <div v-if="onError != null" class="w-full sm:w-auto mb-2 text-right">
+                    <p class="inline-block text-sm text-red-700 bg-red-100 rounded px-3 py-1">
+                      {{ t('common.unexpectedError', [onError.message]) }}
+                    </p>
+                  </div>
+                  <div class="bg-gray-50 rounded-b-lg px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <template v-if="phase === 'start'">
+                      <button
+                        type="button"
+                        class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed"
+                        :disabled="!canStartRecovery"
+                        @click="startRecovery()"
+                      >
+                        {{ t('common.start') }}
+                      </button>
+                    </template>
 
-                      <div v-if="processType === 'RECOVERY'">
-                        <label class="block text-sm font-medium text-gray-700">
-                          {{ t('recoveryDialog.selectNewOwner') }}
-                        </label>
-                        <MultiUserSelectInputGroup
-                          :selected-users="newOwners"
-                          :on-search="searchUsers"
-                          :input-visible="true"
-                          @action="addNewOwner"
-                          @remove="removeNewOwner"
-                        />
-                      </div>
+                    <template v-else-if="phase === 'approve' && !didAddMyShare">
+                      <button
+                        type="button"
+                        class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm"
+                        @click="approveRecovery()"
+                      >
+                        {{ t('common.approve') }}
+                      </button>
+                    </template>
 
-                      <div v-if="processType === 'COUNCIL_CHANGE'">
-                        <label class="block text-sm font-medium text-gray-700">
-                          {{ t('recoveryDialog.selectNewCouncil') }}
-                        </label>
-                        <MultiUserSelectInputGroup
-                          :selected-users="newCouncilMembers"
-                          :on-search="searchUsers"
-                          :input-visible="true"
-                          @action="addCouncilMember"
-                          @remove="removeCouncilMember"
-                        />
-                        <RequiredKeySharesInput
-                          v-model="newRequiredKeyShares"
-                          :allow-changing-defaults="true"
-                          :default-key-shares="vault.requiredEmergencyKeyShares"
-                        />
-                        <label class="block text-sm font-medium text-gray-700 pt-4">
-                          {{ t('grantEmergencyAccessDialog.possibleEmergencyScenario') }}
-                        </label>
-                        <EmergencyScenarioVisualization
-                          :selected-users="newCouncilMembers"
-                          :grant-button-disabled="isGrantButtonDisabled"
-                          :required-key-shares="newRequiredKeyShares"
-                        />
-                      </div>
-                    </div><!-- if="phase === start" -->
+                    <template v-else-if="phase === 'complete' && !didAddMyShare">
+                      <button
+                        type="button"
+                        class="inline-flex w-full sm:w-auto justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:text-sm"
+                        @click="completeRecovery()"
+                      >
+                        {{ t('common.complete') }}
+                      </button>
+                    </template>
 
-                    <div v-else-if="!recoveryProcess">
-                      <!-- every other phase should have a non-null recovery process -->
-                      Internal error: No recovery process available. <!-- no need to localize this. -->
-                    </div>
-
-                    <div v-else>
-                      <div v-if="recoveryProcess.type === 'RECOVERY'">
-                        Ownership
-                      </div>
-                      <div v-if="recoveryProcess.type === 'COUNCIL_CHANGE'">
-                        Vote New Council Members
-                      </div>
-
-                      <div v-if="recoveryProcess.type === 'RECOVERY'" class="mt-4 space-y-1 text-sm text-gray-500">
-                        <div>
-                          <span class="font-medium text-gray-700">{{ t('recoveryDialog.selectedOwner') }}:</span>
-                          <MultiUserSelectInputGroup
-                            :selected-users="newOwners"
-                            :on-search="noopSearch"
-                            :input-visible="false"
-                          />
-                        </div>
-                      </div>
-
-                      <div v-if="recoveryProcess.type === 'COUNCIL_CHANGE'" class="mt-4 space-y-1 text-sm text-gray-500">
-                        <div v-if="recoveryProcess.details.newCouncilMemberIds.length > 0">
-                          <span class="font-medium text-gray-700">{{ t('recoveryDialog.selectedCouncil') }}:</span>
-                          <MultiUserSelectInputGroup
-                            :selected-users="newCouncilMembers"
-                            :on-search="noopSearch"
-                            :input-visible="false"
-                          />
-                        </div>
-                        <div>
-                          <span class="font-medium text-gray-700">{{ t('recoveryDialog.requiredKeyShares') }}:</span>
-                          {{ recoveryProcess.details.newRequiredKeyShares }}
-                        </div>
-                      </div>
-                    </div>
+                    <button
+                      type="button"
+                      class="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:w-auto sm:text-sm"
+                      @click="open = false" 
+                    >
+                      {{ t('common.close') }}
+                    </button>
                   </div>
                 </div>
-              </div>
-              <div v-if="onError != null" class="w-full sm:w-auto mb-2 text-right">
-                <p class="inline-block text-sm text-red-700 bg-red-100 rounded px-3 py-1">
-                  {{ t('common.unexpectedError', [onError.message]) }}
-                </p>
-              </div>
-
-              <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                <template v-if="phase === 'start'">
-                  <button
-                    type="button"
-                    class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed"
-                    :disabled="!canStartRecovery"
-                    @click="startRecovery()"
-                  >
-                    {{ t('common.start') }}
-                  </button>
-                </template>
-
-                <template v-else-if="phase === 'approve' && !didAddMyShare">
-                  <button
-                    type="button"
-                    class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm"
-                    @click="approveRecovery()"
-                  >
-                    {{ t('common.approve') }}
-                  </button>
-                </template>
-
-                <template v-else-if="phase === 'complete' && !didAddMyShare">
-                  <button
-                    type="button"
-                    class="inline-flex w-full sm:w-auto justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:text-sm"
-                    @click="completeRecovery()"
-                  >
-                    {{ t('common.complete') }}
-                  </button>
-                </template>
-
-                <button
-                  type="button"
-                  class="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:w-auto sm:text-sm"
-                  @click="open = false" 
-                >
-                  {{ t('common.close') }}
-                </button>
               </div>
             </DialogPanel>
           </TransitionChild>

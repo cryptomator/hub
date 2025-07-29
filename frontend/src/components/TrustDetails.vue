@@ -10,7 +10,11 @@
         <p v-if="trustLevel === -1" class="text-sm mb-2">{{ t('trustDetails.trustLevel.untrusted') }}</p>
         <p v-else-if="trustLevel === 0" class="text-sm mb-2">{{ t('trustDetails.trustLevel', [ n(1, 'percent')]) }}</p>
         <p v-else-if="trustLevel > 0" class="text-sm mb-2">{{ t('trustDetails.trustLevel', [ n(1 / trustLevel, 'percent')]) }}</p>
-        <button v-if="trustLevel !== 0 && trustedUser.ecdhPublicKey && trustedUser.ecdsaPublicKey" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-xs px-4 py-2 bg-primary text-base font-medium text-white hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:w-auto sm:text-sm" @click="showSignUserKeysDialog()">
+        <button 
+          v-if="trustLevel !== 0 && trustedUser.ecdhPublicKey && trustedUser.ecdsaPublicKey" 
+          class="w-full inline-flex justify-center rounded-md border border-transparent shadow-xs px-4 py-2 bg-primary text-base font-medium text-white hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:w-auto sm:text-sm whitespace-nowrap" 
+          @click.prevent.stop="showSignUserKeysDialog"
+        >
           {{ t('trustDetails.showSignDialogBtn') }}
         </button>
         <p v-if="!trustedUser.ecdhPublicKey || !trustedUser.ecdsaPublicKey" class="text-sm mb-2">{{ t('trustDetails.userNotSetUp') }}</p>

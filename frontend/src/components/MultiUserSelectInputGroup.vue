@@ -19,10 +19,18 @@
           'bg-white text-gray-800': selectedPillIndex !== index,
           'bg-white ring-2 ring-primary': selectedPillIndex === index
         }"
-        @click.stop="inputVisible && removeUser(user)"
+        @click="onPillClick($event, user)"
       >
         <img :src="user.pictureUrl" class="w-4 h-4 rounded-full mr-1" />
         {{ user.name }}
+        <span class="ml-1 trust-details">
+          <TrustDetails
+            v-if="user.type === 'USER'"
+            :trusted-user="user"
+            :trusts="trusts"
+            @trust-changed="refreshTrusts"
+          />
+        </span>
         <div v-if="inputVisible" class="ml-1 text-gray-500 hover:text-red-600">&times;</div>
       </button>
       <!-- Combobox -->
@@ -47,7 +55,7 @@
     <!-- DROPDOWN -->
     <div
       v-if="inputVisible && query && filteredUsers.length > 0"
-      class="absolute z-10 mt-1 w-full overflow-auto rounded-md border border-gray-300 bg-white shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm"
+      class="absolute z-10 mt-1 w-full rounded-md border border-gray-300 bg-white shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm"
     >
       <div
         v-for="(user, index) in filteredUsers"
@@ -58,7 +66,7 @@
             ? 'bg-primary text-white'
             : 'hover:bg-primary'
         ]"
-        @click="onSelect(user as T)"
+        @click="onSelect(user)"
         @mouseenter="hoveredIndex = index"
         @mouseleave="hoveredIndex = null"
       >
@@ -69,36 +77,32 @@
   </div>
 </template>
 
-<script setup lang="ts" generic="T extends Item">
-import { ref, computed, watch, nextTick } from 'vue';
-import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions } from '@headlessui/vue';
+<script setup lang="ts">
+import backend, { TrustDto, UserDto } from '../common/backend';
+import { ref, computed, watch, nextTick, onMounted } from 'vue';
+import { Combobox, ComboboxInput } from '@headlessui/vue';
 import { useI18n } from 'vue-i18n';
+import TrustDetails from './TrustDetails.vue';
 
-export type Item = {
-  id: string;
-  name: string;
-  pictureUrl?: string;
-  type?: string;
-  memberSize?: number;
-}
+const trusts = ref<TrustDto[]>([]);
 
 const { t } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{
-  selectedUsers: T[];
-  onSearch: (query: string) => Promise<T[]>;
+  selectedUsers: UserDto[];
+  onSearch: (query: string) => Promise<UserDto[]>;
   inputVisible: boolean;
 }>();
 
 const emit = defineEmits<{
-  action: [item: T];
-  remove: [item: T];
+  action: [item: UserDto];
+  remove: [item: UserDto];
 }>();
 
 const inputVisible = computed(() => props.inputVisible !== false);
 
 const query = ref('');
-const searchResults = ref<T[]>([]);
+const searchResults = ref<UserDto[]>([]);
 const inputEl = ref<HTMLInputElement | null>(null);
 
 const focusInput = () => {
@@ -109,28 +113,8 @@ const focusInput = () => {
 };
 
 const activeIndex = ref(0);
-const hoveredIndex = ref<number | null>(null); // 👈 NEU
+const hoveredIndex = ref<number | null>(null);
 const selectedPillIndex = ref<number | null>(null);
-
-function onBlur() {
-  selectedPillIndex.value = null;
-}
-
-watch(query, async (newQuery) => {
-  if (newQuery.trim() === '') {
-    searchResults.value = [];
-  } else {
-    searchResults.value = await props.onSearch(newQuery);
-  }
-});
-
-watch(query, async (newQuery) => {
-  if (newQuery.trim() === '') {
-    searchResults.value = [];
-  } else {
-    searchResults.value = await props.onSearch(newQuery);
-  }
-});
 
 const filteredUsers = computed(() => {
   return searchResults.value.filter(
@@ -138,7 +122,41 @@ const filteredUsers = computed(() => {
   );
 });
 
-function onSelect(user: T) {
+async function refreshTrusts() {
+  trusts.value = await backend.trust.listTrusted();
+}
+
+function onPillClick(event: MouseEvent, user: UserDto) {
+  const target = event.target as HTMLElement;
+  if (target.closest('.trust-details')) {
+    return;
+  }
+  if (inputVisible.value) {
+    removeUser(user);
+  }
+}
+
+watch(query, async (newQuery) => {
+  if (newQuery.trim() === '') {
+    searchResults.value = [];
+  } else {
+    searchResults.value = await props.onSearch(newQuery);
+  }
+});
+
+watch(query, async (newQuery) => {
+  if (newQuery.trim() === '') {
+    searchResults.value = [];
+  } else {
+    searchResults.value = await props.onSearch(newQuery);
+  }
+});
+
+onMounted(async () => {
+  await refreshTrusts();
+});
+
+function onSelect(user: UserDto) {
   emit('action', user);
   query.value = '';
   searchResults.value = [];
@@ -146,8 +164,12 @@ function onSelect(user: T) {
   nextTick(() => inputEl.value?.focus());
 }
 
-function removeUser(user: T) {
+function removeUser(user: UserDto) {
   emit('remove', user);
+}
+
+function onBlur() {
+  selectedPillIndex.value = null;
 }
 
 function onKeyDown(e: KeyboardEvent) {
@@ -197,7 +219,7 @@ function onKeyDown(e: KeyboardEvent) {
   } else if (e.key === 'Enter' || e.key === 'Tab') {
     if (activeIndex.value >= 0 && filteredUsers.value[activeIndex.value]) {
       e.preventDefault();
-      onSelect(filteredUsers.value[activeIndex.value] as T);
+      onSelect(filteredUsers.value[activeIndex.value]);
     }
   } else {
     selectedPillIndex.value = null;
