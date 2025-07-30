@@ -207,7 +207,6 @@ async function fetchData() {
     }
     await resolveEmergencyKeyShareUsers(vaults.value ?? []);
     const allUserIds = new Set<string>();
-    const vaultCouncilMap = new Map<string, string[]>();
 
     for (const vault of vaults.value ?? []) {
       const process = await loadVaultRecoveryProcess(vault.id);
@@ -313,8 +312,10 @@ async function reloadVaultData(vaultId: string) {
     else vaults.value.push(updatedVault);
 
     await loadEmergencyKeyShareUsers(updatedVault);
+
+    await loadVaultRecoveryProcess(vaultId);
   } catch (err) {
-    console.error('Fehler beim Nachladen eines Vaults:', err);
+    console.error('Error while reloading a vault:', err);
   }
 }
 
