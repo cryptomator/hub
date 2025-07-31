@@ -1,12 +1,4 @@
 {
-  "locale.en": "Английский",
-  "locale.de": "Немецкий",
-  "locale.fr": "Французский",
-  "locale.it": "Итальянский",
-  "locale.ko": "Корейский",
-  "locale.nl": "Голландский",
-  "locale.pt": "Португальский",
-  "locale.tr": "Турецкий",
   "common.add": "Добавить",
   "common.apply": "Применить",
   "common.cancel": "Отмена",
