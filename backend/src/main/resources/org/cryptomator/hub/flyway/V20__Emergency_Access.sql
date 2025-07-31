@@ -42,6 +42,7 @@ CREATE TABLE "recovered_emergency_key_shares"
 	"council_member_id" VARCHAR(255) COLLATE "C" NOT NULL,
     "process_private_key" TEXT NOT NULL,
     "recovered_key_share" TEXT,
+    "signed_process_info" TEXT,
     CONSTRAINT "RECOVERED_EMERGENCY_KEY_SHARES_PK" PRIMARY KEY ("recovery_process_id", "council_member_id"),
     CONSTRAINT "RECOVERED_EMERGENCY_KEY_SHARES_FK_PROCESS" FOREIGN KEY ("recovery_process_id") REFERENCES "emergency_recovery_processes" ("id") ON DELETE CASCADE,
 	CONSTRAINT "RECOVERED_EMERGENCY_KEY_SHARES_FK_USER" FOREIGN KEY ("council_member_id") REFERENCES "user_details" ("id") ON DELETE CASCADE

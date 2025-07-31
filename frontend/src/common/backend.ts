@@ -158,16 +158,19 @@ export type RecoveryProcessChangeCouncil = {
   }
 }
 
+export type RecoveredKeyShareDto = {
+  processPrivateKey: string;
+  recoveredKeyShare?: string;
+  signedProcessInfo?: string;
+};
+
 export type RecoveryProcessDto = (RecoveryProcessSetNewOwner | RecoveryProcessChangeCouncil) & {
   id: string;
   vaultId: string;
   requiredKeyShares: number;
   processPublicKey: string;
   recoveredKeyShares: {
-    [councilMemberId: string]: {
-      processPrivateKey: string;
-      recoveredKeyShare?: string;
-    }
+    [councilMemberId: string]: RecoveredKeyShareDto
   }
 }
 
@@ -480,8 +483,8 @@ class EmergencyAccessService {
     return axiosAuth.put(`/emergency-access/${recoveryProcess.id}`, recoveryProcess);
   }
 
-  public async addMyShare(recoveryProcessId: string, recoveredKeyShareJwe: string): Promise<void> {
-    return axiosAuth.post(`/emergency-access/${recoveryProcessId}/recovered-key-shares`, recoveredKeyShareJwe, { headers: { 'Content-Type': 'text/plain' } });
+  public async addMyShare(recoveryProcessId: string, recoveredKeyShare: RecoveredKeyShareDto): Promise<void> {
+    return axiosAuth.post(`/emergency-access/${recoveryProcessId}/recovered-key-shares`, recoveredKeyShare);
   }
 
   public async delete(recoveryProcessId: string): Promise<void> {

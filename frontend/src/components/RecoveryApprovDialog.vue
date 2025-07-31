@@ -210,7 +210,7 @@
 </template>
 
 <script setup lang="ts">
-import backend, { VaultDto, UserDto, RecoveryProcessDto, didCompleteSetup, RecoveryProcessSetNewOwner, RecoveryProcessChangeCouncil, ActivatedUser, AccessGrant } from '../common/backend';
+import backend, { VaultDto, UserDto, RecoveryProcessDto, didCompleteSetup, RecoveryProcessSetNewOwner, RecoveryProcessChangeCouncil, ActivatedUser, AccessGrant, RecoveredKeyShareDto } from '../common/backend';
 import { ref, computed, toRaw, Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
@@ -220,9 +220,10 @@ import userdata from '../common/userdata';
 import MultiUserSelectInputGroup from './MultiUserSelectInputGroup.vue';
 import RequiredKeySharesInput from './emergencyaccess/RequiredKeySharesInput.vue';
 import EmergencyScenarioVisualization from './emergencyaccess/EmergencyScenarioVisualization.vue';
-import { VaultKeys } from '../common/crypto';
+import { asPublicKey, UserKeys, VaultKeys } from '../common/crypto';
 import { wordEncoder } from '../common/util';
 import { base64 } from 'rfc4648';
+import { ECDSA_P384, JWT, JWTHeader } from '../common/jwt';
 const { t } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{
@@ -338,9 +339,8 @@ const phaseDescription = computed(() => {
  * PHASE ONE: Starting the recovery process and adding the first share.
  */
 async function startRecovery() {
+  onError.value = null;
   try {
-    onError.value = null;
-
     // load council members:
     const recoveryCouncilMemberIds = Object.keys(props.vault.emergencyKeyShares);
     const authorities = await backend.authorities.listSome(recoveryCouncilMemberIds);
@@ -395,7 +395,7 @@ async function startRecovery() {
 
     // add my part of the emergency key:
     const userKeys = await userdata.decryptUserKeysWithBrowser();
-    await addMyShare(process, userKeys.ecdhKeyPair.privateKey);
+    process.recoveredKeyShares[props.me.id] = await addMyShare(process, userKeys);
 
     // save and exit:
     await backend.emergencyAccess.startRecovery(process);
@@ -414,16 +414,20 @@ async function approveRecovery() {
   if (!props.recoveryProcess) {
     throw new Error('No recovery process to approve.');
   }
+  onError.value = null;
   try {
-    onError.value = null;
+    const verifiedProcess = await verifyProcessInfo(props.recoveryProcess);
+    if (!verifiedProcess) {
+      throw new Error('Recovery process has been tampered with.');
+    }
 
     // get my user private key:
     const userKeys = await userdata.decryptUserKeysWithBrowser();
 
     // add my part of the emergency key:
     const process = structuredClone(toRaw(props.recoveryProcess));
-    const myRecoveredShare = await addMyShare(process, userKeys.ecdhKeyPair.privateKey);
-    await backend.emergencyAccess.addMyShare(process.id, myRecoveredShare);
+    process.recoveredKeyShares[props.me.id] = await addMyShare(process, userKeys);
+    await backend.emergencyAccess.addMyShare(process.id, process.recoveredKeyShares[props.me.id]);
 
     // done:
     emit('updated', process);
@@ -441,15 +445,19 @@ async function completeRecovery() {
   if (!props.recoveryProcess) {
     throw new Error('No recovery process to complete.');
   }
+  onError.value = null;
   try {
-    onError.value = null;
+    const verifiedProcess = await verifyProcessInfo(props.recoveryProcess);
+    if (!verifiedProcess) {
+      throw new Error('Recovery process has been tampered with.');
+    }
 
     // get my user private key:
     const userKeys = await userdata.decryptUserKeysWithBrowser();
 
     // add my part of the emergency key:
     const process = structuredClone(toRaw(props.recoveryProcess));
-    await addMyShare(process, userKeys.ecdhKeyPair.privateKey);
+    process.recoveredKeyShares[props.me.id] = await addMyShare(process, userKeys);
 
     // collect key parts:
     const keyShares = Object.values(process.recoveredKeyShares).filter(p => p.recoveredKeyShare !== undefined).map(p => p.recoveredKeyShare!);
@@ -496,10 +504,60 @@ async function completeRecovery() {
   }
 }
 
-async function addMyShare(process: RecoveryProcessDto, userPrivateKey: CryptoKey): Promise<string> {
+async function addMyShare(process: RecoveryProcessDto, userKeys: UserKeys): Promise<RecoveredKeyShareDto> {
   const encryptedShare = props.vault.emergencyKeyShares[props.me.id];
-  const recoveredShare = await EmergencyAccess.recoverShare(encryptedShare, userPrivateKey, process.processPublicKey);
-  process.recoveredKeyShares[props.me.id].recoveredKeyShare = recoveredShare;
-  return recoveredShare;
+  const recoveredShare = await EmergencyAccess.recoverShare(encryptedShare, userKeys.ecdhKeyPair.privateKey, process.processPublicKey);
+
+  const processInfo: Pick<RecoveryProcessDto, 'type' | 'details'> = {
+    type: process.type,
+    details: process.details
+  };
+
+  const signedProcessInfo = await JWT.build({
+    alg: 'ES384',
+    typ: 'JWT',
+    b64: true,
+    iss: props.me.id,
+    sub: process.id,
+    iat: Math.floor(Date.now() / 1000)
+  }, processInfo, userKeys.ecdsaKeyPair.privateKey);
+
+  return {
+    ...process.recoveredKeyShares[props.me.id],
+    recoveredKeyShare: recoveredShare,
+    signedProcessInfo: signedProcessInfo
+  };
+}
+
+async function verifyProcessInfo(process: RecoveryProcessDto): Promise<boolean> {
+  const councilMemberIds = Object.keys(process.recoveredKeyShares);
+  const authorities = await backend.authorities.listSome(councilMemberIds);
+  const councilMembers: Record<string, ActivatedUser> = Object.fromEntries(
+    authorities.filter(a => a.type === 'USER').filter(u => didCompleteSetup(u)).map(u => [u.id, u])
+  );
+
+  for (const [councilMemberId, recoveredKeyShare] of Object.entries(process.recoveredKeyShares)) {
+    if (!recoveredKeyShare.recoveredKeyShare) {
+      continue; // skip members that did not add their share yet
+    } else if (!recoveredKeyShare.signedProcessInfo) {
+      console.error(`Missing signed process info for council member ${councilMemberId}.`);
+      return false;
+    } else if (!councilMembers[councilMemberId]) {
+      console.error(`Unknown council member ${councilMemberId}.`);
+      return false;
+    }
+    const councilMember = councilMembers[councilMemberId];
+    const publicKey = await asPublicKey(base64.parse(councilMember.ecdsaPublicKey), ECDSA_P384, ['verify']);
+    const [header, payload] = await JWT.parse(recoveredKeyShare.signedProcessInfo, publicKey) as [JWTHeader, RecoveryProcessDto];
+    if (header.sub !== process.id || header.iss !== councilMemberId) {
+      console.error(`Invalid signed process info for council member ${councilMemberId}.`);
+      return false;
+    }
+    if (payload.type !== process.type || JSON.stringify(payload.details) !== JSON.stringify(process.details)) { // comparing json strings to check "deep" equality. ES6 preserves order of object properties.
+      console.error(`Signed process info for council member ${councilMemberId} does not match the recovery process`, process, payload);
+      return false;
+    }
+  }
+  return true;
 }
 </script>

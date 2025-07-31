@@ -1,19 +1,16 @@
 package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
-import io.quarkus.panache.common.Parameters;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
-import jakarta.persistence.NoResultException;
 import jakarta.persistence.Table;
 
 import java.io.Serializable;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.stream.Stream;
 
 @Entity
 @Table(name = "recovered_emergency_key_shares")
@@ -27,6 +24,9 @@ public class RecoveredEmergencyKeyShares {
 
 	@Column(name = "recovered_key_share")
 	private String recoveredKeyShare;
+
+	@Column(name = "signed_process_info")
+	private String signedProcessInfo;
 
 	public Id getId() {
 		return id;
@@ -50,6 +50,29 @@ public class RecoveredEmergencyKeyShares {
 
 	public void setRecoveredKeyShare(String recoveredKeyShare) {
 		this.recoveredKeyShare = recoveredKeyShare;
+	}
+
+	public String getSignedProcessInfo() {
+		return signedProcessInfo;
+	}
+
+	public void setSignedProcessInfo(String signedProcessInfo) {
+		this.signedProcessInfo = signedProcessInfo;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (o == null || getClass() != o.getClass()) return false;
+		RecoveredEmergencyKeyShares other = (RecoveredEmergencyKeyShares) o;
+		return Objects.equals(id, other.id)
+				&& Objects.equals(processPrivateKey, other.processPrivateKey)
+				&& Objects.equals(recoveredKeyShare, other.recoveredKeyShare)
+				&& Objects.equals(signedProcessInfo, other.signedProcessInfo);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(id, processPrivateKey, recoveredKeyShare, signedProcessInfo);
 	}
 
 	@Embeddable

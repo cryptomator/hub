@@ -26,6 +26,7 @@ import org.cryptomator.hub.entities.RecoveredEmergencyKeyShares;
 import org.cryptomator.hub.entities.events.EventLogger;
 import org.cryptomator.hub.util.RawJson;
 import org.cryptomator.hub.validation.ValidJWE;
+import org.cryptomator.hub.validation.ValidJWS;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -77,6 +78,7 @@ public class EmergencyAccessResource {
 			keyShareEntity.getId().setCouncilMemberId(memberId);
 			keyShareEntity.setProcessPrivateKey(keyShareDto.processPrivateKey);
 			keyShareEntity.setRecoveredKeyShare(keyShareDto.recoveredKeyShare);
+			keyShareEntity.setSignedProcessInfo(keyShareDto.signedProcessInfo);
 			return keyShareEntity;
 		}));
 		process.setRecoveredKeyShares(keyShares);
@@ -94,18 +96,19 @@ public class EmergencyAccessResource {
 	@POST
 	@Path("/{processId}/recovered-key-shares")
 	@RolesAllowed("user")
-	@Consumes(MediaType.TEXT_PLAIN)
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Operation(summary = "starts a new recovery process")
 	@APIResponse(responseCode = "204", description = "process created")
 	@APIResponse(responseCode = "400", description = "invalid request, e.g. missing required fields")
 	@Transactional
-	public Response addRecoveredKeyShare(@PathParam("processId") UUID processId, String recoveredKeyShareJwe) {
+	public Response addRecoveredKeyShare(@PathParam("processId") UUID processId, RecoveredKeyShareDto dto) {
 		var id = new RecoveredEmergencyKeyShares.Id();
 		id.setRecoveryId(processId);
 		id.setCouncilMemberId(jwt.getSubject());
 
 		var myKeyShare = recoveredKeySharesRepo.findById(id);
-		myKeyShare.setRecoveredKeyShare(recoveredKeyShareJwe);
+		myKeyShare.setRecoveredKeyShare(dto.recoveredKeyShare);
+		myKeyShare.setSignedProcessInfo(dto.signedProcessInfo);
 		recoveredKeySharesRepo.persist(myKeyShare);
 
 		// audit logging
@@ -183,10 +186,10 @@ public class EmergencyAccessResource {
 	}
 
 	@JsonInclude(JsonInclude.Include.NON_NULL)
-	public record RecoveredKeyShareDto(@JsonProperty("processPrivateKey") @ValidJWE String processPrivateKey, @JsonProperty("recoveredKeyShare") @ValidJWE String recoveredKeyShare) {
+	public record RecoveredKeyShareDto(@JsonProperty("processPrivateKey") @ValidJWE String processPrivateKey, @JsonProperty("recoveredKeyShare") @ValidJWE String recoveredKeyShare, @JsonProperty("signedProcessInfo") @ValidJWS String signedProcessInfo) {
 
 		public static RecoveredKeyShareDto fromEntity(RecoveredEmergencyKeyShares entity) {
-			return new RecoveredKeyShareDto(entity.getProcessPrivateKey(), entity.getRecoveredKeyShare());
+			return new RecoveredKeyShareDto(entity.getProcessPrivateKey(), entity.getRecoveredKeyShare(), entity.getSignedProcessInfo());
 		}
 	}
 
