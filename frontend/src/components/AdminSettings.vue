@@ -365,7 +365,6 @@ import backend, { BillingDto, VersionDto, UserDto, didCompleteSetup, ActivatedUs
 import config, { absFrontendBaseURL } from '../common/config';
 import { FetchUpdateError, LatestVersionDto, updateChecker } from '../common/updatecheck';
 import { debounce } from '../common/util';
-import { Locale } from '../i18n/index';
 import FetchError from './FetchError.vue';
 import MultiUserSelectInputGroup from './MultiUserSelectInputGroup.vue';
 import EmergencyScenarioVisualization from '../components/emergencyaccess/EmergencyScenarioVisualization.vue';
@@ -569,10 +568,7 @@ function removeUser(user: UserDto) {
 
 function manageSubscription() {
   const returnUrl = `${absFrontendBaseURL}admin`;
-  const supportedLanguages = [Locale.EN, Locale.DE];
-  const supportedLanguagePathComponents = Object.fromEntries(supportedLanguages.map(lang => [lang, lang == Locale.EN ? '' : `${lang}/`]));
-  const languagePathComponent = supportedLanguagePathComponents[(locale.value as string).split('-')[0]] ?? supportedLanguagePathComponents[fallbackLocale.value as string] ?? '';
-  window.open(`https://cryptomator.org/${languagePathComponent}hub/billing/?hub_id=${admin.value?.hubId}&return_url=${encodeURIComponent(returnUrl)}`, '_self');
+  window.open(`https://cryptomator.org/hub/billing/?hub_id=${admin.value?.hubId}&return_url=${encodeURIComponent(returnUrl)}`, '_self');
 }
 
 async function saveWebOfTrust() {
