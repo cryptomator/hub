@@ -31,7 +31,7 @@ jobs:
         run: npm ci --ignore-scripts
       - name: Build and test frontend
         working-directory: frontend
-        run: npm test:coverage
+        run: npm run test:coverage
       - name: Deploy frontend
         working-directory: frontend
         run: npm run dist
