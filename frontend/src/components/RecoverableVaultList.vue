@@ -96,6 +96,12 @@
                 </div>
               </div>
             </div>
+
+            <!-- TODO Peter: Make this beautiful: -->
+            <div v-if="vault.requiredEmergencyKeyShares >= Object.keys(vault.emergencyKeyShares).length">
+              <ExclamationTriangleIcon class="h-5 w-5 text-yellow-400" aria-hidden="true" />
+              <span class="ml-1 text-sm text-gray-600">TODO localize: No emergency key redundancy! Configure new emergency access council with sufficient members.</span>
+            </div>
           </div>
         </a>
       </li>
@@ -124,7 +130,7 @@ import { useI18n } from 'vue-i18n';
 import backend, { VaultDto, RecoveryProcessDto } from '../common/backend';
 import FetchError from './FetchError.vue';
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue';
-import { CheckIcon, ChevronUpDownIcon } from '@heroicons/vue/24/solid';
+import { CheckIcon, ChevronUpDownIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/solid';
 import userdata from '../common/userdata';
 import { UserDto } from '../common/backend';
 import { describeSegment } from '../common/svgUtils';
