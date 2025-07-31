@@ -20,6 +20,8 @@
   "common.retry": "Reintentar",
   "common.share": "Compartir",
   "common.show": "Mostrar",
+  "common.undo": "Deshacer",
+  "common.unsavedChanges": "No se guardaron los cambios.",
   "common.xMembers": "{0} Miembros",
   "admin.licenseInfo.manageSubscription": "Gestionar suscripción",
   "admin.webOfTrust.information": "Más información.",
