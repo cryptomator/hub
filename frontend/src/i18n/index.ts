@@ -1,36 +1,50 @@
 import { I18nOptions } from 'vue-i18n';
-import de from './de-DE.json';
-import en from './en-US.json';
-import fr from './fr-FR.json';
-import it from './it-IT.json';
-import ko from './ko-KR.json';
-import nl from './nl-NL.json';
-import pt from './pt-PT.json';
-import tr from './tr-TR.json';
+import deDe from './de-DE.json';
+import enUs from './en-US.json';
+import frFr from './fr-FR.json';
+import itIt from './it-IT.json';
+import koKr from './ko-KR.json';
+import lvLv from './lv-LV.json';
+import nlNl from './nl-NL.json';
+import ptBr from './pt-BR.json';
+import ptPt from './pt-PT.json';
+import ruRu from './ru-RU.json';
+import trTr from './tr-TR.json';
+import uaUa from './uk-UA.json';
+import zhTw from './zh-TW.json';
 
 import { createI18n } from 'vue-i18n';
 
-// ISO 639‑1 two letter code
 export enum Locale {
-  EN = 'en',
-  DE = 'de',
-  FR = 'fr',
-  IT = 'it',
-  KO = 'ko',
-  NL = 'nl',
-  PT = 'pt',
-  TR = 'tr'
+  ENUS = 'en-US',
+  DEDE = 'de-DE',
+  FRFR = 'fr-FR',
+  ITIT = 'it-IT',
+  KOKR = 'ko-KR',
+  LVLV = 'lv-LV',
+  NLNL = 'nl-NL',
+  PTBR = 'pt-BR',
+  PTPT = 'pt-PT',
+  RURU = 'ru-RU',
+  TRTR = 'tr-TR',
+  UKUA = 'uk-UA',
+  ZHTW = 'zh-TW',
 }
 
 export const messages = {
-  [Locale.EN]: en,
-  [Locale.DE]: de,
-  [Locale.FR]: fr,
-  [Locale.IT]: it,
-  [Locale.KO]: ko,
-  [Locale.NL]: nl,
-  [Locale.PT]: pt,
-  [Locale.TR]: tr
+  [Locale.ENUS]: enUs,
+  [Locale.DEDE]: deDe,
+  [Locale.FRFR]: frFr,
+  [Locale.ITIT]: itIt,
+  [Locale.KOKR]: koKr,
+  [Locale.LVLV]: lvLv,
+  [Locale.NLNL]: nlNl,
+  [Locale.PTBR]: ptBr,
+  [Locale.PTPT]: ptPt,
+  [Locale.RURU]: ruRu,
+  [Locale.TRTR]: trTr,
+  [Locale.UKUA]: uaUa,
+  [Locale.ZHTW]: zhTw
 };
 
 const defaultShortDatetimeFormat = {
@@ -50,14 +64,19 @@ const defaultShortDatetimeFormat = {
 } as const;
 
 export const datetimeFormats: I18nOptions['datetimeFormats'] = {
-  [Locale.EN]: defaultShortDatetimeFormat,
-  [Locale.DE]: defaultShortDatetimeFormat,
-  [Locale.FR]: defaultShortDatetimeFormat,
-  [Locale.IT]: defaultShortDatetimeFormat,
-  [Locale.KO]: defaultShortDatetimeFormat,
-  [Locale.NL]: defaultShortDatetimeFormat,
-  [Locale.PT]: defaultShortDatetimeFormat,
-  [Locale.TR]: defaultShortDatetimeFormat
+  [Locale.ENUS]: defaultShortDatetimeFormat,
+  [Locale.DEDE]: defaultShortDatetimeFormat,
+  [Locale.FRFR]: defaultShortDatetimeFormat,
+  [Locale.ITIT]: defaultShortDatetimeFormat,
+  [Locale.KOKR]: defaultShortDatetimeFormat,
+  [Locale.LVLV]: defaultShortDatetimeFormat,
+  [Locale.NLNL]: defaultShortDatetimeFormat,
+  [Locale.PTBR]: defaultShortDatetimeFormat,
+  [Locale.PTPT]: defaultShortDatetimeFormat,
+  [Locale.RURU]: defaultShortDatetimeFormat,
+  [Locale.TRTR]: defaultShortDatetimeFormat,
+  [Locale.UKUA]: defaultShortDatetimeFormat,
+  [Locale.ZHTW]: defaultShortDatetimeFormat,
 };
 
 const defaultNumberFormat = {
@@ -68,24 +87,29 @@ const defaultNumberFormat = {
 } as const;
 
 export const numberFormats: I18nOptions['numberFormats'] = {
-  [Locale.EN]: defaultNumberFormat,
-  [Locale.DE]: defaultNumberFormat,
-  [Locale.FR]: defaultNumberFormat,
-  [Locale.IT]: defaultNumberFormat,
-  [Locale.KO]: defaultNumberFormat,
-  [Locale.NL]: defaultNumberFormat,
-  [Locale.PT]: defaultNumberFormat,
-  [Locale.TR]: defaultNumberFormat
+  [Locale.ENUS]: defaultNumberFormat,
+  [Locale.DEDE]: defaultNumberFormat,
+  [Locale.FRFR]: defaultNumberFormat,
+  [Locale.ITIT]: defaultNumberFormat,
+  [Locale.KOKR]: defaultNumberFormat,
+  [Locale.LVLV]: defaultNumberFormat,
+  [Locale.NLNL]: defaultNumberFormat,
+  [Locale.PTBR]: defaultNumberFormat,
+  [Locale.PTPT]: defaultNumberFormat,
+  [Locale.RURU]: defaultNumberFormat,
+  [Locale.TRTR]: defaultNumberFormat,
+  [Locale.UKUA]: defaultNumberFormat,
+  [Locale.ZHTW]: defaultNumberFormat
 };
 
 export const mapToLocale = (local: string): Locale =>
   (Object.values(Locale) as string[]).includes(local)
     ? (local as Locale)
-    : Locale.EN;
+    : Locale.ENUS;
 
 const i18n = createI18n({
   locale: navigator.language,
-  fallbackLocale: Locale.EN,
+  fallbackLocale: Locale.ENUS,
   messages,
   datetimeFormats,
   numberFormats,

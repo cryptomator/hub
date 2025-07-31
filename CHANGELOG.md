@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Updated Keycloak to 26.3.2
+- Added Latvian, Portuguese (Brazil), Russian, Ukrainian and Chinese (Taiwan) translation
 
 ## [1.4.3](https://github.com/cryptomator/hub/compare/1.4.2...1.4.3)
 
