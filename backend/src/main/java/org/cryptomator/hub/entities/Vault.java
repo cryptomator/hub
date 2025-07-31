@@ -16,6 +16,7 @@ import jakarta.persistence.MapKeyColumn;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.transaction.Transactional;
 import org.hibernate.annotations.Immutable;
 
 import java.security.KeyFactory;
@@ -325,6 +326,15 @@ public class Vault {
 
 		public Stream<Vault> findAllInList(List<UUID> ids) {
 			return find("#Vault.allInList", Parameters.with("ids", ids)).stream();
+		}
+
+		@Transactional(Transactional.TxType.REQUIRED)
+		public void deleteEmergencyKeySharesForUser(String userId) {
+			var adjustedVaults = findRecoverable(userId).map(v -> {
+				v.emergencyKeyShares.remove(userId);
+				return v;
+			});
+			persist(adjustedVaults);
 		}
 	}
 }

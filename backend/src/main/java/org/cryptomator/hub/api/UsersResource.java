@@ -219,6 +219,7 @@ public class UsersResource {
 		user.setPrivateKeys(null);
 		user.setSetupCode(null);
 		userRepo.persist(user);
+		vaultRepo.deleteEmergencyKeySharesForUser(user.getId());
 		deviceRepo.deleteByOwner(user.getId());
 		accessTokenRepo.deleteByUser(user.getId());
 		eventLogger.logUserAccountReset(jwt.getSubject());
