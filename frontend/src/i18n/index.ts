@@ -16,35 +16,35 @@ import zhTw from './zh-TW.json';
 import { createI18n } from 'vue-i18n';
 
 export enum Locale {
-  ENUS = 'en-US',
-  DEDE = 'de-DE',
-  FRFR = 'fr-FR',
-  ITIT = 'it-IT',
-  KOKR = 'ko-KR',
-  LVLV = 'lv-LV',
-  NLNL = 'nl-NL',
-  PTBR = 'pt-BR',
-  PTPT = 'pt-PT',
-  RURU = 'ru-RU',
-  TRTR = 'tr-TR',
-  UKUA = 'uk-UA',
-  ZHTW = 'zh-TW',
+  EN_US = 'en-US',
+  DE_DE = 'de-DE',
+  FR_FR = 'fr-FR',
+  IT_IT = 'it-IT',
+  KO_KR = 'ko-KR',
+  LV_LV = 'lv-LV',
+  NL_NL = 'nl-NL',
+  PT_BR = 'pt-BR',
+  PT_PT = 'pt-PT',
+  RU_RU = 'ru-RU',
+  TR_TR = 'tr-TR',
+  UK_UA = 'uk-UA',
+  ZH_TW = 'zh-TW',
 }
 
 export const messages = {
-  [Locale.ENUS]: enUs,
-  [Locale.DEDE]: deDe,
-  [Locale.FRFR]: frFr,
-  [Locale.ITIT]: itIt,
-  [Locale.KOKR]: koKr,
-  [Locale.LVLV]: lvLv,
-  [Locale.NLNL]: nlNl,
-  [Locale.PTBR]: ptBr,
-  [Locale.PTPT]: ptPt,
-  [Locale.RURU]: ruRu,
-  [Locale.TRTR]: trTr,
-  [Locale.UKUA]: uaUa,
-  [Locale.ZHTW]: zhTw
+  [Locale.EN_US]: enUs,
+  [Locale.DE_DE]: deDe,
+  [Locale.FR_FR]: frFr,
+  [Locale.IT_IT]: itIt,
+  [Locale.KO_KR]: koKr,
+  [Locale.LV_LV]: lvLv,
+  [Locale.NL_NL]: nlNl,
+  [Locale.PT_BR]: ptBr,
+  [Locale.PT_PT]: ptPt,
+  [Locale.RU_RU]: ruRu,
+  [Locale.TR_TR]: trTr,
+  [Locale.UK_UA]: uaUa,
+  [Locale.ZH_TW]: zhTw
 };
 
 const defaultShortDatetimeFormat = {
@@ -64,19 +64,19 @@ const defaultShortDatetimeFormat = {
 } as const;
 
 export const datetimeFormats: I18nOptions['datetimeFormats'] = {
-  [Locale.ENUS]: defaultShortDatetimeFormat,
-  [Locale.DEDE]: defaultShortDatetimeFormat,
-  [Locale.FRFR]: defaultShortDatetimeFormat,
-  [Locale.ITIT]: defaultShortDatetimeFormat,
-  [Locale.KOKR]: defaultShortDatetimeFormat,
-  [Locale.LVLV]: defaultShortDatetimeFormat,
-  [Locale.NLNL]: defaultShortDatetimeFormat,
-  [Locale.PTBR]: defaultShortDatetimeFormat,
-  [Locale.PTPT]: defaultShortDatetimeFormat,
-  [Locale.RURU]: defaultShortDatetimeFormat,
-  [Locale.TRTR]: defaultShortDatetimeFormat,
-  [Locale.UKUA]: defaultShortDatetimeFormat,
-  [Locale.ZHTW]: defaultShortDatetimeFormat,
+  [Locale.EN_US]: defaultShortDatetimeFormat,
+  [Locale.DE_DE]: defaultShortDatetimeFormat,
+  [Locale.FR_FR]: defaultShortDatetimeFormat,
+  [Locale.IT_IT]: defaultShortDatetimeFormat,
+  [Locale.KO_KR]: defaultShortDatetimeFormat,
+  [Locale.LV_LV]: defaultShortDatetimeFormat,
+  [Locale.NL_NL]: defaultShortDatetimeFormat,
+  [Locale.PT_BR]: defaultShortDatetimeFormat,
+  [Locale.PT_PT]: defaultShortDatetimeFormat,
+  [Locale.RU_RU]: defaultShortDatetimeFormat,
+  [Locale.TR_TR]: defaultShortDatetimeFormat,
+  [Locale.UK_UA]: defaultShortDatetimeFormat,
+  [Locale.ZH_TW]: defaultShortDatetimeFormat,
 };
 
 const defaultNumberFormat = {
@@ -87,29 +87,29 @@ const defaultNumberFormat = {
 } as const;
 
 export const numberFormats: I18nOptions['numberFormats'] = {
-  [Locale.ENUS]: defaultNumberFormat,
-  [Locale.DEDE]: defaultNumberFormat,
-  [Locale.FRFR]: defaultNumberFormat,
-  [Locale.ITIT]: defaultNumberFormat,
-  [Locale.KOKR]: defaultNumberFormat,
-  [Locale.LVLV]: defaultNumberFormat,
-  [Locale.NLNL]: defaultNumberFormat,
-  [Locale.PTBR]: defaultNumberFormat,
-  [Locale.PTPT]: defaultNumberFormat,
-  [Locale.RURU]: defaultNumberFormat,
-  [Locale.TRTR]: defaultNumberFormat,
-  [Locale.UKUA]: defaultNumberFormat,
-  [Locale.ZHTW]: defaultNumberFormat
+  [Locale.EN_US]: defaultNumberFormat,
+  [Locale.DE_DE]: defaultNumberFormat,
+  [Locale.FR_FR]: defaultNumberFormat,
+  [Locale.IT_IT]: defaultNumberFormat,
+  [Locale.KO_KR]: defaultNumberFormat,
+  [Locale.LV_LV]: defaultNumberFormat,
+  [Locale.NL_NL]: defaultNumberFormat,
+  [Locale.PT_BR]: defaultNumberFormat,
+  [Locale.PT_PT]: defaultNumberFormat,
+  [Locale.RU_RU]: defaultNumberFormat,
+  [Locale.TR_TR]: defaultNumberFormat,
+  [Locale.UK_UA]: defaultNumberFormat,
+  [Locale.ZH_TW]: defaultNumberFormat
 };
 
 export const mapToLocale = (local: string): Locale =>
   (Object.values(Locale) as string[]).includes(local)
     ? (local as Locale)
-    : Locale.ENUS;
+    : Locale.EN_US;
 
 const i18n = createI18n({
   locale: navigator.language,
-  fallbackLocale: Locale.ENUS,
+  fallbackLocale: Locale.EN_US,
   messages,
   datetimeFormats,
   numberFormats,
