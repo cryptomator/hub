@@ -1,12 +1,4 @@
 {
-  "locale.en": "English (Tiếng Anh)",
-  "locale.de": "German (Tiếng Đức)",
-  "locale.fr": "French (Tiếng Pháp)",
-  "locale.it": "Italian (Tiếng Italy)",
-  "locale.ko": "Korean (Tiếng Hàn)",
-  "locale.nl": "Dutch (Tiếng Hà Lan)",
-  "locale.pt": "Portuguese (Tiếng Bồ Đào Nha)",
-  "locale.tr": "Turkish (Tiếng Thổ Nhĩ Kỳ)",
   "common.add": "Thêm",
   "common.apply": "Áp dụng",
   "common.cancel": "Hủy",

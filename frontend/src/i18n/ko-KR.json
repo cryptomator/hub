@@ -1,12 +1,4 @@
 {
-  "locale.en": "영어",
-  "locale.de": "독일어",
-  "locale.fr": "프랑스어",
-  "locale.it": "이탈리아어",
-  "locale.ko": "한국어",
-  "locale.nl": "네덜란드어",
-  "locale.pt": "포르투갈어",
-  "locale.tr": "튀르키에어",
   "common.add": "추가",
   "common.apply": "적용",
   "common.cancel": "취소",
