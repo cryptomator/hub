@@ -43,7 +43,7 @@ export type VaultDto = {
   description?: string;
   archived: boolean;
   requiredEmergencyKeyShares: number;
-  emergencyKeyShares: Record<string, string>;
+  emergencyKeyShares: Record<string, string>; // <memberId, encryptedKeyShare>
   
   // Legacy properties ("Vault Admin Password"):
   masterkey?: string;

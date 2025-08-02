@@ -36,9 +36,9 @@
           </p>
           <ul class="mt-1 pl-4 list-disc text-sm text-gray-700">
             <li v-for="(share, memberId) in vault.emergencyKeyShares" :key="memberId" class="flex items-center gap-2">
-              <img v-if="emergencyKeyShareAuthorities.get(memberId)?.pictureUrl" :src="emergencyKeyShareAuthorities.get(memberId)?.pictureUrl" alt="" class="w-4 h-4 rounded-full" />
+              <img v-if="emergencyKeyShareAuthorities[memberId]?.pictureUrl" :src="emergencyKeyShareAuthorities[memberId]?.pictureUrl" alt="" class="w-4 h-4 rounded-full" />
               <span class="font-medium">
-                {{ emergencyKeyShareAuthorities.get(memberId)?.name || memberId }}
+                {{ emergencyKeyShareAuthorities[memberId]?.name || memberId }}
               </span>
             </li>
           </ul>

@@ -509,10 +509,7 @@ async function addMyShare(process: RecoveryProcessDto, userKeys: UserKeys): Prom
   const encryptedShare = props.vault.emergencyKeyShares[props.me.id];
   const recoveredShare = await EmergencyAccess.recoverShare(encryptedShare, userKeys.ecdhKeyPair.privateKey, process.processPublicKey);
 
-  const processInfo: Pick<RecoveryProcessDto, 'type' | 'details'> = {
-    type: process.type,
-    details: process.details
-  };
+  const processInfo = R.pick(process, ['type', 'details']);
 
   const signedProcessInfo = await JWT.build({
     alg: 'ES384',
