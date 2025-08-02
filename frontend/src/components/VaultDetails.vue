@@ -64,7 +64,7 @@
         <h3 class="font-medium text-gray-900">{{ t('vaultDetails.sharedWith.title') }}</h3>
         <ul class="mt-2 border-t border-b border-gray-200 divide-y divide-gray-200">
           <!-- member list -->
-          <template v-for="member in members.values()" :key="member.id">
+          <template v-for="member in members" :key="member.id">
             <li class="py-3 flex flex-col">
               <div class="flex justify-between items-center">
                 <div class="flex items-center whitespace-nowrap w-full" :title="member.name">
@@ -311,7 +311,7 @@ const recoveringVault = ref(false);
 const recoverVaultDialog = ref<typeof RecoverVaultDialog>();
 const vault = ref<VaultDto>();
 const vaultKeys = ref<VaultKeys>();
-const members = ref<Map<string, MemberDto>>(new Map());
+const members = ref<Record<string, MemberDto>>({});
 const trusts = ref<TrustDto[]>([]);
 const recoveryProcess = ref<RecoveryProcessDto>(); // FIXME: There can be more than one process per vault!
 const usersRequiringAccessGrant = ref<UserDto[]>([]);
@@ -385,7 +385,7 @@ async function fetchData() {
 
 async function fetchOwnerData() {
   try {
-    (await backend.vaults.getMembers(props.vaultId)).forEach(member => members.value.set(member.id, member));
+    members.value = R.indexBy(await backend.vaults.getMembers(props.vaultId), m => m.id);
     await refreshTrusts();
     usersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
     vaultRecoveryRequired.value = false;
@@ -452,15 +452,8 @@ async function reloadDevicesRequiringAccessGrant() {
   }
 }
 
-function isAuthorityDto(toCheck: unknown): toCheck is AuthorityDto {
-  return (toCheck as AuthorityDto).type != null;
-}
-
 async function addAuthority(authority: AuthorityDto) {
   onAddUserError.value = null;
-  if (!isAuthorityDto(authority)) {
-    throw new Error('Parameter authority is not of type AuthorityDto.');
-  }
 
   try {
     await addAuthorityBackend(authority);
@@ -468,7 +461,7 @@ async function addAuthority(authority: AuthorityDto) {
       ...authority,
       role: 'MEMBER'
     };
-    members.value.set(authority.id, addedMember);
+    members.value[authority.id] = addedMember;
     usersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
   } catch (error) {
     //even if error instanceof NotFoundError, it is not expected from user perspective
@@ -569,7 +562,7 @@ function refreshRecoveryProcess(updatedProcess?: RecoveryProcessDto) {
 
 async function searchAuthority(query: string): Promise<AuthorityDto[]> {
   return (await backend.authorities.search(query, true))
-    .filter(authority => !members.value.has(authority.id))
+    .filter(authority => !members.value[authority.id])
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
@@ -584,7 +577,7 @@ async function updateMemberRole(member: MemberDto, role: VaultRole) {
         await backend.vaults.addGroup(props.vaultId, member.id, role);
         break;
     }
-    const updatedMember = members.value.get(member.id);
+    const updatedMember = members.value[member.id];
     if (updatedMember) {
       updatedMember.role = role;
     }
@@ -599,7 +592,7 @@ async function removeMember(memberId: string) {
   delete onUpdateVaultMembershipError.value[memberId];
   try {
     await backend.vaults.removeAuthority(props.vaultId, memberId);
-    members.value.delete(memberId);
+    delete members.value[memberId];
     if (!licenseViolated.value) {
       usersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
     } else {
