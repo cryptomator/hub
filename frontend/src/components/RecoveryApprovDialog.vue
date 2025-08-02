@@ -213,6 +213,7 @@
 import backend, { VaultDto, UserDto, RecoveryProcessDto, didCompleteSetup, RecoveryProcessSetNewOwner, RecoveryProcessChangeCouncil, ActivatedUser, AccessGrant, RecoveredKeyShareDto } from '../common/backend';
 import { ref, computed, toRaw, Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import * as R from 'remeda';
 import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import { describeSegment } from '../common/svgUtils';
 import { EmergencyAccess } from '../common/emergencyaccess';
@@ -553,7 +554,7 @@ async function verifyProcessInfo(process: RecoveryProcessDto): Promise<boolean> 
       console.error(`Invalid signed process info for council member ${councilMemberId}.`);
       return false;
     }
-    if (payload.type !== process.type || JSON.stringify(payload.details) !== JSON.stringify(process.details)) { // comparing json strings to check "deep" equality. ES6 preserves order of object properties.
+    if (payload.type !== process.type || !R.isDeepEqual(payload.details, process.details)) {
       console.error(`Signed process info for council member ${councilMemberId} does not match the recovery process`, process, payload);
       return false;
     }
