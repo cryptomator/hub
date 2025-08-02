@@ -254,6 +254,7 @@ import { ArrowPathIcon, EllipsisVerticalIcon, ExclamationTriangleIcon } from '@h
 import { PlusSmallIcon } from '@heroicons/vue/24/solid';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import * as R from 'remeda';
 import auth from '../common/auth';
 import backend, { AuthorityDto, ConflictError, ForbiddenError, LicenseUserInfoDto, MemberDto, NotFoundError, PaymentRequiredError, RecoveryProcessDto, TrustDto, UserDto, VaultDto, VaultRole } from '../common/backend';
 import { VaultKeys } from '../common/crypto';
@@ -328,7 +329,7 @@ const isAdmin = ref<boolean>();
 const isLegacyVault = computed(() => vault.value?.authPublicKey != null);
 const licenseViolated = computed(() => license.value?.isExpired() || license.value?.isExceeded());
 
-const emergencyKeyShareAuthorities = ref<Map<string, AuthorityDto>>(new Map());
+const emergencyKeyShareAuthorities = ref<Record<string, AuthorityDto>>({});
 
 const isEmergencyKeyShareHolder = computed(() => {
   if (!vault.value || !me.value) return false;
@@ -362,7 +363,7 @@ async function fetchData() {
 
     if (vault.value && Object.keys(vault.value.emergencyKeyShares).length > 0) {
       const authorities = await backend.authorities.listSome(Object.keys(vault.value.emergencyKeyShares));
-      emergencyKeyShareAuthorities.value = new Map(authorities.map(a => [a.id, a]));
+      emergencyKeyShareAuthorities.value = R.indexBy(authorities, a => a.id);
     }
 
     // TODO: there can be multiple recovery processes, one per type

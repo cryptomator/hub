@@ -127,6 +127,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
+import * as R from 'remeda';
 import backend, { VaultDto, RecoveryProcessDto } from '../common/backend';
 import FetchError from './FetchError.vue';
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue';
@@ -220,9 +221,7 @@ async function fetchData() {
     }
 
     const authorities = await backend.authorities.listSome(Array.from(allUserIds));
-    const usersById: Record<string, Item> = Object.fromEntries(
-      authorities.map((u) => [u.id, u])
-    );
+    const usersById = R.indexBy(authorities, u => u.id);
   } catch (error) {
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
   }

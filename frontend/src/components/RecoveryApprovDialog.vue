@@ -533,8 +533,9 @@ async function addMyShare(process: RecoveryProcessDto, userKeys: UserKeys): Prom
 async function verifyProcessInfo(process: RecoveryProcessDto): Promise<boolean> {
   const councilMemberIds = Object.keys(process.recoveredKeyShares);
   const authorities = await backend.authorities.listSome(councilMemberIds);
-  const councilMembers: Record<string, ActivatedUser> = Object.fromEntries(
-    authorities.filter(a => a.type === 'USER').filter(u => didCompleteSetup(u)).map(u => [u.id, u])
+  const councilMembers = R.indexBy(
+    authorities.filter(a => a.type === 'USER').filter(u => didCompleteSetup(u)),
+    u => u.id
   );
 
   for (const [councilMemberId, recoveredKeyShare] of Object.entries(process.recoveredKeyShares)) {
