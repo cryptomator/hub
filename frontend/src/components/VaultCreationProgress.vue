@@ -9,7 +9,7 @@
             'bg-white border-gray-300 text-black': index > currentStep,
             'bg-white border-primary text-white': index === currentStep
           }"
-          :title="tooltipForStep(index)"
+          :title="tooltipForStep(step)"
         >
           <template v-if="index < currentStep">
             <CheckIcon class="text-white" />
@@ -50,8 +50,8 @@ const { t } = useI18n({ useScope: 'global' });
 
 const currentStep = computed(() => props.steps.indexOf(props.state));
 
-const tooltipForStep = (index: number): string => {
-  switch (props.steps[index]) {
+const tooltipForStep = (step: State): string => {
+  switch (step) {
     case State.EnterVaultDetails:
       return t('createVault.enterVaultDetails.title');
     case State.ShowRecoveryKey:
