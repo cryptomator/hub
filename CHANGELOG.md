@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Updated Keycloak to 26.3.2
+- Updated to Quarkus 3.20.2 LTS
+- Added Latvian, Portuguese (Brazil), Russian, Ukrainian and Chinese (Taiwan) translation
+
+### Fixed
+
+- Bumped dependencies (fixes CVE-2025-7783, CVE-2025-53892, could not be exploited in Hub)
 
 ## [1.4.3](https://github.com/cryptomator/hub/compare/1.4.2...1.4.3)
 
