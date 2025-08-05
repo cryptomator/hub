@@ -276,15 +276,15 @@
   "vaultList.addVault": "Додати",
   "vaultList.addVault.disabled.licenseViolation": "Перевищено ліміт ліцензії.",
   "vaultList.addVault.disabled.missingPermission": "У вас немає дозволу на створення сховища.",
-  "vaultList.addVault.create": "Створити новий",
-  "vaultList.addVault.recover": "Відновити наявний",
+  "vaultList.addVault.create": "Створити нове",
+  "vaultList.addVault.recover": "Відновити наявне",
   "vaultList.filter": "Фільтр",
   "vaultList.filter.entry.accessibleVaults": "Доступний",
   "vaultList.filter.entry.ownedVaults": "Належать мені",
   "vaultList.filter.entry.allVaults": "Усі",
   "vaultList.filter.result.empty.title": "Немає сховищ",
   "vaultList.filter.result.empty.description": "Не знайдено результатів за цим пошуковим запитом або фільтром.",
-  "vaultList.search.placeholder": "Шукаємо…",
+  "vaultList.search.placeholder": "Пошук…",
   "vaultList.badge.owner": "Власник",
   "vaultList.badge.archived": "Заархівовано"
 }
