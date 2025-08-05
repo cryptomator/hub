@@ -5,13 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/cryptomator/hub/compare/1.4.3...HEAD)
+## [1.4.4](https://github.com/cryptomator/hub/compare/1.4.3...1.4.4)
+
+### Added
+
+- Breadcrumb Navigation
+- Unsaved changes notice with undo in the WOT settings
+- Support for regionalized translations
+- Latvian, Portuguese (Brazil), Russian, Ukrainian and Chinese (Taiwan) translation
 
 ### Changed
 
 - Updated Keycloak to 26.3.2
 - Updated to Quarkus 3.20.2 LTS
-- Added Latvian, Portuguese (Brazil), Russian, Ukrainian and Chinese (Taiwan) translation
 
 ### Fixed
 
