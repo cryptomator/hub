@@ -1,33 +1,33 @@
 <template>
   <div class="flex items-center">
-    <template v-for="(_, index) in 4" :key="index">
+    <template v-for="(step, index) in steps" :key="step">
       <div class="flex items-center">
         <div
-          class="relative z-10 flex h-7 w-7 items-center justify-center rounded-full border-3 cursor-default"
+          class="relative z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 cursor-default"
           :class="{
             'bg-primary border-primary text-white': index < currentStep,
             'bg-white border-gray-300 text-black': index > currentStep,
-            'bg-white border-primary text-white': index == currentStep
+            'bg-white border-primary text-white': index === currentStep
           }"
-          :title="tooltipForStep(index)"
+          :title="tooltipForStep(step)"
         >
           <template v-if="index < currentStep">
-            <CheckIcon class="text-white"></CheckIcon>
+            <CheckIcon class="text-white m-0.5" />
           </template>
-          <template v-if="index > currentStep">
-            <span class="h-1.5 w-1.5 rounded-full bg-gray-300 block"></span>
-          </template>
-          <template v-if="index == currentStep">
-            <span class="h-1.5 w-1.5 rounded-full bg-primary block"></span>
+          <template v-else>
+            <span
+              class="h-2.5 w-2.5 rounded-full block"
+              :class="{
+                'bg-primary opacity-100': index === currentStep,
+                'bg-gray-300 opacity-0': index > currentStep
+              }"
+            />
           </template>
         </div>
         <div
-          v-if="index < 3"
-          class="w-10 sm:w-12 h-1"
-          :class="{
-            'bg-primary': index < currentStep,
-            'bg-gray-300': index >= currentStep,
-          }"
+          v-if="index < steps.length - 1"
+          class="w-10 sm:w-12 h-0.5"
+          :class="index < currentStep ? 'bg-primary' : 'bg-gray-300'"
         />
       </div>
     </template>
@@ -43,45 +43,29 @@ enum State {
   Initial,
   EnterRecoveryKey,
   EnterVaultDetails,
-  DefineEmergencyAccess,
   ShowRecoveryKey,
   Finished
 }
 
-const { t } = useI18n({ useScope: 'global' });
-
 const props = defineProps<{
   state: State;
+  steps: State[];
 }>();
 
-const currentStep = computed(() => {
-  switch (props.state) {
-    case State.EnterVaultDetails:
-      return 0;
-    case State.DefineEmergencyAccess:
-      return 1;
-    case State.ShowRecoveryKey:
-      return 2;
-    case State.Finished:
-      return 3;
-    default:
-      return -1;
-  }
-});
+const { t } = useI18n({ useScope: 'global' });
 
-const tooltipForStep = (index: number): string => {
-  switch (index) {
-    case 0:
+const currentStep = computed(() => props.steps.indexOf(props.state));
+
+const tooltipForStep = (step: State): string => {
+  switch (step) {
+    case State.EnterVaultDetails:
       return t('createVault.enterVaultDetails.title');
-    case 1:
-      return t('createVault.emergencyAccessDetails.title');
-    case 2:
+    case State.ShowRecoveryKey:
       return t('createVault.showRecoveryKey.title');
-    case 3:
+    case State.Finished:
       return t('createVault.success.title');
     default:
       return '';
   }
 };
-
 </script>
