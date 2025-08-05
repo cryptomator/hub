@@ -12,7 +12,7 @@
 	"extensions": {
 		"recommendations": [
 			"dbaeumer.vscode-eslint",
-			"felixjb.testify",
+			"vitest.explorer",
 			"vue.volar"
 		],
 		"unwantedRecommendations": [
