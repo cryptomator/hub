@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory, NavigationGuardWithThis, RouteLocationRaw, RouteRecordRaw } from 'vue-router';
+import { createRouter, createWebHistory, NavigationGuardWithThis, RouteLocationNormalized, RouteLocationRaw, RouteRecordRaw } from 'vue-router';
 import authPromise from '../common/auth';
 import backend from '../common/backend';
 import { baseURL } from '../common/config';
@@ -149,11 +149,7 @@ router.beforeEach((to, from, next) => {
       if (auth.isAuthenticated()) {
         next();
       } else {
-        // secondsSinceEpoch is required for legacy reasons, as caching headers were only introduced in #255
-        // as result, the redirect URI changes and caching does not break updates anymore
-        const secondsSinceEpoch = Math.round(new Date().getTime() / 1000);
-        const redirect: RouteLocationRaw = { query: { ...to.query, 'sync_me': secondsSinceEpoch } };
-        const redirectUri = `${location.origin}${router.resolve(redirect, to).href}`;
+        const redirectUri = buildRedirectSyncMeUri(to);
         auth.login(redirectUri);
       }
     });
@@ -204,5 +200,18 @@ router.beforeEach(async (to) => {
     }
   }
 });
+
+export function buildRedirectSyncMeUri(route?: RouteLocationNormalized): string {
+  const targetRoute = route ?? router.currentRoute.value;
+  // secondsSinceEpoch is required for legacy reasons, as caching headers were only introduced in #255
+  const secondsSinceEpoch = Math.round(Date.now() / 1000);
+  const redirect: RouteLocationRaw = {
+    query: {
+      ...targetRoute.query,
+      sync_me: secondsSinceEpoch,
+    }
+  };
+  return `${location.origin}${router.resolve(redirect, targetRoute).href}`;
+}
 
 export default router;
