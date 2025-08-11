@@ -51,56 +51,79 @@
             <!-- Recovery-Button -->
             <div class="mt-2 flex flex-wrap items-center pr-2">
               <button
-                v-if="me && vault.emergencyKeyShares?.[me.id] && vaultRecoveryProcesses[vault.id] || isEmergencyKeyShareHolder(vault)"
+                v-if="(me && vault.emergencyKeyShares?.[me.id] || isEmergencyKeyShareHolder(vault)) && !hasAllProcessTypesStarted(vault)"
                 type="button"
                 class="inline-flex items-center gap-2 rounded-md bg-white px-2 py-1 text-xs font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 relative"
-                @click.stop="openRecoveryDialog(vault)"
+                @click.stop="openRecoveryStartDialog(vault)"
               >
-                {{ hasSubmittedEmergencyKeyShare(vault) ? t('vaultDetails.actions.showEmergencyAccessState') : getRecoveryLabel(vault) }}
+                {{ t('common.start') }}
               </button>
             </div>
-            <div class="relative group">
-              <svg class="ml-auto shrink-0" width="36" height="36" viewBox="0 0 36 36">
-                <g>
-                  <path
-                    v-for="i in getRequiredSegments(vault)"
-                    :key="i"
-                    :d="describeSegment(i - 1, getRequiredSegments(vault), 16)"
-                    :fill="i <= getCompletedSegments(vault) ? '#22c55e' : '#e5e7eb'"
-                    stroke="white"
-                    stroke-width="1"
-                  />
-                </g>
-              </svg>
 
-              <!-- Tooltip -->
-              <div
-                class="absolute z-99999 top-1/2 -translate-y-1/2 right-full mr-2
-                  hidden group-hover:block bg-white border border-gray-300
-                  rounded-md shadow-md p-2 text-sm text-gray-700 whitespace-nowrap
-                  min-w-[200px] overflow-visible"
-              >
-                <div class="font-medium mb-1">
-                  Required Key Shares: {{ vault.requiredEmergencyKeyShares }}
-                </div>
-                <div v-if="emergencyKeyShareUsersByVaultId[vault.id]?.length">
-                  <span class="font-medium">Council Members:</span>
-                  <ul class="list-disc ml-5 mt-1">
-                    <li v-for="user in emergencyKeyShareUsersByVaultId[vault.id]" :key="user.id">
-                      {{ user.name }}
-                      <span v-if="vaultRecoveryProcesses[vault.id]?.recoveredKeyShares?.[user.id]?.recoveredKeyShare">
-                        &check;
-                      </span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
+            <div class="mt-2 flex flex-wrap items-center gap-2 pr-2">
+              <template v-for="proc in getProcesses(vault.id)" :key="proc.id">
+                <button
+                  v-if="me && (vault.emergencyKeyShares?.[me.id] || isEmergencyKeyShareHolder(vault))"
+                  type="button"
+                  class="inline-flex items-center gap-2 rounded-md bg-white px-2 py-1 text-xs font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                  @click.stop="openRecoveryDialog(vault, proc)"
+                >
+                  <div class="relative group">
+                    <svg class="shrink-0" width="20" height="20" viewBox="0 0 36 36">
+                      <g>
+                        <path
+                          v-for="i in getRequiredSegmentsForProcess(proc)"
+                          :key="i"
+                          :d="describeSegment(i - 1, getRequiredSegmentsForProcess(proc), 16)"
+                          :fill="i <= getCompletedSegmentsForProcess(proc) ? '#22c55e' : '#e5e7eb'"
+                          stroke="white"
+                          stroke-width="1"
+                        />
+                      </g>
+                    </svg>
+
+                    <div
+                      class="absolute z-50 top-1/2 -translate-y-1/2 left-full ml-2
+                            hidden group-hover:block bg-white border border-gray-300
+                            rounded-md shadow-md p-2 text-sm text-gray-700 whitespace-nowrap
+                            min-w-[200px]"
+                    >
+                      <div class="font-medium mb-1">
+                        {{ t('vaultDetails.emergency.requiredKeyShares') }}: {{ getRequiredSegmentsForProcess(proc) }}
+                      </div>
+                      <div v-if="emergencyKeyShareUsersByVaultId[vault.id]?.length">
+                        <span class="font-medium">{{ t('vaultDetails.emergency.councilMembers') }}:</span>
+                        <ul class="list-disc ml-5 mt-1">
+                          <li v-for="user in emergencyKeyShareUsersByVaultId[vault.id]" :key="user.id">
+                            {{ user.name }}
+                            <span v-if="proc.recoveredKeyShares?.[user.id]?.recoveredKeyShare">
+                              &check;
+                            </span>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  <span class="rounded-full px-1.5 py-0.5 ring-1 ring-gray-300 text-[10px] uppercase tracking-wide">
+                    {{ proc.type }}
+                  </span>
+
+                  {{ hasSubmittedEmergencyKeyShareForProcess(proc)
+                    ? t('vaultDetails.actions.showEmergencyAccessState')
+                    : getRecoveryLabelForProcess(proc) }}
+                </button>
+              </template>
             </div>
 
-            <!-- TODO Peter: Make this beautiful: -->
-            <div v-if="vault.requiredEmergencyKeyShares >= Object.keys(vault.emergencyKeyShares).length">
-              <ExclamationTriangleIcon class="h-5 w-5 text-yellow-400" aria-hidden="true" />
-              <span class="ml-1 text-sm text-gray-600">TODO localize: No emergency key redundancy! Configure new emergency access council with sufficient members.</span>
+            <div v-if="needsRedundancy(vault)" class="ml-3">
+              <span
+                class="inline-flex items-center gap-2 rounded-full bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800"
+                :title="t('vaultList.emergency.noRedundancyHint')"
+              >
+                <ExclamationTriangleIcon class="h-4 w-4" aria-hidden="true" />
+                {{ t('vaultList.emergency.noRedundancy') }}
+              </span>
             </div>
           </div>
         </a>
@@ -118,7 +141,7 @@
     ref="recoveryApprovDialog"
     :vault="recoveryApprovVault"
     :me="me!"
-    :recovery-process="vaultRecoveryProcesses[recoveryApprovVault.id]"
+    :recovery-process="selectedProcess"
     @updated="handleRecoveryUpdated"
     @close="recoveryApprovVault = null"
   />
@@ -145,6 +168,17 @@ export type Item = {
   memberSize?: number;
 }
 
+const SUPPORTED_PROCESS_TYPES = ['RECOVERY', 'COUNCIL_CHANGE'] as const;
+
+function startedTypesForVault(vault: VaultDto): Set<string> {
+  return new Set(getProcesses(vault.id).map(p => p.type));
+}
+
+function hasAllProcessTypesStarted(vault: VaultDto): boolean {
+  const started = startedTypesForVault(vault);
+  return (SUPPORTED_PROCESS_TYPES as readonly string[]).every(t => started.has(t));
+}
+
 const { t } = useI18n({ useScope: 'global' });
 const me = ref<UserDto>();
 const query = ref('');
@@ -167,17 +201,15 @@ const filteredVaults = computed<VaultDto[]>(() => {
       break;
     case 'approvable':
       result = result.filter((vault) => {
-        const proc = vaultRecoveryProcesses.value[vault.id];
+        const proc = activeProcessForVault(vault);
         const hasKeyShares = proc?.recoveredKeyShares && Object.keys(proc.recoveredKeyShares).length > 0;
         return hasKeyShares && !hasSubmittedEmergencyKeyShare(vault);
       });
       break;
     case 'startable':
       result = result.filter((vault) => {
-        const proc = vaultRecoveryProcesses.value[vault.id];
-        const hasNoKeyShares =
-          !proc?.recoveredKeyShares ||
-          Object.keys(proc.recoveredKeyShares).length === 0;
+        const proc = activeProcessForVault(vault);
+        const hasNoKeyShares = !proc?.recoveredKeyShares || Object.keys(proc.recoveredKeyShares).length === 0;
         return hasNoKeyShares && !hasSubmittedEmergencyKeyShare(vault);
       });
       break;  
@@ -192,7 +224,30 @@ const filteredVaults = computed<VaultDto[]>(() => {
   return result;
 });
 
-const vaultRecoveryProcesses = ref<Record<string, RecoveryProcessDto>>({});
+const selectedProcess = ref<RecoveryProcessDto | undefined>(undefined);
+
+function openRecoveryDialog(vault: VaultDto, proc: RecoveryProcessDto) {
+  recoveryApprovVault.value = vault;
+  selectedProcess.value = proc;
+  nextTick(() => recoveryApprovDialog.value?.show());
+}
+
+function getRecoveryLabelForProcess(proc: RecoveryProcessDto): string {
+  const required = proc?.requiredKeyShares ?? 1;
+  const completed = Object.values(proc?.recoveredKeyShares ?? {})
+    .filter(ks => ks.recoveredKeyShare !== undefined).length;
+
+  if (completed === 0) return t('vaultDetails.actions.startEmergencyAccess');
+  if (completed + 1 === required) return t('vaultDetails.actions.completeEmergencyAccess');
+  return t('vaultDetails.actions.approveEmergencyAccess');
+}
+
+function hasSubmittedEmergencyKeyShareForProcess(proc: RecoveryProcessDto): boolean {
+  if (!me.value || !proc?.recoveredKeyShares) return false;
+  return proc.recoveredKeyShares[me.value.id]?.recoveredKeyShare !== undefined;
+}
+
+const vaultRecoveryProcesses = ref<Record<string, RecoveryProcessDto[]>>({});
 
 const emergencyKeyShareUsersByVaultId = ref<Record<string, Item[]>>({});
 
@@ -209,55 +264,57 @@ async function fetchData() {
     for (const vault of vaults.value ?? []) {
       const processes = await backend.emergencyAccess.findProcessesForVault(vault.id);
       if (processes.length > 0) {
-        vaultRecoveryProcesses.value[vault.id] = processes[0];
+        vaultRecoveryProcesses.value[vault.id] = processes;
       }
     }
+
     await resolveEmergencyKeyShareUsers(vaults.value ?? []);
     const allUserIds = new Set<string>();
 
     for (const vault of vaults.value ?? []) {
-      const process = await loadVaultRecoveryProcess(vault.id);
       await loadEmergencyKeyShareUsers(vault);
     }
 
     const authorities = await backend.authorities.listSome(Array.from(allUserIds));
-    const usersById = R.indexBy(authorities, u => u.id);
   } catch (error) {
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
 }
 
-function getRecoveryLabel(vault: VaultDto): string {
-  const proc = vaultRecoveryProcesses.value[vault.id];
-  const required = proc?.requiredKeyShares ?? 1;
-  const completed = Object.values(proc?.recoveredKeyShares ?? {}).filter(ks => ks.recoveredKeyShare !== undefined).length;
-
-  if (completed === 0) {
-    return t('vaultDetails.actions.startEmergencyAccess');
-  } else if (completed + 1 === required) {
-    return t('vaultDetails.actions.completeEmergencyAccess');
-  } else {
-    return t('vaultDetails.actions.approveEmergencyAccess');
-  }
-}
-
-function getRequiredSegments(vault: VaultDto): number {
-  return vaultRecoveryProcesses.value[vault.id]?.requiredKeyShares ?? vault.requiredEmergencyKeyShares;
-}
-
-function getCompletedSegments(vault: VaultDto): number {
-  return Object.values(vaultRecoveryProcesses.value[vault.id]?.recoveredKeyShares ?? {}).filter(ks => ks.recoveredKeyShare !== undefined).length;
+function hasSubmittedEmergencyKeyShare(vault: VaultDto): boolean {
+  const proc = activeProcessForVault(vault);
+  if (!me.value || !proc?.recoveredKeyShares) return false;
+  return proc.recoveredKeyShares[me.value.id]?.recoveredKeyShare !== undefined;
 }
 
 function isEmergencyKeyShareHolder(vault: VaultDto): boolean {
   if (!vault || !me.value) return false;
   return vault.emergencyKeyShares[me.value.id] !== undefined;
-};
+}
 
-function hasSubmittedEmergencyKeyShare(vault: VaultDto): boolean {
-  const proc = vaultRecoveryProcesses.value[vault.id];
-  if (!me.value || !proc?.recoveredKeyShares) return false;
-  return proc.recoveredKeyShares[me.value.id]?.recoveredKeyShare !== undefined;
+function needsRedundancy(vault: VaultDto): boolean {
+  const members = Object.keys(vault.emergencyKeyShares ?? {}).length;
+  return vault.requiredEmergencyKeyShares >= members;
+}
+
+async function loadVaultRecoveryProcess(vaultId: string): Promise<RecoveryProcessDto[] | null> {
+  const processes = await backend.emergencyAccess.findProcessesForVault(vaultId);
+  if (processes.length > 0) {
+    vaultRecoveryProcesses.value[vaultId] = processes;
+    return processes;
+  } else {
+    delete vaultRecoveryProcesses.value[vaultId];
+    return null;
+  }
+}
+
+function getRequiredSegmentsForProcess(proc: RecoveryProcessDto): number {
+  return proc?.requiredKeyShares ?? 1;
+}
+
+function getCompletedSegmentsForProcess(proc: RecoveryProcessDto): number {
+  return Object.values(proc?.recoveredKeyShares ?? {})
+    .filter(ks => ks?.recoveredKeyShare !== undefined).length;
 }
 
 async function resolveEmergencyKeyShareUsers(vaults: VaultDto[]) {
@@ -284,17 +341,6 @@ async function resolveEmergencyKeyShareUsers(vaults: VaultDto[]) {
       Object.keys(v.emergencyKeyShares).map(id => usersById[id]).filter(Boolean)
     ])
   );
-}
-
-async function loadVaultRecoveryProcess(vaultId: string): Promise<RecoveryProcessDto | null> {
-  const processes = await backend.emergencyAccess.findProcessesForVault(vaultId);
-  const process = processes[0] ?? null; // TODO: handle multiple parallel processes (database allows one per vault and type)
-  if (process) {
-    vaultRecoveryProcesses.value[vaultId] = process;
-  } else {
-    delete vaultRecoveryProcesses.value[vaultId];
-  }
-  return process;
 }
 
 async function loadEmergencyKeyShareUsers(vault: VaultDto) {
@@ -331,15 +377,45 @@ async function handleRecoveryUpdated(updatedProcess?: RecoveryProcessDto) {
       await reloadVaultData(vaultId);
     }
   } catch (e) {
-    console.error('Fehler beim gezielten Nachladen nach Recovery:', e);
+    console.error('Error while reloading after recovery:', e);
   } finally {
     recoveryApprovVault.value = null;
   }
 }
 
-function openRecoveryDialog(vault: VaultDto) {
+function openRecoveryStartDialog(vault: VaultDto) {
   recoveryApprovVault.value = vault;
+  selectedProcess.value = undefined;
   nextTick(() => recoveryApprovDialog.value?.show());
+}
+
+function getProcesses(vaultId: string): RecoveryProcessDto[] {
+  return vaultRecoveryProcesses.value[vaultId] ?? [];
+}
+
+type AnyProcess = RecoveryProcessDto & Partial<{
+  state: string;
+  updatedAt: string;
+  startedAt: string;
+  createdAt: string;
+  completedAt: string;
+}>;
+
+function pickActiveProcess(list: RecoveryProcessDto[]): RecoveryProcessDto | undefined {
+  if (list.length === 0) return undefined;
+
+  const notDone = (list as AnyProcess[]).filter(p =>
+    (p.state ? !['completed', 'canceled', 'closed'].includes(p.state) : true) &&
+    (p.completedAt ? !p.completedAt : true)
+  );
+  const candidates = notDone.length ? notDone : (list as AnyProcess[]);
+
+  const ts = (p: AnyProcess) => new Date(p.updatedAt ?? p.startedAt ?? p.createdAt ?? 0).getTime();
+  return [...candidates].sort((a, b) => ts(b) - ts(a))[0];
+}
+
+function activeProcessForVault(vault: VaultDto): RecoveryProcessDto | undefined {
+  return pickActiveProcess(getProcesses(vault.id));
 }
 
 </script>
