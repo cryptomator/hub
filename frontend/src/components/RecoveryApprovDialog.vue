@@ -66,12 +66,12 @@
                               v-model="processType"
                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
                             >
-                              <option value="RECOVERY">{{ t('recoveryDialog.ownership') }}</option>
+                              <option value="ASSIGN_OWNER">{{ t('recoveryDialog.ownership') }}</option>
                               <option value="COUNCIL_CHANGE">{{ t('recoveryDialog.voteCouncil') }}</option>
                             </select>
                           </div>
 
-                          <div v-if="processType === 'RECOVERY'">
+                          <div v-if="processType === 'ASSIGN_OWNER'">
                             <label class="block text-sm font-medium text-gray-700">
                               {{ t('recoveryDialog.selectNewOwner') }}
                             </label>
@@ -117,14 +117,14 @@
                         </div>
 
                         <div v-else>
-                          <div v-if="recoveryProcess.type === 'RECOVERY'">
+                          <div v-if="recoveryProcess.type === 'ASSIGN_OWNER'">
                             Ownership
                           </div>
                           <div v-if="recoveryProcess.type === 'COUNCIL_CHANGE'">
                             Vote New Council Members
                           </div>
 
-                          <div v-if="recoveryProcess.type === 'RECOVERY'" class="mt-4 space-y-1 text-sm text-gray-500">
+                          <div v-if="recoveryProcess.type === 'ASSIGN_OWNER'" class="mt-4 space-y-1 text-sm text-gray-500">
                             <div>
                               <span class="font-medium text-gray-700">{{ t('recoveryDialog.selectedOwner') }}:</span>
                               <MultiUserSelectInputGroup
@@ -242,7 +242,7 @@ defineExpose({
   show,
 });
 
-const processType = ref<RecoveryProcessDto['type']>(props.recoveryProcess?.type ?? 'RECOVERY');
+const processType = ref<RecoveryProcessDto['type']>(props.recoveryProcess?.type ?? 'ASSIGN_OWNER');
 
 type PhaseType = 'start' | 'approve' | 'complete';
 const phase = computed<PhaseType>(() => {
@@ -294,7 +294,7 @@ function removeUser(this: Ref<UserDto[]>, user: UserDto) {
 }
 
 const canStartRecovery = computed(() => {
-  if (processType.value === 'RECOVERY') {
+  if (processType.value === 'ASSIGN_OWNER') {
     return newOwners.value.length > 0;
   } else if (processType.value === 'COUNCIL_CHANGE') {
     return newCouncilMembers.value.length >= newRequiredKeyShares.value && newRequiredKeyShares.value > 0;
@@ -309,7 +309,7 @@ async function show() {
     const users = authorities.filter(a => a.type === 'USER').filter(u => didCompleteSetup(u));
     newCouncilMembers.value = users;
   }
-  else if (props.recoveryProcess?.type === 'RECOVERY') {
+  else if (props.recoveryProcess?.type === 'ASSIGN_OWNER') {
     const authorities = await backend.authorities.listSome(props.recoveryProcess.details.newOwnerIds);
     const users = authorities.filter(a => a.type === 'USER').filter(u => didCompleteSetup(u));
     newOwners.value = users;
@@ -352,12 +352,12 @@ async function startRecovery() {
 
     // depending on the process type, we need different data:
     let data: RecoveryProcessSetNewOwner | RecoveryProcessChangeCouncil;
-    if (processType.value === 'RECOVERY') {
+    if (processType.value === 'ASSIGN_OWNER') {
       if (!newOwners.value) {
         throw new Error(t('recoveryDialog.error.noOwnerSelected'));
       }
       data = {
-        type: 'RECOVERY',
+        type: 'ASSIGN_OWNER',
         details: {
           newOwnerIds: newOwners.value.map(u => u.id)
         }
@@ -479,7 +479,7 @@ async function completeRecovery() {
         keyShares,
         props.vault.description
       );
-    } else if (process.type === 'RECOVERY' && newOwners.value.length > 0) {
+    } else if (process.type === 'ASSIGN_OWNER' && newOwners.value.length > 0) {
       // grant access to new owners using recovered key:
       const vaultKeys = await VaultKeys.recover(recoveredKey);
       const accessGrants: AccessGrant[] = await Promise.all(newOwners.value.map(async u => {

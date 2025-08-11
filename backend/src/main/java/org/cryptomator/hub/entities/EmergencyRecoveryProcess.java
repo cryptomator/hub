@@ -38,7 +38,7 @@ import java.util.stream.Stream;
 public class EmergencyRecoveryProcess {
 
 	public enum Type {
-		RECOVERY,
+		ASSIGN_OWNER,
 		COUNCIL_CHANGE
 	}
 

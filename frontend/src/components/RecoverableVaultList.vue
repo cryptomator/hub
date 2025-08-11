@@ -168,7 +168,7 @@ export type Item = {
   memberSize?: number;
 }
 
-const SUPPORTED_PROCESS_TYPES = ['RECOVERY', 'COUNCIL_CHANGE'] as const;
+const SUPPORTED_PROCESS_TYPES = ['ASSIGN_OWNER', 'COUNCIL_CHANGE'] as const;
 
 function startedTypesForVault(vault: VaultDto): Set<string> {
   return new Set(getProcesses(vault.id).map(p => p.type));

@@ -144,7 +144,7 @@ export type SettingsDto = {
 }
 
 export type RecoveryProcessSetNewOwner = {
-  type: 'RECOVERY',
+  type: 'ASSIGN_OWNER',
   details: {
     newOwnerIds: string[];
   }
