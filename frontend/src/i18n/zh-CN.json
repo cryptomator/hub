@@ -1,4 +1,5 @@
 {
+  "locale.en-US": "英语",
   "common.add": "添加",
   "common.apply": "应用",
   "common.cancel": "取消",
@@ -34,6 +35,7 @@
   "admin.webOfTrust.description": "配置信任网络设置，以管理系统中用户之间如何建立信任。这些设置会影响用户身份和密钥签名的验证。",
   "admin.webOfTrust.information": "了解更多。",
   "admin.webOfTrust.wotMaxDepth.description": "。",
+  "admin.webOfTrust.wotIdVerifyLen.description": "需要输入对方指纹的多少位数字来验证其身份。",
   "admin.webOfTrust.save": "保存",
   "admin.webOfTrust.saved": "已保存！",
   "auditLog.filter": "筛选",
