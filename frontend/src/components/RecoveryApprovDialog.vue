@@ -77,7 +77,7 @@
                             </label>
                             <MultiUserSelectInputGroup
                               :selected-users="newOwners"
-                              :on-search="searchUsersExcludingOwners"
+                              :on-search="searchUsers"
                               :input-visible="true"
                               @action="addNewOwner"
                               @remove="removeNewOwner"
@@ -293,33 +293,6 @@ function removeUser(this: Ref<UserDto[]>, user: UserDto) {
   this.value = this.value.filter(u => u.id !== user.id);
 }
 
-const ownerIds = ref<Set<string>>(new Set());
-
-async function refreshOwnerIds(): Promise<void> {
-  try {
-    const members = await backend.vaults.getMembers(props.vault.id);
-    ownerIds.value = new Set(
-      members
-        .filter(m => m.type === 'USER' && m.role === 'OWNER')
-        .map(m => m.id)
-    );
-  } catch (e) {
-    console.warn('Owner IDs could not be determined — searching without filter.', e);
-    ownerIds.value.clear();
-  }
-}
-
-async function searchUsersExcludingOwners(query: string): Promise<UserDto[]> {
-  if (ownerIds.value.size === 0) {
-    await refreshOwnerIds();
-  }
-  const users = await searchUsers(query);
-  return users.filter(u =>
-    !ownerIds.value.has(u.id) &&
-    !newOwners.value.some(o => o.id === u.id)
-  );
-}
-
 const canStartRecovery = computed(() => {
   if (processType.value === 'ASSIGN_OWNER') {
     return newOwners.value.length > 0;
@@ -331,7 +304,6 @@ const canStartRecovery = computed(() => {
 });
 
 async function show() {
-  await refreshOwnerIds();
   if (props.recoveryProcess?.type === 'COUNCIL_CHANGE') {
     const authorities = await backend.authorities.listSome(props.recoveryProcess.details.newCouncilMemberIds);
     const users = authorities.filter(a => a.type === 'USER').filter(u => didCompleteSetup(u));
