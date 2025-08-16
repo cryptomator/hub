@@ -30,7 +30,7 @@ public class AuditLogResourceIT {
 
 	@BeforeEach
 	public void beforeEach() {
-		Mockito.doReturn(true).when(licenseHolder).isSet();
+		Mockito.doReturn(true).when(licenseHolder).isSet(); // TODO
 		Mockito.doReturn(false).when(licenseHolder).isExpired();
 	}
 

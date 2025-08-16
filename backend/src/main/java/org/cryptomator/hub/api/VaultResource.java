@@ -292,7 +292,7 @@ public class VaultResource {
 			var access = legacyAccessTokenRepo.unlock(vaultId, deviceId, jwt.getSubject());
 			eventLogger.logVaultKeyRetrieved(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.SUCCESS, ipAddress, deviceId);
 			var subscriptionStateHeaderName = "Hub-Subscription-State";
-			var subscriptionStateHeaderValue = license.isSet() ? "ACTIVE" : "INACTIVE"; // license expiration is not checked here, because it is checked in the ActiveLicense filter
+			var subscriptionStateHeaderValue = license.isSet() ? "ACTIVE" : "INACTIVE"; // license expiration is not checked here, because it is checked in the ActiveLicense filter // FIXME: we need to refactor this header
 			return Response.ok(access.getJwe()).header(subscriptionStateHeaderName, subscriptionStateHeaderValue).build();
 		} catch (NoResultException e) {
 			eventLogger.logVaultKeyRetrieved(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.UNAUTHORIZED, ipAddress, deviceId);
@@ -334,7 +334,7 @@ public class VaultResource {
 		if (access != null) {
 			eventLogger.logVaultKeyRetrieved(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.SUCCESS, ipAddress, deviceId);
 			var subscriptionStateHeaderName = "Hub-Subscription-State";
-			var subscriptionStateHeaderValue = license.isSet() ? "ACTIVE" : "INACTIVE"; // license expiration is not checked here, because it is checked in the ActiveLicense filter
+			var subscriptionStateHeaderValue = license.isSet() ? "ACTIVE" : "INACTIVE"; // license expiration is not checked here, because it is checked in the ActiveLicense filter // FIXME: we need to refactor this header
 			return Response.ok(access.getVaultKey(), MediaType.TEXT_PLAIN_TYPE).header(subscriptionStateHeaderName, subscriptionStateHeaderValue).build();
 		} else if (vaultRepo.findById(vaultId) == null) {
 			throw new NotFoundException("No such vault.");

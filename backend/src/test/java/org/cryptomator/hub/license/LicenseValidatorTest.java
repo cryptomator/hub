@@ -4,10 +4,9 @@ import com.auth0.jwt.exceptions.InvalidClaimException;
 import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.exceptions.SignatureVerificationException;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.Optional;
 
 public class LicenseValidatorTest {
 
@@ -16,8 +15,16 @@ public class LicenseValidatorTest {
 	private static final String FUTURE_TOKEN = "eyJhbGciOiJFUzUxMiJ9.eyJqdGkiOjQyLCJpYXQiOjE3MDEyNDkzMzEzMSwiaXNzIjoiU2t5bWF0aWMiLCJhdWQiOiJDcnlwdG9tYXRvciBIdWIiLCJzdWIiOiJ0b2JpYXMuaGFnZW1hbm5Ac2t5bWF0aWMuZGUiLCJzZWF0cyI6NSwiZXhwIjoxNzIyMzg0MDAwLCJyZWZyZXNoVXJsIjoiaHR0cDovL2xvY2FsaG9zdDo4Nzg3L2h1Yi9zdWJzY3JpcHRpb24_aHViX2lkPTQyIn0.ALd0oyPR3kgntysXp8TZ1LvmHYDiDIGlbmaq52d5wAE1V8MZ1asWvufXgL9YExXvJhFbGCnLu66XgA387rxjrxKeASL_q43ZZUEDxtm8aa7uH2VMOvdM3gXEibSHUzNwO0MRWFbeYWOc8daRNWdxgOcrpX6NcMV7vPZH7yZSEct_cqf5";
 	private static final String TOKEN_WITH_INVALID_SIGNATURE = "eyJhbGciOiJFUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.AbVUinMiT3J_03je8WTOIl-VdggzvoFgnOsdouAs-DLOtQzau9valrq-S6pETyi9Q18HH-EuwX49Q7m3KC0GuNBJAc9Tksulgsdq8GqwIqZqDKmG7hNmDzaQG1Dpdezn2qzv-otf3ZZe-qNOXUMRImGekfQFIuH_MjD2e8RZyww6lbZk";
 	private static final String MALFORMED_TOKEN = "hello world";
+	private static final String LICENSE_PUBLIC_KEY = "MIGbMBAGByqGSM49AgEGBSuBBAAjA4GGAAQBjvVwj5K4/v6yq23luaEEYYG9ru6zBuXeQLtZNy49FlGA5rbeumoruFVQfVPuV8R9mofxyJBpU4ixi8KGkYl+eEQBTGvNEQ9Z36gBX2uZOCOfHM4x50lpwtTZ0QA3B07WPhmvupy9gZk18NHuysOd8KZFEPpGYGmYBhMZXAL30qweiBQ=";
 
 	LicenseValidator validator = new LicenseValidator();
+
+	@BeforeEach
+	public void setup() {
+		var verifierProducer = new LicenseVerifierProducer();
+		verifierProducer.licensePublicKey = LICENSE_PUBLIC_KEY;
+		validator.verifier = verifierProducer.produceLicenseVerifier();
+	}
 
 	@Test
 	@DisplayName("validate valid token")
