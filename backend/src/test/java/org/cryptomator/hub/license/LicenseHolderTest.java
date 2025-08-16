@@ -181,15 +181,16 @@ public class LicenseHolderTest {
 		LicenseHolder licenseHolderSpy = Mockito.spy(licenseHolder);
 		Settings settings = mock(Settings.class);
 		LicenseApi.Challenge challenge = mock(LicenseApi.Challenge.class);
-		doReturn(challenge).when(licenseApi).generateTrialChallenge(Mockito.any());
-		doReturn(1337).when(licenseHolderSpy).solveChallenge(challenge);
-		doReturn("token").when(licenseApi).verifyTrialChallenge(Mockito.any(), Mockito.eq(1337));
+		doReturn(challenge).when(licenseApi).generateTrialChallenge();
+		var solution = mock(LicenseApi.Solution.class);
+		doReturn(solution).when(licenseHolderSpy).solveChallenge(challenge);
+		doReturn("token").when(licenseApi).verifyTrialChallenge(Mockito.any(), Mockito.eq(solution));
 		doReturn(mock(DecodedJWT.class)).when(validator).validate(Mockito.eq("token"), Mockito.any());
 
 		licenseHolderSpy.requestAnonTrialLicense(settings);
 
-		verify(licenseApi).generateTrialChallenge(Mockito.any());
-		verify(licenseApi).verifyTrialChallenge(Mockito.any(), Mockito.eq(1337));
+		verify(licenseApi).generateTrialChallenge();
+		verify(licenseApi).verifyTrialChallenge(Mockito.any(), Mockito.eq(solution));
 		verify(settings).setHubId(Mockito.any());
 		verify(settings).setLicenseKey("token");
 		verify(settingsRepo).persistAndFlush(settings);

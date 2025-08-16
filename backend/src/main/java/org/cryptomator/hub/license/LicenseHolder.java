@@ -27,6 +27,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.HexFormat;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -110,8 +111,8 @@ public class LicenseHolder {
 	void requestAnonTrialLicense(Settings settings) {
 		LOG.info("No license found. Requesting trial license...");
 		var hubId = UUID.randomUUID().toString();
-		var challenge = licenseApi.generateTrialChallenge(hubId);
-		int solution = solveChallenge(challenge);
+		var challenge = licenseApi.generateTrialChallenge();
+		var solution = solveChallenge(challenge);
 		var trialLicense = licenseApi.verifyTrialChallenge(hubId, solution);
 		this.license = licenseValidator.validate(trialLicense, hubId);
 		settings.setLicenseKey(trialLicense);
@@ -121,18 +122,20 @@ public class LicenseHolder {
 	}
 
 	// visible for testing
-	int solveChallenge(LicenseApi.Challenge challenge) {
+	LicenseApi.Solution solveChallenge(LicenseApi.Challenge challenge) {
+		HexFormat hex = HexFormat.of();
 		MessageDigest sha256;
 		try {
 			sha256 = MessageDigest.getInstance("SHA-256");
 		} catch (NoSuchAlgorithmException e) {
 			throw new AssertionError("Every implementation of the Java platform is required to support [...] SHA-256", e);
 		}
-		for (int i = challenge.minCounter(); i < challenge.maxCounter(); i++) {
-			sha256.update(challenge.salt());
-			sha256.update(ByteBuffer.allocate(Integer.BYTES).putInt(0, i));
-			if (Arrays.equals(challenge.digest(), sha256.digest())) {
-				return i;
+		for (int i = 0; i < challenge.maxnumber(); i++) {
+			var saltedSecret = challenge.salt() + i;
+			sha256.update(saltedSecret.getBytes(StandardCharsets.US_ASCII));
+			var attempt = hex.formatHex(sha256.digest());
+			if (challenge.challenge().equals(attempt)) {
+				return challenge.solve(i);
 			}
 		}
 		throw new IllegalArgumentException("Unsolvable challenge");

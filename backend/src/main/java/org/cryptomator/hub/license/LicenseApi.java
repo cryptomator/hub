@@ -1,6 +1,7 @@
 package org.cryptomator.hub.license;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -15,17 +16,30 @@ public interface LicenseApi {
 	@GET
 	@Path("/trial/challenge")
 	@Produces(MediaType.APPLICATION_JSON)
-	Challenge generateTrialChallenge(@QueryParam("hubId") String hubId);
+	Challenge generateTrialChallenge();
 
 	@POST
 	@Path("/trial/verify")
+	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.TEXT_PLAIN)
-	String verifyTrialChallenge(@QueryParam("hubId") String hubId, @QueryParam("solution") int solution);
+	String verifyTrialChallenge(@QueryParam("hubId") String hubId, Solution solution);
 
-	record Challenge(@JsonProperty("salt") byte[] salt, @JsonProperty("counter") int counter, @JsonProperty("digest") byte[] digest, @JsonProperty("minCounter") int minCounter, @JsonProperty("maxCounter") int maxCounter) {
-		public Challenge withoutSolution() {
-			return new Challenge(salt, 0, digest, minCounter, maxCounter);
+	record Challenge(@JsonProperty("algorithm") String algorithm,
+							@JsonProperty("challenge") String challenge,
+							@JsonProperty("maxnumber") int maxnumber,
+							@JsonProperty("salt") String salt,
+							@JsonProperty("signature") String signature) {
+		public Solution solve(int number) {
+			return new Solution(algorithm, challenge, number, salt, signature);
 		}
 	}
+
+	record Solution(@JsonProperty("algorithm") String algorithm,
+						   @JsonProperty("challenge") String challenge,
+						   @JsonProperty("number") int number,
+						   @JsonProperty("salt") String salt,
+						   @JsonProperty("signature") String signature) {
+	}
+
 
 }
