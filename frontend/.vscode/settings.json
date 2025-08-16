@@ -20,13 +20,6 @@
   "html.format.wrapLineLength": 0,
   "typescript.preferences.importModuleSpecifier": "relative",
   "typescript.preferences.quoteStyle": "single",
-  "mochaExplorer.nodeArgv": [
-    "--loader=ts-node/esm",
-    "--no-warnings=ExperimentalWarning",
-    "--experimental-specifier-resolution=node"
-  ],
-  "mochaExplorer.files": "test/**/*.spec.ts",
-  "mochaExplorer.require": "ts-node/register",
   "eslint.validate": ["typescript", "javascript", "vue"],
   "eslint.useFlatConfig": true
 }

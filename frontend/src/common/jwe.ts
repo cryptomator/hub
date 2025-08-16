@@ -1,5 +1,6 @@
 import { base64url } from 'rfc4648';
 import { UnwrapKeyError } from './crypto';
+import { UTF8 } from './util';
 
 // visible for testing
 export class ConcatKDF {
@@ -58,8 +59,7 @@ export class JWEParser {
   readonly tag: Uint8Array;
 
   private constructor(readonly encodedHeader: string, readonly encodedEncryptedKey: string, readonly encodedIv: string, readonly encodedCiphertext: string, readonly encodedTag: string) {
-    const utf8dec = new TextDecoder();
-    this.header = JSON.parse(utf8dec.decode(base64url.parse(encodedHeader, { loose: true })));
+    this.header = JSON.parse(UTF8.decode(base64url.parse(encodedHeader, { loose: true })));
     this.encryptedKey = base64url.parse(encodedEncryptedKey, { loose: true });
     this.iv = base64url.parse(encodedIv, { loose: true });
     this.ciphertext = base64url.parse(encodedCiphertext, { loose: true });
@@ -111,7 +111,6 @@ export class JWEParser {
   }
 
   private async decrypt<T>(cek: CryptoKey): Promise<T> {
-    const utf8enc = new TextEncoder();
     const m = new Uint8Array(this.ciphertext.length + this.tag.length);
     m.set(this.ciphertext, 0);
     m.set(this.tag, this.ciphertext.length);
@@ -119,13 +118,13 @@ export class JWEParser {
       {
         name: 'AES-GCM',
         iv: this.iv,
-        additionalData: utf8enc.encode(this.encodedHeader),
+        additionalData: UTF8.encode(this.encodedHeader),
         tagLength: 128
       },
       cek,
       m
     ));
-    return JSON.parse(new TextDecoder().decode(payloadJson));
+    return JSON.parse(UTF8.decode(payloadJson));
   }
 }
 
@@ -150,7 +149,7 @@ export class JWEBuilder {
       apu: base64url.stringify(apu, { pad: false }),
       apv: base64url.stringify(apv, { pad: false })
     })();
-    const encryptedKey = (async () => Uint8Array.of())(); // empty for Direct Key Agreement as per spec
+    const encryptedKey = Promise.resolve(Uint8Array.of()); // empty for Direct Key Agreement as per spec
     const cek = (async () => ECDH_ES.deriveContentKey(recipientPublicKey, (await ephemeralKey).privateKey, 384, 32, await header))();
     return new JWEBuilder(header, encryptedKey, cek);
   }
@@ -186,10 +185,8 @@ export class JWEBuilder {
    * @returns The JWE
    */
   public async encrypt(payload: object) {
-    const utf8enc = new TextEncoder();
-
     /* JWE assembly and content encryption described in RFC 7516: */
-    const encodedHeader = base64url.stringify(utf8enc.encode(JSON.stringify(await this.header)), { pad: false });
+    const encodedHeader = base64url.stringify(UTF8.encode(JSON.stringify(await this.header)), { pad: false });
     const iv = crypto.getRandomValues(new Uint8Array(12));
     const encodedIv = base64url.stringify(iv, { pad: false });
     const encodedEncryptedKey = base64url.stringify(await this.encryptedKey, { pad: false });
@@ -197,11 +194,11 @@ export class JWEBuilder {
       {
         name: 'AES-GCM',
         iv: iv,
-        additionalData: utf8enc.encode(encodedHeader),
+        additionalData: UTF8.encode(encodedHeader),
         tagLength: 128
       },
       await this.cek,
-      utf8enc.encode(JSON.stringify(payload))
+      UTF8.encode(JSON.stringify(payload))
     ));
     console.assert(m.byteLength > 16, 'result of GCM encryption expected to contain 128bit tag');
     const ciphertext = m.slice(0, m.byteLength - 16);
@@ -218,7 +215,7 @@ export class ECDH_ES {
     let agreedKey = new Uint8Array();
     let derivedKey = new Uint8Array();
     try {
-      const algorithmId = ECDH_ES.lengthPrefixed(new TextEncoder().encode(header.enc));
+      const algorithmId = ECDH_ES.lengthPrefixed(UTF8.encode(header.enc));
       const partyUInfo = ECDH_ES.lengthPrefixed(base64url.parse(header.apu ?? '', { loose: true }));
       const partyVInfo = ECDH_ES.lengthPrefixed(base64url.parse(header.apv ?? '', { loose: true }));
       const suppPubInfo = new ArrayBuffer(4);
@@ -265,8 +262,7 @@ export class PBES2 {
     } else {
       throw new Error('only PBES2-HS512+A256KW and PBES2-HS256+A128KW supported');
     }
-    const utf8enc = new TextEncoder();
-    const encodedPw = utf8enc.encode(password);
+    const encodedPw = UTF8.encode(password);
     const pwKey = crypto.subtle.importKey(
       'raw',
       encodedPw,
@@ -278,7 +274,7 @@ export class PBES2 {
       {
         name: 'PBKDF2',
         hash: hash,
-        salt: new Uint8Array([...utf8enc.encode(alg), ...PBES2.NULL_BYTE, ...salt]), // see https://www.rfc-editor.org/rfc/rfc7518#section-4.8.1.1
+        salt: new Uint8Array([...UTF8.encode(alg), ...PBES2.NULL_BYTE, ...salt]), // see https://www.rfc-editor.org/rfc/rfc7518#section-4.8.1.1
         iterations: iterations
       },
       await pwKey,

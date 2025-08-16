@@ -5,12 +5,54 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/cryptomator/hub/compare/1.4.0...HEAD)
+## [1.4.5](https://github.com/cryptomator/hub/compare/1.4.4...1.4.5)
+
+### Fixed
+
+- Fix Session Expiration Not Enforced in Cryptomator Hub Web Client (GHSA-69fp-wc9g-5778)
+
+## [1.4.4](https://github.com/cryptomator/hub/compare/1.4.3...1.4.4)
+
+### Added
+
+- Breadcrumb Navigation
+- Unsaved changes notice with undo in the WOT settings
+- Support for regionalized translations
+- Latvian, Portuguese (Brazil), Russian, Ukrainian and Chinese (Taiwan) translation
 
 ### Changed
 
-- Updated Keycloak to 26.2.3
-- Updated to Quarkus 3.20.0 LTS
+- Updated Keycloak to 26.3.2
+- Updated to Quarkus 3.20.2 LTS
+
+### Fixed
+
+- Bumped dependencies (fixes CVE-2025-7783, CVE-2025-53892, could not be exploited in Hub)
+
+## [1.4.3](https://github.com/cryptomator/hub/compare/1.4.2...1.4.3)
+
+### Changed
+
+- Updated Keycloak to 26.2.5
+- Updated to Quarkus 3.20.1 LTS
+
+### Fixed
+
+- Health check in Docker Compose not working due to curl missing from native images (#344, #249)
+- Bumped build time dependencies (fixes CVE-2025-5889, CVE-2025-46565, neither affected any Hub release)
+
+
+## [1.4.2](https://github.com/cryptomator/hub/compare/1.4.1...1.4.2)
+
+### Fixed
+
+- Fixed an issue where syncing of Keycloak users/groups would fail in very rare circumstances (#343)
+
+## [1.4.1](https://github.com/cryptomator/hub/compare/1.4.0...1.4.1)
+
+### Fixed
+
+- Fixed licence refresh, which had not been executed since version 1.4.0 (#341)
 
 ## [1.4.0](https://github.com/cryptomator/hub/compare/1.3.4...1.4.0)
 

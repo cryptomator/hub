@@ -1,5 +1,30 @@
 import { dictionary } from './4096words_en';
 
+export class UTF8 {
+  private static readonly encoder = new TextEncoder();
+  private static readonly decoder = new TextDecoder('utf-8', { fatal: true });
+
+  /**
+   * Encodes a string into a byte sequence, using the UTF-8 NFC encoding.
+   * @param data string to encode
+   * @returns Uint8Array containing the UTF-8 NFC encoded string
+   */
+  public static encode(data: string): Uint8Array {
+    return UTF8.encoder.encode(data.normalize('NFC'));
+  }
+
+  /**
+   * Decodes a UTF-8 encoded string from a Uint8Array or SharedArrayBuffer.
+   * @param data data to decode
+   * @param options optional TextDecodeOptions
+   * @throws {TypeError} if the data is not valid UTF-8
+   * @returns decoded string
+   */
+  public static decode(data: AllowSharedBufferSource, options?: TextDecodeOptions): string {
+    return UTF8.decoder.decode(data, options);
+  }
+}
+
 export class DB {
   private static readonly NAME = 'hub';
 

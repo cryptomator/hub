@@ -157,19 +157,21 @@ public class LicenseHolder {
 	 */
 	@Scheduled(cron = "0 0 1 * * ?", timeZone = "UTC", concurrentExecution = Scheduled.ConcurrentExecution.SKIP)
 	void refreshLicense() throws InterruptedException {
-		randomMinuteSleeper.sleep(); // add random sleep between [0,59]min to reduce infrastructure load
-		var refreshUrlClaim = get().getClaim("refreshUrl");
-		if (refreshUrlClaim != null) {
-			try {
-				var refreshUrl = URI.create(refreshUrlClaim.asString());
-				var refreshedLicense = requestLicenseRefresh(refreshUrl, get().getToken());
-				set(refreshedLicense);
-			} catch (LicenseRefreshFailedException e) {
-				LOG.errorv("Failed to refresh license token. Request to {0} was answerd with response code {1,number,integer}", refreshUrlClaim, e.statusCode);
-			} catch (IllegalArgumentException | IOException e) {
-				LOG.error("Failed to refresh license token", e);
-			} catch (JWTVerificationException e) {
-				LOG.error("Failed to refresh license token. Refreshed token is invalid.", e);
+		if (get() != null) {
+			randomMinuteSleeper.sleep(); // add random sleep between [0,59]min to reduce infrastructure load
+			var refreshUrlClaim = get().getClaim("refreshUrl");
+			if (refreshUrlClaim != null) {
+				try {
+					var refreshUrl = URI.create(refreshUrlClaim.asString());
+					var refreshedLicense = requestLicenseRefresh(refreshUrl, get().getToken());
+					set(refreshedLicense);
+				} catch (LicenseRefreshFailedException e) {
+					LOG.errorv("Failed to refresh license token. Request to {0} was answerd with response code {1,number,integer}", refreshUrlClaim, e.statusCode);
+				} catch (IllegalArgumentException | IOException e) {
+					LOG.error("Failed to refresh license token", e);
+				} catch (JWTVerificationException e) {
+					LOG.error("Failed to refresh license token. Refreshed token is invalid.", e);
+				}
 			}
 		}
 	}

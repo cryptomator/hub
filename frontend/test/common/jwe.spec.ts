@@ -1,18 +1,8 @@
-import { expect } from 'chai';
-import { describe } from 'mocha';
-import { webcrypto } from 'node:crypto';
 import { base64url } from 'rfc4648';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { ConcatKDF, ECDH_ES, ECDH_P384, JWEBuilder, JWEHeader, JWEParser, PBES2 } from '../../src/common/jwe';
 
 describe('JWE', () => {
-  before(done => {
-    // since this test runs on Node, we need to replace window.crypto:
-    Object.defineProperty(global, 'crypto', { value: webcrypto });
-    // @ts-expect-error: incomplete 'window' type
-    global.window = { crypto: global.crypto };
-    done();
-  });
-
   describe('NIST SP 800-56A Rev. 2 Section 5.8.1', () => {
     it('should fulfill test vectors', async () => {
       const z = new Uint8Array([158, 86, 217, 29, 129, 113, 53, 211, 114, 131, 66, 131, 191, 132, 38, 156, 251, 49, 110, 163, 218, 128, 106, 72, 246, 218, 167, 121, 140, 254, 144, 196]);
@@ -23,7 +13,7 @@ describe('JWE', () => {
 
       const otherInfo = new Uint8Array([...algorithmId, ...partyUInfo, ...partyVInfo, ...new Uint8Array(suppPubInfo)]);
       const derivedKey = await ConcatKDF.kdf(z, 16, otherInfo);
-      expect(new Uint8Array(derivedKey), 'derived key').to.eql(new Uint8Array([86, 170, 141, 234, 248, 35, 109, 32, 92, 34, 40, 205, 113, 167, 16, 26]));
+      expect(new Uint8Array(derivedKey)).toEqual(new Uint8Array([86, 170, 141, 234, 248, 35, 109, 32, 92, 34, 40, 205, 113, 167, 16, 26]));
     });
   });
 
@@ -48,7 +38,7 @@ describe('JWE', () => {
       const jwe = await JWEBuilder.ecdhEs(recipientPublicKey).encrypt(orig);
 
       const decrypted = await JWEParser.parse(jwe).decryptEcdhEs(recipientPrivateKey);
-      expect(decrypted).to.deep.eq(orig);
+      expect(decrypted).toEqual(orig);
     });
 
     // TODO: add some more decrypt-only tests with JWE from 3rd party
@@ -61,7 +51,7 @@ describe('JWE', () => {
       const jwe = await JWEBuilder.pbes2('topsecret', 1000).encrypt(orig);
 
       const decrypted = await JWEParser.parse(jwe).decryptPbes2('topsecret');
-      expect(decrypted).to.deep.eq(orig);
+      expect(decrypted).toEqual(orig);
     });
 
     it('encrypt JWE used in Java unit tests', async () => {
@@ -69,7 +59,7 @@ describe('JWE', () => {
 
       const jwe = await JWEBuilder.pbes2('123456', 1000).encrypt(orig);
 
-      expect(jwe).not.to.be.null;
+      expect(jwe).not.toBeNull();
     });
 
     // TODO: add some more decrypt-only tests with JWE from 3rd party
@@ -86,7 +76,7 @@ describe('JWE', () => {
 
       const wrappingKey = await PBES2.deriveWrappingKey(password, 'PBES2-HS256+A128KW', saltInput, iterations, true);
       const rawKey = await crypto.subtle.exportKey('raw', wrappingKey);
-      expect(new Uint8Array(rawKey), 'wrappingKey').to.eql(Uint8Array.of(110, 171, 169, 92, 129, 92, 109, 117, 233, 242, 116, 233, 170, 14,
+      expect(new Uint8Array(rawKey)).toEqual(Uint8Array.of(110, 171, 169, 92, 129, 92, 109, 117, 233, 242, 116, 233, 170, 14,
         24, 75));
     });
   });
@@ -116,8 +106,8 @@ describe('JWE', () => {
       const importParams: EcKeyImportParams = { name: 'ECDH', namedCurve: 'P-256' };
       alice = await crypto.subtle.importKey('jwk', alicePriv, importParams, false, ['deriveBits']);
       bob = await crypto.subtle.importKey('jwk', bobPub, importParams, false, []);
-      expect(alice.type, 'alice\'s key type').to.eql('private');
-      expect(bob.type, 'bob\'s key type').to.eql('public');
+      expect(alice.type).toEqual('private');
+      expect(bob.type).toEqual('public');
     });
 
     it('should derive expected key using ECDH-ES', async () => {
@@ -133,7 +123,7 @@ describe('JWE', () => {
       };
       const derived = await ECDH_ES.deriveContentKey(bob, alice, 256, 16, header, true);
       const derivedBytes = await crypto.subtle.exportKey('raw', derived);
-      expect(new Uint8Array(derivedBytes), 'derived key').to.eql(new Uint8Array([86, 170, 141, 234, 248, 35, 109, 32, 92, 34, 40, 205, 113, 167, 16, 26]));
+      expect(new Uint8Array(derivedBytes)).toEqual(new Uint8Array([86, 170, 141, 234, 248, 35, 109, 32, 92, 34, 40, 205, 113, 167, 16, 26]));
     });
 
     it('should derive content key despite missing apu/apv', async () => {
@@ -146,7 +136,7 @@ describe('JWE', () => {
       };
       const derived = await ECDH_ES.deriveContentKey(bob, alice, 256, 16, header, true);
       const derivedBytes = await crypto.subtle.exportKey('raw', derived);
-      expect(new Uint8Array(derivedBytes), 'derived key').to.eql(new Uint8Array([187, 151, 171, 93, 14, 133, 109, 143, 143, 192, 62, 38, 91, 36, 42, 125]));
+      expect(new Uint8Array(derivedBytes)).toEqual(new Uint8Array([187, 151, 171, 93, 14, 133, 109, 143, 143, 192, 62, 38, 91, 36, 42, 125]));
     });
   });
 });
