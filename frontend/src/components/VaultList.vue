@@ -160,7 +160,7 @@ const isLicenseViolated = computed(() => {
 
 const filterOptions = ref< {[key: string]: string} >({
   accessibleVaults: t('vaultList.filter.entry.accessibleVaults'),
-  ownedVaults: t('vaultList.filter.entry.ownedVaults'),
+  ownedVaults: t('vaultList.filter.entry.ownedVaults')
 });
 const selectedFilter = ref<'accessibleVaults' | 'ownedVaults' | 'allVaults'>('accessibleVaults');
 watch(selectedFilter, fetchData);
