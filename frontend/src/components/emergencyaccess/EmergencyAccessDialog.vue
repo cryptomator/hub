@@ -262,7 +262,9 @@ const phase = computed<PhaseType>(() => {
 });
 const requiredSegments = props.recoveryProcess?.requiredKeyShares ?? props.vault.requiredEmergencyKeyShares;
 const completedSegments = Object.values(props.recoveryProcess?.recoveredKeyShares ?? {}).filter(ks => ks.recoveredKeyShare !== undefined).length;
-const didAddMyShare = props.recoveryProcess?.recoveredKeyShares[props.me.id].recoveredKeyShare !== undefined;
+const didAddMyShare = computed(() => {
+  return props.recoveryProcess?.recoveredKeyShares?.[props.me.id]?.recoveredKeyShare !== undefined;
+});
 
 const open = ref(false);
 const onError = ref<Error | null>();
