@@ -210,21 +210,21 @@
 </template>
 
 <script setup lang="ts">
-import backend, { VaultDto, UserDto, RecoveryProcessDto, didCompleteSetup, RecoveryProcessSetNewOwner, RecoveryProcessChangeCouncil, ActivatedUser, AccessGrant, RecoveredKeyShareDto } from '../common/backend';
+import backend, { VaultDto, UserDto, RecoveryProcessDto, didCompleteSetup, RecoveryProcessSetNewOwner, RecoveryProcessChangeCouncil, ActivatedUser, AccessGrant, RecoveredKeyShareDto } from '../../common/backend';
 import { ref, computed, toRaw, Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import * as R from 'remeda';
 import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
-import { describeSegment } from '../common/svgUtils';
-import { EmergencyAccess } from '../common/emergencyaccess';
-import userdata from '../common/userdata';
-import MultiUserSelectInputGroup from './MultiUserSelectInputGroup.vue';
-import RequiredKeySharesInput from './emergencyaccess/RequiredKeySharesInput.vue';
-import EmergencyScenarioVisualization from './emergencyaccess/EmergencyScenarioVisualization.vue';
-import { asPublicKey, UserKeys, VaultKeys } from '../common/crypto';
-import { wordEncoder } from '../common/util';
+import { describeSegment } from '../../common/svgUtils';
+import { EmergencyAccess } from '../../common/emergencyaccess';
+import userdata from '../../common/userdata';
+import MultiUserSelectInputGroup from '../MultiUserSelectInputGroup.vue';
+import RequiredKeySharesInput from './RequiredKeySharesInput.vue';
+import EmergencyScenarioVisualization from './EmergencyScenarioVisualization.vue';
+import { asPublicKey, UserKeys, VaultKeys } from '../../common/crypto';
+import { wordEncoder } from '../../common/util';
 import { base64 } from 'rfc4648';
-import { ECDSA_P384, JWT, JWTHeader } from '../common/jwt';
+import { ECDSA_P384, JWT, JWTHeader } from '../../common/jwt';
 const { t } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{

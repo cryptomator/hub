@@ -213,7 +213,7 @@
           {{ t('vaultDetails.actions.displayRecoveryKey') }}
         </button>
         <!-- emergencyAccess button -->
-        <button v-if="isEmergencyKeyShareHolder" type="button" class="bg-white p-2 py-2 px-4 border border-gray-300 rounded-md shadow-xs text-sm font-medium text-gray-700 hover:bg-gray-50 justify-center items-center focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary w-full flex" @click="showRecoveryApprovDialog()">
+        <button v-if="isEmergencyKeyShareHolder" type="button" class="bg-white p-2 py-2 px-4 border border-gray-300 rounded-md shadow-xs text-sm font-medium text-gray-700 hover:bg-gray-50 justify-center items-center focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary w-full flex" @click="showEmergencyAccessDialog()">
           <span>
             {{ isRecoveryInProgress ? 'Emergency Access in Progress' : recoveryButtonLabel }}
           </span>
@@ -254,7 +254,7 @@
   <ArchiveVaultDialog v-if="archivingVault && vault" ref="archiveVaultDialog" :vault="vault" @close="archivingVault = false" @archived="refreshVault" />
   <ReactivateVaultDialog v-if="reactivatingVault && vault" ref="reactivateVaultDialog" :vault="vault" @close="reactivatingVault = false" @reactivated="v => { refreshVault(v); refreshLicense();}" />
   <RecoverVaultDialog v-if="recoveringVault && vault" ref="recoverVaultDialog" :vault="vault" @close="recoveringVault = false" @recovered="fetchOwnerData()" />
-  <RecoveryApprovDialog v-if="recoveryApprov && vault && me && requiredRecoverySegments" ref="recoveryApprovDialog" :vault="vault" :recovery-process="recoveryProcess" :me="me" @updated="refreshRecoveryProcess" @close="recoveryApprov = false" />
+  <EmergencyAccessDialog v-if="recoveryApprov && vault && me && requiredRecoverySegments" ref="recoveryApprovDialog" :vault="vault" :recovery-process="recoveryProcess" :me="me" @updated="refreshRecoveryProcess" @close="recoveryApprov = false" />
   <GrantEmergencyAccessDialog v-if="grantingEmergencyAccess && vault && vaultKeys" ref="grantEmergencyAccessDialog" :vault="vault" :vault-keys="vaultKeys" @close="grantingEmergencyAccess = false" @updated="refreshVault" />
 </template>
 
@@ -281,7 +281,7 @@ import ReactivateVaultDialog from './ReactivateVaultDialog.vue';
 import RecoverVaultDialog from './RecoverVaultDialog.vue';
 import SearchInputGroup from './SearchInputGroup.vue';
 import TrustDetails from './TrustDetails.vue';
-import RecoveryApprovDialog from './RecoveryApprovDialog.vue';
+import EmergencyAccessDialog from './emergencyaccess/EmergencyAccessDialog.vue';
 import GrantEmergencyAccessDialog from './emergencyaccess/GrantEmergencyAccessDialog.vue';
 import { describeSegment } from '../common/svgUtils';
 
@@ -329,7 +329,7 @@ const claimVaultOwnershipDialog = ref<typeof ClaimVaultOwnershipDialog>();
 const claimingVaultOwnership = ref(false);
 const me = ref<UserDto>();
 const recoveryApprov = ref(false);
-const recoveryApprovDialog = ref<typeof RecoveryApprovDialog>();
+const recoveryApprovDialog = ref<typeof EmergencyAccessDialog>();
 const grantingEmergencyAccess = ref(false);
 const grantEmergencyAccessDialog = ref<typeof GrantEmergencyAccessDialog>();
 
@@ -552,7 +552,7 @@ function showGrantEmergencyAccessDialog() {
   nextTick(() => grantEmergencyAccessDialog.value?.show?.());
 }
 
-function showRecoveryApprovDialog() {
+function showEmergencyAccessDialog() {
   recoveryApprov.value = true;
   nextTick(() => recoveryApprovDialog.value?.show());
 }

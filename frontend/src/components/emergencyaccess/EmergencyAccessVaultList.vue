@@ -136,7 +136,7 @@
     <p class="mt-1 text-sm text-gray-500">{{ t('vaultList.empty.description') }}</p>
   </div>
 
-  <RecoveryApprovDialog
+  <EmergencyAccessDialog
     v-if="recoveryApprovVault != null"
     ref="recoveryApprovDialog"
     :vault="recoveryApprovVault"
@@ -151,14 +151,14 @@
 import { ref, computed, onMounted, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import * as R from 'remeda';
-import backend, { VaultDto, RecoveryProcessDto } from '../common/backend';
-import FetchError from './FetchError.vue';
+import backend, { VaultDto, RecoveryProcessDto } from '../../common/backend';
+import FetchError from '../FetchError.vue';
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue';
 import { CheckIcon, ChevronUpDownIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/solid';
-import userdata from '../common/userdata';
-import { UserDto } from '../common/backend';
-import { describeSegment } from '../common/svgUtils';
-import RecoveryApprovDialog from './RecoveryApprovDialog.vue';
+import userdata from '../../common/userdata';
+import { UserDto } from '../../common/backend';
+import { describeSegment } from '../../common/svgUtils';
+import EmergencyAccessDialog from './EmergencyAccessDialog.vue';
 
 export type Item = {
   id: string;
@@ -252,7 +252,7 @@ const vaultRecoveryProcesses = ref<Record<string, RecoveryProcessDto[]>>({});
 const emergencyKeyShareUsersByVaultId = ref<Record<string, Item[]>>({});
 
 const recoveryApprovVault = ref<VaultDto | null>(null);
-const recoveryApprovDialog = ref<typeof RecoveryApprovDialog>();
+const recoveryApprovDialog = ref<typeof EmergencyAccessDialog>();
 
 onMounted(fetchData);
 
