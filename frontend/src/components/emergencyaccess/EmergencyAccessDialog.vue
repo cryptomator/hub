@@ -159,6 +159,11 @@
                       {{ t('common.unexpectedError', [onError.message]) }}
                     </p>
                   </div>
+                  <div v-if="conflictingProcessExists && phase === 'start'" class="w-full sm:w-auto mb-2 text-right">
+                    <p class="inline-block text-sm text-red-700 bg-red-100 rounded px-3 py-1">
+                      {{ t('recoveryDialog.error.processAlreadyExists') }}
+                    </p>
+                  </div>
                   <div class="bg-gray-50 rounded-b-lg px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                     <template v-if="phase === 'start'">
                       <button
@@ -262,6 +267,12 @@ const didAddMyShare = props.recoveryProcess?.recoveredKeyShares[props.me.id].rec
 const open = ref(false);
 const onError = ref<Error | null>();
 
+const conflictingProcessExists = computed(() => {
+  return existingProcesses.value.some(p => p.type === processType.value);
+});
+
+const existingProcesses = ref<RecoveryProcessDto[]>([]);
+
 // NEW OWNER
 const newOwners = ref<ActivatedUser[]>([]);
 const addNewOwner = addUser.bind(newOwners);
@@ -294,6 +305,8 @@ function removeUser(this: Ref<UserDto[]>, user: UserDto) {
 }
 
 const canStartRecovery = computed(() => {
+  if (conflictingProcessExists.value) return false;
+
   if (processType.value === 'ASSIGN_OWNER') {
     return newOwners.value.length > 0;
   } else if (processType.value === 'COUNCIL_CHANGE') {
@@ -304,12 +317,13 @@ const canStartRecovery = computed(() => {
 });
 
 async function show() {
+  existingProcesses.value = await backend.emergencyAccess.findProcessesForVault(props.vault.id);
+
   if (props.recoveryProcess?.type === 'COUNCIL_CHANGE') {
     const authorities = await backend.authorities.listSome(props.recoveryProcess.details.newCouncilMemberIds);
     const users = authorities.filter(a => a.type === 'USER').filter(u => didCompleteSetup(u));
     newCouncilMembers.value = users;
-  }
-  else if (props.recoveryProcess?.type === 'ASSIGN_OWNER') {
+  } else if (props.recoveryProcess?.type === 'ASSIGN_OWNER') {
     const authorities = await backend.authorities.listSome(props.recoveryProcess.details.newOwnerIds);
     const users = authorities.filter(a => a.type === 'USER').filter(u => didCompleteSetup(u));
     newOwners.value = users;
