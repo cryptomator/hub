@@ -22,6 +22,9 @@ public class RecoveredEmergencyKeyShares {
 	@Column(name = "process_private_key", nullable = false)
 	private String processPrivateKey;
 
+	@Column(name = "unrecovered_key_share", nullable = false)
+	private String unrecoveredKeyShare;
+
 	@Column(name = "recovered_key_share")
 	private String recoveredKeyShare;
 
@@ -42,6 +45,14 @@ public class RecoveredEmergencyKeyShares {
 
 	public void setProcessPrivateKey(String processPrivateKey) {
 		this.processPrivateKey = processPrivateKey;
+	}
+
+	public String getUnrecoveredKeyShare() {
+		return unrecoveredKeyShare;
+	}
+
+	public void setUnrecoveredKeyShare(String unrecoveredKeyShare) {
+		this.unrecoveredKeyShare = unrecoveredKeyShare;
 	}
 
 	public String getRecoveredKeyShare() {
@@ -66,13 +77,14 @@ public class RecoveredEmergencyKeyShares {
 		RecoveredEmergencyKeyShares other = (RecoveredEmergencyKeyShares) o;
 		return Objects.equals(id, other.id)
 				&& Objects.equals(processPrivateKey, other.processPrivateKey)
+				&& Objects.equals(unrecoveredKeyShare, other.unrecoveredKeyShare)
 				&& Objects.equals(recoveredKeyShare, other.recoveredKeyShare)
 				&& Objects.equals(signedProcessInfo, other.signedProcessInfo);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, processPrivateKey, recoveredKeyShare, signedProcessInfo);
+		return Objects.hash(id, processPrivateKey, unrecoveredKeyShare, recoveredKeyShare, signedProcessInfo);
 	}
 
 	@Embeddable

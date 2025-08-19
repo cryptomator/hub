@@ -406,6 +406,7 @@ async function startRecovery() {
     // initialize recovered key shares for all council members:
     for (const [memberId, jwe] of Object.entries(processKeyPair.recoveryPrivateKeys)) {
       process.recoveredKeyShares[memberId] = {
+        unrecoveredKeyShare: props.vault.emergencyKeyShares[memberId],
         processPrivateKey: jwe,
       };
     }
@@ -522,7 +523,7 @@ async function completeRecovery() {
 }
 
 async function addMyShare(process: RecoveryProcessDto, userKeys: UserKeys): Promise<RecoveredKeyShareDto> {
-  const encryptedShare = props.vault.emergencyKeyShares[props.me.id];
+  const encryptedShare = process.recoveredKeyShares[props.me.id].unrecoveredKeyShare;
   const recoveredShare = await EmergencyAccess.recoverShare(encryptedShare, userKeys.ecdhKeyPair.privateKey, process.processPublicKey);
 
   const processInfo = R.pick(process, ['type', 'details']);

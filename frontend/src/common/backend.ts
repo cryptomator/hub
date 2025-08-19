@@ -160,6 +160,7 @@ export type RecoveryProcessChangeCouncil = {
 
 export type RecoveredKeyShareDto = {
   processPrivateKey: string;
+  unrecoveredKeyShare: string;
   recoveredKeyShare?: string;
   signedProcessInfo?: string;
 };

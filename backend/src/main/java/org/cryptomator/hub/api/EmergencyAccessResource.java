@@ -77,6 +77,7 @@ public class EmergencyAccessResource {
 			keyShareEntity.getId().setRecoveryId(processId);
 			keyShareEntity.getId().setCouncilMemberId(memberId);
 			keyShareEntity.setProcessPrivateKey(keyShareDto.processPrivateKey);
+			keyShareEntity.setUnrecoveredKeyShare(keyShareDto.unrecoveredKeyShare);
 			keyShareEntity.setRecoveredKeyShare(keyShareDto.recoveredKeyShare);
 			keyShareEntity.setSignedProcessInfo(keyShareDto.signedProcessInfo);
 			return keyShareEntity;
@@ -186,10 +187,10 @@ public class EmergencyAccessResource {
 	}
 
 	@JsonInclude(JsonInclude.Include.NON_NULL)
-	public record RecoveredKeyShareDto(@JsonProperty("processPrivateKey") @ValidJWE String processPrivateKey, @JsonProperty("recoveredKeyShare") @ValidJWE String recoveredKeyShare, @JsonProperty("signedProcessInfo") @ValidJWS String signedProcessInfo) {
+	public record RecoveredKeyShareDto(@JsonProperty("processPrivateKey") @ValidJWE String processPrivateKey, @JsonProperty("unrecoveredKeyShare") @ValidJWE String unrecoveredKeyShare, @JsonProperty("recoveredKeyShare") @ValidJWE String recoveredKeyShare, @JsonProperty("signedProcessInfo") @ValidJWS String signedProcessInfo) {
 
 		public static RecoveredKeyShareDto fromEntity(RecoveredEmergencyKeyShares entity) {
-			return new RecoveredKeyShareDto(entity.getProcessPrivateKey(), entity.getRecoveredKeyShare(), entity.getSignedProcessInfo());
+			return new RecoveredKeyShareDto(entity.getProcessPrivateKey(), entity.getUnrecoveredKeyShare(), entity.getRecoveredKeyShare(), entity.getSignedProcessInfo());
 		}
 	}
 

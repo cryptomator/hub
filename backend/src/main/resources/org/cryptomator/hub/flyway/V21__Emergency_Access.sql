@@ -41,6 +41,7 @@ CREATE TABLE "recovered_emergency_key_shares"
     "recovery_process_id" UUID NOT NULL,
 	"council_member_id" VARCHAR(255) COLLATE "C" NOT NULL,
     "process_private_key" TEXT NOT NULL,
+    "unrecovered_key_share" TEXT NOT NULL,
     "recovered_key_share" TEXT,
     "signed_process_info" TEXT,
     CONSTRAINT "RECOVERED_EMERGENCY_KEY_SHARES_PK" PRIMARY KEY ("recovery_process_id", "council_member_id"),
