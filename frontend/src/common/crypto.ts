@@ -361,7 +361,7 @@ export class UserKeys {
    * @returns a JWE containing the PKCS#8-encoded private key
    * @see JWEBuilder.ecdhEs
    */
-  public async encryptForDevice(devicePublicKey: CryptoKey | Uint8Array): Promise<string> {
+  public async encryptForDevice(devicePublicKey: CryptoKey | BufferSource): Promise<string> {
     const publicKey = await asPublicKey(devicePublicKey, BrowserKeys.KEY_DESIGNATION);
     const payload = await this.prepareForEncryption();
     return JWEBuilder.ecdhEs(publicKey).encrypt(payload);

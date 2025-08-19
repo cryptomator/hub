@@ -145,23 +145,6 @@ public class EmergencyAccessResource {
 		return recoverProcessRepo.findByVaultId(vaultId).map(RecoveryProcessDto::fromEntity).toList();
 	}
 
-//	@GET
-//	@Path("/{processId}")
-//	@RolesAllowed("user")
-//	@Consumes(MediaType.APPLICATION_JSON)
-//	@Produces(MediaType.APPLICATION_JSON)
-//	@Operation(summary = "finds an existing recovery process")
-//	@APIResponse(responseCode = "200", description = "process created")
-//	@APIResponse(responseCode = "404", description = "invalid request, e.g. missing required fields")
-//	@Transactional
-//	public RecoveryProcessDto getRecoveryProcess(@PathParam("processId") UUID processId) {
-//		var entity = recoverProcessRepo.findById(processId);
-//		if (entity == null) {
-//			throw new NotFoundException();
-//		}
-//		return RecoveryProcessDto.fromEntity(entity);
-//	}
-
 	@JsonInclude(JsonInclude.Include.NON_NULL)
 	public record RecoveryProcessDto(
 			@JsonProperty("id") @NotBlank UUID id,

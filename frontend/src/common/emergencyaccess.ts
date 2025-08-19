@@ -50,7 +50,7 @@ export class EmergencyAccess {
       const payload: KeySharePayload = {
         keyShare: base64.stringify(shares[i])
       };
-      const keyBytes = base64.parse(recipient.ecdhPublicKey!);
+      const keyBytes = base64.parse(recipient.ecdhPublicKey);
       const key = await asPublicKey(keyBytes, UserKeys.ECDH_KEY_DESIGNATION);
       const jwe = await JWEBuilder.ecdhEs(key).encrypt(payload);
       result[recipient.id] = jwe;
@@ -71,7 +71,7 @@ export class EmergencyAccess {
     const jwk = await crypto.subtle.exportKey('jwk', processKeyPair.privateKey);
     const payload: ProcessPrivateKeyPayload = { privateKey: jwk };
     for (const member of councilMembers) {
-      const keyBytes = base64.parse(member.ecdhPublicKey!);
+      const keyBytes = base64.parse(member.ecdhPublicKey);
       const key = await asPublicKey(keyBytes, UserKeys.ECDH_KEY_DESIGNATION);
       const jwe = await JWEBuilder.ecdhEs(key).encrypt(payload);
       encryptedPrivateKeys.set(member.id, jwe);
