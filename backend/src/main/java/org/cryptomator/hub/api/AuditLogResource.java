@@ -126,7 +126,7 @@ public class AuditLogResource {
 				case VaultMemberRemovedEvent evt -> new VaultMemberRemovedEventDto(evt.getId(), evt.getTimestamp(), VaultMemberRemovedEvent.TYPE, evt.getRemovedBy(), evt.getVaultId(), evt.getAuthorityId());
 				case VaultMemberUpdatedEvent evt -> new VaultMemberUpdatedEventDto(evt.getId(), evt.getTimestamp(), VaultMemberUpdatedEvent.TYPE, evt.getUpdatedBy(), evt.getVaultId(), evt.getAuthorityId(), evt.getRole());
 				case VaultOwnershipClaimedEvent evt -> new VaultOwnershipClaimedEventDto(evt.getId(), evt.getTimestamp(), VaultOwnershipClaimedEvent.TYPE, evt.getClaimedBy(), evt.getVaultId());
-				case EmergencyAccessSetupEvent evt -> new EmergencyAccessSetupEventDto(evt.getId(), evt.getTimestamp(), EmergencyAccessSetupEvent.TYPE, evt.getOwnerId(), evt.getSettings(), evt.getIpAddress());
+				case EmergencyAccessSetupEvent evt -> new EmergencyAccessSetupEventDto(evt.getId(), evt.getTimestamp(), EmergencyAccessSetupEvent.TYPE, evt.getVaultId() ,evt.getOwnerId(), evt.getSettings(), evt.getIpAddress());
 				case EmergencyAccessSettingsUpdatedEvent evt -> new EmergencyAccessSettingsUpdatedEventDto(evt.getId(), evt.getTimestamp(), EmergencyAccessSettingsUpdatedEvent.TYPE, evt.getAdminId(), evt.getCouncilMemberIds(), evt.getRequiredKeyShares(), evt.isAllowChoosingCouncil());
 				case EmergencyAccessRecoveryStartedEvent evt -> new EmergencyAccessRecoveryStartedEventDto(evt.getId(), evt.getTimestamp(), EmergencyAccessRecoveryStartedEvent.TYPE, evt.getVaultId(), evt.getProcessId(), evt.getCouncilMemberId(), evt.getProcessType(), evt.getDetails());
 				case EmergencyAccessRecoveryApprovedEvent evt -> new EmergencyAccessRecoveryApprovedEventDto(evt.getId(), evt.getTimestamp(), EmergencyAccessRecoveryApprovedEvent.TYPE, evt.getProcessId(), evt.getCouncilMemberId(), evt.getIpAddress());
@@ -191,7 +191,7 @@ public class AuditLogResource {
 	record VaultOwnershipClaimedEventDto(long id, Instant timestamp, String type, @JsonProperty("claimedBy") String claimedBy, @JsonProperty("vaultId") UUID vaultId) implements AuditEventDto {
 	}
 
-	record EmergencyAccessSetupEventDto(long id, Instant timestamp, String type, @JsonProperty("ownerId") String ownerId, @JsonProperty("settings") String settings,
+	record EmergencyAccessSetupEventDto(long id, Instant timestamp, String type, @JsonProperty("vaultId") UUID vaultId, @JsonProperty("ownerId") String ownerId, @JsonProperty("settings") String settings,
 										@JsonProperty("ipAddress") String ipAddress) implements AuditEventDto {
 	}
 

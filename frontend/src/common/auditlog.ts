@@ -116,6 +116,7 @@ export type AuditEventVaultOwnershipClaimDto = AuditEventDtoBase & {
 
 export type AuditEventEmergencyAccessSetupDto = AuditEventDtoBase & {
   type: 'EMERGENCY_ACCESS_SETUP',
+  vaultId: string;
   ownerId: string;
   settings: string; // contains stringified JSON
   ipAddress: string;
