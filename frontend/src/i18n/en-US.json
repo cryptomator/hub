@@ -373,6 +373,8 @@
   "recoveryDialog.completeDesc": "Complete Emergency Access Desc",
   "recoveryDialog.alreadyAddedKeyShare": "You have already added your part of the emergency key.",
 
+  "emergencyAccessVaultList.empty.title": "No emergency access vaults found",
+
   "vaultList.title": "Vaults",
   "vaultList.empty.title": "No vaults",
   "vaultList.empty.description": "Get started by creating a new vault.",

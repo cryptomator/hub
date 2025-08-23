@@ -132,8 +132,7 @@
   </div>
 
   <div v-else-if="filteredVaults && filteredVaults.length == 0" class="mt-3 text-center">
-    <h3 class="mt-2 text-sm font-medium text-gray-900">{{ t('vaultList.empty.title') }}</h3>
-    <p class="mt-1 text-sm text-gray-500">{{ t('vaultList.empty.description') }}</p>
+    <h3 class="mt-2 text-sm font-medium text-gray-900">{{ t('emergencyAccessVaultList.empty.title') }}</h3>
   </div>
 
   <EmergencyAccessDialog
