@@ -355,13 +355,21 @@ async function loadEmergencyKeyShareUsers(vault: VaultDto) {
 
 async function reloadVaultData(vaultId: string) {
   try {
-    const updatedVault = await backend.vaults.get(vaultId);
+    const recoverable = await backend.vaults.listRecoverable();
+
+    const updatedVault = recoverable.find(v => v.id === vaultId);
+    if (!updatedVault) {
+      console.warn(`Vault ${vaultId} is not included in listRecoverable().`);
+      return;
+    }
 
     if (!vaults.value) vaults.value = [];
     const index = vaults.value.findIndex(v => v.id === vaultId);
-    if (index >= 0) vaults.value[index] = updatedVault;
-    else vaults.value.push(updatedVault);
-
+    if (index >= 0) {
+      vaults.value[index] = updatedVault;
+    } else {
+      vaults.value.push(updatedVault);
+    }
     await loadEmergencyKeyShareUsers(updatedVault);
 
     await loadVaultRecoveryProcess(vaultId);
