@@ -98,8 +98,8 @@ public class EmergencyAccessResource {
 	@Path("/{processId}/recovered-key-shares")
 	@RolesAllowed("user")
 	@Consumes(MediaType.APPLICATION_JSON)
-	@Operation(summary = "starts a new recovery process")
-	@APIResponse(responseCode = "204", description = "process created")
+	@Operation(summary = "approves a recovery process by adding a key share")
+	@APIResponse(responseCode = "204", description = "key share added")
 	@APIResponse(responseCode = "400", description = "invalid request, e.g. missing required fields")
 	@Transactional
 	public Response addRecoveredKeyShare(@PathParam("processId") UUID processId, RecoveredKeyShareDto dto) {
@@ -108,12 +108,33 @@ public class EmergencyAccessResource {
 		id.setCouncilMemberId(jwt.getSubject());
 
 		var myKeyShare = recoveredKeySharesRepo.findById(id);
+		if (myKeyShare == null) {
+			return Response.status(Response.Status.BAD_REQUEST).build();
+		}
+
+		boolean wasNullBefore = myKeyShare.getRecoveredKeyShare() == null;
+
 		myKeyShare.setRecoveredKeyShare(dto.recoveredKeyShare);
 		myKeyShare.setSignedProcessInfo(dto.signedProcessInfo);
 		recoveredKeySharesRepo.persist(myKeyShare);
+		recoveredKeySharesRepo.flush();
 
 		// audit logging
 		eventLogger.logEmergencyAccessRecoveryApproved(processId, jwt.getSubject(), request.remoteAddress().hostAddress());
+
+		var process = recoverProcessRepo.findById(processId);
+		if (process == null) {
+			return Response.status(Response.Status.BAD_REQUEST).build();
+		}
+		int requiredShares = process.getRequiredKeyShares();
+
+		long recoveredNow = recoveredKeySharesRepo.count(
+			"id.recoveryId = ?1 and recoveredKeyShare is not null", processId
+		);
+
+		if (wasNullBefore && recoveredNow >= requiredShares) {
+			eventLogger.logEmergencyAccessRecoveryCompleted(processId, jwt.getSubject());
+		}
 
 		return Response.status(Response.Status.NO_CONTENT).build();
 	}
@@ -132,7 +153,6 @@ public class EmergencyAccessResource {
 			throw new NotFoundException();
 		}
 	}
-
 
 	@GET
 	@Path("/{vaultId}")
