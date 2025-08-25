@@ -57,7 +57,7 @@ import java.util.stream.Stream;
 				SELECT DISTINCT v
 				FROM Vault v
 				INNER JOIN v.emergencyKeyShares keyShares WHERE KEY(keyShares) = :councilMemberId
-				UNION ALL
+				UNION
 				SELECT DISTINCT v
 				FROM EmergencyRecoveryProcess process
 				INNER JOIN RecoveredEmergencyKeyShares share ON share.id.recoveryId = process.id
