@@ -127,15 +127,15 @@
             </div>
           </div>
           <!-- TODO: remove this dev area -->
-          <div v-if="getProcessesWithAnyKeyShare(vault.id).length" class="px-4 pb-4 sm:px-6">
-            <div v-for="proc in getProcessesWithAnyKeyShare(vault.id)" :key="proc.id" class="mb-3">
+          <div v-if="getProcesses(vault.id).length" class="px-4 pb-4 sm:px-6">
+            <div v-for="proc in getProcesses(vault.id)" :key="proc.id" class="mb-3">
               <div class="text-xs text-gray-700 mb-1">
                 <strong>Council ({{ getCouncilMembersForProcess(proc).length }}):</strong>
                 <span v-for="u in getCouncilMembersForProcess(proc)" :key="u.id" class="inline-flex items-center gap-1 mr-2">
                   <img v-if="u.pictureUrl" :src="u.pictureUrl" alt="" class="w-4 h-4 rounded-full" />
                   <span>{{ u.name || u.id }}</span>
-                  <span v-if="(proc as any)?.recoveredKeyShares?.[u.id]?.recoveredKeyShare">✔</span>
-                  <span v-else-if="(proc as any)?.recoveredKeyShares?.[u.id]?.unrecoveredKeyShare">•</span>
+                  <span v-if="proc.recoveredKeyShares[u.id]?.recoveredKeyShare">✔</span>
+                  <span v-else-if="proc.recoveredKeyShares[u.id]?.unrecoveredKeyShare">•</span>
                 </span>
               </div>
 
@@ -166,7 +166,7 @@
 import { ref, computed, onMounted, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import * as R from 'remeda';
-import backend, { VaultDto, RecoveryProcessDto } from '../../common/backend';
+import backend, { VaultDto, RecoveryProcessDto, RecoveredKeyShareDto } from '../../common/backend';
 import FetchError from '../FetchError.vue';
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue';
 import { CheckIcon, ChevronUpDownIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/solid';
@@ -277,20 +277,6 @@ const recoveryApprovDialog = ref<typeof EmergencyAccessDialog>();
 
 onMounted(fetchData);
 
-type KeyShareEntry = Partial<{
-  recoveredKeyShare: unknown;
-  unrecoveredKeyShare: unknown;
-}>;
-
-function hasAnyKeyShare(proc: RecoveryProcessDto): boolean {
-  const entries: KeyShareEntry[] = Object.values((proc as any)?.recoveredKeyShares ?? {});
-  return entries.some(ks => ks?.recoveredKeyShare !== undefined || ks?.unrecoveredKeyShare !== undefined);
-}
-
-function getProcessesWithAnyKeyShare(vaultId: string): RecoveryProcessDto[] {
-  return getProcesses(vaultId).filter(hasAnyKeyShare);
-}
-
 function stringifyProcess(proc: RecoveryProcessDto): string {
   try {
     return JSON.stringify(proc, null, 2);
@@ -308,7 +294,7 @@ function upsertAuthorities(list: UserDto[]) {
 }
 
 function getCouncilMemberIdsForProcess(proc: RecoveryProcessDto): string[] {
-  return Object.keys((proc as any)?.recoveredKeyShares ?? {});
+  return Object.keys(proc.recoveredKeyShares);
 }
 
 function getCouncilMembersForProcess(proc: RecoveryProcessDto): Item[] {
@@ -349,7 +335,7 @@ async function fetchData() {
       if (processes.length > 0) {
         vaultRecoveryProcesses.value[vault.id] = processes;
         for (const p of processes) {
-          Object.keys((p as any)?.recoveredKeyShares ?? {}).forEach(id => processCouncilIds.add(id));
+          Object.keys(p.recoveredKeyShares).forEach(id => processCouncilIds.add(id));
         }
       }
     }
@@ -481,6 +467,7 @@ function getProcesses(vaultId: string): RecoveryProcessDto[] {
   return vaultRecoveryProcesses.value[vaultId] ?? [];
 }
 
+// FIXME: nonsense
 type AnyProcess = RecoveryProcessDto & Partial<{
   state: string;
   updatedAt: string;
@@ -505,5 +492,6 @@ function pickActiveProcess(list: RecoveryProcessDto[]): RecoveryProcessDto | und
 function activeProcessForVault(vault: VaultDto): RecoveryProcessDto | undefined {
   return pickActiveProcess(getProcesses(vault.id));
 }
+// end FIXME
 
 </script>
