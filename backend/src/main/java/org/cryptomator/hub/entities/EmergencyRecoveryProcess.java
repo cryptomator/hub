@@ -5,14 +5,11 @@ import io.quarkus.panache.common.Parameters;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
-import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Inheritance;
-import jakarta.persistence.InheritanceType;
 import jakarta.persistence.MapKey;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.NoResultException;
@@ -20,11 +17,8 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -35,6 +29,26 @@ import java.util.stream.Stream;
 			FROM EmergencyRecoveryProcess process
 			WHERE process.vaultId = :vaultId
 		""")
+@NamedQuery(
+    name = "EmergencyRecoveryProcess.byParticipant",
+    query = """
+        SELECT DISTINCT process
+        FROM EmergencyRecoveryProcess process
+        JOIN process.recoveredKeyShares rks
+          ON rks.id.recoveryId = process.id
+        WHERE rks.id.councilMemberId = :userId
+    """
+)
+@NamedQuery(
+    name = "EmergencyRecoveryProcess.vaultIdsByParticipant",
+    query = """
+        SELECT DISTINCT process.vaultId
+        FROM EmergencyRecoveryProcess process
+        JOIN process.recoveredKeyShares rks
+        WHERE KEY(rks) = :userId
+    """
+)
+
 public class EmergencyRecoveryProcess {
 
 	public enum Type {
@@ -146,5 +160,16 @@ public class EmergencyRecoveryProcess {
 			}
 		}
 
+		public Stream<EmergencyRecoveryProcess> findByParticipant(String userId) {
+			return find("#EmergencyRecoveryProcess.byParticipant",
+					io.quarkus.panache.common.Parameters.with("userId", userId)).stream();
+		}
+
+		public Stream<java.util.UUID> findVaultIdsByParticipant(String userId) {
+				return findByParticipant(userId)
+						.map(EmergencyRecoveryProcess::getVaultId)
+						.distinct();
+			}
 	}
+
 }

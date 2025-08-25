@@ -203,6 +203,16 @@
                     >
                       {{ t('common.close') }}
                     </button>
+                    
+                    <template v-if="phase !== 'start'">
+                      <button
+                        type="button"
+                        class="mt-3 inline-flex w-full justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-600 sm:mt-0 sm:w-auto sm:text-sm"
+                        @click="cancelRecovery()"
+                      >
+                        {{ t('common.cancel') }}
+                      </button>
+                    </template>
                   </div>
                 </div>
               </div>
@@ -299,6 +309,23 @@ async function searchUsers(query: string): Promise<UserDto[]> {
 function addUser(this: Ref<UserDto[]>, user: UserDto) {
   if (!this.value.find(u => u.id === user.id)) {
     this.value.push(user);
+  }
+}
+
+async function cancelRecovery() {
+  if (!props.recoveryProcess) return;
+  onError.value = null;
+
+  const ok = confirm(t?.('recoveryDialog.cancelConfirm') ?? 'Prozess wirklich abbrechen und löschen?'); //TODO: replace with custom cancel dialog
+  if (!ok) return;
+
+  try {
+    await backend.emergencyAccess.delete(props.recoveryProcess.id);
+    emit('updated');
+    open.value = false;
+  } catch (error) {
+    console.error('Cancelling emergency recovery failed.', error);
+    onError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
 }
 

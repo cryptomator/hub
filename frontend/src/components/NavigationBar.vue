@@ -110,13 +110,22 @@ const props = defineProps<{
 
 onMounted(async () => {
   try {
-    recoverableVaults.value = await backend.vaults.listRecoverable();
+    const [recoverable, myProcVaults] = await Promise.all([
+      backend.vaults.listRecoverable().catch(() => [] as VaultDto[]),
+      backend.emergencyAccess.myProcessVaults().catch(() => [] as VaultDto[]),
+    ]);
+
+    const map = new Map<string, VaultDto>();
+    [...recoverable, ...myProcVaults].forEach(v => {
+      if (!v.archived) map.set(v.id, v);
+    });
+    recoverableVaults.value = Array.from(map.values());
   } catch (e) {
-    console.error('Failed to load recoverable vaults:', e);
+    console.error('Failed to load emergency-access vaults:', e);
     recoverableVaults.value = [];
   }
 
-  if (recoverableVaults.value.length > 0) {
+  if (recoverableVaults.value.length > 0 && !navigation.value.some(i => i.to === '/app/emergencyaccess')) {
     navigation.value.push({ name: 'nav.emergencyAccess', to: '/app/emergencyaccess' });
   }
 
@@ -126,4 +135,5 @@ onMounted(async () => {
     profileDropdown.value = [profileDropdownSections.infoSection, profileDropdownSections.hubSection];
   }
 });
+
 </script>

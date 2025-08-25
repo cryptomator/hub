@@ -10,6 +10,7 @@ import jakarta.ws.rs.container.ResourceInfo;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.ext.Provider;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
+import org.cryptomator.hub.entities.EmergencyRecoveryProcess;
 import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.entities.VaultAccess;
 import org.eclipse.microprofile.jwt.JsonWebToken;
@@ -32,6 +33,9 @@ public class VaultRoleFilter implements ContainerRequestFilter {
 
 	@Inject
 	EffectiveVaultAccess.Repository effectiveVaultAccessRepo;
+
+	@Inject
+	EmergencyRecoveryProcess.Repository recoveryRepo;
 
 	@Inject
 	Vault.Repository vaultRepo;
@@ -61,6 +65,18 @@ public class VaultRoleFilter implements ContainerRequestFilter {
 			return;
 		}
 
+		boolean emergencyBypass = false;
+		if (annotation.bypassForEmergencyAccess()) {
+			if (vault != null && vault.getEmergencyKeyShares().containsKey(userId)) {
+				emergencyBypass = true;
+			} else {
+				emergencyBypass = hasEmergencyProcessBypass(userId, vaultId);
+			}
+		}
+		if (emergencyBypass) {
+			return;
+		}
+
 		var forbiddenMsg = "Vault role required: " + Arrays.stream(annotation.value()).map(VaultAccess.Role::name).collect(Collectors.joining(", "));
 		if (vault != null) {
 			// check permissions for existing vault:
@@ -81,5 +97,23 @@ public class VaultRoleFilter implements ContainerRequestFilter {
 				}
 			}
 		}
+	}
+
+	private boolean hasEmergencyProcessBypass(String userId, UUID vaultId) {
+		var processes = recoveryRepo.findByVaultId(vaultId);
+		if (processes == null) {
+			return false;
+		}
+		return processes.anyMatch(p -> {
+			var my = p.getRecoveredKeyShares().get(userId);
+			if (my == null || my.getRecoveredKeyShare() == null) {
+				return false;
+			}
+
+			long recovered = p.getRecoveredKeyShares().values().stream()
+					.filter(s -> s.getRecoveredKeyShare() != null)
+					.count();
+			return recovered >= p.getRequiredKeyShares();
+		});
 	}
 }

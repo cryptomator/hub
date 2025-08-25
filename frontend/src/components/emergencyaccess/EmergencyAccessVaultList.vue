@@ -63,7 +63,7 @@
             <div class="mt-2 flex flex-wrap items-center gap-2 pr-2">
               <template v-for="proc in getProcesses(vault.id)" :key="proc.id">
                 <button
-                  v-if="me && (vault.emergencyKeyShares?.[me.id] || isEmergencyKeyShareHolder(vault))"
+                  v-if="me && isUserInProcess(proc)"
                   type="button"
                   class="inline-flex items-center gap-2 rounded-md bg-white px-2 py-1 text-xs font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
                   @click.stop="openRecoveryDialog(vault, proc)"
@@ -91,10 +91,10 @@
                       <div class="font-medium mb-1">
                         {{ t('vaultDetails.emergency.requiredKeyShares') }}: {{ getRequiredSegmentsForProcess(proc) }}
                       </div>
-                      <div v-if="emergencyKeyShareUsersByVaultId[vault.id]?.length">
+                      <div v-if="getCouncilMembersForProcess(proc)?.length">
                         <span class="font-medium">{{ t('vaultDetails.emergency.councilMembers') }}:</span>
                         <ul class="list-disc ml-5 mt-1">
-                          <li v-for="user in emergencyKeyShareUsersByVaultId[vault.id]" :key="user.id">
+                          <li v-for="user in getCouncilMembersForProcess(proc)" :key="user.id">
                             {{ user.name }}
                             <span v-if="proc.recoveredKeyShares?.[user.id]?.recoveredKeyShare">
                               &check;
@@ -124,6 +124,22 @@
                 <ExclamationTriangleIcon class="h-4 w-4" aria-hidden="true" />
                 {{ t('vaultList.emergency.noRedundancy') }}
               </span>
+            </div>
+          </div>
+          <!-- TODO: remove this dev area -->
+          <div v-if="getProcessesWithAnyKeyShare(vault.id).length" class="px-4 pb-4 sm:px-6">
+            <div v-for="proc in getProcessesWithAnyKeyShare(vault.id)" :key="proc.id" class="mb-3">
+              <div class="text-xs text-gray-700 mb-1">
+                <strong>Council ({{ getCouncilMembersForProcess(proc).length }}):</strong>
+                <span v-for="u in getCouncilMembersForProcess(proc)" :key="u.id" class="inline-flex items-center gap-1 mr-2">
+                  <img v-if="u.pictureUrl" :src="u.pictureUrl" alt="" class="w-4 h-4 rounded-full" />
+                  <span>{{ u.name || u.id }}</span>
+                  <span v-if="(proc as any)?.recoveredKeyShares?.[u.id]?.recoveredKeyShare">✔</span>
+                  <span v-else-if="(proc as any)?.recoveredKeyShares?.[u.id]?.unrecoveredKeyShare">•</span>
+                </span>
+              </div>
+
+              <pre class="text-xs text-gray-700 bg-gray-50 rounded p-2 overflow-x-auto">{{ stringifyProcess(proc) }}</pre>
             </div>
           </div>
         </a>
@@ -231,6 +247,12 @@ function openRecoveryDialog(vault: VaultDto, proc: RecoveryProcessDto) {
   nextTick(() => recoveryApprovDialog.value?.show());
 }
 
+function isUserInProcess(proc: RecoveryProcessDto): boolean {
+  const uid = me.value?.id;
+  if (!uid) return false;
+  return !!proc?.recoveredKeyShares?.[uid];
+}
+
 function getRecoveryLabelForProcess(proc: RecoveryProcessDto): string {
   const required = proc?.requiredKeyShares ?? 1;
   const completed = Object.values(proc?.recoveredKeyShares ?? {})
@@ -255,6 +277,44 @@ const recoveryApprovDialog = ref<typeof EmergencyAccessDialog>();
 
 onMounted(fetchData);
 
+type KeyShareEntry = Partial<{
+  recoveredKeyShare: unknown;
+  unrecoveredKeyShare: unknown;
+}>;
+
+function hasAnyKeyShare(proc: RecoveryProcessDto): boolean {
+  const entries: KeyShareEntry[] = Object.values((proc as any)?.recoveredKeyShares ?? {});
+  return entries.some(ks => ks?.recoveredKeyShare !== undefined || ks?.unrecoveredKeyShare !== undefined);
+}
+
+function getProcessesWithAnyKeyShare(vaultId: string): RecoveryProcessDto[] {
+  return getProcesses(vaultId).filter(hasAnyKeyShare);
+}
+
+function stringifyProcess(proc: RecoveryProcessDto): string {
+  try {
+    return JSON.stringify(proc, null, 2);
+  } catch {
+    return String(proc);
+  }
+}
+
+const authoritiesById = ref<Record<string, Item>>({});
+
+function upsertAuthorities(list: UserDto[]) {
+  for (const u of list) {
+    authoritiesById.value[u.id] = { id: u.id, name: u.name, pictureUrl: u.pictureUrl };
+  }
+}
+
+function getCouncilMemberIdsForProcess(proc: RecoveryProcessDto): string[] {
+  return Object.keys((proc as any)?.recoveredKeyShares ?? {});
+}
+
+function getCouncilMembersForProcess(proc: RecoveryProcessDto): Item[] {
+  return getCouncilMemberIdsForProcess(proc).map((id) => authoritiesById.value[id] ?? { id, name: id });
+}
+
 async function fetchData() {
   onFetchError.value = null;
   try {
@@ -274,7 +334,35 @@ async function fetchData() {
       await loadEmergencyKeyShareUsers(vault);
     }
 
-    const authorities = await backend.authorities.listSome(Array.from(allUserIds));
+    const [recoverable, myProcVaults] = await Promise.all([
+      backend.vaults.listRecoverable(),
+      backend.emergencyAccess.myProcessVaults(),
+    ]);
+
+    const map = new Map<string, VaultDto>();
+    [...recoverable, ...myProcVaults].forEach(v => map.set(v.id, v));
+    vaults.value = Array.from(map.values())
+      .filter(v => !v.archived)
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    const processCouncilIds = new Set<string>();
+
+    for (const vault of vaults.value ?? []) {
+      const processes = await backend.emergencyAccess.findProcessesForVault(vault.id);
+      if (processes.length > 0) {
+        vaultRecoveryProcesses.value[vault.id] = processes;
+        for (const p of processes) {
+          Object.keys((p as any)?.recoveredKeyShares ?? {}).forEach(id => processCouncilIds.add(id));
+        }
+      }
+    }
+
+    await resolveEmergencyKeyShareUsers(vaults.value ?? []);
+
+    if (processCouncilIds.size > 0) {
+      const auths = await backend.authorities.listSome(Array.from(processCouncilIds));
+      upsertAuthorities(auths as UserDto[]);
+    }
   } catch (error) {
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
@@ -323,15 +411,11 @@ async function resolveEmergencyKeyShareUsers(vaults: VaultDto[]) {
   }
 
   const authorities = await backend.authorities.listSome(Array.from(allUserIds));
+
+  upsertAuthorities(authorities as UserDto[]);
+
   const usersById: Record<string, Item> = Object.fromEntries(
-    authorities.map(u => [
-      u.id, 
-      { 
-        id: u.id, 
-        name: u.name, 
-        pictureUrl: u.pictureUrl 
-      }
-    ])
+    authorities.map(u => [u.id, { id: u.id, name: u.name, pictureUrl: u.pictureUrl }])
   );
 
   emergencyKeyShareUsersByVaultId.value = Object.fromEntries(
