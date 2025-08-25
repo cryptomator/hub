@@ -72,9 +72,9 @@
                     <svg class="shrink-0" width="20" height="20" viewBox="0 0 36 36">
                       <g>
                         <path
-                          v-for="i in getRequiredSegmentsForProcess(proc)"
+                          v-for="i in proc.requiredKeyShares"
                           :key="i"
-                          :d="describeSegment(i - 1, getRequiredSegmentsForProcess(proc), 16)"
+                          :d="describeSegment(i - 1, proc.requiredKeyShares, 16)"
                           :fill="i <= getCompletedSegmentsForProcess(proc) ? '#22c55e' : '#e5e7eb'"
                           stroke="white"
                           stroke-width="1"
@@ -89,7 +89,7 @@
                             min-w-[200px]"
                     >
                       <div class="font-medium mb-1">
-                        {{ t('vaultDetails.emergency.requiredKeyShares') }}: {{ getRequiredSegmentsForProcess(proc) }}
+                        {{ t('vaultDetails.emergency.requiredKeyShares') }}: {{ proc.requiredKeyShares }}
                       </div>
                       <div v-if="getCouncilMembersForProcess(proc)?.length">
                         <span class="font-medium">{{ t('vaultDetails.emergency.councilMembers') }}:</span>
@@ -166,7 +166,7 @@
 import { ref, computed, onMounted, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import * as R from 'remeda';
-import backend, { VaultDto, RecoveryProcessDto, RecoveredKeyShareDto } from '../../common/backend';
+import backend, { VaultDto, RecoveryProcessDto, RecoveredKeyShareDto, AuthorityDto } from '../../common/backend';
 import FetchError from '../FetchError.vue';
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue';
 import { CheckIcon, ChevronUpDownIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/solid';
@@ -185,19 +185,10 @@ export type Item = {
 
 const SUPPORTED_PROCESS_TYPES = ['ASSIGN_OWNER', 'COUNCIL_CHANGE'] as const;
 
-function startedTypesForVault(vault: VaultDto): Set<string> {
-  return new Set(getProcesses(vault.id).map(p => p.type));
-}
-
-function hasAllProcessTypesStarted(vault: VaultDto): boolean {
-  const started = startedTypesForVault(vault);
-  return (SUPPORTED_PROCESS_TYPES as readonly string[]).every(t => started.has(t));
-}
-
 const { t } = useI18n({ useScope: 'global' });
 const me = ref<UserDto>();
 const query = ref('');
-const vaults = ref<VaultDto[]>();
+const vaults = ref<VaultDto[]>([]);
 const onFetchError = ref<Error | null>(null);
 
 const selectedFilter = ref<'recoverableVaults' | 'approved' | 'approvable' | 'startable'>('recoverableVaults');
@@ -207,27 +198,58 @@ const filterOptions = ref({
   approved: t('vaultList.filter.approved'),
   startable: t('vaultList.filter.startable'),
 });
-const filteredVaults = computed<VaultDto[]>(() => {
-  let result = vaults.value ?? [];
+const selectedProcess = ref<RecoveryProcessDto | undefined>(undefined);
+const filteredVaults = computed<VaultDto[]>(() => filterVaults(vaults.value));
+const vaultRecoveryProcesses = ref<Record<string, RecoveryProcessDto[]>>({});
+const recoveryApprovVault = ref<VaultDto | null>(null);
+const recoveryApprovDialog = ref<typeof EmergencyAccessDialog>();
+const authoritiesById = ref<Record<string, AuthorityDto>>({});
+
+onMounted(fetchData);
+
+async function fetchData() {
+  onFetchError.value = null;
+  try {
+    me.value = await userdata.me;
+    vaults.value = (await backend.vaults.listRecoverable()).filter(v => !v.archived).sort((a, b) => a.name.localeCompare(b.name));
+    for (const vault of vaults.value) {
+      const processes = await backend.emergencyAccess.findProcessesForVault(vault.id);
+      if (processes.length > 0) {
+        vaultRecoveryProcesses.value[vault.id] = processes;
+      }
+    }
+
+    const memberIdsOfAllRunningProcesses = Object.values(vaultRecoveryProcesses.value).flat().flatMap(p => Object.keys(p.recoveredKeyShares));
+    if (memberIdsOfAllRunningProcesses.length > 0) {
+      const auths = await backend.authorities.listSome(memberIdsOfAllRunningProcesses);
+      authoritiesById.value = R.indexBy(auths, u => u.id);
+    }
+  } catch (error) {
+    onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
+  }
+}
+
+function filterVaults(vaults: VaultDto[]): VaultDto[] {
+  let result: VaultDto[];
 
   switch (selectedFilter.value) {
+    case 'recoverableVaults': // "All"
+      result = vaults;
+      break;
     case 'approved':
-      result = result.filter((vault) => hasSubmittedEmergencyKeyShare(vault));
+      result = vaults.filter((vault) => hasSubmittedEmergencyKeyShare(vault));
       break;
     case 'approvable':
-      result = result.filter((vault) => {
-        const proc = activeProcessForVault(vault);
-        const hasKeyShares = proc?.recoveredKeyShares && Object.keys(proc.recoveredKeyShares).length > 0;
-        return hasKeyShares && !hasSubmittedEmergencyKeyShare(vault);
+      result = vaults.filter((vault) => {
+        return activeProcessForVault(vault) && !hasSubmittedEmergencyKeyShare(vault);
       });
       break;
     case 'startable':
-      result = result.filter((vault) => {
-        const proc = activeProcessForVault(vault);
-        const hasNoKeyShares = !proc?.recoveredKeyShares || Object.keys(proc.recoveredKeyShares).length === 0;
-        return hasNoKeyShares && !hasSubmittedEmergencyKeyShare(vault);
+      result = vaults.filter((vault) => {
+        return !hasAllProcessTypesStarted(vault);
       });
-      break;  
+      break;
+    default: throw new Error(`Unknown filter type: ${selectedFilter.value}`);
   }
 
   if (query.value !== '') {
@@ -237,9 +259,12 @@ const filteredVaults = computed<VaultDto[]>(() => {
   }
 
   return result;
-});
+}
 
-const selectedProcess = ref<RecoveryProcessDto | undefined>(undefined);
+function hasAllProcessTypesStarted(vault: VaultDto): boolean {
+  const started = getProcesses(vault.id).map(p => p.type);
+  return SUPPORTED_PROCESS_TYPES.every(t => started.includes(t));
+}
 
 function openRecoveryDialog(vault: VaultDto, proc: RecoveryProcessDto) {
   recoveryApprovVault.value = vault;
@@ -248,9 +273,8 @@ function openRecoveryDialog(vault: VaultDto, proc: RecoveryProcessDto) {
 }
 
 function isUserInProcess(proc: RecoveryProcessDto): boolean {
-  const uid = me.value?.id;
-  if (!uid) return false;
-  return !!proc?.recoveredKeyShares?.[uid];
+  const councilMemberIds = Object.keys(proc.recoveredKeyShares);
+  return councilMemberIds.includes(me.value?.id ?? '');
 }
 
 function getRecoveryLabelForProcess(proc: RecoveryProcessDto): string {
@@ -268,15 +292,6 @@ function hasSubmittedEmergencyKeyShareForProcess(proc: RecoveryProcessDto): bool
   return proc.recoveredKeyShares[me.value.id]?.recoveredKeyShare !== undefined;
 }
 
-const vaultRecoveryProcesses = ref<Record<string, RecoveryProcessDto[]>>({});
-
-const emergencyKeyShareUsersByVaultId = ref<Record<string, Item[]>>({});
-
-const recoveryApprovVault = ref<VaultDto | null>(null);
-const recoveryApprovDialog = ref<typeof EmergencyAccessDialog>();
-
-onMounted(fetchData);
-
 function stringifyProcess(proc: RecoveryProcessDto): string {
   try {
     return JSON.stringify(proc, null, 2);
@@ -285,70 +300,8 @@ function stringifyProcess(proc: RecoveryProcessDto): string {
   }
 }
 
-const authoritiesById = ref<Record<string, Item>>({});
-
-function upsertAuthorities(list: UserDto[]) {
-  for (const u of list) {
-    authoritiesById.value[u.id] = { id: u.id, name: u.name, pictureUrl: u.pictureUrl };
-  }
-}
-
-function getCouncilMemberIdsForProcess(proc: RecoveryProcessDto): string[] {
-  return Object.keys(proc.recoveredKeyShares);
-}
-
 function getCouncilMembersForProcess(proc: RecoveryProcessDto): Item[] {
-  return getCouncilMemberIdsForProcess(proc).map((id) => authoritiesById.value[id] ?? { id, name: id });
-}
-
-async function fetchData() {
-  onFetchError.value = null;
-  try {
-    me.value = await userdata.me;
-    vaults.value = (await backend.vaults.listRecoverable()).filter(v => !v.archived).sort((a, b) => a.name.localeCompare(b.name));
-    for (const vault of vaults.value ?? []) {
-      const processes = await backend.emergencyAccess.findProcessesForVault(vault.id);
-      if (processes.length > 0) {
-        vaultRecoveryProcesses.value[vault.id] = processes;
-      }
-    }
-
-    await resolveEmergencyKeyShareUsers(vaults.value ?? []);
-    const allUserIds = new Set<string>();
-
-    for (const vault of vaults.value ?? []) {
-      await loadEmergencyKeyShareUsers(vault);
-    }
-
-    const recoverable = await backend.vaults.listRecoverable();
-
-    const map = new Map<string, VaultDto>();
-    recoverable.forEach(v => map.set(v.id, v));
-    vaults.value = Array.from(map.values())
-      .filter(v => !v.archived)
-      .sort((a, b) => a.name.localeCompare(b.name));
-
-    const processCouncilIds = new Set<string>();
-
-    for (const vault of vaults.value ?? []) {
-      const processes = await backend.emergencyAccess.findProcessesForVault(vault.id);
-      if (processes.length > 0) {
-        vaultRecoveryProcesses.value[vault.id] = processes;
-        for (const p of processes) {
-          Object.keys(p.recoveredKeyShares).forEach(id => processCouncilIds.add(id));
-        }
-      }
-    }
-
-    await resolveEmergencyKeyShareUsers(vaults.value ?? []);
-
-    if (processCouncilIds.size > 0) {
-      const auths = await backend.authorities.listSome(Array.from(processCouncilIds));
-      upsertAuthorities(auths as UserDto[]);
-    }
-  } catch (error) {
-    onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
-  }
+  return Object.keys(proc.recoveredKeyShares).map((id) => authoritiesById.value[id] ?? { id, name: id });
 }
 
 function hasSubmittedEmergencyKeyShare(vault: VaultDto): boolean {
@@ -363,7 +316,7 @@ function isEmergencyKeyShareHolder(vault: VaultDto): boolean {
 }
 
 function needsRedundancy(vault: VaultDto): boolean {
-  const members = Object.keys(vault.emergencyKeyShares ?? {}).length;
+  const members = Object.keys(vault.emergencyKeyShares).length;
   return vault.requiredEmergencyKeyShares >= members;
 }
 
@@ -378,45 +331,9 @@ async function loadVaultRecoveryProcess(vaultId: string): Promise<RecoveryProces
   }
 }
 
-function getRequiredSegmentsForProcess(proc: RecoveryProcessDto): number {
-  return proc?.requiredKeyShares ?? 1;
-}
-
 function getCompletedSegmentsForProcess(proc: RecoveryProcessDto): number {
-  return Object.values(proc?.recoveredKeyShares ?? {})
+  return Object.values(proc.recoveredKeyShares)
     .filter(ks => ks?.recoveredKeyShare !== undefined).length;
-}
-
-async function resolveEmergencyKeyShareUsers(vaults: VaultDto[]) {
-  const allUserIds = new Set<string>();
-  for (const vault of vaults) {
-    Object.keys(vault.emergencyKeyShares).forEach(id => allUserIds.add(id));
-  }
-
-  const authorities = await backend.authorities.listSome(Array.from(allUserIds));
-
-  upsertAuthorities(authorities as UserDto[]);
-
-  const usersById: Record<string, Item> = Object.fromEntries(
-    authorities.map(u => [u.id, { id: u.id, name: u.name, pictureUrl: u.pictureUrl }])
-  );
-
-  emergencyKeyShareUsersByVaultId.value = Object.fromEntries(
-    vaults.map(v => [
-      v.id,
-      Object.keys(v.emergencyKeyShares).map(id => usersById[id]).filter(Boolean)
-    ])
-  );
-}
-
-async function loadEmergencyKeyShareUsers(vault: VaultDto) {
-  const userIds = Object.keys(vault.emergencyKeyShares);
-  const users = await backend.authorities.listSome(userIds);
-  emergencyKeyShareUsersByVaultId.value[vault.id] = users.map(u => ({
-    id: u.id,
-    name: u.name,
-    pictureUrl: u.pictureUrl,
-  }));
 }
 
 async function reloadVaultData(vaultId: string) {
@@ -436,7 +353,6 @@ async function reloadVaultData(vaultId: string) {
     } else {
       vaults.value.push(updatedVault);
     }
-    await loadEmergencyKeyShareUsers(updatedVault);
 
     await loadVaultRecoveryProcess(vaultId);
   } catch (err) {
@@ -467,31 +383,11 @@ function getProcesses(vaultId: string): RecoveryProcessDto[] {
   return vaultRecoveryProcesses.value[vaultId] ?? [];
 }
 
-// FIXME: nonsense
-type AnyProcess = RecoveryProcessDto & Partial<{
-  state: string;
-  updatedAt: string;
-  startedAt: string;
-  createdAt: string;
-  completedAt: string;
-}>;
-
-function pickActiveProcess(list: RecoveryProcessDto[]): RecoveryProcessDto | undefined {
-  if (list.length === 0) return undefined;
-
-  const notDone = (list as AnyProcess[]).filter(p =>
-    (p.state ? !['completed', 'canceled', 'closed'].includes(p.state) : true) &&
-    (p.completedAt ? !p.completedAt : true)
-  );
-  const candidates = notDone.length ? notDone : (list as AnyProcess[]);
-
-  const ts = (p: AnyProcess) => new Date(p.updatedAt ?? p.startedAt ?? p.createdAt ?? 0).getTime();
-  return [...candidates].sort((a, b) => ts(b) - ts(a))[0];
-}
-
+// TODO: currently, we always return "any" process
 function activeProcessForVault(vault: VaultDto): RecoveryProcessDto | undefined {
-  return pickActiveProcess(getProcesses(vault.id));
+  const list = getProcesses(vault.id);
+  if (list.length === 0) return undefined;
+  return list[0];
 }
-// end FIXME
 
 </script>
