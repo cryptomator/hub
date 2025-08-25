@@ -63,7 +63,7 @@ public class EmergencyRecoveryProcess {
 	@Column(name = "process_public_key", nullable = false)
 	private String processPublicKey;
 
-	@OneToMany(mappedBy = "id.recoveryId", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@OneToMany(mappedBy = "id.recoveryId", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
 	@MapKey(name = "id.councilMemberId")
 	private Map<String, RecoveredEmergencyKeyShares> recoveredKeyShares = new HashMap<>();
 
