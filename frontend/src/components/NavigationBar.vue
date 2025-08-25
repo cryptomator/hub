@@ -110,13 +110,10 @@ const props = defineProps<{
 
 onMounted(async () => {
   try {
-    const [recoverable, myProcVaults] = await Promise.all([
-      backend.vaults.listRecoverable().catch(() => [] as VaultDto[]),
-      backend.emergencyAccess.myProcessVaults().catch(() => [] as VaultDto[]),
-    ]);
+    const recoverable = await backend.vaults.listRecoverable().catch(() => [] as VaultDto[]);
 
     const map = new Map<string, VaultDto>();
-    [...recoverable, ...myProcVaults].forEach(v => {
+    recoverable.forEach(v => {
       if (!v.archived) map.set(v.id, v);
     });
     recoverableVaults.value = Array.from(map.values());

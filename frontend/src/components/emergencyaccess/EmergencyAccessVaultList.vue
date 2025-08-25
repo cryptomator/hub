@@ -334,13 +334,10 @@ async function fetchData() {
       await loadEmergencyKeyShareUsers(vault);
     }
 
-    const [recoverable, myProcVaults] = await Promise.all([
-      backend.vaults.listRecoverable(),
-      backend.emergencyAccess.myProcessVaults(),
-    ]);
+    const recoverable = await backend.vaults.listRecoverable();
 
     const map = new Map<string, VaultDto>();
-    [...recoverable, ...myProcVaults].forEach(v => map.set(v.id, v));
+    recoverable.forEach(v => map.set(v.id, v));
     vaults.value = Array.from(map.values())
       .filter(v => !v.archived)
       .sort((a, b) => a.name.localeCompare(b.name));

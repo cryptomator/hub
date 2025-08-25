@@ -30,25 +30,12 @@ import java.util.stream.Stream;
 			WHERE process.vaultId = :vaultId
 		""")
 @NamedQuery(
-    name = "EmergencyRecoveryProcess.byParticipant",
-    query = """
-        SELECT DISTINCT process
-        FROM EmergencyRecoveryProcess process
-        JOIN process.recoveredKeyShares rks
-          ON rks.id.recoveryId = process.id
-        WHERE rks.id.councilMemberId = :userId
-    """
+		name = "EmergencyRecoveryProcess.byCouncilMember", query = """
+		    SELECT process
+		    FROM EmergencyRecoveryProcess process
+		    WHERE KEY(process.recoveredKeyShares) = :councilMemberId
+		"""
 )
-@NamedQuery(
-    name = "EmergencyRecoveryProcess.vaultIdsByParticipant",
-    query = """
-        SELECT DISTINCT process.vaultId
-        FROM EmergencyRecoveryProcess process
-        JOIN process.recoveredKeyShares rks
-        WHERE KEY(rks) = :userId
-    """
-)
-
 public class EmergencyRecoveryProcess {
 
 	public enum Type {
@@ -160,16 +147,17 @@ public class EmergencyRecoveryProcess {
 			}
 		}
 
-		public Stream<EmergencyRecoveryProcess> findByParticipant(String userId) {
-			return find("#EmergencyRecoveryProcess.byParticipant",
-					io.quarkus.panache.common.Parameters.with("userId", userId)).stream();
+		public Stream<EmergencyRecoveryProcess> findByCouncilMember(String councilMemberId) {
+			return find("#EmergencyRecoveryProcess.byCouncilMember", Parameters.with("councilMemberId", councilMemberId)).stream();
 		}
 
-		public Stream<java.util.UUID> findVaultIdsByParticipant(String userId) {
-				return findByParticipant(userId)
-						.map(EmergencyRecoveryProcess::getVaultId)
-						.distinct();
-			}
+		public void deleteKeySharesForCouncilMember(String councilMemberId) {
+			var adjustedProcesses = findByCouncilMember(councilMemberId).map(p -> {
+				p.recoveredKeyShares.remove(councilMemberId);
+				return p;
+			});
+			persist(adjustedProcesses);
+		}
 	}
 
 }

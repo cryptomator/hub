@@ -480,10 +480,6 @@ class EmergencyAccessService {
     return axiosAuth.get<RecoveryProcessDto[]>(`/emergency-access/${vaultId}`).then(response => response.data);
   }
 
-  public async myProcessVaults(): Promise<VaultDto[]> {
-    return axiosAuth.get<VaultDto[]>('/emergency-access/my-process-vaults').then(r => r.data);
-  }
-
   public async startRecovery(recoveryProcess: RecoveryProcessDto): Promise<void> {
     return axiosAuth.put(`/emergency-access/${recoveryProcess.id}`, recoveryProcess);
   }
