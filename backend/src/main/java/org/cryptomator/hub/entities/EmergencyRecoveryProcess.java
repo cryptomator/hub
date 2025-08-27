@@ -15,7 +15,6 @@ import jakarta.persistence.NamedQuery;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import jakarta.transaction.Transactional;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -152,18 +151,10 @@ public class EmergencyRecoveryProcess {
 			return find("#EmergencyRecoveryProcess.byCouncilMember", Parameters.with("councilMemberId", councilMemberId)).stream();
 		}
 
-		// Deletes unrecovered key shares, keeps recovered ones. After resetting account, council member will no longer be able to recover their key share
-		@Transactional
-		public void deleteUnrecoveredKeySharesForCouncilMember(String councilMemberId) {
-			var adjustedProcesses = findByCouncilMember(councilMemberId).map(process -> {
-				process.recoveredKeyShares.computeIfPresent(councilMemberId, (unused, share) -> {
-					if (share.getRecoveredKeyShare() != null) {
-						return share; // keep entry, if already recovered
-					} else {
-						return null; // remove otherwise
-					}
-				});
-				return process;
+		public void deleteKeySharesForCouncilMember(String councilMemberId) {
+			var adjustedProcesses = findByCouncilMember(councilMemberId).map(p -> {
+				p.recoveredKeyShares.remove(councilMemberId);
+				return p;
 			});
 			persist(adjustedProcesses);
 		}
