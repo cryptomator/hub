@@ -41,7 +41,7 @@
         <h3 class="font-medium text-gray-900">{{ t('vaultDetails.sharedWith.title') }}</h3>
         <ul class="mt-2 border-t border-b border-gray-200 divide-y divide-gray-200">
           <!-- member list -->
-          <template v-for="member in members.values()" :key="member.id">
+          <template v-for="member in members" :key="member.id">
             <li class="py-3 flex flex-col">
               <div class="flex justify-between items-center">
                 <div class="flex items-center whitespace-nowrap w-full" :title="member.name">
@@ -215,6 +215,7 @@ import { PlusSmallIcon } from '@heroicons/vue/24/solid';
 import { base64 } from 'rfc4648';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import * as R from 'remeda';
 import auth from '../common/auth';
 import backend, { AuthorityDto, ConflictError, ForbiddenError, LicenseUserInfoDto, MemberDto, NotFoundError, PaymentRequiredError, TrustDto, UserDto, VaultDto, VaultRole } from '../common/backend';
 import { JWT, JWTHeader } from '../common/jwt';
@@ -270,7 +271,7 @@ const recoverVaultDialog = ref<typeof RecoverVaultDialog>();
 const vault = ref<VaultDto>();
 const vaultFormat8 = ref<VaultFormat8>();
 const uvfVault = ref<UniversalVaultFormat>();
-const members = ref<Map<string, MemberDto>>(new Map());
+const members = ref<Record<string, MemberDto>>({});
 const membersRequiringAccessGrant = ref<(MemberDto & UserDto)[]>([]);
 const trusts = ref<TrustDto[]>([]);
 const claimVaultOwnershipDialog = ref<typeof ClaimVaultOwnershipDialog>();
@@ -306,7 +307,7 @@ async function fetchOwnerData() {
     throw new Error('Vault not initialized.');
   }
   try {
-    (await backend.vaults.getMembers(props.vaultId)).forEach(member => members.value.set(member.id, member));
+    members.value = R.indexBy(await backend.vaults.getMembers(props.vaultId), m => m.id);
     await refreshTrusts();
     membersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
     vaultRecoveryRequired.value = false;
@@ -385,15 +386,8 @@ async function reloadMembersRequiringAccessGrant() {
   }
 }
 
-function isAuthorityDto(toCheck: unknown): toCheck is AuthorityDto {
-  return (toCheck as AuthorityDto).type != null;
-}
-
 async function addAuthority(authority: AuthorityDto) {
   onAddUserError.value = null;
-  if (!isAuthorityDto(authority)) {
-    throw new Error('Parameter authority is not of type AuthorityDto.');
-  }
 
   try {
     await addAuthorityBackend(authority);
@@ -401,7 +395,7 @@ async function addAuthority(authority: AuthorityDto) {
       ...authority,
       role: 'MEMBER'
     };
-    members.value.set(authority.id, addedMember);
+    members.value[authority.id] = addedMember;
     membersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
   } catch (error) {
     //even if error instanceof NotFoundError, it is not expected from user perspective
@@ -491,7 +485,7 @@ function refreshVault(updatedVault: VaultDto) {
 
 async function searchAuthority(query: string): Promise<AuthorityDto[]> {
   return (await backend.authorities.search(query, true))
-    .filter(authority => !members.value.has(authority.id))
+    .filter(authority => !members.value[authority.id])
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
@@ -506,7 +500,7 @@ async function updateMemberRole(member: MemberDto, role: VaultRole) {
         await backend.vaults.addGroup(props.vaultId, member.id, role);
         break;
     }
-    const updatedMember = members.value.get(member.id);
+    const updatedMember = members.value[member.id];
     if (updatedMember) {
       updatedMember.role = role;
     }
@@ -526,7 +520,7 @@ async function removeMember(memberId: string) {
   delete onUpdateVaultMembershipError.value[memberId];
   try {
     await backend.vaults.removeAuthority(props.vaultId, memberId);
-    members.value.delete(memberId);
+    delete members.value[memberId];
     if (!licenseViolated.value) {
       membersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
     } else {
