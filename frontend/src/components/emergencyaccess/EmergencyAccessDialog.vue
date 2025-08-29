@@ -483,7 +483,6 @@ async function approveRecovery() {
     // add my part of the emergency key:
     const process = structuredClone(toRaw(props.recoveryProcess));
     process.recoveredKeyShares[props.me.id] = await addMyShare(process, userKeys);
-    await backend.emergencyAccess.addMyShare(process.id, process.recoveredKeyShares[props.me.id]);
 
     // done:
     emit('updated', process);
