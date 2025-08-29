@@ -502,11 +502,12 @@ async function completeRecovery() {
 
     // add my part of the emergency key:
     const process = structuredClone(toRaw(props.recoveryProcess));
-    process.recoveredKeyShares[props.me.id] = await addMyShare(process, userKeys);
-    await backend.emergencyAccess.addMyShare(process.id, process.recoveredKeyShares[props.me.id]);
+    const myShare = await addMyShare(process, userKeys);
+    const temp = structuredClone(process);
+    temp.recoveredKeyShares[props.me.id] = myShare;
 
     // collect key parts:
-    const keyShares = Object.values(process.recoveredKeyShares).filter(p => p.recoveredKeyShare !== undefined).map(p => p.recoveredKeyShare!);
+    const keyShares = Object.values(temp.recoveredKeyShares).filter(p => p.recoveredKeyShare !== undefined).map(p => p.recoveredKeyShare!);
 
     // get process private key:
     const processPrivateKey = process.recoveredKeyShares[props.me.id].processPrivateKey;
@@ -540,6 +541,7 @@ async function completeRecovery() {
       throw new Error(`Unsupported state for recovery process type: ${process.type}`);
     }
 
+    await backend.emergencyAccess.addMyShare(process.id, myShare);
     console.log(`Successfully completed recovery process ${process.id} for vault ${props.vault.id}.`);
     await backend.emergencyAccess.delete(process.id);
     emit('updated');
