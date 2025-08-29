@@ -66,11 +66,14 @@
                               v-model="processType"
                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
                             >
-                              <option value="ASSIGN_OWNER">{{ t('recoveryDialog.ownership') }}</option>
-                              <option value="COUNCIL_CHANGE">{{ t('recoveryDialog.voteCouncil') }}</option>
+                              <option value="ASSIGN_OWNER" :disabled="processConflicts('ASSIGN_OWNER')">
+                                {{ t('recoveryDialog.ownership') }}
+                              </option>
+                              <option value="COUNCIL_CHANGE" :disabled="processConflicts('COUNCIL_CHANGE')">
+                                {{ t('recoveryDialog.voteCouncil') }}
+                              </option>
                             </select>
                           </div>
-
                           <div v-if="processType === 'ASSIGN_OWNER'">
                             <label class="block text-sm font-medium text-gray-700">
                               {{ t('recoveryDialog.selectNewOwner') }}
@@ -298,6 +301,14 @@ const removeCouncilMember = removeUser.bind(newCouncilMembers);
 
 const isGrantButtonDisabled = computed(() => newCouncilMembers.value.length < newRequiredKeyShares.value);
 
+const canStartRecovery = computed(() => {
+  if (processType.value == null) return false;
+  if (conflictingProcessExists.value) return false;
+  if (processType.value === 'ASSIGN_OWNER') return newOwners.value.length > 0;
+  if (processType.value === 'COUNCIL_CHANGE') return newCouncilMembers.value.length >= newRequiredKeyShares.value && newRequiredKeyShares.value > 0;
+  return false;
+});
+
 const noopSearch = async () => [];
 async function searchUsers(query: string): Promise<UserDto[]> {
   const authorities = await backend.authorities.search(query, true);
@@ -333,20 +344,20 @@ function removeUser(this: Ref<UserDto[]>, user: UserDto) {
   this.value = this.value.filter(u => u.id !== user.id);
 }
 
-const canStartRecovery = computed(() => {
-  if (conflictingProcessExists.value) return false;
-
-  if (processType.value === 'ASSIGN_OWNER') {
-    return newOwners.value.length > 0;
-  } else if (processType.value === 'COUNCIL_CHANGE') {
-    return newCouncilMembers.value.length >= newRequiredKeyShares.value && newRequiredKeyShares.value > 0;
-  } else {
-    return false;
-  }
-});
+function processConflicts(type: RecoveryProcessDto['type']) {
+  return existingProcesses.value.some(p => p.type === type);
+}
 
 async function show() {
   existingProcesses.value = await backend.emergencyAccess.findProcessesForVault(props.vault.id);
+
+  if (props.recoveryProcess) {
+    processType.value = props.recoveryProcess.type;
+  } else {
+    const allTypes: RecoveryProcessDto['type'][] = ['ASSIGN_OWNER', 'COUNCIL_CHANGE'];
+    const firstFree = allTypes.find(t => !processConflicts(t));
+    processType.value = firstFree ?? 'ASSIGN_OWNER'; // fallback
+  }
 
   if (props.recoveryProcess?.type === 'COUNCIL_CHANGE') {
     const authorities = await backend.authorities.listSome(props.recoveryProcess.details.newCouncilMemberIds);
