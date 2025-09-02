@@ -65,12 +65,12 @@ class UserData {
    * 
    * @see UserDto.ecdhPublicKey
    */
-  public get ecdhPublicKey(): Promise<Uint8Array> {
+  public get ecdhPublicKey(): Promise<Uint8Array<ArrayBuffer>> {
     return this.me.then(me => {
       if (!me.ecdhPublicKey) {
         throw new Error('User not initialized.');
       }
-      return base64.parse(me.ecdhPublicKey);
+      return base64.parse(me.ecdhPublicKey).slice();
     });
   }
 
@@ -79,9 +79,9 @@ class UserData {
    * 
    * @see UserDto.ecdsaPublicKey
    */
-  public get ecdsaPublicKey(): Promise<Uint8Array | undefined> {
+  public get ecdsaPublicKey(): Promise<Uint8Array<ArrayBuffer> | undefined> {
     return this.me.then(me => {
-      return me.ecdsaPublicKey ? base64.parse(me.ecdsaPublicKey) : undefined;
+      return me.ecdsaPublicKey ? base64.parse(me.ecdsaPublicKey).slice() : undefined;
     });
   }
 
@@ -175,7 +175,7 @@ class UserData {
       me.ecdsaPublicKey = await userKeys.encodedEcdsaPublicKey();
       me.privateKeys = await userKeys.encryptWithSetupCode(setupCode);
       for (const device of me.devices) {
-        device.userPrivateKey = await userKeys.encryptForDevice(base64.parse(device.publicKey));
+        device.userPrivateKey = await userKeys.encryptForDevice(base64.parse(device.publicKey).slice());
       }
       await backend.users.putMe(me);
     }

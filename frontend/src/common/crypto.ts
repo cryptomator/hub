@@ -144,13 +144,13 @@ export class UserKeys {
   private static async createFromJwe(jwe: UserKeyPayload, ecdhPublicKey: CryptoKey | BufferSource, ecdsaPublicKey?: CryptoKey | BufferSource): Promise<UserKeys> {
     const ecdhKeyPair: CryptoKeyPair = {
       publicKey: await asPublicKey(ecdhPublicKey, UserKeys.ECDH_KEY_DESIGNATION),
-      privateKey: await crypto.subtle.importKey('pkcs8', base64.parse(jwe.ecdhPrivateKey ?? jwe.key, { loose: true }), UserKeys.ECDH_KEY_DESIGNATION, true, UserKeys.ECDH_PRIV_KEY_USAGES)
+      privateKey: await crypto.subtle.importKey('pkcs8', base64.parse(jwe.ecdhPrivateKey ?? jwe.key, { loose: true }).slice(), UserKeys.ECDH_KEY_DESIGNATION, true, UserKeys.ECDH_PRIV_KEY_USAGES)
     };
     let ecdsaKeyPair: CryptoKeyPair;
     if (jwe.ecdsaPrivateKey && ecdsaPublicKey) {
       ecdsaKeyPair = {
         publicKey: await asPublicKey(ecdsaPublicKey, UserKeys.ECDSA_KEY_DESIGNATION, UserKeys.ECDSA_PUB_KEY_USAGES),
-        privateKey: await crypto.subtle.importKey('pkcs8', base64.parse(jwe.ecdsaPrivateKey, { loose: true }), UserKeys.ECDSA_KEY_DESIGNATION, true, UserKeys.ECDSA_PRIV_KEY_USAGES)
+        privateKey: await crypto.subtle.importKey('pkcs8', base64.parse(jwe.ecdsaPrivateKey, { loose: true }).slice(), UserKeys.ECDSA_KEY_DESIGNATION, true, UserKeys.ECDSA_PRIV_KEY_USAGES)
       };
     } else {
       // ECDSA key was added in Hub 1.4.0. If it's missing, we generate a new one.
@@ -196,7 +196,7 @@ export class UserKeys {
    * @returns a JWE containing the PKCS#8-encoded private key
    * @see Recipient.ecdhEs
    */
-  public async encryptForDevice(devicePublicKey: CryptoKey | Uint8Array): Promise<string> {
+  public async encryptForDevice(devicePublicKey: CryptoKey | BufferSource): Promise<string> {
     const publicKey = await asPublicKey(devicePublicKey, BrowserKeys.KEY_DESIGNATION);
     const payload = await this.prepareForEncryption();
     const jwe = await JWE.build(payload).encrypt(Recipient.ecdhEs('org.cryptomator.hub.deviceKey', publicKey));
