@@ -237,13 +237,13 @@ export class VaultMetadata {
    * @returns new vault
    */
   public static async create(automaticAccessGrant: VaultMetadataJWEAutomaticAccessGrantDto): Promise<VaultMetadata> {
-    const initialSeedId = new Uint32Array(1);
+    const initialSeedId = new Uint8Array(4);
     const initialSeedValue = new Uint8Array(32);
     const kdfSalt = new Uint8Array(32);
     crypto.getRandomValues(initialSeedId);
     crypto.getRandomValues(initialSeedValue);
     crypto.getRandomValues(kdfSalt);
-    const initialSeedNo = initialSeedId[0];
+    const initialSeedNo = new DataView(initialSeedId.buffer).getInt32(0, false);
     const seeds: Map<number, Uint8Array> = new Map<number, Uint8Array>();
     seeds.set(initialSeedNo, initialSeedValue);
     return new VaultMetadata(automaticAccessGrant, seeds, initialSeedNo, initialSeedNo, kdfSalt);
@@ -501,7 +501,7 @@ export class UniversalVaultFormat implements AccessTokenProducing, VaultTemplate
 }
 
 /**
- * Parses the 4 byte seed id from its base64url-encoded form to a 32 bit integer.
+ * Decodes a base64url-encoded 32 bit big endian number.
  * @param encoded base64url-encoded seed ID
  * @returns a 32 bit number
  * @throws Error if the input is invalid
@@ -511,16 +511,16 @@ function parseSeedId(encoded: string): number {
   if (bytes.length != 4) {
     throw new Error('Malformed seed ID');
   }
-  return new Uint32Array(bytes.buffer)[0];
+  return new DataView(bytes.buffer).getInt32(0, false);
 }
 
 /**
- * Encodes a 32 bit integer denoting the 4 byte seed id as a base64url-encoded string.
+ * Encodes the seed ID as a 32 bit big endian integer and base64url-encodes it.
  * @param id numeric seed ID
  * @returns a base6url-encoded seed ID
  */
 function stringifySeedId(id: number): string {
-  const ints = new Uint32Array([id]);
-  const bytes = new Uint8Array(ints.buffer);
+  const bytes = new Uint8Array(4);
+  new DataView(bytes.buffer).setInt32(0, id, false);
   return base64url.stringify(bytes, { pad: false });
 }

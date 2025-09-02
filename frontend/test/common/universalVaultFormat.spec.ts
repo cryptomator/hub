@@ -188,8 +188,8 @@ describe('UVF', () => {
 
       expect(uvf).to.be.not.null;
       expect(uvf.metadata).to.be.not.null;
-      expect(uvf.metadata.initialSeedId).to.eq(4072093980);
-      expect(uvf.metadata.latestSeedId).to.eq(369695552);
+      expect(uvf.metadata.initialSeedId).to.eq(473544690);
+      expect(uvf.metadata.latestSeedId).to.eq(1075513622);
       expect(base64url.stringify(uvf.metadata.kdfSalt, { pad: false })).to.eq('NIlr89R7FhochyP4yuXZmDqCnQ0dBB3UZ2D-6oiIjr8');
       expect(base64url.stringify(uvf.metadata.initialSeed, { pad: false })).to.eq('ypeBEsobvcr6wjGzmiPcTaeG7_gUfE5yuYB3ha_uSLs');
       expect(base64url.stringify(uvf.metadata.latestSeed, { pad: false })).to.eq('Ln0sA6lQeuJl7PW1NWiFpTOTogKdJBOUmXJloaJa78Y');
@@ -206,8 +206,8 @@ describe('UVF', () => {
 
       expect(uvf).to.be.not.null;
       expect(uvf.metadata).to.be.not.null;
-      expect(uvf.metadata.initialSeedId).to.eq(4072093980);
-      expect(uvf.metadata.latestSeedId).to.eq(369695552);
+      expect(uvf.metadata.initialSeedId).to.eq(473544690);
+      expect(uvf.metadata.latestSeedId).to.eq(1075513622);
       expect(base64url.stringify(uvf.metadata.kdfSalt, { pad: false })).to.eq('NIlr89R7FhochyP4yuXZmDqCnQ0dBB3UZ2D-6oiIjr8');
       expect(base64url.stringify(uvf.metadata.initialSeed, { pad: false })).to.eq('ypeBEsobvcr6wjGzmiPcTaeG7_gUfE5yuYB3ha_uSLs');
       expect(base64url.stringify(uvf.metadata.latestSeed, { pad: false })).to.eq('Ln0sA6lQeuJl7PW1NWiFpTOTogKdJBOUmXJloaJa78Y');
