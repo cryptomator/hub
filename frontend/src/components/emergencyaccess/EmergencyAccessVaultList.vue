@@ -7,11 +7,16 @@
       <FetchError :error="onFetchError" :retry="fetchData"/>
     </div>
   </div>
-
-  <h2 class="text-2xl font-bold leading-9 text-gray-900 sm:text-3xl sm:truncate">
-    {{ t('nav.emergencyAccess') }}
-  </h2>
-
+  <div class="flex flex-col sm:flex-row sm:justify-between gap-3 w-full">
+    <h2 class="text-2xl font-bold leading-9 text-gray-900 sm:text-3xl sm:truncate">
+      {{ t('nav.emergencyAccess') }}
+    </h2>
+    <div class="flex gap-3">
+      <button class="w-full bg-primary py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="fetchData()">
+        {{ t('common.refresh') }}
+      </button>
+    </div>
+  </div>
   <div class="pb-5 mt-3 border-b border-gray-200 flex flex-wrap sm:flex-nowrap gap-3 items-center whitespace-nowrap">
     <input id="vaultSearch" v-model="query" :placeholder="t('vaultList.search.placeholder')" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs text-sm border-gray-300 rounded-md disabled:bg-gray-200"/>
 
@@ -157,7 +162,7 @@
     :vault="recoveryApprovVault"
     :me="me!"
     :recovery-process="selectedProcess"
-    @updated="handleRecoveryUpdated"
+    @updated="fetchData"
     @close="recoveryApprovVault = null"
   />
 </template>
@@ -334,43 +339,6 @@ async function loadVaultRecoveryProcess(vaultId: string): Promise<RecoveryProces
 function getCompletedSegmentsForProcess(proc: RecoveryProcessDto): number {
   return Object.values(proc.recoveredKeyShares)
     .filter(ks => ks?.recoveredKeyShare !== undefined).length;
-}
-
-async function reloadVaultData(vaultId: string) {
-  try {
-    const recoverable = await backend.vaults.listRecoverable();
-
-    const updatedVault = recoverable.find(v => v.id === vaultId);
-    if (!updatedVault) {
-      console.warn(`Vault ${vaultId} is not included in listRecoverable().`);
-      return;
-    }
-
-    if (!vaults.value) vaults.value = [];
-    const index = vaults.value.findIndex(v => v.id === vaultId);
-    if (index >= 0) {
-      vaults.value[index] = updatedVault;
-    } else {
-      vaults.value.push(updatedVault);
-    }
-
-    await loadVaultRecoveryProcess(vaultId);
-  } catch (err) {
-    console.error('Error while reloading a vault:', err);
-  }
-}
-
-async function handleRecoveryUpdated(updatedProcess?: RecoveryProcessDto) {
-  const vaultId = recoveryApprovVault.value?.id;
-  try {
-    if (vaultId) {
-      await reloadVaultData(vaultId);
-    }
-  } catch (e) {
-    console.error('Error while reloading after recovery:', e);
-  } finally {
-    recoveryApprovVault.value = null;
-  }
 }
 
 function openRecoveryStartDialog(vault: VaultDto) {
