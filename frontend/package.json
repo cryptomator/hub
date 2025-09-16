@@ -48,7 +48,7 @@
     "@headlessui/tailwindcss": "^0.2.2",
     "@headlessui/vue": "^1.7.23",
     "@heroicons/vue": "^2.2.0",
-    "axios": "^1.11.0",
+    "axios": "^1.12.0",
     "file-saver": "^2.0.5",
     "jdenticon": "^3.3.0",
     "jszip": "^3.10.1",
