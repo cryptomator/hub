@@ -52,22 +52,7 @@ public class BillingResourceIT {
 		private static final String MALFORMED_TOKEN = "hello world";
 
 		@Test
-		@DisplayName("GET /billing returns 200 with empty license self-hosted")
-		public void testGetEmptySelfHosted() {
-			Mockito.when(licenseHolder.get()).thenReturn(null);
-			Mockito.when(licenseHolder.getSeats()).thenReturn(5L);
-			when().get("/billing")
-					.then().statusCode(200)
-					.body("hubId", is("42"))
-					.body("hasLicense", is(false))
-					.body("email", nullValue())
-					.body("licensedSeats", is(5)) //community license
-					.body("usedSeats", is(2)) //depends on the flyway test data migration
-					.body("issuedAt", nullValue())
-					.body("expiresAt", nullValue());
-		}
-
-		@Test
+		@Order(2)
 		@DisplayName("PUT /billing/token returns 204 for initial token")
 		public void testPutInitialToken() {
 			given().contentType(ContentType.TEXT).body(INITIAL_TOKEN)

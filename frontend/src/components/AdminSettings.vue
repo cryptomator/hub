@@ -1,5 +1,5 @@
 <template>
-  <div v-if="admin == null || version == null || wotMaxDepth == null || wotIdVerifyLen == null">
+  <div v-if="billing == null || version == null || wotMaxDepth == null || wotIdVerifyLen == null">
     <div v-if="onFetchError == null">
       {{ t('common.loading') }}
     </div>
@@ -28,7 +28,7 @@
           <div class="md:grid md:grid-cols-3 md:gap-6">
             <label for="hubId" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.serverInfo.hubId.title') }}</label>
             <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
-              <input id="hubId" v-model="admin.hubId" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
+              <input id="hubId" v-model="billing.hubId" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
             </div>
           </div>
 
@@ -72,7 +72,8 @@
         </form>
       </section>
 
-      <section v-if="admin.hasLicense && remainingSeats != null" class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6">
+      <!-- TODO refactor hasLicense check -->
+      <section v-if="billing.hasLicense && remainingSeats != null" class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6">
         <h3 class="text-lg font-medium leading-6 text-gray-900">
           {{ t('admin.licenseInfo.title') }}
         </h3>
@@ -84,14 +85,14 @@
           <div class="md:grid md:grid-cols-3 md:gap-6">
             <label for="email" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.licenseInfo.email.title') }}</label>
             <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
-              <input id="email" v-model="admin.email" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
+              <input id="email" v-model="billing.email" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
             </div>
           </div>
 
           <div class="md:grid md:grid-cols-3 md:gap-6">
             <label for="seats" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.licenseInfo.seats.title') }}</label>
             <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
-              <input id="seats" v-model="admin.licensedSeats" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" aria-describedby="seats-description" readonly />
+              <input id="seats" v-model="billing.licensedSeats" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" aria-describedby="seats-description" readonly />
               <p v-if="remainingSeats > 0" id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
                 <CheckIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
                 {{ t('admin.licenseInfo.seats.description.enoughSeats', [remainingSeats]) }}
@@ -110,15 +111,15 @@
           <div class="md:grid md:grid-cols-3 md:gap-6">
             <label for="issuedAt" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.licenseInfo.issuedAt.title') }}</label>
             <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
-              <input id="issuedAt" :value="d(admin.issuedAt, 'short')" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
+              <input id="issuedAt" :value="d(billing.issuedAt, 'short')" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
             </div>
           </div>
 
           <div class="md:grid md:grid-cols-3 md:gap-6">
             <label for="expiresAt" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.licenseInfo.expiresAt.title') }}</label>
             <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
-              <input id="expiresAt" :value="d(admin.expiresAt, 'short')" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" aria-describedby="expiresAt-description" readonly />
-              <p v-if="now < admin.expiresAt" id="expiresAt-description" class="inline-flex mt-2 text-sm text-gray-500">
+              <input id="expiresAt" :value="d(billing.expiresAt, 'short')" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" aria-describedby="expiresAt-description" readonly />
+              <p v-if="now < billing.expiresAt" id="expiresAt-description" class="inline-flex mt-2 text-sm text-gray-500">
                 <CheckIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
                 {{ t('admin.licenseInfo.expiresAt.description.valid') }}
               </p>
@@ -140,11 +141,12 @@
         </form>
       </section>
 
-      <section v-if="!admin.hasLicense && remainingSeats != null" class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6">
+      <!-- TODO remove? -->
+      <section v-if="!billing.hasLicense" class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6">
         <h3 class="text-lg font-medium leading-6 text-gray-900">
           {{ t('admin.licenseInfo.title') }}
         </h3>
-        <p v-if="!admin.managedInstance" class="mt-1 text-sm text-gray-500 w-full">
+        <p v-if="!billing.managedInstance" class="mt-1 text-sm text-gray-500 w-full">
           {{ t('admin.licenseInfo.selfHostedNoLicense.description') }}
         </p>
         <p v-else class="mt-1 text-sm text-gray-500 w-full">
@@ -155,7 +157,7 @@
           <div class="md:grid md:grid-cols-3 md:gap-6">
             <label for="licenseType" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.licenseInfo.type.title') }}</label>
             <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
-              <input v-if="!admin.managedInstance" id="licenseType" value="Community License" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
+              <input v-if="!billing.managedInstance" id="licenseType" value="Community License" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
               <input v-else id="licenseType" value="Managed" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
             </div>
           </div>
@@ -163,7 +165,7 @@
           <div class="md:grid md:grid-cols-3 md:gap-6">
             <label for="seats" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.licenseInfo.seats.title') }}</label>
             <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
-              <input id="seats" v-model="admin.licensedSeats" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" aria-describedby="seats-description" readonly />
+              <input id="seats" v-model="billing.licensedSeats" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" aria-describedby="seats-description" readonly />
               <p v-if="remainingSeats > 0" id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
                 <CheckIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
                 {{ t('admin.licenseInfo.seats.description.enoughSeats', [remainingSeats]) }}
@@ -286,7 +288,7 @@ const props = defineProps<{
 
 const version = ref<VersionDto>();
 const latestVersion = ref<LatestVersionDto>();
-const admin = ref<BillingDto>();
+const billing = ref<BillingDto>();
 const now = ref<Date>(new Date());
 const keycloakAdminRealmURL = ref<string>();
 const wotMaxDepth = ref<number>();
@@ -326,7 +328,7 @@ const betaUpdateExists = computed(() => {
   return false;
 });
 
-const remainingSeats = computed(() => admin.value ? admin.value.licensedSeats - admin.value.usedSeats : undefined);
+const remainingSeats = computed(() => billing.value ? billing.value.licensedSeats - billing.value.usedSeats : 0);
 const numberOfExceededSeats = computed(() => {
   if (remainingSeats.value === undefined) {
     return undefined;
@@ -365,7 +367,7 @@ async function fetchData() {
   try {
     const versionDto = backend.version.get();
     const versionAvailable = versionDto.then(versionDto => updateChecker.get(versionDto.hubVersion));
-    admin.value = await backend.billing.get();
+    billing.value = await backend.billing.get();
     version.value = await versionDto;
     latestVersion.value = await versionAvailable;
     
@@ -395,7 +397,7 @@ async function saveWebOfTrust() {
   onSaveError.value = null;
   wotMaxDepthError.value = null;
   wotIdVerifyLenError.value = null;
-  if (admin.value == null || wotMaxDepth.value == null || wotIdVerifyLen.value == null) {
+  if (billing.value == null || wotMaxDepth.value == null || wotIdVerifyLen.value == null) {
     throw new Error('No data available.');
   }
   if (!form.value?.checkValidity()) {
@@ -412,7 +414,7 @@ async function saveWebOfTrust() {
     const settings = {
       wotMaxDepth: wotMaxDepth.value,
       wotIdVerifyLen: wotIdVerifyLen.value,
-      hubId: admin.value.hubId
+      hubId: billing.value.hubId
     };
     initialWebOfTrustSettings.value = {
       wotMaxDepth: wotMaxDepth.value,

@@ -64,7 +64,7 @@ public class AuditLogResource {
 	@APIResponse(responseCode = "402", description = "Community license used or license expired")
 	@APIResponse(responseCode = "403", description = "requesting user does not have admin role")
 	public List<AuditEventDto> getAllEvents(@QueryParam("startDate") Instant startDate, @QueryParam("endDate") Instant endDate, @QueryParam("type") List<String> type, @QueryParam("paginationId") Long paginationId, @QueryParam("order") @DefaultValue("desc") String order, @QueryParam("pageSize") @DefaultValue("20") int pageSize) {
-		if (!license.isSet() || license.isExpired()) {
+		if (!license.isSet() || license.isExpired()) { // TODO change to license.getClaim("auditLog") != null
 			throw new PaymentRequiredException("Community license used or license expired");
 		}
 
