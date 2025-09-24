@@ -507,7 +507,7 @@ public class VaultResource {
 	}
 
 
-	public record VaultDto(@JsonProperty("id") UUID id,
+	public record VaultDto(@JsonProperty("id") @NotBlank UUID id,
 						   @JsonProperty("name") @NoHtmlOrScriptChars @NotBlank String name,
 						   @JsonProperty("description") @NoHtmlOrScriptChars String description,
 						   @JsonProperty("archived") boolean archived,
