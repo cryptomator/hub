@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Updated Keycloak to 26.3.4
+- Updated Keycloak to 26.3.5
 
 ## [1.4.5](https://github.com/cryptomator/hub/compare/1.4.4...1.4.5)
 
