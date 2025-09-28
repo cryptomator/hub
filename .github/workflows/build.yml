@@ -36,7 +36,7 @@ jobs:
         working-directory: frontend
         run: npm run dist
       - name: SonarCloud Scan Frontend
-        uses: SonarSource/sonarqube-scan-action@v5
+        uses: SonarSource/sonarqube-scan-action@v6
         with:
           projectBaseDir: frontend
           args: >
