@@ -219,9 +219,7 @@ async function fetchData() {
     vaults.value = (await backend.vaults.listRecoverable()).filter(v => !v.archived).sort((a, b) => a.name.localeCompare(b.name));
     for (const vault of vaults.value) {
       const processes = await backend.emergencyAccess.findProcessesForVault(vault.id);
-      if (processes.length > 0) {
-        vaultRecoveryProcesses.value[vault.id] = processes;
-      }
+      vaultRecoveryProcesses.value[vault.id] = processes;
     }
 
     const memberIdsOfAllRunningProcesses = Object.values(vaultRecoveryProcesses.value).flat().flatMap(p => Object.keys(p.recoveredKeyShares));
