@@ -374,6 +374,9 @@
   "recoveryDialog.alreadyAddedKeyShare": "You have already added your part of the emergency key.",
 
   "emergencyAccessVaultList.empty.title": "No emergency access vaults found",
+  "emergencyAccessProcessAbortDialog.title": "Abort this Process",
+  "emergencyAccessProcessAbortDialog.description": "Are you sure you want to abort this emergency access process? This action cannot be undone.",
+  "emergencyAccessProcessAbortDialog.confirm": "Abort Process",
 
   "vaultList.title": "Vaults",
   "vaultList.empty.title": "No vaults",

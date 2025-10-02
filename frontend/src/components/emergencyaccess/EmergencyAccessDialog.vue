@@ -211,7 +211,7 @@
                       <button
                         type="button"
                         class="mt-3 inline-flex w-full justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-600 sm:mt-0 sm:w-auto sm:text-sm"
-                        @click="cancelRecovery()"
+                        @click="requestCancel()"
                       >
                         {{ t('common.cancel') }}
                       </button>
@@ -225,6 +225,13 @@
       </div>
     </Dialog>
   </TransitionRoot>
+  <ProcessAbortDialog
+    v-if="props.recoveryProcess"
+    ref="abortDialog"
+    :recovery-process-id="props.recoveryProcess.id"
+    @confirmed="handleRecoveryAborted"
+    @close="() => {}"
+  />
 </template>
 
 <script setup lang="ts">
@@ -239,6 +246,7 @@ import userdata from '../../common/userdata';
 import MultiUserSelectInputGroup from '../MultiUserSelectInputGroup.vue';
 import RequiredKeySharesInput from './RequiredKeySharesInput.vue';
 import EmergencyScenarioVisualization from './EmergencyScenarioVisualization.vue';
+import ProcessAbortDialog from './ProcessAbortDialog.vue';
 import { asPublicKey, UserKeys, VaultKeys } from '../../common/crypto';
 import { wordEncoder } from '../../common/util';
 import { base64 } from 'rfc4648';
@@ -323,13 +331,16 @@ function addUser(this: Ref<UserDto[]>, user: UserDto) {
   }
 }
 
-async function cancelRecovery() {
+const abortDialog = ref<InstanceType<typeof ProcessAbortDialog> | null>(null);
+
+function requestCancel() {
+  if (!props.recoveryProcess) return;
+  abortDialog.value?.show();
+}
+
+async function handleRecoveryAborted() {
   if (!props.recoveryProcess) return;
   onError.value = null;
-
-  const ok = confirm(t?.('recoveryDialog.cancelConfirm') ?? 'Prozess wirklich abbrechen und löschen?'); //TODO: replace with custom cancel dialog
-  if (!ok) return;
-
   try {
     await backend.emergencyAccess.delete(props.recoveryProcess.id);
     emit('updated');
