@@ -53,19 +53,34 @@
               </div>
               <p v-if="vault.description" class="truncate text-sm text-gray-500 mt-2">{{ vault.description }}</p>
             </div>
-            <!-- Recovery-Button -->
-            <div class="mt-2 flex flex-wrap items-center pr-2">
+            <div
+              v-if="(me && vault.emergencyKeyShares?.[me.id] || isEmergencyKeyShareHolder(vault))"
+              class="flex flex-wrap items-center gap-2 pr-2 self-center"
+            >
+              <!-- Start: ASSIGN_OWNER -->
               <button
-                v-if="(me && vault.emergencyKeyShares?.[me.id] || isEmergencyKeyShareHolder(vault)) && !hasAllProcessTypesStarted(vault)"
+                v-if="!hasProcessTypeStarted(vault, 'ASSIGN_OWNER')"
                 type="button"
-                class="inline-flex items-center gap-2 rounded-md bg-white px-2 py-1 text-xs font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 relative"
-                @click.stop="openRecoveryStartDialog(vault)"
+                class="inline-flex items-center gap-2 rounded-md bg-white px-2 py-1 text-xs font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                @click.stop="openRecoveryStartDialog(vault, 'ASSIGN_OWNER')"
               >
-                {{ t('common.start') }}
+                <PlayIcon class="h-4 w-4 text-primary" aria-hidden="true" />
+                {{ t('recoveryDialog.ownership') }}
+              </button>
+
+              <!-- Start: COUNCIL_CHANGE -->
+              <button
+                v-if="!hasProcessTypeStarted(vault, 'COUNCIL_CHANGE')"
+                type="button"
+                class="inline-flex items-center gap-2 rounded-md bg-white px-2 py-1 text-xs font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                @click.stop="openRecoveryStartDialog(vault, 'COUNCIL_CHANGE')"
+              >
+                <PlayIcon class="h-4 w-4 text-primary" aria-hidden="true" />
+                {{ t('recoveryDialog.voteCouncil') }}
               </button>
             </div>
 
-            <div class="mt-2 flex flex-wrap items-center gap-2 pr-2">
+            <div class="flex flex-wrap items-center gap-2 pr-2 self-center">
               <template v-for="proc in getProcesses(vault.id)" :key="proc.id">
                 <button
                   v-if="me && isUserInProcess(proc)"
@@ -162,6 +177,7 @@
     :vault="recoveryApprovVault"
     :me="me!"
     :recovery-process="selectedProcess"
+    :start-type="startType"
     @updated="fetchData"
     @close="recoveryApprovVault = null"
   />
@@ -174,7 +190,7 @@ import * as R from 'remeda';
 import backend, { VaultDto, RecoveryProcessDto, RecoveredKeyShareDto, AuthorityDto } from '../../common/backend';
 import FetchError from '../FetchError.vue';
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue';
-import { CheckIcon, ChevronUpDownIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/solid';
+import { CheckIcon, ChevronUpDownIcon, ExclamationTriangleIcon, PlayIcon } from '@heroicons/vue/24/solid';
 import userdata from '../../common/userdata';
 import { UserDto } from '../../common/backend';
 import { describeSegment } from '../../common/svgUtils';
@@ -339,9 +355,16 @@ function getCompletedSegmentsForProcess(proc: RecoveryProcessDto): number {
     .filter(ks => ks?.recoveredKeyShare !== undefined).length;
 }
 
-function openRecoveryStartDialog(vault: VaultDto) {
+const startType = ref<RecoveryProcessDto['type'] | undefined>(undefined);
+
+function hasProcessTypeStarted(vault: VaultDto, type: RecoveryProcessDto['type']): boolean {
+  return getProcesses(vault.id).some(p => p.type === type);
+}
+
+function openRecoveryStartDialog(vault: VaultDto, type?: RecoveryProcessDto['type']) {
   recoveryApprovVault.value = vault;
   selectedProcess.value = undefined;
+  startType.value = type;
   nextTick(() => recoveryApprovDialog.value?.show());
 }
 

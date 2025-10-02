@@ -32,18 +32,23 @@
                   <div class="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                     <div class="sm:flex sm:items-start">
                       <div class="mx-auto shrink-0 flex items-center justify-center h-12 w-12 sm:mx-0 sm:h-10 sm:w-10 relative">
-                        <svg width="36" height="36" viewBox="0 0 36 36">
-                          <g>
-                            <path
-                              v-for="i in requiredSegments"
-                              :key="i"
-                              :d="describeSegment(i - 1, requiredSegments, 16)"
-                              :fill="i <= completedSegments ? '#49b04a' : '#e5e7eb'"
-                              stroke="white"
-                              stroke-width="1"
-                            />
-                          </g>
-                        </svg>
+                        <div v-if="phase !== 'start'">
+                          <svg width="36" height="36" viewBox="0 0 36 36">
+                            <g>
+                              <path
+                                v-for="i in requiredSegments"
+                                :key="i"
+                                :d="describeSegment(i - 1, requiredSegments, 16)"
+                                :fill="i <= completedSegments ? '#49b04a' : '#e5e7eb'"
+                                stroke="white"
+                                stroke-width="1"
+                              />
+                            </g>
+                          </svg>
+                        </div>
+                        <div v-else>
+                          <PlayIcon class="h-8 w-8 text-primary" aria-hidden="true" />
+                        </div>
                       </div>
                       <div class="mt-3 grow text-center sm:mt-0 sm:ml-4 sm:text-left">
                         <DialogTitle as="h3" class="text-lg leading-6 font-medium text-gray-900">
@@ -58,22 +63,6 @@
                           </p>
                         </div>
                         <div v-if="phase === 'start'" class="mt-4 space-y-4">
-                          <div>
-                            <label class="block text-sm font-medium text-gray-700">
-                              {{ t('recoveryDialog.selectRecoveryType') }}
-                            </label>
-                            <select
-                              v-model="processType"
-                              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
-                            >
-                              <option value="ASSIGN_OWNER" :disabled="processConflicts('ASSIGN_OWNER')">
-                                {{ t('recoveryDialog.ownership') }}
-                              </option>
-                              <option value="COUNCIL_CHANGE" :disabled="processConflicts('COUNCIL_CHANGE')">
-                                {{ t('recoveryDialog.voteCouncil') }}
-                              </option>
-                            </select>
-                          </div>
                           <div v-if="processType === 'ASSIGN_OWNER'">
                             <label class="block text-sm font-medium text-gray-700">
                               {{ t('recoveryDialog.selectNewOwner') }}
@@ -87,7 +76,7 @@
                             />
                           </div>
 
-                          <div v-if="processType === 'COUNCIL_CHANGE'">
+                          <div v-else-if="processType === 'COUNCIL_CHANGE'">
                             <label class="block text-sm font-medium text-gray-700">
                               {{ t('recoveryDialog.selectNewCouncil') }}
                             </label>
@@ -112,7 +101,11 @@
                               :required-key-shares="newRequiredKeyShares"
                             />
                           </div>
-                        </div><!-- if="phase === start" -->
+
+                          <div v-else class="text-sm text-red-600">
+                            {{ t('recoveryDialog.error.invalidRecoveryType') }}
+                          </div>
+                        </div>
 
                         <div v-else-if="!recoveryProcess">
                           <!-- every other phase should have a non-null recovery process -->
@@ -240,6 +233,7 @@ import { ref, computed, toRaw, Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import * as R from 'remeda';
 import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
+import { PlayIcon } from '@heroicons/vue/24/solid';
 import { describeSegment } from '../../common/svgUtils';
 import { EmergencyAccess } from '../../common/emergencyaccess';
 import userdata from '../../common/userdata';
@@ -257,6 +251,7 @@ const props = defineProps<{
   vault: VaultDto;
   me: UserDto;
   recoveryProcess?: RecoveryProcessDto;
+  startType?: RecoveryProcessDto['type'];
 }>();
 
 const emit = defineEmits<{
@@ -268,7 +263,9 @@ defineExpose({
   show,
 });
 
-const processType = ref<RecoveryProcessDto['type']>(props.recoveryProcess?.type ?? 'ASSIGN_OWNER');
+const processType = ref<RecoveryProcessDto['type']>(
+  props.recoveryProcess?.type ?? props.startType ?? 'ASSIGN_OWNER'
+);
 
 type PhaseType = 'start' | 'approve' | 'complete';
 const phase = computed<PhaseType>(() => {
@@ -364,10 +361,12 @@ async function show() {
 
   if (props.recoveryProcess) {
     processType.value = props.recoveryProcess.type;
+  } else if (props.startType) {
+    processType.value = props.startType;
   } else {
     const allTypes: RecoveryProcessDto['type'][] = ['ASSIGN_OWNER', 'COUNCIL_CHANGE'];
     const firstFree = allTypes.find(t => !processConflicts(t));
-    processType.value = firstFree ?? 'ASSIGN_OWNER'; // fallback
+    processType.value = firstFree ?? 'ASSIGN_OWNER';
   }
 
   if (props.recoveryProcess?.type === 'COUNCIL_CHANGE') {

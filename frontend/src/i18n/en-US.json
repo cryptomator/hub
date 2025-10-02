@@ -356,7 +356,7 @@
   "recoveryDialog.selectRecoveryType": "Choose Type",
   "recoveryDialog.selectNewOwner": "Select Owner",
   "recoveryDialog.addMyKeyShare": "Approv now",
-  "recoveryDialog.ownership": "Ownership",
+  "recoveryDialog.ownership": "Assign Ownership",
   "recoveryDialog.voteCouncil": "Vote New Council",
   "recoveryDialog.selectNewCouncil": "Select Council Members",
   "recoveryDialog.notPossible": "Not possible",
