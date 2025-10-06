@@ -53,30 +53,40 @@
               </div>
               <p v-if="vault.description" class="truncate text-sm text-gray-500 mt-2">{{ vault.description }}</p>
             </div>
+            <div v-if="needsRedundancy(vault)" class="mr-3">
+              <span
+                class="inline-flex items-center gap-2 rounded-full bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800"
+                :title="t('emergencyAccessVaultList.noRedundancyHint')"
+              >
+                <ExclamationTriangleIcon class="h-4 w-4" aria-hidden="true" />
+                {{ t('emergencyAccessVaultList.noRedundancy') }}
+              </span>
+            </div>
+
             <div
-              v-if="(me && vault.emergencyKeyShares?.[me.id] || isEmergencyKeyShareHolder(vault))"
+              v-if="((me && vault.emergencyKeyShares?.[me.id] || isEmergencyKeyShareHolder(vault)))"
               class="flex flex-wrap items-center gap-2 pr-2 self-center"
             >
               <!-- Start: ASSIGN_OWNER -->
               <button
                 v-if="!hasProcessTypeStarted(vault, 'ASSIGN_OWNER')"
                 type="button"
-                class="inline-flex items-center gap-2 rounded-md bg-white px-2 py-1 text-xs font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                class="h-7 inline-flex items-center gap-2 rounded-md bg-white px-2 py-1 text-xs font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
                 @click.stop="openRecoveryStartDialog(vault, 'ASSIGN_OWNER')"
               >
                 <PlayIcon class="h-4 w-4 text-primary" aria-hidden="true" />
-                {{ t('recoveryDialog.ownership') }}
+                {{ t('emergencyAccessVaultList.assignOwner') }}
               </button>
 
               <!-- Start: COUNCIL_CHANGE -->
               <button
                 v-if="!hasProcessTypeStarted(vault, 'COUNCIL_CHANGE')"
                 type="button"
-                class="inline-flex items-center gap-2 rounded-md bg-white px-2 py-1 text-xs font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                class="h-7 inline-flex items-center gap-2 rounded-md bg-white px-2 py-1 text-xs font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
                 @click.stop="openRecoveryStartDialog(vault, 'COUNCIL_CHANGE')"
               >
                 <PlayIcon class="h-4 w-4 text-primary" aria-hidden="true" />
-                {{ t('recoveryDialog.voteCouncil') }}
+                {{ t('emergencyAccessVaultList.changeCouncil') }}
               </button>
             </div>
 
@@ -124,30 +134,20 @@
                       </div>
                     </div>
                   </div>
-
-                  <span class="rounded-full px-1.5 py-0.5 ring-1 ring-gray-300 text-[10px] uppercase tracking-wide">
-                    {{ proc.type }}
-                  </span>
-
-                  {{ hasSubmittedEmergencyKeyShareForProcess(proc)
-                    ? t('vaultDetails.actions.showEmergencyAccessState')
-                    : getRecoveryLabelForProcess(proc) }}
+                  <div v-if="proc.type == 'ASSIGN_OWNER'">
+                    {{ t('emergencyAccessVaultList.assignOwner') }}
+                  </div>
+                  <div v-else-if="proc.type == 'COUNCIL_CHANGE'">
+                    {{ t('emergencyAccessVaultList.changeCouncil') }}
+                  </div>
                 </button>
               </template>
             </div>
 
-            <div v-if="needsRedundancy(vault)" class="ml-3">
-              <span
-                class="inline-flex items-center gap-2 rounded-full bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800"
-                :title="t('vaultList.emergency.noRedundancyHint')"
-              >
-                <ExclamationTriangleIcon class="h-4 w-4" aria-hidden="true" />
-                {{ t('vaultList.emergency.noRedundancy') }}
-              </span>
-            </div>
+
           </div>
           <!-- TODO: remove this dev area -->
-          <div v-if="getProcesses(vault.id).length" class="px-4 pb-4 sm:px-6">
+          <div v-if="getProcesses(vault.id).length" class="px-4 pb-4 sm:px-6" hidden="true">
             <div v-for="proc in getProcesses(vault.id)" :key="proc.id" class="mb-3">
               <div class="text-xs text-gray-700 mb-1">
                 <strong>Council ({{ getCouncilMembersForProcess(proc).length }}):</strong>

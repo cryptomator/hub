@@ -1,6 +1,6 @@
 <template>
-  <TransitionRoot as="template" :show="open" @after-leave="$emit('close')">
-    <Dialog as="div" class="fixed z-10 inset-0 overflow-y-auto" @close="open = false">
+  <TransitionRoot as="template" :show="open" @after-leave="handleAfterLeave">
+    <Dialog as="div" class="fixed inset-0 z-40 overflow-y-auto" :class="wantAbort ? 'pointer-events-none' : ''" :aria-hidden="wantAbort ? 'true' : undefined" @close="handleParentClose">
       <TransitionChild
         as="template"
         enter="ease-out duration-300"
@@ -57,9 +57,6 @@
                         <div class="mt-2">
                           <p class="text-sm text-gray-500">
                             {{ phaseDescription }}
-                          </p>
-                          <p v-if="didAddMyShare" class="text-sm text-gray-500">
-                            {{ t('recoveryDialog.alreadyAddedKeyShare') }}
                           </p>
                         </div>
                         <div v-if="phase === 'start'" class="mt-4 space-y-4">
@@ -182,32 +179,39 @@
                       </button>
                     </template>
 
-                    <template v-else-if="phase === 'complete' && !didAddMyShare">
+                    <template v-else-if="phase === 'complete' && !didAddMyShare || completedSegments >= requiredSegments">
                       <button
                         type="button"
                         class="inline-flex w-full sm:w-auto justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:text-sm"
                         @click="completeRecovery()"
                       >
-                        {{ t('common.complete') }}
+                        {{ t('emergencyAccessProcessAbortDialog.complete') }}
                       </button>
                     </template>
 
                     <button
                       type="button"
                       class="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:w-auto sm:text-sm"
-                      @click="open = false" 
+                      @click.stop="open = false" 
                     >
                       {{ t('common.close') }}
                     </button>
                     
                     <template v-if="phase !== 'start'">
                       <button
+                        hidden="true"
                         type="button"
                         class="mt-3 inline-flex w-full justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-600 sm:mt-0 sm:w-auto sm:text-sm"
-                        @click="requestCancel()"
+                        @click.stop="requestCancel()"
                       >
                         {{ t('common.cancel') }}
                       </button>
+                      <p
+                        class="mt-2 text-sm text-red-600 cursor-pointer hover:underline sm:order-last sm:mr-auto"
+                        @click.stop="requestCancel()"
+                      >
+                        {{ t('emergencyAccessProcessAbortDialog.title') }}
+                      </p>
                     </template>
                   </div>
                 </div>
@@ -218,12 +222,13 @@
       </div>
     </Dialog>
   </TransitionRoot>
+
   <ProcessAbortDialog
     v-if="props.recoveryProcess"
     ref="abortDialog"
     :recovery-process-id="props.recoveryProcess.id"
     @confirmed="handleRecoveryAborted"
-    @close="() => {}"
+    @close="onAbortClosed"
   />
 </template>
 
@@ -245,6 +250,7 @@ import { asPublicKey, UserKeys, VaultKeys } from '../../common/crypto';
 import { wordEncoder } from '../../common/util';
 import { base64 } from 'rfc4648';
 import { ECDSA_P384, JWT, JWTHeader } from '../../common/jwt';
+
 const { t } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{
@@ -259,9 +265,7 @@ const emit = defineEmits<{
   updated: [recoveryProcess?: RecoveryProcessDto];
 }>();
 
-defineExpose({
-  show,
-});
+defineExpose({ show });
 
 const processType = ref<RecoveryProcessDto['type']>(
   props.recoveryProcess?.type ?? props.startType ?? 'ASSIGN_OWNER'
@@ -329,10 +333,27 @@ function addUser(this: Ref<UserDto[]>, user: UserDto) {
 }
 
 const abortDialog = ref<InstanceType<typeof ProcessAbortDialog> | null>(null);
+const wantAbort = ref(false);
 
 function requestCancel() {
   if (!props.recoveryProcess) return;
+  wantAbort.value = true;
   abortDialog.value?.show();
+}
+
+function onAbortClosed() {
+  wantAbort.value = false;
+}
+
+function handleParentClose() {
+  if (wantAbort.value) return;
+  open.value = false;
+}
+
+function handleAfterLeave() {
+  if (!open.value) {
+    emit('close');
+  }
 }
 
 async function handleRecoveryAborted() {
@@ -341,6 +362,7 @@ async function handleRecoveryAborted() {
   try {
     await backend.emergencyAccess.delete(props.recoveryProcess.id);
     emit('updated');
+    wantAbort.value = false;
     open.value = false;
   } catch (error) {
     console.error('Cancelling emergency recovery failed.', error);
@@ -385,7 +407,7 @@ async function show() {
 const phaseTitle = computed(() => {
   switch (phase.value) {
     case 'start': return t('recoveryDialog.startTitle');
-    case 'approve': return t('recoveryDialog.approveTitle');
+    case 'approve': return didAddMyShare.value ? 'Approved' : t('recoveryDialog.approveTitle');
     case 'complete': return t('recoveryDialog.completeTitle');
     default: return '';
   }
@@ -394,7 +416,7 @@ const phaseTitle = computed(() => {
 const phaseDescription = computed(() => {
   switch (phase.value) {
     case 'start': return t('recoveryDialog.startDesc');
-    case 'approve': return t('recoveryDialog.approveDesc');
+    case 'approve': return didAddMyShare.value ? t('recoveryDialog.alreadyAddedKeyShare') : t('recoveryDialog.approveDesc');
     case 'complete': return t('recoveryDialog.completeDesc');
     default: return '';
   }
@@ -406,15 +428,13 @@ const phaseDescription = computed(() => {
 async function startRecovery() {
   onError.value = null;
   try {
-    // load council members:
     const recoveryCouncilMemberIds = Object.keys(props.vault.emergencyKeyShares);
     const authorities = await backend.authorities.listSome(recoveryCouncilMemberIds);
-    const councilMembers = authorities.filter(a => a.type == 'USER').filter(u => didCompleteSetup(u)); // we can basically assume this
+    const councilMembers = authorities.filter(a => a.type == 'USER').filter(u => didCompleteSetup(u));
     if (councilMembers.length < props.vault.requiredEmergencyKeyShares) {
       throw new Error(`Inconsistent data: Insufficient council members (${councilMembers.length}) to recovery this vault (${props.vault.requiredEmergencyKeyShares}).`);
     }
 
-    // depending on the process type, we need different data:
     let data: RecoveryProcessSetNewOwner | RecoveryProcessChangeCouncil;
     if (processType.value === 'ASSIGN_OWNER') {
       if (!newOwners.value) {
@@ -441,7 +461,6 @@ async function startRecovery() {
       throw new Error(t('recoveryDialog.error.invalidRecoveryType'));
     }
 
-    // create recovery process:
     const processKeyPair = await EmergencyAccess.startRecovery(councilMembers);
     const process: RecoveryProcessDto = {
       id: crypto.randomUUID(),
@@ -451,7 +470,6 @@ async function startRecovery() {
       processPublicKey: processKeyPair.recoveryPublicKey,
       recoveredKeyShares: {}
     };
-    // initialize recovered key shares for all council members:
     for (const [memberId, jwe] of Object.entries(processKeyPair.recoveryPrivateKeys)) {
       process.recoveredKeyShares[memberId] = {
         unrecoveredKeyShare: props.vault.emergencyKeyShares[memberId],
@@ -459,11 +477,9 @@ async function startRecovery() {
       };
     }
 
-    // add my part of the emergency key:
     const userKeys = await userdata.decryptUserKeysWithBrowser();
     process.recoveredKeyShares[props.me.id] = await addMyShare(process, userKeys);
 
-    // save and exit:
     await backend.emergencyAccess.startRecovery(process);
     emit('updated', process);
     open.value = false;
@@ -487,15 +503,11 @@ async function approveRecovery() {
       throw new Error('Recovery process has been tampered with.');
     }
 
-    // get my user private key:
     const userKeys = await userdata.decryptUserKeysWithBrowser();
-
-    // add my part of the emergency key:
     const process = structuredClone(toRaw(props.recoveryProcess));
     process.recoveredKeyShares[props.me.id] = await addMyShare(process, userKeys);
     await backend.emergencyAccess.addMyShare(process.id, process.recoveredKeyShares[props.me.id]);
 
-    // done:
     emit('updated', process);
     open.value = false;
   } catch (error) {
@@ -518,23 +530,18 @@ async function completeRecovery() {
       throw new Error('Recovery process has been tampered with.');
     }
 
-    // get my user private key:
     const userKeys = await userdata.decryptUserKeysWithBrowser();
 
-    // add my part of the emergency key:
     const process = structuredClone(toRaw(props.recoveryProcess));
     process.recoveredKeyShares[props.me.id] = await addMyShare(process, userKeys);
 
-    // collect key parts:
     const keyShares = Object.values(process.recoveredKeyShares).filter(p => p.recoveredKeyShare !== undefined).map(p => p.recoveredKeyShare!);
 
-    // get process private key:
     const processPrivateKey = process.recoveredKeyShares[props.me.id].processPrivateKey;
     const recoveredKeyBytes = await EmergencyAccess.combineRecoveredShares(keyShares, processPrivateKey, userKeys.ecdhKeyPair.privateKey);
-    const recoveredKey = wordEncoder.encodePadded(recoveredKeyBytes); // TODO remove word encoding crap:
+    const recoveredKey = wordEncoder.encodePadded(recoveredKeyBytes);
 
     if (process.type === 'COUNCIL_CHANGE' && newCouncilMembers.value.length >= process.details.newRequiredKeyShares) {
-      // split recovered key into new shares for new council members:
       const keyShares = await EmergencyAccess.split(recoveredKeyBytes, process.details.newRequiredKeyShares, ...newCouncilMembers.value);
       await backend.vaults.createOrUpdateVault(
         props.vault.id,
@@ -545,22 +552,18 @@ async function completeRecovery() {
         props.vault.description
       );
     } else if (process.type === 'ASSIGN_OWNER' && newOwners.value.length > 0) {
-      // grant access to new owners using recovered key:
       const vaultKeys = await VaultKeys.recover(recoveredKey);
       const accessGrants: AccessGrant[] = await Promise.all(newOwners.value.map(async u => {
-        console.log(`Granting access to user ${u.email}.`);
         const publicKey = base64.parse(u.ecdhPublicKey);
         const jwe = vaultKeys.encryptForUser(publicKey);
         await backend.vaults.addUser(props.vault.id, u.id, 'OWNER');
         return { userId: u.id, token: await jwe };
       }));
       await backend.vaults.grantAccess(props.vault.id, ...accessGrants);
-      // TODO: shall we remove other owners or is that up to the new owner?
     } else {
       throw new Error(`Unsupported state for recovery process type: ${process.type}`);
     }
 
-    console.log(`Successfully completed recovery process ${process.id} for vault ${props.vault.id}.`);
     await backend.emergencyAccess.delete(process.id);
     emit('updated');
     open.value = false;
@@ -602,7 +605,7 @@ async function verifyProcessInfo(process: RecoveryProcessDto): Promise<boolean> 
 
   for (const [councilMemberId, recoveredKeyShare] of Object.entries(process.recoveredKeyShares)) {
     if (!recoveredKeyShare.recoveredKeyShare) {
-      continue; // skip members that did not add their share yet
+      continue;
     } else if (!recoveredKeyShare.signedProcessInfo) {
       console.error(`Missing signed process info for council member ${councilMemberId}.`);
       return false;

@@ -374,9 +374,16 @@
   "recoveryDialog.alreadyAddedKeyShare": "You have already added your part of the emergency key.",
 
   "emergencyAccessVaultList.empty.title": "No emergency access vaults found",
+  "emergencyAccessVaultList.changeCouncil": "Change Council",
+  "emergencyAccessVaultList.assignOwner": "Assign Vault Owner",
+  "emergencyAccessVaultList.noRedundancy": "No Redundancy",
+  "emergencyAccessVaultList.noRedundancyHint": "This Emergency Access Council has no redundancy. Consider assigning a council with redundancy.",
+
   "emergencyAccessProcessAbortDialog.title": "Abort this Process",
   "emergencyAccessProcessAbortDialog.description": "Are you sure you want to abort this emergency access process? This action cannot be undone.",
   "emergencyAccessProcessAbortDialog.confirm": "Abort Process",
+
+  "emergencyAccessProcessAbortDialog.complete": "Complete Process",
 
   "vaultList.title": "Vaults",
   "vaultList.empty.title": "No vaults",
