@@ -16,6 +16,8 @@ import org.cryptomator.hub.entities.VaultAccess;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 
 import java.util.Arrays;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -60,20 +62,8 @@ public class VaultRoleFilter implements ContainerRequestFilter {
 		}
 
 		var vault = vaultRepo.findById(vaultId);
-		if (vault != null && annotation.bypassForEmergencyAccess() && vault.getEmergencyKeyShares().containsKey(userId)) {
+		if (vault != null && annotation.bypassForEmergencyAccess() && isEmergencyAccessCouncilMember(userId, vault)) {
 			// user is a member of the emergency access council, so we skip the role check:
-			return;
-		}
-
-		boolean emergencyBypass = false;
-		if (annotation.bypassForEmergencyAccess()) {
-			if (vault != null && vault.getEmergencyKeyShares().containsKey(userId)) {
-				emergencyBypass = true;
-			} else {
-				emergencyBypass = hasEmergencyProcessBypass(userId, vaultId);
-			}
-		}
-		if (emergencyBypass) {
 			return;
 		}
 
@@ -99,21 +89,17 @@ public class VaultRoleFilter implements ContainerRequestFilter {
 		}
 	}
 
-	private boolean hasEmergencyProcessBypass(String userId, UUID vaultId) {
-		var processes = recoveryRepo.findByVaultId(vaultId);
-		if (processes == null) {
-			return false;
+	private boolean isEmergencyAccessCouncilMember(String userId, Vault vault) {
+		if (vault.getEmergencyKeyShares().containsKey(userId)) {
+			// member of current emergency access council:
+			return true;
+		} else {
+			// check if member of an ongoing recovery process:
+			return recoveryRepo.findByVaultId(vault.getId()) // processes
+					.map(EmergencyRecoveryProcess::getRecoveredKeyShares) // map of member IDs to key shares
+					.map(Map::keySet) // set of process member IDs
+					.flatMap(Set::stream) // steam of process member IDs
+					.anyMatch(userId::equals);
 		}
-		return processes.anyMatch(p -> {
-			var my = p.getRecoveredKeyShares().get(userId);
-			if (my == null || my.getRecoveredKeyShare() == null) {
-				return false;
-			}
-
-			long recovered = p.getRecoveredKeyShares().values().stream()
-					.filter(s -> s.getRecoveredKeyShare() != null)
-					.count();
-			return recovered >= p.getRequiredKeyShares();
-		});
 	}
 }

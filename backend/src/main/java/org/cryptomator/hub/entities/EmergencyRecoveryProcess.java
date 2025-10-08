@@ -140,11 +140,7 @@ public class EmergencyRecoveryProcess {
 	public static class Repository implements PanacheRepositoryBase<EmergencyRecoveryProcess, UUID> {
 
 		public Stream<EmergencyRecoveryProcess> findByVaultId(UUID vaultId) {
-			try {
-				return find("#EmergencyRecoveryProcess.findByVaultId", Parameters.with("vaultId", vaultId)).stream();
-			} catch (NoResultException e) {
-				return null;
-			}
+			return find("#EmergencyRecoveryProcess.findByVaultId", Parameters.with("vaultId", vaultId)).stream();
 		}
 
 		public Stream<EmergencyRecoveryProcess> findByCouncilMember(String councilMemberId) {
