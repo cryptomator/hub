@@ -49,6 +49,7 @@
   "admin.serverInfo.hubVersion.description.fetchingUpdatesFailed": "Unable to check for updates. Please check manually.",
   "admin.serverInfo.keycloakVersion.title": "Keycloak Version",
   "admin.serverInfo.keycloakVersion.description": "Manage Keycloak",
+  "admin.serverInfo.keycloakVersion.notAvailable": "not available",
   "admin.licenseInfo.title": "License Info",
   "admin.licenseInfo.description": "Verify your license information. If you'd like to make changes or check your subscription status, press \"Manage Subscription\".",
   "admin.licenseInfo.email.title": "Licensed To",
