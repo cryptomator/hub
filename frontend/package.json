@@ -35,7 +35,7 @@
     "@vue/compiler-sfc": "^3.5.12",
     "eslint": "^9.32.0",
     "eslint-plugin-vue": "^10.3.0",
-    "happy-dom": "^18.0.1",
+    "happy-dom": "^20.0.0",
     "tailwindcss": "^4.1.11",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
