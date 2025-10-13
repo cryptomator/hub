@@ -10,9 +10,6 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.keycloak.admin.client.Keycloak;
-import org.keycloak.representations.info.SystemInfoRepresentation;
-
-import java.util.Optional;
 
 @Path("/version")
 public class VersionResource {
@@ -28,9 +25,11 @@ public class VersionResource {
 	@Operation(summary = "get version of hub and keycloak")
 	@APIResponse(responseCode = "200")
 	public VersionDto getVersion() {
-		var keycloakVersion = Optional.ofNullable(keycloak.serverInfo().getInfo().getSystemInfo())
-				.map(SystemInfoRepresentation::getVersion)
-				.orElse(null);
+		String keycloakVersion = null;
+		var keycloakSystemInfo = keycloak.serverInfo().getInfo().getSystemInfo();
+		if (keycloakSystemInfo != null) {
+			keycloakVersion = keycloakSystemInfo.getVersion();
+		}
 		return new VersionDto(hubVersion, keycloakVersion);
 	}
 
