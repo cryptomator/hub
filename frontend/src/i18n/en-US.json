@@ -266,6 +266,7 @@
   "userProfile.actions.manageAccount": "Manage Account",
   "userProfile.actions.changeLanguage": "Change Language",
   "userProfile.actions.changeLanguage.entry.browser": "Browser Language",
+  "userProfile.keycloakVersion.notAvailable": "version not available",
 
   "unlockSuccess.title": "Vault unlocked successfully",
   "unlockSuccess.description": "You may now close this browser tab and return to Cryptomator.",
