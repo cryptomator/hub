@@ -147,6 +147,15 @@
               :selected-users="emergencyCouncilMembers"
               :required-key-shares="requiredKeyShares"
             />
+            <div v-if="needsRedundancy()" class="mt-4 mr-3">
+              <span
+                class="inline-flex items-center gap-2 rounded-full bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800"
+                :title="t('emergencyAccessVaultList.noRedundancyHint')"
+              >
+                <ExclamationTriangleIcon class="h-4 w-4" aria-hidden="true" />
+                {{ t('emergencyAccessVaultList.noRedundancy') }}
+              </span>
+            </div>
           </div>
           <div class="bg-gray-50 mt-4 px-4 py-3 sm:px-6 rounded-b-lg">
             <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center sm:space-x-4">
@@ -302,7 +311,7 @@
 <script setup lang="ts">
 import { ClipboardIcon } from '@heroicons/vue/20/solid';
 import { ArrowPathIcon, CheckIcon, KeyIcon, PlusIcon } from '@heroicons/vue/24/outline';
-import { ArrowDownTrayIcon } from '@heroicons/vue/24/solid';
+import { ArrowDownTrayIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/solid';
 import { saveAs } from 'file-saver';
 import { onMounted, ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -492,6 +501,10 @@ async function validateVaultDetails() {
 async function validateVaultEmergencyAccess(){
   await splitRecoveryKey();
   state.value = State.ShowRecoveryKey;
+}
+
+function needsRedundancy(): boolean {
+  return requiredKeyShares.value == emergencyCouncilMembers.value.length;
 }
 
 const vaultKeyShares = ref<Record<string, string> | null>(null);

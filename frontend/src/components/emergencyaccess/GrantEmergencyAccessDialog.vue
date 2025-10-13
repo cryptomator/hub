@@ -62,10 +62,19 @@
                       :allow-changing-defaults="allowChangingDefaults"
                       :default-key-shares="defaultRequiredEmergencyKeyShares"
                     />
+                    <label class="block text-sm font-medium text-gray-700 pt-4">
+                      {{ t('grantEmergencyAccessDialog.possibleEmergencyScenario') }}
+                    </label>
                     <EmergencyScenarioVisualization
                       :selected-users="emergencyCouncilMembers"
                       :required-key-shares="requiredKeyShares"
                     />
+                    <div v-if="needsRedundancy()" class="mt-4 mr-3">
+                      <span class="inline-flex items-center gap-2 rounded-full bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800" :title="t('emergencyAccessVaultList.noRedundancyHint')" >
+                        <ExclamationTriangleIconSolid class="h-4 w-4" aria-hidden="true" />
+                        {{ t('emergencyAccessVaultList.noRedundancy') }}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
@@ -73,7 +82,6 @@
                   {{ onAddCouncilMemberError.message }}
                 </p>
               </div>
-
               <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                 <!-- Grant-Button -->
                 <button
@@ -104,6 +112,7 @@
 <script setup lang="ts">
 import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
+import { ExclamationTriangleIcon as ExclamationTriangleIconSolid } from '@heroicons/vue/24/solid';
 import { ref, watch, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { TrustDto, UserDto, VaultDto, didCompleteSetup, ActivatedUser } from '../../common/backend';
@@ -194,6 +203,10 @@ function closeDialog() {
     clearInterval(randomSelectionInterval.value);
     randomSelectionInterval.value = null;
   }
+}
+
+function needsRedundancy(): boolean {
+  return requiredKeyShares.value == emergencyCouncilMembers.value.length;
 }
 
 async function searchCouncilMembers(query: string): Promise<ActivatedUser[]> {

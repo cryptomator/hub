@@ -328,6 +328,7 @@
   "vaultDetails.actions.archiveVault": "Archive Vault",
   "vaultDetails.actions.reactivateVault": "Reactivate Vault",
   "vaultDetails.actions.claimOwnership": "Claim Ownership",
+  "vaultDetails.actions.fixEmergencyCouncil": "Fix Emergency Access Council",
   "vaultDetails.actions.recoverVault": "Recover Vault Access",
   "vaultDetails.actions.keyAdded": "Key Added",
   "vaultDetails.actions.showEmergencyAccessState": "Show",
@@ -350,6 +351,7 @@
   "vaultList.filter.approvable": "Approvable",
   "vaultList.filter.approved": "Approved",
   "vaultList.filter.startable": "Startable",
+  "vaultList.badge.noCouncil":"No Council",
 
   "recoveryDialog.startTitle": "Start Emergency Access",
   "recoveryDialog.startDesc": "Start Emergency Access Desc",

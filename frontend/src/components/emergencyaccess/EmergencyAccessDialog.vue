@@ -65,12 +65,20 @@
                               {{ t('recoveryDialog.selectNewOwner') }}
                             </label>
                             <MultiUserSelectInputGroup
-                              :selected-users="newOwners"
+                              :selected-users="owners"
                               :on-search="searchUsers"
                               :input-visible="true"
-                              @action="addNewOwner"
-                              @remove="removeNewOwner"
+                              @action="addOwner"
+                              @remove="removeOwner"
                             />
+                            <div class="flex mt-5 sm:mt-6">
+                              <div class="flex h-5">
+                                <input id="alsoEndMembership" v-model="alsoEndMembership" name="alsoEndMembership" type="checkbox" class="h-4 w-4 rounded-sm border-gray-300 text-primary focus:ring-primary" required>
+                              </div>
+                              <div class="ml-3 text-sm">
+                                <label for="confirmSetupCode" class="font-medium text-gray-700">Also end membership of removed owners.</label>
+                              </div>
+                            </div>
                           </div>
 
                           <div v-else-if="processType === 'COUNCIL_CHANGE'">
@@ -97,8 +105,13 @@
                               :grant-button-disabled="isGrantButtonDisabled"
                               :required-key-shares="newRequiredKeyShares"
                             />
+                            <div v-if="needsRedundancy()" class="mt-4 mr-3">
+                              <span class="inline-flex items-center gap-2 rounded-full bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800" :title="t('emergencyAccessVaultList.noRedundancyHint')" >
+                                <ExclamationTriangleIcon class="h-4 w-4" aria-hidden="true" />
+                                {{ t('emergencyAccessVaultList.noRedundancy') }}
+                              </span>
+                            </div>
                           </div>
-
                           <div v-else class="text-sm text-red-600">
                             {{ t('recoveryDialog.error.invalidRecoveryType') }}
                           </div>
@@ -119,12 +132,20 @@
 
                           <div v-if="recoveryProcess.type === 'ASSIGN_OWNER'" class="mt-4 space-y-1 text-sm text-gray-500">
                             <div>
-                              <span class="font-medium text-gray-700">{{ t('recoveryDialog.selectedOwner') }}:</span>
+                              <span class="font-medium text-gray-700">Owner</span>
                               <MultiUserSelectInputGroup
-                                :selected-users="newOwners"
+                                :selected-users="selectedNewOwners"
                                 :on-search="noopSearch"
                                 :input-visible="false"
                               />
+                              <div v-if="removedOwners.length > 0"> 
+                                <span class="font-medium text-gray-700">Removed Owner</span>
+                                <MultiUserSelectInputGroup
+                                  :selected-users="removedOwners"
+                                  :on-search="noopSearch"
+                                  :input-visible="false"
+                                />
+                              </div>
                             </div>
                           </div>
 
@@ -148,10 +169,17 @@
                   </div>
                 
                   <div v-if="onError != null" class="w-full sm:w-auto mb-2 text-right">
+                    <p v-if="onError instanceof PaymentRequiredError" class="text-sm text-red-900 text-right mt-1">
+                      {{ t('vaultDetails.error.licenseViolated') }}
+                    </p>
+                    <p v-else class="inline-block text-sm text-red-700 bg-red-100 rounded px-3 py-1">
+                      {{ t('common.unexpectedError', [onError.message]) }}
+                    </p>
                     <p class="inline-block text-sm text-red-700 bg-red-100 rounded px-3 py-1">
                       {{ t('common.unexpectedError', [onError.message]) }}
                     </p>
                   </div>
+
                   <div v-if="conflictingProcessExists && phase === 'start'" class="w-full sm:w-auto mb-2 text-right">
                     <p class="inline-block text-sm text-red-700 bg-red-100 rounded px-3 py-1">
                       {{ t('recoveryDialog.error.processAlreadyExists') }}
@@ -233,12 +261,12 @@
 </template>
 
 <script setup lang="ts">
-import backend, { VaultDto, UserDto, RecoveryProcessDto, didCompleteSetup, RecoveryProcessSetNewOwner, RecoveryProcessChangeCouncil, ActivatedUser, AccessGrant, RecoveredKeyShareDto } from '../../common/backend';
+import backend, { VaultDto, UserDto, RecoveryProcessDto, didCompleteSetup, RecoveryProcessSetNewOwner, RecoveryProcessChangeCouncil, ActivatedUser, AccessGrant, RecoveredKeyShareDto, PaymentRequiredError } from '../../common/backend';
 import { ref, computed, toRaw, Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import * as R from 'remeda';
 import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
-import { PlayIcon } from '@heroicons/vue/24/solid';
+import { ExclamationTriangleIcon, PlayIcon } from '@heroicons/vue/24/solid';
 import { describeSegment } from '../../common/svgUtils';
 import { EmergencyAccess } from '../../common/emergencyaccess';
 import userdata from '../../common/userdata';
@@ -291,16 +319,59 @@ const didAddMyShare = computed(() => {
 const open = ref(false);
 const onError = ref<Error | null>();
 
+const alsoEndMembership = ref(false);
+
 const conflictingProcessExists = computed(() => {
   return existingProcesses.value.some(p => p.type === processType.value);
 });
 
 const existingProcesses = ref<RecoveryProcessDto[]>([]);
 
-// NEW OWNER
-const newOwners = ref<ActivatedUser[]>([]);
-const addNewOwner = addUser.bind(newOwners);
-const removeNewOwner = removeUser.bind(newOwners);
+const owners = ref<ActivatedUser[]>([]);
+const addOwner = addUser.bind(owners);
+const removeOwner = removeUser.bind(owners);
+
+const existingOwnerIds = ref<Set<string>>(new Set());
+
+const removedOwners = computed<ActivatedUser[]>(() => 
+  owners.value
+    .filter(u => !selectedNewOwners.value.some(s => s.id === u.id))
+);
+
+const removedOwnerIds = computed<string[]>(() =>
+  owners.value
+    .filter(u => !selectedNewOwners.value.some(s => s.id === u.id))
+    .map(u => u.id)
+);
+
+const newOwnerIds = computed(() =>
+  owners.value
+    .map(u => u.id)
+);
+
+const selectedNewOwners = computed<ActivatedUser[]>(() => {
+  if (props.recoveryProcess?.type === 'ASSIGN_OWNER') {
+    const ids = new Set(props.recoveryProcess.details.newOwnerIds);
+    return owners.value.filter(u => ids.has(u.id));
+  }
+  const ids = new Set(newOwnerIds.value);
+  return owners.value.filter(u => ids.has(u.id));
+});
+
+const selectedNewOwnerIds = computed(() =>
+  selectedNewOwners.value
+    .map(u => u.id)
+);
+
+function setAndArrayDifferById(setIds: Set<string>, arr: { id: string }[]): boolean {
+  if (setIds.size !== arr.length) return true;
+  for (const u of arr) if (!setIds.has(u.id)) return true;
+  return false;
+}
+
+const ownersDifferFromExistingIds = computed(() =>
+  setAndArrayDifferById(existingOwnerIds.value, owners.value)
+);
 
 // COUNCIL CHANGE
 const newRequiredKeyShares = ref<number>(props.vault.requiredEmergencyKeyShares);
@@ -313,7 +384,7 @@ const isGrantButtonDisabled = computed(() => newCouncilMembers.value.length < ne
 const canStartRecovery = computed(() => {
   if (processType.value == null) return false;
   if (conflictingProcessExists.value) return false;
-  if (processType.value === 'ASSIGN_OWNER') return newOwners.value.length > 0;
+  if (processType.value === 'ASSIGN_OWNER') return ownersDifferFromExistingIds.value;
   if (processType.value === 'COUNCIL_CHANGE') return newCouncilMembers.value.length >= newRequiredKeyShares.value && newRequiredKeyShares.value > 0;
   return false;
 });
@@ -330,6 +401,10 @@ function addUser(this: Ref<UserDto[]>, user: UserDto) {
   if (!this.value.find(u => u.id === user.id)) {
     this.value.push(user);
   }
+}
+
+function needsRedundancy(): boolean {
+  return newRequiredKeyShares.value == newCouncilMembers.value.length;
 }
 
 const abortDialog = ref<InstanceType<typeof ProcessAbortDialog> | null>(null);
@@ -379,6 +454,14 @@ function processConflicts(type: RecoveryProcessDto['type']) {
 }
 
 async function show() {
+  //Seats test: fails without admin permissions
+  try {
+    const seats = (await backend.billing.get()).licensedSeats;
+    console.log('Seats: ' + seats);
+  } catch (e) {
+    console.error('Loading seats amount failed', e);
+  }
+
   existingProcesses.value = await backend.emergencyAccess.findProcessesForVault(props.vault.id);
 
   if (props.recoveryProcess) {
@@ -391,6 +474,16 @@ async function show() {
     processType.value = firstFree ?? 'ASSIGN_OWNER';
   }
 
+  try {
+    const memberList = await backend.vaults.getMembers(props.vault.id);
+    const existingOwners = memberList
+      .filter(m => m.type === 'USER' && m.role === 'OWNER' && didCompleteSetup(m)) as ActivatedUser[];
+    owners.value = existingOwners;
+    existingOwnerIds.value = new Set(owners.value.map(u => u.id));
+  } catch (e) {
+    console.error('Loading existing owners failed', e);
+  }
+
   if (props.recoveryProcess?.type === 'COUNCIL_CHANGE') {
     const authorities = await backend.authorities.listSome(props.recoveryProcess.details.newCouncilMemberIds);
     const users = authorities.filter(a => a.type === 'USER').filter(u => didCompleteSetup(u));
@@ -398,8 +491,11 @@ async function show() {
   } else if (props.recoveryProcess?.type === 'ASSIGN_OWNER') {
     const authorities = await backend.authorities.listSome(props.recoveryProcess.details.newOwnerIds);
     const users = authorities.filter(a => a.type === 'USER').filter(u => didCompleteSetup(u));
-    newOwners.value = users;
+    for (const u of users) {
+      if (!owners.value.find(x => x.id === u.id)) owners.value.push(u as ActivatedUser);
+    }
   }
+  debugLogUsers();
 
   open.value = true;
 }
@@ -437,13 +533,13 @@ async function startRecovery() {
 
     let data: RecoveryProcessSetNewOwner | RecoveryProcessChangeCouncil;
     if (processType.value === 'ASSIGN_OWNER') {
-      if (!newOwners.value) {
+      if (newOwnerIds.value.length === 0) {
         throw new Error(t('recoveryDialog.error.noOwnerSelected'));
       }
       data = {
         type: 'ASSIGN_OWNER',
         details: {
-          newOwnerIds: newOwners.value.map(u => u.id)
+          newOwnerIds: newOwnerIds.value
         }
       };
     } else if (processType.value === 'COUNCIL_CHANGE') {
@@ -551,16 +647,29 @@ async function completeRecovery() {
         keyShares,
         props.vault.description
       );
-    } else if (process.type === 'ASSIGN_OWNER' && newOwners.value.length > 0) {
+    } else if (process.type === 'ASSIGN_OWNER') {
       const vaultKeys = await VaultKeys.recover(recoveredKey);
-      const accessGrants: AccessGrant[] = await Promise.all(newOwners.value.map(async u => {
-        const publicKey = base64.parse(u.ecdhPublicKey);
-        const jwe = vaultKeys.encryptForUser(publicKey);
-        await backend.vaults.addUser(props.vault.id, u.id, 'OWNER');
-        return { userId: u.id, token: await jwe };
-      }));
-      await backend.vaults.grantAccess(props.vault.id, ...accessGrants);
-    } else {
+
+      if (removedOwnerIds.value.length > 0) {
+        for (const id of removedOwnerIds.value) {
+          await backend.vaults.addUser(props.vault.id, id, 'MEMBER');
+          //await backend.vaults.removeAuthority(props.vault.id, id); //Forbidden
+        }
+      }
+
+      if (selectedNewOwnerIds.value.length > 0) {
+        const accessGrants: AccessGrant[] = await Promise.all(selectedNewOwnerIds.value.map(async id => {
+          const u = selectedNewOwners.value.find(x => x.id === id)!;
+          const publicKey = base64.parse(u.ecdhPublicKey);
+          const jwe = vaultKeys.encryptForUser(publicKey);
+          await backend.vaults.addUser(props.vault.id, u.id, 'OWNER');
+          return { userId: u.id, token: await jwe };
+        }));
+        await backend.vaults.grantAccess(props.vault.id, ...accessGrants);
+      }
+    }
+
+    else {
       throw new Error(`Unsupported state for recovery process type: ${process.type}`);
     }
 
@@ -571,6 +680,54 @@ async function completeRecovery() {
     console.error('Completing emergency recovery failed.', error);
     onError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
+}
+
+async function debugLogUserNamesByIds(ids: string[], label = 'Users by ID') {
+  try {
+    const authorities = await backend.authorities.listSome(ids);
+    const users = authorities
+      .filter((a): a is UserDto => a.type === 'USER'); // didCompleteSetup optional hier
+
+    const rows = users.map(u => ({
+      id: u.id,
+      name: u.name,
+      setupComplete: didCompleteSetup(u),
+    }));
+
+    console.group(`[DEBUG] ${label}`);
+    console.table(rows);
+    const resolved = new Set(users.map(u => u.id));
+    const missing = ids.filter(id => !resolved.has(id));
+    if (missing.length > 0) {
+      console.warn('IDs ohne Treffer:', missing);
+    }
+    console.groupEnd();
+  } catch (e) {
+    console.error('[DEBUG] Fehler beim Auflösen von User-IDs:', e);
+  }
+}
+
+function debugLogUsersFromObjects(users: (UserDto | ActivatedUser)[], label = 'Users (objects)') {
+  const rows = users.map(u => ({
+    id: u.id,
+    name: u.name,
+    setupComplete: 'type' in u ? didCompleteSetup(u as UserDto) : undefined,
+  }));
+  console.group(`[DEBUG] ${label}`);
+  console.table(rows);
+  console.groupEnd();
+}
+
+async function debugLogUsers() {
+  console.group('[DEBUG] RecoveryDialog Users');
+
+  await debugLogUserNamesByIds(removedOwnerIds.value, 'Removed Owner (IDs → Namen)');
+
+  debugLogUsersFromObjects(owners.value, 'Owners (objects)');
+  debugLogUsersFromObjects(selectedNewOwners.value, 'Selected New Owners (objects)');
+  debugLogUsersFromObjects(newCouncilMembers.value, 'New Council Members (objects)');
+
+  console.groupEnd();
 }
 
 async function addMyShare(process: RecoveryProcessDto, userKeys: UserKeys): Promise<RecoveredKeyShareDto> {

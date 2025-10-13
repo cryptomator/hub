@@ -81,6 +81,14 @@
                 <p class="truncate text-sm font-medium text-primary">{{ vault.name }}</p>
                 <div v-if="ownedVaults?.some(ownedVault => ownedVault.id == vault.id)" class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">{{ t('vaultList.badge.owner') }}</div>
                 <div v-if="vault.archived" class="inline-flex items-center rounded-md bg-yellow-400/10 px-2 py-1 text-xs font-medium text-yellow-500 ring-1 ring-inset ring-yellow-400/20">{{ t('vaultList.badge.archived') }}</div>
+                <div v-if="!hasEmergencyKeys(vault) && ownedVaults?.some(ownedVault => ownedVault.id == vault.id)" class="inline-flex items-center rounded-md bg-yellow-400/10 px-2 py-1 text-xs font-medium text-yellow-500 ring-1 ring-inset ring-yellow-400/20">
+                  <ExclamationTriangleIcon class="h-4 w-4 text-yellow-500 mr-1" />
+                  {{ t('vaultList.badge.noCouncil') }}
+                </div>
+                <div v-else-if="hasInsufficientEmergencyRedundancy(vault) && ownedVaults?.some(ownedVault => ownedVault.id == vault.id)" class="inline-flex items-center rounded-md bg-yellow-400/10 px-2 py-1 text-xs font-medium text-yellow-500 ring-1 ring-inset ring-yellow-400/20">
+                  <ExclamationTriangleIcon class="h-4 w-4 text-yellow-500 mr-1" />
+                  {{ t('emergencyAccessVaultList.noRedundancy') }}
+                </div>
               </div>
               <p v-if="vault.description && vault.description.length > 0" class="truncate text-sm text-gray-500 mt-2">{{ vault.description }}</p>
             </div>
@@ -117,7 +125,7 @@
 <script setup lang="ts">
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
 import { ArrowPathIcon, ChevronDownIcon, PlusIcon } from '@heroicons/vue/20/solid';
-import { CheckIcon, ChevronRightIcon, ChevronUpDownIcon } from '@heroicons/vue/24/solid';
+import { CheckIcon, ChevronRightIcon, ChevronUpDownIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/solid';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auth from '../common/auth';
@@ -209,6 +217,22 @@ async function fetchData() {
 function showVaultDetails(vault: VaultDto) {
   selectedVault.value = vault;
   nextTick(() => vaultDetailsSlideOver.value?.show());
+}
+
+function hasEmergencyKeys(vault: VaultDto): boolean {
+  return Object.keys(vault.emergencyKeyShares ?? {}).length > 0; 
+}
+
+function needsRedundancy(vault: VaultDto): boolean {
+  const required = vault.requiredEmergencyKeyShares ?? 0;
+  const members = Object.keys(vault.emergencyKeyShares ?? {}).length;
+  return required == members;
+}
+
+function hasInsufficientEmergencyRedundancy(vault: VaultDto): boolean {
+  const required = vault.requiredEmergencyKeyShares ?? 0;
+  const members = Object.keys(vault.emergencyKeyShares ?? {}).length;
+  return required == members;
 }
 
 async function onSelectedVaultUpdate(vault: VaultDto) {

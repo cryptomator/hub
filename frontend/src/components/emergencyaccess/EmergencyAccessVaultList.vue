@@ -53,7 +53,14 @@
               </div>
               <p v-if="vault.description" class="truncate text-sm text-gray-500 mt-2">{{ vault.description }}</p>
             </div>
-            <div v-if="needsRedundancy(vault)" class="mr-3">
+            <div v-if="!isEmergencyKeyShareHolder(vault)" class="mr-3">
+              <span class="inline-flex items-center gap-2 rounded-full bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800">
+                <ExclamationTriangleIcon class="h-4 w-4" aria-hidden="true" />
+                Not a council member anymore
+              </span>
+            </div>
+
+            <div v-if="needsRedundancy(vault) && isEmergencyKeyShareHolder(vault)" class="mr-3">
               <span
                 class="inline-flex items-center gap-2 rounded-full bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800"
                 :title="t('emergencyAccessVaultList.noRedundancyHint')"
@@ -143,7 +150,6 @@
                 </button>
               </template>
             </div>
-
 
           </div>
           <!-- TODO: remove this dev area -->
