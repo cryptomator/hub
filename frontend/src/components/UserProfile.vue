@@ -52,7 +52,7 @@
         </div>
         <div v-if="version != null" class="text-center">
           <p class="text-xs text-gray-500">
-            Hub {{ version.hubVersion }} • Keycloak {{ version.keycloakVersion }}
+            Hub {{ version.hubVersion }} • Keycloak {{ version.keycloakVersion ?? t('userProfile.keycloakVersion.notAvailable') }}
           </p>
         </div>
       </div>

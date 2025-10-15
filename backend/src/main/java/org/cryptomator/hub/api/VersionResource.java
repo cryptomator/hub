@@ -25,7 +25,11 @@ public class VersionResource {
 	@Operation(summary = "get version of hub and keycloak")
 	@APIResponse(responseCode = "200")
 	public VersionDto getVersion() {
-		var keycloakVersion = keycloak.serverInfo().getInfo().getSystemInfo().getVersion();
+		String keycloakVersion = null;
+		var keycloakSystemInfo = keycloak.serverInfo().getInfo().getSystemInfo();
+		if (keycloakSystemInfo != null) {
+			keycloakVersion = keycloakSystemInfo.getVersion();
+		}
 		return new VersionDto(hubVersion, keycloakVersion);
 	}
 
