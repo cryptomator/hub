@@ -160,7 +160,8 @@
       },
       "clientRoles": {
         "realm-management": [
-          "realm-admin"
+          "realm-admin",
+          "view-system"
         ]
       }
     },
