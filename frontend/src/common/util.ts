@@ -9,7 +9,7 @@ export class UTF8 {
    * @param data string to encode
    * @returns Uint8Array containing the UTF-8 NFC encoded string
    */
-  public static encode(data: string): Uint8Array {
+  public static encode(data: string): Uint8Array<ArrayBuffer> {
     return UTF8.encoder.encode(data.normalize('NFC'));
   }
 

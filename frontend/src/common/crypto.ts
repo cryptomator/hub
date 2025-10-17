@@ -1,7 +1,16 @@
-import * as miscreant from 'miscreant';
-import { base16, base32, base64, base64url } from 'rfc4648';
-import { JWEBuilder, JWEParser } from './jwe';
-import { UTF8, CRC32, DB, wordEncoder } from './util';
+import { base16, base64, base64url } from 'rfc4648';
+import { VaultDto } from './backend';
+import { JWE, Recipient } from './jwe';
+import { DB, UTF8 } from './util';
+
+/**
+ * Represents a JSON Web Key (JWK) as defined in RFC 7517.
+ * @see https://datatracker.ietf.org/doc/html/rfc7517#section-5
+ */
+export type JsonWebKeySet = {
+  keys: JsonWebKey & { kid?: string }[] // RFC defines kid, but webcrypto spec does not
+}
+
 export class UnwrapKeyError extends Error {
   readonly actualError: unknown;
 
@@ -11,29 +20,15 @@ export class UnwrapKeyError extends Error {
   }
 }
 
-export interface VaultConfigPayload {
-  jti: string
-  format: number
-  cipherCombo: string
-  shorteningThreshold: number
+export interface AccessTokenPayload {
+  /**
+   * The vault key (base64-encoded DER-formatted)
+   */
+  key: string,
+  [key: string]: string | number | boolean | object | undefined
 }
 
-export interface VaultConfigHeaderHub {
-  clientId: string
-  authEndpoint: string
-  tokenEndpoint: string
-  authSuccessUrl: string
-  authErrorUrl: string
-  apiBaseUrl: string
-  // deprecated:
-  devicesResourceUrl: string
-}
-
-interface JWEPayload {
-  key: string
-}
-
-interface UserKeyPayload {
+interface UserKeyPayload extends AccessTokenPayload {
   /**
    * @deprecated use `ecdhPrivateKey` instead
    */
@@ -42,222 +37,60 @@ interface UserKeyPayload {
   ecdsaPrivateKey: string,
 }
 
-const GCM_NONCE_LEN = 12;
+export const GCM_NONCE_LEN = 12;
 
-export class VaultKeys {
-  // in this browser application, this 512 bit key is used
-  // as a hmac key to sign the vault config.
-  // however when used by cryptomator, it gets split into
-  // a 256 bit encryption key and a 256 bit mac key
-  private static readonly MASTERKEY_KEY_DESIGNATION: HmacImportParams | HmacKeyGenParams = {
-    name: 'HMAC',
-    hash: 'SHA-256',
-    length: 512
-  };
+export interface AccessTokenProducing {
 
-  readonly masterKey: CryptoKey;
+  /**
+   * Creates a user-specific access token for the given vault.
+   * @param userPublicKey the public key of the user
+   * @param isOwner whether to also include owner secrets for this user (UVF only)
+   */
+  encryptForUser(userPublicKey: CryptoKey | Uint8Array, isOwner?: boolean): Promise<string>;
 
-  protected constructor(masterkey: CryptoKey) {
-    this.masterKey = masterkey;
+}
+
+export interface VaultTemplateProducing {
+
+  /**
+   * Produces a zip file containing the vault template.
+   * @param apiURL absolute base URL of the API
+   * @param vault The vault
+   */
+  exportTemplate(apiURL: string, vault: VaultDto): Promise<Blob>;
+
+}
+
+/**
+ * Represents a vault member by their public key.
+ */
+export class OtherVaultMember {
+  protected constructor(readonly publicKey: Promise<CryptoKey>) { }
+
+  /**
+   * Creates a new vault member with the given public key
+   * @param publicKey The public key of the vault member
+   * @returns A vault member with the given public key
+   */
+  public static withPublicKey(publicKey: CryptoKey | BufferSource): OtherVaultMember {
+    const keyPromise = asPublicKey(publicKey, UserKeys.ECDH_KEY_DESIGNATION);
+    return new OtherVaultMember(keyPromise);
   }
 
   /**
-   * Creates a new masterkey
-   * @returns A new masterkey
+   * Creates an access token for this vault member.
+   * @param payload The payload to encrypt
+   * @return A ECDH-ES encrypted JWE containing the encrypted payload
    */
-  public static async create(): Promise<VaultKeys> {
-    const key = crypto.subtle.generateKey(
-      VaultKeys.MASTERKEY_KEY_DESIGNATION,
-      true,
-      ['sign']
-    );
-    return new VaultKeys(await key);
-  }
-
-  /**
-   * Decrypts the vault's masterkey using the user's private key
-   * @param jwe JWE containing the vault key
-   * @param userPrivateKey The user's private key
-   * @returns The masterkey
-   */
-  public static async decryptWithUserKey(jwe: string, userPrivateKey: CryptoKey): Promise<VaultKeys> {
-    let rawKey = new Uint8Array();
-    try {
-      const payload: JWEPayload = await JWEParser.parse(jwe).decryptEcdhEs(userPrivateKey);
-      rawKey = base64.parse(payload.key);
-      const masterkey = crypto.subtle.importKey('raw', rawKey, VaultKeys.MASTERKEY_KEY_DESIGNATION, true, ['sign']);
-      return new VaultKeys(await masterkey);
-    } finally {
-      rawKey.fill(0x00);
-    }
-  }
-
-  /**
-   * Unwraps keys protected by the legacy "Vault Admin Password".
-   * @param vaultAdminPassword Vault Admin Password
-   * @param wrappedMasterkey The wrapped masterkey
-   * @param wrappedOwnerPrivateKey The wrapped owner private key
-   * @param ownerPublicKey The owner public key
-   * @param salt PBKDF2 Salt
-   * @param iterations PBKDF2 Iterations
-   * @returns The unwrapped key material.
-   * @throws WrongPasswordError, if the wrong password is used
-   * @deprecated Only used during "claim vault ownership" workflow for legacy vaults
-   */
-  public static async decryptWithAdminPassword(vaultAdminPassword: string, wrappedMasterkey: string, wrappedOwnerPrivateKey: string, ownerPublicKey: string, salt: string, iterations: number): Promise<[VaultKeys, CryptoKeyPair]> {
-    // pbkdf2:
-    const encodedPw = UTF8.encode(vaultAdminPassword);
-    const pwKey = crypto.subtle.importKey('raw', encodedPw, 'PBKDF2', false, ['deriveKey']);
-    const kek = crypto.subtle.deriveKey(
-      {
-        name: 'PBKDF2',
-        hash: 'SHA-256',
-        salt: base64.parse(salt, { loose: true }),
-        iterations: iterations
-      },
-      await pwKey,
-      { name: 'AES-GCM', length: 256 },
-      false,
-      ['unwrapKey']
-    );
-    // unwrapping
-    const decodedMasterKey = base64.parse(wrappedMasterkey, { loose: true });
-    const decodedPrivateKey = base64.parse(wrappedOwnerPrivateKey, { loose: true });
-    const decodedPublicKey = base64.parse(ownerPublicKey, { loose: true });
-    try {
-      const masterkey = await crypto.subtle.unwrapKey(
-        'raw',
-        decodedMasterKey.slice(GCM_NONCE_LEN),
-        await kek,
-        { name: 'AES-GCM', iv: decodedMasterKey.slice(0, GCM_NONCE_LEN) },
-        VaultKeys.MASTERKEY_KEY_DESIGNATION,
-        true,
-        ['sign']
-      );
-      const privKey = await crypto.subtle.unwrapKey(
-        'pkcs8',
-        decodedPrivateKey.slice(GCM_NONCE_LEN),
-        await kek,
-        { name: 'AES-GCM', iv: decodedPrivateKey.slice(0, GCM_NONCE_LEN) },
-        { name: 'ECDSA', namedCurve: 'P-384' },
-        false,
-        ['sign']
-      );
-      const pubKey = await crypto.subtle.importKey(
-        'spki',
-        decodedPublicKey,
-        { name: 'ECDSA', namedCurve: 'P-384' },
-        true,
-        ['verify']
-      );
-      return [new VaultKeys(masterkey), { privateKey: privKey, publicKey: pubKey }];
-    } catch (error) {
-      throw new UnwrapKeyError(error);
-    }
-  }
-
-  /**
-   * Restore the master key from a given recovery key, create a new admin signature key pair.
-   * @param recoveryKey The recovery key
-   * @returns The recovered master key
-   * @throws Error, if passing a malformed recovery key
-   */
-  public static async recover(recoveryKey: string): Promise<VaultKeys> {
-    // decode and check recovery key:
-    const decoded = wordEncoder.decode(recoveryKey);
-    if (decoded.length !== 66) {
-      throw new Error('Invalid recovery key length.');
-    }
-    const decodedKey = decoded.subarray(0, 64);
-    const crc32 = CRC32.compute(decodedKey);
-    if (decoded[64] !== (crc32 & 0xFF)
-      || decoded[65] !== (crc32 >> 8 & 0xFF)) {
-      throw new Error('Invalid recovery key checksum.');
-    }
-
-    // construct new VaultKeys from recovered key
-    const key = crypto.subtle.importKey(
-      'raw',
-      decodedKey,
-      VaultKeys.MASTERKEY_KEY_DESIGNATION,
-      true,
-      ['sign']
-    );
-    return new VaultKeys(await key);
-  }
-
-  public async createVaultConfig(kid: string, hubConfig: VaultConfigHeaderHub, payload: VaultConfigPayload): Promise<string> {
-    const header = JSON.stringify({
-      kid: kid,
-      typ: 'jwt',
-      alg: 'HS256',
-      hub: hubConfig
-    });
-    const payloadJson = JSON.stringify(payload);
-    const unsignedToken = base64url.stringify(UTF8.encode(header), { pad: false }) + '.' + base64url.stringify(UTF8.encode(payloadJson), { pad: false });
-    const encodedUnsignedToken = UTF8.encode(unsignedToken);
-    const signature = await crypto.subtle.sign(
-      'HMAC',
-      this.masterKey,
-      encodedUnsignedToken
-    );
-    return unsignedToken + '.' + base64url.stringify(new Uint8Array(signature), { pad: false });
-  }
-
-  public async hashDirectoryId(cleartextDirectoryId: string): Promise<string> {
-    const dirHash = UTF8.encode(cleartextDirectoryId);
-    const rawkey = new Uint8Array(await crypto.subtle.exportKey('raw', this.masterKey));
-    try {
-      // miscreant lib requires mac key first and then the enc key
-      const encKey = rawkey.subarray(0, rawkey.length / 2 | 0);
-      const macKey = rawkey.subarray(rawkey.length / 2 | 0);
-      const shiftedRawKey = new Uint8Array([...macKey, ...encKey]);
-      const key = await miscreant.SIV.importKey(shiftedRawKey, 'AES-SIV');
-      const ciphertext = await key.seal(dirHash, []);
-      // hash is only used as deterministic scheme for the root dir
-      const hash = await crypto.subtle.digest('SHA-1', ciphertext);
-      return base32.stringify(new Uint8Array(hash));
-    } finally {
-      rawkey.fill(0x00);
-    }
-  }
-
-  /**
-   * Encrypts this masterkey using the given public key
-   * @param userPublicKey The recipient's public key (DER-encoded)
-   * @returns a JWE containing this Masterkey
-   */
-  public async encryptForUser(userPublicKey: CryptoKey | BufferSource): Promise<string> {
-    const publicKey = await asPublicKey(userPublicKey, UserKeys.ECDH_KEY_DESIGNATION);
-    const rawkey = new Uint8Array(await crypto.subtle.exportKey('raw', this.masterKey));
-    try {
-      const payload: JWEPayload = {
-        key: base64.stringify(rawkey)
-      };
-      return JWEBuilder.ecdhEs(publicKey).encrypt(payload);
-    } finally {
-      rawkey.fill(0x00);
-    }
-  }
-
-  /**
-   * Encode masterkey for offline backup purposes, allowing re-importing the key for recovery purposes
-   */
-  public async createRecoveryKey(): Promise<string> {
-    const rawkey = new Uint8Array(await crypto.subtle.exportKey('raw', this.masterKey));
-
-    // add 16 bit checksum:
-    const crc32 = CRC32.compute(rawkey);
-    const checksum = new Uint8Array(2);
-    checksum[0] = crc32 & 0xff;      // append the least significant byte of the crc
-    checksum[1] = crc32 >> 8 & 0xff; // followed by the second-least significant byte
-    const combined = new Uint8Array([...rawkey, ...checksum]);
-
-    // encode using human-readable words:
-    return wordEncoder.encodePadded(combined);
+  public async createAccessToken(payload: AccessTokenPayload): Promise<string> {
+    const jwe = await JWE.build(payload).encrypt(Recipient.ecdhEs('org.cryptomator.hub.userkey', await this.publicKey));
+    return jwe.compactSerialization();
   }
 }
 
+/**
+ * The current user's key pair.
+ */
 export class UserKeys {
   public static readonly ECDH_PRIV_KEY_USAGES: KeyUsage[] = ['deriveBits'];
 
@@ -291,7 +124,7 @@ export class UserKeys {
    * @throws {UnwrapKeyError} when attempting to decrypt the private key using an incorrect setupCode
    */
   public static async recover(privateKeys: string, setupCode: string, userEcdhPublicKey: CryptoKey | BufferSource, userEcdsaPublicKey?: CryptoKey | BufferSource): Promise<UserKeys> {
-    const jwe: UserKeyPayload = await JWEParser.parse(privateKeys).decryptPbes2(setupCode);
+    const jwe: UserKeyPayload = await JWE.parseCompact(privateKeys).decrypt(Recipient.pbes2('org.cryptomator.hub.setupCode', setupCode));
     return UserKeys.createFromJwe(jwe, userEcdhPublicKey, userEcdsaPublicKey);
   }
 
@@ -304,20 +137,20 @@ export class UserKeys {
    * @returns The user's key pair
    */
   public static async decryptOnBrowser(jwe: string, browserPrivateKey: CryptoKey, userEcdhPublicKey: CryptoKey | BufferSource, userEcdsaPublicKey?: CryptoKey | BufferSource): Promise<UserKeys> {
-    const payload: UserKeyPayload = await JWEParser.parse(jwe).decryptEcdhEs(browserPrivateKey);
+    const payload: UserKeyPayload = await JWE.parseCompact(jwe).decrypt(Recipient.ecdhEs('org.cryptomator.hub.deviceKey', browserPrivateKey));
     return UserKeys.createFromJwe(payload, userEcdhPublicKey, userEcdsaPublicKey);
   }
 
   private static async createFromJwe(jwe: UserKeyPayload, ecdhPublicKey: CryptoKey | BufferSource, ecdsaPublicKey?: CryptoKey | BufferSource): Promise<UserKeys> {
     const ecdhKeyPair: CryptoKeyPair = {
       publicKey: await asPublicKey(ecdhPublicKey, UserKeys.ECDH_KEY_DESIGNATION),
-      privateKey: await crypto.subtle.importKey('pkcs8', base64.parse(jwe.ecdhPrivateKey ?? jwe.key, { loose: true }), UserKeys.ECDH_KEY_DESIGNATION, true, UserKeys.ECDH_PRIV_KEY_USAGES)
+      privateKey: await crypto.subtle.importKey('pkcs8', base64.parse(jwe.ecdhPrivateKey ?? jwe.key, { loose: true }).slice(), UserKeys.ECDH_KEY_DESIGNATION, true, UserKeys.ECDH_PRIV_KEY_USAGES)
     };
     let ecdsaKeyPair: CryptoKeyPair;
     if (jwe.ecdsaPrivateKey && ecdsaPublicKey) {
       ecdsaKeyPair = {
         publicKey: await asPublicKey(ecdsaPublicKey, UserKeys.ECDSA_KEY_DESIGNATION, UserKeys.ECDSA_PUB_KEY_USAGES),
-        privateKey: await crypto.subtle.importKey('pkcs8', base64.parse(jwe.ecdsaPrivateKey, { loose: true }), UserKeys.ECDSA_KEY_DESIGNATION, true, UserKeys.ECDSA_PRIV_KEY_USAGES)
+        privateKey: await crypto.subtle.importKey('pkcs8', base64.parse(jwe.ecdsaPrivateKey, { loose: true }).slice(), UserKeys.ECDSA_KEY_DESIGNATION, true, UserKeys.ECDSA_PRIV_KEY_USAGES)
       };
     } else {
       // ECDSA key was added in Hub 1.4.0. If it's missing, we generate a new one.
@@ -347,24 +180,37 @@ export class UserKeys {
   /**
    * Encrypts the user's private key using a key derived from the given setupCode
    * @param setupCode The password to protect the private key.
+   * @param p2c Optional number of iterations for PBKDF2.
    * @returns A JWE holding the encrypted private key
-   * @see JWEBuilder.pbes2
+   * @see Recipient.pbes2
    */
-  public async encryptWithSetupCode(setupCode: string, iterations?: number): Promise<string> {
+  public async encryptWithSetupCode(setupCode: string, p2c?: number): Promise<string> {
     const payload = await this.prepareForEncryption();
-    return await JWEBuilder.pbes2(setupCode, iterations).encrypt(payload);
+    const jwe = await JWE.build(payload).encrypt(Recipient.pbes2('org.cryptomator.hub.setupCode', setupCode, p2c));
+    return jwe.compactSerialization();
   }
 
   /**
    * Encrypts the user's private key using the given public key
    * @param devicePublicKey The device's public key (DER-encoded)
    * @returns a JWE containing the PKCS#8-encoded private key
-   * @see JWEBuilder.ecdhEs
+   * @see Recipient.ecdhEs
    */
-  public async encryptForDevice(devicePublicKey: CryptoKey | Uint8Array): Promise<string> {
+  public async encryptForDevice(devicePublicKey: CryptoKey | BufferSource): Promise<string> {
     const publicKey = await asPublicKey(devicePublicKey, BrowserKeys.KEY_DESIGNATION);
     const payload = await this.prepareForEncryption();
-    return JWEBuilder.ecdhEs(publicKey).encrypt(payload);
+    const jwe = await JWE.build(payload).encrypt(Recipient.ecdhEs('org.cryptomator.hub.deviceKey', publicKey));
+    return jwe.compactSerialization();
+  }
+
+  /**
+   * Decrypts the access token using the user's ECDH private key
+   * @param jwe The encrypted access token
+   * @returns The token's payload
+   */
+  public async decryptAccessToken(jwe: string): Promise<AccessTokenPayload> {
+    const payload = await JWE.parseCompact(jwe).decrypt(Recipient.ecdhEs('org.cryptomator.hub.userkey', this.ecdhKeyPair.privateKey));
+    return payload;
   }
 
   private async prepareForEncryption(): Promise<UserKeyPayload> {
@@ -467,6 +313,18 @@ export async function asPublicKey(publicKey: CryptoKey | BufferSource, keyDesign
 /**
  * Computes the JWK Thumbprint (RFC 7638) using SHA-256.
  * @param key A key to compute the thumbprint for
+ * @returns The thumbprint as a base64url-encoded string
+ * @throws Error if the key is not supported
+ */
+export async function getJwkThumbprintStr(key: JsonWebKey | CryptoKey): Promise<string> {
+  const thumbprint = await getJwkThumbprint(key);
+  return base64url.stringify(new Uint8Array(thumbprint), { pad: false });
+}
+
+/**
+ * Computes the JWK Thumbprint (RFC 7638) using SHA-256.
+ * @param key A key to compute the thumbprint for
+ * @returns The thumbprint as a Uint8Array
  * @throws Error if the key is not supported
  */
 export async function getJwkThumbprint(key: JsonWebKey | CryptoKey): Promise<Uint8Array> {

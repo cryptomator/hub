@@ -54,8 +54,8 @@ import { saveAs } from 'file-saver';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { VaultDto } from '../common/backend';
-import { VaultKeys } from '../common/crypto';
-import { VaultConfig } from '../common/vaultconfig';
+import { absBackendBaseURL } from '../common/config';
+import { VaultTemplateProducing } from '../common/crypto';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -65,7 +65,7 @@ const onDownloadError = ref<Error|null>();
 
 const props = defineProps<{
   vault: VaultDto
-  vaultKeys: VaultKeys
+  vaultKeys: VaultTemplateProducing
 }>();
 
 defineEmits<{
@@ -83,17 +83,12 @@ function show() {
 async function downloadVault() {
   onDownloadError.value = null;
   try {
-    const blob = await generateVaultZip();
+    const blob = await props.vaultKeys.exportTemplate(absBackendBaseURL, props.vault);
     saveAs(blob, `${props.vault.name}.zip`);
     open.value = false;
   } catch (error) {
     console.error('Downloading vault template failed.', error);
     onDownloadError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
-}
-
-async function generateVaultZip(): Promise<Blob> {
-  const config = await VaultConfig.create(props.vault.id, props.vaultKeys);
-  return await config.exportTemplate();
 }
 </script>

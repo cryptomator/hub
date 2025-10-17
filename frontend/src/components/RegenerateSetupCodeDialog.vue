@@ -102,7 +102,7 @@ import { ArrowPathIcon, KeyIcon } from '@heroicons/vue/24/outline';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend from '../common/backend';
-import { JWEBuilder } from '../common/jwe';
+import { JWE, Recipient } from '../common/jwe';
 import userdata from '../common/userdata';
 import { debounce } from '../common/util';
 
@@ -154,7 +154,7 @@ async function regenerateSetupCode() {
     const newCode = crypto.randomUUID();
     const userKeys = await userdata.decryptUserKeysWithBrowser();
     me.privateKeys = await userKeys.encryptWithSetupCode(newCode);
-    me.setupCode = await JWEBuilder.ecdhEs(userKeys.ecdhKeyPair.publicKey).encrypt({ setupCode: newCode });
+    me.setupCode = (await JWE.build({ setupCode: newCode }).encrypt(Recipient.ecdhEs('org.cryptomator.hub.userkey', userKeys.ecdhKeyPair.publicKey))).compactSerialization();
     await backend.users.putMe(me);
     setupCode.value = newCode;
 

@@ -55,9 +55,8 @@ import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, Trans
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { VaultDto } from '../common/backend';
-
-import { VaultKeys } from '../common/crypto';
 import userdata from '../common/userdata';
+import { VaultFormat8 } from '../common/vaultFormat8';
 
 class FormValidationFailedError extends Error {
   constructor() {
@@ -103,11 +102,12 @@ async function recoverVault() {
   onVaultRecoverError.value = null;
   try {
     processingVaultRecovery.value = true;
-    const vaultKeys = await VaultKeys.recover(recoveryKey.value);
+    // TODO: check whether Vault Format 8 or UVF
+    const vaultFormat8 = await VaultFormat8.recover(recoveryKey.value);
     const me = await userdata.me;
-    if (vaultKeys) {
+    if (vaultFormat8) {
       const publicKey = await userdata.ecdhPublicKey;
-      const jwe = await vaultKeys.encryptForUser(publicKey);
+      const jwe = await vaultFormat8.encryptForUser(publicKey);
       await backend.vaults.grantAccess(props.vault.id, { userId: me.id, token: jwe });
       emit('recovered');
       open.value = false;

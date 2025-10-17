@@ -37,13 +37,29 @@ export class ConcatKDF {
 }
 
 export type JWEHeader = {
-  readonly alg: 'ECDH-ES' | 'PBES2-HS512+A256KW',
-  readonly enc: 'A256GCM' | 'A128GCM',
-  readonly apu?: string,
-  readonly apv?: string,
-  readonly epk?: JsonWebKey,
-  readonly p2c?: number,
-  readonly p2s?: string
+  kid?: string,
+  enc?: 'A256GCM' | 'A128GCM',
+  alg?: 'ECDH-ES' | 'ECDH-ES+A256KW' | 'PBES2-HS512+A256KW' | 'A256KW',
+  apu?: string,
+  apv?: string,
+  epk?: JsonWebKey,
+  p2c?: number,
+  p2s?: string,
+  jku?: string,
+  [other: string]: undefined | string | number | boolean | object; // allow further properties
+}
+
+export type JsonJWE = {
+  protected: string,
+  recipients: PerRecipientProperties[]
+  iv: string,
+  ciphertext: string,
+  tag: string
+}
+
+type PerRecipientProperties = {
+  encrypted_key: string;
+  header: JWEHeader;
 }
 
 export const ECDH_P384: EcKeyImportParams | EcKeyGenParams = {
@@ -51,174 +67,353 @@ export const ECDH_P384: EcKeyImportParams | EcKeyGenParams = {
   namedCurve: 'P-384'
 };
 
-export class JWEParser {
-  readonly header: JWEHeader;
-  readonly encryptedKey: Uint8Array;
-  readonly iv: Uint8Array;
-  readonly ciphertext: Uint8Array;
-  readonly tag: Uint8Array;
+// #region Recipients
 
-  private constructor(readonly encodedHeader: string, readonly encodedEncryptedKey: string, readonly encodedIv: string, readonly encodedCiphertext: string, readonly encodedTag: string) {
-    this.header = JSON.parse(UTF8.decode(base64url.parse(encodedHeader, { loose: true })));
-    this.encryptedKey = base64url.parse(encodedEncryptedKey, { loose: true });
-    this.iv = base64url.parse(encodedIv, { loose: true });
-    this.ciphertext = base64url.parse(encodedCiphertext, { loose: true });
-    this.tag = base64url.parse(encodedTag, { loose: true });
-  }
+export abstract class Recipient {
+  constructor(readonly kid: string) { };
 
   /**
-   * Decodes the JWE.
-   * @param jwe The JWE string
-   * @returns Decoded JWE, ready to decrypt.
+   * Encryptes a CEK using the recipient-specific `alg`.
+   * @param cek The CEK that is used to encrypt a JWE payload.
+   * @param commonHeader The protected and unprotected header (not per-recipient)
+   * @returns The encrypted CEK and per-recipient header parameters for the used `alg`.
    */
-  public static parse(jwe: string): JWEParser {
-    const [encodedHeader, encodedEncryptedKey, encodedIv, encodedCiphertext, encodedTag] = jwe.split('.', 5);
-    return new JWEParser(encodedHeader, encodedEncryptedKey, encodedIv, encodedCiphertext, encodedTag);
-  }
+  abstract encrypt(cek: CryptoKey, commonHeader: JWEHeader): Promise<PerRecipientProperties>;
 
   /**
-   * Decrypts the JWE, assuming alg == ECDH-ES, enc == A256GCM and keys on the P-384 curve.
-   * @param recipientPrivateKey The recipient's private key
-   * @returns Decrypted payload
+   * Decrypts the CEK using the recipient-specific `alg`.
+   * @param header JOSE header applicable for this recipient
+   * @param encryptedKey Encrypted CEK for this recipient
+   * @returns A non-extractable CEK suitable for decryption with AES-GCM.
+   * @throws {UnwrapKeyError} if decryption failed
    */
-  public async decryptEcdhEs<T>(recipientPrivateKey: CryptoKey): Promise<T> {
-    if (this.header.alg != 'ECDH-ES' || this.header.enc != 'A256GCM' || !this.header.epk) {
-      throw new Error('unsupported alg or enc');
+  abstract decrypt(header: JWEHeader, encryptedKey: string): Promise<CryptoKey>;
+
+  /**
+   * Create a recipient using `alg: ECDH-ES+A256KW`. Also supports `ECDH-ES` with direct key agreement for decryption
+   * 
+   * @param kid The key ID used to distinguish multiple recipients
+   * @param recipientKey The recipients static public key for encryption or private key for decryption
+   * @param apu Optional information about the creator
+   * @param apv Optional information about the recipient
+   * @returns A new recipient
+   */
+  public static ecdhEs(kid: string, recipientKey: CryptoKey, apu: Uint8Array = new Uint8Array(), apv: Uint8Array = new Uint8Array()): Recipient {
+    if (recipientKey?.type === 'secret' || recipientKey?.algorithm.name !== 'ECDH') {
+      throw new Error('Unsupported recipient key');
     }
-    const ephemeralKey = await crypto.subtle.importKey('jwk', this.header.epk, ECDH_P384, false, []);
-    const cek = await ECDH_ES.deriveContentKey(ephemeralKey, recipientPrivateKey, 384, 32, this.header);
-    return this.decrypt(cek);
+    return new EcdhRecipient(kid, recipientKey, apu, apv);
   }
 
   /**
-   * Decrypts the JWE, assuming alg == PBES2-HS512+A256KW and enc == A256GCM.
+   * Create a recipient using `alg: PBES2-HS512+A256KW`.
+   * 
+   * @param kid The key ID used to distinguish multiple recipients
    * @param password The password to feed into the KDF
-   * @returns Decrypted payload
-   * @throws {UnwrapKeyError} if decryption failed (wrong password?)
+   * @param iterations The PBKDF2 iteration count (defaults to {@link PBES2.DEFAULT_ITERATION_COUNT}) - ignored and read from the header's `p2c` value during decryption
+   * @returns A new recipient
    */
-  public async decryptPbes2<T>(password: string): Promise<T> {
-    if (this.header.alg != 'PBES2-HS512+A256KW' || /* this.header.enc != 'A256GCM' || */ !this.header.p2s || !this.header.p2c) {
-      throw new Error('unsupported alg or enc');
+  public static pbes2(kid: string, password: string, iterations: number = PBES2.DEFAULT_ITERATION_COUNT): Recipient {
+    return new Pbes2Recipient(kid, password, iterations);
+  }
+
+  /**
+   * Create a recipient using `alg: A256KW`.
+   * 
+   * @param kid The key ID used to distinguish multiple recipients
+   * @param wrappingKey The key used to wrap the CEK
+   * @returns A new recipient
+   */
+  public static a256kw(kid: string, wrappingKey: CryptoKey): Recipient {
+    if (wrappingKey?.type !== 'secret' || wrappingKey?.algorithm.name !== 'AES-KW') {
+      throw new Error('Unsupported wrapping key');
     }
-    const saltInput = base64url.parse(this.header.p2s, { loose: true });
-    const wrappingKey = await PBES2.deriveWrappingKey(password, this.header.alg, saltInput, this.header.p2c);
+    return new A256kwRecipient(kid, wrappingKey);
+  }
+}
+
+class EcdhRecipient extends Recipient {
+  constructor(readonly kid: string, private recipientKey: CryptoKey, private apu: Uint8Array = new Uint8Array(), private apv: Uint8Array = new Uint8Array()) {
+    super(kid);
+  }
+
+  async encrypt(cek: CryptoKey, commonHeader: JWEHeader): Promise<PerRecipientProperties> {
+    if (this.recipientKey.type !== 'public') {
+      throw new Error('Recipient public key required.');
+    }
+    const ephemeralKey = await crypto.subtle.generateKey(ECDH_P384, false, ['deriveBits']);
+    const header: JWEHeader = {
+      ...commonHeader,
+      kid: this.kid,
+      alg: 'ECDH-ES+A256KW',
+      epk: await crypto.subtle.exportKey('jwk', ephemeralKey.publicKey),
+      apu: base64url.stringify(this.apu, { pad: false }),
+      apv: base64url.stringify(this.apv, { pad: false })
+    };
+    const wrappingKey = await ECDH_ES.deriveKey(this.recipientKey, ephemeralKey.privateKey, 384, 32, header, false, { name: 'AES-KW', length: 256 }, ['wrapKey']);
+    const encryptedKey = new Uint8Array(await crypto.subtle.wrapKey('raw', cek, wrappingKey, 'AES-KW'));
+    return {
+      header: header,
+      encrypted_key: base64url.stringify(encryptedKey, { pad: false })
+    };
+  }
+
+  async decrypt(header: JWEHeader, encryptedKey: string): Promise<CryptoKey> {
+    if (this.recipientKey.type !== 'private') {
+      throw new Error('Recipient private key required.');
+    }
+    if (header.alg === 'ECDH-ES' && header.epk) {
+      return this.decryptDirect(header, { name: 'AES-GCM', length: 256 }, ['decrypt']);
+    } else if (header.alg === 'ECDH-ES+A256KW' && header.epk) {
+      return this.decryptAndUnwrap(header, encryptedKey);
+    } else {
+      throw new Error('Missing or invalid header parameters.');
+    }
+  }
+
+  async decryptDirect(header: JWEHeader, keyAlgorithm: AesKeyAlgorithm, keyUsage: KeyUsage[]): Promise<CryptoKey> {
+    let keyBits: number;
+    switch (header.epk!.crv) {
+      case 'P-256':
+        keyBits = 256;
+        break;
+      case 'P-384':
+        keyBits = 384;
+        break;
+      default:
+        throw new Error('Unsupported curve');
+    }
+    const epk = await crypto.subtle.importKey('jwk', header.epk!, { name: 'ECDH', namedCurve: header.epk?.crv }, false, []);
+    return ECDH_ES.deriveKey(epk, this.recipientKey, keyBits, keyAlgorithm.length / 8, header, false, keyAlgorithm, keyUsage);
+  }
+
+  async decryptAndUnwrap(header: JWEHeader, encryptedKey: string): Promise<CryptoKey> {
+    const wrappingKey = await this.decryptDirect(header, { name: 'AES-KW', length: 256 }, ['unwrapKey']);
     try {
-      const cek = crypto.subtle.unwrapKey('raw', this.encryptedKey, wrappingKey, 'AES-KW', { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
-      return this.decrypt(await cek);
+      return await crypto.subtle.unwrapKey('raw', base64url.parse(encryptedKey, { loose: true }), wrappingKey, 'AES-KW', { name: 'AES-GCM' }, false, ['decrypt']);
     } catch (error) {
       throw new UnwrapKeyError(error);
     }
   }
+}
 
-  private async decrypt<T>(cek: CryptoKey): Promise<T> {
-    const m = new Uint8Array(this.ciphertext.length + this.tag.length);
-    m.set(this.ciphertext, 0);
-    m.set(this.tag, this.ciphertext.length);
-    const payloadJson = new Uint8Array(await crypto.subtle.decrypt(
+class A256kwRecipient extends Recipient {
+  constructor(readonly kid: string, private wrappingKey: CryptoKey) {
+    super(kid);
+  }
+
+  async encrypt(cek: CryptoKey, commonHeader: JWEHeader): Promise<PerRecipientProperties> {
+    const header: JWEHeader = {
+      ...commonHeader,
+      kid: this.kid,
+      alg: 'A256KW'
+    };
+    const encryptedKey = new Uint8Array(await crypto.subtle.wrapKey('raw', cek, this.wrappingKey, 'AES-KW'));
+    return {
+      header: header,
+      encrypted_key: base64url.stringify(encryptedKey, { pad: false })
+    };
+  }
+
+  async decrypt(header: JWEHeader, encryptedKey: string): Promise<CryptoKey> {
+    if (header.alg != 'A256KW') {
+      throw new Error('unsupported alg');
+    }
+    try {
+      return await crypto.subtle.unwrapKey('raw', base64url.parse(encryptedKey, { loose: true }), this.wrappingKey, 'AES-KW', { name: 'AES-GCM' }, false, ['decrypt']);
+    } catch (error) {
+      throw new UnwrapKeyError(error);
+    }
+  }
+}
+
+class Pbes2Recipient extends Recipient {
+  constructor(readonly kid: string, private password: string, private iterations: number) {
+    super(kid);
+  }
+
+  async encrypt(cek: CryptoKey, commonHeader: JWEHeader): Promise<PerRecipientProperties> {
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const header: JWEHeader = {
+      ...commonHeader,
+      kid: this.kid,
+      alg: 'PBES2-HS512+A256KW',
+      p2c: this.iterations,
+      p2s: base64url.stringify(salt, { pad: false })
+    };
+    const wrappingKey = PBES2.deriveWrappingKey(this.password, 'PBES2-HS512+A256KW', salt, this.iterations);
+    const encryptedKey = new Uint8Array(await crypto.subtle.wrapKey('raw', cek, await wrappingKey, 'AES-KW'));
+    return {
+      header: header,
+      encrypted_key: base64url.stringify(encryptedKey, { pad: false })
+    };
+  }
+
+  async decrypt(header: JWEHeader, encryptedKey: string): Promise<CryptoKey> {
+    if (header.alg != 'PBES2-HS512+A256KW' || !header.p2s || !header.p2c) {
+      throw new Error('Missing or invalid header parameters.');
+    }
+    const salt = base64url.parse(header.p2s, { loose: true });
+    const wrappingKey = await PBES2.deriveWrappingKey(this.password, 'PBES2-HS512+A256KW', salt, header.p2c);
+    try {
+      return await crypto.subtle.unwrapKey('raw', base64url.parse(encryptedKey, { loose: true }), wrappingKey, 'AES-KW', { name: 'AES-GCM' }, false, ['decrypt']);
+    } catch (error) {
+      throw new UnwrapKeyError(error);
+    }
+  }
+}
+
+// #endregion
+// #region JWE
+
+export class JWE {
+  private constructor(private payload: object, private protectedHeader: JWEHeader) { }
+
+  public static build(payload: object, protectedHeader: JWEHeader = {}): JWE {
+    return new JWE(payload, protectedHeader);
+  }
+
+  public static parseCompact(token: string): EncryptedJWE {
+    const [protectedHeader, encryptedKey, iv, ciphertext, tag] = token.split('.', 5);
+    const utf8 = new TextDecoder();
+    const header: JWEHeader = JSON.parse(utf8.decode(base64url.parse(protectedHeader, { loose: true })));
+
+    return new EncryptedJWE(protectedHeader, [{ encrypted_key: encryptedKey, header: header }], iv, ciphertext, tag);
+  }
+
+  public static parseJson(jwe: JsonJWE): EncryptedJWE {
+    if (!jwe.protected || !jwe.recipients || !jwe.iv || !jwe.ciphertext || !jwe.tag) {
+      throw new Error('Malformed JWE');
+    }
+    return new EncryptedJWE(jwe.protected, jwe.recipients, jwe.iv, jwe.ciphertext, jwe.tag);
+  }
+
+  public async encrypt(recipient: Recipient, ...moreRecipients: Recipient[]): Promise<EncryptedJWE> {
+    let protectedHeader: JWEHeader = {
+      ...this.protectedHeader,
+      enc: 'A256GCM'
+    };
+    const cek = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt']);
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const perRecipientData = await Promise.all([recipient, ...moreRecipients].map(r => r.encrypt(cek, protectedHeader)));
+
+    if (perRecipientData.length === 1) {
+      protectedHeader = {
+        ...protectedHeader,
+        ...perRecipientData[0].header
+      };
+    } else {
+      protectedHeader.enc = perRecipientData[0].header.enc;
+      for (const key of Object.keys(protectedHeader)) {
+        perRecipientData.forEach(r => delete r.header[key]);
+      }
+    }
+
+    const encodedProtectedHeader = base64url.stringify(UTF8.encode(JSON.stringify(protectedHeader)), { pad: false });
+    const m = UTF8.encode(JSON.stringify(this.payload));
+    const ciphertextAndTag = new Uint8Array(await crypto.subtle.encrypt(
       {
         name: 'AES-GCM',
-        iv: this.iv,
-        additionalData: UTF8.encode(this.encodedHeader),
+        iv: iv,
+        additionalData: UTF8.encode(encodedProtectedHeader),
         tagLength: 128
       },
       cek,
       m
     ));
-    return JSON.parse(UTF8.decode(payloadJson));
-  }
-}
-
-export class JWEBuilder {
-  private constructor(readonly header: Promise<JWEHeader>, readonly encryptedKey: Promise<Uint8Array>, readonly cek: Promise<CryptoKey>) { }
-
-  /**
-   * Prepares a new JWE using alg: ECDH-ES and enc: A256GCM.
-   * 
-   * @param recipientPublicKey Static public key of the JWE's recipient
-   * @param apu Optional information about the creator
-   * @param apv Optional information about the recipient
-   * @returns A new JWEBuilder ready to encrypt the payload
-   */
-  public static ecdhEs(recipientPublicKey: CryptoKey, apu: Uint8Array = new Uint8Array(), apv: Uint8Array = new Uint8Array()): JWEBuilder {
-    /* key agreement and header params described in RFC 7518, Section 4.6: */
-    const ephemeralKey = crypto.subtle.generateKey(ECDH_P384, false, ['deriveBits']);
-    const header = (async () => <JWEHeader>{
-      alg: 'ECDH-ES',
-      enc: 'A256GCM',
-      epk: await crypto.subtle.exportKey('jwk', (await ephemeralKey).publicKey),
-      apu: base64url.stringify(apu, { pad: false }),
-      apv: base64url.stringify(apv, { pad: false })
-    })();
-    const encryptedKey = Promise.resolve(Uint8Array.of()); // empty for Direct Key Agreement as per spec
-    const cek = (async () => ECDH_ES.deriveContentKey(recipientPublicKey, (await ephemeralKey).privateKey, 384, 32, await header))();
-    return new JWEBuilder(header, encryptedKey, cek);
-  }
-
-  /**
-   * Prepares a new JWE using alg: PBES2-HS512+A256KW and enc: A256GCM.
-   * 
-   * @param password The password to feed into the KDF
-   * @param iterations The PBKDF2 iteration count (defaults to {@link PBES2.DEFAULT_ITERATION_COUNT} )
-   * @param apu Optional information about the creator
-   * @param apv Optional information about the recipient
-   * @returns A new JWEBuilder ready to encrypt the payload
-   */
-  public static pbes2(password: string, iterations: number = PBES2.DEFAULT_ITERATION_COUNT, apu: Uint8Array = new Uint8Array(), apv: Uint8Array = new Uint8Array()): JWEBuilder {
-    const saltInput = crypto.getRandomValues(new Uint8Array(16));
-    const header = (async () => <JWEHeader>{
-      alg: 'PBES2-HS512+A256KW',
-      enc: 'A256GCM',
-      p2s: base64url.stringify(saltInput, { pad: false }),
-      p2c: iterations,
-      apu: base64url.stringify(apu, { pad: false }),
-      apv: base64url.stringify(apv, { pad: false })
-    })();
-    const wrappingKey = PBES2.deriveWrappingKey(password, 'PBES2-HS512+A256KW', saltInput, iterations);
-    const cek = crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt']);
-    const encryptedKey = (async () => new Uint8Array(await crypto.subtle.wrapKey('raw', await cek, await wrappingKey, 'AES-KW')))();
-    return new JWEBuilder(header, encryptedKey, cek);
-  }
-
-  /**
-   * Builds the JWE.
-   * @param payload Payload to be encrypted
-   * @returns The JWE
-   */
-  public async encrypt(payload: object) {
-    /* JWE assembly and content encryption described in RFC 7516: */
-    const encodedHeader = base64url.stringify(UTF8.encode(JSON.stringify(await this.header)), { pad: false });
-    const iv = crypto.getRandomValues(new Uint8Array(12));
-    const encodedIv = base64url.stringify(iv, { pad: false });
-    const encodedEncryptedKey = base64url.stringify(await this.encryptedKey, { pad: false });
-    const m = new Uint8Array(await crypto.subtle.encrypt(
-      {
-        name: 'AES-GCM',
-        iv: iv,
-        additionalData: UTF8.encode(encodedHeader),
-        tagLength: 128
-      },
-      await this.cek,
-      UTF8.encode(JSON.stringify(payload))
-    ));
     console.assert(m.byteLength > 16, 'result of GCM encryption expected to contain 128bit tag');
-    const ciphertext = m.slice(0, m.byteLength - 16);
-    const tag = m.slice(m.byteLength - 16);
+    const ciphertext = ciphertextAndTag.slice(0, m.byteLength - 16);
+    const tag = ciphertextAndTag.slice(m.byteLength - 16);
+
+    const encodedIv = base64url.stringify(iv, { pad: false });
     const encodedCiphertext = base64url.stringify(ciphertext, { pad: false });
     const encodedTag = base64url.stringify(tag, { pad: false });
-    return `${encodedHeader}.${encodedEncryptedKey}.${encodedIv}.${encodedCiphertext}.${encodedTag}`;
+    return new EncryptedJWE(encodedProtectedHeader, perRecipientData, encodedIv, encodedCiphertext, encodedTag);
   }
 }
 
 // visible for testing
+export class EncryptedJWE {
+  constructor(private protectedHeader: string, private perRecipient: PerRecipientProperties[], private iv: string, private ciphertext: string, private tag: string) {
+    if (perRecipient.length < 1) {
+      throw new Error('Expected at least one recipient.');
+    }
+  }
+
+  public jsonSerialization(): JsonJWE {
+    if (this.perRecipient.length < 1) {
+      throw new Error('JWE JSON Serialization requires at least one recipient.');
+    }
+    const recipients = this.perRecipient.map(r => ({
+      header: r.header,
+      encrypted_key: r.encrypted_key
+    }));
+    return {
+      protected: this.protectedHeader,
+      recipients: recipients,
+      iv: this.iv,
+      ciphertext: this.ciphertext,
+      tag: this.tag
+    };
+  }
+
+  public compactSerialization(): string {
+    if (this.perRecipient.length !== 1) {
+      throw new Error('JWE Compact Serialization requires exactly one recipient.');
+    }
+    return `${this.protectedHeader}.${this.perRecipient[0].encrypted_key}.${this.iv}.${this.ciphertext}.${this.tag}`;
+  }
+
+  public async decrypt(recipient: Recipient): Promise<any> {
+    const protectedHeader: JWEHeader = JSON.parse(UTF8.decode(base64url.parse(this.protectedHeader, { loose: true })));
+    const perRecipientData = (this.perRecipient.length === 1)
+      ? this.perRecipient[0]
+      : this.perRecipientWithKid(recipient.kid);
+    const combinedHeader: JWEHeader = { ...perRecipientData.header, ...protectedHeader };
+    const cek = await recipient.decrypt(combinedHeader, perRecipientData.encrypted_key);
+    const ciphertext = base64url.parse(this.ciphertext, { loose: true });
+    const tag = base64url.parse(this.tag, { loose: true });
+    const ciphertextAndTag = new Uint8Array([...ciphertext, ...tag]);
+    const cleartext = new Uint8Array(await crypto.subtle.decrypt(
+      {
+        name: 'AES-GCM',
+        iv: base64url.parse(this.iv, { loose: true }),
+        additionalData: UTF8.encode(this.protectedHeader),
+        tagLength: 128
+      },
+      cek,
+      ciphertextAndTag
+    ));
+    return JSON.parse(UTF8.decode(cleartext));
+  }
+
+  private perRecipientWithKid(kid: string): PerRecipientProperties {
+    const result = this.perRecipient.find(r => r.header.kid === kid);
+    if (result) {
+      return result;
+    } else {
+      throw new Error(`JWE does not contain recipient with kid: ${kid}`);
+    }
+  }
+}
+
+// #endregion
+// #region Utilities
+
+// visible for testing
 export class ECDH_ES {
-  public static async deriveContentKey(publicKey: CryptoKey, privateKey: CryptoKey, ecdhKeyBits: number, desiredKeyBytes: number, header: JWEHeader, exportable: boolean = false): Promise<CryptoKey> {
+  private static async deriveRawKey(publicKey: CryptoKey, privateKey: CryptoKey, ecdhKeyBits: number, desiredKeyBytes: number, header: JWEHeader): Promise<Uint8Array> {
     let agreedKey = new Uint8Array();
-    let derivedKey = new Uint8Array();
     try {
-      const algorithmId = ECDH_ES.lengthPrefixed(UTF8.encode(header.enc));
+      const algOrEnc = header.alg === 'ECDH-ES' ? header.enc : header.alg; // see definition of AlgorithmID in RFC 7518, Section 4.6.2
+      if (!algOrEnc) {
+        throw new Error('Missing alg or enc header parameter');
+      }
+      const algorithmId = ECDH_ES.lengthPrefixed(UTF8.encode(algOrEnc));
       const partyUInfo = ECDH_ES.lengthPrefixed(base64url.parse(header.apu ?? '', { loose: true }));
       const partyVInfo = ECDH_ES.lengthPrefixed(base64url.parse(header.apv ?? '', { loose: true }));
       const suppPubInfo = new ArrayBuffer(4);
+      const suppPrivInfo = new Uint8Array();
       new DataView(suppPubInfo).setUint32(0, desiredKeyBytes * 8, false);
       agreedKey = new Uint8Array(await crypto.subtle.deriveBits(
         {
@@ -228,13 +423,29 @@ export class ECDH_ES {
         privateKey,
         ecdhKeyBits
       ));
-      const otherInfo = new Uint8Array([...algorithmId, ...partyUInfo, ...partyVInfo, ...new Uint8Array(suppPubInfo)]);
-      derivedKey = await ConcatKDF.kdf(new Uint8Array(agreedKey), desiredKeyBytes, otherInfo);
-      return crypto.subtle.importKey('raw', derivedKey, { name: 'AES-GCM', length: desiredKeyBytes * 8 }, exportable, ['encrypt', 'decrypt']);
+      const otherInfo = new Uint8Array([...algorithmId, ...partyUInfo, ...partyVInfo, ...new Uint8Array(suppPubInfo), ...suppPrivInfo]);
+      return ConcatKDF.kdf(new Uint8Array(agreedKey), desiredKeyBytes, otherInfo);
     } finally {
-      derivedKey.fill(0x00);
       agreedKey.fill(0x00);
     }
+  }
+
+  public static async deriveKey(publicKey: CryptoKey, privateKey: CryptoKey, ecdhKeyBits: number, desiredKeyBytes: number, header: JWEHeader, exportable: boolean, algorithm: AesKeyAlgorithm, usage: KeyUsage[]): Promise<CryptoKey> {
+    let derivedKey = new Uint8Array();
+    try {
+      derivedKey = await this.deriveRawKey(publicKey, privateKey, ecdhKeyBits, desiredKeyBytes, header);
+      return crypto.subtle.importKey('raw', derivedKey, algorithm, exportable, usage);
+    } finally {
+      derivedKey.fill(0x00);
+    }
+  }
+
+  public static async deriveContentKey(publicKey: CryptoKey, privateKey: CryptoKey, ecdhKeyBits: number, desiredKeyBytes: number, header: JWEHeader, exportable: boolean = false): Promise<CryptoKey> {
+    return this.deriveKey(publicKey, privateKey, ecdhKeyBits, desiredKeyBytes, header, exportable, { name: 'AES-GCM', length: desiredKeyBytes * 8 }, ['encrypt', 'decrypt']);
+  }
+
+  public static async deriveWrappingKey(publicKey: CryptoKey, privateKey: CryptoKey, ecdhKeyBits: number, desiredKeyBytes: number, header: JWEHeader, exportable: boolean = false): Promise<CryptoKey> {
+    return this.deriveKey(publicKey, privateKey, ecdhKeyBits, desiredKeyBytes, header, exportable, { name: 'AES-KW', length: desiredKeyBytes * 8 }, ['wrapKey', 'unwrapKey']);
   }
 
   public static lengthPrefixed(data: Uint8Array): Uint8Array {
@@ -250,7 +461,6 @@ export class PBES2 {
   public static readonly DEFAULT_ITERATION_COUNT = 1000000;
   private static readonly NULL_BYTE = Uint8Array.of(0x00);
 
-  // TODO: can we dedup this with crypto.ts's PBKDF2? Or is the latter unused anyway, once we migrate all ciphertext to JWE containers
   public static async deriveWrappingKey(password: string, alg: 'PBES2-HS512+A256KW' | 'PBES2-HS256+A128KW', salt: Uint8Array, iterations: number, extractable: boolean = false): Promise<CryptoKey> {
     let hash, keyLen;
     if (alg == 'PBES2-HS512+A256KW') {
@@ -287,3 +497,5 @@ export class PBES2 {
     );
   }
 }
+
+// #endregion

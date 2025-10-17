@@ -9,6 +9,9 @@ import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.MapsId;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.Immutable;
@@ -19,6 +22,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Entity
 @Immutable
@@ -62,10 +66,28 @@ import java.util.stream.Collectors;
 		FROM EffectiveVaultAccess eva
 		WHERE eva.id.vaultId = :vaultId AND eva.id.authorityId = :authorityId
 		""")
+@NamedQuery(name = "EffectiveVaultAccess.findMembersWithoutAccessTokens", query = """
+		SELECT eva
+		FROM EffectiveVaultAccess eva
+			INNER JOIN User u ON u.id = eva.id.authorityId
+			LEFT JOIN AccessToken token ON token.id.vaultId = eva.id.vaultId AND token.id.userId = eva.id.authorityId
+			WHERE eva.id.vaultId = :vaultId AND token.vault IS NULL AND u.ecdhPublicKey IS NOT NULL
+		"""
+)
 public class EffectiveVaultAccess {
 
 	@EmbeddedId
 	private EffectiveVaultAccess.Id id;
+
+	@ManyToOne
+	@MapsId("vaultId")
+	@JoinColumn(name = "vault_id")
+	private Vault vault;
+
+	@ManyToOne
+	@MapsId("authorityId")
+	@JoinColumn(name = "authority_id")
+	private Authority authority;
 
 	public Id getId() {
 		return id;
@@ -73,6 +95,30 @@ public class EffectiveVaultAccess {
 
 	public void setId(Id id) {
 		this.id = id;
+	}
+
+	public Vault getVault() {
+		return vault;
+	}
+
+	public void setVault(Vault vault) {
+		this.vault = vault;
+	}
+
+	public Authority getAuthority() {
+		return authority;
+	}
+
+	public void setAuthority(Authority authority) {
+		this.authority = authority;
+	}
+
+	public VaultAccess.Role getRole() {
+		return id.role;
+	}
+
+	public void setRole(VaultAccess.Role role) {
+		this.id.role = role;
 	}
 
 	@Embeddable
@@ -170,8 +216,12 @@ public class EffectiveVaultAccess {
 
 		public Collection<VaultAccess.Role> listRoles(UUID vaultId, String authorityId) {
 			return find("#EffectiveVaultAccess.findByAuthorityAndVault", Parameters.with("vaultId", vaultId).and("authorityId", authorityId)).stream()
-					.map(eva -> eva.getId().getRole())
+					.map(EffectiveVaultAccess::getRole)
 					.collect(Collectors.toUnmodifiableSet());
+		}
+
+		public Stream<EffectiveVaultAccess> findMembersWithoutAccessTokens(UUID vaultId) {
+			return find("#EffectiveVaultAccess.findMembersWithoutAccessTokens", Parameters.with("vaultId", vaultId)).stream();
 		}
 	}
 }

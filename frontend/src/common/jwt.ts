@@ -9,6 +9,16 @@ export type JWTHeader = {
 }
 
 export class JWT {
+  public header: any;
+  public payload: any;
+  public signature: Uint8Array;
+
+  private constructor(header: any, payload: any, signature: Uint8Array) {
+    this.header = header;
+    this.payload = payload;
+    this.signature = signature;
+  }
+
   /**
    * Creates an ES384 JWT (signed with ECDSA using P-384 and SHA-384).
    * 

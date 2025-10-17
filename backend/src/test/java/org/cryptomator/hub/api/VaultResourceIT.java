@@ -56,7 +56,6 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.comparesEqualTo;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.text.IsEqualIgnoringCase.equalToIgnoringCase;
 
 @QuarkusTest
@@ -93,10 +92,12 @@ public class VaultResourceIT {
 		private static final String VALID_SALT = "base64";
 		private static final String VALID_AUTH_PUB = "base64";
 		private static final String VALID_AUTH_PRI = "base64";
+		private static final String VALID_UVF_METADATA_FILE = "{json}";
+		private static final String VALID_UVF_RECOVERY_KEY = "base64";
 
 		@Test
 		public void testValidDto() {
-			var dto = new VaultResource.VaultDto(VALID_ID, VALID_NAME, "foobarbaz", false, Instant.parse("2020-02-20T20:20:20Z"), VALID_MASTERKEY, 8, VALID_SALT, VALID_AUTH_PUB, VALID_AUTH_PRI);
+			var dto = new VaultResource.VaultDto(VALID_ID, VALID_NAME, "foobarbaz", false, Instant.parse("2020-02-20T20:20:20Z"), VALID_UVF_METADATA_FILE, VALID_UVF_RECOVERY_KEY, VALID_MASTERKEY, 8, VALID_SALT, VALID_AUTH_PUB, VALID_AUTH_PRI);
 			var violations = validator.validate(dto);
 			MatcherAssert.assertThat(violations, Matchers.empty());
 		}
@@ -265,7 +266,7 @@ public class VaultResourceIT {
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100003333 returns 403 for missing role")
 		public void testCreateVaultWithMissingRole() {
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100003333");
-			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", "Test vault 3", false, Instant.parse("2112-12-21T21:12:21Z"), "masterkey3", 42, "NaCl", "authPubKey3", "authPrvKey3");
+			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", "Test vault 3", false, Instant.parse("2112-12-21T21:12:21Z"), "uvfMetadata3", "uvfKeySet3", "masterkey3", 42, "NaCl", "authPubKey3", "authPrvKey3");
 
 			given().contentType(ContentType.JSON).body(vaultDto)
 					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-000100003333")
@@ -288,7 +289,7 @@ public class VaultResourceIT {
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100003333 returns 201")
 		public void testCreateVault1() {
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100003333");
-			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", "Test vault 3", false, Instant.parse("2112-12-21T21:12:21Z"), "masterkey3", 42, "NaCl", "authPubKey3", "authPrvKey3");
+			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", "Test vault 3", false, Instant.parse("2112-12-21T21:12:21Z"), "uvfMetadata3", "uvfKeySet3", "masterkey3", 42, "NaCl", "authPubKey3", "authPrvKey3");
 
 			given().contentType(ContentType.JSON).body(vaultDto)
 					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-000100003333")
@@ -313,7 +314,7 @@ public class VaultResourceIT {
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100004444 returns 201 ignoring archived flag")
 		public void testCreateVault3() {
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100004444");
-			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", "Test vault 4", true, Instant.parse("2112-12-21T21:12:21Z"), "masterkey4", 42, "NaCl", "authPubKey4", "authPrvKey4");
+			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", "Test vault 4", true, Instant.parse("2112-12-21T21:12:21Z"), "uvfMetadata4", "uvfKeySet4","masterkey4", 42, "NaCl", "authPubKey4", "authPrvKey4");
 
 			given().contentType(ContentType.JSON).body(vaultDto)
 					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-000100004444")
@@ -329,7 +330,7 @@ public class VaultResourceIT {
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100003333 returns 200, updating only name, description and archive flag")
 		public void testUpdateVault() {
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100003333");
-			var vaultDto = new VaultResource.VaultDto(uuid, "VaultUpdated", "Vault updated.", true, Instant.parse("2222-11-11T11:11:11Z"), "doNotUpdate", 27, "doNotUpdate", "doNotUpdate", "doNotUpdate");
+			var vaultDto = new VaultResource.VaultDto(uuid, "VaultUpdated", "Vault updated.", true, Instant.parse("2222-11-11T11:11:11Z"), "doNotUpdate", "doNotUpdate", "doNotUpdate", 27, "doNotUpdate", "doNotUpdate", "doNotUpdate");
 			given().contentType(ContentType.JSON)
 					.body(vaultDto)
 					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-000100003333")
@@ -614,11 +615,11 @@ public class VaultResourceIT {
 
 		@Test
 		@Order(3)
-		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/members does contain group2 with memberSize=2")
+		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/members does contain group2")
 		public void getMembersOfVault1a() {
 			given().when().get("/vaults/{vaultId}/members", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(200)
-					.body("find { it.id == 'group2' }.memberSize", equalTo(2));
+					.body("id", hasItems("group2"));
 		}
 
 		@Test
@@ -780,7 +781,7 @@ public class VaultResourceIT {
 			Assumptions.assumeTrue(effectiveVaultAccessRepo.countSeatOccupyingUsers() == 5);
 			var vaultId = "7E57C0DE-0000-4000-8000-000100001111";
 
-			var vaultDto = new VaultResource.VaultDto(UUID.fromString(vaultId), "Vault 1", "This is a testvault.", false, Instant.parse("2222-11-11T11:11:11Z"), "someVaule", -1, "doNotUpdate", "doNotUpdate", "doNotUpdate");
+			var vaultDto = new VaultResource.VaultDto(UUID.fromString(vaultId), "Vault 1", "This is a testvault.", false, Instant.parse("2222-11-11T11:11:11Z"), "doNotUpdate", "doNotUpdate", "someVaule", -1, "doNotUpdate", "doNotUpdate", "doNotUpdate");
 			given().contentType(ContentType.JSON)
 					.body(vaultDto)
 					.when().put("/vaults/{vaultId}", vaultId)
@@ -806,7 +807,7 @@ public class VaultResourceIT {
 			Assumptions.assumeTrue(effectiveVaultAccessRepo.countSeatOccupyingUsers() > 5);
 
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-0001FFFF3333");
-			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", "Test vault 4", false, Instant.parse("2112-12-21T21:12:21Z"), "masterkey3", 42, "NaCl", "authPubKey3", "authPrvKey3");
+			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", "Test vault 4", false, Instant.parse("2112-12-21T21:12:21Z"), "uvfMetadata3", "uvfKeySet3", "masterkey3", 42, "NaCl", "authPubKey3", "authPrvKey3");
 			given().contentType(ContentType.JSON).body(vaultDto)
 					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-0001FFFF3333")
 					.then().statusCode(402);
