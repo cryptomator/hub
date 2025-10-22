@@ -62,7 +62,7 @@
                         <div v-if="phase === 'start'" class="mt-4 space-y-4">
                           <div v-if="processType === 'ASSIGN_OWNER'">
                             <label class="block text-sm font-medium text-gray-700">
-                              {{ t('recoveryDialog.selectNewOwner') }}
+                              Owner
                             </label>
                             <MultiUserSelectInputGroup
                               :selected-users="owners"
@@ -71,12 +71,22 @@
                               @action="addOwner"
                               @remove="removeOwner"
                             />
+                            <div v-if="removedOwners.length > 0" class="mt-4">
+                              <span class="block text-sm font-medium text-gray-700">
+                                Removed Owner
+                              </span>
+                              <MultiUserSelectInputGroup
+                                :selected-users="removedOwners"
+                                :on-search="noopSearch"
+                                :input-visible="false"
+                              />
+                            </div>
                             <div class="flex mt-5 sm:mt-6">
                               <div class="flex h-5">
                                 <input id="alsoEndMembership" v-model="alsoEndMembership" name="alsoEndMembership" type="checkbox" class="h-4 w-4 rounded-sm border-gray-300 text-primary focus:ring-primary" required>
                               </div>
                               <div class="ml-3 text-sm">
-                                <label for="confirmSetupCode" class="font-medium text-gray-700">Also end membership of removed owners.</label>
+                                <label for="alsoEndMembership" class="font-medium text-gray-700">Also end membership of removed owners.</label>
                               </div>
                             </div>
                           </div>
@@ -164,6 +174,9 @@
                             </div>
                           </div>
                         </div>
+                        <div v-if="phase != 'start' && !isMeInProcessCouncil">
+                          You are not part of the current process council.
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -186,6 +199,7 @@
                     </p>
                   </div>
                   <div class="bg-gray-50 rounded-b-lg px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <!-- START -->
                     <template v-if="phase === 'start'">
                       <button
                         type="button"
@@ -197,18 +211,25 @@
                       </button>
                     </template>
 
-                    <template v-else-if="phase === 'approve' && !didAddMyShare">
+                    <!-- APPROVE -->
+                    <template v-else-if="phase === 'approve'">
                       <button
+                        v-if="canSeeApprove"
                         type="button"
                         class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm"
                         @click="approveRecovery()"
                       >
                         {{ t('common.approve') }}
                       </button>
+                      <p v-if-else="!canStartRecovery" class="mt-2 text-sm text-gray-500 sm:ml-3">
+                        {{ notInCouncilMsg }}
+                      </p>
                     </template>
 
-                    <template v-else-if="phase === 'complete' && !didAddMyShare || completedSegments >= requiredSegments">
+                    <!-- COMPLETE -->
+                    <template v-else-if="phase === 'complete'">
                       <button
+                        v-if="canSeeComplete"
                         type="button"
                         class="inline-flex w-full sm:w-auto justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:text-sm"
                         @click="completeRecovery()"
@@ -299,6 +320,49 @@ const processType = ref<RecoveryProcessDto['type']>(
   props.recoveryProcess?.type ?? props.startType ?? 'ASSIGN_OWNER'
 );
 
+const meId = computed(() => props.me.id);
+
+const currentVaultCouncilIds = computed(() =>
+  Object.keys(props.vault.emergencyKeyShares ?? {})
+);
+
+const processCouncilIds = computed(() =>
+  props.recoveryProcess ? Object.keys(props.recoveryProcess.recoveredKeyShares ?? {}) : []
+);
+
+const isMeInCurrentCouncil = computed(() =>
+  currentVaultCouncilIds.value.includes(meId.value)
+);
+
+const isMeInProcessCouncil = computed(() =>
+  !!props.recoveryProcess && processCouncilIds.value.includes(meId.value)
+);
+
+const canSeeStart = computed(() =>
+  phase.value === 'start' &&
+  isMeInCurrentCouncil.value &&
+  !conflictingProcessExists.value &&
+  canStartRecovery.value
+);
+
+const canSeeApprove = computed(() =>
+  phase.value === 'approve' &&
+  isMeInProcessCouncil.value &&
+  !didAddMyShare.value
+);
+
+const canSeeComplete = computed(() =>
+  phase.value === 'complete' &&
+  isMeInProcessCouncil.value &&
+  ( !didAddMyShare.value || completedSegments >= requiredSegments )
+);
+
+const notInCouncilMsg = computed(() => {
+  if (phase.value === 'start') return t('recoveryDialog.error.notInCouncilToStart') ?? 'You are not in the current council for this vault.';
+  if (phase.value === 'approve') return t('recoveryDialog.error.notInCouncilToApprove') ?? 'You are not part of this process council.';
+  return t('recoveryDialog.error.notInCouncilToComplete') ?? 'You are not part of this process council.';
+});
+
 type PhaseType = 'start' | 'approve' | 'complete';
 const phase = computed<PhaseType>(() => {
   const p = props.recoveryProcess;
@@ -332,16 +396,14 @@ const addOwner = addUser.bind(owners);
 const removeOwner = removeUser.bind(owners);
 
 const existingOwnerIds = ref<Set<string>>(new Set());
+const existingOwners = ref<ActivatedUser[]>([]);
 
-const removedOwners = computed<ActivatedUser[]>(() => 
-  owners.value
-    .filter(u => !selectedNewOwners.value.some(s => s.id === u.id))
+const removedOwners = computed<ActivatedUser[]>(() =>
+  existingOwners.value.filter(u => !selectedNewOwnerIds.value.includes(u.id))
 );
 
 const removedOwnerIds = computed<string[]>(() =>
-  owners.value
-    .filter(u => !selectedNewOwners.value.some(s => s.id === u.id))
-    .map(u => u.id)
+  removedOwners.value.map(u => u.id)
 );
 
 const newOwnerIds = computed(() =>
@@ -454,14 +516,6 @@ function processConflicts(type: RecoveryProcessDto['type']) {
 }
 
 async function show() {
-  //Seats test: fails without admin permissions
-  try {
-    const seats = (await backend.billing.get()).licensedSeats;
-    console.log('Seats: ' + seats);
-  } catch (e) {
-    console.error('Loading seats amount failed', e);
-  }
-
   existingProcesses.value = await backend.emergencyAccess.findProcessesForVault(props.vault.id);
 
   if (props.recoveryProcess) {
@@ -476,10 +530,11 @@ async function show() {
 
   try {
     const memberList = await backend.vaults.getMembers(props.vault.id);
-    const existingOwners = memberList
+    const initialOwners = memberList
       .filter(m => m.type === 'USER' && m.role === 'OWNER' && didCompleteSetup(m)) as ActivatedUser[];
-    owners.value = existingOwners;
-    existingOwnerIds.value = new Set(owners.value.map(u => u.id));
+    existingOwners.value = initialOwners;
+    owners.value = initialOwners;
+    existingOwnerIds.value = new Set(initialOwners.map(u => u.id));
   } catch (e) {
     console.error('Loading existing owners failed', e);
   }
@@ -495,7 +550,6 @@ async function show() {
       if (!owners.value.find(x => x.id === u.id)) owners.value.push(u as ActivatedUser);
     }
   }
-  debugLogUsers();
 
   open.value = true;
 }
@@ -680,54 +734,6 @@ async function completeRecovery() {
     console.error('Completing emergency recovery failed.', error);
     onError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
-}
-
-async function debugLogUserNamesByIds(ids: string[], label = 'Users by ID') {
-  try {
-    const authorities = await backend.authorities.listSome(ids);
-    const users = authorities
-      .filter((a): a is UserDto => a.type === 'USER'); // didCompleteSetup optional hier
-
-    const rows = users.map(u => ({
-      id: u.id,
-      name: u.name,
-      setupComplete: didCompleteSetup(u),
-    }));
-
-    console.group(`[DEBUG] ${label}`);
-    console.table(rows);
-    const resolved = new Set(users.map(u => u.id));
-    const missing = ids.filter(id => !resolved.has(id));
-    if (missing.length > 0) {
-      console.warn('IDs ohne Treffer:', missing);
-    }
-    console.groupEnd();
-  } catch (e) {
-    console.error('[DEBUG] Fehler beim Auflösen von User-IDs:', e);
-  }
-}
-
-function debugLogUsersFromObjects(users: (UserDto | ActivatedUser)[], label = 'Users (objects)') {
-  const rows = users.map(u => ({
-    id: u.id,
-    name: u.name,
-    setupComplete: 'type' in u ? didCompleteSetup(u as UserDto) : undefined,
-  }));
-  console.group(`[DEBUG] ${label}`);
-  console.table(rows);
-  console.groupEnd();
-}
-
-async function debugLogUsers() {
-  console.group('[DEBUG] RecoveryDialog Users');
-
-  await debugLogUserNamesByIds(removedOwnerIds.value, 'Removed Owner (IDs → Namen)');
-
-  debugLogUsersFromObjects(owners.value, 'Owners (objects)');
-  debugLogUsersFromObjects(selectedNewOwners.value, 'Selected New Owners (objects)');
-  debugLogUsersFromObjects(newCouncilMembers.value, 'New Council Members (objects)');
-
-  console.groupEnd();
 }
 
 async function addMyShare(process: RecoveryProcessDto, userKeys: UserKeys): Promise<RecoveredKeyShareDto> {
