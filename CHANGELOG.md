@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/cryptomator/hub/compare/1.4.6...HEAD)
 
+### Changed
+
+- Updated Keycloak to 26.4.2
+
 ## [1.4.6](https://github.com/cryptomator/hub/compare/1.4.5...1.4.6)
 
 ### Changed
