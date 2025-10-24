@@ -248,7 +248,7 @@ public class VaultResource {
 	@DELETE
 	@Path("/{vaultId}/authority/{authorityId}")
 	@RolesAllowed("user")
-	@VaultRole(VaultAccess.Role.OWNER) // may throw 403
+	@VaultRole(value = VaultAccess.Role.OWNER, bypassForEmergencyAccess = true) // may throw 403
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "remove a user or group from this vault", description = "revokes the given authority's access rights from this vault. If the given authority is no member, the request is a no-op.")
