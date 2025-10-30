@@ -168,16 +168,8 @@ public class Vault {
 		return directMembers;
 	}
 
-	public void setDirectMembers(Set<Authority> directMembers) {
-		this.directMembers = directMembers;
-	}
-
 	public Set<Authority> getEffectiveMembers() {
 		return effectiveMembers;
-	}
-
-	public void setEffectiveMembers(Set<Authority> effectiveMembers) {
-		this.effectiveMembers = effectiveMembers;
 	}
 
 	public Set<AccessToken> getAccessTokens() {
