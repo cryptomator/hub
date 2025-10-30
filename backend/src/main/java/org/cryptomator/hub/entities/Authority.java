@@ -12,6 +12,7 @@ import jakarta.persistence.InheritanceType;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
@@ -86,7 +87,7 @@ public class Authority {
 			return find("#Authority.byName", Parameters.with("name", '%' + name.toLowerCase() + '%')).stream();
 		}
 
-		public Stream<Authority> findAllInList(List<String> ids) {
+		public Stream<Authority> findAllInList(Collection<String> ids) {
 			return find("#Authority.allInList", Parameters.with("ids", ids)).stream();
 		}
 	}

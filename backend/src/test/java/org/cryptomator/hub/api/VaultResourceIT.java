@@ -4,6 +4,7 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import io.agroal.api.AgroalDataSource;
 import io.quarkus.narayana.jta.QuarkusTransaction;
+import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.quarkus.test.security.oidc.Claim;
@@ -14,6 +15,8 @@ import jakarta.inject.Inject;
 import jakarta.validation.Validator;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.entities.Vault;
+import org.cryptomator.hub.entities.VaultAccess;
+import org.cryptomator.hub.entities.events.EventLogger;
 import org.cryptomator.hub.rollback.DBRollbackAfter;
 import org.cryptomator.hub.rollback.DBRollbackBefore;
 import org.flywaydb.core.Flyway;
@@ -32,6 +35,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.mockito.Mockito;
 
 import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
@@ -56,12 +60,14 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.comparesEqualTo;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.text.IsEqualIgnoringCase.equalToIgnoringCase;
 
 @QuarkusTest
 @DisplayName("Resource /vaults")
 public class VaultResourceIT {
+
+	@InjectMock
+	EventLogger eventLogger;
 
 	@Inject
 	AgroalDataSource dataSource;
@@ -344,7 +350,7 @@ public class VaultResourceIT {
 	}
 
 	@Nested
-	@DisplayName("As vault admin user1")
+	@DisplayName("As vault owner user1")
 	@TestSecurity(user = "User Name 1", roles = {"user"})
 	@OidcSecurity(claims = {
 			@Claim(key = "sub", value = "user1")
@@ -565,12 +571,52 @@ public class VaultResourceIT {
 
 		@Test
 		@Order(14)
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100002222/members adds, removes and updates members")
+		public void setMembersOfVault2() {
+			given().when().contentType(ContentType.JSON).body("""
+							{
+								"user1": "MEMBER",
+								"user2": "OWNER",
+								"group2": "MEMBER"
+							}
+							""").put("/vaults/{vaultId}/members", "7E57C0DE-0000-4000-8000-000100002222")
+					.then().statusCode(204);
+			var vaultId = UUID.fromString("7E57C0DE-0000-4000-8000-000100002222");
+			Mockito.verify(eventLogger).logVaultMemberAdded("user2", vaultId, "user1", VaultAccess.Role.MEMBER);
+			Mockito.verify(eventLogger).logVaultMemberAdded("user2", vaultId, "user2", VaultAccess.Role.OWNER);
+			Mockito.verify(eventLogger).logVaultMemberRemoved("user2", vaultId, "group1");
+			Mockito.verify(eventLogger).logVaultMemberUpdated("user2", vaultId, "group2", VaultAccess.Role.MEMBER);
+		}
+
+		@Test
+		@Order(15)
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100002222/members restores original members")
+		public void restoreOriginalMembersOfVault2() { // as defined in V9999__Tst_Data.sql
+			given().when().contentType(ContentType.JSON).body("""
+							{
+								"group1": "MEMBER",
+								"group2": "OWNER"
+							}
+							""").put("/vaults/{vaultId}/members", "7E57C0DE-0000-4000-8000-000100002222")
+					.then().statusCode(204);
+			var vaultId = UUID.fromString("7E57C0DE-0000-4000-8000-000100002222");
+			Mockito.verify(eventLogger).logVaultMemberRemoved("user2", vaultId, "user1");
+			Mockito.verify(eventLogger).logVaultMemberRemoved("user2", vaultId, "user2");
+			Mockito.verify(eventLogger).logVaultMemberAdded("user2", vaultId, "group1", VaultAccess.Role.MEMBER);
+			Mockito.verify(eventLogger).logVaultMemberUpdated("user2", vaultId, "group2", VaultAccess.Role.OWNER);
+
+		}
+
+		@Test
+		@Order(16)
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100002222/members does not contain user2")
 		@DBRollbackAfter
 		public void getMembersOfVault2c() {
 			given().when().get("/vaults/{vaultId}/members", "7E57C0DE-0000-4000-8000-000100002222")
 					.then().statusCode(200)
-					.body("id", not(hasItems("user2")));
+					.body("id", not(hasItems("user2")))
+					.body("id", hasItems("group1", "group2"))
+			;
 		}
 	}
 
@@ -1078,6 +1124,7 @@ public class VaultResourceIT {
 				"GET, /vaults/accessible",
 				"GET, /vaults/7E57C0DE-0000-4000-8000-000100001111",
 				"GET, /vaults/7E57C0DE-0000-4000-8000-000100001111/members",
+				"PUT, /vaults/7E57C0DE-0000-4000-8000-000100001111/members",
 				"PUT, /vaults/7E57C0DE-0000-4000-8000-000100001111/users/user1",
 				"DELETE, /vaults/7E57C0DE-0000-4000-8000-000100001111/authority/user1",
 				"GET, /vaults/7E57C0DE-0000-4000-8000-000100001111/users-requiring-access-grant",

@@ -65,7 +65,9 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -77,20 +79,29 @@ public class VaultResource {
 
 	@Inject
 	AccessToken.Repository accessTokenRepo;
+
 	@Inject
 	Group.Repository groupRepo;
+
 	@Inject
 	User.Repository userRepo;
+
+	@Inject
+	Authority.Repository authorityRepo;
+
 	@Inject
 	EffectiveVaultAccess.Repository effectiveVaultAccessRepo;
+
 	/**
 	 * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
 	 */
 	@Inject
 	@Deprecated(since = "1.3.0", forRemoval = true)
 	LegacyAccessToken.Repository legacyAccessTokenRepo;
+
 	@Inject
 	Vault.Repository vaultRepo;
+
 	@Inject
 	VaultAccess.Repository vaultAccessRepo;
 
@@ -172,6 +183,62 @@ public class VaultResource {
 			default -> throw new IllegalStateException();
 		}).toList();
 	}
+
+	@PUT
+	@Path("/{vaultId}/members")
+	@RolesAllowed("user")
+	@VaultRole(value = VaultAccess.Role.OWNER, bypassForEmergencyAccess = true) // may throw 403
+	@Transactional
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Operation(summary = "set vault members", description = "replaces all direct vault members with the given ones")
+	@APIResponse(responseCode = "204", description = "members updated")
+	@APIResponse(responseCode = "400", description = "invalid members in request body")
+	@APIResponse(responseCode = "403", description = "not a vault owner")
+	@APIResponse(responseCode = "404", description = "vault not found")
+	public Response setDirectMembers(@PathParam("vaultId") UUID vaultId, @NotEmpty Map<String, VaultAccess.Role> memberRoles) {
+		var vault = vaultRepo.findById(vaultId);
+		if (vault == null) {
+			throw new NotFoundException("Vault not found.");
+		}
+		var newVaultAccess = authorityRepo.findAllInList(memberRoles.keySet()).map(authority -> {
+			assert memberRoles.containsKey(authority.getId());
+			return VaultAccess.create(vault, authority, memberRoles.get(authority.getId()));
+		}).toList();
+		if (newVaultAccess.isEmpty()){
+			throw new BadRequestException("No (valid) members given.");
+		}
+		var oldVaultAccess = vaultAccessRepo.forVault(vaultId).toList();
+
+		// determine diff:
+		Set<VaultAccess.Id> newIds = newVaultAccess.stream().map(VaultAccess::getId).collect(Collectors.toSet());
+		Set<VaultAccess.Id> oldIds = oldVaultAccess.stream().map(VaultAccess::getId).collect(Collectors.toSet());
+		Predicate<VaultAccess> isNew = va -> newIds.contains(va.getId());
+		Predicate<VaultAccess> isOld = va -> oldIds.contains(va.getId());
+		Predicate<VaultAccess> hasChangedRole = va -> memberRoles.get(va.getId().getAuthorityId()) != va.getRole();
+		var addedMembers = newVaultAccess.stream()
+				.filter(isOld.negate())
+				.peek(va -> eventLogger.logVaultMemberAdded(jwt.getSubject(), vaultId, va.getId().getAuthorityId(), va.getRole()));
+		var removedMemberIds = oldVaultAccess.stream()
+				.filter(isNew.negate())
+				.peek(va -> eventLogger.logVaultMemberRemoved(jwt.getSubject(), vaultId, va.getId().getAuthorityId()))
+				.map(VaultAccess::getId)
+				.map(VaultAccess.Id::getAuthorityId);
+		var updatedMembers = oldVaultAccess.stream()
+				.filter(isNew)
+				.filter(hasChangedRole)
+				.peek(va -> va.setRole(memberRoles.get(va.getId().getAuthorityId())))
+				.peek(va -> eventLogger.logVaultMemberUpdated(jwt.getSubject(), vaultId, va.getId().getAuthorityId(), va.getRole()))
+				.toList();
+
+		// replace all:
+		vaultAccessRepo.delete(vaultId, removedMemberIds.toList());
+		vaultAccessRepo.persist(addedMembers);
+		vaultAccessRepo.persist(updatedMembers);
+
+		return Response.noContent().build();
+	}
+
+
 
 	@PUT
 	@Path("/{vaultId}/users/{userId}")
