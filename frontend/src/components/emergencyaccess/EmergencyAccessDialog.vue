@@ -62,7 +62,7 @@
                         <div v-if="phase === 'start'" class="mt-4 space-y-4">
                           <div v-if="processType === 'ASSIGN_OWNER'">
                             <label class="block text-sm font-medium text-gray-700">
-                              Owner
+                              Owners
                             </label>
                             <MultiUserSelectInputGroup
                               :selected-users="owners"
@@ -71,23 +71,31 @@
                               @action="addOwner"
                               @remove="removeOwner"
                             />
-                            <div v-if="removedOwners.length > 0" class="mt-4">
+
+                            <!-- Members (non-owners) selector -->
+                            <div class="mt-4">
+                              <label class="block text-sm font-medium text-gray-700">
+                                Members
+                              </label>
+                              <MultiUserSelectInputGroup
+                                :selected-users="members"
+                                :on-search="searchUsers"
+                                :input-visible="true"
+                                @action="addMember"
+                                @remove="removeMember"
+                              />
+                            </div>
+
+                            <!-- Removed Members display -->
+                            <div v-if="removedMembers.length > 0" class="mt-4">
                               <span class="block text-sm font-medium text-gray-700">
-                                Removed Owner
+                                Removed
                               </span>
                               <MultiUserSelectInputGroup
-                                :selected-users="removedOwners"
+                                :selected-users="removedMembers"
                                 :on-search="noopSearch"
                                 :input-visible="false"
                               />
-                            </div>
-                            <div class="flex mt-5 sm:mt-6">
-                              <div class="flex h-5">
-                                <input id="alsoEndMembership" v-model="alsoEndMembership" name="alsoEndMembership" type="checkbox" class="h-4 w-4 rounded-sm border-gray-300 text-primary focus:ring-primary" required>
-                              </div>
-                              <div class="ml-3 text-sm">
-                                <label for="alsoEndMembership" class="font-medium text-gray-700">Also end membership of removed owners.</label>
-                              </div>
                             </div>
                           </div>
 
@@ -97,7 +105,7 @@
                             </label>
                             <MultiUserSelectInputGroup
                               :selected-users="newCouncilMembers"
-                              :on-search="searchUsers"
+                              :on-search="searchUsersWithCompleteSetup"
                               :input-visible="true"
                               @action="addCouncilMember"
                               @remove="removeCouncilMember"
@@ -142,16 +150,30 @@
 
                           <div v-if="recoveryProcess.type === 'ASSIGN_OWNER'" class="mt-4 space-y-1 text-sm text-gray-500">
                             <div>
-                              <span class="font-medium text-gray-700">Owner</span>
+                              <span class="font-medium text-gray-700">Owners</span>
                               <MultiUserSelectInputGroup
                                 :selected-users="selectedNewOwners"
                                 :on-search="noopSearch"
                                 :input-visible="false"
                               />
-                              <div v-if="removedOwners.length > 0"> 
-                                <span class="font-medium text-gray-700">Removed Owner</span>
+                              <!-- Members (non-owners) selector -->
+                              <div class="mt-4">
+                                <label class="block text-sm font-medium text-gray-700">
+                                  Members
+                                </label>
                                 <MultiUserSelectInputGroup
-                                  :selected-users="removedOwners"
+                                  :selected-users="selectedNewmembers"
+                                  :on-search="noopSearch"
+                                  :input-visible="false"
+                                />
+                              </div>
+                              <!-- Removed Members display -->
+                              <div v-if="removedMembers.length > 0" class="mt-4">
+                                <span class="block text-sm font-medium text-gray-700">
+                                  Removed
+                                </span>
+                                <MultiUserSelectInputGroup
+                                  :selected-users="removedMembers"
                                   :on-search="noopSearch"
                                   :input-visible="false"
                                 />
@@ -221,9 +243,6 @@
                       >
                         {{ t('common.approve') }}
                       </button>
-                      <p v-if-else="!canStartRecovery" class="mt-2 text-sm text-gray-500 sm:ml-3">
-                        {{ notInCouncilMsg }}
-                      </p>
                     </template>
 
                     <!-- COMPLETE -->
@@ -322,27 +341,12 @@ const processType = ref<RecoveryProcessDto['type']>(
 
 const meId = computed(() => props.me.id);
 
-const currentVaultCouncilIds = computed(() =>
-  Object.keys(props.vault.emergencyKeyShares ?? {})
-);
-
 const processCouncilIds = computed(() =>
   props.recoveryProcess ? Object.keys(props.recoveryProcess.recoveredKeyShares ?? {}) : []
 );
 
-const isMeInCurrentCouncil = computed(() =>
-  currentVaultCouncilIds.value.includes(meId.value)
-);
-
 const isMeInProcessCouncil = computed(() =>
   !!props.recoveryProcess && processCouncilIds.value.includes(meId.value)
-);
-
-const canSeeStart = computed(() =>
-  phase.value === 'start' &&
-  isMeInCurrentCouncil.value &&
-  !conflictingProcessExists.value &&
-  canStartRecovery.value
 );
 
 const canSeeApprove = computed(() =>
@@ -374,8 +378,10 @@ const phase = computed<PhaseType>(() => {
     return 'complete';
   }
 });
+
 const requiredSegments = props.recoveryProcess?.requiredKeyShares ?? props.vault.requiredEmergencyKeyShares;
 const completedSegments = Object.values(props.recoveryProcess?.recoveredKeyShares ?? {}).filter(ks => ks.recoveredKeyShare !== undefined).length;
+
 const didAddMyShare = computed(() => {
   return props.recoveryProcess?.recoveredKeyShares?.[props.me.id]?.recoveredKeyShare !== undefined;
 });
@@ -383,35 +389,82 @@ const didAddMyShare = computed(() => {
 const open = ref(false);
 const onError = ref<Error | null>();
 
-const alsoEndMembership = ref(false);
-
 const conflictingProcessExists = computed(() => {
   return existingProcesses.value.some(p => p.type === processType.value);
 });
 
 const existingProcesses = ref<RecoveryProcessDto[]>([]);
 
-const owners = ref<ActivatedUser[]>([]);
-const addOwner = addUser.bind(owners);
-const removeOwner = removeUser.bind(owners);
-
+// OWNERS
+const owners = ref<UserDto[]>([]);
 const existingOwnerIds = ref<Set<string>>(new Set());
-const existingOwners = ref<ActivatedUser[]>([]);
+const existingOwners = ref<UserDto[]>([]);
+const newOwnerIds = computed(() => owners.value.map(u => u.id));
 
-const removedOwners = computed<ActivatedUser[]>(() =>
-  existingOwners.value.filter(u => !selectedNewOwnerIds.value.includes(u.id))
-);
+// MEMBERS (non-owners)
+const members = ref<UserDto[]>([]);
+const existingMembers = ref<UserDto[]>([]);
+const existingMemberIds = ref<Set<string>>(new Set());
+const newMemberIds = computed(() => members.value.map(u => u.id));
 
-const removedOwnerIds = computed<string[]>(() =>
-  removedOwners.value.map(u => u.id)
-);
 
-const newOwnerIds = computed(() =>
-  owners.value
-    .map(u => u.id)
-);
+// --- helper: generic add/remove by id ---
+function addUnique(list: Ref<UserDto[]>, user: UserDto) {
+  if (!list.value.find(u => u.id === user.id)) list.value.push(user);
+}
+function removeFrom(list: Ref<UserDto[]>, user: UserDto) {
+  list.value = list.value.filter(u => u.id !== user.id);
+}
 
-const selectedNewOwners = computed<ActivatedUser[]>(() => {
+// Owner handlers keep lists in sync
+const addOwner = (user: UserDto) => {
+  addUnique(owners, user);
+  removeFrom(members, user);
+};
+const removeOwner = (user: UserDto) => {
+  removeFrom(owners, user);
+};
+
+// Member handlers keep lists in sync
+const addMember = (user: UserDto) => {
+  addUnique(members, user);
+  removeFrom(owners, user);
+};
+const removeMember = (user: UserDto) => {
+  removeFrom(members, user);
+};
+
+const removedMembers = computed<UserDto[]>(() => {
+  const initialOwnerAndMemberIds = new Set<string>([
+    ...initialOwnerIds.value,
+    ...initialMemberIds.value,
+  ]);
+
+  const newOwnerIdList =
+    props.recoveryProcess?.type === 'ASSIGN_OWNER'
+      ? props.recoveryProcess.details.newOwnerIds ?? []
+      : newOwnerIds.value;
+
+  const newMemberIdList =
+    props.recoveryProcess?.type === 'ASSIGN_OWNER'
+      ? props.recoveryProcess.details.newMemberIds ?? []
+      : newMemberIds.value;
+
+  const newIds = new Set<string>([...newOwnerIdList, ...newMemberIdList]);
+
+  const removedIds = Array.from(initialOwnerAndMemberIds).filter((id) => !newIds.has(id));
+
+  const byId = R.indexBy(
+    [...existingOwners.value, ...existingMembers.value],
+    (u) => u.id,
+  );
+
+  return removedIds
+    .map((id) => byId[id])
+    .filter((u): u is UserDto => !!u);
+});
+
+const selectedNewOwners = computed<UserDto[]>(() => {
   if (props.recoveryProcess?.type === 'ASSIGN_OWNER') {
     const ids = new Set(props.recoveryProcess.details.newOwnerIds);
     return owners.value.filter(u => ids.has(u.id));
@@ -420,10 +473,14 @@ const selectedNewOwners = computed<ActivatedUser[]>(() => {
   return owners.value.filter(u => ids.has(u.id));
 });
 
-const selectedNewOwnerIds = computed(() =>
-  selectedNewOwners.value
-    .map(u => u.id)
-);
+const selectedNewmembers = computed<UserDto[]>(() => {
+  if (props.recoveryProcess?.type === 'ASSIGN_OWNER') {
+    const ids = new Set(props.recoveryProcess.details.newMemberIds);
+    return members.value.filter(u => ids.has(u.id));
+  }
+  const ids = new Set(newMemberIds.value);
+  return members.value.filter(u => ids.has(u.id));
+});
 
 function setAndArrayDifferById(setIds: Set<string>, arr: { id: string }[]): boolean {
   if (setIds.size !== arr.length) return true;
@@ -431,38 +488,41 @@ function setAndArrayDifferById(setIds: Set<string>, arr: { id: string }[]): bool
   return false;
 }
 
-const ownersDifferFromExistingIds = computed(() =>
-  setAndArrayDifferById(existingOwnerIds.value, owners.value)
-);
+const ownersDifferFromExistingIds = computed(() => setAndArrayDifferById(existingOwnerIds.value, owners.value));
+const membersDifferFromExistingIds = computed(() => setAndArrayDifferById(existingMemberIds.value, members.value));
 
 // COUNCIL CHANGE
 const newRequiredKeyShares = ref<number>(props.vault.requiredEmergencyKeyShares);
 const newCouncilMembers = ref<ActivatedUser[]>([]);
-const addCouncilMember = addUser.bind(newCouncilMembers);
-const removeCouncilMember = removeUser.bind(newCouncilMembers);
+const addCouncilMember = function(this: Ref<UserDto[]>, user: UserDto) { addUnique(this as unknown as Ref<UserDto[]>, user); } .bind(newCouncilMembers as unknown as Ref<UserDto[]>);
+const removeCouncilMember = function(this: Ref<UserDto[]>, user: UserDto) { removeFrom(this as unknown as Ref<UserDto[]>, user); } .bind(newCouncilMembers as unknown as Ref<UserDto[]>);
 
 const isGrantButtonDisabled = computed(() => newCouncilMembers.value.length < newRequiredKeyShares.value);
 
 const canStartRecovery = computed(() => {
   if (processType.value == null) return false;
   if (conflictingProcessExists.value) return false;
-  if (processType.value === 'ASSIGN_OWNER') return ownersDifferFromExistingIds.value;
-  if (processType.value === 'COUNCIL_CHANGE') return newCouncilMembers.value.length >= newRequiredKeyShares.value && newRequiredKeyShares.value > 0;
+  if (processType.value === 'ASSIGN_OWNER')
+    return (ownersDifferFromExistingIds.value || membersDifferFromExistingIds.value) && owners.value.length != 0;
+  if (processType.value === 'COUNCIL_CHANGE')
+    return newCouncilMembers.value.length >= newRequiredKeyShares.value && newRequiredKeyShares.value > 0;
   return false;
 });
 
 const noopSearch = async () => [];
+
 async function searchUsers(query: string): Promise<UserDto[]> {
+  const authorities = await backend.authorities.search(query, true);
+  return authorities
+    .filter((a): a is UserDto => a.type === 'USER')
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+async function searchUsersWithCompleteSetup(query: string): Promise<UserDto[]> {
   const authorities = await backend.authorities.search(query, true);
   return authorities
     .filter((a): a is UserDto => a.type === 'USER' && didCompleteSetup(a))
     .sort((a, b) => a.name.localeCompare(b.name));
-}
-
-function addUser(this: Ref<UserDto[]>, user: UserDto) {
-  if (!this.value.find(u => u.id === user.id)) {
-    this.value.push(user);
-  }
 }
 
 function needsRedundancy(): boolean {
@@ -478,20 +538,11 @@ function requestCancel() {
   abortDialog.value?.show();
 }
 
-function onAbortClosed() {
-  wantAbort.value = false;
-}
+function onAbortClosed() { wantAbort.value = false; }
 
-function handleParentClose() {
-  if (wantAbort.value) return;
-  open.value = false;
-}
+function handleParentClose() { if (!wantAbort.value) open.value = false; }
 
-function handleAfterLeave() {
-  if (!open.value) {
-    emit('close');
-  }
-}
+function handleAfterLeave() { if (!open.value) emit('close'); }
 
 async function handleRecoveryAborted() {
   if (!props.recoveryProcess) return;
@@ -507,13 +558,12 @@ async function handleRecoveryAborted() {
   }
 }
 
-function removeUser(this: Ref<UserDto[]>, user: UserDto) {
-  this.value = this.value.filter(u => u.id !== user.id);
-}
-
 function processConflicts(type: RecoveryProcessDto['type']) {
   return existingProcesses.value.some(p => p.type === type);
 }
+
+const initialOwnerIds = ref<Set<string>>(new Set());
+const initialMemberIds = ref<Set<string>>(new Set());
 
 async function show() {
   existingProcesses.value = await backend.emergencyAccess.findProcessesForVault(props.vault.id);
@@ -530,13 +580,21 @@ async function show() {
 
   try {
     const memberList = await backend.vaults.getMembers(props.vault.id);
-    const initialOwners = memberList
-      .filter(m => m.type === 'USER' && m.role === 'OWNER' && didCompleteSetup(m)) as ActivatedUser[];
+    const initialOwners = memberList.filter(m => m.type === 'USER' && m.role === 'OWNER') as UserDto[];
+    const initialMembers = memberList.filter(m => m.type === 'USER' && m.role === 'MEMBER') as UserDto[];
+
     existingOwners.value = initialOwners;
     owners.value = initialOwners;
     existingOwnerIds.value = new Set(initialOwners.map(u => u.id));
+
+    existingMembers.value = initialMembers;
+    members.value = initialMembers;
+    existingMemberIds.value = new Set(initialMembers.map(u => u.id));
+
+    initialOwnerIds.value = new Set(initialOwners.map(u => u.id));
+    initialMemberIds.value = new Set(initialMembers.map(u => u.id));
   } catch (e) {
-    console.error('Loading existing owners failed', e);
+    console.error('Loading existing owners/members failed', e);
   }
 
   if (props.recoveryProcess?.type === 'COUNCIL_CHANGE') {
@@ -544,10 +602,15 @@ async function show() {
     const users = authorities.filter(a => a.type === 'USER').filter(u => didCompleteSetup(u));
     newCouncilMembers.value = users;
   } else if (props.recoveryProcess?.type === 'ASSIGN_OWNER') {
-    const authorities = await backend.authorities.listSome(props.recoveryProcess.details.newOwnerIds);
-    const users = authorities.filter(a => a.type === 'USER').filter(u => didCompleteSetup(u));
-    for (const u of users) {
-      if (!owners.value.find(x => x.id === u.id)) owners.value.push(u as ActivatedUser);
+    const newOwners = await backend.authorities.listSome(props.recoveryProcess.details.newOwnerIds);
+    for (const u of newOwners) {
+      if (!owners.value.find(x => x.id === u.id)) 
+        owners.value.push(u as UserDto);
+    }
+    const newMembers = await backend.authorities.listSome(props.recoveryProcess.details.newMemberIds);
+    for (const u of newMembers) {
+      if (!members.value.find(x => x.id === u.id)) 
+        members.value.push(u as UserDto);
     }
   }
 
@@ -593,7 +656,8 @@ async function startRecovery() {
       data = {
         type: 'ASSIGN_OWNER',
         details: {
-          newOwnerIds: newOwnerIds.value
+          newOwnerIds: newOwnerIds.value,
+          newMemberIds: newMemberIds.value
         }
       };
     } else if (processType.value === 'COUNCIL_CHANGE') {
@@ -704,26 +768,30 @@ async function completeRecovery() {
     } else if (process.type === 'ASSIGN_OWNER') {
       const vaultKeys = await VaultKeys.recover(recoveredKey);
 
-      if (removedOwnerIds.value.length > 0) {
-        for (const id of removedOwnerIds.value) {
-          await backend.vaults.addUser(props.vault.id, id, 'MEMBER');
-          //await backend.vaults.removeAuthority(props.vault.id, id); //Forbidden
+      if (removedMembers.value.length > 0) {
+        for (const id of removedMembers.value.map(u => u.id)) {
+          await backend.vaults.removeAuthority(props.vault.id, id);
         }
       }
 
-      if (selectedNewOwnerIds.value.length > 0) {
-        const accessGrants: AccessGrant[] = await Promise.all(selectedNewOwnerIds.value.map(async id => {
-          const u = selectedNewOwners.value.find(x => x.id === id)!;
-          const publicKey = base64.parse(u.ecdhPublicKey);
-          const jwe = vaultKeys.encryptForUser(publicKey);
-          await backend.vaults.addUser(props.vault.id, u.id, 'OWNER');
-          return { userId: u.id, token: await jwe };
-        }));
-        await backend.vaults.grantAccess(props.vault.id, ...accessGrants);
+      for (const id of selectedNewOwners.value.map(u => u.id)) {
+        await backend.vaults.addUser(props.vault.id, id, 'OWNER');
       }
-    }
+      for (const id of selectedNewmembers.value.map(u => u.id)) {
+        await backend.vaults.addUser(props.vault.id, id, 'MEMBER');
+      }
 
-    else {
+      const setupOwners = selectedNewOwners.value.filter(u => didCompleteSetup(u));
+      const accessGrants: AccessGrant[] = await Promise.all(
+        setupOwners.map(async u => {
+          const publicKey = base64.parse(u.ecdhPublicKey);
+          const jwe = await vaultKeys.encryptForUser(publicKey);
+          return { userId: u.id, token: jwe };
+        })
+      );
+
+      if (accessGrants.length > 0) { await backend.vaults.grantAccess(props.vault.id, ...accessGrants); }
+    } else {
       throw new Error(`Unsupported state for recovery process type: ${process.type}`);
     }
 
