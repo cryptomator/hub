@@ -136,7 +136,7 @@
                 <div v-if="me && isUserInProcess(proc) && proc.type == 'ASSIGN_OWNER'" class="relative group inline-block">
                   <button
                     type="button"
-                    class="inline-flex items-center gap-2 rounded-md bg-white px-2 py-1 text-xs font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                    class="h-8 inline-flex items-center gap-2 rounded-md bg-white px-2 py-1 text-xs font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
                     @click.stop="openRecoveryDialog(vault, proc)"
                   >
                     <div class="relative">
@@ -232,7 +232,7 @@
                 <div class="relative group inline-block">
                   <button
                     type="button"
-                    class="h-7 inline-flex items-center gap-2 rounded-md bg-white px-2 py-1 text-xs font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                    class="h-8 inline-flex items-center gap-2 rounded-md bg-white px-2 py-1 text-xs font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
                     @click.stop="onUnifiedButtonClick(vault, type)"
                   >
                     <template v-if="getProcessByType(vault, type)">
