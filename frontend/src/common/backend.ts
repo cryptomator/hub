@@ -147,6 +147,7 @@ export type RecoveryProcessSetNewOwner = {
   type: 'ASSIGN_OWNER',
   details: {
     newOwnerIds: string[];
+    newMemberIds: string[];
   }
 }
 
