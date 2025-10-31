@@ -233,6 +233,11 @@ class VaultService {
     return axiosAuth.get<MemberDto[]>(`/vaults/${vaultId}/members`).then(response => response.data.map(AuthorityService.fillInMissingPicture)).catch(err => rethrowAndConvertIfExpected(err, 403));
   }
 
+  public async setMembersWithRole(vaultId: string, members: Record<string, VaultRole>): Promise<void> {
+    await axiosAuth.put(`/vaults/${vaultId}/members`, members)
+      .catch((error) => rethrowAndConvertIfExpected(error, 403, 404));
+  }
+
   public async addUser(vaultId: string, userId: string, role?: VaultRole): Promise<AxiosResponse<void>> {
     return axiosAuth.put(`/vaults/${vaultId}/users/${userId}` + (role ? `?role=${role}` : ''))
       .catch((error) => rethrowAndConvertIfExpected(error, 402, 404, 409));

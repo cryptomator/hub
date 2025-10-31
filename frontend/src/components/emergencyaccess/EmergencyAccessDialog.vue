@@ -301,7 +301,7 @@
 </template>
 
 <script setup lang="ts">
-import backend, { VaultDto, UserDto, RecoveryProcessDto, didCompleteSetup, RecoveryProcessSetNewOwner, RecoveryProcessChangeCouncil, ActivatedUser, AccessGrant, RecoveredKeyShareDto, PaymentRequiredError } from '../../common/backend';
+import backend, { VaultDto, VaultRole, UserDto, RecoveryProcessDto, didCompleteSetup, RecoveryProcessSetNewOwner, RecoveryProcessChangeCouncil, ActivatedUser, AccessGrant, RecoveredKeyShareDto, PaymentRequiredError } from '../../common/backend';
 import { ref, computed, toRaw, Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import * as R from 'remeda';
@@ -406,7 +406,6 @@ const members = ref<UserDto[]>([]);
 const existingMembers = ref<UserDto[]>([]);
 const existingMemberIds = ref<Set<string>>(new Set());
 const newMemberIds = computed(() => members.value.map(u => u.id));
-
 
 // --- helper: generic add/remove by id ---
 function addUnique(list: Ref<UserDto[]>, user: UserDto) {
@@ -768,22 +767,18 @@ async function completeRecovery() {
     } else if (process.type === 'ASSIGN_OWNER') {
       const vaultKeys = await VaultKeys.recover(recoveredKey);
 
-      if (removedMembers.value.length > 0) {
-        for (const id of removedMembers.value.map(u => u.id)) {
-          await backend.vaults.removeAuthority(props.vault.id, id);
-        }
-      }
+      const membersWithRole = Object.fromEntries([
+        ...selectedNewOwners.value.map(u => [u.id, 'OWNER']),
+        ...selectedNewmembers.value.map(u => [u.id, 'MEMBER'])
+      ]) as Record<string, VaultRole>;
 
-      for (const id of selectedNewOwners.value.map(u => u.id)) {
-        await backend.vaults.addUser(props.vault.id, id, 'OWNER');
-      }
-      for (const id of selectedNewmembers.value.map(u => u.id)) {
-        await backend.vaults.addUser(props.vault.id, id, 'MEMBER');
-      }
+      await backend.vaults.setMembersWithRole(props.vault.id, membersWithRole);
 
-      const setupOwners = selectedNewOwners.value.filter(u => didCompleteSetup(u));
+      const didCompleteSetupMembers = [...selectedNewOwners.value, ...selectedNewmembers.value]
+        .filter(u => didCompleteSetup(u));
+
       const accessGrants: AccessGrant[] = await Promise.all(
-        setupOwners.map(async u => {
+        didCompleteSetupMembers.map(async u => {
           const publicKey = base64.parse(u.ecdhPublicKey);
           const jwe = await vaultKeys.encryptForUser(publicKey);
           return { userId: u.id, token: jwe };
