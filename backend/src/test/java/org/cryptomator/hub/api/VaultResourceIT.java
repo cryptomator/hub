@@ -17,6 +17,7 @@ import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.entities.VaultAccess;
 import org.cryptomator.hub.entities.events.EventLogger;
+import org.cryptomator.hub.entities.events.VaultKeyRetrievedEvent;
 import org.cryptomator.hub.rollback.DBRollbackAfter;
 import org.cryptomator.hub.rollback.DBRollbackBefore;
 import org.flywaydb.core.Flyway;
@@ -78,6 +79,7 @@ public class VaultResourceIT {
 	@Inject
 	Validator validator;
 	@Inject
+	@SuppressWarnings("unused") // needed for @DBRollbackBefore
 	public Flyway flyway;
 
 	@BeforeAll
@@ -173,12 +175,13 @@ public class VaultResourceIT {
 					.then().statusCode(200)
 					.body(is("jwe.jwe.jwe.vault1.user1"));
 
-			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
-				var rs = s.executeQuery("""
-						SELECT * FROM "audit_event_vault_key_retrieve" WHERE "device_id" = '123456789123456789' AND "ip_address" = '1.2.3.4';
-						""");
-				Assertions.assertTrue(rs.next());
-			}
+			Mockito.verify(eventLogger).logVaultKeyRetrieved(
+					"user1",
+					UUID.fromString("7E57C0DE-0000-4000-8000-000100001111"),
+					VaultKeyRetrievedEvent.Result.SUCCESS,
+					"1.2.3.4",
+					"123456789123456789"
+			);
 		}
 
 		@Test
