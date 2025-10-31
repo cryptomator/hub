@@ -376,6 +376,8 @@
   "recoveryDialog.completeTitle": "Complete Emergency Access",
   "recoveryDialog.completeDesc": "Complete Emergency Access Desc",
   "recoveryDialog.alreadyAddedKeyShare": "You have already added your part of the emergency key.",
+  "recoveryDialog.status.added": "Added",
+  "recoveryDialog.status.pending": "Pending",
 
   "emergencyAccessVaultList.empty.title": "No emergency access vaults found",
   "emergencyAccessVaultList.changeCouncil": "Change Council",
