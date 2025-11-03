@@ -59,10 +59,12 @@ public class SettingsResource {
 		var oldWotMaxDepth = settings.getWotMaxDepth();
 		var oldEmergencyCouncilMemberIds = settings.getEmergencyCouncilMemberIds();
 		var oldRequiredEmergencyKeyShares = settings.getDefaultRequiredEmergencyKeyShares();
+		var oldMinMembers = settings.getDefaultMinMembers();
 		var oldAllowChoosingEmergencyCouncil = settings.isAllowChoosingEmergencyCouncil();
 		settings.setWotMaxDepth(dto.wotMaxDepth);
 		settings.setWotIdVerifyLen(dto.wotIdVerifyLen);
 		settings.setDefaultRequiredEmergencyKeyShares(dto.defaultRequiredEmergencyKeyShares);
+		settings.setDefaultMinMembers(dto.defaultMinMembers);
 		settings.setAllowChoosingEmergencyCouncil(dto.allowChoosingEmergencyCouncil);
 		settings.setEmergencyCouncilMemberIds(dto.emergencyCouncilMemberIds);
 		settingsRepo.persist(settings);
@@ -70,9 +72,9 @@ public class SettingsResource {
 			eventLogger.logWotSettingUpdated(jwt.getSubject(), dto.wotIdVerifyLen, dto.wotMaxDepth);
 		}
 		if (!oldEmergencyCouncilMemberIds.containsAll(dto.emergencyCouncilMemberIds) || !dto.emergencyCouncilMemberIds.containsAll(oldEmergencyCouncilMemberIds)
-		|| oldRequiredEmergencyKeyShares != dto.defaultRequiredEmergencyKeyShares || oldAllowChoosingEmergencyCouncil != dto.allowChoosingEmergencyCouncil) {
+		|| oldRequiredEmergencyKeyShares != dto.defaultRequiredEmergencyKeyShares || oldAllowChoosingEmergencyCouncil != dto.allowChoosingEmergencyCouncil || oldMinMembers != dto.defaultMinMembers) {
 			var councilMemberIds = "[\"" + String.join("\", \"", dto.emergencyCouncilMemberIds) + "\"]";
-			eventLogger.logEmergencyAccessSettingsUpdated(jwt.getSubject(), councilMemberIds, dto.defaultRequiredEmergencyKeyShares, dto.allowChoosingEmergencyCouncil);
+			eventLogger.logEmergencyAccessSettingsUpdated(jwt.getSubject(), councilMemberIds, dto.defaultRequiredEmergencyKeyShares, dto.defaultMinMembers, dto.allowChoosingEmergencyCouncil);
 		}
 		return Response.status(Response.Status.NO_CONTENT).build();
 	}
@@ -81,11 +83,12 @@ public class SettingsResource {
 							  @JsonProperty("wotMaxDepth") @Min(0) @Max(9) int wotMaxDepth,
 							  @JsonProperty("wotIdVerifyLen") @Min(0) int wotIdVerifyLen,
 							  @JsonProperty("defaultRequiredEmergencyKeyShares") @Min(0) int defaultRequiredEmergencyKeyShares,
+							  @JsonProperty("defaultMinMembers") @Min(0) int defaultMinMembers,
 							  @JsonProperty("allowChoosingEmergencyCouncil") boolean allowChoosingEmergencyCouncil,
 							  @JsonProperty("emergencyCouncilMemberIds") Set<String> emergencyCouncilMemberIds) {
 
 		public static SettingsDto fromEntity(Settings entity) {
-			return new SettingsDto(entity.getHubId(), entity.getWotMaxDepth(), entity.getWotIdVerifyLen(), entity.getDefaultRequiredEmergencyKeyShares(), entity.isAllowChoosingEmergencyCouncil(), entity.getEmergencyCouncilMemberIds());
+			return new SettingsDto(entity.getHubId(), entity.getWotMaxDepth(), entity.getWotIdVerifyLen(), entity.getDefaultRequiredEmergencyKeyShares(), entity.getDefaultMinMembers(), entity.isAllowChoosingEmergencyCouncil(), entity.getEmergencyCouncilMemberIds());
 		}
 
 	}

@@ -1,4 +1,5 @@
 ALTER TABLE "settings" ADD "default_required_emergency_key_shares" INTEGER NOT NULL DEFAULT 2;
+ALTER TABLE "settings" ADD "default_min_members" INTEGER NOT NULL DEFAULT 3;
 ALTER TABLE "settings" ADD "allow_choosing_emergency_council" BOOLEAN NOT NULL DEFAULT TRUE;
 
 ALTER TABLE "vault" ADD "requried_emergency_key_shares" INTEGER NOT NULL DEFAULT 0;
@@ -57,6 +58,7 @@ CREATE TABLE "audit_event_emergaccess_settings_updated"
 	"admin_id"               VARCHAR(255) COLLATE "C" NOT NULL,
 	"council_member_ids"     TEXT NOT NULL,
 	"required_key_shares"    INTEGER NOT NULL,
+	"min_members"			 INTEGER NOT NULL,
 	"allow_choosing_council" BOOLEAN NOT NULL,
 	CONSTRAINT "AUDIT_EVENT_EMERGACCESS_SETTINGS_UPDATED_PK" PRIMARY KEY ("id"),
 	CONSTRAINT "AUDIT_EVENT_EMERGACCESS_SETTINGS_UPDATED_FK_AUDIT_EVENT" FOREIGN KEY ("id") REFERENCES "audit_event" ("id") ON DELETE CASCADE

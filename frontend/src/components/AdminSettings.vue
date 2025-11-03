@@ -307,6 +307,18 @@
               </p>
             </div>
           </div>
+          <!-- Default Min Members -->
+          <div class="md:grid md:grid-cols-3 md:gap-6">
+            <label class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
+              {{ t('admin.emergencyAccess.defaultMinMembers.title') }}
+            </label>
+            <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
+              <input v-model="defaultMinMembers" type="number" min="2" class="block w-full rounded-md border-gray-300 shadow-sm sm:text-sm focus:ring-primary focus:border-primary" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': defaultMinMembersError instanceof FormValidationFailedError }" />
+              <p class="mt-2 text-sm text-gray-500">
+                {{ t('admin.emergencyAccess.defaultMinMembers.description') }}
+              </p>
+            </div>
+          </div>
           <div class="md:grid md:grid-cols-3 md:gap-6">
             <label class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
               {{ t('grantEmergencyAccessDialog.possibleEmergencyScenario') }}
@@ -391,6 +403,7 @@ const wotMaxDepth = ref<number>();
 const wotIdVerifyLen = ref<number>();
 
 const defaultRequiredEmergencyKeyShares = ref<number>();
+const defaultMinMembers = ref<number>();
 const allowChoosingEmergencyCouncil = ref<boolean>();
 
 const wotUpdated = ref(false);
@@ -405,6 +418,7 @@ const errorOnFetchingUpdates = ref<boolean>(false);
 const wotMaxDepthError = ref<Error | null >(null);
 const wotIdVerifyLenError = ref<Error | null >(null);
 const defaultRequiredEmergencyKeySharesError = ref<Error | null>(null);
+const defaultMinMembersError = ref<Error | null>(null);
 
 class FormValidationFailedError extends Error {
   constructor() {
@@ -451,11 +465,12 @@ const wotHasUnsavedChanges = computed(() => {
 
 type EmergencyAccessSettings = {
   defaultRequiredEmergencyKeyShares: number;
+  defaultMinMembers: number;
   allowChoosingEmergencyCouncil: boolean;
   selectedUsers: UserDto[];
 };
 
-const initialEmergencyAccessSettings = ref<EmergencyAccessSettings>({ defaultRequiredEmergencyKeyShares: 0, allowChoosingEmergencyCouncil: false, selectedUsers: [] });
+const initialEmergencyAccessSettings = ref<EmergencyAccessSettings>({ defaultRequiredEmergencyKeyShares: 0, defaultMinMembers: 0, allowChoosingEmergencyCouncil: false, selectedUsers: [] });
 const selectedCouncilUserIds = computed(() => selectedUsers.value.map(u => u.id).sort().join(','));
 const initialCouncilUserIds = computed(() => initialEmergencyAccessSettings.value.selectedUsers.map(u => u.id).sort().join(','));
 
@@ -466,6 +481,7 @@ const sameCouncilMemberIds = computed(() => {
 const emergencyAccessHasUnsavedChanges = computed(() => {
   return (
     initialEmergencyAccessSettings.value.defaultRequiredEmergencyKeyShares !== defaultRequiredEmergencyKeyShares.value ||
+    initialEmergencyAccessSettings.value.defaultMinMembers !== defaultMinMembers.value ||
     initialEmergencyAccessSettings.value.allowChoosingEmergencyCouncil !== allowChoosingEmergencyCouncil.value ||
     !sameCouncilMemberIds.value
   );
@@ -511,9 +527,11 @@ async function fetchData() {
       wotIdVerifyLen: wotIdVerifyLen.value
     };
     defaultRequiredEmergencyKeyShares.value = settings.defaultRequiredEmergencyKeyShares;
+    defaultMinMembers.value = settings.defaultMinMembers;
     allowChoosingEmergencyCouncil.value = settings.allowChoosingEmergencyCouncil;
     initialEmergencyAccessSettings.value = {
       defaultRequiredEmergencyKeyShares: defaultRequiredEmergencyKeyShares.value,
+      defaultMinMembers: defaultMinMembers.value,
       allowChoosingEmergencyCouncil: allowChoosingEmergencyCouncil.value,
       selectedUsers: [...selectedUsers.value]
     };
@@ -619,13 +637,20 @@ function resetWebOfTrust() {
 async function saveRecoverySettings() {
   onSaveErrorRecovery.value = null;
   defaultRequiredEmergencyKeySharesError.value = null;
+  defaultMinMembersError.value = null;
 
-  if (admin.value == null || defaultRequiredEmergencyKeyShares.value == null || allowChoosingEmergencyCouncil.value == null) {
+  if (admin.value == null || defaultRequiredEmergencyKeyShares.value == null || defaultMinMembers.value == null || allowChoosingEmergencyCouncil.value == null) {
     throw new Error('No data available.');
   }
 
-  if (defaultRequiredEmergencyKeyShares.value < 0) {
+  if (defaultRequiredEmergencyKeyShares.value < 2) {
     defaultRequiredEmergencyKeySharesError.value = new FormValidationFailedError();
+    onSaveErrorRecovery.value = new Error('Unknown reason');
+    return;
+  }
+
+  if (defaultMinMembers.value < 2) {
+    defaultMinMembersError.value = new FormValidationFailedError();
     return;
   }
 
@@ -634,11 +659,13 @@ async function saveRecoverySettings() {
     const settings = {
       hubId: admin.value.hubId,
       defaultRequiredEmergencyKeyShares: defaultRequiredEmergencyKeyShares.value,
+      defaultMinMembers: defaultMinMembers.value,
       allowChoosingEmergencyCouncil: allowChoosingEmergencyCouncil.value,
       emergencyCouncilMemberIds: selectedUsers.value.map(u => u.id)
     };
     initialEmergencyAccessSettings.value = {
       defaultRequiredEmergencyKeyShares: defaultRequiredEmergencyKeyShares.value,
+      defaultMinMembers: defaultMinMembers.value,
       allowChoosingEmergencyCouncil: allowChoosingEmergencyCouncil.value,
       selectedUsers: selectedUsers.value
     }; 
@@ -655,6 +682,7 @@ async function saveRecoverySettings() {
 
 function resetEmergencyAccess() {
   defaultRequiredEmergencyKeyShares.value = initialEmergencyAccessSettings.value.defaultRequiredEmergencyKeyShares;
+  defaultMinMembers.value = initialEmergencyAccessSettings.value.defaultMinMembers;
   allowChoosingEmergencyCouncil.value = initialEmergencyAccessSettings.value.allowChoosingEmergencyCouncil;
   initialCouncilMembers.value = [...initialEmergencyAccessSettings.value.selectedUsers];
   addedCouncilMembers.value = [];

@@ -139,6 +139,7 @@ export type SettingsDto = {
   wotMaxDepth: number,
   wotIdVerifyLen: number,
   defaultRequiredEmergencyKeyShares: number,
+  defaultMinMembers: number,
   allowChoosingEmergencyCouncil: boolean,
   emergencyCouncilMemberIds: string[]
 }

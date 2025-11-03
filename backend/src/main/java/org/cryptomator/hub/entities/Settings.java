@@ -41,6 +41,9 @@ public class Settings {
 	@Column(name = "default_required_emergency_key_shares", nullable = false)
 	private int defaultRequiredEmergencyKeyShares;
 
+	@Column(name = "default_min_members", nullable = false)
+	private int defaultMinMembers;
+
 	@Column(name = "allow_choosing_emergency_council", nullable = false)
 	private boolean allowChoosingEmergencyCouncil;
 
@@ -96,9 +99,17 @@ public class Settings {
 		return defaultRequiredEmergencyKeyShares;
 	}
 
+	public int getDefaultMinMembers() {
+		return defaultMinMembers;
+	}
+
 	public void setDefaultRequiredEmergencyKeyShares(int defaultRequiredEmergencyKeyShares) {
 		this.defaultRequiredEmergencyKeyShares = defaultRequiredEmergencyKeyShares;
 	}
+
+	public void setDefaultMinMembers(int defaultMinMembers) {
+		this.defaultMinMembers = defaultMinMembers;
+	}	
 
 	public boolean isAllowChoosingEmergencyCouncil() {
 		return allowChoosingEmergencyCouncil;
@@ -126,6 +137,7 @@ public class Settings {
 				", wotMaxDepth='" + wotMaxDepth + '\'' +
 				", wotIdVerifyLen='" + wotIdVerifyLen + '\'' +
 				", defaultRequiredEmergencyKeyShares=" + defaultRequiredEmergencyKeyShares +
+				", defaultMinMembers=" + defaultMinMembers +
 				", allowChoosingEmergencyCouncil=" + allowChoosingEmergencyCouncil +
 				", emergencyCouncilMemberIds= [" + String.join(", ", emergencyCouncilMemberIds) + "]" +
 				'}';
@@ -142,13 +154,14 @@ public class Settings {
 				&& Objects.equals(wotMaxDepth, settings.wotMaxDepth)
 				&& Objects.equals(wotIdVerifyLen, settings.wotIdVerifyLen)
 				&& defaultRequiredEmergencyKeyShares == settings.defaultRequiredEmergencyKeyShares
+				&& defaultMinMembers == settings.defaultMinMembers
 				&& allowChoosingEmergencyCouncil == settings.allowChoosingEmergencyCouncil
 				&& Objects.equals(emergencyCouncilMemberIds, settings.emergencyCouncilMemberIds);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, hubId, licenseKey, wotMaxDepth, wotIdVerifyLen, defaultRequiredEmergencyKeyShares, allowChoosingEmergencyCouncil, emergencyCouncilMemberIds);
+		return Objects.hash(id, hubId, licenseKey, wotMaxDepth, wotIdVerifyLen, defaultRequiredEmergencyKeyShares, defaultMinMembers, allowChoosingEmergencyCouncil, emergencyCouncilMemberIds);
 	}
 
 	@ApplicationScoped

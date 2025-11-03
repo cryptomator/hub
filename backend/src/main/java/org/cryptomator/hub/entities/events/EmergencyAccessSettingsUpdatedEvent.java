@@ -23,6 +23,9 @@ public class EmergencyAccessSettingsUpdatedEvent extends AuditEvent {
 	@Column(name = "required_key_shares", nullable = false)
 	private int requiredKeyShares;
 
+	@Column(name = "min_members", nullable = false)
+	private int minMembers;
+
 	@Column(name = "allow_choosing_council", nullable = false)
 	private boolean allowChoosingCouncil;
 
@@ -48,6 +51,14 @@ public class EmergencyAccessSettingsUpdatedEvent extends AuditEvent {
 
 	public void setRequiredKeyShares(int requiredKeyShares) {
 		this.requiredKeyShares = requiredKeyShares;
+	}
+
+	public int getMinMembers() {
+		return minMembers;
+	}
+
+	public void setMinMembers(int minMembers) {
+		this.minMembers = minMembers;
 	}
 
 	public boolean isAllowChoosingCouncil() {

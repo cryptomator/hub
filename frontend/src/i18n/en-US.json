@@ -91,6 +91,8 @@
   "admin.emergencyAccess.councilMembers.error": "Council Members Error",
   "admin.emergencyAccess.defaultShares.title": "Default Shares",
   "admin.emergencyAccess.defaultShares.description": "Default Shares Description",
+  "admin.emergencyAccess.defaultMinMembers.title": "Default Minimum Members",
+  "admin.emergencyAccess.defaultMinMembers.description": "Default Minimum Members Description",
   "admin.emergencyAccess.defaultShares.error": "Default Shares Error",
   "admin.emergencyAccess.allowChoosingCouncil.title": "Allow Choosing Council",
   "admin.emergencyAccess.allowChoosingCouncil.description": "Allow Choosing Council Description",
