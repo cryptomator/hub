@@ -274,10 +274,27 @@
         <hr class="my-4 pb-6 border-gray-200"/>
 
         <form ref="recoveryForm" class="space-y-6 md:gap-6" novalidate @submit.prevent="saveRecoverySettings()">
+          <!-- Allow Choosing Council -->
+          <div class="md:grid md:grid-cols-3 md:gap-6">
+            <label class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
+              {{ t('admin.emergencyAccess.allowChoosingCouncil.title') }}
+            </label>
+            <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1 flex items-center">
+              <input v-model="allowChoosingEmergencyCouncil" type="checkbox" class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"/>
+              <span class="ml-2 text-sm text-gray-500">
+                {{ t('admin.emergencyAccess.allowChoosingCouncil.description') }}
+              </span>
+            </div>
+          </div>
           <!-- User Selection -->
           <div class="md:grid md:grid-cols-3 md:gap-6">
             <label class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
-              {{ t('admin.emergencyAccess.councilMembers.title') }}
+              <div v-if="allowChoosingEmergencyCouncil">
+                Default {{ t('admin.emergencyAccess.councilMembers.title') }}
+              </div>
+              <div v-else>
+                {{ t('admin.emergencyAccess.councilMembers.title') }}
+              </div>
             </label>
             <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
               <div class="relative">
@@ -294,31 +311,53 @@
               </div>
             </div>
           </div>
-
-          <!-- Default Shares -->
-          <div class="md:grid md:grid-cols-3 md:gap-6">
+          <!-- Shares -->
+          <div v-if="!allowChoosingEmergencyCouncil" class="md:grid md:grid-cols-3 md:gap-6">
             <label class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
-              {{ t('admin.emergencyAccess.defaultShares.title') }}
+              Shares
             </label>
             <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
               <input v-model="defaultRequiredEmergencyKeyShares" type="number" min="2" class="block w-full rounded-md border-gray-300 shadow-sm sm:text-sm focus:ring-primary focus:border-primary" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': defaultRequiredEmergencyKeySharesError instanceof FormValidationFailedError }" />
               <p class="mt-2 text-sm text-gray-500">
-                {{ t('admin.emergencyAccess.defaultShares.description') }}
+                Desc
               </p>
             </div>
           </div>
-          <!-- Default Min Members -->
-          <div class="md:grid md:grid-cols-3 md:gap-6">
+          <div v-else class="md:grid md:grid-cols-3 md:gap-6">
             <label class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
-              {{ t('admin.emergencyAccess.defaultMinMembers.title') }}
+              Default Shares
             </label>
             <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
-              <input v-model="defaultMinMembers" type="number" min="2" class="block w-full rounded-md border-gray-300 shadow-sm sm:text-sm focus:ring-primary focus:border-primary" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': defaultMinMembersError instanceof FormValidationFailedError }" />
-              <p class="mt-2 text-sm text-gray-500">
-                {{ t('admin.emergencyAccess.defaultMinMembers.description') }}
-              </p>
+              <div >
+                <div class="flex items-center gap-2">
+                  <input
+                    v-model="defaultRequiredEmergencyKeyShares"
+                    type="number" min="2"
+                    class="w-20 rounded-md border-gray-300 shadow-sm sm:text-sm focus:ring-primary focus:border-primary text-left"
+                    :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': defaultRequiredEmergencyKeySharesError instanceof FormValidationFailedError }"
+                    aria-label="Required shares"
+                  />
+                  <span class="text-sm text-gray-500">
+                    out of
+                  </span>
+                  <input
+                    v-model="defaultMinMembers"
+                    type="number" min="2"
+                    class="w-20 rounded-md border-gray-300 shadow-sm sm:text-sm focus:ring-primary focus:border-primary text-left"
+                    :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': defaultMinMembersError instanceof FormValidationFailedError }"
+                    aria-label="Total members"
+                  />
+                  <span class="ml-1 text-sm text-gray-500">
+                    Min Members
+                  </span>
+                </div>
+                <p class="mt-2 text-sm text-gray-500">
+                  Desc
+                </p>
+              </div>
             </div>
           </div>
+          <!-- Possible Scenario -->
           <div class="md:grid md:grid-cols-3 md:gap-6">
             <label class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
               {{ t('grantEmergencyAccessDialog.possibleEmergencyScenario') }}
@@ -330,19 +369,6 @@
               />
             </div>
           </div>
-          <!-- Allow Choosing Council -->
-          <div class="md:grid md:grid-cols-3 md:gap-6">
-            <label class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
-              {{ t('admin.emergencyAccess.allowChoosingCouncil.title') }}
-            </label>
-            <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1 flex items-center">
-              <input v-model="allowChoosingEmergencyCouncil" type="checkbox" class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"/>
-              <span class="ml-2 text-sm text-gray-500">
-                {{ t('admin.emergencyAccess.allowChoosingCouncil.description') }}
-              </span>
-            </div>
-          </div>
-
           <!-- Save Button -->
           <div class="md:grid md:grid-cols-3 md:gap-6">
             <div class="md:col-start-2 flex items-center gap-2">
