@@ -274,62 +274,17 @@
         <hr class="my-4 pb-6 border-gray-200"/>
 
         <form ref="recoveryForm" class="space-y-6 md:gap-6" novalidate @submit.prevent="saveRecoverySettings()">
-          <!-- Allow Choosing Council -->
-          <div class="md:grid md:grid-cols-3 md:gap-6">
-            <label class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
-              {{ t('admin.emergencyAccess.allowChoosingCouncil.title') }}
-            </label>
-            <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1 flex items-center">
-              <input v-model="allowChoosingEmergencyCouncil" type="checkbox" class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"/>
-              <span class="ml-2 text-sm text-gray-500">
-                {{ t('admin.emergencyAccess.allowChoosingCouncil.description') }}
-              </span>
-            </div>
-          </div>
-          <!-- User Selection -->
-          <div class="md:grid md:grid-cols-3 md:gap-6">
-            <label class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
-              <div v-if="allowChoosingEmergencyCouncil">
-                Default {{ t('admin.emergencyAccess.councilMembers.title') }}
-              </div>
-              <div v-else>
-                {{ t('admin.emergencyAccess.councilMembers.title') }}
-              </div>
-            </label>
-            <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
-              <div class="relative">
-                <MultiUserSelectInputGroup
-                  :selected-users="selectedUsers"
-                  :on-search="searchCouncilMembers"
-                  :input-visible="true"
-                  @action="selectUser"
-                  @remove="removeUser"
-                />
-                <p class="mt-2 text-sm text-gray-500">
-                  {{ t('admin.emergencyAccess.councilMembers.description') }}
-                </p>
-              </div>
-            </div>
-          </div>
           <!-- Shares -->
-          <div v-if="!allowChoosingEmergencyCouncil" class="md:grid md:grid-cols-3 md:gap-6">
+          <div class="md:grid md:grid-cols-3 md:gap-6">
             <label class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
-              Shares
-            </label>
-            <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
-              <input v-model="defaultRequiredEmergencyKeyShares" type="number" min="2" class="block w-full rounded-md border-gray-300 shadow-sm sm:text-sm focus:ring-primary focus:border-primary" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': defaultRequiredEmergencyKeySharesError instanceof FormValidationFailedError }" />
-              <p class="mt-2 text-sm text-gray-500">
-                Desc
-              </p>
-            </div>
-          </div>
-          <div v-else class="md:grid md:grid-cols-3 md:gap-6">
-            <label class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
-              Default Shares
+              {{ t('admin.emergencyAccess.keySplitting.title') }}
             </label>
             <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
               <div >
                 <div class="flex items-center gap-2">
+                  <span class="text-sm text-gray-500">
+                    Require
+                  </span>
                   <input
                     v-model="defaultRequiredEmergencyKeyShares"
                     type="number" min="2"
@@ -348,25 +303,62 @@
                     aria-label="Total members"
                   />
                   <span class="ml-1 text-sm text-gray-500">
-                    Min Members
+                    key shards
                   </span>
                 </div>
                 <p class="mt-2 text-sm text-gray-500">
-                  Desc
+                  The Emergency Access Key is split up into 5 shards. Recovery will require approval of 3 people to restore access.
+                </p>
+                <p class="mt-2 text-sm text-gray-500">
+                  We recommend a pair of subsequent Fibonacci numbers for optimal redundancy, e.g. 2 out of 3, or 3 out of 5.
                 </p>
               </div>
             </div>
           </div>
-          <!-- Possible Scenario -->
+          <!-- User Selection -->
           <div class="md:grid md:grid-cols-3 md:gap-6">
             <label class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
-              {{ t('grantEmergencyAccessDialog.possibleEmergencyScenario') }}
+              Who shall retrieve Key Shards?
+            </label>
+            <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
+              <div class="relative">
+                <MultiUserSelectInputGroup
+                  :selected-users="selectedUsers"
+                  :on-search="searchCouncilMembers"
+                  :input-visible="true"
+                  @action="selectUser"
+                  @remove="removeUser"
+                />
+                <p class="mt-2 text-sm text-gray-500">
+                  The selected users are responsible for vault recovery.
+                </p>
+              </div>
+            </div>
+          </div>
+          <!-- Allow Choosing Council -->
+          <div class="md:grid md:grid-cols-3 md:gap-6">
+            <label class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
+            </label>
+            <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1 flex items-center">
+              <input v-model="allowChoosingEmergencyCouncil" type="checkbox" class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"/>
+              <span class="ml-2 text-sm text-gray-500">
+                {{ t('admin.emergencyAccess.letChooseDifferentUsersCheckbox.description') }}
+              </span>
+            </div>
+          </div>
+          <!-- Example Recovery -->
+          <div class="md:grid md:grid-cols-3 md:gap-6">
+            <label class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
+              {{ t('admin.emergencyAccess.exampleRecovery.label') }}
             </label>
             <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
               <EmergencyScenarioVisualization
                 :selected-users="selectedUsers"
                 :required-key-shares="defaultRequiredEmergencyKeyShares!"
               />
+              <p class="mt-2 text-sm text-gray-500">
+                Example of who can collaborate to recover a vault.
+              </p>
             </div>
           </div>
           <!-- Save Button -->
