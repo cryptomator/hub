@@ -127,6 +127,7 @@ export type AuditEventEmergencyAccessSettingsChangedDto = AuditEventDtoBase & {
   adminId: string;
   councilMemberIds: string;
   requiredKeyShares: number;
+  minMembers: number;
   allowChoosingCouncil: boolean;
 }
 

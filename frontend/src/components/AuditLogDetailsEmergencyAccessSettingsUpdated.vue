@@ -23,6 +23,14 @@
       </div>
       <div class="flex items-baseline gap-2">
         <dt class="text-xs text-gray-500">
+          <code>minMembers</code>
+        </dt>
+        <dd class="flex items-baseline gap-2 text-sm text-gray-900">
+          <code class="text-xs">{{ event.minMembers }}</code>
+        </dd>
+      </div>
+      <div class="flex items-baseline gap-2">
+        <dt class="text-xs text-gray-500">
           <code>allowChoosingCouncil</code>
         </dt>
         <dd class="flex items-baseline gap-2 text-sm text-gray-900">
