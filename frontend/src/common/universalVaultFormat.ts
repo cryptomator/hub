@@ -320,9 +320,14 @@ export class VaultMetadata {
    */
   public async encrypt(apiURL: string, vault: VaultDto, memberKey: MemberKey, recoveryKey: RecoveryKey): Promise<string> {
     const recoveryKeyID = `org.cryptomator.hub.recoverykey.${await getJwkThumbprintStr(recoveryKey.publicKey)}`;
+    // see https://github.com/encryption-alliance/unified-vault-format/tree/develop/vault%20metadata#jose-header
     const protectedHeader: JWEHeader = {
-      origin: `${apiURL}/vaults/${vault.id}/uvf/vault.uvf`,
-      jku: 'jwks.json' // URL relative to origin
+      // enc: 'A256GCM', // will be set by JWE.build()
+      cty: 'json',
+      crit: ['uvf.spec.version'],
+      'uvf.spec.version': 1,
+      'cloud.katta.origin': `${apiURL}/vaults/${vault.id}/uvf/vault.uvf`, // single source of truth for this vault
+      jku: 'jwks.json', // URL relative to cloud.katta.origin
     };
     const jwe = await JWE.build(this.payload(), protectedHeader).encrypt(Recipient.a256kw('org.cryptomator.hub.memberkey', memberKey.key), Recipient.ecdhEs(recoveryKeyID, recoveryKey.publicKey));
     const json = jwe.jsonSerialization();
