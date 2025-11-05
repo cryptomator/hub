@@ -12,7 +12,7 @@ export class ConcatKDF {
    * @param otherInfo Optional context info binding the derived key to a key agreement (see e.g. RFC 7518, Section 4.6.2)
    * @returns key data
    */
-  public static async kdf(z: Uint8Array, keyDataLen: number, otherInfo: Uint8Array): Promise<Uint8Array> {
+  public static async kdf(z: Uint8Array, keyDataLen: number, otherInfo: Uint8Array): Promise<Uint8Array<ArrayBuffer>> {
     const hashLen = 32; // output length of SHA-256
     const reps = Math.ceil(keyDataLen / hashLen);
     if (reps >= 0xFFFFFFFF) {
@@ -46,6 +46,8 @@ export type JWEHeader = {
   p2c?: number,
   p2s?: string,
   jku?: string,
+  cty?: 'json',
+  crit?: string[],
   [other: string]: undefined | string | number | boolean | object; // allow further properties
 }
 
@@ -190,7 +192,7 @@ class EcdhRecipient extends Recipient {
   async decryptAndUnwrap(header: JWEHeader, encryptedKey: string): Promise<CryptoKey> {
     const wrappingKey = await this.decryptDirect(header, { name: 'AES-KW', length: 256 }, ['unwrapKey']);
     try {
-      return await crypto.subtle.unwrapKey('raw', base64url.parse(encryptedKey, { loose: true }), wrappingKey, 'AES-KW', { name: 'AES-GCM' }, false, ['decrypt']);
+      return await crypto.subtle.unwrapKey('raw', base64url.parse(encryptedKey, { loose: true }) as Uint8Array<ArrayBuffer>, wrappingKey, 'AES-KW', { name: 'AES-GCM' }, false, ['decrypt']);
     } catch (error) {
       throw new UnwrapKeyError(error);
     }
@@ -220,7 +222,7 @@ class A256kwRecipient extends Recipient {
       throw new Error('unsupported alg');
     }
     try {
-      return await crypto.subtle.unwrapKey('raw', base64url.parse(encryptedKey, { loose: true }), this.wrappingKey, 'AES-KW', { name: 'AES-GCM' }, false, ['decrypt']);
+      return await crypto.subtle.unwrapKey('raw', base64url.parse(encryptedKey, { loose: true }) as Uint8Array<ArrayBuffer>, this.wrappingKey, 'AES-KW', { name: 'AES-GCM' }, false, ['decrypt']);
     } catch (error) {
       throw new UnwrapKeyError(error);
     }
@@ -256,7 +258,7 @@ class Pbes2Recipient extends Recipient {
     const salt = base64url.parse(header.p2s, { loose: true });
     const wrappingKey = await PBES2.deriveWrappingKey(this.password, 'PBES2-HS512+A256KW', salt, header.p2c);
     try {
-      return await crypto.subtle.unwrapKey('raw', base64url.parse(encryptedKey, { loose: true }), wrappingKey, 'AES-KW', { name: 'AES-GCM' }, false, ['decrypt']);
+      return await crypto.subtle.unwrapKey('raw', base64url.parse(encryptedKey, { loose: true }) as Uint8Array<ArrayBuffer>, wrappingKey, 'AES-KW', { name: 'AES-GCM' }, false, ['decrypt']);
     } catch (error) {
       throw new UnwrapKeyError(error);
     }
@@ -377,7 +379,7 @@ export class EncryptedJWE {
     const cleartext = new Uint8Array(await crypto.subtle.decrypt(
       {
         name: 'AES-GCM',
-        iv: base64url.parse(this.iv, { loose: true }),
+        iv: base64url.parse(this.iv, { loose: true }) as Uint8Array<ArrayBuffer>,
         additionalData: UTF8.encode(this.protectedHeader),
         tagLength: 128
       },
@@ -402,7 +404,7 @@ export class EncryptedJWE {
 
 // visible for testing
 export class ECDH_ES {
-  private static async deriveRawKey(publicKey: CryptoKey, privateKey: CryptoKey, ecdhKeyBits: number, desiredKeyBytes: number, header: JWEHeader): Promise<Uint8Array> {
+  private static async deriveRawKey(publicKey: CryptoKey, privateKey: CryptoKey, ecdhKeyBits: number, desiredKeyBytes: number, header: JWEHeader): Promise<Uint8Array<ArrayBuffer>> {
     let agreedKey = new Uint8Array();
     try {
       const algOrEnc = header.alg === 'ECDH-ES' ? header.enc : header.alg; // see definition of AlgorithmID in RFC 7518, Section 4.6.2
