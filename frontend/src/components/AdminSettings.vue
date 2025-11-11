@@ -245,12 +245,12 @@
 
           <div class="md:grid md:grid-cols-3 md:gap-6">
             <div class="md:col-start-2 flex items-center gap-2">
-              <button type="submit" :disabled="processingWot || !wotHasUnsavedChanges" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
+              <button type="submit" :disabled="processing || !wotHasUnsavedChanges" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
                 <span v-if="!wotUpdated">{{ t('admin.webOfTrust.save') }}</span>
                 <span v-else>{{ t('admin.webOfTrust.saved') }}</span>
               </button>
-              <p v-if="onSaveErrorWot != null && !(onSaveErrorWot instanceof FormValidationFailedError)" class="mt-2 text-sm text-red-900">
-                {{ t('common.unexpectedError', [onSaveErrorWot.message]) }}
+              <p v-if="onSaveError != null && !(onSaveError instanceof FormValidationFailedError)" class="mt-2 text-sm text-red-900">
+                {{ t('common.unexpectedError', [onSaveError.message]) }}
               </p>
               <div v-if="wotHasUnsavedChanges" class="flex items-center whitespace-nowrap gap-1 text-sm text-yellow-700">
                 <ExclamationTriangleIcon class="w-4 h-4 m-1 text-yellow-500" />
@@ -272,7 +272,7 @@
 <script setup lang="ts">
 import { ArrowRightIcon, ArrowTopRightOnSquareIcon, CheckIcon, ExclamationTriangleIcon, InformationCircleIcon, LinkIcon, XMarkIcon } from '@heroicons/vue/20/solid';
 import semver from 'semver';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { BillingDto, VersionDto } from '../common/backend';
 import config, { absFrontendBaseURL } from '../common/config';
@@ -298,9 +298,9 @@ const wotIdVerifyLen = ref<number>();
 const wotUpdated = ref(false);
 const debouncedWotUpdated = debounce(() => wotUpdated.value = false, 2000);
 const form = ref<HTMLFormElement>();
+const processing = ref(false);
 const onFetchError = ref<Error | null>(null);
-const processingWot = ref(false);
-const onSaveErrorWot = ref<Error | null>(null);
+const onSaveError = ref<Error | null>(null);
 const errorOnFetchingUpdates = ref<boolean>(false);
 const wotMaxDepthError = ref<Error | null >(null);
 const wotIdVerifyLenError = ref<Error | null >(null);
@@ -372,6 +372,7 @@ async function fetchData() {
     admin.value = await backend.billing.get();
     version.value = await versionDto;
     latestVersion.value = await versionAvailable;
+
     const settings = await backend.settings.get();
     wotMaxDepth.value = settings.wotMaxDepth;
     wotIdVerifyLen.value = settings.wotIdVerifyLen;
@@ -395,10 +396,9 @@ function manageSubscription() {
 }
 
 async function saveWebOfTrust() {
-  onSaveErrorWot.value = null;
+  onSaveError.value = null;
   wotMaxDepthError.value = null;
   wotIdVerifyLenError.value = null;
-
   if (admin.value == null || wotMaxDepth.value == null || wotIdVerifyLen.value == null) {
     throw new Error('No data available.');
   }
@@ -411,9 +411,8 @@ async function saveWebOfTrust() {
     }
     return;
   }
-
   try {
-    processingWot.value = true;
+    processing.value = true;
     const settings = {
       wotMaxDepth: wotMaxDepth.value,
       wotIdVerifyLen: wotIdVerifyLen.value,
@@ -428,9 +427,9 @@ async function saveWebOfTrust() {
     debouncedWotUpdated();
   } catch (error) {
     console.error('Failed to save settings:', error);
-    onSaveErrorWot.value = error instanceof Error ? error : new Error('Unknown reason');
+    onSaveError.value = error instanceof Error ? error : new Error('Unknown reason');
   } finally {
-    processingWot.value = false;
+    processing.value = false;
   }
 }
 
