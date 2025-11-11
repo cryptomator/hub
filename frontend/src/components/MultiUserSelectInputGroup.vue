@@ -2,10 +2,11 @@
   <div class="relative w-full">
     <div
       :class="[
-        'flex items-center flex-wrap min-h-[42px] rounded-md',
-        { 
-          'px-2 py-1 shadow-xs border border-gray-300 focus-within:ring-1 focus-within:ring-primary cursor-text': inputVisible 
-        }
+        'flex items-center flex-wrap min-h-[42px] rounded-md px-2 py-1 shadow-xs border', 
+        inputVisible ? 'focus-within:ring-1' : 'bg-gray-50 cursor-not-allowed',
+        props.hasError
+          ? 'border-red-300 text-red-900 focus-within:ring-red-500 focus-within:border-red-500'
+          : 'border-gray-300 focus-within:ring-primary'
       ]"
       @click="focusInput"
     >
@@ -45,13 +46,19 @@
                 'caret-transparent': selectedPillIndex !== null,
                 'caret-black': selectedPillIndex === null
               }"
-              :placeholder="props.selectedUsers.length === 0 ? t('recoveryDialog.searchUser') : ''"
+              :placeholder="!!props.placeholder ? props.placeholder : ''"
               @keydown="onKeyDown"
               @blur="onBlur"
             />
           </ComboboxInput>
         </div>
       </Combobox>
+      <div v-if="props.hasError" class="absolute left-1/2 -translate-x-1/2 -top-2 transform -translate-y-full w-5/6">
+        <div class="bg-red-50 border border-red-300 text-red-900 px-2 py-1 rounded shadow-sm text-sm hyphens-auto">
+          {{ props.errorMessage || t('common.unexpectedError') }}
+          <div class="absolute bottom-0 left-1/2 transform translate-y-1/2 rotate-45 w-2 h-2 bg-red-50 border-r border-b border-red-300"></div>
+        </div>
+      </div>
     </div>
     <!-- DROPDOWN -->
     <div
@@ -105,6 +112,9 @@ const props = defineProps<{
   selectedUsers: T[];
   onSearch: (query: string) => Promise<T[]>;
   inputVisible: boolean;
+  hasError?: boolean;
+  errorMessage?: string;
+  placeholder?: string;
 }>();
 
 const emit = defineEmits<{
