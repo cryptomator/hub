@@ -53,7 +53,7 @@
             <span class="ml-1 text-sm text-gray-500">{{ t('admin.emergencyAccess.keySplitting.keyShards') }}</span>
           </div>
           <p class="mt-2 text-sm text-gray-500">
-            {{ t('admin.emergencyAccess.keySplittingDesc') }}
+            {{ t('admin.emergencyAccess.keySplitting.desc') }}
           </p>
           <div class="mt-2">
             <div v-if="!isKeySplittingInvalid" class="flex items-start gap-2 rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-900">
@@ -81,7 +81,7 @@
               <span class="leading-5">
                 <span v-if="isDescLoading">{{ t('common.loading') }}</span>
                 <span v-else-if="isKeySplittingInvalid">
-                  {{ t('admin.emergencyAccess.errors.keySplittingInvalid') }}
+                  {{ t('admin.emergencyAccess.keySplitting.errors.invalid') }}
                 </span>
               </span>
             </div>
@@ -110,7 +110,7 @@
               :selected-users="selectedUsers"
               :on-search="searchCouncilMembers"
               :input-visible="true"
-              :error-message="t('admin.emergencyAccess.errors.notEnoughMembers', [minMembers])"
+              :error-message="t('admin.emergencyAccess.councilMembers.errors.notEnoughMembers', [minMembers])"
               :has-error="!!selectedMembersError"
               :placeholder="t('common.search')"
               @action="selectUser"
@@ -276,15 +276,15 @@ function removeUser(u: UserDto) {
 }
 
 const requiredKeySharesValidationText = computed(() => {
-  if (defaultRequiredEmergencyKeySharesToHighError.value != null) return t('admin.emergencyAccess.errors.keySplitting.maxValue');
-  else if (defaultRequiredEmergencyKeySharesLessThenTwoError.value != null) return t('admin.emergencyAccess.errors.keySplitting.minValue');
-  else if ( defaultRequiredEmergencyKeySharesLowerThenMinMembersError.value != null) return t('admin.emergencyAccess.errors.lowerAsMinMembers');
+  if (defaultRequiredEmergencyKeySharesToHighError.value != null) return t('admin.emergencyAccess.keySplitting.errors.maxValue');
+  else if (defaultRequiredEmergencyKeySharesLessThenTwoError.value != null) return t('admin.emergencyAccess.keySplitting.errors.minValue');
+  else if ( defaultRequiredEmergencyKeySharesLowerThenMinMembersError.value != null) return t('admin.emergencyAccess.keySplitting.errors.lowerAsMinMembersOrEqual');
   return 'No text.';
 });
 
 const requiredMinMembersValidationText = computed(() => {
-  if (defaultMinMembersToHighError.value != null) return t('admin.emergencyAccess.errors.keySplitting.maxValue');
-  else if (defaultMinMembersLessThenTwoError.value != null) return t('admin.emergencyAccess.errors.keySplitting.minValue');
+  if (defaultMinMembersToHighError.value != null) return t('admin.emergencyAccess.keySplitting.errors.maxValue');
+  else if (defaultMinMembersLessThenTwoError.value != null) return t('admin.emergencyAccess.keySplitting.errors.minValue');
   return 'No text.';
 });
 
@@ -365,7 +365,7 @@ async function saveRecoverySettings() {
   if (selectedUsers.value.length < minMembers.value) {
     selectedMembersError.value = new FormValidationFailedError();
     onSaveErrorRecovery.value = new Error(
-      t('admin.emergencyAccess.errors.notEnoughMembers', [minMembers.value]) ?? 'Not enough selected members'
+      t('admin.emergencyAccess.councilMembers.errors.notEnoughMembers', [minMembers.value]) ?? 'Not enough selected members'
     );
     return;
   }
