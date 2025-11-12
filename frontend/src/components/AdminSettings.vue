@@ -62,7 +62,7 @@
           <div class="md:grid md:grid-cols-3 md:gap-6">
             <label for="keycloakVersion" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.serverInfo.keycloakVersion.title') }}</label>
             <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
-              <input id="keycloakVersion" v-model="version.keycloakVersion" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
+              <input id="keycloakVersion" :value="version.keycloakVersion ?? t('admin.serverInfo.keycloakVersion.notAvailable')" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
               <p id="keycloakAdminRealmURL" class="inline-flex mt-2 text-sm">
                 <LinkIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
                 <a :href="keycloakAdminRealmURL" target="_blank" class="underline text-gray-500 hover:text-gray-900">{{ $t('admin.serverInfo.keycloakVersion.description') }}</a>
