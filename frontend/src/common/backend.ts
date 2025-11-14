@@ -115,7 +115,7 @@ export type BillingDto = {
 
 export type VersionDto = {
   hubVersion: string;
-  keycloakVersion: string;
+  keycloakVersion?: string;
 }
 
 export type SettingsDto = {
