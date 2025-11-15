@@ -390,7 +390,7 @@ async function fetchData() {
 
 function manageSubscription() {
   const returnUrl = `${absFrontendBaseURL}admin`;
-  window.open(`https://cryptomator.org/hub/billing/?hub_id=${billing.value?.hubId}&return_url=${encodeURIComponent(returnUrl)}`, '_self');
+  window.location.href = `https://cryptomator.org/hub/billing/?hub_id=${billing.value?.hubId}&return_url=${encodeURIComponent(returnUrl)}`;
 }
 
 async function saveWebOfTrust() {
