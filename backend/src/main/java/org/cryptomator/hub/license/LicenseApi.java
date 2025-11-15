@@ -14,12 +14,12 @@ import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 public interface LicenseApi {
 
 	@GET
-	@Path("/trial/challenge")
+	@Path("/hub/challenge")
 	@Produces(MediaType.APPLICATION_JSON)
 	Challenge generateTrialChallenge();
 
 	@POST
-	@Path("/trial/verify")
+	@Path("/hub/trial")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.TEXT_PLAIN)
 	String verifyTrialChallenge(@QueryParam("hubId") String hubId, Solution solution);
