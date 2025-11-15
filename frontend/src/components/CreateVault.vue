@@ -133,19 +133,38 @@
                 @action="addCouncilMember"
                 @remove="removeCouncilMember"
               />
+              <div v-if="minMembers - emergencyCouncilMembers.length > 0" class="flex items-start gap-2 rounded-md border border-yellow-200 bg-yellow-50 p-1 text-sm text-gray-900 mt-1">
+                <span class="leading-5">
+                  <span class="text-gray-600">
+                    Select at least {{ minMembers - emergencyCouncilMembers.length }} more council member. 
+                  </span>
+                </span>
+              </div>
             </div>
-
-            <RequiredKeySharesInput
-              v-model="requiredKeyShares"
-              :allow-changing-defaults="allowChangingDefaults"
-              :default-key-shares="defaultRequiredEmergencyKeyShares"
-            />
+            <div class="flex items-start gap-2 rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-900 mt-3">
+              <span class="leading-5">
+                <span class="text-gray-500">
+                  Recovery will require approval of {{ requiredKeyShares }} council member to use emergency access restore features. 
+                </span>
+              </span>
+              <SegmentRing
+                v-if="true"
+                class="ml-auto shrink-0"
+                :total="requiredKeyShares"
+                :completed="0"
+                :width="36"
+                :height="36"
+                fill-color="#66cc68bb"
+                empty-color="#ccc"
+              />
+            </div>
             <label class="block text-sm font-medium text-gray-700 pt-4">
-              {{ t('grantEmergencyAccessDialog.possibleEmergencyScenario') }}
+              Example Recovery
             </label>
             <EmergencyScenarioVisualization
               :selected-users="emergencyCouncilMembers"
               :required-key-shares="requiredKeyShares"
+              :min-members="0"
             />
             <div v-if="needsRedundancy()" class="mt-4 mr-3">
               <span
@@ -327,6 +346,7 @@ import { EmergencyAccess } from '../common/emergencyaccess';
 import EmergencyScenarioVisualization from './emergencyaccess/EmergencyScenarioVisualization.vue';
 import VaultCreationProgress from './VaultCreationProgress.vue';
 import { wordEncoder } from '../common/util';
+import SegmentRing from './emergencyaccess/SegmentRing.vue';
 
 enum State {
   Initial,
@@ -379,6 +399,7 @@ const defaultEmergencyCouncilMembers = ref<ActivatedUser[]>([]);
 const defaultRequiredEmergencyKeyShares = ref<number>(0);
 const allowChangingDefaults = ref<boolean>(false);
 const requiredKeyShares = ref<number>(0);
+const minMembers = ref<number>(0);
 const initialEmergencyCouncilMembers = ref<ActivatedUser[]>([]);
 const addedEmergencyCouncilMembers = ref<ActivatedUser[]>([]);
 
@@ -419,6 +440,7 @@ async function loadDefaultEmergencyAccessSettings() {
     allowChangingDefaults.value = settings.allowChoosingEmergencyCouncil;
     defaultRequiredEmergencyKeyShares.value = settings.defaultRequiredEmergencyKeyShares;
     requiredKeyShares.value = settings.defaultRequiredEmergencyKeyShares;
+    minMembers.value = settings.defaultMinMembers;
   } catch (error) {
     console.error('Loading emergency council members failed:', error);
     defaultRequiredEmergencyKeyShares.value = 0;
