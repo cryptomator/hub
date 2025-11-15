@@ -35,13 +35,21 @@
             <template v-for="(item, index) in displayItems.value" :key="item.id">
               <span
                 v-if="item.type === 'user' && index <= 5"
-                class="pill inline-flex items-center border border-grey bg-white text-sm font-medium px-2 py-1 rounded-full shadow-sm absolute"
+                class="pill inline-flex items-center justify-between border border-grey bg-white text-sm font-medium px-2 py-1 rounded-full shadow-sm absolute"
                 :style="{ left: `${calcLeft(index)}px`, width: pillWidth + 'px', zIndex: 1 }"
               >
-                <img :src="item.user!.pictureUrl" class="w-4 h-4 rounded-full mr-1 shrink-0" />
-                <span class="truncate">{{ item.user!.name }}</span>
+                <div class="inline-flex items-center min-w-0">
+                  <img :src="item.user!.pictureUrl" class="w-4 h-4 rounded-full mr-1 shrink-0" />
+                  <span class="truncate">{{ item.user!.name }}</span>
+                </div>
+                <SegmentRing
+                  :start-index="Math.ceil(index / 2)"
+                  :total="requiredKeyShares"
+                  :completed="1"
+                  :width="24"
+                  :height="24"
+                />
               </span>
-
               <span
                 v-else-if="item.type === 'plus' && index <= 5"
                 class="pill inline-flex items-center justify-center text-gray-500 font-medium absolute"
@@ -71,6 +79,7 @@ import { ExclamationTriangleIcon } from '@heroicons/vue/20/solid';
 import { useI18n } from 'vue-i18n';
 import { UserDto } from '../../common/backend';
 import { nextTick } from 'vue';
+import SegmentRing from './SegmentRing.vue';
 
 export type Item = {
   id: string;
@@ -84,7 +93,8 @@ const { t } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{
   selectedUsers: T[];
-  requiredKeyShares: number
+  requiredKeyShares: number;
+  minMembers: number
 }>();
 
 let timeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -92,7 +102,7 @@ const loadingCouncilSelection = ref(true);
 const randomCouncilSelection = ref<UserDto[]>([]);
 const randomSelectionInterval = ref<ReturnType<typeof setInterval> | null>(null);
 
-const { selectedUsers, requiredKeyShares } = toRefs(props);
+const { selectedUsers, requiredKeyShares, minMembers } = toRefs(props);
 
 const pillContainer = ref<HTMLElement | null>(null);
 const containerWidth = ref(0);
@@ -154,7 +164,7 @@ function stopRandomCouncilInterval() {
   }
 }
 const isGrantButtonDisabled = computed(() => {
-  return selectedUsers.value.length < requiredKeyShares.value;
+  return selectedUsers.value.length < requiredKeyShares.value || selectedUsers.value.length < minMembers.value;
 });
 
 watch([isGrantButtonDisabled], () => {
