@@ -110,11 +110,6 @@
                               @action="addCouncilMember"
                               @remove="removeCouncilMember"
                             />
-                            <RequiredKeySharesInput
-                              v-model="newRequiredKeyShares"
-                              :allow-changing-defaults="true"
-                              :default-key-shares="vault.requiredEmergencyKeyShares"
-                            />
                             <label class="block text-sm font-medium text-gray-700 pt-4">
                               {{ t('grantEmergencyAccessDialog.possibleEmergencyScenario') }}
                             </label>
@@ -311,7 +306,6 @@ import { describeSegment } from '../../common/svgUtils';
 import { EmergencyAccess } from '../../common/emergencyaccess';
 import userdata from '../../common/userdata';
 import MultiUserSelectInputGroup from '../MultiUserSelectInputGroup.vue';
-import RequiredKeySharesInput from './RequiredKeySharesInput.vue';
 import EmergencyScenarioVisualization from './EmergencyScenarioVisualization.vue';
 import ProcessAbortDialog from './ProcessAbortDialog.vue';
 import { asPublicKey, UserKeys, VaultKeys } from '../../common/crypto';

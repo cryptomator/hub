@@ -57,11 +57,6 @@
                         @remove="removeCouncilMember"
                       />
                     </div>
-                    <RequiredKeySharesInput
-                      v-model="requiredKeyShares"
-                      :allow-changing-defaults="allowChangingDefaults"
-                      :default-key-shares="defaultRequiredEmergencyKeyShares"
-                    />
                     <label class="block text-sm font-medium text-gray-700 pt-4">
                       {{ t('grantEmergencyAccessDialog.possibleEmergencyScenario') }}
                     </label>
@@ -121,7 +116,6 @@ import { VaultKeys } from '../../common/crypto';
 import { wordEncoder } from '../../common/util';
 import { EmergencyAccess } from '../../common/emergencyaccess';
 import MultiUserSelectInputGroup from '../MultiUserSelectInputGroup.vue';
-import RequiredKeySharesInput from './RequiredKeySharesInput.vue';
 import EmergencyScenarioVisualization from './EmergencyScenarioVisualization.vue';
 
 const { t } = useI18n({ useScope: 'global' });

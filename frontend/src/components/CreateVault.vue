@@ -341,7 +341,6 @@ import { debounce } from '../common/util';
 import { VaultConfig } from '../common/vaultconfig';
 import BreadcrumbNav from './BreadcrumbNav.vue';
 import MultiUserSelectInputGroup from './MultiUserSelectInputGroup.vue';
-import RequiredKeySharesInput from './emergencyaccess/RequiredKeySharesInput.vue';
 import { EmergencyAccess } from '../common/emergencyaccess';
 import EmergencyScenarioVisualization from './emergencyaccess/EmergencyScenarioVisualization.vue';
 import VaultCreationProgress from './VaultCreationProgress.vue';
