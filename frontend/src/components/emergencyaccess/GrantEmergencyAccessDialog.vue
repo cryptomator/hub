@@ -145,6 +145,7 @@ const trusts = ref<TrustDto[]>([]);
 
 const defaultEmergencyCouncilMembers = ref<ActivatedUser[]>([]);
 const defaultRequiredEmergencyKeyShares = ref<number>(0);
+const minMembers = ref<number>(0);
 const allowChangingDefaults = ref<boolean>(false);
 
 const addingCouncilMember = ref(false);
@@ -314,6 +315,7 @@ async function loadDefaultSettings() {
     initialEmergencyCouncilMembers.value = [...sortedActivatedUsers];
 
     allowChangingDefaults.value = settings.allowChoosingEmergencyCouncil;
+    minMembers.value = settings.defaultMinMembers;
     defaultRequiredEmergencyKeyShares.value = settings.defaultRequiredEmergencyKeyShares;
   } catch (error) {
     console.error('Loading emergency council members failed:', error);
