@@ -437,6 +437,7 @@ onMounted(fetchData);
 
 async function fetchData() {
   onFetchError.value = null;
+  loadDefaultSettings();
   try {
     me.value = await userdata.me;
 
@@ -487,6 +488,19 @@ function getTypeLabel(type: RecoveryProcessDto['type']) {
   return type === 'ASSIGN_OWNER'
     ? t('emergencyAccessVaultList.assignOwner')
     : t('emergencyAccessVaultList.changeCouncil');
+}
+
+const allowChoosingEmergencyCouncil = ref<boolean>(false);
+async function loadDefaultSettings() {
+  try {
+    const settings = await backend.settings.get();
+   
+    allowChoosingEmergencyCouncil.value = settings.allowChoosingEmergencyCouncil;
+  } catch (error) {
+    console.error('Loading allowChoosingEmergencyCouncil failed:', error);
+    // TODO: don't set defaults, hard-fail with error message instead
+    allowChoosingEmergencyCouncil.value = false;
+  }
 }
 
 function onUnifiedButtonClick(vault: VaultDto, type: RecoveryProcessDto['type']) {
