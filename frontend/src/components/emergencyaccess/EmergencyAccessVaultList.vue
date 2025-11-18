@@ -258,7 +258,7 @@
                   <!-- Hover-Card -->
                   <div
                     class="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-150
-                          absolute -left-45 top-9 z-20 w-80 rounded-lg border border-gray-200 bg-white p-3 shadow-xl"
+                          absolute right-0 top-9 z-20 w-80 rounded-lg border border-gray-200 bg-white p-3 shadow-xl"
                     role="tooltip"
                   >
                     <!-- Running process -->
