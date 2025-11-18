@@ -232,27 +232,23 @@
                 <div class="relative group inline-block">
                   <button
                     type="button"
-                    class="h-8 inline-flex items-center gap-2 rounded-md bg-white px-2 py-1 text-xs font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                    class="h-8 inline-flex items-center gap-2 rounded-md bg-white px-2 py-1 text-xs font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     @click.stop="onUnifiedButtonClick(vault, type)"
                   >
                     <template v-if="getProcessByType(vault, type)">
-                      <svg class="shrink-0 pointer-events-none select-none" width="20" height="20" viewBox="0 0 36 36">
-                        <g>
-                          <path
-                            v-for="i in getProcessByType(vault, type)!.requiredKeyShares"
-                            :key="i"
-                            :d="describeSegment(i - 1, getProcessByType(vault, type)!.requiredKeyShares, 16)"
-                            :fill="i <= getCompletedSegmentsForProcess(getProcessByType(vault, type)!) ? '#22c55e' : '#e5e7eb'"
-                            stroke="white"
-                            stroke-width="1"
-                          />
-                        </g>
-                      </svg>
+                      <SegmentRing
+                        :total="getProcessByType(vault, type)!.requiredKeyShares"
+                        :completed="getCompletedSegmentsForProcess(getProcessByType(vault, type)!)"
+                        class="shrink-0 pointer-events-none select-none"
+                      />
+                      <span v-if="isEmergencyKeyShareHolder(vault)">
+                        {{ getTypeLabel(vault,type) }} - {{ getApprovalLabel(getProcessByType(vault, type)!) }}
+                      </span>
                     </template>
                     <template v-else>
                       <PlayIcon class="h-4 w-4 text-primary" aria-hidden="true" />
+                      <span>{{ getTypeLabel(vault, type) }}</span>
                     </template>
-                    <span>{{ getTypeLabel(type) }}</span>
                   </button>
 
                   <!-- Hover-Card -->
@@ -266,30 +262,19 @@
                     <template v-if="getProcessByType(vault, type)">
                       <div class="flex items-center justify-between mb-1">
                         <div>
-                          <div class="text-xl">Assign Vault Owner</div>
+                          <div class="text-xl">{{ getTypeLabel(vault,type) }}</div>
                           <div class="text-xs text-gray-500 mb-2">
                             {{ t('recoveryDialog.requiredKeyShares') }}:
                             {{ getProcessByType(vault, type)!.requiredKeyShares }}
                           </div>
                         </div>
-                        <svg
+                        <SegmentRing
+                          :total="getProcessByType(vault, type)!.requiredKeyShares"
+                          :completed="getCompletedSegmentsForProcess(getProcessByType(vault, type)!)"
                           class="shrink-0 pointer-events-none select-none"
-                          width="42"
-                          height="42"
-                          viewBox="0 0 36 36"
-                          aria-hidden="true"
-                        >
-                          <g>
-                            <path
-                              v-for="i in getProcessByType(vault, type)!.requiredKeyShares"
-                              :key="i"
-                              :d="describeSegment(i - 1, getProcessByType(vault, type)!.requiredKeyShares, 16)"
-                              :fill="i <= getCompletedSegmentsForProcess(getProcessByType(vault, type)!) ? '#22c55e' : '#e5e7eb'"
-                              stroke="white"
-                              stroke-width="1"
-                            />
-                          </g>
-                        </svg>
+                          :width="42"
+                          :height="42"
+                        />
                       </div>
                       <div>
                         Process council
@@ -325,7 +310,7 @@
                     <!-- Startable process -->
                     <template v-else>
                       <div class="flex items-center justify-between mb-1">
-                        <div class="text-xl">{{ getTypeLabel(type) }}</div>
+                        <div class="text-xl">{{ getTypeLabel(vault, type) }}</div>
                       </div>
                       <div class="text-xs text-gray-500 mb-2">
                         {{ t('recoveryDialog.requiredKeyShares') }}:
@@ -402,6 +387,7 @@ import userdata from '../../common/userdata';
 import { UserDto } from '../../common/backend';
 import { describeSegment } from '../../common/svgUtils';
 import EmergencyAccessDialog from './EmergencyAccessDialog.vue';
+import SegmentRing from './SegmentRing.vue';
 
 export type Item = {
   id: string;
@@ -480,14 +466,49 @@ function recoveredMemberIdsForProcess(proc: RecoveryProcessDto): Set<string> {
   return set;
 }
 
+function didAddMyShare(proc?: RecoveryProcessDto): boolean {
+  if (!proc || !me.value) return false;
+  return proc.recoveredKeyShares?.[me.value.id]?.recoveredKeyShare !== undefined;
+}
+
+function isProcessFullyApproved(proc?: RecoveryProcessDto): boolean {
+  if (!proc) return false;
+  const recovered = Object.values(proc.recoveredKeyShares ?? {})
+    .filter(ks => ks?.recoveredKeyShare !== undefined).length;
+  return recovered >= proc.requiredKeyShares;
+}
+
+function isProcessAboutToComplete(proc?: RecoveryProcessDto): boolean {
+  if (!proc) return false;
+  const recovered = Object.values(proc.recoveredKeyShares ?? {})
+    .filter(ks => ks?.recoveredKeyShare !== undefined).length;
+  console.log('recovered:' + recovered);
+  console.log('proc.requiredKeyShares:' + proc.requiredKeyShares);
+  return (recovered + 1 ) >= proc.requiredKeyShares;
+}
+
+function getApprovalLabel(proc?: RecoveryProcessDto): string {
+  if (!proc) return '';
+
+  if (didAddMyShare(proc))
+    return 'Approved';
+  else {
+    if (isProcessFullyApproved(proc) || isProcessAboutToComplete(proc)) {
+      return 'Complete';
+    }
+    else 
+      return 'Approve';
+  }
+}
+
 function getProcessByType(vault: VaultDto, type: RecoveryProcessDto['type']): RecoveryProcessDto | undefined {
   return getProcesses(vault.id).find(p => p.type === type);
 }
 
-function getTypeLabel(type: RecoveryProcessDto['type']) {
+function getTypeLabel(vault: VaultDto, type: RecoveryProcessDto['type']) {
   return type === 'ASSIGN_OWNER'
     ? t('emergencyAccessVaultList.assignOwner')
-    : t('emergencyAccessVaultList.changeCouncil');
+    : ( allowChoosingEmergencyCouncil.value ? t('emergencyAccessVaultList.changeCouncil') : 'Reset Council');
 }
 
 const allowChoosingEmergencyCouncil = ref<boolean>(false);
