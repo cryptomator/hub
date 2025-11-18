@@ -120,8 +120,18 @@
                 Not a council member anymore
               </span>
             </div>
-            <!-- No Redundancy badge -->
-            <div v-if="needsRedundancy(vault) && isEmergencyKeyShareHolder(vault)" class="mr-3">
+            <!-- Broken EA -->
+            <div v-else-if="isBroken(vault) && isEmergencyKeyShareHolder(vault)" class="mr-3">
+              <span
+                class="inline-flex items-center gap-2 rounded-full bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800"
+                :title="t('emergencyAccessVaultList.noRedundancyHint')"
+              >
+                <ExclamationTriangleIcon class="h-4 w-4" aria-hidden="true" />
+                Broken EA
+              </span>
+            </div>
+            <!-- Needs Redundancy badge -->
+            <div v-else-if="noRedundancy(vault) && isEmergencyKeyShareHolder(vault)" class="mr-3">
               <span
                 class="inline-flex items-center gap-2 rounded-full bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800"
                 :title="t('emergencyAccessVaultList.noRedundancyHint')"
@@ -233,6 +243,7 @@
                   <button
                     type="button"
                     class="h-8 inline-flex items-center gap-2 rounded-md bg-white px-2 py-1 text-xs font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    :disabled="isBroken(vault)"
                     @click.stop="onUnifiedButtonClick(vault, type)"
                   >
                     <template v-if="getProcessByType(vault, type)">
@@ -637,9 +648,14 @@ function isEmergencyKeyShareHolder(vault: VaultDto): boolean {
   return vault.emergencyKeyShares[me.value.id] !== undefined;
 }
 
-function needsRedundancy(vault: VaultDto): boolean {
+function noRedundancy(vault: VaultDto): boolean {
   const members = Object.keys(vault.emergencyKeyShares).length;
-  return vault.requiredEmergencyKeyShares >= members;
+  return vault.requiredEmergencyKeyShares == members;
+}
+
+function isBroken(vault: VaultDto): boolean {
+  const members = Object.keys(vault.emergencyKeyShares).length;
+  return vault.requiredEmergencyKeyShares > members;
 }
 
 function getCompletedSegmentsForProcess(proc: RecoveryProcessDto): number {
