@@ -2,11 +2,11 @@
   <div class="mt-2">
     <div
       ref="pillContainer"
-      class="relative flex flex-wrap gap-2 min-h-[40px] p-2 border border-gray-300 rounded-md bg-gray-100 opacity-60 cursor-not-allowed"
+      class="relative flex flex-wrap gap-2 p-2 border border-gray-300 rounded-md bg-gray-100 opacity-60 cursor-not-allowed"
       aria-disabled="true"
     >
       <template v-if="loadingCouncilSelection">
-        <div class="w-full flex py-2.5">
+        <div class="w-full flex pb-3.5">
           <svg class="animate-spin h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -16,11 +16,11 @@
 
       <template v-else>
         <template v-if="isGrantButtonDisabled">
-          <div class="relative flex flex-wrap gap-2 min-h-[40px]">
+          <div class="relative flex flex-wrap gap-2 pb-8.5">
             <span
               class="pill inline-flex items-center border border-red-300 bg-red-50 text-red-800 text-sm font-medium px-2 py-1 rounded-full shadow-sm absolute"
             >
-              <ExclamationTriangleIcon class="h-4 w-4 text-red-500 mr-1" />
+              <ExclamationTriangleIcon class="h-4 w-4 m-1 text-red-500 mr-1" />
               <span class="truncate">{{ t('recoveryDialog.notPossible') }}</span>
             </span>
           </div>
@@ -30,7 +30,7 @@
           <TransitionGroup
             name="pill"
             tag="div"
-            class="relative flex flex-wrap gap-2 min-h-[40px]"
+            class="relative flex flex-wrap gap-2 pb-8.5"
           >
             <template v-for="(item, index) in displayItems.value" :key="item.id">
               <span
