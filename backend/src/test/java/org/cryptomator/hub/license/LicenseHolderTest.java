@@ -3,7 +3,6 @@ package org.cryptomator.hub.license;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import io.quarkus.test.InjectMock;
 import org.cryptomator.hub.entities.Settings;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,7 +10,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
@@ -182,15 +180,14 @@ public class LicenseHolderTest {
 		Settings settings = mock(Settings.class);
 		LicenseApi.Challenge challenge = mock(LicenseApi.Challenge.class);
 		doReturn(challenge).when(licenseApi).generateTrialChallenge();
-		var solution = mock(LicenseApi.Solution.class);
-		doReturn(solution).when(licenseHolderSpy).solveChallenge(challenge);
-		doReturn("token").when(licenseApi).verifyTrialChallenge(Mockito.any(), Mockito.eq(solution));
+		doReturn("captcha").when(licenseHolderSpy).solveChallenge(challenge);
+		doReturn("token").when(licenseApi).generateTrialLicense("captcha");
 		doReturn(mock(DecodedJWT.class)).when(validator).validate(Mockito.eq("token"), Mockito.any());
 
 		licenseHolderSpy.requestAnonTrialLicense(settings);
 
 		verify(licenseApi).generateTrialChallenge();
-		verify(licenseApi).verifyTrialChallenge(Mockito.any(), Mockito.eq(solution));
+		verify(licenseApi).generateTrialLicense("captcha");
 		verify(settings).setHubId(Mockito.any());
 		verify(settings).setLicenseKey("token");
 		verify(settingsRepo).persistAndFlush(settings);

@@ -1,11 +1,9 @@
 package org.cryptomator.hub.license;
 
 import com.auth0.jwt.exceptions.JWTVerificationException;
-import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.cronutils.utils.Preconditions;
 import io.quarkus.scheduler.Scheduled;
-import io.quarkus.scheduler.ScheduledExecution;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -21,12 +19,10 @@ import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.HexFormat;
 import java.util.Optional;
 import java.util.UUID;
@@ -110,13 +106,12 @@ public class LicenseHolder {
 	@Transactional(Transactional.TxType.MANDATORY)
 	void requestAnonTrialLicense(Settings settings) {
 		LOG.info("No license found. Requesting trial license...");
-		var hubId = UUID.randomUUID().toString();
 		var challenge = licenseApi.generateTrialChallenge();
 		var solution = solveChallenge(challenge);
-		var trialLicense = licenseApi.verifyTrialChallenge(hubId, solution);
-		this.license = licenseValidator.validate(trialLicense, hubId);
-		settings.setLicenseKey(trialLicense);
-		settings.setHubId(hubId);
+		var trialResponse = licenseApi.generateTrialLicense(solution.toCaptcha()); // FIXME: is enterprise?
+		this.license = licenseValidator.validate(trialResponse.licenseKey(), trialResponse.hubId());
+		settings.setLicenseKey(trialResponse.licenseKey());
+		settings.setHubId(trialResponse.hubId());
 		settingsRepo.persistAndFlush(settings);
 		LOG.info("Successfully retrieved trial license.");
 	}
@@ -130,12 +125,14 @@ public class LicenseHolder {
 		} catch (NoSuchAlgorithmException e) {
 			throw new AssertionError("Every implementation of the Java platform is required to support [...] SHA-256", e);
 		}
+		long start = System.nanoTime();
 		for (int i = 0; i < challenge.maxnumber(); i++) {
 			var saltedSecret = challenge.salt() + i;
 			sha256.update(saltedSecret.getBytes(StandardCharsets.US_ASCII));
 			var attempt = hex.formatHex(sha256.digest());
 			if (challenge.challenge().equals(attempt)) {
-				return challenge.solve(i);
+				long took = System.nanoTime() - start;
+				return challenge.solve(i, took / 1_000_000);
 			}
 		}
 		throw new IllegalArgumentException("Unsolvable challenge");
