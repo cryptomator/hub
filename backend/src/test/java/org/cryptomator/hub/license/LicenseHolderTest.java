@@ -179,9 +179,13 @@ public class LicenseHolderTest {
 		LicenseHolder licenseHolderSpy = Mockito.spy(licenseHolder);
 		Settings settings = mock(Settings.class);
 		LicenseApi.Challenge challenge = mock(LicenseApi.Challenge.class);
+		LicenseApi.Solution solution = mock(LicenseApi.Solution.class);
+		LicenseApi.TrialLicenseResponse trialLicenseResponse = mock(LicenseApi.TrialLicenseResponse.class);
 		doReturn(challenge).when(licenseApi).generateTrialChallenge();
-		doReturn("captcha").when(licenseHolderSpy).solveChallenge(challenge);
-		doReturn("token").when(licenseApi).generateTrialLicense("captcha");
+		doReturn("captcha").when(solution).toCaptcha();
+		doReturn(solution).when(licenseHolderSpy).solveChallenge(challenge);
+		doReturn(trialLicenseResponse).when(licenseApi).generateTrialLicense("captcha");
+		doReturn("token").when(trialLicenseResponse).licenseKey();
 		doReturn(mock(DecodedJWT.class)).when(validator).validate(Mockito.eq("token"), Mockito.any());
 
 		licenseHolderSpy.requestAnonTrialLicense(settings);
