@@ -113,7 +113,9 @@
   
   "admin.emergencyAccess.keyShardsDesc":"The Emergency Access Key is split up into {0} or more shards. Recovery will require approval of {1} people to restore access.",
   "admin.emergencyAccess.errors.noRedundancy":"Your current key splitting has no redundancy. If just one user resets his account or else this recovery is not working anymore.",
-  "admin.emergencyAccess.assignOwner.startDesc":"The Emergency Access Key is split up into {0} or more shards. Recovery will require approval of {1} people to change vault permissons.",
+  "admin.emergencyAccess.assignOwner.startDesc":"The Emergency Access Key is split up into {0} or more shards. Recovery will require approval of {0} people to change vault permissons.",
+  "admin.emergencyAccess.changeCouncil.startDesc":"The Emergency Access Key is split up into {0} or more shards. This recovery will require approval of {0} people to change the emergency access council.",
+  "admin.emergencyAccess.changeCouncil.newCouncilDesc":"The comming recovery will require approval of {0} people to change permissions or emergency council.",
   "admin.emergencyAccess.startDialog.keyShardsDesc":"Recovery will require approval of {0} people to restore access.",
   "admin.recover.title": "Recover Title",
   "admin.recover.description": "Recover Desc",
@@ -387,6 +389,7 @@
   "recoveryDialog.approveTitle": "Approve Emergency Access",
   "recoveryDialog.approveDesc": "Approve Emergency Access Desc",
   "recoveryDialog.selectedCouncil": "Select Council",
+  "recoveryDialog.newCouncilMembers": "New Council Members",
   "recoveryDialog.requiredKeyShares": "Required KeyShares",
   "common.approve": "Approve",
   "common.start": "Start",
@@ -400,7 +403,7 @@
 
   "emergencyAccessVaultList.empty.title": "No emergency access vaults found",
   "emergencyAccessVaultList.changeCouncil": "Change Council",
-  "emergencyAccessVaultList.assignOwner": "Assign Vault Owner",
+  "emergencyAccessVaultList.assignOwner": "Change Permissions",
   "emergencyAccessVaultList.noRedundancy": "No Redundancy",
   "emergencyAccessVaultList.noRedundancyHint": "This Emergency Access Council has no redundancy. Consider assigning a council with redundancy.",
 
