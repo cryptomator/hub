@@ -387,22 +387,6 @@
               </div>
             </div>
           </div>
-          <!-- TODO: remove this dev area -->
-          <div v-if="getProcesses(vault.id).length" class="px-4 pb-4 sm:px-6" hidden="true">
-            <div v-for="proc in getProcesses(vault.id)" :key="proc.id" class="mb-3">
-              <div class="text-xs text-gray-700 mb-1">
-                <strong>Council ({{ getCouncilMembersForProcess(proc).length }}):</strong>
-                <span v-for="u in getCouncilMembersForProcess(proc)" :key="u.id" class="inline-flex items-center gap-1 mr-2">
-                  <img v-if="u.pictureUrl" :src="u.pictureUrl" alt="" class="w-4 h-4 rounded-full" />
-                  <span>{{ u.name || u.id }}</span>
-                  <span v-if="proc.recoveredKeyShares[u.id]?.recoveredKeyShare">✔</span>
-                  <span v-else-if="proc.recoveredKeyShares[u.id]?.unrecoveredKeyShare">•</span>
-                </span>
-              </div>
-
-              <pre class="text-xs text-gray-700 bg-gray-50 rounded p-2 overflow-x-auto">{{ stringifyProcess(proc) }}</pre>
-            </div>
-          </div>
         </a>
       </li>
     </ul>
@@ -661,14 +645,6 @@ function openRecoveryDialog(vault: VaultDto, proc: RecoveryProcessDto) {
 function isUserInProcess(proc: RecoveryProcessDto): boolean {
   const councilMemberIds = Object.keys(proc.recoveredKeyShares);
   return councilMemberIds.includes(me.value?.id ?? '');
-}
-
-function stringifyProcess(proc: RecoveryProcessDto): string {
-  try {
-    return JSON.stringify(proc, null, 2);
-  } catch {
-    return String(proc);
-  }
 }
 
 function getCouncilMembersForProcess(proc: RecoveryProcessDto): Item[] {
