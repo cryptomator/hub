@@ -46,294 +46,83 @@
     <ul class="divide-y divide-gray-200">
       <li v-for="(vault, index) in filteredVaults" :key="vault.masterkey">
         <a class="block hover:bg-gray-50" :class="{'rounded-t-md': index == 0, 'rounded-b-md': index == filteredVaults.length - 1}">
-          <div class="px-4 py-4 flex items-center sm:px-6">
-            <!-- Name and description -->
-            <div class="min-w-0 flex-1">
-              <div class="flex items-center gap-3">
-                <p class="truncate text-sm font-medium text-primary">{{ vault.name }}</p>
-              </div>
-              <p v-if="vault.description" class="truncate text-sm text-gray-500 mt-2">{{ vault.description }}</p>
-            </div>
-            <!-- Council Members -->
-            <div v-if="getCurrentCouncilMembers(vault).length && isEmergencyKeyShareHolder(vault)" class="mt-2 mr-5">
-              <div class="relative group inline-flex -space-x-2">
-                <template v-for="m in getCouncilPreview(vault).list" :key="m.id">
-                  <div class="relative h-7 w-7 rounded-full ring-1 ring-gray-400 bg-white overflow-hidden flex items-center justify-center">
-                    <img
-                      v-if="getAvatarUrl(m)"
-                      :src="getAvatarUrl(m)"
-                      :alt="m.name"
-                      class="h-full w-full object-cover"
-                    />
-                    <div
-                      v-else
-                      class="h-full w-full flex items-center justify-center text-[9px] font-semibold text-gray-700"
-                    >
-                      {{ initials(m.name) }}
-                    </div>
-                  </div>
-                </template>
+          <div class="px-4 py-4 sm:px-6">
 
-                <!-- +N Circle -->
-                <div
-                  v-if="getCouncilPreview(vault).extra > 0"
-                  class="relative z-10 h-7 w-7 rounded-full ring-2 ring-white bg-gray-200 overflow-hidden
-                        flex items-center justify-center text-[10px] font-semibold text-gray-700"
-                  :title="`+${getCouncilPreview(vault).extra}`"
-                  style="margin-left: 4px;"
-                >
-                  +{{ getCouncilPreview(vault).extra }}
+            <div class="flex flex-wrap gap-3 sm:flex-nowrap sm:items-center sm:justify-between">
+              <!-- Name and description -->
+              <div class="flex-1 min-w-[10rem]">
+                <div class="flex items-center gap-3 min-w-0">
+                  <p class="truncate text-sm font-medium text-primary min-w-0">
+                    {{ vault.name }}
+                  </p>
                 </div>
-
-                <!-- Hover-Card -->
-                <div
-                  class="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-150
-                        absolute left-0 top-9 z-20 w-80 rounded-lg border border-gray-200 bg-white p-3 shadow-xl"
-                  role="tooltip"
+                <p
+                  v-if="vault.description"
+                  class="truncate text-sm text-gray-500 mt-2 min-w-0"
                 >
-                  <div class="text-xl">
-                    Vault Council
-                  </div>
-                  <div class="text-xs text-gray-500 mb-2">
-                    {{ t('recoveryDialog.requiredKeyShares') }}:
-                    {{ vault!.requiredEmergencyKeyShares }}
-                  </div>
-                  <ul class="space-y-1 max-h-56 overflow-auto pr-1">
-                    <li
-                      v-for="m in getCurrentCouncilMembers(vault)"
-                      :key="'hc-' + vault.id + '-' + m.id"
-                      class="flex items-center justify-between text-sm h-6"
-                    >
-                      <span class="truncate flex items-center gap-2">
-                        <img v-if="getAvatarUrl(m)" :src="getAvatarUrl(m)" :alt="m.name" class="h-4 w-4 rounded-full" />
-                        <span class="truncate">{{ m.name }}</span>
-                      </span>
-                    </li>
-                  </ul>
-                </div>
+                  {{ vault.description }}
+                </p>
               </div>
-            </div>
-            <!-- Not a council member badge -->
-            <div v-if="!isEmergencyKeyShareHolder(vault)" class="mr-3">
-              <span class="inline-flex items-center gap-2 rounded-full bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800">
-                <ExclamationTriangleIcon class="h-4 w-4" aria-hidden="true" />
-                Not a council member anymore
-              </span>
-            </div>
-            <!-- Broken EA -->
-            <div v-else-if="isBroken(vault) && isEmergencyKeyShareHolder(vault)" class="mr-3">
-              <span
-                class="inline-flex items-center gap-2 rounded-full bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800"
-                :title="t('emergencyAccessVaultList.noRedundancyHint')"
-              >
-                <ExclamationTriangleIcon class="h-4 w-4" aria-hidden="true" />
-                Broken EA
-              </span>
-            </div>
-            <!-- Needs Redundancy badge -->
-            <div v-else-if="noRedundancy(vault) && isEmergencyKeyShareHolder(vault)" class="mr-3">
-              <span
-                class="inline-flex items-center gap-2 rounded-full bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800"
-                :title="t('emergencyAccessVaultList.noRedundancyHint')"
-              >
-                <ExclamationTriangleIcon class="h-4 w-4" aria-hidden="true" />
-                {{ t('emergencyAccessVaultList.noRedundancy') }}
-              </span>
-            </div>
-            <!-- ASSIGN OWNER Button - old council -->
-            <div v-if="!isEmergencyKeyShareHolder(vault)" class="flex flex-wrap items-center gap-2 pr-2 self-center">
-              <template v-for="proc in getProcesses(vault.id)" :key="proc.id">
-                <div v-if="me && isUserInProcess(proc) && proc.type == 'ASSIGN_OWNER'" class="relative group inline-block">
-                  <button
-                    type="button"
-                    class="h-8 inline-flex items-center gap-2 rounded-md bg-white px-2 py-1 text-xs font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-                    @click.stop="openRecoveryDialog(vault, proc)"
-                  >
-                    <div class="relative">
-                      <svg class="shrink-0 pointer-events-none select-none" width="20" height="20" viewBox="0 0 36 36">
-                        <g>
-                          <path
-                            v-for="i in proc.requiredKeyShares"
-                            :key="i"
-                            :d="describeSegment(i - 1, proc.requiredKeyShares, 16)"
-                            :fill="i <= getCompletedSegmentsForProcess(proc) ? '#22c55e' : '#e5e7eb'"
-                            stroke="white"
-                            stroke-width="1"
-                          />
-                        </g>
-                      </svg>
-                    </div>
-                    <div>
-                      {{ t('emergencyAccessVaultList.assignOwner') }}
-                    </div>
-                  </button>
-                  <!-- Hover-Card -->
-                  <div
-                    class="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-150
-                          absolute -left-40 top-9 z-20 w-80 rounded-lg border border-gray-200 bg-white p-3 shadow-xl"
-                    role="tooltip"
-                  >
-                    <div class="flex items-center justify-between mb-1">
-                      <div class="text-xl">Assign Vault Owner</div>
-                      <svg
-                        class="shrink-0 pointer-events-none select-none"
-                        width="42"
-                        height="42"
-                        viewBox="0 0 36 36"
-                        aria-hidden="true"
-                      >
-                        <g>
-                          <path
-                            v-for="i in proc.requiredKeyShares"
-                            :key="i"
-                            :d="describeSegment(i - 1, proc.requiredKeyShares, 16)"
-                            :fill="i <= getCompletedSegmentsForProcess(proc) ? '#22c55e' : '#e5e7eb'"
-                            stroke="white"
-                            stroke-width="1"
-                          />
-                        </g>
-                      </svg>
-                    </div>
 
-                    <div class="text-xs text-gray-500 mb-2">
-                      {{ t('recoveryDialog.requiredKeyShares') }}:
-                      {{ proc.requiredKeyShares }}
-                    </div>
-                    <div>
-                      Process council
-                    </div>
-                    <ul class="space-y-1 max-h-56 overflow-auto pr-1">
-                      <li
-                        v-for="m in getCouncilMembersForProcess(proc)"
-                        :key="'hc-proc-top-' + vault.id + '-' + proc.id + '-' + m.id"
-                        class="flex items-center justify-between text-sm h-6"
-                      >
-                        <span class="truncate flex items-center gap-2">
-                          <img v-if="getAvatarUrl(m)" :src="getAvatarUrl(m)" :alt="m.name" class="h-4 w-4 rounded-full" />
-                          <span class="truncate">{{ m.name || m.id }}</span>
-                        </span>
-                        <span
-                          class="ml-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px]"
-                          :class="recoveredMemberIdsForProcess(proc).has(m.id)
-                            ? 'bg-green-50 text-green-700 ring-1 ring-green-200'
-                            : 'bg-gray-50 text-gray-600 ring-1 ring-gray-200'"
+              <div class="flex flex-wrap items-center gap-2 sm:justify-end">
+
+                <!-- Council Members -->
+                <div v-if="getCurrentCouncilMembers(vault).length && isEmergencyKeyShareHolder(vault)" class="mt-2 mr-5">
+                  <div class="relative group inline-flex -space-x-2">
+                    <template v-for="m in getCouncilPreview(vault).list" :key="m.id">
+                      <div class="relative h-7 w-7 rounded-full ring-1 ring-gray-400 bg-white overflow-hidden flex items-center justify-center">
+                        <img
+                          v-if="getAvatarUrl(m)"
+                          :src="getAvatarUrl(m)"
+                          :alt="m.name"
+                          class="h-full w-full object-cover"
+                        />
+                        <div
+                          v-else
+                          class="h-full w-full flex items-center justify-center text-[9px] font-semibold text-gray-700"
                         >
-                          <span
-                            class="h-2 w-2 rounded-full"
-                            :class="recoveredMemberIdsForProcess(proc).has(m.id) ? 'bg-green-500' : 'bg-gray-300'"
-                          ></span>
-                          {{ recoveredMemberIdsForProcess(proc).has(m.id)
-                            ? t('recoveryDialog.status.added')
-                            : t('recoveryDialog.status.pending') }}
-                        </span>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </template>
-            </div>
-
-            <!-- EA Buttons -->
-            <div
-              v-if="((me && vault.emergencyKeyShares?.[me.id] || isEmergencyKeyShareHolder(vault)))"
-              class="flex flex-wrap items-center gap-2 pr-2 self-center"
-            >
-              <template v-for="type in SUPPORTED_PROCESS_TYPES" :key="'unified-' + vault.id + '-' + type">
-                <div class="relative group inline-block">
-                  <button
-                    type="button"
-                    class="h-8 inline-flex items-center gap-2 rounded-md bg-white px-2 py-1 text-xs font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    :disabled="isBroken(vault)"
-                    @click.stop="onUnifiedButtonClick(vault, type)"
-                  >
-                    <template v-if="getProcessByType(vault, type)">
-                      <SegmentRing
-                        :total="getProcessByType(vault, type)!.requiredKeyShares"
-                        :completed="getCompletedSegmentsForProcess(getProcessByType(vault, type)!)"
-                        class="shrink-0 pointer-events-none select-none"
-                      />
-                      <span v-if="isEmergencyKeyShareHolder(vault)">
-                        {{ getTypeLabel(vault,type) }} - {{ getApprovalLabel(getProcessByType(vault, type)!) }}
-                      </span>
+                          {{ initials(m.name) }}
+                        </div>
+                      </div>
                     </template>
-                    <template v-else>
-                      <PlayIcon class="h-4 w-4 text-primary" aria-hidden="true" />
-                      <span>{{ getTypeLabel(vault, type) }}</span>
-                    </template>
-                  </button>
 
-                  <!-- Hover-Card -->
-                  <div
-                    class="invisible opacity-0 group-hover:opacity-100 transition-opacity duration-150
-                          absolute right-0 top-9 z-20 w-80 rounded-lg border border-gray-200 bg-white p-3 shadow-xl"
-                    :class="getProcessByType(vault, type) ? 'group-hover:visible' : ''"
-                    role="tooltip"
-                  >
-                    <!-- Running process -->
-                    <template v-if="getProcessByType(vault, type)">
+                    <!-- +N Circle -->
+                    <div
+                      v-if="getCouncilPreview(vault).extra > 0"
+                      class="relative z-10 h-7 w-7 rounded-full ring-2 ring-white bg-gray-200 overflow-hidden
+                            flex items-center justify-center text-[10px] font-semibold text-gray-700"
+                      :title="`+${getCouncilPreview(vault).extra}`"
+                      style="margin-left: 4px;"
+                    >
+                      +{{ getCouncilPreview(vault).extra }}
+                    </div>
+
+                    <!-- Hover-Card -->
+                    <div
+                      class="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-150
+                            absolute left-0 top-9 z-20 w-80 rounded-lg border border-gray-200 bg-white p-3 shadow-xl"
+                      role="tooltip"
+                    >
                       <div class="flex items-center justify-between mb-1">
                         <div>
-                          <div class="text-xl">{{ getTypeLabel(vault,type) }}</div>
+                          <div class="text-xl">Vault Council</div>
                           <div class="text-xs text-gray-500 mb-2">
                             {{ t('recoveryDialog.requiredKeyShares') }}:
-                            {{ getProcessByType(vault, type)!.requiredKeyShares }}
+                            {{ vault!.requiredEmergencyKeyShares }}
                           </div>
                         </div>
                         <SegmentRing
-                          :total="getProcessByType(vault, type)!.requiredKeyShares"
-                          :completed="getCompletedSegmentsForProcess(getProcessByType(vault, type)!)"
+                          :total="vault!.requiredEmergencyKeyShares"
+                          :completed="0"
                           class="shrink-0 pointer-events-none select-none"
                           :width="42"
                           :height="42"
                         />
                       </div>
-                      <div>
-                        Process council
-                      </div>
-                      <ul class="space-y-1 max-h-56 overflow-auto pr-1">
-                        <li
-                          v-for="m in getCouncilMembersForProcess(getProcessByType(vault, type)!)"
-                          :key="'hc-proc-' + vault.id + '-' + type + '-' + m.id"
-                          class="flex items-center justify-between text-sm h-6"
-                        >
-                          <span class="truncate flex items-center gap-2">
-                            <img v-if="getAvatarUrl(m)" :src="getAvatarUrl(m)" :alt="m.name" class="h-4 w-4 rounded-full" />
-                            <span class="truncate">{{ m.name || m.id }}</span>
-                          </span>
-                          <span
-                            class="ml-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px]"
-                            :class="recoveredMemberIdsForProcess(getProcessByType(vault, type)!).has(m.id)
-                              ? 'bg-green-50 text-green-700 ring-1 ring-green-200'
-                              : 'bg-gray-50 text-gray-600 ring-1 ring-gray-200'"
-                          >
-                            <span
-                              class="h-2 w-2 rounded-full"
-                              :class="recoveredMemberIdsForProcess(getProcessByType(vault, type)!).has(m.id) ? 'bg-green-500' : 'bg-gray-300'"
-                            ></span>
-                            {{ recoveredMemberIdsForProcess(getProcessByType(vault, type)!).has(m.id)
-                              ? t('recoveryDialog.status.added')
-                              : t('recoveryDialog.status.pending') }}
-                          </span>
-                        </li>
-                      </ul>
-                    </template>
-
-                    <!-- Startable process -->
-                    <template v-else>
-                      <div class="flex items-center justify-between mb-1">
-                        <div class="text-xl">{{ getTypeLabel(vault, type) }}</div>
-                      </div>
-                      <div class="text-xs text-gray-500 mb-2">
-                        {{ t('recoveryDialog.requiredKeyShares') }}:
-                        {{ vault!.requiredEmergencyKeyShares }}
-                      </div>
-                      <div>
-                        Vault council
-                      </div>
                       <ul class="space-y-1 max-h-56 overflow-auto pr-1">
                         <li
                           v-for="m in getCurrentCouncilMembers(vault)"
-                          :key="'hc-start-' + vault.id + '-' + type + '-' + m.id"
+                          :key="'hc-' + vault.id + '-' + m.id"
                           class="flex items-center justify-between text-sm h-6"
                         >
                           <span class="truncate flex items-center gap-2">
@@ -342,12 +131,261 @@
                           </span>
                         </li>
                       </ul>
-                    </template>
+                    </div>
                   </div>
                 </div>
-              </template>
-            </div>
+                <!-- Not a council member badge -->
+                <div v-if="!isEmergencyKeyShareHolder(vault)" class="relative mr-3 group">
+                  <span
+                    class="inline-flex items-center gap-2 rounded-full bg-yellow-50 ring-1 ring-yellow-300/70 
+                          px-2.5 py-1 text-xs font-medium text-yellow-800 cursor-default"
+                  >
+                    <ExclamationTriangleIcon class="h-4 w-4" aria-hidden="true" />
+                  </span>
 
+                  <!-- Tooltip -->
+                  <div
+                    class="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-150
+                          absolute left-1/2 -translate-x-1/2 -top-2 transform -translate-y-full w-max max-w-xs z-10"
+                  >
+                    <div class="bg-yellow-50 border border-yellow-300 text-yellow-900 px-2 py-1 rounded shadow-sm text-xs hyphens-auto relative">
+                      You are no longer part of the actual vault's emergency council.
+                      <div
+                        class="absolute bottom-0 left-1/2 transform translate-y-1/2 -translate-x-1/2 rotate-45 
+                              w-2 h-2 bg-yellow-50 border-r border-b border-yellow-300"
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Broken EA -->
+                <div v-else-if="isBroken(vault) && isEmergencyKeyShareHolder(vault)" class="mr-3">
+                  <span
+                    class="inline-flex items-center gap-2 rounded-full bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800"
+                    :title="t('emergencyAccessVaultList.noRedundancyHint')"
+                  >
+                    <ExclamationTriangleIcon class="h-4 w-4" aria-hidden="true" />
+                    Broken EA
+                  </span>
+                </div>
+                <!-- Needs Redundancy badge -->
+                <div v-else-if="noRedundancy(vault) && isEmergencyKeyShareHolder(vault)" class="mr-3">
+                  <span
+                    class="inline-flex items-center gap-2 rounded-full bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800"
+                    :title="t('emergencyAccessVaultList.noRedundancyHint')"
+                  >
+                    <ExclamationTriangleIcon class="h-4 w-4" aria-hidden="true" />
+                    {{ t('emergencyAccessVaultList.noRedundancy') }}
+                  </span>
+                </div>
+                <!-- ASSIGN OWNER Button - old council -->
+                <div v-if="!isEmergencyKeyShareHolder(vault)" class="flex flex-wrap items-center gap-2 pr-2 self-center">
+                  <template v-for="proc in getProcesses(vault.id)" :key="proc.id">
+                    <div v-if="me && isUserInProcess(proc) && proc.type == 'ASSIGN_OWNER'" class="relative group inline-block">
+                      <button
+                        type="button"
+                        class="h-8 inline-flex items-center gap-2 rounded-md bg-white px-2 py-1 text-xs font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                        @click.stop="openRecoveryDialog(vault, proc)"
+                      >
+                        <div class="relative">
+                          <svg class="shrink-0 pointer-events-none select-none" width="20" height="20" viewBox="0 0 36 36">
+                            <g>
+                              <path
+                                v-for="i in proc.requiredKeyShares"
+                                :key="i"
+                                :d="describeSegment(i - 1, proc.requiredKeyShares, 16)"
+                                :fill="i <= getCompletedSegmentsForProcess(proc) ? '#22c55e' : '#e5e7eb'"
+                                stroke="white"
+                                stroke-width="1"
+                              />
+                            </g>
+                          </svg>
+                        </div>
+                        <div>
+                          {{ t('emergencyAccessVaultList.assignOwner') }}
+                        </div>
+                      </button>
+                      <!-- Hover-Card -->
+                      <div
+                        class="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-150
+                              absolute -left-40 top-9 z-20 w-80 rounded-lg border border-gray-200 bg-white p-3 shadow-xl"
+                        role="tooltip"
+                      >
+                        <div class="flex items-center justify-between mb-1">
+                          <div class="text-xl">{{ t('emergencyAccessVaultList.assignOwner') }}</div>
+                          <svg
+                            class="shrink-0 pointer-events-none select-none"
+                            width="42"
+                            height="42"
+                            viewBox="0 0 36 36"
+                            aria-hidden="true"
+                          >
+                            <g>
+                              <path
+                                v-for="i in proc.requiredKeyShares"
+                                :key="i"
+                                :d="describeSegment(i - 1, proc.requiredKeyShares, 16)"
+                                :fill="i <= getCompletedSegmentsForProcess(proc) ? '#22c55e' : '#e5e7eb'"
+                                stroke="white"
+                                stroke-width="1"
+                              />
+                            </g>
+                          </svg>
+                        </div>
+
+                        <div class="text-xs text-gray-500 mb-2">
+                          {{ t('recoveryDialog.requiredKeyShares') }}:
+                          {{ proc.requiredKeyShares }}
+                        </div>
+                        <div>
+                          Process council
+                        </div>
+                        <ul class="space-y-1 max-h-56 overflow-auto pr-1">
+                          <li
+                            v-for="m in getCouncilMembersForProcess(proc)"
+                            :key="'hc-proc-top-' + vault.id + '-' + proc.id + '-' + m.id"
+                            class="flex items-center justify-between text-sm h-6"
+                          >
+                            <span class="truncate flex items-center gap-2">
+                              <img v-if="getAvatarUrl(m)" :src="getAvatarUrl(m)" :alt="m.name" class="h-4 w-4 rounded-full" />
+                              <span class="truncate">{{ m.name || m.id }}</span>
+                            </span>
+                            <span
+                              class="ml-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px]"
+                              :class="recoveredMemberIdsForProcess(proc).has(m.id)
+                                ? 'bg-green-50 text-green-700 ring-1 ring-green-200'
+                                : 'bg-gray-50 text-gray-600 ring-1 ring-gray-200'"
+                            >
+                              <span
+                                class="h-2 w-2 rounded-full"
+                                :class="recoveredMemberIdsForProcess(proc).has(m.id) ? 'bg-green-500' : 'bg-gray-300'"
+                              ></span>
+                              {{ recoveredMemberIdsForProcess(proc).has(m.id)
+                                ? t('recoveryDialog.status.added')
+                                : t('recoveryDialog.status.pending') }}
+                            </span>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+
+                <!-- EA Buttons -->
+                <div
+                  v-if="((me && vault.emergencyKeyShares?.[me.id] || isEmergencyKeyShareHolder(vault)))"
+                  class="flex flex-col gap-2 pr-2 self-stretch lg:flex-row flex-wrap lg:items-center lg:justify-end"
+                >
+                  <template v-for="type in SUPPORTED_PROCESS_TYPES" :key="'unified-' + vault.id + '-' + type">
+                    <div class="relative group block md:inline-block">
+                      <button
+                        type="button"
+                        class="w-full sm:w-auto h-8 inline-flex items-center gap-2 rounded-md bg-white px-2 py-1 text-xs font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        :disabled="isBroken(vault)"
+                        @click.stop="onUnifiedButtonClick(vault, type)"
+                      >
+                        <template v-if="getProcessByType(vault, type)">
+                          <SegmentRing
+                            :total="getProcessByType(vault, type)!.requiredKeyShares"
+                            :completed="getCompletedSegmentsForProcess(getProcessByType(vault, type)!)"
+                            class="shrink-0 pointer-events-none select-none"
+                          />
+                          <span v-if="isEmergencyKeyShareHolder(vault)">
+                            {{ getTypeLabel(vault,type) }} - {{ getApprovalLabel(getProcessByType(vault, type)!) }}
+                          </span>
+                        </template>
+                        <template v-else>
+                          <PlayIcon class="h-4 w-4 text-primary" aria-hidden="true" />
+                          <span>{{ getTypeLabel(vault, type) }}</span>
+                        </template>
+                      </button>
+                      <!-- Hover-Card -->
+                      <div
+                        class="invisible opacity-0 group-hover:opacity-100 transition-opacity duration-150
+                              absolute right-0 top-9 z-20 w-80 rounded-lg border border-gray-200 bg-white p-3 shadow-xl"
+                        :class="getProcessByType(vault, type) ? 'group-hover:visible' : ''"
+                        role="tooltip"
+                      >
+                        <!-- Running process -->
+                        <template v-if="getProcessByType(vault, type)">
+                          <div class="flex items-center justify-between mb-1">
+                            <div>
+                              <div class="text-xl">{{ getTypeLabel(vault,type) }}</div>
+                              <div class="text-xs text-gray-500 mb-2">
+                                {{ t('recoveryDialog.requiredKeyShares') }}:
+                                {{ getProcessByType(vault, type)!.requiredKeyShares }}
+                              </div>
+                            </div>
+                            <SegmentRing
+                              :total="getProcessByType(vault, type)!.requiredKeyShares"
+                              :completed="getCompletedSegmentsForProcess(getProcessByType(vault, type)!)"
+                              class="shrink-0 pointer-events-none select-none"
+                              :width="42"
+                              :height="42"
+                            />
+                          </div>
+                          <div>
+                            Process council
+                          </div>
+                          <ul class="space-y-1 max-h-56 overflow-auto pr-1">
+                            <li
+                              v-for="m in getCouncilMembersForProcess(getProcessByType(vault, type)!)"
+                              :key="'hc-proc-' + vault.id + '-' + type + '-' + m.id"
+                              class="flex items-center justify-between text-sm h-6"
+                            >
+                              <span class="truncate flex items-center gap-2">
+                                <img v-if="getAvatarUrl(m)" :src="getAvatarUrl(m)" :alt="m.name" class="h-4 w-4 rounded-full" />
+                                <span class="truncate">{{ m.name || m.id }}</span>
+                              </span>
+                              <span
+                                class="ml-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px]"
+                                :class="recoveredMemberIdsForProcess(getProcessByType(vault, type)!).has(m.id)
+                                  ? 'bg-green-50 text-green-700 ring-1 ring-green-200'
+                                  : 'bg-gray-50 text-gray-600 ring-1 ring-gray-200'"
+                              >
+                                <span
+                                  class="h-2 w-2 rounded-full"
+                                  :class="recoveredMemberIdsForProcess(getProcessByType(vault, type)!).has(m.id) ? 'bg-green-500' : 'bg-gray-300'"
+                                ></span>
+                                {{ recoveredMemberIdsForProcess(getProcessByType(vault, type)!).has(m.id)
+                                  ? t('recoveryDialog.status.added')
+                                  : t('recoveryDialog.status.pending') }}
+                              </span>
+                            </li>
+                          </ul>
+                        </template>
+
+                        <!-- Startable process -->
+                        <template v-else>
+                          <div class="flex items-center justify-between mb-1">
+                            <div class="text-xl">{{ getTypeLabel(vault, type) }}</div>
+                          </div>
+                          <div class="text-xs text-gray-500 mb-2">
+                            {{ t('recoveryDialog.requiredKeyShares') }}:
+                            {{ vault!.requiredEmergencyKeyShares }}
+                          </div>
+                          <div>
+                            Vault council
+                          </div>
+                          <ul class="space-y-1 max-h-56 overflow-auto pr-1">
+                            <li
+                              v-for="m in getCurrentCouncilMembers(vault)"
+                              :key="'hc-start-' + vault.id + '-' + type + '-' + m.id"
+                              class="flex items-center justify-between text-sm h-6"
+                            >
+                              <span class="truncate flex items-center gap-2">
+                                <img v-if="getAvatarUrl(m)" :src="getAvatarUrl(m)" :alt="m.name" class="h-4 w-4 rounded-full" />
+                                <span class="truncate">{{ m.name }}</span>
+                              </span>
+                            </li>
+                          </ul>
+                        </template>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+
+              </div>
+            </div>
           </div>
           <!-- TODO: remove this dev area -->
           <div v-if="getProcesses(vault.id).length" class="px-4 pb-4 sm:px-6" hidden="true">
