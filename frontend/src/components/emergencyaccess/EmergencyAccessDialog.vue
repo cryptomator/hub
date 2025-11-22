@@ -720,12 +720,28 @@ const isGrantButtonDisabled = computed(() => newCouncilMembers.value.length < ne
 const canStartRecovery = computed(() => {
   if (processType.value == null) return false;
   if (conflictingProcessExists.value) return false;
-  if (processType.value === 'ASSIGN_OWNER')
-    return (ownersDifferFromExistingIds.value || membersDifferFromExistingIds.value) && owners.value.length != 0;
-  if (processType.value === 'COUNCIL_CHANGE')
-    return newCouncilMembers.value.length >= newRequiredKeyShares.value && newRequiredKeyShares.value > 0;
+
+  if (processType.value === 'ASSIGN_OWNER') {
+    return (
+      hasActivatedOwner.value &&
+      (ownersDifferFromExistingIds.value || membersDifferFromExistingIds.value) &&
+      owners.value.length !== 0
+    );
+  }
+
+  if (processType.value === 'COUNCIL_CHANGE') {
+    return (
+      newCouncilMembers.value.length >= newRequiredKeyShares.value &&
+      newRequiredKeyShares.value > 0
+    );
+  }
+
   return false;
 });
+
+const hasActivatedOwner = computed(() =>
+  owners.value.some(u => didCompleteSetup(u as ActivatedUser))
+);
 
 const noopSearch = async () => [];
 
