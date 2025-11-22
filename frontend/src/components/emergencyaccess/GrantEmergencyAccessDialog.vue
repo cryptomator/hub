@@ -39,12 +39,15 @@
                       {{ t('grantEmergencyAccessDialog.title') }}
                     </DialogTitle>
                     <div class="mt-2">
-                      <p class="text-sm text-gray-500">
-                        {{ t('grantEmergencyAccessDialog.description') }}
+                      <p v-if="allowChangingDefaults" class="text-sm text-gray-500">
+                        Select council members to grant emergency access for this vault.
+                      </p>
+                      <p v-else class="text-sm text-gray-500">
+                        Grant emergency access for this vault.
                       </p>
                     </div>
                     <div class="relative">
-                      <div class="sm:grid sm:grid-cols-2 sm:items-center sm:gap-2 pt-2 pb-2">
+                      <div class="sm:grid sm:items-center sm:gap-2 mt-2 pb-2">
                         <label for="coundcilMembers" class="text-sm font-medium text-gray-700 flex items-center">
                           {{ t('admin.emergencyAccess.councilMembers.title') }}
                         </label>
@@ -53,12 +56,38 @@
                         :selected-users="emergencyCouncilMembers"
                         :on-search="searchCouncilMembers"
                         :input-visible="allowChangingDefaults"
+                        :placeholder="'Select new council members…'"
                         @action="addCouncilMember"
                         @remove="removeCouncilMember"
                       />
+                      
+                      <div v-if="minMembers - emergencyCouncilMembers.length > 0" class="flex items-start gap-2 rounded-md border border-yellow-200 bg-yellow-50 p-1 text-sm text-gray-900 mt-1">
+                        <span class="leading-5">
+                          <span class="text-gray-600">
+                            Select at least {{ minMembers - emergencyCouncilMembers.length }} more council member. 
+                          </span>
+                        </span>
+                      </div>
+                    </div>
+                    <div class="flex items-start gap-2 rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-900 mt-3">
+                      <span class="leading-5">
+                        <span class="text-gray-500">
+                          Recovery will require approval of {{ vault.requiredEmergencyKeyShares }} council member to use emergency access restore features. 
+                        </span>
+                      </span>
+                      <SegmentRing
+                        v-if="true"
+                        class="ml-auto shrink-0"
+                        :total="vault.requiredEmergencyKeyShares"
+                        :completed="0"
+                        :width="36"
+                        :height="36"
+                        fill-color="#66cc68bb"
+                        empty-color="#ccc"
+                      />
                     </div>
                     <label class="block text-sm font-medium text-gray-700 pt-4">
-                      {{ t('grantEmergencyAccessDialog.possibleEmergencyScenario') }}
+                      Example Recovery
                     </label>
                     <EmergencyScenarioVisualization
                       :selected-users="emergencyCouncilMembers"
@@ -117,6 +146,7 @@ import { wordEncoder } from '../../common/util';
 import { EmergencyAccess } from '../../common/emergencyaccess';
 import MultiUserSelectInputGroup from '../MultiUserSelectInputGroup.vue';
 import EmergencyScenarioVisualization from './EmergencyScenarioVisualization.vue';
+import SegmentRing from './SegmentRing.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -168,7 +198,7 @@ const isInvaildCouncilMembers = computed(() => {
 });
 
 const hasTooFewCouncilMembers = computed(() => {
-  return emergencyCouncilMembers.value.length < requiredKeyShares.value;
+  return emergencyCouncilMembers.value.length < requiredKeyShares.value || emergencyCouncilMembers.value.length < minMembers.value;
 });
 
 const isGrantButtonDisabled = computed(() => {
