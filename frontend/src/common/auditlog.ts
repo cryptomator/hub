@@ -153,7 +153,14 @@ export type AuditEventEmergencyAccessRecoveryCompletedDto = AuditEventDtoBase & 
   councilMemberId: string;
 }
 
-export type AuditEventDto = AuditEventDeviceRegisterDto | AuditEventDeviceRemoveDto | AuditEventSettingWotUpdateDto | AuditEventSignedWotIdDto | AuditEventUserAccountResetDto | AuditEventUserKeysChangeDto | AuditEventUserSetupCodeChangeDto | AuditEventVaultCreateDto | AuditEventVaultUpdateDto | AuditEventVaultAccessGrantDto | AuditEventVaultKeyRetrieveDto | AuditEventVaultMemberAddDto | AuditEventVaultMemberRemoveDto | AuditEventVaultMemberUpdateDto | AuditEventVaultOwnershipClaimDto | AuditEventEmergencyAccessSetupDto | AuditEventEmergencyAccessSettingsChangedDto | AuditEventEmergencyAccessRecoveryStartedDto | AuditEventEmergencyAccessRecoveryApprovedDto | AuditEventEmergencyAccessRecoveryCompletedDto;
+export type AuditEventEmergencyAccessRecoveryAbortedDto = AuditEventDtoBase & {
+  type: 'EMERGENCY_ACCESS_RECOVERY_ABORTED';
+  processId: string;
+  councilMemberId: string;
+  ipAddress: string;
+}
+
+export type AuditEventDto = AuditEventDeviceRegisterDto | AuditEventDeviceRemoveDto | AuditEventSettingWotUpdateDto | AuditEventSignedWotIdDto | AuditEventUserAccountResetDto | AuditEventUserKeysChangeDto | AuditEventUserSetupCodeChangeDto | AuditEventVaultCreateDto | AuditEventVaultUpdateDto | AuditEventVaultAccessGrantDto | AuditEventVaultKeyRetrieveDto | AuditEventVaultMemberAddDto | AuditEventVaultMemberRemoveDto | AuditEventVaultMemberUpdateDto | AuditEventVaultOwnershipClaimDto | AuditEventEmergencyAccessSetupDto | AuditEventEmergencyAccessSettingsChangedDto | AuditEventEmergencyAccessRecoveryStartedDto | AuditEventEmergencyAccessRecoveryApprovedDto | AuditEventEmergencyAccessRecoveryCompletedDto | AuditEventEmergencyAccessRecoveryAbortedDto;
 
 /* Entity Cache */
 

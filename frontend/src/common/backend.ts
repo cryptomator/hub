@@ -498,6 +498,10 @@ class EmergencyAccessService {
   public async delete(recoveryProcessId: string): Promise<void> {
     return axiosAuth.delete(`/emergency-access/${recoveryProcessId}`);
   }
+
+  public async abort(recoveryProcessId: string): Promise<void> {
+    return axiosAuth.delete(`/emergency-access/${recoveryProcessId}/abort`);
+  }
 }
 
 /**

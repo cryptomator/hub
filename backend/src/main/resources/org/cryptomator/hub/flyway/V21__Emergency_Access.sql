@@ -105,3 +105,16 @@ CREATE TABLE "audit_event_emergaccess_recovery_completed"
 	CONSTRAINT "AUDIT_EVENT_EMERGACCESS_RECOVERY_COMPLETED_PK" PRIMARY KEY ("id"),
 	CONSTRAINT "AUDIT_EVENT_EMERGACCESS_RECOVERY_COMPLETED_FK_AUDIT_EVENT" FOREIGN KEY ("id") REFERENCES "audit_event" ("id") ON DELETE CASCADE
 );
+
+CREATE TABLE "audit_event_emergaccess_recovery_aborted"
+(
+    "id"                BIGINT      NOT NULL,
+    "vault_id"          UUID        NOT NULL,
+    "process_id"        UUID        NOT NULL,
+    "council_member_id" VARCHAR(255) COLLATE "C" NOT NULL,
+    "ip_address"        VARCHAR(46) NOT NULL,
+    CONSTRAINT "AUDIT_EVENT_EMERGACCESS_RECOVERY_ABORTED_PK"
+        PRIMARY KEY ("id"),
+    CONSTRAINT "AUDIT_EVENT_EMERGACCESS_RECOVERY_ABORTED_FK_AUDIT_EVENT"
+        FOREIGN KEY ("id") REFERENCES "audit_event" ("id") ON DELETE CASCADE
+);

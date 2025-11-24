@@ -67,7 +67,7 @@ public class AuditLogResource {
 			var validTypes = Set.of(DeviceRegisteredEvent.TYPE, DeviceRemovedEvent.TYPE, UserAccountResetEvent.TYPE, UserKeysChangeEvent.TYPE, UserSetupCodeChangeEvent.TYPE,
 					SettingWotUpdateEvent.TYPE, SignedWotIdEvent.TYPE, VaultCreatedEvent.TYPE, VaultUpdatedEvent.TYPE, VaultAccessGrantedEvent.TYPE,
 					VaultKeyRetrievedEvent.TYPE, VaultMemberAddedEvent.TYPE, VaultMemberRemovedEvent.TYPE, VaultMemberUpdatedEvent.TYPE, VaultOwnershipClaimedEvent.TYPE,
-					EmergencyAccessSetupEvent.TYPE, EmergencyAccessSettingsUpdatedEvent.TYPE, EmergencyAccessRecoveryStartedEvent.TYPE, EmergencyAccessRecoveryApprovedEvent.TYPE, EmergencyAccessRecoveryCompletedEvent.TYPE);
+					EmergencyAccessSetupEvent.TYPE, EmergencyAccessSettingsUpdatedEvent.TYPE, EmergencyAccessRecoveryStartedEvent.TYPE, EmergencyAccessRecoveryApprovedEvent.TYPE, EmergencyAccessRecoveryCompletedEvent.TYPE, EmergencyAccessRecoveryAbortedEvent.TYPE);
 			if (!validTypes.containsAll(type)) {
 				throw new BadRequestException("Invalid event type provided");
 			}
@@ -99,7 +99,8 @@ public class AuditLogResource {
 			@JsonSubTypes.Type(value = EmergencyAccessSettingsUpdatedEventDto.class, name = EmergencyAccessSettingsUpdatedEvent.TYPE), //
 			@JsonSubTypes.Type(value = EmergencyAccessRecoveryStartedEventDto.class, name = EmergencyAccessRecoveryStartedEvent.TYPE), //
 			@JsonSubTypes.Type(value = EmergencyAccessRecoveryApprovedEventDto.class, name = EmergencyAccessRecoveryApprovedEvent.TYPE), //
-			@JsonSubTypes.Type(value = EmergencyAccessRecoveryCompletedEventDto.class, name = EmergencyAccessRecoveryCompletedEvent.TYPE) //
+			@JsonSubTypes.Type(value = EmergencyAccessRecoveryCompletedEventDto.class, name = EmergencyAccessRecoveryCompletedEvent.TYPE), //
+	        @JsonSubTypes.Type(value = EmergencyAccessRecoveryAbortedEventDto.class, name = EmergencyAccessRecoveryAbortedEvent.TYPE), //
 	})
 	public interface AuditEventDto {
 
@@ -131,6 +132,7 @@ public class AuditLogResource {
 				case EmergencyAccessRecoveryStartedEvent evt -> new EmergencyAccessRecoveryStartedEventDto(evt.getId(), evt.getTimestamp(), EmergencyAccessRecoveryStartedEvent.TYPE, evt.getVaultId(), evt.getProcessId(), evt.getCouncilMemberId(), evt.getProcessType(), evt.getDetails());
 				case EmergencyAccessRecoveryApprovedEvent evt -> new EmergencyAccessRecoveryApprovedEventDto(evt.getId(), evt.getTimestamp(), EmergencyAccessRecoveryApprovedEvent.TYPE, evt.getProcessId(), evt.getCouncilMemberId(), evt.getIpAddress());
 				case EmergencyAccessRecoveryCompletedEvent evt -> new EmergencyAccessRecoveryCompletedEventDto(evt.getId(), evt.getTimestamp(), EmergencyAccessRecoveryCompletedEvent.TYPE, evt.getProcessId(), evt.getCouncilMemberId());
+				case EmergencyAccessRecoveryAbortedEvent evt -> new EmergencyAccessRecoveryAbortedEventDto(evt.getId(), evt.getTimestamp(), EmergencyAccessRecoveryAbortedEvent.TYPE, evt.getVaultId(), evt.getProcessId(), evt.getCouncilMemberId(), evt.getIpAddress());
 				default -> throw new UnsupportedOperationException("conversion not implemented for event type " + entity.getClass());
 			};
 		}
@@ -209,6 +211,9 @@ public class AuditLogResource {
 	}
 
 	record EmergencyAccessRecoveryCompletedEventDto(long id, Instant timestamp, String type, @JsonProperty("processId") UUID processId, @JsonProperty("councilMemberId") String councilMemberId) implements AuditEventDto {
+	}
+
+	record EmergencyAccessRecoveryAbortedEventDto(long id, Instant timestamp, String type, @JsonProperty("vaultId") UUID vaultId, @JsonProperty("processId") UUID processId, @JsonProperty("councilMemberId") String councilMemberId, @JsonProperty("ipAddress") String ipAddress) implements AuditEventDto {
 	}
 
 }

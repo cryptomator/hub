@@ -782,7 +782,7 @@ async function handleRecoveryAborted() {
   if (!props.recoveryProcess) return;
   onError.value = null;
   try {
-    await backend.emergencyAccess.delete(props.recoveryProcess.id);
+    await backend.emergencyAccess.abort(props.recoveryProcess.id);
     emit('updated');
     wantAbort.value = false;
     open.value = false;

@@ -134,6 +134,24 @@ public class EmergencyAccessResource {
 		}
 	}
 
+	@DELETE
+	@Path("/{processId}/abort")
+	@RolesAllowed("user")
+	@Operation(summary = "aborts an existing recovery process")
+	@APIResponse(responseCode = "204")
+	@APIResponse(responseCode = "404")
+	@Transactional
+	public Response abort(@PathParam("processId") UUID processId) {
+		var currentUserId = jwt.getSubject();
+		var process = recoverProcessRepo.findByIdOptional(processId)
+				.orElseThrow(NotFoundException::new);
+
+		eventLogger.logEmergencyAccessRecoveryAborted(process.getVaultId(), processId, currentUserId, request.remoteAddress().hostAddress());
+
+		recoverProcessRepo.delete(process);
+		return Response.noContent().build();
+	}
+
 	@GET
 	@Path("/{vaultId}")
 	@RolesAllowed("user")

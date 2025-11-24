@@ -164,6 +164,7 @@
                   <AuditLogDetailsEmergencyAccessRecoveryStarted v-else-if="auditEvent.type == 'EMERGENCY_ACCESS_RECOVERY_STARTED'" :event="auditEvent" />
                   <AuditLogDetailsEmergencyAccessRecoveryApproved v-else-if="auditEvent.type == 'EMERGENCY_ACCESS_RECOVERY_APPROVED'" :event="auditEvent" />
                   <AuditLogDetailsEmergencyAccessRecoveryCompleted v-else-if="auditEvent.type == 'EMERGENCY_ACCESS_RECOVERY_COMPLETED'" :event="auditEvent" />
+                  <AuditLogDetailsEmergencyAccessRecoveryAborted v-else-if="auditEvent.type == 'EMERGENCY_ACCESS_RECOVERY_ABORTED'" :event="auditEvent" />
                   <AuditLogDetailsSettingWotUpdate v-else-if="auditEvent.type == 'SETTING_WOT_UPDATE'" :event="auditEvent" />
                   <AuditLogDetailsSignedWotId v-else-if="auditEvent.type == 'SIGN_WOT_ID'" :event="auditEvent" />
                   <AuditLogDetailsUserAccountReset v-else-if="auditEvent.type == 'USER_ACCOUNT_RESET'" :event="auditEvent" />
@@ -239,6 +240,7 @@ import AuditLogDetailsEmergencyAccessSettingsUpdated from './AuditLogDetailsEmer
 import AuditLogDetailsEmergencyAccessRecoveryStarted from './AuditLogDetailsEmergencyAccessRecoveryStarted.vue';
 import AuditLogDetailsEmergencyAccessRecoveryApproved from './AuditLogDetailsEmergencyAccessRecoveryApproved.vue';
 import AuditLogDetailsEmergencyAccessRecoveryCompleted from './AuditLogDetailsEmergencyAccessRecoveryCompleted.vue';
+import AuditLogDetailsEmergencyAccessRecoveryAborted from './AuditLogDetailsEmergencyAccessRecoveryAborted.vue';
 import AuditLogDetailsSettingWotUpdate from './AuditLogDetailsSettingWotUpdate.vue';
 import AuditLogDetailsSignedWotId from './AuditLogDetailsSignedWotId.vue';
 import AuditLogDetailsUserAccountReset from './AuditLogDetailsUserAccountReset.vue';
@@ -314,6 +316,7 @@ const eventTypeOptions = Object.fromEntries(
     EMERGENCY_ACCESS_RECOVERY_STARTED: t('auditLog.details.emergencyaccess.recoveryStarted'),
     EMERGENCY_ACCESS_RECOVERY_APPROVED: t('auditLog.details.emergencyaccess.recoveryApproved'),
     EMERGENCY_ACCESS_RECOVERY_COMPLETED: t('auditLog.details.emergencyaccess.recoveryCompleted'),
+    EMERGENCY_ACCESS_RECOVERY_ABORTED: t('auditLog.details.emergencyaccess.recoveryAborted'),
     SETTING_WOT_UPDATE: t('auditLog.details.setting.wot.update'),
     SIGN_WOT_ID: t('auditLog.details.wot.signedIdentity'),
     USER_ACCOUNT_RESET: t('auditLog.details.user.account.reset'),

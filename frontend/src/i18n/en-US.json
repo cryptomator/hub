@@ -148,6 +148,7 @@
   "auditLog.details.emergencyaccess.recoveryStarted": "Emergency Access Recovery Started",
   "auditLog.details.emergencyaccess.recoveryApproved": "Emergency Access Recovery Approved",
   "auditLog.details.emergencyaccess.recoveryCompleted": "Emergency Access Recovery Completed",
+  "auditLog.details.emergencyaccess.recoveryAborted": "Emergency Access Recovery Aborted",
   "auditLog.details.setting.wot.update": "Update Wot Settings",
   "auditLog.details.user.account.reset": "Reset User Account",
   "auditLog.details.user.keys.change": "User Keys Change",

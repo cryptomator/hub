@@ -194,6 +194,16 @@ public class EventLogger {
 		auditEventRepository.persist(event);
 	}
 
+	public void logEmergencyAccessRecoveryAborted(UUID vaultId, UUID processId, String councilMemberId, String ipAddress) {
+		var event = new EmergencyAccessRecoveryAbortedEvent();
+		event.setTimestamp(Instant.now());
+		event.setVaultId(vaultId);
+		event.setProcessId(processId);
+		event.setCouncilMemberId(councilMemberId);
+		event.setIpAddress(ipAddress);
+		auditEventRepository.persist(event);
+	}
+
 	//endregion
 
 	//legacy
