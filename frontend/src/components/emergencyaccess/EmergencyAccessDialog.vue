@@ -725,12 +725,24 @@ const canStartRecovery = computed(() => {
 
   if (processType.value === 'COUNCIL_CHANGE') {
     return (
-      newCouncilMembers.value.length >= newRequiredKeyShares.value &&
-      newRequiredKeyShares.value > 0
+      newCouncilMembers.value.length >= defaultMinMembers.value
+      && isCouncilChanged.value
     );
   }
 
   return false;
+});
+
+const isCouncilChanged = computed(() => {
+  const currentCouncilIds = Object.keys(props.vault.emergencyKeyShares ?? {});
+  const newCouncilIds = newCouncilMembers.value.map(u => u.id);
+
+  if (currentCouncilIds.length !== newCouncilIds.length) {
+    return true;
+  }
+
+  const currentSet = new Set(currentCouncilIds);
+  return newCouncilIds.some(id => !currentSet.has(id));
 });
 
 const hasActivatedOwner = computed(() =>
