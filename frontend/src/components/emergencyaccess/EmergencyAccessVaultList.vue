@@ -114,8 +114,7 @@
                         <SegmentRing
                           :total="vault!.requiredEmergencyKeyShares"
                           :completed="0"
-                          :width="42"
-                          :height="42"
+                          :size="42"
                         />
                       </div>
                       <ul class="space-y-1 max-h-56 overflow-auto pr-1">
@@ -316,9 +315,7 @@
                             <SegmentRing
                               :total="getProcessByType(vault, type)!.requiredKeyShares"
                               :completed="getCompletedSegmentsForProcess(getProcessByType(vault, type)!)"
-                              class="shrink-0 pointer-events-none select-none"
-                              :width="42"
-                              :height="42"
+                              :size="42"
                             />
                           </div>
                           <div>

@@ -1,7 +1,7 @@
 <template>
   <svg
-    :width="width"
-    :height="height"
+    :width="size"
+    :height="size"
     :viewBox="`0 0 ${viewBox} ${viewBox}`"
     :class="['ml-auto shrink-0', attrs.class]"
     aria-hidden="true"
@@ -29,8 +29,7 @@ type Props = {
   total: number;
   completed: number;
   startIndex?: number;
-  width?: number;
-  height?: number;
+  size?: number;
   viewBox?: number;
   radius?: number;
   fillColor?: string;
@@ -41,8 +40,7 @@ type Props = {
 
 withDefaults(defineProps<Props>(), {
   startIndex: 0,
-  width: 20,
-  height: 20,
+  size: 20,
   viewBox: 36,
   radius: 16,
   fillColor: '#22c55e',

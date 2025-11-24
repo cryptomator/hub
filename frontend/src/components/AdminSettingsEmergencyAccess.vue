@@ -69,8 +69,7 @@
                 v-if="!isDescLoading"
                 :total="requiredShares!"
                 :completed="requiredShares!"
-                :width="36"
-                :height="36"
+                :size="36"
                 fill-color="#66cc68bb"
               />
             </div>

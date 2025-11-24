@@ -37,8 +37,7 @@
                             v-if="true"
                             :total="newRequiredKeyShares"
                             :completed="completedSegments"
-                            :width="36"
-                            :height="36"
+                            :size="36"
                           />
                         </div>
                         <div v-else>
@@ -171,8 +170,7 @@
                                   v-if="true"
                                   :total="vault.requiredEmergencyKeyShares"
                                   :completed="completedSegments"
-                                  :width="36"
-                                  :height="36"
+                                  :size="36"
                                   fill-color="#66cc68bb"
                                 />
                               </div>
@@ -245,11 +243,9 @@
                               </span>
                               <SegmentRing
                                 v-if="true"
-                                class="ml-auto shrink-0"
                                 :total="newRequiredKeyShares"
                                 :completed="newRequiredKeyShares"
-                                :width="36"
-                                :height="36"
+                                :size="36"
                                 fill-color="#66cc68bb"
                               />
                             </div>
@@ -339,11 +335,9 @@
                                 </span>
                                 <SegmentRing
                                   v-if="true"
-                                  class="ml-auto shrink-0"
                                   :total="newRequiredKeyShares"
                                   :completed="0"
-                                  :width="36"
-                                  :height="36"
+                                  :size="36"
                                   fill-color="#66cc68bb"
                                 />
                               </div>

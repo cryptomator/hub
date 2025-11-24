@@ -151,8 +151,7 @@
                 v-if="true"
                 :total="requiredKeyShares"
                 :completed="0"
-                :width="36"
-                :height="36"
+                :size="36"
                 fill-color="#66cc68bb"
                 empty-color="#ccc"
               />

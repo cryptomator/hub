@@ -46,8 +46,7 @@
                   :start-index="Math.ceil(index / 2)"
                   :total="requiredKeyShares"
                   :completed="1"
-                  :width="24"
-                  :height="24"
+                  :size="24"
                 />
               </span>
               <span
