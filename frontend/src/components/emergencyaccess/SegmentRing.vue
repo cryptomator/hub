@@ -2,7 +2,7 @@
   <svg
     :width="size"
     :height="size"
-    :viewBox="`0 0 ${viewBox} ${viewBox}`"
+    :viewBox="`0 0 36 36`"
     :class="['ml-auto shrink-0', attrs.class]"
     aria-hidden="true"
   >
@@ -10,7 +10,7 @@
       <path
         v-for="i in total"
         :key="i"
-        :d="describeSegment(i - 1 + startIndex, total, radius)"
+        :d="describeSegment(i - 1 + startIndex, total, 16)"
         :fill="i <= completed ? fillColor : emptyColor"
         :stroke="stroke"
         :stroke-width="strokeWidth"
@@ -30,8 +30,6 @@ type Props = {
   completed: number;
   startIndex?: number;
   size?: number;
-  viewBox?: number;
-  radius?: number;
   fillColor?: string;
   emptyColor?: string;
   stroke?: string;
@@ -41,8 +39,6 @@ type Props = {
 withDefaults(defineProps<Props>(), {
   startIndex: 0,
   size: 20,
-  viewBox: 36,
-  radius: 16,
   fillColor: '#22c55e',
   emptyColor: '#e5e7eb',
   stroke: 'white',
