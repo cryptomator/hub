@@ -67,7 +67,6 @@
               </span>
               <SegmentRing
                 v-if="!isDescLoading"
-                class="ml-auto shrink-0"
                 :total="requiredShares!"
                 :completed="requiredShares!"
                 :width="36"

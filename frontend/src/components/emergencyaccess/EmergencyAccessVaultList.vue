@@ -114,7 +114,6 @@
                         <SegmentRing
                           :total="vault!.requiredEmergencyKeyShares"
                           :completed="0"
-                          class="shrink-0 pointer-events-none select-none"
                           :width="42"
                           :height="42"
                         />
@@ -287,7 +286,6 @@
                           <SegmentRing
                             :total="getProcessByType(vault, type)!.requiredKeyShares"
                             :completed="getCompletedSegmentsForProcess(getProcessByType(vault, type)!)"
-                            class="shrink-0 pointer-events-none select-none"
                           />
                           <span v-if="isEmergencyKeyShareHolder(vault)">
                             {{ getTypeLabel(vault,type) }} - {{ getApprovalLabel(getProcessByType(vault, type)!) }}

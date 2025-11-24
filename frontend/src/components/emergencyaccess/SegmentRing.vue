@@ -3,7 +3,7 @@
     :width="width"
     :height="height"
     :viewBox="`0 0 ${viewBox} ${viewBox}`"
-    :class="attrs.class"
+    :class="['ml-auto shrink-0', attrs.class]"
     aria-hidden="true"
   >
     <g>

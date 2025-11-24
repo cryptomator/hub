@@ -149,7 +149,6 @@
               </span>
               <SegmentRing
                 v-if="true"
-                class="ml-auto shrink-0"
                 :total="requiredKeyShares"
                 :completed="0"
                 :width="36"

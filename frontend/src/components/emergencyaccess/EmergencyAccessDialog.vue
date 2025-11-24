@@ -33,18 +33,13 @@
                     <div class="sm:flex sm:items-start">
                       <div class="mx-auto shrink-0 flex items-center justify-center h-12 w-12 sm:mx-0 sm:h-10 sm:w-10 relative">
                         <div v-if="phase !== 'start'">
-                          <svg width="36" height="36" viewBox="0 0 36 36">
-                            <g>
-                              <path
-                                v-for="i in requiredSegments"
-                                :key="i"
-                                :d="describeSegment(i - 1, requiredSegments, 16)"
-                                :fill="i <= completedSegments ? '#49b04a' : '#e5e7eb'"
-                                stroke="white"
-                                stroke-width="1"
-                              />
-                            </g>
-                          </svg>
+                          <SegmentRing
+                            v-if="true"
+                            :total="newRequiredKeyShares"
+                            :completed="completedSegments"
+                            :width="36"
+                            :height="36"
+                          />
                         </div>
                         <div v-else>
                           <PlayIcon class="h-8 w-8 text-primary" aria-hidden="true" />
@@ -174,7 +169,6 @@
                                 </span>
                                 <SegmentRing
                                   v-if="true"
-                                  class="ml-auto shrink-0"
                                   :total="vault.requiredEmergencyKeyShares"
                                   :completed="completedSegments"
                                   :width="36"
