@@ -161,7 +161,7 @@
                                   <span class="text-gray-500">
                                     {{ 
                                       startType == 'ASSIGN_OWNER' 
-                                        ? t('admin.emergencyAccess.assignOwner.startDesc', [vault.requiredEmergencyKeyShares]) 
+                                        ? t('admin.emergencyAccess.assignOwner.startDesc', [getCurrentCouncilMembers(vault).length, vault.requiredEmergencyKeyShares]) 
                                         : t('admin.emergencyAccess.changeCouncil.startDesc', [vault.requiredEmergencyKeyShares]) 
                                     }}
                                   </span>
@@ -586,6 +586,19 @@ export type Item = {
   type?: string;
   memberSize?: number;
 }
+
+function getCurrentCouncilMembers(vault: VaultDto): Item[] {
+  const ids = Object.keys(vault.emergencyKeyShares ?? {});
+  return ids.map((id) => {
+    const a = authoritiesById.value[id];
+    if (a && (a as any).name) {
+      return { id: a.id, name: (a as any).name, pictureUrl: (a as any).pictureUrl };
+    } else {
+      return { id, name: id };
+    }
+  }).sort((a, b) => a.name.localeCompare(b.name));
+}
+
 const authoritiesById = ref<Record<string, AuthorityDto>>({});
 function getCouncilMembersForProcess(proc: RecoveryProcessDto): Item[] {
   return Object.keys(proc.recoveredKeyShares).map((id) => authoritiesById.value[id] ?? { id, name: id });

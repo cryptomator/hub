@@ -113,7 +113,7 @@
   
   "admin.emergencyAccess.keyShardsDesc":"The Emergency Access Key is split up into {0} or more shards. Recovery will require approval of {1} people to restore access.",
   "admin.emergencyAccess.errors.noRedundancy":"Your current key splitting has no redundancy. If just one user resets his account or else this recovery is not working anymore.",
-  "admin.emergencyAccess.assignOwner.startDesc":"The Emergency Access Key is split up into {0} or more shards. Recovery will require approval of {0} people to change vault permissons.",
+  "admin.emergencyAccess.assignOwner.startDesc":"The Emergency Access Key is split up into {0} shards. Recovery will require approval of {1} people to change vault permissons.",
   "admin.emergencyAccess.changeCouncil.startDesc":"The Emergency Access Key is split up into {0} or more shards. This recovery will require approval of {0} people to change the emergency access council.",
   "admin.emergencyAccess.changeCouncil.newCouncilDesc":"The comming recovery will require approval of {0} people to change permissions or emergency council.",
   "admin.emergencyAccess.startDialog.keyShardsDesc":"Recovery will require approval of {0} people to restore access.",
