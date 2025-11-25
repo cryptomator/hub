@@ -363,10 +363,13 @@
                             </span>
                           </div>
                         </div>
+                        <div v-if="phase != 'start' && !isMeInProcessCouncil" class="text-sm left pt-4">
+                          <span class="inline-flex items-center gap-2 rounded-md bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800 text-left " >
+                            <ExclamationCircleIcon class="h-4 w-4" aria-hidden="true" />
+                            You are not part of this process council.
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                    <div v-if="phase != 'start' && !isMeInProcessCouncil">
-                      You are not part of the current process council.
                     </div>
                   </div>
                 
@@ -481,7 +484,7 @@ import { wordEncoder } from '../../common/util';
 import { base64 } from 'rfc4648';
 import { ECDSA_P384, JWT, JWTHeader } from '../../common/jwt';
 import SegmentRing from './SegmentRing.vue';
-import { CheckBadgeIcon, InformationCircleIcon } from '@heroicons/vue/20/solid';
+import { CheckBadgeIcon, ExclamationCircleIcon, InformationCircleIcon } from '@heroicons/vue/20/solid';
 
 const { t } = useI18n({ useScope: 'global' });
 
