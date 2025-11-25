@@ -432,7 +432,7 @@
                       {{ t('common.close') }}
                     </button>
                     
-                    <template v-if="phase !== 'start'">
+                    <template v-if="phase !== 'start' && isMeInProcessCouncil">
                       <button
                         hidden="true"
                         type="button"
