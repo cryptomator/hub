@@ -66,11 +66,73 @@
 
               <div class="flex flex-wrap items-center gap-2 sm:justify-end">
 
+                <!-- Not a council member badge -->
+                <div v-if="!isEmergencyKeyShareHolder(vault)" class="relative mr-3 group">
+                  <span
+                    class="inline-flex items-center gap-2 rounded-full bg-yellow-50 ring-1 ring-yellow-300/70 
+                          px-2 py-2 text-xs font-medium text-yellow-800 cursor-default"
+                  >
+                    <ExclamationTriangleIcon class="h-4 w-4 text-yellow-500" aria-hidden="true" />
+                  </span>
+
+                  <!-- Tooltip -->
+                  <div
+                    class="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-150
+                          absolute left-1/2 -translate-x-1/2 -top-2 transform -translate-y-full w-max max-w-xs z-10"
+                  >
+                    <div class="bg-yellow-50 border border-yellow-300 text-yellow-900 px-2 py-1 rounded shadow-sm text-xs hyphens-auto relative">
+                      <b>No Council Member</b><br/>
+                      You are no longer part of the actual vault's emergency council.
+                      <div
+                        class="absolute bottom-0 left-1/2 transform translate-y-1/2 -translate-x-1/2 rotate-45 
+                              w-2 h-2 bg-yellow-50 border-r border-b border-yellow-300"
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Broken EA -->
+                <div v-else-if="isBroken(vault) && isEmergencyKeyShareHolder(vault)" class="relative mr-3 group">
+                  <span
+                    class="inline-flex items-center gap-2 rounded-full bg-yellow-50 ring-1 ring-yellow-300/70 px-2 py-2 text-xs font-medium text-yellow-800"
+                    :title="t('emergencyAccessVaultList.noRedundancyHint')"
+                  >
+                    <ExclamationTriangleIcon class="h-4 w-4" aria-hidden="true" />
+                  </span>
+                  <!-- Tooltip -->
+                  <div class="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-150 absolute left-1/2 -translate-x-1/2 -top-2 transform -translate-y-full w-max max-w-xs z-10">
+                    <div class="bg-yellow-50 border border-yellow-300 text-yellow-900 px-2 py-1 rounded shadow-sm text-xs hyphens-auto relative">
+                      <b>Broken EA</b><br/>
+                      Emergency Access ist not possible anymore. One or more council members performed an account reset and lost their key shrads. The vault owner can setup up a new emergency access council in the vault details.
+                      <div
+                        class="absolute bottom-0 left-1/2 transform translate-y-1/2 -translate-x-1/2 rotate-45 
+                              w-2 h-2 bg-yellow-50 border-r border-b border-yellow-300"
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Needs Redundancy badge -->
+                <div v-else-if="noRedundancy(vault) && isEmergencyKeyShareHolder(vault)" class="relative mr-3 group">
+                  <span class="inline-flex items-center gap-2 rounded-full bg-yellow-50 ring-1 ring-yellow-300/70 px-2 py-2 text-xs font-medium text-yellow-800" >
+                    <ExclamationTriangleIcon class="h-4 w-4 text-yellow-500" aria-hidden="true" />
+                  </span>
+                  <!-- Tooltip -->
+                  <div class="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-150 absolute left-1/2 -translate-x-1/2 -top-2 transform -translate-y-full w-max max-w-xs z-10">
+                    <div class="bg-yellow-50 border border-yellow-300 text-yellow-900 px-2 py-1 rounded shadow-sm text-xs hyphens-auto relative">
+                      <b>No Redundancy</b><br/>
+                      {{ t('emergencyAccessVaultList.noRedundancyHint') }}
+                      <div
+                        class="absolute bottom-0 left-1/2 transform translate-y-1/2 -translate-x-1/2 rotate-45 
+                              w-2 h-2 bg-yellow-50 border-r border-b border-yellow-300"
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+
                 <!-- Council Members -->
                 <div v-if="getCurrentCouncilMembers(vault).length && isEmergencyKeyShareHolder(vault)" class="mt-2 mr-5">
                   <div class="relative group inline-flex -space-x-2">
                     <template v-for="m in getCouncilPreview(vault).list" :key="m.id">
-                      <div class="relative h-7 w-7 rounded-full ring-1 ring-gray-400 bg-white overflow-hidden flex items-center justify-center">
+                      <div class="relative h-8 w-8 rounded-full ring-1 ring-gray-200 bg-white overflow-hidden flex items-center justify-center">
                         <img
                           v-if="getAvatarUrl(m)"
                           :src="getAvatarUrl(m)"
@@ -89,7 +151,7 @@
                     <!-- +N Circle -->
                     <div
                       v-if="getCouncilPreview(vault).extra > 0"
-                      class="relative z-10 h-7 w-7 rounded-full ring-2 ring-white bg-gray-200 overflow-hidden
+                      class="relative z-10 h-8 w-8 rounded-full ring-1 ring-gray-200 bg-gray-200 overflow-hidden
                             flex items-center justify-center text-[10px] font-semibold text-gray-700"
                       :title="`+${getCouncilPreview(vault).extra}`"
                       style="margin-left: 4px;"
@@ -132,104 +194,45 @@
                     </div>
                   </div>
                 </div>
-                <!-- Not a council member badge -->
-                <div v-if="!isEmergencyKeyShareHolder(vault)" class="relative mr-3 group">
-                  <span
-                    class="inline-flex items-center gap-2 rounded-full bg-yellow-50 ring-1 ring-yellow-300/70 
-                          px-2.5 py-1 text-xs font-medium text-yellow-800 cursor-default"
-                  >
-                    <ExclamationTriangleIcon class="h-4 w-4" aria-hidden="true" />
-                  </span>
 
-                  <!-- Tooltip -->
-                  <div
-                    class="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-150
-                          absolute left-1/2 -translate-x-1/2 -top-2 transform -translate-y-full w-max max-w-xs z-10"
-                  >
-                    <div class="bg-yellow-50 border border-yellow-300 text-yellow-900 px-2 py-1 rounded shadow-sm text-xs hyphens-auto relative">
-                      You are no longer part of the actual vault's emergency council.
-                      <div
-                        class="absolute bottom-0 left-1/2 transform translate-y-1/2 -translate-x-1/2 rotate-45 
-                              w-2 h-2 bg-yellow-50 border-r border-b border-yellow-300"
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-                <!-- Broken EA -->
-                <div v-else-if="isBroken(vault) && isEmergencyKeyShareHolder(vault)" class="mr-3">
-                  <span
-                    class="inline-flex items-center gap-2 rounded-full bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800"
-                    :title="t('emergencyAccessVaultList.noRedundancyHint')"
-                  >
-                    <ExclamationTriangleIcon class="h-4 w-4" aria-hidden="true" />
-                    Broken EA
-                  </span>
-                </div>
-                <!-- Needs Redundancy badge -->
-                <div v-else-if="noRedundancy(vault) && isEmergencyKeyShareHolder(vault)" class="mr-3">
-                  <span
-                    class="inline-flex items-center gap-2 rounded-full bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800"
-                    :title="t('emergencyAccessVaultList.noRedundancyHint')"
-                  >
-                    <ExclamationTriangleIcon class="h-4 w-4" aria-hidden="true" />
-                    {{ t('emergencyAccessVaultList.noRedundancy') }}
-                  </span>
-                </div>
                 <!-- ASSIGN OWNER Button - old council -->
                 <div v-if="!isEmergencyKeyShareHolder(vault)" class="flex flex-wrap items-center gap-2 pr-2 self-center">
                   <template v-for="proc in getProcesses(vault.id)" :key="proc.id">
                     <div v-if="me && isUserInProcess(proc) && proc.type == 'ASSIGN_OWNER'" class="relative group inline-block">
                       <button
                         type="button"
-                        class="h-8 inline-flex items-center gap-2 rounded-md bg-white px-2 py-1 text-xs font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                        class="w-full sm:w-auto h-10 inline-flex items-center gap-2 rounded-md bg-white px-2 py-1 text-xs font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
                         @click.stop="openRecoveryDialog(vault, proc)"
                       >
                         <div class="relative">
-                          <svg class="shrink-0 pointer-events-none select-none" width="20" height="20" viewBox="0 0 36 36">
-                            <g>
-                              <path
-                                v-for="i in proc.requiredKeyShares"
-                                :key="i"
-                                :d="describeSegment(i - 1, proc.requiredKeyShares, 16)"
-                                :fill="i <= getCompletedSegmentsForProcess(proc) ? '#22c55e' : '#e5e7eb'"
-                                stroke="white"
-                                stroke-width="1"
-                              />
-                            </g>
-                          </svg>
+                          <SegmentRing
+                            :total="proc.requiredKeyShares"
+                            :completed="getCompletedSegmentsForProcess(proc)"
+                            :size="24"
+                            class="mr-0.5"
+                          />
                         </div>
                         <div>
-                          {{ t('emergencyAccessVaultList.assignOwner') }}
+                          <span class="flex flex-col leading-tight text-left">
+                            {{ t('emergencyAccessVaultList.assignOwner') }}
+                            <span class="text-[10px] text-gray-500">{{ getApprovalLabel(proc) }}</span>
+                          </span>
                         </div>
                       </button>
                       <!-- Hover-Card -->
                       <div
                         class="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-150
-                              absolute -left-40 top-9 z-20 w-80 rounded-lg border border-gray-200 bg-white p-3 shadow-xl"
+                              absolute right-0 top-10 z-20 w-80 rounded-lg border border-gray-200 bg-white p-3 shadow-xl"
                         role="tooltip"
                       >
                         <div class="flex items-center justify-between mb-1">
                           <div class="text-xl">{{ t('emergencyAccessVaultList.assignOwner') }}</div>
-                          <svg
-                            class="shrink-0 pointer-events-none select-none"
-                            width="42"
-                            height="42"
-                            viewBox="0 0 36 36"
-                            aria-hidden="true"
-                          >
-                            <g>
-                              <path
-                                v-for="i in proc.requiredKeyShares"
-                                :key="i"
-                                :d="describeSegment(i - 1, proc.requiredKeyShares, 16)"
-                                :fill="i <= getCompletedSegmentsForProcess(proc) ? '#22c55e' : '#e5e7eb'"
-                                stroke="white"
-                                stroke-width="1"
-                              />
-                            </g>
-                          </svg>
+                          <SegmentRing
+                            :total="proc.requiredKeyShares"
+                            :completed="getCompletedSegmentsForProcess(proc)"
+                            :size="42"
+                          />
                         </div>
-
                         <div class="text-xs text-gray-500 mb-2">
                           {{ t('recoveryDialog.requiredKeyShares') }}:
                           {{ proc.requiredKeyShares }}
@@ -277,7 +280,7 @@
                     <div class="relative group block md:inline-block">
                       <button
                         type="button"
-                        class="w-full sm:w-auto h-8 inline-flex items-center gap-2 rounded-md bg-white px-2 py-1 text-xs font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        class="w-full sm:w-auto h-10 inline-flex items-center gap-2 rounded-md bg-white px-2 py-1 text-xs font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                         :disabled="isBroken(vault)"
                         @click.stop="onUnifiedButtonClick(vault, type)"
                       >
@@ -285,20 +288,26 @@
                           <SegmentRing
                             :total="getProcessByType(vault, type)!.requiredKeyShares"
                             :completed="getCompletedSegmentsForProcess(getProcessByType(vault, type)!)"
+                            :size="24"
+                            class="mr-0.5"
                           />
-                          <span v-if="isEmergencyKeyShareHolder(vault)">
-                            {{ getTypeLabel(vault,type) }} - {{ getApprovalLabel(getProcessByType(vault, type)!) }}
+                          <span v-if="isEmergencyKeyShareHolder(vault)" class="flex flex-col leading-tight text-left">
+                            <span>{{ getTypeLabel(vault, type) }}</span>
+                            <span class="text-[10px] text-gray-500">{{ getApprovalLabel(getProcessByType(vault, type)!) }}</span>
                           </span>
                         </template>
                         <template v-else>
-                          <PlayIcon class="h-4 w-4 text-primary" aria-hidden="true" />
-                          <span>{{ getTypeLabel(vault, type) }}</span>
+                          <PlayIcon class="h-6 w-6 text-primary" aria-hidden="true" />
+                          <span v-if="isEmergencyKeyShareHolder(vault)" class="flex flex-col leading-tight text-left">
+                            <span>{{ getTypeLabel(vault, type) }}</span>
+                            <span class="text-[10px] text-gray-500">Start process</span>
+                          </span>
                         </template>
                       </button>
                       <!-- Hover-Card -->
                       <div
                         class="invisible opacity-0 group-hover:opacity-100 transition-opacity duration-150
-                              absolute right-0 top-9 z-20 w-80 rounded-lg border border-gray-200 bg-white p-3 shadow-xl"
+                              absolute right-0 top-10 z-20 w-80 rounded-lg border border-gray-200 bg-white p-3 shadow-xl"
                         :class="getProcessByType(vault, type) ? 'group-hover:visible' : ''"
                         role="tooltip"
                       >
@@ -519,13 +528,13 @@ function getApprovalLabel(proc?: RecoveryProcessDto): string {
   if (!proc) return '';
 
   if (didAddMyShare(proc))
-    return 'Approved';
+    return 'Waiting for other approvals';
   else {
     if (isProcessFullyApproved(proc) || isProcessAboutToComplete(proc)) {
-      return 'Complete';
+      return 'Complete now';
     }
     else 
-      return 'Approve';
+      return 'Approve now';
   }
 }
 
