@@ -128,6 +128,9 @@ public class EmergencyAccessResource {
 	@Transactional
 	public Response delete(@PathParam("processId") UUID processId) {
 		if (recoverProcessRepo.deleteById(processId)) {
+			var currentUserId = jwt.getSubject();
+			eventLogger.logEmergencyAccessRecoveryApproved(processId, currentUserId, request.remoteAddress().hostAddress());
+			eventLogger.logEmergencyAccessRecoveryCompleted(processId, currentUserId);
 			return Response.noContent().build();
 		} else {
 			throw new NotFoundException();
