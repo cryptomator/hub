@@ -529,6 +529,8 @@ function getApprovalLabel(proc?: RecoveryProcessDto): string {
 
   if (didAddMyShare(proc))
     return 'Waiting for other approvals';
+  else if (!isUserInProcess(proc))
+    return 'Show details';
   else {
     if (isProcessFullyApproved(proc) || isProcessAboutToComplete(proc)) {
       return 'Complete now';
