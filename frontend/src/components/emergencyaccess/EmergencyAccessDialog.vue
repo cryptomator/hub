@@ -364,9 +364,9 @@
                           </div>
                         </div>
                       </div>
-                      <div v-if="phase != 'start' && !isMeInProcessCouncil">
-                        You are not part of the current process council.
-                      </div>
+                    </div>
+                    <div v-if="phase != 'start' && !isMeInProcessCouncil">
+                      You are not part of the current process council.
                     </div>
                   </div>
                 
@@ -899,7 +899,11 @@ const phaseTitle = computed(() => {
         return 'Change Council';
       return 'Change Vault Permissons';
     }
-    case 'approve': return didAddMyShare.value ? 'Approved' : t('recoveryDialog.approveTitle');
+    case 'approve': {
+      if (!isMeInProcessCouncil.value)
+        return 'Process details';
+      return didAddMyShare.value ? 'Approved' : t('recoveryDialog.approveTitle');
+    } 
     case 'complete': return !didAddMyShare.value ?  t('recoveryDialog.completeTitle') : 'Approved';
     default: return '';
   }
