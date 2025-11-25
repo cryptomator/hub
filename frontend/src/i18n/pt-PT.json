@@ -47,7 +47,7 @@
   "admin.serverInfo.hubVersion.description.fetchingUpdatesFailed": "Não é possível verificar por atualizações. Por favor, verifique manualmente.",
   "admin.serverInfo.keycloakVersion.title": "Versão do Keycloak",
   "admin.serverInfo.keycloakVersion.description": "Gerir Keycloak",
-  "admin.serverInfo.keycloakVersion.notAvailable": "não disponível",
+  "admin.serverInfo.keycloakVersion.notAvailable": "não disponivel",
   "admin.licenseInfo.title": "Info da licença",
   "admin.licenseInfo.description": "Verifique a informação da sua licença. Se desejar fazer alterações ou verificar o estado da subscrição, pressione \"Gerir subscrição\".",
   "admin.licenseInfo.email.title": "Licenciado para",
