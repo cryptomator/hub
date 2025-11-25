@@ -151,6 +151,7 @@ export type AuditEventEmergencyAccessRecoveryCompletedDto = AuditEventDtoBase & 
   type: 'EMERGENCY_ACCESS_RECOVERY_COMPLETED',
   processId: string;
   councilMemberId: string;
+  ipAddress: string;
 }
 
 export type AuditEventEmergencyAccessRecoveryAbortedDto = AuditEventDtoBase & {

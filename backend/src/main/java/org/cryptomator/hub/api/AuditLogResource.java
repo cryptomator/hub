@@ -131,7 +131,7 @@ public class AuditLogResource {
 				case EmergencyAccessSettingsUpdatedEvent evt -> new EmergencyAccessSettingsUpdatedEventDto(evt.getId(), evt.getTimestamp(), EmergencyAccessSettingsUpdatedEvent.TYPE, evt.getAdminId(), evt.getCouncilMemberIds(), evt.getRequiredKeyShares(), evt.getMinMembers(),  evt.isAllowChoosingCouncil());
 				case EmergencyAccessRecoveryStartedEvent evt -> new EmergencyAccessRecoveryStartedEventDto(evt.getId(), evt.getTimestamp(), EmergencyAccessRecoveryStartedEvent.TYPE, evt.getVaultId(), evt.getProcessId(), evt.getCouncilMemberId(), evt.getProcessType(), evt.getDetails());
 				case EmergencyAccessRecoveryApprovedEvent evt -> new EmergencyAccessRecoveryApprovedEventDto(evt.getId(), evt.getTimestamp(), EmergencyAccessRecoveryApprovedEvent.TYPE, evt.getProcessId(), evt.getCouncilMemberId(), evt.getIpAddress());
-				case EmergencyAccessRecoveryCompletedEvent evt -> new EmergencyAccessRecoveryCompletedEventDto(evt.getId(), evt.getTimestamp(), EmergencyAccessRecoveryCompletedEvent.TYPE, evt.getProcessId(), evt.getCouncilMemberId());
+				case EmergencyAccessRecoveryCompletedEvent evt -> new EmergencyAccessRecoveryCompletedEventDto(evt.getId(), evt.getTimestamp(), EmergencyAccessRecoveryCompletedEvent.TYPE, evt.getProcessId(), evt.getCouncilMemberId(), evt.getIpAddress());
 				case EmergencyAccessRecoveryAbortedEvent evt -> new EmergencyAccessRecoveryAbortedEventDto(evt.getId(), evt.getTimestamp(), EmergencyAccessRecoveryAbortedEvent.TYPE, evt.getVaultId(), evt.getProcessId(), evt.getCouncilMemberId(), evt.getIpAddress());
 				default -> throw new UnsupportedOperationException("conversion not implemented for event type " + entity.getClass());
 			};
@@ -210,7 +210,7 @@ public class AuditLogResource {
 												   @JsonProperty("ipAddress") String ipAddress) implements AuditEventDto {
 	}
 
-	record EmergencyAccessRecoveryCompletedEventDto(long id, Instant timestamp, String type, @JsonProperty("processId") UUID processId, @JsonProperty("councilMemberId") String councilMemberId) implements AuditEventDto {
+	record EmergencyAccessRecoveryCompletedEventDto(long id, Instant timestamp, String type, @JsonProperty("processId") UUID processId, @JsonProperty("councilMemberId") String councilMemberId, @JsonProperty("ipAddress") String ipAddress) implements AuditEventDto {
 	}
 
 	record EmergencyAccessRecoveryAbortedEventDto(long id, Instant timestamp, String type, @JsonProperty("vaultId") UUID vaultId, @JsonProperty("processId") UUID processId, @JsonProperty("councilMemberId") String councilMemberId, @JsonProperty("ipAddress") String ipAddress) implements AuditEventDto {

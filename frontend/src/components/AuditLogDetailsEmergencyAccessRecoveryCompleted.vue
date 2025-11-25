@@ -21,6 +21,14 @@
           <code class="text-xs" :class="{'text-gray-600': resolvedCouncilMember != null}">{{ event.councilMemberId }}</code>
         </dd>
       </div>
+      <div v-if="event.ipAddress" class="flex items-baseline gap-2">
+        <dt class="text-xs text-gray-500">
+          <code>ipAddress</code>
+        </dt>
+        <dd class="flex items-baseline gap-2 text-sm text-gray-900">
+          <code class="text-xs">{{ event.ipAddress }}</code>
+        </dd>
+      </div>
     </dl>
   </td>
 </template>

@@ -21,6 +21,9 @@ public class EmergencyAccessRecoveryCompletedEvent extends AuditEvent {
 	@Column(name = "council_member_id", nullable = false)
 	private String councilMemberId;
 
+	@Column(name = "ip_address")
+    private String ipAddress;
+
 	public UUID getProcessId() {
 		return processId;
 	}
@@ -37,18 +40,27 @@ public class EmergencyAccessRecoveryCompletedEvent extends AuditEvent {
 		this.councilMemberId = councilMemberId;
 	}
 
+	public String getIpAddress() {
+        return ipAddress;
+    }
+
+    public void setIpAddress(String ipAddress) {
+        this.ipAddress = ipAddress;
+    }
+
 	@Override
 	public boolean equals(Object o) {
 		if (o == null || getClass() != o.getClass()) return false;
 		if (!super.equals(o)) return false;
 		EmergencyAccessRecoveryCompletedEvent other = (EmergencyAccessRecoveryCompletedEvent) o;
 		return Objects.equals(processId, other.processId)
-				&& Objects.equals(councilMemberId, other.councilMemberId);
+				&& Objects.equals(councilMemberId, other.councilMemberId)
+				&& Objects.equals(ipAddress, other.ipAddress);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(super.hashCode(), processId, councilMemberId);
+		return Objects.hash(super.hashCode(), processId, councilMemberId, ipAddress);
 	}
 }
 

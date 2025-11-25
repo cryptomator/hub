@@ -186,11 +186,12 @@ public class EventLogger {
 		auditEventRepository.persist(event);
 	}
 
-	public void logEmergencyAccessRecoveryCompleted(UUID processId, String councilMemberId) {
+	public void logEmergencyAccessRecoveryCompleted(UUID processId, String councilMemberId, String ipAddress) {
 		var event = new EmergencyAccessRecoveryCompletedEvent();
 		event.setTimestamp(Instant.now());
 		event.setProcessId(processId);
 		event.setCouncilMemberId(councilMemberId);
+		event.setIpAddress(ipAddress);
 		auditEventRepository.persist(event);
 	}
 
