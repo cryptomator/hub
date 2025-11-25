@@ -89,6 +89,11 @@
                   <ExclamationTriangleIcon class="h-4 w-4 text-yellow-500 mr-1" />
                   {{ t('emergencyAccessVaultList.noRedundancy') }}
                 </div>
+                <div v-else-if="(isBrokenEA(vault) && ownedVaults?.some(ownedVault => ownedVault.id == vault.id))" class="inline-flex items-center rounded-md bg-yellow-400/10 px-2 py-1 text-xs font-medium text-yellow-500 ring-1 ring-inset ring-yellow-400/20">
+                  <ExclamationTriangleIcon class="h-4 w-4 text-yellow-500 mr-1" />
+                  Broken EA
+                </div>
+
               </div>
               <p v-if="vault.description && vault.description.length > 0" class="truncate text-sm text-gray-500 mt-2">{{ vault.description }}</p>
             </div>
@@ -233,6 +238,11 @@ function hasInsufficientEmergencyRedundancy(vault: VaultDto): boolean {
   const required = vault.requiredEmergencyKeyShares ?? 0;
   const members = Object.keys(vault.emergencyKeyShares ?? {}).length;
   return required == members;
+}
+
+function isBrokenEA(vault: VaultDto): boolean {
+  const members = Object.keys(vault.emergencyKeyShares).length;
+  return vault.requiredEmergencyKeyShares > members;
 }
 
 async function onSelectedVaultUpdate(vault: VaultDto) {
