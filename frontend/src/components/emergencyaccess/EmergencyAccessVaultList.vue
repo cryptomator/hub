@@ -65,52 +65,26 @@
               </div>
 
               <div class="flex flex-wrap items-center gap-2 sm:justify-end">
+                <EmergencyBadge
+                  v-if="!isEmergencyKeyShareHolder(vault)"
+                  type="notCouncil"
+                  title="No Vault Council Member anymore"
+                  message="You are no longer part of the actual vault's emergency council. But you are still part of an running emergency access process."
+                />
 
-                <!-- Not a council member badge -->
-                <div v-if="!isEmergencyKeyShareHolder(vault)" class="relative mr-3 group">
-                  <span class="inline-flex items-center gap-2 rounded-full bg-yellow-50 ring-1 ring-yellow-300/70 px-2 py-2 text-xs font-medium text-yellow-800 cursor-default">
-                    <ExclamationTriangleIcon class="h-4 w-4 text-yellow-500" aria-hidden="true" />
-                  </span>
+                <EmergencyBadge
+                  v-else-if="isBroken(vault)"
+                  type="broken"
+                  title="Broken EA"
+                  message="Emergency Access is not possible anymore. One or more council members performed an account reset and lost their key shares."
+                />
 
-                  <!-- Tooltip -->
-                  <div class="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-150 absolute left-1/2 -translate-x-1/2 -top-2 transform -translate-y-full w-max max-w-xs z-10">
-                    <div class="bg-yellow-50 border border-yellow-300 text-yellow-900 px-2 py-1 rounded shadow-sm text-xs hyphens-auto relative">
-                      <b>No Vault Council Member anymore</b><br/>
-                      You are no longer part of the actual vault's emergency council. But you are still part of an running emergency access process.
-                    </div>
-                  </div>
-                </div>
-                <!-- Broken EA -->
-                <div v-else-if="isBroken(vault) && isEmergencyKeyShareHolder(vault)" class="relative mr-3 group">
-                  <span
-                    class="inline-flex items-center gap-2 rounded-full bg-red-100 ring-1 ring-red-300/70 px-2 py-2 text-xs font-medium text-yellow-800"
-                    :title="t('emergencyAccessVaultList.noRedundancyHint')"
-                  >
-                    <ExclamationTriangleIcon class="h-4 w-4" aria-hidden="true" />
-                  </span>
-                  <!-- Tooltip -->
-                  <div class="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-150 absolute left-1/2 -translate-x-1/2 -top-2 transform -translate-y-full w-max max-w-xs z-10">
-                    <div class="bg-red-50 border border-red-300 text-red-900 px-2 py-1 rounded shadow-sm text-xs hyphens-auto relative">
-                      <b>Broken EA</b><br/>
-                      Emergency Access ist not possible anymore. One or more council members performed an account reset and lost their key shrads. The vault owner can setup up a new emergency access council in the vault details.
-                      <div class="absolute bottom-0 left-1/2 transform translate-y-1/2 -translate-x-1/2 rotate-45 w-2 h-2 bg-red-50 border-r border-b border-red-300"></div>
-                    </div>
-                  </div>
-                </div>
-                <!-- Needs Redundancy badge -->
-                <div v-else-if="noRedundancy(vault) && isEmergencyKeyShareHolder(vault)" class="relative mr-3 group">
-                  <span class="inline-flex items-center gap-2 rounded-full bg-yellow-50 ring-1 ring-yellow-300/70 px-2 py-2 text-xs font-medium text-yellow-800" >
-                    <ExclamationTriangleIcon class="h-4 w-4 text-yellow-500" aria-hidden="true" />
-                  </span>
-                  <!-- Tooltip -->
-                  <div class="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-150 absolute left-1/2 -translate-x-1/2 -top-2 transform -translate-y-full w-max max-w-xs z-10">
-                    <div class="bg-yellow-50 border border-yellow-300 text-yellow-900 px-2 py-1 rounded shadow-sm text-xs hyphens-auto relative">
-                      <b>No Redundancy</b><br/>
-                      {{ t('emergencyAccessVaultList.noRedundancyHint') }}
-                      <div class="absolute bottom-0 left-1/2 transform translate-y-1/2 -translate-x-1/2 rotate-45 w-2 h-2 bg-yellow-50 border-r border-b border-yellow-300"></div>
-                    </div>
-                  </div>
-                </div>
+                <EmergencyBadge
+                  v-else-if="noRedundancy(vault)"
+                  type="noRedundancy"
+                  title="No Redundancy"
+                  :message="t('emergencyAccessVaultList.noRedundancyHint')"
+                />
 
                 <!-- Council Members -->
                 <div v-if="getCurrentCouncilMembers(vault).length && isEmergencyKeyShareHolder(vault)" class="mt-2 mr-5">
@@ -409,6 +383,7 @@ import { UserDto } from '../../common/backend';
 import { describeSegment } from '../../common/svgUtils';
 import EmergencyAccessDialog from './EmergencyAccessDialog.vue';
 import SegmentRing from './SegmentRing.vue';
+import EmergencyBadge from './EmergencyBadge.vue';
 
 export type Item = {
   id: string;
