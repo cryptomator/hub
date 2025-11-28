@@ -71,7 +71,7 @@
     </Menu>
   </div>
 
-  <div v-if="filteredVaults != null && filteredVaults.length > 0" class="mt-5 bg-white shadow-sm overflow-hidden rounded-md">
+  <div v-if="filteredVaults != null && filteredVaults.length > 0" class="mt-5 bg-white shadow-sm rounded-md">
     <ul class="divide-y divide-gray-200">
       <li v-for="(vault, index) in filteredVaults" :key="vault.masterkey">
         <a tabindex="0" class="block hover:bg-gray-50" :class="{'ring-2 ring-inset ring-primary': selectedVault == vault, 'rounded-t-md': index == 0, 'rounded-b-md': index == filteredVaults.length - 1}" @click="showVaultDetails(vault)">
@@ -81,21 +81,31 @@
                 <p class="truncate text-sm font-medium text-primary">{{ vault.name }}</p>
                 <div v-if="ownedVaults?.some(ownedVault => ownedVault.id == vault.id)" class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">{{ t('vaultList.badge.owner') }}</div>
                 <div v-if="vault.archived" class="inline-flex items-center rounded-md bg-yellow-400/10 px-2 py-1 text-xs font-medium text-yellow-500 ring-1 ring-inset ring-yellow-400/20">{{ t('vaultList.badge.archived') }}</div>
-                <div v-if="!hasEmergencyKeys(vault) && ownedVaults?.some(ownedVault => ownedVault.id == vault.id)" class="inline-flex items-center rounded-md bg-yellow-400/10 px-2 py-1 text-xs font-medium text-yellow-500 ring-1 ring-inset ring-yellow-400/20">
-                  <ExclamationTriangleIcon class="h-4 w-4 text-yellow-500 mr-1" />
-                  {{ t('vaultList.badge.noCouncil') }}
-                </div>
-                <div v-else-if="hasInsufficientEmergencyRedundancy(vault) && ownedVaults?.some(ownedVault => ownedVault.id == vault.id)" class="inline-flex items-center rounded-md bg-yellow-400/10 px-2 py-1 text-xs font-medium text-yellow-500 ring-1 ring-inset ring-yellow-400/20">
-                  <ExclamationTriangleIcon class="h-4 w-4 text-yellow-500 mr-1" />
-                  {{ t('emergencyAccessVaultList.noRedundancy') }}
-                </div>
-                <div v-else-if="(isBrokenEA(vault) && ownedVaults?.some(ownedVault => ownedVault.id == vault.id))" class="inline-flex items-center rounded-md bg-yellow-400/10 px-2 py-1 text-xs font-medium text-yellow-500 ring-1 ring-inset ring-yellow-400/20">
-                  <ExclamationTriangleIcon class="h-4 w-4 text-yellow-500 mr-1" />
-                  Broken EA
-                </div>
-
               </div>
               <p v-if="vault.description && vault.description.length > 0" class="truncate text-sm text-gray-500 mt-2">{{ vault.description }}</p>
+            </div>
+            <div v-if="ownedVaults?.some(ownedVault => ownedVault.id == vault.id)">
+              <EmergencyBadge
+                v-if="!hasEmergencyKeys(vault)"
+                type="missingCouncil"
+                title="Council missing"
+                message="No council."
+                position="right"
+              />
+              <EmergencyBadge
+                v-else-if="isBroken(vault)"
+                type="broken"
+                title="Broken EA"
+                message="Emergency Access is not possible anymore. One or more council members performed an account reset and lost their key shares."
+                position="right"
+              />
+              <EmergencyBadge
+                v-else-if="noRedundancy(vault)"
+                type="noRedundancy"
+                title="No Redundancy"
+                :message="t('emergencyAccessVaultList.noRedundancyHint')"
+                position="right"
+              />
             </div>
             <div class="ml-5 shrink-0">
               <ChevronRightIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
@@ -134,13 +144,17 @@ import { CheckIcon, ChevronRightIcon, ChevronUpDownIcon, ExclamationTriangleIcon
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auth from '../common/auth';
-import backend, { LicenseUserInfoDto, VaultDto, VaultRole } from '../common/backend';
+import backend, { LicenseUserInfoDto, UserDto, VaultDto, VaultRole } from '../common/backend';
+import userdata from '../common/userdata';
 import FetchError from './FetchError.vue';
 import LicenseAlert from './LicenseAlert.vue';
 import SlideOver from './SlideOver.vue';
 import VaultDetails from './VaultDetails.vue';
+import EmergencyBadge from './emergencyaccess/EmergencyBadge.vue';
 
 const { t } = useI18n({ useScope: 'global' });
+
+const me = ref<UserDto>();
 
 const vaultDetailsSlideOver = ref<typeof SlideOver>();
 const onFetchError = ref<Error | null>();
@@ -191,6 +205,7 @@ onMounted(fetchData);
 async function fetchData() {
   onFetchError.value = null;
   try {
+    me.value = await userdata.me;
     isAdmin.value = (await auth).hasRole('admin');
     canCreateVaults.value = (await auth).hasRole('create-vaults');
 
@@ -228,19 +243,12 @@ function hasEmergencyKeys(vault: VaultDto): boolean {
   return Object.keys(vault.emergencyKeyShares ?? {}).length > 0; 
 }
 
-function needsRedundancy(vault: VaultDto): boolean {
-  const required = vault.requiredEmergencyKeyShares ?? 0;
-  const members = Object.keys(vault.emergencyKeyShares ?? {}).length;
-  return required == members;
+function noRedundancy(vault: VaultDto): boolean {
+  const members = Object.keys(vault.emergencyKeyShares).length;
+  return vault.requiredEmergencyKeyShares == members;
 }
 
-function hasInsufficientEmergencyRedundancy(vault: VaultDto): boolean {
-  const required = vault.requiredEmergencyKeyShares ?? 0;
-  const members = Object.keys(vault.emergencyKeyShares ?? {}).length;
-  return required == members;
-}
-
-function isBrokenEA(vault: VaultDto): boolean {
+function isBroken(vault: VaultDto): boolean {
   const members = Object.keys(vault.emergencyKeyShares).length;
   return vault.requiredEmergencyKeyShares > members;
 }
