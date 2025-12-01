@@ -13,447 +13,329 @@
         <DialogOverlay class="fixed inset-0 bg-gray-500/75 transition-opacity" />
       </TransitionChild>
 
-      <div class="fixed inset-0 z-10 overflow-y-auto">
-        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-          <TransitionChild
-            as="template"
-            enter="ease-out duration-300"
-            enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-            enter-to="opacity-100 translate-y-0 sm:scale-100"
-            leave="ease-in duration-200"
-            leave-from="opacity-100 translate-y-0 sm:scale-100"
-            leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+      <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+        <TransitionChild
+          as="template"
+          enter="ease-out duration-300"
+          enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+          enter-to="opacity-100 translate-y-0 sm:scale-100"
+          leave="ease-in duration-200"
+          leave-from="opacity-100 translate-y-0 sm:scale-100"
+          leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+        >
+          <DialogPanel
+            class="relative transform overflow-visible transition-all sm:my-8 sm:w-full sm:max-w-lg"
           >
-            <DialogPanel
-              class="relative transform overflow-visible transition-all sm:my-8 sm:w-full sm:max-w-lg"
-            >
-              <div class="relative rounded-lg bg-white">
-                <div class="relative z-10">
-                  <div class="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                    <div class="sm:flex sm:items-start">
-                      <div class="mx-auto shrink-0 flex items-center justify-center h-12 w-12 sm:mx-0 sm:h-10 sm:w-10 relative">
-                        <div v-if="phase !== 'start'">
-                          <SegmentRing
-                            v-if="true"
-                            :total="newRequiredKeyShares"
-                            :completed="completedSegments"
-                            :size="36"
-                          />
-                        </div>
-                        <div v-else>
-                          <PlayIcon class="h-8 w-8 text-primary" aria-hidden="true" />
+            <div class="relative rounded-lg bg-white z-10">
+              <div class="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="sm:flex sm:items-start">
+                  <div class="mx-auto shrink-0 flex items-center justify-center h-12 w-12 sm:mx-0 sm:h-10 sm:w-10 relative">
+                    <div v-if="phase !== 'start'">
+                      <SegmentRing
+                        :total="newRequiredKeyShares"
+                        :completed="completedSegments"
+                        :size="36"
+                      />
+                    </div>
+                    <div v-else>
+                      <PlayIcon class="h-8 w-8 text-primary" aria-hidden="true" />
+                    </div>
+                  </div>
+                  <div class="mt-3 grow text-center sm:mt-0 sm:ml-4 sm:text-left">
+                    <DialogTitle as="h3" class="text-lg leading-6 font-medium text-gray-900">
+                      {{ phaseTitle }}
+                    </DialogTitle>
+
+                    <div v-if="phase === 'start'" class="mt-4 space-y-4">
+                      <div class="mt-2">
+                        <div class="text-sm text-gray-500">
+                          <div class="flex items-start gap-2 rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-900">
+                            <span class="leading-5">
+                              <span class="text-gray-500">
+                                {{ 
+                                  startType == 'ASSIGN_OWNER' 
+                                    ? t('admin.emergencyAccess.assignOwner.startDesc', [getCurrentCouncilMembers(vault).length, vault.requiredEmergencyKeyShares]) 
+                                    : t('admin.emergencyAccess.changeCouncil.startDesc', [vault.requiredEmergencyKeyShares]) 
+                                }}
+                              </span>
+                            </span>
+                            <SegmentRing
+                              :total="vault.requiredEmergencyKeyShares"
+                              :completed="completedSegments"
+                              :size="36"
+                              fill-color="#66cc68bb"
+                            />
+                          </div>
                         </div>
                       </div>
-                      <div class="mt-3 grow text-center sm:mt-0 sm:ml-4 sm:text-left">
-                        <DialogTitle as="h3" class="text-lg leading-6 font-medium text-gray-900">
-                          {{ phaseTitle }}
-                        </DialogTitle>
-                        <div v-if="false && !!props.recoveryProcess">
-                          Process council
-                        </div>
-                        <div v-if="false && !!props.recoveryProcess && getCouncilMembersForProcess(getProcessByType(vault, props.startType!)!).length && isEmergencyKeyShareHolder(vault)" class="mt-2 mr-5">
-                          Added: 
-                          <div class="relative group inline-flex -space-x-2">
-                            <template v-for="m in getCouncilPreview(props.recoveryProcess!).list.filter(m => recoveredMemberIdsForProcess(getProcessByType(vault, props.startType!)!).has(m.id))" :key="m.id">
-                              <div class="relative h-7 w-7 rounded-full ring-1 ring-gray-400 bg-white overflow-hidden flex items-center justify-center">
-                                <img
-                                  v-if="getAvatarUrl(m)"
-                                  :src="getAvatarUrl(m)"
-                                  :alt="m.name"
-                                  class="h-full w-full object-cover"
-                                />
-                                <div
-                                  v-else
-                                  class="h-full w-full flex items-center justify-center text-[9px] font-semibold text-gray-700"
-                                >
-                                  {{ m.name }}
-                                </div>
-                              </div>
-                            </template>
-
-                            <!-- +N Circle -->
-                            <div
-                              v-if="getCouncilPreview(props.recoveryProcess!).extra > 0"
-                              class="relative z-10 h-7 w-7 rounded-full ring-2 ring-white bg-gray-200 overflow-hidden
-                                    flex items-center justify-center text-[10px] font-semibold text-gray-700"
-                              :title="`+${getCouncilPreview(props.recoveryProcess!).extra}`"
-                              style="margin-left: 4px;"
-                            >
-                              +{{ getCouncilPreview(props.recoveryProcess!).extra }}
-                            </div>
-                          </div>
-                          Missing: 
-                          <div class="relative group inline-flex -space-x-2">
-                            <template v-for="m in getCouncilPreview(props.recoveryProcess!).list.filter(m => !recoveredMemberIdsForProcess(getProcessByType(vault, props.startType!)!).has(m.id))" :key="m.id">
-                              <div class="relative h-7 w-7 rounded-full ring-1 ring-gray-400 bg-white overflow-hidden flex items-center justify-center">
-                                <img
-                                  v-if="getAvatarUrl(m)"
-                                  :src="getAvatarUrl(m)"
-                                  :alt="m.name"
-                                  class="h-full w-full object-cover"
-                                />
-                                <div
-                                  v-else
-                                  class="h-full w-full flex items-center justify-center text-[9px] font-semibold text-gray-700"
-                                >
-                                  {{ m.name }}
-                                </div>
-                              </div>
-                            </template>
-
-                            <!-- +N Circle -->
-                            <div
-                              v-if="getCouncilPreview(props.recoveryProcess!).extra > 0"
-                              class="relative z-10 h-7 w-7 rounded-full ring-2 ring-white bg-gray-200 overflow-hidden
-                                    flex items-center justify-center text-[10px] font-semibold text-gray-700"
-                              :title="`+${getCouncilPreview(props.recoveryProcess!).extra}`"
-                              style="margin-left: 4px;"
-                            >
-                              +{{ getCouncilPreview(props.recoveryProcess!).extra }}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div v-if="false && !!props.recoveryProcess">
-                          {{ completedSegments }} / {{ requiredSegments }} -
-                          {{ requiredSegments - completedSegments }} missing
-                        </div>
-                        <ul v-if="false && !!props.recoveryProcess" class="space-y-1 max-h-56 overflow-auto pr-1">
-                          <li
-                            v-for="m in getCouncilMembersForProcess(getProcessByType(vault, props.startType!)!)"
-                            :key="'hc-proc-' + vault.id + '-' + props.startType! + '-' + m.id"
-                            class="flex items-center justify-between text-sm h-6"
-                          >
-                            <span class="truncate flex items-center gap-2">
-                              <img v-if="getAvatarUrl(m)" :src="getAvatarUrl(m)" :alt="m.name" class="h-4 w-4 rounded-full" />
-                              <span class="truncate">{{ m.name || m.id }} {{ isMe(m) ? '(You)' : '' }}</span>
+                      <div v-if="processType === 'ASSIGN_OWNER'">
+                        <label class="block text-sm font-medium text-gray-700">
+                          Select user with role owner
+                        </label>
+                        <MultiUserSelectInputGroup
+                          :selected-users="owners"
+                          :on-search="searchUsers"
+                          :input-visible="true"
+                          @action="addOwner"
+                          @remove="removeOwner"
+                        />
+                        <div v-if="!hasActivatedOwner" class="flex items-start gap-2 rounded-md border border-yellow-200 bg-yellow-50 p-1 text-sm text-gray-900 mt-1">
+                          <span class="leading-5">
+                            <span class="text-gray-600">
+                              Select at least 1 activated user as owner.
                             </span>
-                            <span
-                              class="ml-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px]"
-                              :class="recoveredMemberIdsForProcess(getProcessByType(vault, props.startType!)!).has(m.id)
-                                ? 'bg-green-50 text-green-700 ring-1 ring-green-200'
-                                : 'bg-gray-50 text-gray-600 ring-1 ring-gray-200'"
-                            >
-                              <SegmentRing 
-                                :total="requiredSegments" 
-                                :completed="1"
-                                :fill-color="recoveredMemberIdsForProcess(getProcessByType(vault, props.startType!)!).has(m.id)
-                                  ? '#66cc68'
-                                  : '#cfcfcf'"
-                              >
-                              </SegmentRing>
-                              <span
-                                class="h-2 w-2 rounded-full"
-                                :class="recoveredMemberIdsForProcess(getProcessByType(vault, props.startType!)!).has(m.id) ? 'bg-green-500' : 'bg-gray-300'"
-                              ></span>
-                              {{ recoveredMemberIdsForProcess(getProcessByType(vault, props.startType!)!).has(m.id)
-                                ? t('recoveryDialog.status.added')
-                                : t('recoveryDialog.status.pending') }}
-                            </span>
-                          </li>
-                        </ul>
-
-                        <div v-if="phase === 'start'" class="mt-4 space-y-4">
-                          <div class="mt-2">
-                            <div class="text-sm text-gray-500">
-                              <div class="flex items-start gap-2 rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-900">
-                                <span class="leading-5">
-                                  <span class="text-gray-500">
-                                    {{ 
-                                      startType == 'ASSIGN_OWNER' 
-                                        ? t('admin.emergencyAccess.assignOwner.startDesc', [getCurrentCouncilMembers(vault).length, vault.requiredEmergencyKeyShares]) 
-                                        : t('admin.emergencyAccess.changeCouncil.startDesc', [vault.requiredEmergencyKeyShares]) 
-                                    }}
-                                  </span>
-                                </span>
-                                <SegmentRing
-                                  v-if="true"
-                                  :total="vault.requiredEmergencyKeyShares"
-                                  :completed="completedSegments"
-                                  :size="36"
-                                  fill-color="#66cc68bb"
-                                />
-                              </div>
-                            </div>
-                          </div>
-                          <div v-if="processType === 'ASSIGN_OWNER'">
-                            <label class="block text-sm font-medium text-gray-700">
-                              Select user with role owner
-                            </label>
-                            <MultiUserSelectInputGroup
-                              :selected-users="owners"
-                              :on-search="searchUsers"
-                              :input-visible="true"
-                              @action="addOwner"
-                              @remove="removeOwner"
-                            />
-                            <div v-if="!hasActivatedOwner" class="flex items-start gap-2 rounded-md border border-yellow-200 bg-yellow-50 p-1 text-sm text-gray-900 mt-1">
-                              <span class="leading-5">
-                                <span class="text-gray-600">
-                                  Select at least 1 activated user as owner.
-                                </span>
-                              </span>
-                            </div>
-
-                            <!-- Members (non-owners) selector -->
-                            <div class="mt-4">
-                              <label class="block text-sm font-medium text-gray-700">
-                                Select user with role member
-                              </label>
-                              <MultiUserSelectInputGroup
-                                :selected-users="members"
-                                :on-search="searchUsers"
-                                :input-visible="true"
-                                @action="addMember"
-                                @remove="removeMember"
-                              />
-                            </div>
-
-                            <!-- Removed Members display -->
-                            <div v-if="removedMembers.length > 0" class="mt-4">
-                              <span class="block text-sm font-medium text-gray-700">
-                                Removed
-                              </span>
-                              <MultiUserSelectInputGroup
-                                :selected-users="removedMembers"
-                                :on-search="noopSearch"
-                                :input-visible="false"
-                              />
-                            </div>
-                          </div>
-
-                          <div v-else-if="processType === 'COUNCIL_CHANGE'">
-                            <label class="block text-sm font-medium text-gray-700">
-                              {{ t('admin.emergencyAccess.councilMembers.title') }} (Min Members: {{ defaultMinMembers }})
-                            </label>
-                            <MultiUserSelectInputGroup
-                              :selected-users="newCouncilMembers"
-                              :on-search="searchUsersWithCompleteSetup"
-                              :input-visible="allowChangingDefaults"
-                              @action="addCouncilMember"
-                              @remove="removeCouncilMember"
-                            />
-                            <label class="block text-sm font-medium text-gray-700 pt-4">
-                              {{ t('grantEmergencyAccessDialog.possibleEmergencyScenario') }}
-                            </label>
-                            <EmergencyScenarioVisualization
-                              :selected-users="newCouncilMembers"
-                              :grant-button-disabled="isGrantButtonDisabled"
-                              :required-key-shares="newRequiredKeyShares"
-                              :min-members="defaultMinMembers"
-                            />
-                            <div class="flex items-start gap-2 rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-900 mt-2">
-                              <span class="leading-5">
-                                <span class="text-gray-500">
-                                  {{ t('admin.emergencyAccess.changeCouncil.newCouncilDesc', [newRequiredKeyShares]) }}
-                                </span>
-                              </span>
-                              <SegmentRing
-                                v-if="true"
-                                :total="newRequiredKeyShares"
-                                :completed="newRequiredKeyShares"
-                                :size="36"
-                                fill-color="#66cc68bb"
-                              />
-                            </div>
-                            <div v-if="needsRedundancy()" class="mt-4 mr-3">
-                              <span class="inline-flex items-center gap-2 rounded-full bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800" :title="t('emergencyAccessVaultList.noRedundancyHint')" >
-                                <ExclamationTriangleIcon class="h-4 w-4" aria-hidden="true" />
-                                {{ t('emergencyAccessVaultList.noRedundancy') }}
-                              </span>
-                            </div>
-                          </div>
-                          <div v-else class="text-sm text-red-600">
-                            {{ t('recoveryDialog.error.invalidRecoveryType') }}
-                          </div>
+                          </span>
                         </div>
 
-                        <div v-else-if="!recoveryProcess">
-                          <!-- every other phase should have a non-null recovery process -->
-                          Internal error: No recovery process available. <!-- no need to localize this. -->
+                        <!-- Members (non-owners) selector -->
+                        <div class="mt-4">
+                          <label class="block text-sm font-medium text-gray-700">
+                            Select user with role member
+                          </label>
+                          <MultiUserSelectInputGroup
+                            :selected-users="members"
+                            :on-search="searchUsers"
+                            :input-visible="true"
+                            @action="addMember"
+                            @remove="removeMember"
+                          />
                         </div>
 
-                        <div v-else>
-                          <div v-if="recoveryProcess.type === 'ASSIGN_OWNER'" >
-                            Ownership
-                            
-                            <div class="mt-4 space-y-1 text-sm text-gray-500">
-                              <span class="font-medium text-gray-700">Owners</span>
-                              <MultiUserSelectInputGroup
-                                :selected-users="selectedNewOwners"
-                                :on-search="noopSearch"
-                                :input-visible="false"
-                              />
-                              <!-- Members (non-owners) selector -->
-                              <div class="mt-4">
-                                <label class="block text-sm font-medium text-gray-700">
-                                  Members
-                                </label>
-                                <MultiUserSelectInputGroup
-                                  :selected-users="selectedNewmembers"
-                                  :on-search="noopSearch"
-                                  :input-visible="false"
-                                />
-                              </div>
-                              <!-- Removed Members display -->
-                              <div v-if="removedMembers.length > 0" class="mt-4">
-                                <span class="block text-sm font-medium text-gray-700">
-                                  Removed
-                                </span>
-                                <MultiUserSelectInputGroup
-                                  :selected-users="removedMembers"
-                                  :on-search="noopSearch"
-                                  :input-visible="false"
-                                />
-                              </div>
-                            </div>
-                          </div>
-                          <div v-if="recoveryProcess.type === 'COUNCIL_CHANGE'" >
-                            Council Change
-                            <div class="mt-4 space-y-1 text-sm text-gray-500">
-                              <div v-if="recoveryProcess.details.newCouncilMemberIds.length > 0">
-                                <span class="font-medium text-gray-700">{{ t('recoveryDialog.newCouncilMembers') }}:</span>
-                                <MultiUserSelectInputGroup
-                                  :selected-users="newCouncilMembers"
-                                  :on-search="noopSearch"
-                                  :input-visible="false"
-                                  :error-message="t('admin.emergencyAccess.councilMembers.errors.notEnoughMembers', [3])"
-                                  :has-error="hasCouncilMemberError"
-                                />
-                              </div>
-                              <div>
-                                <span class="font-medium text-gray-700">{{ t('recoveryDialog.requiredKeyShares') }}:</span>
-                                {{ recoveryProcess.details.newRequiredKeyShares }}
-                              </div>
-                              <label class="block text-sm font-medium text-gray-700 pt-4">
-                                {{ t('grantEmergencyAccessDialog.possibleEmergencyScenario') }}
-                              </label>
-                              <EmergencyScenarioVisualization
-                                :selected-users="newCouncilMembers"
-                                :grant-button-disabled="isGrantButtonDisabled"
-                                :required-key-shares="newRequiredKeyShares"
-                                :min-members="defaultMinMembers"
-                              />
-                              <div class="flex items-start gap-2 rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-900 mt-2">
-                                <span class="leading-5">
-                                  <span class="text-gray-500">
-                                    {{ t('admin.emergencyAccess.changeCouncil.newCouncilDesc', [newRequiredKeyShares]) }}as
-                                  </span>
-                                </span>
-                                <SegmentRing
-                                  v-if="true"
-                                  :total="newRequiredKeyShares"
-                                  :completed="0"
-                                  :size="36"
-                                  fill-color="#66cc68bb"
-                                />
-                              </div>
-                            </div>
-                          </div>
-                          <div v-if="phase == 'complete' && !didAddMyShare" class="text-sm pt-2">
-                            <span class="inline-flex items-center gap-2 rounded-md bg-green-50 ring-1 ring-green-300/70 px-2.5 py-1 text-xs font-medium text-green-800" >
-                              <InformationCircleIcon class="h-4 w-4" aria-hidden="true" />
-                              You can finish this emergency access process by add the last key shard and complete.
-                            </span>
-                          </div>
-                          <div v-else-if="(phase == 'complete' || phase == 'approve') && didAddMyShare" class="text-sm pt-2">
-                            <span class="inline-flex items-center gap-2 rounded-full bg-green-50 ring-1 ring-green-300/70 px-2.5 py-1 text-xs font-medium text-green-800" >
-                              <CheckBadgeIcon class="h-4 w-4" aria-hidden="true" />
-                              KeyShare allready added.
-                            </span>
-                          </div>
+                        <!-- Removed Members display -->
+                        <div v-if="removedMembers.length > 0" class="mt-4">
+                          <span class="block text-sm font-medium text-gray-700">
+                            Removed
+                          </span>
+                          <MultiUserSelectInputGroup
+                            :selected-users="removedMembers"
+                            :on-search="noopSearch"
+                            :input-visible="false"
+                          />
                         </div>
-                        <div v-if="phase != 'start' && !isMeInProcessCouncil" class="text-sm left pt-4">
-                          <span class="inline-flex items-center gap-2 rounded-md bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800 text-left " >
-                            <ExclamationCircleIcon class="h-4 w-4" aria-hidden="true" />
-                            You are not part of this process council.
+                      </div>
+
+                      <div v-else-if="processType === 'COUNCIL_CHANGE'">
+                        <label class="block text-sm font-medium text-gray-700">
+                          {{ t('admin.emergencyAccess.councilMembers.title') }} (Min Members: {{ defaultMinMembers }})
+                        </label>
+                        <MultiUserSelectInputGroup
+                          :selected-users="newCouncilMembers"
+                          :on-search="searchUsersWithCompleteSetup"
+                          :input-visible="allowChangingDefaults"
+                          @action="addCouncilMember"
+                          @remove="removeCouncilMember"
+                        />
+                        <label class="block text-sm font-medium text-gray-700 pt-4">
+                          {{ t('grantEmergencyAccessDialog.possibleEmergencyScenario') }}
+                        </label>
+                        <EmergencyScenarioVisualization
+                          :selected-users="newCouncilMembers"
+                          :grant-button-disabled="isGrantButtonDisabled"
+                          :required-key-shares="newRequiredKeyShares"
+                          :min-members="defaultMinMembers"
+                        />
+                        <div class="flex items-start gap-2 rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-900 mt-2">
+                          <span class="leading-5">
+                            <span class="text-gray-500">
+                              {{ t('admin.emergencyAccess.changeCouncil.newCouncilDesc', [newRequiredKeyShares]) }}
+                            </span>
+                          </span>
+                          <SegmentRing
+                            :total="newRequiredKeyShares"
+                            :completed="newRequiredKeyShares"
+                            :size="36"
+                            fill-color="#66cc68bb"
+                          />
+                        </div>
+                        <div v-if="needsRedundancy()" class="mt-4 mr-3">
+                          <span class="inline-flex items-center gap-2 rounded-full bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800" :title="t('emergencyAccessVaultList.noRedundancyHint')" >
+                            <ExclamationTriangleIcon class="h-4 w-4" aria-hidden="true" />
+                            {{ t('emergencyAccessVaultList.noRedundancy') }}
                           </span>
                         </div>
                       </div>
+                      <div v-else class="text-sm text-red-600">
+                        {{ t('recoveryDialog.error.invalidRecoveryType') }}
+                      </div>
                     </div>
-                  </div>
-                
-                  <div v-if="onError != null" class="w-full sm:w-auto mb-2 text-right">
-                    <p v-if="onError instanceof PaymentRequiredError" class="text-sm text-red-900 text-right mt-1">
-                      {{ t('vaultDetails.error.licenseViolated') }}
-                    </p>
-                    <p v-else class="inline-block text-sm text-red-700 bg-red-100 rounded px-3 py-1">
-                      {{ t('common.unexpectedError', [onError.message]) }}
-                    </p>
-                  </div>
 
-                  <div v-if="conflictingProcessExists && phase === 'start'" class="w-full sm:w-auto mb-2 text-right">
-                    <p class="inline-block text-sm text-red-700 bg-red-100 rounded px-3 py-1">
-                      {{ t('recoveryDialog.error.processAlreadyExists') }}
-                    </p>
-                  </div>
-                  <div class="bg-gray-50 rounded-b-lg px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                    <!-- START -->
-                    <template v-if="phase === 'start'">
-                      <button
-                        type="button"
-                        class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed"
-                        :disabled="!canStartRecovery"
-                        @click="startRecovery()"
-                      >
-                        {{ t('common.start') }}
-                      </button>
-                    </template>
+                    <div v-else-if="!recoveryProcess">
+                      <!-- every other phase should have a non-null recovery process -->
+                      Internal error: No recovery process available. <!-- no need to localize this. -->
+                    </div>
 
-                    <!-- APPROVE -->
-                    <template v-else-if="phase === 'approve'">
-                      <button
-                        v-if="canSeeApprove"
-                        type="button"
-                        class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm"
-                        @click="approveRecovery()"
-                      >
-                        {{ t('common.approve') }}
-                      </button>
-                    </template>
-
-                    <!-- COMPLETE -->
-                    <template v-else-if="phase === 'complete'">
-                      <button
-                        v-if="canSeeComplete"
-                        type="button"
-                        class="inline-flex w-full sm:w-auto justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:text-sm"
-                        @click="completeRecovery()"
-                      >
-                        {{ t('emergencyAccessProcessAbortDialog.complete') }}
-                      </button>
-                    </template>
-
-                    <button
-                      type="button"
-                      class="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:w-auto sm:text-sm"
-                      @click.stop="open = false" 
-                    >
-                      {{ t('common.close') }}
-                    </button>
-                    
-                    <template v-if="phase !== 'start' && isMeInProcessCouncil">
-                      <button
-                        hidden="true"
-                        type="button"
-                        class="mt-3 inline-flex w-full justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-600 sm:mt-0 sm:w-auto sm:text-sm"
-                        @click.stop="requestCancel()"
-                      >
-                        {{ t('common.cancel') }}
-                      </button>
-                      <p
-                        class="mt-2 text-sm text-red-600 cursor-pointer hover:underline sm:order-last sm:mr-auto"
-                        @click.stop="requestCancel()"
-                      >
-                        {{ t('emergencyAccessProcessAbortDialog.title') }}
-                      </p>
-                    </template>
+                    <div v-else>
+                      <div v-if="recoveryProcess.type === 'ASSIGN_OWNER'" >
+                        Ownership
+                        
+                        <div class="mt-4 space-y-1 text-sm text-gray-500">
+                          <span class="font-medium text-gray-700">Owners</span>
+                          <MultiUserSelectInputGroup
+                            :selected-users="selectedNewOwners"
+                            :on-search="noopSearch"
+                            :input-visible="false"
+                          />
+                          <!-- Members (non-owners) selector -->
+                          <div class="mt-4">
+                            <label class="block text-sm font-medium text-gray-700">
+                              Members
+                            </label>
+                            <MultiUserSelectInputGroup
+                              :selected-users="selectedNewmembers"
+                              :on-search="noopSearch"
+                              :input-visible="false"
+                            />
+                          </div>
+                          <!-- Removed Members display -->
+                          <div v-if="removedMembers.length > 0" class="mt-4">
+                            <span class="block text-sm font-medium text-gray-700">
+                              Removed
+                            </span>
+                            <MultiUserSelectInputGroup
+                              :selected-users="removedMembers"
+                              :on-search="noopSearch"
+                              :input-visible="false"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div v-if="recoveryProcess.type === 'COUNCIL_CHANGE'" >
+                        Council Change
+                        <div class="mt-4 space-y-1 text-sm text-gray-500">
+                          <div v-if="recoveryProcess.details.newCouncilMemberIds.length > 0">
+                            <span class="font-medium text-gray-700">{{ t('recoveryDialog.newCouncilMembers') }}:</span>
+                            <MultiUserSelectInputGroup
+                              :selected-users="newCouncilMembers"
+                              :on-search="noopSearch"
+                              :input-visible="false"
+                              :error-message="t('admin.emergencyAccess.councilMembers.errors.notEnoughMembers', [defaultMinMembers])"
+                              :has-error="hasCouncilMemberError"
+                            />
+                          </div>
+                          <div>
+                            <span class="font-medium text-gray-700">{{ t('recoveryDialog.requiredKeyShares') }}:</span>
+                            {{ recoveryProcess.details.newRequiredKeyShares }}
+                          </div>
+                          <label class="block text-sm font-medium text-gray-700 pt-4">
+                            {{ t('grantEmergencyAccessDialog.possibleEmergencyScenario') }}
+                          </label>
+                          <EmergencyScenarioVisualization
+                            :selected-users="newCouncilMembers"
+                            :grant-button-disabled="isGrantButtonDisabled"
+                            :required-key-shares="newRequiredKeyShares"
+                            :min-members="defaultMinMembers"
+                          />
+                          <div class="flex items-start gap-2 rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-900 mt-2">
+                            <span class="leading-5">
+                              <span class="text-gray-500">
+                                {{ t('admin.emergencyAccess.changeCouncil.newCouncilDesc', [newRequiredKeyShares]) }}as
+                              </span>
+                            </span>
+                            <SegmentRing
+                              :total="newRequiredKeyShares"
+                              :completed="0"
+                              :size="36"
+                              fill-color="#66cc68bb"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div v-if="phase === 'complete' && !didAddMyShare" class="text-sm pt-2">
+                        <span class="inline-flex items-center gap-2 rounded-md bg-green-50 ring-1 ring-green-300/70 px-2.5 py-1 text-xs font-medium text-green-800">
+                          <InformationCircleIcon class="h-4 w-4" aria-hidden="true" />
+                          You can finish this emergency access process by adding the last key share and completing it.
+                        </span>
+                      </div>
+                      <div v-else-if="(phase === 'complete' || phase === 'approve') && didAddMyShare" class="text-sm pt-2">
+                        <span class="inline-flex items-center gap-2 rounded-full bg-green-50 ring-1 ring-green-300/70 px-2.5 py-1 text-xs font-medium text-green-800">
+                          <CheckBadgeIcon class="h-4 w-4" aria-hidden="true" />
+                          Your key share has already been added.
+                        </span>
+                      </div>
+                    </div>
+                    <div v-if="phase !== 'start' && !isMeInProcessCouncil" class="text-sm pt-4">
+                      <span class="inline-flex items-center gap-2 rounded-md bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800 text-left">
+                        <ExclamationCircleIcon class="h-4 w-4" aria-hidden="true" />
+                        You are not part of the council for this process and cannot add a key share.
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </DialogPanel>
-          </TransitionChild>
-        </div>
+            
+              <div v-if="onError != null" class="w-full sm:w-auto mb-2 text-right">
+                <p v-if="onError instanceof PaymentRequiredError" class="inline-block text-sm text-red-900 bg-red-100 rounded px-3 py-1 mt-1">
+                  {{ t('vaultDetails.error.licenseViolated') }}
+                </p>
+                <p v-else class="inline-block text-sm text-red-700 bg-red-100 rounded px-3 py-1 mt-1">
+                  {{ t('common.unexpectedError', [onError.message]) }}
+                </p>
+              </div>
+
+              <div v-if="conflictingProcessExists && phase === 'start'" class="w-full sm:w-auto mb-2 text-right">
+                <p class="inline-block text-sm text-red-700 bg-red-100 rounded px-3 py-1">
+                  {{ t('recoveryDialog.error.processAlreadyExists') }}
+                </p>
+              </div>
+              <div class="bg-gray-50 rounded-b-lg px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <!-- START -->
+                <template v-if="phase === 'start'">
+                  <button
+                    type="button"
+                    class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed"
+                    :disabled="!canStartRecovery"
+                    @click="startRecovery()"
+                  >
+                    {{ t('common.start') }}
+                  </button>
+                </template>
+
+                <!-- APPROVE -->
+                <template v-else-if="phase === 'approve'">
+                  <button
+                    v-if="canSeeApprove"
+                    type="button"
+                    class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm"
+                    @click="approveRecovery()"
+                  >
+                    {{ t('common.approve') }}
+                  </button>
+                </template>
+
+                <!-- COMPLETE -->
+                <template v-else-if="phase === 'complete'">
+                  <button
+                    v-if="canSeeComplete"
+                    type="button"
+                    class="inline-flex w-full sm:w-auto justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:text-sm"
+                    @click="completeRecovery()"
+                  >
+                    {{ t('emergencyAccessProcessAbortDialog.complete') }}
+                  </button>
+                </template>
+
+                <!-- CLOSE -->
+                <button
+                  type="button"
+                  class="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:w-auto sm:text-sm"
+                  @click.stop="open = false" 
+                >
+                  {{ t('common.close') }}
+                </button>
+                
+                <!-- ABORT -->
+                <template v-if="phase !== 'start' && isMeInProcessCouncil">
+                  <p
+                    class="mt-2 text-sm text-red-600 cursor-pointer hover:underline sm:order-last sm:mr-auto"
+                    @click.stop="requestCancel()"
+                  >
+                    {{ t('emergencyAccessProcessAbortDialog.title') }}
+                  </p>
+                </template>
+              </div>
+            </div>
+          </DialogPanel>
+        </TransitionChild>
       </div>
     </Dialog>
   </TransitionRoot>
@@ -517,37 +399,38 @@ const isMeInProcessCouncil = computed(() =>
 );
 
 const canSeeApprove = computed(() =>
-  phase.value === 'approve' &&
-  isMeInProcessCouncil.value &&
-  !didAddMyShare.value
+  phase.value === 'approve' 
+  && isMeInProcessCouncil.value 
+  && !didAddMyShare.value
 );
 
 const canSeeComplete = computed(() =>
-  phase.value === 'complete' &&
-  isMeInProcessCouncil.value &&
-  ( !didAddMyShare.value || completedSegments >= requiredSegments )
+  phase.value === 'complete' 
+  && isMeInProcessCouncil.value 
+  && (!didAddMyShare.value || completedSegments.value >= requiredSegments.value)
 );
-
-const notInCouncilMsg = computed(() => {
-  if (phase.value === 'start') return t('recoveryDialog.error.notInCouncilToStart') ?? 'You are not in the current council for this vault.';
-  if (phase.value === 'approve') return t('recoveryDialog.error.notInCouncilToApprove') ?? 'You are not part of this process council.';
-  return t('recoveryDialog.error.notInCouncilToComplete') ?? 'You are not part of this process council.';
-});
 
 type PhaseType = 'start' | 'approve' | 'complete';
 const phase = computed<PhaseType>(() => {
   const p = props.recoveryProcess;
   if (!p) {
     return 'start';
-  } else if (completedSegments + 1 < p.requiredKeyShares) {
+  } else if (completedSegments.value + 1 < p.requiredKeyShares) {
     return 'approve';
   } else {
     return 'complete';
   }
 });
 
-const requiredSegments = props.recoveryProcess?.requiredKeyShares ?? props.vault.requiredEmergencyKeyShares;
-const completedSegments = Object.values(props.recoveryProcess?.recoveredKeyShares ?? {}).filter(ks => ks.recoveredKeyShare !== undefined).length;
+const requiredSegments = computed(() =>
+  props.recoveryProcess?.requiredKeyShares ?? props.vault.requiredEmergencyKeyShares
+);
+
+const completedSegments = computed(() =>
+  Object.values(props.recoveryProcess?.recoveredKeyShares ?? {}).filter(
+    ks => ks.recoveredKeyShare !== undefined
+  ).length
+);
 
 const didAddMyShare = computed(() => {
   return props.recoveryProcess?.recoveredKeyShares?.[props.me.id]?.recoveredKeyShare !== undefined;
@@ -557,18 +440,20 @@ const open = ref(false);
 const onError = ref<Error | null>();
 
 const hasCouncilMemberError = computed(() =>
-  selectedNewmembers.value instanceof FormValidationFailedError
+  processType.value === 'COUNCIL_CHANGE' &&
+  newCouncilMembers.value.length > 0 &&
+  newCouncilMembers.value.length < defaultMinMembers.value
 );
-class FormValidationFailedError extends Error {
-  constructor() {
-    super('The form is invalid.');
-  }
-}
+
+const existingProcesses = ref<RecoveryProcessDto[]>([]);
+
 const conflictingProcessExists = computed(() => {
   return existingProcesses.value.some(p => p.type === processType.value);
 });
 
-const existingProcesses = ref<RecoveryProcessDto[]>([]);
+function processConflicts(type: RecoveryProcessDto['type']) {
+  return existingProcesses.value.some(p => p.type === type);
+}
 
 // OWNERS
 const owners = ref<UserDto[]>([]);
@@ -603,38 +488,6 @@ function getCurrentCouncilMembers(vault: VaultDto): Item[] {
 }
 
 const authoritiesById = ref<Record<string, AuthorityDto>>({});
-function getCouncilMembersForProcess(proc: RecoveryProcessDto): Item[] {
-  return Object.keys(proc.recoveredKeyShares).map((id) => authoritiesById.value[id] ?? { id, name: id });
-}
-function getAvatarUrl(u: Item | UserDto | AuthorityDto | any): string | undefined {
-  return u?.pictureUrl || u?.avatarUrl || u?.imageUrl || undefined;
-}
-function recoveredMemberIdsForProcess(proc: RecoveryProcessDto): Set<string> {
-  const set = new Set<string>();
-  if (!proc?.recoveredKeyShares) return set;
-  for (const [id, ks] of Object.entries(proc.recoveredKeyShares)) {
-    if (ks?.recoveredKeyShare) set.add(id);
-  }
-  return set;
-}
-function getProcessByType(vault: VaultDto, type: RecoveryProcessDto['type']): RecoveryProcessDto | undefined {
-  return props.recoveryProcess;
-}
-function isMe(m: Item): boolean{
-  if (m.id == meId.value)
-    return true;
-  return false;
-}
-function isEmergencyKeyShareHolder(vault: VaultDto): boolean {
-  if (!vault || !meId.value) return false;
-  return vault.emergencyKeyShares[meId.value] !== undefined;
-}
-function getCouncilPreview(process: RecoveryProcessDto): { list: Item[]; extra: number } {
-  const all = getCouncilMembersForProcess(process!);
-  const max = 5;
-  const extra = Math.max(0, all.length - max);
-  return { list: all.slice(0, max), extra };
-}
 
 // --- helper: generic add/remove by id ---
 function addUnique(list: Ref<UserDto[]>, user: UserDto) {
@@ -722,8 +575,8 @@ const membersDifferFromExistingIds = computed(() => setAndArrayDifferById(existi
 // COUNCIL CHANGE
 const newRequiredKeyShares = ref<number>(props.vault.requiredEmergencyKeyShares);
 const newCouncilMembers = ref<ActivatedUser[]>([]);
-const addCouncilMember = function(this: Ref<UserDto[]>, user: UserDto) { addUnique(this as unknown as Ref<UserDto[]>, user); } .bind(newCouncilMembers as unknown as Ref<UserDto[]>);
-const removeCouncilMember = function(this: Ref<UserDto[]>, user: UserDto) { removeFrom(this as unknown as Ref<UserDto[]>, user); } .bind(newCouncilMembers as unknown as Ref<UserDto[]>);
+function addCouncilMember(user: UserDto) { addUnique(newCouncilMembers, user); }
+function removeCouncilMember(user: UserDto) { removeFrom(newCouncilMembers, user); }
 
 const isGrantButtonDisabled = computed(() => newCouncilMembers.value.length < newRequiredKeyShares.value);
 
@@ -814,16 +667,24 @@ async function handleRecoveryAborted() {
   }
 }
 
-function processConflicts(type: RecoveryProcessDto['type']) {
-  return existingProcesses.value.some(p => p.type === type);
-}
-
 const initialOwnerIds = ref<Set<string>>(new Set());
 const initialMemberIds = ref<Set<string>>(new Set());
 
 async function show() {
+  await loadExistingProcessesForVault();
+  initProcessType();
+  await initOwnersAndMembers();
+  await loadAuthoritiesForCouncilAndProcesses();
+  await initProcessSpecificState();
+
+  open.value = true;
+}
+
+async function loadExistingProcessesForVault() {
   existingProcesses.value = await backend.emergencyAccess.findProcessesForVault(props.vault.id);
-  
+}
+
+function initProcessType() {
   if (props.recoveryProcess) {
     processType.value = props.recoveryProcess.type;
   } else if (props.startType) {
@@ -833,18 +694,20 @@ async function show() {
     const firstFree = allTypes.find(t => !processConflicts(t));
     processType.value = firstFree ?? 'ASSIGN_OWNER';
   }
+}
 
+async function initOwnersAndMembers() {
   try {
     const memberList = await backend.vaults.getMembers(props.vault.id);
     const initialOwners = memberList.filter(m => m.type === 'USER' && m.role === 'OWNER') as UserDto[];
     const initialMembers = memberList.filter(m => m.type === 'USER' && m.role === 'MEMBER') as UserDto[];
 
     existingOwners.value = initialOwners;
-    owners.value = initialOwners;
+    owners.value = [...initialOwners];
     existingOwnerIds.value = new Set(initialOwners.map(u => u.id));
 
     existingMembers.value = initialMembers;
-    members.value = initialMembers;
+    members.value = [...initialMembers];
     existingMemberIds.value = new Set(initialMembers.map(u => u.id));
 
     initialOwnerIds.value = new Set(initialOwners.map(u => u.id));
@@ -852,11 +715,12 @@ async function show() {
   } catch (e) {
     console.error('Loading existing owners/members failed', e);
   }
+}
 
-  const memberIdsOfAllRunningProcesses = Object
-    .values(existingProcesses.value)
-    .flat()
-    .flatMap(p => Object.keys(p.recoveredKeyShares));
+async function loadAuthoritiesForCouncilAndProcesses() {
+  const memberIdsOfAllRunningProcesses = existingProcesses.value.flatMap(p =>
+    Object.keys(p.recoveredKeyShares ?? {})
+  );
 
   const councilIds = Object.keys(props.vault.emergencyKeyShares ?? {});
   const allIds = Array.from(new Set([...memberIdsOfAllRunningProcesses, ...councilIds]));
@@ -867,7 +731,9 @@ async function show() {
   } else {
     authoritiesById.value = {};
   }
+}
 
+async function initProcessSpecificState() {
   if (props.recoveryProcess?.type === 'COUNCIL_CHANGE') {
     const users = await backend.authorities.listSome(props.recoveryProcess.details.newCouncilMemberIds);
     const sorted = users
@@ -882,33 +748,38 @@ async function show() {
   } else if (props.recoveryProcess?.type === 'ASSIGN_OWNER') {
     const newOwners = await backend.authorities.listSome(props.recoveryProcess.details.newOwnerIds);
     for (const u of newOwners) {
-      if (!owners.value.find(x => x.id === u.id)) 
+      if (!owners.value.find(x => x.id === u.id)) {
         owners.value.push(u as UserDto);
+      }
     }
     const newMembers = await backend.authorities.listSome(props.recoveryProcess.details.newMemberIds);
     for (const u of newMembers) {
-      if (!members.value.find(x => x.id === u.id)) 
+      if (!members.value.find(x => x.id === u.id)) {
         members.value.push(u as UserDto);
+      }
     }
   }
-
-  open.value = true;
 }
 
 const phaseTitle = computed(() => {
   switch (phase.value) {
     case 'start': {
-      if (props.startType === 'COUNCIL_CHANGE')
-        return 'Change Council';
-      return 'Change Vault Permissons';
+      if (processType.value === 'COUNCIL_CHANGE') {
+        return 'Change council';
+      }
+      return 'Change vault permissions';
     }
     case 'approve': {
-      if (!isMeInProcessCouncil.value)
+      if (!isMeInProcessCouncil.value) {
         return 'Process details';
+      }
       return didAddMyShare.value ? 'Approved' : t('recoveryDialog.approveTitle');
-    } 
-    case 'complete': return !didAddMyShare.value ?  t('recoveryDialog.completeTitle') : 'Approved';
-    default: return '';
+    }
+    case 'complete': {
+      return !didAddMyShare.value ? t('recoveryDialog.completeTitle') : 'Approved';
+    }
+    default:
+      return '';
   }
 });
 
@@ -1145,20 +1016,16 @@ const defaultEmergencyCouncilMembers = ref<ActivatedUser[]>([]);
 const defaultRequiredEmergencyKeyShares = ref<number>(0);
 const defaultMinMembers = ref<number>(0);
 const allowChangingDefaults = ref<boolean>(false);
-const initialEmergencyCouncilMembers = ref<ActivatedUser[]>([]);
+
 async function loadDefaultSettings() {
   try {
     const settings = await backend.settings.get();
-    defaultEmergencyCouncilMembers.value = (await backend.authorities.listSome(settings.emergencyCouncilMemberIds))
-      .filter(a => a.type === 'USER')
-      .filter(a => didCompleteSetup(a)); // only include users with a public key
     const authorities = await backend.authorities.listSome(settings.emergencyCouncilMemberIds);
     const sortedActivatedUsers = authorities
       .filter((a): a is ActivatedUser => a.type === 'USER' && didCompleteSetup(a))
       .sort((a, b) => a.name.localeCompare(b.name));
 
     defaultEmergencyCouncilMembers.value = [...sortedActivatedUsers];
-    initialEmergencyCouncilMembers.value = [...sortedActivatedUsers];
     allowChangingDefaults.value = settings.allowChoosingEmergencyCouncil;
     defaultRequiredEmergencyKeyShares.value = settings.defaultRequiredEmergencyKeyShares;
     defaultMinMembers.value = settings.defaultMinMembers;
