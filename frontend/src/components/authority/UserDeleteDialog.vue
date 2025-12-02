@@ -57,7 +57,6 @@ import backend, { UserDto } from '../../common/backend';
 const { t } = useI18n({ useScope: 'global' });
   
 const open = ref(false);
-  
 const onDeleteUserError = ref<Error | null>();
   
 const props = defineProps<{
@@ -79,9 +78,11 @@ function show() {
   
 async function deleteUser() {
   onDeleteUserError.value = null;
+
   try {
-    const userDto = await backend.users.removeUser(props.user.id);
-    emit('delete', userDto);
+    await backend.users.removeUser(props.user.id);
+
+    emit('delete', props.user);
     open.value = false;
   } catch (error) {
     console.error('Deleting user failed.', error);

@@ -81,6 +81,7 @@ export type UserDto = {
   ecdsaPublicKey?: string;
   privateKeys?: string;
   setupCode?: string;
+  createdTimestamp?: number;
 }
 
 export type GroupDto = {
@@ -100,6 +101,23 @@ export type MemberDto = AuthorityDto & {
 export type TrustDto = {
   trustedUserId: string,
   signatureChain: string[]
+}
+
+export type CreateUserDto = {
+  username: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  password: string;
+  pictureUrl?: string;
+  groupIds?: string[];
+}
+
+export type UpdateUserDto = {
+  firstName?: string;
+  lastName?: string;
+  password?: string;
+  pictureUrl?: string;
 }
 
 export type BillingDto = {
@@ -290,6 +308,18 @@ class UserService {
 
   public async listAll(): Promise<UserDto[]> {
     return axiosAuth.get<UserDto[]>('/users/').then(response => response.data.map(AuthorityService.fillInMissingPicture));
+  }
+
+  public async createUser(dto: CreateUserDto): Promise<UserDto> {
+    return axiosAuth.post<UserDto>('/users/', dto).then(response => AuthorityService.fillInMissingPicture(response.data));
+  }
+
+  public async getUser(userId: string): Promise<UserDto> {
+    return axiosAuth.get<UserDto>(`/users/${userId}`).then(response => AuthorityService.fillInMissingPicture(response.data));
+  }
+
+  public async updateUser(userId: string, dto: UpdateUserDto): Promise<UserDto> {
+    return axiosAuth.put<UserDto>(`/users/${userId}`, dto).then(response => AuthorityService.fillInMissingPicture(response.data));
   }
 }
 

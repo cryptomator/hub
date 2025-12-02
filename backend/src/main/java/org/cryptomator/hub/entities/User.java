@@ -41,6 +41,21 @@ import java.util.stream.Stream;
 				INNER JOIN EffectiveGroupMembership egm	ON u.id = egm.id.memberId
 				WHERE egm.id.groupId = :groupId
 		""")
+@NamedQuery(name = "User.countGroupsForUser", query = """
+				SELECT count(DISTINCT egm.id.groupId)
+				FROM EffectiveGroupMembership egm
+				WHERE egm.id.memberId = :userId
+		""")
+@NamedQuery(name = "User.countVaultsForUser", query = """
+				SELECT count(DISTINCT eva.id.vaultId)
+				FROM EffectiveVaultAccess eva
+				WHERE eva.id.authorityId = :userId
+		""")
+@NamedQuery(name = "User.countDevicesForUser", query = """
+				SELECT count(d)
+				FROM Device d
+				WHERE d.owner.id = :userId
+		""")
 public class User extends Authority {
 
 	@Column(name = "picture_url")
@@ -185,6 +200,27 @@ public class User extends Authority {
 
 		public Stream<User> getEffectiveGroupUsers(String groupdId) {
 			return find("#User.getEffectiveGroupUsers", Parameters.with("groupId", groupdId)).stream();
+		}
+
+		public long countGroupsForUser(String userId) {
+			return getEntityManager()
+					.createNamedQuery("User.countGroupsForUser", Long.class)
+					.setParameter("userId", userId)
+					.getSingleResult();
+		}
+
+		public long countVaultsForUser(String userId) {
+			return getEntityManager()
+					.createNamedQuery("User.countVaultsForUser", Long.class)
+					.setParameter("userId", userId)
+					.getSingleResult();
+		}
+
+		public long countDevicesForUser(String userId) {
+			return getEntityManager()
+					.createNamedQuery("User.countDevicesForUser", Long.class)
+					.setParameter("userId", userId)
+					.getSingleResult();
 		}
 	}
 }

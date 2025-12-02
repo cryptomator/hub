@@ -75,6 +75,7 @@ import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
 import { onMounted, ref, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
+import backend from '../../common/backend';
 import BreadcrumbNav from '../BreadcrumbNav.vue';
 import UserDeleteDialog from './UserDeleteDialog.vue';
 import UserDeviceList from './UserDeviceList.vue';
@@ -211,8 +212,21 @@ function handleGroupsSaved(newGroups: Group[]) {
 
 onMounted(async () => {
   try {
-    await new Promise((r) => setTimeout(r, 300));
-    // TODO: fetch real data here
+    const fetchedUser = await backend.users.getUser(props.id);
+
+    user.value.username = fetchedUser.name;
+    user.value.email = fetchedUser.email;
+    user.value.userPicture = fetchedUser.pictureUrl;
+
+    const nameParts = fetchedUser.name.split(' ');
+    user.value.firstName = nameParts[0] || '';
+    user.value.lastName = nameParts.slice(1).join(' ') || '';
+
+    if (fetchedUser.createdTimestamp) {
+      user.value.creationTime = new Date(fetchedUser.createdTimestamp).toISOString();
+    }
+  } catch (error) {
+    console.error('Failed to fetch user:', error);
   } finally {
     loading.value = false;
   }

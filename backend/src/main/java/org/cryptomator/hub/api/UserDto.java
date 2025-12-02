@@ -127,4 +127,33 @@ public final class UserDto extends AuthorityDto {
 				null,
 				null);
 	}
+
+	public static UserDtoWithCounts justPublicInfoWithCounts(User user, long groupsCount, long vaultsCount, long devicesCount) {
+		return new UserDtoWithCounts(
+				user.getId(),
+				user.getName(),
+				user.getPictureUrl(),
+				user.getEmail(),
+				user.getLanguage(),
+				user.getEcdhPublicKey(),
+				user.getEcdsaPublicKey(),
+				devicesCount,
+				groupsCount,
+				vaultsCount
+		);
+	}
+
+	public record UserDtoWithCounts(
+			@JsonProperty("id") String id,
+			@JsonProperty("name") String name,
+			@JsonProperty("pictureUrl") String pictureUrl,
+			@JsonProperty("email") String email,
+			@JsonProperty("language") String language,
+			@JsonProperty("ecdhPublicKey") String ecdhPublicKey,
+			@JsonProperty("ecdsaPublicKey") String ecdsaPublicKey,
+			@JsonProperty("devicesCount") long devicesCount,
+			@JsonProperty("groupsCount") long groupsCount,
+			@JsonProperty("vaultsCount") long vaultsCount
+	) {
+	}
 }

@@ -15,7 +15,7 @@
       </div>
       
       <!-- Mobile Card Layout (visible on small screens) -->
-      <div class="block md:hidden space-y-3">
+      <div v-if="sortedGroups.length > 0" class="block md:hidden space-y-3">
         <div v-for="group in sortedGroups" :key="group.id" class="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer" @click="router.push(`/app/groups/${group.id}`)">
           <div class="px-4 py-4">
             <div class="flex items-start justify-between mb-4">
@@ -41,14 +41,14 @@
                 </transition>
               </Menu>
             </div>
-            
+
             <!-- Stats section -->
             <div class="mb-3 ml-13 text-xs text-gray-600">
               <span>{{ t('groupList.members.count') }}: {{ group.members?.length ?? 0 }}</span>
               <span class="mx-2">|</span>
               <span>{{ t('groupList.vaults.count') }}: {{ group.vaults?.length ?? 0 }}</span>
             </div>
-            
+
             <!-- Creation date -->
             <div class="ml-13 text-xs text-gray-500">{{ t('groupList.group.created') }}: {{ d(new Date(group.creationTime), 'short') }}</div>
           </div>
@@ -56,7 +56,7 @@
       </div>
 
       <!-- Desktop Table Layout (visible on medium screens and up) -->
-      <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8 hidden md:block">
+      <div v-if="sortedGroups.length > 0" class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8 hidden md:block">
         <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
           <div class="shadow-sm overflow-hidden border-b border-gray-200 sm:rounded-lg">
             <table class="min-w-full divide-y divide-gray-200" aria-describedby="groupListTitle">
@@ -78,7 +78,7 @@
                         <img :src="group.groupPicture" :alt="t('groupList.profileImage')" class="w-10 h-10 rounded-full object-cover border border-gray-300"/>
                         <button type="button" class="truncate block hover:underline" :title="group.name" @click="router.push(`/app/groups/${group.id}`)"> {{ group.name }} </button>
                       </div>
-                    </td>                
+                    </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ group.members?.length ?? 0 }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ group.vaults?.length ?? 0 }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ d(new Date(group.creationTime), 'long') }}</td>
@@ -91,6 +91,24 @@
             </table>
           </div>
         </div>
+      </div>
+
+      <!-- Empty State when no groups exist -->
+      <div v-else-if="query === '' && sortedGroups.length == 0" class="mt-3 text-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+          <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-gray-900">{{ t('groupList.empty.title') }}</h3>
+        <p class="mt-1 text-sm text-gray-500">{{ t('groupList.empty.description') }}</p>
+      </div>
+
+      <!-- Empty State for Search Results -->
+      <div v-else-if="query !== '' && sortedGroups.length == 0" class="mt-3 text-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+          <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 15.75l-2.489-2.489m0 0a3.375 3.375 0 10-4.773-4.773 3.375 3.375 0 004.774 4.774zM21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-gray-900">{{ t('groupList.filter.result.empty.title') }}</h3>
+        <p class="mt-1 text-sm text-gray-500">{{ t('groupList.filter.result.empty.description') }}</p>
       </div>
     </div>
   </div>

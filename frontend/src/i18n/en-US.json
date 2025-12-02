@@ -435,5 +435,11 @@
   "vaultList.filter.result.empty.description": "No results using that search term or filter.",
   "vaultList.search.placeholder": "Search…",
   "vaultList.badge.owner": "Owner",
-  "vaultList.badge.archived": "Archived"
+  "vaultList.badge.archived": "Archived",
+  "userList.filter.result.empty.title": "No users",
+  "userList.filter.result.empty.description": "No results using that search term.",
+  "groupList.empty.title": "No groups",
+  "groupList.empty.description": "You don't own any groups and aren't a member of any.",
+  "groupList.filter.result.empty.title": "No groups",
+  "groupList.filter.result.empty.description": "No results using that search term."
 }

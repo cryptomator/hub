@@ -8,6 +8,8 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.POST;
@@ -28,6 +30,7 @@ import org.cryptomator.hub.entities.WotEntry;
 import org.cryptomator.hub.entities.events.AuditEvent;
 import org.cryptomator.hub.entities.events.EventLogger;
 import org.cryptomator.hub.entities.events.VaultKeyRetrievedEvent;
+import org.cryptomator.hub.keycloak.KeycloakAdminService;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
@@ -67,6 +70,9 @@ public class UsersResource {
 
 	@Inject
 	JsonWebToken jwt;
+
+	@Inject
+	KeycloakAdminService keycloakAdminService;
 
 	@PUT
 	@Path("/me")
@@ -229,9 +235,17 @@ public class UsersResource {
 	@Path("/")
 	@RolesAllowed("user")
 	@Produces(MediaType.APPLICATION_JSON)
-	@Operation(summary = "list all users")
-	public List<UserDto> getAll() {
-		return userRepo.findAll().stream().map(UserDto::justPublicInfo).toList();
+	@Transactional
+	@Operation(summary = "list all users with counts")
+	public List<UserDto.UserDtoWithCounts> getAll() {
+		return userRepo.findAll().stream()
+				.map(user -> UserDto.justPublicInfoWithCounts(
+						user,
+						userRepo.countGroupsForUser(user.getId()),
+						userRepo.countVaultsForUser(user.getId()),
+						userRepo.countDevicesForUser(user.getId())
+				))
+				.toList();
 	}
 
 	@PUT
@@ -288,6 +302,159 @@ public class UsersResource {
 
 		public static TrustedUserDto fromEntity(EffectiveWot entity) {
 			return new TrustedUserDto(entity.getId().getTrustedUserId(), List.of(entity.getSignatureChain()));
+		}
+	}
+
+	@POST
+	@Path("/")
+	@RolesAllowed("user")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Transactional
+	@Operation(summary = "create a new user in Keycloak")
+	@APIResponse(responseCode = "201", description = "user created")
+	@APIResponse(responseCode = "400", description = "invalid input")
+	@APIResponse(responseCode = "409", description = "user already exists")
+	public Response createUser(@Valid @NotNull CreateUserDto dto) {
+		var userRepresentation = keycloakAdminService.createUser(
+				dto.username(),
+				dto.email(),
+				dto.firstName(),
+				dto.lastName(),
+				dto.password(),
+				dto.pictureUrl(),
+				dto.groupIds()
+		);
+
+		User user = userRepo.findById(userRepresentation.getId());
+		if (user == null) {
+			throw new RuntimeException("User was created in Keycloak but not found in database after sync");
+		}
+
+		return Response.created(URI.create("./" + user.getId()))
+				.entity(UserDto.justPublicInfo(user))
+				.build();
+	}
+
+	@GET
+	@Path("/{id}")
+	@RolesAllowed("user")
+	@Produces(MediaType.APPLICATION_JSON)
+	@NoCache
+	@Operation(summary = "get a specific user")
+	@APIResponse(responseCode = "200", description = "user found")
+	@APIResponse(responseCode = "404", description = "user not found")
+	public UserDtoWithTimestamp getUser(@PathParam("id") String userId) {
+		User user = userRepo.findById(userId);
+		if (user == null) {
+			throw new NotFoundException("User not found: " + userId);
+		}
+
+		Long createdTimestamp = null;
+		try {
+			var keycloakUser = keycloakAdminService.getUser(userId);
+			createdTimestamp = keycloakUser.getCreatedTimestamp();
+		} catch (Exception e) {
+			// continue without timestamp
+		}
+
+		return UserDtoWithTimestamp.from(UserDto.justPublicInfo(user), createdTimestamp);
+	}
+
+	@PUT
+	@Path("/{id}")
+	@RolesAllowed("user")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Transactional
+	@Operation(summary = "update a user in Keycloak")
+	@APIResponse(responseCode = "200", description = "user updated")
+	@APIResponse(responseCode = "403", description = "user has federated identity and cannot be modified")
+	@APIResponse(responseCode = "404", description = "user not found")
+	public UserDto updateUser(@PathParam("id") String userId, @Valid @NotNull UpdateUserDto dto) {
+		try {
+			keycloakAdminService.updateUser(
+					userId,
+					dto.firstName(),
+					dto.lastName(),
+					dto.password(),
+					dto.pictureUrl()
+			);
+
+			User user = userRepo.findById(userId);
+			if (user == null) {
+				throw new NotFoundException("User not found after update: " + userId);
+			}
+
+			return UserDto.justPublicInfo(user);
+		} catch (ForbiddenException | NotFoundException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to update user", e);
+		}
+	}
+
+	@DELETE
+	@Path("/{id}")
+	@RolesAllowed("user")
+	@Transactional
+	@Operation(summary = "delete a user from Keycloak")
+	@APIResponse(responseCode = "204", description = "user deleted")
+	@APIResponse(responseCode = "403", description = "user has federated identity and cannot be deleted")
+	@APIResponse(responseCode = "404", description = "user not found")
+	public Response deleteUser(@PathParam("id") String userId) {
+		try {
+			keycloakAdminService.deleteUser(userId);
+			return Response.noContent().build();
+		} catch (ForbiddenException | NotFoundException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to delete user", e);
+		}
+	}
+
+	public record CreateUserDto(
+			@JsonProperty("username") @NotNull String username,
+			@JsonProperty("email") @NotNull String email,
+			@JsonProperty("firstName") @NotNull String firstName,
+			@JsonProperty("lastName") @NotNull String lastName,
+			@JsonProperty("password") @NotNull String password,
+			@JsonProperty("pictureUrl") String pictureUrl,
+			@JsonProperty("groupIds") Set<String> groupIds
+	) {
+	}
+
+	public record UpdateUserDto(
+			@JsonProperty("firstName") String firstName,
+			@JsonProperty("lastName") String lastName,
+			@JsonProperty("password") String password,
+			@JsonProperty("pictureUrl") String pictureUrl
+	) {
+	}
+
+	public record UserDtoWithTimestamp(
+			@JsonProperty("id") String id,
+			@JsonProperty("type") AuthorityDto.Type type,
+			@JsonProperty("name") String name,
+			@JsonProperty("pictureUrl") String pictureUrl,
+			@JsonProperty("email") String email,
+			@JsonProperty("language") String language,
+			@JsonProperty("ecdhPublicKey") String ecdhPublicKey,
+			@JsonProperty("ecdsaPublicKey") String ecdsaPublicKey,
+			@JsonProperty("createdTimestamp") Long createdTimestamp
+	) {
+		public static UserDtoWithTimestamp from(UserDto userDto, Long createdTimestamp) {
+			return new UserDtoWithTimestamp(
+					userDto.id,
+					userDto.type,
+					userDto.name,
+					userDto.pictureUrl,
+					userDto.getEmail(),
+					userDto.getLanguage(),
+					userDto.getEcdhPublicKey(),
+					userDto.getEcdsaPublicKey(),
+					createdTimestamp
+			);
 		}
 	}
 }

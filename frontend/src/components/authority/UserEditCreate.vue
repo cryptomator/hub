@@ -22,6 +22,7 @@
           <div class="flex flex-col items-center gap-4 mb-8">
             <div class="relative w-32 h-32">
               <img v-if="isValidImageUrl" :src="pictureUrl" class="w-full h-full rounded-full object-cover border border-gray-300"/>
+              <img v-else-if="previewJdenticon" :src="previewJdenticon" class="w-full h-full rounded-full object-cover border border-gray-300"/>
               <div v-else class="w-full h-full rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
                 <UserIcon class="w-12 h-12" />
               </div>
@@ -228,11 +229,14 @@
 <script setup lang="ts">
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue';
 import { CheckIcon, ChevronUpDownIcon, EyeIcon, EyeSlashIcon, ExclamationTriangleIcon, InformationCircleIcon, TrashIcon, UserIcon } from '@heroicons/vue/24/outline';
+import { toSvg } from 'jdenticon';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
+import { base64 } from 'rfc4648';
+import backend from '../../common/backend';
 import { FormValidator } from '../../common/formvalidator';
-import { debounce } from '../../common/util';
+import { debounce, UTF8 } from '../../common/util';
 import BreadcrumbNav from '../BreadcrumbNav.vue';
 
 interface UserData {
@@ -271,8 +275,7 @@ const { t } = useI18n({ useScope: 'global' });
 const route = useRoute();
 const router = useRouter();
 
-// Determine if we're in edit or create mode
-const userId = route.params.id as string;
+let userId = route.params.id as string;
 const isEditMode = computed(() => !!userId);
 
 const loading = ref(true);
@@ -299,26 +302,47 @@ const passwordInputType = ref<'password' | 'text'>('password');
 const passwordStrength = ref<'weak' | 'medium' | 'strong' | ''>('');
 const pictureUrl = ref<string>('');
 const isValidImageUrl = ref<boolean>(false);
+const previewJdenticon = ref<string>('');
 
-watch(pictureUrl, 
+const generateJdenticon = (seed: string): string => {
+  if (!seed) return '';
+  const svg = toSvg(seed, 128);
+  const bytes = UTF8.encode(svg);
+  return `data:image/svg+xml;base64,${base64.stringify(bytes)}`;
+};
+
+watch(pictureUrl,
   async (newUrl) => {
     isValidImageUrl.value = await FormValidator.validateImageUrl(newUrl);
   },
   { immediate: true }
 );
 
-onMounted(() => {
+watch([pictureUrl, isValidImageUrl, () => userId],
+  ([newPictureUrl, newIsValidImageUrl, newUserId]) => {
+    const hasValidPicture = newPictureUrl && newIsValidImageUrl;
+    const shouldShowJdenticon = !hasValidPicture && newUserId;
+
+    previewJdenticon.value = shouldShowJdenticon ? generateJdenticon(newUserId) : '';
+  },
+  { immediate: true }
+);
+
+onMounted(async () => {
   if (isEditMode.value) {
-    // TODO: Replace with actual API call to fetch user data
-    // This is temporary mock data for development purposes
-    setTimeout(() => {
-      firstName.value = 'Max';
-      lastName.value = 'Mustermann';
-      username.value = 'mustermannmax';
-      email.value = 'max.mustermann@mustermail.de';
-      pictureUrl.value = 'https://i.pravatar.cc/150?u=placeholder';
-      selectedRoles.value = ['Admin']; 
-      loading.value = false;
+    try {
+      const fetchedUser = await backend.users.getUser(userId);
+
+      const nameParts = fetchedUser.name.split(' ');
+      firstName.value = nameParts[0] || '';
+      lastName.value = nameParts.slice(1).join(' ') || '';
+
+      username.value = fetchedUser.name;
+      email.value = fetchedUser.email;
+      pictureUrl.value = fetchedUser.pictureUrl || '';
+
+      selectedRoles.value = [];
+
       initialUserData.value = {
         firstName: firstName.value,
         lastName: lastName.value,
@@ -327,7 +351,11 @@ onMounted(() => {
         roles: selectedRoles.value,
         previewUrl: pictureUrl.value
       };
-    }, 300);
+    } catch (error) {
+      console.error('Failed to fetch user data:', error);
+    } finally {
+      loading.value = false;
+    }
   } else {
     firstName.value = '';
     lastName.value = '';
@@ -399,13 +427,13 @@ function removePicture() {
   isValidImageUrl.value = false;
 }
 
-function onSubmit() {
+async function onSubmit() {
   if (!validateForm()) {
     return;
   }
-  
-  processing.value = true;     
-  
+
+  processing.value = true;
+
   firstName.value = firstName.value.trim();
   lastName.value = lastName.value.trim();
   username.value = username.value.trim();
@@ -420,32 +448,42 @@ function onSubmit() {
     roles: selectedRoles.value,
     previewUrl: pictureUrl.value
   };
-  
+
   try {
-    // Here would be the actual API call to save the user
-    // Different API call depending on edit vs create mode
     if (isEditMode.value) {
-      console.log('Updating user:', userId);
+      await backend.users.updateUser(userId, {
+        firstName: firstName.value || undefined,
+        lastName: lastName.value || undefined,
+        password: password.value || undefined,
+        pictureUrl: pictureUrl.value || undefined
+      });
     } else {
-      console.log('Creating new user');
+      const createdUser = await backend.users.createUser({
+        username: username.value,
+        email: email.value,
+        firstName: firstName.value,
+        lastName: lastName.value,
+        password: password.value,
+        pictureUrl: pictureUrl.value || undefined,
+        groupIds: undefined
+      });
+
+      userId = createdUser.id;
     }
-    
+
     userSaved.value = true;
-    debouncedUserSaved();
-    
-    // Redirect after successful operation with a slight delay
+    processing.value = false;
+
+    const redirectDelay = 800;
     setTimeout(() => {
       if (isEditMode.value) {
-        // For edit mode, redirect to user details
         router.push(`/app/users/${userId}`);
       } else {
-        // For create mode, redirect to user list
         router.push('/app/users');
       }
-    }, 1000);
+    }, redirectDelay);
   } catch (error) {
     console.error('Failed to save user:', error);
-  } finally {
     processing.value = false;
   }
 }
