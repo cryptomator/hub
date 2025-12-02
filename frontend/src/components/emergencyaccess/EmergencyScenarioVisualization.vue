@@ -93,7 +93,6 @@ const { t } = useI18n({ useScope: 'global' });
 const props = defineProps<{
   selectedUsers: T[];
   requiredKeyShares: number;
-  minMembers: number
 }>();
 
 let timeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -101,7 +100,7 @@ const loadingCouncilSelection = ref(true);
 const randomCouncilSelection = ref<UserDto[]>([]);
 const randomSelectionInterval = ref<ReturnType<typeof setInterval> | null>(null);
 
-const { selectedUsers, requiredKeyShares, minMembers } = toRefs(props);
+const { selectedUsers, requiredKeyShares } = toRefs(props);
 
 const pillContainer = ref<HTMLElement | null>(null);
 const containerWidth = ref(0);
@@ -163,7 +162,7 @@ function stopRandomCouncilInterval() {
   }
 }
 const isGrantButtonDisabled = computed(() => {
-  return selectedUsers.value.length < requiredKeyShares.value || selectedUsers.value.length < minMembers.value;
+  return selectedUsers.value.length < requiredKeyShares.value;
 });
 
 watch([isGrantButtonDisabled], () => {
