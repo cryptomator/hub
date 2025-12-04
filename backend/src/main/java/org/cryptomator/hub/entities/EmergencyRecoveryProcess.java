@@ -39,7 +39,7 @@ import java.util.stream.Stream;
 public class EmergencyRecoveryProcess {
 
 	public enum Type {
-		ASSIGN_OWNER,
+		CHANGE_PERMISSIONS,
 		COUNCIL_CHANGE
 	}
 

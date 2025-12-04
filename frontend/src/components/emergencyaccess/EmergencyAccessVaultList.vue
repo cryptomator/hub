@@ -160,7 +160,7 @@
                 >
                   <template v-for="proc in getProcesses(vault.id)" :key="proc.id">
                     <EmergencyProcessButton
-                      v-if="me && isUserInProcess(proc) && proc.type === 'ASSIGN_OWNER'"
+                      v-if="me && isUserInProcess(proc) && proc.type === 'CHANGE_PERMISSIONS'"
                       :label="t('emergencyAccessVaultList.assignOwner')"
                       :approval-label="getApprovalLabel(proc)"
                       :disabled="isBroken(vault)"
@@ -252,7 +252,7 @@ export type Item = {
   memberSize?: number;
 }
 
-const SUPPORTED_PROCESS_TYPES = ['ASSIGN_OWNER', 'COUNCIL_CHANGE'] as const;
+const SUPPORTED_PROCESS_TYPES = ['CHANGE_PERMISSIONS', 'COUNCIL_CHANGE'] as const;
 
 const { t } = useI18n({ useScope: 'global' });
 const me = ref<UserDto>();
@@ -363,7 +363,7 @@ function getProcessByType(vault: VaultDto, type: RecoveryProcessDto['type']): Re
 }
 
 function getTypeLabel(vault: VaultDto, type: RecoveryProcessDto['type']) {
-  return type === 'ASSIGN_OWNER'
+  return type === 'CHANGE_PERMISSIONS'
     ? t('emergencyAccessVaultList.assignOwner')
     : ( allowChoosingEmergencyCouncil.value ? t('emergencyAccessVaultList.changeCouncil') : 'Reset Council');
 }

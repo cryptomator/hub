@@ -53,7 +53,7 @@
                             <span class="leading-5">
                               <span class="text-gray-500">
                                 {{ 
-                                  startType == 'ASSIGN_OWNER' 
+                                  startType == 'CHANGE_PERMISSIONS' 
                                     ? t('admin.emergencyAccess.assignOwner.startDesc', [getCurrentCouncilMembers(vault).length, vault.requiredEmergencyKeyShares]) 
                                     : t('admin.emergencyAccess.changeCouncil.startDesc', [vault.requiredEmergencyKeyShares]) 
                                 }}
@@ -68,7 +68,7 @@
                           </div>
                         </div>
                       </div>
-                      <div v-if="processType === 'ASSIGN_OWNER'">
+                      <div v-if="processType === 'CHANGE_PERMISSIONS'">
                         <label class="block text-sm font-medium text-gray-700">
                           Select user with role owner
                         </label>
@@ -165,7 +165,7 @@
                     </div>
 
                     <div v-else>
-                      <div v-if="recoveryProcess.type === 'ASSIGN_OWNER'" >
+                      <div v-if="recoveryProcess.type === 'CHANGE_PERMISSIONS'" >
                         Ownership
                         
                         <div class="mt-4 space-y-1 text-sm text-gray-500">
@@ -385,7 +385,7 @@ const emit = defineEmits<{
 defineExpose({ show });
 
 const processType = ref<RecoveryProcessDto['type']>(
-  props.recoveryProcess?.type ?? props.startType ?? 'ASSIGN_OWNER'
+  props.recoveryProcess?.type ?? props.startType ?? 'CHANGE_PERMISSIONS'
 );
 
 const meId = computed(() => props.me.id);
@@ -522,12 +522,12 @@ const removedMembers = computed<UserDto[]>(() => {
   ]);
 
   const newOwnerIdList =
-    props.recoveryProcess?.type === 'ASSIGN_OWNER'
+    props.recoveryProcess?.type === 'CHANGE_PERMISSIONS'
       ? props.recoveryProcess.details.newOwnerIds ?? []
       : newOwnerIds.value;
 
   const newMemberIdList =
-    props.recoveryProcess?.type === 'ASSIGN_OWNER'
+    props.recoveryProcess?.type === 'CHANGE_PERMISSIONS'
       ? props.recoveryProcess.details.newMemberIds ?? []
       : newMemberIds.value;
 
@@ -546,7 +546,7 @@ const removedMembers = computed<UserDto[]>(() => {
 });
 
 const selectedNewOwners = computed<UserDto[]>(() => {
-  if (props.recoveryProcess?.type === 'ASSIGN_OWNER') {
+  if (props.recoveryProcess?.type === 'CHANGE_PERMISSIONS') {
     const ids = new Set(props.recoveryProcess.details.newOwnerIds);
     return owners.value.filter(u => ids.has(u.id));
   }
@@ -555,7 +555,7 @@ const selectedNewOwners = computed<UserDto[]>(() => {
 });
 
 const selectedNewmembers = computed<UserDto[]>(() => {
-  if (props.recoveryProcess?.type === 'ASSIGN_OWNER') {
+  if (props.recoveryProcess?.type === 'CHANGE_PERMISSIONS') {
     const ids = new Set(props.recoveryProcess.details.newMemberIds);
     return members.value.filter(u => ids.has(u.id));
   }
@@ -584,7 +584,7 @@ const canStartRecovery = computed(() => {
   if (processType.value == null) return false;
   if (conflictingProcessExists.value) return false;
 
-  if (processType.value === 'ASSIGN_OWNER') {
+  if (processType.value === 'CHANGE_PERMISSIONS') {
     return (
       hasActivatedOwner.value &&
       (ownersDifferFromExistingIds.value || membersDifferFromExistingIds.value) &&
@@ -690,9 +690,9 @@ function initProcessType() {
   } else if (props.startType) {
     processType.value = props.startType;
   } else {
-    const allTypes: RecoveryProcessDto['type'][] = ['ASSIGN_OWNER', 'COUNCIL_CHANGE'];
+    const allTypes: RecoveryProcessDto['type'][] = ['CHANGE_PERMISSIONS', 'COUNCIL_CHANGE'];
     const firstFree = allTypes.find(t => !processConflicts(t));
-    processType.value = firstFree ?? 'ASSIGN_OWNER';
+    processType.value = firstFree ?? 'CHANGE_PERMISSIONS';
   }
 }
 
@@ -745,7 +745,7 @@ async function initProcessSpecificState() {
     await loadDefaultSettings();
     newCouncilMembers.value = [...defaultEmergencyCouncilMembers.value];
     newRequiredKeyShares.value = defaultRequiredEmergencyKeyShares.value;
-  } else if (props.recoveryProcess?.type === 'ASSIGN_OWNER') {
+  } else if (props.recoveryProcess?.type === 'CHANGE_PERMISSIONS') {
     const newOwners = await backend.authorities.listSome(props.recoveryProcess.details.newOwnerIds);
     for (const u of newOwners) {
       if (!owners.value.find(x => x.id === u.id)) {
@@ -806,12 +806,12 @@ async function startRecovery() {
     }
 
     let data: RecoveryProcessSetNewOwner | RecoveryProcessChangeCouncil;
-    if (processType.value === 'ASSIGN_OWNER') {
+    if (processType.value === 'CHANGE_PERMISSIONS') {
       if (newOwnerIds.value.length === 0) {
         throw new Error(t('recoveryDialog.error.noOwnerSelected'));
       }
       data = {
-        type: 'ASSIGN_OWNER',
+        type: 'CHANGE_PERMISSIONS',
         details: {
           newOwnerIds: newOwnerIds.value,
           newMemberIds: newMemberIds.value
@@ -922,7 +922,7 @@ async function completeRecovery() {
         keyShares,
         props.vault.description
       );
-    } else if (process.type === 'ASSIGN_OWNER') {
+    } else if (process.type === 'CHANGE_PERMISSIONS') {
       const vaultKeys = await VaultKeys.recover(recoveredKey);
 
       const membersWithRole = Object.fromEntries([
