@@ -1,14 +1,37 @@
 <template>
   <section class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6">
     <h3 class="text-lg font-medium leading-6 text-gray-900">{{ t('admin.emergencyAccess.title') }}</h3>
-    <p class="mt-1 text-sm text-gray-500 w-full">{{ t('admin.emergencyAccess.description') }}</p>
+    <p class="mt-1 text-sm text-gray-500 w-full">{{ t('admin.emergencyAccess.description') }}.
+      <a href="https://docs.cryptomator.org/hub/admin/#" target="_blank" class="ml-1 inline-flex items-center text-primary underline hover:text-primary-darker">
+        {{ t('common.learnMore') }}
+        <ArrowRightIcon class="ml-1 h-4 w-4" aria-hidden="true" />
+      </a>
+    </p>
     <hr class="my-4 pb-6 border-gray-200"/>
 
     <form class="space-y-6 md:gap-6" novalidate @submit.prevent="saveRecoverySettings">
+      <div v-if="noRedundancy" class="md:grid md:grid-cols-6 md:gap-6">
+        <span
+          class="inline-flex items-center rounded-md bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800 col-span-6"
+          :title="t('emergencyAccessVaultList.noRedundancyHint')"
+        >
+          <span class="inline-flex items-center gap-2">
+            <ExclamationTriangleIcon class="h-6 w-6" aria-hidden="true" />
+            <div>
+              <b>Your current key splittting has no redundacy!</b><br/>
+              It is strongly advised to configure more keyholders than required keys.
+              <a href="https://docs.cryptomator.org/hub/admin/#" target="_blank" class="ml-1 inline-flex items-center text-primary underline hover:text-primary-darker">
+                {{ t('common.learnMore') }}
+                <ArrowRightIcon class="ml-1 h-4 w-4" aria-hidden="true" />
+              </a>
+            </div>
+          </span>
+        </span>
+      </div>
       <!-- Key Splitting -->
       <div class="md:grid md:grid-cols-6 md:gap-6">
         <label class="col-span-2 block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
-          {{ t('admin.emergencyAccess.keySplitting.title') }}
+          Required Keys
         </label>
         <div class="mt-1 md:mt-0 lg:col-span-3 md:col-span-4 relative">
           <div class="flex items-center gap-2">
@@ -28,9 +51,10 @@
               <div v-if="defaultRequiredEmergencyKeySharesLessThenTwoError || defaultRequiredEmergencyKeySharesToHighError instanceof FormValidationFailedError" class="absolute  -top-2 transform translate-y-[-100%] z-10">
                 <div class="absolute bottom-0 left-5 transform translate-y-1/2 rotate-45 w-2 h-2 bg-red-50 border-r border-b border-red-300"></div>
               </div>
+              <p class="mt-2 text-sm text-gray-500">How many keys are required in order to restore access to a vault.</p>
             </div>
           </div>
-          <div class="mt-2">
+          <div hidden class="mt-2">
             <div v-if="!isKeySplittingInvalid" class="flex items-start gap-2 rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-900">
               <span v-if="isDescLoading" class="mt-0.5 inline-block h-4 w-4 mb-5.5 animate-spin rounded-full border-2 border-current border-t-transparent"></span>
               <InformationCircleIcon v-else class="mt-0.5 h-8 w-8 max-w-4 max-h-4 text-gray-400" aria-hidden="true" />
@@ -66,7 +90,7 @@
       <!-- User Selection -->
       <div class="md:grid md:grid-cols-6 md:gap-6">
         <label class="col-span-2 block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
-          Who shall retrieve Key Shards?
+          Keyholders
         </label>
         <div class="mt-1 md:mt-0 lg:col-span-3 md:col-span-4">
           <div class="relative">
@@ -80,16 +104,7 @@
               @action="selectUser"
               @remove="removeUser"
             />
-            <p class="mt-2 text-sm text-gray-500">The selected users are responsible for vault recovery.</p>
-            <div v-if="noRedundancy" class="mt-2">
-              <span
-                class="inline-flex items-center gap-2 rounded-md bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800"
-                :title="t('emergencyAccessVaultList.noRedundancyHint')"
-              >
-                <ExclamationTriangleIcon class="h-6 w-6" aria-hidden="true" />
-                {{ t('admin.emergencyAccess.errors.noRedundancy') }}
-              </span>
-            </div>
+            <p class="mt-2 text-sm text-gray-500">Who shall retrieve an emergency access key.</p>
           </div>
         </div>
       </div>
@@ -105,7 +120,7 @@
             class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
           />
           <label for="allow" class="ml-2 text-sm text-gray-500">
-            {{ allowChoosing ? 'Let Vault Owners choose different users. Min: ' : t('admin.emergencyAccess.letChooseDifferentUsersCheckbox.description') }}
+            Allow to choose different Keyholders. {{ allowChoosing ? ' At least: ' : '' }}
           </label>
 
           <div class="relative ml-2 flex-1">
@@ -183,7 +198,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
-import { ExclamationTriangleIcon, InformationCircleIcon } from '@heroicons/vue/20/solid';
+import { ArrowRightIcon, ExclamationTriangleIcon, InformationCircleIcon } from '@heroicons/vue/20/solid';
 import { useI18n } from 'vue-i18n';
 import backend, { UserDto, ActivatedUser, didCompleteSetup } from '../common/backend';
 import MultiUserSelectInputGroup from './MultiUserSelectInputGroup.vue';
