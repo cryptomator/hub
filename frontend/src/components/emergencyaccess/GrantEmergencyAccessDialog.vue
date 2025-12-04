@@ -56,7 +56,7 @@
                         :selected-users="emergencyCouncilMembers"
                         :on-search="searchCouncilMembers"
                         :input-visible="allowChangingDefaults"
-                        :placeholder="'Select new council members…'"
+                        :placeholder="'Search…'"
                         @action="addCouncilMember"
                         @remove="removeCouncilMember"
                       />
@@ -68,21 +68,6 @@
                           </span>
                         </span>
                       </div>
-                    </div>
-                    <div class="flex items-start gap-2 rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-900 mt-3">
-                      <span class="leading-5">
-                        <span class="text-gray-500">
-                          Recovery will require approval of {{ vault.requiredEmergencyKeyShares }} council member to use emergency access restore features. 
-                        </span>
-                      </span>
-                      <SegmentRing
-                        v-if="true"
-                        :total="vault.requiredEmergencyKeyShares"
-                        :completed="0"
-                        :size="36"
-                        fill-color="#66cc68bb"
-                        empty-color="#ccc"
-                      />
                     </div>
                     <label class="block text-sm font-medium text-gray-700 pt-4">
                       Example Recovery
@@ -144,7 +129,6 @@ import { wordEncoder } from '../../common/util';
 import { EmergencyAccess } from '../../common/emergencyaccess';
 import MultiUserSelectInputGroup from '../MultiUserSelectInputGroup.vue';
 import EmergencyScenarioVisualization from './EmergencyScenarioVisualization.vue';
-import SegmentRing from './SegmentRing.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 
