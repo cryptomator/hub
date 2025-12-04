@@ -24,29 +24,6 @@
         <p v-if="vault.description && vault.description.length > 0" class="text-sm text-gray-500">{{ vault.description }}</p>
         <p v-else class="text-sm text-gray-500 italic">{{ t('vaultDetails.description.empty') }}</p>
       </div>
-      <div class="mt-2 space-y-1">
-        <p class="text-sm text-gray-500">
-          {{ t('requiredEmergencyKeyShares') }}:
-          <span class="font-medium text-gray-900">{{ vault.requiredEmergencyKeyShares }}</span>
-        </p>
-
-        <div v-if="Object.keys(vault.emergencyKeyShares).length > 0">
-          <p class="text-sm text-gray-500">
-            {{ t('vaultDetails.information.emergencyKeyShares') }}:
-          </p>
-          <ul class="mt-1 pl-4 list-disc text-sm text-gray-700">
-            <li v-for="(share, memberId) in vault.emergencyKeyShares" :key="memberId" class="flex items-center gap-2">
-              <img v-if="emergencyKeyShareAuthorities[memberId]?.pictureUrl" :src="emergencyKeyShareAuthorities[memberId]?.pictureUrl" alt="" class="w-4 h-4 rounded-full" />
-              <span class="font-medium">
-                {{ emergencyKeyShareAuthorities[memberId]?.name || memberId }}
-              </span>
-            </li>
-          </ul>
-        </div>
-        <p v-else class="text-sm text-gray-500 italic">
-          {{ t('noEmergencyKeyShares') }}
-        </p>
-      </div>
     </div>
 
     <div>
@@ -269,7 +246,6 @@ import ReactivateVaultDialog from './ReactivateVaultDialog.vue';
 import RecoverVaultDialog from './RecoverVaultDialog.vue';
 import SearchInputGroup from './SearchInputGroup.vue';
 import TrustDetails from './TrustDetails.vue';
-import EmergencyAccessDialog from './emergencyaccess/EmergencyAccessDialog.vue';
 import GrantEmergencyAccessDialog from './emergencyaccess/GrantEmergencyAccessDialog.vue';
 
 const { t, d } = useI18n({ useScope: 'global' });
@@ -315,8 +291,6 @@ const usersRequiringAccessGrant = ref<UserDto[]>([]);
 const claimVaultOwnershipDialog = ref<typeof ClaimVaultOwnershipDialog>();
 const claimingVaultOwnership = ref(false);
 const me = ref<UserDto>();
-const recoveryApprov = ref(false);
-const recoveryApprovDialog = ref<typeof EmergencyAccessDialog>();
 const grantingEmergencyAccess = ref(false);
 const grantEmergencyAccessDialog = ref<typeof GrantEmergencyAccessDialog>();
 
@@ -519,11 +493,6 @@ function showGrantEmergencyAccessDialog() {
   nextTick(() => grantEmergencyAccessDialog.value?.show?.());
 }
 
-function showEmergencyAccessDialog() {
-  recoveryApprov.value = true;
-  nextTick(() => recoveryApprovDialog.value?.show());
-}
-
 function showArchiveVaultDialog() {
   archivingVault.value = true;
   nextTick(() => archiveVaultDialog.value?.show());
@@ -555,10 +524,6 @@ async function refreshLicense() {
 function refreshVault(updatedVault: VaultDto) {
   vault.value = updatedVault;
   emit('vaultUpdated', updatedVault);
-}
-
-function refreshRecoveryProcess(updatedProcess?: RecoveryProcessDto) {
-  recoveryProcess.value = updatedProcess;
 }
 
 async function searchAuthority(query: string): Promise<AuthorityDto[]> {
