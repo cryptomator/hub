@@ -22,7 +22,7 @@
             <ArrowTopRightOnSquareIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
             {{ t('userProfile.actions.manageAccount') }}
           </button>
-          <Listbox v-model="locale" as="div">
+          <Listbox v-model="languagePreference" as="div">
             <div class="relative">
               <ListboxButton class="relative w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 shadow-xs text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary">
                 <LanguageIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
@@ -33,7 +33,7 @@
               </ListboxButton>
               <transition leave-active-class="transition ease-in duration-100" leave-from-class="opacity-100" leave-to-class="opacity-0">
                 <ListboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-hidden text-sm">
-                  <ListboxOption v-slot="{ active, selected }" :value="browserLocale" class="relative cursor-default select-none py-2 pl-3 pr-9 ui-not-active:text-gray-900 ui-active:text-white ui-active:bg-primary" @click="saveLanguage(undefined)">
+                  <ListboxOption v-slot="{ active, selected }" value="browser" class="relative cursor-default select-none py-2 pl-3 pr-9 ui-not-active:text-gray-900 ui-active:text-white ui-active:bg-primary" @click="saveLanguage(undefined)">
                     <span :class="[selected || active ? 'font-semibold' : 'font-normal', 'block truncate']">{{ t('userProfile.actions.changeLanguage.entry.browser') }}</span>
                     <span v-if="selected" :class="[active ? 'text-white' : 'text-primary', 'absolute inset-y-0 right-0 flex items-center pr-4']">
                       <CheckIcon class="h-5 w-5" aria-hidden="true" />
@@ -76,7 +76,7 @@ import backend, { UserDto, VersionDto } from '../common/backend';
 
 import config from '../common/config';
 import userdata from '../common/userdata';
-import { Locale } from '../i18n';
+import { Locale, detectBrowserLocale } from '../i18n';
 import DeviceList from './DeviceList.vue';
 import FetchError from './FetchError.vue';
 import LegacyDeviceList from './LegacyDeviceList.vue';
@@ -85,16 +85,25 @@ import UserkeyFingerprint from './UserkeyFingerprint.vue';
 
 const { locale, t } = useI18n({ useScope: 'global' });
 
+type LanguagePreference = Locale | 'browser';
+
+const languagePreference = ref<LanguagePreference>('browser');
+
 const me = ref<UserDto>();
 const keycloakUserAccountURL = ref<string>();
 const version = ref<VersionDto>();
 const onFetchError = ref<Error | null>();
-const browserLocale = ref<string>(navigator.language);
+const browserLocale = ref<string>(detectBrowserLocale());
 
 onMounted(async () => {
   const cfg = config.get();
   keycloakUserAccountURL.value = `${cfg.keycloakUrl}/realms/${cfg.keycloakRealm}/account`;
   await fetchData();
+  if (me.value?.language) {
+    languagePreference.value = me.value.language as Locale;
+  } else {
+    languagePreference.value = 'browser';
+  }
 });
 
 async function fetchData() {
