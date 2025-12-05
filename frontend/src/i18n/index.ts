@@ -145,8 +145,9 @@ function getBrowserLocale(): string {
     return navigator.languages[0];
   } else if (navigator.language) {
     return navigator.language;
+  } else {
+    return Locale.EN_US;
   }
-  return Locale.EN_US;
 }
 
 const i18n = createI18n({
