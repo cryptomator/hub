@@ -133,14 +133,21 @@ export const mapToLocale = (local: string): Locale => {
 };
 
 export const detectBrowserLocale = (): Locale => {
-  const raw =
-    (typeof navigator !== 'undefined' &&
-      (navigator.languages && navigator.languages[0])) ||
-    (typeof navigator !== 'undefined' && navigator.language) ||
-    Locale.EN_US;
+  const raw = getBrowserLocale();
 
   return mapToLocale(raw);
 };
+
+function getBrowserLocale(): string {
+  if (typeof navigator === 'undefined') {
+    return Locale.EN_US;
+  } else if (navigator.languages && navigator.languages.length > 0) {
+    return navigator.languages[0];
+  } else if (navigator.language) {
+    return navigator.language;
+  }
+  return Locale.EN_US;
+}
 
 const i18n = createI18n({
   locale: detectBrowserLocale(),
