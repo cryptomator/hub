@@ -45,14 +45,13 @@ class KeycloakAuthorityPullerTest {
 		remoteUserPuller.remoteUserProvider = remoteUserProvider;
 		remoteUserPuller.userRepo = userRepo;
 		remoteUserPuller.groupRepo = groupRepo;
-		remoteUserPuller.effectiveGroupMembershipRepo = effectiveGroupMembershipRepo;
-		persistedUsers.clear();;
+		persistedUsers.clear();
 		Mockito.doAnswer(invocation -> {
 			Stream<User> stream = invocation.getArgument(0);
 			persistedUsers.addAll(stream.toList());
 			return null;
 		}).when(userRepo).persist(Mockito.<Stream<User>>any());
-		persistedGroups.clear();;
+		persistedGroups.clear();
 		Mockito.doAnswer(invocation -> {
 			Stream<Group> stream = invocation.getArgument(0);
 			persistedGroups.addAll(stream.toList());

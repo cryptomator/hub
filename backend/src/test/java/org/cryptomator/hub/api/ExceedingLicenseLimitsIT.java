@@ -7,19 +7,15 @@ import io.quarkus.test.security.oidc.OidcSecurity;
 import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
-import org.cryptomator.hub.entities.EffectiveGroupMembership;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.entities.VaultAccess;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -52,8 +48,6 @@ public class ExceedingLicenseLimitsIT {
 	Group.Repository groupRepo;
 	@Inject
 	User.Repository userRepo;
-	@Inject
-	EffectiveGroupMembership.Repository effectiveGroupMembershipRepo;
 	@Inject
 	Vault.Repository vaultRepo;
 	@Inject
@@ -106,8 +100,6 @@ public class ExceedingLicenseLimitsIT {
 		group91.getMembers().add(user93);
 		group91.getMembers().add(user94);
 		groupRepo.persist(group91);
-
-		effectiveGroupMembershipRepo.updateGroups(List.of("group91"));
 
 		var access = new VaultAccess();
 		access.setVault(vaultRepo.findById(UUID.fromString("7E57C0DE-0000-4000-8000-00010000AAAA")));
