@@ -130,7 +130,7 @@ public class VaultResourceIT {
 		@Test
 		@DisplayName("GET /vaults/nonExistingVault returns 404")
 		public void testGetVault2() {
-			when().get("/vaults/{vaultId}", "nonExistingVault")
+			when().get("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-BADBADBADBAD")
 					.then().statusCode(404);
 		}
 

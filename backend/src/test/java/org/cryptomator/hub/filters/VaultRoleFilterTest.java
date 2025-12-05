@@ -47,12 +47,12 @@ public class VaultRoleFilterTest {
 	}
 
 	@Test
-	@DisplayName("error 403 if annotated resource has no vaultId path param")
+	@DisplayName("error 404 if annotated resource has no vaultId path param")
 	public void testFilterWithMissingVaultId() throws NoSuchMethodException {
 		Mockito.doReturn(VaultRoleFilterTest.class.getMethod("allowMember")).when(resourceInfo).getResourceMethod();
 		Mockito.doReturn(new MultivaluedHashMap<>()).when(uriInfo).getPathParameters();
 
-		Assertions.assertThrows(ForbiddenException.class, () -> filter.filter(context));
+		Assertions.assertThrows(NotFoundException.class, () -> filter.filter(context));
 	}
 
 	@Test

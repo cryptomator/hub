@@ -67,14 +67,6 @@ public class Vault {
 	)
 	private Set<Authority> directMembers = new HashSet<>();
 
-	@ManyToMany
-	@Immutable
-	@JoinTable(name = "effective_vault_access",
-			joinColumns = @JoinColumn(name = "vault_id", referencedColumnName = "id"),
-			inverseJoinColumns = @JoinColumn(name = "authority_id", referencedColumnName = "id")
-	)
-	private Set<Authority> effectiveMembers = new HashSet<>();
-
 	@OneToMany(mappedBy = "vault", fetch = FetchType.LAZY)
 	private Set<AccessToken> accessTokens = new HashSet<>();
 
@@ -140,14 +132,6 @@ public class Vault {
 
 	public void setDirectMembers(Set<Authority> directMembers) {
 		this.directMembers = directMembers;
-	}
-
-	public Set<Authority> getEffectiveMembers() {
-		return effectiveMembers;
-	}
-
-	public void setEffectiveMembers(Set<Authority> effectiveMembers) {
-		this.effectiveMembers = effectiveMembers;
 	}
 
 	public Set<AccessToken> getAccessTokens() {
