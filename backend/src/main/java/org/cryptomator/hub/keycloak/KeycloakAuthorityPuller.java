@@ -5,6 +5,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import org.cryptomator.hub.entities.Authority;
+import org.cryptomator.hub.entities.EffectiveGroupMembership;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
 
@@ -23,6 +24,8 @@ public class KeycloakAuthorityPuller {
 	Group.Repository groupRepo;
 	@Inject
 	KeycloakAuthorityProvider remoteUserProvider;
+	@Inject
+	EffectiveGroupMembership.Repository effectiveGroupMembershipRepo;
 
 	@Scheduled(every = "{hub.keycloak.syncer-period}")
 	void sync() {
@@ -56,12 +59,14 @@ public class KeycloakAuthorityPuller {
 			return databaseUser;
 		});
 		userRepo.persist(added);
+		effectiveGroupMembershipRepo.updateUsers(addedIds);
 	}
 
 	//visible for testing
 	Set<String> syncDeletedUsers(Map<String, KeycloakUserDto> keycloakUsers, Map<String, User> databaseUsers) {
 		var deletedIds = diff(databaseUsers.keySet(), keycloakUsers.keySet());
 		userRepo.deleteByIds(deletedIds);
+		effectiveGroupMembershipRepo.updateUsers(deletedIds);
 		return deletedIds;
 	}
 
@@ -100,12 +105,14 @@ public class KeycloakAuthorityPuller {
 			return databaseGroup;
 		});
 		groupRepo.persist(added);
+		effectiveGroupMembershipRepo.updateGroups(addedIds);
 	}
 
 	//visible for testing
 	Set<String> syncDeletedGroups(Map<String, KeycloakGroupDto> keycloakGroups, Map<String, Group> databaseGroups) {
 		var deletedIds = diff(databaseGroups.keySet(), keycloakGroups.keySet());
 		groupRepo.deleteByIds(deletedIds);
+		effectiveGroupMembershipRepo.updateGroups(deletedIds);
 		return deletedIds;
 	}
 

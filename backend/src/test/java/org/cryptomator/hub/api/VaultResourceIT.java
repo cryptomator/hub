@@ -14,6 +14,7 @@ import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Validator;
+import org.cryptomator.hub.entities.EffectiveGroupMembership;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
@@ -82,6 +83,8 @@ public class VaultResourceIT {
 	@Inject
 	User.Repository userRepo;
 	@Inject
+	EffectiveGroupMembership.Repository effectiveGroupMembershipRepo;
+	@Inject
 	Validator validator;
 	@Inject
 	public Flyway flyway;
@@ -112,6 +115,9 @@ public class VaultResourceIT {
 		group2.getMembers().add(user998);
 		group2.getMembers().add(user999);
 		groupRepo.persist(group2);
+
+		effectiveGroupMembershipRepo.updateUsers(List.of("user998", "user999"));
+		effectiveGroupMembershipRepo.updateGroups(List.of("group2"));
 	}
 
 	@AfterEach

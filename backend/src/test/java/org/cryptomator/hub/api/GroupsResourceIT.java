@@ -7,6 +7,7 @@ import io.quarkus.test.security.oidc.OidcSecurity;
 import io.restassured.RestAssured;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import org.cryptomator.hub.entities.EffectiveGroupMembership;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
 import org.junit.jupiter.api.AfterEach;
@@ -34,6 +35,9 @@ public class GroupsResourceIT {
 	@Inject
 	User.Repository userRepo;
 
+	@Inject
+	EffectiveGroupMembership.Repository effectiveGroupMembershipRepo;
+
 	@BeforeAll
 	public static void beforeAll() {
 		RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
@@ -56,6 +60,9 @@ public class GroupsResourceIT {
 		var group1 = groupRepo.findById("group1");
 		group1.getMembers().add(group999);
 		groupRepo.persist(group1);
+
+		effectiveGroupMembershipRepo.updateUsers(List.of("user999"));
+		effectiveGroupMembershipRepo.updateGroups(List.of("group999"));
 	}
 
 	@AfterEach

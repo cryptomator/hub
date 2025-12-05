@@ -1,6 +1,7 @@
 package org.cryptomator.hub.keycloak;
 
 import org.cryptomator.hub.entities.Authority;
+import org.cryptomator.hub.entities.EffectiveGroupMembership;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
 import org.hamcrest.MatcherAssert;
@@ -33,6 +34,7 @@ class KeycloakAuthorityPullerTest {
 	private final KeycloakAuthorityProvider remoteUserProvider = Mockito.mock(KeycloakAuthorityProvider.class);
 	private final User.Repository userRepo = Mockito.mock(User.Repository.class);
 	private final Group.Repository groupRepo = Mockito.mock(Group.Repository.class);
+	private final EffectiveGroupMembership.Repository effectiveGroupMembershipRepo = Mockito.mock(EffectiveGroupMembership.Repository.class);
 
 	private final List<User> persistedUsers = new ArrayList<>();
 	private final List<Group> persistedGroups = new ArrayList<>();
@@ -45,6 +47,7 @@ class KeycloakAuthorityPullerTest {
 		remoteUserPuller.remoteUserProvider = remoteUserProvider;
 		remoteUserPuller.userRepo = userRepo;
 		remoteUserPuller.groupRepo = groupRepo;
+		remoteUserPuller.effectiveGroupMembershipRepo = effectiveGroupMembershipRepo;
 		persistedUsers.clear();
 		Mockito.doAnswer(invocation -> {
 			Stream<User> stream = invocation.getArgument(0);
@@ -92,6 +95,7 @@ class KeycloakAuthorityPullerTest {
 			remoteUserPuller.syncAddedUsers(keycloakUsers, databaseUsers);
 
 			Mockito.verify(userRepo).persist(Mockito.<Stream<User>>any());
+			Mockito.verify(effectiveGroupMembershipRepo).updateUsers(Mockito.argThat(addedUserIds::containsAll));
 			for (var userId : addedUserIds) {
 				MatcherAssert.assertThat(persistedUsers, Matchers.hasItem(
 						Matchers.allOf(
@@ -133,6 +137,7 @@ class KeycloakAuthorityPullerTest {
 			var expected = Arrays.stream(deletedUserIdString).collect(Collectors.toSet());
 			MatcherAssert.assertThat(result, Matchers.equalTo(expected));
 			Mockito.verify(userRepo).deleteByIds(expected);
+			Mockito.verify(effectiveGroupMembershipRepo).updateUsers(Mockito.argThat(expected::containsAll));
 		}
 	}
 
@@ -226,6 +231,7 @@ class KeycloakAuthorityPullerTest {
 
 			var addedGroupIds = Set.of(addedGroupIdString);
 			Mockito.verify(groupRepo).persist(Mockito.<Stream<Group>>any());
+			Mockito.verify(effectiveGroupMembershipRepo).updateGroups(Mockito.argThat(addedGroupIds::containsAll));
 			for (var groupId : addedGroupIds) {
 				MatcherAssert.assertThat(persistedGroups, Matchers.hasItem(
 						Matchers.allOf(
@@ -265,6 +271,7 @@ class KeycloakAuthorityPullerTest {
 			var expected = Arrays.stream(deletedGroupIdString).collect(Collectors.toSet());
 			MatcherAssert.assertThat(result, Matchers.equalTo(expected));
 			Mockito.verify(groupRepo).deleteByIds(expected);
+			Mockito.verify(effectiveGroupMembershipRepo).updateGroups(Mockito.argThat(expected::containsAll));
 		}
 	}
 
