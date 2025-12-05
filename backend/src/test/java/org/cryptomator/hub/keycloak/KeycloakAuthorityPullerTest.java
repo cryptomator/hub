@@ -15,22 +15,27 @@ import org.junit.jupiter.params.converter.SimpleArgumentConverter;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mockito;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
 
 class KeycloakAuthorityPullerTest {
 
 	private final KeycloakAuthorityProvider remoteUserProvider = Mockito.mock(KeycloakAuthorityProvider.class);
 	private final User.Repository userRepo = Mockito.mock(User.Repository.class);
 	private final Group.Repository groupRepo = Mockito.mock(Group.Repository.class);
+
+	private final List<User> persistedUsers = new ArrayList<>();
+	private final List<Group> persistedGroups = new ArrayList<>();
 
 	private KeycloakAuthorityPuller remoteUserPuller;
 
@@ -40,8 +45,19 @@ class KeycloakAuthorityPullerTest {
 		remoteUserPuller.remoteUserProvider = remoteUserProvider;
 		remoteUserPuller.userRepo = userRepo;
 		remoteUserPuller.groupRepo = groupRepo;
-		Mockito.doNothing().when(userRepo).persist((User) Mockito.any());
-		Mockito.doNothing().when(groupRepo).persist((Group) Mockito.any());
+		remoteUserPuller.effectiveGroupMembershipRepo = effectiveGroupMembershipRepo;
+		persistedUsers.clear();;
+		Mockito.doAnswer(invocation -> {
+			Stream<User> stream = invocation.getArgument(0);
+			persistedUsers.addAll(stream.toList());
+			return null;
+		}).when(userRepo).persist(Mockito.<Stream<User>>any());
+		persistedGroups.clear();;
+		Mockito.doAnswer(invocation -> {
+			Stream<Group> stream = invocation.getArgument(0);
+			persistedGroups.addAll(stream.toList());
+			return null;
+		}).when(groupRepo).persist(Mockito.<Stream<Group>>any());
 	}
 
 	@Nested
@@ -62,9 +78,9 @@ class KeycloakAuthorityPullerTest {
 			Map<String, KeycloakUserDto> keycloakUsers = Mockito.mock(Map.class);
 			Map<String, User> databaseUsers = Mockito.mock(Map.class);
 
-			var keycloakUserIds = Arrays.stream(keycloakUserIdString).collect(Collectors.toSet());
-			var databaseUserIds = Arrays.stream(databaseUserIdString).collect(Collectors.toSet());
-			var addedUserIds = Arrays.stream(addedUserIdString).collect(Collectors.toSet());
+			var keycloakUserIds = Set.of(keycloakUserIdString);
+			var databaseUserIds = Set.of(databaseUserIdString);
+			var addedUserIds = Set.of(addedUserIdString);
 
 			Mockito.when(keycloakUsers.keySet()).thenReturn(keycloakUserIds);
 			Mockito.when(databaseUsers.keySet()).thenReturn(databaseUserIds);
@@ -76,12 +92,15 @@ class KeycloakAuthorityPullerTest {
 
 			remoteUserPuller.syncAddedUsers(keycloakUsers, databaseUsers);
 
+			Mockito.verify(userRepo).persist(Mockito.<Stream<User>>any());
 			for (var userId : addedUserIds) {
-				Mockito.verify(userRepo).persist(argThat((User u) ->
-						u.getId().equals(userId)
-								&& u.getName().equals("name " + userId)
-								&& u.getEmail().equals("email " + userId)
-								&& u.getPictureUrl().equals("pic " + userId)
+				MatcherAssert.assertThat(persistedUsers, Matchers.hasItem(
+						Matchers.allOf(
+								Matchers.hasProperty("id", Matchers.equalTo(userId)),
+								Matchers.hasProperty("name", Matchers.equalTo("name " + userId)),
+								Matchers.hasProperty("email", Matchers.equalTo("email " + userId)),
+								Matchers.hasProperty("pictureUrl", Matchers.equalTo("pic " + userId))
+						)
 				));
 			}
 		}
@@ -112,12 +131,9 @@ class KeycloakAuthorityPullerTest {
 
 			var result = remoteUserPuller.syncDeletedUsers(keycloakUsers, databaseUsers);
 
-			for (var id : deletedUserIdString) {
-				Mockito.verify(userRepo).delete(deletedMap.get(id));
-			}
-
 			var expected = Arrays.stream(deletedUserIdString).collect(Collectors.toSet());
 			MatcherAssert.assertThat(result, Matchers.equalTo(expected));
+			Mockito.verify(userRepo).deleteByIds(expected);
 		}
 	}
 
@@ -189,7 +205,7 @@ class KeycloakAuthorityPullerTest {
 
 			Map<String, KeycloakGroupDto> keycloakGroups = new HashMap<>();
 			for (var gid : keycloakGroupIdString) {
-				var dto = new KeycloakGroupDto(gid, "Name " + gid, Set.of(kcUsers.get(gid)));
+				var dto = new KeycloakGroupDto(gid, "name " + gid, Set.of(kcUsers.get(gid)));
 				keycloakGroups.put(gid, dto);
 			}
 
@@ -209,14 +225,16 @@ class KeycloakAuthorityPullerTest {
 
 			remoteUserPuller.syncAddedGroups(keycloakGroups, databaseGroups, databaseUsers);
 
-			for (var newGid : addedGroupIdString) {
-				Mockito.verify(groupRepo).persist(argThat((Group created) -> {
-					if (!created.getId().equals(newGid)) {
-						return false;
-					}
-					var members = created.getMembers();
-					return members.stream().anyMatch(m -> m.getId().equals(newGid));
-				}));
+			var addedGroupIds = Set.of(addedGroupIdString);
+			Mockito.verify(groupRepo).persist(Mockito.<Stream<Group>>any());
+			for (var groupId : addedGroupIds) {
+				MatcherAssert.assertThat(persistedGroups, Matchers.hasItem(
+						Matchers.allOf(
+								Matchers.hasProperty("id", Matchers.equalTo(groupId)),
+								Matchers.hasProperty("name", Matchers.equalTo("name " + groupId)),
+								Matchers.hasProperty("members", Matchers.contains(Matchers.hasProperty("id", Matchers.equalTo(groupId))))
+						)
+				));
 			}
 		}
 
@@ -245,11 +263,9 @@ class KeycloakAuthorityPullerTest {
 
 			var result = remoteUserPuller.syncDeletedGroups(keycloakGroups, databaseGroups);
 
-			for (var id : deletedGroupIdString) {
-				Mockito.verify(groupRepo).delete(deletedMap.get(id));
-			}
 			var expected = Arrays.stream(deletedGroupIdString).collect(Collectors.toSet());
 			MatcherAssert.assertThat(result, Matchers.equalTo(expected));
+			Mockito.verify(groupRepo).deleteByIds(expected);
 		}
 	}
 
