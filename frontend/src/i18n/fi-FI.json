@@ -1,4 +1,5 @@
 {
+  "common.add": "Lisää",
   "common.apply": "Käytä",
   "common.cancel": "Peruuta",
   "common.close": "Sulje",
@@ -6,11 +7,15 @@
   "common.copy": "Kopioi",
   "common.download": "Lataa",
   "common.next": "Seuraava",
+  "common.previous": "Edellinen",
+  "common.refresh": "Päivitä",
   "common.remove": "Poista",
   "common.reset": "Palauta",
+  "common.retry": "Yritä uudelleen",
   "common.share": "Jaa",
   "common.show": "Näytä",
   "admin.webOfTrust.information": "Lue Lisää.",
+  "admin.webOfTrust.save": "Tallenna",
   "auditLog.filter": "Suodata",
   "auditLog.details.vault.create": "Luo Uusi Vault",
   "claimVaultOwnershipDialog.error.wrongPassword": "Väärä salasana",
@@ -24,5 +29,6 @@
   "unlockSuccess.deviceSetup.title": "Uusi laite",
   "vaultDetails.actions.updatePermissions.reload": "Päivitä",
   "vaultDetails.actions.displayRecoveryKey": "Näytä palautusavain",
+  "vaultList.addVault": "Lisää",
   "vaultList.filter": "Suodata"
 }
