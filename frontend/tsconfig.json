@@ -12,6 +12,7 @@
 
     /* Linting */
     "strict": true,
+    "skipLibCheck": true,
     "resolveJsonModule": true,
     "noUnusedLocals": false,
     "noFallthroughCasesInSwitch": true,
