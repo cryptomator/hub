@@ -1,9 +1,10 @@
 <template>
   <section class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6">
-    <h3 class="text-lg font-medium leading-6 text-gray-900">{{ t('admin.emergencyAccess.title') }}</h3>
-    <p class="mt-1 text-sm text-gray-500 w-full">{{ t('admin.emergencyAccess.description') }}.
+    <h3 class="text-lg font-medium leading-6 text-gray-900">Emergency Access</h3>
+    <p class="mt-1 text-sm text-gray-500 w-full">
+      Configure Key Splitting for Vault Recovery.
       <a href="https://docs.cryptomator.org/hub/admin/#" target="_blank" class="ml-1 inline-flex items-center text-primary underline hover:text-primary-darker">
-        {{ t('common.learnMore') }}
+        Learn more.
         <ArrowRightIcon class="ml-1 h-4 w-4" aria-hidden="true" />
       </a>
     </p>
@@ -21,7 +22,7 @@
               <b>Your current key splitting has no redundacy!</b><br/>
               It is strongly advised to configure more keyholders than required keys.
               <a href="https://docs.cryptomator.org/hub/admin/#" target="_blank" class="ml-1 inline-flex items-center text-primary underline hover:text-primary-darker">
-                {{ t('common.learnMore') }}
+                Learn more.
                 <ArrowRightIcon class="ml-1 h-4 w-4" aria-hidden="true" />
               </a>
             </div>
@@ -54,36 +55,6 @@
               <p class="mt-2 text-sm text-gray-500">How many keys are required in order to restore access to a vault.</p>
             </div>
           </div>
-          <div hidden class="mt-2">
-            <div v-if="!isKeySplittingInvalid" class="flex items-start gap-2 rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-900">
-              <span v-if="isDescLoading" class="mt-0.5 inline-block h-4 w-4 mb-5.5 animate-spin rounded-full border-2 border-current border-t-transparent"></span>
-              <InformationCircleIcon v-else class="mt-0.5 h-8 w-8 max-w-4 max-h-4 text-gray-400" aria-hidden="true" />
-              <span class="leading-5">
-                <span v-if="isDescLoading">{{ t('common.loading') }}</span>
-                <span v-else class="text-gray-500">
-                  {{ t('admin.emergencyAccess.keyShardsDesc2', [requiredShares]) }}
-                </span>
-              </span>
-              <SegmentRing
-                v-if="!isDescLoading"
-                :total="requiredShares!"
-                :completed="requiredShares!"
-                :size="36"
-                fill-color="#66cc68bb"
-              />
-            </div>
-            <div v-else class="flex items-start gap-2 rounded-md border border-gray-200 bg-gray-50 p-3 h-16.5 text-sm text-gray-900">
-              <span v-if="isDescLoading" class="mt-0.5 inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></span>
-              <InformationCircleIcon v-else class="mt-0.5 h-4 w-4 text-gray-400" aria-hidden="true" />
-              <span class="leading-5">
-                <span v-if="isDescLoading">{{ t('common.loading') }}</span>
-                <span v-else-if="isKeySplittingInvalid">
-                  {{ t('admin.emergencyAccess.keySplitting.errors.invalid') }}
-                </span>
-              </span>
-            </div>
-            <!-- Needs Redundancy badge -->
-          </div>
         </div>
       </div>
 
@@ -98,9 +69,9 @@
               :selected-users="selectedUsers"
               :on-search="searchCouncilMembers"
               :input-visible="true"
-              :error-message="t('admin.emergencyAccess.councilMembers.errors.notEnoughMembers2', [requiredShares])"
+              :error-message="'At least ' + requiredShares + ' members must be selected.  The required amount was defined above.'"
               :has-error="!!selectedMembersError"
-              :placeholder="t('common.search')"
+              placeholder="Search…"
               @action="selectUser"
               @remove="removeUser"
             />
@@ -156,14 +127,14 @@
       <!-- Example Recovery -->
       <div class="md:grid md:grid-cols-6 md:gap-6">
         <label class="block text-sm text-gray-700 md:text-right md:pr-4 md:mt-2 col-span-2">
-          {{ t('admin.emergencyAccess.exampleRecovery.label') }}
+          Example Recovery
         </label>
         <div class="mt-1 md:mt-0 lg:col-span-3 md:col-span-4">
           <EmergencyScenarioVisualization
             :selected-users="selectedUsers"
             :required-key-shares="requiredShares!"
           />
-          <p class="mt-2 text-sm text-gray-500">{{ t('admin.emergencyAccess.exampleRecovery.description') }}</p>
+          <p class="mt-2 text-sm text-gray-500">Example of who can collaborate to recover a vault.</p>
         </div>
       </div>
 
@@ -296,15 +267,15 @@ function removeUser(u: UserDto) {
 }
 
 const requiredKeySharesValidationText = computed(() => {
-  if (defaultRequiredEmergencyKeySharesToHighError.value != null) return t('admin.emergencyAccess.keySplitting.errors.maxValue');
-  else if (defaultRequiredEmergencyKeySharesLessThenTwoError.value != null) return t('admin.emergencyAccess.keySplitting.errors.minValue');
+  if (defaultRequiredEmergencyKeySharesToHighError.value != null) return 'Max value is 255.';
+  else if (defaultRequiredEmergencyKeySharesLessThenTwoError.value != null) return 'Min value is 2.';
   return 'No text.';
 });
 
 const requiredMinMembersValidationText = computed(() => {
-  if (defaultMinMembersToHighError.value != null) return t('admin.emergencyAccess.keySplitting.errors.maxValue');
-  else if (defaultMinMembersLessThenTwoError.value != null) return t('admin.emergencyAccess.keySplitting.errors.minValue');
-  else if (defaultMinMembersLowerThenRequiredEmergencyKeySharesError.value != null) return t('admin.emergencyAccess.keySplitting.errors.minMembersHigherOrEaualAsKeyShares');
+  if (defaultMinMembersToHighError.value != null) return 'Max value is 255.';
+  else if (defaultMinMembersLessThenTwoError.value != null) return 'Min value is 2.';
+  else if (defaultMinMembersLowerThenRequiredEmergencyKeySharesError.value != null) return 'Must be higher as Key Shares or equal.';
   return 'No text.';
 });
 

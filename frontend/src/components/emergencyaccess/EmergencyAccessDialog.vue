@@ -96,7 +96,7 @@
 
                       <div v-else-if="processType === 'COUNCIL_CHANGE'">
                         <label class="block text-sm font-medium text-gray-700">
-                          {{ t('admin.emergencyAccess.councilMembers.title') }} (At least: {{ newRequiredKeyShares }})
+                          Council Members (At least: {{ newRequiredKeyShares }})
                         </label>
                         <MultiUserSelectInputGroup
                           :selected-users="newCouncilMembers"
@@ -182,7 +182,7 @@
                               :selected-users="newCouncilMembers"
                               :on-search="noopSearch"
                               :input-visible="false"
-                              :error-message="t('admin.emergencyAccess.councilMembers.errors.notEnoughMembers', [defaultMinMembers])"
+                              :error-message="'At least ' + defaultMinMembers + ' members must be selected.'"
                               :has-error="hasCouncilMemberError"
                             />
                           </div>
