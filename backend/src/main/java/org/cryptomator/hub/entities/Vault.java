@@ -260,7 +260,10 @@ public class Vault {
 		}
 
 		public Stream<Vault> findAllInList(List<UUID> ids) {
-			return find("#Vault.allInList", Parameters.with("ids", ids)).stream();
+			return Batch.of(200).run(ids, Stream.of(), (batch, result) -> {;
+				Stream<Vault> partialResult = find("#Vault.allInList", Parameters.with("ids", batch)).stream();
+				return Stream.concat(result, partialResult);
+			});
 		}
 	}
 }

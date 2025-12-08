@@ -153,7 +153,10 @@ public class EffectiveVaultAccess {
 		}
 
 		public long countSeatsOccupiedByUsers(List<String> userIds) {
-			return count("#EffectiveVaultAccess.countSeatsOccupiedByUsers", Parameters.with("userIds", userIds));
+			return Batch.of(200).run(userIds, 0L, (batch, result) -> {
+				long partialCount = count("#EffectiveVaultAccess.countSeatsOccupiedByUsers", Parameters.with("userIds", batch));
+				return result + partialCount;
+			});
 		}
 
 		public long countSeatOccupyingUsers() {
