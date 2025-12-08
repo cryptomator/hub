@@ -495,6 +495,10 @@ class EmergencyAccessService {
     return axiosAuth.post(`/emergency-access/${recoveryProcessId}/recovered-key-shares`, recoveredKeyShare);
   }
 
+  public async complete(recoveryProcessId: string): Promise<void> {
+    return axiosAuth.post(`/emergency-access/${recoveryProcessId}/complete`);
+  }
+
   public async delete(recoveryProcessId: string): Promise<void> {
     return axiosAuth.delete(`/emergency-access/${recoveryProcessId}`);
   }
