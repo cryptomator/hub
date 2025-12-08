@@ -18,7 +18,7 @@
           <span class="inline-flex items-center gap-2">
             <ExclamationTriangleIcon class="h-6 w-6" aria-hidden="true" />
             <div>
-              <b>Your current key splittting has no redundacy!</b><br/>
+              <b>Your current key splitting has no redundacy!</b><br/>
               It is strongly advised to configure more keyholders than required keys.
               <a href="https://docs.cryptomator.org/hub/admin/#" target="_blank" class="ml-1 inline-flex items-center text-primary underline hover:text-primary-darker">
                 {{ t('common.learnMore') }}
@@ -328,7 +328,6 @@ watch([requiredShares], ([r]) => {
   isDescLoading.value = true;
   isKeySplittingInvalid.value = false;
   isMinMembersKeySplittingInvalid.value = false;
-  noRedundancy.value = false;
 
   defaultRequiredEmergencyKeySharesLessThenTwoError.value = null;
   defaultRequiredEmergencyKeySharesToHighError.value = null;
