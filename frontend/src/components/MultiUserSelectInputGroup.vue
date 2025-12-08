@@ -46,14 +46,14 @@
                 'caret-transparent': selectedPillIndex !== null,
                 'caret-black': selectedPillIndex === null
               }"
-              :placeholder="!!props.placeholder ? props.placeholder : ''"
+              :placeholder="!!props.placeholder ? props.placeholder : t('common.search')"
               @keydown="onKeyDown"
               @blur="onBlur"
             />
           </ComboboxInput>
         </div>
       </Combobox>
-      <div v-if="props.hasError" class="absolute left-1/2 -translate-x-1/2 -top-2 transform -translate-y-full w-5/6">
+      <div v-if="props.hasError" class="absolute left-1/2 -translate-x-1/2 -top-2 transform -translate-y-full">
         <div class="bg-red-50 border border-red-300 text-red-900 px-2 py-1 rounded shadow-sm text-sm hyphens-auto">
           {{ props.errorMessage || t('common.unexpectedError') }}
           <div class="absolute bottom-0 left-1/2 transform translate-y-1/2 rotate-45 w-2 h-2 bg-red-50 border-r border-b border-red-300"></div>

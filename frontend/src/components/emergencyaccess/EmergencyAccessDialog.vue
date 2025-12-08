@@ -55,6 +55,7 @@
                           :selected-users="owners"
                           :on-search="searchUsers"
                           :input-visible="true"
+                          placeholder=" "
                           @action="addOwner"
                           @remove="removeOwner"
                         />
