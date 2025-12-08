@@ -264,7 +264,7 @@
         </form>
       </section>
 
-      <AdminSettingsEmergencyAccess class=""/>
+      <AdminSettingsEmergencyAccess />
     </div>
   </div>
 </template>
