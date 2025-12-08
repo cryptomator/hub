@@ -10,6 +10,9 @@ public class Batch {
 	private final int size;
 
 	private Batch(int size) {
+		if (size <= 0) {
+			throw new IllegalArgumentException("Batch size must be positive");
+		}
 		this.size = size;
 	}
 

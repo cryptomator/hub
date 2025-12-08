@@ -17,6 +17,7 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -152,8 +153,8 @@ public class EffectiveVaultAccess {
 			return count("#EffectiveVaultAccess.countSeatsOccupiedBySingleUser", Parameters.with("userId", userId)) > 0;
 		}
 
-		public long countSeatsOccupiedByUsers(List<String> userIds) {
-			return Batch.of(200).run(userIds, 0L, (batch, result) -> {
+		public long countSeatsOccupiedByUsers(Collection<String> userIds) {
+			return Batch.of(200).run(Set.copyOf(userIds), 0L, (batch, result) -> {
 				long partialCount = count("#EffectiveVaultAccess.countSeatsOccupiedByUsers", Parameters.with("userIds", batch));
 				return result + partialCount;
 			});

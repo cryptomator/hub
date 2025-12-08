@@ -123,7 +123,6 @@ public class VaultResourceIT {
 	@AfterEach
 	@Transactional
 	public void cleanupTestData() {
-		groupRepo.deleteById("group999");
 		userRepo.deleteByIds(List.of("user998", "user999"));
 	}
 

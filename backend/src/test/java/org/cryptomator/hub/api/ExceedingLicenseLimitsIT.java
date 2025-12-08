@@ -85,14 +85,6 @@ public class ExceedingLicenseLimitsIT {
 		user95A.setId("user95_A");
 		user95A.setName("user name Archived");
 
-		var user999 = new User();
-		user999.setId("user999");
-		user999.setName("User 999");
-		user999.setEcdhPublicKey("ecdh_public999");
-		user999.setEcdsaPublicKey("ecdsa_public999");
-		user999.setPrivateKeys("private999");
-		user999.setSetupCode("setup999");
-
 		userRepo.persist(user91, user92, user93, user94, user95A);
 
 		var group91 = new Group();
@@ -175,7 +167,7 @@ public class ExceedingLicenseLimitsIT {
 		Assumptions.assumeTrue(vaultResourceIT.effectiveVaultAccessRepo.countSeatOccupyingUsers() == 5);
 		var vaultId = "7E57C0DE-0000-4000-8000-000100001111";
 
-		var vaultDto = new VaultResource.VaultDto(UUID.fromString(vaultId), "Vault 1", "This is a testvault.", false, Instant.parse("2222-11-11T11:11:11Z"), "someVaule", -1, "doNotUpdate", "doNotUpdate", "doNotUpdate");
+		var vaultDto = new VaultResource.VaultDto(UUID.fromString(vaultId), "Vault 1", "This is a testvault.", false, Instant.parse("2222-11-11T11:11:11Z"), "someValue", -1, "doNotUpdate", "doNotUpdate", "doNotUpdate");
 		given().contentType(ContentType.JSON)
 				.body(vaultDto)
 				.when().put("/vaults/{vaultId}", vaultId)
@@ -222,8 +214,8 @@ public class ExceedingLicenseLimitsIT {
 
 	@Test
 	@Order(8)
-	@DisplayName("Unlock/legacyUnlock is blocked if (effective vault users with toke) > license seats")
-	public void testUnockBlockedExceedingLicenseHardLimit() throws SQLException {
+	@DisplayName("Unlock/legacyUnlock is blocked if (effective vault users with token) > license seats")
+	public void testUnlockBlockedExceedingLicenseHardLimit() throws SQLException {
 		try (var c = vaultResourceIT.dataSource.getConnection(); var s = c.createStatement()) {
 			s.execute("""
 					INSERT INTO "access_token" ("user_id", "vault_id", "vault_masterkey")
