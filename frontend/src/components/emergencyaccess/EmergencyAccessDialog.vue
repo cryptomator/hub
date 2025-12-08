@@ -47,27 +47,6 @@
                     </DialogTitle>
 
                     <div v-if="phase === 'start'" class="mt-4 space-y-4">
-                      <div class="mt-2">
-                        <div class="text-sm text-gray-500">
-                          <div class="flex items-start gap-2 rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-900">
-                            <span class="leading-5">
-                              <span class="text-gray-500">
-                                {{ 
-                                  startType == 'CHANGE_PERMISSIONS' 
-                                    ? t('admin.emergencyAccess.assignOwner.startDesc', [getCurrentCouncilMembers(vault).length, vault.requiredEmergencyKeyShares]) 
-                                    : t('admin.emergencyAccess.changeCouncil.startDesc', [vault.requiredEmergencyKeyShares]) 
-                                }}
-                              </span>
-                            </span>
-                            <SegmentRing
-                              :total="vault.requiredEmergencyKeyShares"
-                              :completed="completedSegments"
-                              :size="36"
-                              fill-color="#66cc68bb"
-                            />
-                          </div>
-                        </div>
-                      </div>
                       <div v-if="processType === 'CHANGE_PERMISSIONS'">
                         <label class="block text-sm font-medium text-gray-700">
                           Select user with role owner
@@ -134,19 +113,6 @@
                           :required-key-shares="newRequiredKeyShares"
                           :min-members="defaultMinMembers"
                         />
-                        <div class="flex items-start gap-2 rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-900 mt-2">
-                          <span class="leading-5">
-                            <span class="text-gray-500">
-                              {{ t('admin.emergencyAccess.changeCouncil.newCouncilDesc', [newRequiredKeyShares]) }}
-                            </span>
-                          </span>
-                          <SegmentRing
-                            :total="newRequiredKeyShares"
-                            :completed="newRequiredKeyShares"
-                            :size="36"
-                            fill-color="#66cc68bb"
-                          />
-                        </div>
                         <div v-if="needsRedundancy()" class="mt-4 mr-3">
                           <span class="inline-flex items-center gap-2 rounded-full bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800" :title="t('emergencyAccessVaultList.noRedundancyHint')" >
                             <ExclamationTriangleIcon class="h-4 w-4" aria-hidden="true" />
@@ -225,19 +191,6 @@
                             :required-key-shares="newRequiredKeyShares"
                             :min-members="defaultMinMembers"
                           />
-                          <div class="flex items-start gap-2 rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-900 mt-2">
-                            <span class="leading-5">
-                              <span class="text-gray-500">
-                                {{ t('admin.emergencyAccess.changeCouncil.newCouncilDesc', [newRequiredKeyShares]) }}as
-                              </span>
-                            </span>
-                            <SegmentRing
-                              :total="newRequiredKeyShares"
-                              :completed="0"
-                              :size="36"
-                              fill-color="#66cc68bb"
-                            />
-                          </div>
                         </div>
                       </div>
                       <div v-if="phase === 'complete' && !didAddMyShare" class="text-sm pt-2">
