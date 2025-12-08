@@ -212,7 +212,7 @@ export class VaultKeys {
       const encKey = rawkey.subarray(0, rawkey.length / 2 | 0);
       const macKey = rawkey.subarray(rawkey.length / 2 | 0);
       const shiftedRawKey = new Uint8Array([...macKey, ...encKey]);
-      const ciphertext = aessiv(shiftedRawKey, dirHash).encrypt(new Uint8Array(0)) as Uint8Array<ArrayBuffer>;
+      const ciphertext = aessiv(shiftedRawKey).encrypt(dirHash) as Uint8Array<ArrayBuffer>;
       // hash is only used as deterministic scheme for the root dir
       const hash = await crypto.subtle.digest('SHA-1', ciphertext);
       return base32.encode(new Uint8Array(hash));
