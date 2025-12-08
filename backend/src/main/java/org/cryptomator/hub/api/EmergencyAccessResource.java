@@ -119,6 +119,23 @@ public class EmergencyAccessResource {
 		return Response.status(Response.Status.NO_CONTENT).build();
 	}
 
+	@POST
+	@Path("/{processId}/complete")
+	@RolesAllowed("user")
+	@Operation(summary = "completes an existing recovery process")
+	@APIResponse(responseCode = "204")
+	@APIResponse(responseCode = "404")
+	@Transactional
+	public Response complete(@PathParam("processId") UUID processId) {
+		var currentUserId = jwt.getSubject();
+		var ip = request.remoteAddress().hostAddress();
+
+		eventLogger.logEmergencyAccessRecoveryCompleted(processId, currentUserId, ip);
+
+		return Response.noContent().build();
+	}
+
+
 	@DELETE
 	@Path("/{processId}")
 	@RolesAllowed("user")
@@ -128,10 +145,10 @@ public class EmergencyAccessResource {
 	@Transactional
 	public Response delete(@PathParam("processId") UUID processId) {
 		if (recoverProcessRepo.deleteById(processId)) {
-			var currentUserId = jwt.getSubject();
-			var ip = request.remoteAddress().hostAddress();
-			eventLogger.logEmergencyAccessRecoveryApproved(processId, currentUserId, ip);
-			eventLogger.logEmergencyAccessRecoveryCompleted(processId, currentUserId, ip);
+			//var currentUserId = jwt.getSubject();
+			//var ip = request.remoteAddress().hostAddress();
+			//eventLogger.logEmergencyAccessRecoveryApproved(processId, currentUserId, ip);
+			//eventLogger.logEmergencyAccessRecoveryCompleted(processId, currentUserId, ip);
 			return Response.noContent().build();
 		} else {
 			throw new NotFoundException();

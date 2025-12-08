@@ -901,6 +901,7 @@ async function completeRecovery() {
       throw new Error(`Unsupported state for recovery process type: ${process.type}`);
     }
 
+    await backend.emergencyAccess.complete(process.id);
     await backend.emergencyAccess.delete(process.id);
     emit('updated');
     open.value = false;
