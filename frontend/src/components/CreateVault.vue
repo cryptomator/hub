@@ -141,21 +141,6 @@
                 </span>
               </div>
             </div>
-            <div class="flex items-start gap-2 rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-900 mt-3">
-              <span class="leading-5">
-                <span class="text-gray-500">
-                  Recovery will require approval of {{ requiredKeyShares }} council member to use emergency access restore features. 
-                </span>
-              </span>
-              <SegmentRing
-                v-if="true"
-                :total="requiredKeyShares"
-                :completed="0"
-                :size="36"
-                fill-color="#66cc68bb"
-                empty-color="#ccc"
-              />
-            </div>
             <label class="block text-sm font-medium text-gray-700 pt-4">
               Example Recovery
             </label>
@@ -343,7 +328,6 @@ import { EmergencyAccess } from '../common/emergencyaccess';
 import EmergencyScenarioVisualization from './emergencyaccess/EmergencyScenarioVisualization.vue';
 import VaultCreationProgress from './VaultCreationProgress.vue';
 import { wordEncoder } from '../common/util';
-import SegmentRing from './emergencyaccess/SegmentRing.vue';
 
 enum State {
   Initial,
