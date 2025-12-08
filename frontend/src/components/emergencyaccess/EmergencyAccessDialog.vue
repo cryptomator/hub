@@ -96,15 +96,22 @@
 
                       <div v-else-if="processType === 'COUNCIL_CHANGE'">
                         <label class="block text-sm font-medium text-gray-700">
-                          {{ t('admin.emergencyAccess.councilMembers.title') }} (Min Members: {{ defaultMinMembers }})
+                          {{ t('admin.emergencyAccess.councilMembers.title') }} (At least: {{ newRequiredKeyShares }})
                         </label>
                         <MultiUserSelectInputGroup
                           :selected-users="newCouncilMembers"
                           :on-search="searchUsersWithCompleteSetup"
-                          :input-visible="allowChangingDefaults"
+                          :input-visible="true"
                           @action="addCouncilMember"
                           @remove="removeCouncilMember"
                         />
+                        <div v-if="newRequiredKeyShares - newCouncilMembers.length > 0" class="flex items-start gap-2 rounded-md border border-yellow-200 bg-yellow-50 p-1 text-sm text-gray-900 mt-1">
+                          <span class="leading-5">
+                            <span class="text-gray-600">
+                              Select at least {{ newRequiredKeyShares - newCouncilMembers.length }} more council member.
+                            </span>
+                          </span>
+                        </div>
                         <label class="block text-sm font-medium text-gray-700 pt-4">
                           {{ t('grantEmergencyAccessDialog.possibleEmergencyScenario') }}
                         </label>
@@ -112,7 +119,7 @@
                           :selected-users="newCouncilMembers"
                           :grant-button-disabled="isGrantButtonDisabled"
                           :required-key-shares="newRequiredKeyShares"
-                          :min-members="defaultMinMembers"
+                          :min-members="newRequiredKeyShares"
                         />
                         <div v-if="needsRedundancy()" class="mt-4 mr-3">
                           <span class="inline-flex items-center gap-2 rounded-full bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800" :title="t('emergencyAccessVaultList.noRedundancyHint')" >

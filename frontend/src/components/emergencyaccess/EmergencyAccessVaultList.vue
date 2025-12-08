@@ -365,7 +365,7 @@ function getProcessByType(vault: VaultDto, type: RecoveryProcessDto['type']): Re
 function getTypeLabel(vault: VaultDto, type: RecoveryProcessDto['type']) {
   return type === 'CHANGE_PERMISSIONS'
     ? t('emergencyAccessVaultList.assignOwner')
-    : ( allowChoosingEmergencyCouncil.value ? t('emergencyAccessVaultList.changeCouncil') : 'Reset Council');
+    : t('emergencyAccessVaultList.changeCouncil');
 }
 
 const allowChoosingEmergencyCouncil = ref<boolean>(false);

@@ -120,7 +120,7 @@
             class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
           />
           <label for="allow" class="ml-2 text-sm text-gray-500">
-            Allow to choose different Keyholders. {{ allowChoosing ? ' At least: ' : '' }}
+            Let Vault Owners choose different keyholders. {{ allowChoosing ? ' At least: ' : '' }}
           </label>
 
           <div class="relative ml-2 flex-1">
