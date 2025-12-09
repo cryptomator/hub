@@ -72,7 +72,7 @@ const vFocus = {
 const actionButton = ref<HTMLButtonElement>();
 const selectedItem = shallowRef<T>();
 watch(selectedItem, (value) => {
-  if (value != undefined) {
+  if (value !== undefined) {
     nextTick(() => actionButton.value?.focus());
   }
 });
