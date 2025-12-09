@@ -384,7 +384,7 @@ public class VaultResource {
 	@GET
 	@Path("/{vaultId}")
 	@RolesAllowed("user")
-	@VaultRole(value = {VaultAccess.Role.MEMBER, VaultAccess.Role.OWNER}, bypassForRealmRole = true, realmRole = "admin", onMissingVault = VaultRole.OnMissingVault.NOT_FOUND) // we do custom access check below to allow admin role
+	@VaultRole(value = {VaultAccess.Role.MEMBER, VaultAccess.Role.OWNER}, bypassForRealmRole = true, realmRole = "admin", onMissingVault = VaultRole.OnMissingVault.NOT_FOUND)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
 	@Operation(summary = "gets a vault")
