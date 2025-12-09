@@ -14,41 +14,38 @@ import org.hibernate.annotations.Immutable;
 
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 @NamedNativeQuery(name = "EffectiveGroupMembership.fullUpdate", query = """
-		INSERT INTO "effective_group_membership" ("group_id", "member_id", "path")
-		WITH RECURSIVE "members" ("root", "member_id", "depth", "path") AS (
-		    SELECT "group_id", "member_id", 0, '/' || "group_id" || '/' || "member_id"
+		INSERT INTO "effective_group_membership" ("group_id", "intermediate_group_ids", "member_id")
+		WITH RECURSIVE "members" ("root","intermediate_group_ids","member_id", "depth") AS (
+		    SELECT "group_id", ARRAY["group_id"]::varchar[], "member_id", 0
 		        FROM "group_membership"
 		    UNION
-		    SELECT "parent"."root", "child"."member_id", "parent"."depth" + 1, "parent"."path" || '/' || "child"."member_id"
+		    SELECT "parent"."root", array_append("parent"."intermediate_group_ids", "child"."group_id"), "child"."member_id", "parent"."depth" + 1
 		        FROM "group_membership" "child"
 		        INNER JOIN "members" "parent" ON "child"."group_id" = "parent"."member_id"
 		        WHERE "parent"."depth" < 10
-		) SELECT "root", "member_id", "path" FROM "members"
+		) SELECT "root", "intermediate_group_ids", "member_id" FROM "members"
 		ON CONFLICT DO NOTHING
 		""")
-@NamedQuery(name = "EffectiveGroupMembership.deleteGroups", query = """
+@NamedNativeQuery(name = "EffectiveGroupMembership.deleteGroups", query = """
 		DELETE
-		FROM EffectiveGroupMembership egm
-		WHERE egm.id.groupId IN :groupIds
+		FROM "effective_group_membership"
+		WHERE "intermediate_group_ids" && :groupIds
 		""")
 @NamedNativeQuery(name = "EffectiveGroupMembership.updateGroups", query = """
-		INSERT INTO "effective_group_membership" ("group_id", "member_id", "path")
-		WITH RECURSIVE "members" ("root", "member_id", "depth", "path") AS (
-		    SELECT "group_id", "member_id", 0, '/' || "group_id" || '/' || "member_id"
+		INSERT INTO "effective_group_membership" ("group_id", "intermediate_group_ids", "member_id")
+		WITH RECURSIVE "members" ("root", "intermediate_group_ids", "member_id", "depth") AS (
+		    SELECT "group_id", ARRAY["group_id"]::varchar[], "member_id", 0
 		        FROM "group_membership"
 		        WHERE "group_id" IN :groupIds
 		    UNION
-		    SELECT "parent"."root", "child"."member_id", "parent"."depth" + 1, "parent"."path" || '/' || "child"."member_id"
+		    SELECT "parent"."root", array_append("parent"."intermediate_group_ids", "child"."group_id"), "child"."member_id", "parent"."depth" + 1
 		        FROM "group_membership" "child"
 		        INNER JOIN "members" "parent" ON "child"."group_id" = "parent"."member_id"
 		        WHERE "parent"."depth" < 10
-		) SELECT "root", "member_id", "path" FROM "members"
+		) SELECT "root", "intermediate_group_ids", "member_id" FROM "members"
 		ON CONFLICT DO NOTHING
 		""")
 @NamedQuery(name = "EffectiveGroupMembership.deleteUsers", query = """
@@ -57,17 +54,17 @@ import java.util.stream.Collectors;
 		WHERE egm.id.memberId IN :userIds
 		""")
 @NamedNativeQuery(name = "EffectiveGroupMembership.updateUsers", query = """
-		INSERT INTO "effective_group_membership" ("group_id", "member_id", "path")
-		WITH RECURSIVE "members" ("group_id", "member_id", "depth", "path") AS (
-		    SELECT "group_id", "member_id", 0, '/' || "group_id" || '/' || "member_id"
+		INSERT INTO "effective_group_membership" ("group_id", "intermediate_group_ids", "member_id")
+		WITH RECURSIVE "members" ("group_id", "intermediate_group_ids", "member_id", "depth") AS (
+		    SELECT "group_id", ARRAY["group_id"]::varchar[], "member_id", 0
 		        FROM "group_membership"
 		        WHERE "member_id" IN :userIds
 		    UNION
-		    SELECT "parent"."group_id", "child"."member_id", "child"."depth" + 1, '/' || "parent"."group_id" || "child"."path"
+		    SELECT "parent"."group_id", array_prepend("parent"."group_id", "child"."intermediate_group_ids"), "child"."member_id", "child"."depth" + 1
 		        FROM "group_membership" "parent"
 		        INNER JOIN "members" "child" ON "child"."group_id" = "parent"."member_id"
 		        WHERE "child"."depth" < 10
-		) SELECT "group_id", "member_id", "path" FROM "members"
+		) SELECT "group_id", "intermediate_group_ids", "member_id" FROM "members"
 		ON CONFLICT DO NOTHING
 		""")
 @Entity
@@ -77,8 +74,6 @@ public class EffectiveGroupMembership {
 
 	@EmbeddedId
 	private Id id;
-
-	private String path;
 
 	@Embeddable
 	public static class Id implements Serializable {
@@ -125,7 +120,10 @@ public class EffectiveGroupMembership {
 
 		public void updateGroups(Collection<String> groupIds) {
 			Batch.of(200).run(groupIds, (batch) -> {
-				delete("#EffectiveGroupMembership.deleteGroups", Parameters.with("groupIds", batch));
+				getEntityManager()
+						.createNamedQuery("EffectiveGroupMembership.deleteGroups")
+						.setParameter("groupIds", batch.toArray(new String[0])) // explicit cast to array, so JPA maps to VARCHAR[] instead of VARCHAR
+						.executeUpdate();
 				getEntityManager()
 						.createNamedQuery("EffectiveGroupMembership.updateGroups")
 						.setParameter("groupIds", batch)
@@ -141,6 +139,14 @@ public class EffectiveGroupMembership {
 						.setParameter("userIds", batch)
 						.executeUpdate();
 			});
+		}
+
+		// visible for testing
+		boolean isMember(String groupId, String memberId) {
+			EffectiveGroupMembership.Id id = new EffectiveGroupMembership.Id();
+			id.groupId = groupId;
+			id.memberId = memberId;
+			return findById(id) != null;
 		}
 
 	}

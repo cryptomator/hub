@@ -60,9 +60,8 @@ public class GroupsResourceIT {
 		var group1 = groupRepo.findById("group1");
 		group1.getMembers().add(group999);
 		groupRepo.persist(group1);
-
-		effectiveGroupMembershipRepo.updateUsers(List.of("user999"));
-		effectiveGroupMembershipRepo.updateGroups(List.of("group999"));
+		
+		effectiveGroupMembershipRepo.updateGroups(List.of("group1", "group999"));
 	}
 
 	@AfterEach

@@ -29,10 +29,10 @@ VALUES
 	('group1', 'user1'),
 	('group2', 'user2');
 
-INSERT INTO "effective_group_membership" ("group_id", "member_id", "path")
+INSERT INTO "effective_group_membership" ("group_id", "intermediate_group_ids", "member_id")
 VALUES
-    ('group1', 'user1', '/group1/user1'),
-    ('group2', 'user2', '/group2/user2');
+    ('group1', ARRAY['group1'], 'user1'),
+    ('group2', ARRAY['group2'], 'user2');
 
 INSERT INTO "vault" ("id", "name", "description", "creation_time", "salt", "iterations", "masterkey", "auth_pubkey", "auth_prvkey", "archived")
 VALUES
