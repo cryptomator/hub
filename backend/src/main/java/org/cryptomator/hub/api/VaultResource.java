@@ -336,7 +336,7 @@ public class VaultResource {
 	@VaultRole(VaultAccess.Role.OWNER) // may throw 403
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
-	@Operation(summary = "list devices requiring access rights", description = "lists all devices owned by vault members, that don't have a device-specific masterkey yet")
+	@Operation(summary = "list users requiring access rights", description = "lists all users, who don't have a user-specific vault key yet")
 	@APIResponse(responseCode = "200")
 	@APIResponse(responseCode = "403", description = "not a vault owner")
 	public List<UserDto> getUsersRequiringAccessGrant(@PathParam("vaultId") UUID vaultId) {

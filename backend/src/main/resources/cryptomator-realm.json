@@ -41,6 +41,7 @@
   },
   "users": [
     {
+      "id": "admin",
       "username": "admin",
       "firstName": "admin",
       "lastName": "admin",
@@ -60,6 +61,7 @@
       ]
     },
     {
+      "id": "alice",
       "username": "alice",
       "firstName": "alice",
       "lastName": "alice",
@@ -77,6 +79,7 @@
       ]
     },
     {
+      "id": "bob",
       "username": "bob",
       "firstName": "bob",
       "lastName": "bob",
@@ -94,6 +97,7 @@
       ]
     },
     {
+      "id": "carol",
       "username": "carol",
       "firstName": "carol",
       "lastName": "carol",
@@ -113,6 +117,7 @@
       ]
     },
     {
+      "id": "dave",
       "username": "dave",
       "firstName": "dave",
       "lastName": "dave",
@@ -132,6 +137,7 @@
       ]
     },
     {
+      "id": "erin",
       "username": "erin",
       "firstName": "erin",
       "lastName": "erin",
@@ -151,6 +157,7 @@
       ]
     },
     {
+      "id": "system",
       "username": "system",
       "email": "system@localhost",
       "enabled": true,
@@ -166,6 +173,7 @@
       }
     },
     {
+      "id": "cli",
       "username": "cli",
       "email": "cli@localhost",
       "enabled": true,
