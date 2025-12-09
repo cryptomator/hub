@@ -46,7 +46,7 @@
         <div>
           <div class="text-xl">{{ label }}</div>
           <div class="text-xs text-gray-500 mb-2">
-            {{ t('recoveryDialog.requiredKeyShares') }}:
+            Required KeyShares:
             {{ requiredKeyShares }}
           </div>
         </div>
@@ -79,8 +79,8 @@
               :class="recoveredSet.has(m.id) ? 'bg-green-500' : 'bg-gray-300'"
             ></span>
             {{ recoveredSet.has(m.id)
-              ? t('recoveryDialog.status.added')
-              : t('recoveryDialog.status.pending') }}
+              ? 'Added'
+              : 'Pending' }}
           </span>
         </li>
       </ul>

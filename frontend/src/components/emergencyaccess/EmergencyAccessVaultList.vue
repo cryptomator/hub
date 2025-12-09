@@ -83,7 +83,7 @@
                   v-else-if="noRedundancy(vault)"
                   type="noRedundancy"
                   title="No Redundancy"
-                  :message="t('emergencyAccessVaultList.noRedundancyHint')"
+                  message="This Emergency Access Council has no redundancy. Consider assigning a council with redundancy."
                 />
 
                 <!-- Council Members -->
@@ -127,7 +127,7 @@
                         <div>
                           <div class="text-xl">Vault Council</div>
                           <div class="text-xs text-gray-500 mb-2">
-                            {{ t('recoveryDialog.requiredKeyShares') }}:
+                            Required KeyShares:
                             {{ vault!.requiredEmergencyKeyShares }}
                           </div>
                         </div>
@@ -161,7 +161,7 @@
                   <template v-for="proc in getProcesses(vault.id)" :key="proc.id">
                     <EmergencyProcessButton
                       v-if="me && isUserInProcess(proc) && proc.type === 'CHANGE_PERMISSIONS'"
-                      :label="t('emergencyAccessVaultList.assignOwner')"
+                      label="Change Permissions"
                       :approval-label="getApprovalLabel(proc)"
                       :disabled="isBroken(vault)"
                       :has-process="true"
@@ -214,7 +214,7 @@
   </div>
 
   <div v-else-if="filteredVaults && filteredVaults.length == 0" class="mt-3 text-center">
-    <h3 class="mt-2 text-sm font-medium text-gray-900">{{ t('emergencyAccessVaultList.empty.title') }}</h3>
+    <h3 class="mt-2 text-sm font-medium text-gray-900">No emergency access vaults found</h3>
   </div>
 
   <EmergencyAccessDialog
@@ -364,8 +364,8 @@ function getProcessByType(vault: VaultDto, type: RecoveryProcessDto['type']): Re
 
 function getTypeLabel(vault: VaultDto, type: RecoveryProcessDto['type']) {
   return type === 'CHANGE_PERMISSIONS'
-    ? t('emergencyAccessVaultList.assignOwner')
-    : t('emergencyAccessVaultList.changeCouncil');
+    ? 'Change Permissions'
+    : 'Change Council';
 }
 
 const allowChoosingEmergencyCouncil = ref<boolean>(false);

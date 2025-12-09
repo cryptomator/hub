@@ -103,7 +103,7 @@
                 v-else-if="noRedundancy(vault)"
                 type="noRedundancy"
                 title="No Redundancy"
-                :message="t('emergencyAccessVaultList.noRedundancyHint')"
+                message="This Emergency Access Council has no redundancy. Consider assigning a council with redundancy."
                 position="right"
               />
             </div>

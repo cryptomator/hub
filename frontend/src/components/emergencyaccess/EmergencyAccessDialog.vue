@@ -122,9 +122,9 @@
                           :min-members="newRequiredKeyShares"
                         />
                         <div v-if="needsRedundancy()" class="mt-4 mr-3">
-                          <span class="inline-flex items-center gap-2 rounded-full bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800" :title="t('emergencyAccessVaultList.noRedundancyHint')" >
+                          <span class="inline-flex items-center gap-2 rounded-full bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800">
                             <ExclamationTriangleIcon class="h-4 w-4" aria-hidden="true" />
-                            {{ t('emergencyAccessVaultList.noRedundancy') }}
+                            No Redundancy
                           </span>
                         </div>
                       </div>
@@ -177,7 +177,7 @@
                         Council Change
                         <div class="mt-4 space-y-1 text-sm text-gray-500">
                           <div v-if="recoveryProcess.details.newCouncilMemberIds.length > 0">
-                            <span class="font-medium text-gray-700">{{ t('recoveryDialog.newCouncilMembers') }}:</span>
+                            <span class="font-medium text-gray-700">New Council Members:</span>
                             <MultiUserSelectInputGroup
                               :selected-users="newCouncilMembers"
                               :on-search="noopSearch"
@@ -187,7 +187,7 @@
                             />
                           </div>
                           <div>
-                            <span class="font-medium text-gray-700">{{ t('recoveryDialog.requiredKeyShares') }}:</span>
+                            <span class="font-medium text-gray-700">Required KeyShares:</span>
                             {{ recoveryProcess.details.newRequiredKeyShares }}
                           </div>
                           <label class="block text-sm font-medium text-gray-700 pt-4">
@@ -247,7 +247,7 @@
                     :disabled="!canStartRecovery"
                     @click="startRecovery()"
                   >
-                    {{ t('common.start') }}
+                    Start
                   </button>
                 </template>
 
@@ -259,7 +259,7 @@
                     class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm"
                     @click="approveRecovery()"
                   >
-                    {{ t('common.approve') }}
+                    Approve
                   </button>
                 </template>
 
@@ -271,7 +271,7 @@
                     class="inline-flex w-full sm:w-auto justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:text-sm"
                     @click="completeRecovery()"
                   >
-                    {{ t('emergencyAccessProcessAbortDialog.complete') }}
+                    Complete Process
                   </button>
                 </template>
 
@@ -290,7 +290,7 @@
                     class="mt-2 text-sm text-red-600 cursor-pointer hover:underline sm:order-last sm:mr-auto"
                     @click.stop="requestCancel()"
                   >
-                    {{ t('emergencyAccessProcessAbortDialog.title') }}
+                    Abort this Process
                   </p>
                 </template>
               </div>
@@ -734,10 +734,10 @@ const phaseTitle = computed(() => {
       if (!isMeInProcessCouncil.value) {
         return 'Process details';
       }
-      return didAddMyShare.value ? 'Approved' : t('recoveryDialog.approveTitle');
+      return didAddMyShare.value ? 'Approved' : 'Approve Emergency Access';
     }
     case 'complete': {
-      return !didAddMyShare.value ? t('recoveryDialog.completeTitle') : 'Approved';
+      return !didAddMyShare.value ? 'Complete Emergency Access' : 'Approved';
     }
     default:
       return '';
@@ -746,9 +746,9 @@ const phaseTitle = computed(() => {
 
 const phaseDescription = computed(() => {
   switch (phase.value) {
-    case 'start': return t('recoveryDialog.startDesc');
-    case 'approve': return didAddMyShare.value ? t('recoveryDialog.alreadyAddedKeyShare') : t('recoveryDialog.approveDesc');
-    case 'complete': return t('recoveryDialog.completeDesc');
+    case 'start': return 'Start Emergency Access Desc';
+    case 'approve': return didAddMyShare.value ? 'You have already added your part of the emergency key.' : 'Approve Emergency Access Desc';
+    case 'complete': return 'Complete Emergency Access Desc';
     default: return '';
   }
 });

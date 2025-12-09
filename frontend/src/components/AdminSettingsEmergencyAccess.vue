@@ -14,7 +14,6 @@
       <div v-if="noRedundancy" class="md:grid md:grid-cols-6 md:gap-6">
         <span
           class="inline-flex items-center rounded-md bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800 col-span-6"
-          :title="t('emergencyAccessVaultList.noRedundancyHint')"
         >
           <span class="inline-flex items-center gap-2">
             <ExclamationTriangleIcon class="h-6 w-6" aria-hidden="true" />
