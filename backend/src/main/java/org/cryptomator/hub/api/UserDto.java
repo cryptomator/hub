@@ -128,7 +128,7 @@ public final class UserDto extends AuthorityDto {
 				null);
 	}
 
-	public static UserDtoWithCounts justPublicInfoWithCounts(User user, long groupsCount, long vaultsCount, long devicesCount) {
+	public static UserDtoWithCounts justPublicInfoWithCounts(User user, String firstName, String lastName, long groupsCount, long vaultsCount, long devicesCount) {
 		return new UserDtoWithCounts(
 				user.getId(),
 				user.getName(),
@@ -137,6 +137,8 @@ public final class UserDto extends AuthorityDto {
 				user.getLanguage(),
 				user.getEcdhPublicKey(),
 				user.getEcdsaPublicKey(),
+				firstName,
+				lastName,
 				devicesCount,
 				groupsCount,
 				vaultsCount
@@ -151,6 +153,8 @@ public final class UserDto extends AuthorityDto {
 			@JsonProperty("language") String language,
 			@JsonProperty("ecdhPublicKey") String ecdhPublicKey,
 			@JsonProperty("ecdsaPublicKey") String ecdsaPublicKey,
+			@JsonProperty("firstName") String firstName,
+			@JsonProperty("lastName") String lastName,
 			@JsonProperty("devicesCount") long devicesCount,
 			@JsonProperty("groupsCount") long groupsCount,
 			@JsonProperty("vaultsCount") long vaultsCount

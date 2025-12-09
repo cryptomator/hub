@@ -23,7 +23,7 @@
                 <img :src="user.pictureUrl" :alt="t('userList.profileImage')" class="w-10 h-10 rounded-full object-cover border border-gray-300 flex-shrink-0" />
                 <div class="ml-3 min-w-0 flex-1">
                   <p class="text-sm font-medium text-gray-900 truncate leading-tight">{{ user.name }}</p>
-                  <p class="text-xs text-gray-500 truncate">{{ user.email }}</p>
+                  <p class="text-xs text-gray-500 truncate">{{ user.firstName || user.lastName ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() : user.email }}</p>
                 </div>
               </div>
               <Menu v-if="user.id !== currentUserId" as="div" class="relative inline-block shrink-0 text-left">
@@ -78,7 +78,7 @@
                         <img :src="user.pictureUrl" :alt="t('userList.profileImage')" class="w-10 h-10 rounded-full object-cover border border-gray-300"/>
                         <div class="flex flex-col min-w-0 flex-1">
                           <button type="button" class="truncate block hover:underline text-left" :title="user.name" @click="router.push(`users/${user.id}`)">{{ user.name }}</button>
-                          <span class="text-xs text-gray-500 truncate" :title="user.email">{{ user.email }}</span>
+                          <span class="text-xs text-gray-500 truncate" :title="user.firstName || user.lastName ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() : user.email">{{ user.firstName || user.lastName ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() : user.email }}</span>
                         </div>
                       </div>
                     </td>
@@ -138,6 +138,8 @@ interface UserListDto {
   pictureUrl?: string;
   ecdhPublicKey?: string;
   ecdsaPublicKey?: string;
+  firstName?: string;
+  lastName?: string;
   devicesCount?: number;
   groupsCount?: number;
   vaultsCount?: number;

@@ -333,9 +333,9 @@ onMounted(async () => {
     try {
       const fetchedUser = await backend.users.getUser(userId);
 
-      const nameParts = fetchedUser.name.split(' ');
-      firstName.value = nameParts[0] || '';
-      lastName.value = nameParts.slice(1).join(' ') || '';
+      const userData = fetchedUser as { firstName?: string; lastName?: string };
+      firstName.value = userData.firstName || '';
+      lastName.value = userData.lastName || '';
 
       username.value = fetchedUser.name;
       email.value = fetchedUser.email;

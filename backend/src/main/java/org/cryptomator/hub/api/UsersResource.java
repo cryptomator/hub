@@ -246,12 +246,25 @@ public class UsersResource {
 	@Operation(summary = "list all users with counts")
 	public List<UserDto.UserDtoWithCounts> getAll() {
 		return userRepo.findAll().stream()
-				.map(user -> UserDto.justPublicInfoWithCounts(
-						user,
-						userRepo.countGroupsForUser(user.getId()),
-						userRepo.countVaultsForUser(user.getId()),
-						userRepo.countDevicesForUser(user.getId())
-				))
+				.map(user -> {
+					String firstName = null;
+					String lastName = null;
+					try {
+						var keycloakUser = keycloakAdminService.getUser(user.getId());
+						firstName = keycloakUser.getFirstName();
+						lastName = keycloakUser.getLastName();
+					} catch (Exception e) {
+						// continue without keycloak data
+					}
+					return UserDto.justPublicInfoWithCounts(
+							user,
+							firstName,
+							lastName,
+							userRepo.countGroupsForUser(user.getId()),
+							userRepo.countVaultsForUser(user.getId()),
+							userRepo.countDevicesForUser(user.getId())
+					);
+				})
 				.toList();
 	}
 
@@ -363,11 +376,15 @@ public class UsersResource {
 		}
 
 		Long createdTimestamp = null;
+		String firstName = null;
+		String lastName = null;
 		try {
 			var keycloakUser = keycloakAdminService.getUser(userId);
 			createdTimestamp = keycloakUser.getCreatedTimestamp();
+			firstName = keycloakUser.getFirstName();
+			lastName = keycloakUser.getLastName();
 		} catch (Exception e) {
-			// continue without timestamp
+			// continue without keycloak data
 		}
 
 		// Fetch groups for the user
@@ -398,7 +415,17 @@ public class UsersResource {
 		// Fetch roles
 		Set<String> roles = keycloakAdminService.getUserRoles(userId);
 
-		return UserDtoWithTimestamp.from(UserDto.justPublicInfo(user), createdTimestamp, groups, vaults, devices, legacyDevices, roles);
+		return UserDtoWithTimestamp.from(
+				UserDto.justPublicInfo(user),
+				createdTimestamp,
+				firstName,
+				lastName,
+				groups,
+				vaults,
+				devices,
+				legacyDevices,
+				roles
+		);
 	}
 
 	@PUT
@@ -488,13 +515,15 @@ public class UsersResource {
 			@JsonProperty("ecdhPublicKey") String ecdhPublicKey,
 			@JsonProperty("ecdsaPublicKey") String ecdsaPublicKey,
 			@JsonProperty("createdTimestamp") Long createdTimestamp,
+			@JsonProperty("firstName") String firstName,
+			@JsonProperty("lastName") String lastName,
 			@JsonProperty("groups") List<GroupDto> groups,
 			@JsonProperty("vaults") List<VaultDtoWithRole> vaults,
 			@JsonProperty("devices") Set<DeviceResource.DeviceDto> devices,
 			@JsonProperty("legacyDevices") Set<DeviceResource.DeviceDto> legacyDevices,
 			@JsonProperty("roles") Set<String> roles
 	) {
-		public static UserDtoWithTimestamp from(UserDto userDto, Long createdTimestamp, List<GroupDto> groups, List<VaultDtoWithRole> vaults, Set<DeviceResource.DeviceDto> devices, Set<DeviceResource.DeviceDto> legacyDevices, Set<String> roles) {
+		public static UserDtoWithTimestamp from(UserDto userDto, Long createdTimestamp, String firstName, String lastName, List<GroupDto> groups, List<VaultDtoWithRole> vaults, Set<DeviceResource.DeviceDto> devices, Set<DeviceResource.DeviceDto> legacyDevices, Set<String> roles) {
 			return new UserDtoWithTimestamp(
 					userDto.id,
 					userDto.type,
@@ -505,6 +534,8 @@ public class UsersResource {
 					userDto.getEcdhPublicKey(),
 					userDto.getEcdsaPublicKey(),
 					createdTimestamp,
+					firstName,
+					lastName,
 					groups,
 					vaults,
 					devices,

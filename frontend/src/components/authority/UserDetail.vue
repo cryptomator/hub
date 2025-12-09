@@ -107,6 +107,8 @@ interface Device {
 }
 
 interface DetailUser {
+  firstName?: string;
+  lastName?: string;
   username: string;
   email: string;
   userPicture?: string;
@@ -151,6 +153,8 @@ const onUserDeleted = (deletedUser: UserDto) => {
 };
 
 const user = ref<DetailUser>({
+  firstName: undefined,
+  lastName: undefined,
   username: '',
   email: '',
   userPicture: undefined,
@@ -176,6 +180,9 @@ onMounted(async () => {
   try {
     const fetchedUser = await backend.users.getUser(props.id);
 
+    const userData = fetchedUser as { firstName?: string; lastName?: string };
+    user.value.firstName = userData.firstName;
+    user.value.lastName = userData.lastName;
     user.value.username = fetchedUser.name;
     user.value.email = fetchedUser.email;
     user.value.userPicture = fetchedUser.pictureUrl;
