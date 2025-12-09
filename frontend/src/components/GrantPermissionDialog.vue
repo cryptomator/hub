@@ -48,7 +48,7 @@
                     {{ t('common.cancel') }}
                   </button>
                 </div>
-                <p v-if="onGrantPermissionError != null" class="text-sm text-red-900 px-4 sm:px-6 text-right bg-red-50">
+                <p v-if="onGrantPermissionError" class="text-sm text-red-900 px-4 sm:px-6 text-right bg-red-50">
                   {{ t('common.unexpectedError', [onGrantPermissionError.message]) }}
                 </p>
                 <p v-if="onGrantPermissionError instanceof ConflictError || onGrantPermissionError instanceof NotFoundError" class="text-sm text-red-900 px-4 sm:px-6 pb-3 text-right bg-red-50">
@@ -77,7 +77,7 @@ const { t } = useI18n({ useScope: 'global' });
 
 const open = ref(false);
 const trusts = ref<TrustDto[]>([]);
-const onGrantPermissionError = ref<Error | null>();
+const onGrantPermissionError = ref<Error>();
 
 const props = defineProps<{
   vault: VaultDto
@@ -109,7 +109,7 @@ function show() {
 }
 
 async function grantAccess() {
-  onGrantPermissionError.value = null;
+  onGrantPermissionError.value = undefined;
   try {
     await giveUsersAccess(props.users);
     emit('permissionGranted');
