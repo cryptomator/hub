@@ -67,8 +67,8 @@
       </table>
     </div>
   </section>
-  <UserAddGroupDialog ref="addGroupDialog" :groups="user.groups" @saved="props.onSaved" />
-  <UserGroupRemoveDialog ref="deleteGroupMemberDialog" :group="deletingGroup" @close="deletingGroup = null" @delete="onGroupRemoved"/>
+  <UserAddGroupDialog ref="addGroupDialog" :user-id="userId" :groups="user.groups" @saved="props.onSaved" />
+  <UserGroupRemoveDialog ref="deleteGroupMemberDialog" :group="deletingGroup" :user-id="userId" @close="deletingGroup = null" @removed="onGroupRemoved"/>
 </template>
 
 <script setup lang="ts">
@@ -89,7 +89,6 @@ interface DetailUser {
   lastName?: string;
   username: string;
   roles: string[];
-  password: string;
   email: string;
   userPicture?: string;
   creationTime: string;
@@ -115,6 +114,7 @@ interface Device {
 
 const props = defineProps<{
   user: DetailUser;
+  userId: string;
   groups: Group[];
   pageSize: number;
   onSaved: (groups: Group[]) => void;
@@ -130,8 +130,9 @@ function showDeleteDialog(g: Group) {
   });
 }
 
-function onGroupRemoved(removed: GroupDto) {
-  props.groups.filter(g => g.id !== removed.id);
+function onGroupRemoved() {
+  const updatedGroups = props.groups.filter(g => g.id !== deletingGroup.value?.id);
+  props.onSaved(updatedGroups);
   deletingGroup.value = null;
 }
 

@@ -41,10 +41,27 @@ import java.util.stream.Stream;
 				INNER JOIN EffectiveGroupMembership egm	ON u.id = egm.id.memberId
 				WHERE egm.id.groupId = :groupId
 		""")
+@NamedQuery(name = "User.getGroupsForUser", query = """
+				SELECT DISTINCT g
+				FROM Group g
+				INNER JOIN EffectiveGroupMembership egm ON g.id = egm.id.groupId
+				WHERE egm.id.memberId = :userId
+		""")
 @NamedQuery(name = "User.countGroupsForUser", query = """
 				SELECT count(DISTINCT egm.id.groupId)
 				FROM EffectiveGroupMembership egm
 				WHERE egm.id.memberId = :userId
+		""")
+@NamedQuery(name = "User.getVaultsForUser", query = """
+				SELECT DISTINCT v
+				FROM Vault v
+				INNER JOIN EffectiveVaultAccess eva ON v.id = eva.id.vaultId
+				WHERE eva.id.authorityId = :userId
+		""")
+@NamedQuery(name = "User.getVaultAccessForUser", query = """
+				SELECT eva
+				FROM EffectiveVaultAccess eva
+				WHERE eva.id.authorityId = :userId
 		""")
 @NamedQuery(name = "User.countVaultsForUser", query = """
 				SELECT count(DISTINCT eva.id.vaultId)
@@ -202,11 +219,32 @@ public class User extends Authority {
 			return find("#User.getEffectiveGroupUsers", Parameters.with("groupId", groupdId)).stream();
 		}
 
+		public Stream<Group> getGroupsForUser(String userId) {
+			return getEntityManager()
+					.createNamedQuery("User.getGroupsForUser", Group.class)
+					.setParameter("userId", userId)
+					.getResultStream();
+		}
+
 		public long countGroupsForUser(String userId) {
 			return getEntityManager()
 					.createNamedQuery("User.countGroupsForUser", Long.class)
 					.setParameter("userId", userId)
 					.getSingleResult();
+		}
+
+		public Stream<Vault> getVaultsForUser(String userId) {
+			return getEntityManager()
+					.createNamedQuery("User.getVaultsForUser", Vault.class)
+					.setParameter("userId", userId)
+					.getResultStream();
+		}
+
+		public Stream<EffectiveVaultAccess> getVaultAccessForUser(String userId) {
+			return getEntityManager()
+					.createNamedQuery("User.getVaultAccessForUser", EffectiveVaultAccess.class)
+					.setParameter("userId", userId)
+					.getResultStream();
 		}
 
 		public long countVaultsForUser(String userId) {

@@ -1,9 +1,12 @@
 <template>
   <section v-if="visible" class="bg-white rounded-lg shadow-sm overflow-hidden">
     <div class="flex items-center bg-gray-50 px-6 py-4 border-b border-gray-200 space-x-2">
-      <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">
-        {{ title }}
-      </h3>
+      <div class="flex items-baseline gap-1">
+        <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+          {{ title }}
+        </h3>
+        <span class="text-xs text-gray-500">{{ devices.length }}</span>
+      </div>
       <div v-if="info != ''" class="relative group" :title="t('user.detail.legacyDeviceList.info')">
         <QuestionMarkCircleIcon class="h-4 w-4 text-gray-400"/>
       </div>

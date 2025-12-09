@@ -284,11 +284,11 @@ const lastName = ref('');
 const username = ref('');
 const email = ref('');
 
-type Role = 'Admin' | 'Create-Vault';
+type Role = 'admin' | 'create-vaults';
 const selectedRoles = ref<Role[]>([]);
 const roleOptions: Record<Role, string> = {
-  'Admin': 'Admin',
-  'Create-Vault': 'Create-Vault',
+  'admin': 'Admin',
+  'create-vaults': 'Create Vaults',
 };
 
 const errors = ref<Record<string, string>>({});
@@ -341,7 +341,8 @@ onMounted(async () => {
       email.value = fetchedUser.email;
       pictureUrl.value = fetchedUser.pictureUrl || '';
 
-      selectedRoles.value = [];
+      const userRoles = (fetchedUser as { roles?: string[] }).roles || [];
+      selectedRoles.value = userRoles.filter((r): r is Role => r === 'admin' || r === 'create-vaults');
 
       initialUserData.value = {
         firstName: firstName.value,
@@ -455,7 +456,8 @@ async function onSubmit() {
         firstName: firstName.value || undefined,
         lastName: lastName.value || undefined,
         password: password.value || undefined,
-        pictureUrl: pictureUrl.value || undefined
+        pictureUrl: pictureUrl.value || undefined,
+        roles: selectedRoles.value.length > 0 ? selectedRoles.value : []
       });
     } else {
       const createdUser = await backend.users.createUser({
@@ -465,7 +467,8 @@ async function onSubmit() {
         lastName: lastName.value,
         password: password.value,
         pictureUrl: pictureUrl.value || undefined,
-        groupIds: undefined
+        groupIds: undefined,
+        roles: selectedRoles.value.length > 0 ? selectedRoles.value : undefined
       });
 
       userId = createdUser.id;

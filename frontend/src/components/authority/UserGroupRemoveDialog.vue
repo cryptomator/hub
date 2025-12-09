@@ -52,6 +52,7 @@ import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, Trans
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import backend, { GroupDto } from '../../common/backend';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -59,7 +60,13 @@ const open = ref(false);
 const onDeleteGroupError = ref<Error | null>();
 
 const props = defineProps<{
-    group: GroupDto;
+    group: GroupDto | null;
+    userId: string;
+}>();
+
+const emit = defineEmits<{
+    close: [];
+    removed: [];
 }>();
 
 defineExpose({
@@ -71,7 +78,16 @@ function show() {
 }
 
 async function removeUserFromGroup() {
+  if (!props.group) return;
+
   onDeleteGroupError.value = null;
-  open.value = false;
+  try {
+    await backend.groups.removeMember(props.group.id, props.userId);
+    emit('removed');
+    open.value = false;
+  } catch (error) {
+    console.error('Removing user from group failed.', error);
+    onDeleteGroupError.value = error instanceof Error ? error : new Error('Unknown Error');
+  }
 }
 </script>

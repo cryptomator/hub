@@ -211,9 +211,9 @@
   "group.addMembers.selectedUser": "User(s) selected",
 
 
-  "group.member.remove.title" : "Remove Group Member",
-  "group.member.remove.description": "Are you sure you want to remove this group member?",
-  "group.member.remove.confirm": "Yes, remove member",
+  "group.member.remove.title" : "Remove User from Group",
+  "group.member.remove.description": "Are you sure you want to remove this user from the group?",
+  "group.member.remove.confirm": "Yes, remove from group",
 
   "groupEditCreate.title.create" : "Create New Group",
   "groupEditCreate.title.edit" : "Group Edit",

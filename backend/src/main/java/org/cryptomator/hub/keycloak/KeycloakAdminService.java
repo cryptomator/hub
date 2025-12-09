@@ -32,6 +32,9 @@ public class KeycloakAdminService {
 	KeycloakAuthorityProvider authorityProvider;
 
 	@Inject
+	KeycloakAuthorityPuller authorityPuller;
+
+	@Inject
 	User.Repository userRepo;
 
 	@ConfigProperty(name = "hub.keycloak.realm")
@@ -205,4 +208,93 @@ public class KeycloakAdminService {
 			throw new RuntimeException("Failed to sync user: " + userId, e);
 		}
 	}
+
+	@Transactional
+	public void addUserToGroup(String groupId, String userId) {
+		RealmResource realm = keycloak.realm(keycloakRealm);
+
+		try {
+			realm.groups().group(groupId).toRepresentation();
+		} catch (jakarta.ws.rs.NotFoundException e) {
+			throw new NotFoundException("Group not found: " + groupId);
+		}
+
+		try {
+			UserResource userResource = realm.users().get(userId);
+			userResource.joinGroup(groupId);
+		} catch (jakarta.ws.rs.NotFoundException e) {
+			throw new NotFoundException("User not found: " + userId);
+		}
+
+		var keycloakGroups = authorityProvider.groups().stream()
+				.collect(java.util.stream.Collectors.toMap(KeycloakGroupDto::id, java.util.function.Function.identity()));
+		var keycloakUsers = authorityProvider.users().stream()
+				.collect(java.util.stream.Collectors.toMap(KeycloakUserDto::id, java.util.function.Function.identity()));
+		authorityPuller.sync(keycloakGroups, keycloakUsers);
+	}
+
+	@Transactional
+	public void removeUserFromGroup(String groupId, String userId) {
+		RealmResource realm = keycloak.realm(keycloakRealm);
+
+		try {
+			realm.groups().group(groupId).toRepresentation();
+		} catch (jakarta.ws.rs.NotFoundException e) {
+			throw new NotFoundException("Group not found: " + groupId);
+		}
+
+		try {
+			UserResource userResource = realm.users().get(userId);
+			userResource.leaveGroup(groupId);
+		} catch (jakarta.ws.rs.NotFoundException e) {
+			throw new NotFoundException("User not found: " + userId);
+		}
+
+		var keycloakGroups = authorityProvider.groups().stream()
+				.collect(java.util.stream.Collectors.toMap(KeycloakGroupDto::id, java.util.function.Function.identity()));
+		var keycloakUsers = authorityProvider.users().stream()
+				.collect(java.util.stream.Collectors.toMap(KeycloakUserDto::id, java.util.function.Function.identity()));
+		authorityPuller.sync(keycloakGroups, keycloakUsers);
+	}
+
+	public Set<String> getUserRoles(String userId) {
+		RealmResource realm = keycloak.realm(keycloakRealm);
+		try {
+			UserResource userResource = realm.users().get(userId);
+			return userResource.roles().realmLevel().listEffective().stream()
+					.map(role -> role.getName())
+					.filter(name -> "admin".equals(name) || "create-vaults".equals(name))
+					.collect(java.util.stream.Collectors.toSet());
+		} catch (jakarta.ws.rs.NotFoundException e) {
+			throw new NotFoundException("User not found: " + userId);
+		}
+	}
+
+	public void updateUserRoles(String userId, Set<String> roles) {
+		RealmResource realm = keycloak.realm(keycloakRealm);
+		try {
+			UserResource userResource = realm.users().get(userId);
+			var roleMappings = userResource.roles().realmLevel();
+
+			List<org.keycloak.representations.idm.RoleRepresentation> currentRoles = roleMappings.listEffective().stream()
+					.filter(r -> "admin".equals(r.getName()) || "create-vaults".equals(r.getName()))
+					.collect(java.util.stream.Collectors.toList());
+			if (!currentRoles.isEmpty()) {
+				roleMappings.remove(currentRoles);
+			}
+
+			if (roles != null && !roles.isEmpty()) {
+				var allRealmRoles = realm.roles().list();
+				List<org.keycloak.representations.idm.RoleRepresentation> rolesToAdd = allRealmRoles.stream()
+						.filter(r -> roles.contains(r.getName()))
+						.collect(java.util.stream.Collectors.toList());
+				if (!rolesToAdd.isEmpty()) {
+					roleMappings.add(rolesToAdd);
+				}
+			}
+		} catch (jakarta.ws.rs.NotFoundException e) {
+			throw new NotFoundException("User not found: " + userId);
+		}
+	}
 }
+

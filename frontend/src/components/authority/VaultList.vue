@@ -1,9 +1,12 @@
 <template>
   <section v-if="props.visible" class="bg-white rounded-lg shadow-sm overflow-hidden">
     <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
-      <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">
-        {{ t('nav.vaults') }}
-      </h3>
+      <div class="flex items-baseline gap-1">
+        <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+          {{ t('nav.vaults') }}
+        </h3>
+        <span class="text-xs text-gray-500">{{ vaults.length }}</span>
+      </div>
     </div>
 
     <!-- Search bar -->
@@ -15,7 +18,10 @@
     <div class="py-0">
       <ul class="divide-y divide-gray-200 bg-white">
         <li v-for="vault in paginatedVaults" :key="vault.id" class="py-2 px-6">
-          <div class="text-sm font-medium text-gray-900 truncate">{{ vault.name }}</div>
+          <div class="flex items-center gap-2">
+            <div class="text-sm font-medium text-gray-900 truncate">{{ vault.name }}</div>
+            <div v-if="vault.role === 'OWNER'" class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">{{ t('vaultList.badge.owner') }}</div>
+          </div>
           <div v-if="vault.description" class="text-sm text-gray-500 truncate">{{ vault.description }}</div>
         </li>
         <li v-if="!filteredVaults.length" class="flex items-center justify-center py-4 px-6 w-full text-sm text-gray-500">
@@ -55,6 +61,7 @@ interface Vault {
   id: string;
   name: string;
   description?: string;
+  role?: 'OWNER' | 'MEMBER';
 }
 
 const props = defineProps<{

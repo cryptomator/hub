@@ -111,6 +111,7 @@ export type CreateUserDto = {
   password: string;
   pictureUrl?: string;
   groupIds?: string[];
+  roles?: string[];
 }
 
 export type UpdateUserDto = {
@@ -118,6 +119,7 @@ export type UpdateUserDto = {
   lastName?: string;
   password?: string;
   pictureUrl?: string;
+  roles?: string[];
 }
 
 export type BillingDto = {
@@ -281,6 +283,14 @@ class DeviceService {
 class GroupService {
   public async removeGroup(groupId: string): Promise<GroupDto> {
     return axiosAuth.delete<GroupDto>(`/groups/${groupId}`).then(res => res.data);
+  }
+
+  public async addMember(groupId: string, userId: string): Promise<void> {
+    return axiosAuth.post(`/groups/${groupId}/members/${userId}`);
+  }
+
+  public async removeMember(groupId: string, userId: string): Promise<void> {
+    return axiosAuth.delete(`/groups/${groupId}/members/${userId}`);
   }
 }
 

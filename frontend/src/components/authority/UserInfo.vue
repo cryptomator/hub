@@ -55,7 +55,6 @@ interface DetailUser {
   lastName?: string;
   username: string;
   roles: string[];
-  password: string;
   email: string;
   userPicture?: string;
   creationTime: string;

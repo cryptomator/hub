@@ -22,10 +22,13 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.AccessToken;
 import org.cryptomator.hub.entities.Device;
+import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.entities.EffectiveWot;
+import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.LegacyDevice;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
+import org.cryptomator.hub.entities.VaultAccess;
 import org.cryptomator.hub.entities.WotEntry;
 import org.cryptomator.hub.entities.events.AuditEvent;
 import org.cryptomator.hub.entities.events.EventLogger;
@@ -39,6 +42,8 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.jboss.resteasy.reactive.NoCache;
 
 import java.net.URI;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -67,6 +72,8 @@ public class UsersResource {
 	EffectiveWot.Repository effectiveWotRepo;
 	@Inject
 	AuditEvent.Repository auditEventRepo;
+	@Inject
+	Group.Repository groupRepo;
 
 	@Inject
 	JsonWebToken jwt;
@@ -326,6 +333,10 @@ public class UsersResource {
 				dto.groupIds()
 		);
 
+		if (dto.roles() != null && !dto.roles().isEmpty()) {
+			keycloakAdminService.updateUserRoles(userRepresentation.getId(), dto.roles());
+		}
+
 		User user = userRepo.findById(userRepresentation.getId());
 		if (user == null) {
 			throw new RuntimeException("User was created in Keycloak but not found in database after sync");
@@ -341,6 +352,7 @@ public class UsersResource {
 	@RolesAllowed("user")
 	@Produces(MediaType.APPLICATION_JSON)
 	@NoCache
+	@Transactional
 	@Operation(summary = "get a specific user")
 	@APIResponse(responseCode = "200", description = "user found")
 	@APIResponse(responseCode = "404", description = "user not found")
@@ -358,7 +370,35 @@ public class UsersResource {
 			// continue without timestamp
 		}
 
-		return UserDtoWithTimestamp.from(UserDto.justPublicInfo(user), createdTimestamp);
+		// Fetch groups for the user
+		List<GroupDto> groups = userRepo.getGroupsForUser(userId)
+				.map(GroupDto::fromEntity)
+				.toList();
+
+		// Fetch vaults with roles for the user
+		Map<UUID, Vault> vaultMap = vaultRepo.findAll().stream()
+				.collect(Collectors.toMap(Vault::getId, Function.identity()));
+		List<VaultDtoWithRole> vaults = userRepo.getVaultAccessForUser(userId)
+				.map(eva -> {
+					Vault vault = vaultMap.get(eva.getId().getVaultId());
+					return VaultDtoWithRole.from(vault, eva.getId().getRole());
+				})
+				.toList();
+
+		// Fetch devices (modern devices)
+		Set<DeviceResource.DeviceDto> devices = user.devices.stream()
+				.map(DeviceResource.DeviceDto::fromEntity)
+				.collect(Collectors.toSet());
+
+		// Fetch legacy devices
+		Set<DeviceResource.DeviceDto> legacyDevices = user.legacyDevices.stream()
+				.map(DeviceResource.DeviceDto::fromEntity)
+				.collect(Collectors.toSet());
+
+		// Fetch roles
+		Set<String> roles = keycloakAdminService.getUserRoles(userId);
+
+		return UserDtoWithTimestamp.from(UserDto.justPublicInfo(user), createdTimestamp, groups, vaults, devices, legacyDevices, roles);
 	}
 
 	@PUT
@@ -380,6 +420,10 @@ public class UsersResource {
 					dto.password(),
 					dto.pictureUrl()
 			);
+
+			if (dto.roles() != null) {
+				keycloakAdminService.updateUserRoles(userId, dto.roles());
+			}
 
 			User user = userRepo.findById(userId);
 			if (user == null) {
@@ -420,7 +464,8 @@ public class UsersResource {
 			@JsonProperty("lastName") @NotNull String lastName,
 			@JsonProperty("password") @NotNull String password,
 			@JsonProperty("pictureUrl") String pictureUrl,
-			@JsonProperty("groupIds") Set<String> groupIds
+			@JsonProperty("groupIds") Set<String> groupIds,
+			@JsonProperty("roles") Set<String> roles
 	) {
 	}
 
@@ -428,7 +473,8 @@ public class UsersResource {
 			@JsonProperty("firstName") String firstName,
 			@JsonProperty("lastName") String lastName,
 			@JsonProperty("password") String password,
-			@JsonProperty("pictureUrl") String pictureUrl
+			@JsonProperty("pictureUrl") String pictureUrl,
+			@JsonProperty("roles") Set<String> roles
 	) {
 	}
 
@@ -441,9 +487,14 @@ public class UsersResource {
 			@JsonProperty("language") String language,
 			@JsonProperty("ecdhPublicKey") String ecdhPublicKey,
 			@JsonProperty("ecdsaPublicKey") String ecdsaPublicKey,
-			@JsonProperty("createdTimestamp") Long createdTimestamp
+			@JsonProperty("createdTimestamp") Long createdTimestamp,
+			@JsonProperty("groups") List<GroupDto> groups,
+			@JsonProperty("vaults") List<VaultDtoWithRole> vaults,
+			@JsonProperty("devices") Set<DeviceResource.DeviceDto> devices,
+			@JsonProperty("legacyDevices") Set<DeviceResource.DeviceDto> legacyDevices,
+			@JsonProperty("roles") Set<String> roles
 	) {
-		public static UserDtoWithTimestamp from(UserDto userDto, Long createdTimestamp) {
+		public static UserDtoWithTimestamp from(UserDto userDto, Long createdTimestamp, List<GroupDto> groups, List<VaultDtoWithRole> vaults, Set<DeviceResource.DeviceDto> devices, Set<DeviceResource.DeviceDto> legacyDevices, Set<String> roles) {
 			return new UserDtoWithTimestamp(
 					userDto.id,
 					userDto.type,
@@ -453,7 +504,32 @@ public class UsersResource {
 					userDto.getLanguage(),
 					userDto.getEcdhPublicKey(),
 					userDto.getEcdsaPublicKey(),
-					createdTimestamp
+					createdTimestamp,
+					groups,
+					vaults,
+					devices,
+					legacyDevices,
+					roles
+			);
+		}
+	}
+
+	public record VaultDtoWithRole(
+			@JsonProperty("id") UUID id,
+			@JsonProperty("name") String name,
+			@JsonProperty("description") String description,
+			@JsonProperty("archived") boolean archived,
+			@JsonProperty("creationTime") Instant creationTime,
+			@JsonProperty("role") VaultAccess.Role role
+	) {
+		public static VaultDtoWithRole from(Vault vault, VaultAccess.Role role) {
+			return new VaultDtoWithRole(
+					vault.getId(),
+					vault.getName(),
+					vault.getDescription(),
+					vault.isArchived(),
+					vault.getCreationTime().truncatedTo(ChronoUnit.MILLIS),
+					role
 			);
 		}
 	}
