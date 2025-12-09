@@ -262,10 +262,10 @@ const onFetchError = ref<Error | null>(null);
 
 const selectedFilter = ref<'recoverableVaults' | 'approved' | 'approvable' | 'startable'>('recoverableVaults');
 const filterOptions = ref({
-  recoverableVaults: t('vaultList.filter.all'),
-  approvable: t('vaultList.filter.approvable'),
-  approved: t('vaultList.filter.approved'),
-  startable: t('vaultList.filter.startable'),
+  recoverableVaults: 'All',
+  approvable: 'Approvable',
+  approved: 'Approved',
+  startable: 'Startable',
 });
 const selectedProcess = ref<RecoveryProcessDto | undefined>(undefined);
 const filteredVaults = computed<VaultDto[]>(() => filterVaults(vaults.value));

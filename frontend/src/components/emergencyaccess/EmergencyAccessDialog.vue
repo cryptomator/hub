@@ -113,7 +113,7 @@
                           </span>
                         </div>
                         <label class="block text-sm font-medium text-gray-700 pt-4">
-                          {{ t('grantEmergencyAccessDialog.possibleEmergencyScenario') }}
+                          Possible Emergency Scenario
                         </label>
                         <EmergencyScenarioVisualization
                           :selected-users="newCouncilMembers"
@@ -191,7 +191,7 @@
                             {{ recoveryProcess.details.newRequiredKeyShares }}
                           </div>
                           <label class="block text-sm font-medium text-gray-700 pt-4">
-                            {{ t('grantEmergencyAccessDialog.possibleEmergencyScenario') }}
+                            Possible Emergency Scenario
                           </label>
                           <EmergencyScenarioVisualization
                             :selected-users="newCouncilMembers"

@@ -36,7 +36,7 @@
                   </div>
                   <div class="mt-3 grow text-center sm:mt-0 sm:ml-4 sm:text-left">
                     <DialogTitle as="h3" class="text-lg leading-6 font-medium text-gray-900">
-                      {{ t('grantEmergencyAccessDialog.title') }}
+                      Grant Emergency Access
                     </DialogTitle>
                     <div class="mt-2">
                       <p v-if="allowChangingDefaults" class="text-sm text-gray-500">
@@ -49,7 +49,7 @@
                     <div class="relative">
                       <div class="sm:grid sm:items-center sm:gap-2 mt-2 pb-2">
                         <label for="coundcilMembers" class="text-sm font-medium text-gray-700 flex items-center">
-                          {{ t('admin.emergencyAccess.councilMembers.title') }}
+                          Council Members
                         </label>
                       </div>
                       <MultiUserSelectInputGroup
@@ -98,7 +98,7 @@
                   :disabled="isGrantButtonDisabled"
                   @click="splitRecoveryKey()"
                 >
-                  {{ t('common.grant') }}
+                  Grant
                 </button>
                 <!-- Close-Button -->
                 <button
@@ -259,28 +259,22 @@ async function splitRecoveryKey() {
     onAddCouncilMemberError.value = null;
 
     if (requiredKeyShares.value == null || requiredKeyShares.value < 1) {
-      throw new Error(t('grantEmergencyAccessDialog.error.invalidKeyShares'));
+      throw new Error('At least 2 Emergency Key Shares are required.');
     }
 
     if (emergencyCouncilMembers.value.length < 1) {
-      throw new Error(t('grantEmergencyAccessDialog.error.invalidCouncilMemberLengt'));
+      throw new Error('At least 2 Council Members are required.');
     }
 
     if (emergencyCouncilMembers.value.length < requiredKeyShares.value) {
       throw new Error(
-        t('grantEmergencyAccessDialog.error.notEnoughCouncilMembers', {
-          required: requiredKeyShares.value,
-          actual: emergencyCouncilMembers.value.length,
-        })
+        'Too few Council Members. Add more or lower the required Emergency Key Shares.'
       );
     }
 
     if (emergencyCouncilMembers.value.length < requiredKeyShares.value) {
       throw new Error(
-        t('grantEmergencyAccessDialog.error.notEnoughCouncilMembers', {
-          required: requiredKeyShares.value,
-          actual: emergencyCouncilMembers.value.length,
-        })
+        'Too few Council Members. Add more or lower the required Emergency Key Shares.'
       );
     }
 

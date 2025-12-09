@@ -113,11 +113,11 @@
           </div>
           <div class="mt-3 mb-3 px-4 sm:mt-5">
             <h3 class="text-lg leading-6 font-medium text-gray-900 text-center">
-              {{ t('createVault.emergencyAccessDetails.title') }}
+              Define Emergency Access Conditions
             </h3>
             <div class="mt-2">
               <p class="text-sm text-gray-500 text-center">
-                {{ t('createVault.emergencyAccessDetails.description') }}
+                Desc
               </p>
             </div>
             <div class="relative">
@@ -517,23 +517,20 @@ async function splitRecoveryKey() {
     onCreateError.value = null;
 
     if (!vaultKeys.value) {
-      throw new Error(t('grantEmergencyAccessDialog.error.missingVaultKeys'));
+      throw new Error('VaultKeys missing.');
     }
 
     if (requiredKeyShares.value == null || requiredKeyShares.value < 1) {
-      throw new Error(t('grantEmergencyAccessDialog.error.invalidKeyShares'));
+      throw new Error('At least 2 Emergency Key Shares are required.');
     }
 
     if (emergencyCouncilMembers.value.length < 1) {
-      throw new Error(t('grantEmergencyAccessDialog.error.invalidCouncilMemberLengt'));
+      throw new Error('At least 2 Council Members are required.');
     }
 
     if (emergencyCouncilMembers.value.length < requiredKeyShares.value) {
       throw new Error(
-        t('grantEmergencyAccessDialog.error.notEnoughCouncilMembers', {
-          required: requiredKeyShares.value,
-          actual: emergencyCouncilMembers.value.length,
-        })
+        'Too few Council Members. Add more or lower the required Emergency Key Shares.'
       );
     }
 

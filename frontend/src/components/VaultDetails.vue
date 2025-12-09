@@ -202,7 +202,7 @@
           @click="showGrantEmergencyAccessDialog()"
         >
           <ExclamationTriangleIcon class="h-5 w-5 text-yellow-500" />
-          <span>{{ t('vaultDetails.actions.fixEmergencyCouncil') }}</span>
+          <span>Fix Emergency Access Council</span>
         </button>
         <!-- archiveVault button -->
         <button v-if="(vaultRole == 'OWNER' || isAdmin)" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white  hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showArchiveVaultDialog()">
