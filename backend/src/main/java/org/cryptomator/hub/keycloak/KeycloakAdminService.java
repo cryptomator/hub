@@ -348,16 +348,24 @@ public class KeycloakAdminService {
 
 		if (name != null && !name.isBlank()) {
 			group.setName(name);
+			group.setAttributes(null);
+			groupResource.update(group);
 		}
+
 		if (pictureUrl != null) {
-			if (pictureUrl.isBlank()) {
-				group.setAttributes(Collections.emptyMap());
-			} else {
-				group.setAttributes(Map.of("picture", List.of(pictureUrl)));
+			try {
+				GroupRepresentation groupForPicture = groupResource.toRepresentation();
+				if (pictureUrl.isBlank()) {
+					groupForPicture.setAttributes(Collections.emptyMap());
+				} else {
+					groupForPicture.setAttributes(Map.of("picture", List.of(pictureUrl)));
+				}
+				groupResource.update(groupForPicture);
+			} catch (Exception e) {
+				LOG.warn("Failed to update picture attribute for group {}", groupId, e);
 			}
 		}
 
-		groupResource.update(group);
 		syncAuthorities();
 
 		return groupResource.toRepresentation();
