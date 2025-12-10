@@ -1,10 +1,9 @@
 <template>
-  <div v-if="onFetchError == null">
-    <div v-if="groups.length === 0">
-      {{ t('common.loading') }}
-    </div>
-
-    <div v-else class="flex flex-col">
+  <div v-if="loading" class="text-center p-8 text-gray-500 text-sm">
+    {{ t('common.loading') }}
+  </div>
+  <div v-else-if="onFetchError == null">
+    <div class="flex flex-col">
       <h2 class="text-2xl font-bold leading-9 text-gray-900 sm:text-3xl sm:truncate mb-4">
         {{ t('groups.title') }}
       </h2>
@@ -131,6 +130,7 @@ const route = useRoute();
 const { t } = useI18n({ useScope: 'global' });
 
 const groups = ref<GroupDto[]>([]);
+const loading = ref(true);
 const onFetchError = ref<Error | null>(null);
 const deleteGroupDialog = ref<typeof GroupDeleteDialog>();
 const deletingGroup = ref<GroupDto | null>(null);
@@ -165,6 +165,8 @@ async function fetchData() {
     groups.value = await backend.groups.listAll();
   } catch (error) {
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
+  } finally {
+    loading.value = false;
   }
 }
 
