@@ -45,7 +45,7 @@
                   <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-xs px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" @click="open = false">
                     {{ t('common.cancel') }}
                   </button>
-                  <div v-if="onUpdateVaultMetadataError != null">
+                  <div v-if="onUpdateVaultMetadataError">
                     <p v-if="onUpdateVaultMetadataError instanceof FormValidationFailedError" class="text-sm text-red-900">
                       {{ t('editVaultMetadataDialog.error.formValidationFailed') }}
                     </p>
@@ -81,7 +81,7 @@ const { t } = useI18n({ useScope: 'global' });
 const open = ref(false);
 const form = ref<HTMLFormElement>();
 
-const onUpdateVaultMetadataError = ref<Error|null>();
+const onUpdateVaultMetadataError = ref<Error>();
 
 const vaultName = ref('');
 const vaultDescription = ref<string | undefined>();
@@ -106,7 +106,7 @@ function show() {
 }
 
 async function updateVaultMetadata() {
-  onUpdateVaultMetadataError.value = null;
+  onUpdateVaultMetadataError.value = undefined;
   try {
     if (!form.value?.checkValidity()) {
       throw new FormValidationFailedError();
