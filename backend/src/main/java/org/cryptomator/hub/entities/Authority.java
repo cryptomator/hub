@@ -68,7 +68,6 @@ public class Authority {
 		this.pictureUrl = pictureUrl;
 	}
 
-
 	@Override
 	public String toString() {
 		return "Authority{" +
