@@ -5,7 +5,7 @@
         <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">
           {{ t('group.detail.members') }}
         </h3>
-        <span class="text-xs text-gray-500">{{ group.users.length }}</span>
+        <span class="text-xs text-gray-500">{{ members.length }}</span>
       </div>
       <button class="inline-flex items-center gap-2 px-2.5 py-1.5 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="openAccessDialog">
         {{ t('common.add') }}
@@ -23,17 +23,17 @@
         <tbody class="divide-y divide-gray-200 bg-white">
           <tr v-for="user in paginatedUsers" :key="user.id + user.name">
             <td class="whitespace-nowrap h-17 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 flex items-center gap-3 sm:pl-6">
-              <img :src="user.userPicture" class="w-8 h-8 rounded-full object-cover border border-gray-300" />
+              <img :src="user.pictureUrl" class="w-8 h-8 rounded-full object-cover border border-gray-300" />
               <div class="flex flex-col truncate">
                 <span class="font-medium truncate">
                   <template v-if="user.name">
                     {{ user.name }}
                   </template>
                   <template v-else>
-                    {{ user.username }}
+                    {{ user.email }}
                   </template>
                 </span>
-                <span v-if="user.name" class="text-xs text-gray-500 truncate">{{ user.username }}</span>
+                <span v-if="user.name" class="text-xs text-gray-500 truncate">{{ user.email }}</span>
               </div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -73,7 +73,7 @@
       </table>
     </div>
   </section>
-  <GroupAddMemberDialog ref="addMemberDialog" :members="group.users" @saved="props.onSaved" />
+  <GroupAddMemberDialog ref="addMemberDialog" :group-id="group.id" :members="members" @saved="(users) => props.onSaved(users)" />
   <GroupMemberRemoveDialog v-if="deletingGroupMember" ref="deleteGroupMemberDialog" :member="deletingGroupMember" :group-id="group.id" @close="deletingGroupMember = null" @delete="onGroupMemberDeleted" />
 </template>
 
@@ -86,50 +86,18 @@ import GroupMemberRemoveDialog from './GroupMemberRemoveDialog.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 
+interface GroupBasic {
+  id: string;
+  name: string;
+}
+
 const props = defineProps<{
-  group: DetailGroup;
-  members: UserDto[];
+  group: GroupBasic;
   pageSize: number;
   onSaved: (users: UserDto[]) => void;
 }>();
 
-interface DetailGroup {
-  id: string;
-  name: string;
-  picture?: string;
-  createdAt: string;
-  roles: Role[];
-  users: User[];
-  vaults: Vault[];
-  description?: string;
-  memberSize: number;
-}
-interface User {
-  id: string;
-  name: string;
-  userPicture?: string;
-  role?: string;
-  username: string;
-  email?: string;
-}
-
-interface Vault {
-  id: string;
-  name: string;
-  description?: string;
-}
-interface Role {
-  id: string;
-  name: string;
-}
-interface Device {
-  id: string;
-  name: string;
-  type: 'DESKTOP' | 'MOBILE' | 'TABLET';
-  creationTime: string;
-  lastAccessTime?: string;
-  lastIpAddress?: string;
-}
+const members = defineModel<UserDto[]>('members', { required: true });
 
 const deleteGroupMemberDialog = ref<typeof GroupMemberRemoveDialog>();
 const deletingGroupMember = ref<UserDto | null>(null);
@@ -144,7 +112,8 @@ function openAccessDialog() {
   addMemberDialog.value?.show();
 }
 
-function onGroupMemberDeleted() {
+function onGroupMemberDeleted(deletedMemberId: string) {
+  members.value = members.value.filter(m => m.id !== deletedMemberId);
   deletingGroupMember.value = null;
 }
 
@@ -157,16 +126,16 @@ const showPaginationUsers = computed(
 
 const filteredUsers = computed(() => {
   const q = userQuery.value.trim().toLowerCase();
-  return [...props.group.users]
+  return [...members.value]
     .filter(u => {
       if (!q) return true;
       const nameMatch = u.name?.toLowerCase().includes(q);
-      const usernameMatch = u.username?.toLowerCase().includes(q);
-      return nameMatch || usernameMatch;
+      const emailMatch = u.email?.toLowerCase().includes(q);
+      return nameMatch || emailMatch;
     })
     .sort((a, b) => {
-      const aKey = a.name?.trim() || a.username || '';
-      const bKey = b.name?.trim() || b.username || '';
+      const aKey = a.name?.trim() || a.email || '';
+      const bKey = b.name?.trim() || b.email || '';
       return aKey.localeCompare(bKey, 'de', { sensitivity: 'base' });
     });
 });

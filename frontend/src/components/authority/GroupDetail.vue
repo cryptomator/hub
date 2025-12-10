@@ -42,20 +42,20 @@
         <!-- Group Info -->
         <GroupInfo :group="group"/>
         <!-- Vaults -->
-        <VaultList :vaults="group.vaults" :page-size="10" :visible="true" />
+        <VaultList :vaults="group.vaults" :page-size="10" :visible="true"/>
       </section>
       <section class="lg:col-start-2 grid gap-6">
         <!-- Members -->
-        <GroupMemberList :group="group" :page-size="10" :on-saved="onMembersSaved" />
+        <GroupMemberList v-model:members="group.members" :group="group" :page-size="10" :on-saved="onMembersSaved" />
       </section>
     </div>
     <div class="grid lg:hidden grid-cols-1 gap-6 items-start pt-3">
       <!-- Group Info -->
       <GroupInfo :group="group"/>
       <!-- Members -->
-      <GroupMemberList :group="group" :page-size="10" :on-saved="onMembersSaved" />
+      <GroupMemberList v-model:members="group.members" :group="group" :page-size="10" :on-saved="onMembersSaved" />
       <!-- Vaults -->
-      <VaultList :vaults="group.vaults" :page-size="10" :visible="true" />
+      <VaultList :vaults="group.vaults" :page-size="10" :visible="true"/>
     </div>
   </div>
   <!-- Delete Dialog -->
@@ -65,67 +65,49 @@
 <script setup lang="ts">
 import { EllipsisVerticalIcon } from '@heroicons/vue/20/solid';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
-import { ref, nextTick } from 'vue';
+import { ref, nextTick, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import VaultList from './VaultList.vue';
+import backend, { GroupDto, UserDto, VaultDtoWithRole } from '../../common/backend';
 import GroupDeleteDialog from './GroupDeleteDialog.vue';
 import GroupMemberList from './GroupMemberList.vue';
 import GroupInfo from './GroupInfo.vue';
+import VaultList from './VaultList.vue';
 import BreadcrumbNav from '../BreadcrumbNav.vue';
 
 const router = useRouter();
 
-interface GroupDto {
-  id: string;
-  name: string;
-  groupPicture: string;
-  members: string[];
-  vaults?: { id: string }[];
-  creationTime: string;
-}
 const deletingGroup = ref<GroupDto | null>(null);
 
-function showDeleteGroupDialog(group: GroupDto) {
-  deletingGroup.value = group;
+function showDeleteGroupDialog(grp: DetailGroup) {
+  deletingGroup.value = { type: 'GROUP', id: grp.id, name: grp.name, pictureUrl: grp.picture };
   nextTick(() => deleteGroupDialog.value?.show());
 }
 
 const deleteGroupDialog = ref<typeof GroupDeleteDialog>();
 
-interface User {
-  id: string;
-  name: string;
-  userPicture?: string;
-  role?: string;
-  username: string;
-  email?: string;
-}
-interface Role {
-  id: string;
-  name: string;
-}
-
 interface Vault {
   id: string;
   name: string;
-  description: string;
+  description?: string;
+  archived: boolean;
+  role?: 'OWNER' | 'MEMBER';
 }
 
 interface DetailGroup {
   id: string;
   name: string;
   picture?: string;
-  createdAt: string;
-  roles: Role[];
-  users: User[];
+  members: UserDto[];
   vaults: Vault[];
-  description?: string;
-  memberSize: number;
 }
 
 function showGroupEdit() {
   router.push(`/app/groups/${group.value.id}/edit`);
+}
+
+function onGroupDeleted() {
+  router.push('/app/groups');
 }
 
 const props = defineProps<{ id: string }>();
@@ -133,58 +115,32 @@ const { t } = useI18n({ useScope: 'global' });
 
 const group = ref<DetailGroup>({
   id: props.id,
-  name: 'Frontend‑Team',
-  picture: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iIzAwNUU3MSIgb3BhY2l0eT0iMS4wMCIvPjxwYXRoIGZpbGw9IiNmNmY2ZjYiIGQ9Ik0yNSAyNUwyNSAwTDUwIDBaTTUwIDBMNzUgMEw3NSAyNVpNNzUgNzVMNzUgMTAwTDUwIDEwMFpNNTAgMTAwTDI1IDEwMEwyNSA3NVpNMCA1MEwwIDI1TDI1IDI1Wk03NSAyNUwxMDAgMjVMMTAwIDUwWk0xMDAgNTBMMTAwIDc1TDc1IDc1Wk0yNSA3NUwwIDc1TDAgNTBaIi8+PHBhdGggZmlsbD0iI2NlZWNmMiIgZD0iTTI1IDI1TDAgMjVMMCAwWk03NSAyNUw3NSAwTDEwMCAwWk03NSA3NUwxMDAgNzVMMTAwIDEwMFpNMjUgNzVMMjUgMTAwTDAgMTAwWiIvPjxwYXRoIGZpbGw9IiNhYmRmZTkiIGQ9Ik0yNSAyNUw1MCAyNUw1MCA1MEwyNSA1MFpNMzEuMyA0MC42TDQwLjYgNTBMNTAgNDAuNkw0MC42IDMxLjNaTTc1IDI1TDc1IDUwTDUwIDUwTDUwIDI1Wk01OS40IDMxLjNMNTAgNDAuNkw1OS40IDUwTDY4LjggNDAuNlpNNzUgNzVMNTAgNzVMNTAgNTBMNzUgNTBaTTY4LjggNTkuNEw1OS40IDUwTDUwIDU5LjRMNTkuNCA2OC44Wk0yNSA3NUwyNSA1MEw1MCA1MEw1MCA3NVpNNDAuNiA2OC44TDUwIDU5LjRMNDAuNiA1MEwzMS4zIDU5LjRaIi8+PC9zdmc+',
-  createdAt: '2017-02-15T13:12:00Z',
-  description: 'Das Frontend-Team ist für die Entwicklung der Benutzeroberfläche verantwortlich.',
-  roles: [
-    { id: '1', name: 'User' },
-    { id: '2', name: 'Create-Vault' }
-  ],
-  users: [
-    { id: '1', name: 'Anna Marie Schmidtson', username: 'anna.schmidtson', email: 'anna.schmidtson@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=anna', role: 'admin' },
-    { id: '2', name: 'Liu Wei', username: 'liu.wei', email: 'liu.wei@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=liuwei', role: 'admin' },
-    { id: '3', name: 'Carlos Gómez', username: 'carlos.gomez', email: 'carlos.gomez@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=carlosgomez', role: 'admin' },
-    { id: '4', name: 'Fatima Al-Hassan', username: 'fatima.alhassan', email: 'fatima.alhassan@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=fatimaalhassan', role: 'admin' },
-    { id: '5', name: 'Giulia Rossi', username: 'giulia.rossi', email: 'giulia.rossi@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=giuliarossi', role: 'admin' },
-    { id: '6', name: 'Noah Johansson', username: 'noah.johansson', email: 'noah.johansson@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=noahjohansson', role: 'admin' },
-    { id: '7', name: 'Aisha Khan', username: 'aisha.khan', email: 'aisha.khan@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=aishakhan', role: 'admin' },
-    { id: '8', name: 'Hiroshi Tanaka', username: 'hiroshi.tanaka', email: 'hiroshi.tanaka@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=hiroshitanaka', role: 'admin' },
-    { id: '9', name: 'Elena Petrov', username: 'elena.petrov', email: 'elena.petrov@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=elenapetrov', role: 'admin' },
-    { id: '10', name: 'Samuel Osei', username: 'samuel.osei', email: 'samuel.osei@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=samuelosei', role: 'admin' },
-    { id: '11', name: 'Marie Dubois', username: 'marie.dubois', email: 'marie.dubois@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=mariedubois', role: 'admin' },
-    { id: '12', name: 'Javier Morales', username: 'javier.morales', email: 'javier.morales@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=javiermorales', role: 'admin' },
-    { id: '13', name: 'Sofia Almeida', username: 'sofia.almeida', email: 'sofia.almeida@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=sofiaalmeida', role: 'admin' },
-    { id: '14', name: 'Chen Mei', username: 'chen.mei', email: 'chen.mei@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=chenmei', role: 'admin' },
-    { id: '15', name: 'Michael O\'Connor', username: 'michael.oconnor', email: 'michael.oconnor@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=michaeloconnor', role: 'admin' },
-    { id: '16', name: '', username: 'zanele.dlamini', email: 'zanele.dlamini@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=zaneledlamini', role: 'admin' },
-    { id: '17', name: 'Anna Kovár', username: 'anna.kovar', email: 'anna.kovar@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=annakovar', role: 'admin' },
-    { id: '18', name: '', username: 'timur.iskanderov', email: 'timur.iskanderov@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=timuriskanderov', role: 'admin' },
-    { id: '19', name: 'Lara Müller', username: 'lara.mueller', email: 'lara.mueller@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=laramuller', role: 'admin' },
-    { id: '20', name: '', username: 'ahmed.nasser', email: 'ahmed.nasser@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=ahmednasser', role: 'admin' },
-    { id: '21', name: '', username: 'isabella.costa', email: 'isabella.costa@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=isabellacosta', role: 'admin' },
-    { id: '22', name: 'Oliver Smith', username: 'oliver.smith', email: 'oliver.smith@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=oliversmith', role: 'admin' },
-    { id: '23', name: 'Yuki Sato', username: 'yuki.sato', email: 'yuki.sato@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=yukisato', role: 'admin' },
-    { id: '24', name: 'Priya Reddy', username: 'priya.reddy', email: 'priya.reddy@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=priyareddy', role: 'admin' },
-    { id: '25', name: 'Juanita Rivera', username: 'juanita.rivera', email: 'juanita.rivera@skymatic.de', userPicture: 'https://i.pravatar.cc/50?u=juanitarivera', role: 'admin' }
-  ],
-  vaults: [
-    { id: 'v1', name: 'HR', description: '...' },
-    { id: 'v2', name: 'Finances', description: '...' },
-    { id: 'v3', name: 'Products', description: '...' },
-    { id: 'v4', name: 'Tax', description: '...' },
-    { id: 'v5', name: 'Orga', description: '...' },
-    { id: 'v6', name: 'Sales', description: '...' },
-  ],
-  memberSize: 25
+  name: '',
+  picture: undefined,
+  members: [],
+  vaults: []
 });
 
-function onMembersSaved(newMembers: User[]) {
-  const ids = new Set(group.value.users.map(u => u.id));
-  newMembers.forEach(u => { if (!ids.has(u.id)) group.value.users.push(u); });
-  group.value.users.sort((a, b) => a.name.localeCompare(b.name, 'de', { sensitivity: 'base' }));
+function onMembersSaved(newMembers: UserDto[]) {
+  const ids = new Set(group.value.members.map(u => u.id));
+  newMembers.forEach(u => { if (!ids.has(u.id)) group.value.members.push(u); });
+  group.value.members.sort((a, b) => a.name.localeCompare(b.name, 'de', { sensitivity: 'base' }));
 }
 
-const loading = ref(false);
+const loading = ref(true);
 
+onMounted(async () => {
+  try {
+    const fetchedGroup = await backend.groups.getGroup(props.id);
+    group.value.id = fetchedGroup.id;
+    group.value.name = fetchedGroup.name;
+    group.value.picture = fetchedGroup.pictureUrl;
+    group.value.members = fetchedGroup.members;
+    group.value.vaults = fetchedGroup.vaults;
+  } catch (error) {
+    console.error('Failed to fetch group:', error);
+  } finally {
+    loading.value = false;
+  }
+});
 </script>

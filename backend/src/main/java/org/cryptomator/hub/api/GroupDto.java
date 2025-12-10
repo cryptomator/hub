@@ -8,17 +8,24 @@ public final class GroupDto extends AuthorityDto {
 	@JsonProperty("memberSize")
 	public final Integer memberSize;
 
-	GroupDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("memberSize") Integer memberSize) {
+	@JsonProperty("vaultCount")
+	public final Integer vaultCount;
+
+	GroupDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("memberSize") Integer memberSize, @JsonProperty("vaultCount") Integer vaultCount) {
 		super(id, Type.GROUP, name, null);
 		this.memberSize = memberSize;
+		this.vaultCount = vaultCount;
 	}
 
 	public static GroupDto fromEntity(Group group) {
-		return fromEntity(group, false);
+		return new GroupDto(group.getId(), group.getName(), null, null);
 	}
 
 	public static GroupDto fromEntity(Group group, boolean withMemberSize) {
-		Integer memberSize = withMemberSize ? group.getMemberSize() : null;
-		return new GroupDto(group.getId(), group.getName(), memberSize);
+		return new GroupDto(group.getId(), group.getName(), withMemberSize ? group.getMemberSize() : null, null);
+	}
+
+	public static GroupDto fromEntity(Group group, Integer memberSize, Integer vaultCount) {
+		return new GroupDto(group.getId(), group.getName(), memberSize, vaultCount);
 	}
 }

@@ -23,7 +23,7 @@
             <div class="relative w-32 h-32">
               <img v-if="isValidImageUrl" :src="pictureUrl" class="w-full h-full rounded-full object-cover border border-gray-300" :alt="t('groupEditCreate.profilePicture')" />
               <div v-else class="w-full h-full rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
-                <UserIcon class="w-12 h-12" />
+                <UserGroupIcon class="w-12 h-12" />
               </div>
             </div>
           </div>
@@ -57,48 +57,6 @@
               </div>
             </div>
 
-            <!-- Roles row -->
-            <div class="md:grid md:grid-cols-3 md:gap-6">
-              <label class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
-                {{ t('groupEditCreate.roles') }}
-              </label>
-              <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1 max-w-md">
-                <Listbox v-model="selectedRoles" multiple>
-                  <div class="relative">
-                    <ListboxButton class="relative w-full rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary text-sm">
-                      <div class="flex flex-wrap gap-2">
-                        <template v-if="selectedRoles.length">
-                          <button v-for="role in selectedRoles" :key="role" type="button" class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20" :aria-label="t('common.remove', { role })" @click.stop="removeRole(role)">
-                            <span class="mr-1">{{ roleOptions[role] }}</span>
-                            <span class="text-green-800 font-bold" aria-hidden="true">&times;</span>
-                          </button>
-                        </template>
-                        <template v-else>
-                          <span class="text-gray-500">{{ t('groupEditCreate.selectRolesPlaceholder') }}</span>
-                        </template>
-                      </div>
-                      <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                        <ChevronUpDownIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
-                      </span>
-                    </ListboxButton>
-
-                    <!-- Roles row -->
-                    <transition leave-active-class="transition ease-in duration-100" leave-from-class="opacity-100" leave-to-class="opacity-0">
-                      <ListboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-none text-sm">
-                        <ListboxOption v-for="(label, key) in roleOptions" v-slot="{ selected }" :key="key" :value="key" class="relative cursor-default select-none py-2 pl-3 pr-9 ui-not-active:text-gray-900 ui-active:text-white ui-active:bg-primary">
-                          <span :class="[selected ? 'font-semibold' : 'font-normal', 'block truncate']">{{ label }}</span>
-                          <span v-if="selected" class="absolute inset-y-0 right-0 flex items-center pr-4 text-primary">
-                            <CheckIcon class="h-5 w-5" aria-hidden="true" />
-                          </span>
-                        </ListboxOption>
-                      </ListboxOptions>
-                    </transition>
-                  </div>
-                </Listbox>
-                <p v-if="errors.roles" class="mt-1 text-sm text-red-600">{{ errors.roles }}</p>
-              </div>
-            </div>
-
             <!-- Actions -->
             <div class="md:grid md:grid-cols-3 md:gap-6">
               <div></div>
@@ -121,6 +79,7 @@
                     </button>
                   </div>
                 </div>
+                <p v-if="onSaveError" class="mt-2 text-sm text-red-600">{{ t('common.unexpectedError', [onSaveError.message]) }}</p>
               </div>
             </div>
           </form>
@@ -131,11 +90,11 @@
 </template>
 
 <script setup lang="ts">
-import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue';
-import { CheckIcon, ChevronUpDownIcon, ExclamationTriangleIcon, TrashIcon, UserIcon } from '@heroicons/vue/24/outline';
+import { ExclamationTriangleIcon, TrashIcon, UserGroupIcon } from '@heroicons/vue/24/outline';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
+import backend from '../../common/backend';
 import { FormValidator } from '../../common/formvalidator';
 import { debounce } from '../../common/util';
 import BreadcrumbNav from '../BreadcrumbNav.vue';
@@ -143,23 +102,20 @@ import BreadcrumbNav from '../BreadcrumbNav.vue';
 interface GroupData {
   id?: string;
   name: string;
-  roles: Role[];
   pictureUrl?: string;
 }
 
-const initialGroupData = ref<GroupData>({ name: '', roles: [], pictureUrl:'' });
+const initialGroupData = ref<GroupData>({ name: '', pictureUrl: '' });
 
 const groupDataHasUnsavedChanges = computed(() => {
   return (
     initialGroupData.value.name !== name.value ||
-    initialGroupData.value.roles !== selectedRoles.value ||
     initialGroupData.value.pictureUrl !== pictureUrl.value
   );
 });
 
 function resetGroupData() {
   name.value = initialGroupData.value.name;
-  selectedRoles.value = initialGroupData.value.roles;
   pictureUrl.value = initialGroupData.value.pictureUrl ?? '';
 }
 
@@ -174,48 +130,41 @@ const isEditMode = computed(() => !!groupId.value);
 const loading = ref(true);
 const name = ref<string>('');
 
-type Role = 'Admin' | 'Create-Vault';
-const selectedRoles = ref<Role[]>([]);
-const roleOptions: Record<Role, string> = {
-  'Admin': 'Admin',
-  'Create-Vault': 'Create-Vault',
-};
-
 const errors = ref<Record<string, string>>({});
 const processing = ref(false);
 const groupSaved = ref(false);
+const onSaveError = ref<Error | null>(null);
 const debouncedGroupSaved = debounce(() => groupSaved.value = false, 2000);
 
 const pictureUrl = ref<string>('');
 const isValidImageUrl = ref<boolean>(false);
 
-watch(pictureUrl, 
+watch(pictureUrl,
   async (newUrl) => {
     isValidImageUrl.value = await FormValidator.validateImageUrl(newUrl);
   },
   { immediate: true }
 );
 
-onMounted(() => {
-  // TODO: Replace with actual API call to fetch group data
-  // This is temporary mock data for development purposes
-  setTimeout(() => {
-    if (isEditMode.value) {
-      name.value = 'Frontend-Team';
-      selectedRoles.value = ['Admin', 'Create-Vault'];
-      pictureUrl.value = 'https://i.pravatar.cc/200?u=group';
+onMounted(async () => {
+  if (isEditMode.value && groupId.value) {
+    try {
+      const group = await backend.groups.getGroup(groupId.value);
+      name.value = group.name;
+      pictureUrl.value = group.pictureUrl ?? '';
       initialGroupData.value = {
-        name: name.value,
-        roles: selectedRoles.value,
-        pictureUrl: pictureUrl.value
+        id: group.id,
+        name: group.name,
+        pictureUrl: group.pictureUrl ?? ''
       };
-    } else {
-      name.value = '';
-      selectedRoles.value = [];
-      pictureUrl.value = '';
+    } catch (error) {
+      console.error('Failed to fetch group:', error);
     }
-    loading.value = false;
-  }, 300);
+  } else {
+    name.value = '';
+    pictureUrl.value = '';
+  }
+  loading.value = false;
 });
 
 function removePicture() {
@@ -228,56 +177,52 @@ function validateForm() {
     pictureUrl: pictureUrl.value,
     isValidImageUrl: isValidImageUrl.value
   });
-  
+
   errors.value = result.errors;
   return result.valid;
 }
 
-function removeRole(role: Role) {
-  selectedRoles.value = selectedRoles.value.filter(r => r !== role);
-}
-
-watch(selectedRoles, () => {
-  if (selectedRoles.value.length > 0) {
-    selectedRoles.value.sort((a, b) => roleOptions[a].localeCompare(roleOptions[b]));
-  }
-});
-
-function onSubmit() {
+async function onSubmit() {
   if (!validateForm()) {
     return;
   }
-  
+
   processing.value = true;
-  
-  name.value = name.value.trim();
-  
-  initialGroupData.value = {
-    name: name.value,
-    roles: selectedRoles.value,
-    pictureUrl: pictureUrl.value
-  };
+  onSaveError.value = null;
+
+  const trimmedName = name.value.trim();
 
   try {
-    const payload = {
-      ...(isEditMode.value && { id: groupId.value }),
-      name: name.value,
-      roles: [...selectedRoles.value],
+    if (isEditMode.value && groupId.value) {
+      await backend.groups.updateGroup(groupId.value, {
+        name: trimmedName,
+        pictureUrl: pictureUrl.value || undefined
+      });
+    } else {
+      await backend.groups.createGroup({
+        name: trimmedName,
+        pictureUrl: pictureUrl.value || undefined
+      });
+    }
+
+    // Update initial data to match saved state
+    initialGroupData.value = {
+      name: trimmedName,
       pictureUrl: pictureUrl.value
     };
-    
-    console.log(`${isEditMode.value ? 'Updating' : 'Creating'} group:`, payload);
-    
+    name.value = trimmedName;
+
     // Show saved success state
     groupSaved.value = true;
     debouncedGroupSaved();
-    
+
     // Redirect after successful save
     setTimeout(() => {
       router.push('/app/groups');
     }, 1000);
   } catch (error) {
     console.error('Failed to save group:', error);
+    onSaveError.value = error instanceof Error ? error : new Error('Unknown Error');
   } finally {
     processing.value = false;
   }

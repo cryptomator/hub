@@ -20,7 +20,7 @@
           <div class="px-4 py-4">
             <div class="flex items-start justify-between mb-4">
               <div class="flex items-center min-w-0 flex-1" :title="group.name">
-                <img :src="group.groupPicture" :alt="t('groupList.profileImage')" class="w-10 h-10 rounded-full object-cover border border-gray-300 flex-shrink-0" />
+                <img :src="group.pictureUrl" :alt="t('groupList.profileImage')" class="w-10 h-10 rounded-full object-cover border border-gray-300 flex-shrink-0" />
                 <div class="ml-3 min-w-0 flex-1">
                   <p class="text-sm font-medium text-gray-900 truncate leading-tight">{{ group.name }}</p>
                 </div>
@@ -43,14 +43,10 @@
             </div>
 
             <!-- Stats section -->
-            <div class="mb-3 ml-13 text-xs text-gray-600">
-              <span>{{ t('groupList.members.count') }}: {{ group.members?.length ?? 0 }}</span>
-              <span class="mx-2">|</span>
-              <span>{{ t('groupList.vaults.count') }}: {{ group.vaults?.length ?? 0 }}</span>
+            <div class="ml-13 text-xs text-gray-600 space-x-3">
+              <span>{{ t('groupList.members.count') }}: {{ group.memberSize ?? 0 }}</span>
+              <span>{{ t('groupList.vaults.count') }}: {{ group.vaultCount ?? 0 }}</span>
             </div>
-
-            <!-- Creation date -->
-            <div class="ml-13 text-xs text-gray-500">{{ t('groupList.group.created') }}: {{ d(new Date(group.creationTime), 'short') }}</div>
           </div>
         </div>
       </div>
@@ -62,26 +58,24 @@
             <table class="min-w-full divide-y divide-gray-200" aria-describedby="groupListTitle">
               <thead class="bg-gray-50">
                 <tr>
-                  <th class="px-6 py-3 w-1/4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t('groupList.name') }}</th>
-                  <th class="px-4 py-3 w-1/6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t('groupList.members.count') }}</th>
-                  <th class="px-4 py-3 w-1/6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t('groupList.vaults.count') }}</th>
-                  <th class="px-4 py-3 w-1/6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">{{ t('groupList.group.created') }}</th>
+                  <th class="px-6 py-3 w-2/5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t('groupList.name') }}</th>
+                  <th class="px-4 py-3 w-1/5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t('groupList.members.count') }}</th>
+                  <th class="px-4 py-3 w-1/5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ t('groupList.vaults.count') }}</th>
                   <th class="px-4 py-3 w-auto text-right text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
                 </tr>
               </thead>
 
               <tbody class="bg-white divide-y divide-gray-200">
-                <template v-for="group in sortedGroups" :key="group.name">
+                <template v-for="group in sortedGroups" :key="group.id">
                   <tr>
                     <td class="px-6 py-4 text-sm font-medium text-gray-900">
                       <div class="flex items-center gap-3 max-w-xs">
-                        <img :src="group.groupPicture" :alt="t('groupList.profileImage')" class="w-10 h-10 rounded-full object-cover border border-gray-300"/>
+                        <img :src="group.pictureUrl" :alt="t('groupList.profileImage')" class="w-10 h-10 rounded-full object-cover border border-gray-300"/>
                         <button type="button" class="truncate block hover:underline" :title="group.name" @click="router.push(`/app/groups/${group.id}`)"> {{ group.name }} </button>
                       </div>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ group.members?.length ?? 0 }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ group.vaults?.length ?? 0 }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ d(new Date(group.creationTime), 'long') }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ group.memberSize ?? 0 }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ group.vaultCount ?? 0 }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div class="cursor-pointer text-sm font-medium text-red-700 hover:text-red-900" @click="showDeleteGroupDialog(group)">{{ t('common.remove') }}</div>
                     </td>
@@ -124,24 +118,17 @@
 <script setup lang="ts">
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
 import { EllipsisVerticalIcon } from '@heroicons/vue/20/solid';
-import { computed, nextTick, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
+import backend, { GroupDto } from '../../common/backend';
 import GroupDeleteDialog from './GroupDeleteDialog.vue';
 import FetchError from '../FetchError.vue';
 
 const router = useRouter();
+const route = useRoute();
 
-interface GroupDto {
-  id: string;
-  name: string;
-  groupPicture: string;
-  members: string[];
-  vaults?: { id: string }[];
-  creationTime: string;
-}
-
-const { t, d } = useI18n({ useScope: 'global' });
+const { t } = useI18n({ useScope: 'global' });
 
 const groups = ref<GroupDto[]>([]);
 const onFetchError = ref<Error | null>(null);
@@ -154,8 +141,8 @@ function showDeleteGroupDialog(group: GroupDto) {
   nextTick(() => deleteGroupDialog.value?.show());
 }
 
-function onGroupDeleted(deletedGroup: GroupDto) {
-  groups.value = groups.value.filter(g => g.id !== deletedGroup.id);
+function onGroupDeleted(deletedGroupId: string) {
+  groups.value = groups.value.filter(g => g.id !== deletedGroupId);
   deletingGroup.value = null;
 }
 
@@ -167,37 +154,15 @@ onMounted(() => {
   fetchData();
 });
 
+watch(() => route.path, (newPath) => {
+  if (newPath === '/app/groups') {
+    fetchData();
+  }
+});
+
 async function fetchData() {
   try {
-    // TODO: Replace with actual API call
-    // This is temporary mock data for development purposes
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    groups.value = [
-      {
-        id: '1',
-        name: 'Sales',
-        groupPicture: 'https://i.pravatar.cc/150?u=anna',
-        members: ['user1', 'user2'],
-        vaults: [{ id: 'v1' }, { id: 'v2' }],
-        creationTime: '2023-08-15T14:30:00Z',
-      },
-      {
-        id: '2',
-        name: 'Research & Development',
-        groupPicture: 'https://i.pravatar.cc/150?u=max',
-        members: ['user1', 'user2'],
-        vaults: [{ id: 'v3' }],
-        creationTime: '2024-02-20T09:15:00Z',
-      },
-      {
-        id: '3',
-        name: 'Marketing',
-        groupPicture: 'https://i.pravatar.cc/150?u=max',
-        members: ['user1', 'user2'],
-        vaults: [],
-        creationTime: '2024-01-10T16:45:00Z',
-      },
-    ];
+    groups.value = await backend.groups.listAll();
   } catch (error) {
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
@@ -206,14 +171,14 @@ async function fetchData() {
 const filteredGroups = computed(() =>
   query.value === ''
     ? groups.value
-    : groups.value.filter((u) =>
-      u.name.toLowerCase().includes(query.value.toLowerCase())
+    : groups.value.filter((g) =>
+      g.name.toLowerCase().includes(query.value.toLowerCase())
     )
 );
 
 const sortedGroups = computed(() =>
   filteredGroups.value.slice().sort((a, b) =>
-    new Date(b.creationTime).getTime() - new Date(a.creationTime).getTime()
+    a.name.localeCompare(b.name)
   )
 );
 </script>

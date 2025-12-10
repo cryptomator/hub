@@ -65,22 +65,22 @@ const props = defineProps<{
   
 const emit = defineEmits<{
     close: [];
-    delete: [updatedGroup: GroupDto];
+    delete: [deletedGroupId: string];
   }>();
-  
+
 defineExpose({
   show
 });
-  
+
 function show() {
   open.value = true;
 }
-  
+
 async function deleteGroup() {
   onDeleteGroupError.value = null;
   try {
-    const groupDto = await backend.groups.removeGroup(props.group.id);
-    emit('delete', groupDto);
+    await backend.groups.removeGroup(props.group.id);
+    emit('delete', props.group.id);
     open.value = false;
   } catch (error) {
     console.error('Deleting group failed.', error);

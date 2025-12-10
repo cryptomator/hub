@@ -24,8 +24,8 @@
                       <div class="flex items-center justify-between">
                         <div class="flex items-center w-full" :title="member.name">
                           <div class="w-8 h-8 rounded-full border border-gray-300 bg-white flex items-center justify-center overflow-hidden">
-                            <img v-if="member.userPicture" :src="member.userPicture" class="w-full h-full object-cover" alt="group icon" />
-                            <UserGroupIcon v-else class="w-5 h-5 text-gray-400" aria-hidden="true" />
+                            <img v-if="member.pictureUrl" :src="member.pictureUrl" class="w-full h-full object-cover" alt="user icon" />
+                            <UserIcon v-else class="w-5 h-5 text-gray-400" aria-hidden="true" />
                           </div>
                           <p class="ml-4 text-sm font-medium truncate">
                             {{ member.name }}
@@ -58,19 +58,20 @@
 
 <script setup lang="ts">
 import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
+import { UserIcon } from '@heroicons/vue/24/outline';
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import SearchInputGroup from '../SearchInputGroup.vue';
+import backend, { UserDto } from '../../common/backend';
 
-type User = { id: string; name: string; username: string, userPicture: string; role: string };
-
-const props = defineProps<{ members: User[] }>();
-const emit  = defineEmits<{ saved: (added: User[]) => void }>();
+const props = defineProps<{ groupId: string; members: UserDto[] }>();
+const emit  = defineEmits<{ saved: [added: UserDto[]] }>();
 
 const { t } = useI18n({ useScope: 'global' });
 const open = ref(false);
-const newMembers = ref<User[]>([]);
-const onAddUserError = ref<Error | null>(null);  
+const newMembers = ref<UserDto[]>([]);
+const onAddUserError = ref<Error | null>(null);
+const isSaving = ref(false);
 
 const selectedCount = computed(() => newMembers.value.length);
 const sortedNewMembers = computed(() => [...newMembers.value].reverse());
@@ -79,47 +80,23 @@ function isKnown(id: string) {
   return props.members.some(u => u.id === id);
 }
 
-async function searchUser(query: string): Promise<User[]> {
+async function searchUser(query: string): Promise<UserDto[]> {
   if (!query.trim()) return [];
 
-  const results: User[] = await new Promise(resolve =>
-    setTimeout(() => resolve([
-      { id: '26', name: 'Nikolai Ivanov', username: 'nikolai.ivanov', userPicture: 'https://i.pravatar.cc/50?u=nikolaiivanov', role: 'admin' },
-      { id: '27', name: 'Grace Kim', username: 'grace.kim', userPicture: 'https://i.pravatar.cc/50?u=gracekim', role: 'admin' },
-      { id: '28', name: 'Pedro Martins', username: 'pedro.martins', userPicture: 'https://i.pravatar.cc/50?u=pedromartins', role: 'admin' },
-      { id: '29', name: 'Miriam Ndulu', username: 'miriam.ndulu', userPicture: 'https://i.pravatar.cc/50?u=miriamndulu', role: 'admin' },
-      { id: '30', name: 'Thomas Berg', username: 'thomas.berg', userPicture: 'https://i.pravatar.cc/50?u=thomasberg', role: 'admin' },
-      { id: '31', name: 'Shiho Nakamura', username: 'shiho.nakamura', userPicture: 'https://i.pravatar.cc/50?u=shihonakamura', role: 'admin' },
-      { id: '32', name: 'Abdul Rahman', username: 'abdul.rahman', userPicture: 'https://i.pravatar.cc/50?u=abdulrahman', role: 'admin' },
-      { id: '33', name: 'Lucia Caruso', username: 'lucia.caruso', userPicture: 'https://i.pravatar.cc/50?u=luciacaruso', role: 'admin' },
-      { id: '34', name: 'Andrei Popescu', username: 'andrei.popescu', userPicture: 'https://i.pravatar.cc/50?u=andreipopescu', role: 'admin' },
-      { id: '35', name: 'Maya Patel', username: 'maya.patel', userPicture: 'https://i.pravatar.cc/50?u=mayapatel', role: 'admin' },
-      { id: '36', name: 'Joon Park', username: 'joon.park', userPicture: 'https://i.pravatar.cc/50?u=joonpark', role: 'admin' },
-      { id: '37', name: 'Selma Öztürk', username: 'selma.ozturk', userPicture: 'https://i.pravatar.cc/50?u=selmaozturk', role: 'admin' },
-      { id: '38', name: 'Luka Kovačić', username: 'luka.kovacic', userPicture: 'https://i.pravatar.cc/50?u=lukakovacic', role: 'admin' },
-      { id: '39', name: 'Clara Jensen', username: 'clara.jensen', userPicture: 'https://i.pravatar.cc/50?u=clarajensen', role: 'admin' },
-      { id: '40', name: 'Igor Petrescu', username: 'igor.petrescu', userPicture: 'https://i.pravatar.cc/50?u=igorpetrescu', role: 'admin' },
-      { id: '41', name: 'Leila Haddad', username: 'leila.haddad', userPicture: 'https://i.pravatar.cc/50?u=leilahaddad', role: 'admin' },
-      { id: '42', name: 'Mateusz Nowak', username: 'mateusz.nowak', userPicture: 'https://i.pravatar.cc/50?u=mateusznowak', role: 'admin' },
-      { id: '43', name: 'Sienna Brown', username: 'sienna.brown', userPicture: 'https://i.pravatar.cc/50?u=siennabrown', role: 'admin' },
-      { id: '44', name: 'Rashid Aliyev', username: 'rashid.aliyev', userPicture: 'https://i.pravatar.cc/50?u=rashidaliyev', role: 'admin' },
-      { id: '45', name: 'Emily Thompson', username: 'emily.thompson', userPicture: 'https://i.pravatar.cc/50?u=emilythompson', role: 'admin' },
-      { id: '46', name: 'Sergei Kuznetsov', username: 'sergei.kuznetsov', userPicture: 'https://i.pravatar.cc/50?u=sergeikuznetsov', role: 'admin' },
-      { id: '47', name: 'Chloe Wilson', username: 'chloe.wilson', userPicture: 'https://i.pravatar.cc/50?u=chloewilson', role: 'admin' },
-      { id: '48', name: 'Omar Farouk', username: 'omar.farouk', userPicture: 'https://i.pravatar.cc/50?u=omarfarouk', role: 'admin' },
-      { id: '49', name: 'Camille Laurent', username: 'camille.laurent', userPicture: 'https://i.pravatar.cc/50?u=camillelaurent', role: 'admin' },
-      { id: '50', name: 'Jonas Sørensen', username: 'jonas.sorensen', userPicture: 'https://i.pravatar.cc/50?u=jonassorensen', role: 'admin' },
-      { id: '51', name: 'Zoya Ahmed', username: 'zoya.ahmed', userPicture: 'https://i.pravatar.cc/50?u=zoyaahmed', role: 'admin' }
-    ]), 300)
-  );
-
-  return results
-    .filter(u => !isKnown(u.id) && !newMembers.value.some(n => n.id === u.id))
-    .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }))
-    .map(u => ({ ...u, pictureUrl: u.userPicture }));
+  try {
+    const results = await backend.authorities.search(query);
+    // Filter to only users (not groups) and exclude existing members
+    return results
+      .filter((a): a is UserDto => a.type === 'USER')
+      .filter(u => !isKnown(u.id) && !newMembers.value.some(n => n.id === u.id))
+      .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+  } catch (error) {
+    console.error('Search failed:', error);
+    return [];
+  }
 }
 
-function addUser(user: User) {
+function addUser(user: UserDto) {
   try {
     if (isKnown(user.id) || newMembers.value.some(u => u.id === user.id)) {
       return;
@@ -132,9 +109,28 @@ function removeTempMember(id: string) {
   newMembers.value = newMembers.value.filter(u => u.id !== id);
 }
 
-function onSubmit() {
-  emit('saved', [...newMembers.value]);
-  open.value = false;
+async function onSubmit() {
+  if (newMembers.value.length === 0) {
+    open.value = false;
+    return;
+  }
+
+  isSaving.value = true;
+  onAddUserError.value = null;
+
+  try {
+    // Add each member to the group via API
+    for (const member of newMembers.value) {
+      await backend.groups.addMember(props.groupId, member.id);
+    }
+    emit('saved', [...newMembers.value]);
+    open.value = false;
+  } catch (error) {
+    console.error('Adding members failed:', error);
+    onAddUserError.value = error instanceof Error ? error : new Error('Unknown Error');
+  } finally {
+    isSaving.value = false;
+  }
 }
 
 function show() {

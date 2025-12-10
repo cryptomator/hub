@@ -90,6 +90,7 @@ export type GroupDto = {
   name: string;
   pictureUrl?: string;
   memberSize?: number;
+  vaultCount?: number;
 }
 
 export type AuthorityDto = UserDto | GroupDto;
@@ -120,6 +121,32 @@ export type UpdateUserDto = {
   password?: string;
   pictureUrl?: string;
   roles?: string[];
+}
+
+export type CreateGroupDto = {
+  name: string;
+  pictureUrl?: string;
+}
+
+export type UpdateGroupDto = {
+  name?: string;
+  pictureUrl?: string;
+}
+
+export type VaultDtoWithRole = {
+  id: string;
+  name: string;
+  description?: string;
+  archived: boolean;
+  role: VaultRole;
+}
+
+export type GroupDtoWithDetails = {
+  id: string;
+  name: string;
+  pictureUrl?: string;
+  members: UserDto[];
+  vaults: VaultDtoWithRole[];
 }
 
 export type BillingDto = {
@@ -281,16 +308,55 @@ class DeviceService {
 }
 
 class GroupService {
-  public async removeGroup(groupId: string): Promise<GroupDto> {
-    return axiosAuth.delete<GroupDto>(`/groups/${groupId}`).then(res => res.data);
+  public async listAll(): Promise<GroupDto[]> {
+    return axiosAuth.get<GroupDto[]>('/groups/').then(response => response.data.map(AuthorityService.fillInMissingPicture));
+  }
+
+  public async getGroup(groupId: string): Promise<GroupDtoWithDetails> {
+    return axiosAuth.get<GroupDtoWithDetails>(`/groups/${groupId}`)
+      .then(response => {
+        const group = response.data;
+        const filledGroup = AuthorityService.fillInMissingPicture({ ...group, type: 'GROUP' as const });
+        return {
+          ...group,
+          pictureUrl: filledGroup.pictureUrl,
+          members: group.members.map(m => AuthorityService.fillInMissingPicture(m))
+        };
+      })
+      .catch((error) => rethrowAndConvertIfExpected(error, 404));
+  }
+
+  public async createGroup(dto: CreateGroupDto): Promise<GroupDto> {
+    return axiosAuth.post<GroupDto>('/groups/', dto).then(response => AuthorityService.fillInMissingPicture(response.data));
+  }
+
+  public async updateGroup(groupId: string, dto: UpdateGroupDto): Promise<GroupDto> {
+    return axiosAuth.put<GroupDto>(`/groups/${groupId}`, dto)
+      .then(response => AuthorityService.fillInMissingPicture(response.data))
+      .catch((error) => rethrowAndConvertIfExpected(error, 404));
+  }
+
+  public async removeGroup(groupId: string): Promise<void> {
+    return axiosAuth.delete(`/groups/${groupId}`)
+      .then(() => {})
+      .catch((error) => rethrowAndConvertIfExpected(error, 404));
+  }
+
+  public async getEffectiveMembers(groupId: string): Promise<UserDto[]> {
+    return axiosAuth.get<UserDto[]>(`/groups/${groupId}/effective-members`)
+      .then(response => response.data.map(AuthorityService.fillInMissingPicture));
   }
 
   public async addMember(groupId: string, userId: string): Promise<void> {
-    return axiosAuth.post(`/groups/${groupId}/members/${userId}`);
+    return axiosAuth.post(`/groups/${groupId}/members/${userId}`)
+      .then(() => {})
+      .catch((error) => rethrowAndConvertIfExpected(error, 404));
   }
 
   public async removeMember(groupId: string, userId: string): Promise<void> {
-    return axiosAuth.delete(`/groups/${groupId}/members/${userId}`);
+    return axiosAuth.delete(`/groups/${groupId}/members/${userId}`)
+      .then(() => {})
+      .catch((error) => rethrowAndConvertIfExpected(error, 404));
   }
 }
 

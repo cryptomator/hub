@@ -8,9 +8,11 @@ import jakarta.ws.rs.NotFoundException;
 import org.cryptomator.hub.entities.User;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.keycloak.admin.client.Keycloak;
+import org.keycloak.admin.client.resource.GroupResource;
 import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.representations.idm.CredentialRepresentation;
+import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +21,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class KeycloakAdminService {
@@ -295,6 +299,88 @@ public class KeycloakAdminService {
 		} catch (jakarta.ws.rs.NotFoundException e) {
 			throw new NotFoundException("User not found: " + userId);
 		}
+	}
+
+	// Group management methods
+
+	public GroupRepresentation createGroup(String name, String pictureUrl) {
+		RealmResource realm = keycloak.realm(keycloakRealm);
+
+		GroupRepresentation group = new GroupRepresentation();
+		group.setName(name);
+
+		if (pictureUrl != null && !pictureUrl.isBlank()) {
+			group.setAttributes(Map.of("picture", List.of(pictureUrl)));
+		}
+
+		var response = realm.groups().add(group);
+		if (response.getStatus() != 201) {
+			throw new RuntimeException("Failed to create group in Keycloak. Status: " + response.getStatus());
+		}
+
+		String locationHeader = response.getHeaderString("Location");
+		String groupId = locationHeader.substring(locationHeader.lastIndexOf('/') + 1);
+
+		syncAuthorities();
+
+		return realm.groups().group(groupId).toRepresentation();
+	}
+
+	public GroupRepresentation getGroup(String groupId) {
+		RealmResource realm = keycloak.realm(keycloakRealm);
+		try {
+			return realm.groups().group(groupId).toRepresentation();
+		} catch (jakarta.ws.rs.NotFoundException e) {
+			throw new NotFoundException("Group not found: " + groupId);
+		}
+	}
+
+	public GroupRepresentation updateGroup(String groupId, String name, String pictureUrl) {
+		RealmResource realm = keycloak.realm(keycloakRealm);
+		GroupResource groupResource;
+		try {
+			groupResource = realm.groups().group(groupId);
+		} catch (jakarta.ws.rs.NotFoundException e) {
+			throw new NotFoundException("Group not found: " + groupId);
+		}
+
+		GroupRepresentation group = groupResource.toRepresentation();
+
+		if (name != null && !name.isBlank()) {
+			group.setName(name);
+		}
+		if (pictureUrl != null) {
+			if (pictureUrl.isBlank()) {
+				group.setAttributes(Collections.emptyMap());
+			} else {
+				group.setAttributes(Map.of("picture", List.of(pictureUrl)));
+			}
+		}
+
+		groupResource.update(group);
+		syncAuthorities();
+
+		return groupResource.toRepresentation();
+	}
+
+	@Transactional
+	public void deleteGroup(String groupId) {
+		RealmResource realm = keycloak.realm(keycloakRealm);
+		try {
+			realm.groups().group(groupId).remove();
+		} catch (jakarta.ws.rs.NotFoundException e) {
+			throw new NotFoundException("Group not found: " + groupId);
+		}
+
+		syncAuthorities();
+	}
+
+	private void syncAuthorities() {
+		var keycloakGroups = authorityProvider.groups().stream()
+				.collect(Collectors.toMap(KeycloakGroupDto::id, Function.identity()));
+		var keycloakUsers = authorityProvider.users().stream()
+				.collect(Collectors.toMap(KeycloakUserDto::id, Function.identity()));
+		authorityPuller.sync(keycloakGroups, keycloakUsers);
 	}
 }
 
