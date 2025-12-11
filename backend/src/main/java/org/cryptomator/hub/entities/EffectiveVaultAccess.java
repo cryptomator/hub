@@ -35,29 +35,31 @@ import java.util.stream.Collectors;
 		SELECT COUNT(DISTINCT u.id)
 		FROM User u
 		INNER JOIN EffectiveVaultAccess eva ON u.id = eva.id.authorityId
-		INNER JOIN Vault v ON eva.id.vaultId = v.id AND NOT v.archived
-		WHERE u.id IN :userIds
+		INNER JOIN Vault v ON eva.id.vaultId = v.id
+		WHERE u.id IN :userIds AND NOT v.archived
 		""")
 @NamedQuery(name = "EffectiveVaultAccess.countSeatOccupyingUsers", query = """
-		SELECT count(DISTINCT u)
+		SELECT COUNT(DISTINCT u.id)
 		FROM User u
 		INNER JOIN EffectiveVaultAccess eva ON u.id = eva.id.authorityId
-		INNER JOIN Vault v ON eva.id.vaultId = v.id AND NOT v.archived
+		INNER JOIN Vault v ON eva.id.vaultId = v.id
+		WHERE NOT v.archived
 		""")
 @NamedQuery(name = "EffectiveVaultAccess.countSeatOccupyingUsersWithAccessToken", query = """
-		SELECT count(DISTINCT u)
+		SELECT COUNT(DISTINCT u.id)
 		FROM User u
 		INNER JOIN EffectiveVaultAccess eva ON u.id = eva.id.authorityId
-		INNER JOIN Vault v ON eva.id.vaultId = v.id AND NOT v.archived
+		INNER JOIN Vault v ON eva.id.vaultId = v.id
 		INNER JOIN AccessToken at ON eva.id.vaultId = at.id.vaultId AND eva.id.authorityId = at.id.userId
+		WHERE NOT v.archived
 		""")
 @NamedQuery(name = "EffectiveVaultAccess.countSeatOccupyingUsersOfGroup", query = """
-		SELECT count(DISTINCT u)
+		SELECT COUNT(DISTINCT u.id)
 		FROM User u
 		INNER JOIN EffectiveVaultAccess eva ON u.id = eva.id.authorityId
 		INNER JOIN EffectiveGroupMembership egm ON u.id = egm.id.memberId
-		INNER JOIN Vault v ON eva.id.vaultId = v.id AND NOT v.archived
-		WHERE egm.id.groupId = :groupId
+		INNER JOIN Vault v ON eva.id.vaultId = v.id
+		WHERE egm.id.groupId = :groupId AND NOT v.archived
 		""")
 @NamedQuery(name = "EffectiveVaultAccess.findByAuthorityAndVault", query = """
 		SELECT eva
