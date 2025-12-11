@@ -3,8 +3,10 @@ package org.cryptomator.hub.keycloak;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.User;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.keycloak.admin.client.Keycloak;
@@ -65,6 +67,9 @@ public class KeycloakAdminService {
 		user.setCredentials(List.of(credential));
 
 		var response = realm.users().create(user);
+		if (response.getStatus() == 409) {
+			throw new ClientErrorException("User already exists", Response.Status.CONFLICT);
+		}
 		if (response.getStatus() != 201) {
 			throw new RuntimeException("Failed to create user in Keycloak. Status: " + response.getStatus());
 		}

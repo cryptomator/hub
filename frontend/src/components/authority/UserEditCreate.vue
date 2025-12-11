@@ -217,6 +217,7 @@
                     </button>
                   </div>
                 </div>
+                <p v-if="submitError" class="mt-2 text-sm text-red-600">{{ submitError }}</p>
               </div>
             </div>
           </form>
@@ -294,6 +295,7 @@ const roleOptions: Record<Role, string> = {
 const errors = ref<Record<string, string>>({});
 const processing = ref(false);
 const userSaved = ref(false);
+const submitError = ref<string | null>(null);
 const debouncedUserSaved = debounce(() => userSaved.value = false, 2000);
 
 const password = ref('');
@@ -485,9 +487,15 @@ async function onSubmit() {
         router.push('/app/users');
       }
     }, redirectDelay);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Failed to save user:', error);
     processing.value = false;
+    const axiosError = error as { response?: { status?: number } };
+    if (axiosError?.response?.status === 409) {
+      errors.value.username = t('userEditCreate.error.userAlreadyExists');
+    } else {
+      submitError.value = error instanceof Error ? error.message : 'An error occurred';
+    }
   }
 }
 

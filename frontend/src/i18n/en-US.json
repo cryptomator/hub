@@ -369,7 +369,8 @@
   "userEditCreate.invalidImageUrl": "Invalid image URL",
   "userEditCreate.validation.required": "This field is required",
   "userEditCreate.validation.passwordMismatch": "Passwords don't match",
-  
+  "userEditCreate.error.userAlreadyExists": "A user with this username already exists.",
+
   "userList.edit.user.button": "Edit",
   "userList.userName": "Name",
   "userList.groups.count": "Groups",
