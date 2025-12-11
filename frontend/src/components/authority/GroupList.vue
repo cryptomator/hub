@@ -14,8 +14,8 @@
       </div>
       
       <!-- Mobile Card Layout (visible on small screens) -->
-      <div v-if="sortedGroups.length > 0" class="block md:hidden space-y-3">
-        <div v-for="group in sortedGroups" :key="group.id" class="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer" @click="router.push(`/app/groups/${group.id}`)">
+      <div v-if="paginatedGroups.length > 0" class="block md:hidden space-y-3">
+        <div v-for="group in paginatedGroups" :key="group.id" class="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer" @click="router.push(`/app/groups/${group.id}`)">
           <div class="px-4 py-4">
             <div class="flex items-start justify-between mb-4">
               <div class="flex items-center min-w-0 flex-1" :title="group.name">
@@ -51,7 +51,7 @@
       </div>
 
       <!-- Desktop Table Layout (visible on medium screens and up) -->
-      <div v-if="sortedGroups.length > 0" class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8 hidden md:block">
+      <div v-if="paginatedGroups.length > 0" class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8 hidden md:block">
         <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
           <div class="shadow-sm overflow-hidden border-b border-gray-200 sm:rounded-lg">
             <table class="min-w-full divide-y divide-gray-200" aria-describedby="groupListTitle">
@@ -65,7 +65,7 @@
               </thead>
 
               <tbody class="bg-white divide-y divide-gray-200">
-                <template v-for="group in sortedGroups" :key="group.id">
+                <template v-for="group in paginatedGroups" :key="group.id">
                   <tr>
                     <td class="px-6 py-4 text-sm font-medium text-gray-900">
                       <div class="flex items-center gap-3 max-w-xs">
@@ -81,10 +81,47 @@
                   </tr>
                 </template>
               </tbody>
+
+              <!-- Pagination -->
+              <tfoot v-if="showPagination" class="bg-gray-50">
+                <tr>
+                  <td colspan="4">
+                    <nav class="flex items-center justify-between px-4 py-3 sm:px-6" :aria-label="t('common.pagination')">
+                      <div class="hidden sm:block">
+                        <i18n-t keypath="auditLog.pagination.showing" scope="global" tag="p" class="text-sm text-gray-700">
+                          <span class="font-medium">{{ paginationBegin }}</span>
+                          <span class="font-medium">{{ paginationEnd }}</span>
+                        </i18n-t>
+                      </div>
+                      <div class="flex flex-1 justify-end space-x-3">
+                        <button v-if="currentPage > 0" type="button" class="relative inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0" @click="showPreviousPage">
+                          {{ t('common.previous') }}
+                        </button>
+                        <button v-if="hasNextPage" type="button" class="relative inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0" @click="showNextPage">
+                          {{ t('common.next') }}
+                        </button>
+                      </div>
+                    </nav>
+                  </td>
+                </tr>
+              </tfoot>
             </table>
           </div>
         </div>
       </div>
+
+      <!-- Mobile Pagination -->
+      <nav v-if="showPagination" class="flex items-center justify-between px-4 py-3 md:hidden" :aria-label="t('common.pagination')">
+        <div class="flex flex-1 justify-between space-x-3">
+          <button v-if="currentPage > 0" type="button" class="relative inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0" @click="showPreviousPage">
+            {{ t('common.previous') }}
+          </button>
+          <div class="flex-1"></div>
+          <button v-if="hasNextPage" type="button" class="relative inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline-offset-0" @click="showNextPage">
+            {{ t('common.next') }}
+          </button>
+        </div>
+      </nav>
 
       <!-- Empty State when no groups exist -->
       <div v-else-if="query === '' && sortedGroups.length == 0" class="mt-3 text-center">
@@ -119,10 +156,10 @@ import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
 import { EllipsisVerticalIcon } from '@heroicons/vue/20/solid';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useRouter, useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import backend, { GroupDto } from '../../common/backend';
-import GroupDeleteDialog from './GroupDeleteDialog.vue';
 import FetchError from '../FetchError.vue';
+import GroupDeleteDialog from './GroupDeleteDialog.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -135,6 +172,8 @@ const onFetchError = ref<Error | null>(null);
 const deleteGroupDialog = ref<typeof GroupDeleteDialog>();
 const deletingGroup = ref<GroupDto | null>(null);
 const query = ref('');
+const currentPage = ref(0);
+const pageSize = 20;
 
 function showDeleteGroupDialog(group: GroupDto) {
   deletingGroup.value = group;
@@ -183,4 +222,23 @@ const sortedGroups = computed(() =>
     a.name.localeCompare(b.name)
   )
 );
+
+const paginatedGroups = computed(() =>
+  sortedGroups.value.slice(currentPage.value * pageSize, (currentPage.value + 1) * pageSize)
+);
+
+const showPagination = computed(() => sortedGroups.value.length > pageSize);
+const hasNextPage = computed(() => (currentPage.value + 1) * pageSize < sortedGroups.value.length);
+const paginationBegin = computed(() => sortedGroups.value.length ? currentPage.value * pageSize + 1 : 0);
+const paginationEnd = computed(() => Math.min((currentPage.value + 1) * pageSize, sortedGroups.value.length));
+
+function showNextPage() {
+  if (hasNextPage.value) currentPage.value += 1;
+}
+
+function showPreviousPage() {
+  if (currentPage.value > 0) currentPage.value -= 1;
+}
+
+watch(() => [filteredGroups.value.length, query.value], () => (currentPage.value = 0));
 </script>
