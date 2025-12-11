@@ -43,9 +43,6 @@ import java.util.stream.Stream;
 		""")
 public class User extends Authority {
 
-	@Column(name = "picture_url")
-	private String pictureUrl;
-
 	@Column(name = "email")
 	private String email;
 
@@ -63,14 +60,6 @@ public class User extends Authority {
 
 	@Column(name = "setupcode")
 	private String setupCode;
-
-	public String getPictureUrl() {
-		return pictureUrl;
-	}
-
-	public void setPictureUrl(String pictureUrl) {
-		this.pictureUrl = pictureUrl;
-	}
 
 	public String getEmail() {
 		return email;
@@ -163,13 +152,12 @@ public class User extends Authority {
 		if (o == null || getClass() != o.getClass()) return false;
 		User that = (User) o;
 		return super.equals(that) //
-				&& Objects.equals(pictureUrl, that.pictureUrl) //
 				&& Objects.equals(email, that.email);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(super.getId(), pictureUrl, email);
+		return Objects.hash(super.hashCode(), email);
 	}
 
 	@ApplicationScoped

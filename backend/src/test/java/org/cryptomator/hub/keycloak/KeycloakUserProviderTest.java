@@ -136,9 +136,11 @@ class KeycloakUserProviderTest {
 		public Groups() {
 			Mockito.when(group1.getId()).thenReturn("grpId3000");
 			Mockito.when(group1.getName()).thenReturn("grpName3000");
+			Mockito.when(group1.getAttributes()).thenReturn(Map.of("picture", List.of("grpPicture3000")));
 
 			Mockito.when(group2.getId()).thenReturn("grpId3001");
 			Mockito.when(group2.getName()).thenReturn("grpName3001");
+			Mockito.when(group2.getAttributes()).thenReturn(Map.of("picture", List.of("grpPicture3001")));
 
 			Mockito.when(realm.groups()).thenReturn(groupsResource);
 			Mockito.when(realm.groups().group("grpId3000")).thenReturn(groupResource1);
@@ -151,7 +153,7 @@ class KeycloakUserProviderTest {
 		@Test
 		@DisplayName("test groups listing contains two groups with members in group2")
 		public void testListGroups() {
-			Mockito.when(groupsResource.groups(0, KeycloakAuthorityProvider.MAX_COUNT_PER_REQUEST)).thenReturn(List.of(group1, group2));
+			Mockito.when(groupsResource.groups(null, 0, KeycloakAuthorityProvider.MAX_COUNT_PER_REQUEST, false)).thenReturn(List.of(group1, group2));
 
 			var result = keycloakRemoteUserProvider.groups(realm);
 
@@ -162,10 +164,12 @@ class KeycloakUserProviderTest {
 
 			Assertions.assertEquals("grpId3000", resultGroup1.id());
 			Assertions.assertEquals("grpName3000", resultGroup1.name());
+			Assertions.assertEquals("grpPicture3000", resultGroup1.pictureUrl());
 			Assertions.assertEquals(0, resultGroup1.members().size());
 
 			Assertions.assertEquals("grpId3001", resultGroup2.id());
 			Assertions.assertEquals("grpName3001", resultGroup2.name());
+			Assertions.assertEquals("grpPicture3001", resultGroup2.pictureUrl());
 			Assertions.assertEquals(2, resultGroup2.members().size());
 
 			var membersGroup2 = resultGroup2.members().stream().sorted(Comparator.comparing(KeycloakUserDto::id)).toList();

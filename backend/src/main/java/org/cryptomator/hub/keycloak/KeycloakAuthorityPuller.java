@@ -86,6 +86,7 @@ public class KeycloakAuthorityPuller {
 			var databaseGroup = new Group();
 			databaseGroup.setId(keycloakGroup.id());
 			databaseGroup.setName(keycloakGroup.name());
+			databaseGroup.setPictureUrl(keycloakGroup.pictureUrl());
 			Set<Authority> members = new HashSet<>();
 			for (var keycloakMember : keycloakGroup.members()) {
 				var databaseUser = databaseUsers.get(keycloakMember.id());
@@ -119,6 +120,7 @@ public class KeycloakAuthorityPuller {
 			var wantIds = keycloakGroup.members().stream().map(KeycloakUserDto::id).collect(Collectors.toSet());
 			var haveIds = databaseGroup.getMembers().stream().map(Authority::getId).collect(Collectors.toSet());
 			databaseGroup.setName(keycloakGroup.name());
+			databaseGroup.setPictureUrl(keycloakGroup.pictureUrl());
 			for (var addId : diff(wantIds, haveIds)) {
 				var databaseUser = databaseUsers.get(addId);
 				if (databaseUser == null) {

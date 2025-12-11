@@ -198,7 +198,11 @@
       "name": "groupies",
       "path": "/groupies",
       "subGroups": [],
-      "attributes": {},
+      "attributes": {
+        "picture": [
+          "https://cryptomator.org/img/logo.svg"
+        ]
+      },
       "realmRoles": [],
       "clientRoles": {}
     }

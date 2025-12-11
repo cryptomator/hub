@@ -29,7 +29,7 @@ public final class MemberDto extends AuthorityDto {
 	}
 
 	public static MemberDto fromEntity(Group group, VaultAccess.Role role) {
-		return new MemberDto(group.getId(), Type.GROUP, group.getName(), null, null, null, role, group.getMemberSize());
+		return new MemberDto(group.getId(), Type.GROUP, group.getName(), group.getPictureUrl(), null, null, role, group.getMemberSize());
 	}
 
 }
