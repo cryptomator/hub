@@ -298,7 +298,7 @@ const processing = ref(false);
 const onFetchError = ref<Error>();
 const errorOnFetchingUpdates = ref<boolean>(false);
 const onSaveError = ref<Error>();
-const wotMaxDepthError = ref<Error >();
+const wotMaxDepthError = ref<Error>();
 const wotIdVerifyLenError = ref<Error>();
 
 class FormValidationFailedError extends Error {
@@ -395,7 +395,7 @@ async function saveWebOfTrust() {
   onSaveError.value = undefined;
   wotMaxDepthError.value = undefined;
   wotIdVerifyLenError.value = undefined;
-  if (admin.value == undefined || wotMaxDepth.value == undefined || wotIdVerifyLen.value == undefined) {
+  if (admin.value === undefined || wotMaxDepth.value === undefined || wotIdVerifyLen.value === undefined) {
     throw new Error('No data available.');
   }
   if (!form.value?.checkValidity()) {
