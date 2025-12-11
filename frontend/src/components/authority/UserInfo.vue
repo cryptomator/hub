@@ -31,10 +31,6 @@
             </span>
           </dd>
         </div>
-        <div class="py-3 flex justify-between">
-          <dt class="text-sm text-gray-500">{{ t('user.detail.createdOn') }}</dt>
-          <dd class="text-sm text-gray-900 font-medium">{{ d(user.creationTime, 'long') }}</dd>
-        </div>
       </dl>
     </div>
   </section>
@@ -44,7 +40,7 @@
 import { useI18n } from 'vue-i18n';
 import { computed } from 'vue';
 
-const { t, d } = useI18n({ useScope: 'global' });
+const { t } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{
   user: DetailUser;
@@ -57,7 +53,6 @@ interface DetailUser {
   roles: string[];
   email: string;
   userPicture?: string;
-  creationTime: string;
   groups: Group[];
   vaults: Vault[];
   devices: Device[];

@@ -112,7 +112,6 @@ interface DetailUser {
   username: string;
   email: string;
   userPicture?: string;
-  creationTime: string;
   groups: Group[];
   vaults: Vault[];
   devices: Device[];
@@ -134,7 +133,6 @@ interface UserDto {
   legacyDevices?: Device[];
   groups?: Group[];
   vaults?: Vault[];
-  createdTimestamp?: number;
   type?: 'USER';
   ecdhPublicKey?: string;
   ecdsaPublicKey?: string;
@@ -167,7 +165,6 @@ const user = ref<DetailUser>({
   username: '',
   email: '',
   userPicture: undefined,
-  creationTime: new Date().toISOString(),
   groups: [],
   vaults: [],
   devices: [],
@@ -195,10 +192,6 @@ onMounted(async () => {
     user.value.username = fetchedUser.name;
     user.value.email = fetchedUser.email;
     user.value.userPicture = fetchedUser.pictureUrl;
-
-    if (fetchedUser.createdTimestamp) {
-      user.value.creationTime = new Date(fetchedUser.createdTimestamp).toISOString();
-    }
 
     // Load groups
     if (fetchedUser.groups) {
