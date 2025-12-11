@@ -370,6 +370,7 @@
   "userEditCreate.validation.required": "This field is required",
   "userEditCreate.validation.passwordMismatch": "Passwords don't match",
   "userEditCreate.error.userAlreadyExists": "A user with this username already exists.",
+  "userEditCreate.error.emailAlreadyExists": "A user with this email already exists.",
 
   "userList.edit.user.button": "Edit",
   "userList.userName": "Name",

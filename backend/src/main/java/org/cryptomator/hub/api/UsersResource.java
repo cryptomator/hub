@@ -8,6 +8,7 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.GET;
@@ -336,28 +337,36 @@ public class UsersResource {
 	@APIResponse(responseCode = "400", description = "invalid input")
 	@APIResponse(responseCode = "409", description = "user already exists")
 	public Response createUser(@Valid @NotNull CreateUserDto dto) {
-		var userRepresentation = keycloakAdminService.createUser(
-				dto.username(),
-				dto.email(),
-				dto.firstName(),
-				dto.lastName(),
-				dto.password(),
-				dto.pictureUrl(),
-				dto.groupIds()
-		);
+		try {
+			var userRepresentation = keycloakAdminService.createUser(
+					dto.username(),
+					dto.email(),
+					dto.firstName(),
+					dto.lastName(),
+					dto.password(),
+					dto.pictureUrl(),
+					dto.groupIds()
+			);
 
-		if (dto.roles() != null && !dto.roles().isEmpty()) {
-			keycloakAdminService.updateUserRoles(userRepresentation.getId(), dto.roles());
+			if (dto.roles() != null && !dto.roles().isEmpty()) {
+				keycloakAdminService.updateUserRoles(userRepresentation.getId(), dto.roles());
+			}
+
+			User user = userRepo.findById(userRepresentation.getId());
+			if (user == null) {
+				throw new RuntimeException("User was created in Keycloak but not found in database after sync");
+			}
+
+			return Response.created(URI.create("./" + user.getId()))
+					.entity(UserDto.justPublicInfo(user))
+					.build();
+		} catch (ClientErrorException e) {
+			// Return 409 with specific error message (EMAIL_EXISTS or USERNAME_EXISTS)
+			return Response.status(Response.Status.CONFLICT)
+					.entity(e.getMessage())
+					.type(MediaType.TEXT_PLAIN)
+					.build();
 		}
-
-		User user = userRepo.findById(userRepresentation.getId());
-		if (user == null) {
-			throw new RuntimeException("User was created in Keycloak but not found in database after sync");
-		}
-
-		return Response.created(URI.create("./" + user.getId()))
-				.entity(UserDto.justPublicInfo(user))
-				.build();
 	}
 
 	@GET

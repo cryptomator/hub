@@ -237,7 +237,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { base64 } from 'rfc4648';
 import backend from '../../common/backend';
 import { FormValidator } from '../../common/formvalidator';
-import { debounce, UTF8 } from '../../common/util';
+import { UTF8 } from '../../common/util';
 import BreadcrumbNav from '../BreadcrumbNav.vue';
 
 interface UserData {
@@ -296,7 +296,6 @@ const errors = ref<Record<string, string>>({});
 const processing = ref(false);
 const userSaved = ref(false);
 const submitError = ref<string | null>(null);
-const debouncedUserSaved = debounce(() => userSaved.value = false, 2000);
 
 const password = ref('');
 const passwordConfirm = ref('');
@@ -479,20 +478,22 @@ async function onSubmit() {
     userSaved.value = true;
     processing.value = false;
 
-    const redirectDelay = 800;
-    setTimeout(() => {
-      if (isEditMode.value) {
-        router.push(`/app/users/${userId}`);
-      } else {
-        router.push('/app/users');
-      }
-    }, redirectDelay);
+    if (isEditMode.value) {
+      router.push(`/app/users/${userId}`);
+    } else {
+      router.push('/app/users');
+    }
   } catch (error: unknown) {
     console.error('Failed to save user:', error);
     processing.value = false;
-    const axiosError = error as { response?: { status?: number } };
+    const axiosError = error as { response?: { status?: number; data?: string } };
     if (axiosError?.response?.status === 409) {
-      errors.value.username = t('userEditCreate.error.userAlreadyExists');
+      const errorData = axiosError.response.data;
+      if (errorData === 'EMAIL_EXISTS') {
+        errors.value.email = t('userEditCreate.error.emailAlreadyExists');
+      } else {
+        errors.value.username = t('userEditCreate.error.userAlreadyExists');
+      }
     } else {
       submitError.value = error instanceof Error ? error.message : 'An error occurred';
     }

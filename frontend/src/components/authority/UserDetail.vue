@@ -155,8 +155,8 @@ const showDeleteUserDialog = () => {
   nextTick(() => deleteUserDialog.value?.show());
 };
 
-const onUserDeleted = (deletedUser: UserDto) => {
-  
+const onUserDeleted = () => {
+  router.push('/app/users');
 };
 
 const user = ref<DetailUser>({

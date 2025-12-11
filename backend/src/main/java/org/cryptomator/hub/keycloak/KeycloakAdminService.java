@@ -7,6 +7,7 @@ import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
+import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.keycloak.admin.client.Keycloak;
@@ -23,8 +24,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class KeycloakAdminService {
@@ -35,13 +34,10 @@ public class KeycloakAdminService {
 	Keycloak keycloak;
 
 	@Inject
-	KeycloakAuthorityProvider authorityProvider;
-
-	@Inject
-	KeycloakAuthorityPuller authorityPuller;
-
-	@Inject
 	User.Repository userRepo;
+
+	@Inject
+	Group.Repository groupRepo;
 
 	@ConfigProperty(name = "hub.keycloak.realm")
 	String keycloakRealm;
@@ -68,7 +64,15 @@ public class KeycloakAdminService {
 
 		var response = realm.users().create(user);
 		if (response.getStatus() == 409) {
-			throw new ClientErrorException("User already exists", Response.Status.CONFLICT);
+			String body = response.readEntity(String.class);
+			// Parse error message from Keycloak response
+			String errorMessage = "User already exists";
+			if (body != null && body.contains("same email")) {
+				errorMessage = "EMAIL_EXISTS";
+			} else if (body != null && body.contains("same username")) {
+				errorMessage = "USERNAME_EXISTS";
+			}
+			throw new ClientErrorException(errorMessage, Response.Status.CONFLICT);
 		}
 		if (response.getStatus() != 201) {
 			throw new RuntimeException("Failed to create user in Keycloak. Status: " + response.getStatus());
@@ -219,6 +223,43 @@ public class KeycloakAdminService {
 	}
 
 	@Transactional
+	public Group syncGroup(String groupId) {
+		try {
+			RealmResource realm = keycloak.realm(keycloakRealm);
+			GroupResource groupResource = realm.groups().group(groupId);
+			GroupRepresentation keycloakGroup = groupResource.toRepresentation();
+
+			Group dbGroup = groupRepo.findById(groupId);
+			if (dbGroup == null) {
+				dbGroup = new Group();
+				dbGroup.setId(keycloakGroup.getId());
+			}
+
+			dbGroup.setName(keycloakGroup.getName());
+
+			// Sync members
+			var keycloakMembers = groupResource.members();
+			Set<org.cryptomator.hub.entities.Authority> members = new java.util.HashSet<>();
+			for (var member : keycloakMembers) {
+				User dbUser = userRepo.findById(member.getId());
+				if (dbUser != null) {
+					members.add(dbUser);
+				}
+			}
+			dbGroup.setMembers(members);
+
+			groupRepo.persist(dbGroup);
+			groupRepo.flush();
+			return dbGroup;
+		} catch (jakarta.ws.rs.NotFoundException e) {
+			throw new NotFoundException("Group not found in Keycloak: " + groupId);
+		} catch (Exception e) {
+			LOG.error("Failed to sync group {}", groupId, e);
+			throw new RuntimeException("Failed to sync group: " + groupId, e);
+		}
+	}
+
+	@Transactional
 	public void addUserToGroup(String groupId, String userId) {
 		RealmResource realm = keycloak.realm(keycloakRealm);
 
@@ -235,11 +276,7 @@ public class KeycloakAdminService {
 			throw new NotFoundException("User not found: " + userId);
 		}
 
-		var keycloakGroups = authorityProvider.groups().stream()
-				.collect(java.util.stream.Collectors.toMap(KeycloakGroupDto::id, java.util.function.Function.identity()));
-		var keycloakUsers = authorityProvider.users().stream()
-				.collect(java.util.stream.Collectors.toMap(KeycloakUserDto::id, java.util.function.Function.identity()));
-		authorityPuller.sync(keycloakGroups, keycloakUsers);
+		syncGroup(groupId);
 	}
 
 	@Transactional
@@ -259,11 +296,7 @@ public class KeycloakAdminService {
 			throw new NotFoundException("User not found: " + userId);
 		}
 
-		var keycloakGroups = authorityProvider.groups().stream()
-				.collect(java.util.stream.Collectors.toMap(KeycloakGroupDto::id, java.util.function.Function.identity()));
-		var keycloakUsers = authorityProvider.users().stream()
-				.collect(java.util.stream.Collectors.toMap(KeycloakUserDto::id, java.util.function.Function.identity()));
-		authorityPuller.sync(keycloakGroups, keycloakUsers);
+		syncGroup(groupId);
 	}
 
 	public Set<String> getUserRoles(String userId) {
@@ -326,7 +359,7 @@ public class KeycloakAdminService {
 		String locationHeader = response.getHeaderString("Location");
 		String groupId = locationHeader.substring(locationHeader.lastIndexOf('/') + 1);
 
-		syncAuthorities();
+		syncGroup(groupId);
 
 		return realm.groups().group(groupId).toRepresentation();
 	}
@@ -371,7 +404,7 @@ public class KeycloakAdminService {
 			}
 		}
 
-		syncAuthorities();
+		syncGroup(groupId);
 
 		return groupResource.toRepresentation();
 	}
@@ -385,15 +418,11 @@ public class KeycloakAdminService {
 			throw new NotFoundException("Group not found: " + groupId);
 		}
 
-		syncAuthorities();
+		Group group = groupRepo.findById(groupId);
+		if (group != null) {
+			groupRepo.delete(group);
+		}
 	}
 
-	private void syncAuthorities() {
-		var keycloakGroups = authorityProvider.groups().stream()
-				.collect(Collectors.toMap(KeycloakGroupDto::id, Function.identity()));
-		var keycloakUsers = authorityProvider.users().stream()
-				.collect(Collectors.toMap(KeycloakUserDto::id, Function.identity()));
-		authorityPuller.sync(keycloakGroups, keycloakUsers);
-	}
 }
 
