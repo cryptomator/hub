@@ -24,6 +24,13 @@
                           {{ t('deleteUserDialog.description') }}
                         </p>
                       </div>
+                      <div class="mt-4 hidden sm:flex items-center gap-2">
+                        <img :src="user.pictureUrl" class="w-8 h-8 rounded-full border" />
+                        <div class="flex flex-col">
+                          <span class="font-medium text-sm">{{ user.name }}</span>
+                          <span v-if="fullName" class="text-xs text-gray-500">{{ fullName }}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -50,7 +57,7 @@
 <script setup lang="ts">
 import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { UserDto } from '../../common/backend';
   
@@ -62,6 +69,12 @@ const onDeleteUserError = ref<Error | null>();
 const props = defineProps<{
     user: UserDto
   }>();
+
+const fullName = computed(() => {
+  const first = props.user.firstName ?? '';
+  const last = props.user.lastName ?? '';
+  return `${first} ${last}`.trim();
+});
   
 const emit = defineEmits<{
     close: []

@@ -27,7 +27,7 @@
             <MenuItems class="absolute right-0 mt-2 z-10 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-hidden">
               <div class="py-1">
                 <MenuItem v-slot="{ active }">
-                  <div :class="[ active ? 'bg-gray-100 text-red-900' : 'text-red-700', 'cursor-pointer block px-4 py-2 text-sm']" @click="showDeleteUserDialog(user)">
+                  <div :class="[ active ? 'bg-gray-100 text-red-900' : 'text-red-700', 'cursor-pointer block px-4 py-2 text-sm']" @click="showDeleteUserDialog()">
                     {{ t('common.remove') }}
                   </div>
                 </MenuItem>
@@ -138,13 +138,22 @@ interface UserDto {
   type?: 'USER';
   ecdhPublicKey?: string;
   ecdsaPublicKey?: string;
+  firstName?: string;
+  lastName?: string;
 }
 
 const deleteUserDialog = ref<typeof UserDeleteDialog>();
 const deletingUser = ref<UserDto | null>(null);
 
-const showDeleteUserDialog = (user: UserDto) => {
-  deletingUser.value = user;
+const showDeleteUserDialog = () => {
+  deletingUser.value = {
+    id: props.id,
+    name: user.value.username,
+    email: user.value.email,
+    pictureUrl: user.value.userPicture,
+    firstName: user.value.firstName,
+    lastName: user.value.lastName
+  };
   nextTick(() => deleteUserDialog.value?.show());
 };
 

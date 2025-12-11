@@ -160,4 +160,26 @@ public final class UserDto extends AuthorityDto {
 			@JsonProperty("vaultsCount") long vaultsCount
 	) {
 	}
+
+	public record UserDtoWithName(
+			@JsonProperty("id") String id,
+			@JsonProperty("type") AuthorityDto.Type type,
+			@JsonProperty("name") String name,
+			@JsonProperty("pictureUrl") String pictureUrl,
+			@JsonProperty("email") String email,
+			@JsonProperty("firstName") String firstName,
+			@JsonProperty("lastName") String lastName
+	) {
+		public static UserDtoWithName from(User user, String firstName, String lastName) {
+			return new UserDtoWithName(
+					user.getId(),
+					AuthorityDto.Type.USER,
+					user.getName(),
+					user.getPictureUrl(),
+					user.getEmail(),
+					firstName,
+					lastName
+			);
+		}
+	}
 }

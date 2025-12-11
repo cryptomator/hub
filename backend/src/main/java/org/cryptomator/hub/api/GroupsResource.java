@@ -62,8 +62,8 @@ public class GroupsResource {
 	@RolesAllowed("user")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "list all effective group members")
-	public List<UserDto> getEffectiveMembers(@PathParam("groupId") @ValidId String groupId) {
-		return userRepo.getEffectiveGroupUsers(groupId).map(UserDto::justPublicInfo).toList();
+	public List<UserDto.UserDtoWithName> getEffectiveMembers(@PathParam("groupId") @ValidId String groupId) {
+		return getMembersWithNames(groupId);
 	}
 
 	@POST
@@ -140,9 +140,7 @@ public class GroupsResource {
 			// continue without keycloak data
 		}
 
-		List<UserDto> members = userRepo.getEffectiveGroupUsers(groupId)
-				.map(UserDto::justPublicInfo)
-				.toList();
+		List<UserDto.UserDtoWithName> members = getMembersWithNames(groupId);
 
 		List<VaultDtoWithRole> vaults = vaultAccessRepo.findByAuthority(groupId)
 				.map(va -> VaultDtoWithRole.from(va.getVault(), va.getRole()))
@@ -183,6 +181,22 @@ public class GroupsResource {
 		return Response.noContent().build();
 	}
 
+	private List<UserDto.UserDtoWithName> getMembersWithNames(String groupId) {
+		return userRepo.getEffectiveGroupUsers(groupId)
+				.map(user -> {
+					String firstName = null;
+					String lastName = null;
+					try {
+						var keycloakUser = keycloakAdminService.getUser(user.getId());
+						firstName = keycloakUser.getFirstName();
+						lastName = keycloakUser.getLastName();
+					} catch (Exception ignored) {
+					}
+					return UserDto.UserDtoWithName.from(user, firstName, lastName);
+				})
+				.toList();
+	}
+
 	public record CreateGroupDto(
 			@JsonProperty("name") @NotNull String name,
 			@JsonProperty("pictureUrl") String pictureUrl
@@ -199,10 +213,10 @@ public class GroupsResource {
 			@JsonProperty("id") String id,
 			@JsonProperty("name") String name,
 			@JsonProperty("pictureUrl") String pictureUrl,
-			@JsonProperty("members") List<UserDto> members,
+			@JsonProperty("members") List<UserDto.UserDtoWithName> members,
 			@JsonProperty("vaults") List<VaultDtoWithRole> vaults
 	) {
-		public static GroupDtoWithDetails from(Group group, String pictureUrl, List<UserDto> members, List<VaultDtoWithRole> vaults) {
+		public static GroupDtoWithDetails from(Group group, String pictureUrl, List<UserDto.UserDtoWithName> members, List<VaultDtoWithRole> vaults) {
 			return new GroupDtoWithDetails(
 					group.getId(),
 					group.getName(),

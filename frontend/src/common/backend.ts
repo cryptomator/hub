@@ -74,6 +74,8 @@ export type UserDto = {
   name: string;
   pictureUrl?: string;
   email: string;
+  firstName?: string;
+  lastName?: string;
   language?: string;
   devices: DeviceDto[];
   accessibleVaults: VaultDto[];

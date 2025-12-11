@@ -24,18 +24,11 @@
                           {{ t('group.member.remove.description') }}
                         </p>
                       </div>
-                      <div class="mt-4 flex items-center gap-2">
+                      <div class="mt-4 hidden sm:flex items-center gap-2">
                         <img :src="member.pictureUrl" class="w-8 h-8 rounded-full border" />
-                        <div class="flex flex-col truncate">
-                          <span class="font-medium truncate text-sm">
-                            <template v-if="member.name">
-                              {{ member.name }}
-                            </template>
-                            <template v-else>
-                              {{ member.email }}
-                            </template>
-                          </span>
-                          <span v-if="member.name" class="text-xs text-gray-500 truncate">{{ member.email }}</span>
+                        <div class="flex flex-col">
+                          <span class="font-medium text-sm">{{ member.name }}</span>
+                          <span v-if="fullName" class="text-xs text-gray-500">{{ fullName }}</span>
                         </div>
                       </div>
                     </div>
@@ -64,21 +57,25 @@
 <script setup lang="ts">
 import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend from '../../common/backend';
+import backend, { type UserDto } from '../../common/backend';
 
 const { t } = useI18n({ useScope: 'global' });
 
 const open = ref(false);
 const onDeleteGroupError = ref<Error | null>();
 
-import type { UserDto } from '../../common/backend';
-
 const props = defineProps<{
    member: UserDto;
    groupId: string;
  }>();
+
+const fullName = computed(() => {
+  const first = props.member.firstName ?? '';
+  const last = props.member.lastName ?? '';
+  return `${first} ${last}`.trim();
+});
 
 const emit = defineEmits<{
     close: [];

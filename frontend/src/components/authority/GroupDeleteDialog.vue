@@ -24,6 +24,10 @@
                           {{ t('deleteGroupDialog.description') }}
                         </p>
                       </div>
+                      <div class="mt-4 hidden sm:flex items-center gap-2">
+                        <img :src="group.pictureUrl" class="w-8 h-8 rounded-full border" />
+                        <span class="font-medium text-sm">{{ group.name }}</span>
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -25,15 +25,8 @@
             <td class="whitespace-nowrap h-17 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 flex items-center gap-3 sm:pl-6">
               <img :src="user.pictureUrl" class="w-8 h-8 rounded-full object-cover border border-gray-300" />
               <div class="flex flex-col truncate">
-                <span class="font-medium truncate">
-                  <template v-if="user.name">
-                    {{ user.name }}
-                  </template>
-                  <template v-else>
-                    {{ user.email }}
-                  </template>
-                </span>
-                <span v-if="user.name" class="text-xs text-gray-500 truncate">{{ user.email }}</span>
+                <span class="font-medium truncate">{{ user.name }}</span>
+                <span class="text-xs text-gray-500 truncate">{{ user.firstName || user.lastName ? [user.firstName, user.lastName].filter(Boolean).join(' ') : user.email }}</span>
               </div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -131,7 +124,9 @@ const filteredUsers = computed(() => {
       if (!q) return true;
       const nameMatch = u.name?.toLowerCase().includes(q);
       const emailMatch = u.email?.toLowerCase().includes(q);
-      return nameMatch || emailMatch;
+      const firstNameMatch = u.firstName?.toLowerCase().includes(q);
+      const lastNameMatch = u.lastName?.toLowerCase().includes(q);
+      return nameMatch || emailMatch || firstNameMatch || lastNameMatch;
     })
     .sort((a, b) => {
       const aKey = a.name?.trim() || a.email || '';
