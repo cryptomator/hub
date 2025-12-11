@@ -157,7 +157,7 @@ public class User extends Authority {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(super.getId(), email);
+		return Objects.hash(super.getId(), email, super.getPictureUrl());
 	}
 
 	@ApplicationScoped
