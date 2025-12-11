@@ -24,11 +24,12 @@ import java.util.stream.Collectors;
 @Entity
 @Immutable
 @Table(name = "effective_vault_access")
-@NamedQuery(name = "EffectiveVaultAccess.countSeatsOccupiedBySingleUser", query = """
-		SELECT count(u)
+@NamedQuery(name = "EffectiveVaultAccess.isUserOccupyingSeat", query = """
+		SELECT 1
 		FROM User u
 		INNER JOIN EffectiveVaultAccess eva ON u.id = eva.id.authorityId
-		WHERE eva.id.authorityId = :userId
+		INNER JOIN Vault v ON eva.id.vaultId = v.id
+		WHERE u.id = :userId AND NOT v.archived
 		""")
 @NamedQuery(name = "EffectiveVaultAccess.countSeatsOccupiedByUsers", query = """
 		SELECT COUNT(DISTINCT u.id)
@@ -150,7 +151,7 @@ public class EffectiveVaultAccess {
 	public static class Repository implements PanacheRepositoryBase<EffectiveVaultAccess, Id> {
 
 		public boolean isUserOccupyingSeat(String userId) {
-			return count("#EffectiveVaultAccess.countSeatsOccupiedBySingleUser", Parameters.with("userId", userId)) > 0;
+			return find("#EffectiveVaultAccess.isUserOccupyingSeat", Parameters.with("userId", userId)).page(0, 1).firstResult() != null;
 		}
 
 		public long countSeatsOccupiedByUsers(Collection<String> userIds) {
