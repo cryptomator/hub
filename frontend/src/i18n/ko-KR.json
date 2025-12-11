@@ -202,7 +202,7 @@
   "nav.profile.signOut": "로그아웃",
   "nav.mobileMenu": "메인 메뉴 열기",
   "reactivateVaultDialog.title": "Vault 재활성화",
-  "reactivateVaultDialog.description": "경고: Vault를 재활성화하는 것은 남은 좌석의 수에 영향을 끼칠 것입니다. 잔여 좌석 수가 초과될 경우, 모든 Vault를 잠금 해제 하는 것이 금지될 것입니다.",
+  "reactivateVaultDialog.description": "경고: Vault를 재활성화하는 것은 남은 시트의 수에 영향을 끼칠 것입니다. 사용 가능한 시트의 수를 초과하면, 모든 Vault에 대한 잠금 해제가 차단됩니다.",
   "reactivateVaultDialog.confirm": "재활성화",
   "recoveryKeyDialog.title": "복구 키",
   "recoveryKeyDialog.description": "다음은 \"{0}\"에 대한 복구 키입니다. 안전한 곳에 두십시오, 시스템 장애의 경우에 Vault에 대한 접근을 얻을 수 있는 유일한 수단입니다.",
