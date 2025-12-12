@@ -42,6 +42,9 @@ public class Authority {
 	@Column(name = "name", nullable = false)
 	private String name;
 
+	@Column(name = "picture_url")
+	private String pictureUrl;
+
 	public String getId() {
 		return id;
 	}
@@ -58,6 +61,14 @@ public class Authority {
 		this.name = name;
 	}
 
+	public String getPictureUrl() {
+		return pictureUrl;
+	}
+
+	public void setPictureUrl(String pictureUrl) {
+		this.pictureUrl = pictureUrl;
+	}
+
 	@Override
 	public String toString() {
 		return "Authority{" +
@@ -72,12 +83,13 @@ public class Authority {
 		if (o == null || getClass() != o.getClass()) return false;
 		Authority authority = (Authority) o;
 		return Objects.equals(id, authority.id)
+				&& Objects.equals(pictureUrl, authority.pictureUrl)
 				&& Objects.equals(name, authority.name);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, name);
+		return Objects.hash(id, name, pictureUrl);
 	}
 
 	@ApplicationScoped

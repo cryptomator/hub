@@ -209,7 +209,7 @@ class KeycloakAuthorityPullerTest {
 
 			Map<String, KeycloakGroupDto> keycloakGroups = new HashMap<>();
 			for (var gid : keycloakGroupIdString) {
-				var dto = new KeycloakGroupDto(gid, "name " + gid, Set.of(kcUsers.get(gid)));
+				var dto = new KeycloakGroupDto(gid, "name " + gid, "pic " + gid, Set.of(kcUsers.get(gid)));
 				keycloakGroups.put(gid, dto);
 			}
 
@@ -236,6 +236,7 @@ class KeycloakAuthorityPullerTest {
 				MatcherAssert.assertThat(persistedGroups, Matchers.hasItem(
 						Matchers.allOf(
 								Matchers.hasProperty("id", Matchers.equalTo(groupId)),
+								Matchers.hasProperty("pictureUrl", Matchers.equalTo("pic " + groupId)),
 								Matchers.hasProperty("name", Matchers.equalTo("name " + groupId)),
 								Matchers.hasProperty("members", Matchers.contains(Matchers.hasProperty("id", Matchers.equalTo(groupId))))
 						)
@@ -304,6 +305,7 @@ class KeycloakAuthorityPullerTest {
 		for (var groupId : updatedGroupIds) {
 			var kcDto = Mockito.mock(KeycloakGroupDto.class);
 			Mockito.when(kcDto.name()).thenReturn(String.format("name %s", groupId));
+			Mockito.when(kcDto.pictureUrl()).thenReturn(String.format("pic %s", groupId));
 			Mockito.when(kcDto.members()).thenReturn(Set.of(
 					new KeycloakUserDto("U_user", "n", "e", "p"),
 					new KeycloakUserDto("U_otherKC", "n", "e", "p")
@@ -328,6 +330,7 @@ class KeycloakAuthorityPullerTest {
 		for (var groupId : updatedGroupIdString) {
 			var dbGroup = databaseGroups.get(groupId);
 			Mockito.verify(dbGroup).setName(String.format("name %s", groupId));
+			Mockito.verify(dbGroup).setPictureUrl(String.format("pic %s", groupId));
 			MatcherAssert.assertThat(dbGroupMembers, Matchers.containsInAnyOrder(userMock, otherKCUser));
 		}
 	}
