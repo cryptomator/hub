@@ -9,7 +9,7 @@ export class UTF8 {
    * @param data string to encode
    * @returns Uint8Array containing the UTF-8 NFC encoded string
    */
-  public static encode(data: string): Uint8Array {
+  public static encode(data: string): Uint8Array<ArrayBuffer> {
     return UTF8.encoder.encode(data.normalize('NFC'));
   }
 
@@ -138,7 +138,7 @@ class WordEncoder {
     return result.join(WordEncoder.DELIMITER);
   }
 
-  public decode(encoded: string): Uint8Array {
+  public decode(encoded: string): Uint8Array<ArrayBuffer> {
     const split = encoded.split(/\s+/).filter(s => s !== '');
     if (split.length % 2 != 0) {
       throw new Error(`input needs to be a multiple of two words: "${encoded}"`);

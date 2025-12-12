@@ -66,7 +66,7 @@
 <script setup lang="ts">
 import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
-import { base64 } from 'rfc4648';
+import { base64 } from '@scure/base';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { AccessGrant, ConflictError, NotFoundError, TrustDto, UserDto, VaultDto } from '../common/backend';
@@ -124,7 +124,7 @@ async function giveUsersAccess(users: UserDto[]) {
   const tokens: AccessGrant[] = [];
   for (const user of users) {
     if (user.ecdhPublicKey) { // some users might not have set up their key pair, so we can't share secrets with them yet
-      const publicKey = base64.parse(user.ecdhPublicKey);
+      const publicKey = base64.decode(user.ecdhPublicKey) as Uint8Array<ArrayBuffer>;
       const jwe = await props.vaultKeys.encryptForUser(publicKey);
       tokens.push({ userId: user.id, token: jwe });
     }

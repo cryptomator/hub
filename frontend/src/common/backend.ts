@@ -1,6 +1,6 @@
+import { base64 } from '@scure/base';
 import AxiosStatic, { AxiosHeaders, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { JdenticonConfig, toSvg } from 'jdenticon';
-import { base64 } from 'rfc4648';
 import authPromise from './auth';
 import { backendBaseURL } from './config';
 import { JWTHeader } from './jwt';
@@ -321,7 +321,7 @@ class AuthorityService {
       const cfg = AuthorityService.getJdenticonConfig(authority.type);
       const svg = toSvg(authority.id, 100, cfg);
       const bytes = UTF8.encode(svg);
-      const url = `data:image/svg+xml;base64,${base64.stringify(bytes)}`;
+      const url = `data:image/svg+xml;base64,${base64.encode(bytes)}`;
       return {
         ...authority,
         pictureUrl: url

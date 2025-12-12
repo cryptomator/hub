@@ -116,7 +116,8 @@ async function sign() {
     emit('signed', newTrust);
     open.value = false;
   } catch (error) {
-    onSignError.value = error;
+    console.error('Error during signing:', error);
+    onSignError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
 }
 
