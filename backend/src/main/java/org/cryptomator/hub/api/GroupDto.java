@@ -11,21 +11,22 @@ public final class GroupDto extends AuthorityDto {
 	@JsonProperty("vaultCount")
 	public final Integer vaultCount;
 
-	GroupDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("memberSize") Integer memberSize, @JsonProperty("vaultCount") Integer vaultCount) {
-		super(id, Type.GROUP, name, null);
+	GroupDto(@JsonProperty("id") String id, @JsonProperty("name") String name, @JsonProperty("pictureUrl") String pictureUrl, @JsonProperty("memberSize") Integer memberSize, @JsonProperty("vaultCount") Integer vaultCount) {
+		super(id, Type.GROUP, name, pictureUrl);
 		this.memberSize = memberSize;
 		this.vaultCount = vaultCount;
 	}
 
 	public static GroupDto fromEntity(Group group) {
-		return new GroupDto(group.getId(), group.getName(), null, null);
+		return new GroupDto(group.getId(), group.getName(), group.getPictureUrl(), null, null);
 	}
 
 	public static GroupDto fromEntity(Group group, boolean withMemberSize) {
-		return new GroupDto(group.getId(), group.getName(), withMemberSize ? group.getMemberSize() : null, null);
+		Integer memberSize = withMemberSize ? group.getMemberSize() : null;
+		return new GroupDto(group.getId(), group.getName(), group.getPictureUrl(), memberSize, null);
 	}
 
 	public static GroupDto fromEntity(Group group, Integer memberSize, Integer vaultCount) {
-		return new GroupDto(group.getId(), group.getName(), memberSize, vaultCount);
+		return new GroupDto(group.getId(), group.getName(), group.getPictureUrl(), memberSize, vaultCount);
 	}
 }
