@@ -1,4 +1,4 @@
-import { base64, base64url } from 'rfc4648';
+import { base64, base64urlnopad } from '@scure/base';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { VaultDto } from '../../src/common/backend';
 import { UserKeys } from '../../src/common/crypto';
@@ -190,9 +190,9 @@ describe('UVF', () => {
       expect(uvf.metadata).to.be.not.null;
       expect(uvf.metadata.initialSeedId).to.eq(473544690);
       expect(uvf.metadata.latestSeedId).to.eq(1075513622);
-      expect(base64url.stringify(uvf.metadata.kdfSalt, { pad: false })).to.eq('NIlr89R7FhochyP4yuXZmDqCnQ0dBB3UZ2D-6oiIjr8');
-      expect(base64url.stringify(uvf.metadata.initialSeed, { pad: false })).to.eq('ypeBEsobvcr6wjGzmiPcTaeG7_gUfE5yuYB3ha_uSLs');
-      expect(base64url.stringify(uvf.metadata.latestSeed, { pad: false })).to.eq('Ln0sA6lQeuJl7PW1NWiFpTOTogKdJBOUmXJloaJa78Y');
+      expect(base64urlnopad.encode(uvf.metadata.kdfSalt)).to.eq('NIlr89R7FhochyP4yuXZmDqCnQ0dBB3UZ2D-6oiIjr8');
+      expect(base64urlnopad.encode(uvf.metadata.initialSeed)).to.eq('ypeBEsobvcr6wjGzmiPcTaeG7_gUfE5yuYB3ha_uSLs');
+      expect(base64urlnopad.encode(uvf.metadata.latestSeed)).to.eq('Ln0sA6lQeuJl7PW1NWiFpTOTogKdJBOUmXJloaJa78Y');
       expect(uvf.memberKey).to.be.not.null;
       expect(uvf.recoveryKey).to.be.not.null;
       expect(uvf.recoveryKey.privateKey).to.be.undefined;
@@ -208,9 +208,9 @@ describe('UVF', () => {
       expect(uvf.metadata).to.be.not.null;
       expect(uvf.metadata.initialSeedId).to.eq(473544690);
       expect(uvf.metadata.latestSeedId).to.eq(1075513622);
-      expect(base64url.stringify(uvf.metadata.kdfSalt, { pad: false })).to.eq('NIlr89R7FhochyP4yuXZmDqCnQ0dBB3UZ2D-6oiIjr8');
-      expect(base64url.stringify(uvf.metadata.initialSeed, { pad: false })).to.eq('ypeBEsobvcr6wjGzmiPcTaeG7_gUfE5yuYB3ha_uSLs');
-      expect(base64url.stringify(uvf.metadata.latestSeed, { pad: false })).to.eq('Ln0sA6lQeuJl7PW1NWiFpTOTogKdJBOUmXJloaJa78Y');
+      expect(base64urlnopad.encode(uvf.metadata.kdfSalt)).to.eq('NIlr89R7FhochyP4yuXZmDqCnQ0dBB3UZ2D-6oiIjr8');
+      expect(base64urlnopad.encode(uvf.metadata.initialSeed)).to.eq('ypeBEsobvcr6wjGzmiPcTaeG7_gUfE5yuYB3ha_uSLs');
+      expect(base64urlnopad.encode(uvf.metadata.latestSeed)).to.eq('Ln0sA6lQeuJl7PW1NWiFpTOTogKdJBOUmXJloaJa78Y');
       expect(uvf.memberKey).to.be.not.null;
       expect(uvf.recoveryKey).to.be.not.null;
       expect(uvf.recoveryKey.privateKey).to.be.not.null;
@@ -275,18 +275,18 @@ describe('UVF', () => {
       it('computeRootDirId() deterministically creates a dir ID', async () => {
         const dirId = await uvf.computeRootDirId();
         expect(dirId).to.have.a.lengthOf(32);
-        expect(base64.stringify(dirId)).to.eq('5WEGzwKkAHPwVSjT2Brr3P3zLz7oMiNpMn/qBvht7eM=');
+        expect(base64.encode(dirId)).to.eq('5WEGzwKkAHPwVSjT2Brr3P3zLz7oMiNpMn/qBvht7eM=');
       });
 
       it('computeRootDirIdHash() creates a truncated hmac', async () => {
-        const rootDirId = base64.parse('5WEGzwKkAHPwVSjT2Brr3P3zLz7oMiNpMn/qBvht7eM=').slice();
+        const rootDirId = base64.decode('5WEGzwKkAHPwVSjT2Brr3P3zLz7oMiNpMn/qBvht7eM=') as Uint8Array<ArrayBuffer>;
         const hash = await uvf.computeRootDirIdHash(rootDirId);
         expect(hash).to.have.a.lengthOf(32);
         expect(hash).to.eq('RZK7ZH7KBXULNEKBMGX3CU42PGUIAIX4');
       });
 
       it('encryptFile() creates some ciphertext', async () => {
-        const rootDirId = base64.parse('5WEGzwKkAHPwVSjT2Brr3P3zLz7oMiNpMn/qBvht7eM=').slice();
+        const rootDirId = base64.decode('5WEGzwKkAHPwVSjT2Brr3P3zLz7oMiNpMn/qBvht7eM=') as Uint8Array<ArrayBuffer>;
         const fileContent = await uvf.encryptFile(rootDirId, uvf.metadata.initialSeedId);
         expect(fileContent).to.have.a.lengthOf(128);
         expect(fileContent.slice(0, 4)).to.eql(new Uint8Array([0x75, 0x76, 0x66, 0x01])); // magic bytes

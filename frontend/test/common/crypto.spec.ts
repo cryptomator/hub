@@ -1,4 +1,4 @@
-import { base64, base64url } from 'rfc4648';
+import { base64, base64urlnopad } from '@scure/base';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { UnwrapKeyError, UserKeys, getJwkThumbprint, getJwkThumbprintStr } from '../../src/common/crypto';
 
@@ -125,25 +125,25 @@ describe('crypto', () => {
   describe('Test Key Pairs', () => {
     it('alice private key (PKCS8)', async () => {
       const bytes = new Uint8Array(await crypto.subtle.exportKey('pkcs8', aliceEcdh.privateKey));
-      const encoded = base64.stringify(bytes);
+      const encoded = base64.encode(bytes);
       expect(encoded).toBe('MIG2AgEAMBAGByqGSM49AgEGBSuBBAAiBIGeMIGbAgEBBDDCi4K1Ts3DgTz/ufkLX7EGMHjGpJv+WJmFgyzLwwaDFSfLpDw0Kgf3FKK+LAsV8r+hZANiAARLOtFebIjxVYUmDV09Q1sVxz2Nm+NkR8fu6UojVSRcCW13tEZatx8XGrIY9zC7oBCEdRqDc68PMSvS5RA0Pg9cdBNc/kgMZ1iEmEv5YsqOcaNADDSs0bLlXb35pX7Kx5Y=');
     });
 
     it('alice public key (SPKI)', async () => {
       const bytes = new Uint8Array(await crypto.subtle.exportKey('spki', aliceEcdh.publicKey));
-      const encoded = base64.stringify(bytes);
+      const encoded = base64.encode(bytes);
       expect(encoded).toBe('MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAESzrRXmyI8VWFJg1dPUNbFcc9jZvjZEfH7ulKI1UkXAltd7RGWrcfFxqyGPcwu6AQhHUag3OvDzEr0uUQND4PXHQTXP5IDGdYhJhL+WLKjnGjQAw0rNGy5V29+aV+yseW');
     });
 
     it('bob private key (PKCS8)', async () => {
       const bytes = new Uint8Array(await crypto.subtle.exportKey('pkcs8', bobEcdh.privateKey));
-      const encoded = base64.stringify(bytes);
+      const encoded = base64.encode(bytes);
       expect(encoded).toBe('MIG2AgEAMBAGByqGSM49AgEGBSuBBAAiBIGeMIGbAgEBBDB2bmFCWy2p+EbAn8NWS5Om+GA7c5LHhRZb8g2pSMSf0fsd7k7dZDVrnyHFiLdd/YGhZANiAAR6bsjTEdXKWIuu1Bvj6Y8wySlIROy7YpmVZTY128ItovCD8pcR4PnFljvAIb2MshCdr1alX4g6cgDOqcTeREiObcSfucOU9Ry1pJ/GnX6KA0eSljrk6rxjSDos8aiZ6Mg=');
     });
 
     it('bob public key (SPKI)', async () => {
       const bytes = new Uint8Array(await crypto.subtle.exportKey('spki', bobEcdh.publicKey));
-      const encoded = base64.stringify(bytes);
+      const encoded = base64.encode(bytes);
       expect(encoded).to.eq('MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAEem7I0xHVyliLrtQb4+mPMMkpSETsu2KZlWU2NdvCLaLwg/KXEeD5xZY7wCG9jLIQna9WpV+IOnIAzqnE3kRIjm3En7nDlPUctaSfxp1+igNHkpY65Oq8Y0g6LPGomejI');
     });
   });
@@ -161,7 +161,7 @@ describe('crypto', () => {
     it('compute example thumbprint from RFC 7638, Section 3.1', async () => {
       const thumbprint = await getJwkThumbprint(input);
 
-      expect(base64url.stringify(thumbprint, { pad: false })).toBe('NzbLsXh8uDCcd-6MNwXF4W_7noWXFZAfHkxZsRGC9Xs');
+      expect(base64urlnopad.encode(thumbprint)).toBe('NzbLsXh8uDCcd-6MNwXF4W_7noWXFZAfHkxZsRGC9Xs');
     });
 
     it('compute example thumbprint from RFC 7638, Section 3.1', async () => {

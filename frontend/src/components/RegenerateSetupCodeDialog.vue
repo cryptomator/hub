@@ -34,7 +34,7 @@
                   <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-xs px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" @click="open = false">
                     {{ t('common.close') }}
                   </button>
-                  <p v-if="onRegenerateError != null" class="mt-3 text-center text-sm text-red-900 sm:mt-0 sm:text-right">
+                  <p v-if="onRegenerateError" class="mt-3 text-center text-sm text-red-900 sm:mt-0 sm:text-right">
                     {{ t('common.unexpectedError', [onRegenerateError.message]) }}
                   </p>
                 </div>
@@ -113,7 +113,7 @@ enum State {
 
 const { t } = useI18n({ useScope: 'global' });
 
-const onRegenerateError = ref<Error | null>();
+const onRegenerateError = ref<Error>();
 
 const state = ref(State.ConfirmRegenerateSetupCode);
 const processing = ref(false);
@@ -146,7 +146,7 @@ async function show() {
 }
 
 async function regenerateSetupCode() {
-  onRegenerateError.value = null;
+  onRegenerateError.value = undefined;
   try {
     processing.value = true;
 

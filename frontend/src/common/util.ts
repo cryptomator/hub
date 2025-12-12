@@ -138,7 +138,7 @@ class WordEncoder {
     return result.join(WordEncoder.DELIMITER);
   }
 
-  public decode(encoded: string): Uint8Array {
+  public decode(encoded: string): Uint8Array<ArrayBuffer> {
     const split = encoded.split(/\s+/).filter(s => s !== '');
     if (split.length % 2 != 0) {
       throw new Error(`input needs to be a multiple of two words: "${encoded}"`);

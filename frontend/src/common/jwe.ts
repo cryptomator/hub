@@ -1,4 +1,4 @@
-import { base64url } from 'rfc4648';
+import { base64urlnopad } from '@scure/base';
 import { UnwrapKeyError } from './crypto';
 import { UTF8 } from './util';
 
@@ -149,14 +149,14 @@ class EcdhRecipient extends Recipient {
       kid: this.kid,
       alg: 'ECDH-ES+A256KW',
       epk: await crypto.subtle.exportKey('jwk', ephemeralKey.publicKey),
-      apu: base64url.stringify(this.apu, { pad: false }),
-      apv: base64url.stringify(this.apv, { pad: false })
+      apu: base64urlnopad.encode(this.apu),
+      apv: base64urlnopad.encode(this.apv)
     };
     const wrappingKey = await ECDH_ES.deriveKey(this.recipientKey, ephemeralKey.privateKey, 384, 32, header, false, { name: 'AES-KW', length: 256 }, ['wrapKey']);
     const encryptedKey = new Uint8Array(await crypto.subtle.wrapKey('raw', cek, wrappingKey, 'AES-KW'));
     return {
       header: header,
-      encrypted_key: base64url.stringify(encryptedKey, { pad: false })
+      encrypted_key: base64urlnopad.encode(encryptedKey)
     };
   }
 
@@ -192,7 +192,7 @@ class EcdhRecipient extends Recipient {
   async decryptAndUnwrap(header: JWEHeader, encryptedKey: string): Promise<CryptoKey> {
     const wrappingKey = await this.decryptDirect(header, { name: 'AES-KW', length: 256 }, ['unwrapKey']);
     try {
-      return await crypto.subtle.unwrapKey('raw', base64url.parse(encryptedKey, { loose: true }) as Uint8Array<ArrayBuffer>, wrappingKey, 'AES-KW', { name: 'AES-GCM' }, false, ['decrypt']);
+      return await crypto.subtle.unwrapKey('raw', base64urlnopad.decode(encryptedKey) as Uint8Array<ArrayBuffer>, wrappingKey, 'AES-KW', { name: 'AES-GCM' }, false, ['decrypt']);
     } catch (error) {
       throw new UnwrapKeyError(error);
     }
@@ -213,7 +213,7 @@ class A256kwRecipient extends Recipient {
     const encryptedKey = new Uint8Array(await crypto.subtle.wrapKey('raw', cek, this.wrappingKey, 'AES-KW'));
     return {
       header: header,
-      encrypted_key: base64url.stringify(encryptedKey, { pad: false })
+      encrypted_key: base64urlnopad.encode(encryptedKey)
     };
   }
 
@@ -222,7 +222,7 @@ class A256kwRecipient extends Recipient {
       throw new Error('unsupported alg');
     }
     try {
-      return await crypto.subtle.unwrapKey('raw', base64url.parse(encryptedKey, { loose: true }) as Uint8Array<ArrayBuffer>, this.wrappingKey, 'AES-KW', { name: 'AES-GCM' }, false, ['decrypt']);
+      return await crypto.subtle.unwrapKey('raw', base64urlnopad.decode(encryptedKey) as Uint8Array<ArrayBuffer>, this.wrappingKey, 'AES-KW', { name: 'AES-GCM' }, false, ['decrypt']);
     } catch (error) {
       throw new UnwrapKeyError(error);
     }
@@ -241,13 +241,13 @@ class Pbes2Recipient extends Recipient {
       kid: this.kid,
       alg: 'PBES2-HS512+A256KW',
       p2c: this.iterations,
-      p2s: base64url.stringify(salt, { pad: false })
+      p2s: base64urlnopad.encode(salt)
     };
     const wrappingKey = PBES2.deriveWrappingKey(this.password, 'PBES2-HS512+A256KW', salt, this.iterations);
     const encryptedKey = new Uint8Array(await crypto.subtle.wrapKey('raw', cek, await wrappingKey, 'AES-KW'));
     return {
       header: header,
-      encrypted_key: base64url.stringify(encryptedKey, { pad: false })
+      encrypted_key: base64urlnopad.encode(encryptedKey)
     };
   }
 
@@ -255,10 +255,10 @@ class Pbes2Recipient extends Recipient {
     if (header.alg != 'PBES2-HS512+A256KW' || !header.p2s || !header.p2c) {
       throw new Error('Missing or invalid header parameters.');
     }
-    const salt = base64url.parse(header.p2s, { loose: true });
+    const salt = base64urlnopad.decode(header.p2s);
     const wrappingKey = await PBES2.deriveWrappingKey(this.password, 'PBES2-HS512+A256KW', salt, header.p2c);
     try {
-      return await crypto.subtle.unwrapKey('raw', base64url.parse(encryptedKey, { loose: true }) as Uint8Array<ArrayBuffer>, wrappingKey, 'AES-KW', { name: 'AES-GCM' }, false, ['decrypt']);
+      return await crypto.subtle.unwrapKey('raw', base64urlnopad.decode(encryptedKey) as Uint8Array<ArrayBuffer>, wrappingKey, 'AES-KW', { name: 'AES-GCM' }, false, ['decrypt']);
     } catch (error) {
       throw new UnwrapKeyError(error);
     }
@@ -278,7 +278,7 @@ export class JWE {
   public static parseCompact(token: string): EncryptedJWE {
     const [protectedHeader, encryptedKey, iv, ciphertext, tag] = token.split('.', 5);
     const utf8 = new TextDecoder();
-    const header: JWEHeader = JSON.parse(utf8.decode(base64url.parse(protectedHeader, { loose: true })));
+    const header: JWEHeader = JSON.parse(utf8.decode(base64urlnopad.decode(protectedHeader)));
 
     return new EncryptedJWE(protectedHeader, [{ encrypted_key: encryptedKey, header: header }], iv, ciphertext, tag);
   }
@@ -311,7 +311,7 @@ export class JWE {
       }
     }
 
-    const encodedProtectedHeader = base64url.stringify(UTF8.encode(JSON.stringify(protectedHeader)), { pad: false });
+    const encodedProtectedHeader = base64urlnopad.encode(UTF8.encode(JSON.stringify(protectedHeader)));
     const m = UTF8.encode(JSON.stringify(this.payload));
     const ciphertextAndTag = new Uint8Array(await crypto.subtle.encrypt(
       {
@@ -327,9 +327,9 @@ export class JWE {
     const ciphertext = ciphertextAndTag.slice(0, m.byteLength - 16);
     const tag = ciphertextAndTag.slice(m.byteLength - 16);
 
-    const encodedIv = base64url.stringify(iv, { pad: false });
-    const encodedCiphertext = base64url.stringify(ciphertext, { pad: false });
-    const encodedTag = base64url.stringify(tag, { pad: false });
+    const encodedIv = base64urlnopad.encode(iv);
+    const encodedCiphertext = base64urlnopad.encode(ciphertext);
+    const encodedTag = base64urlnopad.encode(tag);
     return new EncryptedJWE(encodedProtectedHeader, perRecipientData, encodedIv, encodedCiphertext, encodedTag);
   }
 }
@@ -367,19 +367,19 @@ export class EncryptedJWE {
   }
 
   public async decrypt(recipient: Recipient): Promise<any> {
-    const protectedHeader: JWEHeader = JSON.parse(UTF8.decode(base64url.parse(this.protectedHeader, { loose: true })));
+    const protectedHeader: JWEHeader = JSON.parse(UTF8.decode(base64urlnopad.decode(this.protectedHeader)));
     const perRecipientData = (this.perRecipient.length === 1)
       ? this.perRecipient[0]
       : this.perRecipientWithKid(recipient.kid);
     const combinedHeader: JWEHeader = { ...perRecipientData.header, ...protectedHeader };
     const cek = await recipient.decrypt(combinedHeader, perRecipientData.encrypted_key);
-    const ciphertext = base64url.parse(this.ciphertext, { loose: true });
-    const tag = base64url.parse(this.tag, { loose: true });
+    const ciphertext = base64urlnopad.decode(this.ciphertext);
+    const tag = base64urlnopad.decode(this.tag);
     const ciphertextAndTag = new Uint8Array([...ciphertext, ...tag]);
     const cleartext = new Uint8Array(await crypto.subtle.decrypt(
       {
         name: 'AES-GCM',
-        iv: base64url.parse(this.iv, { loose: true }) as Uint8Array<ArrayBuffer>,
+        iv: base64urlnopad.decode(this.iv) as Uint8Array<ArrayBuffer>,
         additionalData: UTF8.encode(this.protectedHeader),
         tagLength: 128
       },
@@ -412,8 +412,8 @@ export class ECDH_ES {
         throw new Error('Missing alg or enc header parameter');
       }
       const algorithmId = ECDH_ES.lengthPrefixed(UTF8.encode(algOrEnc));
-      const partyUInfo = ECDH_ES.lengthPrefixed(base64url.parse(header.apu ?? '', { loose: true }));
-      const partyVInfo = ECDH_ES.lengthPrefixed(base64url.parse(header.apv ?? '', { loose: true }));
+      const partyUInfo = ECDH_ES.lengthPrefixed(base64urlnopad.decode(header.apu ?? ''));
+      const partyVInfo = ECDH_ES.lengthPrefixed(base64urlnopad.decode(header.apv ?? ''));
       const suppPubInfo = new ArrayBuffer(4);
       const suppPrivInfo = new Uint8Array();
       new DataView(suppPubInfo).setUint32(0, desiredKeyBytes * 8, false);

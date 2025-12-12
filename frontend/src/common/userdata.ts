@@ -1,4 +1,4 @@
-import { base64 } from 'rfc4648';
+import { base64 } from '@scure/base';
 import backend, { DeviceDto, UserDto } from './backend';
 import { BrowserKeys, UserKeys } from './crypto';
 import { JWE, Recipient } from './jwe';
@@ -70,7 +70,7 @@ class UserData {
       if (!me.ecdhPublicKey) {
         throw new Error('User not initialized.');
       }
-      return base64.parse(me.ecdhPublicKey).slice();
+      return base64.decode(me.ecdhPublicKey) as Uint8Array<ArrayBuffer>;
     });
   }
 
@@ -81,7 +81,7 @@ class UserData {
    */
   public get ecdsaPublicKey(): Promise<Uint8Array<ArrayBuffer> | undefined> {
     return this.me.then(me => {
-      return me.ecdsaPublicKey ? base64.parse(me.ecdsaPublicKey).slice() : undefined;
+      return me.ecdsaPublicKey ? base64.decode(me.ecdsaPublicKey) as Uint8Array<ArrayBuffer> : undefined;
     });
   }
 
@@ -175,7 +175,7 @@ class UserData {
       me.ecdsaPublicKey = await userKeys.encodedEcdsaPublicKey();
       me.privateKeys = await userKeys.encryptWithSetupCode(setupCode);
       for (const device of me.devices) {
-        device.userPrivateKey = await userKeys.encryptForDevice(base64.parse(device.publicKey).slice());
+        device.userPrivateKey = await userKeys.encryptForDevice(base64.decode(device.publicKey) as Uint8Array<ArrayBuffer>);
       }
       await backend.users.putMe(me);
     }

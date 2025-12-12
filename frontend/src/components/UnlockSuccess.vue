@@ -3,8 +3,8 @@
   <SimpleNavigationBar v-else-if="me" :me="me"/>
 
   <div class="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8 flex justify-center">
-    <div v-if="me == null">
-      <div v-if="onFetchError == null">
+    <div v-if="me === undefined">
+      <div v-if="!onFetchError">
         {{ t('common.loading') }}
       </div>
       <div v-else>
@@ -121,12 +121,12 @@ enum VaultAccess {
 const me = ref<UserDto>();
 const hasBrowserKeys = ref<boolean>(false);
 const accessibleVaults = ref<VaultDto[]>();
-const onFetchError = ref<Error | null>();
+const onFetchError = ref<Error>();
 
 onMounted(fetchData);
 
 async function fetchData() {
-  onFetchError.value = null;
+  onFetchError.value = undefined;
   try {
     me.value = await userdata.me;
     hasBrowserKeys.value = await userdata.browserKeys.then(keys => keys !== undefined);

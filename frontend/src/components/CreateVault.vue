@@ -78,7 +78,7 @@
             >
               {{ t('createVault.enterRecoveryKey.submit') }}
             </button>
-            <div v-if="onRecoverError != null">
+            <div v-if="onRecoverError">
               <p v-if="onRecoverError instanceof FormValidationFailedError" class="text-sm text-red-900 mt-2">{{ t('createVault.error.formValidationFailed') }}</p>
               <p v-else-if="onRecoverError instanceof DecodeUvfRecoveryKeyError || onRecoverError instanceof DecodeVf8RecoveryKeyError" class="text-sm text-red-900 mt-2">{{ t('createVault.error.invalidRecoveryKey') }}</p>
               <p v-else class="text-sm text-red-900 mt-2">{{ t('createVault.error.invalidRecoveryKey') }}</p>
@@ -128,7 +128,7 @@
           <div class="bg-gray-50 mt-4 px-4 py-3 sm:px-6">
             <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center sm:space-x-4">
               <div class="text-sm text-red-900 text-right sm:flex-1 sm:min-w-0">
-                <template v-if="onCreateError !== null">
+                <template v-if="onCreateError">
                   <p v-if="(onCreateError instanceof FormValidationFailedError)">
                     {{ t('createVault.error.formValidationFailed','') }} 
                   </p>
@@ -217,7 +217,7 @@
           <div class="bg-gray-50 mt-4 px-4 py-3 sm:px-6">
             <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center sm:space-x-4">
               <div class="text-sm text-red-900 sm:flex-1 sm:min-w-0">
-                <template v-if="onCreateError !== null">
+                <template v-if="onCreateError">
                   <p v-if="!(onCreateError instanceof PaymentRequiredError)">
                     {{ t('common.unexpectedError', [onCreateError.message]) }}
                   </p>
@@ -276,7 +276,7 @@
             <ArrowDownTrayIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
             {{ t('createVault.success.download') }}
           </button>
-          <p v-if="onDownloadTemplateError != null" class="text-sm text-red-900 mr-4">
+          <p v-if="onDownloadTemplateError" class="text-sm text-red-900 mr-4">
             {{ t('createVault.error.downloadTemplateFailed', [onDownloadTemplateError.message]) }}
           </p>
           <!-- TODO: not beautiful-->
@@ -358,10 +358,10 @@ const { t } = useI18n({ useScope: 'global' });
 const form = ref<HTMLFormElement>();
 const fileUpload = ref<HTMLInputElement>();
 
-const onCreateError = ref<Error | null>(null);
-const onDownloadTemplateError = ref<Error | null>(null);
-const onRecoverError = ref<Error | null>(null);
-const onUploadError = ref<Error | null>(null);
+const onCreateError = ref<Error>();
+const onRecoverError = ref<Error>();
+const onDownloadTemplateError = ref<Error>();
+const onUploadError = ref<Error>();
 
 const state = ref(State.Initial);
 const processing = ref(false);
@@ -420,7 +420,7 @@ async function handleDragLeave() {
 }
 
 async function handleDrop(event: DragEvent) {
-  onUploadError.value = null;
+  onUploadError.value = undefined;
   isDraggingOver.value = false;
   let file: File | null = null;
   if (event.dataTransfer?.items && event.dataTransfer.items.length >= 1) {
@@ -436,7 +436,7 @@ async function handleDrop(event: DragEvent) {
 }
 
 async function handleUpload(event: Event) {
-  onUploadError.value = null;
+  onUploadError.value = undefined;
   validateAndSetMetadataFile(fileUpload.value?.files?.item(0) ?? null);
 }
 
@@ -458,7 +458,7 @@ async function validateAndSetMetadataFile(file: File | null) {
 }
 
 async function validateRecoveryKey() {
-  onRecoverError.value = null;
+  onRecoverError.value = undefined;
   if (!form.value?.checkValidity() || !vaultMetadata.value ) {
     onRecoverError.value = new FormValidationFailedError();
     return;
@@ -473,7 +473,7 @@ const allCreateStates = [
 ];
 
 async function recoverVault() {
-  onRecoverError.value = null;
+  onRecoverError.value = undefined;
   try {
     processing.value = true;
     if (vaultType.value == VaultType.UniversalVaultFormat) {
@@ -491,7 +491,7 @@ async function recoverVault() {
 }
 
 async function validateVaultDetails() {
-  onCreateError.value = null;
+  onCreateError.value = undefined;
   if (!form.value?.checkValidity()) {
     onCreateError.value = new FormValidationFailedError();
     return;
@@ -508,7 +508,7 @@ function backToEnterVaultDetails(){
 }
 
 async function createVault() {
-  onCreateError.value = null;
+  onCreateError.value = undefined;
   try {
     processing.value = true;
     const owner = await userdata.me;
@@ -556,7 +556,7 @@ async function downloadVaultTemplate() {
   if (!vaultFormat8.value && !uvfVault.value) {
     throw new Error('Invalid state');
   }
-  onDownloadTemplateError.value = null;
+  onDownloadTemplateError.value = undefined;
   try {
     const templateProducer: VaultTemplateProducing = vaultFormat8.value || uvfVault.value!;
     const blob = await templateProducer.exportTemplate(absBackendBaseURL, vault.value);

@@ -1,5 +1,5 @@
-import { base16, base64, base64url } from 'rfc4648';
 import { VaultDto } from './backend';
+import { base16, base64, base64urlnopad } from '@scure/base';
 import { JWE, Recipient } from './jwe';
 import { DB, UTF8 } from './util';
 
@@ -46,7 +46,7 @@ export interface AccessTokenProducing {
    * @param userPublicKey the public key of the user
    * @param isOwner whether to also include owner secrets for this user (UVF only)
    */
-  encryptForUser(userPublicKey: CryptoKey | Uint8Array, isOwner?: boolean): Promise<string>;
+  encryptForUser(userPublicKey: CryptoKey | BufferSource, isOwner?: boolean): Promise<string>;
 
 }
 
@@ -144,13 +144,13 @@ export class UserKeys {
   private static async createFromJwe(jwe: UserKeyPayload, ecdhPublicKey: CryptoKey | BufferSource, ecdsaPublicKey?: CryptoKey | BufferSource): Promise<UserKeys> {
     const ecdhKeyPair: CryptoKeyPair = {
       publicKey: await asPublicKey(ecdhPublicKey, UserKeys.ECDH_KEY_DESIGNATION),
-      privateKey: await crypto.subtle.importKey('pkcs8', base64.parse(jwe.ecdhPrivateKey ?? jwe.key, { loose: true }).slice(), UserKeys.ECDH_KEY_DESIGNATION, true, UserKeys.ECDH_PRIV_KEY_USAGES)
+      privateKey: await crypto.subtle.importKey('pkcs8', base64.decode(jwe.ecdhPrivateKey ?? jwe.key) as Uint8Array<ArrayBuffer>, UserKeys.ECDH_KEY_DESIGNATION, true, UserKeys.ECDH_PRIV_KEY_USAGES)
     };
     let ecdsaKeyPair: CryptoKeyPair;
     if (jwe.ecdsaPrivateKey && ecdsaPublicKey) {
       ecdsaKeyPair = {
         publicKey: await asPublicKey(ecdsaPublicKey, UserKeys.ECDSA_KEY_DESIGNATION, UserKeys.ECDSA_PUB_KEY_USAGES),
-        privateKey: await crypto.subtle.importKey('pkcs8', base64.parse(jwe.ecdsaPrivateKey, { loose: true }).slice(), UserKeys.ECDSA_KEY_DESIGNATION, true, UserKeys.ECDSA_PRIV_KEY_USAGES)
+        privateKey: await crypto.subtle.importKey('pkcs8', base64.decode(jwe.ecdsaPrivateKey) as Uint8Array<ArrayBuffer>, UserKeys.ECDSA_KEY_DESIGNATION, true, UserKeys.ECDSA_PRIV_KEY_USAGES)
       };
     } else {
       // ECDSA key was added in Hub 1.4.0. If it's missing, we generate a new one.
@@ -165,7 +165,7 @@ export class UserKeys {
    */
   public async encodedEcdhPublicKey(): Promise<string> {
     const publicKey = new Uint8Array(await crypto.subtle.exportKey('spki', this.ecdhKeyPair.publicKey));
-    return base64.stringify(publicKey);
+    return base64.encode(publicKey);
   }
 
   /**
@@ -174,7 +174,7 @@ export class UserKeys {
    */
   public async encodedEcdsaPublicKey(): Promise<string> {
     const publicKey = new Uint8Array(await crypto.subtle.exportKey('spki', this.ecdsaKeyPair.publicKey));
-    return base64.stringify(publicKey);
+    return base64.encode(publicKey);
   }
 
   /**
@@ -196,7 +196,7 @@ export class UserKeys {
    * @returns a JWE containing the PKCS#8-encoded private key
    * @see Recipient.ecdhEs
    */
-  public async encryptForDevice(devicePublicKey: CryptoKey | BufferSource): Promise<string> {
+  public async encryptForDevice(devicePublicKey: CryptoKey | Uint8Array<ArrayBuffer>): Promise<string> {
     const publicKey = await asPublicKey(devicePublicKey, BrowserKeys.KEY_DESIGNATION);
     const payload = await this.prepareForEncryption();
     const jwe = await JWE.build(payload).encrypt(Recipient.ecdhEs('org.cryptomator.hub.deviceKey', publicKey));
@@ -218,9 +218,9 @@ export class UserKeys {
     const encodedEcdsaPrivateKey = new Uint8Array(await crypto.subtle.exportKey('pkcs8', this.ecdsaKeyPair.privateKey));
     try {
       return {
-        key: base64.stringify(encodedEcdhPrivateKey), // redundant for backwards compatibility
-        ecdhPrivateKey: base64.stringify(encodedEcdhPrivateKey),
-        ecdsaPrivateKey: base64.stringify(encodedEcdsaPrivateKey)
+        key: base64.encode(encodedEcdhPrivateKey), // redundant for backwards compatibility
+        ecdhPrivateKey: base64.encode(encodedEcdhPrivateKey),
+        ecdsaPrivateKey: base64.encode(encodedEcdsaPrivateKey)
       };
     } finally {
       encodedEcdhPrivateKey.fill(0x00);
@@ -293,12 +293,12 @@ export class BrowserKeys {
   public async id(): Promise<string> {
     const publicKey = new Uint8Array(await crypto.subtle.exportKey('spki', this.keyPair.publicKey));
     const hash = new Uint8Array(await crypto.subtle.digest({ name: 'SHA-256' }, publicKey));
-    return base16.stringify(hash).toUpperCase();
+    return base16.encode(hash);
   }
 
   public async encodedPublicKey() {
     const publicKey = new Uint8Array(await crypto.subtle.exportKey('spki', this.keyPair.publicKey));
-    return base64.stringify(publicKey);
+    return base64.encode(publicKey);
   }
 }
 
@@ -318,7 +318,7 @@ export async function asPublicKey(publicKey: CryptoKey | BufferSource, keyDesign
  */
 export async function getJwkThumbprintStr(key: JsonWebKey | CryptoKey): Promise<string> {
   const thumbprint = await getJwkThumbprint(key);
-  return base64url.stringify(new Uint8Array(thumbprint), { pad: false });
+  return base64urlnopad.encode(new Uint8Array(thumbprint));
 }
 
 /**
