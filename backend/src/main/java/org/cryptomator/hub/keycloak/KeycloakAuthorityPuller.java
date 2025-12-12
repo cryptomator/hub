@@ -120,6 +120,7 @@ public class KeycloakAuthorityPuller {
 	//visible for testing
 	void syncUpdatedGroups(Map<String, KeycloakGroupDto> keycloakGroups, Map<String, Group> databaseGroups, Set<String> deletedGroupIds, Map<String, User> databaseUsers) {
 		var toUpdateIds = diff(databaseGroups.keySet(), deletedGroupIds);
+		var idsOfGroupsWithChangedMembers = new HashSet<String>();
 		for (var id : toUpdateIds) {
 			var databaseGroup = databaseGroups.get(id);
 			var keycloakGroup = keycloakGroups.get(id);
@@ -138,7 +139,11 @@ public class KeycloakAuthorityPuller {
 			for (var removeId : diff(haveIds, wantIds)) {
 				databaseGroup.getMembers().removeIf(u -> u.getId().equals(removeId));
 			}
+			if (!wantIds.containsAll(haveIds) || !haveIds.containsAll(wantIds)) {
+				idsOfGroupsWithChangedMembers.add(id);
+			}
 		}
+		effectiveGroupMembershipRepo.updateGroups(idsOfGroupsWithChangedMembers);
 	}
 
 	private <T> Set<T> diff(Set<T> base, Set<T> difference) {
