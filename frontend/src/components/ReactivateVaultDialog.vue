@@ -35,7 +35,7 @@
                     {{ t('common.cancel') }}
                   </button>
                 </div>
-                <p v-if="onReactivateVaultError != null" class="text-sm text-red-900 px-4 sm:px-6 text-right bg-red-50">
+                <p v-if="onReactivateVaultError" class="text-sm text-red-900 px-4 sm:px-6 text-right bg-red-50">
                   {{ t('common.unexpectedError', [onReactivateVaultError.message]) }}
                 </p>
               </form>
@@ -58,7 +58,7 @@ const { t } = useI18n({ useScope: 'global' });
 
 const open = ref(false);
 
-const onReactivateVaultError = ref<Error | null>();
+const onReactivateVaultError = ref<Error>();
 
 const props = defineProps<{
   vault: VaultDto
@@ -78,7 +78,7 @@ function show() {
 }
 
 async function reactivateVault() {
-  onReactivateVaultError.value = null;
+  onReactivateVaultError.value = undefined;
   const v = props.vault;
   try {
     const vaultDto = await backend.vaults.createOrUpdateVault(v.id, v.name, false, v.description);

@@ -1,6 +1,6 @@
 <template>
-  <div v-if="me == null">
-    <div v-if="onFetchError == null">
+  <div v-if="me === undefined">
+    <div v-if="!onFetchError">
       {{ t('common.loading') }}
     </div>
     <div v-else>
@@ -15,7 +15,7 @@
         <div class="text-center">
           <img class="h-32 w-32 rounded-full bg-white mx-auto" :src="me.pictureUrl" alt="" />
           <p class="mt-3 font-semibold">{{ me.name }}</p>
-          <p v-if="me.email != null" class="text-sm text-gray-500">{{ me.email }}</p>
+          <p v-if="me.email" class="text-sm text-gray-500">{{ me.email }}</p>
         </div>
         <div class="flex flex-col gap-2">
           <button type="button" class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 shadow-xs text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="openKeycloakUserAccount()">
@@ -50,7 +50,7 @@
             </div>
           </Listbox>
         </div>
-        <div v-if="version != null" class="text-center">
+        <div v-if="version !== undefined" class="text-center">
           <p class="text-xs text-gray-500">
             Hub {{ version.hubVersion }} • Keycloak {{ version.keycloakVersion ?? t('userProfile.keycloakVersion.notAvailable') }}
           </p>
@@ -88,7 +88,7 @@ const { locale, t } = useI18n({ useScope: 'global' });
 const me = ref<UserDto>();
 const keycloakUserAccountURL = ref<string>();
 const version = ref<VersionDto>();
-const onFetchError = ref<Error | null>();
+const onFetchError = ref<Error>();
 const browserLocale = ref<string>(navigator.language);
 
 onMounted(async () => {
@@ -98,7 +98,7 @@ onMounted(async () => {
 });
 
 async function fetchData() {
-  onFetchError.value = null;
+  onFetchError.value = undefined;
   try {
     me.value = await userdata.me;
     version.value = await backend.version.get();

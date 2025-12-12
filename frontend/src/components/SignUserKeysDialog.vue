@@ -44,7 +44,7 @@
                     {{ t('common.cancel') }}
                   </button>
                 </div>
-                <p v-if="onSignError != null" class="text-sm text-red-900 px-4 sm:px-6 text-right bg-red-50">
+                <p v-if="onSignError" class="text-sm text-red-900 px-4 sm:px-6 text-right bg-red-50">
                   {{ t('common.unexpectedError', [onSignError.message]) }}
                 </p>
               </form>
@@ -82,7 +82,7 @@ defineExpose({
   show
 });
 
-const onSignError = ref<Error | null>();
+const onSignError = ref<Error>();
 const expectedFingerprint = ref<string>();
 const enteredFingerprint = ref<string>('');
 const minVerificationLen = ref<number>(64); // default: check all 64 hex digits of 256 bit fingerprint

@@ -1,10 +1,10 @@
 <template>
-  <div v-if="vault == null">
-    <div v-if="onFetchError == null">
+  <div v-if="vault === undefined">
+    <div v-if="!onFetchError">
       {{ t('common.loading') }}
     </div>
     <div v-else>
-      <FetchError :error="onFetchError" :retry="allowRetryFetch ? fetchData : null"/>
+      <FetchError :error="onFetchError" :retry="allowRetryFetch ? fetchData : undefined"/>
     </div>
   </div>
 
@@ -83,7 +83,7 @@
                 </div>
               </div>
 
-              <p v-if="onUpdateVaultMembershipError[member.id] != null" class="text-sm text-red-900 text-right mt-1">
+              <p v-if="onUpdateVaultMembershipError[member.id]" class="text-sm text-red-900 text-right mt-1">
                 {{ t('common.unexpectedError', [onUpdateVaultMembershipError[member.id].message]) }}
               </p>
             </li>
@@ -99,7 +99,7 @@
               </button>
             </div>
             <SearchInputGroup v-else-if="addingUser" :action-title="t('common.add')" :on-search="searchAuthority" @action="addAuthority" />
-            <div v-if="onAddUserError != null">
+            <div v-if="onAddUserError">
               <p v-if="onAddUserError instanceof PaymentRequiredError" class="text-sm text-red-900 text-right mt-1">
                 {{ t('vaultDetails.error.licenseViolated') }}
               </p>
@@ -211,9 +211,9 @@
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
 import { ArrowPathIcon, EllipsisVerticalIcon, ExclamationTriangleIcon } from '@heroicons/vue/20/solid';
 import { PlusSmallIcon } from '@heroicons/vue/24/solid';
+import * as R from 'remeda';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import * as R from 'remeda';
 import auth from '../common/auth';
 import backend, { AuthorityDto, ConflictError, ForbiddenError, LicenseUserInfoDto, MemberDto, NotFoundError, PaymentRequiredError, TrustDto, UserDto, VaultDto, VaultRole } from '../common/backend';
 import { VaultKeys } from '../common/crypto';
@@ -243,11 +243,11 @@ const emit = defineEmits<{
   licenseStatusUpdated: [license: LicenseUserInfoDto]
 }>();
 
-const onFetchError = ref<Error | null>();
-const allowRetryFetch = computed(() => onFetchError.value != null && !(onFetchError.value instanceof NotFoundError));  //fetch requests either list something, or query from th vault. In the latter, a 404 indicates the vault does not exists anymore.
+const onFetchError = ref<Error>();
+const allowRetryFetch = computed(() => onFetchError.value && !(onFetchError.value instanceof NotFoundError));  //fetch requests either list something, or query from th vault. In the latter, a 404 indicates the vault does not exists anymore.
 
 const onUpdateVaultMembershipError = ref< {[id: string]: Error} >({});
-const onAddUserError = ref<Error | null>();
+const onAddUserError = ref<Error>();
 
 const license = ref<LicenseUserInfoDto>();
 const addingUser = ref(false);
@@ -277,13 +277,13 @@ const me = ref<UserDto>();
 const vaultRecoveryRequired = ref<boolean>(false);
 const isAdmin = ref<boolean>();
 
-const isLegacyVault = computed(() => vault.value?.authPublicKey != null);
+const isLegacyVault = computed(() => vault.value?.authPublicKey !== undefined);
 const licenseViolated = computed(() => license.value?.isExpired() || license.value?.isExceeded());
 
 onMounted(fetchData);
 
 async function fetchData() {
-  onFetchError.value = null;
+  onFetchError.value = undefined;
   try {
     isAdmin.value = (await auth).hasRole('admin');
     vault.value = await backend.vaults.get(props.vaultId);
@@ -368,7 +368,7 @@ async function reloadDevicesRequiringAccessGrant() {
 }
 
 async function addAuthority(authority: AuthorityDto) {
-  onAddUserError.value = null;
+  onAddUserError.value = undefined;
 
   try {
     await addAuthorityBackend(authority);
