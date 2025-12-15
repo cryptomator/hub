@@ -1,6 +1,6 @@
 <template>
-  <div v-if="vaults == null">
-    <div v-if="onFetchError == null">
+  <div v-if="!vaults">
+    <div v-if="!onFetchError">
       {{ t('common.loading') }}
     </div>
     <div v-else>
@@ -71,7 +71,7 @@
     </Menu>
   </div>
 
-  <div v-if="filteredVaults != null && filteredVaults.length > 0" class="mt-5 bg-white shadow-sm overflow-hidden rounded-md">
+  <div v-if="filteredVaults && filteredVaults.length > 0" class="mt-5 bg-white shadow-sm overflow-hidden rounded-md">
     <ul class="divide-y divide-gray-200">
       <li v-for="(vault, index) in filteredVaults" :key="vault.masterkey">
         <a tabindex="0" class="block hover:bg-gray-50" :class="{'ring-2 ring-inset ring-primary': selectedVault == vault, 'rounded-t-md': index == 0, 'rounded-b-md': index == filteredVaults.length - 1}" @click="showVaultDetails(vault)">
@@ -93,7 +93,7 @@
     </ul>
   </div>
 
-  <div v-else-if="query === '' && filteredVaults != null && filteredVaults.length == 0" class="mt-3 text-center">
+  <div v-else-if="query === '' && filteredVaults && filteredVaults.length == 0" class="mt-3 text-center">
     <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
       <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10.5v6m3-3H9m4.06-7.19l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
     </svg>
@@ -101,7 +101,7 @@
     <p v-if="canCreateVaults" class="mt-1 text-sm text-gray-500">{{ t('vaultList.empty.description') }}</p>
   </div>
 
-  <div v-else-if="query !== '' && filteredVaults != null && filteredVaults.length == 0" class="mt-3 text-center">
+  <div v-else-if="query !== '' && filteredVaults && filteredVaults.length == 0" class="mt-3 text-center">
     <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
       <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 15.75l-2.489-2.489m0 0a3.375 3.375 0 10-4.773-4.773 3.375 3.375 0 004.774 4.774zM21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
     </svg>
@@ -109,7 +109,7 @@
     <p class="mt-1 text-sm text-gray-500">{{ t('vaultList.filter.result.empty.description') }}</p>
   </div>
 
-  <SlideOver v-if="selectedVault != null" ref="vaultDetailsSlideOver" :title="selectedVault.name" @close="selectedVault = null">
+  <SlideOver v-if="selectedVault" ref="vaultDetailsSlideOver" :title="selectedVault.name" @close="selectedVault = undefined">
     <VaultDetails :vault-id="selectedVault.id" :vault-role="roleOfSelectedVault" @vault-updated="v => onSelectedVaultUpdate(v)" @license-status-updated="l => licenseUpdated(l)"></VaultDetails>
   </SlideOver>
 </template>
@@ -130,12 +130,12 @@ import VaultDetails from './VaultDetails.vue';
 const { t } = useI18n({ useScope: 'global' });
 
 const vaultDetailsSlideOver = ref<typeof SlideOver>();
-const onFetchError = ref<Error | null>();
+const onFetchError = ref<Error>();
 
 const vaults = ref<VaultDto[]>();
 const accessibleVaults = ref<VaultDto[]>();
 const ownedVaults = ref<VaultDto[]>();
-const selectedVault = ref<VaultDto | null>(null);
+const selectedVault = ref<VaultDto>();
 
 const roleOfSelectedVault = computed<VaultRole | 'NONE'>(() => {
   if (ownedVaults.value?.some(ownedVault => ownedVault.id == selectedVault.value?.id)) {
@@ -176,7 +176,7 @@ const filteredVaults = computed(() =>
 onMounted(fetchData);
 
 async function fetchData() {
-  onFetchError.value = null;
+  onFetchError.value = undefined;
   try {
     isAdmin.value = (await auth).hasRole('admin');
     canCreateVaults.value = (await auth).hasRole('create-vaults');
@@ -213,7 +213,7 @@ function showVaultDetails(vault: VaultDto) {
 
 async function onSelectedVaultUpdate(vault: VaultDto) {
   await fetchData();
-  if (vaults.value == null || vault.id !== selectedVault.value?.id) {
+  if (vaults.value === undefined || vault.id !== selectedVault.value?.id) {
     return;
   }
   const index = vaults.value?.findIndex(v => v.id === vault.id);

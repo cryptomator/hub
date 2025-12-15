@@ -38,7 +38,7 @@
 </template>
 
 <script setup lang="ts">
-import { base64 } from 'rfc4648';
+import { base64 } from '@scure/base';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auditlog, { AuditEventSignedWotIdDto } from '../common/auditlog';
@@ -75,7 +75,7 @@ onMounted(async () => {
   }
 
   try {
-    const signerPublicKey = await asPublicKey(base64.parse(props.event.signerKey), UserKeys.ECDSA_KEY_DESIGNATION, UserKeys.ECDSA_PUB_KEY_USAGES);
+    const signerPublicKey = await asPublicKey(base64.decode(props.event.signerKey) as Uint8Array<ArrayBuffer>, UserKeys.ECDSA_KEY_DESIGNATION, UserKeys.ECDSA_PUB_KEY_USAGES);
     const [_, signedKeys] = await JWT.parse(props.event.signature, signerPublicKey) as [JWTHeader, SignedKeys];
     signedFingerprint.value = await wot.computeFingerprint({ ecdhPublicKey: signedKeys.ecdhPublicKey, ecdsaPublicKey: signedKeys.ecdsaPublicKey });
     if (props.event.signerKey === signingUser?.ecdsaPublicKey && signedFingerprint.value === currentFingerprint.value) {
