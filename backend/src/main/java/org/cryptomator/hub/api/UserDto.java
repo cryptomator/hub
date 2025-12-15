@@ -131,6 +131,7 @@ public final class UserDto extends AuthorityDto {
 	public static UserDtoWithCounts justPublicInfoWithCounts(User user, String firstName, String lastName, long groupsCount, long vaultsCount, long devicesCount) {
 		return new UserDtoWithCounts(
 				user.getId(),
+				Type.USER,
 				user.getName(),
 				user.getPictureUrl(),
 				user.getEmail(),
@@ -147,6 +148,7 @@ public final class UserDto extends AuthorityDto {
 
 	public record UserDtoWithCounts(
 			@JsonProperty("id") String id,
+			@JsonProperty("type") AuthorityDto.Type type,
 			@JsonProperty("name") String name,
 			@JsonProperty("pictureUrl") String pictureUrl,
 			@JsonProperty("email") String email,
