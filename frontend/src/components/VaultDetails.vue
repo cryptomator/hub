@@ -190,13 +190,13 @@
           {{ t('vaultDetails.actions.displayRecoveryKey') }}
         </button>
         <!-- setup emergencyAccess button -->
-        <button v-if="!hasEmergencyKeys && vaultRole == 'OWNER'" type="button" class="inline-flex items-center justify-center gap-2 bg-white py-2 px-4 border border-gray-300 rounded-md shadow-xs text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showGrantEmergencyAccessDialog()">
+        <button v-if="!hasEmergencyKeys && vaultRole == 'OWNER' && !isCommunityLicense" type="button" class="inline-flex items-center justify-center gap-2 bg-white py-2 px-4 border border-gray-300 rounded-md shadow-xs text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showGrantEmergencyAccessDialog()">
           <ExclamationTriangleIcon class="h-5 w-5 text-yellow-500" />
           <span>Setup Emergency Access Council</span>
         </button>
         <!-- fix emergency council size -->
         <button
-          v-else-if="vaultRole == 'OWNER' && (hasInsufficientEmergencyRedundancy || hasMismatchedApprovals) || (vaultRole == 'OWNER' && requiredGreaterThanMembers)"
+          v-else-if="(vaultRole == 'OWNER' && (hasInsufficientEmergencyRedundancy || hasMismatchedApprovals) || (vaultRole == 'OWNER' && requiredGreaterThanMembers)) && !isCommunityLicense"
           type="button"
           class="inline-flex items-center justify-center gap-2 bg-white py-2 px-4 border border-yellow-300 rounded-md shadow-xs text-sm font-medium text-yellow-800 hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-400"
           @click="showGrantEmergencyAccessDialog()"
@@ -303,6 +303,10 @@ const licenseViolated = computed(() => license.value?.isExpired() || license.val
 const emergencyKeyShareAuthorities = ref<Record<string, AuthorityDto>>({});
 
 const hasEmergencyKeys = computed(() => Object.keys(vault.value?.emergencyKeyShares ?? {}).length > 0 );
+
+const isCommunityLicense = computed(() => {
+  return !license.value?.expiresAt;
+});
 
 onMounted(fetchData);
 

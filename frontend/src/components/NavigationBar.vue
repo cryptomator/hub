@@ -69,10 +69,10 @@
 <script setup lang="ts">
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
 import { ArrowRightStartOnRectangleIcon, Bars3Icon, ListBulletIcon, UserIcon, WrenchIcon, XMarkIcon } from '@heroicons/vue/24/outline';
-import { FunctionalComponent, onMounted, ref } from 'vue';
+import { FunctionalComponent, onMounted, ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auth from '../common/auth';
-import backend, { UserDto, VaultDto } from '../common/backend';
+import backend, { UserDto, VaultDto, LicenseUserInfoDto } from '../common/backend';
 
 const recoverableVaults = ref<VaultDto[]>([]);
 
@@ -107,29 +107,38 @@ const profileDropdown = ref<ProfileDropdownItem[][]>([]);
 const props = defineProps<{
   me : UserDto
 }>();
+const licenseStatus = ref<LicenseUserInfoDto>();
+
+const isCommunityLicense = computed(() => {
+  return !licenseStatus.value?.expiresAt;
+});
 
 onMounted(async () => {
-  try {
-    const recoverable = await backend.vaults.listRecoverable().catch(() => [] as VaultDto[]);
-
-    const map = new Map<string, VaultDto>();
-    recoverable.forEach(v => {
-      if (!v.archived) map.set(v.id, v);
-    });
-    recoverableVaults.value = Array.from(map.values());
-  } catch (e) {
-    console.error('Failed to load emergency-access vaults:', e);
-    recoverableVaults.value = [];
-  }
-
-  if (recoverableVaults.value.length > 0 && !navigation.value.some(i => i.to === '/app/emergencyaccess')) {
-    navigation.value.push({ name: 'nav.emergencyAccess', to: '/app/emergencyaccess' });
-  }
-
   if ((await auth).hasRole('admin')) {
     profileDropdown.value = [profileDropdownSections.infoSection, profileDropdownSections.adminSection, profileDropdownSections.hubSection];
   } else {
     profileDropdown.value = [profileDropdownSections.infoSection, profileDropdownSections.hubSection];
+  }
+
+  licenseStatus.value = await backend.license.getUserInfo();
+
+  if (!isCommunityLicense.value){
+    try {
+      const recoverable = await backend.vaults.listRecoverable().catch(() => [] as VaultDto[]);
+
+      const map = new Map<string, VaultDto>();
+      recoverable.forEach(v => {
+        if (!v.archived) map.set(v.id, v);
+      });
+      recoverableVaults.value = Array.from(map.values());
+    } catch (e) {
+      console.error('Failed to load emergency-access vaults:', e);
+      recoverableVaults.value = [];
+    }
+
+    if (recoverableVaults.value.length > 0 && !navigation.value.some(i => i.to === '/app/emergencyaccess')) {
+      navigation.value.push({ name: 'nav.emergencyAccess', to: '/app/emergencyaccess' });
+    }
   }
 });
 

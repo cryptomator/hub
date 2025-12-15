@@ -41,7 +41,7 @@
 
   <div v-else-if="state == State.EnterVaultDetails">
     <BreadcrumbNav :crumbs="[ { label: t('vaultList.title'), to: '/app/vaults' }, { label: t('createVault.enterVaultDetails.title') } ]"/>
-    <VaultCreationProgress :state="State.EnterVaultDetails" :steps="allCreateStates" class="flex justify-center mb-4" />
+    <VaultCreationProgress :state="State.EnterVaultDetails" :steps="getCurrentStates" class="flex justify-center mb-4" />
     <form ref="form" class="space-y-6" novalidate @submit.prevent="validateVaultDetails()">
       <div class="flex justify-center text-center">
         <div class="bg-white shadow-sm rounded-lg overflow-hidden sm:w-full sm:max-w-lg">
@@ -104,7 +104,7 @@
   </div>
   <div v-else-if="state == State.DefineEmergencyAccess">
     <BreadcrumbNav :crumbs="[ { label: t('vaultList.title'), to: '/app/vaults' }, { label: t('createVault.enterVaultDetails.title') } ]"/>
-    <VaultCreationProgress :state="state" :steps="allCreateStates" class="flex justify-center mb-4" />
+    <VaultCreationProgress :state="state" :steps="getCurrentStates" class="flex justify-center mb-4" />
     <form @submit.prevent="validateVaultEmergencyAccess()">
       <div class="flex justify-center">
         <div class="bg-white shadow-sm rounded-lg sm:w-full sm:max-w-lg">
@@ -191,7 +191,7 @@
   </div>
   <div v-else-if="state == State.ShowRecoveryKey">
     <BreadcrumbNav :crumbs="[ { label: t('vaultList.title'), to: '/app/vaults' }, { label: t('createVault.enterVaultDetails.title') } ]"/>
-    <VaultCreationProgress :state="state" :steps="allCreateStates" class="flex justify-center mb-4" />
+    <VaultCreationProgress :state="state" :steps="getCurrentStates" class="flex justify-center mb-4" />
     <form @submit.prevent="createVault()">
       <div class="flex justify-center text-center">
         <div class="bg-white shadow-sm rounded-lg overflow-hidden sm:max-w-lg">
@@ -276,7 +276,7 @@
 
   <div v-else-if="state == State.Finished">
     <BreadcrumbNav :crumbs="[ { label: t('vaultList.title'), to: '/app/vaults' }, { label: t('createVault.enterVaultDetails.title') } ]"/>
-    <VaultCreationProgress :state="state" :steps="allCreateStates" class="flex justify-center mb-4" />
+    <VaultCreationProgress :state="state" :steps="getCurrentStates" class="flex justify-center mb-4" />
     <div class="flex justify-center">
       <div class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6 text-center sm:w-full sm:max-w-lg">
         <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-emerald-100">
@@ -316,7 +316,7 @@ import { ArrowDownTrayIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/so
 import { saveAs } from 'file-saver';
 import { onMounted, ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { PaymentRequiredError, ActivatedUser, didCompleteSetup } from '../common/backend';
+import backend, { ActivatedUser, didCompleteSetup, LicenseUserInfoDto, PaymentRequiredError } from '../common/backend';
 import { VaultKeys } from '../common/crypto';
 import userdata from '../common/userdata';
 import { debounce } from '../common/util';
@@ -445,6 +445,11 @@ const isGrantButtonDisabled = computed(() => {
 });
 
 onMounted(initialize);
+const licenseStatus = ref<LicenseUserInfoDto>();
+
+const isCommunityLicense = computed(() => {
+  return !licenseStatus.value?.expiresAt;
+});
 
 async function initialize() {
   if (props.recover) {
@@ -455,6 +460,7 @@ async function initialize() {
     await loadDefaultEmergencyAccessSettings();
     state.value = State.EnterVaultDetails;
   }
+  licenseStatus.value = await backend.license.getUserInfo();
 }
 
 async function validateRecoveryKey() {
@@ -466,9 +472,19 @@ async function validateRecoveryKey() {
   await recoverVault();
 }
 
+const getCurrentStates = computed(() => {
+  return isCommunityLicense.value ? communityCreateStates : allCreateStates;
+});
+
 const allCreateStates = [
   State.EnterVaultDetails,
   State.DefineEmergencyAccess,
+  State.ShowRecoveryKey,
+  State.Finished,
+];
+
+const communityCreateStates = [
+  State.EnterVaultDetails,
   State.ShowRecoveryKey,
   State.Finished,
 ];
@@ -496,7 +512,10 @@ async function validateVaultDetails() {
   if (props.recover) {
     await createVault();
   } else {
-    state.value = State.DefineEmergencyAccess;
+    if (!isCommunityLicense.value)
+      state.value = State.DefineEmergencyAccess;
+    else
+      state.value = State.ShowRecoveryKey;
   }
 }
 
@@ -553,7 +572,10 @@ function backToEnterVaultDetails(){
 }
 
 function backToDefineEmergencyAccess(){
-  state.value = State.DefineEmergencyAccess;
+  if (isCommunityLicense.value)
+    state.value = State.EnterVaultDetails;
+  else
+    state.value = State.DefineEmergencyAccess;
 }
 
 async function createVault() {

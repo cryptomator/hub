@@ -264,7 +264,7 @@
         </form>
       </section>
 
-      <AdminSettingsEmergencyAccess />
+      <AdminSettingsEmergencyAccess :hidden="isCommunityLicense"/>
     </div>
   </div>
 </template>
@@ -274,7 +274,7 @@ import { ArrowRightIcon, ArrowTopRightOnSquareIcon, CheckIcon, ExclamationTriang
 import semver from 'semver';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { BillingDto, VersionDto } from '../common/backend';
+import backend, { BillingDto, LicenseUserInfoDto, VersionDto } from '../common/backend';
 import config, { absFrontendBaseURL } from '../common/config';
 import { FetchUpdateError, LatestVersionDto, updateChecker } from '../common/updatecheck';
 import { debounce } from '../common/util';
@@ -365,6 +365,12 @@ async function setToken(token: string) {
   }
 }
 
+const licenseStatus = ref<LicenseUserInfoDto>();
+
+const isCommunityLicense = computed(() => {
+  return !licenseStatus.value?.expiresAt;
+});
+
 async function fetchData() {
   try {
     const versionDto = backend.version.get();
@@ -372,6 +378,8 @@ async function fetchData() {
     admin.value = await backend.billing.get();
     version.value = await versionDto;
     latestVersion.value = await versionAvailable;
+
+    licenseStatus.value = await backend.license.getUserInfo();
 
     const settings = await backend.settings.get();
     wotMaxDepth.value = settings.wotMaxDepth;

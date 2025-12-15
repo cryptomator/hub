@@ -84,7 +84,7 @@
               </div>
               <p v-if="vault.description && vault.description.length > 0" class="truncate text-sm text-gray-500 mt-2">{{ vault.description }}</p>
             </div>
-            <div v-if="ownedVaults?.some(ownedVault => ownedVault.id == vault.id)">
+            <div v-if="ownedVaults?.some(ownedVault => ownedVault.id == vault.id) && !isCommunityLicense">
               <EmergencyBadge
                 v-if="!hasEmergencyKeys(vault)"
                 type="missingCouncil"
@@ -183,6 +183,10 @@ const isLicenseViolated = computed(() => {
   } else {
     return false;
   }
+});
+
+const isCommunityLicense = computed(() => {
+  return !licenseStatus.value?.expiresAt;
 });
 
 const filterOptions = ref< {[key: string]: string} >({
