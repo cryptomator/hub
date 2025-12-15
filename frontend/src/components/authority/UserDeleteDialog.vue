@@ -59,7 +59,15 @@ import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, Trans
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { UserDto } from '../../common/backend';
+import backend from '../../common/backend';
+
+interface User {
+  id: string;
+  name: string;
+  pictureUrl?: string;
+  firstName?: string;
+  lastName?: string;
+}
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -67,7 +75,7 @@ const open = ref(false);
 const onDeleteUserError = ref<Error | null>();
 
 const props = defineProps<{
-    user: UserDto
+    user: User
   }>();
 
 const fullName = computed(() => {
@@ -78,7 +86,7 @@ const fullName = computed(() => {
 
 const emit = defineEmits<{
     close: []
-    delete: [updatedUser: UserDto]
+    delete: [updatedUser: User]
   }>();
 
 defineExpose({

@@ -100,7 +100,7 @@ interface Vault {
 interface Device {
   id: string;
   name: string;
-  type: 'DESKTOP' | 'MOBILE' | 'TABLET';
+  type: 'DESKTOP' | 'MOBILE' | 'BROWSER';
   creationTime: string;
   lastAccessTime?: string;
   lastIpAddress?: string;
@@ -184,11 +184,11 @@ function handleGroupsSaved(newGroups: Group[]) {
 
 onMounted(async () => {
   try {
-    const fetchedUser = await backend.users.getUser(props.id);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const fetchedUser = await backend.users.getUser(props.id) as any;
 
-    const userData = fetchedUser as { firstName?: string; lastName?: string };
-    user.value.firstName = userData.firstName;
-    user.value.lastName = userData.lastName;
+    user.value.firstName = fetchedUser.firstName;
+    user.value.lastName = fetchedUser.lastName;
     user.value.username = fetchedUser.name;
     user.value.email = fetchedUser.email;
     user.value.userPicture = fetchedUser.pictureUrl;
@@ -214,8 +214,7 @@ onMounted(async () => {
     }
 
     // Load roles
-    const userRoles = (fetchedUser as { roles?: string[] }).roles || [];
-    user.value.roles = userRoles.filter(r => r === 'admin' || r === 'create-vaults');
+    user.value.roles = (fetchedUser.roles || []).filter((r: string) => r === 'admin' || r === 'create-vaults');
   } catch (error) {
     console.error('Failed to fetch user:', error);
   } finally {

@@ -75,8 +75,14 @@ interface Group {
 
 const scrollContainer = ref<HTMLElement | null>(null);
 
-const props = defineProps<{ groups: Group[]; userId: string }>();
-const emit = defineEmits<{ saved: (added: Group[]) => void }>();
+interface PropsGroup {
+  id: string;
+  name: string;
+  userPicture?: string;
+}
+
+const props = defineProps<{ groups: PropsGroup[]; userId: string }>();
+const emit = defineEmits<{ saved: [added: Group[]] }>();
 
 const { t } = useI18n({ useScope: 'global' });
 const open = ref(false);

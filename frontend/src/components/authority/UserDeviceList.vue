@@ -44,7 +44,7 @@
             <tr class="hidden sm:table-row">
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                 <div class="flex items-center gap-2">
-                  <span v-if="device.type == 'TABLET'" :title="'Browser'">
+                  <span v-if="device.type == 'BROWSER'" :title="'Browser'">
                     <WindowIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
                   </span>
                   <span v-else-if="device.type == 'DESKTOP'" :title="'Desktop'">
@@ -74,7 +74,7 @@
             <tr class="sm:hidden">
               <td class="px-4 py-4 text-sm text-gray-900">
                 <div class="flex items-top gap-2">
-                  <span v-if="device.type == 'TABLET'" :title="'Browser'">
+                  <span v-if="device.type == 'BROWSER'" :title="'Browser'">
                     <WindowIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
                   </span>
                   <span v-else-if="device.type == 'DESKTOP'" :title="'Desktop'">
@@ -174,7 +174,7 @@ const props = withDefaults(defineProps<{
 interface Device {
   id: string;
   name: string;
-  type: 'DESKTOP' | 'MOBILE' | 'TABLET';
+  type: 'DESKTOP' | 'MOBILE' | 'BROWSER';
   creationTime: string;
   lastAccessTime?: string;
   lastIpAddress?: string;

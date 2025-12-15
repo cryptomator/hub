@@ -74,7 +74,7 @@ interface Vault {
 interface Device {
   id: string;
   name: string;
-  type: 'DESKTOP' | 'MOBILE' | 'TABLET';
+  type: 'DESKTOP' | 'MOBILE' | 'BROWSER';
   creationTime: string;
   lastAccessTime?: string;
   lastIpAddress?: string;

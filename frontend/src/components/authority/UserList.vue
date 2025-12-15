@@ -151,7 +151,7 @@
   </div>
 
   <!-- Delete Dialog -->
-  <UserDeleteDialog v-if="deletingUser != null" ref="deleteUserDialog" :user="deletingUser as any" @close="deletingUser = null" @delete="onUserDeleted"/>
+  <UserDeleteDialog v-if="deletingUser != null" ref="deleteUserDialog" :user="deletingUser" @close="deletingUser = null" @delete="onUserDeleted"/>
 </template>
 
 <script setup lang="ts">
@@ -198,7 +198,7 @@ const showDeleteUserDialog = (user: UserListDto) => {
   nextTick(() => deleteUserDialog.value?.show());
 };
 
-const onUserDeleted = (deletedUser: UserListDto) => {
+const onUserDeleted = (deletedUser: { id: string }) => {
   users.value = users.value.filter((u: UserListDto) => u.id !== deletedUser.id);
   deletingUser.value = null;
 };

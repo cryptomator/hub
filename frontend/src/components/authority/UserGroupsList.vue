@@ -67,8 +67,8 @@
       </table>
     </div>
   </section>
-  <UserAddGroupDialog ref="addGroupDialog" :user-id="userId" :groups="user.groups" @saved="props.onSaved" />
-  <UserGroupRemoveDialog ref="deleteGroupMemberDialog" :group="deletingGroup" :user-id="userId" @close="deletingGroup = null" @removed="onGroupRemoved"/>
+  <UserAddGroupDialog ref="addGroupDialog" :user-id="userId" :groups="user.groups" @saved="(groups: Group[]) => props.onSaved(groups)" />
+  <UserGroupRemoveDialog ref="deleteGroupMemberDialog" :group="deletingGroup as { id: string; name: string; userPicture?: string } | null" :user-id="userId" @close="deletingGroup = null" @removed="onGroupRemoved"/>
 </template>
 
 <script setup lang="ts">
@@ -76,8 +76,7 @@ import { computed, ref, watch, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import UserAddGroupDialog from './UserAddGroupDialog.vue';
 import UserGroupRemoveDialog from './UserGroupRemoveDialog.vue';
-import { GroupDto } from '../../common/backend';
-import { UserGroupIcon } from '@heroicons/vue/20/solid'; 
+import { UserGroupIcon } from '@heroicons/vue/20/solid';
 const { t } = useI18n({ useScope: 'global' });
 interface Group {
   id: string;
@@ -91,7 +90,6 @@ interface DetailUser {
   roles: string[];
   email: string;
   userPicture?: string;
-  creationTime: string;
   groups: Group[];
   vaults: Vault[];
   devices: Device[];
@@ -106,7 +104,7 @@ interface Vault {
 interface Device {
   id: string;
   name: string;
-  type: 'DESKTOP' | 'MOBILE' | 'TABLET';
+  type: 'DESKTOP' | 'MOBILE' | 'BROWSER';
   creationTime: string;
   lastAccessTime?: string;
   lastIpAddress?: string;
