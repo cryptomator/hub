@@ -234,7 +234,7 @@ import { toSvg } from 'jdenticon';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
-import { base64 } from 'rfc4648';
+import { base64 } from '@scure/base';
 import backend from '../../common/backend';
 import { FormValidator } from '../../common/formvalidator';
 import { UTF8 } from '../../common/util';
@@ -309,7 +309,7 @@ const generateJdenticon = (seed: string): string => {
   if (!seed) return '';
   const svg = toSvg(seed, 128);
   const bytes = UTF8.encode(svg);
-  return `data:image/svg+xml;base64,${base64.stringify(bytes)}`;
+  return `data:image/svg+xml;base64,${base64.encode(bytes)}`;
 };
 
 watch(pictureUrl,
