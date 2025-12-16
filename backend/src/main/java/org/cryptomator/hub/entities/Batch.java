@@ -17,6 +17,9 @@ public class Batch {
 	}
 
 	public static Batch of(int size) {
+		if (size <= 0) {
+			throw new IllegalArgumentException("Batch size must be positive");
+		}
 		return new Batch(size);
 	}
 
@@ -38,13 +41,4 @@ public class Batch {
 		return result;
 	}
 
-	public <T, R> List<R> run(Collection<T> collection, BiFunction<List<T>, List<R>, List<R>> job) {
-		List<T> list = collection instanceof List<T> l ? l : List.copyOf(collection);
-		List<R> result = List.of();
-		for(int i = 0; i < list.size(); i += size) {
-			List<T> sublist = list.subList(i, Math.min(i + size, list.size()));
-			result = job.apply(sublist, result);
-		}
-		return result;
-	}
 }

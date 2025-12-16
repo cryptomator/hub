@@ -134,7 +134,9 @@ public class KeycloakAuthorityPuller {
 					// User might have been just added, fetch from database
 					databaseUser = userRepo.findById(addId);
 				}
-				databaseGroup.getMembers().add(databaseUser);
+				if (databaseUser != null) {
+					databaseGroup.getMembers().add(databaseUser);
+				}
 			}
 			for (var removeId : diff(haveIds, wantIds)) {
 				databaseGroup.getMembers().removeIf(u -> u.getId().equals(removeId));
