@@ -311,23 +311,23 @@
 </template>
 
 <script setup lang="ts">
-import backend, { VaultDto, VaultRole, UserDto, RecoveryProcessDto, didCompleteSetup, RecoveryProcessSetNewOwner, RecoveryProcessChangeCouncil, ActivatedUser, AccessGrant, RecoveredKeyShareDto, PaymentRequiredError, AuthorityDto } from '../../common/backend';
-import { ref, computed, toRaw, Ref } from 'vue';
-import { useI18n } from 'vue-i18n';
-import * as R from 'remeda';
 import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
+import { CheckBadgeIcon, ExclamationCircleIcon, InformationCircleIcon } from '@heroicons/vue/20/solid';
 import { ExclamationTriangleIcon, PlayIcon } from '@heroicons/vue/24/solid';
+import { base64 } from '@scure/base';
+import * as R from 'remeda';
+import { computed, ref, Ref, toRaw } from 'vue';
+import { useI18n } from 'vue-i18n';
+import backend, { AccessGrant, ActivatedUser, AuthorityDto, didCompleteSetup, PaymentRequiredError, RecoveredKeyShareDto, RecoveryProcessChangeCouncil, RecoveryProcessDto, RecoveryProcessSetNewOwner, UserDto, VaultDto, VaultRole } from '../../common/backend';
+import { asPublicKey, UserKeys, VaultKeys } from '../../common/crypto';
 import { EmergencyAccess } from '../../common/emergencyaccess';
+import { ECDSA_P384, JWT, JWTHeader } from '../../common/jwt';
 import userdata from '../../common/userdata';
+import { wordEncoder } from '../../common/util';
 import MultiUserSelectInputGroup from '../MultiUserSelectInputGroup.vue';
 import EmergencyScenarioVisualization from './EmergencyScenarioVisualization.vue';
 import ProcessAbortDialog from './ProcessAbortDialog.vue';
-import { asPublicKey, UserKeys, VaultKeys } from '../../common/crypto';
-import { wordEncoder } from '../../common/util';
-import { base64 } from 'rfc4648';
-import { ECDSA_P384, JWT, JWTHeader } from '../../common/jwt';
 import SegmentRing from './SegmentRing.vue';
-import { CheckBadgeIcon, ExclamationCircleIcon, InformationCircleIcon } from '@heroicons/vue/20/solid';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -898,7 +898,7 @@ async function completeRecovery() {
 
       const accessGrants: AccessGrant[] = await Promise.all(
         didCompleteSetupMembers.map(async u => {
-          const publicKey = base64.parse(u.ecdhPublicKey);
+          const publicKey = base64.decode(u.ecdhPublicKey) as Uint8Array<ArrayBuffer>;
           const jwe = await vaultKeys.encryptForUser(publicKey);
           return { userId: u.id, token: jwe };
         })
@@ -960,7 +960,7 @@ async function verifyProcessInfo(process: RecoveryProcessDto): Promise<boolean> 
       return false;
     }
     const councilMember = councilMembers[councilMemberId];
-    const publicKey = await asPublicKey(base64.parse(councilMember.ecdsaPublicKey), ECDSA_P384, ['verify']);
+    const publicKey = await asPublicKey(base64.decode(councilMember.ecdsaPublicKey) as Uint8Array<ArrayBuffer>, ECDSA_P384, ['verify']);
     const [header, payload] = await JWT.parse(recoveredKeyShare.signedProcessInfo, publicKey) as [JWTHeader, RecoveryProcessDto];
     if (header.sub !== process.id || header.iss !== councilMemberId) {
       console.error(`Invalid signed process info for council member ${councilMemberId}.`);

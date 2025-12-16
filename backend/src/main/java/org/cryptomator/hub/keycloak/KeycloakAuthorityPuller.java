@@ -5,6 +5,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import org.cryptomator.hub.entities.Authority;
+import org.cryptomator.hub.entities.EffectiveGroupMembership;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
 
@@ -23,6 +24,8 @@ public class KeycloakAuthorityPuller {
 	Group.Repository groupRepo;
 	@Inject
 	KeycloakAuthorityProvider remoteUserProvider;
+	@Inject
+	EffectiveGroupMembership.Repository effectiveGroupMembershipRepo;
 
 	@Scheduled(every = "{hub.keycloak.syncer-period}")
 	void sync() {
@@ -46,23 +49,24 @@ public class KeycloakAuthorityPuller {
 	//visible for testing
 	void syncAddedUsers(Map<String, KeycloakUserDto> keycloakUsers, Map<String, User> databaseUsers) {
 		var addedIds = diff(keycloakUsers.keySet(), databaseUsers.keySet());
-		for (var id : addedIds) {
+		var added = addedIds.stream().map(id -> {
 			var keycloakUser = keycloakUsers.get(id);
 			var databaseUser = new User();
 			databaseUser.setId(keycloakUser.id());
 			databaseUser.setName(keycloakUser.name());
 			databaseUser.setEmail(keycloakUser.email());
 			databaseUser.setPictureUrl(keycloakUser.pictureUrl());
-			userRepo.persist(databaseUser);
-		}
+			return databaseUser;
+		});
+		userRepo.persist(added);
+		effectiveGroupMembershipRepo.updateUsers(addedIds);
 	}
 
 	//visible for testing
 	Set<String> syncDeletedUsers(Map<String, KeycloakUserDto> keycloakUsers, Map<String, User> databaseUsers) {
 		var deletedIds = diff(databaseUsers.keySet(), keycloakUsers.keySet());
-		for (var id : deletedIds) {
-			userRepo.delete(databaseUsers.get(id));
-		}
+		userRepo.deleteByIds(deletedIds);
+		effectiveGroupMembershipRepo.updateUsers(deletedIds);
 		return deletedIds;
 	}
 
@@ -81,11 +85,12 @@ public class KeycloakAuthorityPuller {
 	//visible for testing
 	void syncAddedGroups(Map<String, KeycloakGroupDto> keycloakGroups, Map<String, Group> databaseGroups, Map<String, User> databaseUsers) {
 		var addedIds = diff(keycloakGroups.keySet(), databaseGroups.keySet());
-		for (var id : addedIds) {
+		var added = addedIds.stream().map(id -> {
 			var keycloakGroup = keycloakGroups.get(id);
 			var databaseGroup = new Group();
 			databaseGroup.setId(keycloakGroup.id());
 			databaseGroup.setName(keycloakGroup.name());
+			databaseGroup.setPictureUrl(keycloakGroup.pictureUrl());
 			Set<Authority> members = new HashSet<>();
 			for (var keycloakMember : keycloakGroup.members()) {
 				var databaseUser = databaseUsers.get(keycloakMember.id());
@@ -93,44 +98,54 @@ public class KeycloakAuthorityPuller {
 					// User might have been just added, fetch from database
 					databaseUser = userRepo.findById(keycloakMember.id());
 				}
-				members.add(databaseUser);
+				if (databaseUser != null) {
+					members.add(databaseUser);
+				}
 			}
 			databaseGroup.setMembers(members);
-			groupRepo.persist(databaseGroup);
-		}
+			return databaseGroup;
+		});
+		groupRepo.persist(added);
+		effectiveGroupMembershipRepo.updateGroups(addedIds);
 	}
 
 	//visible for testing
 	Set<String> syncDeletedGroups(Map<String, KeycloakGroupDto> keycloakGroups, Map<String, Group> databaseGroups) {
 		var deletedIds = diff(databaseGroups.keySet(), keycloakGroups.keySet());
-		for (var id : deletedIds) {
-			var databaseGroup = databaseGroups.get(id);
-			groupRepo.delete(databaseGroup);
-		}
+		groupRepo.deleteByIds(deletedIds);
+		effectiveGroupMembershipRepo.updateGroups(deletedIds);
 		return deletedIds;
 	}
 
 	//visible for testing
 	void syncUpdatedGroups(Map<String, KeycloakGroupDto> keycloakGroups, Map<String, Group> databaseGroups, Set<String> deletedGroupIds, Map<String, User> databaseUsers) {
 		var toUpdateIds = diff(databaseGroups.keySet(), deletedGroupIds);
+		var idsOfGroupsWithChangedMembers = new HashSet<String>();
 		for (var id : toUpdateIds) {
 			var databaseGroup = databaseGroups.get(id);
 			var keycloakGroup = keycloakGroups.get(id);
 			var wantIds = keycloakGroup.members().stream().map(KeycloakUserDto::id).collect(Collectors.toSet());
 			var haveIds = databaseGroup.getMembers().stream().map(Authority::getId).collect(Collectors.toSet());
 			databaseGroup.setName(keycloakGroup.name());
+			databaseGroup.setPictureUrl(keycloakGroup.pictureUrl());
 			for (var addId : diff(wantIds, haveIds)) {
 				var databaseUser = databaseUsers.get(addId);
 				if (databaseUser == null) {
 					// User might have been just added, fetch from database
 					databaseUser = userRepo.findById(addId);
 				}
-				databaseGroup.getMembers().add(databaseUser);
+				if (databaseUser != null) {
+					databaseGroup.getMembers().add(databaseUser);
+				}
 			}
 			for (var removeId : diff(haveIds, wantIds)) {
 				databaseGroup.getMembers().removeIf(u -> u.getId().equals(removeId));
 			}
+			if (!wantIds.containsAll(haveIds) || !haveIds.containsAll(wantIds)) {
+				idsOfGroupsWithChangedMembers.add(id);
+			}
 		}
+		effectiveGroupMembershipRepo.updateGroups(idsOfGroupsWithChangedMembers);
 	}
 
 	private <T> Set<T> diff(Set<T> base, Set<T> difference) {

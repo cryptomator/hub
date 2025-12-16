@@ -1,8 +1,8 @@
+import { base64 } from '@scure/base';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { ActivatedUser } from '../../src/common/backend';
 import { EmergencyAccess, RecoveryProcess } from '../../src/common/emergencyaccess';
 import { UTF8 } from '../../src/common/util';
-import { base64 } from 'rfc4648';
-import { ActivatedUser } from '../../src/common/backend';
 
 describe('Emergency Access', () => {
   const originalSecret = UTF8.encode('Hello World!');
@@ -111,7 +111,7 @@ async function createUserDto(id: string, publicKey: CryptoKey): Promise<Activate
     email: '',
     devices: [],
     accessibleVaults: [],
-    ecdhPublicKey: base64.stringify(keyBytes),
+    ecdhPublicKey: base64.encode(keyBytes),
     ecdsaPublicKey: ''
   };
 }

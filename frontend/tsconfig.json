@@ -12,10 +12,10 @@
 
     /* Linting */
     "strict": true,
+    "skipLibCheck": true,
     "resolveJsonModule": true,
     "noUnusedLocals": false,
-    "noFallthroughCasesInSwitch": true,
-    "useUnknownInCatchVariables": false, // Workaround for `node_modules/miscreant/src/providers/webcrypto.ts:21:11 - error TS18046: 'e' is of type 'unknown'.`
+    "noFallthroughCasesInSwitch": true
   },
   "ts-node": {
     "esm": true,

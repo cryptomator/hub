@@ -12,8 +12,12 @@ import io.quarkus.test.security.oidc.OidcSecurity;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import jakarta.validation.Validator;
+import org.cryptomator.hub.entities.EffectiveGroupMembership;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
+import org.cryptomator.hub.entities.Group;
+import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.entities.VaultAccess;
 import org.cryptomator.hub.entities.events.EventLogger;
@@ -24,9 +28,9 @@ import org.flywaydb.core.Flyway;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;
@@ -39,17 +43,13 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mockito;
 
 import java.security.GeneralSecurityException;
-import java.security.KeyFactory;
 import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
 import java.security.interfaces.ECPrivateKey;
 import java.security.spec.ECGenParameterSpec;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.PKCS8EncodedKeySpec;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -77,6 +77,12 @@ public class VaultResourceIT {
 	@Inject
 	Vault.Repository vaultRepo;
 	@Inject
+	Group.Repository groupRepo;
+	@Inject
+	User.Repository userRepo;
+	@Inject
+	EffectiveGroupMembership.Repository effectiveGroupMembershipRepo;
+	@Inject
 	Validator validator;
 	@Inject
 	@SuppressWarnings("unused") // needed for @DBRollbackBefore
@@ -87,8 +93,36 @@ public class VaultResourceIT {
 		RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
 	}
 
-	private static PrivateKey getPrivateKey(String keyBytes) throws NoSuchAlgorithmException, InvalidKeySpecException {
-		return KeyFactory.getInstance("EC").generatePrivate(new PKCS8EncodedKeySpec(Base64.getDecoder().decode(keyBytes)));
+	@BeforeEach
+	@Transactional
+	public void setupTestData() {
+		var user998 = new User();
+		user998.setId("user998");
+		user998.setName("User 998");
+
+		var user999 = new User();
+		user999.setId("user999");
+		user999.setName("User 999");
+		user999.setEcdhPublicKey("ecdh_public999");
+		user999.setEcdsaPublicKey("ecdsa_public999");
+		user999.setPrivateKeys("private999");
+		user999.setSetupCode("setup999");
+
+		userRepo.persist(user998, user999);
+
+		var group2 = groupRepo.findById("group2");
+		group2.getMembers().add(user998);
+		group2.getMembers().add(user999);
+		groupRepo.persist(group2);
+
+		effectiveGroupMembershipRepo.updateUsers(List.of("user998", "user999"));
+		effectiveGroupMembershipRepo.updateGroups(List.of("group2"));
+	}
+
+	@AfterEach
+	@Transactional
+	public void cleanupTestData() {
+		userRepo.deleteByIds(List.of("user998", "user999"));
 	}
 
 	@Nested
@@ -138,7 +172,7 @@ public class VaultResourceIT {
 		@Test
 		@DisplayName("GET /vaults/nonExistingVault returns 404")
 		public void testGetVault2() {
-			when().get("/vaults/{vaultId}", "nonExistingVault")
+			when().get("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-BADBADBADBAD")
 					.then().statusCode(404);
 		}
 
@@ -371,28 +405,10 @@ public class VaultResourceIT {
 
 		@Test
 		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100001111/access-tokens returns 200 for [user998, user999]")
-		public void testGrantAccess1() throws SQLException {
-			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
-				s.execute("""
-						INSERT INTO "authority" ("id", "type", "name") VALUES ('user998', 'USER', 'User 998');
-						INSERT INTO "authority" ("id", "type", "name") VALUES ('user999', 'USER', 'User 999');
-						INSERT INTO "user_details" ("id") VALUES ('user998');
-						INSERT INTO "user_details" ("id") VALUES ('user999');
-						INSERT INTO "group_membership" ("group_id", "member_id") VALUES ('group2', 'user998');
-						INSERT INTO "group_membership" ("group_id", "member_id") VALUES ('group2', 'user999');
-						""");
-			}
-
+		public void testGrantAccess1() {
 			given().contentType(ContentType.JSON).body(Map.of("user998", "jwe.jwe.jwe.vault1.user998", "user999", "jwe.jwe.jwe.vault1.user999"))
 					.when().post("/vaults/{vaultId}/access-tokens/", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(200);
-
-			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
-				s.execute("""
-						DELETE FROM "authority" WHERE "id" = 'user998';
-						DELETE FROM "authority" WHERE "id" = 'user999';
-						""");
-			}
 		}
 
 		@Test
@@ -633,18 +649,6 @@ public class VaultResourceIT {
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 	public class ManageAccessAsUser1 {
 
-		@BeforeAll
-		public void setup() throws SQLException {
-			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
-				// user999 will be deleted in #cleanup()
-				s.execute("""
-						INSERT INTO "authority" ("id", "type", "name") VALUES ('user999', 'USER', 'User 999');
-						INSERT INTO "user_details" ("id", "ecdh_publickey", "ecdsa_publickey", "privatekeys", "setupcode") VALUES ('user999', 'ecdh_public999', 'ecdsa_public999', 'private999', 'setup999');
-						INSERT INTO "group_membership" ("group_id", "member_id") VALUES ('group2', 'user999')
-						""");
-			}
-		}
-
 		@Test
 		@Order(1)
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111/groups/group3000 returns 404")
@@ -663,11 +667,11 @@ public class VaultResourceIT {
 
 		@Test
 		@Order(3)
-		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/members does contain group2 with memberSize=2")
+		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/members does contain group2 with memberSize=3")
 		public void getMembersOfVault1a() {
 			given().when().get("/vaults/{vaultId}/members", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(200)
-					.body("find { it.id == 'group2' }.memberSize", equalTo(2));
+					.body("find { it.id == 'group2' }.memberSize", equalTo(3));
 		}
 
 		@Test
@@ -694,12 +698,7 @@ public class VaultResourceIT {
 			given().contentType(ContentType.JSON).body(Map.of("user999", "jwe.jwe.jwe.vault2.user999"))
 					.when().post("/vaults/{vaultId}/access-tokens/", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(200);
-		}
 
-		@Test
-		@Order(6)
-		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/users-requiring-access-grant does no longer contain user999")
-		public void testGetUsersRequiringAccess4() {
 			given().when().get("/vaults/{vaultId}/users-requiring-access-grant", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(200)
 					.body("id", not(hasItems("user999")));
@@ -721,191 +720,6 @@ public class VaultResourceIT {
 			given().when().get("/vaults/{vaultId}/members", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(200)
 					.body("id", not(hasItems("group2")));
-		}
-
-	}
-
-	@Nested
-	@DisplayName("When exceeding 5 seats in license")
-	@TestSecurity(user = "User Name 1", roles = {"user", "create-vaults"})
-	@OidcSecurity(claims = {
-			@Claim(key = "sub", value = "user1")
-	})
-	@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-	public class ExceedingLicenseLimits {
-
-		@BeforeAll
-		public void setup() throws SQLException {
-			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
-				s.execute("""
-						INSERT INTO "authority" ("id", "type", "name")
-						VALUES
-							('user91', 'USER', 'user name 91'),
-							('user92', 'USER', 'user name 92'),
-							('user93', 'USER', 'user name 93'),
-							('user94', 'USER', 'user name 94'),
-							('user95_A', 'USER', 'user name Archived'),
-							('group91', 'GROUP', 'group name 91');
-							
-						INSERT INTO "group_details" ("id")
-						VALUES
-							('group91');
-							
-						INSERT INTO "user_details" ("id")
-						VALUES
-							('user91'),
-							('user92'),
-							('user93'),
-							('user94'),
-							('user95_A');
-							
-						INSERT INTO "group_membership" ("group_id", "member_id")
-						VALUES
-							('group91', 'user91'),
-							('group91', 'user92'),
-							('group91', 'user93'),
-							('group91', 'user94');
-							
-						INSERT INTO "vault_access" ("vault_id", "authority_id")
-						VALUES
-							('7E57C0DE-0000-4000-8000-00010000AAAA', 'user95_A');
-						""");
-			}
-		}
-
-		@Test
-		@Order(0)
-		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100001111/access-tokens returns 402 for [user91, user92, user93, user94]")
-		public void grantAccessExceedingSeats() {
-			Assumptions.assumeTrue(effectiveVaultAccessRepo.countSeatOccupyingUsers() == 2);
-			var body = Map.of(
-					"user91", "jwe.jwe.jwe.vault1.user91", //
-					"user92", "jwe.jwe.jwe.vault1.user92", //
-					"user93", "jwe.jwe.jwe.vault1.user93", //
-					"user94", "jwe.jwe.jwe.vault1.user94" //
-			);
-
-			given().contentType(ContentType.JSON).body(body)
-					.when().post("/vaults/{vaultId}/access-tokens/", "7E57C0DE-0000-4000-8000-000100001111")
-					.then().statusCode(402);
-		}
-
-		@Test
-		@Order(1)
-		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111/groups/group91 returns 402")
-		public void addGroupToVaultExceedingSeats() {
-			Assumptions.assumeTrue(effectiveVaultAccessRepo.countSeatOccupyingUsers() == 2);
-
-			given().when().put("/vaults/{vaultId}/groups/{groupId}", "7E57C0DE-0000-4000-8000-000100001111", "group91")
-					.then().statusCode(402);
-		}
-
-		@Order(2)
-		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111/users/userXX returns 201")
-		@ParameterizedTest(name = "Adding user {0} succeeds")
-		@CsvSource(value = {"0,user91", "1,user92", "2,user93"})
-		public void addUserToVaultNotExceedingSeats(String run, String userId) {
-			Assumptions.assumeTrue(effectiveVaultAccessRepo.countSeatOccupyingUsers() == 2 + Integer.parseInt(run));
-
-			given().when().put("/vaults/{vaultId}/users/{usersId}", "7E57C0DE-0000-4000-8000-000100001111", userId)
-					.then().statusCode(201);
-		}
-
-		@Test
-		@Order(3)
-		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111/users/user94 returns 402")
-		public void addUserToVaultExceedingSeats() {
-			Assumptions.assumeTrue(effectiveVaultAccessRepo.countSeatOccupyingUsers() == 5);
-
-			given().when().put("/vaults/{vaultId}/users/{usersId}", "7E57C0DE-0000-4000-8000-000100001111", "user94")
-					.then().statusCode(402);
-		}
-
-		@Test
-		@Order(4)
-		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111 (as user1) returns 200 with only updated name, description and archive flag, despite exceeding license")
-		public void testUpdateVaultDespiteLicenseExceeded() {
-			Assumptions.assumeTrue(effectiveVaultAccessRepo.countSeatOccupyingUsers() == 5);
-			var vaultId = "7E57C0DE-0000-4000-8000-000100001111";
-
-			var vaultDto = new VaultResource.VaultDto(UUID.fromString(vaultId), "Vault 1", Instant.parse("2222-11-11T11:11:11Z"), "This is a testvault.", false, 0, Map.of(), "someVaule", -1, "doNotUpdate", "doNotUpdate", "doNotUpdate");
-			given().contentType(ContentType.JSON)
-					.body(vaultDto)
-					.when().put("/vaults/{vaultId}", vaultId)
-					.then().statusCode(200)
-					.body("id", equalToIgnoringCase(vaultId))
-					.body("name", equalTo("Vault 1"))
-					.body("description", equalTo("This is a testvault."))
-					.body("archived", equalTo(false));
-		}
-
-		@Test
-		@Order(5)
-		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-0001FFFF3333 (as user1) exceeding the license returns 402")
-		public void testCreateVaultExceedingSeats() throws SQLException {
-			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
-				s.execute("""
-						INSERT INTO "vault_access" ("vault_id", "authority_id")
-						VALUES
-							('7E57C0DE-0000-4000-8000-000100001111', 'group91');
-						""");
-			}
-
-			Assumptions.assumeTrue(effectiveVaultAccessRepo.countSeatOccupyingUsers() > 5);
-
-			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-0001FFFF3333");
-			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", Instant.parse("2112-12-21T21:12:21Z"), "Test vault 4", false, 0, Map.of(), "masterkey3", 42, "NaCl", "authPubKey3", "authPrvKey3");
-			given().contentType(ContentType.JSON).body(vaultDto)
-					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-0001FFFF3333")
-					.then().statusCode(402);
-		}
-
-		@Test
-		@Order(7)
-		@DisplayName("unlock/legacyUnlock is granted, if (effective vault user) > license seats but (effective vault user with access token) <= license seat")
-		public void testUnlockAllowedExceedingLicenseSoftLimit() {
-			Assumptions.assumeTrue(effectiveVaultAccessRepo.countSeatOccupyingUsersWithAccessToken() <= 5);
-
-			when().get("/vaults/{vaultId}/access-token", "7E57C0DE-0000-4000-8000-000100001111")
-					.then().statusCode(200);
-			when().get("/vaults/{vaultId}/keys/{deviceId}", "7E57C0DE-0000-4000-8000-000100002222", "legacyDevice3")
-					.then().statusCode(200)
-					.body(is("legacy.jwe.jwe.vault2.device3"));
-		}
-
-		@Test
-		@Order(8)
-		@DisplayName("Unlock/legacyUnlock is blocked if (effective vault users with toke) > license seats")
-		public void testUnockBlockedExceedingLicenseHardLimit() throws SQLException {
-			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
-				s.execute("""
-						INSERT INTO "access_token" ("user_id", "vault_id", "vault_masterkey")
-							VALUES ('user91', '7E57C0DE-0000-4000-8000-000100001111', 'jwe.jwe.jwe.vault1.user91');
-						INSERT INTO "access_token" ("user_id", "vault_id", "vault_masterkey")
-							VALUES ('user92', '7E57C0DE-0000-4000-8000-000100001111', 'jwe.jwe.jwe.vault1.user92');
-						INSERT INTO "access_token" ("user_id", "vault_id", "vault_masterkey")
-							VALUES ('user93', '7E57C0DE-0000-4000-8000-000100001111', 'jwe.jwe.jwe.vault1.user93');
-						INSERT INTO "access_token" ("user_id", "vault_id", "vault_masterkey")
-							VALUES ('user94', '7E57C0DE-0000-4000-8000-000100001111', 'jwe.jwe.jwe.vault1.user94');
-						""");
-			}
-			Assumptions.assumeTrue(effectiveVaultAccessRepo.countSeatOccupyingUsersWithAccessToken() > 5);
-
-			when().get("/vaults/{vaultId}/access-token", "7E57C0DE-0000-4000-8000-000100001111")
-					.then().statusCode(402);
-			when().get("/vaults/{vaultId}/keys/{deviceId}", "7E57C0DE-0000-4000-8000-000100002222", "legacyDevice3")
-					.then().statusCode(402);
-		}
-
-		@AfterAll
-		public void reset() throws SQLException {
-			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
-				s.execute("""
-						DELETE FROM "authority"
-						WHERE "id" IN ('user91', 'user92', 'user93', 'user94', 'user95_A', 'group91');
-						""");
-			}
 		}
 
 	}

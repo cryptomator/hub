@@ -85,14 +85,6 @@ public class Vault {
 	)
 	private Set<Authority> directMembers = new HashSet<>();
 
-	@ManyToMany
-	@Immutable
-	@JoinTable(name = "effective_vault_access",
-			joinColumns = @JoinColumn(name = "vault_id", referencedColumnName = "id"),
-			inverseJoinColumns = @JoinColumn(name = "authority_id", referencedColumnName = "id")
-	)
-	private Set<Authority> effectiveMembers = new HashSet<>();
-
 	@OneToMany(mappedBy = "vault", fetch = FetchType.LAZY)
 	private Set<AccessToken> accessTokens = new HashSet<>();
 
@@ -166,10 +158,6 @@ public class Vault {
 
 	public Set<Authority> getDirectMembers() {
 		return directMembers;
-	}
-
-	public Set<Authority> getEffectiveMembers() {
-		return effectiveMembers;
 	}
 
 	public Set<AccessToken> getAccessTokens() {
@@ -323,7 +311,10 @@ public class Vault {
 		}
 
 		public Stream<Vault> findAllInList(List<UUID> ids) {
-			return find("#Vault.allInList", Parameters.with("ids", ids)).stream();
+			return Batch.of(200).run(ids, Stream.of(), (batch, result) -> {
+				Stream<Vault> partialResult = find("#Vault.allInList", Parameters.with("ids", batch)).stream();
+				return Stream.concat(result, partialResult);
+			});
 		}
 
 		@Transactional(Transactional.TxType.REQUIRED)

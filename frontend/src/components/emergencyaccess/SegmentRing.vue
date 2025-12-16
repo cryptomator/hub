@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import { useAttrs, withDefaults, defineProps } from 'vue';
+import { useAttrs } from 'vue';
 import { describeSegment } from '../../common/svgUtils';
 
 const attrs = useAttrs();

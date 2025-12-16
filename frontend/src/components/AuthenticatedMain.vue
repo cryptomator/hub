@@ -1,7 +1,7 @@
 <template>
-  <div v-if="me == null">
+  <div v-if="me === undefined">
     <!--TODO: beautify loading screen -->
-    <div v-if="onFetchError == null">
+    <div v-if="!onFetchError">
       {{ t('common.loading') }}
     </div>
     <div v-else>
@@ -29,12 +29,12 @@ import NavigationBar from './NavigationBar.vue';
 const { t } = useI18n({ useScope: 'global' });
 
 const me = ref<UserDto>();
-const onFetchError = ref<Error | null>();
+const onFetchError = ref<Error>();
 
 onMounted(fetchData);
 
 async function fetchData() {
-  onFetchError.value = null;
+  onFetchError.value = undefined;
   try {
     me.value = await userdata.me;
   } catch (error) {

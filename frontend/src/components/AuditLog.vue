@@ -1,6 +1,6 @@
 <template>
   <div v-if="state == State.Loading">
-    <div v-if="onFetchError == null">
+    <div v-if="!onFetchError">
       {{ t('common.loading') }}
     </div>
     <div v-else>
@@ -204,7 +204,7 @@
               </tfoot>
             </table>
           </div>
-          <p v-if="onFetchError != null" class="text-sm text-red-900 mt-2">{{ onFetchError.message }}</p>
+          <p v-if="onFetchError" class="text-sm text-red-900 mt-2">{{ onFetchError.message }}</p>
         </div>
       </div>
     </div>
@@ -266,7 +266,7 @@ const { t } = useI18n({ useScope: 'global' });
 
 const state = ref(State.Loading);
 const auditEvents = ref<AuditEventDto[]>([]);
-const onFetchError = ref<Error | null>();
+const onFetchError = ref<Error>();
 
 const startDate = ref(beginOfDate(new Date(new Date().setMonth(new Date().getMonth() - 1))));
 const startDateFilter = ref(startDate.value.toISOString().split('T')[0]);
@@ -348,7 +348,7 @@ watch(selectedEventTypes, (newSelection, oldSelection) => {
 });
 
 async function fetchData(page: number = 0) {
-  onFetchError.value = null;
+  onFetchError.value = undefined;
   try {
     // Fetch one more event than the page size to determine if there is a next page
     const events = await auditlog.service.getAllEvents(startDate.value, endDate.value, selectedEventTypes.value, lastIdOfPreviousPage[page], selectedOrder.value, pageSize.value + 1);

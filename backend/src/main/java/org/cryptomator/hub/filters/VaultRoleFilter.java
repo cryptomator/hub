@@ -48,12 +48,17 @@ public class VaultRoleFilter implements ContainerRequestFilter {
 	@Override
 	public void filter(ContainerRequestContext requestContext) throws NotFoundException, ForbiddenException, NotAuthorizedException {
 		var annotation = resourceInfo.getResourceMethod().getAnnotation(VaultRole.class);
+		if (annotation.bypassForRealmRole() && requestContext.getSecurityContext().isUserInRole(annotation.realmRole())) {
+			// user has required realm role, so we skip the vault role check:
+			return;
+		}
+
 		var vaultIdStr = requestContext.getUriInfo().getPathParameters().getFirst(annotation.vaultIdParam());
 		final UUID vaultId;
 		try {
 			vaultId = UUID.fromString(vaultIdStr);
 		} catch (NullPointerException | IllegalArgumentException e) {
-			throw new ForbiddenException("@VaultRole not set up correctly (unknown vault id)", e);
+			throw new NotFoundException("@VaultRole not set up correctly (unknown vault id)", e);
 		}
 
 		var userId = jwt.getSubject();
