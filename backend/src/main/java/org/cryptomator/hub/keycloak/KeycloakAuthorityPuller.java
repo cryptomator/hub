@@ -47,13 +47,13 @@ public class KeycloakAuthorityPuller {
 		syncUpdatedUsers(keycloakUsers, databaseUsers, deletedUserIds);
 
 		// all users after additions and deletions:
-		var allUsers = merge(databaseUsers, addedUsers);
-		deletedUserIds.forEach(allUsers::remove);
+		Map<String, Authority> allAuthorities = merge(databaseUsers, addedUsers);
+		deletedUserIds.forEach(allAuthorities::remove);
 
 		// sync groups:
-		syncAddedGroups(keycloakGroups, databaseGroups, allUsers);
+		var addedGroups = syncAddedGroups(keycloakGroups, databaseGroups, allAuthorities);
 		var deletedGroupIds = syncDeletedGroups(keycloakGroups, databaseGroups);
-		syncUpdatedGroups(keycloakGroups, databaseGroups, deletedGroupIds, allUsers);
+		syncUpdatedGroups(keycloakGroups, databaseGroups, deletedGroupIds, allAuthorities);
 	}
 
 	//visible for testing
@@ -94,7 +94,7 @@ public class KeycloakAuthorityPuller {
 	}
 
 	//visible for testing
-	Map<String, Group> syncAddedGroups(Map<String, KeycloakGroupDto> keycloakGroups, Map<String, Group> databaseGroups, Map<String, User> databaseUsers) {
+	Map<String, Group> syncAddedGroups(Map<String, KeycloakGroupDto> keycloakGroups, Map<String, Group> databaseGroups, Map<String, Authority> allAuthorities) {
 		var addedIds = diff(keycloakGroups.keySet(), databaseGroups.keySet());
 		var added = addedIds.stream().map(id -> {
 			var keycloakGroup = keycloakGroups.get(id);
@@ -102,7 +102,7 @@ public class KeycloakAuthorityPuller {
 			databaseGroup.setId(keycloakGroup.id());
 			databaseGroup.setName(keycloakGroup.name());
 			databaseGroup.setPictureUrl(keycloakGroup.pictureUrl());
-			databaseGroup.setMembers(keycloakGroup.members().stream().map(KeycloakUserDto::id).map(databaseUsers::get).collect(Collectors.toSet()));
+			databaseGroup.setMembers(keycloakGroup.members().stream().map(KeycloakUserDto::id).map(allAuthorities::get).collect(Collectors.toSet()));
 			return databaseGroup;
 		}).collect(Collectors.toMap(Group::getId, Function.identity()));;
 		groupRepo.persist(added.values());
@@ -119,7 +119,7 @@ public class KeycloakAuthorityPuller {
 	}
 
 	//visible for testing
-	void syncUpdatedGroups(Map<String, KeycloakGroupDto> keycloakGroups, Map<String, Group> databaseGroups, Set<String> deletedGroupIds, Map<String, User> databaseUsers) {
+	void syncUpdatedGroups(Map<String, KeycloakGroupDto> keycloakGroups, Map<String, Group> databaseGroups, Set<String> deletedGroupIds, Map<String, Authority> allAuthorities) {
 		var toUpdateIds = diff(databaseGroups.keySet(), deletedGroupIds);
 		var idsOfGroupsWithChangedMembers = new HashSet<String>();
 		for (var id : toUpdateIds) {
@@ -132,7 +132,7 @@ public class KeycloakAuthorityPuller {
 			var kcMemberIds = keycloakGroup.members().stream().map(KeycloakUserDto::id).collect(Collectors.toSet());
 			var dbMemberIds = databaseGroup.getMembers().stream().map(Authority::getId).collect(Collectors.toSet());
 			var addedMemberIds = diff(kcMemberIds, dbMemberIds);
-			addedMemberIds.stream().map(databaseUsers::get).forEach(databaseGroup.getMembers()::add);
+			addedMemberIds.stream().map(allAuthorities::get).forEach(databaseGroup.getMembers()::add);
 			var removedMemberIds = diff(dbMemberIds, kcMemberIds);
 			databaseGroup.getMembers().removeIf(u -> removedMemberIds.contains(u.getId()));
 			if (!addedMemberIds.isEmpty() || !removedMemberIds.isEmpty()) {
@@ -148,8 +148,8 @@ public class KeycloakAuthorityPuller {
 		return result;
 	}
 
-	private static <K, V> Map<K, V> merge(Map<K, V> first, Map<K, V> second) {
-		var result = new HashMap<>(first);
+	private static <K, V> Map<K, V> merge(Map<K, ? extends V> first, Map<K, ? extends V> second) {
+		Map<K, V> result = new HashMap<>(first);
 		result.putAll(second);
 		return result;
 	}
