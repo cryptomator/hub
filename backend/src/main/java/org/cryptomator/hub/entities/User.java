@@ -11,6 +11,7 @@ import jakarta.persistence.NamedQuery;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -162,6 +163,10 @@ public class User extends Authority {
 
 	@ApplicationScoped
 	public static class Repository implements PanacheRepositoryBase<User, String> {
+
+		public long deleteByIds(Collection<String> ids) {
+			return Batch.of(200).run(ids, 0L, (batch, result) -> result + delete("id IN :ids", Parameters.with("ids", batch)));
+		}
 
 		public Stream<User> findRequiringAccessGrant(UUID vaultId) {
 			return find("#User.requiringAccessGrant", Parameters.with("vaultId", vaultId)).stream();
