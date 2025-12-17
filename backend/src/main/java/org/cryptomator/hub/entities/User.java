@@ -13,6 +13,7 @@ import jakarta.persistence.Table;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -28,13 +29,12 @@ import java.util.stream.Stream;
 					INNER JOIN EffectiveVaultAccess perm ON u.id = perm.id.authorityId
 					LEFT JOIN u.accessTokens token ON token.id.vaultId = :vaultId AND token.id.userId = u.id
 					WHERE perm.id.vaultId = :vaultId AND token.vault IS NULL AND u.ecdhPublicKey IS NOT NULL
-				"""
-)
+				""")
 @NamedQuery(name = "User.getEffectiveGroupUsers", query = """
 				SELECT DISTINCT u
 				FROM User u
 				INNER JOIN EffectiveGroupMembership egm ON u.id = egm.id.memberId
-				WHERE egm.id.groupId = :groupId
+				WHERE egm.id.groupId IN :groupIds
 		""")
 @NamedQuery(name = "User.countEffectiveGroupUsers", query = """
 				SELECT count( DISTINCT u)
@@ -164,6 +164,14 @@ public class User extends Authority {
 	@ApplicationScoped
 	public static class Repository implements PanacheRepositoryBase<User, String> {
 
+		public Set<User> getByIds(Collection<String> ids) {
+			return Batch.of(200).run(ids, new HashSet<>(), (batch, result) -> {
+				var partial = find("WHERE id IN :ids", Parameters.with("ids", batch));
+				result.addAll(partial.list());
+				return result;
+			});
+		}
+
 		public long deleteByIds(Collection<String> ids) {
 			return Batch.of(200).run(ids, 0L, (batch, result) -> result + delete("id IN :ids", Parameters.with("ids", batch)));
 		}
@@ -177,7 +185,15 @@ public class User extends Authority {
 		}
 
 		public Stream<User> getEffectiveGroupUsers(String groupdId) {
-			return find("#User.getEffectiveGroupUsers", Parameters.with("groupId", groupdId)).stream();
+			return getEffectiveGroupUsers(List.of(groupdId)).stream();
+		}
+
+		public Set<User> getEffectiveGroupUsers(Collection<String> groupIds) {
+			return Batch.of(200).run(groupIds, new HashSet<>(), (batch, result) -> {
+				var partial = find("#User.getEffectiveGroupUsers", Parameters.with("groupIds", batch)).project(User.class);
+				result.addAll(partial.list());
+				return result;
+			});
 		}
 	}
 }

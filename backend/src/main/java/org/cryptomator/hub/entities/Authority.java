@@ -27,12 +27,6 @@ import java.util.stream.Stream;
 				FROM Authority a
 				WHERE LOWER(a.name) LIKE :name
 				""")
-@NamedQuery(name = "Authority.allInList",
-		query = """
-				SELECT a
-				FROM Authority a
-				WHERE a.id IN :ids
-				""")
 public class Authority {
 
 	@Id
@@ -101,7 +95,7 @@ public class Authority {
 
 		public Stream<Authority> findAllInList(Collection<String> ids) {
 			return Batch.of(200).run(ids, Stream.empty(), (batch, result) -> {
-				var partial = find("#Authority.allInList", Parameters.with("ids", batch));
+				var partial = find("WHERE id IN :ids", Parameters.with("ids", batch));
 				return Stream.concat(result, partial.stream());
 			});
 		}
