@@ -63,6 +63,7 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -225,6 +226,16 @@ public class VaultResource {
 				.filter(hasChangedRole)
 				.peek(va -> va.setRole(memberRoles.get(va.getId().getAuthorityId())))
 				.toList();
+
+		// resolve group members and simulate new seat count:
+		var effectiveUsers = new HashSet<User>();
+		effectiveUsers.addAll(userRepo.getEffectiveGroupUsers(memberRoles.keySet()));
+		effectiveUsers.addAll(userRepo.getByIds(memberRoles.keySet()));
+		var newSeatOccupyingUsers = new HashSet<>(effectiveVaultAccessRepo.usersSeatedOnOtherVaults(vaultId).toList()); // initialize with users already having access to other vaults
+		newSeatOccupyingUsers.addAll(effectiveUsers.stream().map(User::getId).toList()); // add all users that will have access to this vault after the operation (avoid double counting by using a set)
+		if (newSeatOccupyingUsers.size() > license.getSeats()) {
+			throw new PaymentRequiredException("License seats exceeded. Cannot add more users.");
+		}
 
 		// Audit Log
 		addedMembers.forEach(va -> eventLogger.logVaultMemberAdded(jwt.getSubject(), vaultId, va.getId().getAuthorityId(), va.getRole()));
