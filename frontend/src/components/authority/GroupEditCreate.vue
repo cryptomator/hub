@@ -52,7 +52,7 @@
                 {{ t('groupEditCreate.name') }}
               </label>
               <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
-                <input id="name" v-model="name" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" required />
+                <input id="name" v-model="name" type="text" :class="[errors.name ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-primary focus:border-primary', 'block w-full max-w-md shadow-sm sm:text-sm rounded-md']" required />
                 <p v-if="errors.name" class="mt-1 text-sm text-red-600">{{ errors.name }}</p>
               </div>
             </div>
@@ -220,11 +220,15 @@ async function onSubmit() {
     setTimeout(() => {
       router.push('/app/groups');
     }, 1000);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Failed to save group:', error);
-    onSaveError.value = error instanceof Error ? error : new Error('Unknown Error');
-  } finally {
     processing.value = false;
+    const axiosError = error as { response?: { status?: number; data?: string } };
+    if (axiosError?.response?.status === 409) {
+      errors.value.name = t('groupEditCreate.error.groupNameAlreadyExists');
+    } else {
+      onSaveError.value = error instanceof Error ? error : new Error('Unknown Error');
+    }
   }
 }
 

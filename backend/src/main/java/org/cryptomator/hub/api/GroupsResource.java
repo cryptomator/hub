@@ -6,6 +6,7 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
@@ -99,17 +100,26 @@ public class GroupsResource {
 	@Operation(summary = "create a new group in Keycloak")
 	@APIResponse(responseCode = "201", description = "group created")
 	@APIResponse(responseCode = "400", description = "invalid input")
+	@APIResponse(responseCode = "409", description = "group name already exists")
 	public Response createGroup(@Valid @NotNull CreateGroupDto dto) {
-		var groupRepresentation = keycloakAdminService.createGroup(dto.name(), dto.pictureUrl());
+		try {
+			var groupRepresentation = keycloakAdminService.createGroup(dto.name(), dto.pictureUrl());
 
-		Group group = groupRepo.findById(groupRepresentation.getId());
-		if (group == null) {
-			throw new RuntimeException("Group was created in Keycloak but not found in database after sync");
+			Group group = groupRepo.findById(groupRepresentation.getId());
+			if (group == null) {
+				throw new RuntimeException("Group was created in Keycloak but not found in database after sync");
+			}
+
+			return Response.created(URI.create("./" + group.getId()))
+					.entity(GroupDto.fromEntity(group))
+					.build();
+		} catch (ClientErrorException e) {
+			// Return 409 with specific error message (GROUP_NAME_EXISTS)
+			return Response.status(Response.Status.CONFLICT)
+					.entity(e.getMessage())
+					.type(MediaType.TEXT_PLAIN)
+					.build();
 		}
-
-		return Response.created(URI.create("./" + group.getId()))
-				.entity(GroupDto.fromEntity(group))
-				.build();
 	}
 
 	@GET

@@ -352,6 +352,9 @@ public class KeycloakAdminService {
 		}
 
 		var response = realm.groups().add(group);
+		if (response.getStatus() == 409) {
+			throw new ClientErrorException("GROUP_NAME_EXISTS", Response.Status.CONFLICT);
+		}
 		if (response.getStatus() != 201) {
 			throw new RuntimeException("Failed to create group in Keycloak. Status: " + response.getStatus());
 		}

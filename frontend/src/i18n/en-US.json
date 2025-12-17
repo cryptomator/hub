@@ -236,6 +236,7 @@
   "groupEditCreate.invalidImageUrl": "Invalid image URL",
   "groupEditCreate.profilePictureUrl": "Profile Picture URL",
   "groupEditCreate.selectRolesPlaceholder": "Select role(s)",
+  "groupEditCreate.error.groupNameAlreadyExists": "A group with this name already exists.",
 
   "trustDetails.trustLevel": "Trust Level {0}",
   "trustDetails.trustLevel.untrusted": "Unverified",
