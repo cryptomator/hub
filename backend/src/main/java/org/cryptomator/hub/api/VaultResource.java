@@ -217,22 +217,22 @@ public class VaultResource {
 		Predicate<VaultAccess> isOld = va -> oldIds.contains(va.getId());
 		Predicate<VaultAccess> hasChangedRole = va -> memberRoles.get(va.getId().getAuthorityId()) != va.getRole();
 		var addedMembers = newVaultAccess.stream()
-				.filter(isOld.negate())
-				.peek(va -> eventLogger.logVaultMemberAdded(jwt.getSubject(), vaultId, va.getId().getAuthorityId(), va.getRole()));
-		var removedMemberIds = oldVaultAccess.stream()
-				.filter(isNew.negate())
-				.peek(va -> eventLogger.logVaultMemberRemoved(jwt.getSubject(), vaultId, va.getId().getAuthorityId()))
-				.map(VaultAccess::getId)
-				.map(VaultAccess.Id::getAuthorityId);
+				.filter(isOld.negate()).toList();
+		var removedMembers = oldVaultAccess.stream()
+				.filter(isNew.negate()).toList();
 		var updatedMembers = oldVaultAccess.stream()
 				.filter(isNew)
 				.filter(hasChangedRole)
 				.peek(va -> va.setRole(memberRoles.get(va.getId().getAuthorityId())))
-				.peek(va -> eventLogger.logVaultMemberUpdated(jwt.getSubject(), vaultId, va.getId().getAuthorityId(), va.getRole()))
 				.toList();
 
+		// Audit Log
+		addedMembers.forEach(va -> eventLogger.logVaultMemberAdded(jwt.getSubject(), vaultId, va.getId().getAuthorityId(), va.getRole()));
+		removedMembers.forEach(va -> eventLogger.logVaultMemberRemoved(jwt.getSubject(), vaultId, va.getId().getAuthorityId()));
+		updatedMembers.forEach(va -> eventLogger.logVaultMemberUpdated(jwt.getSubject(), vaultId, va.getId().getAuthorityId(), va.getRole()));
+
 		// replace all:
-		vaultAccessRepo.delete(vaultId, removedMemberIds.toList());
+		vaultAccessRepo.delete(vaultId, removedMembers.stream().map(VaultAccess::getId).map(VaultAccess.Id::getAuthorityId).toList());
 		vaultAccessRepo.persist(addedMembers);
 		vaultAccessRepo.persist(updatedMembers);
 
