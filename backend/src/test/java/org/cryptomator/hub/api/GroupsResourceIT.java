@@ -9,9 +9,14 @@ import io.quarkus.test.security.oidc.OidcSecurity;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import jakarta.ws.rs.NotFoundException;
+import org.cryptomator.hub.entities.EffectiveGroupMembership;
+import org.cryptomator.hub.entities.Group;
+import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.keycloak.KeycloakAdminService;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -24,6 +29,7 @@ import org.keycloak.representations.idm.GroupRepresentation;
 import org.mockito.Mockito;
 
 import java.sql.SQLException;
+import java.util.List;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
@@ -37,12 +43,49 @@ public class GroupsResourceIT {
 	@Inject
 	AgroalDataSource dataSource;
 
+	@Inject
+	Group.Repository groupRepo;
+
+	@Inject
+	User.Repository userRepo;
+
+	@Inject
+	EffectiveGroupMembership.Repository effectiveGroupMembershipRepo;
+
 	@InjectMock
 	KeycloakAdminService keycloakAdminService;
 
 	@BeforeAll
 	public static void beforeAll() {
 		RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
+	}
+
+	@BeforeEach
+	@Transactional
+	public void setupTestData() {
+		var user999 = new User();
+		user999.setId("user999");
+		user999.setName("User 999");
+		userRepo.persist(user999);
+
+		var group999 = new Group();
+		group999.setId("group999");
+		group999.setName("Group 999");
+		group999.getMembers().add(user999);
+		groupRepo.persist(group999);
+
+		var group1 = groupRepo.findById("group1");
+		group1.getMembers().add(group999);
+		groupRepo.persist(group1);
+		
+		effectiveGroupMembershipRepo.updateGroups(List.of("group1", "group999"));
+	}
+
+	@AfterEach
+	@Transactional
+	public void cleanupTestData() {
+		groupRepo.deleteById("group999");
+		userRepo.deleteById("user999");
 	}
 
 	@Nested
@@ -64,32 +107,9 @@ public class GroupsResourceIT {
 		@Test
 		@DisplayName("GET /groups/group1/effective-members contains direct and subgroup members")
 		public void testGetEffectiveUsers() throws SQLException {
-			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
-				s.execute("""
-						INSERT INTO "authority" ("id", "type", "name")
-						VALUES
-							('user999', 'USER', 'User 999'),
-							('group999', 'GROUP', 'Group 999');
-
-						INSERT INTO "user_details" ("id") VALUES ('user999');
-						INSERT INTO "group_details" ("id") VALUES ('group999');
-
-						INSERT INTO "group_membership" ("group_id", "member_id")
-						VALUES
-							('group999', 'user999'),
-							('group1', 'group999');
-						""");
-			}
-
 			when().get("/groups/{groupId}/effective-members", "group1")
 					.then().statusCode(200)
 					.body("id", hasItems("user1", "user999"));
-
-			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
-				s.execute("""
-						DELETE FROM "authority" WHERE "id" = 'user999' OR "id" = 'group999';
-						""");
-			}
 		}
 
 	}

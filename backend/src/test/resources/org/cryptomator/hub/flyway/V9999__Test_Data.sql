@@ -29,6 +29,11 @@ VALUES
 	('group1', 'user1'),
 	('group2', 'user2');
 
+INSERT INTO "effective_group_membership" ("group_id", "intermediate_group_ids", "member_id")
+VALUES
+    ('group1', ARRAY['group1'], 'user1'),
+    ('group2', ARRAY['group2'], 'user2');
+
 INSERT INTO "vault" ("id", "name", "description", "creation_time", "salt", "iterations", "masterkey", "auth_pubkey", "auth_prvkey", "archived")
 VALUES
 	('7E57C0DE-0000-4000-8000-000100001111', 'Vault 1', 'This is a testvault.', '2020-02-20 20:20:20', 'salt1', 42, 'masterkey1',
