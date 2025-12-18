@@ -405,11 +405,9 @@ public class UsersResource {
 				.toList();
 
 		// Fetch vaults with roles for the user
-		Map<UUID, Vault> vaultMap = vaultRepo.findAll().stream()
-				.collect(Collectors.toMap(Vault::getId, Function.identity()));
 		List<VaultDtoWithRole> vaults = userRepo.getVaultAccessForUser(userId)
 				.map(eva -> {
-					Vault vault = vaultMap.get(eva.getId().getVaultId());
+					Vault vault = vaultRepo.findById(eva.getId().getVaultId());
 					return VaultDtoWithRole.from(vault, eva.getId().getRole());
 				})
 				.toList();
