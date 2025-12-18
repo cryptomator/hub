@@ -10,6 +10,7 @@ import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
@@ -132,7 +133,7 @@ public class GroupsResource {
 	public GroupDtoWithDetails getGroup(@PathParam("groupId") @ValidId String groupId) {
 		Group group = groupRepo.findById(groupId);
 		if (group == null) {
-			throw new jakarta.ws.rs.NotFoundException("Group not found: " + groupId);
+			throw new NotFoundException("Group not found: " + groupId);
 		}
 
 		List<UserDto> members = getMembersWithNames(groupId);
@@ -158,7 +159,7 @@ public class GroupsResource {
 
 		Group group = groupRepo.findById(groupId);
 		if (group == null) {
-			throw new jakarta.ws.rs.NotFoundException("Group not found after update: " + groupId);
+			throw new NotFoundException("Group not found after update: " + groupId);
 		}
 
 		return GroupDto.fromEntity(group);
@@ -189,7 +190,7 @@ public class GroupsResource {
 	}
 
 	public record UpdateGroupDto(
-			@JsonProperty("name") String name,
+			@JsonProperty("name") @NotNull String name,
 			@JsonProperty("pictureUrl") String pictureUrl
 	) {
 	}

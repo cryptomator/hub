@@ -218,6 +218,13 @@ public class User extends Authority {
 	@ApplicationScoped
 	public static class Repository implements PanacheRepositoryBase<User, String> {
 
+		public Stream<User> findByIds(Collection<String> ids) {
+			return Batch.of(200).run(ids, Stream.empty(), (batch, result) -> {
+				var partial = find("id IN :ids", Parameters.with("ids", batch));
+				return Stream.concat(result, partial.stream());
+			});
+		}
+
 		public long deleteByIds(Collection<String> ids) {
 			return Batch.of(200).run(ids, 0L, (batch, result) -> result + delete("id IN :ids", Parameters.with("ids", batch)));
 		}

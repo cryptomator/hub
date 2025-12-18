@@ -432,30 +432,24 @@ public class UsersResource {
 	@APIResponse(responseCode = "403", description = "user has federated identity and cannot be modified")
 	@APIResponse(responseCode = "404", description = "user not found")
 	public UserDto updateUser(@PathParam("id") String userId, @Valid @NotNull UpdateUserDto dto) {
-		try {
-			keycloakAdminService.updateUser(
-					userId,
-					dto.firstName(),
-					dto.lastName(),
-					dto.password(),
-					dto.pictureUrl()
-			);
+		keycloakAdminService.updateUser(
+				userId,
+				dto.firstName(),
+				dto.lastName(),
+				dto.password(),
+				dto.pictureUrl()
+		);
 
-			if (dto.roles() != null) {
-				keycloakAdminService.updateUserRoles(userId, dto.roles());
-			}
-
-			User user = userRepo.findById(userId);
-			if (user == null) {
-				throw new NotFoundException("User not found after update: " + userId);
-			}
-
-			return UserDto.justPublicInfo(user);
-		} catch (ForbiddenException | NotFoundException e) {
-			throw e;
-		} catch (Exception e) {
-			throw new RuntimeException("Failed to update user", e);
+		if (dto.roles() != null) {
+			keycloakAdminService.updateUserRoles(userId, dto.roles());
 		}
+
+		User user = userRepo.findById(userId);
+		if (user == null) {
+			throw new NotFoundException("User not found after update: " + userId);
+		}
+
+		return UserDto.justPublicInfo(user);
 	}
 
 	@DELETE
