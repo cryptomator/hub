@@ -521,4 +521,24 @@ public class VaultResource {
 		}
 
 	}
+
+	public record VaultDtoWithRole(
+			@JsonProperty("id") UUID id,
+			@JsonProperty("name") String name,
+			@JsonProperty("description") String description,
+			@JsonProperty("archived") boolean archived,
+			@JsonProperty("creationTime") Instant creationTime,
+			@JsonProperty("role") VaultAccess.Role role
+	) {
+		public static VaultDtoWithRole from(Vault vault, VaultAccess.Role role) {
+			return new VaultDtoWithRole(
+					vault.getId(),
+					vault.getName(),
+					vault.getDescription(),
+					vault.isArchived(),
+					vault.getCreationTime().truncatedTo(ChronoUnit.MILLIS),
+					role
+			);
+		}
+	}
 }

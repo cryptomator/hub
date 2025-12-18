@@ -28,7 +28,6 @@ import org.jboss.resteasy.reactive.NoCache;
 
 import java.net.URI;
 import java.util.List;
-import java.util.UUID;
 import java.util.logging.Logger;
 
 @Path("/groups")
@@ -155,8 +154,8 @@ public class GroupsResource {
 
 		List<UserDto.UserDtoWithName> members = getMembersWithNames(groupId);
 
-		List<VaultDtoWithRole> vaults = vaultAccessRepo.findByAuthority(groupId)
-				.map(va -> VaultDtoWithRole.from(va.getVault(), va.getRole()))
+		List<VaultResource.VaultDtoWithRole> vaults = vaultAccessRepo.findByAuthority(groupId)
+				.map(va -> VaultResource.VaultDtoWithRole.from(va.getVault(), va.getRole()))
 				.toList();
 
 		return GroupDtoWithDetails.from(group, pictureUrl, members, vaults);
@@ -228,33 +227,15 @@ public class GroupsResource {
 			@JsonProperty("name") String name,
 			@JsonProperty("pictureUrl") String pictureUrl,
 			@JsonProperty("members") List<UserDto.UserDtoWithName> members,
-			@JsonProperty("vaults") List<VaultDtoWithRole> vaults
+			@JsonProperty("vaults") List<VaultResource.VaultDtoWithRole> vaults
 	) {
-		public static GroupDtoWithDetails from(Group group, String pictureUrl, List<UserDto.UserDtoWithName> members, List<VaultDtoWithRole> vaults) {
+		public static GroupDtoWithDetails from(Group group, String pictureUrl, List<UserDto.UserDtoWithName> members, List<VaultResource.VaultDtoWithRole> vaults) {
 			return new GroupDtoWithDetails(
 					group.getId(),
 					group.getName(),
 					pictureUrl,
 					members,
 					vaults
-			);
-		}
-	}
-
-	public record VaultDtoWithRole(
-			@JsonProperty("id") UUID id,
-			@JsonProperty("name") String name,
-			@JsonProperty("description") String description,
-			@JsonProperty("archived") boolean archived,
-			@JsonProperty("role") VaultAccess.Role role
-	) {
-		public static VaultDtoWithRole from(org.cryptomator.hub.entities.Vault vault, VaultAccess.Role role) {
-			return new VaultDtoWithRole(
-					vault.getId(),
-					vault.getName(),
-					vault.getDescription(),
-					vault.isArchived(),
-					role
 			);
 		}
 	}

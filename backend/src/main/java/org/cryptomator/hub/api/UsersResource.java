@@ -23,13 +23,11 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.AccessToken;
 import org.cryptomator.hub.entities.Device;
-import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.entities.EffectiveWot;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.LegacyDevice;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
-import org.cryptomator.hub.entities.VaultAccess;
 import org.cryptomator.hub.entities.WotEntry;
 import org.cryptomator.hub.entities.events.AuditEvent;
 import org.cryptomator.hub.entities.events.EventLogger;
@@ -43,8 +41,6 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.jboss.resteasy.reactive.NoCache;
 
 import java.net.URI;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -405,10 +401,10 @@ public class UsersResource {
 				.toList();
 
 		// Fetch vaults with roles for the user
-		List<VaultDtoWithRole> vaults = userRepo.getVaultAccessForUser(userId)
+		List<VaultResource.VaultDtoWithRole> vaults = userRepo.getVaultAccessForUser(userId)
 				.map(eva -> {
 					Vault vault = vaultRepo.findById(eva.getId().getVaultId());
-					return VaultDtoWithRole.from(vault, eva.getId().getRole());
+					return VaultResource.VaultDtoWithRole.from(vault, eva.getId().getRole());
 				})
 				.toList();
 
@@ -528,12 +524,12 @@ public class UsersResource {
 			@JsonProperty("firstName") String firstName,
 			@JsonProperty("lastName") String lastName,
 			@JsonProperty("groups") List<GroupDto> groups,
-			@JsonProperty("vaults") List<VaultDtoWithRole> vaults,
+			@JsonProperty("vaults") List<VaultResource.VaultDtoWithRole> vaults,
 			@JsonProperty("devices") Set<DeviceResource.DeviceDto> devices,
 			@JsonProperty("legacyDevices") Set<DeviceResource.DeviceDto> legacyDevices,
 			@JsonProperty("roles") Set<String> roles
 	) {
-		public static UserDtoWithTimestamp from(UserDto userDto, Long createdTimestamp, String firstName, String lastName, List<GroupDto> groups, List<VaultDtoWithRole> vaults, Set<DeviceResource.DeviceDto> devices, Set<DeviceResource.DeviceDto> legacyDevices, Set<String> roles) {
+		public static UserDtoWithTimestamp from(UserDto userDto, Long createdTimestamp, String firstName, String lastName, List<GroupDto> groups, List<VaultResource.VaultDtoWithRole> vaults, Set<DeviceResource.DeviceDto> devices, Set<DeviceResource.DeviceDto> legacyDevices, Set<String> roles) {
 			return new UserDtoWithTimestamp(
 					userDto.id,
 					userDto.type,
@@ -555,23 +551,4 @@ public class UsersResource {
 		}
 	}
 
-	public record VaultDtoWithRole(
-			@JsonProperty("id") UUID id,
-			@JsonProperty("name") String name,
-			@JsonProperty("description") String description,
-			@JsonProperty("archived") boolean archived,
-			@JsonProperty("creationTime") Instant creationTime,
-			@JsonProperty("role") VaultAccess.Role role
-	) {
-		public static VaultDtoWithRole from(Vault vault, VaultAccess.Role role) {
-			return new VaultDtoWithRole(
-					vault.getId(),
-					vault.getName(),
-					vault.getDescription(),
-					vault.isArchived(),
-					vault.getCreationTime().truncatedTo(ChronoUnit.MILLIS),
-					role
-			);
-		}
-	}
 }
