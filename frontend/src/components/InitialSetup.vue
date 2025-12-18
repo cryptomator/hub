@@ -30,7 +30,7 @@
 
               <div class="relative mt-5 sm:mt-6">
                 <div class="overflow-hidden rounded-lg border border-gray-300 shadow-xs focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
-                  <textarea v-model="setupCode" :aria-label="t('initialSetup.accountKey')" rows="1" name="setupCode" class="block w-full resize-none border-0 py-3 font-mono text-lg text-center focus:ring-0" readonly />
+                  <textarea id="setupCode" v-model="setupCode" :aria-label="t('initialSetup.accountKey')" rows="1" name="setupCode" class="block w-full resize-none border-0 py-3 font-mono text-lg text-center focus:ring-0" readonly />
                   <div class="py-2" aria-hidden="true">
                     <div class="h-9" />
                   </div>

@@ -40,19 +40,19 @@
                 <ExclamationTriangleIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
                 {{ t('admin.serverInfo.hubVersion.description.fetchingUpdatesFailed') }}
               </p>
-              <p v-else-if="!stableUpdateExists && !betaUpdateExists" class="inline-flex mt-2 text-sm text-gray-500">
+              <p v-else-if="!stableUpdateExists && !betaUpdateExists" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
                 <CheckIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
                 {{ t('admin.serverInfo.hubVersion.description.upToDate') }}
               </p>
-              <p v-else-if="stableUpdateExists" class="inline-flex mt-2 text-sm text-gray-500">
+              <p v-else-if="stableUpdateExists" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
                 <ExclamationTriangleIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
                 {{ t('admin.serverInfo.hubVersion.description.updateExists', [latestVersion?.stable]) }}
               </p>
-              <p v-else-if="betaUpdateExists && isBeta" class="inline-flex mt-2 text-sm text-gray-500">
+              <p v-else-if="betaUpdateExists && isBeta" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
                 <ExclamationTriangleIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
                 {{ t('admin.serverInfo.hubVersion.description.updateExists', [latestVersion?.beta]) }}
               </p>
-              <p v-else-if="betaUpdateExists && !isBeta" class="inline-flex mt-2 text-sm text-gray-500">
+              <p v-else-if="betaUpdateExists && !isBeta" id="version-description" class="inline-flex mt-2 text-sm text-gray-500">
                 <InformationCircleIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
                 {{ t('admin.serverInfo.hubVersion.description.updateExists', [latestVersion?.beta]) }}
               </p>
@@ -96,11 +96,11 @@
                 <CheckIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
                 {{ t('admin.licenseInfo.seats.description.enoughSeats', [remainingSeats]) }}
               </p>
-              <p v-else-if="remainingSeats == 0" class="inline-flex mt-2 text-sm text-gray-500">
+              <p v-else-if="remainingSeats == 0" id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
                 <ExclamationTriangleIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
                 {{ t('admin.licenseInfo.seats.description.zeroSeats') }}
               </p>
-              <p v-else class="inline-flex mt-2 text-sm text-gray-500">
+              <p v-else id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
                 <XMarkIcon class="shrink-0 text-red-500 mr-1 h-5 w-5" aria-hidden="true" />
                 {{ t('admin.licenseInfo.seats.description.undercutSeats', [numberOfExceededSeats]) }}
               </p>
@@ -122,7 +122,7 @@
                 <CheckIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
                 {{ t('admin.licenseInfo.expiresAt.description.valid') }}
               </p>
-              <p v-else class="inline-flex mt-2 text-sm text-gray-500">
+              <p v-else id="expiresAt-description" class="inline-flex mt-2 text-sm text-gray-500">
                 <XMarkIcon class="shrink-0 text-red-500 mr-1 h-5 w-5" aria-hidden="true" />
                 {{ t('admin.licenseInfo.expiresAt.description.expired') }}
               </p>
@@ -156,7 +156,7 @@
             <label for="licenseType" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.licenseInfo.type.title') }}</label>
             <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
               <input v-if="!admin.managedInstance" id="licenseType" value="Community License" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
-              <input v-else value="Managed" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
+              <input v-else id="licenseType" value="Managed" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
             </div>
           </div>
 
@@ -168,11 +168,11 @@
                 <CheckIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
                 {{ t('admin.licenseInfo.seats.description.enoughSeats', [remainingSeats]) }}
               </p>
-              <p v-else-if="remainingSeats == 0" class="inline-flex mt-2 text-sm text-gray-500">
+              <p v-else-if="remainingSeats == 0" id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
                 <ExclamationTriangleIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
                 {{ t('admin.licenseInfo.seats.description.zeroSeats') }}
               </p>
-              <p v-else class="inline-flex mt-2 text-sm text-gray-500">
+              <p v-else id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
                 <XMarkIcon class="shrink-0 text-red-500 mr-1 h-5 w-5" aria-hidden="true" />
                 {{ t('admin.licenseInfo.seats.description.undercutSeats', [numberOfExceededSeats]) }}
               </p>
