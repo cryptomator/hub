@@ -240,6 +240,8 @@
   "userProfile.actions.changeLanguage": "언어 변경",
   "userProfile.actions.changeLanguage.entry.browser": "브라우저 언어",
   "userProfile.keycloakVersion.notAvailable": "해당 버전 사용 불가능",
+  "unlock.noAccessVaultArchived.title": "Vault가 아카이브됨",
+  "unlock.noAccessVaultArchived.description": "이 Vault는 아카이브되어 더 이상 접근할 수 없습니다. Vault 소유자에게 문의하십시오.",
   "unlockSuccess.title": "Vault 잠금 해제됨",
   "unlockSuccess.description": "이 브라우저 탭을 닫고 Cryptomator로 돌아가도 됩니다.",
   "unlockSuccess.accountSetup.title": "설정 필요함",
