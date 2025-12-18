@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Updated Keycloak to 26.4.7
+- Update Quarkus to 3.20.4 LTS
 - Improved efficiency of group-based access permission checks (#372)
 - Migrated aes-siv and base encoding libraries to [`@noble/ciphers`](https://github.com/paulmillr/noble-ciphers) and [`@scure/base`](https://github.com/paulmillr/scure-base/) (#373)
 
