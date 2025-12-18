@@ -240,6 +240,8 @@
   "userProfile.actions.changeLanguage": "Изменить язык",
   "userProfile.actions.changeLanguage.entry.browser": "Язык браузера",
   "userProfile.keycloakVersion.notAvailable": "версия недоступна",
+  "unlock.noAccessVaultArchived.title": "Хранилище заархивировано",
+  "unlock.noAccessVaultArchived.description": "Это хранилище было заархивировано и больше недоступно. Свяжитесь с владельцем хранилища.",
   "unlockSuccess.title": "Хранилище разблокировано",
   "unlockSuccess.description": "Теперь можно закрыть вкладку браузера и вернуться в Cryptomator.",
   "unlockSuccess.accountSetup.title": "Требуется настройка",
