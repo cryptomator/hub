@@ -231,7 +231,7 @@
   "groupEditCreate.roles" : "Roles",
   "groupEditCreate.validation.required": "This field is required",
   "groupEditCreate.roles.remove": "Remove roles",
-  "groupEditCreate.roles.chose": "Choose roles",
+  "groupEditCreate.roles.choose": "Choose roles",
   "groupEditCreate.roles.addMore": "Add more",
   "groupEditCreate.invalidImageUrl": "Invalid image URL",
   "groupEditCreate.profilePictureUrl": "Profile Picture URL",
