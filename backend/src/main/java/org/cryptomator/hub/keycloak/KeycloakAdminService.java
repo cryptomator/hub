@@ -253,7 +253,8 @@ public class KeycloakAdminService {
 					members.add(dbUser);
 				}
 			}
-			dbGroup.setMembers(members);
+			dbGroup.getMembers().clear();
+			dbGroup.getMembers().addAll(members);
 
 			groupRepo.persist(dbGroup);
 			groupRepo.flush();

@@ -401,7 +401,7 @@ function validateDateFilterValue(dateFilterValue: string): Date | null {
     return null;
   }
   const date = new Date(dateFilterValue);
-  if (isNaN(date.getTime())) {
+  if (Number.isNaN(date.getTime())) {
     return null;
   } else {
     return date;

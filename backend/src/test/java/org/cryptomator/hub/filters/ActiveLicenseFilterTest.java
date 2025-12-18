@@ -15,13 +15,13 @@ public class ActiveLicenseFilterTest {
 	ActiveLicenseFilter filter = new ActiveLicenseFilter();
 
 	@BeforeEach
-	public void setup() {
+	void setup() {
 		filter.license = Mockito.mock(LicenseHolder.class);
 	}
 
 	@Test
 	@DisplayName("abort when providing expired license")
-	public void testFilterWithExpiredLicense() {
+	void testFilterWithExpiredLicense() {
 		Mockito.doReturn(true).when(filter.license).isExpired();
 
 		filter.filter(context);
@@ -31,7 +31,7 @@ public class ActiveLicenseFilterTest {
 
 	@Test
 	@DisplayName("continue when seats are still available")
-	public void testDontFilterWhenLicenseIsNotExpired() {
+	void testDontFilterWhenLicenseIsNotExpired() {
 		Mockito.doReturn(false).when(filter.license).isExpired();
 
 		filter.filter(context);

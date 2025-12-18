@@ -56,13 +56,13 @@ public class GroupsResourceIT {
 	KeycloakAdminService keycloakAdminService;
 
 	@BeforeAll
-	public static void beforeAll() {
+	static void beforeAll() {
 		RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
 	}
 
 	@BeforeEach
 	@Transactional
-	public void setupTestData() {
+	void setupTestData() {
 		var user999 = new User();
 		user999.setId("user999");
 		user999.setName("User 999");
@@ -83,7 +83,7 @@ public class GroupsResourceIT {
 
 	@AfterEach
 	@Transactional
-	public void cleanupTestData() {
+	void cleanupTestData() {
 		groupRepo.deleteById("group999");
 		userRepo.deleteById("user999");
 	}
@@ -98,7 +98,7 @@ public class GroupsResourceIT {
 
 		@Test
 		@DisplayName("GET /groups returns 200")
-		public void testGetAll() {
+		void testGetAll() {
 			when().get("/groups")
 					.then().statusCode(200)
 					.body("id", hasItems("group1", "group2"));
@@ -106,7 +106,7 @@ public class GroupsResourceIT {
 
 		@Test
 		@DisplayName("GET /groups/group1/effective-members contains direct and subgroup members")
-		public void testGetEffectiveUsers() throws SQLException {
+		void testGetEffectiveUsers() throws SQLException {
 			when().get("/groups/{groupId}/effective-members", "group1")
 					.then().statusCode(200)
 					.body("id", hasItems("user1", "user999"));
@@ -123,7 +123,7 @@ public class GroupsResourceIT {
 		@CsvSource(value = {
 				"GET, /groups"
 		})
-		public void testGet(String method, String path) {
+		void testGet(String method, String path) {
 			when().request(method, path)
 					.then().statusCode(401);
 		}
