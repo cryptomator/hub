@@ -132,7 +132,8 @@ public class KeycloakAuthorityPuller {
 			var kcMemberIds = keycloakGroup.members().stream().map(KeycloakUserDto::id).collect(Collectors.toSet());
 			var dbMemberIds = databaseGroup.getMembers().stream().map(Authority::getId).collect(Collectors.toSet());
 			var addedMemberIds = diff(kcMemberIds, dbMemberIds);
-			addedMemberIds.stream().map(allAuthorities::get).forEach(databaseGroup.getMembers()::add);
+			var addedMembers = addedMemberIds.stream().map(allAuthorities::get).collect(Collectors.toSet());
+			databaseGroup.getMembers().addAll(addedMembers);
 			var removedMemberIds = diff(dbMemberIds, kcMemberIds);
 			databaseGroup.getMembers().removeIf(u -> removedMemberIds.contains(u.getId()));
 			if (!addedMemberIds.isEmpty() || !removedMemberIds.isEmpty()) {
