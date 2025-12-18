@@ -78,11 +78,9 @@ import { useRoute } from 'vue-router';
 const { t } = useI18n({ useScope: 'global' });
 const route = useRoute();
 
-const navigation = [
-  { name: 'nav.vaults', to: '/app/vaults' },
-  { name: 'nav.users', to: '/app/users' },
-  { name: 'nav.groups', to: '/app/groups' }
-];
+const navigation = ref([
+  { name: 'nav.vaults', to: '/app/vaults' }
+]);
 
 type ProfileDropdownItem = { icon: FunctionalComponent, name: string, to: string };
 
@@ -112,6 +110,10 @@ const props = defineProps<{
 
 onMounted(async () => {
   if ((await auth).hasRole('admin')) {
+    navigation.value.push(
+      { name: 'nav.users', to: '/app/users' },
+      { name: 'nav.groups', to: '/app/groups' }
+    );
     profileDropdown.value = [profileDropdownSections.infoSection, profileDropdownSections.adminSection, profileDropdownSections.hubSection];
   } else {
     profileDropdown.value = [profileDropdownSections.infoSection, profileDropdownSections.hubSection];

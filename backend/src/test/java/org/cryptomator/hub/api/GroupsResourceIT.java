@@ -89,12 +89,12 @@ public class GroupsResourceIT {
 	}
 
 	@Nested
-	@DisplayName("As user1")
-	@TestSecurity(user = "User Name 1", roles = {"user"})
+	@DisplayName("As admin")
+	@TestSecurity(user = "Admin User", roles = {"admin"})
 	@OidcSecurity(claims = {
-			@Claim(key = "sub", value = "user1")
+			@Claim(key = "sub", value = "admin")
 	})
-	public class AsAuthorzedUser1 {
+	public class AsAdmin {
 
 		@Test
 		@DisplayName("GET /groups returns 200")
@@ -132,9 +132,9 @@ public class GroupsResourceIT {
 
 	@Nested
 	@DisplayName("Group CRUD Operations")
-	@TestSecurity(user = "User Name 1", roles = {"user"})
+	@TestSecurity(user = "Admin User", roles = {"admin"})
 	@OidcSecurity(claims = {
-			@Claim(key = "sub", value = "user1")
+			@Claim(key = "sub", value = "admin")
 	})
 	@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 	public class GroupCrudOperations {

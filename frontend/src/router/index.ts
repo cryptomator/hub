@@ -68,41 +68,53 @@ const routes: RouteRecordRaw[] = [
     children: [
       {
         path: 'users',
-        component: UserList
-      },
-      {
-        path: 'users/create',
-        component: UserEditCreate,
-        props: true,
-      },
-      {
-        path: 'users/:id',
-        component: UserDetail,
-        props: true,
-      },
-      {
-        path: 'users/:id/edit',
-        component: UserEditCreate,
-        props: true,
+        beforeEnter: checkRole('admin'),
+        children: [
+          {
+            path: '',
+            component: UserList
+          },
+          {
+            path: 'create',
+            component: UserEditCreate,
+            props: true,
+          },
+          {
+            path: ':id',
+            component: UserDetail,
+            props: true,
+          },
+          {
+            path: ':id/edit',
+            component: UserEditCreate,
+            props: true,
+          },
+        ]
       },
       {
         path: 'groups',
-        component: GroupList
-      },
-      {
-        path: 'groups/create',
-        component: GroupEditCreate,
-        props: true,
-      },
-      {
-        path: 'groups/:id',
-        component: GroupDetail,
-        props: true,
-      },
-      {
-        path: 'groups/:id/edit',
-        component: GroupEditCreate,
-        props: true,
+        beforeEnter: checkRole('admin'),
+        children: [
+          {
+            path: '',
+            component: GroupList
+          },
+          {
+            path: 'create',
+            component: GroupEditCreate,
+            props: true,
+          },
+          {
+            path: ':id',
+            component: GroupDetail,
+            props: true,
+          },
+          {
+            path: ':id/edit',
+            component: GroupEditCreate,
+            props: true,
+          },
+        ]
       },
       {
         path: 'vaults',

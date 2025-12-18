@@ -143,14 +143,6 @@ public class UsersResourceIT {
 		}
 
 		@Test
-		@DisplayName("GET /users returns 200")
-		public void testGetAll() {
-			when().get("/users")
-					.then().statusCode(200)
-					.body("id", hasItems("user1", "user2"));
-		}
-
-		@Test
 		@DisplayName("POST /users/me/access-tokens returns 200")
 		public void testPostAccessTokens1() {
 			var body = """
@@ -375,9 +367,9 @@ public class UsersResourceIT {
 
 	@Nested
 	@DisplayName("User CRUD Operations")
-	@TestSecurity(user = "User Name 1", roles = {"user"})
+	@TestSecurity(user = "Admin User", roles = {"admin"})
 	@OidcSecurity(claims = {
-			@Claim(key = "sub", value = "user1")
+			@Claim(key = "sub", value = "admin")
 	})
 	@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 	public class UserCrudOperations {
@@ -404,6 +396,14 @@ public class UsersResourceIT {
 						DELETE FROM "authority" WHERE "id" = 'newUserId123';
 						""");
 			}
+		}
+
+		@Test
+		@DisplayName("GET /users returns 200")
+		public void testGetAll() {
+			when().get("/users")
+					.then().statusCode(200)
+					.body("id", hasItems("user1", "user2"));
 		}
 
 		@Test

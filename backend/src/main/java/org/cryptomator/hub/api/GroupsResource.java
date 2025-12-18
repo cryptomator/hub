@@ -47,7 +47,7 @@ public class GroupsResource {
 
 	@GET
 	@Path("/")
-	@RolesAllowed("user")
+	@RolesAllowed("admin")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "list all groups")
 	public List<GroupDto> getAll() {
@@ -63,7 +63,7 @@ public class GroupsResource {
 
 	@GET
 	@Path("/{groupId}/effective-members")
-	@RolesAllowed("user")
+	@RolesAllowed("admin")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "list all effective group members")
 	public List<UserDto.UserDtoWithName> getEffectiveMembers(@PathParam("groupId") @ValidId String groupId) {
@@ -127,7 +127,7 @@ public class GroupsResource {
 
 	@GET
 	@Path("/{groupId}")
-	@RolesAllowed("user")
+	@RolesAllowed("admin")
 	@Produces(MediaType.APPLICATION_JSON)
 	@NoCache
 	@Transactional
