@@ -21,7 +21,7 @@ import static org.hamcrest.Matchers.*;
 public class AuthorityResourceIT {
 
 	@BeforeAll
-	public static void beforeAll() {
+	static void beforeAll() {
 		RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
 	}
 
@@ -35,7 +35,7 @@ public class AuthorityResourceIT {
 
 		@Test
 		@DisplayName("GET /search?query=U returns 200 with \"user1\", \"user2\", \"group1\"")
-		public void testGetAll() {
+		void testGetAll() {
 			when().get("/authorities/search?query=U")
 					.then().statusCode(200)
 					.body("id", hasItems("user1", "user2", "group1"));
@@ -43,7 +43,7 @@ public class AuthorityResourceIT {
 
 		@Test
 		@DisplayName("GET /search?query=u returns 200 with \"user1\", \"user2\", \"group1\"")
-		public void testGetAllIgnoreCase() {
+		void testGetAllIgnoreCase() {
 			when().get("/authorities/search?query=u")
 					.then().statusCode(200)
 					.body("id", hasItems("user1", "user2", "group1"));
@@ -51,7 +51,7 @@ public class AuthorityResourceIT {
 
 		@Test
 		@DisplayName("GET /search?query=User returns 200 with \"user1\", \"user2\"")
-		public void testGetUser() {
+		void testGetUser() {
 			when().get("/authorities/search?query=User")
 					.then().statusCode(200)
 					.body("id", hasItems("user1", "user2"));
@@ -59,7 +59,7 @@ public class AuthorityResourceIT {
 
 		@Test
 		@DisplayName("GET /search?query=Group Name 1 returns 200 with \"group1\"")
-		public void testGetExactMatch() {
+		void testGetExactMatch() {
 			when().get("/authorities/search?query=Group Name 1")
 					.then().statusCode(200)
 					.body("id", hasItems("group1"));
@@ -67,7 +67,7 @@ public class AuthorityResourceIT {
 
 		@Test
 		@DisplayName("GET /search?query=User Name 3000 returns 200 with empty body")
-		public void testGetEmpty() {
+		void testGetEmpty() {
 			when().get("/authorities/search?query=User Name 3000")
 					.then().statusCode(200)
 					.body("id", empty());
@@ -75,7 +75,7 @@ public class AuthorityResourceIT {
 
 		@Test
 		@DisplayName("GET /search?query=1 returns 200 with \"user1\", \"group1\"")
-		public void testGetSameUserGroupName() {
+		void testGetSameUserGroupName() {
 			when().get("/authorities/search?query=1")
 					.then().statusCode(200)
 					.body("find { it.id == 'user1' }.memberSize", nullValue())
@@ -84,7 +84,7 @@ public class AuthorityResourceIT {
 
 		@Test
 		@DisplayName("GET /search?query=1&withMemberSize=true returns 200 with \"group1\" and \"memberSize\"=true")
-		public void testGetSameUserGroupNameWithMemberSize() {
+		void testGetSameUserGroupNameWithMemberSize() {
 			when().get("/authorities/search?query=1&withMemberSize=true")
 					.then().statusCode(200)
 					.body("find { it.id == 'user1' }.memberSize", nullValue())
@@ -102,7 +102,7 @@ public class AuthorityResourceIT {
 
 		@Test
 		@DisplayName("GET /authorities returns 200 with empty body")
-		public void testGetSomeEmpty() {
+		void testGetSomeEmpty() {
 			when().get("/authorities")
 					.then().statusCode(200)
 					.body("", hasSize(0));
@@ -110,7 +110,7 @@ public class AuthorityResourceIT {
 
 		@Test
 		@DisplayName("GET /authorities?ids=iDoNotExist returns 200 with empty body")
-		public void testGetSomeNotExisting() {
+		void testGetSomeNotExisting() {
 			given().param("ids", "iDoNotExist")
 					.when().get("/authorities")
 					.then().statusCode(200)
@@ -119,7 +119,7 @@ public class AuthorityResourceIT {
 
 		@Test
 		@DisplayName("GET /authorities?ids=user1&ids=group2 returns 200 with body containing user1 and group2")
-		public void testGetSome() {
+		void testGetSome() {
 			given().param("ids", "user1", "group2")
 					.when().get("/authorities")
 					.then().statusCode(200)

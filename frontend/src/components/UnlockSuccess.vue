@@ -41,6 +41,16 @@
         </router-link>
       </div>
 
+      <!-- ARCHIVED -->
+      <div v-else-if="vaultAccess == VaultAccess.Archived" class="text-sm text-gray-500">
+        <h1 class="text-2xl leading-6 font-medium text-gray-900">
+          {{ t('unlock.noAccessVaultArchived.title') }}
+        </h1>
+        <p class="mt-2">
+          {{ t('unlock.noAccessVaultArchived.description') }}
+        </p>
+      </div>
+
       <!-- NO VAULT ACCESS -->
       <div v-else-if="vaultAccess == VaultAccess.Denied" class="text-sm text-gray-500">
         <h1 class="text-2xl leading-6 font-medium text-gray-900">
@@ -52,7 +62,7 @@
       </div>
 
       <!-- SUCCESS -->
-      <div v-else class="text-sm text-gray-500">
+      <div v-else-if="vaultAccess == VaultAccess.Allowed" class="text-sm text-gray-500">
         <h1 class="text-2xl leading-6 font-medium text-gray-900">
           {{ t('unlockSuccess.title') }}
         </h1>
@@ -98,9 +108,10 @@ const deviceState : ComputedRef<DeviceState> = computed(() => {
 });
 
 const vaultAccess : ComputedRef<VaultAccess> = computed(() => {
-  return accessibleVaults.value?.find(v => v.id === props.vaultId)
-    ? VaultAccess.Allowed
-    : VaultAccess.Denied;
+  const vault = accessibleVaults.value?.find(v => v.id === props.vaultId);
+  if (!vault) return VaultAccess.Denied;
+  if (vault.archived) return VaultAccess.Archived;
+  return VaultAccess.Allowed;
 });
 
 enum AccountState {
@@ -115,6 +126,7 @@ enum DeviceState {
 
 enum VaultAccess {
   Allowed,
+  Archived,
   Denied
 }
 

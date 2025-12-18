@@ -152,7 +152,7 @@ class KeycloakUserProviderTest {
 
 		@Test
 		@DisplayName("test groups listing contains two groups with members in group2")
-		public void testListGroups() {
+		void testListGroups() {
 			Mockito.when(groupsResource.groups(null, 0, KeycloakAuthorityProvider.MAX_COUNT_PER_REQUEST, false)).thenReturn(List.of(group1, group2));
 
 			var result = keycloakRemoteUserProvider.groups(realm);

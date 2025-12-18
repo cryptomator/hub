@@ -35,7 +35,7 @@ public class BillingResourceManagedInstanceIT {
 	AgroalDataSource dataSource;
 
 	@BeforeAll
-	public static void beforeAll() {
+	static void beforeAll() {
 		RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
 		Arc.container().instance(LicenseHolder.class).destroy();
 	}
@@ -49,7 +49,7 @@ public class BillingResourceManagedInstanceIT {
 
 	@Test
 	@DisplayName("GET /billing returns 401 with empty license managed instance")
-	public void testGetEmptyManagedInstance() throws SQLException {
+	void testGetEmptyManagedInstance() throws SQLException {
 		try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 			s.execute("""
 					UPDATE "settings"

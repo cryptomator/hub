@@ -24,12 +24,12 @@ public class AuditLogResourceIT {
 	LicenseHolder licenseHolder;
 
 	@BeforeAll
-	public static void beforeAll() {
+	static void beforeAll() {
 		RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
 	}
 
 	@BeforeEach
-	public void beforeEach() {
+	void beforeEach() {
 		Mockito.doReturn(true).when(licenseHolder).isSet();
 		Mockito.doReturn(false).when(licenseHolder).isExpired();
 	}
@@ -37,7 +37,7 @@ public class AuditLogResourceIT {
 	@Test
 	@TestSecurity(user = "Admin", roles = {"admin"})
 	@DisplayName("As admin, GET /auditlog?startDate=2020-02-20T00:00:00.000Z&endDate=2020-02-20T23:59:59.999Z&paginationId=9999 returns 200 with 20 entries")
-	public void testGetAuditLogEntries() {
+	void testGetAuditLogEntries() {
 		given().param("startDate", "2020-02-20T00:00:00.000Z")
 				.param("endDate", "2020-02-20T23:59:59.999Z")
 				.param("paginationId", 9999L)
@@ -49,7 +49,7 @@ public class AuditLogResourceIT {
 	@Test
 	@TestSecurity(user = "Admin", roles = {"admin"})
 	@DisplayName("As admin, GET /auditlog?startDate=2020-02-20T00:00:00.000Z&endDate=2020-02-20T23:59:59.999Z&pageSize=10&paginationId=1000&order=asc returns 200 with 3 entries")
-	public void testGetAuditLogEntriesPageSizeAsc() {
+	void testGetAuditLogEntriesPageSizeAsc() {
 		given().param("startDate", "2020-02-20T00:00:00.000Z")
 				.param("endDate", "2020-02-20T23:59:59.999Z")
 				.param("pageSize", 3)
@@ -63,7 +63,7 @@ public class AuditLogResourceIT {
 	@Test
 	@TestSecurity(user = "User", roles = {"user"})
 	@DisplayName("As user, GET /auditlog?startDate=2020-02-20T00:00:00.000Z&endDate=2020-02-20T23:59:59.999Z&pageSize=10 returns 403")
-	public void testGetAuditLogEntriesAsUser() {
+	void testGetAuditLogEntriesAsUser() {
 		when().get("/auditlog?startDate=2020-02-20T00:00:00.000Z&endDate=2020-02-20T23:59:59.999ZZ&pageSize=10")
 				.then().statusCode(403);
 	}
