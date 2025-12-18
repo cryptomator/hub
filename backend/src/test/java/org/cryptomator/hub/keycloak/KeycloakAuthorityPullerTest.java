@@ -6,6 +6,7 @@ import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -50,16 +51,16 @@ class KeycloakAuthorityPullerTest {
 		remoteUserPuller.effectiveGroupMembershipRepo = effectiveGroupMembershipRepo;
 		persistedUsers.clear();
 		Mockito.doAnswer(invocation -> {
-			Stream<User> stream = invocation.getArgument(0);
-			persistedUsers.addAll(stream.toList());
+			Iterable<User> iterable = invocation.getArgument(0);
+			iterable.forEach(persistedUsers::add);
 			return null;
-		}).when(userRepo).persist(Mockito.<Stream<User>>any());
+		}).when(userRepo).persist(Mockito.<Iterable<User>>any());
 		persistedGroups.clear();
 		Mockito.doAnswer(invocation -> {
-			Stream<Group> stream = invocation.getArgument(0);
-			persistedGroups.addAll(stream.toList());
+			Iterable<Group> iterable = invocation.getArgument(0);
+			iterable.forEach(persistedGroups::add);
 			return null;
-		}).when(groupRepo).persist(Mockito.<Stream<Group>>any());
+		}).when(groupRepo).persist(Mockito.<Iterable<Group>>any());
 	}
 
 	@Nested
@@ -77,8 +78,8 @@ class KeycloakAuthorityPullerTest {
 				",;,;,"
 		}, delimiterString = ";")
 		void testAddUsers(@ConvertWith(StringArrayConverter.class) String[] keycloakUserIdString, @ConvertWith(StringArrayConverter.class) String[] databaseUserIdString, @ConvertWith(StringArrayConverter.class) String[] addedUserIdString) {
-			Map<String, KeycloakUserDto> keycloakUsers = Mockito.mock(Map.class);
-			Map<String, User> databaseUsers = Mockito.mock(Map.class);
+			Map<String, KeycloakUserDto> keycloakUsers = Mockito.mock();
+			Map<String, User> databaseUsers = Mockito.mock();
 
 			var keycloakUserIds = Set.of(keycloakUserIdString);
 			var databaseUserIds = Set.of(databaseUserIdString);
@@ -92,9 +93,10 @@ class KeycloakAuthorityPullerTest {
 				Mockito.when(keycloakUsers.get(userId)).thenReturn(keycloakUser);
 			}
 
-			remoteUserPuller.syncAddedUsers(keycloakUsers, databaseUsers);
+			var added = remoteUserPuller.syncAddedUsers(keycloakUsers, databaseUsers);
 
-			Mockito.verify(userRepo).persist(Mockito.<Stream<User>>any());
+			Assertions.assertEquals(addedUserIds, added.keySet());
+			Mockito.verify(userRepo).persist(Mockito.<Iterable<User>>any());
 			Mockito.verify(effectiveGroupMembershipRepo).updateUsers(Mockito.argThat(addedUserIds::containsAll));
 			for (var userId : addedUserIds) {
 				MatcherAssert.assertThat(persistedUsers, Matchers.hasItem(
@@ -119,8 +121,8 @@ class KeycloakAuthorityPullerTest {
 				",;,;,"
 		}, delimiterString = ";")
 		void testDeleteUsers(@ConvertWith(StringArrayConverter.class) String[] keycloakUserIdString, @ConvertWith(StringArrayConverter.class) String[] databaseUserIdString, @ConvertWith(StringArrayConverter.class) String[] deletedUserIdString) {
-			Map<String, KeycloakUserDto> keycloakUsers = Mockito.mock(Map.class);
-			Map<String, User> databaseUsers = Mockito.mock(Map.class);
+			Map<String, KeycloakUserDto> keycloakUsers = Mockito.mock();
+			Map<String, User> databaseUsers = Mockito.mock();
 
 			var keycloakUserIds = Arrays.stream(keycloakUserIdString).collect(Collectors.toSet());
 			var databaseUserIds = Arrays.stream(databaseUserIdString).collect(Collectors.toSet());
@@ -155,8 +157,8 @@ class KeycloakAuthorityPullerTest {
 				",;,;,;," // all empty
 		}, delimiterString = ";")
 		void testUpdateUsers(@ConvertWith(StringArrayConverter.class) String[] keycloakUserIdString, @ConvertWith(StringArrayConverter.class) String[] databaseUserIdString, @ConvertWith(StringArrayConverter.class) String[] deletedUserIdString, @ConvertWith(StringArrayConverter.class) String[] updatedUserIdString) {
-			Map<String, KeycloakUserDto> keycloakUsers = Mockito.mock(Map.class);
-			Map<String, User> databaseUsers = Mockito.mock(Map.class);
+			Map<String, KeycloakUserDto> keycloakUsers = Mockito.mock();
+			Map<String, User> databaseUsers = Mockito.mock();
 
 			var keycloakUserIds = Arrays.stream(keycloakUserIdString).collect(Collectors.toSet());
 			var databaseUserIds = Arrays.stream(databaseUserIdString).collect(Collectors.toSet());
@@ -213,7 +215,7 @@ class KeycloakAuthorityPullerTest {
 				keycloakGroups.put(gid, dto);
 			}
 
-			Map<String, User> databaseUsers = new HashMap<>();
+			Map<String, Authority> databaseUsers = new HashMap<>();
 			for (var keycloakUser : kcUsers.values()) {
 				var databaseUser = Mockito.mock(User.class);
 				Mockito.when(databaseUser.getId()).thenReturn(keycloakUser.id());
@@ -227,10 +229,11 @@ class KeycloakAuthorityPullerTest {
 				databaseGroups.put(gid, databaseGroup);
 			}
 
-			remoteUserPuller.syncAddedGroups(keycloakGroups, databaseGroups, databaseUsers);
+			var added = remoteUserPuller.syncAddedGroups(keycloakGroups, databaseGroups, databaseUsers);
 
 			var addedGroupIds = Set.of(addedGroupIdString);
-			Mockito.verify(groupRepo).persist(Mockito.<Stream<Group>>any());
+			Assertions.assertEquals(addedGroupIds, added.keySet());
+			Mockito.verify(groupRepo).persist(Mockito.<Iterable<Group>>any());
 			Mockito.verify(effectiveGroupMembershipRepo).updateGroups(Mockito.argThat(addedGroupIds::containsAll));
 			for (var groupId : addedGroupIds) {
 				MatcherAssert.assertThat(persistedGroups, Matchers.hasItem(
@@ -255,8 +258,8 @@ class KeycloakAuthorityPullerTest {
 				",;,;,"
 		}, delimiterString = ";")
 		void testDeleteGroups(@ConvertWith(StringArrayConverter.class) String[] keycloakGroupIdString, @ConvertWith(StringArrayConverter.class) String[] databaseGroupIdString, @ConvertWith(StringArrayConverter.class) String[] deletedGroupIdString) {
-			Map<String, KeycloakGroupDto> keycloakGroups = Mockito.mock(Map.class);
-			Map<String, Group> databaseGroups = Mockito.mock(Map.class);
+			Map<String, KeycloakGroupDto> keycloakGroups = Mockito.mock();
+			Map<String, Group> databaseGroups = Mockito.mock();
 
 			var kcGroupIds = Arrays.stream(keycloakGroupIdString).collect(Collectors.toSet());
 			var dbGroupIds = Arrays.stream(databaseGroupIdString).collect(Collectors.toSet());
@@ -291,8 +294,8 @@ class KeycloakAuthorityPullerTest {
 		var otherKCUser = Mockito.mock(User.class);
 		Mockito.when(otherKCUser.getId()).thenReturn("U_otherKC");
 
-		Map<String, KeycloakGroupDto> keycloakGroups = Mockito.mock(Map.class);
-		Map<String, Group> databaseGroups = Mockito.mock(Map.class);
+		Map<String, KeycloakGroupDto> keycloakGroups = Mockito.mock();
+		Map<String, Group> databaseGroups = Mockito.mock();
 
 		var keycloakGroupIds = Arrays.stream(keycloakGroupIdString).collect(Collectors.toSet());
 		var databaseGroupIds = Arrays.stream(databaseGroupIdString).collect(Collectors.toSet());
@@ -319,7 +322,7 @@ class KeycloakAuthorityPullerTest {
 			Mockito.when(databaseGroups.get(groupId)).thenReturn(dbGroup);
 		}
 
-		Map<String, User> databaseUsers = new HashMap<>();
+		Map<String, Authority> databaseUsers = new HashMap<>();
 		var userMock = Mockito.mock(User.class);
 		Mockito.when(userMock.getId()).thenReturn("U_user");
 		databaseUsers.put("U_user", userMock);
