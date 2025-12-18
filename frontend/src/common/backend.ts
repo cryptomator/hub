@@ -464,7 +464,7 @@ class AuthorityService {
         };
       case 'GROUP':
         return {
-          hues: [190],
+          hues: [6, 28, 48, 121, 283],
           saturation: {
             color: 0.59
           },

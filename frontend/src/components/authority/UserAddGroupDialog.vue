@@ -25,7 +25,7 @@
                       <div class="flex items-center justify-between">
                         <div class="flex items-center w-full" :title="group.name">
                           <div class="w-8 h-8 rounded-full border border-gray-300 bg-white flex items-center justify-center overflow-hidden">
-                            <img :src="group.userPicture" class="w-full h-full object-cover" alt="group icon" />
+                            <img :src="group.pictureUrl" class="w-full h-full object-cover" alt="group icon" />
                           </div>
                           <p class="ml-4 text-sm font-medium truncate">
                             {{ group.name }}
@@ -67,7 +67,7 @@ import backend, { GroupDto } from '../../common/backend';
 interface Group {
   id: string;
   name: string;
-  userPicture: string;
+  pictureUrl?: string;
   description?: string;
   type?: string;
   memberSize?: number;
@@ -115,7 +115,7 @@ async function searchGroup(query: string): Promise<Group[]> {
         name: g.name,
         description: undefined,
         memberSize: g.memberSize,
-        userPicture: g.pictureUrl || ''
+        pictureUrl: g.pictureUrl
       }));
   } catch (error) {
     console.error('Search groups failed:', error);
