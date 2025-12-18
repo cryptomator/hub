@@ -240,6 +240,8 @@
   "userProfile.actions.changeLanguage": "Taal wijzigen",
   "userProfile.actions.changeLanguage.entry.browser": "Browser taal",
   "userProfile.keycloakVersion.notAvailable": "versie niet beschikbaar",
+  "unlock.noAccessVaultArchived.title": "Kluis is gearchiveerd",
+  "unlock.noAccessVaultArchived.description": "Deze kluis is gearchiveerd en is niet meer toegankelijk. Neem contact op met de eigenaar van de kluis.",
   "unlockSuccess.title": "Kluis met succes ontgrendeld",
   "unlockSuccess.description": "U kunt dit browsertabblad nu sluiten en terugkeren naar Cryptomator.",
   "unlockSuccess.accountSetup.title": "Installatie vereist",
