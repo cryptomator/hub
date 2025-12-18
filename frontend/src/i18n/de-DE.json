@@ -240,6 +240,8 @@
   "userProfile.actions.changeLanguage": "Sprache ändern",
   "userProfile.actions.changeLanguage.entry.browser": "Browser-Sprache",
   "userProfile.keycloakVersion.notAvailable": "Version nicht verfügbar",
+  "unlock.noAccessVaultArchived.title": "Tresor ist archiviert",
+  "unlock.noAccessVaultArchived.description": "Dieser Tresor wurde archiviert, daher ist ein Zugriff darauf nicht mehr möglich. Kontaktiere den Eigentümer des Tresors.",
   "unlockSuccess.title": "Tresor erfolgreich entsperrt",
   "unlockSuccess.description": "Du kannst diesen Browser-Tab schließen und zu Cryptomator zurückkehren.",
   "unlockSuccess.accountSetup.title": "Einrichtung erforderlich",
