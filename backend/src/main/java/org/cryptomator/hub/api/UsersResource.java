@@ -51,11 +51,14 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 @Path("/users")
 @Produces(MediaType.TEXT_PLAIN)
 public class UsersResource {
+
+	private static final Logger LOG = Logger.getLogger(UsersResource.class.getName());
 
 	@Inject
 	AccessToken.Repository accessTokenRepo;
@@ -255,7 +258,7 @@ public class UsersResource {
 						firstName = keycloakUser.getFirstName();
 						lastName = keycloakUser.getLastName();
 					} catch (Exception e) {
-						// continue without keycloak data
+						LOG.fine("Could not fetch Keycloak user data for " + user.getId());
 					}
 					return UserDto.justPublicInfoWithCounts(
 							user,
@@ -393,7 +396,7 @@ public class UsersResource {
 			firstName = keycloakUser.getFirstName();
 			lastName = keycloakUser.getLastName();
 		} catch (Exception e) {
-			// continue without keycloak data
+			LOG.fine("Could not fetch Keycloak user data for " + userId);
 		}
 
 		// Fetch groups for the user

@@ -29,9 +29,12 @@ import org.jboss.resteasy.reactive.NoCache;
 import java.net.URI;
 import java.util.List;
 import java.util.UUID;
+import java.util.logging.Logger;
 
 @Path("/groups")
 public class GroupsResource {
+
+	private static final Logger LOG = Logger.getLogger(GroupsResource.class.getName());
 
 	@Inject
 	User.Repository userRepo;
@@ -147,7 +150,7 @@ public class GroupsResource {
 				}
 			}
 		} catch (Exception e) {
-			// continue without keycloak data
+			LOG.fine("Could not fetch Keycloak group data for " + groupId);
 		}
 
 		List<UserDto.UserDtoWithName> members = getMembersWithNames(groupId);
@@ -200,7 +203,8 @@ public class GroupsResource {
 						var keycloakUser = keycloakAdminService.getUser(user.getId());
 						firstName = keycloakUser.getFirstName();
 						lastName = keycloakUser.getLastName();
-					} catch (Exception ignored) {
+					} catch (Exception e) {
+						LOG.fine("Could not fetch Keycloak user data for " + user.getId());
 					}
 					return UserDto.UserDtoWithName.from(user, firstName, lastName);
 				})
