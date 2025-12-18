@@ -94,7 +94,7 @@ async function fetchData() {
   expectedFingerprint.value = await wot.computeFingerprint(props.user);
   minVerificationLen.value = (await backend.settings.get()).wotIdVerifyLen;
   if (minVerificationLen.value === 0) {
-    enteredFingerprint.value = expectedFingerprint.value.replace(/.{8}/g, '$&' + ' ').trim();
+    enteredFingerprint.value = expectedFingerprint.value.replaceAll(/.{8}/g, '$&' + ' ').trim();
   }
 }
 
@@ -105,7 +105,7 @@ function show() {
 async function tryAutocomplete() {
   if (enteredFingerprint.value.length >= minVerificationLen.value) {
     if (expectedFingerprint.value?.startsWith(enteredFingerprint.value)) {
-      enteredFingerprint.value = expectedFingerprint.value.replace(/.{8}/g, '$&' + ' ').trim();
+      enteredFingerprint.value = expectedFingerprint.value.replaceAll(/.{8}/g, '$&' + ' ').trim();
     }
   }
 }

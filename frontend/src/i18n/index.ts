@@ -1,4 +1,4 @@
-import { I18nOptions } from 'vue-i18n';
+import { I18nOptions, createI18n } from 'vue-i18n';
 import deDe from './de-DE.json';
 import enUs from './en-US.json';
 import frFr from './fr-FR.json';
@@ -12,8 +12,6 @@ import ruRu from './ru-RU.json';
 import trTr from './tr-TR.json';
 import uaUa from './uk-UA.json';
 import zhTw from './zh-TW.json';
-
-import { createI18n } from 'vue-i18n';
 
 export enum Locale {
   EN_US = 'en-US',
