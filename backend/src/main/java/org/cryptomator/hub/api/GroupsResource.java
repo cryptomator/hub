@@ -69,7 +69,7 @@ public class GroupsResource {
 
 	@POST
 	@Path("/{groupId}/members/{userId}")
-	@RolesAllowed("user")
+	@RolesAllowed("admin")
 	@Transactional
 	@Operation(summary = "add a user to a group")
 	@APIResponse(responseCode = "204", description = "user added to group")
@@ -81,7 +81,7 @@ public class GroupsResource {
 
 	@DELETE
 	@Path("/{groupId}/members/{userId}")
-	@RolesAllowed("user")
+	@RolesAllowed("admin")
 	@Transactional
 	@Operation(summary = "remove a user from a group")
 	@APIResponse(responseCode = "204", description = "user removed from group")
@@ -93,7 +93,7 @@ public class GroupsResource {
 
 	@POST
 	@Path("/")
-	@RolesAllowed("user")
+	@RolesAllowed("admin")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
@@ -161,7 +161,7 @@ public class GroupsResource {
 
 	@PUT
 	@Path("/{groupId}")
-	@RolesAllowed("user")
+	@RolesAllowed("admin")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
@@ -181,7 +181,7 @@ public class GroupsResource {
 
 	@DELETE
 	@Path("/{groupId}")
-	@RolesAllowed("user")
+	@RolesAllowed("admin")
 	@Transactional
 	@Operation(summary = "delete a group from Keycloak")
 	@APIResponse(responseCode = "204", description = "group deleted")

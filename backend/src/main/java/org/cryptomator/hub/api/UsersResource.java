@@ -328,7 +328,7 @@ public class UsersResource {
 
 	@POST
 	@Path("/")
-	@RolesAllowed("user")
+	@RolesAllowed("admin")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
@@ -439,7 +439,7 @@ public class UsersResource {
 
 	@PUT
 	@Path("/{id}")
-	@RolesAllowed("user")
+	@RolesAllowed("admin")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
@@ -476,7 +476,7 @@ public class UsersResource {
 
 	@DELETE
 	@Path("/{id}")
-	@RolesAllowed("user")
+	@RolesAllowed("admin")
 	@Transactional
 	@Operation(summary = "delete a user from Keycloak")
 	@APIResponse(responseCode = "204", description = "user deleted")
