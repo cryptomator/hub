@@ -116,11 +116,7 @@ public class GroupsResource {
 					.entity(GroupDto.fromEntity(group))
 					.build();
 		} catch (ClientErrorException e) {
-			// Return 409 with specific error message (GROUP_NAME_EXISTS)
-			return Response.status(Response.Status.CONFLICT)
-					.entity(e.getMessage())
-					.type(MediaType.TEXT_PLAIN)
-					.build();
+			return Response.status(Response.Status.CONFLICT).build();
 		}
 	}
 
@@ -139,26 +135,13 @@ public class GroupsResource {
 			throw new jakarta.ws.rs.NotFoundException("Group not found: " + groupId);
 		}
 
-		String pictureUrl = null;
-		try {
-			var keycloakGroup = keycloakAdminService.getGroup(groupId);
-			if (keycloakGroup.getAttributes() != null) {
-				var pictureAttr = keycloakGroup.getAttributes().get("picture");
-				if (pictureAttr != null && !pictureAttr.isEmpty()) {
-					pictureUrl = pictureAttr.get(0);
-				}
-			}
-		} catch (Exception e) {
-			LOG.fine("Could not fetch Keycloak group data for " + groupId);
-		}
-
 		List<UserDto.UserDtoWithName> members = getMembersWithNames(groupId);
 
 		List<VaultResource.VaultDtoWithRole> vaults = vaultAccessRepo.findByAuthority(groupId)
 				.map(va -> VaultResource.VaultDtoWithRole.from(va.getVault(), va.getRole()))
 				.toList();
 
-		return GroupDtoWithDetails.from(group, pictureUrl, members, vaults);
+		return GroupDtoWithDetails.from(group, members, vaults);
 	}
 
 	@PUT
@@ -229,11 +212,11 @@ public class GroupsResource {
 			@JsonProperty("members") List<UserDto.UserDtoWithName> members,
 			@JsonProperty("vaults") List<VaultResource.VaultDtoWithRole> vaults
 	) {
-		public static GroupDtoWithDetails from(Group group, String pictureUrl, List<UserDto.UserDtoWithName> members, List<VaultResource.VaultDtoWithRole> vaults) {
+		public static GroupDtoWithDetails from(Group group, List<UserDto.UserDtoWithName> members, List<VaultResource.VaultDtoWithRole> vaults) {
 			return new GroupDtoWithDetails(
 					group.getId(),
 					group.getName(),
-					pictureUrl,
+					group.getPictureUrl(),
 					members,
 					vaults
 			);

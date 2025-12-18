@@ -18,7 +18,7 @@ public final class GroupDto extends AuthorityDto {
 	}
 
 	public static GroupDto fromEntity(Group group) {
-		return new GroupDto(group.getId(), group.getName(), group.getPictureUrl(), null, null);
+		return fromEntity(group, false);
 	}
 
 	public static GroupDto fromEntity(Group group, boolean withMemberSize) {

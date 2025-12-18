@@ -253,7 +253,7 @@ public class UsersResource {
 						var keycloakUser = keycloakAdminService.getUser(user.getId());
 						firstName = keycloakUser.getFirstName();
 						lastName = keycloakUser.getLastName();
-					} catch (Exception e) {
+					} catch (NotFoundException e) {
 						LOG.fine("Could not fetch Keycloak user data for " + user.getId());
 					}
 					return UserDto.justPublicInfoWithCounts(
