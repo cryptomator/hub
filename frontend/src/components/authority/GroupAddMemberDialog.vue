@@ -38,10 +38,10 @@
                 </div>
               </div>
               <div class="flex-shrink-0 bg-gray-50 -m-4 py-3 px-6 sm:flex sm:flex-row-reverse sm:space-x-4 sm:space-x-reverse">
-                <button type="submit" class="w-full sm:w-auto inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary text-base font-medium text-white hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                <button type="submit" :disabled="isSaving" class="w-full sm:w-auto inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary text-base font-medium text-white hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed">
                   {{ t('common.save') }}
                 </button>
-                <button type="button" class="mt-3 sm:mt-0 w-full sm:w-auto inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="open = false">
+                <button type="button" :disabled="isSaving" class="mt-3 sm:mt-0 w-full sm:w-auto inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed" @click="open = false">
                   {{ t('common.cancel') }}
                 </button>
                 <span class="mt-3 sm:mt-0 flex items-center text-sm text-gray-600 sm:mr-auto">

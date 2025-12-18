@@ -2,6 +2,7 @@
   <div v-if="loading" class="text-center p-8 text-gray-500 text-sm">
     {{ t('common.loading') }}
   </div>
+  <FetchError v-else-if="fetchError" :error="fetchError" :retry="fetchGroup" />
   <div v-else>
     <BreadcrumbNav :crumbs="[ { label: t('nav.groups'), to: '/app/groups' }, { label: group.name } ]"/>
     <div class="flex flex-row items-center justify-between gap-3 pb-1 w-full border-b border-gray-200 mb-2">
@@ -68,12 +69,13 @@ import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
 import { ref, nextTick, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import backend, { GroupDto, UserDto, VaultDtoWithRole } from '../../common/backend';
+import backend, { GroupDto, UserDto } from '../../common/backend';
 import GroupDeleteDialog from './GroupDeleteDialog.vue';
 import GroupMemberList from './GroupMemberList.vue';
 import GroupInfo from './GroupInfo.vue';
 import VaultList from './VaultList.vue';
 import BreadcrumbNav from '../BreadcrumbNav.vue';
+import FetchError from '../FetchError.vue';
 
 const router = useRouter();
 
@@ -128,8 +130,11 @@ function onMembersSaved(newMembers: UserDto[]) {
 }
 
 const loading = ref(true);
+const fetchError = ref<Error | null>(null);
 
-onMounted(async () => {
+async function fetchGroup() {
+  loading.value = true;
+  fetchError.value = null;
   try {
     const fetchedGroup = await backend.groups.getGroup(props.id);
     group.value.id = fetchedGroup.id;
@@ -139,8 +144,11 @@ onMounted(async () => {
     group.value.vaults = fetchedGroup.vaults;
   } catch (error) {
     console.error('Failed to fetch group:', error);
+    fetchError.value = error instanceof Error ? error : new Error('Unknown error');
   } finally {
     loading.value = false;
   }
-});
+}
+
+onMounted(fetchGroup);
 </script>
