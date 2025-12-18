@@ -29,7 +29,7 @@ public class RollbackTestIT {
 		@Test
 		@Order(1)
 		@DBRollbackAfter
-		public void changeDB() throws SQLException {
+		void changeDB() throws SQLException {
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
 						UPDATE "settings"
@@ -41,7 +41,7 @@ public class RollbackTestIT {
 
 		@Test
 		@Order(2)
-		public void testDB() throws SQLException {
+		void testDB() throws SQLException {
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				var result = s.executeQuery("""
 						SELECT *
@@ -60,7 +60,7 @@ public class RollbackTestIT {
 
 		@Test
 		@Order(1)
-		public void changeDB() throws SQLException {
+		void changeDB() throws SQLException {
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
 						UPDATE "settings"
@@ -72,7 +72,7 @@ public class RollbackTestIT {
 
 		@Test
 		@Order(2)
-		public void testDB() throws SQLException {
+		void testDB() throws SQLException {
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				var result = s.executeQuery("""
 						SELECT *

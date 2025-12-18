@@ -15,7 +15,7 @@ class BatchTest {
 
 	@ParameterizedTest
 	@ValueSource(ints = {-1, 0})
-	public void testInvalidBatchSize(int batchSize) {
+	void testInvalidBatchSize(int batchSize) {
 		Assertions.assertThrows(IllegalArgumentException.class, () -> {
 			Batch.of(batchSize);
 		});
@@ -23,7 +23,7 @@ class BatchTest {
 
 	@ParameterizedTest
 	@ValueSource(ints = {1, 2, 3, 5, 10})
-	public void testBatchSizes(int batchSize) {
+	void testBatchSizes(int batchSize) {
 		List<Integer> result = new ArrayList<>();
 		Batch.of(batchSize).run(List.of(1, 2, 3, 4, 5, 6, 7), result::addAll);
 
@@ -31,7 +31,7 @@ class BatchTest {
 	}
 
 	@Test
-	public void testNoopIfInputIsEmpty() {
+	void testNoopIfInputIsEmpty() {
 		Consumer<List<String>> job = Mockito.mock();
 
 		Batch.of(10).run(List.of(), job);
@@ -41,7 +41,7 @@ class BatchTest {
 
 	@ParameterizedTest
 	@ValueSource(ints = {1, 2, 3, 5, 10})
-	public void testBatchSizesReduce(int batchSize) {
+	void testBatchSizesReduce(int batchSize) {
 		int result = Batch.of(batchSize).run(List.of(1, 2, 3, 4, 5, 6, 7), 0, (sublist, r) -> {
 			for (int i : sublist) {
 				r += i;
@@ -53,7 +53,7 @@ class BatchTest {
 	}
 
 	@Test
-	public void testNoopIfReduceInputIsEmpty() {
+	void testNoopIfReduceInputIsEmpty() {
 		BiFunction<List<Integer>, Integer, Integer> job = Mockito.mock();
 
 		Batch.of(10).run(List.of(), 0, job);

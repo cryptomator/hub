@@ -64,7 +64,7 @@ public class ExceedingLicenseLimitsIT {
 
 	@BeforeAll
 	@Transactional
-	public void setupTestData() {
+	void setupTestData() {
 		var user91 = new User();
 		user91.setId("user91");
 		user91.setName("user name 91");
@@ -107,7 +107,7 @@ public class ExceedingLicenseLimitsIT {
 
 	@AfterAll
 	@Transactional
-	public void cleanupTestData() {
+	void cleanupTestData() {
 		groupRepo.deleteById("group91");
 		userRepo.deleteByIds(List.of("user91", "user92", "user93", "user94", "user95_A"));
 	}
@@ -115,7 +115,7 @@ public class ExceedingLicenseLimitsIT {
 	@Test
 	@Order(0)
 	@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100001111/access-tokens returns 402 for [user91, user92, user93, user94]")
-	public void grantAccessExceedingSeats() {
+	void grantAccessExceedingSeats() {
 		Assumptions.assumeTrue(vaultResourceIT.effectiveVaultAccessRepo.countSeatOccupyingUsers() == 2);
 		var body = Map.of(
 				"user91", "jwe.jwe.jwe.vault1.user91", //
@@ -132,7 +132,7 @@ public class ExceedingLicenseLimitsIT {
 	@Test
 	@Order(1)
 	@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111/groups/group91 returns 402")
-	public void addGroupToVaultExceedingSeats() {
+	void addGroupToVaultExceedingSeats() {
 		Assumptions.assumeTrue(vaultResourceIT.effectiveVaultAccessRepo.countSeatOccupyingUsers() == 2);
 
 		given().when().put("/vaults/{vaultId}/groups/{groupId}", "7E57C0DE-0000-4000-8000-000100001111", "group91")
@@ -143,7 +143,7 @@ public class ExceedingLicenseLimitsIT {
 	@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111/users/userXX returns 201")
 	@ParameterizedTest(name = "Adding user {0} succeeds")
 	@CsvSource(value = {"0,user91", "1,user92", "2,user93"})
-	public void addUserToVaultNotExceedingSeats(String run, String userId) {
+	void addUserToVaultNotExceedingSeats(String run, String userId) {
 		Assumptions.assumeTrue(vaultResourceIT.effectiveVaultAccessRepo.countSeatOccupyingUsers() == 2 + Integer.parseInt(run));
 
 		given().when().put("/vaults/{vaultId}/users/{usersId}", "7E57C0DE-0000-4000-8000-000100001111", userId)
@@ -153,7 +153,7 @@ public class ExceedingLicenseLimitsIT {
 	@Test
 	@Order(3)
 	@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111/users/user94 returns 402")
-	public void addUserToVaultExceedingSeats() {
+	void addUserToVaultExceedingSeats() {
 		Assumptions.assumeTrue(vaultResourceIT.effectiveVaultAccessRepo.countSeatOccupyingUsers() == 5);
 
 		given().when().put("/vaults/{vaultId}/users/{usersId}", "7E57C0DE-0000-4000-8000-000100001111", "user94")
@@ -163,7 +163,7 @@ public class ExceedingLicenseLimitsIT {
 	@Test
 	@Order(4)
 	@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111 (as user1) returns 200 with only updated name, description and archive flag, despite exceeding license")
-	public void testUpdateVaultDespiteLicenseExceeded() {
+	void testUpdateVaultDespiteLicenseExceeded() {
 		Assumptions.assumeTrue(vaultResourceIT.effectiveVaultAccessRepo.countSeatOccupyingUsers() == 5);
 		var vaultId = "7E57C0DE-0000-4000-8000-000100001111";
 
@@ -181,7 +181,7 @@ public class ExceedingLicenseLimitsIT {
 	@Test
 	@Order(5)
 	@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-0001FFFF3333 (as user1) exceeding the license returns 402")
-	public void testCreateVaultExceedingSeats() throws SQLException {
+	void testCreateVaultExceedingSeats() throws SQLException {
 		try (var c = vaultResourceIT.dataSource.getConnection(); var s = c.createStatement()) {
 			s.execute("""
 					INSERT INTO "vault_access" ("vault_id", "authority_id")
@@ -202,7 +202,7 @@ public class ExceedingLicenseLimitsIT {
 	@Test
 	@Order(7)
 	@DisplayName("unlock/legacyUnlock is granted, if (effective vault user) > license seats but (effective vault user with access token) <= license seat")
-	public void testUnlockAllowedExceedingLicenseSoftLimit() {
+	void testUnlockAllowedExceedingLicenseSoftLimit() {
 		Assumptions.assumeTrue(vaultResourceIT.effectiveVaultAccessRepo.countSeatOccupyingUsersWithAccessToken() <= 5);
 
 		when().get("/vaults/{vaultId}/access-token", "7E57C0DE-0000-4000-8000-000100001111")
@@ -215,7 +215,7 @@ public class ExceedingLicenseLimitsIT {
 	@Test
 	@Order(8)
 	@DisplayName("Unlock/legacyUnlock is blocked if (effective vault users with token) > license seats")
-	public void testUnlockBlockedExceedingLicenseHardLimit() throws SQLException {
+	void testUnlockBlockedExceedingLicenseHardLimit() throws SQLException {
 		try (var c = vaultResourceIT.dataSource.getConnection(); var s = c.createStatement()) {
 			s.execute("""
 					INSERT INTO "access_token" ("user_id", "vault_id", "vault_masterkey")

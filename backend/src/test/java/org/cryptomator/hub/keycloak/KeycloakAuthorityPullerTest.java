@@ -76,7 +76,7 @@ class KeycloakAuthorityPullerTest {
 				",;foo,bar,baz;,",
 				",;,;,"
 		}, delimiterString = ";")
-		public void testAddUsers(@ConvertWith(StringArrayConverter.class) String[] keycloakUserIdString, @ConvertWith(StringArrayConverter.class) String[] databaseUserIdString, @ConvertWith(StringArrayConverter.class) String[] addedUserIdString) {
+		void testAddUsers(@ConvertWith(StringArrayConverter.class) String[] keycloakUserIdString, @ConvertWith(StringArrayConverter.class) String[] databaseUserIdString, @ConvertWith(StringArrayConverter.class) String[] addedUserIdString) {
 			Map<String, KeycloakUserDto> keycloakUsers = Mockito.mock(Map.class);
 			Map<String, User> databaseUsers = Mockito.mock(Map.class);
 
@@ -118,7 +118,7 @@ class KeycloakAuthorityPullerTest {
 				",;foo,bar,baz;foo,bar,baz",
 				",;,;,"
 		}, delimiterString = ";")
-		public void testDeleteUsers(@ConvertWith(StringArrayConverter.class) String[] keycloakUserIdString, @ConvertWith(StringArrayConverter.class) String[] databaseUserIdString, @ConvertWith(StringArrayConverter.class) String[] deletedUserIdString) {
+		void testDeleteUsers(@ConvertWith(StringArrayConverter.class) String[] keycloakUserIdString, @ConvertWith(StringArrayConverter.class) String[] databaseUserIdString, @ConvertWith(StringArrayConverter.class) String[] deletedUserIdString) {
 			Map<String, KeycloakUserDto> keycloakUsers = Mockito.mock(Map.class);
 			Map<String, User> databaseUsers = Mockito.mock(Map.class);
 
@@ -154,7 +154,7 @@ class KeycloakAuthorityPullerTest {
 				"foo,bar,baz;,;,;,", // all new
 				",;,;,;," // all empty
 		}, delimiterString = ";")
-		public void testUpdateUsers(@ConvertWith(StringArrayConverter.class) String[] keycloakUserIdString, @ConvertWith(StringArrayConverter.class) String[] databaseUserIdString, @ConvertWith(StringArrayConverter.class) String[] deletedUserIdString, @ConvertWith(StringArrayConverter.class) String[] updatedUserIdString) {
+		void testUpdateUsers(@ConvertWith(StringArrayConverter.class) String[] keycloakUserIdString, @ConvertWith(StringArrayConverter.class) String[] databaseUserIdString, @ConvertWith(StringArrayConverter.class) String[] deletedUserIdString, @ConvertWith(StringArrayConverter.class) String[] updatedUserIdString) {
 			Map<String, KeycloakUserDto> keycloakUsers = Mockito.mock(Map.class);
 			Map<String, User> databaseUsers = Mockito.mock(Map.class);
 
@@ -201,7 +201,7 @@ class KeycloakAuthorityPullerTest {
 				",;foo,bar,baz;,",
 				",;,;,"
 		}, delimiterString = ";")
-		public void testAddGroups(@ConvertWith(StringArrayConverter.class) String[] keycloakGroupIdString, @ConvertWith(StringArrayConverter.class) String[] databaseGroupIdString, @ConvertWith(StringArrayConverter.class) String[] addedGroupIdString) {
+		void testAddGroups(@ConvertWith(StringArrayConverter.class) String[] keycloakGroupIdString, @ConvertWith(StringArrayConverter.class) String[] databaseGroupIdString, @ConvertWith(StringArrayConverter.class) String[] addedGroupIdString) {
 			Map<String, KeycloakUserDto> kcUsers = new HashMap<>();
 			for (var gid : keycloakGroupIdString) {
 				kcUsers.put(gid, new KeycloakUserDto(gid, "name " + gid, "email " + gid, "pic " + gid));
@@ -254,7 +254,7 @@ class KeycloakAuthorityPullerTest {
 				",;foo,bar,baz;foo,bar,baz",
 				",;,;,"
 		}, delimiterString = ";")
-		public void testDeleteGroups(@ConvertWith(StringArrayConverter.class) String[] keycloakGroupIdString, @ConvertWith(StringArrayConverter.class) String[] databaseGroupIdString, @ConvertWith(StringArrayConverter.class) String[] deletedGroupIdString) {
+		void testDeleteGroups(@ConvertWith(StringArrayConverter.class) String[] keycloakGroupIdString, @ConvertWith(StringArrayConverter.class) String[] databaseGroupIdString, @ConvertWith(StringArrayConverter.class) String[] deletedGroupIdString) {
 			Map<String, KeycloakGroupDto> keycloakGroups = Mockito.mock(Map.class);
 			Map<String, Group> databaseGroups = Mockito.mock(Map.class);
 
@@ -285,7 +285,7 @@ class KeycloakAuthorityPullerTest {
 			"foo,bar,baz;,;,;,",
 			",;,;,;,"
 	}, delimiterString = ";")
-	public void testUpdateGroups(@ConvertWith(StringArrayConverter.class) String[] keycloakGroupIdString, @ConvertWith(StringArrayConverter.class) String[] databaseGroupIdString, @ConvertWith(StringArrayConverter.class) String[] deletedGroupIdString, @ConvertWith(StringArrayConverter.class) String[] updatedGroupIdString) {
+	void testUpdateGroups(@ConvertWith(StringArrayConverter.class) String[] keycloakGroupIdString, @ConvertWith(StringArrayConverter.class) String[] databaseGroupIdString, @ConvertWith(StringArrayConverter.class) String[] deletedGroupIdString, @ConvertWith(StringArrayConverter.class) String[] updatedGroupIdString) {
 		var dbOnlyUser = Mockito.mock(User.class);
 		Mockito.when(dbOnlyUser.getId()).thenReturn("U_dbOnly");
 		var otherKCUser = Mockito.mock(User.class);
