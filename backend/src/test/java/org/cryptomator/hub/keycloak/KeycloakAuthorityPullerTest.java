@@ -215,7 +215,7 @@ class KeycloakAuthorityPullerTest {
 				keycloakGroups.put(gid, dto);
 			}
 
-			Map<String, User> databaseUsers = new HashMap<>();
+			Map<String, Authority> databaseUsers = new HashMap<>();
 			for (var keycloakUser : kcUsers.values()) {
 				var databaseUser = Mockito.mock(User.class);
 				Mockito.when(databaseUser.getId()).thenReturn(keycloakUser.id());
@@ -322,7 +322,7 @@ class KeycloakAuthorityPullerTest {
 			Mockito.when(databaseGroups.get(groupId)).thenReturn(dbGroup);
 		}
 
-		Map<String, User> databaseUsers = new HashMap<>();
+		Map<String, Authority> databaseUsers = new HashMap<>();
 		var userMock = Mockito.mock(User.class);
 		Mockito.when(userMock.getId()).thenReturn("U_user");
 		databaseUsers.put("U_user", userMock);
