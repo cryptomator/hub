@@ -94,7 +94,7 @@ export class FormValidator {
    * Validates email format
    */
   static isValidEmail(email: string): boolean {
-    return /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/.test(email.trim());
+    return /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(email.trim());
   }
 
   /**
