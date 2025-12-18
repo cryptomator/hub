@@ -258,8 +258,8 @@ const userDataHasUnsavedChanges = computed(() => {
     initialUserData.value.lastName !== lastName.value ||
     initialUserData.value.username !== username.value ||
     initialUserData.value.email !== email.value ||
-    initialUserData.value.roles !== selectedRoles.value ||
-    initialUserData.value.previewUrl !== pictureUrl.value 
+    JSON.stringify([...initialUserData.value.roles].sort()) !== JSON.stringify([...selectedRoles.value].sort()) ||
+    initialUserData.value.previewUrl !== pictureUrl.value
   );
 });
 
@@ -268,7 +268,7 @@ function resetUserData() {
   lastName.value = initialUserData.value.lastName;
   username.value = initialUserData.value.username;
   email.value = initialUserData.value.email;
-  selectedRoles.value  = initialUserData.value.roles;
+  selectedRoles.value = [...initialUserData.value.roles];
   pictureUrl.value = initialUserData.value.previewUrl ?? '';
 }
 
@@ -350,7 +350,7 @@ onMounted(async () => {
         lastName: lastName.value,
         username: username.value,
         email: email.value,
-        roles: selectedRoles.value,
+        roles: [...selectedRoles.value],
         previewUrl: pictureUrl.value
       };
     } catch (error) {
@@ -447,7 +447,7 @@ async function onSubmit() {
     lastName: lastName.value,
     username: username.value,
     email: email.value,
-    roles: selectedRoles.value,
+    roles: [...selectedRoles.value],
     previewUrl: pictureUrl.value
   };
 
