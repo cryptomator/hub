@@ -35,7 +35,7 @@ public class DeviceResourceIT {
 	AgroalDataSource dataSource;
 
 	@BeforeAll
-	public static void beforeAll() {
+	static void beforeAll() {
 		RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
 	}
 
@@ -51,7 +51,7 @@ public class DeviceResourceIT {
 		@Test
 		@Order(1)
 		@DisplayName("PUT /devices/device1 without DTO returns 400")
-		public void testCreateNoDeviceDto() {
+		void testCreateNoDeviceDto() {
 			given().contentType(ContentType.JSON).body("")
 					.when().put("/devices/{deviceId}", "device1")
 					.then().statusCode(400);
@@ -60,8 +60,8 @@ public class DeviceResourceIT {
 		@Test
 		@Order(1)
 		@DisplayName("PUT /devices/  with DTO returns 400")
-		public void testCreateNoDeviceId() {
-			var deviceDto = new DeviceResource.DeviceDto("device1", "Computer 1", Device.Type.DESKTOP, "publickey1", "jwe.jwe.jwe.user1.device1", "user1", Instant.parse("2020-02-20T20:20:20Z"));
+		void testCreateNoDeviceId() {
+			var deviceDto = new DeviceResource.DeviceDto("device1", "Computer 1", Device.Type.DESKTOP, "publickey1", "jwe.jwe.jwe.user1.device1", "user1", Instant.parse("2020-02-20T20:20:20Z"), null, null, false);
 			given().contentType(ContentType.JSON).body(deviceDto)
 					.when().put("/devices/{deviceId}", " ") //a whitespace
 					.then().statusCode(400);
@@ -70,7 +70,7 @@ public class DeviceResourceIT {
 		@Test
 		@Order(1)
 		@DisplayName("GET /devices/device1 returns 200")
-		public void testGet1() {
+		void testGet1() {
 			given().when().get("/devices/{deviceId}", "device1")
 					.then().statusCode(200)
 					.body("id", is("device1"))
@@ -81,7 +81,7 @@ public class DeviceResourceIT {
 		@Test
 		@Order(1)
 		@DisplayName("GET /devices/legacyDevice1/legacy-access-tokens returns 200")
-		public void testGetLegacyAccessTokens1() {
+		void testGetLegacyAccessTokens1() {
 			given().when().get("/devices/{deviceId}/legacy-access-tokens", "legacyDevice1")
 					.then().statusCode(200)
 					.body("7e57c0de-0000-4000-8000-000100001111", is("legacy.jwe.jwe.vault1.device1"));
@@ -90,7 +90,7 @@ public class DeviceResourceIT {
 		@Test
 		@Order(1)
 		@DisplayName("GET /devices/legacyDevice2/legacy-access-tokens returns empty list (owned by different user)")
-		public void testGetLegacyAccessTokens2() {
+		void testGetLegacyAccessTokens2() {
 			given().when().get("/devices/{deviceId}/legacy-access-tokens", "legacyDevice2")
 					.then().statusCode(200)
 					.body(is("{}"));
@@ -99,7 +99,7 @@ public class DeviceResourceIT {
 		@Test
 		@Order(1)
 		@DisplayName("GET /devices/legacyDevice3/legacy-access-tokens returns 200")
-		public void testGetLegacyAccessTokens3() {
+		void testGetLegacyAccessTokens3() {
 			given().when().get("/devices/{deviceId}/legacy-access-tokens", "legacyDevice3")
 					.then().statusCode(200)
 					.body("7e57c0de-0000-4000-8000-000100002222", is("legacy.jwe.jwe.vault2.device3"));
@@ -108,7 +108,7 @@ public class DeviceResourceIT {
 		@Test
 		@Order(1)
 		@DisplayName("GET /devices/noSuchDevice/legacy-access-tokens returns empty list (no such device)")
-		public void testGetLegacyAccessTokens4() {
+		void testGetLegacyAccessTokens4() {
 			given().when().get("/devices/{deviceId}/legacy-access-tokens", "noSuchDevice")
 					.then().statusCode(200)
 					.body(is("{}"));
@@ -117,7 +117,7 @@ public class DeviceResourceIT {
 		@Test
 		@Order(1)
 		@DisplayName("GET /devices/device2 returns 404 (owned by other user)")
-		public void testGet2() {
+		void testGet2() {
 			given().when().get("/devices/{deviceId}", "device2")
 					.then().statusCode(404);
 		}
@@ -125,7 +125,7 @@ public class DeviceResourceIT {
 		@Test
 		@Order(1)
 		@DisplayName("GET /devices/noSuchDevice returns 404 (no such device)")
-		public void testGetNonExistingDeviceToken() {
+		void testGetNonExistingDeviceToken() {
 			when().get("/devices/{deviceId}", "noSuchDevice")
 					.then().statusCode(404);
 		}
@@ -133,7 +133,7 @@ public class DeviceResourceIT {
 		@Test
 		@Order(2)
 		@DisplayName("PUT /devices/device999 returns 201 (creating new device)")
-		public void testCreate999() throws SQLException {
+		void testCreate999() throws SQLException {
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
 						INSERT INTO "device_legacy" ("id", "owner_id", "name", "type", "publickey", "creation_time")
@@ -142,7 +142,7 @@ public class DeviceResourceIT {
 						""");
 			}
 
-			var deviceDto = new DeviceResource.DeviceDto("device999", "Computer 999", Device.Type.DESKTOP, "publickey999", "jwe.jwe.jwe.user1.device999", "user1", Instant.parse("2020-02-20T20:20:20Z"));
+			var deviceDto = new DeviceResource.DeviceDto("device999", "Computer 999", Device.Type.DESKTOP, "publickey999", "jwe.jwe.jwe.user1.device999", "user1", Instant.parse("2020-02-20T20:20:20Z"), null, null, false);
 
 			given().contentType(ContentType.JSON).body(deviceDto)
 					.when().put("/devices/{deviceId}", "device999")
@@ -159,8 +159,8 @@ public class DeviceResourceIT {
 		@Test
 		@Order(2)
 		@DisplayName("PUT /devices/deviceX returns 201 (creating new device with same name as device1)")
-		public void testCreateX() {
-			var deviceDto = new DeviceResource.DeviceDto("deviceX", "Computer 1", Device.Type.DESKTOP, "publickey1", "jwe.jwe.jwe.user1.deviceX", "user1", Instant.parse("2020-02-20T20:20:20Z"));
+		void testCreateX() {
+			var deviceDto = new DeviceResource.DeviceDto("deviceX", "Computer 1", Device.Type.DESKTOP, "publickey1", "jwe.jwe.jwe.user1.deviceX", "user1", Instant.parse("2020-02-20T20:20:20Z"), null, null, false);
 
 			given().contentType(ContentType.JSON).body(deviceDto)
 					.when().put("/devices/{deviceId}", "deviceX")
@@ -170,8 +170,8 @@ public class DeviceResourceIT {
 		@Test
 		@Order(3)
 		@DisplayName("PUT /devices/deviceY returns 409 (creating new device with the key of deviceX conflicts)")
-		public void testCreateYWithKeyOfDeviceX() {
-			var deviceDto = new DeviceResource.DeviceDto("deviceY", "Computer 2", Device.Type.DESKTOP, "publickey1", "jwe.jwe.jwe.user1.deviceX", "user1", Instant.parse("2020-02-20T20:20:20Z"));
+		void testCreateYWithKeyOfDeviceX() {
+			var deviceDto = new DeviceResource.DeviceDto("deviceY", "Computer 2", Device.Type.DESKTOP, "publickey1", "jwe.jwe.jwe.user1.deviceX", "user1", Instant.parse("2020-02-20T20:20:20Z"), null, null, false);
 
 			given().contentType(ContentType.JSON).body(deviceDto)
 					.when().put("/devices/{deviceId}", "deviceY")
@@ -181,7 +181,7 @@ public class DeviceResourceIT {
 		@Test
 		@Order(4)
 		@DisplayName("GET /devices/device999 returns 200")
-		public void testGet999AfterCreate() {
+		void testGet999AfterCreate() {
 			given().when().get("/devices/{deviceId}", "device999")
 					.then().statusCode(200)
 					.body("id", is("device999"))
@@ -191,8 +191,8 @@ public class DeviceResourceIT {
 		@Test
 		@Order(5)
 		@DisplayName("PUT /devices/device999 returns 201 (updating existing device)")
-		public void testUpdate1() {
-			var deviceDto = new DeviceResource.DeviceDto("device999", "Computer 999 got a new name", Device.Type.DESKTOP, "publickey999", "jwe.jwe.jwe.user1.device999", "user1", Instant.parse("2020-02-20T20:20:20Z"));
+		void testUpdate1() {
+			var deviceDto = new DeviceResource.DeviceDto("device999", "Computer 999 got a new name", Device.Type.DESKTOP, "publickey999", "jwe.jwe.jwe.user1.device999", "user1", Instant.parse("2020-02-20T20:20:20Z"), null, null, false);
 
 			given().contentType(ContentType.JSON).body(deviceDto)
 					.when().put("/devices/{deviceId}", "device999")
@@ -202,7 +202,7 @@ public class DeviceResourceIT {
 		@Test
 		@Order(6)
 		@DisplayName("GET /devices/device999 returns 200 (with updated name)")
-		public void testGet999AfterUpdate() {
+		void testGet999AfterUpdate() {
 			given().when().get("/devices/{deviceId}", "device999")
 					.then().statusCode(200)
 					.body("id", is("device999"))
@@ -212,7 +212,7 @@ public class DeviceResourceIT {
 		@Test
 		@Order(7)
 		@DisplayName("DELETE /devices/  returns 400")
-		public void testDeleteNoDeviceId() {
+		void testDeleteNoDeviceId() {
 			when().delete("/devices/{deviceId}", " ") //a whitespace
 					.then().statusCode(400);
 		}
@@ -220,7 +220,7 @@ public class DeviceResourceIT {
 		@Test
 		@Order(7)
 		@DisplayName("DELETE /devices/device0 returns 404")
-		public void testDeleteNotExisting() {
+		void testDeleteNotExisting() {
 			when().delete("/devices/{deviceId}", "device0") //
 					.then().statusCode(404);
 		}
@@ -228,19 +228,76 @@ public class DeviceResourceIT {
 		@Test
 		@Order(7)
 		@DisplayName("DELETE /devices/device2 returns 404")
-		public void testDeleteNotOwner() {
+		void testDeleteNotOwner() {
 			when().delete("/devices/{deviceId}", "device2") //
 					.then().statusCode(404);
 		}
 
 		@Test
 		@Order(7)
+		@DisplayName("DELETE /devices/device999/legacy-device as legacy device returns 404")
+		void testDeleteExistingDeviceAsLegacyDevice() {
+			when().delete("/devices/{deviceId}/legacy-device", "device999") //
+					.then().statusCode(404);
+		}
+
+		@Test
+		@Order(7)
+		@DisplayName("DELETE /devices/device15000 as non legacy device returns 404")
+		void testDeleteExistingLegacyDeviceAsDevice() throws SQLException {
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
+				s.execute("""
+						INSERT INTO "device_legacy" ("id", "owner_id", "name", "type", "publickey", "creation_time")
+						VALUES
+							('device15000', 'user1', 'Computer 15000', 'DESKTOP', 'publickey15000', '2020-02-20 20:20:20')
+						""");
+			}
+
+			when().delete("/devices/{deviceId}", "device15000") //
+					.then().statusCode(404);
+
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
+				var rs = s.executeQuery("""
+						SELECT * FROM "device_legacy" WHERE "id" = 'device15000';
+						""");
+				Assertions.assertTrue(rs.next());
+
+				s.execute("""
+						DELETE FROM "device_legacy" WHERE "id" = 'device15000';
+						""");
+			}
+		}
+
+		@Test
+		@Order(7)
 		@DisplayName("DELETE /devices/device999 returns 204")
-		public void testDeleteValid() {
+		void testDeleteValid() {
 			when().delete("/devices/{deviceId}", "device999") //
 					.then().statusCode(204);
 		}
 
+		@Test
+		@Order(7)
+		@DisplayName("DELETE /devices/device15000 returns 204")
+		void testDeleteValidLegacyDevice() throws SQLException {
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
+				s.execute("""
+						INSERT INTO "device_legacy" ("id", "owner_id", "name", "type", "publickey", "creation_time")
+						VALUES
+							('device15000', 'user1', 'Computer 15000', 'DESKTOP', 'publickey15000', '2020-02-20 20:20:20')
+						""");
+			}
+
+			when().delete("/devices/{deviceId}/legacy-device", "device15000") //
+					.then().statusCode(204);
+
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
+				var rs = s.executeQuery("""
+						SELECT * FROM "device_legacy" WHERE "id" = 'device15000';
+						""");
+				Assertions.assertFalse(rs.next());
+			}
+		}
 
 	}
 
@@ -250,8 +307,8 @@ public class DeviceResourceIT {
 
 		@Test
 		@DisplayName("PUT /devices/device1 returns 401")
-		public void testCreate1() {
-			var deviceDto = new DeviceResource.DeviceDto("device1", "Device 1", Device.Type.BROWSER, "publickey1", "jwe.jwe.jwe.user1.device1", "user1", Instant.parse("2020-02-20T20:20:20Z"));
+		void testCreate1() {
+			var deviceDto = new DeviceResource.DeviceDto("device1", "Device 1", Device.Type.BROWSER, "publickey1", "jwe.jwe.jwe.user1.device1", "user1", Instant.parse("2020-02-20T20:20:20Z"), null, null, false);
 
 			given().contentType(ContentType.JSON).body(deviceDto)
 					.when().put("/devices/{deviceId}", "device1")
@@ -260,7 +317,7 @@ public class DeviceResourceIT {
 
 		@Test
 		@DisplayName("DELETE /devices/device1 returns 401")
-		public void testDelete() {
+		void testDelete() {
 			when().delete("/devices/{deviceId}", "device1") //
 					.then().statusCode(401);
 		}
@@ -277,7 +334,7 @@ public class DeviceResourceIT {
 
 		@Test
 		@DisplayName("GET /devices returns 200 with empty body")
-		public void testGetSomeEmpty() {
+		void testGetSomeEmpty() {
 			when().get("/devices")
 					.then().statusCode(200)
 					.body("", hasSize(0));
@@ -285,7 +342,7 @@ public class DeviceResourceIT {
 
 		@Test
 		@DisplayName("GET /devices?ids=iDoNotExist returns 200 with empty body")
-		public void testGetSomeNotExisting() {
+		void testGetSomeNotExisting() {
 			given().param("ids", "iDoNotExist")
 					.when().get("/devices")
 					.then().statusCode(200)
@@ -293,12 +350,24 @@ public class DeviceResourceIT {
 		}
 
 		@Test
-		@DisplayName("GET /devices?ids=device2&ids=device3 returns 200 with body containing device2 and device3")
-		public void testGetSome() {
-			given().param("ids", "device2", "device3")
+		@DisplayName("GET /devices?ids=device2&ids=device3&ids=legacyDevice1 returns 200 with body containing device2 and device3")
+		void testGetSome() {
+			given().param("ids", "device2", "device3", "legacyDevice1")
 					.when().get("/devices")
 					.then().statusCode(200)
-					.body("id", containsInAnyOrder("device2", "device3"));
+					.body("id", containsInAnyOrder("device2", "device3"))
+					.body("find { it.id == 'device2' }.legacyDevice", is(false))
+					.body("find { it.id == 'device3' }.legacyDevice", is(false));
+		}
+
+		@Test
+		@DisplayName("GET /devices/legacy-devices?ids=legacyDevice1&ids=device2&ids=device3 returns 200 with body containing device2, device3 and legacyDevice1")
+		void testGetSomeLegacyDevices() {
+			given().param("ids", "device2", "device3", "legacyDevice1")
+					.when().get("/devices/legacy-devices")
+					.then().statusCode(200)
+					.body("id", containsInAnyOrder("legacyDevice1"))
+					.body("find { it.id == 'legacyDevice1' }.legacyDevice", is(true));
 		}
 
 		@Test
@@ -307,7 +376,7 @@ public class DeviceResourceIT {
 		@OidcSecurity(claims = {
 				@Claim(key = "sub", value = "user1")
 		})
-		public void testGetSomeAsUser() {
+		void testGetSomeAsUser() {
 			given().param("ids", "device2", "device3")
 					.when().get("/devices")
 					.then().statusCode(403);

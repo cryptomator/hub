@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory, RouteLocationRaw, RouteRecordRaw } from 'vue-router';
+import { createRouter, createWebHistory, NavigationGuardWithThis, RouteLocationNormalized, RouteLocationRaw, RouteRecordRaw } from 'vue-router';
 import authPromise from '../common/auth';
 import backend from '../common/backend';
 import { baseURL } from '../common/config';
@@ -7,6 +7,7 @@ import AdminSettings from '../components/AdminSettings.vue';
 import AuditLog from '../components/AuditLog.vue';
 import AuthenticatedMain from '../components/AuthenticatedMain.vue';
 import CreateVault from '../components/CreateVault.vue';
+import Forbidden from '../components/Forbidden.vue';
 import InitialSetup from '../components/InitialSetup.vue';
 import NotFound from '../components/NotFound.vue';
 import UnlockError from '../components/UnlockError.vue';
@@ -14,6 +15,20 @@ import UnlockSuccess from '../components/UnlockSuccess.vue';
 import UserProfile from '../components/UserProfile.vue';
 import VaultDetails from '../components/VaultDetails.vue';
 import VaultList from '../components/VaultList.vue';
+
+import i18n, { mapToLocale } from '../i18n';
+
+function checkRole(role: string): NavigationGuardWithThis<undefined> {
+  return async (to, _) => {
+    const auth = await authPromise;
+    if (auth.hasRole(role)) {
+      return true;
+    } else {
+      console.warn(`Access denied: User requires role ${role} to access ${to.fullPath}`);
+      return { path: '/app/forbidden', replace: true };
+    }
+  };
+}
 
 const routes: RouteRecordRaw[] = [
   {
@@ -52,12 +67,14 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'vaults/create',
         component: CreateVault,
-        props: () => ({ recover: false })
+        props: () => ({ recover: false }),
+        beforeEnter: checkRole('create-vaults'),
       },
       {
         path: 'vaults/recover',
         component: CreateVault,
-        props: () => ({ recover: true })
+        props: () => ({ recover: true }),
+        beforeEnter: checkRole('create-vaults'),
       },
       {
         path: 'vaults/:id',
@@ -70,10 +87,7 @@ const routes: RouteRecordRaw[] = [
       },
       {
         path: 'admin',
-        beforeEnter: async () => {
-          const auth = await authPromise;
-          return auth.isAdmin(); //TODO: reroute to NotFound Screen/ AccessDeniedScreen?
-        },
+        beforeEnter: checkRole('admin'),
         children: [
           {
             path: '',
@@ -114,6 +128,11 @@ const routes: RouteRecordRaw[] = [
     component: NotFound,
     meta: { skipAuth: true, skipSetup: true }
   },
+  {
+    path: '/app/forbidden',
+    component: Forbidden,
+    meta: { skipAuth: true, skipSetup: true }
+  },
 ];
 
 const router = createRouter({
@@ -130,11 +149,7 @@ router.beforeEach((to, from, next) => {
       if (auth.isAuthenticated()) {
         next();
       } else {
-        // secondsSinceEpoch is required for legacy reasons, as caching headers were only introduced in #255
-        // as result, the redirect URI changes and caching does not break updates anymore
-        const secondsSinceEpoch = Math.round(new Date().getTime() / 1000);
-        const redirect: RouteLocationRaw = { query: { ...to.query, 'sync_me': secondsSinceEpoch } };
-        const redirectUri = `${location.origin}${router.resolve(redirect, to).href}`;
+        const redirectUri = buildRedirectSyncMeUri(to);
         auth.login(redirectUri);
       }
     });
@@ -175,5 +190,28 @@ router.beforeEach(async (to) => {
     return { path: '/app/setup' };
   }
 });
+
+// FOURTH apply user language
+router.beforeEach(async (to) => {
+  if (!to.meta.skipAuth) {
+    const me = await userdata.me;
+    if (me.language) {
+      i18n.global.locale.value = mapToLocale(me.language);
+    }
+  }
+});
+
+export function buildRedirectSyncMeUri(route?: RouteLocationNormalized): string {
+  const targetRoute = route ?? router.currentRoute.value;
+  // secondsSinceEpoch is required for legacy reasons, as caching headers were only introduced in #255
+  const secondsSinceEpoch = Math.round(Date.now() / 1000);
+  const redirect: RouteLocationRaw = {
+    query: {
+      ...targetRoute.query,
+      sync_me: secondsSinceEpoch,
+    }
+  };
+  return `${location.origin}${router.resolve(redirect, targetRoute).href}`;
+}
 
 export default router;

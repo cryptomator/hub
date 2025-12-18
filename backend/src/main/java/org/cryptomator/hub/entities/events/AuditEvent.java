@@ -17,7 +17,9 @@ import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Stream;
 
 @Entity
@@ -31,6 +33,7 @@ import java.util.stream.Stream;
 				WHERE ae.timestamp >= :startDate
 				AND ae.timestamp < :endDate
 				AND ae.id < :paginationId
+				AND (:allTypes = true OR ae.type IN :types)
 				ORDER BY ae.id DESC
 				""")
 @NamedQuery(name = "AuditEvent.listAllInPeriodAfterId",
@@ -40,7 +43,19 @@ import java.util.stream.Stream;
 				WHERE ae.timestamp >= :startDate
 				AND ae.timestamp < :endDate
 				AND ae.id > :paginationId
+				AND (:allTypes = true OR ae.type IN :types)
 				ORDER BY ae.id ASC
+				""")
+@NamedQuery(name = "AuditEvent.lastVaultKeyRetrieve",
+		query = """
+				SELECT e1
+				FROM VaultKeyRetrievedEvent e1
+				WHERE e1.deviceId IN (:deviceIds)
+				AND e1.timestamp = (
+					SELECT MAX(e2.timestamp)
+					FROM VaultKeyRetrievedEvent e2
+					WHERE e2.deviceId = e1.deviceId
+				  )
 				""")
 @SequenceGenerator(name = "audit_event_id_seq", sequenceName = "audit_event_id_seq", allocationSize = 1)
 public class AuditEvent {
@@ -106,8 +121,14 @@ public class AuditEvent {
 	@ApplicationScoped
 	public static class Repository implements PanacheRepository<AuditEvent> {
 
-		public Stream<AuditEvent> findAllInPeriod(Instant startDate, Instant endDate, long paginationId, boolean ascending, int pageSize) {
-			var parameters = Parameters.with("startDate", startDate).and("endDate", endDate).and("paginationId", paginationId);
+		public Stream<AuditEvent> findAllInPeriod(Instant startDate, Instant endDate, List<String> type, long paginationId, boolean ascending, int pageSize) {
+			var allTypes = type.isEmpty();
+
+			var parameters = Parameters.with("startDate", startDate)
+					.and("endDate", endDate)
+					.and("paginationId", paginationId)
+					.and("types", type)
+					.and("allTypes", allTypes);
 
 			final PanacheQuery<AuditEvent> query;
 			if (ascending) {
@@ -117,6 +138,10 @@ public class AuditEvent {
 			}
 			query.page(0, pageSize);
 			return query.stream();
+		}
+
+		public Stream<VaultKeyRetrievedEvent> findLastVaultKeyRetrieve(Set<String> deviceIds) {
+			return find("#AuditEvent.lastVaultKeyRetrieve", Parameters.with("deviceIds", deviceIds)).stream();
 		}
 	}
 }

@@ -1,6 +1,6 @@
 <template>
-  <div v-if="setupCode == null">
-    <div v-if="onFetchError == null">
+  <div v-if="setupCode === undefined">
+    <div v-if="!onFetchError">
       {{ t('common.loading') }}
     </div>
     <div v-else>
@@ -16,7 +16,7 @@
       {{ t('manageAccountKey.description') }}
     </p>
 
-    <div class="mt-4 bg-white rounded-md shadow-sm flex w-full">
+    <div class="mt-4 bg-white rounded-md shadow-xs flex w-full">
       <div class="rounded-none rounded-l-md px-3 py-2 ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-primary focus-within:z-10 w-full">
         <label for="setupCode" class="sr-only">{{ t('manageAccountKey.title') }}</label>
         <input id="setupCode" v-model="setupCode" :type="setupCodeInputType" name="setupCode" class="block w-full border-0 p-0 text-gray-900 font-mono text-lg placeholder:text-gray-400 focus:ring-0" readonly />
@@ -35,13 +35,13 @@
     </div>
 
     <div class="flex justify-end mt-4">
-      <button type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showRegenerateSetupCodeDialog()">
+      <button type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showRegenerateSetupCodeDialog()">
         {{ t('manageAccountKey.regenerate') }}
       </button>
     </div>
   </div>
 
-  <RegenerateSetupCodeDialog v-if="regeneratingSetupCode && setupCode != null" ref="regenerateSetupCodeDialog" v-model:setup-code="setupCode" @close="regeneratingSetupCode = false" />
+  <RegenerateSetupCodeDialog v-if="regeneratingSetupCode && setupCode !== undefined" ref="regenerateSetupCodeDialog" v-model:setup-code="setupCode" @close="regeneratingSetupCode = false" />
 </template>
 
 <script setup lang="ts">
@@ -61,12 +61,12 @@ const copiedSetupCode = ref(false);
 const debouncedCopyFinish = debounce(() => copiedSetupCode.value = false, 2000);
 const regeneratingSetupCode = ref(false);
 const regenerateSetupCodeDialog = ref<typeof RegenerateSetupCodeDialog>();
-const onFetchError = ref<Error | null>();
+const onFetchError = ref<Error>();
 
 onMounted(fetchData);
 
 async function fetchData() {
-  onFetchError.value = null;
+  onFetchError.value = undefined;
   try {
     const me = await userdata.me;
     if (!me.setupCode) {
@@ -86,7 +86,7 @@ function toggleSetupCodeVisibility() {
 }
 
 async function copySetupCode() {
-  if (setupCode.value == null) {
+  if (setupCode.value === undefined) {
     throw new Error('Invalid state.');
   }
   await navigator.clipboard.writeText(setupCode.value);

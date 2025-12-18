@@ -1,13 +1,34 @@
 package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
+import io.quarkus.panache.common.Parameters;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
 
-@Deprecated
+import java.time.Instant;
+import java.util.List;
+import java.util.stream.Stream;
+
+/**
+ * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
+ */
+@Deprecated(since = "1.3.0", forRemoval = true)
+@NamedQuery(name = "LegacyDevice.allInList",
+		query = """
+				SELECT d
+				FROM LegacyDevice d
+				WHERE d.id IN :ids
+				""")
+@NamedQuery(name = "LegacyDevice.deleteByOwner", query = "DELETE FROM LegacyDevice d WHERE d.ownerId = :userId")
 @Entity
 @Table(name = "device_legacy")
 public class LegacyDevice {
@@ -16,8 +37,25 @@ public class LegacyDevice {
 	@Column(name = "id", nullable = false)
 	private String id;
 
-	@Column(name = "owner_id", nullable = false)
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "owner_id", updatable = false, nullable = false)
+	private User owner;
+
+	@Column(name = "owner_id", insertable = false, updatable = false, nullable = false)
 	private String ownerId;
+
+	@Column(name = "name", nullable = false)
+	private String name;
+
+	@Column(name = "type", nullable = false)
+	@Enumerated(EnumType.STRING)
+	private Device.Type type;
+
+	@Column(name = "publickey", nullable = false)
+	private String publickey;
+
+	@Column(name = "creation_time", nullable = false)
+	private Instant creationTime;
 
 	public String getId() {
 		return id;
@@ -27,18 +65,41 @@ public class LegacyDevice {
 		this.id = id;
 	}
 
-	public String getOwnerId() {
-		return ownerId;
+	public User getOwner() {
+		return owner;
 	}
 
-	public void setOwnerId(String ownerId) {
-		this.ownerId = ownerId;
+	public String getName() {
+		return name;
 	}
 
-	// Further attributes omitted, as they are no longer used. The above ones are exceptions, as they are referenced via JPQL for joining.
+	public Instant getCreationTime() {
+		return creationTime;
+	}
 
+	public Device.Type getType() {
+		return type;
+	}
+
+	public String getPublickey() {
+		return publickey;
+	}
+
+	// Further attributes omitted, as they are no longer used. The above ones are exceptions, as they are referenced via JPQL for joining and required for the device list.
+
+	/**
+	 * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
+	 */
+	@Deprecated(since = "1.3.0", forRemoval = true)
 	@ApplicationScoped
-	@Deprecated
 	public static class Repository implements PanacheRepositoryBase<LegacyDevice, String> {
+
+		public Stream<LegacyDevice> findAllInList(List<String> ids) {
+			return find("#LegacyDevice.allInList", Parameters.with("ids", ids)).stream();
+		}
+
+		public void deleteByOwner(String userId) {
+			delete("#LegacyDevice.deleteByOwner", Parameters.with("userId", userId));
+		}
 	}
 }

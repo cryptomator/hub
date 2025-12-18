@@ -1,0 +1,24 @@
+## Stage 1 : build with maven builder image
+FROM quay.io/quarkus/ubi-quarkus-mandrel-builder-image:jdk-21 AS builder
+COPY --chown=quarkus:quarkus --chmod=0755 mvnw /code/mvnw
+COPY --chown=quarkus:quarkus .mvn /code/.mvn
+COPY --chown=quarkus:quarkus pom.xml /code/
+USER quarkus
+WORKDIR /code
+RUN ./mvnw -B quarkus:go-offline --no-transfer-progress
+COPY src /code/src
+RUN ./mvnw -B package -DskipTests --no-transfer-progress --strict-checksums
+
+## Stage 2 : create the docker final image
+FROM eclipse-temurin:21-jre-alpine
+COPY --from=builder /code/target/quarkus-app/ /work/
+WORKDIR /work/
+
+LABEL org.opencontainers.image.url="https://cryptomator.org/hub/"
+LABEL org.opencontainers.image.source="https://github.com/cryptomator/hub"
+LABEL org.opencontainers.image.vendor="Skymatic GmbH"
+EXPOSE 8080
+USER 1001
+ENV QUARKUS_HTTP_HOST=0.0.0.0
+
+CMD ["java", "-jar", "/work/quarkus-run.jar"]

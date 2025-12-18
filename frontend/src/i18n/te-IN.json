@@ -1,0 +1,10 @@
+{
+  "common.previous": "మునుపటి",
+  "common.refresh": "రిఫ్రెష్ చేయండి",
+  "common.remove": "తొలగించు",
+  "common.retry": "మళ్ళీ చేయండి",
+  "common.share": "తో పంచు",
+  "admin.webOfTrust.save": "సేవ్ చేయండి",
+  "auditLog.details": "వివరాలు",
+  "claimVaultOwnershipDialog.error.wrongPassword": "సరియినది కాని రహస్య పదము"
+}

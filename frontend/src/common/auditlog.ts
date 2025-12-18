@@ -21,12 +21,35 @@ export type AuditEventDeviceRemoveDto = AuditEventDtoBase & {
   deviceId: string;
 }
 
+export type AuditEventSettingWotUpdateDto = AuditEventDtoBase & {
+  type: 'SETTING_WOT_UPDATE',
+  updatedBy: string;
+  wotMaxDepth: number;
+  wotIdVerifyLen: number;
+}
+
 export type AuditEventSignedWotIdDto = AuditEventDtoBase & {
   type: 'SIGN_WOT_ID',
   userId: string;
   signerId: string;
   signerKey: string;
   signature: string;
+}
+
+export type AuditEventUserAccountResetDto = AuditEventDtoBase & {
+  type: 'USER_ACCOUNT_RESET',
+  resetBy: string;
+}
+
+export type AuditEventUserKeysChangeDto = AuditEventDtoBase & {
+  type: 'USER_KEYS_CHANGE',
+  changedBy: string,
+  userName: string;
+}
+
+export type AuditEventUserSetupCodeChangeDto = AuditEventDtoBase & {
+  type: 'USER_SETUP_CODE_CHANGE',
+  changedBy: string;
 }
 
 export type AuditEventVaultCreateDto = AuditEventDtoBase & {
@@ -58,6 +81,8 @@ export type AuditEventVaultKeyRetrieveDto = AuditEventDtoBase & {
   retrievedBy: string;
   vaultId: string;
   result: 'SUCCESS' | 'UNAUTHORIZED';
+  ipAddress?: string;
+  deviceId?: string;
 }
 
 export type AuditEventVaultMemberAddDto = AuditEventDtoBase & {
@@ -89,14 +114,14 @@ export type AuditEventVaultOwnershipClaimDto = AuditEventDtoBase & {
   vaultId: string;
 }
 
-export type AuditEventDto = AuditEventDeviceRegisterDto | AuditEventDeviceRemoveDto | AuditEventSignedWotIdDto | AuditEventVaultCreateDto | AuditEventVaultUpdateDto | AuditEventVaultAccessGrantDto | AuditEventVaultKeyRetrieveDto | AuditEventVaultMemberAddDto | AuditEventVaultMemberRemoveDto | AuditEventVaultMemberUpdateDto | AuditEventVaultOwnershipClaimDto;
+export type AuditEventDto = AuditEventDeviceRegisterDto | AuditEventDeviceRemoveDto | AuditEventSettingWotUpdateDto | AuditEventSignedWotIdDto | AuditEventUserAccountResetDto | AuditEventUserKeysChangeDto | AuditEventUserSetupCodeChangeDto | AuditEventVaultCreateDto | AuditEventVaultUpdateDto | AuditEventVaultAccessGrantDto | AuditEventVaultKeyRetrieveDto | AuditEventVaultMemberAddDto | AuditEventVaultMemberRemoveDto | AuditEventVaultMemberUpdateDto | AuditEventVaultOwnershipClaimDto;
 
 /* Entity Cache */
 
 export class AuditLogEntityCache {
-  private vaults: Map<string, Deferred<VaultDto>>;
-  private authorities: Map<string, Deferred<AuthorityDto>>;
-  private devices: Map<string, Deferred<DeviceDto>>;
+  private readonly vaults: Map<string, Deferred<VaultDto>>;
+  private readonly authorities: Map<string, Deferred<AuthorityDto>>;
+  private readonly devices: Map<string, Deferred<DeviceDto>>;
 
   constructor() {
     this.vaults = new Map();
@@ -128,9 +153,21 @@ export class AuditLogEntityCache {
     }
   }
 
-  private debouncedResolvePendingVaults = debounce(async () => await this.resolvePendingEntities<VaultDto>(this.vaults, backend.vaults.listSome), 100);
-  private debouncedResolvePendingAuthorities = debounce(async () => await this.resolvePendingEntities<AuthorityDto>(this.authorities, backend.authorities.listSome), 100);
-  private debouncedResolvePendingDevices = debounce(async () => await this.resolvePendingEntities<DeviceDto>(this.devices, backend.devices.listSome), 100);
+  private readonly debouncedResolvePendingVaults = debounce(async () => await this.resolvePendingEntities<VaultDto>(this.vaults, backend.vaults.listSome), 100);
+  private readonly debouncedResolvePendingAuthorities = debounce(async () => await this.resolvePendingEntities<AuthorityDto>(this.authorities, backend.authorities.listSome), 100);
+  private readonly debouncedResolvePendingDevices = debounce(async () => {
+    await this.resolvePendingEntities<DeviceDto>(
+      this.devices,
+      (deviceIds: string[]) =>
+        Promise.all([
+          backend.devices.listSome(deviceIds).catch(() => []),
+          backend.devices.listSomeLegacyDevices(deviceIds).catch(() => [])
+        ]).then(([devices, legacyDevices]) => [
+          ...devices,
+          ...legacyDevices
+        ])
+    );
+  }, 100);
 
   private async resolvePendingEntities<T extends { id: string }>(entities: Map<string, Deferred<T>>, listSome: (ids: string[]) => Promise<T[]>): Promise<void> {
     const pendingEntities = Array.from(entities.entries()).filter(([, v]) => v.status === 'pending');
@@ -155,8 +192,9 @@ export class AuditLogEntityCache {
 /* Service */
 
 class AuditLogService {
-  public async getAllEvents(startDate: Date, endDate: Date, paginationId: number, order: string, pageSize: number): Promise<AuditEventDto[]> {
-    return axiosAuth.get<AuditEventDto[]>(`/auditlog?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}&paginationId=${paginationId}&order=${order}&pageSize=${pageSize}`)
+  public async getAllEvents(startDate: Date, endDate: Date, type: string[], paginationId: number, order: string, pageSize: number): Promise<AuditEventDto[]> {
+    const typeQuery = type.length > 0 ? `&type=${type.join('&type=')}` : '';
+    return axiosAuth.get<AuditEventDto[]>(`/auditlog?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}&paginationId=${paginationId}${typeQuery}&order=${order}&pageSize=${pageSize}`)
       .then(response => response.data.map(dto => {
         dto.timestamp = new Date(dto.timestamp);
         return dto;

@@ -1,11 +1,15 @@
-import { base64 } from 'rfc4648';
+import { base64 } from '@scure/base';
 import backend, { DeviceDto, UserDto } from './backend';
 import { BrowserKeys, UserKeys } from './crypto';
 import { JWEParser } from './jwe';
 
 class UserData {
   #me?: Promise<UserDto>;
+  #meWithLastAccess?: Promise<UserDto>;
   #browserKeys?: Promise<BrowserKeys | undefined>;
+
+  /** @deprecated since version 1.3.0, to be removed in https://github.com/cryptomator/hub/issues/333 */
+  #meWithLegacyDevicesAndLastAccess?: Promise<UserDto>;
 
   /**
    * Gets the user DTO representing the currently logged in user.
@@ -15,6 +19,22 @@ class UserData {
       this.#me = backend.users.me(true);
     }
     return this.#me;
+  }
+
+  public get meWithLastAccess(): Promise<UserDto> {
+    if (!this.#meWithLastAccess) {
+      this.#meWithLastAccess = backend.users.me(true, true);
+      this.#me = this.#meWithLastAccess;
+    }
+    return this.#meWithLastAccess;
+  }
+
+  /** @deprecated since version 1.3.0, to be removed in https://github.com/cryptomator/hub/issues/333 */
+  public get meWithLegacyDevicesAndLastAccess(): Promise<UserDto> {
+    if (!this.#meWithLegacyDevicesAndLastAccess) {
+      this.#meWithLegacyDevicesAndLastAccess = backend.users.meWithLegacyDevicesAndAccess();
+    }
+    return this.#meWithLegacyDevicesAndLastAccess;
   }
 
   /**
@@ -45,12 +65,12 @@ class UserData {
    * 
    * @see UserDto.ecdhPublicKey
    */
-  public get ecdhPublicKey(): Promise<Uint8Array> {
+  public get ecdhPublicKey(): Promise<Uint8Array<ArrayBuffer>> {
     return this.me.then(me => {
       if (!me.ecdhPublicKey) {
         throw new Error('User not initialized.');
       }
-      return base64.parse(me.ecdhPublicKey);
+      return base64.decode(me.ecdhPublicKey) as Uint8Array<ArrayBuffer>;
     });
   }
 
@@ -59,9 +79,9 @@ class UserData {
    * 
    * @see UserDto.ecdsaPublicKey
    */
-  public get ecdsaPublicKey(): Promise<Uint8Array | undefined> {
+  public get ecdsaPublicKey(): Promise<Uint8Array<ArrayBuffer> | undefined> {
     return this.me.then(me => {
-      return me.ecdsaPublicKey ? base64.parse(me.ecdsaPublicKey) : undefined;
+      return me.ecdsaPublicKey ? base64.decode(me.ecdsaPublicKey) as Uint8Array<ArrayBuffer> : undefined;
     });
   }
 
@@ -71,6 +91,21 @@ class UserData {
   public async reload() {
     this.#me = backend.users.me(true);
     this.#browserKeys = undefined;
+  }
+
+  /**
+   * Invalidates the cached user data with devices and last access and reloads it in the backend.
+   */
+  public async reloadAccess() {
+    this.#meWithLastAccess = backend.users.me(true, true);
+  }
+
+  /**
+   * Invalidates the cached user data with legacy devices and last access and reloads it in the backend.
+   * @deprecated since version 1.3.0, to be removed in https://github.com/cryptomator/hub/issues/333
+   */
+  public async reloadLegacyAccess() {
+    this.#meWithLegacyDevicesAndLastAccess = backend.users.meWithLegacyDevicesAndAccess();
   }
 
   /**
@@ -93,10 +128,10 @@ class UserData {
    */
   public async decryptUserKeysWithSetupCode(setupCode: string): Promise<UserKeys> {
     const me = await this.me;
-    if (!me.privateKey) {
+    if (!me.privateKeys) {
       throw new Error('User not initialized.');
     }
-    const userKeys = await UserKeys.recover(me.privateKey, setupCode, await this.ecdhPublicKey, await this.ecdsaPublicKey);
+    const userKeys = await UserKeys.recover(me.privateKeys, setupCode, await this.ecdhPublicKey, await this.ecdsaPublicKey);
     await this.addEcdsaKeyIfMissing(userKeys);
     return userKeys;
   }
@@ -128,9 +163,9 @@ class UserData {
     if (me.setupCode && !me.ecdsaPublicKey) {
       const payload: { setupCode: string } = await JWEParser.parse(me.setupCode).decryptEcdhEs(userKeys.ecdhKeyPair.privateKey);
       me.ecdsaPublicKey = await userKeys.encodedEcdsaPublicKey();
-      me.privateKey = await userKeys.encryptWithSetupCode(payload.setupCode);
+      me.privateKeys = await userKeys.encryptWithSetupCode(payload.setupCode);
       for (const device of me.devices) {
-        device.userPrivateKey = await userKeys.encryptForDevice(base64.parse(device.publicKey));
+        device.userPrivateKey = await userKeys.encryptForDevice(base64.decode(device.publicKey) as Uint8Array<ArrayBuffer>);
       }
       await backend.users.putMe(me);
     }

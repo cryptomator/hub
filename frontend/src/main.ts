@@ -1,22 +1,11 @@
 import { createApp } from 'vue';
-import { createI18n } from 'vue-i18n';
 import App from './App.vue';
 import './css/fonts.css';
-import { Locale, datetimeFormats, messages, numberFormats } from './i18n/index';
+import i18n from './i18n';
 import './index.css';
 import router from './router';
-// migrate to // import messages from '@intlify/vite-plugin-vue-i18n/messages'; as soon as it works
 
-const i18n = createI18n({
-  locale: navigator.language,
-  fallbackLocale: Locale.EN,
-  messages,
-  datetimeFormats,
-  numberFormats,
-  globalInjection: true,
-  missingWarn: false,
-  fallbackWarn: false
-});
+// migrate to // import messages from '@intlify/vite-plugin-vue-i18n/messages'; as soon as it works
 
 createApp(App)
   .use(router)

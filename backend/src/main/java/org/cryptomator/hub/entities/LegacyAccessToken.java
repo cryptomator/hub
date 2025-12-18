@@ -15,6 +15,10 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+/**
+ * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
+ */
+@Deprecated(since = "1.3.0", forRemoval = true)
 @Entity
 @Table(name = "access_token_legacy")
 @NamedQuery(name = "LegacyAccessToken.get", query = """
@@ -31,7 +35,6 @@ import java.util.stream.Stream;
 		INNER JOIN EffectiveVaultAccess perm ON token.id.vaultId = perm.id.vaultId AND device.ownerId = perm.id.authorityId
 		WHERE token.id.deviceId = :deviceId AND device.ownerId = :userId
 		""")
-@Deprecated
 public class LegacyAccessToken {
 
 	@EmbeddedId
@@ -134,8 +137,11 @@ public class LegacyAccessToken {
 		}
 	}
 
+	/**
+	 * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
+	 */
+	@Deprecated(since = "1.3.0", forRemoval = true)
 	@ApplicationScoped
-	@Deprecated
 	public static class Repository implements PanacheRepositoryBase<LegacyAccessToken, AccessId> {
 
 		public LegacyAccessToken unlock(UUID vaultId, String deviceId, String userId) {

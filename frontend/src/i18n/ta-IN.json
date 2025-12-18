@@ -1,0 +1,21 @@
+{
+  "common.apply": "பயன்படுத்து",
+  "common.cancel": "ரத்து செய்",
+  "common.close": "மூடு",
+  "common.copied": "நகலெடுக்கப்பட்டது!",
+  "common.copy": "நகலெடு",
+  "common.next": "அடுத்து",
+  "common.previous": "முந்தைய",
+  "common.refresh": "புதுப்பி",
+  "common.remove": "நீக்கு",
+  "common.retry": "மீண்டும் முயற்சிக்கவும்",
+  "common.share": "பகிர்",
+  "common.show": "காட்டு",
+  "admin.webOfTrust.save": "சேமி",
+  "auditLog.details.vault.create": "பெட்டகத்தை உருவாக்கவும்",
+  "claimVaultOwnershipDialog.error.wrongPassword": "தவறான கடவுச்சொல்",
+  "createVault.enterVaultDetails.title": "பெட்டகத்தை உருவாக்கவும்",
+  "createVault.enterVaultDetails.vaultName": "பெட்டகத்தின் பெயர்",
+  "createVault.showRecoveryKey.submit": "பெட்டகத்தை உருவாக்கவும்",
+  "editVaultMetadataDialog.vaultName": "பெட்டகத்தின் பெயர்"
+}

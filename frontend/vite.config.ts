@@ -1,4 +1,5 @@
 import vueI18nPlugin from '@intlify/unplugin-vue-i18n/vite';
+import tailwindcss from '@tailwindcss/vite';
 import vue from '@vitejs/plugin-vue';
 import path from 'path';
 import { defineConfig } from 'vite';
@@ -11,6 +12,7 @@ export default defineConfig({
     vueI18nPlugin({
       include: path.resolve(__dirname, './src/i18n/*.json')
     }),
+    tailwindcss(),
   ],
   build: {
     minify: 'esbuild',

@@ -1,17 +1,7 @@
-import { expect } from 'chai';
-import { describe } from 'mocha';
-import { webcrypto } from 'node:crypto';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { JWT, JWTHeader } from '../../src/common/jwt';
 
 describe('JWT', () => {
-  before(done => {
-    // since this test runs on Node, we need to replace window.crypto:
-    Object.defineProperty(global, 'crypto', { value: webcrypto });
-    // @ts-expect-error: incomplete 'window' type
-    global.window = { crypto: global.crypto };
-    done();
-  });
-
   describe('RFC 7515 / RFC 7519', () => {
     let signerKey: CryptoKeyPair;
 
@@ -40,7 +30,7 @@ describe('JWT', () => {
 
       const encodedSignature = await JWT.es384sign(encodedHeader, encodedPayload, signerKey.privateKey);
 
-      expect(encodedSignature).to.be.a('string');
+      expect(encodedSignature).toBeTypeOf('string');
     });
 
     it('es384verify() a valid signature', async () => {
@@ -48,7 +38,7 @@ describe('JWT', () => {
 
       const validSignature = await JWT.es384verify(jwt, signerKey.publicKey);
 
-      expect(validSignature).to.be.true;
+      expect(validSignature).toBe(true);
     });
 
     it('es384verify() an invalid signature', async () => {
@@ -56,7 +46,7 @@ describe('JWT', () => {
 
       const validSignature = await JWT.es384verify(jwt, signerKey.publicKey);
 
-      expect(validSignature).to.be.false;
+      expect(validSignature).toBe(false);
     });
 
     it('build() ES384-signed JWT', async () => {
@@ -74,7 +64,7 @@ describe('JWT', () => {
 
       const jwt = await JWT.build(header, payload, signerKey.privateKey);
 
-      expect(jwt).to.be.not.null;
+      expect(jwt).not.toBeNull();
     });
 
     it('parse() ES384-signed JWT', async () => {
@@ -82,8 +72,8 @@ describe('JWT', () => {
 
       const [header, payload] = await JWT.parse(jwt, signerKey.publicKey);
 
-      expect(header).to.deep.equal({ alg: 'ES384', typ: 'JWT', b64: true });
-      expect(payload).to.deep.equal({ foo: 42, bar: 'lol', obj: { nested: true } });
+      expect(header).toEqual({ alg: 'ES384', typ: 'JWT', b64: true });
+      expect(payload).toEqual({ foo: 42, bar: 'lol', obj: { nested: true } });
     });
   });
 });

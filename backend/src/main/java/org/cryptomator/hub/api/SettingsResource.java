@@ -16,6 +16,8 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.Settings;
+import org.cryptomator.hub.entities.events.EventLogger;
+import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 
@@ -23,7 +25,13 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 public class SettingsResource {
 
 	@Inject
+	EventLogger eventLogger;
+
+	@Inject
 	Settings.Repository settingsRepo;
+
+	@Inject
+	JsonWebToken jwt;
 
 	@GET
 	@RolesAllowed("user")
@@ -45,9 +53,14 @@ public class SettingsResource {
 	@Transactional
 	public Response put(@NotNull @Valid SettingsDto dto) {
 		var settings = settingsRepo.get();
+		var oldWotIdVerifyLen = settings.getWotIdVerifyLen();
+		var oldWotMaxDepth = settings.getWotMaxDepth();
 		settings.setWotMaxDepth(dto.wotMaxDepth);
 		settings.setWotIdVerifyLen(dto.wotIdVerifyLen);
 		settingsRepo.persist(settings);
+		if (oldWotMaxDepth != dto.wotMaxDepth || oldWotIdVerifyLen != dto.wotIdVerifyLen) {
+			eventLogger.logWotSettingUpdated(jwt.getSubject(), dto.wotIdVerifyLen, dto.wotMaxDepth);
+		}
 		return Response.status(Response.Status.NO_CONTENT).build();
 	}
 

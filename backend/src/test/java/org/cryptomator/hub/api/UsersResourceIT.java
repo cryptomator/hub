@@ -10,7 +10,6 @@ import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
 import org.cryptomator.hub.license.LicenseHolder;
-import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -32,9 +31,10 @@ import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.comparesEqualTo;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 
 @QuarkusTest
@@ -48,7 +48,7 @@ public class UsersResourceIT {
 	LicenseHolder licenseHolder;
 
 	@BeforeAll
-	public static void beforeAll() {
+	static void beforeAll() {
 		RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
 	}
 
@@ -62,14 +62,14 @@ public class UsersResourceIT {
 
 		@Test
 		@DisplayName("PUT /users/me returns 201")
-		public void testSyncMe() {
+		void testSyncMe() {
 			when().put("/users/me")
 					.then().statusCode(201);
 		}
 
 		@Test
 		@DisplayName("GET /users/me returns 200")
-		public void testGetMe1() {
+		void testGetMe1() {
 			when().get("/users/me")
 					.then().statusCode(200)
 					.body("id", is("user1"))
@@ -78,16 +78,62 @@ public class UsersResourceIT {
 
 		@Test
 		@DisplayName("GET /users/me?withDevices=true returns 200")
-		public void testGetMe2() {
+		void testGetMe2() throws SQLException {
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
+				s.execute("""
+						INSERT INTO "audit_event" (id, timestamp, type) VALUES (30000, '2020-02-20T20:20:24.242Z', 'VAULT_KEY_RETRIEVE');
+						INSERT INTO "audit_event" (id, timestamp, type) VALUES (30001, '2020-02-20T20:20:24.242Z', 'VAULT_KEY_RETRIEVE');
+						INSERT INTO "audit_event_vault_key_retrieve" (id, retrieved_by, vault_id, result, device_id, ip_address) VALUES (30000, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'SUCCESS', 'device1', '1.2.3.4');
+						INSERT INTO "audit_event_vault_key_retrieve" (id, retrieved_by, vault_id, result, device_id, ip_address) VALUES (30001, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'SUCCESS', 'legacyDevice1', '1.2.3.4');
+						""");
+			}
+
 			when().get("/users/me?withDevices=true")
 					.then().statusCode(200)
 					.body("id", is("user1"))
-					.body("devices.id", hasItems("device1"));
+					.body("devices.find { it.id == 'device1' }.lastAccessTime", nullValue())
+					.body("devices.find { it.id == 'device1' }.lastIpAddress", nullValue())
+					.body("devices.find { it.id == 'device1' }.legacyDevice", equalTo(false))
+					.body("devices.find { it.id == 'legacyDevice1' }", nullValue());
+
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
+				s.execute("""
+						DELETE FROM "audit_event" WHERE id=30000;
+						DELETE FROM "audit_event" WHERE id=30001;
+						""");
+			}
+		}
+
+		@Test
+		@DisplayName("GET /users/me-with-legacy-devices-and-access returns 200")
+		void testGetMe3() throws SQLException {
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
+				s.execute("""
+						INSERT INTO "audit_event" (id, timestamp, type) VALUES (30000, '2020-02-20T20:20:24.242Z', 'VAULT_KEY_RETRIEVE');
+						INSERT INTO "audit_event" (id, timestamp, type) VALUES (30001, '2020-02-20T20:20:24.242Z', 'VAULT_KEY_RETRIEVE');
+						INSERT INTO "audit_event_vault_key_retrieve" (id, retrieved_by, vault_id, result, device_id, ip_address) VALUES (30000, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'SUCCESS', 'device1', '1.2.3.4');
+						INSERT INTO "audit_event_vault_key_retrieve" (id, retrieved_by, vault_id, result, device_id, ip_address) VALUES (30001, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'SUCCESS', 'legacyDevice1', '1.2.3.4');
+						""");
+			}
+
+			when().get("/users/me-with-legacy-devices-and-access")
+					.then().statusCode(200)
+					.body("id", is("user1"))
+					.body("devices.find { it.id == 'legacyDevice1' }.lastAccessTime", equalTo("2020-02-20T20:20:24.242Z"))
+					.body("devices.find { it.id == 'legacyDevice1' }.lastIpAddress", equalTo("1.2.3.4"))
+					.body("devices.find { it.id == 'legacyDevice1' }.legacyDevice", equalTo(true));
+
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
+				s.execute("""
+						DELETE FROM "audit_event" WHERE id=30000;
+						DELETE FROM "audit_event" WHERE id=30001;
+						""");
+			}
 		}
 
 		@Test
 		@DisplayName("GET /users returns 200")
-		public void testGetAll() {
+		void testGetAll() {
 			when().get("/users")
 					.then().statusCode(200)
 					.body("id", hasItems("user1", "user2"));
@@ -95,7 +141,7 @@ public class UsersResourceIT {
 
 		@Test
 		@DisplayName("POST /users/me/access-tokens returns 200")
-		public void testPostAccessTokens1() {
+		void testPostAccessTokens1() {
 			var body = """
 					{
 						"7E57C0DE-0000-4000-8000-000100001111": "jwe.jwe.jwe.vault1.user1",
@@ -109,7 +155,7 @@ public class UsersResourceIT {
 
 		@Test
 		@DisplayName("POST /users/me/access-tokens returns 200 for empty list")
-		public void testPostAccessTokens2() {
+		void testPostAccessTokens2() {
 			given().contentType(ContentType.JSON).body("{}")
 					.when().post("/users/me/access-tokens")
 					.then().statusCode(200);
@@ -117,7 +163,7 @@ public class UsersResourceIT {
 
 		@Test
 		@DisplayName("POST /users/me/access-tokens returns 400 for malformed body")
-		public void testPostAccessTokens3() {
+		void testPostAccessTokens3() {
 			given().contentType(ContentType.JSON).body("")
 					.when().post("/users/me/access-tokens")
 					.then().statusCode(400);
@@ -152,7 +198,7 @@ public class UsersResourceIT {
 		private Instant testStart;
 
 		@BeforeAll
-		public void setup() throws SQLException {
+		void setup() throws SQLException {
 			testStart = Instant.now();
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
@@ -173,7 +219,7 @@ public class UsersResourceIT {
 		@OidcSecurity(claims = {
 				@Claim(key = "sub", value = "user997")
 		})
-		public void test997Trusts998() {
+		void test997Trusts998() {
 			given().contentType(ContentType.TEXT).body("997 trusts 998")
 					.when().put("/users/trusted/user998")
 					.then().statusCode(204);
@@ -186,7 +232,7 @@ public class UsersResourceIT {
 		@OidcSecurity(claims = {
 				@Claim(key = "sub", value = "user998")
 		})
-		public void test998Trusts999() {
+		void test998Trusts999() {
 			given().contentType(ContentType.TEXT).body("998 trusts 999")
 					.when().put("/users/trusted/user999")
 					.then().statusCode(204);
@@ -199,7 +245,7 @@ public class UsersResourceIT {
 		@OidcSecurity(claims = {
 				@Claim(key = "sub", value = "user998")
 		})
-		public void test998Trusts997() {
+		void test998Trusts997() {
 			given().contentType(ContentType.TEXT).body("998 trusts 997")
 					.when().put("/users/trusted/user997")
 					.then().statusCode(204);
@@ -212,7 +258,7 @@ public class UsersResourceIT {
 		@OidcSecurity(claims = {
 				@Claim(key = "sub", value = "user997")
 		})
-		public void testGetTrustedBy997() {
+		void testGetTrustedBy997() {
 			given().when().get("/users/trusted")
 					.then().statusCode(200)
 					.body("$", hasSize(2))
@@ -228,7 +274,7 @@ public class UsersResourceIT {
 		@OidcSecurity(claims = {
 				@Claim(key = "sub", value = "user998")
 		})
-		public void testGetTrustedBy998() {
+		void testGetTrustedBy998() {
 			given().when().get("/users/trusted")
 					.then().statusCode(200)
 					.body("$", hasSize(2))
@@ -244,7 +290,7 @@ public class UsersResourceIT {
 		@OidcSecurity(claims = {
 				@Claim(key = "sub", value = "user999")
 		})
-		public void testGetTrustedBy999() {
+		void testGetTrustedBy999() {
 			given().when().get("/users/trusted")
 					.then().statusCode(200)
 					.body("$", hasSize(0));
@@ -257,7 +303,7 @@ public class UsersResourceIT {
 		@OidcSecurity(claims = {
 				@Claim(key = "sub", value = "user997")
 		})
-		public void test997Gets998() {
+		void test997Gets998() {
 			given().when().get("/users/trusted/user998")
 					.then().statusCode(200)
 					.body("signatureChain", hasItems("997 trusts 998"));
@@ -270,7 +316,7 @@ public class UsersResourceIT {
 		@OidcSecurity(claims = {
 				@Claim(key = "sub", value = "user997")
 		})
-		public void test997Gets999() {
+		void test997Gets999() {
 			given().when().get("/users/trusted/user999")
 					.then().statusCode(200)
 					.body("signatureChain", hasItems("997 trusts 998", "998 trusts 999"));
@@ -283,7 +329,7 @@ public class UsersResourceIT {
 		@OidcSecurity(claims = {
 				@Claim(key = "sub", value = "user999")
 		})
-		public void test999Gets998() {
+		void test999Gets998() {
 			given().when().get("/users/trusted/user998")
 					.then().statusCode(404);
 		}
@@ -292,7 +338,7 @@ public class UsersResourceIT {
 		@Order(4)
 		@TestSecurity(user = "Admin", roles = {"admin"})
 		@DisplayName("As admin, GET /auditlog contains signature events")
-		public void testGetAuditLogEntries() {
+		void testGetAuditLogEntries() {
 			Mockito.doReturn(true).when(licenseHolder).isSet();
 			Mockito.doReturn(false).when(licenseHolder).isExpired();
 
@@ -306,7 +352,7 @@ public class UsersResourceIT {
 
 
 		@AfterAll
-		public void tearDown() throws SQLException {
+		void tearDown() throws SQLException {
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
 						DELETE FROM "authority" WHERE "id" IN ('user997', 'user998', 'user999');

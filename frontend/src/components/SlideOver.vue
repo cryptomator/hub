@@ -14,7 +14,7 @@
                       {{ title }}
                     </DialogTitle>
                     <div class="ml-3 h-7 flex items-center">
-                      <button type="button" class="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="open = false">
+                      <button type="button" class="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="open = false">
                         <span class="sr-only">Close panel</span>
                         <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                       </button>
