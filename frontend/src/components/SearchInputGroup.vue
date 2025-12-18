@@ -19,7 +19,7 @@
           <ComboboxOption v-for="item in filteredItems" :key="item.id" :value="item" class="relative cursor-default select-none py-2 pl-3 pr-9 ui-not-active:text-gray-900 ui-active:bg-primary ui-active:text-white">
             <div class="flex items-center">
               <img v-if="item.pictureUrl" :src="item.pictureUrl" class="w-6 h-6 shrink-0 rounded-full" alt="group icon" />
-              <div v-else class="w-6 h-6 flex items-center rounded-full rounded-full border border-gray-300 bg-white justify-center overflow-hidde">
+              <div v-else class="w-6 h-6 flex items-center rounded-full rounded-full border border-gray-300 bg-white justify-center overflow-hidden">
                 <UserGroupIcon class="w-4 h-4 shrink-0 text-gray-400" aria-hidden="true" />
               </div>
               <span class="ml-3 truncate">{{ item.name }}</span>
