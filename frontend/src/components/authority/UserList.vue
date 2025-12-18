@@ -1,10 +1,11 @@
 <template>
-  <div v-if="onFetchError == null">
-    <div v-if="users.length === 0">
-      {{ t('common.loading') }}
-    </div>
+  <div v-if="loading" class="text-center p-8 text-gray-500 text-sm">
+    {{ t('common.loading') }}
+  </div>
 
-    <div v-else class="flex flex-col">
+  <FetchError v-else-if="onFetchError != null" :error="onFetchError" :retry="fetchData" />
+
+  <div v-else class="flex flex-col">
       <h2 class="text-2xl font-bold leading-9 text-gray-900 sm:text-3xl sm:truncate mb-4">
         {{ t('users.title') }}
       </h2>
@@ -143,11 +144,6 @@
         <h3 class="mt-2 text-sm font-medium text-gray-900">{{ t('userList.filter.result.empty.title') }}</h3>
         <p class="mt-1 text-sm text-gray-500">{{ t('userList.filter.result.empty.description') }}</p>
       </div>
-    </div>
-  </div>
-
-  <div v-else>
-    <FetchError :error="onFetchError" :retry="fetchData" />
   </div>
 
   <!-- Delete Dialog -->
@@ -185,6 +181,7 @@ interface UserListDto {
 const { t } = useI18n({ useScope: 'global' });
 
 const users = ref<UserListDto[]>([]);
+const loading = ref(true);
 const onFetchError = ref<Error | null>(null);
 const deleteUserDialog = ref<typeof UserDeleteDialog>();
 const deletingUser = ref<UserListDto | null>(null);
@@ -220,10 +217,13 @@ watch(() => route.path, (newPath) => {
 });
 
 async function fetchData() {
+  loading.value = true;
   try {
     users.value = await backend.users.listAll();
   } catch (error) {
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
+  } finally {
+    loading.value = false;
   }
 }
 
