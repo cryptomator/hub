@@ -191,7 +191,7 @@ public class UsersResource {
 		} else {
 			deviceDtos = Set.of();
 		}
-		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getLanguage(), deviceDtos, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
+		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getLanguage(), deviceDtos, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
 	}
 
 	/**
@@ -215,7 +215,7 @@ public class UsersResource {
 			var event = events.get(d.getId());
 			return DeviceResource.DeviceDto.fromEntity(d, event);
 		}).collect(Collectors.toSet());
-		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getLanguage(), deviceDtos, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
+		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getLanguage(), deviceDtos, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
 	}
 
 	@POST
@@ -246,25 +246,12 @@ public class UsersResource {
 	@Operation(summary = "list all users with counts")
 	public List<UserDto.UserDtoWithCounts> getAll() {
 		return userRepo.findAll().stream()
-				.map(user -> {
-					String firstName = null;
-					String lastName = null;
-					try {
-						var keycloakUser = keycloakAdminService.getUser(user.getId());
-						firstName = keycloakUser.getFirstName();
-						lastName = keycloakUser.getLastName();
-					} catch (NotFoundException e) {
-						LOG.fine("Could not fetch Keycloak user data for " + user.getId());
-					}
-					return UserDto.justPublicInfoWithCounts(
-							user,
-							firstName,
-							lastName,
-							userRepo.countGroupsForUser(user.getId()),
-							userRepo.countVaultsForUser(user.getId()),
-							userRepo.countDevicesForUser(user.getId())
-					);
-				})
+				.map(user -> UserDto.justPublicInfoWithCounts(
+						user,
+						userRepo.countGroupsForUser(user.getId()),
+						userRepo.countVaultsForUser(user.getId()),
+						userRepo.countDevicesForUser(user.getId())
+				))
 				.toList();
 	}
 

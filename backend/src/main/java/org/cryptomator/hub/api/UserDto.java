@@ -1,7 +1,9 @@
 package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import jakarta.annotation.Nullable;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.validation.OnlyBase64Chars;
@@ -9,9 +11,12 @@ import org.cryptomator.hub.validation.ValidJWE;
 
 import java.util.Set;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public final class UserDto extends AuthorityDto {
 
 	private final String email;
+	private final String firstName;
+	private final String lastName;
 	private final String language;
 	private final Set<DeviceResource.DeviceDto> devices;
 	private final String ecdhPublicKey;
@@ -25,6 +30,8 @@ public final class UserDto extends AuthorityDto {
 			@JsonProperty("name") String name,
 			@JsonProperty("pictureUrl") String pictureUrl,
 			@JsonProperty("email") String email,
+			@JsonProperty("firstName") String firstName,
+			@JsonProperty("lastName") String lastName,
 			@JsonProperty("language") String language,
 			@JsonProperty("devices") Set<DeviceResource.DeviceDto> devices,
 			// Accept either "ecdhPublicKey" or the legacy "publicKey" on input
@@ -37,6 +44,8 @@ public final class UserDto extends AuthorityDto {
 			@Nullable @JsonProperty("setupCode") @ValidJWE String setupCode) {
 		super(id, Type.USER, name, pictureUrl);
 		this.email = email;
+		this.firstName = firstName;
+		this.lastName = lastName;
 		this.language = language;
 		this.devices = devices;
 		this.ecdhPublicKey = ecdhPublicKey != null ? ecdhPublicKey : publicKey;
@@ -50,18 +59,30 @@ public final class UserDto extends AuthorityDto {
 			String name,
 			String pictureUrl,
 			String email,
+			String firstName,
+			String lastName,
 			String language,
 			Set<DeviceResource.DeviceDto> devices,
 			String ecdhPublicKey,
 			String ecdsaPublicKey,
 			String privateKeys,
 			String setupCode) {
-		this(id, name, pictureUrl, email, language, devices, ecdhPublicKey, ecdhPublicKey, ecdsaPublicKey, privateKeys, privateKeys, setupCode);
+		this(id, name, pictureUrl, email, firstName, lastName, language, devices, ecdhPublicKey, ecdhPublicKey, ecdsaPublicKey, privateKeys, privateKeys, setupCode);
 	}
 
 	@JsonProperty("email")
 	public String getEmail() {
 		return email;
+	}
+
+	@JsonProperty("firstName")
+	public String getFirstName() {
+		return firstName;
+	}
+
+	@JsonProperty("lastName")
+	public String getLastName() {
+		return lastName;
 	}
 
 	@JsonProperty("language")
@@ -120,6 +141,8 @@ public final class UserDto extends AuthorityDto {
 				user.getName(),
 				user.getPictureUrl(),
 				user.getEmail(),
+				user.getFirstName(),
+				user.getLastName(),
 				user.getLanguage(),
 				Set.of(),
 				user.getEcdhPublicKey(),
@@ -128,18 +151,9 @@ public final class UserDto extends AuthorityDto {
 				null);
 	}
 
-	public static UserDtoWithCounts justPublicInfoWithCounts(User user, String firstName, String lastName, long groupsCount, long vaultsCount, long devicesCount) {
+	public static UserDtoWithCounts justPublicInfoWithCounts(User user, long groupsCount, long vaultsCount, long devicesCount) {
 		return new UserDtoWithCounts(
-				user.getId(),
-				Type.USER,
-				user.getName(),
-				user.getPictureUrl(),
-				user.getEmail(),
-				user.getLanguage(),
-				user.getEcdhPublicKey(),
-				user.getEcdsaPublicKey(),
-				firstName,
-				lastName,
+				UserDto.justPublicInfo(user),
 				devicesCount,
 				groupsCount,
 				vaultsCount
@@ -147,41 +161,9 @@ public final class UserDto extends AuthorityDto {
 	}
 
 	public record UserDtoWithCounts(
-			@JsonProperty("id") String id,
-			@JsonProperty("type") AuthorityDto.Type type,
-			@JsonProperty("name") String name,
-			@JsonProperty("pictureUrl") String pictureUrl,
-			@JsonProperty("email") String email,
-			@JsonProperty("language") String language,
-			@JsonProperty("ecdhPublicKey") String ecdhPublicKey,
-			@JsonProperty("ecdsaPublicKey") String ecdsaPublicKey,
-			@JsonProperty("firstName") String firstName,
-			@JsonProperty("lastName") String lastName,
+			@JsonUnwrapped UserDto user,
 			@JsonProperty("devicesCount") long devicesCount,
 			@JsonProperty("groupsCount") long groupsCount,
 			@JsonProperty("vaultsCount") long vaultsCount
-	) {
-	}
-
-	public record UserDtoWithName(
-			@JsonProperty("id") String id,
-			@JsonProperty("type") AuthorityDto.Type type,
-			@JsonProperty("name") String name,
-			@JsonProperty("pictureUrl") String pictureUrl,
-			@JsonProperty("email") String email,
-			@JsonProperty("firstName") String firstName,
-			@JsonProperty("lastName") String lastName
-	) {
-		public static UserDtoWithName from(User user, String firstName, String lastName) {
-			return new UserDtoWithName(
-					user.getId(),
-					AuthorityDto.Type.USER,
-					user.getName(),
-					user.getPictureUrl(),
-					user.getEmail(),
-					firstName,
-					lastName
-			);
-		}
-	}
+	) {}
 }

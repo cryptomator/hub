@@ -65,7 +65,7 @@ public class GroupsResource {
 	@RolesAllowed("admin")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "list all effective group members")
-	public List<UserDto.UserDtoWithName> getEffectiveMembers(@PathParam("groupId") @ValidId String groupId) {
+	public List<UserDto> getEffectiveMembers(@PathParam("groupId") @ValidId String groupId) {
 		return getMembersWithNames(groupId);
 	}
 
@@ -135,7 +135,7 @@ public class GroupsResource {
 			throw new jakarta.ws.rs.NotFoundException("Group not found: " + groupId);
 		}
 
-		List<UserDto.UserDtoWithName> members = getMembersWithNames(groupId);
+		List<UserDto> members = getMembersWithNames(groupId);
 
 		List<VaultResource.VaultDtoWithRole> vaults = vaultAccessRepo.findByAuthority(groupId)
 				.map(va -> VaultResource.VaultDtoWithRole.from(va.getVault(), va.getRole()))
@@ -176,20 +176,9 @@ public class GroupsResource {
 		return Response.noContent().build();
 	}
 
-	private List<UserDto.UserDtoWithName> getMembersWithNames(String groupId) {
+	private List<UserDto> getMembersWithNames(String groupId) {
 		return userRepo.getEffectiveGroupUsers(groupId)
-				.map(user -> {
-					String firstName = null;
-					String lastName = null;
-					try {
-						var keycloakUser = keycloakAdminService.getUser(user.getId());
-						firstName = keycloakUser.getFirstName();
-						lastName = keycloakUser.getLastName();
-					} catch (Exception e) {
-						LOG.fine("Could not fetch Keycloak user data for " + user.getId());
-					}
-					return UserDto.UserDtoWithName.from(user, firstName, lastName);
-				})
+				.map(UserDto::justPublicInfo)
 				.toList();
 	}
 
@@ -209,10 +198,10 @@ public class GroupsResource {
 			@JsonProperty("id") String id,
 			@JsonProperty("name") String name,
 			@JsonProperty("pictureUrl") String pictureUrl,
-			@JsonProperty("members") List<UserDto.UserDtoWithName> members,
+			@JsonProperty("members") List<UserDto> members,
 			@JsonProperty("vaults") List<VaultResource.VaultDtoWithRole> vaults
 	) {
-		public static GroupDtoWithDetails from(Group group, List<UserDto.UserDtoWithName> members, List<VaultResource.VaultDtoWithRole> vaults) {
+		public static GroupDtoWithDetails from(Group group, List<UserDto> members, List<VaultResource.VaultDtoWithRole> vaults) {
 			return new GroupDtoWithDetails(
 					group.getId(),
 					group.getName(),

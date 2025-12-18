@@ -61,7 +61,7 @@ public class KeycloakAuthorityProvider {
 
 	private KeycloakUserDto mapToUser(UserRepresentation userRepresentation) {
 		var pictureUrl = parsePictureUrl(userRepresentation.getAttributes());
-		return new KeycloakUserDto(userRepresentation.getId(), userRepresentation.getUsername(), userRepresentation.getEmail(), pictureUrl);
+		return new KeycloakUserDto(userRepresentation.getId(), userRepresentation.getUsername(), userRepresentation.getEmail(), userRepresentation.getFirstName(), userRepresentation.getLastName(), pictureUrl);
 	}
 
 	private String parsePictureUrl(Map<String, List<String>> attributes) {

@@ -65,6 +65,8 @@ public class KeycloakAuthorityPuller {
 			databaseUser.setId(keycloakUser.id());
 			databaseUser.setName(keycloakUser.name());
 			databaseUser.setEmail(keycloakUser.email());
+			databaseUser.setFirstName(keycloakUser.firstName());
+			databaseUser.setLastName(keycloakUser.lastName());
 			databaseUser.setPictureUrl(keycloakUser.pictureUrl());
 			return databaseUser;
 		}).collect(Collectors.toMap(User::getId, Function.identity()));
@@ -89,6 +91,8 @@ public class KeycloakAuthorityPuller {
 			var keycloakUser = keycloakUsers.get(id);
 			databaseUser.setName(keycloakUser.name());
 			databaseUser.setEmail(keycloakUser.email());
+			databaseUser.setFirstName(keycloakUser.firstName());
+			databaseUser.setLastName(keycloakUser.lastName());
 			databaseUser.setPictureUrl(keycloakUser.pictureUrl());
 		}
 	}
