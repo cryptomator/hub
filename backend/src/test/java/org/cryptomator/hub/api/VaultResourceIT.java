@@ -90,13 +90,13 @@ public class VaultResourceIT {
 	public Flyway flyway;
 
 	@BeforeAll
-	public static void beforeAll() {
+	static void beforeAll() {
 		RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
 	}
 
 	@BeforeEach
 	@Transactional
-	public void setupTestData() {
+	void setupTestData() {
 		var user998 = new User();
 		user998.setId("user998");
 		user998.setName("User 998");
@@ -122,7 +122,7 @@ public class VaultResourceIT {
 
 	@AfterEach
 	@Transactional
-	public void cleanupTestData() {
+	void cleanupTestData() {
 		userRepo.deleteByIds(List.of("user998", "user999"));
 	}
 
@@ -138,7 +138,7 @@ public class VaultResourceIT {
 		private static final String VALID_AUTH_PRI = "base64";
 
 		@Test
-		public void testValidDto() {
+		void testValidDto() {
 			var dto = new VaultResource.VaultDto(VALID_ID, VALID_NAME, "foobarbaz", false, Instant.parse("2020-02-20T20:20:20Z"), VALID_MASTERKEY, 8, VALID_SALT, VALID_AUTH_PUB, VALID_AUTH_PRI);
 			var violations = validator.validate(dto);
 			MatcherAssert.assertThat(violations, Matchers.empty());
@@ -156,7 +156,7 @@ public class VaultResourceIT {
 
 		@Test
 		@DisplayName("GET /vaults/accessible returns 200")
-		public void testGetSharedOrOwnedNotArchived() {
+		void testGetSharedOrOwnedNotArchived() {
 			when().get("/vaults/accessible")
 					.then().statusCode(200)
 					.body("id", hasItems(equalToIgnoringCase("7E57C0DE-0000-4000-8000-000100001111"), equalToIgnoringCase("7E57C0DE-0000-4000-8000-000100002222")));
@@ -164,7 +164,7 @@ public class VaultResourceIT {
 
 		@Test
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111 returns 200")
-		public void testGetVault1() {
+		void testGetVault1() {
 			when().get("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(200)
 					.body("id", equalToIgnoringCase("7E57C0DE-0000-4000-8000-000100001111"));
@@ -172,14 +172,14 @@ public class VaultResourceIT {
 
 		@Test
 		@DisplayName("GET /vaults/nonExistingVault returns 404")
-		public void testGetVault2() {
+		void testGetVault2() {
 			when().get("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-BADBADBADBAD")
 					.then().statusCode(404);
 		}
 
 		@Test
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/access-token returns 200 using user access")
-		public void testUnlock1() {
+		void testUnlock1() {
 			when().get("/vaults/{vaultId}/access-token", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(200)
 					.body(is("jwe.jwe.jwe.vault1.user1"));
@@ -187,7 +187,7 @@ public class VaultResourceIT {
 
 		@Test
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100002222/access-token returns 200 using group access")
-		public void testUnlock2() {
+		void testUnlock2() {
 			when().get("/vaults/{vaultId}/access-token", "7E57C0DE-0000-4000-8000-000100002222")
 					.then().statusCode(200)
 					.body(is("jwe.jwe.jwe.vault2.user1"));
@@ -195,7 +195,7 @@ public class VaultResourceIT {
 
 		@Test
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/access-token returns 200 using user access with evenIfArchived set")
-		public void testUnlock3() {
+		void testUnlock3() {
 			when().get("/vaults/{vaultId}/access-token?evenIfArchived=true", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(200)
 					.body(is("jwe.jwe.jwe.vault1.user1"));
@@ -203,7 +203,7 @@ public class VaultResourceIT {
 
 		@Test
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/access-token with remote IP and device ID stores it in audit log")
-		public void testUnlock4() throws SQLException {
+		void testUnlock4() throws SQLException {
 			given().header("HUB-DEVICE-ID", "123456789123456789")
 					.header("X-Forwarded-For", "1.2.3.4")
 					.when().get("/vaults/{vaultId}/access-token", "7E57C0DE-0000-4000-8000-000100001111")
@@ -220,21 +220,21 @@ public class VaultResourceIT {
 
 		@Test
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-00010000AAAA/access-token returns 410 for archived vaults")
-		public void testUnlockArchived1() {
+		void testUnlockArchived1() {
 			when().get("/vaults/{vaultId}/access-token", "7E57C0DE-0000-4000-8000-00010000AAAA")
 					.then().statusCode(410);
 		}
 
 		@Test
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-00010000AAAA/access-token returns 410 for archived vaults with evenIfArchived set to false")
-		public void testUnlockArchived2() {
+		void testUnlockArchived2() {
 			when().get("/vaults/{vaultId}/access-token?evenIfArchived=false", "7E57C0DE-0000-4000-8000-00010000AAAA")
 					.then().statusCode(410);
 		}
 
 		@Test
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-00010000AAAA/access-token returns 200 for archived vaults with evenIfArchived set to true")
-		public void testUnlockArchived3() throws SQLException {
+		void testUnlockArchived3() throws SQLException {
 			when().get("/vaults/{vaultId}/access-token?evenIfArchived=true", "7E57C0DE-0000-4000-8000-00010000AAAA")
 					.then().statusCode(200);
 		}
@@ -249,7 +249,7 @@ public class VaultResourceIT {
 
 			@Test
 			@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/keys/legacyDevice1 returns 200 using user access")
-			public void testUnlock1() {
+			void testUnlock1() {
 				when().get("/vaults/{vaultId}/keys/{deviceId}", "7E57C0DE-0000-4000-8000-000100001111", "legacyDevice1")
 						.then().statusCode(200)
 						.body(is("legacy.jwe.jwe.vault1.device1"));
@@ -257,7 +257,7 @@ public class VaultResourceIT {
 
 			@Test
 			@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100002222/keys/legacyDevice3 returns 200 using group access")
-			public void testUnlock2() {
+			void testUnlock2() {
 				when().get("/vaults/{vaultId}/keys/{deviceId}", "7E57C0DE-0000-4000-8000-000100002222", "legacyDevice3")
 						.then().statusCode(200)
 						.body(is("legacy.jwe.jwe.vault2.device3"));
@@ -265,21 +265,21 @@ public class VaultResourceIT {
 
 			@Test
 			@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/keys/noSuchDevice returns 403") // legacy unlock must not encourage to register a legacy device by responding with 404 here
-			public void testUnlock3() {
+			void testUnlock3() {
 				when().get("/vaults/{vaultId}/keys/{deviceId}", "7E57C0DE-0000-4000-8000-000100001111", "noSuchDevice")
 						.then().statusCode(403);
 			}
 
 			@Test
 			@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/keys/legacyDevice2 returns 403")
-			public void testUnlock4() {
+			void testUnlock4() {
 				when().get("/vaults/{vaultId}/keys/{deviceId}", "7E57C0DE-0000-4000-8000-000100001111", "legacyDevice2")
 						.then().statusCode(403);
 			}
 
 			@Test
 			@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-00010000AAAA/keys/someDevice returns 410 for archived vaults")
-			public void testUnlockArchived() {
+			void testUnlockArchived() {
 				when().get("/vaults/{vaultId}/keys/{deviceId}", "7E57C0DE-0000-4000-8000-00010000AAAA", "legacyDevice1")
 						.then().statusCode(410);
 			}
@@ -299,14 +299,14 @@ public class VaultResourceIT {
 		@Test
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/access-token returns 449, because user2 is not initialized")
 		@DBRollbackBefore
-		public void testUnlock() {
+		void testUnlock() {
 			when().get("/vaults/{vaultId}/access-token", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(449);
 		}
 
 		@Test
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100003333 returns 403 for missing role")
-		public void testCreateVaultWithMissingRole() {
+		void testCreateVaultWithMissingRole() {
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100003333");
 			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", "Test vault 3", false, Instant.parse("2112-12-21T21:12:21Z"), "masterkey3", 42, "NaCl", "authPubKey3", "authPrvKey3");
 
@@ -329,7 +329,7 @@ public class VaultResourceIT {
 		@Test
 		@Order(1)
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100003333 returns 201")
-		public void testCreateVault1() {
+		void testCreateVault1() {
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100003333");
 			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", "Test vault 3", false, Instant.parse("2112-12-21T21:12:21Z"), "masterkey3", 42, "NaCl", "authPubKey3", "authPrvKey3");
 
@@ -345,7 +345,7 @@ public class VaultResourceIT {
 		@Test
 		@Order(1)
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-BADBADBADBAD returns 400 due to malformed request body")
-		public void testCreateVault2() {
+		void testCreateVault2() {
 			given().contentType(ContentType.JSON)
 					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-BADBADBADBAD") // invalid body (expected json)
 					.then().statusCode(400);
@@ -354,7 +354,7 @@ public class VaultResourceIT {
 		@Test
 		@Order(1)
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100004444 returns 201 ignoring archived flag")
-		public void testCreateVault3() {
+		void testCreateVault3() {
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100004444");
 			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", "Test vault 4", true, Instant.parse("2112-12-21T21:12:21Z"), "masterkey4", 42, "NaCl", "authPubKey4", "authPrvKey4");
 
@@ -370,7 +370,7 @@ public class VaultResourceIT {
 		@Test
 		@Order(2)
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100003333 returns 200, updating only name, description and archive flag")
-		public void testUpdateVault() {
+		void testUpdateVault() {
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100003333");
 			var vaultDto = new VaultResource.VaultDto(uuid, "VaultUpdated", "Vault updated.", true, Instant.parse("2222-11-11T11:11:11Z"), "doNotUpdate", 27, "doNotUpdate", "doNotUpdate", "doNotUpdate");
 			given().contentType(ContentType.JSON)
@@ -397,7 +397,7 @@ public class VaultResourceIT {
 
 		@Test
 		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100001111/access-tokens returns 404 for [user1, user666]")
-		public void testGrantAccess0() {
+		void testGrantAccess0() {
 			given().contentType(ContentType.JSON).body(Map.of("user1", "jwe.jwe.jwe.vault1.user1", "user666", "jwe.jwe.jwe.vault1.user666"))
 					.when().post("/vaults/{vaultId}/access-tokens/", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(404);
@@ -405,7 +405,7 @@ public class VaultResourceIT {
 
 		@Test
 		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100001111/access-tokens returns 200 for [user998, user999]")
-		public void testGrantAccess1() {
+		void testGrantAccess1() {
 			given().contentType(ContentType.JSON).body(Map.of("user998", "jwe.jwe.jwe.vault1.user998", "user999", "jwe.jwe.jwe.vault1.user999"))
 					.when().post("/vaults/{vaultId}/access-tokens/", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(200);
@@ -413,7 +413,7 @@ public class VaultResourceIT {
 
 		@Test
 		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100001111/access-tokens returns 200 for user1")
-		public void testGrantAccess2() {
+		void testGrantAccess2() {
 			given().contentType(ContentType.JSON).body(Map.of("user1", "jwe.jwe.jwe.vault1.user1"))
 					.when().post("/vaults/{vaultId}/access-tokens/", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(200);
@@ -421,7 +421,7 @@ public class VaultResourceIT {
 
 		@Test
 		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-BADBADBADBAD/access-tokens returns 403 (not owning this vault)")
-		public void testGrantAccess3() {
+		void testGrantAccess3() {
 			given().contentType(ContentType.JSON).body(Map.of("user1", "jwe.jwe.jwe.vault666.user1"))
 					.when().post("/vaults/{vaultId}/access-tokens/", "7E57C0DE-0000-4000-8000-BADBADBADBAD")
 					.then().statusCode(403);
@@ -429,7 +429,7 @@ public class VaultResourceIT {
 
 		@Test
 		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100001111/access-tokens returns 404 for nonExistingUser")
-		public void testGrantAccess4() {
+		void testGrantAccess4() {
 			given().contentType(ContentType.JSON).body(Map.of("user666", "jwe.jwe.jwe.vault1.user666"))
 					.when().post("/vaults/{vaultId}/access-tokens/", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(404);
@@ -437,7 +437,7 @@ public class VaultResourceIT {
 
 		@Test
 		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100001111/access-tokens returns 400 for empty body")
-		public void testGrantAccess5() {
+		void testGrantAccess5() {
 			given().contentType(ContentType.JSON).body(Map.of())
 					.when().post("/vaults/{vaultId}/access-tokens/", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(400);
@@ -445,7 +445,7 @@ public class VaultResourceIT {
 
 		@Test
 		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-00010000AAAA/access-tokens returns 200 for user1 and vault archived")
-		public void testGrantAccessArchived() {
+		void testGrantAccessArchived() {
 			given().contentType(ContentType.JSON).body(Map.of("user1", "jwe.jwe.jwe.vaultAAA.user1"))
 					.when().post("/vaults/{vaultId}/access-tokens/", "7E57C0DE-0000-4000-8000-00010000AAAA")
 					.then().statusCode(200);
@@ -465,7 +465,7 @@ public class VaultResourceIT {
 		@Test
 		@Order(1)
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100002222/users/user9999 returns 404 - no such user")
-		public void addNonExistingUser() {
+		void addNonExistingUser() {
 			given().when().put("/vaults/{vaultId}/users/{userId}", "7E57C0DE-0000-4000-8000-000100002222", "user9999")
 					.then().statusCode(404);
 		}
@@ -473,7 +473,7 @@ public class VaultResourceIT {
 		@Test
 		@Order(2)
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-BADBADBADBAD/users/user2 returns 403 - not owning a nonexisting vault")
-		public void addUserToNonExistingVault() {
+		void addUserToNonExistingVault() {
 			given().when().put("/vaults/{vaultId}/users/{userId}", "7E57C0DE-0000-4000-8000-BADBADBADBAD", "user2")
 					.then().statusCode(403);
 		}
@@ -481,7 +481,7 @@ public class VaultResourceIT {
 		@Test
 		@Order(4)
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100002222/members does not contain user2")
-		public void getMembersOfVault2a() {
+		void getMembersOfVault2a() {
 			given().when().get("/vaults/{vaultId}/members", "7E57C0DE-0000-4000-8000-000100002222")
 					.then().statusCode(200)
 					.body("users.id", not(hasItems("user2")));
@@ -490,7 +490,7 @@ public class VaultResourceIT {
 		@Test
 		@Order(4)
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/members returns 403")
-		public void getMembersOfVault1() {
+		void getMembersOfVault1() {
 			when().get("/vaults/{vaultId}/members", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(403);
 		}
@@ -498,7 +498,7 @@ public class VaultResourceIT {
 		@Test
 		@Order(5)
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100002222/users-requiring-access-grant contains user2 via group membership")
-		public void testGetUsersRequiringAccess1() throws SQLException {
+		void testGetUsersRequiringAccess1() throws SQLException {
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
 						UPDATE "user_details"
@@ -523,7 +523,7 @@ public class VaultResourceIT {
 		@Test
 		@Order(6)
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100002222/members/user2 returns 201")
-		public void testGrantDirectAccessToSelf() {
+		void testGrantDirectAccessToSelf() {
 			given().when().put("/vaults/{vaultId}/users/{userId}", "7E57C0DE-0000-4000-8000-000100002222", "user2")
 					.then().statusCode(201);
 		}
@@ -531,7 +531,7 @@ public class VaultResourceIT {
 		@Test
 		@Order(7)
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100002222/members does contain user2 directly")
-		public void getMembersOfVault2b() {
+		void getMembersOfVault2b() {
 			given().when().get("/vaults/{vaultId}/members", "7E57C0DE-0000-4000-8000-000100002222")
 					.then().statusCode(200)
 					.body("id", hasItems("user2"));
@@ -540,7 +540,7 @@ public class VaultResourceIT {
 		@Test
 		@Order(10)
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100002222/users-requiring-access-grant contains user2")
-		public void testGetUsersRequiringAccess2() throws SQLException {
+		void testGetUsersRequiringAccess2() throws SQLException {
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
 						UPDATE
@@ -565,7 +565,7 @@ public class VaultResourceIT {
 		@Test
 		@Order(11)
 		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100002222/access-tokens for user2 returns 200")
-		public void testGrantAccess() {
+		void testGrantAccess() {
 			given().contentType(ContentType.JSON).body(Map.of("user2", "jwe.jwe.jwe.vault2.user2"))
 					.when().post("/vaults/{vaultId}/access-tokens/", "7E57C0DE-0000-4000-8000-000100002222")
 					.then().statusCode(200);
@@ -574,7 +574,7 @@ public class VaultResourceIT {
 		@Test
 		@Order(12)
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100002222/users-requiring-access-grant contains not user2")
-		public void testGetUsersRequiringAccess3() {
+		void testGetUsersRequiringAccess3() {
 			given().when().get("/vaults/{vaultId}/users-requiring-access-grant", "7E57C0DE-0000-4000-8000-000100002222")
 					.then().statusCode(200)
 					.body("id", not(hasItems("user2")));
@@ -583,7 +583,7 @@ public class VaultResourceIT {
 		@Test
 		@Order(13)
 		@DisplayName("DELETE /vaults/7E57C0DE-0000-4000-8000-000100002222/members/user2 returns 204")
-		public void testRevokeAccess() { // previously added in testGrantAccess()
+		void testRevokeAccess() { // previously added in testGrantAccess()
 			given().when().delete("/vaults/{vaultId}/authority/{userId}", "7E57C0DE-0000-4000-8000-000100002222", "user2")
 					.then().statusCode(204);
 		}
@@ -592,7 +592,7 @@ public class VaultResourceIT {
 		@Order(14)
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100002222/members does not contain user2")
 		@DBRollbackAfter
-		public void getMembersOfVault2c() {
+		void getMembersOfVault2c() {
 			given().when().get("/vaults/{vaultId}/members", "7E57C0DE-0000-4000-8000-000100002222")
 					.then().statusCode(200)
 					.body("id", not(hasItems("user2")));
@@ -612,7 +612,7 @@ public class VaultResourceIT {
 		@Test
 		@Order(1)
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111/groups/group3000 returns 404")
-		public void addNonExistingGroup() {
+		void addNonExistingGroup() {
 			given().when().put("/vaults/{vaultId}/groups/{groupId}", "7E57C0DE-0000-4000-8000-000100001111", "group3000")
 					.then().statusCode(404);
 		}
@@ -620,7 +620,7 @@ public class VaultResourceIT {
 		@Test
 		@Order(2)
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111/groups/group2 returns 201")
-		public void addGroupToVault() {
+		void addGroupToVault() {
 			given().when().put("/vaults/{vaultId}/groups/{groupId}", "7E57C0DE-0000-4000-8000-000100001111", "group2")
 					.then().statusCode(201);
 		}
@@ -628,7 +628,7 @@ public class VaultResourceIT {
 		@Test
 		@Order(3)
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/members does contain group2 with memberSize=3")
-		public void getMembersOfVault1a() {
+		void getMembersOfVault1a() {
 			given().when().get("/vaults/{vaultId}/members", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(200)
 					.body("find { it.id == 'group2' }.memberSize", equalTo(3));
@@ -637,7 +637,7 @@ public class VaultResourceIT {
 		@Test
 		@Order(3)
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100002222/members returns 403")
-		public void getMembersOfVault2() {
+		void getMembersOfVault2() {
 			given().when().get("/vaults/{vaultId}/members", "7E57C0DE-0000-4000-8000-000100002222")
 					.then().statusCode(403);
 		}
@@ -645,7 +645,7 @@ public class VaultResourceIT {
 		@Test
 		@Order(4)
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/users-requiring-access-grant contains user999")
-		public void testGetUsersRequiringAccess3() {
+		void testGetUsersRequiringAccess3() {
 			given().when().get("/vaults/{vaultId}/users-requiring-access-grant", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(200)
 					.body("id", hasItems("user999"));
@@ -654,7 +654,7 @@ public class VaultResourceIT {
 		@Test
 		@Order(5)
 		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100001111/access-tokens for user999 returns 200")
-		public void testGrantAccess2() {
+		void testGrantAccess2() {
 			given().contentType(ContentType.JSON).body(Map.of("user999", "jwe.jwe.jwe.vault2.user999"))
 					.when().post("/vaults/{vaultId}/access-tokens/", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(200);
@@ -667,7 +667,7 @@ public class VaultResourceIT {
 		@Test
 		@Order(7)
 		@DisplayName("DELETE /vaults/7E57C0DE-0000-4000-8000-000100001111/groups/group2 returns 204")
-		public void removeGroup2() {
+		void removeGroup2() {
 			given().when().delete("/vaults/{vaultId}/authority/{groupId}", "7E57C0DE-0000-4000-8000-000100001111", "group2")
 					.then().statusCode(204);
 		}
@@ -676,7 +676,7 @@ public class VaultResourceIT {
 		@Order(8)
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/members does not contain group2")
 		@DBRollbackAfter
-		public void getMembersOfVault1b() {
+		void getMembersOfVault1b() {
 			given().when().get("/vaults/{vaultId}/members", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(200)
 					.body("id", not(hasItems("group2")));
@@ -697,7 +697,7 @@ public class VaultResourceIT {
 		private static Algorithm JWT_ALG;
 
 		@BeforeAll
-		public void setup() throws GeneralSecurityException {
+		void setup() throws GeneralSecurityException {
 			var keyPairGen = KeyPairGenerator.getInstance("EC");
 			keyPairGen.initialize(new ECGenParameterSpec("secp384r1"));
 			var keyPair = keyPairGen.generateKeyPair();
@@ -720,7 +720,7 @@ public class VaultResourceIT {
 		@Test
 		@Order(1)
 		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100009999/claim-ownership returns 400 - JWT has wrong SUB")
-		public void testClaimOwnershipIncorrectJWT1() {
+		void testClaimOwnershipIncorrectJWT1() {
 			var proof = JWT.create()
 					.withNotBefore(Instant.now().minusSeconds(10))
 					.withExpiresAt(Instant.now().plusSeconds(10))
@@ -736,7 +736,7 @@ public class VaultResourceIT {
 		@Test
 		@Order(1)
 		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100009999/claim-ownership returns 400 - JWT missing NBF")
-		public void testClaimOwnershipIncorrectJWT2() {
+		void testClaimOwnershipIncorrectJWT2() {
 			var proof = JWT.create()
 					.withExpiresAt(Instant.now().plusSeconds(10))
 					.withSubject("user1")
@@ -751,7 +751,7 @@ public class VaultResourceIT {
 		@Test
 		@Order(1)
 		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100009999/claim-ownership returns 400 - JWT not yet valid")
-		public void testClaimOwnershipIncorrectJWT3() {
+		void testClaimOwnershipIncorrectJWT3() {
 			var proof = JWT.create()
 					.withNotBefore(Instant.now().plusSeconds(60))
 					.withExpiresAt(Instant.now().plusSeconds(10))
@@ -767,7 +767,7 @@ public class VaultResourceIT {
 		@Test
 		@Order(1)
 		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100009999/claim-ownership returns 400 - JWT missing EXP")
-		public void testClaimOwnershipIncorrectJWT4() {
+		void testClaimOwnershipIncorrectJWT4() {
 			var proof = JWT.create()
 					.withNotBefore(Instant.now().minusSeconds(10))
 					.withSubject("user1")
@@ -782,7 +782,7 @@ public class VaultResourceIT {
 		@Test
 		@Order(1)
 		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100009999/claim-ownership returns 400 - JWT expired")
-		public void testClaimOwnershipIncorrectJWT5() {
+		void testClaimOwnershipIncorrectJWT5() {
 			var proof = JWT.create()
 					.withNotBefore(Instant.now().minusSeconds(10))
 					.withExpiresAt(Instant.now().minusSeconds(60))
@@ -798,7 +798,7 @@ public class VaultResourceIT {
 		@Test
 		@Order(1)
 		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100009999/claim-ownership returns 400 - JWT wrong vaultId")
-		public void testClaimOwnershipIncorrectJWT6() {
+		void testClaimOwnershipIncorrectJWT6() {
 			var proof = JWT.create()
 					.withNotBefore(Instant.now().minusSeconds(10))
 					.withExpiresAt(Instant.now().plusSeconds(10))
@@ -814,7 +814,7 @@ public class VaultResourceIT {
 		@Test
 		@Order(1)
 		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100009999/claim-ownership returns 400 - JWT wrong signature")
-		public void testClaimOwnershipIncorrectJWT7() throws GeneralSecurityException {
+		void testClaimOwnershipIncorrectJWT7() throws GeneralSecurityException {
 			var keyPairGen = KeyPairGenerator.getInstance("EC");
 			keyPairGen.initialize(new ECGenParameterSpec("secp384r1"));
 			var differentKey = keyPairGen.generateKeyPair();
@@ -835,7 +835,7 @@ public class VaultResourceIT {
 		@Test
 		@Order(1)
 		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-BADBADBADBAD/claim-ownership returns 404")
-		public void testClaimOwnershipNoSuchVault() {
+		void testClaimOwnershipNoSuchVault() {
 			var proof = JWT.create()
 					.withJWTId(UUID.randomUUID().toString())
 					.withSubject("user1")
@@ -851,7 +851,7 @@ public class VaultResourceIT {
 		@Test
 		@Order(2)
 		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100009999/claim-ownership returns 200")
-		public void testClaimOwnershipSuccess() {
+		void testClaimOwnershipSuccess() {
 			var proof = JWT.create()
 					.withNotBefore(Instant.now().minusSeconds(10))
 					.withExpiresAt(Instant.now().plusSeconds(10))
@@ -867,7 +867,7 @@ public class VaultResourceIT {
 		@Test
 		@Order(3)
 		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100009999/claim-ownership returns 409")
-		public void testClaimOwnershipAlreadyClaimed() {
+		void testClaimOwnershipAlreadyClaimed() {
 			var proof = JWT.create()
 					.withNotBefore(Instant.now().minusSeconds(10))
 					.withExpiresAt(Instant.now().plusSeconds(10))
@@ -881,7 +881,7 @@ public class VaultResourceIT {
 		}
 
 		@AfterAll
-		public void cleanup() throws SQLException {
+		void cleanup() throws SQLException {
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
 						DELETE FROM "vault" WHERE "id" = '7E57C0DE-0000-4000-8000-000100009999';
@@ -923,7 +923,7 @@ public class VaultResourceIT {
 		@OidcSecurity(claims = {
 				@Claim(key = "sub", value = "user1")
 		})
-		public void testGetAllVaultsAsUser() {
+		void testGetAllVaultsAsUser() {
 			when().get("/vaults/all")
 					.then().statusCode(403);
 		}
@@ -934,7 +934,7 @@ public class VaultResourceIT {
 		@OidcSecurity(claims = {
 				@Claim(key = "sub", value = "user1")
 		})
-		public void testGetAllVaultsAsAdmin() {
+		void testGetAllVaultsAsAdmin() {
 			when().get("/vaults/all")
 					.then().statusCode(200)
 					.body("id", hasItems(equalToIgnoringCase("7E57C0DE-0000-4000-8000-000100001111"), equalToIgnoringCase("7E57C0DE-0000-4000-8000-000100002222"), equalToIgnoringCase("7E57C0DE-0000-4000-8000-00010000AAAA")));
@@ -955,7 +955,7 @@ public class VaultResourceIT {
 
 			@Test
 			@DisplayName("GET /vaults/some?ids=7e57c0de-0000-4000-8000-000100001111&ids=7e57c0de-0000-4000-8000-000100002222")
-			public void testListSomeVaults() {
+			void testListSomeVaults() {
 				given().param("ids", "7e57c0de-0000-4000-8000-000100001111", "7e57c0de-0000-4000-8000-000100002222")
 						.when().get("/vaults/some")
 						.then().statusCode(200)
@@ -964,7 +964,7 @@ public class VaultResourceIT {
 
 			@Test
 			@DisplayName("GET /vaults/some?ids=7e57c0de-0000-4000-8000-BADBADBADBAD")
-			public void testListSomeVaultsNotExistingId() {
+			void testListSomeVaultsNotExistingId() {
 				given().param("ids", "7e57c0de-0000-4000-8000-BADBADBADBAD")
 						.when().get("/vaults/some")
 						.then().statusCode(200)
@@ -973,7 +973,7 @@ public class VaultResourceIT {
 
 			@Test
 			@DisplayName("GET /vaults/some")
-			public void testListSomeVaultsNoParams() {
+			void testListSomeVaultsNoParams() {
 				given().when().get("/vaults/some")
 						.then().statusCode(200)
 						.body("", hasSize(0));
@@ -986,7 +986,7 @@ public class VaultResourceIT {
 		@OidcSecurity(claims = {
 				@Claim(key = "sub", value = "user1")
 		})
-		public void testListSomeVaultsAsUser() {
+		void testListSomeVaultsAsUser() {
 			given().param("ids", "7e57c0de-0000-4000-8000-000100001111")
 					.when().get("/vaults/some")
 					.then().statusCode(403);

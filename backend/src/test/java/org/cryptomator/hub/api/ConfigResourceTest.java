@@ -10,7 +10,7 @@ public class ConfigResourceTest {
 	ConfigResource configResource;
 
 	@BeforeEach
-	public void init() {
+	void init() {
 		this.configResource = new ConfigResource();
 	}
 

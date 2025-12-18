@@ -28,7 +28,7 @@ class EffectiveGroupMembershipIT {
 
 	@BeforeEach
 	@Transactional
-	public void setup() {
+	void setup() {
 		for (int i = 1; i <= 5; i++) {
 			User u = new User();
 			u.setId("u" + i);
@@ -62,7 +62,7 @@ class EffectiveGroupMembershipIT {
 
 	@AfterEach
 	@Transactional
-	public void teardown() {
+	void teardown() {
 		userRepo.deleteByIds(List.of("u1", "u2", "u3", "u4", "u5"));
 		groupRepo.deleteByIds(List.of( "g1", "g2", "g3", "g4", "g5"));
 	}
@@ -70,7 +70,7 @@ class EffectiveGroupMembershipIT {
 	@Test
 	@DisplayName("validate data after full update")
 	@Transactional
-	public void testDataAfterFullUpdate() {
+	void testDataAfterFullUpdate() {
 		Assertions.assertTrue(effectiveGroupMembershipRepo.isMember("g1", "u1"));
 		Assertions.assertTrue(effectiveGroupMembershipRepo.isMember("g1", "u2"));
 		Assertions.assertTrue(effectiveGroupMembershipRepo.isMember("g1", "u3"));
@@ -93,7 +93,7 @@ class EffectiveGroupMembershipIT {
 	@Test
 	@DisplayName("updateGroups after adding g5/u5")
 	@Transactional
-	public void updateGroupAfterAddingG5U5() {
+	void updateGroupAfterAddingG5U5() {
 		addMembers("g5", "u5");
 		effectiveGroupMembershipRepo.updateGroups(List.of("g5"));
 		Assertions.assertTrue(effectiveGroupMembershipRepo.isMember("g5", "u5"));
@@ -102,7 +102,7 @@ class EffectiveGroupMembershipIT {
 	@Test
 	@DisplayName("updateGroups after removing g2/g3")
 	@Transactional
-	public void updateGroupAfterRemovingG2G3() {
+	void updateGroupAfterRemovingG2G3() {
 		removeMembers("g2", "g3");
 		effectiveGroupMembershipRepo.updateGroups(List.of("g2"));
 		Assertions.assertTrue(effectiveGroupMembershipRepo.isMember("g2", "u2"));
@@ -117,7 +117,7 @@ class EffectiveGroupMembershipIT {
 	@Test
 	@DisplayName("updateUsers after adding g5/u5")
 	@Transactional
-	public void updateUsersAfterAddingG5U5() {
+	void updateUsersAfterAddingG5U5() {
 		addMembers("g5", "u5");
 		effectiveGroupMembershipRepo.updateUsers(List.of("u5"));
 		Assertions.assertTrue(effectiveGroupMembershipRepo.isMember("g5", "u5"));
@@ -126,7 +126,7 @@ class EffectiveGroupMembershipIT {
 	@Test
 	@DisplayName("updateUsers after adding g3/u5")
 	@Transactional
-	public void updateUsersAfterAddingG3U5() {
+	void updateUsersAfterAddingG3U5() {
 		addMembers("g3", "u5");
 		effectiveGroupMembershipRepo.updateUsers(List.of("u5"));
 		Assertions.assertTrue(effectiveGroupMembershipRepo.isMember("g3", "u5"));
@@ -137,7 +137,7 @@ class EffectiveGroupMembershipIT {
 	@Test
 	@DisplayName("updateUsers after removing g2/u2")
 	@Transactional
-	public void updateUsersAfterRemovingG2U2() {
+	void updateUsersAfterRemovingG2U2() {
 		removeMembers("g2", "u2");
 		effectiveGroupMembershipRepo.updateUsers(List.of("u2"));
 		Assertions.assertFalse(effectiveGroupMembershipRepo.isMember("g2", "u2"));
@@ -147,7 +147,7 @@ class EffectiveGroupMembershipIT {
 	@Test
 	@DisplayName("updateUsers after removing g2/u4")
 	@Transactional
-	public void updateUsersAfterRemovingG2U4() {
+	void updateUsersAfterRemovingG2U4() {
 		removeMembers("g2", "u4");
 		effectiveGroupMembershipRepo.updateUsers(List.of("u4"));
 		Assertions.assertTrue(effectiveGroupMembershipRepo.isMember("g3", "u4"));

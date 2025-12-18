@@ -21,7 +21,7 @@ public class LicenseValidatorTest {
 
 	@Test
 	@DisplayName("validate valid token")
-	public void testValidateValidToken() {
+	void testValidateValidToken() {
 		var jwt = validator.validate(VALID_TOKEN, "42");
 		Assertions.assertEquals("ES512", jwt.getAlgorithm());
 		Assertions.assertEquals("42", jwt.getId());
@@ -35,7 +35,7 @@ public class LicenseValidatorTest {
 
 	@Test
 	@DisplayName("validate valid token with mismatching hub id")
-	public void testValidateValidTokenWithMismatchingHubId() {
+	void testValidateValidTokenWithMismatchingHubId() {
 		Assertions.assertThrows(InvalidClaimException.class, () -> {
 			validator.validate(VALID_TOKEN, "123");
 		});
@@ -43,21 +43,21 @@ public class LicenseValidatorTest {
 
 	@Test
 	@DisplayName("validate expired token")
-	public void testValidateExpiredToken() {
+	void testValidateExpiredToken() {
 		// this should not throw an exception and return a JWT with an expired date
 		validator.validate(EXPIRED_TOKEN, "42");
 	}
 
 	@Test
 	@DisplayName("validate future token")
-	public void testValidateFutureToken() {
+	void testValidateFutureToken() {
 		// this should not throw an exception and return a JWT with an issued at in the future
 		validator.validate(FUTURE_TOKEN, "42");
 	}
 
 	@Test
 	@DisplayName("validate token with invalid signature")
-	public void testValidateTokenWithInvalidSignature() {
+	void testValidateTokenWithInvalidSignature() {
 		Assertions.assertThrows(SignatureVerificationException.class, () -> {
 			validator.validate(TOKEN_WITH_INVALID_SIGNATURE, "42");
 		});
@@ -65,7 +65,7 @@ public class LicenseValidatorTest {
 
 	@Test
 	@DisplayName("validate malformed token")
-	public void testValidateMalformedToken() {
+	void testValidateMalformedToken() {
 		Assertions.assertThrows(JWTDecodeException.class, () -> {
 			validator.validate(MALFORMED_TOKEN, "42");
 		});
