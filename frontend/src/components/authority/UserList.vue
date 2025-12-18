@@ -236,7 +236,9 @@ const filteredUsers = computed(() =>
 );
 
 const sortedUsers = computed(() =>
-  filteredUsers.value.slice().sort((a: UserListDto, b: UserListDto) => {
+  filteredUsers.value.toSorted((a, b) => {
+    if (a.id === currentUserId.value) return -1;
+    if (b.id === currentUserId.value) return 1;
     return a.name.localeCompare(b.name);
   })
 );
