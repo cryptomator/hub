@@ -95,7 +95,7 @@ class KeycloakAuthorityPullerTest {
 
 			var added = remoteUserPuller.syncAddedUsers(keycloakUsers, databaseUsers);
 
-			Assertions.assertEquals(added.keySet(), addedUserIds);
+			Assertions.assertEquals(addedUserIds, added.keySet());
 			Mockito.verify(userRepo).persist(Mockito.<Iterable<User>>any());
 			Mockito.verify(effectiveGroupMembershipRepo).updateUsers(Mockito.argThat(addedUserIds::containsAll));
 			for (var userId : addedUserIds) {
@@ -232,7 +232,7 @@ class KeycloakAuthorityPullerTest {
 			var added = remoteUserPuller.syncAddedGroups(keycloakGroups, databaseGroups, databaseUsers);
 
 			var addedGroupIds = Set.of(addedGroupIdString);
-			Assertions.assertEquals(added.keySet(), addedGroupIds);
+			Assertions.assertEquals(addedGroupIds, added.keySet());
 			Mockito.verify(groupRepo).persist(Mockito.<Iterable<Group>>any());
 			Mockito.verify(effectiveGroupMembershipRepo).updateGroups(Mockito.argThat(addedGroupIds::containsAll));
 			for (var groupId : addedGroupIds) {
