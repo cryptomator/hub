@@ -20,7 +20,6 @@ import org.keycloak.representations.idm.UserRepresentation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -135,11 +134,18 @@ public class KeycloakAdminService {
 			user.setLastName(lastName);
 		}
 		if (pictureUrl != null) {
-			if (pictureUrl.isBlank()) {
-				user.setAttributes(Collections.emptyMap());
+			Map<String, List<String>> attrs = user.getAttributes();
+			if (attrs == null) {
+				attrs = new java.util.HashMap<>();
 			} else {
-				user.setAttributes(Map.of("picture", List.of(pictureUrl)));
+				attrs = new java.util.HashMap<>(attrs);
 			}
+			if (pictureUrl.isBlank()) {
+				attrs.remove("picture");
+			} else {
+				attrs.put("picture", List.of(pictureUrl));
+			}
+			user.setAttributes(attrs);
 		}
 
 		userResource.update(user);
@@ -187,6 +193,7 @@ public class KeycloakAdminService {
 		}
 	}
 
+	@Transactional
 	public User syncUser(String userId) {
 		try {
 			RealmResource realm = keycloak.realm(keycloakRealm);
@@ -389,18 +396,24 @@ public class KeycloakAdminService {
 
 		if (name != null && !name.isBlank()) {
 			group.setName(name);
-			group.setAttributes(null);
 			groupResource.update(group);
 		}
 
 		if (pictureUrl != null) {
 			try {
 				GroupRepresentation groupForPicture = groupResource.toRepresentation();
-				if (pictureUrl.isBlank()) {
-					groupForPicture.setAttributes(Collections.emptyMap());
+				Map<String, List<String>> attrs = groupForPicture.getAttributes();
+				if (attrs == null) {
+					attrs = new java.util.HashMap<>();
 				} else {
-					groupForPicture.setAttributes(Map.of("picture", List.of(pictureUrl)));
+					attrs = new java.util.HashMap<>(attrs);
 				}
+				if (pictureUrl.isBlank()) {
+					attrs.remove("picture");
+				} else {
+					attrs.put("picture", List.of(pictureUrl));
+				}
+				groupForPicture.setAttributes(attrs);
 				groupResource.update(groupForPicture);
 			} catch (Exception e) {
 				LOG.warn("Failed to update picture attribute for group {}", groupId, e);
