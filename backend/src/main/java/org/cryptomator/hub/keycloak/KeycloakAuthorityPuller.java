@@ -104,7 +104,7 @@ public class KeycloakAuthorityPuller {
 			databaseGroup.setPictureUrl(keycloakGroup.pictureUrl());
 			databaseGroup.setMembers(keycloakGroup.members().stream().map(KeycloakUserDto::id).map(allAuthorities::get).collect(Collectors.toSet()));
 			return databaseGroup;
-		}).collect(Collectors.toMap(Group::getId, Function.identity()));;
+		}).collect(Collectors.toMap(Group::getId, Function.identity()));
 		groupRepo.persist(added.values());
 		effectiveGroupMembershipRepo.updateGroups(addedIds);
 		return added;
