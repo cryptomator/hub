@@ -137,7 +137,7 @@
     </nav>
 
     <!-- Empty State for Search Results -->
-    <div v-else-if="query !== '' && sortedUsers.length == 0" class="mt-3 text-center">
+    <div v-if="query !== '' && sortedUsers.length === 0" class="mt-3 text-center">
       <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
         <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 15.75l-2.489-2.489m0 0a3.375 3.375 0 10-4.773-4.773 3.375 3.375 0 004.774 4.774zM21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
@@ -206,6 +206,7 @@ watch(() => route.path, (newPath) => {
 
 async function fetchData() {
   loading.value = true;
+  onFetchError.value = undefined;
   try {
     users.value = await backend.users.listAll();
   } catch (error) {

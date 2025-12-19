@@ -122,7 +122,7 @@ function handleGroupsSaved(newGroups: GroupDto[]) {
   newGroups.forEach(g => {
     if (!ids.has(g.id)) user.value.groups.push(g);
   });
-  user.value.groups.sort((a, b) => a.name.localeCompare(b.name, 'de', { sensitivity: 'base' }));
+  user.value.groups.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
 }
 
 onMounted(async () => {

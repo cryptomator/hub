@@ -366,8 +366,10 @@ class UserService {
     return axiosAuth.get<UserDto>('/users/me-with-legacy-devices-and-access').then(response => AuthorityService.fillInMissingPicture(response.data));
   }
 
-  public async removeUser(userId: string): Promise<UserDto> {
-    return axiosAuth.delete(`/users/${userId}`).then(response => response.data);
+  public async removeUser(userId: string): Promise<void> {
+    return axiosAuth.delete(`/users/${userId}`)
+      .then(() => {})
+      .catch((error) => rethrowAndConvertIfExpected(error, 404));
   }
 
   public async resetMe(): Promise<void> {

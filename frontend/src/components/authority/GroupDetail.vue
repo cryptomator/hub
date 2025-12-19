@@ -111,7 +111,7 @@ const group = ref<GroupDtoWithDetails>({
 function onMembersSaved(newMembers: AuthorityDto[]) {
   const ids = new Set(group.value.members.map(u => u.id));
   newMembers.forEach(u => { if (!ids.has(u.id)) group.value.members.push(u); });
-  group.value.members.sort((a, b) => a.name.localeCompare(b.name, 'de', { sensitivity: 'base' }));
+  group.value.members.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
 }
 
 const loading = ref(true);
