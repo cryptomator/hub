@@ -46,7 +46,7 @@
 
             <!-- Stats section -->
             <div class="mb-3 ml-13 text-xs text-gray-600">
-              <span>{{ t('userList.vaults.count') }}: {{ user.accessibleVaults ?? 0 }}</span>
+              <span>{{ t('userList.vaults.count') }}: {{ user.accessibleVaultCount ?? 0 }}</span>
               <span class="mx-2">|</span>
               <span>{{ t('userList.groups.count') }}: {{ user.groupsCount ?? 0 }}</span>
               <span class="mx-2">|</span>
@@ -83,7 +83,7 @@
                         </div>
                       </div>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.accessibleVaults ?? 0 }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.accessibleVaultCount ?? 0 }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.groupsCount ?? 0 }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.devicesCount ?? 0 }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

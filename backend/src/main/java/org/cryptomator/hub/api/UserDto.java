@@ -184,7 +184,7 @@ public final class UserDto extends AuthorityDto {
 			@JsonUnwrapped UserDto user,
 			@JsonProperty("devicesCount") long devicesCount,
 			@JsonProperty("groupsCount") long groupsCount,
-			@JsonProperty("vaultsCount") long vaultsCount
+			@JsonProperty("accessibleVaultCount") long accessibleVaultCount
 	) {}
 
 	public record WithDetails(

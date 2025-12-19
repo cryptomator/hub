@@ -91,7 +91,7 @@ export type UserDto = {
 export type UserDtoWithCounts = UserDto & {
   groupsCount?: number;
   devicesCount?: number;
-  accessibleVaults?: number;
+  accessibleVaultCount?: number;
 }
 
 export type UserDtoWithDetails = UserDto & {
