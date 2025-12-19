@@ -235,7 +235,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import { base64 } from '@scure/base';
-import backend from '../../common/backend';
+import backend, { RealmRole } from '../../common/backend';
 import { FormValidator } from '../../common/formvalidator';
 import { UTF8 } from '../../common/util';
 import BreadcrumbNav from '../BreadcrumbNav.vue';
@@ -245,7 +245,7 @@ interface UserData {
   lastName: string;
   username: string;
   email: string;
-  roles: Role[];
+  roles: SelectableRealmRole[];
   picture?: File | null;
   previewUrl?: string | null;
 }
@@ -285,9 +285,9 @@ const lastName = ref('');
 const username = ref('');
 const email = ref('');
 
-type Role = 'admin' | 'create-vaults';
-const selectedRoles = ref<Role[]>([]);
-const roleOptions: Record<Role, string> = {
+type SelectableRealmRole = Exclude<RealmRole, 'user'>;
+const selectedRoles = ref<SelectableRealmRole[]>([]);
+const roleOptions: Record<SelectableRealmRole, string> = {
   'admin': 'Admin',
   'create-vaults': 'Create Vaults',
 };
@@ -295,7 +295,7 @@ const roleOptions: Record<Role, string> = {
 const errors = ref<Record<string, string>>({});
 const processing = ref(false);
 const userSaved = ref(false);
-const submitError = ref<string | null>(null);
+const submitError = ref<string>();
 
 const password = ref('');
 const passwordConfirm = ref('');
@@ -342,8 +342,8 @@ onMounted(async () => {
       email.value = fetchedUser.email;
       pictureUrl.value = fetchedUser.pictureUrl || '';
 
-      const userRoles = (fetchedUser as { roles?: string[] }).roles || [];
-      selectedRoles.value = userRoles.filter((r): r is Role => r === 'admin' || r === 'create-vaults');
+      const userRoles = fetchedUser.realmRoles;
+      selectedRoles.value = userRoles.filter((r): r is SelectableRealmRole => r === 'admin' || r === 'create-vaults');
 
       initialUserData.value = {
         firstName: firstName.value,
@@ -371,7 +371,7 @@ onMounted(async () => {
   }
 });
 
-function removeRole(role: Role) {
+function removeRole(role: SelectableRealmRole) {
   selectedRoles.value = selectedRoles.value.filter(r => r !== role);
 }
 

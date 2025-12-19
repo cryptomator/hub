@@ -63,7 +63,7 @@ export type DeviceDto = {
 
 export type VaultRole = 'MEMBER' | 'OWNER';
 
-export type RealmRole = 'admin' | 'create-vaults';
+export type RealmRole = 'user' | 'admin' | 'create-vaults';
 
 export type AccessGrant = {
   userId: string,

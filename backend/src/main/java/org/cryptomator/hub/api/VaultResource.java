@@ -46,6 +46,7 @@ import org.cryptomator.hub.entities.events.EventLogger;
 import org.cryptomator.hub.entities.events.VaultKeyRetrievedEvent;
 import org.cryptomator.hub.filters.ActiveLicense;
 import org.cryptomator.hub.filters.VaultRole;
+import org.cryptomator.hub.keycloak.RealmRole;
 import org.cryptomator.hub.license.LicenseHolder;
 import org.cryptomator.hub.validation.NoHtmlOrScriptChars;
 import org.cryptomator.hub.validation.OnlyBase64Chars;
@@ -385,7 +386,7 @@ public class VaultResource {
 	@GET
 	@Path("/{vaultId}")
 	@RolesAllowed("user")
-	@VaultRole(value = {VaultAccess.Role.MEMBER, VaultAccess.Role.OWNER}, bypassForRealmRole = true, realmRole = "admin", onMissingVault = VaultRole.OnMissingVault.NOT_FOUND)
+	@VaultRole(value = {VaultAccess.Role.MEMBER, VaultAccess.Role.OWNER}, bypassForRealmRole = true, realmRole = RealmRole.ADMIN, onMissingVault = VaultRole.OnMissingVault.NOT_FOUND)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
 	@Operation(summary = "gets a vault")
@@ -399,7 +400,7 @@ public class VaultResource {
 	@PUT
 	@Path("/{vaultId}")
 	@RolesAllowed("user") // general authentication. VaultRole filter will check for specific access rights
-	@VaultRole(value = VaultAccess.Role.OWNER, onMissingVault = VaultRole.OnMissingVault.REQUIRE_REALM_ROLE, realmRole = "create-vaults")
+	@VaultRole(value = VaultAccess.Role.OWNER, onMissingVault = VaultRole.OnMissingVault.REQUIRE_REALM_ROLE, realmRole = RealmRole.CREATE_VAULTS)
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional

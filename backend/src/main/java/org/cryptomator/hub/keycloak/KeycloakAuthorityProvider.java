@@ -6,9 +6,11 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.representations.idm.GroupRepresentation;
+import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -67,7 +69,7 @@ public class KeycloakAuthorityProvider {
 				userRepresentation.getFirstName(),
 				userRepresentation.getLastName(),
 				pictureUrl,
-				userRepresentation.getRealmRoles() == null ? Set.of() : Set.copyOf(userRepresentation.getRealmRoles()));
+				RealmRole.fromKcNames(userRepresentation.getRealmRoles()));
 	}
 
 	private String parsePictureUrl(Map<String, List<String>> attributes) {
@@ -119,5 +121,24 @@ public class KeycloakAuthorityProvider {
 		} while (currentRequestedMemebers.size() == MAX_COUNT_PER_REQUEST);
 
 		return members.stream().map(this::mapToUser).collect(Collectors.toSet());
+	}
+
+	public List<UserRepresentation> usersInRole(RealmRole role) {
+		return usersInRole(keycloak.realm(keycloakRealm), role.kcName());
+	}
+
+	//visible for testing
+	List<UserRepresentation> usersInRole(RealmResource realm, String roleName) {
+		var roles = realm.roles();
+
+		List<UserRepresentation> users = new ArrayList<>();
+		List<UserRepresentation> currentBatch;
+
+		do {
+			currentBatch = roles.get(roleName).getUserMembers(true, users.size(), MAX_COUNT_PER_REQUEST);
+			users.addAll(currentBatch);
+		} while (currentBatch.size() == MAX_COUNT_PER_REQUEST);
+
+		return users;
 	}
 }

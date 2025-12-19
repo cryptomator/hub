@@ -155,7 +155,7 @@ public final class UserDto extends AuthorityDto {
 				user.getFirstName(),
 				user.getLastName(),
 				user.getLanguage(),
-				Set.copyOf(user.getRealmRoles()),
+				Set.of(user.getRealmRoles()),
 				Set.of(),
 				user.getEcdhPublicKey(),
 				user.getEcdsaPublicKey(),

@@ -33,6 +33,7 @@ import org.cryptomator.hub.entities.events.AuditEvent;
 import org.cryptomator.hub.entities.events.EventLogger;
 import org.cryptomator.hub.entities.events.VaultKeyRetrievedEvent;
 import org.cryptomator.hub.keycloak.KeycloakAdminService;
+import org.cryptomator.hub.keycloak.RealmRole;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
@@ -191,7 +192,7 @@ public class UsersResource {
 		} else {
 			deviceDtos = Set.of();
 		}
-		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getLanguage(), user.getRealmRoles(), deviceDtos, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
+		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getLanguage(), Set.of(user.getRealmRoles()), deviceDtos, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
 	}
 
 	/**
@@ -215,7 +216,7 @@ public class UsersResource {
 			var event = events.get(d.getId());
 			return DeviceResource.DeviceDto.fromEntity(d, event);
 		}).collect(Collectors.toSet());
-		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getLanguage(), user.getRealmRoles(), deviceDtos, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
+		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getLanguage(), Set.of(user.getRealmRoles()), deviceDtos, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
 	}
 
 	@POST
@@ -456,7 +457,7 @@ public class UsersResource {
 			@JsonProperty("password") @NotNull String password,
 			@JsonProperty("pictureUrl") String pictureUrl,
 			@JsonProperty("groupIds") Set<String> groupIds,
-			@JsonProperty("realmRoles") @NotNull Set<String> realmRoles
+			@JsonProperty("realmRoles") @NotNull Set<RealmRole> realmRoles
 	) {
 	}
 
@@ -465,7 +466,7 @@ public class UsersResource {
 			@JsonProperty("lastName") String lastName,
 			@JsonProperty("password") String password,
 			@JsonProperty("pictureUrl") String pictureUrl,
-			@JsonProperty("realmRoles") @NotNull Set<String> realmRoles
+			@JsonProperty("realmRoles") @NotNull Set<RealmRole> realmRoles
 	) {
 	}
 

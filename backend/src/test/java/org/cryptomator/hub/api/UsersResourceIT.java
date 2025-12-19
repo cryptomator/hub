@@ -519,7 +519,6 @@ public class UsersResourceIT {
 			userRep.setCreatedTimestamp(1700000000000L);
 
 			Mockito.when(keycloakAdminService.getUser("user1")).thenReturn(userRep);
-			Mockito.when(keycloakAdminService.getUserRoles("user1")).thenReturn(Collections.emptySet());
 
 			when().get("/users/user1")
 					.then().statusCode(200)

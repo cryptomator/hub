@@ -23,10 +23,15 @@ import org.keycloak.representations.idm.UserRepresentation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @ApplicationScoped
@@ -42,6 +47,9 @@ public class KeycloakAdminService {
 
 	@Inject
 	Group.Repository groupRepo;
+
+	@Inject
+	KeycloakRealmRoles realmRoles;
 
 	@ConfigProperty(name = "hub.keycloak.realm")
 	String keycloakRealm;
@@ -192,9 +200,6 @@ public class KeycloakAdminService {
 		dbUser.setEmail(keycloakUser.getEmail());
 		dbUser.setFirstName(keycloakUser.getFirstName());
 		dbUser.setLastName(keycloakUser.getLastName());
-		if (keycloakUser.getRealmRoles() != null) {
-			dbUser.setRealmRoles(Set.copyOf(keycloakUser.getRealmRoles()));
-		}
 
 		var attrs = keycloakUser.getAttributes();
 		if (attrs != null && attrs.containsKey("picture")) {
@@ -260,33 +265,29 @@ public class KeycloakAdminService {
 		syncGroup(groupId);
 	}
 
-	public Set<String> getUserRoles(String userId) {
-		UserResource userResource = realm.users().get(userId);
-		return userResource.roles().realmLevel().listEffective().stream()
-				.map(RoleRepresentation::getName)
-				.filter(name -> "admin".equals(name) || "create-vaults".equals(name))
-				.collect(Collectors.toSet());
-	}
-
-	public void updateUserRoles(String userId, Set<String> roles) {
+	public void updateUserRoles(String userId, Set<RealmRole> roles) {
 		UserResource userResource = realm.users().get(userId);
 		var roleMappings = userResource.roles().realmLevel();
 
-		List<RoleRepresentation> currentRoles = roleMappings.listEffective().stream()
-				.filter(r -> "admin".equals(r.getName()) || "create-vaults".equals(r.getName()))
-				.toList();
-		if (!currentRoles.isEmpty()) {
-			roleMappings.remove(currentRoles);
+		// remove roles that are not in the provided set:
+		var rolesToRemove = EnumSet.allOf(RealmRole.class);
+		rolesToRemove.removeAll(roles);
+		if (!rolesToRemove.isEmpty()) {
+			roleMappings.remove(rolesToRemove.stream().map(realmRoles::getRealmRole).toList());
 		}
 
-		if (roles != null && !roles.isEmpty()) {
-			var allRealmRoles = realm.roles().list();
-			List<RoleRepresentation> rolesToAdd = allRealmRoles.stream()
-					.filter(r -> roles.contains(r.getName()))
-					.toList();
-			if (!rolesToAdd.isEmpty()) {
-				roleMappings.add(rolesToAdd);
-			}
+		// set roles that are in the provided set:
+		var rolesToSet = EnumSet.noneOf(RealmRole.class);
+		rolesToSet.addAll(roles);
+		if (!rolesToSet.isEmpty()) {
+			roleMappings.add(rolesToSet.stream().map(realmRoles::getRealmRole).toList());
+		}
+
+		// sync to db:
+		User dbUser = userRepo.findById(userId);
+		if (dbUser != null) {
+			dbUser.setRealmRoles(rolesToSet.stream().map(RealmRole::kcName).toArray(String[]::new));
+			userRepo.persist(dbUser);
 		}
 	}
 

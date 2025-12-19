@@ -15,6 +15,8 @@ import jakarta.persistence.NamedQuery;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.Immutable;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.Type;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -94,7 +96,8 @@ public class User extends Authority {
 	private String language;
 
 	@Column(name = "realm_roles")
-	private Set<String> realmRoles = new HashSet<>();
+	@Type(StringArrayType.class)
+	private String[] realmRoles;
 
 	@Column(name = "ecdh_publickey")
 	private String ecdhPublicKey;
@@ -140,11 +143,11 @@ public class User extends Authority {
 		this.language = language;
 	}
 
-	public Set<String> getRealmRoles() {
+	public String[] getRealmRoles() {
 		return realmRoles;
 	}
 
-	public void setRealmRoles(Set<String> realmRoles) {
+	public void setRealmRoles(String[] realmRoles) {
 		this.realmRoles = realmRoles;
 	}
 
