@@ -240,10 +240,8 @@ public class KeycloakAdminService {
 		var dbMembers = userRepo.findByIds(keycloakMembers).toList();
 		dbGroup.getMembers().clear();
 		dbGroup.getMembers().addAll(dbMembers);
-		effectiveGroupMembershipRepo.updateGroups(Set.of(dbGroup.getId()));
-
 		groupRepo.persist(dbGroup);
-		groupRepo.flush();
+		effectiveGroupMembershipRepo.updateGroups(Set.of(dbGroup.getId()));
 		return dbGroup;
 	}
 
