@@ -27,16 +27,16 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-200 bg-white">
-          <tr v-for="user in paginatedUsers" :key="user.id + user.name">
+          <tr v-for="member in paginatedMembers" :key="member.id + member.name">
             <td class="whitespace-nowrap h-17 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 flex items-center gap-3 sm:pl-6">
-              <img :src="user.pictureUrl" class="w-8 h-8 rounded-full object-cover border border-gray-300" />
-              <div class="flex flex-col truncate">
-                <span class="font-medium truncate">{{ user.name }}</span>
-                <span class="text-xs text-gray-500 truncate">{{ user.firstName || user.lastName ? [user.firstName, user.lastName].filter(Boolean).join(' ') : user.email }}</span>
+              <img :src="member.pictureUrl" class="w-8 h-8 rounded-full object-cover border border-gray-300" />
+              <div class="flex flex-col truncate" v-if="member.type === 'USER'">
+                <span class="font-medium truncate">{{ member.name }}</span>
+                <span class="text-xs text-gray-500 truncate">{{ member.firstName || member.lastName ? [member.firstName, member.lastName].filter(Boolean).join(' ') : member.email }}</span>
               </div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-              <a tabindex="0" class="cursor-pointer text-red-600 hover:text-red-900" :title="t('common.leave')" @click="showDeleteDialog(user)">{{ t('common.remove') }}</a>
+              <a tabindex="0" class="cursor-pointer text-red-600 hover:text-red-900" :title="t('common.leave')" @click="showDeleteDialog(member)">{{ t('common.remove') }}</a>
             </td>
           </tr>
           <tr v-if="!filteredUsers.length">
@@ -72,14 +72,14 @@
       </table>
     </div>
   </section>
-  <GroupAddMemberDialog ref="addMemberDialog" :group-id="group.id" :members="members" @saved="(users) => props.onSaved(users)" />
-  <GroupMemberRemoveDialog v-if="deletingGroupMember" ref="deleteGroupMemberDialog" :member="deletingGroupMember" :group-id="group.id" @close="deletingGroupMember = null" @delete="onGroupMemberDeleted" />
+  <GroupAddMemberDialog ref="addMemberDialog" :group-id="group.id" :members="members" @saved="props.onSaved" />
+  <GroupMemberRemoveDialog v-if="deletingGroupMember" ref="deleteGroupMemberDialog" :member="deletingGroupMember" :group-id="group.id" @close="deletingGroupMember = undefined" @delete="onGroupMemberDeleted" />
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { GroupDto, UserDto } from '../../common/backend';
+import { AuthorityDto, GroupDto, UserDto } from '../../common/backend';
 import GroupAddMemberDialog from './GroupAddMemberDialog.vue';
 import GroupMemberRemoveDialog from './GroupMemberRemoveDialog.vue';
 
@@ -88,16 +88,16 @@ const { t } = useI18n({ useScope: 'global' });
 const props = defineProps<{
   group: GroupDto;
   pageSize: number;
-  onSaved: (users: UserDto[]) => void;
+  onSaved: (members: AuthorityDto[]) => void;
 }>();
 
-const members = defineModel<UserDto[]>('members', { required: true });
+const members = defineModel<AuthorityDto[]>('members', { required: true });
 
 const deleteGroupMemberDialog = ref<typeof GroupMemberRemoveDialog>();
-const deletingGroupMember = ref<UserDto | null>(null);
+const deletingGroupMember = ref<AuthorityDto>();
 const addMemberDialog = ref<InstanceType<typeof GroupAddMemberDialog> | null>(null);
 
-function showDeleteDialog(u: UserDto) {
+function showDeleteDialog(u: AuthorityDto) {
   deletingGroupMember.value = u;
   nextTick(() => deleteGroupMemberDialog.value?.show());
 }
@@ -108,7 +108,7 @@ function openAccessDialog() {
 
 function onGroupMemberDeleted(deletedMemberId: string) {
   members.value = members.value.filter(m => m.id !== deletedMemberId);
-  deletingGroupMember.value = null;
+  deletingGroupMember.value = undefined;
 }
 
 const currentPage = ref(0);
@@ -121,6 +121,7 @@ const showPaginationUsers = computed(
 const filteredUsers = computed(() => {
   const q = userQuery.value.trim().toLowerCase();
   return [...members.value]
+    .filter(m => m.type === 'USER')
     .filter(u => {
       if (!q) return true;
       const nameMatch = u.name?.toLowerCase().includes(q);
@@ -136,7 +137,7 @@ const filteredUsers = computed(() => {
     });
 });
 
-const paginatedUsers = computed(() =>
+const paginatedMembers = computed(() =>
   filteredUsers.value.slice(currentPage.value * props.pageSize, currentPage.value * props.pageSize + props.pageSize)
 );
 

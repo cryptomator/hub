@@ -1,6 +1,7 @@
 package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -67,7 +68,7 @@ public class GroupsResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "list all effective group members")
 	public List<UserDto> getEffectiveMembers(@PathParam("groupId") @ValidId String groupId) {
-		return getMembersWithNames(groupId);
+		return userRepo.getEffectiveGroupUsers(groupId).map(UserDto::justPublicInfo).toList();
 	}
 
 	@POST
@@ -130,19 +131,19 @@ public class GroupsResource {
 	@Operation(summary = "get a specific group")
 	@APIResponse(responseCode = "200", description = "group found")
 	@APIResponse(responseCode = "404", description = "group not found")
-	public GroupDtoWithDetails getGroup(@PathParam("groupId") @ValidId String groupId) {
-		Group group = groupRepo.findById(groupId);
+	public GroupDto.WithDetails getGroup(@PathParam("groupId") @ValidId String groupId) {
+		Group group = groupRepo.findByIdWithEagerDetails(groupId);
 		if (group == null) {
 			throw new NotFoundException("Group not found: " + groupId);
 		}
 
-		List<UserDto> members = getMembersWithNames(groupId);
+		List<AuthorityDto> members = group.getMembers().stream().map(AuthorityDto::fromEntity).toList();
 
-		List<VaultResource.VaultDtoWithRole> vaults = vaultAccessRepo.findByAuthority(groupId)
+		List<VaultResource.VaultDtoWithRole> vaults = group.accessibleVaults.stream()
 				.map(va -> VaultResource.VaultDtoWithRole.from(va.getVault(), va.getRole()))
 				.toList();
 
-		return GroupDtoWithDetails.from(group, members, vaults);
+		return GroupDto.fromEntity(group).withDetails(members, vaults);
 	}
 
 	@PUT
@@ -177,39 +178,16 @@ public class GroupsResource {
 		return Response.noContent().build();
 	}
 
-	private List<UserDto> getMembersWithNames(String groupId) {
-		return userRepo.getEffectiveGroupUsers(groupId)
-				.map(UserDto::justPublicInfo)
-				.toList();
-	}
-
 	public record CreateGroupDto(
 			@JsonProperty("name") @NotNull String name,
 			@JsonProperty("pictureUrl") String pictureUrl
 	) {
+
 	}
 
 	public record UpdateGroupDto(
 			@JsonProperty("name") @NotNull String name,
 			@JsonProperty("pictureUrl") String pictureUrl
 	) {
-	}
-
-	public record GroupDtoWithDetails(
-			@JsonProperty("id") String id,
-			@JsonProperty("name") String name,
-			@JsonProperty("pictureUrl") String pictureUrl,
-			@JsonProperty("members") List<UserDto> members,
-			@JsonProperty("vaults") List<VaultResource.VaultDtoWithRole> vaults
-	) {
-		public static GroupDtoWithDetails from(Group group, List<UserDto> members, List<VaultResource.VaultDtoWithRole> vaults) {
-			return new GroupDtoWithDetails(
-					group.getId(),
-					group.getName(),
-					group.getPictureUrl(),
-					members,
-					vaults
-			);
-		}
 	}
 }

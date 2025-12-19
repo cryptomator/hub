@@ -62,15 +62,15 @@ import { UserIcon } from '@heroicons/vue/24/outline';
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import SearchInputGroup from '../SearchInputGroup.vue';
-import backend, { UserDto } from '../../common/backend';
+import backend, { AuthorityDto, UserDto } from '../../common/backend';
 
-const props = defineProps<{ groupId: string; members: UserDto[] }>();
-const emit  = defineEmits<{ saved: [added: UserDto[]] }>();
+const props = defineProps<{ groupId: string; members: AuthorityDto[] }>();
+const emit  = defineEmits<{ saved: [added: AuthorityDto[]] }>();
 
 const { t } = useI18n({ useScope: 'global' });
 const open = ref(false);
-const newMembers = ref<UserDto[]>([]);
-const onAddUserError = ref<Error | null>(null);
+const newMembers = ref<AuthorityDto[]>([]);
+const onAddUserError = ref<Error>();
 const isSaving = ref(false);
 
 const selectedCount = computed(() => newMembers.value.length);
@@ -116,7 +116,7 @@ async function onSubmit() {
   }
 
   isSaving.value = true;
-  onAddUserError.value = null;
+  onAddUserError.value = undefined;
 
   try {
     // Add each member to the group via API

@@ -69,7 +69,7 @@ import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
 import { ref, nextTick, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import backend, { GroupDto, GroupDtoWithDetails, UserDto } from '../../common/backend';
+import backend, { AuthorityDto, GroupDto, GroupDtoWithDetails, UserDto } from '../../common/backend';
 import GroupDeleteDialog from './GroupDeleteDialog.vue';
 import GroupMemberList from './GroupMemberList.vue';
 import GroupInfo from './GroupInfo.vue';
@@ -108,7 +108,7 @@ const group = ref<GroupDtoWithDetails>({
   vaults: []
 });
 
-function onMembersSaved(newMembers: UserDto[]) {
+function onMembersSaved(newMembers: AuthorityDto[]) {
   const ids = new Set(group.value.members.map(u => u.id));
   newMembers.forEach(u => { if (!ids.has(u.id)) group.value.members.push(u); });
   group.value.members.sort((a, b) => a.name.localeCompare(b.name, 'de', { sensitivity: 'base' }));

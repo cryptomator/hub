@@ -59,7 +59,7 @@ import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, Trans
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { type UserDto } from '../../common/backend';
+import backend, { AuthorityDto, type UserDto } from '../../common/backend';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -67,14 +67,18 @@ const open = ref(false);
 const onDeleteGroupError = ref<Error | null>();
 
 const props = defineProps<{
-   member: UserDto;
+   member: AuthorityDto;
    groupId: string;
  }>();
 
 const fullName = computed(() => {
-  const first = props.member.firstName ?? '';
-  const last = props.member.lastName ?? '';
-  return `${first} ${last}`.trim();
+  if (props.member.type === 'USER') {
+    const first = props.member.firstName ?? '';
+    const last = props.member.lastName ?? '';
+    return `${first} ${last}`.trim();
+  } else {
+    return props.member.name;
+  }
 });
 
 const emit = defineEmits<{

@@ -1,7 +1,11 @@
 package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import org.cryptomator.hub.entities.Group;
+
+import java.util.List;
+import java.util.Set;
 
 public final class GroupDto extends AuthorityDto {
 
@@ -29,4 +33,14 @@ public final class GroupDto extends AuthorityDto {
 	public static GroupDto fromEntity(Group group, Integer memberSize, Integer vaultCount) {
 		return new GroupDto(group.getId(), group.getName(), group.getPictureUrl(), memberSize, vaultCount);
 	}
+
+	WithDetails withDetails(List<AuthorityDto> members, List<VaultResource.VaultDtoWithRole> vaults) {
+		return new WithDetails(this, members, vaults);
+	}
+
+	public record WithDetails(
+			@JsonUnwrapped GroupDto group,
+			@JsonProperty("members") List<AuthorityDto> members,
+			@JsonProperty("vaults") List<VaultResource.VaultDtoWithRole> vaults
+	) {}
 }

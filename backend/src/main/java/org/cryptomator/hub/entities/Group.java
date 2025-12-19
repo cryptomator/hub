@@ -6,11 +6,14 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
+import org.hibernate.annotations.Immutable;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -28,6 +31,10 @@ public class Group extends Authority {
 	)
 	private Set<Authority> members = new HashSet<>();
 
+	@Immutable
+	@OneToMany(mappedBy = "authority", fetch = FetchType.LAZY)
+	public Set<VaultAccess> accessibleVaults = new HashSet<>();
+
 	public Set<Authority> getMembers() {
 		return members;
 	}
@@ -39,6 +46,15 @@ public class Group extends Authority {
 
 	@ApplicationScoped
 	public static class Repository implements PanacheRepositoryBase<Group, String> {
+
+		public Group findByIdWithEagerDetails(String id) {
+			return find("""
+					FROM Group g
+					LEFT JOIN FETCH g.members
+					LEFT JOIN FETCH g.accessibleVaults
+					WHERE g.id = :id
+					""", Parameters.with("id", id)).singleResultOptional().orElse(null);
+		}
 
 		public long deleteByIds(Collection<String> ids) {
 			return Batch.of(200).run(ids, 0L, (batch, result) -> result + delete("id IN :ids", Parameters.with("ids", batch)));

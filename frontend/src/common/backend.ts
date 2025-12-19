@@ -137,7 +137,7 @@ export type VaultDtoWithRole = VaultDto & { // TODO: unused??
 }
 
 export type GroupDtoWithDetails = GroupDto & {
-  members: UserDto[];
+  members: AuthorityDto[];
   vaults: VaultDtoWithRole[];
 }
 
