@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.validation.OnlyBase64Chars;
 import org.cryptomator.hub.validation.ValidJWE;
@@ -18,6 +19,7 @@ public final class UserDto extends AuthorityDto {
 	private final String firstName;
 	private final String lastName;
 	private final String language;
+	private final Set<String> realmRoles;
 	private final Set<DeviceResource.DeviceDto> devices;
 	private final String ecdhPublicKey;
 	private final String ecdsaPublicKey;
@@ -26,13 +28,14 @@ public final class UserDto extends AuthorityDto {
 
 	@JsonCreator
 	public UserDto(
-			@JsonProperty("id") String id,
-			@JsonProperty("name") String name,
+			@JsonProperty("id") @NotNull String id,
+			@JsonProperty("name") @NotNull String name,
 			@JsonProperty("pictureUrl") String pictureUrl,
-			@JsonProperty("email") String email,
+			@JsonProperty("email") @NotNull String email,
 			@JsonProperty("firstName") String firstName,
 			@JsonProperty("lastName") String lastName,
 			@JsonProperty("language") String language,
+			@JsonProperty("realmRoles") @NotNull Set<String> realmRoles,
 			@JsonProperty("devices") Set<DeviceResource.DeviceDto> devices,
 			// Accept either "ecdhPublicKey" or the legacy "publicKey" on input
 			@Nullable @JsonProperty("ecdhPublicKey") @OnlyBase64Chars String ecdhPublicKey,
@@ -47,6 +50,7 @@ public final class UserDto extends AuthorityDto {
 		this.firstName = firstName;
 		this.lastName = lastName;
 		this.language = language;
+		this.realmRoles = realmRoles;
 		this.devices = devices;
 		this.ecdhPublicKey = ecdhPublicKey != null ? ecdhPublicKey : publicKey;
 		this.ecdsaPublicKey = ecdsaPublicKey;
@@ -62,12 +66,13 @@ public final class UserDto extends AuthorityDto {
 			String firstName,
 			String lastName,
 			String language,
+			Set<String> realmRoles,
 			Set<DeviceResource.DeviceDto> devices,
 			String ecdhPublicKey,
 			String ecdsaPublicKey,
 			String privateKeys,
 			String setupCode) {
-		this(id, name, pictureUrl, email, firstName, lastName, language, devices, ecdhPublicKey, ecdhPublicKey, ecdsaPublicKey, privateKeys, privateKeys, setupCode);
+		this(id, name, pictureUrl, email, firstName, lastName, language, realmRoles, devices, ecdhPublicKey, ecdhPublicKey, ecdsaPublicKey, privateKeys, privateKeys, setupCode);
 	}
 
 	@JsonProperty("email")
@@ -88,6 +93,11 @@ public final class UserDto extends AuthorityDto {
 	@JsonProperty("language")
 	public String getLanguage() {
 		return language;
+	}
+
+	@JsonProperty("realmRoles")
+	public Set<String> getRealmRoles() {
+		return realmRoles;
 	}
 
 	@JsonProperty("devices")
@@ -144,6 +154,7 @@ public final class UserDto extends AuthorityDto {
 				user.getFirstName(),
 				user.getLastName(),
 				user.getLanguage(),
+				Set.copyOf(user.getRealmRoles()),
 				Set.of(),
 				user.getEcdhPublicKey(),
 				user.getEcdsaPublicKey(),

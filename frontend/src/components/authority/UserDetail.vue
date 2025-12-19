@@ -3,7 +3,7 @@
     {{ t('common.loading') }}
   </div>
   <div v-else>
-    <BreadcrumbNav :crumbs="[ { label: t('nav.users'), to: '/app/users' }, { label: user.username } ]" />
+    <BreadcrumbNav :crumbs="[ { label: t('nav.users'), to: '/app/users' }, { label: user.name } ]" />
     <div class="flex flex-row items-center justify-between gap-3 pb-1 w-full border-b border-gray-200 mb-2">
       <!-- Headline -->
       <h2 id="title" class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl mb-4">
@@ -49,7 +49,7 @@
         <!-- Groups -->
         <UserGroupsList :user="user" :user-id="props.id" :groups="user.groups" :page-size="10" :on-saved="handleGroupsSaved"/>
         <!-- Vaults -->
-        <VaultList :vaults="user.vaults" :page-size="10" :visible="true"/>
+        <VaultList :vaults="user.accessibleVaults" :page-size="10" :visible="true"/>
       </section>
     </div>
     <div class="grid lg:hidden grid-cols-1 gap-6 items-start pt-3">
@@ -61,12 +61,12 @@
       <UserDeviceList :devices="user.devices" :page-size="10" :title="t('user.detail.devices')"/>
       <UserDeviceList :devices="user.legacyDevices" :page-size="10" :visible="user.legacyDevices.length != 0" :title="t('legacyDeviceList.title')" :info="t('legacyDeviceList.title')"/>
       <!-- Vaults -->
-      <VaultList :vaults="user.vaults" :page-size="10" :visible="true"/>
+      <VaultList :vaults="user.accessibleVaults" :page-size="10" :visible="true"/>
     </div>
   </div>
 
   <!-- Dialogs -->
-  <UserDeleteDialog v-if="deletingUser != null" ref="deleteUserDialog" :user="deletingUser" @close="deletingUser = null" @delete="onUserDeleted"/>
+  <UserDeleteDialog v-if="deletingUser" ref="deleteUserDialog" :user="deletingUser" @close="deletingUser = undefined" @delete="onUserDeleted"/>
 </template>
 
 <script setup lang="ts">
@@ -75,7 +75,7 @@ import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
 import { onMounted, ref, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import backend from '../../common/backend';
+import backend, { DeviceDto, GroupDto, UserDto, VaultDto, VaultDtoWithRole } from '../../common/backend';
 import BreadcrumbNav from '../BreadcrumbNav.vue';
 import UserDeleteDialog from './UserDeleteDialog.vue';
 import UserDeviceList from './UserDeviceList.vue';
@@ -83,75 +83,21 @@ import UserGroupsList from './UserGroupsList.vue';
 import UserInfo from './UserInfo.vue';
 import VaultList from './VaultList.vue';
 
-interface Group {
-  id: string;
-  name: string;
-  pictureUrl?: string;
-}
-
-interface Vault {
-  id: string;
-  name: string;
-  description?: string;
-  archived: boolean;
-  role?: 'OWNER' | 'MEMBER';
-}
-
-interface Device {
-  id: string;
-  name: string;
-  type: 'DESKTOP' | 'MOBILE' | 'BROWSER';
-  creationTime: string;
-  lastAccessTime?: string;
-  lastIpAddress?: string;
-}
-
-interface DetailUser {
-  firstName?: string;
-  lastName?: string;
-  username: string;
-  email: string;
-  userPicture?: string;
-  groups: Group[];
-  vaults: Vault[];
-  devices: Device[];
-  legacyDevices: Device[];
-  roles: string[];
+type UserDtoWithDetails = UserDto & {
+  groups: GroupDto[];
+  devices: DeviceDto[];
+  legacyDevices: DeviceDto[];
 }
 
 const props = defineProps<{ id: string }>();
 const { t } = useI18n({ useScope: 'global' });
 const router = useRouter();
 
-interface UserDto {
-  id: string;
-  name: string;
-  email: string;
-  pictureUrl?: string;
-  language?: string;
-  devices?: Device[];
-  legacyDevices?: Device[];
-  groups?: Group[];
-  vaults?: Vault[];
-  type?: 'USER';
-  ecdhPublicKey?: string;
-  ecdsaPublicKey?: string;
-  firstName?: string;
-  lastName?: string;
-}
-
 const deleteUserDialog = ref<typeof UserDeleteDialog>();
-const deletingUser = ref<UserDto | null>(null);
+const deletingUser = ref<UserDto>();
 
 const showDeleteUserDialog = () => {
-  deletingUser.value = {
-    id: props.id,
-    name: user.value.username,
-    email: user.value.email,
-    pictureUrl: user.value.userPicture,
-    firstName: user.value.firstName,
-    lastName: user.value.lastName
-  };
+  deletingUser.value = user.value;
   nextTick(() => deleteUserDialog.value?.show());
 };
 
@@ -159,22 +105,25 @@ const onUserDeleted = () => {
   router.push('/app/users');
 };
 
-const user = ref<DetailUser>({
+const user = ref<UserDtoWithDetails>({
+  type: 'USER',
+  id: props.id,
+  name: '',
+  pictureUrl: undefined,
+  email: '',
   firstName: undefined,
   lastName: undefined,
-  username: '',
-  email: '',
-  userPicture: undefined,
+  language: undefined,
+  accessibleVaults: [],
+  realmRoles: [],
   groups: [],
-  vaults: [],
   devices: [],
   legacyDevices: [],
-  roles: []
 });
 
 const loading = ref<boolean>(true);
 
-function handleGroupsSaved(newGroups: Group[]) {
+function handleGroupsSaved(newGroups: GroupDto[]) {
   const ids = new Set(user.value.groups.map(g => g.id));
   newGroups.forEach(g => {
     if (!ids.has(g.id)) user.value.groups.push(g);
@@ -184,37 +133,10 @@ function handleGroupsSaved(newGroups: Group[]) {
 
 onMounted(async () => {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const fetchedUser = await backend.users.getUser(props.id) as any;
-
-    user.value.firstName = fetchedUser.firstName;
-    user.value.lastName = fetchedUser.lastName;
-    user.value.username = fetchedUser.name;
-    user.value.email = fetchedUser.email;
-    user.value.userPicture = fetchedUser.pictureUrl;
-
-    // Load groups
-    if (fetchedUser.groups) {
-      user.value.groups = fetchedUser.groups;
-    }
-
-    // Load vaults
-    if (fetchedUser.vaults) {
-      user.value.vaults = fetchedUser.vaults;
-    }
-
-    // Load devices
-    if (fetchedUser.devices) {
-      user.value.devices = fetchedUser.devices;
-    }
-
-    // Load legacy devices
-    if (fetchedUser.legacyDevices) {
-      user.value.legacyDevices = fetchedUser.legacyDevices;
-    }
+    user.value = await backend.users.getUser(props.id) as UserDtoWithDetails; // FIXME: use different loading method for details
 
     // Load roles
-    user.value.roles = (fetchedUser.roles || []).filter((r: string) => r === 'admin' || r === 'create-vaults');
+    user.value.realmRoles = (user.value.realmRoles || []).filter((r: string) => r === 'admin' || r === 'create-vaults');
   } catch (error) {
     console.error('Failed to fetch user:', error);
   } finally {

@@ -60,7 +60,7 @@
     </div>
   </div>
   <!-- Delete Dialog -->
-  <GroupDeleteDialog v-if="deletingGroup != null" ref="deleteGroupDialog" :group="deletingGroup" @close="deletingGroup = null" @delete="onGroupDeleted"/>
+  <GroupDeleteDialog v-if="deletingGroup" ref="deleteGroupDialog" :group="deletingGroup" @close="deletingGroup = undefined" @delete="onGroupDeleted"/>
 </template>
 
 <script setup lang="ts">
@@ -69,7 +69,7 @@ import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
 import { ref, nextTick, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import backend, { GroupDto, UserDto } from '../../common/backend';
+import backend, { GroupDto, GroupDtoWithDetails, UserDto } from '../../common/backend';
 import GroupDeleteDialog from './GroupDeleteDialog.vue';
 import GroupMemberList from './GroupMemberList.vue';
 import GroupInfo from './GroupInfo.vue';
@@ -79,30 +79,14 @@ import FetchError from '../FetchError.vue';
 
 const router = useRouter();
 
-const deletingGroup = ref<GroupDto | null>(null);
+const deletingGroup = ref<GroupDto>();
 
-function showDeleteGroupDialog(grp: DetailGroup) {
-  deletingGroup.value = { type: 'GROUP', id: grp.id, name: grp.name, pictureUrl: grp.picture };
+function showDeleteGroupDialog(grp: GroupDtoWithDetails) {
+  deletingGroup.value = grp;
   nextTick(() => deleteGroupDialog.value?.show());
 }
 
 const deleteGroupDialog = ref<typeof GroupDeleteDialog>();
-
-interface Vault {
-  id: string;
-  name: string;
-  description?: string;
-  archived: boolean;
-  role?: 'OWNER' | 'MEMBER';
-}
-
-interface DetailGroup {
-  id: string;
-  name: string;
-  picture?: string;
-  members: UserDto[];
-  vaults: Vault[];
-}
 
 function showGroupEdit() {
   router.push(`/app/groups/${group.value.id}/edit`);
@@ -115,10 +99,11 @@ function onGroupDeleted() {
 const props = defineProps<{ id: string }>();
 const { t } = useI18n({ useScope: 'global' });
 
-const group = ref<DetailGroup>({
+const group = ref<GroupDtoWithDetails>({
+  type: 'GROUP',
   id: props.id,
   name: '',
-  picture: undefined,
+  pictureUrl: undefined,
   members: [],
   vaults: []
 });
@@ -136,12 +121,7 @@ async function fetchGroup() {
   loading.value = true;
   fetchError.value = null;
   try {
-    const fetchedGroup = await backend.groups.getGroup(props.id);
-    group.value.id = fetchedGroup.id;
-    group.value.name = fetchedGroup.name;
-    group.value.picture = fetchedGroup.pictureUrl;
-    group.value.members = fetchedGroup.members;
-    group.value.vaults = fetchedGroup.vaults;
+    group.value = await backend.groups.getGroup(props.id);
   } catch (error) {
     console.error('Failed to fetch group:', error);
     fetchError.value = error instanceof Error ? error : new Error('Unknown error');

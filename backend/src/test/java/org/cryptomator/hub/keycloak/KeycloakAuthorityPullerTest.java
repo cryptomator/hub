@@ -88,7 +88,7 @@ class KeycloakAuthorityPullerTest {
 			Mockito.when(databaseUsers.keySet()).thenReturn(databaseUserIds);
 
 			for (var userId : addedUserIds) {
-				var keycloakUser = new KeycloakUserDto(userId, "name " + userId, "email " + userId, "first " + userId, "last " + userId, "pic " + userId);
+				var keycloakUser = new KeycloakUserDto(userId, "name " + userId, "email " + userId, "first " + userId, "last " + userId, "pic " + userId, Set.of());
 				Mockito.when(keycloakUsers.get(userId)).thenReturn(keycloakUser);
 			}
 
@@ -170,7 +170,7 @@ class KeycloakAuthorityPullerTest {
 			Mockito.when(databaseUsers.keySet()).thenReturn(databaseUserIds);
 
 			for (var userId : updatedUserIds) {
-				var keycloakUser = new KeycloakUserDto(userId, "name " + userId, "email " + userId, "first " + userId, "last " + userId, "pic " + userId);
+				var keycloakUser = new KeycloakUserDto(userId, "name " + userId, "email " + userId, "first " + userId, "last " + userId, "pic " + userId, Set.of());
 				Mockito.when(keycloakUsers.get(userId)).thenReturn(keycloakUser);
 
 				var databaseUser = Mockito.mock(User.class);
@@ -209,7 +209,7 @@ class KeycloakAuthorityPullerTest {
 		void testAddGroups(@ConvertWith(StringArrayConverter.class) String[] keycloakGroupIdString, @ConvertWith(StringArrayConverter.class) String[] databaseGroupIdString, @ConvertWith(StringArrayConverter.class) String[] addedGroupIdString) {
 			Map<String, KeycloakUserDto> kcUsers = new HashMap<>();
 			for (var gid : keycloakGroupIdString) {
-				kcUsers.put(gid, new KeycloakUserDto(gid, "username", "email", "first", "last", "pic"));
+				kcUsers.put(gid, new KeycloakUserDto(gid, "username", "email", "first", "last", "pic", Set.of()));
 			}
 
 			Map<String, KeycloakGroupDto> keycloakGroups = new HashMap<>();
@@ -313,8 +313,8 @@ class KeycloakAuthorityPullerTest {
 			Mockito.when(kcDto.name()).thenReturn(String.format("name %s", groupId));
 			Mockito.when(kcDto.pictureUrl()).thenReturn(String.format("pic %s", groupId));
 			Mockito.when(kcDto.members()).thenReturn(Set.of(
-					new KeycloakUserDto("U_user", "n", "e", "f", "l", "p"),
-					new KeycloakUserDto("U_otherKC", "n", "e", "f", "l", "p")
+					new KeycloakUserDto("U_user", "n", "e", "f", "l", "p", Set.of()),
+					new KeycloakUserDto("U_otherKC", "n", "e", "f", "l", "p", Set.of())
 			));
 
 			var dbGroup = Mockito.mock(Group.class);

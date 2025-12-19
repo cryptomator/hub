@@ -12,7 +12,6 @@ import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.jspecify.annotations.Nullable;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.GroupResource;
 import org.keycloak.admin.client.resource.RealmResource;
@@ -193,6 +192,9 @@ public class KeycloakAdminService {
 		dbUser.setEmail(keycloakUser.getEmail());
 		dbUser.setFirstName(keycloakUser.getFirstName());
 		dbUser.setLastName(keycloakUser.getLastName());
+		if (keycloakUser.getRealmRoles() != null) {
+			dbUser.setRealmRoles(Set.copyOf(keycloakUser.getRealmRoles()));
+		}
 
 		var attrs = keycloakUser.getAttributes();
 		if (attrs != null && attrs.containsKey("picture")) {

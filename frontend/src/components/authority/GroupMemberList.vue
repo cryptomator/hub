@@ -73,19 +73,14 @@
 <script setup lang="ts">
 import { computed, ref, watch, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { UserDto } from '../../common/backend';
+import { GroupDto, UserDto } from '../../common/backend';
 import GroupAddMemberDialog from './GroupAddMemberDialog.vue';
 import GroupMemberRemoveDialog from './GroupMemberRemoveDialog.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 
-interface GroupBasic {
-  id: string;
-  name: string;
-}
-
 const props = defineProps<{
-  group: GroupBasic;
+  group: GroupDto;
   pageSize: number;
   onSaved: (users: UserDto[]) => void;
 }>();

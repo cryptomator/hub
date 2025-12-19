@@ -61,13 +61,20 @@ public class KeycloakAuthorityProvider {
 
 	private KeycloakUserDto mapToUser(UserRepresentation userRepresentation) {
 		var pictureUrl = parsePictureUrl(userRepresentation.getAttributes());
-		return new KeycloakUserDto(userRepresentation.getId(), userRepresentation.getUsername(), userRepresentation.getEmail(), userRepresentation.getFirstName(), userRepresentation.getLastName(), pictureUrl);
+		return new KeycloakUserDto(userRepresentation.getId(),
+				userRepresentation.getUsername(),
+				userRepresentation.getEmail(),
+				userRepresentation.getFirstName(),
+				userRepresentation.getLastName(),
+				pictureUrl,
+				userRepresentation.getRealmRoles() == null ? Set.of() : Set.copyOf(userRepresentation.getRealmRoles()));
 	}
 
 	private String parsePictureUrl(Map<String, List<String>> attributes) {
-		try {
-			return attributes.get("picture").get(0);
-		} catch (NullPointerException e) {
+		if (attributes != null && attributes.containsKey("picture")) {
+			var pictures = attributes.get("picture");
+			return pictures.stream().findFirst().orElse(null);
+		} else {
 			return null;
 		}
 	}
