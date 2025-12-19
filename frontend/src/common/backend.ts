@@ -64,6 +64,10 @@ export type DeviceDto = {
 export type VaultRole = 'MEMBER' | 'OWNER';
 
 export type RealmRole = 'user' | 'admin' | 'create-vaults';
+export type SelectableRealmRole = Exclude<RealmRole, 'user'>;
+export function isSelectableRealmRole(role: RealmRole): role is SelectableRealmRole {
+  return role !== 'user';
+}
 
 export type AccessGrant = {
   userId: string,

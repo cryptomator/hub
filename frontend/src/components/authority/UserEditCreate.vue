@@ -235,7 +235,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import { base64 } from '@scure/base';
-import backend, { RealmRole } from '../../common/backend';
+import backend, { isSelectableRealmRole, SelectableRealmRole } from '../../common/backend';
 import { FormValidator } from '../../common/formvalidator';
 import { UTF8 } from '../../common/util';
 import BreadcrumbNav from '../BreadcrumbNav.vue';
@@ -285,7 +285,6 @@ const lastName = ref('');
 const username = ref('');
 const email = ref('');
 
-type SelectableRealmRole = Exclude<RealmRole, 'user'>;
 const selectedRoles = ref<SelectableRealmRole[]>([]);
 const roleOptions: Record<SelectableRealmRole, string> = {
   'admin': 'Admin',
@@ -342,8 +341,7 @@ onMounted(async () => {
       email.value = fetchedUser.email;
       pictureUrl.value = fetchedUser.pictureUrl || '';
 
-      const userRoles = fetchedUser.realmRoles;
-      selectedRoles.value = userRoles.filter((r): r is SelectableRealmRole => r === 'admin' || r === 'create-vaults');
+      selectedRoles.value = fetchedUser.realmRoles.filter(isSelectableRealmRole);
 
       initialUserData.value = {
         firstName: firstName.value,
