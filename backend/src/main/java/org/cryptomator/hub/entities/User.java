@@ -5,6 +5,7 @@ import io.quarkus.panache.common.Parameters;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
@@ -92,6 +93,9 @@ public class User extends Authority {
 	@Column(name = "language")
 	private String language;
 
+	@Column(name = "realm_roles")
+	private Set<String> realmRoles = new HashSet<>();
+
 	@Column(name = "ecdh_publickey")
 	private String ecdhPublicKey;
 
@@ -134,6 +138,14 @@ public class User extends Authority {
 
 	public void setLanguage(String language) {
 		this.language = language;
+	}
+
+	public Set<String> getRealmRoles() {
+		return realmRoles;
+	}
+
+	public void setRealmRoles(Set<String> realmRoles) {
+		this.realmRoles = realmRoles;
 	}
 
 	public String getEcdhPublicKey() {

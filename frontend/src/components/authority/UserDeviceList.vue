@@ -158,11 +158,12 @@
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { ComputerDesktopIcon, QuestionMarkCircleIcon, DevicePhoneMobileIcon, WindowIcon } from '@heroicons/vue/24/solid';
+import { DeviceDto } from '../../common/backend';
 
 const { t } = useI18n({ useScope: 'global' });
 
 const props = withDefaults(defineProps<{
-  devices: Device[];
+  devices: DeviceDto[];
   pageSize: number;
   visible?: boolean;
   title: string;
@@ -171,14 +172,6 @@ const props = withDefaults(defineProps<{
   visible: true,
   info: ''
 });
-interface Device {
-  id: string;
-  name: string;
-  type: 'DESKTOP' | 'MOBILE' | 'BROWSER';
-  creationTime: string;
-  lastAccessTime?: string;
-  lastIpAddress?: string;
-}
 
 // ---------------------------------------------------------------------------
 // DEVICES – search & pagination

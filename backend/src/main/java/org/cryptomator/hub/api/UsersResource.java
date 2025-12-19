@@ -192,7 +192,7 @@ public class UsersResource {
 		} else {
 			deviceDtos = Set.of();
 		}
-		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getLanguage(), deviceDtos, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
+		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getLanguage(), user.getRealmRoles(), deviceDtos, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
 	}
 
 	/**
@@ -216,7 +216,7 @@ public class UsersResource {
 			var event = events.get(d.getId());
 			return DeviceResource.DeviceDto.fromEntity(d, event);
 		}).collect(Collectors.toSet());
-		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getLanguage(), deviceDtos, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
+		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getLanguage(), user.getRealmRoles(), deviceDtos, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
 	}
 
 	@POST
@@ -326,7 +326,7 @@ public class UsersResource {
 	public Response createUser(@Valid @NotNull CreateUserDto dto) {
 		try {
 			var userRepresentation = keycloakAdminService.createUser(
-					dto.username(),
+					dto.name(),
 					dto.email(),
 					dto.firstName(),
 					dto.lastName(),
@@ -335,8 +335,8 @@ public class UsersResource {
 					dto.groupIds()
 			);
 
-			if (dto.roles() != null && !dto.roles().isEmpty()) {
-				keycloakAdminService.updateUserRoles(userRepresentation.getId(), dto.roles());
+			if (!dto.realmRoles().isEmpty()) {
+				keycloakAdminService.updateUserRoles(userRepresentation.getId(), dto.realmRoles());
 			}
 
 			User user = userRepo.findById(userRepresentation.getId());
@@ -394,16 +394,12 @@ public class UsersResource {
 				.map(DeviceResource.DeviceDto::fromEntity)
 				.collect(Collectors.toSet());
 
-		// Fetch roles // FIXME: sync to db?
-		Set<String> roles = keycloakAdminService.getUserRoles(userId);
-
 		return UserDtoWithDetails.from(
 				UserDto.justPublicInfo(user),
 				groups,
 				vaults,
 				devices,
-				legacyDevices,
-				roles
+				legacyDevices
 		);
 	}
 
@@ -426,9 +422,7 @@ public class UsersResource {
 				dto.pictureUrl()
 		);
 
-		if (dto.roles() != null) {
-			keycloakAdminService.updateUserRoles(userId, dto.roles());
-		}
+		keycloakAdminService.updateUserRoles(userId, dto.realmRoles());
 
 		User user = userRepo.findById(userId);
 		if (user == null) {
@@ -458,14 +452,14 @@ public class UsersResource {
 	}
 
 	public record CreateUserDto(
-			@JsonProperty("username") @NotNull String username,
+			@JsonProperty("name") @NotNull String name,
 			@JsonProperty("email") @NotNull String email,
 			@JsonProperty("firstName") @NotNull String firstName,
 			@JsonProperty("lastName") @NotNull String lastName,
 			@JsonProperty("password") @NotNull String password,
 			@JsonProperty("pictureUrl") String pictureUrl,
 			@JsonProperty("groupIds") Set<String> groupIds,
-			@JsonProperty("roles") Set<String> roles
+			@JsonProperty("realmRoles") @NotNull Set<String> realmRoles
 	) {
 	}
 
@@ -474,26 +468,24 @@ public class UsersResource {
 			@JsonProperty("lastName") String lastName,
 			@JsonProperty("password") String password,
 			@JsonProperty("pictureUrl") String pictureUrl,
-			@JsonProperty("roles") Set<String> roles
+			@JsonProperty("realmRoles") @NotNull Set<String> realmRoles
 	) {
 	}
 
 	public record UserDtoWithDetails(
 			@JsonUnwrapped UserDto user,
 			@JsonProperty("groups") List<GroupDto> groups,
-			@JsonProperty("vaults") List<VaultResource.VaultDtoWithRole> vaults,
+			@JsonProperty("accessibleVaults") List<VaultResource.VaultDtoWithRole> accessibleVaults,
 			@JsonProperty("devices") Set<DeviceResource.DeviceDto> devices,
-			@JsonProperty("legacyDevices") Set<DeviceResource.DeviceDto> legacyDevices,
-			@JsonProperty("roles") Set<String> roles
+			@JsonProperty("legacyDevices") Set<DeviceResource.DeviceDto> legacyDevices
 	) {
-		public static UserDtoWithDetails from(UserDto userDto, List<GroupDto> groups, List<VaultResource.VaultDtoWithRole> vaults, Set<DeviceResource.DeviceDto> devices, Set<DeviceResource.DeviceDto> legacyDevices, Set<String> roles) {
+		public static UserDtoWithDetails from(UserDto userDto, List<GroupDto> groups, List<VaultResource.VaultDtoWithRole> accessibleVaults, Set<DeviceResource.DeviceDto> devices, Set<DeviceResource.DeviceDto> legacyDevices) {
 			return new UserDtoWithDetails(
 					userDto,
 					groups,
-					vaults,
+					accessibleVaults,
 					devices,
-					legacyDevices,
-					roles
+					legacyDevices
 			);
 		}
 	}

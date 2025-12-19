@@ -2,17 +2,17 @@
   <section class="bg-white rounded-lg shadow-sm overflow-hidden">
     <div class="px-6 py-6">
       <div class="flex flex-col items-center justify-center h-full text-center">
-        <img :src="user.userPicture" class="w-48 h-48 rounded-full object-cover border border-gray-300 mb-4" />
+        <img :src="user.pictureUrl" class="w-48 h-48 rounded-full object-cover border border-gray-300 mb-4" />
         <h2 class="text-xl font-semibold text-gray-900">
           <template v-if="user.firstName || user.lastName">
             {{ user.firstName }} {{ user.lastName }}
           </template>
           <template v-else>
-            {{ user.username }}
+            {{ user.name }}
           </template>
         </h2>
         <p v-if="user.firstName || user.lastName" class="text-sm text-gray-500 mt-1">
-          {{ user.username }}
+          {{ user.name }}
         </p>
       </div>
       <dl class="divide-y divide-gray-100">
@@ -39,49 +39,22 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
 import { computed } from 'vue';
+import { DeviceDto, GroupDto, UserDto } from '../../common/backend';
 
 const { t } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{
-  user: DetailUser;
+  user: UserDtoWithDetails;
 }>();
 
-interface DetailUser {
-  firstName?: string;
-  lastName?: string;
-  username: string;
-  roles: string[];
-  email: string;
-  userPicture?: string;
-  groups: Group[];
-  vaults: Vault[];
-  devices: Device[];
-  legacyDevices: Device[];
-}
-
-interface Group {
-  id: string;
-  name: string;
-  userPicture?: string;
-}
-
-interface Vault {
-  id: string;
-  name: string;
-  description?: string;
-}
-
-interface Device {
-  id: string;
-  name: string;
-  type: 'DESKTOP' | 'MOBILE' | 'BROWSER';
-  creationTime: string;
-  lastAccessTime?: string;
-  lastIpAddress?: string;
+type UserDtoWithDetails = UserDto & {
+  groups: GroupDto[];
+  devices: DeviceDto[];
+  legacyDevices: DeviceDto[];
 }
 
 const sortedRoles = computed(() => 
-  [...props.user.roles ?? []].sort((a, b) => a.localeCompare(b, 'de', { sensitivity: 'base' }))
+  [...props.user.realmRoles ?? []].sort((a, b) => a.localeCompare(b, 'de', { sensitivity: 'base' }))
 );
 
 </script>

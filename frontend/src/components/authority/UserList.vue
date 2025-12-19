@@ -3,7 +3,7 @@
     {{ t('common.loading') }}
   </div>
 
-  <FetchError v-else-if="onFetchError != null" :error="onFetchError" :retry="fetchData" />
+  <FetchError v-else-if="onFetchError" :error="onFetchError" :retry="fetchData" />
 
   <div v-else class="flex flex-col">
       <h2 class="text-2xl font-bold leading-9 text-gray-900 sm:text-3xl sm:truncate mb-4">
@@ -147,7 +147,7 @@
   </div>
 
   <!-- Delete Dialog -->
-  <UserDeleteDialog v-if="deletingUser != null" ref="deleteUserDialog" :user="deletingUser" @close="deletingUser = null" @delete="onUserDeleted"/>
+  <UserDeleteDialog v-if="deletingUser" ref="deleteUserDialog" :user="deletingUser" @close="deletingUser = undefined" @delete="onUserDeleted"/>
 </template>
 
 <script setup lang="ts">
@@ -164,15 +164,9 @@ import FetchError from '../FetchError.vue';
 const router = useRouter();
 const route = useRoute();
 
-interface UserListDto {
-  id: string;
-  name: string;
-  email: string;
-  pictureUrl?: string;
-  ecdhPublicKey?: string;
-  ecdsaPublicKey?: string;
-  firstName?: string;
-  lastName?: string;
+import { UserDto } from '../../common/backend';
+
+type UserWithCountsDto = UserDto & { // TODO: move to backend.ts?
   devicesCount?: number;
   groupsCount?: number;
   vaultsCount?: number;
@@ -180,24 +174,24 @@ interface UserListDto {
 
 const { t } = useI18n({ useScope: 'global' });
 
-const users = ref<UserListDto[]>([]);
+const users = ref<UserWithCountsDto[]>([]);
 const loading = ref(true);
-const onFetchError = ref<Error | null>(null);
+const onFetchError = ref<Error>();
 const deleteUserDialog = ref<typeof UserDeleteDialog>();
-const deletingUser = ref<UserListDto | null>(null);
+const deletingUser = ref<UserWithCountsDto>();
 const query = ref('');
 const currentUserId = ref<string>('');
 const currentPage = ref(0);
 const pageSize = 20;
 
-const showDeleteUserDialog = (user: UserListDto) => {
+const showDeleteUserDialog = (user: UserWithCountsDto) => {
   deletingUser.value = user;
   nextTick(() => deleteUserDialog.value?.show());
 };
 
 const onUserDeleted = (deletedUser: { id: string }) => {
-  users.value = users.value.filter((u: UserListDto) => u.id !== deletedUser.id);
-  deletingUser.value = null;
+  users.value = users.value.filter((u: UserWithCountsDto) => u.id !== deletedUser.id);
+  deletingUser.value = undefined;
 };
 
 function showCreateUser() {
@@ -230,7 +224,7 @@ async function fetchData() {
 const filteredUsers = computed(() =>
   query.value === ''
     ? users.value
-    : users.value.filter((u: UserListDto) =>
+    : users.value.filter((u: UserWithCountsDto) =>
       u.name.toLowerCase().includes(query.value.toLowerCase())
     )
 );

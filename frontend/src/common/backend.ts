@@ -63,6 +63,8 @@ export type DeviceDto = {
 
 export type VaultRole = 'MEMBER' | 'OWNER';
 
+export type RealmRole = 'admin' | 'create-vaults';
+
 export type AccessGrant = {
   userId: string,
   token: string
@@ -76,9 +78,10 @@ export type UserDto = {
   email: string;
   firstName?: string;
   lastName?: string;
+  realmRoles: RealmRole[];
   language?: string;
   devices: DeviceDto[];
-  accessibleVaults: VaultDto[];
+  accessibleVaults: VaultDtoWithRole[];
   ecdhPublicKey?: string;
   ecdsaPublicKey?: string;
   privateKeys?: string;
@@ -97,7 +100,7 @@ export type GroupDto = {
 export type AuthorityDto = UserDto | GroupDto;
 
 export type MemberDto = AuthorityDto & {
-  role: VaultRole
+  vaultRole: VaultRole
 }
 
 export type TrustDto = {
@@ -105,12 +108,11 @@ export type TrustDto = {
   signatureChain: string[]
 }
 
-export type CreateUserDto = Pick<UserDto, 'name' | 'email' | 'firstName' | 'lastName' | 'pictureUrl'> & {
+export type CreateUserDto = Pick<UserDto, 'name' | 'email' | 'firstName' | 'lastName' | 'pictureUrl' | 'realmRoles'> & {
   password: string;
-  roles: string[];
 };
 
-export type UpdateUserDto = Pick<CreateUserDto, 'firstName' | 'lastName' | 'pictureUrl' | 'roles'> & {
+export type UpdateUserDto = Pick<UserDto, 'firstName' | 'lastName' | 'pictureUrl' | 'realmRoles'> & {
   password?: string;
 };
 

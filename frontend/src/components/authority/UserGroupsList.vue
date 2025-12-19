@@ -24,7 +24,7 @@
           <tr v-for="group in paginatedGroups" :key="group.id">
             <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 flex items-center gap-3 sm:pl-6">
               <div class="w-8 h-8 rounded-full border border-gray-300 bg-white flex items-center justify-center overflow-hidden">
-                <img v-if="group.userPicture" :src="group.userPicture" class="w-full h-full object-cover" alt="group icon" />
+                <img v-if="group.pictureUrl" :src="group.pictureUrl" class="w-full h-full object-cover" alt="group icon" />
                 <UserGroupIcon v-else class="w-5 h-5 text-gray-400" aria-hidden="true" />
               </div>
               <span class="truncate">{{ group.name }}</span>
@@ -67,8 +67,8 @@
       </table>
     </div>
   </section>
-  <UserAddGroupDialog ref="addGroupDialog" :user-id="userId" :groups="user.groups" @saved="(groups: Group[]) => props.onSaved(groups)" />
-  <UserGroupRemoveDialog ref="deleteGroupMemberDialog" :group="deletingGroup as { id: string; name: string; userPicture?: string } | null" :user-id="userId" @close="deletingGroup = null" @removed="onGroupRemoved"/>
+  <UserAddGroupDialog ref="addGroupDialog" :user-id="userId" :groups="user.groups" @saved="(groups: GroupDto[]) => props.onSaved(groups)" />
+  <UserGroupRemoveDialog ref="deleteGroupMemberDialog" :group="deletingGroup" :user-id="userId" @close="deletingGroup = undefined" @removed="onGroupRemoved"/>
 </template>
 
 <script setup lang="ts">
@@ -77,51 +77,27 @@ import { useI18n } from 'vue-i18n';
 import UserAddGroupDialog from './UserAddGroupDialog.vue';
 import UserGroupRemoveDialog from './UserGroupRemoveDialog.vue';
 import { UserGroupIcon } from '@heroicons/vue/20/solid';
+import { DeviceDto, GroupDto, UserDto } from '../../common/backend';
 const { t } = useI18n({ useScope: 'global' });
-interface Group {
-  id: string;
-  name: string;
-  userPicture?: string;
-}
-interface DetailUser {
-  firstName?: string;
-  lastName?: string;
-  username: string;
-  roles: string[];
-  email: string;
-  userPicture?: string;
-  groups: Group[];
-  vaults: Vault[];
-  devices: Device[];
-  legacyDevices: Device[];
-}
-interface Vault {
-  id: string;
-  name: string;
-  description?: string;
-}
 
-interface Device {
-  id: string;
-  name: string;
-  type: 'DESKTOP' | 'MOBILE' | 'BROWSER';
-  creationTime: string;
-  lastAccessTime?: string;
-  lastIpAddress?: string;
+type UserDtoWithDetails = UserDto & {
+  groups: GroupDto[];
+  devices: DeviceDto[];
+  legacyDevices: DeviceDto[];
 }
 
 const props = defineProps<{
-  user: DetailUser;
+  user: UserDtoWithDetails;
   userId: string;
-  groups: Group[];
+  groups: GroupDto[];
   pageSize: number;
-  onSaved: (groups: Group[]) => void;
+  onSaved: (groups: GroupDto[]) => void;
 }>();
 
-const deletingGroup = ref<Group | null>(null);
+const deletingGroup = ref<GroupDto>();
 const deleteGroupMemberDialog = ref<InstanceType<typeof UserGroupRemoveDialog> | null>(null);
 
-function showDeleteDialog(g: Group) {
+function showDeleteDialog(g: GroupDto) {
   deletingGroup.value = g;
   nextTick(() => {
     deleteGroupMemberDialog.value?.show();
@@ -131,7 +107,7 @@ function showDeleteDialog(g: Group) {
 function onGroupRemoved() {
   const updatedGroups = props.groups.filter(g => g.id !== deletingGroup.value?.id);
   props.onSaved(updatedGroups);
-  deletingGroup.value = null;
+  deletingGroup.value = undefined;
 }
 
 // ---------------------------------------------------------------------------

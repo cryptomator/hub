@@ -64,29 +64,14 @@ import { useI18n } from 'vue-i18n';
 import SearchInputGroup from '../SearchInputGroup.vue';
 import backend, { GroupDto } from '../../common/backend';
 
-interface Group {
-  id: string;
-  name: string;
-  pictureUrl?: string;
-  description?: string;
-  type?: string;
-  memberSize?: number;
-}
-
 const scrollContainer = ref<HTMLElement | null>(null);
 
-interface PropsGroup {
-  id: string;
-  name: string;
-  userPicture?: string;
-}
-
-const props = defineProps<{ groups: PropsGroup[]; userId: string }>();
-const emit = defineEmits<{ saved: [added: Group[]] }>();
+const props = defineProps<{ groups: GroupDto[]; userId: string }>();
+const emit = defineEmits<{ saved: [added: GroupDto[]] }>();
 
 const { t } = useI18n({ useScope: 'global' });
 const open = ref(false);
-const newGroups = ref<Group[]>([]);
+const newGroups = ref<GroupDto[]>([]);
 const onAddGroupError = ref<Error | null>(null);
 
 const selectedCount = computed(() => newGroups.value.length);
@@ -96,7 +81,7 @@ function isKnown(id: string) {
   return props.groups.some(g => g.id === id);
 }
 
-async function searchGroup(query: string): Promise<Group[]> {
+async function searchGroup(query: string): Promise<GroupDto[]> {
   if (!query.trim()) return [];
 
   try {
@@ -123,7 +108,7 @@ async function searchGroup(query: string): Promise<Group[]> {
   }
 }
 
-function addGroup(group: Group) {
+function addGroup(group: GroupDto) {
   try {
     if (isKnown(group.id) || newGroups.value.some(g => g.id === group.id)) return;
     newGroups.value.push(group);

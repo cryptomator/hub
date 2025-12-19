@@ -458,7 +458,7 @@ async function onSubmit() {
         lastName: lastName.value || undefined,
         password: password.value || undefined,
         pictureUrl: pictureUrl.value || undefined,
-        roles: selectedRoles.value
+        realmRoles: selectedRoles.value
       });
     } else {
       const createdUser = await backend.users.createUser({
@@ -468,7 +468,7 @@ async function onSubmit() {
         lastName: lastName.value,
         password: password.value,
         pictureUrl: pictureUrl.value || undefined,
-        roles: selectedRoles.value
+        realmRoles: selectedRoles.value
       });
 
       userId = createdUser.id;
