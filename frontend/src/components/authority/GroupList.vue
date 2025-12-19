@@ -70,7 +70,7 @@
                     <td class="px-6 py-4 text-sm font-medium text-gray-900">
                       <div class="flex items-center gap-3 max-w-xs">
                         <img :src="group.pictureUrl" :alt="t('groupList.profileImage')" class="w-10 h-10 rounded-full object-cover border border-gray-300"/>
-                        <button type="button" class="truncate block hover:underline" :title="group.name" @click="router.push(`/app/groups/${group.id}`)"> {{ group.name }} </button>
+                        <button type="button" class="truncate block hover:underline cursor-pointer" :title="group.name" @click="router.push(`/app/groups/${group.id}`)"> {{ group.name }} </button>
                       </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ group.memberSize ?? 0 }}</td>
