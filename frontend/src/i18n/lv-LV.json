@@ -240,6 +240,8 @@
   "userProfile.actions.changeLanguage": "Mainīt valodu",
   "userProfile.actions.changeLanguage.entry.browser": "Pārlūka valoda",
   "userProfile.keycloakVersion.notAvailable": "versija nav pieejama",
+  "unlock.noAccessVaultArchived.title": "Glabātava arhivēta",
+  "unlock.noAccessVaultArchived.description": "Glabātava tika arhivēta un vairs nav pieejama. Lūgums sazināties ar glabātavas īpašnieku.",
   "unlockSuccess.title": "Glabātava sekmīgi atslēgta",
   "unlockSuccess.description": "Tagad var aizvēr šo pārlūka cilni un atgriezties Cryptomator.",
   "unlockSuccess.accountSetup.title": "Nepieciešama uzstādīšana",
