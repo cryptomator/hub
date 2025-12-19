@@ -1,6 +1,7 @@
 package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import jakarta.annotation.Nullable;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -245,7 +246,7 @@ public class UsersResource {
 	@Transactional
 	@Operation(summary = "list all users with counts")
 	public List<UserDto.UserDtoWithCounts> getAll() {
-		return userRepo.findAll().stream()
+		return userRepo.findAll().stream()// FIXME: eagerly count groups, vaults, devices
 				.map(user -> UserDto.justPublicInfoWithCounts(
 						user,
 						userRepo.countGroupsForUser(user.getId()),
@@ -364,34 +365,22 @@ public class UsersResource {
 	@Operation(summary = "get a specific user")
 	@APIResponse(responseCode = "200", description = "user found")
 	@APIResponse(responseCode = "404", description = "user not found")
-	public UserDtoWithTimestamp getUser(@PathParam("id") String userId) {
-		User user = userRepo.findById(userId);
+	public UserDtoWithDetails getUser(@PathParam("id") String userId) {
+		User user = userRepo.findById(userId); // TODO: eagerly load groups, accessible vaults, devices, legacy devices
 		if (user == null) {
 			throw new NotFoundException("User not found: " + userId);
 		}
 
-		Long createdTimestamp = null;
-		String firstName = null;
-		String lastName = null;
-		try {
-			var keycloakUser = keycloakAdminService.getUser(userId);
-			createdTimestamp = keycloakUser.getCreatedTimestamp();
-			firstName = keycloakUser.getFirstName();
-			lastName = keycloakUser.getLastName();
-		} catch (Exception e) {
-			LOG.fine("Could not fetch Keycloak user data for " + userId);
-		}
 
 		// Fetch groups for the user
-		List<GroupDto> groups = userRepo.getGroupsForUser(userId)
+		List<GroupDto> groups = user.directGroupMemberships.stream()
 				.map(GroupDto::fromEntity)
 				.toList();
 
 		// Fetch vaults with roles for the user
-		List<VaultResource.VaultDtoWithRole> vaults = userRepo.getVaultAccessForUser(userId)
+		List<VaultResource.VaultDtoWithRole> vaults = user.accessibleVaults.stream()
 				.map(eva -> {
-					Vault vault = vaultRepo.findById(eva.getId().getVaultId());
-					return VaultResource.VaultDtoWithRole.from(vault, eva.getId().getRole());
+					return VaultResource.VaultDtoWithRole.from(eva.getVault(), eva.getRole());
 				})
 				.toList();
 
@@ -405,14 +394,11 @@ public class UsersResource {
 				.map(DeviceResource.DeviceDto::fromEntity)
 				.collect(Collectors.toSet());
 
-		// Fetch roles
+		// Fetch roles // FIXME: sync to db?
 		Set<String> roles = keycloakAdminService.getUserRoles(userId);
 
-		return UserDtoWithTimestamp.from(
+		return UserDtoWithDetails.from(
 				UserDto.justPublicInfo(user),
-				createdTimestamp,
-				firstName,
-				lastName,
 				groups,
 				vaults,
 				devices,
@@ -492,37 +478,17 @@ public class UsersResource {
 	) {
 	}
 
-	public record UserDtoWithTimestamp(
-			@JsonProperty("id") String id,
-			@JsonProperty("type") AuthorityDto.Type type,
-			@JsonProperty("name") String name,
-			@JsonProperty("pictureUrl") String pictureUrl,
-			@JsonProperty("email") String email,
-			@JsonProperty("language") String language,
-			@JsonProperty("ecdhPublicKey") String ecdhPublicKey,
-			@JsonProperty("ecdsaPublicKey") String ecdsaPublicKey,
-			@JsonProperty("createdTimestamp") Long createdTimestamp,
-			@JsonProperty("firstName") String firstName,
-			@JsonProperty("lastName") String lastName,
+	public record UserDtoWithDetails(
+			@JsonUnwrapped UserDto user,
 			@JsonProperty("groups") List<GroupDto> groups,
 			@JsonProperty("vaults") List<VaultResource.VaultDtoWithRole> vaults,
 			@JsonProperty("devices") Set<DeviceResource.DeviceDto> devices,
 			@JsonProperty("legacyDevices") Set<DeviceResource.DeviceDto> legacyDevices,
 			@JsonProperty("roles") Set<String> roles
 	) {
-		public static UserDtoWithTimestamp from(UserDto userDto, Long createdTimestamp, String firstName, String lastName, List<GroupDto> groups, List<VaultResource.VaultDtoWithRole> vaults, Set<DeviceResource.DeviceDto> devices, Set<DeviceResource.DeviceDto> legacyDevices, Set<String> roles) {
-			return new UserDtoWithTimestamp(
-					userDto.id,
-					userDto.type,
-					userDto.name,
-					userDto.pictureUrl,
-					userDto.getEmail(),
-					userDto.getLanguage(),
-					userDto.getEcdhPublicKey(),
-					userDto.getEcdsaPublicKey(),
-					createdTimestamp,
-					firstName,
-					lastName,
+		public static UserDtoWithDetails from(UserDto userDto, List<GroupDto> groups, List<VaultResource.VaultDtoWithRole> vaults, Set<DeviceResource.DeviceDto> devices, Set<DeviceResource.DeviceDto> legacyDevices, Set<String> roles) {
+			return new UserDtoWithDetails(
+					userDto,
 					groups,
 					vaults,
 					devices,

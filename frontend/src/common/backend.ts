@@ -83,7 +83,6 @@ export type UserDto = {
   ecdsaPublicKey?: string;
   privateKeys?: string;
   setupCode?: string;
-  createdTimestamp?: number;
 }
 
 export type GroupDto = {
@@ -106,47 +105,24 @@ export type TrustDto = {
   signatureChain: string[]
 }
 
-export type CreateUserDto = {
-  username: string;
-  email: string;
-  firstName: string;
-  lastName: string;
+export type CreateUserDto = Pick<UserDto, 'name' | 'email' | 'firstName' | 'lastName' | 'pictureUrl'> & {
   password: string;
-  pictureUrl?: string;
-  groupIds?: string[];
-  roles?: string[];
-}
+  roles: string[];
+};
 
-export type UpdateUserDto = {
-  firstName?: string;
-  lastName?: string;
+export type UpdateUserDto = Pick<CreateUserDto, 'firstName' | 'lastName' | 'pictureUrl' | 'roles'> & {
   password?: string;
-  pictureUrl?: string;
-  roles?: string[];
-}
+};
 
-export type CreateGroupDto = {
-  name: string;
-  pictureUrl?: string;
-}
+export type CreateGroupDto = Pick<GroupDto, 'name' | 'pictureUrl'>;
 
-export type UpdateGroupDto = {
-  name?: string;
-  pictureUrl?: string;
-}
+export type UpdateGroupDto = CreateGroupDto;
 
-export type VaultDtoWithRole = {
-  id: string;
-  name: string;
-  description?: string;
-  archived: boolean;
+export type VaultDtoWithRole = VaultDto & { // TODO: unused??
   role: VaultRole;
 }
 
-export type GroupDtoWithDetails = {
-  id: string;
-  name: string;
-  pictureUrl?: string;
+export type GroupDtoWithDetails = GroupDto & {
   members: UserDto[];
   vaults: VaultDtoWithRole[];
 }

@@ -458,18 +458,17 @@ async function onSubmit() {
         lastName: lastName.value || undefined,
         password: password.value || undefined,
         pictureUrl: pictureUrl.value || undefined,
-        roles: selectedRoles.value.length > 0 ? selectedRoles.value : []
+        roles: selectedRoles.value
       });
     } else {
       const createdUser = await backend.users.createUser({
-        username: username.value,
+        name: username.value,
         email: email.value,
         firstName: firstName.value,
         lastName: lastName.value,
         password: password.value,
         pictureUrl: pictureUrl.value || undefined,
-        groupIds: undefined,
-        roles: selectedRoles.value.length > 0 ? selectedRoles.value : undefined
+        roles: selectedRoles.value
       });
 
       userId = createdUser.id;
