@@ -325,7 +325,7 @@ import { base64 } from '@scure/base';
 import * as R from 'remeda';
 import { computed, ref, Ref, toRaw } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { AccessGrant, ActivatedUser, AuthorityDto, didCompleteSetup, PaymentRequiredError, RecoveredKeyShareDto, RecoveryProcessChangeCouncil, RecoveryProcessDto, RecoveryProcessSetNewOwner, UserDto, VaultDto, VaultRole } from '../../common/backend';
+import backend, { AccessGrant, ActivatedUser, AuthorityDto, didCompleteSetup, GroupDto, PaymentRequiredError, RecoveredKeyShareDto, RecoveryProcessChangeCouncil, RecoveryProcessDto, RecoveryProcessSetNewOwner, UserDto, VaultDto, VaultRole } from '../../common/backend';
 import { asPublicKey, UserKeys, VaultKeys } from '../../common/crypto';
 import { EmergencyAccess } from '../../common/emergencyaccess';
 import { ECDSA_P384, JWT, JWTHeader } from '../../common/jwt';
@@ -424,66 +424,46 @@ function processConflicts(type: RecoveryProcessDto['type']) {
 }
 
 // OWNERS
-const owners = ref<UserDto[]>([]);
+const owners = ref<AuthorityDto[]>([]);
+const existingOwners = ref<AuthorityDto[]>([]);
 const existingOwnerIds = ref<Set<string>>(new Set());
-const existingOwners = ref<UserDto[]>([]);
 const newOwnerIds = computed(() => owners.value.map(u => u.id));
 
 // MEMBERS (non-owners)
-const members = ref<UserDto[]>([]);
-const existingMembers = ref<UserDto[]>([]);
+const members = ref<AuthorityDto[]>([]);
+const existingMembers = ref<AuthorityDto[]>([]);
 const existingMemberIds = ref<Set<string>>(new Set());
 const newMemberIds = computed(() => members.value.map(u => u.id));
-
-export type Item = {
-  id: string;
-  name: string;
-  pictureUrl?: string;
-  type?: string;
-  memberSize?: number;
-}
-
-function getCurrentCouncilMembers(vault: VaultDto): Item[] {
-  const ids = Object.keys(vault.emergencyKeyShares ?? {});
-  return ids.map((id) => {
-    const a = authoritiesById.value[id];
-    if (a && (a as any).name) {
-      return { id: a.id, name: (a as any).name, pictureUrl: (a as any).pictureUrl };
-    } else {
-      return { id, name: id };
-    }
-  }).sort((a, b) => a.name.localeCompare(b.name));
-}
 
 const authoritiesById = ref<Record<string, AuthorityDto>>({});
 
 // --- helper: generic add/remove by id ---
-function addUnique(list: Ref<UserDto[]>, user: UserDto) {
+function addUnique(list: Ref<AuthorityDto[]>, user: AuthorityDto) {
   if (!list.value.find(u => u.id === user.id)) list.value.push(user);
 }
-function removeFrom(list: Ref<UserDto[]>, user: UserDto) {
+function removeFrom(list: Ref<AuthorityDto[]>, user: AuthorityDto) {
   list.value = list.value.filter(u => u.id !== user.id);
 }
 
 // Owner handlers keep lists in sync
-const addOwner = (user: UserDto) => {
+const addOwner = (user: AuthorityDto) => {
   addUnique(owners, user);
   removeFrom(members, user);
 };
-const removeOwner = (user: UserDto) => {
+const removeOwner = (user: AuthorityDto) => {
   removeFrom(owners, user);
 };
 
 // Member handlers keep lists in sync
-const addMember = (user: UserDto) => {
+const addMember = (user: AuthorityDto) => {
   addUnique(members, user);
   removeFrom(owners, user);
 };
-const removeMember = (user: UserDto) => {
+const removeMember = (user: AuthorityDto) => {
   removeFrom(members, user);
 };
 
-const removedMembers = computed<UserDto[]>(() => {
+const removedMembers = computed<AuthorityDto[]>(() => {
   const initialOwnerAndMemberIds = new Set<string>([
     ...initialOwnerIds.value,
     ...initialMemberIds.value,
@@ -510,10 +490,10 @@ const removedMembers = computed<UserDto[]>(() => {
 
   return removedIds
     .map((id) => byId[id])
-    .filter((u): u is UserDto => !!u);
+    .filter((u): u is AuthorityDto => !!u);
 });
 
-const selectedNewOwners = computed<UserDto[]>(() => {
+const selectedNewOwners = computed<AuthorityDto[]>(() => {
   if (props.recoveryProcess?.type === 'CHANGE_PERMISSIONS') {
     const ids = new Set(props.recoveryProcess.details.newOwnerIds);
     return owners.value.filter(u => ids.has(u.id));
@@ -522,7 +502,7 @@ const selectedNewOwners = computed<UserDto[]>(() => {
   return owners.value.filter(u => ids.has(u.id));
 });
 
-const selectedNewmembers = computed<UserDto[]>(() => {
+const selectedNewmembers = computed<AuthorityDto[]>(() => {
   if (props.recoveryProcess?.type === 'CHANGE_PERMISSIONS') {
     const ids = new Set(props.recoveryProcess.details.newMemberIds);
     return members.value.filter(u => ids.has(u.id));
@@ -562,7 +542,7 @@ const canStartRecovery = computed(() => {
 
   if (processType.value === 'COUNCIL_CHANGE') {
     return (
-      newCouncilMembers.value.length >= defaultMinMembers.value
+      newCouncilMembers.value.length >= newRequiredKeyShares.value
       && isCouncilChanged.value
     );
   }
@@ -579,7 +559,8 @@ const isCouncilChanged = computed(() => {
   }
 
   const currentSet = new Set(currentCouncilIds);
-  return newCouncilIds.some(id => !currentSet.has(id));
+  const requiredKeySharesChanged = props.vault.requiredEmergencyKeyShares != newRequiredKeyShares.value;
+  return newCouncilIds.some(id => !currentSet.has(id)) || requiredKeySharesChanged;
 });
 
 const hasActivatedOwner = computed(() =>
@@ -588,10 +569,10 @@ const hasActivatedOwner = computed(() =>
 
 const noopSearch = async () => [];
 
-async function searchUsers(query: string): Promise<UserDto[]> {
+async function searchUsers(query: string): Promise<AuthorityDto[]> {
   const authorities = await backend.authorities.search(query, true);
   return authorities
-    .filter((a): a is UserDto => a.type === 'USER')
+    .filter((a): a is AuthorityDto => true)
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
@@ -668,8 +649,8 @@ function initProcessType() {
 async function initOwnersAndMembers() {
   try {
     const memberList = await backend.vaults.getMembers(props.vault.id);
-    const initialOwners = memberList.filter(m => m.type === 'USER' && m.role === 'OWNER') as UserDto[];
-    const initialMembers = memberList.filter(m => m.type === 'USER' && m.role === 'MEMBER') as UserDto[];
+    const initialOwners = (memberList.filter(m => m.role === 'OWNER') as AuthorityDto[]);
+    const initialMembers = memberList.filter(m => m.role === 'MEMBER') as AuthorityDto[];
 
     existingOwners.value = initialOwners;
     owners.value = [...initialOwners];
@@ -716,18 +697,31 @@ async function initProcessSpecificState() {
     newRequiredKeyShares.value = defaultRequiredEmergencyKeyShares.value;
   } else if (props.recoveryProcess?.type === 'CHANGE_PERMISSIONS') {
     const newOwners = await backend.authorities.listSome(props.recoveryProcess.details.newOwnerIds);
-    for (const u of newOwners) {
-      if (!owners.value.find(x => x.id === u.id)) {
-        owners.value.push(u as UserDto);
-      }
-    }
+    const enrichedOwners = await enrichGroupsMemberSize([...owners.value, ...newOwners]);
+    owners.value = R.uniqueBy(enrichedOwners, u => u.id);
+
     const newMembers = await backend.authorities.listSome(props.recoveryProcess.details.newMemberIds);
-    for (const u of newMembers) {
-      if (!members.value.find(x => x.id === u.id)) {
-        members.value.push(u as UserDto);
-      }
-    }
+    const enrichedMembers = await enrichGroupsMemberSize([...members.value, ...newMembers]);
+    members.value = R.uniqueBy(enrichedMembers, u => u.id);
   }
+};
+
+async function enrichGroupsMemberSize(authorities: AuthorityDto[]): Promise<AuthorityDto[]> {
+  const groups = authorities.filter(a => a.type === 'GROUP') as GroupDto[];
+  if (groups.length === 0) return authorities;
+
+  const lookups = await Promise.all(groups.map(async g => {
+    const res = await backend.authorities.search(g.name, true);
+    const hit = res.find(a => a.type === 'GROUP' && a.id === g.id) as GroupDto | undefined;
+    return [g.id, hit?.memberSize] as const;
+  }));
+  const byId = Object.fromEntries(lookups);
+
+  return authorities.map(a =>
+    a.type === 'GROUP'
+      ? { ...a, memberSize: byId[a.id] ?? (a as GroupDto).memberSize }
+      : a
+  );
 }
 
 const showSuccess = ref(false);
@@ -906,7 +900,7 @@ async function completeRecovery() {
       await backend.vaults.setMembersWithRole(props.vault.id, membersWithRole);
 
       const didCompleteSetupMembers = [...selectedNewOwners.value, ...selectedNewmembers.value]
-        .filter(u => didCompleteSetup(u));
+        .filter(u => didCompleteSetup(u as UserDto) && u.type === 'USER');
 
       const accessGrants: AccessGrant[] = await Promise.all(
         didCompleteSetupMembers.map(async u => {
