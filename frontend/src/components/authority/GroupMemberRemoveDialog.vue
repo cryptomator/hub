@@ -64,7 +64,7 @@ import backend, { AuthorityDto, type UserDto } from '../../common/backend';
 const { t } = useI18n({ useScope: 'global' });
 
 const open = ref(false);
-const onDeleteGroupError = ref<Error | null>();
+const onDeleteGroupError = ref<Error | null>(null);
 
 const props = defineProps<{
    member: AuthorityDto;

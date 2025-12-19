@@ -72,7 +72,7 @@ interface User {
 const { t } = useI18n({ useScope: 'global' });
 
 const open = ref(false);
-const onDeleteUserError = ref<Error | null>();
+const onDeleteUserError = ref<Error | null>(null);
 
 const props = defineProps<{
     user: User
