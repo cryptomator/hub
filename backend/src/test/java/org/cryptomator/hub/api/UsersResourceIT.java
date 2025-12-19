@@ -426,11 +426,12 @@ public class UsersResourceIT {
 
 			var body = """
 					{
-						"username": "newuser",
+						"name": "newuser",
 						"email": "newuser@example.com",
 						"firstName": "New",
 						"lastName": "User",
-						"password": "password123"
+						"password": "password123",
+						"realmRoles": []
 					}
 					""";
 			given().contentType(ContentType.JSON).body(body)
@@ -453,11 +454,12 @@ public class UsersResourceIT {
 
 			var body = """
 					{
-						"username": "existinguser",
+						"name": "existinguser",
 						"email": "new@example.com",
 						"firstName": "Test",
 						"lastName": "User",
-						"password": "password123"
+						"password": "password123",
+						"realmRoles": []
 					}
 					""";
 			given().contentType(ContentType.JSON).body(body)
@@ -480,11 +482,12 @@ public class UsersResourceIT {
 
 			var body = """
 					{
-						"username": "newuser",
+						"name": "newuser",
 						"email": "existing@example.com",
 						"firstName": "Test",
 						"lastName": "User",
-						"password": "password123"
+						"password": "password123",
+						"realmRoles": []
 					}
 					""";
 			given().contentType(ContentType.JSON).body(body)
@@ -550,7 +553,8 @@ public class UsersResourceIT {
 			var body = """
 					{
 						"firstName": "Updated",
-						"lastName": "Name"
+						"lastName": "Name",
+						"realmRoles": []
 					}
 					""";
 			given().contentType(ContentType.JSON).body(body)
@@ -572,7 +576,8 @@ public class UsersResourceIT {
 			var body = """
 					{
 						"firstName": "Updated",
-						"lastName": "Name"
+						"lastName": "Name",
+						"realmRoles": []
 					}
 					""";
 			given().contentType(ContentType.JSON).body(body)
@@ -594,7 +599,8 @@ public class UsersResourceIT {
 			var body = """
 					{
 						"firstName": "Updated",
-						"lastName": "Name"
+						"lastName": "Name",
+						"realmRoles": []
 					}
 					""";
 			given().contentType(ContentType.JSON).body(body)
