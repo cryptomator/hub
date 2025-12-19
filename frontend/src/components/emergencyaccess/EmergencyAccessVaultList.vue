@@ -103,70 +103,15 @@
                   />
 
                   <!-- Council Members -->
-                  <div v-if="getCurrentCouncilMembers(vault).length && isEmergencyKeyShareHolder(vault)" class="mt-2 mr-5">
-                    <div class="relative group inline-flex -space-x-2">
-                      <template v-for="m in getCouncilPreview(vault).list" :key="m.id">
-                        <div class="relative h-8 w-8 rounded-full ring-1 ring-gray-200 bg-white overflow-hidden flex items-center justify-center">
-                          <img
-                            v-if="getAvatarUrl(m)"
-                            :src="getAvatarUrl(m)"
-                            :alt="m.name"
-                            class="h-full w-full object-cover"
-                          />
-                          <div
-                            v-else
-                            class="h-full w-full flex items-center justify-center text-[9px] font-semibold text-gray-700"
-                          >
-                            {{ initials(m.name) }}
-                          </div>
-                        </div>
-                      </template>
+                  <div class="relative group mt-2 mr-5">
+                    <UserListGroupVisualization :users="getCurrentCouncilMembers(vault)" />
 
-                      <!-- +N Circle -->
-                      <div
-                        v-if="getCouncilPreview(vault).extra > 0"
-                        class="relative z-10 h-8 w-8 rounded-full ring-1 ring-gray-200 bg-gray-200 overflow-hidden
-                              flex items-center justify-center text-[10px] font-semibold text-gray-700"
-                        :title="`+${getCouncilPreview(vault).extra}`"
-                        style="margin-left: 4px;"
-                      >
-                        +{{ getCouncilPreview(vault).extra }}
-                      </div>
-
-                      <!-- Hover-Card -->
-                      <div
-                        class="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-150
-                              absolute left-0 top-9 z-20 w-80 rounded-lg border border-gray-200 bg-white p-3 shadow-xl"
-                        role="tooltip"
-                      >
-                        <div class="flex items-center justify-between mb-1">
-                          <div>
-                            <div class="text-xl">Vault Council</div>
-                            <div class="text-xs text-gray-500 mb-2">
-                              Required KeyShares:
-                              {{ vault!.requiredEmergencyKeyShares }}
-                            </div>
-                          </div>
-                          <SegmentRing
-                            :total="vault!.requiredEmergencyKeyShares"
-                            :completed="0"
-                            :size="42"
-                          />
-                        </div>
-                        <ul class="space-y-1 max-h-56 overflow-auto pr-1">
-                          <li
-                            v-for="m in getCurrentCouncilMembers(vault)"
-                            :key="'hc-' + vault.id + '-' + m.id"
-                            class="flex items-center justify-between text-sm h-6"
-                          >
-                            <span class="truncate flex items-center gap-2">
-                              <img v-if="getAvatarUrl(m)" :src="getAvatarUrl(m)" :alt="m.name" class="h-4 w-4 rounded-full" />
-                              <span class="truncate">{{ m.name }}</span>
-                            </span>
-                          </li>
-                        </ul>
-                      </div>
-                    </div>
+                    <VaultCouncilHoverCard
+                      v-if="isEmergencyKeyShareHolder(vault)"
+                      :members="getCurrentCouncilMembers(vault)"
+                      :required-key-shares="vault.requiredEmergencyKeyShares"
+                      :completed="0"
+                    />
                   </div>
 
                   <!-- ASSIGN OWNER Button - old council -->
@@ -234,7 +179,6 @@
     </div>
   </div>
 
-
   <EmergencyAccessDialog
     v-if="recoveryApprovVault != null"
     ref="recoveryApprovDialog"
@@ -263,6 +207,8 @@ import EmergencyAccessDialog from './EmergencyAccessDialog.vue';
 import SegmentRing from './SegmentRing.vue';
 import EmergencyBadge from './EmergencyBadge.vue';
 import EmergencyProcessButton from './EmergencyProcessButton.vue';
+import VaultCouncilHoverCard from './VaultCouncilHoverCard.vue';
+import UserListGroupVisualization from '../UserListGroupVisualization.vue';
 
 export type Item = {
   id: string;
