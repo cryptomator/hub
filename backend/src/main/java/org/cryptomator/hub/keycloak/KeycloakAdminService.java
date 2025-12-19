@@ -9,6 +9,7 @@ import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
+import org.cryptomator.hub.entities.EffectiveGroupMembership;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -47,6 +48,9 @@ public class KeycloakAdminService {
 
 	@Inject
 	Group.Repository groupRepo;
+
+	@Inject
+	EffectiveGroupMembership.Repository effectiveGroupMembershipRepo;
 
 	@Inject
 	KeycloakRealmRoles realmRoles;
@@ -114,6 +118,7 @@ public class KeycloakAdminService {
 					// TODO: shall we fail the whole user creation here? undo previous steps?
 				}
 			}
+			effectiveGroupMembershipRepo.updateGroups(groupIds);
 		}
 
 		syncUser(userId);
@@ -241,6 +246,7 @@ public class KeycloakAdminService {
 		var dbMembers = userRepo.findByIds(keycloakMembers).toList();
 		dbGroup.getMembers().clear();
 		dbGroup.getMembers().addAll(dbMembers);
+		effectiveGroupMembershipRepo.updateGroups(Set.of(dbGroup.getId()));
 
 		groupRepo.persist(dbGroup);
 		groupRepo.flush();
