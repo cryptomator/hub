@@ -2,7 +2,7 @@
   <div class="relative w-full">
     <div
       :class="[
-        'flex items-center flex-wrap min-h-[42px] rounded-md px-2 py-1 shadow-xs border', 
+        'flex items-center flex-wrap min-h-[54px] rounded-md px-2 py-1 shadow-xs border', 
         inputVisible ? 'focus-within:ring-1' : 'bg-gray-50 cursor-not-allowed',
         props.hasError
           ? 'border-red-300 text-red-900 focus-within:ring-red-500 focus-within:border-red-500'
