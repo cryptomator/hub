@@ -899,11 +899,11 @@ async function completeRecovery() {
 
       await backend.vaults.setMembersWithRole(props.vault.id, membersWithRole);
 
-      const didCompleteSetupMembers = [...selectedNewOwners.value, ...selectedNewmembers.value]
-        .filter(u => didCompleteSetup(u as UserDto) && u.type === 'USER');
+      const activatedUsersToGrant = [...selectedNewOwners.value, ...selectedNewmembers.value]
+        .filter((a): a is ActivatedUser => a.type === 'USER' && didCompleteSetup(a));
 
       const accessGrants: AccessGrant[] = await Promise.all(
-        didCompleteSetupMembers.map(async u => {
+        activatedUsersToGrant.map(async u => {
           const publicKey = base64.decode(u.ecdhPublicKey) as Uint8Array<ArrayBuffer>;
           const jwe = await vaultKeys.encryptForUser(publicKey);
           return { userId: u.id, token: jwe };
