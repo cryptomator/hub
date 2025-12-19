@@ -223,6 +223,14 @@ public class KeycloakAdminService {
 
 		dbGroup.setName(keycloakGroup.getName());
 
+		var attrs = keycloakGroup.getAttributes();
+		if (attrs != null && attrs.containsKey("picture")) {
+			var pictureAttr = attrs.get("picture");
+			dbGroup.setPictureUrl(pictureAttr.isEmpty() ? null : pictureAttr.getFirst());
+		} else {
+			dbGroup.setPictureUrl(null);
+		}
+
 		// Sync members
 		var keycloakMembers = groupResource.members().stream().map(UserRepresentation::getId).toList();
 		var dbMembers = userRepo.findByIds(keycloakMembers).toList();
