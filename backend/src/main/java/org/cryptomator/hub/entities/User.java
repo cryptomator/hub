@@ -7,9 +7,13 @@ import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.Immutable;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -180,6 +184,23 @@ public class User extends Authority {
 		this.devices = devices;
 	}
 
+	@OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+	public Set<AccessToken> accessTokens = new HashSet<>();
+
+	@OneToMany(mappedBy = "owner", orphanRemoval = true, fetch = FetchType.LAZY)
+	public Set<Device> devices = new HashSet<>();
+
+	@ManyToMany
+	@JoinTable(name = "group_membership",
+			joinColumns = @JoinColumn(name = "member_id", referencedColumnName = "id"),
+			inverseJoinColumns = @JoinColumn(name = "group_id", referencedColumnName = "id")
+	)
+	public Set<Group> directGroupMemberships = new HashSet<>();
+
+	@Immutable
+	@OneToMany(mappedBy = "authority", fetch = FetchType.LAZY)
+	public Set<VaultAccess> accessibleVaults = new HashSet<>();
+
 	/**
 	 * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
 	 */
@@ -187,12 +208,6 @@ public class User extends Authority {
 	public Set<LegacyDevice> getLegacyDevices() {
 		return legacyDevices;
 	}
-
-	@OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
-	public Set<AccessToken> accessTokens = new HashSet<>();
-
-	@OneToMany(mappedBy = "owner", orphanRemoval = true, fetch = FetchType.LAZY)
-	public Set<Device> devices = new HashSet<>();
 
 	/**
 	 * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
