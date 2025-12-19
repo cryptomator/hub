@@ -113,6 +113,8 @@
   "resetUserAccountDialog.title": "Inicializovať užívateľský účet",
   "userProfile.actions.changeLanguage.entry.browser": "Jazyk prehliadača",
   "userProfile.keycloakVersion.notAvailable": "verzia nie je k dispozícii",
+  "unlock.noAccessVaultArchived.title": "Trezor je archivovaný",
+  "unlock.noAccessVaultArchived.description": "Tento trezor bol archivovaný a nie je viac dostupný. Prosím kontaktujte jeho vlastníka.",
   "unlockSuccess.deviceSetup.title": "Nové zariadenie",
   "vaultDetails.description.header": "Popis",
   "vaultDetails.actions.updatePermissions.reload": "Znovu načítať",
