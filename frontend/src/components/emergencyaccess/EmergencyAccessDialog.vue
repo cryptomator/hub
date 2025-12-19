@@ -30,7 +30,10 @@
               <div class="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                 <div class="sm:flex sm:items-start">
                   <div class="mx-auto shrink-0 flex items-center justify-center h-12 w-12 sm:mx-0 sm:h-10 sm:w-10 relative">
-                    <div v-if="phase !== 'start'">
+                    <div v-if="showSuccess">
+                      <CheckCircleIcon class="h-12 w-12 text-primary" aria-hidden="true" />
+                    </div>
+                    <div v-else-if="phase !== 'start'">
                       <SegmentRing
                         :total="newRequiredKeyShares"
                         :completed="completedSegments"
@@ -45,8 +48,12 @@
                     <DialogTitle as="h3" class="text-lg leading-6 font-medium text-gray-900">
                       {{ phaseTitle }}
                     </DialogTitle>
-
-                    <div v-if="phase === 'start'" class="mt-4 space-y-4">
+                    <div v-if="showSuccess" class="mt-4">
+                      <div>
+                        Process completed successfully.
+                      </div>
+                    </div>
+                    <div v-else-if="phase === 'start'" class="mt-4 space-y-4">
                       <div v-if="processType === 'CHANGE_PERMISSIONS'">
                         <label class="block text-sm font-medium text-gray-700">
                           Select user with role owner
@@ -264,7 +271,7 @@
                 </template>
 
                 <!-- COMPLETE -->
-                <template v-else-if="phase === 'complete'">
+                <template v-else-if="phase === 'complete' && !showSuccess">
                   <button
                     v-if="canSeeComplete"
                     type="button"
@@ -285,7 +292,7 @@
                 </button>
                 
                 <!-- ABORT -->
-                <template v-if="phase !== 'start' && isMeInProcessCouncil">
+                <template v-if="phase !== 'start' && isMeInProcessCouncil && !showSuccess">
                   <p
                     class="mt-2 text-sm text-red-600 cursor-pointer hover:underline sm:order-last sm:mr-auto"
                     @click.stop="requestCancel()"
@@ -313,7 +320,7 @@
 <script setup lang="ts">
 import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import { CheckBadgeIcon, ExclamationCircleIcon, InformationCircleIcon } from '@heroicons/vue/20/solid';
-import { ExclamationTriangleIcon, PlayIcon } from '@heroicons/vue/24/solid';
+import { ExclamationTriangleIcon, PlayIcon, CheckCircleIcon } from '@heroicons/vue/24/solid';
 import { base64 } from '@scure/base';
 import * as R from 'remeda';
 import { computed, ref, Ref, toRaw } from 'vue';
@@ -638,6 +645,7 @@ async function show() {
   await loadAuthoritiesForCouncilAndProcesses();
   await initProcessSpecificState();
 
+  showSuccess.value = false;
   open.value = true;
 }
 
@@ -722,7 +730,11 @@ async function initProcessSpecificState() {
   }
 }
 
+const showSuccess = ref(false);
+
 const phaseTitle = computed(() => {
+  if (showSuccess.value) return 'Success';
+
   switch (phase.value) {
     case 'start': {
       if (processType.value === 'COUNCIL_CHANGE') {
@@ -912,7 +924,7 @@ async function completeRecovery() {
     await backend.emergencyAccess.complete(process.id);
     await backend.emergencyAccess.delete(process.id);
     emit('updated');
-    open.value = false;
+    showSuccess.value = true; 
   } catch (error) {
     console.error('Completing emergency recovery failed.', error);
     onError.value = error instanceof Error ? error : new Error('Unknown Error');
