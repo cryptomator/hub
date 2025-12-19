@@ -130,7 +130,7 @@ const filteredGroups = computed(() => {
   const q = groupQuery.value.trim().toLowerCase();
   return (props.groups ?? [])
     .filter((g) => !q || g.name.toLowerCase().includes(q))
-    .sort((a, b) => a.name.localeCompare(b.name, 'de', { sensitivity: 'base' }));
+    .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
 });
 
 const showPaginationGroup = computed(() => filteredGroups.value.length > pageSizeGroup.value);

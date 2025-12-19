@@ -133,7 +133,7 @@ const filteredUsers = computed(() => {
     .sort((a, b) => {
       const aKey = a.name?.trim() || a.email || '';
       const bKey = b.name?.trim() || b.email || '';
-      return aKey.localeCompare(bKey, 'de', { sensitivity: 'base' });
+      return aKey.localeCompare(bKey, undefined, { sensitivity: 'base' });
     });
 });
 

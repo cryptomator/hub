@@ -48,7 +48,7 @@ const props = defineProps<{
 }>();
 
 const sortedRoles = computed(() => 
-  [...props.user.realmRoles ?? []].sort((a, b) => a.localeCompare(b, 'de', { sensitivity: 'base' }))
+  [...props.user.realmRoles ?? []].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
 );
 
 </script>
