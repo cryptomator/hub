@@ -374,27 +374,6 @@ function onUnifiedButtonClick(vault: VaultDto, type: RecoveryProcessDto['type'])
   }
 }
 
-function getCouncilPreview(vault: VaultDto): { list: Item[]; extra: number } {
-  const all = getCurrentCouncilMembers(vault);
-  const max = 3;
-  const extra = Math.max(0, all.length - max);
-  return { list: all.slice(0, max), extra };
-}
-
-function getAvatarUrl(u: Item | UserDto | AuthorityDto | any): string | undefined {
-  return u?.pictureUrl || u?.avatarUrl || u?.imageUrl || undefined;
-}
-
-function initials(name: string): string {
-  return (name ?? '')
-    .split(' ')
-    .map((p: string) => p.trim()[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
-}
-
 function getCurrentCouncilMembers(vault: VaultDto): Item[] {
   const ids = Object.keys(vault.emergencyKeyShares ?? {});
   return ids.map((id) => {
