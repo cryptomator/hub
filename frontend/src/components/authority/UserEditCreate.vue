@@ -342,8 +342,7 @@ onMounted(async () => {
       email.value = fetchedUser.email;
       pictureUrl.value = fetchedUser.pictureUrl || '';
 
-      const userRoles = (fetchedUser as { roles?: string[] }).roles || [];
-      selectedRoles.value = userRoles.filter((r): r is Role => r === 'admin' || r === 'create-vaults');
+      selectedRoles.value = fetchedUser.realmRoles.filter((r): r is Role => r === 'admin' || r === 'create-vaults');
 
       initialUserData.value = {
         firstName: firstName.value,
