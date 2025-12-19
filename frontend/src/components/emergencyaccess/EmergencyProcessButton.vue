@@ -24,7 +24,7 @@
     <button
       type="button"
       class="h-10 inline-flex flex-col justify-center px-2 text-xs font-medium text-gray-700 bg-white
-             hover:bg-gray-50 border border-gray-300 rounded-e-md
+             hover:bg-gray-50 border border-gray-300 rounded-e-md w-full
              focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed text-left"
       :disabled="disabled"
       @click.stop="emit('click-main')"
