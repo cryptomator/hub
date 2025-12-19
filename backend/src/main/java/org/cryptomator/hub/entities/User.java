@@ -245,6 +245,17 @@ public class User extends Authority {
 	@ApplicationScoped
 	public static class Repository implements PanacheRepositoryBase<User, String> {
 
+		public User findByIdWithEagerDetails(String id) {
+			return find("""
+					FROM User u
+					LEFT JOIN FETCH u.directGroupMemberships
+					LEFT JOIN FETCH u.accessibleVaults
+					LEFT JOIN FETCH u.devices
+					LEFT JOIN FETCH u.legacyDevices
+					WHERE u.id = :id
+					""", Parameters.with("id", id)).singleResultOptional().orElse(null);
+		}
+
 		public Stream<User> findByIds(Collection<String> ids) {
 			return Batch.of(200).run(ids, Stream.empty(), (batch, result) -> {
 				var partial = find("id IN :ids", Parameters.with("ids", batch));

@@ -364,7 +364,7 @@ public class UsersResource {
 	@APIResponse(responseCode = "200", description = "user found")
 	@APIResponse(responseCode = "404", description = "user not found")
 	public UserDto.WithDetails getUser(@PathParam("id") String userId) {
-		User user = userRepo.findById(userId); // TODO: eagerly load groups, accessible vaults, devices, legacy devices
+		User user = userRepo.findByIdWithEagerDetails(userId);
 		if (user == null) {
 			throw new NotFoundException("User not found: " + userId);
 		}
