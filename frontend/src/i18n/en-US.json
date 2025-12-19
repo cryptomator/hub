@@ -48,6 +48,11 @@
   "common.unsavedChanges": "Unsaved changes.",
   "common.update": "Update",
   "common.xMembers": "{0} Members",
+  "common.actions": "Actions",
+  "common.group": "Group",
+  "common.member": "Member",
+  "common.property": "Property",
+  "common.value": "Value",
 
   "admin.title": "Admin",
   "admin.serverInfo.title": "Server Info",

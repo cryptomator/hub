@@ -20,6 +20,12 @@
     <!-- Group table -->
     <div class="overflow-x-auto">
       <table class="min-w-full divide-y divide-gray-300" aria-describedby="groupsTitle">
+        <thead class="sr-only">
+          <tr>
+            <th scope="col">{{ t('common.group') }}</th>
+            <th scope="col">{{ t('common.actions') }}</th>
+          </tr>
+        </thead>
         <tbody class="divide-y divide-gray-200 bg-white">
           <tr v-for="group in paginatedGroups" :key="group.id">
             <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 flex items-center gap-3 sm:pl-6">

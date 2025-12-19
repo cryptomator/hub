@@ -90,6 +90,12 @@
                   </div>
                 </div>
                 <table class="text-xs text-gray-400 mt-2 ml-8">
+                  <thead class="sr-only">
+                    <tr>
+                      <th scope="col">{{ t('common.property') }}</th>
+                      <th scope="col">{{ t('common.value') }}</th>
+                    </tr>
+                  </thead>
                   <tbody>
                     <tr>
                       <td class="pr-2 align-top text-left whitespace-nowrap font-normal text-gray-500">

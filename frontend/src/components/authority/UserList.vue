@@ -78,7 +78,7 @@
                       <div class="flex items-center gap-3 max-w-sm">
                         <img :src="user.pictureUrl" :alt="t('userList.profileImage')" class="w-10 h-10 rounded-full object-cover border border-gray-300"/>
                         <div class="flex flex-col min-w-0 flex-1">
-                          <button type="button" class="truncate block hover:underline text-left" :title="user.name" @click="router.push(`users/${user.id}`)">{{ user.name }}</button>
+                          <button type="button" class="truncate block hover:underline cursor-pointer text-left" :title="user.name" @click="router.push(`users/${user.id}`)">{{ user.name }}</button>
                           <span class="text-xs text-gray-500 truncate" :title="user.firstName || user.lastName ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() : user.email">{{ user.firstName || user.lastName ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() : user.email }}</span>
                         </div>
                       </div>
