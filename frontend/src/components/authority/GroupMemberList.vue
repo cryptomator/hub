@@ -20,6 +20,12 @@
     <!-- User table -->
     <div class="overflow-x-auto">
       <table class="min-w-full divide-y divide-gray-300" aria-describedby="usersTitle">
+        <thead class="sr-only">
+          <tr>
+            <th scope="col">{{ t('common.member') }}</th>
+            <th scope="col">{{ t('common.actions') }}</th>
+          </tr>
+        </thead>
         <tbody class="divide-y divide-gray-200 bg-white">
           <tr v-for="user in paginatedUsers" :key="user.id + user.name">
             <td class="whitespace-nowrap h-17 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 flex items-center gap-3 sm:pl-6">
