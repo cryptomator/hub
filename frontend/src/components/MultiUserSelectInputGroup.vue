@@ -15,7 +15,7 @@
         v-for="(user, index) in selectedUsers"
         :key="user.id"
         tabindex="-1"
-        class="inline-flex items-center text-sm rounded-full px-2 py-1 mr-1 mb-1 border transition-colors shadow-sm"
+        class="inline-flex items-center text-sm rounded-full px-2 py-1 mt-1 mb-1 mr-1 border transition-colors shadow-sm"
         :class="{
           'bg-white text-gray-800': selectedPillIndex !== index,
           'bg-white ring-2 ring-primary': selectedPillIndex === index
@@ -24,12 +24,17 @@
       >
         <img :src="user.pictureUrl" class="w-4 h-4 rounded-full mr-1" />
         {{ user.name }}
-        <span class="ml-1 trust-details">
+        <span v-if="user.type === 'USER'" class="ml-1 trust-details">
           <TrustDetails
             :trusted-user="user as UserDto"
             :trusts="trusts"
             @trust-changed="refreshTrusts"
           />
+        </span>
+        <span v-else class="ml-1 trust-details">
+          <PopoverButton class="inline-flex items-center bg-gray-50 ring-1 ring-inset ring-gray-500/10 mx-1 px-2 p-0.5 rounded-full">
+            {{ user.memberSize }}
+          </PopoverButton>
         </span>
         <div v-if="inputVisible" class="ml-1 text-gray-500 hover:text-red-600">&times;</div>
       </button>
@@ -80,6 +85,11 @@
       >
         <img :src="user.pictureUrl" alt="" class="h-5 w-5 rounded-full mr-2" />
         {{ user.name }}
+        <span v-if="user.type === 'GROUP'" class="ml-1 trust-details">
+          <PopoverButton class="inline-flex items-center bg-gray-50 ring-1 ring-inset ring-gray-500/10 mx-1 px-2 p-0.5 rounded-full focus:outline-hidden focus:ring-primary text-black">
+            {{ user.memberSize }}
+          </PopoverButton>
+        </span>
       </div>
     </div>
   </div>
@@ -91,12 +101,13 @@ import { ref, computed, watch, nextTick, onMounted } from 'vue';
 import { Combobox, ComboboxInput } from '@headlessui/vue';
 import { useI18n } from 'vue-i18n';
 import TrustDetails from './TrustDetails.vue';
+import UserListGroupVisualization from './UserListGroupVisualization.vue';
 
 export type Item = {
   id: string;
   name: string;
   pictureUrl?: string;
-  type: 'USER';
+  type: 'USER' | 'GROUP';
   memberSize?: number;
 
   email?: string;
