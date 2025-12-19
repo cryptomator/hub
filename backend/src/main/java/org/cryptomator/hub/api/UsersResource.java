@@ -246,12 +246,8 @@ public class UsersResource {
 	@Transactional
 	@Operation(summary = "list all users with counts")
 	public List<UserDto.WithCounts> getAll() {
-		return userRepo.findAll().stream() // FIXME: eagerly count groups, vaults, devices
-				.map(user -> UserDto.justPublicInfo(user).withCounts(
-						userRepo.countGroupsForUser(user.getId()),
-						userRepo.countVaultsForUser(user.getId()),
-						userRepo.countDevicesForUser(user.getId())
-				))
+		return userRepo.findAllWithMetrics().stream()
+				.map(user -> UserDto.justPublicInfo(user).withCounts(user.metrics.getDirectGroupMembershipCount(), user.metrics.getEffectiveVaultAccessCount(), user.metrics.getDeviceCount()))
 				.toList();
 	}
 

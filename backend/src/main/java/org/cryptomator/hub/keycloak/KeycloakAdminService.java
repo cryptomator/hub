@@ -209,7 +209,6 @@ public class KeycloakAdminService {
 		}
 
 		userRepo.persist(dbUser);
-		userRepo.flush();
 		return dbUser;
 	}
 

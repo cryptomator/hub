@@ -1,5 +1,6 @@
 package org.cryptomator.hub.entities;
 
+import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import io.quarkus.panache.common.Parameters;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -13,6 +14,7 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.Immutable;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -49,38 +51,6 @@ import java.util.stream.Stream;
 				INNER JOIN EffectiveGroupMembership egm	ON u.id = egm.id.memberId
 				WHERE egm.id.groupId = :groupId
 		""")
-@NamedQuery(name = "User.getGroupsForUser", query = """
-				SELECT DISTINCT g
-				FROM Group g
-				INNER JOIN EffectiveGroupMembership egm ON g.id = egm.id.groupId
-				WHERE egm.id.memberId = :userId
-		""")
-@NamedQuery(name = "User.countGroupsForUser", query = """
-				SELECT count(DISTINCT egm.id.groupId)
-				FROM EffectiveGroupMembership egm
-				WHERE egm.id.memberId = :userId
-		""")
-@NamedQuery(name = "User.getVaultsForUser", query = """
-				SELECT DISTINCT v
-				FROM Vault v
-				INNER JOIN EffectiveVaultAccess eva ON v.id = eva.id.vaultId
-				WHERE eva.id.authorityId = :userId
-		""")
-@NamedQuery(name = "User.getVaultAccessForUser", query = """
-				SELECT eva
-				FROM EffectiveVaultAccess eva
-				WHERE eva.id.authorityId = :userId
-		""")
-@NamedQuery(name = "User.countVaultsForUser", query = """
-				SELECT count(DISTINCT eva.id.vaultId)
-				FROM EffectiveVaultAccess eva
-				WHERE eva.id.authorityId = :userId
-		""")
-@NamedQuery(name = "User.countDevicesForUser", query = """
-				SELECT count(d)
-				FROM Device d
-				WHERE d.owner.id = :userId
-		""")
 public class User extends Authority {
 
 	@Column(name = "email")
@@ -110,6 +80,9 @@ public class User extends Authority {
 
 	@Column(name = "setupcode")
 	private String setupCode;
+
+	@OneToOne(mappedBy = "user", fetch = FetchType.LAZY)
+	public UserMetrics metrics;
 
 	public String getEmail() {
 		return email;
@@ -248,6 +221,13 @@ public class User extends Authority {
 	@ApplicationScoped
 	public static class Repository implements PanacheRepositoryBase<User, String> {
 
+		public PanacheQuery<User> findAllWithMetrics() {
+			return find("""
+					FROM User u
+					LEFT JOIN FETCH u.metrics m
+					""");
+		}
+
 		public User findByIdWithEagerDetails(String id) {
 			return find("""
 					FROM User u
@@ -283,46 +263,5 @@ public class User extends Authority {
 			return find("#User.getEffectiveGroupUsers", Parameters.with("groupId", groupdId)).stream();
 		}
 
-		public Stream<Group> getGroupsForUser(String userId) {
-			return getEntityManager()
-					.createNamedQuery("User.getGroupsForUser", Group.class)
-					.setParameter("userId", userId)
-					.getResultStream();
-		}
-
-		public long countGroupsForUser(String userId) {
-			return getEntityManager()
-					.createNamedQuery("User.countGroupsForUser", Long.class)
-					.setParameter("userId", userId)
-					.getSingleResult();
-		}
-
-		public Stream<Vault> getVaultsForUser(String userId) {
-			return getEntityManager()
-					.createNamedQuery("User.getVaultsForUser", Vault.class)
-					.setParameter("userId", userId)
-					.getResultStream();
-		}
-
-		public Stream<EffectiveVaultAccess> getVaultAccessForUser(String userId) {
-			return getEntityManager()
-					.createNamedQuery("User.getVaultAccessForUser", EffectiveVaultAccess.class)
-					.setParameter("userId", userId)
-					.getResultStream();
-		}
-
-		public long countVaultsForUser(String userId) {
-			return getEntityManager()
-					.createNamedQuery("User.countVaultsForUser", Long.class)
-					.setParameter("userId", userId)
-					.getSingleResult();
-		}
-
-		public long countDevicesForUser(String userId) {
-			return getEntityManager()
-					.createNamedQuery("User.countDevicesForUser", Long.class)
-					.setParameter("userId", userId)
-					.getSingleResult();
-		}
 	}
 }
