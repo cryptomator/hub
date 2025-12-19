@@ -117,11 +117,8 @@ const user = ref<UserDtoWithDetails>({
 
 const loading = ref<boolean>(true);
 
-function handleGroupsSaved(newGroups: GroupDto[]) {
-  const ids = new Set(user.value.groups.map(g => g.id));
-  newGroups.forEach(g => {
-    if (!ids.has(g.id)) user.value.groups.push(g);
-  });
+async function handleGroupsSaved(newGroups: GroupDto[]) {
+  user.value = await backend.users.getUser(props.id); // reload user to get updated vault list
   user.value.groups.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
 }
 
