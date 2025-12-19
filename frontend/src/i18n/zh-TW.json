@@ -240,6 +240,8 @@
   "userProfile.actions.changeLanguage": "變更語言",
   "userProfile.actions.changeLanguage.entry.browser": "瀏覽器語言",
   "userProfile.keycloakVersion.notAvailable": "無法取得版本",
+  "unlock.noAccessVaultArchived.title": "加密檔案庫已封存",
+  "unlock.noAccessVaultArchived.description": "這個加密檔案庫已封存且無法再被存取。請聯絡加密檔案庫的主人。",
   "unlockSuccess.title": "加密檔案庫解鎖成功",
   "unlockSuccess.description": "您可以關閉瀏覽器分頁並回到 Cryptomator。",
   "unlockSuccess.accountSetup.title": "需要設定",
