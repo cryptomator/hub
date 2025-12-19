@@ -899,8 +899,7 @@ async function completeRecovery() {
 
       await backend.vaults.setMembersWithRole(props.vault.id, membersWithRole);
 
-      const activatedUsersToGrant = [...selectedNewOwners.value, ...selectedNewmembers.value]
-        .filter((a): a is ActivatedUser => a.type === 'USER' && didCompleteSetup(a));
+      const activatedUsersToGrant = await backend.vaults.getUsersRequiringAccessGrant(props.vault.id);
 
       const accessGrants: AccessGrant[] = await Promise.all(
         activatedUsersToGrant.map(async u => {

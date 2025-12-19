@@ -345,7 +345,7 @@ public class VaultResource {
 	@GET
 	@Path("/{vaultId}/users-requiring-access-grant")
 	@RolesAllowed("user")
-	@VaultRole(VaultAccess.Role.OWNER) // may throw 403
+	@VaultRole(value = VaultAccess.Role.OWNER, bypassForEmergencyAccess = true) // may throw 403
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "list users requiring access rights", description = "lists all users, who don't have a user-specific vault key yet")
