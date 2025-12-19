@@ -41,14 +41,10 @@ public class StringArrayType implements UserType<String[]> {
 
 	@Override
 	public void nullSafeSet(PreparedStatement st, String[] value, int index, SharedSessionContractImplementor session) throws SQLException {
-		if (value == null) {
-			st.setNull(index, Types.ARRAY);
-		} else {
-			session.doWork(connection -> {
-				var jdbcArray = connection.createArrayOf("VARCHAR", value);
-				st.setArray(index, jdbcArray);
-			});
-		}
+		session.doWork(connection -> {
+			var jdbcArray = connection.createArrayOf("VARCHAR", value == null ? new String[0] : value);
+			st.setArray(index, jdbcArray);
+		});
 	}
 
 	@Override
@@ -58,12 +54,12 @@ public class StringArrayType implements UserType<String[]> {
 
 	@Override
 	public String[] deepCopy(String[] value) {
-		return value.clone();
+		return value == null ? null : value.clone();
 	}
 
 	@Override
 	public Serializable disassemble(String[] value) {
-		return value.clone();
+		return deepCopy(value);
 	}
 
 	@Override

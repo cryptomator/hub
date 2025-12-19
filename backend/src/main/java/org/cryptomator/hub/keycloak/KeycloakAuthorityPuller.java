@@ -81,7 +81,7 @@ public class KeycloakAuthorityPuller {
 			databaseUser.setFirstName(keycloakUser.firstName());
 			databaseUser.setLastName(keycloakUser.lastName());
 			databaseUser.setPictureUrl(keycloakUser.pictureUrl());
-			databaseUser.setRealmRoles(keycloakUser.roles().toArray(String[]::new));
+			databaseUser.setRealmRoles(keycloakUser.roles().stream().map(RealmRole::kcName).toArray(String[]::new));
 			return databaseUser;
 		}).collect(Collectors.toMap(User::getId, Function.identity()));
 		userRepo.persist(added.values());
