@@ -88,6 +88,18 @@ export type UserDto = {
   setupCode?: string;
 }
 
+export type UserDtoWithCounts = UserDto & {
+  groupsCount?: number;
+  devicesCount?: number;
+  accessibleVaults?: number;
+}
+
+export type UserDtoWithDetails = UserDto & {
+  groups: GroupDto[];
+  devices: DeviceDto[];
+  legacyDevices: DeviceDto[];
+}
+
 export type GroupDto = {
   type: 'GROUP';
   id: string;
@@ -362,16 +374,16 @@ class UserService {
     return axiosAuth.post('/users/me/reset');
   }
 
-  public async listAll(): Promise<UserDto[]> {
-    return axiosAuth.get<UserDto[]>('/users/').then(response => response.data.map(AuthorityService.fillInMissingPicture));
+  public async listAll(): Promise<UserDtoWithCounts[]> {
+    return axiosAuth.get<UserDtoWithCounts[]>('/users/').then(response => response.data.map(AuthorityService.fillInMissingPicture));
   }
 
   public async createUser(dto: CreateUserDto): Promise<UserDto> {
     return axiosAuth.post<UserDto>('/users/', dto).then(response => AuthorityService.fillInMissingPicture(response.data));
   }
 
-  public async getUser(userId: string): Promise<UserDto> {
-    return axiosAuth.get<UserDto>(`/users/${userId}`).then(response => AuthorityService.fillInMissingPicture(response.data));
+  public async getUser(userId: string): Promise<UserDtoWithDetails> {
+    return axiosAuth.get<UserDtoWithDetails>(`/users/${userId}`).then(response => AuthorityService.fillInMissingPicture(response.data));
   }
 
   public async updateUser(userId: string, dto: UpdateUserDto): Promise<UserDto> {

@@ -1,7 +1,6 @@
 package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import jakarta.annotation.Nullable;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -245,10 +244,9 @@ public class UsersResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
 	@Operation(summary = "list all users with counts")
-	public List<UserDto.UserDtoWithCounts> getAll() {
-		return userRepo.findAll().stream()// FIXME: eagerly count groups, vaults, devices
-				.map(user -> UserDto.justPublicInfoWithCounts(
-						user,
+	public List<UserDto.WithCounts> getAll() {
+		return userRepo.findAll().stream() // FIXME: eagerly count groups, vaults, devices
+				.map(user -> UserDto.justPublicInfo(user).withCounts(
 						userRepo.countGroupsForUser(user.getId()),
 						userRepo.countVaultsForUser(user.getId()),
 						userRepo.countDevicesForUser(user.getId())
@@ -365,7 +363,7 @@ public class UsersResource {
 	@Operation(summary = "get a specific user")
 	@APIResponse(responseCode = "200", description = "user found")
 	@APIResponse(responseCode = "404", description = "user not found")
-	public UserDtoWithDetails getUser(@PathParam("id") String userId) {
+	public UserDto.WithDetails getUser(@PathParam("id") String userId) {
 		User user = userRepo.findById(userId); // TODO: eagerly load groups, accessible vaults, devices, legacy devices
 		if (user == null) {
 			throw new NotFoundException("User not found: " + userId);
@@ -394,8 +392,7 @@ public class UsersResource {
 				.map(DeviceResource.DeviceDto::fromEntity)
 				.collect(Collectors.toSet());
 
-		return UserDtoWithDetails.from(
-				UserDto.justPublicInfo(user),
+		return UserDto.justPublicInfo(user).withDetails(
 				groups,
 				vaults,
 				devices,
@@ -470,24 +467,6 @@ public class UsersResource {
 			@JsonProperty("pictureUrl") String pictureUrl,
 			@JsonProperty("realmRoles") @NotNull Set<String> realmRoles
 	) {
-	}
-
-	public record UserDtoWithDetails(
-			@JsonUnwrapped UserDto user,
-			@JsonProperty("groups") List<GroupDto> groups,
-			@JsonProperty("accessibleVaults") List<VaultResource.VaultDtoWithRole> accessibleVaults,
-			@JsonProperty("devices") Set<DeviceResource.DeviceDto> devices,
-			@JsonProperty("legacyDevices") Set<DeviceResource.DeviceDto> legacyDevices
-	) {
-		public static UserDtoWithDetails from(UserDto userDto, List<GroupDto> groups, List<VaultResource.VaultDtoWithRole> accessibleVaults, Set<DeviceResource.DeviceDto> devices, Set<DeviceResource.DeviceDto> legacyDevices) {
-			return new UserDtoWithDetails(
-					userDto,
-					groups,
-					accessibleVaults,
-					devices,
-					legacyDevices
-			);
-		}
 	}
 
 }

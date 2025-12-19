@@ -39,19 +39,13 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
 import { computed } from 'vue';
-import { DeviceDto, GroupDto, UserDto } from '../../common/backend';
+import { UserDtoWithDetails } from '../../common/backend';
 
 const { t } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{
   user: UserDtoWithDetails;
 }>();
-
-type UserDtoWithDetails = UserDto & {
-  groups: GroupDto[];
-  devices: DeviceDto[];
-  legacyDevices: DeviceDto[];
-}
 
 const sortedRoles = computed(() => 
   [...props.user.realmRoles ?? []].sort((a, b) => a.localeCompare(b, 'de', { sensitivity: 'base' }))

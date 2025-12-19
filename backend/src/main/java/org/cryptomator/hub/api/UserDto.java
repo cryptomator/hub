@@ -10,6 +10,7 @@ import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.validation.OnlyBase64Chars;
 import org.cryptomator.hub.validation.ValidJWE;
 
+import java.util.List;
 import java.util.Set;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -162,19 +163,35 @@ public final class UserDto extends AuthorityDto {
 				null);
 	}
 
-	public static UserDtoWithCounts justPublicInfoWithCounts(User user, long groupsCount, long vaultsCount, long devicesCount) {
-		return new UserDtoWithCounts(
-				UserDto.justPublicInfo(user),
+	public WithCounts withCounts(long groupsCount, long vaultsCount, long devicesCount) {
+		return new WithCounts(
+				this,
 				devicesCount,
 				groupsCount,
-				vaultsCount
-		);
+				vaultsCount);
 	}
 
-	public record UserDtoWithCounts(
+	public WithDetails withDetails(List<GroupDto> groups, List<VaultResource.VaultDtoWithRole> accessibleVaults, Set<DeviceResource.DeviceDto> devices, Set<DeviceResource.DeviceDto> legacyDevices) {
+			return new WithDetails(
+					this,
+					groups,
+					accessibleVaults,
+					devices,
+					legacyDevices);
+	}
+
+	public record WithCounts(
 			@JsonUnwrapped UserDto user,
 			@JsonProperty("devicesCount") long devicesCount,
 			@JsonProperty("groupsCount") long groupsCount,
 			@JsonProperty("vaultsCount") long vaultsCount
+	) {}
+
+	public record WithDetails(
+			@JsonUnwrapped UserDto user,
+			@JsonProperty("groups") List<GroupDto> groups,
+			@JsonProperty("accessibleVaults") List<VaultResource.VaultDtoWithRole> accessibleVaults,
+			@JsonProperty("devices") Set<DeviceResource.DeviceDto> devices,
+			@JsonProperty("legacyDevices") Set<DeviceResource.DeviceDto> legacyDevices
 	) {}
 }

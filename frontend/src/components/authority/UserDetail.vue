@@ -75,19 +75,13 @@ import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
 import { onMounted, ref, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import backend, { DeviceDto, GroupDto, UserDto, VaultDto, VaultDtoWithRole } from '../../common/backend';
+import backend, { GroupDto, UserDto, UserDtoWithDetails } from '../../common/backend';
 import BreadcrumbNav from '../BreadcrumbNav.vue';
 import UserDeleteDialog from './UserDeleteDialog.vue';
 import UserDeviceList from './UserDeviceList.vue';
 import UserGroupsList from './UserGroupsList.vue';
 import UserInfo from './UserInfo.vue';
 import VaultList from './VaultList.vue';
-
-type UserDtoWithDetails = UserDto & {
-  groups: GroupDto[];
-  devices: DeviceDto[];
-  legacyDevices: DeviceDto[];
-}
 
 const props = defineProps<{ id: string }>();
 const { t } = useI18n({ useScope: 'global' });
@@ -133,7 +127,7 @@ function handleGroupsSaved(newGroups: GroupDto[]) {
 
 onMounted(async () => {
   try {
-    user.value = await backend.users.getUser(props.id) as UserDtoWithDetails; // FIXME: use different loading method for details
+    user.value = await backend.users.getUser(props.id);
 
     // Load roles
     user.value.realmRoles = (user.value.realmRoles || []).filter((r: string) => r === 'admin' || r === 'create-vaults');

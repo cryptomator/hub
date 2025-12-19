@@ -46,7 +46,7 @@
 
             <!-- Stats section -->
             <div class="mb-3 ml-13 text-xs text-gray-600">
-              <span>{{ t('userList.vaults.count') }}: {{ user.vaultsCount ?? 0 }}</span>
+              <span>{{ t('userList.vaults.count') }}: {{ user.accessibleVaults ?? 0 }}</span>
               <span class="mx-2">|</span>
               <span>{{ t('userList.groups.count') }}: {{ user.groupsCount ?? 0 }}</span>
               <span class="mx-2">|</span>
@@ -83,7 +83,7 @@
                         </div>
                       </div>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.vaultsCount ?? 0 }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.accessibleVaults ?? 0 }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.groupsCount ?? 0 }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.devicesCount ?? 0 }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -164,33 +164,27 @@ import FetchError from '../FetchError.vue';
 const router = useRouter();
 const route = useRoute();
 
-import { UserDto } from '../../common/backend';
-
-type UserWithCountsDto = UserDto & { // TODO: move to backend.ts?
-  devicesCount?: number;
-  groupsCount?: number;
-  vaultsCount?: number;
-}
+import { UserDtoWithCounts } from '../../common/backend';
 
 const { t } = useI18n({ useScope: 'global' });
 
-const users = ref<UserWithCountsDto[]>([]);
+const users = ref<UserDtoWithCounts[]>([]);
 const loading = ref(true);
 const onFetchError = ref<Error>();
 const deleteUserDialog = ref<typeof UserDeleteDialog>();
-const deletingUser = ref<UserWithCountsDto>();
+const deletingUser = ref<UserDtoWithCounts>();
 const query = ref('');
 const currentUserId = ref<string>('');
 const currentPage = ref(0);
 const pageSize = 20;
 
-const showDeleteUserDialog = (user: UserWithCountsDto) => {
+const showDeleteUserDialog = (user: UserDtoWithCounts) => {
   deletingUser.value = user;
   nextTick(() => deleteUserDialog.value?.show());
 };
 
 const onUserDeleted = (deletedUser: { id: string }) => {
-  users.value = users.value.filter((u: UserWithCountsDto) => u.id !== deletedUser.id);
+  users.value = users.value.filter((u: UserDtoWithCounts) => u.id !== deletedUser.id);
   deletingUser.value = undefined;
 };
 
@@ -224,7 +218,7 @@ async function fetchData() {
 const filteredUsers = computed(() =>
   query.value === ''
     ? users.value
-    : users.value.filter((u: UserWithCountsDto) =>
+    : users.value.filter((u: UserDtoWithCounts) =>
       u.name.toLowerCase().includes(query.value.toLowerCase())
     )
 );

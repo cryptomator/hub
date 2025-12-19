@@ -77,14 +77,8 @@ import { useI18n } from 'vue-i18n';
 import UserAddGroupDialog from './UserAddGroupDialog.vue';
 import UserGroupRemoveDialog from './UserGroupRemoveDialog.vue';
 import { UserGroupIcon } from '@heroicons/vue/20/solid';
-import { DeviceDto, GroupDto, UserDto } from '../../common/backend';
+import { UserDtoWithDetails, GroupDto } from '../../common/backend';
 const { t } = useI18n({ useScope: 'global' });
-
-type UserDtoWithDetails = UserDto & {
-  groups: GroupDto[];
-  devices: DeviceDto[];
-  legacyDevices: DeviceDto[];
-}
 
 const props = defineProps<{
   user: UserDtoWithDetails;
