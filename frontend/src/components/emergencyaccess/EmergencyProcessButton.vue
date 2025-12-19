@@ -37,7 +37,7 @@
 
     <!-- Tooltip -->
     <div
-      class="transition-opacity duration-150 absolute right-0 top-10 z-20 w-80 rounded-lg border
+      class="transition-opacity duration-150 absolute right-0 top-10 z-20 w-60 rounded-lg border
              border-gray-200 bg-white p-3 shadow-xl"
       :class="isTooltipOpen ? 'opacity-100 visible' : 'opacity-0 invisible'"
       role="tooltip"
