@@ -66,13 +66,6 @@
                           @action="addOwner"
                           @remove="removeOwner"
                         />
-                        <div v-if="!hasActivatedOwner" class="flex items-start gap-2 rounded-md border border-yellow-200 bg-yellow-50 p-1 text-sm text-gray-900 mt-1">
-                          <span class="leading-5">
-                            <span class="text-gray-600">
-                              Select at least 1 activated user as owner.
-                            </span>
-                          </span>
-                        </div>
 
                         <!-- Members (non-owners) selector -->
                         <div class="mt-4">
@@ -534,7 +527,6 @@ const canStartRecovery = computed(() => {
 
   if (processType.value === 'CHANGE_PERMISSIONS') {
     return (
-      hasActivatedOwner.value &&
       (ownersDifferFromExistingIds.value || membersDifferFromExistingIds.value) &&
       owners.value.length !== 0
     );
@@ -562,10 +554,6 @@ const isCouncilChanged = computed(() => {
   const requiredKeySharesChanged = props.vault.requiredEmergencyKeyShares != newRequiredKeyShares.value;
   return newCouncilIds.some(id => !currentSet.has(id)) || requiredKeySharesChanged;
 });
-
-const hasActivatedOwner = computed(() =>
-  owners.value.some(u => didCompleteSetup(u as ActivatedUser))
-);
 
 const noopSearch = async () => [];
 
