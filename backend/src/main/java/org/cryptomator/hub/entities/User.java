@@ -214,7 +214,7 @@ public class User extends Authority {
 
 	@Immutable
 	@OneToMany(mappedBy = "authority", fetch = FetchType.LAZY)
-	public Set<VaultAccess> accessibleVaults = new HashSet<>();
+	public Set<EffectiveVaultAccess> accessibleVaults = new HashSet<>();
 
 	/**
 	 * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
@@ -251,10 +251,11 @@ public class User extends Authority {
 		public User findByIdWithEagerDetails(String id) {
 			return find("""
 					FROM User u
-					LEFT JOIN FETCH u.directGroupMemberships
-					LEFT JOIN FETCH u.accessibleVaults
-					LEFT JOIN FETCH u.devices
-					LEFT JOIN FETCH u.legacyDevices
+					LEFT JOIN FETCH u.directGroupMemberships dgm
+					LEFT JOIN FETCH u.accessibleVaults eva
+					LEFT JOIN FETCH eva.vault v
+					LEFT JOIN FETCH u.devices d
+					LEFT JOIN FETCH u.legacyDevices ld
 					WHERE u.id = :id
 					""", Parameters.with("id", id)).singleResultOptional().orElse(null);
 		}
