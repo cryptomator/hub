@@ -196,7 +196,7 @@ import { ref, computed, onMounted, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import * as R from 'remeda';
 import auth from '../../common/auth';
-import backend, { BillingDto, LicenseUserInfoDto, VaultDto, RecoveryProcessDto, AuthorityDto } from '../../common/backend';
+import backend, { LicenseUserInfoDto, VaultDto, RecoveryProcessDto, AuthorityDto } from '../../common/backend';
 import FetchError from '../FetchError.vue';
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue';
 import LicenseAlert from '../LicenseAlert.vue';
@@ -204,7 +204,6 @@ import { CheckIcon, ChevronUpDownIcon, WrenchIcon } from '@heroicons/vue/24/soli
 import userdata from '../../common/userdata';
 import { UserDto } from '../../common/backend';
 import EmergencyAccessDialog from './EmergencyAccessDialog.vue';
-import SegmentRing from './SegmentRing.vue';
 import EmergencyBadge from './EmergencyBadge.vue';
 import EmergencyProcessButton from './EmergencyProcessButton.vue';
 import VaultCouncilHoverCard from './VaultCouncilHoverCard.vue';
@@ -254,7 +253,6 @@ const vaultRecoveryProcesses = ref<Record<string, RecoveryProcessDto[]>>({});
 const recoveryApprovVault = ref<VaultDto | null>(null);
 const recoveryApprovDialog = ref<typeof EmergencyAccessDialog>();
 const authoritiesById = ref<Record<string, AuthorityDto>>({});
-const billing = ref<BillingDto>();
 
 onMounted(fetchData);
 
