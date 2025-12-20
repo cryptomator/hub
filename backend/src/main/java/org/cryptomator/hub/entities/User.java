@@ -16,6 +16,7 @@ import jakarta.persistence.NamedQuery;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.Immutable;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.Type;
@@ -25,6 +26,7 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Entity
@@ -229,15 +231,30 @@ public class User extends Authority {
 		}
 
 		public User findByIdWithEagerDetails(String id) {
-			return find("""
+			// 1. fetch user with groups, devices, legacy devices:
+			// we can do this in a single query since we don't expect a large number of groups/devices per user,
+			// e.g. 1 user x 5 groups x 5 devices = 25 rows, which is acceptable
+			var user = find("""
 					FROM User u
 					LEFT JOIN FETCH u.directGroupMemberships dgm
-					LEFT JOIN FETCH u.accessibleVaults eva
-					LEFT JOIN FETCH eva.vault v
 					LEFT JOIN FETCH u.devices d
 					LEFT JOIN FETCH u.legacyDevices ld
 					WHERE u.id = :id
 					""", Parameters.with("id", id)).singleResultOptional().orElse(null);
+			if (user == null) {
+				return null;
+			}
+			// 2. fetch accessible vaults separately to avoid cartesian product explosion:
+			// we replace the persistent set with our own set (allowed because it's marked as @Immutable)
+			user.accessibleVaults = getEntityManager().createQuery("""
+							SELECT DISTINCT eva
+							FROM EffectiveVaultAccess eva
+							INNER JOIN FETCH eva.vault v
+							WHERE eva.authority.id = :userId
+							""", EffectiveVaultAccess.class)
+					.setParameter("userId", id)
+					.getResultStream().collect(Collectors.toSet());
+			return user;
 		}
 
 		public Stream<User> findByIds(Collection<String> ids) {
