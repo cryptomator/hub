@@ -30,7 +30,7 @@
           <tr v-for="member in paginatedMembers" :key="member.id + member.name">
             <td class="whitespace-nowrap h-17 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 flex items-center gap-3 sm:pl-6">
               <img :src="member.pictureUrl" class="w-8 h-8 rounded-full object-cover border border-gray-300" />
-              <div class="flex flex-col truncate" v-if="member.type === 'USER'">
+              <div v-if="member.type === 'USER'" class="flex flex-col truncate">
                 <span class="font-medium truncate">{{ member.name }}</span>
                 <span class="text-xs text-gray-500 truncate">{{ member.firstName || member.lastName ? [member.firstName, member.lastName].filter(Boolean).join(' ') : member.email }}</span>
               </div>
@@ -77,9 +77,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, nextTick } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { AuthorityDto, GroupDto, UserDto } from '../../common/backend';
+import { AuthorityDto, GroupDto } from '../../common/backend';
 import GroupAddMemberDialog from './GroupAddMemberDialog.vue';
 import GroupMemberRemoveDialog from './GroupMemberRemoveDialog.vue';
 

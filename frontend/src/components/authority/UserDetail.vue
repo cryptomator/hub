@@ -70,12 +70,12 @@
 </template>
 
 <script setup lang="ts">
-import { EllipsisVerticalIcon } from '@heroicons/vue/20/solid';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
-import { onMounted, ref, nextTick } from 'vue';
+import { EllipsisVerticalIcon } from '@heroicons/vue/20/solid';
+import { nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import backend, { GroupDto, isSelectableRealmRole, SelectableRealmRole, UserDto, UserDtoWithDetails } from '../../common/backend';
+import backend, { GroupDto, isSelectableRealmRole, UserDto, UserDtoWithDetails } from '../../common/backend';
 import BreadcrumbNav from '../BreadcrumbNav.vue';
 import UserDeleteDialog from './UserDeleteDialog.vue';
 import UserDeviceList from './UserDeviceList.vue';

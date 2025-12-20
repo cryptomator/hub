@@ -64,18 +64,18 @@
 </template>
 
 <script setup lang="ts">
-import { EllipsisVerticalIcon } from '@heroicons/vue/20/solid';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
-import { ref, nextTick, onMounted } from 'vue';
+import { EllipsisVerticalIcon } from '@heroicons/vue/20/solid';
+import { nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import backend, { AuthorityDto, GroupDto, GroupDtoWithDetails, UserDto } from '../../common/backend';
-import GroupDeleteDialog from './GroupDeleteDialog.vue';
-import GroupMemberList from './GroupMemberList.vue';
-import GroupInfo from './GroupInfo.vue';
-import VaultList from './VaultList.vue';
+import backend, { AuthorityDto, GroupDto, GroupDtoWithDetails } from '../../common/backend';
 import BreadcrumbNav from '../BreadcrumbNav.vue';
 import FetchError from '../FetchError.vue';
+import GroupDeleteDialog from './GroupDeleteDialog.vue';
+import GroupInfo from './GroupInfo.vue';
+import GroupMemberList from './GroupMemberList.vue';
+import VaultList from './VaultList.vue';
 
 const router = useRouter();
 

@@ -57,9 +57,9 @@
 <script setup lang="ts">
 import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
-import { ref, computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { AuthorityDto, type UserDto } from '../../common/backend';
+import backend, { AuthorityDto } from '../../common/backend';
 
 const { t } = useI18n({ useScope: 'global' });
 
