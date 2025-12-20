@@ -1,7 +1,6 @@
 package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -11,6 +10,7 @@ import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
@@ -30,12 +30,9 @@ import org.jboss.resteasy.reactive.NoCache;
 
 import java.net.URI;
 import java.util.List;
-import java.util.logging.Logger;
 
 @Path("/groups")
 public class GroupsResource {
-
-	private static final Logger LOG = Logger.getLogger(GroupsResource.class.getName());
 
 	@Inject
 	User.Repository userRepo;
@@ -111,7 +108,7 @@ public class GroupsResource {
 
 			Group group = groupRepo.findById(groupRepresentation.getId());
 			if (group == null) {
-				throw new RuntimeException("Group was created in Keycloak but not found in database after sync");
+				throw new InternalServerErrorException("Group was created in Keycloak but not found in database after sync");
 			}
 
 			return Response.created(URI.create("./" + group.getId()))

@@ -201,7 +201,7 @@ class KeycloakAuthorityProviderTest {
 		private RoleResource roleResource2 = Mockito.mock(RoleResource.class);
 
 		@BeforeEach
-		public void setup() {
+		void setup() {
 			Mockito.doReturn(rolesResource).when(realm).roles();
 			Mockito.doReturn(roleResource1).when(rolesResource).get("role1");
 			Mockito.doReturn(roleResource2).when(rolesResource).get("role2");

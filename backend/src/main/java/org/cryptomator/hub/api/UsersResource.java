@@ -7,11 +7,12 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.ClientErrorException;
+import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
@@ -48,14 +49,11 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 @Path("/users")
 @Produces(MediaType.TEXT_PLAIN)
 public class UsersResource {
-
-	private static final Logger LOG = Logger.getLogger(UsersResource.class.getName());
 
 	@Inject
 	AccessToken.Repository accessTokenRepo;
@@ -336,7 +334,7 @@ public class UsersResource {
 
 			User user = userRepo.findById(userRepresentation.getId());
 			if (user == null) {
-				throw new RuntimeException("User was created in Keycloak but not found in database after sync");
+				throw new InternalServerErrorException("User was created in Keycloak but not found in database after sync");
 			}
 
 			return Response.created(URI.create("./" + user.getId()))
@@ -374,9 +372,7 @@ public class UsersResource {
 
 		// Fetch vaults with roles for the user
 		List<VaultResource.VaultDtoWithRole> vaults = user.accessibleVaults.stream()
-				.map(eva -> {
-					return VaultResource.VaultDtoWithRole.from(eva.getVault(), eva.getRole());
-				})
+				.map(eva -> VaultResource.VaultDtoWithRole.from(eva.getVault(), eva.getRole()))
 				.toList();
 
 		// Fetch devices (modern devices)
@@ -385,6 +381,7 @@ public class UsersResource {
 				.collect(Collectors.toSet());
 
 		// Fetch legacy devices
+		@SuppressWarnings("removal")
 		Set<DeviceResource.DeviceDto> legacyDevices = user.legacyDevices.stream()
 				.map(DeviceResource.DeviceDto::fromEntity)
 				.collect(Collectors.toSet());
@@ -435,14 +432,8 @@ public class UsersResource {
 	@APIResponse(responseCode = "403", description = "user has federated identity and cannot be deleted")
 	@APIResponse(responseCode = "404", description = "user not found")
 	public Response deleteUser(@PathParam("id") String userId) {
-		try {
-			keycloakAdminService.deleteUser(userId);
-			return Response.noContent().build();
-		} catch (ForbiddenException | NotFoundException e) {
-			throw e;
-		} catch (Exception e) {
-			throw new RuntimeException("Failed to delete user", e);
-		}
+		keycloakAdminService.deleteUser(userId);
+		return Response.noContent().build();
 	}
 
 	public record CreateUserDto(

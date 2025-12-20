@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import org.cryptomator.hub.entities.Group;
 
 import java.util.List;
-import java.util.Set;
 
 public final class GroupDto extends AuthorityDto {
 

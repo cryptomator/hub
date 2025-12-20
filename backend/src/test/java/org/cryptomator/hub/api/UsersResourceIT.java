@@ -33,7 +33,6 @@ import org.mockito.Mockito;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
-import java.util.Collections;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
@@ -185,7 +184,7 @@ public class UsersResourceIT {
 				"PUT, /users/me",
 				"GET, /users"
 		})
-		public void testGet(String method, String path) {
+		void testGet(String method, String path) {
 			when().request(method, path)
 					.then().statusCode(401);
 		}
