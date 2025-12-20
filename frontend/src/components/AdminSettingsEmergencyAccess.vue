@@ -100,6 +100,7 @@
                 :selected-users="selectedUsers"
                 :on-search="async () => []"
                 :input-visible="enableEmergencyAccess"
+                :disable-action="true"
               />
               <p class="mt-2 text-sm text-gray-500">Who shall retrieve an emergency access key.</p>
             </div>

@@ -2,8 +2,8 @@
   <div class="relative w-full">
     <div
       :class="[
-        'flex items-center flex-wrap min-h-[54px] rounded-md px-2 py-1 shadow-xs border bg-white', 
-        inputVisible ? 'focus-within:ring-1' : 'bg-gray-50 cursor-not-allowed',
+        'flex items-center flex-wrap min-h-[54px] rounded-md px-2 py-1 shadow-xs border', 
+        inputVisible ? 'focus-within:ring-1 bg-white' : 'bg-gray-100 cursor-not-allowed',
         props.hasError
           ? 'border-red-300 text-red-900 focus-within:ring-red-500 focus-within:border-red-500'
           : 'border-gray-300 focus-within:ring-primary'
@@ -32,7 +32,7 @@
           <TrustDetails
             :trusted-user="user as UserDto"
             :trusts="trusts"
-            :disable-action="!inputVisible"
+            :disable-action="disableAction"
             @trust-changed="refreshTrusts"
           />
         </span>
@@ -106,7 +106,6 @@ import { ref, computed, watch, nextTick, onMounted } from 'vue';
 import { Combobox, ComboboxInput } from '@headlessui/vue';
 import { useI18n } from 'vue-i18n';
 import TrustDetails from './TrustDetails.vue';
-import UserListGroupVisualization from './UserListGroupVisualization.vue';
 
 export type Item = {
   id: string;
@@ -128,6 +127,7 @@ const props = defineProps<{
   selectedUsers: T[];
   onSearch: (query: string) => Promise<T[]>;
   inputVisible: boolean;
+  disableAction?: boolean;
   hasError?: boolean;
   errorMessage?: string;
   placeholder?: string;
