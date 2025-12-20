@@ -5,6 +5,13 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
 {
+    ignores: [
+        'coverage/**',
+        'dist/**',
+        'node_modules/**'
+    ]
+},
+{
     files: ['src/**/*.ts', 'test/**/*.ts'],
     extends: [
         eslint.configs.recommended,
@@ -39,6 +46,7 @@ export default tseslint.config(
         'semi': ['error', 'always'],
         'space-infix-ops': 'error',
         'indent': ['error', 2, { SwitchCase: 1 }],
+        'complexity': ['warn', { max: 10 }],
     }
 },
 {
@@ -89,9 +97,11 @@ export default tseslint.config(
         'vue/html-closing-bracket-spacing': 'off',
         'vue/html-self-closing': 'off',
         'vue/max-attributes-per-line': 'off',
+        'vue/multi-word-component-names': 'off',
         'vue/padding-line-between-blocks': 'error',
         'vue/singleline-html-element-content-newline': 'off',
         'vue/space-infix-ops': 'error',
+        'complexity': ['warn', { max: 15 }],
     },
 }
 );

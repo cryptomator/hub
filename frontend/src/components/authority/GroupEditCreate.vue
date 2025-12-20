@@ -94,7 +94,7 @@ import { ExclamationTriangleIcon, TrashIcon, UserGroupIcon } from '@heroicons/vu
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
-import backend from '../../common/backend';
+import backend, { isAxiosError } from '../../common/backend';
 import { FormValidator } from '../../common/formvalidator';
 import { debounce } from '../../common/util';
 import BreadcrumbNav from '../BreadcrumbNav.vue';
@@ -223,8 +223,7 @@ async function onSubmit() {
   } catch (error: unknown) {
     console.error('Failed to save group:', error);
     processing.value = false;
-    const axiosError = error as { response?: { status?: number; data?: string } };
-    if (axiosError?.response?.status === 409) {
+    if (isAxiosError(error) && error.response?.status === 409) {
       errors.value.name = t('groupEditCreate.error.groupNameAlreadyExists');
     } else {
       onSaveError.value = error instanceof Error ? error : new Error('Unknown Error');

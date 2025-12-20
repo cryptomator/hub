@@ -1,5 +1,5 @@
 import { base64 } from '@scure/base';
-import AxiosStatic, { AxiosHeaders, AxiosRequestConfig, AxiosResponse } from 'axios';
+import AxiosStatic, { AxiosError, AxiosHeaders, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { JdenticonConfig, toSvg } from 'jdenticon';
 import authPromise from './auth';
 import { backendBaseURL } from './config';
@@ -33,6 +33,10 @@ axiosAuth.interceptors.request.use(async request => {
     throw new UnauthorizedError();
   }
 });
+
+export function isAxiosError(error: unknown): error is AxiosError {
+  return AxiosStatic.isAxiosError(error);
+}
 
 // #region DTOs
 
@@ -136,7 +140,7 @@ export type CreateGroupDto = Pick<GroupDto, 'name' | 'pictureUrl'>;
 
 export type UpdateGroupDto = CreateGroupDto;
 
-export type VaultDtoWithRole = VaultDto & { // TODO: unused??
+export type VaultDtoWithRole = VaultDto & {
   role: VaultRole;
 }
 
@@ -334,7 +338,7 @@ class GroupService {
 
   public async removeGroup(groupId: string): Promise<void> {
     return axiosAuth.delete(`/groups/${groupId}`)
-      .then(() => {})
+      .then(() => { })
       .catch((error) => rethrowAndConvertIfExpected(error, 404));
   }
 
@@ -345,13 +349,13 @@ class GroupService {
 
   public async addMember(groupId: string, userId: string): Promise<void> {
     return axiosAuth.post(`/groups/${groupId}/members/${userId}`)
-      .then(() => {})
+      .then(() => { })
       .catch((error) => rethrowAndConvertIfExpected(error, 404));
   }
 
   public async removeMember(groupId: string, userId: string): Promise<void> {
     return axiosAuth.delete(`/groups/${groupId}/members/${userId}`)
-      .then(() => {})
+      .then(() => { })
       .catch((error) => rethrowAndConvertIfExpected(error, 404));
   }
 }
@@ -372,7 +376,7 @@ class UserService {
 
   public async removeUser(userId: string): Promise<void> {
     return axiosAuth.delete(`/users/${userId}`)
-      .then(() => {})
+      .then(() => { })
       .catch((error) => rethrowAndConvertIfExpected(error, 404));
   }
 

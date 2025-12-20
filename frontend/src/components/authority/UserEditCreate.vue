@@ -229,13 +229,13 @@
 
 <script setup lang="ts">
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue';
-import { CheckIcon, ChevronUpDownIcon, EyeIcon, EyeSlashIcon, ExclamationTriangleIcon, InformationCircleIcon, TrashIcon, UserIcon } from '@heroicons/vue/24/outline';
+import { CheckIcon, ChevronUpDownIcon, ExclamationTriangleIcon, EyeIcon, EyeSlashIcon, InformationCircleIcon, TrashIcon, UserIcon } from '@heroicons/vue/24/outline';
+import { base64 } from '@scure/base';
 import { toSvg } from 'jdenticon';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
-import { base64 } from '@scure/base';
-import backend, { isSelectableRealmRole, SelectableRealmRole } from '../../common/backend';
+import backend, { isAxiosError, isSelectableRealmRole, SelectableRealmRole } from '../../common/backend';
 import { FormValidator } from '../../common/formvalidator';
 import { UTF8 } from '../../common/util';
 import BreadcrumbNav from '../BreadcrumbNav.vue';
@@ -276,7 +276,7 @@ const { t } = useI18n({ useScope: 'global' });
 const route = useRoute();
 const router = useRouter();
 
-let userId = route.params.id as string;
+const userId = route.params.id as string | undefined;
 const isEditMode = computed(() => !!userId);
 
 const loading = ref(true);
@@ -329,7 +329,7 @@ watch([pictureUrl, isValidImageUrl, () => userId],
 );
 
 onMounted(async () => {
-  if (isEditMode.value) {
+  if (userId) {
     try {
       const fetchedUser = await backend.users.getUser(userId);
 
@@ -450,7 +450,7 @@ async function onSubmit() {
   };
 
   try {
-    if (isEditMode.value) {
+    if (userId) { // edit mode
       await backend.users.updateUser(userId, {
         firstName: firstName.value || undefined,
         lastName: lastName.value || undefined,
@@ -458,7 +458,9 @@ async function onSubmit() {
         pictureUrl: pictureUrl.value || undefined,
         realmRoles: selectedRoles.value
       });
-    } else {
+      userSaved.value = true;
+      router.push(`/app/users/${userId}`);
+    } else { // create mode
       const createdUser = await backend.users.createUser({
         name: username.value,
         email: email.value,
@@ -468,32 +470,21 @@ async function onSubmit() {
         pictureUrl: pictureUrl.value || undefined,
         realmRoles: selectedRoles.value
       });
-
-      userId = createdUser.id;
-    }
-
-    userSaved.value = true;
-    processing.value = false;
-
-    if (isEditMode.value) {
-      router.push(`/app/users/${userId}`);
-    } else {
+      userSaved.value = true;
       router.push('/app/users');
     }
   } catch (error: unknown) {
     console.error('Failed to save user:', error);
     processing.value = false;
-    const axiosError = error as { response?: { status?: number; data?: string } };
-    if (axiosError?.response?.status === 409) {
-      const errorData = axiosError.response.data;
-      if (errorData === 'EMAIL_EXISTS') {
-        errors.value.email = t('userEditCreate.error.emailAlreadyExists');
-      } else {
-        errors.value.username = t('userEditCreate.error.userAlreadyExists');
-      }
-    } else {
+    if (!isAxiosError(error)) {
       submitError.value = error instanceof Error ? error.message : 'An error occurred';
+    } else if (error.response?.status === 409 && error.response.data === 'EMAIL_EXISTS') {
+      errors.value.email = t('userEditCreate.error.emailAlreadyExists');
+    } else if (error.response?.status === 409) {
+      errors.value.username = t('userEditCreate.error.userAlreadyExists');
     }
+  } finally {
+    processing.value = false;
   }
 }
 
