@@ -1,6 +1,11 @@
 <template>
   <Popover as="div" class="relative inline-block text-left overflow-visible">
-    <PopoverButton class="inline-flex items-center bg-gray-50 ring-1 ring-inset ring-gray-500/10 mx-1 p-1 rounded-full focus:outline-hidden focus:ring-primary">
+    <PopoverButton 
+      :disabled="disableAction" class="inline-flex items-center bg-gray-50 ring-1 ring-inset ring-gray-500/10 mx-1 p-1 rounded-full focus:outline-hidden focus:ring-primary"           
+      :class="{
+        'cursor-not-allowed': disableAction
+      }"
+    >
       <ShieldExclamationIcon v-if="trustLevel === -1" class="h-4 w-4 text-red-500" aria-label="Unverified" />
       <ShieldCheckIcon v-else class="h-4 w-4 text-primary" aria-label="Verified" />
     </PopoverButton>
@@ -39,7 +44,8 @@ const { t, n } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{
   trustedUser: UserDto,
-  trusts: TrustDto[]
+  trusts: TrustDto[],
+  disableAction?: boolean
 }>();
 
 const emit = defineEmits<{

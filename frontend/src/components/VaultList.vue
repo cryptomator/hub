@@ -86,21 +86,21 @@
             </div>
             <div v-if="ownedVaults?.some(ownedVault => ownedVault.id == vault.id) && !isCommunityLicense">
               <EmergencyBadge
-                v-if="!hasEmergencyKeys(vault)"
+                v-if="!hasEmergencyKeys(vault) && settings?.enableEmergencyAccess"
                 type="missingCouncil"
                 title="Council missing"
                 message="No council."
                 position="right"
               />
               <EmergencyBadge
-                v-else-if="isBroken(vault)"
+                v-else-if="isBroken(vault) && settings?.enableEmergencyAccess"
                 type="broken"
                 title="Broken EA"
                 message="Emergency Access is not possible anymore. One or more council members performed an account reset and lost their key shares."
                 position="right"
               />
               <EmergencyBadge
-                v-else-if="noRedundancy(vault)"
+                v-else-if="noRedundancy(vault) && settings?.enableEmergencyAccess"
                 type="noRedundancy"
                 title="No Redundancy"
                 message="This Emergency Access Council has no redundancy. Consider assigning a council with redundancy."
@@ -144,7 +144,7 @@ import { CheckIcon, ChevronRightIcon, ChevronUpDownIcon, ExclamationTriangleIcon
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auth from '../common/auth';
-import backend, { LicenseUserInfoDto, UserDto, VaultDto, VaultRole } from '../common/backend';
+import backend, { LicenseUserInfoDto, SettingsDto, UserDto, VaultDto, VaultRole } from '../common/backend';
 import userdata from '../common/userdata';
 import FetchError from './FetchError.vue';
 import LicenseAlert from './LicenseAlert.vue';
@@ -160,6 +160,7 @@ const vaultDetailsSlideOver = ref<typeof SlideOver>();
 const onFetchError = ref<Error>();
 
 const vaults = ref<VaultDto[]>();
+const settings = ref<SettingsDto>();
 const accessibleVaults = ref<VaultDto[]>();
 const ownedVaults = ref<VaultDto[]>();
 const selectedVault = ref<VaultDto>();
@@ -212,6 +213,8 @@ async function fetchData() {
     me.value = await userdata.me;
     isAdmin.value = (await auth).hasRole('admin');
     canCreateVaults.value = (await auth).hasRole('create-vaults');
+
+    settings.value = await backend.settings.get();
 
     if (isAdmin.value) {
       filterOptions.value['allVaults'] = t('vaultList.filter.entry.allVaults');

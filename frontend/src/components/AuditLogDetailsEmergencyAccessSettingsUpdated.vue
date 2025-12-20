@@ -15,6 +15,14 @@
       </div>
       <div class="flex items-baseline gap-2">
         <dt class="text-xs text-gray-500">
+          <code>enableEmergencyAccess</code>
+        </dt>
+        <dd class="flex items-baseline gap-2 text-sm text-gray-900">
+          <code class="text-xs">{{ String(event.enableEmergencyAccess) }}</code>
+        </dd>
+      </div>
+      <div class="flex items-baseline gap-2">
+        <dt class="text-xs text-gray-500">
           <code>requiredKeyShares</code>
         </dt>
         <dd class="flex items-baseline gap-2 text-sm text-gray-900">

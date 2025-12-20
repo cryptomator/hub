@@ -173,6 +173,9 @@
         </li>
       </ul>
     </div>
+    <div v-else-if="isCommunityLicense || !settings?.enableEmergencyAccess" class="mt-3 text-center">
+      <h3 class="mt-2 text-sm font-medium text-gray-900">Emergency Access is disabled.</h3>
+    </div>
 
     <div v-else-if="filteredVaults && filteredVaults.length == 0" class="mt-3 text-center">
       <h3 class="mt-2 text-sm font-medium text-gray-900">No emergency access vaults found</h3>
@@ -196,7 +199,7 @@ import { ref, computed, onMounted, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import * as R from 'remeda';
 import auth from '../../common/auth';
-import backend, { LicenseUserInfoDto, VaultDto, RecoveryProcessDto, AuthorityDto } from '../../common/backend';
+import backend, { LicenseUserInfoDto, VaultDto, RecoveryProcessDto, AuthorityDto, SettingsDto } from '../../common/backend';
 import FetchError from '../FetchError.vue';
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue';
 import LicenseAlert from '../LicenseAlert.vue';
@@ -228,6 +231,7 @@ const onFetchError = ref<Error | null>(null);
 const isAdmin = ref<boolean>(false);
 
 const licenseStatus = ref<LicenseUserInfoDto>();
+const settings = ref<SettingsDto>();
 const isLicenseViolated = computed(() => {
   if (licenseStatus.value) {
     return licenseStatus.value.isExceeded() || licenseStatus.value.isExpired();
@@ -264,32 +268,33 @@ async function fetchData() {
     isAdmin.value = (await auth).hasRole('admin');
 
     licenseStatus.value = await backend.license.getUserInfo();
-    //billing.value = await backend.billing.get();
+    settings.value = (await backend.settings.get());
+    if (!isCommunityLicense.value && settings.value.enableEmergencyAccess){
+      vaults.value = (await backend.vaults.listRecoverable())
+        .filter(v => !v.archived)
+        .sort((a, b) => a.name.localeCompare(b.name));
 
-    vaults.value = (await backend.vaults.listRecoverable())
-      .filter(v => !v.archived)
-      .sort((a, b) => a.name.localeCompare(b.name));
+      for (const vault of vaults.value) {
+        const processes = await backend.emergencyAccess.findProcessesForVault(vault.id);
+        vaultRecoveryProcesses.value[vault.id] = processes;
+      }
 
-    for (const vault of vaults.value) {
-      const processes = await backend.emergencyAccess.findProcessesForVault(vault.id);
-      vaultRecoveryProcesses.value[vault.id] = processes;
-    }
+      const memberIdsOfAllRunningProcesses = Object
+        .values(vaultRecoveryProcesses.value)
+        .flat()
+        .flatMap(p => Object.keys(p.recoveredKeyShares));
 
-    const memberIdsOfAllRunningProcesses = Object
-      .values(vaultRecoveryProcesses.value)
-      .flat()
-      .flatMap(p => Object.keys(p.recoveredKeyShares));
+      const councilIds = vaults.value
+        .flatMap(v => Object.keys(v.emergencyKeyShares ?? {}));
 
-    const councilIds = vaults.value
-      .flatMap(v => Object.keys(v.emergencyKeyShares ?? {}));
+      const allIds = Array.from(new Set([...memberIdsOfAllRunningProcesses, ...councilIds]));
 
-    const allIds = Array.from(new Set([...memberIdsOfAllRunningProcesses, ...councilIds]));
-
-    if (allIds.length > 0) {
-      const auths = await backend.authorities.listSome(allIds);
-      authoritiesById.value = R.indexBy(auths, u => u.id);
-    } else {
-      authoritiesById.value = {};
+      if (allIds.length > 0) {
+        const auths = await backend.authorities.listSome(allIds);
+        authoritiesById.value = R.indexBy(auths, u => u.id);
+      } else {
+        authoritiesById.value = {};
+      }
     }
   } catch (error) {
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');

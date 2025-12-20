@@ -17,6 +17,9 @@ public class EmergencyAccessSettingsUpdatedEvent extends AuditEvent {
 	@Column(name = "admin_id", nullable = false)
 	private String adminId;
 
+	@Column(name = "enable_emergency_access", nullable = false)
+	private boolean enableEmergencyAccess;
+
 	@Column(name = "council_member_ids", nullable = false)
 	private String councilMemberIds;
 
@@ -35,6 +38,14 @@ public class EmergencyAccessSettingsUpdatedEvent extends AuditEvent {
 
 	public void setAdminId(String adminId) {
 		this.adminId = adminId;
+	}
+
+	public boolean isEmergencyAcessEnabled() {
+		return enableEmergencyAccess;
+	}
+
+	public void setEmergencyAcessEnabled(boolean enableEmergencyAccess) {
+		this.enableEmergencyAccess = enableEmergencyAccess;
 	}
 
 	public String getCouncilMemberIds() {

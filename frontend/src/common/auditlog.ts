@@ -125,6 +125,7 @@ export type AuditEventEmergencyAccessSetupDto = AuditEventDtoBase & {
 export type AuditEventEmergencyAccessSettingsChangedDto = AuditEventDtoBase & {
   type: 'EMERGENCY_ACCESS_SETTINGS_UPDATED',
   adminId: string;
+  enableEmergencyAccess: boolean;
   councilMemberIds: string;
   requiredKeyShares: number;
   minMembers: number;

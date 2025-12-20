@@ -2,7 +2,7 @@
   <div class="relative w-full">
     <div
       :class="[
-        'flex items-center flex-wrap min-h-[54px] rounded-md px-2 py-1 shadow-xs border', 
+        'flex items-center flex-wrap min-h-[54px] rounded-md px-2 py-1 shadow-xs border bg-white', 
         inputVisible ? 'focus-within:ring-1' : 'bg-gray-50 cursor-not-allowed',
         props.hasError
           ? 'border-red-300 text-red-900 focus-within:ring-red-500 focus-within:border-red-500'
@@ -15,19 +15,24 @@
         v-for="(user, index) in selectedUsers"
         :key="user.id"
         tabindex="-1"
+        :disabled="!inputVisible"
         class="inline-flex items-center text-sm rounded-full px-2 py-1 mt-1 mb-1 mr-1 border transition-colors shadow-sm"
         :class="{
           'bg-white text-gray-800': selectedPillIndex !== index,
-          'bg-white ring-2 ring-primary': selectedPillIndex === index
+          'bg-white ring-2 ring-primary': selectedPillIndex === index,
+          'cursor-not-allowed': !inputVisible
         }"
         @click="onPillClick($event, user)"
       >
         <img :src="user.pictureUrl" class="w-4 h-4 rounded-full mr-1" />
         {{ user.name }}
-        <span v-if="user.type === 'USER'" class="ml-1 trust-details">
+        <span 
+          v-if="user.type === 'USER'" class="ml-1 trust-details"
+        >
           <TrustDetails
             :trusted-user="user as UserDto"
             :trusts="trusts"
+            :disable-action="!inputVisible"
             @trust-changed="refreshTrusts"
           />
         </span>

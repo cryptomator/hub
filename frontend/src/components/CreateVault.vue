@@ -316,7 +316,7 @@ import { ArrowDownTrayIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/so
 import { saveAs } from 'file-saver';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { ActivatedUser, didCompleteSetup, LicenseUserInfoDto, PaymentRequiredError } from '../common/backend';
+import backend, { ActivatedUser, didCompleteSetup, LicenseUserInfoDto, PaymentRequiredError, SettingsDto } from '../common/backend';
 import { VaultKeys } from '../common/crypto';
 import { EmergencyAccess } from '../common/emergencyaccess';
 import userdata from '../common/userdata';
@@ -358,6 +358,7 @@ const onDownloadTemplateError = ref<Error>();
 
 const state = ref(State.Initial);
 const processing = ref(false);
+const settings = ref<SettingsDto>();
 const vaultName = ref('');
 const vaultDescription = ref<string | undefined>();
 const copiedRecoveryKey = ref(false);
@@ -408,18 +409,18 @@ function removeCouncilMember(user: ActivatedUser) {
 
 async function loadDefaultEmergencyAccessSettings() {
   try {
-    const settings = await backend.settings.get();
-    const authorities = await backend.authorities.listSome(settings.emergencyCouncilMemberIds);
+    settings.value = await backend.settings.get();
+    const authorities = await backend.authorities.listSome(settings.value.emergencyCouncilMemberIds);
     const activatedUsers = authorities
       .filter((a): a is ActivatedUser => a.type === 'USER' && didCompleteSetup(a))
       .sort((a, b) => a.name.localeCompare(b.name));
 
     defaultEmergencyCouncilMembers.value = activatedUsers;
     initialEmergencyCouncilMembers.value = [...activatedUsers];
-    allowChangingDefaults.value = settings.allowChoosingEmergencyCouncil;
-    defaultRequiredEmergencyKeyShares.value = settings.defaultRequiredEmergencyKeyShares;
-    requiredKeyShares.value = settings.defaultRequiredEmergencyKeyShares;
-    minMembers.value = settings.defaultMinMembers;
+    allowChangingDefaults.value = settings.value.allowChoosingEmergencyCouncil;
+    defaultRequiredEmergencyKeyShares.value = settings.value.defaultRequiredEmergencyKeyShares;
+    requiredKeyShares.value = settings.value.defaultRequiredEmergencyKeyShares;
+    minMembers.value = settings.value.defaultMinMembers;
   } catch (error) {
     console.error('Loading emergency council members failed:', error);
     defaultRequiredEmergencyKeyShares.value = 0;
@@ -472,7 +473,7 @@ async function validateRecoveryKey() {
 }
 
 const getCurrentStates = computed(() => {
-  return isCommunityLicense.value ? communityCreateStates : allCreateStates;
+  return isCommunityLicense.value || !settings.value?.enableEmergencyAccess ? communityCreateStates : allCreateStates;
 });
 
 const allCreateStates = [
@@ -511,7 +512,7 @@ async function validateVaultDetails() {
   if (props.recover) {
     await createVault();
   } else {
-    if (!isCommunityLicense.value)
+    if (!isCommunityLicense.value && settings.value?.enableEmergencyAccess)
       state.value = State.DefineEmergencyAccess;
     else
       state.value = State.ShowRecoveryKey;
@@ -571,7 +572,7 @@ function backToEnterVaultDetails(){
 }
 
 function backToDefineEmergencyAccess(){
-  if (isCommunityLicense.value)
+  if (isCommunityLicense.value || !settings.value?.enableEmergencyAccess)
     state.value = State.EnterVaultDetails;
   else
     state.value = State.DefineEmergencyAccess;

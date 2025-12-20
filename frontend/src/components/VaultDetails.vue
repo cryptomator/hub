@@ -190,13 +190,13 @@
           {{ t('vaultDetails.actions.displayRecoveryKey') }}
         </button>
         <!-- setup emergencyAccess button -->
-        <button v-if="!hasEmergencyKeys && vaultRole == 'OWNER' && !isCommunityLicense" type="button" class="inline-flex items-center justify-center gap-2 bg-white py-2 px-4 border border-gray-300 rounded-md shadow-xs text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showGrantEmergencyAccessDialog()">
+        <button v-if="!hasEmergencyKeys && vaultRole == 'OWNER' && !isCommunityLicense && settings?.enableEmergencyAccess" type="button" class="inline-flex items-center justify-center gap-2 bg-white py-2 px-4 border border-gray-300 rounded-md shadow-xs text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showGrantEmergencyAccessDialog()">
           <ExclamationTriangleIcon class="h-5 w-5 text-yellow-500" />
           <span>Setup Emergency Access Council</span>
         </button>
         <!-- fix emergency council size -->
         <button
-          v-else-if="(vaultRole == 'OWNER' && (hasInsufficientEmergencyRedundancy || hasMismatchedApprovals) || (vaultRole == 'OWNER' && requiredGreaterThanMembers)) && !isCommunityLicense"
+          v-else-if="(vaultRole == 'OWNER' && (hasInsufficientEmergencyRedundancy || hasMismatchedApprovals) || (vaultRole == 'OWNER' && requiredGreaterThanMembers)) && !isCommunityLicense && settings?.enableEmergencyAccess"
           type="button"
           class="inline-flex items-center justify-center gap-2 bg-white py-2 px-4 border border-yellow-300 rounded-md shadow-xs text-sm font-medium text-yellow-800 hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-400"
           @click="showGrantEmergencyAccessDialog()"
@@ -231,7 +231,7 @@ import * as R from 'remeda';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auth from '../common/auth';
-import backend, { AuthorityDto, ConflictError, ForbiddenError, LicenseUserInfoDto, MemberDto, NotFoundError, PaymentRequiredError, RecoveryProcessDto, TrustDto, UserDto, VaultDto, VaultRole } from '../common/backend';
+import backend, { AuthorityDto, ConflictError, ForbiddenError, LicenseUserInfoDto, MemberDto, NotFoundError, PaymentRequiredError, RecoveryProcessDto, SettingsDto, TrustDto, UserDto, VaultDto, VaultRole } from '../common/backend';
 import { VaultKeys } from '../common/crypto';
 import { JWT, JWTHeader } from '../common/jwt';
 import userdata from '../common/userdata';
@@ -266,6 +266,7 @@ const allowRetryFetch = computed(() => onFetchError.value && !(onFetchError.valu
 const onUpdateVaultMembershipError = ref< {[id: string]: Error} >({});
 const onAddUserError = ref<Error>();
 
+const settings = ref<SettingsDto>();
 const license = ref<LicenseUserInfoDto>();
 const addingUser = ref(false);
 const grantingPermission = ref(false);
@@ -315,6 +316,7 @@ async function fetchData() {
   try {
     isAdmin.value = (await auth).hasRole('admin');
     vault.value = await backend.vaults.get(props.vaultId);
+    settings.value = await backend.settings.get();
 
     if (vault.value && Object.keys(vault.value.emergencyKeyShares).length > 0) {
       const authorities = await backend.authorities.listSome(Object.keys(vault.value.emergencyKeyShares));

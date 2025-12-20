@@ -74,7 +74,6 @@ import { useI18n } from 'vue-i18n';
 import auth from '../common/auth';
 import backend, { UserDto, VaultDto, LicenseUserInfoDto } from '../common/backend';
 
-const recoverableVaults = ref<VaultDto[]>([]);
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -121,8 +120,10 @@ onMounted(async () => {
   }
 
   licenseStatus.value = await backend.license.getUserInfo();
+  const emergencyAccessEnabled = (await backend.settings.get()).enableEmergencyAccess;
+  if (!isCommunityLicense.value && emergencyAccessEnabled){
+    const recoverableVaults = ref<VaultDto[]>([]);
 
-  if (!isCommunityLicense.value){
     try {
       const recoverable = await backend.vaults.listRecoverable().catch(() => [] as VaultDto[]);
 

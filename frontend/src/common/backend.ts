@@ -141,7 +141,8 @@ export type SettingsDto = {
   defaultRequiredEmergencyKeyShares: number,
   defaultMinMembers: number,
   allowChoosingEmergencyCouncil: boolean,
-  emergencyCouncilMemberIds: string[]
+  emergencyCouncilMemberIds: string[],
+  enableEmergencyAccess: boolean
 }
 
 export type RecoveryProcessSetNewOwner = {

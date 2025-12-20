@@ -128,7 +128,7 @@ public class AuditLogResource {
 				case VaultMemberUpdatedEvent evt -> new VaultMemberUpdatedEventDto(evt.getId(), evt.getTimestamp(), VaultMemberUpdatedEvent.TYPE, evt.getUpdatedBy(), evt.getVaultId(), evt.getAuthorityId(), evt.getRole());
 				case VaultOwnershipClaimedEvent evt -> new VaultOwnershipClaimedEventDto(evt.getId(), evt.getTimestamp(), VaultOwnershipClaimedEvent.TYPE, evt.getClaimedBy(), evt.getVaultId());
 				case EmergencyAccessSetupEvent evt -> new EmergencyAccessSetupEventDto(evt.getId(), evt.getTimestamp(), EmergencyAccessSetupEvent.TYPE, evt.getVaultId() ,evt.getOwnerId(), evt.getSettings(), evt.getIpAddress());
-				case EmergencyAccessSettingsUpdatedEvent evt -> new EmergencyAccessSettingsUpdatedEventDto(evt.getId(), evt.getTimestamp(), EmergencyAccessSettingsUpdatedEvent.TYPE, evt.getAdminId(), evt.getCouncilMemberIds(), evt.getRequiredKeyShares(), evt.getMinMembers(),  evt.isAllowChoosingCouncil());
+				case EmergencyAccessSettingsUpdatedEvent evt -> new EmergencyAccessSettingsUpdatedEventDto(evt.getId(), evt.getTimestamp(), EmergencyAccessSettingsUpdatedEvent.TYPE, evt.getAdminId(), evt.isEmergencyAcessEnabled(), evt.getCouncilMemberIds(), evt.getRequiredKeyShares(), evt.getMinMembers(),  evt.isAllowChoosingCouncil());
 				case EmergencyAccessRecoveryStartedEvent evt -> new EmergencyAccessRecoveryStartedEventDto(evt.getId(), evt.getTimestamp(), EmergencyAccessRecoveryStartedEvent.TYPE, evt.getVaultId(), evt.getProcessId(), evt.getCouncilMemberId(), evt.getProcessType(), evt.getDetails());
 				case EmergencyAccessRecoveryApprovedEvent evt -> new EmergencyAccessRecoveryApprovedEventDto(evt.getId(), evt.getTimestamp(), EmergencyAccessRecoveryApprovedEvent.TYPE, evt.getProcessId(), evt.getCouncilMemberId(), evt.getIpAddress());
 				case EmergencyAccessRecoveryCompletedEvent evt -> new EmergencyAccessRecoveryCompletedEventDto(evt.getId(), evt.getTimestamp(), EmergencyAccessRecoveryCompletedEvent.TYPE, evt.getProcessId(), evt.getCouncilMemberId(), evt.getIpAddress());
@@ -197,7 +197,7 @@ public class AuditLogResource {
 										@JsonProperty("ipAddress") String ipAddress) implements AuditEventDto {
 	}
 
-	record EmergencyAccessSettingsUpdatedEventDto(long id, Instant timestamp, String type, @JsonProperty("adminId") String adminId, @JsonProperty("councilMemberIds") String councilMemberIds,
+	record EmergencyAccessSettingsUpdatedEventDto(long id, Instant timestamp, String type, @JsonProperty("adminId") String adminId,@JsonProperty("enableEmergencyAccess") boolean enableEmergencyAccess, @JsonProperty("councilMemberIds") String councilMemberIds,
 												  @JsonProperty("requiredKeyShares") int requiredKeyShares, @JsonProperty("minMembers") int minMembers, @JsonProperty("allowChoosingCouncil") boolean allowChoosingCouncil) implements AuditEventDto {
 	}
 

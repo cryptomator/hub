@@ -155,7 +155,7 @@ public class EventLogger {
 		auditEventRepository.persist(event);
 	}
 
-	public void logEmergencyAccessSettingsUpdated(String adminId, String councilMemberIds, int requiredKeyShares, int minMembers,  boolean allowChoosingCouncil) {
+	public void logEmergencyAccessSettingsUpdated(String adminId, boolean enableEmergencyAccess, String councilMemberIds, int requiredKeyShares, int minMembers,  boolean allowChoosingCouncil) {
 		var event = new EmergencyAccessSettingsUpdatedEvent();
 		event.setTimestamp(Instant.now());
 		event.setAdminId(adminId);
@@ -163,6 +163,7 @@ public class EventLogger {
 		event.setRequiredKeyShares(requiredKeyShares);
 		event.setMinMembers(minMembers);
 		event.setAllowChoosingCouncil(allowChoosingCouncil);
+		event.setEmergencyAcessEnabled(enableEmergencyAccess);
 		auditEventRepository.persist(event);
 	}
 

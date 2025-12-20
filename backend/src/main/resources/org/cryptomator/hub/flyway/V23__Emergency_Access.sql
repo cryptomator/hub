@@ -1,6 +1,7 @@
 ALTER TABLE "settings" ADD "default_required_emergency_key_shares" INTEGER NOT NULL DEFAULT 2;
 ALTER TABLE "settings" ADD "default_min_members" INTEGER NOT NULL DEFAULT 3;
 ALTER TABLE "settings" ADD "allow_choosing_emergency_council" BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE "settings" ADD "enable_emergency_access" BOOLEAN NOT NULL DEFAULT FALSE;
 
 ALTER TABLE "vault" ADD "requried_emergency_key_shares" INTEGER NOT NULL DEFAULT 0;
 
@@ -56,6 +57,7 @@ CREATE TABLE "audit_event_emergaccess_settings_updated"
 (
 	"id"                     BIGINT NOT NULL,
 	"admin_id"               VARCHAR(255) COLLATE "C" NOT NULL,
+	"enable_emergency_access" 	BOOLEAN NOT NULL,
 	"council_member_ids"     TEXT NOT NULL,
 	"required_key_shares"    INTEGER NOT NULL,
 	"min_members"			 INTEGER NOT NULL,

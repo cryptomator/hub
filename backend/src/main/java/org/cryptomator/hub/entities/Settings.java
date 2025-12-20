@@ -38,6 +38,9 @@ public class Settings {
 	@Column(name = "wot_id_verify_len", nullable = false)
 	private int wotIdVerifyLen;
 
+	@Column(name = "enable_emergency_access", nullable = false)
+	private boolean enableEmergencyAccess;
+
 	@Column(name = "default_required_emergency_key_shares", nullable = false)
 	private int defaultRequiredEmergencyKeyShares;
 
@@ -95,6 +98,14 @@ public class Settings {
 		this.wotIdVerifyLen = wotIdVerifyLen;
 	}
 
+	public boolean isEmergencyAcessEnabled() {
+		return enableEmergencyAccess;
+	}
+
+	public void setEmergencyAcessEnabled(boolean enableEmergencyAccess) {
+		this.enableEmergencyAccess = enableEmergencyAccess;
+	}
+
 	public int getDefaultRequiredEmergencyKeyShares() {
 		return defaultRequiredEmergencyKeyShares;
 	}
@@ -136,6 +147,7 @@ public class Settings {
 				", licenseKey='" + licenseKey + '\'' +
 				", wotMaxDepth='" + wotMaxDepth + '\'' +
 				", wotIdVerifyLen='" + wotIdVerifyLen + '\'' +
+				", enableEmergencyAccess=" + enableEmergencyAccess + '\'' +
 				", defaultRequiredEmergencyKeyShares=" + defaultRequiredEmergencyKeyShares +
 				", defaultMinMembers=" + defaultMinMembers +
 				", allowChoosingEmergencyCouncil=" + allowChoosingEmergencyCouncil +
@@ -153,6 +165,7 @@ public class Settings {
 				&& Objects.equals(licenseKey, settings.licenseKey)
 				&& Objects.equals(wotMaxDepth, settings.wotMaxDepth)
 				&& Objects.equals(wotIdVerifyLen, settings.wotIdVerifyLen)
+				&& enableEmergencyAccess == settings.enableEmergencyAccess
 				&& defaultRequiredEmergencyKeyShares == settings.defaultRequiredEmergencyKeyShares
 				&& defaultMinMembers == settings.defaultMinMembers
 				&& allowChoosingEmergencyCouncil == settings.allowChoosingEmergencyCouncil
@@ -161,7 +174,7 @@ public class Settings {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, hubId, licenseKey, wotMaxDepth, wotIdVerifyLen, defaultRequiredEmergencyKeyShares, defaultMinMembers, allowChoosingEmergencyCouncil, emergencyCouncilMemberIds);
+		return Objects.hash(id, hubId, licenseKey, wotMaxDepth, wotIdVerifyLen, enableEmergencyAccess, defaultRequiredEmergencyKeyShares, defaultMinMembers, allowChoosingEmergencyCouncil, emergencyCouncilMemberIds);
 	}
 
 	@ApplicationScoped
