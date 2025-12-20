@@ -54,7 +54,7 @@ public class SettingsResourceIT {
 		@Order(2)
 		@DisplayName("PUT /settings returns 204 No Content")
 		public void testPut() {
-			var dto = new SettingsResource.SettingsDto("42", 5, 8, 2, 3, false, Set.of());
+			var dto = new SettingsResource.SettingsDto("42", 5, 8, true, 2, 3, false, Set.of());
 			given().contentType(ContentType.JSON).body(dto)
 					.when().put("/settings")
 					.then().statusCode(204);
@@ -74,7 +74,7 @@ public class SettingsResourceIT {
 		@Order(4)
 		@DisplayName("PUT /settings returns 204 No Content")
 		public void testPutBackToDefault() {
-			var dto = new SettingsResource.SettingsDto("42", 3, 2, 2, 3, false, Set.of());
+			var dto = new SettingsResource.SettingsDto("42", 3, 2, true, 2, 3, false, Set.of());
 			given().contentType(ContentType.JSON).body(dto)
 					.when().put("/settings")
 					.then().statusCode(204);
