@@ -6,14 +6,14 @@
 
   <!-- Edit/Create page -->
   <div v-else>
-    <BreadcrumbNav v-if="isEditMode" :crumbs="[ { label: t('nav.groups'), to: '/app/groups' }, { label: name, to:'/app/groups/' + groupId }, { label: t('common.edit') } ]"/>
+    <BreadcrumbNav v-if="props.mode === 'EDIT'" :crumbs="[ { label: t('nav.groups'), to: '/app/groups' }, { label: name, to:'/app/groups/' + props.id }, { label: t('common.edit') } ]"/>
     <BreadcrumbNav v-else :crumbs="[ { label: t('nav.groups'), to: '/app/groups' }, { label: t('common.create') } ]"/>
     <div class="-my-2 -mx-4 sm:-mx-6 lg:-mx-8 overflow-hidden">
       <div class="py-2 align-middle inline-block min-w-full px-4 sm:px-6 lg:px-8">
         <div class="shadow overflow-hidden border-b border-gray-200 rounded-lg bg-white p-6 space-y-8">
           <div>
             <h3 class="text-lg font-medium leading-6 text-gray-900">
-              {{ isEditMode ? t('groupEditCreate.title.edit') : t('groupEditCreate.title.create') }}
+              {{ props.mode === 'EDIT' ? t('groupEditCreate.title.edit') : t('groupEditCreate.title.create') }}
             </h3>
             <hr class="my-4 border-gray-200"/>
           </div>
@@ -67,11 +67,11 @@
                   </button>
                   <button type="submit" :disabled="processing || !groupDataHasUnsavedChanges" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
                     <span v-if="!groupSaved">
-                      {{ isEditMode ? t('common.save') : t('common.create') }}
+                      {{ props.mode === 'EDIT' ? t('common.save') : t('common.create') }}
                     </span>
                     <span v-else>{{ t('common.saved') }}</span>
                   </button>
-                  <div v-if="groupDataHasUnsavedChanges && isEditMode" class="flex items-center whitespace-nowrap gap-1 text-sm text-yellow-700">
+                  <div v-if="groupDataHasUnsavedChanges && props.mode === 'EDIT'" class="flex items-center whitespace-nowrap gap-1 text-sm text-yellow-700">
                     <ExclamationTriangleIcon class="w-4 h-4 m-1 text-yellow-500" />
                     {{ t('common.unsavedChanges') }}&nbsp;
                     <button type="button" class="underline hover:text-yellow-900" @click="resetGroupData()">
@@ -93,11 +93,19 @@
 import { ExclamationTriangleIcon, TrashIcon, UserGroupIcon } from '@heroicons/vue/24/outline';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useRoute, useRouter } from 'vue-router';
+import { useRouter } from 'vue-router';
 import backend, { isAxiosError } from '../../common/backend';
 import { FormValidator } from '../../common/formvalidator';
 import { debounce } from '../../common/util';
 import BreadcrumbNav from '../BreadcrumbNav.vue';
+
+const props = defineProps<{
+  id: undefined,
+  mode: 'CREATE',
+} | {
+  id: string,
+  mode: 'EDIT',
+}>();
 
 interface GroupData {
   id?: string;
@@ -120,12 +128,7 @@ function resetGroupData() {
 }
 
 const { t } = useI18n({ useScope: 'global' });
-const route = useRoute();
 const router = useRouter();
-
-// Determine if we're in edit or create mode based on route params
-const groupId = computed(() => route.params.id as string | undefined);
-const isEditMode = computed(() => !!groupId.value);
 
 const loading = ref(true);
 const name = ref<string>('');
@@ -147,9 +150,9 @@ watch(pictureUrl,
 );
 
 onMounted(async () => {
-  if (isEditMode.value && groupId.value) {
+  if (props.mode === 'EDIT') {
     try {
-      const group = await backend.groups.getGroup(groupId.value);
+      const group = await backend.groups.getGroup(props.id);
       name.value = group.name;
       pictureUrl.value = group.pictureUrl ?? '';
       initialGroupData.value = {
@@ -193,8 +196,8 @@ async function onSubmit() {
   const trimmedName = name.value.trim();
 
   try {
-    if (isEditMode.value && groupId.value) {
-      await backend.groups.updateGroup(groupId.value, {
+    if (props.mode === 'EDIT') {
+      await backend.groups.updateGroup(props.id, {
         name: trimmedName,
         pictureUrl: pictureUrl.value || undefined
       });
@@ -232,8 +235,8 @@ async function onSubmit() {
 }
 
 function cancelAction() {
-  if (isEditMode.value) {
-    router.push(`/app/groups/${groupId.value}`);
+  if (props.mode === 'EDIT') {
+    router.push(`/app/groups/${props.id}`);
   } else {
     router.push('/app/groups');
   }

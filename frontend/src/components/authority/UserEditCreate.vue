@@ -6,14 +6,14 @@
 
   <!-- Edit/Create page -->
   <div v-else>
-    <BreadcrumbNav v-if="isEditMode" :crumbs="[ { label: t('nav.users'), to: '/app/users' }, { label: username, to:'/app/users/' + userId }, { label: t('common.edit') } ]"/>
+    <BreadcrumbNav v-if="props.mode === 'EDIT'" :crumbs="[ { label: t('nav.users'), to: '/app/users' }, { label: username, to:'/app/users/' + props.id }, { label: t('common.edit') } ]"/>
     <BreadcrumbNav v-else :crumbs="[ { label: t('nav.users'), to: '/app/users' }, { label: t('common.create') } ]"/>
     <div class="-my-2 -mx-4 sm:-mx-6 lg:-mx-8 overflow-hidden">
       <div class="py-2 align-middle inline-block min-w-full px-4 sm:px-6 lg:px-8">
         <div class="shadow overflow-hidden border-b border-gray-200 rounded-lg bg-white p-6 space-y-8 relative">
           <div>
             <h3 class="text-lg font-medium leading-6 text-gray-900">
-              {{ isEditMode ? t('userEditCreate.title.edit') : t('userEditCreate.title.create') }}
+              {{ props.mode === 'EDIT' ? t('userEditCreate.title.edit') : t('userEditCreate.title.create') }}
             </h3>
             <hr class="my-4 border-gray-200"/>
           </div>
@@ -141,7 +141,7 @@
                 <div class="bg-blue-50 text-gray-900 text-sm rounded-md p-4 flex gap-3 items-start">
                   <InformationCircleIcon class="w-5 h-5 mt-0.5 text-blue-400 flex-shrink-0" aria-hidden="true" />
                   <p>
-                    {{ isEditMode ? t('userEditCreate.edit.passwordInfo') : t('userEditCreate.create.passwordInfo') }}
+                    {{ props.mode === 'EDIT' ? t('userEditCreate.edit.passwordInfo') : t('userEditCreate.create.passwordInfo') }}
                   </p>
                 </div>
               </div>
@@ -206,10 +206,10 @@
                     {{ t('common.cancel') }}
                   </button>
                   <button type="submit" :disabled="processing || !userDataHasUnsavedChanges || password !== passwordConfirm" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
-                    <span v-if="!userSaved">{{ isEditMode ? t('common.save') : t('common.create') }}</span>
+                    <span v-if="!userSaved">{{ props.mode === 'EDIT' ? t('common.save') : t('common.create') }}</span>
                     <span v-else>{{ t('common.saved') }}</span>
                   </button>
-                  <div v-if="userDataHasUnsavedChanges && isEditMode" class="flex items-center whitespace-nowrap gap-1 text-sm text-yellow-700">
+                  <div v-if="userDataHasUnsavedChanges && props.mode === 'EDIT'" class="flex items-center whitespace-nowrap gap-1 text-sm text-yellow-700">
                     <ExclamationTriangleIcon class="w-4 h-4 m-1 text-yellow-500" />
                     {{ t('common.unsavedChanges') }}&nbsp;
                     <button type="button" class="underline hover:text-yellow-900" @click="resetUserData()">
@@ -234,11 +234,19 @@ import { base64 } from '@scure/base';
 import { toSvg } from 'jdenticon';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useRoute, useRouter } from 'vue-router';
+import { useRouter } from 'vue-router';
 import backend, { isAxiosError, isSelectableRealmRole, SelectableRealmRole } from '../../common/backend';
 import { FormValidator } from '../../common/formvalidator';
 import { UTF8 } from '../../common/util';
 import BreadcrumbNav from '../BreadcrumbNav.vue';
+
+const props = defineProps<{
+  id: undefined,
+  mode: 'CREATE',
+} | {
+  id: string,
+  mode: 'EDIT',
+}>();
 
 interface UserData {
   firstName: string;
@@ -273,18 +281,12 @@ function resetUserData() {
 }
 
 const { t } = useI18n({ useScope: 'global' });
-const route = useRoute();
 const router = useRouter();
-
-const userId = route.params.id as string | undefined;
-const isEditMode = computed(() => !!userId);
-
 const loading = ref(true);
 const firstName = ref('');
 const lastName = ref('');
 const username = ref('');
 const email = ref('');
-
 const selectedRoles = ref<SelectableRealmRole[]>([]);
 const roleOptions: Record<SelectableRealmRole, string> = {
   'admin': 'Admin',
@@ -318,20 +320,20 @@ watch(pictureUrl,
   { immediate: true }
 );
 
-watch([pictureUrl, isValidImageUrl, () => userId],
-  ([newPictureUrl, newIsValidImageUrl, newUserId]) => {
+watch([pictureUrl, isValidImageUrl],
+  ([newPictureUrl, newIsValidImageUrl]) => {
     const hasValidPicture = newPictureUrl && newIsValidImageUrl;
-    const shouldShowJdenticon = !hasValidPicture && newUserId;
+    const shouldShowJdenticon = !hasValidPicture && props.id;
 
-    previewJdenticon.value = shouldShowJdenticon ? generateJdenticon(newUserId) : '';
+    previewJdenticon.value = shouldShowJdenticon ? generateJdenticon(props.id) : '';
   },
   { immediate: true }
 );
 
 onMounted(async () => {
-  if (userId) {
+  if (props.mode === 'EDIT') {
     try {
-      const fetchedUser = await backend.users.getUser(userId);
+      const fetchedUser = await backend.users.getUser(props.id);
 
       const userData = fetchedUser as { firstName?: string; lastName?: string };
       firstName.value = userData.firstName || '';
@@ -385,7 +387,7 @@ function validateForm() {
     email: email.value,
     password: password.value,
     passwordConfirm: passwordConfirm.value,
-    isEditMode: isEditMode.value,
+    isEditMode: props.mode === 'EDIT',
     pictureUrl: pictureUrl.value,      
     isValidImageUrl: isValidImageUrl.value 
   });
@@ -450,8 +452,8 @@ async function onSubmit() {
   };
 
   try {
-    if (userId) { // edit mode
-      await backend.users.updateUser(userId, {
+    if (props.mode === 'EDIT') { // edit mode
+      await backend.users.updateUser(props.id, {
         firstName: firstName.value || undefined,
         lastName: lastName.value || undefined,
         password: password.value || undefined,
@@ -459,9 +461,9 @@ async function onSubmit() {
         realmRoles: selectedRoles.value
       });
       userSaved.value = true;
-      router.push(`/app/users/${userId}`);
+      router.push(`/app/users/${props.id}`); // navigate to user detail page after save
     } else { // create mode
-      const createdUser = await backend.users.createUser({
+      await backend.users.createUser({
         name: username.value,
         email: email.value,
         firstName: firstName.value,
@@ -471,7 +473,7 @@ async function onSubmit() {
         realmRoles: selectedRoles.value
       });
       userSaved.value = true;
-      router.push('/app/users');
+      router.push('/app/users'); // navigate to user list page after creation
     }
   } catch (error: unknown) {
     console.error('Failed to save user:', error);
@@ -489,8 +491,8 @@ async function onSubmit() {
 }
 
 function cancelAction() {
-  if (isEditMode.value) {
-    router.push(`/app/users/${userId}`);
+  if (props.mode === 'EDIT') {
+    router.push(`/app/users/${props.id}`);
   } else {
     router.push('/app/users');
   }
