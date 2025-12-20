@@ -13,6 +13,7 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.Immutable;
 
 import java.util.Collection;
@@ -48,12 +49,18 @@ public class Group extends Authority {
 	public static class Repository implements PanacheRepositoryBase<Group, String> {
 
 		public Group findByIdWithEagerDetails(String id) {
-			return find("""
+			// 1. fetch group with members:
+			var group = find("""
 					FROM Group g
 					LEFT JOIN FETCH g.members
-					LEFT JOIN FETCH g.accessibleVaults
 					WHERE g.id = :id
 					""", Parameters.with("id", id)).singleResultOptional().orElse(null);
+			if (group == null) {
+				return null;
+			}
+			// 2. fetch accessible vaults separately to avoid cartesian product explosion:
+			Hibernate.initialize(group.accessibleVaults);
+			return group;
 		}
 
 		public long deleteByIds(Collection<String> ids) {
