@@ -36,7 +36,7 @@ public class StringArrayType implements UserType<String[]> {
 	@Override
 	public String[] nullSafeGet(ResultSet rs, int position, SharedSessionContractImplementor session, Object owner) throws SQLException {
 		Array array = rs.getArray(position);
-		return array != null ? (String[]) array.getArray() : null;
+		return array != null ? (String[]) array.getArray() : new String[0];
 	}
 
 	@Override

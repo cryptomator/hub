@@ -67,7 +67,7 @@ public class User extends Authority {
 
 	@Column(name = "realm_roles")
 	@Type(StringArrayType.class)
-	private String[] realmRoles;
+	private String[] realmRoles = new String[0];
 
 	@Column(name = "ecdh_publickey")
 	private String ecdhPublicKey;
