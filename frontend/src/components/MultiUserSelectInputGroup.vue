@@ -44,7 +44,7 @@
         <div v-if="inputVisible" class="ml-1 text-gray-500 hover:text-red-600">&times;</div>
       </button>
       <!-- Combobox -->
-      <Combobox v-model="inputVisible" @update:model-value="onSelect">
+      <Combobox @update:model-value="onSelect">
         <div class="flex-1 relative"> 
           <ComboboxInput v-if="inputVisible" as="template">
             <input
@@ -119,6 +119,10 @@ export type Item = {
   accessibleVaults?: unknown[];
 }
 
+export type MultiUserSelectExpose = {
+  focus: () => Promise<void> | void;
+};
+
 const trusts = ref<TrustDto[]>([]);
 
 const { t } = useI18n({ useScope: 'global' });
@@ -142,7 +146,19 @@ const inputVisible = computed(() => props.inputVisible !== false);
 
 const query = ref('');
 const searchResults = ref<T[]>([]);
+
 const inputEl = ref<HTMLInputElement | null>(null);
+
+async function focus() {
+  selectedPillIndex.value = null;
+  await nextTick();
+
+  if (inputVisible.value) inputEl.value?.focus();
+}
+
+defineExpose<MultiUserSelectExpose>({
+  focus
+});
 
 const focusInput = () => {
   selectedPillIndex.value = null;

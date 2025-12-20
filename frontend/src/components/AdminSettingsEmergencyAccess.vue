@@ -377,7 +377,7 @@ async function saveRecoverySettings() {
       return;
     }
 
-    if (requiredShares.value > minMembers.value) {
+    if (allowChoosing.value && requiredShares.value > minMembers.value) {
       defaultMinMembersLowerThenRequiredEmergencyKeySharesError.value = new FormValidationFailedError();
       onSaveErrorRecovery.value = new Error(
         t('admin.emergencyAccess.errors.sharesMustNotExceedMembers') ?? 'Required > members'

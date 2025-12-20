@@ -59,6 +59,7 @@
                           Select user with role owner
                         </label>
                         <MultiUserSelectInputGroup
+                          ref="ownersSelect"
                           :selected-users="owners"
                           :on-search="searchUsers"
                           :input-visible="true"
@@ -99,6 +100,7 @@
                           Council Members (At least: {{ newRequiredKeyShares }})
                         </label>
                         <MultiUserSelectInputGroup
+                          ref="concilMembersSelect"
                           :selected-users="newCouncilMembers"
                           :on-search="searchUsersWithCompleteSetup"
                           :input-visible="true"
@@ -201,7 +203,7 @@
                           />
                         </div>
                       </div>
-                      <div v-if="phase === 'complete' && !didAddMyShare" class="text-sm pt-2">
+                      <div v-if="phase === 'complete' && !didAddMyShare && isMeInProcessCouncil" class="text-sm pt-2">
                         <span class="inline-flex items-center gap-2 rounded-md bg-green-50 ring-1 ring-green-300/70 px-2.5 py-1 text-xs font-medium text-green-800">
                           <InformationCircleIcon class="h-4 w-4" aria-hidden="true" />
                           You can finish this emergency access process by adding the last key share and completing it.
@@ -238,7 +240,25 @@
                   {{ t('recoveryDialog.error.processAlreadyExists') }}
                 </p>
               </div>
-              <div class="bg-gray-50 rounded-b-lg px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+              <div class="bg-gray-50 rounded-b-lg px-4 py-3 sm:px-6 sm:flex">
+                <!-- ABORT -->
+                <template v-if="phase !== 'start' && isMeInProcessCouncil && !showSuccess">
+                  <button
+                    class=" text-sm text-red-600 hover:underline sm:mr-auto focus:outline-none focus:underline rounded"
+                    @click.stop="requestCancel()"
+                  >
+                    Abort this Process    
+                  </button>
+                </template>
+                <!-- CLOSE -->
+                <button
+                  ref="closeButton"
+                  type="button"
+                  class="mt-3 inline-flex w-full justify-center sm:ml-auto rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:w-auto sm:text-sm"
+                  @click.stop="open = false" 
+                >
+                  {{ t('common.close') }}
+                </button>               
                 <!-- START -->
                 <template v-if="phase === 'start'">
                   <button
@@ -267,31 +287,13 @@
                 <template v-else-if="phase === 'complete' && !showSuccess">
                   <button
                     v-if="canSeeComplete"
+                    ref="completeButton"
                     type="button"
                     class="inline-flex w-full sm:w-auto justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:text-sm"
                     @click="completeRecovery()"
                   >
                     Complete Process
                   </button>
-                </template>
-
-                <!-- CLOSE -->
-                <button
-                  type="button"
-                  class="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:w-auto sm:text-sm"
-                  @click.stop="open = false" 
-                >
-                  {{ t('common.close') }}
-                </button>
-                
-                <!-- ABORT -->
-                <template v-if="phase !== 'start' && isMeInProcessCouncil && !showSuccess">
-                  <p
-                    class="mt-2 text-sm text-red-600 cursor-pointer hover:underline sm:order-last sm:mr-auto"
-                    @click.stop="requestCancel()"
-                  >
-                    Abort this Process
-                  </p>
                 </template>
               </div>
             </div>
@@ -316,7 +318,7 @@ import { CheckBadgeIcon, ExclamationCircleIcon, InformationCircleIcon } from '@h
 import { ExclamationTriangleIcon, PlayIcon, CheckCircleIcon } from '@heroicons/vue/24/solid';
 import { base64 } from '@scure/base';
 import * as R from 'remeda';
-import { computed, ref, Ref, toRaw } from 'vue';
+import { computed, ref, Ref, toRaw, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { AccessGrant, ActivatedUser, AuthorityDto, didCompleteSetup, GroupDto, PaymentRequiredError, RecoveredKeyShareDto, RecoveryProcessChangeCouncil, RecoveryProcessDto, RecoveryProcessSetNewOwner, UserDto, VaultDto, VaultRole } from '../../common/backend';
 import { asPublicKey, UserKeys, VaultKeys } from '../../common/crypto';
@@ -328,6 +330,7 @@ import MultiUserSelectInputGroup from '../MultiUserSelectInputGroup.vue';
 import EmergencyScenarioVisualization from './EmergencyScenarioVisualization.vue';
 import ProcessAbortDialog from './ProcessAbortDialog.vue';
 import SegmentRing from './SegmentRing.vue';
+import type { MultiUserSelectExpose } from '../MultiUserSelectInputGroup.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -344,6 +347,9 @@ const emit = defineEmits<{
 }>();
 
 defineExpose({ show });
+const closeButton = ref<HTMLElement | null>(null);
+const ownersSelect = ref<MultiUserSelectExpose | null>(null);
+const concilMembersSelect = ref<MultiUserSelectExpose | null>(null);
 
 const processType = ref<RecoveryProcessDto['type']>(
   props.recoveryProcess?.type ?? props.startType ?? 'CHANGE_PERMISSIONS'
@@ -613,9 +619,17 @@ async function show() {
   await initOwnersAndMembers();
   await loadAuthoritiesForCouncilAndProcesses();
   await initProcessSpecificState();
-
   showSuccess.value = false;
   open.value = true;
+  await nextTick();
+
+  if (phase.value === 'start' && processType.value === 'CHANGE_PERMISSIONS') {
+    return ownersSelect.value?.focus();
+  } else if (phase.value === 'start' && processType.value === 'COUNCIL_CHANGE') {
+    return concilMembersSelect.value?.focus();
+  } else {
+    return closeButton.value?.focus();
+  }
 }
 
 async function loadExistingProcessesForVault() {
@@ -907,6 +921,7 @@ async function completeRecovery() {
     await backend.emergencyAccess.delete(process.id);
     emit('updated');
     showSuccess.value = true; 
+    closeButton.value?.focus();
   } catch (error) {
     console.error('Completing emergency recovery failed.', error);
     onError.value = error instanceof Error ? error : new Error('Unknown Error');
