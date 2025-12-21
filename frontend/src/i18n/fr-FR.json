@@ -240,6 +240,8 @@
   "userProfile.actions.changeLanguage": "Changer la Langue",
   "userProfile.actions.changeLanguage.entry.browser": "Langue du navigateur",
   "userProfile.keycloakVersion.notAvailable": "version indisponible",
+  "unlock.noAccessVaultArchived.title": "Le coffre est archivé",
+  "unlock.noAccessVaultArchived.description": "Ce coffre a été archivé et n'est plus accessible. Veuillez contacter le propriétaire du coffre.",
   "unlockSuccess.title": "Coffre déverrouillé avec succès",
   "unlockSuccess.description": "Vous pouvez maintenant fermer cet onglet du navigateur et retourner à Cryptomator.",
   "unlockSuccess.accountSetup.title": "Configuration requise",
