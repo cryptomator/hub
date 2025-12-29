@@ -177,11 +177,7 @@ public class User extends Authority {
 	@OneToMany(mappedBy = "owner", orphanRemoval = true, fetch = FetchType.LAZY)
 	public Set<Device> devices = new HashSet<>();
 
-	@ManyToMany
-	@JoinTable(name = "group_membership",
-			joinColumns = @JoinColumn(name = "member_id", referencedColumnName = "id"),
-			inverseJoinColumns = @JoinColumn(name = "group_id", referencedColumnName = "id")
-	)
+	@ManyToMany(mappedBy = "members", cascade = {})
 	public Set<Group> directGroupMemberships = new HashSet<>();
 
 	@Immutable
