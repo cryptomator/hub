@@ -240,6 +240,8 @@
   "userProfile.actions.changeLanguage": "Cambia lingua",
   "userProfile.actions.changeLanguage.entry.browser": "Lingua del browser",
   "userProfile.keycloakVersion.notAvailable": "versione non disponibile",
+  "unlock.noAccessVaultArchived.title": "La cassaforte è archiviata",
+  "unlock.noAccessVaultArchived.description": "Questa cassaforte è stata archiviata e non è più accessibile. Contatta il proprietario della cassaforte.",
   "unlockSuccess.title": "Cassaforte sbloccato con successo",
   "unlockSuccess.description": "Ora puoi chiudere questa scheda del browser e tornare a Cryptomator.",
   "unlockSuccess.accountSetup.title": "Configurazione necessaria",
