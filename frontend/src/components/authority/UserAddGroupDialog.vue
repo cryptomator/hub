@@ -31,7 +31,7 @@
                             {{ group.name }}
                           </p>
                         </div>
-                        <a tabindex="0" class="cursor-pointer text-red-600 hover:text-red-900" :title="t('common.remove')" @click="removeTempGroup(group.id)">{{ t('common.remove') }}</a>
+                        <button type="button" class="cursor-pointer text-red-600 hover:text-red-900" :title="t('common.remove')" @click="removeTempGroup(group.id)">{{ t('common.remove') }}</button>
                       </div>
                     </li>
                   </TransitionGroup>

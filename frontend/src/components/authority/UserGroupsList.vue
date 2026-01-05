@@ -37,7 +37,7 @@
             </td>
 
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-              <a tabindex="0" class="cursor-pointer text-red-600 hover:text-red-900" :title="t('common.remove')" @click="showDeleteDialog(group)">{{ t('common.remove') }}</a>
+              <button type="button" class="cursor-pointer text-red-600 hover:text-red-900" :title="t('common.remove')" @click="showDeleteDialog(group)">{{ t('common.remove') }}</button>
             </td>
           </tr>
           <tr v-if="!filteredGroups.length">
