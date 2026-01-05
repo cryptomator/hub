@@ -102,12 +102,12 @@ export const numberFormats: I18nOptions['numberFormats'] = {
   [Locale.ZH_TW]: defaultNumberFormat
 };
 
-export const mapToLocale = (local: string): Locale => {
-  if (!local) {
+export const mapToLocale = (locale: string): Locale => {
+  if (!locale) {
     return Locale.EN_US;
   }
 
-  const normalized = local.replace('_', '-');
+  const normalized = locale.replace('_', '-');
 
   if ((Object.values(Locale) as string[]).includes(normalized)) {
     return normalized as Locale;
