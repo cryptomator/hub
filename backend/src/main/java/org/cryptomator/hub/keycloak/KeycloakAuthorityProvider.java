@@ -79,9 +79,10 @@ public class KeycloakAuthorityProvider {
 	//visible for testing
 	List<KeycloakGroupDto> groups(RealmResource realm) {
 		return deepCollectGroups(realm).stream().map(group -> {
+			var pictureUrl = parsePictureUrl(group.getAttributes());
 			// TODO add sub groups and the members of the sub group to it too using `group.getSubGroups()` recursively
 			var members = deepCollectMembers(realm, group.getId());
-			return new KeycloakGroupDto(group.getId(), group.getName(), members);
+			return new KeycloakGroupDto(group.getId(), group.getName(), pictureUrl, members);
 		}).toList();
 	}
 
@@ -92,7 +93,7 @@ public class KeycloakAuthorityProvider {
 		List<GroupRepresentation> currentRequestedGroups;
 
 		do {
-			currentRequestedGroups = group.groups(groups.size(), MAX_COUNT_PER_REQUEST);
+			currentRequestedGroups = group.groups(null, groups.size(), MAX_COUNT_PER_REQUEST, false);
 			groups.addAll(currentRequestedGroups);
 		} while (currentRequestedGroups.size() == MAX_COUNT_PER_REQUEST);
 

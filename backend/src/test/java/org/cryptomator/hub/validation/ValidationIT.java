@@ -29,7 +29,7 @@ public class ValidationIT {
 	Validator validator;
 
 	@Test
-	public void testOk() {
+	void testOk() {
 		when().get("/test/nothing")
 				.then().statusCode(200);
 	}
@@ -41,7 +41,7 @@ public class ValidationIT {
 		@DisplayName("Valid ids are accepted")
 		@ParameterizedTest
 		@ValueSource(strings = {"2fa854c2-e289-4a4d-9cf5-8dd81e6ae710", "myPersonalId", "_-.-_"})
-		public void testIdValid(String toTest) {
+		void testIdValid(String toTest) {
 			when().get("/test/validid/{id}", toTest)
 					.then().statusCode(200);
 		}
@@ -50,7 +50,7 @@ public class ValidationIT {
 		@ParameterizedTest
 		@ValueSource(strings = {"WHITE SPACE", "\u5207ä="})
 		@ArgumentsSource(MalicousStringsProvider.class)
-		public void testIdInvalid(String toTest) {
+		void testIdInvalid(String toTest) {
 			when().get("/test/validid/{id}", toTest)
 					.then().statusCode(400);
 		}
@@ -62,7 +62,7 @@ public class ValidationIT {
 
 		@DisplayName("Valid input is accepted")
 		@Test
-		public void testNoHtmlOrScriptCharsInvalid() {
+		void testNoHtmlOrScriptCharsInvalid() {
 			var dto = new ValidationTestResource.NoHtmlOrScriptCharsDto("Collin 老子 O´Connor");
 			var violations = validator.validate(dto);
 			MatcherAssert.assertThat(violations, Matchers.empty());
@@ -71,7 +71,7 @@ public class ValidationIT {
 		@DisplayName("Invalid input is rejected")
 		@ParameterizedTest
 		@ArgumentsSource(MalicousStringsProvider.class)
-		public void testNoHtmlOrScriptCharsInvalid(String data) {
+		void testNoHtmlOrScriptCharsInvalid(String data) {
 			var dto = new ValidationTestResource.NoHtmlOrScriptCharsDto(data);
 			var violations = validator.validate(dto);
 			MatcherAssert.assertThat(violations, Matchers.not(Matchers.empty()));
@@ -85,7 +85,7 @@ public class ValidationIT {
 		@DisplayName("Strings only containing base64-chars are accepted")
 		@ParameterizedTest
 		@ValueSource(strings = {"abcdefghijklmnopqrstuvwxyz0123456789+/", "bGlnaHQgd29yaw==", "x======"})
-		public void testOnlyBase64CharsValid(String toTest) {
+		void testOnlyBase64CharsValid(String toTest) {
 			when().get("/test/onlybase64chars/{b64String}", toTest)
 					.then().statusCode(200);
 		}
@@ -94,7 +94,7 @@ public class ValidationIT {
 		@ParameterizedTest
 		@ValueSource(strings = {"\u5207ä=", "foo_-", "abc==abc", "==="})
 		@ArgumentsSource(MalicousStringsProvider.class)
-		public void testOnlyBase64CharsInvalid(String toTest) {
+		void testOnlyBase64CharsInvalid(String toTest) {
 			when().get("/test/onlybase64chars/{b64String}", toTest)
 					.then().statusCode(400);
 		}
@@ -107,7 +107,7 @@ public class ValidationIT {
 		@DisplayName("Valid JWE compact serializations strings are accepted")
 		@ParameterizedTest
 		@ValueSource(strings = {"foo=.b4r.baz==.bas.asd=", "fo0=...bar.", "foo.=.=.bar.===="})
-		public void testJWEValid(String toTest) {
+		void testJWEValid(String toTest) {
 			when().get("/test/validjwe/{jwe}", toTest)
 					.then().statusCode(200);
 		}
@@ -116,7 +116,7 @@ public class ValidationIT {
 		@ParameterizedTest
 		@ValueSource(strings = {"foo=.bar.baz.bas", ".bar=.baz.bas.asd=", "föö=.bar.baz.bas.asd", "foo=bar.baz.bas.asd.qwe"})
 		@ArgumentsSource(MalicousStringsProvider.class)
-		public void testJWEInvalid(String toTest) {
+		void testJWEInvalid(String toTest) {
 			when().get("/test/validjwe/{jwe}", toTest)
 					.then().statusCode(400);
 		}
@@ -129,7 +129,7 @@ public class ValidationIT {
 		@DisplayName("Valid JWS compact serializations strings are accepted")
 		@ParameterizedTest
 		@ValueSource(strings = {"fo0.b4r.baz", "f0o..", "fo0.=.bar="})
-		public void testJWSValid(String toTest) {
+		void testJWSValid(String toTest) {
 			when().get("/test/validjws/{jws}", toTest)
 					.then().statusCode(200);
 		}
@@ -138,7 +138,7 @@ public class ValidationIT {
 		@ParameterizedTest
 		@ValueSource(strings = {"foo=.bar", ".bar=.baz", "föö=.bar.baz", "foo=bar.baz.bas"})
 		@ArgumentsSource(MalicousStringsProvider.class)
-		public void testJWSInvalid(String toTest) {
+		void testJWSInvalid(String toTest) {
 			when().get("/test/validjws/{jws}", toTest)
 					.then().statusCode(400);
 		}

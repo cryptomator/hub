@@ -119,9 +119,9 @@ export type AuditEventDto = AuditEventDeviceRegisterDto | AuditEventDeviceRemove
 /* Entity Cache */
 
 export class AuditLogEntityCache {
-  private vaults: Map<string, Deferred<VaultDto>>;
-  private authorities: Map<string, Deferred<AuthorityDto>>;
-  private devices: Map<string, Deferred<DeviceDto>>;
+  private readonly vaults: Map<string, Deferred<VaultDto>>;
+  private readonly authorities: Map<string, Deferred<AuthorityDto>>;
+  private readonly devices: Map<string, Deferred<DeviceDto>>;
 
   constructor() {
     this.vaults = new Map();
@@ -153,9 +153,9 @@ export class AuditLogEntityCache {
     }
   }
 
-  private debouncedResolvePendingVaults = debounce(async () => await this.resolvePendingEntities<VaultDto>(this.vaults, backend.vaults.listSome), 100);
-  private debouncedResolvePendingAuthorities = debounce(async () => await this.resolvePendingEntities<AuthorityDto>(this.authorities, backend.authorities.listSome), 100);
-  private debouncedResolvePendingDevices = debounce(async () => {
+  private readonly debouncedResolvePendingVaults = debounce(async () => await this.resolvePendingEntities<VaultDto>(this.vaults, backend.vaults.listSome), 100);
+  private readonly debouncedResolvePendingAuthorities = debounce(async () => await this.resolvePendingEntities<AuthorityDto>(this.authorities, backend.authorities.listSome), 100);
+  private readonly debouncedResolvePendingDevices = debounce(async () => {
     await this.resolvePendingEntities<DeviceDto>(
       this.devices,
       (deviceIds: string[]) =>

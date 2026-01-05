@@ -34,7 +34,7 @@
                   <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-xs px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" @click="open = false">
                     {{ t('common.cancel') }}
                   </button>
-                  <p v-if="onDownloadError != null" class="text-sm text-red-900">
+                  <p v-if="onDownloadError" class="text-sm text-red-900">
                     {{ t('common.unexpectedError', [onDownloadError.message]) }}
                   </p>
                 </div>
@@ -61,7 +61,7 @@ const { t } = useI18n({ useScope: 'global' });
 
 const open = ref(false);
 
-const onDownloadError = ref<Error|null>();
+const onDownloadError = ref<Error>();
 
 const props = defineProps<{
   vault: VaultDto
@@ -81,7 +81,7 @@ function show() {
 }
 
 async function downloadVault() {
-  onDownloadError.value = null;
+  onDownloadError.value = undefined;
   try {
     const blob = await generateVaultZip();
     saveAs(blob, `${props.vault.name}.zip`);

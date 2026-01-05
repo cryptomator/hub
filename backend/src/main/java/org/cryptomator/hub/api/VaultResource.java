@@ -3,6 +3,7 @@ package org.cryptomator.hub.api;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.quarkus.security.identity.SecurityIdentity;
 import io.vertx.core.http.HttpServerRequest;
@@ -255,7 +256,7 @@ public class VaultResource {
 	@VaultRole(VaultAccess.Role.OWNER) // may throw 403
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
-	@Operation(summary = "list devices requiring access rights", description = "lists all devices owned by vault members, that don't have a device-specific masterkey yet")
+	@Operation(summary = "list users requiring access rights", description = "lists all users, who don't have a user-specific vault key yet")
 	@APIResponse(responseCode = "200")
 	@APIResponse(responseCode = "403", description = "not a vault owner")
 	public List<UserDto> getUsersRequiringAccessGrant(@PathParam("vaultId") UUID vaultId) {
@@ -384,7 +385,7 @@ public class VaultResource {
 	@GET
 	@Path("/{vaultId}")
 	@RolesAllowed("user")
-	// @VaultRole(VaultAccess.Role.MEMBER) // TODO: members and admin may do this...
+	@VaultRole(value = {VaultAccess.Role.MEMBER, VaultAccess.Role.OWNER}, bypassForRealmRole = true, realmRole = "admin", onMissingVault = VaultRole.OnMissingVault.NOT_FOUND)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
 	@Operation(summary = "gets a vault")
@@ -392,9 +393,6 @@ public class VaultResource {
 	@APIResponse(responseCode = "403", description = "requesting user is neither a vault member nor has the admin role")
 	public VaultDto get(@PathParam("vaultId") UUID vaultId) {
 		Vault vault = vaultRepo.findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-		if (vault.getEffectiveMembers().stream().noneMatch(u -> u.getId().equals(jwt.getSubject())) && !identity.getRoles().contains("admin")) {
-			throw new ForbiddenException("Requesting user is not a member of the vault");
-		}
 		return VaultDto.fromEntity(vault);
 	}
 
@@ -506,8 +504,8 @@ public class VaultResource {
 		return Response.ok(VaultDto.fromEntity(vault), MediaType.APPLICATION_JSON).build();
 	}
 
-
-	public record VaultDto(@JsonProperty("id") UUID id,
+	@JsonInclude(JsonInclude.Include.NON_NULL)
+	public record VaultDto(@JsonProperty("id") @NotNull UUID id,
 						   @JsonProperty("name") @NoHtmlOrScriptChars @NotBlank String name,
 						   @JsonProperty("description") @NoHtmlOrScriptChars String description,
 						   @JsonProperty("archived") boolean archived,

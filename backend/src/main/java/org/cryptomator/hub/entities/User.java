@@ -11,6 +11,7 @@ import jakarta.persistence.NamedQuery;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -43,9 +44,6 @@ import java.util.stream.Stream;
 		""")
 public class User extends Authority {
 
-	@Column(name = "picture_url")
-	private String pictureUrl;
-
 	@Column(name = "email")
 	private String email;
 
@@ -63,14 +61,6 @@ public class User extends Authority {
 
 	@Column(name = "setupcode")
 	private String setupCode;
-
-	public String getPictureUrl() {
-		return pictureUrl;
-	}
-
-	public void setPictureUrl(String pictureUrl) {
-		this.pictureUrl = pictureUrl;
-	}
 
 	public String getEmail() {
 		return email;
@@ -163,17 +153,20 @@ public class User extends Authority {
 		if (o == null || getClass() != o.getClass()) return false;
 		User that = (User) o;
 		return super.equals(that) //
-				&& Objects.equals(pictureUrl, that.pictureUrl) //
 				&& Objects.equals(email, that.email);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(super.getId(), pictureUrl, email);
+		return Objects.hash(super.hashCode(), email);
 	}
 
 	@ApplicationScoped
 	public static class Repository implements PanacheRepositoryBase<User, String> {
+
+		public long deleteByIds(Collection<String> ids) {
+			return Batch.of(200).run(ids, 0L, (batch, result) -> result + delete("id IN :ids", Parameters.with("ids", batch)));
+		}
 
 		public Stream<User> findRequiringAccessGrant(UUID vaultId) {
 			return find("#User.requiringAccessGrant", Parameters.with("vaultId", vaultId)).stream();

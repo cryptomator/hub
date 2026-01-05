@@ -1,4 +1,4 @@
-import { base64url } from 'rfc4648';
+import { base64urlnopad } from '@scure/base';
 import { UTF8 } from './util';
 
 export type JWTHeader = {
@@ -20,8 +20,8 @@ export class JWT {
    * @param signerPrivateKey The signers's private key
    */
   public static async build(header: JWTHeader, payload: object, signerPrivateKey: CryptoKey): Promise<string> {
-    const encodedHeader = base64url.stringify(UTF8.encode(JSON.stringify(header)), { pad: false });
-    const encodedPayload = base64url.stringify(UTF8.encode(JSON.stringify(payload)), { pad: false });
+    const encodedHeader = base64urlnopad.encode(UTF8.encode(JSON.stringify(header)));
+    const encodedPayload = base64urlnopad.encode(UTF8.encode(JSON.stringify(payload)));
     const encodedSignature = await this.es384sign(encodedHeader, encodedPayload, signerPrivateKey);
     return encodedHeader + '.' + encodedPayload + '.' + encodedSignature;
   }
@@ -29,7 +29,7 @@ export class JWT {
   // visible for testing
   public static async es384sign(encodedHeader: string, encodedPayload: string, signerPrivateKey: CryptoKey): Promise<string> {
     const headerAndPayload = UTF8.encode(encodedHeader + '.' + encodedPayload);
-    const signature = await window.crypto.subtle.sign(
+    const signature = await globalThis.crypto.subtle.sign(
       {
         name: 'ECDSA',
         hash: { name: 'SHA-384' },
@@ -37,7 +37,7 @@ export class JWT {
       signerPrivateKey,
       headerAndPayload
     );
-    return base64url.stringify(new Uint8Array(signature), { pad: false });
+    return base64urlnopad.encode(new Uint8Array(signature));
   }
 
   /**
@@ -49,7 +49,7 @@ export class JWT {
    */
   public static async parse(jwt: string, signerPublicKey: CryptoKey): Promise<[JWTHeader, object]> {
     const [encodedHeader, encodedPayload] = jwt.split('.');
-    const header: JWTHeader = JSON.parse(UTF8.decode(base64url.parse(encodedHeader, { loose: true })));
+    const header: JWTHeader = JSON.parse(UTF8.decode(base64urlnopad.decode(encodedHeader)));
     if (header.alg !== 'ES384') {
       throw new Error('Unsupported algorithm');
     }
@@ -57,7 +57,7 @@ export class JWT {
     if (!validSignature) {
       throw new Error('Invalid signature');
     }
-    const payload = JSON.parse(UTF8.decode(base64url.parse(encodedPayload, { loose: true })));
+    const payload = JSON.parse(UTF8.decode(base64urlnopad.decode(encodedPayload)));
     return [header, payload];
   }
 
@@ -65,8 +65,8 @@ export class JWT {
   public static async es384verify(jwt: string, signerPublicKey: CryptoKey): Promise<boolean> {
     const [encodedHeader, encodedPayload, encodedSignature] = jwt.split('.');
     const headerAndPayload = UTF8.encode(encodedHeader + '.' + encodedPayload);
-    const signature = base64url.parse(encodedSignature);
-    return window.crypto.subtle.verify(
+    const signature = base64urlnopad.decode(encodedSignature) as Uint8Array<ArrayBuffer>;
+    return globalThis.crypto.subtle.verify(
       {
         name: 'ECDSA',
         hash: { name: 'SHA-384' },

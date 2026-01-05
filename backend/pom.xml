@@ -10,13 +10,13 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.jdk.version>21</project.jdk.version>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <quarkus.platform.version>3.20.3</quarkus.platform.version>
+    <quarkus.platform.version>3.20.4</quarkus.platform.version>
     <jwt.version>4.5.0</jwt.version>
     <compiler-plugin.version>3.14.1</compiler-plugin.version>
-    <dependency-plugin.version>3.8.1</dependency-plugin.version>
+    <dependency-plugin.version>3.9.0</dependency-plugin.version>
     <surefire-plugin.version>3.5.4</surefire-plugin.version>
     <failsafe-plugin.version>3.5.4</failsafe-plugin.version>
-    <junit-tree-reporter.version>1.4.0</junit-tree-reporter.version>
+    <junit-tree-reporter.version>1.5.1</junit-tree-reporter.version>
   </properties>
 
   <dependencyManagement>

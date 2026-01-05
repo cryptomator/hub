@@ -3,8 +3,8 @@
   <SimpleNavigationBar v-else-if="me" :me="me"/>
 
   <div class="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8 flex justify-center">
-    <div v-if="me == null">
-      <div v-if="onFetchError == null">
+    <div v-if="me === undefined">
+      <div v-if="!onFetchError">
         {{ t('common.loading') }}
       </div>
       <div v-else>
@@ -41,6 +41,16 @@
         </router-link>
       </div>
 
+      <!-- ARCHIVED -->
+      <div v-else-if="vaultAccess == VaultAccess.Archived" class="text-sm text-gray-500">
+        <h1 class="text-2xl leading-6 font-medium text-gray-900">
+          {{ t('unlock.noAccessVaultArchived.title') }}
+        </h1>
+        <p class="mt-2">
+          {{ t('unlock.noAccessVaultArchived.description') }}
+        </p>
+      </div>
+
       <!-- NO VAULT ACCESS -->
       <div v-else-if="vaultAccess == VaultAccess.Denied" class="text-sm text-gray-500">
         <h1 class="text-2xl leading-6 font-medium text-gray-900">
@@ -52,7 +62,7 @@
       </div>
 
       <!-- SUCCESS -->
-      <div v-else class="text-sm text-gray-500">
+      <div v-else-if="vaultAccess == VaultAccess.Allowed" class="text-sm text-gray-500">
         <h1 class="text-2xl leading-6 font-medium text-gray-900">
           {{ t('unlockSuccess.title') }}
         </h1>
@@ -98,9 +108,10 @@ const deviceState : ComputedRef<DeviceState> = computed(() => {
 });
 
 const vaultAccess : ComputedRef<VaultAccess> = computed(() => {
-  return accessibleVaults.value?.find(v => v.id === props.vaultId)
-    ? VaultAccess.Allowed
-    : VaultAccess.Denied;
+  const vault = accessibleVaults.value?.find(v => v.id === props.vaultId);
+  if (!vault) return VaultAccess.Denied;
+  if (vault.archived) return VaultAccess.Archived;
+  return VaultAccess.Allowed;
 });
 
 enum AccountState {
@@ -115,18 +126,19 @@ enum DeviceState {
 
 enum VaultAccess {
   Allowed,
+  Archived,
   Denied
 }
 
 const me = ref<UserDto>();
 const hasBrowserKeys = ref<boolean>(false);
 const accessibleVaults = ref<VaultDto[]>();
-const onFetchError = ref<Error | null>();
+const onFetchError = ref<Error>();
 
 onMounted(fetchData);
 
 async function fetchData() {
-  onFetchError.value = null;
+  onFetchError.value = undefined;
   try {
     me.value = await userdata.me;
     hasBrowserKeys.value = await userdata.browserKeys.then(keys => keys !== undefined);

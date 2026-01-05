@@ -1,6 +1,7 @@
 package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
+import io.quarkus.panache.common.Parameters;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.DiscriminatorValue;
@@ -11,6 +12,7 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -30,10 +32,6 @@ public class Group extends Authority {
 		return members;
 	}
 
-	public void setMembers(Set<Authority> members) {
-		this.members = members;
-	}
-
 	@Transient
 	public int getMemberSize() {
 		return members.size();
@@ -41,5 +39,10 @@ public class Group extends Authority {
 
 	@ApplicationScoped
 	public static class Repository implements PanacheRepositoryBase<Group, String> {
+
+		public long deleteByIds(Collection<String> ids) {
+			return Batch.of(200).run(ids, 0L, (batch, result) -> result + delete("id IN :ids", Parameters.with("ids", batch)));
+		}
+
 	}
 }

@@ -1,6 +1,6 @@
 <template>
   <div v-if="state == State.Loading">
-    <div v-if="onFetchError == null">
+    <div v-if="!onFetchError">
       {{ t('common.loading') }}
     </div>
     <div v-else>
@@ -63,7 +63,7 @@
                     <input id="filter-end-date" v-model="endDateFilter" type="text" class="shadow-xs focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': !endDateFilterIsValid }" placeholder="yyyy-MM-dd" />
                   </div>
                   <div class="sm:grid sm:grid-cols-2 sm:items-center sm:gap-2">
-                    <label class="block text-sm font-medium text-gray-700 flex items-center">
+                    <label for="event-type-filter" class="block text-sm font-medium text-gray-700 flex items-center">
                       {{ t('auditLog.type') }}
                       <button 
                         type="button" 
@@ -76,7 +76,7 @@
                       </button>
                     </label>
                   </div>
-                  <Listbox v-model="selectedEventTypes" as="div" multiple>
+                  <Listbox id="event-type-filter" v-model="selectedEventTypes" as="div" multiple>
                     <div class="relative w-88">
                       <ListboxButton class="relative w-full rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary text-sm">
                         <div class="flex flex-wrap gap-2">
@@ -198,7 +198,7 @@
               </tfoot>
             </table>
           </div>
-          <p v-if="onFetchError != null" class="text-sm text-red-900 mt-2">{{ onFetchError.message }}</p>
+          <p v-if="onFetchError" class="text-sm text-red-900 mt-2">{{ onFetchError.message }}</p>
         </div>
       </div>
     </div>
@@ -254,7 +254,7 @@ const { t } = useI18n({ useScope: 'global' });
 
 const state = ref(State.Loading);
 const auditEvents = ref<AuditEventDto[]>([]);
-const onFetchError = ref<Error | null>();
+const onFetchError = ref<Error>();
 
 const startDate = ref(beginOfDate(new Date(new Date().setMonth(new Date().getMonth() - 1))));
 const startDateFilter = ref(startDate.value.toISOString().split('T')[0]);
@@ -330,7 +330,7 @@ watch(selectedEventTypes, (newSelection, oldSelection) => {
 });
 
 async function fetchData(page: number = 0) {
-  onFetchError.value = null;
+  onFetchError.value = undefined;
   try {
     // Fetch one more event than the page size to determine if there is a next page
     const events = await auditlog.service.getAllEvents(startDate.value, endDate.value, selectedEventTypes.value, lastIdOfPreviousPage[page], selectedOrder.value, pageSize.value + 1);
@@ -401,7 +401,7 @@ function validateDateFilterValue(dateFilterValue: string): Date | null {
     return null;
   }
   const date = new Date(dateFilterValue);
-  if (isNaN(date.getTime())) {
+  if (Number.isNaN(date.getTime())) {
     return null;
   } else {
     return date;
