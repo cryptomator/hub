@@ -36,11 +36,11 @@
               </div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-              <a tabindex="0" class="cursor-pointer text-red-600 hover:text-red-900" :title="t('common.leave')" @click="showDeleteDialog(member)">{{ t('common.remove') }}</a>
+              <button type="button" class="cursor-pointer text-red-600 hover:text-red-900" :title="t('common.leave')" @click="showDeleteDialog(member)">{{ t('common.remove') }}</button>
             </td>
           </tr>
           <tr v-if="!filteredUsers.length">
-            <td colspan="3" class="py-4 px-4 text-sm text-center text-gray-500">
+            <td colspan="2" class="py-4 px-4 text-sm text-center text-gray-500">
               {{ t(userQuery ? 'group.members.search.empty' : 'common.none') }}
             </td>
           </tr>
@@ -49,7 +49,7 @@
         <!-- USERS – Pagination ----------------------------->
         <tfoot v-if="showPaginationUsers" class="bg-gray-50">
           <tr>
-            <td colspan="3">
+            <td colspan="2">
               <nav class="flex items-center justify-between px-4 py-3 sm:px-6" :aria-label="t('common.pagination')">
                 <div class="hidden sm:block">
                   <i18n-t keypath="auditLog.pagination.showing" scope="global" tag="p" class="text-sm text-gray-700">

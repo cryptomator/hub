@@ -344,7 +344,8 @@ class GroupService {
 
   public async getEffectiveMembers(groupId: string): Promise<UserDto[]> {
     return axiosAuth.get<UserDto[]>(`/groups/${groupId}/effective-members`)
-      .then(response => response.data.map(AuthorityService.fillInMissingPicture));
+      .then(response => response.data.map(AuthorityService.fillInMissingPicture))
+      .catch((error) => rethrowAndConvertIfExpected(error, 404));
   }
 
   public async addMember(groupId: string, userId: string): Promise<void> {
@@ -393,11 +394,15 @@ class UserService {
   }
 
   public async getUser(userId: string): Promise<UserDtoWithDetails> {
-    return axiosAuth.get<UserDtoWithDetails>(`/users/${userId}`).then(response => AuthorityService.fillInMissingPicture(response.data));
+    return axiosAuth.get<UserDtoWithDetails>(`/users/${userId}`)
+      .then(response => AuthorityService.fillInMissingPicture(response.data))
+      .catch((error) => rethrowAndConvertIfExpected(error, 404));
   }
 
   public async updateUser(userId: string, dto: UpdateUserDto): Promise<UserDto> {
-    return axiosAuth.put<UserDto>(`/users/${userId}`, dto).then(response => AuthorityService.fillInMissingPicture(response.data));
+    return axiosAuth.put<UserDto>(`/users/${userId}`, dto)
+      .then(response => AuthorityService.fillInMissingPicture(response.data))
+      .catch((error) => rethrowAndConvertIfExpected(error, 404));
   }
 }
 
