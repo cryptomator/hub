@@ -23,10 +23,7 @@
                     <li v-for="member in sortedNewMembers" :key="member.id" class="flex flex-col py-2 border-b border-gray-200 border-l-4 border-transparent mx-1 last:border-b-0 transform transition">
                       <div class="flex items-center justify-between">
                         <div class="flex items-center w-full" :title="member.name">
-                          <div class="w-8 h-8 rounded-full border border-gray-300 bg-white flex items-center justify-center overflow-hidden">
-                            <img v-if="member.pictureUrl" :src="member.pictureUrl" class="w-full h-full object-cover" alt="user icon" />
-                            <UserIcon v-else class="w-5 h-5 text-gray-400" aria-hidden="true" />
-                          </div>
+                          <img :src="member.pictureUrl" class="w-8 h-8 rounded-full border border-gray-300 object-cover" alt="user icon" />
                           <p class="ml-4 text-sm font-medium truncate">
                             {{ member.name }}
                           </p>
@@ -58,7 +55,6 @@
 
 <script setup lang="ts">
 import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
-import { UserIcon } from '@heroicons/vue/24/outline';
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import SearchInputGroup from '../SearchInputGroup.vue';
