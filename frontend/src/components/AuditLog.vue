@@ -63,7 +63,7 @@
                     <input id="filter-end-date" v-model="endDateFilter" type="text" class="shadow-xs focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': !endDateFilterIsValid }" placeholder="yyyy-MM-dd" />
                   </div>
                   <div class="sm:grid sm:grid-cols-2 sm:items-center sm:gap-2">
-                    <label class="block text-sm font-medium text-gray-700 flex items-center">
+                    <label for="event-type-filter" class="block text-sm font-medium text-gray-700 flex items-center">
                       {{ t('auditLog.type') }}
                       <button 
                         type="button" 
@@ -76,7 +76,7 @@
                       </button>
                     </label>
                   </div>
-                  <Listbox v-model="selectedEventTypes" as="div" multiple>
+                  <Listbox id="event-type-filter" v-model="selectedEventTypes" as="div" multiple>
                     <div class="relative w-88">
                       <ListboxButton class="relative w-full rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary text-sm">
                         <div class="flex flex-wrap gap-2">
@@ -419,7 +419,7 @@ function validateDateFilterValue(dateFilterValue: string): Date | null {
     return null;
   }
   const date = new Date(dateFilterValue);
-  if (isNaN(date.getTime())) {
+  if (Number.isNaN(date.getTime())) {
     return null;
   } else {
     return date;

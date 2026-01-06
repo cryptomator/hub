@@ -32,10 +32,6 @@ public class Group extends Authority {
 		return members;
 	}
 
-	public void setMembers(Set<Authority> members) {
-		this.members = members;
-	}
-
 	@Transient
 	public int getMemberSize() {
 		return members.size();

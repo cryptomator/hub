@@ -333,7 +333,7 @@ function editBrowserName() {
     span.focus();
     const range = document.createRange();
     range.selectNodeContents(span);
-    const sel = window.getSelection() as Selection;
+    const sel = globalThis.getSelection() as Selection;
     sel.removeAllRanges();
     sel.addRange(range);
   });

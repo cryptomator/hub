@@ -34,7 +34,7 @@ export class JWT {
   // visible for testing
   public static async es384sign(encodedHeader: string, encodedPayload: string, signerPrivateKey: CryptoKey): Promise<string> {
     const headerAndPayload = UTF8.encode(encodedHeader + '.' + encodedPayload);
-    const signature = await window.crypto.subtle.sign(
+    const signature = await globalThis.crypto.subtle.sign(
       {
         name: 'ECDSA',
         hash: { name: 'SHA-384' },
@@ -71,7 +71,7 @@ export class JWT {
     const [encodedHeader, encodedPayload, encodedSignature] = jwt.split('.');
     const headerAndPayload = UTF8.encode(encodedHeader + '.' + encodedPayload);
     const signature = base64urlnopad.decode(encodedSignature) as Uint8Array<ArrayBuffer>;
-    return window.crypto.subtle.verify(
+    return globalThis.crypto.subtle.verify(
       {
         name: 'ECDSA',
         hash: { name: 'SHA-384' },

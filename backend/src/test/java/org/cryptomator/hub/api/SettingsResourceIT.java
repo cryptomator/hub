@@ -25,7 +25,7 @@ import static org.hamcrest.CoreMatchers.is;
 public class SettingsResourceIT {
 
 	@BeforeAll
-	public static void beforeAll() {
+	static void beforeAll() {
 		RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
 	}
 
@@ -41,7 +41,7 @@ public class SettingsResourceIT {
 		@Test
 		@Order(1)
 		@DisplayName("GET /settings returns 200")
-		public void testGetInitial() {
+		void testGetInitial() {
 			when().get("/settings")
 					.then().statusCode(200)
 					.body("wotMaxDepth", is(3))
@@ -53,7 +53,7 @@ public class SettingsResourceIT {
 		@Test
 		@Order(2)
 		@DisplayName("PUT /settings returns 204 No Content")
-		public void testPut() {
+		void testPut() {
 			var dto = new SettingsResource.SettingsDto("42", 5, 8, true, 2, 3, false, Set.of());
 			given().contentType(ContentType.JSON).body(dto)
 					.when().put("/settings")
@@ -63,7 +63,7 @@ public class SettingsResourceIT {
 		@Test
 		@Order(3)
 		@DisplayName("GET /settings returns 200")
-		public void testGetModify() {
+		void testGetModify() {
 			when().get("/settings")
 					.then().statusCode(200)
 					.body("wotMaxDepth", is(5))
@@ -73,7 +73,7 @@ public class SettingsResourceIT {
 		@Test
 		@Order(4)
 		@DisplayName("PUT /settings returns 204 No Content")
-		public void testPutBackToDefault() {
+		void testPutBackToDefault() {
 			var dto = new SettingsResource.SettingsDto("42", 3, 2, true, 2, 3, false, Set.of());
 			given().contentType(ContentType.JSON).body(dto)
 					.when().put("/settings")
@@ -93,14 +93,14 @@ public class SettingsResourceIT {
 
 		@Test
 		@DisplayName("GET /settings returns 200")
-		public void testGet() {
+		void testGet() {
 			when().get("/settings")
 					.then().statusCode(200);
 		}
 
 		@Test
 		@DisplayName("PUT /settings returns 403 Forbidden")
-		public void testPut() {
+		void testPut() {
 			given().contentType(ContentType.JSON).body("")
 					.when().put("/settings")
 					.then().statusCode(403);
@@ -114,14 +114,14 @@ public class SettingsResourceIT {
 
 		@Test
 		@DisplayName("GET /billing returns 401 Unauthorized")
-		public void testGet() {
+		void testGet() {
 			when().get("/settings")
 					.then().statusCode(401);
 		}
 
 		@Test
 		@DisplayName("PUT /settings returns 401 Unauthorized")
-		public void testPut() {
+		void testPut() {
 			given().contentType(ContentType.JSON).body("")
 					.when().put("/settings")
 					.then().statusCode(401);

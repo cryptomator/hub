@@ -275,6 +275,9 @@
   "userProfile.actions.changeLanguage.entry.browser": "Browser Language",
   "userProfile.keycloakVersion.notAvailable": "version not available",
 
+  "unlock.noAccessVaultArchived.title": "Vault is archived",
+  "unlock.noAccessVaultArchived.description": "This vault has been archived and is no longer accessible. Please contact the vault owner.",
+
   "unlockSuccess.title": "Vault unlocked successfully",
   "unlockSuccess.description": "You may now close this browser tab and return to Cryptomator.",
   "unlockSuccess.accountSetup.title": "Setup Required",
