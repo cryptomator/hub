@@ -12,8 +12,8 @@ export class FormValidator {
    * Validates user form data
    */
   static validateUser(data: {
-    firstName: string,
-    lastName: string,
+    firstName?: string,
+    lastName?: string,
     username: string,
     email: string,
     password: string,
@@ -25,8 +25,8 @@ export class FormValidator {
     const errors: Record<string, string> = {};
 
     // Required fields validation
-    if (!data.firstName.trim()) errors.firstName = t('userEditCreate.validation.required');
-    if (!data.lastName.trim()) errors.lastName = t('userEditCreate.validation.required');
+    if (!data.firstName?.trim()) errors.firstName = t('userEditCreate.validation.required');
+    if (!data.lastName?.trim()) errors.lastName = t('userEditCreate.validation.required');
     if (!data.username.trim()) errors.username = t('userEditCreate.validation.required');
 
     // Email validation
@@ -114,7 +114,7 @@ export class FormValidator {
   /**
    * Validates image URL by attempting to load it
    */
-  static validateImageUrl(url: string): Promise<boolean> {
+  static validateImageUrl(url?: string): Promise<boolean> {
     return new Promise((resolve) => {
       if (!url) {
         resolve(false);
