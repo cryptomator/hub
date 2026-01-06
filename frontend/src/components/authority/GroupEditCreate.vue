@@ -6,7 +6,7 @@
 
   <!-- Edit/Create page -->
   <div v-else>
-    <BreadcrumbNav v-if="props.mode === 'EDIT'" :crumbs="[ { label: t('nav.groups'), to: '/app/groups' }, { label: name, to:'/app/groups/' + props.id }, { label: t('common.edit') } ]"/>
+    <BreadcrumbNav v-if="props.mode === 'EDIT'" :crumbs="[ { label: t('nav.groups'), to: '/app/groups' }, { label: data.name, to:'/app/groups/' + props.id }, { label: t('common.edit') } ]"/>
     <BreadcrumbNav v-else :crumbs="[ { label: t('nav.groups'), to: '/app/groups' }, { label: t('common.create') } ]"/>
     <div class="-my-2 -mx-4 sm:-mx-6 lg:-mx-8 overflow-hidden">
       <div class="py-2 align-middle inline-block min-w-full px-4 sm:px-6 lg:px-8">
@@ -21,7 +21,7 @@
           <!-- Profile Picture Preview -->
           <div class="flex flex-col items-center gap-4 mb-8">
             <div class="relative w-32 h-32">
-              <img v-if="isValidImageUrl" :src="pictureUrl" class="w-full h-full rounded-full object-cover border border-gray-300" :alt="t('groupEditCreate.profilePicture')" />
+              <img v-if="isValidImageUrl" :src="data.pictureUrl" class="w-full h-full rounded-full object-cover border border-gray-300" :alt="t('groupEditCreate.profilePicture')" />
               <div v-else class="w-full h-full rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
                 <UserGroupIcon class="w-12 h-12" />
               </div>
@@ -37,8 +37,8 @@
               </label>
               <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
                 <div class="relative">
-                  <input id="pictureUrl" v-model="pictureUrl" type="url" :class="[errors.pictureUrl ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-primary focus:border-primary', 'block w-full max-w-md shadow-sm sm:text-sm rounded-md pr-10']"/>
-                  <button v-if="pictureUrl" type="button" class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600 focus:outline-none" :aria-label="t('groupEditCreate.removePicture')" @click="removePicture">
+                  <input id="pictureUrl" v-model="data.pictureUrl" type="url" :class="[errors.pictureUrl ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-primary focus:border-primary', 'block w-full max-w-md shadow-sm sm:text-sm rounded-md pr-10']"/>
+                  <button v-if="data.pictureUrl" type="button" class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600 focus:outline-none" :aria-label="t('groupEditCreate.removePicture')" @click="removePicture">
                     <TrashIcon class="w-5 h-5 text-gray-600" />
                   </button>
                 </div>
@@ -52,7 +52,7 @@
                 {{ t('groupEditCreate.name') }}
               </label>
               <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
-                <input id="name" v-model="name" type="text" :class="[errors.name ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-primary focus:border-primary', 'block w-full max-w-md shadow-sm sm:text-sm rounded-md']" required />
+                <input id="name" v-model="data.name" type="text" :class="[errors.name ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-primary focus:border-primary', 'block w-full max-w-md shadow-sm sm:text-sm rounded-md']" required />
                 <p v-if="errors.name" class="mt-1 text-sm text-red-600">{{ errors.name }}</p>
               </div>
             </div>
@@ -91,10 +91,10 @@
 
 <script setup lang="ts">
 import { ExclamationTriangleIcon, TrashIcon, UserGroupIcon } from '@heroicons/vue/24/outline';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, shallowRef, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import backend, { isAxiosError } from '../../common/backend';
+import backend, { GroupDto, isAxiosError } from '../../common/backend';
 import { FormValidator } from '../../common/formvalidator';
 import { debounce } from '../../common/util';
 import BreadcrumbNav from '../BreadcrumbNav.vue';
@@ -107,42 +107,31 @@ const props = defineProps<{
   mode: 'EDIT',
 }>();
 
-interface GroupData {
-  id?: string;
-  name: string;
-  pictureUrl?: string;
-}
-
-const initialGroupData = ref<GroupData>({ name: '', pictureUrl: '' });
+type EditableGroupData = Pick<GroupDto, 'name' | 'pictureUrl'>;
+const initialData = shallowRef<EditableGroupData>({ name: '', pictureUrl: '' });
+const data = reactive<EditableGroupData>(initialData.value);
 
 const groupDataHasUnsavedChanges = computed(() => {
-  return (
-    initialGroupData.value.name !== name.value ||
-    initialGroupData.value.pictureUrl !== pictureUrl.value
-  );
+  return data.name !== initialData.value.name
+    || data.pictureUrl !== initialData.value.pictureUrl;
 });
 
 function resetGroupData() {
-  name.value = initialGroupData.value.name;
-  pictureUrl.value = initialGroupData.value.pictureUrl ?? '';
+  data.name = initialData.value.name;
+  data.pictureUrl = initialData.value.pictureUrl;
 }
 
 const { t } = useI18n({ useScope: 'global' });
 const router = useRouter();
-
 const loading = ref(true);
-const name = ref<string>('');
-
 const errors = ref<Record<string, string>>({});
 const processing = ref(false);
 const groupSaved = ref(false);
 const onSaveError = ref<Error | null>(null);
 const debouncedGroupSaved = debounce(() => groupSaved.value = false, 2000);
-
-const pictureUrl = ref<string>('');
 const isValidImageUrl = ref<boolean>(false);
 
-watch(pictureUrl,
+watch(() => data.pictureUrl,
   async (newUrl) => {
     isValidImageUrl.value = await FormValidator.validateImageUrl(newUrl);
   },
@@ -150,34 +139,33 @@ watch(pictureUrl,
 );
 
 onMounted(async () => {
+  loading.value = true;
   if (props.mode === 'EDIT') {
     try {
-      const group = await backend.groups.getGroup(props.id);
-      name.value = group.name;
-      pictureUrl.value = group.pictureUrl ?? '';
-      initialGroupData.value = {
-        id: group.id,
-        name: group.name,
-        pictureUrl: group.pictureUrl ?? ''
-      };
+      initialData.value = await backend.groups.getGroup(props.id);
     } catch (error) {
       console.error('Failed to fetch group:', error);
+    } finally {
+      loading.value = false;
     }
   } else {
-    name.value = '';
-    pictureUrl.value = '';
+    initialData.value = {
+      name: '',
+      pictureUrl: ''
+    };
+    loading.value = false;
   }
-  loading.value = false;
+  resetGroupData();
 });
 
 function removePicture() {
-  pictureUrl.value = '';
+  data.pictureUrl = undefined;
 }
 
 function validateForm() {
   const result = FormValidator.validateGroup({
-    name: name.value,
-    pictureUrl: pictureUrl.value,
+    name: data.name,
+    pictureUrl: data.pictureUrl,
     isValidImageUrl: isValidImageUrl.value
   });
 
@@ -193,27 +181,20 @@ async function onSubmit() {
   processing.value = true;
   onSaveError.value = null;
 
-  const trimmedName = name.value.trim();
+  data.name = data.name.trim();
 
   try {
     if (props.mode === 'EDIT') {
-      await backend.groups.updateGroup(props.id, {
-        name: trimmedName,
-        pictureUrl: pictureUrl.value || undefined
-      });
+      await backend.groups.updateGroup(props.id, data);
     } else {
-      await backend.groups.createGroup({
-        name: trimmedName,
-        pictureUrl: pictureUrl.value || undefined
-      });
+      await backend.groups.createGroup(data);
     }
 
     // Update initial data to match saved state
-    initialGroupData.value = {
-      name: trimmedName,
-      pictureUrl: pictureUrl.value
+    initialData.value = {
+      name: data.name,
+      pictureUrl: data.pictureUrl
     };
-    name.value = trimmedName;
 
     // Show saved success state
     groupSaved.value = true;

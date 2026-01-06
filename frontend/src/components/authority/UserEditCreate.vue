@@ -6,7 +6,7 @@
 
   <!-- Edit/Create page -->
   <div v-else>
-    <BreadcrumbNav v-if="props.mode === 'EDIT'" :crumbs="[ { label: t('nav.users'), to: '/app/users' }, { label: username, to:'/app/users/' + props.id }, { label: t('common.edit') } ]"/>
+    <BreadcrumbNav v-if="props.mode === 'EDIT'" :crumbs="[ { label: t('nav.users'), to: '/app/users' }, { label: data.name, to:'/app/users/' + props.id }, { label: t('common.edit') } ]"/>
     <BreadcrumbNav v-else :crumbs="[ { label: t('nav.users'), to: '/app/users' }, { label: t('common.create') } ]"/>
     <div class="-my-2 -mx-4 sm:-mx-6 lg:-mx-8 overflow-hidden">
       <div class="py-2 align-middle inline-block min-w-full px-4 sm:px-6 lg:px-8">
@@ -21,7 +21,7 @@
           <!-- Profile Picture Preview -->
           <div class="flex flex-col items-center gap-4 mb-8">
             <div class="relative w-32 h-32">
-              <img v-if="isValidImageUrl" :src="pictureUrl" class="w-full h-full rounded-full object-cover border border-gray-300"/>
+              <img v-if="isValidImageUrl" :src="data.pictureUrl" class="w-full h-full rounded-full object-cover border border-gray-300"/>
               <img v-else-if="previewJdenticon" :src="previewJdenticon" class="w-full h-full rounded-full object-cover border border-gray-300"/>
               <div v-else class="w-full h-full rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
                 <UserIcon class="w-12 h-12" />
@@ -38,8 +38,8 @@
               </label>
               <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
                 <div class="relative">
-                  <input id="pictureUrl" v-model="pictureUrl" type="url" :class="[errors.pictureUrl ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-primary focus:border-primary', 'block w-full max-w-md shadow-sm sm:text-sm rounded-md pr-10']"/>
-                  <button v-if="pictureUrl" type="button" class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600 focus:outline-none" :aria-label="t('userEditCreate.removePicture')" @click="removePicture">
+                  <input id="pictureUrl" v-model="data.pictureUrl" type="url" :class="[errors.pictureUrl ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-primary focus:border-primary', 'block w-full max-w-md shadow-sm sm:text-sm rounded-md pr-10']"/>
+                  <button v-if="data.pictureUrl" type="button" class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600 focus:outline-none" :aria-label="t('userEditCreate.removePicture')" @click="removePicture">
                     <TrashIcon class="w-5 h-5 text-gray-600" />
                   </button>
                 </div>
@@ -53,7 +53,7 @@
                 {{ t('userEditCreate.firstName') }}
               </label>
               <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
-                <input id="firstName" v-model="firstName" type="text" required :class="[errors.firstName ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-primary focus:border-primary', 'block w-full max-w-md shadow-sm sm:text-sm rounded-md']"/>
+                <input id="firstName" v-model="data.firstName" type="text" required :class="[errors.firstName ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-primary focus:border-primary', 'block w-full max-w-md shadow-sm sm:text-sm rounded-md']"/>
                 <p v-if="errors.firstName" class="mt-1 text-sm text-red-600">{{ errors.firstName }}</p>
               </div>
             </div>
@@ -64,7 +64,7 @@
                 {{ t('userEditCreate.lastName') }}
               </label>
               <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
-                <input id="lastName" v-model="lastName" type="text" required :class="[errors.lastName ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-primary focus:border-primary', 'block w-full max-w-md shadow-sm sm:text-sm rounded-md']"/>
+                <input id="lastName" v-model="data.lastName" type="text" required :class="[errors.lastName ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-primary focus:border-primary', 'block w-full max-w-md shadow-sm sm:text-sm rounded-md']"/>
                 <p v-if="errors.lastName" class="mt-1 text-sm text-red-600">{{ errors.lastName }}</p>
               </div>
             </div>
@@ -75,7 +75,7 @@
                 {{ t('userEditCreate.username') }}
               </label>
               <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
-                <input id="username" v-model="username" type="text" required :class="[errors.username ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-primary focus:border-primary', 'block w-full max-w-md shadow-sm sm:text-sm rounded-md']"/>
+                <input id="username" v-model="data.name" type="text" required :class="[errors.username ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-primary focus:border-primary', 'block w-full max-w-md shadow-sm sm:text-sm rounded-md']"/>
                 <p v-if="errors.username" class="mt-1 text-sm text-red-600">{{ errors.username }}</p>
               </div>
             </div>
@@ -86,9 +86,9 @@
                 {{ t('userEditCreate.email') }}
               </label>
               <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
-                <input id="email" v-model="email" type="email" required :class="[errors.email ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-primary focus:border-primary', 'block w-full max-w-md shadow-sm sm:text-sm rounded-md']"/>
+                <input id="email" v-model="data.email" type="email" required :class="[errors.email ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-primary focus:border-primary', 'block w-full max-w-md shadow-sm sm:text-sm rounded-md']"/>
                 <p v-if="errors.email" class="mt-1 text-sm text-red-600">{{ errors.email }}</p>
-                <p v-else-if="email && !isValidEmail(email.trim())" class="mt-1 text-sm text-red-600">
+                <p v-else-if="data.email && !isValidEmail(data.email?.trim())" class="mt-1 text-sm text-red-600">
                   {{ t('userEditCreate.invalidEmail') }}
                 </p>
               </div>
@@ -100,12 +100,12 @@
                 {{ t('userEditCreate.roles') }}
               </label>
               <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1 max-w-md">
-                <Listbox v-model="selectedRoles" multiple as="div">
+                <Listbox v-model="data.realmRoles" multiple as="div">
                   <div class="relative">
                     <ListboxButton class="relative w-full rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:ring-primary text-sm">
                       <div class="flex flex-wrap gap-2">
-                        <template v-if="selectedRoles.length > 0">
-                          <button v-for="role in selectedRoles" :key="role" class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20" @click.stop="removeRole(role)">
+                        <template v-if="data.realmRoles.length > 0">
+                          <button v-for="role in selectedRoleOptions" :key="role" class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20" @click.stop="removeRole(role)">
                             <span class="mr-1">{{ roleOptions[role] }}</span>
                             <span class="text-green-800 font-bold">&times;</span>
                           </button>
@@ -232,10 +232,10 @@ import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headless
 import { CheckIcon, ChevronUpDownIcon, ExclamationTriangleIcon, EyeIcon, EyeSlashIcon, InformationCircleIcon, TrashIcon, UserIcon } from '@heroicons/vue/24/outline';
 import { base64 } from '@scure/base';
 import { toSvg } from 'jdenticon';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, shallowRef, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import backend, { isAxiosError, isSelectableRealmRole, SelectableRealmRole } from '../../common/backend';
+import backend, { isAxiosError, isSelectableRealmRole, SelectableRealmRole, UserDto } from '../../common/backend';
 import { FormValidator } from '../../common/formvalidator';
 import { UTF8 } from '../../common/util';
 import BreadcrumbNav from '../BreadcrumbNav.vue';
@@ -248,46 +248,36 @@ const props = defineProps<{
   mode: 'EDIT',
 }>();
 
-interface UserData {
-  firstName: string;
-  lastName: string;
-  username: string;
-  email: string;
-  roles: SelectableRealmRole[];
-  picture?: File | null;
-  previewUrl?: string | null;
-}
-
-const initialUserData = ref<UserData>({ firstName: '', lastName: '', username: '', email: '', roles: [], previewUrl:'' });
+type EditableUserData = Pick<UserDto, 'firstName' | 'lastName' | 'name' | 'email' | 'realmRoles' | 'pictureUrl'>;
+const initialData = shallowRef<EditableUserData>({ firstName: '', lastName: '', name: '', email: '', realmRoles: [], pictureUrl:'' });
+const data = reactive<EditableUserData>(initialData.value);
 
 const userDataHasUnsavedChanges = computed(() => {
-  return (
-    initialUserData.value.firstName !== firstName.value ||
-    initialUserData.value.lastName !== lastName.value ||
-    initialUserData.value.username !== username.value ||
-    initialUserData.value.email !== email.value ||
-    JSON.stringify([...initialUserData.value.roles].sort()) !== JSON.stringify([...selectedRoles.value].sort()) ||
-    initialUserData.value.previewUrl !== pictureUrl.value
-  );
+  return data.firstName !== initialData.value.firstName
+    || data.lastName !== initialData.value.lastName
+    || data.name !== initialData.value.name
+    || data.email !== initialData.value.email
+    || data.name !== initialData.value.name
+    || data.pictureUrl !== initialData.value.pictureUrl
+    || JSON.stringify([...data.realmRoles].sort()) !== JSON.stringify([...initialData.value.realmRoles].sort());
 });
 
 function resetUserData() {
-  firstName.value = initialUserData.value.firstName;
-  lastName.value = initialUserData.value.lastName;
-  username.value = initialUserData.value.username;
-  email.value = initialUserData.value.email;
-  selectedRoles.value = [...initialUserData.value.roles];
-  pictureUrl.value = initialUserData.value.previewUrl ?? '';
+  data.firstName = initialData.value.firstName;
+  data.lastName = initialData.value.lastName;
+  data.name = initialData.value.name;
+  data.email = initialData.value.email;
+  data.realmRoles = [...initialData.value.realmRoles];
+  data.pictureUrl = initialData.value.pictureUrl;
 }
 
 const { t } = useI18n({ useScope: 'global' });
 const router = useRouter();
 const loading = ref(true);
-const firstName = ref('');
-const lastName = ref('');
-const username = ref('');
-const email = ref('');
-const selectedRoles = ref<SelectableRealmRole[]>([]);
+
+const selectedRoleOptions = computed(() => {
+  return data.realmRoles.filter(isSelectableRealmRole);
+});
 const roleOptions: Record<SelectableRealmRole, string> = {
   'admin': 'Admin',
   'create-vaults': 'Create Vaults',
@@ -302,7 +292,7 @@ const password = ref('');
 const passwordConfirm = ref('');
 const passwordInputType = ref<'password' | 'text'>('password');
 const passwordStrength = ref<'weak' | 'medium' | 'strong' | ''>('');
-const pictureUrl = ref<string>('');
+
 const isValidImageUrl = ref<boolean>(false);
 const previewJdenticon = ref<string>('');
 
@@ -313,14 +303,14 @@ const generateJdenticon = (seed: string): string => {
   return `data:image/svg+xml;base64,${base64.encode(bytes)}`;
 };
 
-watch(pictureUrl,
+watch(() => data.pictureUrl,
   async (newUrl) => {
     isValidImageUrl.value = await FormValidator.validateImageUrl(newUrl);
   },
   { immediate: true }
 );
 
-watch([pictureUrl, isValidImageUrl],
+watch(() =>  [data.pictureUrl, isValidImageUrl],
   ([newPictureUrl, newIsValidImageUrl]) => {
     const hasValidPicture = newPictureUrl && newIsValidImageUrl;
     const shouldShowJdenticon = !hasValidPicture && props.id;
@@ -331,48 +321,24 @@ watch([pictureUrl, isValidImageUrl],
 );
 
 onMounted(async () => {
+  loading.value = true;
   if (props.mode === 'EDIT') {
     try {
-      const fetchedUser = await backend.users.getUser(props.id);
-
-      const userData = fetchedUser as { firstName?: string; lastName?: string };
-      firstName.value = userData.firstName || '';
-      lastName.value = userData.lastName || '';
-
-      username.value = fetchedUser.name;
-      email.value = fetchedUser.email;
-      pictureUrl.value = fetchedUser.pictureUrl || '';
-
-      selectedRoles.value = fetchedUser.realmRoles.filter(isSelectableRealmRole);
-
-      initialUserData.value = {
-        firstName: firstName.value,
-        lastName: lastName.value,
-        username: username.value,
-        email: email.value,
-        roles: [...selectedRoles.value],
-        previewUrl: pictureUrl.value
-      };
+      initialData.value = await backend.users.getUser(props.id);
     } catch (error) {
       console.error('Failed to fetch user data:', error);
     } finally {
       loading.value = false;
     }
   } else {
-    firstName.value = '';
-    lastName.value = '';
-    username.value = '';
-    email.value = '';
-    password.value = '';
-    passwordConfirm.value = '';
-    pictureUrl.value = '';
-    selectedRoles.value = [];
+    initialData.value = { firstName: '', lastName: '', name: '', email: '', realmRoles: [], pictureUrl:'' };
     loading.value = false;
   }
+  resetUserData();
 });
 
 function removeRole(role: SelectableRealmRole) {
-  selectedRoles.value = selectedRoles.value.filter(r => r !== role);
+  data.realmRoles = data.realmRoles.filter(r => r !== role);
 }
 
 function togglePasswordVisibility() {
@@ -381,14 +347,14 @@ function togglePasswordVisibility() {
 
 function validateForm() {
   const result = FormValidator.validateUser({
-    firstName: firstName.value,
-    lastName: lastName.value,
-    username: username.value,
-    email: email.value,
+    firstName: data.firstName,
+    lastName: data.lastName,
+    username: data.name,
+    email: data.email,
     password: password.value,
     passwordConfirm: passwordConfirm.value,
     isEditMode: props.mode === 'EDIT',
-    pictureUrl: pictureUrl.value,      
+    pictureUrl: data.pictureUrl,      
     isValidImageUrl: isValidImageUrl.value 
   });
   
@@ -425,7 +391,7 @@ watch(password, (newVal) => {
 });
 
 function removePicture() {
-  pictureUrl.value = '';
+  data.pictureUrl = undefined;
   isValidImageUrl.value = false;
 }
 
@@ -436,45 +402,33 @@ async function onSubmit() {
 
   processing.value = true;
 
-  firstName.value = firstName.value.trim();
-  lastName.value = lastName.value.trim();
-  username.value = username.value.trim();
-  email.value = email.value.trim();
-  pictureUrl.value = pictureUrl.value.trim();
-
-  initialUserData.value = {
-    firstName: firstName.value,
-    lastName: lastName.value,
-    username: username.value,
-    email: email.value,
-    roles: [...selectedRoles.value],
-    previewUrl: pictureUrl.value
-  };
+  data.firstName = data.firstName?.trim();
+  data.lastName = data.lastName?.trim();
+  data.name = data.name.trim();
+  data.email = data.email.trim();
+  data.pictureUrl = data.pictureUrl?.trim();
 
   try {
     if (props.mode === 'EDIT') { // edit mode
-      await backend.users.updateUser(props.id, {
-        firstName: firstName.value || undefined,
-        lastName: lastName.value || undefined,
-        password: password.value || undefined,
-        pictureUrl: pictureUrl.value || undefined,
-        realmRoles: selectedRoles.value
-      });
-      userSaved.value = true;
+      await backend.users.updateUser(props.id, data);
       router.push(`/app/users/${props.id}`); // navigate to user detail page after save
     } else { // create mode
-      await backend.users.createUser({
-        name: username.value,
-        email: email.value,
-        firstName: firstName.value,
-        lastName: lastName.value,
-        password: password.value,
-        pictureUrl: pictureUrl.value || undefined,
-        realmRoles: selectedRoles.value
-      });
-      userSaved.value = true;
+      await backend.users.createUser({ ...data, password: password.value });
       router.push('/app/users'); // navigate to user list page after creation
     }
+
+    // Update initial data to match saved state
+    initialData.value = {
+      firstName: data.firstName,
+      lastName: data.lastName,
+      name: data.name,
+      email: data.email,
+      realmRoles: [...data.realmRoles],
+      pictureUrl: data.pictureUrl
+    };
+    
+    // TODO: debounce, see groups
+    userSaved.value = true;
   } catch (error: unknown) {
     console.error('Failed to save user:', error);
     processing.value = false;
