@@ -395,7 +395,14 @@ class UserService {
 
   public async getUser(userId: string): Promise<UserDtoWithDetails> {
     return axiosAuth.get<UserDtoWithDetails>(`/users/${userId}`)
-      .then(response => AuthorityService.fillInMissingPicture(response.data))
+      .then(response => {
+        const user = response.data;
+        const filledUser = AuthorityService.fillInMissingPicture(user);
+        return {
+          ...filledUser,
+          groups: user.groups.map(g => AuthorityService.fillInMissingPicture({ ...g, type: 'GROUP' as const }))
+        };
+      })
       .catch((error) => rethrowAndConvertIfExpected(error, 404));
   }
 
