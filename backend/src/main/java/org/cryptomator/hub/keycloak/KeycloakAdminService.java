@@ -124,7 +124,7 @@ public class KeycloakAdminService {
 		return realm.users().get(userId).toRepresentation();
 	}
 
-	public UserRepresentation updateUser(String userId, String firstName, String lastName, String password, String pictureUrl) {
+	public UserRepresentation updateUser(String userId, String email, String firstName, String lastName, String password, String pictureUrl) {
 		if (isUserReadOnly(userId)) {
 			throw new ForbiddenException("User has a federated identity and cannot be modified");
 		}
@@ -132,6 +132,9 @@ public class KeycloakAdminService {
 		UserResource userResource = realm.users().get(userId);
 		UserRepresentation user = userResource.toRepresentation();
 
+		if (email != null && !email.isBlank()) {
+			user.setEmail(email);
+		}
 		if (firstName != null && !firstName.isBlank()) {
 			user.setFirstName(firstName);
 		}

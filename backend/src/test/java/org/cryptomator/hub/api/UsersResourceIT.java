@@ -536,11 +536,13 @@ public class UsersResourceIT {
 		void testUpdateUserSuccess() {
 			var userRep = new UserRepresentation();
 			userRep.setId("user1");
+			userRep.setEmail("email1");
 			userRep.setUsername("User Name 1");
 			userRep.setFirstName("Updated");
 			userRep.setLastName("Name");
 
 			Mockito.when(keycloakAdminService.updateUser(
+					Mockito.eq("email1"),
 					Mockito.eq("user1"),
 					Mockito.eq("Updated"),
 					Mockito.eq("Name"),
@@ -568,6 +570,7 @@ public class UsersResourceIT {
 					Mockito.any(),
 					Mockito.any(),
 					Mockito.any(),
+					Mockito.any(),
 					Mockito.any()
 			)).thenThrow(new NotFoundException("User not found"));
 
@@ -588,6 +591,7 @@ public class UsersResourceIT {
 		void testUpdateUserForbidden() {
 			Mockito.when(keycloakAdminService.updateUser(
 					Mockito.eq("federatedUser"),
+					Mockito.any(),
 					Mockito.any(),
 					Mockito.any(),
 					Mockito.any(),

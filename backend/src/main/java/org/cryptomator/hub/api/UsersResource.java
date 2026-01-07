@@ -406,6 +406,7 @@ public class UsersResource {
 	public UserDto updateUser(@PathParam("id") String userId, @Valid @NotNull UpdateUserDto dto) {
 		keycloakAdminService.updateUser(
 				userId,
+				dto.email(),
 				dto.firstName(),
 				dto.lastName(),
 				dto.password(),
@@ -448,6 +449,7 @@ public class UsersResource {
 	}
 
 	public record UpdateUserDto(
+			@JsonProperty("email") String email,
 			@JsonProperty("firstName") String firstName,
 			@JsonProperty("lastName") String lastName,
 			@JsonProperty("password") String password,

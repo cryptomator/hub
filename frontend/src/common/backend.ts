@@ -132,7 +132,7 @@ export type CreateUserDto = Pick<UserDto, 'name' | 'email' | 'firstName' | 'last
   password: string;
 };
 
-export type UpdateUserDto = Pick<UserDto, 'firstName' | 'lastName' | 'pictureUrl' | 'realmRoles'> & {
+export type UpdateUserDto = Pick<UserDto, 'email' | 'firstName' | 'lastName' | 'pictureUrl' | 'realmRoles'> & {
   password?: string;
 };
 
