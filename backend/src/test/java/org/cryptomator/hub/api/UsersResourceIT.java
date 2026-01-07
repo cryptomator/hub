@@ -542,8 +542,8 @@ public class UsersResourceIT {
 			userRep.setLastName("Name");
 
 			Mockito.when(keycloakAdminService.updateUser(
-					Mockito.eq("email1"),
 					Mockito.eq("user1"),
+					Mockito.eq("email1"),
 					Mockito.eq("Updated"),
 					Mockito.eq("Name"),
 					Mockito.isNull(),
