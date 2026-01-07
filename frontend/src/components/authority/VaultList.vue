@@ -5,7 +5,7 @@
         <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">
           {{ t('nav.vaults') }}
         </h3>
-        <span class="text-xs text-gray-500">{{ vaults.length }}</span>
+        <span class="text-xs text-gray-500">{{ deduplicatedVaults.length }}</span>
       </div>
     </div>
 
@@ -61,8 +61,20 @@ const { t } = useI18n({ useScope: 'global' });
 const props = defineProps<{
   vaults: VaultDtoWithRole[];
   pageSize: number;
-  visible: boolean; 
+  visible: boolean;
 }>();
+
+// Deduplicate vaults by ID, keeping highest role (OWNER > MEMBER)
+const deduplicatedVaults = computed(() => {
+  const vaultMap = new Map<string, VaultDtoWithRole>();
+  for (const vault of props.vaults) {
+    const existing = vaultMap.get(vault.id);
+    if (!existing || vault.role === 'OWNER') {
+      vaultMap.set(vault.id, vault);
+    }
+  }
+  return Array.from(vaultMap.values());
+});
 
 // Vaults – search & pagination
 const pageSizeVault = ref(props.pageSize);
@@ -71,7 +83,7 @@ const vaultQuery = ref('');
 
 const filteredVaults = computed(() => {
   const q = vaultQuery.value.trim().toLowerCase();
-  return props.vaults
+  return deduplicatedVaults.value
     .filter(v => !q || v.name.toLowerCase().includes(q) || (v.description && v.description.toLowerCase().includes(q)))
     .sort((a, b) => a.name.localeCompare(b.name, 'de', { sensitivity: 'base' }));
 });
