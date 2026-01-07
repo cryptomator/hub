@@ -410,7 +410,7 @@ async function onSubmit() {
 
   try {
     if (props.mode === 'EDIT') { // edit mode
-      await backend.users.updateUser(props.id, data);
+      await backend.users.updateUser(props.id, { ...data, password: password.value || undefined });
       router.push(`/app/users/${props.id}`); // navigate to user detail page after save
     } else { // create mode
       await backend.users.createUser({ ...data, password: password.value });
