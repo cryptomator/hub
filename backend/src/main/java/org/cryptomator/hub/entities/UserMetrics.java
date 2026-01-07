@@ -13,7 +13,7 @@ import org.hibernate.annotations.Subselect;
 @Subselect("""
 		SELECT
 			u.id AS user_id,
-			COUNT(g.group_id) AS direct_group_count,
+			COUNT(DISTINCT g.group_id) AS direct_group_count,
 			COUNT(DISTINCT eva.vault_id) AS effective_vault_count,
 			COUNT(DISTINCT d.id) AS device_count
 		FROM
