@@ -136,7 +136,6 @@ const previewJdenticon = ref<string>();
 watch(() => data.pictureUrl,
   async (newUrl) => {
     isValidImageUrl.value = await FormValidator.validateImageUrl(newUrl);
-    previewJdenticon.value = generateFallbackPictureUrl('GROUP', props.id);
   },
   { immediate: true }
 );
