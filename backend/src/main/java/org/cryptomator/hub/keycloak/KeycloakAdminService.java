@@ -162,13 +162,15 @@ public class KeycloakAdminService {
 			throw new ForbiddenException("User has a federated identity and cannot be deleted");
 		}
 
+		// 1. delete from db (roll back if kc deletion fails):
+		userRepo.deleteById(userId);
+
+		// 2. delete from kc:
 		try (var response = realm.users().delete(userId)){
 			if (response.getStatus() != 204) {
 				throw new InternalServerErrorException("Failed to delete user in Keycloak. Status: " + response.getStatus());
 			}
 		}
-
-		userRepo.deleteById(userId);
 	}
 
 	public boolean isUserReadOnly(String userId) {
@@ -261,29 +263,31 @@ public class KeycloakAdminService {
 		syncGroup(groupId);
 	}
 
+	@Transactional
 	public void updateUserRoles(String userId, Set<RealmRole> roles) {
-		UserResource userResource = realm.users().get(userId);
-		var roleMappings = userResource.roles().realmLevel();
-
 		// remove roles that are not in the provided set:
 		var rolesToRemove = EnumSet.allOf(RealmRole.class);
 		rolesToRemove.removeAll(roles);
-		if (!rolesToRemove.isEmpty()) {
-			roleMappings.remove(rolesToRemove.stream().map(realmRoles::getRealmRole).toList());
-		}
 
 		// set roles that are in the provided set:
 		var rolesToSet = EnumSet.noneOf(RealmRole.class);
 		rolesToSet.addAll(roles);
-		if (!rolesToSet.isEmpty()) {
-			roleMappings.add(rolesToSet.stream().map(realmRoles::getRealmRole).toList());
-		}
 
-		// sync to db:
+		// 1. sync to db (roll back if kc update fails):
 		User dbUser = userRepo.findById(userId);
 		if (dbUser != null) {
 			dbUser.setRealmRoles(rolesToSet.stream().map(RealmRole::kcName).toArray(String[]::new));
 			userRepo.persist(dbUser);
+		}
+
+		// 2. sync to kc:
+		UserResource userResource = realm.users().get(userId);
+		var roleMappings = userResource.roles().realmLevel();
+		if (!rolesToRemove.isEmpty()) {
+			roleMappings.remove(rolesToRemove.stream().map(realmRoles::getRealmRole).toList());
+		}
+		if (!rolesToSet.isEmpty()) {
+			roleMappings.add(rolesToSet.stream().map(realmRoles::getRealmRole).toList());
 		}
 	}
 
@@ -333,8 +337,11 @@ public class KeycloakAdminService {
 
 	@Transactional
 	public void deleteGroup(String groupId) {
-		realm.groups().group(groupId).remove();
+		// 1. delete from db (roll back if kc deletion fails):
 		groupRepo.deleteById(groupId);
+
+		// 2. delete from kc:
+		realm.groups().group(groupId).remove();
 	}
 
 	private static Map<String, List<String>> setPicture(Map<String, List<String>> attributes, String pictureUrl) {
