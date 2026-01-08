@@ -47,7 +47,7 @@
       </section>
       <section class="lg:col-start-2 grid gap-6">
         <!-- Groups -->
-        <UserGroupsList :user="user" :user-id="props.id" :groups="user.groups" :page-size="10" :on-saved="handleGroupsSaved"/>
+        <UserGroupsList :user="user" :user-id="props.id" :groups="user.groups" :page-size="10" @on-saved="handleGroupsSaved"/>
         <!-- Vaults -->
         <VaultList :vaults="user.accessibleVaults" :page-size="10" :visible="true"/>
       </section>
@@ -56,7 +56,7 @@
       <!-- User Info -->
       <UserInfo :user="user"/>
       <!-- Groups -->
-      <UserGroupsList :user="user" :user-id="props.id" :groups="user.groups" :page-size="10" :on-saved="handleGroupsSaved"/>
+      <UserGroupsList :user="user" :user-id="props.id" :groups="user.groups" :page-size="10" @on-saved="handleGroupsSaved"/>
       <!-- Devices -->
       <UserDeviceList :devices="user.devices" :page-size="10" :title="t('user.detail.devices')"/>
       <UserDeviceList :devices="user.legacyDevices" :page-size="10" :visible="user.legacyDevices.length != 0" :title="t('legacyDeviceList.title')" :info="t('user.detail.legacyDeviceList.info')"/>

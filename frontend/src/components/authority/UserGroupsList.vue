@@ -73,7 +73,7 @@
       </table>
     </div>
   </section>
-  <UserAddGroupDialog ref="addGroupDialog" :user-id="userId" :groups="user.groups" @saved="(groups: GroupDto[]) => props.onSaved(groups)" />
+  <UserAddGroupDialog ref="addGroupDialog" :user-id="userId" :groups="user.groups" @saved="(groups: GroupDto[]) => emit('onSaved', groups)" />
   <UserGroupRemoveDialog ref="deleteGroupMemberDialog" :group="deletingGroup" :user-id="userId" @close="deletingGroup = undefined" @removed="onGroupRemoved"/>
 </template>
 
@@ -91,7 +91,10 @@ const props = defineProps<{
   userId: string;
   groups: GroupDto[];
   pageSize: number;
-  onSaved: (groups: GroupDto[]) => void;
+}>();
+
+const emit = defineEmits<{
+  onSaved: [groups: GroupDto[]]
 }>();
 
 const deletingGroup = ref<GroupDto>();
@@ -106,7 +109,7 @@ function showDeleteDialog(g: GroupDto) {
 
 function onGroupRemoved() {
   const updatedGroups = props.groups.filter(g => g.id !== deletingGroup.value?.id);
-  props.onSaved(updatedGroups);
+  emit('onSaved', updatedGroups);
   deletingGroup.value = undefined;
 }
 
