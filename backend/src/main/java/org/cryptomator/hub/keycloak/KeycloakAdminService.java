@@ -247,18 +247,14 @@ public class KeycloakAdminService {
 
 	@Transactional
 	public void addUserToGroup(String groupId, String userId) {
-		realm.groups().group(groupId).toRepresentation(); // trigger NotFoundException if group does not exist
-		UserResource userResource = realm.users().get(userId);
-		userResource.joinGroup(groupId);
+		realm.users().get(userId).joinGroup(groupId);
 
 		syncGroup(groupId);
 	}
 
 	@Transactional
 	public void removeUserFromGroup(String groupId, String userId) {
-		realm.groups().group(groupId).toRepresentation(); // trigger NotFoundException if group does not exist
-		UserResource userResource = realm.users().get(userId);
-		userResource.leaveGroup(groupId);
+		realm.users().get(userId).leaveGroup(groupId);
 
 		syncGroup(groupId);
 	}
