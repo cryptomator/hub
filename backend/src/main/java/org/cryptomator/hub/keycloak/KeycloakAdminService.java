@@ -254,7 +254,7 @@ public class KeycloakAdminService {
 			groupRepo.addMember(groupId, userId);
 			effectiveGroupMembershipRepo.updateGroups(List.of(groupId));
 		} catch (PersistenceException e) { // caused by foreign key constraint violation
-			throw new NotFoundException("Failed to add member to group " + groupId + " to user " + userId);
+			throw new NotFoundException("Failed to add member " + userId + " to group " + groupId);
 		}
 
 		// 2. sync to kc:

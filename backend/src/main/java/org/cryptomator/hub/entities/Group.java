@@ -76,6 +76,13 @@ public class Group extends Authority {
 			return Batch.of(200).run(ids, 0L, (batch, result) -> result + delete("id IN :ids", Parameters.with("ids", batch)));
 		}
 
+		/**
+		 * Adds the group membership mapping without loading the entities.
+		 * <p>
+		 * This is a lightweight alternative to calling {@link Group#getMembers() group.getMembers().add(...)} but should be avoided if the group is already present in the persistence context.
+		 * @param groupId group ID
+		 * @param memberId memnber ID
+		 */
 		public void addMember(String groupId, String memberId) {
 			getEntityManager()
 					.createNamedQuery("Group.addMember")
@@ -84,6 +91,13 @@ public class Group extends Authority {
 					.executeUpdate();
 		}
 
+		/**
+		 * Removes the group membership mapping without loading the entities.
+		 * <p>
+		 * This is a lightweight alternative to calling {@link Group#getMembers() group.getMembers().remove(...)} but should be avoided if the group is already present in the persistence context.
+		 * @param groupId group ID
+		 * @param memberId memnber ID
+		 */
 		public void removeMember(String groupId, String memberId) {
 			getEntityManager()
 					.createNamedQuery("Group.removeMember")
