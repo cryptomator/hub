@@ -201,9 +201,11 @@ async function onSubmit() {
     debouncedGroupSaved();
 
     // Redirect after successful save
-    setTimeout(() => {
+    if (props.mode === 'EDIT') {
+      router.push(`/app/groups/${props.id}`);
+    } else {
       router.push('/app/groups');
-    }, 1000);
+    }
   } catch (error: unknown) {
     console.error('Failed to save group:', error);
     processing.value = false;
