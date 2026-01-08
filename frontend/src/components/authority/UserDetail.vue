@@ -42,26 +42,26 @@
         <!-- User Info -->
         <UserInfo :user="user"/>
         <!-- Devices -->
-        <UserDeviceList :devices="user.devices" :page-size="10" :title="t('user.detail.devices')"/>      
-        <UserDeviceList :devices="user.legacyDevices" :page-size="10" :visible="user.legacyDevices.length != 0" :title="t('legacyDeviceList.title')" :info="t('user.detail.legacyDeviceList.info')"/>
+        <UserDeviceList :devices="user.devices" :title="t('user.detail.devices')"/>      
+        <UserDeviceList :devices="user.legacyDevices" :visible="user.legacyDevices.length != 0" :title="t('legacyDeviceList.title')" :info="t('user.detail.legacyDeviceList.info')"/>
       </section>
       <section class="lg:col-start-2 grid gap-6">
         <!-- Groups -->
-        <UserGroupsList :user="user" :user-id="props.id" :groups="user.groups" :page-size="10" @on-saved="handleGroupsSaved"/>
+        <UserGroupsList :user="user" :user-id="props.id" :groups="user.groups" @on-saved="handleGroupsSaved"/>
         <!-- Vaults -->
-        <VaultList :vaults="user.accessibleVaults" :page-size="10" :visible="true"/>
+        <VaultList :vaults="user.accessibleVaults" :visible="true"/>
       </section>
     </div>
     <div class="grid lg:hidden grid-cols-1 gap-6 items-start pt-3">
       <!-- User Info -->
       <UserInfo :user="user"/>
       <!-- Groups -->
-      <UserGroupsList :user="user" :user-id="props.id" :groups="user.groups" :page-size="10" @on-saved="handleGroupsSaved"/>
+      <UserGroupsList :user="user" :user-id="props.id" :groups="user.groups" @on-saved="handleGroupsSaved"/>
       <!-- Devices -->
-      <UserDeviceList :devices="user.devices" :page-size="10" :title="t('user.detail.devices')"/>
-      <UserDeviceList :devices="user.legacyDevices" :page-size="10" :visible="user.legacyDevices.length != 0" :title="t('legacyDeviceList.title')" :info="t('user.detail.legacyDeviceList.info')"/>
+      <UserDeviceList :devices="user.devices" :title="t('user.detail.devices')"/>
+      <UserDeviceList :devices="user.legacyDevices" :visible="user.legacyDevices.length != 0" :title="t('legacyDeviceList.title')" :info="t('user.detail.legacyDeviceList.info')"/>
       <!-- Vaults -->
-      <VaultList :vaults="user.accessibleVaults" :page-size="10" :visible="true"/>
+      <VaultList :vaults="user.accessibleVaults" :visible="true"/>
     </div>
   </div>
 

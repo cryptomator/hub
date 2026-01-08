@@ -86,11 +86,12 @@ import { UserGroupIcon } from '@heroicons/vue/20/solid';
 import { UserDtoWithDetails, GroupDto } from '../../common/backend';
 const { t } = useI18n({ useScope: 'global' });
 
+const PAGE_SIZE = 10;
+
 const props = defineProps<{
   user: UserDtoWithDetails;
   userId: string;
   groups: GroupDto[];
-  pageSize: number;
 }>();
 
 const emit = defineEmits<{
@@ -125,7 +126,6 @@ function openAddGroupDialog() {
 // ---------------------------------------------------------------------------
 // GROUPS – search & pagination (member-list style)
 // ---------------------------------------------------------------------------
-const pageSizeGroup = ref(10);
 const currentPageGroup = ref(0);
 const groupQuery = ref('');
 
@@ -136,16 +136,16 @@ const filteredGroups = computed(() => {
     .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
 });
 
-const showPaginationGroup = computed(() => filteredGroups.value.length > pageSizeGroup.value);
+const showPaginationGroup = computed(() => filteredGroups.value.length > PAGE_SIZE);
 
 const paginatedGroups = computed(() =>
-  filteredGroups.value.slice(currentPageGroup.value * pageSizeGroup.value, (currentPageGroup.value + 1) * pageSizeGroup.value)
+  filteredGroups.value.slice(currentPageGroup.value * PAGE_SIZE, (currentPageGroup.value + 1) * PAGE_SIZE)
 );
 
-const hasNextPageGroup = computed(() => (currentPageGroup.value + 1) * pageSizeGroup.value < filteredGroups.value.length);
+const hasNextPageGroup = computed(() => (currentPageGroup.value + 1) * PAGE_SIZE < filteredGroups.value.length);
 
-const paginationBeginGroup = computed(() => (filteredGroups.value.length ? currentPageGroup.value * pageSizeGroup.value + 1 : 0));
-const paginationEndGroup = computed(() => Math.min((currentPageGroup.value + 1) * pageSizeGroup.value, filteredGroups.value.length));
+const paginationBeginGroup = computed(() => (filteredGroups.value.length ? currentPageGroup.value * PAGE_SIZE + 1 : 0));
+const paginationEndGroup = computed(() => Math.min((currentPageGroup.value + 1) * PAGE_SIZE, filteredGroups.value.length));
 
 function showNextPageGroup() {
   if (hasNextPageGroup.value) currentPageGroup.value++;

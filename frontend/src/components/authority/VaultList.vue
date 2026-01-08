@@ -58,9 +58,10 @@ import { useI18n } from 'vue-i18n';
 import { VaultDtoWithRole } from '../../common/backend';
 const { t } = useI18n({ useScope: 'global' });
 
+const PAGE_SIZE = 10;
+
 const props = defineProps<{
   vaults: VaultDtoWithRole[];
-  pageSize: number;
   visible: boolean;
 }>();
 
@@ -77,7 +78,6 @@ const deduplicatedVaults = computed(() => {
 });
 
 // Vaults – search & pagination
-const pageSizeVault = ref(props.pageSize);
 const currentPageVault = ref(0);
 const vaultQuery = ref('');
 
@@ -88,16 +88,16 @@ const filteredVaults = computed(() => {
     .sort((a, b) => a.name.localeCompare(b.name, 'de', { sensitivity: 'base' }));
 });
 
-const showPaginationVault = computed(() => filteredVaults.value.length > pageSizeVault.value);
+const showPaginationVault = computed(() => filteredVaults.value.length > PAGE_SIZE);
 
 const paginatedVaults = computed(() =>
-  filteredVaults.value.slice(currentPageVault.value * pageSizeVault.value, (currentPageVault.value + 1) * pageSizeVault.value)
+  filteredVaults.value.slice(currentPageVault.value * PAGE_SIZE, (currentPageVault.value + 1) * PAGE_SIZE)
 );
 
-const hasNextPageVault = computed(() => (currentPageVault.value + 1) * pageSizeVault.value < filteredVaults.value.length);
+const hasNextPageVault = computed(() => (currentPageVault.value + 1) * PAGE_SIZE < filteredVaults.value.length);
 
-const paginationBeginVault = computed(() => (filteredVaults.value.length ? currentPageVault.value * pageSizeVault.value + 1 : 0));
-const paginationEndVault = computed(() => Math.min((currentPageVault.value + 1) * pageSizeVault.value, filteredVaults.value.length));
+const paginationBeginVault = computed(() => (filteredVaults.value.length ? currentPageVault.value * PAGE_SIZE + 1 : 0));
+const paginationEndVault = computed(() => Math.min((currentPageVault.value + 1) * PAGE_SIZE, filteredVaults.value.length));
 
 function showNextPageVault() {
   if (hasNextPageVault.value) currentPageVault.value++;

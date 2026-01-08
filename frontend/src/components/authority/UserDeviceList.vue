@@ -168,9 +168,10 @@ import { DeviceDto } from '../../common/backend';
 
 const { t } = useI18n({ useScope: 'global' });
 
+const PAGE_SIZE = 10;
+
 const props = withDefaults(defineProps<{
   devices: DeviceDto[];
-  pageSize: number;
   visible?: boolean;
   title: string;
   info?: string;
@@ -195,18 +196,18 @@ const currentPageDevice = ref(0);
 
 const paginatedDevices = computed(() =>
   filteredDevices.value.slice(
-    currentPageDevice.value * props.pageSize,
-    (currentPageDevice.value + 1) * props.pageSize
+    currentPageDevice.value * PAGE_SIZE,
+    (currentPageDevice.value + 1) * PAGE_SIZE
   )
 );
 
-const showPaginationDevice = computed(() => filteredDevices.value.length > props.pageSize);
+const showPaginationDevice = computed(() => filteredDevices.value.length > PAGE_SIZE);
 const hasNextPageDevice = computed(() =>
-  (currentPageDevice.value + 1) * props.pageSize < filteredDevices.value.length
+  (currentPageDevice.value + 1) * PAGE_SIZE < filteredDevices.value.length
 );
-const paginationBeginDevice = computed(() => currentPageDevice.value * props.pageSize + 1);
+const paginationBeginDevice = computed(() => currentPageDevice.value * PAGE_SIZE + 1);
 const paginationEndDevice = computed(() =>
-  Math.min((currentPageDevice.value + 1) * props.pageSize, filteredDevices.value.length)
+  Math.min((currentPageDevice.value + 1) * PAGE_SIZE, filteredDevices.value.length)
 );
 
 function showPreviousPageDevice() {

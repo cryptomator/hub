@@ -168,6 +168,8 @@ import { UserDtoWithCounts } from '../../common/backend';
 
 const { t } = useI18n({ useScope: 'global' });
 
+const PAGE_SIZE = 20;
+
 const users = ref<UserDtoWithCounts[]>([]);
 const loading = ref(true);
 const onFetchError = ref<Error>();
@@ -176,7 +178,6 @@ const deletingUser = ref<UserDtoWithCounts>();
 const query = ref('');
 const currentUserId = ref<string>('');
 const currentPage = ref(0);
-const pageSize = 20;
 
 const showDeleteUserDialog = (user: UserDtoWithCounts) => {
   deletingUser.value = user;
@@ -233,13 +234,13 @@ const sortedUsers = computed(() =>
 );
 
 const paginatedUsers = computed(() =>
-  sortedUsers.value.slice(currentPage.value * pageSize, (currentPage.value + 1) * pageSize)
+  sortedUsers.value.slice(currentPage.value * PAGE_SIZE, (currentPage.value + 1) * PAGE_SIZE)
 );
 
-const showPagination = computed(() => sortedUsers.value.length > pageSize);
-const hasNextPage = computed(() => (currentPage.value + 1) * pageSize < sortedUsers.value.length);
-const paginationBegin = computed(() => sortedUsers.value.length ? currentPage.value * pageSize + 1 : 0);
-const paginationEnd = computed(() => Math.min((currentPage.value + 1) * pageSize, sortedUsers.value.length));
+const showPagination = computed(() => sortedUsers.value.length > PAGE_SIZE);
+const hasNextPage = computed(() => (currentPage.value + 1) * PAGE_SIZE < sortedUsers.value.length);
+const paginationBegin = computed(() => sortedUsers.value.length ? currentPage.value * PAGE_SIZE + 1 : 0);
+const paginationEnd = computed(() => Math.min((currentPage.value + 1) * PAGE_SIZE, sortedUsers.value.length));
 
 function showNextPage() {
   if (hasNextPage.value) currentPage.value += 1;
