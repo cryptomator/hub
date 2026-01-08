@@ -6,6 +6,7 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
@@ -177,14 +178,14 @@ public class GroupsResource {
 
 	public record CreateGroupDto(
 			@JsonProperty("name") @NotNull String name,
-			@JsonProperty("pictureUrl") String pictureUrl
+			@JsonProperty("pictureUrl") @Size(max = 255) String pictureUrl
 	) {
 
 	}
 
 	public record UpdateGroupDto(
 			@JsonProperty("name") @NotNull String name,
-			@JsonProperty("pictureUrl") String pictureUrl
+			@JsonProperty("pictureUrl") @Size(max = 255) String pictureUrl
 	) {
 	}
 }

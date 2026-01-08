@@ -231,11 +231,10 @@
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue';
 import { CheckIcon, ChevronUpDownIcon, ExclamationTriangleIcon, EyeIcon, EyeSlashIcon, InformationCircleIcon, TrashIcon, UserIcon } from '@heroicons/vue/24/outline';
 import { base64 } from '@scure/base';
-import { toSvg } from 'jdenticon';
 import { computed, onMounted, reactive, ref, shallowRef, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import backend, { isAxiosError, isSelectableRealmRole, SelectableRealmRole, UserDto } from '../../common/backend';
+import backend, { generateFallbackPictureUrl, isAxiosError, isSelectableRealmRole, SelectableRealmRole, UserDto } from '../../common/backend';
 import { FormValidator } from '../../common/formvalidator';
 import { UTF8 } from '../../common/util';
 import BreadcrumbNav from '../BreadcrumbNav.vue';
@@ -293,14 +292,7 @@ const passwordInputType = ref<'password' | 'text'>('password');
 const passwordStrength = ref<'weak' | 'medium' | 'strong' | ''>('');
 
 const isValidImageUrl = ref<boolean>(false);
-const previewJdenticon = ref<string>('');
-
-const generateJdenticon = (seed: string): string => {
-  if (!seed) return '';
-  const svg = toSvg(seed, 128);
-  const bytes = UTF8.encode(svg);
-  return `data:image/svg+xml;base64,${base64.encode(bytes)}`;
-};
+const previewJdenticon = ref<string>();
 
 watch(() => data.pictureUrl,
   async (newUrl) => {
@@ -314,7 +306,7 @@ watch(() =>  [data.pictureUrl, isValidImageUrl],
     const hasValidPicture = newPictureUrl && newIsValidImageUrl;
     const shouldShowJdenticon = !hasValidPicture && props.id;
 
-    previewJdenticon.value = shouldShowJdenticon ? generateJdenticon(props.id) : '';
+    previewJdenticon.value = shouldShowJdenticon ? generateFallbackPictureUrl('USER', props.id) : '';
   },
   { immediate: true }
 );
@@ -323,7 +315,7 @@ onMounted(async () => {
   loading.value = true;
   if (props.mode === 'EDIT') {
     try {
-      initialData.value = await backend.users.getUser(props.id);
+      initialData.value = await backend.users.getUser(props.id, false);
     } catch (error) {
       console.error('Failed to fetch user data:', error);
     } finally {

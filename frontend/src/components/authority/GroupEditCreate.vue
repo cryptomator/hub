@@ -22,6 +22,7 @@
           <div class="flex flex-col items-center gap-4 mb-8">
             <div class="relative w-32 h-32">
               <img v-if="isValidImageUrl" :src="data.pictureUrl" class="w-full h-full rounded-full object-cover border border-gray-300" :alt="t('groupEditCreate.profilePicture')" />
+              <img v-else-if="previewJdenticon" :src="previewJdenticon" class="w-full h-full rounded-full object-cover border border-gray-300"/>
               <div v-else class="w-full h-full rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
                 <UserGroupIcon class="w-12 h-12" />
               </div>
@@ -94,7 +95,7 @@ import { ExclamationTriangleIcon, TrashIcon, UserGroupIcon } from '@heroicons/vu
 import { computed, onMounted, reactive, ref, shallowRef, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import backend, { GroupDto, isAxiosError } from '../../common/backend';
+import backend, { generateFallbackPictureUrl, GroupDto, isAxiosError } from '../../common/backend';
 import { FormValidator } from '../../common/formvalidator';
 import { debounce } from '../../common/util';
 import BreadcrumbNav from '../BreadcrumbNav.vue';
@@ -130,6 +131,7 @@ const groupSaved = ref(false);
 const onSaveError = ref<Error | null>(null);
 const debouncedGroupSaved = debounce(() => groupSaved.value = false, 2000);
 const isValidImageUrl = ref<boolean>(false);
+const previewJdenticon = ref<string>();
 
 watch(() => data.pictureUrl,
   async (newUrl) => {
@@ -138,11 +140,21 @@ watch(() => data.pictureUrl,
   { immediate: true }
 );
 
+watch(() =>  [data.pictureUrl, isValidImageUrl],
+  ([newPictureUrl, newIsValidImageUrl]) => {
+    const hasValidPicture = newPictureUrl && newIsValidImageUrl;
+    const shouldShowJdenticon = !hasValidPicture && props.id;
+
+    previewJdenticon.value = shouldShowJdenticon ? generateFallbackPictureUrl('GROUP', props.id) : '';
+  },
+  { immediate: true }
+);
+
 onMounted(async () => {
   loading.value = true;
   if (props.mode === 'EDIT') {
     try {
-      initialData.value = await backend.groups.getGroup(props.id);
+      initialData.value = await backend.groups.getGroup(props.id, false);
     } catch (error) {
       console.error('Failed to fetch group:', error);
     } finally {

@@ -139,10 +139,8 @@ public class KeycloakAdminService {
 		if (lastName != null && !lastName.isBlank()) {
 			user.setLastName(lastName);
 		}
-		if (pictureUrl != null) {
-			var attrs = setPicture(user.getAttributes(), pictureUrl);
-			user.setAttributes(attrs);
-		}
+		var attrs = setPicture(user.getAttributes(), pictureUrl);
+		user.setAttributes(attrs);
 
 		userResource.update(user);
 
@@ -333,10 +331,8 @@ public class KeycloakAdminService {
 			group.setName(name);
 		}
 
-		if (pictureUrl != null) {
-			var attrs = setPicture(group.getAttributes(), pictureUrl);
-			group.setAttributes(attrs);
-		}
+		var attrs = setPicture(group.getAttributes(), pictureUrl);
+		group.setAttributes(attrs);
 
 		groupResource.update(group);
 		syncGroup(groupId);

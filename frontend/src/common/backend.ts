@@ -192,6 +192,58 @@ export interface VaultIdHeader extends JWTHeader {
   vaultId: string;
 }
 
+function fillInMissingPicture<T extends AuthorityDto>(authority: T): T & { pictureUrl: string } {
+  if (authority.pictureUrl) {
+    return {
+      ...authority,
+      pictureUrl: authority.pictureUrl
+    };
+  } else {
+    return {
+      ...authority,
+      pictureUrl: generateFallbackPictureUrl(authority.type, authority.id)
+    };
+  }
+}
+
+export function generateFallbackPictureUrl(type: 'USER' | 'GROUP', authorityId: string): string {
+  const cfg = getJdenticonConfig(type);
+  const svg = toSvg(authorityId, 100, cfg);
+  const bytes = UTF8.encode(svg);
+  return `data:image/svg+xml;base64,${base64.encode(bytes)}`;
+}
+
+function getJdenticonConfig(type: 'USER' | 'GROUP'): JdenticonConfig {
+  switch (type) {
+    case 'USER':
+      return {
+        hues: [6, 28, 48, 121, 283],
+        saturation: {
+          color: 0.59,
+        },
+        lightness: {
+          color: [0.32, 0.49],
+          grayscale: [0.32, 0.49]
+        },
+        backColor: '#F7F7F7',
+        padding: 0
+      };
+    case 'GROUP':
+      return {
+        hues: [6, 28, 48, 121, 283],
+        saturation: {
+          color: 0.59
+        },
+        lightness: {
+          color: [0.81, 0.97],
+          grayscale: [0.81, 0.97]
+        },
+        backColor: '#005E71',
+        padding: 0
+      };
+  }
+}
+
 // #endregion DTOs
 // #region Services
 
@@ -220,8 +272,9 @@ class VaultService {
       .catch((error) => rethrowAndConvertIfExpected(error, 404));
   }
 
-  public async getMembers(vaultId: string): Promise<MemberDto[]> {
-    return axiosAuth.get<MemberDto[]>(`/vaults/${vaultId}/members`).then(response => response.data.map(AuthorityService.fillInMissingPicture)).catch(err => rethrowAndConvertIfExpected(err, 403));
+  public async getMembers(vaultId: string, addFallbackPictures: boolean = true): Promise<MemberDto[]> {
+    const members = await axiosAuth.get<MemberDto[]>(`/vaults/${vaultId}/members`).then(response => response.data).catch(err => rethrowAndConvertIfExpected(err, 403));
+    return addFallbackPictures ? members.map(fillInMissingPicture) : members;
   }
 
   public async addUser(vaultId: string, userId: string, role?: VaultRole): Promise<AxiosResponse<void>> {
@@ -234,10 +287,9 @@ class VaultService {
       .catch((error) => rethrowAndConvertIfExpected(error, 402, 404, 409));
   }
 
-  public async getUsersRequiringAccessGrant(vaultId: string): Promise<UserDto[]> {
-    return axiosAuth.get<UserDto[]>(`/vaults/${vaultId}/users-requiring-access-grant`)
-      .then(response => response.data.map(AuthorityService.fillInMissingPicture))
-      .catch(err => rethrowAndConvertIfExpected(err, 403));
+  public async getUsersRequiringAccessGrant(vaultId: string, addFallbackPictures: boolean = true): Promise<UserDto[]> {
+    const users = await axiosAuth.get<UserDto[]>(`/vaults/${vaultId}/users-requiring-access-grant`).then(response => response.data).catch(err => rethrowAndConvertIfExpected(err, 403));
+    return addFallbackPictures ? users.map(fillInMissingPicture) : users;
   }
 
   public async createOrUpdateVault(vaultId: string, name: string, archived: boolean, description?: string): Promise<VaultDto> {
@@ -308,32 +360,31 @@ class DeviceService {
 }
 
 class GroupService {
-  public async listAll(): Promise<GroupDto[]> {
-    return axiosAuth.get<GroupDto[]>('/groups/').then(response => response.data.map(AuthorityService.fillInMissingPicture));
+  public async listAll(addFallbackPictures: boolean = true): Promise<GroupDto[]> {
+    const groups = await axiosAuth.get<GroupDto[]>('/groups/').then(response => response.data);
+    return addFallbackPictures ? groups.map(fillInMissingPicture) : groups;
   }
 
-  public async getGroup(groupId: string): Promise<GroupDtoWithDetails> {
-    return axiosAuth.get<GroupDtoWithDetails>(`/groups/${groupId}`)
-      .then(response => {
-        const group = response.data;
-        const filledGroup = AuthorityService.fillInMissingPicture({ ...group, type: 'GROUP' as const });
-        return {
-          ...group,
-          pictureUrl: filledGroup.pictureUrl,
-          members: group.members.map(m => AuthorityService.fillInMissingPicture(m))
-        };
-      })
-      .catch((error) => rethrowAndConvertIfExpected(error, 404));
+  public async getGroup(groupId: string, addFallbackPictures: boolean = true): Promise<GroupDtoWithDetails> {
+    const group = await axiosAuth.get<GroupDtoWithDetails>(`/groups/${groupId}`).then(response => response.data).catch((error) => rethrowAndConvertIfExpected(error, 404));
+    if (addFallbackPictures) {
+      return {
+        ...fillInMissingPicture(group),
+        members: group.members.map(m => fillInMissingPicture(m))
+      };
+    } else {
+      return group;
+    }
   }
 
-  public async createGroup(dto: CreateGroupDto): Promise<GroupDto> {
-    return axiosAuth.post<GroupDto>('/groups/', dto).then(response => AuthorityService.fillInMissingPicture(response.data));
+  public async createGroup(dto: CreateGroupDto, addFallbackPictures: boolean = true): Promise<GroupDto> {
+    const group = await axiosAuth.post<GroupDto>('/groups/', dto).then(response => response.data);
+    return addFallbackPictures ? fillInMissingPicture(group) : group;
   }
 
-  public async updateGroup(groupId: string, dto: UpdateGroupDto): Promise<GroupDto> {
-    return axiosAuth.put<GroupDto>(`/groups/${groupId}`, dto)
-      .then(response => AuthorityService.fillInMissingPicture(response.data))
-      .catch((error) => rethrowAndConvertIfExpected(error, 404));
+  public async updateGroup(groupId: string, dto: UpdateGroupDto, addFallbackPictures: boolean = true): Promise<GroupDto> {
+    const group = await axiosAuth.put<GroupDto>(`/groups/${groupId}`, dto).then(response => response.data).catch((error) => rethrowAndConvertIfExpected(error, 404));
+    return addFallbackPictures ? fillInMissingPicture(group) : group;
   }
 
   public async removeGroup(groupId: string): Promise<void> {
@@ -342,22 +393,17 @@ class GroupService {
       .catch((error) => rethrowAndConvertIfExpected(error, 404));
   }
 
-  public async getEffectiveMembers(groupId: string): Promise<UserDto[]> {
-    return axiosAuth.get<UserDto[]>(`/groups/${groupId}/effective-members`)
-      .then(response => response.data.map(AuthorityService.fillInMissingPicture))
-      .catch((error) => rethrowAndConvertIfExpected(error, 404));
+  public async getEffectiveMembers(groupId: string, addFallbackPictures: boolean = true): Promise<UserDto[]> {
+    const members = await axiosAuth.get<UserDto[]>(`/groups/${groupId}/effective-members`).then(response => response.data).catch((error) => rethrowAndConvertIfExpected(error, 404));
+    return addFallbackPictures ? members.map(fillInMissingPicture) : members;
   }
 
   public async addMember(groupId: string, userId: string): Promise<void> {
-    return axiosAuth.post(`/groups/${groupId}/members/${userId}`)
-      .then(() => { })
-      .catch((error) => rethrowAndConvertIfExpected(error, 404));
+    await axiosAuth.post(`/groups/${groupId}/members/${userId}`).catch((error) => rethrowAndConvertIfExpected(error, 404));
   }
 
   public async removeMember(groupId: string, userId: string): Promise<void> {
-    return axiosAuth.delete(`/groups/${groupId}/members/${userId}`)
-      .then(() => { })
-      .catch((error) => rethrowAndConvertIfExpected(error, 404));
+    await axiosAuth.delete(`/groups/${groupId}/members/${userId}`).catch((error) => rethrowAndConvertIfExpected(error, 404));
   }
 }
 
@@ -366,13 +412,14 @@ class UserService {
     return axiosAuth.put('/users/me', dto);
   }
 
-  public async me(withDevices: boolean = false, withLastAccess: boolean = false): Promise<UserDto> {
-    return axiosAuth.get<UserDto>(`/users/me?withDevices=${withDevices}&withLastAccess=${withLastAccess}`).then(response => AuthorityService.fillInMissingPicture(response.data));
+  public async me(withDevices: boolean = false, withLastAccess: boolean = false, addFallbackPictures: boolean = true): Promise<UserDto> {
+    const user = await axiosAuth.get<UserDto>(`/users/me?withDevices=${withDevices}&withLastAccess=${withLastAccess}`).then(response => response.data);
+    return addFallbackPictures ? fillInMissingPicture(user) : user;
   }
 
   /** @deprecated since version 1.3.0, to be removed in https://github.com/cryptomator/hub/issues/333 */
   public async meWithLegacyDevicesAndAccess(): Promise<UserDto> {
-    return axiosAuth.get<UserDto>('/users/me-with-legacy-devices-and-access').then(response => AuthorityService.fillInMissingPicture(response.data));
+    return axiosAuth.get<UserDto>('/users/me-with-legacy-devices-and-access').then(response => fillInMissingPicture(response.data));
   }
 
   public async removeUser(userId: string): Promise<void> {
@@ -385,31 +432,31 @@ class UserService {
     return axiosAuth.post('/users/me/reset');
   }
 
-  public async listAll(): Promise<UserDtoWithCounts[]> {
-    return axiosAuth.get<UserDtoWithCounts[]>('/users/').then(response => response.data.map(AuthorityService.fillInMissingPicture));
+  public async listAll(addFallbackPictures: boolean = true): Promise<UserDtoWithCounts[]> {
+    const users = await axiosAuth.get<UserDtoWithCounts[]>('/users/').then(response => response.data);
+    return addFallbackPictures ? users.map(fillInMissingPicture) : users;
   }
 
-  public async createUser(dto: CreateUserDto): Promise<UserDto> {
-    return axiosAuth.post<UserDto>('/users/', dto).then(response => AuthorityService.fillInMissingPicture(response.data));
+  public async createUser(dto: CreateUserDto, addFallbackPictures: boolean = true): Promise<UserDto> {
+    const user = await axiosAuth.post<UserDto>('/users/', dto).then(response => response.data);
+    return addFallbackPictures ? fillInMissingPicture(user) : user;
   }
 
-  public async getUser(userId: string): Promise<UserDtoWithDetails> {
-    return axiosAuth.get<UserDtoWithDetails>(`/users/${userId}`)
-      .then(response => {
-        const user = response.data;
-        const filledUser = AuthorityService.fillInMissingPicture(user);
-        return {
-          ...filledUser,
-          groups: user.groups.map(g => AuthorityService.fillInMissingPicture({ ...g, type: 'GROUP' as const }))
-        };
-      })
-      .catch((error) => rethrowAndConvertIfExpected(error, 404));
+  public async getUser(userId: string, addFallbackPictures: boolean = true): Promise<UserDtoWithDetails> {
+    const user = await axiosAuth.get<UserDtoWithDetails>(`/users/${userId}`).then(response => response.data).catch((error) => rethrowAndConvertIfExpected(error, 404));
+    if (addFallbackPictures) {
+      return {
+        ...fillInMissingPicture(user),
+        groups: user.groups.map(g => fillInMissingPicture(g))
+      };
+    } else {
+      return user;
+    }
   }
 
-  public async updateUser(userId: string, dto: UpdateUserDto): Promise<UserDto> {
-    return axiosAuth.put<UserDto>(`/users/${userId}`, dto)
-      .then(response => AuthorityService.fillInMissingPicture(response.data))
-      .catch((error) => rethrowAndConvertIfExpected(error, 404));
+  public async updateUser(userId: string, dto: UpdateUserDto, addFallbackPictures: boolean = true): Promise<UserDto> {
+    const user = await axiosAuth.put<UserDto>(`/users/${userId}`, dto).then(response => response.data).catch((error) => rethrowAndConvertIfExpected(error, 404));
+    return addFallbackPictures ? fillInMissingPicture(user) : user;
   }
 }
 
@@ -432,62 +479,15 @@ class TrustService {
 }
 
 class AuthorityService {
-  public async search(query: string, withMemberSize: boolean = false): Promise<AuthorityDto[]> {
-    return axiosAuth.get<AuthorityDto[]>(`/authorities/search?query=${query}&withMemberSize=${withMemberSize}`).then(response => response.data.map(AuthorityService.fillInMissingPicture));
+  public async search(query: string, withMemberSize: boolean = false, addFallbackPictures: boolean = true): Promise<AuthorityDto[]> {
+    const authorities = await axiosAuth.get<AuthorityDto[]>(`/authorities/search?query=${query}&withMemberSize=${withMemberSize}`).then(response => response.data);
+    return addFallbackPictures ? authorities.map(fillInMissingPicture) : authorities;
   }
 
-  public async listSome(authorityIds: string[]): Promise<AuthorityDto[]> {
+  public async listSome(authorityIds: string[], addFallbackPictures: boolean = true): Promise<AuthorityDto[]> {
     const query = `ids=${authorityIds.join('&ids=')}`;
-    return axiosAuth.get<AuthorityDto[]>(`/authorities?${query}`).then(response => response.data.map(AuthorityService.fillInMissingPicture));
-  }
-
-  public static fillInMissingPicture<T extends AuthorityDto>(authority: T): T & { pictureUrl: string } {
-    if (authority.pictureUrl) {
-      return {
-        ...authority,
-        pictureUrl: authority.pictureUrl
-      };
-    } else {
-      const cfg = AuthorityService.getJdenticonConfig(authority.type);
-      const svg = toSvg(authority.id, 100, cfg);
-      const bytes = UTF8.encode(svg);
-      const url = `data:image/svg+xml;base64,${base64.encode(bytes)}`;
-      return {
-        ...authority,
-        pictureUrl: url
-      };
-    }
-  }
-
-  private static getJdenticonConfig(type: 'USER' | 'GROUP'): JdenticonConfig {
-    switch (type) {
-      case 'USER':
-        return {
-          hues: [6, 28, 48, 121, 283],
-          saturation: {
-            color: 0.59,
-          },
-          lightness: {
-            color: [0.32, 0.49],
-            grayscale: [0.32, 0.49]
-          },
-          backColor: '#F7F7F7',
-          padding: 0
-        };
-      case 'GROUP':
-        return {
-          hues: [6, 28, 48, 121, 283],
-          saturation: {
-            color: 0.59
-          },
-          lightness: {
-            color: [0.81, 0.97],
-            grayscale: [0.81, 0.97]
-          },
-          backColor: '#005E71',
-          padding: 0
-        };
-    }
+    const authorities = await axiosAuth.get<AuthorityDto[]>(`/authorities?${query}`).then(response => response.data);
+    return addFallbackPictures ? authorities.map(fillInMissingPicture) : authorities;
   }
 }
 
