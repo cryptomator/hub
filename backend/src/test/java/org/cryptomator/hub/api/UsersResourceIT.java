@@ -510,15 +510,6 @@ public class UsersResourceIT {
 		@Test
 		@DisplayName("GET /users/{id} returns 200 for existing user")
 		void testGetUserSuccess() {
-			var userRep = new UserRepresentation();
-			userRep.setId("user1");
-			userRep.setUsername("User Name 1");
-			userRep.setFirstName("User");
-			userRep.setLastName("One");
-			userRep.setCreatedTimestamp(1700000000000L);
-
-			Mockito.when(keycloakAdminService.getUser("user1")).thenReturn(userRep);
-
 			when().get("/users/user1")
 					.then().statusCode(200)
 					.body("id", is("user1"));
@@ -543,7 +534,7 @@ public class UsersResourceIT {
 
 			Mockito.when(keycloakAdminService.updateUser(
 					Mockito.eq("user1"),
-					Mockito.eq("email1"),
+					Mockito.isNull(),
 					Mockito.eq("Updated"),
 					Mockito.eq("Name"),
 					Mockito.isNull(),
@@ -613,12 +604,12 @@ public class UsersResourceIT {
 		@Test
 		@DisplayName("DELETE /users/{id} returns 204 when deleted successfully")
 		void testDeleteUserSuccess() {
-			Mockito.doNothing().when(keycloakAdminService).deleteUser("user2");
+			Mockito.doNothing().when(keycloakAdminService).deleteUser("mockedUserId");
 
-			when().delete("/users/user2")
+			when().delete("/users/mockedUserId")
 					.then().statusCode(204);
 
-			Mockito.verify(keycloakAdminService).deleteUser("user2");
+			Mockito.verify(keycloakAdminService).deleteUser("mockedUserId");
 		}
 
 		@Test

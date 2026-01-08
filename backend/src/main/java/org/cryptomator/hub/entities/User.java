@@ -83,6 +83,26 @@ public class User extends Authority {
 	@OneToOne(mappedBy = "user", fetch = FetchType.LAZY)
 	public UserMetrics metrics;
 
+	@OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+	private Set<AccessToken> accessTokens = new HashSet<>();
+
+	@OneToMany(mappedBy = "owner", orphanRemoval = true, fetch = FetchType.LAZY)
+	private Set<Device> devices = new HashSet<>();
+
+	@ManyToMany(mappedBy = "members", cascade = {})
+	private Set<Group> directGroupMemberships = new HashSet<>();
+
+	@Immutable
+	@OneToMany(mappedBy = "authority", fetch = FetchType.LAZY)
+	private Set<EffectiveVaultAccess> accessibleVaults = new HashSet<>();
+
+	/**
+	 * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
+	 */
+	@Deprecated(since = "1.3.0", forRemoval = true)
+	@OneToMany(mappedBy = "owner", orphanRemoval = true, fetch = FetchType.LAZY)
+	private Set<LegacyDevice> legacyDevices = new HashSet<>();
+
 	public String getEmail() {
 		return email;
 	}
@@ -171,18 +191,17 @@ public class User extends Authority {
 		this.devices = devices;
 	}
 
-	@OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
-	public Set<AccessToken> accessTokens = new HashSet<>();
+	public UserMetrics getMetrics() {
+		return metrics;
+	}
 
-	@OneToMany(mappedBy = "owner", orphanRemoval = true, fetch = FetchType.LAZY)
-	public Set<Device> devices = new HashSet<>();
+	public Set<Group> getDirectGroupMemberships() {
+		return directGroupMemberships;
+	}
 
-	@ManyToMany(mappedBy = "members", cascade = {})
-	public Set<Group> directGroupMemberships = new HashSet<>();
-
-	@Immutable
-	@OneToMany(mappedBy = "authority", fetch = FetchType.LAZY)
-	public Set<EffectiveVaultAccess> accessibleVaults = new HashSet<>();
+	public Set<EffectiveVaultAccess> getAccessibleVaults() {
+		return accessibleVaults;
+	}
 
 	/**
 	 * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
@@ -191,13 +210,6 @@ public class User extends Authority {
 	public Set<LegacyDevice> getLegacyDevices() {
 		return legacyDevices;
 	}
-
-	/**
-	 * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
-	 */
-	@Deprecated(since = "1.3.0", forRemoval = true)
-	@OneToMany(mappedBy = "owner", orphanRemoval = true, fetch = FetchType.LAZY)
-	public Set<LegacyDevice> legacyDevices = new HashSet<>();
 
 	@Override
 	public boolean equals(Object o) {

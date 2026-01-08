@@ -120,10 +120,6 @@ public class KeycloakAdminService {
 		return realm.users().get(userId).toRepresentation();
 	}
 
-	public UserRepresentation getUser(String userId) {
-		return realm.users().get(userId).toRepresentation();
-	}
-
 	public UserRepresentation updateUser(String userId, String email, String firstName, String lastName, String password, String pictureUrl) {
 		if (isUserReadOnly(userId)) {
 			throw new ForbiddenException("User has a federated identity and cannot be modified");
@@ -314,10 +310,6 @@ public class KeycloakAdminService {
 		}
 
 		syncGroup(groupId);
-		return realm.groups().group(groupId).toRepresentation();
-	}
-
-	public GroupRepresentation getGroup(String groupId) {
 		return realm.groups().group(groupId).toRepresentation();
 	}
 

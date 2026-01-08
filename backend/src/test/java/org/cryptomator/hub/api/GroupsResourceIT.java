@@ -219,12 +219,6 @@ public class GroupsResourceIT {
 		@Test
 		@DisplayName("GET /groups/{id} returns 200 for existing group")
 		void testGetGroupSuccess() {
-			var groupRep = new GroupRepresentation();
-			groupRep.setId("group1");
-			groupRep.setName("Group 1");
-
-			Mockito.when(keycloakAdminService.getGroup("group1")).thenReturn(groupRep);
-
 			when().get("/groups/group1")
 					.then().statusCode(200)
 					.body("id", is("group1"));
@@ -282,12 +276,12 @@ public class GroupsResourceIT {
 		@Test
 		@DisplayName("DELETE /groups/{id} returns 204 when deleted successfully")
 		void testDeleteGroupSuccess() {
-			Mockito.doNothing().when(keycloakAdminService).deleteGroup("group2");
+			Mockito.doNothing().when(keycloakAdminService).deleteGroup("mockedGroupId");
 
-			when().delete("/groups/group2")
+			when().delete("/groups/mockedGroupId")
 					.then().statusCode(204);
 
-			Mockito.verify(keycloakAdminService).deleteGroup("group2");
+			Mockito.verify(keycloakAdminService).deleteGroup("mockedGroupId");
 		}
 
 		@Test

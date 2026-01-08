@@ -70,8 +70,6 @@ public class UsersResource {
 	EffectiveWot.Repository effectiveWotRepo;
 	@Inject
 	AuditEvent.Repository auditEventRepo;
-	@Inject
-	Group.Repository groupRepo;
 
 	@Inject
 	JsonWebToken jwt;
@@ -122,7 +120,7 @@ public class UsersResource {
 	 */
 	private void updateDevices(User userEntity, UserDto userDto) {
 		if (userDto.getDevices() != null) {
-			var devices = userEntity.devices.stream().collect(Collectors.toUnmodifiableMap(Device::getId, Function.identity()));
+			var devices = userEntity.getDevices().stream().collect(Collectors.toUnmodifiableMap(Device::getId, Function.identity()));
 			var updatedDevices = userDto.getDevices().stream()
 					.filter(d -> devices.containsKey(d.id())) // only look at DTOs for which we find a matching existing entity
 					.map(dto -> {
@@ -178,7 +176,7 @@ public class UsersResource {
 		User user = userRepo.findById(jwt.getSubject());
 		Set<DeviceResource.DeviceDto> deviceDtos;
 		if (withLastAccess) {
-			var devices = user.devices.stream().collect(Collectors.toMap(Device::getId, Function.identity()));
+			var devices = user.getDevices().stream().collect(Collectors.toMap(Device::getId, Function.identity()));
 			var events = auditEventRepo.findLastVaultKeyRetrieve(devices.keySet()).collect(Collectors.toMap(VaultKeyRetrievedEvent::getDeviceId, Function.identity()));
 			deviceDtos = devices.values().stream().map(d -> {
 				var event = events.get(d.getId());
@@ -207,7 +205,7 @@ public class UsersResource {
 	@APIResponse(responseCode = "404", description = "no user matching the subject of the JWT passed as Bearer Token")
 	public UserDto getMeWithLegacyDevicesAndAccess() {
 		User user = userRepo.findById(jwt.getSubject());
-		var legacyDevices = user.legacyDevices.stream().collect(Collectors.toMap(LegacyDevice::getId, Function.identity()));
+		var legacyDevices = user.getLegacyDevices().stream().collect(Collectors.toMap(LegacyDevice::getId, Function.identity()));
 		var events = auditEventRepo.findLastVaultKeyRetrieve(legacyDevices.keySet()).collect(Collectors.toMap(VaultKeyRetrievedEvent::getDeviceId, Function.identity()));
 		var deviceDtos = legacyDevices.values().stream().map(d -> {
 			var event = events.get(d.getId());
@@ -365,23 +363,23 @@ public class UsersResource {
 
 
 		// Fetch groups for the user
-		List<GroupDto> groups = user.directGroupMemberships.stream()
+		List<GroupDto> groups = user.getDirectGroupMemberships().stream()
 				.map(GroupDto::fromEntity)
 				.toList();
 
 		// Fetch vaults with roles for the user
-		List<VaultResource.VaultDtoWithRole> vaults = user.accessibleVaults.stream()
+		List<VaultResource.VaultDtoWithRole> vaults = user.getAccessibleVaults().stream()
 				.map(eva -> VaultResource.VaultDtoWithRole.from(eva.getVault(), eva.getRole()))
 				.toList();
 
 		// Fetch devices (modern devices)
-		Set<DeviceResource.DeviceDto> devices = user.devices.stream()
+		Set<DeviceResource.DeviceDto> devices = user.getDevices().stream()
 				.map(DeviceResource.DeviceDto::fromEntity)
 				.collect(Collectors.toSet());
 
 		// Fetch legacy devices
 		@SuppressWarnings("removal")
-		Set<DeviceResource.DeviceDto> legacyDevices = user.legacyDevices.stream()
+		Set<DeviceResource.DeviceDto> legacyDevices = user.getLegacyDevices().stream()
 				.map(DeviceResource.DeviceDto::fromEntity)
 				.collect(Collectors.toSet());
 
