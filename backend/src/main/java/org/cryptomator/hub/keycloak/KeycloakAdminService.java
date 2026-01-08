@@ -3,10 +3,12 @@ package org.cryptomator.hub.keycloak;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.InternalServerErrorException;
+import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.EffectiveGroupMembership;
@@ -241,22 +243,32 @@ public class KeycloakAdminService {
 		dbGroup.getMembers().clear();
 		dbGroup.getMembers().addAll(dbMembers);
 		groupRepo.persist(dbGroup);
-		effectiveGroupMembershipRepo.updateGroups(Set.of(dbGroup.getId()));
+		effectiveGroupMembershipRepo.updateGroups(List.of(dbGroup.getId()));
 		return dbGroup;
 	}
 
 	@Transactional
 	public void addUserToGroup(String groupId, String userId) {
-		realm.users().get(userId).joinGroup(groupId);
+		// 1. sync to db (roll back if kc update fails):
+		try {
+			groupRepo.addMember(groupId, userId);
+			effectiveGroupMembershipRepo.updateGroups(List.of(groupId));
+		} catch (PersistenceException e) { // caused by foreign key constraint violation
+			throw new NotFoundException("Failed to add member to group " + groupId + " to user " + userId);
+		}
 
-		syncGroup(groupId);
+		// 2. sync to kc:
+		realm.users().get(userId).joinGroup(groupId);
 	}
 
 	@Transactional
 	public void removeUserFromGroup(String groupId, String userId) {
-		realm.users().get(userId).leaveGroup(groupId);
+		// 1. sync to db (roll back if kc update fails):
+		groupRepo.removeMember(groupId, userId);
+		effectiveGroupMembershipRepo.updateGroups(List.of(groupId));
 
-		syncGroup(groupId);
+		// 2. sync to kc:
+		realm.users().get(userId).leaveGroup(groupId);
 	}
 
 	@Transactional

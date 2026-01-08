@@ -3,13 +3,13 @@ package org.cryptomator.hub.entities;
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import io.quarkus.panache.common.Parameters;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.NamedNativeQuery;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
@@ -20,12 +20,21 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+@NamedNativeQuery(name = "Group.addMember", query = """
+		INSERT INTO "group_membership" ("group_id", "member_id")
+		VALUES (:groupId, :memberId)
+		ON CONFLICT DO NOTHING
+		""")
+@NamedNativeQuery(name = "Group.removeMember", query = """
+		DELETE FROM "group_membership"
+		WHERE "group_id" = :groupId AND "member_id" = :memberId
+		""")
 @Entity
 @Table(name = "group_details")
 @DiscriminatorValue("GROUP")
 public class Group extends Authority {
 
-	@ManyToMany(cascade = {CascadeType.MERGE, CascadeType.PERSIST})
+	@ManyToMany
 	@JoinTable(name = "group_membership",
 			joinColumns = @JoinColumn(name = "group_id", referencedColumnName = "id"),
 			inverseJoinColumns = @JoinColumn(name = "member_id", referencedColumnName = "id")
@@ -65,6 +74,22 @@ public class Group extends Authority {
 
 		public long deleteByIds(Collection<String> ids) {
 			return Batch.of(200).run(ids, 0L, (batch, result) -> result + delete("id IN :ids", Parameters.with("ids", batch)));
+		}
+
+		public void addMember(String groupId, String memberId) {
+			getEntityManager()
+					.createNamedQuery("Group.addMember")
+					.setParameter("groupId", groupId)
+					.setParameter("memberId", memberId)
+					.executeUpdate();
+		}
+
+		public void removeMember(String groupId, String memberId) {
+			getEntityManager()
+					.createNamedQuery("Group.removeMember")
+					.setParameter("groupId", groupId)
+					.setParameter("memberId", memberId)
+					.executeUpdate();
 		}
 
 	}
