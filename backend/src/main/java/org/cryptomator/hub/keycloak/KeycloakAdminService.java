@@ -114,10 +114,14 @@ public class KeycloakAdminService {
 					// TODO: shall we fail the whole user creation here? undo previous steps?
 				}
 			}
-			effectiveGroupMembershipRepo.updateGroups(groupIds);
 		}
 
+		// sync to db:
 		syncUser(userId);
+
+		// update effective group membership as soon as the DB contains all membership data
+		// (we can assume that the groups already exist, otherwise the caller wouldn't have been able to provide their IDs):
+		effectiveGroupMembershipRepo.updateGroups(groupIds);
 
 		return realm.users().get(userId).toRepresentation();
 	}
