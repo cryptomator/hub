@@ -136,16 +136,7 @@ const previewJdenticon = ref<string>();
 watch(() => data.pictureUrl,
   async (newUrl) => {
     isValidImageUrl.value = await FormValidator.validateImageUrl(newUrl);
-  },
-  { immediate: true }
-);
-
-watch(() =>  [data.pictureUrl, isValidImageUrl],
-  ([newPictureUrl, newIsValidImageUrl]) => {
-    const hasValidPicture = newPictureUrl && newIsValidImageUrl;
-    const shouldShowJdenticon = !hasValidPicture && props.id;
-
-    previewJdenticon.value = shouldShowJdenticon ? generateFallbackPictureUrl('GROUP', props.id) : '';
+    previewJdenticon.value = generateFallbackPictureUrl('GROUP', props.id);
   },
   { immediate: true }
 );
@@ -153,6 +144,7 @@ watch(() =>  [data.pictureUrl, isValidImageUrl],
 onMounted(async () => {
   loading.value = true;
   if (props.mode === 'EDIT') {
+    previewJdenticon.value = generateFallbackPictureUrl('GROUP', props.id);
     try {
       initialData.value = await backend.groups.getGroup(props.id, false);
     } catch (error) {

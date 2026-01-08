@@ -301,19 +301,10 @@ watch(() => data.pictureUrl,
   { immediate: true }
 );
 
-watch(() =>  [data.pictureUrl, isValidImageUrl],
-  ([newPictureUrl, newIsValidImageUrl]) => {
-    const hasValidPicture = newPictureUrl && newIsValidImageUrl;
-    const shouldShowJdenticon = !hasValidPicture && props.id;
-
-    previewJdenticon.value = shouldShowJdenticon ? generateFallbackPictureUrl('USER', props.id) : '';
-  },
-  { immediate: true }
-);
-
 onMounted(async () => {
   loading.value = true;
   if (props.mode === 'EDIT') {
+    previewJdenticon.value = generateFallbackPictureUrl('USER', props.id);
     try {
       initialData.value = await backend.users.getUser(props.id, false);
     } catch (error) {
