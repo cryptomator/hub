@@ -178,7 +178,7 @@ public class KeycloakAdminService {
 			return !federatedIdentities.isEmpty();
 		} catch (WebApplicationException e) {
 			LOG.warn("Failed to check federated identity for user {}. Keycloak responded with status {}", userId, e.getResponse().getStatus(), e);
-			return false;
+			throw new InternalServerErrorException("Failed to check federated identity", e);
 		}
 	}
 
