@@ -256,7 +256,8 @@ const userDataHasUnsavedChanges = computed(() => {
     || data.name !== initialData.value.name
     || data.email !== initialData.value.email
     || JSON.stringify([...data.realmRoles].sort()) !== JSON.stringify([...initialData.value.realmRoles].sort())
-    || data.pictureUrl !== initialData.value.pictureUrl;
+    || data.pictureUrl !== initialData.value.pictureUrl
+    || password.value.length > 0;
 });
 
 function resetUserData() {
