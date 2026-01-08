@@ -284,11 +284,9 @@ public class KeycloakAdminService {
 		rolesToSet.addAll(roles);
 
 		// 1. sync to db (roll back if kc update fails):
-		User dbUser = userRepo.findById(userId);
-		if (dbUser != null) {
-			dbUser.setRealmRoles(rolesToSet.stream().map(RealmRole::kcName).toArray(String[]::new));
-			userRepo.persist(dbUser);
-		}
+		User dbUser = userRepo.findByIdOptional(userId).orElseThrow(NotFoundException::new);
+		dbUser.setRealmRoles(rolesToSet.stream().map(RealmRole::kcName).toArray(String[]::new));
+		userRepo.persist(dbUser);
 
 		// 2. sync to kc:
 		UserResource userResource = realm.users().get(userId);
