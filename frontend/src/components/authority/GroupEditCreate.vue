@@ -67,10 +67,7 @@
                     {{ t('common.cancel') }}
                   </button>
                   <button type="submit" :disabled="processing || !groupDataHasUnsavedChanges" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
-                    <span v-if="!groupSaved">
-                      {{ props.mode === 'EDIT' ? t('common.save') : t('common.create') }}
-                    </span>
-                    <span v-else>{{ t('common.saved') }}</span>
+                    <span>{{ props.mode === 'EDIT' ? t('common.save') : t('common.create') }}</span>
                   </button>
                   <div v-if="groupDataHasUnsavedChanges && props.mode === 'EDIT'" class="flex items-center whitespace-nowrap gap-1 text-sm text-yellow-700">
                     <ExclamationTriangleIcon class="w-4 h-4 m-1 text-yellow-500" />
@@ -80,7 +77,7 @@
                     </button>
                   </div>
                 </div>
-                <p v-if="onSaveError" class="mt-2 text-sm text-red-600">{{ t('common.unexpectedError', [onSaveError.message]) }}</p>
+                <p v-if="onSubmitError" class="mt-2 text-sm text-red-600">{{ t('common.unexpectedError', [onSubmitError.message]) }}</p>
               </div>
             </div>
           </form>
@@ -127,9 +124,7 @@ const router = useRouter();
 const loading = ref(true);
 const errors = ref<Record<string, string>>({});
 const processing = ref(false);
-const groupSaved = ref(false);
-const onSaveError = ref<Error | null>(null);
-const debouncedGroupSaved = debounce(() => groupSaved.value = false, 2000);
+const onSubmitError = ref<Error>();
 const isValidImageUrl = ref<boolean>(false);
 const previewJdenticon = ref<string>();
 
@@ -182,41 +177,27 @@ async function onSubmit() {
   }
 
   processing.value = true;
-  onSaveError.value = null;
+  onSubmitError.value = undefined;
 
   data.name = data.name.trim();
 
   try {
     if (props.mode === 'EDIT') {
       await backend.groups.updateGroup(props.id, data);
-    } else {
-      await backend.groups.createGroup(data);
-    }
-
-    // Update initial data to match saved state
-    initialData.value = {
-      name: data.name,
-      pictureUrl: data.pictureUrl
-    };
-
-    // Show saved success state
-    groupSaved.value = true;
-    debouncedGroupSaved();
-
-    // Redirect after successful save
-    if (props.mode === 'EDIT') {
       router.push(`/app/groups/${props.id}`);
     } else {
+      await backend.groups.createGroup(data);
       router.push('/app/groups');
     }
   } catch (error: unknown) {
     console.error('Failed to save group:', error);
-    processing.value = false;
     if (isAxiosError(error) && error.response?.status === 409) {
       errors.value.name = t('groupEditCreate.error.groupNameAlreadyExists');
     } else {
-      onSaveError.value = error instanceof Error ? error : new Error('Unknown Error');
+      onSubmitError.value = error instanceof Error ? error : new Error('Unknown Error');
     }
+  } finally {
+    processing.value = false;
   }
 }
 

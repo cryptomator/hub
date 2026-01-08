@@ -206,8 +206,7 @@
                     {{ t('common.cancel') }}
                   </button>
                   <button type="submit" :disabled="processing || !userDataHasUnsavedChanges || password !== passwordConfirm" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
-                    <span v-if="!userSaved">{{ props.mode === 'EDIT' ? t('common.save') : t('common.create') }}</span>
-                    <span v-else>{{ t('common.saved') }}</span>
+                    <span>{{ props.mode === 'EDIT' ? t('common.save') : t('common.create') }}</span>
                   </button>
                   <div v-if="userDataHasUnsavedChanges && props.mode === 'EDIT'" class="flex items-center whitespace-nowrap gap-1 text-sm text-yellow-700">
                     <ExclamationTriangleIcon class="w-4 h-4 m-1 text-yellow-500" />
@@ -283,7 +282,6 @@ const roleOptions: Record<SelectableRealmRole, string> = {
 
 const errors = ref<Record<string, string>>({});
 const processing = ref(false);
-const userSaved = ref(false);
 const submitError = ref<string>();
 
 const password = ref('');
@@ -383,6 +381,7 @@ async function onSubmit() {
   }
 
   processing.value = true;
+  submitError.value = undefined;
 
   data.firstName = data.firstName?.trim();
   data.lastName = data.lastName?.trim();
@@ -398,22 +397,8 @@ async function onSubmit() {
       await backend.users.createUser({ ...data, password: password.value });
       router.push('/app/users'); // navigate to user list page after creation
     }
-
-    // Update initial data to match saved state
-    initialData.value = {
-      firstName: data.firstName,
-      lastName: data.lastName,
-      name: data.name,
-      email: data.email,
-      realmRoles: [...data.realmRoles],
-      pictureUrl: data.pictureUrl
-    };
-    
-    // TODO: debounce, see groups
-    userSaved.value = true;
   } catch (error: unknown) {
     console.error('Failed to save user:', error);
-    processing.value = false;
     if (!isAxiosError(error)) {
       submitError.value = error instanceof Error ? error.message : 'An error occurred';
     } else if (error.response?.status === 409 && error.response.data === 'EMAIL_EXISTS') {
