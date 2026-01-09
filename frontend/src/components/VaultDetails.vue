@@ -1,10 +1,10 @@
 <template>
-  <div v-if="vault == null">
-    <div v-if="onFetchError == null">
+  <div v-if="vault === undefined">
+    <div v-if="!onFetchError">
       {{ t('common.loading') }}
     </div>
     <div v-else>
-      <FetchError :error="onFetchError" :retry="allowRetryFetch ? fetchData : null"/>
+      <FetchError :error="onFetchError" :retry="allowRetryFetch ? fetchData : undefined"/>
     </div>
   </div>
 
@@ -49,7 +49,7 @@
                   <p class="w-full ml-4 text-sm font-medium text-gray-900 truncate">{{ member.name }}</p>
                   <span v-if="member.type === 'GROUP'" class="ml-3 text-xs text-gray-500 italic whitespace-nowrap">{{ t('common.xMembers', [member.memberSize]) }}</span>
                   <TrustDetails v-if="member.type === 'USER'" :trusted-user="member" :trusts="trusts" @trust-changed="refreshTrusts()"/>
-                  <div v-if="member.role == 'OWNER'" class="ml-3 inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">{{ t('vaultDetails.sharedWith.badge.owner') }}</div>
+                  <div v-if="member.vaultRole == 'OWNER'" class="ml-3 inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">{{ t('vaultDetails.sharedWith.badge.owner') }}</div>
                   <Menu v-if="member.id != me?.id" as="div" class="relative ml-2 inline-block shrink-0 text-left">
                     <MenuButton class="group relative inline-flex h-8 w-8 items-center justify-center rounded-full bg-white focus:outline-hidden focus:ring-2 focus:ring-primary focus:ring-offset-2">
                       <span class="absolute -inset-1.5" />
@@ -61,12 +61,12 @@
                     <transition enter-active-class="transition ease-out duration-100" enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 scale-100" leave-to-class="transform opacity-0 scale-95">
                       <MenuItems class="absolute right-9 top-0 z-10 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-hidden">
                         <div class="py-1">
-                          <MenuItem v-if="member.role == 'MEMBER'" v-slot="{ active }" @click="updateMemberRole(member, 'OWNER')">
+                          <MenuItem v-if="member.vaultRole == 'MEMBER'" v-slot="{ active }" @click="updateMemberRole(member, 'OWNER')">
                             <div :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'cursor-pointer block px-4 py-2 text-sm']">
                               {{ t('vaultDetails.sharedWith.grantOwnership') }}
                             </div>
                           </MenuItem>
-                          <MenuItem v-if="member.role == 'OWNER'" v-slot="{ active }" @click="updateMemberRole(member, 'MEMBER')">
+                          <MenuItem v-if="member.vaultRole == 'OWNER'" v-slot="{ active }" @click="updateMemberRole(member, 'MEMBER')">
                             <div :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'cursor-pointer block px-4 py-2 text-sm']">
                               {{ t('vaultDetails.sharedWith.revokeOwnership') }}
                             </div>
@@ -83,7 +83,7 @@
                 </div>
               </div>
 
-              <p v-if="onUpdateVaultMembershipError[member.id] != null" class="text-sm text-red-900 text-right mt-1">
+              <p v-if="onUpdateVaultMembershipError[member.id]" class="text-sm text-red-900 text-right mt-1">
                 {{ t('common.unexpectedError', [onUpdateVaultMembershipError[member.id].message]) }}
               </p>
             </li>
@@ -98,8 +98,8 @@
                 <span class="ml-4 text-sm font-medium text-primary group-hover:text-primary-l1">{{ t('common.share') }}</span>
               </button>
             </div>
-            <SearchInputGroup v-else-if="addingUser" :action-title="t('common.add')" :on-search="searchAuthority" @action="addAuthority" />
-            <div v-if="onAddUserError != null">
+            <SearchInputGroup v-else-if="addingUser" :action-title="t('common.add')" place-holder="John Doe" :on-search="searchAuthority" @action="addAuthority" />
+            <div v-if="onAddUserError">
               <p v-if="onAddUserError instanceof PaymentRequiredError" class="text-sm text-red-900 text-right mt-1">
                 {{ t('vaultDetails.error.licenseViolated') }}
               </p>
@@ -211,9 +211,9 @@
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
 import { ArrowPathIcon, EllipsisVerticalIcon, ExclamationTriangleIcon } from '@heroicons/vue/20/solid';
 import { PlusSmallIcon } from '@heroicons/vue/24/solid';
+import * as R from 'remeda';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import * as R from 'remeda';
 import auth from '../common/auth';
 import backend, { AuthorityDto, ConflictError, ForbiddenError, LicenseUserInfoDto, MemberDto, NotFoundError, PaymentRequiredError, TrustDto, UserDto, VaultDto, VaultRole } from '../common/backend';
 import { VaultKeys } from '../common/crypto';
@@ -243,11 +243,11 @@ const emit = defineEmits<{
   licenseStatusUpdated: [license: LicenseUserInfoDto]
 }>();
 
-const onFetchError = ref<Error | null>();
-const allowRetryFetch = computed(() => onFetchError.value != null && !(onFetchError.value instanceof NotFoundError));  //fetch requests either list something, or query from th vault. In the latter, a 404 indicates the vault does not exists anymore.
+const onFetchError = ref<Error>();
+const allowRetryFetch = computed(() => onFetchError.value && !(onFetchError.value instanceof NotFoundError));  //fetch requests either list something, or query from th vault. In the latter, a 404 indicates the vault does not exists anymore.
 
 const onUpdateVaultMembershipError = ref< {[id: string]: Error} >({});
-const onAddUserError = ref<Error | null>();
+const onAddUserError = ref<Error>();
 
 const license = ref<LicenseUserInfoDto>();
 const addingUser = ref(false);
@@ -277,13 +277,13 @@ const me = ref<UserDto>();
 const vaultRecoveryRequired = ref<boolean>(false);
 const isAdmin = ref<boolean>();
 
-const isLegacyVault = computed(() => vault.value?.authPublicKey != null);
+const isLegacyVault = computed(() => vault.value?.authPublicKey !== undefined);
 const licenseViolated = computed(() => license.value?.isExpired() || license.value?.isExceeded());
 
 onMounted(fetchData);
 
 async function fetchData() {
-  onFetchError.value = null;
+  onFetchError.value = undefined;
   try {
     isAdmin.value = (await auth).hasRole('admin');
     vault.value = await backend.vaults.get(props.vaultId);
@@ -368,13 +368,13 @@ async function reloadDevicesRequiringAccessGrant() {
 }
 
 async function addAuthority(authority: AuthorityDto) {
-  onAddUserError.value = null;
+  onAddUserError.value = undefined;
 
   try {
     await addAuthorityBackend(authority);
     const addedMember: MemberDto = {
       ...authority,
-      role: 'MEMBER'
+      vaultRole: 'MEMBER'
     };
     members.value[authority.id] = addedMember;
     usersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
@@ -480,7 +480,7 @@ async function updateMemberRole(member: MemberDto, role: VaultRole) {
     }
     const updatedMember = members.value[member.id];
     if (updatedMember) {
-      updatedMember.role = role;
+      updatedMember.vaultRole = role;
     }
   } catch (error) {
     console.error('Updating member role failed.', error);

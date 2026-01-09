@@ -20,7 +20,7 @@ public class VueHistoryModeFilterTest {
 
 	@Test
 	@DisplayName("redirect /app/* subresources to index.html")
-	public void testFilter() throws ServletException, IOException {
+	void testFilter() throws ServletException, IOException {
 		var dispatcher = Mockito.mock(RequestDispatcher.class);
 		Mockito.doReturn(dispatcher).when(req).getRequestDispatcher("/index.html");
 

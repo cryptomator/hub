@@ -32,7 +32,7 @@ public class BillingResourceManagedInstanceIT {
 	LicenseHolder licenseHolder;
 
 	@BeforeAll
-	public static void beforeAll() {
+	static void beforeAll() {
 		RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
 	}
 

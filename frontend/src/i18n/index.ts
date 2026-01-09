@@ -1,4 +1,4 @@
-import { I18nOptions } from 'vue-i18n';
+import { I18nOptions, createI18n } from 'vue-i18n';
 import deDe from './de-DE.json';
 import enUs from './en-US.json';
 import frFr from './fr-FR.json';
@@ -12,8 +12,6 @@ import ruRu from './ru-RU.json';
 import trTr from './tr-TR.json';
 import uaUa from './uk-UA.json';
 import zhTw from './zh-TW.json';
-
-import { createI18n } from 'vue-i18n';
 
 export enum Locale {
   EN_US = 'en-US',
@@ -102,13 +100,56 @@ export const numberFormats: I18nOptions['numberFormats'] = {
   [Locale.ZH_TW]: defaultNumberFormat
 };
 
-export const mapToLocale = (local: string): Locale =>
-  (Object.values(Locale) as string[]).includes(local)
-    ? (local as Locale)
-    : Locale.EN_US;
+export const mapToLocale = (locale: string): Locale => {
+  if (!locale) {
+    return Locale.EN_US;
+  }
+
+  const normalized = locale.replace('_', '-');
+
+  if ((Object.values(Locale) as string[]).includes(normalized)) {
+    return normalized as Locale;
+  }
+
+  const base = normalized.split('-')[0];
+
+  switch (base) {
+    case 'de': return Locale.DE_DE;
+    case 'en': return Locale.EN_US;
+    case 'fr': return Locale.FR_FR;
+    case 'it': return Locale.IT_IT;
+    case 'ko': return Locale.KO_KR;
+    case 'lv': return Locale.LV_LV;
+    case 'nl': return Locale.NL_NL;
+    case 'pt': return Locale.PT_PT;
+    case 'ru': return Locale.RU_RU;
+    case 'tr': return Locale.TR_TR;
+    case 'uk': return Locale.UK_UA;
+    case 'zh': return Locale.ZH_TW;
+    default: return Locale.EN_US;
+  }
+};
+
+export const detectBrowserLocale = (): Locale => {
+  const raw = getBrowserLocale();
+
+  return mapToLocale(raw);
+};
+
+function getBrowserLocale(): string {
+  if (typeof navigator === 'undefined') {
+    return Locale.EN_US;
+  } else if (navigator.languages && navigator.languages.length > 0) {
+    return navigator.languages[0];
+  } else if (navigator.language) {
+    return navigator.language;
+  } else {
+    return Locale.EN_US;
+  }
+}
 
 const i18n = createI18n({
-  locale: navigator.language,
+  locale: detectBrowserLocale(),
   fallbackLocale: Locale.EN_US,
   messages,
   datetimeFormats,

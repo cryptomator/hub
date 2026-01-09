@@ -30,6 +30,19 @@ import java.util.stream.Stream;
 				INNER JOIN FETCH va.authority
 				WHERE va.id.vaultId = :vaultId
 				""")
+@NamedQuery(name = "VaultAccess.countByAuthority",
+		query = """
+				SELECT COUNT(va)
+				FROM VaultAccess va
+				WHERE va.id.authorityId = :authorityId
+				""")
+@NamedQuery(name = "VaultAccess.findByAuthority",
+		query = """
+				SELECT va
+				FROM VaultAccess va
+				INNER JOIN FETCH va.vault
+				WHERE va.id.authorityId = :authorityId
+				""")
 public class VaultAccess {
 
 	@EmbeddedId
@@ -154,6 +167,14 @@ public class VaultAccess {
 
 		public Stream<VaultAccess> forVault(UUID vaultId) {
 			return find("#VaultAccess.forVault", Parameters.with("vaultId", vaultId)).stream();
+		}
+
+		public long countByAuthority(String authorityId) {
+			return count("#VaultAccess.countByAuthority", Parameters.with("authorityId", authorityId));
+		}
+
+		public Stream<VaultAccess> findByAuthority(String authorityId) {
+			return find("#VaultAccess.findByAuthority", Parameters.with("authorityId", authorityId)).stream();
 		}
 	}
 }

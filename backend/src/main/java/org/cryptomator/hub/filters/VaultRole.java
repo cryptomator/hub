@@ -2,6 +2,7 @@ package org.cryptomator.hub.filters;
 
 import jakarta.ws.rs.NameBinding;
 import org.cryptomator.hub.entities.VaultAccess;
+import org.cryptomator.hub.keycloak.RealmRole;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -34,10 +35,16 @@ public @interface VaultRole {
 	enum OnMissingVault { FORBIDDEN, NOT_FOUND, PASS, REQUIRE_REALM_ROLE }
 
 	/**
+	 * If set to true, skip the role check if the current user has the role {@link #realmRole()}.
+	 * @return whether the given realm role allows bypassing the vault role check.
+	 */
+	boolean bypassForRealmRole() default false;
+
+	/**
 	 * Which additional realm role is required to access the annotated resource.
 	 *
-	 * Only relevant if {@link #onMissingVault()} is set to {@link OnMissingVault#REQUIRE_REALM_ROLE}.
+	 * Only relevant if {@link #bypassForRealmRole()} or {@link #onMissingVault()} is set to {@link OnMissingVault#REQUIRE_REALM_ROLE}.
 	 * @return realm role required to access the annotated resource.
 	 */
-	String realmRole() default "";
+	RealmRole realmRole() default RealmRole.ADMIN;
 }

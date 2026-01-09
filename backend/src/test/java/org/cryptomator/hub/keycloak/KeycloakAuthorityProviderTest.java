@@ -1,5 +1,7 @@
 package org.cryptomator.hub.keycloak;
 
+import org.hamcrest.MatcherAssert;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -10,6 +12,8 @@ import org.keycloak.admin.client.resource.ClientsResource;
 import org.keycloak.admin.client.resource.GroupResource;
 import org.keycloak.admin.client.resource.GroupsResource;
 import org.keycloak.admin.client.resource.RealmResource;
+import org.keycloak.admin.client.resource.RoleResource;
+import org.keycloak.admin.client.resource.RolesResource;
 import org.keycloak.admin.client.resource.UsersResource;
 import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.idm.GroupRepresentation;
@@ -20,7 +24,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
-class KeycloakUserProviderTest {
+class KeycloakAuthorityProviderTest {
 
 	private RealmResource realm = Mockito.mock(RealmResource.class);
 	private UsersResource usersResource = Mockito.mock(UsersResource.class);
@@ -136,9 +140,11 @@ class KeycloakUserProviderTest {
 		public Groups() {
 			Mockito.when(group1.getId()).thenReturn("grpId3000");
 			Mockito.when(group1.getName()).thenReturn("grpName3000");
+			Mockito.when(group1.getAttributes()).thenReturn(Map.of("picture", List.of("grpPicture3000")));
 
 			Mockito.when(group2.getId()).thenReturn("grpId3001");
 			Mockito.when(group2.getName()).thenReturn("grpName3001");
+			Mockito.when(group2.getAttributes()).thenReturn(Map.of("picture", List.of("grpPicture3001")));
 
 			Mockito.when(realm.groups()).thenReturn(groupsResource);
 			Mockito.when(realm.groups().group("grpId3000")).thenReturn(groupResource1);
@@ -150,8 +156,8 @@ class KeycloakUserProviderTest {
 
 		@Test
 		@DisplayName("test groups listing contains two groups with members in group2")
-		public void testListGroups() {
-			Mockito.when(groupsResource.groups(0, KeycloakAuthorityProvider.MAX_COUNT_PER_REQUEST)).thenReturn(List.of(group1, group2));
+		void testListGroups() {
+			Mockito.when(groupsResource.groups(null, 0, KeycloakAuthorityProvider.MAX_COUNT_PER_REQUEST, false)).thenReturn(List.of(group1, group2));
 
 			var result = keycloakRemoteUserProvider.groups(realm);
 
@@ -162,10 +168,12 @@ class KeycloakUserProviderTest {
 
 			Assertions.assertEquals("grpId3000", resultGroup1.id());
 			Assertions.assertEquals("grpName3000", resultGroup1.name());
+			Assertions.assertEquals("grpPicture3000", resultGroup1.pictureUrl());
 			Assertions.assertEquals(0, resultGroup1.members().size());
 
 			Assertions.assertEquals("grpId3001", resultGroup2.id());
 			Assertions.assertEquals("grpName3001", resultGroup2.name());
+			Assertions.assertEquals("grpPicture3001", resultGroup2.pictureUrl());
 			Assertions.assertEquals(2, resultGroup2.members().size());
 
 			var membersGroup2 = resultGroup2.members().stream().sorted(Comparator.comparing(KeycloakUserDto::id)).toList();
@@ -181,6 +189,42 @@ class KeycloakUserProviderTest {
 			Assertions.assertEquals("username3001", member2Group2.name());
 			Assertions.assertEquals("email3001", member2Group2.email());
 			Assertions.assertNull(member2Group2.pictureUrl());
+		}
+	}
+
+	@Nested
+	@DisplayName("Test roles")
+	class Roles {
+
+		private RolesResource rolesResource = Mockito.mock(RolesResource.class);
+		private RoleResource roleResource1 = Mockito.mock(RoleResource.class);
+		private RoleResource roleResource2 = Mockito.mock(RoleResource.class);
+
+		@BeforeEach
+		void setup() {
+			Mockito.doReturn(rolesResource).when(realm).roles();
+			Mockito.doReturn(roleResource1).when(rolesResource).get("role1");
+			Mockito.doReturn(roleResource2).when(rolesResource).get("role2");
+
+			Mockito.doReturn(List.of(user1, user2)).when(roleResource1).getUserMembers(true, 0, KeycloakAuthorityProvider.MAX_COUNT_PER_REQUEST);
+			Mockito.doReturn(List.of()).when(roleResource2).getUserMembers(true, 0, KeycloakAuthorityProvider.MAX_COUNT_PER_REQUEST);
+		}
+
+		@Test
+		@DisplayName("users having role1: user1, user2")
+		void testListUsersInRole1() {
+			var result = keycloakRemoteUserProvider.usersInRole(realm, "role1");
+
+			Assertions.assertEquals(2, result.size());
+			MatcherAssert.assertThat(result, Matchers.containsInAnyOrder(user1, user2));
+		}
+
+		@Test
+		@DisplayName("users having role2: <none>")
+		void testListUsersInRole2() {
+			var result = keycloakRemoteUserProvider.usersInRole(realm, "role2");
+
+			Assertions.assertEquals(0, result.size());
 		}
 	}
 

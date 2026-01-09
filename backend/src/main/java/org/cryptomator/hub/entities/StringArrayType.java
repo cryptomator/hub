@@ -36,31 +36,38 @@ public class StringArrayType implements UserType<String[]> {
 	@Override
 	public String[] nullSafeGet(ResultSet rs, int position, SharedSessionContractImplementor session, Object owner) throws SQLException {
 		Array array = rs.getArray(position);
-		return array != null ? (String[]) array.getArray() : null;
+		return array != null ? (String[]) array.getArray() : new String[0];
 	}
 
 	@Override
-	public void nullSafeSet(PreparedStatement st, String[] value, int index, SharedSessionContractImplementor session) {
-		throw new UnsupportedOperationException("Read Only");
+	public void nullSafeSet(PreparedStatement st, String[] value, int index, SharedSessionContractImplementor session) throws SQLException {
+		session.doWork(connection -> {
+			var jdbcArray = connection.createArrayOf("VARCHAR", value == null ? new String[0] : value);
+			st.setArray(index, jdbcArray);
+		});
 	}
 
 	@Override
 	public boolean isMutable() {
-		return false;
+		return true;
 	}
 
 	@Override
 	public String[] deepCopy(String[] value) {
-		return value; // value is immutable
+		return value == null ? null : value.clone();
 	}
 
 	@Override
 	public Serializable disassemble(String[] value) {
-		return value; // value is immutable
+		return deepCopy(value);
 	}
 
 	@Override
 	public String[] assemble(Serializable cached, Object owner) {
-		return (String[]) cached; // value is immutable
+		if (cached instanceof String[] s) {
+			return s.clone();
+		} else {
+			throw new IllegalArgumentException("Cached value is not of type String[]");
+		}
 	}
 }

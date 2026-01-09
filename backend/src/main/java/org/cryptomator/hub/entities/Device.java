@@ -158,7 +158,10 @@ public class Device {
 		}
 
 		public Stream<Device> findAllInList(List<String> ids) {
-			return find("#Device.allInList", Parameters.with("ids", ids)).stream();
+			return Batch.of(200).run(ids, Stream.empty(), (batch, result) -> {
+				var partial = find("#Device.allInList", Parameters.with("ids", batch));
+				return Stream.concat(result, partial.stream());
+			});
 		}
 
 		public void deleteByOwner(String userId) {

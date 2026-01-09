@@ -1,4 +1,4 @@
-import { base64url } from 'rfc4648';
+import { base64urlnopad } from '@scure/base';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ConcatKDF, ECDH_ES, ECDH_P384, JWEBuilder, JWEHeader, JWEParser, PBES2 } from '../../src/common/jwe';
 
@@ -118,8 +118,8 @@ describe('JWE', () => {
         alg: 'ECDH-ES', // not relevant for this test
         enc: 'A128GCM',
         epk: alicePub,
-        apu: base64url.stringify(apu, { pad: false }),
-        apv: base64url.stringify(apv, { pad: false })
+        apu: base64urlnopad.encode(apu),
+        apv: base64urlnopad.encode(apv)
       };
       const derived = await ECDH_ES.deriveContentKey(bob, alice, 256, 16, header, true);
       const derivedBytes = await crypto.subtle.exportKey('raw', derived);

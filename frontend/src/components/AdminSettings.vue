@@ -1,6 +1,6 @@
 <template>
-  <div v-if="billing == null || version == null || wotMaxDepth == null || wotIdVerifyLen == null">
-    <div v-if="onFetchError == null">
+  <div v-if="billing === undefined || version === undefined || wotMaxDepth === undefined || wotIdVerifyLen === undefined">
+    <div v-if="!onFetchError">
       {{ t('common.loading') }}
     </div>
     <div v-else>
@@ -73,7 +73,7 @@
       </section>
 
       <!-- TODO refactor hasLicense check -->
-      <section v-if="billing.hasLicense && remainingSeats != null" class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6">
+      <section v-if="billing.hasLicense && remainingSeats !== undefined" class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6">
         <h3 class="text-lg font-medium leading-6 text-gray-900">
           {{ t('admin.licenseInfo.title') }}
         </h3>
@@ -142,7 +142,7 @@
       </section>
 
       <!-- TODO remove? -->
-      <section v-if="!billing.hasLicense" class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6">
+      <section v-if="!billing.hasLicense && remainingSeats !== undefined" class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6">
         <h3 class="text-lg font-medium leading-6 text-gray-900">
           {{ t('admin.licenseInfo.title') }}
         </h3>
@@ -251,7 +251,7 @@
                 <span v-if="!wotUpdated">{{ t('admin.webOfTrust.save') }}</span>
                 <span v-else>{{ t('admin.webOfTrust.saved') }}</span>
               </button>
-              <p v-if="onSaveError != null && !(onSaveError instanceof FormValidationFailedError)" class="mt-2 text-sm text-red-900">
+              <p v-if="onSaveError && !(onSaveError instanceof FormValidationFailedError)" class="mt-2 text-sm text-red-900">
                 {{ t('common.unexpectedError', [onSaveError.message]) }}
               </p>
               <div v-if="wotHasUnsavedChanges" class="flex items-center whitespace-nowrap gap-1 text-sm text-yellow-700">
@@ -297,11 +297,11 @@ const wotUpdated = ref(false);
 const debouncedWotUpdated = debounce(() => wotUpdated.value = false, 2000);
 const form = ref<HTMLFormElement>();
 const processing = ref(false);
-const onFetchError = ref<Error | null>();
+const onFetchError = ref<Error>();
 const errorOnFetchingUpdates = ref<boolean>(false);
-const onSaveError = ref<Error | null>(null);
-const wotMaxDepthError = ref<Error | null >(null);
-const wotIdVerifyLenError = ref<Error | null >(null);
+const onSaveError = ref<Error>();
+const wotMaxDepthError = ref<Error>();
+const wotIdVerifyLenError = ref<Error>();
 
 class FormValidationFailedError extends Error {
   constructor() {
@@ -394,10 +394,10 @@ function manageSubscription() {
 }
 
 async function saveWebOfTrust() {
-  onSaveError.value = null;
-  wotMaxDepthError.value = null;
-  wotIdVerifyLenError.value = null;
-  if (billing.value == null || wotMaxDepth.value == null || wotIdVerifyLen.value == null) {
+  onSaveError.value = undefined;
+  wotMaxDepthError.value = undefined;
+  wotIdVerifyLenError.value = undefined;
+  if (billing.value === undefined || wotMaxDepth.value === undefined || wotIdVerifyLen.value === undefined) {
     throw new Error('No data available.');
   }
   if (!form.value?.checkValidity()) {

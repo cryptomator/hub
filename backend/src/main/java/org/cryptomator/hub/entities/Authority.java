@@ -41,6 +41,9 @@ public class Authority {
 	@Column(name = "name", nullable = false)
 	private String name;
 
+	@Column(name = "picture_url")
+	private String pictureUrl;
+
 	public String getId() {
 		return id;
 	}
@@ -57,12 +60,17 @@ public class Authority {
 		this.name = name;
 	}
 
+	public String getPictureUrl() {
+		return pictureUrl;
+	}
+
+	public void setPictureUrl(String pictureUrl) {
+		this.pictureUrl = pictureUrl;
+	}
+
 	@Override
 	public String toString() {
-		return "Authority{" +
-				"id='" + id + '\'' +
-				", name='" + name + '\'' +
-				'}';
+		return "Authority{id='" + id + "'}";
 	}
 
 	@Override
@@ -70,13 +78,12 @@ public class Authority {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 		Authority authority = (Authority) o;
-		return Objects.equals(id, authority.id)
-				&& Objects.equals(name, authority.name);
+		return Objects.equals(id, authority.id);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, name);
+		return Objects.hash(id);
 	}
 
 	@ApplicationScoped
@@ -87,7 +94,10 @@ public class Authority {
 		}
 
 		public Stream<Authority> findAllInList(List<String> ids) {
-			return find("#Authority.allInList", Parameters.with("ids", ids)).stream();
+			return Batch.of(200).run(ids, Stream.empty(), (batch, result) -> {
+				var partial = find("#Authority.allInList", Parameters.with("ids", batch));
+				return Stream.concat(result, partial.stream());
+			});
 		}
 	}
 }

@@ -7,9 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/cryptomator/hub/compare/1.4.6...HEAD)
 
+### Added
+
+- User and group management (#376)
+- Show pictures of the groups in the Vaults member list (#375)
+
 ### Changed
 
-- Updated Keycloak to 26.4.5
+- Updated Keycloak to 26.4.7
+- Update Quarkus to 3.20.4 LTS
+- Improved browser locale detection (#371)
+- Improved efficiency of keycloak-to-hub data sync (#377)
+- Improved efficiency of group-based access permission checks (#372)
+- Migrated aes-siv and base encoding libraries to [`@noble/ciphers`](https://github.com/paulmillr/noble-ciphers) and [`@scure/base`](https://github.com/paulmillr/scure-base/) (#373)
+
+### Security
+
+- CVE-2025-64756, CVE-2025-64118: removed `glob` and `tar` dependencies
+- CVE-2025-64718, CVE-2025-62522: updated `js-yaml` and `vite`
 
 ## [1.4.6](https://github.com/cryptomator/hub/compare/1.4.5...1.4.6)
 

@@ -9,9 +9,15 @@ import io.quarkus.test.security.oidc.OidcSecurity;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.ClientErrorException;
+import jakarta.ws.rs.ForbiddenException;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.Response;
+import org.cryptomator.hub.keycloak.KeycloakAdminService;
 import org.cryptomator.hub.license.LicenseHolder;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;
@@ -21,6 +27,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.keycloak.representations.idm.UserRepresentation;
 import org.mockito.Mockito;
 
 import java.sql.SQLException;
@@ -47,8 +54,11 @@ public class UsersResourceIT {
 	@InjectMock
 	LicenseHolder licenseHolder;
 
+	@InjectMock
+	KeycloakAdminService keycloakAdminService;
+
 	@BeforeAll
-	public static void beforeAll() {
+	static void beforeAll() {
 		RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
 	}
 
@@ -62,14 +72,14 @@ public class UsersResourceIT {
 
 		@Test
 		@DisplayName("PUT /users/me returns 201")
-		public void testSyncMe() {
+		void testSyncMe() {
 			when().put("/users/me")
 					.then().statusCode(201);
 		}
 
 		@Test
 		@DisplayName("GET /users/me returns 200")
-		public void testGetMe1() {
+		void testGetMe1() {
 			when().get("/users/me")
 					.then().statusCode(200)
 					.body("id", is("user1"))
@@ -78,7 +88,7 @@ public class UsersResourceIT {
 
 		@Test
 		@DisplayName("GET /users/me?withDevices=true returns 200")
-		public void testGetMe2() throws SQLException {
+		void testGetMe2() throws SQLException {
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
 						INSERT INTO "audit_event" (id, timestamp, type) VALUES (30000, '2020-02-20T20:20:24.242Z', 'VAULT_KEY_RETRIEVE');
@@ -106,7 +116,7 @@ public class UsersResourceIT {
 
 		@Test
 		@DisplayName("GET /users/me-with-legacy-devices-and-access returns 200")
-		public void testGetMe3() throws SQLException {
+		void testGetMe3() throws SQLException {
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
 						INSERT INTO "audit_event" (id, timestamp, type) VALUES (30000, '2020-02-20T20:20:24.242Z', 'VAULT_KEY_RETRIEVE');
@@ -132,16 +142,8 @@ public class UsersResourceIT {
 		}
 
 		@Test
-		@DisplayName("GET /users returns 200")
-		public void testGetAll() {
-			when().get("/users")
-					.then().statusCode(200)
-					.body("id", hasItems("user1", "user2"));
-		}
-
-		@Test
 		@DisplayName("POST /users/me/access-tokens returns 200")
-		public void testPostAccessTokens1() {
+		void testPostAccessTokens1() {
 			var body = """
 					{
 						"7E57C0DE-0000-4000-8000-000100001111": "jwe.jwe.jwe.vault1.user1",
@@ -155,7 +157,7 @@ public class UsersResourceIT {
 
 		@Test
 		@DisplayName("POST /users/me/access-tokens returns 200 for empty list")
-		public void testPostAccessTokens2() {
+		void testPostAccessTokens2() {
 			given().contentType(ContentType.JSON).body("{}")
 					.when().post("/users/me/access-tokens")
 					.then().statusCode(200);
@@ -163,7 +165,7 @@ public class UsersResourceIT {
 
 		@Test
 		@DisplayName("POST /users/me/access-tokens returns 400 for malformed body")
-		public void testPostAccessTokens3() {
+		void testPostAccessTokens3() {
 			given().contentType(ContentType.JSON).body("")
 					.when().post("/users/me/access-tokens")
 					.then().statusCode(400);
@@ -182,7 +184,7 @@ public class UsersResourceIT {
 				"PUT, /users/me",
 				"GET, /users"
 		})
-		public void testGet(String method, String path) {
+		void testGet(String method, String path) {
 			when().request(method, path)
 					.then().statusCode(401);
 		}
@@ -198,7 +200,7 @@ public class UsersResourceIT {
 		private Instant testStart;
 
 		@BeforeAll
-		public void setup() throws SQLException {
+		void setup() throws SQLException {
 			testStart = Instant.now();
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
@@ -219,7 +221,7 @@ public class UsersResourceIT {
 		@OidcSecurity(claims = {
 				@Claim(key = "sub", value = "user997")
 		})
-		public void test997Trusts998() {
+		void test997Trusts998() {
 			given().contentType(ContentType.TEXT).body("997 trusts 998")
 					.when().put("/users/trusted/user998")
 					.then().statusCode(204);
@@ -232,7 +234,7 @@ public class UsersResourceIT {
 		@OidcSecurity(claims = {
 				@Claim(key = "sub", value = "user998")
 		})
-		public void test998Trusts999() {
+		void test998Trusts999() {
 			given().contentType(ContentType.TEXT).body("998 trusts 999")
 					.when().put("/users/trusted/user999")
 					.then().statusCode(204);
@@ -245,7 +247,7 @@ public class UsersResourceIT {
 		@OidcSecurity(claims = {
 				@Claim(key = "sub", value = "user998")
 		})
-		public void test998Trusts997() {
+		void test998Trusts997() {
 			given().contentType(ContentType.TEXT).body("998 trusts 997")
 					.when().put("/users/trusted/user997")
 					.then().statusCode(204);
@@ -258,7 +260,7 @@ public class UsersResourceIT {
 		@OidcSecurity(claims = {
 				@Claim(key = "sub", value = "user997")
 		})
-		public void testGetTrustedBy997() {
+		void testGetTrustedBy997() {
 			given().when().get("/users/trusted")
 					.then().statusCode(200)
 					.body("$", hasSize(2))
@@ -274,7 +276,7 @@ public class UsersResourceIT {
 		@OidcSecurity(claims = {
 				@Claim(key = "sub", value = "user998")
 		})
-		public void testGetTrustedBy998() {
+		void testGetTrustedBy998() {
 			given().when().get("/users/trusted")
 					.then().statusCode(200)
 					.body("$", hasSize(2))
@@ -290,7 +292,7 @@ public class UsersResourceIT {
 		@OidcSecurity(claims = {
 				@Claim(key = "sub", value = "user999")
 		})
-		public void testGetTrustedBy999() {
+		void testGetTrustedBy999() {
 			given().when().get("/users/trusted")
 					.then().statusCode(200)
 					.body("$", hasSize(0));
@@ -303,7 +305,7 @@ public class UsersResourceIT {
 		@OidcSecurity(claims = {
 				@Claim(key = "sub", value = "user997")
 		})
-		public void test997Gets998() {
+		void test997Gets998() {
 			given().when().get("/users/trusted/user998")
 					.then().statusCode(200)
 					.body("signatureChain", hasItems("997 trusts 998"));
@@ -316,7 +318,7 @@ public class UsersResourceIT {
 		@OidcSecurity(claims = {
 				@Claim(key = "sub", value = "user997")
 		})
-		public void test997Gets999() {
+		void test997Gets999() {
 			given().when().get("/users/trusted/user999")
 					.then().statusCode(200)
 					.body("signatureChain", hasItems("997 trusts 998", "998 trusts 999"));
@@ -329,7 +331,7 @@ public class UsersResourceIT {
 		@OidcSecurity(claims = {
 				@Claim(key = "sub", value = "user999")
 		})
-		public void test999Gets998() {
+		void test999Gets998() {
 			given().when().get("/users/trusted/user998")
 					.then().statusCode(404);
 		}
@@ -338,7 +340,7 @@ public class UsersResourceIT {
 		@Order(4)
 		@TestSecurity(user = "Admin", roles = {"admin"})
 		@DisplayName("As admin, GET /auditlog contains signature events")
-		public void testGetAuditLogEntries() {
+		void testGetAuditLogEntries() {
 			Mockito.doReturn(true).when(licenseHolder).isSet(); // TODO
 			Mockito.doReturn(false).when(licenseHolder).isExpired();
 
@@ -352,12 +354,282 @@ public class UsersResourceIT {
 
 
 		@AfterAll
-		public void tearDown() throws SQLException {
+		void tearDown() throws SQLException {
 			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
 				s.execute("""
 						DELETE FROM "authority" WHERE "id" IN ('user997', 'user998', 'user999');
 						""");
 			}
+		}
+
+	}
+
+	@Nested
+	@DisplayName("User CRUD Operations")
+	@TestSecurity(user = "Admin User", roles = {"admin"})
+	@OidcSecurity(claims = {
+			@Claim(key = "sub", value = "admin")
+	})
+	@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+	public class UserCrudOperations {
+
+		@BeforeEach
+		void resetMocks() {
+			Mockito.reset(keycloakAdminService);
+		}
+
+		@BeforeAll
+		void setup() throws SQLException {
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
+				s.execute("""
+						INSERT INTO "authority" ("id", "type", "name") VALUES ('newUserId123', 'USER', 'newuser');
+						INSERT INTO "user_details" ("id") VALUES ('newUserId123');
+						""");
+			}
+		}
+
+		@AfterAll
+		void tearDown() throws SQLException {
+			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
+				s.execute("""
+						DELETE FROM "authority" WHERE "id" = 'newUserId123';
+						""");
+			}
+		}
+
+		@Test
+		@DisplayName("GET /users returns 200")
+		void testGetAll() {
+			when().get("/users")
+					.then().statusCode(200)
+					.body("id", hasItems("user1", "user2"));
+		}
+
+		@Test
+		@DisplayName("POST /users returns 201 when user created successfully")
+		void testCreateUserSuccess() {
+			var userRep = new UserRepresentation();
+			userRep.setId("newUserId123");
+			userRep.setUsername("newuser");
+			userRep.setEmail("newuser@example.com");
+
+			Mockito.when(keycloakAdminService.createUser(
+					Mockito.eq("newuser"),
+					Mockito.eq("newuser@example.com"),
+					Mockito.eq("New"),
+					Mockito.eq("User"),
+					Mockito.eq("password123"),
+					Mockito.isNull(),
+					Mockito.isNull()
+			)).thenReturn(userRep);
+
+			var body = """
+					{
+						"name": "newuser",
+						"email": "newuser@example.com",
+						"firstName": "New",
+						"lastName": "User",
+						"password": "password123",
+						"realmRoles": []
+					}
+					""";
+			given().contentType(ContentType.JSON).body(body)
+					.when().post("/users")
+					.then().statusCode(201);
+		}
+
+		@Test
+		@DisplayName("POST /users returns 409 when username already exists")
+		void testCreateUserConflictUsername() {
+			Mockito.when(keycloakAdminService.createUser(
+					Mockito.anyString(),
+					Mockito.anyString(),
+					Mockito.anyString(),
+					Mockito.anyString(),
+					Mockito.anyString(),
+					Mockito.any(),
+					Mockito.any()
+			)).thenThrow(new ClientErrorException("USERNAME_EXISTS", Response.Status.CONFLICT));
+
+			var body = """
+					{
+						"name": "existinguser",
+						"email": "new@example.com",
+						"firstName": "Test",
+						"lastName": "User",
+						"password": "password123",
+						"realmRoles": []
+					}
+					""";
+			given().contentType(ContentType.JSON).body(body)
+					.when().post("/users")
+					.then().statusCode(409);
+		}
+
+		@Test
+		@DisplayName("POST /users returns 409 when email already exists")
+		void testCreateUserConflictEmail() {
+			Mockito.when(keycloakAdminService.createUser(
+					Mockito.anyString(),
+					Mockito.anyString(),
+					Mockito.anyString(),
+					Mockito.anyString(),
+					Mockito.anyString(),
+					Mockito.any(),
+					Mockito.any()
+			)).thenThrow(new ClientErrorException("EMAIL_EXISTS", Response.Status.CONFLICT));
+
+			var body = """
+					{
+						"name": "newuser",
+						"email": "existing@example.com",
+						"firstName": "Test",
+						"lastName": "User",
+						"password": "password123",
+						"realmRoles": []
+					}
+					""";
+			given().contentType(ContentType.JSON).body(body)
+					.when().post("/users")
+					.then().statusCode(409);
+		}
+
+		@Test
+		@DisplayName("POST /users returns 400 for invalid body")
+		void testCreateUserInvalidBody() {
+			var body = """
+					{
+						"username": "newuser"
+					}
+					""";
+			given().contentType(ContentType.JSON).body(body)
+					.when().post("/users")
+					.then().statusCode(400);
+		}
+
+		@Test
+		@DisplayName("GET /users/{id} returns 200 for existing user")
+		void testGetUserSuccess() {
+			when().get("/users/user1")
+					.then().statusCode(200)
+					.body("id", is("user1"));
+		}
+
+		@Test
+		@DisplayName("GET /users/{id} returns 404 for non-existing user")
+		void testGetUserNotFound() {
+			when().get("/users/nonexistent")
+					.then().statusCode(404);
+		}
+
+		@Test
+		@DisplayName("PUT /users/{id} returns 200 when update successful")
+		void testUpdateUserSuccess() {
+			var userRep = new UserRepresentation();
+			userRep.setId("user1");
+			userRep.setEmail("email1");
+			userRep.setUsername("User Name 1");
+			userRep.setFirstName("Updated");
+			userRep.setLastName("Name");
+
+			Mockito.when(keycloakAdminService.updateUser(
+					Mockito.eq("user1"),
+					Mockito.isNull(),
+					Mockito.eq("Updated"),
+					Mockito.eq("Name"),
+					Mockito.isNull(),
+					Mockito.isNull()
+			)).thenReturn(userRep);
+
+			var body = """
+					{
+						"firstName": "Updated",
+						"lastName": "Name",
+						"realmRoles": []
+					}
+					""";
+			given().contentType(ContentType.JSON).body(body)
+					.when().put("/users/user1")
+					.then().statusCode(200);
+		}
+
+		@Test
+		@DisplayName("PUT /users/{id} returns 404 for non-existing user")
+		void testUpdateUserNotFound() {
+			Mockito.when(keycloakAdminService.updateUser(
+					Mockito.eq("nonexistent"),
+					Mockito.any(),
+					Mockito.any(),
+					Mockito.any(),
+					Mockito.any(),
+					Mockito.any()
+			)).thenThrow(new NotFoundException("User not found"));
+
+			var body = """
+					{
+						"firstName": "Updated",
+						"lastName": "Name",
+						"realmRoles": []
+					}
+					""";
+			given().contentType(ContentType.JSON).body(body)
+					.when().put("/users/nonexistent")
+					.then().statusCode(404);
+		}
+
+		@Test
+		@DisplayName("PUT /users/{id} returns 403 for federated user")
+		void testUpdateUserForbidden() {
+			Mockito.when(keycloakAdminService.updateUser(
+					Mockito.eq("federatedUser"),
+					Mockito.any(),
+					Mockito.any(),
+					Mockito.any(),
+					Mockito.any(),
+					Mockito.any()
+			)).thenThrow(new ForbiddenException("User has a federated identity"));
+
+			var body = """
+					{
+						"firstName": "Updated",
+						"lastName": "Name",
+						"realmRoles": []
+					}
+					""";
+			given().contentType(ContentType.JSON).body(body)
+					.when().put("/users/federatedUser")
+					.then().statusCode(403);
+		}
+
+		@Test
+		@DisplayName("DELETE /users/{id} returns 204 when deleted successfully")
+		void testDeleteUserSuccess() {
+			Mockito.doNothing().when(keycloakAdminService).deleteUser("mockedUserId");
+
+			when().delete("/users/mockedUserId")
+					.then().statusCode(204);
+
+			Mockito.verify(keycloakAdminService).deleteUser("mockedUserId");
+		}
+
+		@Test
+		@DisplayName("DELETE /users/{id} returns 404 for non-existing user")
+		void testDeleteUserNotFound() {
+			Mockito.doThrow(new NotFoundException("User not found"))
+					.when(keycloakAdminService).deleteUser("nonexistent");
+
+			when().delete("/users/nonexistent")
+					.then().statusCode(404);
+		}
+
+		@Test
+		@DisplayName("DELETE /users/{id} returns 403 for federated user")
+		void testDeleteUserForbidden() {
+			Mockito.doThrow(new ForbiddenException("User has a federated identity"))
+					.when(keycloakAdminService).deleteUser("federatedUser");
+
+			when().delete("/users/federatedUser")
+					.then().statusCode(403);
 		}
 
 	}
