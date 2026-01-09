@@ -158,7 +158,7 @@
               <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
                 <div class="relative">
                   <input id="password" v-model="password" :type="passwordInputType" :class="[errors.password ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-primary focus:border-primary', 'block w-full max-w-md shadow-sm sm:text-sm rounded-md pr-10']"/>
-                  <button type="button" class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600 focus:outline-none" :aria-label="passwordInputType === 'password' ? t('common.showPassword') : t('common.hidePassword')" @click="togglePasswordVisibility">
+                  <button type="button" class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600 focus:outline-none" :aria-label="passwordInputType === 'password' ? t('userEditCreate.showPassword') : t('userEditCreate.hidePassword')" @click="togglePasswordVisibility">
                     <component :is="passwordInputType === 'password' ? EyeIcon : EyeSlashIcon" class="h-5 w-5" />
                   </button>
                 </div>
@@ -250,7 +250,7 @@ const props = defineProps<{
 }>();
 
 type EditableUserData = Pick<UserDto, 'firstName' | 'lastName' | 'name' | 'email' | 'realmRoles' | 'pictureUrl'>;
-const initialData = shallowRef<EditableUserData>({ firstName: '', lastName: '', name: '', email: '', realmRoles: [], pictureUrl:'' });
+const initialData = shallowRef<EditableUserData>({ firstName: undefined, lastName: undefined, name: '', email: '', realmRoles: [], pictureUrl: undefined });
 const data = reactive<EditableUserData>(initialData.value);
 
 const userDataHasUnsavedChanges = computed(() => {
