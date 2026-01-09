@@ -107,7 +107,7 @@
                   <div class="relative">
                     <ListboxButton class="relative w-full rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:ring-primary text-sm">
                       <div class="flex flex-wrap gap-2">
-                        <template v-if="data.realmRoles.length > 0">
+                        <template v-if="selectedRoleOptions.length > 0">
                           <button v-for="role in selectedRoleOptions" :key="role" class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20" @click.stop="removeRole(role)">
                             <span class="mr-1">{{ roleOptions[role] }}</span>
                             <span class="text-green-800 font-bold">&times;</span>
