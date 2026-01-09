@@ -11,6 +11,7 @@ import jakarta.ws.rs.core.UriInfo;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.entities.VaultAccess;
+import org.cryptomator.hub.keycloak.RealmRole;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -186,18 +187,18 @@ public class VaultRoleFilterTest {
 			}
 
 			@Test
-			@DisplayName("error 403 if user lacks realm role required by @VaultRole(realmRole = \"foobar\")")
+			@DisplayName("error 403 if user lacks realm role required by @VaultRole(realmRole = RealmRole.ADMIN)")
 			void testMissesRole() {
-				Mockito.doReturn(false).when(securityContext).isUserInRole("foobar");
+				Mockito.doReturn(false).when(securityContext).isUserInRole("admin");
 
 				Assertions.assertThrows(ForbiddenException.class, () -> filter.filter(context));
 			}
 
 
 			@Test
-			@DisplayName("pass if user has realm role required by @VaultRole(realmRole = \"foobar\")")
+			@DisplayName("pass if user has realm role required by @VaultRole(realmRole = RealmRole.ADMIN)")
 			void testHasRole() {
-				Mockito.doReturn(true).when(securityContext).isUserInRole("foobar");
+				Mockito.doReturn(true).when(securityContext).isUserInRole("admin");
 
 				Assertions.assertDoesNotThrow(() -> filter.filter(context));
 			}
@@ -226,7 +227,7 @@ public class VaultRoleFilterTest {
 		@VaultRole(value = {VaultAccess.Role.OWNER}, onMissingVault = VaultRole.OnMissingVault.PASS)
 		public void pass() {}
 
-		@VaultRole(value = {VaultAccess.Role.OWNER}, onMissingVault = VaultRole.OnMissingVault.REQUIRE_REALM_ROLE, realmRole = "foobar")
+		@VaultRole(value = {VaultAccess.Role.OWNER}, onMissingVault = VaultRole.OnMissingVault.REQUIRE_REALM_ROLE, realmRole = RealmRole.ADMIN)
 		public void requireRealmRole() {}
 	}
 

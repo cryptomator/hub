@@ -9,6 +9,7 @@ import org.cryptomator.hub.entities.EffectiveGroupMembership;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -32,6 +33,16 @@ public class KeycloakAuthorityPuller {
 	void sync() {
 		var keycloakGroups = remoteUserProvider.groups().stream().collect(Collectors.toMap(KeycloakGroupDto::id, Function.identity()));
 		var keycloakUsers = remoteUserProvider.users().stream().collect(Collectors.toMap(KeycloakUserDto::id, Function.identity()));
+		var keycloakRealmRoles = Arrays.stream(RealmRole.values()).collect(Collectors.toMap(Function.identity(), remoteUserProvider::usersInRole));
+		for (var role : RealmRole.values()) {
+			var usersInRole = keycloakRealmRoles.get(role);
+			for (var user : usersInRole) {
+				var keycloakUser = keycloakUsers.get(user.getId());
+				if (keycloakUser != null) {
+					keycloakUser.roles().add(role);
+				}
+			}
+		}
 		sync(keycloakGroups, keycloakUsers);
 	}
 
@@ -65,7 +76,10 @@ public class KeycloakAuthorityPuller {
 			databaseUser.setId(keycloakUser.id());
 			databaseUser.setName(keycloakUser.name());
 			databaseUser.setEmail(keycloakUser.email());
+			databaseUser.setFirstName(keycloakUser.firstName());
+			databaseUser.setLastName(keycloakUser.lastName());
 			databaseUser.setPictureUrl(keycloakUser.pictureUrl());
+			databaseUser.setRealmRoles(keycloakUser.roles().stream().map(RealmRole::kcName).toArray(String[]::new));
 			return databaseUser;
 		}).collect(Collectors.toMap(User::getId, Function.identity()));
 		userRepo.persist(added.values());
@@ -89,7 +103,10 @@ public class KeycloakAuthorityPuller {
 			var keycloakUser = keycloakUsers.get(id);
 			databaseUser.setName(keycloakUser.name());
 			databaseUser.setEmail(keycloakUser.email());
+			databaseUser.setFirstName(keycloakUser.firstName());
+			databaseUser.setLastName(keycloakUser.lastName());
 			databaseUser.setPictureUrl(keycloakUser.pictureUrl());
+			databaseUser.setRealmRoles(keycloakUser.roles().stream().map(RealmRole::kcName).toArray(String[]::new));
 		}
 	}
 

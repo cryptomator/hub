@@ -9,13 +9,16 @@ import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.MapsId;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.Immutable;
 
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -71,12 +74,30 @@ public class EffectiveVaultAccess {
 	@EmbeddedId
 	private EffectiveVaultAccess.Id id;
 
+	@ManyToOne(fetch = FetchType.LAZY)
+	@MapsId("vaultId")
+	@JoinColumn(name = "vault_id")
+	private Vault vault;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@MapsId("authorityId")
+	@JoinColumn(name = "authority_id")
+	private Authority authority;
+
 	public Id getId() {
 		return id;
 	}
 
-	public void setId(Id id) {
-		this.id = id;
+	public Vault getVault() {
+		return vault;
+	}
+
+	public Authority getAuthority() {
+		return authority;
+	}
+
+	public VaultAccess.Role getRole() {
+		return id.role;
 	}
 
 	@Embeddable

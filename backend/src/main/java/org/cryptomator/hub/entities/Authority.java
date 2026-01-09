@@ -12,7 +12,6 @@ import jakarta.persistence.InheritanceType;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
@@ -71,10 +70,7 @@ public class Authority {
 
 	@Override
 	public String toString() {
-		return "Authority{" +
-				"id='" + id + '\'' +
-				", name='" + name + '\'' +
-				'}';
+		return "Authority{id='" + id + "'}";
 	}
 
 	@Override
@@ -82,14 +78,12 @@ public class Authority {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 		Authority authority = (Authority) o;
-		return Objects.equals(id, authority.id)
-				&& Objects.equals(pictureUrl, authority.pictureUrl)
-				&& Objects.equals(name, authority.name);
+		return Objects.equals(id, authority.id);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, name, pictureUrl);
+		return Objects.hash(id);
 	}
 
 	@ApplicationScoped

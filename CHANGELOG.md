@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Show pictures of the groups in the Vaults member list. (#375)
+- User and group management (#376)
+- Show pictures of the groups in the Vaults member list (#375)
 
 ### Changed
 
