@@ -11,12 +11,12 @@ public final class MemberDto extends AuthorityDto {
 	public final String ecdhPublicKey;
 	@JsonProperty("ecdsaPublicKey")
 	public final String ecdsaPublicKey;
-	@JsonProperty("role")
+	@JsonProperty("vaultRole")
 	public final VaultAccess.Role role;
 	@JsonProperty("memberSize")
 	public final Integer memberSize;
 
-	MemberDto(@JsonProperty("id") String id, @JsonProperty("type") Type type, @JsonProperty("name") String name, @JsonProperty("pictureUrl") String pictureUrl, @JsonProperty("ecdhPublicKey") String ecdhPublicKey, @JsonProperty("ecdsaPublicKey") String ecdsaPublicKey, @JsonProperty("role") VaultAccess.Role role, @JsonProperty("memberSize") Integer memberSize) {
+	MemberDto(@JsonProperty("id") String id, @JsonProperty("type") Type type, @JsonProperty("name") String name, @JsonProperty("pictureUrl") String pictureUrl, @JsonProperty("ecdhPublicKey") String ecdhPublicKey, @JsonProperty("ecdsaPublicKey") String ecdsaPublicKey, @JsonProperty("vaultRole") VaultAccess.Role role, @JsonProperty("memberSize") Integer memberSize) {
 		super(id, type, name, pictureUrl);
 		this.ecdhPublicKey = ecdhPublicKey;
 		this.ecdsaPublicKey = ecdsaPublicKey;

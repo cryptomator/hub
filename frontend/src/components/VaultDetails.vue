@@ -49,7 +49,7 @@
                   <p class="w-full ml-4 text-sm font-medium text-gray-900 truncate">{{ member.name }}</p>
                   <span v-if="member.type === 'GROUP'" class="ml-3 text-xs text-gray-500 italic whitespace-nowrap">{{ t('common.xMembers', [member.memberSize]) }}</span>
                   <TrustDetails v-if="member.type === 'USER'" :trusted-user="member" :trusts="trusts" @trust-changed="refreshTrusts()"/>
-                  <div v-if="member.role == 'OWNER'" class="ml-3 inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">{{ t('vaultDetails.sharedWith.badge.owner') }}</div>
+                  <div v-if="member.vaultRole == 'OWNER'" class="ml-3 inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">{{ t('vaultDetails.sharedWith.badge.owner') }}</div>
                   <Menu v-if="member.id != me?.id" as="div" class="relative ml-2 inline-block shrink-0 text-left">
                     <MenuButton class="group relative inline-flex h-8 w-8 items-center justify-center rounded-full bg-white focus:outline-hidden focus:ring-2 focus:ring-primary focus:ring-offset-2">
                       <span class="absolute -inset-1.5" />
@@ -61,12 +61,12 @@
                     <transition enter-active-class="transition ease-out duration-100" enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 scale-100" leave-to-class="transform opacity-0 scale-95">
                       <MenuItems class="absolute right-9 top-0 z-10 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-hidden">
                         <div class="py-1">
-                          <MenuItem v-if="member.role == 'MEMBER'" v-slot="{ active }" @click="updateMemberRole(member, 'OWNER')">
+                          <MenuItem v-if="member.vaultRole == 'MEMBER'" v-slot="{ active }" @click="updateMemberRole(member, 'OWNER')">
                             <div :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'cursor-pointer block px-4 py-2 text-sm']">
                               {{ t('vaultDetails.sharedWith.grantOwnership') }}
                             </div>
                           </MenuItem>
-                          <MenuItem v-if="member.role == 'OWNER'" v-slot="{ active }" @click="updateMemberRole(member, 'MEMBER')">
+                          <MenuItem v-if="member.vaultRole == 'OWNER'" v-slot="{ active }" @click="updateMemberRole(member, 'MEMBER')">
                             <div :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'cursor-pointer block px-4 py-2 text-sm']">
                               {{ t('vaultDetails.sharedWith.revokeOwnership') }}
                             </div>
@@ -98,7 +98,7 @@
                 <span class="ml-4 text-sm font-medium text-primary group-hover:text-primary-l1">{{ t('common.share') }}</span>
               </button>
             </div>
-            <SearchInputGroup v-else-if="addingUser" :action-title="t('common.add')" :on-search="searchAuthority" @action="addAuthority" />
+            <SearchInputGroup v-else-if="addingUser" :action-title="t('common.add')" place-holder="John Doe" :on-search="searchAuthority" @action="addAuthority" />
             <div v-if="onAddUserError">
               <p v-if="onAddUserError instanceof PaymentRequiredError" class="text-sm text-red-900 text-right mt-1">
                 {{ t('vaultDetails.error.licenseViolated') }}
@@ -393,7 +393,7 @@ async function addAuthority(authority: AuthorityDto) {
     await addAuthorityBackend(authority);
     const addedMember: MemberDto = {
       ...authority,
-      role: 'MEMBER'
+      vaultRole: 'MEMBER'
     };
     members.value[authority.id] = addedMember;
     membersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
@@ -502,7 +502,7 @@ async function updateMemberRole(member: MemberDto, role: VaultRole) {
     }
     const updatedMember = members.value[member.id];
     if (updatedMember) {
-      updatedMember.role = role;
+      updatedMember.vaultRole = role;
     }
     if (uvfVault.value && member.type == 'USER' && member.ecdhPublicKey) {
       const includeOwnerKeys = role == 'OWNER';

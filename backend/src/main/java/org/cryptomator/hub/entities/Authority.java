@@ -70,10 +70,7 @@ public class Authority {
 
 	@Override
 	public String toString() {
-		return "Authority{" +
-				"id='" + id + '\'' +
-				", name='" + name + '\'' +
-				'}';
+		return "Authority{id='" + id + "'}";
 	}
 
 	@Override
@@ -81,14 +78,12 @@ public class Authority {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 		Authority authority = (Authority) o;
-		return Objects.equals(id, authority.id)
-				&& Objects.equals(pictureUrl, authority.pictureUrl)
-				&& Objects.equals(name, authority.name);
+		return Objects.equals(id, authority.id);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, name, pictureUrl);
+		return Objects.hash(id);
 	}
 
 	@ApplicationScoped
@@ -99,7 +94,10 @@ public class Authority {
 		}
 
 		public Stream<Authority> findAllInList(List<String> ids) {
-			return find("#Authority.allInList", Parameters.with("ids", ids)).stream();
+			return Batch.of(200).run(ids, Stream.empty(), (batch, result) -> {
+				var partial = find("#Authority.allInList", Parameters.with("ids", batch));
+				return Stream.concat(result, partial.stream());
+			});
 		}
 	}
 }

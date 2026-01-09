@@ -125,7 +125,7 @@ async function giveUsersAccess(members: (MemberDto & UserDto)[]) {
   for (const member of members) {
     if (member.ecdhPublicKey) { // some users might not have set up their key pair, so we can't share secrets with them yet
       const publicKey = base64.decode(member.ecdhPublicKey) as Uint8Array<ArrayBuffer>;
-      const includeOwnerKeys = member.role === 'OWNER';
+      const includeOwnerKeys = member.vaultRole === 'OWNER';
       const jwe = await props.vaultKeys.encryptForUser(publicKey, includeOwnerKeys);
       tokens.push({ userId: member.id, token: jwe });
     }

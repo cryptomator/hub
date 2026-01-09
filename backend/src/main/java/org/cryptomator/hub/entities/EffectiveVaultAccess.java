@@ -9,6 +9,7 @@ import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
@@ -18,8 +19,8 @@ import org.hibernate.annotations.Immutable;
 
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -27,39 +28,42 @@ import java.util.stream.Stream;
 @Entity
 @Immutable
 @Table(name = "effective_vault_access")
-@NamedQuery(name = "EffectiveVaultAccess.countSeatsOccupiedBySingleUser", query = """
-		SELECT count(u)
+@NamedQuery(name = "EffectiveVaultAccess.isUserOccupyingSeat", query = """
+		SELECT 1
 		FROM User u
 		INNER JOIN EffectiveVaultAccess eva ON u.id = eva.id.authorityId
-		WHERE eva.id.authorityId = :userId
+		INNER JOIN Vault v ON eva.id.vaultId = v.id
+		WHERE u.id = :userId AND NOT v.archived
 		""")
 @NamedQuery(name = "EffectiveVaultAccess.countSeatsOccupiedByUsers", query = """
 		SELECT COUNT(DISTINCT u.id)
 		FROM User u
 		INNER JOIN EffectiveVaultAccess eva ON u.id = eva.id.authorityId
-		INNER JOIN Vault v ON eva.id.vaultId = v.id AND NOT v.archived
-		WHERE u.id IN :userIds
+		INNER JOIN Vault v ON eva.id.vaultId = v.id
+		WHERE u.id IN :userIds AND NOT v.archived
 		""")
 @NamedQuery(name = "EffectiveVaultAccess.countSeatOccupyingUsers", query = """
-		SELECT count(DISTINCT u)
+		SELECT COUNT(DISTINCT u.id)
 		FROM User u
 		INNER JOIN EffectiveVaultAccess eva ON u.id = eva.id.authorityId
-		INNER JOIN Vault v ON eva.id.vaultId = v.id AND NOT v.archived
+		INNER JOIN Vault v ON eva.id.vaultId = v.id
+		WHERE NOT v.archived
 		""")
 @NamedQuery(name = "EffectiveVaultAccess.countSeatOccupyingUsersWithAccessToken", query = """
-		SELECT count(DISTINCT u)
+		SELECT COUNT(DISTINCT u.id)
 		FROM User u
 		INNER JOIN EffectiveVaultAccess eva ON u.id = eva.id.authorityId
-		INNER JOIN Vault v ON eva.id.vaultId = v.id AND NOT v.archived
+		INNER JOIN Vault v ON eva.id.vaultId = v.id
 		INNER JOIN AccessToken at ON eva.id.vaultId = at.id.vaultId AND eva.id.authorityId = at.id.userId
+		WHERE NOT v.archived
 		""")
 @NamedQuery(name = "EffectiveVaultAccess.countSeatOccupyingUsersOfGroup", query = """
-		SELECT count(DISTINCT u)
+		SELECT COUNT(DISTINCT u.id)
 		FROM User u
 		INNER JOIN EffectiveVaultAccess eva ON u.id = eva.id.authorityId
 		INNER JOIN EffectiveGroupMembership egm ON u.id = egm.id.memberId
-		INNER JOIN Vault v ON eva.id.vaultId = v.id AND NOT v.archived
-		WHERE egm.id.groupId = :groupId
+		INNER JOIN Vault v ON eva.id.vaultId = v.id
+		WHERE egm.id.groupId = :groupId AND NOT v.archived
 		""")
 @NamedQuery(name = "EffectiveVaultAccess.findByAuthorityAndVault", query = """
 		SELECT eva
@@ -69,8 +73,8 @@ import java.util.stream.Stream;
 @NamedQuery(name = "EffectiveVaultAccess.findMembersWithoutAccessTokens", query = """
 		SELECT eva
 		FROM EffectiveVaultAccess eva
-			INNER JOIN User u ON u.id = eva.id.authorityId
-			LEFT JOIN AccessToken token ON token.id.vaultId = eva.id.vaultId AND token.id.userId = eva.id.authorityId
+			INNER JOIN FETCH eva.authority u
+			LEFT JOIN AccessToken token ON token.id.vaultId = eva.id.vaultId AND token.id.userId = u.id
 			WHERE eva.id.vaultId = :vaultId AND token.vault IS NULL AND u.ecdhPublicKey IS NOT NULL
 		"""
 )
@@ -79,12 +83,12 @@ public class EffectiveVaultAccess {
 	@EmbeddedId
 	private EffectiveVaultAccess.Id id;
 
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.LAZY)
 	@MapsId("vaultId")
 	@JoinColumn(name = "vault_id")
 	private Vault vault;
 
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.LAZY)
 	@MapsId("authorityId")
 	@JoinColumn(name = "authority_id")
 	private Authority authority;
@@ -93,32 +97,16 @@ public class EffectiveVaultAccess {
 		return id;
 	}
 
-	public void setId(Id id) {
-		this.id = id;
-	}
-
 	public Vault getVault() {
 		return vault;
-	}
-
-	public void setVault(Vault vault) {
-		this.vault = vault;
 	}
 
 	public Authority getAuthority() {
 		return authority;
 	}
 
-	public void setAuthority(Authority authority) {
-		this.authority = authority;
-	}
-
 	public VaultAccess.Role getRole() {
 		return id.role;
-	}
-
-	public void setRole(VaultAccess.Role role) {
-		this.id.role = role;
 	}
 
 	@Embeddable
@@ -195,11 +183,14 @@ public class EffectiveVaultAccess {
 	public static class Repository implements PanacheRepositoryBase<EffectiveVaultAccess, Id> {
 
 		public boolean isUserOccupyingSeat(String userId) {
-			return count("#EffectiveVaultAccess.countSeatsOccupiedBySingleUser", Parameters.with("userId", userId)) > 0;
+			return find("#EffectiveVaultAccess.isUserOccupyingSeat", Parameters.with("userId", userId)).page(0, 1).firstResult() != null;
 		}
 
-		public long countSeatsOccupiedByUsers(List<String> userIds) {
-			return count("#EffectiveVaultAccess.countSeatsOccupiedByUsers", Parameters.with("userIds", userIds));
+		public long countSeatsOccupiedByUsers(Collection<String> userIds) {
+			return Batch.of(200).run(Set.copyOf(userIds), 0L, (batch, result) -> {
+				long partialCount = count("#EffectiveVaultAccess.countSeatsOccupiedByUsers", Parameters.with("userIds", batch));
+				return result + partialCount;
+			});
 		}
 
 		public long countSeatOccupyingUsers() {

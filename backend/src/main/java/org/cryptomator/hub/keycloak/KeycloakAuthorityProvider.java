@@ -61,13 +61,20 @@ public class KeycloakAuthorityProvider {
 
 	private KeycloakUserDto mapToUser(UserRepresentation userRepresentation) {
 		var pictureUrl = parsePictureUrl(userRepresentation.getAttributes());
-		return new KeycloakUserDto(userRepresentation.getId(), userRepresentation.getUsername(), userRepresentation.getEmail(), pictureUrl);
+		return new KeycloakUserDto(userRepresentation.getId(),
+				userRepresentation.getUsername(),
+				userRepresentation.getEmail(),
+				userRepresentation.getFirstName(),
+				userRepresentation.getLastName(),
+				pictureUrl,
+				RealmRole.fromKcNames(userRepresentation.getRealmRoles()));
 	}
 
 	private String parsePictureUrl(Map<String, List<String>> attributes) {
-		try {
-			return attributes.get("picture").get(0);
-		} catch (NullPointerException e) {
+		if (attributes != null && attributes.containsKey("picture")) {
+			var pictures = attributes.get("picture");
+			return pictures.stream().findFirst().orElse(null);
+		} else {
 			return null;
 		}
 	}
@@ -112,5 +119,24 @@ public class KeycloakAuthorityProvider {
 		} while (currentRequestedMemebers.size() == MAX_COUNT_PER_REQUEST);
 
 		return members.stream().map(this::mapToUser).collect(Collectors.toSet());
+	}
+
+	public List<UserRepresentation> usersInRole(RealmRole role) {
+		return usersInRole(keycloak.realm(keycloakRealm), role.kcName());
+	}
+
+	//visible for testing
+	List<UserRepresentation> usersInRole(RealmResource realm, String roleName) {
+		var roles = realm.roles();
+
+		List<UserRepresentation> users = new ArrayList<>();
+		List<UserRepresentation> currentBatch;
+
+		do {
+			currentBatch = roles.get(roleName).getUserMembers(true, users.size(), MAX_COUNT_PER_REQUEST);
+			users.addAll(currentBatch);
+		} while (currentBatch.size() == MAX_COUNT_PER_REQUEST);
+
+		return users;
 	}
 }
