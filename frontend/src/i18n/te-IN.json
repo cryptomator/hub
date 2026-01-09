@@ -1,10 +1,19 @@
 {
+  "common.create": "సృష్టించు",
+  "common.edit": "మార్పు",
   "common.previous": "మునుపటి",
   "common.refresh": "రిఫ్రెష్ చేయండి",
   "common.remove": "తొలగించు",
   "common.retry": "మళ్ళీ చేయండి",
+  "common.save": "సేవ్ చేయండి",
   "common.share": "తో పంచు",
   "admin.webOfTrust.save": "సేవ్ చేయండి",
   "auditLog.details": "వివరాలు",
-  "claimVaultOwnershipDialog.error.wrongPassword": "సరియినది కాని రహస్య పదము"
+  "claimVaultOwnershipDialog.error.wrongPassword": "సరియినది కాని రహస్య పదము",
+  "groupList.edit.group.button": "మార్పు",
+  "user.detail.edit": "మార్పు",
+  "user.detail.username": "వినియోగదారు పేరు",
+  "userEditCreate.button.save": "సేవ్ చేయండి",
+  "userEditCreate.username": "వినియోగదారు పేరు",
+  "userList.edit.user.button": "మార్పు"
 }
