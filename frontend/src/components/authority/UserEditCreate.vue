@@ -1,6 +1,9 @@
 <template>
   <!-- Loading placeholder -->
-  <div v-if="loading" class="text-center p-8 text-gray-500 text-sm">
+  <div v-if="onFetchError">
+    <FetchError :error="onFetchError"/>
+  </div>
+  <div v-else-if="loading" class="text-center p-8 text-gray-500 text-sm">
     {{ t('common.loading') }}
   </div>
 
@@ -229,14 +232,14 @@
 <script setup lang="ts">
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue';
 import { CheckIcon, ChevronUpDownIcon, ExclamationTriangleIcon, EyeIcon, EyeSlashIcon, InformationCircleIcon, TrashIcon, UserIcon } from '@heroicons/vue/24/outline';
-import { base64 } from '@scure/base';
 import { computed, onMounted, reactive, ref, shallowRef, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import backend, { generateFallbackPictureUrl, isAxiosError, isSelectableRealmRole, SelectableRealmRole, UserDto } from '../../common/backend';
 import { FormValidator } from '../../common/formvalidator';
-import { debounce, UTF8 } from '../../common/util';
+import { debounce } from '../../common/util';
 import BreadcrumbNav from '../BreadcrumbNav.vue';
+import FetchError from '../FetchError.vue';
 
 const props = defineProps<{
   id: undefined,
@@ -272,6 +275,7 @@ function resetUserData() {
 const { t } = useI18n({ useScope: 'global' });
 const router = useRouter();
 const loading = ref(true);
+const onFetchError = ref<Error>();
 
 const selectedRoleOptions = computed(() => {
   return data.realmRoles.filter(isSelectableRealmRole);
@@ -306,6 +310,7 @@ onMounted(async () => {
       initialData.value = await backend.users.getUser(props.id, false);
     } catch (error) {
       console.error('Failed to fetch user data:', error);
+      onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
     } finally {
       loading.value = false;
     }

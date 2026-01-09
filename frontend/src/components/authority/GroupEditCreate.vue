@@ -1,6 +1,9 @@
 <template>
   <!-- Loading placeholder -->
-  <div v-if="loading" class="text-center py-10">
+  <div v-if="onFetchError">
+    <FetchError :error="onFetchError"/>
+  </div>
+  <div v-else-if="loading" class="text-center py-10">
     {{ t('common.loading') }}
   </div>
 
@@ -96,6 +99,7 @@ import backend, { generateFallbackPictureUrl, GroupDto, isAxiosError } from '../
 import { FormValidator } from '../../common/formvalidator';
 import { debounce } from '../../common/util';
 import BreadcrumbNav from '../BreadcrumbNav.vue';
+import FetchError from '../FetchError.vue';
 
 const props = defineProps<{
   id: undefined,
@@ -122,6 +126,7 @@ function resetGroupData() {
 const { t } = useI18n({ useScope: 'global' });
 const router = useRouter();
 const loading = ref(true);
+const onFetchError = ref<Error>();
 const errors = ref<Record<string, string>>({});
 const processing = ref(false);
 const onSubmitError = ref<Error>();
@@ -141,6 +146,7 @@ onMounted(async () => {
       initialData.value = await backend.groups.getGroup(props.id, false);
     } catch (error) {
       console.error('Failed to fetch group:', error);
+      onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
     } finally {
       loading.value = false;
     }
