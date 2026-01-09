@@ -114,14 +114,23 @@ export class FormValidator {
   /**
    * Validates image URL by attempting to load it
    */
-  static validateImageUrl(url?: string): Promise<boolean> {
+  static validateImageUrl(url?: string, timeoutMs: number = 1000): Promise<boolean> {
     if (!url) {
       return Promise.resolve(false);
     }
     return new Promise((resolve) => {
+      const timeout = setTimeout(() => {
+        resolve(false);
+      }, timeoutMs);
       const img = new Image();
-      img.onload = () => resolve(true);
-      img.onerror = () => resolve(false);
+      img.onload = () => {
+        clearTimeout(timeout);
+        resolve(true);
+      };
+      img.onerror = () => {
+        clearTimeout(timeout);
+        resolve(false);
+      };
       img.src = url;
     });
   }
