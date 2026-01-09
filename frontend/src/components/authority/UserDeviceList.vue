@@ -7,7 +7,7 @@
         </h3>
         <span class="text-xs text-gray-500">{{ devices.length }}</span>
       </div>
-      <div v-if="info != ''" class="relative group" :title="t('user.detail.legacyDeviceList.info')">
+      <div v-if="info != ''" class="relative group" :title="info">
         <QuestionMarkCircleIcon class="h-4 w-4 text-gray-400"/>
       </div>
     </div>
