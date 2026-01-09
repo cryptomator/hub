@@ -164,11 +164,11 @@ function removePicture() {
   data.pictureUrl = undefined;
 }
 
-function validateForm() {
+async function validateForm(): Promise<boolean> {
   const result = FormValidator.validateGroup({
     name: data.name,
     pictureUrl: data.pictureUrl,
-    isValidImageUrl: isValidImageUrl.value
+    isValidImageUrl: await FormValidator.validateImageUrl(data.pictureUrl)
   });
 
   errors.value = result.errors;
@@ -176,7 +176,7 @@ function validateForm() {
 }
 
 async function onSubmit() {
-  if (!validateForm()) {
+  if (!await validateForm()) {
     return;
   }
 

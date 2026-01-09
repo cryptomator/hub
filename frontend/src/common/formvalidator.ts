@@ -19,7 +19,7 @@ export class FormValidator {
     password: string,
     passwordConfirm: string,
     isEditMode: boolean,
-    pictureUrl?: string | null,
+    pictureUrl?: string,
     isValidImageUrl?: boolean
   }): ValidationResult {
     const errors: Record<string, string> = {};
@@ -61,7 +61,7 @@ export class FormValidator {
    */
   static validateGroup(data: {
     name: string,
-    pictureUrl?: string | null,
+    pictureUrl?: string,
     isValidImageUrl?: boolean
   }): ValidationResult {
     const errors: Record<string, string> = {};
@@ -83,11 +83,11 @@ export class FormValidator {
    * Common validation for picture URLs
    * @private
    */
-  private static validatePictureUrl(pictureUrl: string | undefined | null, isValidImageUrl: boolean | undefined, errorKey: string): string | null {
+  private static validatePictureUrl(pictureUrl: string | undefined, isValidImageUrl: boolean | undefined, errorKey: string): string | undefined {
     if (pictureUrl && !isValidImageUrl) {
       return t(errorKey);
     }
-    return null;
+    return undefined;
   }
 
   /**
@@ -115,12 +115,10 @@ export class FormValidator {
    * Validates image URL by attempting to load it
    */
   static validateImageUrl(url?: string): Promise<boolean> {
+    if (!url) {
+      return Promise.resolve(false);
+    }
     return new Promise((resolve) => {
-      if (!url) {
-        resolve(false);
-        return;
-      }
-
       const img = new Image();
       img.onload = () => resolve(true);
       img.onerror = () => resolve(false);

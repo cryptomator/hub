@@ -329,7 +329,7 @@ function togglePasswordVisibility() {
   passwordInputType.value = passwordInputType.value === 'password' ? 'text' : 'password';
 }
 
-function validateForm() {
+async function validateForm(): Promise<boolean> {
   const result = FormValidator.validateUser({
     firstName: data.firstName,
     lastName: data.lastName,
@@ -339,7 +339,7 @@ function validateForm() {
     passwordConfirm: passwordConfirm.value,
     isEditMode: props.mode === 'EDIT',
     pictureUrl: data.pictureUrl,      
-    isValidImageUrl: isValidImageUrl.value 
+    isValidImageUrl: await FormValidator.validateImageUrl(data.pictureUrl)
   });
   
   errors.value = result.errors;
@@ -380,7 +380,7 @@ function removePicture() {
 }
 
 async function onSubmit() {
-  if (!validateForm()) {
+  if (!await validateForm()) {
     return;
   }
 
