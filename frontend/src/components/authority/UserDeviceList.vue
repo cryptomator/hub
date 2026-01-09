@@ -2,7 +2,7 @@
   <section v-if="visible" class="bg-white rounded-lg shadow-sm overflow-hidden">
     <div class="flex items-center bg-gray-50 px-6 py-4 border-b border-gray-200 space-x-2">
       <div class="flex items-baseline gap-1">
-        <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+        <h3 :id="'deviceListTitle' + id" class="text-sm font-semibold text-gray-900 uppercase tracking-wide">
           {{ title }}
         </h3>
         <span class="text-xs text-gray-500">{{ devices.length }}</span>
@@ -14,11 +14,11 @@
 
     <!-- Search bar -->
     <div class="px-6 py-3 border-b border-gray-200">
-      <label for="legacyDeviceSearch" class="sr-only">{{ t('common.search.placeholder') }}</label>
-      <input id="legacyDeviceSearch" v-model="deviceQuery" :placeholder="t('common.search.placeholder')" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs text-sm border-gray-300 rounded-md disabled:bg-gray-200" />
+      <label :for="'deviceSearch' + id" class="sr-only">{{ t('common.search.placeholder') }}</label>
+      <input :id="'deviceSearch' + id" v-model="deviceQuery" :placeholder="t('common.search.placeholder')" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs text-sm border-gray-300 rounded-md disabled:bg-gray-200" />
     </div>
     <div>
-      <table class="w-full table-fixed divide-y divide-gray-200" aria-describedby="deviceListTitle">
+      <table class="w-full table-fixed divide-y divide-gray-200" :aria-describedby="'deviceListTitle' + id">
         <!-- Desktop Header -->
         <thead v-if="filteredDevices.length != 0" class="bg-gray-50 hidden sm:table-header-group">
           <tr>
@@ -131,7 +131,7 @@
           </template>
 
           <tr v-if="!filteredDevices.length">
-            <td colspan="5" class="py-4 px-6 text-sm text-gray-500 text-center">
+            <td colspan="3" class="py-4 px-6 text-sm text-gray-500 text-center">
               {{ t(deviceQuery ? 'common.nothingFound' : 'common.none') }}
             </td>
           </tr>
@@ -162,12 +162,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { useId, computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { ComputerDesktopIcon, QuestionMarkCircleIcon, DevicePhoneMobileIcon, WindowIcon } from '@heroicons/vue/24/solid';
 import { DeviceDto } from '../../common/backend';
 
 const { t } = useI18n({ useScope: 'global' });
+const id = useId();
 
 const PAGE_SIZE = 10;
 
