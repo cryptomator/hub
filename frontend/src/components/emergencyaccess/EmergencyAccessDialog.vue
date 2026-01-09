@@ -651,8 +651,8 @@ function initProcessType() {
 async function initOwnersAndMembers() {
   try {
     const memberList = await backend.vaults.getMembers(props.vault.id);
-    const initialOwners = (memberList.filter(m => m.role === 'OWNER') as AuthorityDto[]);
-    const initialMembers = memberList.filter(m => m.role === 'MEMBER') as AuthorityDto[];
+    const initialOwners = (memberList.filter(m => m.vaultRole === 'OWNER') as AuthorityDto[]);
+    const initialMembers = memberList.filter(m => m.vaultRole === 'MEMBER') as AuthorityDto[];
 
     existingOwners.value = initialOwners;
     owners.value = [...initialOwners];

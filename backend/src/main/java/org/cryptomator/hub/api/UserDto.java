@@ -1,18 +1,26 @@
 package org.cryptomator.hub.api;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.validation.OnlyBase64Chars;
 import org.cryptomator.hub.validation.ValidJWE;
 
+import java.util.List;
 import java.util.Set;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public final class UserDto extends AuthorityDto {
 
 	private final String email;
+	private final String firstName;
+	private final String lastName;
 	private final String language;
+	private final Set<String> realmRoles;
 	private final Set<DeviceResource.DeviceDto> devices;
 	private final String ecdhPublicKey;
 	private final String ecdsaPublicKey;
@@ -21,11 +29,14 @@ public final class UserDto extends AuthorityDto {
 
 	@JsonCreator
 	public UserDto(
-			@JsonProperty("id") String id,
-			@JsonProperty("name") String name,
+			@JsonProperty("id") @NotNull String id,
+			@JsonProperty("name") @NotNull String name,
 			@JsonProperty("pictureUrl") String pictureUrl,
-			@JsonProperty("email") String email,
+			@JsonProperty("email") @NotNull String email,
+			@JsonProperty("firstName") String firstName,
+			@JsonProperty("lastName") String lastName,
 			@JsonProperty("language") String language,
+			@JsonProperty("realmRoles") @NotNull Set<String> realmRoles,
 			@JsonProperty("devices") Set<DeviceResource.DeviceDto> devices,
 			// Accept either "ecdhPublicKey" or the legacy "publicKey" on input
 			@Nullable @JsonProperty("ecdhPublicKey") @OnlyBase64Chars String ecdhPublicKey,
@@ -37,7 +48,10 @@ public final class UserDto extends AuthorityDto {
 			@Nullable @JsonProperty("setupCode") @ValidJWE String setupCode) {
 		super(id, Type.USER, name, pictureUrl);
 		this.email = email;
+		this.firstName = firstName;
+		this.lastName = lastName;
 		this.language = language;
+		this.realmRoles = realmRoles;
 		this.devices = devices;
 		this.ecdhPublicKey = ecdhPublicKey != null ? ecdhPublicKey : publicKey;
 		this.ecdsaPublicKey = ecdsaPublicKey;
@@ -50,13 +64,16 @@ public final class UserDto extends AuthorityDto {
 			String name,
 			String pictureUrl,
 			String email,
+			String firstName,
+			String lastName,
 			String language,
+			Set<String> realmRoles,
 			Set<DeviceResource.DeviceDto> devices,
 			String ecdhPublicKey,
 			String ecdsaPublicKey,
 			String privateKeys,
 			String setupCode) {
-		this(id, name, pictureUrl, email, language, devices, ecdhPublicKey, ecdhPublicKey, ecdsaPublicKey, privateKeys, privateKeys, setupCode);
+		this(id, name, pictureUrl, email, firstName, lastName, language, realmRoles, devices, ecdhPublicKey, ecdhPublicKey, ecdsaPublicKey, privateKeys, privateKeys, setupCode);
 	}
 
 	@JsonProperty("email")
@@ -64,9 +81,24 @@ public final class UserDto extends AuthorityDto {
 		return email;
 	}
 
+	@JsonProperty("firstName")
+	public String getFirstName() {
+		return firstName;
+	}
+
+	@JsonProperty("lastName")
+	public String getLastName() {
+		return lastName;
+	}
+
 	@JsonProperty("language")
 	public String getLanguage() {
 		return language;
+	}
+
+	@JsonProperty("realmRoles")
+	public Set<String> getRealmRoles() {
+		return realmRoles;
 	}
 
 	@JsonProperty("devices")
@@ -120,11 +152,46 @@ public final class UserDto extends AuthorityDto {
 				user.getName(),
 				user.getPictureUrl(),
 				user.getEmail(),
+				user.getFirstName(),
+				user.getLastName(),
 				user.getLanguage(),
+				Set.of(user.getRealmRoles()),
 				Set.of(),
 				user.getEcdhPublicKey(),
 				user.getEcdsaPublicKey(),
 				null,
 				null);
 	}
+
+	public WithCounts withCounts(long groupsCount, long vaultsCount, long devicesCount) {
+		return new WithCounts(
+				this,
+				devicesCount,
+				groupsCount,
+				vaultsCount);
+	}
+
+	public WithDetails withDetails(List<GroupDto> groups, List<VaultResource.VaultDtoWithRole> accessibleVaults, Set<DeviceResource.DeviceDto> devices, Set<DeviceResource.DeviceDto> legacyDevices) {
+			return new WithDetails(
+					this,
+					groups,
+					accessibleVaults,
+					devices,
+					legacyDevices);
+	}
+
+	public record WithCounts(
+			@JsonUnwrapped UserDto user,
+			@JsonProperty("devicesCount") long devicesCount,
+			@JsonProperty("groupsCount") long groupsCount,
+			@JsonProperty("accessibleVaultCount") long accessibleVaultCount
+	) {}
+
+	public record WithDetails(
+			@JsonUnwrapped UserDto user,
+			@JsonProperty("groups") List<GroupDto> groups,
+			@JsonProperty("accessibleVaults") List<VaultResource.VaultDtoWithRole> accessibleVaults,
+			@JsonProperty("devices") Set<DeviceResource.DeviceDto> devices,
+			@JsonProperty("legacyDevices") Set<DeviceResource.DeviceDto> legacyDevices
+	) {}
 }

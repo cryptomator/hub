@@ -48,7 +48,7 @@ public class VaultRoleFilter implements ContainerRequestFilter {
 	@Override
 	public void filter(ContainerRequestContext requestContext) throws NotFoundException, ForbiddenException, NotAuthorizedException {
 		var annotation = resourceInfo.getResourceMethod().getAnnotation(VaultRole.class);
-		if (annotation.bypassForRealmRole() && requestContext.getSecurityContext().isUserInRole(annotation.realmRole())) {
+		if (annotation.bypassForRealmRole() && requestContext.getSecurityContext().isUserInRole(annotation.realmRole().kcName())) {
 			// user has required realm role, so we skip the vault role check:
 			return;
 		}
@@ -86,7 +86,7 @@ public class VaultRoleFilter implements ContainerRequestFilter {
 				case NOT_FOUND -> throw new NotFoundException("Vault not found");
 				case PASS -> {}
 				case REQUIRE_REALM_ROLE -> {
-					if (!requestContext.getSecurityContext().isUserInRole(annotation.realmRole())) {
+					if (!requestContext.getSecurityContext().isUserInRole(annotation.realmRole().kcName())) {
 						throw new ForbiddenException("Missing role " + annotation.realmRole());
 					}
 				}

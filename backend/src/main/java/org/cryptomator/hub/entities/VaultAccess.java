@@ -30,7 +30,20 @@ import java.util.stream.Stream;
 				INNER JOIN FETCH va.authority
 				WHERE va.id.vaultId = :vaultId
 				""")
-@NamedQuery(name = "VaultAccess.deleteForVault",
+@NamedQuery(name = "VaultAccess.countByAuthority",
+		query = """
+				SELECT COUNT(va)
+				FROM VaultAccess va
+				WHERE va.id.authorityId = :authorityId
+				""")
+@NamedQuery(name = "VaultAccess.findByAuthority",
+		query = """
+				SELECT va
+				FROM VaultAccess va
+				INNER JOIN FETCH va.vault
+				WHERE va.id.authorityId = :authorityId
+				""")
+@NamedQuery(name = "VaultAccess.deleteSpecific",
 		query = """
 				DELETE FROM VaultAccess va
 				WHERE va.id.vaultId = :vaultId
@@ -171,8 +184,16 @@ public class VaultAccess {
 			return find("#VaultAccess.forVault", Parameters.with("vaultId", vaultId)).stream();
 		}
 
+		public long countByAuthority(String authorityId) {
+			return count("#VaultAccess.countByAuthority", Parameters.with("authorityId", authorityId));
+		}
+
+		public Stream<VaultAccess> findByAuthority(String authorityId) {
+			return find("#VaultAccess.findByAuthority", Parameters.with("authorityId", authorityId)).stream();
+		}
+
 		public long delete(UUID vaultId, Iterable<String> authorityIds) {
-			return delete("#VaultAccess.deleteForVault", Parameters.with("vaultId", vaultId).and("authorityIds", authorityIds));
+			return delete("#VaultAccess.deleteSpecific", Parameters.with("vaultId", vaultId).and("authorityIds", authorityIds));
 		}
 	}
 }

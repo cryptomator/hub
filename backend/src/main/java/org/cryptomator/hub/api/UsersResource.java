@@ -7,8 +7,12 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
@@ -21,6 +25,7 @@ import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.AccessToken;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.EffectiveWot;
+import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.EmergencyRecoveryProcess;
 import org.cryptomator.hub.entities.LegacyDevice;
 import org.cryptomator.hub.entities.User;
@@ -29,6 +34,8 @@ import org.cryptomator.hub.entities.WotEntry;
 import org.cryptomator.hub.entities.events.AuditEvent;
 import org.cryptomator.hub.entities.events.EventLogger;
 import org.cryptomator.hub.entities.events.VaultKeyRetrievedEvent;
+import org.cryptomator.hub.keycloak.KeycloakAdminService;
+import org.cryptomator.hub.keycloak.RealmRole;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
@@ -70,6 +77,9 @@ public class UsersResource {
 
 	@Inject
 	JsonWebToken jwt;
+
+	@Inject
+	KeycloakAdminService keycloakAdminService;
 
 	@PUT
 	@Path("/me")
@@ -114,7 +124,7 @@ public class UsersResource {
 	 */
 	private void updateDevices(User userEntity, UserDto userDto) {
 		if (userDto.getDevices() != null) {
-			var devices = userEntity.devices.stream().collect(Collectors.toUnmodifiableMap(Device::getId, Function.identity()));
+			var devices = userEntity.getDevices().stream().collect(Collectors.toUnmodifiableMap(Device::getId, Function.identity()));
 			var updatedDevices = userDto.getDevices().stream()
 					.filter(d -> devices.containsKey(d.id())) // only look at DTOs for which we find a matching existing entity
 					.map(dto -> {
@@ -170,7 +180,7 @@ public class UsersResource {
 		User user = userRepo.findById(jwt.getSubject());
 		Set<DeviceResource.DeviceDto> deviceDtos;
 		if (withLastAccess) {
-			var devices = user.devices.stream().collect(Collectors.toMap(Device::getId, Function.identity()));
+			var devices = user.getDevices().stream().collect(Collectors.toMap(Device::getId, Function.identity()));
 			var events = auditEventRepo.findLastVaultKeyRetrieve(devices.keySet()).collect(Collectors.toMap(VaultKeyRetrievedEvent::getDeviceId, Function.identity()));
 			deviceDtos = devices.values().stream().map(d -> {
 				var event = events.get(d.getId());
@@ -181,7 +191,7 @@ public class UsersResource {
 		} else {
 			deviceDtos = Set.of();
 		}
-		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getLanguage(), deviceDtos, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
+		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getLanguage(), Set.of(user.getRealmRoles()), deviceDtos, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
 	}
 
 	/**
@@ -199,13 +209,13 @@ public class UsersResource {
 	@APIResponse(responseCode = "404", description = "no user matching the subject of the JWT passed as Bearer Token")
 	public UserDto getMeWithLegacyDevicesAndAccess() {
 		User user = userRepo.findById(jwt.getSubject());
-		var legacyDevices = user.legacyDevices.stream().collect(Collectors.toMap(LegacyDevice::getId, Function.identity()));
+		var legacyDevices = user.getLegacyDevices().stream().collect(Collectors.toMap(LegacyDevice::getId, Function.identity()));
 		var events = auditEventRepo.findLastVaultKeyRetrieve(legacyDevices.keySet()).collect(Collectors.toMap(VaultKeyRetrievedEvent::getDeviceId, Function.identity()));
 		var deviceDtos = legacyDevices.values().stream().map(d -> {
 			var event = events.get(d.getId());
 			return DeviceResource.DeviceDto.fromEntity(d, event);
 		}).collect(Collectors.toSet());
-		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getLanguage(), deviceDtos, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
+		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getLanguage(), Set.of(user.getRealmRoles()), deviceDtos, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
 	}
 
 	@POST
@@ -232,11 +242,14 @@ public class UsersResource {
 
 	@GET
 	@Path("/")
-	@RolesAllowed("user")
+	@RolesAllowed("admin")
 	@Produces(MediaType.APPLICATION_JSON)
-	@Operation(summary = "list all users")
-	public List<UserDto> getAll() {
-		return userRepo.findAll().stream().map(UserDto::justPublicInfo).toList();
+	@Transactional
+	@Operation(summary = "list all users with counts")
+	public List<UserDto.WithCounts> getAll() {
+		return userRepo.findAllWithMetrics().stream()
+				.map(user -> UserDto.justPublicInfo(user).withCounts(user.metrics.getDirectGroupMembershipCount(), user.metrics.getEffectiveVaultAccessCount(), user.metrics.getDeviceCount()))
+				.toList();
 	}
 
 	@PUT
@@ -295,4 +308,158 @@ public class UsersResource {
 			return new TrustedUserDto(entity.getId().getTrustedUserId(), List.of(entity.getSignatureChain()));
 		}
 	}
+
+	@POST
+	@Path("/")
+	@RolesAllowed("admin")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Transactional
+	@Operation(summary = "create a new user in Keycloak")
+	@APIResponse(responseCode = "201", description = "user created")
+	@APIResponse(responseCode = "400", description = "invalid input")
+	@APIResponse(responseCode = "409", description = "user already exists")
+	public Response createUser(@Valid @NotNull CreateUserDto dto) {
+		try {
+			var userRepresentation = keycloakAdminService.createUser(
+					dto.name(),
+					dto.email(),
+					dto.firstName(),
+					dto.lastName(),
+					dto.password(),
+					dto.pictureUrl(),
+					dto.groupIds()
+			);
+
+			if (!dto.realmRoles().isEmpty()) {
+				keycloakAdminService.updateUserRoles(userRepresentation.getId(), dto.realmRoles());
+			}
+
+			User user = userRepo.findById(userRepresentation.getId());
+			if (user == null) {
+				throw new InternalServerErrorException("User was created in Keycloak but not found in database after sync");
+			}
+
+			return Response.created(URI.create("./" + user.getId()))
+					.entity(UserDto.justPublicInfo(user))
+					.build();
+		} catch (ClientErrorException e) {
+			// Return 409 with specific error message (EMAIL_EXISTS or USERNAME_EXISTS)
+			return Response.status(Response.Status.CONFLICT)
+					.entity(e.getMessage())
+					.type(MediaType.TEXT_PLAIN)
+					.build();
+		}
+	}
+
+	@GET
+	@Path("/{id}")
+	@RolesAllowed("admin")
+	@Produces(MediaType.APPLICATION_JSON)
+	@NoCache
+	@Transactional
+	@Operation(summary = "get a specific user")
+	@APIResponse(responseCode = "200", description = "user found")
+	@APIResponse(responseCode = "404", description = "user not found")
+	public UserDto.WithDetails getUser(@PathParam("id") String userId) {
+		User user = userRepo.findByIdWithEagerDetails(userId);
+		if (user == null) {
+			throw new NotFoundException("User not found: " + userId);
+		}
+
+
+		// Fetch groups for the user
+		List<GroupDto> groups = user.getDirectGroupMemberships().stream()
+				.map(GroupDto::fromEntity)
+				.toList();
+
+		// Fetch vaults with roles for the user
+		List<VaultResource.VaultDtoWithRole> vaults = user.getAccessibleVaults().stream()
+				.map(eva -> VaultResource.VaultDtoWithRole.from(eva.getVault(), eva.getRole()))
+				.toList();
+
+		// Fetch devices (modern devices)
+		Set<DeviceResource.DeviceDto> devices = user.getDevices().stream()
+				.map(DeviceResource.DeviceDto::fromEntity)
+				.collect(Collectors.toSet());
+
+		// Fetch legacy devices
+		@SuppressWarnings("removal")
+		Set<DeviceResource.DeviceDto> legacyDevices = user.getLegacyDevices().stream()
+				.map(DeviceResource.DeviceDto::fromEntity)
+				.collect(Collectors.toSet());
+
+		return UserDto.justPublicInfo(user).withDetails(
+				groups,
+				vaults,
+				devices,
+				legacyDevices
+		);
+	}
+
+	@PUT
+	@Path("/{id}")
+	@RolesAllowed("admin")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Transactional
+	@Operation(summary = "update a user in Keycloak")
+	@APIResponse(responseCode = "200", description = "user updated")
+	@APIResponse(responseCode = "403", description = "user has federated identity and cannot be modified")
+	@APIResponse(responseCode = "404", description = "user not found")
+	public UserDto updateUser(@PathParam("id") String userId, @Valid @NotNull UpdateUserDto dto) {
+		keycloakAdminService.updateUser(
+				userId,
+				dto.email(),
+				dto.firstName(),
+				dto.lastName(),
+				dto.password(),
+				dto.pictureUrl()
+		);
+
+		keycloakAdminService.updateUserRoles(userId, dto.realmRoles());
+
+		User user = userRepo.findById(userId);
+		if (user == null) {
+			throw new NotFoundException("User not found after update: " + userId);
+		}
+
+		return UserDto.justPublicInfo(user);
+	}
+
+	@DELETE
+	@Path("/{id}")
+	@RolesAllowed("admin")
+	@Transactional
+	@Operation(summary = "delete a user from Keycloak")
+	@APIResponse(responseCode = "204", description = "user deleted")
+	@APIResponse(responseCode = "403", description = "user has federated identity and cannot be deleted")
+	@APIResponse(responseCode = "404", description = "user not found")
+	public Response deleteUser(@PathParam("id") String userId) {
+		keycloakAdminService.deleteUser(userId);
+		return Response.noContent().build();
+	}
+
+	public record CreateUserDto(
+			@JsonProperty("name") @NotNull String name,
+			@JsonProperty("email") @NotNull String email,
+			@JsonProperty("firstName") @NotNull String firstName,
+			@JsonProperty("lastName") @NotNull String lastName,
+			@JsonProperty("password") @NotNull String password,
+			@JsonProperty("pictureUrl") @Size(max = 255) String pictureUrl,
+			@JsonProperty("groupIds") Set<String> groupIds,
+			@JsonProperty("realmRoles") @NotNull Set<RealmRole> realmRoles
+	) {
+	}
+
+	public record UpdateUserDto(
+			@JsonProperty("email") String email,
+			@JsonProperty("firstName") String firstName,
+			@JsonProperty("lastName") String lastName,
+			@JsonProperty("password") String password,
+			@JsonProperty("pictureUrl") @Size(max = 255) String pictureUrl,
+			@JsonProperty("realmRoles") @NotNull Set<RealmRole> realmRoles
+	) {
+	}
+
 }

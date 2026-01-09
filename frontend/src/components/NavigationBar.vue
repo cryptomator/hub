@@ -16,8 +16,8 @@
             <span class="font-headline font-bold text-primary ml-2 pb-px">CRYPTOMATOR HUB</span>
           </router-link>
           <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
-            <router-link v-for="item in navigation" :key="item.name" v-slot="{ isActive, href, navigate }" :to="item.to" custom>
-              <a :href="href" :class="[isActive ? 'border-primary text-white' : 'border-transparent text-gray-300 hover:border-gray-300 hover:text-white', ' inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium']" @click="navigate">
+            <router-link v-for="item in navigation" :key="item.name" v-slot="{ href, navigate }" :to="item.to" custom>
+              <a :href="href" :class="[route.path.startsWith(item.to) ? 'border-primary text-white' : 'border-transparent text-gray-300 hover:border-gray-300 hover:text-white', 'inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium']" @click="navigate">
                 {{ t(item.name) }}
               </a>
             </router-link>
@@ -73,12 +73,13 @@ import { FunctionalComponent, onMounted, ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auth from '../common/auth';
 import backend, { UserDto, VaultDto, LicenseUserInfoDto } from '../common/backend';
-
+import { useRoute } from 'vue-router';
 
 const { t } = useI18n({ useScope: 'global' });
+const route = useRoute();
 
 const navigation = ref([
-  { name: 'nav.vaults', to: '/app/vaults' },
+  { name: 'nav.vaults', to: '/app/vaults' }
 ]);
 
 type ProfileDropdownItem = { icon: FunctionalComponent, name: string, to: string };
@@ -114,6 +115,10 @@ const isCommunityLicense = computed(() => {
 
 onMounted(async () => {
   if ((await auth).hasRole('admin')) {
+    navigation.value.push(
+      { name: 'nav.users', to: '/app/users' },
+      { name: 'nav.groups', to: '/app/groups' }
+    );
     profileDropdown.value = [profileDropdownSections.infoSection, profileDropdownSections.adminSection, profileDropdownSections.hubSection];
   } else {
     profileDropdown.value = [profileDropdownSections.infoSection, profileDropdownSections.hubSection];

@@ -107,10 +107,12 @@ import { Combobox, ComboboxInput } from '@headlessui/vue';
 import { useI18n } from 'vue-i18n';
 import TrustDetails from './TrustDetails.vue';
 
+// TODO: consolidate types
 export type Item = {
   id: string;
   name: string;
   pictureUrl?: string;
+  realmRoles?: string[];
   type: 'USER' | 'GROUP';
   memberSize?: number;
 

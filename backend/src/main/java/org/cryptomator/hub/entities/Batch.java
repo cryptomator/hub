@@ -23,15 +23,19 @@ public class Batch {
 		return new Batch(size);
 	}
 
+	// TODO: add jspecify annotations
 	public <T> void run(Collection<T> collection, Consumer<List<T>> job) {
-		List<T> list = collection instanceof List<T> l ? l : List.copyOf(collection);
-		for(int i = 0; i < list.size(); i += size) {
-			List<T> sublist = list.subList(i, Math.min(i + size, list.size()));
-			job.accept(sublist);
-		}
+		run(collection, null, (batch, ignored) -> {
+			job.accept(batch);
+			return null;
+		});
 	}
 
+	// TODO: add jspecify annotations
 	public <T, R> R run(Collection<T> collection, R initialValue, BiFunction<List<T>, R, R> job) {
+		if (collection == null || collection.isEmpty()) {
+			return initialValue;
+		}
 		List<T> list = collection instanceof List<T> l ? l : List.copyOf(collection);
 		R result = initialValue;
 		for(int i = 0; i < list.size(); i += size) {
