@@ -235,7 +235,7 @@ import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import backend, { generateFallbackPictureUrl, isAxiosError, isSelectableRealmRole, SelectableRealmRole, UserDto } from '../../common/backend';
 import { FormValidator } from '../../common/formvalidator';
-import { UTF8 } from '../../common/util';
+import { debounce, UTF8 } from '../../common/util';
 import BreadcrumbNav from '../BreadcrumbNav.vue';
 
 const props = defineProps<{
@@ -292,13 +292,11 @@ const passwordStrength = ref<'weak' | 'medium' | 'strong' | ''>('');
 
 const isValidImageUrl = ref<boolean>(false);
 const previewJdenticon = ref<string>();
+const debouncedValidateImageUrl = debounce(async (url?: string) => {
+  isValidImageUrl.value = await FormValidator.validateImageUrl(url);
+}, 500);
 
-watch(() => data.pictureUrl,
-  async (newUrl) => {
-    isValidImageUrl.value = await FormValidator.validateImageUrl(newUrl);
-  },
-  { immediate: true }
-);
+watch(() => data.pictureUrl, debouncedValidateImageUrl, { immediate: true });
 
 onMounted(async () => {
   loading.value = true;

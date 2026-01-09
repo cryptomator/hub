@@ -127,13 +127,11 @@ const processing = ref(false);
 const onSubmitError = ref<Error>();
 const isValidImageUrl = ref<boolean>(false);
 const previewJdenticon = ref<string>();
+const debouncedValidateImageUrl = debounce(async (url?: string) => {
+  isValidImageUrl.value = await FormValidator.validateImageUrl(url);
+}, 500);
 
-watch(() => data.pictureUrl,
-  async (newUrl) => {
-    isValidImageUrl.value = await FormValidator.validateImageUrl(newUrl);
-  },
-  { immediate: true }
-);
+watch(() => data.pictureUrl, debouncedValidateImageUrl, { immediate: true });
 
 onMounted(async () => {
   loading.value = true;

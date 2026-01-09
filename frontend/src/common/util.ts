@@ -68,8 +68,8 @@ export class Deferred<T> {
  * @param wait time to wait before calling function
  * @returns debounced function
  */
-// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-export const debounce = (func: Function, wait = 300) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function debounce<F extends (...args: any[]) => any>(func: F, wait = 300): F & { cancel: () => void } {
   let timeoutId: ReturnType<typeof setTimeout>;
   function debounceCore(this: unknown, ...args: unknown[]) {
     cancel();
@@ -79,8 +79,8 @@ export const debounce = (func: Function, wait = 300) => {
     clearTimeout(timeoutId);
   }
   debounceCore.cancel = cancel;
-  return debounceCore;
-};
+  return debounceCore as F & { cancel: () => void };
+}
 
 // based on https://stackoverflow.com/a/18639903/4014509
 export class CRC32 {
