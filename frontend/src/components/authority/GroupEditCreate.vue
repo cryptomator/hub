@@ -110,7 +110,7 @@ const props = defineProps<{
 }>();
 
 type EditableGroupData = Pick<GroupDto, 'name' | 'pictureUrl'>;
-const initialData = shallowRef<EditableGroupData>({ name: '', pictureUrl: '' });
+const initialData = shallowRef<EditableGroupData>({ name: '', pictureUrl: undefined });
 const data = reactive<EditableGroupData>(initialData.value);
 
 const groupDataHasUnsavedChanges = computed(() => {
@@ -151,10 +151,7 @@ onMounted(async () => {
       loading.value = false;
     }
   } else {
-    initialData.value = {
-      name: '',
-      pictureUrl: ''
-    };
+    initialData.value = { name: '', pictureUrl: undefined };
     loading.value = false;
   }
   resetGroupData();

@@ -315,7 +315,7 @@ onMounted(async () => {
       loading.value = false;
     }
   } else {
-    initialData.value = { firstName: '', lastName: '', name: '', email: '', realmRoles: [], pictureUrl:'' };
+    initialData.value = { firstName: undefined, lastName: undefined, name: '', email: '', realmRoles: [], pictureUrl: undefined };
     loading.value = false;
   }
   resetUserData();
