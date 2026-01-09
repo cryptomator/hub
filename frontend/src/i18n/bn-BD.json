@@ -4,12 +4,15 @@
   "common.close": "বন্ধ করুন",
   "common.copied": "কপি হয়েছে!",
   "common.copy": "কপি",
+  "common.create": "তৈরি করুন",
   "common.download": "ডাউনলোড",
+  "common.edit": "এডিট",
   "common.next": "পরবর্তী",
   "common.previous": "পিছনে",
   "common.refresh": "রিফ্রেশ",
   "common.remove": "বাতিল",
   "common.retry": "পুনরায় চেষ্টা করুন",
+  "common.save": "সংরক্ষণ করুন",
   "common.share": "শেয়ার",
   "common.show": "দেখান",
   "admin.webOfTrust.information": "আরও জানুন।",
@@ -20,5 +23,11 @@
   "createVault.enterVaultDetails.vaultName": "ভোল্ট এর নাম",
   "createVault.showRecoveryKey.submit": "ভোল্ট তৈরি করুন",
   "editVaultMetadataDialog.vaultName": "ভোল্ট এর নাম",
-  "legacyDeviceList.description.information": "আরও জানুন।"
+  "groupList.edit.group.button": "এডিট",
+  "legacyDeviceList.description.information": "আরও জানুন।",
+  "user.detail.edit": "এডিট",
+  "user.detail.username": "ব্যবহারকারীর নাম",
+  "userEditCreate.button.save": "সংরক্ষণ করুন",
+  "userEditCreate.username": "ব্যবহারকারীর নাম",
+  "userList.edit.user.button": "এডিট"
 }
