@@ -6,12 +6,13 @@
   <FetchError v-else-if="onFetchError" :error="onFetchError" :retry="fetchData" />
 
   <div v-else class="flex flex-col">
-    <h2 class="text-2xl font-bold leading-9 text-gray-900 sm:text-3xl sm:truncate mb-4">
+    <h2 id="userListTitle" class="text-2xl font-bold leading-9 text-gray-900 sm:text-3xl sm:truncate mb-4">
       {{ t('users.title') }}
     </h2>
     <!-- Searchbar + Createbutton -->
     <div class="flex flex-wrap sm:flex-nowrap justify-between items-center gap-3 mb-4">
-      <input v-model="query" type="text" :placeholder="t('userList.search.placeholder')" class="flex-1 focus:ring-primary focus:border-primary shadow-xs text-sm border-gray-300 rounded-md"/>
+      <label for="userSearch" class="sr-only">{{ t('common.search.placeholder') }}</label>
+      <input id="userSearch" v-model="query" type="text" :placeholder="t('common.search.placeholder')" class="flex-1 focus:ring-primary focus:border-primary shadow-xs text-sm border-gray-300 rounded-md"/>
       <button type="button" class="bg-primary text-white text-sm font-medium px-4 py-2 rounded-md shadow-xs hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showCreateUser()">{{ t('userList.create.button') }}</button>
     </div>
     
