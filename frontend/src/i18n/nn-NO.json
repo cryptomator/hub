@@ -10,5 +10,8 @@
   "createVault.enterVaultDetails.title": "Opprett kvelven",
   "createVault.enterVaultDetails.vaultName": "Namn på kvelven",
   "createVault.showRecoveryKey.submit": "Opprett kvelven",
-  "editVaultMetadataDialog.vaultName": "Namn på kvelven"
+  "editVaultMetadataDialog.vaultName": "Namn på kvelven",
+  "userEditCreate.password": "Passord",
+  "userEditCreate.passwordStrong": "Sterkt",
+  "userEditCreate.passwordWeak": "Svakt"
 }
