@@ -2,7 +2,7 @@
   <section class="bg-white rounded-lg shadow-sm overflow-hidden">
     <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex items-center justify-between">
       <div class="flex items-baseline gap-1">
-        <h3 class="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+        <h3 id="membersTitle" class="text-sm font-semibold text-gray-900 uppercase tracking-wide">
           {{ t('group.detail.members') }}
         </h3>
         <span class="text-xs text-gray-500">{{ members.length }}</span>
@@ -20,7 +20,7 @@
 
     <!-- User table -->
     <div class="overflow-x-auto">
-      <table class="min-w-full divide-y divide-gray-300" aria-describedby="usersTitle">
+      <table class="min-w-full divide-y divide-gray-300" aria-describedby="membersTitle">
         <thead class="sr-only">
           <tr>
             <th scope="col">{{ t('common.member') }}</th>

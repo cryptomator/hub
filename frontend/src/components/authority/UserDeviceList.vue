@@ -74,7 +74,7 @@
             <!-- Mobile -->
             <tr class="sm:hidden">
               <td class="px-4 py-4 text-sm text-gray-900">
-                <div class="flex items-top gap-2">
+                <div class="flex items-start gap-2">
                   <span v-if="device.type == 'BROWSER'" :title="'Browser'">
                     <WindowIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
                   </span>
