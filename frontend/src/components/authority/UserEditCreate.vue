@@ -270,6 +270,9 @@ function resetUserData() {
   data.email = initialData.value.email;
   data.realmRoles = [...initialData.value.realmRoles];
   data.pictureUrl = initialData.value.pictureUrl;
+  
+  password.value = '';
+  passwordConfirm.value = '';
 }
 
 const { t } = useI18n({ useScope: 'global' });
