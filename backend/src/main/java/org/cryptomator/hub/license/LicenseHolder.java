@@ -25,7 +25,7 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.HexFormat;
 import java.util.Optional;
-import java.util.UUID;
+import java.util.Set;
 
 @ApplicationScoped
 public class LicenseHolder {
@@ -200,14 +200,8 @@ public class LicenseHolder {
 		return Preconditions.checkNotNull(license);
 	}
 
-	/**
-	 * Checks if the license is set.
-	 *
-	 * @return {@code true}, if the license _is not null_. Otherwise false.
-	 */
-	@Deprecated // FIXME remove this method!
-	public boolean isSet() {
-		return license != null;
+	public HubLicenseEntitlements getEntitlements() {
+		return license.getClaim("org.cryptomator.hub.entitlements").as(HubLicenseEntitlements.class);
 	}
 
 	/**
@@ -224,8 +218,13 @@ public class LicenseHolder {
 	 *
 	 * @return Number of seats of the license
 	 */
-	public long getSeats() {
-		return Preconditions.checkNotNull(license).getClaim("seats").asLong();
+	public long getSeats() { // TODO: deprecate this method in favour of entitlements.seats()?
+		var entitlements = getEntitlements();
+		if (entitlements != null) {
+			return entitlements.seats();
+		} else {
+			return Preconditions.checkNotNull(license).getClaim("seats").asLong();
+		}
 	}
 
 	public boolean isManagedInstance() {

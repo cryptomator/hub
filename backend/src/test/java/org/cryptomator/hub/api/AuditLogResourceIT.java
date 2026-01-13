@@ -4,6 +4,7 @@ import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.restassured.RestAssured;
+import org.cryptomator.hub.license.HubLicenseEntitlements;
 import org.cryptomator.hub.license.LicenseHolder;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeAll;
@@ -30,7 +31,9 @@ public class AuditLogResourceIT {
 
 	@BeforeEach
 	void beforeEach() {
-		Mockito.doReturn(true).when(licenseHolder).isSet();
+		var licenseEntitlements = Mockito.mock(HubLicenseEntitlements.class);
+		Mockito.doReturn(licenseEntitlements).when(licenseHolder).getEntitlements();
+		Mockito.doReturn(Long.MAX_VALUE).when(licenseEntitlements).auditLogRetentionDays(); // unlimited retention for tests
 		Mockito.doReturn(false).when(licenseHolder).isExpired();
 	}
 

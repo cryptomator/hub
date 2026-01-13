@@ -293,9 +293,17 @@ public class VaultResource {
 		try {
 			var access = legacyAccessTokenRepo.unlock(vaultId, deviceId, jwt.getSubject());
 			eventLogger.logVaultKeyRetrieved(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.SUCCESS, ipAddress, deviceId);
-			var subscriptionStateHeaderName = "Hub-Subscription-State";
-			var subscriptionStateHeaderValue = license.isSet() ? "ACTIVE" : "INACTIVE"; // license expiration is not checked here, because it is checked in the ActiveLicense filter // FIXME: we need to refactor this header
-			return Response.ok(access.getJwe()).header(subscriptionStateHeaderName, subscriptionStateHeaderValue).build();
+			var response = Response.ok(access.getJwe());
+			var iosLicense = license.getEntitlements().iosLicense();
+			var androidLicense = license.getEntitlements().androidLicense();
+			if (iosLicense != null) {
+				response = response.header("Hub-Subscription-State", "ACTIVE"); // license expiration is not checked here, because it is checked in the ActiveLicense filter
+				response = response.header("Hub-iOS-License", iosLicense);
+			}
+			if (androidLicense != null) {
+				response = response.header("Hub-Android-License", androidLicense);
+			}
+			return response.build();
 		} catch (NoResultException e) {
 			eventLogger.logVaultKeyRetrieved(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.UNAUTHORIZED, ipAddress, deviceId);
 			throw new ForbiddenException("Access to this device not granted.");
@@ -335,9 +343,17 @@ public class VaultResource {
 		var access = accessTokenRepo.unlock(vaultId, jwt.getSubject());
 		if (access != null) {
 			eventLogger.logVaultKeyRetrieved(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.SUCCESS, ipAddress, deviceId);
-			var subscriptionStateHeaderName = "Hub-Subscription-State";
-			var subscriptionStateHeaderValue = license.isSet() ? "ACTIVE" : "INACTIVE"; // license expiration is not checked here, because it is checked in the ActiveLicense filter // FIXME: we need to refactor this header
-			return Response.ok(access.getVaultKey(), MediaType.TEXT_PLAIN_TYPE).header(subscriptionStateHeaderName, subscriptionStateHeaderValue).build();
+			var response = Response.ok(access.getVaultKey(), MediaType.TEXT_PLAIN_TYPE);
+			var iosLicense = license.getEntitlements().iosLicense();
+			var androidLicense = license.getEntitlements().androidLicense();
+			if (iosLicense != null) {
+				response = response.header("Hub-Subscription-State", "ACTIVE"); // license expiration is not checked here, because it is checked in the ActiveLicense filter
+				response = response.header("Hub-iOS-License", iosLicense);
+			}
+			if (androidLicense != null) {
+				response = response.header("Hub-Android-License", androidLicense);
+			}
+			return response.build();
 		} else if (vaultRepo.findById(vaultId) == null) {
 			throw new NotFoundException("No such vault.");
 		} else {
