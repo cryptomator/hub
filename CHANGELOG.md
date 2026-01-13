@@ -151,6 +151,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Added "Browser Language" option to language selection dropdown, enabling users to revert to browser default language (#324)
+- Hide Archive/Reactivate Vault actions for admins without ownership rights (#379)
 - Reload device lists upon device removal
 - Added pointer cursor to device remove "button" text
 - Show device only when available in audit log vault key retrieve event
