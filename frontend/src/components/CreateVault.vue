@@ -113,17 +113,19 @@
           </div>
           <div class="mt-3 mb-3 px-4 sm:mt-5">
             <h3 class="text-lg leading-6 font-medium text-gray-900 text-center">
-              Define Emergency Access Conditions
+              {{ t('createVault.emergencyAccessDetails.title') }}
             </h3>
             <div class="mt-2">
               <p class="text-sm text-gray-500 text-center">
-                Desc
+                {{ allowChangingDefaults
+                  ? t('createVault.emergencyAccessDetails.description')
+                  : t('createVault.emergencyAccessDetails.description.adminDefined') }}
               </p>
             </div>
             <div class="relative">
               <div class="sm:grid sm:grid-cols-2 sm:items-center sm:gap-2 pt-2 pb-2">
                 <label for="coundcilMembers" class="text-sm font-medium text-gray-700 flex items-center">
-                  Council Members
+                  {{ t('emergencyAccess.label.councilMembers') }}
                 </label>
               </div>
               <MultiUserSelectInputGroup
@@ -136,13 +138,13 @@
               <div v-if="minMembers - emergencyCouncilMembers.length > 0" class="flex items-start gap-2 rounded-md border border-yellow-200 bg-yellow-50 p-1 text-sm text-gray-900 mt-1">
                 <span class="leading-5">
                   <span class="text-gray-600">
-                    Select at least {{ minMembers - emergencyCouncilMembers.length }} more council member. 
+                    {{ t('emergencyAccess.validation.selectMoreCouncilMembers', [minMembers - emergencyCouncilMembers.length]) }}
                   </span>
                 </span>
               </div>
             </div>
             <label class="block text-sm font-medium text-gray-700 pt-4">
-              Example Recovery
+              {{ t('emergencyAccess.label.exampleRecovery') }}
             </label>
             <EmergencyScenarioVisualization
               :selected-users="emergencyCouncilMembers"
@@ -154,7 +156,7 @@
                 class="inline-flex items-center gap-2 rounded-full bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800"
               >
                 <ExclamationTriangleIcon class="h-4 w-4" aria-hidden="true" />
-                No Redundancy
+                {{ t('emergencyAccess.noRedundancy') }}
               </span>
             </div>
           </div>
@@ -539,16 +541,16 @@ async function splitRecoveryKey() {
     }
 
     if (requiredKeyShares.value == null || requiredKeyShares.value < 1) {
-      throw new Error('At least 2 Emergency Key Shares are required.');
+      throw new Error(t('grantEmergencyAccessDialog.error.keySharesRequired'));
     }
 
     if (emergencyCouncilMembers.value.length < 1) {
-      throw new Error('At least 2 Council Members are required.');
+      throw new Error(t('grantEmergencyAccessDialog.error.councilMembersRequired'));
     }
 
     if (emergencyCouncilMembers.value.length < requiredKeyShares.value) {
       throw new Error(
-        'Too few Council Members. Add more or lower the required Emergency Key Shares.'
+        t('grantEmergencyAccessDialog.error.tooFewCouncilMembers')
       );
     }
 

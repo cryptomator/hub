@@ -192,7 +192,7 @@
         <!-- setup emergencyAccess button -->
         <button v-if="!hasEmergencyKeys && vaultRole == 'OWNER' && !isCommunityLicense && settings?.enableEmergencyAccess" type="button" class="inline-flex items-center justify-center gap-2 bg-white py-2 px-4 border border-gray-300 rounded-md shadow-xs text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showGrantEmergencyAccessDialog()">
           <ExclamationTriangleIcon class="h-5 w-5 text-yellow-500" />
-          <span>Setup Emergency Access Council</span>
+          <span>{{ t('vaultDetails.emergencyAccess.setupCouncil') }}</span>
         </button>
         <!-- fix emergency council size -->
         <button
@@ -202,7 +202,7 @@
           @click="showGrantEmergencyAccessDialog()"
         >
           <ExclamationTriangleIcon class="h-5 w-5 text-yellow-500" />
-          <span>Fix Emergency Access Council</span>
+          <span>{{ t('vaultDetails.emergencyAccess.fixCouncil') }}</span>
         </button>
         <!-- archiveVault button -->
         <button v-if="(vaultRole == 'OWNER' || isAdmin)" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white  hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showArchiveVaultDialog()">

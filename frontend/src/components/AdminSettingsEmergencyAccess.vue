@@ -1,10 +1,10 @@
 <template>
   <section class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6">
-    <h3 class="text-lg font-medium leading-6 text-gray-900">Emergency Access</h3>
+    <h3 class="text-lg font-medium leading-6 text-gray-900">{{ t('admin.emergencyAccess.title') }}</h3>
     <p class="mt-1 text-sm text-gray-500 w-full">
-      Configure Key Splitting for Vault Recovery.
+      {{ t('admin.emergencyAccess.description') }}
       <a href="https://docs.cryptomator.org/hub/admin/#" target="_blank" class="ml-1 inline-flex items-center text-primary underline hover:text-primary-darker">
-        Learn more.
+        {{ t('admin.emergencyAccess.learnMore') }}
         <ArrowRightIcon class="ml-1 h-4 w-4" aria-hidden="true" />
       </a>
     </p>
@@ -17,7 +17,7 @@
         class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
       />
       <label for="enableEmergencyAcces" class="ml-2 text-sm text-gray-500">
-        Enable Emergency Access.
+        {{ t('admin.emergencyAccess.enable') }}
       </label>
     </div>
 
@@ -37,10 +37,10 @@
             <span class="inline-flex items-center gap-2">
               <ExclamationTriangleIcon class="h-6 w-6" aria-hidden="true" />
               <div>
-                <b>Your current key splitting has no redundacy!</b><br/>
-                It is strongly advised to configure more keyholders than required keys.
+                <b>{{ t('admin.emergencyAccess.noRedundancy.title') }}</b><br/>
+                {{ t('admin.emergencyAccess.noRedundancy.description') }}
                 <a href="https://docs.cryptomator.org/hub/admin/#" target="_blank" class="ml-1 inline-flex items-center text-primary underline hover:text-primary-darker">
-                  Learn more.
+                  {{ t('admin.emergencyAccess.learnMore') }}
                   <ArrowRightIcon class="ml-1 h-4 w-4" aria-hidden="true" />
                 </a>
               </div>
@@ -50,7 +50,7 @@
         <!-- Key Splitting -->
         <div class="md:grid md:grid-cols-6 md:gap-6">
           <label class="col-span-2 block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
-            Required Keys
+            {{ t('admin.emergencyAccess.requiredKeys.label') }}
           </label>
           <div class="mt-1 md:mt-0 lg:col-span-3 md:col-span-4 relative">
             <div class="flex items-center gap-2">
@@ -66,12 +66,12 @@
                   :disabled="!enableEmergencyAccess"
                   class="rounded-md border-gray-300 shadow-sm sm:text-sm focus:ring-primary focus:border-primary text-left w-full disabled:cursor-not-allowed"
                   :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': defaultRequiredEmergencyKeySharesError || defaultRequiredEmergencyKeySharesToHighError instanceof FormValidationFailedError}"
-                  aria-label="Required shares"
+                  :aria-label="t('admin.emergencyAccess.requiredKeys.ariaLabel')"
                 />
                 <div v-if="defaultRequiredEmergencyKeySharesLessThenTwoError || defaultRequiredEmergencyKeySharesToHighError instanceof FormValidationFailedError" class="absolute  -top-2 transform translate-y-[-100%] z-10">
                   <div class="absolute bottom-0 left-5 transform translate-y-1/2 rotate-45 w-2 h-2 bg-red-50 border-r border-b border-red-300"></div>
                 </div>
-                <p class="mt-2 text-sm text-gray-500">How many keys are required in order to restore access to a vault.</p>
+                <p class="mt-2 text-sm text-gray-500">{{ t('admin.emergencyAccess.requiredKeys.help') }}</p>
               </div>
             </div>
           </div>
@@ -80,7 +80,7 @@
         <!-- User Selection -->
         <div class="md:grid md:grid-cols-6 md:gap-6">
           <label class="col-span-2 block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
-            Keyholders
+            {{ t('admin.emergencyAccess.keyholders.label') }}
           </label>
           <div class="mt-1 md:mt-0 lg:col-span-3 md:col-span-4">
             <div class="relative">
@@ -89,9 +89,9 @@
                 :selected-users="selectedUsers"
                 :on-search="searchCouncilMembers"
                 :input-visible="enableEmergencyAccess"
-                :error-message="'At least ' + requiredShares + ' members must be selected.  The required amount was defined above.'"
+                :error-message="t('admin.emergencyAccess.keyholders.minSelected', [requiredShares])"
                 :has-error="!!selectedMembersError"
-                placeholder="Search…"
+                :placeholder="t('common.search.placeholder')"
                 @action="selectUser"
                 @remove="removeUser"
               />
@@ -102,7 +102,7 @@
                 :input-visible="enableEmergencyAccess"
                 :disable-action="true"
               />
-              <p class="mt-2 text-sm text-gray-500">Who shall retrieve an emergency access key.</p>
+              <p class="mt-2 text-sm text-gray-500">{{ t('admin.emergencyAccess.keyholders.help') }}</p>
             </div>
           </div>
         </div>
@@ -119,7 +119,8 @@
               class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
             />
             <label for="allow" class="ml-2 text-sm text-gray-500">
-              Let Vault Owners choose different keyholders. {{ allowChoosing ? ' At least: ' : '' }}
+              {{ t('admin.emergencyAccess.allowChoosing.label') }}
+              <span v-if="allowChoosing"> {{ t('admin.emergencyAccess.allowChoosing.atLeast') }}</span>
             </label>
 
             <div class="relative ml-2 flex-1">
@@ -147,7 +148,7 @@
                   'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500':
                     defaultMinMembersLessThenTwoError || defaultMinMembersToHighError || defaultMinMembersLowerThenRequiredEmergencyKeySharesError instanceof FormValidationFailedError
                 }"
-                aria-label="Min members"
+                :aria-label="t('admin.emergencyAccess.minMembers.ariaLabel')"
               />
             </div>
           </div>
@@ -156,14 +157,14 @@
         <!-- Example Recovery -->
         <div class="md:grid md:grid-cols-6 md:gap-6">
           <label class="block text-sm text-gray-700 md:text-right md:pr-4 md:mt-2 col-span-2">
-            Example Recovery
+            {{ t('emergencyAccess.label.exampleRecovery') }}
           </label>
           <div class="mt-1 md:mt-0 lg:col-span-3 md:col-span-4">
             <EmergencyScenarioVisualization
               :selected-users="selectedUsers"
               :required-key-shares="requiredShares!"
             />
-            <p class="mt-2 text-sm text-gray-500">Example of who can collaborate to recover a vault.</p>
+            <p class="mt-2 text-sm text-gray-500">{{ t('admin.emergencyAccess.example.help') }}</p>
           </div>
         </div>
       </div>
@@ -301,16 +302,16 @@ function removeUser(u: UserDto) {
 }
 
 const requiredKeySharesValidationText = computed(() => {
-  if (defaultRequiredEmergencyKeySharesToHighError.value != null) return 'Max value is 255.';
-  else if (defaultRequiredEmergencyKeySharesLessThenTwoError.value != null) return 'Min value is 2.';
-  return 'No text.';
+  if (defaultRequiredEmergencyKeySharesToHighError.value != null) return t('admin.emergencyAccess.validation.maxValue', [255]);
+  else if (defaultRequiredEmergencyKeySharesLessThenTwoError.value != null) return t('admin.emergencyAccess.validation.minValue', [2]);
+  return '';
 });
 
 const requiredMinMembersValidationText = computed(() => {
-  if (defaultMinMembersToHighError.value != null) return 'Max value is 255.';
-  else if (defaultMinMembersLessThenTwoError.value != null) return 'Min value is 2.';
-  else if (defaultMinMembersLowerThenRequiredEmergencyKeySharesError.value != null) return 'Must be higher as Key Shares or equal.';
-  return 'No text.';
+  if (defaultMinMembersToHighError.value != null) return t('admin.emergencyAccess.validation.maxValue', [255]);
+  else if (defaultMinMembersLessThenTwoError.value != null) return t('admin.emergencyAccess.validation.minValue', [2]);
+  else if (defaultMinMembersLowerThenRequiredEmergencyKeySharesError.value != null) return t('admin.emergencyAccess.validation.minMembersAtLeastRequiredShares');
+  return '';
 });
 
 const onSaveErrorRecovery = ref<Error | null>(null);
@@ -379,9 +380,7 @@ async function saveRecoverySettings() {
 
     if (allowChoosing.value && requiredShares.value > minMembers.value) {
       defaultMinMembersLowerThenRequiredEmergencyKeySharesError.value = new FormValidationFailedError();
-      onSaveErrorRecovery.value = new Error(
-        t('admin.emergencyAccess.errors.sharesMustNotExceedMembers') ?? 'Required > members'
-      );
+      onSaveErrorRecovery.value = new Error(t('admin.emergencyAccess.errors.sharesMustNotExceedMembers'));
       return;
     }
     if (selectedUsers.value.length < requiredShares.value) {

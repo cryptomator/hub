@@ -56,7 +56,7 @@
                 'caret-transparent': selectedPillIndex !== null,
                 'caret-black': selectedPillIndex === null
               }"
-              :placeholder="!!props.placeholder ? props.placeholder : 'Search…'"
+              :placeholder="props.placeholder ? props.placeholder : t('common.search.placeholder')"
               @keydown="onKeyDown"
               @blur="onBlur"
             />

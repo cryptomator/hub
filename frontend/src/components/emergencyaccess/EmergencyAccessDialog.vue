@@ -50,13 +50,13 @@
                     </DialogTitle>
                     <div v-if="showSuccess" class="mt-4">
                       <div>
-                        Process completed successfully.
+                        {{ t('emergencyAccessDialog.message.completed') }}
                       </div>
                     </div>
                     <div v-else-if="phase === 'start'" class="mt-4 space-y-4">
                       <div v-if="processType === 'CHANGE_PERMISSIONS'">
                         <label class="block text-sm font-medium text-gray-700">
-                          Select user with role owner
+                          {{ t('emergencyAccessDialog.label.selectOwner') }}
                         </label>
                         <MultiUserSelectInputGroup
                           ref="ownersSelect"
@@ -71,7 +71,7 @@
                         <!-- Members (non-owners) selector -->
                         <div class="mt-4">
                           <label class="block text-sm font-medium text-gray-700">
-                            Select user with role member
+                            {{ t('emergencyAccessDialog.label.selectMember') }}
                           </label>
                           <MultiUserSelectInputGroup
                             :selected-users="members"
@@ -85,7 +85,7 @@
                         <!-- Removed Members display -->
                         <div v-if="removedMembers.length > 0" class="mt-4">
                           <span class="block text-sm font-medium text-gray-700">
-                            Removed
+                            {{ t('emergencyAccess.label.removed') }}
                           </span>
                           <MultiUserSelectInputGroup
                             :selected-users="removedMembers"
@@ -97,7 +97,7 @@
 
                       <div v-else-if="processType === 'COUNCIL_CHANGE'">
                         <label class="block text-sm font-medium text-gray-700">
-                          Council Members (At least: {{ newRequiredKeyShares }})
+                          {{ t('emergencyAccessDialog.label.councilMembersAtLeast', [newRequiredKeyShares]) }}
                         </label>
                         <MultiUserSelectInputGroup
                           ref="concilMembersSelect"
@@ -110,12 +110,12 @@
                         <div v-if="newRequiredKeyShares - newCouncilMembers.length > 0" class="flex items-start gap-2 rounded-md border border-yellow-200 bg-yellow-50 p-1 text-sm text-gray-900 mt-1">
                           <span class="leading-5">
                             <span class="text-gray-600">
-                              Select at least {{ newRequiredKeyShares - newCouncilMembers.length }} more council member.
+                              {{ t('emergencyAccess.validation.selectMoreCouncilMembers', [newRequiredKeyShares - newCouncilMembers.length]) }}
                             </span>
                           </span>
                         </div>
                         <label class="block text-sm font-medium text-gray-700 pt-4">
-                          Possible Emergency Scenario
+                          {{ t('emergencyAccess.label.possibleScenario') }}
                         </label>
                         <EmergencyScenarioVisualization
                           :selected-users="newCouncilMembers"
@@ -126,7 +126,7 @@
                         <div v-if="needsRedundancy()" class="mt-4 mr-3">
                           <span class="inline-flex items-center gap-2 rounded-full bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800">
                             <ExclamationTriangleIcon class="h-4 w-4" aria-hidden="true" />
-                            No Redundancy
+                            {{ t('emergencyAccess.noRedundancy') }}
                           </span>
                         </div>
                       </div>
@@ -142,10 +142,10 @@
 
                     <div v-else>
                       <div v-if="recoveryProcess.type === 'CHANGE_PERMISSIONS'" >
-                        Ownership
+                        {{ t('emergencyAccessDialog.section.ownership') }}
                         
                         <div class="mt-4 space-y-1 text-sm text-gray-500">
-                          <span class="font-medium text-gray-700">Owners</span>
+                          <span class="font-medium text-gray-700">{{ t('emergencyAccess.label.owners') }}</span>
                           <MultiUserSelectInputGroup
                             :selected-users="selectedNewOwners"
                             :on-search="noopSearch"
@@ -154,7 +154,7 @@
                           <!-- Members (non-owners) selector -->
                           <div class="mt-4">
                             <label class="block text-sm font-medium text-gray-700">
-                              Members
+                              {{ t('emergencyAccess.label.members') }}
                             </label>
                             <MultiUserSelectInputGroup
                               :selected-users="selectedNewmembers"
@@ -165,7 +165,7 @@
                           <!-- Removed Members display -->
                           <div v-if="removedMembers.length > 0" class="mt-4">
                             <span class="block text-sm font-medium text-gray-700">
-                              Removed
+                              {{ t('emergencyAccess.label.removed') }}
                             </span>
                             <MultiUserSelectInputGroup
                               :selected-users="removedMembers"
@@ -176,24 +176,24 @@
                         </div>
                       </div>
                       <div v-if="recoveryProcess.type === 'COUNCIL_CHANGE'" >
-                        Council Change
+                        {{ t('emergencyAccessDialog.section.councilChange') }}
                         <div class="mt-4 space-y-1 text-sm text-gray-500">
                           <div v-if="recoveryProcess.details.newCouncilMemberIds.length > 0">
-                            <span class="font-medium text-gray-700">New Council Members:</span>
+                            <span class="font-medium text-gray-700">{{ t('emergencyAccess.label.newCouncilMembers') }}:</span>
                             <MultiUserSelectInputGroup
                               :selected-users="newCouncilMembers"
                               :on-search="noopSearch"
                               :input-visible="false"
-                              :error-message="'At least ' + defaultMinMembers + ' members must be selected.'"
+                              :error-message="t('emergencyAccess.validation.minimumMembers', [defaultMinMembers])"
                               :has-error="hasCouncilMemberError"
                             />
                           </div>
                           <div>
-                            <span class="font-medium text-gray-700">Required KeyShares:</span>
+                            <span class="font-medium text-gray-700">{{ t('emergencyAccess.requiredKeyShares') }}:</span>
                             {{ recoveryProcess.details.newRequiredKeyShares }}
                           </div>
                           <label class="block text-sm font-medium text-gray-700 pt-4">
-                            Possible Emergency Scenario
+                            {{ t('emergencyAccess.label.possibleScenario') }}
                           </label>
                           <EmergencyScenarioVisualization
                             :selected-users="newCouncilMembers"
@@ -206,20 +206,20 @@
                       <div v-if="phase === 'complete' && !didAddMyShare && isMeInProcessCouncil" class="text-sm pt-2">
                         <span class="inline-flex items-center gap-2 rounded-md bg-green-50 ring-1 ring-green-300/70 px-2.5 py-1 text-xs font-medium text-green-800">
                           <InformationCircleIcon class="h-4 w-4" aria-hidden="true" />
-                          You can finish this emergency access process by adding the last key share and completing it.
+                          {{ t('emergencyAccessDialog.hint.finishProcess') }}
                         </span>
                       </div>
                       <div v-else-if="(phase === 'complete' || phase === 'approve') && didAddMyShare" class="text-sm pt-2">
                         <span class="inline-flex items-center gap-2 rounded-full bg-green-50 ring-1 ring-green-300/70 px-2.5 py-1 text-xs font-medium text-green-800">
                           <CheckBadgeIcon class="h-4 w-4" aria-hidden="true" />
-                          Your key share has already been added.
+                          {{ t('emergencyAccessDialog.hint.keyShareAdded') }}
                         </span>
                       </div>
                     </div>
                     <div v-if="phase !== 'start' && !isMeInProcessCouncil" class="text-sm pt-4">
                       <span class="inline-flex items-center gap-2 rounded-md bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800 text-left">
                         <ExclamationCircleIcon class="h-4 w-4" aria-hidden="true" />
-                        You are not part of the council for this process and cannot add a key share.
+                        {{ t('emergencyAccessDialog.hint.notInCouncil') }}
                       </span>
                     </div>
                   </div>
@@ -247,7 +247,7 @@
                     class=" text-sm text-red-600 hover:underline sm:mr-auto focus:outline-none focus:underline rounded"
                     @click.stop="requestCancel()"
                   >
-                    Abort this Process    
+                    {{ t('emergencyAccessDialog.action.abortProcess') }}
                   </button>
                 </template>
                 <!-- CLOSE -->
@@ -267,7 +267,7 @@
                     :disabled="!canStartRecovery"
                     @click="startRecovery()"
                   >
-                    Start
+                    {{ t('emergencyAccessDialog.action.start') }}
                   </button>
                 </template>
 
@@ -279,7 +279,7 @@
                     class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm"
                     @click="approveRecovery()"
                   >
-                    Approve
+                    {{ t('emergencyAccessDialog.action.approve') }}
                   </button>
                 </template>
 
@@ -292,7 +292,7 @@
                     class="inline-flex w-full sm:w-auto justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:text-sm"
                     @click="completeRecovery()"
                   >
-                    Complete Process
+                    {{ t('emergencyAccessDialog.action.completeProcess') }}
                   </button>
                 </template>
               </div>
@@ -729,23 +729,27 @@ async function enrichGroupsMemberSize(authorities: AuthorityDto[]): Promise<Auth
 const showSuccess = ref(false);
 
 const phaseTitle = computed(() => {
-  if (showSuccess.value) return 'Success';
+  if (showSuccess.value) return t('emergencyAccessDialog.title.success');
 
   switch (phase.value) {
     case 'start': {
       if (processType.value === 'COUNCIL_CHANGE') {
-        return 'Change council';
+        return t('emergencyAccessDialog.title.changeCouncil');
       }
-      return 'Change vault permissions';
+      return t('emergencyAccessDialog.title.changePermissions');
     }
     case 'approve': {
       if (!isMeInProcessCouncil.value) {
-        return 'Process details';
+        return t('emergencyAccessDialog.title.processDetails');
       }
-      return didAddMyShare.value ? 'Approved' : 'Approve Emergency Access';
+      return didAddMyShare.value
+        ? t('emergencyAccessDialog.title.approved')
+        : t('emergencyAccessDialog.title.approveEmergencyAccess');
     }
     case 'complete': {
-      return !didAddMyShare.value ? 'Complete Emergency Access' : 'Approved';
+      return !didAddMyShare.value
+        ? t('emergencyAccessDialog.title.completeEmergencyAccess')
+        : t('emergencyAccessDialog.title.approved');
     }
     default:
       return '';
@@ -771,7 +775,7 @@ async function startRecovery() {
     const authorities = await backend.authorities.listSome(recoveryCouncilMemberIds);
     const councilMembers = authorities.filter(a => a.type == 'USER').filter(u => didCompleteSetup(u));
     if (councilMembers.length < props.vault.requiredEmergencyKeyShares) {
-      throw new Error(`Inconsistent data: Insufficient council members (${councilMembers.length}) to recovery this vault (${props.vault.requiredEmergencyKeyShares}).`);
+      throw new Error(t('emergencyAccessDialog.error.insufficientCouncilMembers', [councilMembers.length, props.vault.requiredEmergencyKeyShares]));
     }
 
     let data: RecoveryProcessSetNewOwner | RecoveryProcessChangeCouncil;
@@ -834,13 +838,13 @@ async function startRecovery() {
  */
 async function approveRecovery() {
   if (!props.recoveryProcess) {
-    throw new Error('No recovery process to approve.');
+    throw new Error(t('emergencyAccessDialog.error.noProcessToApprove'));
   }
   onError.value = null;
   try {
     const verifiedProcess = await verifyProcessInfo(props.recoveryProcess);
     if (!verifiedProcess) {
-      throw new Error('Recovery process has been tampered with.');
+      throw new Error(t('emergencyAccessDialog.error.processTampered'));
     }
 
     const userKeys = await userdata.decryptUserKeysWithBrowser();
@@ -861,13 +865,13 @@ async function approveRecovery() {
  */
 async function completeRecovery() {
   if (!props.recoveryProcess) {
-    throw new Error('No recovery process to complete.');
+    throw new Error(t('emergencyAccessDialog.error.noProcessToComplete'));
   }
   onError.value = null;
   try {
     const verifiedProcess = await verifyProcessInfo(props.recoveryProcess);
     if (!verifiedProcess) {
-      throw new Error('Recovery process has been tampered with.');
+      throw new Error(t('emergencyAccessDialog.error.processTampered'));
     }
 
     const userKeys = await userdata.decryptUserKeysWithBrowser();
@@ -914,7 +918,7 @@ async function completeRecovery() {
 
       if (accessGrants.length > 0) { await backend.vaults.grantAccess(props.vault.id, ...accessGrants); }
     } else {
-      throw new Error(`Unsupported state for recovery process type: ${process.type}`);
+      throw new Error(t('emergencyAccessDialog.error.unsupportedProcessType', [process.type]));
     }
 
     await backend.emergencyAccess.complete(process.id);

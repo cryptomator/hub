@@ -14,7 +14,10 @@
       <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
     </svg>
     <h3 class="mt-2 text-sm font-medium text-gray-900">{{ t('auditLog.paymentRequired.message') }}</h3>
-    <p class="mt-1 text-sm text-gray-500">Emergency Access is only available with a paid license. {{ isAdmin ? 'You can get one in the admin section.' : '' }}</p>
+    <p class="mt-1 text-sm text-gray-500">
+      {{ t('emergencyAccess.licenseRequired.message') }}
+      <span v-if="isAdmin"> {{ t('emergencyAccess.licenseRequired.adminHint') }}</span>
+    </p>
     <router-link v-slot="{ navigate }" to="/app/admin/settings" :hidden="!isAdmin" custom>
       <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent shadow-xs text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary mt-6" @click="navigate()">
         <WrenchIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
@@ -84,22 +87,22 @@
                   <EmergencyBadge
                     v-if="!isEmergencyKeyShareHolder(vault)"
                     type="notCouncil"
-                    title="No Vault Council Member anymore"
-                    message="You are no longer part of the actual vault's emergency council. But you are still part of an running emergency access process."
+                    :title="t('emergencyAccess.badge.notCouncil.title')"
+                    :message="t('emergencyAccess.badge.notCouncil.message')"
                   />
 
                   <EmergencyBadge
                     v-else-if="isBroken(vault)"
                     type="broken"
-                    title="Broken EA"
-                    message="Emergency Access is not possible anymore. One or more council members performed an account reset and lost their key shares."
+                    :title="t('emergencyAccess.badge.broken.title')"
+                    :message="t('emergencyAccess.badge.broken.message')"
                   />
 
                   <EmergencyBadge
                     v-else-if="noRedundancy(vault)"
                     type="noRedundancy"
-                    title="No Redundancy"
-                    message="This Emergency Access Council has no redundancy. Consider assigning a council with redundancy."
+                    :title="t('emergencyAccess.badge.noRedundancy.title')"
+                    :message="t('emergencyAccess.badge.noRedundancy.message')"
                   />
 
                   <!-- Council Members -->
@@ -122,7 +125,7 @@
                     <template v-for="proc in getProcesses(vault.id)" :key="proc.id">
                       <EmergencyProcessButton
                         v-if="me && isUserInProcess(proc) && proc.type === 'CHANGE_PERMISSIONS'"
-                        label="Change Permissions"
+                        :label="t('emergencyAccess.processType.changePermissions')"
                         :approval-label="getApprovalLabel(proc)"
                         :disabled="isBroken(vault)"
                         :has-process="true"
@@ -174,11 +177,11 @@
       </ul>
     </div>
     <div v-else-if="isCommunityLicense || !settings?.enableEmergencyAccess" class="mt-3 text-center">
-      <h3 class="mt-2 text-sm font-medium text-gray-900">Emergency Access is disabled.</h3>
+      <h3 class="mt-2 text-sm font-medium text-gray-900">{{ t('emergencyAccess.empty.disabled') }}</h3>
     </div>
 
     <div v-else-if="filteredVaults && filteredVaults.length == 0" class="mt-3 text-center">
-      <h3 class="mt-2 text-sm font-medium text-gray-900">No emergency access vaults found</h3>
+      <h3 class="mt-2 text-sm font-medium text-gray-900">{{ t('emergencyAccess.empty.noneFound') }}</h3>
     </div>
   </div>
 
@@ -245,12 +248,12 @@ const isCommunityLicense = computed(() => {
 });
 
 const selectedFilter = ref<'recoverableVaults' | 'approved' | 'approvable' | 'startable'>('recoverableVaults');
-const filterOptions = ref({
-  recoverableVaults: 'All',
-  approvable: 'Approvable',
-  approved: 'Approved',
-  startable: 'Startable',
-});
+const filterOptions = computed(() => ({
+  recoverableVaults: t('emergencyAccess.filter.all'),
+  approvable: t('emergencyAccess.filter.approvable'),
+  approved: t('emergencyAccess.filter.approved'),
+  startable: t('emergencyAccess.filter.startable'),
+}));
 const selectedProcess = ref<RecoveryProcessDto | undefined>(undefined);
 const filteredVaults = computed<VaultDto[]>(() => filterVaults(vaults.value));
 const vaultRecoveryProcesses = ref<Record<string, RecoveryProcessDto[]>>({});
@@ -335,15 +338,15 @@ function getApprovalLabel(proc?: RecoveryProcessDto): string {
   if (!proc) return '';
 
   if (didAddMyShare(proc))
-    return 'Waiting for other approvals';
+    return t('emergencyAccess.approval.waitingOthers');
   else if (!isUserInProcess(proc))
-    return 'Show details';
+    return t('emergencyAccess.approval.showDetails');
   else {
     if (isProcessFullyApproved(proc) || isProcessAboutToComplete(proc)) {
-      return 'Complete now';
+      return t('emergencyAccess.approval.completeNow');
     }
     else 
-      return 'Approve now';
+      return t('emergencyAccess.approval.approveNow');
   }
 }
 
@@ -353,8 +356,8 @@ function getProcessByType(vault: VaultDto, type: RecoveryProcessDto['type']): Re
 
 function getTypeLabel(vault: VaultDto, type: RecoveryProcessDto['type']) {
   return type === 'CHANGE_PERMISSIONS'
-    ? 'Change Permissions'
-    : 'Change Council';
+    ? t('emergencyAccess.processType.changePermissions')
+    : t('emergencyAccess.processType.changeCouncil');
 }
 
 const allowChoosingEmergencyCouncil = ref<boolean>(false);

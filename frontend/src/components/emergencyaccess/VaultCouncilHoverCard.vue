@@ -7,9 +7,9 @@
   >
     <div class="flex items-center justify-between mb-1">
       <div>
-        <div class="text-xl">Vault Council</div>
+        <div class="text-xl">{{ t('emergencyAccess.vaultCouncil') }}</div>
         <div class="text-xs text-gray-500 mb-2">
-          Required KeyShares: {{ requiredKeyShares }}
+          {{ t('emergencyAccess.requiredKeyShares') }}: {{ requiredKeyShares }}
         </div>
       </div>
 
@@ -39,10 +39,13 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import SegmentRing from './SegmentRing.vue';
 import UserListGroupVisualization, {
   UserVisualItem,
 } from '../UserListGroupVisualization.vue';
+
+const { t } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{
   members: UserVisualItem[];

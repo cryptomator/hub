@@ -36,27 +36,27 @@
                   </div>
                   <div class="mt-3 grow text-center sm:mt-0 sm:ml-4 sm:text-left">
                     <DialogTitle as="h3" class="text-lg leading-6 font-medium text-gray-900">
-                      Grant Emergency Access
+                      {{ t('grantEmergencyAccessDialog.title') }}
                     </DialogTitle>
                     <div class="mt-2">
                       <p v-if="allowChangingDefaults" class="text-sm text-gray-500">
-                        Select council members to grant emergency access for this vault.
+                        {{ t('grantEmergencyAccessDialog.description.selectCouncil') }}
                       </p>
                       <p v-else class="text-sm text-gray-500">
-                        Grant emergency access for this vault.
+                        {{ t('grantEmergencyAccessDialog.description.default') }}
                       </p>
                     </div>
                     <div class="relative">
                       <div class="sm:grid sm:items-center sm:gap-2 mt-2 pb-2">
                         <label for="coundcilMembers" class="text-sm font-medium text-gray-700 flex items-center">
-                          Council Members
+                          {{ t('emergencyAccess.label.councilMembers') }}
                         </label>
                       </div>
                       <MultiUserSelectInputGroup
                         :selected-users="emergencyCouncilMembers"
                         :on-search="searchCouncilMembers"
                         :input-visible="allowChangingDefaults"
-                        :placeholder="'Search…'"
+                        :placeholder="t('common.search.placeholder')"
                         @action="addCouncilMember"
                         @remove="removeCouncilMember"
                       />
@@ -64,13 +64,13 @@
                       <div v-if="minMembers - emergencyCouncilMembers.length > 0" class="flex items-start gap-2 rounded-md border border-yellow-200 bg-yellow-50 p-1 text-sm text-gray-900 mt-1">
                         <span class="leading-5">
                           <span class="text-gray-600">
-                            Select at least {{ minMembers - emergencyCouncilMembers.length }} more council member. 
+                            {{ t('emergencyAccess.validation.selectMoreCouncilMembers', [minMembers - emergencyCouncilMembers.length]) }}
                           </span>
                         </span>
                       </div>
                     </div>
                     <label class="block text-sm font-medium text-gray-700 pt-4">
-                      Example Recovery
+                      {{ t('emergencyAccess.label.exampleRecovery') }}
                     </label>
                     <EmergencyScenarioVisualization
                       :selected-users="emergencyCouncilMembers"
@@ -80,7 +80,7 @@
                     <div v-if="needsRedundancy()" class="mt-4 mr-3">
                       <span class="inline-flex items-center gap-2 rounded-full bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800">
                         <ExclamationTriangleIconSolid class="h-4 w-4" aria-hidden="true" />
-                        No Redundancy
+                        {{ t('emergencyAccess.noRedundancy') }}
                       </span>
                     </div>
                   </div>
@@ -98,7 +98,7 @@
                   :disabled="isGrantButtonDisabled"
                   @click="splitRecoveryKey()"
                 >
-                  Grant
+                  {{ t('grantEmergencyAccessDialog.grant') }}
                 </button>
                 <!-- Close-Button -->
                 <button
@@ -259,22 +259,22 @@ async function splitRecoveryKey() {
     onAddCouncilMemberError.value = null;
 
     if (requiredKeyShares.value == null || requiredKeyShares.value < 1) {
-      throw new Error('At least 2 Emergency Key Shares are required.');
+      throw new Error(t('grantEmergencyAccessDialog.error.keySharesRequired'));
     }
 
     if (emergencyCouncilMembers.value.length < 1) {
-      throw new Error('At least 2 Council Members are required.');
+      throw new Error(t('grantEmergencyAccessDialog.error.councilMembersRequired'));
     }
 
     if (emergencyCouncilMembers.value.length < requiredKeyShares.value) {
       throw new Error(
-        'Too few Council Members. Add more or lower the required Emergency Key Shares.'
+        t('grantEmergencyAccessDialog.error.tooFewCouncilMembers')
       );
     }
 
     if (emergencyCouncilMembers.value.length < requiredKeyShares.value) {
       throw new Error(
-        'Too few Council Members. Add more or lower the required Emergency Key Shares.'
+        t('grantEmergencyAccessDialog.error.tooFewCouncilMembers')
       );
     }
 

@@ -21,7 +21,7 @@
               class="pill inline-flex items-center border border-red-300 bg-red-50 text-red-800 text-sm font-medium px-2 py-1 rounded-full shadow-sm absolute"
             >
               <ExclamationTriangleIcon class="h-4 w-4 m-1 text-red-500 mr-1" />
-              <span class="truncate">Not possible</span>
+              <span class="truncate">{{ t('emergencyAccess.notPossible') }}</span>
             </span>
           </div>
         </template>

@@ -88,22 +88,22 @@
               <EmergencyBadge
                 v-if="!hasEmergencyKeys(vault) && settings?.enableEmergencyAccess"
                 type="missingCouncil"
-                title="Council missing"
-                message="No council."
+                :title="t('emergencyAccess.badge.missingCouncil.title')"
+                :message="t('emergencyAccess.badge.missingCouncil.message')"
                 position="right"
               />
               <EmergencyBadge
                 v-else-if="isBroken(vault) && settings?.enableEmergencyAccess"
                 type="broken"
-                title="Broken EA"
-                message="Emergency Access is not possible anymore. One or more council members performed an account reset and lost their key shares."
+                :title="t('emergencyAccess.badge.broken.title')"
+                :message="t('emergencyAccess.badge.broken.message')"
                 position="right"
               />
               <EmergencyBadge
                 v-else-if="noRedundancy(vault) && settings?.enableEmergencyAccess"
                 type="noRedundancy"
-                title="No Redundancy"
-                message="This Emergency Access Council has no redundancy. Consider assigning a council with redundancy."
+                :title="t('emergencyAccess.badge.noRedundancy.title')"
+                :message="t('emergencyAccess.badge.noRedundancy.message')"
                 position="right"
               />
             </div>

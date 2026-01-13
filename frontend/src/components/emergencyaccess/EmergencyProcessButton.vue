@@ -46,7 +46,7 @@
         <div>
           <div class="text-xl">{{ label }}</div>
           <div class="text-xs text-gray-500 mb-2">
-            Required KeyShares:
+            {{ t('emergencyAccess.requiredKeyShares') }}:
             {{ requiredKeyShares }}
           </div>
         </div>
@@ -57,7 +57,7 @@
         />
       </div>
 
-      <div>Process council</div>
+      <div>{{ t('emergencyAccess.processCouncil') }}</div>
       <ul class="space-y-1 max-h-56 overflow-auto pr-1">
         <li
           v-for="m in councilMembers"
@@ -79,8 +79,8 @@
               :class="recoveredSet.has(m.id) ? 'bg-green-500' : 'bg-gray-300'"
             ></span>
             {{ recoveredSet.has(m.id)
-              ? 'Added'
-              : 'Pending' }}
+              ? t('emergencyAccess.status.added')
+              : t('emergencyAccess.status.pending') }}
           </span>
         </li>
       </ul>
@@ -99,7 +99,7 @@
     <PlayIcon class="h-6 w-6 text-primary" />
     <span class="flex flex-col leading-tight text-left">
       <span>{{ label }}</span>
-      <span class="text-[10px] text-gray-500">Start process</span>
+      <span class="text-[10px] text-gray-500">{{ t('emergencyAccess.startProcess') }}</span>
     </span>
   </button>
 </template>
