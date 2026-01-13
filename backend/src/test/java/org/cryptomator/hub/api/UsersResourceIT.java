@@ -342,9 +342,8 @@ public class UsersResourceIT {
 		@TestSecurity(user = "Admin", roles = {"admin"})
 		@DisplayName("As admin, GET /auditlog contains signature events")
 		void testGetAuditLogEntries() {
-			var licenseEntitlements = Mockito.mock(HubLicenseEntitlements.class);
-			Mockito.doReturn(licenseEntitlements).when(licenseHolder).getEntitlements();
-			Mockito.doReturn(7).when(licenseEntitlements).auditLogRetentionDays();
+			var entitlements = new HubLicenseEntitlements(5L, 7L, null, null);
+			Mockito.doReturn(entitlements).when(licenseHolder).getEntitlements();
 			Mockito.doReturn(false).when(licenseHolder).isExpired();
 
 			given().param("startDate", DateTimeFormatter.ISO_INSTANT.format(testStart))

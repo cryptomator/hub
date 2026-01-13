@@ -13,6 +13,7 @@ import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.entities.VaultAccess;
+import org.cryptomator.hub.license.HubLicenseEntitlements;
 import org.cryptomator.hub.license.LicenseHolder;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assumptions;
@@ -120,6 +121,8 @@ public class ExceedingLicenseLimitsIT {
 
 	@BeforeEach
 	public void setup() {
+		var entitlements = new HubLicenseEntitlements(5L, 0L, null, null);
+		Mockito.doReturn(entitlements).when(licenseHolder).getEntitlements();
 		Mockito.doReturn(false).when(licenseHolder).isExpired();
 		Mockito.doReturn(5L).when(licenseHolder).getSeats();
 	}

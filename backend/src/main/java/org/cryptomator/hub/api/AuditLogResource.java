@@ -69,7 +69,7 @@ public class AuditLogResource {
 		if (license.getEntitlements().auditLogRetentionDays() == 0 || license.isExpired()) {
 			throw new PaymentRequiredException("Community license used or license expired");
 		}
-		Instant retentionThreshold = Instant.now().minus(license.getEntitlements().auditLogRetentionDays(), ChronoUnit.DAYS);
+		Instant retentionThreshold = license.getEntitlements().auditLogRetentionThreshold();
 
 		if (startDate == null || endDate == null) {
 			throw new BadRequestException("startDate and endDate must be specified");

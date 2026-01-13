@@ -31,9 +31,8 @@ public class AuditLogResourceIT {
 
 	@BeforeEach
 	void beforeEach() {
-		var licenseEntitlements = Mockito.mock(HubLicenseEntitlements.class);
-		Mockito.doReturn(licenseEntitlements).when(licenseHolder).getEntitlements();
-		Mockito.doReturn(Long.MAX_VALUE).when(licenseEntitlements).auditLogRetentionDays(); // unlimited retention for tests
+		var entitlements = new HubLicenseEntitlements(5L, Long.MAX_VALUE, null, null); // unlimited retention for tests
+		Mockito.doReturn(entitlements).when(licenseHolder).getEntitlements();
 		Mockito.doReturn(false).when(licenseHolder).isExpired();
 	}
 
