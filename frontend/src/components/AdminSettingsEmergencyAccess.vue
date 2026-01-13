@@ -8,22 +8,20 @@
         <ArrowRightIcon class="ml-1 h-4 w-4" aria-hidden="true" />
       </a>
     </p>
-    <!-- Enable Emergency Access -->
-    <div class="">
-      <input
-        id="enableEmergencyAcces"
-        v-model="enableEmergencyAccess"
-        type="checkbox"
-        class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-      />
-      <label for="enableEmergencyAcces" class="ml-2 text-sm text-gray-500">
-        {{ t('admin.emergencyAccess.enable') }}
-      </label>
-    </div>
-
     <hr class="my-4 pb-6 border-gray-200"/>
-
     <form class="space-y-6 md:gap-6" novalidate @submit.prevent="saveRecoverySettings">
+      <!-- Enable Emergency Access -->
+      <div>
+        <input
+          id="enableEmergencyAcces"
+          v-model="enableEmergencyAccess"
+          type="checkbox"
+          class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+        />
+        <label for="enableEmergencyAcces" class="ml-2 text-sm text-gray-500">
+          {{ t('admin.emergencyAccess.enable') }}
+        </label>
+      </div>
       <div 
         :class="[
           'pt-2 pb-2 pr-1 pl-1 sm:rounded-lg border',
@@ -71,7 +69,7 @@
                 <div v-if="defaultRequiredEmergencyKeySharesLessThenTwoError || defaultRequiredEmergencyKeySharesToHighError instanceof FormValidationFailedError" class="absolute  -top-2 transform translate-y-[-100%] z-10">
                   <div class="absolute bottom-0 left-5 transform translate-y-1/2 rotate-45 w-2 h-2 bg-red-50 border-r border-b border-red-300"></div>
                 </div>
-                <p class="mt-2 text-sm text-gray-500">{{ t('admin.emergencyAccess.requiredKeys.help') }}</p>
+                <p class="mt-2 my-4 text-sm text-gray-500">{{ t('admin.emergencyAccess.requiredKeys.help') }}</p>
               </div>
             </div>
           </div>
