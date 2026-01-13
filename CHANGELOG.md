@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Show admin section of Hub when Keycloak version is not available (#361)
+- Hide Archive/Reactivate Vault actions for admins without ownership rights (#379)
 
 ## [1.4.5](https://github.com/cryptomator/hub/compare/1.4.4...1.4.5)
 
@@ -151,7 +152,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Added "Browser Language" option to language selection dropdown, enabling users to revert to browser default language (#324)
-- Hide Archive/Reactivate Vault actions for admins without ownership rights (#379)
 - Reload device lists upon device removal
 - Added pointer cursor to device remove "button" text
 - Show device only when available in audit log vault key retrieve event
