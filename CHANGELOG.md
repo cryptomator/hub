@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Updated Keycloak to 26.4.7
 
+### Fixed
+- Hide Archive/Reactivate Vault actions for admins without ownership rights (#379)
+
 ## [1.4.6](https://github.com/cryptomator/hub/compare/1.4.5...1.4.6)
 
 ### Changed
@@ -25,7 +28,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Show admin section of Hub when Keycloak version is not available (#361)
-- Hide Archive/Reactivate Vault actions for admins without ownership rights (#379)
 
 ## [1.4.5](https://github.com/cryptomator/hub/compare/1.4.4...1.4.5)
 
