@@ -321,6 +321,8 @@
   "userEditCreate.invalidImageUrl": "Nederīgs attēla URL",
   "userEditCreate.validation.required": "Šis lauks ir nepieciešams",
   "userEditCreate.validation.passwordMismatch": "Paroles nesakrīt",
+  "userEditCreate.error.userAlreadyExists": "Lietotājs ar šādu lietotājvārdu jau pastāv.",
+  "userEditCreate.error.emailAlreadyExists": "Lietotājs ar šādu e-pasta adresi jau pastāv.",
   "userList.edit.user.button": "Labot",
   "userList.userName": "Vārds",
   "userList.device.count": "Ierīces",
