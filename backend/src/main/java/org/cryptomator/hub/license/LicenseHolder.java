@@ -218,11 +218,12 @@ public class LicenseHolder {
 	 *
 	 * @return Number of seats of the license
 	 */
-	public long getSeats() { // TODO: deprecate this method in favour of entitlements.seats()?
+	public long getSeats() {
 		var entitlements = getEntitlements();
 		if (entitlements != null) {
 			return entitlements.seats();
 		} else {
+			// legacy licenses don't have entitlements claim yet...
 			return Preconditions.checkNotNull(license).getClaim("seats").asLong();
 		}
 	}
