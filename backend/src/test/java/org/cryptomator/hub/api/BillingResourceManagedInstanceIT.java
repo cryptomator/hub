@@ -54,7 +54,6 @@ public class BillingResourceManagedInstanceIT {
 		when().get("/billing")
 				.then().statusCode(200)
 				.body("hubId", is("42"))
-				.body("hasLicense", is(true))
 				.body("email", is("hub@cryptomator.org"))
 				.body("licensedSeats", is(5))
 				.body("usedSeats", is(2))

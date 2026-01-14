@@ -72,8 +72,7 @@
         </form>
       </section>
 
-      <!-- TODO refactor hasLicense check -->
-      <section v-if="billing.hasLicense && remainingSeats !== undefined" class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6">
+      <section v-if="remainingSeats !== undefined" class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6">
         <h3 class="text-lg font-medium leading-6 text-gray-900">
           {{ t('admin.licenseInfo.title') }}
         </h3>
@@ -135,57 +134,6 @@
               <button type="button" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="manageSubscription()">
                 <ArrowTopRightOnSquareIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
                 {{ t('admin.licenseInfo.manageSubscription') }}
-              </button>
-            </div>
-          </div>
-        </form>
-      </section>
-
-      <!-- TODO remove? -->
-      <section v-if="!billing.hasLicense && remainingSeats !== undefined" class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6">
-        <h3 class="text-lg font-medium leading-6 text-gray-900">
-          {{ t('admin.licenseInfo.title') }}
-        </h3>
-        <p v-if="!billing.managedInstance" class="mt-1 text-sm text-gray-500 w-full">
-          {{ t('admin.licenseInfo.selfHostedNoLicense.description') }}
-        </p>
-        <p v-else class="mt-1 text-sm text-gray-500 w-full">
-          {{ t('admin.licenseInfo.managedNoLicense.description') }}
-        </p>
-        <hr class="my-4 pb-6 border-gray-200"/>
-        <form class="space-y-6 md:gap-6" novalidate>
-          <div class="md:grid md:grid-cols-3 md:gap-6">
-            <label for="licenseType" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.licenseInfo.type.title') }}</label>
-            <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
-              <input v-if="!billing.managedInstance" id="licenseType" value="Community License" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
-              <input v-else id="licenseType" value="Managed" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
-            </div>
-          </div>
-
-          <div class="md:grid md:grid-cols-3 md:gap-6">
-            <label for="seats" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.licenseInfo.seats.title') }}</label>
-            <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
-              <input id="seats" v-model="billing.licensedSeats" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" aria-describedby="seats-description" readonly />
-              <p v-if="remainingSeats > 0" id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
-                <CheckIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
-                {{ t('admin.licenseInfo.seats.description.enoughSeats', [remainingSeats]) }}
-              </p>
-              <p v-else-if="remainingSeats == 0" id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
-                <ExclamationTriangleIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
-                {{ t('admin.licenseInfo.seats.description.zeroSeats') }}
-              </p>
-              <p v-else id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
-                <XMarkIcon class="shrink-0 text-red-500 mr-1 h-5 w-5" aria-hidden="true" />
-                {{ t('admin.licenseInfo.seats.description.undercutSeats', [numberOfExceededSeats]) }}
-              </p>
-            </div>
-          </div>
-
-          <div class="md:grid md:grid-cols-3 md:gap-6">
-            <div class="md:col-start-2">
-              <button type="button" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="manageSubscription()">
-                <ArrowTopRightOnSquareIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
-                {{ t('admin.licenseInfo.getLicense') }}
               </button>
             </div>
           </div>

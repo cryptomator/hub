@@ -79,8 +79,6 @@
   "admin.licenseInfo.manageSubscription": "Manage Subscription",
   "admin.licenseInfo.type.title": "Type",
   "admin.licenseInfo.getLicense": "Get License",
-  "admin.licenseInfo.selfHostedNoLicense.description": "Thank you for using Cryptomator Hub! You have been granted the Community License. If you need more seats, upgrade your license.",
-  "admin.licenseInfo.managedNoLicense.description": "Thank you for using Cryptomator Hub! You currently have no active license.",
 
   "admin.webOfTrust.title": "Web of Trust",
   "admin.webOfTrust.description": "Configure the Web of Trust settings to manage how trust is established between users in the system. These settings affect the verification of user identities and key signatures.",

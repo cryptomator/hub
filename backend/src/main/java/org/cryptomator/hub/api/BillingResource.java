@@ -67,7 +67,7 @@ public class BillingResource {
 		}
 	}
 
-	public record BillingDto(@JsonProperty("hubId") String hubId, @JsonProperty("hasLicense") Boolean hasLicense, @JsonProperty("email") String email,
+	public record BillingDto(@JsonProperty("hubId") String hubId, @JsonProperty("email") String email,
 							 @JsonProperty("licensedSeats") Integer licensedSeats, @JsonProperty("usedSeats") Integer usedSeats,
 							 @JsonProperty("issuedAt") Instant issuedAt, @JsonProperty("expiresAt") Instant expiresAt, @JsonProperty("managedInstance") Boolean managedInstance) {
 
@@ -77,7 +77,7 @@ public class BillingResource {
 			var licensedSeats = jwt.getClaim("seats").asInt();
 			var issuedAt = jwt.getIssuedAt().toInstant();
 			var expiresAt = jwt.getExpiresAt().toInstant();
-			return new BillingDto(id, true, email, licensedSeats, usedSeats, issuedAt, expiresAt, isManaged);
+			return new BillingDto(id, email, licensedSeats, usedSeats, issuedAt, expiresAt, isManaged);
 		}
 
 	}

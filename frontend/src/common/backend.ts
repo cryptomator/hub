@@ -151,7 +151,6 @@ export type GroupDtoWithDetails = GroupDto & {
 
 export type BillingDto = {
   hubId: string;
-  hasLicense: boolean; // TODO remove
   email: string;
   licensedSeats: number;
   usedSeats: number;
