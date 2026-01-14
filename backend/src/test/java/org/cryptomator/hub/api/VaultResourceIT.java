@@ -118,7 +118,7 @@ public class VaultResourceIT {
 		effectiveGroupMembershipRepo.updateUsers(List.of("user998", "user999"));
 		effectiveGroupMembershipRepo.updateGroups(List.of("group2"));
 
-		var entitlements = new HubLicenseEntitlements(5L, 0L, null, null);
+		var entitlements = HubLicenseEntitlements.create().withSeats(5L);
 		Mockito.doReturn(entitlements).when(licenseHolder).getEntitlements();
 		Mockito.doReturn(false).when(licenseHolder).isExpired();
 		Mockito.doReturn(5L).when(licenseHolder).getSeats();

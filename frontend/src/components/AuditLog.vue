@@ -1,4 +1,8 @@
 <template>
+  <div v-if="cfg.entitlements.showTrialHint" class="mb-4 p-4 rounded-md bg-yellow-50 border border-yellow-200 text-yellow-800 flex items-center gap-3">
+    <p>TODO: This is a Trial Feature</p> <!-- FIXME: Replace with <ContentBanner/> and make localizable -->
+  </div>
+
   <div v-if="state == State.Loading">
     <div v-if="!onFetchError">
       {{ t('common.loading') }}
@@ -243,6 +247,7 @@ import AuditLogDetailsVaultUpdate from './AuditLogDetailsVaultUpdate.vue';
 import AuditLogUserKeysChange from './AuditLogUserKeysChange.vue';
 import AuditLogUserSetupCodeChanged from './AuditLogUserSetupCodeChanged.vue';
 import FetchError from './FetchError.vue';
+import config, { ConfigDto } from '../common/config';
 
 enum State {
   Loading,
@@ -252,6 +257,7 @@ enum State {
 
 const { t } = useI18n({ useScope: 'global' });
 
+const cfg = ref<ConfigDto>(config.get());
 const state = ref(State.Loading);
 const auditEvents = ref<AuditEventDto[]>([]);
 const onFetchError = ref<Error>();
