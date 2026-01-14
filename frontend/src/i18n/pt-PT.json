@@ -414,5 +414,7 @@
   "groupList.empty.title": "Sem grupos",
   "groupList.empty.description": "Não possui nenhum grupo e não é membro de nenhum.",
   "groupList.filter.result.empty.title": "Sem grupos",
-  "groupList.filter.result.empty.description": "Nenhum resultado utilizando este termo de pesquisa."
+  "groupList.filter.result.empty.description": "Nenhum resultado utilizando este termo de pesquisa.",
+  "trial.enterpriseFeature.title": "Funcionalidade empresarial",
+  "trial.enterpriseFeature.description": "Esta funcionalidade está disponível permanentemente apenas com uma licença empresarial."
 }
