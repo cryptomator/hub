@@ -379,5 +379,7 @@
   "vaultList.filter.result.empty.description": "Нет результатов с использованием этого слова или фильтра поиска.",
   "vaultList.search.placeholder": "Поиск…",
   "vaultList.badge.owner": "Владелец",
-  "vaultList.badge.archived": "В архиве"
+  "vaultList.badge.archived": "В архиве",
+  "trial.enterpriseFeature.title": "Enterprise-функция",
+  "trial.enterpriseFeature.description": "Эта функция доступна только на постоянной основе с корпоративной лицензией."
 }
