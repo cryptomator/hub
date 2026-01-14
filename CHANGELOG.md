@@ -26,6 +26,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CVE-2025-64756, CVE-2025-64118: removed `glob` and `tar` dependencies
 - CVE-2025-64718, CVE-2025-62522: updated `js-yaml` and `vite`
 
+### Fixed
+- Hide Archive/Reactivate Vault actions for admins without ownership rights (#379)
+
 ## [1.4.6](https://github.com/cryptomator/hub/compare/1.4.5...1.4.6)
 
 ### Changed
