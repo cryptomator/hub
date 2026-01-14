@@ -414,5 +414,7 @@
   "groupList.empty.title": "Geen groepen",
   "groupList.empty.description": "Je hebt geen groepen en bent geen lid van een groep.",
   "groupList.filter.result.empty.title": "Geen groepen",
-  "groupList.filter.result.empty.description": "Geen resultaten met die zoekterm of filter."
+  "groupList.filter.result.empty.description": "Geen resultaten met die zoekterm of filter.",
+  "trial.enterpriseFeature.title": "Enterprise Functie",
+  "trial.enterpriseFeature.description": "Deze functie is alleen permanent beschikbaar met een Enterprise licentie."
 }
