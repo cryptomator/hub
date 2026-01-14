@@ -108,7 +108,7 @@ public class LicenseHolder {
 		LOG.info("No license found. Requesting trial license...");
 		var challenge = licenseApi.generateTrialChallenge();
 		var solution = solveChallenge(challenge);
-		var trialResponse = licenseApi.generateTrialLicense(solution.toCaptcha()); // FIXME: is enterprise?
+		var trialResponse = licenseApi.generateTrialLicense(solution.toCaptcha());
 		this.license = licenseValidator.validate(trialResponse.licenseKey(), trialResponse.hubId());
 		settings.setLicenseKey(trialResponse.licenseKey());
 		settings.setHubId(trialResponse.hubId());
