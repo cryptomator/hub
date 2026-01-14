@@ -60,5 +60,6 @@
   "vaultDetails.actions.displayRecoveryKey": "Veure clau de recuperació",
   "vaultList.title": "Caixes fortes",
   "vaultList.addVault": "Afegir",
-  "vaultList.filter": "Filtre"
+  "vaultList.filter": "Filtre",
+  "trial.enterpriseFeature.description": "Aquesta funció només es pot utilitzar de manera permanent amb una llicència Enterprise."
 }
