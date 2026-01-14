@@ -458,5 +458,8 @@
   "groupList.empty.title": "No groups",
   "groupList.empty.description": "You don't own any groups and aren't a member of any.",
   "groupList.filter.result.empty.title": "No groups",
-  "groupList.filter.result.empty.description": "No results using that search term."
+  "groupList.filter.result.empty.description": "No results using that search term.",
+
+  "trial.enterpriseFeature.title": "Enterprise Feature",
+  "trial.enterpriseFeature.description": "This feature is only permanently available with an Enterprise license."
 }
