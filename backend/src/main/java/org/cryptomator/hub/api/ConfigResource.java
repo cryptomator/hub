@@ -80,7 +80,7 @@ public class ConfigResource {
 							@JsonProperty("keycloakClientIdHub") String keycloakClientIdHub, @JsonProperty("keycloakClientIdCryptomator") String keycloakClientIdCryptomator,
 							@JsonProperty("keycloakAuthEndpoint") String authEndpoint, @JsonProperty("keycloakTokenEndpoint") String tokenEndpoint,
 							@JsonProperty("serverTime") Instant serverTime, @JsonProperty("apiLevel") Integer apiLevel,
-							@JsonProperty("entitlements")HubLicenseEntitlements entitlements) {
+							@JsonProperty("entitlements") HubLicenseEntitlements entitlements) {
 	}
 
 }

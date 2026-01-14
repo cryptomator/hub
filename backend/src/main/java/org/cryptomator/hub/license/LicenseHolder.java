@@ -98,7 +98,7 @@ public class LicenseHolder {
 			settingsRepo.persistAndFlush(settings);
 			LOG.info("Successfully imported license from property hub.initial-license.");
 		} catch (JWTVerificationException e) {
-			LOG.warn("Provided initial license is invalid or does not match inital hubId.", e);
+			LOG.warn("Provided initial license is invalid or does not match initial hubId.", e);
 			throw e;
 		}
 	}
@@ -166,7 +166,7 @@ public class LicenseHolder {
 					var refreshedLicense = requestLicenseRefresh(refreshUrl, get().getToken());
 					set(refreshedLicense);
 				} catch (LicenseRefreshFailedException e) {
-					LOG.errorv("Failed to refresh license token. Request to {0} was answerd with response code {1,number,integer}", refreshUrlClaim, e.statusCode);
+					LOG.errorv("Failed to refresh license token. Request to {0} was answered with response code {1,number,integer}", refreshUrlClaim, e.statusCode);
 				} catch (IllegalArgumentException | IOException e) {
 					LOG.error("Failed to refresh license token", e);
 				} catch (JWTVerificationException e) {
