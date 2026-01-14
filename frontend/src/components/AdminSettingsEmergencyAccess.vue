@@ -8,7 +8,7 @@
         <ArrowRightIcon class="ml-1 h-4 w-4" aria-hidden="true" />
       </a>
     </p>
-    <hr class="my-4 pb-6 border-gray-200"/>
+    <hr class="my-4 border-gray-200"/>
     <form class="space-y-6 md:gap-6" novalidate @submit.prevent="saveRecoverySettings">
       <!-- Enable Emergency Access -->
       <div>
@@ -24,27 +24,19 @@
       </div>
       <div 
         :class="[
-          'pt-2 pb-2 pr-1 pl-1 sm:rounded-lg border',
+          'pb-2 pr-1 pl-1 sm:rounded-lg border',
           enableEmergencyAccess ? 'border-white' : ' bg-gray-200 opacity-20 border-gray-300 cursor-not-allowed disabled'
         ]"
       >
-        <div v-if="noRedundancy" class="md:grid md:grid-cols-6 md:gap-6">
-          <span
-            class="inline-flex items-center rounded-md bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800 col-span-6"
-          >
-            <span class="inline-flex items-center gap-2">
-              <ExclamationTriangleIcon class="h-6 w-6" aria-hidden="true" />
-              <div>
-                <b>{{ t('admin.emergencyAccess.noRedundancy.title') }}</b><br/>
-                {{ t('admin.emergencyAccess.noRedundancy.description') }}
-                <a href="https://docs.cryptomator.org/hub/admin/#" target="_blank" class="ml-1 inline-flex items-center text-primary underline hover:text-primary-darker">
-                  {{ t('admin.emergencyAccess.learnMore') }}
-                  <ArrowRightIcon class="ml-1 h-4 w-4" aria-hidden="true" />
-                </a>
-              </div>
-            </span>
-          </span>
-        </div>
+        <ContentBanner
+          v-if="noRedundancy"
+          type="warning"
+          :title="t('admin.emergencyAccess.noRedundancy.title')"
+          :link-text="t('admin.emergencyAccess.learnMore')"
+          link-url="https://docs.cryptomator.org/hub/admin/#"
+        >
+          {{ t('admin.emergencyAccess.noRedundancy.description') }}
+        </ContentBanner>
         <!-- Key Splitting -->
         <div class="md:grid md:grid-cols-6 md:gap-6">
           <label class="col-span-2 block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
@@ -198,7 +190,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
-import { ArrowRightIcon, ExclamationTriangleIcon, InformationCircleIcon } from '@heroicons/vue/20/solid';
+import { ArrowRightIcon, ExclamationTriangleIcon } from '@heroicons/vue/20/solid';
+import ContentBanner from './ContentBanner.vue';
 import { useI18n } from 'vue-i18n';
 import backend, { UserDto, ActivatedUser, didCompleteSetup } from '../common/backend';
 import MultiUserSelectInputGroup from './MultiUserSelectInputGroup.vue';

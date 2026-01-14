@@ -9,6 +9,10 @@
   </div>
   <LicenseAlert v-if="isLicenseViolated && isAdmin != undefined && licenseStatus" :is-admin="isAdmin" :license-status="licenseStatus" />
 
+  <ContentBanner v-if="isTrial && !isCommunityLicense" type="error" :title="t('trial.enterpriseFeature.title')">
+    {{ t('trial.enterpriseFeature.description') }}
+  </ContentBanner>
+
   <div v-if="isCommunityLicense" class="flex flex-col justify-center items-center text-center">
     <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
       <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
@@ -206,6 +210,7 @@ import backend, { LicenseUserInfoDto, VaultDto, RecoveryProcessDto, AuthorityDto
 import FetchError from '../FetchError.vue';
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/vue';
 import LicenseAlert from '../LicenseAlert.vue';
+import ContentBanner from '../ContentBanner.vue';
 import { CheckIcon, ChevronUpDownIcon, WrenchIcon } from '@heroicons/vue/24/solid';
 import userdata from '../../common/userdata';
 import { UserDto } from '../../common/backend';
@@ -246,6 +251,9 @@ const isLicenseViolated = computed(() => {
 const isCommunityLicense = computed(() => {
   return !licenseStatus.value?.expiresAt;
 });
+
+// TODO: Replace with actual trial status from backend
+const isTrial = ref(true);
 
 const selectedFilter = ref<'recoverableVaults' | 'approved' | 'approvable' | 'startable'>('recoverableVaults');
 const filterOptions = computed(() => ({

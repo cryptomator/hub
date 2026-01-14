@@ -10,6 +10,10 @@
 
   <LicenseAlert v-if="isLicenseViolated && isAdmin != undefined && licenseStatus" :is-admin="isAdmin" :license-status="licenseStatus" />
 
+  <ContentBanner v-if="isTrial && !isCommunityLicense" type="info" :title="t('trial.enterpriseFeature.title')">
+    {{ t('trial.enterpriseFeature.description') }}
+  </ContentBanner>
+
   <h2 class="text-2xl font-bold leading-9 text-gray-900 sm:text-3xl sm:truncate">
     {{ t('vaultList.title') }}
   </h2>
@@ -148,6 +152,7 @@ import backend, { LicenseUserInfoDto, SettingsDto, UserDto, VaultDto, VaultRole 
 import userdata from '../common/userdata';
 import FetchError from './FetchError.vue';
 import LicenseAlert from './LicenseAlert.vue';
+import ContentBanner from './ContentBanner.vue';
 import SlideOver from './SlideOver.vue';
 import VaultDetails from './VaultDetails.vue';
 import EmergencyBadge from './emergencyaccess/EmergencyBadge.vue';
@@ -189,6 +194,9 @@ const isLicenseViolated = computed(() => {
 const isCommunityLicense = computed(() => {
   return !licenseStatus.value?.expiresAt;
 });
+
+// TODO: Replace with actual trial status from backend
+const isTrial = ref(true);
 
 const filterOptions = ref< {[key: string]: string} >({
   accessibleVaults: t('vaultList.filter.entry.accessibleVaults'),
