@@ -77,8 +77,6 @@
   "admin.licenseInfo.manageSubscription": "Gestisci Abbonamento",
   "admin.licenseInfo.type.title": "Tipo",
   "admin.licenseInfo.getLicense": "Ottieni licenza",
-  "admin.licenseInfo.selfHostedNoLicense.description": "Grazie per aver utilizzato Cryptomator Hub! Ti è stata concessa la licenza Community. Se hai bisogno di ulteriori postazioni, fai un upgrade.",
-  "admin.licenseInfo.managedNoLicense.description": "Grazie per aver utilizzato Cryptomator Hub! Al momento non hai una licenza attiva.",
   "admin.webOfTrust.title": "Web of Trust",
   "admin.webOfTrust.description": "Configurare le impostazioni del Web of Trust per gestire come viene stabilita la fiducia tra gli utenti del sistema. Queste impostazioni influenzano la verifica delle identità utente e delle chiavi di firma.",
   "admin.webOfTrust.information": "Scopri di più.",
