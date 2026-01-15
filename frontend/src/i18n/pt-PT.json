@@ -77,8 +77,6 @@
   "admin.licenseInfo.manageSubscription": "Gerir subscrição",
   "admin.licenseInfo.type.title": "Tipo",
   "admin.licenseInfo.getLicense": "Obter licença",
-  "admin.licenseInfo.selfHostedNoLicense.description": "Obrigado por usar o Cryptomator Hub! Foi-lhe concedida uma licença da comunidade. Se você precisar de mais lugares, atualize a sua licença.",
-  "admin.licenseInfo.managedNoLicense.description": "Obrigado por usar o Cryptomator Hub! Atualmente você não possui uma licença ativa.",
   "admin.webOfTrust.title": "Cadeia de confiança",
   "admin.webOfTrust.description": "Configure as opções da cadeia de confiança para gerir como a confiança é estabelecida entre utilizadores no sistema. Essas configurações afetam a verificação da identidade dos utilizadores é chaves de assinatura.",
   "admin.webOfTrust.information": "Saiba mais.",
