@@ -66,8 +66,6 @@
   "admin.licenseInfo.manageSubscription": "Aboneliği Yönet",
   "admin.licenseInfo.type.title": "Tip",
   "admin.licenseInfo.getLicense": "Lisans Al",
-  "admin.licenseInfo.selfHostedNoLicense.description": "Cryptomator Hub'ı kullandığınız için teşekkür ederiz! Size Topluluk Lisansı verilmiştir. Daha fazla koltuğa ihtiyacınız varsa, lisansınızı yükseltin.",
-  "admin.licenseInfo.managedNoLicense.description": "Cryptomator Hub'ı kullandığınız için teşekkür ederiz! Şu anda aktif bir lisansınız yok.",
   "admin.webOfTrust.title": "Güven Ağı",
   "admin.webOfTrust.description": "Sistemdeki kullanıcılar arasında güvenin nasıl kurulduğunu yönetmek için Güven Ağı ayarlarını yapılandırın. Bu ayarlar kullanıcı kimliklerinin ve anahtar imzalarının doğrulanmasını etkiler.",
   "admin.webOfTrust.information": "Daha fazla bilgi edin.",
