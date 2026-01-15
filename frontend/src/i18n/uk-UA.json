@@ -414,5 +414,7 @@
   "groupList.empty.title": "Немає груп",
   "groupList.empty.description": "Ви не володієте і не є учасником жодної групи.",
   "groupList.filter.result.empty.title": "Немає груп",
-  "groupList.filter.result.empty.description": "Не знайдено результатів за цим пошуковим запитом."
+  "groupList.filter.result.empty.description": "Не знайдено результатів за цим пошуковим запитом.",
+  "trial.enterpriseFeature.title": "Корпоративні особливості",
+  "trial.enterpriseFeature.description": "Ця функція доступна на постійній основі тільки з Корпоративною ліцензією."
 }
