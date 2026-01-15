@@ -67,8 +67,6 @@
   "admin.licenseInfo.manageSubscription": "Zarządzaj subskrypcją",
   "admin.licenseInfo.type.title": "Typ",
   "admin.licenseInfo.getLicense": "Uzyskaj Licencję",
-  "admin.licenseInfo.selfHostedNoLicense.description": "Dziękujemy za korzystanie z Cryptomator Hub! Otrzymałeś licencję typu \"Community\". Jeśli potrzebujesz więcej miejsc, zaktualizuj licencję.",
-  "admin.licenseInfo.managedNoLicense.description": "Dziękujemy za korzystanie z Cryptomator Hub! Obecnie nie masz aktywnej licencji.",
   "admin.webOfTrust.title": "Sieć zaufania",
   "admin.webOfTrust.description": "Skonfiguruj ustawienia sieci zaufania, aby zarządzać zaufaniem między użytkownikami w systemie. Te ustawienia wpływają na weryfikację tożsamości użytkownika i podpisów kluczowych.",
   "admin.webOfTrust.information": "Więcej informacji.",
