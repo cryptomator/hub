@@ -32,7 +32,7 @@ import static org.mockito.Mockito.when;
 public class LicenseHolderTest {
 
 	Settings.Repository settingsRepo = mock(Settings.Repository.class);
-	RandomMinuteSleeper randomMinuteSleeper = mock(RandomMinuteSleeper.class);
+	RandomSleeper randomSleeper = mock(RandomSleeper.class);
 	LicenseValidator validator = mock(LicenseValidator.class);
 
 	LicenseHolder licenseHolder;
@@ -42,7 +42,7 @@ public class LicenseHolderTest {
 		licenseHolder = new LicenseHolder();
 		licenseHolder.licenseValidator = validator;
 		licenseHolder.settingsRepo = settingsRepo;
-		licenseHolder.randomMinuteSleeper = randomMinuteSleeper;
+		licenseHolder.randomSleeper = randomSleeper;
 	}
 
 	@Nested
@@ -184,7 +184,7 @@ public class LicenseHolderTest {
 
 		@BeforeEach
 		void setup() throws InterruptedException {
-			Mockito.doNothing().when(randomMinuteSleeper).sleep();
+			Mockito.doNothing().when(randomSleeper).sleep(Mockito.anyInt(), Mockito.anyInt(), Mockito.any());
 		}
 
 		@Test

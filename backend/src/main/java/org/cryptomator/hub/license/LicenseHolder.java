@@ -4,7 +4,7 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import io.quarkus.scheduler.Scheduled;
-import io.quarkus.scheduler.ScheduledExecution;
+import io.smallrye.common.annotation.RunOnVirtualThread;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -21,6 +21,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
 @ApplicationScoped
@@ -45,7 +46,8 @@ public class LicenseHolder {
 	LicenseValidator licenseValidator;
 
 	@Inject
-	RandomMinuteSleeper randomMinuteSleeper;
+	RandomSleeper randomSleeper;
+
 	@Inject
 	Settings.Repository settingsRepo;
 
@@ -107,23 +109,30 @@ public class LicenseHolder {
 	 * Attempts to refresh the Hub licence every day between 01:00:00 and 02:00:00 AM UTC if claim refreshURL is present.
 	 */
 	@Scheduled(cron = "0 0 1 * * ?", timeZone = "UTC", concurrentExecution = Scheduled.ConcurrentExecution.SKIP)
-	void refreshLicense() throws InterruptedException {
-		if (get() != null) {
-			randomMinuteSleeper.sleep(); // add random sleep between [0,59]min to reduce infrastructure load
-			var refreshUrlClaim = get().getClaim("refreshUrl");
-			if (refreshUrlClaim != null) {
-				try {
-					var refreshUrl = URI.create(refreshUrlClaim.asString());
-					var refreshedLicense = requestLicenseRefresh(refreshUrl, get().getToken());
-					set(refreshedLicense);
-				} catch (LicenseRefreshFailedException lrfe) {
-					LOG.errorv("Failed to refresh license token. Request to {0} was answerd with response code {1,number,integer}", refreshUrlClaim, lrfe.statusCode);
-				} catch (IllegalArgumentException | IOException e) {
-					LOG.error("Failed to refresh license token", e);
-				} catch (JWTVerificationException jve) {
-					LOG.error("Failed to refresh license token. Refreshed token is invalid.", jve);
-				}
-			}
+	@RunOnVirtualThread
+	void refreshLicense() {
+		if (get() == null) {
+			return;
+		}
+		var refreshUrlClaim = get().getClaim("refreshUrl");
+		if (refreshUrlClaim == null) {
+			LOG.error("Missing refreshUrl claim.");
+			return;
+		}
+		try {
+			randomSleeper.sleep(0, 59, ChronoUnit.MINUTES); // add random sleep to reduce infrastructure load
+			var refreshUrl = URI.create(refreshUrlClaim.asString());
+			var refreshedLicense = requestLicenseRefresh(refreshUrl, get().getToken());
+			set(refreshedLicense);
+		} catch (LicenseRefreshFailedException e) {
+			LOG.errorv("Failed to refresh license token. Request to {0} was answered with response code {1,number,integer}", refreshUrlClaim, e.statusCode);
+		} catch (IllegalArgumentException | IOException e) {
+			LOG.error("Failed to refresh license token", e);
+		} catch (JWTVerificationException e) {
+			LOG.error("Failed to refresh license token. Refreshed token is invalid.", e);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			LOG.warn("License refresh was interrupted", e);
 		}
 	}
 
