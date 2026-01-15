@@ -201,7 +201,12 @@ public class LicenseHolder {
 	}
 
 	public HubLicenseEntitlements getEntitlements() {
-		return license.getClaim("org.cryptomator.hub.entitlements").as(HubLicenseEntitlements.class);
+		var entitlements = license.getClaim("org.cryptomator.hub.entitlements").as(HubLicenseEntitlements.class);
+		if (entitlements == null) {
+			return HubLicenseEntitlements.create().withSeats(license.getClaim("seats").asLong());
+		} else {
+			return entitlements;
+		}
 	}
 
 	/**
