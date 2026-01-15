@@ -67,8 +67,6 @@
   "admin.licenseInfo.manageSubscription": "Gerenciar assinatura",
   "admin.licenseInfo.type.title": "Tipo",
   "admin.licenseInfo.getLicense": "Obter Licença",
-  "admin.licenseInfo.selfHostedNoLicense.description": "Obrigado por usar o Cryptomator Hub! Foi concedida a você a licença da comunidade. Se você precisar de mais lugares, atualize sua licença.",
-  "admin.licenseInfo.managedNoLicense.description": "Obrigado por usar o Cryptomator Hub! Atualmente você não tem uma licença ativa.",
   "admin.webOfTrust.title": "Teia de Confiança",
   "admin.webOfTrust.description": "Configure a Teia de Confiança para gerenciar como a confiança é estabelecida entre os usuários no sistema. Essas configurações afetam a verificação de identidades de usuário e assinaturas-chave.",
   "admin.webOfTrust.information": "Saiba mais.",
