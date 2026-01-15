@@ -76,7 +76,7 @@ public class AuditLogResource {
 		} else if (startDate.isAfter(endDate)) {
 			throw new BadRequestException("startDate must be before endDate");
 		} else if (endDate.isBefore(retentionThreshold)) {
-			throw new PaymentRequiredException("endDate beyond licensed audit log retention period");
+			throw new PaymentRequiredException("queried date range predates audit log retention period");
 		} else if (!(order.equals("desc") || order.equals("asc"))) {
 			throw new BadRequestException("order must be either 'asc' or 'desc'");
 		} else if (pageSize < 1 || pageSize > 100) {

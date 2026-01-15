@@ -13,7 +13,7 @@ import java.util.Objects;
 @ApplicationScoped
 public class LicenseValidator {
 
-	private static final String[] REQUIRED_CLAIMS = {"seats"}; // TODO: eventually phase out "seats" claim in favor of "org.cryptomator.hub.entitlements"."seats", see https://github.com/cryptomator/hub/issues/391
+	private static final String[] REQUIRED_CLAIMS = {"jti", "sub", "iat", "exp", "seats"}; // TODO: eventually phase out "seats" claim in favor of "org.cryptomator.hub.entitlements"."seats", see https://github.com/cryptomator/hub/issues/391
 
 	@Inject
 	@Named("licenseVerifier")

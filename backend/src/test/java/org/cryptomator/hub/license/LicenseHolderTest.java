@@ -3,6 +3,7 @@ package org.cryptomator.hub.license;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import jakarta.ws.rs.InternalServerErrorException;
 import org.cryptomator.hub.entities.Settings;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -115,6 +116,23 @@ public class LicenseHolderTest {
 			verify(licenseHolderSpy, never()).validateExistingLicense(settings);
 			verify(licenseHolderSpy, never()).validateAndApplyInitLicense(Mockito.eq(settings), any(), any());
 			verify(licenseHolderSpy).requestAnonTrialLicense(settings);
+		}
+
+		@DisplayName("requestAnonTrialLicense() fails when server doesn't respond as expected")
+		@Test
+		void testRequestTrialLicense() {
+			licenseHolderSpy.initialLicenseToken = Optional.empty();
+			licenseHolderSpy.initialId = Optional.empty();
+			doReturn(null).when(settings).getLicenseKey();
+			doReturn(null).when(settings).getHubId();
+			doCallRealMethod().when(licenseHolderSpy).requestAnonTrialLicense(Mockito.any());
+			doThrow(new InternalServerErrorException()).when(licenseApi).generateTrialChallenge();
+
+			Assertions.assertThrows(InternalServerErrorException.class, licenseHolderSpy::ensureLicenseExists);
+
+			verify(validator, never()).validate(any(), any());
+			verify(settings, never()).setLicenseKey(any());
+			verify(settings, never()).setHubId(any());
 		}
 	}
 

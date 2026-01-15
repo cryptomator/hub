@@ -8,6 +8,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.WebApplicationException;
 import org.cryptomator.hub.entities.Settings;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
@@ -25,7 +26,6 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.HexFormat;
 import java.util.Optional;
-import java.util.Set;
 
 @ApplicationScoped
 public class LicenseHolder {
@@ -66,7 +66,7 @@ public class LicenseHolder {
 	 * @throws JWTVerificationException if the license is invalid
 	 */
 	@Transactional
-	public void ensureLicenseExists() throws JWTVerificationException{
+	public void ensureLicenseExists() throws JWTVerificationException, WebApplicationException {
 		var settings = settingsRepo.get();
 		if (settings.getLicenseKey() != null && settings.getHubId() != null) {
 			validateExistingLicense(settings);
@@ -84,7 +84,6 @@ public class LicenseHolder {
 			LOG.info("Verified existing license.");
 		} catch (JWTVerificationException e) {
 			LOG.warn("License in database is invalid or does not match hubId", e);
-			LOG.warn("Deleting license entry. Please add the license over the REST API again.");
 			throw e;
 		}
 	}
@@ -104,7 +103,7 @@ public class LicenseHolder {
 	}
 
 	@Transactional(Transactional.TxType.MANDATORY)
-	void requestAnonTrialLicense(Settings settings) {
+	void requestAnonTrialLicense(Settings settings) throws WebApplicationException {
 		LOG.info("No license found. Requesting trial license...");
 		var challenge = licenseApi.generateTrialChallenge();
 		var solution = solveChallenge(challenge);
