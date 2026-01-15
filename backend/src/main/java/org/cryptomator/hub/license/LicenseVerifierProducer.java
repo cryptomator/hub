@@ -4,9 +4,9 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.JWTVerifier;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import jakarta.ws.rs.Produces;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jose4j.base64url.Base64;
 
