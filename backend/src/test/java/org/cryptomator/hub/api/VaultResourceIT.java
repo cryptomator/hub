@@ -4,7 +4,7 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import io.agroal.api.AgroalDataSource;
 import io.quarkus.narayana.jta.QuarkusTransaction;
-import io.quarkus.test.TestTransaction;
+import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.quarkus.test.security.oidc.Claim;
@@ -19,6 +19,8 @@ import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
+import org.cryptomator.hub.license.HubLicenseEntitlements;
+import org.cryptomator.hub.license.LicenseHolder;
 import org.cryptomator.hub.rollback.DBRollbackAfter;
 import org.cryptomator.hub.rollback.DBRollbackBefore;
 import org.flywaydb.core.Flyway;
@@ -27,7 +29,6 @@ import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -39,22 +40,17 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.mockito.Mockito;
 
 import java.security.GeneralSecurityException;
-import java.security.KeyFactory;
 import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
 import java.security.interfaces.ECPrivateKey;
 import java.security.spec.ECGenParameterSpec;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.PKCS8EncodedKeySpec;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
@@ -65,7 +61,6 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.comparesEqualTo;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.text.IsEqualIgnoringCase.equalToIgnoringCase;
 
 @QuarkusTest
@@ -86,6 +81,10 @@ public class VaultResourceIT {
 	EffectiveGroupMembership.Repository effectiveGroupMembershipRepo;
 	@Inject
 	Validator validator;
+	@InjectMock
+	LicenseHolder licenseHolder;
+
+	@SuppressWarnings("unused") // used by @DBRollbackAfter annotation
 	@Inject
 	public Flyway flyway;
 
@@ -118,6 +117,10 @@ public class VaultResourceIT {
 
 		effectiveGroupMembershipRepo.updateUsers(List.of("user998", "user999"));
 		effectiveGroupMembershipRepo.updateGroups(List.of("group2"));
+
+		var entitlements = HubLicenseEntitlements.create().withSeats(5L);
+		Mockito.doReturn(entitlements).when(licenseHolder).getEntitlements();
+		Mockito.doReturn(false).when(licenseHolder).isExpired();
 	}
 
 	@AfterEach

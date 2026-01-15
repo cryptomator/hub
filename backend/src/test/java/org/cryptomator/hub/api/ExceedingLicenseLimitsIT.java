@@ -1,5 +1,6 @@
 package org.cryptomator.hub.api;
 
+import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.quarkus.test.security.oidc.Claim;
@@ -12,9 +13,12 @@ import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.entities.VaultAccess;
+import org.cryptomator.hub.license.HubLicenseEntitlements;
+import org.cryptomator.hub.license.LicenseHolder;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
@@ -23,6 +27,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.mockito.Mockito;
 
 import java.sql.SQLException;
 import java.time.Instant;
@@ -55,6 +60,8 @@ public class ExceedingLicenseLimitsIT {
 	Vault.Repository vaultRepo;
 	@Inject
 	VaultAccess.Repository vaultAccessRepo;
+	@InjectMock
+	LicenseHolder licenseHolder;
 
 	private final VaultResourceIT vaultResourceIT;
 
@@ -110,6 +117,13 @@ public class ExceedingLicenseLimitsIT {
 	void cleanupTestData() {
 		groupRepo.deleteById("group91");
 		userRepo.deleteByIds(List.of("user91", "user92", "user93", "user94", "user95_A"));
+	}
+
+	@BeforeEach
+	public void setup() {
+		var entitlements = HubLicenseEntitlements.create().withSeats(5L);
+		Mockito.doReturn(entitlements).when(licenseHolder).getEntitlements();
+		Mockito.doReturn(false).when(licenseHolder).isExpired();
 	}
 
 	@Test

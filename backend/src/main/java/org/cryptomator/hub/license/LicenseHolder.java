@@ -1,16 +1,17 @@
 package org.cryptomator.hub.license;
 
 import com.auth0.jwt.exceptions.JWTVerificationException;
-import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import io.quarkus.scheduler.Scheduled;
 import io.smallrye.common.annotation.RunOnVirtualThread;
-import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.WebApplicationException;
 import org.cryptomator.hub.entities.Settings;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.logging.Logger;
 
 import java.io.IOException;
@@ -20,15 +21,17 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.HexFormat;
 import java.util.Optional;
 
 @ApplicationScoped
 public class LicenseHolder {
 
-	private static final int SELFHOSTED_NOLICENSE_SEATS = 5;
-	private static final int MANAGED_NOLICENSE_SEATS = 0;
+	private static final Logger LOG = Logger.getLogger(LicenseHolder.class);
 
 	@Inject
 	@ConfigProperty(name = "hub.managed-instance", defaultValue = "false")
@@ -51,44 +54,88 @@ public class LicenseHolder {
 	@Inject
 	Settings.Repository settingsRepo;
 
-	private static final Logger LOG = Logger.getLogger(LicenseHolder.class);
+	@RestClient
+	LicenseApi licenseApi;
+
 	private DecodedJWT license;
 
 	/**
-	 * Loads the license from the database or from init props, if present
+	 * Makes sure a valid (but possibly expired) license exists.
+	 * <p>
+	 * Called during {@link org.cryptomator.hub.Main application startup}.
+	 *
+	 * @throws JWTVerificationException if the license is invalid
 	 */
-	@PostConstruct
-	void init() {
+	@Transactional
+	public void ensureLicenseExists() throws JWTVerificationException, WebApplicationException {
 		var settings = settingsRepo.get();
 		if (settings.getLicenseKey() != null && settings.getHubId() != null) {
-			validateOrResetExistingLicense(settings);
+			validateExistingLicense(settings);
 		} else if (initialLicenseToken.isPresent() && initialId.isPresent()) {
 			validateAndApplyInitLicense(settings, initialLicenseToken.get(), initialId.get());
+		} else {
+			requestAnonTrialLicense(settings);
 		}
 	}
 
-	@Transactional
-	void validateOrResetExistingLicense(Settings settings) {
+	@Transactional(Transactional.TxType.MANDATORY)
+	void validateExistingLicense(Settings settings) throws JWTVerificationException {
 		try {
 			this.license = licenseValidator.validate(settings.getLicenseKey(), settings.getHubId());
+			LOG.info("Verified existing license.");
 		} catch (JWTVerificationException e) {
 			LOG.warn("License in database is invalid or does not match hubId", e);
-			LOG.warn("Deleting license entry. Please add the license over the REST API again.");
-			settings.setLicenseKey(null);
-			settingsRepo.persistAndFlush(settings);
+			throw e;
 		}
 	}
 
-	@Transactional
-	void validateAndApplyInitLicense(Settings settings, String initialLicenseToken, String initialHubId) {
+	@Transactional(Transactional.TxType.MANDATORY)
+	void validateAndApplyInitLicense(Settings settings, String initialLicenseToken, String initialHubId) throws JWTVerificationException {
 		try {
 			this.license = licenseValidator.validate(initialLicenseToken, initialHubId);
 			settings.setLicenseKey(initialLicenseToken);
 			settings.setHubId(initialHubId);
 			settingsRepo.persistAndFlush(settings);
+			LOG.info("Successfully imported license from property hub.initial-license.");
 		} catch (JWTVerificationException e) {
-			LOG.warn("Provided initial license is invalid or does not match inital hubId.", e);
+			LOG.warn("Provided initial license is invalid or does not match initial hubId.", e);
+			throw e;
 		}
+	}
+
+	@Transactional(Transactional.TxType.MANDATORY)
+	void requestAnonTrialLicense(Settings settings) throws WebApplicationException {
+		LOG.info("No license found. Requesting trial license...");
+		var challenge = licenseApi.generateTrialChallenge();
+		var solution = solveChallenge(challenge);
+		var trialResponse = licenseApi.generateTrialLicense(solution.toCaptcha());
+		this.license = licenseValidator.validate(trialResponse.licenseKey(), trialResponse.hubId());
+		settings.setLicenseKey(trialResponse.licenseKey());
+		settings.setHubId(trialResponse.hubId());
+		settingsRepo.persistAndFlush(settings);
+		LOG.info("Successfully retrieved trial license.");
+	}
+
+	// visible for testing
+	LicenseApi.Solution solveChallenge(LicenseApi.Challenge challenge) {
+		HexFormat hex = HexFormat.of();
+		MessageDigest sha256;
+		try {
+			sha256 = MessageDigest.getInstance("SHA-256");
+		} catch (NoSuchAlgorithmException e) {
+			throw new AssertionError("Every implementation of the Java platform is required to support [...] SHA-256", e);
+		}
+		long start = System.nanoTime();
+		for (int i = 0; i < challenge.maxnumber(); i++) {
+			var saltedSecret = challenge.salt() + i;
+			sha256.update(saltedSecret.getBytes(StandardCharsets.US_ASCII));
+			var attempt = hex.formatHex(sha256.digest());
+			if (challenge.challenge().equals(attempt)) {
+				long took = System.nanoTime() - start;
+				return challenge.solve(i, took / 1_000_000);
+			}
+		}
+		throw new IllegalArgumentException("Unsolvable challenge");
 	}
 
 	/**
@@ -111,9 +158,6 @@ public class LicenseHolder {
 	@Scheduled(cron = "0 0 1 * * ?", timeZone = "UTC", concurrentExecution = Scheduled.ConcurrentExecution.SKIP)
 	@RunOnVirtualThread
 	void refreshLicense() {
-		if (get() == null) {
-			return;
-		}
 		var refreshUrlClaim = get().getClaim("refreshUrl");
 		if (refreshUrlClaim.isMissing()) {
 			LOG.error("Missing refreshUrl claim.");
@@ -155,49 +199,34 @@ public class LicenseHolder {
 		}
 	}
 
+	@NotNull
 	public DecodedJWT get() {
+		if (license == null) {
+			throw new IllegalStateException();
+		}
 		return license;
 	}
 
-	/**
-	 * Checks if the license is set.
-	 *
-	 * @return {@code true}, if the license _is not null_. Otherwise false.
-	 */
-	public boolean isSet() {
-		return license != null;
+	public HubLicenseEntitlements getEntitlements() {
+		var entitlements = license.getClaim("org.cryptomator.hub.entitlements").as(HubLicenseEntitlements.class);
+		// TODO: eventually "entitlements" claim will be mandatory and this fallback can be removed, see https://github.com/cryptomator/hub/issues/391
+		if (entitlements == null) { // legacy (pre 1.5.0) license without "org.cryptomator.hub.entitlements" claim:
+			return HubLicenseEntitlements.create().withSeats(license.getClaim("seats").asLong());
+		} else {
+			return entitlements;
+		}
 	}
 
 	/**
 	 * Checks if the license is expired.
 	 *
-	 * @return {@code true}, if the license _is not nul and expired_. Otherwise false.
+	 * @return {@code true}, if the license expired, {@code false} otherwise.
 	 */
 	public boolean isExpired() {
-		return Optional.ofNullable(license) //
-				.map(l -> l.getExpiresAt().toInstant().isBefore(Instant.now())) //
-				.orElse(false);
-	}
-
-	/**
-	 * Gets the number of seats in the license
-	 *
-	 * @return Number of seats of the license, if license is not null. Otherwise {@value SELFHOSTED_NOLICENSE_SEATS}.
-	 */
-	public long getSeats() {
-		return Optional.ofNullable(license) //
-				.map(l -> l.getClaim("seats")) //
-				.map(Claim::asLong) //
-				.orElseGet(this::seatsOnNotExisingLicense);
-	}
-
-	//visible for testing
-	public long seatsOnNotExisingLicense() {
-		if (!managedInstance) {
-			return SELFHOSTED_NOLICENSE_SEATS;
-		} else {
-			return MANAGED_NOLICENSE_SEATS;
+		if (license == null) {
+			throw new IllegalStateException();
 		}
+		return license.getExpiresAt().toInstant().isBefore(Instant.now());
 	}
 
 	public boolean isManagedInstance() {
@@ -213,4 +242,5 @@ public class LicenseHolder {
 			this.body = body;
 		}
 	}
+
 }

@@ -1,4 +1,8 @@
 <template>
+  <ContentBanner v-if="cfg.entitlements.showTrialHint" type="info" :title="t('trial.enterpriseFeature.title')" class="mb-12">
+    {{ t('trial.enterpriseFeature.description') }} <!-- TODO: link to feature comparison? -->
+  </ContentBanner>
+
   <div v-if="state == State.Loading">
     <div v-if="!onFetchError">
       {{ t('common.loading') }}
@@ -243,6 +247,8 @@ import AuditLogDetailsVaultUpdate from './AuditLogDetailsVaultUpdate.vue';
 import AuditLogUserKeysChange from './AuditLogUserKeysChange.vue';
 import AuditLogUserSetupCodeChanged from './AuditLogUserSetupCodeChanged.vue';
 import FetchError from './FetchError.vue';
+import config, { ConfigDto } from '../common/config';
+import ContentBanner from './ContentBanner.vue';
 
 enum State {
   Loading,
@@ -252,6 +258,7 @@ enum State {
 
 const { t } = useI18n({ useScope: 'global' });
 
+const cfg = ref<ConfigDto>(config.get());
 const state = ref(State.Loading);
 const auditEvents = ref<AuditEventDto[]>([]);
 const onFetchError = ref<Error>();

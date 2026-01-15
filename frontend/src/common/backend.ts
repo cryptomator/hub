@@ -151,7 +151,6 @@ export type GroupDtoWithDetails = GroupDto & {
 
 export type BillingDto = {
   hubId: string;
-  hasLicense: boolean;
   email: string;
   licensedSeats: number;
   usedSeats: number;
@@ -184,7 +183,7 @@ export class LicenseUserInfoDto {
   }
 
   public isExceeded(): boolean {
-    return this.usedSeats > this.licensedSeats;
+    return this.licensedSeats == 0 || this.usedSeats > this.licensedSeats;
   }
 }
 
