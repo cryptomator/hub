@@ -68,8 +68,6 @@
   "admin.licenseInfo.manageSubscription": "管理訂閱",
   "admin.licenseInfo.type.title": "類別",
   "admin.licenseInfo.getLicense": "取得授權",
-  "admin.licenseInfo.selfHostedNoLicense.description": "感謝您使用 Cryptomator Hub！ 您已獲得社群版授權。如果您需要更多授權數量，請升級您的授權。",
-  "admin.licenseInfo.managedNoLicense.description": "感謝您使用 Cryptomator Hub！ 您目前沒有已啟用的授權。",
   "admin.webOfTrust.title": "信任網絡",
   "admin.webOfTrust.description": "調整信任網路 (WoT) 設定，以管理系統中使用者之間信任關係的建立方式。這些設定將影響使用者身份驗證與金鑰簽署的驗證流程。",
   "admin.webOfTrust.information": "了解更多。",
