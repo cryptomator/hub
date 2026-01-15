@@ -77,8 +77,6 @@
   "admin.licenseInfo.manageSubscription": "구독 관리",
   "admin.licenseInfo.type.title": "유형",
   "admin.licenseInfo.getLicense": "라이선스 얻기",
-  "admin.licenseInfo.selfHostedNoLicense.description": "Cryptomator Hub를 이용해주셔서 감사합니다! 커뮤니티 라이선스가 발급되었습니다. 더 많은 시트가 필요하다면, 라이선스를 업그레이드 해주십시오.",
-  "admin.licenseInfo.managedNoLicense.description": "Cryptomator Hub를 이용해주셔서 감사합니다! 현재 활성화된 라이선스가 없습니다.",
   "admin.webOfTrust.title": "Web of Trust",
   "admin.webOfTrust.description": "시스템 내부에서 사용자 간 신뢰가 어떻게 구성될지를 관리하기 위해 Web of Trust 설정을 하십시오. 이 설정은 사용자 신원과 키 사인에 영향을 미칩니다.",
   "admin.webOfTrust.information": "자세히 알아보기",
