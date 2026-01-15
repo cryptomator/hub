@@ -77,8 +77,6 @@
   "admin.licenseInfo.manageSubscription": "Hantera prenumeration",
   "admin.licenseInfo.type.title": "Typ",
   "admin.licenseInfo.getLicense": "Köp licens",
-  "admin.licenseInfo.selfHostedNoLicense.description": "Tack för att du använder Cryptomator Navet! Du har beviljats en gemenskapslicens. Om du behöver fler platser, uppgradera din licens.",
-  "admin.licenseInfo.managedNoLicense.description": "Tack för att du använder Cryptomator Navet! Du har för närvarande ingen aktiv licens.",
   "admin.webOfTrust.title": "Tillitsnätet",
   "admin.webOfTrust.description": "Konfigurera tillitsnätinställningar för att hantera hur förtroende skapas mellan användare i systemet. Dessa inställningar påverkar verifieringen av användaridentiteter och nyckelsignaturer.",
   "admin.webOfTrust.information": "Läs mer.",
