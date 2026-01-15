@@ -388,5 +388,7 @@
   "vaultList.badge.archived": "Arhivēta",
   "userList.filter.result.empty.title": "Nav lietotāju",
   "userList.filter.result.empty.description": "Nekas atbilstošs meklēšanas vaicājumam netika atrasts.",
-  "groupList.filter.result.empty.description": "Nekas atbilstošs meklēšanas vaicājumam netika atrasts."
+  "groupList.filter.result.empty.description": "Nekas atbilstošs meklēšanas vaicājumam netika atrasts.",
+  "trial.enterpriseFeature.title": "Iespēja uzņēmumiem",
+  "trial.enterpriseFeature.description": "Šī iespēja ir pieejama tikai ar licenci uzņēmumiem."
 }
