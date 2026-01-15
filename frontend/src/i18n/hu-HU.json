@@ -50,8 +50,6 @@
   "admin.licenseInfo.manageSubscription": "Előfizetés kezelése",
   "admin.licenseInfo.type.title": "Típus",
   "admin.licenseInfo.getLicense": "Licence vásárlása",
-  "admin.licenseInfo.selfHostedNoLicense.description": "Köszönjük, hogy a Cryptomator Hub-ot használod! Hozzáférést kaptál a Közösségi Licenchez. Ha több helyre lenne szükséged, bővítheted a licenced.",
-  "admin.licenseInfo.managedNoLicense.description": "Köszönjük, hogy a Cryptomator Hub-ot használod! Nincs aktív licenced.",
   "admin.webOfTrust.title": "Web of Trust",
   "admin.webOfTrust.description": "Konfiguráld a Web of Trust beállításaid a rendszer felhasználó közötti biztalom kialakításának kezeléséhez. Ezek a beállítások befolyásolják a felhasználói identitások és kulcsaláírások ellenőrzését.",
   "admin.webOfTrust.information": "További információk.",
