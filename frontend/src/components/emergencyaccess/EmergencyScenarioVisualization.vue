@@ -2,7 +2,7 @@
   <div class="mt-2">
     <div
       ref="pillContainer"
-      class="relative flex flex-wrap gap-2 p-2 border border-gray-300 rounded-md bg-gray-100 opacity-60 cursor-not-allowed"
+      class="relative flex flex-wrap gap-2 p-2 border border-gray-300 rounded-md bg-gray-200 opacity-60 cursor-not-allowed"
       aria-disabled="true"
     >
       <template v-if="loadingCouncilSelection">

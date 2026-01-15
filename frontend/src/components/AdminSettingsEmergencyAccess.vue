@@ -10,152 +10,151 @@
     </p>
     <hr class="my-4 border-gray-200"/>
     <form class="space-y-6 md:gap-6" novalidate @submit.prevent="saveRecoverySettings">
-      <!-- Enable Emergency Access -->
-      <div>
-        <input
-          id="enableEmergencyAcces"
-          v-model="enableEmergencyAccess"
-          type="checkbox"
-          class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-        />
-        <label for="enableEmergencyAcces" class="ml-2 text-sm text-gray-500">
-          {{ t('admin.emergencyAccess.enable') }}
-        </label>
-      </div>
-      <div 
-        :class="[
-          'pb-2 pr-1 pl-1 sm:rounded-lg border',
-          enableEmergencyAccess ? 'border-white' : ' bg-gray-200 opacity-20 border-gray-300 cursor-not-allowed disabled'
-        ]"
+      <ContentBanner
+        v-if="noRedundancy"
+        type="warning"
+        :title="t('admin.emergencyAccess.noRedundancy.title')"
+        :link-text="t('admin.emergencyAccess.learnMore')"
+        link-url="https://docs.cryptomator.org/hub/admin/#"
       >
-        <ContentBanner
-          v-if="noRedundancy"
-          type="warning"
-          :title="t('admin.emergencyAccess.noRedundancy.title')"
-          :link-text="t('admin.emergencyAccess.learnMore')"
-          link-url="https://docs.cryptomator.org/hub/admin/#"
-        >
-          {{ t('admin.emergencyAccess.noRedundancy.description') }}
-        </ContentBanner>
-        <!-- Key Splitting -->
-        <div class="md:grid md:grid-cols-6 md:gap-6">
-          <label class="col-span-2 block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
-            {{ t('admin.emergencyAccess.requiredKeys.label') }}
+        {{ t('admin.emergencyAccess.noRedundancy.description') }}
+      </ContentBanner>
+      <!-- Enable Emergency Access -->
+      <div class="md:grid md:grid-cols-6 md:gap-6 items-baseline">
+        <label for="enableEmergencyAccess" class="col-span-2 block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
+          {{ t('admin.emergencyAccess.enabled.label') }}
+        </label>
+        <div class="mt-2 md:mt-0 lg:col-span-3 md:col-span-4">
+          <input
+            id="enableEmergencyAccess"
+            v-model="enableEmergencyAccess"
+            type="checkbox"
+            class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+          />
+          <label for="enableEmergencyAccess" class="ml-2 text-sm text-gray-500">
+            {{ t('admin.emergencyAccess.enabled.help') }}
           </label>
-          <div class="mt-1 md:mt-0 lg:col-span-3 md:col-span-4 relative">
-            <div class="flex items-center gap-2">
+        </div>
+      </div>
+
+      <!-- Key Splitting -->
+      <div class="md:grid md:grid-cols-6 md:gap-6 items-baseline">
+        <label class="col-span-2 block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
+          {{ t('admin.emergencyAccess.requiredKeys.label') }}
+        </label>
+        <div class="mt-1 md:mt-0 lg:col-span-3 md:col-span-4 relative">
+          <div class="flex items-center gap-2">
+            <div v-if="defaultRequiredEmergencyKeySharesLessThenTwoError || defaultRequiredEmergencyKeySharesToHighError instanceof FormValidationFailedError" class="absolute  -top-2 transform translate-y-[-100%] z-10">
+              <div class="bg-red-50 border border-red-300 text-red-900 px-2 py-1 rounded shadow-sm text-sm hyphens-auto">
+                {{ requiredKeySharesValidationText }}
+              </div>
+            </div>
+            <div class="relative flex-1">
+              <input
+                v-model.number="requiredShares"
+                type="number" min="2" max="255"
+                :disabled="!enableEmergencyAccess"
+                class="rounded-md border-gray-300 shadow-sm sm:text-sm focus:ring-primary focus:border-primary text-left w-full disabled:cursor-not-allowed disabled:bg-gray-200"
+                :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': defaultRequiredEmergencyKeySharesError || defaultRequiredEmergencyKeySharesToHighError instanceof FormValidationFailedError}"
+                :aria-label="t('admin.emergencyAccess.requiredKeys.ariaLabel')"
+              />
               <div v-if="defaultRequiredEmergencyKeySharesLessThenTwoError || defaultRequiredEmergencyKeySharesToHighError instanceof FormValidationFailedError" class="absolute  -top-2 transform translate-y-[-100%] z-10">
-                <div class="bg-red-50 border border-red-300 text-red-900 px-2 py-1 rounded shadow-sm text-sm hyphens-auto">
-                  {{ requiredKeySharesValidationText }}
-                </div>
-              </div>
-              <div class="relative flex-1">
-                <input
-                  v-model.number="requiredShares"
-                  type="number" min="2" max="255"
-                  :disabled="!enableEmergencyAccess"
-                  class="rounded-md border-gray-300 shadow-sm sm:text-sm focus:ring-primary focus:border-primary text-left w-full disabled:cursor-not-allowed"
-                  :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': defaultRequiredEmergencyKeySharesError || defaultRequiredEmergencyKeySharesToHighError instanceof FormValidationFailedError}"
-                  :aria-label="t('admin.emergencyAccess.requiredKeys.ariaLabel')"
-                />
-                <div v-if="defaultRequiredEmergencyKeySharesLessThenTwoError || defaultRequiredEmergencyKeySharesToHighError instanceof FormValidationFailedError" class="absolute  -top-2 transform translate-y-[-100%] z-10">
-                  <div class="absolute bottom-0 left-5 transform translate-y-1/2 rotate-45 w-2 h-2 bg-red-50 border-r border-b border-red-300"></div>
-                </div>
-                <p class="mt-2 my-4 text-sm text-gray-500">{{ t('admin.emergencyAccess.requiredKeys.help') }}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- User Selection -->
-        <div class="md:grid md:grid-cols-6 md:gap-6">
-          <label class="col-span-2 block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
-            {{ t('admin.emergencyAccess.keyholders.label') }}
-          </label>
-          <div class="mt-1 md:mt-0 lg:col-span-3 md:col-span-4">
-            <div class="relative">
-              <MultiUserSelectInputGroup
-                v-if="enableEmergencyAccess"
-                :selected-users="selectedUsers"
-                :on-search="searchCouncilMembers"
-                :input-visible="enableEmergencyAccess"
-                :error-message="t('admin.emergencyAccess.keyholders.minSelected', [requiredShares])"
-                :has-error="!!selectedMembersError"
-                :placeholder="t('common.search.placeholder')"
-                @action="selectUser"
-                @remove="removeUser"
-              />
-              <MultiUserSelectInputGroup
-                v-else
-                :selected-users="selectedUsers"
-                :on-search="async () => []"
-                :input-visible="enableEmergencyAccess"
-                :disable-action="true"
-              />
-              <p class="mt-2 text-sm text-gray-500">{{ t('admin.emergencyAccess.keyholders.help') }}</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Allow Choosing Council + Min Members -->
-        <div class="md:grid md:grid-cols-6 md:gap-6">
-          <label class="col-span-2"></label>
-          <div class="mt-1 md:mt-0 lg:col-span-3 md:col-span-4 flex items-center h-9.5">
-            <input
-              id="allow"
-              v-model="allowChoosing"
-              :disabled="!enableEmergencyAccess"
-              type="checkbox"
-              class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-            />
-            <label for="allow" class="ml-2 text-sm text-gray-500">
-              {{ t('admin.emergencyAccess.allowChoosing.label') }}
-              <span v-if="allowChoosing"> {{ t('admin.emergencyAccess.allowChoosing.atLeast') }}</span>
-            </label>
-
-            <div class="relative ml-2 flex-1">
-              <!-- Tooltip -->
-              <div
-                v-if="defaultMinMembersLessThenTwoError || defaultMinMembersToHighError || defaultMinMembersLowerThenRequiredEmergencyKeySharesError instanceof FormValidationFailedError"
-                class="absolute -top-2 left-0 translate-y-[-100%] z-10"
-              >
-                <div class="inline-block bg-red-50 border border-red-300 text-red-900 px-2 py-1 rounded shadow-sm text-sm hyphens-auto">
-                  {{ requiredMinMembersValidationText }}
-                </div>
-                <!-- Arrow -->
                 <div class="absolute bottom-0 left-5 transform translate-y-1/2 rotate-45 w-2 h-2 bg-red-50 border-r border-b border-red-300"></div>
               </div>
-
-              <!-- minMembers Input -->
-              <input
-                v-model.number="minMembers"
-                :disabled="!enableEmergencyAccess"
-                type="number"
-                min="2" max="255"
-                :hidden="!allowChoosing"
-                class="w-full rounded-md border-gray-300 shadow-sm sm:text-sm focus:ring-primary focus:border-primary text-left"
-                :class="{
-                  'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500':
-                    defaultMinMembersLessThenTwoError || defaultMinMembersToHighError || defaultMinMembersLowerThenRequiredEmergencyKeySharesError instanceof FormValidationFailedError
-                }"
-                :aria-label="t('admin.emergencyAccess.minMembers.ariaLabel')"
-              />
+              <p class="mt-2 my-4 text-sm text-gray-500">{{ t('admin.emergencyAccess.requiredKeys.help') }}</p>
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- Example Recovery -->
-        <div class="md:grid md:grid-cols-6 md:gap-6">
-          <label class="block text-sm text-gray-700 md:text-right md:pr-4 md:mt-2 col-span-2">
-            {{ t('emergencyAccess.label.exampleRecovery') }}
-          </label>
-          <div class="mt-1 md:mt-0 lg:col-span-3 md:col-span-4">
-            <EmergencyScenarioVisualization
+      <!-- User Selection -->
+      <div class="md:grid md:grid-cols-6 md:gap-6">
+        <label class="col-span-2 block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
+          {{ t('admin.emergencyAccess.keyholders.label') }}
+        </label>
+        <div class="mt-1 md:mt-0 lg:col-span-3 md:col-span-4">
+          <div class="relative">
+            <MultiUserSelectInputGroup
+              v-if="enableEmergencyAccess"
               :selected-users="selectedUsers"
-              :required-key-shares="requiredShares!"
+              :on-search="searchCouncilMembers"
+              :input-visible="enableEmergencyAccess"
+              :error-message="t('admin.emergencyAccess.keyholders.minSelected', [requiredShares])"
+              :has-error="!!selectedMembersError"
+              :placeholder="t('common.search.placeholder')"
+              @action="selectUser"
+              @remove="removeUser"
             />
-            <p class="mt-2 text-sm text-gray-500">{{ t('admin.emergencyAccess.example.help') }}</p>
+            <MultiUserSelectInputGroup
+              v-else
+              :selected-users="selectedUsers"
+              :on-search="async () => []"
+              :input-visible="enableEmergencyAccess"
+              :disable-action="true"
+            />
+            <p class="mt-2 text-sm text-gray-500">{{ t('admin.emergencyAccess.keyholders.help') }}</p>
           </div>
+        </div>
+      </div>
+
+      <!-- Allow Choosing Council + Min Members -->
+      <div class="md:grid md:grid-cols-6 md:gap-6">
+        <label class="col-span-2"></label>
+        <div class="mt-1 md:mt-0 lg:col-span-3 md:col-span-4 flex items-center h-9.5">
+          <input
+            id="allow"
+            v-model="allowChoosing"
+            :disabled="!enableEmergencyAccess"
+            type="checkbox"
+            class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+          />
+          <label for="allow" class="ml-2 text-sm text-gray-500">
+            {{ t('admin.emergencyAccess.allowChoosing.label') }}
+            <span v-if="allowChoosing"> {{ t('admin.emergencyAccess.allowChoosing.atLeast') }}</span>
+          </label>
+
+          <div class="relative ml-2 flex-1">
+            <!-- Tooltip -->
+            <div
+              v-if="defaultMinMembersLessThenTwoError || defaultMinMembersToHighError || defaultMinMembersLowerThenRequiredEmergencyKeySharesError instanceof FormValidationFailedError"
+              class="absolute -top-2 left-0 translate-y-[-100%] z-10"
+            >
+              <div class="inline-block bg-red-50 border border-red-300 text-red-900 px-2 py-1 rounded shadow-sm text-sm hyphens-auto">
+                {{ requiredMinMembersValidationText }}
+              </div>
+              <!-- Arrow -->
+              <div class="absolute bottom-0 left-5 transform translate-y-1/2 rotate-45 w-2 h-2 bg-red-50 border-r border-b border-red-300"></div>
+            </div>
+
+            <!-- minMembers Input -->
+            <input
+              v-model.number="minMembers"
+              :disabled="!enableEmergencyAccess"
+              type="number"
+              min="2" max="255"
+              :hidden="!allowChoosing"
+              class="w-full rounded-md border-gray-300 shadow-sm sm:text-sm focus:ring-primary focus:border-primary text-left disabled:cursor-not-allowed disabled:bg-gray-200"
+              :class="{
+                'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500':
+                  defaultMinMembersLessThenTwoError || defaultMinMembersToHighError || defaultMinMembersLowerThenRequiredEmergencyKeySharesError instanceof FormValidationFailedError
+              }"
+              :aria-label="t('admin.emergencyAccess.minMembers.ariaLabel')"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Example Recovery -->
+      <div class="md:grid md:grid-cols-6 md:gap-6">
+        <label class="block text-sm text-gray-700 md:text-right md:pr-4 md:mt-2 col-span-2">
+          {{ t('emergencyAccess.label.exampleRecovery') }}
+        </label>
+        <div class="mt-1 md:mt-0 lg:col-span-3 md:col-span-4">
+          <EmergencyScenarioVisualization
+            :selected-users="selectedUsers"
+            :required-key-shares="requiredShares!"
+          />
+          <p class="mt-2 text-sm text-gray-500">{{ t('admin.emergencyAccess.example.help') }}</p>
         </div>
       </div>
 

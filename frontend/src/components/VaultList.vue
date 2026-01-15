@@ -10,10 +10,6 @@
 
   <LicenseAlert v-if="isLicenseViolated && licenseStatus" :is-admin="isAdmin" :license-status="licenseStatus" />
 
-  <ContentBanner v-if="isTrial && !isCommunityLicense" type="info" :title="t('trial.enterpriseFeature.title')">
-    {{ t('trial.enterpriseFeature.description') }}
-  </ContentBanner>
-
   <h2 class="text-2xl font-bold leading-9 text-gray-900 sm:text-3xl sm:truncate">
     {{ t('vaultList.title') }}
   </h2>
