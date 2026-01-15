@@ -29,6 +29,11 @@ import java.util.UUID;
 @Path("/auditlog")
 public class AuditLogResource {
 
+	private static final Set<String> EVENT_TYPES = Set.of(DeviceRegisteredEvent.TYPE, DeviceRemovedEvent.TYPE, UserAccountResetEvent.TYPE, UserKeysChangeEvent.TYPE, UserSetupCodeChangeEvent.TYPE,
+			SettingWotUpdateEvent.TYPE, SignedWotIdEvent.TYPE, VaultCreatedEvent.TYPE, VaultUpdatedEvent.TYPE, VaultAccessGrantedEvent.TYPE,
+			VaultKeyRetrievedEvent.TYPE, VaultMemberAddedEvent.TYPE, VaultMemberRemovedEvent.TYPE, VaultMemberUpdatedEvent.TYPE, VaultOwnershipClaimedEvent.TYPE,
+			EmergencyAccessSetupEvent.TYPE, EmergencyAccessSettingsUpdatedEvent.TYPE, EmergencyAccessRecoveryStartedEvent.TYPE, EmergencyAccessRecoveryApprovedEvent.TYPE, EmergencyAccessRecoveryCompletedEvent.TYPE, EmergencyAccessRecoveryAbortedEvent.TYPE);
+
 	@Inject
 	AuditEvent.Repository auditEventRepo;
 	@Inject
@@ -49,31 +54,35 @@ public class AuditLogResource {
 	@APIResponse(responseCode = "402", description = "Community license used or license expired")
 	@APIResponse(responseCode = "403", description = "requesting user does not have admin role")
 	public List<AuditEventDto> getAllEvents(@QueryParam("startDate") Instant startDate, @QueryParam("endDate") Instant endDate, @QueryParam("type") List<String> type, @QueryParam("paginationId") Long paginationId, @QueryParam("order") @DefaultValue("desc") String order, @QueryParam("pageSize") @DefaultValue("20") int pageSize) {
-		if (!license.isSet() || license.isExpired()) {
+		if (license.getEntitlements().auditLogRetentionDays() == 0 || license.isExpired()) {
 			throw new PaymentRequiredException("Community license used or license expired");
 		}
+		Instant retentionThreshold = license.getEntitlements().auditLogRetentionThreshold();
 
 		if (startDate == null || endDate == null) {
 			throw new BadRequestException("startDate and endDate must be specified");
 		} else if (startDate.isAfter(endDate)) {
 			throw new BadRequestException("startDate must be before endDate");
+		} else if (endDate.isBefore(retentionThreshold)) {
+			throw new PaymentRequiredException("queried date range predates audit log retention period");
 		} else if (!(order.equals("desc") || order.equals("asc"))) {
 			throw new BadRequestException("order must be either 'asc' or 'desc'");
 		} else if (pageSize < 1 || pageSize > 100) {
 			throw new BadRequestException("pageSize must be between 1 and 100");
 		} else if (type == null) {
 			throw new BadRequestException("type must be specified");
-		} else if (!type.isEmpty()) {
-			var validTypes = Set.of(DeviceRegisteredEvent.TYPE, DeviceRemovedEvent.TYPE, UserAccountResetEvent.TYPE, UserKeysChangeEvent.TYPE, UserSetupCodeChangeEvent.TYPE,
-					SettingWotUpdateEvent.TYPE, SignedWotIdEvent.TYPE, VaultCreatedEvent.TYPE, VaultUpdatedEvent.TYPE, VaultAccessGrantedEvent.TYPE,
-					VaultKeyRetrievedEvent.TYPE, VaultMemberAddedEvent.TYPE, VaultMemberRemovedEvent.TYPE, VaultMemberUpdatedEvent.TYPE, VaultOwnershipClaimedEvent.TYPE,
-					EmergencyAccessSetupEvent.TYPE, EmergencyAccessSettingsUpdatedEvent.TYPE, EmergencyAccessRecoveryStartedEvent.TYPE, EmergencyAccessRecoveryApprovedEvent.TYPE, EmergencyAccessRecoveryCompletedEvent.TYPE, EmergencyAccessRecoveryAbortedEvent.TYPE);
-			if (!validTypes.containsAll(type)) {
-				throw new BadRequestException("Invalid event type provided");
-			}
 		} else if (paginationId == null) {
 			throw new BadRequestException("paginationId must be specified");
 		}
+
+		if (!type.isEmpty()) {
+			if (!EVENT_TYPES.containsAll(type)) {
+				throw new BadRequestException("Invalid event type provided");
+			}
+		}
+
+		// cut off startDate at retention threshold
+		startDate = startDate.isBefore(retentionThreshold) ? retentionThreshold : startDate;
 
 		return auditEventRepo.findAllInPeriod(startDate, endDate, type, paginationId, order.equals("asc"), pageSize).map(AuditEventDto::fromEntity).toList();
 	}

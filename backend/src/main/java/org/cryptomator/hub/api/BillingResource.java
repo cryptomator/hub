@@ -46,12 +46,8 @@ public class BillingResource {
 	public BillingDto get() {
 		int usedSeats = (int) effectiveVaultAccessRepo.countSeatOccupyingUsers();
 		boolean isManaged = licenseHolder.isManagedInstance();
-		return Optional.ofNullable(licenseHolder.get())
-				.map(jwt -> BillingDto.fromDecodedJwt(jwt, usedSeats, isManaged))
-				.orElseGet(() -> {
-					var hubId = settingsRepo.get().getHubId();
-					return BillingDto.create(hubId, (int) licenseHolder.getSeats(), usedSeats, isManaged);
-				});
+		var licenseToken = licenseHolder.get();
+		return BillingDto.fromDecodedJwt(licenseToken, usedSeats, isManaged);
 	}
 
 	@PUT
@@ -71,21 +67,17 @@ public class BillingResource {
 		}
 	}
 
-	public record BillingDto(@JsonProperty("hubId") String hubId, @JsonProperty("hasLicense") Boolean hasLicense, @JsonProperty("email") String email,
+	public record BillingDto(@JsonProperty("hubId") String hubId, @JsonProperty("email") String email,
 							 @JsonProperty("licensedSeats") Integer licensedSeats, @JsonProperty("usedSeats") Integer usedSeats,
 							 @JsonProperty("issuedAt") Instant issuedAt, @JsonProperty("expiresAt") Instant expiresAt, @JsonProperty("managedInstance") Boolean managedInstance) {
-
-		public static BillingDto create(String hubId, int noLicenseSeatCount, int usedSeats, boolean isManaged) {
-			return new BillingDto(hubId, false, null, noLicenseSeatCount, usedSeats, null, null, isManaged);
-		}
 
 		public static BillingDto fromDecodedJwt(DecodedJWT jwt, int usedSeats, boolean isManaged) {
 			var id = jwt.getId();
 			var email = jwt.getSubject();
-			var licensedSeats = jwt.getClaim("seats").asInt();
+			var licensedSeats = jwt.getClaim("seats").asInt(); // TODO eventually replace with "org.cryptomator.hub.entitlements"."seats", see https://github.com/cryptomator/hub/issues/391
 			var issuedAt = jwt.getIssuedAt().toInstant();
 			var expiresAt = jwt.getExpiresAt().toInstant();
-			return new BillingDto(id, true, email, licensedSeats, usedSeats, issuedAt, expiresAt, isManaged);
+			return new BillingDto(id, email, licensedSeats, usedSeats, issuedAt, expiresAt, isManaged);
 		}
 
 	}

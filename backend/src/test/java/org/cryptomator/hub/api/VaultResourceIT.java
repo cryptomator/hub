@@ -22,6 +22,8 @@ import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.entities.VaultAccess;
 import org.cryptomator.hub.entities.events.EventLogger;
 import org.cryptomator.hub.entities.events.VaultKeyRetrievedEvent;
+import org.cryptomator.hub.license.HubLicenseEntitlements;
+import org.cryptomator.hub.license.LicenseHolder;
 import org.cryptomator.hub.rollback.DBRollbackAfter;
 import org.cryptomator.hub.rollback.DBRollbackBefore;
 import org.flywaydb.core.Flyway;
@@ -84,8 +86,11 @@ public class VaultResourceIT {
 	EffectiveGroupMembership.Repository effectiveGroupMembershipRepo;
 	@Inject
 	Validator validator;
+	@InjectMock
+	LicenseHolder licenseHolder;
+
 	@Inject
-	@SuppressWarnings("unused") // needed for @DBRollbackBefore
+	@SuppressWarnings("unused") // needed for @DBRollbackBefore, @DBRollbackAfter
 	public Flyway flyway;
 
 	@BeforeAll
@@ -117,6 +122,10 @@ public class VaultResourceIT {
 
 		effectiveGroupMembershipRepo.updateUsers(List.of("user998", "user999"));
 		effectiveGroupMembershipRepo.updateGroups(List.of("group2"));
+
+		var entitlements = HubLicenseEntitlements.create().withSeats(5L);
+		Mockito.doReturn(entitlements).when(licenseHolder).getEntitlements();
+		Mockito.doReturn(false).when(licenseHolder).isExpired();
 	}
 
 	@AfterEach

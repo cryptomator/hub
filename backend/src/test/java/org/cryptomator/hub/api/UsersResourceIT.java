@@ -14,6 +14,7 @@ import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.keycloak.KeycloakAdminService;
+import org.cryptomator.hub.license.HubLicenseEntitlements;
 import org.cryptomator.hub.license.LicenseHolder;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -341,7 +342,8 @@ public class UsersResourceIT {
 		@TestSecurity(user = "Admin", roles = {"admin"})
 		@DisplayName("As admin, GET /auditlog contains signature events")
 		void testGetAuditLogEntries() {
-			Mockito.doReturn(true).when(licenseHolder).isSet();
+			var entitlements = HubLicenseEntitlements.create().withAuditLogRetentionDays(7L);
+			Mockito.doReturn(entitlements).when(licenseHolder).getEntitlements();
 			Mockito.doReturn(false).when(licenseHolder).isExpired();
 
 			given().param("startDate", DateTimeFormatter.ISO_INSTANT.format(testStart))

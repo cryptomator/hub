@@ -1,6 +1,5 @@
 package org.cryptomator.hub.api;
 
-import com.auth0.jwt.interfaces.DecodedJWT;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -14,7 +13,6 @@ import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 
 import java.time.Instant;
-import java.util.Optional;
 
 @Path("/license")
 public class LicenseResource {
@@ -41,8 +39,8 @@ public class LicenseResource {
 									 @JsonProperty("expiresAt") Instant expiresAt) {
 
 		public static LicenseUserInfoDto create(LicenseHolder licenseHolder, int usedSeats) {
-			var licensedSeats = (int) licenseHolder.getSeats();
-			var expiresAt = Optional.ofNullable(licenseHolder.get()).map(DecodedJWT::getExpiresAtAsInstant).orElse(null);
+			var licensedSeats = (int) licenseHolder.getEntitlements().seats();
+			var expiresAt = licenseHolder.get().getExpiresAtAsInstant();
 			return new LicenseUserInfoDto(licensedSeats, usedSeats, expiresAt);
 		}
 

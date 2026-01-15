@@ -23,6 +23,13 @@ export type ConfigDto = {
   keycloakTokenEndpoint: string;
   serverTime: string;
   apiLevel: number;
+  entitlements: {
+    seats: number;
+    showTrialHint: boolean;
+    auditLogRetentionDays: number;
+    iosLicense: string;
+    androidLicense: string;
+  }
 };
 
 class ConfigWrapper {

@@ -3,6 +3,7 @@ package org.cryptomator.hub.license;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import jakarta.ws.rs.InternalServerErrorException;
 import org.cryptomator.hub.entities.Settings;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -10,7 +11,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
 
@@ -24,98 +25,114 @@ import java.util.stream.Stream;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class LicenseHolderTest {
 
 	Settings.Repository settingsRepo = mock(Settings.Repository.class);
-	RandomMinuteSleeper randomMinuteSleeper = mock(RandomMinuteSleeper.class);
+	RandomSleeper randomSleeper = mock(RandomSleeper.class);
 	LicenseValidator validator = mock(LicenseValidator.class);
+	LicenseApi licenseApi = mock(LicenseApi.class);
 
 	LicenseHolder licenseHolder;
 
 	@BeforeEach
-	void resetTestclass() {
+	public void resetTestclass() {
 		licenseHolder = new LicenseHolder();
 		licenseHolder.licenseValidator = validator;
 		licenseHolder.settingsRepo = settingsRepo;
-		licenseHolder.randomMinuteSleeper = randomMinuteSleeper;
+		licenseHolder.randomSleeper = randomSleeper;
+		licenseHolder.licenseApi = licenseApi;
 	}
 
 	@Nested
-	@DisplayName("Testing Init Method")
-	class TestInit {
+	@DisplayName("Testing ensureLicenseExists()")
+	class TestEnsureLicenseExists {
+
+		private Settings settings;
+		private LicenseHolder licenseHolderSpy;
+
+		@BeforeEach
+		void setup() {
+			settings = mock(Settings.class);
+			licenseHolderSpy = Mockito.spy(licenseHolder);
+			Mockito.doReturn(settings).when(settingsRepo).get();
+			Mockito.doNothing().when(licenseHolderSpy).validateExistingLicense(any());
+			Mockito.doNothing().when(licenseHolderSpy).validateAndApplyInitLicense(any(), any(), any());
+			Mockito.doNothing().when(licenseHolderSpy).requestAnonTrialLicense(settings);
+		}
 
 		@Test
-		@DisplayName("If db token and hubId is set, call validateExisting")
-		void testTokenAndIdPresentInDatabase() {
+		@DisplayName("call validateExistingLicense(), if DB contains existing token")
+		void testValidateExistingLicense() {
 			//to show check, that db has higher precedence
-			licenseHolder.initialId = Optional.of("43");
-			licenseHolder.initialLicenseToken = Optional.of("initToken");
-
-			Settings settings = mock(Settings.class);
+			licenseHolderSpy.initialId = Optional.of("43");
+			licenseHolderSpy.initialLicenseToken = Optional.of("initToken");
 			when(settings.getLicenseKey()).thenReturn("token");
 			when(settings.getHubId()).thenReturn("42");
-			when(settingsRepo.get()).thenReturn(settings);
 
-			var licenseHolderSpy = Mockito.spy(licenseHolder);
-			licenseHolderSpy.init();
-			verify(licenseHolderSpy).validateOrResetExistingLicense(settings);
+			licenseHolderSpy.ensureLicenseExists();
+
+			verify(licenseHolderSpy).validateExistingLicense(settings);
+			verify(licenseHolderSpy, never()).validateAndApplyInitLicense(any(), any(), any());
+			verify(licenseHolderSpy, never()).requestAnonTrialLicense(settings);
 		}
 
-		@DisplayName("If dbToken or dbHubId is null, use set init config values")
+		@DisplayName("call validateAndApplyInitLicense(), if DB doesn't contain token but init config does")
 		@ParameterizedTest
-		@MethodSource("provideInitValuesCases")
-		void testInitValues(String dbToken, String dbHubId) {
-			Settings settings = mock(Settings.class);
+		@CsvSource(value = {
+				"dbToken, null",
+				"null, null",
+				"null, 42"
+		}, nullValues = {"null"})
+		void testApplyInitLicense(String dbToken, String dbHubId) {
+			licenseHolderSpy.initialLicenseToken = Optional.of("token");
+			licenseHolderSpy.initialId = Optional.of("43");
 			when(settings.getLicenseKey()).thenReturn(dbToken);
 			when(settings.getHubId()).thenReturn(dbHubId);
-			when(settingsRepo.get()).thenReturn(settings);
 
-			licenseHolder.initialLicenseToken = Optional.of("token");
-			licenseHolder.initialId = Optional.of("43");
+			licenseHolderSpy.ensureLicenseExists();
 
-			var licenseHolderSpy = Mockito.spy(licenseHolder);
-			licenseHolderSpy.init();
+			verify(licenseHolderSpy, never()).validateExistingLicense(any());
 			verify(licenseHolderSpy).validateAndApplyInitLicense(settings, "token", "43");
+			verify(licenseHolderSpy, never()).requestAnonTrialLicense(settings);
 		}
 
-		public static Stream<Arguments> provideInitValuesCases() {
-			return Stream.of(
-					Arguments.of("dbToken", null),
-					Arguments.of(null, null),
-					Arguments.of(null, "42")
-			);
-		}
-
-		@DisplayName("Do nothing, if db and init have a null value")
+		@DisplayName("call requestAnonTrialLicense(), if neither DB nor init config contains token")
 		@ParameterizedTest
-		@MethodSource("provideDoNothingCases")
-		void testDoNothingCases(String dbToken, String dbHubId, String initToken, String initId) {
-			Settings settings = mock(Settings.class);
+		@CsvSource(value = {
+				"dbToken, null, null, 43",
+				"null, 42, null, 43",
+				"dbToken, null, initToken, null"
+		}, nullValues = {"null"})
+		void testRequestTrialLicense(String dbToken, String dbHubId, String initToken, String initId) {
+			licenseHolderSpy.initialLicenseToken = Optional.ofNullable(initToken);
+			licenseHolderSpy.initialId = Optional.ofNullable(initId);
 			when(settings.getLicenseKey()).thenReturn(dbToken);
 			when(settings.getHubId()).thenReturn(dbHubId);
-			when(settingsRepo.get()).thenReturn(settings);
 
-			licenseHolder.initialLicenseToken = Optional.ofNullable(initToken);
-			licenseHolder.initialId = Optional.ofNullable(initId);
+			licenseHolderSpy.ensureLicenseExists();
 
-			var licenseHolderSpy = Mockito.spy(licenseHolder);
-			licenseHolderSpy.init();
-			verify(licenseHolderSpy, never()).validateOrResetExistingLicense(settings);
+			verify(licenseHolderSpy, never()).validateExistingLicense(settings);
 			verify(licenseHolderSpy, never()).validateAndApplyInitLicense(Mockito.eq(settings), any(), any());
+			verify(licenseHolderSpy).requestAnonTrialLicense(settings);
 		}
 
-		public static Stream<Arguments> provideDoNothingCases() {
-			return Stream.of(
-					Arguments.of("dbToken", null, null, "43"),
-					Arguments.of(null, "42", null, "43"),
-					Arguments.of(null, "42", "initToken", null),
-					Arguments.of("dbToken", null, "initToken", null)
-			);
+		@DisplayName("requestAnonTrialLicense() fails when server doesn't respond as expected")
+		@Test
+		void testFailingRequestTrialLicense() {
+			licenseHolderSpy.initialLicenseToken = Optional.empty();
+			licenseHolderSpy.initialId = Optional.empty();
+			doReturn(null).when(settings).getLicenseKey();
+			doReturn(null).when(settings).getHubId();
+			doCallRealMethod().when(licenseHolderSpy).requestAnonTrialLicense(Mockito.any());
+			doThrow(new InternalServerErrorException()).when(licenseApi).generateTrialChallenge();
+
+			Assertions.assertThrows(InternalServerErrorException.class, licenseHolderSpy::ensureLicenseExists);
+
+			verify(validator, never()).validate(any(), any());
+			verify(settings, never()).setLicenseKey(any());
+			verify(settings, never()).setHubId(any());
 		}
 	}
 
@@ -126,38 +143,34 @@ public class LicenseHolderTest {
 		when(settings.getLicenseKey()).thenReturn("token");
 		when(settings.getHubId()).thenReturn("42");
 		when(settingsRepo.get()).thenReturn(settings);
-
 		when(validator.validate("token", "42")).thenReturn(Mockito.mock(DecodedJWT.class));
 
-		licenseHolder.validateOrResetExistingLicense(settings);
+		licenseHolder.validateExistingLicense(settings);
+
 		verify(settings, never()).setHubId(any());
 		verify(settings, never()).setLicenseKey(any());
 	}
 
 	@Test
-	@DisplayName("Invalid db token is set to null and persisted")
+	@DisplayName("Invalid db token fails validation")
 	void testValidateExistingFailure() {
 		Settings settings = mock(Settings.class);
 		when(settings.getLicenseKey()).thenReturn("token");
 		when(settings.getHubId()).thenReturn("42");
 		when(settingsRepo.get()).thenReturn(settings);
-
 		when(validator.validate("token", "42")).thenThrow(JWTVerificationException.class);
 
-		licenseHolder.validateOrResetExistingLicense(settings);
-		verify(settings, never()).setHubId(any());
-		verify(settings).setLicenseKey(Mockito.isNull());
-		verify(settingsRepo).persistAndFlush(settings);
+		Assertions.assertThrows(JWTVerificationException.class, () -> licenseHolder.validateExistingLicense(settings));
 	}
 
 	@Test
 	@DisplayName("Valid init token is persisted with hubID to db")
 	void testApplyInitSuccess() {
 		Settings settings = mock(Settings.class);
-
 		when(validator.validate("token", "42")).thenReturn(Mockito.mock(DecodedJWT.class));
 
 		licenseHolder.validateAndApplyInitLicense(settings, "token", "42");
+
 		verify(settings).setHubId("42");
 		verify(settings).setLicenseKey("token");
 		verify(settingsRepo).persistAndFlush(settings);
@@ -170,12 +183,36 @@ public class LicenseHolderTest {
 		when(settings.getLicenseKey()).thenReturn("token");
 		when(settings.getHubId()).thenReturn("42");
 		when(settingsRepo.get()).thenReturn(settings);
-
 		when(validator.validate("token", "42")).thenThrow(JWTVerificationException.class);
 
-		licenseHolder.validateAndApplyInitLicense(settings, "token", "42");
+		Assertions.assertThrows(JWTVerificationException.class, () -> licenseHolder.validateAndApplyInitLicense(settings, "token", "42"));
+
 		verify(settings, never()).setHubId(any());
 		verify(settings, never()).setLicenseKey(any());
+	}
+
+	@Test
+	@DisplayName("Requesting a trial license contacts the license server")
+	void testRequestAnonTrialLicense() {
+		LicenseHolder licenseHolderSpy = Mockito.spy(licenseHolder);
+		Settings settings = mock(Settings.class);
+		LicenseApi.Challenge challenge = mock(LicenseApi.Challenge.class);
+		LicenseApi.Solution solution = mock(LicenseApi.Solution.class);
+		LicenseApi.TrialLicenseResponse trialLicenseResponse = mock(LicenseApi.TrialLicenseResponse.class);
+		doReturn(challenge).when(licenseApi).generateTrialChallenge();
+		doReturn("captcha").when(solution).toCaptcha();
+		doReturn(solution).when(licenseHolderSpy).solveChallenge(challenge);
+		doReturn(trialLicenseResponse).when(licenseApi).generateTrialLicense("captcha");
+		doReturn("token").when(trialLicenseResponse).licenseKey();
+		doReturn(mock(DecodedJWT.class)).when(validator).validate(Mockito.eq("token"), Mockito.any());
+
+		licenseHolderSpy.requestAnonTrialLicense(settings);
+
+		verify(licenseApi).generateTrialChallenge();
+		verify(licenseApi).generateTrialLicense("captcha");
+		verify(settings).setHubId(Mockito.any());
+		verify(settings).setLicenseKey("token");
+		verify(settingsRepo).persistAndFlush(settings);
 	}
 
 	@Nested
@@ -184,7 +221,7 @@ public class LicenseHolderTest {
 
 		@BeforeEach
 		void setup() throws InterruptedException {
-			Mockito.doNothing().when(randomMinuteSleeper).sleep();
+			Mockito.doNothing().when(randomSleeper).sleep(Mockito.anyInt(), Mockito.anyInt(), Mockito.any());
 		}
 
 		@Test
@@ -208,18 +245,15 @@ public class LicenseHolderTest {
 		@Test
 		@DisplayName("Setting an invalid token fails with exception")
 		void testSetInvalidToken() {
-			when(validator.validate("token", "42")).thenAnswer(invocationOnMock -> {
-				throw new JWTVerificationException("");
-			});
 			Settings settings = mock(Settings.class);
-			when(settings.getHubId()).thenReturn("42");
-			when(settingsRepo.get()).thenReturn(settings);
+			Mockito.doReturn(settings).when(settingsRepo).get();
+			Mockito.doReturn("42").when(settings).getHubId();
+			Mockito.doThrow(new JWTVerificationException("")).when(validator).validate("token", "42");
 
 			Assertions.assertThrows(JWTVerificationException.class, () -> licenseHolder.set("token"));
 
 			verify(validator).validate("token", "42");
 			verify(settingsRepo, never()).persist((Settings) any());
-			Assertions.assertNull(licenseHolder.get()); //TODO: not very unit test like
 		}
 	}
 
@@ -227,14 +261,28 @@ public class LicenseHolderTest {
 	@DisplayName("Testing refreshLicense()")
 	class RefreshLicense {
 
+		private LicenseHolder licenseHolderSpy;
+		private Claim refreshClaim;
+		private DecodedJWT licenseJwt;
+
+		@BeforeEach
+		void setup() {
+			licenseHolderSpy = Mockito.spy(licenseHolder);
+			refreshClaim = mock(Claim.class);
+			licenseJwt = mock(DecodedJWT.class);
+
+			Mockito.doReturn("http://localhost:3000").when(refreshClaim).asString();
+			Mockito.doReturn(refreshClaim).when(licenseJwt).getClaim("refreshUrl");
+			Mockito.doReturn("token").when(licenseJwt).getToken();
+			Mockito.doReturn(licenseJwt).when(licenseHolderSpy).get();
+		}
+
 		@Test
 		@DisplayName("If license does not have a refreshUrl, skip refresh")
 		void testRefreshLicenseNoRefreshURL() throws InterruptedException, IOException {
-			var licenseHolderSpy = Mockito.spy(licenseHolder);
-
-			var licenseJwt = mock(DecodedJWT.class);
-			when(licenseJwt.getClaim("refreshUrl")).thenReturn(null);
-			when(licenseHolderSpy.get()).thenReturn(licenseJwt);
+			var missingClaim = mock(Claim.class);
+			Mockito.doReturn(true).when(missingClaim).isMissing();
+			Mockito.doReturn(missingClaim).when(licenseJwt).getClaim("refreshUrl");
 
 			licenseHolderSpy.refreshLicense();
 
@@ -248,13 +296,7 @@ public class LicenseHolderTest {
 		@Test
 		@DisplayName("If license does not have a valid refreshUrl, skip refresh")
 		void testRefreshLicenseBadURL() throws InterruptedException, IOException {
-			var licenseHolderSpy = Mockito.spy(licenseHolder);
-
-			var refreshClaim = mock(Claim.class);
-			when(refreshClaim.asString()).thenReturn("*:not:an::uri");
-			var licenseJwt = mock(DecodedJWT.class);
-			when(licenseJwt.getClaim("refreshUrl")).thenReturn(refreshClaim);
-			when(licenseHolderSpy.get()).thenReturn(licenseJwt);
+			Mockito.doReturn("*:not:an::uri").when(refreshClaim).asString();
 
 			licenseHolderSpy.refreshLicense();
 
@@ -268,14 +310,6 @@ public class LicenseHolderTest {
 		@ParameterizedTest
 		@MethodSource("provideRefreshLicenseFailingRequestCases")
 		void testRefreshLicenseFailingRequest(Throwable t) throws InterruptedException, IOException {
-			var licenseHolderSpy = Mockito.spy(licenseHolder);
-
-			var refreshClaim = mock(Claim.class);
-			when(refreshClaim.asString()).thenReturn("http://localhost:3000");
-			var licenseJwt = mock(DecodedJWT.class);
-			when(licenseJwt.getClaim("refreshUrl")).thenReturn(refreshClaim);
-			when(licenseJwt.getToken()).thenReturn("token");
-			when(licenseHolderSpy.get()).thenReturn(licenseJwt);
 			Mockito.doThrow(t).when(licenseHolderSpy).requestLicenseRefresh(any(), eq("token"));
 
 			licenseHolderSpy.refreshLicense();
@@ -293,14 +327,6 @@ public class LicenseHolderTest {
 		@Test
 		@DisplayName("Successful refresh request, but failing validation")
 		void testRefreshLicenseFailedValidation() throws InterruptedException, IOException {
-			var licenseHolderSpy = Mockito.spy(licenseHolder);
-
-			var refreshClaim = mock(Claim.class);
-			when(refreshClaim.asString()).thenReturn("http://localhost:3000");
-			var licenseJwt = mock(DecodedJWT.class);
-			when(licenseJwt.getClaim("refreshUrl")).thenReturn(refreshClaim);
-			when(licenseJwt.getToken()).thenReturn("token");
-			when(licenseHolderSpy.get()).thenReturn(licenseJwt);
 			Mockito.doReturn("newToken").when(licenseHolderSpy).requestLicenseRefresh(any(), eq("token"));
 			Mockito.doThrow(JWTVerificationException.class).when(licenseHolderSpy).set("newToken");
 
@@ -313,25 +339,20 @@ public class LicenseHolderTest {
 		}
 
 		@Test
-		@DisplayName("Successful refresh request, but failing validation")
+		@DisplayName("Successful refresh")
 		void testRefreshLicenseSuccess() throws InterruptedException, IOException {
-			var licenseHolderSpy = Mockito.spy(licenseHolder);
-
-			var refreshClaim = mock(Claim.class);
-			when(refreshClaim.asString()).thenReturn("http://localhost:3000");
-			var licenseJwt = mock(DecodedJWT.class);
-			when(licenseJwt.getClaim("refreshUrl")).thenReturn(refreshClaim);
-			when(licenseJwt.getToken()).thenReturn("token");
-			when(licenseHolderSpy.get()).thenReturn(licenseJwt);
+			var settings = Mockito.mock(Settings.class);
+			Mockito.doReturn("42").when(settings).getHubId();
+			Mockito.doReturn(settings).when(settingsRepo).get();
 			Mockito.doReturn("newToken").when(licenseHolderSpy).requestLicenseRefresh(any(), eq("token"));
-			Mockito.doThrow(JWTVerificationException.class).when(licenseHolderSpy).set("newToken");
 
 			licenseHolderSpy.refreshLicense();
 
 			verify(licenseHolderSpy).requestLicenseRefresh(any(), eq("token"));
 			verify(licenseHolderSpy).set("newToken");
-			verify(settingsRepo, never()).get();
-			verify(settingsRepo, never()).persistAndFlush(any());
+			verify(validator).validate("newToken", "42");
+			verify(settings).setLicenseKey("newToken");
+			verify(settingsRepo).persistAndFlush(settings);
 		}
 
 	}

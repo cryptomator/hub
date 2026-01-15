@@ -130,7 +130,7 @@
           {{ t('vaultDetails.actions.editVaultMetadata') }}
         </button>
         <!-- archiveVault button -->
-        <button v-if="(vaultRole == 'OWNER' || isAdmin)" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white  hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showArchiveVaultDialog()">
+        <button v-if="vaultRole == 'OWNER'" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white  hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showArchiveVaultDialog()">
           {{ t('vaultDetails.actions.archiveVault') }}
         </button>
       </div>
@@ -160,7 +160,7 @@
           {{ t('vaultDetails.actions.displayRecoveryKey') }}
         </button>
         <!-- reactivateVault button -->
-        <button v-if="(vaultRole == 'OWNER' || isAdmin)" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white  hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showReactivateVaultDialog()">
+        <button v-if="vaultRole == 'OWNER'" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white  hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showReactivateVaultDialog()">
           {{ t('vaultDetails.actions.reactivateVault') }}
         </button>
       </div>
@@ -205,7 +205,7 @@
           <span>{{ t('vaultDetails.emergencyAccess.fixCouncil') }}</span>
         </button>
         <!-- archiveVault button -->
-        <button v-if="(vaultRole == 'OWNER' || isAdmin)" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white  hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showArchiveVaultDialog()">
+        <button v-if="vaultRole == 'OWNER'" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white  hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showArchiveVaultDialog()">
           {{ t('vaultDetails.actions.archiveVault') }}
         </button>
       </div>
@@ -296,7 +296,6 @@ const grantingEmergencyAccess = ref(false);
 const grantEmergencyAccessDialog = ref<typeof GrantEmergencyAccessDialog>();
 
 const vaultRecoveryRequired = ref<boolean>(false);
-const isAdmin = ref<boolean>();
 
 const isLegacyVault = computed(() => vault.value?.authPublicKey !== undefined);
 const licenseViolated = computed(() => license.value?.isExpired() || license.value?.isExceeded());
@@ -314,7 +313,6 @@ onMounted(fetchData);
 async function fetchData() {
   onFetchError.value = undefined;
   try {
-    isAdmin.value = (await auth).hasRole('admin');
     vault.value = await backend.vaults.get(props.vaultId);
     settings.value = await backend.settings.get();
 
