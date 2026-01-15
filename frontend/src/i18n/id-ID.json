@@ -50,8 +50,6 @@
   "admin.licenseInfo.manageSubscription": "Atur Langganan",
   "admin.licenseInfo.type.title": "Tipe",
   "admin.licenseInfo.getLicense": "Dapatkan Lisensi",
-  "admin.licenseInfo.selfHostedNoLicense.description": "Terima kasih telah memakai Hub Cryptomator! Anda telah memperoleh Lisensi Komunitas. Bila Anda perlu lebih banyak penempatan, tingkatkan lisensi Anda.",
-  "admin.licenseInfo.managedNoLicense.description": "Terima kasih telah memakai Hub Cryptomator! Anda saat ini tidak punya lisensi aktif.",
   "admin.webOfTrust.title": "Jaringan Kepercayaan",
   "admin.webOfTrust.description": "Konfigurasikan pengaturan Jaringan Kepercayaan untuk mengelola bagaimana kepercayaan dijalin antar pengguna dalam sistem. Pengaturan ini memengaruhi verifikasi identitas pengguna dan tanda tangan kunci.",
   "admin.webOfTrust.information": "Selengkapnya.",
