@@ -32,7 +32,7 @@ public class LicenseValidator {
 			throw new InvalidClaimException("Token ID " + jwt.getId() + " does not match your Hub ID " + expectedHubId);
 		}
 		for (var claim : REQUIRED_CLAIMS) {
-			if (Objects.isNull(jwt.getClaim(claim))) {
+			if (jwt.getClaim(claim).isMissing()) {
 				throw new InvalidClaimException("The claim " + claim + " is required, but not present.");
 			}
 		}

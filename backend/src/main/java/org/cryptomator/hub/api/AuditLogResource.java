@@ -44,6 +44,10 @@ import java.util.UUID;
 @Path("/auditlog")
 public class AuditLogResource {
 
+	private static final Set<String> EVENT_TYPES = Set.of(DeviceRegisteredEvent.TYPE, DeviceRemovedEvent.TYPE, UserAccountResetEvent.TYPE, UserKeysChangeEvent.TYPE, UserSetupCodeChangeEvent.TYPE,
+			SettingWotUpdateEvent.TYPE, SignedWotIdEvent.TYPE, VaultCreatedEvent.TYPE, VaultUpdatedEvent.TYPE, VaultAccessGrantedEvent.TYPE,
+			VaultKeyRetrievedEvent.TYPE, VaultMemberAddedEvent.TYPE, VaultMemberRemovedEvent.TYPE, VaultMemberUpdatedEvent.TYPE, VaultOwnershipClaimedEvent.TYPE);
+
 	@Inject
 	AuditEvent.Repository auditEventRepo;
 	@Inject
@@ -81,15 +85,14 @@ public class AuditLogResource {
 			throw new BadRequestException("pageSize must be between 1 and 100");
 		} else if (type == null) {
 			throw new BadRequestException("type must be specified");
-		} else if (!type.isEmpty()) {
-			var validTypes = Set.of(DeviceRegisteredEvent.TYPE, DeviceRemovedEvent.TYPE, UserAccountResetEvent.TYPE, UserKeysChangeEvent.TYPE, UserSetupCodeChangeEvent.TYPE,
-					SettingWotUpdateEvent.TYPE, SignedWotIdEvent.TYPE, VaultCreatedEvent.TYPE, VaultUpdatedEvent.TYPE, VaultAccessGrantedEvent.TYPE,
-					VaultKeyRetrievedEvent.TYPE, VaultMemberAddedEvent.TYPE, VaultMemberRemovedEvent.TYPE, VaultMemberUpdatedEvent.TYPE, VaultOwnershipClaimedEvent.TYPE);
-			if (!validTypes.containsAll(type)) {
-				throw new BadRequestException("Invalid event type provided");
-			}
 		} else if (paginationId == null) {
 			throw new BadRequestException("paginationId must be specified");
+		}
+
+		if (!type.isEmpty()) {
+			if (!EVENT_TYPES.containsAll(type)) {
+				throw new BadRequestException("Invalid event type provided");
+			}
 		}
 
 		// cut off startDate at retention threshold
