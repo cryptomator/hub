@@ -74,7 +74,7 @@ public class BillingResource {
 		public static BillingDto fromDecodedJwt(DecodedJWT jwt, int usedSeats, boolean isManaged) {
 			var id = jwt.getId();
 			var email = jwt.getSubject();
-			var licensedSeats = jwt.getClaim("seats").asInt();
+			var licensedSeats = jwt.getClaim("seats").asInt(); // TODO eventually replace with "org.cryptomator.hub.entitlements"."seats", see https://github.com/cryptomator/hub/issues/391
 			var issuedAt = jwt.getIssuedAt().toInstant();
 			var expiresAt = jwt.getExpiresAt().toInstant();
 			return new BillingDto(id, email, licensedSeats, usedSeats, issuedAt, expiresAt, isManaged);

@@ -179,7 +179,7 @@ public class VaultResource {
 		var vault = vaultRepo.findById(vaultId); // should always be found, since @VaultRole filter would have triggered
 		var user = userRepo.findByIdOptional(userId).orElseThrow(NotFoundException::new);
 		var usedSeats = effectiveVaultAccessRepo.countSeatOccupyingUsers();
-		if (usedSeats < license.getSeats() // free seats available
+		if (usedSeats < license.getEntitlements().seats() // free seats available
 				|| effectiveVaultAccessRepo.isUserOccupyingSeat(userId)) { // or user already sitting
 			return addAuthority(vault, user, role);
 		} else {
@@ -206,7 +206,7 @@ public class VaultResource {
 		var group = groupRepo.findByIdOptional(groupId).orElseThrow(NotFoundException::new);
 
 		//usersInGroup - usersInGroupAndPartOfAtLeastOneVault + usersOfAtLeastOneVault
-		if (userRepo.countEffectiveGroupUsers(groupId) - effectiveVaultAccessRepo.countSeatOccupyingUsersOfGroup(groupId) + effectiveVaultAccessRepo.countSeatOccupyingUsers() > license.getSeats()) {
+		if (userRepo.countEffectiveGroupUsers(groupId) - effectiveVaultAccessRepo.countSeatOccupyingUsersOfGroup(groupId) + effectiveVaultAccessRepo.countSeatOccupyingUsers() > license.getEntitlements().seats()) {
 			throw new PaymentRequiredException("Adding this group would exceed available license seats.");
 		}
 
@@ -286,7 +286,7 @@ public class VaultResource {
 		}
 
 		var accessTokenSeats = effectiveVaultAccessRepo.countSeatOccupyingUsersWithAccessToken();
-		if (accessTokenSeats > license.getSeats()) {
+		if (accessTokenSeats > license.getEntitlements().seats()) {
 			throw new PaymentRequiredException("Number of effective vault users exceeds available license seats");
 		}
 		var ipAddress = request.remoteAddress().hostAddress();
@@ -330,7 +330,7 @@ public class VaultResource {
 		}
 
 		var accessTokenSeats = effectiveVaultAccessRepo.countSeatOccupyingUsersWithAccessToken();
-		if (accessTokenSeats > license.getSeats()) {
+		if (accessTokenSeats > license.getEntitlements().seats()) {
 			throw new PaymentRequiredException("Number of effective vault users exceeds available license seats");
 		}
 
@@ -380,7 +380,7 @@ public class VaultResource {
 		long occupiedSeats = effectiveVaultAccessRepo.countSeatOccupyingUsers();
 		long usersWithoutSeat = tokens.size() - effectiveVaultAccessRepo.countSeatsOccupiedByUsers(tokens.keySet().stream().toList());
 
-		if (occupiedSeats + usersWithoutSeat > license.getSeats()) {
+		if (occupiedSeats + usersWithoutSeat > license.getEntitlements().seats()) {
 			throw new PaymentRequiredException("Number of effective vault users greater than or equal to the available license seats");
 		}
 
@@ -435,7 +435,7 @@ public class VaultResource {
 		} else {
 			//if license is exceeded block vault creation, independent if the user is already sitting
 			var usedSeats = effectiveVaultAccessRepo.countSeatOccupyingUsers();
-			if (usedSeats > license.getSeats()) {
+			if (usedSeats > license.getEntitlements().seats()) {
 				throw new PaymentRequiredException("Number of effective vault users exceeds available license seats");
 			}
 			// create new vault:

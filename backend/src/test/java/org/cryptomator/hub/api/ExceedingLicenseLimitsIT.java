@@ -124,7 +124,6 @@ public class ExceedingLicenseLimitsIT {
 		var entitlements = HubLicenseEntitlements.create().withSeats(5L);
 		Mockito.doReturn(entitlements).when(licenseHolder).getEntitlements();
 		Mockito.doReturn(false).when(licenseHolder).isExpired();
-		Mockito.doReturn(5L).when(licenseHolder).getSeats();
 	}
 
 	@Test

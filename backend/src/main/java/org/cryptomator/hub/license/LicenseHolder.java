@@ -202,7 +202,8 @@ public class LicenseHolder {
 
 	public HubLicenseEntitlements getEntitlements() {
 		var entitlements = license.getClaim("org.cryptomator.hub.entitlements").as(HubLicenseEntitlements.class);
-		if (entitlements == null) {
+		// TODO: eventually "entitlements" claim will be mandatory and this fallback can be removed, see https://github.com/cryptomator/hub/issues/391
+		if (entitlements == null) { // legacy (pre 1.5.0) license without "org.cryptomator.hub.entitlements" claim:
 			return HubLicenseEntitlements.create().withSeats(license.getClaim("seats").asLong());
 		} else {
 			return entitlements;
@@ -216,21 +217,6 @@ public class LicenseHolder {
 	 */
 	public boolean isExpired() {
 		return Preconditions.checkNotNull(license).getExpiresAt().toInstant().isBefore(Instant.now());
-	}
-
-	/**
-	 * Gets the number of seats in the license
-	 *
-	 * @return Number of seats of the license
-	 */
-	public long getSeats() {
-		var entitlements = getEntitlements();
-		if (entitlements != null) {
-			return entitlements.seats();
-		} else {
-			// legacy licenses don't have entitlements claim yet...
-			return Preconditions.checkNotNull(license).getClaim("seats").asLong();
-		}
 	}
 
 	public boolean isManagedInstance() {

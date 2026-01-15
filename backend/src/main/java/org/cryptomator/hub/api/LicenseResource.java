@@ -39,7 +39,7 @@ public class LicenseResource {
 									 @JsonProperty("expiresAt") Instant expiresAt) {
 
 		public static LicenseUserInfoDto create(LicenseHolder licenseHolder, int usedSeats) {
-			var licensedSeats = (int) licenseHolder.getSeats();
+			var licensedSeats = (int) licenseHolder.getEntitlements().seats();
 			var expiresAt = licenseHolder.get().getExpiresAtAsInstant();
 			return new LicenseUserInfoDto(licensedSeats, usedSeats, expiresAt);
 		}
