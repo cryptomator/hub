@@ -76,8 +76,6 @@
   "admin.licenseInfo.manageSubscription": "Pārvaldīt abonementu",
   "admin.licenseInfo.type.title": "Veids",
   "admin.licenseInfo.getLicense": "Iegūt licenci",
-  "admin.licenseInfo.selfHostedNoLicense.description": "Paldies par Cryptomator Hub izmantošanu! Tika piešķirta kopienas licence. Ja ir nepieciešamas vairāk vietu, jāuzlabo licence.",
-  "admin.licenseInfo.managedNoLicense.description": "Paldies par Cryptomator Hub izmantošanu! Pašlaik nav spēkā esošas licences.",
   "admin.webOfTrust.title": "Uzticēšanās tīkls",
   "admin.webOfTrust.description": "Konfigurē Web of Trust iestatījumus, lai pārvaldītu, kā uzticība tiek izveidota starp sistēmas lietotājiem. Šie iestatījumi ietekmē lietotāju identitāšu un atslēgas parakstu apliecināšanu.",
   "admin.webOfTrust.information": "Uzzināt vairāk.",
