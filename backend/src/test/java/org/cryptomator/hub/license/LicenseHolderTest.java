@@ -233,7 +233,9 @@ public class LicenseHolderTest {
 			var licenseHolderSpy = Mockito.spy(licenseHolder);
 
 			var licenseJwt = mock(DecodedJWT.class);
-			when(licenseJwt.getClaim("refreshUrl")).thenReturn(null);
+			var missingClaim = mock(Claim.class);
+			when(missingClaim.isMissing()).thenReturn(true);
+			when(licenseJwt.getClaim("refreshUrl")).thenReturn(missingClaim);
 			when(licenseHolderSpy.get()).thenReturn(licenseJwt);
 
 			licenseHolderSpy.refreshLicense();

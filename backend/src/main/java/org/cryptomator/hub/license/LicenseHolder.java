@@ -115,7 +115,7 @@ public class LicenseHolder {
 			return;
 		}
 		var refreshUrlClaim = get().getClaim("refreshUrl");
-		if (refreshUrlClaim == null) {
+		if (refreshUrlClaim.isMissing()) {
 			LOG.error("Missing refreshUrl claim.");
 			return;
 		}
