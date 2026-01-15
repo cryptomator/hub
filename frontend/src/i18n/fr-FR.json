@@ -68,8 +68,6 @@
   "admin.licenseInfo.manageSubscription": "Gérer l'abonnement",
   "admin.licenseInfo.type.title": "Type",
   "admin.licenseInfo.getLicense": "Obtenir une licence",
-  "admin.licenseInfo.selfHostedNoLicense.description": "Merci d'utiliser Cryptomator Hub ! Vous avez obtenu une Licence Communautaire. Si vous avez besoin de plus de places, mettez à niveau votre licence.",
-  "admin.licenseInfo.managedNoLicense.description": "Merci d'utiliser Cryptomator Hub ! Vous n'avez actuellement aucune licence active.",
   "admin.webOfTrust.title": "Réseau de Confiance",
   "admin.webOfTrust.description": "Configurez les paramètres du Réseau de Confiance pour gérer comment la confiance est établie entre les utilisateurs du système. Ces paramètres affectent la vérification des identités des utilisateurs et des signatures clés.",
   "admin.webOfTrust.information": "En savoir plus.",
