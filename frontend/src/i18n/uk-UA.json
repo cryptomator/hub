@@ -77,8 +77,6 @@
   "admin.licenseInfo.manageSubscription": "Керувати підпискою",
   "admin.licenseInfo.type.title": "Тип",
   "admin.licenseInfo.getLicense": "Отримати ліцензію",
-  "admin.licenseInfo.selfHostedNoLicense.description": "Дякуємо за використання Cryptomator Hub! Вам надано ліцензію для спільноти. Якщо вам потрібно більше місць, оновіть свою ліцензію.",
-  "admin.licenseInfo.managedNoLicense.description": "Дякуємо за використання Cryptomator Hub! Наразі у вас немає активної ліцензії.",
   "admin.webOfTrust.title": "Мережа довіри",
   "admin.webOfTrust.description": "Налаштуйте параметри Мережі довіри, щоб керувати тим, як встановлюється довіра між користувачами в системі. Ці налаштування впливають на перевірку ідентичності користувачів і підписів ключів.",
   "admin.webOfTrust.information": "Дізнатися більше.",
