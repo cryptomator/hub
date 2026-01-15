@@ -77,8 +77,6 @@
   "admin.licenseInfo.manageSubscription": "Abonnement beheren",
   "admin.licenseInfo.type.title": "Type",
   "admin.licenseInfo.getLicense": "Verkrijg licentie",
-  "admin.licenseInfo.selfHostedNoLicense.description": "Bedankt voor het gebruiken van Cryptomator Hub! U heeft een Community licentie gekregen. Als u meer zetels nodig heeft, upgrade dan uw licentie.",
-  "admin.licenseInfo.managedNoLicense.description": "Bedankt voor het gebruik van Cryptomator Hub! U heeft momenteel geen actieve licentie.",
   "admin.webOfTrust.title": "Web of Trust",
   "admin.webOfTrust.description": "De WoT-instellingen configureren om te beheren hoe vertrouwen wordt opgebouwd tussen gebruikers in het systeem. Deze instellingen hebben invloed op de verificatie van gebruikersidentiteiten en sleutelhandtekeningen.",
   "admin.webOfTrust.information": "Meer weten.",
