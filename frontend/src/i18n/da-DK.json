@@ -66,8 +66,6 @@
   "admin.licenseInfo.manageSubscription": "Administrér abonnement",
   "admin.licenseInfo.type.title": "Type",
   "admin.licenseInfo.getLicense": "Hent licens",
-  "admin.licenseInfo.selfHostedNoLicense.description": "Tak fordi du bruger Cryptomator Hub! Du er blevet tildelt community licensen. Hvis du har brug for flere pladser, skal du opgradere din licens.",
-  "admin.licenseInfo.managedNoLicense.description": "Tak for at bruge Cryptomator Hub! Du har i øjeblikket ingen aktiv licens.",
   "admin.webOfTrust.title": "Web of Trust",
   "admin.webOfTrust.description": "Konfigurér Web of Trust indstillinger til at styre, hvordan tillid er etableret mellem brugere i systemet. Disse indstillinger påvirker verifikationen af brugernes identiteter og nøglesignaturer.",
   "admin.webOfTrust.information": "Læs mere.",
