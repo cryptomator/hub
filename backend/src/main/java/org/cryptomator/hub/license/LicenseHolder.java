@@ -2,7 +2,6 @@ package org.cryptomator.hub.license;
 
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.cronutils.utils.Preconditions;
 import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -196,7 +195,10 @@ public class LicenseHolder {
 
 	@NotNull
 	public DecodedJWT get() {
-		return Preconditions.checkNotNull(license);
+		if (license == null) {
+			throw new IllegalStateException();
+		}
+		return license;
 	}
 
 	public HubLicenseEntitlements getEntitlements() {
@@ -215,7 +217,10 @@ public class LicenseHolder {
 	 * @return {@code true}, if the license expired, {@code false} otherwise.
 	 */
 	public boolean isExpired() {
-		return Preconditions.checkNotNull(license).getExpiresAt().toInstant().isBefore(Instant.now());
+		if (license == null) {
+			throw new IllegalStateException();
+		}
+		return license.getExpiresAt().toInstant().isBefore(Instant.now());
 	}
 
 	public boolean isManagedInstance() {

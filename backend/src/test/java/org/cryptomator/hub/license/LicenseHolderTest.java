@@ -120,7 +120,7 @@ public class LicenseHolderTest {
 
 		@DisplayName("requestAnonTrialLicense() fails when server doesn't respond as expected")
 		@Test
-		void testRequestTrialLicense() {
+		void testFailingRequestTrialLicense() {
 			licenseHolderSpy.initialLicenseToken = Optional.empty();
 			licenseHolderSpy.initialId = Optional.empty();
 			doReturn(null).when(settings).getLicenseKey();

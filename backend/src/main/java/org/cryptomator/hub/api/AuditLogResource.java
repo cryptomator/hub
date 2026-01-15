@@ -37,8 +37,6 @@ import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
