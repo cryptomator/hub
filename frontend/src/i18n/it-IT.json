@@ -412,5 +412,7 @@
   "groupList.empty.title": "Nessun gruppo",
   "groupList.empty.description": "Non possiedi alcun gruppo e nemmeno ne fai parte.",
   "groupList.filter.result.empty.title": "Nessun gruppo",
-  "groupList.filter.result.empty.description": "Nessun risultato usando quel termine di ricerca."
+  "groupList.filter.result.empty.description": "Nessun risultato usando quel termine di ricerca.",
+  "trial.enterpriseFeature.title": "Funzionalità Aziendali",
+  "trial.enterpriseFeature.description": "Questa funzionalità è disponibile in maniera continuativa solo con una licenza Aziendale."
 }
