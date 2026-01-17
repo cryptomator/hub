@@ -283,5 +283,7 @@
   "vaultDetails.actions.claimOwnership": "Begär Ägarskap",
   "vaultList.title": "Valv",
   "vaultList.addVault": "Lägg till",
-  "vaultList.filter": "Filter"
+  "vaultList.filter": "Filter",
+  "trial.enterpriseFeature.title": "Företagsfunktion",
+  "trial.enterpriseFeature.description": "Denna funktion är endast permanent tillgänglig med en Enterprise licens."
 }
