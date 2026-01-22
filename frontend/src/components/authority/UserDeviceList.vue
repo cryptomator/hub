@@ -130,8 +130,15 @@
             </tr>
           </template>
 
-          <tr v-if="!filteredDevices.length">
+          <!-- Desktop empty state -->
+          <tr v-if="!filteredDevices.length" class="hidden sm:table-row">
             <td colspan="3" class="py-4 px-6 text-sm text-gray-500 text-center">
+              {{ t(deviceQuery ? 'common.nothingFound' : 'common.none') }}
+            </td>
+          </tr>
+          <!-- Mobile empty state -->
+          <tr v-if="!filteredDevices.length" class="sm:hidden">
+            <td class="py-4 px-4 text-sm text-gray-500 text-center">
               {{ t(deviceQuery ? 'common.nothingFound' : 'common.none') }}
             </td>
           </tr>

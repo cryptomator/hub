@@ -45,13 +45,13 @@
                   <tr>
                     <td class="py-4 text-sm text-gray-500">
                       <div class="grid place-items-center h-12 aspect-square">
-                        <span v-if="device.type == 'BROWSER'" :title="'Browser'">
+                        <span v-if="device.type == 'BROWSER'" :title="t('deviceType.browser')">
                           <WindowIcon class="size-5" aria-hidden="true" />
                         </span>
-                        <span v-else-if="device.type == 'DESKTOP'" :title="'Desktop'">
+                        <span v-else-if="device.type == 'DESKTOP'" :title="t('deviceType.desktop')">
                           <ComputerDesktopIcon class="size-5" aria-hidden="true" />
                         </span>
-                        <span v-else-if="device.type == 'MOBILE'" :title="'Mobile'">
+                        <span v-else-if="device.type == 'MOBILE'" :title="t('deviceType.mobile')">
                           <DevicePhoneMobileIcon class="size-5" aria-hidden="true" />
                         </span>
                       </div>
