@@ -45,13 +45,13 @@
             <tr class="hidden sm:table-row">
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                 <div class="flex items-center gap-2">
-                  <span v-if="device.type == 'BROWSER'" :title="'Browser'">
+                  <span v-if="device.type == 'BROWSER'" :title="t('deviceType.browser')">
                     <WindowIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
                   </span>
-                  <span v-else-if="device.type == 'DESKTOP'" :title="'Desktop'">
+                  <span v-else-if="device.type == 'DESKTOP'" :title="t('deviceType.desktop')">
                     <ComputerDesktopIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
                   </span>
-                  <span v-else-if="device.type == 'MOBILE'" :title="'Mobile'">
+                  <span v-else-if="device.type == 'MOBILE'" :title="t('deviceType.mobile')">
                     <DevicePhoneMobileIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
                   </span>
                   <span class="truncate max-w-xs" :title="device.name">
@@ -75,13 +75,13 @@
             <tr class="sm:hidden">
               <td class="px-4 py-4 text-sm text-gray-900">
                 <div class="flex items-start gap-2">
-                  <span v-if="device.type == 'BROWSER'" :title="'Browser'">
+                  <span v-if="device.type == 'BROWSER'" :title="t('deviceType.browser')">
                     <WindowIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
                   </span>
-                  <span v-else-if="device.type == 'DESKTOP'" :title="'Desktop'">
+                  <span v-else-if="device.type == 'DESKTOP'" :title="t('deviceType.desktop')">
                     <ComputerDesktopIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
                   </span>
-                  <span v-else-if="device.type == 'MOBILE'" :title="'Mobile'">
+                  <span v-else-if="device.type == 'MOBILE'" :title="t('deviceType.mobile')">
                     <DevicePhoneMobileIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
                   </span>
                   <div>

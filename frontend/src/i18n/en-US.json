@@ -179,6 +179,10 @@
   "deviceList.lastAccess": "Last Vault Access",
   "deviceList.lastAccess.toolTip": "May be missing for devices accessed with older versions.",
 
+  "deviceType.browser": "Browser",
+  "deviceType.desktop": "Desktop",
+  "deviceType.mobile": "Mobile",
+
   "downloadVaultTemplateDialog.title": "Download Vault Template",
   "downloadVaultTemplateDialog.description": "Download and unpack the zipped vault template to any location shared with your team members. This is required only once during the initial setup.",
 
