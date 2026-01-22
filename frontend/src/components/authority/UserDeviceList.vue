@@ -60,11 +60,11 @@
                 </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {{ new Date(device.creationTime).toISOString().slice(0, 16).replace('T', ' ') }}
+                {{ d(device.creationTime, 'long') }}
               </td>
               <td class="h-17 px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                 <div v-if="device.lastAccessTime">
-                  {{ new Date(device.lastAccessTime).toISOString().slice(0, 16).replace('T', ' ') }}
+                  {{ d(device.lastAccessTime, 'long') }}
                 </div>
                 <div v-if="device.lastIpAddress" class="text-xs text-gray-400">
                   {{ device.lastIpAddress }}
@@ -103,7 +103,7 @@
                         {{ t('legacyDeviceList.added') }}
                       </td>
                       <td class="text-left">
-                        {{ new Date(device.creationTime).toISOString().slice(0, 16).replace('T', ' ') }}
+                        {{ d(device.creationTime, 'long') }}
                       </td>
                     </tr>
                     <tr>
@@ -114,7 +114,7 @@
                         </div>
                       </td>
                       <td v-if="device.lastAccessTime" class="text-left">
-                        {{ new Date(device.lastAccessTime).toISOString().slice(0, 16).replace('T', ' ') }}
+                        {{ d(device.lastAccessTime, 'long') }}
                       </td>
                     </tr>
                     <tr v-if="device.lastIpAddress">
@@ -174,7 +174,7 @@ import { useI18n } from 'vue-i18n';
 import { ComputerDesktopIcon, QuestionMarkCircleIcon, DevicePhoneMobileIcon, WindowIcon } from '@heroicons/vue/24/solid';
 import { DeviceDto } from '../../common/backend';
 
-const { t } = useI18n({ useScope: 'global' });
+const { t, d } = useI18n({ useScope: 'global' });
 const id = useId();
 
 const PAGE_SIZE = 10;
