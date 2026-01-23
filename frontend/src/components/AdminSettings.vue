@@ -9,6 +9,7 @@
   </div>
 
   <div v-else>
+    <!-- Page Header -->
     <div class="pb-5 border-b border-gray-200">
       <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
         {{ t('admin.title') }}
@@ -16,6 +17,7 @@
     </div>
 
     <div class="space-y-6 mt-5">
+      <!-- Server Information Section -->
       <section class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6">
         <h3 class="text-lg font-medium leading-6 text-gray-900">
           {{ t('admin.serverInfo.title') }}
@@ -72,10 +74,16 @@
         </form>
       </section>
 
+      <!-- License Information Section -->
       <section v-if="remainingSeats !== undefined" class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6">
-        <h3 class="text-lg font-medium leading-6 text-gray-900">
-          {{ t('admin.licenseInfo.title') }}
-        </h3>
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-medium leading-6 text-gray-900">
+            {{ t('admin.licenseInfo.title') }}
+          </h3>
+          <button type="button" class="p-1 cursor-pointer text-gray-400 hover:text-gray-600 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary rounded-full" :title="t('common.refresh')" @click="refreshLicense()" >
+            <ArrowPathIcon class="h-5 w-5" aria-hidden="true" />
+          </button>
+        </div>
         <p class="mt-1 text-sm text-gray-500 w-full">
           {{ t('admin.licenseInfo.description') }}
         </p>
@@ -140,6 +148,7 @@
         </form>
       </section>
 
+      <!-- Web of Trust Configuration Section -->
       <section class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6">
         <h3 class="text-lg font-medium leading-6 text-gray-900">
           {{ t('admin.webOfTrust.title') }}
@@ -218,7 +227,7 @@
 </template>
 
 <script setup lang="ts">
-import { ArrowRightIcon, ArrowTopRightOnSquareIcon, CheckIcon, ExclamationTriangleIcon, InformationCircleIcon, LinkIcon, XMarkIcon } from '@heroicons/vue/20/solid';
+import { ArrowPathIcon, ArrowRightIcon, ArrowTopRightOnSquareIcon, CheckIcon, ExclamationTriangleIcon, InformationCircleIcon, LinkIcon, XMarkIcon } from '@heroicons/vue/20/solid';
 import semver from 'semver';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -228,7 +237,7 @@ import { FetchUpdateError, LatestVersionDto, updateChecker } from '../common/upd
 import { debounce } from '../common/util';
 import FetchError from './FetchError.vue';
 
-const { t, d, locale, fallbackLocale } = useI18n({ useScope: 'global' });
+const { t, d } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{
   token?: string
@@ -333,6 +342,15 @@ async function fetchData() {
       console.error('Retrieving server information failed.', error);
       onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
     }
+  }
+}
+
+async function refreshLicense() {
+  try {
+    await backend.license.refresh();
+    billing.value = await backend.billing.get();
+  } catch (error) {
+    console.error('Refreshing license info failed.', error);
   }
 }
 
