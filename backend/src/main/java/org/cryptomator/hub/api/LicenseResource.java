@@ -4,14 +4,18 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.InternalServerErrorException;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.license.LicenseHolder;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 
+import java.io.IOException;
 import java.time.Instant;
 
 @Path("/license")
@@ -45,5 +49,21 @@ public class LicenseResource {
 		}
 
 	}
+
+	@POST
+	@Path("/refresh")
+	@RolesAllowed("admin")
+	@Operation(summary = "Refresh license information", description = "Refreshes the license information from the license server.")
+	@APIResponse(responseCode = "204", description = "License information refreshed")
+	@APIResponse(responseCode = "500", description = "License information refreshed")
+	public Response refresh() {
+		try {
+			licenseHolder.refreshLicense();
+		} catch (IOException e) {
+			throw new InternalServerErrorException("License refresh failed", e);
+		}
+		return Response.noContent().build();
+	}
+
 
 }

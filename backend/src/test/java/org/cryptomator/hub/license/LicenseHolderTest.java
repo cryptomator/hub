@@ -284,7 +284,7 @@ public class LicenseHolderTest {
 			Mockito.doReturn(true).when(missingClaim).isMissing();
 			Mockito.doReturn(missingClaim).when(licenseJwt).getClaim("refreshUrl");
 
-			licenseHolderSpy.refreshLicense();
+			Assertions.assertThrows(IllegalStateException.class, licenseHolderSpy::refreshLicense);
 
 			verify(licenseHolderSpy, never()).requestLicenseRefresh(any(), any());
 			verify(licenseHolderSpy, never()).set(any());
@@ -294,11 +294,11 @@ public class LicenseHolderTest {
 
 
 		@Test
-		@DisplayName("If license does not have a valid refreshUrl, skip refresh")
+		@DisplayName("If license does not have a valid refreshUrl, throw ISE")
 		void testRefreshLicenseBadURL() throws InterruptedException, IOException {
 			Mockito.doReturn("*:not:an::uri").when(refreshClaim).asString();
 
-			licenseHolderSpy.refreshLicense();
+			Assertions.assertThrows(IllegalStateException.class, licenseHolderSpy::refreshLicense);
 
 			verify(licenseHolderSpy, never()).requestLicenseRefresh(any(), any());
 			verify(licenseHolderSpy, never()).set(any());
@@ -312,7 +312,7 @@ public class LicenseHolderTest {
 		void testRefreshLicenseFailingRequest(Throwable t) throws InterruptedException, IOException {
 			Mockito.doThrow(t).when(licenseHolderSpy).requestLicenseRefresh(any(), eq("token"));
 
-			licenseHolderSpy.refreshLicense();
+			Assertions.assertThrows(IOException.class, licenseHolderSpy::refreshLicense);
 
 			verify(licenseHolderSpy).requestLicenseRefresh(any(), eq("token"));
 			verify(licenseHolderSpy, never()).set(any());
@@ -330,7 +330,7 @@ public class LicenseHolderTest {
 			Mockito.doReturn("newToken").when(licenseHolderSpy).requestLicenseRefresh(any(), eq("token"));
 			Mockito.doThrow(JWTVerificationException.class).when(licenseHolderSpy).set("newToken");
 
-			licenseHolderSpy.refreshLicense();
+			Assertions.assertThrows(IOException.class, licenseHolderSpy::refreshLicense);
 
 			verify(licenseHolderSpy).requestLicenseRefresh(any(), eq("token"));
 			verify(licenseHolderSpy).set("newToken");

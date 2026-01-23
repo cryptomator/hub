@@ -510,6 +510,10 @@ class LicenseService {
       return new LicenseUserInfoDto(response.data.licensedSeats, response.data.usedSeats, response.data.expiresAt ? new Date(response.data.expiresAt) : null);
     });
   }
+
+  public async refresh(): Promise<void> {
+    return axiosAuth.post('/license/refresh');
+  }
 }
 
 class VersionService {
