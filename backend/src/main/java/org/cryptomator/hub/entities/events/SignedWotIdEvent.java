@@ -3,12 +3,9 @@ package org.cryptomator.hub.entities.events;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 
 import java.util.Objects;
-import java.util.UUID;
 
 @Entity
 @Table(name = "audit_event_sign_wot_id")

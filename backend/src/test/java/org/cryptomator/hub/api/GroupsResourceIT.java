@@ -77,7 +77,7 @@ public class GroupsResourceIT {
 		var group1 = groupRepo.findById("group1");
 		group1.getMembers().add(group999);
 		groupRepo.persist(group1);
-		
+
 		effectiveGroupMembershipRepo.updateGroups(List.of("group1", "group999"));
 	}
 

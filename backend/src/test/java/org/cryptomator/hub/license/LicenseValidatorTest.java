@@ -28,7 +28,7 @@ public class LicenseValidatorTest {
 
 	@Test
 	@DisplayName("validate valid legacy token (pre org.cryptomator.hub.entitlements)")
-	// TODO: eventually remove this test when legacy tokens are no longer supported, see https://github.com/cryptomator/hub/issues/391
+		// TODO: eventually remove this test when legacy tokens are no longer supported, see https://github.com/cryptomator/hub/issues/391
 	void testValidateValidToken() {
 		var jwt = validator.validate(VALID_LEGACY_TOKEN, "42");
 		Assertions.assertEquals("ES512", jwt.getAlgorithm());

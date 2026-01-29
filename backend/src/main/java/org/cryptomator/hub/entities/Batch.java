@@ -38,7 +38,7 @@ public class Batch {
 		}
 		List<T> list = collection instanceof List<T> l ? l : List.copyOf(collection);
 		R result = initialValue;
-		for(int i = 0; i < list.size(); i += size) {
+		for (int i = 0; i < list.size(); i += size) {
 			List<T> sublist = list.subList(i, Math.min(i + size, list.size()));
 			result = job.apply(sublist, result);
 		}

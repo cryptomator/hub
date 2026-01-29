@@ -114,8 +114,8 @@ public class EffectiveGroupMembership {
 		public void fullUpdate() {
 			deleteAll();
 			getEntityManager()
-				.createNamedQuery("EffectiveGroupMembership.fullUpdate")
-				.executeUpdate();
+					.createNamedQuery("EffectiveGroupMembership.fullUpdate")
+					.executeUpdate();
 		}
 
 		public void updateGroups(Collection<String> groupIds) {

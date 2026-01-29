@@ -72,7 +72,8 @@ public class VaultRoleFilter implements ContainerRequestFilter {
 			switch (annotation.onMissingVault()) {
 				case FORBIDDEN -> throw new ForbiddenException(forbiddenMsg);
 				case NOT_FOUND -> throw new NotFoundException("Vault not found");
-				case PASS -> {}
+				case PASS -> {
+				}
 				case REQUIRE_REALM_ROLE -> {
 					if (!requestContext.getSecurityContext().isUserInRole(annotation.realmRole().kcName())) {
 						throw new ForbiddenException("Missing role " + annotation.realmRole());

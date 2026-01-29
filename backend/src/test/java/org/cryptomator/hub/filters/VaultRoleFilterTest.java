@@ -212,23 +212,29 @@ public class VaultRoleFilterTest {
 	 */
 
 	@VaultRole({VaultAccess.Role.MEMBER})
-	public void allowMember() {}
+	public void allowMember() {
+	}
 
 	@VaultRole({VaultAccess.Role.OWNER})
-	public void allowOwner() {}
+	public void allowOwner() {
+	}
 
 	public static class NonExistingVault {
 		@VaultRole(value = {VaultAccess.Role.OWNER}, onMissingVault = VaultRole.OnMissingVault.FORBIDDEN)
-		public void forbidden() {}
+		public void forbidden() {
+		}
 
 		@VaultRole(value = {VaultAccess.Role.OWNER}, onMissingVault = VaultRole.OnMissingVault.NOT_FOUND)
-		public void notFound() {}
+		public void notFound() {
+		}
 
 		@VaultRole(value = {VaultAccess.Role.OWNER}, onMissingVault = VaultRole.OnMissingVault.PASS)
-		public void pass() {}
+		public void pass() {
+		}
 
 		@VaultRole(value = {VaultAccess.Role.OWNER}, onMissingVault = VaultRole.OnMissingVault.REQUIRE_REALM_ROLE, realmRole = RealmRole.ADMIN)
-		public void requireRealmRole() {}
+		public void requireRealmRole() {
+		}
 	}
 
 
