@@ -225,14 +225,16 @@
 import { ArrowRightIcon, ArrowTopRightOnSquareIcon, CheckIcon, ExclamationTriangleIcon, InformationCircleIcon, LinkIcon, XMarkIcon } from '@heroicons/vue/20/solid';
 import semver from 'semver';
 import { computed, onMounted, ref } from 'vue';
+import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import backend, { BillingDto, VersionDto } from '../common/backend';
-import config, { absFrontendBaseURL } from '../common/config';
+import config, { absBaseURL, absFrontendBaseURL } from '../common/config';
 import { FetchUpdateError, LatestVersionDto, updateChecker } from '../common/updatecheck';
 import { debounce } from '../common/util';
 import FetchError from './FetchError.vue';
 
 const { t, d, locale, fallbackLocale } = useI18n({ useScope: 'global' });
+const route = useRoute();
 
 const props = defineProps<{
   token?: string
@@ -346,13 +348,13 @@ function manageSubscription() {
 }
 
 function getFreeCeLicense() {
-  const cfg = config.get();
-  if (!cfg.freeCeLicenseUrl) {
-    return;
+  if (billing.value === undefined) {
+    throw new Error('Illegal state.');
   }
-  const oldLicense = billing.value?.licenseKey ?? '';
-  const returnUrl = window.location.origin;
-  window.open(`${cfg.freeCeLicenseUrl}#oldLicense=${encodeURIComponent(oldLicense)}&returnUrl=${encodeURIComponent(returnUrl)}`, '_blank');
+  const cfg = config.get();
+  const oldLicense = billing.value.licenseKey;
+  const returnUrl = new URL(route.path.replace(/^\/+/, ''), absBaseURL).href;
+  window.open(`${cfg.ceRegistrationUrl}#oldLicense=${encodeURIComponent(oldLicense)}&returnUrl=${encodeURIComponent(returnUrl)}`, '_blank');
 }
 
 async function saveWebOfTrust() {

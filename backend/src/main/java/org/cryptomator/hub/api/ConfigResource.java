@@ -39,8 +39,8 @@ public class ConfigResource {
 	String internalRealmUrl;
 
 	@Inject
-	@ConfigProperty(name = "hub.free-ce-license-url", defaultValue = "")
-	String freeCeLicenseUrl;
+	@ConfigProperty(name = "hub.ce-registration-url", defaultValue = "")
+	String ceRegistrationUrl;
 
 	@Inject
 	OidcConfigurationMetadata oidcConfData;
@@ -57,7 +57,7 @@ public class ConfigResource {
 		var authUri = replacePrefix(oidcConfData.getAuthorizationUri(), trimTrailingSlash(internalRealmUrl), publicRealmUri);
 		var tokenUri = replacePrefix(oidcConfData.getTokenUri(), trimTrailingSlash(internalRealmUrl), publicRealmUri);
 
-		return new ConfigDto(keycloakPublicUrl, keycloakRealm, keycloakClientIdHub, keycloakClientIdCryptomator, authUri, tokenUri, Instant.now().truncatedTo(ChronoUnit.MILLIS), 4, license.getEntitlements(), freeCeLicenseUrl);
+		return new ConfigDto(keycloakPublicUrl, keycloakRealm, keycloakClientIdHub, keycloakClientIdCryptomator, authUri, tokenUri, Instant.now().truncatedTo(ChronoUnit.MILLIS), 4, license.getEntitlements(), ceRegistrationUrl);
 	}
 
 	//visible for testing
@@ -85,7 +85,7 @@ public class ConfigResource {
 							@JsonProperty("keycloakAuthEndpoint") String authEndpoint, @JsonProperty("keycloakTokenEndpoint") String tokenEndpoint,
 							@JsonProperty("serverTime") Instant serverTime, @JsonProperty("apiLevel") Integer apiLevel,
 							@JsonProperty("entitlements") HubLicenseEntitlements entitlements,
-							@JsonProperty("freeCeLicenseUrl") String freeCeLicenseUrl) {
+							@JsonProperty("ceRegistrationUrl") String ceRegistrationUrl) {
 	}
 
 }
