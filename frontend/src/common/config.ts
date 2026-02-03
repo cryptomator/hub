@@ -29,7 +29,8 @@ export type ConfigDto = {
     auditLogRetentionDays: number;
     iosLicense: string;
     androidLicense: string;
-  }
+  };
+  freeCeLicenseUrl: string;
 };
 
 class ConfigWrapper {

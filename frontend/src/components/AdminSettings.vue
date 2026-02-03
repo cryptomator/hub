@@ -130,10 +130,14 @@
           </div>
 
           <div class="md:grid md:grid-cols-3 md:gap-6">
-            <div class="md:col-start-2">
+            <div class="md:col-start-2 flex flex-wrap gap-2">
               <button type="button" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="manageSubscription()">
                 <ArrowTopRightOnSquareIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
                 {{ t('admin.licenseInfo.manageSubscription') }}
+              </button>
+              <button type="button" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="getFreeCeLicense()">
+                <ArrowTopRightOnSquareIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+                {{ t('admin.licenseInfo.getFreeCeLicense') }}
               </button>
             </div>
           </div>
@@ -339,6 +343,16 @@ async function fetchData() {
 function manageSubscription() {
   const returnUrl = `${absFrontendBaseURL}admin`;
   window.location.href = `https://cryptomator.org/hub/billing/?hub_id=${billing.value?.hubId}&return_url=${encodeURIComponent(returnUrl)}`;
+}
+
+function getFreeCeLicense() {
+  const cfg = config.get();
+  if (!cfg.freeCeLicenseUrl) {
+    return;
+  }
+  const oldLicense = billing.value?.licenseKey ?? '';
+  const returnUrl = window.location.origin;
+  window.open(`${cfg.freeCeLicenseUrl}#oldLicense=${encodeURIComponent(oldLicense)}&returnUrl=${encodeURIComponent(returnUrl)}`, '_blank');
 }
 
 async function saveWebOfTrust() {
