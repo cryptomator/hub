@@ -135,10 +135,10 @@
                 <ArrowTopRightOnSquareIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
                 {{ t('admin.licenseInfo.manageSubscription') }}
               </button>
-              <button type="button" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="getFreeCeLicense()">
+              <a :href="freeCeLicenseUrl" target="_blank" rel="noopener" class="button flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary">
                 <ArrowTopRightOnSquareIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
                 {{ t('admin.licenseInfo.getFreeCeLicense') }}
-              </button>
+              </a>
             </div>
           </div>
         </form>
@@ -282,6 +282,16 @@ const betaUpdateExists = computed(() => {
   return false;
 });
 
+const freeCeLicenseUrl = computed(() => {
+  if (!billing.value?.licenseKey) {
+    return '';
+  }
+  const cfg = config.get();
+  const oldLicense = billing.value.licenseKey;
+  const returnUrl = new URL(route.path.replace(/^\/+/, ''), absBaseURL).href;
+  return `${cfg.ceRegistrationUrl}#oldLicense=${encodeURIComponent(oldLicense)}&returnUrl=${encodeURIComponent(returnUrl)}`;
+});
+
 const remainingSeats = computed(() => billing.value ? billing.value.licensedSeats - billing.value.usedSeats : 0);
 const numberOfExceededSeats = computed(() => {
   if (remainingSeats.value === undefined) {
@@ -345,16 +355,6 @@ async function fetchData() {
 function manageSubscription() {
   const returnUrl = `${absFrontendBaseURL}admin`;
   window.location.href = `https://cryptomator.org/hub/billing/?hub_id=${billing.value?.hubId}&return_url=${encodeURIComponent(returnUrl)}`;
-}
-
-function getFreeCeLicense() {
-  if (billing.value === undefined) {
-    throw new Error('Illegal state.');
-  }
-  const cfg = config.get();
-  const oldLicense = billing.value.licenseKey;
-  const returnUrl = new URL(route.path.replace(/^\/+/, ''), absBaseURL).href;
-  window.open(`${cfg.ceRegistrationUrl}#oldLicense=${encodeURIComponent(oldLicense)}&returnUrl=${encodeURIComponent(returnUrl)}`, '_blank');
 }
 
 async function saveWebOfTrust() {
