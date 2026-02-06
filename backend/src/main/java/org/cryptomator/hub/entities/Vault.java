@@ -115,7 +115,7 @@ public class Vault {
 	@Column(name = "archived", nullable = false)
 	private boolean archived;
 
-	@Column(name = "requried_emergency_key_shares", nullable = false)
+	@Column(name = "required_emergency_key_shares", nullable = false)
 	private int requiredEmergencyKeyShares;
 
 	@ElementCollection(fetch = FetchType.EAGER)

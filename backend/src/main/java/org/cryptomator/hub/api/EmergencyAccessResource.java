@@ -9,6 +9,7 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
@@ -132,6 +133,10 @@ public class EmergencyAccessResource {
 	public Response complete(@PathParam("processId") UUID processId) {
 		var currentUserId = jwt.getSubject();
 		var ip = request.remoteAddress().hostAddress();
+		var process = recoverProcessRepo.findById(processId);
+		if (process == null) {
+			throw new NotFoundException("Recovery process not found");
+		}
 
 		eventLogger.logEmergencyAccessRecoveryCompleted(processId, currentUserId, ip);
 
@@ -185,9 +190,9 @@ public class EmergencyAccessResource {
 
 	@JsonInclude(JsonInclude.Include.NON_NULL)
 	public record RecoveryProcessDto(
-			@JsonProperty("id") @NotBlank UUID id,
-			@JsonProperty("vaultId") @NotBlank UUID vaultId,
-			@JsonProperty("type") @NotBlank EmergencyRecoveryProcess.Type type,
+			@JsonProperty("id") @NotNull UUID id,
+			@JsonProperty("vaultId") @NotNull UUID vaultId,
+			@JsonProperty("type") @NotNull EmergencyRecoveryProcess.Type type,
 			@JsonProperty("details") @RawJson String details,
 			@JsonProperty("requiredKeyShares") @Min(2) int requiredKeyShares,
 			@JsonProperty("processPublicKey") @ValidJWE String processPublicKey,

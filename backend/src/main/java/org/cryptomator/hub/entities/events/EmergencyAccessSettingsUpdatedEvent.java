@@ -85,7 +85,9 @@ public class EmergencyAccessSettingsUpdatedEvent extends AuditEvent {
 		if (o == null || getClass() != o.getClass()) return false;
 		if (!super.equals(o)) return false;
 		EmergencyAccessSettingsUpdatedEvent other = (EmergencyAccessSettingsUpdatedEvent) o;
-		return requiredKeyShares == other.requiredKeyShares
+		return enableEmergencyAccess == other.enableEmergencyAccess
+				&& requiredKeyShares == other.requiredKeyShares
+				&& minMembers == other.minMembers
 				&& allowChoosingCouncil == other.allowChoosingCouncil
 				&& Objects.equals(adminId, other.adminId)
 				&& Objects.equals(councilMemberIds, other.councilMemberIds);
@@ -93,7 +95,7 @@ public class EmergencyAccessSettingsUpdatedEvent extends AuditEvent {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(super.hashCode(), adminId, councilMemberIds, requiredKeyShares, allowChoosingCouncil);
+		return Objects.hash(super.hashCode(), adminId, enableEmergencyAccess, councilMemberIds, requiredKeyShares, minMembers, allowChoosingCouncil);
 	}
 }
 

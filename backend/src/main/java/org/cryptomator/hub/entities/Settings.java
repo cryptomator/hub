@@ -146,7 +146,7 @@ public class Settings {
 				", licenseKey='" + licenseKey + '\'' +
 				", wotMaxDepth='" + wotMaxDepth + '\'' +
 				", wotIdVerifyLen='" + wotIdVerifyLen + '\'' +
-				", enableEmergencyAccess=" + enableEmergencyAccess + '\'' +
+				", enableEmergencyAccess=" + enableEmergencyAccess +
 				", defaultRequiredEmergencyKeyShares=" + defaultRequiredEmergencyKeyShares +
 				", defaultMinMembers=" + defaultMinMembers +
 				", allowChoosingEmergencyCouncil=" + allowChoosingEmergencyCouncil +
