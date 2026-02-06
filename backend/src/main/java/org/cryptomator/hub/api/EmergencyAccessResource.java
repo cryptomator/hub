@@ -10,6 +10,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
@@ -64,6 +65,12 @@ public class EmergencyAccessResource {
 	@APIResponse(responseCode = "400", description = "invalid request, e.g. missing required fields")
 	@Transactional
 	public Response startRecovery(@PathParam("processId") UUID processId, RecoveryProcessDto dto) {
+		var currentUser = jwt.getSubject();
+		if (!dto.recoveredKeyShares.containsKey(currentUser)) {
+			// the council member who starts the process must, by definition, be part of the process
+			throw new BadRequestException("User is not a member of the recovery process");
+		}
+
 		var process = new EmergencyRecoveryProcess();
 		process.setId(processId);
 		process.setVaultId(dto.vaultId);
@@ -85,11 +92,12 @@ public class EmergencyAccessResource {
 		}));
 		process.setRecoveredKeyShares(keyShares);
 		recoverProcessRepo.persist(process);
-		var currentUser = jwt.getSubject();
 
 		// audit logging
 		eventLogger.logEmergencyAccessRecoveryStarted(dto.vaultId, processId, currentUser, dto.type.name(), dto.details);
-		if (keyShares.get(currentUser).getRecoveredKeyShare() != null) { // usually, the council member who starts the process also adds their key share
+		var myKeyShare = keyShares.get(currentUser);
+		assert myKeyShare != null; // as verified above, the user must be part of the process
+		if (myKeyShare.getRecoveredKeyShare() != null) { // usually, this member also adds their key share immediately
 			eventLogger.logEmergencyAccessRecoveryApproved(processId, currentUser, request.remoteAddress().hostAddress());
 		}
 		return Response.status(Response.Status.NO_CONTENT).build();
