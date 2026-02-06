@@ -9,11 +9,11 @@
   </div>
   <LicenseAlert v-if="isLicenseViolated && isAdmin != undefined && licenseStatus" :is-admin="isAdmin" :license-status="licenseStatus" />
 
-  <ContentBanner v-if="isTrial && !isCommunityLicense" type="error" :title="t('trial.enterpriseFeature.title')">
-    {{ t('trial.enterpriseFeature.description') }}
+  <ContentBanner v-if="entitlements.emergencyAccessEnabled && entitlements.showTrialHint" type="info" :title="t('trial.enterpriseFeature.title')" class="mb-6">
+    {{ t('trial.enterpriseFeature.description') }} <!-- TODO: link to feature comparison? -->
   </ContentBanner>
 
-  <div v-if="isCommunityLicense" class="flex flex-col justify-center items-center text-center">
+  <div v-if="!entitlements.emergencyAccessEnabled" class="flex flex-col justify-center items-center text-center">
     <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
       <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
     </svg>
@@ -22,11 +22,9 @@
       {{ t('emergencyAccess.licenseRequired.message') }}
       <span v-if="isAdmin"> {{ t('emergencyAccess.licenseRequired.adminHint') }}</span>
     </p>
-    <router-link v-slot="{ navigate }" to="/app/admin/settings" :hidden="!isAdmin" custom>
-      <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent shadow-xs text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary mt-6" @click="navigate()">
-        <WrenchIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
-        {{ t('auditLog.paymentRequired.openAdminSection') }}
-      </button>
+    <router-link to="/app/admin/settings" :hidden="!isAdmin" class="inline-flex items-center px-4 py-2 border border-transparent shadow-xs text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary mt-6">
+      <WrenchIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+      {{ t('auditLog.paymentRequired.openAdminSection') }}
     </router-link>
   </div>
   <div v-else>
@@ -180,7 +178,7 @@
         </li>
       </ul>
     </div>
-    <div v-else-if="isCommunityLicense || !settings?.enableEmergencyAccess" class="mt-3 text-center">
+    <div v-else-if="!entitlements.emergencyAccessEnabled || !settings?.enableEmergencyAccess" class="mt-3 text-center">
       <h3 class="mt-2 text-sm font-medium text-gray-900">{{ t('emergencyAccess.empty.disabled') }}</h3>
     </div>
 
@@ -214,6 +212,7 @@ import ContentBanner from '../ContentBanner.vue';
 import { CheckIcon, ChevronUpDownIcon, WrenchIcon } from '@heroicons/vue/24/solid';
 import userdata from '../../common/userdata';
 import { UserDto } from '../../common/backend';
+import config from '../../common/config';
 import EmergencyAccessDialog from './EmergencyAccessDialog.vue';
 import EmergencyBadge from './EmergencyBadge.vue';
 import EmergencyProcessButton from './EmergencyProcessButton.vue';
@@ -238,6 +237,7 @@ const onFetchError = ref<Error | null>(null);
 
 const isAdmin = ref<boolean>(false);
 
+const entitlements = config.get().entitlements;
 const licenseStatus = ref<LicenseUserInfoDto>();
 const settings = ref<SettingsDto>();
 const isLicenseViolated = computed(() => {
@@ -247,13 +247,6 @@ const isLicenseViolated = computed(() => {
     return false;
   }
 });
-
-const isCommunityLicense = computed(() => {
-  return !licenseStatus.value?.expiresAt;
-});
-
-// TODO: Replace with actual trial status from backend
-const isTrial = ref(true);
 
 const selectedFilter = ref<'recoverableVaults' | 'approved' | 'approvable' | 'startable'>('recoverableVaults');
 const filterOptions = computed(() => ({
@@ -280,7 +273,7 @@ async function fetchData() {
 
     licenseStatus.value = await backend.license.getUserInfo();
     settings.value = (await backend.settings.get());
-    if (!isCommunityLicense.value && settings.value.enableEmergencyAccess){
+    if (entitlements.emergencyAccessEnabled && settings.value.enableEmergencyAccess){
       vaults.value = (await backend.vaults.listRecoverable())
         .filter(v => !v.archived)
         .sort((a, b) => a.name.localeCompare(b.name));

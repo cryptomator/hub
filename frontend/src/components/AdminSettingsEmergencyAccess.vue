@@ -9,7 +9,13 @@
       </a>
     </p>
     <hr class="my-4 border-gray-200"/>
-    <form class="space-y-6 md:gap-6" novalidate @submit.prevent="saveRecoverySettings">
+    <ContentBanner v-if="!entitlements.emergencyAccessEnabled" type="info" :title="t('missingEntitlements.title')">
+      {{ t('missingEntitlements.description') }} <!-- TODO: link to feature comparison? -->
+    </ContentBanner>
+    <form v-else class="space-y-6 md:gap-6" novalidate @submit.prevent="saveRecoverySettings">
+      <ContentBanner v-if="entitlements.showTrialHint" type="info" :title="t('trial.enterpriseFeature.title')" class="mb-6">
+        {{ t('trial.enterpriseFeature.description') }} <!-- TODO: link to feature comparison? -->
+      </ContentBanner>
       <ContentBanner
         v-if="noRedundancy"
         type="warning"
@@ -193,11 +199,13 @@ import { ArrowRightIcon, ExclamationTriangleIcon } from '@heroicons/vue/20/solid
 import ContentBanner from './ContentBanner.vue';
 import { useI18n } from 'vue-i18n';
 import backend, { UserDto, ActivatedUser, didCompleteSetup } from '../common/backend';
+import config from '../common/config';
 import MultiUserSelectInputGroup from './MultiUserSelectInputGroup.vue';
 import EmergencyScenarioVisualization from './emergencyaccess/EmergencyScenarioVisualization.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 
+const entitlements = config.get().entitlements;
 const noRedundancy = ref(false);
 const isKeySplittingInvalid = ref(false);
 const isMinMembersKeySplittingInvalid = ref(false);

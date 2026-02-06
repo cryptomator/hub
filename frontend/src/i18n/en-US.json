@@ -576,6 +576,9 @@
   "groupList.filter.result.empty.title": "No groups",
   "groupList.filter.result.empty.description": "No results using that search term.",
 
+  "missingEntitlements.title": "Upgrade Required",
+  "missingEntitlements.description": "This feature is not part of your current license.",
+
   "trial.enterpriseFeature.title": "Enterprise Feature",
   "trial.enterpriseFeature.description": "This feature is only permanently available with an Enterprise license."
 }

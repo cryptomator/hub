@@ -214,7 +214,7 @@
         </form>
       </section>
 
-      <AdminSettingsEmergencyAccess :hidden="isCommunityLicense"/>
+      <AdminSettingsEmergencyAccess/>
     </div>
   </div>
 </template>
@@ -315,12 +315,6 @@ async function setToken(token: string) {
   }
 }
 
-const licenseStatus = ref<LicenseUserInfoDto>();
-
-const isCommunityLicense = computed(() => {
-  return !licenseStatus.value?.expiresAt;
-});
-
 async function fetchData() {
   try {
     const versionDto = backend.version.get();
@@ -328,8 +322,6 @@ async function fetchData() {
     billing.value = await backend.billing.get();
     version.value = await versionDto;
     latestVersion.value = await versionAvailable;
-
-    licenseStatus.value = await backend.license.getUserInfo();
 
     const settings = await backend.settings.get();
     wotMaxDepth.value = settings.wotMaxDepth;
