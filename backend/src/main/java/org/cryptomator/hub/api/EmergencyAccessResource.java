@@ -204,7 +204,7 @@ public class EmergencyAccessResource {
 			@JsonProperty("type") @NotNull EmergencyRecoveryProcess.Type type,
 			@JsonProperty("details") @RawJson String details,
 			@JsonProperty("requiredKeyShares") @Min(2) int requiredKeyShares,
-			@JsonProperty("processPublicKey") @ValidJWE String processPublicKey,
+			@JsonProperty("processPublicKey") @NotNull String processPublicKey,
 			@JsonProperty("recoveredKeyShares") @NotEmpty Map<String, RecoveredKeyShareDto> recoveredKeyShares) {
 
 		public static RecoveryProcessDto fromEntity(EmergencyRecoveryProcess entity) {
