@@ -163,7 +163,7 @@ public class EventLogger {
 		event.setRequiredKeyShares(requiredKeyShares);
 		event.setMinMembers(minMembers);
 		event.setAllowChoosingCouncil(allowChoosingCouncil);
-		event.setEmergencyAcessEnabled(enableEmergencyAccess);
+		event.setEmergencyAccessEnabled(enableEmergencyAccess);
 		auditEventRepository.persist(event);
 	}
 

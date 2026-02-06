@@ -61,14 +61,14 @@ public class SettingsResource {
 		var oldRequiredEmergencyKeyShares = settings.getDefaultRequiredEmergencyKeyShares();
 		var oldMinMembers = settings.getDefaultMinMembers();
 		var oldAllowChoosingEmergencyCouncil = settings.isAllowChoosingEmergencyCouncil();
-		var oldEmergencyAccessEnabled = settings.isEmergencyAcessEnabled();
+		var oldEmergencyAccessEnabled = settings.isEmergencyAccessEnabled();
 		settings.setWotMaxDepth(dto.wotMaxDepth);
 		settings.setWotIdVerifyLen(dto.wotIdVerifyLen);
 		settings.setDefaultRequiredEmergencyKeyShares(dto.defaultRequiredEmergencyKeyShares);
 		settings.setDefaultMinMembers(dto.defaultMinMembers);
 		settings.setAllowChoosingEmergencyCouncil(dto.allowChoosingEmergencyCouncil);
 		settings.setEmergencyCouncilMemberIds(dto.emergencyCouncilMemberIds);
-		settings.setEmergencyAcessEnabled(dto.enableEmergencyAccess);
+		settings.setEmergencyAccessEnabled(dto.enableEmergencyAccess);
 		settingsRepo.persist(settings);
 		if (oldWotMaxDepth != dto.wotMaxDepth || oldWotIdVerifyLen != dto.wotIdVerifyLen) {
 			eventLogger.logWotSettingUpdated(jwt.getSubject(), dto.wotIdVerifyLen, dto.wotMaxDepth);
@@ -95,7 +95,7 @@ public class SettingsResource {
 							  @JsonProperty("emergencyCouncilMemberIds") Set<String> emergencyCouncilMemberIds) {
 
 		public static SettingsDto fromEntity(Settings entity) {
-			return new SettingsDto(entity.getHubId(), entity.getWotMaxDepth(), entity.getWotIdVerifyLen(), entity.isEmergencyAcessEnabled(), entity.getDefaultRequiredEmergencyKeyShares(), entity.getDefaultMinMembers(), entity.isAllowChoosingEmergencyCouncil(), entity.getEmergencyCouncilMemberIds());
+			return new SettingsDto(entity.getHubId(), entity.getWotMaxDepth(), entity.getWotIdVerifyLen(), entity.isEmergencyAccessEnabled(), entity.getDefaultRequiredEmergencyKeyShares(), entity.getDefaultMinMembers(), entity.isAllowChoosingEmergencyCouncil(), entity.getEmergencyCouncilMemberIds());
 		}
 
 	}

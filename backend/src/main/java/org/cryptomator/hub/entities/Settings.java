@@ -14,7 +14,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "settings")
@@ -98,11 +97,11 @@ public class Settings {
 		this.wotIdVerifyLen = wotIdVerifyLen;
 	}
 
-	public boolean isEmergencyAcessEnabled() {
+	public boolean isEmergencyAccessEnabled() {
 		return enableEmergencyAccess;
 	}
 
-	public void setEmergencyAcessEnabled(boolean enableEmergencyAccess) {
+	public void setEmergencyAccessEnabled(boolean enableEmergencyAccess) {
 		this.enableEmergencyAccess = enableEmergencyAccess;
 	}
 

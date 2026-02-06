@@ -98,7 +98,7 @@ public class EmergencyAccessResource {
 	@Path("/{processId}/recovered-key-shares")
 	@RolesAllowed("user")
 	@Consumes(MediaType.APPLICATION_JSON)
-	@Operation(summary = "starts a new recovery process")
+	@Operation(summary = "adds recovered key share")
 	@APIResponse(responseCode = "204", description = "process created")
 	@APIResponse(responseCode = "400", description = "invalid request, e.g. missing required fields")
 	@Transactional

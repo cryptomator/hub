@@ -40,11 +40,11 @@ public class EmergencyAccessSettingsUpdatedEvent extends AuditEvent {
 		this.adminId = adminId;
 	}
 
-	public boolean isEmergencyAcessEnabled() {
+	public boolean isEmergencyAccessEnabled() {
 		return enableEmergencyAccess;
 	}
 
-	public void setEmergencyAcessEnabled(boolean enableEmergencyAccess) {
+	public void setEmergencyAccessEnabled(boolean enableEmergencyAccess) {
 		this.enableEmergencyAccess = enableEmergencyAccess;
 	}
 
