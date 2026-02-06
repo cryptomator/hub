@@ -108,6 +108,9 @@ public class EmergencyAccessResource {
 		id.setCouncilMemberId(jwt.getSubject());
 
 		var myKeyShare = recoveredKeySharesRepo.findById(id);
+		if (myKeyShare == null) {
+			throw new NotFoundException("Recovery process not found or user not part of emergency access council");
+		}
 
 		myKeyShare.setRecoveredKeyShare(dto.recoveredKeyShare);
 		myKeyShare.setSignedProcessInfo(dto.signedProcessInfo);
