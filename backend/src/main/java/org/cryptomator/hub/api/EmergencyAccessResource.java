@@ -6,6 +6,7 @@ import io.vertx.core.http.HttpServerRequest;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -64,7 +65,7 @@ public class EmergencyAccessResource {
 	@APIResponse(responseCode = "204", description = "process created")
 	@APIResponse(responseCode = "400", description = "invalid request, e.g. missing required fields")
 	@Transactional
-	public Response startRecovery(@PathParam("processId") UUID processId, RecoveryProcessDto dto) {
+	public Response startRecovery(@PathParam("processId") UUID processId, @Valid RecoveryProcessDto dto) {
 		var currentUser = jwt.getSubject();
 		if (!dto.recoveredKeyShares.containsKey(currentUser)) {
 			// the council member who starts the process must, by definition, be part of the process
@@ -108,7 +109,7 @@ public class EmergencyAccessResource {
 	@RolesAllowed("user")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Operation(summary = "adds recovered key share")
-	@APIResponse(responseCode = "204", description = "process created")
+	@APIResponse(responseCode = "204", description = "key share added")
 	@APIResponse(responseCode = "400", description = "invalid request, e.g. missing required fields")
 	@Transactional
 	public Response addRecoveredKeyShare(@PathParam("processId") UUID processId, RecoveredKeyShareDto dto) {
