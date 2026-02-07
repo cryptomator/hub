@@ -226,7 +226,7 @@
                 </div>
               </div>
             
-              <div v-if="onError != null" class="w-full sm:w-auto mb-2 text-right">
+              <div v-if="onError" class="w-full sm:w-auto mb-2 text-right">
                 <p v-if="onError instanceof PaymentRequiredError" class="inline-block text-sm text-red-900 bg-red-100 rounded px-3 py-1 mt-1">
                   {{ t('vaultDetails.error.licenseViolated') }}
                 </p>
@@ -338,7 +338,7 @@ const props = defineProps<{
   vault: VaultDto;
   me: UserDto;
   recoveryProcess?: RecoveryProcessDto;
-  startType?: RecoveryProcessDto['type'];
+  startType: RecoveryProcessDto['type'];
 }>();
 
 const emit = defineEmits<{
@@ -347,22 +347,20 @@ const emit = defineEmits<{
 }>();
 
 defineExpose({ show });
-const closeButton = ref<HTMLElement | null>(null);
-const ownersSelect = ref<MultiUserSelectExpose | null>(null);
-const concilMembersSelect = ref<MultiUserSelectExpose | null>(null);
+const closeButton = ref<HTMLElement>();
+const ownersSelect = ref<MultiUserSelectExpose>();
+const concilMembersSelect = ref<MultiUserSelectExpose>();
 
 const processType = ref<RecoveryProcessDto['type']>(
-  props.recoveryProcess?.type ?? props.startType ?? 'CHANGE_PERMISSIONS'
+  props.recoveryProcess?.type ?? props.startType
 );
-
-const meId = computed(() => props.me.id);
 
 const processCouncilIds = computed(() =>
   props.recoveryProcess ? Object.keys(props.recoveryProcess.recoveredKeyShares ?? {}) : []
 );
 
 const isMeInProcessCouncil = computed(() =>
-  !!props.recoveryProcess && processCouncilIds.value.includes(meId.value)
+  processCouncilIds.value.includes(props.me.id)
 );
 
 const canSeeApprove = computed(() =>
@@ -404,7 +402,7 @@ const didAddMyShare = computed(() => {
 });
 
 const open = ref(false);
-const onError = ref<Error | null>();
+const onError = ref<Error>();
 
 const hasCouncilMemberError = computed(() =>
   processType.value === 'COUNCIL_CHANGE' &&
@@ -425,13 +423,11 @@ function processConflicts(type: RecoveryProcessDto['type']) {
 // OWNERS
 const owners = ref<AuthorityDto[]>([]);
 const existingOwners = ref<AuthorityDto[]>([]);
-const existingOwnerIds = ref<Set<string>>(new Set());
 const newOwnerIds = computed(() => owners.value.map(u => u.id));
 
 // MEMBERS (non-owners)
 const members = ref<AuthorityDto[]>([]);
 const existingMembers = ref<AuthorityDto[]>([]);
-const existingMemberIds = ref<Set<string>>(new Set());
 const newMemberIds = computed(() => members.value.map(u => u.id));
 
 const authoritiesById = ref<Record<string, AuthorityDto>>({});
@@ -463,61 +459,35 @@ const removeMember = (user: AuthorityDto) => {
 };
 
 const removedMembers = computed<AuthorityDto[]>(() => {
-  const initialOwnerAndMemberIds = new Set<string>([
-    ...initialOwnerIds.value,
-    ...initialMemberIds.value,
-  ]);
+  const oldMembers = [...existingOwners.value, ...existingMembers.value];
+  const oldIds = oldMembers.map(u => u.id);
+  const oldMembersById = R.indexBy<AuthorityDto, string>(oldMembers, (u) => u.id);
 
-  const newOwnerIdList =
-    props.recoveryProcess?.type === 'CHANGE_PERMISSIONS'
-      ? props.recoveryProcess.details.newOwnerIds ?? []
-      : newOwnerIds.value;
+  const newIds: string[] = props.recoveryProcess?.type === 'CHANGE_PERMISSIONS'
+    ? [...(props.recoveryProcess.details.newOwnerIds ?? []), ...(props.recoveryProcess.details.newMemberIds ?? [])]
+    : [...newOwnerIds.value, ...newMemberIds.value];
 
-  const newMemberIdList =
-    props.recoveryProcess?.type === 'CHANGE_PERMISSIONS'
-      ? props.recoveryProcess.details.newMemberIds ?? []
-      : newMemberIds.value;
-
-  const newIds = new Set<string>([...newOwnerIdList, ...newMemberIdList]);
-
-  const removedIds = Array.from(initialOwnerAndMemberIds).filter((id) => !newIds.has(id));
-
-  const byId = R.indexBy(
-    [...existingOwners.value, ...existingMembers.value],
-    (u) => u.id,
-  );
-
-  return removedIds
-    .map((id) => byId[id])
-    .filter((u): u is AuthorityDto => !!u);
+  const removedIds = R.difference(oldIds, newIds);
+  return removedIds.map((id) => oldMembersById[id]);
 });
 
 const selectedNewOwners = computed<AuthorityDto[]>(() => {
   if (props.recoveryProcess?.type === 'CHANGE_PERMISSIONS') {
     const ids = new Set(props.recoveryProcess.details.newOwnerIds);
     return owners.value.filter(u => ids.has(u.id));
+  } else {
+    return owners.value;
   }
-  const ids = new Set(newOwnerIds.value);
-  return owners.value.filter(u => ids.has(u.id));
 });
 
 const selectedNewmembers = computed<AuthorityDto[]>(() => {
   if (props.recoveryProcess?.type === 'CHANGE_PERMISSIONS') {
     const ids = new Set(props.recoveryProcess.details.newMemberIds);
     return members.value.filter(u => ids.has(u.id));
+  } else {
+    return members.value;
   }
-  const ids = new Set(newMemberIds.value);
-  return members.value.filter(u => ids.has(u.id));
 });
-
-function setAndArrayDifferById(setIds: Set<string>, arr: { id: string }[]): boolean {
-  if (setIds.size !== arr.length) return true;
-  for (const u of arr) if (!setIds.has(u.id)) return true;
-  return false;
-}
-
-const ownersDifferFromExistingIds = computed(() => setAndArrayDifferById(existingOwnerIds.value, owners.value));
-const membersDifferFromExistingIds = computed(() => setAndArrayDifferById(existingMemberIds.value, members.value));
 
 // COUNCIL CHANGE
 const newRequiredKeyShares = ref<number>(props.vault.requiredEmergencyKeyShares);
@@ -528,17 +498,16 @@ function removeCouncilMember(user: UserDto) { removeFrom(newCouncilMembers, user
 const isGrantButtonDisabled = computed(() => newCouncilMembers.value.length < newRequiredKeyShares.value);
 
 const canStartRecovery = computed(() => {
-  if (processType.value == null) return false;
+  if (processType.value === undefined) return false;
   if (conflictingProcessExists.value) return false;
 
   if (processType.value === 'CHANGE_PERMISSIONS') {
-    return (
-      (ownersDifferFromExistingIds.value || membersDifferFromExistingIds.value) &&
-      owners.value.length !== 0
-    );
-  }
-
-  if (processType.value === 'COUNCIL_CHANGE') {
+    const existingOwnerIds = new Set(existingOwners.value.map(u => u.id));
+    const sameOwners = owners.value.length === existingOwners.value.length && owners.value.every(o => existingOwnerIds.has(o.id));
+    const existingMemberIds = new Set(existingMembers.value.map(u => u.id));
+    const sameMembers = members.value.length === existingMembers.value.length && members.value.every(m => existingMemberIds.has(m.id));
+    return (!sameOwners || !sameMembers) && owners.value.length !== 0;
+  } else if (processType.value === 'COUNCIL_CHANGE') {
     return (
       newCouncilMembers.value.length >= newRequiredKeyShares.value
       && isCouncilChanged.value
@@ -598,7 +567,7 @@ function handleAfterLeave() { if (!open.value) emit('close'); }
 
 async function handleRecoveryAborted() {
   if (!props.recoveryProcess) return;
-  onError.value = null;
+  onError.value = undefined;
   try {
     await backend.emergencyAccess.abort(props.recoveryProcess.id);
     emit('updated');
@@ -609,9 +578,6 @@ async function handleRecoveryAborted() {
     onError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
 }
-
-const initialOwnerIds = ref<Set<string>>(new Set());
-const initialMemberIds = ref<Set<string>>(new Set());
 
 async function show() {
   await loadExistingProcessesForVault();
@@ -651,19 +617,14 @@ function initProcessType() {
 async function initOwnersAndMembers() {
   try {
     const memberList = await backend.vaults.getMembers(props.vault.id);
-    const initialOwners = (memberList.filter(m => m.vaultRole === 'OWNER') as AuthorityDto[]);
+    const initialOwners = memberList.filter(m => m.vaultRole === 'OWNER') as AuthorityDto[];
     const initialMembers = memberList.filter(m => m.vaultRole === 'MEMBER') as AuthorityDto[];
 
     existingOwners.value = initialOwners;
     owners.value = [...initialOwners];
-    existingOwnerIds.value = new Set(initialOwners.map(u => u.id));
 
     existingMembers.value = initialMembers;
     members.value = [...initialMembers];
-    existingMemberIds.value = new Set(initialMembers.map(u => u.id));
-
-    initialOwnerIds.value = new Set(initialOwners.map(u => u.id));
-    initialMemberIds.value = new Set(initialMembers.map(u => u.id));
   } catch (e) {
     console.error('Loading existing owners/members failed', e);
   }
@@ -756,20 +717,11 @@ const phaseTitle = computed(() => {
   }
 });
 
-const phaseDescription = computed(() => {
-  switch (phase.value) {
-    case 'start': return 'Start Emergency Access Desc';
-    case 'approve': return didAddMyShare.value ? 'You have already added your part of the emergency key.' : 'Approve Emergency Access Desc';
-    case 'complete': return 'Complete Emergency Access Desc';
-    default: return '';
-  }
-});
-
 /**
  * PHASE ONE: Starting the recovery process and adding the first share.
  */
 async function startRecovery() {
-  onError.value = null;
+  onError.value = undefined;
   try {
     const recoveryCouncilMemberIds = Object.keys(props.vault.emergencyKeyShares);
     const authorities = await backend.authorities.listSome(recoveryCouncilMemberIds);
@@ -840,7 +792,7 @@ async function approveRecovery() {
   if (!props.recoveryProcess) {
     throw new Error(t('emergencyAccessDialog.error.noProcessToApprove'));
   }
-  onError.value = null;
+  onError.value = undefined;
   try {
     const verifiedProcess = await verifyProcessInfo(props.recoveryProcess);
     if (!verifiedProcess) {
@@ -867,7 +819,7 @@ async function completeRecovery() {
   if (!props.recoveryProcess) {
     throw new Error(t('emergencyAccessDialog.error.noProcessToComplete'));
   }
-  onError.value = null;
+  onError.value = undefined;
   try {
     const verifiedProcess = await verifyProcessInfo(props.recoveryProcess);
     if (!verifiedProcess) {

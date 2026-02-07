@@ -185,14 +185,14 @@
   </div>
 
   <EmergencyAccessDialog
-    v-if="recoveryApprovVault != null"
+    v-if="recoveryApprovVault"
     ref="recoveryApprovDialog"
     :vault="recoveryApprovVault"
     :me="me!"
     :recovery-process="selectedProcess"
     :start-type="startType"
     @updated="fetchData"
-    @close="recoveryApprovVault = null"
+    @close="recoveryApprovVault = undefined"
   />
 </template>
 
@@ -256,7 +256,8 @@ const filterOptions = computed(() => ({
 const selectedProcess = ref<RecoveryProcessDto>();
 const filteredVaults = computed<VaultDto[]>(() => filterVaults(vaults.value));
 const vaultRecoveryProcesses = ref<Record<string, RecoveryProcessDto[]>>({});
-const recoveryApprovVault = ref<VaultDto | null>(null);
+const startType = ref<RecoveryProcessDto['type']>('CHANGE_PERMISSIONS');
+const recoveryApprovVault = ref<VaultDto>();
 const recoveryApprovDialog = ref<typeof EmergencyAccessDialog>();
 const authoritiesById = ref<Record<string, AuthorityDto>>({});
 
@@ -458,9 +459,7 @@ function getCompletedSegmentsForProcess(proc: RecoveryProcessDto): number {
     .filter(ks => ks?.recoveredKeyShare !== undefined).length;
 }
 
-const startType = ref<RecoveryProcessDto['type'] | undefined>(undefined);
-
-function openRecoveryStartDialog(vault: VaultDto, type?: RecoveryProcessDto['type']) {
+function openRecoveryStartDialog(vault: VaultDto, type: RecoveryProcessDto['type']) {
   recoveryApprovVault.value = vault;
   selectedProcess.value = undefined;
   startType.value = type;
