@@ -1,12 +1,9 @@
 <template>
-  <div v-if="vaults == null">
-    <div v-if="onFetchError == null">
-      {{ t('common.loading') }}
-    </div>
-    <div v-else>
-      <FetchError :error="onFetchError" :retry="fetchData"/>
-    </div>
+  <div v-if="loading" class="text-center p-8 text-gray-500 text-sm">
+    {{ t('common.loading') }}
   </div>
+  <FetchError v-else-if="onFetchError" :error="onFetchError" :retry="fetchData" />
+
   <LicenseAlert v-if="isLicenseViolated && isAdmin != undefined && licenseStatus" :is-admin="isAdmin" :license-status="licenseStatus" />
 
   <ContentBanner v-if="entitlements.emergencyAccessEnabled && entitlements.showTrialHint" type="info" :title="t('trial.enterpriseFeature.title')" class="mb-6">
@@ -27,7 +24,11 @@
       {{ t('auditLog.paymentRequired.openAdminSection') }}
     </router-link>
   </div>
+  <div v-else-if="!settings?.enableEmergencyAccess" class="mt-3 text-center">
+    <h3 class="mt-2 text-sm font-medium text-gray-900">{{ t('emergencyAccess.empty.disabled') }}</h3>
+  </div>
   <div v-else>
+    <!-- entitlements.emergencyAccessEnabled && settings.enableEmergencyAccess -->
     <div class="flex flex-col sm:flex-row sm:justify-between gap-3 w-full">
       <h2 class="text-2xl font-bold leading-9 text-gray-900 sm:text-3xl sm:truncate">
         {{ t('nav.emergencyAccess') }}
@@ -63,9 +64,12 @@
       </Listbox>
     </div>
 
-    <div v-if="filteredVaults?.length > 0" class="mt-5 bg-white shadow-sm rounded-md">
+    <div v-if="filteredVaults.length === 0" class="mt-3 text-center">
+      <h3 class="mt-2 text-sm font-medium text-gray-900">{{ t('emergencyAccess.empty.noneFound') }}</h3>
+    </div>
+    <div v-else class="mt-5 bg-white shadow-sm rounded-md">
       <ul class="divide-y divide-gray-200">
-        <li v-for="(vault, index) in filteredVaults" :key="vault.masterkey">
+        <li v-for="(vault, index) in filteredVaults" :key="vault.id">
           <a class="block" :class="{'rounded-t-md': index == 0, 'rounded-b-md': index == filteredVaults.length - 1}">
             <div class="px-4 py-4 sm:px-6">
 
@@ -143,7 +147,7 @@
 
                   <!-- EA Buttons -->
                   <div
-                    v-if="(me && vault.emergencyKeyShares?.[me.id]) || isEmergencyKeyShareHolder(vault)"
+                    v-if="(me && vault.emergencyKeyShares[me.id]) || isEmergencyKeyShareHolder(vault)"
                     class="flex flex-col gap-2 pr-2 self-stretch lg:flex-row flex-wrap lg:items-center lg:justify-end"
                   >
                     <template v-for="type in SUPPORTED_PROCESS_TYPES" :key="'unified-' + vault.id + '-' + type">
@@ -177,13 +181,6 @@
           </a>
         </li>
       </ul>
-    </div>
-    <div v-else-if="!entitlements.emergencyAccessEnabled || !settings?.enableEmergencyAccess" class="mt-3 text-center">
-      <h3 class="mt-2 text-sm font-medium text-gray-900">{{ t('emergencyAccess.empty.disabled') }}</h3>
-    </div>
-
-    <div v-else-if="filteredVaults && filteredVaults.length == 0" class="mt-3 text-center">
-      <h3 class="mt-2 text-sm font-medium text-gray-900">{{ t('emergencyAccess.empty.noneFound') }}</h3>
     </div>
   </div>
 
@@ -233,7 +230,8 @@ const { t } = useI18n({ useScope: 'global' });
 const me = ref<UserDto>();
 const query = ref('');
 const vaults = ref<VaultDto[]>([]);
-const onFetchError = ref<Error | null>(null);
+const loading = ref(true);
+const onFetchError = ref<Error>();
 
 const isAdmin = ref<boolean>(false);
 
@@ -255,7 +253,7 @@ const filterOptions = computed(() => ({
   approved: t('emergencyAccess.filter.approved'),
   startable: t('emergencyAccess.filter.startable'),
 }));
-const selectedProcess = ref<RecoveryProcessDto | undefined>(undefined);
+const selectedProcess = ref<RecoveryProcessDto>();
 const filteredVaults = computed<VaultDto[]>(() => filterVaults(vaults.value));
 const vaultRecoveryProcesses = ref<Record<string, RecoveryProcessDto[]>>({});
 const recoveryApprovVault = ref<VaultDto | null>(null);
@@ -265,8 +263,8 @@ const authoritiesById = ref<Record<string, AuthorityDto>>({});
 onMounted(fetchData);
 
 async function fetchData() {
-  onFetchError.value = null;
-  loadDefaultSettings();
+  loading.value = true;
+  onFetchError.value = undefined;
   try {
     me.value = await userdata.me;
     isAdmin.value = (await auth).hasRole('admin');
@@ -302,6 +300,8 @@ async function fetchData() {
     }
   } catch (error) {
     onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
+  } finally {
+    loading.value = false;
   }
 }
 
@@ -330,8 +330,6 @@ function isProcessAboutToComplete(proc?: RecoveryProcessDto): boolean {
   if (!proc) return false;
   const recovered = Object.values(proc.recoveredKeyShares ?? {})
     .filter(ks => ks?.recoveredKeyShare !== undefined).length;
-  console.log('recovered:' + recovered);
-  console.log('proc.requiredKeyShares:' + proc.requiredKeyShares);
   return (recovered + 1 ) >= proc.requiredKeyShares;
 }
 
@@ -359,19 +357,6 @@ function getTypeLabel(vault: VaultDto, type: RecoveryProcessDto['type']) {
   return type === 'CHANGE_PERMISSIONS'
     ? t('emergencyAccess.processType.changePermissions')
     : t('emergencyAccess.processType.changeCouncil');
-}
-
-const allowChoosingEmergencyCouncil = ref<boolean>(false);
-async function loadDefaultSettings() {
-  try {
-    const settings = await backend.settings.get();
-   
-    allowChoosingEmergencyCouncil.value = settings.allowChoosingEmergencyCouncil;
-  } catch (error) {
-    console.error('Loading allowChoosingEmergencyCouncil failed:', error);
-    // TODO: don't set defaults, hard-fail with error message instead
-    allowChoosingEmergencyCouncil.value = false;
-  }
 }
 
 function onUnifiedButtonClick(vault: VaultDto, type: RecoveryProcessDto['type']) {
