@@ -6,8 +6,8 @@
                flex items-center justify-center"
       >
         <img
-          v-if="getAvatarUrl(u)"
-          :src="getAvatarUrl(u)"
+          v-if="u.pictureUrl"
+          :src="u.pictureUrl"
           :alt="u.name"
           class="h-full w-full object-cover"
         />
@@ -34,17 +34,10 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-
-export type UserVisualItem = {
-  id: string;
-  name: string;
-  pictureUrl?: string;
-  avatarUrl?: string;
-  imageUrl?: string;
-};
+import { UserDto } from '../common/backend';
 
 const props = withDefaults(defineProps<{
-  users: UserVisualItem[];
+  users: UserDto[];
   max?: number;
 }>(), {
   max: 3,
@@ -57,10 +50,6 @@ const preview = computed(() => {
     extra,
   };
 });
-
-function getAvatarUrl(u: any): string | undefined {
-  return u?.pictureUrl || u?.avatarUrl || u?.imageUrl;
-}
 
 function initials(name: string): string {
   return (name ?? '')

@@ -72,7 +72,7 @@
   </div>
 </template>
 
-<script setup lang="ts" generic="T extends UserDto">
+<script setup lang="ts">
 import { computed, watch, ref, toRefs, onMounted, onBeforeUnmount } from 'vue';
 import { ExclamationTriangleIcon } from '@heroicons/vue/20/solid';
 import { useI18n } from 'vue-i18n';
@@ -80,18 +80,10 @@ import { UserDto } from '../../common/backend';
 import { nextTick } from 'vue';
 import SegmentRing from './SegmentRing.vue';
 
-export type Item = {
-  id: string;
-  name: string;
-  pictureUrl?: string;
-  type?: string;
-  memberSize?: number;
-}
-
 const { t } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{
-  selectedUsers: T[];
+  selectedUsers: UserDto[];
   requiredKeyShares: number;
 }>();
 
@@ -189,7 +181,7 @@ function pickRandomCouncilMembers() {
     rotateCouncilMember(available, required);
 }
 
-function needsInitialSelection(available: T[], required: number): boolean {
+function needsInitialSelection(available: UserDto[], required: number): boolean {
   if (randomCouncilSelection.value.length !== required) return true;
 
   const currentIds = randomCouncilSelection.value.map(u => u.id);
@@ -198,14 +190,14 @@ function needsInitialSelection(available: T[], required: number): boolean {
   return currentIds.some(id => !availableIds.has(id));
 }
 
-function setInitialCouncil(available: T[], required: number) {
+function setInitialCouncil(available: UserDto[], required: number) {
   const shuffled = [...available].sort(() => 0.5 - 
     Math.random() // NOSONAR
   ); 
   randomCouncilSelection.value = shuffled.slice(0, required);
 }
 
-function rotateCouncilMember(available: T[], required: number) {
+function rotateCouncilMember(available: UserDto[], required: number) {
   const current = randomCouncilSelection.value;
   const currentIds = new Set(current.map(u => u.id));
   const candidates = available.filter(u => !currentIds.has(u.id));
@@ -216,7 +208,7 @@ function rotateCouncilMember(available: T[], required: number) {
     * maxPills
   );
 
-  let newUser: T;
+  let newUser: UserDto;
 
   if (candidates.length > 0) {
     newUser = candidates[Math.floor(

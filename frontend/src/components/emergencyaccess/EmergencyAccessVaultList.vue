@@ -216,14 +216,6 @@ import EmergencyProcessButton from './EmergencyProcessButton.vue';
 import VaultCouncilHoverCard from './VaultCouncilHoverCard.vue';
 import UserListGroupVisualization from '../UserListGroupVisualization.vue';
 
-export type Item = {
-  id: string;
-  name: string;
-  pictureUrl?: string;
-  type?: string;
-  memberSize?: number;
-}
-
 const SUPPORTED_PROCESS_TYPES = ['CHANGE_PERMISSIONS', 'COUNCIL_CHANGE'] as const;
 
 const { t } = useI18n({ useScope: 'global' });
@@ -259,7 +251,7 @@ const vaultRecoveryProcesses = ref<Record<string, RecoveryProcessDto[]>>({});
 const startType = ref<RecoveryProcessDto['type']>('CHANGE_PERMISSIONS');
 const recoveryApprovVault = ref<VaultDto>();
 const recoveryApprovDialog = ref<typeof EmergencyAccessDialog>();
-const authoritiesById = ref<Record<string, AuthorityDto>>({});
+const usersById = ref<Record<string, UserDto>>({});
 
 onMounted(fetchData);
 
@@ -269,9 +261,9 @@ async function fetchData() {
   try {
     me.value = await userdata.me;
     isAdmin.value = (await auth).hasRole('admin');
-
     licenseStatus.value = await backend.license.getUserInfo();
-    settings.value = (await backend.settings.get());
+    settings.value = await backend.settings.get();
+
     if (entitlements.emergencyAccessEnabled && settings.value.enableEmergencyAccess){
       vaults.value = (await backend.vaults.listRecoverable())
         .filter(v => !v.archived)
@@ -282,21 +274,18 @@ async function fetchData() {
         vaultRecoveryProcesses.value[vault.id] = processes;
       }
 
-      const memberIdsOfAllRunningProcesses = Object
-        .values(vaultRecoveryProcesses.value)
+      const memberIdsOfAllRunningProcesses = Object.values(vaultRecoveryProcesses.value)
         .flat()
         .flatMap(p => Object.keys(p.recoveredKeyShares));
+      const memberIds = vaults.value
+        .flatMap(v => Object.keys(v.emergencyKeyShares));
+      const combinedMemberIds = R.unique([...memberIdsOfAllRunningProcesses, ...memberIds]);
 
-      const councilIds = vaults.value
-        .flatMap(v => Object.keys(v.emergencyKeyShares ?? {}));
-
-      const allIds = Array.from(new Set([...memberIdsOfAllRunningProcesses, ...councilIds]));
-
-      if (allIds.length > 0) {
-        const auths = await backend.authorities.listSome(allIds);
-        authoritiesById.value = R.indexBy(auths, u => u.id);
+      if (combinedMemberIds.length > 0) {
+        const allUsers = (await backend.authorities.listSome(combinedMemberIds)).filter(a => a.type === 'USER');
+        usersById.value = R.indexBy(allUsers, u => u.id);
       } else {
-        authoritiesById.value = {};
+        usersById.value = {};
       }
     }
   } catch (error) {
@@ -369,19 +358,14 @@ function onUnifiedButtonClick(vault: VaultDto, type: RecoveryProcessDto['type'])
   }
 }
 
-function getCurrentCouncilMembers(vault: VaultDto): Item[] {
+function getCurrentCouncilMembers(vault: VaultDto): UserDto[] {
   const ids = Object.keys(vault.emergencyKeyShares ?? {});
-  return ids.map((id) => {
-    const a = authoritiesById.value[id];
-    if (a && (a as any).name) {
-      return { id: a.id, name: (a as any).name, pictureUrl: (a as any).pictureUrl };
-    } else {
-      return { id, name: id };
-    }
-  }).sort((a, b) => a.name.localeCompare(b.name));
+  return ids.map(id => usersById.value[id]).filter(u => u !== undefined).sort((a, b) => a.name.localeCompare(b.name));
 }
 
 function filterVaults(vaults: VaultDto[]): VaultDto[] {
+  if (loading.value) return [];
+
   let result: VaultDto[];
 
   switch (selectedFilter.value) {
@@ -429,8 +413,8 @@ function isUserInProcess(proc: RecoveryProcessDto): boolean {
   return councilMemberIds.includes(me.value?.id ?? '');
 }
 
-function getCouncilMembersForProcess(proc: RecoveryProcessDto): Item[] {
-  return Object.keys(proc.recoveredKeyShares).map((id) => authoritiesById.value[id] ?? { id, name: id });
+function getCouncilMembersForProcess(proc: RecoveryProcessDto): UserDto[] {
+  return Object.keys(proc.recoveredKeyShares).map(id => usersById.value[id]);
 }
 
 function hasSubmittedEmergencyKeyShare(vault: VaultDto): boolean {

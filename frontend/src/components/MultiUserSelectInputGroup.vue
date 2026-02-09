@@ -100,26 +100,12 @@
   </div>
 </template>
 
-<script setup lang="ts" generic="T extends Item">
-import backend, { TrustDto, UserDto } from '../common/backend';
+<script setup lang="ts" generic="T extends AuthorityDto">
+import backend, { AuthorityDto, TrustDto, UserDto, UserDtoWithCounts } from '../common/backend';
 import { ref, computed, watch, nextTick, onMounted } from 'vue';
 import { Combobox, ComboboxInput } from '@headlessui/vue';
 import { useI18n } from 'vue-i18n';
 import TrustDetails from './TrustDetails.vue';
-
-// TODO: consolidate types
-export type Item = {
-  id: string;
-  name: string;
-  pictureUrl?: string;
-  realmRoles?: string[];
-  type: 'USER' | 'GROUP';
-  memberSize?: number;
-
-  email?: string;
-  devices?: unknown[];
-  accessibleVaults?: unknown[];
-}
 
 export type MultiUserSelectExpose = {
   focus: () => Promise<void> | void;

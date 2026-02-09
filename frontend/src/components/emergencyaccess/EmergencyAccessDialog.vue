@@ -100,7 +100,7 @@
                           {{ t('emergencyAccessDialog.label.councilMembersAtLeast', [newRequiredKeyShares]) }}
                         </label>
                         <MultiUserSelectInputGroup
-                          ref="concilMembersSelect"
+                          ref="councilMembersSelect"
                           :selected-users="newCouncilMembers"
                           :on-search="searchUsersWithCompleteSetup"
                           :input-visible="true"
@@ -851,8 +851,8 @@ async function completeRecovery() {
       const vaultKeys = await VaultKeys.recover(recoveredKey);
 
       const membersWithRole = Object.fromEntries([
-        ...selectedNewOwners.value.map(u => [u.id, 'OWNER']),
-        ...selectedNewmembers.value.map(u => [u.id, 'MEMBER'])
+        ...selectedNewmembers.value.map(u => [u.id, 'MEMBER']),
+        ...selectedNewOwners.value.map(u => [u.id, 'OWNER'])
       ]) as Record<string, VaultRole>;
 
       await backend.vaults.setMembersWithRole(props.vault.id, membersWithRole);

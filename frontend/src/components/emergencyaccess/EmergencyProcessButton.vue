@@ -65,7 +65,7 @@
           class="flex items-center justify-between text-sm h-6"
         >
           <span class="truncate flex items-center gap-2">
-            <img v-if="getAvatarUrl(m)" :src="getAvatarUrl(m)" :alt="m.name" class="h-4 w-4 rounded-full" />
+            <img v-if="m.pictureUrl" :src="m.pictureUrl" :alt="m.name" class="h-4 w-4 rounded-full" />
             <span class="truncate">{{ m.name || m.id }}</span>
           </span>
           <span
@@ -109,14 +109,7 @@ import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import SegmentRing from './SegmentRing.vue';
 import { PlayIcon } from '@heroicons/vue/24/solid';
-
-export type Item = {
-  id: string;
-  name: string;
-  pictureUrl?: string;
-  type?: string;
-  memberSize?: number;
-}
+import { AuthorityDto } from '../../common/backend';
 
 const props = defineProps<{
   label: string;
@@ -126,7 +119,7 @@ const props = defineProps<{
   canStart: boolean;
   requiredKeyShares?: number;
   completedKeyShares?: number;
-  councilMembers?: Item[];
+  councilMembers?: AuthorityDto[];
   recoveredMemberIds?: string[];
 }>();
 
@@ -151,9 +144,5 @@ function closeTooltip() {
 
 function toggleTooltip() {
   isTooltipOpen.value = !isTooltipOpen.value;
-}
-
-function getAvatarUrl(u: Item | any): string | undefined {
-  return u?.pictureUrl || u?.avatarUrl || u?.imageUrl || undefined;
 }
 </script>
