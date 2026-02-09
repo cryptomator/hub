@@ -27,8 +27,8 @@
         class="flex items-center gap-2 text-sm h-6"
       >
         <img
-          v-if="getAvatarUrl(m)"
-          :src="getAvatarUrl(m)"
+          v-if="m.pictureUrl"
+          :src="m.pictureUrl"
           class="h-4 w-4 rounded-full"
         />
         <span class="truncate">{{ m.name }}</span>
@@ -41,14 +41,12 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import SegmentRing from './SegmentRing.vue';
-import UserListGroupVisualization, {
-  UserVisualItem,
-} from '../UserListGroupVisualization.vue';
+import { UserDto } from '../../common/backend';
 
 const { t } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{
-  members: UserVisualItem[];
+  members: UserDto[];
   requiredKeyShares: number;
   completed: number;
 }>();
@@ -56,8 +54,4 @@ const props = defineProps<{
 const sortedMembers = computed(() =>
   [...props.members].sort((a, b) => a.name.localeCompare(b.name))
 );
-
-function getAvatarUrl(u: any): string | undefined {
-  return u?.pictureUrl || u?.avatarUrl || u?.imageUrl;
-}
 </script>
