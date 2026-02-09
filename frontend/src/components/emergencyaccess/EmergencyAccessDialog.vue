@@ -119,9 +119,7 @@
                         </label>
                         <EmergencyScenarioVisualization
                           :selected-users="newCouncilMembers"
-                          :grant-button-disabled="isGrantButtonDisabled"
                           :required-key-shares="newRequiredKeyShares"
-                          :min-members="newRequiredKeyShares"
                         />
                         <div v-if="needsRedundancy()" class="mt-4 mr-3">
                           <span class="inline-flex items-center gap-2 rounded-full bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800">
@@ -197,9 +195,7 @@
                           </label>
                           <EmergencyScenarioVisualization
                             :selected-users="newCouncilMembers"
-                            :grant-button-disabled="isGrantButtonDisabled"
                             :required-key-shares="newRequiredKeyShares"
-                            :min-members="defaultMinMembers"
                           />
                         </div>
                       </div>
@@ -494,8 +490,6 @@ const newRequiredKeyShares = ref<number>(props.vault.requiredEmergencyKeyShares)
 const newCouncilMembers = ref<ActivatedUser[]>([]);
 function addCouncilMember(user: UserDto) { addUnique(newCouncilMembers, user); }
 function removeCouncilMember(user: UserDto) { removeFrom(newCouncilMembers, user); }
-
-const isGrantButtonDisabled = computed(() => newCouncilMembers.value.length < newRequiredKeyShares.value);
 
 const canStartRecovery = computed(() => {
   if (processType.value === undefined) return false;

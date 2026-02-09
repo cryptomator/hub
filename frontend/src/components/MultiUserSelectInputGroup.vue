@@ -187,14 +187,6 @@ watch(query, async (newQuery) => {
   }
 });
 
-watch(query, async (newQuery) => {
-  if (newQuery.trim() === '') {
-    searchResults.value = [];
-  } else {
-    searchResults.value = await props.onSearch(newQuery);
-  }
-});
-
 onMounted(async () => {
   await refreshTrusts();
 });

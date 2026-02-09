@@ -32,7 +32,7 @@
             tag="div"
             class="relative flex flex-wrap gap-2 pb-8.5"
           >
-            <template v-for="(item, index) in displayItems.value" :key="item.id">
+            <template v-for="(item, index) in randomCouncilSelectionWithPluses" :key="item.id">
               <span
                 v-if="item.type === 'user' && index <= 5"
                 class="pill inline-flex items-center justify-between border border-grey bg-white text-sm font-medium px-2 py-1 rounded-full shadow-sm absolute"
@@ -113,6 +113,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', updateContainerWidth);
+  stopRandomCouncilInterval();
 });
 
 const pillWidth = computed(() => {
@@ -165,7 +166,7 @@ watch([isGrantButtonDisabled], () => {
 }, { immediate: true });
 
 function pickRandomCouncilMembers() {
-  const available = props.selectedUsers as T[];
+  const available = props.selectedUsers;
   const required = props.requiredKeyShares ?? 1;
 
   if (available.length < required) {
@@ -260,8 +261,6 @@ function calcLeft(index: number): number {
   }
   return x;
 }
-
-const displayItems = computed(() => randomCouncilSelectionWithPluses);
 </script>
 
 <style scoped>
