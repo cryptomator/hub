@@ -37,9 +37,9 @@
           />
         </span>
         <span v-else class="ml-1 trust-details">
-          <PopoverButton class="inline-flex items-center bg-gray-50 ring-1 ring-inset ring-gray-500/10 mx-1 px-2 p-0.5 rounded-full">
+          <span class="inline-flex items-center bg-gray-50 ring-1 ring-inset ring-gray-500/10 mx-1 px-2 p-0.5 rounded-full">
             {{ user.memberSize }}
-          </PopoverButton>
+          </span>
         </span>
         <div v-if="inputVisible" class="ml-1 text-gray-500 hover:text-red-600">&times;</div>
       </button>
@@ -91,9 +91,9 @@
         <img :src="user.pictureUrl" alt="" class="h-5 w-5 rounded-full mr-2" />
         {{ user.name }}
         <span v-if="user.type === 'GROUP'" class="ml-1 trust-details">
-          <PopoverButton class="inline-flex items-center bg-gray-50 ring-1 ring-inset ring-gray-500/10 mx-1 px-2 p-0.5 rounded-full focus:outline-hidden focus:ring-primary text-black">
+          <span class="inline-flex items-center bg-gray-50 ring-1 ring-inset ring-gray-500/10 mx-1 px-2 p-0.5 rounded-full focus:outline-hidden focus:ring-primary text-black">
             {{ user.memberSize }}
-          </PopoverButton>
+          </span>
         </span>
       </div>
     </div>
