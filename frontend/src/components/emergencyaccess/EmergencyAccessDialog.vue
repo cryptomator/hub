@@ -345,7 +345,7 @@ const emit = defineEmits<{
 defineExpose({ show });
 const closeButton = ref<HTMLElement>();
 const ownersSelect = ref<MultiUserSelectExpose>();
-const concilMembersSelect = ref<MultiUserSelectExpose>();
+const councilMembersSelect = ref<MultiUserSelectExpose>();
 
 const processType = ref<RecoveryProcessDto['type']>(
   props.recoveryProcess?.type ?? props.startType
@@ -586,7 +586,7 @@ async function show() {
   if (phase.value === 'start' && processType.value === 'CHANGE_PERMISSIONS') {
     return ownersSelect.value?.focus();
   } else if (phase.value === 'start' && processType.value === 'COUNCIL_CHANGE') {
-    return concilMembersSelect.value?.focus();
+    return councilMembersSelect.value?.focus();
   } else {
     return closeButton.value?.focus();
   }
