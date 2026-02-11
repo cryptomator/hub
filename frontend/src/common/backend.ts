@@ -626,11 +626,7 @@ class EmergencyAccessService {
   }
 
   public async complete(recoveryProcessId: string): Promise<void> {
-    return axiosAuth.post(`/emergency-access/${recoveryProcessId}/complete`);
-  }
-
-  public async delete(recoveryProcessId: string): Promise<void> {
-    return axiosAuth.delete(`/emergency-access/${recoveryProcessId}`);
+    return axiosAuth.delete(`/emergency-access/${recoveryProcessId}/complete`);
   }
 
   public async abort(recoveryProcessId: string): Promise<void> {

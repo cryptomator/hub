@@ -868,7 +868,6 @@ async function completeRecovery() {
     }
 
     await backend.emergencyAccess.complete(process.id);
-    await backend.emergencyAccess.delete(process.id);
     emit('updated');
     showSuccess.value = true; 
     closeButton.value?.focus();

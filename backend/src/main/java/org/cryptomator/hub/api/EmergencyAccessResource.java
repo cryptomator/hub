@@ -132,7 +132,7 @@ public class EmergencyAccessResource {
 		return Response.status(Response.Status.NO_CONTENT).build();
 	}
 
-	@POST
+	@DELETE
 	@Path("/{processId}/complete")
 	@RolesAllowed("user")
 	@Operation(summary = "completes an existing recovery process")
@@ -142,26 +142,8 @@ public class EmergencyAccessResource {
 	public Response complete(@PathParam("processId") UUID processId) {
 		var currentUserId = jwt.getSubject();
 		var ip = request.remoteAddress().hostAddress();
-		var process = recoverProcessRepo.findById(processId);
-		if (process == null) {
-			throw new NotFoundException("Recovery process not found");
-		}
-
-		eventLogger.logEmergencyAccessRecoveryCompleted(processId, currentUserId, ip);
-
-		return Response.noContent().build();
-	}
-
-
-	@DELETE
-	@Path("/{processId}")
-	@RolesAllowed("user")
-	@Operation(summary = "deletes an obsolete recovery process")
-	@APIResponse(responseCode = "204")
-	@APIResponse(responseCode = "404")
-	@Transactional
-	public Response delete(@PathParam("processId") UUID processId) {
 		if (recoverProcessRepo.deleteById(processId)) {
+			eventLogger.logEmergencyAccessRecoveryCompleted(processId, currentUserId, ip);
 			return Response.noContent().build();
 		} else {
 			throw new NotFoundException();
