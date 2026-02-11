@@ -878,20 +878,29 @@ async function completeRecovery() {
   }
 }
 
+type SignedProcessInfoPayload = Pick<RecoveryProcessDto, 'type' | 'details'> & {
+  iss: string;
+  sub: string;
+  iat: number;
+};
+
 async function addMyShare(process: RecoveryProcessDto, userKeys: UserKeys): Promise<RecoveredKeyShareDto> {
   const encryptedShare = process.recoveredKeyShares[props.me.id].unrecoveredKeyShare;
   const recoveredShare = await EmergencyAccess.recoverShare(encryptedShare, userKeys.ecdhKeyPair.privateKey, process.processPublicKey);
 
   const processInfo = R.pick(process, ['type', 'details']);
+  const payload: SignedProcessInfoPayload = {
+    iss: props.me.id,
+    sub: process.id,
+    iat: Math.floor(Date.now() / 1000),
+    ...processInfo
+  };
 
   const signedProcessInfo = await JWT.build({
     alg: 'ES384',
     typ: 'JWT',
-    b64: true,
-    iss: props.me.id,
-    sub: process.id,
-    iat: Math.floor(Date.now() / 1000)
-  }, processInfo, userKeys.ecdsaKeyPair.privateKey);
+    b64: true
+  }, payload, userKeys.ecdsaKeyPair.privateKey);
 
   return {
     ...process.recoveredKeyShares[props.me.id],
@@ -920,8 +929,8 @@ async function verifyProcessInfo(process: RecoveryProcessDto): Promise<boolean> 
     }
     const councilMember = councilMembers[councilMemberId];
     const publicKey = await asPublicKey(base64.decode(councilMember.ecdsaPublicKey) as Uint8Array<ArrayBuffer>, ECDSA_P384, ['verify']);
-    const [header, payload] = await JWT.parse(recoveredKeyShare.signedProcessInfo, publicKey) as [JWTHeader, RecoveryProcessDto];
-    if (header.sub !== process.id || header.iss !== councilMemberId) {
+    const [_header, payload] = await JWT.parse(recoveredKeyShare.signedProcessInfo, publicKey) as [JWTHeader, SignedProcessInfoPayload];
+    if (payload.sub !== process.id || payload.iss !== councilMemberId) {
       console.error(`Invalid signed process info for council member ${councilMemberId}.`);
       return false;
     }
