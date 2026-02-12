@@ -61,6 +61,7 @@
   "admin.webOfTrust.wotIdVerifyLen.description": "Egy másik felhasználó ujjlenyomatának hány számjegyét kell megadnia személyazonosságának igazolásához.",
   "admin.webOfTrust.save": "Mentés",
   "admin.webOfTrust.saved": "Elmentve!",
+  "admin.emergencyAccess.learnMore": "További információk.",
   "archiveVaultDialog.title": "Széf Archiválása",
   "archiveVaultDialog.description": "A széf archiválása után a széf inaktív lesz. Ez felszabíthat foglalt helyet. Egy archivált széfet vissza lehet állítani később.",
   "archiveVaultDialog.confirm": "Archiválás",
