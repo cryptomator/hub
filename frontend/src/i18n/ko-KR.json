@@ -412,5 +412,7 @@
   "groupList.empty.title": "그룹 없음",
   "groupList.empty.description": "소유 중이거나 소속된 그룹이 없습니다.",
   "groupList.filter.result.empty.title": "그룹 없음",
-  "groupList.filter.result.empty.description": "입력하신 검색어에 대한 결과가 없습니다."
+  "groupList.filter.result.empty.description": "입력하신 검색어에 대한 결과가 없습니다.",
+  "trial.enterpriseFeature.title": "엔터프라이즈용 기능",
+  "trial.enterpriseFeature.description": "이 기능은 엔터프라이즈 라이선스를 보유한 경우에만 영구적으로 사용할 수 있습니다."
 }
