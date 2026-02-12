@@ -196,7 +196,7 @@
         </button>
         <!-- fix emergency council size -->
         <button
-          v-else-if="(vaultRole == 'OWNER' && (hasInsufficientEmergencyRedundancy || hasMismatchedApprovals) || (vaultRole == 'OWNER' && requiredGreaterThanMembers)) && !isCommunityLicense && settings?.enableEmergencyAccess"
+          v-else-if="(vaultRole == 'OWNER' && hasInsufficientEmergencyRedundancy || (vaultRole == 'OWNER' && requiredGreaterThanMembers)) && !isCommunityLicense && settings?.enableEmergencyAccess"
           type="button"
           class="inline-flex items-center justify-center gap-2 bg-white py-2 px-4 border border-yellow-300 rounded-md shadow-xs text-sm font-medium text-yellow-800 hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-400"
           @click="showGrantEmergencyAccessDialog()"
@@ -287,7 +287,6 @@ const vault = ref<VaultDto>();
 const vaultKeys = ref<VaultKeys>();
 const members = ref<Record<string, MemberDto>>({});
 const trusts = ref<TrustDto[]>([]);
-const recoveryProcess = ref<RecoveryProcessDto>(); // FIXME: There can be more than one process per vault!
 const usersRequiringAccessGrant = ref<UserDto[]>([]);
 const claimVaultOwnershipDialog = ref<typeof ClaimVaultOwnershipDialog>();
 const claimingVaultOwnership = ref(false);
@@ -319,12 +318,6 @@ async function fetchData() {
     if (vault.value && Object.keys(vault.value.emergencyKeyShares).length > 0) {
       const authorities = await backend.authorities.listSome(Object.keys(vault.value.emergencyKeyShares));
       emergencyKeyShareAuthorities.value = R.indexBy(authorities, a => a.id);
-    }
-
-    // TODO: there can be multiple recovery processes, one per type
-    const startedRecoveryProcesses = await backend.emergencyAccess.findProcessesForVault(props.vaultId);
-    if (startedRecoveryProcesses.length > 0) {
-      recoveryProcess.value = startedRecoveryProcesses[0];
     }
 
     me.value = await userdata.me;
@@ -359,16 +352,6 @@ async function fetchOwnerData() {
     }
   }
 }
-
-const hasMismatchedApprovals = computed(() => {
-  const proc = recoveryProcess.value;
-  const councilIds = new Set(Object.keys(vault.value?.emergencyKeyShares ?? {}));
-  if (!proc) return false;
-
-  return Object.entries(proc.recoveredKeyShares ?? {}).some(([userId, ks]) =>
-    !!ks?.recoveredKeyShare && !councilIds.has(userId)
-  );
-});
 
 const hasInsufficientEmergencyRedundancy = computed(() => {
   const required = vault.value?.requiredEmergencyKeyShares ?? 0;
