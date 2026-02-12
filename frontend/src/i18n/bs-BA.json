@@ -10,6 +10,7 @@
   "common.remove": "Ukloni",
   "common.show": "Pokaži",
   "admin.webOfTrust.information": "Saznaj više.",
+  "admin.emergencyAccess.learnMore": "Saznaj više.",
   "auditLog.details.vault.create": "Kreiraj novi sef",
   "createVault.enterVaultDetails.title": "Kreiraj novi sef",
   "createVault.enterVaultDetails.vaultName": "Ime sefa",
