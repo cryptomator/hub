@@ -68,6 +68,7 @@ jobs:
           -Dsonar.projectKey=cryptomator_hub_backend
           -Dsonar.organization=cryptomator
           -Dsonar.host.url=https://sonarcloud.io
+          -Dapi.version=1.44
           --no-transfer-progress
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
