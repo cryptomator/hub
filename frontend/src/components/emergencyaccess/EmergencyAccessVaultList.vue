@@ -365,41 +365,31 @@ function getCurrentCouncilMembers(vault: VaultDto): UserDto[] {
 
 function filterVaults(vaults: VaultDto[]): VaultDto[] {
   if (loading.value) return [];
-
-  let result: VaultDto[];
-
-  switch (selectedFilter.value) {
-    case 'recoverableVaults': // "All"
-      result = vaults;
-      break;
-    case 'approved':
-      result = vaults.filter((vault) => hasSubmittedEmergencyKeyShare(vault));
-      break;
-    case 'approvable':
-      result = vaults.filter((vault) => {
-        return activeProcessForVault(vault) && !hasSubmittedEmergencyKeyShare(vault);
-      });
-      break;
-    case 'startable':
-      result = vaults.filter((vault) => {
-        return !hasAllProcessTypesStarted(vault);
-      });
-      break;
-    default: throw new Error(`Unknown filter type: ${selectedFilter.value}`);
-  }
-
+  const filteredByStatus = vaults.filter(filterByStatus);
   if (query.value !== '') {
-    result = result.filter((vault) =>
+    return filteredByStatus.filter((vault) =>
       vault.name.toLowerCase().includes(query.value.toLowerCase())
     );
+  } else {
+    return filteredByStatus;
   }
-
-  return result;
 }
 
-function hasAllProcessTypesStarted(vault: VaultDto): boolean {
-  const started = getProcesses(vault.id).map(p => p.type);
-  return SUPPORTED_PROCESS_TYPES.every(t => started.includes(t));
+function filterByStatus(vault: VaultDto): boolean {
+  const processes = getProcesses(vault.id);
+  switch (selectedFilter.value) {
+    case 'approved': // find vaults where there is at least one process to which the user has already submitted their key share
+      return processes.some(p => hasSubmittedEmergencyKeyShare(p));
+    case 'approvable': // find vaults where there there is at least one process to which the user has not yet submitted their key share
+      return processes.length > 0 && processes.some(p => !hasSubmittedEmergencyKeyShare(p));
+    case 'startable': { // find vaults where at least one type of process has not yet been started
+      const processTypes = processes.map(p => p.type);
+      return !SUPPORTED_PROCESS_TYPES.every(processTypes.includes);
+    }
+    case 'recoverableVaults': // all
+    default:
+      return true;
+  }
 }
 
 function openRecoveryDialog(vault: VaultDto, proc: RecoveryProcessDto) {
@@ -417,8 +407,7 @@ function getCouncilMembersForProcess(proc: RecoveryProcessDto): UserDto[] {
   return Object.keys(proc.recoveredKeyShares).map(id => usersById.value[id]);
 }
 
-function hasSubmittedEmergencyKeyShare(vault: VaultDto): boolean {
-  const proc = activeProcessForVault(vault);
+function hasSubmittedEmergencyKeyShare(proc: RecoveryProcessDto): boolean {
   if (!me.value || !proc?.recoveredKeyShares) return false;
   return proc.recoveredKeyShares[me.value.id]?.recoveredKeyShare !== undefined;
 }
@@ -452,13 +441,6 @@ function openRecoveryStartDialog(vault: VaultDto, type: RecoveryProcessDto['type
 
 function getProcesses(vaultId: string): RecoveryProcessDto[] {
   return vaultRecoveryProcesses.value[vaultId] ?? [];
-}
-
-// TODO: currently, we always return "any" process
-function activeProcessForVault(vault: VaultDto): RecoveryProcessDto | undefined {
-  const list = getProcesses(vault.id);
-  if (list.length === 0) return undefined;
-  return list[0];
 }
 
 </script>
