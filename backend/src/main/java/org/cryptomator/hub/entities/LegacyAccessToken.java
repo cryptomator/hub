@@ -9,7 +9,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
 
-import java.io.Serializable;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -38,7 +37,7 @@ import java.util.stream.Stream;
 public class LegacyAccessToken {
 
 	@EmbeddedId
-	private AccessId id = new AccessId();
+	private AccessId id;
 
 	@Column(name = "jwe", nullable = false)
 	private String jwe;
@@ -82,59 +81,9 @@ public class LegacyAccessToken {
 	}
 
 	@Embeddable
-	public static class AccessId implements Serializable {
-
-		@Column(name = "device_id", nullable = false)
-		private String deviceId;
-
-		@Column(name = "vault_id", nullable = false)
-		private UUID vaultId;
-
-		public String getDeviceId() {
-			return deviceId;
-		}
-
-		public void setDeviceId(String deviceId) {
-			this.deviceId = deviceId;
-		}
-
-		public UUID getVaultId() {
-			return vaultId;
-		}
-
-		public void setVaultId(UUID vaultId) {
-			this.vaultId = vaultId;
-		}
-
-		public AccessId(String deviceId, UUID vaultId) {
-			this.deviceId = deviceId;
-			this.vaultId = vaultId;
-		}
-
-		public AccessId() {
-		}
-
-		@Override
-		public boolean equals(Object o) {
-			if (this == o) return true;
-			if (o == null || getClass() != o.getClass()) return false;
-			AccessId other = (AccessId) o;
-			return Objects.equals(deviceId, other.deviceId) //
-					&& Objects.equals(vaultId, other.vaultId);
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(deviceId, vaultId);
-		}
-
-		@Override
-		public String toString() {
-			return "LegacyAccessTokenId{" +
-					"deviceId='" + deviceId + '\'' +
-					", vaultId='" + vaultId + '\'' +
-					'}';
-		}
+	public record AccessId(
+			@Column(name = "device_id", nullable = false) String deviceId,
+			@Column(name = "vault_id", nullable = false) UUID vaultId) {
 	}
 
 	/**
