@@ -18,6 +18,7 @@
   "common.show": "Näytä",
   "admin.webOfTrust.information": "Lue Lisää.",
   "admin.webOfTrust.save": "Tallenna",
+  "admin.emergencyAccess.learnMore": "Lue Lisää.",
   "auditLog.filter": "Suodata",
   "auditLog.details.vault.create": "Luo Uusi Vault",
   "claimVaultOwnershipDialog.error.wrongPassword": "Väärä salasana",
