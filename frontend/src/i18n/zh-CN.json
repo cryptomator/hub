@@ -74,6 +74,7 @@
   "admin.webOfTrust.wotIdVerifyLen.description": "需要输入对方指纹的多少位数字来验证其身份。",
   "admin.webOfTrust.save": "保存",
   "admin.webOfTrust.saved": "已保存！",
+  "admin.emergencyAccess.learnMore": "了解更多。",
   "auditLog.filter": "筛选",
   "auditLog.filter.clerEventFilter": "清除事件筛选器",
   "auditLog.details": "详情",
