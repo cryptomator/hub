@@ -17,6 +17,7 @@
   "common.show": "দেখান",
   "admin.webOfTrust.information": "আরও জানুন।",
   "admin.webOfTrust.save": "সংরক্ষণ করুন",
+  "admin.emergencyAccess.learnMore": "আরও জানুন।",
   "auditLog.details.vault.create": "ভোল্ট তৈরি করুন",
   "claimVaultOwnershipDialog.error.wrongPassword": "ভুল পাসওয়ার্ড",
   "createVault.enterVaultDetails.title": "ভোল্ট তৈরি করুন",
