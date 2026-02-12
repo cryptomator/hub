@@ -20,6 +20,7 @@
   "admin.licenseInfo.manageSubscription": "Spravovat předplatné",
   "admin.webOfTrust.information": "Více informací.",
   "admin.webOfTrust.save": "Uložit",
+  "admin.emergencyAccess.learnMore": "Více informací.",
   "auditLog.filter": "Filtr",
   "auditLog.details": "Podrobnosti",
   "auditLog.details.vault.create": "Vytvořit trezor",
