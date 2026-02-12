@@ -16,7 +16,7 @@ class RawJsonTest {
 
 	@Test
 	@DisplayName("serialize entity with @RawJson field containing JSON string")
-	public void testSerialization() throws Exception {
+	void testSerialization() throws Exception {
 		TestEntity entity = new TestEntity("test", "{\"key\":\"value\"}");
 		ObjectMapper objectMapper = new ObjectMapper();
 
@@ -32,7 +32,7 @@ class RawJsonTest {
 
 	@Test
 	@DisplayName("serialize entity with @RawJson field containing null")
-	public void testNullSerialization() throws Exception {
+	void testNullSerialization() throws Exception {
 		TestEntity entity = new TestEntity("test", null);
 		ObjectMapper objectMapper = new ObjectMapper();
 
@@ -48,7 +48,7 @@ class RawJsonTest {
 
 	@Test
 	@DisplayName("fail serialization if @RawJson field contains non-JSON string")
-	public void testBrokenSerialization() throws Exception {
+	void testBrokenSerialization() throws Exception {
 		TestEntity entity = new TestEntity("test", "NOT JSON");
 		ObjectMapper objectMapper = new ObjectMapper();
 
@@ -59,7 +59,7 @@ class RawJsonTest {
 
 	@Test
 	@DisplayName("deserialize json with arbitrary data in @RawJson field")
-	public void testDeserialization() throws Exception {
+	void testDeserialization() throws Exception {
 		String json = """
 				{
 					"str": "test",
@@ -76,7 +76,7 @@ class RawJsonTest {
 
 	@Test
 	@DisplayName("deserialize json with null in @RawJson field")
-	public void testNullDeserialization() throws Exception {
+	void testNullDeserialization() throws Exception {
 		String json = """
 				{
 					"str": "test",
@@ -93,7 +93,7 @@ class RawJsonTest {
 
 	@Test
 	@DisplayName("deserialize json with missing @RawJson field")
-	public void testUndefinedDeserialization() throws Exception {
+	void testUndefinedDeserialization() throws Exception {
 		String json = """
 				{
 					"str": "test"

@@ -67,7 +67,7 @@ import static org.hamcrest.text.IsEqualIgnoringCase.equalToIgnoringCase;
 
 @QuarkusTest
 @DisplayName("Resource /vaults")
-public class VaultResourceIT {
+class VaultResourceIT {
 
 	@InjectMock
 	EventLogger eventLogger;
@@ -91,7 +91,7 @@ public class VaultResourceIT {
 
 	@Inject
 	@SuppressWarnings("unused") // needed for @DBRollbackBefore, @DBRollbackAfter
-	public Flyway flyway;
+	Flyway flyway;
 
 	@BeforeAll
 	static void beforeAll() {
@@ -136,7 +136,7 @@ public class VaultResourceIT {
 
 	@Nested
 	@DisplayName("Test VaultDto validation")
-	public class TestVaultDtoValidation {
+	class TestVaultDtoValidation {
 
 		private static final UUID VALID_ID = UUID.fromString("7E57C0DE-0000-4000-8000-000100001111");
 		private static final String VALID_NAME = "foobar";
@@ -160,7 +160,7 @@ public class VaultResourceIT {
 	@OidcSecurity(claims = {
 			@Claim(key = "sub", value = "user1")
 	})
-	public class AsAuthorizedUser1 {
+	class AsAuthorizedUser1 {
 
 		@Test
 		@DisplayName("GET /vaults/accessible returns 200")
@@ -211,7 +211,7 @@ public class VaultResourceIT {
 
 		@Test
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/access-token with remote IP and device ID stores it in audit log")
-		void testUnlock4() throws SQLException {
+		void testUnlock4() {
 			given().header("HUB-DEVICE-ID", "123456789123456789")
 					.header("X-Forwarded-For", "1.2.3.4")
 					.when().get("/vaults/{vaultId}/access-token", "7E57C0DE-0000-4000-8000-000100001111")
@@ -254,7 +254,7 @@ public class VaultResourceIT {
 		@OidcSecurity(claims = {
 				@Claim(key = "sub", value = "user1")
 		})
-		public class LegacyUnlock {
+		class LegacyUnlock {
 
 			@Test
 			@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/keys/legacyDevice1 returns 200 using user access")
@@ -303,7 +303,7 @@ public class VaultResourceIT {
 	@OidcSecurity(claims = {
 			@Claim(key = "sub", value = "user2")
 	})
-	public class AsAuthorizedUser2 {
+	class AsAuthorizedUser2 {
 
 		@Test
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/access-token returns 449, because user2 is not initialized")
@@ -333,7 +333,7 @@ public class VaultResourceIT {
 			@Claim(key = "sub", value = "user1")
 	})
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-	public class CreateVaults {
+	class CreateVaults {
 
 		@Test
 		@Order(1)
@@ -402,7 +402,7 @@ public class VaultResourceIT {
 			@Claim(key = "sub", value = "user1")
 	})
 	@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-	public class GrantAccess {
+	class GrantAccess {
 
 		@Test
 		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100001111/access-tokens returns 404 for [user1, user666]")
@@ -469,7 +469,7 @@ public class VaultResourceIT {
 			@Claim(key = "sub", value = "user2")
 	})
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-	public class ManageAccessAsUser2 {
+	class ManageAccessAsUser2 {
 
 		@Test
 		@Order(1)
@@ -600,7 +600,7 @@ public class VaultResourceIT {
 		@Test
 		@Order(14)
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100002222/members adds, removes and updates members")
-		public void setMembersOfVault2() {
+		void setMembersOfVault2() {
 			given().when().contentType(ContentType.JSON).body("""
 							{
 								"user1": "MEMBER",
@@ -619,7 +619,7 @@ public class VaultResourceIT {
 		@Test
 		@Order(15)
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100002222/members restores original members")
-		public void restoreOriginalMembersOfVault2() { // as defined in V9999__Tst_Data.sql
+		void restoreOriginalMembersOfVault2() { // as defined in V9999__Tst_Data.sql
 			given().when().contentType(ContentType.JSON).body("""
 							{
 								"group1": "MEMBER",
@@ -656,7 +656,7 @@ public class VaultResourceIT {
 	})
 	@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-	public class ManageAccessAsUser1 {
+	class ManageAccessAsUser1 {
 
 		@Test
 		@Order(1)
@@ -741,7 +741,7 @@ public class VaultResourceIT {
 	})
 	@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-	public class ClaimOwnership {
+	class ClaimOwnership {
 
 		private static Algorithm JWT_ALG;
 
@@ -942,7 +942,7 @@ public class VaultResourceIT {
 
 	@Nested
 	@DisplayName("As unauthenticated user")
-	public class AsAnonymous {
+	class AsAnonymous {
 
 		@DisplayName("401 Unauthorized")
 		@ParameterizedTest(name = "{0} {1}")
@@ -956,7 +956,7 @@ public class VaultResourceIT {
 				"GET, /vaults/7E57C0DE-0000-4000-8000-000100001111/users-requiring-access-grant",
 				"GET, /vaults/7E57C0DE-0000-4000-8000-000100001111/access-token"
 		})
-		public void testGet(String method, String path) {
+		void testGet(String method, String path) {
 			when().request(method, path)
 					.then().statusCode(401);
 		}
@@ -965,7 +965,7 @@ public class VaultResourceIT {
 
 	@Nested
 	@DisplayName("/vaults/all")
-	public class GetAllVaults {
+	class GetAllVaults {
 
 		@Test
 		@DisplayName("GET /vaults/all returns 403 as user")
@@ -993,7 +993,7 @@ public class VaultResourceIT {
 
 	@Nested
 	@DisplayName("/vaults/some")
-	public class GetSomeVaults {
+	class GetSomeVaults {
 
 		@Nested
 		@DisplayName("as admin")
@@ -1001,7 +1001,7 @@ public class VaultResourceIT {
 		@OidcSecurity(claims = {
 				@Claim(key = "sub", value = "user1")
 		})
-		public class AsAdmin {
+		class AsAdmin {
 
 			@Test
 			@DisplayName("GET /vaults/some?ids=7e57c0de-0000-4000-8000-000100001111&ids=7e57c0de-0000-4000-8000-000100002222")

@@ -48,7 +48,7 @@ import static org.hamcrest.text.IsEqualIgnoringCase.equalToIgnoringCase;
 })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class ExceedingLicenseLimitsIT {
+class ExceedingLicenseLimitsIT {
 
 	@Inject
 	Group.Repository groupRepo;
@@ -120,7 +120,7 @@ public class ExceedingLicenseLimitsIT {
 	}
 
 	@BeforeEach
-	public void setup() {
+	void setup() {
 		var entitlements = HubLicenseEntitlements.create().withSeats(5L);
 		Mockito.doReturn(entitlements).when(licenseHolder).getEntitlements();
 		Mockito.doReturn(false).when(licenseHolder).isExpired();

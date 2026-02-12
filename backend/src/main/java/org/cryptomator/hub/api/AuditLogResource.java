@@ -75,10 +75,8 @@ public class AuditLogResource {
 			throw new BadRequestException("paginationId must be specified");
 		}
 
-		if (!type.isEmpty()) {
-			if (!EVENT_TYPES.containsAll(type)) {
-				throw new BadRequestException("Invalid event type provided");
-			}
+		if (!type.isEmpty() && !EVENT_TYPES.containsAll(type)) {
+			throw new BadRequestException("Invalid event type provided");
 		}
 
 		// cut off startDate at retention threshold

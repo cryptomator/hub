@@ -26,7 +26,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-public class VaultRoleFilterTest {
+class VaultRoleFilterTest {
 
 	private final ResourceInfo resourceInfo = Mockito.mock(ResourceInfo.class);
 	private final UriInfo uriInfo = Mockito.mock(UriInfo.class);
@@ -108,7 +108,7 @@ public class VaultRoleFilterTest {
 
 	@Test
 	@DisplayName("pass if user3 tries to access 7E57C0DE-0000-4000-8000-000100001111 (user3 is recovery council member)")
-	public void testFilterSuccess3() throws NoSuchMethodException {
+	void testFilterSuccess3() throws NoSuchMethodException {
 		Mockito.doReturn(VaultRoleFilterTest.class.getMethod("byPassRecoveryCouncilMembers")).when(resourceInfo).getResourceMethod();
 		Mockito.doReturn(new MultivaluedHashMap<>(Map.of(VaultRole.DEFAULT_VAULT_ID_PARAM, "7E57C0DE-0000-4000-8000-000100001111"))).when(uriInfo).getPathParameters();
 		Mockito.doReturn("user3").when(jwt).getSubject();
@@ -123,7 +123,7 @@ public class VaultRoleFilterTest {
 
 	@Test
 	@DisplayName("pass if user4 tries to access 7E57C0DE-0000-4000-8000-000100001111 (user4 is member of started recovery process)")
-	public void testFilterSuccess4() throws NoSuchMethodException {
+	void testFilterSuccess4() throws NoSuchMethodException {
 		Mockito.doReturn(VaultRoleFilterTest.class.getMethod("byPassRecoveryCouncilMembers")).when(resourceInfo).getResourceMethod();
 		Mockito.doReturn(new MultivaluedHashMap<>(Map.of(VaultRole.DEFAULT_VAULT_ID_PARAM, "7E57C0DE-0000-4000-8000-000100001111"))).when(uriInfo).getPathParameters();
 		Mockito.doReturn("user4").when(jwt).getSubject();
@@ -142,7 +142,7 @@ public class VaultRoleFilterTest {
 
 	@Nested
 	@DisplayName("when attempting to access archived vault")
-	public class OnArchivedVault {
+	class OnArchivedVault {
 
 		@BeforeEach
 		void setup() {
@@ -175,7 +175,7 @@ public class VaultRoleFilterTest {
 
 	@Nested
 	@DisplayName("when attempting to access non-existing vault")
-	public class OnMissingVault {
+	class OnMissingVault {
 
 		@BeforeEach
 		void setup() {
@@ -213,7 +213,7 @@ public class VaultRoleFilterTest {
 
 		@Nested
 		@DisplayName("if @VaultRole(onMissingVault = OnMissingVault.REQUIRE_REALM_ROLE)")
-		public class RequireRealmRole {
+		class RequireRealmRole {
 
 			@BeforeEach
 			void setup() throws NoSuchMethodException {

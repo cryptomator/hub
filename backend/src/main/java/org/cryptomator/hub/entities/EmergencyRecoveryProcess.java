@@ -12,7 +12,6 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.MapKey;
 import jakarta.persistence.NamedQuery;
-import jakarta.persistence.NoResultException;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
@@ -25,15 +24,15 @@ import java.util.stream.Stream;
 @Entity
 @Table(name = "emergency_recovery_processes")
 @NamedQuery(name = "EmergencyRecoveryProcess.findByVaultId", query = """
-			SELECT process
-			FROM EmergencyRecoveryProcess process
-			WHERE process.vaultId = :vaultId
+		SELECT process
+		FROM EmergencyRecoveryProcess process
+		WHERE process.vaultId = :vaultId
 		""")
 @NamedQuery(
 		name = "EmergencyRecoveryProcess.byCouncilMember", query = """
-		    SELECT process
-		    FROM EmergencyRecoveryProcess process
-		    WHERE KEY(process.recoveredKeyShares) = :councilMemberId
+		SELECT process
+		FROM EmergencyRecoveryProcess process
+		WHERE KEY(process.recoveredKeyShares) = :councilMemberId
 		"""
 )
 public class EmergencyRecoveryProcess {

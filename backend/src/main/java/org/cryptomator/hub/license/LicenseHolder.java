@@ -89,9 +89,9 @@ public class LicenseHolder {
 	@Transactional(Transactional.TxType.MANDATORY)
 	DecodedJWT validateExistingLicense(Settings settings) throws JWTVerificationException {
 		try {
-			var license = licenseValidator.validate(settings.getLicenseKey(), settings.getHubId());
+			var validated = licenseValidator.validate(settings.getLicenseKey(), settings.getHubId());
 			LOG.info("Verified existing license.");
-			return license;
+			return validated;
 		} catch (JWTVerificationException e) {
 			LOG.warn("License in database is invalid or does not match hubId", e);
 			throw e;
@@ -101,12 +101,12 @@ public class LicenseHolder {
 	@Transactional(Transactional.TxType.MANDATORY)
 	DecodedJWT validateAndApplyInitLicense(Settings settings, String initialLicenseToken, String initialHubId) throws JWTVerificationException {
 		try {
-			var license = licenseValidator.validate(initialLicenseToken, initialHubId);
+			var validated = licenseValidator.validate(initialLicenseToken, initialHubId);
 			settings.setLicenseKey(initialLicenseToken);
 			settings.setHubId(initialHubId);
 			settingsRepo.persistAndFlush(settings);
 			LOG.info("Successfully imported license from property hub.initial-license.");
-			return license;
+			return validated;
 		} catch (JWTVerificationException e) {
 			LOG.warn("Provided initial license is invalid or does not match initial hubId.", e);
 			throw e;
@@ -119,12 +119,12 @@ public class LicenseHolder {
 		var challenge = licenseApi.generateTrialChallenge();
 		var solution = solveChallenge(challenge);
 		var trialResponse = licenseApi.generateTrialLicense(solution.toCaptcha());
-		var license = licenseValidator.validate(trialResponse.licenseKey(), trialResponse.hubId());
+		var validated = licenseValidator.validate(trialResponse.licenseKey(), trialResponse.hubId());
 		settings.setLicenseKey(trialResponse.licenseKey());
 		settings.setHubId(trialResponse.hubId());
 		settingsRepo.persistAndFlush(settings);
 		LOG.info("Successfully retrieved trial license.");
-		return license;
+		return validated;
 	}
 
 	// visible for testing

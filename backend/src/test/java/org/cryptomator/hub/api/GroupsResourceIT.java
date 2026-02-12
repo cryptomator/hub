@@ -38,7 +38,7 @@ import static org.hamcrest.CoreMatchers.is;
 
 @QuarkusTest
 @DisplayName("Resource /groups")
-public class GroupsResourceIT {
+class GroupsResourceIT {
 
 	@Inject
 	AgroalDataSource dataSource;
@@ -94,7 +94,7 @@ public class GroupsResourceIT {
 	@OidcSecurity(claims = {
 			@Claim(key = "sub", value = "admin")
 	})
-	public class AsAdmin {
+	class AsAdmin {
 
 		@Test
 		@DisplayName("GET /groups returns 200")

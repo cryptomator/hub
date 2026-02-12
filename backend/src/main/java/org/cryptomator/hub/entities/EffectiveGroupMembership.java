@@ -114,12 +114,12 @@ public class EffectiveGroupMembership {
 		public void fullUpdate() {
 			deleteAll();
 			getEntityManager()
-				.createNamedQuery("EffectiveGroupMembership.fullUpdate")
-				.executeUpdate();
+					.createNamedQuery("EffectiveGroupMembership.fullUpdate")
+					.executeUpdate();
 		}
 
 		public void updateGroups(Collection<String> groupIds) {
-			Batch.of(200).run(groupIds, (batch) -> {
+			Batch.of(200).run(groupIds, batch -> {
 				getEntityManager()
 						.createNamedQuery("EffectiveGroupMembership.deleteGroups")
 						.setParameter("groupIds", batch.toArray(new String[0])) // explicit cast to array, so JPA maps to VARCHAR[] instead of VARCHAR
@@ -132,7 +132,7 @@ public class EffectiveGroupMembership {
 		}
 
 		public void updateUsers(Collection<String> userIds) {
-			Batch.of(200).run(userIds, (batch) -> {
+			Batch.of(200).run(userIds, batch -> {
 				delete("#EffectiveGroupMembership.deleteUsers", Parameters.with("userIds", batch));
 				getEntityManager()
 						.createNamedQuery("EffectiveGroupMembership.updateUsers")

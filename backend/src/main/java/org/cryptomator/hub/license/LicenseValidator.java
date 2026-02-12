@@ -8,8 +8,6 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
-import java.util.Objects;
-
 @ApplicationScoped
 public class LicenseValidator {
 
