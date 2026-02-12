@@ -77,6 +77,7 @@
   "admin.webOfTrust.wotIdVerifyLen.description": "Hvor mange cifre i en anden brugers fingeraftryk man skal indtaste for at bekræfte deres identitet.",
   "admin.webOfTrust.save": "Gem",
   "admin.webOfTrust.saved": "Gemt!",
+  "admin.emergencyAccess.learnMore": "Læs mere.",
   "archiveVaultDialog.title": "Arkivér boks",
   "archiveVaultDialog.description": "Arkivering af en boks gør den inaktiv. Dette kan frigøre besatte pladser. En arkiveret boks kan genaktiveres senere.",
   "archiveVaultDialog.confirm": "Arkiv",
