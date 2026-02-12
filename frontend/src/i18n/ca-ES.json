@@ -27,6 +27,7 @@
   "admin.licenseInfo.manageSubscription": "Gestionar Subscripcions",
   "admin.webOfTrust.information": "Més informació.",
   "admin.webOfTrust.save": "Desa",
+  "admin.emergencyAccess.learnMore": "Més informació.",
   "auditLog.filter": "Filtre",
   "auditLog.details": "Detalls",
   "auditLog.details.vault.create": "Crea la caixa forta",
