@@ -20,6 +20,7 @@
   "admin.licenseInfo.manageSubscription": "Administrer abonnement",
   "admin.webOfTrust.information": "Finn ut mer.",
   "admin.webOfTrust.save": "Lagre",
+  "admin.emergencyAccess.learnMore": "Finn ut mer.",
   "auditLog.filter": "Filter",
   "auditLog.details": "Detaljer",
   "auditLog.details.vault.create": "Opprett hvelv",
