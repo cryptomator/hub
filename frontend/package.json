@@ -57,6 +57,7 @@
     "keycloak-js": "^26.2.1",
     "remeda": "^2.32.0",
     "semver": "^7.7.3",
+    "shamir-secret-sharing": "^0.0.4",
     "vue": "^3.5.25",
     "vue-i18n": "^11.2.2",
     "vue-router": "^4.6.3"

@@ -57,9 +57,6 @@ public class LicenseHolderTest {
 			settings = mock(Settings.class);
 			licenseHolderSpy = Mockito.spy(licenseHolder);
 			Mockito.doReturn(settings).when(settingsRepo).get();
-			Mockito.doNothing().when(licenseHolderSpy).validateExistingLicense(any());
-			Mockito.doNothing().when(licenseHolderSpy).validateAndApplyInitLicense(any(), any(), any());
-			Mockito.doNothing().when(licenseHolderSpy).requestAnonTrialLicense(settings);
 		}
 
 		@Test
@@ -70,6 +67,8 @@ public class LicenseHolderTest {
 			licenseHolderSpy.initialLicenseToken = Optional.of("initToken");
 			when(settings.getLicenseKey()).thenReturn("token");
 			when(settings.getHubId()).thenReturn("42");
+			var license = Mockito.mock(DecodedJWT.class);
+			Mockito.doReturn(license).when(licenseHolderSpy).validateExistingLicense(any());
 
 			licenseHolderSpy.ensureLicenseExists();
 
@@ -90,6 +89,8 @@ public class LicenseHolderTest {
 			licenseHolderSpy.initialId = Optional.of("43");
 			when(settings.getLicenseKey()).thenReturn(dbToken);
 			when(settings.getHubId()).thenReturn(dbHubId);
+			var license = Mockito.mock(DecodedJWT.class);
+			Mockito.doReturn(license).when(licenseHolderSpy).validateAndApplyInitLicense(any(), any(), any());
 
 			licenseHolderSpy.ensureLicenseExists();
 
@@ -110,6 +111,8 @@ public class LicenseHolderTest {
 			licenseHolderSpy.initialId = Optional.ofNullable(initId);
 			when(settings.getLicenseKey()).thenReturn(dbToken);
 			when(settings.getHubId()).thenReturn(dbHubId);
+			var license = Mockito.mock(DecodedJWT.class);
+			Mockito.doReturn(license).when(licenseHolderSpy).requestAnonTrialLicense(settings);
 
 			licenseHolderSpy.ensureLicenseExists();
 

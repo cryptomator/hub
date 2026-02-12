@@ -14,6 +14,8 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 
+import java.util.Set;
+
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
 import static org.hamcrest.CoreMatchers.is;
@@ -43,14 +45,16 @@ public class SettingsResourceIT {
 			when().get("/settings")
 					.then().statusCode(200)
 					.body("wotMaxDepth", is(3))
-					.body("wotIdVerifyLen", is(2));
+					.body("wotIdVerifyLen", is(2))
+					.body("defaultRequiredEmergencyKeyShares", is(2))
+					.body("allowChoosingEmergencyCouncil", is(false));
 		}
 
 		@Test
 		@Order(2)
 		@DisplayName("PUT /settings returns 204 No Content")
 		void testPut() {
-			var dto = new SettingsResource.SettingsDto("42", 5, 8);
+			var dto = new SettingsResource.SettingsDto("42", 5, 8, true, 2, 3, false, Set.of());
 			given().contentType(ContentType.JSON).body(dto)
 					.when().put("/settings")
 					.then().statusCode(204);
@@ -70,7 +74,7 @@ public class SettingsResourceIT {
 		@Order(4)
 		@DisplayName("PUT /settings returns 204 No Content")
 		void testPutBackToDefault() {
-			var dto = new SettingsResource.SettingsDto("42", 3, 2);
+			var dto = new SettingsResource.SettingsDto("42", 3, 2, true, 2, 3, false, Set.of());
 			given().contentType(ContentType.JSON).body(dto)
 					.when().put("/settings")
 					.then().statusCode(204);

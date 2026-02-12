@@ -43,6 +43,12 @@ import java.util.stream.Stream;
 				INNER JOIN FETCH va.vault
 				WHERE va.id.authorityId = :authorityId
 				""")
+@NamedQuery(name = "VaultAccess.deleteSpecific",
+		query = """
+				DELETE FROM VaultAccess va
+				WHERE va.id.vaultId = :vaultId
+				AND va.id.authorityId IN :authorityIds
+				""")
 public class VaultAccess {
 
 	@EmbeddedId
@@ -104,6 +110,15 @@ public class VaultAccess {
 
 	public void setRole(Role role) {
 		this.role = role;
+	}
+
+	public static VaultAccess create(Vault vault, Authority authority, Role role) {
+		VaultAccess entity = new VaultAccess();
+		entity.setId(new Id(vault.getId(), authority.getId()));
+		entity.setVault(vault);
+		entity.setAuthority(authority);
+		entity.setRole(role);
+		return entity;
 	}
 
 	@Embeddable
@@ -175,6 +190,10 @@ public class VaultAccess {
 
 		public Stream<VaultAccess> findByAuthority(String authorityId) {
 			return find("#VaultAccess.findByAuthority", Parameters.with("authorityId", authorityId)).stream();
+		}
+
+		public long delete(UUID vaultId, Iterable<String> authorityIds) {
+			return delete("#VaultAccess.deleteSpecific", Parameters.with("vaultId", vaultId).and("authorityIds", authorityIds));
 		}
 	}
 }

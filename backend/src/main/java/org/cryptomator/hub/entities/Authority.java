@@ -12,7 +12,7 @@ import jakarta.persistence.InheritanceType;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -25,12 +25,6 @@ import java.util.stream.Stream;
 				SELECT DISTINCT a
 				FROM Authority a
 				WHERE LOWER(a.name) LIKE :name
-				""")
-@NamedQuery(name = "Authority.allInList",
-		query = """
-				SELECT a
-				FROM Authority a
-				WHERE a.id IN :ids
 				""")
 public class Authority {
 
@@ -93,9 +87,9 @@ public class Authority {
 			return find("#Authority.byName", Parameters.with("name", '%' + name.toLowerCase() + '%')).stream();
 		}
 
-		public Stream<Authority> findAllInList(List<String> ids) {
+		public Stream<Authority> findAllInList(Collection<String> ids) {
 			return Batch.of(200).run(ids, Stream.empty(), (batch, result) -> {
-				var partial = find("#Authority.allInList", Parameters.with("ids", batch));
+				var partial = find("WHERE id IN :ids", Parameters.with("ids", batch));
 				return Stream.concat(result, partial.stream());
 			});
 		}

@@ -50,4 +50,10 @@ public @interface VaultRole {
 	 * @return realm role required to access the annotated resource.
 	 */
 	RealmRole realmRole() default RealmRole.ADMIN;
+
+	/**
+	 * If set to true, skip the role check if the current user is a member of this vault's emergency access council.
+	 * @return whether emergency access council members should bypass the role check.
+	 */
+	boolean bypassForEmergencyAccess() default false;
 }

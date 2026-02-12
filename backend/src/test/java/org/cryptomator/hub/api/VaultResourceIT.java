@@ -19,6 +19,9 @@ import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
+import org.cryptomator.hub.entities.VaultAccess;
+import org.cryptomator.hub.entities.events.EventLogger;
+import org.cryptomator.hub.entities.events.VaultKeyRetrievedEvent;
 import org.cryptomator.hub.license.HubLicenseEntitlements;
 import org.cryptomator.hub.license.LicenseHolder;
 import org.cryptomator.hub.rollback.DBRollbackAfter;
@@ -28,7 +31,6 @@ import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -65,7 +67,10 @@ import static org.hamcrest.text.IsEqualIgnoringCase.equalToIgnoringCase;
 
 @QuarkusTest
 @DisplayName("Resource /vaults")
-public class VaultResourceIT {
+class VaultResourceIT {
+
+	@InjectMock
+	EventLogger eventLogger;
 
 	@Inject
 	AgroalDataSource dataSource;
@@ -84,9 +89,9 @@ public class VaultResourceIT {
 	@InjectMock
 	LicenseHolder licenseHolder;
 
-	@SuppressWarnings("unused") // used by @DBRollbackAfter annotation
 	@Inject
-	public Flyway flyway;
+	@SuppressWarnings("unused") // needed for @DBRollbackBefore, @DBRollbackAfter
+	Flyway flyway;
 
 	@BeforeAll
 	static void beforeAll() {
@@ -131,7 +136,7 @@ public class VaultResourceIT {
 
 	@Nested
 	@DisplayName("Test VaultDto validation")
-	public class TestVaultDtoValidation {
+	class TestVaultDtoValidation {
 
 		private static final UUID VALID_ID = UUID.fromString("7E57C0DE-0000-4000-8000-000100001111");
 		private static final String VALID_NAME = "foobar";
@@ -142,7 +147,7 @@ public class VaultResourceIT {
 
 		@Test
 		void testValidDto() {
-			var dto = new VaultResource.VaultDto(VALID_ID, VALID_NAME, "foobarbaz", false, Instant.parse("2020-02-20T20:20:20Z"), VALID_MASTERKEY, 8, VALID_SALT, VALID_AUTH_PUB, VALID_AUTH_PRI);
+			var dto = new VaultResource.VaultDto(VALID_ID, VALID_NAME, Instant.parse("2020-02-20T20:20:20Z"), "foobarbaz", false, 0, Map.of(), VALID_MASTERKEY, 8, VALID_SALT, VALID_AUTH_PUB, VALID_AUTH_PRI);
 			var violations = validator.validate(dto);
 			MatcherAssert.assertThat(violations, Matchers.empty());
 		}
@@ -155,7 +160,7 @@ public class VaultResourceIT {
 	@OidcSecurity(claims = {
 			@Claim(key = "sub", value = "user1")
 	})
-	public class AsAuthorizedUser1 {
+	class AsAuthorizedUser1 {
 
 		@Test
 		@DisplayName("GET /vaults/accessible returns 200")
@@ -206,19 +211,20 @@ public class VaultResourceIT {
 
 		@Test
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/access-token with remote IP and device ID stores it in audit log")
-		void testUnlock4() throws SQLException {
+		void testUnlock4() {
 			given().header("HUB-DEVICE-ID", "123456789123456789")
 					.header("X-Forwarded-For", "1.2.3.4")
 					.when().get("/vaults/{vaultId}/access-token", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(200)
 					.body(is("jwe.jwe.jwe.vault1.user1"));
 
-			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
-				var rs = s.executeQuery("""
-						SELECT * FROM "audit_event_vault_key_retrieve" WHERE "device_id" = '123456789123456789' AND "ip_address" = '1.2.3.4';
-						""");
-				Assertions.assertTrue(rs.next());
-			}
+			Mockito.verify(eventLogger).logVaultKeyRetrieved(
+					"user1",
+					UUID.fromString("7E57C0DE-0000-4000-8000-000100001111"),
+					VaultKeyRetrievedEvent.Result.SUCCESS,
+					"1.2.3.4",
+					"123456789123456789"
+			);
 		}
 
 		@Test
@@ -248,7 +254,7 @@ public class VaultResourceIT {
 		@OidcSecurity(claims = {
 				@Claim(key = "sub", value = "user1")
 		})
-		public class LegacyUnlock {
+		class LegacyUnlock {
 
 			@Test
 			@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/keys/legacyDevice1 returns 200 using user access")
@@ -298,7 +304,7 @@ public class VaultResourceIT {
 	@OidcSecurity(claims = {
 			@Claim(key = "sub", value = "user2")
 	})
-	public class AsAuthorizedUser2 {
+	class AsAuthorizedUser2 {
 
 		@Test
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/access-token returns 449, because user2 is not initialized")
@@ -312,7 +318,7 @@ public class VaultResourceIT {
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100003333 returns 403 for missing role")
 		void testCreateVaultWithMissingRole() {
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100003333");
-			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", "Test vault 3", false, Instant.parse("2112-12-21T21:12:21Z"), "masterkey3", 42, "NaCl", "authPubKey3", "authPrvKey3");
+			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", Instant.parse("2112-12-21T21:12:21Z"), "Test vault 3", false, 0, Map.of(), "masterkey3", 42, "NaCl", "authPubKey3", "authPrvKey3");
 
 			given().contentType(ContentType.JSON).body(vaultDto)
 					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-000100003333")
@@ -328,14 +334,14 @@ public class VaultResourceIT {
 			@Claim(key = "sub", value = "user1")
 	})
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-	public class CreateVaults {
+	class CreateVaults {
 
 		@Test
 		@Order(1)
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100003333 returns 201")
 		void testCreateVault1() {
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100003333");
-			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", "Test vault 3", false, Instant.parse("2112-12-21T21:12:21Z"), "masterkey3", 42, "NaCl", "authPubKey3", "authPrvKey3");
+			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", Instant.parse("2112-12-21T21:12:21Z"), "Test vault 3", false, 0, Map.of(), "masterkey3", 42, "NaCl", "authPubKey3", "authPrvKey3");
 
 			given().contentType(ContentType.JSON).body(vaultDto)
 					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-000100003333")
@@ -360,7 +366,7 @@ public class VaultResourceIT {
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100004444 returns 201 ignoring archived flag")
 		void testCreateVault3() {
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100004444");
-			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", "Test vault 4", true, Instant.parse("2112-12-21T21:12:21Z"), "masterkey4", 42, "NaCl", "authPubKey4", "authPrvKey4");
+			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", Instant.parse("2112-12-21T21:12:21Z"), "Test vault 4", true, 0, Map.of(), "masterkey4", 42, "NaCl", "authPubKey4", "authPrvKey4");
 
 			given().contentType(ContentType.JSON).body(vaultDto)
 					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-000100004444")
@@ -376,7 +382,7 @@ public class VaultResourceIT {
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100003333 returns 200, updating only name, description and archive flag")
 		void testUpdateVault() {
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100003333");
-			var vaultDto = new VaultResource.VaultDto(uuid, "VaultUpdated", "Vault updated.", true, Instant.parse("2222-11-11T11:11:11Z"), "doNotUpdate", 27, "doNotUpdate", "doNotUpdate", "doNotUpdate");
+			var vaultDto = new VaultResource.VaultDto(uuid, "VaultUpdated", Instant.parse("2222-11-11T11:11:11Z"), "Vault updated.", true, 0, Map.of(), "doNotUpdate", 27, "doNotUpdate", "doNotUpdate", "doNotUpdate");
 			given().contentType(ContentType.JSON)
 					.body(vaultDto)
 					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-000100003333")
@@ -391,13 +397,13 @@ public class VaultResourceIT {
 	}
 
 	@Nested
-	@DisplayName("As vault admin user1")
+	@DisplayName("As vault owner user1")
 	@TestSecurity(user = "User Name 1", roles = {"user"})
 	@OidcSecurity(claims = {
 			@Claim(key = "sub", value = "user1")
 	})
 	@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-	public class GrantAccess {
+	class GrantAccess {
 
 		@Test
 		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100001111/access-tokens returns 404 for [user1, user666]")
@@ -464,7 +470,7 @@ public class VaultResourceIT {
 			@Claim(key = "sub", value = "user2")
 	})
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-	public class ManageAccessAsUser2 {
+	class ManageAccessAsUser2 {
 
 		@Test
 		@Order(1)
@@ -594,12 +600,52 @@ public class VaultResourceIT {
 
 		@Test
 		@Order(14)
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100002222/members adds, removes and updates members")
+		void setMembersOfVault2() {
+			given().when().contentType(ContentType.JSON).body("""
+							{
+								"user1": "MEMBER",
+								"user2": "OWNER",
+								"group2": "MEMBER"
+							}
+							""").put("/vaults/{vaultId}/members", "7E57C0DE-0000-4000-8000-000100002222")
+					.then().statusCode(204);
+			var vaultId = UUID.fromString("7E57C0DE-0000-4000-8000-000100002222");
+			Mockito.verify(eventLogger).logVaultMemberAdded("user2", vaultId, "user1", VaultAccess.Role.MEMBER);
+			Mockito.verify(eventLogger).logVaultMemberAdded("user2", vaultId, "user2", VaultAccess.Role.OWNER);
+			Mockito.verify(eventLogger).logVaultMemberRemoved("user2", vaultId, "group1");
+			Mockito.verify(eventLogger).logVaultMemberUpdated("user2", vaultId, "group2", VaultAccess.Role.MEMBER);
+		}
+
+		@Test
+		@Order(15)
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100002222/members restores original members")
+		void restoreOriginalMembersOfVault2() { // as defined in V9999__Tst_Data.sql
+			given().when().contentType(ContentType.JSON).body("""
+							{
+								"group1": "MEMBER",
+								"group2": "OWNER"
+							}
+							""").put("/vaults/{vaultId}/members", "7E57C0DE-0000-4000-8000-000100002222")
+					.then().statusCode(204);
+			var vaultId = UUID.fromString("7E57C0DE-0000-4000-8000-000100002222");
+			Mockito.verify(eventLogger).logVaultMemberRemoved("user2", vaultId, "user1");
+			Mockito.verify(eventLogger).logVaultMemberRemoved("user2", vaultId, "user2");
+			Mockito.verify(eventLogger).logVaultMemberAdded("user2", vaultId, "group1", VaultAccess.Role.MEMBER);
+			Mockito.verify(eventLogger).logVaultMemberUpdated("user2", vaultId, "group2", VaultAccess.Role.OWNER);
+
+		}
+
+		@Test
+		@Order(16)
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100002222/members does not contain user2")
 		@DBRollbackAfter
 		void getMembersOfVault2c() {
 			given().when().get("/vaults/{vaultId}/members", "7E57C0DE-0000-4000-8000-000100002222")
 					.then().statusCode(200)
-					.body("id", not(hasItems("user2")));
+					.body("id", not(hasItems("user2")))
+					.body("id", hasItems("group1", "group2"))
+			;
 		}
 	}
 
@@ -611,7 +657,7 @@ public class VaultResourceIT {
 	})
 	@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-	public class ManageAccessAsUser1 {
+	class ManageAccessAsUser1 {
 
 		@Test
 		@Order(1)
@@ -696,7 +742,7 @@ public class VaultResourceIT {
 	})
 	@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-	public class ClaimOwnership {
+	class ClaimOwnership {
 
 		private static Algorithm JWT_ALG;
 
@@ -897,7 +943,7 @@ public class VaultResourceIT {
 
 	@Nested
 	@DisplayName("As unauthenticated user")
-	public class AsAnonymous {
+	class AsAnonymous {
 
 		@DisplayName("401 Unauthorized")
 		@ParameterizedTest(name = "{0} {1}")
@@ -905,12 +951,13 @@ public class VaultResourceIT {
 				"GET, /vaults/accessible",
 				"GET, /vaults/7E57C0DE-0000-4000-8000-000100001111",
 				"GET, /vaults/7E57C0DE-0000-4000-8000-000100001111/members",
+				"PUT, /vaults/7E57C0DE-0000-4000-8000-000100001111/members",
 				"PUT, /vaults/7E57C0DE-0000-4000-8000-000100001111/users/user1",
 				"DELETE, /vaults/7E57C0DE-0000-4000-8000-000100001111/authority/user1",
 				"GET, /vaults/7E57C0DE-0000-4000-8000-000100001111/users-requiring-access-grant",
 				"GET, /vaults/7E57C0DE-0000-4000-8000-000100001111/access-token"
 		})
-		public void testGet(String method, String path) {
+		void testGet(String method, String path) {
 			when().request(method, path)
 					.then().statusCode(401);
 		}
@@ -919,7 +966,7 @@ public class VaultResourceIT {
 
 	@Nested
 	@DisplayName("/vaults/all")
-	public class GetAllVaults {
+	class GetAllVaults {
 
 		@Test
 		@DisplayName("GET /vaults/all returns 403 as user")
@@ -947,7 +994,7 @@ public class VaultResourceIT {
 
 	@Nested
 	@DisplayName("/vaults/some")
-	public class GetSomeVaults {
+	class GetSomeVaults {
 
 		@Nested
 		@DisplayName("as admin")
@@ -955,7 +1002,7 @@ public class VaultResourceIT {
 		@OidcSecurity(claims = {
 				@Claim(key = "sub", value = "user1")
 		})
-		public class AsAdmin {
+		class AsAdmin {
 
 			@Test
 			@DisplayName("GET /vaults/some?ids=7e57c0de-0000-4000-8000-000100001111&ids=7e57c0de-0000-4000-8000-000100002222")
