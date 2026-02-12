@@ -944,26 +944,16 @@ async function verifyProcessInfo(process: RecoveryProcessDto): Promise<boolean> 
 const defaultEmergencyCouncilMembers = ref<ActivatedUser[]>([]);
 const defaultRequiredEmergencyKeyShares = ref<number>(0);
 const defaultMinMembers = ref<number>(0);
-const allowChangingDefaults = ref<boolean>(false);
 
 async function loadDefaultSettings() {
-  try {
-    const settings = await backend.settings.get();
-    const authorities = await backend.authorities.listSome(settings.emergencyCouncilMemberIds);
-    const sortedActivatedUsers = authorities
-      .filter((a): a is ActivatedUser => a.type === 'USER' && didCompleteSetup(a))
-      .sort((a, b) => a.name.localeCompare(b.name));
+  const settings = await backend.settings.get();
+  const authorities = await backend.authorities.listSome(settings.emergencyCouncilMemberIds);
+  const sortedActivatedUsers = authorities
+    .filter((a): a is ActivatedUser => a.type === 'USER' && didCompleteSetup(a))
+    .sort((a, b) => a.name.localeCompare(b.name));
 
-    defaultEmergencyCouncilMembers.value = [...sortedActivatedUsers];
-    allowChangingDefaults.value = settings.allowChoosingEmergencyCouncil;
-    defaultRequiredEmergencyKeyShares.value = settings.defaultRequiredEmergencyKeyShares;
-    defaultMinMembers.value = settings.defaultMinMembers;
-  } catch (error) {
-    console.error('Loading emergency council members failed:', error);
-    // TODO: don't set defaults, hard-fail with error message instead
-    //resetCouncilMembers();
-    defaultRequiredEmergencyKeyShares.value = 0;
-    allowChangingDefaults.value = false;
-  }
+  defaultEmergencyCouncilMembers.value = [...sortedActivatedUsers];
+  defaultRequiredEmergencyKeyShares.value = settings.defaultRequiredEmergencyKeyShares;
+  defaultMinMembers.value = settings.defaultMinMembers;
 }
 </script>
