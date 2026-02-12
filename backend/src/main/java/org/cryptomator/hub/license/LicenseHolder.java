@@ -29,7 +29,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.HexFormat;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 @ApplicationScoped
 public class LicenseHolder {
@@ -60,11 +59,11 @@ public class LicenseHolder {
 	@RestClient
 	LicenseApi licenseApi;
 
-	private CompletableFuture<DecodedJWT> license;
+	private DecodedJWT license;
 
 	@PostConstruct
 	void init() {
-		this.license = CompletableFuture.supplyAsync(this::ensureLicenseExists);
+		this.license = this.ensureLicenseExists();
 	}
 
 	/**
@@ -158,8 +157,7 @@ public class LicenseHolder {
 	@Transactional
 	public void set(String token) throws JWTVerificationException {
 		var settings = settingsRepo.get();
-		var newValidLicense = licenseValidator.validate(token, settings.getHubId());
-		this.license = CompletableFuture.completedFuture(newValidLicense);
+		this.license = licenseValidator.validate(token, settings.getHubId());
 		settings.setLicenseKey(token);
 		settingsRepo.persistAndFlush(settings);
 	}
@@ -216,18 +214,10 @@ public class LicenseHolder {
 		if (license == null) {
 			throw new IllegalStateException();
 		}
-		try {
-			return license.get();
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-			throw new IllegalStateException("Getting license interrupted", e);
-		} catch (ExecutionException e) {
-			throw new IllegalStateException("Failed to get license", e);
-		}
+		return license;
 	}
 
 	public HubLicenseEntitlements getEntitlements() {
-		var license = get();
 		var entitlements = license.getClaim("org.cryptomator.hub.entitlements").as(HubLicenseEntitlements.class);
 		// TODO: eventually "entitlements" claim will be mandatory and this fallback can be removed, see https://github.com/cryptomator/hub/issues/391
 		if (entitlements == null) { // legacy (pre 1.5.0) license without "org.cryptomator.hub.entitlements" claim:
