@@ -20,6 +20,7 @@
   "admin.licenseInfo.manageSubscription": "จัดการการสมัครสมาชิก",
   "admin.webOfTrust.information": "เรียนรู้เพิ่มเติม",
   "admin.webOfTrust.save": "บันทึก",
+  "admin.emergencyAccess.learnMore": "เรียนรู้เพิ่มเติม",
   "auditLog.filter": "กรอง",
   "auditLog.details": "ราย​ละเอียด",
   "auditLog.details.vault.create": "สร้าง Vault",
