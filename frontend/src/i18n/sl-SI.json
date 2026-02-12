@@ -18,6 +18,7 @@
   "common.show": "Prikaži",
   "admin.webOfTrust.information": "Preberite več.",
   "admin.webOfTrust.save": "Shrani",
+  "admin.emergencyAccess.learnMore": "Preberite več.",
   "auditLog.details": "Podrobnosti",
   "auditLog.details.vault.create": "Ustvari trezor",
   "claimVaultOwnershipDialog.error.wrongPassword": "Napačno geslo",
