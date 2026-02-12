@@ -18,9 +18,9 @@ public class DBRollbackAfterExtension implements QuarkusTestAfterConstructCallba
 	@Override
 	public void afterTestExecution(QuarkusTestMethodContext context) {
 		var isAnnotationPresent = context.getTestMethod().getAnnotation(DBRollbackAfter.class) != null;
-		if(isAnnotationPresent) {
+		if (isAnnotationPresent) {
 			var flyway = INSTANCE.get();
-			if(flyway == null) {
+			if (flyway == null) {
 				throw new IllegalStateException("Flyway instance was not set. Please ensure that test class (or enclosing class) have a public non-null, Flyway field.");
 			}
 
@@ -44,7 +44,7 @@ public class DBRollbackAfterExtension implements QuarkusTestAfterConstructCallba
 		var hasEnclosingClass = testClazz.getEnclosingClass() != null;
 		var isNotStatic = !Modifier.isStatic(testClazz.getModifiers());
 		var isNested = testClazz.getAnnotation(Nested.class) != null;
-		if(hasEnclosingClass && isNotStatic && isNested) {
+		if (hasEnclosingClass && isNotStatic && isNested) {
 			Field field = testClazz.getDeclaredField("this$0");
 			field.setAccessible(true);
 			return getTopLevelTestInstance(field.get(testInstance));

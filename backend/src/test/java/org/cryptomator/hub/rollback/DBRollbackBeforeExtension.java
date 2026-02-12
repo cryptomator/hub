@@ -1,7 +1,6 @@
 package org.cryptomator.hub.rollback;
 
 import io.quarkus.test.junit.callback.QuarkusTestAfterConstructCallback;
-import io.quarkus.test.junit.callback.QuarkusTestAfterTestExecutionCallback;
 import io.quarkus.test.junit.callback.QuarkusTestBeforeTestExecutionCallback;
 import io.quarkus.test.junit.callback.QuarkusTestMethodContext;
 import org.flywaydb.core.Flyway;
@@ -19,9 +18,9 @@ public class DBRollbackBeforeExtension implements QuarkusTestAfterConstructCallb
 	@Override
 	public void beforeTestExecution(QuarkusTestMethodContext context) {
 		var isAnnotationPresent = context.getTestMethod().getAnnotation(DBRollbackAfter.class) != null;
-		if(isAnnotationPresent) {
+		if (isAnnotationPresent) {
 			var flyway = INSTANCE.get();
-			if(flyway == null) {
+			if (flyway == null) {
 				throw new IllegalStateException("Flyway instance was not set. Please ensure that test class (or enclosing class) have a public non-null, Flyway field.");
 			}
 
@@ -45,7 +44,7 @@ public class DBRollbackBeforeExtension implements QuarkusTestAfterConstructCallb
 		var hasEnclosingClass = testClazz.getEnclosingClass() != null;
 		var isNotStatic = !Modifier.isStatic(testClazz.getModifiers());
 		var isNested = testClazz.getAnnotation(Nested.class) != null;
-		if(hasEnclosingClass && isNotStatic && isNested) {
+		if (hasEnclosingClass && isNotStatic && isNested) {
 			Field field = testClazz.getDeclaredField("this$0");
 			field.setAccessible(true);
 			return getTopLevelTestInstance(field.get(testInstance));

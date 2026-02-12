@@ -19,7 +19,8 @@ public class LicenseValidator {
 
 	/**
 	 * Validates the token signature and whether it matches the Hub ID. It does NOT check the expiration date, though.
-	 * @param token JWT
+	 *
+	 * @param token         JWT
 	 * @param expectedHubId the ID of this Hub instance
 	 * @return the verified token.
 	 * @throws JWTVerificationException If validation fails.

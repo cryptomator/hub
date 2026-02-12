@@ -119,7 +119,7 @@ public class Settings {
 
 	public void setDefaultMinMembers(int defaultMinMembers) {
 		this.defaultMinMembers = defaultMinMembers;
-	}	
+	}
 
 	public boolean isAllowChoosingEmergencyCouncil() {
 		return allowChoosingEmergencyCouncil;

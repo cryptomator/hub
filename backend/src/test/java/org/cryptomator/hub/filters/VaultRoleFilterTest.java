@@ -117,7 +117,7 @@ class VaultRoleFilterTest {
 		Mockito.doReturn(vault).when(vaultRepo).findById(uuid("7E57C0DE-0000-4000-8000-000100001111"));
 
 		Assertions.assertDoesNotThrow(() -> filter.filter(context));
-		
+
 		Mockito.verify(effectiveVaultAccessRepo, Mockito.never()).listRoles(Mockito.any(), Mockito.any());
 	}
 
@@ -136,7 +136,7 @@ class VaultRoleFilterTest {
 		Mockito.doReturn(vault).when(vaultRepo).findById(uuid("7E57C0DE-0000-4000-8000-000100001111"));
 
 		Assertions.assertDoesNotThrow(() -> filter.filter(context));
-		
+
 		Mockito.verify(effectiveVaultAccessRepo, Mockito.never()).listRoles(Mockito.any(), Mockito.any());
 	}
 
@@ -246,32 +246,39 @@ class VaultRoleFilterTest {
 	 */
 
 	@VaultRole(value = {VaultAccess.Role.OWNER}, bypassForEmergencyAccess = true)
-	public void byPassRecoveryCouncilMembers() {}
+	public void byPassRecoveryCouncilMembers() {
+	}
 
 	@VaultRole({VaultAccess.Role.MEMBER})
-	public void allowMember() {}
+	public void allowMember() {
+	}
 
 	@VaultRole({VaultAccess.Role.OWNER})
-	public void allowOwner() {}
+	public void allowOwner() {
+	}
 
 	public static class NonExistingVault {
 		@VaultRole(value = {VaultAccess.Role.OWNER}, onMissingVault = VaultRole.OnMissingVault.FORBIDDEN)
-		public void forbidden() {}
+		public void forbidden() {
+		}
 
 		@VaultRole(value = {VaultAccess.Role.OWNER}, onMissingVault = VaultRole.OnMissingVault.NOT_FOUND)
-		public void notFound() {}
+		public void notFound() {
+		}
 
 		@VaultRole(value = {VaultAccess.Role.OWNER}, onMissingVault = VaultRole.OnMissingVault.PASS)
-		public void pass() {}
+		public void pass() {
+		}
 
 		@VaultRole(value = {VaultAccess.Role.OWNER}, onMissingVault = VaultRole.OnMissingVault.REQUIRE_REALM_ROLE, realmRole = RealmRole.ADMIN)
-		public void requireRealmRole() {}
+		public void requireRealmRole() {
+		}
 	}
-	
+
 	/*
 	 * utils
 	 */
-	
+
 	private static UUID uuid(String uuid) {
 		return Mockito.argThat(arg -> arg.toString().equalsIgnoreCase(uuid));
 	}

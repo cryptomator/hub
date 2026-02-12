@@ -207,7 +207,7 @@ public class VaultResource {
 			assert memberRoles.containsKey(authority.getId());
 			return VaultAccess.create(vault, authority, memberRoles.get(authority.getId()));
 		}).toList();
-		if (newVaultAccess.isEmpty()){
+		if (newVaultAccess.isEmpty()) {
 			throw new BadRequestException("No (valid) members given.");
 		}
 		var oldVaultAccess = vaultAccessRepo.forVault(vaultId).toList();
@@ -250,7 +250,6 @@ public class VaultResource {
 
 		return Response.noContent().build();
 	}
-
 
 
 	@PUT

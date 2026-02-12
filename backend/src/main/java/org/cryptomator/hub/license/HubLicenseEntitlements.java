@@ -17,6 +17,7 @@ public record HubLicenseEntitlements(@JsonProperty("seats") long seats,
 									 @JsonProperty("androidLicense") String androidLicense) {
 	/**
 	 * Calculates the earliest point of time for audit log entries to still be retained.
+	 *
 	 * @return {@link #auditLogRetentionDays} days in the past from now
 	 */
 	public Instant auditLogRetentionThreshold() {

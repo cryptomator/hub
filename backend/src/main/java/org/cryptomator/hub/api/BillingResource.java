@@ -22,7 +22,6 @@ import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 
 import java.time.Instant;
-import java.util.Optional;
 
 //TODO: redirect ot /license path
 @Path("/billing")

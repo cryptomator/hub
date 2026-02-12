@@ -22,7 +22,7 @@ public class EmergencyAccessRecoveryCompletedEvent extends AuditEvent {
 	private String councilMemberId;
 
 	@Column(name = "ip_address")
-    private String ipAddress;
+	private String ipAddress;
 
 	public UUID getProcessId() {
 		return processId;
@@ -41,12 +41,12 @@ public class EmergencyAccessRecoveryCompletedEvent extends AuditEvent {
 	}
 
 	public String getIpAddress() {
-        return ipAddress;
-    }
+		return ipAddress;
+	}
 
-    public void setIpAddress(String ipAddress) {
-        this.ipAddress = ipAddress;
-    }
+	public void setIpAddress(String ipAddress) {
+		this.ipAddress = ipAddress;
+	}
 
 	@Override
 	public boolean equals(Object o) {

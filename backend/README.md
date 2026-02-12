@@ -7,6 +7,7 @@ If you want to learn more about Quarkus, please visit its website: https://quark
 ## Dev Mode
 
 You can run your application in dev mode that enables live coding using:
+
 ```shell script
 ./mvnw clean quarkus:dev
 ```
@@ -16,7 +17,6 @@ You can run your application in dev mode that enables live coding using:
 ### Accessing Keycloak (Port 8180)
 
 During development, Keycloak is started as a Quarkus Dev Service using port 8180. When using alternative ports, you can also find it via [http://localhost:8080/q/dev](http://localhost:8080/q/dev).
-
 
 ### Testing rest services via CLI:
 
@@ -54,6 +54,7 @@ docker build -f src/main/docker/Dockerfile.jvm -t ghcr.io/cryptomator/hub .
 ### Building native images
 
 3x smaller but takes longer to build. Docker VM requires sufficient memory during the build:
+
 ```shell script
 docker build -f src/main/docker/Dockerfile.native -t ghcr.io/cryptomator/hub .
 ```
