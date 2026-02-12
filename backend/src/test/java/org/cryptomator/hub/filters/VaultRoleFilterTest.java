@@ -117,7 +117,7 @@ class VaultRoleFilterTest {
 		Mockito.doReturn(vault).when(vaultRepo).findById(uuid("7E57C0DE-0000-4000-8000-000100001111"));
 
 		Assertions.assertDoesNotThrow(() -> filter.filter(context));
-		
+
 		Mockito.verify(effectiveVaultAccessRepo, Mockito.never()).listRoles(Mockito.any(), Mockito.any());
 	}
 
@@ -136,7 +136,7 @@ class VaultRoleFilterTest {
 		Mockito.doReturn(vault).when(vaultRepo).findById(uuid("7E57C0DE-0000-4000-8000-000100001111"));
 
 		Assertions.assertDoesNotThrow(() -> filter.filter(context));
-		
+
 		Mockito.verify(effectiveVaultAccessRepo, Mockito.never()).listRoles(Mockito.any(), Mockito.any());
 	}
 
@@ -246,7 +246,8 @@ class VaultRoleFilterTest {
 	 */
 
 	@VaultRole(value = {VaultAccess.Role.OWNER}, bypassForEmergencyAccess = true)
-	public void byPassRecoveryCouncilMembers() {}
+	public void byPassRecoveryCouncilMembers() {
+	}
 
 	@VaultRole({VaultAccess.Role.MEMBER})
 	public void allowMember() {
@@ -273,11 +274,11 @@ class VaultRoleFilterTest {
 		public void requireRealmRole() {
 		}
 	}
-	
+
 	/*
 	 * utils
 	 */
-	
+
 	private static UUID uuid(String uuid) {
 		return Mockito.argThat(arg -> arg.toString().equalsIgnoreCase(uuid));
 	}

@@ -74,12 +74,12 @@ public class SettingsResource {
 		if (oldWotMaxDepth != dto.wotMaxDepth || oldWotIdVerifyLen != dto.wotIdVerifyLen) {
 			eventLogger.logWotSettingUpdated(jwt.getSubject(), dto.wotIdVerifyLen, dto.wotMaxDepth);
 		}
-		if (!oldEmergencyCouncilMemberIds.containsAll(dto.emergencyCouncilMemberIds) 
-			|| !dto.emergencyCouncilMemberIds.containsAll(oldEmergencyCouncilMemberIds)
-			|| oldRequiredEmergencyKeyShares != dto.defaultRequiredEmergencyKeyShares 
-			|| oldAllowChoosingEmergencyCouncil != dto.allowChoosingEmergencyCouncil 
-			|| oldMinMembers != dto.defaultMinMembers 
-			|| oldEmergencyAccessEnabled != dto.enableEmergencyAccess) {
+		if (!oldEmergencyCouncilMemberIds.containsAll(dto.emergencyCouncilMemberIds)
+				|| !dto.emergencyCouncilMemberIds.containsAll(oldEmergencyCouncilMemberIds)
+				|| oldRequiredEmergencyKeyShares != dto.defaultRequiredEmergencyKeyShares
+				|| oldAllowChoosingEmergencyCouncil != dto.allowChoosingEmergencyCouncil
+				|| oldMinMembers != dto.defaultMinMembers
+				|| oldEmergencyAccessEnabled != dto.enableEmergencyAccess) {
 			var councilMemberIds = "[" + dto.emergencyCouncilMemberIds.stream().map(s -> "\"" + s + "\"").collect(Collectors.joining(", ")) + "]";
 			eventLogger.logEmergencyAccessSettingsUpdated(jwt.getSubject(), dto.enableEmergencyAccess, councilMemberIds, dto.defaultRequiredEmergencyKeyShares, dto.defaultMinMembers, dto.allowChoosingEmergencyCouncil);
 		}

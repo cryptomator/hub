@@ -14,7 +14,28 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.VaultAccess;
-import org.cryptomator.hub.entities.events.*;
+import org.cryptomator.hub.entities.events.AuditEvent;
+import org.cryptomator.hub.entities.events.DeviceRegisteredEvent;
+import org.cryptomator.hub.entities.events.DeviceRemovedEvent;
+import org.cryptomator.hub.entities.events.EmergencyAccessRecoveryAbortedEvent;
+import org.cryptomator.hub.entities.events.EmergencyAccessRecoveryApprovedEvent;
+import org.cryptomator.hub.entities.events.EmergencyAccessRecoveryCompletedEvent;
+import org.cryptomator.hub.entities.events.EmergencyAccessRecoveryStartedEvent;
+import org.cryptomator.hub.entities.events.EmergencyAccessSettingsUpdatedEvent;
+import org.cryptomator.hub.entities.events.EmergencyAccessSetupEvent;
+import org.cryptomator.hub.entities.events.SettingWotUpdateEvent;
+import org.cryptomator.hub.entities.events.SignedWotIdEvent;
+import org.cryptomator.hub.entities.events.UserAccountResetEvent;
+import org.cryptomator.hub.entities.events.UserKeysChangeEvent;
+import org.cryptomator.hub.entities.events.UserSetupCodeChangeEvent;
+import org.cryptomator.hub.entities.events.VaultAccessGrantedEvent;
+import org.cryptomator.hub.entities.events.VaultCreatedEvent;
+import org.cryptomator.hub.entities.events.VaultKeyRetrievedEvent;
+import org.cryptomator.hub.entities.events.VaultMemberAddedEvent;
+import org.cryptomator.hub.entities.events.VaultMemberRemovedEvent;
+import org.cryptomator.hub.entities.events.VaultMemberUpdatedEvent;
+import org.cryptomator.hub.entities.events.VaultOwnershipClaimedEvent;
+import org.cryptomator.hub.entities.events.VaultUpdatedEvent;
 import org.cryptomator.hub.license.LicenseHolder;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.enums.ParameterIn;
@@ -107,7 +128,7 @@ public class AuditLogResource {
 			@JsonSubTypes.Type(value = EmergencyAccessRecoveryStartedEventDto.class, name = EmergencyAccessRecoveryStartedEvent.TYPE), //
 			@JsonSubTypes.Type(value = EmergencyAccessRecoveryApprovedEventDto.class, name = EmergencyAccessRecoveryApprovedEvent.TYPE), //
 			@JsonSubTypes.Type(value = EmergencyAccessRecoveryCompletedEventDto.class, name = EmergencyAccessRecoveryCompletedEvent.TYPE), //
-	        @JsonSubTypes.Type(value = EmergencyAccessRecoveryAbortedEventDto.class, name = EmergencyAccessRecoveryAbortedEvent.TYPE), //
+			@JsonSubTypes.Type(value = EmergencyAccessRecoveryAbortedEventDto.class, name = EmergencyAccessRecoveryAbortedEvent.TYPE), //
 	})
 	public interface AuditEventDto {
 
@@ -119,8 +140,7 @@ public class AuditLogResource {
 
 		static AuditEventDto fromEntity(AuditEvent entity) {
 			return switch (entity) {
-				case DeviceRegisteredEvent evt ->
-						new DeviceRegisteredEventDto(evt.getId(), evt.getTimestamp(), DeviceRegisteredEvent.TYPE, evt.getRegisteredBy(), evt.getDeviceId(), evt.getDeviceName(), evt.getDeviceType());
+				case DeviceRegisteredEvent evt -> new DeviceRegisteredEventDto(evt.getId(), evt.getTimestamp(), DeviceRegisteredEvent.TYPE, evt.getRegisteredBy(), evt.getDeviceId(), evt.getDeviceName(), evt.getDeviceType());
 				case DeviceRemovedEvent evt -> new DeviceRemovedEventDto(evt.getId(), evt.getTimestamp(), DeviceRemovedEvent.TYPE, evt.getRemovedBy(), evt.getDeviceId());
 				case SignedWotIdEvent evt -> new SignedWotIdEventDto(evt.getId(), evt.getTimestamp(), SignedWotIdEvent.TYPE, evt.getUserId(), evt.getSignerId(), evt.getSignerKey(), evt.getSignature());
 				case SettingWotUpdateEvent evt -> new SettingWotUpdateEventDto(evt.getId(), evt.getTimestamp(), SettingWotUpdateEvent.TYPE, evt.getUpdatedBy(), evt.getWotMaxDepth(), evt.getWotIdVerifyLen());
@@ -128,18 +148,15 @@ public class AuditLogResource {
 				case UserKeysChangeEvent evt -> new UserKeysChangeEventDto(evt.getId(), evt.getTimestamp(), UserKeysChangeEvent.TYPE, evt.getChangedBy(), evt.getUserName());
 				case UserSetupCodeChangeEvent evt -> new UserSetupCodeChangeEventDto(evt.getId(), evt.getTimestamp(), UserSetupCodeChangeEvent.TYPE, evt.getChangedBy());
 				case VaultCreatedEvent evt -> new VaultCreatedEventDto(evt.getId(), evt.getTimestamp(), VaultCreatedEvent.TYPE, evt.getCreatedBy(), evt.getVaultId(), evt.getVaultName(), evt.getVaultDescription());
-				case VaultUpdatedEvent evt ->
-						new VaultUpdatedEventDto(evt.getId(), evt.getTimestamp(), VaultUpdatedEvent.TYPE, evt.getUpdatedBy(), evt.getVaultId(), evt.getVaultName(), evt.getVaultDescription(), evt.isVaultArchived());
+				case VaultUpdatedEvent evt -> new VaultUpdatedEventDto(evt.getId(), evt.getTimestamp(), VaultUpdatedEvent.TYPE, evt.getUpdatedBy(), evt.getVaultId(), evt.getVaultName(), evt.getVaultDescription(), evt.isVaultArchived());
 				case VaultAccessGrantedEvent evt -> new VaultAccessGrantedEventDto(evt.getId(), evt.getTimestamp(), VaultAccessGrantedEvent.TYPE, evt.getGrantedBy(), evt.getVaultId(), evt.getAuthorityId());
-				case VaultKeyRetrievedEvent evt ->
-						new VaultKeyRetrievedEventDto(evt.getId(), evt.getTimestamp(), VaultKeyRetrievedEvent.TYPE, evt.getRetrievedBy(), evt.getVaultId(), evt.getResult(), evt.getIpAddress(), evt.getDeviceId());
+				case VaultKeyRetrievedEvent evt -> new VaultKeyRetrievedEventDto(evt.getId(), evt.getTimestamp(), VaultKeyRetrievedEvent.TYPE, evt.getRetrievedBy(), evt.getVaultId(), evt.getResult(), evt.getIpAddress(), evt.getDeviceId());
 				case VaultMemberAddedEvent evt -> new VaultMemberAddedEventDto(evt.getId(), evt.getTimestamp(), VaultMemberAddedEvent.TYPE, evt.getAddedBy(), evt.getVaultId(), evt.getAuthorityId(), evt.getRole());
 				case VaultMemberRemovedEvent evt -> new VaultMemberRemovedEventDto(evt.getId(), evt.getTimestamp(), VaultMemberRemovedEvent.TYPE, evt.getRemovedBy(), evt.getVaultId(), evt.getAuthorityId());
-				case VaultMemberUpdatedEvent evt ->
-						new VaultMemberUpdatedEventDto(evt.getId(), evt.getTimestamp(), VaultMemberUpdatedEvent.TYPE, evt.getUpdatedBy(), evt.getVaultId(), evt.getAuthorityId(), evt.getRole());
+				case VaultMemberUpdatedEvent evt -> new VaultMemberUpdatedEventDto(evt.getId(), evt.getTimestamp(), VaultMemberUpdatedEvent.TYPE, evt.getUpdatedBy(), evt.getVaultId(), evt.getAuthorityId(), evt.getRole());
 				case VaultOwnershipClaimedEvent evt -> new VaultOwnershipClaimedEventDto(evt.getId(), evt.getTimestamp(), VaultOwnershipClaimedEvent.TYPE, evt.getClaimedBy(), evt.getVaultId());
-				case EmergencyAccessSetupEvent evt -> new EmergencyAccessSetupEventDto(evt.getId(), evt.getTimestamp(), EmergencyAccessSetupEvent.TYPE, evt.getVaultId() ,evt.getOwnerId(), evt.getSettings(), evt.getIpAddress());
-				case EmergencyAccessSettingsUpdatedEvent evt -> new EmergencyAccessSettingsUpdatedEventDto(evt.getId(), evt.getTimestamp(), EmergencyAccessSettingsUpdatedEvent.TYPE, evt.getAdminId(), evt.isEmergencyAccessEnabled(), evt.getCouncilMemberIds(), evt.getRequiredKeyShares(), evt.getMinMembers(),  evt.isAllowChoosingCouncil());
+				case EmergencyAccessSetupEvent evt -> new EmergencyAccessSetupEventDto(evt.getId(), evt.getTimestamp(), EmergencyAccessSetupEvent.TYPE, evt.getVaultId(), evt.getOwnerId(), evt.getSettings(), evt.getIpAddress());
+				case EmergencyAccessSettingsUpdatedEvent evt -> new EmergencyAccessSettingsUpdatedEventDto(evt.getId(), evt.getTimestamp(), EmergencyAccessSettingsUpdatedEvent.TYPE, evt.getAdminId(), evt.isEmergencyAccessEnabled(), evt.getCouncilMemberIds(), evt.getRequiredKeyShares(), evt.getMinMembers(), evt.isAllowChoosingCouncil());
 				case EmergencyAccessRecoveryStartedEvent evt -> new EmergencyAccessRecoveryStartedEventDto(evt.getId(), evt.getTimestamp(), EmergencyAccessRecoveryStartedEvent.TYPE, evt.getVaultId(), evt.getProcessId(), evt.getCouncilMemberId(), evt.getProcessType(), evt.getDetails());
 				case EmergencyAccessRecoveryApprovedEvent evt -> new EmergencyAccessRecoveryApprovedEventDto(evt.getId(), evt.getTimestamp(), EmergencyAccessRecoveryApprovedEvent.TYPE, evt.getProcessId(), evt.getCouncilMemberId(), evt.getIpAddress());
 				case EmergencyAccessRecoveryCompletedEvent evt -> new EmergencyAccessRecoveryCompletedEventDto(evt.getId(), evt.getTimestamp(), EmergencyAccessRecoveryCompletedEvent.TYPE, evt.getProcessId(), evt.getCouncilMemberId(), evt.getIpAddress());
@@ -208,8 +225,10 @@ public class AuditLogResource {
 										@JsonProperty("ipAddress") String ipAddress) implements AuditEventDto {
 	}
 
-	record EmergencyAccessSettingsUpdatedEventDto(long id, Instant timestamp, String type, @JsonProperty("adminId") String adminId,@JsonProperty("enableEmergencyAccess") boolean enableEmergencyAccess, @JsonProperty("councilMemberIds") String councilMemberIds,
-												  @JsonProperty("requiredKeyShares") int requiredKeyShares, @JsonProperty("minMembers") int minMembers, @JsonProperty("allowChoosingCouncil") boolean allowChoosingCouncil) implements AuditEventDto {
+	record EmergencyAccessSettingsUpdatedEventDto(long id, Instant timestamp, String type, @JsonProperty("adminId") String adminId, @JsonProperty("enableEmergencyAccess") boolean enableEmergencyAccess,
+												  @JsonProperty("councilMemberIds") String councilMemberIds,
+												  @JsonProperty("requiredKeyShares") int requiredKeyShares, @JsonProperty("minMembers") int minMembers,
+												  @JsonProperty("allowChoosingCouncil") boolean allowChoosingCouncil) implements AuditEventDto {
 	}
 
 	record EmergencyAccessRecoveryStartedEventDto(long id, Instant timestamp, String type, @JsonProperty("vaultId") UUID vaultId, @JsonProperty("processId") UUID processId,
@@ -221,10 +240,12 @@ public class AuditLogResource {
 												   @JsonProperty("ipAddress") String ipAddress) implements AuditEventDto {
 	}
 
-	record EmergencyAccessRecoveryCompletedEventDto(long id, Instant timestamp, String type, @JsonProperty("processId") UUID processId, @JsonProperty("councilMemberId") String councilMemberId, @JsonProperty("ipAddress") String ipAddress) implements AuditEventDto {
+	record EmergencyAccessRecoveryCompletedEventDto(long id, Instant timestamp, String type, @JsonProperty("processId") UUID processId, @JsonProperty("councilMemberId") String councilMemberId,
+													@JsonProperty("ipAddress") String ipAddress) implements AuditEventDto {
 	}
 
-	record EmergencyAccessRecoveryAbortedEventDto(long id, Instant timestamp, String type, @JsonProperty("vaultId") UUID vaultId, @JsonProperty("processId") UUID processId, @JsonProperty("councilMemberId") String councilMemberId, @JsonProperty("ipAddress") String ipAddress) implements AuditEventDto {
+	record EmergencyAccessRecoveryAbortedEventDto(long id, Instant timestamp, String type, @JsonProperty("vaultId") UUID vaultId, @JsonProperty("processId") UUID processId,
+												  @JsonProperty("councilMemberId") String councilMemberId, @JsonProperty("ipAddress") String ipAddress) implements AuditEventDto {
 	}
 
 }
