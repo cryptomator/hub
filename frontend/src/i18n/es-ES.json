@@ -77,6 +77,7 @@
   "admin.webOfTrust.wotIdVerifyLen.description": "Cuántos dígitos de la huella digital de otro usuario hay que introducir para verificar su identidad.",
   "admin.webOfTrust.save": "Guardar",
   "admin.webOfTrust.saved": "¡Guardado!",
+  "admin.emergencyAccess.learnMore": "Más información.",
   "archiveVaultDialog.title": "Archivar bóveda",
   "archiveVaultDialog.description": "Archivar una bóveda la inactiva. Esto puede liberar asientos ocupados. Una bóveda archivada puede reactivarse más tarde.",
   "archiveVaultDialog.confirm": "Archivar",
