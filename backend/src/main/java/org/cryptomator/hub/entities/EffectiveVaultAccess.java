@@ -23,6 +23,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Entity
 @Immutable
@@ -40,6 +41,13 @@ import java.util.stream.Collectors;
 		INNER JOIN EffectiveVaultAccess eva ON u.id = eva.id.authorityId
 		INNER JOIN Vault v ON eva.id.vaultId = v.id
 		WHERE u.id IN :userIds AND NOT v.archived
+		""")
+@NamedQuery(name = "EffectiveVaultAccess.usersSeatedOnOtherVaults", query = """
+		SELECT DISTINCT u.id
+		FROM User u
+		INNER JOIN EffectiveVaultAccess eva ON u.id = eva.id.authorityId
+		INNER JOIN Vault v ON eva.id.vaultId = v.id
+		WHERE NOT v.archived AND v.id <> :vaultId
 		""")
 @NamedQuery(name = "EffectiveVaultAccess.countSeatOccupyingUsers", query = """
 		SELECT COUNT(DISTINCT u.id)
@@ -200,6 +208,10 @@ public class EffectiveVaultAccess {
 			return find("#EffectiveVaultAccess.findByAuthorityAndVault", Parameters.with("vaultId", vaultId).and("authorityId", authorityId)).stream()
 					.map(eva -> eva.getId().getRole())
 					.collect(Collectors.toUnmodifiableSet());
+		}
+
+		public Stream<String> usersSeatedOnOtherVaults(UUID vaultId) {
+			return find("#EffectiveVaultAccess.usersSeatedOnOtherVaults", Parameters.with("vaultId", vaultId)).project(String.class).stream();
 		}
 	}
 }

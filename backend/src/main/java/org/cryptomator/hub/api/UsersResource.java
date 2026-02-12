@@ -26,6 +26,7 @@ import org.cryptomator.hub.entities.AccessToken;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.EffectiveWot;
 import org.cryptomator.hub.entities.Group;
+import org.cryptomator.hub.entities.EmergencyRecoveryProcess;
 import org.cryptomator.hub.entities.LegacyDevice;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
@@ -65,6 +66,8 @@ public class UsersResource {
 	Device.Repository deviceRepo;
 	@Inject
 	Vault.Repository vaultRepo;
+	@Inject
+	EmergencyRecoveryProcess.Repository emergencyRecovery;
 	@Inject
 	WotEntry.Repository wotRepo;
 	@Inject
@@ -229,6 +232,8 @@ public class UsersResource {
 		user.setPrivateKeys(null);
 		user.setSetupCode(null);
 		userRepo.persist(user);
+		vaultRepo.deleteEmergencyKeySharesForUser(user.getId());
+		emergencyRecovery.deleteKeySharesForCouncilMember(user.getId());
 		deviceRepo.deleteByOwner(user.getId());
 		accessTokenRepo.deleteByUser(user.getId());
 		eventLogger.logUserAccountReset(jwt.getSubject());

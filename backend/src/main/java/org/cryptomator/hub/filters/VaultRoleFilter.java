@@ -10,11 +10,14 @@ import jakarta.ws.rs.container.ResourceInfo;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.ext.Provider;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
+import org.cryptomator.hub.entities.EmergencyRecoveryProcess;
 import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.entities.VaultAccess;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 
 import java.util.Arrays;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -32,6 +35,9 @@ public class VaultRoleFilter implements ContainerRequestFilter {
 
 	@Inject
 	EffectiveVaultAccess.Repository effectiveVaultAccessRepo;
+
+	@Inject
+	EmergencyRecoveryProcess.Repository recoveryRepo;
 
 	@Inject
 	Vault.Repository vaultRepo;
@@ -60,8 +66,14 @@ public class VaultRoleFilter implements ContainerRequestFilter {
 			throw new NotAuthorizedException("No JWT supplied in request header");
 		}
 
+		var vault = vaultRepo.findById(vaultId);
+		if (vault != null && annotation.bypassForEmergencyAccess() && isEmergencyAccessCouncilMember(userId, vault)) {
+			// user is a member of the emergency access council, so we skip the role check:
+			return;
+		}
+
 		var forbiddenMsg = "Vault role required: " + Arrays.stream(annotation.value()).map(VaultAccess.Role::name).collect(Collectors.joining(", "));
-		if (vaultRepo.findByIdOptional(vaultId).isPresent()) {
+		if (vault != null) {
 			// check permissions for existing vault:
 			var effectiveRoles = effectiveVaultAccessRepo.listRoles(vaultId, userId);
 			if (Arrays.stream(annotation.value()).noneMatch(effectiveRoles::contains)) {
@@ -79,6 +91,20 @@ public class VaultRoleFilter implements ContainerRequestFilter {
 					}
 				}
 			}
+		}
+	}
+
+	private boolean isEmergencyAccessCouncilMember(String userId, Vault vault) {
+		if (vault.getEmergencyKeyShares().containsKey(userId)) {
+			// member of current emergency access council:
+			return true;
+		} else {
+			// check if member of an ongoing recovery process:
+			return recoveryRepo.findByVaultId(vault.getId()) // processes
+					.map(EmergencyRecoveryProcess::getRecoveredKeyShares) // map of member IDs to key shares
+					.map(Map::keySet) // set of process member IDs
+					.flatMap(Set::stream) // steam of process member IDs
+					.anyMatch(userId::equals);
 		}
 	}
 }

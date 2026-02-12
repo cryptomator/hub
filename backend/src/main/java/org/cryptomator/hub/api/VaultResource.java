@@ -13,6 +13,7 @@ import jakarta.inject.Inject;
 import jakarta.persistence.NoResultException;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -63,10 +64,14 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Path("/vaults")
@@ -77,20 +82,29 @@ public class VaultResource {
 
 	@Inject
 	AccessToken.Repository accessTokenRepo;
+
 	@Inject
 	Group.Repository groupRepo;
+
 	@Inject
 	User.Repository userRepo;
+
+	@Inject
+	Authority.Repository authorityRepo;
+
 	@Inject
 	EffectiveVaultAccess.Repository effectiveVaultAccessRepo;
+
 	/**
 	 * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
 	 */
 	@Inject
 	@Deprecated(since = "1.3.0", forRemoval = true)
 	LegacyAccessToken.Repository legacyAccessTokenRepo;
+
 	@Inject
 	Vault.Repository vaultRepo;
+
 	@Inject
 	VaultAccess.Repository vaultAccessRepo;
 
@@ -124,6 +138,18 @@ public class VaultResource {
 	}
 
 	@GET
+	@Path("/recoverable")
+	@RolesAllowed("user")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Transactional
+	@Operation(summary = "list all recoverable vaults", description = "list all vaults that can be recovered by the currently logged in user")
+	public List<VaultDto> getRecoverable() {
+		var currentUserId = jwt.getSubject();
+		final Stream<Vault> resultStream = vaultRepo.findRecoverable(currentUserId);
+		return resultStream.map(VaultDto::fromEntity).toList();
+	}
+
+	@GET
 	@Path("/some")
 	@RolesAllowed("admin")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -147,7 +173,7 @@ public class VaultResource {
 	@GET
 	@Path("/{vaultId}/members")
 	@RolesAllowed("user")
-	@VaultRole(VaultAccess.Role.OWNER) // may throw 403
+	@VaultRole(value = VaultAccess.Role.OWNER, bypassForEmergencyAccess = true) // may throw 403
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "list vault members", description = "list all users or groups that this vault has been shared with directly (not inherited via group membership)")
@@ -162,9 +188,75 @@ public class VaultResource {
 	}
 
 	@PUT
+	@Path("/{vaultId}/members")
+	@RolesAllowed("user")
+	@VaultRole(value = VaultAccess.Role.OWNER, bypassForEmergencyAccess = true) // may throw 403
+	@Transactional
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Operation(summary = "set vault members", description = "replaces all direct vault members with the given ones")
+	@APIResponse(responseCode = "204", description = "members updated")
+	@APIResponse(responseCode = "400", description = "invalid members in request body")
+	@APIResponse(responseCode = "403", description = "not a vault owner")
+	@APIResponse(responseCode = "404", description = "vault not found")
+	public Response setDirectMembers(@PathParam("vaultId") UUID vaultId, @NotEmpty Map<String, VaultAccess.Role> memberRoles) {
+		var vault = vaultRepo.findById(vaultId);
+		if (vault == null) {
+			throw new NotFoundException("Vault not found.");
+		}
+		var newVaultAccess = authorityRepo.findAllInList(memberRoles.keySet()).map(authority -> {
+			assert memberRoles.containsKey(authority.getId());
+			return VaultAccess.create(vault, authority, memberRoles.get(authority.getId()));
+		}).toList();
+		if (newVaultAccess.isEmpty()){
+			throw new BadRequestException("No (valid) members given.");
+		}
+		var oldVaultAccess = vaultAccessRepo.forVault(vaultId).toList();
+
+		// determine diff:
+		Set<VaultAccess.Id> newIds = newVaultAccess.stream().map(VaultAccess::getId).collect(Collectors.toSet());
+		Set<VaultAccess.Id> oldIds = oldVaultAccess.stream().map(VaultAccess::getId).collect(Collectors.toSet());
+		Predicate<VaultAccess> isNew = va -> newIds.contains(va.getId());
+		Predicate<VaultAccess> isOld = va -> oldIds.contains(va.getId());
+		Predicate<VaultAccess> hasChangedRole = va -> memberRoles.get(va.getId().getAuthorityId()) != va.getRole();
+		var addedMembers = newVaultAccess.stream()
+				.filter(isOld.negate()).toList();
+		var removedMembers = oldVaultAccess.stream()
+				.filter(isNew.negate()).toList();
+		var updatedMembers = oldVaultAccess.stream()
+				.filter(isNew)
+				.filter(hasChangedRole)
+				.peek(va -> va.setRole(memberRoles.get(va.getId().getAuthorityId())))
+				.toList();
+
+		// resolve group members and simulate new seat count:
+		var effectiveUsers = new HashSet<User>();
+		effectiveUsers.addAll(userRepo.getEffectiveGroupUsers(memberRoles.keySet()));
+		effectiveUsers.addAll(userRepo.findByIds(memberRoles.keySet()).toList());
+		var newSeatOccupyingUsers = new HashSet<>(effectiveVaultAccessRepo.usersSeatedOnOtherVaults(vaultId).toList()); // initialize with users already having access to other vaults
+		newSeatOccupyingUsers.addAll(effectiveUsers.stream().map(User::getId).toList()); // add all users that will have access to this vault after the operation (avoid double counting by using a set)
+		if (newSeatOccupyingUsers.size() > license.getEntitlements().seats()) {
+			throw new PaymentRequiredException("License seats exceeded. Cannot add more users.");
+		}
+
+		// Audit Log
+		addedMembers.forEach(va -> eventLogger.logVaultMemberAdded(jwt.getSubject(), vaultId, va.getId().getAuthorityId(), va.getRole()));
+		removedMembers.forEach(va -> eventLogger.logVaultMemberRemoved(jwt.getSubject(), vaultId, va.getId().getAuthorityId()));
+		updatedMembers.forEach(va -> eventLogger.logVaultMemberUpdated(jwt.getSubject(), vaultId, va.getId().getAuthorityId(), va.getRole()));
+
+		// replace all:
+		vaultAccessRepo.delete(vaultId, removedMembers.stream().map(VaultAccess::getId).map(VaultAccess.Id::getAuthorityId).toList());
+		vaultAccessRepo.persist(addedMembers);
+		vaultAccessRepo.persist(updatedMembers);
+
+		return Response.noContent().build();
+	}
+
+
+
+	@PUT
 	@Path("/{vaultId}/users/{userId}")
 	@RolesAllowed("user")
-	@VaultRole(VaultAccess.Role.OWNER) // may throw 403
+	@VaultRole(value = VaultAccess.Role.OWNER, bypassForEmergencyAccess = true) // may throw 403
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "adds a user to this vault or updates her role")
@@ -236,7 +328,7 @@ public class VaultResource {
 	@DELETE
 	@Path("/{vaultId}/authority/{authorityId}")
 	@RolesAllowed("user")
-	@VaultRole(VaultAccess.Role.OWNER) // may throw 403
+	@VaultRole(value = VaultAccess.Role.OWNER, bypassForEmergencyAccess = true) // may throw 403
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "remove a user or group from this vault", description = "revokes the given authority's access rights from this vault. If the given authority is no member, the request is a no-op.")
@@ -254,7 +346,7 @@ public class VaultResource {
 	@GET
 	@Path("/{vaultId}/users-requiring-access-grant")
 	@RolesAllowed("user")
-	@VaultRole(VaultAccess.Role.OWNER) // may throw 403
+	@VaultRole(value = VaultAccess.Role.OWNER, bypassForEmergencyAccess = true) // may throw 403
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
 	@Operation(summary = "list users requiring access rights", description = "lists all users, who don't have a user-specific vault key yet")
@@ -365,13 +457,13 @@ public class VaultResource {
 	@POST
 	@Path("/{vaultId}/access-tokens")
 	@RolesAllowed("user")
-	@VaultRole(VaultAccess.Role.OWNER) // may throw 403
+	@VaultRole(value = VaultAccess.Role.OWNER, bypassForEmergencyAccess = true) // may throw 403
 	@Transactional
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Operation(summary = "adds user-specific vault keys", description = "Stores one or more user-vaultkey-tuples, as defined in the request body ({user1: token1, user2: token2, ...}).")
 	@APIResponse(responseCode = "200", description = "all keys stored")
 	@APIResponse(responseCode = "402", description = "number of users granted access exceeds available license seats")
-	@APIResponse(responseCode = "403", description = "not a vault owner")
+	@APIResponse(responseCode = "403", description = "not a vault owner or emergency access council member")
 	@APIResponse(responseCode = "404", description = "at least one user has not been found")
 	public Response grantAccess(@PathParam("vaultId") UUID vaultId, @NotEmpty Map<String, String> tokens) {
 		var vault = vaultRepo.findById(vaultId); // should always be found, since @VaultRole filter would have triggered
@@ -416,7 +508,7 @@ public class VaultResource {
 	@PUT
 	@Path("/{vaultId}")
 	@RolesAllowed("user") // general authentication. VaultRole filter will check for specific access rights
-	@VaultRole(value = VaultAccess.Role.OWNER, onMissingVault = VaultRole.OnMissingVault.REQUIRE_REALM_ROLE, realmRole = RealmRole.CREATE_VAULTS)
+	@VaultRole(value = VaultAccess.Role.OWNER, onMissingVault = VaultRole.OnMissingVault.REQUIRE_REALM_ROLE, realmRole = RealmRole.CREATE_VAULTS, bypassForEmergencyAccess = true)
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
@@ -447,8 +539,21 @@ public class VaultResource {
 		vault.setName(vaultDto.name);
 		vault.setDescription(vaultDto.description);
 		vault.setArchived(existingVault.isEmpty() ? false : vaultDto.archived);
+		var oldEmergencyKeyShares = vault.getEmergencyKeyShares().values();
+		vault.setRequiredEmergencyKeyShares(vaultDto.requiredEmergencyKeyShares);
+		vault.setEmergencyKeyShares(vaultDto.emergencyKeyShares);
 
 		vaultRepo.persistAndFlush(vault); // trigger PersistenceException before we continue with
+
+		// does this request update emergency key shares?
+		if (!oldEmergencyKeyShares.containsAll(vaultDto.emergencyKeyShares.values())) {
+			var emergencyAccessCouncilMembers = String.join("\", \"", vaultDto.emergencyKeyShares.keySet());
+			var settings = """
+					{ "requiredEmergencyKeyShares": %d, "emergencyCouncilMemberIds": ["%s"] }
+					""".formatted(vaultDto.requiredEmergencyKeyShares, emergencyAccessCouncilMembers);
+			eventLogger.logEmergencyAccessSetup(vault.getId(), currentUser.getId(), settings, request.remoteAddress().hostAddress());
+		}
+
 		if (existingVault.isEmpty()) {
 			eventLogger.logVaultCreated(currentUser.getId(), vault.getId(), vault.getName(), vault.getDescription());
 			var access = new VaultAccess();
@@ -524,9 +629,10 @@ public class VaultResource {
 	@JsonInclude(JsonInclude.Include.NON_NULL)
 	public record VaultDto(@JsonProperty("id") @NotNull UUID id,
 						   @JsonProperty("name") @NoHtmlOrScriptChars @NotBlank String name,
-						   @JsonProperty("description") @NoHtmlOrScriptChars String description,
+						   @JsonProperty("creationTime") Instant creationTime, @JsonProperty("description") @NoHtmlOrScriptChars String description,
 						   @JsonProperty("archived") boolean archived,
-						   @JsonProperty("creationTime") Instant creationTime,
+						   @JsonProperty("requiredEmergencyKeyShares") @Min(0) int requiredEmergencyKeyShares,
+						   @JsonProperty("emergencyKeyShares") Map<String, String> emergencyKeyShares,
 						   // Legacy properties ("Vault Admin Password"):
 						   @JsonProperty("masterkey") @OnlyBase64Chars String masterkey, @JsonProperty("iterations") Integer iterations,
 						   @JsonProperty("salt") @OnlyBase64Chars String salt,
@@ -534,7 +640,7 @@ public class VaultResource {
 	) {
 
 		public static VaultDto fromEntity(Vault entity) {
-			return new VaultDto(entity.getId(), entity.getName(), entity.getDescription(), entity.isArchived(), entity.getCreationTime().truncatedTo(ChronoUnit.MILLIS), entity.getMasterkey(), entity.getIterations(), entity.getSalt(), entity.getAuthenticationPublicKey(), entity.getAuthenticationPrivateKey());
+			return new VaultDto(entity.getId(), entity.getName(), entity.getCreationTime().truncatedTo(ChronoUnit.MILLIS), entity.getDescription(), entity.isArchived(), entity.getRequiredEmergencyKeyShares(), entity.getEmergencyKeyShares(), entity.getMasterkey(), entity.getIterations(), entity.getSalt(), entity.getAuthenticationPublicKey(), entity.getAuthenticationPrivateKey());
 		}
 
 	}

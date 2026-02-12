@@ -71,7 +71,7 @@
     </Menu>
   </div>
 
-  <div v-if="filteredVaults && filteredVaults.length > 0" class="mt-5 bg-white shadow-sm overflow-hidden rounded-md">
+  <div v-if="filteredVaults && filteredVaults.length > 0" class="mt-5 bg-white shadow-sm rounded-md">
     <ul class="divide-y divide-gray-200">
       <li v-for="(vault, index) in filteredVaults" :key="vault.masterkey">
         <a tabindex="0" class="block hover:bg-gray-50" :class="{'ring-2 ring-inset ring-primary': selectedVault == vault, 'rounded-t-md': index == 0, 'rounded-b-md': index == filteredVaults.length - 1}" @click="showVaultDetails(vault)">
@@ -83,6 +83,29 @@
                 <div v-if="vault.archived" class="inline-flex items-center rounded-md bg-yellow-400/10 px-2 py-1 text-xs font-medium text-yellow-500 ring-1 ring-inset ring-yellow-400/20">{{ t('vaultList.badge.archived') }}</div>
               </div>
               <p v-if="vault.description && vault.description.length > 0" class="truncate text-sm text-gray-500 mt-2">{{ vault.description }}</p>
+            </div>
+            <div v-if="ownedVaults?.some(ownedVault => ownedVault.id == vault.id) && !isCommunityLicense">
+              <EmergencyBadge
+                v-if="!hasEmergencyKeys(vault) && settings?.enableEmergencyAccess"
+                type="missingCouncil"
+                :title="t('emergencyAccess.badge.missingCouncil.title')"
+                :message="t('emergencyAccess.badge.missingCouncil.message')"
+                position="right"
+              />
+              <EmergencyBadge
+                v-else-if="isBroken(vault) && settings?.enableEmergencyAccess"
+                type="broken"
+                :title="t('emergencyAccess.badge.broken.title')"
+                :message="t('emergencyAccess.badge.broken.message')"
+                position="right"
+              />
+              <EmergencyBadge
+                v-else-if="noRedundancy(vault) && settings?.enableEmergencyAccess"
+                type="noRedundancy"
+                :title="t('emergencyAccess.badge.noRedundancy.title')"
+                :message="t('emergencyAccess.badge.noRedundancy.message')"
+                position="right"
+              />
             </div>
             <div class="ml-5 shrink-0">
               <ChevronRightIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
@@ -117,22 +140,28 @@
 <script setup lang="ts">
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
 import { ArrowPathIcon, ChevronDownIcon, PlusIcon } from '@heroicons/vue/20/solid';
-import { CheckIcon, ChevronRightIcon, ChevronUpDownIcon } from '@heroicons/vue/24/solid';
+import { CheckIcon, ChevronRightIcon, ChevronUpDownIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/solid';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auth from '../common/auth';
-import backend, { LicenseUserInfoDto, VaultDto, VaultRole } from '../common/backend';
+import backend, { LicenseUserInfoDto, SettingsDto, UserDto, VaultDto, VaultRole } from '../common/backend';
+import userdata from '../common/userdata';
 import FetchError from './FetchError.vue';
 import LicenseAlert from './LicenseAlert.vue';
+import ContentBanner from './ContentBanner.vue';
 import SlideOver from './SlideOver.vue';
 import VaultDetails from './VaultDetails.vue';
+import EmergencyBadge from './emergencyaccess/EmergencyBadge.vue';
 
 const { t } = useI18n({ useScope: 'global' });
+
+const me = ref<UserDto>();
 
 const vaultDetailsSlideOver = ref<typeof SlideOver>();
 const onFetchError = ref<Error>();
 
 const vaults = ref<VaultDto[]>();
+const settings = ref<SettingsDto>();
 const accessibleVaults = ref<VaultDto[]>();
 const ownedVaults = ref<VaultDto[]>();
 const selectedVault = ref<VaultDto>();
@@ -158,6 +187,13 @@ const isLicenseViolated = computed(() => {
   }
 });
 
+const isCommunityLicense = computed(() => {
+  return !licenseStatus.value?.expiresAt;
+});
+
+// TODO: Replace with actual trial status from backend
+const isTrial = ref(true);
+
 const filterOptions = ref< {[key: string]: string} >({
   accessibleVaults: t('vaultList.filter.entry.accessibleVaults'),
   ownedVaults: t('vaultList.filter.entry.ownedVaults')
@@ -178,8 +214,11 @@ onMounted(fetchData);
 async function fetchData() {
   onFetchError.value = undefined;
   try {
+    me.value = await userdata.me;
     isAdmin.value = (await auth).hasRole('admin');
     canCreateVaults.value = (await auth).hasRole('create-vaults');
+
+    settings.value = await backend.settings.get();
 
     if (isAdmin.value) {
       filterOptions.value['allVaults'] = t('vaultList.filter.entry.allVaults');
@@ -209,6 +248,20 @@ async function fetchData() {
 function showVaultDetails(vault: VaultDto) {
   selectedVault.value = vault;
   nextTick(() => vaultDetailsSlideOver.value?.show());
+}
+
+function hasEmergencyKeys(vault: VaultDto): boolean {
+  return Object.keys(vault.emergencyKeyShares ?? {}).length > 0; 
+}
+
+function noRedundancy(vault: VaultDto): boolean {
+  const members = Object.keys(vault.emergencyKeyShares).length;
+  return vault.requiredEmergencyKeyShares == members;
+}
+
+function isBroken(vault: VaultDto): boolean {
+  const members = Object.keys(vault.emergencyKeyShares).length;
+  return vault.requiredEmergencyKeyShares > members;
 }
 
 async function onSelectedVaultUpdate(vault: VaultDto) {
