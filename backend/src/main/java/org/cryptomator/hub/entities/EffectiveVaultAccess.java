@@ -17,9 +17,7 @@ import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.Immutable;
 
-import java.io.Serializable;
 import java.util.Collection;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -105,77 +103,14 @@ public class EffectiveVaultAccess {
 	}
 
 	public VaultAccess.Role getRole() {
-		return id.role;
+		return id.role();
 	}
 
 	@Embeddable
-	public static class Id implements Serializable {
-
-		@Column(name = "vault_id")
-		private UUID vaultId;
-
-		@Column(name = "authority_id")
-		private String authorityId;
-
-		@Column(name = "role", nullable = false)
-		@Enumerated(EnumType.STRING)
-		private VaultAccess.Role role;
-
-		public UUID getVaultId() {
-			return vaultId;
-		}
-
-		public void setVaultId(UUID vaultId) {
-			this.vaultId = vaultId;
-		}
-
-		public String getAuthorityId() {
-			return authorityId;
-		}
-
-		public void setAuthorityId(String authorityId) {
-			this.authorityId = authorityId;
-		}
-
-		public VaultAccess.Role getRole() {
-			return role;
-		}
-
-		public void setRole(VaultAccess.Role role) {
-			this.role = role;
-		}
-
-		public Id(UUID vaultId, String authorityId, VaultAccess.Role role) {
-			this.vaultId = vaultId;
-			this.authorityId = authorityId;
-			this.role = role;
-		}
-
-		public Id() {
-		}
-
-		@Override
-		public boolean equals(Object o) {
-			if (this == o) return true;
-			if (o instanceof EffectiveVaultAccess.Id other) {
-				return Objects.equals(this.vaultId, other.vaultId) && Objects.equals(this.authorityId, other.authorityId) && Objects.equals(this.role, other.role);
-			}
-			return false;
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(vaultId, authorityId, role);
-		}
-
-		@Override
-		public String toString() {
-			return "EffectiveVaultAccess.Id{" +
-					"vaultId='" + vaultId + '\'' +
-					", authorityId='" + authorityId + '\'' +
-					", role='" + role + '\'' +
-					'}';
-		}
+	public record Id(
+			@Column(name = "vault_id") UUID vaultId,
+			@Column(name = "authority_id") String authorityId,
+			@Column(name = "role", nullable = false) @Enumerated(EnumType.STRING) VaultAccess.Role role) {
 	}
 
 	@ApplicationScoped
@@ -206,7 +141,7 @@ public class EffectiveVaultAccess {
 
 		public Collection<VaultAccess.Role> listRoles(UUID vaultId, String authorityId) {
 			return find("#EffectiveVaultAccess.findByAuthorityAndVault", Parameters.with("vaultId", vaultId).and("authorityId", authorityId)).stream()
-					.map(eva -> eva.getId().getRole())
+					.map(eva -> eva.getId().role())
 					.collect(Collectors.toUnmodifiableSet());
 		}
 

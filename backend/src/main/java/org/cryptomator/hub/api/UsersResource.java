@@ -260,9 +260,7 @@ public class UsersResource {
 	@APIResponse(responseCode = "204", description = "signature stored")
 	public Response putSignature(@PathParam("userId") String userId, @NotNull String signature) {
 		var signer = userRepo.findById(jwt.getSubject());
-		var id = new WotEntry.Id();
-		id.setUserId(userId);
-		id.setSignerId(signer.getId());
+		var id = new WotEntry.Id(userId, signer.getId());
 		var entry = wotRepo.findById(id);
 		if (entry == null) {
 			entry = new WotEntry();
@@ -304,7 +302,7 @@ public class UsersResource {
 	public record TrustedUserDto(@JsonProperty("trustedUserId") String trustedUserId, @JsonProperty("signatureChain") List<String> signatureChain) {
 
 		public static TrustedUserDto fromEntity(EffectiveWot entity) {
-			return new TrustedUserDto(entity.getId().getTrustedUserId(), List.of(entity.getSignatureChain()));
+			return new TrustedUserDto(entity.getId().trustedUserId(), List.of(entity.getSignatureChain()));
 		}
 	}
 

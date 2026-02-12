@@ -82,8 +82,7 @@ public class EmergencyAccessResource {
 			var memberId = e.getKey();
 			var keyShareDto = e.getValue();
 			var keyShareEntity = new RecoveredEmergencyKeyShares();
-			keyShareEntity.getId().setRecoveryId(processId);
-			keyShareEntity.getId().setCouncilMemberId(memberId);
+			keyShareEntity.setId(new RecoveredEmergencyKeyShares.Id(memberId, processId));
 			keyShareEntity.setProcessPrivateKey(keyShareDto.processPrivateKey);
 			keyShareEntity.setUnrecoveredKeyShare(keyShareDto.unrecoveredKeyShare);
 			keyShareEntity.setRecoveredKeyShare(keyShareDto.recoveredKeyShare);
@@ -112,9 +111,7 @@ public class EmergencyAccessResource {
 	@APIResponse(responseCode = "400", description = "invalid request, e.g. missing required fields")
 	@Transactional
 	public Response addRecoveredKeyShare(@PathParam("processId") UUID processId, RecoveredKeyShareDto dto) {
-		var id = new RecoveredEmergencyKeyShares.Id();
-		id.setRecoveryId(processId);
-		id.setCouncilMemberId(jwt.getSubject());
+		var id = new RecoveredEmergencyKeyShares.Id(jwt.getSubject(), processId);
 
 		var myKeyShare = recoveredKeySharesRepo.findById(id);
 		if (myKeyShare == null) {
