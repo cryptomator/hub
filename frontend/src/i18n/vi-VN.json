@@ -35,6 +35,7 @@
   "admin.serverInfo.hubVersion.description.fetchingUpdatesFailed": "Không thể kiểm tra cập nhật. Vui lòng kiểm tra thủ công.",
   "admin.webOfTrust.information": "Tìm hiểu thêm.",
   "admin.webOfTrust.save": "Lưu",
+  "admin.emergencyAccess.learnMore": "Tìm hiểu thêm.",
   "auditLog.filter": "Lọc",
   "auditLog.details": "Chi tiết",
   "auditLog.details.vault.create": "Tạo Vault",
