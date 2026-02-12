@@ -49,6 +49,7 @@ import org.cryptomator.hub.filters.ActiveLicense;
 import org.cryptomator.hub.filters.VaultRole;
 import org.cryptomator.hub.keycloak.RealmRole;
 import org.cryptomator.hub.license.LicenseHolder;
+import org.cryptomator.hub.metrics.VaultUnlockMetrics;
 import org.cryptomator.hub.validation.NoHtmlOrScriptChars;
 import org.cryptomator.hub.validation.OnlyBase64Chars;
 import org.cryptomator.hub.validation.ValidId;
@@ -116,6 +117,9 @@ public class VaultResource {
 
 	@Inject
 	LicenseHolder license;
+
+	@Inject
+	VaultUnlockMetrics vaultUnlockMetrics;
 
 	@Context
 	HttpServerRequest request;
@@ -432,8 +436,10 @@ public class VaultResource {
 		var ipAddress = request.remoteAddress().hostAddress();
 		var deviceId = request.getHeader("Hub-Device-ID");
 		var access = accessTokenRepo.unlock(vaultId, jwt.getSubject());
+		vaultUnlockMetrics.recordUnlock();
 		if (access != null) {
 			eventLogger.logVaultKeyRetrieved(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.SUCCESS, ipAddress, deviceId);
+			vaultUnlockMetrics.recordSuccess();
 			var response = Response.ok(access.getVaultKey(), MediaType.TEXT_PLAIN_TYPE);
 			var iosLicense = license.getEntitlements().iosLicense();
 			var androidLicense = license.getEntitlements().androidLicense();
@@ -449,6 +455,7 @@ public class VaultResource {
 			throw new NotFoundException("No such vault.");
 		} else {
 			eventLogger.logVaultKeyRetrieved(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.UNAUTHORIZED, ipAddress, deviceId);
+			vaultUnlockMetrics.recordFailure();
 			throw new ForbiddenException("Access to this vault not granted.");
 		}
 	}
