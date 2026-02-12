@@ -18,6 +18,7 @@
   "common.show": "दिखाएँ",
   "admin.webOfTrust.information": "अधिक जानें",
   "admin.webOfTrust.save": "सहेजें",
+  "admin.emergencyAccess.learnMore": "अधिक जानें",
   "auditLog.filter": "छांटे",
   "auditLog.details.vault.create": "वॉल्ट बनाएं",
   "claimVaultOwnershipDialog.error.wrongPassword": "गलत पासवर्ड!",
