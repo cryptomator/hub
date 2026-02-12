@@ -19,6 +19,7 @@
   "admin.licenseInfo.manageSubscription": "Upravljaj pretplatom",
   "admin.webOfTrust.information": "Saznaj više.",
   "admin.webOfTrust.save": "Pohrani",
+  "admin.emergencyAccess.learnMore": "Saznaj više.",
   "auditLog.details": "Detalji",
   "auditLog.details.vault.create": "Izradi trezor",
   "claimVaultOwnershipDialog.error.wrongPassword": "Pogrešna lozinka",
