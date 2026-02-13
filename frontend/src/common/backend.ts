@@ -173,6 +173,7 @@ export type BillingDto = {
   issuedAt: Date;
   expiresAt: Date;
   managedInstance: boolean;
+  licenseKey: string;
 }
 
 export type VersionDto = {

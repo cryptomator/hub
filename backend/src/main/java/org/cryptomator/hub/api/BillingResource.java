@@ -68,7 +68,8 @@ public class BillingResource {
 
 	public record BillingDto(@JsonProperty("hubId") String hubId, @JsonProperty("email") String email,
 							 @JsonProperty("licensedSeats") Integer licensedSeats, @JsonProperty("usedSeats") Integer usedSeats,
-							 @JsonProperty("issuedAt") Instant issuedAt, @JsonProperty("expiresAt") Instant expiresAt, @JsonProperty("managedInstance") Boolean managedInstance) {
+							 @JsonProperty("issuedAt") Instant issuedAt, @JsonProperty("expiresAt") Instant expiresAt, @JsonProperty("managedInstance") Boolean managedInstance, 
+							 @JsonProperty("licenseKey") String licenseKey) {
 
 		public static BillingDto fromDecodedJwt(DecodedJWT jwt, int usedSeats, boolean isManaged) {
 			var id = jwt.getId();
@@ -76,7 +77,8 @@ public class BillingResource {
 			var licensedSeats = jwt.getClaim("seats").asInt(); // TODO eventually replace with "org.cryptomator.hub.entitlements"."seats", see https://github.com/cryptomator/hub/issues/391
 			var issuedAt = jwt.getIssuedAt().toInstant();
 			var expiresAt = jwt.getExpiresAt().toInstant();
-			return new BillingDto(id, email, licensedSeats, usedSeats, issuedAt, expiresAt, isManaged);
+			var licenseKey = jwt.getToken();
+			return new BillingDto(id, email, licensedSeats, usedSeats, issuedAt, expiresAt, isManaged, licenseKey);
 		}
 
 	}

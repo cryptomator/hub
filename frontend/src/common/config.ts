@@ -2,6 +2,7 @@ import AxiosStatic from 'axios';
 
 // these URLs must end on '/':
 export const baseURL = new URL(document.baseURI).pathname;
+export const absBaseURL = `${location.origin}${baseURL}`;
 export const frontendBaseURL = `${baseURL}app/`;
 export const absFrontendBaseURL = `${location.origin}${frontendBaseURL}`;
 export const backendBaseURL = `${baseURL}api/`;
@@ -30,7 +31,8 @@ export type ConfigDto = {
     emergencyAccessEnabled: boolean;
     iosLicense: string;
     androidLicense: string;
-  }
+  };
+  ceRegistrationUrl: string;
 };
 
 class ConfigWrapper {
