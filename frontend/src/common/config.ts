@@ -57,8 +57,9 @@ class ConfigWrapper {
     return this.data;
   }
 
-  public async reload(): Promise<void> {
+  public async reload(): Promise<ConfigDto> {
     this.data = await ConfigWrapper.loadConfig();
+    return this.data;
   }
 }
 

@@ -347,6 +347,7 @@ async function refreshLicense() {
   try {
     await backend.license.refresh();
     billing.value = await backend.billing.get();
+    cfg.value = await config.reload();
   } catch (error) {
     console.error('Refreshing license info failed.', error);
   }
