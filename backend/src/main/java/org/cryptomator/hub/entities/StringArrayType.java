@@ -1,6 +1,6 @@
 package org.cryptomator.hub.entities;
 
-import org.hibernate.engine.spi.SharedSessionContractImplementor;
+import org.hibernate.type.descriptor.WrapperOptions;
 import org.hibernate.usertype.UserType;
 
 import java.io.Serializable;
@@ -34,14 +34,14 @@ public class StringArrayType implements UserType<String[]> {
 	}
 
 	@Override
-	public String[] nullSafeGet(ResultSet rs, int position, SharedSessionContractImplementor session, Object owner) throws SQLException {
+	public String[] nullSafeGet(ResultSet rs, int position, WrapperOptions options) throws SQLException {
 		Array array = rs.getArray(position);
 		return array != null ? (String[]) array.getArray() : new String[0];
 	}
 
 	@Override
-	public void nullSafeSet(PreparedStatement st, String[] value, int index, SharedSessionContractImplementor session) throws SQLException {
-		session.doWork(connection -> {
+	public void nullSafeSet(PreparedStatement st, String[] value, int index, WrapperOptions options) {
+		options.getSession().doWork(connection -> {
 			var jdbcArray = connection.createArrayOf("VARCHAR", value == null ? new String[0] : value);
 			st.setArray(index, jdbcArray);
 		});

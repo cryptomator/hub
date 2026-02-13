@@ -12,9 +12,7 @@ import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.Immutable;
 
-import java.io.Serializable;
 import java.util.Collection;
-import java.util.Objects;
 
 @NamedNativeQuery(name = "EffectiveGroupMembership.fullUpdate", query = """
 		INSERT INTO "effective_group_membership" ("group_id", "intermediate_group_ids", "member_id")
@@ -76,36 +74,7 @@ public class EffectiveGroupMembership {
 	private Id id;
 
 	@Embeddable
-	public static class Id implements Serializable {
-
-		@Column(name = "group_id")
-		private String groupId;
-
-		@Column(name = "member_id")
-		private String memberId;
-
-		@Override
-		public boolean equals(Object o) {
-			if (this == o) return true;
-			if (o instanceof Id egmId) {
-				return Objects.equals(groupId, egmId.groupId) //
-						&& Objects.equals(memberId, egmId.memberId);
-			}
-			return false;
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(groupId, memberId);
-		}
-
-		@Override
-		public String toString() {
-			return "EffectiveGroupMembershipId{" +
-					"groupId='" + groupId + '\'' +
-					", memberId='" + memberId + '\'' +
-					'}';
-		}
+	public record Id(@Column(name = "group_id") String groupId, @Column(name = "member_id") String memberId) {
 	}
 
 	@ApplicationScoped
@@ -114,12 +83,12 @@ public class EffectiveGroupMembership {
 		public void fullUpdate() {
 			deleteAll();
 			getEntityManager()
-				.createNamedQuery("EffectiveGroupMembership.fullUpdate")
-				.executeUpdate();
+					.createNamedQuery("EffectiveGroupMembership.fullUpdate")
+					.executeUpdate();
 		}
 
 		public void updateGroups(Collection<String> groupIds) {
-			Batch.of(200).run(groupIds, (batch) -> {
+			Batch.of(200).run(groupIds, batch -> {
 				getEntityManager()
 						.createNamedQuery("EffectiveGroupMembership.deleteGroups")
 						.setParameter("groupIds", batch.toArray(new String[0])) // explicit cast to array, so JPA maps to VARCHAR[] instead of VARCHAR
@@ -132,7 +101,7 @@ public class EffectiveGroupMembership {
 		}
 
 		public void updateUsers(Collection<String> userIds) {
-			Batch.of(200).run(userIds, (batch) -> {
+			Batch.of(200).run(userIds, batch -> {
 				delete("#EffectiveGroupMembership.deleteUsers", Parameters.with("userIds", batch));
 				getEntityManager()
 						.createNamedQuery("EffectiveGroupMembership.updateUsers")
@@ -143,9 +112,7 @@ public class EffectiveGroupMembership {
 
 		// visible for testing
 		boolean isMember(String groupId, String memberId) {
-			EffectiveGroupMembership.Id id = new EffectiveGroupMembership.Id();
-			id.groupId = groupId;
-			id.memberId = memberId;
+			var id = new EffectiveGroupMembership.Id(groupId, memberId);
 			return findById(id) != null;
 		}
 

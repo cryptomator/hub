@@ -138,11 +138,16 @@
           </div>
 
           <div class="md:grid md:grid-cols-3 md:gap-6">
-            <div class="md:col-start-2">
-              <button type="button" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="manageSubscription()">
+            <div class="md:col-start-2 col-span-2 flex gap-2">
+              <a :href="manageSubscriptionUrl" rel="noopener" class="button flex-1 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
                 <ArrowTopRightOnSquareIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
                 {{ t('admin.licenseInfo.manageSubscription') }}
-              </button>
+              </a>
+              <a :href="freeCeLicenseUrl" rel="noopener" class="button flex-1 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
+                <ArrowTopRightOnSquareIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+                {{ t('admin.licenseInfo.getFreeCeLicense') }}
+              </a>
+              <span class="flex-1"></span>
             </div>
           </div>
         </form>
@@ -222,6 +227,8 @@
           </div>
         </form>
       </section>
+
+      <AdminSettingsEmergencyAccess/>
     </div>
   </div>
 </template>
@@ -230,14 +237,17 @@
 import { ArrowPathIcon, ArrowRightIcon, ArrowTopRightOnSquareIcon, CheckIcon, ExclamationTriangleIcon, InformationCircleIcon, LinkIcon, XMarkIcon } from '@heroicons/vue/20/solid';
 import semver from 'semver';
 import { computed, onMounted, ref } from 'vue';
+import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import backend, { BillingDto, VersionDto } from '../common/backend';
-import config, { absFrontendBaseURL } from '../common/config';
+import config, { absBaseURL, absFrontendBaseURL } from '../common/config';
 import { FetchUpdateError, LatestVersionDto, updateChecker } from '../common/updatecheck';
 import { debounce } from '../common/util';
 import FetchError from './FetchError.vue';
+import AdminSettingsEmergencyAccess from './AdminSettingsEmergencyAccess.vue';
 
 const { t, d } = useI18n({ useScope: 'global' });
+const route = useRoute();
 
 const props = defineProps<{
   token?: string
@@ -250,6 +260,7 @@ const now = ref<Date>(new Date());
 const keycloakAdminRealmURL = ref<string>();
 const wotMaxDepth = ref<number>();
 const wotIdVerifyLen = ref<number>();
+
 const wotUpdated = ref(false);
 const debouncedWotUpdated = debounce(() => wotUpdated.value = false, 2000);
 const form = ref<HTMLFormElement>();
@@ -283,6 +294,24 @@ const betaUpdateExists = computed(() => {
     return semver.lt(version.value.hubVersion, latestVersion.value.beta ?? '0.1.0-beta1');
   }
   return false;
+});
+
+const freeCeLicenseUrl = computed(() => {
+  if (!billing.value) {
+    return '';
+  }
+  const cfg = config.get();
+  const oldLicense = billing.value.licenseKey;
+  const returnUrl = new URL(route.path.replace(/^\/+/, ''), absBaseURL).href;
+  return `${cfg.ceRegistrationUrl}#oldLicense=${encodeURIComponent(oldLicense)}&returnUrl=${encodeURIComponent(returnUrl)}`;
+});
+
+const manageSubscriptionUrl = computed(() => {
+  if (!billing.value) {
+    return '';
+  }
+  const returnUrl = `${absFrontendBaseURL}admin`;
+  return `https://cryptomator.org/hub/billing/?hub_id=${billing.value.hubId}&return_url=${encodeURIComponent(returnUrl)}`;
 });
 
 const remainingSeats = computed(() => billing.value ? billing.value.licensedSeats - billing.value.usedSeats : 0);
@@ -327,7 +356,7 @@ async function fetchData() {
     billing.value = await backend.billing.get();
     version.value = await versionDto;
     latestVersion.value = await versionAvailable;
-    
+
     const settings = await backend.settings.get();
     wotMaxDepth.value = settings.wotMaxDepth;
     wotIdVerifyLen.value = settings.wotIdVerifyLen;
@@ -352,11 +381,6 @@ async function refreshLicense() {
   } catch (error) {
     console.error('Refreshing license info failed.', error);
   }
-}
-
-function manageSubscription() {
-  const returnUrl = `${absFrontendBaseURL}admin`;
-  window.location.href = `https://cryptomator.org/hub/billing/?hub_id=${billing.value?.hubId}&return_url=${encodeURIComponent(returnUrl)}`;
 }
 
 async function saveWebOfTrust() {
@@ -386,7 +410,7 @@ async function saveWebOfTrust() {
       wotMaxDepth: wotMaxDepth.value,
       wotIdVerifyLen: wotIdVerifyLen.value
     };
-    await backend.settings.put(settings);
+    await backend.settings.update(settings);
     wotUpdated.value = true;
     debouncedWotUpdated();
   } catch (error) {

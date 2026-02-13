@@ -10,7 +10,7 @@ COPY src /code/src
 RUN ./mvnw -B package -DskipTests --no-transfer-progress --strict-checksums
 
 ## Stage 2 : create the docker final image
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:21
 COPY --from=builder /code/target/quarkus-app/ /work/
 WORKDIR /work/
 
