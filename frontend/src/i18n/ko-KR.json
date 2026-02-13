@@ -75,6 +75,7 @@
   "admin.licenseInfo.expiresAt.description.valid": "라이선스가 유효합니다.",
   "admin.licenseInfo.expiresAt.description.expired": "라이선스가 만료되었습니다.",
   "admin.licenseInfo.manageSubscription": "구독 관리",
+  "admin.licenseInfo.getFreeCeLicense": "무료 CE 라이선스 받기",
   "admin.licenseInfo.type.title": "유형",
   "admin.licenseInfo.getLicense": "라이선스 얻기",
   "admin.webOfTrust.title": "Web of Trust",
