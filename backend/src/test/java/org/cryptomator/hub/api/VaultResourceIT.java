@@ -24,6 +24,7 @@ import org.cryptomator.hub.entities.events.EventLogger;
 import org.cryptomator.hub.entities.events.VaultKeyRetrievedEvent;
 import org.cryptomator.hub.license.HubLicenseEntitlements;
 import org.cryptomator.hub.license.LicenseHolder;
+import org.cryptomator.hub.metrics.VaultUnlockMetrics;
 import org.cryptomator.hub.rollback.DBRollbackAfter;
 import org.cryptomator.hub.rollback.DBRollbackBefore;
 import org.flywaydb.core.Flyway;
@@ -88,6 +89,8 @@ public class VaultResourceIT {
 	Validator validator;
 	@InjectMock
 	LicenseHolder licenseHolder;
+	@InjectMock
+	VaultUnlockMetrics vaultUnlockMetrics;
 
 	@Inject
 	@SuppressWarnings("unused") // needed for @DBRollbackBefore, @DBRollbackAfter
@@ -191,6 +194,9 @@ public class VaultResourceIT {
 			when().get("/vaults/{vaultId}/access-token", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(200)
 					.body(is("jwe.jwe.jwe.vault1.user1"));
+
+			Mockito.verify(vaultUnlockMetrics).recordUnlock();
+			Mockito.verify(vaultUnlockMetrics).recordSuccess();
 		}
 
 		@Test
@@ -199,6 +205,9 @@ public class VaultResourceIT {
 			when().get("/vaults/{vaultId}/access-token", "7E57C0DE-0000-4000-8000-000100002222")
 					.then().statusCode(200)
 					.body(is("jwe.jwe.jwe.vault2.user1"));
+
+			Mockito.verify(vaultUnlockMetrics).recordUnlock();
+			Mockito.verify(vaultUnlockMetrics).recordSuccess();
 		}
 
 		@Test
@@ -207,6 +216,9 @@ public class VaultResourceIT {
 			when().get("/vaults/{vaultId}/access-token?evenIfArchived=true", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(200)
 					.body(is("jwe.jwe.jwe.vault1.user1"));
+
+			Mockito.verify(vaultUnlockMetrics).recordUnlock();
+			Mockito.verify(vaultUnlockMetrics).recordSuccess();
 		}
 
 		@Test
@@ -232,6 +244,9 @@ public class VaultResourceIT {
 		void testUnlockArchived1() {
 			when().get("/vaults/{vaultId}/access-token", "7E57C0DE-0000-4000-8000-00010000AAAA")
 					.then().statusCode(410);
+
+			Mockito.verify(vaultUnlockMetrics).recordUnlock();
+			Mockito.verify(vaultUnlockMetrics).recordFailure();
 		}
 
 		@Test
@@ -239,6 +254,9 @@ public class VaultResourceIT {
 		void testUnlockArchived2() {
 			when().get("/vaults/{vaultId}/access-token?evenIfArchived=false", "7E57C0DE-0000-4000-8000-00010000AAAA")
 					.then().statusCode(410);
+
+			Mockito.verify(vaultUnlockMetrics).recordUnlock();
+			Mockito.verify(vaultUnlockMetrics).recordFailure();
 		}
 
 		@Test
@@ -246,6 +264,9 @@ public class VaultResourceIT {
 		void testUnlockArchived3() throws SQLException {
 			when().get("/vaults/{vaultId}/access-token?evenIfArchived=true", "7E57C0DE-0000-4000-8000-00010000AAAA")
 					.then().statusCode(200);
+
+			Mockito.verify(vaultUnlockMetrics).recordUnlock();
+			Mockito.verify(vaultUnlockMetrics).recordSuccess();
 		}
 
 		@Nested

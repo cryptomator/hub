@@ -49,6 +49,7 @@ import org.cryptomator.hub.filters.ActiveLicense;
 import org.cryptomator.hub.filters.VaultRole;
 import org.cryptomator.hub.keycloak.RealmRole;
 import org.cryptomator.hub.license.LicenseHolder;
+import org.cryptomator.hub.metrics.VaultUnlockMetrics;
 import org.cryptomator.hub.validation.NoHtmlOrScriptChars;
 import org.cryptomator.hub.validation.OnlyBase64Chars;
 import org.cryptomator.hub.validation.ValidId;
@@ -116,6 +117,9 @@ public class VaultResource {
 
 	@Inject
 	LicenseHolder license;
+
+	@Inject
+	VaultUnlockMetrics vaultUnlockMetrics;
 
 	@Context
 	HttpServerRequest request;
@@ -415,18 +419,22 @@ public class VaultResource {
 	@APIResponse(responseCode = "449", description = "User account not yet initialized. Retry after setting up user")
 	@ActiveLicense // may throw 402
 	public Response unlock(@PathParam("vaultId") UUID vaultId, @QueryParam("evenIfArchived") @DefaultValue("false") boolean ignoreArchived) {
+		vaultUnlockMetrics.recordUnlock();
 		var vault = vaultRepo.findById(vaultId); // should always be found, since @VaultRole filter would have triggered
 		if (vault.isArchived() && !ignoreArchived) {
+			vaultUnlockMetrics.recordFailure();
 			throw new GoneException("Vault is archived.");
 		}
 
 		var accessTokenSeats = effectiveVaultAccessRepo.countSeatOccupyingUsersWithAccessToken();
 		if (accessTokenSeats > license.getEntitlements().seats()) {
+			vaultUnlockMetrics.recordFailure();
 			throw new PaymentRequiredException("Number of effective vault users exceeds available license seats");
 		}
 
 		var user = userRepo.findById(jwt.getSubject());
 		if (user.getEcdhPublicKey() == null) {
+			vaultUnlockMetrics.recordFailure();
 			throw new ActionRequiredException("User account not initialized.");
 		}
 		var ipAddress = request.remoteAddress().hostAddress();
@@ -434,6 +442,7 @@ public class VaultResource {
 		var access = accessTokenRepo.unlock(vaultId, jwt.getSubject());
 		if (access != null) {
 			eventLogger.logVaultKeyRetrieved(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.SUCCESS, ipAddress, deviceId);
+			vaultUnlockMetrics.recordSuccess();
 			var response = Response.ok(access.getVaultKey(), MediaType.TEXT_PLAIN_TYPE);
 			var iosLicense = license.getEntitlements().iosLicense();
 			var androidLicense = license.getEntitlements().androidLicense();
@@ -445,10 +454,9 @@ public class VaultResource {
 				response = response.header("Hub-Android-License", androidLicense);
 			}
 			return response.build();
-		} else if (vaultRepo.findById(vaultId) == null) {
-			throw new NotFoundException("No such vault.");
 		} else {
 			eventLogger.logVaultKeyRetrieved(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.UNAUTHORIZED, ipAddress, deviceId);
+			vaultUnlockMetrics.recordFailure();
 			throw new ForbiddenException("Access to this vault not granted.");
 		}
 	}
