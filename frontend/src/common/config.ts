@@ -28,6 +28,7 @@ export type ConfigDto = {
     seats: number;
     showTrialHint: boolean;
     auditLogRetentionDays: number;
+    emergencyAccessEnabled: boolean;
     iosLicense: string;
     androidLicense: string;
   };

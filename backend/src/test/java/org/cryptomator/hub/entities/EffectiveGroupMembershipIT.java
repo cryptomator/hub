@@ -64,7 +64,7 @@ class EffectiveGroupMembershipIT {
 	@Transactional
 	void teardown() {
 		userRepo.deleteByIds(List.of("u1", "u2", "u3", "u4", "u5"));
-		groupRepo.deleteByIds(List.of( "g1", "g2", "g3", "g4", "g5"));
+		groupRepo.deleteByIds(List.of("g1", "g2", "g3", "g4", "g5"));
 	}
 
 	@Test

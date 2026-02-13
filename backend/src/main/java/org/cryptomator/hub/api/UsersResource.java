@@ -25,7 +25,7 @@ import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.AccessToken;
 import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.EffectiveWot;
-import org.cryptomator.hub.entities.Group;
+import org.cryptomator.hub.entities.EmergencyRecoveryProcess;
 import org.cryptomator.hub.entities.LegacyDevice;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
@@ -65,6 +65,8 @@ public class UsersResource {
 	Device.Repository deviceRepo;
 	@Inject
 	Vault.Repository vaultRepo;
+	@Inject
+	EmergencyRecoveryProcess.Repository emergencyRecovery;
 	@Inject
 	WotEntry.Repository wotRepo;
 	@Inject
@@ -229,6 +231,8 @@ public class UsersResource {
 		user.setPrivateKeys(null);
 		user.setSetupCode(null);
 		userRepo.persist(user);
+		vaultRepo.deleteEmergencyKeySharesForUser(user.getId());
+		emergencyRecovery.deleteKeySharesForCouncilMember(user.getId());
 		deviceRepo.deleteByOwner(user.getId());
 		accessTokenRepo.deleteByUser(user.getId());
 		eventLogger.logUserAccountReset(jwt.getSubject());
@@ -256,9 +260,7 @@ public class UsersResource {
 	@APIResponse(responseCode = "204", description = "signature stored")
 	public Response putSignature(@PathParam("userId") String userId, @NotNull String signature) {
 		var signer = userRepo.findById(jwt.getSubject());
-		var id = new WotEntry.Id();
-		id.setUserId(userId);
-		id.setSignerId(signer.getId());
+		var id = new WotEntry.Id(userId, signer.getId());
 		var entry = wotRepo.findById(id);
 		if (entry == null) {
 			entry = new WotEntry();
@@ -300,7 +302,7 @@ public class UsersResource {
 	public record TrustedUserDto(@JsonProperty("trustedUserId") String trustedUserId, @JsonProperty("signatureChain") List<String> signatureChain) {
 
 		public static TrustedUserDto fromEntity(EffectiveWot entity) {
-			return new TrustedUserDto(entity.getId().getTrustedUserId(), List.of(entity.getSignatureChain()));
+			return new TrustedUserDto(entity.getId().trustedUserId(), List.of(entity.getSignatureChain()));
 		}
 	}
 

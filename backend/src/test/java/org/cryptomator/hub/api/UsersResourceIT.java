@@ -47,7 +47,7 @@ import static org.hamcrest.Matchers.hasSize;
 
 @QuarkusTest
 @DisplayName("Resource /users")
-public class UsersResourceIT {
+class UsersResourceIT {
 
 	@Inject
 	AgroalDataSource dataSource;
@@ -69,7 +69,7 @@ public class UsersResourceIT {
 	@OidcSecurity(claims = {
 			@Claim(key = "sub", value = "user1")
 	})
-	public class AsAuthorzedUser1 {
+	class AsAuthorzedUser1 {
 
 		@Test
 		@DisplayName("PUT /users/me returns 201")
@@ -176,7 +176,7 @@ public class UsersResourceIT {
 
 	@Nested
 	@DisplayName("As unauthenticated user")
-	public class AsAnonymous {
+	class AsAnonymous {
 
 		@DisplayName("401 Unauthorized")
 		@ParameterizedTest(name = "{0} {1}")
@@ -196,7 +196,7 @@ public class UsersResourceIT {
 	@DisplayName("Test Web of Trust")
 	@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-	public class WebOfTrust {
+	class WebOfTrust {
 
 		private Instant testStart;
 
@@ -373,7 +373,7 @@ public class UsersResourceIT {
 			@Claim(key = "sub", value = "admin")
 	})
 	@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-	public class UserCrudOperations {
+	class UserCrudOperations {
 
 		@BeforeEach
 		void resetMocks() {

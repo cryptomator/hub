@@ -43,9 +43,13 @@ export function isAxiosError(error: unknown): error is AxiosError {
 export type VaultDto = {
   id: string;
   name: string;
+  creationTime: Date;
   description?: string;
   archived: boolean;
-  creationTime: Date;
+  requiredEmergencyKeyShares: number;
+  emergencyKeyShares: Record<string, string>; // <memberId, encryptedKeyShare>
+  
+  // Legacy properties ("Vault Admin Password"):
   masterkey?: string;
   iterations?: number;
   salt?: string;
@@ -108,6 +112,18 @@ export type UserDtoWithDetails = UserDto & {
   legacyDevices: DeviceDto[];
 }
 
+/**
+ * Represents a user who generated key pairs during the setup process.
+ */
+export type ActivatedUser = UserDto & {
+  ecdhPublicKey: string;
+  ecdsaPublicKey: string;
+}
+
+export function didCompleteSetup(user: UserDto): user is ActivatedUser {
+  return user.ecdhPublicKey !== undefined && user.ecdsaPublicKey !== undefined;
+}
+
 export type GroupDto = {
   type: 'GROUP';
   id: string;
@@ -168,7 +184,45 @@ export type VersionDto = {
 export type SettingsDto = {
   hubId: string,
   wotMaxDepth: number,
-  wotIdVerifyLen: number
+  wotIdVerifyLen: number,
+  defaultRequiredEmergencyKeyShares: number,
+  defaultMinMembers: number,
+  allowChoosingEmergencyCouncil: boolean,
+  emergencyCouncilMemberIds: string[],
+  enableEmergencyAccess: boolean
+}
+
+export type RecoveryProcessSetNewOwner = {
+  type: 'CHANGE_PERMISSIONS',
+  details: {
+    newOwnerIds: string[];
+    newMemberIds: string[];
+  }
+}
+
+export type RecoveryProcessChangeCouncil = {
+  type: 'COUNCIL_CHANGE',
+  details: {
+    newCouncilMemberIds: string[];
+    newRequiredKeyShares: number;
+  }
+}
+
+export type RecoveredKeyShareDto = {
+  processPrivateKey: string;
+  unrecoveredKeyShare: string;
+  recoveredKeyShare?: string;
+  signedProcessInfo?: string;
+};
+
+export type RecoveryProcessDto = (RecoveryProcessSetNewOwner | RecoveryProcessChangeCouncil) & {
+  id: string;
+  vaultId: string;
+  requiredKeyShares: number;
+  processPublicKey: string;
+  recoveredKeyShares: {
+    [councilMemberId: string]: RecoveredKeyShareDto
+  }
 }
 
 export class LicenseUserInfoDto {
@@ -253,6 +307,10 @@ class VaultService {
     return axiosAuth.get('/vaults/accessible', { params: queryParams }).then(response => response.data);
   }
 
+  public async listRecoverable(): Promise<VaultDto[]> {
+    return axiosAuth.get('/vaults/recoverable').then(response => response.data);
+  }
+
   public async listSome(vaultsIds: string[]): Promise<VaultDto[]> {
     const query = `ids=${vaultsIds.join('&ids=')}`;
     return axiosAuth.get(`/vaults/some?${query}`).then(response => response.data);
@@ -277,6 +335,11 @@ class VaultService {
     return addFallbackPictures ? members.map(fillInMissingPicture) : members;
   }
 
+  public async setMembersWithRole(vaultId: string, members: Record<string, VaultRole>): Promise<void> {
+    await axiosAuth.put(`/vaults/${vaultId}/members`, members)
+      .catch((error) => rethrowAndConvertIfExpected(error, 403, 404));
+  }
+
   public async addUser(vaultId: string, userId: string, role?: VaultRole): Promise<AxiosResponse<void>> {
     return axiosAuth.put(`/vaults/${vaultId}/users/${userId}` + (role ? `?role=${role}` : ''))
       .catch((error) => rethrowAndConvertIfExpected(error, 402, 404, 409));
@@ -292,8 +355,16 @@ class VaultService {
     return addFallbackPictures ? users.map(fillInMissingPicture) : users;
   }
 
-  public async createOrUpdateVault(vaultId: string, name: string, archived: boolean, description?: string): Promise<VaultDto> {
-    const body: VaultDto = { id: vaultId, name: name, description: description, archived: archived, creationTime: new Date() };
+  public async createOrUpdateVault(vaultId: string, name: string, archived: boolean, requiredEmergencyKeyShares: number, emergencyKeyShares: Record<string, string>, description?: string): Promise<VaultDto> {
+    const body: VaultDto = {
+      id: vaultId,
+      name: name,
+      creationTime: new Date(),
+      description: description,
+      archived: archived,
+      requiredEmergencyKeyShares: requiredEmergencyKeyShares,
+      emergencyKeyShares: emergencyKeyShares
+    };
     return axiosAuth.put(`/vaults/${vaultId}`, body)
       .then(response => response.data)
       .catch((error) => rethrowAndConvertIfExpected(error, 402, 404));
@@ -485,6 +556,10 @@ class AuthorityService {
   }
 
   public async listSome(authorityIds: string[], addFallbackPictures: boolean = true): Promise<AuthorityDto[]> {
+    if (authorityIds.length === 0) {
+      // safe roundtrip for empty list
+      return [];
+    }
     const query = `ids=${authorityIds.join('&ids=')}`;
     const authorities = await axiosAuth.get<AuthorityDto[]>(`/authorities?${query}`).then(response => response.data);
     return addFallbackPictures ? authorities.map(fillInMissingPicture) : authorities;
@@ -527,6 +602,37 @@ class SettingsService {
   public async put(settings: SettingsDto): Promise<void> {
     return axiosAuth.put('/settings', settings);
   }
+
+  public async update(settings: Partial<SettingsDto>): Promise<void> {
+    const originalSettings = await this.get();
+    const updatedSettings = {
+      ...originalSettings,
+      ...settings
+    };
+    return axiosAuth.put('/settings', updatedSettings);
+  }
+}
+
+class EmergencyAccessService {
+  public async findProcessesForVault(vaultId: string): Promise<RecoveryProcessDto[]> {
+    return axiosAuth.get<RecoveryProcessDto[]>(`/emergency-access/${vaultId}`).then(response => response.data);
+  }
+
+  public async startRecovery(recoveryProcess: RecoveryProcessDto): Promise<void> {
+    return axiosAuth.put(`/emergency-access/${recoveryProcess.id}`, recoveryProcess);
+  }
+
+  public async addMyShare(recoveryProcessId: string, recoveredKeyShare: RecoveredKeyShareDto): Promise<void> {
+    return axiosAuth.post(`/emergency-access/${recoveryProcessId}/recovered-key-shares`, recoveredKeyShare);
+  }
+
+  public async complete(recoveryProcessId: string): Promise<void> {
+    return axiosAuth.delete(`/emergency-access/${recoveryProcessId}/complete`);
+  }
+
+  public async abort(recoveryProcessId: string): Promise<void> {
+    return axiosAuth.delete(`/emergency-access/${recoveryProcessId}/abort`);
+  }
 }
 
 /**
@@ -543,6 +649,7 @@ const services = {
   license: new LicenseService(),
   settings: new SettingsService(),
   groups: new GroupService(),
+  emergencyAccess: new EmergencyAccessService(),
 };
 
 export default services;

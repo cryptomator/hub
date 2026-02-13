@@ -13,9 +13,6 @@ import jakarta.persistence.Table;
 import org.hibernate.annotations.Immutable;
 import org.hibernate.annotations.Type;
 
-import java.io.Serializable;
-import java.util.Objects;
-
 @Entity
 @Immutable
 @Table(name = "effective_wot")
@@ -55,44 +52,9 @@ public class EffectiveWot {
 	}
 
 	@Embeddable
-	public static class Id implements Serializable {
-
-		@Column(name = "trusting_user_id")
-		private String trustingUserId;
-
-		@Column(name = "trusted_user_id")
-		private String trustedUserId;
-
-		public String getTrustingUserId() {
-			return trustingUserId;
-		}
-
-		public String getTrustedUserId() {
-			return trustedUserId;
-		}
-
-		@Override
-		public boolean equals(Object o) {
-			if (this == o) return true;
-			if (o instanceof Id other) {
-				return Objects.equals(trustingUserId, other.trustingUserId) //
-						&& Objects.equals(trustedUserId, other.trustedUserId);
-			}
-			return false;
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(trustingUserId, trustedUserId);
-		}
-
-		@Override
-		public String toString() {
-			return "EffectiveWotId{" +
-					"trustingUserId='" + trustingUserId + '\'' +
-					", trustedUserId='" + trustedUserId + '\'' +
-					'}';
-		}
+	public record Id(
+			@Column(name = "trusting_user_id") String trustingUserId,
+			@Column(name = "trusted_user_id") String trustedUserId) {
 	}
 
 	@ApplicationScoped
