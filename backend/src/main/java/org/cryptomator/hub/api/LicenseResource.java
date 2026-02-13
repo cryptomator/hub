@@ -55,7 +55,7 @@ public class LicenseResource {
 	@RolesAllowed("admin")
 	@Operation(summary = "Refresh license information", description = "Refreshes the license information from the license server.")
 	@APIResponse(responseCode = "204", description = "License information refreshed")
-	@APIResponse(responseCode = "500", description = "License information refreshed")
+	@APIResponse(responseCode = "500", description = "License refresh failed")
 	public Response refresh() {
 		try {
 			licenseHolder.refreshLicense();

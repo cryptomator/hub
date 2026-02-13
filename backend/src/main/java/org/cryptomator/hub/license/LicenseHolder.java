@@ -186,7 +186,7 @@ public class LicenseHolder {
 		var refreshUrl = getLicenseRefreshUri();
 		final String refreshedLicense;
 		try {
-			refreshedLicense = requestLicenseRefresh(getLicenseRefreshUri(), get().getToken());
+			refreshedLicense = requestLicenseRefresh(refreshUrl, get().getToken());
 		} catch (LicenseRefreshFailedException e) {
 			LOG.errorv("Failed to refresh license token. Request to {0} was answered with response code {1,number,integer}", refreshUrl, e.statusCode);
 			throw new IOException("Failed to refresh license token.", e);
