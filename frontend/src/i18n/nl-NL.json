@@ -75,6 +75,7 @@
   "admin.licenseInfo.expiresAt.description.valid": "Uw licentie is geldig.",
   "admin.licenseInfo.expiresAt.description.expired": "Je licentie is verlopen.",
   "admin.licenseInfo.manageSubscription": "Abonnement beheren",
+  "admin.licenseInfo.getFreeCeLicense": "Verkrijg een gratis CE-licentie",
   "admin.licenseInfo.type.title": "Type",
   "admin.licenseInfo.getLicense": "Verkrijg licentie",
   "admin.webOfTrust.title": "Web of Trust",
