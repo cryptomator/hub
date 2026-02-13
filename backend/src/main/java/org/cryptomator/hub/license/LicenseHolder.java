@@ -10,13 +10,16 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.MediaType;
 import org.cryptomator.hub.entities.Settings;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.logging.Logger;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -167,26 +170,47 @@ public class LicenseHolder {
 	 */
 	@Scheduled(cron = "0 0 1 * * ?", timeZone = "UTC", concurrentExecution = Scheduled.ConcurrentExecution.SKIP)
 	@RunOnVirtualThread
-	void refreshLicense() {
-		var refreshUrlClaim = get().getClaim("refreshUrl");
-		if (refreshUrlClaim.isMissing()) {
-			LOG.error("Missing refreshUrl claim.");
-			return;
-		}
+	void scheduleLicenseRefresh() {
 		try {
 			randomSleeper.sleep(0, 59, ChronoUnit.MINUTES); // add random sleep to reduce infrastructure load
-			var refreshUrl = URI.create(refreshUrlClaim.asString());
-			var refreshedLicense = requestLicenseRefresh(refreshUrl, get().getToken());
-			set(refreshedLicense);
-		} catch (LicenseRefreshFailedException e) {
-			LOG.errorv("Failed to refresh license token. Request to {0} was answered with response code {1,number,integer}", refreshUrlClaim, e.statusCode);
-		} catch (IllegalArgumentException | IOException e) {
-			LOG.error("Failed to refresh license token", e);
-		} catch (JWTVerificationException e) {
-			LOG.error("Failed to refresh license token. Refreshed token is invalid.", e);
+			refreshLicense();
+		} catch (IOException e) {
+			LOG.error("Scheduled license refresh failed.", e);
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
-			LOG.warn("License refresh was interrupted", e);
+			LOG.warn("Scheduled license refresh was interrupted.", e);
+		}
+	}
+
+	public void refreshLicense() throws IOException {
+		var refreshUrl = getLicenseRefreshUri();
+		final String refreshedLicense;
+		try {
+			refreshedLicense = requestLicenseRefresh(refreshUrl, get().getToken());
+		} catch (LicenseRefreshFailedException e) {
+			LOG.errorv("Failed to refresh license token. Request to {0} was answered with response code {1,number,integer}", refreshUrl, e.statusCode);
+			throw new IOException("Failed to refresh license token.", e);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			throw new InterruptedIOException("License refresh was interrupted");
+		}
+		try {
+			set(refreshedLicense);
+		} catch (JWTVerificationException e) {
+			LOG.errorv(e, "Failed to refresh license token. Refreshed token is invalid: {0}", refreshedLicense);
+			throw new IOException("Invalid new license token.", e);
+		}
+	}
+
+	private URI getLicenseRefreshUri() {
+		var refreshUrlClaim = get().getClaim("refreshUrl");
+		if (refreshUrlClaim.isMissing()) {
+			throw new IllegalStateException("Missing refreshUrl claim.");
+		}
+		try {
+			return new URI(refreshUrlClaim.asString());
+		} catch (NullPointerException | URISyntaxException e) {
+			throw new IllegalStateException("Invalid value for refreshUrl claim", e);
 		}
 	}
 
@@ -196,7 +220,7 @@ public class LicenseHolder {
 			var body = "token=" + URLEncoder.encode(licenseToken, StandardCharsets.UTF_8);
 			var request = HttpRequest.newBuilder() //
 					.uri(refreshUrl) //
-					.header("Content-Type", "application/x-www-form-urlencoded") //
+					.header("Content-Type", MediaType.APPLICATION_FORM_URLENCODED) //
 					.POST(HttpRequest.BodyPublishers.ofString(body)) //
 					.version(HttpClient.Version.HTTP_1_1) //
 					.build();
