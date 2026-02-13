@@ -21,7 +21,7 @@ public class DBRollbackAfterExtension implements QuarkusTestAfterConstructCallba
 		if (isAnnotationPresent) {
 			var flyway = INSTANCE.get();
 			if (flyway == null) {
-				throw new IllegalStateException("Flyway instance was not set. Please ensure that test class (or enclosing class) have a public non-null, Flyway field.");
+				throw new IllegalStateException("Flyway instance was not set. Please ensure that test class (or enclosing class) are public and have a public non-null, Flyway field.");
 			}
 
 			flyway.clean();
