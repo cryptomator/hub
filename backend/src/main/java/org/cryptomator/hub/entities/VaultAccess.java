@@ -15,8 +15,6 @@ import jakarta.persistence.MapsId;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
 
-import java.io.Serializable;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -52,7 +50,7 @@ import java.util.stream.Stream;
 public class VaultAccess {
 
 	@EmbeddedId
-	private VaultAccess.Id id = new VaultAccess.Id();
+	private VaultAccess.Id id;
 
 	@ManyToOne
 	@MapsId("vaultId")
@@ -122,59 +120,7 @@ public class VaultAccess {
 	}
 
 	@Embeddable
-	public static class Id implements Serializable {
-
-		@Column(name = "vault_id")
-		UUID vaultId;
-
-		@Column(name = "authority_id")
-		String authorityId;
-
-		public Id(UUID vaultId, String authorityId) {
-			this.vaultId = vaultId;
-			this.authorityId = authorityId;
-		}
-
-		public Id() {
-		}
-
-		public UUID getVaultId() {
-			return vaultId;
-		}
-
-		public void setVaultId(UUID vaultId) {
-			this.vaultId = vaultId;
-		}
-
-		public String getAuthorityId() {
-			return authorityId;
-		}
-
-		public void setAuthorityId(String authorityId) {
-			this.authorityId = authorityId;
-		}
-
-		@Override
-		public boolean equals(Object o) {
-			if (this == o) return true;
-			if (o instanceof Id other) {
-				return Objects.equals(this.vaultId, other.vaultId) && Objects.equals(this.authorityId, other.authorityId);
-			}
-			return false;
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(vaultId, authorityId);
-		}
-
-		@Override
-		public String toString() {
-			return "VaultAccess.Id{" +
-					"vaultId='" + vaultId + '\'' +
-					", authorityId='" + authorityId + '\'' +
-					'}';
-		}
+	public record Id(@Column(name = "vault_id") UUID vaultId, @Column(name = "authority_id") String authorityId) {
 	}
 
 	@ApplicationScoped

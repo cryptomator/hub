@@ -221,7 +221,7 @@ public class VaultResource {
 		Set<VaultAccess.Id> oldIds = oldVaultAccess.stream().map(VaultAccess::getId).collect(Collectors.toSet());
 		Predicate<VaultAccess> isNew = va -> newIds.contains(va.getId());
 		Predicate<VaultAccess> isOld = va -> oldIds.contains(va.getId());
-		Predicate<VaultAccess> hasChangedRole = va -> memberRoles.get(va.getId().getAuthorityId()) != va.getRole();
+		Predicate<VaultAccess> hasChangedRole = va -> memberRoles.get(va.getId().authorityId()) != va.getRole();
 		var addedMembers = newVaultAccess.stream()
 				.filter(isOld.negate()).toList();
 		var removedMembers = oldVaultAccess.stream()
@@ -229,7 +229,7 @@ public class VaultResource {
 		var updatedMembers = oldVaultAccess.stream()
 				.filter(isNew)
 				.filter(hasChangedRole)
-				.peek(va -> va.setRole(memberRoles.get(va.getId().getAuthorityId())))
+				.peek(va -> va.setRole(memberRoles.get(va.getId().authorityId())))
 				.toList();
 
 		// resolve group members and simulate new seat count:
@@ -243,12 +243,12 @@ public class VaultResource {
 		}
 
 		// Audit Log
-		addedMembers.forEach(va -> eventLogger.logVaultMemberAdded(jwt.getSubject(), vaultId, va.getId().getAuthorityId(), va.getRole()));
-		removedMembers.forEach(va -> eventLogger.logVaultMemberRemoved(jwt.getSubject(), vaultId, va.getId().getAuthorityId()));
-		updatedMembers.forEach(va -> eventLogger.logVaultMemberUpdated(jwt.getSubject(), vaultId, va.getId().getAuthorityId(), va.getRole()));
+		addedMembers.forEach(va -> eventLogger.logVaultMemberAdded(jwt.getSubject(), vaultId, va.getId().authorityId(), va.getRole()));
+		removedMembers.forEach(va -> eventLogger.logVaultMemberRemoved(jwt.getSubject(), vaultId, va.getId().authorityId()));
+		updatedMembers.forEach(va -> eventLogger.logVaultMemberUpdated(jwt.getSubject(), vaultId, va.getId().authorityId(), va.getRole()));
 
 		// replace all:
-		vaultAccessRepo.delete(vaultId, removedMembers.stream().map(VaultAccess::getId).map(VaultAccess.Id::getAuthorityId).toList());
+		vaultAccessRepo.delete(vaultId, removedMembers.stream().map(VaultAccess::getId).map(VaultAccess.Id::authorityId).toList());
 		vaultAccessRepo.persist(addedMembers);
 		vaultAccessRepo.persist(updatedMembers);
 
