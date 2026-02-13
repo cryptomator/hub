@@ -236,7 +236,6 @@ import { FetchUpdateError, LatestVersionDto, updateChecker } from '../common/upd
 import { debounce } from '../common/util';
 import FetchError from './FetchError.vue';
 import AdminSettingsEmergencyAccess from './AdminSettingsEmergencyAccess.vue';
-import ContentBanner from './ContentBanner.vue';
 
 const { t, d } = useI18n({ useScope: 'global' });
 const route = useRoute();
