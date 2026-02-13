@@ -80,7 +80,7 @@
           <h3 class="text-lg font-medium leading-6 text-gray-900">
             {{ t('admin.licenseInfo.title') }}
           </h3>
-          <button type="button" class="p-1 cursor-pointer text-gray-400 hover:text-gray-600 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary rounded-full" :title="t('common.refresh')" @click="refreshLicense()" >
+          <button type="button" class="p-1 cursor-pointer text-gray-400 hover:text-gray-600 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary rounded-full disabled:opacity-50 disabled:hover:text-gray-400 disabled:cursor-not-allowed" :title="t('common.refresh')" :disabled="!isRegistered" @click="refreshLicense()">
             <ArrowPathIcon class="h-5 w-5" aria-hidden="true" />
           </button>
         </div>
@@ -240,7 +240,7 @@ import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import backend, { BillingDto, VersionDto } from '../common/backend';
-import config, { absBaseURL, absFrontendBaseURL } from '../common/config';
+import config, { absBaseURL, absFrontendBaseURL, ConfigDto } from '../common/config';
 import { FetchUpdateError, LatestVersionDto, updateChecker } from '../common/updatecheck';
 import { debounce } from '../common/util';
 import FetchError from './FetchError.vue';
@@ -256,6 +256,7 @@ const props = defineProps<{
 const version = ref<VersionDto>();
 const latestVersion = ref<LatestVersionDto>();
 const billing = ref<BillingDto>();
+const cfg = ref<ConfigDto>(config.get());
 const now = ref<Date>(new Date());
 const keycloakAdminRealmURL = ref<string>();
 const wotMaxDepth = ref<number>();
@@ -295,6 +296,8 @@ const betaUpdateExists = computed(() => {
   }
   return false;
 });
+
+const isRegistered = computed(() => !cfg.value.entitlements.showTrialHint );
 
 const freeCeLicenseUrl = computed(() => {
   if (!billing.value) {
