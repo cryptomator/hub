@@ -168,7 +168,7 @@
               {{ t('admin.webOfTrust.wotMaxDepth.title') }}
             </label>
             <div class="mt-1 md:mt-0 relative md:col-span-2 lg:col-span-1">
-              <input id="wotMaxDepth" v-model="wotMaxDepth" type="number" min="0" max="9" step="1" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': wotMaxDepthError instanceof FormValidationFailedError }"/>
+              <input id="wotMaxDepth" v-model="wotMaxDepth" type="number" min="0" max="9" step="1" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': wotMaxDepthError instanceof WotFormValidationFailedError }"/>
               <div v-if="wotMaxDepthError" class="absolute left-1/2 -translate-x-1/2 -top-2 transform translate-y-[-100%] w-5/6">
                 <div class="bg-red-50 border border-red-300 text-red-900 px-2 py-1 rounded shadow-sm text-sm hyphens-auto">
                   {{ t('admin.webOfTrust.wotMaxDepth.error') }}
@@ -190,7 +190,7 @@
               {{ t('admin.webOfTrust.wotIdVerifyLen.title') }}
             </label>
             <div class="mt-1 md:mt-0 relative md:col-span-2 lg:col-span-1">
-              <input id="wotIdVerifyLen" v-model="wotIdVerifyLen" type="number" min="0" max="9" step="1" class="focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': wotIdVerifyLenError instanceof FormValidationFailedError }"/>
+              <input id="wotIdVerifyLen" v-model="wotIdVerifyLen" type="number" min="0" max="9" step="1" class="focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': wotIdVerifyLenError instanceof WotFormValidationFailedError }"/>
               <div v-if="wotIdVerifyLenError" class="absolute left-1/2 -translate-x-1/2 -top-2 transform translate-y-[-100%] w-5/6">
                 <div class="bg-red-50 border border-red-300 text-red-900 px-2 py-1 rounded shadow-sm text-sm hyphens-auto">
                   {{ t('admin.webOfTrust.wotIdVerifyLen.error') }}
@@ -213,7 +213,7 @@
                 <span v-if="!wotUpdated">{{ t('admin.webOfTrust.save') }}</span>
                 <span v-else>{{ t('admin.webOfTrust.saved') }}</span>
               </button>
-              <p v-if="onSaveError && !(onSaveError instanceof FormValidationFailedError)" class="mt-2 text-sm text-red-900">
+              <p v-if="onSaveError && !(onSaveError instanceof WotFormValidationFailedError)" class="mt-2 text-sm text-red-900">
                 {{ t('common.unexpectedError', [onSaveError.message]) }}
               </p>
               <div v-if="wotHasUnsavedChanges" class="flex items-center whitespace-nowrap gap-1 text-sm text-yellow-700">
@@ -253,104 +253,21 @@ const props = defineProps<{
   token?: string
 }>();
 
-const version = ref<VersionDto>();
-const latestVersion = ref<LatestVersionDto>();
-const billing = ref<BillingDto>();
 const cfg = ref<ConfigDto>(config.get());
 const now = ref<Date>(new Date());
 const keycloakAdminRealmURL = ref<string>();
-const wotMaxDepth = ref<number>();
-const wotIdVerifyLen = ref<number>();
-
-const wotUpdated = ref(false);
-const debouncedWotUpdated = debounce(() => wotUpdated.value = false, 2000);
 const form = ref<HTMLFormElement>();
 const processing = ref(false);
 const onFetchError = ref<Error>();
 const errorOnFetchingUpdates = ref<boolean>(false);
-const onSaveError = ref<Error>();
-const wotMaxDepthError = ref<Error>();
-const wotIdVerifyLenError = ref<Error>();
-
-class FormValidationFailedError extends Error {
-  constructor() {
-    super('The form is invalid.');
-  }
-}
-
-const isBeta = computed(() => {
-  if (version.value && semver.valid(version.value.hubVersion)) {
-    return semver.prerelease(version.value.hubVersion ?? '0.1.0') != null;
-  }
-  return false;
-});
-const stableUpdateExists = computed(() => {
-  if (version.value && semver.valid(version.value.hubVersion) && latestVersion.value?.stable) {
-    return semver.lt(version.value.hubVersion, latestVersion.value.stable ?? '0.1.0');
-  }
-  return false;
-});
-const betaUpdateExists = computed(() => {
-  if (version.value && semver.valid(version.value.hubVersion) && latestVersion.value?.beta) {
-    return semver.lt(version.value.hubVersion, latestVersion.value.beta ?? '0.1.0-beta1');
-  }
-  return false;
-});
-
-const isRegistered = computed(() => !cfg.value.entitlements.showTrialHint );
-
-const freeCeLicenseUrl = computed(() => {
-  if (!billing.value) {
-    return '';
-  }
-  const cfg = config.get();
-  const oldLicense = billing.value.licenseKey;
-  const returnUrl = new URL(route.path.replace(/^\/+/, ''), absBaseURL).href;
-  return `${cfg.ceRegistrationUrl}#oldLicense=${encodeURIComponent(oldLicense)}&returnUrl=${encodeURIComponent(returnUrl)}`;
-});
-
-const manageSubscriptionUrl = computed(() => {
-  if (!billing.value) {
-    return '';
-  }
-  const returnUrl = `${absFrontendBaseURL}admin`;
-  return `https://cryptomator.org/hub/billing/?hub_id=${billing.value.hubId}&return_url=${encodeURIComponent(returnUrl)}`;
-});
-
-const remainingSeats = computed(() => billing.value ? billing.value.licensedSeats - billing.value.usedSeats : 0);
-const numberOfExceededSeats = computed(() => {
-  if (remainingSeats.value === undefined) {
-    return undefined;
-  }
-  return remainingSeats.value < 0 ? Math.abs(remainingSeats.value) : 0;
-});
-
-type WotSettings = { wotMaxDepth: number; wotIdVerifyLen: number };
-const initialWebOfTrustSettings = ref<WotSettings>({ wotMaxDepth: 0, wotIdVerifyLen: 0 });
-
-const wotHasUnsavedChanges = computed(() => {
-  return (
-    initialWebOfTrustSettings.value.wotMaxDepth !== wotMaxDepth.value ||
-    initialWebOfTrustSettings.value.wotIdVerifyLen !== wotIdVerifyLen.value
-  );
-});
 
 onMounted(async () => {
-  const cfg = config.get();
-  keycloakAdminRealmURL.value = `${cfg.keycloakUrl}/admin/${cfg.keycloakRealm}/console`;
+  keycloakAdminRealmURL.value = `${cfg.value.keycloakUrl}/admin/${cfg.value.keycloakRealm}/console`;
   if (props.token) {
     await setToken(props.token);
   }
   await fetchData();
 });
-
-async function setToken(token: string) {
-  try {
-    await backend.billing.setToken(token);
-  } catch (error) {
-    console.error('Setting token failed.', error);
-  }
-}
 
 async function fetchData() {
   try {
@@ -377,6 +294,55 @@ async function fetchData() {
   }
 }
 
+// #region Update Information
+
+const version = ref<VersionDto>();
+const latestVersion = ref<LatestVersionDto>();
+
+const isBeta = computed(() => {
+  if (version.value && semver.valid(version.value.hubVersion)) {
+    return semver.prerelease(version.value.hubVersion ?? '0.1.0') != null;
+  }
+  return false;
+});
+const stableUpdateExists = computed(() => {
+  if (version.value && semver.valid(version.value.hubVersion) && latestVersion.value?.stable) {
+    return semver.lt(version.value.hubVersion, latestVersion.value.stable ?? '0.1.0');
+  }
+  return false;
+});
+const betaUpdateExists = computed(() => {
+  if (version.value && semver.valid(version.value.hubVersion) && latestVersion.value?.beta) {
+    return semver.lt(version.value.hubVersion, latestVersion.value.beta ?? '0.1.0-beta1');
+  }
+  return false;
+});
+
+// #endregion
+
+// #region License Information
+
+const billing = ref<BillingDto>();
+
+const isRegistered = computed(() => !cfg.value.entitlements.showTrialHint );
+
+const freeCeLicenseUrl = computed(() => {
+  if (!billing.value) {
+    return '';
+  }
+  const oldLicense = billing.value.licenseKey;
+  const returnUrl = new URL(route.path.replace(/^\/+/, ''), absBaseURL).href;
+  return `${cfg.value.ceRegistrationUrl}#oldLicense=${encodeURIComponent(oldLicense)}&returnUrl=${encodeURIComponent(returnUrl)}`;
+});
+
+const manageSubscriptionUrl = computed(() => {
+  if (!billing.value) {
+    return '';
+  }
+  const returnUrl = `${absFrontendBaseURL}admin`;
+  return `https://cryptomator.org/hub/billing/?hub_id=${billing.value.hubId}&return_url=${encodeURIComponent(returnUrl)}`;
+});
+
 async function refreshLicense() {
   try {
     await backend.license.refresh();
@@ -385,6 +351,49 @@ async function refreshLicense() {
     console.error('Refreshing license info failed.', error);
   }
 }
+
+async function setToken(token: string) {
+  try {
+    await backend.billing.setToken(token);
+  } catch (error) {
+    console.error('Setting token failed.', error);
+  }
+}
+
+const remainingSeats = computed(() => billing.value ? billing.value.licensedSeats - billing.value.usedSeats : 0);
+const numberOfExceededSeats = computed(() => {
+  if (remainingSeats.value === undefined) {
+    return undefined;
+  }
+  return remainingSeats.value < 0 ? Math.abs(remainingSeats.value) : 0;
+});
+
+// #endregion
+
+// #region Web of Trust
+
+type WotSettings = { wotMaxDepth: number; wotIdVerifyLen: number };
+const initialWebOfTrustSettings = ref<WotSettings>({ wotMaxDepth: 0, wotIdVerifyLen: 0 });
+const wotMaxDepth = ref<number>();
+const wotIdVerifyLen = ref<number>();
+const wotUpdated = ref(false);
+const debouncedWotUpdated = debounce(() => wotUpdated.value = false, 2000);
+const wotMaxDepthError = ref<Error>();
+const wotIdVerifyLenError = ref<Error>();
+const onSaveError = ref<Error>();
+
+class WotFormValidationFailedError extends Error {
+  constructor() {
+    super('The form is invalid.');
+  }
+}
+
+const wotHasUnsavedChanges = computed(() => {
+  return (
+    initialWebOfTrustSettings.value.wotMaxDepth !== wotMaxDepth.value ||
+    initialWebOfTrustSettings.value.wotIdVerifyLen !== wotIdVerifyLen.value
+  );
+});
 
 async function saveWebOfTrust() {
   onSaveError.value = undefined;
@@ -395,10 +404,10 @@ async function saveWebOfTrust() {
   }
   if (!form.value?.checkValidity()) {
     if (wotMaxDepth.value < 0 || wotMaxDepth.value > 9) {
-      wotMaxDepthError.value = new FormValidationFailedError();
+      wotMaxDepthError.value = new WotFormValidationFailedError();
     }
     if (wotIdVerifyLen.value < 0) {
-      wotIdVerifyLenError.value = new FormValidationFailedError();
+      wotIdVerifyLenError.value = new WotFormValidationFailedError();
     }
     return;
   }
@@ -428,5 +437,7 @@ function resetWebOfTrust() {
   wotMaxDepth.value = initialWebOfTrustSettings.value.wotMaxDepth;
   wotIdVerifyLen.value = initialWebOfTrustSettings.value.wotIdVerifyLen;
 }
+
+// #endregion
 
 </script>
