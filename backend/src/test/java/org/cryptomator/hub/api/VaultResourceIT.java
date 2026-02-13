@@ -68,7 +68,7 @@ import static org.hamcrest.text.IsEqualIgnoringCase.equalToIgnoringCase;
 
 @QuarkusTest
 @DisplayName("Resource /vaults")
-class VaultResourceIT {
+public class VaultResourceIT {
 
 	@InjectMock
 	EventLogger eventLogger;
@@ -94,7 +94,7 @@ class VaultResourceIT {
 
 	@Inject
 	@SuppressWarnings("unused") // needed for @DBRollbackBefore, @DBRollbackAfter
-	Flyway flyway;
+	public Flyway flyway;
 
 	@BeforeAll
 	static void beforeAll() {
