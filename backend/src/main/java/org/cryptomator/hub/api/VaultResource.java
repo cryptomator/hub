@@ -419,24 +419,27 @@ public class VaultResource {
 	@APIResponse(responseCode = "449", description = "User account not yet initialized. Retry after setting up user")
 	@ActiveLicense // may throw 402
 	public Response unlock(@PathParam("vaultId") UUID vaultId, @QueryParam("evenIfArchived") @DefaultValue("false") boolean ignoreArchived) {
+		vaultUnlockMetrics.recordUnlock();
 		var vault = vaultRepo.findById(vaultId); // should always be found, since @VaultRole filter would have triggered
 		if (vault.isArchived() && !ignoreArchived) {
+			vaultUnlockMetrics.recordFailure();
 			throw new GoneException("Vault is archived.");
 		}
 
 		var accessTokenSeats = effectiveVaultAccessRepo.countSeatOccupyingUsersWithAccessToken();
 		if (accessTokenSeats > license.getEntitlements().seats()) {
+			vaultUnlockMetrics.recordFailure();
 			throw new PaymentRequiredException("Number of effective vault users exceeds available license seats");
 		}
 
 		var user = userRepo.findById(jwt.getSubject());
 		if (user.getEcdhPublicKey() == null) {
+			vaultUnlockMetrics.recordFailure();
 			throw new ActionRequiredException("User account not initialized.");
 		}
 		var ipAddress = request.remoteAddress().hostAddress();
 		var deviceId = request.getHeader("Hub-Device-ID");
 		var access = accessTokenRepo.unlock(vaultId, jwt.getSubject());
-		vaultUnlockMetrics.recordUnlock();
 		if (access != null) {
 			eventLogger.logVaultKeyRetrieved(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.SUCCESS, ipAddress, deviceId);
 			vaultUnlockMetrics.recordSuccess();
@@ -451,8 +454,6 @@ public class VaultResource {
 				response = response.header("Hub-Android-License", androidLicense);
 			}
 			return response.build();
-		} else if (vaultRepo.findById(vaultId) == null) {
-			throw new NotFoundException("No such vault.");
 		} else {
 			eventLogger.logVaultKeyRetrieved(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.UNAUTHORIZED, ipAddress, deviceId);
 			vaultUnlockMetrics.recordFailure();
