@@ -41,5 +41,6 @@ public final class GroupDto extends AuthorityDto {
 			@JsonUnwrapped GroupDto group,
 			@JsonProperty("members") List<AuthorityDto> members,
 			@JsonProperty("vaults") List<VaultResource.VaultDtoWithRole> vaults
-	) {}
+	) {
+	}
 }

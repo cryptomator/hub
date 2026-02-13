@@ -44,7 +44,7 @@ public class EntityIT {
 	@Test
 	@TestTransaction
 	@DisplayName("Retrieve the correct token when a user has access to multiple vaults")
-	void testGetCorrectTokenForDeviceWithAcessToMultipleVaults() {
+	void testGetCorrectTokenForDeviceWithAccessToMultipleVaults() {
 		var token = accessTokenRepo.unlock(UUID.fromString("7E57C0DE-0000-4000-8000-000100001111"), "user1");
 		Assertions.assertEquals(UUID.fromString("7E57C0DE-0000-4000-8000-000100001111"), token.getVault().getId());
 		Assertions.assertEquals("user1", token.getUser().getId());

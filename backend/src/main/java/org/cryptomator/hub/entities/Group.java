@@ -80,7 +80,8 @@ public class Group extends Authority {
 		 * Adds the group membership mapping without loading the entities.
 		 * <p>
 		 * This is a lightweight alternative to calling {@link Group#getMembers() group.getMembers().add(...)} but should be avoided if the group is already present in the persistence context.
-		 * @param groupId group ID
+		 *
+		 * @param groupId  group ID
 		 * @param memberId memnber ID
 		 */
 		public void addMember(String groupId, String memberId) {
@@ -95,7 +96,8 @@ public class Group extends Authority {
 		 * Removes the group membership mapping without loading the entities.
 		 * <p>
 		 * This is a lightweight alternative to calling {@link Group#getMembers() group.getMembers().remove(...)} but should be avoided if the group is already present in the persistence context.
-		 * @param groupId group ID
+		 *
+		 * @param groupId  group ID
 		 * @param memberId memnber ID
 		 */
 		public void removeMember(String groupId, String memberId) {

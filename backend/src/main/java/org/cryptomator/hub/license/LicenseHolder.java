@@ -4,6 +4,7 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import io.quarkus.scheduler.Scheduled;
 import io.smallrye.common.annotation.RunOnVirtualThread;
+import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -27,6 +28,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HexFormat;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 @ApplicationScoped
 public class LicenseHolder {
@@ -59,6 +61,11 @@ public class LicenseHolder {
 
 	private DecodedJWT license;
 
+	@PostConstruct
+	void init() {
+		this.license = this.ensureLicenseExists();
+	}
+
 	/**
 	 * Makes sure a valid (but possibly expired) license exists.
 	 * <p>
@@ -67,22 +74,23 @@ public class LicenseHolder {
 	 * @throws JWTVerificationException if the license is invalid
 	 */
 	@Transactional
-	public void ensureLicenseExists() throws JWTVerificationException, WebApplicationException {
+	DecodedJWT ensureLicenseExists() throws JWTVerificationException, WebApplicationException {
 		var settings = settingsRepo.get();
 		if (settings.getLicenseKey() != null && settings.getHubId() != null) {
-			validateExistingLicense(settings);
+			return validateExistingLicense(settings);
 		} else if (initialLicenseToken.isPresent() && initialId.isPresent()) {
-			validateAndApplyInitLicense(settings, initialLicenseToken.get(), initialId.get());
+			return validateAndApplyInitLicense(settings, initialLicenseToken.get(), initialId.get());
 		} else {
-			requestAnonTrialLicense(settings);
+			return requestAnonTrialLicense(settings);
 		}
 	}
 
 	@Transactional(Transactional.TxType.MANDATORY)
-	void validateExistingLicense(Settings settings) throws JWTVerificationException {
+	DecodedJWT validateExistingLicense(Settings settings) throws JWTVerificationException {
 		try {
-			this.license = licenseValidator.validate(settings.getLicenseKey(), settings.getHubId());
+			var validated = licenseValidator.validate(settings.getLicenseKey(), settings.getHubId());
 			LOG.info("Verified existing license.");
+			return validated;
 		} catch (JWTVerificationException e) {
 			LOG.warn("License in database is invalid or does not match hubId", e);
 			throw e;
@@ -90,13 +98,14 @@ public class LicenseHolder {
 	}
 
 	@Transactional(Transactional.TxType.MANDATORY)
-	void validateAndApplyInitLicense(Settings settings, String initialLicenseToken, String initialHubId) throws JWTVerificationException {
+	DecodedJWT validateAndApplyInitLicense(Settings settings, String initialLicenseToken, String initialHubId) throws JWTVerificationException {
 		try {
-			this.license = licenseValidator.validate(initialLicenseToken, initialHubId);
+			var validated = licenseValidator.validate(initialLicenseToken, initialHubId);
 			settings.setLicenseKey(initialLicenseToken);
 			settings.setHubId(initialHubId);
 			settingsRepo.persistAndFlush(settings);
 			LOG.info("Successfully imported license from property hub.initial-license.");
+			return validated;
 		} catch (JWTVerificationException e) {
 			LOG.warn("Provided initial license is invalid or does not match initial hubId.", e);
 			throw e;
@@ -104,16 +113,17 @@ public class LicenseHolder {
 	}
 
 	@Transactional(Transactional.TxType.MANDATORY)
-	void requestAnonTrialLicense(Settings settings) throws WebApplicationException {
+	DecodedJWT requestAnonTrialLicense(Settings settings) throws WebApplicationException {
 		LOG.info("No license found. Requesting trial license...");
 		var challenge = licenseApi.generateTrialChallenge();
 		var solution = solveChallenge(challenge);
 		var trialResponse = licenseApi.generateTrialLicense(solution.toCaptcha());
-		this.license = licenseValidator.validate(trialResponse.licenseKey(), trialResponse.hubId());
+		var validated = licenseValidator.validate(trialResponse.licenseKey(), trialResponse.hubId());
 		settings.setLicenseKey(trialResponse.licenseKey());
 		settings.setHubId(trialResponse.hubId());
 		settingsRepo.persistAndFlush(settings);
 		LOG.info("Successfully retrieved trial license.");
+		return validated;
 	}
 
 	// visible for testing
@@ -186,7 +196,7 @@ public class LicenseHolder {
 			var body = "token=" + URLEncoder.encode(licenseToken, StandardCharsets.UTF_8);
 			var request = HttpRequest.newBuilder() //
 					.uri(refreshUrl) //
-					.headers("Content-Type", "application/x-www-form-urlencoded") //
+					.header("Content-Type", "application/x-www-form-urlencoded") //
 					.POST(HttpRequest.BodyPublishers.ofString(body)) //
 					.version(HttpClient.Version.HTTP_1_1) //
 					.build();
@@ -223,6 +233,7 @@ public class LicenseHolder {
 	 * @return {@code true}, if the license expired, {@code false} otherwise.
 	 */
 	public boolean isExpired() {
+		var license = get();
 		if (license == null) {
 			throw new IllegalStateException();
 		}

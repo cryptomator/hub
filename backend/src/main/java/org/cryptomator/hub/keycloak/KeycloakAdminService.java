@@ -170,7 +170,7 @@ public class KeycloakAdminService {
 		userRepo.deleteById(userId);
 
 		// 2. delete from kc:
-		try (var response = realm.users().delete(userId)){
+		try (var response = realm.users().delete(userId)) {
 			if (response.getStatus() != 204) {
 				throw new InternalServerErrorException("Failed to delete user in Keycloak. Status: " + response.getStatus());
 			}

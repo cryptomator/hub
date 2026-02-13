@@ -8,6 +8,11 @@ export type JWTHeader = {
   [other: string]: undefined | string | number | boolean | object; // allow further properties
 }
 
+export const ECDSA_P384: EcKeyImportParams | EcKeyGenParams = {
+  name: 'ECDSA',
+  namedCurve: 'P-384'
+};
+
 export class JWT {
   /**
    * Creates an ES384 JWT (signed with ECDSA using P-384 and SHA-384).

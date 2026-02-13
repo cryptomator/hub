@@ -1,10 +1,12 @@
 package org.cryptomator.hub.api;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.cryptomator.hub.entities.Authority;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 abstract sealed class AuthorityDto permits UserDto, GroupDto, MemberDto {
 
 	public enum Type {

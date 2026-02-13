@@ -18,7 +18,10 @@ public class Main implements QuarkusApplication {
 	@Override
 	public int run(String... args) throws Exception {
 		try {
-			license.ensureLicenseExists();
+			if (license.get() == null) {
+				LOG.error("No license found, shutting down...");
+				return 2;
+			}
 		} catch (RuntimeException e) {
 			LOG.error("Failed to validate license, shutting down...", e);
 			return 1;

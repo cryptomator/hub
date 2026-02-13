@@ -1,6 +1,6 @@
 <template>
   <div
-    class="rounded-md p-4 mb-3 ring-1"
+    class="rounded-md p-4 ring-1"
     :class="[typeStyles.bg, typeStyles.border]"
   >
     <div class="flex">

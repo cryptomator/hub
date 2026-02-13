@@ -38,7 +38,7 @@ import static org.hamcrest.CoreMatchers.is;
 
 @QuarkusTest
 @DisplayName("Resource /groups")
-public class GroupsResourceIT {
+class GroupsResourceIT {
 
 	@Inject
 	AgroalDataSource dataSource;
@@ -77,7 +77,7 @@ public class GroupsResourceIT {
 		var group1 = groupRepo.findById("group1");
 		group1.getMembers().add(group999);
 		groupRepo.persist(group1);
-		
+
 		effectiveGroupMembershipRepo.updateGroups(List.of("group1", "group999"));
 	}
 
@@ -94,7 +94,7 @@ public class GroupsResourceIT {
 	@OidcSecurity(claims = {
 			@Claim(key = "sub", value = "admin")
 	})
-	public class AsAdmin {
+	class AsAdmin {
 
 		@Test
 		@DisplayName("GET /groups returns 200")
