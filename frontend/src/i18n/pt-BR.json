@@ -230,6 +230,7 @@
   "emergencyAccess.filter.startable": "Iniciável",
   "emergencyAccess.empty.disabled": "O acesso de emergência está desativado.",
   "emergencyAccess.empty.noneFound": "Nenhum cofre de emergência encontrado.",
+  "emergencyAccess.licenseRequired.message": "O acesso de emergência está disponível apenas com uma licença paga.",
   "emergencyAccess.badge.noRedundancy.title": "Nenhuma redundância",
   "emergencyAccessDialog.label.selectOwner": "Selecione o usuário com a função de proprietário",
   "emergencyAccessDialog.label.selectMember": "Selecione o usuário com a função de membro",
