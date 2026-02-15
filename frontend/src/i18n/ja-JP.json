@@ -48,6 +48,7 @@
   "admin.licenseInfo.expiresAt.description.valid": "あなたのライセンスは有効です。",
   "admin.licenseInfo.expiresAt.description.expired": "あなたのライセンスは期限切れです。",
   "admin.licenseInfo.manageSubscription": "サブスクリプションの管理",
+  "admin.licenseInfo.getFreeCeLicense": "無料CEライセンスを取得",
   "admin.licenseInfo.type.title": "種類",
   "admin.licenseInfo.getLicense": "ライセンスを取得",
   "admin.webOfTrust.information": "さらに詳しく",
