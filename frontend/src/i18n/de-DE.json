@@ -80,6 +80,7 @@
   "admin.webOfTrust.save": "Speichern",
   "admin.webOfTrust.saved": "Gespeichert!",
   "admin.emergencyAccess.learnMore": "Mehr erfahren.",
+  "admin.emergencyAccess.noRedundancy.title": "Ihre aktuelle Schlüsselaufteilung hat keine Redundanz!",
   "archiveVaultDialog.title": "Tresor archivieren",
   "archiveVaultDialog.description": "Das Archivieren eines Tresors macht ihn inaktiv. Dadurch können belegte Sitze frei werden. Ein archivierter Tresor kann später wieder aktiviert werden.",
   "archiveVaultDialog.confirm": "Archivieren",
