@@ -353,7 +353,7 @@
   "initialSetup.recoverUserKey.lostAccountKey.resetUserAccount": "Redefinir a minha conta",
   "initialSetup.setupAlreadyCompleted.title": "Configuração já concluída",
   "initialSetup.setupAlreadyCompleted.description": "Você já concluiu a configuração inicial do Cryptomator Hub. Sua Chave de Conta pode ser encontrada em seu perfil.",
-  "initialSetup.setupAlreadyCompleted.goToYourProfile": "Ir para o seu perfil",
+  "initialSetup.setupAlreadyCompleted.goToYourProfile": "Acessar meu perfil",
   "initialSetup.accountKey": "Chave da Conta",
   "initialSetup.submit": "Finalizar configuração",
   "licenseAlert.noRemainingSeats.title": "Licença excedida",
