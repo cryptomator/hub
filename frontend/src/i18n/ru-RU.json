@@ -108,6 +108,7 @@
   "admin.emergencyAccess.example.help": "Пример, кто может сотрудничать для восстановления хранилища.",
   "admin.emergencyAccess.validation.maxValue": "Макс. значение {0}.",
   "admin.emergencyAccess.validation.minValue": "Мин. значение {0}.",
+  "admin.emergencyAccess.validation.minMembersAtLeastRequiredShares": "Должно быть больше или равно требуемым ресурсам ключей.",
   "archiveVaultDialog.title": "Архивное хранилище",
   "archiveVaultDialog.description": "Архивирование хранилища делает его неактивным. Это может высвободить занятые места. Архивированное хранилище потом можно снова активировать.",
   "archiveVaultDialog.confirm": "Архивировать",
