@@ -1,5 +1,5 @@
 import { aessiv } from '@noble/ciphers/aes.js';
-import { base16, base32, base64, base64nopad, base64urlnopad } from '@scure/base';
+import { base16, base32, base64, base64urlnopad } from '@scure/base';
 import { JWEBuilder, JWEParser } from './jwe';
 import { CRC32, DB, UTF8, wordEncoder } from './util';
 
@@ -116,7 +116,7 @@ export class VaultKeys {
       {
         name: 'PBKDF2',
         hash: 'SHA-256',
-        salt: base64nopad.decode(salt) as Uint8Array<ArrayBuffer>,
+        salt: base64.decode(salt) as Uint8Array<ArrayBuffer>,
         iterations: iterations
       },
       await pwKey,
