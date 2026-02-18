@@ -73,7 +73,7 @@
             </tr>
             <!-- Mobile -->
             <tr class="sm:hidden">
-              <td class="px-4 py-4 text-sm text-gray-900">
+              <td colspan="3" class="px-4 py-4 text-sm text-gray-900">
                 <div class="flex items-start gap-2">
                   <span v-if="device.type == 'BROWSER'" :title="t('deviceType.browser')">
                     <WindowIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
@@ -130,15 +130,8 @@
             </tr>
           </template>
 
-          <!-- Desktop empty state -->
-          <tr v-if="!filteredDevices.length" class="hidden sm:table-row">
-            <td colspan="3" class="py-4 px-6 text-sm text-gray-500 text-center">
-              {{ t(deviceQuery ? 'common.nothingFound' : 'common.none') }}
-            </td>
-          </tr>
-          <!-- Mobile empty state -->
-          <tr v-if="!filteredDevices.length" class="sm:hidden">
-            <td class="py-4 px-4 text-sm text-gray-500 text-center">
+          <tr v-if="!filteredDevices.length">
+            <td colspan="3" class="py-4 px-4 sm:px-6 text-sm text-gray-500 text-center">
               {{ t(deviceQuery ? 'common.nothingFound' : 'common.none') }}
             </td>
           </tr>
