@@ -38,7 +38,7 @@ public class BillingResourceManagedInstanceIT {
 
 	@BeforeEach
 	public void setup() {
-		licenseHolder.ensureLicenseExists();
+		licenseHolder.get();
 	}
 
 	public static class ManagedInstanceTestProfile implements QuarkusTestProfile {

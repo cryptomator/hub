@@ -213,6 +213,8 @@
           </div>
         </form>
       </section>
+
+      <AdminSettingsEmergencyAccess/>
     </div>
   </div>
 </template>
@@ -222,13 +224,14 @@ import { ArrowRightIcon, ArrowTopRightOnSquareIcon, CheckIcon, ExclamationTriang
 import semver from 'semver';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { BillingDto, VersionDto } from '../common/backend';
+import backend, { BillingDto, LicenseUserInfoDto, VersionDto } from '../common/backend';
 import config, { absFrontendBaseURL } from '../common/config';
 import { FetchUpdateError, LatestVersionDto, updateChecker } from '../common/updatecheck';
 import { debounce } from '../common/util';
 import FetchError from './FetchError.vue';
+import AdminSettingsEmergencyAccess from './AdminSettingsEmergencyAccess.vue';
 
-const { t, d, locale, fallbackLocale } = useI18n({ useScope: 'global' });
+const { t, d } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{
   token?: string
@@ -241,6 +244,7 @@ const now = ref<Date>(new Date());
 const keycloakAdminRealmURL = ref<string>();
 const wotMaxDepth = ref<number>();
 const wotIdVerifyLen = ref<number>();
+
 const wotUpdated = ref(false);
 const debouncedWotUpdated = debounce(() => wotUpdated.value = false, 2000);
 const form = ref<HTMLFormElement>();
@@ -318,7 +322,7 @@ async function fetchData() {
     billing.value = await backend.billing.get();
     version.value = await versionDto;
     latestVersion.value = await versionAvailable;
-    
+
     const settings = await backend.settings.get();
     wotMaxDepth.value = settings.wotMaxDepth;
     wotIdVerifyLen.value = settings.wotIdVerifyLen;
@@ -368,7 +372,7 @@ async function saveWebOfTrust() {
       wotMaxDepth: wotMaxDepth.value,
       wotIdVerifyLen: wotIdVerifyLen.value
     };
-    await backend.settings.put(settings);
+    await backend.settings.update(settings);
     wotUpdated.value = true;
     debouncedWotUpdated();
   } catch (error) {

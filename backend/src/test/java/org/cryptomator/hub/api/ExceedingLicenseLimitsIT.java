@@ -48,7 +48,7 @@ import static org.hamcrest.text.IsEqualIgnoringCase.equalToIgnoringCase;
 })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class ExceedingLicenseLimitsIT {
+class ExceedingLicenseLimitsIT {
 
 	@Inject
 	Group.Repository groupRepo;
@@ -120,7 +120,7 @@ public class ExceedingLicenseLimitsIT {
 	}
 
 	@BeforeEach
-	public void setup() {
+	void setup() {
 		var entitlements = HubLicenseEntitlements.create().withSeats(5L);
 		Mockito.doReturn(entitlements).when(licenseHolder).getEntitlements();
 		Mockito.doReturn(false).when(licenseHolder).isExpired();
@@ -181,7 +181,7 @@ public class ExceedingLicenseLimitsIT {
 		Assumptions.assumeTrue(vaultResourceIT.effectiveVaultAccessRepo.countSeatOccupyingUsers() == 5);
 		var vaultId = "7E57C0DE-0000-4000-8000-000100001111";
 
-		var vaultDto = new VaultResource.VaultDto(UUID.fromString(vaultId), "Vault 1", "This is a testvault.", false, Instant.parse("2222-11-11T11:11:11Z"), "someValue", -1, "doNotUpdate", "doNotUpdate", "doNotUpdate");
+		var vaultDto = new VaultResource.VaultDto(UUID.fromString(vaultId), "Vault 1", Instant.parse("2222-11-11T11:11:11Z"), "This is a testvault.", false, 0, Map.of(), "someVaule", -1, "doNotUpdate", "doNotUpdate", "doNotUpdate");
 		given().contentType(ContentType.JSON)
 				.body(vaultDto)
 				.when().put("/vaults/{vaultId}", vaultId)
@@ -207,7 +207,7 @@ public class ExceedingLicenseLimitsIT {
 		Assumptions.assumeTrue(vaultResourceIT.effectiveVaultAccessRepo.countSeatOccupyingUsers() > 5);
 
 		var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-0001FFFF3333");
-		var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", "Test vault 4", false, Instant.parse("2112-12-21T21:12:21Z"), "masterkey3", 42, "NaCl", "authPubKey3", "authPrvKey3");
+		var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", Instant.parse("2112-12-21T21:12:21Z"), "Test vault 4", false, 0, Map.of(), "masterkey3", 42, "NaCl", "authPubKey3", "authPrvKey3");
 		given().contentType(ContentType.JSON).body(vaultDto)
 				.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-0001FFFF3333")
 				.then().statusCode(402);

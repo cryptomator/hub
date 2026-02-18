@@ -172,7 +172,7 @@ public class DeviceResource {
 	@APIResponse(responseCode = "200")
 	public Map<UUID, String> getLegacyAccessTokens(@PathParam("deviceId") @ValidId String deviceId) {
 		return legacyAccessTokenRepo.getByDeviceAndOwner(deviceId, jwt.getSubject())
-				.collect(Collectors.toMap(token -> token.getId().getVaultId(), LegacyAccessToken::getJwe));
+				.collect(Collectors.toMap(token -> token.getId().vaultId(), LegacyAccessToken::getJwe));
 	}
 
 	@DELETE

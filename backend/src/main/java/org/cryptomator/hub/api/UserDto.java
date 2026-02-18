@@ -113,6 +113,7 @@ public final class UserDto extends AuthorityDto {
 
 	/**
 	 * Same as {@link #ecdhPublicKey}, kept for compatibility purposes
+	 *
 	 * @deprecated to be removed in Hub 2.0.0, tracked in <a href="https://github.com/cryptomator/hub/issues/316">#316</a>
 	 */
 	@Deprecated(forRemoval = true)
@@ -133,6 +134,7 @@ public final class UserDto extends AuthorityDto {
 
 	/**
 	 * Same as {@link #privateKeys}, kept for compatibility purposes
+	 *
 	 * @deprecated to be removed in Hub 2.0.0, tracked in <a href="https://github.com/cryptomator/hub/issues/316">#316</a>
 	 */
 	@Deprecated(forRemoval = true)
@@ -172,12 +174,12 @@ public final class UserDto extends AuthorityDto {
 	}
 
 	public WithDetails withDetails(List<GroupDto> groups, List<VaultResource.VaultDtoWithRole> accessibleVaults, Set<DeviceResource.DeviceDto> devices, Set<DeviceResource.DeviceDto> legacyDevices) {
-			return new WithDetails(
-					this,
-					groups,
-					accessibleVaults,
-					devices,
-					legacyDevices);
+		return new WithDetails(
+				this,
+				groups,
+				accessibleVaults,
+				devices,
+				legacyDevices);
 	}
 
 	public record WithCounts(
@@ -185,7 +187,8 @@ public final class UserDto extends AuthorityDto {
 			@JsonProperty("devicesCount") long devicesCount,
 			@JsonProperty("groupsCount") long groupsCount,
 			@JsonProperty("accessibleVaultCount") long accessibleVaultCount
-	) {}
+	) {
+	}
 
 	public record WithDetails(
 			@JsonUnwrapped UserDto user,
@@ -193,5 +196,6 @@ public final class UserDto extends AuthorityDto {
 			@JsonProperty("accessibleVaults") List<VaultResource.VaultDtoWithRole> accessibleVaults,
 			@JsonProperty("devices") Set<DeviceResource.DeviceDto> devices,
 			@JsonProperty("legacyDevices") Set<DeviceResource.DeviceDto> legacyDevices
-	) {}
+	) {
+	}
 }
