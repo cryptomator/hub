@@ -1,0 +1,12 @@
+{{- if .Values.keycloak.realmBootstrap.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "cryptomator-hub.fullname" . }}-keycloak-realm
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cryptomator-hub.labels" . | nindent 4 }}
+data:
+  realm.json: |
+{{ include "cryptomator-hub.realmJson" . | indent 4 }}
+{{- end }}

@@ -1,0 +1,28 @@
+global:
+  host: ""
+
+hub:
+  image:
+    tag: stable
+  admin:
+    username: admin
+    password: admin
+    passwordTemporary: true
+
+keycloak:
+  enabled: true
+  admin:
+    password: admin
+
+postgres:
+  enabled: true
+  auth:
+    adminPassword: top-secret
+    hubPassword: top-secret
+    keycloakPassword: top-secret
+  storage:
+    size: 1Gi
+  resources:
+    requests:
+      cpu: 25m
+      memory: 128Mi

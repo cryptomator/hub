@@ -1,0 +1,45 @@
+global:
+  host: hub.example.com
+
+hub:
+  image:
+    tag: stable
+  admin:
+    username: admin
+    password: replace-me
+    passwordTemporary: true
+  resources:
+    requests:
+      cpu: 20m
+      memory: 16Mi
+    limits:
+      cpu: 200m
+      memory: 96Mi
+
+keycloak:
+  enabled: true
+  admin:
+    password: replace-me
+  resources:
+    requests:
+      cpu: 50m
+      memory: 512Mi
+    limits:
+      cpu: 100m
+      memory: 1Gi
+
+postgres:
+  enabled: true
+  auth:
+    adminPassword: replace-me
+    hubPassword: replace-me
+    keycloakPassword: replace-me
+  storage:
+    size: 20Gi
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi

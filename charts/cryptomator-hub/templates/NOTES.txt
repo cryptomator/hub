@@ -1,0 +1,17 @@
+Cryptomator Hub was installed.
+
+Hub service:
+  {{ include "cryptomator-hub.fullname" . }}:{{ .Values.hub.service.port }}
+
+{{- if .Values.keycloak.enabled }}
+Keycloak service:
+  {{ include "cryptomator-hub.keycloakServiceName" . }}:{{ .Values.keycloak.service.httpPort }}
+{{- end }}
+
+{{- if .Values.postgres.enabled }}
+PostgreSQL service:
+  {{ include "cryptomator-hub.postgresServiceName" . }}:{{ .Values.postgres.service.port }}
+{{- end }}
+
+Because ingress is not part of chart v1, use port-forward for quick checks:
+  kubectl port-forward svc/{{ include "cryptomator-hub.fullname" . }} 8080:{{ .Values.hub.service.port }}

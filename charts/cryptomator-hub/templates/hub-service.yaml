@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "cryptomator-hub.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cryptomator-hub.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.hub.service.type }}
+  selector:
+    {{- include "cryptomator-hub.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: hub
+  ports:
+    - name: http
+      protocol: TCP
+      port: {{ .Values.hub.service.port }}
+      targetPort: http

@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "cryptomator-hub.fullname" . }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cryptomator-hub.labels" . | nindent 4 }}
+data:
+  HUB_PUBLIC_ROOT_PATH: {{ .Values.hub.config.publicRootPath | quote }}
+  HUB_KEYCLOAK_PUBLIC_URL: {{ include "cryptomator-hub.keycloakPublicUrl" . | quote }}
+  HUB_KEYCLOAK_LOCAL_URL: {{ include "cryptomator-hub.keycloakLocalUrl" . | quote }}
+  HUB_KEYCLOAK_REALM: {{ .Values.hub.config.keycloakRealm | quote }}
+  HUB_KEYCLOAK_SYSTEM_CLIENT_ID: "cryptomatorhub-system"
+  HUB_KEYCLOAK_SYNCER_PERIOD: {{ .Values.hub.config.keycloakSyncerPeriod | quote }}
+  HUB_KEYCLOAK_OIDC_CRYPTOMATOR_CLIENT_ID: "cryptomator"
+  QUARKUS_OIDC_AUTH_SERVER_URL: {{ include "cryptomator-hub.oidcAuthServerUrl" . | quote }}
+  QUARKUS_OIDC_TOKEN_ISSUER: {{ include "cryptomator-hub.oidcTokenIssuer" . | quote }}
+  QUARKUS_OIDC_CLIENT_ID: {{ .Values.hub.oidc.clientId | quote }}
+  QUARKUS_DATASOURCE_JDBC_URL: {{ include "cryptomator-hub.hubJdbcUrl" . | quote }}
+  QUARKUS_DATASOURCE_USERNAME: {{ include "cryptomator-hub.hubDbUsername" . | quote }}
+  QUARKUS_HTTP_PROXY_PROXY_ADDRESS_FORWARDING: "true"

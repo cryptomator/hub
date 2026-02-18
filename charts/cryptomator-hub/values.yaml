@@ -1,0 +1,126 @@
+global:
+  host: ""
+
+hub:
+  image:
+    repository: ghcr.io/cryptomator/hub
+    tag: stable
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8080
+  resources:
+    requests:
+      cpu: 10m
+      memory: 8Mi
+    limits:
+      cpu: 100m
+      memory: 64Mi
+  podSecurityContext:
+    runAsNonRoot: true
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+  waitForDependencies: true
+  config:
+    publicRootPath: /
+    keycloakRealm: cryptomator
+    keycloakSyncerPeriod: 5m
+    keycloakPublicUrl: ""
+    keycloakLocalUrl: ""
+  oidc:
+    clientId: cryptomatorhub
+    authServerUrl: ""
+    tokenIssuer: ""
+  database:
+    jdbcUrl: ""
+    username: ""
+  admin:
+    username: admin
+    password: admin
+    passwordTemporary: true
+  secrets:
+    create: true
+    existingSecret: ""
+    keys:
+      systemClientSecret: hub-system-client-secret
+      dbPassword: hub-db-password
+      initialId: hub-initial-id
+      initialLicense: hub-initial-license
+    data:
+      systemClientSecret: "" # optional; auto-generated when chart manages Hub secret
+      dbPassword: "change-me" # only used when postgres.enabled=false and hub.secrets.create=true
+      initialId: ""
+      initialLicense: ""
+
+keycloak:
+  enabled: true
+  image:
+    repository: ghcr.io/cryptomator/keycloak
+    tag: "26.5.3"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    httpPort: 8080
+    managementPort: 9000
+  resources:
+    requests:
+      cpu: 20m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 640Mi
+  podSecurityContext: {}
+  securityContext: {}
+  admin:
+    username: admin
+    password: admin
+  config:
+    relativePath: /kc
+    proxyHeaders: xforwarded
+    hostname: ""
+  auth:
+    dbUsername: keycloak
+    dbPassword: ""
+  database:
+    url: ""
+  realmBootstrap:
+    enabled: true
+    realmId: "9e2a8718-debe-4e72-9867-1b3f84beba3d"
+    publicHost: ""
+    systemClientSecret: ""
+
+postgres:
+  enabled: true
+  image:
+    repository: postgres
+    tag: "17-alpine"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 5432
+  storage:
+    size: 10Gi
+    storageClassName: ""
+    accessMode: ReadWriteOnce
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+  podSecurityContext: {}
+  securityContext: {}
+  auth:
+    adminUsername: postgres
+    adminPassword: "change-me"
+    hubDatabase: hub
+    hubUsername: hub
+    hubPassword: "change-me"
+    keycloakDatabase: keycloak
+    keycloakUsername: keycloak
+    keycloakPassword: "change-me"
