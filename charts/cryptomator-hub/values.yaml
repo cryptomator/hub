@@ -1,6 +1,16 @@
 global:
   host: ""
 
+ingress:
+  enabled: true
+  className: ""
+  annotations: {}
+  hubPath: /
+  keycloakPath: /kc
+  tls:
+    enabled: false
+    secretName: ""
+
 hub:
   image:
     repository: ghcr.io/cryptomator/hub

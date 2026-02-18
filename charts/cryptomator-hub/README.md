@@ -6,12 +6,15 @@ This chart deploys:
 - Keycloak (optional, enabled by default)
 - PostgreSQL (optional, enabled by default)
 
-Ingress and TLS are intentionally not part of v1.
+TLS termination is currently expected to be done by ingress controller.
+
 
 ## Quick Start (Full Internal Stack)
 
 ```bash
 helm install hub charts/cryptomator-hub \
+  --namespace default \
+  --set ingress.enabled=true \
   --set global.host=domain.tld \
   --set postgres.auth.adminPassword=<postgres-admin-password> \
   --set postgres.auth.hubPassword=<hub-db-password> \

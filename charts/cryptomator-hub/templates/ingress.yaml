@@ -1,0 +1,43 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "cryptomator-hub.fullname" . }}-ingress
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cryptomator-hub.labels" . | nindent 4 }}
+  {{- with .Values.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.global.host | required "global.host must be set when ingress.enabled=true" | quote }}
+      http:
+        paths:
+          - path: {{ .Values.ingress.hubPath }}
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "cryptomator-hub.fullname" . }}
+                port:
+                  number: {{ .Values.hub.service.port }}
+          {{- if .Values.keycloak.enabled }}
+          - path: {{ .Values.ingress.keycloakPath }}
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "cryptomator-hub.keycloakServiceName" . }}
+                port:
+                  number: {{ .Values.keycloak.service.httpPort }}
+          {{- end }}
+  {{- if .Values.ingress.tls.enabled }}
+  tls:
+    - hosts:
+        - {{ .Values.global.host | required "global.host must be set when ingress.enabled=true" | quote }}
+      secretName: {{ .Values.ingress.tls.secretName | required "ingress.tls.secretName must be set when ingress.tls.enabled=true" }}
+  {{- end }}
+{{- end }}
