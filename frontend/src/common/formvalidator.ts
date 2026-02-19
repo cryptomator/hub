@@ -15,11 +15,11 @@ export class FormValidator {
     firstName?: string,
     lastName?: string,
     username: string,
-    email?: string | null,
+    email?: string,
     password: string,
     passwordConfirm: string,
     isEditMode: boolean,
-    initialEmail?: string | null,
+    initialEmail?: string,
     pictureUrl?: string,
     isValidImageUrl?: boolean
   }): ValidationResult {
@@ -97,7 +97,7 @@ export class FormValidator {
   /**
    * Validates email format
    */
-  static isValidEmail(email: string | null | undefined): boolean {
+  static isValidEmail(email?: string): boolean {
     if (!email) return false;
     return /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(email.trim());
   }
@@ -105,7 +105,7 @@ export class FormValidator {
   /**
    * Checks if email is required (always for CREATE, only if previously set for EDIT)
    */
-  static isEmailRequired(isEditMode: boolean, initialEmail?: string | null): boolean {
+  static isEmailRequired(isEditMode: boolean, initialEmail?: string): boolean {
     if (!isEditMode) return true;
     return !!initialEmail?.trim();
   }

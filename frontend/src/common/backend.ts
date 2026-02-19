@@ -87,7 +87,7 @@ export type UserDto = {
   id: string;
   name: string;
   pictureUrl?: string;
-  email?: string | null;
+  email?: string;
   firstName?: string;
   lastName?: string;
   realmRoles: RealmRole[];
