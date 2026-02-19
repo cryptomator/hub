@@ -21,7 +21,7 @@ hub:
       memory: 8Mi
     limits:
       cpu: 500m
-      memory: 64Mi
+      memory: 128Mi
   config:
     publicRootPath: /
     keycloakRealm: cryptomator
@@ -37,10 +37,10 @@ hub:
     jdbcUrl: ""
     name: hub
     username: hub
-    password: "change-me"
+    password: ""
   admin:
     username: admin
-    password: admin
+    password: ""
     passwordTemporary: true
   secrets:
     create: true
@@ -64,16 +64,15 @@ keycloak:
       memory: 640Mi
   admin:
     username: admin
-    password: admin
+    password: ""
   config:
     relativePath: /kc
     proxyHeaders: xforwarded
-    hostname: ""
   database:
     url: ""
     name: keycloak
     username: keycloak
-    password: "change-me"
+    password: ""
   realmBootstrap:
     enabled: true
     realmId: ""
@@ -97,4 +96,4 @@ postgres:
       memory: 256Mi
   auth:
     adminUsername: postgres
-    adminPassword: "change-me"
+    adminPassword: ""

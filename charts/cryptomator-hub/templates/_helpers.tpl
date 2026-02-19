@@ -104,13 +104,121 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 {{- end -}}
 
+{{/* 
+
+Auto-generated secrets below:
+
+1. try to use cached value (required so we don't generate a new random value on every template rendering)
+2. try to use value from values.yaml (if user has set it, e.g. `hub.secrets.systemClientSecret`)
+3. try to look up existing secret in cluster and use it if it exists (this allows users to upgrade from older versions of the chart without losing their secrets)
+4. if all else fails, generate a new random value
+
+*/}}
+
 {{- define "cryptomator-hub.resolvedSystemClientSecret" -}}
-{{- if not (hasKey .Values "_resolvedSystemClientSecret") -}}
-{{- $_ := set .Values "_resolvedSystemClientSecret" (default (randAlphaNum 32) .Values.hub.secrets.systemClientSecret) -}}
+{{- if hasKey .Values "_resolvedSystemClientSecret" -}}
+{{- index .Values "_resolvedSystemClientSecret" -}}
+{{- else if .Values.hub.secrets.systemClientSecret -}}
+{{- $_ := set .Values "_resolvedSystemClientSecret" .Values.hub.secrets.systemClientSecret -}}
+{{- index .Values "_resolvedSystemClientSecret" -}}
+{{- else -}}
+{{- $secretName := print (include "cryptomator-hub.fullname" .) "-secrets-hub" -}}
+{{- $existing := lookup "v1" "Secret" .Release.Namespace $secretName -}}
+{{- if and $existing (hasKey $existing.data "hub_system_client_secret") -}}
+{{- $_ := set .Values "_resolvedSystemClientSecret" (index $existing.data "hub_system_client_secret" | b64dec) -}}
+{{- else -}}
+{{- $_ := set .Values "_resolvedSystemClientSecret" (randAlphaNum 32) -}}
 {{- end -}}
 {{- index .Values "_resolvedSystemClientSecret" -}}
 {{- end -}}
+{{- end -}}
 
-{{- define "cryptomator-hub.realmSystemClientSecret" -}}
-{{- include "cryptomator-hub.resolvedSystemClientSecret" . -}}
+{{- define "cryptomator-hub.resolvedHubDbPassword" -}}
+{{- if hasKey .Values "_resolvedHubDbPassword" -}}
+{{- index .Values "_resolvedHubDbPassword" -}}
+{{- else if .Values.hub.database.password -}}
+{{- $_ := set .Values "_resolvedHubDbPassword" .Values.hub.database.password -}}
+{{- index .Values "_resolvedHubDbPassword" -}}
+{{- else -}}
+{{- $secretName := print (include "cryptomator-hub.fullname" .) "-secrets-hub" -}}
+{{- $existing := lookup "v1" "Secret" .Release.Namespace $secretName -}}
+{{- if and $existing (hasKey $existing.data "hub_db_password") -}}
+{{- $_ := set .Values "_resolvedHubDbPassword" (index $existing.data "hub_db_password" | b64dec) -}}
+{{- else -}}
+{{- $_ := set .Values "_resolvedHubDbPassword" (randAlphaNum 32) -}}
+{{- end -}}
+{{- index .Values "_resolvedHubDbPassword" -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "cryptomator-hub.resolvedHubAdminPassword" -}}
+{{- if hasKey .Values "_resolvedHubAdminPassword" -}}
+{{- index .Values "_resolvedHubAdminPassword" -}}
+{{- else if .Values.hub.admin.password -}}
+{{- $_ := set .Values "_resolvedHubAdminPassword" .Values.hub.admin.password -}}
+{{- index .Values "_resolvedHubAdminPassword" -}}
+{{- else -}}
+{{- $secretName := print (include "cryptomator-hub.fullname" .) "-secrets-kc" -}}
+{{- $existing := lookup "v1" "Secret" .Release.Namespace $secretName -}}
+{{- if and $existing (hasKey $existing.data "hub-admin-password") -}}
+{{- $_ := set .Values "_resolvedHubAdminPassword" (index $existing.data "hub-admin-password" | b64dec) -}}
+{{- else -}}
+{{- $_ := set .Values "_resolvedHubAdminPassword" (randAlphaNum 32) -}}
+{{- end -}}
+{{- index .Values "_resolvedHubAdminPassword" -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "cryptomator-hub.resolvedKeycloakDbPassword" -}}
+{{- if hasKey .Values "_resolvedKeycloakDbPassword" -}}
+{{- index .Values "_resolvedKeycloakDbPassword" -}}
+{{- else if .Values.keycloak.database.password -}}
+{{- $_ := set .Values "_resolvedKeycloakDbPassword" .Values.keycloak.database.password -}}
+{{- index .Values "_resolvedKeycloakDbPassword" -}}
+{{- else -}}
+{{- $secretName := print (include "cryptomator-hub.fullname" .) "-secrets-kc" -}}
+{{- $existing := lookup "v1" "Secret" .Release.Namespace $secretName -}}
+{{- if and $existing (hasKey $existing.data "db-password") -}}
+{{- $_ := set .Values "_resolvedKeycloakDbPassword" (index $existing.data "db-password" | b64dec) -}}
+{{- else -}}
+{{- $_ := set .Values "_resolvedKeycloakDbPassword" (randAlphaNum 32) -}}
+{{- end -}}
+{{- index .Values "_resolvedKeycloakDbPassword" -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "cryptomator-hub.resolvedKeycloakAdminPassword" -}}
+{{- if hasKey .Values "_resolvedKeycloakAdminPassword" -}}
+{{- index .Values "_resolvedKeycloakAdminPassword" -}}
+{{- else if .Values.keycloak.admin.password -}}
+{{- $_ := set .Values "_resolvedKeycloakAdminPassword" .Values.keycloak.admin.password -}}
+{{- index .Values "_resolvedKeycloakAdminPassword" -}}
+{{- else -}}
+{{- $secretName := print (include "cryptomator-hub.fullname" .) "-secrets-kc" -}}
+{{- $existing := lookup "v1" "Secret" .Release.Namespace $secretName -}}
+{{- if and $existing (hasKey $existing.data "admin-password") -}}
+{{- $_ := set .Values "_resolvedKeycloakAdminPassword" (index $existing.data "admin-password" | b64dec) -}}
+{{- else -}}
+{{- $_ := set .Values "_resolvedKeycloakAdminPassword" (randAlphaNum 32) -}}
+{{- end -}}
+{{- index .Values "_resolvedKeycloakAdminPassword" -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "cryptomator-hub.resolvedPostgresAdminPassword" -}}
+{{- if hasKey .Values "_resolvedPostgresAdminPassword" -}}
+{{- index .Values "_resolvedPostgresAdminPassword" -}}
+{{- else if .Values.postgres.auth.adminPassword -}}
+{{- $_ := set .Values "_resolvedPostgresAdminPassword" .Values.postgres.auth.adminPassword -}}
+{{- index .Values "_resolvedPostgresAdminPassword" -}}
+{{- else -}}
+{{- $secretName := print (include "cryptomator-hub.fullname" .) "-secrets-pg" -}}
+{{- $existing := lookup "v1" "Secret" .Release.Namespace $secretName -}}
+{{- if and $existing (hasKey $existing.data "admin-password") -}}
+{{- $_ := set .Values "_resolvedPostgresAdminPassword" (index $existing.data "admin-password" | b64dec) -}}
+{{- else -}}
+{{- $_ := set .Values "_resolvedPostgresAdminPassword" (randAlphaNum 32) -}}
+{{- end -}}
+{{- index .Values "_resolvedPostgresAdminPassword" -}}
+{{- end -}}
 {{- end -}}

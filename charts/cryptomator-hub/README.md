@@ -18,15 +18,15 @@ TLS termination is currently expected to be done by ingress controller.
 
 ```bash
 helm install hub charts/cryptomator-hub \
-  --namespace default \
+  --namespace cryptomator \
+  --create-namespace \
+  --wait --timeout 5m \
   --set ingress.enabled=true \
-  --set global.host=domain.tld \
-  --set postgres.auth.adminPassword=<postgres-admin-password> \
-  --set hub.database.password=<hub-db-password> \
-  --set keycloak.database.password=<keycloak-db-password> \
-  --set keycloak.admin.password=<keycloak-bootstrap-admin-password> \
-  --set hub.admin.password=<hub-admin-password>
+  --set global.host=domain.tld
 ```
+
+Passwords are optional by default. If unset, the chart generates random values and
+prints commands in `helm` notes to retrieve them from Kubernetes Secrets.
 
 The Keycloak realm import is rendered from a dedicated template using:
 
@@ -38,6 +38,9 @@ The Keycloak realm import is rendered from a dedicated template using:
 
 ```bash
 helm install hub charts/cryptomator-hub \
+  --namespace cryptomator \
+  --create-namespace \
+  --wait --timeout 5m \
   --set keycloak.enabled=false \
   --set postgres.enabled=false \
   --set hub.database.jdbcUrl='jdbc:postgresql://db.example:5432/hub' \

@@ -49,7 +49,7 @@
       "credentials": [
         {
           "type": "password",
-          "value": {{ .Values.hub.admin.password | quote }},
+          "value": {{ include "cryptomator-hub.resolvedHubAdminPassword" . | quote }},
           "temporary": {{ .Values.hub.admin.passwordTemporary }}
         }
       ],
