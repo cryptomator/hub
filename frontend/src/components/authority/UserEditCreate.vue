@@ -395,7 +395,7 @@ async function onSubmit() {
   data.firstName = data.firstName?.trim();
   data.lastName = data.lastName?.trim();
   data.name = data.name.trim();
-  data.email = data.email?.trim() ?? '';
+  data.email = data.email?.trim() || undefined;
   data.pictureUrl = data.pictureUrl?.trim();
 
   try {
