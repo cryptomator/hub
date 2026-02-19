@@ -52,9 +52,7 @@ spec:
             - /opt/keycloak/bin/kc.sh
             - start
             - --optimized
-            {{- if .Values.keycloak.realmBootstrap.enabled }}
             - --import-realm
-            {{- end }}
           ports:
             - name: http
               containerPort: 8080
@@ -67,17 +65,12 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: {{ include "cryptomator-hub.fullname" . }}-secrets-kc
-                  key: db-password
-            - name: KC_BOOTSTRAP_ADMIN_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "cryptomator-hub.fullname" . }}-secrets-kc
-                  key: admin-username
+                  key: kc_db_password
             - name: KC_BOOTSTRAP_ADMIN_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: {{ include "cryptomator-hub.fullname" . }}-secrets-kc
-                  key: admin-password
+                  key: kc_admin_password
           envFrom:
             - configMapRef:
                 name: {{ include "cryptomator-hub.fullname" . }}-config-kc
@@ -113,21 +106,17 @@ spec:
           volumeMounts:
             - name: tmp
               mountPath: /tmp
-            {{- if .Values.keycloak.realmBootstrap.enabled }}
             - name: realm
               mountPath: /opt/keycloak/data/import/realm.json
               subPath: realm.json
               readOnly: true
-            {{- end }}
       volumes:
         - name: tmp
           emptyDir: {}
-        {{- if .Values.keycloak.realmBootstrap.enabled }}
         - name: realm
           secret:
             secretName: {{ include "cryptomator-hub.fullname" . }}-secrets-kc
             items:
               - key: realm.json
                 path: realm.json
-        {{- end }}
 {{- end }}

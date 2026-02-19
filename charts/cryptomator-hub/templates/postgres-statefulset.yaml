@@ -64,7 +64,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: {{ include "cryptomator-hub.fullname" . }}-secrets-pg
-                  key: admin-password
+                  key: pg_admin_password
             - name: POSTGRES_USER
               value: {{ .Values.postgres.auth.adminUsername | quote }}
           livenessProbe:

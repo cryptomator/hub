@@ -10,6 +10,7 @@ data:
   KC_DB: "postgres"
   KC_DB_URL: {{ if .Values.postgres.enabled }}{{ printf "jdbc:postgresql://%s:%v/%s" (print (include "cryptomator-hub.fullname" .) "-service-pg") .Values.postgres.service.port .Values.keycloak.database.name | quote }}{{ else }}{{ required "keycloak.database.url must be set when keycloak.enabled=true and postgres.enabled=false" .Values.keycloak.database.url | quote }}{{ end }}
   KC_DB_USERNAME: {{ .Values.keycloak.database.username | quote }}
+  KC_BOOTSTRAP_ADMIN_USERNAME: {{ .Values.keycloak.admin.username | quote }}
   KC_HEALTH_ENABLED: "true"
   KC_METRICS_ENABLED: "true"
   KC_HTTP_ENABLED: "true"

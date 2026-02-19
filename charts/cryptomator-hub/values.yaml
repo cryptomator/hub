@@ -1,6 +1,9 @@
 global:
   host: ""
 
+notes:
+  useColor: true
+
 ingress:
   enabled: false
   className: ""
@@ -18,10 +21,10 @@ hub:
   resources:
     requests:
       cpu: 10m
-      memory: 8Mi
+      memory: 16Mi
     limits:
       cpu: 500m
-      memory: 128Mi
+      memory: 256Mi
   config:
     publicRootPath: /
     keycloakRealm: cryptomator
@@ -74,7 +77,6 @@ keycloak:
     username: keycloak
     password: ""
   realmBootstrap:
-    enabled: true
     realmId: ""
 
 postgres:
