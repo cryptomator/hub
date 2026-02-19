@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "cryptomator-hub.fullname" . }}
+  name: {{ include "cryptomator-hub.fullname" . }}-hub
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "cryptomator-hub.labels" . | nindent 4 }}
@@ -19,33 +19,47 @@ spec:
         app.kubernetes.io/component: hub
       annotations:
         checksum/hub-config: {{ include (print $.Template.BasePath "/hub-configmap.yaml") . | sha256sum }}
-        checksum/hub-secret: {{ if and .Values.hub.secrets.create (not .Values.hub.secrets.existingSecret) }}{{ include (print $.Template.BasePath "/hub-secret.yaml") . | sha256sum }}{{ else }}{{ include "cryptomator-hub.hubSecretName" . | sha256sum }}{{ end }}
+        checksum/hub-secret: {{ if .Values.hub.secrets.create }}{{ include (print $.Template.BasePath "/hub-secret.yaml") . | sha256sum }}{{ else }}{{ print (include "cryptomator-hub.fullname" .) "-secrets-hub" | sha256sum }}{{ end }}
     spec:
-      {{- with .Values.hub.podSecurityContext }}
       securityContext:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- if .Values.hub.waitForDependencies }}
+        runAsNonRoot: true
+      {{- if or .Values.postgres.enabled .Values.keycloak.enabled }}
       initContainers:
         {{- if .Values.postgres.enabled }}
         - name: wait-for-postgres
           image: busybox:1.36
+          securityContext:
+            runAsNonRoot: false
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            privileged: false
+            capabilities:
+              drop:
+                - ALL
           command: ["/bin/sh", "-c"]
           args:
             - |
               set -eux
-              until nc -zw 10 {{ include "cryptomator-hub.postgresServiceName" . }} {{ .Values.postgres.service.port }}; do
+              until nc -zw 10 {{ include "cryptomator-hub.fullname" . }}-service-pg {{ .Values.postgres.service.port }}; do
                 echo "waiting for postgres..."
               done
         {{- end }}
         {{- if .Values.keycloak.enabled }}
         - name: wait-for-keycloak
           image: busybox:1.36
+          securityContext:
+            runAsNonRoot: false
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            privileged: false
+            capabilities:
+              drop:
+                - ALL
           command: ["/bin/sh", "-c"]
           args:
             - |
               set -eux
-              until wget -q --spider "http://{{ include "cryptomator-hub.keycloakServiceName" . }}:{{ .Values.keycloak.service.managementPort }}{{ include "cryptomator-hub.keycloakRelativePath" . }}/health/live"; do
+              until wget -q --spider "http://{{ include "cryptomator-hub.fullname" . }}-service-kc:{{ .Values.keycloak.service.managementPort }}{{ include "cryptomator-hub.keycloakRelativePath" . }}/health/live"; do
                 echo "waiting for keycloak..."
                 sleep 5
               done
@@ -53,59 +67,72 @@ spec:
       {{- end }}
       containers:
         - name: hub
-          image: "{{ .Values.hub.image.repository }}:{{ .Values.hub.image.tag }}"
-          imagePullPolicy: {{ .Values.hub.image.pullPolicy }}
+          image: "ghcr.io/cryptomator/hub:{{ .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.hub.imagePullPolicy }}
           ports:
             - name: http
               containerPort: 8080
               protocol: TCP
+            - name: management
+              containerPort: 9000
+              protocol: TCP
           startupProbe:
             httpGet:
               path: /q/health/started
-              port: http
+              port: management
             periodSeconds: 5
             failureThreshold: 24
           readinessProbe:
             httpGet:
               path: /q/health/ready
-              port: http
+              port: management
             periodSeconds: 5
             failureThreshold: 6
           livenessProbe:
             httpGet:
               path: /q/health/live
-              port: http
+              port: management
             periodSeconds: 10
             failureThreshold: 3
           envFrom:
             - configMapRef:
-                name: {{ include "cryptomator-hub.fullname" . }}-config
+                name: {{ include "cryptomator-hub.fullname" . }}-config-hub
           env:
             - name: HUB_KEYCLOAK_SYSTEM_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "cryptomator-hub.hubSecretName" . }}
-                  key: {{ .Values.hub.secrets.keys.systemClientSecret }}
+                  name: {{ include "cryptomator-hub.fullname" . }}-secrets-hub
+                  key: hub_system_client_secret
             - name: QUARKUS_DATASOURCE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "cryptomator-hub.hubDbPasswordSecretName" . }}
-                  key: {{ include "cryptomator-hub.hubDbPasswordSecretKey" . }}
+                  name: {{ include "cryptomator-hub.fullname" . }}-secrets-hub
+                  key: hub_db_password
             - name: HUB_INITIAL_ID
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "cryptomator-hub.hubSecretName" . }}
-                  key: {{ .Values.hub.secrets.keys.initialId }}
+                  name: {{ include "cryptomator-hub.fullname" . }}-secrets-hub
+                  key: hub_initial_id
                   optional: true
             - name: HUB_INITIAL_LICENSE
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "cryptomator-hub.hubSecretName" . }}
-                  key: {{ .Values.hub.secrets.keys.initialLicense }}
+                  name: {{ include "cryptomator-hub.fullname" . }}-secrets-hub
+                  key: hub_initial_license
                   optional: true
           resources:
             {{- toYaml .Values.hub.resources | nindent 12 }}
-          {{- with .Values.hub.securityContext }}
           securityContext:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            privileged: false
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}

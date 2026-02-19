@@ -2,8 +2,8 @@ global:
   host: ""
 
 hub:
-  image:
-    tag: stable
+  database:
+    password: top-secret
   admin:
     username: admin
     password: admin
@@ -11,6 +11,8 @@ hub:
 
 keycloak:
   enabled: true
+  database:
+    password: top-secret
   admin:
     password: admin
 
@@ -18,8 +20,6 @@ postgres:
   enabled: true
   auth:
     adminPassword: top-secret
-    hubPassword: top-secret
-    keycloakPassword: top-secret
   storage:
     size: 1Gi
   resources:

@@ -18,19 +18,19 @@ spec:
     - host: {{ .Values.global.host | required "global.host must be set when ingress.enabled=true" | quote }}
       http:
         paths:
-          - path: {{ .Values.ingress.hubPath }}
+          - path: {{ include "cryptomator-hub.hubRelativePath" . | quote }}
             pathType: Prefix
             backend:
               service:
-                name: {{ include "cryptomator-hub.fullname" . }}
+                name: {{ include "cryptomator-hub.fullname" . }}-service-hub
                 port:
                   number: {{ .Values.hub.service.port }}
           {{- if .Values.keycloak.enabled }}
-          - path: {{ .Values.ingress.keycloakPath }}
+          - path: {{ include "cryptomator-hub.keycloakRelativePath" . | quote }}
             pathType: Prefix
             backend:
               service:
-                name: {{ include "cryptomator-hub.keycloakServiceName" . }}
+                name: {{ include "cryptomator-hub.fullname" . }}-service-kc
                 port:
                   number: {{ .Values.keycloak.service.httpPort }}
           {{- end }}

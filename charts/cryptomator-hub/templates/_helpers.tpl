@@ -22,34 +22,17 @@ app.kubernetes.io/name: {{ include "cryptomator-hub.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 
-{{- define "cryptomator-hub.hubSecretName" -}}
-{{- if .Values.hub.secrets.existingSecret -}}
-{{- .Values.hub.secrets.existingSecret -}}
-{{- else if not .Values.hub.secrets.create -}}
-{{- required "hub.secrets.existingSecret must be set when hub.secrets.create=false" .Values.hub.secrets.existingSecret -}}
-{{- else -}}
-{{- include "cryptomator-hub.fullname" . -}}
-{{- end -}}
-{{- end -}}
-
-{{- define "cryptomator-hub.postgresSecretName" -}}
-{{- printf "%s-postgres" (include "cryptomator-hub.fullname" .) -}}
-{{- end -}}
-
-{{- define "cryptomator-hub.keycloakSecretName" -}}
-{{- printf "%s-keycloak" (include "cryptomator-hub.fullname" .) -}}
-{{- end -}}
-
-{{- define "cryptomator-hub.postgresServiceName" -}}
-{{- printf "%s-postgres" (include "cryptomator-hub.fullname" .) -}}
-{{- end -}}
-
-{{- define "cryptomator-hub.keycloakServiceName" -}}
-{{- printf "%s-keycloak" (include "cryptomator-hub.fullname" .) -}}
-{{- end -}}
-
 {{- define "cryptomator-hub.keycloakRelativePath" -}}
 {{- $path := default "/kc" .Values.keycloak.config.relativePath -}}
+{{- if hasPrefix "/" $path -}}
+{{- $path -}}
+{{- else -}}
+{{- printf "/%s" $path -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "cryptomator-hub.hubRelativePath" -}}
+{{- $path := default "/" .Values.hub.config.publicRootPath -}}
 {{- if hasPrefix "/" $path -}}
 {{- $path -}}
 {{- else -}}
@@ -61,7 +44,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- if .Values.hub.config.keycloakLocalUrl -}}
 {{- .Values.hub.config.keycloakLocalUrl -}}
 {{- else if .Values.keycloak.enabled -}}
-{{- printf "http://%s:%v%s" (include "cryptomator-hub.keycloakServiceName" .) .Values.keycloak.service.httpPort (include "cryptomator-hub.keycloakRelativePath" .) -}}
+{{- printf "http://%s:%v%s" (print (include "cryptomator-hub.fullname" .) "-service-kc") .Values.keycloak.service.httpPort (include "cryptomator-hub.keycloakRelativePath" .) -}}
 {{- else -}}
 {{- required "hub.config.keycloakLocalUrl must be set when keycloak.enabled=false" .Values.hub.config.keycloakLocalUrl -}}
 {{- end -}}
@@ -71,7 +54,11 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- if .Values.hub.config.keycloakPublicUrl -}}
 {{- .Values.hub.config.keycloakPublicUrl -}}
 {{- else if and .Values.global.host .Values.keycloak.enabled -}}
+{{- if .Values.ingress.tls.enabled -}}
 {{- printf "https://%s%s" .Values.global.host (include "cryptomator-hub.keycloakRelativePath" .) -}}
+{{- else -}}
+{{- printf "http://%s%s" .Values.global.host (include "cryptomator-hub.keycloakRelativePath" .) -}}
+{{- end -}}
 {{- else if .Values.keycloak.enabled -}}
 {{- include "cryptomator-hub.keycloakLocalUrl" . -}}
 {{- else -}}
@@ -79,23 +66,21 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 {{- end -}}
 
+{{- define "cryptomator-hub.hubPublicUrl" -}}
+{{- if .Values.ingress.tls.enabled -}}
+{{- printf "https://%s%s" .Values.global.host (include "cryptomator-hub.hubRelativePath" .) -}}
+{{- else -}}
+{{- printf "http://%s%s" .Values.global.host (include "cryptomator-hub.hubRelativePath" .) -}}
+{{- end -}}
+{{- end -}}
+
 {{- define "cryptomator-hub.hubJdbcUrl" -}}
 {{- if .Values.hub.database.jdbcUrl -}}
 {{- .Values.hub.database.jdbcUrl -}}
 {{- else if .Values.postgres.enabled -}}
-{{- printf "jdbc:postgresql://%s:%v/%s" (include "cryptomator-hub.postgresServiceName" .) .Values.postgres.service.port .Values.postgres.auth.hubDatabase -}}
+{{- printf "jdbc:postgresql://%s:%v/%s" (print (include "cryptomator-hub.fullname" .) "-service-pg") .Values.postgres.service.port .Values.hub.database.name -}}
 {{- else -}}
 {{- required "hub.database.jdbcUrl must be set when postgres.enabled=false" .Values.hub.database.jdbcUrl -}}
-{{- end -}}
-{{- end -}}
-
-{{- define "cryptomator-hub.hubDbUsername" -}}
-{{- if .Values.hub.database.username -}}
-{{- .Values.hub.database.username -}}
-{{- else if .Values.postgres.enabled -}}
-{{- .Values.postgres.auth.hubUsername -}}
-{{- else -}}
-{{- required "hub.database.username must be set when postgres.enabled=false" .Values.hub.database.username -}}
 {{- end -}}
 {{- end -}}
 
@@ -119,56 +104,13 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 {{- end -}}
 
-{{- define "cryptomator-hub.realmPublicHost" -}}
-{{- if .Values.keycloak.realmBootstrap.publicHost -}}
-{{- .Values.keycloak.realmBootstrap.publicHost -}}
-{{- else if .Values.global.host -}}
-{{- .Values.global.host -}}
-{{- else -}}
-domain.tld
-{{- end -}}
-{{- end -}}
-
 {{- define "cryptomator-hub.resolvedSystemClientSecret" -}}
-{{- if hasKey .Values "_resolvedSystemClientSecret" -}}
+{{- if not (hasKey .Values "_resolvedSystemClientSecret") -}}
+{{- $_ := set .Values "_resolvedSystemClientSecret" (default (randAlphaNum 32) .Values.hub.secrets.systemClientSecret) -}}
+{{- end -}}
 {{- index .Values "_resolvedSystemClientSecret" -}}
-{{- else -}}
-{{- $resolved := "" -}}
-{{- if .Values.hub.secrets.data.systemClientSecret -}}
-{{- $resolved = .Values.hub.secrets.data.systemClientSecret -}}
-{{- else if .Values.keycloak.realmBootstrap.systemClientSecret -}}
-{{- $resolved = .Values.keycloak.realmBootstrap.systemClientSecret -}}
-{{- else -}}
-{{- $existing := (lookup "v1" "Secret" .Release.Namespace (include "cryptomator-hub.hubSecretName" .)) -}}
-{{- if and $existing (hasKey $existing.data .Values.hub.secrets.keys.systemClientSecret) -}}
-{{- $resolved = (index $existing.data .Values.hub.secrets.keys.systemClientSecret | b64dec) -}}
-{{- else if and .Values.hub.secrets.create (not .Values.hub.secrets.existingSecret) -}}
-{{- $resolved = randAlphaNum 32 -}}
-{{- else -}}
-{{- $resolved = required "Provide hub.secrets.data.systemClientSecret (or keycloak.realmBootstrap.systemClientSecret) when using an existing Hub secret." .Values.hub.secrets.data.systemClientSecret -}}
-{{- end -}}
-{{- end -}}
-{{- $_ := set .Values "_resolvedSystemClientSecret" $resolved -}}
-{{- $resolved -}}
-{{- end -}}
 {{- end -}}
 
 {{- define "cryptomator-hub.realmSystemClientSecret" -}}
 {{- include "cryptomator-hub.resolvedSystemClientSecret" . -}}
-{{- end -}}
-
-{{- define "cryptomator-hub.hubDbPasswordSecretName" -}}
-{{- if .Values.postgres.enabled -}}
-{{- include "cryptomator-hub.postgresSecretName" . -}}
-{{- else -}}
-{{- include "cryptomator-hub.hubSecretName" . -}}
-{{- end -}}
-{{- end -}}
-
-{{- define "cryptomator-hub.hubDbPasswordSecretKey" -}}
-{{- if .Values.postgres.enabled -}}
-hub-password
-{{- else -}}
-{{- .Values.hub.secrets.keys.dbPassword -}}
-{{- end -}}
 {{- end -}}

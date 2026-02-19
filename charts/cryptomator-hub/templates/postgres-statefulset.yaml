@@ -2,13 +2,13 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: {{ include "cryptomator-hub.fullname" . }}-postgres
+  name: {{ include "cryptomator-hub.fullname" . }}-pg
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "cryptomator-hub.labels" . | nindent 4 }}
     app.kubernetes.io/component: postgres
 spec:
-  serviceName: {{ include "cryptomator-hub.postgresServiceName" . }}
+  serviceName: {{ include "cryptomator-hub.fullname" . }}-service-pg
   replicas: 1
   selector:
     matchLabels:
@@ -22,14 +22,37 @@ spec:
       annotations:
         checksum/postgres-secret: {{ include (print $.Template.BasePath "/postgres-secret.yaml") . | sha256sum }}
     spec:
-      {{- with .Values.postgres.podSecurityContext }}
       securityContext:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      initContainers:
+        - name: fix-permissions
+          image: busybox:1.36
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -eux
+              mkdir -p /var/lib/postgresql/data /var/run/postgresql
+              chown -R 1000:1000 /var/lib/postgresql/data /var/run/postgresql
+              chmod 700 /var/lib/postgresql/data
+              chmod 775 /var/run/postgresql
+          securityContext:
+            runAsNonRoot: false
+            runAsUser: 0
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            privileged: false
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+            - name: run
+              mountPath: /var/run/postgresql
       containers:
         - name: postgres
-          image: "{{ .Values.postgres.image.repository }}:{{ .Values.postgres.image.tag }}"
-          imagePullPolicy: {{ .Values.postgres.image.pullPolicy }}
+          image: "postgres:17-alpine"
+          imagePullPolicy: {{ .Values.postgres.imagePullPolicy }}
           ports:
             - name: postgres
               containerPort: 5432
@@ -40,7 +63,7 @@ spec:
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "cryptomator-hub.postgresSecretName" . }}
+                  name: {{ include "cryptomator-hub.fullname" . }}-secrets-pg
                   key: admin-password
             - name: POSTGRES_USER
               value: {{ .Values.postgres.auth.adminUsername | quote }}
@@ -62,10 +85,16 @@ spec:
             failureThreshold: 6
           resources:
             {{- toYaml .Values.postgres.resources | nindent 12 }}
-          {{- with .Values.postgres.securityContext }}
           securityContext:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            privileged: false
+            capabilities:
+              drop:
+                - ALL
           volumeMounts:
             - name: initdb
               mountPath: /docker-entrypoint-initdb.d/initdb.sql
@@ -73,13 +102,21 @@ spec:
               readOnly: true
             - name: data
               mountPath: /var/lib/postgresql/data
+            - name: run
+              mountPath: /var/run/postgresql
+            - name: tmp
+              mountPath: /tmp
       volumes:
         - name: initdb
           secret:
-            secretName: {{ include "cryptomator-hub.postgresSecretName" . }}
+            secretName: {{ include "cryptomator-hub.fullname" . }}-secrets-pg
             items:
               - key: initdb.sql
                 path: initdb.sql
+        - name: run
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
   volumeClaimTemplates:
     - metadata:
         name: data

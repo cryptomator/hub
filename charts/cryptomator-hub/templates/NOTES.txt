@@ -1,17 +1,35 @@
 Cryptomator Hub was installed.
 
 Hub service:
-  {{ include "cryptomator-hub.fullname" . }}:{{ .Values.hub.service.port }}
+  {{ include "cryptomator-hub.fullname" . }}-service-hub:{{ .Values.hub.service.port }}
 
 {{- if .Values.keycloak.enabled }}
 Keycloak service:
-  {{ include "cryptomator-hub.keycloakServiceName" . }}:{{ .Values.keycloak.service.httpPort }}
+  {{ include "cryptomator-hub.fullname" . }}-service-kc:{{ .Values.keycloak.service.httpPort }}
 {{- end }}
 
 {{- if .Values.postgres.enabled }}
 PostgreSQL service:
-  {{ include "cryptomator-hub.postgresServiceName" . }}:{{ .Values.postgres.service.port }}
+  {{ include "cryptomator-hub.fullname" . }}-service-pg:{{ .Values.postgres.service.port }}
 {{- end }}
 
-Because ingress is not part of chart v1, use port-forward for quick checks:
+{{- if .Values.ingress.enabled }}
+Hub URL (Ingress):
+  {{ include "cryptomator-hub.hubPublicUrl" . }}
+
+{{- if .Values.keycloak.enabled }}
+Keycloak URL (Ingress):
+  {{ include "cryptomator-hub.keycloakPublicUrl" . }}
+{{- end }}
+{{- else }}
+Ingress is disabled. Configure ingress manually to the aforementioned services.
+{{- end }}
+
+Use port-forward for quick checks:
   kubectl port-forward svc/{{ include "cryptomator-hub.fullname" . }} 8080:{{ .Values.hub.service.port }}
+
+{{- if not (.Values.keycloak.enabled) }}
+Please import this realm.json into your existing Keycloak installation:
+
+kubectl get secret -n {{ .Release.Namespace }} {{ include "cryptomator-hub.fullname" . }}-secrets-kc -o jsonpath='{.data.realm\.json}' | base64 -d
+{{- end }}

@@ -2,7 +2,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "cryptomator-hub.keycloakServiceName" . }}
+  name: {{ include "cryptomator-hub.fullname" . }}-kc
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "cryptomator-hub.labels" . | nindent 4 }}
@@ -20,30 +20,34 @@ spec:
         app.kubernetes.io/component: keycloak
       annotations:
         checksum/keycloak-secret: {{ include (print $.Template.BasePath "/keycloak-secret.yaml") . | sha256sum }}
-        {{- if .Values.keycloak.realmBootstrap.enabled }}
-        checksum/keycloak-realm: {{ include (print $.Template.BasePath "/keycloak-realm-configmap.yaml") . | sha256sum }}
-        {{- end }}
+        checksum/keycloak-config: {{ include (print $.Template.BasePath "/keycloak-realm-configmap.yaml") . | sha256sum }}
     spec:
-      {{- with .Values.keycloak.podSecurityContext }}
       securityContext:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+        runAsNonRoot: true
       {{- if .Values.postgres.enabled }}
       initContainers:
         - name: wait-for-postgres
           image: busybox:1.36
+          securityContext:
+            runAsNonRoot: false
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            privileged: false
+            capabilities:
+              drop:
+                - ALL
           command: ["/bin/sh", "-c"]
           args:
             - |
               set -eux
-              until nc -zw 10 {{ include "cryptomator-hub.postgresServiceName" . }} {{ .Values.postgres.service.port }}; do
+              until nc -zw 10 {{ include "cryptomator-hub.fullname" . }}-service-pg {{ .Values.postgres.service.port }}; do
                 echo "waiting for postgres..."
               done
       {{- end }}
       containers:
         - name: keycloak
-          image: "{{ .Values.keycloak.image.repository }}:{{ .Values.keycloak.image.tag }}"
-          imagePullPolicy: {{ .Values.keycloak.image.pullPolicy }}
+          image: "ghcr.io/cryptomator/keycloak:26.5.3"
+          imagePullPolicy: {{ .Values.keycloak.imagePullPolicy }}
           command:
             - /opt/keycloak/bin/kc.sh
             - start
@@ -59,38 +63,29 @@ spec:
               containerPort: 9000
               protocol: TCP
           env:
-            - name: KEYCLOAK_ADMIN
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "cryptomator-hub.keycloakSecretName" . }}
-                  key: admin-username
-            - name: KEYCLOAK_ADMIN_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "cryptomator-hub.keycloakSecretName" . }}
-                  key: admin-password
-            - name: KC_DB
-              value: postgres
-            - name: KC_DB_URL
-              value: {{ if .Values.postgres.enabled }}{{ printf "jdbc:postgresql://%s:%v/%s" (include "cryptomator-hub.postgresServiceName" .) .Values.postgres.service.port .Values.postgres.auth.keycloakDatabase }}{{ else }}{{ required "keycloak.database.url must be set when keycloak.enabled=true and postgres.enabled=false" .Values.keycloak.database.url }}{{ end }}
-            - name: KC_DB_USERNAME
-              value: {{ if .Values.postgres.enabled }}{{ .Values.postgres.auth.keycloakUsername }}{{ else }}{{ .Values.keycloak.auth.dbUsername }}{{ end }}
             - name: KC_DB_PASSWORD
-              value: {{ if .Values.postgres.enabled }}{{ .Values.postgres.auth.keycloakPassword }}{{ else }}{{ required "keycloak.auth.dbPassword must be set when keycloak.enabled=true and postgres.enabled=false" .Values.keycloak.auth.dbPassword }}{{ end }}
-            - name: KC_HEALTH_ENABLED
-              value: "true"
-            - name: KC_HTTP_ENABLED
-              value: "true"
-            - name: KC_PROXY_HEADERS
-              value: {{ .Values.keycloak.config.proxyHeaders | quote }}
-            - name: KC_HTTP_RELATIVE_PATH
-              value: {{ include "cryptomator-hub.keycloakRelativePath" . | quote }}
-            - name: KC_HOSTNAME
-              value: {{ if .Values.keycloak.config.hostname }}{{ .Values.keycloak.config.hostname | quote }}{{ else if .Values.global.host }}{{ printf "https://%s%s" .Values.global.host (include "cryptomator-hub.keycloakRelativePath" .) | quote }}{{ else }}{{ printf "http://%s:%v%s" (include "cryptomator-hub.keycloakServiceName" .) .Values.keycloak.service.httpPort (include "cryptomator-hub.keycloakRelativePath" .) | quote }}{{ end }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "cryptomator-hub.fullname" . }}-secrets-kc
+                  key: db-password
+            - name: KC_BOOTSTRAP_ADMIN_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "cryptomator-hub.fullname" . }}-secrets-kc
+                  key: admin-username
+            - name: KC_BOOTSTRAP_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "cryptomator-hub.fullname" . }}-secrets-kc
+                  key: admin-password
+          envFrom:
+            - configMapRef:
+                name: {{ include "cryptomator-hub.fullname" . }}-config-kc
           startupProbe:
             httpGet:
               path: {{ printf "%s/health/started" (include "cryptomator-hub.keycloakRelativePath" .) }}
               port: management
+            initialDelaySeconds: 10
             periodSeconds: 5
             failureThreshold: 36
           livenessProbe:
@@ -107,11 +102,17 @@ spec:
             failureThreshold: 6
           resources:
             {{- toYaml .Values.keycloak.resources | nindent 12 }}
-          {{- with .Values.keycloak.securityContext }}
           securityContext:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            privileged: false
+            capabilities:
+              drop:
+                - ALL
           volumeMounts:
+            - name: tmp
+              mountPath: /tmp
             {{- if .Values.keycloak.realmBootstrap.enabled }}
             - name: realm
               mountPath: /opt/keycloak/data/import/realm.json
@@ -119,10 +120,12 @@ spec:
               readOnly: true
             {{- end }}
       volumes:
+        - name: tmp
+          emptyDir: {}
         {{- if .Values.keycloak.realmBootstrap.enabled }}
         - name: realm
-          configMap:
-            name: {{ include "cryptomator-hub.fullname" . }}-keycloak-realm
+          secret:
+            secretName: {{ include "cryptomator-hub.fullname" . }}-secrets-kc
             items:
               - key: realm.json
                 path: realm.json

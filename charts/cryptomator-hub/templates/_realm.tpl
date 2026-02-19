@@ -1,6 +1,8 @@
 {{- define "cryptomator-hub.realmJson" -}}
 {
+  {{- if .Values.keycloak.realmBootstrap.realmId }}
   "id": {{ .Values.keycloak.realmBootstrap.realmId | quote }},
+  {{- end }}
   "realm": {{ .Values.hub.config.keycloakRealm | quote }},
   "displayName": "Cryptomator Hub",
   "loginTheme": "cryptomator",
@@ -81,6 +83,7 @@
     }
   ],
   "clients": [
+    {{- $hubPublicUrl := trimSuffix "/" (include "cryptomator-hub.hubPublicUrl" .) }}
     {
       "clientId": "cryptomatorhub",
       "serviceAccountsEnabled": false,
@@ -88,7 +91,7 @@
       "name": "Cryptomator Hub",
       "enabled": true,
       "redirectUris": [
-        {{ printf "https://%s/*" (include "cryptomator-hub.realmPublicHost" .) | quote }}
+        {{ printf "%s/*" $hubPublicUrl | quote }}
       ],
       "webOrigins": [
         "+"
@@ -154,12 +157,12 @@
       "name": "Cryptomator Hub System",
       "enabled": true,
       "clientAuthenticatorType": "client-secret",
-      "secret": {{ include "cryptomator-hub.realmSystemClientSecret" . | quote }},
+      "secret": {{ include "cryptomator-hub.resolvedSystemClientSecret" . | quote }},
       "standardFlowEnabled": false
     }
   ],
   "browserSecurityHeaders": {
-    "contentSecurityPolicy": {{ printf "frame-src 'self'; frame-ancestors 'self' https://%s/; object-src 'none';" (include "cryptomator-hub.realmPublicHost" .) | quote }}
+    "contentSecurityPolicy": {{ printf "frame-src 'self'; frame-ancestors 'self' %s; object-src 'none';" $hubPublicUrl | quote }}
   }
 }
 {{- end -}}
