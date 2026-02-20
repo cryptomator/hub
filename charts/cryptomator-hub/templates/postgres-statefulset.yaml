@@ -47,6 +47,7 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /var/lib/postgresql/data
+              subPath: pgdata
             - name: run
               mountPath: /var/run/postgresql
       containers:
@@ -102,6 +103,7 @@ spec:
               readOnly: true
             - name: data
               mountPath: /var/lib/postgresql/data
+              subPath: pgdata
             - name: run
               mountPath: /var/run/postgresql
             - name: tmp
