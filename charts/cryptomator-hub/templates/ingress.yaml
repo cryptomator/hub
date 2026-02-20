@@ -15,7 +15,7 @@ spec:
   ingressClassName: {{ .Values.ingress.className }}
   {{- end }}
   rules:
-    - host: {{ .Values.global.host | required "global.host must be set when ingress.enabled=true" | quote }}
+    - host: {{ regexReplaceAll "^https?://([^:/]+).*" (required "urls.hub.public must be set" .Values.urls.hub.public) "${1}" | quote }}
       http:
         paths:
           - path: {{ include "cryptomator-hub.hubRelativePath" . | quote }}
@@ -25,7 +25,10 @@ spec:
                 name: {{ include "cryptomator-hub.fullname" . }}-service-hub
                 port:
                   number: {{ .Values.hub.service.port }}
-          {{- if .Values.keycloak.enabled }}
+    {{- if .Values.keycloak.enabled }}
+    - host: {{ regexReplaceAll "^https?://([^:/]+).*" (required "urls.kc.public must be set" .Values.urls.kc.public) "${1}" | quote }}
+      http:
+        paths:
           - path: {{ include "cryptomator-hub.keycloakRelativePath" . | quote }}
             pathType: Prefix
             backend:
@@ -33,11 +36,14 @@ spec:
                 name: {{ include "cryptomator-hub.fullname" . }}-service-kc
                 port:
                   number: {{ .Values.keycloak.service.httpPort }}
-          {{- end }}
+    {{- end }}
   {{- if .Values.ingress.tls.enabled }}
   tls:
     - hosts:
-        - {{ .Values.global.host | required "global.host must be set when ingress.enabled=true" | quote }}
+        - {{ regexReplaceAll "^https?://([^:/]+).*" (required "urls.hub.public must be set" .Values.urls.hub.public) "${1}" | quote }}
+        {{- if .Values.keycloak.enabled }}
+        - {{ regexReplaceAll "^https?://([^:/]+).*" (required "urls.kc.public must be set" .Values.urls.kc.public) "${1}" | quote }}
+        {{- end -}}
       secretName: {{ .Values.ingress.tls.secretName | required "ingress.tls.secretName must be set when ingress.tls.enabled=true" }}
   {{- end }}
 {{- end }}

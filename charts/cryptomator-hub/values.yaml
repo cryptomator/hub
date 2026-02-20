@@ -1,5 +1,11 @@
-global:
-  host: ""
+urls:
+  hub:
+    public: ""
+  kc:
+    public: ""
+    clusterInternal: ""
+    authServerUrl: ""
+    tokenIssuer: ""
 
 notes:
   useColor: true
@@ -26,7 +32,6 @@ hub:
       cpu: 500m
       memory: 256Mi
   config:
-    publicRootPath: /
     keycloakRealm: cryptomator
     keycloakSyncerPeriod: 5m
     keycloakPublicUrl: ""
@@ -34,8 +39,6 @@ hub:
     metricsEnabled: true
   oidc:
     clientId: cryptomatorhub
-    authServerUrl: ""
-    tokenIssuer: ""
   database:
     jdbcUrl: ""
     name: hub
@@ -69,10 +72,9 @@ keycloak:
     username: admin
     password: ""
   config:
-    relativePath: /kc
     proxyHeaders: xforwarded
   database:
-    url: ""
+    jdbcUrl: ""
     name: keycloak
     username: keycloak
     password: ""

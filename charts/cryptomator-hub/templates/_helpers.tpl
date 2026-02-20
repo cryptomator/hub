@@ -22,55 +22,29 @@ app.kubernetes.io/name: {{ include "cryptomator-hub.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 
-{{- define "cryptomator-hub.keycloakRelativePath" -}}
-{{- $path := default "/kc" .Values.keycloak.config.relativePath -}}
-{{- if hasPrefix "/" $path -}}
-{{- $path -}}
-{{- else -}}
-{{- printf "/%s" $path -}}
-{{- end -}}
-{{- end -}}
+{{/* 
+
+Compute relative URLs for hub and keycloak based on their public URLs and whether ingress is enabled.
+This allows users to set the public URLs to the actual external URLs of the services, and we can derive the relative paths required for configuring the services to work correctly both with and without ingress.
+
+*/}}
 
 {{- define "cryptomator-hub.hubRelativePath" -}}
-{{- $path := default "/" .Values.hub.config.publicRootPath -}}
-{{- if hasPrefix "/" $path -}}
-{{- $path -}}
-{{- else -}}
-{{- printf "/%s" $path -}}
+{{- regexReplaceAll "^https?://[^/]+" (required "urls.hub.public must be set" .Values.urls.hub.public) "" -}}
 {{- end -}}
+
+{{- define "cryptomator-hub.keycloakRelativePath" -}}
+{{- regexReplaceAll "^https?://[^/]+" (required "urls.kc.public must be set" .Values.urls.kc.public) "" -}}
 {{- end -}}
 
 {{- define "cryptomator-hub.keycloakLocalUrl" -}}
-{{- if .Values.hub.config.keycloakLocalUrl -}}
-{{- .Values.hub.config.keycloakLocalUrl -}}
+{{- if .Values.urls.kc.clusterInternal -}}
+{{- .Values.urls.kc.clusterInternal -}}
 {{- else if .Values.keycloak.enabled -}}
 {{- printf "http://%s:%v%s" (print (include "cryptomator-hub.fullname" .) "-service-kc") .Values.keycloak.service.httpPort (include "cryptomator-hub.keycloakRelativePath" .) -}}
 {{- else -}}
-{{- required "hub.config.keycloakLocalUrl must be set when keycloak.enabled=false" .Values.hub.config.keycloakLocalUrl -}}
-{{- end -}}
-{{- end -}}
-
-{{- define "cryptomator-hub.keycloakPublicUrl" -}}
-{{- if .Values.hub.config.keycloakPublicUrl -}}
-{{- .Values.hub.config.keycloakPublicUrl -}}
-{{- else if and .Values.global.host .Values.keycloak.enabled -}}
-{{- if .Values.ingress.tls.enabled -}}
-{{- printf "https://%s%s" .Values.global.host (include "cryptomator-hub.keycloakRelativePath" .) -}}
-{{- else -}}
-{{- printf "http://%s%s" .Values.global.host (include "cryptomator-hub.keycloakRelativePath" .) -}}
-{{- end -}}
-{{- else if .Values.keycloak.enabled -}}
-{{- include "cryptomator-hub.keycloakLocalUrl" . -}}
-{{- else -}}
-{{- required "hub.config.keycloakPublicUrl must be set when keycloak.enabled=false and global.host is empty" .Values.hub.config.keycloakPublicUrl -}}
-{{- end -}}
-{{- end -}}
-
-{{- define "cryptomator-hub.hubPublicUrl" -}}
-{{- if .Values.ingress.tls.enabled -}}
-{{- printf "https://%s%s" .Values.global.host (include "cryptomator-hub.hubRelativePath" .) -}}
-{{- else -}}
-{{- printf "http://%s%s" .Values.global.host (include "cryptomator-hub.hubRelativePath" .) -}}
+{{/* if keycloak isn't part of the deployment, use public url: */}}
+{{- required "urls.kc.public must be set" .Values.urls.kc.public -}}
 {{- end -}}
 {{- end -}}
 
@@ -85,22 +59,18 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 
 {{- define "cryptomator-hub.oidcAuthServerUrl" -}}
-{{- if .Values.hub.oidc.authServerUrl -}}
-{{- .Values.hub.oidc.authServerUrl -}}
-{{- else if .Values.keycloak.enabled -}}
-{{- printf "%s/realms/%s" (include "cryptomator-hub.keycloakLocalUrl" .) .Values.hub.config.keycloakRealm -}}
+{{- if .Values.urls.kc.authServerUrl -}}
+{{- .Values.urls.kc.authServerUrl -}}
 {{- else -}}
-{{- required "hub.oidc.authServerUrl must be set when keycloak.enabled=false" .Values.hub.oidc.authServerUrl -}}
+{{- printf "%s/realms/%s" (include "cryptomator-hub.keycloakLocalUrl" .) .Values.hub.config.keycloakRealm -}}
 {{- end -}}
 {{- end -}}
 
 {{- define "cryptomator-hub.oidcTokenIssuer" -}}
-{{- if .Values.hub.oidc.tokenIssuer -}}
-{{- .Values.hub.oidc.tokenIssuer -}}
-{{- else if .Values.keycloak.enabled -}}
-{{- printf "%s/realms/%s" (include "cryptomator-hub.keycloakPublicUrl" .) .Values.hub.config.keycloakRealm -}}
+{{- if .Values.urls.kc.tokenIssuer -}}
+{{- .Values.urls.kc.tokenIssuer -}}
 {{- else -}}
-{{- required "hub.oidc.tokenIssuer must be set when keycloak.enabled=false" .Values.hub.oidc.tokenIssuer -}}
+{{- printf "%s/realms/%s" .Values.urls.kc.public .Values.hub.config.keycloakRealm -}}
 {{- end -}}
 {{- end -}}
 

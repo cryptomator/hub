@@ -23,9 +23,9 @@
 
 {{ printf "%s🌐 Ingress%s" $cSection $cReset }}
 {{- if .Values.ingress.enabled }}
-- Hub: {{ include "cryptomator-hub.hubPublicUrl" . }}
+- Hub: {{ .Values.urls.hub.public }}
 {{- if .Values.keycloak.enabled }}
-- Keycloak: {{ include "cryptomator-hub.keycloakPublicUrl" . }}
+- Keycloak: {{ .Values.urls.kc.public }}
 {{- end }}
 {{- else }}
 Ingress is disabled. Configure ingress manually to the services above.

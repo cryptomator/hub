@@ -83,7 +83,7 @@
     }
   ],
   "clients": [
-    {{- $hubPublicUrl := trimSuffix "/" (include "cryptomator-hub.hubPublicUrl" .) }}
+    {{- $hubPublicUrl := trimSuffix "/" .Values.urls.hub.public -}}
     {
       "clientId": "cryptomatorhub",
       "serviceAccountsEnabled": false,

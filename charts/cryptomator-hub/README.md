@@ -21,8 +21,9 @@ helm install hub charts/cryptomator-hub \
   --namespace cryptomator \
   --create-namespace \
   --wait --timeout 5m \
-  --set ingress.enabled=true \
-  --set global.host=domain.tld
+  --set urls.hub.public=http://localhost:9090/hub \
+  --set urls.kc.public=http://localhost:9090/kc \
+  --set ingress.enabled=true
 ```
 
 Passwords are optional by default. If unset, the chart generates random values and

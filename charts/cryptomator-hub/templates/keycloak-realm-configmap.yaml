@@ -8,7 +8,7 @@ metadata:
     {{- include "cryptomator-hub.labels" . | nindent 4 }}
 data:
   KC_DB: "postgres"
-  KC_DB_URL: {{ if .Values.postgres.enabled }}{{ printf "jdbc:postgresql://%s:%v/%s" (print (include "cryptomator-hub.fullname" .) "-service-pg") .Values.postgres.service.port .Values.keycloak.database.name | quote }}{{ else }}{{ required "keycloak.database.url must be set when keycloak.enabled=true and postgres.enabled=false" .Values.keycloak.database.url | quote }}{{ end }}
+  KC_DB_URL: {{ if .Values.postgres.enabled }}{{ printf "jdbc:postgresql://%s:%v/%s" (print (include "cryptomator-hub.fullname" .) "-service-pg") .Values.postgres.service.port .Values.keycloak.database.name | quote }}{{ else }}{{ required "keycloak.database.jdbcUrl must be set when keycloak.enabled=true and postgres.enabled=false" .Values.keycloak.database.jdbcUrl | quote }}{{ end }}
   KC_DB_USERNAME: {{ .Values.keycloak.database.username | quote }}
   KC_BOOTSTRAP_ADMIN_USERNAME: {{ .Values.keycloak.admin.username | quote }}
   KC_HEALTH_ENABLED: "true"
@@ -16,6 +16,7 @@ data:
   KC_HTTP_ENABLED: "true"
   KC_PROXY_HEADERS: {{ .Values.keycloak.config.proxyHeaders | quote }}
   KC_HTTP_RELATIVE_PATH: {{ include "cryptomator-hub.keycloakRelativePath" . | quote }}
-  KC_HOSTNAME: {{ include "cryptomator-hub.keycloakPublicUrl" . | quote }}
+  KC_HOSTNAME: {{ regexReplaceAll "^(https?://[^/]+).*" (required "urls.kc.public must be set" .Values.urls.kc.public) "${1}" | quote }}
+  QUARKUS_TRANSACTION_MANAGER_ENABLE_RECOVERY: "false"
   KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
 {{- end }}
