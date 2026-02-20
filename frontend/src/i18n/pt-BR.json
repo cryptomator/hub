@@ -199,6 +199,8 @@
   "deviceList.ipAddress": "Endereço IP",
   "deviceList.lastAccess": "Último acesso ao cofre",
   "deviceList.lastAccess.toolTip": "Pode estar faltando em dispositivos acessados com versões anteriores.",
+  "deviceType.browser": "Navegador",
+  "deviceType.desktop": "Computador",
   "downloadVaultTemplateDialog.title": "Baixar modelo do cofre",
   "downloadVaultTemplateDialog.description": "Baixe e descompacte o modelo de cofre compactado para qualquer local compartilhado com os membros da sua equipe. Isso é necessário somente uma vez durante a configuração inicial.",
   "emergencyAccess.requiredKeyShares": "Compartilhamentos de chaves obrigatórios",
