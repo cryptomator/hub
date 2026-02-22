@@ -1,0 +1,66 @@
+name: Publish Helm Chart
+
+on:
+  push:
+    paths:
+      - charts/cryptomator-hub/**
+      - .github/workflows/helm-chart-publish.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4.3.0
+
+      - name: Compute publish version
+        id: version
+        run: |
+          set -euo pipefail
+          chart_file="charts/cryptomator-hub/Chart.yaml"
+          base_version=$(awk -F': ' '/^version:/ {print $2}' "$chart_file")
+
+          if [[ -z "$base_version" ]]; then
+            echo "Unable to read chart version from $chart_file" >&2
+            exit 1
+          fi
+
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            publish_version="$base_version"
+          else
+            short_sha="${GITHUB_SHA::7}"
+            branch_slug=$(echo "${GITHUB_REF_NAME}" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9.-]+/-/g; s/^-+//; s/-+$//')
+            publish_version="${base_version}-${branch_slug}.${short_sha}"
+          fi
+
+          echo "publish_version=${publish_version}" >> "$GITHUB_OUTPUT"
+
+      - name: Lint chart
+        run: helm lint charts/cryptomator-hub
+
+      - name: Package chart
+        run: |
+          mkdir -p dist
+          helm package charts/cryptomator-hub \
+            --destination dist \
+            --version "${{ steps.version.outputs.publish_version }}"
+
+      - name: Login to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io --username "${{ github.actor }}" --password-stdin
+
+      - name: Push chart to GHCR (OCI)
+        run: |
+          helm push "dist/cryptomator-hub-${{ steps.version.outputs.publish_version }}.tgz" \
+            "oci://ghcr.io/${{ github.repository_owner }}/charts"

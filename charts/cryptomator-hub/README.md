@@ -29,7 +29,7 @@ helm install hub charts/cryptomator-hub \
   --wait --timeout 5m \
   --set urls.hub.public=http://localhost:9090/hub \
   --set urls.kc.public=http://localhost:9090/kc \
-  --set ingress.controller=contour
+  --set ingress.controller=contour \
   --set hub.admin.password=password
 ```
 
@@ -67,4 +67,25 @@ Assuming namespace `cryptomator` and name `hub`:
 
 ```bash
 kubectl get secret -n cryptomator hub-secrets-kc -o jsonpath='{.data.realm\.json}' | base64 -d | ...
+```
+
+## Verify Published Chart (Signature + Provenance)
+
+This chart contains a OCI chart signature, which can be verified as follows (assuming chart version `0.1.0`):
+
+```bash
+cosign verify \
+  --certificate-identity-regexp 'https://github.com/cryptomator/hub/.github/workflows/helm-chart-publish.yml@refs/(heads|tags)/.+' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  ghcr.io/cryptomator/charts/cryptomator-hub:0.1.0
+```
+
+You can additionally inspect provenance attestations:
+
+```bash
+cosign verify-attestation \
+  --type https://slsa.dev/provenance/v1 \
+  --certificate-identity-regexp 'https://github.com/cryptomator/hub/.github/workflows/helm-chart-publish.yml@refs/(heads|tags)/.+' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  ghcr.io/cryptomator/charts/cryptomator-hub:0.1.0
 ```
