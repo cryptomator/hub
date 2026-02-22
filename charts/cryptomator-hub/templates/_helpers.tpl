@@ -33,6 +33,15 @@ This allows users to set the public URLs to the actual external URLs of the serv
 {{- regexReplaceAll "^https?://[^/]+" (required "urls.hub.public must be set" .Values.urls.hub.public) "" -}}
 {{- end -}}
 
+{{- define "cryptomator-hub.hubPublicRootPath" -}}
+{{- $path := include "cryptomator-hub.hubRelativePath" . -}}
+{{- if or (eq $path "") (eq $path "/") -}}
+/
+{{- else -}}
+{{- printf "%s/" (trimSuffix "/" $path) -}}
+{{- end -}}
+{{- end -}}
+
 {{- define "cryptomator-hub.keycloakRelativePath" -}}
 {{- regexReplaceAll "^https?://[^/]+" (required "urls.kc.public must be set" .Values.urls.kc.public) "" -}}
 {{- end -}}

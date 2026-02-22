@@ -6,7 +6,7 @@ metadata:
   labels:
     {{- include "cryptomator-hub.labels" . | nindent 4 }}
 data:
-  HUB_PUBLIC_ROOT_PATH: {{ include "cryptomator-hub.hubRelativePath" . | quote }}
+  HUB_PUBLIC_ROOT_PATH: {{ include "cryptomator-hub.hubPublicRootPath" . | quote }}
   HUB_KEYCLOAK_PUBLIC_URL: {{ .Values.urls.kc.public | quote }}
   HUB_KEYCLOAK_LOCAL_URL: {{ include "cryptomator-hub.keycloakLocalUrl" . | quote }}
   HUB_KEYCLOAK_REALM: {{ .Values.hub.config.keycloakRealm | quote }}
