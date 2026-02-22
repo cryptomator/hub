@@ -12,6 +12,9 @@ Image repositories/tags are fixed in templates:
 - PostgreSQL: `postgres:17-alpine`
 
 TLS termination is currently expected to be done by ingress controller.
+Supported ingress controller templates:
+- `ingress.controller=nginx`
+- `ingress.controller=traefik`
 
 
 ## Quick Start (Full Internal Stack)
@@ -23,7 +26,7 @@ helm install hub charts/cryptomator-hub \
   --wait --timeout 5m \
   --set urls.hub.public=http://localhost:9090/hub \
   --set urls.kc.public=http://localhost:9090/kc \
-  --set ingress.enabled=true
+  --set ingress.controller=nginx
 ```
 
 Passwords are optional by default. If unset, the chart generates random values and

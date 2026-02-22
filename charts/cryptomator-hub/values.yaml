@@ -11,7 +11,8 @@ notes:
   useColor: true
 
 ingress:
-  enabled: false
+  # supported: nginx, traefik
+  controller: ""
   className: ""
   annotations: {}
   tls:

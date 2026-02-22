@@ -1,0 +1,88 @@
+{{- if eq .Values.ingress.controller "traefik" }}
+{{- $hubPath := include "cryptomator-hub.hubRelativePath" . -}}
+{{- if ne $hubPath "/" }}
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ include "cryptomator-hub.fullname" . }}-stripprefix
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cryptomator-hub.labels" . | nindent 4 }}
+spec:
+  stripPrefix:
+    prefixes:
+      - {{ trimSuffix "/" $hubPath | quote }}
+{{- end }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "cryptomator-hub.fullname" . }}-ingress-hub
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cryptomator-hub.labels" . | nindent 4 }}
+  annotations:
+    {{- if ne $hubPath "/" }}
+    traefik.ingress.kubernetes.io/router.middlewares: {{ printf "%s-%s-stripprefix@kubernetescrd" .Release.Namespace (include "cryptomator-hub.fullname" .) | quote }}
+    {{- end }}
+    {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
+  rules:
+    - host: {{ regexReplaceAll "^https?://([^:/]+).*" (required "urls.hub.public must be set" .Values.urls.hub.public) "${1}" | quote }}
+      http:
+        paths:
+          - path: {{ $hubPath | quote }}
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "cryptomator-hub.fullname" . }}-service-hub
+                port:
+                  number: {{ .Values.hub.service.port }}
+  {{- if .Values.ingress.tls.enabled }}
+  tls:
+    - hosts:
+        - {{ regexReplaceAll "^https?://([^:/]+).*" (required "urls.hub.public must be set" .Values.urls.hub.public) "${1}" | quote }}
+      secretName: {{ .Values.ingress.tls.secretName | required "ingress.tls.secretName must be set when ingress.tls.enabled=true" }}
+  {{- end }}
+{{- if .Values.keycloak.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "cryptomator-hub.fullname" . }}-ingress-kc
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cryptomator-hub.labels" . | nindent 4 }}
+  {{- with .Values.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
+  rules:
+    - host: {{ regexReplaceAll "^https?://([^:/]+).*" (required "urls.kc.public must be set" .Values.urls.kc.public) "${1}" | quote }}
+      http:
+        paths:
+          - path: {{ include "cryptomator-hub.keycloakRelativePath" . | quote }}
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "cryptomator-hub.fullname" . }}-service-kc
+                port:
+                  number: {{ .Values.keycloak.service.httpPort }}
+  {{- if .Values.ingress.tls.enabled }}
+  tls:
+    - hosts:
+        - {{ regexReplaceAll "^https?://([^:/]+).*" (required "urls.kc.public must be set" .Values.urls.kc.public) "${1}" | quote }}
+      secretName: {{ .Values.ingress.tls.secretName | required "ingress.tls.secretName must be set when ingress.tls.enabled=true" }}
+  {{- end }}
+{{- end }}
+{{- end }}

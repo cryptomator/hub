@@ -22,7 +22,7 @@
 {{- end }}
 
 {{ printf "%s🌐 Ingress%s" $cSection $cReset }}
-{{- if .Values.ingress.enabled }}
+{{- if .Values.ingress.controller }}
 - Hub: {{ .Values.urls.hub.public }}
 {{- if .Values.keycloak.enabled }}
 - Keycloak: {{ .Values.urls.kc.public }}
