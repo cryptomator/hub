@@ -69,12 +69,14 @@ jobs:
         id: push
         run: |
           set -euo pipefail
-          push_output=$(helm push "dist/cryptomator-hub-${{ steps.version.outputs.publish_version }}.tgz" "oci://ghcr.io/cryptomator/charts")
+          push_output=$(helm push "dist/cryptomator-hub-${{ steps.version.outputs.publish_version }}.tgz" "oci://ghcr.io/cryptomator/charts" 2>&1)
           echo "$push_output"
 
-          digest=$(echo "$push_output" | awk '/^Digest:/ {print $2}')
+          digest=$(printf '%s\n' "$push_output" | grep -Eo 'sha256:[0-9a-fA-F]{64}' | tail -n1 || true)
           if [[ -z "$digest" ]]; then
             echo "Failed to extract chart digest from helm push output" >&2
+            echo "Raw helm push output:" >&2
+            echo "$push_output" >&2
             exit 1
           fi
 
