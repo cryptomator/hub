@@ -75,9 +75,9 @@ This chart contains a OCI chart signature, which can be verified as follows (ass
 
 ```bash
 cosign verify \
-  --certificate-identity-regexp 'https://github.com/cryptomator/hub/.github/workflows/helm-chart-publish.yml@refs/(heads|tags)/.+' \
+  --certificate-identity-regexp 'https://github.com/cryptomator/hub/.github/workflows/helm-chart.yml@refs/(heads|tags)/.+' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-  ghcr.io/cryptomator/charts/cryptomator-hub:0.1.0
+  ghcr.io/cryptomator/charts/cryptomator-hub:0.1.1
 ```
 
 You can additionally inspect provenance attestations:
@@ -85,7 +85,7 @@ You can additionally inspect provenance attestations:
 ```bash
 cosign verify-attestation \
   --type https://slsa.dev/provenance/v1 \
-  --certificate-identity-regexp 'https://github.com/cryptomator/hub/.github/workflows/helm-chart-publish.yml@refs/(heads|tags)/.+' \
+  --certificate-identity-regexp 'https://github.com/cryptomator/hub/.github/workflows/helm-chart.yml@refs/(heads|tags)/.+' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-  ghcr.io/cryptomator/charts/cryptomator-hub:0.1.0
+  ghcr.io/cryptomator/charts/cryptomator-hub:0.1.1
 ```
