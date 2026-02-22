@@ -262,7 +262,7 @@ const onFetchError = ref<Error>();
 const errorOnFetchingUpdates = ref<boolean>(false);
 
 onMounted(async () => {
-  keycloakAdminRealmURL.value = `${cfg.value.keycloakUrl}/admin/${cfg.value.keycloakRealm}/console`;
+  keycloakAdminRealmURL.value = `${cfg.value.keycloakUrl}/admin/${cfg.value.keycloakRealm}/console/`;
   if (props.token) {
     await setToken(props.token);
   }
