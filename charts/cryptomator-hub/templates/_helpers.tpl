@@ -128,10 +128,10 @@ Auto-generated secrets below:
 {{- $_ := set .Values "_resolvedHubAdminPassword" .Values.hub.admin.password -}}
 {{- index .Values "_resolvedHubAdminPassword" -}}
 {{- else -}}
-{{- $secretName := print (include "cryptomator-hub.fullname" .) "-secrets-kc" -}}
+{{- $secretName := print (include "cryptomator-hub.fullname" .) "-secrets-hub" -}}
 {{- $existing := lookup "v1" "Secret" .Release.Namespace $secretName -}}
-{{- if and $existing (hasKey $existing.data "hub-admin-password") -}}
-{{- $_ := set .Values "_resolvedHubAdminPassword" (index $existing.data "hub-admin-password" | b64dec) -}}
+{{- if and $existing (hasKey $existing.data "hub_admin_password") -}}
+{{- $_ := set .Values "_resolvedHubAdminPassword" (index $existing.data "hub_admin_password" | b64dec) -}}
 {{- else -}}
 {{- $_ := set .Values "_resolvedHubAdminPassword" (randAlphaNum 32) -}}
 {{- end -}}
@@ -148,8 +148,8 @@ Auto-generated secrets below:
 {{- else -}}
 {{- $secretName := print (include "cryptomator-hub.fullname" .) "-secrets-kc" -}}
 {{- $existing := lookup "v1" "Secret" .Release.Namespace $secretName -}}
-{{- if and $existing (hasKey $existing.data "db-password") -}}
-{{- $_ := set .Values "_resolvedKeycloakDbPassword" (index $existing.data "db-password" | b64dec) -}}
+{{- if and $existing (hasKey $existing.data "kc_db_password") -}}
+{{- $_ := set .Values "_resolvedKeycloakDbPassword" (index $existing.data "kc_db_password" | b64dec) -}}
 {{- else -}}
 {{- $_ := set .Values "_resolvedKeycloakDbPassword" (randAlphaNum 32) -}}
 {{- end -}}
@@ -166,8 +166,8 @@ Auto-generated secrets below:
 {{- else -}}
 {{- $secretName := print (include "cryptomator-hub.fullname" .) "-secrets-kc" -}}
 {{- $existing := lookup "v1" "Secret" .Release.Namespace $secretName -}}
-{{- if and $existing (hasKey $existing.data "admin-password") -}}
-{{- $_ := set .Values "_resolvedKeycloakAdminPassword" (index $existing.data "admin-password" | b64dec) -}}
+{{- if and $existing (hasKey $existing.data "kc_admin_password") -}}
+{{- $_ := set .Values "_resolvedKeycloakAdminPassword" (index $existing.data "kc_admin_password" | b64dec) -}}
 {{- else -}}
 {{- $_ := set .Values "_resolvedKeycloakAdminPassword" (randAlphaNum 32) -}}
 {{- end -}}
@@ -184,8 +184,8 @@ Auto-generated secrets below:
 {{- else -}}
 {{- $secretName := print (include "cryptomator-hub.fullname" .) "-secrets-pg" -}}
 {{- $existing := lookup "v1" "Secret" .Release.Namespace $secretName -}}
-{{- if and $existing (hasKey $existing.data "admin-password") -}}
-{{- $_ := set .Values "_resolvedPostgresAdminPassword" (index $existing.data "admin-password" | b64dec) -}}
+{{- if and $existing (hasKey $existing.data "pg_admin_password") -}}
+{{- $_ := set .Values "_resolvedPostgresAdminPassword" (index $existing.data "pg_admin_password" | b64dec) -}}
 {{- else -}}
 {{- $_ := set .Values "_resolvedPostgresAdminPassword" (randAlphaNum 32) -}}
 {{- end -}}
