@@ -106,6 +106,10 @@ spec:
           volumeMounts:
             - name: tmp
               mountPath: /tmp
+              subPath: tmp
+            - name: tmp
+              mountPath: /opt/keycloak/data/tmp
+              subPath: data-tmp
             - name: realm
               mountPath: /opt/keycloak/data/import/realm.json
               subPath: realm.json
