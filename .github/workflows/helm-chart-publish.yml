@@ -8,6 +8,8 @@ on:
   workflow_dispatch:
 
 permissions:
+  id-token: write
+  attestations: write
   contents: read
   packages: write
 
@@ -24,6 +26,9 @@ jobs:
 
       - name: Setup Helm
         uses: azure/setup-helm@v4.3.0
+
+      - name: Setup Cosign
+        uses: sigstore/cosign-installer@v3.9.2
 
       - name: Compute publish version
         id: version
@@ -60,7 +65,31 @@ jobs:
       - name: Login to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io --username "${{ github.actor }}" --password-stdin
 
-      - name: Push chart to GHCR (OCI)
+      - name: Push chart to GHCR
+        id: push
         run: |
-          helm push "dist/cryptomator-hub-${{ steps.version.outputs.publish_version }}.tgz" \
-            "oci://ghcr.io/${{ github.repository_owner }}/charts"
+          set -euo pipefail
+          push_output=$(helm push "dist/cryptomator-hub-${{ steps.version.outputs.publish_version }}.tgz" "oci://ghcr.io/cryptomator/charts")
+          echo "$push_output"
+
+          digest=$(echo "$push_output" | awk '/^Digest:/ {print $2}')
+          if [[ -z "$digest" ]]; then
+            echo "Failed to extract chart digest from helm push output" >&2
+            exit 1
+          fi
+
+          echo "chart_digest=$digest" >> "$GITHUB_OUTPUT"
+
+      - name: Sign chart with cosign (keyless)
+        env:
+          COSIGN_EXPERIMENTAL: "1"
+        run: |
+          set -euo pipefail
+          cosign sign --yes "ghcr.io/cryptomator/charts/cryptomator-hub@${{ steps.push.outputs.chart_digest }}"
+
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@96278af6caaf10aea03fd8d33a09a777ca52d62f # v3.2.0
+        with:
+          subject-name: "ghcr.io/cryptomator/charts/cryptomator-hub"
+          subject-digest: ${{ steps.push.outputs.chart_digest }}
+          push-to-registry: true

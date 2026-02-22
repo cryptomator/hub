@@ -53,9 +53,11 @@
           "temporary": {{ .Values.hub.admin.passwordTemporary }}
         }
       ],
+      {{- if .Values.hub.admin.passwordTemporary }}
       "requiredActions": [
         "UPDATE_PASSWORD"
       ],
+      {{- end }}
       "realmRoles": [
         "admin"
       ]

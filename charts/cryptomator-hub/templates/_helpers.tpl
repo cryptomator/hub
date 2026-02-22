@@ -30,30 +30,25 @@ This allows users to set the public URLs to the actual external URLs of the serv
 */}}
 
 {{- define "cryptomator-hub.hubRelativePath" -}}
-{{- regexReplaceAll "^https?://[^/]+" (required "urls.hub.public must be set" .Values.urls.hub.public) "" -}}
-{{- end -}}
-
-{{- define "cryptomator-hub.hubPublicRootPath" -}}
-{{- $path := include "cryptomator-hub.hubRelativePath" . -}}
-{{- if or (eq $path "") (eq $path "/") -}}
-/
-{{- else -}}
-{{- printf "%s/" (trimSuffix "/" $path) -}}
-{{- end -}}
+{{- $path := regexReplaceAll "^https?://[^/]+" (required "urls.hub.public must be set" .Values.urls.hub.public) "" -}}
+{{- $trimmed := trimAll "/" $path -}}
+{{- printf "/%s" $trimmed -}}
 {{- end -}}
 
 {{- define "cryptomator-hub.keycloakRelativePath" -}}
-{{- regexReplaceAll "^https?://[^/]+" (required "urls.kc.public must be set" .Values.urls.kc.public) "" -}}
+{{- $path := regexReplaceAll "^https?://[^/]+" (required "urls.kc.public must be set" .Values.urls.kc.public) "" -}}
+{{- $trimmed := trimAll "/" $path -}}
+{{- printf "/%s" $trimmed -}}
 {{- end -}}
 
 {{- define "cryptomator-hub.keycloakLocalUrl" -}}
 {{- if .Values.urls.kc.clusterInternal -}}
-{{- .Values.urls.kc.clusterInternal -}}
+{{- trimSuffix "/" .Values.urls.kc.clusterInternal -}}
 {{- else if .Values.keycloak.enabled -}}
 {{- printf "http://%s:%v%s" (print (include "cryptomator-hub.fullname" .) "-service-kc") .Values.keycloak.service.httpPort (include "cryptomator-hub.keycloakRelativePath" .) -}}
 {{- else -}}
 {{/* if keycloak isn't part of the deployment, use public url: */}}
-{{- required "urls.kc.public must be set" .Values.urls.kc.public -}}
+{{- trimSuffix "/" (required "urls.kc.public must be set" .Values.urls.kc.public) -}}
 {{- end -}}
 {{- end -}}
 
@@ -71,7 +66,7 @@ This allows users to set the public URLs to the actual external URLs of the serv
 {{- if .Values.urls.kc.authServerUrl -}}
 {{- .Values.urls.kc.authServerUrl -}}
 {{- else -}}
-{{- printf "%s/realms/%s" (include "cryptomator-hub.keycloakLocalUrl" .) .Values.hub.config.keycloakRealm -}}
+{{- printf "%s/realms/%s" (trimSuffix "/" (include "cryptomator-hub.keycloakLocalUrl" .)) .Values.hub.config.keycloakRealm -}}
 {{- end -}}
 {{- end -}}
 
@@ -79,7 +74,7 @@ This allows users to set the public URLs to the actual external URLs of the serv
 {{- if .Values.urls.kc.tokenIssuer -}}
 {{- .Values.urls.kc.tokenIssuer -}}
 {{- else -}}
-{{- printf "%s/realms/%s" .Values.urls.kc.public .Values.hub.config.keycloakRealm -}}
+{{- printf "%s/realms/%s" (trimSuffix "/" .Values.urls.kc.public) .Values.hub.config.keycloakRealm -}}
 {{- end -}}
 {{- end -}}
 

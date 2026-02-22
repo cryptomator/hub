@@ -1,6 +1,8 @@
 {{- if eq .Values.ingress.controller "nginx" }}
+{{- $hubHost := regexReplaceAll "^https?://([^:/]+).*" (required "urls.hub.public must be set" .Values.urls.hub.public) "${1}" -}}
 {{- $hubPath := include "cryptomator-hub.hubRelativePath" . -}}
-{{- $hubPathBase := trimSuffix "/" $hubPath -}}
+{{- $kcHost := regexReplaceAll "^https?://([^:/]+).*" (required "urls.kc.public must be set" .Values.urls.kc.public) "${1}" -}}
+{{- $kcPath := include "cryptomator-hub.keycloakRelativePath" . -}}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -20,10 +22,10 @@ spec:
   ingressClassName: {{ .Values.ingress.className }}
   {{- end }}
   rules:
-    - host: {{ regexReplaceAll "^https?://([^:/]+).*" (required "urls.hub.public must be set" .Values.urls.hub.public) "${1}" | quote }}
+    - host: {{ $hubHost | quote }}
       http:
         paths:
-          - path: {{ if eq $hubPath "/" }}{{ "/" | quote }}{{ else }}{{ printf "%s(/|$)(.*)" $hubPathBase | quote }}{{ end }}
+          - path: {{ if eq $hubPath "/" }}{{ "/" | quote }}{{ else }}{{ printf "%s(/|$)(.*)" $hubPath | quote }}{{ end }}
             pathType: {{ if eq $hubPath "/" }}Prefix{{ else }}ImplementationSpecific{{ end }}
             backend:
               service:
@@ -33,7 +35,7 @@ spec:
   {{- if .Values.ingress.tls.enabled }}
   tls:
     - hosts:
-        - {{ regexReplaceAll "^https?://([^:/]+).*" (required "urls.hub.public must be set" .Values.urls.hub.public) "${1}" | quote }}
+        - {{ $hubHost | quote }}
       secretName: {{ .Values.ingress.tls.secretName | required "ingress.tls.secretName must be set when ingress.tls.enabled=true" }}
   {{- end }}
 {{- if .Values.keycloak.enabled }}
@@ -54,10 +56,10 @@ spec:
   ingressClassName: {{ .Values.ingress.className }}
   {{- end }}
   rules:
-    - host: {{ regexReplaceAll "^https?://([^:/]+).*" (required "urls.kc.public must be set" .Values.urls.kc.public) "${1}" | quote }}
+    - host: {{ $kcHost | quote }}
       http:
         paths:
-          - path: {{ include "cryptomator-hub.keycloakRelativePath" . | quote }}
+          - path: {{ $kcPath | quote }}
             pathType: Prefix
             backend:
               service:
@@ -67,7 +69,7 @@ spec:
   {{- if .Values.ingress.tls.enabled }}
   tls:
     - hosts:
-        - {{ regexReplaceAll "^https?://([^:/]+).*" (required "urls.kc.public must be set" .Values.urls.kc.public) "${1}" | quote }}
+        - {{ $kcHost | quote }}
       secretName: {{ .Values.ingress.tls.secretName | required "ingress.tls.secretName must be set when ingress.tls.enabled=true" }}
   {{- end }}
 {{- end }}
