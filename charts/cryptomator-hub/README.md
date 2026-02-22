@@ -15,9 +15,12 @@ TLS termination is currently expected to be done by ingress controller.
 Supported ingress controller templates:
 - `ingress.controller=nginx`
 - `ingress.controller=traefik`
+- `ingress.controller=contour`
 
 
 ## Quick Start (Full Internal Stack)
+
+Assuming you have a local KIND cluster, e.g. via [Podman Desktop](https://podman-desktop.io/) with contour ingress on port 9090:
 
 ```bash
 helm install hub charts/cryptomator-hub \
@@ -26,7 +29,8 @@ helm install hub charts/cryptomator-hub \
   --wait --timeout 5m \
   --set urls.hub.public=http://localhost:9090/hub \
   --set urls.kc.public=http://localhost:9090/kc \
-  --set ingress.controller=nginx
+  --set ingress.controller=contour
+  --set hub.admin.password=password
 ```
 
 Passwords are optional by default. If unset, the chart generates random values and
@@ -55,5 +59,12 @@ helm install hub charts/cryptomator-hub \
   --set hub.oidc.tokenIssuer='https://sso.example/kc/realms/cryptomator'
 ```
 
-Even with `keycloak.enabled=false`, the chart still renders `realm.json` in Secret
-`<release>-keycloak` so you can manually export/import it for your existing Keycloak.
+### Importing `realm.json`
+
+Even with `keycloak.enabled=false`, the chart still renders `realm.json` in Secret `<release>-keycloak` so you can manually export/import it for your existing Keycloak.
+
+Assuming namespace `cryptomator` and name `hub`:
+
+```bash
+kubectl get secret -n cryptomator hub-secrets-kc -o jsonpath='{.data.realm\.json}' | base64 -d | ...
+```

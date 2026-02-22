@@ -1,0 +1,71 @@
+{{- if eq .Values.ingress.controller "contour" }}
+{{- $hubHost := regexReplaceAll "^https?://([^:/]+).*" (required "urls.hub.public must be set" .Values.urls.hub.public) "${1}" -}}
+{{- $hubRoot := include "cryptomator-hub.hubPublicRootPath" . -}}
+{{- $hubPrefix := trimSuffix "/" $hubRoot -}}
+{{- if eq $hubPrefix "" }}{{- $hubPrefix = "/" }}{{- end -}}
+{{- $kcHost := "" -}}
+{{- $kcPath := "" -}}
+{{- if .Values.keycloak.enabled -}}
+  {{- $kcHost = regexReplaceAll "^https?://([^:/]+).*" (required "urls.kc.public must be set" .Values.urls.kc.public) "${1}" -}}
+  {{- $kcPath = include "cryptomator-hub.keycloakRelativePath" . -}}
+  {{- if eq $kcPath "" }}{{- $kcPath = "/" }}{{- end -}}
+{{- end -}}
+{{- $sameHost := and .Values.keycloak.enabled (eq $hubHost $kcHost) -}}
+---
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: {{ include "cryptomator-hub.fullname" . }}-proxy-hub
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cryptomator-hub.labels" . | nindent 4 }}
+spec:
+  virtualhost:
+    fqdn: {{ $hubHost | quote }}
+    {{- if .Values.ingress.tls.enabled }}
+    tls:
+      secretName: {{ .Values.ingress.tls.secretName | required "ingress.tls.secretName must be set when ingress.tls.enabled=true" }}
+    {{- end }}
+  routes:
+    - conditions:
+        - prefix: {{ $hubPrefix | quote }}
+      {{- if ne $hubPrefix "/" }}
+      pathRewritePolicy:
+        replacePrefix:
+          - prefix: {{ $hubPrefix | quote }}
+            replacement: "/"
+      {{- end }}
+      services:
+        - name: {{ include "cryptomator-hub.fullname" . }}-service-hub
+          port: {{ .Values.hub.service.port }}
+{{- if $sameHost }}
+    - conditions:
+        - prefix: {{ $kcPath | quote }}
+      services:
+        - name: {{ include "cryptomator-hub.fullname" . }}-service-kc
+          port: {{ .Values.keycloak.service.httpPort }}
+{{- end }}
+{{- if and .Values.keycloak.enabled (not $sameHost) }}
+---
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: {{ include "cryptomator-hub.fullname" . }}-proxy-kc
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cryptomator-hub.labels" . | nindent 4 }}
+spec:
+  virtualhost:
+    fqdn: {{ $kcHost | quote }}
+    {{- if .Values.ingress.tls.enabled }}
+    tls:
+      secretName: {{ .Values.ingress.tls.secretName | required "ingress.tls.secretName must be set when ingress.tls.enabled=true" }}
+    {{- end }}
+  routes:
+    - conditions:
+        - prefix: {{ $kcPath | quote }}
+      services:
+        - name: {{ include "cryptomator-hub.fullname" . }}-service-kc
+          port: {{ .Values.keycloak.service.httpPort }}
+{{- end }}
+{{- end }}
