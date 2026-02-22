@@ -24,9 +24,9 @@ spec:
     spec:
       securityContext:
         runAsNonRoot: true
-        runAsUser: 1000
-        runAsGroup: 1000
-        fsGroup: 1000
+        runAsUser: 70
+        runAsGroup: 70
+        fsGroup: 70
       initContainers:
         - name: fix-permissions
           image: busybox:1.36
@@ -35,7 +35,7 @@ spec:
             - |
               set -eux
               mkdir -p /var/lib/postgresql/data /var/run/postgresql
-              chown -R 1000:1000 /var/lib/postgresql/data /var/run/postgresql
+              chown -R 70:70 /var/lib/postgresql/data /var/run/postgresql
               chmod 700 /var/lib/postgresql/data
               chmod 775 /var/run/postgresql
           securityContext:
@@ -88,8 +88,8 @@ spec:
             {{- toYaml .Values.postgres.resources | nindent 12 }}
           securityContext:
             runAsNonRoot: true
-            runAsUser: 1000
-            runAsGroup: 1000
+            runAsUser: 70
+            runAsGroup: 70
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             privileged: false

@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - charts/cryptomator-hub/**
-      - .github/workflows/helm-chart-publish.yml
+      - .github/workflows/helm-chart.yml
   workflow_dispatch:
 
 permissions:
@@ -25,10 +25,10 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Setup Helm
-        uses: azure/setup-helm@v4.3.0
+        uses: Azure/setup-helm@b9e51907a09c216f16ebe8536097933489208112 # v4.3.0
 
       - name: Setup Cosign
-        uses: sigstore/cosign-installer@v3.9.2
+        uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159 # v3.9.2
 
       - name: Compute publish version
         id: version
@@ -81,8 +81,6 @@ jobs:
           echo "chart_digest=$digest" >> "$GITHUB_OUTPUT"
 
       - name: Sign chart with cosign (keyless)
-        env:
-          COSIGN_EXPERIMENTAL: "1"
         run: |
           set -euo pipefail
           cosign sign --yes "ghcr.io/cryptomator/charts/cryptomator-hub@${{ steps.push.outputs.chart_digest }}"
