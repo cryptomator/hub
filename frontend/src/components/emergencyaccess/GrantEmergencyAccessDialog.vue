@@ -61,7 +61,7 @@
                         @remove="removeCouncilMember"
                       />
                       
-                      <div v-if="allowChangingDefaults && minMembers - emergencyCouncilMembers.length > 0" class="flex items-start gap-2 rounded-md border border-yellow-200 bg-yellow-50 p-1 text-sm text-gray-900 mt-1">
+                      <div v-if="allowChangingDefaults && emergencyCouncilMembers.length < minMembers" class="flex items-start gap-2 rounded-md border border-yellow-200 bg-yellow-50 p-1 text-sm text-gray-900 mt-1">
                         <span class="leading-5">
                           <span class="text-gray-600">
                             {{ t('emergencyAccess.validation.selectMoreCouncilMembers', [minMembers - emergencyCouncilMembers.length]) }}
@@ -180,11 +180,11 @@ const isInvaildCouncilMembers = computed(() => {
 });
 
 const hasTooFewCouncilMembers = computed(() => {
-  return emergencyCouncilMembers.value.length < requiredKeyShares.value || emergencyCouncilMembers.value.length < minMembers.value;
+  return emergencyCouncilMembers.value.length < requiredKeyShares.value || (allowChangingDefaults.value && emergencyCouncilMembers.value.length < minMembers.value);
 });
 
 const isGrantButtonDisabled = computed(() => {
-  return allowChangingDefaults.value && (isInvalidKeyShares.value || isInvaildCouncilMembers.value || hasTooFewCouncilMembers.value);
+  return isInvalidKeyShares.value || isInvaildCouncilMembers.value || hasTooFewCouncilMembers.value;
 });
 
 watch(userQuery, async (newQuery) => {
