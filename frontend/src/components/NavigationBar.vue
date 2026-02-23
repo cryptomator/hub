@@ -134,7 +134,7 @@ onMounted(async () => {
 
       const map = new Map<string, VaultDto>();
       recoverable.forEach(v => {
-        if (!v.archived) map.set(v.id, v);
+        map.set(v.id, v);
       });
       recoverableVaults.value = Array.from(map.values());
     } catch (e) {
