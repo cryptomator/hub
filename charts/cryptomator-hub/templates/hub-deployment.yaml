@@ -54,7 +54,7 @@ spec:
                 echo "waiting for postgres..."
               done
         - name: wait-for-oidc
-          image: busybox:1.36
+          image: alpine/curl:8.17.0
           securityContext:
             runAsNonRoot: false
             allowPrivilegeEscalation: false
@@ -67,7 +67,7 @@ spec:
           args:
             - |
               set -eux
-              until wget -q --spider "{{ include "cryptomator-hub.oidcAuthServerUrl" . }}/.well-known/openid-configuration"; do
+              until [ "$(curl -sS -o /dev/null -w "%{http_code}" "{{ include "cryptomator-hub.oidcAuthServerUrl" . }}/.well-known/openid-configuration")" = "200" ]; do
                 echo "waiting for OIDC discovery endpoint..."
                 sleep 5
               done
