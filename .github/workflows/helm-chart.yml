@@ -1,0 +1,133 @@
+name: Helm Chart
+
+on:
+  push:
+    paths:
+      - charts/cryptomator-hub/**
+      - .github/workflows/helm-chart.yml
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Chart Version'
+        required: true
+      appVersion:
+        description: 'App Version'
+        required: true
+
+permissions:
+  id-token: write
+  attestations: write
+  contents: read
+  packages: write
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  lint:
+    name: Lint Helm Chart
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Setup Helm
+        uses: Azure/setup-helm@b9e51907a09c216f16ebe8536097933489208112 # v4.3.0
+
+      - name: Lint chart
+        run: helm lint charts/cryptomator-hub
+
+  publish:
+    name: Publish Helm Chart
+    needs: lint
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/') || contains(github.event.head_commit.message, '[build image]') || contains(github.event.head_commit.message, '[build chart]')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Setup Helm
+        uses: Azure/setup-helm@b9e51907a09c216f16ebe8536097933489208112 # v4.3.0
+
+      - name: Setup Cosign
+        uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159 # v3.9.2
+
+      - name: Compute publish version
+        id: version
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            echo "publish_version=${{ github.event.inputs.version }}" >> "$GITHUB_OUTPUT"
+            echo "publish_app_version=${{ github.event.inputs.appVersion }}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          chart_file="charts/cryptomator-hub/Chart.yaml"
+          base_version=$(awk -F': ' '/^version:/ {print $2}' "$chart_file")
+          base_app_version=$(awk -F': ' '/^appVersion:/ {print $2}' "$chart_file" | tr -d '"')
+
+          if [[ -z "$base_version" ]]; then
+            echo "Unable to read chart version from $chart_file" >&2
+            exit 1
+          fi
+
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            publish_version="$base_version"
+          else
+            short_sha="${GITHUB_SHA::7}"
+            branch_slug=$(echo "${GITHUB_REF_NAME}" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9.-]+/-/g; s/^-+//; s/-+$//')
+            publish_version="${base_version}-${branch_slug}.${short_sha}"
+          fi
+
+          echo "publish_version=${publish_version}" >> "$GITHUB_OUTPUT"
+          echo "publish_app_version=${base_app_version}" >> "$GITHUB_OUTPUT"
+
+      - name: Package chart
+        run: |
+          mkdir -p dist
+          helm package charts/cryptomator-hub \
+            --destination dist \
+            --version "${{ steps.version.outputs.publish_version }}" \
+            --app-version "${{ steps.version.outputs.publish_app_version }}"
+
+      - name: Login to GHCR
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "Helm Registry: Login to GHCR"
+        run: echo "$GITHUB_TOKEN" | helm registry login ghcr.io --username "${{ github.actor }}" --password-stdin
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push chart to GHCR
+        id: push
+        run: |
+          set -euo pipefail
+          push_output=$(helm push "dist/cryptomator-hub-${{ steps.version.outputs.publish_version }}.tgz" "oci://ghcr.io/cryptomator/charts" 2>&1)
+          echo "$push_output"
+
+          digest=$(printf '%s\n' "$push_output" | grep -Eo 'sha256:[0-9a-fA-F]{64}' | tail -n1 || true)
+          if [[ -z "$digest" ]]; then
+            echo "Failed to extract chart digest from helm push output" >&2
+            echo "Raw helm push output:" >&2
+            echo "$push_output" >&2
+            exit 1
+          fi
+
+          echo "chart_digest=$digest" >> "$GITHUB_OUTPUT"
+
+      - name: Sign chart with cosign (keyless)
+        run: |
+          set -euo pipefail
+          cosign sign --yes "ghcr.io/cryptomator/charts/cryptomator-hub@${{ steps.push.outputs.chart_digest }}"
+
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@96278af6caaf10aea03fd8d33a09a777ca52d62f # v3.2.0
+        with:
+          subject-name: "ghcr.io/cryptomator/charts/cryptomator-hub"
+          subject-digest: ${{ steps.push.outputs.chart_digest }}
+          push-to-registry: true
