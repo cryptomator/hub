@@ -106,11 +106,13 @@ export class FormValidator {
    * Checks if email is required
    */
   static isEmailRequired(isEditMode: boolean, initialEmail?: string): boolean {
-    if (!isEditMode) {
-      return true; // CREATE: always required
+    if (isEditMode) {
+      // EDIT: required only if user previously had email
+      return initialEmail !== undefined && initialEmail.trim() !== '';
+    } else {
+      // CREATE: always required
+      return true;
     }
-    // EDIT: required only if user previously had email
-    return initialEmail !== undefined && initialEmail.trim() !== '';
   }
 
   /**
