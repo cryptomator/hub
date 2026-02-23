@@ -1,6 +1,7 @@
 {{- if eq .Values.ingress.controller "nginx" }}
 {{- $hubHost := regexReplaceAll "^https?://([^:/]+).*" (required "urls.hub.public must be set" .Values.urls.hub.public) "${1}" -}}
 {{- $hubPath := include "cryptomator-hub.hubRelativePath" . -}}
+{{- $hubMetricsPath := printf "%s/q/metrics" $hubPath -}}
 {{- $kcHost := regexReplaceAll "^https?://([^:/]+).*" (required "urls.kc.public must be set" .Values.urls.kc.public) "${1}" -}}
 {{- $kcPath := include "cryptomator-hub.keycloakRelativePath" . -}}
 ---
@@ -40,6 +41,48 @@ spec:
         - {{ $hubHost | quote }}
       secretName: {{ .Values.ingress.tls.secretName | required "ingress.tls.secretName must be set when ingress.tls.enabled=true" }}
   {{- end }}
+{{- if .Values.hub.metrics.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "cryptomator-hub.fullname" . }}-ingress-hub-metrics
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cryptomator-hub.labels" . | nindent 4 }}
+  annotations:
+    {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    nginx.ingress.kubernetes.io/auth-type: "basic"
+    nginx.ingress.kubernetes.io/auth-secret: {{ printf "%s-secrets-hub-metrics" (include "cryptomator-hub.fullname" .) | quote }}
+    nginx.ingress.kubernetes.io/auth-realm: "Authentication Required"
+    {{- if ne $hubPath "/" }}
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: "/q/metrics$1$2"
+    {{- end }}
+spec:
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
+  rules:
+    - host: {{ $hubHost | quote }}
+      http:
+        paths:
+          - path: {{ if eq $hubPath "/" }}{{ $hubMetricsPath | quote }}{{ else }}{{ printf "%s(/|$)(.*)" $hubMetricsPath | quote }}{{ end }}
+            pathType: {{ if eq $hubPath "/" }}Prefix{{ else }}ImplementationSpecific{{ end }}
+            backend:
+              service:
+                name: {{ include "cryptomator-hub.fullname" . }}-service-hub
+                port:
+                  number: {{ .Values.hub.service.managementPort }}
+  {{- if .Values.ingress.tls.enabled }}
+  tls:
+    - hosts:
+        - {{ $hubHost | quote }}
+      secretName: {{ .Values.ingress.tls.secretName | required "ingress.tls.secretName must be set when ingress.tls.enabled=true" }}
+  {{- end }}
+{{- end }}
 {{- if .Values.keycloak.enabled }}
 ---
 apiVersion: networking.k8s.io/v1

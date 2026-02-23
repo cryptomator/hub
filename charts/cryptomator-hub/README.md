@@ -42,6 +42,20 @@ The Keycloak realm import is rendered from a dedicated template using:
 - `hub.secrets.systemClientSecret` (optional; auto-generated when chart-managed Hub secret is used)
 - `hub.admin.*` (realm-level Hub admin user; separate from `keycloak.admin.*` bootstrap user)
 
+## Metrics Endpoint
+
+Hub metrics are configured via:
+
+- `hub.metrics.enabled`
+- `hub.metrics.username`
+- `hub.metrics.password` (optional; auto-generated if unset)
+
+When metrics are enabled, the chart creates:
+
+- Secret `<release>-secrets-hub-metrics` of type `kubernetes.io/basic-auth`
+- Metrics ingress route on Hub management endpoint path `/q/metrics`
+- Basic-auth protection for metrics ingress on `nginx` and `traefik` controllers
+
 ## Hub with External PostgreSQL and Keycloak
 
 ```bash

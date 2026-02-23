@@ -143,6 +143,24 @@ Auto-generated secrets below:
 {{- end -}}
 {{- end -}}
 
+{{- define "cryptomator-hub.resolvedHubMetricsPassword" -}}
+{{- if hasKey .Values "_resolvedHubMetricsPassword" -}}
+{{- index .Values "_resolvedHubMetricsPassword" -}}
+{{- else if .Values.hub.metrics.password -}}
+{{- $_ := set .Values "_resolvedHubMetricsPassword" .Values.hub.metrics.password -}}
+{{- index .Values "_resolvedHubMetricsPassword" -}}
+{{- else -}}
+{{- $secretName := print (include "cryptomator-hub.fullname" .) "-secrets-hub-metrics" -}}
+{{- $existing := lookup "v1" "Secret" .Release.Namespace $secretName -}}
+{{- if and $existing (hasKey $existing.data "password") -}}
+{{- $_ := set .Values "_resolvedHubMetricsPassword" (index $existing.data "password" | b64dec) -}}
+{{- else -}}
+{{- $_ := set .Values "_resolvedHubMetricsPassword" (randAlphaNum 32) -}}
+{{- end -}}
+{{- index .Values "_resolvedHubMetricsPassword" -}}
+{{- end -}}
+{{- end -}}
+
 {{- define "cryptomator-hub.resolvedKeycloakDbPassword" -}}
 {{- if hasKey .Values "_resolvedKeycloakDbPassword" -}}
 {{- index .Values "_resolvedKeycloakDbPassword" -}}

@@ -37,7 +37,10 @@ hub:
     keycloakSyncerPeriod: 5m
     keycloakPublicUrl: ""
     keycloakLocalUrl: ""
-    metricsEnabled: true
+  metrics:
+    enabled: true
+    username: metrics
+    password: ""
   oidc:
     clientId: cryptomatorhub
   database:
