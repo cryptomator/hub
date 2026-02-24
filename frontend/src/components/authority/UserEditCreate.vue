@@ -142,7 +142,7 @@
               <div></div>
               <div class="md:col-span-2 lg:col-span-1">
                 <div class="bg-blue-50 text-gray-900 text-sm rounded-md p-4 flex gap-3 items-start">
-                  <InformationCircleIcon class="w-5 h-5 mt-0.5 text-blue-400 flex-shrink-0" aria-hidden="true" />
+                  <InformationCircleIcon class="w-5 h-5 mt-0.5 text-blue-400 shrink-0" aria-hidden="true" />
                   <p>
                     {{ props.mode === 'EDIT' ? t('userEditCreate.edit.passwordInfo') : t('userEditCreate.create.passwordInfo') }}
                   </p>
