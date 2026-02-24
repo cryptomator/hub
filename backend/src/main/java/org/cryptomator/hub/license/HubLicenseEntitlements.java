@@ -13,8 +13,11 @@ public record HubLicenseEntitlements(@JsonProperty("seats") long seats,
 									 @JsonProperty("showTrialHint") boolean showTrialHint,
 									 @JsonProperty("auditLogRetentionDays") long auditLogRetentionDays,
 									 @JsonProperty("emergencyAccessEnabled") boolean emergencyAccessEnabled,
+									 @JsonProperty("keycloakAccessEnabled") boolean keycloakAccessEnabled,
 									 @JsonProperty("iosLicense") String iosLicense,
-									 @JsonProperty("androidLicense") String androidLicense) {
+									 @JsonProperty("androidLicense") String androidLicense,
+									 @JsonProperty("desktopLicense") String desktopLicense) {
+
 	/**
 	 * Calculates the earliest point of time for audit log entries to still be retained.
 	 *
@@ -28,34 +31,43 @@ public record HubLicenseEntitlements(@JsonProperty("seats") long seats,
 		}
 	}
 
-	// region Factory + Withers (should only be used in tests)
+	// region Factory + Withers
 
 	public static HubLicenseEntitlements create() {
-		return new HubLicenseEntitlements(0, false, 0, false, null, null);
+		return new HubLicenseEntitlements(0, false, 0, false, true, null, null, null);
 	}
 
 	public HubLicenseEntitlements withSeats(long seats) {
-		return new HubLicenseEntitlements(seats, this.showTrialHint, this.auditLogRetentionDays, this.emergencyAccessEnabled, this.iosLicense, this.androidLicense);
+		return new HubLicenseEntitlements(seats, this.showTrialHint, this.auditLogRetentionDays, this.emergencyAccessEnabled, this.keycloakAccessEnabled, this.iosLicense, this.androidLicense, this.desktopLicense);
 	}
 
 	public HubLicenseEntitlements withShowTrialHint(boolean showTrialHint) {
-		return new HubLicenseEntitlements(this.seats, showTrialHint, this.auditLogRetentionDays, this.emergencyAccessEnabled, this.iosLicense, this.androidLicense);
+		return new HubLicenseEntitlements(this.seats, showTrialHint, this.auditLogRetentionDays, this.emergencyAccessEnabled, this.keycloakAccessEnabled, this.iosLicense, this.androidLicense, this.desktopLicense);
 	}
 
 	public HubLicenseEntitlements withAuditLogRetentionDays(long auditLogRetentionDays) {
-		return new HubLicenseEntitlements(this.seats, this.showTrialHint, auditLogRetentionDays, this.emergencyAccessEnabled, this.iosLicense, this.androidLicense);
+		return new HubLicenseEntitlements(this.seats, this.showTrialHint, auditLogRetentionDays, this.emergencyAccessEnabled, this.keycloakAccessEnabled, this.iosLicense, this.androidLicense, this.desktopLicense);
 	}
 
 	public HubLicenseEntitlements withEmergencyAccessEnabled(boolean emergencyAccessEnabled) {
-		return new HubLicenseEntitlements(this.seats, this.showTrialHint, this.auditLogRetentionDays, emergencyAccessEnabled, this.iosLicense, this.androidLicense);
+		return new HubLicenseEntitlements(this.seats, this.showTrialHint, this.auditLogRetentionDays, emergencyAccessEnabled, this.keycloakAccessEnabled, this.iosLicense, this.androidLicense, this.desktopLicense);
+	}
+
+	public HubLicenseEntitlements withKeycloakAccessEnabled(boolean keycloakAccessEnabled) {
+		return new HubLicenseEntitlements(this.seats, this.showTrialHint, this.auditLogRetentionDays, this.emergencyAccessEnabled, keycloakAccessEnabled, this.iosLicense, this.androidLicense, this.desktopLicense);
 	}
 
 	public HubLicenseEntitlements withIosLicense(String iosLicense) {
-		return new HubLicenseEntitlements(this.seats, this.showTrialHint, this.auditLogRetentionDays, this.emergencyAccessEnabled, iosLicense, this.androidLicense);
+		return new HubLicenseEntitlements(this.seats, this.showTrialHint, this.auditLogRetentionDays, this.emergencyAccessEnabled, this.keycloakAccessEnabled, iosLicense, this.androidLicense, this.desktopLicense);
 	}
 
 	public HubLicenseEntitlements withAndroidLicense(String androidLicense) {
-		return new HubLicenseEntitlements(this.seats, this.showTrialHint, this.auditLogRetentionDays, this.emergencyAccessEnabled, this.iosLicense, androidLicense);
+		return new HubLicenseEntitlements(this.seats, this.showTrialHint, this.auditLogRetentionDays, this.emergencyAccessEnabled, this.keycloakAccessEnabled, this.iosLicense, androidLicense, this.desktopLicense);
 	}
+
+	public HubLicenseEntitlements withDesktopLicense(String desktopLicense) {
+		return new HubLicenseEntitlements(this.seats, this.showTrialHint, this.auditLogRetentionDays, this.emergencyAccessEnabled, this.keycloakAccessEnabled, this.iosLicense, this.androidLicense, desktopLicense);
+	}
+
 	// endregion
 }
