@@ -29,8 +29,10 @@ export type ConfigDto = {
     showTrialHint: boolean;
     auditLogRetentionDays: number;
     emergencyAccessEnabled: boolean;
+    keycloakAccessEnabled: boolean;
     iosLicense: string;
     androidLicense: string;
+    desktopLicense: string;
   };
   ceRegistrationUrl: string;
 };
