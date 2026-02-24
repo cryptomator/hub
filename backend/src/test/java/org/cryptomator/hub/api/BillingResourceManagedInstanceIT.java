@@ -1,5 +1,8 @@
 package org.cryptomator.hub.api;
 
+import com.auth0.jwt.interfaces.DecodedJWT;
+import io.quarkus.test.InjectMock;
+import io.quarkus.test.Mock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.QuarkusTestProfile;
 import io.quarkus.test.junit.TestProfile;
@@ -7,13 +10,15 @@ import io.quarkus.test.security.TestSecurity;
 import io.quarkus.test.security.oidc.Claim;
 import io.quarkus.test.security.oidc.OidcSecurity;
 import io.restassured.RestAssured;
-import jakarta.inject.Inject;
 import org.cryptomator.hub.license.LicenseHolder;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
+import java.time.Instant;
+import java.util.Date;
 import java.util.Map;
 
 import static io.restassured.RestAssured.when;
@@ -28,7 +33,7 @@ import static org.hamcrest.CoreMatchers.is;
 @TestProfile(BillingResourceManagedInstanceIT.ManagedInstanceTestProfile.class)
 public class BillingResourceManagedInstanceIT {
 
-	@Inject
+	@InjectMock
 	LicenseHolder licenseHolder;
 
 	@BeforeAll
@@ -38,7 +43,17 @@ public class BillingResourceManagedInstanceIT {
 
 	@BeforeEach
 	public void setup() {
-		licenseHolder.get();
+		var licenseToken = Mockito.mock(DecodedJWT.class);
+		Mockito.doReturn(true).when(licenseHolder).isManagedInstance();
+		Mockito.doReturn(licenseToken).when(licenseHolder).get();
+		Mockito.doReturn("42").when(licenseToken).getId();
+		Mockito.doReturn("hub@cryptomator.org").when(licenseToken).getSubject();
+		var seatsClaim = Mockito.mock(com.auth0.jwt.interfaces.Claim.class);
+		Mockito.doReturn(seatsClaim).when(licenseToken).getClaim("seats");
+		Mockito.doReturn(5).when(seatsClaim).asInt();
+		Mockito.doReturn(Date.from(Instant.parse("2022-03-23T15:29:20Z"))).when(licenseToken).getIssuedAt();
+		Mockito.doReturn(Date.from(Instant.parse("9999-12-31T00:00:00Z"))).when(licenseToken).getExpiresAt();
+		Mockito.doReturn("foo").when(licenseToken).getToken();
 	}
 
 	public static class ManagedInstanceTestProfile implements QuarkusTestProfile {

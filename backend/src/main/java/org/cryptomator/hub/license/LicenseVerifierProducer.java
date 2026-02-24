@@ -20,15 +20,13 @@ import java.time.Instant;
 @ApplicationScoped
 public class LicenseVerifierProducer {
 
-	@Inject
-	@ConfigProperty(name = "hub.license.public-key")
-	String licensePublicKey;
+	private static final String LICENSE_PUBLIC_KEY = "MIGbMBAGByqGSM49AgEGBSuBBAAjA4GGAAQBjvVwj5K4/v6yq23luaEEYYG9ru6zBuXeQLtZNy49FlGA5rbeumoruFVQfVPuV8R9mofxyJBpU4ixi8KGkYl+eEQBTGvNEQ9Z36gBX2uZOCOfHM4x50lpwtTZ0QA3B07WPhmvupy9gZk18NHuysOd8KZFEPpGYGmYBhMZXAL30qweiBQ=";
 
 	@Produces
 	@ApplicationScoped
 	@Named("licenseVerifier")
 	public JWTVerifier produceLicenseVerifier() {
-		var algorithm = Algorithm.ECDSA512(decodePublicKey(licensePublicKey), null);
+		var algorithm = Algorithm.ECDSA512(decodePublicKey(LICENSE_PUBLIC_KEY), null);
 		var expiresleeway = Instant.now().getEpochSecond(); // this will make sure to accept tokens that expired in the past (beginning from 1970)
 		// ignoring issued at will make sure to accept tokens that are issued "in the future" e.g. when the hub time is behind the store time
 		return JWT.require(algorithm).acceptExpiresAt(expiresleeway).ignoreIssuedAt().build();
