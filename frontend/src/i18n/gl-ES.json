@@ -4,12 +4,21 @@
   "common.close": "Pechar",
   "common.copied": "Copiado!",
   "common.copy": "Copiar",
+  "common.create": "Crear",
+  "common.edit": "Editar",
   "common.next": "Seguinte",
   "common.previous": "Anterior",
   "common.refresh": "Actualizar",
   "common.remove": "Eliminar",
   "common.retry": "Tentar de novo",
+  "common.save": "Gardar",
   "common.share": "Compartir",
   "admin.webOfTrust.save": "Gardar",
-  "claimVaultOwnershipDialog.error.wrongPassword": "Contrasinal incorrecto"
+  "claimVaultOwnershipDialog.error.wrongPassword": "Contrasinal incorrecto",
+  "groupList.edit.group.button": "Editar",
+  "user.detail.edit": "Editar",
+  "user.detail.username": "Nome de usuario",
+  "userEditCreate.button.save": "Gardar",
+  "userEditCreate.username": "Nome de usuario",
+  "userList.edit.user.button": "Editar"
 }

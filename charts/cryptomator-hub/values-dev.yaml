@@ -1,0 +1,28 @@
+global:
+  host: ""
+
+hub:
+  database:
+    password: top-secret
+  admin:
+    username: admin
+    password: admin
+    passwordTemporary: true
+
+keycloak:
+  enabled: true
+  database:
+    password: top-secret
+  admin:
+    password: admin
+
+postgres:
+  enabled: true
+  auth:
+    adminPassword: top-secret
+  storage:
+    size: 1Gi
+  resources:
+    requests:
+      cpu: 25m
+      memory: 128Mi

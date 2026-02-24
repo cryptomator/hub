@@ -15,10 +15,11 @@ export class FormValidator {
     firstName?: string,
     lastName?: string,
     username: string,
-    email: string,
+    email?: string,
     password: string,
     passwordConfirm: string,
     isEditMode: boolean,
+    initialEmail?: string,
     pictureUrl?: string,
     isValidImageUrl?: boolean
   }): ValidationResult {
@@ -30,9 +31,12 @@ export class FormValidator {
     if (!data.username.trim()) errors.username = t('userEditCreate.validation.required');
 
     // Email validation
-    if (!data.email.trim()) {
+    const emailTrimmed = data.email?.trim() ?? '';
+    const emailRequired = this.isEmailRequired(data.isEditMode, data.initialEmail);
+
+    if (emailRequired && !emailTrimmed) {
       errors.email = t('userEditCreate.validation.required');
-    } else if (!this.isValidEmail(data.email.trim())) {
+    } else if (emailTrimmed && !this.isValidEmail(emailTrimmed)) {
       errors.email = t('userEditCreate.invalidEmail');
     }
 
@@ -93,8 +97,22 @@ export class FormValidator {
   /**
    * Validates email format
    */
-  static isValidEmail(email: string): boolean {
+  static isValidEmail(email?: string): boolean {
+    if (!email) return false;
     return /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(email.trim());
+  }
+
+  /**
+   * Checks if email is required
+   */
+  static isEmailRequired(isEditMode: boolean, initialEmail?: string): boolean {
+    if (isEditMode) {
+      // EDIT: required only if user previously had email
+      return initialEmail !== undefined && initialEmail.trim() !== '';
+    } else {
+      // CREATE: always required
+      return true;
+    }
   }
 
   /**

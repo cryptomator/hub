@@ -80,6 +80,7 @@
                     <p class="truncate text-sm font-medium text-primary min-w-0">
                       {{ vault.name }}
                     </p>
+                    <div v-if="vault.archived" class="inline-flex items-center rounded-md bg-yellow-400/10 px-2 py-1 text-xs font-medium text-yellow-500 ring-1 ring-inset ring-yellow-400/20">{{ t('vaultList.badge.archived') }}</div>
                   </div>
                   <p
                     v-if="vault.description"
@@ -266,7 +267,6 @@ async function fetchData() {
 
     if (entitlements.emergencyAccessEnabled && settings.value.enableEmergencyAccess){
       vaults.value = (await backend.vaults.listRecoverable())
-        .filter(v => !v.archived)
         .sort((a, b) => a.name.localeCompare(b.name));
 
       for (const vault of vaults.value) {

@@ -53,7 +53,7 @@
                   <tr>
                     <td class="py-4 text-sm text-gray-500">
                       <div class="grid place-items-center h-12 aspect-square">
-                        <span v-if="device.type == 'DESKTOP'" :title="'Desktop'">
+                        <span v-if="device.type == 'DESKTOP'" :title="t('deviceType.desktop')">
                           <ComputerDesktopIcon class="size-5" aria-hidden="true" />
                         </span>
                       </div>

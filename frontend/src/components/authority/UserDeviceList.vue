@@ -45,13 +45,13 @@
             <tr class="hidden sm:table-row">
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                 <div class="flex items-center gap-2">
-                  <span v-if="device.type == 'BROWSER'" :title="'Browser'">
+                  <span v-if="device.type == 'BROWSER'" :title="t('deviceType.browser')">
                     <WindowIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
                   </span>
-                  <span v-else-if="device.type == 'DESKTOP'" :title="'Desktop'">
+                  <span v-else-if="device.type == 'DESKTOP'" :title="t('deviceType.desktop')">
                     <ComputerDesktopIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
                   </span>
-                  <span v-else-if="device.type == 'MOBILE'" :title="'Mobile'">
+                  <span v-else-if="device.type == 'MOBILE'" :title="t('deviceType.mobile')">
                     <DevicePhoneMobileIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
                   </span>
                   <span class="truncate max-w-xs" :title="device.name">
@@ -60,11 +60,11 @@
                 </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {{ new Date(device.creationTime).toISOString().slice(0, 16).replace('T', ' ') }}
+                {{ d(device.creationTime, 'long') }}
               </td>
               <td class="h-17 px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                 <div v-if="device.lastAccessTime">
-                  {{ new Date(device.lastAccessTime).toISOString().slice(0, 16).replace('T', ' ') }}
+                  {{ d(device.lastAccessTime, 'long') }}
                 </div>
                 <div v-if="device.lastIpAddress" class="text-xs text-gray-400">
                   {{ device.lastIpAddress }}
@@ -73,15 +73,15 @@
             </tr>
             <!-- Mobile -->
             <tr class="sm:hidden">
-              <td class="px-4 py-4 text-sm text-gray-900">
+              <td colspan="3" class="px-4 py-4 text-sm text-gray-900">
                 <div class="flex items-start gap-2">
-                  <span v-if="device.type == 'BROWSER'" :title="'Browser'">
+                  <span v-if="device.type == 'BROWSER'" :title="t('deviceType.browser')">
                     <WindowIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
                   </span>
-                  <span v-else-if="device.type == 'DESKTOP'" :title="'Desktop'">
+                  <span v-else-if="device.type == 'DESKTOP'" :title="t('deviceType.desktop')">
                     <ComputerDesktopIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
                   </span>
-                  <span v-else-if="device.type == 'MOBILE'" :title="'Mobile'">
+                  <span v-else-if="device.type == 'MOBILE'" :title="t('deviceType.mobile')">
                     <DevicePhoneMobileIcon class="h-5 w-5 text-gray-500" aria-hidden="true" />
                   </span>
                   <div>
@@ -103,7 +103,7 @@
                         {{ t('legacyDeviceList.added') }}
                       </td>
                       <td class="text-left">
-                        {{ new Date(device.creationTime).toISOString().slice(0, 16).replace('T', ' ') }}
+                        {{ d(device.creationTime, 'long') }}
                       </td>
                     </tr>
                     <tr>
@@ -114,7 +114,7 @@
                         </div>
                       </td>
                       <td v-if="device.lastAccessTime" class="text-left">
-                        {{ new Date(device.lastAccessTime).toISOString().slice(0, 16).replace('T', ' ') }}
+                        {{ d(device.lastAccessTime, 'long') }}
                       </td>
                     </tr>
                     <tr v-if="device.lastIpAddress">
@@ -131,7 +131,7 @@
           </template>
 
           <tr v-if="!filteredDevices.length">
-            <td colspan="3" class="py-4 px-6 text-sm text-gray-500 text-center">
+            <td colspan="3" class="py-4 px-4 sm:px-6 text-sm text-gray-500 text-center">
               {{ t(deviceQuery ? 'common.nothingFound' : 'common.none') }}
             </td>
           </tr>
@@ -167,7 +167,7 @@ import { useI18n } from 'vue-i18n';
 import { ComputerDesktopIcon, QuestionMarkCircleIcon, DevicePhoneMobileIcon, WindowIcon } from '@heroicons/vue/24/solid';
 import { DeviceDto } from '../../common/backend';
 
-const { t } = useI18n({ useScope: 'global' });
+const { t, d } = useI18n({ useScope: 'global' });
 const id = useId();
 
 const PAGE_SIZE = 10;
