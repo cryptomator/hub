@@ -5,9 +5,7 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.JWTVerifier;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
-import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jose4j.base64url.Base64;
 
 import java.security.KeyFactory;
@@ -21,15 +19,38 @@ import java.time.Instant;
 public class LicenseVerifierProducer {
 
 	private static final String LICENSE_PUBLIC_KEY = "MIGbMBAGByqGSM49AgEGBSuBBAAjA4GGAAQBjvVwj5K4/v6yq23luaEEYYG9ru6zBuXeQLtZNy49FlGA5rbeumoruFVQfVPuV8R9mofxyJBpU4ixi8KGkYl+eEQBTGvNEQ9Z36gBX2uZOCOfHM4x50lpwtTZ0QA3B07WPhmvupy9gZk18NHuysOd8KZFEPpGYGmYBhMZXAL30qweiBQ=";
+	private static final String LICENSE_ROOT_CERTIFICATE = """
+			-----BEGIN CERTIFICATE-----
+			MIICbjCCAc+gAwIBAgIURZ67qQ5rU7TeUqM7MxYYo7BD1oYwCgYIKoZIzj0EAwIw
+			PzELMAkGA1UEBhMCREUxFjAUBgNVBAoMDVNreW1hdGljIEdtYkgxGDAWBgNVBAMM
+			D0xpY2Vuc2UgUm9vdCBDQTAeFw0yNjAyMjUxMjU3MDlaFw0zNjAyMjMxMjU3MDla
+			MD8xCzAJBgNVBAYTAkRFMRYwFAYDVQQKDA1Ta3ltYXRpYyBHbWJIMRgwFgYDVQQD
+			DA9MaWNlbnNlIFJvb3QgQ0EwgZswEAYHKoZIzj0CAQYFK4EEACMDgYYABAFc5Rp8
+			bYu2WAemYVoKJ4HVoZWIcvTgryEXruBZ4cn6M2Gj63D0RFVbOF5dLiREoI9PWQoF
+			aPABZBXeuQAJ3U6aBQGyOJSZVzhxhcBlDziR5PjQ4pr90Q3Vu61C+0YolQwhygsw
+			X7jhnWqvTsREVjLGWpqpoEg1XYExtnW5U8or6aTW7aNmMGQwEgYDVR0TAQH/BAgw
+			BgEB/wIBATAOBgNVHQ8BAf8EBAMCAQYwHQYDVR0OBBYEFA+EvJM3z8sVrpLUUxEH
+			Bts9PEyKMB8GA1UdIwQYMBaAFA+EvJM3z8sVrpLUUxEHBts9PEyKMAoGCCqGSM49
+			BAMCA4GMADCBiAJCAR4xXcABzWgzxsLDtqsijXM28xzb4ZopjuznIoi634MWdI5J
+			GWNA8Y3TcYi69kTreDwuXYLW3xwK1OWn0B8AC5/VAkIBSx5vuLl1WfNxwnXMmiGK
+			2+TXA94AIPCwRWoRngW7nVajapOVeMURoGpkZHnwVJ4Op3U0b5nGfKCKSChORmi6
+			gRU=
+			-----END CERTIFICATE-----
+			""";
 
 	@Produces
 	@ApplicationScoped
 	@Named("licenseVerifier")
 	public JWTVerifier produceLicenseVerifier() {
+		return produceLicenseVerifier(LICENSE_ROOT_CERTIFICATE);
+	}
+
+	JWTVerifier produceLicenseVerifier(String trustedRootCertificate) {
 		var algorithm = Algorithm.ECDSA512(decodePublicKey(LICENSE_PUBLIC_KEY), null);
 		var expiresleeway = Instant.now().getEpochSecond(); // this will make sure to accept tokens that expired in the past (beginning from 1970)
-		// ignoring issued at will make sure to accept tokens that are issued "in the future" e.g. when the hub time is behind the store time
-		return JWT.require(algorithm).acceptExpiresAt(expiresleeway).ignoreIssuedAt().build();
+		var legacyVerifier = JWT.require(algorithm).acceptExpiresAt(expiresleeway).ignoreIssuedAt().build(); // ignoring issued at will make sure to accept tokens that are issued "in the future" e.g. when the hub time is behind the store time
+		var trustedRootCert = trustedRootCertificate != null && !trustedRootCertificate.isBlank() ? decodeCertificate(trustedRootCertificate) : null;
+		return new X5cCheckingJWTVerifier(legacyVerifier, trustedRootCert, expiresleeway);
 	}
 
 	private static ECPublicKey decodePublicKey(String pemEncodedPublicKey) {
@@ -45,6 +66,14 @@ public class LicenseVerifierProducer {
 			throw new IllegalArgumentException("Invalid license public key", e);
 		} catch (NoSuchAlgorithmException e) {
 			throw new IllegalStateException(e);
+		}
+	}
+
+	private static java.security.cert.X509Certificate decodeCertificate(String encodedCertificate) {
+		try {
+			return CertChainValidator.decodeCertificate(encodedCertificate);
+		} catch (java.security.GeneralSecurityException e) {
+			throw new IllegalArgumentException("Invalid trusted root certificate", e);
 		}
 	}
 }
