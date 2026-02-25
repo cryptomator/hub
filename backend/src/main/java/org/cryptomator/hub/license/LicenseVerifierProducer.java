@@ -2,18 +2,25 @@ package org.cryptomator.hub.license;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.JWTVerifier;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Named;
-import org.jose4j.base64url.Base64;
 
+import java.io.ByteArrayInputStream;
+import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.time.Instant;
+import java.util.Base64;
+import java.util.List;
 
 @ApplicationScoped
 public class LicenseVerifierProducer {
@@ -45,17 +52,26 @@ public class LicenseVerifierProducer {
 		return produceLicenseVerifier(LICENSE_ROOT_CERTIFICATE);
 	}
 
-	JWTVerifier produceLicenseVerifier(String trustedRootCertificate) {
+	// visible for testing
+	JWTVerifier produceLicenseVerifier(String rootCert) throws JWTVerificationException {
+		var fallback = produceLegacyVerifier();
+		try {
+			var trustedRoot = X509Helper.parseCertificate(rootCert);
+			return new X5cCheckingJWTVerifier(trustedRoot, fallback);
+		} catch (GeneralSecurityException e) {
+			throw new IllegalStateException("Invalid trusted root certificate", e);
+		}
+	}
+
+	private JWTVerifier produceLegacyVerifier() {
 		var algorithm = Algorithm.ECDSA512(decodePublicKey(LICENSE_PUBLIC_KEY), null);
 		var expiresleeway = Instant.now().getEpochSecond(); // this will make sure to accept tokens that expired in the past (beginning from 1970)
-		var legacyVerifier = JWT.require(algorithm).acceptExpiresAt(expiresleeway).ignoreIssuedAt().build(); // ignoring issued at will make sure to accept tokens that are issued "in the future" e.g. when the hub time is behind the store time
-		var trustedRootCert = trustedRootCertificate != null && !trustedRootCertificate.isBlank() ? decodeCertificate(trustedRootCertificate) : null;
-		return new X5cCheckingJWTVerifier(legacyVerifier, trustedRootCert, expiresleeway);
+		return JWT.require(algorithm).acceptExpiresAt(expiresleeway).ignoreIssuedAt().build(); // ignoring issued at will make sure to accept tokens that are issued "in the future" e.g. when the hub time is behind the store time
 	}
 
 	private static ECPublicKey decodePublicKey(String pemEncodedPublicKey) {
 		try {
-			var keyBytes = Base64.decode(pemEncodedPublicKey);
+			var keyBytes = Base64.getDecoder().decode(pemEncodedPublicKey);
 			var key = KeyFactory.getInstance("EC").generatePublic(new X509EncodedKeySpec(keyBytes));
 			if (key instanceof ECPublicKey k) {
 				return k;
@@ -69,11 +85,4 @@ public class LicenseVerifierProducer {
 		}
 	}
 
-	private static java.security.cert.X509Certificate decodeCertificate(String encodedCertificate) {
-		try {
-			return CertChainValidator.decodeCertificate(encodedCertificate);
-		} catch (java.security.GeneralSecurityException e) {
-			throw new IllegalArgumentException("Invalid trusted root certificate", e);
-		}
-	}
 }

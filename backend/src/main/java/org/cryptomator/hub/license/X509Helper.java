@@ -1,30 +1,23 @@
 package org.cryptomator.hub.license;
 
+import java.io.ByteArrayInputStream;
 import java.security.GeneralSecurityException;
 import java.security.cert.CertPathValidator;
+import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.PKIXParameters;
 import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Base64;
-import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
-public final class CertChainValidator {
+final class X509Helper {
 
-	private CertChainValidator() {
-	}
+	private X509Helper() {}
 
 	public static X509Certificate validateX5cChain(List<String> x5c, X509Certificate trustedRootCertificate) throws GeneralSecurityException {
-		if (x5c == null || x5c.isEmpty()) {
-			throw new IllegalArgumentException("x5c header must contain at least one certificate.");
-		}
-		if (trustedRootCertificate == null) {
-			throw new IllegalArgumentException("Trusted root certificate must not be null.");
-		}
-
 		var chain = new ArrayList<>(decodeCertificates(x5c));
 		for (var cert : chain) {
 			cert.checkValidity();
@@ -40,26 +33,42 @@ public final class CertChainValidator {
 
 		var certPath = CertificateFactory.getInstance("X.509").generateCertPath(chain);
 		var pkixParams = new PKIXParameters(Set.of(new TrustAnchor(trustedRootCertificate, null)));
-		pkixParams.setDate(new Date());
 		pkixParams.setRevocationEnabled(false);
 		CertPathValidator.getInstance("PKIX").validate(certPath, pkixParams);
 
 		return chain.getFirst();
 	}
 
-	public static X509Certificate decodeCertificate(String encodedCertificate) throws GeneralSecurityException {
-		var normalized = encodedCertificate.replace("-----BEGIN CERTIFICATE-----", "") //
-				.replace("-----END CERTIFICATE-----", "") //
-				.replaceAll("\\s+", "");
-		var derBytes = Base64.getDecoder().decode(normalized);
-		return (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(new java.io.ByteArrayInputStream(derBytes));
-	}
-
 	private static List<X509Certificate> decodeCertificates(List<String> encodedCertificates) throws GeneralSecurityException {
 		var certs = new ArrayList<X509Certificate>(encodedCertificates.size());
 		for (var encodedCert : encodedCertificates) {
-			certs.add(decodeCertificate(encodedCert));
+			certs.add(parseCertificate(encodedCert));
 		}
 		return certs;
+	}
+
+	/**
+	 * Imports an X.509 certificate from the given string.
+	 *
+	 * @param x509Key The encoded certificate (PEM or base64 DER)
+	 * @return The decoded X.509 certificate
+	 * @throws CertificateException In case of invalid input
+	 */
+	public static X509Certificate parseCertificate(String x509Key) throws CertificateException {
+		var keyBytes = decodeBase64PemOrDer(x509Key);
+		var certFactory = CertificateFactory.getInstance("X.509");
+		var cert = certFactory.generateCertificate(new ByteArrayInputStream(keyBytes));
+		if (cert instanceof X509Certificate x509Cert) {
+			return x509Cert;
+		}
+		throw new CertificateException("X.509 certificate could not be decoded");
+	}
+
+	private static byte[] decodeBase64PemOrDer(String value) {
+		var normalized = value
+				.replace("-----BEGIN CERTIFICATE-----", "")
+				.replace("-----END CERTIFICATE-----", "")
+				.replaceAll("\\s", "");
+		return Base64.getDecoder().decode(normalized);
 	}
 }
