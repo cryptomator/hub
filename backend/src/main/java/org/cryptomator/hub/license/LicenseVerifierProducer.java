@@ -7,6 +7,7 @@ import com.auth0.jwt.interfaces.JWTVerifier;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Named;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.io.ByteArrayInputStream;
 import java.security.GeneralSecurityException;
@@ -25,6 +26,7 @@ import java.util.List;
 @ApplicationScoped
 public class LicenseVerifierProducer {
 
+	@Deprecated // TODO: once all issued tokens contain the x5c claim, we can remove the legacy verification method
 	private static final String LICENSE_PUBLIC_KEY = "MIGbMBAGByqGSM49AgEGBSuBBAAjA4GGAAQBjvVwj5K4/v6yq23luaEEYYG9ru6zBuXeQLtZNy49FlGA5rbeumoruFVQfVPuV8R9mofxyJBpU4ixi8KGkYl+eEQBTGvNEQ9Z36gBX2uZOCOfHM4x50lpwtTZ0QA3B07WPhmvupy9gZk18NHuysOd8KZFEPpGYGmYBhMZXAL30qweiBQ=";
 	private static final String LICENSE_ROOT_CERTIFICATE = """
 			-----BEGIN CERTIFICATE-----
@@ -45,24 +47,28 @@ public class LicenseVerifierProducer {
 			-----END CERTIFICATE-----
 			""";
 
+	@ConfigProperty(name = "hub.license.intermediate.sha256")
+	String intermediateSpkiSha256;
+
 	@Produces
 	@ApplicationScoped
 	@Named("licenseVerifier")
 	public JWTVerifier produceLicenseVerifier() {
-		return produceLicenseVerifier(LICENSE_ROOT_CERTIFICATE);
+		return produceLicenseVerifier(LICENSE_ROOT_CERTIFICATE, Base64.getDecoder().decode(intermediateSpkiSha256));
 	}
 
 	// visible for testing
-	JWTVerifier produceLicenseVerifier(String rootCert) throws JWTVerificationException {
+	JWTVerifier produceLicenseVerifier(String rootCert, byte[] expectedIntermediateSpkiSha256) throws JWTVerificationException {
 		var fallback = produceLegacyVerifier();
 		try {
 			var trustedRoot = X509Helper.parseCertificate(rootCert);
-			return new X5cCheckingJWTVerifier(trustedRoot, fallback);
+			return new X5cCheckingJWTVerifier(trustedRoot, fallback, expectedIntermediateSpkiSha256);
 		} catch (GeneralSecurityException e) {
 			throw new IllegalStateException("Invalid trusted root certificate", e);
 		}
 	}
 
+	@Deprecated // TODO: once all issued tokens contain the x5c claim, we can remove the legacy verification method
 	private JWTVerifier produceLegacyVerifier() {
 		var algorithm = Algorithm.ECDSA512(decodePublicKey(LICENSE_PUBLIC_KEY), null);
 		var expiresleeway = Instant.now().getEpochSecond(); // this will make sure to accept tokens that expired in the past (beginning from 1970)

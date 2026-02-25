@@ -28,6 +28,7 @@ class LicenseValidatorTest {
 	private static final String MALFORMED_TOKEN = "hello world";
 	private static final String ROOT_CERTIFICATE = "MIICAzCCAWSgAwIBAgIUc8N3CFaP07z8TZ5ukicAOi8WHFkwCgYIKoZIzj0EAwQwEzERMA8GA1UEAwwISHViIFJvb3QwHhcNMjYwMjI1MDk1NjE1WhcNMzYwMjIzMDk1NjE1WjATMREwDwYDVQQDDAhIdWIgUm9vdDCBmzAQBgcqhkjOPQIBBgUrgQQAIwOBhgAEAbz+Hva0BIcJLqwgjZwnip0Tosk0MnlR47bJt4xrhQ0XNA2JjqXHnKgzRhHX1cniy+gNud0gVqKjO7HHsW2pz+7sAGV94SRB71Rfc9Yht4AzeeEE8jEU8dkO8xxhKlfYQWAaZyrY1SnfSOkoLlHYRaQi/VWDkn/OZtJv4GXwMZT7ECIGo1MwUTAdBgNVHQ4EFgQUIVAOavghCKHhi23xhzFDYv7qVCYwHwYDVR0jBBgwFoAUIVAOavghCKHhi23xhzFDYv7qVCYwDwYDVR0TAQH/BAUwAwEB/zAKBggqhkjOPQQDBAOBjAAwgYgCQgCD0Ccd9U7mVGqgSCxwmnmCLnXhWamdQDwuwQlVHTc09b6sKrINkJfD1RHrWOGpA5vFQW2g18Qmq6jNNtPhufmmmQJCAZWuCn0uDmyk1T/GL8awekwm+kstyVEluZ9nGNqIhgb/MiollzkV/YFU7hA10yclpkTnNoKXo6+SXhITeYc+jHyr";
 	private static final String INTERMEDIATE_CERTIFICATE = "MIICHTCCAX+gAwIBAgIUQgncgS4tXHPjh4ATnp6Ia+MCzkowCgYIKoZIzj0EAwQwEzERMA8GA1UEAwwISHViIFJvb3QwHhcNMjYwMjI1MDk1NjE1WhcNMjcwMjI1MDk1NjE1WjAbMRkwFwYDVQQDDBBIdWIgSW50ZXJtZWRpYXRlMIGbMBAGByqGSM49AgEGBSuBBAAjA4GGAAQA334k0XJ8iQ3v2XvudYrtyIsVLKMXq91qiJ3X6wCRWV1UvBRYeVITaaDHe0ckIRFKRDbrsPR1NN5X9ULJPvjpe5YBVDnqlDjR7Vx7fWu1afUM+ffzxB9dzrPxI2JHzujQO8w07CMKmBZffJfSdEwEomjamuUlFyt5ZidM/9xF2yk+OcSjZjBkMBIGA1UdEwEB/wQIMAYBAf8CAQAwDgYDVR0PAQH/BAQDAgEGMB0GA1UdDgQWBBT0XyiSIHLZMvlYT4C+on88Ypz3yzAfBgNVHSMEGDAWgBQhUA5q+CEIoeGLbfGHMUNi/upUJjAKBggqhkjOPQQDBAOBiwAwgYcCQXex+3p07kwiVB1dD/SiFe4/X5ywgGR7BSFmLQFL6tUTT9ZYqSulbykfooQSRsuot7HPRWbWvQSNsswHRKELug0UAkIAkFQVEeISX4Mgdxle8GbcL1xaHPdsKf+fNrbJN2zEyMXkxMaXIXtk8VQGuBza5Rq0Gg+wxWL++wSs+Ptf2I12uBw=";
+	private static final String INTERMEDIATE_SHA256 = "lvGeiHoO7xVMGCvYNOA5Xxwe/b2K07ZQEbk9zXPM/pQ=";
 	private static final String LEAF_CERTIFICATE = "MIICGjCCAXygAwIBAgIUSnXPCvi1ZRDY97lnBHyyPXO1FNEwCgYIKoZIzj0EAwQwGzEZMBcGA1UEAwwQSHViIEludGVybWVkaWF0ZTAeFw0yNjAyMjUwOTU2MTVaFw0yNjA1MjYwOTU2MTVaMBYxFDASBgNVBAMMC0h1YiBTaWduaW5nMIGbMBAGByqGSM49AgEGBSuBBAAjA4GGAAQBsPQ0+3p7grVCgrCDxsdBX+d+n/s2LNSR3rKa8maEeMjR6lrF0p32Q1qo6hY6DfNn/bu2ofA8gkH+7GErHTWc2kMAhV0MIPWZTdmoFBXvyhXt68Mcpedn8zDwR7H3211SzW5zmRrNYz1s225wvh3CcLH5HCZnCXfxsg4YkxFzaVz2SZejYDBeMAwGA1UdEwEB/wQCMAAwDgYDVR0PAQH/BAQDAgeAMB0GA1UdDgQWBBSkMG5Igq7CKDc1uVQEyxcGuYoWLzAfBgNVHSMEGDAWgBT0XyiSIHLZMvlYT4C+on88Ypz3yzAKBggqhkjOPQQDBAOBiwAwgYcCQSLhEaJvML/nYseBhrkhOs/tFSw1nFgyi4n9g8i0K5kZDdRC9N7ZyckvwlL05F+MEgx7hGOjO4AeQ5cMCE8T182SAkIAqsRSj3LxGXLmht95L3q/p01It++L2lDZsSEZ1Buxzxq9sBVX1uMjWAItqxtKenMv97z0uRaPzKtQC5eVpSqEuNQ=";
 	private static final String LEAF_PRIVATE_KEY = "MIHuAgEAMBAGByqGSM49AgEGBSuBBAAjBIHWMIHTAgEBBEIB79ZEPDL+/MuwX+bzp6uKu9iUiAH5ZnS3anRVl56Oq9Bjs4FhcTqSgwI5z/EuZx2Ht53y2eho7GH9zZOZOsOoIaWhgYkDgYYABAGw9DT7enuCtUKCsIPGx0Ff536f+zYs1JHespryZoR4yNHqWsXSnfZDWqjqFjoN82f9u7ah8DyCQf7sYSsdNZzaQwCFXQwg9ZlN2agUFe/KFe3rwxyl52fzMPBHsffbXVLNbnOZGs1jPWzbbnC+HcJwsfkcJmcJd/GyDhiTEXNpXPZJlw==";
 
@@ -36,6 +37,7 @@ class LicenseValidatorTest {
 	@BeforeEach
 	void setup() {
 		var verifierProducer = new LicenseVerifierProducer();
+		verifierProducer.intermediateSpkiSha256 = INTERMEDIATE_SHA256;
 		validator.verifier = verifierProducer.produceLicenseVerifier();
 	}
 
@@ -96,7 +98,7 @@ class LicenseValidatorTest {
 	@DisplayName("validate token with x5c certificate chain")
 	void testValidateTokenWithX5cCertificateChain() {
 		var verifierProducer = new LicenseVerifierProducer();
-		validator.verifier = verifierProducer.produceLicenseVerifier(ROOT_CERTIFICATE);
+		validator.verifier = verifierProducer.produceLicenseVerifier(ROOT_CERTIFICATE, Base64.getDecoder().decode(INTERMEDIATE_SHA256));
 		var token = JWT.create()
 				.withHeader(Map.of("x5c", List.of(LEAF_CERTIFICATE, INTERMEDIATE_CERTIFICATE)))
 				.withJWTId("42")
@@ -113,7 +115,7 @@ class LicenseValidatorTest {
 	@DisplayName("reject token with invalid x5c certificate chain")
 	void testRejectTokenWithInvalidX5cCertificateChain() {
 		var verifierProducer = new LicenseVerifierProducer();
-		validator.verifier = verifierProducer.produceLicenseVerifier(ROOT_CERTIFICATE);
+		validator.verifier = verifierProducer.produceLicenseVerifier(ROOT_CERTIFICATE, Base64.getDecoder().decode(INTERMEDIATE_SHA256));
 		var token = JWT.create()
 				.withHeader(Map.of("x5c", List.of(LEAF_CERTIFICATE)))
 				.withJWTId("42")
@@ -125,6 +127,39 @@ class LicenseValidatorTest {
 		Assertions.assertThrows(JWTVerificationException.class, () -> {
 			validator.validate(token, "42");
 		});
+	}
+
+	@Test
+	@DisplayName("validate token with matching intermediate spki hash")
+	void testValidateTokenWithMatchingIntermediateSpkiHash() {
+		var verifierProducer = new LicenseVerifierProducer();
+		validator.verifier = verifierProducer.produceLicenseVerifier(ROOT_CERTIFICATE, Base64.getDecoder().decode(INTERMEDIATE_SHA256));
+		var token = JWT.create()
+				.withHeader(Map.of("x5c", List.of(LEAF_CERTIFICATE, INTERMEDIATE_CERTIFICATE)))
+				.withJWTId("42")
+				.withSubject("hub@cryptomator.org")
+				.withIssuedAt(new java.util.Date())
+				.withExpiresAt(new java.util.Date(System.currentTimeMillis() + 60_000))
+				.withClaim("seats", 5)
+				.sign(Algorithm.ECDSA512(null, decodePrivateKey(LEAF_PRIVATE_KEY)));
+		var jwt = validator.validate(token, "42");
+		Assertions.assertEquals("42", jwt.getId());
+	}
+
+	@Test
+	@DisplayName("reject token with mismatching intermediate spki hash")
+	void testRejectTokenWithMismatchingIntermediateSpkiHash() {
+		var verifierProducer = new LicenseVerifierProducer();
+		validator.verifier = verifierProducer.produceLicenseVerifier(ROOT_CERTIFICATE, new byte[32]);
+		var token = JWT.create()
+				.withHeader(Map.of("x5c", List.of(LEAF_CERTIFICATE, INTERMEDIATE_CERTIFICATE)))
+				.withJWTId("42")
+				.withSubject("hub@cryptomator.org")
+				.withIssuedAt(new java.util.Date())
+				.withExpiresAt(new java.util.Date(System.currentTimeMillis() + 60_000))
+				.withClaim("seats", 5)
+				.sign(Algorithm.ECDSA512(null, decodePrivateKey(LEAF_PRIVATE_KEY)));
+		Assertions.assertThrows(JWTVerificationException.class, () -> validator.validate(token, "42"));
 	}
 
 	private static ECPrivateKey decodePrivateKey(String encodedPkcs8PrivateKey) {

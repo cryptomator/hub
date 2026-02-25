@@ -2,6 +2,8 @@ package org.cryptomator.hub.license;
 
 import java.io.ByteArrayInputStream;
 import java.security.GeneralSecurityException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertPathValidator;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -70,5 +72,14 @@ final class X509Helper {
 				.replace("-----END CERTIFICATE-----", "")
 				.replaceAll("\\s", "");
 		return Base64.getDecoder().decode(normalized);
+	}
+
+	public static byte[] computeSpkiSha256Base64(X509Certificate cert) {
+		try {
+			var sha256 = MessageDigest.getInstance("SHA-256");
+			return sha256.digest(cert.getPublicKey().getEncoded());
+		} catch (NoSuchAlgorithmException e) {
+			throw new AssertionError("Every implementation of the Java platform is required to support [...] SHA-256", e);
+		}
 	}
 }

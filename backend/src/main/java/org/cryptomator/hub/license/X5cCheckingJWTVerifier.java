@@ -7,9 +7,11 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.jwt.interfaces.JWTVerifier;
 
 import java.security.GeneralSecurityException;
+import java.security.MessageDigest;
 import java.security.interfaces.ECPublicKey;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
+import java.util.Base64;
 import java.util.List;
 import java.util.Objects;
 
@@ -17,10 +19,12 @@ class X5cCheckingJWTVerifier implements JWTVerifier {
 
 	private final X509Certificate trustedRootCertificate;
 	private final JWTVerifier fallback;
+	private final byte[] expectedIntermediateSpkiSha256;
 
-	X5cCheckingJWTVerifier(X509Certificate trustedRootCertificate, JWTVerifier fallback) {
+	X5cCheckingJWTVerifier(X509Certificate trustedRootCertificate, JWTVerifier fallback, byte[] expectedIntermediateSpkiSha256) {
 		this.trustedRootCertificate = Objects.requireNonNull(trustedRootCertificate);
 		this.fallback = fallback;
+		this.expectedIntermediateSpkiSha256 = Objects.requireNonNull(expectedIntermediateSpkiSha256);
 	}
 
 	@Override
@@ -31,7 +35,9 @@ class X5cCheckingJWTVerifier implements JWTVerifier {
 	@Override
 	public DecodedJWT verify(DecodedJWT decodedJWT) throws JWTVerificationException {
 		var x5cChain = decodedJWT.getHeaderClaim("x5c").asList(String.class);
-		if (x5cChain == null || x5cChain.isEmpty()) {
+		if (x5cChain == null || x5cChain.size() < 2) {
+			// if present, the x5c claim must contain leaf and intermediate certificate.
+			// If not present or invalid, we fall back to the old verification method (e.g., for tokens that are signed with the old private key and thus do not contain the x5c claim).
 			return fallback.verify(decodedJWT);
 		}
 
@@ -47,6 +53,7 @@ class X5cCheckingJWTVerifier implements JWTVerifier {
 	private ECPublicKey verifyCertChain(List<String> x5cChain) throws JWTVerificationException {
 		try {
 			var leafCertificate = X509Helper.validateX5cChain(x5cChain, trustedRootCertificate);
+			verifyIntermediateSpkiHash(x5cChain);
 			if (leafCertificate.getPublicKey() instanceof ECPublicKey leafPublicKey) {
 				return leafPublicKey;
 			} else {
@@ -54,6 +61,14 @@ class X5cCheckingJWTVerifier implements JWTVerifier {
 			}
 		} catch (GeneralSecurityException e) {
 			throw new JWTVerificationException("Invalid x5c certificate chain.", e);
+		}
+	}
+
+	private void verifyIntermediateSpkiHash(List<String> x5cChain) throws GeneralSecurityException {
+		var intermediateCert = X509Helper.parseCertificate(x5cChain.get(1));
+		var actualHash = X509Helper.computeSpkiSha256Base64(intermediateCert);
+		if (!MessageDigest.isEqual(expectedIntermediateSpkiSha256, actualHash)) {
+			throw new JWTVerificationException("Intermediate certificate SPKI hash mismatch.");
 		}
 	}
 
