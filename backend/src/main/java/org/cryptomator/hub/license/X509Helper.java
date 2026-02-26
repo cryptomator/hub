@@ -58,14 +58,17 @@ final class X509Helper {
 	/**
 	 * Imports an X.509 certificate from the given string.
 	 *
-	 * @param x509Key The encoded certificate (PEM or base64 DER)
+	 * @param encoded The encoded certificate (PEM or base64 DER)
 	 * @return The decoded X.509 certificate
 	 * @throws CertificateException In case of invalid input
 	 */
-	public static X509Certificate parseCertificate(String x509Key) throws CertificateException {
-		var keyBytes = decodeBase64PemOrDer(x509Key);
+	public static X509Certificate parseCertificate(String encoded) throws CertificateException {
+		if (encoded == null || encoded.isBlank()) {
+			throw new CertificateParsingException("Certificate string is null or empty.");
+		}
+		var certBytes = decodeBase64PemOrDer(encoded);
 		var certFactory = CertificateFactory.getInstance("X.509");
-		var cert = certFactory.generateCertificate(new ByteArrayInputStream(keyBytes));
+		var cert = certFactory.generateCertificate(new ByteArrayInputStream(certBytes));
 		if (cert instanceof X509Certificate x509Cert) {
 			return x509Cert;
 		}
