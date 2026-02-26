@@ -23,6 +23,9 @@ final class X509Helper {
 	private X509Helper() {}
 
 	public static X509Certificate validateX5cChain(List<String> x5c, X509Certificate trustedRootCertificate) throws GeneralSecurityException {
+		if (x5c == null || x5c.isEmpty()) {
+			throw new CertPathValidatorException("null or empty x5c chain");
+		}
 		var chain = new ArrayList<>(decodeCertificates(x5c));
 		for (var cert : chain) {
 			cert.checkValidity();
