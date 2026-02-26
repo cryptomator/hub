@@ -51,7 +51,7 @@ class X5cCheckingJWTVerifier implements JWTVerifier {
 	private ECPublicKey verifyCertChain(List<String> x5cChain) throws JWTVerificationException {
 		try {
 			var leafCertificate = X509Helper.validateX5cChain(x5cChain, trustedRootCertificate);
-			if (expectedIntermediateCn.isEmpty()) {
+			if (!expectedIntermediateCn.isEmpty()) {
 				verifyCNIsPartOfChain(expectedIntermediateCn, x5cChain);
 			}
 			if (leafCertificate.getPublicKey() instanceof ECPublicKey leafPublicKey) {
