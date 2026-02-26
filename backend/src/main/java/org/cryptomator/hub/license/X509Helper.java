@@ -1,10 +1,15 @@
 package org.cryptomator.hub.license;
 
+import javax.naming.InvalidNameException;
+import javax.naming.ldap.LdapName;
+import javax.security.auth.x500.X500Principal;
 import java.io.ByteArrayInputStream;
 import java.security.GeneralSecurityException;
 import java.security.cert.CertPathValidator;
+import java.security.cert.CertPathValidatorException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
+import java.security.cert.CertificateParsingException;
 import java.security.cert.PKIXParameters;
 import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
@@ -12,9 +17,6 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Set;
-import javax.naming.InvalidNameException;
-import javax.naming.ldap.LdapName;
-import javax.security.auth.x500.X500Principal;
 
 final class X509Helper {
 
@@ -31,7 +33,7 @@ final class X509Helper {
 			chain.removeLast();
 		}
 		if (chain.isEmpty()) {
-			throw new IllegalArgumentException("x5c chain does not contain a leaf certificate.");
+			throw new CertPathValidatorException("x5c chain does not contain a leaf certificate.");
 		}
 
 		var certPath = CertificateFactory.getInstance("X.509").generateCertPath(chain);
@@ -67,12 +69,16 @@ final class X509Helper {
 		throw new CertificateException("X.509 certificate could not be decoded");
 	}
 
-	private static byte[] decodeBase64PemOrDer(String value) {
+	private static byte[] decodeBase64PemOrDer(String value) throws CertificateParsingException {
 		var normalized = value
 				.replace("-----BEGIN CERTIFICATE-----", "")
 				.replace("-----END CERTIFICATE-----", "")
 				.replaceAll("\\s", "");
-		return Base64.getDecoder().decode(normalized);
+		try {
+			return Base64.getDecoder().decode(normalized);
+		} catch (IllegalArgumentException e) {
+			throw new CertificateParsingException(e);
+		}
 	}
 
 	public static String getCommonName(X509Certificate cert) throws CertificateException {

@@ -21,7 +21,7 @@ class X5cCheckingJWTVerifier implements JWTVerifier {
 
 	X5cCheckingJWTVerifier(X509Certificate trustedRootCertificate, JWTVerifier fallback, String expectedIntermediateCn) {
 		this.trustedRootCertificate = Objects.requireNonNull(trustedRootCertificate);
-		this.fallback = fallback;
+		this.fallback = Objects.requireNonNull(fallback);
 		this.expectedIntermediateCn = Objects.requireNonNull(expectedIntermediateCn);
 	}
 
@@ -51,7 +51,9 @@ class X5cCheckingJWTVerifier implements JWTVerifier {
 	private ECPublicKey verifyCertChain(List<String> x5cChain) throws JWTVerificationException {
 		try {
 			var leafCertificate = X509Helper.validateX5cChain(x5cChain, trustedRootCertificate);
-			verifyIntermediateCn(x5cChain);
+			if (expectedIntermediateCn.isEmpty()) {
+				verifyCNIsPartOfChain(expectedIntermediateCn, x5cChain);
+			}
 			if (leafCertificate.getPublicKey() instanceof ECPublicKey leafPublicKey) {
 				return leafPublicKey;
 			} else {
@@ -62,14 +64,11 @@ class X5cCheckingJWTVerifier implements JWTVerifier {
 		}
 	}
 
-	private void verifyIntermediateCn(List<String> x5cChain) throws GeneralSecurityException {
-		if (expectedIntermediateCn.isEmpty()) {
-			return;
-		}
+	private void verifyCNIsPartOfChain(String expectedCN, List<String> x5cChain) throws GeneralSecurityException {
 		for (var encodedCert : x5cChain) {
 			var cert = X509Helper.parseCertificate(encodedCert);
 			var actualCn = X509Helper.getCommonName(cert);
-			if (expectedIntermediateCn.equals(actualCn)) {
+			if (expectedCN.equals(actualCn)) {
 				return;
 			}
 		}
