@@ -2,8 +2,6 @@ package org.cryptomator.hub.license;
 
 import java.io.ByteArrayInputStream;
 import java.security.GeneralSecurityException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertPathValidator;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -14,6 +12,9 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Set;
+import javax.naming.InvalidNameException;
+import javax.naming.ldap.LdapName;
+import javax.security.auth.x500.X500Principal;
 
 final class X509Helper {
 
@@ -74,12 +75,17 @@ final class X509Helper {
 		return Base64.getDecoder().decode(normalized);
 	}
 
-	public static byte[] computeSpkiSha256Base64(X509Certificate cert) {
+	public static String getCommonName(X509Certificate cert) throws CertificateException {
 		try {
-			var sha256 = MessageDigest.getInstance("SHA-256");
-			return sha256.digest(cert.getPublicKey().getEncoded());
-		} catch (NoSuchAlgorithmException e) {
-			throw new AssertionError("Every implementation of the Java platform is required to support [...] SHA-256", e);
+			var dn = cert.getSubjectX500Principal().getName(X500Principal.RFC2253);
+			for (var rdn : new LdapName(dn).getRdns()) {
+				if ("CN".equals(rdn.getType())) {
+					return String.valueOf(rdn.getValue());
+				}
+			}
+			throw new CertificateException("Certificate subject does not contain CN.");
+		} catch (InvalidNameException e) {
+			throw new CertificateException("Invalid certificate subject.", e);
 		}
 	}
 }
