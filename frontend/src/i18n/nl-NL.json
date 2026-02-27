@@ -225,6 +225,8 @@
   "emergencyAccess.approval.showDetails": "Toon details",
   "emergencyAccess.approval.completeNow": "Nu voltooien",
   "emergencyAccess.approval.approveNow": "Nu goedkeuren",
+  "emergencyAccess.processType.changePermissions": "Kies Kluis Leden",
+  "emergencyAccess.processType.changeCouncil": "Toegangsraad voor noodgevallen veranderen",
   "emergencyAccess.filter.all": "Alles",
   "emergencyAccess.filter.approvable": "Goedkeurbaar",
   "emergencyAccess.filter.approved": "Goedgekeurd",
