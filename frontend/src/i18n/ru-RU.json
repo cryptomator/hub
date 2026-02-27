@@ -225,7 +225,6 @@
   "emergencyAccess.approval.showDetails": "Подробнее",
   "emergencyAccess.approval.completeNow": "Завершить",
   "emergencyAccess.approval.approveNow": "Одобрить",
-  "emergencyAccess.processType.changePermissions": "Изменить разрешения",
   "emergencyAccess.filter.all": "Все",
   "emergencyAccess.badge.noRedundancy.title": "Без избыточности",
   "recoveryDialog.error.invalidRecoveryType": "Недопустимый тип процесса восстановления.",
