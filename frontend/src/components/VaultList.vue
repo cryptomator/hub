@@ -86,24 +86,17 @@
             </div>
             <div v-if="ownedVaults?.some(ownedVault => ownedVault.id == vault.id) && !isCommunityLicense">
               <EmergencyBadge
-                v-if="!hasEmergencyKeys(vault) && settings?.enableEmergencyAccess"
-                type="missingCouncil"
-                :title="t('emergencyAccess.badge.missingCouncil.title')"
-                :message="t('emergencyAccess.badge.missingCouncil.message')"
+                v-if="settings && settings.defaultMinMembers > emergencyAccessMembers(vault).length"
+                type="insufficientCouncilMembers"
+                :title="t('emergencyAccess.badge.insufficientCouncilMembers.title')"
+                :message="t('emergencyAccess.badge.insufficientCouncilMembers.message', [settings.defaultMinMembers])"
                 position="right"
               />
               <EmergencyBadge
-                v-else-if="isBroken(vault) && settings?.enableEmergencyAccess"
+                v-else-if="vault.requiredEmergencyKeyShares > emergencyAccessMembers(vault).length"
                 type="broken"
                 :title="t('emergencyAccess.badge.broken.title')"
                 :message="t('emergencyAccess.badge.broken.message')"
-                position="right"
-              />
-              <EmergencyBadge
-                v-else-if="noRedundancy(vault) && settings?.enableEmergencyAccess"
-                type="noRedundancy"
-                :title="t('emergencyAccess.badge.noRedundancy.title')"
-                :message="t('emergencyAccess.badge.noRedundancy.message')"
                 position="right"
               />
             </div>
@@ -191,9 +184,6 @@ const isCommunityLicense = computed(() => {
   return !licenseStatus.value?.expiresAt;
 });
 
-// TODO: Replace with actual trial status from backend
-const isTrial = ref(true);
-
 const filterOptions = ref< {[key: string]: string} >({
   accessibleVaults: t('vaultList.filter.entry.accessibleVaults'),
   ownedVaults: t('vaultList.filter.entry.ownedVaults')
@@ -250,18 +240,8 @@ function showVaultDetails(vault: VaultDto) {
   nextTick(() => vaultDetailsSlideOver.value?.show());
 }
 
-function hasEmergencyKeys(vault: VaultDto): boolean {
-  return Object.keys(vault.emergencyKeyShares ?? {}).length > 0; 
-}
-
-function noRedundancy(vault: VaultDto): boolean {
-  const members = Object.keys(vault.emergencyKeyShares).length;
-  return vault.requiredEmergencyKeyShares == members;
-}
-
-function isBroken(vault: VaultDto): boolean {
-  const members = Object.keys(vault.emergencyKeyShares).length;
-  return vault.requiredEmergencyKeyShares > members;
+function emergencyAccessMembers(vault: VaultDto): string[] {
+  return Object.keys(vault.emergencyKeyShares);
 }
 
 async function onSelectedVaultUpdate(vault: VaultDto) {

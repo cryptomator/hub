@@ -75,7 +75,7 @@
 
               <div class="flex flex-wrap gap-3 sm:flex-nowrap sm:items-center sm:justify-between">
                 <!-- Name and description -->
-                <div class="flex-1 min-w-[10rem]">
+                <div class="flex-1 min-w-40">
                   <div class="flex items-center gap-3 min-w-0">
                     <p class="truncate text-sm font-medium text-primary min-w-0">
                       {{ vault.name }}
@@ -99,14 +99,22 @@
                   />
 
                   <EmergencyBadge
-                    v-else-if="isBroken(vault)"
+                    v-if="isBroken(vault)"
                     type="broken"
                     :title="t('emergencyAccess.badge.broken.title')"
                     :message="t('emergencyAccess.badge.broken.message')"
                   />
 
                   <EmergencyBadge
-                    v-else-if="noRedundancy(vault)"
+                    v-if="settings && settings.defaultMinMembers > emergencyAccessMembers(vault).length"
+                    type="insufficientCouncilMembers"
+                    :title="t('emergencyAccess.badge.insufficientCouncilMembers.title')"
+                    :message="t('emergencyAccess.badge.insufficientCouncilMembers.message', [settings.defaultMinMembers])"
+                    position="right"
+                  />
+
+                  <EmergencyBadge
+                    v-else-if="vault.requiredEmergencyKeyShares === emergencyAccessMembers(vault).length"
                     type="noRedundancy"
                     :title="t('emergencyAccess.badge.noRedundancy.title')"
                     :message="t('emergencyAccess.badge.noRedundancy.message')"
@@ -359,7 +367,7 @@ function onUnifiedButtonClick(vault: VaultDto, type: RecoveryProcessDto['type'])
 }
 
 function getCurrentCouncilMembers(vault: VaultDto): UserDto[] {
-  const ids = Object.keys(vault.emergencyKeyShares ?? {});
+  const ids = Object.keys(vault.emergencyKeyShares);
   return ids.map(id => usersById.value[id]).filter(u => u !== undefined).sort((a, b) => a.name.localeCompare(b.name));
 }
 
@@ -417,14 +425,12 @@ function isEmergencyKeyShareHolder(vault: VaultDto): boolean {
   return vault.emergencyKeyShares[me.value.id] !== undefined;
 }
 
-function noRedundancy(vault: VaultDto): boolean {
-  const members = Object.keys(vault.emergencyKeyShares).length;
-  return vault.requiredEmergencyKeyShares == members;
+function emergencyAccessMembers(vault: VaultDto): string[] {
+  return Object.keys(vault.emergencyKeyShares);
 }
 
 function isBroken(vault: VaultDto): boolean {
-  const members = Object.keys(vault.emergencyKeyShares).length;
-  return vault.requiredEmergencyKeyShares > members;
+  return vault.requiredEmergencyKeyShares > emergencyAccessMembers(vault).length;
 }
 
 function getCompletedSegmentsForProcess(proc: RecoveryProcessDto): number {

@@ -32,7 +32,7 @@ import { computed } from 'vue';
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/solid';
 
 const props = defineProps<{
-  type: 'notCouncil' | 'broken' | 'noRedundancy' | 'missingCouncil' | 'none';
+  type: 'notCouncil' | 'broken' | 'noRedundancy' | 'insufficientCouncilMembers' | 'none';
   title: string;
   message: string;
   position?: 'center' | 'left' | 'right';
@@ -53,8 +53,8 @@ const positionClasses = computed(() => {
 const badgeClasses = computed(() => {
   switch (props.type) {
     case 'notCouncil':
+    case 'insufficientCouncilMembers':
     case 'noRedundancy':
-    case 'missingCouncil':
       return 'bg-yellow-50 ring-yellow-300/70 text-yellow-800';
     case 'broken':
       return 'bg-red-100 ring-red-300/70 text-red-800';
@@ -66,7 +66,7 @@ const badgeClasses = computed(() => {
 const tooltipClasses = computed(() => {
   switch (props.type) {
     case 'notCouncil':
-    case 'missingCouncil':
+    case 'insufficientCouncilMembers':
     case 'noRedundancy':
       return 'bg-yellow-50 border-yellow-300 text-yellow-900';
     case 'broken':
@@ -79,7 +79,7 @@ const tooltipClasses = computed(() => {
 const arrowClasses = computed(() => {
   switch (props.type) {
     case 'notCouncil':
-    case 'missingCouncil':
+    case 'insufficientCouncilMembers':
     case 'noRedundancy':
       return 'bg-yellow-50 border-yellow-300';
     case 'broken':
