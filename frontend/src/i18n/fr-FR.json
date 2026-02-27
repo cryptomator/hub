@@ -91,6 +91,7 @@
   "admin.webOfTrust.saved": "Enregistré !",
   "admin.emergencyAccess.title": "Accès d'urgence",
   "admin.emergencyAccess.learnMore": "En savoir plus.",
+  "admin.emergencyAccess.allowChoosing.atLeast": "Au moins :",
   "archiveVaultDialog.title": "Archiver le coffre",
   "archiveVaultDialog.description": "Archiver un coffre le rend inactif. Cela peut libérer des places occupées. Un coffre archivé peut être réactivé plus tard.",
   "archiveVaultDialog.confirm": "Archiver",
