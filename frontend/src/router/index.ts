@@ -13,6 +13,7 @@ import UserDetail from '../components/authority/UserDetail.vue';
 import UserEditCreate from '../components/authority/UserEditCreate.vue';
 import UserList from '../components/authority/UserList.vue';
 import CreateVault from '../components/CreateVault.vue';
+import EmergencyAccessVaultList from '../components/emergencyaccess/EmergencyAccessVaultList.vue';
 import Forbidden from '../components/Forbidden.vue';
 import InitialSetup from '../components/InitialSetup.vue';
 import NotFound from '../components/NotFound.vue';
@@ -21,7 +22,6 @@ import UnlockSuccess from '../components/UnlockSuccess.vue';
 import UserProfile from '../components/UserProfile.vue';
 import VaultDetails from '../components/VaultDetails.vue';
 import VaultList from '../components/VaultList.vue';
-import EmergencyAccessVaultList from '../components/emergencyaccess/EmergencyAccessVaultList.vue';
 
 import i18n, { mapToLocale } from '../i18n';
 
@@ -68,7 +68,7 @@ const routes: RouteRecordRaw[] = [
     component: AuthenticatedMain,
     children: [
       {
-        path: 'emergencyaccess',
+        path: 'emergency-access',
         component: EmergencyAccessVaultList
       },
       {
