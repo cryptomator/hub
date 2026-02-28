@@ -154,6 +154,7 @@
   "deviceList.ipAddress": "IP-Adresse",
   "deviceList.lastAccess": "Letzter Tresor Zugriff",
   "deviceList.lastAccess.toolTip": "Kann bei Zugriff von Geräten mit älteren Versionen fehlen.",
+  "deviceType.mobile": "Mobil",
   "downloadVaultTemplateDialog.title": "Tresorvorlage herunterladen",
   "downloadVaultTemplateDialog.description": "Lade die gezippte Tresorvorlage herunter und entpacke ihn an einem beliebigen Ort, der für deine Teammitglieder freigegeben ist. Dies ist einmal für die Ersteinrichtung erforderlich.",
   "emergencyAccess.status.added": "Hinzugefügt",
