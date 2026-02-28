@@ -158,6 +158,7 @@
   "downloadVaultTemplateDialog.description": "Lade die gezippte Tresorvorlage herunter und entpacke ihn an einem beliebigen Ort, der für deine Teammitglieder freigegeben ist. Dies ist einmal für die Ersteinrichtung erforderlich.",
   "emergencyAccess.status.added": "Hinzugefügt",
   "emergencyAccess.filter.all": "Alle",
+  "emergencyAccess.badge.insufficientCouncilMembers.message": "Deine Teamrichtlinie erfordert einen Notfallzugangsrat von mindestens {0} Mitgliedern. Dieser Tresor erfüllt derzeit diese Anforderung nicht.",
   "editVaultMetadataDialog.title": "Tresor-Metadaten bearbeiten",
   "editVaultMetadataDialog.description": "Aktualisiere den Namen und die Beschreibung des Tresors.",
   "editVaultMetadataDialog.vaultName": "Tresorname",
