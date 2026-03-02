@@ -1,5 +1,5 @@
 <template>
-  <div v-if="type !== 'none'" class="relative mr-3 group">
+  <div v-if="type !== 'none'" class="relative mr-3 group/badge">
     <!-- Badge -->
     <span 
       class="inline-flex items-center gap-2 rounded-full px-2 py-2 text-xs font-medium cursor-default ring-1" 
@@ -10,7 +10,7 @@
 
     <!-- Tooltip -->
     <div 
-      class="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-150 absolute -top-2 transform -translate-y-full w-max max-w-xs z-20" 
+      class="invisible opacity-0 group-hover/badge:visible group-hover/badge:opacity-100 transition-opacity duration-150 absolute -top-2 transform -translate-y-full w-max max-w-xs z-20" 
       :class="positionClasses"
     >
       <div class="px-2 py-1 rounded shadow-sm text-xs hyphens-auto border relative" :class="tooltipClasses">
