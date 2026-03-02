@@ -50,7 +50,7 @@
         </label>
         <div class="mt-1 md:mt-0 lg:col-span-3 md:col-span-4 relative">
           <div class="flex items-center gap-2">
-            <div v-if="defaultRequiredEmergencyKeySharesLessThenTwoError || defaultRequiredEmergencyKeySharesToHighError instanceof FormValidationFailedError" class="absolute  -top-2 transform translate-y-[-100%] z-10">
+            <div v-if="defaultRequiredEmergencyKeySharesLessThenTwoError || defaultRequiredEmergencyKeySharesToHighError instanceof FormValidationFailedError" class="absolute  -top-2 transform translate-y-full z-10">
               <div class="bg-red-50 border border-red-300 text-red-900 px-2 py-1 rounded shadow-sm text-sm hyphens-auto">
                 {{ requiredKeySharesValidationText }}
               </div>
@@ -64,7 +64,7 @@
                 :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': defaultRequiredEmergencyKeySharesError || defaultRequiredEmergencyKeySharesToHighError instanceof FormValidationFailedError}"
                 :aria-label="t('admin.emergencyAccess.requiredKeys.ariaLabel')"
               />
-              <div v-if="defaultRequiredEmergencyKeySharesLessThenTwoError || defaultRequiredEmergencyKeySharesToHighError instanceof FormValidationFailedError" class="absolute  -top-2 transform translate-y-[-100%] z-10">
+              <div v-if="defaultRequiredEmergencyKeySharesLessThenTwoError || defaultRequiredEmergencyKeySharesToHighError instanceof FormValidationFailedError" class="absolute  -top-2 transform translate-y-full z-10">
                 <div class="absolute bottom-0 left-5 transform translate-y-1/2 rotate-45 w-2 h-2 bg-red-50 border-r border-b border-red-300"></div>
               </div>
               <p class="mt-2 my-4 text-sm text-gray-500">{{ t('admin.emergencyAccess.requiredKeys.help') }}</p>
@@ -123,7 +123,7 @@
             <!-- Tooltip -->
             <div
               v-if="defaultMinMembersLessThenTwoError || defaultMinMembersToHighError || defaultMinMembersLowerThenRequiredEmergencyKeySharesError instanceof FormValidationFailedError"
-              class="absolute -top-2 left-0 translate-y-[-100%] z-10"
+              class="absolute -top-2 left-0 translate-y-full z-10"
             >
               <div class="inline-block bg-red-50 border border-red-300 text-red-900 px-2 py-1 rounded shadow-sm text-sm hyphens-auto">
                 {{ requiredMinMembersValidationText }}
@@ -225,8 +225,8 @@ const enableEmergencyAccess = ref<boolean>(false);
 
 type EmergencyAccessSettings = {
   enableEmergencyAccess: boolean;
-  defaultRequiredEmergencyKeyShares: number | undefined;
-  defaultMinMembers: number | undefined;
+  defaultRequiredEmergencyKeyShares?: number;
+  defaultMinMembers?: number;
   allowChoosingEmergencyCouncil: boolean;
   selectedUsers: UserDto[];
 };
@@ -392,14 +392,14 @@ async function saveRecoverySettings() {
     await backend.settings.update({
       enableEmergencyAccess: enableEmergencyAccess.value,
       defaultRequiredEmergencyKeyShares: requiredShares.value,
-      defaultMinMembers: minMembers.value,
+      defaultMinMembers: allowChoosing.value ? minMembers.value : selectedUsers.value.length,
       allowChoosingEmergencyCouncil: allowChoosing.value,
       emergencyCouncilMemberIds: selectedUsers.value.map(u => u.id),
     });
     initialEmergencyAccessSettings.value = {
       enableEmergencyAccess: enableEmergencyAccess.value,
       defaultRequiredEmergencyKeyShares: requiredShares.value,
-      defaultMinMembers: minMembers.value,
+      defaultMinMembers: allowChoosing.value ? minMembers.value : selectedUsers.value.length,
       allowChoosingEmergencyCouncil: allowChoosing.value,
       selectedUsers: selectedUsers.value
     };

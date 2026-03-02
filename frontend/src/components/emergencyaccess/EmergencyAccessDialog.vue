@@ -35,7 +35,7 @@
                     </div>
                     <div v-else-if="phase !== 'start'">
                       <SegmentRing
-                        :total="newRequiredKeyShares"
+                        :total="defaultRequiredEmergencyKeyShares"
                         :completed="completedSegments"
                         :size="36"
                       />
@@ -97,7 +97,7 @@
 
                       <div v-else-if="processType === 'COUNCIL_CHANGE'">
                         <label class="block text-sm font-medium text-gray-700">
-                          {{ t('emergencyAccessDialog.label.councilMembersAtLeast', [newRequiredKeyShares]) }}
+                          {{ t('emergencyAccessDialog.label.councilMembersAtLeast', [defaultMinMembers]) }}
                         </label>
                         <MultiUserSelectInputGroup
                           ref="councilMembersSelect"
@@ -107,10 +107,10 @@
                           @action="addCouncilMember"
                           @remove="removeCouncilMember"
                         />
-                        <div v-if="newRequiredKeyShares - newCouncilMembers.length > 0" class="flex items-start gap-2 rounded-md border border-yellow-200 bg-yellow-50 p-1 text-sm text-gray-900 mt-1">
+                        <div v-if="defaultMinMembers - newCouncilMembers.length > 0" class="flex items-start gap-2 rounded-md border border-yellow-200 bg-yellow-50 p-1 text-sm text-gray-900 mt-1">
                           <span class="leading-5">
                             <span class="text-gray-600">
-                              {{ t('emergencyAccess.validation.selectMoreCouncilMembers', [newRequiredKeyShares - newCouncilMembers.length]) }}
+                              {{ t('emergencyAccess.validation.selectMoreCouncilMembers', [defaultMinMembers - newCouncilMembers.length]) }}
                             </span>
                           </span>
                         </div>
@@ -119,9 +119,9 @@
                         </label>
                         <EmergencyScenarioVisualization
                           :selected-users="newCouncilMembers"
-                          :required-key-shares="newRequiredKeyShares"
+                          :required-key-shares="defaultRequiredEmergencyKeyShares"
                         />
-                        <div v-if="needsRedundancy()" class="mt-4 mr-3">
+                        <div v-if="defaultRequiredEmergencyKeyShares == newCouncilMembers.length" class="mt-4 mr-3">
                           <span class="inline-flex items-center gap-2 rounded-full bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800">
                             <ExclamationTriangleIcon class="h-4 w-4" aria-hidden="true" />
                             {{ t('emergencyAccess.noRedundancy') }}
@@ -195,7 +195,7 @@
                           </label>
                           <EmergencyScenarioVisualization
                             :selected-users="newCouncilMembers"
-                            :required-key-shares="newRequiredKeyShares"
+                            :required-key-shares="defaultRequiredEmergencyKeyShares"
                           />
                         </div>
                       </div>
@@ -486,7 +486,6 @@ const selectedNewmembers = computed<AuthorityDto[]>(() => {
 });
 
 // COUNCIL CHANGE
-const newRequiredKeyShares = ref<number>(props.vault.requiredEmergencyKeyShares);
 const newCouncilMembers = ref<ActivatedUser[]>([]);
 function addCouncilMember(user: UserDto) { addUnique(newCouncilMembers, user); }
 function removeCouncilMember(user: UserDto) { removeFrom(newCouncilMembers, user); }
@@ -500,10 +499,10 @@ const canStartRecovery = computed(() => {
     const sameOwners = owners.value.length === existingOwners.value.length && owners.value.every(o => existingOwnerIds.has(o.id));
     const existingMemberIds = new Set(existingMembers.value.map(u => u.id));
     const sameMembers = members.value.length === existingMembers.value.length && members.value.every(m => existingMemberIds.has(m.id));
-    return (!sameOwners || !sameMembers) && owners.value.length !== 0;
+    return !(sameOwners && sameMembers) && owners.value.length !== 0;
   } else if (processType.value === 'COUNCIL_CHANGE') {
     return (
-      newCouncilMembers.value.length >= newRequiredKeyShares.value
+      newCouncilMembers.value.length >= defaultMinMembers.value
       && isCouncilChanged.value
     );
   }
@@ -513,15 +512,13 @@ const canStartRecovery = computed(() => {
 
 const isCouncilChanged = computed(() => {
   const currentCouncilIds = Object.keys(props.vault.emergencyKeyShares ?? {});
-  const newCouncilIds = newCouncilMembers.value.map(u => u.id);
+  const newCouncilIds = new Set(newCouncilMembers.value.map(u => u.id));
 
-  if (currentCouncilIds.length !== newCouncilIds.length) {
+  if (currentCouncilIds.length !== newCouncilIds.size) {
     return true;
   }
 
-  const currentSet = new Set(currentCouncilIds);
-  const requiredKeySharesChanged = props.vault.requiredEmergencyKeyShares != newRequiredKeyShares.value;
-  return newCouncilIds.some(id => !currentSet.has(id)) || requiredKeySharesChanged;
+  return Array.from(currentCouncilIds).some(id => !newCouncilIds.has(id));
 });
 
 const noopSearch = async () => [];
@@ -538,10 +535,6 @@ async function searchUsersWithCompleteSetup(query: string): Promise<UserDto[]> {
   return authorities
     .filter((a): a is UserDto => a.type === 'USER' && didCompleteSetup(a))
     .sort((a, b) => a.name.localeCompare(b.name));
-}
-
-function needsRedundancy(): boolean {
-  return newRequiredKeyShares.value == newCouncilMembers.value.length;
 }
 
 const abortDialog = ref<InstanceType<typeof ProcessAbortDialog> | null>(null);
@@ -642,16 +635,15 @@ async function loadAuthoritiesForCouncilAndProcesses() {
 
 async function initProcessSpecificState() {
   if (props.recoveryProcess?.type === 'COUNCIL_CHANGE') {
-    const users = await backend.authorities.listSome(props.recoveryProcess.details.newCouncilMemberIds);
-    const sorted = users
-      .filter((a): a is ActivatedUser => a.type === 'USER' && didCompleteSetup(a))
-      .sort((a, b) => a.name.localeCompare(b.name));
-    newCouncilMembers.value = [...sorted];
-    newRequiredKeyShares.value = props.recoveryProcess.details.newRequiredKeyShares;
+    const users = await loadActivatedUsers(props.recoveryProcess.details.newCouncilMemberIds);
+    newCouncilMembers.value = [...users];
   } else if (!props.recoveryProcess && processType.value === 'COUNCIL_CHANGE') {
     await loadDefaultSettings();
-    newCouncilMembers.value = [...defaultEmergencyCouncilMembers.value];
-    newRequiredKeyShares.value = defaultRequiredEmergencyKeyShares.value;
+    let users = await loadActivatedUsers(Object.keys(props.vault.emergencyKeyShares));
+    if (users.length === 0) {
+      users = defaultEmergencyCouncilMembers.value;
+    }
+    newCouncilMembers.value = [...users];
   } else if (props.recoveryProcess?.type === 'CHANGE_PERMISSIONS') {
     const newOwners = await backend.authorities.listSome(props.recoveryProcess.details.newOwnerIds);
     const enrichedOwners = await enrichGroupsMemberSize([...owners.value, ...newOwners]);
@@ -718,8 +710,7 @@ async function startRecovery() {
   onError.value = undefined;
   try {
     const recoveryCouncilMemberIds = Object.keys(props.vault.emergencyKeyShares);
-    const authorities = await backend.authorities.listSome(recoveryCouncilMemberIds);
-    const councilMembers = authorities.filter(a => a.type == 'USER').filter(u => didCompleteSetup(u));
+    const councilMembers = await loadActivatedUsers(recoveryCouncilMemberIds);
     if (councilMembers.length < props.vault.requiredEmergencyKeyShares) {
       throw new Error(t('emergencyAccessDialog.error.insufficientCouncilMembers', [councilMembers.length, props.vault.requiredEmergencyKeyShares]));
     }
@@ -737,14 +728,14 @@ async function startRecovery() {
         }
       };
     } else if (processType.value === 'COUNCIL_CHANGE') {
-      if (newCouncilMembers.value.length < newRequiredKeyShares.value) {
+      if (newCouncilMembers.value.length < defaultMinMembers.value) {
         throw new Error(t('recoveryDialog.error.notEnoughCouncilMembers'));
       }
       data = {
         type: 'COUNCIL_CHANGE',
         details: {
           newCouncilMemberIds: newCouncilMembers.value.map(u => u.id),
-          newRequiredKeyShares: newRequiredKeyShares.value
+          newRequiredKeyShares: defaultRequiredEmergencyKeyShares.value
         }
       };
     } else {
@@ -947,13 +938,16 @@ const defaultMinMembers = ref<number>(0);
 
 async function loadDefaultSettings() {
   const settings = await backend.settings.get();
-  const authorities = await backend.authorities.listSome(settings.emergencyCouncilMemberIds);
-  const sortedActivatedUsers = authorities
-    .filter((a): a is ActivatedUser => a.type === 'USER' && didCompleteSetup(a))
-    .sort((a, b) => a.name.localeCompare(b.name));
-
+  const sortedActivatedUsers = await loadActivatedUsers(settings.emergencyCouncilMemberIds);
   defaultEmergencyCouncilMembers.value = [...sortedActivatedUsers];
   defaultRequiredEmergencyKeyShares.value = settings.defaultRequiredEmergencyKeyShares;
   defaultMinMembers.value = settings.defaultMinMembers;
+}
+
+async function loadActivatedUsers(ids: string[]): Promise<ActivatedUser[]> {
+  const authorities = await backend.authorities.listSome(ids);
+  return authorities
+    .filter((a): a is ActivatedUser => a.type === 'USER' && didCompleteSetup(a))
+    .sort((a, b) => a.name.localeCompare(b.name));
 }
 </script>

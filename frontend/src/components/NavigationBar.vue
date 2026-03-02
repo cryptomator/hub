@@ -69,11 +69,11 @@
 <script setup lang="ts">
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
 import { ArrowRightStartOnRectangleIcon, Bars3Icon, ListBulletIcon, UserIcon, WrenchIcon, XMarkIcon } from '@heroicons/vue/24/outline';
-import { FunctionalComponent, onMounted, ref, computed } from 'vue';
+import { computed, FunctionalComponent, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import auth from '../common/auth';
-import backend, { UserDto, VaultDto, LicenseUserInfoDto } from '../common/backend';
 import { useRoute } from 'vue-router';
+import auth from '../common/auth';
+import backend, { LicenseUserInfoDto, UserDto, VaultDto } from '../common/backend';
 
 const { t } = useI18n({ useScope: 'global' });
 const route = useRoute();
@@ -142,8 +142,8 @@ onMounted(async () => {
       recoverableVaults.value = [];
     }
 
-    if (recoverableVaults.value.length > 0 && !navigation.value.some(i => i.to === '/app/emergencyaccess')) {
-      navigation.value.push({ name: 'nav.emergencyAccess', to: '/app/emergencyaccess' });
+    if (recoverableVaults.value.length > 0 && !navigation.value.some(i => i.to === '/app/emergency-access')) {
+      navigation.value.push({ name: 'nav.emergencyAccess', to: '/app/emergency-access' });
     }
   }
 });

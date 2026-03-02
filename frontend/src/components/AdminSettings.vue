@@ -169,7 +169,7 @@
             </label>
             <div class="mt-1 md:mt-0 relative md:col-span-2 lg:col-span-1">
               <input id="wotMaxDepth" v-model="wotMaxDepth" type="number" min="0" max="9" step="1" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': wotMaxDepthError instanceof WotFormValidationFailedError }"/>
-              <div v-if="wotMaxDepthError" class="absolute left-1/2 -translate-x-1/2 -top-2 transform translate-y-[-100%] w-5/6">
+              <div v-if="wotMaxDepthError" class="absolute left-1/2 -translate-x-1/2 -top-2 transform translate-y-full w-5/6">
                 <div class="bg-red-50 border border-red-300 text-red-900 px-2 py-1 rounded shadow-sm text-sm hyphens-auto">
                   {{ t('admin.webOfTrust.wotMaxDepth.error') }}
                   <div class="absolute bottom-0 left-1/2 transform translate-y-1/2 rotate-45 w-2 h-2 bg-red-50 border-r border-b border-red-300"></div>
@@ -191,7 +191,7 @@
             </label>
             <div class="mt-1 md:mt-0 relative md:col-span-2 lg:col-span-1">
               <input id="wotIdVerifyLen" v-model="wotIdVerifyLen" type="number" min="0" max="9" step="1" class="focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': wotIdVerifyLenError instanceof WotFormValidationFailedError }"/>
-              <div v-if="wotIdVerifyLenError" class="absolute left-1/2 -translate-x-1/2 -top-2 transform translate-y-[-100%] w-5/6">
+              <div v-if="wotIdVerifyLenError" class="absolute left-1/2 -translate-x-1/2 -top-2 transform translate-y-full w-5/6">
                 <div class="bg-red-50 border border-red-300 text-red-900 px-2 py-1 rounded shadow-sm text-sm hyphens-auto">
                   {{ t('admin.webOfTrust.wotIdVerifyLen.error') }}
                   <div class="absolute bottom-0 left-1/2 transform translate-y-1/2 rotate-45 w-2 h-2 bg-red-50 border-r border-b border-red-300"></div>

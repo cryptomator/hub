@@ -1,5 +1,5 @@
 <template>
-  <div v-if="type !== 'none'" class="relative mr-3 group">
+  <div v-if="type !== 'none'" class="relative mr-3 group/badge">
     <!-- Badge -->
     <span 
       class="inline-flex items-center gap-2 rounded-full px-2 py-2 text-xs font-medium cursor-default ring-1" 
@@ -10,7 +10,7 @@
 
     <!-- Tooltip -->
     <div 
-      class="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-150 absolute -top-2 transform -translate-y-full w-max max-w-xs z-20" 
+      class="invisible opacity-0 group-hover/badge:visible group-hover/badge:opacity-100 transition-opacity duration-150 absolute -top-2 transform -translate-y-full w-max max-w-xs z-20" 
       :class="positionClasses"
     >
       <div class="px-2 py-1 rounded shadow-sm text-xs hyphens-auto border relative" :class="tooltipClasses">
@@ -32,7 +32,7 @@ import { computed } from 'vue';
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/solid';
 
 const props = defineProps<{
-  type: 'notCouncil' | 'broken' | 'noRedundancy' | 'missingCouncil' | 'none';
+  type: 'notCouncil' | 'broken' | 'noRedundancy' | 'insufficientCouncilMembers' | 'none';
   title: string;
   message: string;
   position?: 'center' | 'left' | 'right';
@@ -53,8 +53,8 @@ const positionClasses = computed(() => {
 const badgeClasses = computed(() => {
   switch (props.type) {
     case 'notCouncil':
+    case 'insufficientCouncilMembers':
     case 'noRedundancy':
-    case 'missingCouncil':
       return 'bg-yellow-50 ring-yellow-300/70 text-yellow-800';
     case 'broken':
       return 'bg-red-100 ring-red-300/70 text-red-800';
@@ -66,7 +66,7 @@ const badgeClasses = computed(() => {
 const tooltipClasses = computed(() => {
   switch (props.type) {
     case 'notCouncil':
-    case 'missingCouncil':
+    case 'insufficientCouncilMembers':
     case 'noRedundancy':
       return 'bg-yellow-50 border-yellow-300 text-yellow-900';
     case 'broken':
@@ -79,7 +79,7 @@ const tooltipClasses = computed(() => {
 const arrowClasses = computed(() => {
   switch (props.type) {
     case 'notCouncil':
-    case 'missingCouncil':
+    case 'insufficientCouncilMembers':
     case 'noRedundancy':
       return 'bg-yellow-50 border-yellow-300';
     case 'broken':
