@@ -9,7 +9,7 @@ on:
     inputs:
       version:
         description: 'Chart Version'
-        required: true
+        required: false
       appVersion:
         description: 'App Version'
         required: true
@@ -58,30 +58,22 @@ jobs:
         run: |
           set -euo pipefail
           if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
-            echo "publish_version=${{ github.event.inputs.version }}" >> "$GITHUB_OUTPUT"
-            echo "publish_app_version=${{ github.event.inputs.appVersion }}" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          chart_file="charts/cryptomator-hub/Chart.yaml"
-          base_version=$(awk -F': ' '/^version:/ {print $2}' "$chart_file")
-          base_app_version=$(awk -F': ' '/^appVersion:/ {print $2}' "$chart_file" | tr -d '"')
-
-          if [[ -z "$base_version" ]]; then
-            echo "Unable to read chart version from $chart_file" >&2
-            exit 1
-          fi
-
-          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
-            publish_version="$base_version"
+            publish_app_version="${{ github.event.inputs.appVersion }}"
+            publish_version="${{ github.event.inputs.version }}"
+            if [[ -z "$publish_version" ]]; then
+              publish_version="$publish_app_version"
+            fi
+          elif [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            publish_version="${GITHUB_REF_NAME#v}"
+            publish_app_version="$publish_version"
           else
             short_sha="${GITHUB_SHA::7}"
-            branch_slug=$(echo "${GITHUB_REF_NAME}" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9.-]+/-/g; s/^-+//; s/-+$//')
-            publish_version="${base_version}-${branch_slug}.${short_sha}"
+            publish_version="1.0.0-${short_sha}"
+            publish_app_version="$publish_version"
           fi
 
           echo "publish_version=${publish_version}" >> "$GITHUB_OUTPUT"
-          echo "publish_app_version=${base_app_version}" >> "$GITHUB_OUTPUT"
+          echo "publish_app_version=${publish_app_version}" >> "$GITHUB_OUTPUT"
 
       - name: Package chart
         run: |

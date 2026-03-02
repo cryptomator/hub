@@ -4,7 +4,7 @@ home: https://cryptomator.org/hub/
 icon: https://cryptomator.org/img/logo.png
 description: Helm chart for deploying Cryptomator Hub with optional Keycloak and PostgreSQL
 type: application
-version: 0.1.5
+version: "1.0.0-dev"
 appVersion: "1.5.0-alpha5"
 kubeVersion: ">=1.27.0-0"
 sources:
