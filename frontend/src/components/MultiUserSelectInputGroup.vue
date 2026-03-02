@@ -24,7 +24,7 @@
         }"
         @click="onPillClick($event, user)"
       >
-        <img :src="user.pictureUrl" class="w-4 h-4 rounded-full mr-1" />
+        <img :src="user.pictureUrl" class="w-4 h-4 rounded-full mr-1" alt="" />
         {{ user.name }}
         <span 
           v-if="user.type === 'USER'" class="ml-1 trust-details"
@@ -101,7 +101,7 @@
 </template>
 
 <script setup lang="ts" generic="T extends AuthorityDto">
-import backend, { AuthorityDto, TrustDto, UserDto, UserDtoWithCounts } from '../common/backend';
+import backend, { AuthorityDto, TrustDto, UserDto } from '../common/backend';
 import { useId, ref, computed, watch, nextTick, onMounted } from 'vue';
 import { Combobox, ComboboxInput } from '@headlessui/vue';
 import { useI18n } from 'vue-i18n';

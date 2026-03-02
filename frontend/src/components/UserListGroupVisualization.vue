@@ -20,7 +20,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { AuthorityDto, UserDto } from '../common/backend';
+import { AuthorityDto } from '../common/backend';
 
 const props = withDefaults(defineProps<{
   authorities: AuthorityDto[];

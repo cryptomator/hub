@@ -346,7 +346,7 @@ watch([requiredShares], ([r]) => {
   descTimer = window.setTimeout(() => { isDescLoading.value = false; }, 350);
 });
 
-async function saveRecoverySettings() {
+function validateRecoverySettings(): boolean {
   defaultRequiredEmergencyKeySharesError.value = null;
   selectedMembersError.value = null;
   onSaveErrorRecovery.value = null;
@@ -356,40 +356,44 @@ async function saveRecoverySettings() {
   defaultMinMembersToHighError.value = null;
   defaultMinMembersLowerThenRequiredEmergencyKeySharesError.value = null;
   
-  if (enableEmergencyAccess.value){  
-    if (requiredShares.value == null || minMembers.value == null) {
-      onSaveErrorRecovery.value = new Error('Missing input');
-      return;
-    }
-    if (requiredShares.value < 2) {
-      defaultRequiredEmergencyKeySharesLessThenTwoError.value = new FormValidationFailedError();
-      return;
-    }
-    if (requiredShares.value > 255) {
-      defaultRequiredEmergencyKeySharesToHighError.value = new FormValidationFailedError();
-      return;
-    }
-
-    if (minMembers.value < 2) {
-      defaultMinMembersLessThenTwoError.value = new FormValidationFailedError();
-      return;
-    }
-    if (minMembers.value > 255) {
-      defaultMinMembersToHighError.value = new FormValidationFailedError();
-      return;
-    }
-
-    if (allowChoosing.value && requiredShares.value > minMembers.value) {
-      defaultMinMembersLowerThenRequiredEmergencyKeySharesError.value = new FormValidationFailedError();
-      onSaveErrorRecovery.value = new Error(t('admin.emergencyAccess.errors.sharesMustNotExceedMembers'));
-      return;
-    }
-    if (selectedUsers.value.length < requiredShares.value) {
-      selectedMembersError.value = new FormValidationFailedError();
-      return;
-    }
+  if (requiredShares.value == null || minMembers.value == null) {
+    onSaveErrorRecovery.value = new Error('Missing input');
+    return false;
+  }
+  if (requiredShares.value < 2) {
+    defaultRequiredEmergencyKeySharesLessThenTwoError.value = new FormValidationFailedError();
+    return false;
+  }
+  if (requiredShares.value > 255) {
+    defaultRequiredEmergencyKeySharesToHighError.value = new FormValidationFailedError();
+    return false;
   }
 
+  if (minMembers.value < 2) {
+    defaultMinMembersLessThenTwoError.value = new FormValidationFailedError();
+    return false;
+  }
+  if (minMembers.value > 255) {
+    defaultMinMembersToHighError.value = new FormValidationFailedError();
+    return false;
+  }
+
+  if (allowChoosing.value && requiredShares.value > minMembers.value) {
+    defaultMinMembersLowerThenRequiredEmergencyKeySharesError.value = new FormValidationFailedError();
+    onSaveErrorRecovery.value = new Error(t('admin.emergencyAccess.errors.sharesMustNotExceedMembers'));
+    return false;
+  }
+  if (selectedUsers.value.length < requiredShares.value) {
+    selectedMembersError.value = new FormValidationFailedError();
+    return false;
+  }
+  return true;
+}
+
+async function saveRecoverySettings() {
+  if (enableEmergencyAccess.value && !validateRecoverySettings()) {
+    return;
+  }
   try {
     processing.value = true;
     await backend.settings.update({
