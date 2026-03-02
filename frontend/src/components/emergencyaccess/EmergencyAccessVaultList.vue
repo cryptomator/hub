@@ -27,171 +27,171 @@
   <div v-else-if="!settings?.enableEmergencyAccess" class="mt-3 text-center">
     <h3 class="mt-2 text-sm font-medium text-gray-900">{{ t('emergencyAccess.empty.disabled') }}</h3>
   </div>
-  <div v-else>
+  <section v-else>
     <!-- entitlements.emergencyAccessEnabled && settings.enableEmergencyAccess -->
-    <div class="flex flex-col sm:flex-row sm:justify-between gap-3 w-full">
-      <h2 class="text-2xl font-bold leading-9 text-gray-900 sm:text-3xl sm:truncate">
-        {{ t('nav.emergencyAccess') }}
-      </h2>
-      <div class="flex gap-3">
-        <button class="w-full bg-primary py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="fetchData()">
-          {{ t('common.refresh') }}
-        </button>
-      </div>
-    </div>
-    <div class="pb-5 mt-3 border-b border-gray-200 flex flex-wrap sm:flex-nowrap gap-3 items-center whitespace-nowrap">
-      <input id="vaultSearch" v-model="query" :placeholder="t('vaultList.search.placeholder')" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs text-sm border-gray-300 rounded-md disabled:bg-gray-200"/>
-
-      <Listbox v-model="selectedFilter" as="div">
-        <div class="relative w-auto whitespace-nowrap">
-          <ListboxButton class="min-w-60 relative w-full rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-xs focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary text-sm">
-            <span class="block whitespace-nowrap">{{ filterOptions[selectedFilter] }}</span>
-            <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-              <ChevronUpDownIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
-            </span>
-          </ListboxButton>
-          <transition leave-active-class="transition ease-in duration-100" leave-from-class="opacity-100" leave-to-class="opacity-0">
-            <ListboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-hidden text-sm">
-              <ListboxOption v-for="(name, key) in filterOptions" :key="key" v-slot="{ active, selected }" :value="key" class="relative cursor-default select-none py-2 pl-3 pr-12 ui-not-active:text-gray-900 ui-active:text-white ui-active:bg-primary">
-                <span :class="[selected ? 'font-semibold' : 'font-normal', 'block whitespace-nowrap']">{{ name }}</span>
-                <span v-if="selected" :class="[active ? 'text-white' : 'text-primary', 'absolute inset-y-0 right-0 flex items-center pr-4']">
-                  <CheckIcon class="h-5 w-5" aria-hidden="true" />
-                </span>
-              </ListboxOption>
-            </ListboxOptions>
-          </transition>
+    <header class="pb-5 border-b border-gray-200">
+      <div class="flex flex-col sm:flex-row sm:justify-between gap-3 w-full">
+        <h2 class="text-2xl font-bold leading-9 text-gray-900 sm:text-3xl sm:truncate">
+          {{ t('nav.emergencyAccess') }}
+        </h2>
+        <div class="flex gap-3">
+          <button class="w-full bg-primary py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="fetchData()">
+            {{ t('common.refresh') }}
+          </button>
         </div>
-      </Listbox>
-    </div>
+      </div>
+      <div class="mt-3 flex flex-wrap sm:flex-nowrap gap-3 items-center whitespace-nowrap">
+        <input id="vaultSearch" v-model="query" :placeholder="t('vaultList.search.placeholder')" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs text-sm border-gray-300 rounded-md disabled:bg-gray-200"/>
+
+        <Listbox v-model="selectedFilter" as="div">
+          <div class="relative w-auto whitespace-nowrap">
+            <ListboxButton class="min-w-60 relative w-full rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-xs focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary text-sm">
+              <span class="block whitespace-nowrap">{{ filterOptions[selectedFilter] }}</span>
+              <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                <ChevronUpDownIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+              </span>
+            </ListboxButton>
+            <transition leave-active-class="transition ease-in duration-100" leave-from-class="opacity-100" leave-to-class="opacity-0">
+              <ListboxOptions class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-hidden text-sm">
+                <ListboxOption v-for="(name, key) in filterOptions" :key="key" v-slot="{ active, selected }" :value="key" class="relative cursor-default select-none py-2 pl-3 pr-12 ui-not-active:text-gray-900 ui-active:text-white ui-active:bg-primary">
+                  <span :class="[selected ? 'font-semibold' : 'font-normal', 'block whitespace-nowrap']">{{ name }}</span>
+                  <span v-if="selected" :class="[active ? 'text-white' : 'text-primary', 'absolute inset-y-0 right-0 flex items-center pr-4']">
+                    <CheckIcon class="h-5 w-5" aria-hidden="true" />
+                  </span>
+                </ListboxOption>
+              </ListboxOptions>
+            </transition>
+          </div>
+        </Listbox>
+      </div>
+    </header>
 
     <div v-if="filteredVaults.length === 0" class="mt-3 text-center">
       <h3 class="mt-2 text-sm font-medium text-gray-900">{{ t('emergencyAccess.empty.noneFound') }}</h3>
     </div>
-    <div v-else class="mt-5 bg-white shadow-sm rounded-md">
-      <ul class="divide-y divide-gray-200">
-        <li v-for="(vault, index) in filteredVaults" :key="vault.id">
-          <a class="block" :class="{'rounded-t-md': index == 0, 'rounded-b-md': index == filteredVaults.length - 1}">
-            <div class="px-4 py-4 sm:px-6">
+    <ul role="list" class="mt-5 divide-y divide-gray-200 bg-white shadow-sm rounded-md">
+      <li v-for="(vault, index) in filteredVaults" :key="vault.id">
+        <a class="block" :class="{'rounded-t-md': index == 0, 'rounded-b-md': index == filteredVaults.length - 1}">
+          <div class="px-4 py-4 sm:px-6">
 
-              <div class="flex flex-wrap gap-3 sm:flex-nowrap sm:items-center sm:justify-between">
-                <!-- Name and description -->
-                <div class="flex-1 min-w-40">
-                  <div class="flex items-center gap-3 min-w-0">
-                    <p class="truncate text-sm font-medium text-primary min-w-0">
-                      {{ vault.name }}
-                    </p>
-                    <div v-if="vault.archived" class="inline-flex items-center rounded-md bg-yellow-400/10 px-2 py-1 text-xs font-medium text-yellow-500 ring-1 ring-inset ring-yellow-400/20">{{ t('vaultList.badge.archived') }}</div>
-                  </div>
-                  <p
-                    v-if="vault.description"
-                    class="truncate text-sm text-gray-500 mt-2 min-w-0"
-                  >
-                    {{ vault.description }}
+            <div class="flex flex-wrap gap-3 sm:flex-nowrap sm:items-center sm:justify-between">
+              <!-- Name and description -->
+              <div class="flex-1 min-w-40">
+                <div class="flex items-center gap-3 min-w-0">
+                  <p class="truncate text-sm font-medium text-primary min-w-0">
+                    {{ vault.name }}
                   </p>
+                  <div v-if="vault.archived" class="inline-flex items-center rounded-md bg-yellow-400/10 px-2 py-1 text-xs font-medium text-yellow-500 ring-1 ring-inset ring-yellow-400/20">{{ t('vaultList.badge.archived') }}</div>
+                </div>
+                <p
+                  v-if="vault.description"
+                  class="truncate text-sm text-gray-500 mt-2 min-w-0"
+                >
+                  {{ vault.description }}
+                </p>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-2 sm:justify-end">
+                <EmergencyBadge
+                  v-if="!isEmergencyKeyShareHolder(vault)"
+                  type="notCouncil"
+                  :title="t('emergencyAccess.badge.notCouncil.title')"
+                  :message="t('emergencyAccess.badge.notCouncil.message')"
+                />
+
+                <EmergencyBadge
+                  v-if="isBroken(vault)"
+                  type="broken"
+                  :title="t('emergencyAccess.badge.broken.title')"
+                  :message="t('emergencyAccess.badge.broken.message')"
+                />
+
+                <EmergencyBadge
+                  v-if="settings && settings.defaultMinMembers > emergencyAccessMembers(vault).length"
+                  type="insufficientCouncilMembers"
+                  :title="t('emergencyAccess.badge.insufficientCouncilMembers.title')"
+                  :message="t('emergencyAccess.badge.insufficientCouncilMembers.message', [settings.defaultMinMembers])"
+                  position="right"
+                />
+
+                <EmergencyBadge
+                  v-else-if="vault.requiredEmergencyKeyShares === emergencyAccessMembers(vault).length"
+                  type="noRedundancy"
+                  :title="t('emergencyAccess.badge.noRedundancy.title')"
+                  :message="t('emergencyAccess.badge.noRedundancy.message')"
+                />
+
+                <!-- Council Members -->
+                <div class="relative group mt-2 mr-5">
+                  <UserListGroupVisualization :users="getCurrentCouncilMembers(vault)" />
+
+                  <VaultCouncilHoverCard
+                    v-if="isEmergencyKeyShareHolder(vault)"
+                    :members="getCurrentCouncilMembers(vault)"
+                    :required-key-shares="vault.requiredEmergencyKeyShares"
+                    :completed="0"
+                  />
                 </div>
 
-                <div class="flex flex-wrap items-center gap-2 sm:justify-end">
-                  <EmergencyBadge
-                    v-if="!isEmergencyKeyShareHolder(vault)"
-                    type="notCouncil"
-                    :title="t('emergencyAccess.badge.notCouncil.title')"
-                    :message="t('emergencyAccess.badge.notCouncil.message')"
-                  />
-
-                  <EmergencyBadge
-                    v-if="isBroken(vault)"
-                    type="broken"
-                    :title="t('emergencyAccess.badge.broken.title')"
-                    :message="t('emergencyAccess.badge.broken.message')"
-                  />
-
-                  <EmergencyBadge
-                    v-if="settings && settings.defaultMinMembers > emergencyAccessMembers(vault).length"
-                    type="insufficientCouncilMembers"
-                    :title="t('emergencyAccess.badge.insufficientCouncilMembers.title')"
-                    :message="t('emergencyAccess.badge.insufficientCouncilMembers.message', [settings.defaultMinMembers])"
-                    position="right"
-                  />
-
-                  <EmergencyBadge
-                    v-else-if="vault.requiredEmergencyKeyShares === emergencyAccessMembers(vault).length"
-                    type="noRedundancy"
-                    :title="t('emergencyAccess.badge.noRedundancy.title')"
-                    :message="t('emergencyAccess.badge.noRedundancy.message')"
-                  />
-
-                  <!-- Council Members -->
-                  <div class="relative group mt-2 mr-5">
-                    <UserListGroupVisualization :users="getCurrentCouncilMembers(vault)" />
-
-                    <VaultCouncilHoverCard
-                      v-if="isEmergencyKeyShareHolder(vault)"
-                      :members="getCurrentCouncilMembers(vault)"
-                      :required-key-shares="vault.requiredEmergencyKeyShares"
-                      :completed="0"
+                <!-- ASSIGN OWNER Button - old council -->
+                <div
+                  v-if="!isEmergencyKeyShareHolder(vault)"
+                  class="flex flex-wrap items-center gap-2 pr-2 self-center"
+                >
+                  <template v-for="proc in getProcesses(vault.id)" :key="proc.id">
+                    <EmergencyProcessButton
+                      v-if="me && isUserInProcess(proc) && proc.type === 'CHANGE_PERMISSIONS'"
+                      :label="t('emergencyAccess.processType.changePermissions')"
+                      :approval-label="getApprovalLabel(proc)"
+                      :disabled="isBroken(vault)"
+                      :has-process="true"
+                      :can-start="false"
+                      :required-key-shares="proc.requiredKeyShares"
+                      :completed-key-shares="getCompletedSegmentsForProcess(proc)"
+                      :council-members="getCouncilMembersForProcess(proc)"
+                      :recovered-member-ids="Array.from(recoveredMemberIdsForProcess(proc))"
+                      @click-main="openRecoveryDialog(vault, proc)"
                     />
-                  </div>
-
-                  <!-- ASSIGN OWNER Button - old council -->
-                  <div
-                    v-if="!isEmergencyKeyShareHolder(vault)"
-                    class="flex flex-wrap items-center gap-2 pr-2 self-center"
-                  >
-                    <template v-for="proc in getProcesses(vault.id)" :key="proc.id">
-                      <EmergencyProcessButton
-                        v-if="me && isUserInProcess(proc) && proc.type === 'CHANGE_PERMISSIONS'"
-                        :label="t('emergencyAccess.processType.changePermissions')"
-                        :approval-label="getApprovalLabel(proc)"
-                        :disabled="isBroken(vault)"
-                        :has-process="true"
-                        :can-start="false"
-                        :required-key-shares="proc.requiredKeyShares"
-                        :completed-key-shares="getCompletedSegmentsForProcess(proc)"
-                        :council-members="getCouncilMembersForProcess(proc)"
-                        :recovered-member-ids="Array.from(recoveredMemberIdsForProcess(proc))"
-                        @click-main="openRecoveryDialog(vault, proc)"
-                      />
-                    </template>
-                  </div>
-
-                  <!-- EA Buttons -->
-                  <div
-                    v-if="(me && vault.emergencyKeyShares[me.id]) || isEmergencyKeyShareHolder(vault)"
-                    class="flex flex-col gap-2 pr-2 self-stretch lg:flex-row flex-wrap lg:items-center lg:justify-end"
-                  >
-                    <template v-for="type in SUPPORTED_PROCESS_TYPES" :key="'unified-' + vault.id + '-' + type">
-                      <EmergencyProcessButton
-                        v-if="getProcessByType(vault, type)"
-                        :label="getTypeLabel(vault, type)"
-                        :approval-label="getApprovalLabel(getProcessByType(vault, type)!)"
-                        :disabled="isBroken(vault)"
-                        :has-process="true"
-                        :can-start="false"
-                        :required-key-shares="getProcessByType(vault, type)!.requiredKeyShares"
-                        :completed-key-shares="getCompletedSegmentsForProcess(getProcessByType(vault, type)!)"
-                        :council-members="getCouncilMembersForProcess(getProcessByType(vault, type)!)"
-                        :recovered-member-ids="Array.from(recoveredMemberIdsForProcess(getProcessByType(vault, type)!))"
-                        @click-main="onUnifiedButtonClick(vault, type)"
-                      />
-                      <EmergencyProcessButton
-                        v-else
-                        :label="getTypeLabel(vault, type)"
-                        :disabled="isBroken(vault)"
-                        :has-process="false"
-                        :can-start="true"
-                        @click-main="onUnifiedButtonClick(vault, type)"
-                      />
-                    </template>
-                  </div>
-
+                  </template>
                 </div>
+
+                <!-- EA Buttons -->
+                <div
+                  v-if="(me && vault.emergencyKeyShares[me.id]) || isEmergencyKeyShareHolder(vault)"
+                  class="flex flex-col gap-2 pr-2 self-stretch lg:flex-row flex-wrap lg:items-center lg:justify-end"
+                >
+                  <template v-for="type in SUPPORTED_PROCESS_TYPES" :key="'unified-' + vault.id + '-' + type">
+                    <EmergencyProcessButton
+                      v-if="getProcessByType(vault, type)"
+                      :label="getTypeLabel(vault, type)"
+                      :approval-label="getApprovalLabel(getProcessByType(vault, type)!)"
+                      :disabled="isBroken(vault)"
+                      :has-process="true"
+                      :can-start="false"
+                      :required-key-shares="getProcessByType(vault, type)!.requiredKeyShares"
+                      :completed-key-shares="getCompletedSegmentsForProcess(getProcessByType(vault, type)!)"
+                      :council-members="getCouncilMembersForProcess(getProcessByType(vault, type)!)"
+                      :recovered-member-ids="Array.from(recoveredMemberIdsForProcess(getProcessByType(vault, type)!))"
+                      @click-main="onUnifiedButtonClick(vault, type)"
+                    />
+                    <EmergencyProcessButton
+                      v-else
+                      :label="getTypeLabel(vault, type)"
+                      :disabled="isBroken(vault)"
+                      :has-process="false"
+                      :can-start="true"
+                      @click-main="onUnifiedButtonClick(vault, type)"
+                    />
+                  </template>
+                </div>
+
               </div>
             </div>
-          </a>
-        </li>
-      </ul>
-    </div>
-  </div>
+          </div>
+        </a>
+      </li>
+    </ul>
+  </section>
 
   <EmergencyAccessDialog
     v-if="recoveryApprovVault"
