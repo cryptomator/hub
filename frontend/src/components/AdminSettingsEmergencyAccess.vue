@@ -45,7 +45,7 @@
 
       <!-- Key Splitting -->
       <div class="md:grid md:grid-cols-6 md:gap-6 items-baseline">
-        <label class="col-span-2 block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
+        <label for="requiredKeyShares" class="col-span-2 block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
           {{ t('admin.emergencyAccess.requiredKeys.label') }}
         </label>
         <div class="mt-1 md:mt-0 lg:col-span-3 md:col-span-4 relative">
@@ -57,6 +57,7 @@
             </div>
             <div class="relative flex-1">
               <input
+                id="requiredKeyShares"
                 v-model.number="requiredShares"
                 type="number" min="2" max="255"
                 :disabled="!enableEmergencyAccess"
@@ -75,13 +76,14 @@
 
       <!-- User Selection -->
       <div class="md:grid md:grid-cols-6 md:gap-6">
-        <label class="col-span-2 block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
+        <label for="searchKeyholder" class="col-span-2 block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
           {{ t('admin.emergencyAccess.keyholders.label') }}
         </label>
         <div class="mt-1 md:mt-0 lg:col-span-3 md:col-span-4">
           <div class="relative">
             <MultiUserSelectInputGroup
               v-if="enableEmergencyAccess"
+              input-id="searchKeyholder"
               :selected-users="selectedUsers"
               :on-search="searchCouncilMembers"
               :input-visible="enableEmergencyAccess"
@@ -105,7 +107,7 @@
 
       <!-- Allow Choosing Council + Min Members -->
       <div class="md:grid md:grid-cols-6 md:gap-6">
-        <label class="col-span-2"></label>
+        <span class="col-span-2"></span>
         <div class="mt-1 md:mt-0 lg:col-span-3 md:col-span-4 flex items-center h-9.5">
           <input
             id="allow"
@@ -116,7 +118,7 @@
           />
           <label for="allow" class="ml-2 text-sm text-gray-500">
             {{ t('admin.emergencyAccess.allowChoosing.label') }}
-            <span v-if="allowChoosing"> {{ t('admin.emergencyAccess.allowChoosing.atLeast') }}</span>
+            <label for="minMembers" v-if="allowChoosing"> {{ t('admin.emergencyAccess.allowChoosing.atLeast') }}</label>
           </label>
 
           <div class="relative ml-2 flex-1">
@@ -134,6 +136,7 @@
 
             <!-- minMembers Input -->
             <input
+              id="minMembers"
               v-model.number="minMembers"
               :disabled="!enableEmergencyAccess"
               type="number"
@@ -152,9 +155,9 @@
 
       <!-- Example Recovery -->
       <div class="md:grid md:grid-cols-6 md:gap-6">
-        <label class="block text-sm text-gray-700 md:text-right md:pr-4 md:mt-2 col-span-2">
+        <span class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2 col-span-2">
           {{ t('emergencyAccess.label.exampleRecovery') }}
-        </label>
+        </span>
         <div class="mt-1 md:mt-0 lg:col-span-3 md:col-span-4">
           <EmergencyScenarioVisualization
             :selected-users="selectedUsers"

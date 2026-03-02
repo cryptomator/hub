@@ -46,7 +46,7 @@
       <!-- Combobox -->
       <Combobox @update:model-value="onSelect">
         <div class="flex-1 relative"> 
-          <ComboboxInput v-if="inputVisible" as="template">
+          <ComboboxInput v-if="inputVisible" :id="props.inputId" as="template">
             <input
               ref="inputEl"
               v-model="query"
@@ -56,7 +56,7 @@
                 'caret-transparent': selectedPillIndex !== null,
                 'caret-black': selectedPillIndex === null
               }"
-              :placeholder="props.placeholder ? props.placeholder : t('common.search.placeholder')"
+              :placeholder="props.placeholder || t('common.search.placeholder')"
               @keydown="onKeyDown"
               @blur="onBlur"
             />
@@ -102,7 +102,7 @@
 
 <script setup lang="ts" generic="T extends AuthorityDto">
 import backend, { AuthorityDto, TrustDto, UserDto, UserDtoWithCounts } from '../common/backend';
-import { ref, computed, watch, nextTick, onMounted } from 'vue';
+import { useId, ref, computed, watch, nextTick, onMounted } from 'vue';
 import { Combobox, ComboboxInput } from '@headlessui/vue';
 import { useI18n } from 'vue-i18n';
 import TrustDetails from './TrustDetails.vue';
@@ -115,7 +115,7 @@ const trusts = ref<TrustDto[]>([]);
 
 const { t } = useI18n({ useScope: 'global' });
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   selectedUsers: T[];
   onSearch: (query: string) => Promise<T[]>;
   inputVisible: boolean;
@@ -123,7 +123,12 @@ const props = defineProps<{
   hasError?: boolean;
   errorMessage?: string;
   placeholder?: string;
-}>();
+  inputId?: string;
+}>(), {
+  errorMessage: undefined,
+  placeholder: undefined,
+  inputId: useId()
+});
 
 const emit = defineEmits<{
   action: [item: T];
