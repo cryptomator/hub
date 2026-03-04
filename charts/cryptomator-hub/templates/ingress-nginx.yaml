@@ -53,9 +53,9 @@ metadata:
     {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
-    {{- if ne $kcPath "/kc" }}
+    {{- if ne $kcPath "/" }}
     nginx.ingress.kubernetes.io/use-regex: "true"
-    nginx.ingress.kubernetes.io/rewrite-target: "/kc$1$2"
+    nginx.ingress.kubernetes.io/rewrite-target: "/$2"
     {{- end }}
 spec:
   {{- if .Values.ingress.className }}
@@ -65,8 +65,8 @@ spec:
     - host: {{ $kcHost | quote }}
       http:
         paths:
-          - path: {{ if eq $kcPath "/kc" }}{{ $kcPath | quote }}{{ else }}{{ printf "%s(/|$)(.*)" $kcPath | quote }}{{ end }}
-            pathType: {{ if eq $kcPath "/kc" }}Prefix{{ else }}ImplementationSpecific{{ end }}
+          - path: {{ if eq $kcPath "/" }}{{ $kcPath | quote }}{{ else }}{{ printf "%s(/|$)(.*)" $kcPath | quote }}{{ end }}
+            pathType: {{ if eq $kcPath "/" }}Prefix{{ else }}ImplementationSpecific{{ end }}
             backend:
               service:
                 name: {{ include "cryptomator-hub.fullname" . }}-service-kc

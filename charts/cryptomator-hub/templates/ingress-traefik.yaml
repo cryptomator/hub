@@ -53,19 +53,19 @@ spec:
         - {{ $hubHost | quote }}
       secretName: {{ .Values.ingress.tls.secretName | required "ingress.tls.secretName must be set when ingress.tls.enabled=true" }}
 {{- end }}
-{{- if and .Values.keycloak.enabled (ne $kcPath "/kc") }}
+{{- if and .Values.keycloak.enabled (ne $kcPath "/") }}
 ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
-  name: {{ include "cryptomator-hub.fullname" . }}-kc-rewrite
+  name: {{ include "cryptomator-hub.fullname" . }}-kc-stripprefix
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "cryptomator-hub.labels" . | nindent 4 }}
 spec:
-  replacePathRegex:
-    regex: {{ printf "^%s(/.*)?$" $kcPath | quote }}
-    replacement: "/kc$1"
+  stripPrefix:
+    prefixes:
+      - {{ $kcPath | quote }}
 {{- end }}
 {{- if .Values.keycloak.enabled }}
 ---
@@ -77,8 +77,8 @@ metadata:
   labels:
     {{- include "cryptomator-hub.labels" . | nindent 4 }}
   annotations:
-    {{- if ne $kcPath "/kc" }}
-    traefik.ingress.kubernetes.io/router.middlewares: {{ printf "%s-%s-kc-rewrite@kubernetescrd" .Release.Namespace (include "cryptomator-hub.fullname" .) | quote }}
+    {{- if ne $kcPath "/" }}
+    traefik.ingress.kubernetes.io/router.middlewares: {{ printf "%s-%s-kc-stripprefix@kubernetescrd" .Release.Namespace (include "cryptomator-hub.fullname" .) | quote }}
     {{- end }}
     {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}

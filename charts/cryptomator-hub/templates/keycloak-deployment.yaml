@@ -46,7 +46,7 @@ spec:
       {{- end }}
       containers:
         - name: keycloak
-          image: "ghcr.io/cryptomator/keycloak:26.5.3"
+          image: "ghcr.io/cryptomator/keycloak:26.5.4-root"
           imagePullPolicy: {{ .Values.keycloak.imagePullPolicy }}
           command:
             - /opt/keycloak/bin/kc.sh
@@ -76,20 +76,20 @@ spec:
                 name: {{ include "cryptomator-hub.fullname" . }}-config-kc
           startupProbe:
             httpGet:
-              path: /kc/health/started
+              path: /health/started
               port: management
             initialDelaySeconds: 10
             periodSeconds: 5
             failureThreshold: 36
           livenessProbe:
             httpGet:
-              path: /kc/health/live
+              path: /health/live
               port: management
             periodSeconds: 10
             failureThreshold: 6
           readinessProbe:
             httpGet:
-              path: /kc/health/ready
+              path: /health/ready
               port: management
             periodSeconds: 5
             failureThreshold: 6
