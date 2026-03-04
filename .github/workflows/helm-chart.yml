@@ -19,6 +19,7 @@ permissions:
   attestations: write
   contents: read
   packages: write
+  artifact-metadata: write
 
 defaults:
   run:
