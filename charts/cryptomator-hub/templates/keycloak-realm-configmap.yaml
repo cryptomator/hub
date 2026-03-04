@@ -1,0 +1,21 @@
+{{- if .Values.keycloak.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "cryptomator-hub.fullname" . }}-config-kc
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cryptomator-hub.labels" . | nindent 4 }}
+data:
+  KC_DB: "postgres"
+  KC_DB_URL: {{ if .Values.postgres.enabled }}{{ printf "jdbc:postgresql://%s:%v/%s" (print (include "cryptomator-hub.fullname" .) "-service-pg") .Values.postgres.service.port .Values.keycloak.database.name | quote }}{{ else }}{{ required "keycloak.database.jdbcUrl must be set when keycloak.enabled=true and postgres.enabled=false" .Values.keycloak.database.jdbcUrl | quote }}{{ end }}
+  KC_DB_USERNAME: {{ .Values.keycloak.database.username | quote }}
+  KC_BOOTSTRAP_ADMIN_USERNAME: {{ .Values.keycloak.admin.username | quote }}
+  KC_HEALTH_ENABLED: "true"
+  KC_METRICS_ENABLED: "true"
+  KC_HTTP_ENABLED: "true"
+  KC_PROXY_HEADERS: {{ .Values.keycloak.config.proxyHeaders | quote }}
+  KC_HOSTNAME: {{ trimSuffix "/" (required "urls.kc.public must be set" .Values.urls.kc.public) | quote }}
+  QUARKUS_TRANSACTION_MANAGER_ENABLE_RECOVERY: "false"
+  KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
+{{- end }}

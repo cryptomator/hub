@@ -1,0 +1,24 @@
+{{- if .Values.keycloak.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "cryptomator-hub.fullname" . }}-service-kc
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cryptomator-hub.labels" . | nindent 4 }}
+    app.kubernetes.io/component: keycloak
+spec:
+  type: {{ .Values.keycloak.service.type }}
+  selector:
+    {{- include "cryptomator-hub.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: keycloak
+  ports:
+    - name: http
+      protocol: TCP
+      port: {{ .Values.keycloak.service.httpPort }}
+      targetPort: http
+    - name: mgmt
+      protocol: TCP
+      port: {{ .Values.keycloak.service.managementPort }}
+      targetPort: management
+{{- end }}

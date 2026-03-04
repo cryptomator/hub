@@ -1,0 +1,82 @@
+{{- if eq .Values.ingress.controller "nginx" }}
+{{- $hubHost := regexReplaceAll "^https?://([^:/]+).*" (required "urls.hub.public must be set" .Values.urls.hub.public) "${1}" -}}
+{{- $hubPath := include "cryptomator-hub.hubRelativePath" . -}}
+{{- $kcHost := regexReplaceAll "^https?://([^:/]+).*" (required "urls.kc.public must be set" .Values.urls.kc.public) "${1}" -}}
+{{- $kcPath := include "cryptomator-hub.keycloakRelativePath" . -}}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "cryptomator-hub.fullname" . }}-ingress-hub
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cryptomator-hub.labels" . | nindent 4 }}
+  annotations:
+    {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- if ne $hubPath "/" }}
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: "/$2"
+    {{- end }}
+spec:
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
+  rules:
+    - host: {{ $hubHost | quote }}
+      http:
+        paths:
+          - path: {{ if eq $hubPath "/" }}{{ "/" | quote }}{{ else }}{{ printf "%s(/|$)(.*)" $hubPath | quote }}{{ end }}
+            pathType: {{ if eq $hubPath "/" }}Prefix{{ else }}ImplementationSpecific{{ end }}
+            backend:
+              service:
+                name: {{ include "cryptomator-hub.fullname" . }}-service-hub
+                port:
+                  number: {{ .Values.hub.service.port }}
+  {{- if .Values.ingress.tls.enabled }}
+  tls:
+    - hosts:
+        - {{ $hubHost | quote }}
+      secretName: {{ .Values.ingress.tls.secretName | required "ingress.tls.secretName must be set when ingress.tls.enabled=true" }}
+  {{- end }}
+{{- if .Values.keycloak.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "cryptomator-hub.fullname" . }}-ingress-kc
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cryptomator-hub.labels" . | nindent 4 }}
+  annotations:
+    {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- if ne $kcPath "/kc" }}
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: "/kc$1$2"
+    {{- end }}
+spec:
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
+  rules:
+    - host: {{ $kcHost | quote }}
+      http:
+        paths:
+          - path: {{ if eq $kcPath "/kc" }}{{ $kcPath | quote }}{{ else }}{{ printf "%s(/|$)(.*)" $kcPath | quote }}{{ end }}
+            pathType: {{ if eq $kcPath "/kc" }}Prefix{{ else }}ImplementationSpecific{{ end }}
+            backend:
+              service:
+                name: {{ include "cryptomator-hub.fullname" . }}-service-kc
+                port:
+                  number: {{ .Values.keycloak.service.httpPort }}
+  {{- if .Values.ingress.tls.enabled }}
+  tls:
+    - hosts:
+        - {{ $kcHost | quote }}
+      secretName: {{ .Values.ingress.tls.secretName | required "ingress.tls.secretName must be set when ingress.tls.enabled=true" }}
+  {{- end }}
+{{- end }}
+{{- end }}
