@@ -1,0 +1,51 @@
+{{- $useColor := .Values.notes.useColor }}
+{{- $ns := .Release.Namespace }}
+{{- $hubSvc := printf "%s-service-hub" (include "cryptomator-hub.fullname" .) }}
+{{- $kcSvc := printf "%s-service-kc" (include "cryptomator-hub.fullname" .) }}
+{{- $pgSvc := printf "%s-service-pg" (include "cryptomator-hub.fullname" .) }}
+{{- $hubSecret := printf "%s-secrets-hub" (include "cryptomator-hub.fullname" .) }}
+{{- $kcSecret := printf "%s-secrets-kc" (include "cryptomator-hub.fullname" .) }}
+{{- $pgSecret := printf "%s-secrets-pg" (include "cryptomator-hub.fullname" .) }}
+{{- $cTitle := ternary "\033[1;36m" "" $useColor }}
+{{- $cSection := ternary "\033[1;34m" "" $useColor }}
+{{- $cReset := ternary "\033[0m" "" $useColor }}
+{{ printf "%s✅ Cryptomator Hub Installed%s\n" $cTitle $cReset }}
+
+{{ printf "%s📦 Services%s" $cSection $cReset }}
+- Namespace: `{{ $ns }}`
+- Hub: `{{ $hubSvc }}:{{ .Values.hub.service.port }}`
+{{- if .Values.keycloak.enabled }}
+- Keycloak: `{{ $kcSvc }}:{{ .Values.keycloak.service.httpPort }}`
+{{- end }}
+{{- if .Values.postgres.enabled }}
+- PostgreSQL: `{{ $pgSvc }}:{{ .Values.postgres.service.port }}`
+{{- end }}
+
+{{ printf "%s🌐 Ingress%s" $cSection $cReset }}
+{{- if .Values.ingress.controller }}
+- Hub: {{ .Values.urls.hub.public }}
+{{- if .Values.keycloak.enabled }}
+- Keycloak: {{ .Values.urls.kc.public }}
+{{- end }}
+{{- else }}
+Ingress is disabled. Configure ingress manually to the services above.
+{{- end }}
+
+{{ printf "%s🔐 Credentials%s" $cSection $cReset }}
+{{- if .Values.hub.secrets.create }}
+- Hub admin password (realm user): `kubectl get secret -n {{ $ns }} {{ $hubSecret }} -o jsonpath='{.data.hub_admin_password}' | base64 -d && echo`
+- Hub DB password: `kubectl get secret -n {{ $ns }} {{ $hubSecret }} -o jsonpath='{.data.hub_db_password}' | base64 -d && echo`
+{{- end }}
+{{- if .Values.keycloak.enabled }}
+- Keycloak admin password: `kubectl get secret -n {{ $ns }} {{ $kcSecret }} -o jsonpath='{.data.kc_admin_password}' | base64 -d && echo`
+- Keycloak DB password: `kubectl get secret -n {{ $ns }} {{ $kcSecret }} -o jsonpath='{.data.kc_db_password}' | base64 -d && echo`
+{{- end }}
+{{- if .Values.postgres.enabled }}
+- PostgreSQL admin password: `kubectl get secret -n {{ $ns }} {{ $pgSecret }} -o jsonpath='{.data.pg_admin_password}' | base64 -d && echo`
+{{- end }}
+
+
+{{ if not .Values.keycloak.enabled }}
+{{ printf "%s📥 Manual Realm Import%s" $cSection $cReset }}
+- `kubectl get secret -n {{ $ns }} {{ $kcSecret }} -o jsonpath='{.data.realm\.json}' | base64 -d`
+{{ end }}
