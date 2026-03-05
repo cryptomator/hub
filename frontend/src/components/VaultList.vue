@@ -84,7 +84,7 @@
               </div>
               <p v-if="vault.description && vault.description.length > 0" class="truncate text-sm text-gray-500 mt-2">{{ vault.description }}</p>
             </div>
-            <div v-if="ownedVaults?.some(ownedVault => ownedVault.id == vault.id) && !isCommunityLicense">
+            <div v-if="ownedVaults?.some(ownedVault => ownedVault.id == vault.id) && !isCommunityLicense && settings?.enableEmergencyAccess">
               <EmergencyBadge
                 v-if="settings && settings.defaultMinMembers > emergencyAccessMembers(vault).length"
                 type="insufficientCouncilMembers"
