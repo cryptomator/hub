@@ -17,8 +17,4 @@ spec:
       protocol: TCP
       port: {{ .Values.keycloak.service.httpPort }}
       targetPort: http
-    - name: mgmt
-      protocol: TCP
-      port: {{ .Values.keycloak.service.managementPort }}
-      targetPort: management
 {{- end }}

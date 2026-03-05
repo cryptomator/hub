@@ -57,9 +57,6 @@ spec:
             - name: http
               containerPort: 8080
               protocol: TCP
-            - name: management
-              containerPort: 9000
-              protocol: TCP
           env:
             - name: KC_DB_PASSWORD
               valueFrom:
@@ -77,20 +74,20 @@ spec:
           startupProbe:
             httpGet:
               path: /health/started
-              port: management
+              port: http
             initialDelaySeconds: 10
             periodSeconds: 5
             failureThreshold: 36
           livenessProbe:
             httpGet:
               path: /health/live
-              port: management
+              port: http
             periodSeconds: 10
             failureThreshold: 6
           readinessProbe:
             httpGet:
               path: /health/ready
-              port: management
+              port: http
             periodSeconds: 5
             failureThreshold: 6
           resources:

@@ -62,7 +62,6 @@ keycloak:
   service:
     type: ClusterIP
     httpPort: 8080
-    managementPort: 9000
   resources:
     requests:
       cpu: 20m
