@@ -15,11 +15,11 @@ on:
         required: true
 
 permissions:
-  id-token: write
-  attestations: write
-  contents: read
-  packages: write
-  artifact-metadata: write
+  contents: read # Required for checkout
+  id-token: write # Required for the attestations step
+  attestations: write # Required for the attestations step
+  artifact-metadata: write # Required for the attestations step
+  packages: write # Required for pushing the chart to GHCR
 
 defaults:
   run:
