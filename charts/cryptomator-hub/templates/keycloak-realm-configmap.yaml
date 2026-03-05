@@ -14,8 +14,9 @@ data:
   KC_HEALTH_ENABLED: "true"
   KC_METRICS_ENABLED: "true"
   KC_HTTP_ENABLED: "true"
-  KC_PROXY_HEADERS: {{ .Values.keycloak.config.proxyHeaders | quote }}
-  KC_HOSTNAME: {{ trimSuffix "/" (required "urls.kc.public must be set" .Values.urls.kc.public) | quote }}
+  KC_PROXY: "edge"
+  KC_HOSTNAME_URL: {{ trimSuffix "/" (required "urls.kc.public must be set" .Values.urls.kc.public) | quote }}
+  KC_HOSTNAME_ADMIN_URL: {{ trimSuffix "/" (required "urls.kc.public must be set" .Values.urls.kc.public) | quote }}
+  KC_HOSTNAME_STRICT_BACKCHANNEL: "false"
   QUARKUS_TRANSACTION_MANAGER_ENABLE_RECOVERY: "false"
-  KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
 {{- end }}
