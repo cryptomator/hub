@@ -13,6 +13,9 @@ data:
   HUB_KEYCLOAK_SYSTEM_CLIENT_ID: "cryptomatorhub-system"
   HUB_KEYCLOAK_SYNCER_PERIOD: {{ .Values.hub.config.keycloakSyncerPeriod | quote }}
   HUB_KEYCLOAK_OIDC_CRYPTOMATOR_CLIENT_ID: "cryptomator"
+  {{- if .Values.hub.license.chain.requiredCn }}
+  HUB_LICENSE_CHAIN_REQUIRED_CN: {{ .Values.hub.license.chain.requiredCn | quote }}
+  {{- end }}
   {{- if .Values.urls.billing.public }}
   HUB_BILLING_URL: {{ .Values.urls.billing.public | quote }}
   {{- end }}

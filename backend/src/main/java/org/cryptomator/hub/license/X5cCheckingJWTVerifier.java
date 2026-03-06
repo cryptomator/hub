@@ -3,10 +3,12 @@ package org.cryptomator.hub.license;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.jwt.interfaces.JWTVerifier;
 
 import java.security.GeneralSecurityException;
+import java.security.cert.CertPathValidatorException;
 import java.security.interfaces.ECPublicKey;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
@@ -17,12 +19,12 @@ class X5cCheckingJWTVerifier implements JWTVerifier {
 
 	private final X509Certificate trustedRootCertificate;
 	private final JWTVerifier fallback;
-	private final String expectedIntermediateCn;
+	private final String licenseChainRequiredCn;
 
-	X5cCheckingJWTVerifier(X509Certificate trustedRootCertificate, JWTVerifier fallback, String expectedIntermediateCn) {
+	X5cCheckingJWTVerifier(X509Certificate trustedRootCertificate, JWTVerifier fallback, String licenseChainRequiredCn) {
 		this.trustedRootCertificate = Objects.requireNonNull(trustedRootCertificate);
 		this.fallback = Objects.requireNonNull(fallback);
-		this.expectedIntermediateCn = Objects.requireNonNull(expectedIntermediateCn);
+		this.licenseChainRequiredCn = Objects.requireNonNull(licenseChainRequiredCn);
 	}
 
 	@Override
@@ -51,8 +53,8 @@ class X5cCheckingJWTVerifier implements JWTVerifier {
 	private ECPublicKey verifyCertChain(List<String> x5cChain) throws JWTVerificationException {
 		try {
 			var leafCertificate = X509Helper.validateX5cChain(x5cChain, trustedRootCertificate);
-			if (!expectedIntermediateCn.isEmpty()) {
-				verifyCNIsPartOfChain(expectedIntermediateCn, x5cChain);
+			if (!licenseChainRequiredCn.isEmpty()) {
+				verifyCNIsPartOfChain(licenseChainRequiredCn, x5cChain);
 			}
 			if (leafCertificate.getPublicKey() instanceof ECPublicKey leafPublicKey) {
 				return leafPublicKey;

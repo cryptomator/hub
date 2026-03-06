@@ -35,7 +35,7 @@
                     </div>
                     <div v-else-if="phase !== 'start'">
                       <SegmentRing
-                        :total="defaultRequiredEmergencyKeyShares"
+                        :total="requiredSegments"
                         :completed="completedSegments"
                         :size="36"
                       />
@@ -194,7 +194,7 @@
                           </label>
                           <EmergencyScenarioVisualization
                             :selected-users="newCouncilMembers"
-                            :required-key-shares="defaultRequiredEmergencyKeyShares"
+                            :required-key-shares="recoveryProcess.details.newRequiredKeyShares"
                           />
                         </div>
                       </div>

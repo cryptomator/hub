@@ -59,6 +59,9 @@ hub:
     systemClientSecret: "" # optional; auto-generated when chart manages Hub secret
     initialId: ""
     initialLicense: ""
+  license:
+    chain:
+      requiredCn: ""
 
 keycloak:
   enabled: true
