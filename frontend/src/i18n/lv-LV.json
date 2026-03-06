@@ -74,7 +74,6 @@
   "admin.licenseInfo.expiresAt.description.valid": "Licence ir derīga.",
   "admin.licenseInfo.expiresAt.description.expired": "Licences derīgums ir beidzies.",
   "admin.licenseInfo.manageSubscription": "Pārvaldīt abonementu",
-  "admin.licenseInfo.getFreeCeLicense": "Iegūt bezmaksas CE licenci",
   "admin.licenseInfo.type.title": "Veids",
   "admin.licenseInfo.getLicense": "Iegūt licenci",
   "admin.webOfTrust.title": "Uzticēšanās tīkls",
