@@ -75,7 +75,6 @@
   "admin.licenseInfo.expiresAt.description.valid": "Лицензия действительна.",
   "admin.licenseInfo.expiresAt.description.expired": "Срок действия лицензии истёк.",
   "admin.licenseInfo.manageSubscription": "Управление подпиской",
-  "admin.licenseInfo.getFreeCeLicense": "Получить бесплатную лицензию CE",
   "admin.licenseInfo.type.title": "Тип",
   "admin.licenseInfo.getLicense": "Получить лицензию",
   "admin.webOfTrust.title": "Web of Trust (Интернет доверия)",
