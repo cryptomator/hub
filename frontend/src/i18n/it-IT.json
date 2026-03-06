@@ -75,7 +75,6 @@
   "admin.licenseInfo.expiresAt.description.valid": "La tua licenza è valida.",
   "admin.licenseInfo.expiresAt.description.expired": "La tua licenza è scaduta.",
   "admin.licenseInfo.manageSubscription": "Gestisci Abbonamento",
-  "admin.licenseInfo.getFreeCeLicense": "Ottieni una Licenza Gratuita CE",
   "admin.licenseInfo.type.title": "Tipo",
   "admin.licenseInfo.getLicense": "Ottieni licenza",
   "admin.webOfTrust.title": "Web of Trust",
