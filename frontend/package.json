@@ -22,6 +22,7 @@
     "test": "./test"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.0",
     "@intlify/devtools-types": "^11.2.2",
     "@intlify/unplugin-vue-i18n": "^11.0.1",
     "@tailwindcss/forms": "^0.5.10",
@@ -33,7 +34,7 @@
     "@vitejs/plugin-vue": "^6.0.1",
     "@vitest/coverage-v8": "^4.0.15",
     "@vue/compiler-sfc": "^3.5.12",
-    "eslint": "^9.37.0",
+    "eslint": "^10.0.0",
     "eslint-plugin-vue": "^10.5.1",
     "happy-dom": "^20.0.4",
     "tailwindcss": "^4.1.11",

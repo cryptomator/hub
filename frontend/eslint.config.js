@@ -2,8 +2,9 @@
 import eslint from "@eslint/js";
 import pluginVue from 'eslint-plugin-vue';
 import tseslint from 'typescript-eslint';
+import { defineConfig } from 'eslint/config';
 
-export default tseslint.config(
+export default defineConfig(
 {
     ignores: [
         'coverage/**',
@@ -15,7 +16,7 @@ export default tseslint.config(
     files: ['src/**/*.ts', 'test/**/*.ts'],
     extends: [
         eslint.configs.recommended,
-        ...tseslint.configs.recommended,
+        tseslint.configs.recommended,
     ],
     plugins: {
         '@typescript-eslint': tseslint.plugin,
@@ -59,8 +60,8 @@ export default tseslint.config(
     files: ['src/**/*.vue'],
     extends: [
         eslint.configs.recommended,
-        ...tseslint.configs.recommended,
-        ...pluginVue.configs["flat/recommended"],
+        tseslint.configs.recommended,
+        pluginVue.configs["flat/recommended"],
     ],
     plugins: {
         '@typescript-eslint': tseslint.plugin,
