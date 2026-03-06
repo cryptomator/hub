@@ -20,7 +20,7 @@ spec:
         app.kubernetes.io/component: keycloak
       annotations:
         checksum/keycloak-secret: {{ include (print $.Template.BasePath "/keycloak-secret.yaml") . | sha256sum }}
-        checksum/keycloak-config: {{ include (print $.Template.BasePath "/keycloak-realm-configmap.yaml") . | sha256sum }}
+        checksum/keycloak-config: {{ include (print $.Template.BasePath "/keycloak-configmap.yaml") . | sha256sum }}
     spec:
       securityContext:
         runAsNonRoot: true
