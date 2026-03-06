@@ -13,6 +13,9 @@ data:
   HUB_KEYCLOAK_SYSTEM_CLIENT_ID: "cryptomatorhub-system"
   HUB_KEYCLOAK_SYNCER_PERIOD: {{ .Values.hub.config.keycloakSyncerPeriod | quote }}
   HUB_KEYCLOAK_OIDC_CRYPTOMATOR_CLIENT_ID: "cryptomator"
+  {{- if .Values.urls.billing.public }}
+  HUB_BILLING_URL: {{ .Values.urls.billing.public | quote }}
+  {{- end }}
   QUARKUS_OIDC_AUTH_SERVER_URL: {{ include "cryptomator-hub.oidcAuthServerUrl" . | quote }}
   QUARKUS_OIDC_TOKEN_ISSUER: {{ include "cryptomator-hub.oidcTokenIssuer" . | quote }}
   QUARKUS_OIDC_CLIENT_ID: {{ .Values.hub.oidc.clientId | quote }}

@@ -6,6 +6,8 @@ urls:
     clusterInternal: ""
     authServerUrl: ""
     tokenIssuer: ""
+  billing:
+    public: ""
 
 notes:
   useColor: true
