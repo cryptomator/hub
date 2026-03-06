@@ -38,22 +38,22 @@ public class LicenseVerifierProducer {
 			-----END CERTIFICATE-----
 			""";
 
-	@ConfigProperty(name = "hub.license.intermediate.cn")
-	String intermediateCn;
+	@ConfigProperty(name = "hub.license.chain.required-cn")
+	String licenseChainRequiredCn;
 
 	@Produces
 	@ApplicationScoped
 	@Named("licenseVerifier")
 	public JWTVerifier produceLicenseVerifier() {
-		return produceLicenseVerifier(LICENSE_ROOT_CERTIFICATE, Objects.requireNonNull(intermediateCn));
+		return produceLicenseVerifier(LICENSE_ROOT_CERTIFICATE, Objects.requireNonNull(licenseChainRequiredCn));
 	}
 
 	// visible for testing
-	JWTVerifier produceLicenseVerifier(String rootCert, String expectedIntermediateCn) throws JWTVerificationException {
+	JWTVerifier produceLicenseVerifier(String rootCert, String licenseChainRequiredCn) throws JWTVerificationException {
 		var fallback = produceLegacyVerifier();
 		try {
 			var trustedRoot = X509Helper.parseCertificate(rootCert);
-			return new X5cCheckingJWTVerifier(trustedRoot, fallback, expectedIntermediateCn);
+			return new X5cCheckingJWTVerifier(trustedRoot, fallback, licenseChainRequiredCn);
 		} catch (GeneralSecurityException e) {
 			throw new IllegalStateException("Invalid trusted root certificate", e);
 		}

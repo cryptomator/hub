@@ -37,7 +37,7 @@ class LicenseValidatorTest {
 	@BeforeEach
 	void setup() {
 		var verifierProducer = new LicenseVerifierProducer();
-		verifierProducer.intermediateCn = "";
+		verifierProducer.licenseChainRequiredCn = "";
 		validator.verifier = verifierProducer.produceLicenseVerifier(ROOT_CERTIFICATE, INTERMEDIATE_CN);
 	}
 
