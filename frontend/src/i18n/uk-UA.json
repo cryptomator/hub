@@ -75,7 +75,6 @@
   "admin.licenseInfo.expiresAt.description.valid": "Ваша ліцензія дійсна.",
   "admin.licenseInfo.expiresAt.description.expired": "Термін дії вашої ліцензії закінчився.",
   "admin.licenseInfo.manageSubscription": "Керувати підпискою",
-  "admin.licenseInfo.getFreeCeLicense": "Отримати безплатну CE ліцензію",
   "admin.licenseInfo.type.title": "Тип",
   "admin.licenseInfo.getLicense": "Отримати ліцензію",
   "admin.webOfTrust.title": "Мережа довіри",
