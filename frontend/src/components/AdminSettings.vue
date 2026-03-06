@@ -323,7 +323,7 @@ const manageSubscriptionUrl = computed(() => {
     return '';
   }
   const returnUrl = `${absFrontendBaseURL}admin`;
-  return `${cfg.value.billingUrl}#hub_id=${encodeURIComponent(billing.value.hubId)}&return_url=${encodeURIComponent(returnUrl)}&old_license=${encodeURIComponent(billing.value.licenseKey)}`;
+  return `${cfg.value.billingUrl}#oldLicense=${encodeURIComponent(billing.value.licenseKey)}&returnUrl=${encodeURIComponent(returnUrl)}`;
 });
 
 async function refreshLicense() {
