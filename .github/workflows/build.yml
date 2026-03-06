@@ -92,8 +92,8 @@ jobs:
       digest_amd64: ${{ steps.digest.outputs.digest_amd64 }}
       digest_arm64: ${{ steps.digest.outputs.digest_arm64 }}
     permissions:
-      contents: read
-      packages: write
+      contents: read # Required for checkout
+      packages: write # Required for pushing the image to GHCR
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
@@ -150,10 +150,11 @@ jobs:
     needs: build-native-image
     runs-on: ubuntu-latest
     permissions:
-      id-token: write
-      contents: read
-      attestations: write
-      packages: write
+      contents: read # Required for checkout
+      id-token: write # Required for the attestations step
+      attestations: write # Required for the attestations step
+      artifact-metadata: write # Required for the attestations step
+      packages: write # Required for pushing the image to GHCR
     steps:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
@@ -179,7 +180,7 @@ jobs:
           DIGEST=$(docker buildx imagetools inspect ghcr.io/cryptomator/hub:${{ steps.sha.outputs.short_sha }} --format "{{json .Manifest}}" | jq -r .digest)
           echo "digest_multiarch=${DIGEST}" >> "$GITHUB_OUTPUT"
       - name: Generate artifact attestation
-        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
+        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
         with:
           subject-name: ghcr.io/cryptomator/hub
           subject-digest: ${{ steps.inspect.outputs.digest_multiarch }}

@@ -14,12 +14,6 @@ on:
         description: 'App Version'
         required: true
 
-permissions:
-  id-token: write
-  attestations: write
-  contents: read
-  packages: write
-
 defaults:
   run:
     shell: bash
@@ -28,6 +22,8 @@ jobs:
   lint:
     name: Lint Helm Chart
     runs-on: ubuntu-latest
+    permissions:
+      contents: read # Required for checkout
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -43,6 +39,12 @@ jobs:
     needs: lint
     if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/') || contains(github.event.head_commit.message, '[build image]') || contains(github.event.head_commit.message, '[build chart]')
     runs-on: ubuntu-latest
+    permissions:
+      contents: read # Required for checkout
+      id-token: write # Required for the attestations step
+      attestations: write # Required for the attestations step
+      artifact-metadata: write # Required for the attestations step
+      packages: write # Required for pushing the chart to GHCR
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -126,7 +128,7 @@ jobs:
           cosign sign --yes "ghcr.io/cryptomator/charts/cryptomator-hub@${{ steps.push.outputs.chart_digest }}"
 
       - name: Generate artifact attestation
-        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
+        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
         with:
           subject-name: "ghcr.io/cryptomator/charts/cryptomator-hub"
           subject-digest: ${{ steps.push.outputs.chart_digest }}

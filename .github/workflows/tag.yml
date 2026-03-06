@@ -18,6 +18,8 @@ jobs:
   tag:
     name: Tags an existing image
     runs-on: ubuntu-latest
+    permissions:
+      packages: write # Required for pushing the image to GHCR
     steps:
       - name: Pull image defined by digest
         run: docker pull ghcr.io/cryptomator/hub@${{ github.event.inputs.digest}}
