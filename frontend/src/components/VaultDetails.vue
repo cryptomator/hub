@@ -189,21 +189,21 @@
         <button v-if="vaultRole == 'OWNER'" type="button" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-xs text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showDisplayRecoveryKeyDialog()">
           {{ t('vaultDetails.actions.displayRecoveryKey') }}
         </button>
-        <!-- setup emergencyAccess button -->
-        <button v-if="!hasEmergencyKeys && vaultRole == 'OWNER' && !isCommunityLicense && settings?.enableEmergencyAccess" type="button" class="inline-flex items-center justify-center gap-2 bg-white py-2 px-4 border border-gray-300 rounded-md shadow-xs text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showGrantEmergencyAccessDialog()">
-          <ExclamationTriangleIcon class="h-5 w-5 text-yellow-500" />
-          <span>{{ t('vaultDetails.emergencyAccess.setupCouncil') }}</span>
-        </button>
-        <!-- fix emergency council size -->
-        <button
-          v-else-if="(vaultRole == 'OWNER' && hasInsufficientEmergencyRedundancy || (vaultRole == 'OWNER' && requiredGreaterThanMembers)) && !isCommunityLicense && settings?.enableEmergencyAccess"
-          type="button"
-          class="inline-flex items-center justify-center gap-2 bg-white py-2 px-4 border border-yellow-300 rounded-md shadow-xs text-sm font-medium text-yellow-800 hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-400"
-          @click="showGrantEmergencyAccessDialog()"
-        >
-          <ExclamationTriangleIcon class="h-5 w-5 text-yellow-500" />
-          <span>{{ t('vaultDetails.emergencyAccess.fixCouncil') }}</span>
-        </button>
+
+        <!-- emergency access -->
+        <div v-if="vaultRole == 'OWNER' && cfg.entitlements.emergencyAccessEnabled && settings?.enableEmergencyAccess" class="mt-2 flex flex-col gap-2">
+          <!-- setup emergencyAccess button -->
+          <button v-if="!hasEmergencyKeys" type="button" class="inline-flex items-center justify-center gap-2 bg-white py-2 px-4 border border-gray-300 rounded-md shadow-xs text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showGrantEmergencyAccessDialog()">
+            <ExclamationTriangleIcon class="h-5 w-5 text-yellow-500" />
+            <span>{{ t('vaultDetails.emergencyAccess.setupCouncil') }}</span>
+          </button>
+          <!-- fix emergency council size -->
+          <button v-else-if="settings.allowChoosingEmergencyCouncil && emergencyAccessMembers.length <= vault.requiredEmergencyKeyShares" type="button" class="inline-flex items-center justify-center gap-2 bg-white py-2 px-4 border border-yellow-300 rounded-md shadow-xs text-sm font-medium text-yellow-800 hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-400" @click="showGrantEmergencyAccessDialog()">
+            <ExclamationTriangleIcon class="h-5 w-5 text-yellow-500" />
+            <span>{{ t('vaultDetails.emergencyAccess.fixCouncil') }}</span>
+          </button>
+        </div>
+        
         <!-- archiveVault button -->
         <button v-if="vaultRole == 'OWNER'" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white  hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showArchiveVaultDialog()">
           {{ t('vaultDetails.actions.archiveVault') }}
@@ -230,8 +230,8 @@ import { PlusSmallIcon } from '@heroicons/vue/24/solid';
 import * as R from 'remeda';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import auth from '../common/auth';
-import backend, { AuthorityDto, ConflictError, ForbiddenError, LicenseUserInfoDto, MemberDto, NotFoundError, PaymentRequiredError, RecoveryProcessDto, SettingsDto, TrustDto, UserDto, VaultDto, VaultRole } from '../common/backend';
+import config from '../common/config';
+import backend, { AuthorityDto, ConflictError, ForbiddenError, LicenseUserInfoDto, MemberDto, NotFoundError, PaymentRequiredError, SettingsDto, TrustDto, UserDto, VaultDto, VaultRole } from '../common/backend';
 import { VaultKeys } from '../common/crypto';
 import { JWT, JWTHeader } from '../common/jwt';
 import userdata from '../common/userdata';
@@ -266,6 +266,7 @@ const allowRetryFetch = computed(() => onFetchError.value && !(onFetchError.valu
 const onUpdateVaultMembershipError = ref< {[id: string]: Error} >({});
 const onAddUserError = ref<Error>();
 
+const cfg = config.get();
 const settings = ref<SettingsDto>();
 const license = ref<LicenseUserInfoDto>();
 const addingUser = ref(false);
@@ -302,10 +303,6 @@ const licenseViolated = computed(() => license.value?.isExpired() || license.val
 const emergencyKeyShareAuthorities = ref<Record<string, AuthorityDto>>({});
 
 const hasEmergencyKeys = computed(() => Object.keys(vault.value?.emergencyKeyShares ?? {}).length > 0 );
-
-const isCommunityLicense = computed(() => {
-  return !license.value?.expiresAt;
-});
 
 onMounted(fetchData);
 
@@ -352,19 +349,8 @@ async function fetchOwnerData() {
     }
   }
 }
-
-const hasInsufficientEmergencyRedundancy = computed(() => {
-  const required = vault.value?.requiredEmergencyKeyShares ?? 0;
-  const members = Object.keys(vault.value?.emergencyKeyShares ?? {}).length;
-  return required >= members;
-});
-
-const councilMemberCount = computed(() =>
-  Object.keys(vault.value?.emergencyKeyShares ?? {}).length
-);
-
-const requiredGreaterThanMembers = computed(() =>
-  (vault.value?.requiredEmergencyKeyShares ?? 0) > councilMemberCount.value
+const emergencyAccessMembers = computed(() =>
+  Object.keys(vault.value?.emergencyKeyShares ?? {})
 );
 
 async function loadVaultKeys(vaultKeyJwe: string): Promise<VaultKeys> {
