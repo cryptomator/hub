@@ -43,6 +43,8 @@ public class LicenseHolderTest {
 		licenseHolder.settingsRepo = settingsRepo;
 		licenseHolder.randomSleeper = randomSleeper;
 		licenseHolder.licenseApi = licenseApi;
+		licenseHolder.managedApiUsername = Optional.empty();
+		licenseHolder.managedApiPassword = Optional.empty();
 	}
 
 	@Nested
@@ -129,7 +131,7 @@ public class LicenseHolderTest {
 			doReturn(null).when(settings).getLicenseKey();
 			doReturn(null).when(settings).getHubId();
 			doCallRealMethod().when(licenseHolderSpy).requestAnonTrialLicense(Mockito.any());
-			doThrow(new InternalServerErrorException()).when(licenseApi).generateTrialChallenge();
+			doThrow(new InternalServerErrorException()).when(licenseApi).generateChallenge();
 
 			Assertions.assertThrows(InternalServerErrorException.class, licenseHolderSpy::ensureLicenseExists);
 
@@ -202,7 +204,7 @@ public class LicenseHolderTest {
 		LicenseApi.Challenge challenge = mock(LicenseApi.Challenge.class);
 		LicenseApi.Solution solution = mock(LicenseApi.Solution.class);
 		LicenseApi.TrialLicenseResponse trialLicenseResponse = mock(LicenseApi.TrialLicenseResponse.class);
-		doReturn(challenge).when(licenseApi).generateTrialChallenge();
+		doReturn(challenge).when(licenseApi).generateChallenge();
 		doReturn("captcha").when(solution).toCaptcha();
 		doReturn(solution).when(licenseHolderSpy).solveChallenge(challenge);
 		doReturn(trialLicenseResponse).when(licenseApi).generateTrialLicense("captcha");
@@ -211,7 +213,7 @@ public class LicenseHolderTest {
 
 		licenseHolderSpy.requestAnonTrialLicense(settings);
 
-		verify(licenseApi).generateTrialChallenge();
+		verify(licenseApi).generateChallenge();
 		verify(licenseApi).generateTrialLicense("captcha");
 		verify(settings).setHubId(Mockito.any());
 		verify(settings).setLicenseKey("token");
@@ -364,6 +366,17 @@ public class LicenseHolderTest {
 	@DisplayName("Testing requestLicenseRefresh()")
 	class RequestLicenseRefresh {
 
+		private LicenseHolder licenseHolderSpy;
+		private LicenseApi.Solution solvedChallenge;
+
+		@BeforeEach
+		void setup() {
+			licenseHolderSpy = Mockito.spy(licenseHolder);
+			solvedChallenge = Mockito.mock(LicenseApi.Solution.class);
+			Mockito.doReturn(solvedChallenge).when(licenseHolderSpy).solveChallenge();
+			Mockito.doReturn("fooBar123").when(solvedChallenge).toCaptcha();
+		}
+
 		@Test
 		void testSucess() throws IOException, InterruptedException {
 			URI refreshUrl = URI.create("https://localhost:3000");
@@ -379,7 +392,7 @@ public class LicenseHolderTest {
 				when(response.body()).thenReturn("newToken");
 				when(httpClient.send(argThat(request -> request.uri().equals(refreshUrl)), any())).thenReturn(response);
 
-				var result = licenseHolder.requestLicenseRefresh(refreshUrl, "token");
+				var result = licenseHolderSpy.requestLicenseRefresh(refreshUrl, "token");
 				Assertions.assertEquals("newToken", result);
 			}
 		}
@@ -399,7 +412,7 @@ public class LicenseHolderTest {
 				when(response.body()).thenReturn("newToken");
 				when(httpClient.send(argThat(request -> request.uri().equals(refreshUrl)), any())).thenReturn(response);
 
-				Assertions.assertThrows(LicenseHolder.LicenseRefreshFailedException.class, () -> licenseHolder.requestLicenseRefresh(refreshUrl, "token"));
+				Assertions.assertThrows(LicenseHolder.LicenseRefreshFailedException.class, () -> licenseHolderSpy.requestLicenseRefresh(refreshUrl, "token"));
 			}
 		}
 
@@ -418,7 +431,7 @@ public class LicenseHolderTest {
 				when(response.body()).thenReturn("");
 				when(httpClient.send(argThat(request -> request.uri().equals(refreshUrl)), any())).thenReturn(response);
 
-				Assertions.assertThrows(LicenseHolder.LicenseRefreshFailedException.class, () -> licenseHolder.requestLicenseRefresh(refreshUrl, "token"));
+				Assertions.assertThrows(LicenseHolder.LicenseRefreshFailedException.class, () -> licenseHolderSpy.requestLicenseRefresh(refreshUrl, "token"));
 			}
 		}
 	}
