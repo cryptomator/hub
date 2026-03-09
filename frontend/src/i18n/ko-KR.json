@@ -237,6 +237,7 @@
   "emergencyAccess.badge.notCouncil.title": "더 이상 Vault 위원회 구성원이 아닙니다",
   "emergencyAccess.badge.notCouncil.message": "귀하는 더 이상 해당 Vault의 비상 위원회 소속이 아닙니다. 하지만 현재 진행 중인 비상 접근 프로세스에는 여전히 참여 중입니다.",
   "emergencyAccess.badge.insufficientCouncilMembers.title": "비상 접근 권한 부족",
+  "emergencyAccess.badge.insufficientCouncilMembers.message": "귀하의 팀 정책에는 최소 {0}명 이상의 비상 접근 위원회가 필요합니다. 이 Vault는 현재 이 요구 사항을 충족하지 않습니다.",
   "emergencyAccess.badge.broken.title": "손상된 비상 접근 오류",
   "emergencyAccess.badge.broken.message": "더 이상 비상 접근이 불가능합니다. 하나 이상의 위원회 구성원이 계정을 초기화하여 키 조각을 분실했습니다.",
   "emergencyAccess.badge.noRedundancy.title": "예비분 중복성 없음",
