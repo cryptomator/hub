@@ -407,7 +407,7 @@
   "regenerateAccountKeyDialog.saveAccountKey.accountKey": "Account Key",
   "regenerateAccountKeyDialog.submit": "키 재생성",
   "resetUserAccountDialog.title": "사용자 계정 리셋",
-  "resetUserAccountDialog.description": "Account Key를 잃어버렸을 때에만 계정을 초기화하십시오. 초기화 시 모든 Vault에 대한 접근을 잃게 되며, Vault 소유주는 귀하에게 다시 접근을 허가해야 합니다.",
+  "resetUserAccountDialog.description": "Account Key를 잃어버렸을 때에만 계정을 초기화하십시오. 초기화 시 모든 Vault에 대한 접근을 잃게 되며, Vault 소유자는 귀하에게 다시 접근을 허가해야 합니다.",
   "resetUserAccountDialog.submit": "계정 리셋",
   "userkeyFingerprint.title": "사용자 키 지문",
   "userkeyFingerprint.description": "사용자 키 지문은 Vault 권한을 업데이트 할 때, 자신의 신원을 인증하기 위해 사용됩니다.",
