@@ -120,7 +120,7 @@
                           :selected-users="newCouncilMembers"
                           :required-key-shares="defaultRequiredEmergencyKeyShares"
                         />
-                        <div v-if="defaultRequiredEmergencyKeyShares == newCouncilMembers.length" class="mt-4 mr-3">
+                        <div v-if="defaultRequiredEmergencyKeyShares == newCouncilMembers.length && allowChangingDefaults" class="mt-4 mr-3">
                           <span class="inline-flex items-center gap-2 rounded-full bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800">
                             <ExclamationTriangleIcon class="h-4 w-4" aria-hidden="true" />
                             {{ t('emergencyAccess.noRedundancy') }}
@@ -934,6 +934,7 @@ async function verifyProcessInfo(process: RecoveryProcessDto): Promise<boolean> 
 const defaultEmergencyCouncilMembers = ref<ActivatedUser[]>([]);
 const defaultRequiredEmergencyKeyShares = ref<number>(0);
 const defaultMinMembers = ref<number>(0);
+const allowChangingDefaults = ref<boolean>(false);
 
 async function loadDefaultSettings() {
   const settings = await backend.settings.get();
@@ -941,6 +942,7 @@ async function loadDefaultSettings() {
   defaultEmergencyCouncilMembers.value = [...sortedActivatedUsers];
   defaultRequiredEmergencyKeyShares.value = settings.defaultRequiredEmergencyKeyShares;
   defaultMinMembers.value = settings.defaultMinMembers;
+  allowChangingDefaults.value = settings.allowChoosingEmergencyCouncil;
 }
 
 async function loadActivatedUsers(ids: string[]): Promise<ActivatedUser[]> {
