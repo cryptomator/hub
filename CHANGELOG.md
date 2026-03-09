@@ -5,13 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/cryptomator/hub/compare/1.4.6...HEAD)
+## [1.5.0-beta1](https://github.com/cryptomator/hub/compare/1.4.6...1.5.0-beta1)
 
 ### Added
 
 - User and group management (#376)
 - Emergency Access: Allow a council to restore access to a orphaned vault (#390)
 - Show pictures of the groups in the Vaults member list (#375)
+- Added helm chart
 
 ### Changed
 
@@ -21,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved efficiency of keycloak-to-hub data sync (#377)
 - Improved efficiency of group-based access permission checks (#372)
 - Migrated aes-siv and base encoding libraries to [`@noble/ciphers`](https://github.com/paulmillr/noble-ciphers) and [`@scure/base`](https://github.com/paulmillr/scure-base/) (#373)
+- Move health check to separate service port (configurable via `QUARKUS_MANAGEMENT_PORT`)
 
 ### Security
 
