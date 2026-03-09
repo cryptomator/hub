@@ -30,6 +30,7 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HexFormat;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -67,6 +68,18 @@ public class LicenseHolder {
 	@PostConstruct
 	void init() {
 		this.license = this.ensureLicenseExists();
+		// refresh upon startup:
+		// except for trial licenses and recently issued licenses (to avoid restart-loop spam)
+		var hasNotBeenIssuedRecently = license.getIssuedAtAsInstant().isBefore(Instant.now().minus(5, ChronoUnit.MINUTES));
+		var isTrialLicense = getEntitlements().showTrialHint();
+		if (hasNotBeenIssuedRecently && !isTrialLicense) {
+			LOG.debug("License was issued more than 5 minutes ago. Attempting a refresh to ensure we have the latest license information from the license server.");
+			try {
+				refreshLicense();
+			} catch (IOException e) {
+				LOG.error("Failed to refresh license during startup.", e);
+			}
+		}
 	}
 
 	/**
@@ -166,7 +179,7 @@ public class LicenseHolder {
 	}
 
 	/**
-	 * Attempts to refresh the Hub licence every day between 01:00:00 and 02:00:00 AM UTC if claim refreshURL is present.
+	 * Attempts to refresh the Hub license every day between 01:00:00 and 02:00:00 AM UTC if claim refreshURL is present.
 	 */
 	@Scheduled(cron = "0 0 1 * * ?", timeZone = "UTC", concurrentExecution = Scheduled.ConcurrentExecution.SKIP)
 	@RunOnVirtualThread
