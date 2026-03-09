@@ -16,6 +16,10 @@ data:
   {{- if .Values.hub.license.chain.requiredCn }}
   HUB_LICENSE_CHAIN_REQUIRED_CN: {{ .Values.hub.license.chain.requiredCn | quote }}
   {{- end }}
+  {{- if and .Values.hub.license.managedApi.username .Values.hub.license.managedApi.password }}
+  HUB_MANAGED_API_USERNAME: {{ .Values.hub.license.managedApi.username | quote }}
+  HUB_MANAGED_API_PASSWORD: {{ .Values.hub.license.managedApi.password | quote }}
+  {{- end }}
   {{- if .Values.urls.billing.public }}
   HUB_BILLING_URL: {{ .Values.urls.billing.public | quote }}
   {{- end }}

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.FormParam;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -21,13 +22,24 @@ public interface LicenseApi {
 	@GET
 	@Path("/hub/challenge")
 	@Produces(MediaType.APPLICATION_JSON)
-	Challenge generateTrialChallenge();
+	Challenge generateChallenge();
+
+	@GET
+	@Path("/hub/no-challenge")
+	@Produces(MediaType.APPLICATION_JSON)
+	Solution generatePresolvedChallenge(@HeaderParam("Authorization") String authHeader);
 
 	@POST
 	@Path("/hub/trial")
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	@Produces(MediaType.APPLICATION_JSON)
 	TrialLicenseResponse generateTrialLicense(@FormParam("captcha") String captcha);
+
+	@POST
+	@Path("/hub/refresh")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Produces(MediaType.TEXT_PLAIN)
+	String refreshLicense(@FormParam("token") String licenseKey, @FormParam("captcha") String captcha);
 
 	record Challenge(@JsonProperty("algorithm") String algorithm,
 					 @JsonProperty("challenge") String challenge,

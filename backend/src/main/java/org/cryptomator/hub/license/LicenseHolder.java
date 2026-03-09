@@ -29,9 +29,9 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Base64;
 import java.util.HexFormat;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 
 @ApplicationScoped
 public class LicenseHolder {
@@ -51,6 +51,14 @@ public class LicenseHolder {
 	Optional<String> initialLicenseToken;
 
 	@Inject
+	@ConfigProperty(name = "hub.managed-api-username")
+	Optional<String> managedApiUsername;
+
+	@Inject
+	@ConfigProperty(name = "hub.managed-api-password")
+	Optional<String> managedApiPassword;
+
+	@Inject
 	LicenseValidator licenseValidator;
 
 	@Inject
@@ -67,6 +75,18 @@ public class LicenseHolder {
 	@PostConstruct
 	void init() {
 		this.license = this.ensureLicenseExists();
+		// refresh upon startup:
+		// except for trial licenses and recently issued licenses (to avoid restart-loop spam)
+		var hasNotBeenIssuedRecently = license.getIssuedAtAsInstant().isBefore(Instant.now().minus(5, ChronoUnit.MINUTES));
+		var isTrialLicense = getEntitlements().showTrialHint();
+		if (hasNotBeenIssuedRecently && !isTrialLicense) {
+			LOG.debug("License was issued more than 5 minutes ago. Attempting a refresh to ensure we have the latest license information from the license server.");
+			try {
+				refreshLicense();
+			} catch (IOException e) {
+				LOG.error("Failed to refresh license during startup.", e);
+			}
+		}
 	}
 
 	/**
@@ -118,8 +138,7 @@ public class LicenseHolder {
 	@Transactional(Transactional.TxType.MANDATORY)
 	DecodedJWT requestAnonTrialLicense(Settings settings) throws WebApplicationException {
 		LOG.info("No license found. Requesting trial license...");
-		var challenge = licenseApi.generateTrialChallenge();
-		var solution = solveChallenge(challenge);
+		var solution = solveChallenge();
 		var trialResponse = licenseApi.generateTrialLicense(solution.toCaptcha());
 		var validated = licenseValidator.validate(trialResponse.licenseKey(), trialResponse.hubId());
 		settings.setLicenseKey(trialResponse.licenseKey());
@@ -127,6 +146,19 @@ public class LicenseHolder {
 		settingsRepo.persistAndFlush(settings);
 		LOG.info("Successfully retrieved trial license.");
 		return validated;
+	}
+
+	LicenseApi.Solution solveChallenge() {
+		if (managedApiUsername.isPresent() && managedApiPassword.isPresent()) {
+			var authHeader = "Basic " + Base64.getEncoder().encodeToString((managedApiUsername.get() + ":" + managedApiPassword.get()).getBytes(StandardCharsets.UTF_8));
+			try {
+				return licenseApi.generatePresolvedChallenge(authHeader);
+			} catch (WebApplicationException e) {
+				LOG.warn("Failed to retrieve presolved challenge for license refresh. Falling back to solving a regular challenge.", e);
+			}
+		}
+		var challenge = licenseApi.generateChallenge();
+		return solveChallenge(challenge);
 	}
 
 	// visible for testing
@@ -138,6 +170,7 @@ public class LicenseHolder {
 		} catch (NoSuchAlgorithmException e) {
 			throw new AssertionError("Every implementation of the Java platform is required to support [...] SHA-256", e);
 		}
+		LOG.debug("Solving challenge...");
 		long start = System.nanoTime();
 		for (int i = 0; i < challenge.maxnumber(); i++) {
 			var saltedSecret = challenge.salt() + i;
@@ -145,6 +178,7 @@ public class LicenseHolder {
 			var attempt = hex.formatHex(sha256.digest());
 			if (challenge.challenge().equals(attempt)) {
 				long took = System.nanoTime() - start;
+				LOG.debugv("Solved challenge in {1,number,integer} ms", took / 1_000_000);
 				return challenge.solve(i, took / 1_000_000);
 			}
 		}
@@ -166,7 +200,7 @@ public class LicenseHolder {
 	}
 
 	/**
-	 * Attempts to refresh the Hub licence every day between 01:00:00 and 02:00:00 AM UTC if claim refreshURL is present.
+	 * Attempts to refresh the Hub license every day between 01:00:00 and 02:00:00 AM UTC if claim refreshURL is present.
 	 */
 	@Scheduled(cron = "0 0 1 * * ?", timeZone = "UTC", concurrentExecution = Scheduled.ConcurrentExecution.SKIP)
 	@RunOnVirtualThread
@@ -216,8 +250,10 @@ public class LicenseHolder {
 
 	//visible for testing
 	String requestLicenseRefresh(URI refreshUrl, String licenseToken) throws InterruptedException, IOException, LicenseRefreshFailedException {
+		var solution = solveChallenge();
 		try (var client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build()) {
-			var body = "token=" + URLEncoder.encode(licenseToken, StandardCharsets.UTF_8);
+			var body = "token=" + URLEncoder.encode(licenseToken, StandardCharsets.UTF_8)
+					+ "&captcha=" + URLEncoder.encode(solution.toCaptcha(), StandardCharsets.UTF_8);
 			var request = HttpRequest.newBuilder() //
 					.uri(refreshUrl) //
 					.header("Content-Type", MediaType.APPLICATION_FORM_URLENCODED) //

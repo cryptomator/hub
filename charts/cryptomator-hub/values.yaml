@@ -62,6 +62,9 @@ hub:
   license:
     chain:
       requiredCn: ""
+    managedApi:
+      username: ""
+      password: ""
 
 keycloak:
   enabled: true
