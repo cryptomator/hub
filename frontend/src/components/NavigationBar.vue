@@ -69,11 +69,12 @@
 <script setup lang="ts">
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue';
 import { ArrowRightStartOnRectangleIcon, Bars3Icon, ListBulletIcon, UserIcon, WrenchIcon, XMarkIcon } from '@heroicons/vue/24/outline';
-import { computed, FunctionalComponent, onMounted, ref } from 'vue';
+import { FunctionalComponent, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 import auth from '../common/auth';
-import backend, { LicenseUserInfoDto, UserDto, VaultDto } from '../common/backend';
+import backend, { UserDto } from '../common/backend';
+import config from '../common/config';
 
 const { t } = useI18n({ useScope: 'global' });
 const route = useRoute();
@@ -107,11 +108,6 @@ const profileDropdown = ref<ProfileDropdownItem[][]>([]);
 const props = defineProps<{
   me : UserDto
 }>();
-const licenseStatus = ref<LicenseUserInfoDto>();
-
-const isCommunityLicense = computed(() => {
-  return !licenseStatus.value?.expiresAt;
-});
 
 onMounted(async () => {
   if ((await auth).hasRole('admin')) {
@@ -124,27 +120,9 @@ onMounted(async () => {
     profileDropdown.value = [profileDropdownSections.infoSection, profileDropdownSections.hubSection];
   }
 
-  licenseStatus.value = await backend.license.getUserInfo();
-  const emergencyAccessEnabled = (await backend.settings.get()).enableEmergencyAccess;
-  if (!isCommunityLicense.value && emergencyAccessEnabled){
-    const recoverableVaults = ref<VaultDto[]>([]);
-
-    try {
-      const recoverable = await backend.vaults.listRecoverable().catch(() => [] as VaultDto[]);
-
-      const map = new Map<string, VaultDto>();
-      recoverable.forEach(v => {
-        map.set(v.id, v);
-      });
-      recoverableVaults.value = Array.from(map.values());
-    } catch (e) {
-      console.error('Failed to load emergency-access vaults:', e);
-      recoverableVaults.value = [];
-    }
-
-    if (recoverableVaults.value.length > 0 && !navigation.value.some(i => i.to === '/app/emergency-access')) {
-      navigation.value.push({ name: 'nav.emergencyAccess', to: '/app/emergency-access' });
-    }
+  const entitlements = config.get().entitlements;
+  if (entitlements.emergencyAccessEnabled && (await backend.settings.get()).enableEmergencyAccess) {
+    navigation.value.push({ name: 'nav.emergencyAccess', to: '/app/emergency-access' });
   }
 });
 

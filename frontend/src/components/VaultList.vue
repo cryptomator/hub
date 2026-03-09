@@ -84,7 +84,7 @@
               </div>
               <p v-if="vault.description && vault.description.length > 0" class="truncate text-sm text-gray-500 mt-2">{{ vault.description }}</p>
             </div>
-            <div v-if="ownedVaults?.some(ownedVault => ownedVault.id == vault.id) && !isCommunityLicense && settings?.enableEmergencyAccess">
+            <div v-if="ownedVaults?.some(ownedVault => ownedVault.id == vault.id) && cfg.entitlements.emergencyAccessEnabled && settings?.enableEmergencyAccess">
               <EmergencyBadge
                 v-if="settings && settings.defaultMinMembers > emergencyAccessMembers(vault).length"
                 type="insufficientCouncilMembers"
@@ -138,10 +138,10 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import auth from '../common/auth';
 import backend, { LicenseUserInfoDto, SettingsDto, UserDto, VaultDto, VaultRole } from '../common/backend';
+import config from '../common/config';
 import userdata from '../common/userdata';
 import FetchError from './FetchError.vue';
 import LicenseAlert from './LicenseAlert.vue';
-import ContentBanner from './ContentBanner.vue';
 import SlideOver from './SlideOver.vue';
 import VaultDetails from './VaultDetails.vue';
 import EmergencyBadge from './emergencyaccess/EmergencyBadge.vue';
@@ -149,6 +149,7 @@ import EmergencyBadge from './emergencyaccess/EmergencyBadge.vue';
 const { t } = useI18n({ useScope: 'global' });
 
 const me = ref<UserDto>();
+const cfg = config.get();
 
 const vaultDetailsSlideOver = ref<typeof SlideOver>();
 const onFetchError = ref<Error>();
@@ -178,10 +179,6 @@ const isLicenseViolated = computed(() => {
   } else {
     return false;
   }
-});
-
-const isCommunityLicense = computed(() => {
-  return !licenseStatus.value?.expiresAt;
 });
 
 const filterOptions = ref< {[key: string]: string} >({
