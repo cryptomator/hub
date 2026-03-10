@@ -3,7 +3,7 @@ import { base32, base64, base64nopad, base64urlnopad } from '@scure/base';
 import JSZip from 'jszip';
 import { VaultDto } from './backend';
 import config, { absFrontendBaseURL } from './config';
-import { AccessTokenProducing, GCM_NONCE_LEN, OtherVaultMember, UnwrapKeyError, UserKeys, VaultTemplateProducing } from './crypto';
+import { AccessTokenProducing, GCM_NONCE_LEN, OtherVaultMember, RecoveryKeyProducing, UnwrapKeyError, UserKeys, VaultTemplateProducing } from './crypto';
 import { CRC32, UTF8, wordEncoder } from './util';
 
 interface VaultConfigPayload {
@@ -24,7 +24,7 @@ interface VaultConfigHeaderHub {
   devicesResourceUrl: string
 }
 
-export class VaultFormat8 implements AccessTokenProducing, VaultTemplateProducing {
+export class VaultFormat8 implements AccessTokenProducing, VaultTemplateProducing, RecoveryKeyProducing {
   // in this browser application, this 512 bit key is used
   // as a hmac key to sign the vault config.
   // however when used by cryptomator, it gets split into
@@ -283,21 +283,27 @@ export class VaultFormat8 implements AccessTokenProducing, VaultTemplateProducin
     });
   }
 
-  /**
-   * Encode masterkey for offline backup purposes, allowing re-importing the key for recovery purposes
-   */
-  public async createRecoveryKey(): Promise<string> {
-    const rawkey = new Uint8Array(await crypto.subtle.exportKey('raw', this.masterKey));
+  /** @inheritdoc */
+  public async createPaddedRecoveryKeyBytes(): Promise<Uint8Array> {
+    const rawkey = new Uint8Array(await crypto.subtle.exportKey('raw', this.masterKey));;
 
     // add 16 bit checksum:
     const crc32 = CRC32.compute(rawkey);
     const checksum = new Uint8Array(2);
     checksum[0] = crc32 & 0xff;      // append the least significant byte of the crc
     checksum[1] = crc32 >> 8 & 0xff; // followed by the second-least significant byte
-    const combined = new Uint8Array([...rawkey, ...checksum]);
+
+    return new Uint8Array([...rawkey, ...checksum]);
+  }
+
+  /**
+   * Encode masterkey for offline backup purposes, allowing re-importing the key for recovery purposes
+   */
+  public async createRecoveryKey(): Promise<string> {
+    const recoveryKeyBytes = await this.createPaddedRecoveryKeyBytes();
 
     // encode using human-readable words:
-    return wordEncoder.encodePadded(combined);
+    return wordEncoder.encodePadded(recoveryKeyBytes);
   }
 }
 

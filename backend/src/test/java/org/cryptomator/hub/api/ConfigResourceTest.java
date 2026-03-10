@@ -19,7 +19,8 @@ public class ConfigResourceTest {
 			"foobar,baz,bar,foobar",
 			"foo,foo,bar,bar",
 			"foo,'',bar,barfoo",
-			"'',baz,bar,''"})
+			"'',baz,bar,''"
+	})
 	void testReplacePrefix(String str, String prefix, String replacement, String expected) {
 		String out = configResource.replacePrefix(str, prefix, replacement);
 
@@ -31,7 +32,8 @@ public class ConfigResourceTest {
 			"foo/,foo",
 			"foo//,foo/",
 			"'',''",
-			"/,''"})
+			"/,''"
+	})
 	void testTrimTrailingSlash(String in, String expected) {
 		String out = configResource.trimTrailingSlash(in);
 

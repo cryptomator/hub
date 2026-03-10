@@ -1,0 +1,113 @@
+urls:
+  hub:
+    public: ""
+  kc:
+    public: ""
+    clusterInternal: ""
+    authServerUrl: ""
+    tokenIssuer: ""
+
+notes:
+  useColor: true
+
+ingress:
+  # supported: nginx, traefik, contour
+  controller: ""
+  className: ""
+  annotations: {}
+  tls:
+    enabled: false
+    secretName: ""
+
+hub:
+  imagePullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8080
+    managementPort: 9000
+  resources:
+    requests:
+      cpu: 10m
+      memory: 16Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+  config:
+    keycloakRealm: cryptomator
+    keycloakSyncerPeriod: 5m
+    keycloakPublicUrl: ""
+    keycloakLocalUrl: ""
+  metrics:
+    enabled: true
+    username: metrics
+    password: ""
+  oidc:
+    clientId: cryptomatorhub
+  database:
+    jdbcUrl: ""
+    name: hub
+    username: hub
+    password: ""
+  admin:
+    username: admin
+    password: ""
+    passwordTemporary: true
+  secrets:
+    create: true
+    systemClientSecret: "" # optional; auto-generated when chart manages Hub secret
+    initialId: ""
+    initialLicense: ""
+  license:
+    chain:
+      requiredCn: ""
+    managedApi:
+      username: ""
+      password: ""
+
+keycloak:
+  enabled: true
+  imagePullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    httpPort: 8080
+    managementPort: 9000
+  resources:
+    requests:
+      cpu: 20m
+      memory: 128Mi
+    limits:
+      cpu: 1000m
+      memory: 640Mi
+  admin:
+    username: admin
+    password: ""
+  config:
+    proxyHeaders: xforwarded
+  database:
+    jdbcUrl: ""
+    name: keycloak
+    username: keycloak
+    password: ""
+  realmBootstrap:
+    realmId: ""
+
+postgres:
+  enabled: true
+  imagePullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 5432
+  storage:
+    size: 10Gi
+    storageClassName: ""
+    accessMode: ReadWriteOnce
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      cpu: 1000m
+      memory: 256Mi
+  auth:
+    adminUsername: postgres
+    adminPassword: ""

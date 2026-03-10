@@ -43,9 +43,13 @@ export function isAxiosError(error: unknown): error is AxiosError {
 export type VaultDto = {
   id: string;
   name: string;
+  creationTime: Date;
   description?: string;
   archived: boolean;
-  creationTime: Date;
+  requiredEmergencyKeyShares: number;
+  emergencyKeyShares: Record<string, string>; // <memberId, encryptedKeyShare>
+  
+  // Legacy properties ("Vault Admin Password"):
   masterkey?: string;
   iterations?: number;
   salt?: string;
@@ -85,7 +89,7 @@ export type UserDto = {
   id: string;
   name: string;
   pictureUrl?: string;
-  email: string;
+  email?: string;
   firstName?: string;
   lastName?: string;
   realmRoles: RealmRole[];
@@ -108,6 +112,18 @@ export type UserDtoWithDetails = UserDto & {
   groups: GroupDto[];
   devices: DeviceDto[];
   legacyDevices: DeviceDto[];
+}
+
+/**
+ * Represents a user who generated key pairs during the setup process.
+ */
+export type ActivatedUser = UserDto & {
+  ecdhPublicKey: string;
+  ecdsaPublicKey: string;
+}
+
+export function didCompleteSetup(user: UserDto): user is ActivatedUser {
+  return user.ecdhPublicKey !== undefined && user.ecdsaPublicKey !== undefined;
 }
 
 export type GroupDto = {
@@ -153,13 +169,13 @@ export type GroupDtoWithDetails = GroupDto & {
 
 export type BillingDto = {
   hubId: string;
-  hasLicense: boolean;
   email: string;
   licensedSeats: number;
   usedSeats: number;
   issuedAt: Date;
   expiresAt: Date;
   managedInstance: boolean;
+  licenseKey: string;
 }
 
 export type VersionDto = {
@@ -170,7 +186,45 @@ export type VersionDto = {
 export type SettingsDto = {
   hubId: string,
   wotMaxDepth: number,
-  wotIdVerifyLen: number
+  wotIdVerifyLen: number,
+  defaultRequiredEmergencyKeyShares: number,
+  defaultMinMembers: number,
+  allowChoosingEmergencyCouncil: boolean,
+  emergencyCouncilMemberIds: string[],
+  enableEmergencyAccess: boolean
+}
+
+export type RecoveryProcessSetNewOwner = {
+  type: 'CHANGE_PERMISSIONS',
+  details: {
+    newOwnerIds: string[];
+    newMemberIds: string[];
+  }
+}
+
+export type RecoveryProcessChangeCouncil = {
+  type: 'COUNCIL_CHANGE',
+  details: {
+    newCouncilMemberIds: string[];
+    newRequiredKeyShares: number;
+  }
+}
+
+export type RecoveredKeyShareDto = {
+  processPrivateKey: string;
+  unrecoveredKeyShare: string;
+  recoveredKeyShare?: string;
+  signedProcessInfo?: string;
+};
+
+export type RecoveryProcessDto = (RecoveryProcessSetNewOwner | RecoveryProcessChangeCouncil) & {
+  id: string;
+  vaultId: string;
+  requiredKeyShares: number;
+  processPublicKey: string;
+  recoveredKeyShares: {
+    [councilMemberId: string]: RecoveredKeyShareDto
+  }
 }
 
 export class LicenseUserInfoDto {
@@ -186,7 +240,7 @@ export class LicenseUserInfoDto {
   }
 
   public isExceeded(): boolean {
-    return this.usedSeats > this.licensedSeats;
+    return this.licensedSeats == 0 || this.usedSeats > this.licensedSeats;
   }
 }
 
@@ -255,6 +309,10 @@ class VaultService {
     return axiosAuth.get('/vaults/accessible', { params: queryParams }).then(response => response.data);
   }
 
+  public async listRecoverable(): Promise<VaultDto[]> {
+    return axiosAuth.get('/vaults/recoverable').then(response => response.data);
+  }
+
   public async listSome(vaultsIds: string[]): Promise<VaultDto[]> {
     const query = `ids=${vaultsIds.join('&ids=')}`;
     return axiosAuth.get(`/vaults/some?${query}`).then(response => response.data);
@@ -277,6 +335,11 @@ class VaultService {
   public async getMembers(vaultId: string, addFallbackPictures: boolean = true): Promise<MemberDto[]> {
     const members = await axiosAuth.get<MemberDto[]>(`/vaults/${vaultId}/members`).then(response => response.data).catch(err => rethrowAndConvertIfExpected(err, 403));
     return addFallbackPictures ? members.map(fillInMissingPicture) : members;
+  }
+
+  public async setMembersWithRole(vaultId: string, members: Record<string, VaultRole>): Promise<void> {
+    await axiosAuth.put(`/vaults/${vaultId}/members`, members)
+      .catch((error) => rethrowAndConvertIfExpected(error, 403, 404));
   }
 
   public async addUser(vaultId: string, userId: string, role?: VaultRole): Promise<AxiosResponse<void>> {
@@ -486,6 +549,10 @@ class AuthorityService {
   }
 
   public async listSome(authorityIds: string[], addFallbackPictures: boolean = true): Promise<AuthorityDto[]> {
+    if (authorityIds.length === 0) {
+      // safe roundtrip for empty list
+      return [];
+    }
     const query = `ids=${authorityIds.join('&ids=')}`;
     const authorities = await axiosAuth.get<AuthorityDto[]>(`/authorities?${query}`).then(response => response.data);
     return addFallbackPictures ? authorities.map(fillInMissingPicture) : authorities;
@@ -512,6 +579,10 @@ class LicenseService {
       return new LicenseUserInfoDto(response.data.licensedSeats, response.data.usedSeats, response.data.expiresAt ? new Date(response.data.expiresAt) : null);
     });
   }
+
+  public async refresh(): Promise<void> {
+    return axiosAuth.post('/license/refresh');
+  }
 }
 
 class VersionService {
@@ -527,6 +598,37 @@ class SettingsService {
 
   public async put(settings: SettingsDto): Promise<void> {
     return axiosAuth.put('/settings', settings);
+  }
+
+  public async update(settings: Partial<SettingsDto>): Promise<void> {
+    const originalSettings = await this.get();
+    const updatedSettings = {
+      ...originalSettings,
+      ...settings
+    };
+    return axiosAuth.put('/settings', updatedSettings);
+  }
+}
+
+class EmergencyAccessService {
+  public async findProcessesForVault(vaultId: string): Promise<RecoveryProcessDto[]> {
+    return axiosAuth.get<RecoveryProcessDto[]>(`/emergency-access/${vaultId}`).then(response => response.data);
+  }
+
+  public async startRecovery(recoveryProcess: RecoveryProcessDto): Promise<void> {
+    return axiosAuth.put(`/emergency-access/${recoveryProcess.id}`, recoveryProcess);
+  }
+
+  public async addMyShare(recoveryProcessId: string, recoveredKeyShare: RecoveredKeyShareDto): Promise<void> {
+    return axiosAuth.post(`/emergency-access/${recoveryProcessId}/recovered-key-shares`, recoveredKeyShare);
+  }
+
+  public async complete(recoveryProcessId: string): Promise<void> {
+    return axiosAuth.delete(`/emergency-access/${recoveryProcessId}/complete`);
+  }
+
+  public async abort(recoveryProcessId: string): Promise<void> {
+    return axiosAuth.delete(`/emergency-access/${recoveryProcessId}/abort`);
   }
 }
 
@@ -544,6 +646,7 @@ const services = {
   license: new LicenseService(),
   settings: new SettingsService(),
   groups: new GroupService(),
+  emergencyAccess: new EmergencyAccessService(),
 };
 
 export default services;

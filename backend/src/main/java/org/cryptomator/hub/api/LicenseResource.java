@@ -1,20 +1,22 @@
 package org.cryptomator.hub.api;
 
-import com.auth0.jwt.interfaces.DecodedJWT;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.InternalServerErrorException;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.license.LicenseHolder;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 
+import java.io.IOException;
 import java.time.Instant;
-import java.util.Optional;
 
 @Path("/license")
 public class LicenseResource {
@@ -41,11 +43,27 @@ public class LicenseResource {
 									 @JsonProperty("expiresAt") Instant expiresAt) {
 
 		public static LicenseUserInfoDto create(LicenseHolder licenseHolder, int usedSeats) {
-			var licensedSeats = (int) licenseHolder.getSeats();
-			var expiresAt = Optional.ofNullable(licenseHolder.get()).map(DecodedJWT::getExpiresAtAsInstant).orElse(null);
+			var licensedSeats = (int) licenseHolder.getEntitlements().seats();
+			var expiresAt = licenseHolder.get().getExpiresAtAsInstant();
 			return new LicenseUserInfoDto(licensedSeats, usedSeats, expiresAt);
 		}
 
 	}
+
+	@POST
+	@Path("/refresh")
+	@RolesAllowed("admin")
+	@Operation(summary = "Refresh license information", description = "Refreshes the license information from the license server.")
+	@APIResponse(responseCode = "204", description = "License information refreshed")
+	@APIResponse(responseCode = "500", description = "License refresh failed")
+	public Response refresh() {
+		try {
+			licenseHolder.refreshLicense();
+		} catch (IOException e) {
+			throw new InternalServerErrorException("License refresh failed", e);
+		}
+		return Response.noContent().build();
+	}
+
 
 }

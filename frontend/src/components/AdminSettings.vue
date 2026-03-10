@@ -1,5 +1,5 @@
 <template>
-  <div v-if="admin === undefined || version === undefined || wotMaxDepth === undefined || wotIdVerifyLen === undefined">
+  <div v-if="billing === undefined || version === undefined || wotMaxDepth === undefined || wotIdVerifyLen === undefined">
     <div v-if="!onFetchError">
       {{ t('common.loading') }}
     </div>
@@ -9,6 +9,7 @@
   </div>
 
   <div v-else>
+    <!-- Page Header -->
     <div class="pb-5 border-b border-gray-200">
       <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
         {{ t('admin.title') }}
@@ -16,6 +17,7 @@
     </div>
 
     <div class="space-y-6 mt-5">
+      <!-- Server Information Section -->
       <section class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6">
         <h3 class="text-lg font-medium leading-6 text-gray-900">
           {{ t('admin.serverInfo.title') }}
@@ -28,7 +30,7 @@
           <div class="md:grid md:grid-cols-3 md:gap-6">
             <label for="hubId" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.serverInfo.hubId.title') }}</label>
             <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
-              <input id="hubId" v-model="admin.hubId" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
+              <input id="hubId" v-model="billing.hubId" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
             </div>
           </div>
 
@@ -63,7 +65,7 @@
             <label for="keycloakVersion" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.serverInfo.keycloakVersion.title') }}</label>
             <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
               <input id="keycloakVersion" :value="version.keycloakVersion ?? t('admin.serverInfo.keycloakVersion.notAvailable')" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
-              <p id="keycloakAdminRealmURL" class="inline-flex mt-2 text-sm">
+              <p v-if="cfg.entitlements.keycloakAccessEnabled" id="keycloakAdminRealmURL" class="inline-flex mt-2 text-sm">
                 <LinkIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
                 <a :href="keycloakAdminRealmURL" target="_blank" class="underline text-gray-500 hover:text-gray-900">{{ $t('admin.serverInfo.keycloakVersion.description') }}</a>
               </p>
@@ -72,10 +74,16 @@
         </form>
       </section>
 
-      <section v-if="admin.hasLicense && remainingSeats !== undefined" class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6">
-        <h3 class="text-lg font-medium leading-6 text-gray-900">
-          {{ t('admin.licenseInfo.title') }}
-        </h3>
+      <!-- License Information Section -->
+      <section v-if="remainingSeats !== undefined" class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6">
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-medium leading-6 text-gray-900">
+            {{ t('admin.licenseInfo.title') }}
+          </h3>
+          <button type="button" class="p-1 cursor-pointer text-gray-400 hover:text-gray-600 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary rounded-full disabled:opacity-50 disabled:hover:text-gray-400 disabled:cursor-not-allowed" :title="t('common.refresh')" :disabled="!isRegistered" @click="refreshLicense()">
+            <ArrowPathIcon class="h-5 w-5" aria-hidden="true" />
+          </button>
+        </div>
         <p class="mt-1 text-sm text-gray-500 w-full">
           {{ t('admin.licenseInfo.description') }}
         </p>
@@ -84,14 +92,14 @@
           <div class="md:grid md:grid-cols-3 md:gap-6">
             <label for="email" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.licenseInfo.email.title') }}</label>
             <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
-              <input id="email" v-model="admin.email" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
+              <input id="email" v-model="billing.email" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
             </div>
           </div>
 
           <div class="md:grid md:grid-cols-3 md:gap-6">
             <label for="seats" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.licenseInfo.seats.title') }}</label>
             <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
-              <input id="seats" v-model="admin.licensedSeats" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" aria-describedby="seats-description" readonly />
+              <input id="seats" v-model="billing.licensedSeats" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" aria-describedby="seats-description" readonly />
               <p v-if="remainingSeats > 0" id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
                 <CheckIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
                 {{ t('admin.licenseInfo.seats.description.enoughSeats', [remainingSeats]) }}
@@ -110,15 +118,15 @@
           <div class="md:grid md:grid-cols-3 md:gap-6">
             <label for="issuedAt" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.licenseInfo.issuedAt.title') }}</label>
             <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
-              <input id="issuedAt" :value="d(admin.issuedAt, 'short')" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
+              <input id="issuedAt" :value="d(billing.issuedAt, 'short')" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
             </div>
           </div>
 
           <div class="md:grid md:grid-cols-3 md:gap-6">
             <label for="expiresAt" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.licenseInfo.expiresAt.title') }}</label>
             <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
-              <input id="expiresAt" :value="d(admin.expiresAt, 'short')" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" aria-describedby="expiresAt-description" readonly />
-              <p v-if="now < admin.expiresAt" id="expiresAt-description" class="inline-flex mt-2 text-sm text-gray-500">
+              <input id="expiresAt" :value="d(billing.expiresAt, 'short')" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" aria-describedby="expiresAt-description" readonly />
+              <p v-if="now < billing.expiresAt" id="expiresAt-description" class="inline-flex mt-2 text-sm text-gray-500">
                 <CheckIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
                 {{ t('admin.licenseInfo.expiresAt.description.valid') }}
               </p>
@@ -130,66 +138,17 @@
           </div>
 
           <div class="md:grid md:grid-cols-3 md:gap-6">
-            <div class="md:col-start-2">
-              <button type="button" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="manageSubscription()">
+            <div class="md:col-start-2 col-span-2 flex gap-2">
+              <a :href="manageSubscriptionUrl" rel="noopener" class="button inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
                 <ArrowTopRightOnSquareIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
                 {{ t('admin.licenseInfo.manageSubscription') }}
-              </button>
+              </a>
             </div>
           </div>
         </form>
       </section>
 
-      <section v-if="!admin.hasLicense && remainingSeats !== undefined" class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6">
-        <h3 class="text-lg font-medium leading-6 text-gray-900">
-          {{ t('admin.licenseInfo.title') }}
-        </h3>
-        <p v-if="!admin.managedInstance" class="mt-1 text-sm text-gray-500 w-full">
-          {{ t('admin.licenseInfo.selfHostedNoLicense.description') }}
-        </p>
-        <p v-else class="mt-1 text-sm text-gray-500 w-full">
-          {{ t('admin.licenseInfo.managedNoLicense.description') }}
-        </p>
-        <hr class="my-4 pb-6 border-gray-200"/>
-        <form class="space-y-6 md:gap-6" novalidate>
-          <div class="md:grid md:grid-cols-3 md:gap-6">
-            <label for="licenseType" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.licenseInfo.type.title') }}</label>
-            <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
-              <input v-if="!admin.managedInstance" id="licenseType" value="Community License" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
-              <input v-else id="licenseType" value="Managed" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" readonly />
-            </div>
-          </div>
-
-          <div class="md:grid md:grid-cols-3 md:gap-6">
-            <label for="seats" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.licenseInfo.seats.title') }}</label>
-            <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
-              <input id="seats" v-model="admin.licensedSeats" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md bg-gray-200" aria-describedby="seats-description" readonly />
-              <p v-if="remainingSeats > 0" id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
-                <CheckIcon class="shrink-0 text-primary mr-1 h-5 w-5" aria-hidden="true" />
-                {{ t('admin.licenseInfo.seats.description.enoughSeats', [remainingSeats]) }}
-              </p>
-              <p v-else-if="remainingSeats == 0" id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
-                <ExclamationTriangleIcon class="shrink-0 text-orange-500 mr-1 h-5 w-5" aria-hidden="true" />
-                {{ t('admin.licenseInfo.seats.description.zeroSeats') }}
-              </p>
-              <p v-else id="seats-description" class="inline-flex mt-2 text-sm text-gray-500">
-                <XMarkIcon class="shrink-0 text-red-500 mr-1 h-5 w-5" aria-hidden="true" />
-                {{ t('admin.licenseInfo.seats.description.undercutSeats', [numberOfExceededSeats]) }}
-              </p>
-            </div>
-          </div>
-
-          <div class="md:grid md:grid-cols-3 md:gap-6">
-            <div class="md:col-start-2">
-              <button type="button" class="flex-none inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed" @click="manageSubscription()">
-                <ArrowTopRightOnSquareIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
-                {{ t('admin.licenseInfo.getLicense') }}
-              </button>
-            </div>
-          </div>
-        </form>
-      </section>
-
+      <!-- Web of Trust Configuration Section -->
       <section class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6">
         <h3 class="text-lg font-medium leading-6 text-gray-900">
           {{ t('admin.webOfTrust.title') }}
@@ -204,8 +163,8 @@
               {{ t('admin.webOfTrust.wotMaxDepth.title') }}
             </label>
             <div class="mt-1 md:mt-0 relative md:col-span-2 lg:col-span-1">
-              <input id="wotMaxDepth" v-model="wotMaxDepth" type="number" min="0" max="9" step="1" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': wotMaxDepthError instanceof FormValidationFailedError }"/>
-              <div v-if="wotMaxDepthError" class="absolute left-1/2 -translate-x-1/2 -top-2 transform translate-y-[-100%] w-5/6">
+              <input id="wotMaxDepth" v-model="wotMaxDepth" type="number" min="0" max="9" step="1" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': wotMaxDepthError instanceof WotFormValidationFailedError }"/>
+              <div v-if="wotMaxDepthError" class="absolute left-1/2 -translate-x-1/2 -top-2 transform translate-y-full w-5/6">
                 <div class="bg-red-50 border border-red-300 text-red-900 px-2 py-1 rounded shadow-sm text-sm hyphens-auto">
                   {{ t('admin.webOfTrust.wotMaxDepth.error') }}
                   <div class="absolute bottom-0 left-1/2 transform translate-y-1/2 rotate-45 w-2 h-2 bg-red-50 border-r border-b border-red-300"></div>
@@ -226,8 +185,8 @@
               {{ t('admin.webOfTrust.wotIdVerifyLen.title') }}
             </label>
             <div class="mt-1 md:mt-0 relative md:col-span-2 lg:col-span-1">
-              <input id="wotIdVerifyLen" v-model="wotIdVerifyLen" type="number" min="0" max="9" step="1" class="focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': wotIdVerifyLenError instanceof FormValidationFailedError }"/>
-              <div v-if="wotIdVerifyLenError" class="absolute left-1/2 -translate-x-1/2 -top-2 transform translate-y-[-100%] w-5/6">
+              <input id="wotIdVerifyLen" v-model="wotIdVerifyLen" type="number" min="0" max="9" step="1" class="focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': wotIdVerifyLenError instanceof WotFormValidationFailedError }"/>
+              <div v-if="wotIdVerifyLenError" class="absolute left-1/2 -translate-x-1/2 -top-2 transform translate-y-full w-5/6">
                 <div class="bg-red-50 border border-red-300 text-red-900 px-2 py-1 rounded shadow-sm text-sm hyphens-auto">
                   {{ t('admin.webOfTrust.wotIdVerifyLen.error') }}
                   <div class="absolute bottom-0 left-1/2 transform translate-y-1/2 rotate-45 w-2 h-2 bg-red-50 border-r border-b border-red-300"></div>
@@ -249,7 +208,7 @@
                 <span v-if="!wotUpdated">{{ t('admin.webOfTrust.save') }}</span>
                 <span v-else>{{ t('admin.webOfTrust.saved') }}</span>
               </button>
-              <p v-if="onSaveError && !(onSaveError instanceof FormValidationFailedError)" class="mt-2 text-sm text-red-900">
+              <p v-if="onSaveError && !(onSaveError instanceof WotFormValidationFailedError)" class="mt-2 text-sm text-red-900">
                 {{ t('common.unexpectedError', [onSaveError.message]) }}
               </p>
               <div v-if="wotHasUnsavedChanges" class="flex items-center whitespace-nowrap gap-1 text-sm text-yellow-700">
@@ -263,49 +222,74 @@
           </div>
         </form>
       </section>
+
+      <AdminSettingsEmergencyAccess/>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ArrowRightIcon, ArrowTopRightOnSquareIcon, CheckIcon, ExclamationTriangleIcon, InformationCircleIcon, LinkIcon, XMarkIcon } from '@heroicons/vue/20/solid';
+import { ArrowPathIcon, ArrowRightIcon, ArrowTopRightOnSquareIcon, CheckIcon, ExclamationTriangleIcon, InformationCircleIcon, LinkIcon, XMarkIcon } from '@heroicons/vue/20/solid';
 import semver from 'semver';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { BillingDto, VersionDto } from '../common/backend';
-import config, { absFrontendBaseURL } from '../common/config';
+import config, { absFrontendBaseURL, ConfigDto } from '../common/config';
 import { FetchUpdateError, LatestVersionDto, updateChecker } from '../common/updatecheck';
 import { debounce } from '../common/util';
 import FetchError from './FetchError.vue';
+import AdminSettingsEmergencyAccess from './AdminSettingsEmergencyAccess.vue';
 
-const { t, d, locale, fallbackLocale } = useI18n({ useScope: 'global' });
-
+const { t, d } = useI18n({ useScope: 'global' });
 const props = defineProps<{
   token?: string
 }>();
 
-const version = ref<VersionDto>();
-const latestVersion = ref<LatestVersionDto>();
-const admin = ref<BillingDto>();
+const cfg = ref<ConfigDto>(config.get());
 const now = ref<Date>(new Date());
 const keycloakAdminRealmURL = ref<string>();
-const wotMaxDepth = ref<number>();
-const wotIdVerifyLen = ref<number>();
-const wotUpdated = ref(false);
-const debouncedWotUpdated = debounce(() => wotUpdated.value = false, 2000);
 const form = ref<HTMLFormElement>();
 const processing = ref(false);
 const onFetchError = ref<Error>();
 const errorOnFetchingUpdates = ref<boolean>(false);
-const onSaveError = ref<Error>();
-const wotMaxDepthError = ref<Error>();
-const wotIdVerifyLenError = ref<Error>();
 
-class FormValidationFailedError extends Error {
-  constructor() {
-    super('The form is invalid.');
+onMounted(async () => {
+  keycloakAdminRealmURL.value = `${cfg.value.keycloakUrl}/admin/${cfg.value.keycloakRealm}/console/`;
+  if (props.token) {
+    await setToken(props.token);
+  }
+  await fetchData();
+});
+
+async function fetchData() {
+  try {
+    const versionDto = backend.version.get();
+    const versionAvailable = versionDto.then(versionDto => updateChecker.get(versionDto.hubVersion));
+    billing.value = await backend.billing.get();
+    version.value = await versionDto;
+    latestVersion.value = await versionAvailable;
+
+    const settings = await backend.settings.get();
+    wotMaxDepth.value = settings.wotMaxDepth;
+    wotIdVerifyLen.value = settings.wotIdVerifyLen;
+    initialWebOfTrustSettings.value = {
+      wotMaxDepth: wotMaxDepth.value,
+      wotIdVerifyLen: wotIdVerifyLen.value
+    };
+  } catch (error) {
+    if (error instanceof FetchUpdateError) {
+      errorOnFetchingUpdates.value = true;
+    } else {
+      console.error('Retrieving server information failed.', error);
+      onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
+    }
   }
 }
+
+// #region Update Information
+
+const version = ref<VersionDto>();
+const latestVersion = ref<LatestVersionDto>();
 
 const isBeta = computed(() => {
   if (version.value && semver.valid(version.value.hubVersion)) {
@@ -326,32 +310,31 @@ const betaUpdateExists = computed(() => {
   return false;
 });
 
-const remainingSeats = computed(() => admin.value ? admin.value.licensedSeats - admin.value.usedSeats : undefined);
-const numberOfExceededSeats = computed(() => {
-  if (remainingSeats.value === undefined) {
-    return undefined;
+// #endregion
+
+// #region License Information
+
+const billing = ref<BillingDto>();
+
+const isRegistered = computed(() => !cfg.value.entitlements.showTrialHint );
+
+const manageSubscriptionUrl = computed(() => {
+  if (!billing.value) {
+    return '';
   }
-  return remainingSeats.value < 0 ? Math.abs(remainingSeats.value) : 0;
+  const returnUrl = `${absFrontendBaseURL}admin`;
+  return `${cfg.value.billingUrl}#oldLicense=${encodeURIComponent(billing.value.licenseKey)}&returnUrl=${encodeURIComponent(returnUrl)}`;
 });
 
-type WotSettings = { wotMaxDepth: number; wotIdVerifyLen: number };
-const initialWebOfTrustSettings = ref<WotSettings>({ wotMaxDepth: 0, wotIdVerifyLen: 0 });
-
-const wotHasUnsavedChanges = computed(() => {
-  return (
-    initialWebOfTrustSettings.value.wotMaxDepth !== wotMaxDepth.value ||
-    initialWebOfTrustSettings.value.wotIdVerifyLen !== wotIdVerifyLen.value
-  );
-});
-
-onMounted(async () => {
-  const cfg = config.get();
-  keycloakAdminRealmURL.value = `${cfg.keycloakUrl}/admin/${cfg.keycloakRealm}/console`;
-  if (props.token) {
-    await setToken(props.token);
+async function refreshLicense() {
+  try {
+    await backend.license.refresh();
+    billing.value = await backend.billing.get();
+    cfg.value = await config.reload();
+  } catch (error) {
+    console.error('Refreshing license info failed.', error);
   }
-  await fetchData();
-});
+}
 
 async function setToken(token: string) {
   try {
@@ -361,49 +344,54 @@ async function setToken(token: string) {
   }
 }
 
-async function fetchData() {
-  try {
-    const versionDto = backend.version.get();
-    const versionAvailable = versionDto.then(versionDto => updateChecker.get(versionDto.hubVersion));
-    admin.value = await backend.billing.get();
-    version.value = await versionDto;
-    latestVersion.value = await versionAvailable;
-    
-    const settings = await backend.settings.get();
-    wotMaxDepth.value = settings.wotMaxDepth;
-    wotIdVerifyLen.value = settings.wotIdVerifyLen;
-    initialWebOfTrustSettings.value = {
-      wotMaxDepth: wotMaxDepth.value,
-      wotIdVerifyLen: wotIdVerifyLen.value
-    };
-  } catch (error) {
-    if (error instanceof FetchUpdateError) {
-      errorOnFetchingUpdates.value = true;
-    } else {
-      console.error('Retrieving server information failed.', error);
-      onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
-    }
+const remainingSeats = computed(() => billing.value ? billing.value.licensedSeats - billing.value.usedSeats : 0);
+const numberOfExceededSeats = computed(() => {
+  if (remainingSeats.value === undefined) {
+    return undefined;
+  }
+  return remainingSeats.value < 0 ? Math.abs(remainingSeats.value) : 0;
+});
+
+// #endregion
+
+// #region Web of Trust
+
+type WotSettings = { wotMaxDepth: number; wotIdVerifyLen: number };
+const initialWebOfTrustSettings = ref<WotSettings>({ wotMaxDepth: 0, wotIdVerifyLen: 0 });
+const wotMaxDepth = ref<number>();
+const wotIdVerifyLen = ref<number>();
+const wotUpdated = ref(false);
+const debouncedWotUpdated = debounce(() => wotUpdated.value = false, 2000);
+const wotMaxDepthError = ref<Error>();
+const wotIdVerifyLenError = ref<Error>();
+const onSaveError = ref<Error>();
+
+class WotFormValidationFailedError extends Error {
+  constructor() {
+    super('The form is invalid.');
   }
 }
 
-function manageSubscription() {
-  const returnUrl = `${absFrontendBaseURL}admin`;
-  window.open(`https://cryptomator.org/hub/billing/?hub_id=${admin.value?.hubId}&return_url=${encodeURIComponent(returnUrl)}`, '_self');
-}
+const wotHasUnsavedChanges = computed(() => {
+  return (
+    initialWebOfTrustSettings.value.wotMaxDepth !== wotMaxDepth.value ||
+    initialWebOfTrustSettings.value.wotIdVerifyLen !== wotIdVerifyLen.value
+  );
+});
 
 async function saveWebOfTrust() {
   onSaveError.value = undefined;
   wotMaxDepthError.value = undefined;
   wotIdVerifyLenError.value = undefined;
-  if (admin.value === undefined || wotMaxDepth.value === undefined || wotIdVerifyLen.value === undefined) {
+  if (billing.value === undefined || wotMaxDepth.value === undefined || wotIdVerifyLen.value === undefined) {
     throw new Error('No data available.');
   }
   if (!form.value?.checkValidity()) {
     if (wotMaxDepth.value < 0 || wotMaxDepth.value > 9) {
-      wotMaxDepthError.value = new FormValidationFailedError();
+      wotMaxDepthError.value = new WotFormValidationFailedError();
     }
     if (wotIdVerifyLen.value < 0) {
-      wotIdVerifyLenError.value = new FormValidationFailedError();
+      wotIdVerifyLenError.value = new WotFormValidationFailedError();
     }
     return;
   }
@@ -412,13 +400,13 @@ async function saveWebOfTrust() {
     const settings = {
       wotMaxDepth: wotMaxDepth.value,
       wotIdVerifyLen: wotIdVerifyLen.value,
-      hubId: admin.value.hubId
+      hubId: billing.value.hubId
     };
     initialWebOfTrustSettings.value = {
       wotMaxDepth: wotMaxDepth.value,
       wotIdVerifyLen: wotIdVerifyLen.value
     };
-    await backend.settings.put(settings);
+    await backend.settings.update(settings);
     wotUpdated.value = true;
     debouncedWotUpdated();
   } catch (error) {
@@ -433,5 +421,7 @@ function resetWebOfTrust() {
   wotMaxDepth.value = initialWebOfTrustSettings.value.wotMaxDepth;
   wotIdVerifyLen.value = initialWebOfTrustSettings.value.wotIdVerifyLen;
 }
+
+// #endregion
 
 </script>

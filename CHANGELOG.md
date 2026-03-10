@@ -10,12 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - User and group management (#376)
+- Emergency Access: Allow a council to restore access to a orphaned vault (#390)
 - Show pictures of the groups in the Vaults member list (#375)
 
 ### Changed
 
-- Updated Keycloak to 26.4.7
-- Update Quarkus to 3.20.4 LTS
+- Updated Keycloak to 26.5.5
+- Update Quarkus to 3.27.2 LTS
 - Improved browser locale detection (#371)
 - Improved efficiency of keycloak-to-hub data sync (#377)
 - Improved efficiency of group-based access permission checks (#372)
@@ -25,6 +26,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - CVE-2025-64756, CVE-2025-64118: removed `glob` and `tar` dependencies
 - CVE-2025-64718, CVE-2025-62522: updated `js-yaml` and `vite`
+
+### Fixed
+- Hide Archive/Reactivate Vault actions for admins without ownership rights (#379)
 
 ## [1.4.6](https://github.com/cryptomator/hub/compare/1.4.5...1.4.6)
 

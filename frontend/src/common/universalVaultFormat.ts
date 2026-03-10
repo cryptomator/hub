@@ -1,7 +1,7 @@
 import { base32, base64, base64urlnopad } from '@scure/base';
 import JSZip from 'jszip';
 import { VaultDto } from './backend';
-import { AccessTokenPayload, AccessTokenProducing, JsonWebKeySet, OtherVaultMember, UserKeys, VaultTemplateProducing, getJwkThumbprintStr } from './crypto';
+import { AccessTokenPayload, AccessTokenProducing, JsonWebKeySet, OtherVaultMember, RecoveryKeyProducing, UserKeys, VaultTemplateProducing, getJwkThumbprintStr } from './crypto';
 import { JWE, JWEHeader, JsonJWE, Recipient } from './jwe';
 import { CRC32, UTF8, wordEncoder } from './util';
 
@@ -148,11 +148,7 @@ export class RecoveryKey {
     return new RecoveryKey(publicKey, privateKey);
   }
 
-  /**
-   * Encodes the private key as a list of words
-   * @returns private key in a human-readable encoding
-   */
-  public async createRecoveryKey(): Promise<string> {
+  public async createRawRecoveryKey(): Promise<Uint8Array> {
     if (!this.privateKey) {
       throw new Error('Private key not available');
     }
@@ -169,10 +165,19 @@ export class RecoveryKey {
     const numPaddingBytes = 3 - (combined.length % 3);
     const padding = new Uint8Array(numPaddingBytes);
     padding.fill(numPaddingBytes & 0xFF); // 01 or 02 02 or 03 03 03
-    const padded = new Uint8Array([...combined, ...padding]);
+
+    return new Uint8Array([...combined, ...padding]);
+  }
+
+  /**
+   * Encodes the private key as a list of words
+   * @returns private key in a human-readable encoding
+   */
+  public async createRecoveryKey(): Promise<string> {
+    const recoveryKeyBytes = await this.createRawRecoveryKey();
 
     // encode using human-readable words:
-    return wordEncoder.encodePadded(padded);
+    return wordEncoder.encodePadded(recoveryKeyBytes);
   }
 
   /**
@@ -358,7 +363,7 @@ export class VaultMetadata {
 /**
  * A UVF-formatted Vault
  */
-export class UniversalVaultFormat implements AccessTokenProducing, VaultTemplateProducing {
+export class UniversalVaultFormat implements AccessTokenProducing, VaultTemplateProducing, RecoveryKeyProducing {
   private constructor(readonly metadata: VaultMetadata, readonly memberKey: MemberKey, readonly recoveryKey: RecoveryKey) { }
 
   public static async create(automaticAccessGrant: VaultMetadataJWEAutomaticAccessGrantDto): Promise<UniversalVaultFormat> {
@@ -397,6 +402,11 @@ export class UniversalVaultFormat implements AccessTokenProducing, VaultTemplate
       recoveryKey = await RecoveryKey.import(recoveryPublicKey);
     }
     return new UniversalVaultFormat(metadata, memberKey, recoveryKey);
+  }
+
+  /** @inheritdoc */
+  public async createPaddedRecoveryKeyBytes(): Promise<Uint8Array> {
+    return this.recoveryKey.createRawRecoveryKey();
   }
 
   /**

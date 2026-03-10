@@ -13,6 +13,7 @@ import UserDetail from '../components/authority/UserDetail.vue';
 import UserEditCreate from '../components/authority/UserEditCreate.vue';
 import UserList from '../components/authority/UserList.vue';
 import CreateVault from '../components/CreateVault.vue';
+import EmergencyAccessVaultList from '../components/emergencyaccess/EmergencyAccessVaultList.vue';
 import Forbidden from '../components/Forbidden.vue';
 import InitialSetup from '../components/InitialSetup.vue';
 import NotFound from '../components/NotFound.vue';
@@ -66,6 +67,10 @@ const routes: RouteRecordRaw[] = [
     path: '/app', /* required but unused */
     component: AuthenticatedMain,
     children: [
+      {
+        path: 'emergency-access',
+        component: EmergencyAccessVaultList
+      },
       {
         path: 'users',
         beforeEnter: checkRole('admin'),

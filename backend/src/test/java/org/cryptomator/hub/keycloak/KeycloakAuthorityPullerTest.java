@@ -64,7 +64,7 @@ class KeycloakAuthorityPullerTest {
 
 	@Nested
 	@DisplayName("Test add/delete Users")
-	public class AddDeleteUsers {
+	class AddDeleteUsers {
 
 		@DisplayName("test add users")
 		@ParameterizedTest(name = "KCUser: {0} DBUser: {1} AddedUser: {2}")
@@ -146,7 +146,7 @@ class KeycloakAuthorityPullerTest {
 
 	@Nested
 	@DisplayName("Test update Users")
-	public class UpdateUsers {
+	class UpdateUsers {
 
 		@DisplayName("test update users")
 		@ParameterizedTest(name = "KCUser: {0} DBUser: {1} Deleted: {2} Updated: {3}")
@@ -194,7 +194,7 @@ class KeycloakAuthorityPullerTest {
 
 	@Nested
 	@DisplayName("Test add/delete Groups")
-	public class AddDeleteGroups {
+	class AddDeleteGroups {
 
 		@DisplayName("test add groups")
 		@ParameterizedTest(name = "KCGroup: {0} DBGroup: {1} AddedGroup: {2}")

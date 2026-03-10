@@ -21,10 +21,16 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: (id: string) => {
-          if (id.includes('node_modules')) {
-            return 'vendor';
-          } else {
-            return 'main';
+          if (id.includes('/node_modules/@heroicons/')) {
+            return 'heroicons';
+          } else if (id.includes('/node_modules/vue')) {
+            return 'vue';
+          } else if (id.includes('/node_modules/')) {
+            return 'libs';
+          } else if (id.includes('/src/i18n/')) {
+            return 'locales';
+          } else if (id.includes('/src/components/emergencyaccess/')) {
+            return 'emergency-access';
           }
         }
       }

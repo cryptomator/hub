@@ -1,4 +1,8 @@
 <template>
+  <ContentBanner v-if="cfg.entitlements.showTrialHint" type="info" :title="t('trial.enterpriseFeature.title')" class="mb-12">
+    {{ t('trial.enterpriseFeature.description') }} <!-- TODO: link to feature comparison? -->
+  </ContentBanner>
+
   <div v-if="state == State.Loading">
     <div v-if="!onFetchError">
       {{ t('common.loading') }}
@@ -159,6 +163,12 @@
                   </td>
                   <AuditLogDetailsDeviceRegister v-if="auditEvent.type == 'DEVICE_REGISTER'" :event="auditEvent" />
                   <AuditLogDetailsDeviceRemove v-else-if="auditEvent.type == 'DEVICE_REMOVE'" :event="auditEvent" />
+                  <AuditLogDetailsEmergencyAccessSetup v-else-if="auditEvent.type == 'EMERGENCY_ACCESS_SETUP'" :event="auditEvent" />
+                  <AuditLogDetailsEmergencyAccessSettingsUpdated v-else-if="auditEvent.type == 'EMERGENCY_ACCESS_SETTINGS_UPDATED'" :event="auditEvent" />
+                  <AuditLogDetailsEmergencyAccessRecoveryStarted v-else-if="auditEvent.type == 'EMERGENCY_ACCESS_RECOVERY_STARTED'" :event="auditEvent" />
+                  <AuditLogDetailsEmergencyAccessRecoveryApproved v-else-if="auditEvent.type == 'EMERGENCY_ACCESS_RECOVERY_APPROVED'" :event="auditEvent" />
+                  <AuditLogDetailsEmergencyAccessRecoveryCompleted v-else-if="auditEvent.type == 'EMERGENCY_ACCESS_RECOVERY_COMPLETED'" :event="auditEvent" />
+                  <AuditLogDetailsEmergencyAccessRecoveryAborted v-else-if="auditEvent.type == 'EMERGENCY_ACCESS_RECOVERY_ABORTED'" :event="auditEvent" />
                   <AuditLogDetailsSettingWotUpdate v-else-if="auditEvent.type == 'SETTING_WOT_UPDATE'" :event="auditEvent" />
                   <AuditLogDetailsSignedWotId v-else-if="auditEvent.type == 'SIGN_WOT_ID'" :event="auditEvent" />
                   <AuditLogDetailsUserAccountReset v-else-if="auditEvent.type == 'USER_ACCOUNT_RESET'" :event="auditEvent" />
@@ -229,6 +239,12 @@ import auditlog, { AuditEventDto } from '../common/auditlog';
 import { PaymentRequiredError } from '../common/backend';
 import AuditLogDetailsDeviceRegister from './AuditLogDetailsDeviceRegister.vue';
 import AuditLogDetailsDeviceRemove from './AuditLogDetailsDeviceRemove.vue';
+import AuditLogDetailsEmergencyAccessSetup from './AuditLogDetailsEmergencyAccessSetup.vue';
+import AuditLogDetailsEmergencyAccessSettingsUpdated from './AuditLogDetailsEmergencyAccessSettingsUpdated.vue';
+import AuditLogDetailsEmergencyAccessRecoveryStarted from './AuditLogDetailsEmergencyAccessRecoveryStarted.vue';
+import AuditLogDetailsEmergencyAccessRecoveryApproved from './AuditLogDetailsEmergencyAccessRecoveryApproved.vue';
+import AuditLogDetailsEmergencyAccessRecoveryCompleted from './AuditLogDetailsEmergencyAccessRecoveryCompleted.vue';
+import AuditLogDetailsEmergencyAccessRecoveryAborted from './AuditLogDetailsEmergencyAccessRecoveryAborted.vue';
 import AuditLogDetailsSettingWotUpdate from './AuditLogDetailsSettingWotUpdate.vue';
 import AuditLogDetailsSignedWotId from './AuditLogDetailsSignedWotId.vue';
 import AuditLogDetailsUserAccountReset from './AuditLogDetailsUserAccountReset.vue';
@@ -243,6 +259,8 @@ import AuditLogDetailsVaultUpdate from './AuditLogDetailsVaultUpdate.vue';
 import AuditLogUserKeysChange from './AuditLogUserKeysChange.vue';
 import AuditLogUserSetupCodeChanged from './AuditLogUserSetupCodeChanged.vue';
 import FetchError from './FetchError.vue';
+import config, { ConfigDto } from '../common/config';
+import ContentBanner from './ContentBanner.vue';
 
 enum State {
   Loading,
@@ -252,6 +270,7 @@ enum State {
 
 const { t } = useI18n({ useScope: 'global' });
 
+const cfg = ref<ConfigDto>(config.get());
 const state = ref(State.Loading);
 const auditEvents = ref<AuditEventDto[]>([]);
 const onFetchError = ref<Error>();
@@ -299,6 +318,12 @@ const eventTypeOptions = Object.fromEntries(
   Object.entries({
     DEVICE_REGISTER: t('auditLog.details.device.register'),
     DEVICE_REMOVE: t('auditLog.details.device.remove'),
+    EMERGENCY_ACCESS_SETUP: t('auditLog.details.emergencyaccess.setup'),
+    EMERGENCY_ACCESS_SETTINGS_UPDATED: t('auditLog.details.emergencyaccess.settingsUpdated'),
+    EMERGENCY_ACCESS_RECOVERY_STARTED: t('auditLog.details.emergencyaccess.recoveryStarted'),
+    EMERGENCY_ACCESS_RECOVERY_APPROVED: t('auditLog.details.emergencyaccess.recoveryApproved'),
+    EMERGENCY_ACCESS_RECOVERY_COMPLETED: t('auditLog.details.emergencyaccess.recoveryCompleted'),
+    EMERGENCY_ACCESS_RECOVERY_ABORTED: t('auditLog.details.emergencyaccess.recoveryAborted'),
     SETTING_WOT_UPDATE: t('auditLog.details.setting.wot.update'),
     SIGN_WOT_ID: t('auditLog.details.wot.signedIdentity'),
     USER_ACCOUNT_RESET: t('auditLog.details.user.account.reset'),

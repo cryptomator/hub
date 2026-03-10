@@ -91,7 +91,7 @@
 
   <div v-else-if="state == State.EnterVaultDetails">
     <BreadcrumbNav :crumbs="[ { label: t('vaultList.title'), to: '/app/vaults' }, { label: t('createVault.enterVaultDetails.title') } ]"/>
-    <VaultCreationProgress :state="State.EnterVaultDetails" :steps="allCreateStates" class="flex justify-center mb-4" />
+    <VaultCreationProgress :state="State.EnterVaultDetails" :steps="getCurrentStates" class="flex justify-center mb-4" />
     <form ref="form" class="space-y-6" novalidate @submit.prevent="validateVaultDetails()">
       <div class="flex justify-center text-center">
         <div class="bg-white shadow-sm rounded-lg overflow-hidden sm:w-full sm:max-w-lg">
@@ -117,7 +117,7 @@
             </div>
 
             <div>
-              <label for="vaultDescription" class="block text-sm font-medium text-gray-700  text-left">
+              <label for="vaultDescription" class="block text-sm font-medium text-gray-700 text-left">
                 {{ t('createVault.enterVaultDetails.vaultDescription') }}
                 <span class="text-xs text-gray-500">({{ t('common.optional') }})</span>
               </label>
@@ -155,10 +155,98 @@
       </div>
     </form>
   </div>
-
+  <div v-else-if="state == State.DefineEmergencyAccess">
+    <BreadcrumbNav :crumbs="[ { label: t('vaultList.title'), to: '/app/vaults' }, { label: t('createVault.enterVaultDetails.title') } ]"/>
+    <VaultCreationProgress :state="state" :steps="getCurrentStates" class="flex justify-center mb-4" />
+    <form @submit.prevent="validateVaultEmergencyAccess()">
+      <div class="flex justify-center">
+        <div class="bg-white shadow-sm rounded-lg sm:w-full sm:max-w-lg">
+          <div class="mx-auto mt-5 flex items-center justify-center h-12 w-12 rounded-full bg-emerald-100">
+            <ArrowPathIcon class="h-6 w-6 text-emerald-600" aria-hidden="true" />
+          </div>
+          <div class="mt-3 mb-3 px-4 sm:mt-5">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 text-center">
+              {{ t('createVault.emergencyAccessDetails.title') }}
+            </h3>
+            <div class="mt-2">
+              <p class="text-sm text-gray-500 text-center">
+                {{ allowChangingDefaults
+                  ? t('createVault.emergencyAccessDetails.description')
+                  : t('createVault.emergencyAccessDetails.description.adminDefined') }}
+              </p>
+            </div>
+            <div class="relative">
+              <div class="sm:grid sm:grid-cols-2 sm:items-center sm:gap-2 pt-2 pb-2">
+                <label for="coundcilMembers" class="text-sm font-medium text-gray-700 flex items-center">
+                  {{ t('emergencyAccess.label.councilMembers') }}
+                </label>
+              </div>
+              <MultiUserSelectInputGroup
+                :selected-users="emergencyCouncilMembers"
+                :on-search="searchCouncilMembers"
+                :input-visible="allowChangingDefaults"
+                @action="addCouncilMember"
+                @remove="removeCouncilMember"
+              />
+              <div v-if="allowChangingDefaults && minMembers - emergencyCouncilMembers.length > 0" class="flex items-start gap-2 rounded-md border border-yellow-200 bg-yellow-50 p-1 text-sm text-gray-900 mt-1">
+                <span class="leading-5">
+                  <span class="text-gray-600">
+                    {{ t('emergencyAccess.validation.selectMoreCouncilMembers', [minMembers - emergencyCouncilMembers.length]) }}
+                  </span>
+                </span>
+              </div>
+            </div>
+            <label class="block text-sm font-medium text-gray-700 pt-4">
+              {{ t('emergencyAccess.label.exampleRecovery') }}
+            </label>
+            <EmergencyScenarioVisualization
+              :selected-users="emergencyCouncilMembers"
+              :required-key-shares="requiredKeyShares"
+              :min-members="0"
+            />
+            <div v-if="needsRedundancy()" class="mt-4 mr-3">
+              <span
+                class="inline-flex items-center gap-2 rounded-full bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800"
+              >
+                <ExclamationTriangleIcon class="h-4 w-4" aria-hidden="true" />
+                {{ t('emergencyAccess.noRedundancy') }}
+              </span>
+            </div>
+          </div>
+          <div class="bg-gray-50 mt-4 px-4 py-3 sm:px-6 rounded-b-lg">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center sm:space-x-4">
+              <div class="text-sm text-red-900 sm:flex-1 sm:min-w-0">
+                <template v-if="onCreateError">
+                  <p v-if="!(onCreateError instanceof PaymentRequiredError)">
+                    {{ t('common.unexpectedError', [onCreateError.message]) }}
+                  </p>
+                </template>
+              </div>
+              <div class="flex flex-col-reverse sm:flex-row-reverse sm:space-x-reverse sm:space-x-3 flex-shrink-0 mt-4 sm:mt-0">
+                <button
+                  type="submit"
+                  :disabled="isGrantButtonDisabled"
+                  class="inline-flex justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed"
+                >
+                  {{ t('common.next') }}
+                </button>
+                <button
+                  type="button"
+                  class="mt-3 sm:mt-0 inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:text-sm"
+                  @click="backToEnterVaultDetails()" 
+                >
+                  {{ t('common.previous') }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
   <div v-else-if="state == State.ShowRecoveryKey">
     <BreadcrumbNav :crumbs="[ { label: t('vaultList.title'), to: '/app/vaults' }, { label: t('createVault.enterVaultDetails.title') } ]"/>
-    <VaultCreationProgress :state="state" :steps="allCreateStates" class="flex justify-center mb-4" />
+    <VaultCreationProgress :state="state" :steps="getCurrentStates" class="flex justify-center mb-4" />
     <form @submit.prevent="createVault()">
       <div class="flex justify-center text-center">
         <div class="bg-white shadow-sm rounded-lg overflow-hidden sm:max-w-lg">
@@ -237,7 +325,7 @@
                 <button
                   type="button"
                   class="mt-3 sm:mt-0 inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:text-sm"
-                  @click="backToEnterVaultDetails()" 
+                  @click="backToDefineEmergencyAccess()" 
                 >
                   {{ t('common.previous') }}
                 </button>
@@ -251,7 +339,7 @@
 
   <div v-else-if="state == State.Finished">
     <BreadcrumbNav :crumbs="[ { label: t('vaultList.title'), to: '/app/vaults' }, { label: t('createVault.enterVaultDetails.title') } ]"/>
-    <VaultCreationProgress :state="state" :steps="allCreateStates" class="flex justify-center mb-4" />
+    <VaultCreationProgress :state="state" :steps="getCurrentStates" class="flex justify-center mb-4" />
     <div class="flex justify-center">
       <div class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6 text-center sm:w-full sm:max-w-lg">
         <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-emerald-100">
@@ -294,17 +382,20 @@
 <script setup lang="ts">
 import { ClipboardIcon, XCircleIcon } from '@heroicons/vue/20/solid';
 import { ArrowPathIcon, ArrowUpOnSquareIcon, CheckIcon, DocumentCheckIcon, KeyIcon, PlusIcon } from '@heroicons/vue/24/outline';
-import { ArrowDownTrayIcon } from '@heroicons/vue/24/solid';
+import { ArrowDownTrayIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/solid';
 import { saveAs } from 'file-saver';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { AccessGrant, PaymentRequiredError, VaultDto } from '../common/backend';
+import backend, { AccessGrant, ActivatedUser, didCompleteSetup, LicenseUserInfoDto, PaymentRequiredError, SettingsDto, VaultDto } from '../common/backend';
 import { absBackendBaseURL } from '../common/config';
 import { VaultTemplateProducing } from '../common/crypto';
+import { EmergencyAccess } from '../common/emergencyaccess';
 import { DecodeUvfRecoveryKeyError, UniversalVaultFormat } from '../common/universalVaultFormat';
 import userdata from '../common/userdata';
-import { debounce } from '../common/util';
+import { debounce, wordEncoder } from '../common/util';
 import BreadcrumbNav from './BreadcrumbNav.vue';
+import EmergencyScenarioVisualization from './emergencyaccess/EmergencyScenarioVisualization.vue';
+import MultiUserSelectInputGroup from './MultiUserSelectInputGroup.vue';
 import VaultCreationProgress from './VaultCreationProgress.vue';
 import { DecodeVf8RecoveryKeyError, VaultFormat8 } from '../common/vaultFormat8';
 
@@ -312,6 +403,7 @@ enum State {
   Initial,
   EnterRecoveryKey,
   EnterVaultDetails,
+  DefineEmergencyAccess,
   ShowRecoveryKey,
   Finished
 }
@@ -365,12 +457,17 @@ const onUploadError = ref<Error>();
 
 const state = ref(State.Initial);
 const processing = ref(false);
+const settings = ref<SettingsDto>();
+const vaultName = ref('');
+const vaultDescription = ref<string | undefined>();
 const vault = ref<VaultDto>({
   id: crypto.randomUUID(),
   name: '',
   description: '',
   archived: false,
-  creationTime: new Date()
+  creationTime: new Date(),
+  requiredEmergencyKeyShares: 0,
+  emergencyKeyShares: {}
 });
 const copiedRecoveryKey = ref(false);
 const debouncedCopyFinish = debounce(() => copiedRecoveryKey.value = false, 2000);
@@ -387,7 +484,84 @@ const props = defineProps<{
   recover: boolean
 }>();
 
+const emergencyCouncilMembers = computed(() =>
+  [...initialEmergencyCouncilMembers.value, ...addedEmergencyCouncilMembers.value]
+);
+const defaultEmergencyCouncilMembers = ref<ActivatedUser[]>([]);
+const defaultRequiredEmergencyKeyShares = ref<number>(0);
+const allowChangingDefaults = ref<boolean>(false);
+const requiredKeyShares = ref<number>(0);
+const minMembers = ref<number>(0);
+const initialEmergencyCouncilMembers = ref<ActivatedUser[]>([]);
+const addedEmergencyCouncilMembers = ref<ActivatedUser[]>([]);
+
+async function searchCouncilMembers(query: string): Promise<ActivatedUser[]> {
+  const existingIds = new Set(emergencyCouncilMembers.value.map(m => m.id));
+  const authorities = await backend.authorities.search(query, true);
+  return authorities
+    .filter(a => a.type === 'USER')
+    .filter(a => didCompleteSetup(a))
+    .filter(a => !existingIds.has(a.id))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+async function addCouncilMember(authority: ActivatedUser) {
+  const alreadyExists =
+    initialEmergencyCouncilMembers.value.some(u => u.id === authority.id) ||
+    addedEmergencyCouncilMembers.value.some(u => u.id === authority.id);
+  if (!alreadyExists) {
+    addedEmergencyCouncilMembers.value = [...addedEmergencyCouncilMembers.value, authority];
+  }
+}
+
+function removeCouncilMember(user: ActivatedUser) {
+  initialEmergencyCouncilMembers.value = initialEmergencyCouncilMembers.value.filter(u => u.id !== user.id);
+  addedEmergencyCouncilMembers.value = addedEmergencyCouncilMembers.value.filter(u => u.id !== user.id);
+}
+
+async function loadDefaultEmergencyAccessSettings() {
+  try {
+    settings.value = await backend.settings.get();
+    const authorities = await backend.authorities.listSome(settings.value.emergencyCouncilMemberIds);
+    const activatedUsers = authorities
+      .filter((a): a is ActivatedUser => a.type === 'USER' && didCompleteSetup(a))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    defaultEmergencyCouncilMembers.value = activatedUsers;
+    initialEmergencyCouncilMembers.value = [...activatedUsers];
+    allowChangingDefaults.value = settings.value.allowChoosingEmergencyCouncil;
+    defaultRequiredEmergencyKeyShares.value = settings.value.defaultRequiredEmergencyKeyShares;
+    requiredKeyShares.value = settings.value.defaultRequiredEmergencyKeyShares;
+    minMembers.value = settings.value.defaultMinMembers;
+  } catch (error) {
+    console.error('Loading emergency council members failed:', error);
+    defaultRequiredEmergencyKeyShares.value = 0;
+    allowChangingDefaults.value = false;
+  }
+}
+
+const isInvalidKeyShares = computed(() => {
+  return requiredKeyShares.value < 1;
+});
+
+const isInvaildCouncilMembers = computed(() => {
+  return emergencyCouncilMembers.value.length < 1;
+});
+
+const hasTooFewCouncilMembers = computed(() => {
+  return emergencyCouncilMembers.value.length < requiredKeyShares.value;
+});
+
+const isGrantButtonDisabled = computed(() => {
+  return isInvalidKeyShares.value || isInvaildCouncilMembers.value || hasTooFewCouncilMembers.value;
+});
+
 onMounted(initialize);
+const licenseStatus = ref<LicenseUserInfoDto>();
+
+const isCommunityLicense = computed(() => {
+  return !licenseStatus.value?.expiresAt;
+});
 
 async function initialize() {
   if (props.recover) {
@@ -403,8 +577,10 @@ async function initialize() {
         recoveryKeyStr.value = await uvfVault.value.recoveryKey.createRecoveryKey();
         break;
     }
+    await loadDefaultEmergencyAccessSettings();
     state.value = State.EnterVaultDetails;
   }
+  licenseStatus.value = await backend.license.getUserInfo();
 }
 
 async function handleDragEnterAndOver (event: DragEvent){
@@ -466,7 +642,18 @@ async function validateRecoveryKey() {
   await recoverVault();
 }
 
+const getCurrentStates = computed(() => {
+  return isCommunityLicense.value || !settings.value?.enableEmergencyAccess ? communityCreateStates : allCreateStates;
+});
+
 const allCreateStates = [
+  State.EnterVaultDetails,
+  State.DefineEmergencyAccess,
+  State.ShowRecoveryKey,
+  State.Finished,
+];
+
+const communityCreateStates = [
   State.EnterVaultDetails,
   State.ShowRecoveryKey,
   State.Finished,
@@ -499,12 +686,83 @@ async function validateVaultDetails() {
   if (props.recover) {
     await createVault();
   } else {
-    state.value = State.ShowRecoveryKey;
+    if (!isCommunityLicense.value && settings.value?.enableEmergencyAccess)
+      state.value = State.DefineEmergencyAccess;
+    else
+      state.value = State.ShowRecoveryKey;
+  }
+}
+
+async function validateVaultEmergencyAccess(){
+  await splitRecoveryKey();
+  state.value = State.ShowRecoveryKey;
+}
+
+function needsRedundancy(): boolean {
+  return requiredKeyShares.value == emergencyCouncilMembers.value.length;
+}
+
+const vaultKeyShares = ref<Record<string, string>>({});
+
+async function splitRecoveryKey() {
+  try {
+    onCreateError.value = undefined;
+
+    if (requiredKeyShares.value == null || requiredKeyShares.value < 1) {
+      throw new Error(t('grantEmergencyAccessDialog.error.keySharesRequired'));
+    }
+
+    if (emergencyCouncilMembers.value.length < 1) {
+      throw new Error(t('grantEmergencyAccessDialog.error.councilMembersRequired'));
+    }
+
+    if (emergencyCouncilMembers.value.length < requiredKeyShares.value) {
+      throw new Error(
+        t('grantEmergencyAccessDialog.error.tooFewCouncilMembers')
+      );
+    }
+
+    let recoveryKeyBytes: Uint8Array;
+    switch (vaultType.value) {
+      case VaultType.VaultFormat8: {
+        if (!vaultFormat8.value) {
+          throw new Error('Invalid state');
+        }
+        recoveryKeyBytes = await vaultFormat8.value.createPaddedRecoveryKeyBytes();
+        break;
+      }
+      case VaultType.UniversalVaultFormat: {
+        if (!uvfVault.value) {
+          throw new Error('Invalid state');
+        }
+        recoveryKeyBytes = await uvfVault.value.createPaddedRecoveryKeyBytes();
+        break;
+      }
+    }
+
+    vaultKeyShares.value = await EmergencyAccess.split(
+      recoveryKeyBytes,
+      requiredKeyShares.value,
+      ...emergencyCouncilMembers.value
+    );
+    vault.value.requiredEmergencyKeyShares = requiredKeyShares.value;
+    vault.value.emergencyKeyShares = { ...vaultKeyShares.value };
+  } catch (error) {
+    console.error('Splitting recovery key failed.', error);
+    onCreateError.value = error instanceof Error ? error : new Error('Unknown Error');
+    throw error;
   }
 }
 
 function backToEnterVaultDetails(){
   state.value = State.EnterVaultDetails;
+}
+
+function backToDefineEmergencyAccess(){
+  if (isCommunityLicense.value || !settings.value?.enableEmergencyAccess)
+    state.value = State.EnterVaultDetails;
+  else
+    state.value = State.DefineEmergencyAccess;
 }
 
 async function createVault() {

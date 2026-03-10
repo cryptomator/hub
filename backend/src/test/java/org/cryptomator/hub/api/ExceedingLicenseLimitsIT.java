@@ -1,5 +1,6 @@
 package org.cryptomator.hub.api;
 
+import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.quarkus.test.security.oidc.Claim;
@@ -12,9 +13,12 @@ import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.entities.VaultAccess;
+import org.cryptomator.hub.license.HubLicenseEntitlements;
+import org.cryptomator.hub.license.LicenseHolder;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
@@ -23,6 +27,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.mockito.Mockito;
 
 import java.sql.SQLException;
 import java.time.Instant;
@@ -43,7 +48,7 @@ import static org.hamcrest.text.IsEqualIgnoringCase.equalToIgnoringCase;
 })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class ExceedingLicenseLimitsIT {
+class ExceedingLicenseLimitsIT {
 
 	@Inject
 	Group.Repository groupRepo;
@@ -55,6 +60,8 @@ public class ExceedingLicenseLimitsIT {
 	Vault.Repository vaultRepo;
 	@Inject
 	VaultAccess.Repository vaultAccessRepo;
+	@InjectMock
+	LicenseHolder licenseHolder;
 
 	private final VaultResourceIT vaultResourceIT;
 
@@ -112,6 +119,13 @@ public class ExceedingLicenseLimitsIT {
 		userRepo.deleteByIds(List.of("user91", "user92", "user93", "user94", "user95_A"));
 	}
 
+	@BeforeEach
+	void setup() {
+		var entitlements = HubLicenseEntitlements.create().withSeats(5L);
+		Mockito.doReturn(entitlements).when(licenseHolder).getEntitlements();
+		Mockito.doReturn(false).when(licenseHolder).isExpired();
+	}
+
 	@Test
 	@Order(0)
 	@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100001111/access-tokens returns 402 for [user91, user92, user93, user94]")
@@ -167,7 +181,7 @@ public class ExceedingLicenseLimitsIT {
 		Assumptions.assumeTrue(vaultResourceIT.effectiveVaultAccessRepo.countSeatOccupyingUsers() == 5);
 		var vaultId = "7E57C0DE-0000-4000-8000-000100001111";
 
-		var vaultDto = new VaultResource.VaultDto(UUID.fromString(vaultId), "Vault 1", "This is a testvault.", false, Instant.parse("2222-11-11T11:11:11Z"), "doNotUpdate", "doNotUpdate", "someValue", -1, "doNotUpdate", "doNotUpdate", "doNotUpdate");
+		var vaultDto = new VaultResource.VaultDto(UUID.fromString(vaultId), "Vault 1", Instant.parse("2222-11-11T11:11:11Z"), "This is a testvault.", false, 0, Map.of(), "doNotUpdate", "doNotUpdate", "someVaule", -1, "doNotUpdate", "doNotUpdate", "doNotUpdate");
 		given().contentType(ContentType.JSON)
 				.body(vaultDto)
 				.when().put("/vaults/{vaultId}", vaultId)
@@ -193,7 +207,7 @@ public class ExceedingLicenseLimitsIT {
 		Assumptions.assumeTrue(vaultResourceIT.effectiveVaultAccessRepo.countSeatOccupyingUsers() > 5);
 
 		var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-0001FFFF3333");
-		var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", "Test vault 4", false, Instant.parse("2112-12-21T21:12:21Z"), "uvfMetadata3", "uvfKeySet3", "masterkey3", 42, "NaCl", "authPubKey3", "authPrvKey3");
+		var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", Instant.parse("2112-12-21T21:12:21Z"), "Test vault 4", false, 0, Map.of(), "uvfMetadata3", "uvfKeySet3", "masterkey3", 42, "NaCl", "authPubKey3", "authPrvKey3");
 		given().contentType(ContentType.JSON).body(vaultDto)
 				.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-0001FFFF3333")
 				.then().statusCode(402);

@@ -2,8 +2,8 @@ package org.cryptomator.hub.api;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.exceptions.JWTVerificationException;
-import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.InjectMock;
+import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.quarkus.test.security.oidc.Claim;
 import io.quarkus.test.security.oidc.OidcSecurity;
@@ -22,7 +22,6 @@ import org.mockito.Mockito;
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
 
 @QuarkusTest
 @DisplayName("Resource /billing")
@@ -52,22 +51,7 @@ public class BillingResourceIT {
 		private static final String MALFORMED_TOKEN = "hello world";
 
 		@Test
-		@DisplayName("GET /billing returns 200 with empty license self-hosted")
-		void testGetEmptySelfHosted() {
-			Mockito.when(licenseHolder.get()).thenReturn(null);
-			Mockito.when(licenseHolder.getSeats()).thenReturn(5L);
-			when().get("/billing")
-					.then().statusCode(200)
-					.body("hubId", is("42"))
-					.body("hasLicense", is(false))
-					.body("email", nullValue())
-					.body("licensedSeats", is(5)) //community license
-					.body("usedSeats", is(2)) //depends on the flyway test data migration
-					.body("issuedAt", nullValue())
-					.body("expiresAt", nullValue());
-		}
-
-		@Test
+		@Order(2)
 		@DisplayName("PUT /billing/token returns 204 for initial token")
 		void testPutInitialToken() {
 			given().contentType(ContentType.TEXT).body(INITIAL_TOKEN)
@@ -83,7 +67,6 @@ public class BillingResourceIT {
 			when().get("/billing")
 					.then().statusCode(200)
 					.body("hubId", is("42"))
-					.body("hasLicense", is(true))
 					.body("email", is("hub@cryptomator.org"))
 					.body("licensedSeats", is(5))
 					.body("usedSeats", is(2))
@@ -106,7 +89,6 @@ public class BillingResourceIT {
 			when().get("/billing")
 					.then().statusCode(200)
 					.body("hubId", is("42"))
-					.body("hasLicense", is(true))
 					.body("email", is("hub@cryptomator.org"))
 					.body("licensedSeats", is(5))
 					.body("usedSeats", is(2))

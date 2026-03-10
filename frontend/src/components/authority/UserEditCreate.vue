@@ -89,9 +89,9 @@
                 {{ t('userEditCreate.email') }}
               </label>
               <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
-                <input id="email" v-model="data.email" type="email" required :class="[errors.email ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-primary focus:border-primary', 'block w-full max-w-md shadow-sm sm:text-sm rounded-md']"/>
+                <input id="email" v-model="data.email" type="email" :required="emailRequired" :class="[errors.email ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-primary focus:border-primary', 'block w-full max-w-md shadow-sm sm:text-sm rounded-md']"/>
                 <p v-if="errors.email" class="mt-1 text-sm text-red-600">{{ errors.email }}</p>
-                <p v-else-if="data.email && !isValidEmail(data.email?.trim())" class="mt-1 text-sm text-red-600">
+                <p v-else-if="data.email?.trim() && !isValidEmail(data.email.trim())" class="mt-1 text-sm text-red-600">
                   {{ t('userEditCreate.invalidEmail') }}
                 </p>
               </div>
@@ -142,7 +142,7 @@
               <div></div>
               <div class="md:col-span-2 lg:col-span-1">
                 <div class="bg-blue-50 text-gray-900 text-sm rounded-md p-4 flex gap-3 items-start">
-                  <InformationCircleIcon class="w-5 h-5 mt-0.5 text-blue-400 flex-shrink-0" aria-hidden="true" />
+                  <InformationCircleIcon class="w-5 h-5 mt-0.5 text-blue-400 shrink-0" aria-hidden="true" />
                   <p>
                     {{ props.mode === 'EDIT' ? t('userEditCreate.edit.passwordInfo') : t('userEditCreate.create.passwordInfo') }}
                   </p>
@@ -341,10 +341,11 @@ async function validateForm(): Promise<boolean> {
     password: password.value,
     passwordConfirm: passwordConfirm.value,
     isEditMode: props.mode === 'EDIT',
-    pictureUrl: data.pictureUrl,      
+    initialEmail: initialData.value.email,
+    pictureUrl: data.pictureUrl,
     isValidImageUrl: await FormValidator.validateImageUrl(data.pictureUrl)
   });
-  
+
   errors.value = result.errors;
   return result.valid;
 }
@@ -368,6 +369,7 @@ const passwordStrengthColor = computed(() => {
 });
 
 const isValidEmail = FormValidator.isValidEmail;
+const emailRequired = computed(() => FormValidator.isEmailRequired(props.mode === 'EDIT', initialData.value.email));
 
 function evaluatePasswordStrength(pw: string): 'weak' | 'medium' | 'strong' | '' {
   return FormValidator.evaluatePasswordStrength(pw);
@@ -393,7 +395,7 @@ async function onSubmit() {
   data.firstName = data.firstName?.trim();
   data.lastName = data.lastName?.trim();
   data.name = data.name.trim();
-  data.email = data.email.trim();
+  data.email = data.email?.trim();
   data.pictureUrl = data.pictureUrl?.trim();
 
   try {

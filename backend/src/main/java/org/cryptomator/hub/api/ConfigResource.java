@@ -8,6 +8,8 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
+import org.cryptomator.hub.license.HubLicenseEntitlements;
+import org.cryptomator.hub.license.LicenseHolder;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.time.Instant;
@@ -37,8 +39,14 @@ public class ConfigResource {
 	String internalRealmUrl;
 
 	@Inject
+	@ConfigProperty(name = "hub.billing-url", defaultValue = "")
+	String billingUrl;
+
+	@Inject
 	OidcConfigurationMetadata oidcConfData;
 
+	@Inject
+	LicenseHolder license;
 
 	@PermitAll
 	@GET
@@ -49,7 +57,7 @@ public class ConfigResource {
 		var authUri = replacePrefix(oidcConfData.getAuthorizationUri(), trimTrailingSlash(internalRealmUrl), publicRealmUri);
 		var tokenUri = replacePrefix(oidcConfData.getTokenUri(), trimTrailingSlash(internalRealmUrl), publicRealmUri);
 
-		return new ConfigDto(keycloakPublicUrl, keycloakRealm, keycloakClientIdHub, keycloakClientIdCryptomator, authUri, tokenUri, Instant.now().truncatedTo(ChronoUnit.MILLIS), 4);
+		return new ConfigDto(keycloakPublicUrl, keycloakRealm, keycloakClientIdHub, keycloakClientIdCryptomator, authUri, tokenUri, Instant.now().truncatedTo(ChronoUnit.MILLIS), 4, license.getEntitlements(), billingUrl);
 	}
 
 	//visible for testing
@@ -75,7 +83,9 @@ public class ConfigResource {
 	public record ConfigDto(@JsonProperty("keycloakUrl") String keycloakUrl, @JsonProperty("keycloakRealm") String keycloakRealm,
 							@JsonProperty("keycloakClientIdHub") String keycloakClientIdHub, @JsonProperty("keycloakClientIdCryptomator") String keycloakClientIdCryptomator,
 							@JsonProperty("keycloakAuthEndpoint") String authEndpoint, @JsonProperty("keycloakTokenEndpoint") String tokenEndpoint,
-							@JsonProperty("serverTime") Instant serverTime, @JsonProperty("apiLevel") Integer apiLevel) {
+							@JsonProperty("serverTime") Instant serverTime, @JsonProperty("apiLevel") Integer apiLevel,
+							@JsonProperty("entitlements") HubLicenseEntitlements entitlements,
+							@JsonProperty("billingUrl") String billingUrl) {
 	}
 
 }

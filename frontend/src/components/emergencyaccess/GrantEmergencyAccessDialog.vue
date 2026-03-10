@@ -1,0 +1,328 @@
+<template>
+  <TransitionRoot as="template" :show="open" @after-leave="$emit('close')">
+    <Dialog as="div" class="fixed z-10 inset-0 overflow-y-auto" @close="open = false">
+      <TransitionChild
+        as="template"
+        enter="ease-out duration-300"
+        enter-from="opacity-0"
+        enter-to="opacity-100"
+        leave="ease-in duration-200"
+        leave-from="opacity-100"
+        leave-to="opacity-0"
+      >
+        <DialogOverlay class="fixed inset-0 bg-gray-500/75 transition-opacity" />
+      </TransitionChild>
+
+      <div class="fixed inset-0 z-10 overflow-y-auto">
+        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+          <TransitionChild
+            as="template"
+            enter="ease-out duration-300"
+            enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            enter-to="opacity-100 translate-y-0 sm:scale-100"
+            leave="ease-in duration-200"
+            leave-from="opacity-100 translate-y-0 sm:scale-100"
+            leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+          >
+            <DialogPanel
+              class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg"
+            >
+              <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="sm:flex sm:items-start">
+                  <div
+                    class="mx-auto shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10"
+                  >
+                    <ExclamationTriangleIcon class="h-6 w-6 text-red-600" aria-hidden="true" />
+                  </div>
+                  <div class="mt-3 grow text-center sm:mt-0 sm:ml-4 sm:text-left">
+                    <DialogTitle as="h3" class="text-lg leading-6 font-medium text-gray-900">
+                      {{ t('grantEmergencyAccessDialog.title') }}
+                    </DialogTitle>
+                    <div class="mt-2">
+                      <p v-if="allowChangingDefaults" class="text-sm text-gray-500">
+                        {{ t('grantEmergencyAccessDialog.description.selectCouncil') }}
+                      </p>
+                      <p v-else class="text-sm text-gray-500">
+                        {{ t('grantEmergencyAccessDialog.description.default') }}
+                      </p>
+                    </div>
+                    <div class="relative">
+                      <div class="sm:grid sm:items-center sm:gap-2 mt-2 pb-2">
+                        <label for="coundcilMembers" class="text-sm font-medium text-gray-700 flex items-center">
+                          {{ t('emergencyAccess.label.councilMembers') }}
+                        </label>
+                      </div>
+                      <MultiUserSelectInputGroup
+                        :selected-users="emergencyCouncilMembers"
+                        :on-search="searchCouncilMembers"
+                        :input-visible="allowChangingDefaults"
+                        :placeholder="t('common.search.placeholder')"
+                        @action="addCouncilMember"
+                        @remove="removeCouncilMember"
+                      />
+                      
+                      <div v-if="allowChangingDefaults && emergencyCouncilMembers.length < minMembers" class="flex items-start gap-2 rounded-md border border-yellow-200 bg-yellow-50 p-1 text-sm text-gray-900 mt-1">
+                        <span class="leading-5">
+                          <span class="text-gray-600">
+                            {{ t('emergencyAccess.validation.selectMoreCouncilMembers', [minMembers - emergencyCouncilMembers.length]) }}
+                          </span>
+                        </span>
+                      </div>
+                    </div>
+                    <label class="block text-sm font-medium text-gray-700 pt-4">
+                      {{ t('emergencyAccess.label.exampleRecovery') }}
+                    </label>
+                    <EmergencyScenarioVisualization
+                      :selected-users="emergencyCouncilMembers"
+                      :required-key-shares="requiredKeyShares"
+                      :min-members="minMembers"
+                    />
+                    <div v-if="needsRedundancy()" class="mt-4 mr-3">
+                      <span class="inline-flex items-center gap-2 rounded-full bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800">
+                        <ExclamationTriangleIconSolid class="h-4 w-4" aria-hidden="true" />
+                        {{ t('emergencyAccess.noRedundancy') }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <p v-if="onAddCouncilMemberError" class="mt-2 text-right text-sm text-red-600">
+                  {{ onAddCouncilMemberError.message }}
+                </p>
+              </div>
+              <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <!-- Grant-Button -->
+                <button
+                  type="button"
+                  class="w-full inline-flex justify-center rounded-md border border-transparent shadow-xs px-4 py-2 bg-primary text-base font-medium text-white hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed"
+                  :disabled="isGrantButtonDisabled"
+                  @click="splitRecoveryKey()"
+                >
+                  {{ t('grantEmergencyAccessDialog.grant') }}
+                </button>
+                <!-- Close-Button -->
+                <button
+                  type="button"
+                  class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-xs px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:w-auto sm:text-sm"
+                  @click="closeDialog()"
+                >
+                  {{ t('common.close') }}
+                </button>
+              </div>
+            </DialogPanel>
+          </TransitionChild>
+        </div>
+      </div>
+    </Dialog>
+  </TransitionRoot>
+</template>
+
+<script setup lang="ts">
+import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
+import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
+import { ExclamationTriangleIcon as ExclamationTriangleIconSolid } from '@heroicons/vue/24/solid';
+import { ref, watch, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+import backend, { TrustDto, UserDto, VaultDto, didCompleteSetup, ActivatedUser } from '../../common/backend';
+import { AccessTokenProducing, RecoveryKeyProducing } from '../../common/crypto';
+import { wordEncoder } from '../../common/util';
+import { EmergencyAccess } from '../../common/emergencyaccess';
+import MultiUserSelectInputGroup from '../MultiUserSelectInputGroup.vue';
+import EmergencyScenarioVisualization from './EmergencyScenarioVisualization.vue';
+
+const { t } = useI18n({ useScope: 'global' });
+
+const props = defineProps<{
+  vault: VaultDto,
+  vaultKeys: RecoveryKeyProducing
+}>();
+
+const emit = defineEmits<{
+  close: []
+  updated: [updatedVault: VaultDto]
+}>();
+
+defineExpose({
+  show,
+});
+
+const open = ref(false);
+const trusts = ref<TrustDto[]>([]);
+
+const defaultEmergencyCouncilMembers = ref<ActivatedUser[]>([]);
+const defaultRequiredEmergencyKeyShares = ref<number>(0);
+const minMembers = ref<number>(0);
+const allowChangingDefaults = ref<boolean>(false);
+
+const addingCouncilMember = ref(false);
+const onAddCouncilMemberError = ref<Error | null>();
+
+const userQuery = ref('');
+const searchResults = ref<UserDto[]>([]);
+
+const requiredKeyShares = ref<number>(0);
+
+const initialEmergencyCouncilMembers = ref<ActivatedUser[]>([]);
+const addedEmergencyCouncilMembers = ref<ActivatedUser[]>([]);
+
+const emergencyCouncilMembers = computed(() =>
+  [...initialEmergencyCouncilMembers.value, ...addedEmergencyCouncilMembers.value]
+);
+
+const randomSelectionInterval = ref<ReturnType<typeof setInterval> | null>(null);
+
+const isInvalidKeyShares = computed(() => {
+  return requiredKeyShares.value < 1;
+});
+
+const isInvaildCouncilMembers = computed(() => {
+  return emergencyCouncilMembers.value.length < 1;
+});
+
+const hasTooFewCouncilMembers = computed(() => {
+  return emergencyCouncilMembers.value.length < requiredKeyShares.value || (allowChangingDefaults.value && emergencyCouncilMembers.value.length < minMembers.value);
+});
+
+const isGrantButtonDisabled = computed(() => {
+  return isInvalidKeyShares.value || isInvaildCouncilMembers.value || hasTooFewCouncilMembers.value;
+});
+
+watch(userQuery, async (newQuery) => {
+  const trimmedQuery = newQuery.trim();
+  if (trimmedQuery.length > 0) {
+    searchResults.value = await searchCouncilMembers(trimmedQuery);
+  } else {
+    searchResults.value = [];
+  }
+});
+
+async function show() {
+  open.value = true;
+  await loadDefaultSettings();
+  requiredKeyShares.value = defaultRequiredEmergencyKeyShares.value;
+  initialEmergencyCouncilMembers.value = [...defaultEmergencyCouncilMembers.value];
+  addedEmergencyCouncilMembers.value = [];
+  await refreshTrusts();
+}
+
+function closeDialog() {
+  open.value = false;
+  if (randomSelectionInterval.value) {
+    clearInterval(randomSelectionInterval.value);
+    randomSelectionInterval.value = null;
+  }
+}
+
+function needsRedundancy(): boolean {
+  return requiredKeyShares.value == emergencyCouncilMembers.value.length;
+}
+
+async function searchCouncilMembers(query: string): Promise<ActivatedUser[]> {
+  const existingIds = new Set(emergencyCouncilMembers.value.map(m => m.id));
+  const authorities = await backend.authorities.search(query, true);
+  return authorities
+    .filter(a => a.type === 'USER')
+    .filter(a => didCompleteSetup(a)) // only include users with a public key
+    .filter(a => !existingIds.has(a.id))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+async function addCouncilMember(authority: ActivatedUser) {
+  onAddCouncilMemberError.value = null;
+  try {
+    const alreadyExists =
+      initialEmergencyCouncilMembers.value.some(u => u.id === authority.id) ||
+      addedEmergencyCouncilMembers.value.some(u => u.id === authority.id);
+
+    if (!alreadyExists) {
+      addedEmergencyCouncilMembers.value = [...addedEmergencyCouncilMembers.value, authority];
+    }   
+    addingCouncilMember.value = false;
+  } catch (error) {
+    console.error('Adding council member failed.', error);
+    onAddCouncilMemberError.value = error instanceof Error ? error : new Error('Unknown Error');
+  }
+}
+
+function removeCouncilMember(user: ActivatedUser) {
+  initialEmergencyCouncilMembers.value = initialEmergencyCouncilMembers.value.filter(u => u.id !== user.id);
+  addedEmergencyCouncilMembers.value = addedEmergencyCouncilMembers.value.filter(u => u.id !== user.id);
+}
+
+function resetCouncilMembers() {
+  initialEmergencyCouncilMembers.value = [];
+  addedEmergencyCouncilMembers.value = [];
+}
+
+async function splitRecoveryKey() {
+  try {
+    onAddCouncilMemberError.value = null;
+
+    if (requiredKeyShares.value == null || requiredKeyShares.value < 1) {
+      throw new Error(t('grantEmergencyAccessDialog.error.keySharesRequired'));
+    }
+
+    if (emergencyCouncilMembers.value.length < 1) {
+      throw new Error(t('grantEmergencyAccessDialog.error.councilMembersRequired'));
+    }
+
+    if (emergencyCouncilMembers.value.length < requiredKeyShares.value) {
+      throw new Error(
+        t('grantEmergencyAccessDialog.error.tooFewCouncilMembers')
+      );
+    }
+
+    if (emergencyCouncilMembers.value.length < requiredKeyShares.value) {
+      throw new Error(
+        t('grantEmergencyAccessDialog.error.tooFewCouncilMembers')
+      );
+    }
+
+    const recoveryKeyBytes = await props.vaultKeys.createPaddedRecoveryKeyBytes();
+    const keyShares = await EmergencyAccess.split(recoveryKeyBytes, requiredKeyShares.value, ...emergencyCouncilMembers.value);
+
+    const updatedVault = await backend.vaults.createOrUpdateVault({
+      ...props.vault,
+      requiredEmergencyKeyShares: requiredKeyShares.value,
+      emergencyKeyShares: keyShares
+    });
+
+    emit('updated', updatedVault);
+    open.value = false;
+  } catch (error) {
+    console.error('Granting emergency access failed.', error);
+    onAddCouncilMemberError.value = error instanceof Error ? error : new Error('Unknown Error');
+  }
+}
+
+async function loadDefaultSettings() {
+  try {
+    const settings = await backend.settings.get();
+    defaultEmergencyCouncilMembers.value = (await backend.authorities.listSome(settings.emergencyCouncilMemberIds))
+      .filter(a => a.type === 'USER')
+      .filter(a => didCompleteSetup(a)); // only include users with a public key
+    
+    const authorities = await backend.authorities.listSome(settings.emergencyCouncilMemberIds);
+    const sortedActivatedUsers = authorities
+      .filter((a): a is ActivatedUser => a.type === 'USER' && didCompleteSetup(a))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    defaultEmergencyCouncilMembers.value = [...sortedActivatedUsers];
+    initialEmergencyCouncilMembers.value = [...sortedActivatedUsers];
+
+    allowChangingDefaults.value = settings.allowChoosingEmergencyCouncil;
+    minMembers.value = settings.defaultMinMembers;
+    defaultRequiredEmergencyKeyShares.value = settings.defaultRequiredEmergencyKeyShares;
+  } catch (error) {
+    console.error('Loading emergency council members failed:', error);
+    // TODO: don't set defaults, hard-fail with error message instead
+    resetCouncilMembers();
+    defaultRequiredEmergencyKeyShares.value = 0;
+    allowChangingDefaults.value = false;
+  }
+}
+
+async function refreshTrusts() {
+  trusts.value = await backend.trust.listTrusted();
+}
+</script>

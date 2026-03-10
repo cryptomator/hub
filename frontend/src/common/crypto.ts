@@ -61,6 +61,16 @@ export interface VaultTemplateProducing {
 
 }
 
+export interface RecoveryKeyProducing {
+
+  /**
+   * Creates a recovery key and pads it to a multiple of 3 bytes (if necessary), so it can be safely encoded using both base64 and the word encoder.
+   * @return The recovery key as a byte array
+   */
+  createPaddedRecoveryKeyBytes(): Promise<Uint8Array>;
+
+}
+
 /**
  * Represents a vault member by their public key.
  */

@@ -17,6 +17,12 @@ import org.cryptomator.hub.entities.VaultAccess;
 import org.cryptomator.hub.entities.events.AuditEvent;
 import org.cryptomator.hub.entities.events.DeviceRegisteredEvent;
 import org.cryptomator.hub.entities.events.DeviceRemovedEvent;
+import org.cryptomator.hub.entities.events.EmergencyAccessRecoveryAbortedEvent;
+import org.cryptomator.hub.entities.events.EmergencyAccessRecoveryApprovedEvent;
+import org.cryptomator.hub.entities.events.EmergencyAccessRecoveryCompletedEvent;
+import org.cryptomator.hub.entities.events.EmergencyAccessRecoveryStartedEvent;
+import org.cryptomator.hub.entities.events.EmergencyAccessSettingsUpdatedEvent;
+import org.cryptomator.hub.entities.events.EmergencyAccessSetupEvent;
 import org.cryptomator.hub.entities.events.SettingWotUpdateEvent;
 import org.cryptomator.hub.entities.events.SignedWotIdEvent;
 import org.cryptomator.hub.entities.events.UserAccountResetEvent;
@@ -44,6 +50,11 @@ import java.util.UUID;
 @Path("/auditlog")
 public class AuditLogResource {
 
+	private static final Set<String> EVENT_TYPES = Set.of(DeviceRegisteredEvent.TYPE, DeviceRemovedEvent.TYPE, UserAccountResetEvent.TYPE, UserKeysChangeEvent.TYPE, UserSetupCodeChangeEvent.TYPE,
+			SettingWotUpdateEvent.TYPE, SignedWotIdEvent.TYPE, VaultCreatedEvent.TYPE, VaultUpdatedEvent.TYPE, VaultAccessGrantedEvent.TYPE,
+			VaultKeyRetrievedEvent.TYPE, VaultMemberAddedEvent.TYPE, VaultMemberRemovedEvent.TYPE, VaultMemberUpdatedEvent.TYPE, VaultOwnershipClaimedEvent.TYPE,
+			EmergencyAccessSetupEvent.TYPE, EmergencyAccessSettingsUpdatedEvent.TYPE, EmergencyAccessRecoveryStartedEvent.TYPE, EmergencyAccessRecoveryApprovedEvent.TYPE, EmergencyAccessRecoveryCompletedEvent.TYPE, EmergencyAccessRecoveryAbortedEvent.TYPE);
+
 	@Inject
 	AuditEvent.Repository auditEventRepo;
 	@Inject
@@ -64,30 +75,33 @@ public class AuditLogResource {
 	@APIResponse(responseCode = "402", description = "Community license used or license expired")
 	@APIResponse(responseCode = "403", description = "requesting user does not have admin role")
 	public List<AuditEventDto> getAllEvents(@QueryParam("startDate") Instant startDate, @QueryParam("endDate") Instant endDate, @QueryParam("type") List<String> type, @QueryParam("paginationId") Long paginationId, @QueryParam("order") @DefaultValue("desc") String order, @QueryParam("pageSize") @DefaultValue("20") int pageSize) {
-		if (!license.isSet() || license.isExpired()) {
+		if (license.getEntitlements().auditLogRetentionDays() == 0 || license.isExpired()) {
 			throw new PaymentRequiredException("Community license used or license expired");
 		}
+		Instant retentionThreshold = license.getEntitlements().auditLogRetentionThreshold();
 
 		if (startDate == null || endDate == null) {
 			throw new BadRequestException("startDate and endDate must be specified");
 		} else if (startDate.isAfter(endDate)) {
 			throw new BadRequestException("startDate must be before endDate");
+		} else if (endDate.isBefore(retentionThreshold)) {
+			throw new PaymentRequiredException("queried date range predates audit log retention period");
 		} else if (!(order.equals("desc") || order.equals("asc"))) {
 			throw new BadRequestException("order must be either 'asc' or 'desc'");
 		} else if (pageSize < 1 || pageSize > 100) {
 			throw new BadRequestException("pageSize must be between 1 and 100");
 		} else if (type == null) {
 			throw new BadRequestException("type must be specified");
-		} else if (!type.isEmpty()) {
-			var validTypes = Set.of(DeviceRegisteredEvent.TYPE, DeviceRemovedEvent.TYPE, UserAccountResetEvent.TYPE, UserKeysChangeEvent.TYPE, UserSetupCodeChangeEvent.TYPE,
-					SettingWotUpdateEvent.TYPE, SignedWotIdEvent.TYPE, VaultCreatedEvent.TYPE, VaultUpdatedEvent.TYPE, VaultAccessGrantedEvent.TYPE,
-					VaultKeyRetrievedEvent.TYPE, VaultMemberAddedEvent.TYPE, VaultMemberRemovedEvent.TYPE, VaultMemberUpdatedEvent.TYPE, VaultOwnershipClaimedEvent.TYPE);
-			if (!validTypes.containsAll(type)) {
-				throw new BadRequestException("Invalid event type provided");
-			}
 		} else if (paginationId == null) {
 			throw new BadRequestException("paginationId must be specified");
 		}
+
+		if (!type.isEmpty() && !EVENT_TYPES.containsAll(type)) {
+			throw new BadRequestException("Invalid event type provided");
+		}
+
+		// cut off startDate at retention threshold
+		startDate = startDate.isBefore(retentionThreshold) ? retentionThreshold : startDate;
 
 		return auditEventRepo.findAllInPeriod(startDate, endDate, type, paginationId, order.equals("asc"), pageSize).map(AuditEventDto::fromEntity).toList();
 	}
@@ -108,7 +122,13 @@ public class AuditLogResource {
 			@JsonSubTypes.Type(value = VaultMemberAddedEventDto.class, name = VaultMemberAddedEvent.TYPE), //
 			@JsonSubTypes.Type(value = VaultMemberRemovedEventDto.class, name = VaultMemberRemovedEvent.TYPE), //
 			@JsonSubTypes.Type(value = VaultMemberUpdatedEventDto.class, name = VaultMemberUpdatedEvent.TYPE), //
-			@JsonSubTypes.Type(value = VaultOwnershipClaimedEventDto.class, name = VaultOwnershipClaimedEvent.TYPE) //
+			@JsonSubTypes.Type(value = VaultOwnershipClaimedEventDto.class, name = VaultOwnershipClaimedEvent.TYPE), //
+			@JsonSubTypes.Type(value = EmergencyAccessSetupEventDto.class, name = EmergencyAccessSetupEvent.TYPE), //
+			@JsonSubTypes.Type(value = EmergencyAccessSettingsUpdatedEventDto.class, name = EmergencyAccessSettingsUpdatedEvent.TYPE), //
+			@JsonSubTypes.Type(value = EmergencyAccessRecoveryStartedEventDto.class, name = EmergencyAccessRecoveryStartedEvent.TYPE), //
+			@JsonSubTypes.Type(value = EmergencyAccessRecoveryApprovedEventDto.class, name = EmergencyAccessRecoveryApprovedEvent.TYPE), //
+			@JsonSubTypes.Type(value = EmergencyAccessRecoveryCompletedEventDto.class, name = EmergencyAccessRecoveryCompletedEvent.TYPE), //
+			@JsonSubTypes.Type(value = EmergencyAccessRecoveryAbortedEventDto.class, name = EmergencyAccessRecoveryAbortedEvent.TYPE), //
 	})
 	public interface AuditEventDto {
 
@@ -135,6 +155,12 @@ public class AuditLogResource {
 				case VaultMemberRemovedEvent evt -> new VaultMemberRemovedEventDto(evt.getId(), evt.getTimestamp(), VaultMemberRemovedEvent.TYPE, evt.getRemovedBy(), evt.getVaultId(), evt.getAuthorityId());
 				case VaultMemberUpdatedEvent evt -> new VaultMemberUpdatedEventDto(evt.getId(), evt.getTimestamp(), VaultMemberUpdatedEvent.TYPE, evt.getUpdatedBy(), evt.getVaultId(), evt.getAuthorityId(), evt.getRole());
 				case VaultOwnershipClaimedEvent evt -> new VaultOwnershipClaimedEventDto(evt.getId(), evt.getTimestamp(), VaultOwnershipClaimedEvent.TYPE, evt.getClaimedBy(), evt.getVaultId());
+				case EmergencyAccessSetupEvent evt -> new EmergencyAccessSetupEventDto(evt.getId(), evt.getTimestamp(), EmergencyAccessSetupEvent.TYPE, evt.getVaultId(), evt.getOwnerId(), evt.getSettings(), evt.getIpAddress());
+				case EmergencyAccessSettingsUpdatedEvent evt -> new EmergencyAccessSettingsUpdatedEventDto(evt.getId(), evt.getTimestamp(), EmergencyAccessSettingsUpdatedEvent.TYPE, evt.getAdminId(), evt.isEmergencyAccessEnabled(), evt.getCouncilMemberIds(), evt.getRequiredKeyShares(), evt.getMinMembers(), evt.isAllowChoosingCouncil());
+				case EmergencyAccessRecoveryStartedEvent evt -> new EmergencyAccessRecoveryStartedEventDto(evt.getId(), evt.getTimestamp(), EmergencyAccessRecoveryStartedEvent.TYPE, evt.getVaultId(), evt.getProcessId(), evt.getCouncilMemberId(), evt.getProcessType(), evt.getDetails());
+				case EmergencyAccessRecoveryApprovedEvent evt -> new EmergencyAccessRecoveryApprovedEventDto(evt.getId(), evt.getTimestamp(), EmergencyAccessRecoveryApprovedEvent.TYPE, evt.getProcessId(), evt.getCouncilMemberId(), evt.getIpAddress());
+				case EmergencyAccessRecoveryCompletedEvent evt -> new EmergencyAccessRecoveryCompletedEventDto(evt.getId(), evt.getTimestamp(), EmergencyAccessRecoveryCompletedEvent.TYPE, evt.getProcessId(), evt.getCouncilMemberId(), evt.getIpAddress());
+				case EmergencyAccessRecoveryAbortedEvent evt -> new EmergencyAccessRecoveryAbortedEventDto(evt.getId(), evt.getTimestamp(), EmergencyAccessRecoveryAbortedEvent.TYPE, evt.getVaultId(), evt.getProcessId(), evt.getCouncilMemberId(), evt.getIpAddress());
 				default -> throw new UnsupportedOperationException("conversion not implemented for event type " + entity.getClass());
 			};
 		}
@@ -193,6 +219,33 @@ public class AuditLogResource {
 	}
 
 	record VaultOwnershipClaimedEventDto(long id, Instant timestamp, String type, @JsonProperty("claimedBy") String claimedBy, @JsonProperty("vaultId") UUID vaultId) implements AuditEventDto {
+	}
+
+	record EmergencyAccessSetupEventDto(long id, Instant timestamp, String type, @JsonProperty("vaultId") UUID vaultId, @JsonProperty("ownerId") String ownerId, @JsonProperty("settings") String settings,
+										@JsonProperty("ipAddress") String ipAddress) implements AuditEventDto {
+	}
+
+	record EmergencyAccessSettingsUpdatedEventDto(long id, Instant timestamp, String type, @JsonProperty("adminId") String adminId, @JsonProperty("enableEmergencyAccess") boolean enableEmergencyAccess,
+												  @JsonProperty("councilMemberIds") String councilMemberIds,
+												  @JsonProperty("requiredKeyShares") int requiredKeyShares, @JsonProperty("minMembers") int minMembers,
+												  @JsonProperty("allowChoosingCouncil") boolean allowChoosingCouncil) implements AuditEventDto {
+	}
+
+	record EmergencyAccessRecoveryStartedEventDto(long id, Instant timestamp, String type, @JsonProperty("vaultId") UUID vaultId, @JsonProperty("processId") UUID processId,
+												  @JsonProperty("councilMemberId") String councilMemberId, @JsonProperty("recoveryType") String recoveryType,
+												  @JsonProperty("details") String details) implements AuditEventDto {
+	}
+
+	record EmergencyAccessRecoveryApprovedEventDto(long id, Instant timestamp, String type, @JsonProperty("processId") UUID processId, @JsonProperty("councilMemberId") String councilMemberId,
+												   @JsonProperty("ipAddress") String ipAddress) implements AuditEventDto {
+	}
+
+	record EmergencyAccessRecoveryCompletedEventDto(long id, Instant timestamp, String type, @JsonProperty("processId") UUID processId, @JsonProperty("councilMemberId") String councilMemberId,
+													@JsonProperty("ipAddress") String ipAddress) implements AuditEventDto {
+	}
+
+	record EmergencyAccessRecoveryAbortedEventDto(long id, Instant timestamp, String type, @JsonProperty("vaultId") UUID vaultId, @JsonProperty("processId") UUID processId,
+												  @JsonProperty("councilMemberId") String councilMemberId, @JsonProperty("ipAddress") String ipAddress) implements AuditEventDto {
 	}
 
 }
