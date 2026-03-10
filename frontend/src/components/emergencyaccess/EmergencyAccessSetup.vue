@@ -2,7 +2,7 @@
   <div class="relative">
     <div class="flex items-center justify-between gap-2 pt-2 pb-2">
       <label :for="id + '-cm'" class="text-sm font-medium text-gray-700 flex items-center">
-        {{ t('emergencyAccess.label.councilMembers') }}
+        {{ t('emergencyAccessDialog.label.councilMembersAtLeast', [minMembers]) }}
       </label>
       <button
         v-if="hasCouncilChanges"
@@ -20,19 +20,11 @@
       :on-search="searchCouncilMembers"
       :input-id="id + '-cm'"
       :input-visible="allowChangingDefaults"
+      :error-message="t('emergencyAccess.validation.minimumMembers', [minMembers])"
+      :has-error="hasValidationErrors"
       @action="addCouncilMember"
       @remove="removeCouncilMember"
     />
-    <div
-      v-if="allowChangingDefaults && emergencyCouncilMembers.length < minMembers"
-      class="mt-1 flex items-start gap-2 rounded-md border border-yellow-200 bg-yellow-50 p-1 text-sm text-gray-900"
-    >
-      <span class="leading-5">
-        <span class="text-gray-600">
-          {{ t('emergencyAccess.validation.selectMoreCouncilMembers', [minMembers - emergencyCouncilMembers.length]) }}
-        </span>
-      </span>
-    </div>
   </div>
 
   <span class="block text-sm font-medium text-gray-700 pt-4">
@@ -82,7 +74,7 @@ const emergencyCouncilMembers = ref<ActivatedUser[]>([]);
 
 // validation:
 const isInvalidKeyShares = computed(() => requiredKeyShares.value < 1);
-const isInvaildCouncilMembers = computed(() => emergencyCouncilMembers.value.length < 1);
+const isInvalidCouncilMembers = computed(() => emergencyCouncilMembers.value.length < 1);
 const hasTooFewCouncilMembers = computed(() =>
   emergencyCouncilMembers.value.length < requiredKeyShares.value
   || (allowChangingDefaults.value && emergencyCouncilMembers.value.length < minMembers.value)
@@ -96,7 +88,7 @@ const hasCouncilChanges = computed(() => {
   return emergencyCouncilMembers.value.some(member => !defaultIds.has(member.id));
 });
 const hasValidationErrors = computed(() =>
-  isInvalidKeyShares.value || isInvaildCouncilMembers.value || hasTooFewCouncilMembers.value
+  isInvalidKeyShares.value || isInvalidCouncilMembers.value || hasTooFewCouncilMembers.value
 );
 
 defineExpose({
