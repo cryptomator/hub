@@ -35,13 +35,11 @@
             <template v-for="(item, index) in randomCouncilSelectionWithPluses" :key="item.id">
               <span
                 v-if="item.type === 'user' && index <= 5"
-                class="pill inline-flex items-center justify-between border border-grey bg-white text-sm font-medium px-2 py-1 rounded-full shadow-sm absolute"
+                class="pill inline-flex items-center justify-between border border-grey bg-white text-sm px-2 py-1 rounded-full shadow-sm gap-1 absolute"
                 :style="{ left: `${calcLeft(index)}px`, width: pillWidth + 'px', zIndex: 1 }"
               >
-                <div class="inline-flex items-center min-w-0">
-                  <img :src="item.user!.pictureUrl" class="w-4 h-4 rounded-full mr-1 shrink-0" />
-                  <span class="truncate">{{ item.user!.name }}</span>
-                </div>
+                <img :src="item.user!.pictureUrl" class="w-4 h-4 rounded-full shrink-0" />
+                <span class="truncate">{{ item.user!.name }}</span>
                 <SegmentRing
                   :start-index="Math.ceil(index / 2)"
                   :total="requiredKeyShares"
