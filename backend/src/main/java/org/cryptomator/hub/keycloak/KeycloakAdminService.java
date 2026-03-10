@@ -21,6 +21,7 @@ import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.GroupRepresentation;
+import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -204,6 +205,10 @@ public class KeycloakAdminService {
 		dbUser.setEmail(keycloakUser.getEmail());
 		dbUser.setFirstName(keycloakUser.getFirstName());
 		dbUser.setLastName(keycloakUser.getLastName());
+		var kcRoleNames = userResource.roles().realmLevel().listEffective().stream()
+				.map(RoleRepresentation::getName)
+				.toList();
+		dbUser.setRealmRoles(RealmRole.fromKcNames(kcRoleNames).stream().map(RealmRole::kcName).toArray(String[]::new));
 
 		var attrs = keycloakUser.getAttributes();
 		if (attrs != null && attrs.containsKey("picture")) {
