@@ -230,6 +230,7 @@
   "recoveryDialog.error.invalidRecoveryType": "無效的復原程序類型。",
   "recoveryDialog.error.processAlreadyExists": "這個類型的復原程序已經存在。",
   "recoveryDialog.error.noOwnerSelected": "至少選擇一位擁有者。",
+  "recoveryDialog.error.notEnoughCouncilMembers": "沒有選擇足夠數量的委員會成員。",
   "editVaultMetadataDialog.title": "編輯檔案庫後設資料",
   "editVaultMetadataDialog.description": "更新檔案庫名稱和描述。",
   "editVaultMetadataDialog.vaultName": "加密檔案庫名稱",
