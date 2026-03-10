@@ -375,16 +375,23 @@ public class UsersResource {
 				.map(eva -> VaultResource.VaultDtoWithRole.from(eva.getVault(), eva.getRole()))
 				.toList();
 
-		// Fetch devices (modern devices)
-		Set<DeviceResource.DeviceDto> devices = user.getDevices().stream()
-				.map(DeviceResource.DeviceDto::fromEntity)
-				.collect(Collectors.toSet());
+		// Fetch devices (modern devices) with last access
+		var deviceMap = user.getDevices().stream().collect(Collectors.toMap(Device::getId, Function.identity()));
+		var deviceEvents = auditEventRepo.findLastVaultKeyRetrieve(deviceMap.keySet()).collect(Collectors.toMap(VaultKeyRetrievedEvent::getDeviceId, Function.identity()));
+		Set<DeviceResource.DeviceDto> devices = deviceMap.values().stream().map(d -> {
+			var event = deviceEvents.get(d.getId());
+			return DeviceResource.DeviceDto.fromEntity(d, event);
+		}).collect(Collectors.toSet());
 
-		// Fetch legacy devices
+		// Fetch legacy devices with last access
 		@SuppressWarnings("removal")
-		Set<DeviceResource.DeviceDto> legacyDevices = user.getLegacyDevices().stream()
-				.map(DeviceResource.DeviceDto::fromEntity)
-				.collect(Collectors.toSet());
+		var legacyDeviceMap = user.getLegacyDevices().stream().collect(Collectors.toMap(LegacyDevice::getId, Function.identity()));
+		var legacyDeviceEvents = auditEventRepo.findLastVaultKeyRetrieve(legacyDeviceMap.keySet()).collect(Collectors.toMap(VaultKeyRetrievedEvent::getDeviceId, Function.identity()));
+		@SuppressWarnings("removal")
+		Set<DeviceResource.DeviceDto> legacyDevices = legacyDeviceMap.values().stream().map(d -> {
+			var event = legacyDeviceEvents.get(d.getId());
+			return DeviceResource.DeviceDto.fromEntity(d, event);
+		}).collect(Collectors.toSet());
 
 		return UserDto.justPublicInfo(user).withDetails(
 				groups,

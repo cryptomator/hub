@@ -18,17 +18,17 @@
       <input :id="'deviceSearch' + id" v-model="deviceQuery" :placeholder="t('common.search.placeholder')" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs text-sm border-gray-300 rounded-md disabled:bg-gray-200" />
     </div>
     <div>
-      <table class="w-full table-fixed divide-y divide-gray-200" :aria-describedby="'deviceListTitle' + id">
+      <table class="w-full divide-y divide-gray-200" :aria-describedby="'deviceListTitle' + id">
         <!-- Desktop Header -->
         <thead v-if="filteredDevices.length != 0" class="bg-gray-50 hidden sm:table-header-group">
           <tr>
             <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               {{ t('common.device') }}
             </th>
-            <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
               {{ t('legacyDeviceList.added') }}
             </th>
-            <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
               <span class="inline-flex items-center gap-1">
                 {{ t('legacyDeviceList.lastAccess') }}
                 <div class="relative group" :title="t('legacyDeviceList.lastAccess.toolTip')">
@@ -62,11 +62,11 @@
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                 {{ d(device.creationTime, 'long') }}
               </td>
-              <td class="h-17 px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                <div v-if="device.lastAccessTime">
+              <td class="px-6 py-4 text-sm text-gray-500">
+                <div v-if="device.lastAccessTime" class="whitespace-nowrap">
                   {{ d(device.lastAccessTime, 'long') }}
                 </div>
-                <div v-if="device.lastIpAddress" class="text-xs text-gray-400">
+                <div v-if="device.lastIpAddress" class="whitespace-nowrap text-xs text-gray-400">
                   {{ device.lastIpAddress }}
                 </div>
               </td>
