@@ -30,12 +30,12 @@
           <TransitionGroup
             name="pill"
             tag="div"
-            class="relative flex flex-wrap gap-2 pb-8.5"
+            class="relative flex flex-wrap gap-2 pb-8.5 text-sm text-gray-800"
           >
             <template v-for="(item, index) in randomCouncilSelectionWithPluses" :key="item.id">
               <span
                 v-if="item.type === 'user' && index <= 5"
-                class="pill inline-flex items-center justify-between border border-grey bg-white text-sm px-2 py-1 rounded-full shadow-sm gap-1 absolute"
+                class="pill inline-flex items-center justify-between border border-grey bg-white px-2 py-1 rounded-full shadow-sm gap-1 absolute"
                 :style="{ left: `${calcLeft(index)}px`, width: pillWidth + 'px', zIndex: 1 }"
               >
                 <img :src="item.user!.pictureUrl" class="w-4 h-4 rounded-full shrink-0" />
