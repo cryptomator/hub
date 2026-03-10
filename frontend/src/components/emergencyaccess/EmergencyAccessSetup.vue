@@ -1,9 +1,19 @@
 <template>
   <div class="relative">
-    <div class="sm:grid sm:items-center sm:gap-2 pt-2 pb-2">
+    <div class="flex items-center justify-between gap-2 pt-2 pb-2">
       <label :for="id + '-cm'" class="text-sm font-medium text-gray-700 flex items-center">
         {{ t('emergencyAccess.label.councilMembers') }}
       </label>
+      <button
+        v-if="hasCouncilChanges"
+        type="button"
+        class="inline-flex cursor-pointer items-center justify-center rounded text-primary hover:text-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-primary focus:ring-offset-2"
+        :aria-label="t('common.reset')"
+        :title="t('common.reset')"
+        @click="resetCouncilMembers()"
+      >
+        <ArrowUturnLeftIcon class="h-4 w-4" aria-hidden="true" />
+      </button>
     </div>
     <MultiUserSelectInputGroup
       :selected-users="emergencyCouncilMembers"
@@ -42,7 +52,7 @@
 </template>
 
 <script setup lang="ts">
-import { ExclamationTriangleIcon } from '@heroicons/vue/24/solid';
+import { ArrowUturnLeftIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/solid';
 import { useId, computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { ActivatedUser, didCompleteSetup } from '../../common/backend';
@@ -77,6 +87,14 @@ const hasTooFewCouncilMembers = computed(() =>
   emergencyCouncilMembers.value.length < requiredKeyShares.value
   || (allowChangingDefaults.value && emergencyCouncilMembers.value.length < minMembers.value)
 );
+const hasCouncilChanges = computed(() => {
+  if (emergencyCouncilMembers.value.length !== defaultEmergencyCouncilMembers.value.length) {
+    return true;
+  }
+
+  const defaultIds = new Set(defaultEmergencyCouncilMembers.value.map(member => member.id));
+  return emergencyCouncilMembers.value.some(member => !defaultIds.has(member.id));
+});
 const hasValidationErrors = computed(() =>
   isInvalidKeyShares.value || isInvaildCouncilMembers.value || hasTooFewCouncilMembers.value
 );
@@ -153,5 +171,9 @@ function addCouncilMember(authority: ActivatedUser) {
 
 function removeCouncilMember(user: ActivatedUser) {
   emergencyCouncilMembers.value = emergencyCouncilMembers.value.filter(u => u.id !== user.id);
+}
+
+function resetCouncilMembers() {
+  emergencyCouncilMembers.value = [...defaultEmergencyCouncilMembers.value];
 }
 </script>
