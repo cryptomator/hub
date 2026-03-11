@@ -2,10 +2,10 @@
   <div class="relative">
     <div class="flex items-center justify-between gap-2 pt-2 pb-2">
       <label :for="id + '-cm'" class="text-sm font-medium text-gray-700 flex items-center">
-        {{ t('emergencyAccessDialog.label.councilMembersAtLeast', [minMembers]) }}
+        {{ readonly ? t('emergencyAccess.label.newCouncilMembers') : t('emergencyAccessDialog.label.councilMembersAtLeast', [minMembers]) }}
       </label>
       <button
-        v-if="hasCouncilChanges"
+        v-if="hasCouncilChanges && !readonly"
         type="button"
         class="inline-flex cursor-pointer items-center justify-center rounded text-primary hover:text-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-primary focus:ring-offset-2"
         :aria-label="t('common.reset')"
@@ -19,7 +19,7 @@
       :selected-users="emergencyCouncilMembers"
       :on-search="searchCouncilMembers"
       :input-id="id + '-cm'"
-      :input-visible="allowChangingDefaults"
+      :input-visible="allowChangingDefaults && !readonly"
       :error-message="t('emergencyAccess.validation.minimumMembers', [minMembers])"
       :has-error="hasValidationErrors"
       @action="addCouncilMember"
@@ -27,15 +27,22 @@
     />
   </div>
 
+  <div v-if="showRequiredKeyShares" class="mt-4 space-y-1 text-sm text-gray-500">
+    <div>
+      <span class="font-medium text-gray-700">{{ t('emergencyAccess.requiredKeyShares') }}:</span>
+      {{ requiredKeyShares }}
+    </div>
+  </div>
+
   <span class="block text-sm font-medium text-gray-700 pt-4">
-    {{ t('emergencyAccess.label.exampleRecovery') }}
+    {{ readonly ? t('emergencyAccess.label.possibleScenario') : t('emergencyAccess.label.exampleRecovery') }}
   </span>
   <EmergencyScenarioVisualization
     :selected-users="emergencyCouncilMembers"
     :required-key-shares="requiredKeyShares"
     :min-members="minMembers"
   />
-  <div v-if="requiredKeyShares === emergencyCouncilMembers.length && allowChangingDefaults" class="mt-4 mr-3">
+  <div v-if="requiredKeyShares === emergencyCouncilMembers.length && allowChangingDefaults && !readonly" class="mt-4 mr-3">
     <span class="inline-flex items-center gap-2 rounded-full bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800">
       <ExclamationTriangleIcon class="h-4 w-4" aria-hidden="true" />
       {{ t('emergencyAccess.noRedundancy') }}
@@ -45,9 +52,9 @@
 
 <script setup lang="ts">
 import { ArrowUturnLeftIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/solid';
-import { useId, computed, onMounted, ref } from 'vue';
+import { useId, computed, onMounted, ref, isReadonly } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { ActivatedUser, didCompleteSetup } from '../../common/backend';
+import backend, { ActivatedUser, RecoveredKeyShareDto, didCompleteSetup } from '../../common/backend';
 import { VaultKeys } from '../../common/crypto';
 import { EmergencyAccess } from '../../common/emergencyaccess';
 import { wordEncoder } from '../../common/util';
@@ -57,17 +64,29 @@ import EmergencyScenarioVisualization from './EmergencyScenarioVisualization.vue
 const { t } = useI18n({ useScope: 'global' });
 const id = useId();
 
+const props = withDefaults(defineProps<{
+  currentEmergencyCouncilMembers?: ActivatedUser[];
+  readonly?: boolean;
+  showRequiredKeyShares?: boolean;
+}>(), {
+  currentEmergencyCouncilMembers: () => [],
+  readonly: false,
+  showRequiredKeyShares: false,
+});
+
 export type SplitResult = {
   keyShares: Record<string, string>;
   requiredKeyShares: number;
 };
 
 // from settings:
-const defaultEmergencyCouncilMembers = ref<ActivatedUser[]>([]);
 const defaultRequiredEmergencyKeyShares = ref<number>(0);
 const minMembers = ref<number>(0);
 const allowChangingDefaults = ref<boolean>(false);
 const requiredKeyShares = ref<number>(0);
+
+// current council:
+const currentEmergencyCouncilMembers = ref<ActivatedUser[]>([...props.currentEmergencyCouncilMembers]);
 
 // user choice:
 const emergencyCouncilMembers = ref<ActivatedUser[]>([]);
@@ -80,11 +99,11 @@ const hasTooFewCouncilMembers = computed(() =>
   || (allowChangingDefaults.value && emergencyCouncilMembers.value.length < minMembers.value)
 );
 const hasCouncilChanges = computed(() => {
-  if (emergencyCouncilMembers.value.length !== defaultEmergencyCouncilMembers.value.length) {
+  if (emergencyCouncilMembers.value.length !== currentEmergencyCouncilMembers.value.length) {
     return true;
   }
 
-  const defaultIds = new Set(defaultEmergencyCouncilMembers.value.map(member => member.id));
+  const defaultIds = new Set(currentEmergencyCouncilMembers.value.map(member => member.id));
   return emergencyCouncilMembers.value.some(member => !defaultIds.has(member.id));
 });
 const hasValidationErrors = computed(() =>
@@ -94,6 +113,8 @@ const hasValidationErrors = computed(() =>
 defineExpose({
   split,
   hasValidationErrors,
+  requiredKeyShares,
+  emergencyCouncilMembers,
   allowChangingDefaults
 });
 
@@ -135,13 +156,19 @@ async function initialize() {
   defaultRequiredEmergencyKeyShares.value = settings.defaultRequiredEmergencyKeyShares;
   requiredKeyShares.value = settings.defaultRequiredEmergencyKeyShares;
 
-  const authorities = await backend.authorities.listSome(settings.emergencyCouncilMemberIds);
-  const sortedActivatedUsers = authorities
-    .filter((a): a is ActivatedUser => a.type === 'USER' && didCompleteSetup(a))
-    .sort((a, b) => a.name.localeCompare(b.name));
+  // if there is no current council, load default from settings:
+  if (currentEmergencyCouncilMembers.value.length === 0) {
+    const authorities = await backend.authorities.listSome(settings.emergencyCouncilMemberIds);
+    const sortedActivatedUsers = authorities
+      .filter((a): a is ActivatedUser => a.type === 'USER' && didCompleteSetup(a))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    currentEmergencyCouncilMembers.value = [...sortedActivatedUsers];
+  }
 
-  defaultEmergencyCouncilMembers.value = [...sortedActivatedUsers];
-  emergencyCouncilMembers.value = [...sortedActivatedUsers];
+  // pre-initialize emergencyCouncilMembers with current council or default from settings:
+  if (emergencyCouncilMembers.value.length === 0) {
+    emergencyCouncilMembers.value = [...currentEmergencyCouncilMembers.value];
+  }
 }
 
 async function searchCouncilMembers(query: string): Promise<ActivatedUser[]> {
@@ -166,6 +193,6 @@ function removeCouncilMember(user: ActivatedUser) {
 }
 
 function resetCouncilMembers() {
-  emergencyCouncilMembers.value = [...defaultEmergencyCouncilMembers.value];
+  emergencyCouncilMembers.value = [...currentEmergencyCouncilMembers.value];
 }
 </script>
