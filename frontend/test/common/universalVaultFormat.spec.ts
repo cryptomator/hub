@@ -72,7 +72,7 @@ describe('UVF', () => {
       });
 
       it('decrypt(encrypt(orig)) == orig', async () => {
-        const dto: VaultDto = { id: '123', name: 'test', archived: false, creationTime: new Date() };
+        const dto: VaultDto = { id: '123', name: 'test', archived: false, creationTime: new Date(), requiredEmergencyKeyShares: 0, emergencyKeyShares: {} };
         const vaultMemberKey = await MemberKey.create();
         const recoveryKey = await RecoveryKey.create();
 
@@ -180,6 +180,8 @@ describe('UVF', () => {
         name: 'test',
         archived: false,
         creationTime: new Date(),
+        requiredEmergencyKeyShares: 0,
+        emergencyKeyShares: {},
         uvfMetadataFile: '{"protected":"eyJvcmlnaW4iOiJodHRwcy4vL2V4YW1wbGUuY29tL2FwaS8vdmF1bHRzLzEyMy91dmYvdmF1bHQudXZmIiwiamt1Ijoiandrcy5qc29uIiwiZW5jIjoiQTI1NkdDTSJ9","recipients":[{"header":{"kid":"org.cryptomator.hub.memberkey","alg":"A256KW"},"encrypted_key":"vJ16vGF2Z3NcA7nXPnVrgDLzgxZ8RFtySgf0FsckcrTBfKDg4hAK0w"},{"header":{"kid":"org.cryptomator.hub.recoverykey.J7-F_hjMaygRKdqIoZrbxSqVSRFJ5aF8BXuOCoBBGjw","alg":"ECDH-ES+A256KW","epk":{"key_ops":[],"ext":true,"kty":"EC","x":"oQZ8e-e9UIOtbN50ySx5Xwik9ET3uu38Bzl6HdDR8uipOzdXIO8OUhVQMJWqEHjs","y":"cTP6OI_YfdCVPVWpGOA1SjQ6-4vUpE4a6QJx3JSw29DkOL70Rjl4GAcDc4Iw-VHY","crv":"P-384"},"apu":"","apv":""},"encrypted_key":"m_tSjpBcNQK42pgqLA9YDZYa3WQwJZ94HhGIpwOcKDoJQ8lP8IKbFw"}],"iv":"XPY9W-TE__Hu2m53","ciphertext":"uoukmSAuFTq-20gD9Ayum8iH6ERrld6cNV_ZTyfHBcWeIIZKOdp3RWWEtzNagVnRy5ix0yAafJIa14aSLnsxFv-NhzW1BirU5YypIkvFIO4cPnjI54vzd8nEtPdpp6z2JOqKUvZQYN89Y2EGoXb33FmQAwVMNJt_xDn2Bcb1dvI0q0uKLUidsvFL87NHSA8KUVWjXmmFdjibfqhWuO9YtFVoYD2Oqso9TzQIRMnDt3aIcVAouTTE7bR9O8kj5nseNID2gQ2osKlJVVcUn-4Cn0bI2w_-SeAfAvnePWLmolF8q79_aOsMkow3zMGsQHFoVU3PWCHR374Z02Lnt0Mj5_aUu_k8R5L11xNZQ0EYY7XWWGoUjRif7HmRfTZoHbJwvnHWk5q6IuEEjd_zSa4_im7PpoEofZR2EcH7Zz_Llq00wPWT05ZD82aRo3VCRNs6A2s6Jd8hspnaYA","tag":"j-xKxc2aZ2EDHDm8CzNf8Tj4QIkruZauF0LeUwrhq6c"}',
         uvfKeySet: '{"keys": [{"kid":"org.cryptomator.hub.recoverykey.J7-F_hjMaygRKdqIoZrbxSqVSRFJ5aF8BXuOCoBBGjw","kty":"EC","crv":"P-384","x":"3ydUf9ZwzYc9RAT2X4nMnJIU2nGbwRbvLj0ve7-C6_i6LaBpy2EbUrfrOBYbEoAN","y":"CQ77rXdI5tg0pyPpTLWzke2l_dMt6k9FquZpilf-_35XlK6weIEdh-ialC-Tw8P0"}]}'
       };
@@ -250,7 +252,7 @@ describe('UVF', () => {
       });
 
       it('createMetadataFile() creates a vault.uvf file', async () => {
-        const json = await uvf.createMetadataFile('https.//example.com/api/', { id: '123', name: 'test', archived: false, creationTime: new Date() });
+        const json = await uvf.createMetadataFile('https.//example.com/api/', { id: '123', name: 'test', archived: false, creationTime: new Date(), requiredEmergencyKeyShares: 0, emergencyKeyShares: {} });
         expect(json).to.be.not.null;
         const jwe = JSON.parse(json) as JsonJWE;
         expect(jwe.protected).to.not.be.empty;

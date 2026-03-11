@@ -221,7 +221,7 @@
   <ArchiveVaultDialog v-if="archivingVault && vault" ref="archiveVaultDialog" :vault="vault" @close="archivingVault = false" @archived="refreshVault" />
   <ReactivateVaultDialog v-if="reactivatingVault && vault" ref="reactivateVaultDialog" :vault="vault" @close="reactivatingVault = false" @reactivated="v => { refreshVault(v); refreshLicense();}" />
   <RecoverVaultDialog v-if="recoveringVault && vault" ref="recoverVaultDialog" :vault="vault" @close="recoveringVault = false" @recovered="fetchOwnerData()" />
-  <GrantEmergencyAccessDialog v-if="grantingEmergencyAccess && vault && (vaultFormat8 || uvfVault)" ref="grantEmergencyAccessDialog" :vault="vault" :vault-keys="(vaultFormat8 || uvfVault)" @close="grantingEmergencyAccess = false" @updated="refreshVault" />
+  <GrantEmergencyAccessDialog v-if="grantingEmergencyAccess && vault && (vaultFormat8 || uvfVault)" ref="grantEmergencyAccessDialog" :vault="vault" :vault-keys="(vaultFormat8 || uvfVault)!" @close="grantingEmergencyAccess = false" @updated="refreshVault" />
 </template>
 
 <script setup lang="ts">
@@ -232,9 +232,7 @@ import { base64 } from '@scure/base';
 import * as R from 'remeda';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import auth from '../common/auth';
 import backend, { AuthorityDto, ConflictError, ForbiddenError, LicenseUserInfoDto, MemberDto, NotFoundError, PaymentRequiredError, RecoveryProcessDto, SettingsDto, TrustDto, UserDto, VaultDto, VaultRole } from '../common/backend';
-import { VaultKeys } from '../common/crypto';
 import { JWT, JWTHeader } from '../common/jwt';
 import { UniversalVaultFormat } from '../common/universalVaultFormat';
 import userdata from '../common/userdata';
