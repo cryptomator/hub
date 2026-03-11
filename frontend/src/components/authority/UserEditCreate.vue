@@ -78,7 +78,7 @@
                 {{ t('userEditCreate.username') }}
               </label>
               <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
-                <input id="username" v-model="data.name" type="text" required :class="[errors.username ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-primary focus:border-primary', 'block w-full max-w-md shadow-sm sm:text-sm rounded-md']"/>
+                <input id="username" v-model="data.name" type="text" required :disabled="props.mode === 'EDIT'" :class="[errors.username ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-primary focus:border-primary', 'block w-full max-w-md shadow-sm sm:text-sm rounded-md disabled:bg-gray-200 disabled:cursor-not-allowed']"/>
                 <p v-if="errors.username" class="mt-1 text-sm text-red-600">{{ errors.username }}</p>
               </div>
             </div>
@@ -256,7 +256,7 @@ const data = reactive<EditableUserData>(initialData.value);
 const userDataHasUnsavedChanges = computed(() => {
   return data.firstName !== initialData.value.firstName
     || data.lastName !== initialData.value.lastName
-    || data.name !== initialData.value.name
+    || (props.mode !== 'EDIT' && data.name !== initialData.value.name)
     || data.email !== initialData.value.email
     || JSON.stringify([...data.realmRoles].sort()) !== JSON.stringify([...initialData.value.realmRoles].sort())
     || data.pictureUrl !== initialData.value.pictureUrl
