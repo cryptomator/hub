@@ -408,6 +408,9 @@
   "legacyDeviceList.ipAddress": "IP Address",
   "legacyDeviceList.lastAccess": "Last Vault Access",
   "legacyDeviceList.lastAccess.toolTip": "May be missing for devices accessed with older versions.",
+  "legacyDeviceBanner.title": "Legacy Devices Will Be Dropped",
+  "legacyDeviceBanner.user.description": "Your legacy devices will no longer be supported in the next major release. Please update Cryptomator on those devices or remove them.",
+  "legacyDeviceBanner.admin.description": "One or more users still have legacy devices. Legacy device support will be dropped in the next major release. Please ask affected users to update Cryptomator or remove their legacy devices.",
 
 
   "manageAccountKey.title": "Account Key",
