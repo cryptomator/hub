@@ -501,8 +501,8 @@ const canStartRecovery = computed(() => {
     return !(sameOwners && sameMembers) && owners.value.length !== 0;
   } else if (processType.value === 'COUNCIL_CHANGE') {
     return (
-      newCouncilMembers.value.length >= defaultMinMembers.value
-      && isCouncilChanged.value
+      newCouncilMembers.value.length >= defaultMinMembers.value && 
+      (isCouncilChanged.value || defaultRequiredEmergencyKeyShares.value != props.vault.requiredEmergencyKeyShares)
     );
   }
 
