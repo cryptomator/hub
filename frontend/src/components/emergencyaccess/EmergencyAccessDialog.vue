@@ -295,16 +295,15 @@
           </DialogPanel>
         </TransitionChild>
       </div>
+      <ProcessAbortDialog
+        v-if="props.recoveryProcess"
+        ref="abortDialog"
+        :recovery-process-id="props.recoveryProcess.id"
+        @confirmed="handleRecoveryAborted"
+        @close="onAbortClosed"
+      />
     </Dialog>
   </TransitionRoot>
-
-  <ProcessAbortDialog
-    v-if="props.recoveryProcess"
-    ref="abortDialog"
-    :recovery-process-id="props.recoveryProcess.id"
-    @confirmed="handleRecoveryAborted"
-    @close="onAbortClosed"
-  />
 </template>
 
 <script setup lang="ts">
