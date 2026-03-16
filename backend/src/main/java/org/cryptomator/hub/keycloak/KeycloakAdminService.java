@@ -288,12 +288,7 @@ public class KeycloakAdminService {
 		var rolesToSet = EnumSet.noneOf(RealmRole.class);
 		rolesToSet.addAll(roles);
 
-		// 1. sync to db (roll back if kc update fails):
-		User dbUser = userRepo.findByIdOptional(userId).orElseThrow(NotFoundException::new);
-		dbUser.setRealmRoles(rolesToSet.stream().map(RealmRole::kcName).toArray(String[]::new));
-		userRepo.persist(dbUser);
-
-		// 2. sync to kc:
+		// 1. sync to kc:
 		UserResource userResource = realm.users().get(userId);
 		var roleMappings = userResource.roles().realmLevel();
 		if (!rolesToRemove.isEmpty()) {
@@ -302,6 +297,14 @@ public class KeycloakAdminService {
 		if (!rolesToSet.isEmpty()) {
 			roleMappings.add(rolesToSet.stream().map(realmRoles::getRealmRole).toList());
 		}
+
+		// 2. sync effective roles from kc to db:
+		User dbUser = userRepo.findByIdOptional(userId).orElseThrow(NotFoundException::new);
+		var kcRoleNames = roleMappings.listEffective().stream()
+				.map(RoleRepresentation::getName)
+				.toList();
+		dbUser.setRealmRoles(RealmRole.fromKcNames(kcRoleNames).stream().map(RealmRole::kcName).toArray(String[]::new));
+		userRepo.persist(dbUser);
 	}
 
 	// Group management methods
