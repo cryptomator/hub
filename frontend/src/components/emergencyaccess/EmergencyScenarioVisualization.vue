@@ -34,7 +34,7 @@
           >
             <template v-for="(item, index) in randomCouncilSelectionWithPluses" :key="item.id">
               <span
-                v-if="item.type === 'user' && index <= 5"
+                v-if="item.type === 'user' && index <= maxVisiblePills * 2 - 2"
                 class="pill inline-flex items-center justify-between border border-grey bg-white text-sm font-medium px-2 py-1 rounded-full shadow-sm absolute"
                 :style="{ left: `${calcLeft(index)}px`, width: pillWidth + 'px', zIndex: 1 }"
               >
@@ -50,7 +50,7 @@
                 />
               </span>
               <span
-                v-else-if="item.type === 'plus' && index <= 5"
+                v-else-if="item.type === 'plus' && index <= maxVisiblePills * 2 - 2"
                 class="pill inline-flex items-center justify-center text-gray-500 font-medium absolute"
                 :style="{ left: `${calcLeft(index)}px`, zIndex: 0 }"
               >
@@ -59,11 +59,11 @@
             </template>
 
             <span
-              v-if="requiredKeyShares > 3"
+              v-if="requiredKeyShares > maxVisiblePills"
               class="inline-flex items-center border border-gray-300 bg-gray-100 text-gray-700 text-sm font-medium px-3 py-1 rounded-full shadow-sm absolute"
-              :style="{ left: `${calcLeft(5)}px`, zIndex: 1 }"
+              :style="{ left: `${calcLeft(maxVisiblePills * 2 - 1)}px`, zIndex: 1 }"
             >
-              +{{ requiredKeyShares - 3 }}
+              +{{ requiredKeyShares - maxVisiblePills }}
             </span>
           </TransitionGroup>
         </template>
@@ -96,7 +96,11 @@ const { selectedUsers, requiredKeyShares } = toRefs(props);
 
 const pillContainer = ref<HTMLElement | null>(null);
 const containerWidth = ref(0);
-const maxVisiblePills = 3;
+
+const maxVisiblePills = computed(() => {
+  if (containerWidth.value > 0 && containerWidth.value < 380) return 2;
+  return 3;
+});
 
 function updateContainerWidth() {
   if (pillContainer.value) {
@@ -117,9 +121,10 @@ onBeforeUnmount(() => {
 });
 
 const pillWidth = computed(() => {
-  const totalGap = (maxVisiblePills - 1) * 8;
+  const numPills = maxVisiblePills.value;
+  const totalGap = (numPills - 1) * 8;
   const usableWidth = Math.max(containerWidth.value - totalGap, 0) - 100;
-  return Math.floor(usableWidth / maxVisiblePills) || 200;
+  return Math.floor(usableWidth / numPills) || 200;
 });
 
 watch(
@@ -203,7 +208,7 @@ function rotateCouncilMember(available: UserDto[], required: number) {
   const currentIds = new Set(current.map(u => u.id));
   const candidates = available.filter(u => !currentIds.has(u.id));
 
-  const maxPills = Math.min(required, 3);
+  const maxPills = Math.min(required, maxVisiblePills.value);
   const replaceIndex = Math.floor(
     Math.random() // NOSONAR
     * maxPills
