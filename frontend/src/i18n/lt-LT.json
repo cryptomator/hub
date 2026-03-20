@@ -1,5 +1,7 @@
 {
+  "common.add": "Pridėti",
   "common.create": "Sukurti",
   "common.remove": "Šalinti",
-  "claimVaultOwnershipDialog.error.wrongPassword": "Neteisingas slaptažodis"
+  "claimVaultOwnershipDialog.error.wrongPassword": "Neteisingas slaptažodis",
+  "vaultList.addVault": "Pridėti"
 }
