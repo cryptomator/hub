@@ -1,1 +1,5 @@
-{}
+{
+  "common.create": "Sukurti",
+  "common.remove": "Šalinti",
+  "claimVaultOwnershipDialog.error.wrongPassword": "Neteisingas slaptažodis"
+}
