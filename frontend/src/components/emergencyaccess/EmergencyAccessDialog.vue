@@ -246,16 +246,15 @@
           </DialogPanel>
         </TransitionChild>
       </div>
+      <ProcessAbortDialog
+        v-if="props.recoveryProcess"
+        ref="abortDialog"
+        :recovery-process-id="props.recoveryProcess.id"
+        @confirmed="handleRecoveryAborted"
+        @close="onAbortClosed"
+      />
     </Dialog>
   </TransitionRoot>
-
-  <ProcessAbortDialog
-    v-if="props.recoveryProcess"
-    ref="abortDialog"
-    :recovery-process-id="props.recoveryProcess.id"
-    @confirmed="handleRecoveryAborted"
-    @close="onAbortClosed"
-  />
 </template>
 
 <script setup lang="ts">
@@ -445,7 +444,8 @@ const canStartRecovery = computed(() => {
   } else if (processType.value === 'COUNCIL_CHANGE' && emergencyAccessSetup.value) {
     const existingCouncilIds = new Set(Object.keys(props.vault.emergencyKeyShares));
     const sameCouncil = emergencyAccessSetup.value.emergencyCouncilMembers.length === existingCouncilIds.size && emergencyAccessSetup.value.emergencyCouncilMembers.every(m => existingCouncilIds.has(m.id));
-    return !emergencyAccessSetup.value.hasValidationErrors && !sameCouncil;
+    const sameRequiredKeyShares = emergencyAccessSetup.value.requiredKeyShares === props.vault.requiredEmergencyKeyShares;
+    return !emergencyAccessSetup.value.hasValidationErrors && (!sameCouncil || !sameRequiredKeyShares);
   }
 
   return false;
