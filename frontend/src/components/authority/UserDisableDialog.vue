@@ -59,15 +59,7 @@ import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, Trans
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend from '../../common/backend';
-
-interface User {
-  id: string;
-  name: string;
-  pictureUrl?: string;
-  firstName?: string;
-  lastName?: string;
-}
+import backend, { UserDto } from '../../common/backend';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -75,8 +67,8 @@ const open = ref(false);
 const onDisableUserError = ref<Error | null>(null);
 
 const props = defineProps<{
-    user: User
-  }>();
+  user: UserDto;
+}>();
 
 const fullName = computed(() => {
   const first = props.user.firstName ?? '';
@@ -85,9 +77,9 @@ const fullName = computed(() => {
 });
 
 const emit = defineEmits<{
-    close: []
-    disable: [updatedUser: User]
-  }>();
+  close: [];
+  disable: [disabledUser: UserDto];
+}>();
 
 defineExpose({
   show
@@ -110,5 +102,4 @@ async function disableUser() {
     onDisableUserError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
 }
-
 </script>
