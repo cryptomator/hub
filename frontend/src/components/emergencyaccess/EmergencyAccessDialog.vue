@@ -773,8 +773,6 @@ async function completeRecovery() {
       );
 
       if (accessGrants.length > 0) { await backend.vaults.grantAccess(props.vault.id, ...accessGrants); }
-    } else {
-      throw new Error(t('emergencyAccessDialog.error.unsupportedProcessType', [process.type]));
     }
 
     await backend.emergencyAccess.complete(process.id);
