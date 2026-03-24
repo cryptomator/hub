@@ -311,9 +311,12 @@ class VaultService {
     return axiosAuth.get('/vaults/recoverable').then(response => response.data);
   }
 
-  public async listSome(vaultsIds: string[]): Promise<VaultDto[]> {
-    const query = `ids=${vaultsIds.join('&ids=')}`;
-    return axiosAuth.get(`/vaults/some?${query}`).then(response => response.data);
+  public async listSome(vaultIds: string[]): Promise<VaultDto[]> {
+    return axiosAuth.get('/vaults/some', {
+      params: {
+        ids: vaultIds
+      }
+    }).then(response => response.data);
   }
 
   public async listAll(): Promise<VaultDto[]> {
@@ -341,12 +344,14 @@ class VaultService {
   }
 
   public async addUser(vaultId: string, userId: string, role?: VaultRole): Promise<AxiosResponse<void>> {
-    return axiosAuth.put(`/vaults/${vaultId}/users/${userId}` + (role ? `?role=${role}` : ''))
+    const queryParams = role ? { role: role } : {};
+    return axiosAuth.put(`/vaults/${vaultId}/users/${userId}`, null, { params: queryParams })
       .catch((error) => rethrowAndConvertIfExpected(error, 402, 404, 409));
   }
 
   public async addGroup(vaultId: string, groupId: string, role?: VaultRole): Promise<AxiosResponse<void>> {
-    return axiosAuth.put(`/vaults/${vaultId}/groups/${groupId}` + (role ? `?role=${role}` : ''))
+    const queryParams = role ? { role: role } : {};
+    return axiosAuth.put(`/vaults/${vaultId}/groups/${groupId}`, null, { params: queryParams })
       .catch((error) => rethrowAndConvertIfExpected(error, 402, 404, 409));
   }
 
@@ -410,8 +415,11 @@ class DeviceService {
 
   /** @deprecated since version 1.3.0, to be removed in https://github.com/cryptomator/hub/issues/333 */
   public async listSomeLegacyDevices(deviceIds: string[]): Promise<DeviceDto[]> {
-    const query = `ids=${deviceIds.join('&ids=')}`;
-    return axiosAuth.get<DeviceDto[]>(`/devices/legacy-devices?${query}`).then(response => response.data);
+    return axiosAuth.get<DeviceDto[]>('/devices/legacy-devices', {
+      params: {
+        ids: deviceIds
+      }
+    }).then(response => response.data);
   }
 
   public async removeDevice(deviceId: string): Promise<AxiosResponse<unknown>> {
@@ -484,7 +492,12 @@ class UserService {
   }
 
   public async me(withDevices: boolean = false, withLastAccess: boolean = false, addFallbackPictures: boolean = true): Promise<UserDto> {
-    const user = await axiosAuth.get<UserDto>(`/users/me?withDevices=${withDevices}&withLastAccess=${withLastAccess}`).then(response => response.data);
+    const user = await axiosAuth.get<UserDto>('/users/me', {
+      params: {
+        withDevices: withDevices,
+        withLastAccess: withLastAccess
+      }
+    }).then(response => response.data);
     return addFallbackPictures ? fillInMissingPicture(user) : user;
   }
 
@@ -551,7 +564,12 @@ class TrustService {
 
 class AuthorityService {
   public async search(query: string, withMemberSize: boolean = false, addFallbackPictures: boolean = true): Promise<AuthorityDto[]> {
-    const authorities = await axiosAuth.get<AuthorityDto[]>(`/authorities/search?query=${query}&withMemberSize=${withMemberSize}`).then(response => response.data);
+    const authorities = await axiosAuth.get<AuthorityDto[]>('/authorities/search', {
+      params: {
+        query: query,
+        withMemberSize: withMemberSize
+      }
+    }).then(response => response.data);
     return addFallbackPictures ? authorities.map(fillInMissingPicture) : authorities;
   }
 
@@ -560,8 +578,11 @@ class AuthorityService {
       // safe roundtrip for empty list
       return [];
     }
-    const query = `ids=${authorityIds.join('&ids=')}`;
-    const authorities = await axiosAuth.get<AuthorityDto[]>(`/authorities?${query}`).then(response => response.data);
+    const authorities = await axiosAuth.get<AuthorityDto[]>('/authorities', {
+      params: {
+        ids: authorityIds
+      }
+    }).then(response => response.data);
     return addFallbackPictures ? authorities.map(fillInMissingPicture) : authorities;
   }
 }
