@@ -431,8 +431,8 @@ public class UsersResource {
 	@Transactional
 	@Operation(summary = "enable or disable a user")
 	@APIResponse(responseCode = "204", description = "user updated")
-	public Response setUserEnabled(@PathParam("id") String userId, @Valid @NotNull SetUserEnabledDto dto) {
-		keycloakAdminService.setUserEnabled(userId, dto.enabled());
+	public Response setUserEnabled(@PathParam("id") String userId, boolean enabled) {
+		keycloakAdminService.setUserEnabled(userId, enabled);
 		return Response.noContent().build();
 	}
 
@@ -468,11 +468,6 @@ public class UsersResource {
 			@JsonProperty("password") String password,
 			@JsonProperty("pictureUrl") @Size(max = 255) String pictureUrl,
 			@JsonProperty("realmRoles") @NotNull Set<RealmRole> realmRoles
-	) {
-	}
-
-	public record SetUserEnabledDto(
-			@JsonProperty("enabled") boolean enabled
 	) {
 	}
 
