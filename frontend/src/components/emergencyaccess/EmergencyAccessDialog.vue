@@ -95,7 +95,7 @@
                       </div>
 
                       <div v-else-if="processType === 'COUNCIL_CHANGE'">
-                        <EmergencyAccessSetup ref="emergencyAccessSetup" :current-emergency-council-members="councilMembers"/>
+                        <EmergencyAccessSetup ref="emergencyAccessSetup" :current-emergency-council-members="councilMembers" :allow-choosing-council="true"/>
                       </div>
                       <div v-else class="text-sm text-red-600">
                         {{ t('recoveryDialog.error.invalidRecoveryType') }}
@@ -145,7 +145,7 @@
                       <div v-if="recoveryProcess.type === 'COUNCIL_CHANGE'" >
                         {{ t('emergencyAccessDialog.section.councilChange') }}
                         <div class="mt-4">
-                          <EmergencyAccessSetup :current-emergency-council-members="councilMembers" :readonly="true" :show-required-key-shares="true"/>
+                          <EmergencyAccessSetup :current-emergency-council-members="councilMembers" :readonly="true" :show-required-key-shares="true" :allow-choosing-council="true"/>
                         </div>
                       </div>
                       <div v-if="phase === 'complete' && !didAddMyShare && isMeInProcessCouncil" class="text-sm pt-2">

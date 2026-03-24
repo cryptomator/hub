@@ -118,12 +118,12 @@
             </h3>
             <div class="mt-2">
               <p class="text-sm text-gray-500 text-center">
-                {{ emergencyAccessSetup?.allowChangingDefaults
+                {{ settings?.allowChoosingEmergencyCouncil
                   ? t('createVault.emergencyAccessDetails.description')
                   : t('createVault.emergencyAccessDetails.description.adminDefined') }}
               </p>
             </div>
-            <EmergencyAccessSetup ref="emergencyAccessSetup"/>
+            <EmergencyAccessSetup ref="emergencyAccessSetup" :allow-choosing-council="settings?.allowChoosingEmergencyCouncil"/>
           </div>
           <div class="bg-gray-50 mt-4 px-4 py-3 sm:px-6 rounded-b-lg">
             <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center sm:space-x-4">

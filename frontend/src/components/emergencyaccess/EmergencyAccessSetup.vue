@@ -2,7 +2,7 @@
   <div class="relative">
     <div class="flex items-center justify-between gap-2 pt-2 pb-2">
       <label :for="id + '-cm'" class="text-sm font-medium text-gray-700 flex items-center">
-        {{ readonly ? t('emergencyAccess.label.newCouncilMembers') : t('emergencyAccessDialog.label.councilMembersAtLeast', [minMembers]) }}
+        {{ readonly || !allowChoosingCouncil ? t('emergencyAccess.label.newCouncilMembers') : t('emergencyAccessDialog.label.councilMembersAtLeast', [minMembers]) }}
       </label>
       <button
         v-if="hasCouncilChanges && !readonly"
@@ -19,7 +19,7 @@
       :selected-users="emergencyCouncilMembers"
       :on-search="searchCouncilMembers"
       :input-id="id + '-cm'"
-      :input-visible="allowChangingDefaults && !readonly"
+      :input-visible="allowChoosingCouncil && !readonly"
       :error-message="t('emergencyAccess.validation.minimumMembers', [minMembers])"
       :has-error="hasValidationErrors"
       @action="addCouncilMember"
@@ -42,7 +42,7 @@
     :required-key-shares="requiredKeyShares"
     :min-members="minMembers"
   />
-  <div v-if="requiredKeyShares === emergencyCouncilMembers.length && allowChangingDefaults && !readonly" class="mt-4 mr-3">
+  <div v-if="requiredKeyShares === emergencyCouncilMembers.length && allowChoosingCouncil && !readonly" class="mt-4 mr-3">
     <span class="inline-flex items-center gap-2 rounded-full bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800">
       <ExclamationTriangleIcon class="h-4 w-4" aria-hidden="true" />
       {{ t('emergencyAccess.noRedundancy') }}
@@ -68,10 +68,12 @@ const props = withDefaults(defineProps<{
   currentEmergencyCouncilMembers?: ActivatedUser[];
   readonly?: boolean;
   showRequiredKeyShares?: boolean;
+  allowChoosingCouncil?: boolean;
 }>(), {
   currentEmergencyCouncilMembers: () => [],
   readonly: false,
   showRequiredKeyShares: false,
+  allowChoosingCouncil: false,
 });
 
 export type SplitResult = {
@@ -82,7 +84,6 @@ export type SplitResult = {
 // from settings:
 const defaultRequiredEmergencyKeyShares = ref<number>(0);
 const minMembers = ref<number>(0);
-const allowChangingDefaults = ref<boolean>(false);
 const requiredKeyShares = ref<number>(0);
 
 // current council:
@@ -96,7 +97,7 @@ const isInvalidKeyShares = computed(() => requiredKeyShares.value < 1);
 const isInvalidCouncilMembers = computed(() => emergencyCouncilMembers.value.length < 1);
 const hasTooFewCouncilMembers = computed(() =>
   emergencyCouncilMembers.value.length < requiredKeyShares.value
-  || (allowChangingDefaults.value && emergencyCouncilMembers.value.length < minMembers.value)
+  || (props.allowChoosingCouncil && emergencyCouncilMembers.value.length < minMembers.value)
 );
 const hasCouncilChanges = computed(() => {
   if (emergencyCouncilMembers.value.length !== currentEmergencyCouncilMembers.value.length) {
@@ -114,8 +115,7 @@ defineExpose({
   split,
   hasValidationErrors,
   requiredKeyShares,
-  emergencyCouncilMembers,
-  allowChangingDefaults
+  emergencyCouncilMembers
 });
 
 onMounted(async () => {
@@ -151,7 +151,6 @@ async function split(vaultKeys: VaultKeys): Promise<SplitResult> {
 
 async function initialize() {
   const settings = await backend.settings.get();
-  allowChangingDefaults.value = settings.allowChoosingEmergencyCouncil;
   minMembers.value = settings.defaultMinMembers;
   defaultRequiredEmergencyKeyShares.value = settings.defaultRequiredEmergencyKeyShares;
   requiredKeyShares.value = settings.defaultRequiredEmergencyKeyShares;

@@ -39,14 +39,14 @@
                       {{ t('grantEmergencyAccessDialog.title') }}
                     </DialogTitle>
                     <div class="mt-2">
-                      <p v-if="emergencyAccessSetup?.allowChangingDefaults" class="text-sm text-gray-500">
+                      <p v-if="settings.allowChoosingEmergencyCouncil" class="text-sm text-gray-500">
                         {{ t('grantEmergencyAccessDialog.description.selectCouncil') }}
                       </p>
                       <p v-else class="text-sm text-gray-500">
                         {{ t('grantEmergencyAccessDialog.description.default') }}
                       </p>
                     </div>
-                    <EmergencyAccessSetup ref="emergencyAccessSetup"/>
+                    <EmergencyAccessSetup ref="emergencyAccessSetup" :allow-choosing-council="settings.allowChoosingEmergencyCouncil"/>
                   </div>
                 </div>
 
@@ -86,7 +86,7 @@ import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, Trans
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { VaultDto } from '../../common/backend';
+import backend, { SettingsDto, VaultDto } from '../../common/backend';
 import { VaultKeys } from '../../common/crypto';
 import EmergencyAccessSetup from './EmergencyAccessSetup.vue';
 
@@ -94,7 +94,8 @@ const { t } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{
   vault: VaultDto,
-  vaultKeys: VaultKeys
+  vaultKeys: VaultKeys,
+  settings: SettingsDto
 }>();
 
 const emit = defineEmits<{

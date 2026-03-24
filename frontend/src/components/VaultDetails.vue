@@ -220,7 +220,7 @@
   <ArchiveVaultDialog v-if="archivingVault && vault" ref="archiveVaultDialog" :vault="vault" @close="archivingVault = false" @archived="refreshVault" />
   <ReactivateVaultDialog v-if="reactivatingVault && vault" ref="reactivateVaultDialog" :vault="vault" @close="reactivatingVault = false" @reactivated="v => { refreshVault(v); refreshLicense();}" />
   <RecoverVaultDialog v-if="recoveringVault && vault" ref="recoverVaultDialog" :vault="vault" @close="recoveringVault = false" @recovered="fetchOwnerData()" />
-  <GrantEmergencyAccessDialog v-if="grantingEmergencyAccess && vault && vaultKeys" ref="grantEmergencyAccessDialog" :vault="vault" :vault-keys="vaultKeys" @close="grantingEmergencyAccess = false" @updated="refreshVault" />
+  <GrantEmergencyAccessDialog v-if="grantingEmergencyAccess && vault && vaultKeys && settings" ref="grantEmergencyAccessDialog" :vault="vault" :vault-keys="vaultKeys" :settings="settings" @close="grantingEmergencyAccess = false" @updated="refreshVault" />
 </template>
 
 <script setup lang="ts">
