@@ -445,7 +445,7 @@ const canStartRecovery = computed(() => {
   } else if (processType.value === 'COUNCIL_CHANGE' && emergencyAccessSetup.value) {
     const existingCouncilIds = new Set(Object.keys(props.vault.emergencyKeyShares));
     const sameCouncil = emergencyAccessSetup.value.emergencyCouncilMembers.length === existingCouncilIds.size && emergencyAccessSetup.value.emergencyCouncilMembers.every(m => existingCouncilIds.has(m.id));
-    const sameRequiredKeyShares = emergencyAccessSetup.value.requiredKeyShares === props.vault.requiredEmergencyKeyShares;
+    const sameRequiredKeyShares = props.settings.defaultRequiredEmergencyKeyShares === props.vault.requiredEmergencyKeyShares; // does the vault's current number of required key shares differ from the configured default?
     return !emergencyAccessSetup.value.hasValidationErrors && (!sameCouncil || !sameRequiredKeyShares);
   }
 
@@ -738,7 +738,10 @@ async function completeRecovery() {
     const recoveredKeyBytes = await EmergencyAccess.combineRecoveredShares(keyShares, processPrivateKey, userKeys.ecdhKeyPair.privateKey);
     const recoveredKey = wordEncoder.encodePadded(recoveredKeyBytes);
 
-    if (process.type === 'COUNCIL_CHANGE' && councilMembers.value.length >= process.details.newRequiredKeyShares) {
+    if (process.type === 'COUNCIL_CHANGE') {
+      if (councilMembers.value.length < process.details.newRequiredKeyShares) {
+        throw new Error(t('emergencyAccessDialog.error.insufficientCouncilMembers', [councilMembers.value.length, process.details.newRequiredKeyShares]));
+      }
       const keyShares = await EmergencyAccess.split(recoveredKeyBytes, process.details.newRequiredKeyShares, ...councilMembers.value);
       await backend.vaults.createOrUpdateVault(
         props.vault.id,
