@@ -177,6 +177,15 @@ public class KeycloakAdminService {
 		}
 	}
 
+	@Transactional
+	public void setUserEnabled(String userId, boolean enabled) {
+		UserResource userResource = realm.users().get(userId);
+		UserRepresentation user = userResource.toRepresentation();
+		user.setEnabled(enabled);
+		userResource.update(user);
+		syncUser(userId);
+	}
+
 	public boolean isUserReadOnly(String userId) {
 		try {
 			UserResource userResource = realm.users().get(userId);
@@ -204,6 +213,8 @@ public class KeycloakAdminService {
 		dbUser.setEmail(keycloakUser.getEmail());
 		dbUser.setFirstName(keycloakUser.getFirstName());
 		dbUser.setLastName(keycloakUser.getLastName());
+
+		dbUser.setEnabled(Boolean.TRUE.equals(keycloakUser.isEnabled()));
 
 		var attrs = keycloakUser.getAttributes();
 		if (attrs != null && attrs.containsKey("picture")) {

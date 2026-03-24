@@ -424,6 +424,18 @@ public class UsersResource {
 		return UserDto.justPublicInfo(user);
 	}
 
+	@PUT
+	@Path("/{id}/enabled")
+	@RolesAllowed("admin")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Transactional
+	@Operation(summary = "enable or disable a user")
+	@APIResponse(responseCode = "204", description = "user updated")
+	public Response setUserEnabled(@PathParam("id") String userId, @Valid @NotNull SetUserEnabledDto dto) {
+		keycloakAdminService.setUserEnabled(userId, dto.enabled());
+		return Response.noContent().build();
+	}
+
 	@DELETE
 	@Path("/{id}")
 	@RolesAllowed("admin")
@@ -456,6 +468,11 @@ public class UsersResource {
 			@JsonProperty("password") String password,
 			@JsonProperty("pictureUrl") @Size(max = 255) String pictureUrl,
 			@JsonProperty("realmRoles") @NotNull Set<RealmRole> realmRoles
+	) {
+	}
+
+	public record SetUserEnabledDto(
+			@JsonProperty("enabled") boolean enabled
 	) {
 	}
 
