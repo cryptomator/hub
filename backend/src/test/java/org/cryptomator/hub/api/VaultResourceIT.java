@@ -963,6 +963,61 @@ public class VaultResourceIT {
 	}
 
 	@Nested
+	@DisplayName("As admin user2 (non-owner)")
+	@TestSecurity(user = "User Name 2", roles = {"user", "admin"})
+	@OidcSecurity(claims = {
+			@Claim(key = "sub", value = "user2")
+	})
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+	class AdminArchiveVault {
+
+		@Test
+		@Order(1)
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111 returns 200 for admin archiving vault")
+		@DBRollbackAfter
+		void testAdminArchiveVault() {
+			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100001111");
+			var vaultDto = new VaultResource.VaultDto(uuid, "Vault 1", Instant.parse("2020-02-20T20:20:20Z"), "This is a testvault.", true, 0, Map.of(), "masterkey1", 42, "salt1", "authPubKey1", "authPrvKey1");
+
+			given().contentType(ContentType.JSON).body(vaultDto)
+					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-000100001111")
+					.then().statusCode(200)
+					.body("id", equalToIgnoringCase("7E57C0DE-0000-4000-8000-000100001111"))
+					.body("name", equalTo("Vault 1"))
+					.body("archived", equalTo(true));
+		}
+
+		@Test
+		@Order(2)
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-00010000AAAA returns 200 for admin unarchiving vault")
+		@DBRollbackAfter
+		void testAdminUnarchiveVault() {
+			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-00010000AAAA");
+			var vaultDto = new VaultResource.VaultDto(uuid, "Vault Archived", Instant.parse("2020-02-20T20:20:20Z"), "This is a archived vault.", false, 0, Map.of(), "masterkey3", 42, "salt3", "authPubKey3", "authPrvKey3");
+
+			given().contentType(ContentType.JSON).body(vaultDto)
+					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-00010000AAAA")
+					.then().statusCode(200)
+					.body("id", equalToIgnoringCase("7E57C0DE-0000-4000-8000-00010000AAAA"))
+					.body("name", equalTo("Vault Archived"))
+					.body("archived", equalTo(false));
+		}
+
+		@Test
+		@Order(3)
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100005555 returns 403 for admin creating vault without create-vaults role")
+		void testAdminCannotCreateVaultWithoutCreateVaultsRole() {
+			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100005555");
+			var vaultDto = new VaultResource.VaultDto(uuid, "New Vault", Instant.parse("2112-12-21T21:12:21Z"), "Should not be created", false, 0, Map.of(), "masterkey5", 42, "NaCl", "authPubKey5", "authPrvKey5");
+
+			given().contentType(ContentType.JSON).body(vaultDto)
+					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-000100005555")
+					.then().statusCode(403);
+		}
+
+	}
+
+	@Nested
 	@DisplayName("As unauthenticated user")
 	class AsAnonymous {
 

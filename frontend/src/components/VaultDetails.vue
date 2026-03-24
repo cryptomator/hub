@@ -130,7 +130,7 @@
           {{ t('vaultDetails.actions.editVaultMetadata') }}
         </button>
         <!-- archiveVault button -->
-        <button v-if="vaultRole == 'OWNER'" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white  hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showArchiveVaultDialog()">
+        <button v-if="canToggleArchive" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white  hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showArchiveVaultDialog()">
           {{ t('vaultDetails.actions.archiveVault') }}
         </button>
       </div>
@@ -160,7 +160,7 @@
           {{ t('vaultDetails.actions.displayRecoveryKey') }}
         </button>
         <!-- reactivateVault button -->
-        <button v-if="vaultRole == 'OWNER'" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white  hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showReactivateVaultDialog()">
+        <button v-if="canToggleArchive" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white  hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showReactivateVaultDialog()">
           {{ t('vaultDetails.actions.reactivateVault') }}
         </button>
       </div>
@@ -205,7 +205,7 @@
           <span>{{ t('vaultDetails.emergencyAccess.fixCouncil') }}</span>
         </button>
         <!-- archiveVault button -->
-        <button v-if="vaultRole == 'OWNER'" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white  hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showArchiveVaultDialog()">
+        <button v-if="canToggleArchive" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white  hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showArchiveVaultDialog()">
           {{ t('vaultDetails.actions.archiveVault') }}
         </button>
       </div>
@@ -253,12 +253,15 @@ const { t, d } = useI18n({ useScope: 'global' });
 const props = defineProps<{
   vaultId: string,
   vaultRole: VaultRole | 'NONE',
+  isAdmin: boolean,
 }>();
 
 const emit = defineEmits<{
   vaultUpdated: [updatedVault: VaultDto]
   licenseStatusUpdated: [license: LicenseUserInfoDto]
 }>();
+
+const canToggleArchive = computed(() => props.vaultRole === 'OWNER' || props.isAdmin);
 
 const onFetchError = ref<Error>();
 const allowRetryFetch = computed(() => onFetchError.value && !(onFetchError.value instanceof NotFoundError));  //fetch requests either list something, or query from th vault. In the latter, a 404 indicates the vault does not exists anymore.

@@ -126,7 +126,7 @@
   </div>
 
   <SlideOver v-if="selectedVault" ref="vaultDetailsSlideOver" :title="selectedVault.name" @close="selectedVault = undefined">
-    <VaultDetails :vault-id="selectedVault.id" :vault-role="roleOfSelectedVault" @vault-updated="v => onSelectedVaultUpdate(v)" @license-status-updated="l => licenseUpdated(l)"></VaultDetails>
+    <VaultDetails :vault-id="selectedVault.id" :vault-role="roleOfSelectedVault" :is-admin="isAdmin" @vault-updated="v => onSelectedVaultUpdate(v)" @license-status-updated="l => licenseUpdated(l)"></VaultDetails>
   </SlideOver>
 </template>
 
