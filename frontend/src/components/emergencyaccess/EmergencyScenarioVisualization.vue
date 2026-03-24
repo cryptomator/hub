@@ -70,6 +70,10 @@ const { selectedUsers, requiredKeyShares } = toRefs(props);
 
 onBeforeUnmount(() => {
   stopRandomCouncilInterval();
+  if (timeoutId !== undefined) {
+    clearTimeout(timeoutId);
+  }
+  timeoutId = undefined;
 });
 
 function startRandomCouncilInterval() {

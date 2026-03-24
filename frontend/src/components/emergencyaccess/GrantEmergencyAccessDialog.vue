@@ -59,7 +59,7 @@
                 <button
                   type="button"
                   class="w-full inline-flex justify-center rounded-md border border-transparent shadow-xs px-4 py-2 bg-primary text-base font-medium text-white hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed"
-                  :disabled="emergencyAccessSetup?.hasValidationErrors"
+                  :disabled="!emergencyAccessSetup || emergencyAccessSetup.hasValidationErrors"
                   @click="splitRecoveryKey()"
                 >
                   {{ t('grantEmergencyAccessDialog.grant') }}

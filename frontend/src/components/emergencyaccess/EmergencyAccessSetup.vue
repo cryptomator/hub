@@ -40,7 +40,6 @@
   <EmergencyScenarioVisualization
     :selected-users="emergencyCouncilMembers"
     :required-key-shares="requiredKeyShares"
-    :min-members="minMembers"
   />
   <div v-if="requiredKeyShares === emergencyCouncilMembers.length && allowChoosingCouncil && !readonly" class="mt-4 mr-3">
     <span class="inline-flex items-center gap-2 rounded-full bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800">

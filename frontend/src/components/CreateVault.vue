@@ -137,7 +137,7 @@
               <div class="flex flex-col-reverse sm:flex-row-reverse sm:space-x-reverse sm:space-x-3 shrink-0 mt-4 sm:mt-0">
                 <button
                   type="submit"
-                  :disabled="emergencyAccessSetup?.hasValidationErrors || processing"
+                  :disabled="!emergencyAccessSetup || emergencyAccessSetup.hasValidationErrors || processing"
                   class="inline-flex justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed"
                 >
                   {{ t('common.next') }}
