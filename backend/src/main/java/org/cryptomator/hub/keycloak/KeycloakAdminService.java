@@ -214,7 +214,7 @@ public class KeycloakAdminService {
 		dbUser.setFirstName(keycloakUser.getFirstName());
 		dbUser.setLastName(keycloakUser.getLastName());
 
-		dbUser.setEnabled(Boolean.TRUE.equals(keycloakUser.isEnabled()));
+		dbUser.setEnabled(keycloakUser.isEnabled());
 
 		var attrs = keycloakUser.getAttributes();
 		if (attrs != null && attrs.containsKey("picture")) {
