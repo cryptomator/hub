@@ -123,7 +123,7 @@
                   : t('createVault.emergencyAccessDetails.description.adminDefined') }}
               </p>
             </div>
-            <EmergencyAccessSetup ref="emergencyAccessSetup" :allow-choosing-council="settings?.allowChoosingEmergencyCouncil"/>
+            <EmergencyAccessSetup v-if="settings" ref="emergencyAccessSetup" :settings="settings" :required-key-shares="settings.defaultRequiredEmergencyKeyShares" :allow-choosing-council="settings.allowChoosingEmergencyCouncil"/>
           </div>
           <div class="bg-gray-50 mt-4 px-4 py-3 sm:px-6 rounded-b-lg">
             <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center sm:space-x-4">
@@ -341,14 +341,6 @@ const props = defineProps<{
   recover: boolean
 }>();
 
-async function loadDefaultEmergencyAccessSettings() {
-  try {
-    settings.value = await backend.settings.get();
-  } catch (error) {
-    console.error('Loading emergency access settings failed:', error);
-  }
-}
-
 onMounted(initialize);
 const licenseStatus = ref<LicenseUserInfoDto>();
 
@@ -362,7 +354,7 @@ async function initialize() {
   } else {
     vaultKeys.value = await VaultKeys.create();
     recoveryKey.value = await vaultKeys.value.createRecoveryKey();
-    await loadDefaultEmergencyAccessSettings();
+    settings.value = await backend.settings.get();
     state.value = State.EnterVaultDetails;
   }
   licenseStatus.value = await backend.license.getUserInfo();
@@ -444,7 +436,6 @@ async function validateVaultEmergencyAccess() {
     processing.value = false;
   }
 }
-
 
 function backToEnterVaultDetails(){
   state.value = State.EnterVaultDetails;

@@ -95,7 +95,7 @@
                       </div>
 
                       <div v-else-if="processType === 'COUNCIL_CHANGE'">
-                        <EmergencyAccessSetup ref="emergencyAccessSetup" :current-emergency-council-members="councilMembers" :allow-choosing-council="true"/>
+                        <EmergencyAccessSetup ref="emergencyAccessSetup" :settings="settings" :council-members="councilMembers" :required-key-shares="settings.defaultRequiredEmergencyKeyShares" :allow-choosing-council="true"/>
                       </div>
                       <div v-else class="text-sm text-red-600">
                         {{ t('recoveryDialog.error.invalidRecoveryType') }}
@@ -145,7 +145,7 @@
                       <div v-if="recoveryProcess.type === 'COUNCIL_CHANGE'" >
                         {{ t('emergencyAccessDialog.section.councilChange') }}
                         <div class="mt-4">
-                          <EmergencyAccessSetup :current-emergency-council-members="councilMembers" :readonly="true" :show-required-key-shares="true" :allow-choosing-council="true"/>
+                          <EmergencyAccessSetup :settings="settings" :council-members="councilMembers" :required-key-shares="recoveryProcess.requiredKeyShares" :readonly="true" :show-required-key-shares="true"/>
                         </div>
                       </div>
                       <div v-if="phase === 'complete' && !didAddMyShare && isMeInProcessCouncil" class="text-sm pt-2">
@@ -265,7 +265,7 @@ import { base64 } from '@scure/base';
 import * as R from 'remeda';
 import { computed, ref, Ref, toRaw, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { AccessGrant, ActivatedUser, AuthorityDto, didCompleteSetup, GroupDto, PaymentRequiredError, RecoveredKeyShareDto, RecoveryProcessChangeCouncil, RecoveryProcessDto, RecoveryProcessSetNewOwner, UserDto, VaultDto, VaultRole } from '../../common/backend';
+import backend, { AccessGrant, ActivatedUser, AuthorityDto, didCompleteSetup, GroupDto, PaymentRequiredError, RecoveredKeyShareDto, RecoveryProcessChangeCouncil, RecoveryProcessDto, RecoveryProcessSetNewOwner, SettingsDto, UserDto, VaultDto, VaultRole } from '../../common/backend';
 import { asPublicKey, UserKeys, VaultKeys } from '../../common/crypto';
 import { EmergencyAccess } from '../../common/emergencyaccess';
 import { ECDSA_P384, JWT, JWTHeader } from '../../common/jwt';
@@ -282,6 +282,7 @@ const { t } = useI18n({ useScope: 'global' });
 const props = defineProps<{
   vault: VaultDto;
   me: UserDto;
+  settings: SettingsDto;
   recoveryProcess?: RecoveryProcessDto;
   startType: RecoveryProcessDto['type'];
 }>();
@@ -650,7 +651,7 @@ async function startRecovery() {
         type: 'COUNCIL_CHANGE',
         details: {
           newCouncilMemberIds: emergencyAccessSetup.value.emergencyCouncilMembers.map(u => u.id),
-          newRequiredKeyShares: emergencyAccessSetup.value.requiredKeyShares
+          newRequiredKeyShares: props.settings.defaultRequiredEmergencyKeyShares
         }
       };
     } else {

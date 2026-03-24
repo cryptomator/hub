@@ -2,7 +2,7 @@
   <div class="relative">
     <div class="flex items-center justify-between gap-2 pt-2 pb-2">
       <label :for="id + '-cm'" class="text-sm font-medium text-gray-700 flex items-center">
-        {{ readonly || !allowChoosingCouncil ? t('emergencyAccess.label.newCouncilMembers') : t('emergencyAccessDialog.label.councilMembersAtLeast', [minMembers]) }}
+        {{ readonly || !allowChoosingCouncil ? t('emergencyAccess.label.newCouncilMembers') : t('emergencyAccessDialog.label.councilMembersAtLeast', [settings.defaultMinMembers]) }}
       </label>
       <button
         v-if="hasCouncilChanges && !readonly"
@@ -20,8 +20,8 @@
       :on-search="searchCouncilMembers"
       :input-id="id + '-cm'"
       :input-visible="allowChoosingCouncil && !readonly"
-      :error-message="t('emergencyAccess.validation.minimumMembers', [minMembers])"
-      :has-error="hasValidationErrors"
+      :error-message="t('emergencyAccess.validation.minimumMembers', [settings.defaultMinMembers])"
+      :has-error="allowChoosingCouncil && hasValidationErrors"
       @action="addCouncilMember"
       @remove="removeCouncilMember"
     />
@@ -51,9 +51,9 @@
 
 <script setup lang="ts">
 import { ArrowUturnLeftIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/solid';
-import { useId, computed, onMounted, ref, isReadonly } from 'vue';
+import { useId, computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { ActivatedUser, RecoveredKeyShareDto, didCompleteSetup } from '../../common/backend';
+import backend, { ActivatedUser, RecoveryProcessDto, SettingsDto, didCompleteSetup } from '../../common/backend';
 import { VaultKeys } from '../../common/crypto';
 import { EmergencyAccess } from '../../common/emergencyaccess';
 import { wordEncoder } from '../../common/util';
@@ -64,12 +64,14 @@ const { t } = useI18n({ useScope: 'global' });
 const id = useId();
 
 const props = withDefaults(defineProps<{
-  currentEmergencyCouncilMembers?: ActivatedUser[];
+  councilMembers?: ActivatedUser[];
+  settings: SettingsDto;
   readonly?: boolean;
+  requiredKeyShares: number
   showRequiredKeyShares?: boolean;
   allowChoosingCouncil?: boolean;
 }>(), {
-  currentEmergencyCouncilMembers: () => [],
+  councilMembers: () => [],
   readonly: false,
   showRequiredKeyShares: false,
   allowChoosingCouncil: false,
@@ -80,23 +82,18 @@ export type SplitResult = {
   requiredKeyShares: number;
 };
 
-// from settings:
-const defaultRequiredEmergencyKeyShares = ref<number>(0);
-const minMembers = ref<number>(0);
-const requiredKeyShares = ref<number>(0);
-
 // current council:
-const currentEmergencyCouncilMembers = ref<ActivatedUser[]>([...props.currentEmergencyCouncilMembers]);
+const currentEmergencyCouncilMembers = ref<ActivatedUser[]>([...props.councilMembers]);
 
 // user choice:
 const emergencyCouncilMembers = ref<ActivatedUser[]>([]);
 
 // validation:
-const isInvalidKeyShares = computed(() => requiredKeyShares.value < 1);
+const isInvalidKeyShares = computed(() => props.requiredKeyShares < 1);
 const isInvalidCouncilMembers = computed(() => emergencyCouncilMembers.value.length < 1);
 const hasTooFewCouncilMembers = computed(() =>
-  emergencyCouncilMembers.value.length < requiredKeyShares.value
-  || (props.allowChoosingCouncil && emergencyCouncilMembers.value.length < minMembers.value)
+  emergencyCouncilMembers.value.length < props.requiredKeyShares
+  || (props.allowChoosingCouncil && emergencyCouncilMembers.value.length < props.settings.defaultMinMembers)
 );
 const hasCouncilChanges = computed(() => {
   if (emergencyCouncilMembers.value.length !== currentEmergencyCouncilMembers.value.length) {
@@ -113,7 +110,6 @@ const hasValidationErrors = computed(() =>
 defineExpose({
   split,
   hasValidationErrors,
-  requiredKeyShares,
   emergencyCouncilMembers
 });
 
@@ -122,7 +118,7 @@ onMounted(async () => {
 });
 
 async function split(vaultKeys: VaultKeys): Promise<SplitResult> {
-  if (requiredKeyShares.value < 1) {
+  if (props.requiredKeyShares < 1) {
     throw new Error(t('grantEmergencyAccessDialog.error.keySharesRequired'));
   }
 
@@ -130,7 +126,11 @@ async function split(vaultKeys: VaultKeys): Promise<SplitResult> {
     throw new Error(t('grantEmergencyAccessDialog.error.councilMembersRequired'));
   }
 
-  if (emergencyCouncilMembers.value.length < requiredKeyShares.value) {
+  if (props.allowChoosingCouncil && emergencyCouncilMembers.value.length < props.settings.defaultMinMembers) {
+    throw new Error(t('grantEmergencyAccessDialog.error.tooFewCouncilMembers'));
+  }
+
+  if (emergencyCouncilMembers.value.length < props.requiredKeyShares) {
     throw new Error(t('grantEmergencyAccessDialog.error.tooFewCouncilMembers'));
   }
 
@@ -138,25 +138,20 @@ async function split(vaultKeys: VaultKeys): Promise<SplitResult> {
   const recoveryKeyBytes = wordEncoder.decode(recoveryKey); // TODO: remove encode/decode once UVF is merged
   const keyShares = await EmergencyAccess.split(
     recoveryKeyBytes,
-    requiredKeyShares.value,
+    props.requiredKeyShares,
     ...emergencyCouncilMembers.value
   );
 
   return {
     keyShares: keyShares,
-    requiredKeyShares: requiredKeyShares.value
+    requiredKeyShares: props.requiredKeyShares
   };
 }
 
 async function initialize() {
-  const settings = await backend.settings.get();
-  minMembers.value = settings.defaultMinMembers;
-  defaultRequiredEmergencyKeyShares.value = settings.defaultRequiredEmergencyKeyShares;
-  requiredKeyShares.value = settings.defaultRequiredEmergencyKeyShares;
-
   // if there is no current council, load default from settings:
   if (currentEmergencyCouncilMembers.value.length === 0) {
-    const authorities = await backend.authorities.listSome(settings.emergencyCouncilMemberIds);
+    const authorities = await backend.authorities.listSome(props.settings.emergencyCouncilMemberIds);
     const sortedActivatedUsers = authorities
       .filter((a): a is ActivatedUser => a.type === 'USER' && didCompleteSetup(a))
       .sort((a, b) => a.name.localeCompare(b.name));
