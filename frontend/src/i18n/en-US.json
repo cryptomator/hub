@@ -456,6 +456,7 @@
 
   "users.title": "Users",
   "user.detail.createdOn": "Created on",
+  "user.detail.disabled": "Disabled",
   "user.detail.devices": "Devices",
   "user.detail.edit": "Edit",
   "user.detail.email": "Email",
@@ -510,6 +511,7 @@
   "userList.user.created": "Created on",
   "userList.profileImage": "Profile Image",
   "userList.create.button": "Create User",
+  "userList.disabled": "Disabled",
 
   "userProfile.title": "Profile",
   "userProfile.actions.manageAccount": "Manage Account",

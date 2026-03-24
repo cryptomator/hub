@@ -110,6 +110,7 @@ const user = ref<UserDtoWithDetails>({
   language: undefined,
   accessibleVaults: [],
   realmRoles: [],
+  enabled: true,
   groups: [],
   devices: [],
   legacyDevices: [],

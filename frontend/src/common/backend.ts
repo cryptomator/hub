@@ -91,6 +91,7 @@ export type UserDto = {
   firstName?: string;
   lastName?: string;
   realmRoles: RealmRole[];
+  enabled: boolean;
   language?: string;
   devices: DeviceDto[];
   accessibleVaults: VaultDtoWithRole[];
