@@ -3,10 +3,10 @@
     <div
       :class="[
         'flex items-center flex-wrap min-h-[54px] rounded-md px-2 py-1 shadow-xs border', 
-        inputVisible ? 'focus-within:ring-1 bg-white' : 'bg-gray-200 cursor-not-allowed opacity-60',
+        inputVisible ? 'focus-within:ring-1 bg-white' : 'bg-gray-100 cursor-not-allowed',
         props.hasError
-          ? 'border-red-300 text-red-900 focus-within:ring-red-500 focus-within:border-red-500'
-          : 'border-gray-300 focus-within:ring-primary'
+          ? (inputVisible ? 'border-red-300 text-red-900 focus-within:ring-red-500 focus-within:border-red-500' : 'border-red-300/60 text-red-900')
+          : (inputVisible ? 'border-gray-300 focus-within:ring-primary' : 'border-gray-300/60')
       ]"
       @click="focusInput"
     >
@@ -24,19 +24,20 @@
         }"
         @click="onPillClick($event, user)"
       >
-        <img :src="user.pictureUrl" class="w-4 h-4 rounded-full" alt="" />
-        {{ user.name }}
-        <span 
+        <img :src="user.pictureUrl" class="w-4 h-4 rounded-full" :class="{ 'opacity-60': !inputVisible }" alt="" />
+        <span :class="{ 'opacity-60': !inputVisible }">{{ user.name }}</span>
+        <span
           v-if="user.type === 'USER'" class="trust-details"
         >
           <TrustDetails
             :trusted-user="user as UserDto"
             :trusts="trusts"
             :disable-action="disableAction"
+            :dimmed="!inputVisible"
             @trust-changed="refreshTrusts"
           />
         </span>
-        <span v-else class="trust-details">
+        <span v-else class="trust-details" :class="{ 'opacity-60': !inputVisible }">
           <span class="inline-flex items-center bg-gray-50 ring-1 ring-inset ring-gray-500/10 mx-1 px-2 p-0.5 rounded-full">
             {{ user.memberSize }}
           </span>
