@@ -362,7 +362,10 @@ class VaultService {
 
   public async setArchived(vaultId: string, archived: boolean): Promise<VaultDto> {
     return axiosAuth.put<VaultDto>(`/vaults/${vaultId}/archived`, archived)
-      .then(response => response.data)
+      .then(response => {
+        response.data.creationTime = new Date(response.data.creationTime);
+        return response.data;
+      })
       .catch((error) => rethrowAndConvertIfExpected(error, 403, 404));
   }
 
