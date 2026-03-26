@@ -52,6 +52,7 @@
   "legacyDeviceList.added": "Pridėtas",
   "legacyDeviceList.thisDevice": "Šis įrenginys",
   "legacyDeviceList.ipAddress": "IP adresas",
+  "user.detail.enable": "Įjungti",
   "unlockSuccess.deviceSetup.title": "Naujas įrenginys",
   "vaultDetails.description.header": "Aprašas",
   "vaultDetails.actions.updatePermissions.reload": "Įkelti iš naujo",
