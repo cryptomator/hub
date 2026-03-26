@@ -427,7 +427,7 @@ public class UsersResource {
 	@PUT
 	@Path("/{id}/enabled")
 	@RolesAllowed("admin")
-	@Consumes(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.TEXT_PLAIN)
 	@Transactional
 	@Operation(summary = "enable or disable a user")
 	@APIResponse(responseCode = "204", description = "user updated")

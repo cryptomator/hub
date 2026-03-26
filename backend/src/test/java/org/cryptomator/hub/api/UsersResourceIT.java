@@ -608,7 +608,7 @@ class UsersResourceIT {
 		void testSetUserEnabledSuccess() {
 			Mockito.doNothing().when(keycloakAdminService).setUserEnabled("user1", false);
 
-			given().contentType(ContentType.JSON).body("false")
+			given().contentType(ContentType.TEXT).body("false")
 					.when().put("/users/user1/enabled")
 					.then().statusCode(204);
 
