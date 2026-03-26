@@ -34,19 +34,19 @@ import java.util.stream.Stream;
 				FROM User u
 					INNER JOIN EffectiveVaultAccess perm ON u.id = perm.id.authorityId
 					LEFT JOIN u.accessTokens token ON token.id.vaultId = :vaultId AND token.id.userId = u.id
-					WHERE perm.id.vaultId = :vaultId AND token.vault IS NULL AND u.ecdhPublicKey IS NOT NULL
+					WHERE perm.id.vaultId = :vaultId AND token.vault IS NULL AND u.ecdhPublicKey IS NOT NULL AND u.enabled
 				""")
 @NamedQuery(name = "User.getEffectiveGroupUsers", query = """
 				SELECT DISTINCT u
 				FROM User u
 				INNER JOIN EffectiveGroupMembership egm ON u.id = egm.id.memberId
-				WHERE egm.id.groupId IN :groupIds
+				WHERE egm.id.groupId IN :groupIds AND u.enabled
 		""")
 @NamedQuery(name = "User.countEffectiveGroupUsers", query = """
 				SELECT count( DISTINCT u)
 				FROM User u
 				INNER JOIN EffectiveGroupMembership egm	ON u.id = egm.id.memberId
-				WHERE egm.id.groupId = :groupId
+				WHERE egm.id.groupId = :groupId AND u.enabled
 		""")
 public class User extends Authority {
 
@@ -65,6 +65,9 @@ public class User extends Authority {
 	@Column(name = "realm_roles")
 	@Type(StringArrayType.class)
 	private String[] realmRoles = new String[0];
+
+	@Column(name = "enabled", nullable = false)
+	private boolean enabled = true;
 
 	@Column(name = "ecdh_publickey")
 	private String ecdhPublicKey;
@@ -139,6 +142,14 @@ public class User extends Authority {
 
 	public void setRealmRoles(String[] realmRoles) {
 		this.realmRoles = realmRoles;
+	}
+
+	public boolean isEnabled() {
+		return enabled;
+	}
+
+	public void setEnabled(boolean enabled) {
+		this.enabled = enabled;
 	}
 
 	public String getEcdhPublicKey() {
