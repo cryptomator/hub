@@ -265,6 +265,7 @@
   "userList.edit.user.button": "Bearbeiten",
   "userList.userName": "Name",
   "userList.vaults.count": "Tresore",
+  "userList.disabled": "Deaktiviert",
   "userProfile.title": "Profil",
   "userProfile.actions.manageAccount": "Account verwalten",
   "userProfile.actions.changeLanguage": "Sprache ändern",
