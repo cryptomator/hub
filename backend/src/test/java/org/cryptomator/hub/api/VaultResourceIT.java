@@ -973,14 +973,11 @@ public class VaultResourceIT {
 
 		@Test
 		@Order(1)
-		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111 returns 200 for admin archiving vault")
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111/archived returns 200 for admin archiving vault")
 		@DBRollbackAfter
 		void testAdminArchiveVault() {
-			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100001111");
-			var vaultDto = new VaultResource.VaultDto(uuid, "Vault 1", Instant.parse("2020-02-20T20:20:20Z"), "This is a testvault.", true, 0, Map.of(), "masterkey1", 42, "salt1", "authPubKey1", "authPrvKey1");
-
-			given().contentType(ContentType.JSON).body(vaultDto)
-					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-000100001111")
+			given().contentType(ContentType.JSON).body(true)
+					.when().put("/vaults/{vaultId}/archived", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(200)
 					.body("id", equalToIgnoringCase("7E57C0DE-0000-4000-8000-000100001111"))
 					.body("name", equalTo("Vault 1"))
@@ -989,14 +986,11 @@ public class VaultResourceIT {
 
 		@Test
 		@Order(2)
-		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-00010000AAAA returns 200 for admin unarchiving vault")
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-00010000AAAA/archived returns 200 for admin unarchiving vault")
 		@DBRollbackAfter
 		void testAdminUnarchiveVault() {
-			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-00010000AAAA");
-			var vaultDto = new VaultResource.VaultDto(uuid, "Vault Archived", Instant.parse("2020-02-20T20:20:20Z"), "This is a archived vault.", false, 0, Map.of(), "masterkey3", 42, "salt3", "authPubKey3", "authPrvKey3");
-
-			given().contentType(ContentType.JSON).body(vaultDto)
-					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-00010000AAAA")
+			given().contentType(ContentType.JSON).body(false)
+					.when().put("/vaults/{vaultId}/archived", "7E57C0DE-0000-4000-8000-00010000AAAA")
 					.then().statusCode(200)
 					.body("id", equalToIgnoringCase("7E57C0DE-0000-4000-8000-00010000AAAA"))
 					.body("name", equalTo("Vault Archived"))
@@ -1005,6 +999,18 @@ public class VaultResourceIT {
 
 		@Test
 		@Order(3)
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111 returns 403 for admin updating vault they don't own")
+		void testAdminCannotUpdateVaultTheyDontOwn() {
+			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100001111");
+			var vaultDto = new VaultResource.VaultDto(uuid, "Vault 1", Instant.parse("2020-02-20T20:20:20Z"), "This is a testvault.", true, 0, Map.of(), "masterkey1", 42, "salt1", "authPubKey1", "authPrvKey1");
+
+			given().contentType(ContentType.JSON).body(vaultDto)
+					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-000100001111")
+					.then().statusCode(403);
+		}
+
+		@Test
+		@Order(4)
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100005555 returns 403 for admin creating vault without create-vaults role")
 		void testAdminCannotCreateVaultWithoutCreateVaultsRole() {
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100005555");
@@ -1031,7 +1037,8 @@ public class VaultResourceIT {
 				"PUT, /vaults/7E57C0DE-0000-4000-8000-000100001111/users/user1",
 				"DELETE, /vaults/7E57C0DE-0000-4000-8000-000100001111/authority/user1",
 				"GET, /vaults/7E57C0DE-0000-4000-8000-000100001111/users-requiring-access-grant",
-				"GET, /vaults/7E57C0DE-0000-4000-8000-000100001111/access-token"
+				"GET, /vaults/7E57C0DE-0000-4000-8000-000100001111/access-token",
+				"PUT, /vaults/7E57C0DE-0000-4000-8000-000100001111/archived"
 		})
 		void testGet(String method, String path) {
 			when().request(method, path)

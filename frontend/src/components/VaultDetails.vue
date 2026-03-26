@@ -210,6 +210,15 @@
         </button>
       </div>
     </div>
+
+    <div v-if="isAdmin && vaultRole !== 'OWNER' && !vaultRecoveryRequired" class="mt-2 flex flex-col gap-2">
+      <button v-if="!vault.archived" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white  hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showArchiveVaultDialog()">
+        {{ t('vaultDetails.actions.archiveVault') }}
+      </button>
+      <button v-if="vault.archived" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white  hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showReactivateVaultDialog()">
+        {{ t('vaultDetails.actions.reactivateVault') }}
+      </button>
+    </div>
   </div>
 
   <ClaimVaultOwnershipDialog v-if="claimingVaultOwnership && vault" ref="claimVaultOwnershipDialog" :vault="vault" @action="provedOwnership" @close="claimingVaultOwnership = false" />

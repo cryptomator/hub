@@ -513,9 +513,28 @@ public class VaultResource {
 	}
 
 	@PUT
+	@Path("/{vaultId}/archived")
+	@RolesAllowed("user")
+	@VaultRole(value = VaultAccess.Role.OWNER, bypassForRealmRole = true, onMissingVault = VaultRole.OnMissingVault.NOT_FOUND)
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Transactional
+	@Operation(summary = "sets the archived flag of a vault")
+	@APIResponse(responseCode = "200", description = "archived flag updated")
+	@APIResponse(responseCode = "403", description = "requesting user is neither a vault owner nor has the admin role")
+	@APIResponse(responseCode = "404", description = "vault not found")
+	public VaultDto setArchived(@PathParam("vaultId") UUID vaultId, @NotNull Boolean archived) {
+		Vault vault = vaultRepo.findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
+		vault.setArchived(archived);
+		vaultRepo.persistAndFlush(vault);
+		eventLogger.logVaultUpdated(jwt.getSubject(), vault.getId(), vault.getName(), vault.getDescription(), vault.isArchived());
+		return VaultDto.fromEntity(vault);
+	}
+
+	@PUT
 	@Path("/{vaultId}")
 	@RolesAllowed("user") // general authentication. VaultRole filter will check for specific access rights
-	@VaultRole(value = VaultAccess.Role.OWNER, bypassForRealmRole = true, onMissingVault = VaultRole.OnMissingVault.REQUIRE_REALM_ROLE, realmRole = RealmRole.CREATE_VAULTS, bypassForEmergencyAccess = true)
+	@VaultRole(value = VaultAccess.Role.OWNER, onMissingVault = VaultRole.OnMissingVault.REQUIRE_REALM_ROLE, realmRole = RealmRole.CREATE_VAULTS, bypassForEmergencyAccess = true)
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
