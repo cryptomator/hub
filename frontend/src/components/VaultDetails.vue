@@ -147,6 +147,14 @@
         <button type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white  hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showRecoverVaultDialog()">
           {{ t('vaultDetails.actions.recoverVault') }}
         </button>
+        <!-- archiveVault button -->
+        <button v-if="canToggleArchive && !vault.archived" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white  hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showArchiveVaultDialog()">
+          {{ t('vaultDetails.actions.archiveVault') }}
+        </button>
+        <!-- reactivateVault button -->
+        <button v-if="canToggleArchive && vault.archived" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white  hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showReactivateVaultDialog()">
+          {{ t('vaultDetails.actions.reactivateVault') }}
+        </button>
       </div>
 
       <!-- vault is archived -->
