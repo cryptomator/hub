@@ -976,7 +976,7 @@ public class VaultResourceIT {
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111/archived returns 200 for admin archiving vault")
 		@DBRollbackAfter
 		void testAdminArchiveVault() {
-			given().contentType(ContentType.JSON).body(true)
+			given().contentType(ContentType.TEXT).body("true")
 					.when().put("/vaults/{vaultId}/archived", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(200)
 					.body("id", equalToIgnoringCase("7E57C0DE-0000-4000-8000-000100001111"))
@@ -989,7 +989,7 @@ public class VaultResourceIT {
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-00010000AAAA/archived returns 200 for admin unarchiving vault")
 		@DBRollbackAfter
 		void testAdminUnarchiveVault() {
-			given().contentType(ContentType.JSON).body(false)
+			given().contentType(ContentType.TEXT).body("false")
 					.when().put("/vaults/{vaultId}/archived", "7E57C0DE-0000-4000-8000-00010000AAAA")
 					.then().statusCode(200)
 					.body("id", equalToIgnoringCase("7E57C0DE-0000-4000-8000-00010000AAAA"))

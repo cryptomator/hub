@@ -516,7 +516,7 @@ public class VaultResource {
 	@Path("/{vaultId}/archived")
 	@RolesAllowed("user")
 	@VaultRole(value = VaultAccess.Role.OWNER, bypassForRealmRole = true, onMissingVault = VaultRole.OnMissingVault.NOT_FOUND)
-	@Consumes(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.TEXT_PLAIN)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
 	@Operation(summary = "sets the archived flag of a vault")
