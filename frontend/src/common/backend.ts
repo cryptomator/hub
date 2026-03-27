@@ -91,6 +91,7 @@ export type UserDto = {
   firstName?: string;
   lastName?: string;
   realmRoles: RealmRole[];
+  enabled: boolean;
   language?: string;
   devices: DeviceDto[];
   accessibleVaults: VaultDtoWithRole[];
@@ -545,6 +546,10 @@ class UserService {
     } else {
       return user;
     }
+  }
+
+  public async setUserEnabled(userId: string, enabled: boolean): Promise<void> {
+    await axiosAuth.put(`/users/${userId}/enabled`, enabled, { headers: { 'Content-Type': 'text/plain' } });
   }
 
   public async updateUser(userId: string, dto: UpdateUserDto, addFallbackPictures: boolean = true): Promise<UserDto> {

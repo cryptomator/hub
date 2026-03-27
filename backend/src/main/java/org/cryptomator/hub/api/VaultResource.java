@@ -184,7 +184,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "200")
 	@APIResponse(responseCode = "403", description = "not a vault owner")
 	public List<MemberDto> getDirectMembers(@PathParam("vaultId") UUID vaultId) {
-		return vaultAccessRepo.forVault(vaultId).map(access -> switch (access.getAuthority()) {
+		return vaultAccessRepo.forVault(vaultId).filter(access -> !(access.getAuthority() instanceof User u) || u.isEnabled()).map(access -> switch (access.getAuthority()) {
 			case User u -> MemberDto.fromEntity(u, access.getRole());
 			case Group g -> MemberDto.fromEntity(g, access.getRole());
 			default -> throw new IllegalStateException();
