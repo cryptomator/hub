@@ -361,6 +361,15 @@ class VaultService {
     return addFallbackPictures ? users.map(fillInMissingPicture) : users;
   }
 
+  public async setArchived(vaultId: string, archived: boolean): Promise<VaultDto> {
+    return axiosAuth.put<VaultDto>(`/vaults/${vaultId}/archived`, String(archived), { headers: { 'Content-Type': 'text/plain' } })
+      .then(response => {
+        response.data.creationTime = new Date(response.data.creationTime);
+        return response.data;
+      })
+      .catch((error) => rethrowAndConvertIfExpected(error, 403, 404));
+  }
+
   public async createOrUpdateVault(vaultId: string, name: string, archived: boolean, requiredEmergencyKeyShares: number, emergencyKeyShares: Record<string, string>, description?: string): Promise<VaultDto> {
     const body: VaultDto = {
       id: vaultId,

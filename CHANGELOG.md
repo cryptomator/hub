@@ -12,7 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - User and group management (#376)
 - Emergency Access: Allow a council to restore access to a orphaned vault (#390)
 - Show pictures of the groups in the Vaults member list (#375)
-- Disable users to exclude them from license seat count (#427)
+- Allow admins to archive and unarchive any vault (#283, #430)
+- Disable users to exclude them from license seat count (#427, #428)
 
 ### Changed
 
