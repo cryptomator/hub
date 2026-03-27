@@ -557,6 +557,7 @@ public class VaultResource {
 			vault.setCreationTime(Instant.now().truncatedTo(ChronoUnit.MILLIS));
 		}
 		// set regardless of whether vault is new or existing:
+		boolean wasArchived = vault.isArchived();
 		vault.setName(vaultDto.name);
 		vault.setDescription(vaultDto.description);
 		vault.setArchived(existingVault.isEmpty() ? false : vaultDto.archived);
@@ -565,6 +566,10 @@ public class VaultResource {
 		vault.setEmergencyKeyShares(vaultDto.emergencyKeyShares);
 
 		vaultRepo.persistAndFlush(vault); // trigger PersistenceException before we continue with
+		// flush first so countSeatOccupyingUsers sees the unarchived vault; @Transactional rolls back on exception
+		if (wasArchived && !vaultDto.archived) {
+			ensureSeatsNotExceeded(effectiveVaultAccessRepo.countSeatOccupyingUsers());
+		}
 
 		// does this request update emergency key shares?
 		if (!oldEmergencyKeyShares.containsAll(vaultDto.emergencyKeyShares.values())) {
