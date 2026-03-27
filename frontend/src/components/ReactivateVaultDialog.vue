@@ -35,7 +35,10 @@
                     {{ t('common.cancel') }}
                   </button>
                 </div>
-                <p v-if="onReactivateVaultError" class="text-sm text-red-900 px-4 sm:px-6 text-right bg-red-50">
+                <p v-if="onReactivateVaultError instanceof PaymentRequiredError" class="text-sm text-red-900 px-4 sm:px-6 text-right bg-red-50">
+                  {{ t('reactivateVaultDialog.error.paymentRequired') }}
+                </p>
+                <p v-else-if="onReactivateVaultError" class="text-sm text-red-900 px-4 sm:px-6 text-right bg-red-50">
                   {{ t('common.unexpectedError', [onReactivateVaultError.message]) }}
                 </p>
               </form>
@@ -52,7 +55,7 @@ import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, Trans
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { VaultDto } from '../common/backend';
+import backend, { PaymentRequiredError, VaultDto } from '../common/backend';
 
 const { t } = useI18n({ useScope: 'global' });
 

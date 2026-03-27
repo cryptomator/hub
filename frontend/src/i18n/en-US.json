@@ -433,6 +433,7 @@
   "reactivateVaultDialog.title": "Reactivate Vault",
   "reactivateVaultDialog.description": "Warning: Reactivating a vault may affect the number of available seats. If the number of available seats is exceeded, unlocking of all vaults will be blocked.",
   "reactivateVaultDialog.confirm": "Reactivate",
+  "reactivateVaultDialog.error.paymentRequired": "Your Cryptomator Hub license has exceeded the number of available seats. Reactivating this vault would exceed the limit. Please inform a Hub administrator to upgrade the license.",
 
   "recoveryKeyDialog.title": "Recovery Key",
   "recoveryKeyDialog.description": "This is your recovery key for \"{0}\". Keep it safe, it is your only chance to regain access to a vault in case of system outage.",

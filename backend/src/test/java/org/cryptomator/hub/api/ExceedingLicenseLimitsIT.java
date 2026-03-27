@@ -214,6 +214,23 @@ class ExceedingLicenseLimitsIT {
 	}
 
 	@Test
+	@Order(6)
+	@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-00010000AAAA/archived returns 402 when unarchiving exceeds seat limit")
+	void unarchiveVaultExceedingSeats() {
+		Assumptions.assumeTrue(vaultResourceIT.effectiveVaultAccessRepo.countSeatOccupyingUsers() > 5);
+
+		given().contentType(ContentType.TEXT)
+				.body("false")
+				.when().put("/vaults/{vaultId}/archived", "7E57C0DE-0000-4000-8000-00010000AAAA")
+				.then().statusCode(402);
+
+		// vault should still be archived (transaction rolled back)
+		when().get("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-00010000AAAA")
+				.then().statusCode(200)
+				.body("archived", is(true));
+	}
+
+	@Test
 	@Order(7)
 	@DisplayName("unlock/legacyUnlock is granted, if (effective vault user) > license seats but (effective vault user with access token) <= license seat")
 	void testUnlockAllowedExceedingLicenseSoftLimit() {
