@@ -271,13 +271,10 @@ public class VaultResource {
 	public Response addUser(@PathParam("vaultId") UUID vaultId, @PathParam("userId") @ValidId String userId, @QueryParam("role") @DefaultValue("MEMBER") VaultAccess.Role role) {
 		var vault = vaultRepo.findById(vaultId); // should always be found, since @VaultRole filter would have triggered
 		var user = userRepo.findByIdOptional(userId).orElseThrow(NotFoundException::new);
-		var usedSeats = effectiveVaultAccessRepo.countSeatOccupyingUsers();
-		if (usedSeats < license.getEntitlements().seats() // free seats available
-				|| effectiveVaultAccessRepo.isUserOccupyingSeat(userId)) { // or user already sitting
-			return addAuthority(vault, user, role);
-		} else {
-			throw new PaymentRequiredException("License seats exceeded. Cannot add more users.");
+		if (!effectiveVaultAccessRepo.isUserOccupyingSeat(userId)) {
+			ensureSeatsNotExceeded(effectiveVaultAccessRepo.countSeatOccupyingUsers() + 1);
 		}
+		return addAuthority(vault, user, role);
 	}
 
 	@PUT
