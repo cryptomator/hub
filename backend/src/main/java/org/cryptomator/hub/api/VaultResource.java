@@ -418,9 +418,11 @@ public class VaultResource {
 		}
 
 		var accessTokenSeats = effectiveVaultAccessRepo.countSeatOccupyingUsersWithAccessToken();
-		if (accessTokenSeats > license.getEntitlements().seats()) {
+		try {
+			ensureSeatsNotExceeded(accessTokenSeats);
+		} catch (PaymentRequiredException e) {
 			vaultUnlockMetrics.recordFailure();
-			throw new PaymentRequiredException("Number of effective vault users exceeds available license seats");
+			throw e;
 		}
 
 		var user = userRepo.findById(jwt.getSubject());
