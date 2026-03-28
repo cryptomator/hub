@@ -518,13 +518,11 @@ public class VaultResource {
 	@APIResponse(responseCode = "404", description = "vault not found")
 	public VaultDto setArchived(@PathParam("vaultId") UUID vaultId, @NotNull Boolean archived) {
 		Vault vault = vaultRepo.findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
-		boolean wasArchived = vault.isArchived();
+		if (vault.isArchived() && !archived) {
+			ensureSeatsNotExceeded(effectiveVaultAccessRepo.countSeatOccupyingUsersIfVaultUnarchived(vaultId));
+		}
 		vault.setArchived(archived);
 		vaultRepo.persistAndFlush(vault);
-		// flush first so countSeatOccupyingUsers sees the unarchived vault; @Transactional rolls back on exception
-		if (wasArchived && !archived) {
-			ensureSeatsNotExceeded(effectiveVaultAccessRepo.countSeatOccupyingUsers());
-		}
 		eventLogger.logVaultUpdated(jwt.getSubject(), vault.getId(), vault.getName(), vault.getDescription(), vault.isArchived());
 		return VaultDto.fromEntity(vault);
 	}
@@ -556,8 +554,10 @@ public class VaultResource {
 			vault.setId(vaultDto.id);
 			vault.setCreationTime(Instant.now().truncatedTo(ChronoUnit.MILLIS));
 		}
+		if (existingVault.isPresent() && vault.isArchived() && !vaultDto.archived) {
+			ensureSeatsNotExceeded(effectiveVaultAccessRepo.countSeatOccupyingUsersIfVaultUnarchived(vaultId));
+		}
 		// set regardless of whether vault is new or existing:
-		boolean wasArchived = vault.isArchived();
 		vault.setName(vaultDto.name);
 		vault.setDescription(vaultDto.description);
 		vault.setArchived(existingVault.isEmpty() ? false : vaultDto.archived);
@@ -566,10 +566,6 @@ public class VaultResource {
 		vault.setEmergencyKeyShares(vaultDto.emergencyKeyShares);
 
 		vaultRepo.persistAndFlush(vault); // trigger PersistenceException before we continue with
-		// flush first so countSeatOccupyingUsers sees the unarchived vault; @Transactional rolls back on exception
-		if (wasArchived && !vaultDto.archived) {
-			ensureSeatsNotExceeded(effectiveVaultAccessRepo.countSeatOccupyingUsers());
-		}
 
 		// does this request update emergency key shares?
 		if (!oldEmergencyKeyShares.containsAll(vaultDto.emergencyKeyShares.values())) {

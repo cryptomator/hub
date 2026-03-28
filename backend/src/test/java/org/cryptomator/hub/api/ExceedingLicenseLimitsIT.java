@@ -224,7 +224,7 @@ class ExceedingLicenseLimitsIT {
 				.when().put("/vaults/{vaultId}/archived", "7E57C0DE-0000-4000-8000-00010000AAAA")
 				.then().statusCode(402);
 
-		// vault should still be archived (transaction rolled back)
+		// vault should still be archived (rejected before mutation)
 		when().get("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-00010000AAAA")
 				.then().statusCode(200)
 				.body("archived", is(true));
@@ -243,7 +243,7 @@ class ExceedingLicenseLimitsIT {
 				.when().put("/vaults/{vaultId}", vaultId)
 				.then().statusCode(402);
 
-		// vault should still be archived (transaction rolled back)
+		// vault should still be archived (rejected before mutation)
 		when().get("/vaults/{vaultId}", vaultId)
 				.then().statusCode(200)
 				.body("archived", is(true));
