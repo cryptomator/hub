@@ -236,9 +236,11 @@ public class VaultResource {
 		var effectiveUsers = new HashSet<User>();
 		effectiveUsers.addAll(userRepo.getEffectiveGroupUsers(memberRoles.keySet()));
 		effectiveUsers.addAll(userRepo.findByIds(memberRoles.keySet()).toList());
-		var newSeatOccupyingUsers = new HashSet<>(effectiveVaultAccessRepo.usersSeatedOnOtherVaults(vaultId).toList()); // initialize with users already having access to other vaults
-		newSeatOccupyingUsers.addAll(effectiveUsers.stream().map(User::getId).toList()); // add all users that will have access to this vault after the operation (avoid double counting by using a set)
-		ensureSeatsNotExceeded(newSeatOccupyingUsers.size());
+		if (!vault.isArchived()) {
+			var newSeatOccupyingUsers = new HashSet<>(effectiveVaultAccessRepo.usersSeatedOnOtherVaults(vaultId).toList()); // initialize with users already having access to other vaults
+			newSeatOccupyingUsers.addAll(effectiveUsers.stream().map(User::getId).toList()); // add all users that will have access to this vault after the operation (avoid double counting by using a set)
+			ensureSeatsNotExceeded(newSeatOccupyingUsers.size());
+		}
 
 		// Audit Log
 		addedMembers.forEach(va -> eventLogger.logVaultMemberAdded(jwt.getSubject(), vaultId, va.getId().authorityId(), va.getRole()));
@@ -271,7 +273,7 @@ public class VaultResource {
 	public Response addUser(@PathParam("vaultId") UUID vaultId, @PathParam("userId") @ValidId String userId, @QueryParam("role") @DefaultValue("MEMBER") VaultAccess.Role role) {
 		var vault = vaultRepo.findById(vaultId); // should always be found, since @VaultRole filter would have triggered
 		var user = userRepo.findByIdOptional(userId).orElseThrow(NotFoundException::new);
-		if (!effectiveVaultAccessRepo.isUserOccupyingSeat(userId)) {
+		if (!vault.isArchived() && !effectiveVaultAccessRepo.isUserOccupyingSeat(userId)) {
 			ensureSeatsNotExceeded(effectiveVaultAccessRepo.countSeatOccupyingUsers() + 1);
 		}
 		return addAuthority(vault, user, role);
@@ -295,8 +297,10 @@ public class VaultResource {
 		var vault = vaultRepo.findById(vaultId); // should always be found, since @VaultRole filter would have triggered
 		var group = groupRepo.findByIdOptional(groupId).orElseThrow(NotFoundException::new);
 
-		//usersInGroup - usersInGroupAndPartOfAtLeastOneVault + usersOfAtLeastOneVault
-		ensureSeatsNotExceeded(userRepo.countEffectiveGroupUsers(groupId) - effectiveVaultAccessRepo.countSeatOccupyingUsersOfGroup(groupId) + effectiveVaultAccessRepo.countSeatOccupyingUsers());
+		if (!vault.isArchived()) {
+			//usersInGroup - usersInGroupAndPartOfAtLeastOneVault + usersOfAtLeastOneVault
+			ensureSeatsNotExceeded(userRepo.countEffectiveGroupUsers(groupId) - effectiveVaultAccessRepo.countSeatOccupyingUsersOfGroup(groupId) + effectiveVaultAccessRepo.countSeatOccupyingUsers());
+		}
 
 		return addAuthority(vault, group, role);
 	}
@@ -469,10 +473,12 @@ public class VaultResource {
 		var vault = vaultRepo.findById(vaultId); // should always be found, since @VaultRole filter would have triggered
 
 		// check number of available seats
-		long occupiedSeats = effectiveVaultAccessRepo.countSeatOccupyingUsers();
-		long usersWithoutSeat = tokens.size() - effectiveVaultAccessRepo.countSeatsOccupiedByUsers(tokens.keySet().stream().toList());
+		if (!vault.isArchived()) {
+			long occupiedSeats = effectiveVaultAccessRepo.countSeatOccupyingUsers();
+			long usersWithoutSeat = tokens.size() - effectiveVaultAccessRepo.countSeatsOccupiedByUsers(tokens.keySet().stream().toList());
 
-		ensureSeatsNotExceeded(occupiedSeats + usersWithoutSeat);
+			ensureSeatsNotExceeded(occupiedSeats + usersWithoutSeat);
+		}
 
 		for (var entry : tokens.entrySet()) {
 			var userId = entry.getKey();
