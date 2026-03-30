@@ -81,7 +81,7 @@ async function archiveVault() {
   onArchiveVaultError.value = undefined;
   const v = props.vault;
   try {
-    const vaultDto = await backend.vaults.createOrUpdateVault(v.id, v.name, true, v.requiredEmergencyKeyShares, v.emergencyKeyShares, v.description);
+    const vaultDto = await backend.vaults.setArchived(v.id, true);
     emit('archived', vaultDto);
     open.value = false;
   } catch (error) {

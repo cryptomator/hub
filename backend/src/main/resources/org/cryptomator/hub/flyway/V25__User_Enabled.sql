@@ -1,0 +1,1 @@
+ALTER TABLE "user_details" ADD COLUMN "enabled" BOOLEAN NOT NULL DEFAULT TRUE;

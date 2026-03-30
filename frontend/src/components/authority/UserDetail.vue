@@ -26,6 +26,16 @@
           <transition enter-active-class="transition ease-out duration-100" enter-from-class="transform opacity-0 translate-y-1 scale-95" enter-to-class="transform opacity-100 translate-y-0 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 translate-y-0 scale-100" leave-to-class="transform opacity-0 translate-y-1 scale-95">
             <MenuItems class="absolute right-0 mt-2 z-10 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-hidden">
               <div class="py-1">
+                <MenuItem v-if="user.enabled" v-slot="{ active }">
+                  <div :class="[ active ? 'bg-gray-100 text-red-900' : 'text-red-700', 'cursor-pointer block px-4 py-2 text-sm']" @click="showDisableUserDialog()">
+                    {{ t('user.detail.disable') }}
+                  </div>
+                </MenuItem>
+                <MenuItem v-else v-slot="{ active }">
+                  <div :class="[ active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'cursor-pointer block px-4 py-2 text-sm']" @click="enableUser()">
+                    {{ t('user.detail.enable') }}
+                  </div>
+                </MenuItem>
                 <MenuItem v-slot="{ active }">
                   <div :class="[ active ? 'bg-gray-100 text-red-900' : 'text-red-700', 'cursor-pointer block px-4 py-2 text-sm']" @click="showDeleteUserDialog()">
                     {{ t('common.remove') }}
@@ -66,6 +76,7 @@
   </div>
 
   <!-- Dialogs -->
+  <UserDisableDialog v-if="disablingUser" ref="disableUserDialog" :user="disablingUser" @close="disablingUser = undefined" @disable="onUserDisabled"/>
   <UserDeleteDialog v-if="deletingUser" ref="deleteUserDialog" :user="deletingUser" @close="deletingUser = undefined" @delete="onUserDeleted"/>
 </template>
 
@@ -78,6 +89,7 @@ import { useRouter } from 'vue-router';
 import backend, { GroupDto, isSelectableRealmRole, UserDto, UserDtoWithDetails } from '../../common/backend';
 import BreadcrumbNav from '../BreadcrumbNav.vue';
 import UserDeleteDialog from './UserDeleteDialog.vue';
+import UserDisableDialog from './UserDisableDialog.vue';
 import UserDeviceList from './UserDeviceList.vue';
 import UserGroupsList from './UserGroupsList.vue';
 import UserInfo from './UserInfo.vue';
@@ -89,6 +101,8 @@ const router = useRouter();
 
 const deleteUserDialog = ref<typeof UserDeleteDialog>();
 const deletingUser = ref<UserDto>();
+const disableUserDialog = ref<typeof UserDisableDialog>();
+const disablingUser = ref<UserDto>();
 
 const showDeleteUserDialog = () => {
   deletingUser.value = user.value;
@@ -97,6 +111,24 @@ const showDeleteUserDialog = () => {
 
 const onUserDeleted = () => {
   router.push('/app/users');
+};
+
+const showDisableUserDialog = () => {
+  disablingUser.value = user.value;
+  nextTick(() => disableUserDialog.value?.show());
+};
+
+const onUserDisabled = async () => {
+  user.value = await backend.users.getUser(props.id);
+};
+
+const enableUser = async () => {
+  try {
+    await backend.users.setUserEnabled(props.id, true);
+    user.value = await backend.users.getUser(props.id);
+  } catch (error) {
+    console.error('Enabling user failed.', error);
+  }
 };
 
 const user = ref<UserDtoWithDetails>({
@@ -110,6 +142,7 @@ const user = ref<UserDtoWithDetails>({
   language: undefined,
   accessibleVaults: [],
   realmRoles: [],
+  enabled: true,
   groups: [],
   devices: [],
   legacyDevices: [],
