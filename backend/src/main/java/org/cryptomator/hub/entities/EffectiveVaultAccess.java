@@ -54,13 +54,6 @@ import java.util.stream.Stream;
 		INNER JOIN Vault v ON eva.id.vaultId = v.id
 		WHERE NOT v.archived AND u.enabled
 		""")
-@NamedQuery(name = "EffectiveVaultAccess.countSeatOccupyingUsersIfVaultUnarchived", query = """
-		SELECT COUNT(DISTINCT u.id)
-		FROM User u
-		INNER JOIN EffectiveVaultAccess eva ON u.id = eva.id.authorityId
-		INNER JOIN Vault v ON eva.id.vaultId = v.id
-		WHERE (NOT v.archived OR v.id = :vaultId) AND u.enabled
-		""")
 @NamedQuery(name = "EffectiveVaultAccess.countSeatOccupyingUsersWithAccessToken", query = """
 		SELECT COUNT(DISTINCT u.id)
 		FROM User u
@@ -136,10 +129,6 @@ public class EffectiveVaultAccess {
 
 		public long countSeatOccupyingUsers() {
 			return count("#EffectiveVaultAccess.countSeatOccupyingUsers");
-		}
-
-		public long countSeatOccupyingUsersIfVaultUnarchived(UUID vaultId) {
-			return count("#EffectiveVaultAccess.countSeatOccupyingUsersIfVaultUnarchived", Parameters.with("vaultId", vaultId));
 		}
 
 		public long countSeatOccupyingUsersWithAccessToken() {

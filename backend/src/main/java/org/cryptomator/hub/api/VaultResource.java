@@ -518,7 +518,16 @@ public class VaultResource {
 	public VaultDto setArchived(@PathParam("vaultId") UUID vaultId, @NotNull Boolean archived) {
 		Vault vault = vaultRepo.findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
 		if (vault.isArchived() && !archived) {
-			ensureSeatsNotExceeded(effectiveVaultAccessRepo.countSeatOccupyingUsersIfVaultUnarchived(vaultId));
+			// resolve group members and simulate new seat count:
+			var authorityIds = vaultAccessRepo.forVault(vaultId)
+					.map(va -> va.getId().authorityId())
+					.collect(Collectors.toSet());
+			var effectiveUsers = new HashSet<User>();
+			effectiveUsers.addAll(userRepo.getEffectiveGroupUsers(authorityIds));
+			effectiveUsers.addAll(userRepo.findByIds(authorityIds).toList());
+			var projectedSeatUsers = new HashSet<>(effectiveVaultAccessRepo.usersSeatedOnOtherVaults(vaultId).toList());
+			projectedSeatUsers.addAll(effectiveUsers.stream().map(User::getId).toList());
+			ensureSeatsNotExceeded(projectedSeatUsers.size());
 		}
 		vault.setArchived(archived);
 		vaultRepo.persistAndFlush(vault);
@@ -534,7 +543,7 @@ public class VaultResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
 	@Operation(summary = "creates or updates a vault",
-			description = "Creates or updates a vault with the given vault id. The creationTime in the vaultDto is always ignored. On creation, the current server time is used and the archived field is ignored. On update, only the name, description, and archived fields are considered.")
+			description = "Creates or updates a vault with the given vault id. The creationTime in the vaultDto is always ignored. The archived field is always ignored (use the dedicated endpoint). On creation, the current server time is used. On update, only the name and description fields are considered.")
 	@APIResponse(responseCode = "200", description = "existing vault updated")
 	@APIResponse(responseCode = "201", description = "new vault created")
 	@APIResponse(responseCode = "402", description = "number of licensed seats is exceeded")
@@ -553,13 +562,9 @@ public class VaultResource {
 			vault.setId(vaultDto.id);
 			vault.setCreationTime(Instant.now().truncatedTo(ChronoUnit.MILLIS));
 		}
-		if (existingVault.isPresent() && vault.isArchived() && !vaultDto.archived) {
-			ensureSeatsNotExceeded(effectiveVaultAccessRepo.countSeatOccupyingUsersIfVaultUnarchived(vaultId));
-		}
 		// set regardless of whether vault is new or existing:
 		vault.setName(vaultDto.name);
 		vault.setDescription(vaultDto.description);
-		vault.setArchived(existingVault.isEmpty() ? false : vaultDto.archived);
 		var oldEmergencyKeyShares = vault.getEmergencyKeyShares().values();
 		vault.setRequiredEmergencyKeyShares(vaultDto.requiredEmergencyKeyShares);
 		vault.setEmergencyKeyShares(vaultDto.emergencyKeyShares);
