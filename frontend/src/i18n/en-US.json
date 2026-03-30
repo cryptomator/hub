@@ -431,7 +431,7 @@
   "nav.mobileMenu": "Open main menu",
 
   "reactivateVaultDialog.title": "Reactivate Vault",
-  "reactivateVaultDialog.description": "Warning: Reactivating a vault may affect the number of available seats. If the number of available seats is exceeded, unlocking of all vaults will be blocked.",
+  "reactivateVaultDialog.description": "Reactivating a vault will add its members to the seat count. If the number of available seats would be exceeded, the operation will be blocked.",
   "reactivateVaultDialog.confirm": "Reactivate",
   "reactivateVaultDialog.error.paymentRequired": "Your Cryptomator Hub license has exceeded the number of available seats. Reactivating this vault would exceed the limit. Please inform a Hub administrator to upgrade the license.",
 
