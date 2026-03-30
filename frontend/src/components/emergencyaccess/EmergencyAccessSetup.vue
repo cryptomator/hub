@@ -41,7 +41,7 @@
     :selected-users="emergencyCouncilMembers"
     :required-key-shares="requiredKeyShares"
   />
-  <div v-if="requiredKeyShares === emergencyCouncilMembers.length && allowChoosingCouncil && !readonly" class="mt-4 mr-3">
+  <div v-if="requiredKeyShares === emergencyCouncilMembers.length && allowChoosingCouncil && !readonly && !hasValidationErrors" class="mt-4 mr-3">
     <span class="inline-flex items-center gap-2 rounded-full bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800">
       <ExclamationTriangleIcon class="h-4 w-4" aria-hidden="true" />
       {{ t('emergencyAccess.noRedundancy') }}
@@ -53,7 +53,7 @@
 import { ArrowUturnLeftIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/solid';
 import { useId, computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { ActivatedUser, RecoveryProcessDto, SettingsDto, didCompleteSetup } from '../../common/backend';
+import backend, { ActivatedUser, SettingsDto, didCompleteSetup } from '../../common/backend';
 import { VaultKeys } from '../../common/crypto';
 import { EmergencyAccess } from '../../common/emergencyaccess';
 import { wordEncoder } from '../../common/util';
