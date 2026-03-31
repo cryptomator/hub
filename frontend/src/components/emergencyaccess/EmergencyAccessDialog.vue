@@ -145,7 +145,7 @@
                       <div v-if="recoveryProcess.type === 'COUNCIL_CHANGE'" >
                         {{ t('emergencyAccessDialog.section.councilChange') }}
                         <div class="mt-4">
-                          <EmergencyAccessSetup :settings="settings" :council-members="councilMembers" :required-key-shares="recoveryProcess.requiredKeyShares" :readonly="true" :show-required-key-shares="true"/>
+                          <EmergencyAccessSetup :settings="settings" :council-members="councilMembers" :required-key-shares="recoveryProcess.details.newRequiredKeyShares" :readonly="true" :show-required-key-shares="true"/>
                         </div>
                       </div>
                       <div v-if="phase === 'complete' && !didAddMyShare && isMeInProcessCouncil" class="text-sm pt-2">
