@@ -516,11 +516,7 @@ async function reactivateVault() {
     onReactivateError.value = error instanceof Error ? error : new Error('Unknown Error');
     return;
   }
-  try {
-    await refreshLicense();
-  } catch (error) {
-    console.error('Refreshing license after reactivating vault failed.', error);
-  }
+  await refreshLicense();
 }
 
 function showRecoverVaultDialog() {
