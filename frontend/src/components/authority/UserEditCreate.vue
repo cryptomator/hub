@@ -103,7 +103,7 @@
                 {{ t('userEditCreate.roles') }}
               </label>
               <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1 max-w-md">
-                <Listbox v-model="data.realmRoles" multiple as="div">
+                <Listbox v-model="selectedRoleOptions" multiple as="div">
                   <div class="relative">
                     <ListboxButton class="relative w-full rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:ring-primary text-sm">
                       <div class="flex flex-wrap gap-2">
@@ -250,7 +250,7 @@ const props = defineProps<{
 }>();
 
 type EditableUserData = Pick<UserDto, 'firstName' | 'lastName' | 'name' | 'email' | 'realmRoles' | 'pictureUrl'>;
-const initialData = shallowRef<EditableUserData>({ firstName: undefined, lastName: undefined, name: '', email: '', realmRoles: [], pictureUrl: undefined });
+const initialData = shallowRef<EditableUserData>({ firstName: undefined, lastName: undefined, name: '', email: '', realmRoles: ['user'], pictureUrl: undefined });
 const data = reactive<EditableUserData>(initialData.value);
 
 const userDataHasUnsavedChanges = computed(() => {
@@ -280,8 +280,13 @@ const router = useRouter();
 const loading = ref(true);
 const onFetchError = ref<Error>();
 
-const selectedRoleOptions = computed(() => {
-  return data.realmRoles.filter(isSelectableRealmRole);
+const selectedRoleOptions = computed({
+  get() {
+    return data.realmRoles.filter(isSelectableRealmRole);
+  },
+  set(newValue) {
+    data.realmRoles = ['user', ...newValue];
+  }
 });
 const roleOptions: Record<SelectableRealmRole, string> = {
   'admin': 'Admin',
@@ -325,7 +330,7 @@ onMounted(async () => {
 });
 
 function removeRole(role: SelectableRealmRole) {
-  data.realmRoles = data.realmRoles.filter(r => r !== role);
+  selectedRoleOptions.value = selectedRoleOptions.value.filter(r => r !== role);
 }
 
 function togglePasswordVisibility() {

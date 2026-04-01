@@ -316,6 +316,9 @@ class VaultService {
     return axiosAuth.get('/vaults/some', {
       params: {
         ids: vaultIds
+      },
+      paramsSerializer: {
+        indexes: null, // disable array indices in query params (e.g. ids[0]=...&ids[1]=...)
       }
     }).then(response => response.data);
   }
@@ -428,8 +431,16 @@ class DeviceService {
     return axiosAuth.get<DeviceDto[]>('/devices/legacy-devices', {
       params: {
         ids: deviceIds
+      },
+      paramsSerializer: {
+        indexes: null, // disable array indices in query params (e.g. ids[0]=...&ids[1]=...)
       }
     }).then(response => response.data);
+  }
+
+  /** @deprecated since version 1.3.0, to be removed in https://github.com/cryptomator/hub/issues/333 */
+  public async hasLegacyDevices(): Promise<boolean> {
+    return axiosAuth.get<boolean>('/devices/has-legacy-devices').then(response => response.data);
   }
 
   public async removeDevice(deviceId: string): Promise<AxiosResponse<unknown>> {
@@ -595,6 +606,9 @@ class AuthorityService {
     const authorities = await axiosAuth.get<AuthorityDto[]>('/authorities', {
       params: {
         ids: authorityIds
+      },
+      paramsSerializer: {
+        indexes: null, // disable array indices in query params (e.g. ids[0]=...&ids[1]=...)
       }
     }).then(response => response.data);
     return addFallbackPictures ? authorities.map(fillInMissingPicture) : authorities;

@@ -14,11 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Show pictures of the groups in the Vaults member list (#375)
 - Allow admins to archive and unarchive any vault (#283, #430)
 - Disable users to exclude them from license seat count (#427, #428)
+- Display a banner to indicate that legacy devices are still in use, since these will be removed in the next major release (#420)
 
 ### Changed
 
 - Updated Keycloak to 26.5.6
-- Update Quarkus to 3.27.2 LTS
+- Update Quarkus to 3.27.3 LTS
 - Improved browser locale detection (#371)
 - Improved efficiency of keycloak-to-hub data sync (#377)
 - Improved efficiency of group-based access permission checks (#372)
@@ -32,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Hide Archive/Reactivate Vault actions for admins without ownership rights (#379)
 - Enforce seat limit when unarchiving a vault (#431)
+- Creating user with sole role `create-vault` was unable to login due to missing role `user`
 
 ## [1.4.6](https://github.com/cryptomator/hub/compare/1.4.5...1.4.6)
 
