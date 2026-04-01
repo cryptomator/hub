@@ -98,6 +98,17 @@ public class LegacyDevice {
 			return find("#LegacyDevice.allInList", Parameters.with("ids", ids)).stream();
 		}
 
+		public List<Object[]> findByOwnerWithLastAccess(String userId) {
+			return getEntityManager().createQuery("""
+							SELECT d, e FROM LegacyDevice d
+							LEFT JOIN VaultKeyRetrievedEvent e ON e.deviceId = d.id
+								AND e.id = (SELECT MAX(e2.id) FROM VaultKeyRetrievedEvent e2 WHERE e2.deviceId = d.id)
+							WHERE d.owner.id = :userId
+							""", Object[].class)
+					.setParameter("userId", userId)
+					.getResultList();
+		}
+
 		public void deleteByOwner(String userId) {
 			delete("#LegacyDevice.deleteByOwner", Parameters.with("userId", userId));
 		}

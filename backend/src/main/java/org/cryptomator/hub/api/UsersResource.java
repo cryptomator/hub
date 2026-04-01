@@ -64,6 +64,8 @@ public class UsersResource {
 	@Inject
 	Device.Repository deviceRepo;
 	@Inject
+	LegacyDevice.Repository legacyDeviceRepo;
+	@Inject
 	Vault.Repository vaultRepo;
 	@Inject
 	EmergencyRecoveryProcess.Repository emergencyRecovery;
@@ -375,15 +377,15 @@ public class UsersResource {
 				.map(eva -> VaultResource.VaultDtoWithRole.from(eva.getVault(), eva.getRole()))
 				.toList();
 
-		// Fetch devices (modern devices)
-		Set<DeviceResource.DeviceDto> devices = user.getDevices().stream()
-				.map(DeviceResource.DeviceDto::fromEntity)
+		// Fetch devices with last access (joined query)
+		Set<DeviceResource.DeviceDto> devices = deviceRepo.findByOwnerWithLastAccess(userId).stream()
+				.map(row -> DeviceResource.DeviceDto.fromEntity((Device) row[0], (VaultKeyRetrievedEvent) row[1]))
 				.collect(Collectors.toSet());
 
-		// Fetch legacy devices
+		// Fetch legacy devices with last access (joined query)
 		@SuppressWarnings("removal")
-		Set<DeviceResource.DeviceDto> legacyDevices = user.getLegacyDevices().stream()
-				.map(DeviceResource.DeviceDto::fromEntity)
+		Set<DeviceResource.DeviceDto> legacyDevices = legacyDeviceRepo.findByOwnerWithLastAccess(userId).stream()
+				.map(row -> DeviceResource.DeviceDto.fromEntity((LegacyDevice) row[0], (VaultKeyRetrievedEvent) row[1]))
 				.collect(Collectors.toSet());
 
 		return UserDto.justPublicInfo(user).withDetails(

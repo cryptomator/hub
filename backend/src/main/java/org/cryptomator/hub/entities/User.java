@@ -234,14 +234,10 @@ public class User extends Authority {
 		}
 
 		public User findByIdWithEagerDetails(String id) {
-			// 1. fetch user with groups, devices, legacy devices:
-			// we can do this in a single query since we don't expect a large number of groups/devices per user,
-			// e.g. 1 user x 5 groups x 5 devices = 25 rows, which is acceptable
+			// 1. fetch user with groups:
 			var user = find("""
 					FROM User u
 					LEFT JOIN FETCH u.directGroupMemberships dgm
-					LEFT JOIN FETCH u.devices d
-					LEFT JOIN FETCH u.legacyDevices ld
 					WHERE u.id = :id
 					""", Parameters.with("id", id)).singleResultOptional().orElse(null);
 			if (user == null) {
