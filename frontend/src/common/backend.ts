@@ -438,6 +438,11 @@ class DeviceService {
     }).then(response => response.data);
   }
 
+  /** @deprecated since version 1.3.0, to be removed in https://github.com/cryptomator/hub/issues/333 */
+  public async hasLegacyDevices(): Promise<boolean> {
+    return axiosAuth.get<boolean>('/devices/has-legacy-devices').then(response => response.data);
+  }
+
   public async removeDevice(deviceId: string): Promise<AxiosResponse<unknown>> {
     return axiosAuth.delete(`/devices/${deviceId}`)
       .catch((error) => rethrowAndConvertIfExpected(error, 404));

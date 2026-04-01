@@ -10,6 +10,14 @@
 
   <LicenseAlert v-if="isLicenseViolated && licenseStatus" :is-admin="isAdmin" :license-status="licenseStatus" />
 
+  <ContentBanner v-if="anyUserHasLegacyDevices" type="warning" :title="t('legacyDeviceBanner.title')" class="mb-4">
+    {{ t('legacyDeviceBanner.admin.description') }}
+  </ContentBanner>
+
+  <ContentBanner v-else-if="hasLegacyDevices" type="warning" :title="t('legacyDeviceBanner.title')" class="mb-4">
+    {{ t('legacyDeviceBanner.user.description') }}
+  </ContentBanner>
+
   <h2 class="text-2xl font-bold leading-9 text-gray-900 sm:text-3xl sm:truncate">
     {{ t('vaultList.title') }}
   </h2>
@@ -171,6 +179,8 @@ const roleOfSelectedVault = computed<VaultRole | 'NONE'>(() => {
 
 const isAdmin = ref<boolean>(false);
 const canCreateVaults = ref<boolean>(false);
+const hasLegacyDevices = ref<boolean>(false);
+const anyUserHasLegacyDevices = ref<boolean>(false);
 const licenseStatus = ref<LicenseUserInfoDto>();
 const isLicenseViolated = computed(() => {
   if (licenseStatus.value) {
@@ -206,12 +216,15 @@ async function fetchData() {
   try {
     me.value = await userdata.me;
     isAdmin.value = (await auth).hasRole('admin');
+    const meWithLegacy = await userdata.meWithLegacyDevicesAndLastAccess;
+    hasLegacyDevices.value = (meWithLegacy.devices?.length ?? 0) > 0;
     canCreateVaults.value = (await auth).hasRole('create-vaults');
 
     settings.value = await backend.settings.get();
 
     if (isAdmin.value) {
       filterOptions.value['allVaults'] = t('vaultList.filter.entry.allVaults');
+      anyUserHasLegacyDevices.value = await backend.devices.hasLegacyDevices();
     }
     accessibleVaults.value = (await backend.vaults.listAccessible()).filter(v => !v.archived).sort((a, b) => a.name.localeCompare(b.name));
     ownedVaults.value = (await backend.vaults.listAccessible('OWNER')).sort((a, b) => a.name.localeCompare(b.name));

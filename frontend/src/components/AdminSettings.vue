@@ -16,6 +16,10 @@
       </h2>
     </div>
 
+    <ContentBanner v-if="hasLegacyDevices" type="warning" :title="t('legacyDeviceBanner.title')" class="mt-5">
+      {{ t('legacyDeviceBanner.admin.description') }}
+    </ContentBanner>
+
     <div class="space-y-6 mt-5">
       <!-- Server Information Section -->
       <section class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6">
@@ -239,6 +243,7 @@ import { FetchUpdateError, LatestVersionDto, updateChecker } from '../common/upd
 import { debounce } from '../common/util';
 import FetchError from './FetchError.vue';
 import AdminSettingsEmergencyAccess from './AdminSettingsEmergencyAccess.vue';
+import ContentBanner from './ContentBanner.vue';
 
 const { t, d } = useI18n({ useScope: 'global' });
 const props = defineProps<{
@@ -252,6 +257,7 @@ const form = ref<HTMLFormElement>();
 const processing = ref(false);
 const onFetchError = ref<Error>();
 const errorOnFetchingUpdates = ref<boolean>(false);
+const hasLegacyDevices = ref<boolean>(false);
 
 onMounted(async () => {
   keycloakAdminRealmURL.value = `${cfg.value.keycloakUrl}/admin/${cfg.value.keycloakRealm}/console/`;
@@ -268,6 +274,7 @@ async function fetchData() {
     billing.value = await backend.billing.get();
     version.value = await versionDto;
     latestVersion.value = await versionAvailable;
+    hasLegacyDevices.value = await backend.devices.hasLegacyDevices();
 
     const settings = await backend.settings.get();
     wotMaxDepth.value = settings.wotMaxDepth;
