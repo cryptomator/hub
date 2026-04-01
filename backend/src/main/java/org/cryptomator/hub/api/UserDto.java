@@ -21,6 +21,7 @@ public final class UserDto extends AuthorityDto {
 	private final String lastName;
 	private final String language;
 	private final Set<String> realmRoles;
+	private final boolean enabled;
 	private final Set<DeviceResource.DeviceDto> devices;
 	private final String ecdhPublicKey;
 	private final String ecdsaPublicKey;
@@ -37,6 +38,7 @@ public final class UserDto extends AuthorityDto {
 			@JsonProperty("lastName") String lastName,
 			@JsonProperty("language") String language,
 			@JsonProperty("realmRoles") @NotNull Set<String> realmRoles,
+			@JsonProperty("enabled") boolean enabled,
 			@JsonProperty("devices") Set<DeviceResource.DeviceDto> devices,
 			// Accept either "ecdhPublicKey" or the legacy "publicKey" on input
 			@Nullable @JsonProperty("ecdhPublicKey") @OnlyBase64Chars String ecdhPublicKey,
@@ -52,6 +54,7 @@ public final class UserDto extends AuthorityDto {
 		this.lastName = lastName;
 		this.language = language;
 		this.realmRoles = realmRoles;
+		this.enabled = enabled;
 		this.devices = devices;
 		this.ecdhPublicKey = ecdhPublicKey != null ? ecdhPublicKey : publicKey;
 		this.ecdsaPublicKey = ecdsaPublicKey;
@@ -68,12 +71,13 @@ public final class UserDto extends AuthorityDto {
 			String lastName,
 			String language,
 			Set<String> realmRoles,
+			boolean enabled,
 			Set<DeviceResource.DeviceDto> devices,
 			String ecdhPublicKey,
 			String ecdsaPublicKey,
 			String privateKeys,
 			String setupCode) {
-		this(id, name, pictureUrl, email, firstName, lastName, language, realmRoles, devices, ecdhPublicKey, ecdhPublicKey, ecdsaPublicKey, privateKeys, privateKeys, setupCode);
+		this(id, name, pictureUrl, email, firstName, lastName, language, realmRoles, enabled, devices, ecdhPublicKey, ecdhPublicKey, ecdsaPublicKey, privateKeys, privateKeys, setupCode);
 	}
 
 	@JsonProperty("email")
@@ -99,6 +103,11 @@ public final class UserDto extends AuthorityDto {
 	@JsonProperty("realmRoles")
 	public Set<String> getRealmRoles() {
 		return realmRoles;
+	}
+
+	@JsonProperty("enabled")
+	public boolean isEnabled() {
+		return enabled;
 	}
 
 	@JsonProperty("devices")
@@ -158,6 +167,7 @@ public final class UserDto extends AuthorityDto {
 				user.getLastName(),
 				user.getLanguage(),
 				Set.of(user.getRealmRoles()),
+				user.isEnabled(),
 				Set.of(),
 				user.getEcdhPublicKey(),
 				user.getEcdsaPublicKey(),

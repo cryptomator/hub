@@ -36,16 +36,27 @@ public @interface VaultRole {
 	enum OnMissingVault {FORBIDDEN, NOT_FOUND, PASS, REQUIRE_REALM_ROLE}
 
 	/**
-	 * If set to true, skip the role check if the current user has the role {@link #realmRole()}.
+	 * If set to true, skip the role check if the current user has the role {@link #bypassRealmRole()}.
+	 * <p>
+	 * Only applies when the vault exists. For non-existing vaults, use {@link #onMissingVault()} instead.
 	 *
 	 * @return whether the given realm role allows bypassing the vault role check.
 	 */
 	boolean bypassForRealmRole() default false;
 
 	/**
+	 * Which realm role bypasses the vault role check when {@link #bypassForRealmRole()} is true.
+	 * <p>
+	 * Separate from {@link #realmRole()}, which is only used for {@link OnMissingVault#REQUIRE_REALM_ROLE}.
+	 *
+	 * @return realm role that bypasses the vault role check.
+	 */
+	RealmRole bypassRealmRole() default RealmRole.ADMIN;
+
+	/**
 	 * Which additional realm role is required to access the annotated resource.
 	 * <p>
-	 * Only relevant if {@link #bypassForRealmRole()} or {@link #onMissingVault()} is set to {@link OnMissingVault#REQUIRE_REALM_ROLE}.
+	 * Only relevant if {@link #onMissingVault()} is set to {@link OnMissingVault#REQUIRE_REALM_ROLE}.
 	 *
 	 * @return realm role required to access the annotated resource.
 	 */
