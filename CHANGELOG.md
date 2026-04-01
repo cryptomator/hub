@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Hide Archive/Reactivate Vault actions for admins without ownership rights (#379)
+- Creating user with sole role `create-vault` was unable to login due to missing role `user`
 
 ## [1.4.6](https://github.com/cryptomator/hub/compare/1.4.5...1.4.6)
 
