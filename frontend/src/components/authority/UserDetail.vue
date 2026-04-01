@@ -86,7 +86,7 @@ import { EllipsisVerticalIcon } from '@heroicons/vue/20/solid';
 import { nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import backend, { GroupDto, isSelectableRealmRole, UserDto, UserDtoWithDetails } from '../../common/backend';
+import backend, { GroupDto, UserDto, UserDtoWithDetails } from '../../common/backend';
 import BreadcrumbNav from '../BreadcrumbNav.vue';
 import UserDeleteDialog from './UserDeleteDialog.vue';
 import UserDisableDialog from './UserDisableDialog.vue';
@@ -159,9 +159,6 @@ onMounted(async () => {
   try {
     user.value = await backend.users.getUser(props.id);
     user.value.groups.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
-
-    // Load roles
-    user.value.realmRoles = user.value.realmRoles.filter(isSelectableRealmRole);
   } catch (error) {
     console.error('Failed to fetch user:', error);
   } finally {

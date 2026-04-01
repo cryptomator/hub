@@ -40,7 +40,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
 import { computed } from 'vue';
-import { UserDtoWithDetails } from '../../common/backend';
+import { UserDtoWithDetails, isSelectableRealmRole } from '../../common/backend';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -49,7 +49,7 @@ const props = defineProps<{
 }>();
 
 const sortedRoles = computed(() => 
-  [...props.user.realmRoles ?? []].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+  [...props.user.realmRoles].filter(isSelectableRealmRole).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
 );
 
 </script>
