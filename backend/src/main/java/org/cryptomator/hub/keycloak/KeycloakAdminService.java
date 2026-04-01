@@ -205,7 +205,7 @@ public class KeycloakAdminService {
 		dbUser.setEmail(keycloakUser.getEmail());
 		dbUser.setFirstName(keycloakUser.getFirstName());
 		dbUser.setLastName(keycloakUser.getLastName());
-		var kcRoleNames = userResource.roles().realmLevel().listEffective().stream()
+		var kcRoleNames = userResource.roles().realmLevel().listAll().stream()
 				.map(RoleRepresentation::getName)
 				.toList();
 		dbUser.setRealmRoles(RealmRole.fromKcNames(kcRoleNames).stream().map(RealmRole::kcName).toArray(String[]::new));
@@ -303,8 +303,8 @@ public class KeycloakAdminService {
 			roleMappings.add(rolesToSet.stream().map(realmRoles::getRealmRole).toList());
 		}
 
-		// 3. sync effective roles from kc back to db:
-		var kcRoleNames = roleMappings.listEffective().stream()
+		// 3. sync direct roles from kc back to db:
+		var kcRoleNames = roleMappings.listAll().stream()
 				.map(RoleRepresentation::getName)
 				.toList();
 		dbUser.setRealmRoles(RealmRole.fromKcNames(kcRoleNames).stream().map(RealmRole::kcName).toArray(String[]::new));
