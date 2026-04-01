@@ -99,7 +99,7 @@ public class LegacyDevice {
 		}
 
 		public boolean existsAny() {
-			return count() > 0;
+			return findAll().firstResultOptional().isPresent();
 		}
 
 		public void deleteByOwner(String userId) {
