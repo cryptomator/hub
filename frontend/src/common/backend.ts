@@ -316,6 +316,9 @@ class VaultService {
     return axiosAuth.get('/vaults/some', {
       params: {
         ids: vaultIds
+      },
+      paramsSerializer: {
+        indexes: null, // disable array indices in query params (e.g. ids[0]=...&ids[1]=...)
       }
     }).then(response => response.data);
   }
@@ -428,6 +431,9 @@ class DeviceService {
     return axiosAuth.get<DeviceDto[]>('/devices/legacy-devices', {
       params: {
         ids: deviceIds
+      },
+      paramsSerializer: {
+        indexes: null, // disable array indices in query params (e.g. ids[0]=...&ids[1]=...)
       }
     }).then(response => response.data);
   }
@@ -595,6 +601,9 @@ class AuthorityService {
     const authorities = await axiosAuth.get<AuthorityDto[]>('/authorities', {
       params: {
         ids: authorityIds
+      },
+      paramsSerializer: {
+        indexes: null, // disable array indices in query params (e.g. ids[0]=...&ids[1]=...)
       }
     }).then(response => response.data);
     return addFallbackPictures ? authorities.map(fillInMissingPicture) : authorities;
