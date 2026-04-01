@@ -238,7 +238,9 @@ public class VaultResource {
 		effectiveUsers.addAll(userRepo.findByIds(memberRoles.keySet()).toList());
 		var newSeatOccupyingUsers = new HashSet<>(effectiveVaultAccessRepo.usersSeatedOnOtherVaults(vaultId).toList()); // initialize with users already having access to other vaults
 		newSeatOccupyingUsers.addAll(effectiveUsers.stream().map(User::getId).toList()); // add all users that will have access to this vault after the operation (avoid double counting by using a set)
-		ensureSeatsNotExceeded(newSeatOccupyingUsers.size());
+		if (newSeatOccupyingUsers.size() > license.getEntitlements().seats()) {
+			throw new PaymentRequiredException("License seats exceeded. Cannot add more users.");
+		}
 
 		// Audit Log
 		addedMembers.forEach(va -> eventLogger.logVaultMemberAdded(jwt.getSubject(), vaultId, va.getId().authorityId(), va.getRole()));
@@ -271,10 +273,13 @@ public class VaultResource {
 	public Response addUser(@PathParam("vaultId") UUID vaultId, @PathParam("userId") @ValidId String userId, @QueryParam("role") @DefaultValue("MEMBER") VaultAccess.Role role) {
 		var vault = vaultRepo.findById(vaultId); // should always be found, since @VaultRole filter would have triggered
 		var user = userRepo.findByIdOptional(userId).orElseThrow(NotFoundException::new);
-		if (!effectiveVaultAccessRepo.isUserOccupyingSeat(userId)) {
-			ensureSeatsNotExceeded(effectiveVaultAccessRepo.countSeatOccupyingUsers() + 1);
+		var usedSeats = effectiveVaultAccessRepo.countSeatOccupyingUsers();
+		if (usedSeats < license.getEntitlements().seats() // free seats available
+				|| effectiveVaultAccessRepo.isUserOccupyingSeat(userId)) { // or user already sitting
+			return addAuthority(vault, user, role);
+		} else {
+			throw new PaymentRequiredException("License seats exceeded. Cannot add more users.");
 		}
-		return addAuthority(vault, user, role);
 	}
 
 	@PUT
@@ -296,7 +301,9 @@ public class VaultResource {
 		var group = groupRepo.findByIdOptional(groupId).orElseThrow(NotFoundException::new);
 
 		//usersInGroup - usersInGroupAndPartOfAtLeastOneVault + usersOfAtLeastOneVault
-		ensureSeatsNotExceeded(userRepo.countEffectiveGroupUsers(groupId) - effectiveVaultAccessRepo.countSeatOccupyingUsersOfGroup(groupId) + effectiveVaultAccessRepo.countSeatOccupyingUsers());
+		if (userRepo.countEffectiveGroupUsers(groupId) - effectiveVaultAccessRepo.countSeatOccupyingUsersOfGroup(groupId) + effectiveVaultAccessRepo.countSeatOccupyingUsers() > license.getEntitlements().seats()) {
+			throw new PaymentRequiredException("Adding this group would exceed available license seats.");
+		}
 
 		return addAuthority(vault, group, role);
 	}
@@ -374,7 +381,9 @@ public class VaultResource {
 		}
 
 		var accessTokenSeats = effectiveVaultAccessRepo.countSeatOccupyingUsersWithAccessToken();
-		ensureSeatsNotExceeded(accessTokenSeats);
+		if (accessTokenSeats > license.getEntitlements().seats()) {
+			throw new PaymentRequiredException("Number of effective vault users exceeds available license seats");
+		}
 		var ipAddress = request.remoteAddress().hostAddress();
 		try {
 			var access = legacyAccessTokenRepo.unlock(vaultId, deviceId, jwt.getSubject());
@@ -418,11 +427,9 @@ public class VaultResource {
 		}
 
 		var accessTokenSeats = effectiveVaultAccessRepo.countSeatOccupyingUsersWithAccessToken();
-		try {
-			ensureSeatsNotExceeded(accessTokenSeats);
-		} catch (PaymentRequiredException e) {
+		if (accessTokenSeats > license.getEntitlements().seats()) {
 			vaultUnlockMetrics.recordFailure();
-			throw e;
+			throw new PaymentRequiredException("Number of effective vault users exceeds available license seats");
 		}
 
 		var user = userRepo.findById(jwt.getSubject());
@@ -472,7 +479,9 @@ public class VaultResource {
 		long occupiedSeats = effectiveVaultAccessRepo.countSeatOccupyingUsers();
 		long usersWithoutSeat = tokens.size() - effectiveVaultAccessRepo.countSeatsOccupiedByUsers(tokens.keySet().stream().toList());
 
-		ensureSeatsNotExceeded(occupiedSeats + usersWithoutSeat);
+		if (occupiedSeats + usersWithoutSeat > license.getEntitlements().seats()) {
+			throw new PaymentRequiredException("Number of effective vault users greater than or equal to the available license seats");
+		}
 
 		for (var entry : tokens.entrySet()) {
 			var userId = entry.getKey();
@@ -527,7 +536,9 @@ public class VaultResource {
 			effectiveUsers.addAll(userRepo.findByIds(authorityIds).toList());
 			var projectedSeatUsers = new HashSet<>(effectiveVaultAccessRepo.usersSeatedOnOtherVaults(vaultId).toList());
 			projectedSeatUsers.addAll(effectiveUsers.stream().map(User::getId).toList());
-			ensureSeatsNotExceeded(projectedSeatUsers.size());
+			if (projectedSeatUsers.size() > license.getEntitlements().seats()) {
+				throw new PaymentRequiredException("Number of effective vault users exceeds available license seats");
+			}
 		}
 		vault.setArchived(archived);
 		vaultRepo.persistAndFlush(vault);
@@ -556,7 +567,10 @@ public class VaultResource {
 			vault = existingVault.get();
 		} else {
 			//if license is exceeded block vault creation, independent if the user is already sitting
-			ensureSeatsNotExceeded(effectiveVaultAccessRepo.countSeatOccupyingUsers());
+			var usedSeats = effectiveVaultAccessRepo.countSeatOccupyingUsers();
+			if (usedSeats > license.getEntitlements().seats()) {
+				throw new PaymentRequiredException("Number of effective vault users exceeds available license seats");
+			}
 			// create new vault:
 			vault = new Vault();
 			vault.setId(vaultDto.id);
@@ -650,12 +664,6 @@ public class VaultResource {
 
 		eventLogger.logVaultOwnershipClaimed(currentUser.getId(), vaultId);
 		return Response.ok(VaultDto.fromEntity(vault), MediaType.APPLICATION_JSON).build();
-	}
-
-	private void ensureSeatsNotExceeded(long occupiedSeats) {
-		if (occupiedSeats > license.getEntitlements().seats()) {
-			throw new PaymentRequiredException("Number of effective vault users exceeds available license seats");
-		}
 	}
 
 	@JsonInclude(JsonInclude.Include.NON_NULL)
