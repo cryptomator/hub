@@ -51,11 +51,13 @@ class KeycloakAuthorityProviderTest {
 		Mockito.when(user1.getId()).thenReturn("id3000");
 		Mockito.when(user1.getUsername()).thenReturn("username3000");
 		Mockito.when(user1.getEmail()).thenReturn("email3000");
+		Mockito.when(user1.isEnabled()).thenReturn(true);
 		Mockito.when(user1.getAttributes()).thenReturn(Map.of("picture", List.of("picture3000")));
 
 		Mockito.when(user2.getId()).thenReturn("id3001");
 		Mockito.when(user2.getUsername()).thenReturn("username3001");
 		Mockito.when(user2.getEmail()).thenReturn("email3001");
+		Mockito.when(user2.isEnabled()).thenReturn(false);
 
 		keycloakRemoteUserProvider = new KeycloakAuthorityProvider();
 	}
@@ -76,11 +78,13 @@ class KeycloakAuthorityProviderTest {
 		Assertions.assertEquals("username3000", resultUser1.name());
 		Assertions.assertEquals("email3000", resultUser1.email());
 		Assertions.assertEquals("picture3000", resultUser1.pictureUrl());
+		Assertions.assertTrue(resultUser1.enabled());
 
 		Assertions.assertEquals("id3001", resultUser2.id());
 		Assertions.assertEquals("username3001", resultUser2.name());
 		Assertions.assertEquals("email3001", resultUser2.email());
 		Assertions.assertNull(resultUser2.pictureUrl());
+		Assertions.assertFalse(resultUser2.enabled());
 	}
 
 	@Test
@@ -114,11 +118,13 @@ class KeycloakAuthorityProviderTest {
 		Assertions.assertEquals("username3000", resultUser1.name());
 		Assertions.assertEquals("email3000", resultUser1.email());
 		Assertions.assertEquals("picture3000", resultUser1.pictureUrl());
+		Assertions.assertTrue(resultUser1.enabled());
 
 		Assertions.assertEquals("id3001", resultUser2.id());
 		Assertions.assertEquals("username3001", resultUser2.name());
 		Assertions.assertEquals("email3001", resultUser2.email());
 		Assertions.assertNull(resultUser2.pictureUrl());
+		Assertions.assertFalse(resultUser2.enabled());
 
 		Assertions.assertEquals("cryptomatorHubCliUserId", resultUser3.id());
 		Assertions.assertEquals("cryptomatorHubCliUserUsername", resultUser3.name());
@@ -184,11 +190,13 @@ class KeycloakAuthorityProviderTest {
 			Assertions.assertEquals("username3000", member1Group2.name());
 			Assertions.assertEquals("email3000", member1Group2.email());
 			Assertions.assertEquals("picture3000", member1Group2.pictureUrl());
+			Assertions.assertTrue(member1Group2.enabled());
 
 			Assertions.assertEquals("id3001", member2Group2.id());
 			Assertions.assertEquals("username3001", member2Group2.name());
 			Assertions.assertEquals("email3001", member2Group2.email());
 			Assertions.assertNull(member2Group2.pictureUrl());
+			Assertions.assertFalse(member2Group2.enabled());
 		}
 	}
 

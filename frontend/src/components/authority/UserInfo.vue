@@ -14,6 +14,7 @@
         <p v-if="user.firstName || user.lastName" class="text-sm text-gray-500 mt-1">
           {{ user.name }}
         </p>
+        <span v-if="!user.enabled" class="inline-flex items-center rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10 mt-2">{{ t('user.detail.disabled') }}</span>
       </div>
       <dl class="divide-y divide-gray-100">
         <div class="py-3 flex justify-between">
@@ -39,7 +40,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
 import { computed } from 'vue';
-import { UserDtoWithDetails } from '../../common/backend';
+import { UserDtoWithDetails, isSelectableRealmRole } from '../../common/backend';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -48,7 +49,7 @@ const props = defineProps<{
 }>();
 
 const sortedRoles = computed(() => 
-  [...props.user.realmRoles ?? []].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+  [...props.user.realmRoles].filter(isSelectableRealmRole).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
 );
 
 </script>
