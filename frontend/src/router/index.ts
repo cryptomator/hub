@@ -50,17 +50,15 @@ const routes: RouteRecordRaw[] = [
     path: '/app/logout',
     component: AuthenticatedMain, // any component will do
     meta: { skipAuth: true, skipSetup: true },
-    beforeEnter: (to, from, next) => {
-      authPromise.then(async auth => {
-        if (auth.isAuthenticated()) {
-          const loggedOutUri = `${location.origin}${router.resolve('/').href}`;
-          await auth.logout(loggedOutUri);
-        } else {
-          next();
-        }
-      }).catch(error => {
-        next(error);
-      });
+    beforeEnter: async () => {
+      const auth = await authPromise;
+      if (auth.isAuthenticated()) {
+        const loggedOutUri = `${location.origin}${router.resolve('/').href}`;
+        await auth.logout(loggedOutUri);
+        return false; // prevent navigation, as logout will cause a full page reload
+      } else {
+        return true;
+      }
     }
   },
   {
@@ -202,35 +200,34 @@ const router = createRouter({
 });
 
 // FIRST check auth
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to) => {
   if (to.meta.skipAuth) {
-    next();
+    return true;
+  }
+
+  const auth = await authPromise;
+  if (auth.isAuthenticated()) {
+    return true;
   } else {
-    authPromise.then(async auth => {
-      if (auth.isAuthenticated()) {
-        next();
-      } else {
-        const redirectUri = buildRedirectSyncMeUri(to);
-        auth.login(redirectUri);
-      }
-    });
+    const redirectUri = buildRedirectSyncMeUri(to);
+    auth.login(redirectUri);
+    return false;
   }
 });
 
 // SECOND update user data (requires auth)
-router.beforeEach((to, from, next) => {
-  if ('sync_me' in to.query) {
-    authPromise.then(async auth => {
-      if (auth.isAuthenticated()) {
-        await backend.users.putMe();
-      }
-    }).finally(() => {
-      const { sync_me: _, ...remainingQuery } = to.query; // remove sync_me query parameter to avoid endless recursion
-      next({ path: to.path, query: remainingQuery, replace: true });
-    });
-  } else {
-    next();
+router.beforeEach(async (to) => {
+  if (!('sync_me' in to.query)) {
+    return true;
   }
+
+  const auth = await authPromise;
+  if (auth.isAuthenticated()) {
+    await backend.users.putMe();
+  }
+
+  const { sync_me: _, ...remainingQuery } = to.query; // remove sync_me query parameter to avoid endless recursion
+  return { path: to.path, query: remainingQuery, replace: true };
 });
 
 // THIRD check user/browser keys (requires auth)

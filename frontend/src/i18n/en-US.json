@@ -205,6 +205,10 @@
   "deleteGroupDialog.description": "Are you sure you want to permanently delete this group? It will be removed from all associated vaults. This action cannot be undone.",
   "deleteGroupDialog.confirm": "Yes, delete group",
 
+  "disableUserDialog.title": "Disable User",
+  "disableUserDialog.description": "This user will no longer be able to log in and will be excluded from the seat count. You can re-enable the user at any time.",
+  "disableUserDialog.confirm": "Disable User",
+
   "deleteUserDialog.title": "Delete User Account",
   "deleteUserDialog.description": "Are you sure you want to permanently delete this user? All associated vaults and devices will be removed. This action cannot be undone.",
   "deleteUserDialog.confirm": "Yes, delete user",
@@ -417,6 +421,9 @@
   "legacyDeviceList.ipAddress": "IP Address",
   "legacyDeviceList.lastAccess": "Last Vault Access",
   "legacyDeviceList.lastAccess.toolTip": "May be missing for devices accessed with older versions.",
+  "legacyDeviceBanner.title": "Legacy Devices Will Be Dropped",
+  "legacyDeviceBanner.user.description": "Your legacy devices will no longer be supported in the next major release. Please update Cryptomator on those devices or remove them.",
+  "legacyDeviceBanner.admin.description": "One or more users still have legacy devices. Legacy device support will be dropped in the next major release. Please ask affected users to update Cryptomator or remove their legacy devices.",
 
 
   "manageAccountKey.title": "Account Key",
@@ -465,8 +472,11 @@
 
   "users.title": "Users",
   "user.detail.createdOn": "Created on",
+  "user.detail.disable": "Disable",
+  "user.detail.disabled": "Disabled",
   "user.detail.devices": "Devices",
   "user.detail.edit": "Edit",
+  "user.detail.enable": "Enable",
   "user.detail.email": "Email",
   "user.detail.groups": "Groups",
   "user.detail.groups.join": "Join",
@@ -519,6 +529,7 @@
   "userList.user.created": "Created on",
   "userList.profileImage": "Profile Image",
   "userList.create.button": "Create User",
+  "userList.disabled": "Disabled",
 
   "userProfile.title": "Profile",
   "userProfile.actions.manageAccount": "Manage Account",

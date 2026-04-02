@@ -184,7 +184,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "200")
 	@APIResponse(responseCode = "403", description = "not a vault owner")
 	public List<MemberDto> getDirectMembers(@PathParam("vaultId") UUID vaultId) {
-		return vaultAccessRepo.forVault(vaultId).map(access -> switch (access.getAuthority()) {
+		return vaultAccessRepo.forVault(vaultId).filter(access -> !(access.getAuthority() instanceof User u) || u.isEnabled()).map(access -> switch (access.getAuthority()) {
 			case User u -> MemberDto.fromEntity(u, access.getRole());
 			case Group g -> MemberDto.fromEntity(g, access.getRole());
 			default -> throw new IllegalStateException();
@@ -540,7 +540,7 @@ public class VaultResource {
 	@GET
 	@Path("/{vaultId}")
 	@RolesAllowed("user")
-	@VaultRole(value = {VaultAccess.Role.MEMBER, VaultAccess.Role.OWNER}, bypassForRealmRole = true, realmRole = RealmRole.ADMIN, onMissingVault = VaultRole.OnMissingVault.NOT_FOUND)
+	@VaultRole(value = {VaultAccess.Role.MEMBER, VaultAccess.Role.OWNER}, bypassForRealmRole = true, onMissingVault = VaultRole.OnMissingVault.NOT_FOUND)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
 	@Operation(summary = "gets a vault")
@@ -548,6 +548,25 @@ public class VaultResource {
 	@APIResponse(responseCode = "403", description = "requesting user is neither a vault member nor has the admin role")
 	public VaultDto get(@PathParam("vaultId") UUID vaultId) {
 		Vault vault = vaultRepo.findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
+		return VaultDto.fromEntity(vault);
+	}
+
+	@PUT
+	@Path("/{vaultId}/archived")
+	@RolesAllowed("user")
+	@VaultRole(value = VaultAccess.Role.OWNER, bypassForRealmRole = true, onMissingVault = VaultRole.OnMissingVault.NOT_FOUND)
+	@Consumes(MediaType.TEXT_PLAIN)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Transactional
+	@Operation(summary = "sets the archived flag of a vault")
+	@APIResponse(responseCode = "200", description = "archived flag updated")
+	@APIResponse(responseCode = "403", description = "requesting user is neither a vault owner nor has the admin role")
+	@APIResponse(responseCode = "404", description = "vault not found")
+	public VaultDto setArchived(@PathParam("vaultId") UUID vaultId, @NotNull Boolean archived) {
+		Vault vault = vaultRepo.findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
+		vault.setArchived(archived);
+		vaultRepo.persistAndFlush(vault);
+		eventLogger.logVaultUpdated(jwt.getSubject(), vault.getId(), vault.getName(), vault.getDescription(), vault.isArchived());
 		return VaultDto.fromEntity(vault);
 	}
 

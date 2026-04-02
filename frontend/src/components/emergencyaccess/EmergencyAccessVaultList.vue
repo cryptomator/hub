@@ -226,8 +226,9 @@
   </section>
 
   <EmergencyAccessDialog
-    v-if="recoveryApprovVault"
+    v-if="recoveryApprovVault && settings"
     ref="recoveryApprovDialog"
+    :settings="settings"
     :vault="recoveryApprovVault"
     :me="me!"
     :recovery-process="selectedProcess"

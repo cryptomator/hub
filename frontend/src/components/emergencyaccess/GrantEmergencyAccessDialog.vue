@@ -39,50 +39,14 @@
                       {{ t('grantEmergencyAccessDialog.title') }}
                     </DialogTitle>
                     <div class="mt-2">
-                      <p v-if="allowChangingDefaults" class="text-sm text-gray-500">
+                      <p v-if="settings.allowChoosingEmergencyCouncil" class="text-sm text-gray-500">
                         {{ t('grantEmergencyAccessDialog.description.selectCouncil') }}
                       </p>
                       <p v-else class="text-sm text-gray-500">
                         {{ t('grantEmergencyAccessDialog.description.default') }}
                       </p>
                     </div>
-                    <div class="relative">
-                      <div class="sm:grid sm:items-center sm:gap-2 mt-2 pb-2">
-                        <label for="coundcilMembers" class="text-sm font-medium text-gray-700 flex items-center">
-                          {{ t('emergencyAccess.label.councilMembers') }}
-                        </label>
-                      </div>
-                      <MultiUserSelectInputGroup
-                        :selected-users="emergencyCouncilMembers"
-                        :on-search="searchCouncilMembers"
-                        :input-visible="allowChangingDefaults"
-                        :placeholder="t('common.search.placeholder')"
-                        @action="addCouncilMember"
-                        @remove="removeCouncilMember"
-                      />
-                      
-                      <div v-if="allowChangingDefaults && emergencyCouncilMembers.length < minMembers" class="flex items-start gap-2 rounded-md border border-yellow-200 bg-yellow-50 p-1 text-sm text-gray-900 mt-1">
-                        <span class="leading-5">
-                          <span class="text-gray-600">
-                            {{ t('emergencyAccess.validation.selectMoreCouncilMembers', [minMembers - emergencyCouncilMembers.length]) }}
-                          </span>
-                        </span>
-                      </div>
-                    </div>
-                    <label class="block text-sm font-medium text-gray-700 pt-4">
-                      {{ t('emergencyAccess.label.exampleRecovery') }}
-                    </label>
-                    <EmergencyScenarioVisualization
-                      :selected-users="emergencyCouncilMembers"
-                      :required-key-shares="requiredKeyShares"
-                      :min-members="minMembers"
-                    />
-                    <div v-if="needsRedundancy()" class="mt-4 mr-3">
-                      <span class="inline-flex items-center gap-2 rounded-full bg-yellow-50 ring-1 ring-yellow-300/70 px-2.5 py-1 text-xs font-medium text-yellow-800">
-                        <ExclamationTriangleIconSolid class="h-4 w-4" aria-hidden="true" />
-                        {{ t('emergencyAccess.noRedundancy') }}
-                      </span>
-                    </div>
+                    <EmergencyAccessSetup ref="emergencyAccessSetup" :settings="settings" :required-key-shares="settings.defaultRequiredEmergencyKeyShares" :allow-choosing-council="settings.allowChoosingEmergencyCouncil"/>
                   </div>
                 </div>
 
@@ -95,7 +59,7 @@
                 <button
                   type="button"
                   class="w-full inline-flex justify-center rounded-md border border-transparent shadow-xs px-4 py-2 bg-primary text-base font-medium text-white hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed"
-                  :disabled="isGrantButtonDisabled"
+                  :disabled="!emergencyAccessSetup || emergencyAccessSetup.hasValidationErrors"
                   @click="splitRecoveryKey()"
                 >
                   {{ t('grantEmergencyAccessDialog.grant') }}
@@ -120,21 +84,18 @@
 <script setup lang="ts">
 import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
-import { ExclamationTriangleIcon as ExclamationTriangleIconSolid } from '@heroicons/vue/24/solid';
-import { ref, watch, computed } from 'vue';
+import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { TrustDto, UserDto, VaultDto, didCompleteSetup, ActivatedUser } from '../../common/backend';
-import { AccessTokenProducing, RecoveryKeyProducing } from '../../common/crypto';
-import { wordEncoder } from '../../common/util';
-import { EmergencyAccess } from '../../common/emergencyaccess';
-import MultiUserSelectInputGroup from '../MultiUserSelectInputGroup.vue';
-import EmergencyScenarioVisualization from './EmergencyScenarioVisualization.vue';
+import backend, { SettingsDto, VaultDto } from '../../common/backend';
+import { RecoveryKeyProducing } from '../../common/crypto';
+import EmergencyAccessSetup from './EmergencyAccessSetup.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{
   vault: VaultDto,
   vaultKeys: RecoveryKeyProducing
+  settings: SettingsDto
 }>();
 
 const emit = defineEmits<{
@@ -147,143 +108,31 @@ defineExpose({
 });
 
 const open = ref(false);
-const trusts = ref<TrustDto[]>([]);
-
-const defaultEmergencyCouncilMembers = ref<ActivatedUser[]>([]);
-const defaultRequiredEmergencyKeyShares = ref<number>(0);
-const minMembers = ref<number>(0);
-const allowChangingDefaults = ref<boolean>(false);
-
-const addingCouncilMember = ref(false);
-const onAddCouncilMemberError = ref<Error | null>();
-
-const userQuery = ref('');
-const searchResults = ref<UserDto[]>([]);
-
-const requiredKeyShares = ref<number>(0);
-
-const initialEmergencyCouncilMembers = ref<ActivatedUser[]>([]);
-const addedEmergencyCouncilMembers = ref<ActivatedUser[]>([]);
-
-const emergencyCouncilMembers = computed(() =>
-  [...initialEmergencyCouncilMembers.value, ...addedEmergencyCouncilMembers.value]
-);
-
-const randomSelectionInterval = ref<ReturnType<typeof setInterval> | null>(null);
-
-const isInvalidKeyShares = computed(() => {
-  return requiredKeyShares.value < 1;
-});
-
-const isInvaildCouncilMembers = computed(() => {
-  return emergencyCouncilMembers.value.length < 1;
-});
-
-const hasTooFewCouncilMembers = computed(() => {
-  return emergencyCouncilMembers.value.length < requiredKeyShares.value || (allowChangingDefaults.value && emergencyCouncilMembers.value.length < minMembers.value);
-});
-
-const isGrantButtonDisabled = computed(() => {
-  return isInvalidKeyShares.value || isInvaildCouncilMembers.value || hasTooFewCouncilMembers.value;
-});
-
-watch(userQuery, async (newQuery) => {
-  const trimmedQuery = newQuery.trim();
-  if (trimmedQuery.length > 0) {
-    searchResults.value = await searchCouncilMembers(trimmedQuery);
-  } else {
-    searchResults.value = [];
-  }
-});
+const emergencyAccessSetup = ref<InstanceType<typeof EmergencyAccessSetup>>();
+const onAddCouncilMemberError = ref<Error>();
 
 async function show() {
+  onAddCouncilMemberError.value = undefined;
   open.value = true;
-  await loadDefaultSettings();
-  requiredKeyShares.value = defaultRequiredEmergencyKeyShares.value;
-  initialEmergencyCouncilMembers.value = [...defaultEmergencyCouncilMembers.value];
-  addedEmergencyCouncilMembers.value = [];
-  await refreshTrusts();
 }
 
 function closeDialog() {
   open.value = false;
-  if (randomSelectionInterval.value) {
-    clearInterval(randomSelectionInterval.value);
-    randomSelectionInterval.value = null;
-  }
-}
-
-function needsRedundancy(): boolean {
-  return requiredKeyShares.value == emergencyCouncilMembers.value.length;
-}
-
-async function searchCouncilMembers(query: string): Promise<ActivatedUser[]> {
-  const existingIds = new Set(emergencyCouncilMembers.value.map(m => m.id));
-  const authorities = await backend.authorities.search(query, true);
-  return authorities
-    .filter(a => a.type === 'USER')
-    .filter(a => didCompleteSetup(a)) // only include users with a public key
-    .filter(a => !existingIds.has(a.id))
-    .sort((a, b) => a.name.localeCompare(b.name));
-}
-
-async function addCouncilMember(authority: ActivatedUser) {
-  onAddCouncilMemberError.value = null;
-  try {
-    const alreadyExists =
-      initialEmergencyCouncilMembers.value.some(u => u.id === authority.id) ||
-      addedEmergencyCouncilMembers.value.some(u => u.id === authority.id);
-
-    if (!alreadyExists) {
-      addedEmergencyCouncilMembers.value = [...addedEmergencyCouncilMembers.value, authority];
-    }   
-    addingCouncilMember.value = false;
-  } catch (error) {
-    console.error('Adding council member failed.', error);
-    onAddCouncilMemberError.value = error instanceof Error ? error : new Error('Unknown Error');
-  }
-}
-
-function removeCouncilMember(user: ActivatedUser) {
-  initialEmergencyCouncilMembers.value = initialEmergencyCouncilMembers.value.filter(u => u.id !== user.id);
-  addedEmergencyCouncilMembers.value = addedEmergencyCouncilMembers.value.filter(u => u.id !== user.id);
-}
-
-function resetCouncilMembers() {
-  initialEmergencyCouncilMembers.value = [];
-  addedEmergencyCouncilMembers.value = [];
 }
 
 async function splitRecoveryKey() {
+  if (!emergencyAccessSetup.value) {
+    console.warn('EmergencyAccessSetup not yet mounted.');
+    return;
+  }
+
+  onAddCouncilMemberError.value = undefined;
   try {
-    onAddCouncilMemberError.value = null;
-
-    if (requiredKeyShares.value == null || requiredKeyShares.value < 1) {
-      throw new Error(t('grantEmergencyAccessDialog.error.keySharesRequired'));
-    }
-
-    if (emergencyCouncilMembers.value.length < 1) {
-      throw new Error(t('grantEmergencyAccessDialog.error.councilMembersRequired'));
-    }
-
-    if (emergencyCouncilMembers.value.length < requiredKeyShares.value) {
-      throw new Error(
-        t('grantEmergencyAccessDialog.error.tooFewCouncilMembers')
-      );
-    }
-
-    if (emergencyCouncilMembers.value.length < requiredKeyShares.value) {
-      throw new Error(
-        t('grantEmergencyAccessDialog.error.tooFewCouncilMembers')
-      );
-    }
-
-    const recoveryKeyBytes = await props.vaultKeys.createPaddedRecoveryKeyBytes();
-    const keyShares = await EmergencyAccess.split(recoveryKeyBytes, requiredKeyShares.value, ...emergencyCouncilMembers.value);
+    const { requiredKeyShares, keyShares } = await emergencyAccessSetup.value.split(props.vaultKeys);
 
     const updatedVault = await backend.vaults.createOrUpdateVault({
       ...props.vault,
-      requiredEmergencyKeyShares: requiredKeyShares.value,
+      requiredEmergencyKeyShares: requiredKeyShares,
       emergencyKeyShares: keyShares
     });
 
@@ -293,36 +142,5 @@ async function splitRecoveryKey() {
     console.error('Granting emergency access failed.', error);
     onAddCouncilMemberError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
-}
-
-async function loadDefaultSettings() {
-  try {
-    const settings = await backend.settings.get();
-    defaultEmergencyCouncilMembers.value = (await backend.authorities.listSome(settings.emergencyCouncilMemberIds))
-      .filter(a => a.type === 'USER')
-      .filter(a => didCompleteSetup(a)); // only include users with a public key
-    
-    const authorities = await backend.authorities.listSome(settings.emergencyCouncilMemberIds);
-    const sortedActivatedUsers = authorities
-      .filter((a): a is ActivatedUser => a.type === 'USER' && didCompleteSetup(a))
-      .sort((a, b) => a.name.localeCompare(b.name));
-
-    defaultEmergencyCouncilMembers.value = [...sortedActivatedUsers];
-    initialEmergencyCouncilMembers.value = [...sortedActivatedUsers];
-
-    allowChangingDefaults.value = settings.allowChoosingEmergencyCouncil;
-    minMembers.value = settings.defaultMinMembers;
-    defaultRequiredEmergencyKeyShares.value = settings.defaultRequiredEmergencyKeyShares;
-  } catch (error) {
-    console.error('Loading emergency council members failed:', error);
-    // TODO: don't set defaults, hard-fail with error message instead
-    resetCouncilMembers();
-    defaultRequiredEmergencyKeyShares.value = 0;
-    allowChangingDefaults.value = false;
-  }
-}
-
-async function refreshTrusts() {
-  trusts.value = await backend.trust.listTrusted();
 }
 </script>

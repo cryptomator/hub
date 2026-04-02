@@ -82,8 +82,8 @@ async function reactivateVault() {
   const dto =  { ...props.vault };
   dto.archived = false;
   try {
-    const updatedVault = await backend.vaults.createOrUpdateVault(dto);
-    emit('reactivated', updatedVault);
+    const vaultDto = await backend.vaults.setArchived(v.id, false);
+    emit('reactivated', vaultDto);
     open.value = false;
   } catch (error) {
     console.error('Reactivating vault failed.', error);

@@ -9,7 +9,7 @@
         <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
           <TransitionChild as="template" enter="ease-out duration-300" enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" enter-to="opacity-100 translate-y-0 sm:scale-100" leave="ease-in duration-200" leave-from="opacity-100 translate-y-0 sm:scale-100" leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
             <DialogPanel class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
-              <form novalidate @submit.prevent="archiveVault" >
+              <form novalidate @submit.prevent="disableUser" >
                 <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                   <div class="sm:flex sm:items-start">
                     <div class="mx-auto shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
@@ -17,26 +17,33 @@
                     </div>
                     <div class="mt-3 grow text-center sm:mt-0 sm:ml-4 sm:text-left">
                       <DialogTitle as="h3" class="text-lg leading-6 font-medium text-gray-900">
-                        {{ t('archiveVaultDialog.title') }}
+                        {{ t('disableUserDialog.title') }}
                       </DialogTitle>
                       <div class="mt-2">
                         <p class="text-sm text-gray-500">
-                          {{ t('archiveVaultDialog.description') }}
+                          {{ t('disableUserDialog.description') }}
                         </p>
+                      </div>
+                      <div class="mt-4 hidden sm:flex items-center gap-2">
+                        <img :src="user.pictureUrl" class="w-8 h-8 rounded-full border" />
+                        <div class="flex flex-col">
+                          <span class="font-medium text-sm">{{ user.name }}</span>
+                          <span v-if="fullName" class="text-xs text-gray-500">{{ fullName }}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
                 <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                   <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-xs px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm" >
-                    {{ t('archiveVaultDialog.confirm') }}
+                    {{ t('disableUserDialog.confirm') }}
                   </button>
                   <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-xs px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" @click="open = false">
                     {{ t('common.cancel') }}
                   </button>
                 </div>
-                <p v-if="onArchiveVaultError" class="text-sm text-red-900 px-4 sm:px-6 text-right bg-red-50">
-                  {{ t('common.unexpectedError', [onArchiveVaultError.message]) }}
+                <p v-if="onDisableUserError != null" class="text-sm text-red-900 px-4 sm:px-6 text-right bg-red-50">
+                  {{ t('common.unexpectedError', [onDisableUserError.message]) }}
                 </p>
               </form>
             </DialogPanel>
@@ -50,23 +57,28 @@
 <script setup lang="ts">
 import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { VaultDto } from '../common/backend';
+import backend, { UserDto } from '../../common/backend';
 
 const { t } = useI18n({ useScope: 'global' });
 
 const open = ref(false);
-
-const onArchiveVaultError = ref<Error>();
+const onDisableUserError = ref<Error | null>(null);
 
 const props = defineProps<{
-  vault: VaultDto
+  user: UserDto;
 }>();
 
+const fullName = computed(() => {
+  const first = props.user.firstName ?? '';
+  const last = props.user.lastName ?? '';
+  return `${first} ${last}`.trim();
+});
+
 const emit = defineEmits<{
-  close: []
-  archived: [updatedVault: VaultDto]
+  close: [];
+  disable: [disabledUser: UserDto];
 }>();
 
 defineExpose({
@@ -77,18 +89,17 @@ function show() {
   open.value = true;
 }
 
-async function archiveVault() {
-  onArchiveVaultError.value = undefined;
-  const dto = { ...props.vault };
-  dto.archived = true;
+async function disableUser() {
+  onDisableUserError.value = null;
+
   try {
-    const vaultDto = await backend.vaults.setArchived(v.id, true);
-    emit('archived', vaultDto);
+    await backend.users.setUserEnabled(props.user.id, false);
+
+    emit('disable', props.user);
     open.value = false;
   } catch (error) {
-    console.error('Archiving vault failed.', error);
-    onArchiveVaultError.value = error instanceof Error ? error : new Error('Unknown Error');
+    console.error('Disabling user failed.', error);
+    onDisableUserError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
 }
-
 </script>
