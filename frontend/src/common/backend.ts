@@ -560,7 +560,7 @@ class UserService {
   }
 
   public async setUserEnabled(userId: string, enabled: boolean): Promise<void> {
-    await axiosAuth.put(`/users/${userId}/enabled`, enabled, { headers: { 'Content-Type': 'text/plain' } });
+    await axiosAuth.put(`/users/${userId}/enabled`, String(enabled), { headers: { 'Content-Type': 'text/plain' } });
   }
 
   public async updateUser(userId: string, dto: UpdateUserDto, addFallbackPictures: boolean = true): Promise<UserDto> {
