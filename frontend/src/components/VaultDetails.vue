@@ -134,7 +134,7 @@
           {{ t('vaultDetails.actions.archiveVault') }}
         </button>
         <!-- reactivateVault button -->
-        <button v-if="canToggleArchive && vault.archived" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white  hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showReactivateVaultDialog()">
+        <button v-if="canToggleArchive && vault.archived" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white  hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="reactivateVault()">
           {{ t('vaultDetails.actions.reactivateVault') }}
         </button>
       </div>
@@ -156,7 +156,7 @@
           {{ t('vaultDetails.actions.archiveVault') }}
         </button>
         <!-- reactivateVault button -->
-        <button v-if="canToggleArchive && vault.archived" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white  hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showReactivateVaultDialog()">
+        <button v-if="canToggleArchive && vault.archived" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white  hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="reactivateVault()">
           {{ t('vaultDetails.actions.reactivateVault') }}
         </button>
       </div>
@@ -172,7 +172,7 @@
           {{ t('vaultDetails.actions.displayRecoveryKey') }}
         </button>
         <!-- reactivateVault button -->
-        <button v-if="canToggleArchive" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white  hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="showReactivateVaultDialog()">
+        <button v-if="canToggleArchive" type="button" class="bg-red-600 py-2 px-4 border border-transparent rounded-md shadow-xs text-sm font-medium text-white  hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500" @click="reactivateVault()">
           {{ t('vaultDetails.actions.reactivateVault') }}
         </button>
       </div>
@@ -221,6 +221,15 @@
           {{ t('vaultDetails.actions.archiveVault') }}
         </button>
       </div>
+
+      <div v-if="onReactivateError">
+        <p v-if="onReactivateError instanceof PaymentRequiredError" class="text-sm text-red-900 text-right mt-1">
+          {{ t('vaultDetails.error.reactivateFailed') }}
+        </p>
+        <p v-else class="text-sm text-red-900 text-right mt-1">
+          {{ t('common.unexpectedError', [onReactivateError.message]) }}
+        </p>
+      </div>
     </div>
   </div>
 
@@ -230,7 +239,6 @@
   <DownloadVaultTemplateDialog v-if="downloadingVaultTemplate && vault && vaultKeys" ref="downloadVaultTemplateDialog" :vault="vault" :vault-keys="vaultKeys" @close="downloadingVaultTemplate = false" />
   <DisplayRecoveryKeyDialog v-if="displayingRecoveryKey && vault && vaultKeys" ref="displayRecoveryKeyDialog" :vault="vault" :vault-keys="vaultKeys" @close="displayingRecoveryKey = false" />
   <ArchiveVaultDialog v-if="archivingVault && vault" ref="archiveVaultDialog" :vault="vault" @close="archivingVault = false" @archived="refreshVault" />
-  <ReactivateVaultDialog v-if="reactivatingVault && vault" ref="reactivateVaultDialog" :vault="vault" @close="reactivatingVault = false" @reactivated="v => { refreshVault(v); refreshLicense();}" />
   <RecoverVaultDialog v-if="recoveringVault && vault" ref="recoverVaultDialog" :vault="vault" @close="recoveringVault = false" @recovered="fetchOwnerData()" />
   <GrantEmergencyAccessDialog v-if="grantingEmergencyAccess && vault && vaultKeys && settings" ref="grantEmergencyAccessDialog" :vault="vault" :vault-keys="vaultKeys" :settings="settings" @close="grantingEmergencyAccess = false" @updated="refreshVault" />
 </template>
@@ -254,7 +262,6 @@ import DownloadVaultTemplateDialog from './DownloadVaultTemplateDialog.vue';
 import EditVaultMetadataDialog from './EditVaultMetadataDialog.vue';
 import FetchError from './FetchError.vue';
 import GrantPermissionDialog from './GrantPermissionDialog.vue';
-import ReactivateVaultDialog from './ReactivateVaultDialog.vue';
 import RecoverVaultDialog from './RecoverVaultDialog.vue';
 import SearchInputGroup from './SearchInputGroup.vue';
 import TrustDetails from './TrustDetails.vue';
@@ -280,6 +287,7 @@ const allowRetryFetch = computed(() => onFetchError.value && !(onFetchError.valu
 
 const onUpdateVaultMembershipError = ref< {[id: string]: Error} >({});
 const onAddUserError = ref<Error>();
+const onReactivateError = ref<Error>();
 
 const settings = ref<SettingsDto>();
 const license = ref<LicenseUserInfoDto>();
@@ -294,8 +302,6 @@ const displayingRecoveryKey = ref(false);
 const displayRecoveryKeyDialog = ref<typeof DisplayRecoveryKeyDialog>();
 const archivingVault = ref(false);
 const archiveVaultDialog = ref<typeof ArchiveVaultDialog>();
-const reactivatingVault = ref(false);
-const reactivateVaultDialog = ref<typeof ReactivateVaultDialog>();
 const recoveringVault = ref(false);
 const recoverVaultDialog = ref<typeof RecoverVaultDialog>();
 const vault = ref<VaultDto>();
@@ -500,9 +506,17 @@ function showArchiveVaultDialog() {
   nextTick(() => archiveVaultDialog.value?.show());
 }
 
-function showReactivateVaultDialog() {
-  reactivatingVault.value = true;
-  nextTick(() => reactivateVaultDialog.value?.show());
+async function reactivateVault() {
+  onReactivateError.value = undefined;
+  try {
+    const vaultDto = await backend.vaults.setArchived(props.vaultId, false);
+    refreshVault(vaultDto);
+  } catch (error) {
+    console.error('Reactivating vault failed.', error);
+    onReactivateError.value = error instanceof Error ? error : new Error('Unknown Error');
+    return;
+  }
+  await refreshLicense();
 }
 
 function showRecoverVaultDialog() {

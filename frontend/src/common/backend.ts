@@ -370,7 +370,7 @@ class VaultService {
         response.data.creationTime = new Date(response.data.creationTime);
         return response.data;
       })
-      .catch((error) => rethrowAndConvertIfExpected(error, 403, 404));
+      .catch((error) => rethrowAndConvertIfExpected(error, 402, 403, 404));
   }
 
   public async createOrUpdateVault(vaultId: string, name: string, archived: boolean, requiredEmergencyKeyShares: number, emergencyKeyShares: Record<string, string>, description?: string): Promise<VaultDto> {
