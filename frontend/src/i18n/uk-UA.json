@@ -510,6 +510,7 @@
   "vaultDetails.emergencyAccess.setupCouncil": "Налаштувати раду екстреного доступу",
   "vaultDetails.emergencyAccess.fixCouncil": "Виправити раду екстреного доступу",
   "vaultDetails.error.licenseViolated": "Термін дії вашої ліцензії Cryptomator Hub минув або ви перевищили кількість ліцензованих місць. Будь ласка, повідомте адміністратора Hub для поновлення або оновлення ліцензії.",
+  "vaultDetails.error.reactivateFailed": "Ваша ліцензія Cryptomator Hub перевищила кількість доступних місць. Повторна активація цього сховища призведе до перевищення ліміту. Будь ласка, повідомте адміністратора Hub про необхідність оновлення ліцензії.",
   "vaultDetails.recoverVault.title": "Ви скинули свій обліковий запис!",
   "vaultDetails.recoverVault.description": "Щоб відновити доступ до сховища, ви повинні використати ключ відновлення або ж інший власник має оновити дозволи на доступ.",
   "vaultList.title": "Сховища",
