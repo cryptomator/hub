@@ -2,6 +2,7 @@ package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import io.quarkus.panache.common.Parameters;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -14,6 +15,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.Table;
+import org.cryptomator.hub.entities.events.VaultKeyRetrievedEvent;
 
 import java.time.Instant;
 import java.util.List;
@@ -164,7 +166,9 @@ public class Device {
 			});
 		}
 
-		public List<Object[]> findByOwnerWithLastAccess(String userId) {
+		public record DeviceWithLastAccess(Device device, @Nullable VaultKeyRetrievedEvent lastAccessEvent) {}
+
+		public List<DeviceWithLastAccess> findByOwnerWithLastAccess(String userId) {
 			return getEntityManager().createQuery("""
 							SELECT d, e FROM Device d
 							LEFT JOIN VaultKeyRetrievedEvent e ON e.deviceId = d.id
@@ -172,7 +176,9 @@ public class Device {
 							WHERE d.owner.id = :userId
 							""", Object[].class)
 					.setParameter("userId", userId)
-					.getResultList();
+					.getResultStream()
+					.map(row -> new DeviceWithLastAccess((Device) row[0], (VaultKeyRetrievedEvent) row[1]))
+					.toList();
 		}
 
 		public void deleteByOwner(String userId) {

@@ -2,6 +2,7 @@ package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import io.quarkus.panache.common.Parameters;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -13,6 +14,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
+import org.cryptomator.hub.entities.events.VaultKeyRetrievedEvent;
 
 import java.time.Instant;
 import java.util.List;
@@ -98,7 +100,9 @@ public class LegacyDevice {
 			return find("#LegacyDevice.allInList", Parameters.with("ids", ids)).stream();
 		}
 
-		public List<Object[]> findByOwnerWithLastAccess(String userId) {
+		public record LegacyDeviceWithLastAccess(LegacyDevice device, @Nullable VaultKeyRetrievedEvent lastAccessEvent) {}
+
+		public List<LegacyDeviceWithLastAccess> findByOwnerWithLastAccess(String userId) {
 			return getEntityManager().createQuery("""
 							SELECT d, e FROM LegacyDevice d
 							LEFT JOIN VaultKeyRetrievedEvent e ON e.deviceId = d.id
@@ -106,7 +110,9 @@ public class LegacyDevice {
 							WHERE d.owner.id = :userId
 							""", Object[].class)
 					.setParameter("userId", userId)
-					.getResultList();
+					.getResultStream()
+					.map(row -> new LegacyDeviceWithLastAccess((LegacyDevice) row[0], (VaultKeyRetrievedEvent) row[1]))
+					.toList();
 		}
 
 		public void deleteByOwner(String userId) {

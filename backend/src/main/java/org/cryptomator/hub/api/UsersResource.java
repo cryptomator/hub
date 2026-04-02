@@ -379,13 +379,13 @@ public class UsersResource {
 
 		// Fetch devices with last access (joined query)
 		Set<DeviceResource.DeviceDto> devices = deviceRepo.findByOwnerWithLastAccess(userId).stream()
-				.map(row -> DeviceResource.DeviceDto.fromEntity((Device) row[0], (VaultKeyRetrievedEvent) row[1]))
+				.map(r -> DeviceResource.DeviceDto.fromEntity(r.device(), r.lastAccessEvent()))
 				.collect(Collectors.toSet());
 
 		// Fetch legacy devices with last access (joined query)
 		@SuppressWarnings("removal")
 		Set<DeviceResource.DeviceDto> legacyDevices = legacyDeviceRepo.findByOwnerWithLastAccess(userId).stream()
-				.map(row -> DeviceResource.DeviceDto.fromEntity((LegacyDevice) row[0], (VaultKeyRetrievedEvent) row[1]))
+				.map(r -> DeviceResource.DeviceDto.fromEntity(r.device(), r.lastAccessEvent()))
 				.collect(Collectors.toSet());
 
 		return UserDto.justPublicInfo(user).withDetails(
