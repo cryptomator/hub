@@ -503,7 +503,7 @@
   "vaultDetails.emergencyAccess.setupCouncil": "Toegangsraad voor noodgevallen instellen",
   "vaultDetails.emergencyAccess.fixCouncil": "Repareer Toegangsraad voor noodgevallen",
   "vaultDetails.error.licenseViolated": "Uw Cryptomator Hub licentie is verlopen of u heeft het aantal toegestane plaatsen overschreden. Informeer een Hub beheerder of upgrade de licentie.",
-  "vaultDetails.error.reactivateFailed": "Uw Cryptomator Hub licentie heeft het aantal beschikbare plaatsen overschreden of is verlopen. Stel een Hub beheerder op de hoogte om de licentie te upgraden of te verlengen.",
+  "vaultDetails.error.reactivateFailed": "Je Cryptomator Hub-licentie heeft het aantal beschikbare plaatsen overschreden. Het heractiveren van deze kluis zou de limiet overschrijden. Informeer een Hub-beheerder om de licentie te upgraden.",
   "vaultDetails.recoverVault.title": "U heeft uw account gereset!",
   "vaultDetails.recoverVault.description": "Om de toegang tot de kluis terug te krijgen moet u uw toegang herstellen via de herstelsleutel, of een andere eigenaar moet de toegangsrechten bijwerken.",
   "vaultList.title": "Kluizen",
