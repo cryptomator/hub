@@ -10,6 +10,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import org.cryptomator.hub.entities.Authority;
+import org.cryptomator.hub.entities.User;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.jboss.resteasy.reactive.NoCache;
@@ -31,7 +32,7 @@ public class AuthorityResource {
 	@Operation(summary = "search authority by name")
 	@Transactional
 	public List<AuthorityDto> search(@QueryParam("query") @NotBlank String query, @QueryParam("withMemberSize") boolean withMemberSize) {
-		return authorityRepo.byName(query).map(authority -> AuthorityDto.fromEntity(authority, withMemberSize)).toList();
+		return authorityRepo.byName(query).filter(a -> !(a instanceof User u) || u.isEnabled()).map(authority -> AuthorityDto.fromEntity(authority, withMemberSize)).toList();
 	}
 
 	@GET

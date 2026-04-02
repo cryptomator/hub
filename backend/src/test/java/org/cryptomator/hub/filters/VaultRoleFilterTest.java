@@ -140,6 +140,35 @@ class VaultRoleFilterTest {
 		Mockito.verify(effectiveVaultAccessRepo, Mockito.never()).listRoles(Mockito.any(), Mockito.any());
 	}
 
+	@Test
+	@DisplayName("pass if admin user tries to access 7E57C0DE-0000-4000-8000-000100001111 (admin bypasses vault role check)")
+	void testFilterBypassForAdmin() throws NoSuchMethodException {
+		Mockito.doReturn(VaultRoleFilterTest.class.getMethod("byPassForRealmRole")).when(resourceInfo).getResourceMethod();
+		Mockito.doReturn(new MultivaluedHashMap<>(Map.of(VaultRole.DEFAULT_VAULT_ID_PARAM, "7E57C0DE-0000-4000-8000-000100001111"))).when(uriInfo).getPathParameters();
+		Mockito.doReturn("user2").when(jwt).getSubject();
+		Mockito.when(vaultRepo.findById(uuid("7E57C0DE-0000-4000-8000-000100001111"))).thenReturn(Mockito.mock(Vault.class));
+		Mockito.doReturn(true).when(securityContext).isUserInRole("admin");
+
+		Assertions.assertDoesNotThrow(() -> filter.filter(context));
+
+		Mockito.verify(effectiveVaultAccessRepo, Mockito.never()).listRoles(Mockito.any(), Mockito.any());
+	}
+
+	@Test
+	@DisplayName("error 403 if non-admin user tries to access 7E57C0DE-0000-4000-8000-000100001111 (bypassForRealmRole has no effect)")
+	void testFilterNoBypassForNonAdmin() throws NoSuchMethodException {
+		Mockito.doReturn(VaultRoleFilterTest.class.getMethod("byPassForRealmRole")).when(resourceInfo).getResourceMethod();
+		Mockito.doReturn(new MultivaluedHashMap<>(Map.of(VaultRole.DEFAULT_VAULT_ID_PARAM, "7E57C0DE-0000-4000-8000-000100001111"))).when(uriInfo).getPathParameters();
+		Mockito.doReturn("user2").when(jwt).getSubject();
+		Mockito.when(vaultRepo.findById(uuid("7E57C0DE-0000-4000-8000-000100001111"))).thenReturn(Mockito.mock(Vault.class));
+		Mockito.when(effectiveVaultAccessRepo.listRoles(uuid("7E57C0DE-0000-4000-8000-000100001111"), Mockito.eq("user2"))).thenReturn(Set.of());
+		Mockito.doReturn(false).when(securityContext).isUserInRole("admin");
+
+		var e = Assertions.assertThrows(ForbiddenException.class, () -> filter.filter(context));
+
+		Assertions.assertEquals("Vault role required: OWNER", e.getMessage());
+	}
+
 	@Nested
 	@DisplayName("when attempting to access archived vault")
 	class OnArchivedVault {
@@ -239,6 +268,35 @@ class VaultRoleFilterTest {
 
 		}
 
+		@Nested
+		@DisplayName("if @VaultRole(bypassForRealmRole = true, onMissingVault = REQUIRE_REALM_ROLE, realmRole = CREATE_VAULTS)")
+		class BypassRealmRoleWithRequireRealmRole {
+
+			@BeforeEach
+			void setup() throws NoSuchMethodException {
+				Mockito.doReturn(NonExistingVault.class.getMethod("bypassRealmRoleWithRequireRealmRole")).when(resourceInfo).getResourceMethod();
+			}
+
+			@Test
+			@DisplayName("error 403 if admin lacks create-vaults role (bypass does not apply for non-existing vault)")
+			void testAdminWithoutCreateVaultsRole() {
+				Mockito.doReturn(true).when(securityContext).isUserInRole("admin");
+				Mockito.doReturn(false).when(securityContext).isUserInRole("create-vaults");
+
+				Assertions.assertThrows(ForbiddenException.class, () -> filter.filter(context));
+			}
+
+			@Test
+			@DisplayName("pass if user has create-vaults role (onMissingVault checks realmRole, not bypassRealmRole)")
+			void testUserWithCreateVaultsRole() {
+				Mockito.doReturn(false).when(securityContext).isUserInRole("admin");
+				Mockito.doReturn(true).when(securityContext).isUserInRole("create-vaults");
+
+				Assertions.assertDoesNotThrow(() -> filter.filter(context));
+			}
+
+		}
+
 	}
 
 	/*
@@ -247,6 +305,10 @@ class VaultRoleFilterTest {
 
 	@VaultRole(value = {VaultAccess.Role.OWNER}, bypassForEmergencyAccess = true)
 	public void byPassRecoveryCouncilMembers() {
+	}
+
+	@VaultRole(value = {VaultAccess.Role.OWNER}, bypassForRealmRole = true)
+	public void byPassForRealmRole() {
 	}
 
 	@VaultRole({VaultAccess.Role.MEMBER})
@@ -268,6 +330,10 @@ class VaultRoleFilterTest {
 
 		@VaultRole(value = {VaultAccess.Role.OWNER}, onMissingVault = VaultRole.OnMissingVault.PASS)
 		public void pass() {
+		}
+
+		@VaultRole(value = {VaultAccess.Role.OWNER}, bypassForRealmRole = true, onMissingVault = VaultRole.OnMissingVault.REQUIRE_REALM_ROLE, realmRole = RealmRole.CREATE_VAULTS)
+		public void bypassRealmRoleWithRequireRealmRole() {
 		}
 
 		@VaultRole(value = {VaultAccess.Role.OWNER}, onMissingVault = VaultRole.OnMissingVault.REQUIRE_REALM_ROLE, realmRole = RealmRole.ADMIN)
