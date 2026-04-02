@@ -6,7 +6,7 @@
         <h2 class="text-xl font-semibold text-gray-900 truncate w-full" :title="displayName">
           {{ displayName }}
         </h2>
-        <p v-if="user.firstName || user.lastName" class="text-sm text-gray-500 mt-1 truncate w-full" :title="user.name">
+        <p v-if="displayName !== user.name" class="text-sm text-gray-500 mt-1 truncate w-full" :title="user.name">
           {{ user.name }}
         </p>
         <span v-if="!user.enabled" class="inline-flex items-center rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10 mt-2">{{ t('user.detail.disabled') }}</span>
