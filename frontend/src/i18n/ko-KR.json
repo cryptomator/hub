@@ -510,6 +510,7 @@
   "vaultDetails.emergencyAccess.setupCouncil": "비상 접근 위원회 설정하기",
   "vaultDetails.emergencyAccess.fixCouncil": "비상 접근 위원회 수정하기",
   "vaultDetails.error.licenseViolated": "Cryptomator Hub 라이선스가 만료되었거나 자리의 수가 초과하였습니다. Hub 관리자에게 라이선스를 갱신하거나 업그레이드 하도록 알리십시오.",
+  "vaultDetails.error.reactivateFailed": "Cryptomator Hub 라이선스의 가용 시트 수가 초과되었습니다. 이 Vault를 다시 활성화하면 라이선스 한도를 초과하게 됩니다. Hub 관리자에게 문의하여 라이선스를 업그레이드해 주십시오.",
   "vaultDetails.recoverVault.title": "계정을 리셋하였습니다!",
   "vaultDetails.recoverVault.description": "Vault에 대한 접근을 다시 얻으려면, 복구 키를 통해 계정을 복원하거나 다른 소유자가 접근 권한을 업데이트해야 합니다.",
   "vaultList.title": "Vault",
