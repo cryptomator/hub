@@ -510,6 +510,7 @@
   "vaultDetails.emergencyAccess.setupCouncil": "Configurar Conselho do Acesso de Emergência",
   "vaultDetails.emergencyAccess.fixCouncil": "Corrigir Conselho do Acesso de Emergência",
   "vaultDetails.error.licenseViolated": "Sua licença do Cryptomator Hub expirou ou você excedeu o número de licenças válidas. Informe a renovação a um administrador do Hub ou atualize-a.",
+  "vaultDetails.error.reactivateFailed": "Sua licença do Cryptomator Hub excedeu o número de lugares disponíveis ou expirou. Informe ao administrador do Hub para atualizar ou renová-la.",
   "vaultDetails.recoverVault.title": "Você redefiniu a sua conta!",
   "vaultDetails.recoverVault.description": "Para recuperar o acesso ao cofre, você deve restaurar seu acesso usando a chave de recuperação ou outro proprietário deve atualizar as permissões de acesso.",
   "vaultList.title": "Cofres",
