@@ -380,6 +380,7 @@
   "vaultDetails.emergencyAccess.setupCouncil": "Configurer le Conseil d'accès d'urgence",
   "vaultDetails.emergencyAccess.fixCouncil": "Réparer le Conseil d'accès d'urgence",
   "vaultDetails.error.licenseViolated": "Votre licence Cryptomator Hub a expiré ou vous avez dépassé le nombre de sièges sous licence. Veuillez en informer un administrateur Hub pour renouveler ou mettre à niveau la licence.",
+  "vaultDetails.error.reactivateFailed": "Votre licence Cryptomator Hub a dépassé le nombre de places disponibles. La réactivation de ce coffre dépasserait la limite. Veuillez demander à l'administrateur du Hub de mettre à niveau la licence.",
   "vaultDetails.recoverVault.title": "Vous avez réinitialisé votre compte !",
   "vaultDetails.recoverVault.description": "Pour regagner l'accès au coffre, vous devez restaurer votre accès en utilisant la clé de récupération, ou un autre propriétaire doit mettre à jour les autorisations d'accès.",
   "vaultList.title": "Coffres",
