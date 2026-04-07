@@ -432,6 +432,8 @@
   "nav.groups": "Groups",
   "nav.users": "Users",
   "nav.mobileMenu": "Open main menu",
+  "nav.sidebar.collapse": "Collapse sidebar",
+  "nav.sidebar.expand": "Expand sidebar",
 
   "recoveryKeyDialog.title": "Recovery Key",
   "recoveryKeyDialog.description": "This is your recovery key for \"{0}\". Keep it safe, it is your only chance to regain access to a vault in case of system outage.",
