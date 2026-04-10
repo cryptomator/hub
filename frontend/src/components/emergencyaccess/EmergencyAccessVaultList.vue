@@ -313,12 +313,15 @@ async function fetchData() {
     settings.value = await backend.settings.get();
 
     if (entitlements.emergencyAccessEnabled && settings.value.enableEmergencyAccess){
-      vaults.value = (await backend.vaults.listRecoverable())
-        .sort((a, b) => a.name.localeCompare(b.name));
+      const [fetchedVaults, allProcesses] = await Promise.all([
+        backend.vaults.listRecoverable(),
+        backend.emergencyAccess.findAllProcesses(),
+      ]);
+      vaults.value = fetchedVaults.sort((a, b) => a.name.localeCompare(b.name));
 
+      const processesByVaultId = R.groupBy(allProcesses, p => p.vaultId);
       for (const vault of vaults.value) {
-        const processes = await backend.emergencyAccess.findProcessesForVault(vault.id);
-        vaultRecoveryProcesses.value[vault.id] = processes;
+        vaultRecoveryProcesses.value[vault.id] = processesByVaultId[vault.id] ?? [];
       }
 
       const memberIdsOfAllRunningProcesses = Object.values(vaultRecoveryProcesses.value)
