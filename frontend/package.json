@@ -49,7 +49,7 @@
     "@headlessui/tailwindcss": "^0.2.2",
     "@headlessui/vue": "^1.7.23",
     "@heroicons/vue": "^2.2.0",
-    "@noble/ciphers": "^2.1.1",
+    "@noble/ciphers": "^2.2.0",
     "@scure/base": "^2.0.0",
     "axios": "^1.14.0",
     "file-saver": "^2.0.5",
