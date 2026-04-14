@@ -67,9 +67,9 @@ const open = ref(false);
 const onDeleteGroupError = ref<Error | null>(null);
 
 const props = defineProps<{
-   member: AuthorityDto;
-   groupId: string;
- }>();
+  member: AuthorityDto;
+  groupId: string;
+}>();
 
 const fullName = computed(() => {
   if (props.member.type === 'USER') {
@@ -82,8 +82,8 @@ const fullName = computed(() => {
 });
 
 const emit = defineEmits<{
-    close: [];
-    delete: [deletedMemberId: string];
+  close: [];
+  delete: [deletedMemberId: string];
 }>();
 
 defineExpose({

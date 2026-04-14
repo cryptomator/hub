@@ -8,7 +8,7 @@
         <span class="text-xs text-gray-500">{{ devices.length }}</span>
       </div>
       <div v-if="info != ''" class="relative group" :title="info">
-        <QuestionMarkCircleIcon class="h-4 w-4 text-gray-400"/>
+        <QuestionMarkCircleIcon class="h-4 w-4 text-gray-400" />
       </div>
     </div>
 
@@ -32,7 +32,7 @@
               <span class="inline-flex items-center gap-1">
                 {{ t('legacyDeviceList.lastAccess') }}
                 <div class="relative group" :title="t('legacyDeviceList.lastAccess.toolTip')">
-                  <QuestionMarkCircleIcon class="h-4 w-4 text-gray-400"/>
+                  <QuestionMarkCircleIcon class="h-4 w-4 text-gray-400" />
                 </div>
               </span>
             </th>
@@ -110,7 +110,7 @@
                       <td class="inline-flex pr-2 align-top text-left whitespace-nowrap font-normal text-gray-500">
                         {{ t('legacyDeviceList.lastAccess') }}
                         <div class="relative group" :title="t('legacyDeviceList.lastAccess.toolTip')">
-                          <QuestionMarkCircleIcon class="h-3 w-3 text-gray-400 m-0.5"/>
+                          <QuestionMarkCircleIcon class="h-3 w-3 text-gray-400 m-0.5" />
                         </div>
                       </td>
                       <td v-if="device.lastAccessTime" class="text-left">

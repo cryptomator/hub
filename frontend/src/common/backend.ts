@@ -99,19 +99,19 @@ export type UserDto = {
   ecdsaPublicKey?: string;
   privateKeys?: string;
   setupCode?: string;
-}
+};
 
 export type UserDtoWithCounts = UserDto & {
   groupsCount?: number;
   devicesCount?: number;
   accessibleVaultCount?: number;
-}
+};
 
 export type UserDtoWithDetails = UserDto & {
   groups: GroupDto[];
   devices: DeviceDto[];
   legacyDevices: DeviceDto[];
-}
+};
 
 /**
  * Represents a user who generated key pairs during the setup process.
@@ -119,7 +119,7 @@ export type UserDtoWithDetails = UserDto & {
 export type ActivatedUser = UserDto & {
   ecdhPublicKey: string;
   ecdsaPublicKey: string;
-}
+};
 
 export function didCompleteSetup(user: UserDto): user is ActivatedUser {
   return user.ecdhPublicKey !== undefined && user.ecdsaPublicKey !== undefined;
@@ -132,18 +132,18 @@ export type GroupDto = {
   pictureUrl?: string;
   memberSize?: number;
   vaultCount?: number;
-}
+};
 
 export type AuthorityDto = UserDto | GroupDto;
 
 export type MemberDto = AuthorityDto & {
   vaultRole: VaultRole
-}
+};
 
 export type TrustDto = {
   trustedUserId: string,
   signatureChain: string[]
-}
+};
 
 export type CreateUserDto = Pick<UserDto, 'name' | 'email' | 'firstName' | 'lastName' | 'pictureUrl' | 'realmRoles'> & {
   password: string;
@@ -159,12 +159,12 @@ export type UpdateGroupDto = CreateGroupDto;
 
 export type VaultDtoWithRole = VaultDto & {
   role: VaultRole;
-}
+};
 
 export type GroupDtoWithDetails = GroupDto & {
   members: AuthorityDto[];
   vaults: VaultDtoWithRole[];
-}
+};
 
 export type BillingDto = {
   hubId: string;
@@ -175,12 +175,12 @@ export type BillingDto = {
   expiresAt: Date;
   managedInstance: boolean;
   licenseKey: string;
-}
+};
 
 export type VersionDto = {
   hubVersion: string;
   keycloakVersion?: string;
-}
+};
 
 export type SettingsDto = {
   hubId: string,
@@ -191,7 +191,7 @@ export type SettingsDto = {
   allowChoosingEmergencyCouncil: boolean,
   emergencyCouncilMemberIds: string[],
   enableEmergencyAccess: boolean
-}
+};
 
 export type RecoveryProcessSetNewOwner = {
   type: 'CHANGE_PERMISSIONS',
@@ -199,7 +199,7 @@ export type RecoveryProcessSetNewOwner = {
     newOwnerIds: string[];
     newMemberIds: string[];
   }
-}
+};
 
 export type RecoveryProcessChangeCouncil = {
   type: 'COUNCIL_CHANGE',
@@ -207,7 +207,7 @@ export type RecoveryProcessChangeCouncil = {
     newCouncilMemberIds: string[];
     newRequiredKeyShares: number;
   }
-}
+};
 
 export type RecoveredKeyShareDto = {
   processPrivateKey: string;
@@ -224,9 +224,10 @@ export type RecoveryProcessDto = (RecoveryProcessSetNewOwner | RecoveryProcessCh
   recoveredKeyShares: {
     [councilMemberId: string]: RecoveredKeyShareDto
   }
-}
+};
 
 export class LicenseUserInfoDto {
+
   constructor(
     public licensedSeats: number,
     public usedSeats: number,
@@ -241,6 +242,7 @@ export class LicenseUserInfoDto {
   public isExceeded(): boolean {
     return this.licensedSeats == 0 || this.usedSeats > this.licensedSeats;
   }
+
 }
 
 export interface VaultIdHeader extends JWTHeader {
@@ -303,6 +305,7 @@ function getJdenticonConfig(type: 'USER' | 'GROUP'): JdenticonConfig {
 // #region Services
 
 class VaultService {
+
   public async listAccessible(role?: 'MEMBER' | 'OWNER'): Promise<VaultDto[]> {
     const queryParams = role ? { role: role } : {};
     return axiosAuth.get('/vaults/accessible', { params: queryParams }).then(response => response.data);
@@ -418,9 +421,11 @@ class VaultService {
     await axiosAuth.delete(`/vaults/${vaultId}/authority/${authorityId}`)
       .catch((error) => rethrowAndConvertIfExpected(error, 404));
   }
+
 }
 
 class DeviceService {
+
   public async listSome(deviceIds: string[]): Promise<DeviceDto[]> {
     const query = `ids=${deviceIds.join('&ids=')}`;
     return axiosAuth.get<DeviceDto[]>(`/devices?${query}`).then(response => response.data);
@@ -457,9 +462,11 @@ class DeviceService {
   public async putDevice(device: DeviceDto): Promise<AxiosResponse<unknown>> {
     return axiosAuth.put(`/devices/${device.id}`, device);
   }
+
 }
 
 class GroupService {
+
   public async listAll(addFallbackPictures: boolean = true): Promise<GroupDto[]> {
     const groups = await axiosAuth.get<GroupDto[]>('/groups/').then(response => response.data);
     return addFallbackPictures ? groups.map(fillInMissingPicture) : groups;
@@ -505,9 +512,11 @@ class GroupService {
   public async removeMember(groupId: string, userId: string): Promise<void> {
     await axiosAuth.delete(`/groups/${groupId}/members/${userId}`).catch((error) => rethrowAndConvertIfExpected(error, 404));
   }
+
 }
 
 class UserService {
+
   public async putMe(dto?: UserDto): Promise<void> {
     return axiosAuth.put('/users/me', dto);
   }
@@ -567,9 +576,11 @@ class UserService {
     const user = await axiosAuth.put<UserDto>(`/users/${userId}`, dto).then(response => response.data).catch((error) => rethrowAndConvertIfExpected(error, 404));
     return addFallbackPictures ? fillInMissingPicture(user) : user;
   }
+
 }
 
 class TrustService {
+
   public async trustUser(userId: string, signature: string): Promise<void> {
     return axiosAuth.put(`/users/trusted/${userId}`, signature, { headers: { 'Content-Type': 'text/plain' } });
   }
@@ -585,9 +596,11 @@ class TrustService {
   public async listTrusted(): Promise<TrustDto[]> {
     return axiosAuth.get<TrustDto[]>('/users/trusted').then(response => response.data);
   }
+
 }
 
 class AuthorityService {
+
   public async search(query: string, withMemberSize: boolean = false, addFallbackPictures: boolean = true): Promise<AuthorityDto[]> {
     const authorities = await axiosAuth.get<AuthorityDto[]>('/authorities/search', {
       params: {
@@ -613,9 +626,11 @@ class AuthorityService {
     }).then(response => response.data);
     return addFallbackPictures ? authorities.map(fillInMissingPicture) : authorities;
   }
+
 }
 
 class BillingService {
+
   public async get(): Promise<BillingDto> {
     return axiosAuth.get('/billing').then(response => {
       response.data.issuedAt = new Date(response.data.issuedAt);
@@ -627,9 +642,11 @@ class BillingService {
   public async setToken(token: string): Promise<void> {
     return axiosAuth.put('/billing/token', token, { headers: { 'Content-Type': 'text/plain' } });
   }
+
 }
 
 class LicenseService {
+
   public async getUserInfo(): Promise<LicenseUserInfoDto> {
     return axiosAuth.get('/license/user-info').then(response => {
       return new LicenseUserInfoDto(response.data.licensedSeats, response.data.usedSeats, response.data.expiresAt ? new Date(response.data.expiresAt) : null);
@@ -639,15 +656,19 @@ class LicenseService {
   public async refresh(): Promise<void> {
     return axiosAuth.post('/license/refresh');
   }
+
 }
 
 class VersionService {
+
   public async get(): Promise<VersionDto> {
     return axiosAuth.get<VersionDto>('/version').then(response => response.data);
   }
+
 }
 
 class SettingsService {
+
   public async get(): Promise<SettingsDto> {
     return axiosAuth.get<SettingsDto>('/settings').then(response => response.data);
   }
@@ -664,9 +685,11 @@ class SettingsService {
     };
     return axiosAuth.put('/settings', updatedSettings);
   }
+
 }
 
 class EmergencyAccessService {
+
   public async findProcessesForVault(vaultId: string): Promise<RecoveryProcessDto[]> {
     return axiosAuth.get<RecoveryProcessDto[]>(`/emergency-access/${vaultId}`).then(response => response.data);
   }
@@ -686,6 +709,7 @@ class EmergencyAccessService {
   public async abort(recoveryProcessId: string): Promise<void> {
     return axiosAuth.delete(`/emergency-access/${recoveryProcessId}/abort`);
   }
+
 }
 
 /**
@@ -741,33 +765,43 @@ export function rethrowAndConvertIfExpected(error: unknown, ...expectedStatusCod
 export class BackendError extends Error { }
 
 export class UnauthorizedError extends BackendError {
+
   constructor() {
     super('Unauthorized to access resource');
   }
+
 }
 
 export class PaymentRequiredError extends BackendError {
+
   constructor() {
     super('Payment required to access resource');
   }
+
 }
 
 export class ForbiddenError extends BackendError {
+
   constructor() {
     super('Insufficient rights to access resource');
   }
+
 }
 
 export class NotFoundError extends BackendError {
+
   constructor() {
     super('Requested resource not found');
   }
+
 }
 
 export class ConflictError extends BackendError {
+
   constructor() {
     super('Resource already exists');
   }
+
 }
 
 // #endregion Error handling

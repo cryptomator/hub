@@ -8,7 +8,7 @@
         <ArrowRightIcon class="ml-1 h-4 w-4" aria-hidden="true" />
       </a>
     </p>
-    <hr class="my-4 border-gray-200"/>
+    <hr class="my-4 border-gray-200" />
     <ContentBanner v-if="!entitlements.emergencyAccessEnabled" type="info" :title="t('missingEntitlements.title')">
       {{ t('missingEntitlements.description') }} <!-- TODO: link to feature comparison? -->
     </ContentBanner>
@@ -59,7 +59,9 @@
               <input
                 id="requiredKeyShares"
                 v-model.number="requiredShares"
-                type="number" min="2" max="255"
+                type="number"
+                min="2"
+                max="255"
                 :disabled="!enableEmergencyAccess"
                 class="rounded-md border-gray-300 shadow-sm sm:text-sm focus:ring-primary focus:border-primary text-left w-full disabled:cursor-not-allowed disabled:bg-gray-200"
                 :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': defaultRequiredEmergencyKeySharesError || defaultRequiredEmergencyKeySharesToHighError instanceof FormValidationFailedError}"
@@ -118,7 +120,7 @@
           />
           <label for="allow" class="ml-2 text-sm text-gray-500">
             {{ t('admin.emergencyAccess.allowChoosing.label') }}
-            <label for="minMembers" v-if="allowChoosing"> {{ t('admin.emergencyAccess.allowChoosing.atLeast') }}</label>
+            <label v-if="allowChoosing" for="minMembers"> {{ t('admin.emergencyAccess.allowChoosing.atLeast') }}</label>
           </label>
 
           <div class="relative ml-2 flex-1">
@@ -140,7 +142,8 @@
               v-model.number="minMembers"
               :disabled="!enableEmergencyAccess"
               type="number"
-              min="2" max="255"
+              min="2"
+              max="255"
               :hidden="!allowChoosing"
               class="w-full rounded-md border-gray-300 shadow-sm sm:text-sm focus:ring-primary focus:border-primary text-left disabled:cursor-not-allowed disabled:bg-gray-200"
               :class="{
@@ -187,7 +190,7 @@
           </div>
         </div>
         <div class="md:col-start-2 flex items-center gap-2 col-span-2">
-          <p v-if="false && onSaveErrorRecovery" class="mt-2 text-sm text-red-900" >
+          <p v-if="false && onSaveErrorRecovery" class="mt-2 text-sm text-red-900">
             {{ onSaveErrorRecovery!.message }}
           </p>
         </div>
@@ -217,9 +220,11 @@ const isDescLoading = ref(false);
 let descTimer: number | undefined;
 
 class FormValidationFailedError extends Error {
+
   constructor() {
     super('The form is invalid.');
   }
+
 }
 const requiredShares = ref<number>();
 const minMembers = ref<number>();
@@ -251,11 +256,11 @@ const sameCouncilMemberIds = computed(() => {
 });
 const hasUnsavedChanges = computed(() => {
   return (
-    initialEmergencyAccessSettings.value.enableEmergencyAccess !== enableEmergencyAccess.value ||
-    initialEmergencyAccessSettings.value.defaultRequiredEmergencyKeyShares !== requiredShares.value ||
-    initialEmergencyAccessSettings.value.defaultMinMembers !== minMembers.value ||
-    initialEmergencyAccessSettings.value.allowChoosingEmergencyCouncil !== allowChoosing.value ||
-    !sameCouncilMemberIds.value
+    initialEmergencyAccessSettings.value.enableEmergencyAccess !== enableEmergencyAccess.value
+    || initialEmergencyAccessSettings.value.defaultRequiredEmergencyKeyShares !== requiredShares.value
+    || initialEmergencyAccessSettings.value.defaultMinMembers !== minMembers.value
+    || initialEmergencyAccessSettings.value.allowChoosingEmergencyCouncil !== allowChoosing.value
+    || !sameCouncilMemberIds.value
   );
 });
 
@@ -413,7 +418,7 @@ async function saveRecoverySettings() {
 
     updated.value = true;
     setTimeout(() => (updated.value = false), 2000);
-  } catch (e: any) {
+  } catch (e) {
     onSaveErrorRecovery.value = e instanceof Error ? e : new Error('Unknown reason');
   } finally {
     processing.value = false;

@@ -4,7 +4,7 @@
   </div>
 
   <div v-else-if="state == State.EnterRecoveryKey">
-    <BreadcrumbNav :crumbs="[ { label: t('vaultList.title'), to: '/app/vaults' }, { label: t('createVault.enterRecoveryKey.title') } ]"/>
+    <BreadcrumbNav :crumbs="[ { label: t('vaultList.title'), to: '/app/vaults' }, { label: t('createVault.enterRecoveryKey.title') } ]" />
     <form ref="form" novalidate @submit.prevent="validateRecoveryKey()">
       <div class="flex justify-center">
         <div class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6 text-center sm:w-full sm:max-w-lg">
@@ -40,7 +40,7 @@
   </div>
 
   <div v-else-if="state == State.EnterVaultDetails">
-    <BreadcrumbNav :crumbs="[ { label: t('vaultList.title'), to: '/app/vaults' }, { label: t('createVault.enterVaultDetails.title') } ]"/>
+    <BreadcrumbNav :crumbs="[ { label: t('vaultList.title'), to: '/app/vaults' }, { label: t('createVault.enterVaultDetails.title') } ]" />
     <VaultCreationProgress :state="State.EnterVaultDetails" :steps="getCurrentStates" class="flex justify-center mb-4" />
     <form ref="form" class="space-y-6" novalidate @submit.prevent="validateVaultDetails()">
       <div class="flex justify-center text-center">
@@ -71,7 +71,7 @@
                 {{ t('createVault.enterVaultDetails.vaultDescription') }}
                 <span class="text-xs text-gray-500">({{ t('common.optional') }})</span>
               </label>
-              <input id="vaultDescription" v-model="vaultDescription" :disabled="processing" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200"/>
+              <input id="vaultDescription" v-model="vaultDescription" :disabled="processing" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" />
             </div>
           </div>
 
@@ -104,7 +104,7 @@
   </div>
 
   <div v-else-if="state == State.DefineEmergencyAccess && vaultKeys">
-    <BreadcrumbNav :crumbs="[ { label: t('vaultList.title'), to: '/app/vaults' }, { label: t('createVault.enterVaultDetails.title') } ]"/>
+    <BreadcrumbNav :crumbs="[ { label: t('vaultList.title'), to: '/app/vaults' }, { label: t('createVault.enterVaultDetails.title') } ]" />
     <VaultCreationProgress :state="state" :steps="getCurrentStates" class="flex justify-center mb-4" />
     <form @submit.prevent="validateVaultEmergencyAccess()">
       <div class="flex justify-center">
@@ -123,7 +123,7 @@
                   : t('createVault.emergencyAccessDetails.description.adminDefined') }}
               </p>
             </div>
-            <EmergencyAccessSetup v-if="settings" ref="emergencyAccessSetup" :settings="settings" :required-key-shares="settings.defaultRequiredEmergencyKeyShares" :allow-choosing-council="settings.allowChoosingEmergencyCouncil"/>
+            <EmergencyAccessSetup v-if="settings" ref="emergencyAccessSetup" :settings="settings" :required-key-shares="settings.defaultRequiredEmergencyKeyShares" :allow-choosing-council="settings.allowChoosingEmergencyCouncil" />
           </div>
           <div class="bg-gray-50 mt-4 px-4 py-3 sm:px-6 rounded-b-lg">
             <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center sm:space-x-4">
@@ -158,7 +158,7 @@
   </div>
 
   <div v-else-if="state == State.ShowRecoveryKey">
-    <BreadcrumbNav :crumbs="[ { label: t('vaultList.title'), to: '/app/vaults' }, { label: t('createVault.enterVaultDetails.title') } ]"/>
+    <BreadcrumbNav :crumbs="[ { label: t('vaultList.title'), to: '/app/vaults' }, { label: t('createVault.enterVaultDetails.title') } ]" />
     <VaultCreationProgress :state="state" :steps="getCurrentStates" class="flex justify-center mb-4" />
     <form @submit.prevent="createVault()">
       <div class="flex justify-center text-center">
@@ -200,7 +200,7 @@
             </div>
             <div class="relative flex items-start text-left mt-5 sm:mt-6">
               <div class="flex h-5 items-center">
-                <input id="confirmRecoveryKey" v-model="confirmRecoveryKey" name="confirmRecoveryKey" type="checkbox" class="h-4 w-4 rounded-sm border-gray-300 text-primary focus:ring-primary" required>
+                <input id="confirmRecoveryKey" v-model="confirmRecoveryKey" name="confirmRecoveryKey" type="checkbox" class="h-4 w-4 rounded-sm border-gray-300 text-primary focus:ring-primary" required />
               </div>
               <div class="ml-3 text-sm">
                 <label for="confirmRecoveryKey" class="font-medium text-gray-700">{{ t('createVault.showRecoveryKey.confirmRecoveryKey') }}</label>
@@ -243,7 +243,7 @@
   </div>
 
   <div v-else-if="state == State.Finished">
-    <BreadcrumbNav :crumbs="[ { label: t('vaultList.title'), to: '/app/vaults' }, { label: t('createVault.enterVaultDetails.title') } ]"/>
+    <BreadcrumbNav :crumbs="[ { label: t('vaultList.title'), to: '/app/vaults' }, { label: t('createVault.enterVaultDetails.title') } ]" />
     <VaultCreationProgress :state="state" :steps="getCurrentStates" class="flex justify-center mb-4" />
     <div class="flex justify-center">
       <div class="bg-white px-4 py-5 shadow-sm sm:rounded-lg sm:p-6 text-center sm:w-full sm:max-w-lg">
@@ -303,15 +303,19 @@ enum State {
 }
 
 class FormValidationFailedError extends Error {
+
   constructor() {
     super('The form is invalid.');
   }
+
 }
 
 class EmptyVaultTemplateError extends Error {
+
   constructor() {
     super('Vault template is empty.');
   }
+
 }
 
 const { t } = useI18n({ useScope: 'global' });

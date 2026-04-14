@@ -1,5 +1,5 @@
 <template>
-  <SimpleNavigationBar v-if="me !== undefined" :me="me"/>
+  <SimpleNavigationBar v-if="me !== undefined" :me="me" />
 
   <div class="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
     <div v-if="state == State.Preparing">
@@ -7,7 +7,7 @@
         {{ t('common.loading') }}
       </div>
       <div v-else>
-        <FetchError :error="onFetchError" :retry="fetchData"/>
+        <FetchError :error="onFetchError" :retry="fetchData" />
       </div>
     </div>
 
@@ -85,7 +85,7 @@
 
               <div class="relative flex justify-center text-left mt-5 sm:mt-6">
                 <div class="flex h-5 items-center">
-                  <input id="confirmSetupCode" v-model="confirmSetupCode" name="confirmSetupCode" type="checkbox" class="h-4 w-4 rounded-sm border-gray-300 text-primary focus:ring-primary" required>
+                  <input id="confirmSetupCode" v-model="confirmSetupCode" name="confirmSetupCode" type="checkbox" class="h-4 w-4 rounded-sm border-gray-300 text-primary focus:ring-primary" required />
                 </div>
                 <div class="ml-3 text-sm">
                   <label for="confirmSetupCode" class="font-medium text-gray-700">{{ t('initialSetup.createUserKey.confirmAccountKey') }}</label>

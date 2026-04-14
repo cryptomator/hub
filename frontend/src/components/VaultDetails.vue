@@ -4,7 +4,7 @@
       {{ t('common.loading') }}
     </div>
     <div v-else>
-      <FetchError :error="onFetchError" :retry="allowRetryFetch ? fetchData : undefined"/>
+      <FetchError :error="onFetchError" :retry="allowRetryFetch ? fetchData : undefined" />
     </div>
   </div>
 
@@ -48,7 +48,7 @@
                   <img :src="member.pictureUrl" alt="" class="w-8 h-8 rounded-full" />
                   <p class="w-full ml-4 text-sm font-medium text-gray-900 truncate">{{ member.name }}</p>
                   <span v-if="member.type === 'GROUP'" class="ml-3 text-xs text-gray-500 italic whitespace-nowrap">{{ t('common.xMembers', [member.memberSize]) }}</span>
-                  <TrustDetails v-if="member.type === 'USER'" :trusted-user="member" :trusts="trusts" @trust-changed="refreshTrusts()"/>
+                  <TrustDetails v-if="member.type === 'USER'" :trusted-user="member" :trusts="trusts" @trust-changed="refreshTrusts()" />
                   <div v-if="member.vaultRole == 'OWNER'" class="ml-3 inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">{{ t('vaultDetails.sharedWith.badge.owner') }}</div>
                   <Menu v-if="member.id != me?.id" as="div" class="relative ml-2 inline-block shrink-0 text-left">
                     <MenuButton class="group relative inline-flex h-8 w-8 items-center justify-center rounded-full bg-white focus:outline-hidden focus:ring-2 focus:ring-primary focus:ring-offset-2">
@@ -285,7 +285,7 @@ const canToggleArchive = computed(() => props.vaultRole === 'OWNER' || props.isA
 const onFetchError = ref<Error>();
 const allowRetryFetch = computed(() => onFetchError.value && !(onFetchError.value instanceof NotFoundError));  //fetch requests either list something, or query from th vault. In the latter, a 404 indicates the vault does not exists anymore.
 
-const onUpdateVaultMembershipError = ref< {[id: string]: Error} >({});
+const onUpdateVaultMembershipError = ref< { [id: string]: Error } >({});
 const onAddUserError = ref<Error>();
 const onReactivateError = ref<Error>();
 

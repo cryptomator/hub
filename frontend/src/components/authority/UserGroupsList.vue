@@ -75,7 +75,7 @@
     </div>
   </section>
   <UserAddGroupDialog ref="addGroupDialog" :user-id="userId" :groups="user.groups" @saved="(groups: GroupDto[]) => emit('onSaved', groups)" />
-  <UserGroupRemoveDialog ref="deleteGroupMemberDialog" :group="deletingGroup" :user-id="userId" @close="deletingGroup = undefined" @removed="onGroupRemoved"/>
+  <UserGroupRemoveDialog ref="deleteGroupMemberDialog" :group="deletingGroup" :user-id="userId" @close="deletingGroup = undefined" @removed="onGroupRemoved" />
 </template>
 
 <script setup lang="ts">

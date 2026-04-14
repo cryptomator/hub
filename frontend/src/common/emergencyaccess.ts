@@ -6,18 +6,19 @@ import { JWEBuilder, JWEParser } from './jwe';
 
 type KeySharePayload = {
   keyShare: string;
-}
+};
 
 type ProcessPrivateKeyPayload = {
   privateKey: JsonWebKey;
-}
+};
 
 export type RecoveryProcess = {
   recoveryPublicKey: string;
   recoveryPrivateKeys: Record<string, string>;
-}
+};
 
 export class EmergencyAccess {
+
   private static readonly PROCESS_KEY_DESIGNATION: EcKeyImportParams | EcKeyGenParams = { name: 'ECDH', namedCurve: 'P-384' };
   private static readonly PROCESS_KEY_USAGE: KeyUsage[] = ['deriveBits'];
 
@@ -112,4 +113,5 @@ export class EmergencyAccess {
     const keyShares = decryptedShares.map(share => base64.decode(share.keyShare) as Uint8Array<ArrayBuffer>);
     return combine(keyShares);
   }
+
 }

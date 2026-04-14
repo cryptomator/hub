@@ -5,10 +5,10 @@
         <div class="relative">
           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <UsersIcon v-if="selectedItem === undefined" class="h-5 w-5 text-gray-400" aria-hidden="true" />
-            <img v-else :src="selectedItem.pictureUrl ?? ''" alt="" class="w-5 h-5 rounded-full" >
+            <img v-else :src="selectedItem.pictureUrl ?? ''" alt="" class="w-5 h-5 rounded-full" />
           </div>
 
-          <ComboboxInput v-if="selectedItem === undefined" v-focus class="w-full h-10 rounded-l-md border border-gray-300 bg-white py-2 px-10 shadow-xs focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary sm:text-sm disabled:bg-primary-l2" :placeholder="placeHolder" @change="query = $event.target.value"/>
+          <ComboboxInput v-if="selectedItem === undefined" v-focus class="w-full h-10 rounded-l-md border border-gray-300 bg-white py-2 px-10 shadow-xs focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary sm:text-sm disabled:bg-primary-l2" :placeholder="placeHolder" @change="query = $event.target.value" />
           <div v-else class="w-full h-10 rounded-l-md border border-gray-300 bg-primary-l2 py-2 px-10 flex items-center justify-between shadow-xs sm:text-sm">
             <span class="truncate">{{ selectedItem.name }}</span>
             <span v-if="selectedItem.type === 'GROUP'" class="ml-3 text-gray-500 text-xs italic whitespace-nowrap">{{ t('common.xMembers', [selectedItem.memberSize]) }}</span>
@@ -53,7 +53,7 @@ export type Item = {
   pictureUrl?: string;
   type?: string;
   memberSize?: number;
-}
+};
 
 const { t } = useI18n({ useScope: 'global' });
 

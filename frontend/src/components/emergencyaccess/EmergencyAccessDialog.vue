@@ -95,7 +95,7 @@
                       </div>
 
                       <div v-else-if="processType === 'COUNCIL_CHANGE'">
-                        <EmergencyAccessSetup ref="emergencyAccessSetup" :settings="settings" :council-members="councilMembers" :required-key-shares="settings.defaultRequiredEmergencyKeyShares" :allow-choosing-council="true"/>
+                        <EmergencyAccessSetup ref="emergencyAccessSetup" :settings="settings" :council-members="councilMembers" :required-key-shares="settings.defaultRequiredEmergencyKeyShares" :allow-choosing-council="true" />
                       </div>
                       <div v-else class="text-sm text-red-600">
                         {{ t('recoveryDialog.error.invalidRecoveryType') }}
@@ -108,7 +108,7 @@
                     </div>
 
                     <div v-else>
-                      <div v-if="recoveryProcess.type === 'CHANGE_PERMISSIONS'" >
+                      <div v-if="recoveryProcess.type === 'CHANGE_PERMISSIONS'">
                         {{ t('emergencyAccessDialog.section.ownership') }}
                         
                         <div class="mt-4 space-y-1 text-sm text-gray-500">
@@ -142,10 +142,10 @@
                           </div>
                         </div>
                       </div>
-                      <div v-if="recoveryProcess.type === 'COUNCIL_CHANGE'" >
+                      <div v-if="recoveryProcess.type === 'COUNCIL_CHANGE'">
                         {{ t('emergencyAccessDialog.section.councilChange') }}
                         <div class="mt-4">
-                          <EmergencyAccessSetup :settings="settings" :council-members="councilMembers" :required-key-shares="recoveryProcess.details.newRequiredKeyShares" :readonly="true" :show-required-key-shares="true"/>
+                          <EmergencyAccessSetup :settings="settings" :council-members="councilMembers" :required-key-shares="recoveryProcess.details.newRequiredKeyShares" :readonly="true" :show-required-key-shares="true" />
                         </div>
                       </div>
                       <div v-if="phase === 'complete' && !didAddMyShare && isMeInProcessCouncil" class="text-sm pt-2">
