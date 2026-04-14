@@ -540,7 +540,7 @@ public class VaultResource {
 	@GET
 	@Path("/{vaultId}")
 	@RolesAllowed("user")
-	@VaultRole(value = {VaultAccess.Role.MEMBER, VaultAccess.Role.OWNER}, bypassForRealmRole = true, onMissingVault = VaultRole.OnMissingVault.NOT_FOUND)
+	@VaultRole(value = {VaultAccess.Role.MEMBER, VaultAccess.Role.OWNER}, bypassForRealmRole = { RealmRole.ADMIN }, onMissingVault = @VaultRole.OnMissingVault(VaultRole.OnMissingVault.Action.NOT_FOUND))
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
 	@Operation(summary = "gets a vault")
@@ -554,7 +554,7 @@ public class VaultResource {
 	@PUT
 	@Path("/{vaultId}/archived")
 	@RolesAllowed("user")
-	@VaultRole(value = VaultAccess.Role.OWNER, bypassForRealmRole = true, onMissingVault = VaultRole.OnMissingVault.NOT_FOUND)
+	@VaultRole(value = VaultAccess.Role.OWNER, bypassForRealmRole = { RealmRole.ADMIN }, onMissingVault = @VaultRole.OnMissingVault(VaultRole.OnMissingVault.Action.NOT_FOUND))
 	@Consumes(MediaType.TEXT_PLAIN)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
@@ -588,7 +588,7 @@ public class VaultResource {
 	@PUT
 	@Path("/{vaultId}")
 	@RolesAllowed("user") // general authentication. VaultRole filter will check for specific access rights
-	@VaultRole(value = VaultAccess.Role.OWNER, onMissingVault = VaultRole.OnMissingVault.REQUIRE_REALM_ROLE, realmRole = RealmRole.CREATE_VAULTS, bypassForEmergencyAccess = true)
+	@VaultRole(value = VaultAccess.Role.OWNER, onMissingVault = @VaultRole.OnMissingVault(value = VaultRole.OnMissingVault.Action.REQUIRE_REALM_ROLE, realmRole = RealmRole.CREATE_VAULTS), bypassForEmergencyAccess = true)
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional

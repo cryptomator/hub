@@ -63,7 +63,7 @@ public class VaultRoleFilter implements ContainerRequestFilter {
 
 		var vault = vaultRepo.findById(vaultId);
 		if (vault != null) {
-			if (annotation.bypassForRealmRole() && requestContext.getSecurityContext().isUserInRole(annotation.bypassRealmRole().kcName())) {
+			if (Arrays.stream(annotation.bypassForRealmRole()).anyMatch(realmRole -> requestContext.getSecurityContext().isUserInRole(realmRole.kcName()))) {
 				// user has required realm role, so we skip the vault role check:
 				return;
 			}
@@ -79,14 +79,14 @@ public class VaultRoleFilter implements ContainerRequestFilter {
 			}
 		} else {
 			// how to treat non-existing vault:
-			switch (annotation.onMissingVault()) {
+			switch (annotation.onMissingVault().value()) {
 				case FORBIDDEN -> throw new ForbiddenException("Vault role required: " + Arrays.stream(annotation.value()).map(VaultAccess.Role::name).collect(Collectors.joining(", ")));
 				case NOT_FOUND -> throw new NotFoundException("Vault not found");
 				case PASS -> {
 				}
 				case REQUIRE_REALM_ROLE -> {
-					if (!requestContext.getSecurityContext().isUserInRole(annotation.realmRole().kcName())) {
-						throw new ForbiddenException("Missing role " + annotation.realmRole());
+					if (!requestContext.getSecurityContext().isUserInRole(annotation.onMissingVault().realmRole().kcName())) {
+						throw new ForbiddenException("Missing role " + annotation.onMissingVault().realmRole());
 					}
 				}
 			}
