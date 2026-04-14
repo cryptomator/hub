@@ -165,6 +165,7 @@ describe('Vault Format 8', () => {
 // #region Mocks
 
 class TestVaultKeys extends VaultFormat8 {
+
   constructor(masterKey: CryptoKey) {
     super(masterKey);
   }
@@ -186,12 +187,15 @@ class TestVaultKeys extends VaultFormat8 {
     );
     return new TestVaultKeys(key);
   }
+
 }
 
 class TestUserKeys extends UserKeys {
+
   public constructor(ecdhKeyPair: CryptoKeyPair, ecdsaKeyPair: CryptoKeyPair) {
     super(ecdhKeyPair, ecdsaKeyPair);
   }
+
 }
 
 // #endregion

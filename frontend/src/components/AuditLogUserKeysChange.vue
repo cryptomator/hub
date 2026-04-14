@@ -34,8 +34,8 @@ import { AuthorityDto } from '../common/backend';
 const { t } = useI18n({ useScope: 'global' });
 
 const props = defineProps<{
-    event: AuditEventUserKeysChangeDto
-  }>();
+  event: AuditEventUserKeysChangeDto
+}>();
 
 const resolvedChangedBy = ref<AuthorityDto>();
 

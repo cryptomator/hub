@@ -71,9 +71,11 @@ import { useI18n } from 'vue-i18n';
 import backend, { VaultDto } from '../common/backend';
 
 class FormValidationFailedError extends Error {
+
   constructor() {
     super('The form is invalid.');
   }
+
 }
 
 const { t } = useI18n({ useScope: 'global' });

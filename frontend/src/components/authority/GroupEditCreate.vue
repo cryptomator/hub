@@ -1,7 +1,7 @@
 <template>
   <!-- Loading placeholder -->
   <div v-if="onFetchError">
-    <FetchError :error="onFetchError"/>
+    <FetchError :error="onFetchError" />
   </div>
   <div v-else-if="loading" class="text-center py-10">
     {{ t('common.loading') }}
@@ -9,8 +9,8 @@
 
   <!-- Edit/Create page -->
   <div v-else>
-    <BreadcrumbNav v-if="props.mode === 'EDIT'" :crumbs="[ { label: t('nav.groups'), to: '/app/groups' }, { label: data.name, to:'/app/groups/' + props.id }, { label: t('common.edit') } ]"/>
-    <BreadcrumbNav v-else :crumbs="[ { label: t('nav.groups'), to: '/app/groups' }, { label: t('common.create') } ]"/>
+    <BreadcrumbNav v-if="props.mode === 'EDIT'" :crumbs="[ { label: t('nav.groups'), to: '/app/groups' }, { label: data.name, to:'/app/groups/' + props.id }, { label: t('common.edit') } ]" />
+    <BreadcrumbNav v-else :crumbs="[ { label: t('nav.groups'), to: '/app/groups' }, { label: t('common.create') } ]" />
     <div class="-my-2 -mx-4 sm:-mx-6 lg:-mx-8 overflow-hidden">
       <div class="py-2 align-middle inline-block min-w-full px-4 sm:px-6 lg:px-8">
         <div class="shadow overflow-hidden border-b border-gray-200 rounded-lg bg-white p-6 space-y-8">
@@ -18,14 +18,14 @@
             <h3 class="text-lg font-medium leading-6 text-gray-900">
               {{ props.mode === 'EDIT' ? t('groupEditCreate.title.edit') : t('groupEditCreate.title.create') }}
             </h3>
-            <hr class="my-4 border-gray-200"/>
+            <hr class="my-4 border-gray-200" />
           </div>
 
           <!-- Profile Picture Preview -->
           <div class="flex flex-col items-center gap-4 mb-8">
             <div class="relative w-32 h-32">
               <img v-if="isValidImageUrl" :src="data.pictureUrl" class="w-full h-full rounded-full object-cover border border-gray-300" :alt="t('groupEditCreate.profilePicture')" />
-              <img v-else-if="previewJdenticon" :src="previewJdenticon" class="w-full h-full rounded-full object-cover border border-gray-300"/>
+              <img v-else-if="previewJdenticon" :src="previewJdenticon" class="w-full h-full rounded-full object-cover border border-gray-300" />
               <div v-else class="w-full h-full rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
                 <UserGroupIcon class="w-12 h-12" />
               </div>
@@ -41,7 +41,7 @@
               </label>
               <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
                 <div class="relative">
-                  <input id="pictureUrl" v-model="data.pictureUrl" type="url" :class="[errors.pictureUrl ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-primary focus:border-primary', 'block w-full max-w-md shadow-sm sm:text-sm rounded-md pr-10']"/>
+                  <input id="pictureUrl" v-model="data.pictureUrl" type="url" :class="[errors.pictureUrl ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-primary focus:border-primary', 'block w-full max-w-md shadow-sm sm:text-sm rounded-md pr-10']" />
                   <button v-if="data.pictureUrl" type="button" class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600 focus:outline-none" :aria-label="t('groupEditCreate.removePicture')" @click="removePicture">
                     <TrashIcon class="w-5 h-5 text-gray-600" />
                   </button>

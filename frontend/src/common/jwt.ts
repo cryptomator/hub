@@ -6,7 +6,7 @@ export type JWTHeader = {
   typ: 'JWT';
   b64: true;
   [other: string]: undefined | string | number | boolean | object; // allow further properties
-}
+};
 
 export const ECDSA_P384: EcKeyImportParams | EcKeyGenParams = {
   name: 'ECDSA',
@@ -14,6 +14,7 @@ export const ECDSA_P384: EcKeyImportParams | EcKeyGenParams = {
 };
 
 export class JWT {
+
   public header: any;
   public payload: any;
   public signature: Uint8Array;
@@ -91,4 +92,5 @@ export class JWT {
       headerAndPayload
     );
   }
+
 }

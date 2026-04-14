@@ -4,6 +4,7 @@ import { UTF8 } from './util';
 
 // visible for testing
 export class ConcatKDF {
+
   /**
    * KDF as defined in <a href="https://doi.org/10.6028/NIST.SP.800-56Ar2">NIST SP 800-56A Rev. 2 Section 5.8.1</a> using SHA-256
    * 
@@ -34,6 +35,7 @@ export class ConcatKDF {
     }
     return key.slice(0, keyDataLen);
   }
+
 }
 
 export type JWEHeader = {
@@ -49,7 +51,7 @@ export type JWEHeader = {
   cty?: 'json',
   crit?: string[],
   [other: string]: undefined | string | number | boolean | object; // allow further properties
-}
+};
 
 export type JsonJWE = {
   protected: string,
@@ -57,12 +59,12 @@ export type JsonJWE = {
   iv: string,
   ciphertext: string,
   tag: string
-}
+};
 
 type PerRecipientProperties = {
   encrypted_key: string;
   header: JWEHeader;
-}
+};
 
 export const ECDH_P384: EcKeyImportParams | EcKeyGenParams = {
   name: 'ECDH',
@@ -72,6 +74,7 @@ export const ECDH_P384: EcKeyImportParams | EcKeyGenParams = {
 // #region Recipients
 
 export abstract class Recipient {
+
   constructor(readonly kid: string) { };
 
   /**
@@ -132,9 +135,11 @@ export abstract class Recipient {
     }
     return new A256kwRecipient(kid, wrappingKey);
   }
+
 }
 
 class EcdhRecipient extends Recipient {
+
   constructor(readonly kid: string, private recipientKey: CryptoKey, private apu: Uint8Array = new Uint8Array(), private apv: Uint8Array = new Uint8Array()) {
     super(kid);
   }
@@ -197,9 +202,11 @@ class EcdhRecipient extends Recipient {
       throw new UnwrapKeyError(error);
     }
   }
+
 }
 
 class A256kwRecipient extends Recipient {
+
   constructor(readonly kid: string, private wrappingKey: CryptoKey) {
     super(kid);
   }
@@ -227,9 +234,11 @@ class A256kwRecipient extends Recipient {
       throw new UnwrapKeyError(error);
     }
   }
+
 }
 
 class Pbes2Recipient extends Recipient {
+
   constructor(readonly kid: string, private password: string, private iterations: number) {
     super(kid);
   }
@@ -263,12 +272,14 @@ class Pbes2Recipient extends Recipient {
       throw new UnwrapKeyError(error);
     }
   }
+
 }
 
 // #endregion
 // #region JWE
 
 export class JWE {
+
   private constructor(private payload: object, private protectedHeader: JWEHeader) { }
 
   public static build(payload: object, protectedHeader: JWEHeader = {}): JWE {
@@ -332,10 +343,12 @@ export class JWE {
     const encodedTag = base64urlnopad.encode(tag);
     return new EncryptedJWE(encodedProtectedHeader, perRecipientData, encodedIv, encodedCiphertext, encodedTag);
   }
+
 }
 
 // visible for testing
 export class EncryptedJWE {
+
   constructor(private protectedHeader: string, private perRecipient: PerRecipientProperties[], private iv: string, private ciphertext: string, private tag: string) {
     if (perRecipient.length < 1) {
       throw new Error('Expected at least one recipient.');
@@ -397,6 +410,7 @@ export class EncryptedJWE {
       throw new Error(`JWE does not contain recipient with kid: ${kid}`);
     }
   }
+
 }
 
 // #endregion
@@ -404,6 +418,7 @@ export class EncryptedJWE {
 
 // visible for testing
 export class ECDH_ES {
+
   private static async deriveRawKey(publicKey: CryptoKey, privateKey: CryptoKey, ecdhKeyBits: number, desiredKeyBytes: number, header: JWEHeader): Promise<Uint8Array<ArrayBuffer>> {
     let agreedKey = new Uint8Array();
     try {
@@ -456,10 +471,12 @@ export class ECDH_ES {
     result.set(data, 4);
     return result;
   }
+
 }
 
 // visible for testing
 export class PBES2 {
+
   public static readonly DEFAULT_ITERATION_COUNT = 1000000;
   private static readonly NULL_BYTE = Uint8Array.of(0x00);
 
@@ -498,6 +515,7 @@ export class PBES2 {
       ['wrapKey', 'unwrapKey']
     );
   }
+
 }
 
 // #endregion

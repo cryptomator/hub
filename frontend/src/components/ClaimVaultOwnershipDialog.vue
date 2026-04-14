@@ -66,9 +66,11 @@ import { UnwrapKeyError } from '../common/crypto';
 import { VaultFormat8 } from '../common/vaultFormat8';
 
 class FormValidationFailedError extends Error {
+
   constructor() {
     super('The form is invalid.');
   }
+
 }
 
 const { t } = useI18n({ useScope: 'global' });

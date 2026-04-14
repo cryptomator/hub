@@ -9,15 +9,17 @@ import { DB, UTF8 } from './util';
  */
 export type JsonWebKeySet = {
   keys: JsonWebKey & { kid?: string }[] // RFC defines kid, but webcrypto spec does not
-}
+};
 
 export class UnwrapKeyError extends Error {
+
   readonly actualError: unknown;
 
   constructor(actualError: unknown) {
     super('Unwrapping key failed');
     this.actualError = actualError;
   }
+
 }
 
 export interface AccessTokenPayload {
@@ -75,6 +77,7 @@ export interface RecoveryKeyProducing {
  * Represents a vault member by their public key.
  */
 export class OtherVaultMember {
+
   protected constructor(readonly publicKey: Promise<CryptoKey>) { }
 
   /**
@@ -96,20 +99,18 @@ export class OtherVaultMember {
     const jwe = await JWE.build(payload).encrypt(Recipient.ecdhEs('org.cryptomator.hub.userkey', await this.publicKey));
     return jwe.compactSerialization();
   }
+
 }
 
 /**
  * The current user's key pair.
  */
 export class UserKeys {
+
   public static readonly ECDH_PRIV_KEY_USAGES: KeyUsage[] = ['deriveBits'];
-
   public static readonly ECDH_KEY_DESIGNATION: EcKeyImportParams | EcKeyGenParams = { name: 'ECDH', namedCurve: 'P-384' };
-
   public static readonly ECDSA_PRIV_KEY_USAGES: KeyUsage[] = ['sign'];
-
   public static readonly ECDSA_PUB_KEY_USAGES: KeyUsage[] = ['verify'];
-
   public static readonly ECDSA_KEY_DESIGNATION: EcKeyImportParams | EcKeyGenParams = { name: 'ECDSA', namedCurve: 'P-384' };
 
   protected constructor(readonly ecdhKeyPair: CryptoKeyPair, readonly ecdsaKeyPair: CryptoKeyPair) { }
@@ -237,9 +238,11 @@ export class UserKeys {
       encodedEcdsaPrivateKey.fill(0x00);
     }
   }
+
 }
 
 export class BrowserKeys {
+
   public static readonly KEY_USAGES: KeyUsage[] = ['deriveBits'];
 
   public static readonly KEY_DESIGNATION: EcKeyImportParams | EcKeyGenParams = {
@@ -310,6 +313,7 @@ export class BrowserKeys {
     const publicKey = new Uint8Array(await crypto.subtle.exportKey('spki', this.keyPair.publicKey));
     return base64.encode(publicKey);
   }
+
 }
 
 export async function asPublicKey(publicKey: CryptoKey | BufferSource, keyDesignation: EcKeyImportParams, keyUsages: KeyUsage[] = []): Promise<CryptoKey> {

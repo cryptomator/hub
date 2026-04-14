@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Updated Keycloak to 26.5.6
+- Updated Keycloak to 26.5.7
 - Update Quarkus to 3.27.3 LTS
 - Improved browser locale detection (#371)
 - Improved efficiency of keycloak-to-hub data sync (#377)
@@ -32,7 +32,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Hide Archive/Reactivate Vault actions for admins without ownership rights (#379)
+- Check seat limit before unarchiving a vault, ensuring smooth operations without unexpectedly exceeding license limits (#431)
 - Creating user with sole role `create-vault` was unable to login due to missing role `user`
+- Fix disabling users via user and group management
 
 ## [1.4.6](https://github.com/cryptomator/hub/compare/1.4.5...1.4.6)
 

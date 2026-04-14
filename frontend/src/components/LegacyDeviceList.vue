@@ -4,7 +4,7 @@
       {{ t('common.loading') }}
     </div>
     <div v-else>
-      <FetchError :error="onFetchError" :retry="fetchData"/>
+      <FetchError :error="onFetchError" :retry="fetchData" />
     </div>
   </div>
 
@@ -43,7 +43,7 @@
                     <span class="inline-flex items-center gap-1">
                       {{ t('legacyDeviceList.lastAccess') }}
                       <div class="relative group" :title="t('legacyDeviceList.lastAccess.toolTip')">
-                        <QuestionMarkCircleIcon class="h-4 w-4 text-gray-400"/>
+                        <QuestionMarkCircleIcon class="h-4 w-4 text-gray-400" />
                       </div>
                     </span>
                   </th>

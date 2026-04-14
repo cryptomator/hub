@@ -25,6 +25,7 @@ interface VaultConfigHeaderHub {
 }
 
 export class VaultFormat8 implements AccessTokenProducing, VaultTemplateProducing, RecoveryKeyProducing {
+
   // in this browser application, this 512 bit key is used
   // as a hmac key to sign the vault config.
   // however when used by cryptomator, it gets split into
@@ -305,10 +306,13 @@ export class VaultFormat8 implements AccessTokenProducing, VaultTemplateProducin
     // encode using human-readable words:
     return wordEncoder.encodePadded(recoveryKeyBytes);
   }
+
 }
 
 export class DecodeVf8RecoveryKeyError extends Error {
+
   constructor(message: string) {
     super(message);
   }
+
 }

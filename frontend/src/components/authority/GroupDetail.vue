@@ -4,7 +4,7 @@
   </div>
   <FetchError v-else-if="fetchError" :error="fetchError" :retry="fetchGroup" />
   <div v-else>
-    <BreadcrumbNav :crumbs="[ { label: t('nav.groups'), to: '/app/groups' }, { label: group.name } ]"/>
+    <BreadcrumbNav :crumbs="[ { label: t('nav.groups'), to: '/app/groups' }, { label: group.name } ]" />
     <div class="flex flex-row items-center justify-between gap-3 pb-1 w-full border-b border-gray-200 mb-2">
       <!-- Headline -->
       <h2 id="title" class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl mb-4">
@@ -41,9 +41,9 @@
     <div class="hidden lg:grid grid-cols-1 lg:grid-cols-2 gap-6 items-start pt-3">
       <section class="lg:col-start-1 grid gap-6">
         <!-- Group Info -->
-        <GroupInfo :group="group"/>
+        <GroupInfo :group="group" />
         <!-- Vaults -->
-        <VaultList :vaults="group.vaults" :page-size="10" :visible="true"/>
+        <VaultList :vaults="group.vaults" :page-size="10" :visible="true" />
       </section>
       <section class="lg:col-start-2 grid gap-6">
         <!-- Members -->
@@ -52,15 +52,15 @@
     </div>
     <div class="grid lg:hidden grid-cols-1 gap-6 items-start pt-3">
       <!-- Group Info -->
-      <GroupInfo :group="group"/>
+      <GroupInfo :group="group" />
       <!-- Members -->
       <GroupMemberList v-model:members="group.members" :group="group" :page-size="10" :on-saved="onMembersSaved" />
       <!-- Vaults -->
-      <VaultList :vaults="group.vaults" :page-size="10" :visible="true"/>
+      <VaultList :vaults="group.vaults" :page-size="10" :visible="true" />
     </div>
   </div>
   <!-- Delete Dialog -->
-  <GroupDeleteDialog v-if="deletingGroup" ref="deleteGroupDialog" :group="deletingGroup" @close="deletingGroup = undefined" @delete="onGroupDeleted"/>
+  <GroupDeleteDialog v-if="deletingGroup" ref="deleteGroupDialog" :group="deletingGroup" @close="deletingGroup = undefined" @delete="onGroupDeleted" />
 </template>
 
 <script setup lang="ts">

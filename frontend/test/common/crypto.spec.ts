@@ -175,7 +175,9 @@ describe('crypto', () => {
 /* ---------- MOCKS ---------- */
 
 class TestUserKeys extends UserKeys {
+
   public constructor(ecdhKeyPair: CryptoKeyPair, ecdsaKeyPair: CryptoKeyPair) {
     super(ecdhKeyPair, ecdsaKeyPair);
   }
+
 }

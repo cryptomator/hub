@@ -1,7 +1,8 @@
 <template>
   <Popover as="div" class="relative inline-block text-left overflow-visible">
     <PopoverButton
-      :disabled="disableAction" class="inline-flex items-center bg-gray-50 ring-1 ring-inset ring-gray-500/10 mx-1 p-1 rounded-full focus:outline-hidden focus:ring-primary"
+      :disabled="disableAction"
+      class="inline-flex items-center bg-gray-50 ring-1 ring-inset ring-gray-500/10 mx-1 p-1 rounded-full focus:outline-hidden focus:ring-primary"
       :class="{
         'cursor-not-allowed': disableAction,
         'opacity-60': dimmed

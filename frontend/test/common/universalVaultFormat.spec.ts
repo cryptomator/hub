@@ -300,6 +300,7 @@ describe('UVF', () => {
 // #region Mocks
 
 class TestMemberKey extends MemberKey {
+
   private constructor(key: CryptoKey) {
     super(key);
   }
@@ -310,18 +311,23 @@ class TestMemberKey extends MemberKey {
     const key = await crypto.subtle.importKey('raw', raw, MemberKey.KEY_DESIGNATION, true, MemberKey.KEY_USAGE);
     return new TestMemberKey(key);
   }
+
 }
 
 class TestUserKeys extends UserKeys {
+
   public constructor(ecdhKeyPair: CryptoKeyPair, ecdsaKeyPair: CryptoKeyPair) {
     super(ecdhKeyPair, ecdsaKeyPair);
   }
+
 }
 
 class TestRecoveryKey extends RecoveryKey {
+
   public constructor(readonly publicKey: CryptoKey, readonly privateKey?: CryptoKey) {
     super(publicKey, privateKey);
   }
+
 }
 
 // #endregion

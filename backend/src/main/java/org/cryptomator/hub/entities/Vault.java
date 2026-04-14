@@ -56,13 +56,12 @@ import java.util.stream.Stream;
 		query = """
 				SELECT DISTINCT v
 				FROM Vault v
-				INNER JOIN v.emergencyKeyShares keyShares WHERE KEY(keyShares) = :councilMemberId
+				WHERE KEY(v.emergencyKeyShares) = :councilMemberId
 				UNION
 				SELECT DISTINCT v
-				FROM EmergencyRecoveryProcess process
-				INNER JOIN RecoveredEmergencyKeyShares share ON share.id.recoveryId = process.id
-				INNER JOIN Vault v ON v.id = process.vaultId
-				WHERE share.id.councilMemberId = :councilMemberId
+				FROM Vault v
+				INNER JOIN EmergencyRecoveryProcess process ON v.id = process.vaultId
+				WHERE KEY(process.recoveredKeyShares) = :councilMemberId
 				""")
 @NamedQuery(name = "Vault.allInList",
 		query = """
