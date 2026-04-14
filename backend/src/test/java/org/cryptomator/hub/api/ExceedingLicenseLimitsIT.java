@@ -235,7 +235,7 @@ class ExceedingLicenseLimitsIT {
 	@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-00010000AAAA ignores archived flag in createOrUpdate")
 	void createOrUpdateIgnoresArchivedFlag() {
 		var vaultId = "7E57C0DE-0000-4000-8000-00010000AAAA";
-		var vaultDto = new VaultResource.VaultDto(UUID.fromString(vaultId), "Vault Archived", Instant.parse("2020-02-20T20:20:20Z"), "This is a archived vault.", false, 0, Map.of(), "masterkey3", 42, "salt3", "doNotUpdate", "doNotUpdate");
+		var vaultDto = new VaultResource.VaultDto(UUID.fromString(vaultId), "Vault Archived", Instant.parse("2020-02-20T20:20:20Z"), "This is a archived vault.", false, 0, Map.of(), "uvfMetadata3", "uvfKeySet3", "masterkey3", 42, "salt3", "doNotUpdate", "doNotUpdate");
 		given().contentType(ContentType.JSON)
 				.body(vaultDto)
 				.when().put("/vaults/{vaultId}", vaultId)
