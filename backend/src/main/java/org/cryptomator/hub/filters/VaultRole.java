@@ -24,32 +24,38 @@ public @interface VaultRole {
 	VaultAccess.Role[] value() default {VaultAccess.Role.MEMBER};
 
 	/**
-	 * @return Name of the path parameter containing the {@link org.cryptomator.hub.entities.Vault#id vault id}.
+	 * @return Name of the path parameter containing the {@link org.cryptomator.hub.entities.Vault#getId vault id}.
 	 */
 	String vaultIdParam() default DEFAULT_VAULT_ID_PARAM;
 
 	/**
 	 * @return How to treat the case when a vault does not exist.
 	 */
-	OnMissingVault onMissingVault() default OnMissingVault.FORBIDDEN;
+	OnMissingVault onMissingVault() default @OnMissingVault(OnMissingVault.Action.FORBIDDEN);
 
-	enum OnMissingVault {FORBIDDEN, NOT_FOUND, PASS, REQUIRE_REALM_ROLE}
+	@interface OnMissingVault {
+		Action value() default Action.FORBIDDEN;
+
+		enum Action {FORBIDDEN, NOT_FOUND, PASS, REQUIRE_REALM_ROLE}
+
+		/**
+		 * Which additional realm role is required to access the annotated resource.
+		 * <p>
+		 * Only relevant if {@link #value()} is set to {@link Action#REQUIRE_REALM_ROLE}.
+		 *
+		 * @return realm role required to access the annotated resource.
+		 */
+		RealmRole realmRole() default RealmRole.ADMIN;
+	}
 
 	/**
-	 * If set to true, skip the role check if the current user has the role {@link #realmRole()}.
-	 *
-	 * @return whether the given realm role allows bypassing the vault role check.
-	 */
-	boolean bypassForRealmRole() default false;
-
-	/**
-	 * Which additional realm role is required to access the annotated resource.
+	 * What realm roles allow a user to skip the vault role check.
 	 * <p>
-	 * Only relevant if {@link #bypassForRealmRole()} or {@link #onMissingVault()} is set to {@link OnMissingVault#REQUIRE_REALM_ROLE}.
+	 * Only applies when the vault exists. For non-existing vaults, use {@link #onMissingVault()} instead.
 	 *
-	 * @return realm role required to access the annotated resource.
+	 * @return realm roles that bypasses the vault role check.
 	 */
-	RealmRole realmRole() default RealmRole.ADMIN;
+	RealmRole[] bypassForRealmRole() default {};
 
 	/**
 	 * If set to true, skip the role check if the current user is a member of this vault's emergency access council.

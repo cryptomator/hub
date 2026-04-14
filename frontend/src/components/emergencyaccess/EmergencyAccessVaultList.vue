@@ -41,7 +41,7 @@
         </div>
       </div>
       <div class="mt-3 flex flex-wrap sm:flex-nowrap gap-3 items-center whitespace-nowrap">
-        <input id="vaultSearch" v-model="query" :placeholder="t('vaultList.search.placeholder')" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs text-sm border-gray-300 rounded-md disabled:bg-gray-200"/>
+        <input id="vaultSearch" v-model="query" :placeholder="t('vaultList.search.placeholder')" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs text-sm border-gray-300 rounded-md disabled:bg-gray-200" />
 
         <Listbox v-model="selectedFilter" as="div">
           <div class="relative w-auto whitespace-nowrap">
@@ -127,7 +127,7 @@
                 >
                   {{ getProcesses(vault.id).length }}
                 </span>
-                <ChevronDownIcon class="h-5 w-5 text-gray-400 transition-transform duration-200 group-open/vault:rotate-180" aria-hidden="true"/>
+                <ChevronDownIcon class="h-5 w-5 text-gray-400 transition-transform duration-200 group-open/vault:rotate-180" aria-hidden="true" />
               </div>
             </div>
           </summary>
@@ -189,10 +189,10 @@
                 <h4 class="mb-2 font-semibold text-gray-700">Vault Access</h4>
                 <div class="grid grid-cols-[max-content_minmax(0,1fr)] gap-x-3 gap-y-3 items-center mb-3">
                   <div class="text-xs font-medium uppercase tracking-wide text-gray-500 whitespace-nowrap">{{ t('emergencyAccess.label.owners') }}:</div>
-                  <UserListGroupVisualization :authorities="getVaultMembers(vault.id).filter(member => member.vaultRole === 'OWNER')" :max="8"/>
+                  <UserListGroupVisualization :authorities="getVaultMembers(vault.id).filter(member => member.vaultRole === 'OWNER')" :max="8" />
                     
                   <div class="text-xs font-medium uppercase tracking-wide text-gray-500 whitespace-nowrap">{{ t('emergencyAccess.label.members') }}:</div>
-                  <UserListGroupVisualization :authorities="getVaultMembers(vault.id).filter(member => member.vaultRole === 'MEMBER')" :max="8"/>
+                  <UserListGroupVisualization :authorities="getVaultMembers(vault.id).filter(member => member.vaultRole === 'MEMBER')" :max="8" />
                 </div>
                 <div class="mt-auto pt-2 flex flex-wrap items-center gap-2">
                   <EmergencyProcessButton
@@ -226,8 +226,9 @@
   </section>
 
   <EmergencyAccessDialog
-    v-if="recoveryApprovVault"
+    v-if="recoveryApprovVault && settings"
     ref="recoveryApprovDialog"
+    :settings="settings"
     :vault="recoveryApprovVault"
     :me="me!"
     :recovery-process="selectedProcess"

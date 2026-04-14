@@ -9,7 +9,7 @@
         <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
           <TransitionChild as="template" enter="ease-out duration-300" enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" enter-to="opacity-100 translate-y-0 sm:scale-100" leave="ease-in duration-200" leave-from="opacity-100 translate-y-0 sm:scale-100" leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
             <DialogPanel class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
-              <form novalidate @submit.prevent="deleteUser" >
+              <form novalidate @submit.prevent="deleteUser">
                 <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                   <div class="sm:flex sm:items-start">
                     <div class="mx-auto shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
@@ -35,7 +35,7 @@
                   </div>
                 </div>
                 <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                  <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-xs px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm" >
+                  <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-xs px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
                     {{ t('deleteUserDialog.confirm') }}
                   </button>
                   <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-xs px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" @click="open = false">
@@ -59,15 +59,7 @@ import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, Trans
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend from '../../common/backend';
-
-interface User {
-  id: string;
-  name: string;
-  pictureUrl?: string;
-  firstName?: string;
-  lastName?: string;
-}
+import backend, { UserDto } from '../../common/backend';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -75,8 +67,8 @@ const open = ref(false);
 const onDeleteUserError = ref<Error | null>(null);
 
 const props = defineProps<{
-    user: User
-  }>();
+  user: UserDto;
+}>();
 
 const fullName = computed(() => {
   const first = props.user.firstName ?? '';
@@ -85,9 +77,9 @@ const fullName = computed(() => {
 });
 
 const emit = defineEmits<{
-    close: []
-    delete: [updatedUser: User]
-  }>();
+  close: [];
+  delete: [deletedUser: UserDto];
+}>();
 
 defineExpose({
   show
@@ -110,5 +102,4 @@ async function deleteUser() {
     onDeleteUserError.value = error instanceof Error ? error : new Error('Unknown Error');
   }
 }
-
 </script>

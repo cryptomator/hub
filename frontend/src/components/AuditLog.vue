@@ -8,7 +8,7 @@
       {{ t('common.loading') }}
     </div>
     <div v-else>
-      <FetchError :error="onFetchError" :retry="fetchData"/>
+      <FetchError :error="onFetchError" :retry="fetchData" />
     </div>
   </div>
 
@@ -281,9 +281,9 @@ const endDate = ref(endOfDate(new Date()));
 const endDateFilter = ref(endDate.value.toISOString().split('T')[0]);
 
 const filterIsReset = computed(() =>
-  startDateFilter.value == startDate.value.toISOString().split('T')[0] &&
-  endDateFilter.value == endDate.value.toISOString().split('T')[0] &&
-  selectedEventTypes.value.length == 0
+  startDateFilter.value == startDate.value.toISOString().split('T')[0]
+  && endDateFilter.value == endDate.value.toISOString().split('T')[0]
+  && selectedEventTypes.value.length == 0
 );
 const startDateFilterIsValid = computed(() => validateDateFilterValue(startDateFilter.value) != null);
 const endDateFilterIsValid = computed(() => {

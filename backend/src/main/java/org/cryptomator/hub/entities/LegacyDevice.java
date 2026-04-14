@@ -98,6 +98,10 @@ public class LegacyDevice {
 			return find("#LegacyDevice.allInList", Parameters.with("ids", ids)).stream();
 		}
 
+		public boolean existsAny() {
+			return findAll().firstResultOptional().isPresent();
+		}
+
 		public void deleteByOwner(String userId) {
 			delete("#LegacyDevice.deleteByOwner", Parameters.with("userId", userId));
 		}

@@ -88,7 +88,7 @@ class KeycloakAuthorityPullerTest {
 			Mockito.when(databaseUsers.keySet()).thenReturn(databaseUserIds);
 
 			for (var userId : addedUserIds) {
-				var keycloakUser = new KeycloakUserDto(userId, "name " + userId, "email " + userId, "first " + userId, "last " + userId, "pic " + userId, Set.of());
+				var keycloakUser = new KeycloakUserDto(userId, "name " + userId, "email " + userId, "first " + userId, "last " + userId, "pic " + userId, true, Set.of());
 				Mockito.when(keycloakUsers.get(userId)).thenReturn(keycloakUser);
 			}
 
@@ -105,7 +105,8 @@ class KeycloakAuthorityPullerTest {
 								Matchers.hasProperty("email", Matchers.equalTo("email " + userId)),
 								Matchers.hasProperty("firstName", Matchers.equalTo("first " + userId)),
 								Matchers.hasProperty("lastName", Matchers.equalTo("last " + userId)),
-								Matchers.hasProperty("pictureUrl", Matchers.equalTo("pic " + userId))
+								Matchers.hasProperty("pictureUrl", Matchers.equalTo("pic " + userId)),
+								Matchers.hasProperty("enabled", Matchers.equalTo(true))
 						)
 				));
 			}
@@ -170,7 +171,7 @@ class KeycloakAuthorityPullerTest {
 			Mockito.when(databaseUsers.keySet()).thenReturn(databaseUserIds);
 
 			for (var userId : updatedUserIds) {
-				var keycloakUser = new KeycloakUserDto(userId, "name " + userId, "email " + userId, "first " + userId, "last " + userId, "pic " + userId, Set.of());
+				var keycloakUser = new KeycloakUserDto(userId, "name " + userId, "email " + userId, "first " + userId, "last " + userId, "pic " + userId, true, Set.of());
 				Mockito.when(keycloakUsers.get(userId)).thenReturn(keycloakUser);
 
 				var databaseUser = Mockito.mock(User.class);
@@ -187,6 +188,7 @@ class KeycloakAuthorityPullerTest {
 				Mockito.verify(databaseUser).setFirstName("first " + userId);
 				Mockito.verify(databaseUser).setLastName("last " + userId);
 				Mockito.verify(databaseUser).setPictureUrl("pic " + userId);
+				Mockito.verify(databaseUser).setEnabled(true);
 			}
 			Mockito.verify(userRepo, Mockito.never()).persist(any(User.class));
 		}
@@ -209,7 +211,7 @@ class KeycloakAuthorityPullerTest {
 		void testAddGroups(@ConvertWith(StringArrayConverter.class) String[] keycloakGroupIdString, @ConvertWith(StringArrayConverter.class) String[] databaseGroupIdString, @ConvertWith(StringArrayConverter.class) String[] addedGroupIdString) {
 			Map<String, KeycloakUserDto> kcUsers = new HashMap<>();
 			for (var gid : keycloakGroupIdString) {
-				kcUsers.put(gid, new KeycloakUserDto(gid, "username", "email", "first", "last", "pic", Set.of()));
+				kcUsers.put(gid, new KeycloakUserDto(gid, "username", "email", "first", "last", "pic", true, Set.of()));
 			}
 
 			Map<String, KeycloakGroupDto> keycloakGroups = new HashMap<>();
@@ -313,8 +315,8 @@ class KeycloakAuthorityPullerTest {
 			Mockito.when(kcDto.name()).thenReturn(String.format("name %s", groupId));
 			Mockito.when(kcDto.pictureUrl()).thenReturn(String.format("pic %s", groupId));
 			Mockito.when(kcDto.members()).thenReturn(Set.of(
-					new KeycloakUserDto("U_user", "n", "e", "f", "l", "p", Set.of()),
-					new KeycloakUserDto("U_otherKC", "n", "e", "f", "l", "p", Set.of())
+					new KeycloakUserDto("U_user", "n", "e", "f", "l", "p", true, Set.of()),
+					new KeycloakUserDto("U_otherKC", "n", "e", "f", "l", "p", true, Set.of())
 			));
 
 			var dbGroup = Mockito.mock(Group.class);

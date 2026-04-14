@@ -3,10 +3,10 @@
     <div
       :class="[
         'flex items-center flex-wrap min-h-[54px] rounded-md px-2 py-1 shadow-xs border', 
-        inputVisible ? 'focus-within:ring-1 bg-white' : 'bg-gray-200 cursor-not-allowed',
+        inputVisible ? 'focus-within:ring-1 bg-white' : 'bg-gray-100 cursor-not-allowed',
         props.hasError
-          ? 'border-red-300 text-red-900 focus-within:ring-red-500 focus-within:border-red-500'
-          : 'border-gray-300 focus-within:ring-primary'
+          ? (inputVisible ? 'border-red-300 text-red-900 focus-within:ring-red-500 focus-within:border-red-500' : 'border-red-300/60 text-red-900')
+          : (inputVisible ? 'border-gray-300 focus-within:ring-primary' : 'border-gray-300/60')
       ]"
       @click="focusInput"
     >
@@ -16,32 +16,31 @@
         :key="user.id"
         tabindex="-1"
         :disabled="!inputVisible"
-        class="inline-flex items-center text-sm rounded-full px-2 py-1 mt-1 mb-1 mr-1 border transition-colors shadow-sm"
+        class="inline-flex items-center text-sm text-gray-800 rounded-full px-2 py-1 mt-1 mb-1 mr-1 border transition-colors shadow-sm gap-1"
         :class="{
-          'bg-white text-gray-800': selectedPillIndex !== index,
+          'bg-white': selectedPillIndex !== index,
           'bg-white ring-2 ring-primary': selectedPillIndex === index,
           'cursor-not-allowed': !inputVisible
         }"
         @click="onPillClick($event, user)"
       >
-        <img :src="user.pictureUrl" class="w-4 h-4 rounded-full mr-1" alt="" />
-        {{ user.name }}
-        <span 
-          v-if="user.type === 'USER'" class="ml-1 trust-details"
-        >
+        <img :src="user.pictureUrl" class="w-4 h-4 rounded-full" :class="{ 'opacity-60': !inputVisible }" alt="" />
+        <span :class="{ 'opacity-60': !inputVisible }">{{ user.name }}</span>
+        <span v-if="user.type === 'USER'" class="trust-details">
           <TrustDetails
             :trusted-user="user as UserDto"
             :trusts="trusts"
             :disable-action="disableAction"
+            :dimmed="!inputVisible"
             @trust-changed="refreshTrusts"
           />
         </span>
-        <span v-else class="ml-1 trust-details">
+        <span v-else class="trust-details" :class="{ 'opacity-60': !inputVisible }">
           <span class="inline-flex items-center bg-gray-50 ring-1 ring-inset ring-gray-500/10 mx-1 px-2 p-0.5 rounded-full">
             {{ user.memberSize }}
           </span>
         </span>
-        <div v-if="inputVisible" class="ml-1 text-gray-500 hover:text-red-600">&times;</div>
+        <div v-if="inputVisible" class="text-gray-500 hover:text-red-600">&times;</div>
       </button>
       <!-- Combobox -->
       <Combobox @update:model-value="onSelect">

@@ -1,6 +1,6 @@
 <template>
-  <NavigationBar v-if="accountState == AccountState.Ready && hasBrowserKeys" :me="me!"/>
-  <SimpleNavigationBar v-else-if="me" :me="me"/>
+  <NavigationBar v-if="accountState == AccountState.Ready && hasBrowserKeys" :me="me!" />
+  <SimpleNavigationBar v-else-if="me" :me="me" />
 
   <div class="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8 flex justify-center">
     <div v-if="me === undefined">
@@ -8,7 +8,7 @@
         {{ t('common.loading') }}
       </div>
       <div v-else>
-        <FetchError :error="onFetchError" :retry="fetchData"/>
+        <FetchError :error="onFetchError" :retry="fetchData" />
       </div>
     </div>
 
