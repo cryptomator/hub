@@ -36,7 +36,7 @@ jobs:
         working-directory: frontend
         run: npm run dist
       - name: SonarCloud Scan Frontend
-        uses: SonarSource/sonarqube-scan-action@a31c9398be7ace6bbfaf30c0bd5d415f843d45e9 # v7.0.0
+        uses: SonarSource/sonarqube-scan-action@299e4b793aaa83bf2aba7c9c14bedbb485688ec4 # v7.1.0
         with:
           projectBaseDir: frontend
           args: >
@@ -55,7 +55,7 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
           cache: 'maven'
       - name: Cache SonarCloud packages
-        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         with:
           path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar
