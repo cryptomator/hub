@@ -1,5 +1,5 @@
 <template>
-  <div ref="containerRef" class="p-2 border border-gray-300 rounded-md bg-gray-200 opacity-60 cursor-not-allowed" aria-disabled="true">
+  <div class="p-2 border border-gray-300 rounded-md bg-gray-200 opacity-60 cursor-not-allowed" aria-disabled="true">
     <template v-if="loadingCouncilSelection">
       <div class="flex">
         <svg class="animate-spin h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -46,8 +46,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch, ref, toRefs, onBeforeUnmount, useTemplateRef } from 'vue';
-import { useResizeObserver } from '@vueuse/core';
+import { computed, watch, ref, toRefs, onMounted, onBeforeUnmount } from 'vue';
 import { ExclamationTriangleIcon } from '@heroicons/vue/20/solid';
 import { useI18n } from 'vue-i18n';
 import { UserDto } from '../../common/backend';
@@ -66,14 +65,13 @@ const loadingCouncilSelection = ref(true);
 const randomCouncilSelection = ref<UserDto[]>([]);
 const randomSelectionInterval = ref<ReturnType<typeof setInterval>>();
 
-const containerRef = useTemplateRef('containerRef');
-const containerWidth = ref<number>(0);
-const maxUserPills = computed(() => containerWidth.value < 300 ? 2 : 3);
+const windowWidth = ref(window.innerWidth);
+const maxUserPills = computed(() => windowWidth.value < 640 ? 2 : 3);
 
 const { selectedUsers, requiredKeyShares } = toRefs(props);
 
-useResizeObserver(containerRef, (entries) => {
-  containerWidth.value = entries[0].contentRect.width;
+onMounted(() => {
+  window.addEventListener('resize', () => { windowWidth.value = window.innerWidth; });
 });
 
 onBeforeUnmount(() => {
