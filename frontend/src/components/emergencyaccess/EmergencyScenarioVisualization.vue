@@ -28,7 +28,7 @@
                   <span v-if="slot.type === 'user'" :key="slot.user.id" class="absolute inset-0 inline-flex w-full items-center justify-between gap-1 rounded-full border border-grey bg-white px-2 py-1 shadow-sm">
                     <img :src="slot.user.pictureUrl" class="w-4 h-4 rounded-full shrink-0" />
                     <span class="truncate">{{ slot.user.name }}</span>
-                    <SegmentRing :start-index="index" :total="requiredKeyShares" :completed="1" :size="24"/>
+                    <SegmentRing :start-index="index" :total="requiredKeyShares" :completed="1" :size="24" />
                   </span>
                   <span v-else class="absolute inset-0 inline-flex w-full items-center justify-center rounded-full border border-gray-300 bg-gray-100 px-3 py-1 font-medium text-gray-700 shadow-sm">
                     +{{ slot.hiddenCount }}

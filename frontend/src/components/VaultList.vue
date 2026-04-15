@@ -4,7 +4,7 @@
       {{ t('common.loading') }}
     </div>
     <div v-else>
-      <FetchError :error="onFetchError" :retry="fetchData"/>
+      <FetchError :error="onFetchError" :retry="fetchData" />
     </div>
   </div>
 
@@ -23,7 +23,7 @@
   </h2>
 
   <div class="pb-5 mt-3 border-b border-gray-200 flex flex-wrap sm:flex-nowrap gap-3 items-center whitespace-nowrap">
-    <input id="vaultSearch" v-model="query" :placeholder="t('vaultList.search.placeholder')" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs text-sm border-gray-300 rounded-md disabled:bg-gray-200"/>
+    <input id="vaultSearch" v-model="query" :placeholder="t('vaultList.search.placeholder')" type="text" class="focus:ring-primary focus:border-primary block w-full shadow-xs text-sm border-gray-300 rounded-md disabled:bg-gray-200" />
 
     <Listbox v-model="selectedFilter" as="div">
       <div class="relative w-auto whitespace-nowrap">
@@ -134,7 +134,7 @@
   </div>
 
   <SlideOver v-if="selectedVault" ref="vaultDetailsSlideOver" :title="selectedVault.name" @close="selectedVault = undefined">
-    <VaultDetails :vault-id="selectedVault.id" :vault-role="roleOfSelectedVault" :is-admin="isAdmin" @vault-updated="v => onSelectedVaultUpdate(v)" @license-status-updated="l => licenseUpdated(l)"></VaultDetails>
+    <VaultDetails :vault-id="selectedVault.id" :vault-role="roleOfSelectedVault" :is-admin="isAdmin" @vault-updated="v => onSelectedVaultUpdate(v)" @license-status-updated="l => licenseUpdated(l)" />
   </SlideOver>
 </template>
 
@@ -194,7 +194,7 @@ const isCommunityLicense = computed(() => {
   return !licenseStatus.value?.expiresAt;
 });
 
-const filterOptions = ref< {[key: string]: string} >({
+const filterOptions = ref< { [key: string]: string } >({
   accessibleVaults: t('vaultList.filter.entry.accessibleVaults'),
   ownedVaults: t('vaultList.filter.entry.ownedVaults')
 });

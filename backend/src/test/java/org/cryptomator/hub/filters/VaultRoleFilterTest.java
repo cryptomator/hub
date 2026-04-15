@@ -213,7 +213,7 @@ class VaultRoleFilterTest {
 		}
 
 		@Test
-		@DisplayName("error 403 if annotated with @VaultRole(onMissingVault = OnMissingVault.FORBIDDEN)")
+		@DisplayName("error 403 if annotated with @VaultRole(onMissingVault = @VaultRole.OnMissingVault(VaultRole.OnMissingVault.Action.FORBIDDEN))")
 		void testForbidden() throws NoSuchMethodException {
 			Mockito.doReturn(NonExistingVault.class.getMethod("forbidden")).when(resourceInfo).getResourceMethod();
 
@@ -223,7 +223,7 @@ class VaultRoleFilterTest {
 		}
 
 		@Test
-		@DisplayName("error 404 if annotated with @VaultRole(onMissingVault = OnMissingVault.NOT_FOUND)")
+		@DisplayName("error 404 if annotated with @VaultRole(onMissingVault = @VaultRole.OnMissingVault(VaultRole.OnMissingVault.Action.NOT_FOUND))")
 		void testNotFound() throws NoSuchMethodException {
 			Mockito.doReturn(NonExistingVault.class.getMethod("notFound")).when(resourceInfo).getResourceMethod();
 
@@ -233,7 +233,7 @@ class VaultRoleFilterTest {
 		}
 
 		@Test
-		@DisplayName("pass if annotated with @VaultRole(onMissingVault = OnMissingVault.PASS)")
+		@DisplayName("pass if annotated with @VaultRole(onMissingVault = @VaultRole.OnMissingVault(VaultRole.OnMissingVault.Action.PASS))")
 		void testPass() throws NoSuchMethodException {
 			Mockito.doReturn(NonExistingVault.class.getMethod("pass")).when(resourceInfo).getResourceMethod();
 
@@ -241,7 +241,7 @@ class VaultRoleFilterTest {
 		}
 
 		@Nested
-		@DisplayName("if @VaultRole(onMissingVault = OnMissingVault.REQUIRE_REALM_ROLE)")
+		@DisplayName("if @VaultRole(onMissingVault = @VaultRole.OnMissingVault(value = VaultRole.OnMissingVault.Action.REQUIRE_REALM_ROLE, realmRole = RealmRole.CREATE_VAULTS))")
 		class RequireRealmRole {
 
 			@BeforeEach
@@ -250,18 +250,18 @@ class VaultRoleFilterTest {
 			}
 
 			@Test
-			@DisplayName("error 403 if user lacks realm role required by @VaultRole(realmRole = RealmRole.ADMIN)")
+			@DisplayName("error 403 if user lacks create-vaults role")
 			void testMissesRole() {
-				Mockito.doReturn(false).when(securityContext).isUserInRole("admin");
+				Mockito.doReturn(false).when(securityContext).isUserInRole("create-vaults");
 
 				Assertions.assertThrows(ForbiddenException.class, () -> filter.filter(context));
 			}
 
 
 			@Test
-			@DisplayName("pass if user has realm role required by @VaultRole(realmRole = RealmRole.ADMIN)")
+			@DisplayName("pass if user has create-vaults role")
 			void testHasRole() {
-				Mockito.doReturn(true).when(securityContext).isUserInRole("admin");
+				Mockito.doReturn(true).when(securityContext).isUserInRole("create-vaults");
 
 				Assertions.assertDoesNotThrow(() -> filter.filter(context));
 			}
@@ -269,7 +269,7 @@ class VaultRoleFilterTest {
 		}
 
 		@Nested
-		@DisplayName("if @VaultRole(bypassForRealmRole = true, onMissingVault = REQUIRE_REALM_ROLE, realmRole = CREATE_VAULTS)")
+		@DisplayName("if @VaultRole(bypassForRealmRole = true, onMissingVault = @VaultRole.OnMissingVault(value = VaultRole.OnMissingVault.Action.REQUIRE_REALM_ROLE, realmRole = RealmRole.CREATE_VAULTS))")
 		class BypassRealmRoleWithRequireRealmRole {
 
 			@BeforeEach
@@ -307,7 +307,7 @@ class VaultRoleFilterTest {
 	public void byPassRecoveryCouncilMembers() {
 	}
 
-	@VaultRole(value = {VaultAccess.Role.OWNER}, bypassForRealmRole = true)
+	@VaultRole(value = {VaultAccess.Role.OWNER}, bypassForRealmRole = { RealmRole.ADMIN })
 	public void byPassForRealmRole() {
 	}
 
@@ -320,23 +320,23 @@ class VaultRoleFilterTest {
 	}
 
 	public static class NonExistingVault {
-		@VaultRole(value = {VaultAccess.Role.OWNER}, onMissingVault = VaultRole.OnMissingVault.FORBIDDEN)
+		@VaultRole(value = {VaultAccess.Role.OWNER}, onMissingVault = @VaultRole.OnMissingVault(VaultRole.OnMissingVault.Action.FORBIDDEN))
 		public void forbidden() {
 		}
 
-		@VaultRole(value = {VaultAccess.Role.OWNER}, onMissingVault = VaultRole.OnMissingVault.NOT_FOUND)
+		@VaultRole(value = {VaultAccess.Role.OWNER}, onMissingVault = @VaultRole.OnMissingVault(VaultRole.OnMissingVault.Action.NOT_FOUND))
 		public void notFound() {
 		}
 
-		@VaultRole(value = {VaultAccess.Role.OWNER}, onMissingVault = VaultRole.OnMissingVault.PASS)
+		@VaultRole(value = {VaultAccess.Role.OWNER}, onMissingVault = @VaultRole.OnMissingVault(VaultRole.OnMissingVault.Action.PASS))
 		public void pass() {
 		}
 
-		@VaultRole(value = {VaultAccess.Role.OWNER}, bypassForRealmRole = true, onMissingVault = VaultRole.OnMissingVault.REQUIRE_REALM_ROLE, realmRole = RealmRole.CREATE_VAULTS)
+		@VaultRole(value = {VaultAccess.Role.OWNER}, bypassForRealmRole = { RealmRole.ADMIN }, onMissingVault = @VaultRole.OnMissingVault(value = VaultRole.OnMissingVault.Action.REQUIRE_REALM_ROLE, realmRole = RealmRole.CREATE_VAULTS))
 		public void bypassRealmRoleWithRequireRealmRole() {
 		}
 
-		@VaultRole(value = {VaultAccess.Role.OWNER}, onMissingVault = VaultRole.OnMissingVault.REQUIRE_REALM_ROLE, realmRole = RealmRole.ADMIN)
+		@VaultRole(value = {VaultAccess.Role.OWNER}, onMissingVault = @VaultRole.OnMissingVault(value = VaultRole.OnMissingVault.Action.REQUIRE_REALM_ROLE, realmRole = RealmRole.CREATE_VAULTS))
 		public void requireRealmRole() {
 		}
 	}

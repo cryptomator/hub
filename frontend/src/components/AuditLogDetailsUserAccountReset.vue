@@ -26,8 +26,8 @@ import { AuthorityDto } from '../common/backend';
 const { t } = useI18n({ useScope: 'global' });
   
 const props = defineProps<{
-    event: AuditEventUserAccountResetDto
-  }>();
+  event: AuditEventUserAccountResetDto
+}>();
   
 const resolvedResetBy = ref<AuthorityDto>();
   
