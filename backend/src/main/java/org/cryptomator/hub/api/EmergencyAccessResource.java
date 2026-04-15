@@ -176,8 +176,7 @@ public class EmergencyAccessResource {
 	@Transactional
 	public List<RecoveryProcessDto> findAllForRecoverableVaults() {
 		var currentUser = jwt.getSubject();
-		var vaultIds = vaultRepo.findRecoverable(currentUser).map(Vault::getId).toList();
-		return recoverProcessRepo.findByVaultIds(vaultIds).map(RecoveryProcessDto::fromEntity).toList();
+		return recoverProcessRepo.findByCouncilMemberOrProcessMember(currentUser).map(RecoveryProcessDto::fromEntity).toList();
 	}
 
 	@GET

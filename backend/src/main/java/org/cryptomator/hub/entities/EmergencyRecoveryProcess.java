@@ -36,6 +36,20 @@ import java.util.stream.Stream;
 		"""
 )
 @NamedQuery(
+		name = "EmergencyRecoveryProcess.byCouncilMemberOrProcessMember", query = """
+		SELECT p
+		FROM EmergencyRecoveryProcess p
+		WHERE KEY(p.recoveredKeyShares) = :councilMemberId
+
+		UNION
+
+		SELECT p
+		FROM EmergencyRecoveryProcess p
+		INNER JOIN Vault v ON v.id = p.vaultId
+		WHERE KEY(v.emergencyKeyShares) = :councilMemberId
+		"""
+)
+@NamedQuery(
 		name = "EmergencyRecoveryProcess.byVaultIds", query = """
 		SELECT process
 		FROM EmergencyRecoveryProcess process
@@ -151,6 +165,10 @@ public class EmergencyRecoveryProcess {
 
 		public Stream<EmergencyRecoveryProcess> findByCouncilMember(String councilMemberId) {
 			return find("#EmergencyRecoveryProcess.byCouncilMember", Parameters.with("councilMemberId", councilMemberId)).stream();
+		}
+
+		public Stream<EmergencyRecoveryProcess> findByCouncilMemberOrProcessMember(String councilMemberId) {
+			return find("#EmergencyRecoveryProcess.byCouncilMemberOrProcessMember", Parameters.with("councilMemberId", councilMemberId)).stream();
 		}
 
 		public Stream<EmergencyRecoveryProcess> findByVaultIds(java.util.Collection<UUID> vaultIds) {
