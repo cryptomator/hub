@@ -70,11 +70,16 @@ const maxUserPills = computed(() => windowWidth.value < 640 ? 2 : 3);
 
 const { selectedUsers, requiredKeyShares } = toRefs(props);
 
+function onWindowResize() {
+  windowWidth.value = window.innerWidth;
+}
+
 onMounted(() => {
-  window.addEventListener('resize', () => { windowWidth.value = window.innerWidth; });
+  window.addEventListener('resize', onWindowResize);
 });
 
 onBeforeUnmount(() => {
+  window.removeEventListener('resize', onWindowResize);
   stopRandomCouncilInterval();
   if (timeoutId !== undefined) {
     clearTimeout(timeoutId);
