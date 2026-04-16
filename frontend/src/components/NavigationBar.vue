@@ -12,7 +12,7 @@
         </div>
         <div class="flex-1 flex items-center justify-center sm:items-stretch sm:justify-start">
           <router-link to="/app" class="shrink-0 flex items-center">
-            <img src="/logo.svg" class="h-8" alt="Logo"/>
+            <img src="/logo.svg" class="h-8" alt="Logo" />
             <span class="font-headline font-bold text-primary ml-2 pb-px">CRYPTOMATOR HUB</span>
           </router-link>
           <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
@@ -34,7 +34,7 @@
               </MenuButton>
             </div>
             <transition enter-active-class="transition ease-out duration-100" enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class=" opacity-100 scale-100" leave-to-class=" opacity-0 scale-95">
-              <MenuItems class="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg divide-y divide-gray-100 ring-1 ring-black/5 focus:outline-hidden">
+              <MenuItems class="absolute right-0 z-50 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg divide-y divide-gray-100 ring-1 ring-black/5 focus:outline-hidden">
                 <div class="px-3.5 py-3 truncate">
                   <span class="block mb-0.5 text-xs text-gray-500">{{ t('nav.profile.signedInAs') }}</span>
                   <span class="text-sm font-semibold">{{ me.name }}</span>

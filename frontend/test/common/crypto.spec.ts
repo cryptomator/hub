@@ -249,6 +249,7 @@ describe('crypto', () => {
 /* ---------- MOCKS ---------- */
 
 class TestVaultKeys extends VaultKeys {
+
   constructor(key: CryptoKey) {
     super(key);
   }
@@ -270,10 +271,13 @@ class TestVaultKeys extends VaultKeys {
     );
     return new TestVaultKeys(key);
   }
+
 }
 
 class TestUserKeys extends UserKeys {
+
   public constructor(ecdhKeyPair: CryptoKeyPair, ecdsaKeyPair: CryptoKeyPair) {
     super(ecdhKeyPair, ecdsaKeyPair);
   }
+
 }

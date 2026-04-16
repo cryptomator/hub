@@ -4,6 +4,7 @@ import { UTF8 } from './util';
 
 // visible for testing
 export class ConcatKDF {
+
   /**
    * KDF as defined in <a href="https://doi.org/10.6028/NIST.SP.800-56Ar2">NIST SP 800-56A Rev. 2 Section 5.8.1</a> using SHA-256
    * 
@@ -34,6 +35,7 @@ export class ConcatKDF {
     }
     return key.slice(0, keyDataLen);
   }
+
 }
 
 export type JWEHeader = {
@@ -44,7 +46,7 @@ export type JWEHeader = {
   readonly epk?: JsonWebKey,
   readonly p2c?: number,
   readonly p2s?: string
-}
+};
 
 export const ECDH_P384: EcKeyImportParams | EcKeyGenParams = {
   name: 'ECDH',
@@ -52,6 +54,7 @@ export const ECDH_P384: EcKeyImportParams | EcKeyGenParams = {
 };
 
 export class JWEParser {
+
   readonly header: JWEHeader;
   readonly encryptedKey: Uint8Array<ArrayBuffer>;
   readonly iv: Uint8Array<ArrayBuffer>;
@@ -126,9 +129,11 @@ export class JWEParser {
     ));
     return JSON.parse(UTF8.decode(payloadJson));
   }
+
 }
 
 export class JWEBuilder {
+
   private constructor(readonly header: Promise<JWEHeader>, readonly encryptedKey: Promise<Uint8Array>, readonly cek: Promise<CryptoKey>) { }
 
   /**
@@ -207,10 +212,12 @@ export class JWEBuilder {
     const encodedTag = base64urlnopad.encode(tag);
     return `${encodedHeader}.${encodedEncryptedKey}.${encodedIv}.${encodedCiphertext}.${encodedTag}`;
   }
+
 }
 
 // visible for testing
 export class ECDH_ES {
+
   public static async deriveContentKey(publicKey: CryptoKey, privateKey: CryptoKey, ecdhKeyBits: number, desiredKeyBytes: number, header: JWEHeader, exportable: boolean = false): Promise<CryptoKey> {
     let agreedKey = new Uint8Array();
     let derivedKey = new Uint8Array();
@@ -243,10 +250,12 @@ export class ECDH_ES {
     result.set(data, 4);
     return result;
   }
+
 }
 
 // visible for testing
 export class PBES2 {
+
   public static readonly DEFAULT_ITERATION_COUNT = 1000000;
   private static readonly NULL_BYTE = Uint8Array.of(0x00);
 
@@ -286,4 +295,5 @@ export class PBES2 {
       ['wrapKey', 'unwrapKey']
     );
   }
+
 }

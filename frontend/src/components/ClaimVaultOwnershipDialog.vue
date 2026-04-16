@@ -65,9 +65,11 @@ import { VaultDto } from '../common/backend';
 import { UnwrapKeyError, VaultKeys } from '../common/crypto';
 
 class FormValidationFailedError extends Error {
+
   constructor() {
     super('The form is invalid.');
   }
+
 }
 
 const { t } = useI18n({ useScope: 'global' });
