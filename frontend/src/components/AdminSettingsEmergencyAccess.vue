@@ -258,7 +258,7 @@ const hasUnsavedChanges = computed(() => {
   return (
     initialEmergencyAccessSettings.value.enableEmergencyAccess !== enableEmergencyAccess.value
     || initialEmergencyAccessSettings.value.defaultRequiredEmergencyKeyShares !== requiredShares.value
-    || initialEmergencyAccessSettings.value.defaultMinMembers !== minMembers.value
+    || (allowChoosing.value ? initialEmergencyAccessSettings.value.defaultMinMembers !== minMembers.value : false)
     || initialEmergencyAccessSettings.value.allowChoosingEmergencyCouncil !== allowChoosing.value
     || !sameCouncilMemberIds.value
   );
