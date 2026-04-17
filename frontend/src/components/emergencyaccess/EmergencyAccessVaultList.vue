@@ -428,7 +428,7 @@ function filterByStatus(vault: VaultDto): boolean {
       return processes.length > 0 && processes.some(p => !hasSubmittedEmergencyKeyShare(p));
     case 'startable': { // find vaults where at least one type of process has not yet been started
       const processTypes = processes.map(p => p.type);
-      return !SUPPORTED_PROCESS_TYPES.every(processTypes.includes);
+      return !SUPPORTED_PROCESS_TYPES.every(t => processTypes.includes(t));
     }
     case 'recoverableVaults': // all
     default:
