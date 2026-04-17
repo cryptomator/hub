@@ -159,6 +159,7 @@
                     type="notCouncil"
                     :title="t('emergencyAccess.badge.notCouncil.title')"
                     :message="t('emergencyAccess.badge.notCouncil.message')"
+                    position="left"
                   />
                   <EmergencyProcessButton
                     v-if="getProcessByType(vault, 'COUNCIL_CHANGE')"
