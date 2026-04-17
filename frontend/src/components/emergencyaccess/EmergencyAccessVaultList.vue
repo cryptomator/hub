@@ -319,9 +319,7 @@ async function fetchData() {
       vaults.value = fetchedVaults.sort((a, b) => a.name.localeCompare(b.name));
 
       const processesByVaultId = R.groupBy(allProcesses, p => p.vaultId);
-      for (const vault of vaults.value) {
-        vaultRecoveryProcesses.value[vault.id] = processesByVaultId[vault.id] ?? [];
-      }
+      vaultRecoveryProcesses.value = R.pullObject(vaults.value, v => v.id, v => processesByVaultId[v.id] ?? []);
 
       const memberIdsOfAllRunningProcesses = Object.values(vaultRecoveryProcesses.value)
         .flat()
