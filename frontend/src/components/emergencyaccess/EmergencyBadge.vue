@@ -22,7 +22,7 @@
         <!-- Arrow -->
         <div
           class="absolute bottom-0 transform translate-y-1/2 rotate-45 w-2 h-2 border-r border-b"
-          :class="[arrowClasses, mobileArrowStyle ? '' : arrowPositionClasses]"
+          :class="[arrowClasses, arrowPositionClasses]"
           :style="mobileArrowStyle"
         ></div>
       </div>
@@ -133,9 +133,9 @@ const arrowClasses = computed(() => {
 const arrowPositionClasses = computed(() => {
   switch (props.position) {
     case 'left':
-      return 'left-2';
+      return 'left-2.5';
     case 'right':
-      return 'right-2';
+      return 'right-2.5';
     case 'center':
     default:
       return 'left-1/2 -translate-x-1/2';
