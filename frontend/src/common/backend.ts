@@ -690,6 +690,10 @@ class SettingsService {
 
 class EmergencyAccessService {
 
+  public async findAllProcesses(): Promise<RecoveryProcessDto[]> {
+    return axiosAuth.get<RecoveryProcessDto[]>('/emergency-access').then(response => response.data);
+  }
+
   public async findProcessesForVault(vaultId: string): Promise<RecoveryProcessDto[]> {
     return axiosAuth.get<RecoveryProcessDto[]>(`/emergency-access/${vaultId}`).then(response => response.data);
   }
