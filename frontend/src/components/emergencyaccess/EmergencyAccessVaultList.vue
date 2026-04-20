@@ -98,11 +98,10 @@
 
                 <div class="flex flex-wrap items-center gap-2 sm:justify-end" @click.stop>
                   <EmergencyBadge
-                    v-if="!isEmergencyKeyShareHolder(vault)"
-                    type="notCouncil"
-                    :title="t('emergencyAccess.badge.notCouncil.title')"
-                    :message="t('emergencyAccess.badge.notCouncil.message')"
-                    position="left"
+                    v-if="isBroken(vault)"
+                    type="broken"
+                    :title="t('emergencyAccess.badge.broken.title')"
+                    :message="t('emergencyAccess.badge.broken.message')"
                   />
 
                   <EmergencyBadge
@@ -159,6 +158,7 @@
                       type="notCouncil"
                       :title="t('emergencyAccess.badge.notCouncil.title')"
                       :message="t('emergencyAccess.badge.notCouncil.message')"
+                      position="left"
                     />
                     <EmergencyProcessButton
                       v-if="getProcessByType(vault, 'COUNCIL_CHANGE')"
