@@ -98,10 +98,11 @@
 
                 <div class="flex flex-wrap items-center gap-2 sm:justify-end" @click.stop>
                   <EmergencyBadge
-                    v-if="isBroken(vault)"
-                    type="broken"
-                    :title="t('emergencyAccess.badge.broken.title')"
-                    :message="t('emergencyAccess.badge.broken.message')"
+                    v-if="!isEmergencyKeyShareHolder(vault)"
+                    type="notCouncil"
+                    :title="t('emergencyAccess.badge.notCouncil.title')"
+                    :message="t('emergencyAccess.badge.notCouncil.message')"
+                    position="left"
                   />
 
                   <EmergencyBadge
@@ -431,7 +432,7 @@ function filterByStatus(vault: VaultDto): boolean {
       return processes.length > 0 && processes.some(p => !hasSubmittedEmergencyKeyShare(p));
     case 'startable': { // find vaults where at least one type of process has not yet been started
       const processTypes = processes.map(p => p.type);
-      return !SUPPORTED_PROCESS_TYPES.every(processTypes.includes);
+      return !SUPPORTED_PROCESS_TYPES.every(t => processTypes.includes(t));
     }
     case 'recoverableVaults': // all
     default:
