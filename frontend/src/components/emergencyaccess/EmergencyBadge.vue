@@ -2,17 +2,25 @@
   <div v-if="type !== 'none'" ref="badgeRef" class="relative mr-3 group/badge">
     <!-- Badge -->
     <span
-      class="inline-flex items-center gap-2 rounded-full px-2 py-2 text-xs font-medium cursor-default ring-1"
+      class="inline-flex items-center gap-2 rounded-full px-2 py-2 text-xs font-medium cursor-default ring-1 outline-none focus-visible:ring-2"
       :class="badgeClasses"
-      @click.stop="toggle"
+      role="button"
+      tabindex="0"
+      :aria-describedby="tooltipId"
+      @click.stop="handleClick"
+      @keydown.enter.prevent="toggle"
+      @keydown.space.prevent="toggle"
+      @keydown.esc="closeOnEscape"
     >
       <ExclamationTriangleIcon class="h-4 w-4" :class="iconColor" />
     </span>
 
     <!-- Tooltip -->
     <div
+      :id="tooltipId"
+      role="tooltip"
       class="transition-opacity duration-150 absolute -top-2 transform -translate-y-full w-max max-w-xs z-20"
-      :class="[positionClasses, isOpen ? 'visible opacity-100' : 'invisible opacity-0 group-hover/badge:visible group-hover/badge:opacity-100']"
+      :class="[positionClasses, isOpen ? 'visible opacity-100' : 'invisible opacity-0 group-hover/badge:visible group-hover/badge:opacity-100 group-focus-within/badge:visible group-focus-within/badge:opacity-100']"
       :style="mobileTooltipStyle"
     >
       <div class="px-2 py-1 rounded shadow-sm text-xs hyphens-auto border relative" :class="tooltipClasses">
@@ -31,8 +39,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, onUnmounted } from 'vue';
+import { computed, ref, onMounted, onUnmounted, useId } from 'vue';
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/solid';
+
+const props = defineProps<{
+  type: 'notCouncil' | 'broken' | 'noRedundancy' | 'insufficientCouncilMembers' | 'none';
+  title: string;
+  message: string;
+  position?: 'center' | 'left' | 'right';
+}>();
+
+const tooltipId = useId();
 
 const badgeRef = ref<HTMLElement | null>(null);
 const isOpen = ref(false);
@@ -92,9 +109,18 @@ function openTooltip() {
 }
 
 function toggle() {
-  if (!isTouchDevice.value) return;
   if (isOpen.value) closeTooltip();
   else openTooltip();
+}
+
+function handleClick() {
+  if (!isTouchDevice.value) return;
+  toggle();
+}
+
+function closeOnEscape() {
+  closeTooltip();
+  badgeRef.value?.blur();
 }
 
 function onDocumentClick(e: MouseEvent) {
@@ -116,13 +142,6 @@ onUnmounted(() => {
   window.removeEventListener('resize', closeTooltip);
   window.removeEventListener('scroll', closeTooltip, true);
 });
-
-const props = defineProps<{
-  type: 'notCouncil' | 'broken' | 'noRedundancy' | 'insufficientCouncilMembers' | 'none';
-  title: string;
-  message: string;
-  position?: 'center' | 'left' | 'right';
-}>();
 
 const positionClasses = computed(() => {
   switch (props.position) {
