@@ -61,12 +61,32 @@ function openTooltip() {
   const rect = badgeRef.value.getBoundingClientRect();
   const margin = 8;
   const maxWidth = Math.min(320, window.innerWidth - 2 * margin);
-  const overflowRight = rect.left + maxWidth - (window.innerWidth - margin);
-  const tooltipShift = overflowRight > 0 ? overflowRight : 0;
-  mobileTooltipStyle.value = { left: `-${tooltipShift}px`, maxWidth: `${maxWidth}px` };
-  // arrow: badge center relative to tooltip left edge, minus half arrow width (4px)
-  const badgeCenterRelative = rect.width / 2 + tooltipShift - 4;
-  mobileArrowStyle.value = { left: `${badgeCenterRelative}px`, right: 'auto' };
+  const arrowHalf = 4;
+  const position = props.position ?? 'center';
+
+  if (position === 'left') {
+    const overflowRight = rect.left + maxWidth - (window.innerWidth - margin);
+    const shift = overflowRight > 0 ? overflowRight : 0;
+    mobileTooltipStyle.value = { left: `-${shift}px`, maxWidth: `${maxWidth}px` };
+    mobileArrowStyle.value = { left: `${rect.width / 2 + shift - arrowHalf}px` };
+  } else if (position === 'right') {
+    const overflowLeft = margin - (rect.right - maxWidth);
+    const shift = overflowLeft > 0 ? overflowLeft : 0;
+    mobileTooltipStyle.value = { right: `-${shift}px`, maxWidth: `${maxWidth}px` };
+    mobileArrowStyle.value = { right: `${rect.width / 2 + shift - arrowHalf}px` };
+  } else {
+    const badgeCenter = rect.left + rect.width / 2;
+    const tooltipLeft = badgeCenter - maxWidth / 2;
+    const tooltipRight = badgeCenter + maxWidth / 2;
+    let shift = 0;
+    if (tooltipRight > window.innerWidth - margin) shift = window.innerWidth - margin - tooltipRight;
+    else if (tooltipLeft < margin) shift = margin - tooltipLeft;
+    const sign = shift >= 0 ? '+' : '-';
+    const abs = Math.abs(shift);
+    mobileTooltipStyle.value = { left: `calc(50% ${sign} ${abs}px)`, maxWidth: `${maxWidth}px` };
+    mobileArrowStyle.value = { left: `calc(50% ${shift >= 0 ? '-' : '+'} ${abs}px)` };
+  }
+
   window.addEventListener('resize', closeTooltip);
   window.addEventListener('scroll', closeTooltip, { passive: true, capture: true });
 }
