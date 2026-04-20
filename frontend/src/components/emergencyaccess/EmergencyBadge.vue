@@ -40,37 +40,62 @@ const mobileTooltipStyle = ref<Record<string, string>>({});
 const mobileArrowStyle = ref<Record<string, string>>({});
 const isTouchDevice = ref(false);
 
-onMounted(() => {
-  isTouchDevice.value = window.matchMedia('(hover: none)').matches;
-});
+let hoverMql: MediaQueryList | null = null;
+
+function onHoverChange(e: MediaQueryListEvent) {
+  isTouchDevice.value = e.matches;
+  if (!isTouchDevice.value) closeTooltip();
+}
+
+function closeTooltip() {
+  isOpen.value = false;
+  mobileTooltipStyle.value = {};
+  mobileArrowStyle.value = {};
+  window.removeEventListener('resize', closeTooltip);
+  window.removeEventListener('scroll', closeTooltip, true);
+}
+
+function openTooltip() {
+  if (!badgeRef.value) return;
+  isOpen.value = true;
+  const rect = badgeRef.value.getBoundingClientRect();
+  const margin = 8;
+  const maxWidth = Math.min(320, window.innerWidth - 2 * margin);
+  const overflowRight = rect.left + maxWidth - (window.innerWidth - margin);
+  const tooltipShift = overflowRight > 0 ? overflowRight : 0;
+  mobileTooltipStyle.value = { left: `-${tooltipShift}px`, maxWidth: `${maxWidth}px` };
+  // arrow: badge center relative to tooltip left edge, minus half arrow width (4px)
+  const badgeCenterRelative = rect.width / 2 + tooltipShift - 4;
+  mobileArrowStyle.value = { left: `${badgeCenterRelative}px`, right: 'auto' };
+  window.addEventListener('resize', closeTooltip);
+  window.addEventListener('scroll', closeTooltip, { passive: true, capture: true });
+}
 
 function toggle() {
   if (!isTouchDevice.value) return;
-  isOpen.value = !isOpen.value;
-  if (isOpen.value && badgeRef.value) {
-    const rect = badgeRef.value.getBoundingClientRect();
-    const margin = 8;
-    const maxWidth = Math.min(320, window.innerWidth - 2 * margin);
-    const overflowRight = rect.left + maxWidth - (window.innerWidth - margin);
-    const tooltipShift = overflowRight > 0 ? overflowRight : 0;
-    mobileTooltipStyle.value = { left: `-${tooltipShift}px`, maxWidth: `${maxWidth}px` };
-    // arrow: badge center relative to tooltip left edge, minus half arrow width (4px)
-    const badgeCenterRelative = rect.width / 2 + tooltipShift - 4;
-    mobileArrowStyle.value = { left: `${badgeCenterRelative}px`, right: 'auto' };
-  } else {
-    mobileTooltipStyle.value = {};
-    mobileArrowStyle.value = {};
-  }
+  if (isOpen.value) closeTooltip();
+  else openTooltip();
 }
 
 function onDocumentClick(e: MouseEvent) {
   if (badgeRef.value && !badgeRef.value.contains(e.target as Node)) {
-    isOpen.value = false;
+    closeTooltip();
   }
 }
 
-onMounted(() => document.addEventListener('click', onDocumentClick));
-onUnmounted(() => document.removeEventListener('click', onDocumentClick));
+onMounted(() => {
+  hoverMql = window.matchMedia('(hover: none)');
+  isTouchDevice.value = hoverMql.matches;
+  hoverMql.addEventListener('change', onHoverChange);
+  document.addEventListener('click', onDocumentClick);
+});
+
+onUnmounted(() => {
+  hoverMql?.removeEventListener('change', onHoverChange);
+  document.removeEventListener('click', onDocumentClick);
+  window.removeEventListener('resize', closeTooltip);
+  window.removeEventListener('scroll', closeTooltip, true);
+});
 
 const props = defineProps<{
   type: 'notCouncil' | 'broken' | 'noRedundancy' | 'insufficientCouncilMembers' | 'none';
