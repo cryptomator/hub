@@ -98,7 +98,7 @@
 
                 <div class="flex flex-wrap items-center gap-2 sm:justify-end" @click.stop>
                   <EmergencyBadge
-                    v-if="!isBroken(vault)"
+                    v-if="isBroken(vault)"
                     type="warning"
                     :title="t('emergencyAccess.badge.broken.title')"
                     :message="t('emergencyAccess.badge.broken.message')"
