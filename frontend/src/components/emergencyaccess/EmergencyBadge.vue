@@ -1,5 +1,5 @@
 <template>
-  <div class="badge-wrapper relative mr-3 inline-block" @click.stop.prevent>
+  <div class="badge-wrapper mr-3 inline-block" @click.stop.prevent>
     <span
       tabindex="0"
       class="inline-flex items-center gap-2 rounded-full px-2 py-2 text-xs font-medium cursor-default ring-1 outline-none focus-visible:ring-2"
@@ -18,10 +18,6 @@
     >
       <b>{{ title }}</b><br />
       <span>{{ message }}</span>
-      <div
-        class="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 rotate-45 w-2 h-2 border-r border-b"
-        :class="isError ? 'bg-red-50 border-red-300' : 'bg-yellow-50 border-yellow-300'"
-      ></div>
     </div>
   </div>
 </template>
@@ -43,15 +39,15 @@ const isError = computed(() => props.type === 'error');
 <style scoped>
 .tooltip-panel {
   position: fixed;
-  inset: auto;
   bottom: anchor(top);
-  margin: 0 0 0.5rem 0;
-  width: fit-content;
-  max-width: min(20rem, calc(100vw - 2rem));
   left: calc(anchor(center) - min(calc(anchor(center) - 1rem), calc(100vw - anchor(center) - 1rem), 10rem));
   right: calc(anchor(center) - min(calc(anchor(center) - 1rem), calc(100vw - anchor(center) - 1rem), 10rem));
   margin-inline: auto;
+  margin-block-end: 0.5rem;
+  width: fit-content;
+  min-width: 10rem;
   z-index: 20;
+  position-try-fallbacks: flip-block;
 
   visibility: hidden;
   opacity: 0;
