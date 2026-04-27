@@ -1,9 +1,9 @@
 <template>
-  <div v-if="type !== 'none'" class="relative mr-3 inline-block">
+  <div class="relative mr-3 inline-block">
     <button
       type="button"
       class="inline-flex items-center gap-2 rounded-full px-2 py-2 text-xs font-medium cursor-default ring-1 outline-none focus-visible:ring-2"
-      :class="badgeClasses"
+      :class="isError ? 'bg-red-100 ring-red-300/70 text-red-800' : 'bg-yellow-50 ring-yellow-300/70 text-yellow-800'"
       :style="{ anchorName: anchor }"
       :aria-label="title"
       @mouseenter="showIfHover"
@@ -12,22 +12,22 @@
       @blur="hideIfHover"
       @click.stop="toggleOnTouch"
     >
-      <ExclamationTriangleIcon class="h-4 w-4" :class="iconColor" />
+      <ExclamationTriangleIcon class="h-4 w-4" :class="isError ? 'text-red-600' : 'text-yellow-500'" />
     </button>
 
     <div
       ref="panel"
       popover="auto"
       class="popover-panel px-2 py-1 rounded shadow-sm border text-xs hyphens-auto relative"
-      :class="[tooltipClasses, positionAreaClass]"
+      :class="isError ? 'bg-red-50 border-red-300 text-red-900' : 'bg-yellow-50 border-yellow-300 text-yellow-900'"
       :style="{ positionAnchor: anchor }"
       @click.stop.prevent
     >
       <b>{{ title }}</b><br />
       <span>{{ message }}</span>
       <div
-        class="absolute bottom-0 translate-y-1/2 rotate-45 w-2 h-2 border-r border-b"
-        :class="[arrowClasses, arrowPositionClasses]"
+        class="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 rotate-45 w-2 h-2 border-r border-b"
+        :class="isError ? 'bg-red-50 border-red-300' : 'bg-yellow-50 border-yellow-300'"
       ></div>
     </div>
   </div>
@@ -38,14 +38,14 @@ import { computed, ref, useId } from 'vue';
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/solid';
 
 const props = defineProps<{
-  type: 'notCouncil' | 'broken' | 'noRedundancy' | 'insufficientCouncilMembers' | 'none';
+  type: 'warning' | 'error';
   title: string;
   message: string;
-  position?: 'center' | 'left' | 'right';
 }>();
 
 const anchor = `--ea-anchor-${useId()}`;
-const panel = ref<HTMLElement | null>(null);
+const panel = ref<HTMLElement | undefined>();
+const isError = computed(() => props.type === 'error');
 
 function isHoverDevice() {
   return window.matchMedia('(hover: hover) and (pointer: fine)').matches;
@@ -70,73 +70,6 @@ function toggleOnTouch() {
   if (p.matches(':popover-open')) p.hidePopover();
   else p.showPopover();
 }
-
-const positionAreaClass = computed(() => {
-  switch (props.position) {
-    case 'left':
-      return 'pos-left';
-    case 'right':
-      return 'pos-right';
-    case 'center':
-    default:
-      return 'pos-center';
-  }
-});
-
-const badgeClasses = computed(() => {
-  switch (props.type) {
-    case 'notCouncil':
-    case 'insufficientCouncilMembers':
-    case 'noRedundancy':
-      return 'bg-yellow-50 ring-yellow-300/70 text-yellow-800';
-    case 'broken':
-      return 'bg-red-100 ring-red-300/70 text-red-800';
-    default:
-      return '';
-  }
-});
-
-const tooltipClasses = computed(() => {
-  switch (props.type) {
-    case 'notCouncil':
-    case 'insufficientCouncilMembers':
-    case 'noRedundancy':
-      return 'bg-yellow-50 border-yellow-300 text-yellow-900';
-    case 'broken':
-      return 'bg-red-50 border-red-300 text-red-900';
-    default:
-      return '';
-  }
-});
-
-const arrowClasses = computed(() => {
-  switch (props.type) {
-    case 'notCouncil':
-    case 'insufficientCouncilMembers':
-    case 'noRedundancy':
-      return 'bg-yellow-50 border-yellow-300';
-    case 'broken':
-      return 'bg-red-50 border-red-300';
-    default:
-      return '';
-  }
-});
-
-const arrowPositionClasses = computed(() => {
-  switch (props.position) {
-    case 'left':
-      return 'left-3';
-    case 'right':
-      return 'right-3';
-    case 'center':
-    default:
-      return 'left-1/2 -translate-x-1/2';
-  }
-});
-
-const iconColor = computed(() => {
-  return props.type === 'broken' ? 'text-red-600' : 'text-yellow-500';
-});
 </script>
 
 <style scoped>
@@ -147,23 +80,8 @@ const iconColor = computed(() => {
   width: fit-content;
   max-width: min(20rem, calc(100vw - 2rem));
   overflow: visible;
-}
-
-.popover-panel.pos-center {
   left: calc(anchor(center) - min(calc(anchor(center) - 1rem), calc(100vw - anchor(center) - 1rem), 10rem));
   right: calc(anchor(center) - min(calc(anchor(center) - 1rem), calc(100vw - anchor(center) - 1rem), 10rem));
   margin-inline: auto;
-}
-
-.popover-panel.pos-left {
-  left: max(1.5rem, anchor(left));
-  right: 1rem;
-  margin-right: auto;
-}
-
-.popover-panel.pos-right {
-  left: 1rem;
-  right: max(1rem, anchor(right));
-  margin-left: auto;
 }
 </style>
