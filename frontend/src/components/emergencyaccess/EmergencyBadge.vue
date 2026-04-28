@@ -11,7 +11,7 @@
     </button>
 
     <div
-      class="tooltip-panel fixed mx-auto mb-2 w-fit min-w-40 z-20 px-2 py-1 rounded shadow-sm border text-xs hyphens-auto invisible opacity-0 transition-[opacity,visibility] duration-150 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100"
+      class="tooltip-panel fixed mb-2 z-20 px-2 py-1 rounded shadow-sm border text-xs hyphens-auto invisible opacity-0 transition-[opacity,visibility] duration-150 group-hover:visible group-hover:opacity-100 group-has-focus-visible:visible group-has-focus-visible:opacity-100 pointer-coarse:group-focus-within:visible pointer-coarse:group-focus-within:opacity-100"
       :class="isError ? 'bg-red-50 border-red-300 text-red-900' : 'bg-yellow-50 border-yellow-300 text-yellow-900'"
       :style="{ positionAnchor: anchor }"
       role="tooltip"
@@ -39,8 +39,8 @@ const isError = computed(() => props.type === 'error');
 <style scoped>
 .tooltip-panel {
   bottom: anchor(top);
-  left: calc(anchor(center) - min(calc(anchor(center) - 1rem), calc(100vw - anchor(center) - 1rem), 10rem));
-  right: calc(anchor(center) - min(calc(anchor(center) - 1rem), calc(100vw - anchor(center) - 1rem), 10rem));
+  left: max(1rem, calc(anchor(center) - 10rem));
+  right: max(1rem, calc(anchor(center) - 10rem));
   position-try-fallbacks: flip-block;
 }
 </style>
