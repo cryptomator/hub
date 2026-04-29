@@ -1,7 +1,8 @@
 package org.cryptomator.hub.metrics;
 
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.MeterRegistry;
+import io.opentelemetry.api.common.AttributeKey;
+import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.api.metrics.Meter;
 import io.quarkus.scheduler.Scheduled;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -21,9 +22,10 @@ public class SystemUsageMetrics {
 	private static final String VAULTS_TOTAL_METRIC = "hub_vaults_total";
 	private static final String ACTIVE_USERS_TOTAL_METRIC = "hub_active_users_total";
 	private static final String DEVICES_TOTAL_METRIC = "hub_devices_total";
+	private static final AttributeKey<String> DEVICE_TYPE_KEY = AttributeKey.stringKey("type");
 
 	@Inject
-	MeterRegistry meterRegistry;
+	Meter meter;
 
 	@Inject
 	Vault.Repository vaultRepo;
@@ -40,22 +42,28 @@ public class SystemUsageMetrics {
 
 	@PostConstruct
 	void registerMetrics() {
-		Gauge.builder(VAULTS_TOTAL_METRIC, vaultsTotal, AtomicLong::get)
-				.description("Number of vaults")
-				.register(meterRegistry);
-
-		Gauge.builder(ACTIVE_USERS_TOTAL_METRIC, activeUsersTotal, AtomicLong::get)
-				.description("Number of unique users with access to any non-archived vault")
-				.register(meterRegistry);
-
 		for (var deviceType : Device.Type.values()) {
-			var value = new AtomicLong(0);
-			devicesPerType.put(deviceType, value);
-			Gauge.builder(DEVICES_TOTAL_METRIC, value, AtomicLong::get)
-					.description("Number of devices grouped by type")
-					.tag("type", deviceType.name())
-					.register(meterRegistry);
+			devicesPerType.put(deviceType, new AtomicLong(0));
 		}
+
+		meter.gaugeBuilder(VAULTS_TOTAL_METRIC)
+				.ofLongs()
+				.setDescription("Number of vaults")
+				.buildWithCallback(measurement -> measurement.record(vaultsTotal.get()));
+
+		meter.gaugeBuilder(ACTIVE_USERS_TOTAL_METRIC)
+				.ofLongs()
+				.setDescription("Number of unique users with access to any non-archived vault")
+				.buildWithCallback(measurement -> measurement.record(activeUsersTotal.get()));
+
+		meter.gaugeBuilder(DEVICES_TOTAL_METRIC)
+				.ofLongs()
+				.setDescription("Number of devices grouped by type")
+				.buildWithCallback(measurement -> {
+					for (var entry : devicesPerType.entrySet()) {
+						measurement.record(entry.getValue().get(), Attributes.of(DEVICE_TYPE_KEY, entry.getKey().name()));
+					}
+				});
 	}
 
 	@Scheduled(every = "24h", delayed = "10s")

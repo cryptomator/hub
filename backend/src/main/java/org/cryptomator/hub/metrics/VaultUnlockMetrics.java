@@ -1,8 +1,7 @@
 package org.cryptomator.hub.metrics;
 
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.MeterRegistry;
+import io.opentelemetry.api.metrics.LongCounter;
+import io.opentelemetry.api.metrics.Meter;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -17,27 +16,29 @@ public class VaultUnlockMetrics {
 	private static final String LAST_FAILURE_METRIC = "hub_vault_unlock_last_failure_epoch_seconds";
 
 	@Inject
-	MeterRegistry meterRegistry;
+	Meter meter;
 
 	private final AtomicLong lastSuccessEpochSeconds = new AtomicLong(0);
 	private final AtomicLong lastFailureEpochSeconds = new AtomicLong(0);
-	private Counter unlockCounter;
+	private LongCounter unlockCounter;
 
 	@PostConstruct
-	void registerGauges() {
-		unlockCounter = Counter.builder(UNLOCKS_TOTAL_METRIC)
-				.description("Total number of vault unlock attempts")
-				.register(meterRegistry);
-		Gauge.builder(LAST_SUCCESS_METRIC, lastSuccessEpochSeconds, AtomicLong::get)
-				.description("Epoch timestamp in seconds of the last successful vault unlock")
-				.register(meterRegistry);
-		Gauge.builder(LAST_FAILURE_METRIC, lastFailureEpochSeconds, AtomicLong::get)
-				.description("Epoch timestamp in seconds of the last failed vault unlock")
-				.register(meterRegistry);
+	void registerInstruments() {
+		unlockCounter = meter.counterBuilder(UNLOCKS_TOTAL_METRIC)
+				.setDescription("Total number of vault unlock attempts")
+				.build();
+		meter.gaugeBuilder(LAST_SUCCESS_METRIC)
+				.ofLongs()
+				.setDescription("Epoch timestamp in seconds of the last successful vault unlock")
+				.buildWithCallback(measurement -> measurement.record(lastSuccessEpochSeconds.get()));
+		meter.gaugeBuilder(LAST_FAILURE_METRIC)
+				.ofLongs()
+				.setDescription("Epoch timestamp in seconds of the last failed vault unlock")
+				.buildWithCallback(measurement -> measurement.record(lastFailureEpochSeconds.get()));
 	}
 
 	public void recordUnlock() {
-		unlockCounter.increment();
+		unlockCounter.add(1);
 	}
 
 	public void recordSuccess() {
