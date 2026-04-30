@@ -38,17 +38,14 @@ hub:
     keycloakPublicUrl: ""
     keycloakLocalUrl: ""
   metrics:
-    # Hub ships metrics, traces and logs via OpenTelemetry / OTLP. When enabled,
-    # the deployment exports to `endpoint` (gRPC, port 4317 by default).
+    # Hub ships metrics, traces and logs via OpenTelemetry / OTLP.
     enabled: false
-    endpoint: "http://otel-collector:4317"
+    endpoint: "https://otel-collector:443"
+    protocol: "http/protobuf"
     # Extra resource attributes merged into the defaults (service.name, service.version).
     # Example: { deployment.environment: production, team: platform }
     resourceAttributes: {}
-    # Optional HTTP Basic auth credentials for the OTLP collector. When both are set,
-    # the chart creates a kubernetes.io/basic-auth Secret and the hub container picks
-    # up `Authorization: Basic <base64(username:password)>` via QUARKUS_OTEL_EXPORTER_OTLP_HEADERS.
-    otlp:
+    otlp: # Optional Basic Authentication for OTLP endpoint
       username: ""
       password: ""
   oidc:

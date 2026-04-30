@@ -47,7 +47,8 @@ The Keycloak realm import is rendered from a dedicated template using:
 Hub exports metrics, traces and logs via OpenTelemetry / OTLP. Telemetry is **off by default**; enable it via:
 
 - `hub.metrics.enabled` (default `false`)
-- `hub.metrics.endpoint` — OTLP/gRPC endpoint, default `http://otel-collector:4317`
+- `hub.metrics.endpoint` — OTLP endpoint, default `https://otel-collector:443`
+- `hub.metrics.protocol` — OTLP wire protocol: `http/protobuf` (default) or `grpc`
 - `hub.metrics.resourceAttributes` — extra OTel resource attributes merged into the chart defaults (`service.name`, `service.version`). Setting a key with the same name overrides the default.
 - `hub.metrics.otlp.username` / `hub.metrics.otlp.password` — Credentials used to add `QUARKUS_OTEL_EXPORTER_OTLP_HEADERS` header `Authorization: Basic <base64(user:pass)>`.
 
