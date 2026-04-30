@@ -29,7 +29,7 @@ helm install hub charts/cryptomator-hub \
   --wait --timeout 5m \
   --set urls.hub.public=http://localhost:9090/hub \
   --set urls.kc.public=http://localhost:9090/kc \
-  --set ingress.controller=contour \
+  --set ingress.controller=nginx \
   --set hub.admin.password=password
 ```
 
@@ -42,19 +42,16 @@ The Keycloak realm import is rendered from a dedicated template using:
 - `hub.secrets.systemClientSecret` (optional; auto-generated when chart-managed Hub secret is used)
 - `hub.admin.*` (realm-level Hub admin user; separate from `keycloak.admin.*` bootstrap user)
 
-## Metrics Endpoint
+## Telemetry (OpenTelemetry)
 
-Hub metrics are configured via:
+Hub exports metrics, traces and logs via OpenTelemetry / OTLP. Telemetry is **off by default**; enable it via:
 
-- `hub.metrics.enabled`
-- `hub.metrics.username`
-- `hub.metrics.password` (optional; auto-generated if unset)
+- `hub.metrics.enabled` (default `false`)
+- `hub.metrics.endpoint` — OTLP/gRPC endpoint, default `http://otel-collector:4317`
+- `hub.metrics.resourceAttributes` — extra OTel resource attributes merged into the chart defaults (`service.name`, `service.version`). Setting a key with the same name overrides the default.
+- `hub.metrics.otlp.username` / `hub.metrics.otlp.password` — Credentials used to add `QUARKUS_OTEL_EXPORTER_OTLP_HEADERS` header `Authorization: Basic <base64(user:pass)>`.
 
-When metrics are enabled, the chart creates:
-
-- Secret `<release>-secrets-hub-metrics` of type `kubernetes.io/basic-auth`
-- Metrics ingress route on Hub management endpoint path `/q/metrics`
-- Basic-auth protection for metrics ingress on `nginx` and `traefik` controllers
+When disabled, the chart sets `QUARKUS_OTEL_SDK_DISABLED=true` so the SDK does not start. When enabled, the chart sets `QUARKUS_OTEL_EXPORTER_OTLP_ENDPOINT` and Hub pushes to your collector — there is no `/q/metrics` scrape endpoint anymore. To bridge to Prometheus, run an OpenTelemetry Collector with `prometheus` or `prometheusremotewrite` exporter.
 
 ## Hub with External PostgreSQL and Keycloak
 
