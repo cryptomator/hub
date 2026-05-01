@@ -20,7 +20,7 @@ Supported ingress controller templates:
 
 ## Quick Start (Full Internal Stack)
 
-Assuming you have a local KIND cluster, e.g. via [Podman Desktop](https://podman-desktop.io/) with contour ingress on port 9090:
+Assuming you have a local Minikube cluster, e.g. via [Podman Desktop](https://podman-desktop.io/) with nginx ingress on port 9090:
 
 ```bash
 helm install hub charts/cryptomator-hub \
