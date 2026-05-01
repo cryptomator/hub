@@ -26,9 +26,7 @@
       >
         <img :src="user.pictureUrl" class="w-4 h-4 rounded-full" :class="{ 'opacity-60': !inputVisible }" alt="" />
         <span :class="{ 'opacity-60': !inputVisible }">{{ user.name }}</span>
-        <span
-          v-if="user.type === 'USER'" class="trust-details"
-        >
+        <span v-if="user.type === 'USER'" class="trust-details">
           <TrustDetails
             :trusted-user="user as UserDto"
             :trusts="trusts"

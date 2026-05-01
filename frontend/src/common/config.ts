@@ -37,6 +37,7 @@ export type ConfigDto = {
 };
 
 class ConfigWrapper {
+
   private data: ConfigDto;
   readonly serverTimeDiff: number;
 
@@ -62,6 +63,7 @@ class ConfigWrapper {
     this.data = await ConfigWrapper.loadConfig();
     return this.data;
   }
+
 }
 
 const config = await ConfigWrapper.build();

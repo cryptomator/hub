@@ -46,7 +46,7 @@
                         {{ t('grantEmergencyAccessDialog.description.default') }}
                       </p>
                     </div>
-                    <EmergencyAccessSetup ref="emergencyAccessSetup" :settings="settings" :required-key-shares="settings.defaultRequiredEmergencyKeyShares" :allow-choosing-council="settings.allowChoosingEmergencyCouncil"/>
+                    <EmergencyAccessSetup ref="emergencyAccessSetup" :settings="settings" :required-key-shares="settings.defaultRequiredEmergencyKeyShares" :allow-choosing-council="settings.allowChoosingEmergencyCouncil" />
                   </div>
                 </div>
 

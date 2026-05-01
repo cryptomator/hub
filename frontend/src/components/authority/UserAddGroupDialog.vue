@@ -89,9 +89,9 @@ async function searchGroup(query: string): Promise<GroupDto[]> {
 
     return results
       .filter((r): r is GroupDto =>
-        r.type === 'GROUP' &&
-        !isKnown(r.id) &&
-        !newGroups.value.some(n => n.id === r.id)
+        r.type === 'GROUP'
+        && !isKnown(r.id)
+        && !newGroups.value.some(n => n.id === r.id)
       )
       .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }))
       .map(g => ({

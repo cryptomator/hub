@@ -1,6 +1,7 @@
 import { dictionary } from './4096words_en';
 
 export class UTF8 {
+
   private static readonly encoder = new TextEncoder();
   private static readonly decoder = new TextDecoder('utf-8', { fatal: true });
 
@@ -23,9 +24,11 @@ export class UTF8 {
   public static decode(data: AllowSharedBufferSource, options?: TextDecodeOptions): string {
     return UTF8.decoder.decode(data, options);
   }
+
 }
 
 export class DB {
+
   private static readonly NAME = 'hub';
 
   public static async transaction<T>(objectStore: string, mode: IDBTransactionMode, query: (transaction: IDBTransaction) => IDBRequest<T>): Promise<T> {
@@ -44,9 +47,11 @@ export class DB {
       db.close();
     });
   }
+
 }
 
 export class Deferred<T> {
+
   public promise: Promise<T>;
   public reject: (reason?: unknown) => void;
   public resolve: (value: T) => void;
@@ -60,7 +65,9 @@ export class Deferred<T> {
       this.resolve = (t) => { this.status = 'resolved'; resolve(t); };
     });
   }
+
 }
+
 /**
  * Creates a cancellable debounced function that delays invoking the provided function until at least `wait` milliseconds have elapsed since the last time it was invoked.
  * Sources: https://decipher.dev/30-seconds-of-typescript/docs/debounce/ and https://wiki.selfhtml.org/wiki/JavaScript/Tutorials/Debounce_und_Throttle
@@ -84,6 +91,7 @@ export function debounce<F extends (...args: any[]) => any>(func: F, wait = 300)
 
 // based on https://stackoverflow.com/a/18639903/4014509
 export class CRC32 {
+
   static readonly TABLE = new Uint32Array(256);
 
   static {
@@ -103,9 +111,11 @@ export class CRC32 {
     }
     return (crc ^ -1) >>> 0;
   }
+
 }
 
 class WordEncoder {
+
   static readonly WORD_COUNT = 4096;
   static readonly DELIMITER = ' ';
 
@@ -162,6 +172,7 @@ class WordEncoder {
     }
     return result;
   }
+
 }
 
 export const wordEncoder = new WordEncoder(dictionary);

@@ -25,6 +25,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.EmergencyRecoveryProcess;
 import org.cryptomator.hub.entities.RecoveredEmergencyKeyShares;
+import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.entities.events.EventLogger;
 import org.cryptomator.hub.util.RawJson;
 import org.cryptomator.hub.validation.ValidJWE;
@@ -46,6 +47,9 @@ public class EmergencyAccessResource {
 
 	@Inject
 	RecoveredEmergencyKeyShares.Repository recoveredKeySharesRepo;
+
+	@Inject
+	Vault.Repository vaultRepo;
 
 	@Inject
 	JsonWebToken jwt;
@@ -162,6 +166,17 @@ public class EmergencyAccessResource {
 
 		recoverProcessRepo.delete(process);
 		return Response.noContent().build();
+	}
+
+	@GET
+	@RolesAllowed("user")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Operation(summary = "finds all recovery processes for vaults recoverable by the current user")
+	@APIResponse(responseCode = "200")
+	@Transactional
+	public List<RecoveryProcessDto> findAllForRecoverableVaults() {
+		var currentUser = jwt.getSubject();
+		return recoverProcessRepo.findByCouncilMemberOrProcessMember(currentUser).map(RecoveryProcessDto::fromEntity).toList();
 	}
 
 	@GET

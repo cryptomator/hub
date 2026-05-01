@@ -50,34 +50,34 @@
     <div class="hidden lg:grid grid-cols-1 lg:grid-cols-2 gap-6 items-start pt-3">
       <section class="lg:col-start-1 grid gap-6">
         <!-- User Info -->
-        <UserInfo :user="user"/>
+        <UserInfo :user="user" />
         <!-- Devices -->
-        <UserDeviceList :devices="user.devices" :title="t('user.detail.devices')"/>      
-        <UserDeviceList :devices="user.legacyDevices" :visible="user.legacyDevices.length != 0" :title="t('legacyDeviceList.title')" :info="t('user.detail.legacyDeviceList.info')"/>
+        <UserDeviceList :devices="user.devices" :title="t('user.detail.devices')" />      
+        <UserDeviceList :devices="user.legacyDevices" :visible="user.legacyDevices.length != 0" :title="t('legacyDeviceList.title')" :info="t('user.detail.legacyDeviceList.info')" />
       </section>
       <section class="lg:col-start-2 grid gap-6">
         <!-- Groups -->
-        <UserGroupsList :user="user" :user-id="props.id" :groups="user.groups" @on-saved="handleGroupsSaved"/>
+        <UserGroupsList :user="user" :user-id="props.id" :groups="user.groups" @on-saved="handleGroupsSaved" />
         <!-- Vaults -->
-        <VaultList :vaults="user.accessibleVaults" :visible="true"/>
+        <VaultList :vaults="user.accessibleVaults" :visible="true" />
       </section>
     </div>
     <div class="grid lg:hidden grid-cols-1 gap-6 items-start pt-3">
       <!-- User Info -->
-      <UserInfo :user="user"/>
+      <UserInfo :user="user" />
       <!-- Groups -->
-      <UserGroupsList :user="user" :user-id="props.id" :groups="user.groups" @on-saved="handleGroupsSaved"/>
+      <UserGroupsList :user="user" :user-id="props.id" :groups="user.groups" @on-saved="handleGroupsSaved" />
       <!-- Devices -->
-      <UserDeviceList :devices="user.devices" :title="t('user.detail.devices')"/>
-      <UserDeviceList :devices="user.legacyDevices" :visible="user.legacyDevices.length != 0" :title="t('legacyDeviceList.title')" :info="t('user.detail.legacyDeviceList.info')"/>
+      <UserDeviceList :devices="user.devices" :title="t('user.detail.devices')" />
+      <UserDeviceList :devices="user.legacyDevices" :visible="user.legacyDevices.length != 0" :title="t('legacyDeviceList.title')" :info="t('user.detail.legacyDeviceList.info')" />
       <!-- Vaults -->
-      <VaultList :vaults="user.accessibleVaults" :visible="true"/>
+      <VaultList :vaults="user.accessibleVaults" :visible="true" />
     </div>
   </div>
 
   <!-- Dialogs -->
-  <UserDisableDialog v-if="disablingUser" ref="disableUserDialog" :user="disablingUser" @close="disablingUser = undefined" @disable="onUserDisabled"/>
-  <UserDeleteDialog v-if="deletingUser" ref="deleteUserDialog" :user="deletingUser" @close="deletingUser = undefined" @delete="onUserDeleted"/>
+  <UserDisableDialog v-if="disablingUser" ref="disableUserDialog" :user="disablingUser" @close="disablingUser = undefined" @disable="onUserDisabled" />
+  <UserDeleteDialog v-if="deletingUser" ref="deleteUserDialog" :user="deletingUser" @close="deletingUser = undefined" @delete="onUserDeleted" />
 </template>
 
 <script setup lang="ts">

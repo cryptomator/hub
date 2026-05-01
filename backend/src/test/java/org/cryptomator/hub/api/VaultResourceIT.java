@@ -400,7 +400,7 @@ public class VaultResourceIT {
 
 		@Test
 		@Order(2)
-		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100003333 returns 200, updating only name, description and archive flag")
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100003333 returns 200, updating only name and description (archived flag ignored)")
 		void testUpdateVault() {
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100003333");
 			var vaultDto = new VaultResource.VaultDto(uuid, "VaultUpdated", Instant.parse("2222-11-11T11:11:11Z"), "Vault updated.", true, 0, Map.of(), "doNotUpdate", 27, "doNotUpdate", "doNotUpdate", "doNotUpdate");
@@ -411,7 +411,7 @@ public class VaultResourceIT {
 					.body("id", equalToIgnoringCase("7E57C0DE-0000-4000-8000-000100003333"))
 					.body("name", equalTo("VaultUpdated"))
 					.body("description", equalTo("Vault updated."))
-					.body("archived", equalTo(true))
+					.body("archived", equalTo(false))
 					.body("creationTime", not("2222-11-11T11:11:11Z"));
 		}
 

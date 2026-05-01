@@ -12,6 +12,11 @@ urls:
 notes:
   useColor: true
 
+secrets:
+  # When true, all chart-managed Secrets are annotated `helm.sh/resource-policy: keep` so they survive `helm uninstall`.
+  # Convenient for development (passwords stay stable across reinstalls) but a security risk in production
+  keepOnUninstall: false
+
 ingress:
   # supported: nginx, traefik, contour
   controller: ""
@@ -29,10 +34,9 @@ hub:
     managementPort: 9000
   resources:
     requests:
-      cpu: 10m
+      cpu: 50m
       memory: 16Mi
     limits:
-      cpu: 500m
       memory: 256Mi
   config:
     keycloakRealm: cryptomator
@@ -40,9 +44,16 @@ hub:
     keycloakPublicUrl: ""
     keycloakLocalUrl: ""
   metrics:
-    enabled: true
-    username: metrics
-    password: ""
+    # Hub ships metrics, traces and logs via OpenTelemetry / OTLP.
+    enabled: false
+    endpoint: "https://otel-collector:443"
+    protocol: "http/protobuf"
+    # Extra resource attributes merged into the defaults (service.name, service.version).
+    # Example: { deployment.environment: production, team: platform }
+    resourceAttributes: {}
+    otlp: # Optional Basic Authentication for OTLP endpoint
+      username: ""
+      password: ""
   oidc:
     clientId: cryptomatorhub
   database:
@@ -75,10 +86,9 @@ keycloak:
     managementPort: 9000
   resources:
     requests:
-      cpu: 20m
+      cpu: 200m
       memory: 128Mi
     limits:
-      cpu: 1000m
       memory: 640Mi
   admin:
     username: admin
@@ -105,10 +115,9 @@ postgres:
     accessMode: ReadWriteOnce
   resources:
     requests:
-      cpu: 10m
+      cpu: 200m
       memory: 32Mi
     limits:
-      cpu: 1000m
       memory: 256Mi
   auth:
     adminUsername: postgres

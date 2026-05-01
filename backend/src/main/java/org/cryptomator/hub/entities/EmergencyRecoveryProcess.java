@@ -35,6 +35,20 @@ import java.util.stream.Stream;
 		WHERE KEY(process.recoveredKeyShares) = :councilMemberId
 		"""
 )
+@NamedQuery(
+		name = "EmergencyRecoveryProcess.byCouncilMemberOrProcessMember", query = """
+		SELECT p
+		FROM EmergencyRecoveryProcess p
+		WHERE KEY(p.recoveredKeyShares) = :councilMemberId
+
+		UNION
+
+		SELECT p
+		FROM EmergencyRecoveryProcess p
+		INNER JOIN Vault v ON v.id = p.vaultId
+		WHERE KEY(v.emergencyKeyShares) = :councilMemberId
+		"""
+)
 public class EmergencyRecoveryProcess {
 
 	public enum Type {
@@ -144,6 +158,10 @@ public class EmergencyRecoveryProcess {
 
 		public Stream<EmergencyRecoveryProcess> findByCouncilMember(String councilMemberId) {
 			return find("#EmergencyRecoveryProcess.byCouncilMember", Parameters.with("councilMemberId", councilMemberId)).stream();
+		}
+
+		public Stream<EmergencyRecoveryProcess> findByCouncilMemberOrProcessMember(String councilMemberId) {
+			return find("#EmergencyRecoveryProcess.byCouncilMemberOrProcessMember", Parameters.with("councilMemberId", councilMemberId)).stream();
 		}
 
 		public void deleteKeySharesForCouncilMember(String councilMemberId) {

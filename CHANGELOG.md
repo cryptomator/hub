@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased](https://github.com/cryptomator/hub/compare/1.5.2...HEAD)
+
+### Fixed
+- Check seat limit before unarchiving a vault, ensuring smooth operations without unexpectedly exceeding license limits (#431)
+- Creating user with sole role `create-vault` was unable to login due to missing role `user`
+- Fix disabling users via user and group management
+
+### Changed
+- Migrated from Micrometer to OpenTelemetry
+- Updated Keycloak to 26.5.7
+- Update Quarkus to 3.27.3 LTS
+
+
 ## [1.5.0-beta2](https://github.com/cryptomator/hub/compare/1.5.0-beta1...1.5.0-beta2)
 
 ### Added

@@ -12,7 +12,7 @@
     <!-- Searchbar + Createbutton -->
     <div class="flex flex-wrap sm:flex-nowrap justify-between items-center gap-3 mb-4">
       <label for="userSearch" class="sr-only">{{ t('common.search.placeholder') }}</label>
-      <input id="userSearch" v-model="query" type="text" :placeholder="t('common.search.placeholder')" class="flex-1 focus:ring-primary focus:border-primary shadow-xs text-sm border-gray-300 rounded-md"/>
+      <input id="userSearch" v-model="query" type="text" :placeholder="t('common.search.placeholder')" class="flex-1 focus:ring-primary focus:border-primary shadow-xs text-sm border-gray-300 rounded-md" />
       <button type="button" class="bg-primary text-white text-sm font-medium px-4 py-2 rounded-md shadow-xs hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showCreateUser()">{{ t('userList.create.button') }}</button>
     </div>
     
@@ -80,7 +80,7 @@
                 <tr>
                   <td class="pr-8 pl-6 py-4 text-sm font-medium text-gray-900">
                     <div class="flex items-center gap-3 max-w-sm">
-                      <img :src="user.pictureUrl" :alt="t('userList.profileImage')" class="w-10 h-10 rounded-full object-cover border border-gray-300"/>
+                      <img :src="user.pictureUrl" :alt="t('userList.profileImage')" class="w-10 h-10 rounded-full object-cover border border-gray-300" />
                       <div class="flex flex-col min-w-0 flex-1">
                         <div class="flex items-center gap-2">
                           <button type="button" class="truncate block hover:underline cursor-pointer text-left" :title="user.name" @click="router.push(`users/${user.id}`)">{{ user.name }}</button>
@@ -154,7 +154,7 @@
   </div>
 
   <!-- Delete Dialog -->
-  <UserDeleteDialog v-if="deletingUser" ref="deleteUserDialog" :user="deletingUser" @close="deletingUser = undefined" @delete="onUserDeleted"/>
+  <UserDeleteDialog v-if="deletingUser" ref="deleteUserDialog" :user="deletingUser" @close="deletingUser = undefined" @delete="onUserDeleted" />
 </template>
 
 <script setup lang="ts">

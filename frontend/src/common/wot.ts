@@ -7,7 +7,7 @@ import userdata from './userdata';
 export type SignedKeys = {
   ecdhPublicKey: string;
   ecdsaPublicKey: string;
-}
+};
 
 function deeplyEqual(a: SignedKeys, b: SignedKeys) {
   return a.ecdhPublicKey === b.ecdhPublicKey

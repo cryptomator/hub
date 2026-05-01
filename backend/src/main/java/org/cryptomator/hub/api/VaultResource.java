@@ -501,7 +501,7 @@ public class VaultResource {
 	@GET
 	@Path("/{vaultId}")
 	@RolesAllowed("user")
-	@VaultRole(value = {VaultAccess.Role.MEMBER, VaultAccess.Role.OWNER}, bypassForRealmRole = true, onMissingVault = VaultRole.OnMissingVault.NOT_FOUND)
+	@VaultRole(value = {VaultAccess.Role.MEMBER, VaultAccess.Role.OWNER}, bypassForRealmRole = { RealmRole.ADMIN }, onMissingVault = @VaultRole.OnMissingVault(VaultRole.OnMissingVault.Action.NOT_FOUND))
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
 	@Operation(summary = "gets a vault")
@@ -515,16 +515,31 @@ public class VaultResource {
 	@PUT
 	@Path("/{vaultId}/archived")
 	@RolesAllowed("user")
-	@VaultRole(value = VaultAccess.Role.OWNER, bypassForRealmRole = true, onMissingVault = VaultRole.OnMissingVault.NOT_FOUND)
+	@VaultRole(value = VaultAccess.Role.OWNER, bypassForRealmRole = { RealmRole.ADMIN }, onMissingVault = @VaultRole.OnMissingVault(VaultRole.OnMissingVault.Action.NOT_FOUND))
 	@Consumes(MediaType.TEXT_PLAIN)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
 	@Operation(summary = "sets the archived flag of a vault")
 	@APIResponse(responseCode = "200", description = "archived flag updated")
+	@APIResponse(responseCode = "402", description = "number of licensed seats would be exceeded after unarchiving")
 	@APIResponse(responseCode = "403", description = "requesting user is neither a vault owner nor has the admin role")
 	@APIResponse(responseCode = "404", description = "vault not found")
 	public VaultDto setArchived(@PathParam("vaultId") UUID vaultId, @NotNull Boolean archived) {
 		Vault vault = vaultRepo.findByIdOptional(vaultId).orElseThrow(NotFoundException::new);
+		if (vault.isArchived() && !archived) {
+			// resolve group members and simulate new seat count:
+			var authorityIds = vaultAccessRepo.forVault(vaultId)
+					.map(va -> va.getId().authorityId())
+					.collect(Collectors.toSet());
+			var effectiveUsers = new HashSet<User>();
+			effectiveUsers.addAll(userRepo.getEffectiveGroupUsers(authorityIds));
+			effectiveUsers.addAll(userRepo.findByIds(authorityIds).toList());
+			var projectedSeatUsers = new HashSet<>(effectiveVaultAccessRepo.usersSeatedOnOtherVaults(vaultId).toList());
+			projectedSeatUsers.addAll(effectiveUsers.stream().map(User::getId).toList());
+			if (projectedSeatUsers.size() > license.getEntitlements().seats()) {
+				throw new PaymentRequiredException("Number of effective vault users exceeds available license seats");
+			}
+		}
 		vault.setArchived(archived);
 		vaultRepo.persistAndFlush(vault);
 		eventLogger.logVaultUpdated(jwt.getSubject(), vault.getId(), vault.getName(), vault.getDescription(), vault.isArchived());
@@ -534,12 +549,12 @@ public class VaultResource {
 	@PUT
 	@Path("/{vaultId}")
 	@RolesAllowed("user") // general authentication. VaultRole filter will check for specific access rights
-	@VaultRole(value = VaultAccess.Role.OWNER, onMissingVault = VaultRole.OnMissingVault.REQUIRE_REALM_ROLE, realmRole = RealmRole.CREATE_VAULTS, bypassForEmergencyAccess = true)
+	@VaultRole(value = VaultAccess.Role.OWNER, onMissingVault = @VaultRole.OnMissingVault(value = VaultRole.OnMissingVault.Action.REQUIRE_REALM_ROLE, realmRole = RealmRole.CREATE_VAULTS), bypassForEmergencyAccess = true)
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Transactional
 	@Operation(summary = "creates or updates a vault",
-			description = "Creates or updates a vault with the given vault id. The creationTime in the vaultDto is always ignored. On creation, the current server time is used and the archived field is ignored. On update, only the name, description, and archived fields are considered.")
+			description = "Creates or updates a vault with the given vault id. The creationTime in the vaultDto is always ignored. The archived field is always ignored (use the dedicated endpoint). On creation, the current server time is used. On update, only the name and description fields are considered.")
 	@APIResponse(responseCode = "200", description = "existing vault updated")
 	@APIResponse(responseCode = "201", description = "new vault created")
 	@APIResponse(responseCode = "402", description = "number of licensed seats is exceeded")
@@ -564,7 +579,6 @@ public class VaultResource {
 		// set regardless of whether vault is new or existing:
 		vault.setName(vaultDto.name);
 		vault.setDescription(vaultDto.description);
-		vault.setArchived(existingVault.isEmpty() ? false : vaultDto.archived);
 		var oldEmergencyKeyShares = vault.getEmergencyKeyShares().values();
 		vault.setRequiredEmergencyKeyShares(vaultDto.requiredEmergencyKeyShares);
 		vault.setEmergencyKeyShares(vaultDto.emergencyKeyShares);

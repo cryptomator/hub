@@ -33,4 +33,14 @@ data:
   QUARKUS_MANAGEMENT_HOST: "0.0.0.0"
   QUARKUS_MANAGEMENT_PORT: "9000"
   QUARKUS_SMALLRYE_HEALTH_MANAGEMENT_ENABLED: "true"
-  QUARKUS_MICROMETER_EXPORT_PROMETHEUS_ENABLED: {{ .Values.hub.metrics.enabled | quote }}
+  {{- if .Values.hub.metrics.enabled }}
+  QUARKUS_OTEL_EXPORTER_OTLP_ENDPOINT: {{ .Values.hub.metrics.endpoint | required "hub.metrics.endpoint must be set when hub.metrics.enabled=true" | quote }}
+  QUARKUS_OTEL_EXPORTER_OTLP_PROTOCOL: {{ .Values.hub.metrics.protocol | required "hub.metrics.protocol must be set when hub.metrics.enabled=true" | quote }}
+  {{- $attrs := dict "service.name" (include "cryptomator-hub.fullname" .) "service.version" .Chart.AppVersion -}}
+  {{- range $k, $v := .Values.hub.metrics.resourceAttributes }}{{- $_ := set $attrs $k $v }}{{- end }}
+  {{- $pairs := list }}
+  {{- range $k := keys $attrs | sortAlpha }}{{- $pairs = append $pairs (printf "%s=%v" $k (index $attrs $k)) }}{{- end }}
+  QUARKUS_OTEL_RESOURCE_ATTRIBUTES: {{ join "," $pairs | quote }}
+  {{- else }}
+  QUARKUS_OTEL_SDK_DISABLED: "true"
+  {{- end }}

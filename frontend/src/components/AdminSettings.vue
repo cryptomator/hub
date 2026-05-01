@@ -4,7 +4,7 @@
       {{ t('common.loading') }}
     </div>
     <div v-else>
-      <FetchError :error="onFetchError" :retry="fetchData"/>
+      <FetchError :error="onFetchError" :retry="fetchData" />
     </div>
   </div>
 
@@ -29,7 +29,7 @@
         <p class="mt-1 text-sm text-gray-500 w-full">
           {{ t('admin.serverInfo.description') }}
         </p>
-        <hr class="my-4 pb-6 border-gray-200"/>
+        <hr class="my-4 pb-6 border-gray-200" />
         <form class="space-y-6 md:gap-6" novalidate>
           <div class="md:grid md:grid-cols-3 md:gap-6">
             <label for="hubId" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.serverInfo.hubId.title') }}</label>
@@ -91,7 +91,7 @@
         <p class="mt-1 text-sm text-gray-500 w-full">
           {{ t('admin.licenseInfo.description') }}
         </p>
-        <hr class="my-4 pb-6 border-gray-200"/>
+        <hr class="my-4 pb-6 border-gray-200" />
         <form class="space-y-6 md:gap-6" novalidate>
           <div class="md:grid md:grid-cols-3 md:gap-6">
             <label for="email" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">{{ t('admin.licenseInfo.email.title') }}</label>
@@ -160,14 +160,14 @@
         <p class="mt-1 text-sm text-gray-500 w-full">
           {{ t('admin.webOfTrust.description') }}
         </p>
-        <hr class="my-4 pb-6 border-gray-200"/>
+        <hr class="my-4 pb-6 border-gray-200" />
         <form ref="form" class="space-y-6 md:gap-6" novalidate @submit.prevent="saveWebOfTrust()">
           <div class="md:grid md:grid-cols-3 md:gap-6">
             <label for="wotMaxDepth" class="block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
               {{ t('admin.webOfTrust.wotMaxDepth.title') }}
             </label>
             <div class="mt-1 md:mt-0 relative md:col-span-2 lg:col-span-1">
-              <input id="wotMaxDepth" v-model="wotMaxDepth" type="number" min="0" max="9" step="1" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': wotMaxDepthError instanceof WotFormValidationFailedError }"/>
+              <input id="wotMaxDepth" v-model="wotMaxDepth" type="number" min="0" max="9" step="1" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': wotMaxDepthError instanceof WotFormValidationFailedError }" />
               <div v-if="wotMaxDepthError" class="absolute left-1/2 -translate-x-1/2 -top-2 transform translate-y-full w-5/6">
                 <div class="bg-red-50 border border-red-300 text-red-900 px-2 py-1 rounded shadow-sm text-sm hyphens-auto">
                   {{ t('admin.webOfTrust.wotMaxDepth.error') }}
@@ -189,7 +189,7 @@
               {{ t('admin.webOfTrust.wotIdVerifyLen.title') }}
             </label>
             <div class="mt-1 md:mt-0 relative md:col-span-2 lg:col-span-1">
-              <input id="wotIdVerifyLen" v-model="wotIdVerifyLen" type="number" min="0" max="9" step="1" class="focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': wotIdVerifyLenError instanceof WotFormValidationFailedError }"/>
+              <input id="wotIdVerifyLen" v-model="wotIdVerifyLen" type="number" min="0" max="9" step="1" class="focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': wotIdVerifyLenError instanceof WotFormValidationFailedError }" />
               <div v-if="wotIdVerifyLenError" class="absolute left-1/2 -translate-x-1/2 -top-2 transform translate-y-full w-5/6">
                 <div class="bg-red-50 border border-red-300 text-red-900 px-2 py-1 rounded shadow-sm text-sm hyphens-auto">
                   {{ t('admin.webOfTrust.wotIdVerifyLen.error') }}
@@ -227,7 +227,7 @@
         </form>
       </section>
 
-      <AdminSettingsEmergencyAccess/>
+      <AdminSettingsEmergencyAccess />
     </div>
   </div>
 </template>
@@ -374,16 +374,16 @@ const wotIdVerifyLenError = ref<Error>();
 const onSaveError = ref<Error>();
 
 class WotFormValidationFailedError extends Error {
+
   constructor() {
     super('The form is invalid.');
   }
+
 }
 
 const wotHasUnsavedChanges = computed(() => {
-  return (
-    initialWebOfTrustSettings.value.wotMaxDepth !== wotMaxDepth.value ||
-    initialWebOfTrustSettings.value.wotIdVerifyLen !== wotIdVerifyLen.value
-  );
+  return initialWebOfTrustSettings.value.wotMaxDepth !== wotMaxDepth.value
+    || initialWebOfTrustSettings.value.wotIdVerifyLen !== wotIdVerifyLen.value;
 });
 
 async function saveWebOfTrust() {
