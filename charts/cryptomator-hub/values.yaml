@@ -27,10 +27,9 @@ hub:
     managementPort: 9000
   resources:
     requests:
-      cpu: 10m
+      cpu: 50m
       memory: 16Mi
     limits:
-      cpu: 500m
       memory: 256Mi
   config:
     keycloakRealm: cryptomator
@@ -80,10 +79,9 @@ keycloak:
     managementPort: 9000
   resources:
     requests:
-      cpu: 20m
+      cpu: 200m
       memory: 128Mi
     limits:
-      cpu: 1000m
       memory: 640Mi
   admin:
     username: admin
@@ -110,10 +108,9 @@ postgres:
     accessMode: ReadWriteOnce
   resources:
     requests:
-      cpu: 10m
+      cpu: 200m
       memory: 32Mi
     limits:
-      cpu: 1000m
       memory: 256Mi
   auth:
     adminUsername: postgres
