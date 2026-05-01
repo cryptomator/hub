@@ -10,6 +10,11 @@ urls:
 notes:
   useColor: true
 
+secrets:
+  # When true, all chart-managed Secrets are annotated `helm.sh/resource-policy: keep` so they survive `helm uninstall`.
+  # Convenient for development (passwords stay stable across reinstalls) but a security risk in production
+  keepOnUninstall: false
+
 ingress:
   # supported: nginx, traefik, contour
   controller: ""

@@ -46,7 +46,7 @@ Ingress is disabled. Configure ingress manually to the services above.
 
 {{ if .Values.hub.metrics.enabled }}
 {{ printf "%s📈 Telemetry%s" $cSection $cReset }}
-- Exporting OTLP/gRPC to `{{ .Values.hub.metrics.endpoint }}` (metrics, traces, logs).
+- Exporting to `{{ .Values.hub.metrics.endpoint }}` (metrics, traces, logs).
 {{ end }}
 
 {{ if not .Values.keycloak.enabled }}
