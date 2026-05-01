@@ -2,6 +2,7 @@ package org.cryptomator.hub.license;
 
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import io.quarkus.scheduler.Scheduled;
 import io.smallrye.common.annotation.RunOnVirtualThread;
 import jakarta.annotation.PostConstruct;
@@ -97,6 +98,7 @@ public class LicenseHolder {
 	 * @throws JWTVerificationException if the license is invalid
 	 */
 	@Transactional
+	@WithSpan("LicenseHolder.ensureLicenseExists")
 	DecodedJWT ensureLicenseExists() throws JWTVerificationException, WebApplicationException {
 		var settings = settingsRepo.get();
 		if (settings.getLicenseKey() != null && settings.getHubId() != null) {
@@ -136,6 +138,7 @@ public class LicenseHolder {
 	}
 
 	@Transactional(Transactional.TxType.MANDATORY)
+	@WithSpan("LicenseHolder.requestAnonTrialLicense")
 	DecodedJWT requestAnonTrialLicense(Settings settings) throws WebApplicationException {
 		LOG.info("No license found. Requesting trial license...");
 		var solution = solveChallenge();

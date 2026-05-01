@@ -1,5 +1,6 @@
 package org.cryptomator.hub.keycloak;
 
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -61,6 +62,7 @@ public class KeycloakAdminService {
 		this.realm = keycloak.realm(keycloakRealm);
 	}
 
+	@WithSpan("KeycloakAdminService.createUser")
 	public UserRepresentation createUser(String username, String email, String firstName, String lastName, String password, String pictureUrl, Set<String> groupIds) {
 		UserRepresentation user = new UserRepresentation();
 		user.setUsername(username);
@@ -199,6 +201,7 @@ public class KeycloakAdminService {
 
 	// TODO deduplicate with KeycloakAuthorityPuller
 	@Transactional
+	@WithSpan("KeycloakAdminService.syncUser")
 	public User syncUser(String userId) {
 		UserResource userResource = realm.users().get(userId);
 		UserRepresentation keycloakUser = userResource.toRepresentation();
@@ -230,6 +233,7 @@ public class KeycloakAdminService {
 
 	// TODO deduplicate with KeycloakAuthorityPuller
 	@Transactional
+	@WithSpan("KeycloakAdminService.syncGroup")
 	public Group syncGroup(String groupId) {
 		GroupResource groupResource = realm.groups().group(groupId);
 		GroupRepresentation keycloakGroup = groupResource.toRepresentation();
@@ -285,6 +289,7 @@ public class KeycloakAdminService {
 	}
 
 	@Transactional
+	@WithSpan("KeycloakAdminService.updateUserRoles")
 	public void updateUserRoles(String userId, Set<RealmRole> roles) {
 		// remove roles that are not in the provided set:
 		var rolesToRemove = EnumSet.allOf(RealmRole.class);
