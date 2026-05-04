@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.7](https://github.com/cryptomator/hub/compare/1.4.6...1.4.7)
+
+### Fixed
+
+- Update dependencies, primarily Quarkus, to version 3.20.6.1 to address the authentication and authorisation bypass vulnerability (CVE-2026-39852).
+
 ## [1.4.6](https://github.com/cryptomator/hub/compare/1.4.5...1.4.6)
 
 ### Changed
