@@ -17,6 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated Keycloak to 26.5.7
 - Update Quarkus to 3.27.3 LTS
 
+## [1.5.0-beta3](https://github.com/cryptomator/hub/compare/1.5.0-beta2...1.5.0-beta3)
+
+### Fixed
+
+- Update Quarkus to 3.27.3.1 to address the authentication and authorisation bypass vulnerability (CVE-2026-39852)
 
 ## [1.5.0-beta2](https://github.com/cryptomator/hub/compare/1.5.0-beta1...1.5.0-beta2)
 
@@ -56,6 +61,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Hide Archive/Reactivate Vault actions for admins without ownership rights (#379)
+
+## [1.4.7](https://github.com/cryptomator/hub/compare/1.4.6...1.4.7)
+
+### Fixed
+
+- Update dependencies, primarily Quarkus, to version 3.20.6.1 to address the authentication and authorisation bypass vulnerability (CVE-2026-39852).
 
 ## [1.4.6](https://github.com/cryptomator/hub/compare/1.4.5...1.4.6)
 
