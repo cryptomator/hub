@@ -11,6 +11,8 @@ hub:
     username: admin
     password: admin
     passwordTemporary: true
+  license:
+    apiUrl: "https://api.staging.cryptomator.org/licenses"
 
 keycloak:
   enabled: true

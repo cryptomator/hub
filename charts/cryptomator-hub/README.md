@@ -6,10 +6,10 @@ This chart deploys:
 - Keycloak (optional, enabled by default)
 - PostgreSQL (optional, enabled by default)
 
-Image repositories/tags are fixed in templates:
-- Hub: `ghcr.io/cryptomator/hub:<appVersion from Chart.yaml>`
-- Keycloak: `ghcr.io/cryptomator/keycloak:26.5.3`
-- PostgreSQL: `postgres:17-alpine`
+Image repositories are fixed in templates; tags are overridable per workload:
+- Hub: `ghcr.io/cryptomator/hub:<hub.image.tag>` (defaults to chart `appVersion`)
+- Keycloak: `ghcr.io/cryptomator/keycloak:<keycloak.image.tag>` (default `26.5.3`)
+- PostgreSQL: `postgres:<postgres.image.tag>` (default `17-alpine`)
 
 TLS termination is currently expected to be done by ingress controller.
 Supported ingress controller templates:

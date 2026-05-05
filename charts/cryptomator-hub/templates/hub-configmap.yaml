@@ -20,6 +20,12 @@ data:
   HUB_MANAGED_API_USERNAME: {{ .Values.hub.license.managedApi.username | quote }}
   HUB_MANAGED_API_PASSWORD: {{ .Values.hub.license.managedApi.password | quote }}
   {{- end }}
+  {{- if .Values.hub.license.apiUrl }}
+  QUARKUS_REST_CLIENT_LICENSE_API_URL: {{ .Values.hub.license.apiUrl | quote }}
+  {{- end }}
+  {{- if .Values.urls.billing.public }}
+  HUB_BILLING_URL: {{ .Values.urls.billing.public | quote }}
+  {{- end }}
   QUARKUS_OIDC_AUTH_SERVER_URL: {{ include "cryptomator-hub.oidcAuthServerUrl" . | quote }}
   QUARKUS_OIDC_TOKEN_ISSUER: {{ include "cryptomator-hub.oidcTokenIssuer" . | quote }}
   QUARKUS_OIDC_CLIENT_ID: {{ .Values.hub.oidc.clientId | quote }}

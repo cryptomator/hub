@@ -26,6 +26,8 @@ ingress:
 
 hub:
   imagePullPolicy: IfNotPresent
+  image:
+    tag: "" # defaults to chart appVersion
   service:
     type: ClusterIP
     port: 8080
@@ -78,6 +80,8 @@ hub:
 keycloak:
   enabled: true
   imagePullPolicy: IfNotPresent
+  image:
+    tag: ""
   service:
     type: ClusterIP
     httpPort: 8080
@@ -104,6 +108,8 @@ keycloak:
 postgres:
   enabled: true
   imagePullPolicy: IfNotPresent
+  image:
+    tag: ""
   service:
     type: ClusterIP
     port: 5432

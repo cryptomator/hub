@@ -76,7 +76,7 @@ spec:
               done
       containers:
         - name: hub
-          image: "ghcr.io/cryptomator/hub:{{ .Chart.AppVersion }}"
+          image: "ghcr.io/cryptomator/hub:{{ .Values.hub.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.hub.imagePullPolicy }}
           ports:
             - name: http
