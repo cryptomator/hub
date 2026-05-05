@@ -18,11 +18,11 @@ on:
     inputs:
       version:
         description: 'Chart Version'
-        required: false
+        required: true
         type: string
       appVersion:
         description: 'App Version'
-        required: false
+        required: true
         type: string
 
 defaults:
@@ -48,7 +48,7 @@ jobs:
   publish:
     name: Publish Helm Chart
     needs: lint
-    if: github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call' || contains(github.event.head_commit.message, '[build chart]')
+    if: inputs.version && inputs.appVersion || contains(github.event.head_commit.message, '[build chart]')
     runs-on: ubuntu-latest
     permissions:
       contents: read # Required for checkout
@@ -70,26 +70,16 @@ jobs:
         id: version
         run: |
           set -euo pipefail
-          publish_version="${{ inputs.version }}"
-          publish_app_version="${{ inputs.appVersion }}"
-
-          if [[ -z "$publish_app_version" ]]; then
-            if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
-              publish_app_version="${GITHUB_REF_NAME#v}"
-            else
-              publish_app_version="${GITHUB_SHA::7}"
-            fi
+          if [[ -n "${{ inputs.appVersion }}" ]]; then
+            # Inputs are required for workflow_dispatch and workflow_call, so use them as-is.
+            publish_app_version="${{ inputs.appVersion }}"
+            publish_version="${{ inputs.version }}"
+          else
+            # Triggered by `[build chart]` push (branch-only via `branches: ["**"]`); derive from commit SHA.
+            # SemVer pre-release sorts below any real release; `-` (not `+`) keeps the tag OCI-compatible.
+            publish_app_version="${GITHUB_SHA::7}"
+            publish_version="0.0.0-${GITHUB_SHA::7}"
           fi
-
-          if [[ -z "$publish_version" ]]; then
-            if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
-              publish_version="${GITHUB_REF_NAME#v}"
-            else
-              # SemVer pre-release: sorts below any real release. `-` (not `+`) for OCI-tag compatibility.
-              publish_version="0.0.0-${GITHUB_SHA::7}"
-            fi
-          fi
-
           echo "publish_version=${publish_version}" >> "$GITHUB_OUTPUT"
           echo "publish_app_version=${publish_app_version}" >> "$GITHUB_OUTPUT"
 
