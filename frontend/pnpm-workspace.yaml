@@ -1,9 +1,7 @@
 # pnpm workspace configuration.
-# explicit allowlist of dependencies whose lifecycle
-# scripts (preinstall/install/postinstall) may run during `pnpm install`.
-# only entries set to `true` here are permitted.
-# Entries set to `false` record an intentional review decision
-# and silence a warning for that package.
+# explicit allowlist of dependencies running scripts on install.
+# only entries set to `true` here are permitted. Entries set to `false`
+# record an intentional review decision and silence a warning for that package.
 allowBuilds:
   # esbuild's postinstall downloads the platform-specific native binary used
   # by Vite (build/dev server) and Vitest (test transformer). Two versions
@@ -13,3 +11,8 @@ allowBuilds:
 
 # fail if any not allow-listed dependency executes a build script
 strictDepBuilds: true
+
+# refuse to install package versions younger than 3 days (=4320minutes).
+# exemptions go through `minimumReleaseAgeExclude`
+# with justification in the PR.
+minimumReleaseAge: 4320

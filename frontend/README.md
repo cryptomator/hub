@@ -19,6 +19,14 @@ Do not use `npm` or `yarn` — they bypass the security gates configured in
 `pnpm-workspace.yaml` (lifecycle script allowlist, install cooldown,
 non-registry source blocking).
 
+### Install Cooldown
+
+When adding a brand-new dependency or upgrading to a freshly published
+version, pnpm will resolve to the most recent version older than the
+3 days. If the very latest version is required (e.g. a
+critical security fix), add the package to `minimumReleaseAgeExclude` in
+`pnpm-workspace.yaml`.
+
 ## Dev Mode
 
 You can run your application in dev mode that enables live coding using:
