@@ -21,20 +21,23 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+      - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+        with:
+          package_json_file: frontend/package.json
       - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-      - name: NPM install
+          cache: 'pnpm'
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - name: pnpm install
         working-directory: frontend
-        run: npm ci --ignore-scripts
+        run: pnpm install --frozen-lockfile
       - name: Build and test frontend
         working-directory: frontend
-        run: npm run test:coverage
+        run: pnpm run test:coverage
       - name: Deploy frontend
         working-directory: frontend
-        run: npm run dist
+        run: pnpm run dist
       - name: SonarCloud Scan Frontend
         uses: SonarSource/sonarqube-scan-action@299e4b793aaa83bf2aba7c9c14bedbb485688ec4 # v7.1.0
         with:
@@ -96,17 +99,20 @@ jobs:
       packages: write # Required for pushing the image to GHCR
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+        with:
+          package_json_file: frontend/package.json
       - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-      - name: NPM install
+          cache: 'pnpm'
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - name: pnpm install
         working-directory: frontend
-        run: npm ci --ignore-scripts
+        run: pnpm install --frozen-lockfile
       - name: Deploy frontend
         working-directory: frontend
-        run: npm run dist
+        run: pnpm run dist
       - name: Ensure to use tagged version
         working-directory: backend
         run: ./mvnw versions:set --file pom.xml -DnewVersion=${GITHUB_REF##*/}
