@@ -1,0 +1,15 @@
+# pnpm workspace configuration.
+# explicit allowlist of dependencies whose lifecycle
+# scripts (preinstall/install/postinstall) may run during `pnpm install`.
+# only entries set to `true` here are permitted.
+# Entries set to `false` record an intentional review decision
+# and silence a warning for that package.
+allowBuilds:
+  # esbuild's postinstall downloads the platform-specific native binary used
+  # by Vite (build/dev server) and Vitest (test transformer). Two versions
+  # are present transitively: 0.25.12 via @intlify/unplugin-vue-i18n, 0.27.7
+  # via vite/vitest. Publisher @evanw is the project maintainer.
+  esbuild: true
+
+# fail if any not allow-listed dependency executes a build script
+strictDepBuilds: true
