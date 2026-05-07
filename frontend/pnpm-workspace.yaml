@@ -16,3 +16,9 @@ strictDepBuilds: true
 # exemptions go through `minimumReleaseAgeExclude`
 # with justification in the PR.
 minimumReleaseAge: 4320
+
+# refuse any *transitive* dependency resolved from a non-registry source
+# (git, tarball, github:, file:, link:, workspace:). Direct dependencies in
+# package.json may still use those protocols when intentional, but a
+# sub-dependency cannot smuggle one in.
+blockExoticSubdeps: true
