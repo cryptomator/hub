@@ -19,6 +19,21 @@ updates:
       - dependency-name: "io.quarkus:*"
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
 
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 3
+    groups:
+      minor-and-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
   - package-ecosystem: "github-actions"
     directory: "/" # even for `.github/workflows`
     schedule:

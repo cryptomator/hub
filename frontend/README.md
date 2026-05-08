@@ -27,6 +27,13 @@ version, pnpm will resolve to the most recent version older than the
 critical security fix), add the package to `minimumReleaseAgeExclude` in
 `pnpm-workspace.yaml`.
 
+### Dependency Upgrades
+
+Don't run `pnpm up --latest` on the default branch. Routine bumps land
+through Dependabot (monthly grouped minor/patch PRs, configured in
+`.github/dependabot.yml`). For an out-of-cycle upgrade, open a PR with
+explicit version pins in `package.json` so the change is reviewable.
+
 ## Dev Mode
 
 You can run your application in dev mode that enables live coding using:
