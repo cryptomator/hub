@@ -10,6 +10,8 @@ const commonRules = {
     '@typescript-eslint/no-explicit-any': 'warn',
     '@typescript-eslint/no-unsafe-function-type': 'warn',
     '@typescript-eslint/no-unused-vars': 'off', // is checked by noUnusedLocals in tsconfig.json // or use ['error', { 'ignoreRestSiblings': true }]
+    '@typescript-eslint/no-redeclare': ['error'],
+    'no-redeclare': 'off', // typescript allows (limited) function overloads, so we need to turn off this rule and use the typescript version instead (@typescript-eslint/no-redeclare)
     'no-unused-vars': 'off', // is checked by noUnusedLocals in tsconfig.json
     'no-undef': 'off', // types checked by typescript already
     'complexity': ['warn', { max: 10 }],
