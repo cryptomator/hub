@@ -2,6 +2,24 @@
 
 This project uses Vue 3 + Typescript + Vite.
 
+## Dev Mode
+
+You can run your application in dev mode that enables live coding using:
+
+```shell script
+pnpm install
+pnpm dev
+```
+
+## Production Build
+
+To build an optimized (production) version of the app, run:
+
+```shell script
+pnpm install
+pnpm dist
+```
+
 ## Recommended IDE Setup
 
 - [VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=johnsoncodehk.volar)
@@ -33,21 +51,3 @@ Don't run `pnpm up --latest` on the default branch. Routine bumps land
 through Dependabot (monthly grouped minor/patch PRs, configured in
 `.github/dependabot.yml`). For an out-of-cycle upgrade, open a PR with
 explicit version pins in `package.json` so the change is reviewable.
-
-## Dev Mode
-
-You can run your application in dev mode that enables live coding using:
-
-```shell script
-pnpm install
-pnpm dev
-```
-
-## Production Build
-
-To build an optimized (production) version of the app, run:
-
-```shell script
-pnpm install
-pnpm dist
-```
