@@ -477,17 +477,17 @@ async function initialize() {
   if (props.recover) {
     state.value = State.EnterRecoveryKey;
   } else {
+    settings.value = await backend.settings.get();
     switch (vaultType.value) {
       case VaultType.VaultFormat8:
         vaultFormat8.value = await VaultFormat8.create();
         recoveryKeyStr.value = await vaultFormat8.value.createRecoveryKey();
         break;
       case VaultType.UniversalVaultFormat:
-        uvfVault.value = await UniversalVaultFormat.create({ enabled: false, maxWotDepth: 0 });
+        uvfVault.value = await UniversalVaultFormat.create({ enabled: false, maxWotDepth: settings.value.wotMaxDepth });
         recoveryKeyStr.value = await uvfVault.value.recoveryKey.createRecoveryKey();
         break;
     }
-    settings.value = await backend.settings.get();
     state.value = State.EnterVaultDetails;
   }
   licenseStatus.value = await backend.license.getUserInfo();
