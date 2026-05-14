@@ -87,7 +87,7 @@ public class SettingsResource {
 	}
 
 	public record SettingsDto(@JsonProperty("hubId") String hubId,
-							  @JsonProperty("wotMaxDepth") @Min(-1) @Max(9) int wotMaxDepth,
+							  @JsonProperty("wotMaxDepth") @Min(0) @Max(9) int wotMaxDepth,
 							  @JsonProperty("wotIdVerifyLen") @Min(0) int wotIdVerifyLen,
 							  @JsonProperty("enableEmergencyAccess") boolean enableEmergencyAccess,
 							  @JsonProperty("defaultRequiredEmergencyKeyShares") @Min(0) int defaultRequiredEmergencyKeyShares,
