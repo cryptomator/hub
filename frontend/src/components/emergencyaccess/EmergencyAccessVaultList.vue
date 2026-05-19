@@ -104,7 +104,7 @@
                     :message="t('emergencyAccess.badge.broken.message')"
                   />
                   <EmergencyBadge
-                    v-if="settings && settings.defaultMinMembers > emergencyAccessMembers(vault).length"
+                    v-else-if="settings && settings.defaultMinMembers > emergencyAccessMembers(vault).length"
                     type="warning"
                     :title="t('emergencyAccess.badge.insufficientCouncilMembers.title')"
                     :message="t('emergencyAccess.badge.insufficientCouncilMembers.message', [settings.defaultMinMembers])"
