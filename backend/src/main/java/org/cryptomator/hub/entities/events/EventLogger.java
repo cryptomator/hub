@@ -133,6 +133,16 @@ public class EventLogger {
 		auditEventRepository.persist(event);
 	}
 
+	public void logAutoGrantSettingUpdated(String updatedBy, boolean enabled, int trustThreshold, boolean allowOverride) {
+		var event = new SettingAutoGrantUpdateEvent();
+		event.setTimestamp(Instant.now());
+		event.setUpdatedBy(updatedBy);
+		event.setEnabled(enabled);
+		event.setTrustThreshold(trustThreshold);
+		event.setAllowOverride(allowOverride);
+		auditEventRepository.persist(event);
+	}
+
 	public void logWotIdSigned(String userId, String signerId, String signerKey, String signature) {
 		var event = new SignedWotIdEvent();
 		event.setTimestamp(Instant.now());

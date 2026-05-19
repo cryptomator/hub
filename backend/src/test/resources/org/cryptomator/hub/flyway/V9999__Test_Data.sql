@@ -8,7 +8,10 @@ SET "hub_id" = '42',
 	"default_required_emergency_key_shares" = 2,
     "default_min_members" = 3,
 	"allow_choosing_emergency_council" = FALSE,
-    "enable_emergency_access" = FALSE
+    "enable_emergency_access" = FALSE,
+	"enable_automatic_access_grant" = FALSE,
+	"automatic_access_grant_trust_threshold" = 0,
+	"allow_automatic_access_grant_override" = FALSE
 WHERE "id" = 0;
 
 INSERT INTO "authority" ("id", "type", "name")

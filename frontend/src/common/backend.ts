@@ -190,7 +190,10 @@ export type SettingsDto = {
   defaultMinMembers: number,
   allowChoosingEmergencyCouncil: boolean,
   emergencyCouncilMemberIds: string[],
-  enableEmergencyAccess: boolean
+  enableEmergencyAccess: boolean,
+  enableAutomaticAccessGrant: boolean,
+  automaticAccessGrantTrustThreshold: number,
+  allowAutomaticAccessGrantOverride: boolean
 };
 
 export type RecoveryProcessSetNewOwner = {
