@@ -82,6 +82,11 @@ export type AccessGrant = {
   token: string
 };
 
+/**
+ * Map from vault id to the user ids on that vault who do not yet have a per-user access token.
+ */
+export type PendingAccessGrants = Record<string, string[]>;
+
 export type UserDto = {
   type: 'USER';
   id: string;
@@ -368,6 +373,19 @@ class VaultService {
   public async getUsersRequiringAccessGrant(vaultId: string, addFallbackPictures: boolean = true): Promise<UserDto[]> {
     const users = await axiosAuth.get<UserDto[]>(`/vaults/${vaultId}/users-requiring-access-grant`).then(response => response.data).catch(err => rethrowAndConvertIfExpected(err, 403));
     return addFallbackPictures ? users.map(fillInMissingPicture) : users;
+  }
+
+  /**
+   * Long-polling endpoint used by the automatic access grant flow. Returns pending grants as a map from vault id to
+   * the user ids on that vault whose access tokens are missing (limited to vaults the caller is a member of). Blocks
+   * up to `waitSeconds` if there are no pending grants at call time; returns an empty map on timeout. Best effort —
+   * clients should poll on a coarse cadence too.
+   */
+  public async listPendingAccessGrants(waitSeconds = 25): Promise<PendingAccessGrants> {
+    return axiosAuth.get<PendingAccessGrants>('/vaults/users-requiring-access-grant', {
+      params: { wait: waitSeconds },
+      timeout: (waitSeconds + 10) * 1000
+    }).then(response => response.data);
   }
 
   public async setArchived(vaultId: string, archived: boolean): Promise<VaultDto> {

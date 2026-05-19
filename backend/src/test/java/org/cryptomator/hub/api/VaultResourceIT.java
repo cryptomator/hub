@@ -269,6 +269,29 @@ public class VaultResourceIT {
 			Mockito.verify(vaultUnlockMetrics).recordSuccess();
 		}
 
+		@Test
+		@DisplayName("GET /vaults/users-requiring-access-grant?wait=0 returns 200 with user999 pending on vault2 (group-based access, ecdh key set)")
+		void testGetUsersRequiringAccessGrant() {
+			// user999 was added to group2 (owner of vault2) by @BeforeEach setupTestData, has a valid ecdh key but no
+			// access token yet, so they are the one pending grant visible to user1 (vault2 member via group1).
+			// user998 also has effective access via group2 but has no ecdh key and must therefore not appear.
+			// vault1 has no pending grants since both members already have tokens; the archived vault is excluded.
+			given().queryParam("wait", 0)
+					.when().get("/vaults/users-requiring-access-grant")
+					.then().statusCode(200)
+					.body("size()", is(1))
+					.body("'7e57c0de-0000-4000-8000-000100002222'", hasItems("user999"))
+					.body("'7e57c0de-0000-4000-8000-000100002222'", not(hasItems("user998")));
+		}
+
+		@Test
+		@DisplayName("GET /vaults/users-requiring-access-grant?wait=-1 returns 400 (validation)")
+		void testGetUsersRequiringAccessGrantNegativeWait() {
+			given().queryParam("wait", -1)
+					.when().get("/vaults/users-requiring-access-grant")
+					.then().statusCode(400);
+		}
+
 		@Nested
 		@DisplayName("legacy unlock")
 		@TestSecurity(user = "User Name 1", roles = {"user"})

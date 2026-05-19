@@ -3,12 +3,14 @@ package org.cryptomator.hub.keycloak;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
 import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import org.cryptomator.hub.entities.Authority;
 import org.cryptomator.hub.entities.EffectiveGroupMembership;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
+import org.cryptomator.hub.events.VaultAccessChanged;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -29,6 +31,8 @@ public class KeycloakAuthorityPuller {
 	KeycloakAuthorityProvider remoteUserProvider;
 	@Inject
 	EffectiveGroupMembership.Repository effectiveGroupMembershipRepo;
+	@Inject
+	Event<VaultAccessChanged> vaultAccessChangedEvent;
 
 	@Scheduled(every = "{hub.keycloak.syncer-period}")
 	@WithSpan("KeycloakAuthorityPuller.sync")
@@ -67,6 +71,11 @@ public class KeycloakAuthorityPuller {
 		var addedGroups = syncAddedGroups(keycloakGroups, databaseGroups, allAuthorities);
 		var deletedGroupIds = syncDeletedGroups(keycloakGroups, databaseGroups);
 		syncUpdatedGroups(keycloakGroups, databaseGroups, deletedGroupIds, allAuthorities);
+
+		// Coarse: fire once at the end of a successful sync. Observers (e.g. the automatic access grant long-poller) will
+		// re-query the database to determine what actually changed. Group-membership updates inside syncUpdatedUsers /
+		// syncUpdatedGroups are not tracked individually, so firing unconditionally keeps the broadcaster correct.
+		vaultAccessChangedEvent.fire(new VaultAccessChanged());
 	}
 
 	//visible for testing

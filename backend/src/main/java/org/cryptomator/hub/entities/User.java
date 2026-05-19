@@ -19,6 +19,7 @@ import org.hibernate.annotations.Type;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -36,6 +37,18 @@ import java.util.stream.Stream;
 					LEFT JOIN u.accessTokens token ON token.id.vaultId = :vaultId AND token.id.userId = u.id
 					WHERE perm.id.vaultId = :vaultId AND token.vault IS NULL AND u.ecdhPublicKey IS NOT NULL AND u.enabled
 				""")
+@NamedQuery(name = "User.requiringAccessGrantByVault",
+		query = """
+				SELECT DISTINCT v.id, u.id
+				FROM User u
+					INNER JOIN EffectiveVaultAccess perm ON u.id = perm.id.authorityId
+					INNER JOIN Vault v ON v.id = perm.id.vaultId
+					INNER JOIN EffectiveVaultAccess eva ON eva.id.vaultId = perm.id.vaultId
+					LEFT JOIN u.accessTokens token ON token.id.vaultId = v.id AND token.id.userId = u.id
+					WHERE v.archived = false AND eva.id.authorityId = :currentUser
+						AND token.vault IS NULL AND u.ecdhPublicKey IS NOT NULL AND u.enabled
+				""",
+		resultClass = User.VaultIdUserIdPair.class)
 @NamedQuery(name = "User.getEffectiveGroupUsers", query = """
 				SELECT DISTINCT u
 				FROM User u
@@ -282,8 +295,27 @@ public class User extends Authority {
 			return Batch.of(200).run(ids, 0L, (batch, result) -> result + delete("id IN :ids", Parameters.with("ids", batch)));
 		}
 
-		public Stream<User> findRequiringAccessGrant(UUID vaultId) {
+		/**
+		 * @param vaultId ID of a vault
+		 * @return ids of vault members who have no access token for the given vault yet
+		 * @see #findUsersRequiringAccessToken(String)
+		 */
+		public Stream<User> findUsersRequiringAccessTokenForVault(UUID vaultId) {
 			return find("#User.requiringAccessGrant", Parameters.with("vaultId", vaultId)).stream();
+		}
+
+		/**
+		 * @param currentUserId ID of the currently logged-in user
+		 * @return ids of vault members who have no access token yet, grouped by vault id
+		 * @see #findUsersRequiringAccessTokenForVault(UUID)
+		 */
+		public Map<UUID, Set<String>> findUsersRequiringAccessToken(String currentUserId) {
+			return getEntityManager().createNamedQuery("User.requiringAccessGrantByVault", VaultIdUserIdPair.class)
+					.setParameter("currentUser", currentUserId)
+					.getResultStream()
+					.collect(Collectors.groupingBy(
+							row -> row.vaultId,
+							Collectors.mapping(row -> row.userId, Collectors.toSet())));
 		}
 
 		public long countEffectiveGroupUsers(String groupdId) {
@@ -303,4 +335,6 @@ public class User extends Authority {
 		}
 
 	}
+
+	public record VaultIdUserIdPair(UUID vaultId, String userId) {}
 }

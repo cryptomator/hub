@@ -5,10 +5,13 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.security.identity.SecurityIdentity;
+import io.smallrye.common.annotation.RunOnVirtualThread;
 import io.vertx.core.http.HttpServerRequest;
 import jakarta.annotation.Nullable;
 import jakarta.annotation.security.RolesAllowed;
+import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 import jakarta.persistence.NoResultException;
 import jakarta.transaction.Transactional;
@@ -45,6 +48,8 @@ import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.entities.VaultAccess;
 import org.cryptomator.hub.entities.events.EventLogger;
 import org.cryptomator.hub.entities.events.VaultKeyRetrievedEvent;
+import org.cryptomator.hub.events.VaultAccessChangeBroadcaster;
+import org.cryptomator.hub.events.VaultAccessChanged;
 import org.cryptomator.hub.filters.ActiveLicense;
 import org.cryptomator.hub.filters.VaultRole;
 import org.cryptomator.hub.keycloak.RealmRole;
@@ -63,6 +68,7 @@ import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 
 import java.net.URI;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
@@ -121,6 +127,12 @@ public class VaultResource {
 	@Inject
 	VaultUnlockMetrics vaultUnlockMetrics;
 
+	@Inject
+	VaultAccessChangeBroadcaster vaultAccessChangeBroadcaster;
+
+	@Inject
+	Event<VaultAccessChanged> vaultAccessChangedEvent;
+
 	@Context
 	HttpServerRequest request;
 
@@ -172,6 +184,35 @@ public class VaultResource {
 	@Operation(summary = "list all vaults", description = "list all vaults in the system")
 	public List<VaultDto> getAllVaults() {
 		return vaultRepo.findAll().stream().map(VaultDto::fromEntity).toList();
+	}
+
+	@GET
+	@Path("/users-requiring-access-grant")
+	@RolesAllowed("user")
+	@RunOnVirtualThread
+	@Produces(MediaType.APPLICATION_JSON)
+	@Operation(summary = "list users who are missing an access token, grouped by vault",
+			description = """
+					Long-polling endpoint for the automatic access grant flow. Returns immediately if any vault accessible
+					to the caller has members without a per-user access token; otherwise blocks up to `wait` seconds and
+					returns either the next snapshot (if anything changes) or an empty list (on timeout). Best effort —
+					events emitted in flight on other backend instances will not wake this call; clients are expected to
+					poll on a coarse cadence as a backstop.""")
+	@APIResponse(responseCode = "200")
+	public Map<UUID, Set<String>> getUsersRequiringAccessGrant(@QueryParam("wait") @DefaultValue("25") @Min(0) int wait) throws InterruptedException {
+		var callerId = jwt.getSubject();
+		try (var ticket = vaultAccessChangeBroadcaster.subscribe()) {
+			var initial = queryPendingAccessGrants(callerId);
+			if (!initial.isEmpty()) {
+				return initial;
+			}
+			ticket.awaitChange(Duration.ofSeconds(wait));
+			return queryPendingAccessGrants(callerId);
+		}
+	}
+
+	private Map<UUID, Set<String>> queryPendingAccessGrants(String currentUserId) {
+		return QuarkusTransaction.requiringNew().call(() -> userRepo.findUsersRequiringAccessToken(currentUserId));
 	}
 
 	@GET
@@ -252,6 +293,9 @@ public class VaultResource {
 		vaultAccessRepo.persist(addedMembers);
 		vaultAccessRepo.persist(updatedMembers);
 
+		if (!addedMembers.isEmpty()) {
+			vaultAccessChangedEvent.fire(new VaultAccessChanged());
+		}
 		return Response.noContent().build();
 	}
 
@@ -324,6 +368,7 @@ public class VaultResource {
 			access.setRole(role);
 			vaultAccessRepo.persist(access);
 			eventLogger.logVaultMemberAdded(jwt.getSubject(), vault.getId(), authority.getId(), role);
+			vaultAccessChangedEvent.fire(new VaultAccessChanged());
 			return Response.created(URI.create(".")).build();
 		}
 	}
@@ -355,8 +400,8 @@ public class VaultResource {
 	@Operation(summary = "list users requiring access rights", description = "lists all users, who don't have a user-specific vault key yet")
 	@APIResponse(responseCode = "200")
 	@APIResponse(responseCode = "403", description = "not a vault owner")
-	public List<UserDto> getUsersRequiringAccessGrant(@PathParam("vaultId") UUID vaultId) {
-		return userRepo.findRequiringAccessGrant(vaultId).map(UserDto::justPublicInfo).toList();
+	public List<UserDto> getUsersRequiringAccessGrantForVault(@PathParam("vaultId") UUID vaultId) {
+		return userRepo.findUsersRequiringAccessTokenForVault(vaultId).map(UserDto::justPublicInfo).toList();
 	}
 
 	/**
@@ -602,6 +647,7 @@ public class VaultResource {
 			access.setRole(VaultAccess.Role.OWNER);
 			vaultAccessRepo.persist(access);
 			eventLogger.logVaultMemberAdded(currentUser.getId(), vaultId, currentUser.getId(), VaultAccess.Role.OWNER);
+			vaultAccessChangedEvent.fire(new VaultAccessChanged());
 			return Response.created(URI.create(".")).contentLocation(URI.create(".")).entity(VaultDto.fromEntity(vault)).type(MediaType.APPLICATION_JSON).build();
 		} else {
 			eventLogger.logVaultUpdated(currentUser.getId(), vault.getId(), vault.getName(), vault.getDescription(), vault.isArchived());
