@@ -557,8 +557,6 @@ public class VaultResource {
 	@APIResponse(responseCode = "403", description = "not a vault owner or emergency access council member")
 	@APIResponse(responseCode = "404", description = "at least one user has not been found")
 	public Response grantAccess(@PathParam("vaultId") UUID vaultId, @NotEmpty Map<String, String> tokens) {
-		var vault = vaultRepo.findById(vaultId); // should always be found, since @VaultRole filter would have triggered
-
 		// check number of available seats
 		long occupiedSeats = effectiveVaultAccessRepo.countSeatOccupyingUsers();
 		long usersWithoutSeat = tokens.size() - effectiveVaultAccessRepo.countSeatsOccupiedByUsers(tokens.keySet().stream().toList());
@@ -567,6 +565,47 @@ public class VaultResource {
 			throw new PaymentRequiredException("Number of effective vault users greater than or equal to the available license seats");
 		}
 
+		grantAccessTokens(vaultId, tokens, false);
+		return Response.ok().build();
+	}
+
+	@POST
+	@Path("/{vaultId}/access-tokens/auto")
+	@RolesAllowed("user")
+	@VaultRole({VaultAccess.Role.MEMBER, VaultAccess.Role.OWNER}) // may throw 403
+	@Transactional
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Operation(summary = "adds user-specific vault keys via the automatic access grant flow", description = "Stores one or more user-vaultkey-tuples, as defined in the request body ({user1: token1, user2: token2, ...}).")
+	@APIResponse(responseCode = "200", description = "all keys stored")
+	@APIResponse(responseCode = "400", description = "at least one target user is not awaiting an access grant for this vault")
+	@APIResponse(responseCode = "403", description = "not a vault member")
+	@APIResponse(responseCode = "404", description = "at least one user has not been found")
+	public Response autoGrantAccess(@PathParam("vaultId") UUID vaultId, @NotEmpty Map<String, String> tokens) {
+		// Only users who are genuinely pending (effective access, but no token yet) may be granted via this member-callable
+		// endpoint; this prevents it from being used to grant access to arbitrary users (adding members stays owner-gated).
+		var pendingUserIds = effectiveVaultAccessRepo.findMembersWithoutAccessTokensForVault(vaultId)
+				.map(eva -> eva.getId().authorityId())
+				.collect(Collectors.toSet());
+		if (!pendingUserIds.containsAll(tokens.keySet())) {
+			var notWaiting = tokens.keySet().stream()
+					.filter(Predicate.not(pendingUserIds::contains))
+					.collect(Collectors.joining(", "));
+			throw new BadRequestException("User(s) not awaiting an access grant for this vault: " + notWaiting);
+		}
+
+		grantAccessTokens(vaultId, tokens, true);
+		return Response.ok().build();
+	}
+
+	/**
+	 * Persists access tokens for the given users, recording each grant in the audit log.
+	 *
+	 * @param vaultId   the vault to grant access to
+	 * @param tokens    map from user id to the per-user-encrypted vault key
+	 * @param automatic whether the grant is performed by the automatic access grant flow (recorded in the audit log)
+	 */
+	private void grantAccessTokens(UUID vaultId, Map<String, String> tokens, boolean automatic) {
+		var vault = vaultRepo.findById(vaultId); // should always be found, since @VaultRole filter would have triggered
 		for (var entry : tokens.entrySet()) {
 			var userId = entry.getKey();
 			var token = accessTokenRepo.findById(new AccessToken.AccessId(userId, vaultId));
@@ -577,9 +616,8 @@ public class VaultResource {
 			}
 			token.setVaultKey(entry.getValue());
 			accessTokenRepo.persist(token);
-			eventLogger.logVaultAccessGranted(jwt.getSubject(), vaultId, userId, false);
+			eventLogger.logVaultAccessGranted(jwt.getSubject(), vaultId, userId, automatic);
 		}
-		return Response.ok().build();
 	}
 
 	@GET

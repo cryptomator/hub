@@ -431,6 +431,20 @@ class VaultService {
       .catch((error) => rethrowAndConvertIfExpected(error, 402, 403, 404, 409));
   }
 
+  /**
+   * Grants access via the automatic access grant flow. Recorded in the audit log with the automatic flag set. Callable
+   * by any vault member (not just owners); the backend only accepts tokens for users already awaiting an access grant
+   * on this vault. Used by the automatic access grant agent; manual grants by owners should use {@link grantAccess}.
+   */
+  public async autoGrantAccess(vaultId: string, ...grants: AccessGrant[]) {
+    const body = grants.reduce<Record<string, string>>((accumulator, curr) => {
+      accumulator[curr.userId] = curr.token;
+      return accumulator;
+    }, {});
+    await axiosAuth.post(`/vaults/${vaultId}/access-tokens/auto`, body)
+      .catch((error) => rethrowAndConvertIfExpected(error, 400, 403, 404));
+  }
+
   public async removeAuthority(vaultId: string, authorityId: string) {
     await axiosAuth.delete(`/vaults/${vaultId}/authority/${authorityId}`)
       .catch((error) => rethrowAndConvertIfExpected(error, 404));
