@@ -266,7 +266,7 @@ import * as R from 'remeda';
 import { computed, ref, Ref, toRaw, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { AccessGrant, ActivatedUser, AuthorityDto, didCompleteSetup, GroupDto, PaymentRequiredError, RecoveredKeyShareDto, RecoveryProcessChangeCouncil, RecoveryProcessDto, RecoveryProcessSetNewOwner, SettingsDto, UserDto, VaultDto, VaultRole } from '../../common/backend';
-import { asPublicKey, UserKeys, VaultKeys } from '../../common/crypto';
+import { AccessTokenProducing, asPublicKey, UserKeys } from '../../common/crypto';
 import { EmergencyAccess } from '../../common/emergencyaccess';
 import { ECDSA_P384, JWT, JWTHeader } from '../../common/jwt';
 import userdata from '../../common/userdata';
@@ -276,6 +276,8 @@ import EmergencyAccessSetup from './EmergencyAccessSetup.vue';
 import ProcessAbortDialog from './ProcessAbortDialog.vue';
 import SegmentRing from './SegmentRing.vue';
 import type { MultiUserSelectExpose } from '../MultiUserSelectInputGroup.vue';
+import { VaultFormat8 } from '../../common/vaultFormat8';
+import { UniversalVaultFormat } from '../../common/universalVaultFormat';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -743,16 +745,17 @@ async function completeRecovery() {
         throw new Error(t('emergencyAccessDialog.error.insufficientCouncilMembers', [councilMembers.value.length, process.details.newRequiredKeyShares]));
       }
       const keyShares = await EmergencyAccess.split(recoveredKeyBytes, process.details.newRequiredKeyShares, ...councilMembers.value);
-      await backend.vaults.createOrUpdateVault(
-        props.vault.id,
-        props.vault.name,
-        props.vault.archived,
-        process.details.newRequiredKeyShares,
-        keyShares,
-        props.vault.description
-      );
+      await backend.vaults.createOrUpdateVault({
+        ...props.vault,
+        requiredEmergencyKeyShares: process.details.newRequiredKeyShares,
+        emergencyKeyShares: keyShares
+      });
     } else if (process.type === 'CHANGE_PERMISSIONS') {
-      const vaultKeys = await VaultKeys.recover(recoveredKey);
+      const vaultKeys: AccessTokenProducing = props.vault.uvfMetadataFile
+        ? await UniversalVaultFormat.recover(props.vault.uvfMetadataFile, recoveredKey)
+        : await VaultFormat8.recover(recoveredKey);
+      
+      // const vaultKeys = await VaultKeys.recover(recoveredKey);
 
       const membersWithRole = Object.fromEntries([
         ...selectedNewmembers.value.map(u => [u.id, 'MEMBER']),
@@ -761,8 +764,8 @@ async function completeRecovery() {
 
       await backend.vaults.setMembersWithRole(props.vault.id, membersWithRole);
 
-      const activatedUsersToGrant = (await backend.vaults.getUsersRequiringAccessGrant(props.vault.id))
-        .filter((a): a is ActivatedUser => a.type === 'USER' && didCompleteSetup(a));
+      const activatedUsersToGrant = (await backend.vaults.getUsersRequiringAccessGrant(props.vault.id) as UserDto[])
+        .filter(didCompleteSetup);
 
       const accessGrants: AccessGrant[] = await Promise.all(
         activatedUsersToGrant.map(async u => {

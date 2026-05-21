@@ -192,7 +192,7 @@ import { nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { UserDto } from '../common/backend';
 import { BrowserKeys, UnwrapKeyError, UserKeys } from '../common/crypto';
-import { JWEBuilder } from '../common/jwe';
+import { JWE, Recipient } from '../common/jwe';
 import userdata from '../common/userdata';
 import { debounce } from '../common/util';
 import router from '../router';
@@ -264,7 +264,7 @@ async function createUserKey() {
     me.ecdhPublicKey = await userKeys.encodedEcdhPublicKey();
     me.ecdsaPublicKey = await userKeys.encodedEcdsaPublicKey();
     me.privateKeys = await userKeys.encryptWithSetupCode(setupCode.value);
-    me.setupCode = await JWEBuilder.ecdhEs(userKeys.ecdhKeyPair.publicKey).encrypt({ setupCode: setupCode.value });
+    me.setupCode = (await JWE.build({ setupCode: setupCode.value }).encrypt(Recipient.ecdhEs('org.cryptomator.hub.userkey', userKeys.ecdhKeyPair.publicKey))).compactSerialization();
     const browserKeys = await userdata.createBrowserKeys();
     await submitBrowserKeys(browserKeys, me, userKeys);
 

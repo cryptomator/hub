@@ -212,7 +212,7 @@ public class VaultResource {
 	}
 
 	private Map<UUID, Set<String>> queryPendingAccessGrants(String currentUserId) {
-		return QuarkusTransaction.requiringNew().call(() -> userRepo.findUsersRequiringAccessToken(currentUserId));
+		return QuarkusTransaction.requiringNew().call(() -> effectiveVaultAccessRepo.findMembersWithoutAccessTokens(currentUserId));
 	}
 
 	@GET
@@ -397,11 +397,18 @@ public class VaultResource {
 	@VaultRole(value = VaultAccess.Role.OWNER, bypassForEmergencyAccess = true) // may throw 403
 	@Transactional
 	@Produces(MediaType.APPLICATION_JSON)
-	@Operation(summary = "list users requiring access rights", description = "lists all users, who don't have a user-specific vault key yet")
+	@Operation(summary = "list members requiring access tokens", description = "lists all members, that have permissions but lack an access token")
 	@APIResponse(responseCode = "200")
 	@APIResponse(responseCode = "403", description = "not a vault owner")
-	public List<UserDto> getUsersRequiringAccessGrantForVault(@PathParam("vaultId") UUID vaultId) {
-		return userRepo.findUsersRequiringAccessTokenForVault(vaultId).map(UserDto::justPublicInfo).toList();
+	public List<MemberDto> getUsersRequiringAccessGrant(@PathParam("vaultId") UUID vaultId) {
+		return effectiveVaultAccessRepo.findMembersWithoutAccessTokensForVault(vaultId).map(access -> {
+			if (access.getAuthority() instanceof User u) {
+				return MemberDto.fromEntity(u, access.getRole());
+			} else {
+				// findMembersWithoutAccessTokens() should only return users, not groups.
+				throw new IllegalStateException();
+			}
+		}).toList();
 	}
 
 	/**
@@ -504,6 +511,38 @@ public class VaultResource {
 			vaultUnlockMetrics.recordFailure();
 			throw new ForbiddenException("Access to this vault not granted.");
 		}
+	}
+
+	@GET
+	@Path("/{vaultId}/uvf/vault.uvf")
+	@RolesAllowed("user")
+	@Transactional
+	@Produces(MediaType.APPLICATION_JSON)
+	@Operation(summary = "get the vault.uvf file")
+	@APIResponse(responseCode = "200")
+	@APIResponse(responseCode = "404", description = "unknown vault")
+	public String getUvfMetadata(@PathParam("vaultId") UUID vaultId) {
+		var vault = vaultRepo.findById(vaultId);
+		if (vault == null || vault.getUvfMetadataFile() == null) {
+			throw new NotFoundException();
+		}
+		return vault.getUvfMetadataFile();
+	}
+
+	@GET
+	@Path("/{vaultId}/uvf/jwks.json")
+	@RolesAllowed("user")
+	@Transactional
+	@Produces(MediaType.APPLICATION_JSON)
+	@Operation(summary = "get public vault keys", description = "retrieves a JWK Set containing public keys related to this vault")
+	@APIResponse(responseCode = "200")
+	@APIResponse(responseCode = "404", description = "unknown vault")
+	public String getUvfKeys(@PathParam("vaultId") UUID vaultId) {
+		var vault = vaultRepo.findById(vaultId);
+		if (vault == null || vault.getUvfMetadataFile() == null) {
+			throw new NotFoundException();
+		}
+		return vault.getUvfKeySet();
 	}
 
 	@POST
@@ -627,6 +666,8 @@ public class VaultResource {
 		var oldEmergencyKeyShares = vault.getEmergencyKeyShares().values();
 		vault.setRequiredEmergencyKeyShares(vaultDto.requiredEmergencyKeyShares);
 		vault.setEmergencyKeyShares(vaultDto.emergencyKeyShares);
+		vault.setUvfMetadataFile(vaultDto.uvfMetadataFile);
+		vault.setUvfKeySet(vaultDto.uvfKeySet);
 
 		vaultRepo.persistAndFlush(vault); // trigger PersistenceException before we continue with
 
@@ -715,18 +756,25 @@ public class VaultResource {
 	@JsonInclude(JsonInclude.Include.NON_NULL)
 	public record VaultDto(@JsonProperty("id") @NotNull UUID id,
 						   @JsonProperty("name") @NoHtmlOrScriptChars @NotBlank String name,
-						   @JsonProperty("creationTime") Instant creationTime, @JsonProperty("description") @NoHtmlOrScriptChars String description,
+						   @JsonProperty("creationTime") Instant creationTime,
+						   @JsonProperty("description") @NoHtmlOrScriptChars String description,
 						   @JsonProperty("archived") boolean archived,
 						   @JsonProperty("requiredEmergencyKeyShares") @Min(0) int requiredEmergencyKeyShares,
 						   @JsonProperty("emergencyKeyShares") Map<String, String> emergencyKeyShares,
+						   @JsonProperty("uvfMetadataFile") String uvfMetadataFile,
+						   @JsonProperty("uvfKeySet") String uvfKeySet,
 						   // Legacy properties ("Vault Admin Password"):
-						   @JsonProperty("masterkey") @OnlyBase64Chars String masterkey, @JsonProperty("iterations") Integer iterations,
-						   @JsonProperty("salt") @OnlyBase64Chars String salt,
+						   @JsonProperty("masterkey") @OnlyBase64Chars String masterkey, @JsonProperty("iterations") Integer iterations, @JsonProperty("salt") @OnlyBase64Chars String salt,
 						   @JsonProperty("authPublicKey") @OnlyBase64Chars String authPublicKey, @JsonProperty("authPrivateKey") @OnlyBase64Chars String authPrivateKey
+
 	) {
 
 		public static VaultDto fromEntity(Vault entity) {
-			return new VaultDto(entity.getId(), entity.getName(), entity.getCreationTime().truncatedTo(ChronoUnit.MILLIS), entity.getDescription(), entity.isArchived(), entity.getRequiredEmergencyKeyShares(), entity.getEmergencyKeyShares(), entity.getMasterkey(), entity.getIterations(), entity.getSalt(), entity.getAuthenticationPublicKey(), entity.getAuthenticationPrivateKey());
+			return new VaultDto(entity.getId(), entity.getName(), entity.getCreationTime().truncatedTo(ChronoUnit.MILLIS), entity.getDescription(), entity.isArchived(), entity.getRequiredEmergencyKeyShares(), entity.getEmergencyKeyShares(),
+					// uvf:
+					entity.getUvfMetadataFile(), entity.getUvfKeySet(),
+					// legacy properties:
+					entity.getMasterkey(), entity.getIterations(), entity.getSalt(), entity.getAuthenticationPublicKey(), entity.getAuthenticationPrivateKey());
 		}
 
 	}

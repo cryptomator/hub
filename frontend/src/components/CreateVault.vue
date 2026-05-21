@@ -3,7 +3,7 @@
     {{ t('common.loading') }}
   </div>
 
-  <div v-else-if="state == State.EnterRecoveryKey">
+  <div v-else-if="state == State.EnterRecoveryKey" @drop.prevent="" @dragover.prevent="">
     <BreadcrumbNav :crumbs="[ { label: t('vaultList.title'), to: '/app/vaults' }, { label: t('createVault.enterRecoveryKey.title') } ]" />
     <form ref="form" novalidate @submit.prevent="validateRecoveryKey()">
       <div class="flex justify-center">
@@ -21,16 +21,72 @@
               </p>
             </div>
           </div>
+          <!-- Textarea -->
           <div class="mt-5 sm:mt-6">
             <label for="recoveryKey" class="sr-only">{{ t('createVault.enterRecoveryKey.recoveryKey') }}</label>
-            <textarea id="recoveryKey" v-model="recoveryKey" rows="6" name="recoveryKey" class="block w-full rounded-md border-gray-300 shadow-xs focus:border-primary focus:ring-primary sm:text-sm" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onRecoverError instanceof FormValidationFailedError }" required />
+            <label for="metadata-file" class="block text-sm font-medium leading-6 text-gray-900">{{ t('createVault.enterRecoveryKey.recoveryKey') }}</label>
+            <textarea
+              id="recoveryKey"
+              v-model="recoveryKeyStr"
+              rows="6"
+              name="recoveryKey"
+              class="block w-full rounded-md border-gray-300 shadow-xs focus:border-primary focus:ring-primary sm:text-sm"
+              :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onRecoverError instanceof FormValidationFailedError }"
+              required
+            />
           </div>
+          <!-- Dropzone -->
           <div class="mt-5 sm:mt-6">
-            <button type="submit" :disabled="processing" class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-xs hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:primary focus:ring-offset-2 sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed">
+            <label for="metadata-file" class="block text-sm font-medium leading-6 text-gray-900">Vault Metadata File</label>
+            <div
+              class="relative mt-2 flex justify-center rounded-lg border-2  px-6 py-10 border-gray-300 hover:border-gray-400 active:border-primary focus-within:border-primary focus-within:ring-primary  focus-within:ring-offset-2"
+              :class="{ 'border-primary': isDraggingOver, 'border-dashed': (vaultMetadata?.length ?? 0) == 0, 'border-red-300 active:border-red-500 focus-within:ring-red-500 focus-within:border-red-500': (vaultMetadata?.length ?? 0) == 0 && onRecoverError instanceof FormValidationFailedError}"
+              @dragenter.prevent="event => handleDragEnterAndOver(event)"
+              @dragover.prevent="event => handleDragEnterAndOver(event)"
+              @dragleave="handleDragLeave()"
+              @drop.prevent="event => handleDrop(event)"
+            >
+              <input id="file-upload" ref="fileUpload" name="file-upload" type="file" class="cursor-pointer absolute inset-0 opacity-0" accept=".cryptomator, .uvf" @change="event => handleUpload(event)" />
+              <div v-if="(vaultMetadata?.length ?? 0) == 0" class="text-center">
+                <ArrowUpOnSquareIcon class="mx-auto h-12 w-12 text-gray-300" aria-hidden="true" />
+                <p class="mt-2 block text-sm font-semibold text-gray-900">
+                  {{ t('createVault.enterRecoveryKey.uploadCaption') }}
+                </p>
+                <p class="text-xs leading-5 text-gray-600">{{ t('createVault.enterRecoveryKey.uploadSubcaption') }}</p>
+              </div>
+              <div v-else class="text-center">
+                <DocumentCheckIcon class="mx-auto h-12 w-12 text-primary" aria-hidden="true" />
+                <p class="mt-2 block text-sm font-semibold text-gray-900">
+                  {{ t('createVault.enterRecoveryKey.uploadSuccessCaption', [metadataFilename]) }}
+                </p>
+                <p class="text-xs leading-5 text-gray-600">{{ t('createVault.enterRecoveryKey.uploadSuccessSubcaption') }}</p>
+              </div>
+            </div>
+            <div v-if="onUploadError" class="rounded-md bg-red-50 p-4">
+              <div class="flex">
+                <div class="flex-shrink-0">
+                  <XCircleIcon class="h-5 w-5 text-red-400" aria-hidden="true" />
+                </div>
+                <div class="ml-3 flex-1 md:flex md:justify-between">
+                  <p v-if="onUploadError instanceof FileTooBigError" class="text-sm text-red-700">{{ t('createVault.error.uploadTooBig') }}</p>
+                  <p v-else-if="onUploadError instanceof WrongFileNameError" class="text-sm text-red-700">{{ t('createVault.error.wrongFileName') }}</p>
+                  <p v-else class="text-sm text-red-700">{{ t('createVault.error.failedUpload') }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Button -->
+          <div class="mt-5 sm:mt-6">
+            <button
+              type="submit"
+              :disabled="processing"
+              class="inline-flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-base font-medium text-white shadow-xs hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:bg-primary focus:ring-offset-2 sm:text-sm disabled:opacity-50 disabled:hover:bg-primary disabled:cursor-not-allowed"
+            >
               {{ t('createVault.enterRecoveryKey.submit') }}
             </button>
             <div v-if="onRecoverError">
-              <p v-if="(onRecoverError instanceof FormValidationFailedError)" class="text-sm text-red-900 mt-2">{{ t('createVault.error.formValidationFailed') }}</p>
+              <p v-if="onRecoverError instanceof FormValidationFailedError" class="text-sm text-red-900 mt-2">{{ t('createVault.error.formValidationFailed') }}</p>
+              <p v-else-if="onRecoverError instanceof DecodeUvfRecoveryKeyError || onRecoverError instanceof DecodeVf8RecoveryKeyError" class="text-sm text-red-900 mt-2">{{ t('createVault.error.invalidRecoveryKey') }}</p>
               <p v-else class="text-sm text-red-900 mt-2">{{ t('createVault.error.invalidRecoveryKey') }}</p>
             </div>
           </div>
@@ -60,7 +116,7 @@
           <div class="mt-6 px-4 space-y-6">
             <div>
               <label for="vaultName" class="block text-sm font-medium text-gray-700 text-left">{{ t('createVault.enterVaultDetails.vaultName') }}</label>
-              <input id="vaultName" v-model="vaultName" :disabled="processing" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onCreateError instanceof FormValidationFailedError }" pattern="^(?! )([^\x5C\x2F:*?\x22<>\x7C])+(?<![ \x2E])$" required />
+              <input id="vaultName" v-model="vault.name" :disabled="processing" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'invalid:border-red-300 invalid:text-red-900 focus:invalid:ring-red-500 focus:invalid:border-red-500': onCreateError instanceof FormValidationFailedError }" pattern="^(?! )([^\x5C\x2F:*?\x22<>\x7C])+(?<![ \x2E])$" required />
               <p v-if="(onCreateError instanceof FormValidationFailedError)" class="text-sm text-red-900 text-left mt-2">
                 {{ t('createVault.error.illegalVaultName') }} \, /, :, *, ?, ", &lt;, >, |
               </p>
@@ -71,7 +127,7 @@
                 {{ t('createVault.enterVaultDetails.vaultDescription') }}
                 <span class="text-xs text-gray-500">({{ t('common.optional') }})</span>
               </label>
-              <input id="vaultDescription" v-model="vaultDescription" :disabled="processing" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" />
+              <input id="vaultDescription" v-model="vault.description" :disabled="processing" type="text" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" />
             </div>
           </div>
 
@@ -81,6 +137,9 @@
                 <template v-if="onCreateError">
                   <p v-if="(onCreateError instanceof FormValidationFailedError)">
                     {{ t('createVault.error.formValidationFailed','') }} 
+                  </p>
+                  <p v-if="(onRecoverError instanceof DecodeUvfRecoveryKeyError || onRecoverError instanceof DecodeVf8RecoveryKeyError)">
+                    {{ t('createVault.error.invalidRecoveryKey','') }} 
                   </p>
                   <p v-else>
                     {{ t('common.unexpectedError', [onCreateError.message]) }}
@@ -161,7 +220,7 @@
     </form>
   </div>
 
-  <div v-else-if="state == State.DefineEmergencyAccess && vaultKeys">
+  <div v-else-if="state == State.DefineEmergencyAccess">
     <BreadcrumbNav :crumbs="[ { label: t('vaultList.title'), to: '/app/vaults' }, { label: t('createVault.enterVaultDetails.title') } ]" />
     <VaultCreationProgress :state="state" :steps="getCurrentStates" class="flex justify-center mb-4" />
     <form @submit.prevent="validateVaultEmergencyAccess()">
@@ -236,8 +295,14 @@
             <div class="relative mt-5 sm:mt-6">
               <div class="overflow-hidden rounded-lg border border-gray-300 shadow-xs focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
                 <label for="recoveryKey" class="sr-only">{{ t('createVault.showRecoveryKey.recoveryKey') }}</label>
-                <textarea id="recoveryKey" v-model="recoveryKey" rows="6" name="recoveryKey" class="block w-full resize-none border-0 py-3 focus:ring-0 sm:text-sm" readonly />
-
+                <textarea
+                  id="recoveryKey"
+                  v-model="recoveryKeyStr"
+                  rows="6"
+                  name="recoveryKey"
+                  class="block w-full resize-none border-0 py-3 focus:ring-0 sm:text-sm"
+                  readonly
+                />
                 <!-- Spacer element to match the height of the toolbar -->
                 <div class="py-2" aria-hidden="true">
                   <div class="h-9" />
@@ -246,8 +311,12 @@
 
               <div class="absolute inset-x-0 bottom-0">
                 <div class="flex flex-nowrap justify-end space-x-2 py-2 px-2 sm:px-3">
-                  <div class="shrink-0">
-                    <button type="button" class="relative inline-flex items-center whitespace-nowrap rounded-full bg-gray-50 py-2 px-2 text-sm font-medium text-gray-500 hover:bg-gray-100 sm:px-3" @click="copyRecoveryKey()">
+                  <div class="flex-shrink-0">
+                    <button
+                      type="button"
+                      class="relative inline-flex items-center whitespace-nowrap rounded-full bg-gray-50 py-2 px-2 text-sm font-medium text-gray-500 hover:bg-gray-100 sm:px-3"
+                      @click="copyRecoveryKey()"
+                    >
                       <ClipboardIcon class="h-5 w-5 shrink-0 text-gray-300 sm:-ml-1" aria-hidden="true" />
                       <span v-if="!copiedRecoveryKey" class="hidden truncate sm:ml-2 sm:block text-gray-900">{{ t('common.copy') }}</span>
                       <span v-else class="hidden truncate sm:ml-2 sm:block text-gray-900">{{ t('common.copied') }}</span>
@@ -319,11 +388,18 @@
           </div>
         </div>
         <div class="mt-5 sm:mt-6">
-          <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent shadow-xs text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="downloadVaultTemplate()">
+          <button
+            type="button"
+            class="inline-flex items-center px-4 py-2 border border-transparent shadow-xs text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+            @click="downloadVaultTemplate()"
+          >
             <ArrowDownTrayIcon class="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
             {{ t('createVault.success.download') }}
           </button>
-          <p v-if="onDownloadTemplateError" class="text-sm text-red-900 mr-4">{{ t('createVault.error.downloadTemplateFailed', [onDownloadTemplateError.message]) }}</p> <!-- TODO: not beautiful-->
+          <p v-if="onDownloadTemplateError" class="text-sm text-red-900 mr-4">
+            {{ t('createVault.error.downloadTemplateFailed', [onDownloadTemplateError.message]) }}
+          </p>
+          <!-- TODO: not beautiful-->
         </div>
         <div class="mt-2">
           <router-link to="/app/vaults" class="text-sm text-gray-500">
@@ -336,20 +412,21 @@
 </template>
 
 <script setup lang="ts">
-import { ClipboardIcon } from '@heroicons/vue/20/solid';
-import { ArrowPathIcon, CheckIcon, KeyIcon, PlusIcon, UserPlusIcon } from '@heroicons/vue/24/outline';
-import { ArrowDownTrayIcon } from '@heroicons/vue/24/solid';
+import { ClipboardIcon, XCircleIcon, ArrowDownTrayIcon } from '@heroicons/vue/20/solid';
+import { ArrowPathIcon, ArrowUpOnSquareIcon, CheckIcon, DocumentCheckIcon, KeyIcon, PlusIcon, UserPlusIcon } from '@heroicons/vue/24/outline';
 import { saveAs } from 'file-saver';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { LicenseUserInfoDto, PaymentRequiredError, SettingsDto } from '../common/backend';
-import { VaultKeys } from '../common/crypto';
+import backend, { AccessGrant, LicenseUserInfoDto, PaymentRequiredError, SettingsDto, VaultDto } from '../common/backend';
+import { absBackendBaseURL } from '../common/config';
+import { RecoveryKeyProducing, VaultTemplateProducing } from '../common/crypto';
+import { DecodeUvfRecoveryKeyError, UniversalVaultFormat } from '../common/universalVaultFormat';
 import userdata from '../common/userdata';
 import { debounce } from '../common/util';
-import { VaultConfig } from '../common/vaultconfig';
 import BreadcrumbNav from './BreadcrumbNav.vue';
 import EmergencyAccessSetup from './emergencyaccess/EmergencyAccessSetup.vue';
 import VaultCreationProgress from './VaultCreationProgress.vue';
+import { DecodeVf8RecoveryKeyError, VaultFormat8 } from '../common/vaultFormat8';
 
 enum State {
   Initial,
@@ -360,6 +437,13 @@ enum State {
   ShowRecoveryKey,
   Finished
 }
+
+enum VaultType {
+  VaultFormat8,
+  UniversalVaultFormat
+}
+
+const vaultType = ref(VaultType.UniversalVaultFormat);
 
 class FormValidationFailedError extends Error {
 
@@ -377,19 +461,54 @@ class EmptyVaultTemplateError extends Error {
 
 }
 
+class NoFileError extends Error {
+
+  constructor() {
+    super('Drag and drop operation has no file.');
+  }
+
+}
+
+class WrongFileNameError extends Error {
+
+  constructor() {
+    super('Dropped file is not named "vault.cryptomator" or "vault.uvf"');
+  }
+
+}
+
+class FileTooBigError extends Error {
+
+  constructor() {
+    super('Dropped file exceeds size limit of 8KB');
+  }
+
+}
+
 const { t } = useI18n({ useScope: 'global' });
 
 const form = ref<HTMLFormElement>();
+const fileUpload = ref<HTMLInputElement>();
 
 const onCreateError = ref<Error>();
 const onRecoverError = ref<Error>();
 const onDownloadTemplateError = ref<Error>();
+const onUploadError = ref<Error>();
 
 const state = ref(State.Initial);
 const processing = ref(false);
 const settings = ref<SettingsDto>();
 const vaultName = ref('');
-const vaultDescription = ref<string>();
+const vaultDescription = ref<string | undefined>();
+const vault = ref<VaultDto>({
+  id: crypto.randomUUID(),
+  name: '',
+  description: '',
+  archived: false,
+  creationTime: new Date(),
+  requiredEmergencyKeyShares: 0,
+  emergencyKeyShares: {}
+});
 // Per-vault override of the global "Automatic Access Grant" defaults. Captured here; will be wired to the UVF metadata payload when the UVF feature lands on this branch.
 const vaultAutoGrantEnabled = ref<boolean>(false);
 const vaultAutoGrantTrustThreshold = ref<number>(0);
@@ -398,10 +517,14 @@ const emergencyKeyShares = ref<Record<string, string>>({});
 const copiedRecoveryKey = ref(false);
 const debouncedCopyFinish = debounce(() => copiedRecoveryKey.value = false, 2000);
 const confirmRecoveryKey = ref(false);
-const vaultKeys = ref<VaultKeys>();
-const recoveryKey = ref<string>('');
-const vaultConfig = ref<VaultConfig>();
+const vaultFormat8 = ref<VaultFormat8>();
+const recoveryKeyStr = ref<string>('');
+const uvfVault = ref<UniversalVaultFormat>();
 const emergencyAccessSetup = ref<InstanceType<typeof EmergencyAccessSetup>>();
+
+const metadataFilename = computed(() => vaultType.value == VaultType.VaultFormat8 ? 'vault.cryptomator' : 'vault.uvf');
+const vaultMetadata = ref<string>('');
+const isDraggingOver = ref<boolean>(false);
 
 const props = defineProps<{
   recover: boolean
@@ -418,9 +541,17 @@ async function initialize() {
   if (props.recover) {
     state.value = State.EnterRecoveryKey;
   } else {
-    vaultKeys.value = await VaultKeys.create();
-    recoveryKey.value = await vaultKeys.value.createRecoveryKey();
     settings.value = await backend.settings.get();
+    switch (vaultType.value) {
+      case VaultType.VaultFormat8:
+        vaultFormat8.value = await VaultFormat8.create();
+        recoveryKeyStr.value = await vaultFormat8.value.createRecoveryKey();
+        break;
+      case VaultType.UniversalVaultFormat:
+        uvfVault.value = await UniversalVaultFormat.create({ enabled: false, maxWotDepth: settings.value.wotMaxDepth });
+        recoveryKeyStr.value = await uvfVault.value.recoveryKey.createRecoveryKey();
+        break;
+    }
     vaultAutoGrantEnabled.value = settings.value.enableAutomaticAccessGrant;
     vaultAutoGrantTrustThreshold.value = settings.value.automaticAccessGrantTrustThreshold;
     state.value = State.EnterVaultDetails;
@@ -428,9 +559,59 @@ async function initialize() {
   licenseStatus.value = await backend.license.getUserInfo();
 }
 
+async function handleDragEnterAndOver (event: DragEvent){
+  isDraggingOver.value = true;
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'copy';
+    event.dataTransfer.dropEffect = 'copy';
+  }
+}
+
+async function handleDragLeave() {
+  isDraggingOver.value = false;
+}
+
+async function handleDrop(event: DragEvent) {
+  onUploadError.value = undefined;
+  isDraggingOver.value = false;
+  let file: File | null = null;
+  if (event.dataTransfer?.items && event.dataTransfer.items.length >= 1) {
+    //new DataTransferItemList API
+    const item = event.dataTransfer.items[0];
+    if (item.kind == 'file') {
+      file = item.getAsFile();
+    }
+  } else {
+    file = event.dataTransfer?.files[0] ?? null;
+  }
+  validateAndSetMetadataFile(file);
+}
+
+async function handleUpload(event: Event) {
+  onUploadError.value = undefined;
+  validateAndSetMetadataFile(fileUpload.value?.files?.item(0) ?? null);
+}
+
+async function validateAndSetMetadataFile(file: File | null) {
+  try {
+    if (!file) {
+      throw new NoFileError();
+    } else if (!file.name.match(/vault\.(cryptomator|uvf)/)) {
+      throw new WrongFileNameError();
+    } else if (file.size > 8000) {
+      throw new FileTooBigError();
+    }
+
+    vaultType.value = file.name.endsWith('.uvf') ? VaultType.UniversalVaultFormat : VaultType.VaultFormat8;
+    vaultMetadata.value = await file.text();
+  } catch (error) {
+    onUploadError.value = error instanceof Error ? error : new Error('Error reading file as UTF-8 encoded text.');
+  }
+}
+
 async function validateRecoveryKey() {
   onRecoverError.value = undefined;
-  if (!form.value?.checkValidity()) {
+  if (!form.value?.checkValidity() || !vaultMetadata.value ) {
     onRecoverError.value = new FormValidationFailedError();
     return;
   }
@@ -452,7 +633,11 @@ async function recoverVault() {
   onRecoverError.value = undefined;
   try {
     processing.value = true;
-    vaultKeys.value = await VaultKeys.recover(recoveryKey.value);
+    if (vaultType.value == VaultType.UniversalVaultFormat) {
+      uvfVault.value = await UniversalVaultFormat.recover(vaultMetadata.value, recoveryKeyStr.value);
+    } else {
+      vaultFormat8.value = await VaultFormat8.recoverAndVerify(vaultMetadata.value, recoveryKeyStr.value);
+    }
     state.value = State.EnterVaultDetails;
   } catch (error) {
     console.error('Recovering vault failed.', error);
@@ -482,17 +667,37 @@ function validateAutomaticAccessGrant() {
 
 async function validateVaultEmergencyAccess() {
   onCreateError.value = undefined;
-  if (!emergencyAccessSetup.value || !vaultKeys.value) {
+  if (!emergencyAccessSetup.value) {
     onCreateError.value = new Error('Invalid state.');
     return;
   }
 
   processing.value = true;
   try {
-    const { requiredKeyShares, keyShares } = await emergencyAccessSetup.value.split(vaultKeys.value);
-    requiredEmergencyKeyShares.value = requiredKeyShares;
-    emergencyKeyShares.value = keyShares;
-    goToNextState();
+    let recoveryKeyProducer: RecoveryKeyProducing;
+    switch (vaultType.value) {
+      case VaultType.VaultFormat8: {
+        if (!vaultFormat8.value) {
+          throw new Error('Invalid state');
+        }
+        recoveryKeyProducer = vaultFormat8.value;
+        break;
+      }
+      case VaultType.UniversalVaultFormat: {
+        if (!uvfVault.value) {
+          throw new Error('Invalid state');
+        }
+        recoveryKeyProducer = uvfVault.value;
+        break;
+      }
+      default:
+        throw new Error('Invalid state');
+    }
+
+    const { requiredKeyShares, keyShares } = await emergencyAccessSetup.value.split(recoveryKeyProducer);
+    vault.value.requiredEmergencyKeyShares = requiredKeyShares;
+    vault.value.emergencyKeyShares = { ...keyShares };
+    state.value = State.ShowRecoveryKey;
   } catch (error) {
     console.error('Validating emergency access settings failed.', error);
     onCreateError.value = error instanceof Error ? error : new Error('Unexpected error');
@@ -520,22 +725,33 @@ function goToPreviousState() {
 async function createVault() {
   onCreateError.value = undefined;
   try {
-    if (!vaultKeys.value) {
-      throw new Error('Invalid state');
-    }
     processing.value = true;
     const owner = await userdata.me;
-    const vaultId = crypto.randomUUID();
-    vaultConfig.value = await VaultConfig.create(vaultId, vaultKeys.value);
-    const ownerJwe = await vaultKeys.value.encryptForUser(await userdata.ecdhPublicKey);
-    await backend.vaults.createOrUpdateVault(
-      vaultId, 
-      vaultName.value, 
-      false, 
-      requiredEmergencyKeyShares.value ?? 0, 
-      emergencyKeyShares.value ?? {}, 
-      vaultDescription.value);
-    await backend.vaults.grantAccess(vaultId, { userId: owner.id, token: ownerJwe });
+    if (!owner.setupCode) {
+      throw new Error('User not set up');
+    }
+    const ownerGrant: AccessGrant = { userId: owner.id, token: '' };
+    switch (vaultType.value) {
+      case VaultType.VaultFormat8: {
+        if (!vaultFormat8.value) {
+          throw new Error('Invalid state');
+        }
+        ownerGrant.token = await vaultFormat8.value.encryptForUser(await userdata.ecdhPublicKey);
+        break;
+      }
+      case VaultType.UniversalVaultFormat: {
+        if (!uvfVault.value) {
+          throw new Error('Invalid state');
+        }
+        ownerGrant.token = await uvfVault.value.encryptForUser(await userdata.ecdhPublicKey, true);
+        const recoveryPublicKey = await uvfVault.value.recoveryKey.serializePublicKey();
+        vault.value.uvfMetadataFile = await uvfVault.value.createMetadataFile(absBackendBaseURL, vault.value);
+        vault.value.uvfKeySet = `{"keys": [${recoveryPublicKey}]}`;
+        break;
+      }
+    }
+    await backend.vaults.createOrUpdateVault(vault.value);
+    await backend.vaults.grantAccess(vault.value.id, ownerGrant);
     state.value = State.Finished;
   } catch (error) {
     console.error('Creating vault failed.', error);
@@ -546,17 +762,21 @@ async function createVault() {
 }
 
 async function copyRecoveryKey() {
-  await navigator.clipboard.writeText(recoveryKey.value);
+  await navigator.clipboard.writeText(recoveryKeyStr.value);
   copiedRecoveryKey.value = true;
   debouncedCopyFinish();
 }
 
 async function downloadVaultTemplate() {
+  if (!vaultFormat8.value && !uvfVault.value) {
+    throw new Error('Invalid state');
+  }
   onDownloadTemplateError.value = undefined;
   try {
-    const blob = await vaultConfig.value?.exportTemplate();
-    if (blob !== undefined) {
-      saveAs(blob, `${vaultName.value}.zip`);
+    const templateProducer: VaultTemplateProducing = vaultFormat8.value || uvfVault.value!;
+    const blob = await templateProducer.exportTemplate(absBackendBaseURL, vault.value);
+    if (blob != null) {
+      saveAs(blob, `${vault.value.name}.zip`);
     } else {
       throw new EmptyVaultTemplateError();
     }

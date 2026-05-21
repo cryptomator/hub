@@ -55,6 +55,8 @@ export type VaultDto = {
   salt?: string;
   authPublicKey?: string;
   authPrivateKey?: string;
+  uvfMetadataFile?: string;
+  uvfKeySet?: string;
 };
 
 export type DeviceDto = {
@@ -370,8 +372,8 @@ class VaultService {
       .catch((error) => rethrowAndConvertIfExpected(error, 402, 404, 409));
   }
 
-  public async getUsersRequiringAccessGrant(vaultId: string, addFallbackPictures: boolean = true): Promise<UserDto[]> {
-    const users = await axiosAuth.get<UserDto[]>(`/vaults/${vaultId}/users-requiring-access-grant`).then(response => response.data).catch(err => rethrowAndConvertIfExpected(err, 403));
+  public async getUsersRequiringAccessGrant(vaultId: string, addFallbackPictures: boolean = true): Promise<(MemberDto & UserDto)[]> {
+    const users = await axiosAuth.get<(MemberDto & UserDto)[]>(`/vaults/${vaultId}/users-requiring-access-grant`).then(response => response.data).catch(err => rethrowAndConvertIfExpected(err, 403));
     return addFallbackPictures ? users.map(fillInMissingPicture) : users;
   }
 
@@ -397,17 +399,8 @@ class VaultService {
       .catch((error) => rethrowAndConvertIfExpected(error, 402, 403, 404));
   }
 
-  public async createOrUpdateVault(vaultId: string, name: string, archived: boolean, requiredEmergencyKeyShares: number, emergencyKeyShares: Record<string, string>, description?: string): Promise<VaultDto> {
-    const body: VaultDto = {
-      id: vaultId,
-      name: name,
-      creationTime: new Date(),
-      description: description,
-      archived: archived,
-      requiredEmergencyKeyShares: requiredEmergencyKeyShares,
-      emergencyKeyShares: emergencyKeyShares
-    };
-    return axiosAuth.put(`/vaults/${vaultId}`, body)
+  public async createOrUpdateVault(vault: VaultDto): Promise<VaultDto> {
+    return axiosAuth.put(`/vaults/${vault.id}`, vault)
       .then(response => response.data)
       .catch((error) => rethrowAndConvertIfExpected(error, 402, 404));
   }

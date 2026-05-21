@@ -54,7 +54,7 @@ import { ArrowUturnLeftIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/s
 import { useId, computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { ActivatedUser, SettingsDto, didCompleteSetup } from '../../common/backend';
-import { VaultKeys } from '../../common/crypto';
+import { RecoveryKeyProducing } from '../../common/crypto';
 import { EmergencyAccess } from '../../common/emergencyaccess';
 import { wordEncoder } from '../../common/util';
 import MultiUserSelectInputGroup from '../MultiUserSelectInputGroup.vue';
@@ -117,7 +117,7 @@ onMounted(async () => {
   await initialize();
 });
 
-async function split(vaultKeys: VaultKeys): Promise<SplitResult> {
+async function split(vaultKeys: RecoveryKeyProducing): Promise<SplitResult> {
   if (props.requiredKeyShares < 1) {
     throw new Error(t('grantEmergencyAccessDialog.error.keySharesRequired'));
   }
@@ -134,8 +134,7 @@ async function split(vaultKeys: VaultKeys): Promise<SplitResult> {
     throw new Error(t('grantEmergencyAccessDialog.error.tooFewCouncilMembers'));
   }
 
-  const recoveryKey = await vaultKeys.createRecoveryKey();
-  const recoveryKeyBytes = wordEncoder.decode(recoveryKey); // TODO: remove encode/decode once UVF is merged
+  const recoveryKeyBytes = await vaultKeys.createPaddedRecoveryKeyBytes();
   const keyShares = await EmergencyAccess.split(
     recoveryKeyBytes,
     props.requiredKeyShares,

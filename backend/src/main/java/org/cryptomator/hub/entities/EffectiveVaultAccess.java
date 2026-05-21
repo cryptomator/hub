@@ -19,6 +19,7 @@ import jakarta.persistence.Table;
 import org.hibernate.annotations.Immutable;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -76,6 +77,24 @@ import java.util.stream.Stream;
 		FROM EffectiveVaultAccess eva
 		WHERE eva.id.vaultId = :vaultId AND eva.id.authorityId = :authorityId
 		""")
+@NamedQuery(name = "EffectiveVaultAccess.findMembersWithoutAccessTokens", query = """
+		SELECT eva
+		FROM EffectiveVaultAccess eva
+			INNER JOIN FETCH eva.authority u
+			LEFT JOIN AccessToken token ON token.id.vaultId = eva.id.vaultId AND token.id.userId = u.id
+			WHERE eva.id.vaultId = :vaultId AND token.vault IS NULL AND u.ecdhPublicKey IS NOT NULL
+		"""
+)
+@NamedQuery(name = "EffectiveVaultAccess.findMembersWithoutAccessTokensForAccessibleVaults", query = """
+		SELECT DISTINCT eva
+		FROM EffectiveVaultAccess eva
+			INNER JOIN eva.authority u
+			INNER JOIN Vault v ON v.id = eva.id.vaultId
+			INNER JOIN EffectiveVaultAccess caller ON caller.id.vaultId = eva.id.vaultId AND caller.id.authorityId = :currentUser
+			LEFT JOIN AccessToken token ON token.id.vaultId = eva.id.vaultId AND token.id.userId = u.id
+			WHERE v.archived = false AND token.vault IS NULL AND u.ecdhPublicKey IS NOT NULL AND u.enabled
+		"""
+)
 public class EffectiveVaultAccess {
 
 	@EmbeddedId
@@ -143,8 +162,30 @@ public class EffectiveVaultAccess {
 
 		public Collection<VaultAccess.Role> listRoles(UUID vaultId, String authorityId) {
 			return find("#EffectiveVaultAccess.findByAuthorityAndVault", Parameters.with("vaultId", vaultId).and("authorityId", authorityId)).stream()
-					.map(eva -> eva.getId().role())
+					.map(EffectiveVaultAccess::getRole)
 					.collect(Collectors.toUnmodifiableSet());
+		}
+
+		/**
+		 * @param vaultId ID of a vault
+		 * @return ids of vault members who have no access token for the given vault yet
+		 * @see #findMembersWithoutAccessTokens(String)
+		 */
+		public Stream<EffectiveVaultAccess> findMembersWithoutAccessTokensForVault(UUID vaultId) {
+			return find("#EffectiveVaultAccess.findMembersWithoutAccessTokens", Parameters.with("vaultId", vaultId)).stream();
+		}
+
+		/**
+		 * @param currentUserId ID of the currently logged-in user
+		 * @return ids of vault members who have no access token yet, grouped by vault id
+		 * @see #findMembersWithoutAccessTokensForVault(UUID)
+		 */
+		public Map<UUID, Set<String>> findMembersWithoutAccessTokens(String currentUserId) {
+			return find("#EffectiveVaultAccess.findMembersWithoutAccessTokensForAccessibleVaults", Parameters.with("currentUser", currentUserId))
+					.stream()
+					.collect(Collectors.groupingBy(
+							eva -> eva.getId().vaultId(),
+							Collectors.mapping(eva -> eva.getId().authorityId(), Collectors.toSet())));
 		}
 
 		public Stream<String> usersSeatedOnOtherVaults(UUID vaultId) {

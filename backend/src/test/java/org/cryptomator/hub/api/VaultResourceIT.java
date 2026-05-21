@@ -147,10 +147,12 @@ public class VaultResourceIT {
 		private static final String VALID_SALT = "base64";
 		private static final String VALID_AUTH_PUB = "base64";
 		private static final String VALID_AUTH_PRI = "base64";
+		private static final String VALID_UVF_METADATA_FILE = "{json}";
+		private static final String VALID_UVF_RECOVERY_KEY = "base64";
 
 		@Test
 		void testValidDto() {
-			var dto = new VaultResource.VaultDto(VALID_ID, VALID_NAME, Instant.parse("2020-02-20T20:20:20Z"), "foobarbaz", false, 0, Map.of(), VALID_MASTERKEY, 8, VALID_SALT, VALID_AUTH_PUB, VALID_AUTH_PRI);
+			var dto = new VaultResource.VaultDto(VALID_ID, VALID_NAME, Instant.parse("2020-02-20T20:20:20Z"), "foobarbaz", false, 0, Map.of(),  VALID_UVF_METADATA_FILE, VALID_UVF_RECOVERY_KEY, VALID_MASTERKEY, 8, VALID_SALT, VALID_AUTH_PUB, VALID_AUTH_PRI);
 			var violations = validator.validate(dto);
 			MatcherAssert.assertThat(violations, Matchers.empty());
 		}
@@ -362,7 +364,7 @@ public class VaultResourceIT {
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100003333 returns 403 for missing role")
 		void testCreateVaultWithMissingRole() {
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100003333");
-			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", Instant.parse("2112-12-21T21:12:21Z"), "Test vault 3", false, 0, Map.of(), "masterkey3", 42, "NaCl", "authPubKey3", "authPrvKey3");
+			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", Instant.parse("2112-12-21T21:12:21Z"), "Test vault 3", false, 0, Map.of(), "uvfMetadata3", "uvfKeySet3", "masterkey3", 42, "NaCl", "authPubKey3", "authPrvKey3");
 
 			given().contentType(ContentType.JSON).body(vaultDto)
 					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-000100003333")
@@ -385,7 +387,7 @@ public class VaultResourceIT {
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100003333 returns 201")
 		void testCreateVault1() {
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100003333");
-			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", Instant.parse("2112-12-21T21:12:21Z"), "Test vault 3", false, 0, Map.of(), "masterkey3", 42, "NaCl", "authPubKey3", "authPrvKey3");
+			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", Instant.parse("2112-12-21T21:12:21Z"), "Test vault 3", false, 0, Map.of(), "uvfMetadata3", "uvfKeySet3", "masterkey3", 42, "NaCl", "authPubKey3", "authPrvKey3");
 
 			given().contentType(ContentType.JSON).body(vaultDto)
 					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-000100003333")
@@ -410,7 +412,7 @@ public class VaultResourceIT {
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100004444 returns 201 ignoring archived flag")
 		void testCreateVault3() {
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100004444");
-			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", Instant.parse("2112-12-21T21:12:21Z"), "Test vault 4", true, 0, Map.of(), "masterkey4", 42, "NaCl", "authPubKey4", "authPrvKey4");
+			var vaultDto = new VaultResource.VaultDto(uuid, "My Vault", Instant.parse("2112-12-21T21:12:21Z"), "Test vault 4", true, 0, Map.of(), "uvfMetadata4", "uvfKeySet4", "masterkey4", 42, "NaCl", "authPubKey4", "authPrvKey4");
 
 			given().contentType(ContentType.JSON).body(vaultDto)
 					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-000100004444")
@@ -426,7 +428,7 @@ public class VaultResourceIT {
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100003333 returns 200, updating only name and description (archived flag ignored)")
 		void testUpdateVault() {
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100003333");
-			var vaultDto = new VaultResource.VaultDto(uuid, "VaultUpdated", Instant.parse("2222-11-11T11:11:11Z"), "Vault updated.", true, 0, Map.of(), "doNotUpdate", 27, "doNotUpdate", "doNotUpdate", "doNotUpdate");
+			var vaultDto = new VaultResource.VaultDto(uuid, "VaultUpdated", Instant.parse("2222-11-11T11:11:11Z"), "Vault updated.", true, 0, Map.of(), "doNotUpdate", "doNotUpdate", "doNotUpdate", 27, "doNotUpdate", "doNotUpdate", "doNotUpdate");
 			given().contentType(ContentType.JSON)
 					.body(vaultDto)
 					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-000100003333")
@@ -1025,7 +1027,7 @@ public class VaultResourceIT {
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111 returns 403 for admin updating vault they don't own")
 		void testAdminCannotUpdateVaultTheyDontOwn() {
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100001111");
-			var vaultDto = new VaultResource.VaultDto(uuid, "Vault 1", Instant.parse("2020-02-20T20:20:20Z"), "This is a testvault.", true, 0, Map.of(), "masterkey1", 42, "salt1", "authPubKey1", "authPrvKey1");
+			var vaultDto = new VaultResource.VaultDto(uuid, "Vault 1", Instant.parse("2020-02-20T20:20:20Z"), "This is a testvault.", true, 0, Map.of(), "uvfMetadata1", "uvfKeySet1", "masterkey1", 42, "salt1", "authPubKey1", "authPrvKey1");
 
 			given().contentType(ContentType.JSON).body(vaultDto)
 					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-000100001111")
@@ -1037,7 +1039,7 @@ public class VaultResourceIT {
 		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100005555 returns 403 for admin creating vault without create-vaults role")
 		void testAdminCannotCreateVaultWithoutCreateVaultsRole() {
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100005555");
-			var vaultDto = new VaultResource.VaultDto(uuid, "New Vault", Instant.parse("2112-12-21T21:12:21Z"), "Should not be created", false, 0, Map.of(), "masterkey5", 42, "NaCl", "authPubKey5", "authPrvKey5");
+			var vaultDto = new VaultResource.VaultDto(uuid, "New Vault", Instant.parse("2112-12-21T21:12:21Z"), "Should not be created", false, 0, Map.of(), "uvfMetadata5", "uvfKeySet5", "masterkey5", 42, "NaCl", "authPubKey5", "authPrvKey5");
 
 			given().contentType(ContentType.JSON).body(vaultDto)
 					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-000100005555")
