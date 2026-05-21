@@ -10,7 +10,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.jdk.version>21</project.jdk.version>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <quarkus.platform.version>3.27.3</quarkus.platform.version>
+        <quarkus.platform.version>3.27.3.1</quarkus.platform.version>
         <jwt.version>4.5.1</jwt.version>
         <compiler-plugin.version>3.15.0</compiler-plugin.version>
         <dependency-plugin.version>3.10.0</dependency-plugin.version>
@@ -128,11 +128,7 @@
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-micrometer</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-micrometer-registry-prometheus</artifactId>
+            <artifactId>quarkus-opentelemetry</artifactId>
         </dependency>
     </dependencies>
 

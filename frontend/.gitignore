@@ -6,3 +6,4 @@ dist-ssr
 *.local
 .nyc_output/
 coverage/
+package-lock.json

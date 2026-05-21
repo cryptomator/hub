@@ -9,7 +9,7 @@
           </RouterLink>
         </template>
         <template v-else>
-          <span class="text-gray-700 font-medium">{{ crumb.label }}</span>
+          <span class="text-gray-700 font-medium truncate max-w-48 sm:max-w-xs" :title="crumb.label">{{ crumb.label }}</span>
         </template>
         <ChevronRightIcon v-if="index < crumbs.length - 1 && !crumb.to" class="w-4 h-4 mx-1 text-gray-400" />
       </li>

@@ -1,5 +1,6 @@
 package org.cryptomator.hub.entities;
 
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import io.quarkus.panache.common.Parameters;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -139,6 +140,7 @@ public class EffectiveVaultAccess {
 			return count("#EffectiveVaultAccess.countSeatOccupyingUsers");
 		}
 
+		@WithSpan("EffectiveVaultAccess.Repository.countSeatOccupyingUsersWithAccessToken")
 		public long countSeatOccupyingUsersWithAccessToken() {
 			return count("#EffectiveVaultAccess.countSeatOccupyingUsersWithAccessToken");
 		}

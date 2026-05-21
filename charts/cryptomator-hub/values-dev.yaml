@@ -1,6 +1,9 @@
 global:
   host: ""
 
+secrets:
+  keepOnUninstall: true
+
 hub:
   database:
     password: top-secret
@@ -22,7 +25,3 @@ postgres:
     adminPassword: top-secret
   storage:
     size: 1Gi
-  resources:
-    requests:
-      cpu: 25m
-      memory: 128Mi

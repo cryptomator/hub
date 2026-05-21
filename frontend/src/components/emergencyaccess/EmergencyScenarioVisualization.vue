@@ -22,20 +22,20 @@
       <template v-else>
         <div class="flex items-center gap-2 text-sm text-gray-800">
           <template v-for="(slot, index) in visibleSlots" :key="`lane-${index}`">
-            <div class="flex-1 min-w-0 max-w-1/3">
+            <div v-if="slot.type === 'user'" class="flex-1 min-w-0 max-w-1/3">
               <div class="slot-lane relative h-8 overflow-hidden">
                 <Transition name="slot-roll">
-                  <span v-if="slot.type === 'user'" :key="slot.user.id" class="absolute inset-0 inline-flex w-full items-center justify-between gap-1 rounded-full border border-grey bg-white px-2 py-1 shadow-sm">
+                  <span :key="slot.user.id" class="absolute inset-0 inline-flex w-full items-center justify-between gap-1 rounded-full border border-grey bg-white px-2 py-1 shadow-sm">
                     <img :src="slot.user.pictureUrl" class="w-4 h-4 rounded-full shrink-0" />
                     <span class="truncate">{{ slot.user.name }}</span>
                     <SegmentRing :start-index="index" :total="requiredKeyShares" :completed="1" :size="24" />
                   </span>
-                  <span v-else class="absolute inset-0 inline-flex w-full items-center justify-center rounded-full border border-gray-300 bg-gray-100 px-3 py-1 font-medium text-gray-700 shadow-sm">
-                    +{{ slot.hiddenCount }}
-                  </span>
                 </Transition>
               </div>
             </div>
+            <span v-else class="shrink-0 inline-flex items-center justify-center rounded-full border border-gray-300 bg-gray-100 px-3 py-1 font-medium text-gray-700 shadow-sm">
+              +{{ slot.hiddenCount }}
+            </span>
 
             <span v-if="index < visibleSlots.length - 1" class="shrink-0 inline-flex items-center justify-center text-gray-500 font-medium">+</span>
           </template>
@@ -46,7 +46,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch, ref, toRefs, onBeforeUnmount } from 'vue';
+import { computed, watch, ref, toRefs, onMounted, onBeforeUnmount } from 'vue';
 import { ExclamationTriangleIcon } from '@heroicons/vue/20/solid';
 import { useI18n } from 'vue-i18n';
 import { UserDto } from '../../common/backend';
@@ -64,11 +64,22 @@ let timeoutId: ReturnType<typeof setTimeout> | undefined;
 const loadingCouncilSelection = ref(true);
 const randomCouncilSelection = ref<UserDto[]>([]);
 const randomSelectionInterval = ref<ReturnType<typeof setInterval>>();
-const maxVisibleSlots = 4;
+
+const windowWidth = ref(window.innerWidth);
+const maxUserPills = computed(() => windowWidth.value < 640 ? 2 : 3);
 
 const { selectedUsers, requiredKeyShares } = toRefs(props);
 
+function onWindowResize() {
+  windowWidth.value = window.innerWidth;
+}
+
+onMounted(() => {
+  window.addEventListener('resize', onWindowResize);
+});
+
 onBeforeUnmount(() => {
+  window.removeEventListener('resize', onWindowResize);
   stopRandomCouncilInterval();
   if (timeoutId !== undefined) {
     clearTimeout(timeoutId);
@@ -95,7 +106,7 @@ const isGrantButtonDisabled = computed(() => {
 });
 
 const visibleUserSlots = computed(() => {
-  return clamp(requiredKeyShares.value, { max: maxVisibleSlots });
+  return clamp(requiredKeyShares.value, { max: maxUserPills.value });
 });
 
 const visibleSlots = computed(() => {
@@ -104,14 +115,14 @@ const visibleSlots = computed(() => {
     user: user,
   }));
 
-  if (requiredKeyShares.value <= maxVisibleSlots) {
+  if (requiredKeyShares.value <= maxUserPills.value) {
     return userSlots;
   } else {
     return [
-      ...userSlots.slice(0, maxVisibleSlots - 1),
+      ...userSlots.slice(0, maxUserPills.value),
       {
         type: 'overflow' as const,
-        hiddenCount: requiredKeyShares.value - visibleUserSlots.value + 1,
+        hiddenCount: requiredKeyShares.value - maxUserPills.value,
       }
     ];
   }
@@ -121,7 +132,7 @@ watch(
   [selectedUsers, requiredKeyShares],
   () => {
     loadingCouncilSelection.value = true;
-   
+
     pickRandomCouncilMembers();
     if (timeoutId !== undefined) {
       clearTimeout(timeoutId);
@@ -179,7 +190,7 @@ function rotateCouncilMember(available: UserDto[], required: number) {
   const currentIds = new Set(current.map(u => u.id));
   const candidates = available.filter(u => !currentIds.has(u.id));
 
-  const userSlots = required > visibleUserSlots.value ? visibleUserSlots.value - 1 : Math.min(required, visibleUserSlots.value);
+  const userSlots = Math.min(required, maxUserPills.value);
 
   const replaceIndex = Math.floor(
     Math.random() // NOSONAR

@@ -1,5 +1,6 @@
 package org.cryptomator.hub.entities;
 
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import io.quarkus.panache.common.Parameters;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -87,6 +88,7 @@ public class EffectiveGroupMembership {
 					.executeUpdate();
 		}
 
+		@WithSpan("EffectiveGroupMembership.Repository.updateGroups")
 		public void updateGroups(Collection<String> groupIds) {
 			Batch.of(200).run(groupIds, batch -> {
 				getEntityManager()
@@ -100,6 +102,7 @@ public class EffectiveGroupMembership {
 			});
 		}
 
+		@WithSpan("EffectiveGroupMembership.Repository.updateUsers")
 		public void updateUsers(Collection<String> userIds) {
 			Batch.of(200).run(userIds, batch -> {
 				delete("#EffectiveGroupMembership.deleteUsers", Parameters.with("userIds", batch));
