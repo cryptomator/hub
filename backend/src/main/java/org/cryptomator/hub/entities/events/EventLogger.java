@@ -75,12 +75,13 @@ public class EventLogger {
 		auditEventRepository.persist(event);
 	}
 
-	public void logVaultAccessGranted(String grantedBy, UUID vaultId, String authorityId) {
+	public void logVaultAccessGranted(String grantedBy, UUID vaultId, String authorityId, boolean automatic) {
 		var event = new VaultAccessGrantedEvent();
 		event.setTimestamp(Instant.now());
 		event.setGrantedBy(grantedBy);
 		event.setVaultId(vaultId);
 		event.setAuthorityId(authorityId);
+		event.setAutomatic(automatic);
 		auditEventRepository.persist(event);
 	}
 

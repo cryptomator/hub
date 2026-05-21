@@ -13,3 +13,6 @@ CREATE TABLE "audit_event_setting_auto_grant_update"
 	CONSTRAINT "AUDIT_EVENT_SETTING_AUTO_GRANT_UPDATE_PK" PRIMARY KEY ("id"),
 	CONSTRAINT "AUDIT_EVENT_SETTING_AUTO_GRANT_UPDATE_FK_AUDIT_EVENT" FOREIGN KEY ("id") REFERENCES "audit_event" ("id") ON DELETE CASCADE
 );
+
+-- distinguishes automatic access grants (performed by a member's client under the auto-grant policy) from manual owner grants
+ALTER TABLE "audit_event_vault_access_grant" ADD "automatic" BOOLEAN NOT NULL DEFAULT FALSE;

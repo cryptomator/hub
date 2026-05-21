@@ -82,6 +82,7 @@ export type AuditEventVaultAccessGrantDto = AuditEventDtoBase & {
   grantedBy: string;
   vaultId: string;
   authorityId: string;
+  automatic: boolean;
 };
 
 export type AuditEventVaultKeyRetrieveDto = AuditEventDtoBase & {

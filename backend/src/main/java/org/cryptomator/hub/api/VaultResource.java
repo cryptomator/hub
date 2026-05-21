@@ -577,7 +577,7 @@ public class VaultResource {
 			}
 			token.setVaultKey(entry.getValue());
 			accessTokenRepo.persist(token);
-			eventLogger.logVaultAccessGranted(jwt.getSubject(), vaultId, userId);
+			eventLogger.logVaultAccessGranted(jwt.getSubject(), vaultId, userId, false);
 		}
 		return Response.ok().build();
 	}

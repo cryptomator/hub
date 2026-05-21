@@ -158,6 +158,7 @@
   "auditLog.details.vault.create": "Create Vault",
   "auditLog.details.vault.update": "Update Vault",
   "auditLog.details.vaultAccess.grant": "Grant Vault Access",
+  "auditLog.details.vaultAccess.automatic": "automatic",
   "auditLog.details.vaultKey.retrieve": "Retrieve Vault Key",
   "auditLog.details.vaultMember.add": "Add Vault Member",
   "auditLog.details.vaultMember.remove": "Remove Vault Member",
