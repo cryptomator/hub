@@ -187,6 +187,10 @@
                 <label for="vaultAutoGrantTrustThreshold" class="block text-sm font-medium text-gray-700">{{ t('createVault.automaticAccessGrant.trustThreshold.label') }}</label>
                 <input id="vaultAutoGrantTrustThreshold" v-model="vaultAutoGrantTrustThreshold" :disabled="processing" type="number" min="-1" max="9" step="1" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" />
                 <p class="mt-1 text-xs text-gray-500">{{ t('createVault.automaticAccessGrant.trustThreshold.help') }}</p>
+                <p v-if="Number(vaultAutoGrantTrustThreshold) === -1" class="mt-1 inline-flex items-start text-xs text-yellow-700">
+                  <ExclamationTriangleIcon class="shrink-0 text-yellow-500 mr-1 h-4 w-4" aria-hidden="true" />
+                  {{ t('createVault.automaticAccessGrant.trustThreshold.disabledWarning') }}
+                </p>
               </div>
             </div>
           </div>
@@ -412,7 +416,7 @@
 </template>
 
 <script setup lang="ts">
-import { ClipboardIcon, XCircleIcon, ArrowDownTrayIcon } from '@heroicons/vue/20/solid';
+import { ClipboardIcon, XCircleIcon, ArrowDownTrayIcon, ExclamationTriangleIcon } from '@heroicons/vue/20/solid';
 import { ArrowPathIcon, ArrowUpOnSquareIcon, CheckIcon, DocumentCheckIcon, KeyIcon, PlusIcon, UserPlusIcon } from '@heroicons/vue/24/outline';
 import { saveAs } from 'file-saver';
 import { computed, onMounted, ref } from 'vue';

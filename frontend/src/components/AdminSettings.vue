@@ -243,11 +243,12 @@
             </label>
             <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
               <div class="flex items-center h-9">
-                <input id="enableAutomaticAccessGrant" v-model="enableAutomaticAccessGrant" type="checkbox" class="h-4 w-4 rounded-sm border-gray-300 text-primary focus:ring-primary" />
+                <input id="enableAutomaticAccessGrant" v-model="enableAutomaticAccessGrant" type="checkbox" aria-describedby="enableAutomaticAccessGrantDescription" class="h-4 w-4 rounded-sm border-gray-300 text-primary focus:ring-primary" />
+                <label for="enableAutomaticAccessGrant" class="ml-2 text-sm text-gray-500">
+                  {{ t('admin.automaticAccessGrant.enabled.help') }}
+                </label>
+                <span id="enableAutomaticAccessGrantDescription" class="hidden">{{ t('admin.automaticAccessGrant.enabled.help') }}</span>
               </div>
-              <p class="mt-2 text-sm text-gray-500">
-                {{ t('admin.automaticAccessGrant.enabled.help') }}
-              </p>
             </div>
           </div>
 
@@ -266,6 +267,10 @@
               <p class="mt-2 text-sm text-gray-500">
                 {{ t('admin.automaticAccessGrant.trustThreshold.description') }}
               </p>
+              <p v-if="enableAutomaticAccessGrant && Number(autoGrantTrustThreshold) === -1" class="mt-2 inline-flex items-start text-sm text-yellow-700">
+                <ExclamationTriangleIcon class="shrink-0 text-yellow-500 mr-1 h-5 w-5" aria-hidden="true" />
+                {{ t('admin.automaticAccessGrant.trustThreshold.disabledWarning') }}
+              </p>
             </div>
           </div>
 
@@ -275,11 +280,10 @@
             </label>
             <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
               <div class="flex items-center h-9">
-                <input id="allowAutomaticAccessGrantOverride" v-model="allowAutomaticAccessGrantOverride" type="checkbox" :disabled="!enableAutomaticAccessGrant" class="h-4 w-4 rounded-sm border-gray-300 text-primary focus:ring-primary disabled:bg-gray-200" />
+                <input id="allowAutomaticAccessGrantOverride" v-model="allowAutomaticAccessGrantOverride" type="checkbox" aria-describedby="allowAutomaticAccessGrantOverrideDescription" :disabled="!enableAutomaticAccessGrant" class="h-4 w-4 rounded-sm border-gray-300 text-primary focus:ring-primary disabled:bg-gray-200" />
+                <label for="allowAutomaticAccessGrantOverride" class="ml-2 text-sm text-gray-500" aria-hidden="true">{{ t('admin.automaticAccessGrant.allowOverride.help') }}</label>
+                <span id="allowAutomaticAccessGrantOverrideDescription" class="hidden">{{ t('admin.automaticAccessGrant.allowOverride.help') }}</span>
               </div>
-              <p class="mt-2 text-sm text-gray-500">
-                {{ t('admin.automaticAccessGrant.allowOverride.help') }}
-              </p>
             </div>
           </div>
 

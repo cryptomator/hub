@@ -36,10 +36,12 @@
             v-model="enableEmergencyAccess"
             type="checkbox"
             class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+            aria-describedby="enableEmergencyAccessDescription"
           />
           <label for="enableEmergencyAccess" class="ml-2 text-sm text-gray-500">
             {{ t('admin.emergencyAccess.enabled.help') }}
           </label>
+          <span id="enableEmergencyAccessDescription" class="hidden">{{ t('admin.emergencyAccess.enabled.help') }}</span>
         </div>
       </div>
 
@@ -111,13 +113,13 @@
         <span class="col-span-2"></span>
         <div class="mt-1 md:mt-0 lg:col-span-3 md:col-span-4 flex items-center h-9.5">
           <input
-            id="allow"
+            id="allowChoosingCouncil"
             v-model="allowChoosing"
             :disabled="!enableEmergencyAccess"
             type="checkbox"
             class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
           />
-          <label for="allow" class="ml-2 text-sm text-gray-500">
+          <label for="allowChoosingCouncil" class="ml-2 text-sm text-gray-500">
             {{ t('admin.emergencyAccess.allowChoosing.label') }}
             <label v-if="allowChoosing" for="minMembers"> {{ t('admin.emergencyAccess.allowChoosing.atLeast') }}</label>
           </label>
