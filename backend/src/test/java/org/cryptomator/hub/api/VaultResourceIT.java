@@ -272,13 +272,13 @@ public class VaultResourceIT {
 		}
 
 		@Test
-		@DisplayName("GET /vaults/users-requiring-access-grant?wait=0 returns 200 with user999 pending on vault2 (group-based access, ecdh key set)")
+		@DisplayName("GET /vaults/users-requiring-access-grant?wait=0 returns 200 with decryptable pending user999 on vault2")
 		void testGetUsersRequiringAccessGrant() {
-			// user999 was added to group2 (owner of vault2) by @BeforeEach setupTestData, has a valid ecdh key but no
-			// access token yet, so they must appear as pending on vault2 for user1 (vault2 member via group1).
-			// user998 also has effective access via group2 but has no ecdh key and must therefore not appear.
-			// We deliberately don't assert on the total number of vaults in the response: other tests in the suite
-			// may have left additional vaults around, so a strict size check is flaky across test ordering.
+			// user999 was added to group2 (owner of vault2) by @BeforeEach, has a valid ecdh key but no access token yet,
+			// so they are a pending member of vault2. The endpoint returns them because user1 holds a token for vault2
+			// (V9999), i.e. can decrypt and therefore re-share. The Web-of-Trust decision is left to the client, so no
+			// trust setup is needed here. user998 has no ecdh key, so it must not appear. We don't assert the total vault
+			// count: other tests may leave vaults around.
 			given().queryParam("wait", 0)
 					.when().get("/vaults/users-requiring-access-grant")
 					.then().statusCode(200)

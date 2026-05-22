@@ -257,6 +257,7 @@ import { JWT, JWTHeader } from '../common/jwt';
 import { UniversalVaultFormat } from '../common/universalVaultFormat';
 import userdata from '../common/userdata';
 import { VaultFormat8 } from '../common/vaultFormat8';
+import { unwrapVaultKeys } from '../common/vaultKeys';
 import ArchiveVaultDialog from './ArchiveVaultDialog.vue';
 import ClaimVaultOwnershipDialog from './ClaimVaultOwnershipDialog.vue';
 import DisplayRecoveryKeyDialog from './DisplayRecoveryKeyDialog.vue';
@@ -364,12 +365,11 @@ async function fetchOwnerData() {
     await refreshTrusts();
     membersRequiringAccessGrant.value = await backend.vaults.getUsersRequiringAccessGrant(props.vaultId);
     vaultRecoveryRequired.value = false;
-    const deviceId = await (await userdata.browserKeys)?.id();
-    const accessToken = await backend.vaults.accessToken(props.vaultId, deviceId, true);
-    if (vault.value.uvfMetadataFile) {
-      uvfVault.value = await loadUvfMetadata(accessToken);
-    } else {
-      vaultFormat8.value = await loadVaultFormat8Keys(accessToken);
+    const vaultKeys = await unwrapVaultKeys(vault.value);
+    if (vaultKeys instanceof UniversalVaultFormat) {
+      uvfVault.value = vaultKeys;
+    } else if (vaultKeys instanceof VaultFormat8) {
+      vaultFormat8.value = vaultKeys;
     }
   } catch (error) {
     if (error instanceof ForbiddenError) {
@@ -397,19 +397,6 @@ const councilMemberCount = computed(() =>
 const requiredGreaterThanMembers = computed(() =>
   (vault.value?.requiredEmergencyKeyShares ?? 0) > councilMemberCount.value
 );
-
-async function loadVaultFormat8Keys(vaultKeyJwe: string): Promise<VaultFormat8> {
-  const userKeys = await userdata.decryptUserKeysWithBrowser();
-  return VaultFormat8.decryptWithUserKey(vaultKeyJwe, userKeys);
-}
-
-async function loadUvfMetadata(accessToken: string): Promise<UniversalVaultFormat> {
-  if (!vault.value || !vault.value.uvfMetadataFile) {
-    throw new Error('Vault not initialized.');
-  }
-  const userKeys = await userdata.decryptUserKeysWithBrowser();
-  return UniversalVaultFormat.decrypt(vault.value, accessToken, userKeys);
-}
 
 async function provedOwnership(keys: VaultFormat8, ownerKeyPair: CryptoKeyPair) {
   if (!me.value) {

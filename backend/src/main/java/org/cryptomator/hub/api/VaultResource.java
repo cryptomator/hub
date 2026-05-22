@@ -191,13 +191,15 @@ public class VaultResource {
 	@RolesAllowed("user")
 	@RunOnVirtualThread
 	@Produces(MediaType.APPLICATION_JSON)
-	@Operation(summary = "list users who are missing an access token, grouped by vault",
+	@Operation(summary = "list pending access grants the caller could perform, grouped by vault",
 			description = """
-					Long-polling endpoint for the automatic access grant flow. Returns immediately if any vault accessible
-					to the caller has members without a per-user access token; otherwise blocks up to `wait` seconds and
-					returns either the next snapshot (if anything changes) or an empty list (on timeout). Best effort —
-					events emitted in flight on other backend instances will not wake this call; clients are expected to
-					poll on a coarse cadence as a backstop.""")
+					Long-polling endpoint for the automatic access grant flow. Returns members without an access token on
+					vaults the caller holds a token for (i.e. can decrypt and therefore re-share). The Web-of-Trust decision
+					and the vault's encrypted trust threshold / enabled flag are evaluated client-side — the server cannot
+					see them, and the recursive WoT view would be too costly to join here. Returns immediately if such
+					pending grants exist; otherwise blocks up to `wait` seconds and returns the next snapshot (or an empty
+					map on timeout). The client avoids re-evaluating candidates it has already ruled out (and backs off when
+					only such candidates remain). Best effort — events on other backend instances will not wake this call.""")
 	@APIResponse(responseCode = "200")
 	public Map<UUID, Set<String>> getUsersRequiringAccessGrant(@QueryParam("wait") @DefaultValue("25") @Min(0) int wait) throws InterruptedException {
 		var callerId = jwt.getSubject();

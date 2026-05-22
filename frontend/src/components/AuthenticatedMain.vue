@@ -12,6 +12,8 @@
   <div v-else>
     <NavigationBar :me="me" />
 
+    <AutomaticAccessGrantAgent />
+
     <div class="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
       <router-view />
     </div>
@@ -23,6 +25,7 @@ import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { UserDto } from '../common/backend';
 import userdata from '../common/userdata';
+import AutomaticAccessGrantAgent from './AutomaticAccessGrantAgent.vue';
 import FetchError from './FetchError.vue';
 import NavigationBar from './NavigationBar.vue';
 

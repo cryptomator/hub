@@ -238,7 +238,7 @@ export class DecodeUvfRecoveryKeyError extends Error {
 export class VaultMetadata {
 
   private constructor(
-    readonly automaticAccessGrant: VaultMetadataJWEAutomaticAccessGrantDto,
+    public automaticAccessGrant: VaultMetadataJWEAutomaticAccessGrantDto,
     readonly seeds: Map<number, Uint8Array<ArrayBuffer>>,
     readonly initialSeedId: number,
     readonly latestSeedId: number,

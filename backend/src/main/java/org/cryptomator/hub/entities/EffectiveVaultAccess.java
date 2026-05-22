@@ -90,7 +90,7 @@ import java.util.stream.Stream;
 		FROM EffectiveVaultAccess eva
 			INNER JOIN eva.authority u
 			INNER JOIN Vault v ON v.id = eva.id.vaultId
-			INNER JOIN EffectiveVaultAccess caller ON caller.id.vaultId = eva.id.vaultId AND caller.id.authorityId = :currentUser
+			INNER JOIN AccessToken callerToken ON callerToken.id.vaultId = eva.id.vaultId AND callerToken.id.userId = :currentUser
 			LEFT JOIN AccessToken token ON token.id.vaultId = eva.id.vaultId AND token.id.userId = u.id
 			WHERE v.archived = false AND token.vault IS NULL AND u.ecdhPublicKey IS NOT NULL AND u.enabled
 		"""
@@ -176,8 +176,14 @@ public class EffectiveVaultAccess {
 		}
 
 		/**
+		 * Finds the pending access grants the given user could perform, grouped by vault id. Limited to vaults the user
+		 * holds an access token for (i.e. can decrypt and therefore re-share). The Web-of-Trust decision and the vault's
+		 * own (encrypted, tamper-proof) trust threshold / enabled flag are evaluated client-side — deliberately not here:
+		 * the {@code effective_wot} view is a recursive transitive-closure computation that would be too costly to join
+		 * on this long-poll hot path, and the client already avoids re-evaluating ruled-out candidates via its blocklists.
+		 *
 		 * @param currentUserId ID of the currently logged-in user
-		 * @return ids of vault members who have no access token yet, grouped by vault id
+		 * @return ids of vault members who have no access token yet, on vaults the user can decrypt, grouped by vault id
 		 * @see #findMembersWithoutAccessTokensForVault(UUID)
 		 */
 		public Map<UUID, Set<String>> findMembersWithoutAccessTokens(String currentUserId) {

@@ -552,7 +552,7 @@ async function initialize() {
         recoveryKeyStr.value = await vaultFormat8.value.createRecoveryKey();
         break;
       case VaultType.UniversalVaultFormat:
-        uvfVault.value = await UniversalVaultFormat.create({ enabled: false, maxWotDepth: settings.value.wotMaxDepth });
+        uvfVault.value = await UniversalVaultFormat.create({ enabled: settings.value.enableAutomaticAccessGrant, maxWotDepth: settings.value.automaticAccessGrantTrustThreshold });
         recoveryKeyStr.value = await uvfVault.value.recoveryKey.createRecoveryKey();
         break;
     }
@@ -748,6 +748,11 @@ async function createVault() {
           throw new Error('Invalid state');
         }
         ownerGrant.token = await uvfVault.value.encryptForUser(await userdata.ecdhPublicKey, true);
+        if (!props.recover) {
+          // Apply the (possibly per-vault-overridden) automatic access grant policy now that the override step is done.
+          // On recovery the existing vault's policy must be preserved, so we leave the recovered metadata untouched.
+          uvfVault.value.metadata.automaticAccessGrant = { enabled: vaultAutoGrantEnabled.value, maxWotDepth: Number(vaultAutoGrantTrustThreshold.value) };
+        }
         const recoveryPublicKey = await uvfVault.value.recoveryKey.serializePublicKey();
         vault.value.uvfMetadataFile = await uvfVault.value.createMetadataFile(absBackendBaseURL, vault.value);
         vault.value.uvfKeySet = `{"keys": [${recoveryPublicKey}]}`;

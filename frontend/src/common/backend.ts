@@ -55,9 +55,14 @@ export type VaultDto = {
   salt?: string;
   authPublicKey?: string;
   authPrivateKey?: string;
+
   uvfMetadataFile?: string;
   uvfKeySet?: string;
 };
+
+export function isUvfVault(v: VaultDto): v is VaultDto & { uvfMetadataFile: string; uvfKeySet: string } {
+  return typeof v.uvfMetadataFile === 'string' && typeof v.uvfKeySet === 'string';
+}
 
 export type DeviceDto = {
   id: string;
