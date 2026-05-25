@@ -6,6 +6,8 @@ urls:
     clusterInternal: ""
     authServerUrl: ""
     tokenIssuer: ""
+  billing:
+    public: ""
 
 notes:
   useColor: true
@@ -75,6 +77,7 @@ hub:
     managedApi:
       username: ""
       password: ""
+    apiUrl: ""
 
 keycloak:
   enabled: true
