@@ -9,6 +9,10 @@ metadata:
     app.kubernetes.io/component: keycloak
 spec:
   replicas: 1
+  # Single-replica, cache-bearing service: replace the pod outright instead of briefly running two.
+  # Avoids the new pod trying to JGroups-JOIN the old (terminating) one during upgrades (long startup stall).
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       {{- include "cryptomator-hub.selectorLabels" . | nindent 6 }}
@@ -46,7 +50,7 @@ spec:
       {{- end }}
       containers:
         - name: keycloak
-          image: "ghcr.io/cryptomator/keycloak:{{ .Values.keycloak.image.tag | default "26.5.3" }}"
+          image: "ghcr.io/cryptomator/keycloak:{{ .Values.keycloak.image.tag | default "26.6.2" }}"
           imagePullPolicy: {{ .Values.keycloak.imagePullPolicy }}
           command:
             - /opt/keycloak/bin/kc.sh
@@ -76,20 +80,20 @@ spec:
                 name: {{ include "cryptomator-hub.fullname" . }}-config-kc
           startupProbe:
             httpGet:
-              path: {{ printf "%s/health/started" (trimSuffix "/" (include "cryptomator-hub.keycloakRelativePath" .)) }}
+              path: /health/started
               port: management
             initialDelaySeconds: 10
             periodSeconds: 5
             failureThreshold: 36
           livenessProbe:
             httpGet:
-              path: {{ printf "%s/health/live" (trimSuffix "/" (include "cryptomator-hub.keycloakRelativePath" .)) }}
+              path: /health/live
               port: management
             periodSeconds: 10
             failureThreshold: 6
           readinessProbe:
             httpGet:
-              path: {{ printf "%s/health/ready" (trimSuffix "/" (include "cryptomator-hub.keycloakRelativePath" .)) }}
+              path: /health/ready
               port: management
             periodSeconds: 5
             failureThreshold: 6
@@ -107,15 +111,16 @@ spec:
             - name: tmp
               mountPath: /tmp
               subPath: tmp
-            - name: tmp
-              mountPath: /opt/keycloak/data/tmp
-              subPath: data-tmp
+            - name: data
+              mountPath: /opt/keycloak/data
             - name: realm
               mountPath: /opt/keycloak/data/import/realm.json
               subPath: realm.json
               readOnly: true
       volumes:
         - name: tmp
+          emptyDir: {}
+        - name: data
           emptyDir: {}
         - name: realm
           secret:
