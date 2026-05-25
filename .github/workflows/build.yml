@@ -164,14 +164,25 @@ jobs:
       - name: Determine versions
         id: version
         run: |
-          echo "short_sha=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+          set -euo pipefail
+          short_sha="${GITHUB_SHA::7}"
           if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
-            echo "app_version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
-            echo "chart_version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+            version="${GITHUB_REF_NAME#v}"
+            # Tag names can contain shell metacharacters and these values flow into later `run:` interpolations,
+            # so allow only OCI-tag-safe characters and fail fast otherwise.
+            if [[ ! "$version" =~ ^[0-9A-Za-z._-]+$ ]]; then
+              echo "::error::Refusing unsafe version '${version}' derived from tag '${GITHUB_REF_NAME}' (allowed: [0-9A-Za-z._-])" >&2
+              exit 1
+            fi
+            app_version="$version"
+            chart_version="$version"
           else
-            echo "app_version=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
-            echo "chart_version=0.0.0-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+            app_version="$short_sha"
+            chart_version="0.0.0-${short_sha}"
           fi
+          echo "short_sha=${short_sha}" >> "$GITHUB_OUTPUT"
+          echo "app_version=${app_version}" >> "$GITHUB_OUTPUT"
+          echo "chart_version=${chart_version}" >> "$GITHUB_OUTPUT"
       - name: Login to GHCR
         uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
         with:

@@ -52,6 +52,8 @@ Once both commands are running:
 > [!WARNING]
 > `values-demo.yaml` is for local evaluation only: it uses well-known passwords, retains secrets on `helm uninstall`, and requests minimal storage. Start from `values-prod.yaml` for real deployments.
 
+<!-- separates the two GitHub alerts above/below (avoids markdownlint MD028) -->
+
 > [!TIP]
 > Keycloak imports the realm **only on first boot** (`--import-realm` does not overwrite an existing realm). Because Postgres data persists across reinstalls — and the demo additionally keeps Secrets via `keepOnUninstall` — changing `urls.hub.public` / `urls.kc.public` after the first install leaves the realm (and its OIDC redirect URIs) stale, which surfaces as a Keycloak `Invalid parameter: redirect_uri` error. To pick up new URLs, either edit the client in the Keycloak admin console, or reset the realm:
 >

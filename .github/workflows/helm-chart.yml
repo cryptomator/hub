@@ -68,12 +68,20 @@ jobs:
 
       - name: Compute publish version
         id: version
+        env:
+          # Pass inputs via env so the shell treats them as data, not as code to interpolate (avoids template injection).
+          INPUT_APP_VERSION: ${{ inputs.appVersion }}
+          INPUT_VERSION: ${{ inputs.version }}
         run: |
           set -euo pipefail
-          if [[ -n "${{ inputs.appVersion }}" ]]; then
-            # Inputs are required for workflow_dispatch and workflow_call, so use them as-is.
-            publish_app_version="${{ inputs.appVersion }}"
-            publish_version="${{ inputs.version }}"
+          if [[ -n "$INPUT_APP_VERSION" ]]; then
+            # Inputs come from workflow_dispatch/workflow_call; treat as untrusted and allow only OCI-tag-safe characters.
+            if [[ ! "$INPUT_APP_VERSION" =~ ^[0-9A-Za-z._-]+$ || ! "$INPUT_VERSION" =~ ^[0-9A-Za-z._-]+$ ]]; then
+              echo "::error::Invalid appVersion/version input (allowed: [0-9A-Za-z._-])" >&2
+              exit 1
+            fi
+            publish_app_version="$INPUT_APP_VERSION"
+            publish_version="$INPUT_VERSION"
           else
             # Triggered by `[build chart]` push (branch-only via `branches: ["**"]`); derive from commit SHA.
             # SemVer pre-release sorts below any real release; `-` (not `+`) keeps the tag OCI-compatible.
