@@ -76,20 +76,20 @@ spec:
                 name: {{ include "cryptomator-hub.fullname" . }}-config-kc
           startupProbe:
             httpGet:
-              path: {{ printf "%s/health/started" (include "cryptomator-hub.keycloakRelativePath" .) }}
+              path: {{ printf "%s/health/started" (trimSuffix "/" (include "cryptomator-hub.keycloakRelativePath" .)) }}
               port: management
             initialDelaySeconds: 10
             periodSeconds: 5
             failureThreshold: 36
           livenessProbe:
             httpGet:
-              path: {{ printf "%s/health/live" (include "cryptomator-hub.keycloakRelativePath" .) }}
+              path: {{ printf "%s/health/live" (trimSuffix "/" (include "cryptomator-hub.keycloakRelativePath" .)) }}
               port: management
             periodSeconds: 10
             failureThreshold: 6
           readinessProbe:
             httpGet:
-              path: {{ printf "%s/health/ready" (include "cryptomator-hub.keycloakRelativePath" .) }}
+              path: {{ printf "%s/health/ready" (trimSuffix "/" (include "cryptomator-hub.keycloakRelativePath" .)) }}
               port: management
             periodSeconds: 5
             failureThreshold: 6

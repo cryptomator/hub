@@ -41,8 +41,7 @@ hub:
   config:
     keycloakRealm: cryptomator
     keycloakSyncerPeriod: 5m
-    keycloakPublicUrl: ""
-    keycloakLocalUrl: ""
+    contentSecurityPolicy: ""
   metrics:
     # Hub ships metrics, traces and logs via OpenTelemetry / OTLP.
     enabled: false

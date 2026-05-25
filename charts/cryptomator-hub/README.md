@@ -22,6 +22,10 @@ Supported ingress controller templates:
 Assuming you have a local Minikube cluster, e.g. via [Podman Desktop](https://podman-desktop.io/) with nginx ingress on port 9090:
 
 ```bash
+# one-off (skip if your cluster already has nginx-ingress)
+minikube addons enable ingress
+
+# deploy
 helm install hub charts/cryptomator-hub \
   --namespace cryptomator \
   --create-namespace \
@@ -31,6 +35,39 @@ helm install hub charts/cryptomator-hub \
   --set ingress.controller=nginx \
   --set hub.admin.password=password
 ```
+
+In a separate terminal, expose the ingress controller on `localhost:9090`:
+
+```bash
+kubectl port-forward -n ingress-nginx svc/ingress-nginx-controller 9090:80
+```
+
+Once both commands are running:
+
+| URL | Credentials |
+|---|---|
+| Hub UI: <http://localhost:9090/hub> | `admin` / `admin` |
+| Keycloak admin: <http://localhost:9090/kc> | `admin` / `admin` |
+
+> [!WARNING]
+> `values-demo.yaml` is for local evaluation only: it uses well-known passwords, retains secrets on `helm uninstall`, and requests minimal storage. Start from `values-prod.yaml` for real deployments.
+
+> [!TIP]
+> Keycloak imports the realm **only on first boot** (`--import-realm` does not overwrite an existing realm). Because Postgres data persists across reinstalls — and the demo additionally keeps Secrets via `keepOnUninstall` — changing `urls.hub.public` / `urls.kc.public` after the first install leaves the realm (and its OIDC redirect URIs) stale, which surfaces as a Keycloak `Invalid parameter: redirect_uri` error. To pick up new URLs, either edit the client in the Keycloak admin console, or reset the realm:
+>
+> ```bash
+> helm uninstall hub -n cryptomator
+> kubectl delete pvc -n cryptomator data-hub-pg-0
+> kubectl delete secret -n cryptomator hub-secrets-hub hub-secrets-kc hub-secrets-pg --ignore-not-found
+> # then reinstall
+> ```
+
+### Routing: subdomains vs. subpaths
+
+The ingress layout is derived entirely from the public URLs you provide — the chart parses host and path independently, so both styles work with the same templates:
+
+- **Subdomains** (as in the demo): give each component a bare host, e.g. `urls.hub.public=https://hub.example.com`, `urls.kc.public=https://kc.example.com`. Each is served at `/`. Keycloak then lives on a different origin than Hub; the chart automatically allowlists it in Hub's `Content-Security-Policy` (`connect-src`), so the browser can reach the OIDC endpoints.
+- **Subpaths**: share one host with distinct prefixes, e.g. `urls.hub.public=https://example.com/hub`, `urls.kc.public=https://example.com/kc`. The chart adds the controller-specific path rewrite (nginx regex / Traefik `stripPrefix`) automatically.
 
 Passwords are optional by default. If unset, the chart generates random values and
 prints commands in `helm` notes to retrieve them from Kubernetes Secrets.
@@ -64,15 +101,15 @@ helm install hub charts/cryptomator-hub \
   --set postgres.enabled=false \
   --set hub.database.jdbcUrl='jdbc:postgresql://db.example:5432/hub' \
   --set hub.database.username='hub' \
-  --set hub.config.keycloakPublicUrl='https://sso.example/kc' \
-  --set hub.config.keycloakLocalUrl='http://keycloak.svc.cluster.local:8080/kc' \
-  --set hub.oidc.authServerUrl='http://keycloak.svc.cluster.local:8080/kc/realms/cryptomator' \
-  --set hub.oidc.tokenIssuer='https://sso.example/kc/realms/cryptomator'
+  --set urls.kc.public='https://sso.example/kc' \
+  --set urls.kc.clusterInternal='http://keycloak.svc.cluster.local:8080/kc' \
+  --set urls.kc.authServerUrl='http://keycloak.svc.cluster.local:8080/kc/realms/cryptomator' \
+  --set urls.kc.tokenIssuer='https://sso.example/kc/realms/cryptomator'
 ```
 
 ### Importing `realm.json`
 
-Even with `keycloak.enabled=false`, the chart still renders `realm.json` in Secret `<release>-keycloak` so you can manually export/import it for your existing Keycloak.
+Even with `keycloak.enabled=false`, the chart still renders `realm.json` in Secret `<release>-secrets-kc` so you can manually export/import it for your existing Keycloak.
 
 Assuming namespace `cryptomator` and name `hub`:
 
