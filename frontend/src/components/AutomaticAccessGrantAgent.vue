@@ -29,40 +29,21 @@ import wot from '../common/wot';
  */
 
 const POLL_WAIT_SECONDS = 25;
-const ERROR_BACKOFF_MS = 30_000;
-// Incremental backoff applied when a poll returns only candidates we have already ruled out (see blocklists below).
-const BLOCKED_BACKOFF_BASE_MS = 10_000;
-const BLOCKED_BACKOFF_MAX_MS = 600_000;
+// The single best-effort cadence knob. After a poll that returned (possibly ungrantable) work, we wait this long before
+// re-polling, so we neither hammer the backend nor re-decrypt vaults on a tight loop. It doubles as the "forget"
+// mechanism: there is no blocklist — every cycle re-evaluates all pending candidates from scratch — so a candidate ruled
+// out earlier (e.g. not yet trusted, or on a vault whose policy was disabled) is simply retried on the next cycle, which
+// is how a later-established trust or changed vault policy gets picked up.
+const RETRY_INTERVAL_MS = 120_000;
 
 let running = false;
 
-// Session-scoped blocklists, so we neither re-decrypt vaults nor re-evaluate candidates we have already ruled out. They
-// are intentionally not persisted: a fresh page load (or re-login) re-evaluates everything, which is how a vault that
-// later enables auto-grant, or a candidate whose trust is later established, is eventually picked up.
-const disqualifiedVaults = new Set<string>(); // vaults that don't qualify for auto grant (not UVF, or auto-grant disabled)
-// Untrusted user ids. Trust is a property of the (current user, candidate) relationship, not of a vault, so a single
-// set suffices: a user we won't grant on one vault, we won't grant on another. (With per-vault trust-threshold
-// overrides this can over-block — failing a stricter vault blocklists the user for a more lenient one too — which is an
-// acceptable conservative trade-off for a best-effort flow.)
-const untrustedCandidates = new Set<string>();
-
-/**
- * Filters the pending grants down to the work not already ruled out: drops disqualified vaults and untrusted candidates,
- * and omits vaults left with no candidates. The result is the set of grants actually worth evaluating this cycle.
- */
-function freshWork(pending: PendingAccessGrants): Map<string, string[]> {
-  const work = new Map<string, string[]>();
-  for (const [vaultId, userIds] of Object.entries(pending)) {
-    if (disqualifiedVaults.has(vaultId)) {
-      continue;
-    }
-    const freshUserIds = userIds.filter(userId => !untrustedCandidates.has(userId));
-    if (freshUserIds.length > 0) {
-      work.set(vaultId, freshUserIds);
-    }
-  }
-  return work;
-}
+// A vault's auto-grant eligibility is fixed for its lifetime — a legacy (non-UVF) vault never qualifies, and the
+// `enabled` flag lives in the vault's immutable, encrypted UVF metadata — so once ruled out we never re-examine it,
+// sparing a fetch + decrypt every cycle. This is unlike user trust, which can change and is therefore re-evaluated
+// every cycle. Session-scoped (not persisted): a reload re-checks, which is how a newly-created qualifying vault is
+// eventually picked up.
+const disqualifiedVaults = new Set<string>();
 
 onMounted(async () => {
   // Only fully set-up users can grant: we need their private keys to unwrap and re-wrap vault keys.
@@ -79,58 +60,63 @@ onBeforeUnmount(() => {
 });
 
 async function loop(): Promise<void> {
-  let backoffMillis = BLOCKED_BACKOFF_BASE_MS;
   while (running) {
     try {
-      // The endpoint only returns candidates this user can be expected to grant (vaults they can decrypt, recipients
-      // they have a Web-of-Trust path to). It blocks up to POLL_WAIT_SECONDS while there is nothing to return.
+      // The endpoint returns pending grants on vaults this user can decrypt, blocking up to POLL_WAIT_SECONDS while
+      // there is nothing to return. It cannot evaluate a vault's (encrypted) policy or the Web of Trust, so some
+      // returned candidates may turn out to be ungrantable; we just skip those and let the next cycle retry them.
       const pending = await backend.vaults.listPendingAccessGrants(POLL_WAIT_SECONDS);
-
-      // The server cannot see a vault's (encrypted) enabled flag or exact trust threshold, so it may still return items
-      // we have already ruled out locally. If nothing pending is still worth evaluating, there is nothing to do — apply
-      // an incremental backoff instead of re-fetching/re-decrypting on a tight loop.
-      const work = freshWork(pending);
-      if (work.size === 0) {
-        await sleep(backoffMillis);
-        backoffMillis = Math.min(backoffMillis * 2, BLOCKED_BACKOFF_MAX_MS);
-        continue;
-      }
-      backoffMillis = BLOCKED_BACKOFF_BASE_MS; // there is something new to evaluate; reset the backoff
-
-      for (const [vaultId, candidateUserIds] of work) {
-        if (!running) {
-          return;
-        }
-        try {
-          await processVault(vaultId, candidateUserIds);
-        } catch (error) {
-          // e.g. this user holds no token for the vault (so cannot share its key) — skip it, keep processing others.
-          console.warn(`Automatic access grant for vault ${vaultId} failed; skipping.`, error);
-        }
+      const grantedSomething = await processPending(pending);
+      // Throttle only when a poll returned candidates but we granted none of them: the server would keep returning those
+      // ungrantable candidates immediately, so wait before retrying instead of tight-looping. If we granted something we
+      // re-poll at once (more may have become grantable), and when idle we re-enter the long-poll at once so genuinely
+      // new members are still picked up promptly.
+      if (running && Object.keys(pending).length > 0 && !grantedSomething) {
+        await sleep(RETRY_INTERVAL_MS);
       }
     } catch (error) {
       if (!running) {
         return;
       }
-      console.warn('Automatic access grant cycle failed; backing off.', error);
-      await sleep(ERROR_BACKOFF_MS);
+      console.warn('Automatic access grant cycle failed; retrying later.', error);
+      await sleep(RETRY_INTERVAL_MS);
     }
   }
 }
 
-async function processVault(vaultId: string, candidateUserIds: string[]): Promise<void> {
+/** Evaluates one poll's pending grants, granting what it can. Returns whether any access was granted. */
+async function processPending(pending: PendingAccessGrants): Promise<boolean> {
+  let grantedSomething = false;
+  for (const [vaultId, candidateUserIds] of Object.entries(pending)) {
+    if (!running) {
+      break;
+    }
+    if (disqualifiedVaults.has(vaultId)) {
+      continue; // permanently ineligible (see disqualifiedVaults) — skip without re-fetching/decrypting
+    }
+    try {
+      grantedSomething = await processVault(vaultId, candidateUserIds) || grantedSomething;
+    } catch (error) {
+      // e.g. this user holds no token for the vault (so cannot share its key) — skip it, keep processing others.
+      console.warn(`Automatic access grant for vault ${vaultId} failed; skipping.`, error);
+    }
+  }
+  return grantedSomething;
+}
+
+async function processVault(vaultId: string, candidateUserIds: string[]): Promise<boolean> {
   const me = await userdata.me;
   const vault = await backend.vaults.get(vaultId);
   if (!isUvfVault(vault)) {
     disqualifiedVaults.add(vaultId); // legacy vaults carry no auto-grant policy and are never auto-granted
-    return;
+    return false;
   }
 
   const vaultKeys: UniversalVaultFormat = await unwrapVaultKeys(vault);
   const { enabled, maxWotDepth } = vaultKeys.metadata.automaticAccessGrant;
   if (!enabled) {
     disqualifiedVaults.add(vaultId); // this vault has opted out of automatic access grant
-    return;
+    return false;
   }
 
   const candidates = await backend.authorities.listSome(candidateUserIds, false);
@@ -140,20 +126,20 @@ async function processVault(vaultId: string, candidateUserIds: string[]): Promis
       continue; // never grant to self
     }
     if (candidate.type !== 'USER' || !candidate.ecdhPublicKey || !candidate.ecdsaPublicKey) {
-      untrustedCandidates.add(candidate.id); // groups / not-yet-set-up users can't receive a key
-      continue;
+      continue; // groups / not-yet-set-up users can't receive a key
     }
     if (!await isTrusted(candidate.id, candidate.ecdhPublicKey, candidate.ecdsaPublicKey, maxWotDepth)) {
-      untrustedCandidates.add(candidate.id); // no usable / sufficiently-short trust path to this user
-      continue;
+      continue; // no usable / sufficiently-short trust path to this user (yet) — retried next cycle
     }
     const publicKey = base64.decode(candidate.ecdhPublicKey) as Uint8Array<ArrayBuffer>;
     const token = await vaultKeys.encryptForUser(publicKey); // member-level access; recovery keys are never auto-shared
     grants.push({ userId: candidate.id, token });
   }
-  if (grants.length > 0) {
-    await submitGrants(vaultId, grants);
+  if (grants.length === 0) {
+    return false;
   }
+  await submitGrants(vaultId, grants);
+  return true;
 }
 
 /**
