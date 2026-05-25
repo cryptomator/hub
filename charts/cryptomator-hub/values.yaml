@@ -16,7 +16,7 @@ secrets:
   keepOnUninstall: false
 
 ingress:
-  # supported: nginx, traefik, contour
+  # supported: nginx, traefik
   controller: ""
   className: ""
   annotations: {}

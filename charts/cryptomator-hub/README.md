@@ -15,7 +15,6 @@ TLS termination is currently expected to be done by ingress controller.
 Supported ingress controller templates:
 - `ingress.controller=nginx`
 - `ingress.controller=traefik`
-- `ingress.controller=contour`
 
 
 ## Quick Start (Full Internal Stack)
