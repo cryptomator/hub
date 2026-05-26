@@ -8,7 +8,7 @@ This chart deploys:
 
 Image repositories are fixed in templates; tags are overridable per workload:
 - Hub: `ghcr.io/cryptomator/hub:<hub.image.tag>` (defaults to chart `appVersion`)
-- Keycloak: `ghcr.io/cryptomator/keycloak:<keycloak.image.tag>` (default `26.5.3`)
+- Keycloak: `ghcr.io/cryptomator/keycloak:<keycloak.image.tag>` (default `26.6.2`)
 - PostgreSQL: `postgres:<postgres.image.tag>` (default `17-alpine`)
 
 TLS termination is currently expected to be done by ingress controller.

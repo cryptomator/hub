@@ -27,7 +27,7 @@ spec:
     - host: {{ $hubHost | quote }}
       http:
         paths:
-          - path: {{ if eq $hubPath "/" }}{{ "/" | quote }}{{ else }}{{ printf "%s(/|$)(.*)" $hubPath | quote }}{{ end }}
+          - path: {{ if eq $hubPath "/" }}{{ "/" | quote }}{{ else }}{{ printf "%s(/|$)(.*)" (regexQuoteMeta $hubPath) | quote }}{{ end }}
             pathType: {{ if eq $hubPath "/" }}Prefix{{ else }}ImplementationSpecific{{ end }}
             backend:
               service:
@@ -65,7 +65,7 @@ spec:
     - host: {{ $kcHost | quote }}
       http:
         paths:
-          - path: {{ if eq $kcPath "/" }}{{ "/" | quote }}{{ else }}{{ printf "%s(/|$)(.*)" $kcPath | quote }}{{ end }}
+          - path: {{ if eq $kcPath "/" }}{{ "/" | quote }}{{ else }}{{ printf "%s(/|$)(.*)" (regexQuoteMeta $kcPath) | quote }}{{ end }}
             pathType: {{ if eq $kcPath "/" }}Prefix{{ else }}ImplementationSpecific{{ end }}
             backend:
               service:
