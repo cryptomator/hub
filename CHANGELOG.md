@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Allow admins to archive and unarchive any vault (#283, #430)
 - Disable users to exclude them from license seat count (#427, #428)
 - Display a banner to indicate that legacy devices are still in use, since these will be removed in the next major release (#420)
+- Published Helm chart (#406, #456)
 
 ### Changed
 
