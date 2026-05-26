@@ -21,20 +21,26 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+      - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+        with:
+          package_json_file: frontend/package.json
+      - name: Check lockfile integrity
+        working-directory: frontend
+        run: bash scripts/check-lockfile.sh
       - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-      - name: NPM install
+          cache: 'pnpm'
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - name: pnpm install
         working-directory: frontend
-        run: npm ci --ignore-scripts
+        run: pnpm install --frozen-lockfile
       - name: Build and test frontend
         working-directory: frontend
-        run: npm run test:coverage
+        run: pnpm run test:coverage
       - name: Deploy frontend
         working-directory: frontend
-        run: npm run dist
+        run: pnpm run dist
       - name: SonarCloud Scan Frontend
         uses: SonarSource/sonarqube-scan-action@299e4b793aaa83bf2aba7c9c14bedbb485688ec4 # v7.1.0
         with:
@@ -96,17 +102,23 @@ jobs:
       packages: write # Required for pushing the image to GHCR
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+        with:
+          package_json_file: frontend/package.json
+      - name: Check lockfile integrity
+        working-directory: frontend
+        run: bash scripts/check-lockfile.sh
       - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-      - name: NPM install
+          cache: 'pnpm'
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - name: pnpm install
         working-directory: frontend
-        run: npm ci --ignore-scripts
+        run: pnpm install --frozen-lockfile
       - name: Deploy frontend
         working-directory: frontend
-        run: npm run dist
+        run: pnpm run dist
       - name: Ensure to use tagged version
         working-directory: backend
         run: ./mvnw versions:set --file pom.xml -DnewVersion=${GITHUB_REF##*/}
@@ -149,6 +161,9 @@ jobs:
     name: Build and Push Multi-Arch Image
     needs: build-native-image
     runs-on: ubuntu-latest
+    outputs:
+      app_version: ${{ steps.version.outputs.app_version }}
+      chart_version: ${{ steps.version.outputs.chart_version }}
     permissions:
       contents: read # Required for checkout
       id-token: write # Required for the attestations step
@@ -158,26 +173,45 @@ jobs:
     steps:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
-      - name: Determine short Commit SHA
-        id: sha
-        run: echo "short_sha=${LONG_SHA:0:7}" >> "$GITHUB_OUTPUT"
-        env:
-          LONG_SHA: ${{ github.sha }}
+      - name: Determine versions
+        id: version
+        run: |
+          set -euo pipefail
+          short_sha="${GITHUB_SHA::7}"
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            version="${GITHUB_REF_NAME#v}"
+            # Tag names can contain shell metacharacters and these values flow into later `run:` interpolations,
+            # so allow only OCI-tag-safe characters and fail fast otherwise.
+            if [[ ! "$version" =~ ^[0-9A-Za-z._-]+$ ]]; then
+              echo "::error::Refusing unsafe version '${version}' derived from tag '${GITHUB_REF_NAME}' (allowed: [0-9A-Za-z._-])" >&2
+              exit 1
+            fi
+            app_version="$version"
+            chart_version="$version"
+          else
+            app_version="$short_sha"
+            chart_version="0.0.0-${short_sha}"
+          fi
+          echo "short_sha=${short_sha}" >> "$GITHUB_OUTPUT"
+          echo "app_version=${app_version}" >> "$GITHUB_OUTPUT"
+          echo "chart_version=${chart_version}" >> "$GITHUB_OUTPUT"
       - name: Login to GHCR
         uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Create Multi-Arch Manifest for ghcr.io/cryptomator/hub:${{ steps.sha.outputs.short_sha }}
+      - name: Create Multi-Arch Manifest for ghcr.io/cryptomator/hub:${{ steps.version.outputs.app_version }}
         run: >
-          docker buildx imagetools create --tag ghcr.io/cryptomator/hub:${{ steps.sha.outputs.short_sha }}
-          ghcr.io/cryptomator/hub@${{ needs.build-native-image.outputs.digest_amd64 }}
-          ghcr.io/cryptomator/hub@${{ needs.build-native-image.outputs.digest_arm64 }}
+          docker buildx imagetools create
+          --tag "ghcr.io/cryptomator/hub:${{ steps.version.outputs.app_version }}"
+          --tag "ghcr.io/cryptomator/hub:${{ steps.version.outputs.short_sha }}"
+          "ghcr.io/cryptomator/hub@${{ needs.build-native-image.outputs.digest_amd64 }}"
+          "ghcr.io/cryptomator/hub@${{ needs.build-native-image.outputs.digest_arm64 }}"
       - name: Retrieve Multi-Arch Digest
         id: inspect
         run: |
-          DIGEST=$(docker buildx imagetools inspect ghcr.io/cryptomator/hub:${{ steps.sha.outputs.short_sha }} --format "{{json .Manifest}}" | jq -r .digest)
+          DIGEST=$(docker buildx imagetools inspect ghcr.io/cryptomator/hub:${{ steps.version.outputs.app_version }} --format "{{json .Manifest}}" | jq -r .digest)
           echo "digest_multiarch=${DIGEST}" >> "$GITHUB_OUTPUT"
       - name: Generate artifact attestation
         uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
@@ -185,3 +219,18 @@ jobs:
           subject-name: ghcr.io/cryptomator/hub
           subject-digest: ${{ steps.inspect.outputs.digest_multiarch }}
           push-to-registry: true
+
+  publish-helm-chart:
+    name: Publish Helm Chart
+    needs: multi-arch-image
+    uses: ./.github/workflows/helm-chart.yml
+    with:
+      appVersion: ${{ needs.multi-arch-image.outputs.app_version }}
+      version: ${{ needs.multi-arch-image.outputs.chart_version }}
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+      packages: write
+    secrets: inherit

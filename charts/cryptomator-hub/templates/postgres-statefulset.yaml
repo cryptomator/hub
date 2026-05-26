@@ -52,7 +52,7 @@ spec:
               mountPath: /var/run/postgresql
       containers:
         - name: postgres
-          image: "postgres:17-alpine"
+          image: "postgres:{{ .Values.postgres.image.tag | default "17-alpine" }}"
           imagePullPolicy: {{ .Values.postgres.imagePullPolicy }}
           ports:
             - name: postgres

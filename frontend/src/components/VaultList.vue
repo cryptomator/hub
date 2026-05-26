@@ -95,17 +95,15 @@
             <div v-if="ownedVaults?.some(ownedVault => ownedVault.id == vault.id) && cfg.entitlements.emergencyAccessEnabled && settings?.enableEmergencyAccess">
               <EmergencyBadge
                 v-if="settings && settings.defaultMinMembers > emergencyAccessMembers(vault).length"
-                type="insufficientCouncilMembers"
+                type="warning"
                 :title="t('emergencyAccess.badge.insufficientCouncilMembers.title')"
                 :message="t('emergencyAccess.badge.insufficientCouncilMembers.message', [settings.defaultMinMembers])"
-                position="right"
               />
               <EmergencyBadge
                 v-else-if="vault.requiredEmergencyKeyShares > emergencyAccessMembers(vault).length"
-                type="broken"
+                type="error"
                 :title="t('emergencyAccess.badge.broken.title')"
                 :message="t('emergencyAccess.badge.broken.message')"
-                position="right"
               />
             </div>
             <div class="ml-5 shrink-0">

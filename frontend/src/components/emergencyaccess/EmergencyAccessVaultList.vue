@@ -99,22 +99,19 @@
                 <div class="flex flex-wrap items-center gap-2 sm:justify-end" @click.stop>
                   <EmergencyBadge
                     v-if="isBroken(vault)"
-                    type="broken"
+                    type="error"
                     :title="t('emergencyAccess.badge.broken.title')"
                     :message="t('emergencyAccess.badge.broken.message')"
                   />
-
                   <EmergencyBadge
                     v-if="settings && settings.defaultMinMembers > emergencyAccessMembers(vault).length"
-                    type="insufficientCouncilMembers"
+                    type="warning"
                     :title="t('emergencyAccess.badge.insufficientCouncilMembers.title')"
                     :message="t('emergencyAccess.badge.insufficientCouncilMembers.message', [settings.defaultMinMembers])"
-                    position="right"
                   />
-
                   <EmergencyBadge
                     v-else-if="vault.requiredEmergencyKeyShares === emergencyAccessMembers(vault).length"
-                    type="noRedundancy"
+                    type="warning"
                     :title="t('emergencyAccess.badge.noRedundancy.title')"
                     :message="t('emergencyAccess.badge.noRedundancy.message')"
                   />
@@ -155,10 +152,9 @@
                   <div class="mt-auto pt-2 flex flex-wrap items-center gap-2">
                     <EmergencyBadge
                       v-if="!isEmergencyKeyShareHolder(vault)"
-                      type="notCouncil"
+                      type="warning"
                       :title="t('emergencyAccess.badge.notCouncil.title')"
                       :message="t('emergencyAccess.badge.notCouncil.message')"
-                      position="left"
                     />
                     <EmergencyProcessButton
                       v-if="getProcessByType(vault, 'COUNCIL_CHANGE')"

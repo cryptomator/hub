@@ -7,15 +7,18 @@
   "license": "AGPL-3.0-or-later",
   "private": true,
   "main": "index.js",
+  "packageManager": "pnpm@10.33.4",
   "scripts": {
-    "dev": "vite",
+    "preinstall": "node scripts/check-pm.js",
+    "dev": "node scripts/check-pm.js && vite",
     "build": "vue-tsc --noEmit && vite build",
     "lint": "eslint",
+    "lint:fix": "eslint --fix",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "serve": "vite preview",
-    "dist": "vue-tsc --noEmit && vite build --sourcemap --outDir=\"../backend/src/main/resources/META-INF/resources\" --emptyOutDir"
+    "dist": "node scripts/check-pm.js && vue-tsc --noEmit && vite build --sourcemap --outDir=\"../backend/src/main/resources/META-INF/resources\" --emptyOutDir"
   },
   "directories": {
     "src": "./src",
@@ -52,7 +55,7 @@
     "@heroicons/vue": "^2.2.0",
     "@noble/ciphers": "^2.2.0",
     "@scure/base": "^2.0.0",
-    "axios": "^1.14.0",
+    "axios": "^1.15.2",
     "file-saver": "^2.0.5",
     "jdenticon": "^3.3.0",
     "jszip": "^3.10.1",

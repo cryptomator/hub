@@ -2,6 +2,7 @@ name: Helm Chart
 
 on:
   push:
+    branches: ["**"]
     paths:
       - charts/cryptomator-hub/**
       - .github/workflows/helm-chart.yml
@@ -13,6 +14,16 @@ on:
       appVersion:
         description: 'App Version'
         required: true
+  workflow_call:
+    inputs:
+      version:
+        description: 'Chart Version'
+        required: true
+        type: string
+      appVersion:
+        description: 'App Version'
+        required: true
+        type: string
 
 defaults:
   run:
@@ -37,7 +48,7 @@ jobs:
   publish:
     name: Publish Helm Chart
     needs: lint
-    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/') || contains(github.event.head_commit.message, '[build image]') || contains(github.event.head_commit.message, '[build chart]')
+    if: inputs.version && inputs.appVersion || contains(github.event.head_commit.message, '[build chart]')
     runs-on: ubuntu-latest
     permissions:
       contents: read # Required for checkout
@@ -57,23 +68,26 @@ jobs:
 
       - name: Compute publish version
         id: version
+        env:
+          # Pass inputs via env so the shell treats them as data, not as code to interpolate (avoids template injection).
+          INPUT_APP_VERSION: ${{ inputs.appVersion }}
+          INPUT_VERSION: ${{ inputs.version }}
         run: |
           set -euo pipefail
-          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
-            publish_app_version="${{ github.event.inputs.appVersion }}"
-            publish_version="${{ github.event.inputs.version }}"
-            if [[ -z "$publish_version" ]]; then
-              publish_version="$publish_app_version"
+          if [[ -n "$INPUT_APP_VERSION" ]]; then
+            # Inputs come from workflow_dispatch/workflow_call; treat as untrusted and allow only OCI-tag-safe characters.
+            if [[ ! "$INPUT_APP_VERSION" =~ ^[0-9A-Za-z._-]+$ || ! "$INPUT_VERSION" =~ ^[0-9A-Za-z._-]+$ ]]; then
+              echo "::error::Invalid appVersion/version input (allowed: [0-9A-Za-z._-])" >&2
+              exit 1
             fi
-          elif [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
-            publish_version="${GITHUB_REF_NAME#v}"
-            publish_app_version="$publish_version"
+            publish_app_version="$INPUT_APP_VERSION"
+            publish_version="$INPUT_VERSION"
           else
-            short_sha="${GITHUB_SHA::7}"
-            publish_version="1.0.0-${short_sha}"
-            publish_app_version="$publish_version"
+            # Triggered by `[build chart]` push (branch-only via `branches: ["**"]`); derive from commit SHA.
+            # SemVer pre-release sorts below any real release; `-` (not `+`) keeps the tag OCI-compatible.
+            publish_app_version="${GITHUB_SHA::7}"
+            publish_version="0.0.0-${GITHUB_SHA::7}"
           fi
-
           echo "publish_version=${publish_version}" >> "$GITHUB_OUTPUT"
           echo "publish_app_version=${publish_app_version}" >> "$GITHUB_OUTPUT"
 

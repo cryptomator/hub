@@ -18,7 +18,7 @@ secrets:
   keepOnUninstall: false
 
 ingress:
-  # supported: nginx, traefik, contour
+  # supported: nginx, traefik
   controller: ""
   className: ""
   annotations: {}
@@ -28,6 +28,8 @@ ingress:
 
 hub:
   imagePullPolicy: IfNotPresent
+  image:
+    tag: "" # defaults to chart appVersion
   service:
     type: ClusterIP
     port: 8080
@@ -41,8 +43,7 @@ hub:
   config:
     keycloakRealm: cryptomator
     keycloakSyncerPeriod: 5m
-    keycloakPublicUrl: ""
-    keycloakLocalUrl: ""
+    contentSecurityPolicy: ""
   metrics:
     # Hub ships metrics, traces and logs via OpenTelemetry / OTLP.
     enabled: false
@@ -76,10 +77,13 @@ hub:
     managedApi:
       username: ""
       password: ""
+    apiUrl: ""
 
 keycloak:
   enabled: true
   imagePullPolicy: IfNotPresent
+  image:
+    tag: ""
   service:
     type: ClusterIP
     httpPort: 8080
@@ -106,6 +110,8 @@ keycloak:
 postgres:
   enabled: true
   imagePullPolicy: IfNotPresent
+  image:
+    tag: ""
   service:
     type: ClusterIP
     port: 5432
