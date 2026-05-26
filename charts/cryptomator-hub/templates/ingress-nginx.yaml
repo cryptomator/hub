@@ -27,7 +27,7 @@ spec:
     - host: {{ $hubHost | quote }}
       http:
         paths:
-          - path: {{ if eq $hubPath "/" }}{{ "/" | quote }}{{ else }}{{ printf "%s(/|$)(.*)" $hubPath | quote }}{{ end }}
+          - path: {{ if eq $hubPath "/" }}{{ "/" | quote }}{{ else }}{{ printf "%s(/|$)(.*)" (regexQuoteMeta $hubPath) | quote }}{{ end }}
             pathType: {{ if eq $hubPath "/" }}Prefix{{ else }}ImplementationSpecific{{ end }}
             backend:
               service:
@@ -49,10 +49,14 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "cryptomator-hub.labels" . | nindent 4 }}
-  {{- with .Values.ingress.annotations }}
   annotations:
+    {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
-  {{- end }}
+    {{- end }}
+    {{- if ne $kcPath "/" }}
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: "/$2"
+    {{- end }}
 spec:
   {{- if .Values.ingress.className }}
   ingressClassName: {{ .Values.ingress.className }}
@@ -61,8 +65,8 @@ spec:
     - host: {{ $kcHost | quote }}
       http:
         paths:
-          - path: {{ $kcPath | quote }}
-            pathType: Prefix
+          - path: {{ if eq $kcPath "/" }}{{ "/" | quote }}{{ else }}{{ printf "%s(/|$)(.*)" (regexQuoteMeta $kcPath) | quote }}{{ end }}
+            pathType: {{ if eq $kcPath "/" }}Prefix{{ else }}ImplementationSpecific{{ end }}
             backend:
               service:
                 name: {{ include "cryptomator-hub.fullname" . }}-service-kc

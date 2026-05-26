@@ -20,12 +20,22 @@ data:
   HUB_MANAGED_API_USERNAME: {{ .Values.hub.license.managedApi.username | quote }}
   HUB_MANAGED_API_PASSWORD: {{ .Values.hub.license.managedApi.password | quote }}
   {{- end }}
+  {{- if .Values.hub.license.apiUrl }}
+  QUARKUS_REST_CLIENT_LICENSE_API_URL: {{ .Values.hub.license.apiUrl | quote }}
+  {{- end }}
+  {{- if .Values.urls.billing.public }}
+  HUB_BILLING_URL: {{ .Values.urls.billing.public | quote }}
+  {{- end }}
   QUARKUS_OIDC_AUTH_SERVER_URL: {{ include "cryptomator-hub.oidcAuthServerUrl" . | quote }}
   QUARKUS_OIDC_TOKEN_ISSUER: {{ include "cryptomator-hub.oidcTokenIssuer" . | quote }}
   QUARKUS_OIDC_CLIENT_ID: {{ .Values.hub.oidc.clientId | quote }}
   QUARKUS_DATASOURCE_JDBC_URL: {{ include "cryptomator-hub.hubJdbcUrl" . | quote }}
   QUARKUS_DATASOURCE_USERNAME: {{ .Values.hub.database.username | quote }}
   QUARKUS_HTTP_PROXY_PROXY_ADDRESS_FORWARDING: "true"
+  {{- /* Whole Content-Security-Policy header is assembled here and set via the env-var form of `quarkus.http.header."Content-Security-Policy".value`, overriding the image's application.properties default at runtime (no image rebuild). The browser must reach Keycloak's OIDC endpoints; when Keycloak is on a different origin than Hub (subdomain routing) that origin must be in connect-src. Origin only (scheme://host:port); a CSP source with a path would match only that exact path. */}}
+  {{- $kcOrigin := regexReplaceAll "^(https?://[^/]+).*" (required "urls.kc.public must be set" .Values.urls.kc.public) "${1}" }}
+  {{- $csp := .Values.hub.config.contentSecurityPolicy | default (printf "default-src 'self'; connect-src 'self' api.cryptomator.org %s; object-src 'none'; child-src 'self'; img-src * data:; frame-ancestors 'none'" $kcOrigin) }}
+  QUARKUS_HTTP_HEADER__CONTENT_SECURITY_POLICY__VALUE: {{ $csp | quote }}
   QUARKUS_MANAGEMENT_ENABLED: "true"
   QUARKUS_MANAGEMENT_HOST: "0.0.0.0"
   QUARKUS_MANAGEMENT_PORT: "9000"

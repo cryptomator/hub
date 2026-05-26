@@ -45,7 +45,8 @@ This allows users to set the public URLs to the actual external URLs of the serv
 {{- if .Values.urls.kc.clusterInternal -}}
 {{- trimSuffix "/" .Values.urls.kc.clusterInternal -}}
 {{- else if .Values.keycloak.enabled -}}
-{{- printf "http://%s:%v%s" (print (include "cryptomator-hub.fullname" .) "-service-kc") .Values.keycloak.service.httpPort (include "cryptomator-hub.keycloakRelativePath" .) -}}
+{{/* Bundled Keycloak serves at "/" (the external subpath is stripped by the ingress), so the in-cluster URL has no path. */}}
+{{- printf "http://%s:%v" (print (include "cryptomator-hub.fullname" .) "-service-kc") .Values.keycloak.service.httpPort -}}
 {{- else -}}
 {{/* if keycloak isn't part of the deployment, use public url: */}}
 {{- trimSuffix "/" (required "urls.kc.public must be set" .Values.urls.kc.public) -}}
