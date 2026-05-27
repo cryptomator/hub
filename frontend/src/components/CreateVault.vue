@@ -513,11 +513,9 @@ const vault = ref<VaultDto>({
   requiredEmergencyKeyShares: 0,
   emergencyKeyShares: {}
 });
-// Per-vault override of the global "Automatic Access Grant" defaults. Captured here; will be wired to the UVF metadata payload when the UVF feature lands on this branch.
+// Per-vault override of the global "Automatic Access Grant" defaults; these values are applied when building the vault metadata payload.
 const vaultAutoGrantEnabled = ref<boolean>(false);
 const vaultAutoGrantTrustThreshold = ref<number>(0);
-const requiredEmergencyKeyShares = ref<number>(0);
-const emergencyKeyShares = ref<Record<string, string>>({});
 const copiedRecoveryKey = ref(false);
 const debouncedCopyFinish = debounce(() => copiedRecoveryKey.value = false, 2000);
 const confirmRecoveryKey = ref(false);
