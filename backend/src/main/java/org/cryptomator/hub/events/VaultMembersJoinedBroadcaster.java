@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * In-process pub/sub for {@link VaultAccessChanged} events. Long-polling request handlers acquire a {@link Ticket},
+ * In-process pub/sub for {@link VaultMembersJoined} events. Long-polling request handlers acquire a {@link Ticket},
  * check the current database state, and then block on the ticket until the next event fires or the timeout elapses.
  *
  * <p>The observer is wired with {@link TransactionPhase#AFTER_SUCCESS} so a rolled-back transaction does not produce
@@ -21,18 +21,18 @@ import java.util.concurrent.TimeoutException;
  * a periodic poll cadence on the client is the intended backstop.
  */
 @ApplicationScoped
-public class VaultAccessChangeBroadcaster {
+public class VaultMembersJoinedBroadcaster {
 
 	private final Set<CompletableFuture<Void>> waiters = ConcurrentHashMap.newKeySet();
 
-	void onChange(@Observes(during = TransactionPhase.AFTER_SUCCESS) VaultAccessChanged event) {
+	void onMembersJoined(@Observes(during = TransactionPhase.AFTER_SUCCESS) VaultMembersJoined event) {
 		for (var w : waiters) {
 			w.complete(null);
 		}
 	}
 
 	/**
-	 * @return a {@link Ticket} that wakes on the next {@link VaultAccessChanged} fired after this call. Must be closed.
+	 * @return a {@link Ticket} that wakes on the next {@link VaultMembersJoined} fired after this call. Must be closed.
 	 */
 	public Ticket subscribe() {
 		var future = new CompletableFuture<Void>();

@@ -48,8 +48,8 @@ import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.entities.VaultAccess;
 import org.cryptomator.hub.entities.events.EventLogger;
 import org.cryptomator.hub.entities.events.VaultKeyRetrievedEvent;
-import org.cryptomator.hub.events.VaultAccessChangeBroadcaster;
-import org.cryptomator.hub.events.VaultAccessChanged;
+import org.cryptomator.hub.events.VaultMembersJoined;
+import org.cryptomator.hub.events.VaultMembersJoinedBroadcaster;
 import org.cryptomator.hub.filters.ActiveLicense;
 import org.cryptomator.hub.filters.VaultRole;
 import org.cryptomator.hub.keycloak.RealmRole;
@@ -128,10 +128,10 @@ public class VaultResource {
 	VaultUnlockMetrics vaultUnlockMetrics;
 
 	@Inject
-	VaultAccessChangeBroadcaster vaultAccessChangeBroadcaster;
+	VaultMembersJoinedBroadcaster vaultMembersJoinedBroadcaster;
 
 	@Inject
-	Event<VaultAccessChanged> vaultAccessChangedEvent;
+	Event<VaultMembersJoined> vaultMembersJoinedEvent;
 
 	@Context
 	HttpServerRequest request;
@@ -203,7 +203,7 @@ public class VaultResource {
 	@APIResponse(responseCode = "200")
 	public Map<UUID, Set<String>> getUsersRequiringAccessGrant(@QueryParam("wait") @DefaultValue("25") @Min(0) int wait) throws InterruptedException {
 		var callerId = jwt.getSubject();
-		try (var ticket = vaultAccessChangeBroadcaster.subscribe()) {
+		try (var ticket = vaultMembersJoinedBroadcaster.subscribe()) {
 			var initial = queryPendingAccessGrants(callerId);
 			if (!initial.isEmpty()) {
 				return initial;
@@ -296,7 +296,7 @@ public class VaultResource {
 		vaultAccessRepo.persist(updatedMembers);
 
 		if (!addedMembers.isEmpty()) {
-			vaultAccessChangedEvent.fire(new VaultAccessChanged());
+			vaultMembersJoinedEvent.fire(new VaultMembersJoined());
 		}
 		return Response.noContent().build();
 	}
@@ -370,7 +370,7 @@ public class VaultResource {
 			access.setRole(role);
 			vaultAccessRepo.persist(access);
 			eventLogger.logVaultMemberAdded(jwt.getSubject(), vault.getId(), authority.getId(), role);
-			vaultAccessChangedEvent.fire(new VaultAccessChanged());
+			vaultMembersJoinedEvent.fire(new VaultMembersJoined());
 			return Response.created(URI.create(".")).build();
 		}
 	}
@@ -728,7 +728,7 @@ public class VaultResource {
 			access.setRole(VaultAccess.Role.OWNER);
 			vaultAccessRepo.persist(access);
 			eventLogger.logVaultMemberAdded(currentUser.getId(), vaultId, currentUser.getId(), VaultAccess.Role.OWNER);
-			vaultAccessChangedEvent.fire(new VaultAccessChanged());
+			vaultMembersJoinedEvent.fire(new VaultMembersJoined());
 			return Response.created(URI.create(".")).contentLocation(URI.create(".")).entity(VaultDto.fromEntity(vault)).type(MediaType.APPLICATION_JSON).build();
 		} else {
 			eventLogger.logVaultUpdated(currentUser.getId(), vault.getId(), vault.getName(), vault.getDescription(), vault.isArchived());
