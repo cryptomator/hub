@@ -150,12 +150,9 @@ async function processVault(vaultId: string, candidateUserIds: string[]): Promis
  * @param userId the candidate's id
  * @param ecdhPublicKey the candidate's ECDH public key (base64), as the server reports it
  * @param ecdsaPublicKey the candidate's ECDSA public key (base64), as the server reports it
- * @param maxWotDepth the vault's trust threshold: -1 disables the check, otherwise the maximum signature-chain length
+ * @param maxWotDepth the vault's trust threshold: the maximum signature-chain length up to which a candidate is trusted
  */
 async function isTrusted(userId: string, ecdhPublicKey: string, ecdsaPublicKey: string, maxWotDepth: number): Promise<boolean> {
-  if (maxWotDepth === -1) {
-    return true; // trust check disabled by the vault's policy
-  }
   const trust = await backend.trust.get(userId);
   if (!trust || trust.signatureChain.length > maxWotDepth) {
     return false; // no trust path, or the candidate is too distant

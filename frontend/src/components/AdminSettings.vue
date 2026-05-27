@@ -257,7 +257,7 @@
               {{ t('admin.automaticAccessGrant.trustThreshold.title') }}
             </label>
             <div class="mt-1 md:mt-0 relative md:col-span-2 lg:col-span-1">
-              <input id="autoGrantTrustThreshold" v-model="autoGrantTrustThreshold" type="number" min="-1" max="9" step="1" :disabled="!enableAutomaticAccessGrant" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': autoGrantTrustThresholdError instanceof AutoGrantFormValidationFailedError }" />
+              <input id="autoGrantTrustThreshold" v-model="autoGrantTrustThreshold" type="number" min="0" max="9" step="1" :disabled="!enableAutomaticAccessGrant" class="focus:ring-primary focus:border-primary block w-full shadow-xs sm:text-sm border-gray-300 rounded-md disabled:bg-gray-200" :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': autoGrantTrustThresholdError instanceof AutoGrantFormValidationFailedError }" />
               <div v-if="autoGrantTrustThresholdError" class="absolute left-1/2 -translate-x-1/2 -top-2 transform translate-y-full w-5/6">
                 <div class="bg-red-50 border border-red-300 text-red-900 px-2 py-1 rounded shadow-sm text-sm hyphens-auto">
                   {{ t('admin.automaticAccessGrant.trustThreshold.error') }}
@@ -266,10 +266,6 @@
               </div>
               <p class="mt-2 text-sm text-gray-500">
                 {{ t('admin.automaticAccessGrant.trustThreshold.description') }}
-              </p>
-              <p v-if="enableAutomaticAccessGrant && Number(autoGrantTrustThreshold) === -1" class="mt-2 inline-flex items-start text-sm text-yellow-700">
-                <ExclamationTriangleIcon class="shrink-0 text-yellow-500 mr-1 h-5 w-5" aria-hidden="true" />
-                {{ t('admin.automaticAccessGrant.trustThreshold.disabledWarning') }}
               </p>
             </div>
           </div>
@@ -554,7 +550,7 @@ async function saveAutomaticAccessGrant() {
     throw new Error('No data available.');
   }
   if (!autoGrantForm.value?.checkValidity()) {
-    if (autoGrantTrustThreshold.value < -1 || autoGrantTrustThreshold.value > 9) {
+    if (autoGrantTrustThreshold.value < 0 || autoGrantTrustThreshold.value > 9) {
       autoGrantTrustThresholdError.value = new AutoGrantFormValidationFailedError();
     }
     return;
