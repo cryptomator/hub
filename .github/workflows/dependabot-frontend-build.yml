@@ -1,24 +1,5 @@
-name: Fix Dependabot Lockfile
-
-# Dependabot's pnpm updater re-resolves pnpm-lock.yaml from scratch but
-# writes it back in a form that does not byte-match the lockfile pnpm itself
-# would produce (e.g. a top-level `overrides:` block that does not match
-# `pnpm.overrides` in package.json). CI's `pnpm install --frozen-lockfile`
-# then fails with ERR_PNPM_LOCKFILE_CONFIG_MISMATCH. Tracked upstream in
-# pnpm/pnpm#9283, pnpm/pnpm#9519, dependabot/dependabot-core#12244,
-# dependabot/dependabot-core#14339.
-#
-# Dropping --frozen-lockfile is not an option — it is half of Step 4's
-# lockfile-integrity defense (see frontend/security-migration.md).
-#
-# This workflow regenerates the lockfile on dependabot PRs and pushes the
-# corrected file back to the PR branch so the main CI sees a lockfile that
-# survives --frozen-lockfile.
-#
-# Note: pushes made with the default GITHUB_TOKEN do not retrigger
-# downstream workflows. After this workflow commits the corrected lockfile,
-# build.yml does not auto-rerun on the new SHA — re-run failed checks
-# manually or push an empty commit with a PAT to retrigger.
+name: Build and test frontend on dependabot update
+# for reasons, see https://github.com/cryptomator/hub/pull/459
 
 on:
   pull_request:
