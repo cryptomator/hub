@@ -1,0 +1,75 @@
+name: Fix Dependabot Lockfile
+
+# Dependabot's pnpm updater re-resolves pnpm-lock.yaml from scratch but
+# writes it back in a form that does not byte-match the lockfile pnpm itself
+# would produce (e.g. a top-level `overrides:` block that does not match
+# `pnpm.overrides` in package.json). CI's `pnpm install --frozen-lockfile`
+# then fails with ERR_PNPM_LOCKFILE_CONFIG_MISMATCH. Tracked upstream in
+# pnpm/pnpm#9283, pnpm/pnpm#9519, dependabot/dependabot-core#12244,
+# dependabot/dependabot-core#14339.
+#
+# Dropping --frozen-lockfile is not an option — it is half of Step 4's
+# lockfile-integrity defense (see frontend/security-migration.md).
+#
+# This workflow regenerates the lockfile on dependabot PRs and pushes the
+# corrected file back to the PR branch so the main CI sees a lockfile that
+# survives --frozen-lockfile.
+#
+# Note: pushes made with the default GITHUB_TOKEN do not retrigger
+# downstream workflows. After this workflow commits the corrected lockfile,
+# build.yml does not auto-rerun on the new SHA — re-run failed checks
+# manually or push an empty commit with a PAT to retrigger.
+
+on:
+  pull_request:
+    branches: [develop]
+    paths:
+      - 'frontend/package.json'
+      - 'frontend/pnpm-lock.yaml'
+      - 'frontend/pnpm-workspace.yaml'
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  NODE_VERSION: 22
+  JAVA_VERSION: 21
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    if: ${{ github.actor == 'dependabot[bot]' && startsWith(github.head_ref, 'dependabot/npm_and_yarn/') }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+      - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+        with:
+          package_json_file: frontend/package.json
+      - name: Check lockfile integrity
+        working-directory: frontend
+        run: bash scripts/check-lockfile.sh
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+          cache-dependency-path: frontend/pnpm-lock.yaml
+        # no-frozen-lockfile option due to byte mismatch
+      - name: Regenerate pnpm-lock.yaml
+        working-directory: frontend
+        run: pnpm install --no-frozen-lockfile --lockfile-only
+      - name: Re-verify lockfile integrity after regeneration
+        working-directory: frontend
+        run: bash scripts/check-lockfile.sh
+        # business as usual
+      - name: Build and test frontend
+        working-directory: frontend
+        run: pnpm run test:coverage
+      - name: Deploy frontend
+        working-directory: frontend
+        run: pnpm run dist
