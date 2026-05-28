@@ -55,7 +55,7 @@ describe('UVF', () => {
 
   describe('VaultMetadata', () => {
     it('create()', async () => {
-      const orig = await VaultMetadata.create({ enabled: true, maxWotDepth: -1 });
+      const orig = await VaultMetadata.create({ enabled: true, maxWotDepth: 1 });
       expect(orig).to.be.not.null;
       expect(orig.seeds.get(orig.initialSeedId)).to.not.be.undefined;
       expect(orig.seeds.get(orig.initialSeedId)!.length).to.eq(32);
@@ -68,7 +68,7 @@ describe('UVF', () => {
 
       beforeEach(async () => {
         // prepare some test metadata:
-        original = await VaultMetadata.create({ enabled: true, maxWotDepth: -1 });
+        original = await VaultMetadata.create({ enabled: true, maxWotDepth: 1 });
       });
 
       it('decrypt(encrypt(orig)) == orig', async () => {
@@ -167,7 +167,7 @@ describe('UVF', () => {
 
   describe('UniversalVaultFormat', () => {
     it('create()', async () => {
-      const uvf = await UniversalVaultFormat.create({ enabled: true, maxWotDepth: -1 });
+      const uvf = await UniversalVaultFormat.create({ enabled: true, maxWotDepth: 1 });
       expect(uvf).to.be.not.null;
       expect(uvf.metadata).to.be.not.null;
       expect(uvf.memberKey).to.be.not.null;

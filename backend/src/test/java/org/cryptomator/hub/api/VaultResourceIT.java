@@ -271,6 +271,29 @@ public class VaultResourceIT {
 			Mockito.verify(vaultUnlockMetrics).recordSuccess();
 		}
 
+		@Test
+		@DisplayName("GET /vaults/users-requiring-access-grant?wait=0 returns 200 with decryptable pending user999 on vault2")
+		void testGetUsersRequiringAccessGrant() {
+			// user999 was added to group2 (owner of vault2) by @BeforeEach, has a valid ecdh key but no access token yet,
+			// so they are a pending member of vault2. The endpoint returns them because user1 holds a token for vault2
+			// (V9999), i.e. can decrypt and therefore re-share. The Web-of-Trust decision is left to the client, so no
+			// trust setup is needed here. user998 has no ecdh key, so it must not appear. We don't assert the total vault
+			// count: other tests may leave vaults around.
+			given().queryParam("wait", 0)
+					.when().get("/vaults/users-requiring-access-grant")
+					.then().statusCode(200)
+					.body("'7e57c0de-0000-4000-8000-000100002222'", hasItems("user999"))
+					.body("'7e57c0de-0000-4000-8000-000100002222'", not(hasItems("user998")));
+		}
+
+		@Test
+		@DisplayName("GET /vaults/users-requiring-access-grant?wait=-1 returns 400 (validation)")
+		void testGetUsersRequiringAccessGrantNegativeWait() {
+			given().queryParam("wait", -1)
+					.when().get("/vaults/users-requiring-access-grant")
+					.then().statusCode(400);
+		}
+
 		@Nested
 		@DisplayName("legacy unlock")
 		@TestSecurity(user = "User Name 1", roles = {"user"})
@@ -482,6 +505,37 @@ public class VaultResourceIT {
 			given().contentType(ContentType.JSON).body(Map.of("user1", "jwe.jwe.jwe.vaultAAA.user1"))
 					.when().post("/vaults/{vaultId}/access-tokens/", "7E57C0DE-0000-4000-8000-00010000AAAA")
 					.then().statusCode(200);
+		}
+
+		@Test
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100002222/access-tokens (manual) returns 403 for non-owner member user1")
+		void testManualGrantByNonOwnerForbidden() {
+			// user1 is only a MEMBER of vault2 (via group1), so the owner-only manual endpoint must reject the grant.
+			given().contentType(ContentType.JSON).body(Map.of("user999", "jwe.jwe.jwe.vault2.user999"))
+					.when().post("/vaults/{vaultId}/access-tokens/", "7E57C0DE-0000-4000-8000-000100002222")
+					.then().statusCode(403);
+		}
+
+		@Test
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100002222/access-tokens/auto returns 200 for user999 (member-initiated automatic grant to a pending user)")
+		void testAutoGrantByMember() {
+			// Same member (user1, non-owner of vault2) and same target as above, but via the auto endpoint, which any
+			// member may call. user999 is in group2 (owner of vault2), has a public key, and holds no token yet → pending.
+			given().contentType(ContentType.JSON).body(Map.of("user999", "jwe.jwe.jwe.vault2.user999"))
+					.when().post("/vaults/{vaultId}/access-tokens/auto", "7E57C0DE-0000-4000-8000-000100002222")
+					.then().statusCode(200);
+
+			// the grant must be recorded as automatic (true), attributed to the member who performed it
+			Mockito.verify(eventLogger).logVaultAccessGranted("user1", UUID.fromString("7E57C0DE-0000-4000-8000-000100002222"), "user999", true);
+		}
+
+		@Test
+		@DisplayName("POST /vaults/7E57C0DE-0000-4000-8000-000100002222/access-tokens/auto returns 400 for user998 (not awaiting a grant: no public key)")
+		void testAutoGrantToNonPending() {
+			// user998 is also in group2 but has no public key, so it is not awaiting a grant and must be rejected.
+			given().contentType(ContentType.JSON).body(Map.of("user998", "jwe.jwe.jwe.vault2.user998"))
+					.when().post("/vaults/{vaultId}/access-tokens/auto", "7E57C0DE-0000-4000-8000-000100002222")
+					.then().statusCode(400);
 		}
 
 	}

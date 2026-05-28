@@ -19,6 +19,7 @@ import jakarta.persistence.Table;
 import org.hibernate.annotations.Immutable;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -82,6 +83,16 @@ import java.util.stream.Stream;
 			INNER JOIN FETCH eva.authority u
 			LEFT JOIN AccessToken token ON token.id.vaultId = eva.id.vaultId AND token.id.userId = u.id
 			WHERE eva.id.vaultId = :vaultId AND token.vault IS NULL AND u.ecdhPublicKey IS NOT NULL
+		"""
+)
+@NamedQuery(name = "EffectiveVaultAccess.findMembersWithoutAccessTokensForAccessibleVaults", query = """
+		SELECT DISTINCT eva
+		FROM EffectiveVaultAccess eva
+			INNER JOIN eva.authority u
+			INNER JOIN Vault v ON v.id = eva.id.vaultId
+			INNER JOIN AccessToken callerToken ON callerToken.id.vaultId = eva.id.vaultId AND callerToken.id.userId = :currentUser
+			LEFT JOIN AccessToken token ON token.id.vaultId = eva.id.vaultId AND token.id.userId = u.id
+			WHERE v.archived = false AND token.vault IS NULL AND u.ecdhPublicKey IS NOT NULL AND u.enabled
 		"""
 )
 public class EffectiveVaultAccess {
@@ -155,8 +166,32 @@ public class EffectiveVaultAccess {
 					.collect(Collectors.toUnmodifiableSet());
 		}
 
-		public Stream<EffectiveVaultAccess> findMembersWithoutAccessTokens(UUID vaultId) {
+		/**
+		 * @param vaultId ID of a vault
+		 * @return ids of vault members who have no access token for the given vault yet
+		 * @see #findMembersWithoutAccessTokens(String)
+		 */
+		public Stream<EffectiveVaultAccess> findMembersWithoutAccessTokensForVault(UUID vaultId) {
 			return find("#EffectiveVaultAccess.findMembersWithoutAccessTokens", Parameters.with("vaultId", vaultId)).stream();
+		}
+
+		/**
+		 * Finds the pending access grants the given user could perform, grouped by vault id. Limited to vaults the user
+		 * holds an access token for (i.e. can decrypt and therefore re-share). The Web-of-Trust decision and the vault's
+		 * own (encrypted, tamper-proof) trust threshold / enabled flag are evaluated client-side — deliberately not here:
+		 * the {@code effective_wot} view is a recursive transitive-closure computation that would be too costly to join
+		 * on this long-poll hot path, and the client already avoids re-evaluating ruled-out candidates via its blocklists.
+		 *
+		 * @param currentUserId ID of the currently logged-in user
+		 * @return ids of vault members who have no access token yet, on vaults the user can decrypt, grouped by vault id
+		 * @see #findMembersWithoutAccessTokensForVault(UUID)
+		 */
+		public Map<UUID, Set<String>> findMembersWithoutAccessTokens(String currentUserId) {
+			return find("#EffectiveVaultAccess.findMembersWithoutAccessTokensForAccessibleVaults", Parameters.with("currentUser", currentUserId))
+					.stream()
+					.collect(Collectors.groupingBy(
+							eva -> eva.getId().vaultId(),
+							Collectors.mapping(eva -> eva.getId().authorityId(), Collectors.toSet())));
 		}
 
 		public Stream<String> usersSeatedOnOtherVaults(UUID vaultId) {

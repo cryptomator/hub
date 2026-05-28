@@ -160,7 +160,7 @@ public class UsersResource {
 			}
 			token.setVaultKey(entry.getValue());
 			accessTokenRepo.persist(token);
-			eventLogger.logVaultAccessGranted(user.getId(), vault.getId(), user.getId());
+			eventLogger.logVaultAccessGranted(user.getId(), vault.getId(), user.getId(), false);
 		}
 		return Response.ok().build();
 	}

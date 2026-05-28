@@ -3,12 +3,14 @@ package org.cryptomator.hub.keycloak;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
 import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import org.cryptomator.hub.entities.Authority;
 import org.cryptomator.hub.entities.EffectiveGroupMembership;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
+import org.cryptomator.hub.events.VaultMembersJoined;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -29,6 +31,8 @@ public class KeycloakAuthorityPuller {
 	KeycloakAuthorityProvider remoteUserProvider;
 	@Inject
 	EffectiveGroupMembership.Repository effectiveGroupMembershipRepo;
+	@Inject
+	Event<VaultMembersJoined> vaultMembersJoinedEvent;
 
 	@Scheduled(every = "{hub.keycloak.syncer-period}")
 	@WithSpan("KeycloakAuthorityPuller.sync")
@@ -66,7 +70,15 @@ public class KeycloakAuthorityPuller {
 		// sync groups:
 		var addedGroups = syncAddedGroups(keycloakGroups, databaseGroups, allAuthorities);
 		var deletedGroupIds = syncDeletedGroups(keycloakGroups, databaseGroups);
-		syncUpdatedGroups(keycloakGroups, databaseGroups, deletedGroupIds, allAuthorities);
+		var membersJoinedGroups = syncUpdatedGroups(keycloakGroups, databaseGroups, deletedGroupIds, allAuthorities);
+
+		// Only an existing group gaining members can turn someone into a vault member still lacking an access token
+		// (newly added users/groups carry no vault access yet, and removals/role changes never create pending grants).
+		// So wake long-pollers (e.g. the automatic access grant agent) only when that actually happened. Best-effort:
+		// observers re-query the database to determine the concrete pending grants.
+		if (membersJoinedGroups) {
+			vaultMembersJoinedEvent.fire(new VaultMembersJoined());
+		}
 	}
 
 	//visible for testing
@@ -140,9 +152,10 @@ public class KeycloakAuthorityPuller {
 	}
 
 	//visible for testing
-	void syncUpdatedGroups(Map<String, KeycloakGroupDto> keycloakGroups, Map<String, Group> databaseGroups, Set<String> deletedGroupIds, Map<String, Authority> allAuthorities) {
+	boolean syncUpdatedGroups(Map<String, KeycloakGroupDto> keycloakGroups, Map<String, Group> databaseGroups, Set<String> deletedGroupIds, Map<String, Authority> allAuthorities) {
 		var toUpdateIds = diff(databaseGroups.keySet(), deletedGroupIds);
 		var idsOfGroupsWithChangedMembers = new HashSet<String>();
+		var membersJoined = false;
 		for (var id : toUpdateIds) {
 			var databaseGroup = databaseGroups.get(id);
 			var keycloakGroup = keycloakGroups.get(id);
@@ -160,8 +173,10 @@ public class KeycloakAuthorityPuller {
 			if (!addedMemberIds.isEmpty() || !removedMemberIds.isEmpty()) {
 				idsOfGroupsWithChangedMembers.add(id);
 			}
+			membersJoined |= !addedMemberIds.isEmpty();
 		}
 		effectiveGroupMembershipRepo.updateGroups(idsOfGroupsWithChangedMembers);
+		return membersJoined;
 	}
 
 	private static <T> Set<T> diff(Set<T> base, Set<T> difference) {

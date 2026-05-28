@@ -49,6 +49,21 @@ public class Settings {
 	@Column(name = "allow_choosing_emergency_council", nullable = false)
 	private boolean allowChoosingEmergencyCouncil;
 
+	@Column(name = "enable_automatic_access_grant", nullable = false)
+	private boolean enableAutomaticAccessGrant;
+
+	// Default Web of Trust distance (number of signatures in the trust chain from an existing vault member to a new
+	// member) up to which access may be granted automatically:
+	//   -1  = trust check disabled (grant regardless of any WoT relationship)
+	//    0  = self-signed identities only (no practical use case)
+	//    1  = direct trust (an existing member has signed the new member's key directly)
+	//   >=2 = transitive trust (a chain of up to N signatures)
+	@Column(name = "automatic_access_grant_trust_threshold", nullable = false)
+	private int automaticAccessGrantTrustThreshold;
+
+	@Column(name = "allow_automatic_access_grant_override", nullable = false)
+	private boolean allowAutomaticAccessGrantOverride;
+
 	@ElementCollection
 	@CollectionTable(
 			name = "default_emergency_council",
@@ -129,6 +144,30 @@ public class Settings {
 		this.allowChoosingEmergencyCouncil = allowChoosingEmergencyCouncil;
 	}
 
+	public boolean isAutomaticAccessGrantEnabled() {
+		return enableAutomaticAccessGrant;
+	}
+
+	public void setAutomaticAccessGrantEnabled(boolean enableAutomaticAccessGrant) {
+		this.enableAutomaticAccessGrant = enableAutomaticAccessGrant;
+	}
+
+	public int getAutomaticAccessGrantTrustThreshold() {
+		return automaticAccessGrantTrustThreshold;
+	}
+
+	public void setAutomaticAccessGrantTrustThreshold(int automaticAccessGrantTrustThreshold) {
+		this.automaticAccessGrantTrustThreshold = automaticAccessGrantTrustThreshold;
+	}
+
+	public boolean isAllowAutomaticAccessGrantOverride() {
+		return allowAutomaticAccessGrantOverride;
+	}
+
+	public void setAllowAutomaticAccessGrantOverride(boolean allowAutomaticAccessGrantOverride) {
+		this.allowAutomaticAccessGrantOverride = allowAutomaticAccessGrantOverride;
+	}
+
 	public Set<String> getEmergencyCouncilMemberIds() {
 		return Set.copyOf(emergencyCouncilMemberIds);
 	}
@@ -150,6 +189,9 @@ public class Settings {
 				", defaultRequiredEmergencyKeyShares=" + defaultRequiredEmergencyKeyShares +
 				", defaultMinMembers=" + defaultMinMembers +
 				", allowChoosingEmergencyCouncil=" + allowChoosingEmergencyCouncil +
+				", enableAutomaticAccessGrant=" + enableAutomaticAccessGrant +
+				", automaticAccessGrantTrustThreshold=" + automaticAccessGrantTrustThreshold +
+				", allowAutomaticAccessGrantOverride=" + allowAutomaticAccessGrantOverride +
 				", emergencyCouncilMemberIds= [" + String.join(", ", emergencyCouncilMemberIds) + "]" +
 				'}';
 	}
@@ -168,12 +210,15 @@ public class Settings {
 				&& defaultRequiredEmergencyKeyShares == settings.defaultRequiredEmergencyKeyShares
 				&& defaultMinMembers == settings.defaultMinMembers
 				&& allowChoosingEmergencyCouncil == settings.allowChoosingEmergencyCouncil
+				&& enableAutomaticAccessGrant == settings.enableAutomaticAccessGrant
+				&& automaticAccessGrantTrustThreshold == settings.automaticAccessGrantTrustThreshold
+				&& allowAutomaticAccessGrantOverride == settings.allowAutomaticAccessGrantOverride
 				&& Objects.equals(emergencyCouncilMemberIds, settings.emergencyCouncilMemberIds);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, hubId, licenseKey, wotMaxDepth, wotIdVerifyLen, enableEmergencyAccess, defaultRequiredEmergencyKeyShares, defaultMinMembers, allowChoosingEmergencyCouncil, emergencyCouncilMemberIds);
+		return Objects.hash(id, hubId, licenseKey, wotMaxDepth, wotIdVerifyLen, enableEmergencyAccess, defaultRequiredEmergencyKeyShares, defaultMinMembers, allowChoosingEmergencyCouncil, enableAutomaticAccessGrant, automaticAccessGrantTrustThreshold, allowAutomaticAccessGrantOverride, emergencyCouncilMemberIds);
 	}
 
 	@ApplicationScoped

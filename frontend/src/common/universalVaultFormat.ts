@@ -18,6 +18,16 @@ type MetadataPayload = {
 
 type VaultMetadataJWEAutomaticAccessGrantDto = {
   enabled: boolean,
+  /**
+   * Maximum Web of Trust distance (number of signatures in the trust chain from an existing vault member to a new
+   * member) up to which access may be granted automatically:
+   * - `0`: self-signed identities only (no practical use case)
+   * - `1`: direct trust (an existing member has signed the new member's key directly)
+   * - `>= 2`: transitive trust (a chain of up to N signatures)
+   *
+   * A value of `-1` is reserved for downstream products that disable the trust check entirely. This client neither
+   * produces nor honors it: such vaults simply receive no automatic grants from here.
+   */
   maxWotDepth: number
 };
 
@@ -230,7 +240,7 @@ export class DecodeUvfRecoveryKeyError extends Error {
 export class VaultMetadata {
 
   private constructor(
-    readonly automaticAccessGrant: VaultMetadataJWEAutomaticAccessGrantDto,
+    public automaticAccessGrant: VaultMetadataJWEAutomaticAccessGrantDto,
     readonly seeds: Map<number, Uint8Array<ArrayBuffer>>,
     readonly initialSeedId: number,
     readonly latestSeedId: number,
