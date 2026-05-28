@@ -102,7 +102,7 @@ function stopRandomCouncilInterval() {
   }
 }
 const isGrantButtonDisabled = computed(() => {
-  return selectedUsers.value.length < requiredKeyShares.value;
+  return requiredKeyShares.value < 1 || selectedUsers.value.length < requiredKeyShares.value;
 });
 
 const visibleUserSlots = computed(() => {
