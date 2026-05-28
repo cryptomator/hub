@@ -104,7 +104,7 @@
                     :message="t('emergencyAccess.badge.broken.message')"
                   />
                   <EmergencyBadge
-                    v-if="settings && settings.defaultMinMembers > emergencyAccessMembers(vault).length"
+                    v-else-if="settings && settings.defaultMinMembers > emergencyAccessMembers(vault).length"
                     type="warning"
                     :title="t('emergencyAccess.badge.insufficientCouncilMembers.title')"
                     :message="t('emergencyAccess.badge.insufficientCouncilMembers.message', [settings.defaultMinMembers])"
@@ -160,7 +160,7 @@
                       v-if="getProcessByType(vault, 'COUNCIL_CHANGE')"
                       :label="getTypeLabel(vault, 'COUNCIL_CHANGE')"
                       :approval-label="getApprovalLabel(getProcessByType(vault, 'COUNCIL_CHANGE')!)"
-                      :disabled="isBroken(vault) || !isUserInProcessWithType(vault, 'COUNCIL_CHANGE')"
+                      :disabled="isBroken(vault)"
                       :has-process="true"
                       :can-start="false"
                       :required-key-shares="getProcessByType(vault, 'COUNCIL_CHANGE')!.requiredKeyShares"
@@ -195,7 +195,7 @@
                       v-if="getProcessByType(vault, 'CHANGE_PERMISSIONS')"
                       :label="getTypeLabel(vault, 'CHANGE_PERMISSIONS')"
                       :approval-label="getApprovalLabel(getProcessByType(vault, 'CHANGE_PERMISSIONS')!)"
-                      :disabled="isBroken(vault) || !isUserInProcessWithType(vault, 'CHANGE_PERMISSIONS')"
+                      :disabled="isBroken(vault)"
                       :has-process="true"
                       :can-start="false"
                       :required-key-shares="getProcessByType(vault, 'CHANGE_PERMISSIONS')!.requiredKeyShares"
@@ -440,12 +440,6 @@ function openRecoveryDialog(vault: VaultDto, proc: RecoveryProcessDto) {
   recoveryApprovVault.value = vault;
   selectedProcess.value = proc;
   nextTick(() => recoveryApprovDialog.value?.show());
-}
-
-function isUserInProcessWithType(vault: VaultDto, type: RecoveryProcessDto['type']): boolean {
-  const proc = getProcessByType(vault, type);
-  if (!proc || !me.value) return false;
-  return Object.keys(proc.recoveredKeyShares ?? {}).includes(me.value.id);
 }
 
 function isUserInProcess(proc: RecoveryProcessDto): boolean {

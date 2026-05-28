@@ -117,9 +117,9 @@
             v-model="allowChoosing"
             :disabled="!enableEmergencyAccess"
             type="checkbox"
-            class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+            class="peer h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded disabled:cursor-not-allowed disabled:opacity-50"
           />
-          <label for="allowChoosingCouncil" class="ml-2 text-sm text-gray-500">
+          <label for="allowChoosingCouncil" class="ml-2 text-sm text-gray-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
             {{ t('admin.emergencyAccess.allowChoosing.label') }}
             <label v-if="allowChoosing" for="minMembers"> {{ t('admin.emergencyAccess.allowChoosing.atLeast') }}</label>
           </label>

@@ -1,0 +1,56 @@
+name: Build and test frontend on dependabot update
+# for reasons, see https://github.com/cryptomator/hub/pull/459
+
+on:
+  pull_request:
+    branches: [develop]
+    paths:
+      - 'frontend/package.json'
+      - 'frontend/pnpm-lock.yaml'
+      - 'frontend/pnpm-workspace.yaml'
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  NODE_VERSION: 22
+  JAVA_VERSION: 21
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    if: ${{ github.actor == 'dependabot[bot]' && startsWith(github.head_ref, 'dependabot/npm_and_yarn/') }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+      - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+        with:
+          package_json_file: frontend/package.json
+      - name: Check lockfile integrity
+        working-directory: frontend
+        run: bash scripts/check-lockfile.sh
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+          cache-dependency-path: frontend/pnpm-lock.yaml
+        # no-frozen-lockfile option due to byte mismatch
+      - name: Regenerate pnpm-lock.yaml
+        working-directory: frontend
+        run: pnpm install --no-frozen-lockfile --lockfile-only
+      - name: Re-verify lockfile integrity after regeneration
+        working-directory: frontend
+        run: bash scripts/check-lockfile.sh
+        # business as usual
+      - name: Build and test frontend
+        working-directory: frontend
+        run: pnpm run test:coverage
+      - name: Deploy frontend
+        working-directory: frontend
+        run: pnpm run dist
