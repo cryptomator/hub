@@ -442,12 +442,6 @@ function openRecoveryDialog(vault: VaultDto, proc: RecoveryProcessDto) {
   nextTick(() => recoveryApprovDialog.value?.show());
 }
 
-function isUserInProcessWithType(vault: VaultDto, type: RecoveryProcessDto['type']): boolean {
-  const proc = getProcessByType(vault, type);
-  if (!proc || !me.value) return false;
-  return Object.keys(proc.recoveredKeyShares ?? {}).includes(me.value.id);
-}
-
 function isUserInProcess(proc: RecoveryProcessDto): boolean {
   const councilMemberIds = Object.keys(proc.recoveredKeyShares);
   return councilMemberIds.includes(me.value?.id ?? '');

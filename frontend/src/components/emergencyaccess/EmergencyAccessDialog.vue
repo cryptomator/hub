@@ -188,7 +188,7 @@
 
               <div class="bg-gray-50 rounded-b-lg px-4 py-3 sm:px-6 sm:flex">
                 <!-- ABORT -->
-                <template v-if="phase !== 'start' && isMeInCouncil && !showSuccess">
+                <template v-if="phase !== 'start' && (isMeInProcessCouncil || isMeInCouncil) && !showSuccess">
                   <button
                     class=" text-sm text-red-600 hover:underline sm:mr-auto focus:outline-none focus:underline rounded"
                     @click.stop="requestCancel()"
