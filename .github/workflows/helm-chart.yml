@@ -4,7 +4,7 @@ on:
   push:
     branches: ["**"]
     paths:
-      - charts/cryptomator-hub/**
+      - chart/**
       - .github/workflows/helm-chart.yml
   workflow_dispatch:
     inputs:
@@ -43,7 +43,7 @@ jobs:
         uses: Azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2 # v5.0.0
 
       - name: Lint chart
-        run: helm lint charts/cryptomator-hub
+        run: helm lint chart
 
   publish:
     name: Publish Helm Chart
@@ -94,7 +94,7 @@ jobs:
       - name: Package chart
         run: |
           mkdir -p dist
-          helm package charts/cryptomator-hub \
+          helm package chart \
             --destination dist \
             --version "${{ steps.version.outputs.publish_version }}" \
             --app-version "${{ steps.version.outputs.publish_app_version }}"

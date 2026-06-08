@@ -26,7 +26,7 @@ Assuming you have a local Minikube cluster, e.g. via [Podman Desktop](https://po
 minikube addons enable ingress
 
 # deploy
-helm install hub charts/cryptomator-hub \
+helm install hub chart \
   --namespace cryptomator \
   --create-namespace \
   --wait --timeout 5m \
@@ -95,7 +95,7 @@ When disabled, the chart sets `QUARKUS_OTEL_SDK_DISABLED=true` so the SDK does n
 ## Hub with External PostgreSQL and Keycloak
 
 ```bash
-helm install hub charts/cryptomator-hub \
+helm install hub chart \
   --namespace cryptomator \
   --create-namespace \
   --wait --timeout 5m \
