@@ -155,7 +155,10 @@ const routes: RouteRecordRaw[] = [
           {
             path: 'settings',
             component: AdminSettings,
-            props: (route) => ({ token: route.query.token }),
+            props: (route) => {
+              const fragmentToken = new URLSearchParams(route.hash.replace(/^#/, '')).get('token');
+              return { token: fragmentToken ?? route.query.token };
+            },
             meta: { skipSetup: true }
           },
           {
