@@ -23,7 +23,7 @@ import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
 import org.cryptomator.hub.entities.VaultAccess;
-import org.cryptomator.hub.keycloak.KeycloakAdminService;
+import org.cryptomator.hub.keycloak.KeycloakAuthorityPuller;
 import org.cryptomator.hub.validation.ValidId;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -42,7 +42,7 @@ public class GroupsResource {
 	@Inject
 	VaultAccess.Repository vaultAccessRepo;
 	@Inject
-	KeycloakAdminService keycloakAdminService;
+	KeycloakAuthorityPuller keycloakAuthorityPuller;
 
 	@GET
 	@Path("/")
@@ -77,7 +77,7 @@ public class GroupsResource {
 	@APIResponse(responseCode = "204", description = "user added to group")
 	@APIResponse(responseCode = "404", description = "group or user not found")
 	public Response addMember(@PathParam("groupId") @ValidId String groupId, @PathParam("userId") @ValidId String userId) {
-		keycloakAdminService.addUserToGroup(groupId, userId);
+		keycloakAuthorityPuller.addUserToGroup(groupId, userId);
 		return Response.noContent().build();
 	}
 
@@ -89,7 +89,7 @@ public class GroupsResource {
 	@APIResponse(responseCode = "204", description = "user removed from group")
 	@APIResponse(responseCode = "404", description = "group or user not found")
 	public Response removeMember(@PathParam("groupId") @ValidId String groupId, @PathParam("userId") @ValidId String userId) {
-		keycloakAdminService.removeUserFromGroup(groupId, userId);
+		keycloakAuthorityPuller.removeUserFromGroup(groupId, userId);
 		return Response.noContent().build();
 	}
 
@@ -105,7 +105,7 @@ public class GroupsResource {
 	@APIResponse(responseCode = "409", description = "group name already exists")
 	public Response createGroup(@Valid @NotNull CreateGroupDto dto) {
 		try {
-			var groupRepresentation = keycloakAdminService.createGroup(dto.name(), dto.pictureUrl());
+			var groupRepresentation = keycloakAuthorityPuller.createGroup(dto.name(), dto.pictureUrl());
 
 			Group group = groupRepo.findById(groupRepresentation.getId());
 			if (group == null) {
@@ -154,7 +154,7 @@ public class GroupsResource {
 	@APIResponse(responseCode = "200", description = "group updated")
 	@APIResponse(responseCode = "404", description = "group not found")
 	public GroupDto updateGroup(@PathParam("groupId") @ValidId String groupId, @Valid @NotNull UpdateGroupDto dto) {
-		keycloakAdminService.updateGroup(groupId, dto.name(), dto.pictureUrl());
+		keycloakAuthorityPuller.updateGroup(groupId, dto.name(), dto.pictureUrl());
 
 		Group group = groupRepo.findById(groupId);
 		if (group == null) {
@@ -172,7 +172,7 @@ public class GroupsResource {
 	@APIResponse(responseCode = "204", description = "group deleted")
 	@APIResponse(responseCode = "404", description = "group not found")
 	public Response deleteGroup(@PathParam("groupId") @ValidId String groupId) {
-		keycloakAdminService.deleteGroup(groupId);
+		keycloakAuthorityPuller.deleteGroup(groupId);
 		return Response.noContent().build();
 	}
 

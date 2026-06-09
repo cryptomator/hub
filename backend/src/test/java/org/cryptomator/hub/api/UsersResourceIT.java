@@ -13,7 +13,7 @@ import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
-import org.cryptomator.hub.keycloak.KeycloakAdminService;
+import org.cryptomator.hub.keycloak.KeycloakAuthorityPuller;
 import org.cryptomator.hub.license.HubLicenseEntitlements;
 import org.cryptomator.hub.license.LicenseHolder;
 import org.junit.jupiter.api.AfterAll;
@@ -56,7 +56,7 @@ class UsersResourceIT {
 	LicenseHolder licenseHolder;
 
 	@InjectMock
-	KeycloakAdminService keycloakAdminService;
+	KeycloakAuthorityPuller keycloakAuthorityPuller;
 
 	@BeforeAll
 	static void beforeAll() {
@@ -377,7 +377,7 @@ class UsersResourceIT {
 
 		@BeforeEach
 		void resetMocks() {
-			Mockito.reset(keycloakAdminService);
+			Mockito.reset(keycloakAuthorityPuller);
 		}
 
 		@BeforeAll
@@ -415,7 +415,7 @@ class UsersResourceIT {
 			userRep.setUsername("newuser");
 			userRep.setEmail("newuser@example.com");
 
-			Mockito.when(keycloakAdminService.createUser(
+			Mockito.when(keycloakAuthorityPuller.createUser(
 					Mockito.eq("newuser"),
 					Mockito.eq("newuser@example.com"),
 					Mockito.eq("New"),
@@ -443,7 +443,7 @@ class UsersResourceIT {
 		@Test
 		@DisplayName("POST /users returns 409 when username already exists")
 		void testCreateUserConflictUsername() {
-			Mockito.when(keycloakAdminService.createUser(
+			Mockito.when(keycloakAuthorityPuller.createUser(
 					Mockito.anyString(),
 					Mockito.anyString(),
 					Mockito.anyString(),
@@ -471,7 +471,7 @@ class UsersResourceIT {
 		@Test
 		@DisplayName("POST /users returns 409 when email already exists")
 		void testCreateUserConflictEmail() {
-			Mockito.when(keycloakAdminService.createUser(
+			Mockito.when(keycloakAuthorityPuller.createUser(
 					Mockito.anyString(),
 					Mockito.anyString(),
 					Mockito.anyString(),
@@ -534,7 +534,7 @@ class UsersResourceIT {
 			userRep.setFirstName("Updated");
 			userRep.setLastName("Name");
 
-			Mockito.when(keycloakAdminService.updateUser(
+			Mockito.when(keycloakAuthorityPuller.updateUser(
 					Mockito.eq("user1"),
 					Mockito.isNull(),
 					Mockito.eq("Updated"),
@@ -558,7 +558,7 @@ class UsersResourceIT {
 		@Test
 		@DisplayName("PUT /users/{id} returns 404 for non-existing user")
 		void testUpdateUserNotFound() {
-			Mockito.when(keycloakAdminService.updateUser(
+			Mockito.when(keycloakAuthorityPuller.updateUser(
 					Mockito.eq("nonexistent"),
 					Mockito.any(),
 					Mockito.any(),
@@ -582,7 +582,7 @@ class UsersResourceIT {
 		@Test
 		@DisplayName("PUT /users/{id} returns 403 for federated user")
 		void testUpdateUserForbidden() {
-			Mockito.when(keycloakAdminService.updateUser(
+			Mockito.when(keycloakAuthorityPuller.updateUser(
 					Mockito.eq("federatedUser"),
 					Mockito.any(),
 					Mockito.any(),
@@ -606,31 +606,31 @@ class UsersResourceIT {
 		@Test
 		@DisplayName("PUT /users/{id}/enabled returns 204 when disabled successfully")
 		void testSetUserEnabledSuccess() {
-			Mockito.doNothing().when(keycloakAdminService).setUserEnabled("user1", false);
+			Mockito.doNothing().when(keycloakAuthorityPuller).setUserEnabled("user1", false);
 
 			given().contentType(ContentType.TEXT).body("false")
 					.when().put("/users/user1/enabled")
 					.then().statusCode(204);
 
-			Mockito.verify(keycloakAdminService).setUserEnabled("user1", false);
+			Mockito.verify(keycloakAuthorityPuller).setUserEnabled("user1", false);
 		}
 
 		@Test
 		@DisplayName("DELETE /users/{id} returns 204 when deleted successfully")
 		void testDeleteUserSuccess() {
-			Mockito.doNothing().when(keycloakAdminService).deleteUser("mockedUserId");
+			Mockito.doNothing().when(keycloakAuthorityPuller).deleteUser("mockedUserId");
 
 			when().delete("/users/mockedUserId")
 					.then().statusCode(204);
 
-			Mockito.verify(keycloakAdminService).deleteUser("mockedUserId");
+			Mockito.verify(keycloakAuthorityPuller).deleteUser("mockedUserId");
 		}
 
 		@Test
 		@DisplayName("DELETE /users/{id} returns 404 for non-existing user")
 		void testDeleteUserNotFound() {
 			Mockito.doThrow(new NotFoundException("User not found"))
-					.when(keycloakAdminService).deleteUser("nonexistent");
+					.when(keycloakAuthorityPuller).deleteUser("nonexistent");
 
 			when().delete("/users/nonexistent")
 					.then().statusCode(404);
@@ -640,7 +640,7 @@ class UsersResourceIT {
 		@DisplayName("DELETE /users/{id} returns 403 for federated user")
 		void testDeleteUserForbidden() {
 			Mockito.doThrow(new ForbiddenException("User has a federated identity"))
-					.when(keycloakAdminService).deleteUser("federatedUser");
+					.when(keycloakAuthorityPuller).deleteUser("federatedUser");
 
 			when().delete("/users/federatedUser")
 					.then().statusCode(403);

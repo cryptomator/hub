@@ -2,18 +2,40 @@ package org.cryptomator.hub.keycloak;
 
 import io.opentelemetry.instrumentation.annotations.WithSpan;
 import io.quarkus.scheduler.Scheduled;
+import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
+import jakarta.ws.rs.ClientErrorException;
+import jakarta.ws.rs.ForbiddenException;
+import jakarta.ws.rs.InternalServerErrorException;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.ProcessingException;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.Authority;
 import org.cryptomator.hub.entities.EffectiveGroupMembership;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.jboss.logging.Logger;
+import org.keycloak.admin.client.Keycloak;
+import org.keycloak.admin.client.resource.GroupResource;
+import org.keycloak.admin.client.resource.RealmResource;
+import org.keycloak.admin.client.resource.UserResource;
+import org.keycloak.representations.idm.CredentialRepresentation;
+import org.keycloak.representations.idm.GroupRepresentation;
+import org.keycloak.representations.idm.UserRepresentation;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -21,6 +43,10 @@ import java.util.stream.Collectors;
 @ApplicationScoped
 public class KeycloakAuthorityPuller {
 
+	private static final Logger LOG = Logger.getLogger(KeycloakAuthorityPuller.class);
+
+	@Inject
+	Keycloak keycloak;
 	@Inject
 	User.Repository userRepo;
 	@Inject
@@ -29,23 +55,39 @@ public class KeycloakAuthorityPuller {
 	KeycloakAuthorityProvider remoteUserProvider;
 	@Inject
 	EffectiveGroupMembership.Repository effectiveGroupMembershipRepo;
+	@Inject
+	KeycloakRealmRoles realmRoles;
+
+	@ConfigProperty(name = "hub.keycloak.realm")
+	String keycloakRealm;
+
+	RealmResource realm;
+
+	@PostConstruct
+	public void setup() {
+		this.realm = keycloak.realm(keycloakRealm);
+	}
 
 	@Scheduled(every = "{hub.keycloak.syncer-period}")
 	@WithSpan("KeycloakAuthorityPuller.sync")
 	void sync() {
-		var keycloakGroups = remoteUserProvider.groups().stream().collect(Collectors.toMap(KeycloakGroupDto::id, Function.identity()));
-		var keycloakUsers = remoteUserProvider.users().stream().collect(Collectors.toMap(KeycloakUserDto::id, Function.identity()));
-		var keycloakRealmRoles = Arrays.stream(RealmRole.values()).collect(Collectors.toMap(Function.identity(), remoteUserProvider::usersInRole));
-		for (var role : RealmRole.values()) {
-			var usersInRole = keycloakRealmRoles.get(role);
-			for (var user : usersInRole) {
-				var keycloakUser = keycloakUsers.get(user.getId());
-				if (keycloakUser != null) {
-					keycloakUser.roles().add(role);
+		try {
+			var keycloakGroups = remoteUserProvider.groups().stream().collect(Collectors.toMap(KeycloakGroupDto::id, Function.identity()));
+			var keycloakUsers = remoteUserProvider.users().stream().collect(Collectors.toMap(KeycloakUserDto::id, Function.identity()));
+			var keycloakRealmRoles = Arrays.stream(RealmRole.values()).collect(Collectors.toMap(Function.identity(), remoteUserProvider::usersInRole));
+			for (var role : RealmRole.values()) {
+				var usersInRole = keycloakRealmRoles.get(role);
+				for (var user : usersInRole) {
+					var keycloakUser = keycloakUsers.get(user.getId());
+					if (keycloakUser != null) {
+						keycloakUser.roles().add(role);
+					}
 				}
 			}
+			sync(keycloakGroups, keycloakUsers);
+		} catch (Exception e) {
+			LOG.error("Keycloak sync failed.", e);
 		}
-		sync(keycloakGroups, keycloakUsers);
 	}
 
 	@Transactional
@@ -76,12 +118,7 @@ public class KeycloakAuthorityPuller {
 			var keycloakUser = keycloakUsers.get(id);
 			var databaseUser = new User();
 			databaseUser.setId(keycloakUser.id());
-			databaseUser.setName(keycloakUser.name());
-			databaseUser.setEmail(keycloakUser.email());
-			databaseUser.setFirstName(keycloakUser.firstName());
-			databaseUser.setLastName(keycloakUser.lastName());
-			databaseUser.setPictureUrl(keycloakUser.pictureUrl());
-			databaseUser.setEnabled(keycloakUser.enabled());
+			applyUser(databaseUser, keycloakUser);
 			databaseUser.setRealmRoles(keycloakUser.roles().stream().map(RealmRole::kcName).toArray(String[]::new));
 			return databaseUser;
 		}).collect(Collectors.toMap(User::getId, Function.identity()));
@@ -104,12 +141,7 @@ public class KeycloakAuthorityPuller {
 		for (var id : toUpdateIds) {
 			var databaseUser = databaseUsers.get(id);
 			var keycloakUser = keycloakUsers.get(id);
-			databaseUser.setName(keycloakUser.name());
-			databaseUser.setEmail(keycloakUser.email());
-			databaseUser.setFirstName(keycloakUser.firstName());
-			databaseUser.setLastName(keycloakUser.lastName());
-			databaseUser.setPictureUrl(keycloakUser.pictureUrl());
-			databaseUser.setEnabled(keycloakUser.enabled());
+			applyUser(databaseUser, keycloakUser);
 			databaseUser.setRealmRoles(keycloakUser.roles().stream().map(RealmRole::kcName).toArray(String[]::new));
 		}
 	}
@@ -121,9 +153,8 @@ public class KeycloakAuthorityPuller {
 			var keycloakGroup = keycloakGroups.get(id);
 			var databaseGroup = new Group();
 			databaseGroup.setId(keycloakGroup.id());
-			databaseGroup.setName(keycloakGroup.name());
-			databaseGroup.setPictureUrl(keycloakGroup.pictureUrl());
-			databaseGroup.getMembers().addAll(keycloakGroup.members().stream().map(KeycloakUserDto::id).map(allAuthorities::get).collect(Collectors.toSet()));
+			var memberIds = keycloakGroup.members().stream().map(KeycloakUserDto::id).collect(Collectors.toSet());
+			applyGroup(databaseGroup, keycloakGroup.name(), keycloakGroup.pictureUrl(), memberIds, allAuthorities::get);
 			return databaseGroup;
 		}).collect(Collectors.toMap(Group::getId, Function.identity()));
 		groupRepo.persist(added.values());
@@ -146,22 +177,394 @@ public class KeycloakAuthorityPuller {
 		for (var id : toUpdateIds) {
 			var databaseGroup = databaseGroups.get(id);
 			var keycloakGroup = keycloakGroups.get(id);
-			databaseGroup.setName(keycloakGroup.name());
-			databaseGroup.setPictureUrl(keycloakGroup.pictureUrl());
-
-			// update members:
-			var kcMemberIds = keycloakGroup.members().stream().map(KeycloakUserDto::id).collect(Collectors.toSet());
-			var dbMemberIds = databaseGroup.getMembers().stream().map(Authority::getId).collect(Collectors.toSet());
-			var addedMemberIds = diff(kcMemberIds, dbMemberIds);
-			var addedMembers = addedMemberIds.stream().map(allAuthorities::get).collect(Collectors.toSet());
-			databaseGroup.getMembers().addAll(addedMembers);
-			var removedMemberIds = diff(dbMemberIds, kcMemberIds);
-			databaseGroup.getMembers().removeIf(u -> removedMemberIds.contains(u.getId()));
-			if (!addedMemberIds.isEmpty() || !removedMemberIds.isEmpty()) {
+			var memberIds = keycloakGroup.members().stream().map(KeycloakUserDto::id).collect(Collectors.toSet());
+			if (applyGroup(databaseGroup, keycloakGroup.name(), keycloakGroup.pictureUrl(), memberIds, allAuthorities::get)) {
 				idsOfGroupsWithChangedMembers.add(id);
 			}
 		}
 		effectiveGroupMembershipRepo.updateGroups(idsOfGroupsWithChangedMembers);
+	}
+
+	private void applyUser(User dbUser, KeycloakUserDto keycloakUser) {
+		dbUser.setName(keycloakUser.name());
+		dbUser.setEmail(keycloakUser.email());
+		dbUser.setFirstName(keycloakUser.firstName());
+		dbUser.setLastName(keycloakUser.lastName());
+		dbUser.setPictureUrl(keycloakUser.pictureUrl());
+		dbUser.setEnabled(keycloakUser.enabled());
+	}
+
+	private boolean applyGroup(Group dbGroup, String name, String pictureUrl, Set<String> kcMemberIds, Function<String, Authority> memberResolver) {
+		dbGroup.setName(name);
+		dbGroup.setPictureUrl(pictureUrl);
+
+		var dbMemberIds = dbGroup.getMembers().stream().map(Authority::getId).collect(Collectors.toSet());
+		var addedMemberIds = diff(kcMemberIds, dbMemberIds);
+		var addedMembers = addedMemberIds.stream().map(memberResolver).filter(Objects::nonNull).collect(Collectors.toSet());
+		dbGroup.getMembers().addAll(addedMembers);
+		var removedMemberIds = diff(dbMemberIds, kcMemberIds);
+		dbGroup.getMembers().removeIf(u -> removedMemberIds.contains(u.getId()));
+		return !addedMemberIds.isEmpty() || !removedMemberIds.isEmpty();
+	}
+
+	@WithSpan("KeycloakAuthorityPuller.createUser")
+	public UserRepresentation createUser(String username, String email, String firstName, String lastName, String password, String pictureUrl, Set<String> groupIds) {
+		UserRepresentation user = new UserRepresentation();
+		user.setUsername(username);
+		user.setEmail(email);
+		user.setFirstName(firstName);
+		user.setLastName(lastName);
+		user.setEnabled(true);
+
+		if (pictureUrl != null && !pictureUrl.isBlank()) {
+			user.setAttributes(Map.of("picture", List.of(pictureUrl)));
+		}
+
+		CredentialRepresentation credential = new CredentialRepresentation();
+		credential.setType(CredentialRepresentation.PASSWORD);
+		credential.setValue(password);
+		credential.setTemporary(false);
+		user.setCredentials(List.of(credential));
+
+		final String userId;
+		try (var response = realm.users().create(user)) {
+			userId = switch (response.getStatus()) {
+				case 201 -> {
+					var location = response.getHeaderString("Location");
+					yield location.substring(location.lastIndexOf('/') + 1);
+				}
+				case 409 -> {
+					String body = response.readEntity(String.class);
+					String errorMessage;
+					if (body != null && body.contains("same email")) {
+						errorMessage = "EMAIL_EXISTS";
+					} else if (body != null && body.contains("same username")) {
+						errorMessage = "USERNAME_EXISTS";
+					} else {
+						errorMessage = "User already exists";
+					}
+					throw new ClientErrorException(errorMessage, Response.Status.CONFLICT);
+				}
+				default -> {
+					LOG.warnv("Failed to create user {0} in Keycloak. Status: {1}", username, response.getStatus());
+					throw new InternalServerErrorException("Failed to create user in Keycloak. Status: " + response.getStatus());
+				}
+			};
+		} catch (ProcessingException e) {
+			LOG.warnv(e, "Failed to create user {0} in Keycloak.", username);
+			throw e;
+		}
+
+		UserResource userResource = realm.users().get(userId);
+
+		// groups need to be set after creation, see https://github.com/keycloak/keycloak/discussions/8552
+		var joinedGroupIds = new HashSet<String>();
+		if (groupIds != null && !groupIds.isEmpty()) {
+			for (String groupId : groupIds) {
+				try {
+					userResource.joinGroup(groupId);
+					joinedGroupIds.add(groupId);
+				} catch (WebApplicationException e) {
+					LOG.warnv(e, "Failed to add user {0} to group {1}.", userId, groupId);
+					// TODO: shall we fail the whole user creation here? undo previous steps?
+				}
+			}
+		}
+
+		// sync to db:
+		syncUser(userId);
+
+		// mirror the successful group joins into the DB (the user now exists in the DB after syncUser):
+		for (String groupId : joinedGroupIds) {
+			groupRepo.addMember(groupId, userId);
+		}
+
+		// update effective group membership now that the DB contains the membership data
+		// (we can assume that the groups already exist, otherwise the caller wouldn't have been able to provide their IDs):
+		effectiveGroupMembershipRepo.updateGroups(groupIds);
+
+		return realm.users().get(userId).toRepresentation();
+	}
+
+	public UserRepresentation updateUser(String userId, String email, String firstName, String lastName, String password, String pictureUrl) {
+		if (isUserReadOnly(userId)) {
+			throw new ForbiddenException("User has a federated identity and cannot be modified");
+		}
+
+		try {
+			UserResource userResource = realm.users().get(userId);
+			UserRepresentation user = userResource.toRepresentation();
+
+			if (email != null && !email.isBlank()) {
+				user.setEmail(email);
+			}
+			if (firstName != null && !firstName.isBlank()) {
+				user.setFirstName(firstName);
+			}
+			if (lastName != null && !lastName.isBlank()) {
+				user.setLastName(lastName);
+			}
+			var attrs = setPicture(user.getAttributes(), pictureUrl);
+			user.setAttributes(attrs);
+
+			userResource.update(user);
+
+			if (password != null && !password.isBlank()) {
+				CredentialRepresentation credential = new CredentialRepresentation();
+				credential.setType(CredentialRepresentation.PASSWORD);
+				credential.setValue(password);
+				credential.setTemporary(false);
+				userResource.resetPassword(credential);
+			}
+
+			syncUser(userId);
+			return userResource.toRepresentation();
+		} catch (WebApplicationException | ProcessingException e) {
+			LOG.warnv(e, "Failed to update user {0} in Keycloak.", userId);
+			throw e;
+		}
+	}
+
+	@Transactional
+	public void deleteUser(String userId) {
+		if (isUserReadOnly(userId)) {
+			throw new ForbiddenException("User has a federated identity and cannot be deleted");
+		}
+
+		// 1. delete from db (roll back if kc deletion fails):
+		userRepo.deleteById(userId);
+
+		// 2. delete from kc:
+		try (var response = realm.users().delete(userId)) {
+			if (response.getStatus() != 204) {
+				LOG.warnv("Failed to delete user {0} in Keycloak. Status: {1}", userId, response.getStatus());
+				throw new InternalServerErrorException("Failed to delete user in Keycloak. Status: " + response.getStatus());
+			}
+		} catch (ProcessingException e) {
+			LOG.warnv(e, "Failed to delete user {0} in Keycloak.", userId);
+			throw e;
+		}
+	}
+
+	@Transactional
+	public void setUserEnabled(String userId, boolean enabled) {
+		try {
+			UserResource userResource = realm.users().get(userId);
+			UserRepresentation user = userResource.toRepresentation();
+			user.setEnabled(enabled);
+			userResource.update(user);
+			syncUser(userId);
+		} catch (WebApplicationException | ProcessingException e) {
+			LOG.warnv(e, "Failed to {0} user {1} in Keycloak.", enabled ? "enable" : "disable", userId);
+			throw e;
+		}
+	}
+
+	public boolean isUserReadOnly(String userId) {
+		try {
+			UserResource userResource = realm.users().get(userId);
+			var federatedIdentities = userResource.getFederatedIdentity();
+			return !federatedIdentities.isEmpty();
+		} catch (WebApplicationException | ProcessingException e) {
+			LOG.warnv(e, "Failed to check federated identity for user {0}.", userId);
+			throw new InternalServerErrorException("Failed to check federated identity", e);
+		}
+	}
+
+	@Transactional
+	@WithSpan("KeycloakAuthorityPuller.syncUser")
+	public User syncUser(String userId) {
+		UserResource userResource = realm.users().get(userId);
+		var keycloakUser = KeycloakAuthorityProvider.mapToUser(userResource.toRepresentation());
+
+		User dbUser = userRepo.findById(userId);
+		if (dbUser == null) {
+			dbUser = new User();
+			dbUser.setId(keycloakUser.id());
+		}
+		applyUser(dbUser, keycloakUser);
+		userRepo.persist(dbUser);
+		return dbUser;
+	}
+
+	@Transactional
+	@WithSpan("KeycloakAuthorityPuller.syncGroup")
+	public Group syncGroup(String groupId) {
+		GroupResource groupResource = realm.groups().group(groupId);
+		GroupRepresentation keycloakGroup = groupResource.toRepresentation();
+		var memberIds = collectMemberIds(groupResource, groupId);
+
+		Group dbGroup = groupRepo.findById(groupId);
+		if (dbGroup == null) {
+			dbGroup = new Group();
+			dbGroup.setId(keycloakGroup.getId());
+		}
+
+		var pictureUrl = KeycloakAuthorityProvider.parsePictureUrl(keycloakGroup.getAttributes());
+		var dbMembers = userRepo.findByIds(memberIds).collect(Collectors.toMap(User::getId, Function.<User>identity()));
+
+		applyGroup(dbGroup, keycloakGroup.getName(), pictureUrl, new HashSet<>(memberIds), dbMembers::get);
+		groupRepo.persist(dbGroup);
+		effectiveGroupMembershipRepo.updateGroups(List.of(groupId));
+		return dbGroup;
+	}
+
+	private List<String> collectMemberIds(GroupResource groupResource, String groupId) {
+		List<String> memberIds = new ArrayList<>();
+		List<UserRepresentation> currentBatch;
+		try {
+			do {
+				currentBatch = groupResource.members(memberIds.size(), KeycloakAuthorityProvider.MAX_COUNT_PER_REQUEST);
+				currentBatch.forEach(member -> memberIds.add(member.getId()));
+			} while (currentBatch.size() == KeycloakAuthorityProvider.MAX_COUNT_PER_REQUEST);
+		} catch (WebApplicationException | ProcessingException e) {
+			LOG.warnv(e, "Failed to read members of group {0} from Keycloak (offset {1}).", groupId, memberIds.size());
+			throw e;
+		}
+		return memberIds;
+	}
+
+	@Transactional
+	public void addUserToGroup(String groupId, String userId) {
+		// 1. sync to db (roll back if kc update fails):
+		try {
+			groupRepo.addMember(groupId, userId);
+			effectiveGroupMembershipRepo.updateGroups(List.of(groupId));
+		} catch (PersistenceException e) { // caused by foreign key constraint violation
+			throw new NotFoundException("Failed to add member " + userId + " to group " + groupId);
+		}
+
+		// 2. sync to kc:
+		try {
+			realm.users().get(userId).joinGroup(groupId);
+		} catch (WebApplicationException | ProcessingException e) {
+			LOG.warnv(e, "Failed to add user {0} to group {1} in Keycloak.", userId, groupId);
+			throw e;
+		}
+	}
+
+	@Transactional
+	public void removeUserFromGroup(String groupId, String userId) {
+		// 1. sync to db (roll back if kc update fails):
+		groupRepo.removeMember(groupId, userId);
+		effectiveGroupMembershipRepo.updateGroups(List.of(groupId));
+
+		// 2. sync to kc:
+		try {
+			realm.users().get(userId).leaveGroup(groupId);
+		} catch (WebApplicationException | ProcessingException e) {
+			LOG.warnv(e, "Failed to remove user {0} from group {1} in Keycloak.", userId, groupId);
+			throw e;
+		}
+	}
+
+	@Transactional
+	@WithSpan("KeycloakAuthorityPuller.updateUserRoles")
+	public void updateUserRoles(String userId, Set<RealmRole> roles) {
+		// remove roles that are not in the provided set:
+		var rolesToRemove = EnumSet.allOf(RealmRole.class);
+		rolesToRemove.removeAll(roles);
+
+		// set roles that are in the provided set:
+		var rolesToSet = EnumSet.noneOf(RealmRole.class);
+		rolesToSet.addAll(roles);
+
+		// 1. sync to db (roll back if kc update fails):
+		User dbUser = userRepo.findByIdOptional(userId).orElseThrow(NotFoundException::new);
+		dbUser.setRealmRoles(rolesToSet.stream().map(RealmRole::kcName).toArray(String[]::new));
+		userRepo.persist(dbUser);
+
+		// 2. sync to kc:
+		try {
+			UserResource userResource = realm.users().get(userId);
+			var roleMappings = userResource.roles().realmLevel();
+			if (!rolesToRemove.isEmpty()) {
+				roleMappings.remove(rolesToRemove.stream().map(realmRoles::getRealmRole).toList());
+			}
+			if (!rolesToSet.isEmpty()) {
+				roleMappings.add(rolesToSet.stream().map(realmRoles::getRealmRole).toList());
+			}
+		} catch (WebApplicationException | ProcessingException e) {
+			LOG.warnv(e, "Failed to update realm roles for user {0} in Keycloak.", userId);
+			throw e;
+		}
+	}
+
+	// Group management methods
+
+	public GroupRepresentation createGroup(String name, String pictureUrl) {
+		GroupRepresentation group = new GroupRepresentation();
+		group.setName(name);
+
+		if (pictureUrl != null && !pictureUrl.isBlank()) {
+			group.setAttributes(Map.of("picture", List.of(pictureUrl)));
+		}
+
+		final String groupId;
+		try (var response = realm.groups().add(group)) {
+			groupId = switch (response.getStatus()) {
+				case 201 -> {
+					var location = response.getHeaderString("Location");
+					yield location.substring(location.lastIndexOf('/') + 1);
+				}
+				case 409 -> throw new ClientErrorException("GROUP_NAME_EXISTS", Response.Status.CONFLICT);
+				default -> {
+					LOG.warnv("Failed to create group {0} in Keycloak. Status: {1}", name, response.getStatus());
+					throw new InternalServerErrorException("Failed to create group in Keycloak. Status: " + response.getStatus());
+				}
+			};
+		} catch (ProcessingException e) {
+			LOG.warnv(e, "Failed to create group {0} in Keycloak.", name);
+			throw e;
+		}
+
+		syncGroup(groupId);
+		return realm.groups().group(groupId).toRepresentation();
+	}
+
+	public GroupRepresentation updateGroup(String groupId, String name, String pictureUrl) {
+		try {
+			GroupResource groupResource = realm.groups().group(groupId);
+			GroupRepresentation group = groupResource.toRepresentation();
+
+			if (!name.isBlank()) {
+				group.setName(name);
+			}
+
+			var attrs = setPicture(group.getAttributes(), pictureUrl);
+			group.setAttributes(attrs);
+
+			groupResource.update(group);
+			syncGroup(groupId);
+			return groupResource.toRepresentation();
+		} catch (WebApplicationException | ProcessingException e) {
+			LOG.warnv(e, "Failed to update group {0} in Keycloak.", groupId);
+			throw e;
+		}
+	}
+
+	@Transactional
+	public void deleteGroup(String groupId) {
+		// 1. delete from db (roll back if kc deletion fails):
+		groupRepo.deleteById(groupId);
+
+		// 2. delete from kc:
+		try {
+			realm.groups().group(groupId).remove();
+		} catch (WebApplicationException | ProcessingException e) {
+			LOG.warnv(e, "Failed to delete group {0} in Keycloak.", groupId);
+			throw e;
+		}
+	}
+
+	private static Map<String, List<String>> setPicture(Map<String, List<String>> attributes, String pictureUrl) {
+		Map<String, List<String>> attrs = attributes == null ? new HashMap<>() : new HashMap<>(attributes);
+		if (pictureUrl == null || pictureUrl.isBlank()) {
+			attrs.remove("picture");
+		} else {
+			attrs.put("picture", List.of(pictureUrl));
+		}
+		return attrs;
 	}
 
 	private static <T> Set<T> diff(Set<T> base, Set<T> difference) {

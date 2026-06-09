@@ -1,5 +1,11 @@
 package org.cryptomator.hub.keycloak;
 
+import jakarta.persistence.PersistenceException;
+import jakarta.ws.rs.ClientErrorException;
+import jakarta.ws.rs.ForbiddenException;
+import jakarta.ws.rs.InternalServerErrorException;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.Authority;
 import org.cryptomator.hub.entities.EffectiveGroupMembership;
 import org.cryptomator.hub.entities.Group;
@@ -10,11 +16,24 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.converter.ArgumentConversionException;
 import org.junit.jupiter.params.converter.ConvertWith;
 import org.junit.jupiter.params.converter.SimpleArgumentConverter;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.keycloak.admin.client.resource.GroupResource;
+import org.keycloak.admin.client.resource.GroupsResource;
+import org.keycloak.admin.client.resource.RealmResource;
+import org.keycloak.admin.client.resource.RoleMappingResource;
+import org.keycloak.admin.client.resource.RoleScopeResource;
+import org.keycloak.admin.client.resource.UserResource;
+import org.keycloak.admin.client.resource.UsersResource;
+import org.keycloak.representations.idm.FederatedIdentityRepresentation;
+import org.keycloak.representations.idm.GroupRepresentation;
+import org.keycloak.representations.idm.RoleRepresentation;
+import org.keycloak.representations.idm.UserRepresentation;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 import java.util.ArrayList;
@@ -23,9 +42,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.mockito.ArgumentMatchers.any;
 
@@ -340,6 +361,382 @@ class KeycloakAuthorityPullerTest {
 			Mockito.verify(dbGroup).setName(String.format("name %s", groupId));
 			Mockito.verify(dbGroup).setPictureUrl(String.format("pic %s", groupId));
 			MatcherAssert.assertThat(dbGroupMembers, Matchers.containsInAnyOrder(userMock, otherKCUser));
+		}
+	}
+
+	@Nested
+	@DisplayName("Test write methods")
+	class WriteMethods {
+
+		private final RealmResource realm = Mockito.mock(RealmResource.class);
+		private final UsersResource usersResource = Mockito.mock(UsersResource.class);
+		private final GroupsResource groupsResource = Mockito.mock(GroupsResource.class);
+		private final KeycloakRealmRoles realmRoles = Mockito.mock(KeycloakRealmRoles.class);
+
+		@BeforeEach
+		void setUp() {
+			remoteUserPuller.realm = realm;
+			remoteUserPuller.realmRoles = realmRoles;
+			Mockito.lenient().when(realm.users()).thenReturn(usersResource);
+			Mockito.lenient().when(realm.groups()).thenReturn(groupsResource);
+		}
+
+		@Test
+		@DisplayName("createUser returns representation and syncs to db on 201")
+		void testCreateUserSuccess() {
+			var response = Mockito.mock(Response.class);
+			Mockito.when(usersResource.create(any())).thenReturn(response);
+			Mockito.when(response.getStatus()).thenReturn(201);
+			Mockito.when(response.getHeaderString("Location")).thenReturn("https://kc/admin/realms/test/users/newId");
+			var userResource = Mockito.mock(UserResource.class);
+			Mockito.when(usersResource.get("newId")).thenReturn(userResource);
+			var representation = new UserRepresentation();
+			representation.setId("newId");
+			representation.setUsername("newuser");
+			representation.setEnabled(true);
+			Mockito.when(userResource.toRepresentation()).thenReturn(representation);
+			Mockito.when(userRepo.findById("newId")).thenReturn(null);
+
+			var result = remoteUserPuller.createUser("newuser", "e", "f", "l", "pw", null, Set.of());
+
+			Assertions.assertEquals("newId", result.getId());
+			Mockito.verify(userRepo).persist(any(User.class));
+		}
+
+		@Test
+		@DisplayName("createUser throws ClientErrorException with USERNAME_EXISTS on 409")
+		void testCreateUserConflict() {
+			var response = Mockito.mock(Response.class);
+			Mockito.when(usersResource.create(any())).thenReturn(response);
+			Mockito.when(response.getStatus()).thenReturn(409);
+			Mockito.when(response.readEntity(String.class)).thenReturn("a user with the same username already exists");
+
+			var e = Assertions.assertThrows(ClientErrorException.class, () -> remoteUserPuller.createUser("u", "e", "f", "l", "pw", null, Set.of()));
+			Assertions.assertEquals("USERNAME_EXISTS", e.getMessage());
+			Mockito.verify(userRepo, Mockito.never()).persist(any(User.class));
+		}
+
+		@Test
+		@DisplayName("createUser throws InternalServerErrorException on unexpected status")
+		void testCreateUserServerError() {
+			var response = Mockito.mock(Response.class);
+			Mockito.when(usersResource.create(any())).thenReturn(response);
+			Mockito.when(response.getStatus()).thenReturn(500);
+
+			Assertions.assertThrows(InternalServerErrorException.class, () -> remoteUserPuller.createUser("u", "e", "f", "l", "pw", null, Set.of()));
+		}
+
+		@Test
+		@DisplayName("deleteUser rejects read-only (federated) user before touching the db")
+		void testDeleteUserRejectsReadOnly() {
+			var userResource = Mockito.mock(UserResource.class);
+			Mockito.when(usersResource.get("fed")).thenReturn(userResource);
+			Mockito.when(userResource.getFederatedIdentity()).thenReturn(List.of(new FederatedIdentityRepresentation()));
+
+			Assertions.assertThrows(ForbiddenException.class, () -> remoteUserPuller.deleteUser("fed"));
+			Mockito.verify(userRepo, Mockito.never()).deleteById(any());
+		}
+
+		@Test
+		@DisplayName("deleteUser deletes from db before Keycloak")
+		void testDeleteUserOrdering() {
+			var userResource = Mockito.mock(UserResource.class);
+			Mockito.when(usersResource.get("u")).thenReturn(userResource);
+			Mockito.when(userResource.getFederatedIdentity()).thenReturn(List.of());
+			var response = Mockito.mock(Response.class);
+			Mockito.when(usersResource.delete("u")).thenReturn(response);
+			Mockito.when(response.getStatus()).thenReturn(204);
+
+			remoteUserPuller.deleteUser("u");
+
+			var inOrder = Mockito.inOrder(userRepo, usersResource);
+			inOrder.verify(userRepo).deleteById("u");
+			inOrder.verify(usersResource).delete("u");
+		}
+
+		@Test
+		@DisplayName("updateUserRoles diffs roles to add and remove")
+		void testUpdateUserRoles() {
+			var dbUser = Mockito.mock(User.class);
+			Mockito.when(userRepo.findByIdOptional("u")).thenReturn(Optional.of(dbUser));
+			var userResource = Mockito.mock(UserResource.class);
+			Mockito.when(usersResource.get("u")).thenReturn(userResource);
+			var roleMapping = Mockito.mock(RoleMappingResource.class);
+			var realmLevel = Mockito.mock(RoleScopeResource.class);
+			Mockito.when(userResource.roles()).thenReturn(roleMapping);
+			Mockito.when(roleMapping.realmLevel()).thenReturn(realmLevel);
+			Mockito.when(realmRoles.getRealmRole(any())).thenReturn(new RoleRepresentation());
+
+			remoteUserPuller.updateUserRoles("u", Set.of(RealmRole.USER));
+
+			var captor = ArgumentCaptor.forClass(String[].class);
+			Mockito.verify(dbUser).setRealmRoles(captor.capture());
+			Assertions.assertArrayEquals(new String[]{"user"}, captor.getValue());
+			Mockito.verify(realmLevel).add(Mockito.anyList());
+			Mockito.verify(realmLevel).remove(Mockito.anyList());
+		}
+
+		@Test
+		@DisplayName("addUserToGroup maps foreign-key violation to NotFoundException")
+		void testAddUserToGroupForeignKeyViolation() {
+			Mockito.doThrow(new PersistenceException()).when(groupRepo).addMember("g", "u");
+
+			Assertions.assertThrows(NotFoundException.class, () -> remoteUserPuller.addUserToGroup("g", "u"));
+			Mockito.verify(usersResource, Mockito.never()).get(any());
+		}
+
+		@Test
+		@DisplayName("syncUser creates a new user when none exists")
+		void testSyncUserCreates() {
+			var userResource = Mockito.mock(UserResource.class);
+			Mockito.when(usersResource.get("u")).thenReturn(userResource);
+			var representation = new UserRepresentation();
+			representation.setId("u");
+			representation.setUsername("name");
+			representation.setEmail("mail");
+			representation.setEnabled(true);
+			Mockito.when(userResource.toRepresentation()).thenReturn(representation);
+			Mockito.when(userRepo.findById("u")).thenReturn(null);
+
+			var result = remoteUserPuller.syncUser("u");
+
+			Assertions.assertEquals("u", result.getId());
+			Assertions.assertEquals("name", result.getName());
+			Assertions.assertEquals("mail", result.getEmail());
+			Mockito.verify(userRepo).persist(result);
+		}
+
+		@Test
+		@DisplayName("syncUser updates an existing user without clearing its realm roles")
+		void testSyncUserUpdatesWithoutClearingRoles() {
+			var userResource = Mockito.mock(UserResource.class);
+			Mockito.when(usersResource.get("u")).thenReturn(userResource);
+			var representation = new UserRepresentation();
+			representation.setId("u");
+			representation.setUsername("renamed");
+			representation.setEnabled(true);
+			Mockito.when(userResource.toRepresentation()).thenReturn(representation);
+			var existing = Mockito.mock(User.class);
+			Mockito.when(userRepo.findById("u")).thenReturn(existing);
+
+			remoteUserPuller.syncUser("u");
+
+			Mockito.verify(existing).setName("renamed");
+			Mockito.verify(existing, Mockito.never()).setRealmRoles(any());
+			Mockito.verify(userRepo).persist(existing);
+		}
+
+		@Test
+		@DisplayName("syncGroup upserts the group and always invalidates effective membership")
+		void testSyncGroupUpsertsAndInvalidates() {
+			var groupResource = Mockito.mock(GroupResource.class);
+			Mockito.when(groupsResource.group("g")).thenReturn(groupResource);
+			var representation = new GroupRepresentation();
+			representation.setId("g");
+			representation.setName("gname");
+			Mockito.when(groupResource.toRepresentation()).thenReturn(representation);
+			Mockito.when(groupResource.members(0, KeycloakAuthorityProvider.MAX_COUNT_PER_REQUEST)).thenReturn(List.of());
+			Mockito.when(groupRepo.findById("g")).thenReturn(null);
+			Mockito.when(userRepo.findByIds(Mockito.anyList())).thenReturn(Stream.of());
+
+			var result = remoteUserPuller.syncGroup("g");
+
+			Assertions.assertEquals("g", result.getId());
+			Assertions.assertEquals("gname", result.getName());
+			Mockito.verify(groupRepo).persist(result);
+			Mockito.verify(effectiveGroupMembershipRepo).updateGroups(List.of("g"));
+		}
+
+		@Test
+		@DisplayName("syncGroup pages through members beyond a single Keycloak page")
+		void testSyncGroupPaginatesMembers() {
+			var groupResource = Mockito.mock(GroupResource.class);
+			Mockito.when(groupsResource.group("g")).thenReturn(groupResource);
+			var representation = new GroupRepresentation();
+			representation.setId("g");
+			representation.setName("g");
+			Mockito.when(groupResource.toRepresentation()).thenReturn(representation);
+
+			var firstPage = new ArrayList<UserRepresentation>();
+			for (int i = 0; i < KeycloakAuthorityProvider.MAX_COUNT_PER_REQUEST; i++) {
+				var member = new UserRepresentation();
+				member.setId("u" + i);
+				firstPage.add(member);
+			}
+			var lastMember = new UserRepresentation();
+			lastMember.setId("uLast");
+			Mockito.when(groupResource.members(0, KeycloakAuthorityProvider.MAX_COUNT_PER_REQUEST)).thenReturn(firstPage);
+			Mockito.when(groupResource.members(KeycloakAuthorityProvider.MAX_COUNT_PER_REQUEST, KeycloakAuthorityProvider.MAX_COUNT_PER_REQUEST)).thenReturn(List.of(lastMember));
+			Mockito.when(groupRepo.findById("g")).thenReturn(null);
+			Mockito.when(userRepo.findByIds(Mockito.anyList())).thenReturn(Stream.of());
+
+			remoteUserPuller.syncGroup("g");
+
+			Mockito.verify(groupResource).members(KeycloakAuthorityProvider.MAX_COUNT_PER_REQUEST, KeycloakAuthorityProvider.MAX_COUNT_PER_REQUEST);
+			var captor = ArgumentCaptor.forClass(List.class);
+			Mockito.verify(userRepo).findByIds(captor.capture());
+			Assertions.assertEquals(KeycloakAuthorityProvider.MAX_COUNT_PER_REQUEST + 1, captor.getValue().size());
+		}
+
+		@Test
+		@DisplayName("createUser tolerates a failed group join and still creates the user")
+		void testCreateUserToleratesGroupJoinFailure() {
+			var response = Mockito.mock(Response.class);
+			Mockito.when(usersResource.create(any())).thenReturn(response);
+			Mockito.when(response.getStatus()).thenReturn(201);
+			Mockito.when(response.getHeaderString("Location")).thenReturn("https://kc/admin/realms/test/users/newId");
+			var userResource = Mockito.mock(UserResource.class);
+			Mockito.when(usersResource.get("newId")).thenReturn(userResource);
+			Mockito.doThrow(new InternalServerErrorException("kc down")).when(userResource).joinGroup("g1");
+			var representation = new UserRepresentation();
+			representation.setId("newId");
+			representation.setUsername("u");
+			representation.setEnabled(true);
+			Mockito.when(userResource.toRepresentation()).thenReturn(representation);
+			Mockito.when(userRepo.findById("newId")).thenReturn(null);
+
+			var result = remoteUserPuller.createUser("u", "e", "f", "l", "pw", null, Set.of("g1"));
+
+			Assertions.assertEquals("newId", result.getId());
+			Mockito.verify(userResource).joinGroup("g1");
+			Mockito.verify(userRepo).persist(any(User.class));
+			Mockito.verify(groupRepo, Mockito.never()).addMember(Mockito.eq("g1"), any());
+			Mockito.verify(effectiveGroupMembershipRepo).updateGroups(Set.of("g1"));
+		}
+
+		@Test
+		@DisplayName("createUser writes membership only for the successfully joined groups on partial failure")
+		void testCreateUserPartialGroupJoinFailure() {
+			var response = Mockito.mock(Response.class);
+			Mockito.when(usersResource.create(any())).thenReturn(response);
+			Mockito.when(response.getStatus()).thenReturn(201);
+			Mockito.when(response.getHeaderString("Location")).thenReturn("https://kc/admin/realms/test/users/newId");
+			var userResource = Mockito.mock(UserResource.class);
+			Mockito.when(usersResource.get("newId")).thenReturn(userResource);
+			Mockito.doThrow(new InternalServerErrorException("kc down")).when(userResource).joinGroup("g2");
+			var representation = new UserRepresentation();
+			representation.setId("newId");
+			representation.setUsername("u");
+			representation.setEnabled(true);
+			Mockito.when(userResource.toRepresentation()).thenReturn(representation);
+			Mockito.when(userRepo.findById("newId")).thenReturn(null);
+
+			remoteUserPuller.createUser("u", "e", "f", "l", "pw", null, Set.of("g1", "g2"));
+
+			Mockito.verify(groupRepo).addMember("g1", "newId");
+			Mockito.verify(groupRepo, Mockito.never()).addMember(Mockito.eq("g2"), any());
+			Mockito.verify(effectiveGroupMembershipRepo).updateGroups(Set.of("g1", "g2"));
+		}
+
+		@Test
+		@DisplayName("createUser writes DB group membership for successfully joined groups")
+		void testCreateUserWritesGroupMembership() {
+			var response = Mockito.mock(Response.class);
+			Mockito.when(usersResource.create(any())).thenReturn(response);
+			Mockito.when(response.getStatus()).thenReturn(201);
+			Mockito.when(response.getHeaderString("Location")).thenReturn("https://kc/admin/realms/test/users/newId");
+			var userResource = Mockito.mock(UserResource.class);
+			Mockito.when(usersResource.get("newId")).thenReturn(userResource);
+			var representation = new UserRepresentation();
+			representation.setId("newId");
+			representation.setUsername("u");
+			representation.setEnabled(true);
+			Mockito.when(userResource.toRepresentation()).thenReturn(representation);
+			Mockito.when(userRepo.findById("newId")).thenReturn(null);
+
+			remoteUserPuller.createUser("u", "e", "f", "l", "pw", null, Set.of("g1"));
+
+			var inOrder = Mockito.inOrder(userRepo, groupRepo, effectiveGroupMembershipRepo);
+			inOrder.verify(userRepo).persist(any(User.class));
+			inOrder.verify(groupRepo).addMember("g1", "newId");
+			inOrder.verify(effectiveGroupMembershipRepo).updateGroups(Set.of("g1"));
+		}
+
+		@Test
+		@DisplayName("updateUser rejects read-only (federated) user before mutating Keycloak")
+		void testUpdateUserRejectsReadOnly() {
+			var userResource = Mockito.mock(UserResource.class);
+			Mockito.when(usersResource.get("fed")).thenReturn(userResource);
+			Mockito.when(userResource.getFederatedIdentity()).thenReturn(List.of(new FederatedIdentityRepresentation()));
+
+			Assertions.assertThrows(ForbiddenException.class, () -> remoteUserPuller.updateUser("fed", "e", "f", "l", null, null));
+			Mockito.verify(userResource, Mockito.never()).update(any());
+		}
+
+		@Test
+		@DisplayName("createGroup returns representation and syncs to db on 201")
+		void testCreateGroupSuccess() {
+			var response = Mockito.mock(Response.class);
+			Mockito.when(groupsResource.add(any())).thenReturn(response);
+			Mockito.when(response.getStatus()).thenReturn(201);
+			Mockito.when(response.getHeaderString("Location")).thenReturn("https://kc/admin/realms/test/groups/newGroup");
+			var groupResource = Mockito.mock(GroupResource.class);
+			Mockito.when(groupsResource.group("newGroup")).thenReturn(groupResource);
+			var representation = new GroupRepresentation();
+			representation.setId("newGroup");
+			representation.setName("New Group");
+			Mockito.when(groupResource.toRepresentation()).thenReturn(representation);
+			Mockito.when(groupResource.members(0, KeycloakAuthorityProvider.MAX_COUNT_PER_REQUEST)).thenReturn(List.of());
+			Mockito.when(groupRepo.findById("newGroup")).thenReturn(null);
+			Mockito.when(userRepo.findByIds(Mockito.anyList())).thenReturn(Stream.of());
+
+			var result = remoteUserPuller.createGroup("New Group", null);
+
+			Assertions.assertEquals("newGroup", result.getId());
+			Mockito.verify(groupRepo).persist(any(Group.class));
+		}
+
+		@Test
+		@DisplayName("createGroup throws ClientErrorException with GROUP_NAME_EXISTS on 409")
+		void testCreateGroupConflict() {
+			var response = Mockito.mock(Response.class);
+			Mockito.when(groupsResource.add(any())).thenReturn(response);
+			Mockito.when(response.getStatus()).thenReturn(409);
+
+			var e = Assertions.assertThrows(ClientErrorException.class, () -> remoteUserPuller.createGroup("g", null));
+			Assertions.assertEquals("GROUP_NAME_EXISTS", e.getMessage());
+			Mockito.verify(groupRepo, Mockito.never()).persist(any(Group.class));
+		}
+
+		@Test
+		@DisplayName("createGroup throws InternalServerErrorException on unexpected status")
+		void testCreateGroupServerError() {
+			var response = Mockito.mock(Response.class);
+			Mockito.when(groupsResource.add(any())).thenReturn(response);
+			Mockito.when(response.getStatus()).thenReturn(500);
+
+			Assertions.assertThrows(InternalServerErrorException.class, () -> remoteUserPuller.createGroup("g", null));
+		}
+	}
+
+	@Nested
+	@DisplayName("Test conditional membership invalidation")
+	class ConditionalInvalidation {
+
+		@Test
+		@DisplayName("syncUpdatedGroups invalidates only groups whose membership changed")
+		void testInvalidatesOnlyChangedGroups() {
+			var member = Mockito.mock(User.class);
+			Mockito.when(member.getId()).thenReturn("u");
+
+			var unchanged = Mockito.mock(Group.class);
+			Mockito.when(unchanged.getId()).thenReturn("unchanged");
+			Mockito.when(unchanged.getMembers()).thenReturn(new HashSet<>(Set.of(member)));
+			var changed = Mockito.mock(Group.class);
+			Mockito.when(changed.getId()).thenReturn("changed");
+			Mockito.when(changed.getMembers()).thenReturn(new HashSet<>());
+
+			Map<String, Group> databaseGroups = Map.of("unchanged", unchanged, "changed", changed);
+			var memberDto = new KeycloakUserDto("u", "n", "e", "f", "l", "p", true, Set.of());
+			Map<String, KeycloakGroupDto> keycloakGroups = Map.of(
+					"unchanged", new KeycloakGroupDto("unchanged", "unchanged", null, Set.of(memberDto)),
+					"changed", new KeycloakGroupDto("changed", "changed", null, Set.of(memberDto))
+			);
+			Map<String, Authority> allAuthorities = Map.of("u", member);
+
+			remoteUserPuller.syncUpdatedGroups(keycloakGroups, databaseGroups, Set.of(), allAuthorities);
+
+			Mockito.verify(effectiveGroupMembershipRepo).updateGroups(Set.of("changed"));
 		}
 	}
 
