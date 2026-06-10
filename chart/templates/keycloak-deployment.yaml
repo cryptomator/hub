@@ -8,11 +8,13 @@ metadata:
     {{- include "cryptomator-hub.labels" . | nindent 4 }}
     app.kubernetes.io/component: keycloak
 spec:
-  replicas: 1
+  replicas: {{ .Values.keycloak.replicas }}
+  {{- if eq (int .Values.keycloak.replicas) 1 }}
   # Single-replica, cache-bearing service: replace the pod outright instead of briefly running two.
   # Avoids the new pod trying to JGroups-JOIN the old (terminating) one during upgrades (long startup stall).
   strategy:
     type: Recreate
+  {{- end }}
   selector:
     matchLabels:
       {{- include "cryptomator-hub.selectorLabels" . | nindent 6 }}

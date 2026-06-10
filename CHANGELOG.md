@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix disabling users via user and group management
 
 ### Changed
+- Updated Keycloak to 26.6.3
+- Update Quarkus to 3.27.3.1 LTS
 - Migrated from Micrometer to OpenTelemetry
 - Updated Keycloak to 26.5.7
 - Update Quarkus to 3.27.3 LTS
