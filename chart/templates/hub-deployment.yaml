@@ -7,7 +7,7 @@ metadata:
     {{- include "cryptomator-hub.labels" . | nindent 4 }}
     app.kubernetes.io/component: hub
 spec:
-  replicas: 1
+  replicas: {{ .Values.hub.replicas }}
   selector:
     matchLabels:
       {{- include "cryptomator-hub.selectorLabels" . | nindent 6 }}
