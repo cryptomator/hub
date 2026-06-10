@@ -1,6 +1,6 @@
 <template>
   <div class="flex grow flex-col gap-y-5 pb-4" :class="collapsed ? 'px-3' : 'px-4'">
-    <div class="flex h-16 shrink-0 items-center" :class="collapsed ? 'justify-center' : ''">
+    <div class="flex h-16 shrink-0 items-center" :class="collapsed ? 'justify-center' : 'px-2'">
       <router-link to="/app" class="flex h-8 items-center" @click="emit('navigate')">
         <img :src="collapsed ? '/logo.svg' : '/logo-text.svg'" class="h-8" alt="Cryptomator Hub" />
       </router-link>
