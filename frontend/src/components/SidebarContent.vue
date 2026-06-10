@@ -33,7 +33,7 @@
          dropdown isn't clipped by the rail's overflow when collapsed -->
     <Menu as="div" class="relative">
       <MenuButton :title="collapsed ? me.name : undefined" :class="['flex w-full items-center gap-x-3 rounded-md p-2 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white focus:outline-hidden', collapsed ? 'justify-center' : '']">
-        <img class="h-8 w-8 shrink-0 rounded-full bg-tertiary2" :src="me.pictureUrl" alt="" />
+        <img class="h-8 w-8 shrink-0 rounded-full bg-white" :src="me.pictureUrl" alt="" />
         <span v-if="!collapsed" class="truncate">{{ me.name }}</span>
       </MenuButton>
       <transition enter-active-class="transition ease-out duration-100" enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class=" opacity-100 scale-100" leave-to-class=" opacity-0 scale-95">
