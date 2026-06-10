@@ -272,7 +272,8 @@ public class KeycloakAuthorityPuller {
 		}
 
 		// sync to db:
-		syncUser(userId);
+		UserRepresentation createdUser = userResource.toRepresentation();
+		syncUser(createdUser);
 
 		// mirror the successful group joins into the DB (the user now exists in the DB after syncUser):
 		for (String groupId : joinedGroupIds) {
@@ -283,7 +284,7 @@ public class KeycloakAuthorityPuller {
 		// (we can assume that the groups already exist, otherwise the caller wouldn't have been able to provide their IDs):
 		effectiveGroupMembershipRepo.updateGroups(groupIds);
 
-		return realm.users().get(userId).toRepresentation();
+		return createdUser;
 	}
 
 	public UserRepresentation updateUser(String userId, String email, String firstName, String lastName, String password, String pictureUrl) {
@@ -317,8 +318,9 @@ public class KeycloakAuthorityPuller {
 				userResource.resetPassword(credential);
 			}
 
-			syncUser(userId);
-			return userResource.toRepresentation();
+			UserRepresentation updatedUser = userResource.toRepresentation();
+			syncUser(updatedUser);
+			return updatedUser;
 		} catch (WebApplicationException | ProcessingException e) {
 			LOG.warnv(e, "Failed to update user {0} in Keycloak.", userId);
 			throw e;
@@ -371,13 +373,16 @@ public class KeycloakAuthorityPuller {
 		}
 	}
 
+	public User syncUser(String userId) {
+		return syncUser(realm.users().get(userId).toRepresentation());
+	}
+
 	@Transactional
 	@WithSpan("KeycloakAuthorityPuller.syncUser")
-	public User syncUser(String userId) {
-		UserResource userResource = realm.users().get(userId);
-		var keycloakUser = KeycloakAuthorityProvider.mapToUser(userResource.toRepresentation());
+	public User syncUser(UserRepresentation userRepresentation) {
+		var keycloakUser = KeycloakAuthorityProvider.mapToUser(userRepresentation);
 
-		User dbUser = userRepo.findById(userId);
+		User dbUser = userRepo.findById(keycloakUser.id());
 		if (dbUser == null) {
 			dbUser = new User();
 			dbUser.setId(keycloakUser.id());
@@ -387,17 +392,21 @@ public class KeycloakAuthorityPuller {
 		return dbUser;
 	}
 
-	@Transactional
-	@WithSpan("KeycloakAuthorityPuller.syncGroup")
 	public Group syncGroup(String groupId) {
 		GroupResource groupResource = realm.groups().group(groupId);
-		GroupRepresentation keycloakGroup = groupResource.toRepresentation();
+		return syncGroup(groupResource, groupResource.toRepresentation());
+	}
+
+	@Transactional
+	@WithSpan("KeycloakAuthorityPuller.syncGroup")
+	public Group syncGroup(GroupResource groupResource, GroupRepresentation keycloakGroup) {
+		var groupId = keycloakGroup.getId();
 		var memberIds = collectMemberIds(groupResource, groupId);
 
 		Group dbGroup = groupRepo.findById(groupId);
 		if (dbGroup == null) {
 			dbGroup = new Group();
-			dbGroup.setId(keycloakGroup.getId());
+			dbGroup.setId(groupId);
 		}
 
 		var pictureUrl = KeycloakAuthorityProvider.parsePictureUrl(keycloakGroup.getAttributes());
@@ -518,8 +527,10 @@ public class KeycloakAuthorityPuller {
 			throw e;
 		}
 
-		syncGroup(groupId);
-		return realm.groups().group(groupId).toRepresentation();
+		GroupResource groupResource = realm.groups().group(groupId);
+		GroupRepresentation createdGroup = groupResource.toRepresentation();
+		syncGroup(groupResource, createdGroup);
+		return createdGroup;
 	}
 
 	public GroupRepresentation updateGroup(String groupId, String name, String pictureUrl) {
@@ -535,8 +546,9 @@ public class KeycloakAuthorityPuller {
 			group.setAttributes(attrs);
 
 			groupResource.update(group);
-			syncGroup(groupId);
-			return groupResource.toRepresentation();
+			GroupRepresentation updatedGroup = groupResource.toRepresentation();
+			syncGroup(groupResource, updatedGroup);
+			return updatedGroup;
 		} catch (WebApplicationException | ProcessingException e) {
 			LOG.warnv(e, "Failed to update group {0} in Keycloak.", groupId);
 			throw e;

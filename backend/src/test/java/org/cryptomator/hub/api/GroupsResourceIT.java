@@ -252,6 +252,8 @@ class GroupsResourceIT {
 			given().contentType(ContentType.JSON).body(body)
 					.when().put("/groups/group1")
 					.then().statusCode(200);
+
+			Mockito.verify(keycloakAuthorityPuller).updateGroup("group1", "Updated Group", null);
 		}
 
 		@Test

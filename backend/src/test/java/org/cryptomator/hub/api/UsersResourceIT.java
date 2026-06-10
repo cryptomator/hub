@@ -14,6 +14,7 @@ import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.keycloak.KeycloakAuthorityPuller;
+import org.cryptomator.hub.keycloak.RealmRole;
 import org.cryptomator.hub.license.HubLicenseEntitlements;
 import org.cryptomator.hub.license.LicenseHolder;
 import org.junit.jupiter.api.AfterAll;
@@ -34,6 +35,7 @@ import org.mockito.Mockito;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
+import java.util.Set;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
@@ -438,6 +440,41 @@ class UsersResourceIT {
 			given().contentType(ContentType.JSON).body(body)
 					.when().post("/users")
 					.then().statusCode(201);
+		}
+
+		@Test
+		@DisplayName("POST /users assigns realm roles when provided")
+		void testCreateUserWithRealmRolesSuccess() {
+			var userRep = new UserRepresentation();
+			userRep.setId("newUserId123");
+			userRep.setUsername("newuser");
+			userRep.setEmail("newuser@example.com");
+
+			Mockito.when(keycloakAuthorityPuller.createUser(
+					Mockito.eq("newuser"),
+					Mockito.eq("newuser@example.com"),
+					Mockito.eq("New"),
+					Mockito.eq("User"),
+					Mockito.eq("password123"),
+					Mockito.isNull(),
+					Mockito.isNull()
+			)).thenReturn(userRep);
+
+			var body = """
+					{
+						"name": "newuser",
+						"email": "newuser@example.com",
+						"firstName": "New",
+						"lastName": "User",
+						"password": "password123",
+						"realmRoles": ["create-vaults"]
+					}
+					""";
+			given().contentType(ContentType.JSON).body(body)
+					.when().post("/users")
+					.then().statusCode(201);
+
+			Mockito.verify(keycloakAuthorityPuller).updateUserRoles("newUserId123", Set.of(RealmRole.CREATE_VAULTS));
 		}
 
 		@Test
