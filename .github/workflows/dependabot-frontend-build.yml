@@ -24,7 +24,7 @@ jobs:
   test:
     name: Run Tests
     runs-on: ubuntu-latest
-    if: ${{ github.actor == 'dependabot[bot]' && startsWith(github.head_ref, 'dependabot/npm_and_yarn/') }}
+    if: ${{ startsWith(github.head_ref, 'dependabot/npm_and_yarn/') || startsWith(github.ref_name, 'dependabot/npm_and_yarn/') }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -41,9 +41,9 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: frontend/pnpm-lock.yaml
         # no-frozen-lockfile option due to byte mismatch
-      - name: Regenerate pnpm-lock.yaml
+      - name: Install frontend dependencies
         working-directory: frontend
-        run: pnpm install --no-frozen-lockfile --lockfile-only
+        run: pnpm install --no-frozen-lockfile
       - name: Re-verify lockfile integrity after regeneration
         working-directory: frontend
         run: bash scripts/check-lockfile.sh
