@@ -11,10 +11,9 @@ hub:
   resources:
     requests:
       cpu: 50m
-      memory: 32Mi
+      memory: 16Mi
     limits:
-      cpu: 1000m
-      memory: 128Mi
+      memory: 32Mi
 
 keycloak:
   enabled: true
@@ -24,10 +23,9 @@ keycloak:
     password: replace-me
   resources:
     requests:
-      cpu: 100m
+      cpu: 200m
       memory: 512Mi
     limits:
-      cpu: 500m
       memory: 1Gi
 
 postgres:
@@ -38,8 +36,7 @@ postgres:
     size: 20Gi
   resources:
     requests:
-      cpu: 100m
+      cpu: 200m
       memory: 64Mi
     limits:
-      cpu: 2000m
       memory: 1Gi

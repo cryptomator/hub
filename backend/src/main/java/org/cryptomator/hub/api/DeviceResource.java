@@ -102,6 +102,21 @@ public class DeviceResource {
 		return legacyDeviceRepo.findAllInList(deviceIds).map(DeviceDto::fromEntity).toList();
 	}
 
+	/**
+	 * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
+	 */
+	@Deprecated(since = "1.3.0", forRemoval = true)
+	@GET
+	@Path("/has-legacy-devices")
+	@RolesAllowed("admin")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Transactional
+	@Operation(summary = "checks if any user has legacy devices")
+	@APIResponse(responseCode = "200")
+	public boolean hasAnyLegacyDevices() {
+		return legacyDeviceRepo.existsAny();
+	}
+
 	@PUT
 	@Path("/{deviceId}")
 	@RolesAllowed("user")

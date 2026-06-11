@@ -67,6 +67,7 @@ public class KeycloakAuthorityProvider {
 				userRepresentation.getFirstName(),
 				userRepresentation.getLastName(),
 				pictureUrl,
+				userRepresentation.isEnabled(),
 				RealmRole.fromKcNames(userRepresentation.getRealmRoles()));
 	}
 

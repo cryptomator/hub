@@ -2,13 +2,16 @@ import { aessiv } from '@noble/ciphers/aes.js';
 import { base16, base32, base64, base64nopad, base64urlnopad } from '@scure/base';
 import { JWEBuilder, JWEParser } from './jwe';
 import { CRC32, DB, UTF8, wordEncoder } from './util';
+
 export class UnwrapKeyError extends Error {
+
   readonly actualError: unknown;
 
   constructor(actualError: unknown) {
     super('Unwrapping key failed');
     this.actualError = actualError;
   }
+
 }
 
 export interface VaultConfigPayload {
@@ -45,6 +48,7 @@ interface UserKeyPayload {
 const GCM_NONCE_LEN = 12;
 
 export class VaultKeys {
+
   // in this browser application, this 512 bit key is used
   // as a hmac key to sign the vault config.
   // however when used by cryptomator, it gets split into
@@ -212,7 +216,7 @@ export class VaultKeys {
       const encKey = rawkey.subarray(0, Math.trunc(rawkey.length / 2));
       const macKey = rawkey.subarray(Math.trunc(rawkey.length / 2));
       const shiftedRawKey = new Uint8Array([...macKey, ...encKey]);
-      const ciphertext = aessiv(shiftedRawKey).encrypt(dirHash) as Uint8Array<ArrayBuffer>;
+      const ciphertext = aessiv(shiftedRawKey).encrypt(dirHash);
       // hash is only used as deterministic scheme for the root dir
       const hash = await crypto.subtle.digest('SHA-1', ciphertext);
       return base32.encode(new Uint8Array(hash));
@@ -255,17 +259,15 @@ export class VaultKeys {
     // encode using human-readable words:
     return wordEncoder.encodePadded(combined);
   }
+
 }
 
 export class UserKeys {
+
   public static readonly ECDH_PRIV_KEY_USAGES: KeyUsage[] = ['deriveBits'];
-
   public static readonly ECDH_KEY_DESIGNATION: EcKeyImportParams | EcKeyGenParams = { name: 'ECDH', namedCurve: 'P-384' };
-
   public static readonly ECDSA_PRIV_KEY_USAGES: KeyUsage[] = ['sign'];
-
   public static readonly ECDSA_PUB_KEY_USAGES: KeyUsage[] = ['verify'];
-
   public static readonly ECDSA_KEY_DESIGNATION: EcKeyImportParams | EcKeyGenParams = { name: 'ECDSA', namedCurve: 'P-384' };
 
   protected constructor(readonly ecdhKeyPair: CryptoKeyPair, readonly ecdsaKeyPair: CryptoKeyPair) { }
@@ -380,9 +382,11 @@ export class UserKeys {
       encodedEcdsaPrivateKey.fill(0x00);
     }
   }
+
 }
 
 export class BrowserKeys {
+
   public static readonly KEY_USAGES: KeyUsage[] = ['deriveBits'];
 
   public static readonly KEY_DESIGNATION: EcKeyImportParams | EcKeyGenParams = {
@@ -453,6 +457,7 @@ export class BrowserKeys {
     const publicKey = new Uint8Array(await crypto.subtle.exportKey('spki', this.keyPair.publicKey));
     return base64.encode(publicKey);
   }
+
 }
 
 export async function asPublicKey(publicKey: CryptoKey | BufferSource, keyDesignation: EcKeyImportParams, keyUsages: KeyUsage[] = []): Promise<CryptoKey> {

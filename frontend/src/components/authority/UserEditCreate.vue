@@ -1,7 +1,7 @@
 <template>
   <!-- Loading placeholder -->
   <div v-if="onFetchError">
-    <FetchError :error="onFetchError"/>
+    <FetchError :error="onFetchError" />
   </div>
   <div v-else-if="loading" class="text-center p-8 text-gray-500 text-sm">
     {{ t('common.loading') }}
@@ -9,8 +9,8 @@
 
   <!-- Edit/Create page -->
   <div v-else>
-    <BreadcrumbNav v-if="props.mode === 'EDIT'" :crumbs="[ { label: t('nav.users'), to: '/app/users' }, { label: data.name, to:'/app/users/' + props.id }, { label: t('common.edit') } ]"/>
-    <BreadcrumbNav v-else :crumbs="[ { label: t('nav.users'), to: '/app/users' }, { label: t('common.create') } ]"/>
+    <BreadcrumbNav v-if="props.mode === 'EDIT'" :crumbs="[ { label: t('nav.users'), to: '/app/users' }, { label: data.name, to:'/app/users/' + props.id }, { label: t('common.edit') } ]" />
+    <BreadcrumbNav v-else :crumbs="[ { label: t('nav.users'), to: '/app/users' }, { label: t('common.create') } ]" />
     <div class="-my-2 -mx-4 sm:-mx-6 lg:-mx-8 overflow-hidden">
       <div class="py-2 align-middle inline-block min-w-full px-4 sm:px-6 lg:px-8">
         <div class="shadow overflow-hidden border-b border-gray-200 rounded-lg bg-white p-6 space-y-8 relative">
@@ -18,14 +18,14 @@
             <h3 class="text-lg font-medium leading-6 text-gray-900">
               {{ props.mode === 'EDIT' ? t('userEditCreate.title.edit') : t('userEditCreate.title.create') }}
             </h3>
-            <hr class="my-4 border-gray-200"/>
+            <hr class="my-4 border-gray-200" />
           </div>
           
           <!-- Profile Picture Preview -->
           <div class="flex flex-col items-center gap-4 mb-8">
             <div class="relative w-32 h-32">
-              <img v-if="isValidImageUrl" :src="data.pictureUrl" class="w-full h-full rounded-full object-cover border border-gray-300"/>
-              <img v-else-if="previewJdenticon" :src="previewJdenticon" class="w-full h-full rounded-full object-cover border border-gray-300"/>
+              <img v-if="isValidImageUrl" :src="data.pictureUrl" class="w-full h-full rounded-full object-cover border border-gray-300" />
+              <img v-else-if="previewJdenticon" :src="previewJdenticon" class="w-full h-full rounded-full object-cover border border-gray-300" />
               <div v-else class="w-full h-full rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
                 <UserIcon class="w-12 h-12" />
               </div>
@@ -41,7 +41,7 @@
               </label>
               <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
                 <div class="relative">
-                  <input id="pictureUrl" v-model="data.pictureUrl" type="url" :class="[errors.pictureUrl ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-primary focus:border-primary', 'block w-full max-w-md shadow-sm sm:text-sm rounded-md pr-10']"/>
+                  <input id="pictureUrl" v-model="data.pictureUrl" type="url" :class="[errors.pictureUrl ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-primary focus:border-primary', 'block w-full max-w-md shadow-sm sm:text-sm rounded-md pr-10']" />
                   <button v-if="data.pictureUrl" type="button" class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600 focus:outline-none" :aria-label="t('userEditCreate.removePicture')" @click="removePicture">
                     <TrashIcon class="w-5 h-5 text-gray-600" />
                   </button>
@@ -56,7 +56,7 @@
                 {{ t('userEditCreate.firstName') }}
               </label>
               <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
-                <input id="firstName" v-model="data.firstName" type="text" required :class="[errors.firstName ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-primary focus:border-primary', 'block w-full max-w-md shadow-sm sm:text-sm rounded-md']"/>
+                <input id="firstName" v-model="data.firstName" type="text" required :class="[errors.firstName ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-primary focus:border-primary', 'block w-full max-w-md shadow-sm sm:text-sm rounded-md']" />
                 <p v-if="errors.firstName" class="mt-1 text-sm text-red-600">{{ errors.firstName }}</p>
               </div>
             </div>
@@ -67,7 +67,7 @@
                 {{ t('userEditCreate.lastName') }}
               </label>
               <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
-                <input id="lastName" v-model="data.lastName" type="text" required :class="[errors.lastName ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-primary focus:border-primary', 'block w-full max-w-md shadow-sm sm:text-sm rounded-md']"/>
+                <input id="lastName" v-model="data.lastName" type="text" required :class="[errors.lastName ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-primary focus:border-primary', 'block w-full max-w-md shadow-sm sm:text-sm rounded-md']" />
                 <p v-if="errors.lastName" class="mt-1 text-sm text-red-600">{{ errors.lastName }}</p>
               </div>
             </div>
@@ -78,7 +78,7 @@
                 {{ t('userEditCreate.username') }}
               </label>
               <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
-                <input id="username" v-model="data.name" type="text" required :class="[errors.username ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-primary focus:border-primary', 'block w-full max-w-md shadow-sm sm:text-sm rounded-md']"/>
+                <input id="username" v-model="data.name" type="text" required :disabled="props.mode === 'EDIT'" :class="[errors.username ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-primary focus:border-primary', 'block w-full max-w-md shadow-sm sm:text-sm rounded-md disabled:bg-gray-200 disabled:cursor-not-allowed']" />
                 <p v-if="errors.username" class="mt-1 text-sm text-red-600">{{ errors.username }}</p>
               </div>
             </div>
@@ -89,7 +89,7 @@
                 {{ t('userEditCreate.email') }}
               </label>
               <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
-                <input id="email" v-model="data.email" type="email" :required="emailRequired" :class="[errors.email ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-primary focus:border-primary', 'block w-full max-w-md shadow-sm sm:text-sm rounded-md']"/>
+                <input id="email" v-model="data.email" type="email" :required="emailRequired" :class="[errors.email ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-primary focus:border-primary', 'block w-full max-w-md shadow-sm sm:text-sm rounded-md']" />
                 <p v-if="errors.email" class="mt-1 text-sm text-red-600">{{ errors.email }}</p>
                 <p v-else-if="data.email?.trim() && !isValidEmail(data.email.trim())" class="mt-1 text-sm text-red-600">
                   {{ t('userEditCreate.invalidEmail') }}
@@ -103,7 +103,7 @@
                 {{ t('userEditCreate.roles') }}
               </label>
               <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1 max-w-md">
-                <Listbox v-model="data.realmRoles" multiple as="div">
+                <Listbox v-model="selectedRoleOptions" multiple as="div">
                   <div class="relative">
                     <ListboxButton class="relative w-full rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:ring-primary text-sm">
                       <div class="flex flex-wrap gap-2">
@@ -157,7 +157,7 @@
               </label>
               <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
                 <div class="relative">
-                  <input id="password" v-model="password" :type="passwordInputType" :class="[errors.password ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-primary focus:border-primary', 'block w-full max-w-md shadow-sm sm:text-sm rounded-md pr-10']"/>
+                  <input id="password" v-model="password" :type="passwordInputType" :class="[errors.password ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-primary focus:border-primary', 'block w-full max-w-md shadow-sm sm:text-sm rounded-md pr-10']" />
                   <button type="button" class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600 focus:outline-none" :aria-label="passwordInputType === 'password' ? t('userEditCreate.showPassword') : t('userEditCreate.hidePassword')" @click="togglePasswordVisibility">
                     <component :is="passwordInputType === 'password' ? EyeIcon : EyeSlashIcon" class="h-5 w-5" />
                   </button>
@@ -188,7 +188,7 @@
               </label>
               <div class="mt-1 md:mt-0 md:col-span-2 lg:col-span-1">
                 <div class="relative">
-                  <input id="passwordConfirm" v-model="passwordConfirm" :type="passwordInputType" :class="[errors.passwordConfirm ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-primary focus:border-primary', 'block w-full max-w-md shadow-sm sm:text-sm rounded-md pr-10']"/>
+                  <input id="passwordConfirm" v-model="passwordConfirm" :type="passwordInputType" :class="[errors.passwordConfirm ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-primary focus:border-primary', 'block w-full max-w-md shadow-sm sm:text-sm rounded-md pr-10']" />
                   <button type="button" class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600 focus:outline-none" :aria-label="passwordInputType === 'password' ? t('userEditCreate.showPassword') : t('userEditCreate.hidePassword')" @click="togglePasswordVisibility">
                     <component :is="passwordInputType === 'password' ? EyeIcon : EyeSlashIcon" class="h-5 w-5" />
                   </button>
@@ -250,13 +250,13 @@ const props = defineProps<{
 }>();
 
 type EditableUserData = Pick<UserDto, 'firstName' | 'lastName' | 'name' | 'email' | 'realmRoles' | 'pictureUrl'>;
-const initialData = shallowRef<EditableUserData>({ firstName: undefined, lastName: undefined, name: '', email: '', realmRoles: [], pictureUrl: undefined });
+const initialData = shallowRef<EditableUserData>({ firstName: undefined, lastName: undefined, name: '', email: '', realmRoles: ['user'], pictureUrl: undefined });
 const data = reactive<EditableUserData>(initialData.value);
 
 const userDataHasUnsavedChanges = computed(() => {
   return data.firstName !== initialData.value.firstName
     || data.lastName !== initialData.value.lastName
-    || data.name !== initialData.value.name
+    || (props.mode !== 'EDIT' && data.name !== initialData.value.name)
     || data.email !== initialData.value.email
     || JSON.stringify([...data.realmRoles].sort()) !== JSON.stringify([...initialData.value.realmRoles].sort())
     || data.pictureUrl !== initialData.value.pictureUrl
@@ -280,8 +280,13 @@ const router = useRouter();
 const loading = ref(true);
 const onFetchError = ref<Error>();
 
-const selectedRoleOptions = computed(() => {
-  return data.realmRoles.filter(isSelectableRealmRole);
+const selectedRoleOptions = computed({
+  get() {
+    return data.realmRoles.filter(isSelectableRealmRole);
+  },
+  set(newValue) {
+    data.realmRoles = ['user', ...newValue];
+  }
 });
 const roleOptions: Record<SelectableRealmRole, string> = {
   'admin': 'Admin',
@@ -325,7 +330,7 @@ onMounted(async () => {
 });
 
 function removeRole(role: SelectableRealmRole) {
-  data.realmRoles = data.realmRoles.filter(r => r !== role);
+  selectedRoleOptions.value = selectedRoleOptions.value.filter(r => r !== role);
 }
 
 function togglePasswordVisibility() {

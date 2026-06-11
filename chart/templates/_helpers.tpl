@@ -45,7 +45,8 @@ This allows users to set the public URLs to the actual external URLs of the serv
 {{- if .Values.urls.kc.clusterInternal -}}
 {{- trimSuffix "/" .Values.urls.kc.clusterInternal -}}
 {{- else if .Values.keycloak.enabled -}}
-{{- printf "http://%s:%v%s" (print (include "cryptomator-hub.fullname" .) "-service-kc") .Values.keycloak.service.httpPort (include "cryptomator-hub.keycloakRelativePath" .) -}}
+{{/* Bundled Keycloak serves at "/" (the external subpath is stripped by the ingress), so the in-cluster URL has no path. */}}
+{{- printf "http://%s:%v" (print (include "cryptomator-hub.fullname" .) "-service-kc") .Values.keycloak.service.httpPort -}}
 {{- else -}}
 {{/* if keycloak isn't part of the deployment, use public url: */}}
 {{- trimSuffix "/" (required "urls.kc.public must be set" .Values.urls.kc.public) -}}
@@ -140,24 +141,6 @@ Auto-generated secrets below:
 {{- $_ := set .Values "_resolvedHubAdminPassword" (randAlphaNum 32) -}}
 {{- end -}}
 {{- index .Values "_resolvedHubAdminPassword" -}}
-{{- end -}}
-{{- end -}}
-
-{{- define "cryptomator-hub.resolvedHubMetricsPassword" -}}
-{{- if hasKey .Values "_resolvedHubMetricsPassword" -}}
-{{- index .Values "_resolvedHubMetricsPassword" -}}
-{{- else if .Values.hub.metrics.password -}}
-{{- $_ := set .Values "_resolvedHubMetricsPassword" .Values.hub.metrics.password -}}
-{{- index .Values "_resolvedHubMetricsPassword" -}}
-{{- else -}}
-{{- $secretName := print (include "cryptomator-hub.fullname" .) "-secrets-hub-metrics" -}}
-{{- $existing := lookup "v1" "Secret" .Release.Namespace $secretName -}}
-{{- if and $existing (hasKey $existing.data "password") -}}
-{{- $_ := set .Values "_resolvedHubMetricsPassword" (index $existing.data "password" | b64dec) -}}
-{{- else -}}
-{{- $_ := set .Values "_resolvedHubMetricsPassword" (randAlphaNum 32) -}}
-{{- end -}}
-{{- index .Values "_resolvedHubMetricsPassword" -}}
 {{- end -}}
 {{- end -}}
 

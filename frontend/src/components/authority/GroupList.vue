@@ -9,7 +9,7 @@
       </h2>
       <!-- Searchbar + Create button -->
       <div class="flex flex-wrap sm:flex-nowrap justify-between items-center gap-3 mb-4">
-        <input v-model="query" type="text" :placeholder="t('groupList.search.placeholder')" class="flex-1 focus:ring-primary focus:border-primary shadow-xs text-sm border-gray-300 rounded-md"/>
+        <input v-model="query" type="text" :placeholder="t('groupList.search.placeholder')" class="flex-1 focus:ring-primary focus:border-primary shadow-xs text-sm border-gray-300 rounded-md" />
         <button type="button" class="bg-primary text-white text-sm font-medium px-4 py-2 rounded-md shadow-xs hover:bg-primary-d1 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-primary" @click="showCreateGroup()">{{ t('groupList.create.button') }}</button>
       </div>
       
@@ -69,7 +69,7 @@
                   <tr>
                     <td class="px-6 py-4 text-sm font-medium text-gray-900">
                       <div class="flex items-center gap-3 max-w-xs">
-                        <img :src="group.pictureUrl" :alt="t('groupList.profileImage')" class="w-10 h-10 rounded-full object-cover border border-gray-300"/>
+                        <img :src="group.pictureUrl" :alt="t('groupList.profileImage')" class="w-10 h-10 rounded-full object-cover border border-gray-300" />
                         <button type="button" class="truncate block hover:underline cursor-pointer" :title="group.name" @click="router.push(`/app/groups/${group.id}`)"> {{ group.name }} </button>
                       </div>
                     </td>
@@ -148,7 +148,7 @@
   </div>
 
   <!-- Delete Dialog -->
-  <GroupDeleteDialog v-if="deletingGroup != null" ref="deleteGroupDialog" :group="deletingGroup" @close="deletingGroup = null" @delete="onGroupDeleted"/>
+  <GroupDeleteDialog v-if="deletingGroup != null" ref="deleteGroupDialog" :group="deletingGroup" @close="deletingGroup = null" @delete="onGroupDeleted" />
 </template>
 
 <script setup lang="ts">

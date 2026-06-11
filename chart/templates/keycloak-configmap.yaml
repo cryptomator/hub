@@ -15,7 +15,7 @@ data:
   KC_METRICS_ENABLED: "true"
   KC_HTTP_ENABLED: "true"
   KC_PROXY_HEADERS: {{ .Values.keycloak.config.proxyHeaders | quote }}
-  KC_HTTP_RELATIVE_PATH: {{ include "cryptomator-hub.keycloakRelativePath" . | quote }}
+  {{- /* Keycloak always serves at "/" (matching the image's baked KC_HTTP_RELATIVE_PATH default, so `start --optimized` stays valid). When exposed under a subpath, the ingress strips the prefix; KC_HOSTNAME carries the full public URL incl. path, so issuer/discovery URLs advertise the external prefix. */}}
   KC_HOSTNAME: {{ trimSuffix "/" (required "urls.kc.public must be set" .Values.urls.kc.public) | quote }}
   QUARKUS_TRANSACTION_MANAGER_ENABLE_RECOVERY: "false"
   KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"

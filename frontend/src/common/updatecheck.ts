@@ -8,6 +8,7 @@ export type LatestVersionDto = {
 };
 
 class UpdatesService {
+
   public async get(localVersion: string): Promise<LatestVersionDto> {
     const config = {
       headers: {
@@ -23,6 +24,7 @@ class UpdatesService {
         throw new FetchUpdateError('Unable to get update info.');
       });
   }
+
 }
 
 export class FetchUpdateError extends Error { }

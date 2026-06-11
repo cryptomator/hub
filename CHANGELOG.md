@@ -5,18 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/cryptomator/hub/compare/1.4.6...HEAD)
+## [Unreleased](https://github.com/cryptomator/hub/compare/1.4.7...HEAD)
 
 ### Added
 
 - User and group management (#376)
 - Emergency Access: Allow a council to restore access to a orphaned vault (#390)
 - Show pictures of the groups in the Vaults member list (#375)
+- Allow admins to archive and unarchive any vault (#283, #430)
+- Disable users to exclude them from license seat count (#427, #428)
+- Display a banner to indicate that legacy devices are still in use, since these will be removed in the next major release (#420)
+- Published Helm chart (#406, #456)
 
 ### Changed
 
-- Updated Keycloak to 26.5.5
-- Update Quarkus to 3.27.2 LTS
+- Updated Keycloak to 26.6.3
+- Update Quarkus to 3.27.3.1 LTS
 - Improved browser locale detection (#371)
 - Improved efficiency of keycloak-to-hub data sync (#377)
 - Improved efficiency of group-based access permission checks (#372)
@@ -29,6 +33,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Hide Archive/Reactivate Vault actions for admins without ownership rights (#379)
+- Check seat limit before unarchiving a vault, ensuring smooth operations without unexpectedly exceeding license limits (#431)
+- Creating user with sole role `create-vault` was unable to login due to missing role `user`
+- Fix disabling users via user and group management
+
+## [1.4.7](https://github.com/cryptomator/hub/compare/1.4.6...1.4.7)
+
+### Fixed
+
+- Update dependencies, primarily Quarkus, to version 3.20.6.1 to address the authentication and authorisation bypass vulnerability (CVE-2026-39852).
 
 ## [1.4.6](https://github.com/cryptomator/hub/compare/1.4.5...1.4.6)
 

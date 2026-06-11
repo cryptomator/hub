@@ -3,6 +3,7 @@ import { buildRedirectSyncMeUri } from '../router';
 import config, { ConfigDto } from './config';
 
 class Auth {
+
   private readonly keycloak: Keycloak;
 
   static async build(cfg: ConfigDto): Promise<Auth> {
@@ -71,6 +72,7 @@ class Auth {
       }
     }
   }
+
 }
 
 // this is a lazy singleton:

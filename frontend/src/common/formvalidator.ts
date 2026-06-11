@@ -8,6 +8,7 @@ export interface ValidationResult {
 }
 
 export class FormValidator {
+
   /**
    * Validates user form data
    */
@@ -152,4 +153,5 @@ export class FormValidator {
       img.src = url;
     });
   }
+
 }

@@ -64,13 +64,13 @@ const open = ref(false);
 const onDeleteGroupError = ref<Error | null>(null);
   
 const props = defineProps<{
-    group: GroupDto;
-  }>();
+  group: GroupDto;
+}>();
   
 const emit = defineEmits<{
-    close: [];
-    delete: [deletedGroupId: string];
-  }>();
+  close: [];
+  delete: [deletedGroupId: string];
+}>();
 
 defineExpose({
   show

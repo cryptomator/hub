@@ -4,11 +4,15 @@
       {{ t('common.loading') }}
     </div>
     <div v-else>
-      <FetchError :error="onFetchError" :retry="fetchData"/>
+      <FetchError :error="onFetchError" :retry="fetchData" />
     </div>
   </div>
 
   <div v-if="me?.devices && me.devices.length > 0">
+    <ContentBanner type="warning" :title="t('legacyDeviceBanner.title')" class="mb-4">
+      {{ t('legacyDeviceBanner.user.description') }}
+    </ContentBanner>
+
     <h2 id="legacyDeviceListTitle" class="text-base font-semibold leading-6 text-gray-900">
       {{ t('legacyDeviceList.title') }}
     </h2>
@@ -39,7 +43,7 @@
                     <span class="inline-flex items-center gap-1">
                       {{ t('legacyDeviceList.lastAccess') }}
                       <div class="relative group" :title="t('legacyDeviceList.lastAccess.toolTip')">
-                        <QuestionMarkCircleIcon class="h-4 w-4 text-gray-400"/>
+                        <QuestionMarkCircleIcon class="h-4 w-4 text-gray-400" />
                       </div>
                     </span>
                   </th>
@@ -100,6 +104,7 @@ import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import backend, { DeviceDto, NotFoundError, UserDto } from '../common/backend';
 import userdata from '../common/userdata';
+import ContentBanner from './ContentBanner.vue';
 import FetchError from './FetchError.vue';
 
 const { t, d } = useI18n({ useScope: 'global' });

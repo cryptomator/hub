@@ -7,7 +7,7 @@ metadata:
     {{- include "cryptomator-hub.labels" . | nindent 4 }}
     app.kubernetes.io/component: hub
 spec:
-  replicas: 1
+  replicas: {{ .Values.hub.replicas }}
   selector:
     matchLabels:
       {{- include "cryptomator-hub.selectorLabels" . | nindent 6 }}
@@ -20,6 +20,9 @@ spec:
       annotations:
         checksum/hub-config: {{ include (print $.Template.BasePath "/hub-configmap.yaml") . | sha256sum }}
         checksum/hub-secret: {{ if .Values.hub.secrets.create }}{{ include (print $.Template.BasePath "/hub-secret.yaml") . | sha256sum }}{{ else }}{{ print (include "cryptomator-hub.fullname" .) "-secrets-hub" | sha256sum }}{{ end }}
+        {{- if and .Values.hub.metrics.enabled .Values.hub.metrics.otlp.username .Values.hub.metrics.otlp.password }}
+        checksum/hub-metrics-secret: {{ include (print $.Template.BasePath "/hub-metrics-secret.yaml") . | sha256sum }}
+        {{- end }}
     spec:
       securityContext:
         runAsNonRoot: true
@@ -73,7 +76,7 @@ spec:
               done
       containers:
         - name: hub
-          image: "ghcr.io/cryptomator/hub:{{ .Chart.AppVersion }}"
+          image: "ghcr.io/cryptomator/hub:{{ .Values.hub.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.hub.imagePullPolicy }}
           ports:
             - name: http
@@ -126,6 +129,13 @@ spec:
                   name: {{ include "cryptomator-hub.fullname" . }}-secrets-hub
                   key: hub_initial_license
                   optional: true
+            {{- if and .Values.hub.metrics.enabled .Values.hub.metrics.otlp.username .Values.hub.metrics.otlp.password }}
+            - name: QUARKUS_OTEL_EXPORTER_OTLP_HEADERS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "cryptomator-hub.fullname" . }}-secrets-hub-metrics
+                  key: otlp_authorization
+            {{- end }}
           resources:
             {{- toYaml .Values.hub.resources | nindent 12 }}
           securityContext:
