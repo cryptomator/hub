@@ -33,6 +33,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Manages users and groups in Keycloak and keeps the local database in sync.
+ * <p>
+ * Transaction convention: methods that write to the database <em>before</em> calling Keycloak are
+ * {@link Transactional}, so a failing Keycloak call rolls back the database change (the DB is the
+ * rollback-able side, the Keycloak call is the commit gate).
+ *
+ * Methods that call Keycloak first and delegate the DB write to {@link #syncUser}/
+ * {@link #syncGroup} run inside the transaction opened by the
+ * calling resource (e.g. {@code UsersResource}), so they are not annotated themselves.
+ */
 @ApplicationScoped
 public class KeycloakAdminService {
 
@@ -62,7 +73,7 @@ public class KeycloakAdminService {
 	public void setup() {
 		this.realm = keycloak.realm(keycloakRealm);
 	}
-
+	// No @Transactional: Keycloak-first orchestration; the DB write is delegated to syncUser
 	@WithSpan("KeycloakAdminService.createUser")
 	public UserRepresentation createUser(String username, String email, String firstName, String lastName, String password, String pictureUrl, Set<String> groupIds) {
 		UserRepresentation user = new UserRepresentation();
@@ -128,7 +139,7 @@ public class KeycloakAdminService {
 
 		return realm.users().get(userId).toRepresentation();
 	}
-
+	// No @Transactional: Keycloak-first; the DB write is delegated to syncUser
 	public UserRepresentation updateUser(String userId, String email, String firstName, String lastName, String password, String pictureUrl) {
 		if (isUserReadOnly(userId)) {
 			throw new ForbiddenException("User has a federated identity and cannot be modified");
@@ -162,7 +173,6 @@ public class KeycloakAdminService {
 		syncUser(userId);
 		return userResource.toRepresentation();
 	}
-
 	@Transactional
 	public void deleteUser(String userId) {
 		if (isUserReadOnly(userId)) {
@@ -180,7 +190,7 @@ public class KeycloakAdminService {
 		}
 	}
 
-	@Transactional
+	// No @Transactional: Keycloak-first; the DB write is delegated to syncUser
 	public void setUserEnabled(String userId, boolean enabled) {
 		UserResource userResource = realm.users().get(userId);
 		UserRepresentation user = userResource.toRepresentation();
@@ -293,6 +303,13 @@ public class KeycloakAdminService {
 		realm.users().get(userId).leaveGroup(groupId);
 	}
 
+	/**
+	 * Sets the user's realm roles to exactly the given set.
+	 * <p>
+	 * Separate from {@link #createUser}/{@link #updateUser} because realm roles are not part of the
+	 * {@link UserRepresentation}, but a distinct Keycloak API ({@code roles().realmLevel()}),
+	 * and assigning roles requires the user to already exist in both Keycloak and the local database.
+	 */
 	@Transactional
 	@WithSpan("KeycloakAdminService.updateUserRoles")
 	public void updateUserRoles(String userId, Set<RealmRole> roles) {
@@ -352,6 +369,7 @@ public class KeycloakAdminService {
 		return realm.groups().group(groupId).toRepresentation();
 	}
 
+	// No @Transactional: Keycloak-first; the DB write is delegated to syncGroup
 	public GroupRepresentation updateGroup(String groupId, String name, String pictureUrl) {
 		GroupResource groupResource = realm.groups().group(groupId);
 		GroupRepresentation group = groupResource.toRepresentation();
