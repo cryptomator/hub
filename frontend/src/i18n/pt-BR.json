@@ -477,7 +477,7 @@
   "userProfile.actions.changeLanguage.entry.browser": "Idioma do navegador",
   "userProfile.keycloakVersion.notAvailable": "versão indisponível",
   "unlock.noAccessVaultArchived.title": "Cofre arquivado",
-  "unlock.noAccessVaultArchived.description": "Este cofre foi arquivo e está inacessível. Contate o proprietário dele.",
+  "unlock.noAccessVaultArchived.description": "Este cofre foi arquivado e está inacessível. Contate o proprietário dele.",
   "unlockSuccess.title": "Cofre desbloqueado com sucesso",
   "unlockSuccess.description": "Agora você pode fechar esta guia do navegador e retornar ao Cryptomator.",
   "unlockSuccess.accountSetup.title": "Configuração necessária",
