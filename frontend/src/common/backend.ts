@@ -90,7 +90,6 @@ export type UserDto = {
   email?: string;
   firstName?: string;
   lastName?: string;
-  realmRoles: RealmRole[];
   enabled: boolean;
   language?: string;
   devices: DeviceDto[];
@@ -111,6 +110,7 @@ export type UserDtoWithDetails = UserDto & {
   groups: GroupDto[];
   devices: DeviceDto[];
   legacyDevices: DeviceDto[];
+  realmRoles?: RealmRole[];
 };
 
 /**
@@ -145,11 +145,13 @@ export type TrustDto = {
   signatureChain: string[]
 };
 
-export type CreateUserDto = Pick<UserDto, 'name' | 'email' | 'firstName' | 'lastName' | 'pictureUrl' | 'realmRoles'> & {
+export type CreateUserDto = Pick<UserDto, 'name' | 'email' | 'firstName' | 'lastName' | 'pictureUrl'> & {
+  realmRoles: RealmRole[];
   password: string;
 };
 
-export type UpdateUserDto = Pick<UserDto, 'email' | 'firstName' | 'lastName' | 'pictureUrl' | 'realmRoles'> & {
+export type UpdateUserDto = Pick<UserDto, 'email' | 'firstName' | 'lastName' | 'pictureUrl'> & {
+  realmRoles: RealmRole[];
   password?: string;
 };
 
@@ -556,8 +558,8 @@ class UserService {
     return addFallbackPictures ? fillInMissingPicture(user) : user;
   }
 
-  public async getUser(userId: string, addFallbackPictures: boolean = true): Promise<UserDtoWithDetails> {
-    const user = await axiosAuth.get<UserDtoWithDetails>(`/users/${userId}`).then(response => response.data).catch((error) => rethrowAndConvertIfExpected(error, 404));
+  public async getUser(userId: string, addFallbackPictures: boolean = true, withRoles: boolean = false): Promise<UserDtoWithDetails> {
+    const user = await axiosAuth.get<UserDtoWithDetails>(`/users/${userId}`, { params: { withRoles } }).then(response => response.data).catch((error) => rethrowAndConvertIfExpected(error, 404));
     if (addFallbackPictures) {
       return {
         ...fillInMissingPicture(user),

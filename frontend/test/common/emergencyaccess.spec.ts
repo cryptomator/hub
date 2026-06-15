@@ -109,7 +109,6 @@ async function createUserDto(id: string, publicKey: CryptoKey): Promise<Activate
     id: id,
     name: `User ${id}`,
     email: '',
-    realmRoles: [],
     enabled: true,
     devices: [],
     accessibleVaults: [],

@@ -190,7 +190,7 @@ public class UsersResource {
 		} else {
 			deviceDtos = Set.of();
 		}
-		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getLanguage(), Set.of(user.getRealmRoles()), user.isEnabled(), deviceDtos, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
+		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getLanguage(), user.isEnabled(), deviceDtos, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
 	}
 
 	/**
@@ -214,7 +214,7 @@ public class UsersResource {
 			var event = events.get(d.getId());
 			return DeviceResource.DeviceDto.fromEntity(d, event);
 		}).collect(Collectors.toSet());
-		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getLanguage(), Set.of(user.getRealmRoles()), user.isEnabled(), deviceDtos, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
+		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getLanguage(), user.isEnabled(), deviceDtos, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
 	}
 
 	@POST
@@ -358,7 +358,7 @@ public class UsersResource {
 	@Operation(summary = "get a specific user")
 	@APIResponse(responseCode = "200", description = "user found")
 	@APIResponse(responseCode = "404", description = "user not found")
-	public UserDto.WithDetails getUser(@PathParam("id") String userId) {
+	public UserDto.WithDetails getUser(@PathParam("id") String userId, @QueryParam("withRoles") boolean withRoles) {
 		User user = userRepo.findByIdWithEagerDetails(userId);
 		if (user == null) {
 			throw new NotFoundException("User not found: " + userId);
@@ -386,11 +386,15 @@ public class UsersResource {
 				.map(DeviceResource.DeviceDto::fromEntity)
 				.collect(Collectors.toSet());
 
+		// realm roles are not persisted; fetch them from Keycloak only when explicitly requested:
+		var realmRoles = withRoles ? keycloakAdminService.realmRolesOf(userId) : null;
+
 		return UserDto.justPublicInfo(user).withDetails(
 				groups,
 				vaults,
 				devices,
-				legacyDevices
+				legacyDevices,
+				realmRoles
 		);
 	}
 

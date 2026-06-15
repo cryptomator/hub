@@ -119,13 +119,13 @@ const showDisableUserDialog = () => {
 };
 
 const onUserDisabled = async () => {
-  user.value = await backend.users.getUser(props.id);
+  user.value = await backend.users.getUser(props.id, true, true);
 };
 
 const enableUser = async () => {
   try {
     await backend.users.setUserEnabled(props.id, true);
-    user.value = await backend.users.getUser(props.id);
+    user.value = await backend.users.getUser(props.id, true, true);
   } catch (error) {
     console.error('Enabling user failed.', error);
   }
@@ -151,13 +151,13 @@ const user = ref<UserDtoWithDetails>({
 const loading = ref<boolean>(true);
 
 async function handleGroupsSaved(newGroups: GroupDto[]) {
-  user.value = await backend.users.getUser(props.id); // reload user to get updated vault list
+  user.value = await backend.users.getUser(props.id, true, true); // reload user to get updated vault list
   user.value.groups.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
 }
 
 onMounted(async () => {
   try {
-    user.value = await backend.users.getUser(props.id);
+    user.value = await backend.users.getUser(props.id, true, true);
     user.value.groups.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
   } catch (error) {
     console.error('Failed to fetch user:', error);

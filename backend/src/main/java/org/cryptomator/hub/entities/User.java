@@ -14,7 +14,6 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.Immutable;
-import org.hibernate.annotations.Type;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -61,10 +60,6 @@ public class User extends Authority {
 
 	@Column(name = "language")
 	private String language;
-
-	@Column(name = "realm_roles")
-	@Type(StringArrayType.class)
-	private String[] realmRoles = new String[0];
 
 	@Column(name = "enabled", nullable = false)
 	private boolean enabled = true;
@@ -134,14 +129,6 @@ public class User extends Authority {
 
 	public void setLanguage(String language) {
 		this.language = language;
-	}
-
-	public String[] getRealmRoles() {
-		return realmRoles;
-	}
-
-	public void setRealmRoles(String[] realmRoles) {
-		this.realmRoles = realmRoles;
 	}
 
 	public boolean isEnabled() {

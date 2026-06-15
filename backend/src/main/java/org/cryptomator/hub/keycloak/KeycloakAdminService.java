@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Manages users and groups in Keycloak and keeps the local database in sync.
@@ -39,7 +40,7 @@ import java.util.Set;
  * Transaction convention: methods that write to the database <em>before</em> calling Keycloak are
  * {@link Transactional}, so a failing Keycloak call rolls back the database change (the DB is the
  * rollback-able side, the Keycloak call is the commit gate).
- *
+ * <p>
  * Methods that call Keycloak first and delegate the DB write to {@link #syncUser}/
  * {@link #syncGroup} run inside the transaction opened by the
  * calling resource (e.g. {@code UsersResource}), so they are not annotated themselves.
@@ -73,6 +74,7 @@ public class KeycloakAdminService {
 	public void setup() {
 		this.realm = keycloak.realm(keycloakRealm);
 	}
+
 	// No @Transactional: Keycloak-first orchestration; the DB write is delegated to syncUser
 	@WithSpan("KeycloakAdminService.createUser")
 	public UserRepresentation createUser(String username, String email, String firstName, String lastName, String password, String pictureUrl, Set<String> groupIds) {
@@ -139,6 +141,7 @@ public class KeycloakAdminService {
 
 		return realm.users().get(userId).toRepresentation();
 	}
+
 	// No @Transactional: Keycloak-first; the DB write is delegated to syncUser
 	public UserRepresentation updateUser(String userId, String email, String firstName, String lastName, String password, String pictureUrl) {
 		if (isUserReadOnly(userId)) {
@@ -173,6 +176,7 @@ public class KeycloakAdminService {
 		syncUser(userId);
 		return userResource.toRepresentation();
 	}
+
 	@Transactional
 	public void deleteUser(String userId) {
 		if (isUserReadOnly(userId)) {
@@ -227,10 +231,6 @@ public class KeycloakAdminService {
 		dbUser.setEmail(keycloakUser.getEmail());
 		dbUser.setFirstName(keycloakUser.getFirstName());
 		dbUser.setLastName(keycloakUser.getLastName());
-
-		var kcRealmRoles = pullRealmRolesFromKeycloak(userResource, dbUser);
-		dbUser.setRealmRoles(kcRealmRoles);
-
 		dbUser.setEnabled(keycloakUser.isEnabled());
 
 		var attrs = keycloakUser.getAttributes();
@@ -306,10 +306,10 @@ public class KeycloakAdminService {
 	 * Sets the user's realm roles to exactly the given set.
 	 * <p>
 	 * Separate from {@link #createUser}/{@link #updateUser} because realm roles are not part of the
-	 * {@link UserRepresentation}, but a distinct Keycloak API ({@code roles().realmLevel()}),
-	 * and assigning roles requires the user to already exist in both Keycloak and the local database.
+	 * {@link UserRepresentation}, but a distinct Keycloak API ({@code roles().realmLevel()}).
+	 * Keycloak is the single source of truth for realm roles, so this method writes only to Keycloak;
+	 * a user unknown to Keycloak surfaces as a {@link NotFoundException}.
 	 */
-	@Transactional
 	@WithSpan("KeycloakAdminService.updateUserRoles")
 	public void updateUserRoles(String userId, Set<RealmRole> roles) {
 		// remove roles that are not in the provided set:
@@ -320,39 +320,29 @@ public class KeycloakAdminService {
 		var rolesToSet = EnumSet.noneOf(RealmRole.class);
 		rolesToSet.addAll(roles);
 
-		// 1. sync to db (roll back if kc update fails):
-		User dbUser = userRepo.findByIdOptional(userId).orElseThrow(NotFoundException::new);
-		dbUser.setRealmRoles(rolesToSet.stream().map(RealmRole::kcName).toArray(String[]::new));
-		userRepo.persist(dbUser);
-
-		// 2. sync to kc:
-		UserResource userResource = realm.users().get(userId);
-		var roleMappings = userResource.roles().realmLevel();
+		var roleMappings = realm.users().get(userId).roles().realmLevel();
 		if (!rolesToRemove.isEmpty()) {
 			roleMappings.remove(rolesToRemove.stream().map(realmRoles::getRealmRole).toList());
 		}
 		if (!rolesToSet.isEmpty()) {
 			roleMappings.add(rolesToSet.stream().map(realmRoles::getRealmRole).toList());
 		}
-
-		// 3. sync direct roles from kc back to db:
-		var kcRealmRoles = pullRealmRolesFromKeycloak(userResource, dbUser);
-		dbUser.setRealmRoles(kcRealmRoles);
 	}
 
 	/**
-	 * Pulls the user's directly assigned realm roles from Keycloak's role-mapping API
-	 * ({@code roles().realmLevel()} — distinct from the {@link UserRepresentation}) into the local
-	 * database entity. Roles unknown to {@link RealmRole} are ignored. Shared by {@link #syncUser}
-	 * and {@link #updateUserRoles} so the mapping has a single source of truth.
+	 * Reads the user's directly assigned realm roles from Keycloak's role-mapping API
+	 * ({@code roles().realmLevel()} — distinct from the {@link UserRepresentation}).
+	 * Roles unknown to {@link RealmRole} are ignored.
 	 *
-	 * @return
+	 * @param userId the Keycloak user id
+	 * @return the user's realm role names (see {@link RealmRole#kcName()})
+	 * @throws NotFoundException if no such user exists in Keycloak
 	 */
-	private static String[] pullRealmRolesFromKeycloak(UserResource userResource, User dbUser) {
-		var kcRoleNames = userResource.roles().realmLevel().listAll().stream()
+	public Set<String> realmRolesOf(String userId) {
+		var kcRoleNames = realm.users().get(userId).roles().realmLevel().listAll().stream()
 				.map(RoleRepresentation::getName)
 				.toList();
-		return RealmRole.fromKcNames(kcRoleNames).stream().map(RealmRole::kcName).toArray(String[]::new);
+		return RealmRole.fromKcNames(kcRoleNames).stream().map(RealmRole::kcName).collect(Collectors.toSet());
 	}
 
 	// Group management methods

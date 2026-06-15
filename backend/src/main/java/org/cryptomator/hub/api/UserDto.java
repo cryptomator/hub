@@ -20,7 +20,6 @@ public final class UserDto extends AuthorityDto {
 	private final String firstName;
 	private final String lastName;
 	private final String language;
-	private final Set<String> realmRoles;
 	private final boolean enabled;
 	private final Set<DeviceResource.DeviceDto> devices;
 	private final String ecdhPublicKey;
@@ -37,7 +36,6 @@ public final class UserDto extends AuthorityDto {
 			@JsonProperty("firstName") String firstName,
 			@JsonProperty("lastName") String lastName,
 			@JsonProperty("language") String language,
-			@JsonProperty("realmRoles") @NotNull Set<String> realmRoles,
 			@JsonProperty("enabled") boolean enabled,
 			@JsonProperty("devices") Set<DeviceResource.DeviceDto> devices,
 			// Accept either "ecdhPublicKey" or the legacy "publicKey" on input
@@ -53,7 +51,6 @@ public final class UserDto extends AuthorityDto {
 		this.firstName = firstName;
 		this.lastName = lastName;
 		this.language = language;
-		this.realmRoles = realmRoles;
 		this.enabled = enabled;
 		this.devices = devices;
 		this.ecdhPublicKey = ecdhPublicKey != null ? ecdhPublicKey : publicKey;
@@ -70,14 +67,13 @@ public final class UserDto extends AuthorityDto {
 			String firstName,
 			String lastName,
 			String language,
-			Set<String> realmRoles,
 			boolean enabled,
 			Set<DeviceResource.DeviceDto> devices,
 			String ecdhPublicKey,
 			String ecdsaPublicKey,
 			String privateKeys,
 			String setupCode) {
-		this(id, name, pictureUrl, email, firstName, lastName, language, realmRoles, enabled, devices, ecdhPublicKey, ecdhPublicKey, ecdsaPublicKey, privateKeys, privateKeys, setupCode);
+		this(id, name, pictureUrl, email, firstName, lastName, language, enabled, devices, ecdhPublicKey, ecdhPublicKey, ecdsaPublicKey, privateKeys, privateKeys, setupCode);
 	}
 
 	@JsonProperty("email")
@@ -98,11 +94,6 @@ public final class UserDto extends AuthorityDto {
 	@JsonProperty("language")
 	public String getLanguage() {
 		return language;
-	}
-
-	@JsonProperty("realmRoles")
-	public Set<String> getRealmRoles() {
-		return realmRoles;
 	}
 
 	@JsonProperty("enabled")
@@ -166,7 +157,6 @@ public final class UserDto extends AuthorityDto {
 				user.getFirstName(),
 				user.getLastName(),
 				user.getLanguage(),
-				Set.of(user.getRealmRoles()),
 				user.isEnabled(),
 				Set.of(),
 				user.getEcdhPublicKey(),
@@ -183,13 +173,14 @@ public final class UserDto extends AuthorityDto {
 				vaultsCount);
 	}
 
-	public WithDetails withDetails(List<GroupDto> groups, List<VaultResource.VaultDtoWithRole> accessibleVaults, Set<DeviceResource.DeviceDto> devices, Set<DeviceResource.DeviceDto> legacyDevices) {
+	public WithDetails withDetails(List<GroupDto> groups, List<VaultResource.VaultDtoWithRole> accessibleVaults, Set<DeviceResource.DeviceDto> devices, Set<DeviceResource.DeviceDto> legacyDevices, @Nullable Set<String> realmRoles) {
 		return new WithDetails(
 				this,
 				groups,
 				accessibleVaults,
 				devices,
-				legacyDevices);
+				legacyDevices,
+				realmRoles);
 	}
 
 	public record WithCounts(
@@ -200,12 +191,15 @@ public final class UserDto extends AuthorityDto {
 	) {
 	}
 
+	//only non-null fields will be serialized
+	@JsonInclude(JsonInclude.Include.NON_NULL)
 	public record WithDetails(
 			@JsonUnwrapped UserDto user,
 			@JsonProperty("groups") List<GroupDto> groups,
 			@JsonProperty("accessibleVaults") List<VaultResource.VaultDtoWithRole> accessibleVaults,
 			@JsonProperty("devices") Set<DeviceResource.DeviceDto> devices,
-			@JsonProperty("legacyDevices") Set<DeviceResource.DeviceDto> legacyDevices
+			@JsonProperty("legacyDevices") Set<DeviceResource.DeviceDto> legacyDevices,
+			@JsonProperty("realmRoles") @Nullable Set<String> realmRoles
 	) {
 	}
 }
