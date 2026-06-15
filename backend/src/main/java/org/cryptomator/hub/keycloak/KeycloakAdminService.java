@@ -227,10 +227,9 @@ public class KeycloakAdminService {
 		dbUser.setEmail(keycloakUser.getEmail());
 		dbUser.setFirstName(keycloakUser.getFirstName());
 		dbUser.setLastName(keycloakUser.getLastName());
-		var kcRoleNames = userResource.roles().realmLevel().listAll().stream()
-				.map(RoleRepresentation::getName)
-				.toList();
-		dbUser.setRealmRoles(RealmRole.fromKcNames(kcRoleNames).stream().map(RealmRole::kcName).toArray(String[]::new));
+
+		var kcRealmRoles = pullRealmRolesFromKeycloak(userResource, dbUser);
+		dbUser.setRealmRoles(kcRealmRoles);
 
 		dbUser.setEnabled(keycloakUser.isEnabled());
 
@@ -337,10 +336,23 @@ public class KeycloakAdminService {
 		}
 
 		// 3. sync direct roles from kc back to db:
-		var kcRoleNames = roleMappings.listAll().stream()
+		var kcRealmRoles = pullRealmRolesFromKeycloak(userResource, dbUser);
+		dbUser.setRealmRoles(kcRealmRoles);
+	}
+
+	/**
+	 * Pulls the user's directly assigned realm roles from Keycloak's role-mapping API
+	 * ({@code roles().realmLevel()} — distinct from the {@link UserRepresentation}) into the local
+	 * database entity. Roles unknown to {@link RealmRole} are ignored. Shared by {@link #syncUser}
+	 * and {@link #updateUserRoles} so the mapping has a single source of truth.
+	 *
+	 * @return
+	 */
+	private static String[] pullRealmRolesFromKeycloak(UserResource userResource, User dbUser) {
+		var kcRoleNames = userResource.roles().realmLevel().listAll().stream()
 				.map(RoleRepresentation::getName)
 				.toList();
-		dbUser.setRealmRoles(RealmRole.fromKcNames(kcRoleNames).stream().map(RealmRole::kcName).toArray(String[]::new));
+		return RealmRole.fromKcNames(kcRoleNames).stream().map(RealmRole::kcName).toArray(String[]::new);
 	}
 
 	// Group management methods
