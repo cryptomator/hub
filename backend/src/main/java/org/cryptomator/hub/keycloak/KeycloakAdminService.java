@@ -1,6 +1,9 @@
 package org.cryptomator.hub.keycloak;
 
 import io.opentelemetry.instrumentation.annotations.WithSpan;
+import io.quarkus.cache.CacheInvalidate;
+import io.quarkus.cache.CacheKey;
+import io.quarkus.cache.CacheResult;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -311,7 +314,8 @@ public class KeycloakAdminService {
 	 * a user unknown to Keycloak surfaces as a {@link NotFoundException}.
 	 */
 	@WithSpan("KeycloakAdminService.updateUserRoles")
-	public void updateUserRoles(String userId, Set<RealmRole> roles) {
+	@CacheInvalidate(cacheName = "realRoles")
+	public void updateUserRoles(@CacheKey String userId, Set<RealmRole> roles) {
 		// remove roles that are not in the provided set:
 		var rolesToRemove = EnumSet.allOf(RealmRole.class);
 		rolesToRemove.removeAll(roles);
@@ -338,6 +342,7 @@ public class KeycloakAdminService {
 	 * @return the user's realm role names (see {@link RealmRole#kcName()})
 	 * @throws NotFoundException if no such user exists in Keycloak
 	 */
+	@CacheResult(cacheName = "realmRoles")
 	public Set<String> realmRolesOf(String userId) {
 		var kcRoleNames = realm.users().get(userId).roles().realmLevel().listAll().stream()
 				.map(RoleRepresentation::getName)

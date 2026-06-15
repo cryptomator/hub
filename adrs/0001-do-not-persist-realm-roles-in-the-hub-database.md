@@ -54,7 +54,8 @@ Concretely:
 3. `KeycloakAdminService.updateUserRoles` writes only to Keycloak (no DB write,
    not transactional); an unknown user surfaces as Keycloak's `404`.
 4. Add `KeycloakAdminService.realmRolesOf(userId)` to read a single user's realm
-   roles from Keycloak's role-mapping API.
+   roles from Keycloak's role-mapping API. Its result is cached for 30s to prevent
+   spamming requests.
 5. Roles are removed from the base `UserDto` entirely and instead live on the
    detailed view `UserDto.WithDetails`, since only `GET /users/{id}` serves them.
    They are populated only when explicitly requested via
@@ -63,7 +64,8 @@ Concretely:
    *absent*, distinct from "no roles" (`[]`). This keeps the widely-shared base
    DTO free of a "sometimes populated" field.
 6. Role *input* is unchanged: `POST /users` and `PUT /users/{id}` still accept
-   `realmRoles` and write them to Keycloak.
+   `realmRoles` and write them to Keycloak. It invalidates the cache for
+   `KeycloakAdminService.realmRolesOf(userId)`.
 
 ## Consequences
 
