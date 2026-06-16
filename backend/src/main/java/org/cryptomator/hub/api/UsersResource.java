@@ -178,14 +178,8 @@ public class UsersResource {
 	public UserDto getMe(@QueryParam("withDevices") boolean withDevices, @QueryParam("withLastAccess") boolean withLastAccess) {
 		User user = userRepo.findById(jwt.getSubject());
 		Set<DeviceResource.DeviceDto> deviceDtos;
-		if (withLastAccess) {
-			var devices = user.getDevices().stream().collect(Collectors.toMap(Device::getId, Function.identity()));
-			var events = auditEventRepo.findLastVaultKeyRetrieve(devices.keySet()).collect(Collectors.toMap(VaultKeyRetrievedEvent::getDeviceId, Function.identity()));
-			deviceDtos = devices.values().stream().map(d -> {
-				var event = events.get(d.getId());
-				return DeviceResource.DeviceDto.fromEntity(d, event);
-			}).collect(Collectors.toSet());
-		} else if (withDevices) {
+		if (withDevices || withLastAccess) {
+			// last access values are part of the device entity, so withLastAccess no longer requires a separate query
 			deviceDtos = user.getDevices().stream().map(DeviceResource.DeviceDto::fromEntity).collect(Collectors.toSet());
 		} else {
 			deviceDtos = Set.of();
@@ -208,13 +202,22 @@ public class UsersResource {
 	@APIResponse(responseCode = "404", description = "no user matching the subject of the JWT passed as Bearer Token")
 	public UserDto getMeWithLegacyDevicesAndAccess() {
 		User user = userRepo.findById(jwt.getSubject());
+		var deviceDtos = legacyDevicesWithLastAccess(user);
+		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getLanguage(), Set.of(user.getRealmRoles()), user.isEnabled(), deviceDtos, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
+	}
+
+	/**
+	 * Loads a user's legacy devices with their last access values derived from audit events.
+	 *
+	 * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
+	 */
+	@Deprecated(since = "1.3.0", forRemoval = true)
+	private Set<DeviceResource.DeviceDto> legacyDevicesWithLastAccess(User user) {
 		var legacyDevices = user.getLegacyDevices().stream().collect(Collectors.toMap(LegacyDevice::getId, Function.identity()));
 		var events = auditEventRepo.findLastVaultKeyRetrieve(legacyDevices.keySet()).collect(Collectors.toMap(VaultKeyRetrievedEvent::getDeviceId, Function.identity()));
-		var deviceDtos = legacyDevices.values().stream().map(d -> {
-			var event = events.get(d.getId());
-			return DeviceResource.DeviceDto.fromEntity(d, event);
-		}).collect(Collectors.toSet());
-		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getLanguage(), Set.of(user.getRealmRoles()), user.isEnabled(), deviceDtos, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
+		return legacyDevices.values().stream()
+				.map(d -> DeviceResource.DeviceDto.fromEntity(d, events.get(d.getId())))
+				.collect(Collectors.toSet());
 	}
 
 	@POST
@@ -380,11 +383,8 @@ public class UsersResource {
 				.map(DeviceResource.DeviceDto::fromEntity)
 				.collect(Collectors.toSet());
 
-		// Fetch legacy devices
-		@SuppressWarnings("removal")
-		Set<DeviceResource.DeviceDto> legacyDevices = user.getLegacyDevices().stream()
-				.map(DeviceResource.DeviceDto::fromEntity)
-				.collect(Collectors.toSet());
+		// Fetch legacy devices with last access (audit-derived, see #333)
+		var legacyDevices = legacyDevicesWithLastAccess(user);
 
 		return UserDto.justPublicInfo(user).withDetails(
 				groups,

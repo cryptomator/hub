@@ -37,6 +37,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.AccessToken;
 import org.cryptomator.hub.entities.Authority;
+import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.LegacyAccessToken;
@@ -83,6 +84,9 @@ public class VaultResource {
 
 	@Inject
 	AccessToken.Repository accessTokenRepo;
+
+	@Inject
+	Device.Repository deviceRepo;
 
 	@Inject
 	Group.Repository groupRepo;
@@ -441,7 +445,10 @@ public class VaultResource {
 		var deviceId = request.getHeader("Hub-Device-ID");
 		var access = accessTokenRepo.unlock(vaultId, jwt.getSubject());
 		if (access != null) {
-			eventLogger.logVaultKeyRetrieved(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.SUCCESS, ipAddress, deviceId);
+			var timestamp = eventLogger.logVaultKeyRetrieved(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.SUCCESS, ipAddress, deviceId);
+			if (deviceId != null) {
+				deviceRepo.updateLastAccess(deviceId, timestamp, ipAddress);
+			}
 			vaultUnlockMetrics.recordSuccess();
 			var response = Response.ok(access.getVaultKey(), MediaType.TEXT_PLAIN_TYPE);
 			var iosLicense = license.getEntitlements().iosLicense();

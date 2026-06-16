@@ -84,7 +84,7 @@ public class EventLogger {
 		auditEventRepository.persist(event);
 	}
 
-	public void logVaultKeyRetrieved(String retrievedBy, UUID vaultId, VaultKeyRetrievedEvent.Result result, String ipAddress, String deviceId) {
+	public Instant logVaultKeyRetrieved(String retrievedBy, UUID vaultId, VaultKeyRetrievedEvent.Result result, String ipAddress, String deviceId) {
 		var event = new VaultKeyRetrievedEvent();
 		event.setTimestamp(Instant.now());
 		event.setRetrievedBy(retrievedBy);
@@ -93,6 +93,7 @@ public class EventLogger {
 		event.setIpAddress(ipAddress);
 		event.setDeviceId(deviceId);
 		auditEventRepository.persist(event);
+        return event.getTimestamp()
 	}
 
 	public void logVaultMemberAdded(String addedBy, UUID vaultId, String authorityId, VaultAccess.Role role) {

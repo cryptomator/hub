@@ -89,30 +89,15 @@ class UsersResourceIT {
 
 		@Test
 		@DisplayName("GET /users/me?withDevices=true returns 200")
-		void testGetMe2() throws SQLException {
-			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
-				s.execute("""
-						INSERT INTO "audit_event" (id, timestamp, type) VALUES (30000, '2020-02-20T20:20:24.242Z', 'VAULT_KEY_RETRIEVE');
-						INSERT INTO "audit_event" (id, timestamp, type) VALUES (30001, '2020-02-20T20:20:24.242Z', 'VAULT_KEY_RETRIEVE');
-						INSERT INTO "audit_event_vault_key_retrieve" (id, retrieved_by, vault_id, result, device_id, ip_address) VALUES (30000, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'SUCCESS', 'device1', '1.2.3.4');
-						INSERT INTO "audit_event_vault_key_retrieve" (id, retrieved_by, vault_id, result, device_id, ip_address) VALUES (30001, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'SUCCESS', 'legacyDevice1', '1.2.3.4');
-						""");
-			}
-
+		void testGetMe2() {
 			when().get("/users/me?withDevices=true")
 					.then().statusCode(200)
 					.body("id", is("user1"))
-					.body("devices.find { it.id == 'device1' }.lastAccessTime", nullValue())
-					.body("devices.find { it.id == 'device1' }.lastIpAddress", nullValue())
+					.body("devices.find { it.id == 'device1' }.lastAccessTime", equalTo("2020-02-20T20:20:24.242Z"))
+					.body("devices.find { it.id == 'device1' }.lastIpAddress", equalTo("1.2.3.4"))
 					.body("devices.find { it.id == 'device1' }.legacyDevice", equalTo(false))
+					.body("devices.find { it.id == 'device3' }.lastAccessTime", nullValue())
 					.body("devices.find { it.id == 'legacyDevice1' }", nullValue());
-
-			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
-				s.execute("""
-						DELETE FROM "audit_event" WHERE id=30000;
-						DELETE FROM "audit_event" WHERE id=30001;
-						""");
-			}
 		}
 
 		@Test
@@ -510,11 +495,14 @@ class UsersResourceIT {
 		}
 
 		@Test
-		@DisplayName("GET /users/{id} returns 200 for existing user")
+		@DisplayName("GET /users/{id} returns 200 for existing user with device last access")
 		void testGetUserSuccess() {
 			when().get("/users/user1")
 					.then().statusCode(200)
-					.body("id", is("user1"));
+					.body("id", is("user1"))
+					.body("devices.find { it.id == 'device1' }.lastAccessTime", equalTo("2020-02-20T20:20:24.242Z"))
+					.body("devices.find { it.id == 'device1' }.lastIpAddress", equalTo("1.2.3.4"))
+					.body("devices.find { it.id == 'device3' }.lastAccessTime", nullValue());
 		}
 
 		@Test
