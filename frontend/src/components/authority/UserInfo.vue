@@ -50,7 +50,7 @@ const displayName = computed(() =>
 );
 
 const sortedRoles = computed(() =>
-  [...(props.user.realmRoles ?? [])].filter(isSelectableRealmRole).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+  [...props.user.realmRoles].filter(isSelectableRealmRole).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
 );
 
 </script>

@@ -527,23 +527,15 @@ class UsersResourceIT {
 		}
 
 		@Test
-		@DisplayName("GET /users/{id}?withRoles=true returns realm roles fetched from Keycloak")
-		void testGetUserWithRoles() {
+		@DisplayName("GET /users/{id} returns realm roles fetched from Keycloak")
+		void testGetUserReturnsRoles() {
 			Mockito.when(keycloakAdminService.realmRolesOf("user1")).thenReturn(Set.of("user", "admin"));
 
-			when().get("/users/user1?withRoles=true")
-					.then().statusCode(200)
-					.body("realmRoles", containsInAnyOrder("user", "admin"));
-		}
-
-		@Test
-		@DisplayName("GET /users/{id} omits realm roles and skips Keycloak when not requested")
-		void testGetUserOmitsRolesByDefault() {
 			when().get("/users/user1")
 					.then().statusCode(200)
-					.body("realmRoles", nullValue());
+					.body("realmRoles", containsInAnyOrder("user", "admin"));
 
-			Mockito.verifyNoInteractions(keycloakAdminService);
+			Mockito.verify(keycloakAdminService).realmRolesOf("user1");
 		}
 
 		@Test

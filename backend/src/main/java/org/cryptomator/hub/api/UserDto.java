@@ -173,7 +173,7 @@ public final class UserDto extends AuthorityDto {
 				vaultsCount);
 	}
 
-	public WithDetails withDetails(List<GroupDto> groups, List<VaultResource.VaultDtoWithRole> accessibleVaults, Set<DeviceResource.DeviceDto> devices, Set<DeviceResource.DeviceDto> legacyDevices, @Nullable Set<String> realmRoles) {
+	public WithDetails withDetails(List<GroupDto> groups, List<VaultResource.VaultDtoWithRole> accessibleVaults, Set<DeviceResource.DeviceDto> devices, Set<DeviceResource.DeviceDto> legacyDevices, Set<String> realmRoles) {
 		return new WithDetails(
 				this,
 				groups,
@@ -191,15 +191,13 @@ public final class UserDto extends AuthorityDto {
 	) {
 	}
 
-	//only non-null fields will be serialized
-	@JsonInclude(JsonInclude.Include.NON_NULL)
 	public record WithDetails(
 			@JsonUnwrapped UserDto user,
 			@JsonProperty("groups") List<GroupDto> groups,
 			@JsonProperty("accessibleVaults") List<VaultResource.VaultDtoWithRole> accessibleVaults,
 			@JsonProperty("devices") Set<DeviceResource.DeviceDto> devices,
 			@JsonProperty("legacyDevices") Set<DeviceResource.DeviceDto> legacyDevices,
-			@JsonProperty("realmRoles") @Nullable Set<String> realmRoles
+			@JsonProperty("realmRoles") Set<String> realmRoles
 	) {
 	}
 }

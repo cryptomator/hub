@@ -315,8 +315,8 @@ onMounted(async () => {
   if (props.mode === 'EDIT') {
     previewJdenticon.value = generateFallbackPictureUrl('USER', props.id);
     try {
-      const fetchedUser = await backend.users.getUser(props.id, false, true);
-      initialData.value = { ...fetchedUser, realmRoles: fetchedUser.realmRoles ?? [] };
+      const fetchedUser = await backend.users.getUser(props.id, false);
+      initialData.value = { ...fetchedUser };
     } catch (error) {
       console.error('Failed to fetch user data:', error);
       onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');

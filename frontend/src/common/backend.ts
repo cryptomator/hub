@@ -110,7 +110,7 @@ export type UserDtoWithDetails = UserDto & {
   groups: GroupDto[];
   devices: DeviceDto[];
   legacyDevices: DeviceDto[];
-  realmRoles?: RealmRole[];
+  realmRoles: RealmRole[];
 };
 
 /**
@@ -558,8 +558,8 @@ class UserService {
     return addFallbackPictures ? fillInMissingPicture(user) : user;
   }
 
-  public async getUser(userId: string, addFallbackPictures: boolean = true, withRoles: boolean = false): Promise<UserDtoWithDetails> {
-    const user = await axiosAuth.get<UserDtoWithDetails>(`/users/${userId}`, { params: { withRoles } }).then(response => response.data).catch((error) => rethrowAndConvertIfExpected(error, 404));
+  public async getUser(userId: string, addFallbackPictures: boolean = true): Promise<UserDtoWithDetails> {
+    const user = await axiosAuth.get<UserDtoWithDetails>(`/users/${userId}`).then(response => response.data).catch((error) => rethrowAndConvertIfExpected(error, 404));
     if (addFallbackPictures) {
       return {
         ...fillInMissingPicture(user),

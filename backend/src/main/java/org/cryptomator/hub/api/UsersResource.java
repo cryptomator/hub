@@ -358,7 +358,7 @@ public class UsersResource {
 	@Operation(summary = "get a specific user")
 	@APIResponse(responseCode = "200", description = "user found")
 	@APIResponse(responseCode = "404", description = "user not found")
-	public UserDto.WithDetails getUser(@PathParam("id") String userId, @QueryParam("withRoles") boolean withRoles) {
+	public UserDto.WithDetails getUser(@PathParam("id") String userId) {
 		User user = userRepo.findByIdWithEagerDetails(userId);
 		if (user == null) {
 			throw new NotFoundException("User not found: " + userId);
@@ -386,8 +386,8 @@ public class UsersResource {
 				.map(DeviceResource.DeviceDto::fromEntity)
 				.collect(Collectors.toSet());
 
-		// realm roles are not persisted; fetch them from Keycloak only when explicitly requested:
-		var realmRoles = withRoles ? keycloakAdminService.realmRolesOf(userId) : null;
+		// realm roles are not persisted in the Hub DB; the detailed view always reads them through from Keycloak:
+		var realmRoles = keycloakAdminService.realmRolesOf(userId);
 
 		return UserDto.justPublicInfo(user).withDetails(
 				groups,

@@ -57,12 +57,11 @@ Concretely:
    roles from Keycloak's role-mapping API. Its result is cached for 30s to prevent
    spamming requests.
 5. Roles are removed from the base `UserDto` entirely and instead live on the
-   detailed view `UserDto.WithDetails`, since only `GET /users/{id}` serves them.
-   They are populated only when explicitly requested via
-   `GET /users/{id}?withRoles=true`, which reads through to Keycloak; with
-   `@JsonInclude(NON_NULL)` on `WithDetails`, "not requested" serializes as
-   *absent*, distinct from "no roles" (`[]`). This keeps the widely-shared base
-   DTO free of a "sometimes populated" field.
+   detailed view `UserDto.WithDetails`, since only `GET /users/{id}` (admin-only)
+   serves them. That endpoint always reads them through from Keycloak, so
+   `realmRoles` is a non-nullable, always-present field of `WithDetails`. This
+   keeps the widely-shared base DTO free of a role field and makes "the detailed
+   view carries roles" a structural guarantee.
 6. Role *input* is unchanged: `POST /users` and `PUT /users/{id}` still accept
    `realmRoles` and write them to Keycloak. It invalidates the cache for
    `KeycloakAdminService.realmRolesOf(userId)`.
@@ -82,10 +81,10 @@ Concretely:
 - Viewing a single user as an admin now costs one extra Keycloak admin call.
   Acceptable because it only happens on the detail/edit screens, one user at a
   time.
-- Roles are "request-scoped": consumers must ask for them explicitly
-  (`withRoles=true`) and tolerate an absent field otherwise. Confining them to
-  `WithDetails` (rather than a nullable field on the base `UserDto`) makes this
-  structural instead of a runtime convention.
+- Roles are confined to the detailed view: only `GET /users/{id}` carries them,
+  and every fetch of `WithDetails` pays the Keycloak call.
+  This was a deliberate decision against a query parameter for a simpler
+  contract since admin is the sole consumer.
 - If a future feature needs roles for *many* users at once (e.g. a roles column
   in the user list), this decision should be revisited: a per-user read-through
   would become an N+1 against the Keycloak admin API, and either a bulk fetch or
