@@ -56,11 +56,24 @@ const emit = defineEmits<{
 }>();
 
 const COLLAPSE_KEY = 'hub.sidebar.collapsed';
-const collapsed = ref(localStorage.getItem(COLLAPSE_KEY) === 'true');
+
+function loadCollapsed(): boolean {
+  try {
+    return localStorage.getItem(COLLAPSE_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+const collapsed = ref(loadCollapsed());
 
 function toggleCollapsed() {
   collapsed.value = !collapsed.value;
-  localStorage.setItem(COLLAPSE_KEY, String(collapsed.value));
+  try {
+    localStorage.setItem(COLLAPSE_KEY, String(collapsed.value));
+  } catch {
+    // storage may be unavailable (private mode / blocked)
+  }
 }
 
 const mainNav = ref<NavigationItem[]>([

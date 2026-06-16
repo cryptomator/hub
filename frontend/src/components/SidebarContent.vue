@@ -32,7 +32,7 @@
     <!-- Profile menu pinned to the bottom, kept outside the scrolling nav so the
          dropdown isn't clipped by the rail's overflow when collapsed -->
     <Menu as="div" class="relative">
-      <MenuButton :title="collapsed ? me.name : undefined" :class="['flex w-full items-center gap-x-3 rounded-md p-2 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white focus:outline-hidden', collapsed ? 'justify-center' : '']">
+      <MenuButton :title="collapsed ? me.name : undefined" :class="['flex w-full items-center gap-x-3 rounded-md p-2 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white focus-visible:bg-white/5 focus-visible:text-white focus:outline-hidden', collapsed ? 'justify-center' : '']">
         <img class="h-8 w-8 shrink-0 rounded-full bg-white" :src="me.pictureUrl" alt="" />
         <span v-if="!collapsed" class="truncate">{{ me.name }}</span>
       </MenuButton>
@@ -85,7 +85,7 @@ const emit = defineEmits<{
 }>();
 
 function itemClasses(to: string) {
-  const active = route.path.startsWith(to);
+  const active = route.path === to || route.path.startsWith(to + '/');
   return [
     active ? 'bg-white/10 text-white' : 'text-gray-300 hover:bg-white/5 hover:text-white',
     'group flex items-center gap-x-3 rounded-md p-2 text-sm font-medium',
