@@ -2,6 +2,7 @@
   <div v-if="loading" class="text-center p-8 text-gray-500 text-sm">
     {{ t('common.loading') }}
   </div>
+  <FetchError v-else-if="fetchError" :error="fetchError" :retry="fetchUser" />
   <div v-else>
     <BreadcrumbNav :crumbs="[ { label: t('nav.users'), to: '/app/users' }, { label: user.name } ]" />
     <div class="flex flex-row items-center justify-between gap-3 pb-1 w-full border-b border-gray-200 mb-2">
@@ -47,6 +48,7 @@
         </Menu>
       </div>
     </div>
+    <p v-if="onEnableUserError" class="text-sm text-red-600 mb-2"><ErrorMessage :error="onEnableUserError" /></p>
     <div class="hidden lg:grid grid-cols-1 lg:grid-cols-2 gap-6 items-start pt-3">
       <section class="lg:col-start-1 grid gap-6">
         <!-- User Info -->
@@ -86,8 +88,10 @@ import { EllipsisVerticalIcon } from '@heroicons/vue/20/solid';
 import { nextTick, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import backend, { GroupDto, UserDto, UserDtoWithDetails } from '../../common/backend';
+import backend, { asError, GroupDto, UserDto, UserDtoWithDetails } from '../../common/backend';
 import BreadcrumbNav from '../BreadcrumbNav.vue';
+import ErrorMessage from '../ErrorMessage.vue';
+import FetchError from '../FetchError.vue';
 import UserDeleteDialog from './UserDeleteDialog.vue';
 import UserDisableDialog from './UserDisableDialog.vue';
 import UserDeviceList from './UserDeviceList.vue';
@@ -119,15 +123,17 @@ const showDisableUserDialog = () => {
 };
 
 const onUserDisabled = async () => {
-  user.value = await backend.users.getUser(props.id);
+  await fetchUser();
 };
 
 const enableUser = async () => {
+  onEnableUserError.value = undefined;
   try {
     await backend.users.setUserEnabled(props.id, true);
-    user.value = await backend.users.getUser(props.id);
+    await fetchUser();
   } catch (error) {
     console.error('Enabling user failed.', error);
+    onEnableUserError.value = asError(error);
   }
 };
 
@@ -149,22 +155,28 @@ const user = ref<UserDtoWithDetails>({
 });
 
 const loading = ref<boolean>(true);
+const fetchError = ref<Error | null>(null);
+const onEnableUserError = ref<Error>();
 
 async function handleGroupsSaved(newGroups: GroupDto[]) {
-  user.value = await backend.users.getUser(props.id); // reload user to get updated vault list
-  user.value.groups.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+  await fetchUser(); // reload user to get updated vault list
 }
 
-onMounted(async () => {
+async function fetchUser() {
+  loading.value = true;
+  fetchError.value = null;
   try {
     user.value = await backend.users.getUser(props.id);
     user.value.groups.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
   } catch (error) {
     console.error('Failed to fetch user:', error);
+    fetchError.value = asError(error);
   } finally {
     loading.value = false;
   }
-});
+}
+
+onMounted(fetchUser);
 
 function showUserEdit() {
   router.push(`/app/users/${props.id}/edit`);

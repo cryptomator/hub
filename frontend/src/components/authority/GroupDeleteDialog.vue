@@ -40,7 +40,7 @@
                   </button>
                 </div>
                 <p v-if="onDeleteGroupError != null" class="text-sm text-red-900 px-4 sm:px-6 text-right bg-red-50">
-                  {{ t('common.unexpectedError', [onDeleteGroupError.message]) }}
+                  <ErrorMessage :error="onDeleteGroupError" />
                 </p>
               </form>
             </DialogPanel>
@@ -56,7 +56,8 @@ import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, Trans
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { GroupDto } from '../../common/backend';
+import backend, { asError, GroupDto } from '../../common/backend';
+import ErrorMessage from '../ErrorMessage.vue';
   
 const { t } = useI18n({ useScope: 'global' });
   
@@ -88,7 +89,7 @@ async function deleteGroup() {
     open.value = false;
   } catch (error) {
     console.error('Deleting group failed.', error);
-    onDeleteGroupError.value = error instanceof Error ? error : new Error('Unknown Error');
+    onDeleteGroupError.value = asError(error);
   }
 }
 </script>

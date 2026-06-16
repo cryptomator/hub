@@ -8,11 +8,9 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
-import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
@@ -317,36 +315,28 @@ public class UsersResource {
 	@APIResponse(responseCode = "400", description = "invalid input")
 	@APIResponse(responseCode = "409", description = "user already exists")
 	public Response createUser(@Valid @NotNull CreateUserDto dto) {
-		try {
-			var userRepresentation = keycloakAuthorityPuller.createUser(
-					dto.name(),
-					dto.email(),
-					dto.firstName(),
-					dto.lastName(),
-					dto.password(),
-					dto.pictureUrl(),
-					dto.groupIds()
-			);
+		var userRepresentation = keycloakAuthorityPuller.createUser(
+				dto.name(),
+				dto.email(),
+				dto.firstName(),
+				dto.lastName(),
+				dto.password(),
+				dto.pictureUrl(),
+				dto.groupIds()
+		);
 
-			if (!dto.realmRoles().isEmpty()) {
-				keycloakAuthorityPuller.updateUserRoles(userRepresentation.getId(), dto.realmRoles());
-			}
-
-			User user = userRepo.findById(userRepresentation.getId());
-			if (user == null) {
-				throw new InternalServerErrorException("User was created in Keycloak but not found in database after sync");
-			}
-
-			return Response.created(URI.create("./" + user.getId()))
-					.entity(UserDto.justPublicInfo(user))
-					.build();
-		} catch (ClientErrorException e) {
-			// Return 409 with specific error message (EMAIL_EXISTS or USERNAME_EXISTS)
-			return Response.status(Response.Status.CONFLICT)
-					.entity(e.getMessage())
-					.type(MediaType.TEXT_PLAIN)
-					.build();
+		if (!dto.realmRoles().isEmpty()) {
+			keycloakAuthorityPuller.updateUserRoles(userRepresentation.getId(), dto.realmRoles());
 		}
+
+		User user = userRepo.findById(userRepresentation.getId());
+		if (user == null) { // user was created in Keycloak but not found in database after sync
+			throw new ErrorCodeException(ErrorCode.CREATE_USER_FAILED);
+		}
+
+		return Response.status(Response.Status.CREATED)
+				.entity(UserDto.justPublicInfo(user))
+				.build();
 	}
 
 	@GET
@@ -361,7 +351,7 @@ public class UsersResource {
 	public UserDto.WithDetails getUser(@PathParam("id") String userId) {
 		User user = userRepo.findByIdWithEagerDetails(userId);
 		if (user == null) {
-			throw new NotFoundException("User not found: " + userId);
+			throw new ErrorCodeException(ErrorCode.USER_NOT_FOUND);
 		}
 
 
@@ -404,6 +394,7 @@ public class UsersResource {
 	@APIResponse(responseCode = "200", description = "user updated")
 	@APIResponse(responseCode = "403", description = "user has federated identity and cannot be modified")
 	@APIResponse(responseCode = "404", description = "user not found")
+	@APIResponse(responseCode = "409", description = "email already exists")
 	public UserDto updateUser(@PathParam("id") String userId, @Valid @NotNull UpdateUserDto dto) {
 		keycloakAuthorityPuller.updateUser(
 				userId,
@@ -418,7 +409,7 @@ public class UsersResource {
 
 		User user = userRepo.findById(userId);
 		if (user == null) {
-			throw new NotFoundException("User not found after update: " + userId);
+			throw new ErrorCodeException(ErrorCode.USER_NOT_FOUND);
 		}
 
 		return UserDto.justPublicInfo(user);

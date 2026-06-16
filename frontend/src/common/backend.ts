@@ -766,6 +766,21 @@ export function rethrowAndConvertIfExpected(error: unknown, ...expectedStatusCod
   }
 }
 
+/**
+ * Converts a thrown object into an Error, preferring the error message provided by the backend (if any).
+ * @param error A thrown object
+ * @returns An error with a human-readable message
+ */
+export function asError(error: unknown): Error {
+  if (AxiosStatic.isAxiosError(error) && typeof error.response?.data === 'string' && error.response.data !== '') {
+    return new Error(error.response.data);
+  } else if (error instanceof Error) {
+    return error;
+  } else {
+    return new Error('Unknown Error');
+  }
+}
+
 export class BackendError extends Error { }
 
 export class UnauthorizedError extends BackendError {

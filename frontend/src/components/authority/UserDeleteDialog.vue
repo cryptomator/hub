@@ -43,7 +43,7 @@
                   </button>
                 </div>
                 <p v-if="onDeleteUserError != null" class="text-sm text-red-900 px-4 sm:px-6 text-right bg-red-50">
-                  {{ t('common.unexpectedError', [onDeleteUserError.message]) }}
+                  <ErrorMessage :error="onDeleteUserError" />
                 </p>
               </form>
             </DialogPanel>
@@ -59,7 +59,8 @@ import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, Trans
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { UserDto } from '../../common/backend';
+import backend, { asError, UserDto } from '../../common/backend';
+import ErrorMessage from '../ErrorMessage.vue';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -99,7 +100,7 @@ async function deleteUser() {
     open.value = false;
   } catch (error) {
     console.error('Deleting user failed.', error);
-    onDeleteUserError.value = error instanceof Error ? error : new Error('Unknown Error');
+    onDeleteUserError.value = asError(error);
   }
 }
 </script>

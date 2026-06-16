@@ -7,12 +7,9 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
-import jakarta.ws.rs.InternalServerErrorException;
-import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
@@ -29,7 +26,6 @@ import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.jboss.resteasy.reactive.NoCache;
 
-import java.net.URI;
 import java.util.List;
 
 @Path("/groups")
@@ -104,20 +100,16 @@ public class GroupsResource {
 	@APIResponse(responseCode = "400", description = "invalid input")
 	@APIResponse(responseCode = "409", description = "group name already exists")
 	public Response createGroup(@Valid @NotNull CreateGroupDto dto) {
-		try {
-			var groupRepresentation = keycloakAuthorityPuller.createGroup(dto.name(), dto.pictureUrl());
+		var groupRepresentation = keycloakAuthorityPuller.createGroup(dto.name(), dto.pictureUrl());
 
-			Group group = groupRepo.findById(groupRepresentation.getId());
-			if (group == null) {
-				throw new InternalServerErrorException("Group was created in Keycloak but not found in database after sync");
-			}
-
-			return Response.created(URI.create("./" + group.getId()))
-					.entity(GroupDto.fromEntity(group))
-					.build();
-		} catch (ClientErrorException e) {
-			return Response.status(Response.Status.CONFLICT).build();
+		Group group = groupRepo.findById(groupRepresentation.getId());
+		if (group == null) { // group was created in Keycloak but not found in database after sync
+			throw new ErrorCodeException(ErrorCode.CREATE_GROUP_FAILED);
 		}
+
+		return Response.status(Response.Status.CREATED)
+				.entity(GroupDto.fromEntity(group))
+				.build();
 	}
 
 	@GET
@@ -132,7 +124,7 @@ public class GroupsResource {
 	public GroupDto.WithDetails getGroup(@PathParam("groupId") @ValidId String groupId) {
 		Group group = groupRepo.findByIdWithEagerDetails(groupId);
 		if (group == null) {
-			throw new NotFoundException("Group not found: " + groupId);
+			throw new ErrorCodeException(ErrorCode.GROUP_NOT_FOUND);
 		}
 
 		List<AuthorityDto> members = group.getMembers().stream().map(AuthorityDto::fromEntity).toList();
@@ -153,12 +145,13 @@ public class GroupsResource {
 	@Operation(summary = "update a group in Keycloak")
 	@APIResponse(responseCode = "200", description = "group updated")
 	@APIResponse(responseCode = "404", description = "group not found")
+	@APIResponse(responseCode = "409", description = "group name already exists")
 	public GroupDto updateGroup(@PathParam("groupId") @ValidId String groupId, @Valid @NotNull UpdateGroupDto dto) {
 		keycloakAuthorityPuller.updateGroup(groupId, dto.name(), dto.pictureUrl());
 
 		Group group = groupRepo.findById(groupId);
 		if (group == null) {
-			throw new NotFoundException("Group not found after update: " + groupId);
+			throw new ErrorCodeException(ErrorCode.GROUP_NOT_FOUND);
 		}
 
 		return GroupDto.fromEntity(group);

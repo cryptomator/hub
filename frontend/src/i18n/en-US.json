@@ -362,7 +362,6 @@
   "groupEditCreate.invalidImageUrl": "Invalid image URL",
   "groupEditCreate.profilePictureUrl": "Profile Picture URL",
   "groupEditCreate.selectRolesPlaceholder": "Select role(s)",
-  "groupEditCreate.error.groupNameAlreadyExists": "A group with this name already exists.",
 
   "trustDetails.trustLevel": "Trust Level {0}",
   "trustDetails.trustLevel.untrusted": "Unverified",
@@ -505,8 +504,6 @@
   "userEditCreate.invalidImageUrl": "Invalid image URL",
   "userEditCreate.validation.required": "This field is required",
   "userEditCreate.validation.passwordMismatch": "Passwords don't match",
-  "userEditCreate.error.userAlreadyExists": "A user with this username already exists.",
-  "userEditCreate.error.emailAlreadyExists": "A user with this email already exists.",
 
   "userList.edit.user.button": "Edit",
   "userList.userName": "Name",
@@ -592,5 +589,27 @@
   "missingEntitlements.description": "This feature is not part of your current license.",
 
   "trial.enterpriseFeature.title": "Enterprise Feature",
-  "trial.enterpriseFeature.description": "This feature is only permanently available with an Enterprise license."
+  "trial.enterpriseFeature.description": "This feature is only permanently available with an Enterprise license.",
+
+  "error.ADD_GROUP_MEMBER_FAILED": "Adding the user to the group in Keycloak failed.",
+  "error.CREATE_GROUP_FAILED": "Creating the group in Keycloak failed.",
+  "error.CREATE_USER_FAILED": "Creating the user in Keycloak failed.",
+  "error.DELETE_GROUP_FAILED": "Deleting the group in Keycloak failed.",
+  "error.DELETE_USER_FAILED": "Deleting the user in Keycloak failed.",
+  "error.DISABLE_USER_FAILED": "Disabling the user in Keycloak failed.",
+  "error.EMAIL_EXISTS": "A user with this email already exists.",
+  "error.ENABLE_USER_FAILED": "Enabling the user in Keycloak failed.",
+  "error.FEDERATED_IDENTITY_CHECK_FAILED": "Checking the user's federated identity in Keycloak failed.",
+  "error.GROUP_MEMBER_NOT_FOUND": "The user or group was not found.",
+  "error.GROUP_NAME_EXISTS": "A group with this name already exists.",
+  "error.GROUP_NOT_FOUND": "The group was not found in Keycloak.",
+  "error.READ_GROUP_MEMBERS_FAILED": "Reading the group members from Keycloak failed.",
+  "error.REMOVE_GROUP_MEMBER_FAILED": "Removing the user from the group in Keycloak failed.",
+  "error.UPDATE_GROUP_FAILED": "Updating the group in Keycloak failed.",
+  "error.UPDATE_USER_FAILED": "Updating the user in Keycloak failed.",
+  "error.UPDATE_USER_ROLES_FAILED": "Updating the user's roles in Keycloak failed.",
+  "error.USER_HAS_FEDERATED_IDENTITY": "This user is managed by an external identity provider and cannot be modified in Hub.",
+  "error.USERNAME_EXISTS": "A user with this username already exists.",
+  "error.USER_NOT_FOUND": "The user was not found in Keycloak."
+
 }

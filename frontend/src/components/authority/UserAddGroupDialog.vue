@@ -15,7 +15,7 @@
                 <div class="flex flex-col p-1 mt-4">
                   <SearchInputGroup :action-title="t('common.add')" :place-holder="t('user.addGroups.searchLabel')" :on-search="searchGroup" @action="addGroup" />
                   <p v-if="onAddGroupError" class="mt-1 text-sm text-red-900 text-right">
-                    {{ t('common.unexpectedError', [onAddGroupError.message]) }}
+                    <ErrorMessage :error="onAddGroupError" />
                   </p>
                 </div>
 
@@ -62,7 +62,8 @@ import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, Trans
 import { ref, computed, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import SearchInputGroup from '../SearchInputGroup.vue';
-import backend, { GroupDto } from '../../common/backend';
+import backend, { asError, GroupDto } from '../../common/backend';
+import ErrorMessage from '../ErrorMessage.vue';
 
 const scrollContainer = ref<HTMLElement | null>(null);
 
@@ -139,12 +140,13 @@ async function onSubmit() {
     open.value = false;
   } catch (error) {
     console.error('Adding user to groups failed:', error);
-    onAddGroupError.value = error instanceof Error ? error : new Error('Unknown Error');
+    onAddGroupError.value = asError(error);
   }
 }
 
 function show() {
   newGroups.value = [];
+  onAddGroupError.value = null;
   open.value = true;
 }
 

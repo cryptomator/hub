@@ -9,10 +9,6 @@ import io.quarkus.test.security.oidc.OidcSecurity;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.ClientErrorException;
-import jakarta.ws.rs.ForbiddenException;
-import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.keycloak.KeycloakAuthorityPuller;
 import org.cryptomator.hub.keycloak.RealmRole;
 import org.cryptomator.hub.license.HubLicenseEntitlements;
@@ -488,7 +484,7 @@ class UsersResourceIT {
 					Mockito.anyString(),
 					Mockito.any(),
 					Mockito.any()
-			)).thenThrow(new ClientErrorException("USERNAME_EXISTS", Response.Status.CONFLICT));
+			)).thenThrow(new ErrorCodeException(ErrorCode.USERNAME_EXISTS));
 
 			var body = """
 					{
@@ -502,7 +498,8 @@ class UsersResourceIT {
 					""";
 			given().contentType(ContentType.JSON).body(body)
 					.when().post("/users")
-					.then().statusCode(409);
+					.then().statusCode(409)
+					.body(is("USERNAME_EXISTS"));
 		}
 
 		@Test
@@ -516,7 +513,7 @@ class UsersResourceIT {
 					Mockito.anyString(),
 					Mockito.any(),
 					Mockito.any()
-			)).thenThrow(new ClientErrorException("EMAIL_EXISTS", Response.Status.CONFLICT));
+			)).thenThrow(new ErrorCodeException(ErrorCode.EMAIL_EXISTS));
 
 			var body = """
 					{
@@ -530,7 +527,8 @@ class UsersResourceIT {
 					""";
 			given().contentType(ContentType.JSON).body(body)
 					.when().post("/users")
-					.then().statusCode(409);
+					.then().statusCode(409)
+					.body(is("EMAIL_EXISTS"));
 		}
 
 		@Test
@@ -602,7 +600,7 @@ class UsersResourceIT {
 					Mockito.any(),
 					Mockito.any(),
 					Mockito.any()
-			)).thenThrow(new NotFoundException("User not found"));
+			)).thenThrow(new ErrorCodeException(ErrorCode.USER_NOT_FOUND));
 
 			var body = """
 					{
@@ -613,7 +611,8 @@ class UsersResourceIT {
 					""";
 			given().contentType(ContentType.JSON).body(body)
 					.when().put("/users/nonexistent")
-					.then().statusCode(404);
+					.then().statusCode(404)
+					.body(is("USER_NOT_FOUND"));
 		}
 
 		@Test
@@ -626,7 +625,7 @@ class UsersResourceIT {
 					Mockito.any(),
 					Mockito.any(),
 					Mockito.any()
-			)).thenThrow(new ForbiddenException("User has a federated identity"));
+			)).thenThrow(new ErrorCodeException(ErrorCode.USER_HAS_FEDERATED_IDENTITY));
 
 			var body = """
 					{
@@ -637,7 +636,32 @@ class UsersResourceIT {
 					""";
 			given().contentType(ContentType.JSON).body(body)
 					.when().put("/users/federatedUser")
-					.then().statusCode(403);
+					.then().statusCode(403)
+					.body(is("USER_HAS_FEDERATED_IDENTITY"));
+		}
+
+		@Test
+		@DisplayName("PUT /users/{id} returns 409 when email already exists")
+		void testUpdateUserConflict() {
+			Mockito.when(keycloakAuthorityPuller.updateUser(
+					Mockito.eq("user1"),
+					Mockito.any(),
+					Mockito.any(),
+					Mockito.any(),
+					Mockito.any(),
+					Mockito.any()
+			)).thenThrow(new ErrorCodeException(ErrorCode.EMAIL_EXISTS));
+
+			var body = """
+					{
+						"email": "existing@example.com",
+						"realmRoles": []
+					}
+					""";
+			given().contentType(ContentType.JSON).body(body)
+					.when().put("/users/user1")
+					.then().statusCode(409)
+					.body(is("EMAIL_EXISTS"));
 		}
 
 		@Test
@@ -666,21 +690,23 @@ class UsersResourceIT {
 		@Test
 		@DisplayName("DELETE /users/{id} returns 404 for non-existing user")
 		void testDeleteUserNotFound() {
-			Mockito.doThrow(new NotFoundException("User not found"))
+			Mockito.doThrow(new ErrorCodeException(ErrorCode.USER_NOT_FOUND))
 					.when(keycloakAuthorityPuller).deleteUser("nonexistent");
 
 			when().delete("/users/nonexistent")
-					.then().statusCode(404);
+					.then().statusCode(404)
+					.body(is("USER_NOT_FOUND"));
 		}
 
 		@Test
 		@DisplayName("DELETE /users/{id} returns 403 for federated user")
 		void testDeleteUserForbidden() {
-			Mockito.doThrow(new ForbiddenException("User has a federated identity"))
+			Mockito.doThrow(new ErrorCodeException(ErrorCode.USER_HAS_FEDERATED_IDENTITY))
 					.when(keycloakAuthorityPuller).deleteUser("federatedUser");
 
 			when().delete("/users/federatedUser")
-					.then().statusCode(403);
+					.then().statusCode(403)
+					.body(is("USER_HAS_FEDERATED_IDENTITY"));
 		}
 
 	}

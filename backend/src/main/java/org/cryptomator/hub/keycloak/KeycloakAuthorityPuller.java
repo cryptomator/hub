@@ -7,13 +7,11 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
-import jakarta.ws.rs.ClientErrorException;
-import jakarta.ws.rs.ForbiddenException;
-import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.WebApplicationException;
-import jakarta.ws.rs.core.Response;
+import org.cryptomator.hub.api.ErrorCode;
+import org.cryptomator.hub.api.ErrorCodeException;
 import org.cryptomator.hub.entities.Authority;
 import org.cryptomator.hub.entities.EffectiveGroupMembership;
 import org.cryptomator.hub.entities.Group;
@@ -106,7 +104,7 @@ public class KeycloakAuthorityPuller {
 		deletedUserIds.forEach(allAuthorities::remove);
 
 		// sync groups:
-		var addedGroups = syncAddedGroups(keycloakGroups, databaseGroups, allAuthorities);
+		syncAddedGroups(keycloakGroups, databaseGroups, allAuthorities);
 		var deletedGroupIds = syncDeletedGroups(keycloakGroups, databaseGroups);
 		syncUpdatedGroups(keycloakGroups, databaseGroups, deletedGroupIds, allAuthorities);
 	}
@@ -235,24 +233,24 @@ public class KeycloakAuthorityPuller {
 				}
 				case 409 -> {
 					String body = response.readEntity(String.class);
-					String errorMessage;
+					ErrorCode errorCode;
 					if (body != null && body.contains("same email")) {
-						errorMessage = "EMAIL_EXISTS";
+						errorCode = ErrorCode.EMAIL_EXISTS;
 					} else if (body != null && body.contains("same username")) {
-						errorMessage = "USERNAME_EXISTS";
+						errorCode = ErrorCode.USERNAME_EXISTS;
 					} else {
-						errorMessage = "User already exists";
+						errorCode = ErrorCode.USER_EXISTS;
 					}
-					throw new ClientErrorException(errorMessage, Response.Status.CONFLICT);
+					throw new ErrorCodeException(errorCode);
 				}
 				default -> {
 					LOG.warnv("Failed to create user {0} in Keycloak. Status: {1}", username, response.getStatus());
-					throw new InternalServerErrorException("Failed to create user in Keycloak. Status: " + response.getStatus());
+					throw new ErrorCodeException(ErrorCode.CREATE_USER_FAILED);
 				}
 			};
 		} catch (ProcessingException e) {
 			LOG.warnv(e, "Failed to create user {0} in Keycloak.", username);
-			throw e;
+			throw new ErrorCodeException(ErrorCode.CREATE_USER_FAILED, e);
 		}
 
 		UserResource userResource = realm.users().get(userId);
@@ -289,7 +287,7 @@ public class KeycloakAuthorityPuller {
 
 	public UserRepresentation updateUser(String userId, String email, String firstName, String lastName, String password, String pictureUrl) {
 		if (isUserReadOnly(userId)) {
-			throw new ForbiddenException("User has a federated identity and cannot be modified");
+			throw new ErrorCodeException(ErrorCode.USER_HAS_FEDERATED_IDENTITY);
 		}
 
 		try {
@@ -318,19 +316,23 @@ public class KeycloakAuthorityPuller {
 				userResource.resetPassword(credential);
 			}
 
-			UserRepresentation updatedUser = userResource.toRepresentation();
-			syncUser(updatedUser);
-			return updatedUser;
+			syncUser(user);
+			return user;
 		} catch (WebApplicationException | ProcessingException e) {
 			LOG.warnv(e, "Failed to update user {0} in Keycloak.", userId);
-			throw e;
+			switch (keycloakStatus(e)) {
+				case 404 -> throw new ErrorCodeException(ErrorCode.USER_NOT_FOUND);
+				// the username is immutable, hence a conflict can only be caused by the email address:
+				case 409 -> throw new ErrorCodeException(ErrorCode.EMAIL_EXISTS);
+				default -> throw new ErrorCodeException(ErrorCode.UPDATE_USER_FAILED, e);
+			}
 		}
 	}
 
 	@Transactional
 	public void deleteUser(String userId) {
 		if (isUserReadOnly(userId)) {
-			throw new ForbiddenException("User has a federated identity and cannot be deleted");
+			throw new ErrorCodeException(ErrorCode.USER_HAS_FEDERATED_IDENTITY);
 		}
 
 		// 1. delete from db (roll back if kc deletion fails):
@@ -340,11 +342,11 @@ public class KeycloakAuthorityPuller {
 		try (var response = realm.users().delete(userId)) {
 			if (response.getStatus() != 204) {
 				LOG.warnv("Failed to delete user {0} in Keycloak. Status: {1}", userId, response.getStatus());
-				throw new InternalServerErrorException("Failed to delete user in Keycloak. Status: " + response.getStatus());
+				throw new ErrorCodeException(ErrorCode.DELETE_USER_FAILED);
 			}
 		} catch (ProcessingException e) {
 			LOG.warnv(e, "Failed to delete user {0} in Keycloak.", userId);
-			throw e;
+			throw new ErrorCodeException(ErrorCode.DELETE_USER_FAILED, e);
 		}
 	}
 
@@ -358,7 +360,10 @@ public class KeycloakAuthorityPuller {
 			syncUser(userId);
 		} catch (WebApplicationException | ProcessingException e) {
 			LOG.warnv(e, "Failed to {0} user {1} in Keycloak.", enabled ? "enable" : "disable", userId);
-			throw e;
+			if (keycloakStatus(e) == 404) {
+				throw new ErrorCodeException(ErrorCode.USER_NOT_FOUND);
+			}
+			throw new ErrorCodeException(enabled ? ErrorCode.ENABLE_USER_FAILED : ErrorCode.DISABLE_USER_FAILED, e);
 		}
 	}
 
@@ -369,7 +374,10 @@ public class KeycloakAuthorityPuller {
 			return !federatedIdentities.isEmpty();
 		} catch (WebApplicationException | ProcessingException e) {
 			LOG.warnv(e, "Failed to check federated identity for user {0}.", userId);
-			throw new InternalServerErrorException("Failed to check federated identity", e);
+			if (keycloakStatus(e) == 404) {
+				throw new ErrorCodeException(ErrorCode.USER_NOT_FOUND);
+			}
+			throw new ErrorCodeException(ErrorCode.FEDERATED_IDENTITY_CHECK_FAILED, e);
 		}
 	}
 
@@ -428,7 +436,7 @@ public class KeycloakAuthorityPuller {
 			} while (currentBatch.size() == KeycloakAuthorityProvider.MAX_COUNT_PER_REQUEST);
 		} catch (WebApplicationException | ProcessingException e) {
 			LOG.warnv(e, "Failed to read members of group {0} from Keycloak (offset {1}).", groupId, memberIds.size());
-			throw e;
+			throw new ErrorCodeException(ErrorCode.READ_GROUP_MEMBERS_FAILED, e);
 		}
 		return memberIds;
 	}
@@ -440,7 +448,7 @@ public class KeycloakAuthorityPuller {
 			groupRepo.addMember(groupId, userId);
 			effectiveGroupMembershipRepo.updateGroups(List.of(groupId));
 		} catch (PersistenceException e) { // caused by foreign key constraint violation
-			throw new NotFoundException("Failed to add member " + userId + " to group " + groupId);
+			throw new ErrorCodeException(ErrorCode.GROUP_MEMBER_NOT_FOUND);
 		}
 
 		// 2. sync to kc:
@@ -448,7 +456,7 @@ public class KeycloakAuthorityPuller {
 			realm.users().get(userId).joinGroup(groupId);
 		} catch (WebApplicationException | ProcessingException e) {
 			LOG.warnv(e, "Failed to add user {0} to group {1} in Keycloak.", userId, groupId);
-			throw e;
+			throw new ErrorCodeException(ErrorCode.ADD_GROUP_MEMBER_FAILED, e);
 		}
 	}
 
@@ -463,7 +471,10 @@ public class KeycloakAuthorityPuller {
 			realm.users().get(userId).leaveGroup(groupId);
 		} catch (WebApplicationException | ProcessingException e) {
 			LOG.warnv(e, "Failed to remove user {0} from group {1} in Keycloak.", userId, groupId);
-			throw e;
+			if (keycloakStatus(e) == 404) {
+				throw new ErrorCodeException(ErrorCode.GROUP_MEMBER_NOT_FOUND);
+			}
+			throw new ErrorCodeException(ErrorCode.REMOVE_GROUP_MEMBER_FAILED, e);
 		}
 	}
 
@@ -495,7 +506,7 @@ public class KeycloakAuthorityPuller {
 			}
 		} catch (WebApplicationException | ProcessingException e) {
 			LOG.warnv(e, "Failed to update realm roles for user {0} in Keycloak.", userId);
-			throw e;
+			throw new ErrorCodeException(ErrorCode.UPDATE_USER_ROLES_FAILED, e);
 		}
 	}
 
@@ -516,15 +527,15 @@ public class KeycloakAuthorityPuller {
 					var location = response.getHeaderString("Location");
 					yield location.substring(location.lastIndexOf('/') + 1);
 				}
-				case 409 -> throw new ClientErrorException("GROUP_NAME_EXISTS", Response.Status.CONFLICT);
+				case 409 -> throw new ErrorCodeException(ErrorCode.GROUP_NAME_EXISTS);
 				default -> {
 					LOG.warnv("Failed to create group {0} in Keycloak. Status: {1}", name, response.getStatus());
-					throw new InternalServerErrorException("Failed to create group in Keycloak. Status: " + response.getStatus());
+					throw new ErrorCodeException(ErrorCode.CREATE_GROUP_FAILED);
 				}
 			};
 		} catch (ProcessingException e) {
 			LOG.warnv(e, "Failed to create group {0} in Keycloak.", name);
-			throw e;
+			throw new ErrorCodeException(ErrorCode.CREATE_GROUP_FAILED, e);
 		}
 
 		GroupResource groupResource = realm.groups().group(groupId);
@@ -546,12 +557,15 @@ public class KeycloakAuthorityPuller {
 			group.setAttributes(attrs);
 
 			groupResource.update(group);
-			GroupRepresentation updatedGroup = groupResource.toRepresentation();
-			syncGroup(groupResource, updatedGroup);
-			return updatedGroup;
+			syncGroup(groupResource, group);
+			return group;
 		} catch (WebApplicationException | ProcessingException e) {
 			LOG.warnv(e, "Failed to update group {0} in Keycloak.", groupId);
-			throw e;
+			switch (keycloakStatus(e)) {
+				case 404 -> throw new ErrorCodeException(ErrorCode.GROUP_NOT_FOUND);
+				case 409 -> throw new ErrorCodeException(ErrorCode.GROUP_NAME_EXISTS);
+				default -> throw new ErrorCodeException(ErrorCode.UPDATE_GROUP_FAILED, e);
+			}
 		}
 	}
 
@@ -565,8 +579,15 @@ public class KeycloakAuthorityPuller {
 			realm.groups().group(groupId).remove();
 		} catch (WebApplicationException | ProcessingException e) {
 			LOG.warnv(e, "Failed to delete group {0} in Keycloak.", groupId);
-			throw e;
+			if (keycloakStatus(e) == 404) {
+				throw new ErrorCodeException(ErrorCode.GROUP_NOT_FOUND);
+			}
+			throw new ErrorCodeException(ErrorCode.DELETE_GROUP_FAILED, e);
 		}
+	}
+
+	private static int keycloakStatus(Exception e) {
+		return e instanceof WebApplicationException wae ? wae.getResponse().getStatus() : -1;
 	}
 
 	private static Map<String, List<String>> setPicture(Map<String, List<String>> attributes, String pictureUrl) {
