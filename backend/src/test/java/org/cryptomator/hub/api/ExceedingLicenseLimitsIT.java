@@ -176,7 +176,7 @@ class ExceedingLicenseLimitsIT {
 
 	@Test
 	@Order(4)
-	@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111 (as user1) returns 200 with only updated name, description and archive flag, despite exceeding license")
+	@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111 (as user1) returns 200 with only updated name and description, despite exceeding license")
 	void testUpdateVaultDespiteLicenseExceeded() {
 		Assumptions.assumeTrue(vaultResourceIT.effectiveVaultAccessRepo.countSeatOccupyingUsers() == 5);
 		var vaultId = "7E57C0DE-0000-4000-8000-000100001111";
@@ -214,7 +214,41 @@ class ExceedingLicenseLimitsIT {
 	}
 
 	@Test
+	@Order(6)
+	@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-00010000AAAA/archived returns 402 when unarchiving exceeds seat limit")
+	void unarchiveVaultExceedingSeats() {
+		Assumptions.assumeTrue(vaultResourceIT.effectiveVaultAccessRepo.countSeatOccupyingUsers() > 5);
+
+		given().contentType(ContentType.TEXT)
+				.body("false")
+				.when().put("/vaults/{vaultId}/archived", "7E57C0DE-0000-4000-8000-00010000AAAA")
+				.then().statusCode(402);
+
+		// vault should still be archived (rejected before mutation)
+		when().get("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-00010000AAAA")
+				.then().statusCode(200)
+				.body("archived", is(true));
+	}
+
+	@Test
 	@Order(7)
+	@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-00010000AAAA ignores archived flag in createOrUpdate")
+	void createOrUpdateIgnoresArchivedFlag() {
+		var vaultId = "7E57C0DE-0000-4000-8000-00010000AAAA";
+		var vaultDto = new VaultResource.VaultDto(UUID.fromString(vaultId), "Vault Archived", Instant.parse("2020-02-20T20:20:20Z"), "This is a archived vault.", false, 0, Map.of(), "masterkey3", 42, "salt3", "doNotUpdate", "doNotUpdate");
+		given().contentType(ContentType.JSON)
+				.body(vaultDto)
+				.when().put("/vaults/{vaultId}", vaultId)
+				.then().statusCode(200);
+
+		// vault should still be archived (archived flag is ignored by createOrUpdate)
+		when().get("/vaults/{vaultId}", vaultId)
+				.then().statusCode(200)
+				.body("archived", is(true));
+	}
+
+	@Test
+	@Order(8)
 	@DisplayName("unlock/legacyUnlock is granted, if (effective vault user) > license seats but (effective vault user with access token) <= license seat")
 	void testUnlockAllowedExceedingLicenseSoftLimit() {
 		Assumptions.assumeTrue(vaultResourceIT.effectiveVaultAccessRepo.countSeatOccupyingUsersWithAccessToken() <= 5);
@@ -227,7 +261,7 @@ class ExceedingLicenseLimitsIT {
 	}
 
 	@Test
-	@Order(8)
+	@Order(9)
 	@DisplayName("Unlock/legacyUnlock is blocked if (effective vault users with token) > license seats")
 	void testUnlockBlockedExceedingLicenseHardLimit() throws SQLException {
 		try (var c = vaultResourceIT.dataSource.getConnection(); var s = c.createStatement()) {

@@ -604,6 +604,18 @@ class UsersResourceIT {
 		}
 
 		@Test
+		@DisplayName("PUT /users/{id}/enabled returns 204 when disabled successfully")
+		void testSetUserEnabledSuccess() {
+			Mockito.doNothing().when(keycloakAdminService).setUserEnabled("user1", false);
+
+			given().contentType(ContentType.TEXT).body("false")
+					.when().put("/users/user1/enabled")
+					.then().statusCode(204);
+
+			Mockito.verify(keycloakAdminService).setUserEnabled("user1", false);
+		}
+
+		@Test
 		@DisplayName("DELETE /users/{id} returns 204 when deleted successfully")
 		void testDeleteUserSuccess() {
 			Mockito.doNothing().when(keycloakAdminService).deleteUser("mockedUserId");

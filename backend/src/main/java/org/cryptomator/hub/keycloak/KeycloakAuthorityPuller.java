@@ -1,5 +1,6 @@
 package org.cryptomator.hub.keycloak;
 
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -30,6 +31,7 @@ public class KeycloakAuthorityPuller {
 	EffectiveGroupMembership.Repository effectiveGroupMembershipRepo;
 
 	@Scheduled(every = "{hub.keycloak.syncer-period}")
+	@WithSpan("KeycloakAuthorityPuller.sync")
 	void sync() {
 		var keycloakGroups = remoteUserProvider.groups().stream().collect(Collectors.toMap(KeycloakGroupDto::id, Function.identity()));
 		var keycloakUsers = remoteUserProvider.users().stream().collect(Collectors.toMap(KeycloakUserDto::id, Function.identity()));
@@ -79,6 +81,7 @@ public class KeycloakAuthorityPuller {
 			databaseUser.setFirstName(keycloakUser.firstName());
 			databaseUser.setLastName(keycloakUser.lastName());
 			databaseUser.setPictureUrl(keycloakUser.pictureUrl());
+			databaseUser.setEnabled(keycloakUser.enabled());
 			databaseUser.setRealmRoles(keycloakUser.roles().stream().map(RealmRole::kcName).toArray(String[]::new));
 			return databaseUser;
 		}).collect(Collectors.toMap(User::getId, Function.identity()));
@@ -106,6 +109,7 @@ public class KeycloakAuthorityPuller {
 			databaseUser.setFirstName(keycloakUser.firstName());
 			databaseUser.setLastName(keycloakUser.lastName());
 			databaseUser.setPictureUrl(keycloakUser.pictureUrl());
+			databaseUser.setEnabled(keycloakUser.enabled());
 			databaseUser.setRealmRoles(keycloakUser.roles().stream().map(RealmRole::kcName).toArray(String[]::new));
 		}
 	}

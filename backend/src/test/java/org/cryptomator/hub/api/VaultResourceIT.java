@@ -400,7 +400,7 @@ public class VaultResourceIT {
 
 		@Test
 		@Order(2)
-		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100003333 returns 200, updating only name, description and archive flag")
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100003333 returns 200, updating only name and description (archived flag ignored)")
 		void testUpdateVault() {
 			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100003333");
 			var vaultDto = new VaultResource.VaultDto(uuid, "VaultUpdated", Instant.parse("2222-11-11T11:11:11Z"), "Vault updated.", true, 0, Map.of(), "doNotUpdate", 27, "doNotUpdate", "doNotUpdate", "doNotUpdate");
@@ -411,7 +411,7 @@ public class VaultResourceIT {
 					.body("id", equalToIgnoringCase("7E57C0DE-0000-4000-8000-000100003333"))
 					.body("name", equalTo("VaultUpdated"))
 					.body("description", equalTo("Vault updated."))
-					.body("archived", equalTo(true))
+					.body("archived", equalTo(false))
 					.body("creationTime", not("2222-11-11T11:11:11Z"));
 		}
 
@@ -963,6 +963,67 @@ public class VaultResourceIT {
 	}
 
 	@Nested
+	@DisplayName("As admin user2 (non-owner)")
+	@TestSecurity(user = "User Name 2", roles = {"user", "admin"})
+	@OidcSecurity(claims = {
+			@Claim(key = "sub", value = "user2")
+	})
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+	class AdminArchiveVault {
+
+		@Test
+		@Order(1)
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111/archived returns 200 for admin archiving vault")
+		@DBRollbackAfter
+		void testAdminArchiveVault() {
+			given().contentType(ContentType.TEXT).body("true")
+					.when().put("/vaults/{vaultId}/archived", "7E57C0DE-0000-4000-8000-000100001111")
+					.then().statusCode(200)
+					.body("id", equalToIgnoringCase("7E57C0DE-0000-4000-8000-000100001111"))
+					.body("name", equalTo("Vault 1"))
+					.body("archived", equalTo(true));
+		}
+
+		@Test
+		@Order(2)
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-00010000AAAA/archived returns 200 for admin unarchiving vault")
+		@DBRollbackAfter
+		void testAdminUnarchiveVault() {
+			given().contentType(ContentType.TEXT).body("false")
+					.when().put("/vaults/{vaultId}/archived", "7E57C0DE-0000-4000-8000-00010000AAAA")
+					.then().statusCode(200)
+					.body("id", equalToIgnoringCase("7E57C0DE-0000-4000-8000-00010000AAAA"))
+					.body("name", equalTo("Vault Archived"))
+					.body("archived", equalTo(false));
+		}
+
+		@Test
+		@Order(3)
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100001111 returns 403 for admin updating vault they don't own")
+		void testAdminCannotUpdateVaultTheyDontOwn() {
+			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100001111");
+			var vaultDto = new VaultResource.VaultDto(uuid, "Vault 1", Instant.parse("2020-02-20T20:20:20Z"), "This is a testvault.", true, 0, Map.of(), "masterkey1", 42, "salt1", "authPubKey1", "authPrvKey1");
+
+			given().contentType(ContentType.JSON).body(vaultDto)
+					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-000100001111")
+					.then().statusCode(403);
+		}
+
+		@Test
+		@Order(4)
+		@DisplayName("PUT /vaults/7E57C0DE-0000-4000-8000-000100005555 returns 403 for admin creating vault without create-vaults role")
+		void testAdminCannotCreateVaultWithoutCreateVaultsRole() {
+			var uuid = UUID.fromString("7E57C0DE-0000-4000-8000-000100005555");
+			var vaultDto = new VaultResource.VaultDto(uuid, "New Vault", Instant.parse("2112-12-21T21:12:21Z"), "Should not be created", false, 0, Map.of(), "masterkey5", 42, "NaCl", "authPubKey5", "authPrvKey5");
+
+			given().contentType(ContentType.JSON).body(vaultDto)
+					.when().put("/vaults/{vaultId}", "7E57C0DE-0000-4000-8000-000100005555")
+					.then().statusCode(403);
+		}
+
+	}
+
+	@Nested
 	@DisplayName("As unauthenticated user")
 	class AsAnonymous {
 
@@ -976,7 +1037,8 @@ public class VaultResourceIT {
 				"PUT, /vaults/7E57C0DE-0000-4000-8000-000100001111/users/user1",
 				"DELETE, /vaults/7E57C0DE-0000-4000-8000-000100001111/authority/user1",
 				"GET, /vaults/7E57C0DE-0000-4000-8000-000100001111/users-requiring-access-grant",
-				"GET, /vaults/7E57C0DE-0000-4000-8000-000100001111/access-token"
+				"GET, /vaults/7E57C0DE-0000-4000-8000-000100001111/access-token",
+				"PUT, /vaults/7E57C0DE-0000-4000-8000-000100001111/archived"
 		})
 		void testGet(String method, String path) {
 			when().request(method, path)

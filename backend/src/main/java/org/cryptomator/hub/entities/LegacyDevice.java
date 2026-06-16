@@ -113,6 +113,10 @@ public class LegacyDevice {
 					.getResultStream()
 					.map(row -> new LegacyDeviceWithLastAccess((LegacyDevice) row[0], (VaultKeyRetrievedEvent) row[1]))
 					.toList();
+        }
+
+		public boolean existsAny() {
+			return findAll().firstResultOptional().isPresent();
 		}
 
 		public void deleteByOwner(String userId) {

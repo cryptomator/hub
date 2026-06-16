@@ -1,74 +1,47 @@
 <template>
-  <div class="mt-2">
-    <div
-      ref="pillContainer"
-      class="relative flex flex-wrap gap-2 p-2 border border-gray-300 rounded-md bg-gray-200 opacity-60 cursor-not-allowed"
-      aria-disabled="true"
-    >
-      <template v-if="loadingCouncilSelection">
-        <div class="w-full flex pb-3.5">
-          <svg class="animate-spin h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-          </svg>
+  <div class="p-2 border border-gray-300 rounded-md bg-gray-200 opacity-60 cursor-not-allowed" aria-disabled="true">
+    <template v-if="loadingCouncilSelection">
+      <div class="flex">
+        <svg class="animate-spin h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+        </svg>
+      </div>
+    </template>
+
+    <template v-else>
+      <template v-if="isGrantButtonDisabled">
+        <div class="flex">
+          <span class="inline-flex items-center border border-red-300 bg-red-50 text-red-800 text-sm font-medium px-2 py-1 rounded-full shadow-sm">
+            <ExclamationTriangleIcon class="h-4 w-4 m-1 text-red-500 mr-1" />
+            <span class="truncate">{{ t('emergencyAccess.notPossible') }}</span>
+          </span>
         </div>
       </template>
 
       <template v-else>
-        <template v-if="isGrantButtonDisabled">
-          <div class="relative flex flex-wrap gap-2 pb-8.5">
-            <span
-              class="pill inline-flex items-center border border-red-300 bg-red-50 text-red-800 text-sm font-medium px-2 py-1 rounded-full shadow-sm absolute"
-            >
-              <ExclamationTriangleIcon class="h-4 w-4 m-1 text-red-500 mr-1" />
-              <span class="truncate">{{ t('emergencyAccess.notPossible') }}</span>
+        <div class="flex items-center gap-2 text-sm text-gray-800">
+          <template v-for="(slot, index) in visibleSlots" :key="`lane-${index}`">
+            <div v-if="slot.type === 'user'" class="flex-1 min-w-0 max-w-1/3">
+              <div class="slot-lane relative h-8 overflow-hidden">
+                <Transition name="slot-roll">
+                  <span :key="slot.user.id" class="absolute inset-0 inline-flex w-full items-center justify-between gap-1 rounded-full border border-grey bg-white px-2 py-1 shadow-sm">
+                    <img :src="slot.user.pictureUrl" class="w-4 h-4 rounded-full shrink-0" />
+                    <span class="truncate">{{ slot.user.name }}</span>
+                    <SegmentRing :start-index="index" :total="requiredKeyShares" :completed="1" :size="24" />
+                  </span>
+                </Transition>
+              </div>
+            </div>
+            <span v-else class="shrink-0 inline-flex items-center justify-center rounded-full border border-gray-300 bg-gray-100 px-3 py-1 font-medium text-gray-700 shadow-sm">
+              +{{ slot.hiddenCount }}
             </span>
-          </div>
-        </template>
 
-        <template v-else>
-          <TransitionGroup
-            name="pill"
-            tag="div"
-            class="relative flex flex-wrap gap-2 pb-8.5"
-          >
-            <template v-for="(item, index) in randomCouncilSelectionWithPluses" :key="item.id">
-              <span
-                v-if="item.type === 'user' && index <= 5"
-                class="pill inline-flex items-center justify-between border border-grey bg-white text-sm font-medium px-2 py-1 rounded-full shadow-sm absolute"
-                :style="{ left: `${calcLeft(index)}px`, width: pillWidth + 'px', zIndex: 1 }"
-              >
-                <div class="inline-flex items-center min-w-0">
-                  <img :src="item.user!.pictureUrl" class="w-4 h-4 rounded-full mr-1 shrink-0" />
-                  <span class="truncate">{{ item.user!.name }}</span>
-                </div>
-                <SegmentRing
-                  :start-index="Math.ceil(index / 2)"
-                  :total="requiredKeyShares"
-                  :completed="1"
-                  :size="24"
-                />
-              </span>
-              <span
-                v-else-if="item.type === 'plus' && index <= 5"
-                class="pill inline-flex items-center justify-center text-gray-500 font-medium absolute"
-                :style="{ left: `${calcLeft(index)}px`, zIndex: 0 }"
-              >
-                +
-              </span>
-            </template>
-
-            <span
-              v-if="requiredKeyShares > 3"
-              class="inline-flex items-center border border-gray-300 bg-gray-100 text-gray-700 text-sm font-medium px-3 py-1 rounded-full shadow-sm absolute"
-              :style="{ left: `${calcLeft(5)}px`, zIndex: 1 }"
-            >
-              +{{ requiredKeyShares - 3 }}
-            </span>
-          </TransitionGroup>
-        </template>
+            <span v-if="index < visibleSlots.length - 1" class="shrink-0 inline-flex items-center justify-center text-gray-500 font-medium">+</span>
+          </template>
+        </div>
       </template>
-    </div>
+    </template>
   </div>
 </template>
 
@@ -77,8 +50,8 @@ import { computed, watch, ref, toRefs, onMounted, onBeforeUnmount } from 'vue';
 import { ExclamationTriangleIcon } from '@heroicons/vue/20/solid';
 import { useI18n } from 'vue-i18n';
 import { UserDto } from '../../common/backend';
-import { nextTick } from 'vue';
 import SegmentRing from './SegmentRing.vue';
+import { shuffle, clamp } from 'remeda';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -87,58 +60,32 @@ const props = defineProps<{
   requiredKeyShares: number;
 }>();
 
-let timeoutId: ReturnType<typeof setTimeout> | null = null;
+let timeoutId: ReturnType<typeof setTimeout> | undefined;
 const loadingCouncilSelection = ref(true);
 const randomCouncilSelection = ref<UserDto[]>([]);
-const randomSelectionInterval = ref<ReturnType<typeof setInterval> | null>(null);
+const randomSelectionInterval = ref<ReturnType<typeof setInterval>>();
+
+const windowWidth = ref(window.innerWidth);
+const maxUserPills = computed(() => windowWidth.value < 640 ? 2 : 3);
 
 const { selectedUsers, requiredKeyShares } = toRefs(props);
 
-const pillContainer = ref<HTMLElement | null>(null);
-const containerWidth = ref(0);
-const maxVisiblePills = 3;
-
-function updateContainerWidth() {
-  if (pillContainer.value) {
-    containerWidth.value = pillContainer.value.clientWidth;
-  }
+function onWindowResize() {
+  windowWidth.value = window.innerWidth;
 }
 
 onMounted(() => {
-  nextTick(() => {
-    updateContainerWidth();
-    window.addEventListener('resize', updateContainerWidth);
-  });
+  window.addEventListener('resize', onWindowResize);
 });
 
 onBeforeUnmount(() => {
-  window.removeEventListener('resize', updateContainerWidth);
+  window.removeEventListener('resize', onWindowResize);
   stopRandomCouncilInterval();
+  if (timeoutId !== undefined) {
+    clearTimeout(timeoutId);
+  }
+  timeoutId = undefined;
 });
-
-const pillWidth = computed(() => {
-  const totalGap = (maxVisiblePills - 1) * 8;
-  const usableWidth = Math.max(containerWidth.value - totalGap, 0) - 100;
-  return Math.floor(usableWidth / maxVisiblePills) || 200;
-});
-
-watch(
-  [selectedUsers, requiredKeyShares],
-  () => {
-    loadingCouncilSelection.value = true;
-   
-    pickRandomCouncilMembers();
-    updateContainerWidth();
-    if (timeoutId !== null) {
-      clearTimeout(timeoutId);
-    }
-    timeoutId = setTimeout(() => {
-      loadingCouncilSelection.value = false;
-      timeoutId = null;
-    }, 100);
-  },
-  { immediate: true }
-);
 
 function startRandomCouncilInterval() {
   stopRandomCouncilInterval();
@@ -151,18 +98,60 @@ function startRandomCouncilInterval() {
 function stopRandomCouncilInterval() {
   if (randomSelectionInterval.value) {
     clearInterval(randomSelectionInterval.value);
-    randomSelectionInterval.value = null;
+    randomSelectionInterval.value = undefined;
   }
 }
 const isGrantButtonDisabled = computed(() => {
-  return selectedUsers.value.length < requiredKeyShares.value;
+  return requiredKeyShares.value < 1 || selectedUsers.value.length < requiredKeyShares.value;
 });
+
+const visibleUserSlots = computed(() => {
+  return clamp(requiredKeyShares.value, { max: maxUserPills.value });
+});
+
+const visibleSlots = computed(() => {
+  const userSlots = randomCouncilSelection.value.map(user => ({
+    type: 'user' as const,
+    user: user,
+  }));
+
+  if (requiredKeyShares.value <= maxUserPills.value) {
+    return userSlots;
+  } else {
+    return [
+      ...userSlots.slice(0, maxUserPills.value),
+      {
+        type: 'overflow' as const,
+        hiddenCount: requiredKeyShares.value - maxUserPills.value,
+      }
+    ];
+  }
+});
+
+watch(
+  [selectedUsers, requiredKeyShares],
+  () => {
+    loadingCouncilSelection.value = true;
+
+    pickRandomCouncilMembers();
+    if (timeoutId !== undefined) {
+      clearTimeout(timeoutId);
+    }
+    timeoutId = setTimeout(() => {
+      loadingCouncilSelection.value = false;
+      timeoutId = undefined;
+    }, 100);
+  },
+  { immediate: true }
+);
 
 watch([isGrantButtonDisabled], () => {
   if (!isGrantButtonDisabled.value) {
     pickRandomCouncilMembers();
     startRandomCouncilInterval();
-  } 
+  } else {
+    stopRandomCouncilInterval();
+  }
 }, { immediate: true });
 
 function pickRandomCouncilMembers() {
@@ -183,7 +172,7 @@ function pickRandomCouncilMembers() {
 }
 
 function needsInitialSelection(available: UserDto[], required: number): boolean {
-  if (randomCouncilSelection.value.length !== required) return true;
+  if (randomCouncilSelection.value.length !== Math.min(required, visibleUserSlots.value)) return true;
 
   const currentIds = randomCouncilSelection.value.map(u => u.id);
   const availableIds = new Set(available.map(u => u.id));
@@ -192,10 +181,8 @@ function needsInitialSelection(available: UserDto[], required: number): boolean 
 }
 
 function setInitialCouncil(available: UserDto[], required: number) {
-  const shuffled = [...available].sort(() => 0.5 - 
-    Math.random() // NOSONAR
-  ); 
-  randomCouncilSelection.value = shuffled.slice(0, required);
+  const shuffled = shuffle(available);
+  randomCouncilSelection.value = shuffled.slice(0, Math.min(required, visibleUserSlots.value));
 }
 
 function rotateCouncilMember(available: UserDto[], required: number) {
@@ -203,10 +190,11 @@ function rotateCouncilMember(available: UserDto[], required: number) {
   const currentIds = new Set(current.map(u => u.id));
   const candidates = available.filter(u => !currentIds.has(u.id));
 
-  const maxPills = Math.min(required, 3);
+  const userSlots = Math.min(required, maxUserPills.value);
+
   const replaceIndex = Math.floor(
     Math.random() // NOSONAR
-    * maxPills
+    * userSlots
   );
 
   let newUser: UserDto;
@@ -231,64 +219,36 @@ function rotateCouncilMember(available: UserDto[], required: number) {
     ...current.slice(replaceIndex + 1),
   ];
 }
-
-const randomCouncilSelectionWithPluses = computed(() => {
-  const items: { type: 'user' | 'plus', user?: UserDto, id: string }[] = [];
-
-  randomCouncilSelection.value.forEach((user, i) => {
-    items.push({ type: 'user', user, id: user.id });
-    if (i < randomCouncilSelection.value.length - 1) {
-      items.push({ type: 'plus', id: `plus-${i}` });
-    }
-  });
-
-  return items;
-});
-
-function calcLeft(index: number): number {
-  const GAP = 8;
-  const PILL_WIDTH = pillWidth.value;
-  const PLUS_WIDTH = 8;
-
-  let x = 0;
-  for (let i = 0; i < index; i++) {
-    const el = randomCouncilSelectionWithPluses.value[i];
-    if (el.type === 'user') {
-      x += PILL_WIDTH + GAP;
-    } else {
-      x += PLUS_WIDTH + GAP;
-    }
-  }
-  return x;
-}
 </script>
 
 <style scoped>
-.pill-enter-active,
-.pill-leave-active {
-  transition: all 0.5s ease;
+.slot-roll-enter-active,
+.slot-roll-leave-active {
+  transition: transform 0.5s ease, opacity 0.5s ease, filter 0.5s ease;
 }
 
-.pill-enter-from {
+.slot-roll-enter-from {
   opacity: 0;
-  transform: translateY(-10px) scale(1.05);
+  transform: translateY(-100%);
   filter: blur(2px);
 }
-.pill-enter-to {
+.slot-roll-enter-to {
   opacity: 1;
-  transform: translateY(0) scale(1);
+  transform: translateY(0);
   filter: blur(0);
 }
 
-.pill-leave-from {
+.slot-roll-leave-from {
   opacity: 1;
-  transform: translateY(0) scale(1);
+  transform: translateY(0);
   filter: blur(0);
 }
-.pill-leave-to {
+.slot-roll-leave-to {
   opacity: 0;
-  transform: translateY(15px) scale(0.95);
+  transform: translateY(100%);
   filter: blur(2px);
 }
-
+.slot-lane {
+  contain: layout paint;
+}
 </style>

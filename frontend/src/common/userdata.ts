@@ -4,6 +4,7 @@ import { BrowserKeys, UserKeys } from './crypto';
 import { JWEParser } from './jwe';
 
 class UserData {
+
   #me?: Promise<UserDto>;
   #meWithLastAccess?: Promise<UserDto>;
   #browserKeys?: Promise<BrowserKeys | undefined>;
@@ -170,6 +171,7 @@ class UserData {
       await backend.users.putMe(me);
     }
   }
+
 }
 
 const instance = new UserData();

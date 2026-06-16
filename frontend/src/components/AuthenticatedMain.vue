@@ -5,15 +5,15 @@
       {{ t('common.loading') }}
     </div>
     <div v-else>
-      <FetchError :error="onFetchError" :retry="fetchData"/>
+      <FetchError :error="onFetchError" :retry="fetchData" />
     </div>
   </div>
 
   <div v-else>
-    <NavigationBar :me="me"/>
+    <NavigationBar :me="me" />
 
     <div class="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
-      <router-view></router-view>
+      <router-view />
     </div>
   </div>
 </template>

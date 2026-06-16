@@ -8,7 +8,7 @@
         <ArrowRightIcon class="ml-1 h-4 w-4" aria-hidden="true" />
       </a>
     </p>
-    <hr class="my-4 border-gray-200"/>
+    <hr class="my-4 border-gray-200" />
     <ContentBanner v-if="!entitlements.emergencyAccessEnabled" type="info" :title="t('missingEntitlements.title')">
       {{ t('missingEntitlements.description') }} <!-- TODO: link to feature comparison? -->
     </ContentBanner>
@@ -48,28 +48,29 @@
         <label for="requiredKeyShares" class="col-span-2 block text-sm font-medium text-gray-700 md:text-right md:pr-4 md:mt-2">
           {{ t('admin.emergencyAccess.requiredKeys.label') }}
         </label>
-        <div class="mt-1 md:mt-0 lg:col-span-3 md:col-span-4 relative">
-          <div class="flex items-center gap-2">
-            <div v-if="defaultRequiredEmergencyKeySharesLessThenTwoError || defaultRequiredEmergencyKeySharesToHighError instanceof FormValidationFailedError" class="absolute  -top-2 transform translate-y-full z-10">
+        <div class="mt-1 md:mt-0 lg:col-span-3 md:col-span-4">
+          <div class="relative flex-1">
+            <!-- Tooltip -->
+            <div
+              v-if="defaultRequiredEmergencyKeySharesLessThenTwoError || defaultRequiredEmergencyKeySharesToHighError instanceof FormValidationFailedError"
+              class="absolute left-1/2 -translate-x-1/2 -top-2 transform -translate-y-full z-10"
+            >
               <div class="bg-red-50 border border-red-300 text-red-900 px-2 py-1 rounded shadow-sm text-sm hyphens-auto">
                 {{ requiredKeySharesValidationText }}
+                <!-- Arrow -->
+                <div class="absolute bottom-0 left-1/2 transform translate-y-1/2 rotate-45 w-2 h-2 bg-red-50 border-r border-b border-red-300"></div>
               </div>
             </div>
-            <div class="relative flex-1">
-              <input
-                id="requiredKeyShares"
-                v-model.number="requiredShares"
-                type="number" min="2" max="255"
-                :disabled="!enableEmergencyAccess"
-                class="rounded-md border-gray-300 shadow-sm sm:text-sm focus:ring-primary focus:border-primary text-left w-full disabled:cursor-not-allowed disabled:bg-gray-200"
-                :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': defaultRequiredEmergencyKeySharesError || defaultRequiredEmergencyKeySharesToHighError instanceof FormValidationFailedError}"
-                :aria-label="t('admin.emergencyAccess.requiredKeys.ariaLabel')"
-              />
-              <div v-if="defaultRequiredEmergencyKeySharesLessThenTwoError || defaultRequiredEmergencyKeySharesToHighError instanceof FormValidationFailedError" class="absolute  -top-2 transform translate-y-full z-10">
-                <div class="absolute bottom-0 left-5 transform translate-y-1/2 rotate-45 w-2 h-2 bg-red-50 border-r border-b border-red-300"></div>
-              </div>
-              <p class="mt-2 my-4 text-sm text-gray-500">{{ t('admin.emergencyAccess.requiredKeys.help') }}</p>
-            </div>
+            <input
+              id="requiredKeyShares"
+              v-model.number="requiredShares"
+              type="number" min="2" max="255"
+              :disabled="!enableEmergencyAccess"
+              class="rounded-md border-gray-300 shadow-sm sm:text-sm focus:ring-primary focus:border-primary text-left w-full disabled:cursor-not-allowed disabled:bg-gray-200"
+              :class="{ 'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': defaultRequiredEmergencyKeySharesError || defaultRequiredEmergencyKeySharesToHighError instanceof FormValidationFailedError}"
+              :aria-label="t('admin.emergencyAccess.requiredKeys.ariaLabel')"
+            />
+            <p class="mt-2 my-4 text-sm text-gray-500">{{ t('admin.emergencyAccess.requiredKeys.help') }}</p>
           </div>
         </div>
       </div>
@@ -114,11 +115,11 @@
             v-model="allowChoosing"
             :disabled="!enableEmergencyAccess"
             type="checkbox"
-            class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+            class="peer h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded disabled:cursor-not-allowed disabled:opacity-50"
           />
-          <label for="allow" class="ml-2 text-sm text-gray-500">
+          <label for="allow" class="ml-2 text-sm text-gray-500 peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
             {{ t('admin.emergencyAccess.allowChoosing.label') }}
-            <label for="minMembers" v-if="allowChoosing"> {{ t('admin.emergencyAccess.allowChoosing.atLeast') }}</label>
+            <label v-if="allowChoosing" for="minMembers"> {{ t('admin.emergencyAccess.allowChoosing.atLeast') }}</label>
           </label>
 
           <div class="relative ml-2 flex-1">
@@ -140,7 +141,8 @@
               v-model.number="minMembers"
               :disabled="!enableEmergencyAccess"
               type="number"
-              min="2" max="255"
+              min="2"
+              max="255"
               :hidden="!allowChoosing"
               class="w-full rounded-md border-gray-300 shadow-sm sm:text-sm focus:ring-primary focus:border-primary text-left disabled:cursor-not-allowed disabled:bg-gray-200"
               :class="{
@@ -187,7 +189,7 @@
           </div>
         </div>
         <div class="md:col-start-2 flex items-center gap-2 col-span-2">
-          <p v-if="false && onSaveErrorRecovery" class="mt-2 text-sm text-red-900" >
+          <p v-if="false && onSaveErrorRecovery" class="mt-2 text-sm text-red-900">
             {{ onSaveErrorRecovery!.message }}
           </p>
         </div>
@@ -217,9 +219,11 @@ const isDescLoading = ref(false);
 let descTimer: number | undefined;
 
 class FormValidationFailedError extends Error {
+
   constructor() {
     super('The form is invalid.');
   }
+
 }
 const requiredShares = ref<number>();
 const minMembers = ref<number>();
@@ -251,11 +255,11 @@ const sameCouncilMemberIds = computed(() => {
 });
 const hasUnsavedChanges = computed(() => {
   return (
-    initialEmergencyAccessSettings.value.enableEmergencyAccess !== enableEmergencyAccess.value ||
-    initialEmergencyAccessSettings.value.defaultRequiredEmergencyKeyShares !== requiredShares.value ||
-    initialEmergencyAccessSettings.value.defaultMinMembers !== minMembers.value ||
-    initialEmergencyAccessSettings.value.allowChoosingEmergencyCouncil !== allowChoosing.value ||
-    !sameCouncilMemberIds.value
+    initialEmergencyAccessSettings.value.enableEmergencyAccess !== enableEmergencyAccess.value
+    || initialEmergencyAccessSettings.value.defaultRequiredEmergencyKeyShares !== requiredShares.value
+    || (allowChoosing.value ? initialEmergencyAccessSettings.value.defaultMinMembers !== minMembers.value : false)
+    || initialEmergencyAccessSettings.value.allowChoosingEmergencyCouncil !== allowChoosing.value
+    || !sameCouncilMemberIds.value
   );
 });
 
@@ -413,7 +417,7 @@ async function saveRecoverySettings() {
 
     updated.value = true;
     setTimeout(() => (updated.value = false), 2000);
-  } catch (e: any) {
+  } catch (e) {
     onSaveErrorRecovery.value = e instanceof Error ? e : new Error('Unknown reason');
   } finally {
     processing.value = false;

@@ -91,6 +91,7 @@ export type UserDto = {
   firstName?: string;
   lastName?: string;
   realmRoles: RealmRole[];
+  enabled: boolean;
   language?: string;
   devices: DeviceDto[];
   accessibleVaults: VaultDtoWithRole[];
@@ -98,19 +99,19 @@ export type UserDto = {
   ecdsaPublicKey?: string;
   privateKeys?: string;
   setupCode?: string;
-}
+};
 
 export type UserDtoWithCounts = UserDto & {
   groupsCount?: number;
   devicesCount?: number;
   accessibleVaultCount?: number;
-}
+};
 
 export type UserDtoWithDetails = UserDto & {
   groups: GroupDto[];
   devices: DeviceDto[];
   legacyDevices: DeviceDto[];
-}
+};
 
 /**
  * Represents a user who generated key pairs during the setup process.
@@ -118,7 +119,7 @@ export type UserDtoWithDetails = UserDto & {
 export type ActivatedUser = UserDto & {
   ecdhPublicKey: string;
   ecdsaPublicKey: string;
-}
+};
 
 export function didCompleteSetup(user: UserDto): user is ActivatedUser {
   return user.ecdhPublicKey !== undefined && user.ecdsaPublicKey !== undefined;
@@ -131,18 +132,18 @@ export type GroupDto = {
   pictureUrl?: string;
   memberSize?: number;
   vaultCount?: number;
-}
+};
 
 export type AuthorityDto = UserDto | GroupDto;
 
 export type MemberDto = AuthorityDto & {
   vaultRole: VaultRole
-}
+};
 
 export type TrustDto = {
   trustedUserId: string,
   signatureChain: string[]
-}
+};
 
 export type CreateUserDto = Pick<UserDto, 'name' | 'email' | 'firstName' | 'lastName' | 'pictureUrl' | 'realmRoles'> & {
   password: string;
@@ -158,12 +159,12 @@ export type UpdateGroupDto = CreateGroupDto;
 
 export type VaultDtoWithRole = VaultDto & {
   role: VaultRole;
-}
+};
 
 export type GroupDtoWithDetails = GroupDto & {
   members: AuthorityDto[];
   vaults: VaultDtoWithRole[];
-}
+};
 
 export type BillingDto = {
   hubId: string;
@@ -174,12 +175,12 @@ export type BillingDto = {
   expiresAt: Date;
   managedInstance: boolean;
   licenseKey: string;
-}
+};
 
 export type VersionDto = {
   hubVersion: string;
   keycloakVersion?: string;
-}
+};
 
 export type SettingsDto = {
   hubId: string,
@@ -190,7 +191,7 @@ export type SettingsDto = {
   allowChoosingEmergencyCouncil: boolean,
   emergencyCouncilMemberIds: string[],
   enableEmergencyAccess: boolean
-}
+};
 
 export type RecoveryProcessSetNewOwner = {
   type: 'CHANGE_PERMISSIONS',
@@ -198,7 +199,7 @@ export type RecoveryProcessSetNewOwner = {
     newOwnerIds: string[];
     newMemberIds: string[];
   }
-}
+};
 
 export type RecoveryProcessChangeCouncil = {
   type: 'COUNCIL_CHANGE',
@@ -206,7 +207,7 @@ export type RecoveryProcessChangeCouncil = {
     newCouncilMemberIds: string[];
     newRequiredKeyShares: number;
   }
-}
+};
 
 export type RecoveredKeyShareDto = {
   processPrivateKey: string;
@@ -223,9 +224,10 @@ export type RecoveryProcessDto = (RecoveryProcessSetNewOwner | RecoveryProcessCh
   recoveredKeyShares: {
     [councilMemberId: string]: RecoveredKeyShareDto
   }
-}
+};
 
 export class LicenseUserInfoDto {
+
   constructor(
     public licensedSeats: number,
     public usedSeats: number,
@@ -240,6 +242,7 @@ export class LicenseUserInfoDto {
   public isExceeded(): boolean {
     return this.licensedSeats == 0 || this.usedSeats > this.licensedSeats;
   }
+
 }
 
 export interface VaultIdHeader extends JWTHeader {
@@ -302,6 +305,7 @@ function getJdenticonConfig(type: 'USER' | 'GROUP'): JdenticonConfig {
 // #region Services
 
 class VaultService {
+
   public async listAccessible(role?: 'MEMBER' | 'OWNER'): Promise<VaultDto[]> {
     const queryParams = role ? { role: role } : {};
     return axiosAuth.get('/vaults/accessible', { params: queryParams }).then(response => response.data);
@@ -311,9 +315,15 @@ class VaultService {
     return axiosAuth.get('/vaults/recoverable').then(response => response.data);
   }
 
-  public async listSome(vaultsIds: string[]): Promise<VaultDto[]> {
-    const query = `ids=${vaultsIds.join('&ids=')}`;
-    return axiosAuth.get(`/vaults/some?${query}`).then(response => response.data);
+  public async listSome(vaultIds: string[]): Promise<VaultDto[]> {
+    return axiosAuth.get('/vaults/some', {
+      params: {
+        ids: vaultIds
+      },
+      paramsSerializer: {
+        indexes: null, // disable array indices in query params (e.g. ids[0]=...&ids[1]=...)
+      }
+    }).then(response => response.data);
   }
 
   public async listAll(): Promise<VaultDto[]> {
@@ -341,18 +351,29 @@ class VaultService {
   }
 
   public async addUser(vaultId: string, userId: string, role?: VaultRole): Promise<AxiosResponse<void>> {
-    return axiosAuth.put(`/vaults/${vaultId}/users/${userId}` + (role ? `?role=${role}` : ''))
+    const queryParams = role ? { role: role } : {};
+    return axiosAuth.put(`/vaults/${vaultId}/users/${userId}`, null, { params: queryParams })
       .catch((error) => rethrowAndConvertIfExpected(error, 402, 404, 409));
   }
 
   public async addGroup(vaultId: string, groupId: string, role?: VaultRole): Promise<AxiosResponse<void>> {
-    return axiosAuth.put(`/vaults/${vaultId}/groups/${groupId}` + (role ? `?role=${role}` : ''))
+    const queryParams = role ? { role: role } : {};
+    return axiosAuth.put(`/vaults/${vaultId}/groups/${groupId}`, null, { params: queryParams })
       .catch((error) => rethrowAndConvertIfExpected(error, 402, 404, 409));
   }
 
   public async getUsersRequiringAccessGrant(vaultId: string, addFallbackPictures: boolean = true): Promise<UserDto[]> {
     const users = await axiosAuth.get<UserDto[]>(`/vaults/${vaultId}/users-requiring-access-grant`).then(response => response.data).catch(err => rethrowAndConvertIfExpected(err, 403));
     return addFallbackPictures ? users.map(fillInMissingPicture) : users;
+  }
+
+  public async setArchived(vaultId: string, archived: boolean): Promise<VaultDto> {
+    return axiosAuth.put<VaultDto>(`/vaults/${vaultId}/archived`, String(archived), { headers: { 'Content-Type': 'text/plain' } })
+      .then(response => {
+        response.data.creationTime = new Date(response.data.creationTime);
+        return response.data;
+      })
+      .catch((error) => rethrowAndConvertIfExpected(error, 402, 403, 404));
   }
 
   public async createOrUpdateVault(vaultId: string, name: string, archived: boolean, requiredEmergencyKeyShares: number, emergencyKeyShares: Record<string, string>, description?: string): Promise<VaultDto> {
@@ -400,9 +421,11 @@ class VaultService {
     await axiosAuth.delete(`/vaults/${vaultId}/authority/${authorityId}`)
       .catch((error) => rethrowAndConvertIfExpected(error, 404));
   }
+
 }
 
 class DeviceService {
+
   public async listSome(deviceIds: string[]): Promise<DeviceDto[]> {
     const query = `ids=${deviceIds.join('&ids=')}`;
     return axiosAuth.get<DeviceDto[]>(`/devices?${query}`).then(response => response.data);
@@ -410,8 +433,19 @@ class DeviceService {
 
   /** @deprecated since version 1.3.0, to be removed in https://github.com/cryptomator/hub/issues/333 */
   public async listSomeLegacyDevices(deviceIds: string[]): Promise<DeviceDto[]> {
-    const query = `ids=${deviceIds.join('&ids=')}`;
-    return axiosAuth.get<DeviceDto[]>(`/devices/legacy-devices?${query}`).then(response => response.data);
+    return axiosAuth.get<DeviceDto[]>('/devices/legacy-devices', {
+      params: {
+        ids: deviceIds
+      },
+      paramsSerializer: {
+        indexes: null, // disable array indices in query params (e.g. ids[0]=...&ids[1]=...)
+      }
+    }).then(response => response.data);
+  }
+
+  /** @deprecated since version 1.3.0, to be removed in https://github.com/cryptomator/hub/issues/333 */
+  public async hasLegacyDevices(): Promise<boolean> {
+    return axiosAuth.get<boolean>('/devices/has-legacy-devices').then(response => response.data);
   }
 
   public async removeDevice(deviceId: string): Promise<AxiosResponse<unknown>> {
@@ -428,9 +462,11 @@ class DeviceService {
   public async putDevice(device: DeviceDto): Promise<AxiosResponse<unknown>> {
     return axiosAuth.put(`/devices/${device.id}`, device);
   }
+
 }
 
 class GroupService {
+
   public async listAll(addFallbackPictures: boolean = true): Promise<GroupDto[]> {
     const groups = await axiosAuth.get<GroupDto[]>('/groups/').then(response => response.data);
     return addFallbackPictures ? groups.map(fillInMissingPicture) : groups;
@@ -476,15 +512,22 @@ class GroupService {
   public async removeMember(groupId: string, userId: string): Promise<void> {
     await axiosAuth.delete(`/groups/${groupId}/members/${userId}`).catch((error) => rethrowAndConvertIfExpected(error, 404));
   }
+
 }
 
 class UserService {
+
   public async putMe(dto?: UserDto): Promise<void> {
     return axiosAuth.put('/users/me', dto);
   }
 
   public async me(withDevices: boolean = false, withLastAccess: boolean = false, addFallbackPictures: boolean = true): Promise<UserDto> {
-    const user = await axiosAuth.get<UserDto>(`/users/me?withDevices=${withDevices}&withLastAccess=${withLastAccess}`).then(response => response.data);
+    const user = await axiosAuth.get<UserDto>('/users/me', {
+      params: {
+        withDevices: withDevices,
+        withLastAccess: withLastAccess
+      }
+    }).then(response => response.data);
     return addFallbackPictures ? fillInMissingPicture(user) : user;
   }
 
@@ -525,13 +568,19 @@ class UserService {
     }
   }
 
+  public async setUserEnabled(userId: string, enabled: boolean): Promise<void> {
+    await axiosAuth.put(`/users/${userId}/enabled`, String(enabled), { headers: { 'Content-Type': 'text/plain' } });
+  }
+
   public async updateUser(userId: string, dto: UpdateUserDto, addFallbackPictures: boolean = true): Promise<UserDto> {
     const user = await axiosAuth.put<UserDto>(`/users/${userId}`, dto).then(response => response.data).catch((error) => rethrowAndConvertIfExpected(error, 404));
     return addFallbackPictures ? fillInMissingPicture(user) : user;
   }
+
 }
 
 class TrustService {
+
   public async trustUser(userId: string, signature: string): Promise<void> {
     return axiosAuth.put(`/users/trusted/${userId}`, signature, { headers: { 'Content-Type': 'text/plain' } });
   }
@@ -547,11 +596,18 @@ class TrustService {
   public async listTrusted(): Promise<TrustDto[]> {
     return axiosAuth.get<TrustDto[]>('/users/trusted').then(response => response.data);
   }
+
 }
 
 class AuthorityService {
+
   public async search(query: string, withMemberSize: boolean = false, addFallbackPictures: boolean = true): Promise<AuthorityDto[]> {
-    const authorities = await axiosAuth.get<AuthorityDto[]>(`/authorities/search?query=${query}&withMemberSize=${withMemberSize}`).then(response => response.data);
+    const authorities = await axiosAuth.get<AuthorityDto[]>('/authorities/search', {
+      params: {
+        query: query,
+        withMemberSize: withMemberSize
+      }
+    }).then(response => response.data);
     return addFallbackPictures ? authorities.map(fillInMissingPicture) : authorities;
   }
 
@@ -560,13 +616,21 @@ class AuthorityService {
       // safe roundtrip for empty list
       return [];
     }
-    const query = `ids=${authorityIds.join('&ids=')}`;
-    const authorities = await axiosAuth.get<AuthorityDto[]>(`/authorities?${query}`).then(response => response.data);
+    const authorities = await axiosAuth.get<AuthorityDto[]>('/authorities', {
+      params: {
+        ids: authorityIds
+      },
+      paramsSerializer: {
+        indexes: null, // disable array indices in query params (e.g. ids[0]=...&ids[1]=...)
+      }
+    }).then(response => response.data);
     return addFallbackPictures ? authorities.map(fillInMissingPicture) : authorities;
   }
+
 }
 
 class BillingService {
+
   public async get(): Promise<BillingDto> {
     return axiosAuth.get('/billing').then(response => {
       response.data.issuedAt = new Date(response.data.issuedAt);
@@ -578,9 +642,11 @@ class BillingService {
   public async setToken(token: string): Promise<void> {
     return axiosAuth.put('/billing/token', token, { headers: { 'Content-Type': 'text/plain' } });
   }
+
 }
 
 class LicenseService {
+
   public async getUserInfo(): Promise<LicenseUserInfoDto> {
     return axiosAuth.get('/license/user-info').then(response => {
       return new LicenseUserInfoDto(response.data.licensedSeats, response.data.usedSeats, response.data.expiresAt ? new Date(response.data.expiresAt) : null);
@@ -590,15 +656,19 @@ class LicenseService {
   public async refresh(): Promise<void> {
     return axiosAuth.post('/license/refresh');
   }
+
 }
 
 class VersionService {
+
   public async get(): Promise<VersionDto> {
     return axiosAuth.get<VersionDto>('/version').then(response => response.data);
   }
+
 }
 
 class SettingsService {
+
   public async get(): Promise<SettingsDto> {
     return axiosAuth.get<SettingsDto>('/settings').then(response => response.data);
   }
@@ -615,9 +685,15 @@ class SettingsService {
     };
     return axiosAuth.put('/settings', updatedSettings);
   }
+
 }
 
 class EmergencyAccessService {
+
+  public async findAllProcesses(): Promise<RecoveryProcessDto[]> {
+    return axiosAuth.get<RecoveryProcessDto[]>('/emergency-access').then(response => response.data);
+  }
+
   public async findProcessesForVault(vaultId: string): Promise<RecoveryProcessDto[]> {
     return axiosAuth.get<RecoveryProcessDto[]>(`/emergency-access/${vaultId}`).then(response => response.data);
   }
@@ -637,6 +713,7 @@ class EmergencyAccessService {
   public async abort(recoveryProcessId: string): Promise<void> {
     return axiosAuth.delete(`/emergency-access/${recoveryProcessId}/abort`);
   }
+
 }
 
 /**
@@ -692,33 +769,43 @@ export function rethrowAndConvertIfExpected(error: unknown, ...expectedStatusCod
 export class BackendError extends Error { }
 
 export class UnauthorizedError extends BackendError {
+
   constructor() {
     super('Unauthorized to access resource');
   }
+
 }
 
 export class PaymentRequiredError extends BackendError {
+
   constructor() {
     super('Payment required to access resource');
   }
+
 }
 
 export class ForbiddenError extends BackendError {
+
   constructor() {
     super('Insufficient rights to access resource');
   }
+
 }
 
 export class NotFoundError extends BackendError {
+
   constructor() {
     super('Requested resource not found');
   }
+
 }
 
 export class ConflictError extends BackendError {
+
   constructor() {
     super('Resource already exists');
   }
+
 }
 
 // #endregion Error handling

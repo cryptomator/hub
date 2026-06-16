@@ -3,6 +3,7 @@ package org.cryptomator.hub.api;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
@@ -74,6 +75,7 @@ public class AuditLogResource {
 	@APIResponse(responseCode = "400", description = "startDate or endDate not specified, startDate > endDate, order specified and not in ['asc','desc'], pageSize not in [1 .. 100] or type is not valid")
 	@APIResponse(responseCode = "402", description = "Community license used or license expired")
 	@APIResponse(responseCode = "403", description = "requesting user does not have admin role")
+	@WithSpan("AuditLogResource.getAllEvents")
 	public List<AuditEventDto> getAllEvents(@QueryParam("startDate") Instant startDate, @QueryParam("endDate") Instant endDate, @QueryParam("type") List<String> type, @QueryParam("paginationId") Long paginationId, @QueryParam("order") @DefaultValue("desc") String order, @QueryParam("pageSize") @DefaultValue("20") int pageSize) {
 		if (license.getEntitlements().auditLogRetentionDays() == 0 || license.isExpired()) {
 			throw new PaymentRequiredException("Community license used or license expired");
