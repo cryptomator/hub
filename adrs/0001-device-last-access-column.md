@@ -11,8 +11,8 @@ Supersedes the approach proposed in [PR #435](https://github.com/cryptomator/hub
 ## Context
 
 The admin user-details view (and the user's own device list) shows, per device, the
-*last vault access*: the timestamp and IP address of the most recent **successful** vault-key
-retrieval — i.e. an actual unlock by that device, not an arbitrary login or a denied attempt.
+*last vault access*: the timestamp and IP address of the most recent vault-key
+retrieval event — i.e. an actual unlock by that device ( denied or successful).
 
 This data has so far been reconstructed on read from the audit-event log. The
 `audit_event_vault_key_retrieve` table receives one row on **every** vault unlock
