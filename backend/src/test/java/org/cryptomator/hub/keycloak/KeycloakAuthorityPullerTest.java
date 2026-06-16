@@ -478,11 +478,12 @@ class KeycloakAuthorityPullerTest {
 		}
 
 		@Test
-		@DisplayName("addUserToGroup maps foreign-key violation to NotFoundException")
+		@DisplayName("addUserToGroup maps foreign-key violation to ErrorCodeException with GROUP_MEMBER_NOT_FOUND")
 		void testAddUserToGroupForeignKeyViolation() {
 			Mockito.doThrow(new PersistenceException()).when(groupRepo).addMember("g", "u");
 
-			Assertions.assertThrows(NotFoundException.class, () -> remoteUserPuller.addUserToGroup("g", "u"));
+			var e = Assertions.assertThrows(ErrorCodeException.class, () -> remoteUserPuller.addUserToGroup("g", "u"));
+			Assertions.assertEquals("GROUP_MEMBER_NOT_FOUND", e.getMessage());
 			Mockito.verify(usersResource, Mockito.never()).get(any());
 		}
 
@@ -680,13 +681,14 @@ class KeycloakAuthorityPullerTest {
 		}
 
 		@Test
-		@DisplayName("isUserReadOnly preserves a Keycloak 404 as NotFoundException")
+		@DisplayName("isUserReadOnly preserves a Keycloak 404 as ErrorCodeException with USER_NOT_FOUND")
 		void testIsUserReadOnlyNotFound() {
 			var userResource = Mockito.mock(UserResource.class);
 			Mockito.when(usersResource.get("u")).thenReturn(userResource);
 			Mockito.when(userResource.getFederatedIdentity()).thenThrow(new NotFoundException());
 
-			Assertions.assertThrows(NotFoundException.class, () -> remoteUserPuller.isUserReadOnly("u"));
+			var e = Assertions.assertThrows(ErrorCodeException.class, () -> remoteUserPuller.isUserReadOnly("u"));
+			Assertions.assertEquals("USER_NOT_FOUND", e.getMessage());
 		}
 
 		@Test
@@ -701,14 +703,15 @@ class KeycloakAuthorityPullerTest {
 		}
 
 		@Test
-		@DisplayName("updateUser preserves a Keycloak 404 as NotFoundException")
+		@DisplayName("updateUser preserves a Keycloak 404 as ErrorCodeException with USER_NOT_FOUND")
 		void testUpdateUserNotFound() {
 			var userResource = Mockito.mock(UserResource.class);
 			Mockito.when(usersResource.get("u")).thenReturn(userResource);
 			Mockito.when(userResource.getFederatedIdentity()).thenReturn(List.of());
 			Mockito.when(userResource.toRepresentation()).thenThrow(new NotFoundException());
 
-			Assertions.assertThrows(NotFoundException.class, () -> remoteUserPuller.updateUser("u", "e", "f", "l", null, null));
+			var e = Assertions.assertThrows(ErrorCodeException.class, () -> remoteUserPuller.updateUser("u", "e", "f", "l", null, null));
+			Assertions.assertEquals("USER_NOT_FOUND", e.getMessage());
 		}
 
 		@Test
@@ -784,13 +787,14 @@ class KeycloakAuthorityPullerTest {
 		}
 
 		@Test
-		@DisplayName("updateGroup preserves a Keycloak 404 as NotFoundException")
+		@DisplayName("updateGroup preserves a Keycloak 404 as ErrorCodeException with GROUP_NOT_FOUND")
 		void testUpdateGroupNotFound() {
 			var groupResource = Mockito.mock(GroupResource.class);
 			Mockito.when(groupsResource.group("g")).thenReturn(groupResource);
 			Mockito.when(groupResource.toRepresentation()).thenThrow(new NotFoundException());
 
-			Assertions.assertThrows(NotFoundException.class, () -> remoteUserPuller.updateGroup("g", "New Name", null));
+			var e = Assertions.assertThrows(ErrorCodeException.class, () -> remoteUserPuller.updateGroup("g", "New Name", null));
+			Assertions.assertEquals("GROUP_NOT_FOUND", e.getMessage());
 		}
 
 		@Test
