@@ -342,6 +342,7 @@ public class KeycloakAdminService {
 	 * @return the user's realm role names (see {@link RealmRole#kcName()})
 	 * @throws NotFoundException if no such user exists in Keycloak
 	 */
+	@WithSpan("KeycloakAdminService.realmRolesOf")
 	@CacheResult(cacheName = "realmRoles")
 	public Set<String> realmRolesOf(String userId) {
 		var kcRoleNames = realm.users().get(userId).roles().realmLevel().listAll().stream()
