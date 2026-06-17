@@ -251,7 +251,7 @@ public class VaultResourceIT {
 					.when().get("/vaults/{vaultId}/access-token", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(400);
 
-			Mockito.verify(eventLogger, never()).logVaultKeyRetrieved(anyString(), any(), any(), anyString(), anyString());
+			Mockito.verify(eventLogger, never()).logVaultKeyRetrieved(any(), any(), any(), any(), any());
 		}
 
 		@Test
