@@ -12,6 +12,7 @@ FROM (
 	FROM "audit_event_vault_key_retrieve" v
 	JOIN "audit_event" a ON a."id" = v."id"
 	WHERE v."device_id" IS NOT NULL
-	ORDER BY v."device_id", a."timestamp" DESC
+		AND v."result" = 'SUCCESS'
+	ORDER BY v."device_id", a."timestamp" DESC, a."id" DESC
 ) s
 WHERE "device"."id" = s."device_id";
