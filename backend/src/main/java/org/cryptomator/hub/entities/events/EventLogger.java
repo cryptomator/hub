@@ -93,7 +93,7 @@ public class EventLogger {
 		event.setIpAddress(ipAddress);
 		event.setDeviceId(deviceId);
 		auditEventRepository.persist(event);
-        return event.getTimestamp()
+        return event.getTimestamp();
 	}
 
 	public void logVaultMemberAdded(String addedBy, UUID vaultId, String authorityId, VaultAccess.Role role) {
