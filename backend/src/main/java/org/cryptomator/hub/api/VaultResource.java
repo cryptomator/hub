@@ -441,8 +441,18 @@ public class VaultResource {
 			vaultUnlockMetrics.recordFailure();
 			throw new ActionRequiredException("User account not initialized.");
 		}
+
 		var ipAddress = request.remoteAddress().hostAddress();
 		var deviceId = request.getHeader("Hub-Device-ID");
+		if( deviceId != null) {
+			//for backwards compatibility, we can only validate the deviceId if the header is set
+			try {
+				deviceRepo.findByIdAndUser(deviceId, user.getId());
+			} catch (NoResultException e) {
+				throw new BadRequestException("User has has no such device as specified in Header");
+			}
+		}
+
 		var access = accessTokenRepo.unlock(vaultId, jwt.getSubject());
 		if (access != null) {
 			var timestamp = eventLogger.logVaultKeyRetrieved(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.SUCCESS, ipAddress, deviceId);
