@@ -1,13 +1,15 @@
 package org.cryptomator.hub.keycloak;
 
 import io.opentelemetry.instrumentation.annotations.WithSpan;
+import io.quarkus.cache.CacheInvalidate;
+import io.quarkus.cache.CacheKey;
+import io.quarkus.cache.CacheResult;
 import io.quarkus.scheduler.Scheduled;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.PersistenceException;
 import jakarta.transaction.Transactional;
-import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.WebApplicationException;
 import org.cryptomator.hub.api.ErrorCode;
@@ -23,11 +25,11 @@ import org.keycloak.admin.client.resource.GroupResource;
 import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.representations.idm.CredentialRepresentation;
+import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -72,16 +74,6 @@ public class KeycloakAuthorityPuller {
 		try {
 			var keycloakGroups = remoteUserProvider.groups().stream().collect(Collectors.toMap(KeycloakGroupDto::id, Function.identity()));
 			var keycloakUsers = remoteUserProvider.users().stream().collect(Collectors.toMap(KeycloakUserDto::id, Function.identity()));
-			var keycloakRealmRoles = Arrays.stream(RealmRole.values()).collect(Collectors.toMap(Function.identity(), remoteUserProvider::usersInRole));
-			for (var role : RealmRole.values()) {
-				var usersInRole = keycloakRealmRoles.get(role);
-				for (var user : usersInRole) {
-					var keycloakUser = keycloakUsers.get(user.getId());
-					if (keycloakUser != null) {
-						keycloakUser.roles().add(role);
-					}
-				}
-			}
 			sync(keycloakGroups, keycloakUsers);
 		} catch (Exception e) {
 			LOG.error("Keycloak sync failed.", e);
@@ -117,7 +109,6 @@ public class KeycloakAuthorityPuller {
 			var databaseUser = new User();
 			databaseUser.setId(keycloakUser.id());
 			applyUser(databaseUser, keycloakUser);
-			databaseUser.setRealmRoles(keycloakUser.roles().stream().map(RealmRole::kcName).toArray(String[]::new));
 			return databaseUser;
 		}).collect(Collectors.toMap(User::getId, Function.identity()));
 		userRepo.persist(added.values());
@@ -140,7 +131,6 @@ public class KeycloakAuthorityPuller {
 			var databaseUser = databaseUsers.get(id);
 			var keycloakUser = keycloakUsers.get(id);
 			applyUser(databaseUser, keycloakUser);
-			databaseUser.setRealmRoles(keycloakUser.roles().stream().map(RealmRole::kcName).toArray(String[]::new));
 		}
 	}
 
@@ -480,7 +470,8 @@ public class KeycloakAuthorityPuller {
 
 	@Transactional
 	@WithSpan("KeycloakAuthorityPuller.updateUserRoles")
-	public void updateUserRoles(String userId, Set<RealmRole> roles) {
+	@CacheInvalidate(cacheName = "keycloak.realmRoles")
+	public void updateUserRoles(@CacheKey String userId, Set<RealmRole> roles) {
 		// remove roles that are not in the provided set:
 		var rolesToRemove = EnumSet.allOf(RealmRole.class);
 		rolesToRemove.removeAll(roles);
@@ -489,12 +480,7 @@ public class KeycloakAuthorityPuller {
 		var rolesToSet = EnumSet.noneOf(RealmRole.class);
 		rolesToSet.addAll(roles);
 
-		// 1. sync to db (roll back if kc update fails):
-		User dbUser = userRepo.findByIdOptional(userId).orElseThrow(NotFoundException::new);
-		dbUser.setRealmRoles(rolesToSet.stream().map(RealmRole::kcName).toArray(String[]::new));
-		userRepo.persist(dbUser);
-
-		// 2. sync to kc:
+		// sync to kc:
 		try {
 			UserResource userResource = realm.users().get(userId);
 			var roleMappings = userResource.roles().realmLevel();
@@ -508,6 +494,15 @@ public class KeycloakAuthorityPuller {
 			LOG.warnv(e, "Failed to update realm roles for user {0} in Keycloak.", userId);
 			throw new ErrorCodeException(ErrorCode.UPDATE_USER_ROLES_FAILED, e);
 		}
+	}
+
+	@WithSpan("KeycloakAuthorityPuller.realmRolesOf")
+	@CacheResult(cacheName = "keycloak.realmRoles")
+	public Set<String> realmRolesOf(@CacheKey String userId) {
+		var kcRoleNames = realm.users().get(userId).roles().realmLevel().listAll().stream()
+				.map(RoleRepresentation::getName)
+				.toList();
+		return RealmRole.fromKcNames(kcRoleNames).stream().map(RealmRole::kcName).collect(Collectors.toSet());
 	}
 
 	// Group management methods

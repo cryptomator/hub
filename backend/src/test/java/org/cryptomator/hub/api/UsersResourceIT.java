@@ -39,6 +39,7 @@ import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -557,6 +558,18 @@ class UsersResourceIT {
 		void testGetUserNotFound() {
 			when().get("/users/nonexistent")
 					.then().statusCode(404);
+		}
+
+		@Test
+		@DisplayName("GET /users/{id} returns realm roles fetched from Keycloak")
+		void testGetUserReturnsRoles() {
+			Mockito.when(keycloakAuthorityPuller.realmRolesOf("user1")).thenReturn(Set.of("user", "admin"));
+
+			when().get("/users/user1")
+					.then().statusCode(200)
+					.body("realmRoles", containsInAnyOrder("user", "admin"));
+
+			Mockito.verify(keycloakAuthorityPuller).realmRolesOf("user1");
 		}
 
 		@Test

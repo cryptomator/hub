@@ -36,6 +36,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -108,7 +109,7 @@ class KeycloakAuthorityPullerTest {
 			Mockito.when(databaseUsers.keySet()).thenReturn(databaseUserIds);
 
 			for (var userId : addedUserIds) {
-				var keycloakUser = new KeycloakUserDto(userId, "name " + userId, "email " + userId, "first " + userId, "last " + userId, "pic " + userId, true, Set.of());
+				var keycloakUser = new KeycloakUserDto(userId, "name " + userId, "email " + userId, "first " + userId, "last " + userId, "pic " + userId, true);
 				Mockito.when(keycloakUsers.get(userId)).thenReturn(keycloakUser);
 			}
 
@@ -191,7 +192,7 @@ class KeycloakAuthorityPullerTest {
 			Mockito.when(databaseUsers.keySet()).thenReturn(databaseUserIds);
 
 			for (var userId : updatedUserIds) {
-				var keycloakUser = new KeycloakUserDto(userId, "name " + userId, "email " + userId, "first " + userId, "last " + userId, "pic " + userId, true, Set.of());
+				var keycloakUser = new KeycloakUserDto(userId, "name " + userId, "email " + userId, "first " + userId, "last " + userId, "pic " + userId, true);
 				Mockito.when(keycloakUsers.get(userId)).thenReturn(keycloakUser);
 
 				var databaseUser = Mockito.mock(User.class);
@@ -231,7 +232,7 @@ class KeycloakAuthorityPullerTest {
 		void testAddGroups(@ConvertWith(StringArrayConverter.class) String[] keycloakGroupIdString, @ConvertWith(StringArrayConverter.class) String[] databaseGroupIdString, @ConvertWith(StringArrayConverter.class) String[] addedGroupIdString) {
 			Map<String, KeycloakUserDto> kcUsers = new HashMap<>();
 			for (var gid : keycloakGroupIdString) {
-				kcUsers.put(gid, new KeycloakUserDto(gid, "username", "email", "first", "last", "pic", true, Set.of()));
+				kcUsers.put(gid, new KeycloakUserDto(gid, "username", "email", "first", "last", "pic", true));
 			}
 
 			Map<String, KeycloakGroupDto> keycloakGroups = new HashMap<>();
@@ -335,8 +336,8 @@ class KeycloakAuthorityPullerTest {
 			Mockito.when(kcDto.name()).thenReturn(String.format("name %s", groupId));
 			Mockito.when(kcDto.pictureUrl()).thenReturn(String.format("pic %s", groupId));
 			Mockito.when(kcDto.members()).thenReturn(Set.of(
-					new KeycloakUserDto("U_user", "n", "e", "f", "l", "p", true, Set.of()),
-					new KeycloakUserDto("U_otherKC", "n", "e", "f", "l", "p", true, Set.of())
+					new KeycloakUserDto("U_user", "n", "e", "f", "l", "p", true),
+					new KeycloakUserDto("U_otherKC", "n", "e", "f", "l", "p", true)
 			));
 
 			var dbGroup = Mockito.mock(Group.class);
@@ -458,8 +459,6 @@ class KeycloakAuthorityPullerTest {
 		@Test
 		@DisplayName("updateUserRoles diffs roles to add and remove")
 		void testUpdateUserRoles() {
-			var dbUser = Mockito.mock(User.class);
-			Mockito.when(userRepo.findByIdOptional("u")).thenReturn(Optional.of(dbUser));
 			var userResource = Mockito.mock(UserResource.class);
 			Mockito.when(usersResource.get("u")).thenReturn(userResource);
 			var roleMapping = Mockito.mock(RoleMappingResource.class);
@@ -470,9 +469,6 @@ class KeycloakAuthorityPullerTest {
 
 			remoteUserPuller.updateUserRoles("u", Set.of(RealmRole.USER));
 
-			var captor = ArgumentCaptor.forClass(String[].class);
-			Mockito.verify(dbUser).setRealmRoles(captor.capture());
-			Assertions.assertArrayEquals(new String[]{"user"}, captor.getValue());
 			Mockito.verify(realmLevel).add(Mockito.anyList());
 			Mockito.verify(realmLevel).remove(Mockito.anyList());
 		}
@@ -524,7 +520,6 @@ class KeycloakAuthorityPullerTest {
 			remoteUserPuller.syncUser("u");
 
 			Mockito.verify(existing).setName("renamed");
-			Mockito.verify(existing, Mockito.never()).setRealmRoles(any());
 			Mockito.verify(userRepo).persist(existing);
 		}
 
@@ -808,6 +803,77 @@ class KeycloakAuthorityPullerTest {
 			var e = Assertions.assertThrows(ErrorCodeException.class, () -> remoteUserPuller.updateGroup("g", "New Name", null));
 			Assertions.assertEquals("UPDATE_GROUP_FAILED", e.getMessage());
 		}
+
+		@Nested
+		@DisplayName("updateUserRoles")
+		class UpdateUserRoles {
+
+			private final EnumMap<RealmRole, RoleRepresentation> roleReps = new EnumMap<>(RealmRole.class);
+			private final RoleMappingResource roleMappings = Mockito.mock(RoleMappingResource.class);
+			private final RoleScopeResource realmLevel = Mockito.mock(RoleScopeResource.class);
+
+			@BeforeEach
+			void setUp() {
+				var dbUser = Mockito.mock(User.class);
+				Mockito.when(userRepo.findByIdOptional("U_test")).thenReturn(Optional.of(dbUser));
+				var userResource = Mockito.mock(UserResource.class);
+				Mockito.when(usersResource.get("U_test")).thenReturn(userResource);
+				Mockito.when(userResource.roles()).thenReturn(roleMappings);
+				Mockito.when(roleMappings.realmLevel()).thenReturn(realmLevel);
+				for (var role : RealmRole.values()) {
+					var rep = role(role.kcName());
+					roleReps.put(role, rep);
+					Mockito.when(realmRoles.getRealmRole(role)).thenReturn(rep);
+				}
+			}
+
+			@Test
+			@DisplayName("assigns the requested roles and removes the rest in Keycloak")
+			void testUpdateUserRoles() {
+				remoteUserPuller.updateUserRoles("U_test", Set.of(RealmRole.USER, RealmRole.ADMIN));
+
+				// CREATE_VAULTS is the only role not in the requested set:
+				Mockito.verify(realmLevel).remove(List.of(roleReps.get(RealmRole.CREATE_VAULTS)));
+				Mockito.verify(realmLevel).add(List.of(roleReps.get(RealmRole.USER), roleReps.get(RealmRole.ADMIN)));
+			}
+
+			@Test
+			@DisplayName("removes all roles when given an empty set")
+			void testClearUserRoles() {
+				remoteUserPuller.updateUserRoles("U_test", Set.of());
+
+				Mockito.verify(realmLevel).remove(List.of(roleReps.get(RealmRole.USER), roleReps.get(RealmRole.ADMIN), roleReps.get(RealmRole.CREATE_VAULTS)));
+				Mockito.verify(realmLevel, Mockito.never()).add(Mockito.anyList());
+			}
+		}
+
+		@Nested
+		@DisplayName("realmRolesOf")
+		class RealmRolesOf {
+
+			@Test
+			@DisplayName("returns known realm roles from Keycloak and ignores unknown ones")
+			void testReadKnownRoles() {
+				var userResource = Mockito.mock(UserResource.class);
+				Mockito.when(usersResource.get("U_test")).thenReturn(userResource);
+				var roleMappings = Mockito.mock(RoleMappingResource.class);
+				var realmLevel = Mockito.mock(RoleScopeResource.class);
+				Mockito.when(userResource.roles()).thenReturn(roleMappings);
+				Mockito.when(roleMappings.realmLevel()).thenReturn(realmLevel);
+				// "offline_access" is not a hub RealmRole and must be dropped:
+				Mockito.when(realmLevel.listAll()).thenReturn(List.of(role("user"), role("admin"), role("offline_access")));
+
+				var result = remoteUserPuller.realmRolesOf("U_test");
+
+				Assertions.assertEquals(Set.of("user", "admin"), result);
+			}
+		}
+
+		private static RoleRepresentation role(String name) {
+			var rep = new RoleRepresentation();
+			rep.setName(name);
+			return rep;
+		}
 	}
 
 	@Nested
@@ -828,7 +894,7 @@ class KeycloakAuthorityPullerTest {
 			Mockito.when(changed.getMembers()).thenReturn(new HashSet<>());
 
 			Map<String, Group> databaseGroups = Map.of("unchanged", unchanged, "changed", changed);
-			var memberDto = new KeycloakUserDto("u", "n", "e", "f", "l", "p", true, Set.of());
+			var memberDto = new KeycloakUserDto("u", "n", "e", "f", "l", "p", true);
 			Map<String, KeycloakGroupDto> keycloakGroups = Map.of(
 					"unchanged", new KeycloakGroupDto("unchanged", "unchanged", null, Set.of(memberDto)),
 					"changed", new KeycloakGroupDto("changed", "changed", null, Set.of(memberDto))

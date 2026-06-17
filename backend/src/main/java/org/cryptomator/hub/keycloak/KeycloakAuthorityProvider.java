@@ -77,8 +77,7 @@ public class KeycloakAuthorityProvider {
 				userRepresentation.getFirstName(),
 				userRepresentation.getLastName(),
 				pictureUrl,
-				userRepresentation.isEnabled(),
-				RealmRole.fromKcNames(userRepresentation.getRealmRoles()));
+				userRepresentation.isEnabled());
 	}
 
 	static String parsePictureUrl(Map<String, List<String>> attributes) {
