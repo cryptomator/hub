@@ -1,6 +1,9 @@
 package org.cryptomator.hub.keycloak;
 
 import io.opentelemetry.instrumentation.annotations.WithSpan;
+import io.quarkus.cache.CacheInvalidate;
+import io.quarkus.cache.CacheKey;
+import io.quarkus.cache.CacheResult;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -22,6 +25,7 @@ import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.GroupRepresentation;
+import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +35,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+/**
+ * Manages users and groups in Keycloak and keeps the local database in sync.
+ * <p>
+ * Transaction convention: methods that write to the database <em>before</em> calling Keycloak are
+ * {@link Transactional}, so a failing Keycloak call rolls back the database change (the DB is the
+ * rollback-able side, the Keycloak call is the commit gate).
+ * <p>
+ * Methods that call Keycloak first and delegate the DB write to {@link #syncUser}/
+ * {@link #syncGroup} run inside the transaction opened by the
+ * calling resource (e.g. {@code UsersResource}), so they are not annotated themselves.
+ */
 @ApplicationScoped
 public class KeycloakAdminService {
 
@@ -62,6 +78,7 @@ public class KeycloakAdminService {
 		this.realm = keycloak.realm(keycloakRealm);
 	}
 
+	// No @Transactional: Keycloak-first orchestration; the DB write is delegated to syncUser
 	@WithSpan("KeycloakAdminService.createUser")
 	public UserRepresentation createUser(String username, String email, String firstName, String lastName, String password, String pictureUrl, Set<String> groupIds) {
 		UserRepresentation user = new UserRepresentation();
@@ -128,6 +145,7 @@ public class KeycloakAdminService {
 		return realm.users().get(userId).toRepresentation();
 	}
 
+	// No @Transactional: Keycloak-first; the DB write is delegated to syncUser
 	public UserRepresentation updateUser(String userId, String email, String firstName, String lastName, String password, String pictureUrl) {
 		if (isUserReadOnly(userId)) {
 			throw new ForbiddenException("User has a federated identity and cannot be modified");
@@ -179,7 +197,7 @@ public class KeycloakAdminService {
 		}
 	}
 
-	@Transactional
+	// No @Transactional: Keycloak-first; the DB write is delegated to syncUser
 	public void setUserEnabled(String userId, boolean enabled) {
 		UserResource userResource = realm.users().get(userId);
 		UserRepresentation user = userResource.toRepresentation();
@@ -216,7 +234,6 @@ public class KeycloakAdminService {
 		dbUser.setEmail(keycloakUser.getEmail());
 		dbUser.setFirstName(keycloakUser.getFirstName());
 		dbUser.setLastName(keycloakUser.getLastName());
-
 		dbUser.setEnabled(keycloakUser.isEnabled());
 
 		var attrs = keycloakUser.getAttributes();
@@ -288,9 +305,17 @@ public class KeycloakAdminService {
 		realm.users().get(userId).leaveGroup(groupId);
 	}
 
-	@Transactional
+	/**
+	 * Sets the user's realm roles to exactly the given set.
+	 * <p>
+	 * Separate from {@link #createUser}/{@link #updateUser} because realm roles are not part of the
+	 * {@link UserRepresentation}, but a distinct Keycloak API ({@code roles().realmLevel()}).
+	 * Keycloak is the single source of truth for realm roles, so this method writes only to Keycloak;
+	 * a user unknown to Keycloak surfaces as a {@link NotFoundException}.
+	 */
 	@WithSpan("KeycloakAdminService.updateUserRoles")
-	public void updateUserRoles(String userId, Set<RealmRole> roles) {
+	@CacheInvalidate(cacheName = "keycloak.realmRoles")
+	public void updateUserRoles(@CacheKey String userId, Set<RealmRole> roles) {
 		// remove roles that are not in the provided set:
 		var rolesToRemove = EnumSet.allOf(RealmRole.class);
 		rolesToRemove.removeAll(roles);
@@ -299,20 +324,31 @@ public class KeycloakAdminService {
 		var rolesToSet = EnumSet.noneOf(RealmRole.class);
 		rolesToSet.addAll(roles);
 
-		// 1. sync to db (roll back if kc update fails):
-		User dbUser = userRepo.findByIdOptional(userId).orElseThrow(NotFoundException::new);
-		dbUser.setRealmRoles(rolesToSet.stream().map(RealmRole::kcName).toArray(String[]::new));
-		userRepo.persist(dbUser);
-
-		// 2. sync to kc:
-		UserResource userResource = realm.users().get(userId);
-		var roleMappings = userResource.roles().realmLevel();
+		var roleMappings = realm.users().get(userId).roles().realmLevel();
 		if (!rolesToRemove.isEmpty()) {
 			roleMappings.remove(rolesToRemove.stream().map(realmRoles::getRealmRole).toList());
 		}
 		if (!rolesToSet.isEmpty()) {
 			roleMappings.add(rolesToSet.stream().map(realmRoles::getRealmRole).toList());
 		}
+	}
+
+	/**
+	 * Reads the user's directly assigned realm roles from Keycloak's role-mapping API
+	 * ({@code roles().realmLevel()} — distinct from the {@link UserRepresentation}).
+	 * Roles unknown to {@link RealmRole} are ignored.
+	 *
+	 * @param userId the Keycloak user id
+	 * @return the user's realm role names (see {@link RealmRole#kcName()})
+	 * @throws NotFoundException if no such user exists in Keycloak
+	 */
+	@WithSpan("KeycloakAdminService.realmRolesOf")
+	@CacheResult(cacheName = "keycloak.realmRoles")
+	public Set<String> realmRolesOf(String userId) {
+		var kcRoleNames = realm.users().get(userId).roles().realmLevel().listAll().stream()
+				.map(RoleRepresentation::getName)
+				.toList();
+		return RealmRole.fromKcNames(kcRoleNames).stream().map(RealmRole::kcName).collect(Collectors.toSet());
 	}
 
 	// Group management methods
@@ -341,6 +377,7 @@ public class KeycloakAdminService {
 		return realm.groups().group(groupId).toRepresentation();
 	}
 
+	// No @Transactional: Keycloak-first; the DB write is delegated to syncGroup
 	public GroupRepresentation updateGroup(String groupId, String name, String pictureUrl) {
 		GroupResource groupResource = realm.groups().group(groupId);
 		GroupRepresentation group = groupResource.toRepresentation();
