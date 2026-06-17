@@ -314,7 +314,7 @@ public class KeycloakAdminService {
 	 * a user unknown to Keycloak surfaces as a {@link NotFoundException}.
 	 */
 	@WithSpan("KeycloakAdminService.updateUserRoles")
-	@CacheInvalidate(cacheName = "realmRoles")
+	@CacheInvalidate(cacheName = "keycloak.realmRoles")
 	public void updateUserRoles(@CacheKey String userId, Set<RealmRole> roles) {
 		// remove roles that are not in the provided set:
 		var rolesToRemove = EnumSet.allOf(RealmRole.class);
@@ -343,7 +343,7 @@ public class KeycloakAdminService {
 	 * @throws NotFoundException if no such user exists in Keycloak
 	 */
 	@WithSpan("KeycloakAdminService.realmRolesOf")
-	@CacheResult(cacheName = "realmRoles")
+	@CacheResult(cacheName = "keycloak.realmRoles")
 	public Set<String> realmRolesOf(String userId) {
 		var kcRoleNames = realm.users().get(userId).roles().realmLevel().listAll().stream()
 				.map(RoleRepresentation::getName)
