@@ -183,7 +183,7 @@
                     </dependency>
                 </dependencies>
                 <configuration>
-                    <argLine>-javaagent:${net.bytebuddy:byte-buddy-agent:jar}</argLine>
+                    <argLine>-javaagent:${org.mockito:mockito-core:jar} --add-opens java.base/java.lang=ALL-UNNAMED</argLine>
                     <systemPropertyVariables>
                         <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
                         <maven.home>${maven.home}</maven.home>
@@ -215,7 +215,7 @@
                     </dependency>
                 </dependencies>
                 <configuration>
-                    <argLine>-javaagent:${net.bytebuddy:byte-buddy-agent:jar}</argLine>
+                    <argLine>-javaagent:${org.mockito:mockito-core:jar} --add-opens java.base/java.lang=ALL-UNNAMED</argLine>
                     <reportFormat>plain</reportFormat>
                     <consoleOutputReporter>
                         <disable>false</disable>
