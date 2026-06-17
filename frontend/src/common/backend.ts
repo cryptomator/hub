@@ -90,7 +90,6 @@ export type UserDto = {
   email?: string;
   firstName?: string;
   lastName?: string;
-  realmRoles: RealmRole[];
   enabled: boolean;
   language?: string;
   devices: DeviceDto[];
@@ -111,6 +110,7 @@ export type UserDtoWithDetails = UserDto & {
   groups: GroupDto[];
   devices: DeviceDto[];
   legacyDevices: DeviceDto[];
+  realmRoles: RealmRole[];
 };
 
 /**
@@ -145,11 +145,13 @@ export type TrustDto = {
   signatureChain: string[]
 };
 
-export type CreateUserDto = Pick<UserDto, 'name' | 'email' | 'firstName' | 'lastName' | 'pictureUrl' | 'realmRoles'> & {
+export type CreateUserDto = Pick<UserDto, 'name' | 'email' | 'firstName' | 'lastName' | 'pictureUrl'> & {
+  realmRoles: RealmRole[];
   password: string;
 };
 
-export type UpdateUserDto = Pick<UserDto, 'email' | 'firstName' | 'lastName' | 'pictureUrl' | 'realmRoles'> & {
+export type UpdateUserDto = Pick<UserDto, 'email' | 'firstName' | 'lastName' | 'pictureUrl'> & {
+  realmRoles: RealmRole[];
   password?: string;
 };
 

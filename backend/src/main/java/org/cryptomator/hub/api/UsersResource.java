@@ -182,7 +182,7 @@ public class UsersResource {
 		} else {
 			deviceDtos = Set.of();
 		}
-		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getLanguage(), Set.of(user.getRealmRoles()), user.isEnabled(), deviceDtos, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
+		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getLanguage(), user.isEnabled(), deviceDtos, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
 	}
 
 	/**
@@ -201,7 +201,7 @@ public class UsersResource {
 	public UserDto getMeWithLegacyDevicesAndAccess() {
 		User user = userRepo.findById(jwt.getSubject());
 		var deviceDtos = legacyDevicesWithLastAccess(user);
-		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getLanguage(), Set.of(user.getRealmRoles()), user.isEnabled(), deviceDtos, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
+		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getLanguage(), user.isEnabled(), deviceDtos, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
 	}
 
 	/**
@@ -384,11 +384,15 @@ public class UsersResource {
 		// Fetch legacy devices with last access (audit-derived, see #333)
 		var legacyDevices = legacyDevicesWithLastAccess(user);
 
+		// realm roles are not persisted in the Hub DB; the detailed view always reads them through from Keycloak:
+		var realmRoles = keycloakAdminService.realmRolesOf(userId);
+
 		return UserDto.justPublicInfo(user).withDetails(
 				groups,
 				vaults,
 				devices,
-				legacyDevices
+				legacyDevices,
+				realmRoles
 		);
 	}
 

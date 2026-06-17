@@ -35,7 +35,7 @@ public class EventLogger {
 		auditEventRepository.persist(event);
 	}
 
-	public void logDeviceRegisted(String registeredBy, String deviceId, String deviceName, Device.Type deviceType) {
+	public void logDeviceRegistered(String registeredBy, String deviceId, String deviceName, Device.Type deviceType) {
 		var event = new DeviceRegisteredEvent();
 		event.setTimestamp(Instant.now());
 		event.setRegisteredBy(registeredBy);

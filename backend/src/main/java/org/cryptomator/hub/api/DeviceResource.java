@@ -148,7 +148,7 @@ public class DeviceResource {
 
 		try {
 			deviceRepo.persistAndFlush(device);
-			eventLogger.logDeviceRegisted(jwt.getSubject(), deviceId, device.getName(), device.getType());
+			eventLogger.logDeviceRegistered(jwt.getSubject(), deviceId, device.getName(), device.getType());
 			return Response.created(URI.create(".")).build();
 		} catch (ConstraintViolationException e) {
 			throw new ClientErrorException(Response.Status.CONFLICT, e);

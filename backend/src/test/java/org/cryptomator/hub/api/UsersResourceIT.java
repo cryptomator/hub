@@ -34,6 +34,7 @@ import org.mockito.Mockito;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
+import java.util.Set;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
@@ -41,6 +42,7 @@ import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -510,6 +512,18 @@ class UsersResourceIT {
 		void testGetUserNotFound() {
 			when().get("/users/nonexistent")
 					.then().statusCode(404);
+		}
+
+		@Test
+		@DisplayName("GET /users/{id} returns realm roles fetched from Keycloak")
+		void testGetUserReturnsRoles() {
+			Mockito.when(keycloakAdminService.realmRolesOf("user1")).thenReturn(Set.of("user", "admin"));
+
+			when().get("/users/user1")
+					.then().statusCode(200)
+					.body("realmRoles", containsInAnyOrder("user", "admin"));
+
+			Mockito.verify(keycloakAdminService).realmRolesOf("user1");
 		}
 
 		@Test
