@@ -172,14 +172,12 @@ public class UsersResource {
 	@NoCache
 	@Transactional
 	@Operation(summary = "get the logged-in user")
-	@Parameter(name = "withLastAccess", in = ParameterIn.QUERY, description = "adds last access values to the devices (if present)")
 	@APIResponse(responseCode = "200", description = "returns the current user")
 	@APIResponse(responseCode = "404", description = "no user matching the subject of the JWT passed as Bearer Token")
-	public UserDto getMe(@QueryParam("withDevices") boolean withDevices, @QueryParam("withLastAccess") boolean withLastAccess) {
+	public UserDto getMe(@QueryParam("withDevices") boolean withDevices) {
 		User user = userRepo.findById(jwt.getSubject());
 		Set<DeviceResource.DeviceDto> deviceDtos;
-		if (withDevices || withLastAccess) {
-			// last access values are part of the device entity, so withLastAccess no longer requires a separate query
+		if (withDevices) {
 			deviceDtos = user.getDevices().stream().map(DeviceResource.DeviceDto::fromEntity).collect(Collectors.toSet());
 		} else {
 			deviceDtos = Set.of();

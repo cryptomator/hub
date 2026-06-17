@@ -115,7 +115,7 @@ onMounted(async () => {
 async function fetchData() {
   onFetchError.value = undefined;
   try {
-    me.value = await userdata.meWithLastAccess;
+    me.value = await userdata.me;
     myDevice.value = await userdata.browser;
   } catch (error) {
     console.error('Retrieving device list failed.', error);
@@ -127,7 +127,7 @@ async function removeDevice(device: DeviceDto) {
   delete onRemoveDeviceError.value[device.id];
   try {
     await backend.devices.removeDevice(device.id);
-    userdata.reloadAccess();
+    userdata.reload();
   } catch (error) {
     console.error('Removing device failed.', error);
     if (error instanceof NotFoundError) {

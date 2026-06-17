@@ -521,11 +521,10 @@ class UserService {
     return axiosAuth.put('/users/me', dto);
   }
 
-  public async me(withDevices: boolean = false, withLastAccess: boolean = false, addFallbackPictures: boolean = true): Promise<UserDto> {
+  public async me(withDevices: boolean = false, addFallbackPictures: boolean = true): Promise<UserDto> {
     const user = await axiosAuth.get<UserDto>('/users/me', {
       params: {
-        withDevices: withDevices,
-        withLastAccess: withLastAccess
+        withDevices: withDevices
       }
     }).then(response => response.data);
     return addFallbackPictures ? fillInMissingPicture(user) : user;

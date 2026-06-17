@@ -6,7 +6,6 @@ import { JWEParser } from './jwe';
 class UserData {
 
   #me?: Promise<UserDto>;
-  #meWithLastAccess?: Promise<UserDto>;
   #browserKeys?: Promise<BrowserKeys | undefined>;
 
   /** @deprecated since version 1.3.0, to be removed in https://github.com/cryptomator/hub/issues/333 */
@@ -20,14 +19,6 @@ class UserData {
       this.#me = backend.users.me(true);
     }
     return this.#me;
-  }
-
-  public get meWithLastAccess(): Promise<UserDto> {
-    if (!this.#meWithLastAccess) {
-      this.#meWithLastAccess = backend.users.me(true, true);
-      this.#me = this.#meWithLastAccess;
-    }
-    return this.#meWithLastAccess;
   }
 
   /** @deprecated since version 1.3.0, to be removed in https://github.com/cryptomator/hub/issues/333 */
@@ -92,13 +83,6 @@ class UserData {
   public async reload() {
     this.#me = backend.users.me(true);
     this.#browserKeys = undefined;
-  }
-
-  /**
-   * Invalidates the cached user data with devices and last access and reloads it in the backend.
-   */
-  public async reloadAccess() {
-    this.#meWithLastAccess = backend.users.me(true, true);
   }
 
   /**
