@@ -34,6 +34,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Gatherers;
 import java.util.stream.Stream;
 
 @Entity
@@ -309,10 +310,9 @@ public class Vault {
 		}
 
 		public Stream<Vault> findAllInList(List<UUID> ids) {
-			return Batch.of(200).run(ids, Stream.of(), (batch, result) -> {
-				Stream<Vault> partialResult = find("#Vault.allInList", Map.of("ids", batch)).stream();
-				return Stream.concat(result, partialResult);
-			});
+			return ids.stream()
+					.gather(Gatherers.windowFixed(200))
+					.flatMap(batch -> find("#Vault.allInList", Map.of("ids", batch)).stream());
 		}
 
 		@Transactional(Transactional.TxType.REQUIRED)

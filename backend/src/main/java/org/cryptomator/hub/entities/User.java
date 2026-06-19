@@ -22,6 +22,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Gatherers;
 import java.util.stream.Stream;
 
 @Entity
@@ -259,10 +260,9 @@ public class User extends Authority {
 		}
 
 		public Stream<User> streamByIds(Collection<String> ids) {
-			return Batch.of(200).run(ids, Stream.empty(), (batch, result) -> {
-				var partial = find("id IN :ids", Map.of("ids", batch));
-				return Stream.concat(result, partial.stream());
-			});
+			return ids.stream()
+					.gather(Gatherers.windowFixed(200))
+					.flatMap(batch -> find("id IN :ids", Map.of("ids", batch)).stream());
 		}
 
 		public long deleteByIds(Collection<String> ids) {

@@ -18,6 +18,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Gatherers;
 import java.util.stream.Stream;
 
 @Entity
@@ -158,10 +159,9 @@ public class Device {
 		}
 
 		public Stream<Device> findAllInList(List<String> ids) {
-			return Batch.of(200).run(ids, Stream.empty(), (batch, result) -> {
-				var partial = find("#Device.allInList", Map.of("ids", batch));
-				return Stream.concat(result, partial.stream());
-			});
+			return ids.stream()
+					.gather(Gatherers.windowFixed(200))
+					.flatMap(batch -> find("#Device.allInList", Map.of("ids", batch)).stream());
 		}
 
 		public void deleteByOwner(String userId) {
