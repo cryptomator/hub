@@ -444,12 +444,12 @@ public class VaultResource {
 
 		var ipAddress = request.remoteAddress().hostAddress();
 		var deviceId = request.getHeader("Hub-Device-ID");
-		if( deviceId != null) {
+		if (deviceId != null) {
 			//for backwards compatibility, we can only validate the deviceId if the header is set
 			try {
 				deviceRepo.findByIdAndUser(deviceId, user.getId());
 			} catch (NoResultException e) {
-				throw new BadRequestException("User has has no such device as specified in Header");
+				throw new BadRequestException("User has no such device as specified in Header");
 			}
 		}
 
