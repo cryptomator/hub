@@ -8,11 +8,9 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
-import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
@@ -33,7 +31,7 @@ import org.cryptomator.hub.entities.WotEntry;
 import org.cryptomator.hub.entities.events.AuditEvent;
 import org.cryptomator.hub.entities.events.EventLogger;
 import org.cryptomator.hub.entities.events.VaultKeyRetrievedEvent;
-import org.cryptomator.hub.keycloak.KeycloakAdminService;
+import org.cryptomator.hub.keycloak.KeycloakAuthorityPuller;
 import org.cryptomator.hub.keycloak.RealmRole;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
@@ -78,7 +76,7 @@ public class UsersResource {
 	JsonWebToken jwt;
 
 	@Inject
-	KeycloakAdminService keycloakAdminService;
+	KeycloakAuthorityPuller keycloakAuthorityPuller;
 
 	@PUT
 	@Path("/me")
@@ -318,36 +316,28 @@ public class UsersResource {
 	@APIResponse(responseCode = "400", description = "invalid input")
 	@APIResponse(responseCode = "409", description = "user already exists")
 	public Response createUser(@Valid @NotNull CreateUserDto dto) {
-		try {
-			var userRepresentation = keycloakAdminService.createUser(
-					dto.name(),
-					dto.email(),
-					dto.firstName(),
-					dto.lastName(),
-					dto.password(),
-					dto.pictureUrl(),
-					dto.groupIds()
-			);
+		var userRepresentation = keycloakAuthorityPuller.createUser(
+				dto.name(),
+				dto.email(),
+				dto.firstName(),
+				dto.lastName(),
+				dto.password(),
+				dto.pictureUrl(),
+				dto.groupIds()
+		);
 
-			if (!dto.realmRoles().isEmpty()) {
-				keycloakAdminService.updateUserRoles(userRepresentation.getId(), dto.realmRoles());
-			}
-
-			User user = userRepo.findById(userRepresentation.getId());
-			if (user == null) {
-				throw new InternalServerErrorException("User was created in Keycloak but not found in database after sync");
-			}
-
-			return Response.created(URI.create("./" + user.getId()))
-					.entity(UserDto.justPublicInfo(user))
-					.build();
-		} catch (ClientErrorException e) {
-			// Return 409 with specific error message (EMAIL_EXISTS or USERNAME_EXISTS)
-			return Response.status(Response.Status.CONFLICT)
-					.entity(e.getMessage())
-					.type(MediaType.TEXT_PLAIN)
-					.build();
+		if (!dto.realmRoles().isEmpty()) {
+			keycloakAuthorityPuller.updateUserRoles(userRepresentation.getId(), dto.realmRoles());
 		}
+
+		User user = userRepo.findById(userRepresentation.getId());
+		if (user == null) { // user was created in Keycloak but not found in database after sync
+			throw new IllegalStateException();
+		}
+
+		return Response.status(Response.Status.CREATED)
+				.entity(UserDto.justPublicInfo(user))
+				.build();
 	}
 
 	@GET
@@ -362,7 +352,7 @@ public class UsersResource {
 	public UserDto.WithDetails getUser(@PathParam("id") String userId) {
 		User user = userRepo.findByIdWithEagerDetails(userId);
 		if (user == null) {
-			throw new NotFoundException("User not found: " + userId);
+			throw new NotFoundException();
 		}
 
 
@@ -385,7 +375,7 @@ public class UsersResource {
 		var legacyDevices = legacyDevicesWithLastAccess(user);
 
 		// realm roles are not persisted in the Hub DB; the detailed view always reads them through from Keycloak:
-		var realmRoles = keycloakAdminService.realmRolesOf(userId);
+		var realmRoles = keycloakAuthorityPuller.realmRolesOf(userId);
 
 		return UserDto.justPublicInfo(user).withDetails(
 				groups,
@@ -406,8 +396,9 @@ public class UsersResource {
 	@APIResponse(responseCode = "200", description = "user updated")
 	@APIResponse(responseCode = "403", description = "user has federated identity and cannot be modified")
 	@APIResponse(responseCode = "404", description = "user not found")
+	@APIResponse(responseCode = "409", description = "email already exists")
 	public UserDto updateUser(@PathParam("id") String userId, @Valid @NotNull UpdateUserDto dto) {
-		keycloakAdminService.updateUser(
+		keycloakAuthorityPuller.updateUser(
 				userId,
 				dto.email(),
 				dto.firstName(),
@@ -416,11 +407,11 @@ public class UsersResource {
 				dto.pictureUrl()
 		);
 
-		keycloakAdminService.updateUserRoles(userId, dto.realmRoles());
+		keycloakAuthorityPuller.updateUserRoles(userId, dto.realmRoles());
 
 		User user = userRepo.findById(userId);
 		if (user == null) {
-			throw new NotFoundException("User not found after update: " + userId);
+			throw new NotFoundException();
 		}
 
 		return UserDto.justPublicInfo(user);
@@ -434,7 +425,7 @@ public class UsersResource {
 	@Operation(summary = "enable or disable a user")
 	@APIResponse(responseCode = "204", description = "user updated")
 	public Response setUserEnabled(@PathParam("id") String userId, boolean enabled) {
-		keycloakAdminService.setUserEnabled(userId, enabled);
+		keycloakAuthorityPuller.setUserEnabled(userId, enabled);
 		return Response.noContent().build();
 	}
 
@@ -447,7 +438,7 @@ public class UsersResource {
 	@APIResponse(responseCode = "403", description = "user has federated identity and cannot be deleted")
 	@APIResponse(responseCode = "404", description = "user not found")
 	public Response deleteUser(@PathParam("id") String userId) {
-		keycloakAdminService.deleteUser(userId);
+		keycloakAuthorityPuller.deleteUser(userId);
 		return Response.noContent().build();
 	}
 
