@@ -40,7 +40,7 @@
                   </button>
                 </div>
                 <p v-if="onDeleteGroupError" class="text-sm text-red-900 px-4 sm:px-6 text-right bg-red-50">
-                  <ErrorMessage :error="onDeleteGroupError" />
+                  {{ t('group.member.remove.error.failed') }}
                 </p>
               </form>
             </DialogPanel>
@@ -56,8 +56,7 @@ import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, Trans
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import backend, { asError, GroupDto } from '../../common/backend';
-import ErrorMessage from '../ErrorMessage.vue';
+import backend, { GroupDto } from '../../common/backend';
 
 const { t } = useI18n({ useScope: 'global' });
 
@@ -92,7 +91,7 @@ async function removeUserFromGroup() {
     open.value = false;
   } catch (error) {
     console.error('Removing user from group failed.', error);
-    onDeleteGroupError.value = asError(error);
+    onDeleteGroupError.value = error instanceof Error ? error : new Error('Unknown reason');
   }
 }
 </script>

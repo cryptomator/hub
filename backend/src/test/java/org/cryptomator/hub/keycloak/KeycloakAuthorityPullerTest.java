@@ -1,10 +1,11 @@
 package org.cryptomator.hub.keycloak;
 
 import jakarta.persistence.PersistenceException;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.Response;
-import org.cryptomator.hub.api.ErrorCodeException;
+import org.cryptomator.hub.api.AlreadyExistsException;
 import org.cryptomator.hub.entities.Authority;
 import org.cryptomator.hub.entities.EffectiveGroupMembership;
 import org.cryptomator.hub.entities.Group;
@@ -404,27 +405,24 @@ class KeycloakAuthorityPullerTest {
 		}
 
 		@Test
-		@DisplayName("createUser throws ErrorCodeException with USERNAME_EXISTS on 409")
+		@DisplayName("createUser throws AlreadyExistsException on 409")
 		void testCreateUserConflict() {
 			var response = Mockito.mock(Response.class);
 			Mockito.when(usersResource.create(any())).thenReturn(response);
 			Mockito.when(response.getStatus()).thenReturn(409);
-			Mockito.when(response.readEntity(String.class)).thenReturn("a user with the same username already exists");
 
-			var e = Assertions.assertThrows(ErrorCodeException.class, () -> remoteUserPuller.createUser("u", "e", "f", "l", "pw", null, Set.of()));
-			Assertions.assertEquals("USERNAME_EXISTS", e.getMessage());
+			Assertions.assertThrows(AlreadyExistsException.class, () -> remoteUserPuller.createUser("u", "e", "f", "l", "pw", null, Set.of()));
 			Mockito.verify(userRepo, Mockito.never()).persist(any(User.class));
 		}
 
 		@Test
-		@DisplayName("createUser throws ErrorCodeException on unexpected status")
+		@DisplayName("createUser throws IllegalStateException on unexpected status")
 		void testCreateUserServerError() {
 			var response = Mockito.mock(Response.class);
 			Mockito.when(usersResource.create(any())).thenReturn(response);
 			Mockito.when(response.getStatus()).thenReturn(500);
 
-			var e = Assertions.assertThrows(ErrorCodeException.class, () -> remoteUserPuller.createUser("u", "e", "f", "l", "pw", null, Set.of()));
-			Assertions.assertEquals("CREATE_USER_FAILED", e.getMessage());
+			Assertions.assertThrows(IllegalStateException.class, () -> remoteUserPuller.createUser("u", "e", "f", "l", "pw", null, Set.of()));
 		}
 
 		@Test
@@ -434,8 +432,7 @@ class KeycloakAuthorityPullerTest {
 			Mockito.when(usersResource.get("fed")).thenReturn(userResource);
 			Mockito.when(userResource.getFederatedIdentity()).thenReturn(List.of(new FederatedIdentityRepresentation()));
 
-			var e = Assertions.assertThrows(ErrorCodeException.class, () -> remoteUserPuller.deleteUser("fed"));
-			Assertions.assertEquals("USER_HAS_FEDERATED_IDENTITY", e.getMessage());
+			Assertions.assertThrows(ForbiddenException.class, () -> remoteUserPuller.deleteUser("fed"));
 			Mockito.verify(userRepo, Mockito.never()).deleteById(any());
 		}
 
@@ -474,12 +471,11 @@ class KeycloakAuthorityPullerTest {
 		}
 
 		@Test
-		@DisplayName("addUserToGroup maps foreign-key violation to ErrorCodeException with GROUP_MEMBER_NOT_FOUND")
+		@DisplayName("addUserToGroup maps foreign-key violation to NotFoundException")
 		void testAddUserToGroupForeignKeyViolation() {
 			Mockito.doThrow(new PersistenceException()).when(groupRepo).addMember("g", "u");
 
-			var e = Assertions.assertThrows(ErrorCodeException.class, () -> remoteUserPuller.addUserToGroup("g", "u"));
-			Assertions.assertEquals("GROUP_MEMBER_NOT_FOUND", e.getMessage());
+			Assertions.assertThrows(NotFoundException.class, () -> remoteUserPuller.addUserToGroup("g", "u"));
 			Mockito.verify(usersResource, Mockito.never()).get(any());
 		}
 
@@ -656,13 +652,12 @@ class KeycloakAuthorityPullerTest {
 			Mockito.when(usersResource.get("fed")).thenReturn(userResource);
 			Mockito.when(userResource.getFederatedIdentity()).thenReturn(List.of(new FederatedIdentityRepresentation()));
 
-			var e = Assertions.assertThrows(ErrorCodeException.class, () -> remoteUserPuller.updateUser("fed", "e", "f", "l", null, null));
-			Assertions.assertEquals("USER_HAS_FEDERATED_IDENTITY", e.getMessage());
+			Assertions.assertThrows(ForbiddenException.class, () -> remoteUserPuller.updateUser("fed", "e", "f", "l", null, null));
 			Mockito.verify(userResource, Mockito.never()).update(any());
 		}
 
 		@Test
-		@DisplayName("updateUser preserves a Keycloak 409 as ErrorCodeException with EMAIL_EXISTS")
+		@DisplayName("updateUser preserves a Keycloak 409 as AlreadyExistsException")
 		void testUpdateUserConflict() {
 			var userResource = Mockito.mock(UserResource.class);
 			Mockito.when(usersResource.get("u")).thenReturn(userResource);
@@ -670,47 +665,42 @@ class KeycloakAuthorityPullerTest {
 			Mockito.when(userResource.toRepresentation()).thenReturn(new UserRepresentation());
 			Mockito.doThrow(new jakarta.ws.rs.WebApplicationException(Response.Status.CONFLICT)).when(userResource).update(any());
 
-			var e = Assertions.assertThrows(ErrorCodeException.class, () -> remoteUserPuller.updateUser("u", "existing@example.com", "f", "l", null, null));
-			Assertions.assertEquals("EMAIL_EXISTS", e.getMessage());
-			Assertions.assertEquals(Response.Status.CONFLICT, e.getStatus());
+			Assertions.assertThrows(AlreadyExistsException.class, () -> remoteUserPuller.updateUser("u", "existing@example.com", "f", "l", null, null));
 		}
 
 		@Test
-		@DisplayName("isUserReadOnly preserves a Keycloak 404 as ErrorCodeException with USER_NOT_FOUND")
+		@DisplayName("isUserReadOnly preserves a Keycloak 404 as NotFoundException")
 		void testIsUserReadOnlyNotFound() {
 			var userResource = Mockito.mock(UserResource.class);
 			Mockito.when(usersResource.get("u")).thenReturn(userResource);
 			Mockito.when(userResource.getFederatedIdentity()).thenThrow(new NotFoundException());
 
-			var e = Assertions.assertThrows(ErrorCodeException.class, () -> remoteUserPuller.isUserReadOnly("u"));
-			Assertions.assertEquals("USER_NOT_FOUND", e.getMessage());
+			Assertions.assertThrows(NotFoundException.class, () -> remoteUserPuller.isUserReadOnly("u"));
 		}
 
 		@Test
-		@DisplayName("isUserReadOnly throws ErrorCodeException with FEDERATED_IDENTITY_CHECK_FAILED on unexpected error")
+		@DisplayName("isUserReadOnly throws IllegalStateException on unexpected error")
 		void testIsUserReadOnlyServerError() {
 			var userResource = Mockito.mock(UserResource.class);
 			Mockito.when(usersResource.get("u")).thenReturn(userResource);
 			Mockito.when(userResource.getFederatedIdentity()).thenThrow(new InternalServerErrorException());
 
-			var e = Assertions.assertThrows(ErrorCodeException.class, () -> remoteUserPuller.isUserReadOnly("u"));
-			Assertions.assertEquals("FEDERATED_IDENTITY_CHECK_FAILED", e.getMessage());
+			Assertions.assertThrows(IllegalStateException.class, () -> remoteUserPuller.isUserReadOnly("u"));
 		}
 
 		@Test
-		@DisplayName("updateUser preserves a Keycloak 404 as ErrorCodeException with USER_NOT_FOUND")
+		@DisplayName("updateUser preserves a Keycloak 404 as NotFoundException")
 		void testUpdateUserNotFound() {
 			var userResource = Mockito.mock(UserResource.class);
 			Mockito.when(usersResource.get("u")).thenReturn(userResource);
 			Mockito.when(userResource.getFederatedIdentity()).thenReturn(List.of());
 			Mockito.when(userResource.toRepresentation()).thenThrow(new NotFoundException());
 
-			var e = Assertions.assertThrows(ErrorCodeException.class, () -> remoteUserPuller.updateUser("u", "e", "f", "l", null, null));
-			Assertions.assertEquals("USER_NOT_FOUND", e.getMessage());
+			Assertions.assertThrows(NotFoundException.class, () -> remoteUserPuller.updateUser("u", "e", "f", "l", null, null));
 		}
 
 		@Test
-		@DisplayName("updateUser throws ErrorCodeException with UPDATE_USER_FAILED on unexpected error")
+		@DisplayName("updateUser throws IllegalStateException on unexpected error")
 		void testUpdateUserServerError() {
 			var userResource = Mockito.mock(UserResource.class);
 			Mockito.when(usersResource.get("u")).thenReturn(userResource);
@@ -718,8 +708,7 @@ class KeycloakAuthorityPullerTest {
 			Mockito.when(userResource.toRepresentation()).thenReturn(new UserRepresentation());
 			Mockito.doThrow(new InternalServerErrorException()).when(userResource).update(any());
 
-			var e = Assertions.assertThrows(ErrorCodeException.class, () -> remoteUserPuller.updateUser("u", "e", "f", "l", null, null));
-			Assertions.assertEquals("UPDATE_USER_FAILED", e.getMessage());
+			Assertions.assertThrows(IllegalStateException.class, () -> remoteUserPuller.updateUser("u", "e", "f", "l", null, null));
 		}
 
 		@Test
@@ -746,62 +735,56 @@ class KeycloakAuthorityPullerTest {
 		}
 
 		@Test
-		@DisplayName("createGroup throws ErrorCodeException with GROUP_NAME_EXISTS on 409")
+		@DisplayName("createGroup throws AlreadyExistsException on 409")
 		void testCreateGroupConflict() {
 			var response = Mockito.mock(Response.class);
 			Mockito.when(groupsResource.add(any())).thenReturn(response);
 			Mockito.when(response.getStatus()).thenReturn(409);
 
-			var e = Assertions.assertThrows(ErrorCodeException.class, () -> remoteUserPuller.createGroup("g", null));
-			Assertions.assertEquals("GROUP_NAME_EXISTS", e.getMessage());
+			Assertions.assertThrows(AlreadyExistsException.class, () -> remoteUserPuller.createGroup("g", null));
 			Mockito.verify(groupRepo, Mockito.never()).persist(any(Group.class));
 		}
 
 		@Test
-		@DisplayName("createGroup throws ErrorCodeException on unexpected status")
+		@DisplayName("createGroup throws IllegalStateException on unexpected status")
 		void testCreateGroupServerError() {
 			var response = Mockito.mock(Response.class);
 			Mockito.when(groupsResource.add(any())).thenReturn(response);
 			Mockito.when(response.getStatus()).thenReturn(500);
 
-			var e = Assertions.assertThrows(ErrorCodeException.class, () -> remoteUserPuller.createGroup("g", null));
-			Assertions.assertEquals("CREATE_GROUP_FAILED", e.getMessage());
+			Assertions.assertThrows(IllegalStateException.class, () -> remoteUserPuller.createGroup("g", null));
 		}
 
 		@Test
-		@DisplayName("updateGroup preserves a Keycloak 409 as ErrorCodeException with GROUP_NAME_EXISTS")
+		@DisplayName("updateGroup preserves a Keycloak 409 as AlreadyExistsException")
 		void testUpdateGroupConflict() {
 			var groupResource = Mockito.mock(GroupResource.class);
 			Mockito.when(groupsResource.group("g")).thenReturn(groupResource);
 			Mockito.when(groupResource.toRepresentation()).thenReturn(new GroupRepresentation());
 			Mockito.doThrow(new jakarta.ws.rs.WebApplicationException(Response.Status.CONFLICT)).when(groupResource).update(any());
 
-			var e = Assertions.assertThrows(ErrorCodeException.class, () -> remoteUserPuller.updateGroup("g", "Existing Group", null));
-			Assertions.assertEquals("GROUP_NAME_EXISTS", e.getMessage());
-			Assertions.assertEquals(Response.Status.CONFLICT, e.getStatus());
+			Assertions.assertThrows(AlreadyExistsException.class, () -> remoteUserPuller.updateGroup("g", "Existing Group", null));
 		}
 
 		@Test
-		@DisplayName("updateGroup preserves a Keycloak 404 as ErrorCodeException with GROUP_NOT_FOUND")
+		@DisplayName("updateGroup preserves a Keycloak 404 as NotFoundException")
 		void testUpdateGroupNotFound() {
 			var groupResource = Mockito.mock(GroupResource.class);
 			Mockito.when(groupsResource.group("g")).thenReturn(groupResource);
 			Mockito.when(groupResource.toRepresentation()).thenThrow(new NotFoundException());
 
-			var e = Assertions.assertThrows(ErrorCodeException.class, () -> remoteUserPuller.updateGroup("g", "New Name", null));
-			Assertions.assertEquals("GROUP_NOT_FOUND", e.getMessage());
+			Assertions.assertThrows(NotFoundException.class, () -> remoteUserPuller.updateGroup("g", "New Name", null));
 		}
 
 		@Test
-		@DisplayName("updateGroup throws ErrorCodeException with UPDATE_GROUP_FAILED on unexpected error")
+		@DisplayName("updateGroup throws IllegalStateException on unexpected error")
 		void testUpdateGroupServerError() {
 			var groupResource = Mockito.mock(GroupResource.class);
 			Mockito.when(groupsResource.group("g")).thenReturn(groupResource);
 			Mockito.when(groupResource.toRepresentation()).thenReturn(new GroupRepresentation());
 			Mockito.doThrow(new InternalServerErrorException()).when(groupResource).update(any());
 
-			var e = Assertions.assertThrows(ErrorCodeException.class, () -> remoteUserPuller.updateGroup("g", "New Name", null));
-			Assertions.assertEquals("UPDATE_GROUP_FAILED", e.getMessage());
+			Assertions.assertThrows(IllegalStateException.class, () -> remoteUserPuller.updateGroup("g", "New Name", null));
 		}
 
 		@Nested

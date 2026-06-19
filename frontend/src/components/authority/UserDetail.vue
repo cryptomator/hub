@@ -48,7 +48,7 @@
         </Menu>
       </div>
     </div>
-    <p v-if="onEnableUserError" class="text-sm text-red-600 mb-2"><ErrorMessage :error="onEnableUserError" /></p>
+    <p v-if="onEnableUserError" class="text-sm text-red-600 mb-2">{{ onEnableUserError.message }}</p>
     <div class="hidden lg:grid grid-cols-1 lg:grid-cols-2 gap-6 items-start pt-3">
       <section class="lg:col-start-1 grid gap-6">
         <!-- User Info -->
@@ -90,7 +90,6 @@ import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import backend, { asError, GroupDto, UserDto, UserDtoWithDetails } from '../../common/backend';
 import BreadcrumbNav from '../BreadcrumbNav.vue';
-import ErrorMessage from '../ErrorMessage.vue';
 import FetchError from '../FetchError.vue';
 import UserDeleteDialog from './UserDeleteDialog.vue';
 import UserDisableDialog from './UserDisableDialog.vue';
@@ -133,7 +132,7 @@ const enableUser = async () => {
     await fetchUser();
   } catch (error) {
     console.error('Enabling user failed.', error);
-    onEnableUserError.value = asError(error);
+    onEnableUserError.value = new Error(t('user.detail.error.enableFailed'));
   }
 };
 

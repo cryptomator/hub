@@ -195,14 +195,17 @@
   "deleteGroupDialog.title": "Delete Group",
   "deleteGroupDialog.description": "Are you sure you want to permanently delete this group? It will be removed from all associated vaults. This action cannot be undone.",
   "deleteGroupDialog.confirm": "Yes, delete group",
+  "deleteGroupDialog.error.failed": "Failed to delete group.",
 
   "disableUserDialog.title": "Disable User",
   "disableUserDialog.description": "This user will no longer be able to log in and will be excluded from the seat count. You can re-enable the user at any time.",
   "disableUserDialog.confirm": "Disable User",
+  "disableUserDialog.error.failed": "Failed to update user.",
 
   "deleteUserDialog.title": "Delete User Account",
   "deleteUserDialog.description": "Are you sure you want to permanently delete this user? All associated vaults and devices will be removed. This action cannot be undone.",
   "deleteUserDialog.confirm": "Yes, delete user",
+  "deleteUserDialog.error.failed": "Failed to delete user.",
 
   "deviceList.empty.message": "No devices",
   "deviceList.empty.description": "To add a device, add a vault from this Hub to the Cryptomator app of the device and unlock it.",
@@ -341,11 +344,12 @@
   "group.addMembers.title": "Add Members",
   "group.addMembers.searchLabel": "Search by username or full name",
   "group.addMembers.selectedUser": "User(s) selected",
-
+  "group.addMembers.error.failed": "Failed to add member to group.",
 
   "group.member.remove.title" : "Remove User from Group",
   "group.member.remove.description": "Are you sure you want to remove this user from the group?",
   "group.member.remove.confirm": "Yes, remove from group",
+  "group.member.remove.error.failed": "Failed to remove from group.",
 
   "groupEditCreate.title.create" : "Create New Group",
   "groupEditCreate.title.edit" : "Group Edit",
@@ -362,6 +366,8 @@
   "groupEditCreate.invalidImageUrl": "Invalid image URL",
   "groupEditCreate.profilePictureUrl": "Profile Picture URL",
   "groupEditCreate.selectRolesPlaceholder": "Select role(s)",
+  "groupEditCreate.error.alreadyExists": "This group already exists.",
+  "groupEditCreate.error.saveFailed": "Failed to save group.",
 
   "trustDetails.trustLevel": "Trust Level {0}",
   "trustDetails.trustLevel.untrusted": "Unverified",
@@ -471,10 +477,12 @@
   "user.detail.name": "Name",
   "user.detail.roles": "Roles",
   "user.detail.username": "Username",
+  "user.detail.error.enableFailed": "Failed to update user.",
 
   "user.addGroups.title": "Add Groups",
   "user.addGroups.searchLabel": "Search by group name",
   "user.addGroups.selectedGroups": "Group(s) selected",
+  "user.addGroups.error.failed": "Failed to add to group.",
 
   "userEditCreate.title.create": "Create New User",
   "userEditCreate.title.edit": "Edit User",
@@ -504,6 +512,8 @@
   "userEditCreate.invalidImageUrl": "Invalid image URL",
   "userEditCreate.validation.required": "This field is required",
   "userEditCreate.validation.passwordMismatch": "Passwords don't match",
+  "userEditCreate.error.alreadyExists": "This user already exists.",
+  "userEditCreate.error.saveFailed": "Failed to save user.",
 
   "userList.edit.user.button": "Edit",
   "userList.userName": "Name",
@@ -590,26 +600,5 @@
 
   "trial.enterpriseFeature.title": "Enterprise Feature",
   "trial.enterpriseFeature.description": "This feature is only permanently available with an Enterprise license.",
-
-  "error.ADD_GROUP_MEMBER_FAILED": "Adding the user to the group in Keycloak failed.",
-  "error.CREATE_GROUP_FAILED": "Creating the group in Keycloak failed.",
-  "error.CREATE_USER_FAILED": "Creating the user in Keycloak failed.",
-  "error.DELETE_GROUP_FAILED": "Deleting the group in Keycloak failed.",
-  "error.DELETE_USER_FAILED": "Deleting the user in Keycloak failed.",
-  "error.DISABLE_USER_FAILED": "Disabling the user in Keycloak failed.",
-  "error.EMAIL_EXISTS": "A user with this email already exists.",
-  "error.ENABLE_USER_FAILED": "Enabling the user in Keycloak failed.",
-  "error.FEDERATED_IDENTITY_CHECK_FAILED": "Checking the user's federated identity in Keycloak failed.",
-  "error.GROUP_MEMBER_NOT_FOUND": "The user or group was not found.",
-  "error.GROUP_NAME_EXISTS": "A group with this name already exists.",
-  "error.GROUP_NOT_FOUND": "The group was not found in Keycloak.",
-  "error.READ_GROUP_MEMBERS_FAILED": "Reading the group members from Keycloak failed.",
-  "error.REMOVE_GROUP_MEMBER_FAILED": "Removing the user from the group in Keycloak failed.",
-  "error.UPDATE_GROUP_FAILED": "Updating the group in Keycloak failed.",
-  "error.UPDATE_USER_FAILED": "Updating the user in Keycloak failed.",
-  "error.UPDATE_USER_ROLES_FAILED": "Updating the user's roles in Keycloak failed.",
-  "error.USER_HAS_FEDERATED_IDENTITY": "This user is managed by an external identity provider and cannot be modified in Hub.",
-  "error.USERNAME_EXISTS": "A user with this username already exists.",
-  "error.USER_NOT_FOUND": "The user was not found in Keycloak."
 
 }

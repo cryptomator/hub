@@ -219,7 +219,7 @@
                     </button>
                   </div>
                 </div>
-                <p v-if="onSubmitError" class="mt-2 text-sm text-red-600"><ErrorMessage :error="onSubmitError" /></p>
+                <p v-if="onSubmitError" class="mt-2 text-sm text-red-600">{{ onSubmitError.message }}</p>
               </div>
             </div>
           </form>
@@ -235,11 +235,10 @@ import { CheckIcon, ChevronUpDownIcon, ExclamationTriangleIcon, EyeIcon, EyeSlas
 import { computed, onMounted, reactive, ref, shallowRef, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import backend, { asError, generateFallbackPictureUrl, isSelectableRealmRole, RealmRole, SelectableRealmRole, UserDto } from '../../common/backend';
+import backend, { asError, ConflictError, generateFallbackPictureUrl, isSelectableRealmRole, RealmRole, SelectableRealmRole, UserDto } from '../../common/backend';
 import { FormValidator } from '../../common/formvalidator';
 import { debounce } from '../../common/util';
 import BreadcrumbNav from '../BreadcrumbNav.vue';
-import ErrorMessage from '../ErrorMessage.vue';
 import FetchError from '../FetchError.vue';
 
 const props = defineProps<{
@@ -415,7 +414,11 @@ async function onSubmit() {
     }
   } catch (error: unknown) {
     console.error('Failed to save user:', error);
-    onSubmitError.value = asError(error);
+    if (error instanceof ConflictError) {
+      onSubmitError.value = new Error(t('userEditCreate.error.alreadyExists'));
+    } else {
+      onSubmitError.value = new Error(t('userEditCreate.error.saveFailed'));
+    }
   } finally {
     processing.value = false;
   }

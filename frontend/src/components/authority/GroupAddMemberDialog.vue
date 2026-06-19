@@ -15,7 +15,7 @@
                 <div class="flex flex-col p-1 mt-4">
                   <SearchInputGroup :action-title="t('common.add')" :place-holder="t('group.addMembers.searchLabel')" :on-search="searchUser" @action="addUser" />
                   <p v-if="onAddUserError" class="mt-1 text-sm text-red-900 text-right">
-                    <ErrorMessage :error="onAddUserError" />
+                    {{ t('group.addMembers.error.failed') }}
                   </p>
                 </div>
                 <div ref="scrollContainer" class="mt-4 flex flex-1 min-h-0 flex-col overflow-y-auto">
@@ -58,8 +58,7 @@ import { Dialog, DialogOverlay, DialogPanel, DialogTitle, TransitionChild, Trans
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import SearchInputGroup from '../SearchInputGroup.vue';
-import backend, { asError, AuthorityDto, UserDto } from '../../common/backend';
-import ErrorMessage from '../ErrorMessage.vue';
+import backend, { AuthorityDto, UserDto } from '../../common/backend';
 
 const props = defineProps<{ groupId: string; members: AuthorityDto[] }>();
 const emit  = defineEmits<{ saved: [added: AuthorityDto[]] }>();
@@ -124,7 +123,7 @@ async function onSubmit() {
     open.value = false;
   } catch (error) {
     console.error('Adding members failed:', error);
-    onAddUserError.value = asError(error);
+    onAddUserError.value = error instanceof Error ? error : new Error('Unknown reason');
   } finally {
     isSaving.value = false;
   }

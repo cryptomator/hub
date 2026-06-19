@@ -331,7 +331,7 @@ public class UsersResource {
 
 		User user = userRepo.findById(userRepresentation.getId());
 		if (user == null) { // user was created in Keycloak but not found in database after sync
-			throw new ErrorCodeException(ErrorCode.CREATE_USER_FAILED);
+			throw new IllegalStateException();
 		}
 
 		return Response.status(Response.Status.CREATED)
@@ -351,7 +351,7 @@ public class UsersResource {
 	public UserDto.WithDetails getUser(@PathParam("id") String userId) {
 		User user = userRepo.findByIdWithEagerDetails(userId);
 		if (user == null) {
-			throw new ErrorCodeException(ErrorCode.USER_NOT_FOUND);
+			throw new NotFoundException();
 		}
 
 
@@ -413,7 +413,7 @@ public class UsersResource {
 
 		User user = userRepo.findById(userId);
 		if (user == null) {
-			throw new ErrorCodeException(ErrorCode.USER_NOT_FOUND);
+			throw new NotFoundException();
 		}
 
 		return UserDto.justPublicInfo(user);

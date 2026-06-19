@@ -80,7 +80,7 @@
                     </button>
                   </div>
                 </div>
-                <p v-if="onSubmitError" class="mt-2 text-sm text-red-600"><ErrorMessage :error="onSubmitError" /></p>
+                <p v-if="onSubmitError" class="mt-2 text-sm text-red-600">{{ onSubmitError.message }}</p>
               </div>
             </div>
           </form>
@@ -95,11 +95,10 @@ import { ExclamationTriangleIcon, TrashIcon, UserGroupIcon } from '@heroicons/vu
 import { computed, onMounted, reactive, ref, shallowRef, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import backend, { asError, generateFallbackPictureUrl, GroupDto } from '../../common/backend';
+import backend, { asError, ConflictError, generateFallbackPictureUrl, GroupDto } from '../../common/backend';
 import { FormValidator } from '../../common/formvalidator';
 import { debounce } from '../../common/util';
 import BreadcrumbNav from '../BreadcrumbNav.vue';
-import ErrorMessage from '../ErrorMessage.vue';
 import FetchError from '../FetchError.vue';
 
 const props = defineProps<{
@@ -193,7 +192,11 @@ async function onSubmit() {
     }
   } catch (error: unknown) {
     console.error('Failed to save group:', error);
-    onSubmitError.value = asError(error);
+    if (error instanceof ConflictError) {
+      errors.value.name = t('groupEditCreate.error.alreadyExists');
+    } else {
+      onSubmitError.value = new Error(t('groupEditCreate.error.saveFailed'));
+    }
   } finally {
     processing.value = false;
   }

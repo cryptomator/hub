@@ -10,6 +10,7 @@ import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import jakarta.ws.rs.NotFoundException;
 import org.cryptomator.hub.entities.EffectiveGroupMembership;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.User;
@@ -190,7 +191,7 @@ class GroupsResourceIT {
 			Mockito.when(keycloakAuthorityPuller.createGroup(
 					Mockito.anyString(),
 					Mockito.any()
-			)).thenThrow(new ErrorCodeException(ErrorCode.GROUP_NAME_EXISTS));
+			)).thenThrow(new AlreadyExistsException());
 
 			var body = """
 					{
@@ -199,8 +200,25 @@ class GroupsResourceIT {
 					""";
 			given().contentType(ContentType.JSON).body(body)
 					.when().post("/groups")
-					.then().statusCode(409)
-					.body(is("GROUP_NAME_EXISTS"));
+					.then().statusCode(409);
+		}
+
+		@Test
+		@DisplayName("POST /groups returns 500 when Keycloak group operation fails")
+		void testCreateGroupOperationFailed() {
+			Mockito.when(keycloakAuthorityPuller.createGroup(
+					Mockito.anyString(),
+					Mockito.any()
+			)).thenThrow(new IllegalStateException());
+
+			var body = """
+					{
+						"name": "New Group"
+					}
+					""";
+			given().contentType(ContentType.JSON).body(body)
+					.when().post("/groups")
+					.then().statusCode(500);
 		}
 
 		@Test
@@ -263,7 +281,7 @@ class GroupsResourceIT {
 					Mockito.eq("nonexistent"),
 					Mockito.any(),
 					Mockito.any()
-			)).thenThrow(new ErrorCodeException(ErrorCode.GROUP_NOT_FOUND));
+			)).thenThrow(new NotFoundException());
 
 			var body = """
 					{
@@ -272,8 +290,7 @@ class GroupsResourceIT {
 					""";
 			given().contentType(ContentType.JSON).body(body)
 					.when().put("/groups/nonexistent")
-					.then().statusCode(404)
-					.body(is("GROUP_NOT_FOUND"));
+					.then().statusCode(404);
 		}
 
 		@Test
@@ -283,7 +300,7 @@ class GroupsResourceIT {
 					Mockito.eq("group1"),
 					Mockito.any(),
 					Mockito.any()
-			)).thenThrow(new ErrorCodeException(ErrorCode.GROUP_NAME_EXISTS));
+			)).thenThrow(new AlreadyExistsException());
 
 			var body = """
 					{
@@ -292,8 +309,7 @@ class GroupsResourceIT {
 					""";
 			given().contentType(ContentType.JSON).body(body)
 					.when().put("/groups/group1")
-					.then().statusCode(409)
-					.body(is("GROUP_NAME_EXISTS"));
+					.then().statusCode(409);
 		}
 
 		@Test
@@ -310,12 +326,11 @@ class GroupsResourceIT {
 		@Test
 		@DisplayName("DELETE /groups/{id} returns 404 for non-existing group")
 		void testDeleteGroupNotFound() {
-			Mockito.doThrow(new ErrorCodeException(ErrorCode.GROUP_NOT_FOUND))
+			Mockito.doThrow(new NotFoundException())
 					.when(keycloakAuthorityPuller).deleteGroup("nonexistent");
 
 			when().delete("/groups/nonexistent")
-					.then().statusCode(404)
-					.body(is("GROUP_NOT_FOUND"));
+					.then().statusCode(404);
 		}
 
 		@Test
@@ -332,23 +347,21 @@ class GroupsResourceIT {
 		@Test
 		@DisplayName("POST /groups/{groupId}/members/{userId} returns 404 for non-existing group")
 		void testAddMemberGroupNotFound() {
-			Mockito.doThrow(new ErrorCodeException(ErrorCode.GROUP_MEMBER_NOT_FOUND))
+			Mockito.doThrow(new NotFoundException())
 					.when(keycloakAuthorityPuller).addUserToGroup("nonexistent", "user1");
 
 			when().post("/groups/nonexistent/members/user1")
-					.then().statusCode(404)
-					.body(is("GROUP_MEMBER_NOT_FOUND"));
+					.then().statusCode(404);
 		}
 
 		@Test
 		@DisplayName("POST /groups/{groupId}/members/{userId} returns 404 for non-existing user")
 		void testAddMemberUserNotFound() {
-			Mockito.doThrow(new ErrorCodeException(ErrorCode.GROUP_MEMBER_NOT_FOUND))
+			Mockito.doThrow(new NotFoundException())
 					.when(keycloakAuthorityPuller).addUserToGroup("group1", "nonexistent");
 
 			when().post("/groups/group1/members/nonexistent")
-					.then().statusCode(404)
-					.body(is("GROUP_MEMBER_NOT_FOUND"));
+					.then().statusCode(404);
 		}
 
 		@Test
@@ -365,23 +378,21 @@ class GroupsResourceIT {
 		@Test
 		@DisplayName("DELETE /groups/{groupId}/members/{userId} returns 404 for non-existing group")
 		void testRemoveMemberGroupNotFound() {
-			Mockito.doThrow(new ErrorCodeException(ErrorCode.GROUP_MEMBER_NOT_FOUND))
+			Mockito.doThrow(new NotFoundException())
 					.when(keycloakAuthorityPuller).removeUserFromGroup("nonexistent", "user1");
 
 			when().delete("/groups/nonexistent/members/user1")
-					.then().statusCode(404)
-					.body(is("GROUP_MEMBER_NOT_FOUND"));
+					.then().statusCode(404);
 		}
 
 		@Test
 		@DisplayName("DELETE /groups/{groupId}/members/{userId} returns 404 for non-existing user")
 		void testRemoveMemberUserNotFound() {
-			Mockito.doThrow(new ErrorCodeException(ErrorCode.GROUP_MEMBER_NOT_FOUND))
+			Mockito.doThrow(new NotFoundException())
 					.when(keycloakAuthorityPuller).removeUserFromGroup("group1", "nonexistent");
 
 			when().delete("/groups/group1/members/nonexistent")
-					.then().statusCode(404)
-					.body(is("GROUP_MEMBER_NOT_FOUND"));
+					.then().statusCode(404);
 		}
 
 	}

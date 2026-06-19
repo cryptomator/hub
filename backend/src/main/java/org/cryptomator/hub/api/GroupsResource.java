@@ -10,6 +10,7 @@ import jakarta.validation.constraints.Size;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
@@ -104,7 +105,7 @@ public class GroupsResource {
 
 		Group group = groupRepo.findById(groupRepresentation.getId());
 		if (group == null) { // group was created in Keycloak but not found in database after sync
-			throw new ErrorCodeException(ErrorCode.CREATE_GROUP_FAILED);
+			throw new IllegalStateException();
 		}
 
 		return Response.status(Response.Status.CREATED)
@@ -124,7 +125,7 @@ public class GroupsResource {
 	public GroupDto.WithDetails getGroup(@PathParam("groupId") @ValidId String groupId) {
 		Group group = groupRepo.findByIdWithEagerDetails(groupId);
 		if (group == null) {
-			throw new ErrorCodeException(ErrorCode.GROUP_NOT_FOUND);
+			throw new NotFoundException();
 		}
 
 		List<AuthorityDto> members = group.getMembers().stream().map(AuthorityDto::fromEntity).toList();
@@ -151,7 +152,7 @@ public class GroupsResource {
 
 		Group group = groupRepo.findById(groupId);
 		if (group == null) {
-			throw new ErrorCodeException(ErrorCode.GROUP_NOT_FOUND);
+			throw new NotFoundException();
 		}
 
 		return GroupDto.fromEntity(group);

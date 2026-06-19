@@ -1,35 +1,29 @@
 import { AxiosError, AxiosResponse } from 'axios';
 import { describe, expect, it, vi } from 'vitest';
-import { asError } from '../../src/common/backend';
+import { asError, NotFoundError } from '../../src/common/backend';
 
 vi.mock('../../src/common/auth', () => ({ default: Promise.resolve({}) }));
 vi.mock('../../src/common/config', () => ({ default: {}, backendBaseURL: '/api/' }));
 
 describe('asError', () => {
-  function axiosError(data: unknown): AxiosError {
-    const response = { data: data, status: 500 } as AxiosResponse;
-    return new AxiosError('Request failed with status code 500', AxiosError.ERR_BAD_RESPONSE, undefined, undefined, response);
+  function axiosError(data: unknown, status = 500): AxiosError {
+    const response = { data: data, status } as AxiosResponse;
+    return new AxiosError(`Request failed with status code ${status}`, AxiosError.ERR_BAD_RESPONSE, undefined, undefined, response);
   }
 
-  it('prefers the error message provided by the backend', () => {
-    const error = axiosError('CREATE_USER_FAILED');
+  it('maps empty-body 404 to NotFoundError', () => {
+    const error = axiosError('', 404);
 
-    expect(asError(error).message).toEqual('CREATE_USER_FAILED');
+    expect(asError(error)).toBeInstanceOf(NotFoundError);
   });
 
-  it('falls back to the axios error message for empty response bodies', () => {
+  it('falls back to the axios error for non-404 status codes', () => {
     const error = axiosError('');
 
-    expect(asError(error).message).toEqual('Request failed with status code 500');
+    expect(asError(error)).toBe(error);
   });
 
-  it('falls back to the axios error message for non-string response bodies', () => {
-    const error = axiosError({ title: 'Constraint Violation' });
-
-    expect(asError(error).message).toEqual('Request failed with status code 500');
-  });
-
-  it('returns errors without backend message as-is', () => {
+  it('returns errors as-is', () => {
     const error = new Error('boom');
 
     expect(asError(error)).toBe(error);

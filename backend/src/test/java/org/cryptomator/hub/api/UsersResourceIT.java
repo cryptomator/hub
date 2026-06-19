@@ -9,6 +9,8 @@ import io.quarkus.test.security.oidc.OidcSecurity;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.ForbiddenException;
+import jakarta.ws.rs.NotFoundException;
 import org.cryptomator.hub.keycloak.KeycloakAuthorityPuller;
 import org.cryptomator.hub.keycloak.RealmRole;
 import org.cryptomator.hub.license.HubLicenseEntitlements;
@@ -475,8 +477,8 @@ class UsersResourceIT {
 		}
 
 		@Test
-		@DisplayName("POST /users returns 409 when username already exists")
-		void testCreateUserConflictUsername() {
+		@DisplayName("POST /users returns 409 when user already exists")
+		void testCreateUserConflict() {
 			Mockito.when(keycloakAuthorityPuller.createUser(
 					Mockito.anyString(),
 					Mockito.anyString(),
@@ -485,7 +487,7 @@ class UsersResourceIT {
 					Mockito.anyString(),
 					Mockito.any(),
 					Mockito.any()
-			)).thenThrow(new ErrorCodeException(ErrorCode.USERNAME_EXISTS));
+			)).thenThrow(new AlreadyExistsException());
 
 			var body = """
 					{
@@ -499,13 +501,12 @@ class UsersResourceIT {
 					""";
 			given().contentType(ContentType.JSON).body(body)
 					.when().post("/users")
-					.then().statusCode(409)
-					.body(is("USERNAME_EXISTS"));
+					.then().statusCode(409);
 		}
 
 		@Test
-		@DisplayName("POST /users returns 409 when email already exists")
-		void testCreateUserConflictEmail() {
+		@DisplayName("POST /users returns 500 when Keycloak user operation fails")
+		void testCreateUserOperationFailed() {
 			Mockito.when(keycloakAuthorityPuller.createUser(
 					Mockito.anyString(),
 					Mockito.anyString(),
@@ -514,12 +515,12 @@ class UsersResourceIT {
 					Mockito.anyString(),
 					Mockito.any(),
 					Mockito.any()
-			)).thenThrow(new ErrorCodeException(ErrorCode.EMAIL_EXISTS));
+			)).thenThrow(new IllegalStateException());
 
 			var body = """
 					{
 						"name": "newuser",
-						"email": "existing@example.com",
+						"email": "new@example.com",
 						"firstName": "Test",
 						"lastName": "User",
 						"password": "password123",
@@ -528,8 +529,7 @@ class UsersResourceIT {
 					""";
 			given().contentType(ContentType.JSON).body(body)
 					.when().post("/users")
-					.then().statusCode(409)
-					.body(is("EMAIL_EXISTS"));
+					.then().statusCode(500);
 		}
 
 		@Test
@@ -613,7 +613,7 @@ class UsersResourceIT {
 					Mockito.any(),
 					Mockito.any(),
 					Mockito.any()
-			)).thenThrow(new ErrorCodeException(ErrorCode.USER_NOT_FOUND));
+			)).thenThrow(new NotFoundException());
 
 			var body = """
 					{
@@ -624,8 +624,7 @@ class UsersResourceIT {
 					""";
 			given().contentType(ContentType.JSON).body(body)
 					.when().put("/users/nonexistent")
-					.then().statusCode(404)
-					.body(is("USER_NOT_FOUND"));
+					.then().statusCode(404);
 		}
 
 		@Test
@@ -638,7 +637,7 @@ class UsersResourceIT {
 					Mockito.any(),
 					Mockito.any(),
 					Mockito.any()
-			)).thenThrow(new ErrorCodeException(ErrorCode.USER_HAS_FEDERATED_IDENTITY));
+			)).thenThrow(new ForbiddenException());
 
 			var body = """
 					{
@@ -649,8 +648,7 @@ class UsersResourceIT {
 					""";
 			given().contentType(ContentType.JSON).body(body)
 					.when().put("/users/federatedUser")
-					.then().statusCode(403)
-					.body(is("USER_HAS_FEDERATED_IDENTITY"));
+					.then().statusCode(403);
 		}
 
 		@Test
@@ -663,7 +661,7 @@ class UsersResourceIT {
 					Mockito.any(),
 					Mockito.any(),
 					Mockito.any()
-			)).thenThrow(new ErrorCodeException(ErrorCode.EMAIL_EXISTS));
+			)).thenThrow(new AlreadyExistsException());
 
 			var body = """
 					{
@@ -673,8 +671,7 @@ class UsersResourceIT {
 					""";
 			given().contentType(ContentType.JSON).body(body)
 					.when().put("/users/user1")
-					.then().statusCode(409)
-					.body(is("EMAIL_EXISTS"));
+					.then().statusCode(409);
 		}
 
 		@Test
@@ -703,23 +700,21 @@ class UsersResourceIT {
 		@Test
 		@DisplayName("DELETE /users/{id} returns 404 for non-existing user")
 		void testDeleteUserNotFound() {
-			Mockito.doThrow(new ErrorCodeException(ErrorCode.USER_NOT_FOUND))
+			Mockito.doThrow(new NotFoundException())
 					.when(keycloakAuthorityPuller).deleteUser("nonexistent");
 
 			when().delete("/users/nonexistent")
-					.then().statusCode(404)
-					.body(is("USER_NOT_FOUND"));
+					.then().statusCode(404);
 		}
 
 		@Test
 		@DisplayName("DELETE /users/{id} returns 403 for federated user")
 		void testDeleteUserForbidden() {
-			Mockito.doThrow(new ErrorCodeException(ErrorCode.USER_HAS_FEDERATED_IDENTITY))
+			Mockito.doThrow(new ForbiddenException())
 					.when(keycloakAuthorityPuller).deleteUser("federatedUser");
 
 			when().delete("/users/federatedUser")
-					.then().statusCode(403)
-					.body(is("USER_HAS_FEDERATED_IDENTITY"));
+					.then().statusCode(403);
 		}
 
 	}
