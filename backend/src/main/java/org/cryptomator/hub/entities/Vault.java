@@ -140,7 +140,7 @@ public class Vault {
 			} else {
 				return Optional.empty();
 			}
-		} catch (InvalidKeySpecException e) {
+		} catch (InvalidKeySpecException _) {
 			return Optional.empty();
 		} catch (NoSuchAlgorithmException e) {
 			throw new IllegalStateException(e);

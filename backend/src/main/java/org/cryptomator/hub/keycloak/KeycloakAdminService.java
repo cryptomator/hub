@@ -287,7 +287,7 @@ public class KeycloakAdminService {
 		try {
 			groupRepo.addMember(groupId, userId);
 			effectiveGroupMembershipRepo.updateGroups(List.of(groupId));
-		} catch (PersistenceException e) { // caused by foreign key constraint violation
+		} catch (PersistenceException _) { // caused by foreign key constraint violation
 			throw new NotFoundException("Failed to add member " + userId + " to group " + groupId);
 		}
 

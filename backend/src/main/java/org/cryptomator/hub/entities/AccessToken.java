@@ -117,7 +117,7 @@ public class AccessToken {
 		public AccessToken unlock(UUID vaultId, String userId) {
 			try {
 				return find("#AccessToken.get", Parameters.with("vaultId", vaultId).and("userId", userId)).firstResult();
-			} catch (NoResultException e) {
+			} catch (NoResultException _) {
 				return null;
 			}
 		}

@@ -115,7 +115,7 @@ public class GroupsResource {
 			return Response.created(URI.create("./" + group.getId()))
 					.entity(GroupDto.fromEntity(group))
 					.build();
-		} catch (ClientErrorException e) {
+		} catch (ClientErrorException _) {
 			return Response.status(Response.Status.CONFLICT).build();
 		}
 	}

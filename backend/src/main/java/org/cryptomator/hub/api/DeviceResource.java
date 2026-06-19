@@ -130,7 +130,7 @@ public class DeviceResource {
 		Device device;
 		try {
 			device = deviceRepo.findByIdAndUser(deviceId, jwt.getSubject());
-		} catch (NoResultException e) {
+		} catch (NoResultException _) {
 			device = new Device();
 			device.setId(deviceId);
 			device.setOwner(userRepo.findById(jwt.getSubject()));

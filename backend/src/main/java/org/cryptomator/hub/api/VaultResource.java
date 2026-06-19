@@ -399,7 +399,7 @@ public class VaultResource {
 				response = response.header("Hub-Android-License", androidLicense);
 			}
 			return response.build();
-		} catch (NoResultException e) {
+		} catch (NoResultException _) {
 			eventLogger.logVaultKeyRetrieved(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.UNAUTHORIZED, ipAddress, deviceId);
 			throw new ForbiddenException("Access to this device not granted.");
 		}
