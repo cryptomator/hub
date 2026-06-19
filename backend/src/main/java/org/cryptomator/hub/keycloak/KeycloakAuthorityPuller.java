@@ -323,7 +323,7 @@ public class KeycloakAuthorityPuller {
 				LOG.warnv("Failed to delete user {0} in Keycloak. Status: {1}", userId, response.getStatus());
 				throw new IllegalStateException();
 			}
-		} catch (ProcessingException e) {
+		} catch (WebApplicationException | ProcessingException e) {
 			LOG.warnv(e, "Failed to delete user {0} in Keycloak.", userId);
 			throw new IllegalStateException(e);
 		}
@@ -572,7 +572,7 @@ public class KeycloakAuthorityPuller {
 		} catch (WebApplicationException | ProcessingException e) {
 			LOG.warnv(e, "Failed to delete group {0} in Keycloak.", groupId);
 			if (keycloakStatus(e) == 404) {
-				throw new NotFoundException();
+				return; // group already absent in KC; let the transaction commit the DB deletion
 			}
 			throw new IllegalStateException(e);
 		}
