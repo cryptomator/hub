@@ -62,6 +62,12 @@ public class Device {
 	@Column(name = "creation_time", nullable = false)
 	private Instant creationTime;
 
+	@Column(name = "last_access_time")
+	private Instant lastAccessTime;
+
+	@Column(name = "last_ip_address")
+	private String lastIpAddress;
+
 	public String getId() {
 		return id;
 	}
@@ -118,6 +124,22 @@ public class Device {
 		this.creationTime = creationTime;
 	}
 
+	public Instant getLastAccessTime() {
+		return lastAccessTime;
+	}
+
+	public void setLastAccessTime(Instant lastAccessTime) {
+		this.lastAccessTime = lastAccessTime;
+	}
+
+	public String getLastIpAddress() {
+		return lastIpAddress;
+	}
+
+	public void setLastIpAddress(String lastIpAddress) {
+		this.lastIpAddress = lastIpAddress;
+	}
+
 	@Override
 	public String toString() {
 		return "Device{" +
@@ -128,6 +150,8 @@ public class Device {
 				", publickey='" + publickey + '\'' +
 				", userPrivateKey='" + userPrivateKeys + '\'' +
 				", creationTime='" + creationTime + '\'' +
+				", lastAccessTime='" + lastAccessTime + '\'' +
+				", lastIpAddress='" + lastIpAddress + '\'' +
 				'}';
 	}
 
@@ -142,12 +166,14 @@ public class Device {
 				&& Objects.equals(this.type, other.type)
 				&& Objects.equals(this.publickey, other.publickey)
 				&& Objects.equals(this.userPrivateKeys, other.userPrivateKeys)
-				&& Objects.equals(this.creationTime, other.creationTime);
+				&& Objects.equals(this.creationTime, other.creationTime)
+				&& Objects.equals(this.lastAccessTime, other.lastAccessTime)
+				&& Objects.equals(this.lastIpAddress, other.lastIpAddress);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, owner, name, type, publickey, userPrivateKeys, creationTime);
+		return Objects.hash(id, owner, name, type, publickey, userPrivateKeys, creationTime, lastAccessTime, lastIpAddress);
 	}
 
 	@ApplicationScoped
@@ -162,6 +188,10 @@ public class Device {
 				var partial = find("#Device.allInList", Parameters.with("ids", batch));
 				return Stream.concat(result, partial.stream());
 			});
+		}
+
+		public void updateLastAccess(String deviceId, Instant timestamp, String ipAddress) {
+			update("lastAccessTime = ?1, lastIpAddress = ?2 where id = ?3", timestamp, ipAddress, deviceId);
 		}
 
 		public void deleteByOwner(String userId) {
