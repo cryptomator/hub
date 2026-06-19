@@ -66,9 +66,9 @@ CREATE INDEX "group_membership_idx_member" ON "group_membership" USING btree ("m
 
 CREATE TABLE "effective_group_membership"
 (
-	"group_id"               VARCHAR(255) NOT NULL,
+	"group_id"               VARCHAR(255) COLLATE "C" NOT NULL,
 	"intermediate_group_ids" VARCHAR[]    NOT NULL,
-	"member_id"              VARCHAR(255) NOT NULL,
+	"member_id"              VARCHAR(255) COLLATE "C" NOT NULL,
 	PRIMARY KEY ("group_id", "member_id"),
 	CONSTRAINT "EFFECTIVE_GROUP_MEMBERSHIP_CHK_NOTSAME" CHECK ("group_id" <> "member_id"),
 	CONSTRAINT "EFFECTIVE_GROUP_MEMBERSHIP_FK_GROUP" FOREIGN KEY ("group_id") REFERENCES "authority" ("id") ON DELETE CASCADE,
