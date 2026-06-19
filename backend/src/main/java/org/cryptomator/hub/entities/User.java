@@ -258,7 +258,7 @@ public class User extends Authority {
 			return user;
 		}
 
-		public Stream<User> findByIds(Collection<String> ids) {
+		public Stream<User> streamByIds(Collection<String> ids) {
 			return Batch.of(200).run(ids, Stream.empty(), (batch, result) -> {
 				var partial = find("id IN :ids", Parameters.with("ids", batch));
 				return Stream.concat(result, partial.stream());

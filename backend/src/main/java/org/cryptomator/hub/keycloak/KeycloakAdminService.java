@@ -273,7 +273,7 @@ public class KeycloakAdminService {
 
 		// Sync members
 		var keycloakMembers = groupResource.members().stream().map(UserRepresentation::getId).toList();
-		var dbMembers = userRepo.findByIds(keycloakMembers).toList();
+		var dbMembers = userRepo.streamByIds(keycloakMembers).toList();
 		dbGroup.getMembers().clear();
 		dbGroup.getMembers().addAll(dbMembers);
 		groupRepo.persist(dbGroup);

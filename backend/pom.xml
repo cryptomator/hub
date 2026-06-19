@@ -8,9 +8,9 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.jdk.version>21</project.jdk.version>
+        <project.jdk.version>25</project.jdk.version>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <quarkus.platform.version>3.27.3.1</quarkus.platform.version>
+        <quarkus.platform.version>3.33.2.1</quarkus.platform.version>
         <jwt.version>4.5.1</jwt.version>
         <compiler-plugin.version>3.15.0</compiler-plugin.version>
         <dependency-plugin.version>3.10.0</dependency-plugin.version>
@@ -22,8 +22,8 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>io.quarkus</groupId>
-                <artifactId>quarkus-universe-bom</artifactId>
+                <groupId>io.quarkus.platform</groupId>
+                <artifactId>quarkus-bom</artifactId>
                 <version>${quarkus.platform.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
@@ -98,12 +98,12 @@
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-junit5</artifactId>
+            <artifactId>quarkus-junit</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-junit5-mockito</artifactId>
+            <artifactId>quarkus-junit-mockito</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -183,7 +183,7 @@
                     </dependency>
                 </dependencies>
                 <configuration>
-                    <argLine>-javaagent:${org.mockito:mockito-core:jar} --add-opens java.base/java.lang=ALL-UNNAMED</argLine>
+                    <argLine>@{argLine} -javaagent:${org.mockito:mockito-core:jar} --add-opens java.base/java.lang=ALL-UNNAMED</argLine>
                     <systemPropertyVariables>
                         <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
                         <maven.home>${maven.home}</maven.home>
@@ -215,7 +215,7 @@
                     </dependency>
                 </dependencies>
                 <configuration>
-                    <argLine>-javaagent:${org.mockito:mockito-core:jar} --add-opens java.base/java.lang=ALL-UNNAMED</argLine>
+                    <argLine>@{argLine} -javaagent:${org.mockito:mockito-core:jar} --add-opens java.base/java.lang=ALL-UNNAMED</argLine>
                     <reportFormat>plain</reportFormat>
                     <consoleOutputReporter>
                         <disable>false</disable>
