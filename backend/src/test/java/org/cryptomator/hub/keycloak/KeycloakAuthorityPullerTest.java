@@ -43,11 +43,7 @@ class KeycloakAuthorityPullerTest {
 
 	@BeforeEach
 	void setUp() {
-		remoteUserPuller = new KeycloakAuthorityPuller();
-		remoteUserPuller.remoteUserProvider = remoteUserProvider;
-		remoteUserPuller.userRepo = userRepo;
-		remoteUserPuller.groupRepo = groupRepo;
-		remoteUserPuller.effectiveGroupMembershipRepo = effectiveGroupMembershipRepo;
+		remoteUserPuller = new KeycloakAuthorityPuller(userRepo, groupRepo, remoteUserProvider, effectiveGroupMembershipRepo);
 		persistedUsers.clear();
 		Mockito.doAnswer(invocation -> {
 			Iterable<User> iterable = invocation.getArgument(0);

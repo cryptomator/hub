@@ -53,25 +53,24 @@ public class KeycloakAdminService {
 
 	private static final Logger LOG = LoggerFactory.getLogger(KeycloakAdminService.class);
 
-	@Inject
-	Keycloak keycloak;
-
-	@Inject
-	User.Repository userRepo;
-
-	@Inject
-	Group.Repository groupRepo;
-
-	@Inject
-	EffectiveGroupMembership.Repository effectiveGroupMembershipRepo;
-
-	@Inject
-	KeycloakRealmRoles realmRoles;
-
-	@ConfigProperty(name = "hub.keycloak.realm")
-	String keycloakRealm;
+	private final Keycloak keycloak;
+	private final User.Repository userRepo;
+	private final Group.Repository groupRepo;
+	private final EffectiveGroupMembership.Repository effectiveGroupMembershipRepo;
+	private final KeycloakRealmRoles realmRoles;
+	private final String keycloakRealm;
 
 	RealmResource realm;
+
+	@Inject
+	KeycloakAdminService(Keycloak keycloak, User.Repository userRepo, Group.Repository groupRepo, EffectiveGroupMembership.Repository effectiveGroupMembershipRepo, KeycloakRealmRoles realmRoles, @ConfigProperty(name = "hub.keycloak.realm") String keycloakRealm) {
+		this.keycloak = keycloak;
+		this.userRepo = userRepo;
+		this.groupRepo = groupRepo;
+		this.effectiveGroupMembershipRepo = effectiveGroupMembershipRepo;
+		this.realmRoles = realmRoles;
+		this.keycloakRealm = keycloakRealm;
+	}
 
 	@PostConstruct
 	public void setup() {

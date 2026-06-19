@@ -33,9 +33,8 @@ class KeycloakAdminServiceTest {
 
 	@BeforeEach
 	void setUp() {
-		service = new KeycloakAdminService();
+		service = new KeycloakAdminService(null, null, null, null, realmRoles, null);
 		service.realm = realm;
-		service.realmRoles = realmRoles;
 
 		var usersResource = Mockito.mock(UsersResource.class);
 		Mockito.when(realm.users()).thenReturn(usersResource);

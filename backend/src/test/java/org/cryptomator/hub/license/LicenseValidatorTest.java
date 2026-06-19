@@ -32,13 +32,12 @@ class LicenseValidatorTest {
 	private static final String LEAF_CERTIFICATE = "MIICDDCCAb6gAwIBAgIUDMOzxJY381JjdN82cW7qd+B3vh0wBQYDK2VwME4xCzAJBgNVBAYTAkRFMRYwFAYDVQQKDA1Ta3ltYXRpYyBHbWJIMScwJQYDVQQDDB5MaWNlbnNlIEludGVybWVkaWF0ZSBDQSAoVGVzdCkwHhcNMjYwMjI2MTU0MDM2WhcNMzYwMjI0MTU0MDM2WjBIMQswCQYDVQQGEwJERTEWMBQGA1UECgwNU2t5bWF0aWMgR21iSDEhMB8GA1UEAwwYTGljZW5zZSBJc3N1ZXIgQ0EgKFRlc3QpMIGbMBAGByqGSM49AgEGBSuBBAAjA4GGAAQBiUVQ0HhZMuAOqiO2lPIT+MMSH4bcl6BOWnFn205bzTcRI9RuRdtrXVNwp/IPtjMVXTj/oW0r12HcrEdLmi9QI6QASTEByWLNTS/d94IoXmRYQTnC+RtH+H/4I1TWYw90aiig2yV0G1s0qCgAiyKswj+ST6r71NM/gepmlW3+qiv9/PWjQjBAMB0GA1UdDgQWBBSNjBwv+/iYQvpOOqz02u7xaASSITAfBgNVHSMEGDAWgBRMASsp1kiawJm8YoJ6+8/sq21X4zAFBgMrZXADQQA4Ok/+y0bdzm2RUmkHd6QFS6WbBKf9O4zz3Uc7iBMpKIq1kBlq+7TbbgMHJu+aYbODcRWT++5sx4i2OspkgOsJ";
 	private static final String LEAF_PRIVATE_KEY = "MGACAQAwEAYHKoZIzj0CAQYFK4EEACMESTBHAgEBBEIA+tBtqmK6OyXS+0ATPadXIF3mf1uwAY/ujIbhtox+dcqolusy8fR8cIVYNqbRb8wUZvbY++xn24nsDAiw6Za4NTg=";
 
-	LicenseValidator validator = new LicenseValidator();
+	LicenseValidator validator;
 
 	@BeforeEach
 	void setup() {
-		var verifierProducer = new LicenseVerifierProducer();
-		verifierProducer.licenseChainRequiredCn = "";
-		validator.verifier = verifierProducer.produceLicenseVerifier(ROOT_CERTIFICATE, INTERMEDIATE_CN);
+		var verifierProducer = new LicenseVerifierProducer("");
+		validator = new LicenseValidator(verifierProducer.produceLicenseVerifier(ROOT_CERTIFICATE, INTERMEDIATE_CN));
 	}
 
 	@Test
@@ -112,8 +111,8 @@ class LicenseValidatorTest {
 	@Test
 	@DisplayName("reject token with invalid x5c certificate chain")
 	void testRejectTokenWithInvalidX5cCertificateChain() {
-		var verifierProducer = new LicenseVerifierProducer();
-		validator.verifier = verifierProducer.produceLicenseVerifier(ROOT_CERTIFICATE, INTERMEDIATE_CN);
+		var verifierProducer = new LicenseVerifierProducer("");
+		validator = new LicenseValidator(verifierProducer.produceLicenseVerifier(ROOT_CERTIFICATE, INTERMEDIATE_CN));
 		var token = JWT.create()
 				.withHeader(Map.of("x5c", List.of(LEAF_CERTIFICATE)))
 				.withJWTId("42")
@@ -145,8 +144,8 @@ class LicenseValidatorTest {
 	@Test
 	@DisplayName("reject token with mismatching intermediate cert cn")
 	void testRejectTokenWithMismatchingIntermediateCn() {
-		var verifierProducer = new LicenseVerifierProducer();
-		validator.verifier = verifierProducer.produceLicenseVerifier(ROOT_CERTIFICATE, "some other CN");
+		var verifierProducer = new LicenseVerifierProducer("");
+		validator = new LicenseValidator(verifierProducer.produceLicenseVerifier(ROOT_CERTIFICATE, "some other CN"));
 		var token = JWT.create()
 				.withHeader(Map.of("x5c", List.of(LEAF_CERTIFICATE, INTERMEDIATE_CERTIFICATE)))
 				.withJWTId("42")

@@ -20,14 +20,18 @@ import java.util.stream.Collectors;
 @ApplicationScoped
 public class KeycloakAuthorityPuller {
 
+	private final User.Repository userRepo;
+	private final Group.Repository groupRepo;
+	private final KeycloakAuthorityProvider remoteUserProvider;
+	private final EffectiveGroupMembership.Repository effectiveGroupMembershipRepo;
+
 	@Inject
-	User.Repository userRepo;
-	@Inject
-	Group.Repository groupRepo;
-	@Inject
-	KeycloakAuthorityProvider remoteUserProvider;
-	@Inject
-	EffectiveGroupMembership.Repository effectiveGroupMembershipRepo;
+	KeycloakAuthorityPuller(User.Repository userRepo, Group.Repository groupRepo, KeycloakAuthorityProvider remoteUserProvider, EffectiveGroupMembership.Repository effectiveGroupMembershipRepo) {
+		this.userRepo = userRepo;
+		this.groupRepo = groupRepo;
+		this.remoteUserProvider = remoteUserProvider;
+		this.effectiveGroupMembershipRepo = effectiveGroupMembershipRepo;
+	}
 
 	@Scheduled(every = "{hub.keycloak.syncer-period}")
 	@WithSpan("KeycloakAuthorityPuller.sync")

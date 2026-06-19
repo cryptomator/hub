@@ -21,11 +21,14 @@ import java.time.Instant;
 @Path("/license")
 public class LicenseResource {
 
-	@Inject
-	LicenseHolder licenseHolder;
+	private final LicenseHolder licenseHolder;
+	private final EffectiveVaultAccess.Repository effectiveVaultAccessRepo;
 
 	@Inject
-	EffectiveVaultAccess.Repository effectiveVaultAccessRepo;
+	LicenseResource(LicenseHolder licenseHolder, EffectiveVaultAccess.Repository effectiveVaultAccessRepo) {
+		this.licenseHolder = licenseHolder;
+		this.effectiveVaultAccessRepo = effectiveVaultAccessRepo;
+	}
 
 	@GET
 	@Path("/user-info")

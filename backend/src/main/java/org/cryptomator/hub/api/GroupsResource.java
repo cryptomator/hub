@@ -35,14 +35,18 @@ import java.util.List;
 @Path("/groups")
 public class GroupsResource {
 
+	private final User.Repository userRepo;
+	private final Group.Repository groupRepo;
+	private final VaultAccess.Repository vaultAccessRepo;
+	private final KeycloakAdminService keycloakAdminService;
+
 	@Inject
-	User.Repository userRepo;
-	@Inject
-	Group.Repository groupRepo;
-	@Inject
-	VaultAccess.Repository vaultAccessRepo;
-	@Inject
-	KeycloakAdminService keycloakAdminService;
+	GroupsResource(User.Repository userRepo, Group.Repository groupRepo, VaultAccess.Repository vaultAccessRepo, KeycloakAdminService keycloakAdminService) {
+		this.userRepo = userRepo;
+		this.groupRepo = groupRepo;
+		this.vaultAccessRepo = vaultAccessRepo;
+		this.keycloakAdminService = keycloakAdminService;
+	}
 
 	@GET
 	@Path("/")

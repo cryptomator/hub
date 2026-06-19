@@ -54,27 +54,31 @@ public class DeviceResource {
 
 	private static final Logger LOG = Logger.getLogger(DeviceResource.class);
 
-	@Inject
-	EventLogger eventLogger;
-	@Inject
-	User.Repository userRepo;
-	@Inject
-	Device.Repository deviceRepo;
+	private final EventLogger eventLogger;
+	private final User.Repository userRepo;
+	private final Device.Repository deviceRepo;
 	/**
 	 * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
 	 */
 	@Deprecated(since = "1.3.0", forRemoval = true)
-	@Inject
-	LegacyAccessToken.Repository legacyAccessTokenRepo;
+	private final LegacyAccessToken.Repository legacyAccessTokenRepo;
 	/**
 	 * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
 	 */
 	@Deprecated(since = "1.3.0", forRemoval = true)
-	@Inject
-	LegacyDevice.Repository legacyDeviceRepo;
+	private final LegacyDevice.Repository legacyDeviceRepo;
+	private final JsonWebToken jwt;
 
 	@Inject
-	JsonWebToken jwt;
+	@SuppressWarnings("deprecation")
+	DeviceResource(EventLogger eventLogger, User.Repository userRepo, Device.Repository deviceRepo, LegacyAccessToken.Repository legacyAccessTokenRepo, LegacyDevice.Repository legacyDeviceRepo, JsonWebToken jwt) {
+		this.eventLogger = eventLogger;
+		this.userRepo = userRepo;
+		this.deviceRepo = deviceRepo;
+		this.legacyAccessTokenRepo = legacyAccessTokenRepo;
+		this.legacyDeviceRepo = legacyDeviceRepo;
+		this.jwt = jwt;
+	}
 
 	@GET
 	@Path("/")

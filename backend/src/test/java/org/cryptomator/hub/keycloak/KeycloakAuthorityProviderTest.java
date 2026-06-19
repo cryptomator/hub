@@ -55,7 +55,7 @@ class KeycloakAuthorityProviderTest {
 		Mockito.when(user2.getEmail()).thenReturn("email3001");
 		Mockito.when(user2.isEnabled()).thenReturn(false);
 
-		keycloakRemoteUserProvider = new KeycloakAuthorityProvider();
+		keycloakRemoteUserProvider = new KeycloakAuthorityProvider(null, null);
 	}
 
 	@Test

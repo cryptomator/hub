@@ -15,7 +15,6 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
-import org.cryptomator.hub.entities.Settings;
 import org.cryptomator.hub.license.LicenseHolder;
 import org.cryptomator.hub.validation.ValidJWS;
 import org.eclipse.microprofile.openapi.annotations.Operation;
@@ -27,12 +26,14 @@ import java.time.Instant;
 @Path("/billing")
 public class BillingResource {
 
+	private final LicenseHolder licenseHolder;
+	private final EffectiveVaultAccess.Repository effectiveVaultAccessRepo;
+
 	@Inject
-	LicenseHolder licenseHolder;
-	@Inject
-	EffectiveVaultAccess.Repository effectiveVaultAccessRepo;
-	@Inject
-	Settings.Repository settingsRepo;
+	BillingResource(LicenseHolder licenseHolder, EffectiveVaultAccess.Repository effectiveVaultAccessRepo) {
+		this.licenseHolder = licenseHolder;
+		this.effectiveVaultAccessRepo = effectiveVaultAccessRepo;
+	}
 
 	@GET
 	@Path("/")

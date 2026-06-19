@@ -25,7 +25,6 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.EmergencyRecoveryProcess;
 import org.cryptomator.hub.entities.RecoveredEmergencyKeyShares;
-import org.cryptomator.hub.entities.Vault;
 import org.cryptomator.hub.entities.events.EventLogger;
 import org.cryptomator.hub.util.RawJson;
 import org.cryptomator.hub.validation.ValidJWE;
@@ -42,23 +41,21 @@ import java.util.stream.Collectors;
 @Path("/emergency-access")
 public class EmergencyAccessResource {
 
-	@Inject
-	EmergencyRecoveryProcess.Repository recoverProcessRepo;
-
-	@Inject
-	RecoveredEmergencyKeyShares.Repository recoveredKeySharesRepo;
-
-	@Inject
-	Vault.Repository vaultRepo;
-
-	@Inject
-	JsonWebToken jwt;
+	private final EmergencyRecoveryProcess.Repository recoverProcessRepo;
+	private final RecoveredEmergencyKeyShares.Repository recoveredKeySharesRepo;
+	private final JsonWebToken jwt;
+	private final EventLogger eventLogger;
 
 	@Context
 	HttpServerRequest request;
 
 	@Inject
-	EventLogger eventLogger;
+	EmergencyAccessResource(EmergencyRecoveryProcess.Repository recoverProcessRepo, RecoveredEmergencyKeyShares.Repository recoveredKeySharesRepo, JsonWebToken jwt, EventLogger eventLogger) {
+		this.recoverProcessRepo = recoverProcessRepo;
+		this.recoveredKeySharesRepo = recoveredKeySharesRepo;
+		this.jwt = jwt;
+		this.eventLogger = eventLogger;
+	}
 
 	@PUT
 	@Path("/{processId}")

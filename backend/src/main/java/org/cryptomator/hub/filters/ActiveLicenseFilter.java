@@ -16,8 +16,12 @@ import org.cryptomator.hub.license.LicenseHolder;
 @ActiveLicense
 public class ActiveLicenseFilter implements ContainerRequestFilter {
 
+	private final LicenseHolder license;
+
 	@Inject
-	LicenseHolder license;
+	ActiveLicenseFilter(LicenseHolder license) {
+		this.license = license;
+	}
 
 	@Override
 	public void filter(ContainerRequestContext requestContext) {

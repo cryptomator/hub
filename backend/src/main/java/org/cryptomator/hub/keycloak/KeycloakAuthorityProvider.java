@@ -21,11 +21,14 @@ public class KeycloakAuthorityProvider {
 	//visible for testing
 	static final int MAX_COUNT_PER_REQUEST = 5_000;
 
-	@Inject
-	Keycloak keycloak;
+	private final Keycloak keycloak;
+	private final String keycloakRealm;
 
-	@ConfigProperty(name = "hub.keycloak.realm")
-	String keycloakRealm;
+	@Inject
+	KeycloakAuthorityProvider(Keycloak keycloak, @ConfigProperty(name = "hub.keycloak.realm") String keycloakRealm) {
+		this.keycloak = keycloak;
+		this.keycloakRealm = keycloakRealm;
+	}
 
 	public List<KeycloakUserDto> users() {
 		return users(keycloak.realm(keycloakRealm));

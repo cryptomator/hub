@@ -38,13 +38,11 @@ public class LicenseHolderTest {
 
 	@BeforeEach
 	public void resetTestclass() {
-		licenseHolder = new LicenseHolder();
-		licenseHolder.licenseValidator = validator;
-		licenseHolder.settingsRepo = settingsRepo;
-		licenseHolder.randomSleeper = randomSleeper;
-		licenseHolder.licenseApi = licenseApi;
-		licenseHolder.managedApiUsername = Optional.empty();
-		licenseHolder.managedApiPassword = Optional.empty();
+		licenseHolder = buildLicenseHolder(Optional.empty(), Optional.empty());
+	}
+
+	private LicenseHolder buildLicenseHolder(Optional<String> initialId, Optional<String> initialLicenseToken) {
+		return new LicenseHolder(false, initialId, initialLicenseToken, Optional.empty(), Optional.empty(), validator, randomSleeper, settingsRepo, licenseApi);
 	}
 
 	@Nested
@@ -65,8 +63,7 @@ public class LicenseHolderTest {
 		@DisplayName("call validateExistingLicense(), if DB contains existing token")
 		void testValidateExistingLicense() {
 			//to show check, that db has higher precedence
-			licenseHolderSpy.initialId = Optional.of("43");
-			licenseHolderSpy.initialLicenseToken = Optional.of("initToken");
+			licenseHolderSpy = Mockito.spy(buildLicenseHolder(Optional.of("43"), Optional.of("initToken")));
 			when(settings.getLicenseKey()).thenReturn("token");
 			when(settings.getHubId()).thenReturn("42");
 			var license = Mockito.mock(DecodedJWT.class);
@@ -87,8 +84,7 @@ public class LicenseHolderTest {
 				"null, 42"
 		}, nullValues = {"null"})
 		void testApplyInitLicense(String dbToken, String dbHubId) {
-			licenseHolderSpy.initialLicenseToken = Optional.of("token");
-			licenseHolderSpy.initialId = Optional.of("43");
+			licenseHolderSpy = Mockito.spy(buildLicenseHolder(Optional.of("43"), Optional.of("token")));
 			when(settings.getLicenseKey()).thenReturn(dbToken);
 			when(settings.getHubId()).thenReturn(dbHubId);
 			var license = Mockito.mock(DecodedJWT.class);
@@ -109,8 +105,7 @@ public class LicenseHolderTest {
 				"dbToken, null, initToken, null"
 		}, nullValues = {"null"})
 		void testRequestTrialLicense(String dbToken, String dbHubId, String initToken, String initId) {
-			licenseHolderSpy.initialLicenseToken = Optional.ofNullable(initToken);
-			licenseHolderSpy.initialId = Optional.ofNullable(initId);
+			licenseHolderSpy = Mockito.spy(buildLicenseHolder(Optional.ofNullable(initId), Optional.ofNullable(initToken)));
 			when(settings.getLicenseKey()).thenReturn(dbToken);
 			when(settings.getHubId()).thenReturn(dbHubId);
 			var license = Mockito.mock(DecodedJWT.class);
@@ -126,8 +121,7 @@ public class LicenseHolderTest {
 		@DisplayName("requestAnonTrialLicense() fails when server doesn't respond as expected")
 		@Test
 		void testFailingRequestTrialLicense() {
-			licenseHolderSpy.initialLicenseToken = Optional.empty();
-			licenseHolderSpy.initialId = Optional.empty();
+			licenseHolderSpy = Mockito.spy(buildLicenseHolder(Optional.empty(), Optional.empty()));
 			doReturn(null).when(settings).getLicenseKey();
 			doReturn(null).when(settings).getHubId();
 			doCallRealMethod().when(licenseHolderSpy).requestAnonTrialLicense(Mockito.any());

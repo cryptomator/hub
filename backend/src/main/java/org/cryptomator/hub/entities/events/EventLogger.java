@@ -11,8 +11,12 @@ import java.util.UUID;
 @ApplicationScoped
 public class EventLogger {
 
+	private final AuditEvent.Repository auditEventRepository;
+
 	@Inject
-	AuditEvent.Repository auditEventRepository;
+	EventLogger(AuditEvent.Repository auditEventRepository) {
+		this.auditEventRepository = auditEventRepository;
+	}
 
 	public void logVaultCreated(String createdBy, UUID vaultId, String vaultName, String vaultDescription) {
 		var event = new VaultCreatedEvent();

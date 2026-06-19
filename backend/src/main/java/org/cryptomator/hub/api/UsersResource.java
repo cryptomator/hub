@@ -55,30 +55,32 @@ import java.util.stream.Collectors;
 @Produces(MediaType.TEXT_PLAIN)
 public class UsersResource {
 
-	@Inject
-	AccessToken.Repository accessTokenRepo;
-	@Inject
-	EventLogger eventLogger;
-	@Inject
-	User.Repository userRepo;
-	@Inject
-	Device.Repository deviceRepo;
-	@Inject
-	Vault.Repository vaultRepo;
-	@Inject
-	EmergencyRecoveryProcess.Repository emergencyRecovery;
-	@Inject
-	WotEntry.Repository wotRepo;
-	@Inject
-	EffectiveWot.Repository effectiveWotRepo;
-	@Inject
-	AuditEvent.Repository auditEventRepo;
+	private final AccessToken.Repository accessTokenRepo;
+	private final EventLogger eventLogger;
+	private final User.Repository userRepo;
+	private final Device.Repository deviceRepo;
+	private final Vault.Repository vaultRepo;
+	private final EmergencyRecoveryProcess.Repository emergencyRecovery;
+	private final WotEntry.Repository wotRepo;
+	private final EffectiveWot.Repository effectiveWotRepo;
+	private final AuditEvent.Repository auditEventRepo;
+	private final JsonWebToken jwt;
+	private final KeycloakAdminService keycloakAdminService;
 
 	@Inject
-	JsonWebToken jwt;
-
-	@Inject
-	KeycloakAdminService keycloakAdminService;
+	UsersResource(AccessToken.Repository accessTokenRepo, EventLogger eventLogger, User.Repository userRepo, Device.Repository deviceRepo, Vault.Repository vaultRepo, EmergencyRecoveryProcess.Repository emergencyRecovery, WotEntry.Repository wotRepo, EffectiveWot.Repository effectiveWotRepo, AuditEvent.Repository auditEventRepo, JsonWebToken jwt, KeycloakAdminService keycloakAdminService) {
+		this.accessTokenRepo = accessTokenRepo;
+		this.eventLogger = eventLogger;
+		this.userRepo = userRepo;
+		this.deviceRepo = deviceRepo;
+		this.vaultRepo = vaultRepo;
+		this.emergencyRecovery = emergencyRecovery;
+		this.wotRepo = wotRepo;
+		this.effectiveWotRepo = effectiveWotRepo;
+		this.auditEventRepo = auditEventRepo;
+		this.jwt = jwt;
+		this.keycloakAdminService = keycloakAdminService;
+	}
 
 	@PUT
 	@Path("/me")

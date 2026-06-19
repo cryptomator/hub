@@ -14,11 +14,14 @@ import org.keycloak.admin.client.Keycloak;
 @Path("/version")
 public class VersionResource {
 
-	@ConfigProperty(name = "quarkus.application.version")
-	String hubVersion;
+	private final String hubVersion;
+	private final Keycloak keycloak;
 
 	@Inject
-	Keycloak keycloak;
+	VersionResource(@ConfigProperty(name = "quarkus.application.version") String hubVersion, Keycloak keycloak) {
+		this.hubVersion = hubVersion;
+		this.keycloak = keycloak;
+	}
 
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)

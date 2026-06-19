@@ -5,7 +5,6 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.quarkus.security.identity.SecurityIdentity;
 import io.vertx.core.http.HttpServerRequest;
 import jakarta.annotation.Nullable;
 import jakarta.annotation.security.RolesAllowed;
@@ -78,51 +77,42 @@ import java.util.stream.Stream;
 @Path("/vaults")
 public class VaultResource {
 
-	@Inject
-	EventLogger eventLogger;
-
-	@Inject
-	AccessToken.Repository accessTokenRepo;
-
-	@Inject
-	Group.Repository groupRepo;
-
-	@Inject
-	User.Repository userRepo;
-
-	@Inject
-	Authority.Repository authorityRepo;
-
-	@Inject
-	EffectiveVaultAccess.Repository effectiveVaultAccessRepo;
-
+	private final EventLogger eventLogger;
+	private final AccessToken.Repository accessTokenRepo;
+	private final Group.Repository groupRepo;
+	private final User.Repository userRepo;
+	private final Authority.Repository authorityRepo;
+	private final EffectiveVaultAccess.Repository effectiveVaultAccessRepo;
 	/**
 	 * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
 	 */
-	@Inject
 	@Deprecated(since = "1.3.0", forRemoval = true)
-	LegacyAccessToken.Repository legacyAccessTokenRepo;
-
-	@Inject
-	Vault.Repository vaultRepo;
-
-	@Inject
-	VaultAccess.Repository vaultAccessRepo;
-
-	@Inject
-	JsonWebToken jwt;
-
-	@Inject
-	SecurityIdentity identity;
-
-	@Inject
-	LicenseHolder license;
-
-	@Inject
-	VaultUnlockMetrics vaultUnlockMetrics;
+	private final LegacyAccessToken.Repository legacyAccessTokenRepo;
+	private final Vault.Repository vaultRepo;
+	private final VaultAccess.Repository vaultAccessRepo;
+	private final JsonWebToken jwt;
+	private final LicenseHolder license;
+	private final VaultUnlockMetrics vaultUnlockMetrics;
 
 	@Context
 	HttpServerRequest request;
+
+	@Inject
+	@SuppressWarnings("deprecation")
+	VaultResource(EventLogger eventLogger, AccessToken.Repository accessTokenRepo, Group.Repository groupRepo, User.Repository userRepo, Authority.Repository authorityRepo, EffectiveVaultAccess.Repository effectiveVaultAccessRepo, LegacyAccessToken.Repository legacyAccessTokenRepo, Vault.Repository vaultRepo, VaultAccess.Repository vaultAccessRepo, JsonWebToken jwt, LicenseHolder license, VaultUnlockMetrics vaultUnlockMetrics) {
+		this.eventLogger = eventLogger;
+		this.accessTokenRepo = accessTokenRepo;
+		this.groupRepo = groupRepo;
+		this.userRepo = userRepo;
+		this.authorityRepo = authorityRepo;
+		this.effectiveVaultAccessRepo = effectiveVaultAccessRepo;
+		this.legacyAccessTokenRepo = legacyAccessTokenRepo;
+		this.vaultRepo = vaultRepo;
+		this.vaultAccessRepo = vaultAccessRepo;
+		this.jwt = jwt;
+		this.license = license;
+		this.vaultUnlockMetrics = vaultUnlockMetrics;
+	}
 
 	@GET
 	@Path("/accessible")
