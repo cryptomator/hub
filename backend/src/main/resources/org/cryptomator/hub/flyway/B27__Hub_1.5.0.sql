@@ -335,7 +335,7 @@ CREATE TABLE "audit_event_device_register"
 (
 	"id"            BIGINT NOT NULL,
 	"registered_by" VARCHAR(255) COLLATE "C" NOT NULL,
-	"device_id"     VARCHAR(64) COLLATE "C" NOT NULL,
+	"device_id"     VARCHAR(255) COLLATE "C" NOT NULL,
 	"device_name"   VARCHAR NOT NULL,
 	"device_type"   VARCHAR(50) NOT NULL,
 	CONSTRAINT "AUDIT_EVENT_DEVICE_REGISTER_PK" PRIMARY KEY ("id"),
@@ -346,7 +346,7 @@ CREATE TABLE "audit_event_device_remove"
 (
 	"id"         BIGINT NOT NULL,
 	"removed_by" VARCHAR(255) COLLATE "C" NOT NULL,
-	"device_id"  VARCHAR(64) COLLATE "C" NOT NULL,
+	"device_id"  VARCHAR(255) COLLATE "C" NOT NULL,
 	CONSTRAINT "AUDIT_EVENT_DEVICE_REMOVE_PK" PRIMARY KEY ("id"),
 	CONSTRAINT "AUDIT_EVENT_DEVICE_REMOVE_FK_AUDIT_EVENT" FOREIGN KEY ("id") REFERENCES "audit_event" ("id") ON DELETE CASCADE
 );
