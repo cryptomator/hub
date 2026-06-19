@@ -116,8 +116,8 @@ CREATE VIEW "effective_vault_access" ("vault_id", "authority_id", "role") AS
 
 CREATE TABLE "device"
 (
-	"id"               VARCHAR(255) NOT NULL,
-	"owner_id"         VARCHAR(255) NOT NULL,
+	"id"               VARCHAR(255) COLLATE "C" NOT NULL,
+    "owner_id"         VARCHAR(255) COLLATE "C" NOT NULL,
 	"name"             VARCHAR NOT NULL,
 	"type"             VARCHAR(50) NOT NULL DEFAULT 'DESKTOP',
 	"publickey"        VARCHAR NOT NULL,        -- base64-encoded SPKI DER (RFC 5280, 4.1.2.7)
