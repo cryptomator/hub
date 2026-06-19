@@ -235,6 +235,7 @@ public class VaultResourceIT {
 					.body(is("jwe.jwe.jwe.vault1.user1"));
 
 			Mockito.verify(eventLogger).logVaultKeyRetrieved(
+					any(),
 					"user1",
 					UUID.fromString("7E57C0DE-0000-4000-8000-000100001111"),
 					VaultKeyRetrievedEvent.Result.SUCCESS,
@@ -245,13 +246,13 @@ public class VaultResourceIT {
 
 		@Test
 		@DisplayName("GET /vaults/7E57C0DE-0000-4000-8000-000100001111/access-token with remote IP and wrong device ID fails with 400")
-		void testUnlock6() throws SQLException {
+		void testUnlock6() {
 			given().header("HUB-DEVICE-ID", "d3v1c33")
 					.header("X-Forwarded-For", "5.6.7.8")
 					.when().get("/vaults/{vaultId}/access-token", "7E57C0DE-0000-4000-8000-000100001111")
 					.then().statusCode(400);
 
-			Mockito.verify(eventLogger, never()).logVaultKeyRetrieved(any(), any(), any(), any(), any());
+			Mockito.verify(eventLogger, never()).logVaultKeyRetrieved(any(), any(), any(), any(), any(), any());
 		}
 
 		@Test

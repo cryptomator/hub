@@ -391,7 +391,7 @@ public class VaultResource {
 		var ipAddress = request.remoteAddress().hostAddress();
 		try {
 			var access = legacyAccessTokenRepo.unlock(vaultId, deviceId, jwt.getSubject());
-			eventLogger.logVaultKeyRetrieved(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.SUCCESS, ipAddress, deviceId);
+			eventLogger.logVaultKeyRetrieved(Instant.now(), jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.SUCCESS, ipAddress, deviceId);
 			var response = Response.ok(access.getJwe());
 			var iosLicense = license.getEntitlements().iosLicense();
 			var androidLicense = license.getEntitlements().androidLicense();
@@ -404,7 +404,7 @@ public class VaultResource {
 			}
 			return response.build();
 		} catch (NoResultException e) {
-			eventLogger.logVaultKeyRetrieved(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.UNAUTHORIZED, ipAddress, deviceId);
+			eventLogger.logVaultKeyRetrieved(Instant.now(), jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.UNAUTHORIZED, ipAddress, deviceId);
 			throw new ForbiddenException("Access to this device not granted.");
 		}
 	}
@@ -455,7 +455,8 @@ public class VaultResource {
 
 		var access = accessTokenRepo.unlock(vaultId, jwt.getSubject());
 		if (access != null) {
-			var timestamp = eventLogger.logVaultKeyRetrieved(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.SUCCESS, ipAddress, deviceId);
+			var timestamp = Instant.now();
+			eventLogger.logVaultKeyRetrieved(timestamp, jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.SUCCESS, ipAddress, deviceId);
 			if (deviceId != null) {
 				deviceRepo.updateLastAccess(deviceId, timestamp, ipAddress);
 			}
@@ -472,7 +473,7 @@ public class VaultResource {
 			}
 			return response.build();
 		} else {
-			eventLogger.logVaultKeyRetrieved(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.UNAUTHORIZED, ipAddress, deviceId);
+			eventLogger.logVaultKeyRetrieved(Instant.now(), jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.UNAUTHORIZED, ipAddress, deviceId);
 			vaultUnlockMetrics.recordFailure();
 			throw new ForbiddenException("Access to this vault not granted.");
 		}
