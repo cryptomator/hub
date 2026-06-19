@@ -1,7 +1,6 @@
 package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
-import io.quarkus.panache.common.Parameters;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -153,15 +152,15 @@ public class EmergencyRecoveryProcess {
 	public static class Repository implements PanacheRepositoryBase<EmergencyRecoveryProcess, UUID> {
 
 		public Stream<EmergencyRecoveryProcess> findByVaultId(UUID vaultId) {
-			return find("#EmergencyRecoveryProcess.findByVaultId", Parameters.with("vaultId", vaultId)).stream();
+			return find("#EmergencyRecoveryProcess.findByVaultId", Map.of("vaultId", vaultId)).stream();
 		}
 
 		public Stream<EmergencyRecoveryProcess> findByCouncilMember(String councilMemberId) {
-			return find("#EmergencyRecoveryProcess.byCouncilMember", Parameters.with("councilMemberId", councilMemberId)).stream();
+			return find("#EmergencyRecoveryProcess.byCouncilMember", Map.of("councilMemberId", councilMemberId)).stream();
 		}
 
 		public Stream<EmergencyRecoveryProcess> findByCouncilMemberOrProcessMember(String councilMemberId) {
-			return find("#EmergencyRecoveryProcess.byCouncilMemberOrProcessMember", Parameters.with("councilMemberId", councilMemberId)).stream();
+			return find("#EmergencyRecoveryProcess.byCouncilMemberOrProcessMember", Map.of("councilMemberId", councilMemberId)).stream();
 		}
 
 		public void deleteKeySharesForCouncilMember(String councilMemberId) {

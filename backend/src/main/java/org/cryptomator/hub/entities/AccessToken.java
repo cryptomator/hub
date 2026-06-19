@@ -1,7 +1,6 @@
 package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
-import io.quarkus.panache.common.Parameters;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -15,6 +14,7 @@ import jakarta.persistence.NamedQuery;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.Table;
 
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -116,14 +116,14 @@ public class AccessToken {
 
 		public AccessToken unlock(UUID vaultId, String userId) {
 			try {
-				return find("#AccessToken.get", Parameters.with("vaultId", vaultId).and("userId", userId)).firstResult();
+				return find("#AccessToken.get", Map.of("vaultId", vaultId, "userId", userId)).firstResult();
 			} catch (NoResultException _) {
 				return null;
 			}
 		}
 
 		public void deleteByUser(String userId) {
-			delete("#AccessToken.deleteByUser", Parameters.with("userId", userId));
+			delete("#AccessToken.deleteByUser", Map.of("userId", userId));
 		}
 	}
 }

@@ -2,7 +2,6 @@ package org.cryptomator.hub.entities;
 
 import io.opentelemetry.instrumentation.annotations.WithSpan;
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
-import io.quarkus.panache.common.Parameters;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
@@ -14,6 +13,7 @@ import jakarta.persistence.Table;
 import org.hibernate.annotations.Immutable;
 
 import java.util.Collection;
+import java.util.Map;
 
 @NamedNativeQuery(name = "EffectiveGroupMembership.fullUpdate", query = """
 		INSERT INTO "effective_group_membership" ("group_id", "intermediate_group_ids", "member_id")
@@ -105,7 +105,7 @@ public class EffectiveGroupMembership {
 		@WithSpan("EffectiveGroupMembership.Repository.updateUsers")
 		public void updateUsers(Collection<String> userIds) {
 			Batch.of(200).run(userIds, batch -> {
-				delete("#EffectiveGroupMembership.deleteUsers", Parameters.with("userIds", batch));
+				delete("#EffectiveGroupMembership.deleteUsers", Map.of("userIds", batch));
 				getEntityManager()
 						.createNamedQuery("EffectiveGroupMembership.updateUsers")
 						.setParameter("userIds", batch)

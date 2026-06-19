@@ -1,7 +1,6 @@
 package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
-import io.quarkus.panache.common.Parameters;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
@@ -18,6 +17,7 @@ import org.hibernate.annotations.Immutable;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 @NamedNativeQuery(name = "Group.addMember", query = """
@@ -63,7 +63,7 @@ public class Group extends Authority {
 					FROM Group g
 					LEFT JOIN FETCH g.members
 					WHERE g.id = :id
-					""", Parameters.with("id", id)).singleResultOptional().orElse(null);
+					""", Map.of("id", id)).singleResultOptional().orElse(null);
 			if (group == null) {
 				return null;
 			}
@@ -73,7 +73,7 @@ public class Group extends Authority {
 		}
 
 		public long deleteByIds(Collection<String> ids) {
-			return Batch.of(200).run(ids, 0L, (batch, result) -> result + delete("id IN :ids", Parameters.with("ids", batch)));
+			return Batch.of(200).run(ids, 0L, (batch, result) -> result + delete("id IN :ids", Map.of("ids", batch)));
 		}
 
 		/**

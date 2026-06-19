@@ -1,7 +1,6 @@
 package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
-import io.quarkus.panache.common.Parameters;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
@@ -298,20 +297,20 @@ public class Vault {
 	public static class Repository implements PanacheRepositoryBase<Vault, UUID> {
 
 		public Stream<Vault> findAccessibleByUser(String userId) {
-			return find("#Vault.accessibleByUser", Parameters.with("userId", userId)).stream();
+			return find("#Vault.accessibleByUser", Map.of("userId", userId)).stream();
 		}
 
 		public Stream<Vault> findRecoverable(String userId) {
-			return find("#Vault.recoverableByUser", Parameters.with("councilMemberId", userId)).stream();
+			return find("#Vault.recoverableByUser", Map.of("councilMemberId", userId)).stream();
 		}
 
 		public Stream<Vault> findAccessibleByUser(String userId, VaultAccess.Role role) {
-			return find("#Vault.accessibleByUserAndRole", Parameters.with("userId", userId).and("role", role)).stream();
+			return find("#Vault.accessibleByUserAndRole", Map.of("userId", userId, "role", role)).stream();
 		}
 
 		public Stream<Vault> findAllInList(List<UUID> ids) {
 			return Batch.of(200).run(ids, Stream.of(), (batch, result) -> {
-				Stream<Vault> partialResult = find("#Vault.allInList", Parameters.with("ids", batch)).stream();
+				Stream<Vault> partialResult = find("#Vault.allInList", Map.of("ids", batch)).stream();
 				return Stream.concat(result, partialResult);
 			});
 		}

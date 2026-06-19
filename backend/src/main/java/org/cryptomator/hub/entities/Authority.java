@@ -1,7 +1,6 @@
 package org.cryptomator.hub.entities;
 
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
-import io.quarkus.panache.common.Parameters;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorColumn;
@@ -13,6 +12,7 @@ import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -84,12 +84,12 @@ public class Authority {
 	public static class Repository implements PanacheRepositoryBase<Authority, String> {
 
 		public Stream<Authority> byName(String name) {
-			return find("#Authority.byName", Parameters.with("name", '%' + name.toLowerCase() + '%')).stream();
+			return find("#Authority.byName", Map.of("name", '%' + name.toLowerCase() + '%')).stream();
 		}
 
 		public Stream<Authority> findAllInList(Collection<String> ids) {
 			return Batch.of(200).run(ids, Stream.empty(), (batch, result) -> {
-				var partial = find("WHERE id IN :ids", Parameters.with("ids", batch));
+				var partial = find("WHERE id IN :ids", Map.of("ids", batch));
 				return Stream.concat(result, partial.stream());
 			});
 		}
