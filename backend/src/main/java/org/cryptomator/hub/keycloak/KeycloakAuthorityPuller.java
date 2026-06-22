@@ -44,6 +44,8 @@ import java.util.stream.Collectors;
 @ApplicationScoped
 public class KeycloakAuthorityPuller {
 
+	private static final Logger LOG = Logger.getLogger(KeycloakAuthorityPuller.class);
+
 	private final Keycloak keycloak;
 	private final User.Repository userRepo;
 	private final Group.Repository groupRepo;
@@ -51,14 +53,19 @@ public class KeycloakAuthorityPuller {
 	private final EffectiveGroupMembership.Repository effectiveGroupMembershipRepo;
 	private final KeycloakRealmRoles realmRoles;
 
+	// visible for testing
+	RealmResource realm;
+
 	@Inject
-	KeycloakAuthorityPuller(Keycloak keycloak, User.Repository userRepo, Group.Repository groupRepo, KeycloakAuthorityProvider remoteUserProvider, EffectiveGroupMembership.Repository effectiveGroupMembershipRepo, KeycloakRealmRoles realmRoles) {
+	KeycloakAuthorityPuller(Keycloak keycloak, User.Repository userRepo, Group.Repository groupRepo, KeycloakAuthorityProvider remoteUserProvider, EffectiveGroupMembership.Repository effectiveGroupMembershipRepo, KeycloakRealmRoles realmRoles, @ConfigProperty(name = "hub.keycloak.realm") String keycloakRealm) {
 		this.keycloak = keycloak;
 		this.userRepo = userRepo;
 		this.groupRepo = groupRepo;
 		this.remoteUserProvider = remoteUserProvider;
 		this.effectiveGroupMembershipRepo = effectiveGroupMembershipRepo;
 		this.realmRoles = realmRoles;
+
+		this.realm = keycloak.realm(keycloakRealm);
 	}
 
 	@Scheduled(every = "{hub.keycloak.syncer-period}")
