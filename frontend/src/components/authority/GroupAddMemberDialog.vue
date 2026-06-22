@@ -15,7 +15,7 @@
                 <div class="flex flex-col p-1 mt-4">
                   <SearchInputGroup :action-title="t('common.add')" :place-holder="t('group.addMembers.searchLabel')" :on-search="searchUser" @action="addUser" />
                   <p v-if="onAddUserError" class="mt-1 text-sm text-red-900 text-right">
-                    {{ t('common.unexpectedError', [onAddUserError.message]) }}
+                    {{ t('group.addMembers.error.failed') }}
                   </p>
                 </div>
                 <div ref="scrollContainer" class="mt-4 flex flex-1 min-h-0 flex-col overflow-y-auto">
@@ -123,7 +123,7 @@ async function onSubmit() {
     open.value = false;
   } catch (error) {
     console.error('Adding members failed:', error);
-    onAddUserError.value = error instanceof Error ? error : new Error('Unknown Error');
+    onAddUserError.value = error instanceof Error ? error : new Error('Unknown reason');
   } finally {
     isSaving.value = false;
   }
@@ -131,6 +131,7 @@ async function onSubmit() {
 
 function show() {
   newMembers.value = [];
+  onAddUserError.value = undefined;
   open.value = true;
 }
 
