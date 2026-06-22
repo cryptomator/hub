@@ -43,7 +43,7 @@
                   </button>
                 </div>
                 <p v-if="onDisableUserError != null" class="text-sm text-red-900 px-4 sm:px-6 text-right bg-red-50">
-                  {{ t('common.unexpectedError', [onDisableUserError.message]) }}
+                  {{ t('disableUserDialog.error.failed') }}
                 </p>
               </form>
             </DialogPanel>
@@ -99,7 +99,7 @@ async function disableUser() {
     open.value = false;
   } catch (error) {
     console.error('Disabling user failed.', error);
-    onDisableUserError.value = error instanceof Error ? error : new Error('Unknown Error');
+    onDisableUserError.value = error instanceof Error ? error : new Error('Unknown reason');
   }
 }
 </script>

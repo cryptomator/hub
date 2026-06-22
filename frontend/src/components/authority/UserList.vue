@@ -163,7 +163,7 @@ import { EllipsisVerticalIcon } from '@heroicons/vue/20/solid';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter, useRoute } from 'vue-router';
-import backend from '../../common/backend';
+import backend, { asError } from '../../common/backend';
 import userdata from '../../common/userdata';
 import UserDeleteDialog from './UserDeleteDialog.vue';
 import FetchError from '../FetchError.vue';
@@ -218,7 +218,7 @@ async function fetchData() {
   try {
     users.value = await backend.users.listAll();
   } catch (error) {
-    onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
+    onFetchError.value = asError(error);
   } finally {
     loading.value = false;
   }

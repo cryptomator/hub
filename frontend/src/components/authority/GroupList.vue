@@ -157,7 +157,7 @@ import { EllipsisVerticalIcon } from '@heroicons/vue/20/solid';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
-import backend, { GroupDto } from '../../common/backend';
+import backend, { asError, GroupDto } from '../../common/backend';
 import FetchError from '../FetchError.vue';
 import GroupDeleteDialog from './GroupDeleteDialog.vue';
 
@@ -204,7 +204,7 @@ async function fetchData() {
   try {
     groups.value = await backend.groups.listAll();
   } catch (error) {
-    onFetchError.value = error instanceof Error ? error : new Error('Unknown Error');
+    onFetchError.value = asError(error);
   } finally {
     loading.value = false;
   }

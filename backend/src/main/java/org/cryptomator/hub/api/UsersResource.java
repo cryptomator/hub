@@ -8,11 +8,9 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
-import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
@@ -33,7 +31,7 @@ import org.cryptomator.hub.entities.WotEntry;
 import org.cryptomator.hub.entities.events.AuditEvent;
 import org.cryptomator.hub.entities.events.EventLogger;
 import org.cryptomator.hub.entities.events.VaultKeyRetrievedEvent;
-import org.cryptomator.hub.keycloak.KeycloakAdminService;
+import org.cryptomator.hub.keycloak.KeycloakAuthorityPuller;
 import org.cryptomator.hub.keycloak.RealmRole;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.Operation;
@@ -65,10 +63,10 @@ public class UsersResource {
 	private final EffectiveWot.Repository effectiveWotRepo;
 	private final AuditEvent.Repository auditEventRepo;
 	private final JsonWebToken jwt;
-	private final KeycloakAdminService keycloakAdminService;
+	private final KeycloakAuthorityPuller keycloakAuthorityPuller;
 
 	@Inject
-	UsersResource(AccessToken.Repository accessTokenRepo, EventLogger eventLogger, User.Repository userRepo, Device.Repository deviceRepo, Vault.Repository vaultRepo, EmergencyRecoveryProcess.Repository emergencyRecovery, WotEntry.Repository wotRepo, EffectiveWot.Repository effectiveWotRepo, AuditEvent.Repository auditEventRepo, JsonWebToken jwt, KeycloakAdminService keycloakAdminService) {
+	UsersResource(AccessToken.Repository accessTokenRepo, EventLogger eventLogger, User.Repository userRepo, Device.Repository deviceRepo, Vault.Repository vaultRepo, EmergencyRecoveryProcess.Repository emergencyRecovery, WotEntry.Repository wotRepo, EffectiveWot.Repository effectiveWotRepo, AuditEvent.Repository auditEventRepo, JsonWebToken jwt, KeycloakAuthorityPuller keycloakAuthorityPuller) {
 		this.accessTokenRepo = accessTokenRepo;
 		this.eventLogger = eventLogger;
 		this.userRepo = userRepo;
@@ -79,7 +77,7 @@ public class UsersResource {
 		this.effectiveWotRepo = effectiveWotRepo;
 		this.auditEventRepo = auditEventRepo;
 		this.jwt = jwt;
-		this.keycloakAdminService = keycloakAdminService;
+		this.keycloakAuthorityPuller = keycloakAuthorityPuller;
 	}
 
 	@PUT
@@ -174,20 +172,12 @@ public class UsersResource {
 	@NoCache
 	@Transactional
 	@Operation(summary = "get the logged-in user")
-	@Parameter(name = "withLastAccess", in = ParameterIn.QUERY, description = "adds last access values to the devices (if present)")
 	@APIResponse(responseCode = "200", description = "returns the current user")
 	@APIResponse(responseCode = "404", description = "no user matching the subject of the JWT passed as Bearer Token")
-	public UserDto getMe(@QueryParam("withDevices") boolean withDevices, @QueryParam("withLastAccess") boolean withLastAccess) {
+	public UserDto getMe(@QueryParam("withDevices") boolean withDevices) {
 		User user = userRepo.findById(jwt.getSubject());
 		Set<DeviceResource.DeviceDto> deviceDtos;
-		if (withLastAccess) {
-			var devices = user.getDevices().stream().collect(Collectors.toMap(Device::getId, Function.identity()));
-			var events = auditEventRepo.findLastVaultKeyRetrieve(devices.keySet()).collect(Collectors.toMap(VaultKeyRetrievedEvent::getDeviceId, Function.identity()));
-			deviceDtos = devices.values().stream().map(d -> {
-				var event = events.get(d.getId());
-				return DeviceResource.DeviceDto.fromEntity(d, event);
-			}).collect(Collectors.toSet());
-		} else if (withDevices) {
+		if (withDevices) {
 			deviceDtos = user.getDevices().stream().map(DeviceResource.DeviceDto::fromEntity).collect(Collectors.toSet());
 		} else {
 			deviceDtos = Set.of();
@@ -210,13 +200,22 @@ public class UsersResource {
 	@APIResponse(responseCode = "404", description = "no user matching the subject of the JWT passed as Bearer Token")
 	public UserDto getMeWithLegacyDevicesAndAccess() {
 		User user = userRepo.findById(jwt.getSubject());
+		var deviceDtos = legacyDevicesWithLastAccess(user);
+		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getLanguage(), user.isEnabled(), deviceDtos, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
+	}
+
+	/**
+	 * Loads a user's legacy devices with their last access values derived from audit events.
+	 *
+	 * @deprecated to be removed in <a href="https://github.com/cryptomator/hub/issues/333">#333</a>
+	 */
+	@Deprecated(since = "1.3.0", forRemoval = true)
+	private Set<DeviceResource.DeviceDto> legacyDevicesWithLastAccess(User user) {
 		var legacyDevices = user.getLegacyDevices().stream().collect(Collectors.toMap(LegacyDevice::getId, Function.identity()));
 		var events = auditEventRepo.findLastVaultKeyRetrieve(legacyDevices.keySet()).collect(Collectors.toMap(VaultKeyRetrievedEvent::getDeviceId, Function.identity()));
-		var deviceDtos = legacyDevices.values().stream().map(d -> {
-			var event = events.get(d.getId());
-			return DeviceResource.DeviceDto.fromEntity(d, event);
-		}).collect(Collectors.toSet());
-		return new UserDto(user.getId(), user.getName(), user.getPictureUrl(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getLanguage(), user.isEnabled(), deviceDtos, user.getEcdhPublicKey(), user.getEcdsaPublicKey(), user.getPrivateKeys(), user.getSetupCode());
+		return legacyDevices.values().stream()
+				.map(d -> DeviceResource.DeviceDto.fromEntity(d, events.get(d.getId())))
+				.collect(Collectors.toSet());
 	}
 
 	@POST
@@ -319,36 +318,28 @@ public class UsersResource {
 	@APIResponse(responseCode = "400", description = "invalid input")
 	@APIResponse(responseCode = "409", description = "user already exists")
 	public Response createUser(@Valid @NotNull CreateUserDto dto) {
-		try {
-			var userRepresentation = keycloakAdminService.createUser(
-					dto.name(),
-					dto.email(),
-					dto.firstName(),
-					dto.lastName(),
-					dto.password(),
-					dto.pictureUrl(),
-					dto.groupIds()
-			);
+		var userRepresentation = keycloakAuthorityPuller.createUser(
+				dto.name(),
+				dto.email(),
+				dto.firstName(),
+				dto.lastName(),
+				dto.password(),
+				dto.pictureUrl(),
+				dto.groupIds()
+		);
 
-			if (!dto.realmRoles().isEmpty()) {
-				keycloakAdminService.updateUserRoles(userRepresentation.getId(), dto.realmRoles());
-			}
-
-			User user = userRepo.findById(userRepresentation.getId());
-			if (user == null) {
-				throw new InternalServerErrorException("User was created in Keycloak but not found in database after sync");
-			}
-
-			return Response.created(URI.create("./" + user.getId()))
-					.entity(UserDto.justPublicInfo(user))
-					.build();
-		} catch (ClientErrorException e) {
-			// Return 409 with specific error message (EMAIL_EXISTS or USERNAME_EXISTS)
-			return Response.status(Response.Status.CONFLICT)
-					.entity(e.getMessage())
-					.type(MediaType.TEXT_PLAIN)
-					.build();
+		if (!dto.realmRoles().isEmpty()) {
+			keycloakAuthorityPuller.updateUserRoles(userRepresentation.getId(), dto.realmRoles());
 		}
+
+		User user = userRepo.findById(userRepresentation.getId());
+		if (user == null) { // user was created in Keycloak but not found in database after sync
+			throw new IllegalStateException();
+		}
+
+		return Response.status(Response.Status.CREATED)
+				.entity(UserDto.justPublicInfo(user))
+				.build();
 	}
 
 	@GET
@@ -363,7 +354,7 @@ public class UsersResource {
 	public UserDto.WithDetails getUser(@PathParam("id") String userId) {
 		User user = userRepo.findByIdWithEagerDetails(userId);
 		if (user == null) {
-			throw new NotFoundException("User not found: " + userId);
+			throw new NotFoundException();
 		}
 
 
@@ -382,14 +373,11 @@ public class UsersResource {
 				.map(DeviceResource.DeviceDto::fromEntity)
 				.collect(Collectors.toSet());
 
-		// Fetch legacy devices
-		@SuppressWarnings("removal")
-		Set<DeviceResource.DeviceDto> legacyDevices = user.getLegacyDevices().stream()
-				.map(DeviceResource.DeviceDto::fromEntity)
-				.collect(Collectors.toSet());
+		// Fetch legacy devices with last access (audit-derived, see #333)
+		var legacyDevices = legacyDevicesWithLastAccess(user);
 
 		// realm roles are not persisted in the Hub DB; the detailed view always reads them through from Keycloak:
-		var realmRoles = keycloakAdminService.realmRolesOf(userId);
+		var realmRoles = keycloakAuthorityPuller.realmRolesOf(userId);
 
 		return UserDto.justPublicInfo(user).withDetails(
 				groups,
@@ -410,8 +398,9 @@ public class UsersResource {
 	@APIResponse(responseCode = "200", description = "user updated")
 	@APIResponse(responseCode = "403", description = "user has federated identity and cannot be modified")
 	@APIResponse(responseCode = "404", description = "user not found")
+	@APIResponse(responseCode = "409", description = "email already exists")
 	public UserDto updateUser(@PathParam("id") String userId, @Valid @NotNull UpdateUserDto dto) {
-		keycloakAdminService.updateUser(
+		keycloakAuthorityPuller.updateUser(
 				userId,
 				dto.email(),
 				dto.firstName(),
@@ -420,11 +409,11 @@ public class UsersResource {
 				dto.pictureUrl()
 		);
 
-		keycloakAdminService.updateUserRoles(userId, dto.realmRoles());
+		keycloakAuthorityPuller.updateUserRoles(userId, dto.realmRoles());
 
 		User user = userRepo.findById(userId);
 		if (user == null) {
-			throw new NotFoundException("User not found after update: " + userId);
+			throw new NotFoundException();
 		}
 
 		return UserDto.justPublicInfo(user);
@@ -438,7 +427,7 @@ public class UsersResource {
 	@Operation(summary = "enable or disable a user")
 	@APIResponse(responseCode = "204", description = "user updated")
 	public Response setUserEnabled(@PathParam("id") String userId, boolean enabled) {
-		keycloakAdminService.setUserEnabled(userId, enabled);
+		keycloakAuthorityPuller.setUserEnabled(userId, enabled);
 		return Response.noContent().build();
 	}
 
@@ -451,7 +440,7 @@ public class UsersResource {
 	@APIResponse(responseCode = "403", description = "user has federated identity and cannot be deleted")
 	@APIResponse(responseCode = "404", description = "user not found")
 	public Response deleteUser(@PathParam("id") String userId) {
-		keycloakAdminService.deleteUser(userId);
+		keycloakAuthorityPuller.deleteUser(userId);
 		return Response.noContent().build();
 	}
 

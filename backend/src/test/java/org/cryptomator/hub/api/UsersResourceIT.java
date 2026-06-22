@@ -9,11 +9,10 @@ import io.quarkus.test.security.oidc.OidcSecurity;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.ClientErrorException;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.core.Response;
-import org.cryptomator.hub.keycloak.KeycloakAdminService;
+import org.cryptomator.hub.keycloak.KeycloakAuthorityPuller;
+import org.cryptomator.hub.keycloak.RealmRole;
 import org.cryptomator.hub.license.HubLicenseEntitlements;
 import org.cryptomator.hub.license.LicenseHolder;
 import org.junit.jupiter.api.AfterAll;
@@ -58,7 +57,7 @@ class UsersResourceIT {
 	LicenseHolder licenseHolder;
 
 	@InjectMock
-	KeycloakAdminService keycloakAdminService;
+	KeycloakAuthorityPuller keycloakAuthorityPuller;
 
 	@BeforeAll
 	static void beforeAll() {
@@ -91,30 +90,15 @@ class UsersResourceIT {
 
 		@Test
 		@DisplayName("GET /users/me?withDevices=true returns 200")
-		void testGetMe2() throws SQLException {
-			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
-				s.execute("""
-						INSERT INTO "audit_event" (id, timestamp, type) VALUES (30000, '2020-02-20T20:20:24.242Z', 'VAULT_KEY_RETRIEVE');
-						INSERT INTO "audit_event" (id, timestamp, type) VALUES (30001, '2020-02-20T20:20:24.242Z', 'VAULT_KEY_RETRIEVE');
-						INSERT INTO "audit_event_vault_key_retrieve" (id, retrieved_by, vault_id, result, device_id, ip_address) VALUES (30000, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'SUCCESS', 'device1', '1.2.3.4');
-						INSERT INTO "audit_event_vault_key_retrieve" (id, retrieved_by, vault_id, result, device_id, ip_address) VALUES (30001, 'user1', '7E57C0DE-0000-4000-8000-000100001111', 'SUCCESS', 'legacyDevice1', '1.2.3.4');
-						""");
-			}
-
+		void testGetMe2() {
 			when().get("/users/me?withDevices=true")
 					.then().statusCode(200)
 					.body("id", is("user1"))
-					.body("devices.find { it.id == 'device1' }.lastAccessTime", nullValue())
-					.body("devices.find { it.id == 'device1' }.lastIpAddress", nullValue())
+					.body("devices.find { it.id == 'device1' }.lastAccessTime", equalTo("2020-02-20T20:20:24.242Z"))
+					.body("devices.find { it.id == 'device1' }.lastIpAddress", equalTo("1.2.3.4"))
 					.body("devices.find { it.id == 'device1' }.legacyDevice", equalTo(false))
+					.body("devices.find { it.id == 'device3' }.lastAccessTime", nullValue())
 					.body("devices.find { it.id == 'legacyDevice1' }", nullValue());
-
-			try (var c = dataSource.getConnection(); var s = c.createStatement()) {
-				s.execute("""
-						DELETE FROM "audit_event" WHERE id=30000;
-						DELETE FROM "audit_event" WHERE id=30001;
-						""");
-			}
 		}
 
 		@Test
@@ -379,7 +363,7 @@ class UsersResourceIT {
 
 		@BeforeEach
 		void resetMocks() {
-			Mockito.reset(keycloakAdminService);
+			Mockito.reset(keycloakAuthorityPuller);
 		}
 
 		@BeforeAll
@@ -417,7 +401,7 @@ class UsersResourceIT {
 			userRep.setUsername("newuser");
 			userRep.setEmail("newuser@example.com");
 
-			Mockito.when(keycloakAdminService.createUser(
+			Mockito.when(keycloakAuthorityPuller.createUser(
 					Mockito.eq("newuser"),
 					Mockito.eq("newuser@example.com"),
 					Mockito.eq("New"),
@@ -443,9 +427,44 @@ class UsersResourceIT {
 		}
 
 		@Test
-		@DisplayName("POST /users returns 409 when username already exists")
-		void testCreateUserConflictUsername() {
-			Mockito.when(keycloakAdminService.createUser(
+		@DisplayName("POST /users assigns realm roles when provided")
+		void testCreateUserWithRealmRolesSuccess() {
+			var userRep = new UserRepresentation();
+			userRep.setId("newUserId123");
+			userRep.setUsername("newuser");
+			userRep.setEmail("newuser@example.com");
+
+			Mockito.when(keycloakAuthorityPuller.createUser(
+					Mockito.eq("newuser"),
+					Mockito.eq("newuser@example.com"),
+					Mockito.eq("New"),
+					Mockito.eq("User"),
+					Mockito.eq("password123"),
+					Mockito.isNull(),
+					Mockito.isNull()
+			)).thenReturn(userRep);
+
+			var body = """
+					{
+						"name": "newuser",
+						"email": "newuser@example.com",
+						"firstName": "New",
+						"lastName": "User",
+						"password": "password123",
+						"realmRoles": ["create-vaults"]
+					}
+					""";
+			given().contentType(ContentType.JSON).body(body)
+					.when().post("/users")
+					.then().statusCode(201);
+
+			Mockito.verify(keycloakAuthorityPuller).updateUserRoles("newUserId123", Set.of(RealmRole.CREATE_VAULTS));
+		}
+
+		@Test
+		@DisplayName("POST /users returns 409 when user already exists")
+		void testCreateUserConflict() {
+			Mockito.when(keycloakAuthorityPuller.createUser(
 					Mockito.anyString(),
 					Mockito.anyString(),
 					Mockito.anyString(),
@@ -453,7 +472,7 @@ class UsersResourceIT {
 					Mockito.anyString(),
 					Mockito.any(),
 					Mockito.any()
-			)).thenThrow(new ClientErrorException("USERNAME_EXISTS", Response.Status.CONFLICT));
+			)).thenThrow(new AlreadyExistsException());
 
 			var body = """
 					{
@@ -471,9 +490,9 @@ class UsersResourceIT {
 		}
 
 		@Test
-		@DisplayName("POST /users returns 409 when email already exists")
-		void testCreateUserConflictEmail() {
-			Mockito.when(keycloakAdminService.createUser(
+		@DisplayName("POST /users returns 500 when Keycloak user operation fails")
+		void testCreateUserOperationFailed() {
+			Mockito.when(keycloakAuthorityPuller.createUser(
 					Mockito.anyString(),
 					Mockito.anyString(),
 					Mockito.anyString(),
@@ -481,12 +500,12 @@ class UsersResourceIT {
 					Mockito.anyString(),
 					Mockito.any(),
 					Mockito.any()
-			)).thenThrow(new ClientErrorException("EMAIL_EXISTS", Response.Status.CONFLICT));
+			)).thenThrow(new IllegalStateException());
 
 			var body = """
 					{
 						"name": "newuser",
-						"email": "existing@example.com",
+						"email": "new@example.com",
 						"firstName": "Test",
 						"lastName": "User",
 						"password": "password123",
@@ -495,7 +514,7 @@ class UsersResourceIT {
 					""";
 			given().contentType(ContentType.JSON).body(body)
 					.when().post("/users")
-					.then().statusCode(409);
+					.then().statusCode(500);
 		}
 
 		@Test
@@ -512,11 +531,14 @@ class UsersResourceIT {
 		}
 
 		@Test
-		@DisplayName("GET /users/{id} returns 200 for existing user")
+		@DisplayName("GET /users/{id} returns 200 for existing user with device last access")
 		void testGetUserSuccess() {
 			when().get("/users/user1")
 					.then().statusCode(200)
-					.body("id", is("user1"));
+					.body("id", is("user1"))
+					.body("devices.find { it.id == 'device1' }.lastAccessTime", equalTo("2020-02-20T20:20:24.242Z"))
+					.body("devices.find { it.id == 'device1' }.lastIpAddress", equalTo("1.2.3.4"))
+					.body("devices.find { it.id == 'device3' }.lastAccessTime", nullValue());
 		}
 
 		@Test
@@ -529,13 +551,13 @@ class UsersResourceIT {
 		@Test
 		@DisplayName("GET /users/{id} returns realm roles fetched from Keycloak")
 		void testGetUserReturnsRoles() {
-			Mockito.when(keycloakAdminService.realmRolesOf("user1")).thenReturn(Set.of("user", "admin"));
+			Mockito.when(keycloakAuthorityPuller.realmRolesOf("user1")).thenReturn(Set.of("user", "admin"));
 
 			when().get("/users/user1")
 					.then().statusCode(200)
 					.body("realmRoles", containsInAnyOrder("user", "admin"));
 
-			Mockito.verify(keycloakAdminService).realmRolesOf("user1");
+			Mockito.verify(keycloakAuthorityPuller).realmRolesOf("user1");
 		}
 
 		@Test
@@ -548,7 +570,7 @@ class UsersResourceIT {
 			userRep.setFirstName("Updated");
 			userRep.setLastName("Name");
 
-			Mockito.when(keycloakAdminService.updateUser(
+			Mockito.when(keycloakAuthorityPuller.updateUser(
 					Mockito.eq("user1"),
 					Mockito.isNull(),
 					Mockito.eq("Updated"),
@@ -572,14 +594,14 @@ class UsersResourceIT {
 		@Test
 		@DisplayName("PUT /users/{id} returns 404 for non-existing user")
 		void testUpdateUserNotFound() {
-			Mockito.when(keycloakAdminService.updateUser(
+			Mockito.when(keycloakAuthorityPuller.updateUser(
 					Mockito.eq("nonexistent"),
 					Mockito.any(),
 					Mockito.any(),
 					Mockito.any(),
 					Mockito.any(),
 					Mockito.any()
-			)).thenThrow(new NotFoundException("User not found"));
+			)).thenThrow(new NotFoundException());
 
 			var body = """
 					{
@@ -596,14 +618,14 @@ class UsersResourceIT {
 		@Test
 		@DisplayName("PUT /users/{id} returns 403 for federated user")
 		void testUpdateUserForbidden() {
-			Mockito.when(keycloakAdminService.updateUser(
+			Mockito.when(keycloakAuthorityPuller.updateUser(
 					Mockito.eq("federatedUser"),
 					Mockito.any(),
 					Mockito.any(),
 					Mockito.any(),
 					Mockito.any(),
 					Mockito.any()
-			)).thenThrow(new ForbiddenException("User has a federated identity"));
+			)).thenThrow(new ForbiddenException());
 
 			var body = """
 					{
@@ -618,33 +640,56 @@ class UsersResourceIT {
 		}
 
 		@Test
+		@DisplayName("PUT /users/{id} returns 409 when email already exists")
+		void testUpdateUserConflict() {
+			Mockito.when(keycloakAuthorityPuller.updateUser(
+					Mockito.eq("user1"),
+					Mockito.any(),
+					Mockito.any(),
+					Mockito.any(),
+					Mockito.any(),
+					Mockito.any()
+			)).thenThrow(new AlreadyExistsException());
+
+			var body = """
+					{
+						"email": "existing@example.com",
+						"realmRoles": []
+					}
+					""";
+			given().contentType(ContentType.JSON).body(body)
+					.when().put("/users/user1")
+					.then().statusCode(409);
+		}
+
+		@Test
 		@DisplayName("PUT /users/{id}/enabled returns 204 when disabled successfully")
 		void testSetUserEnabledSuccess() {
-			Mockito.doNothing().when(keycloakAdminService).setUserEnabled("user1", false);
+			Mockito.doNothing().when(keycloakAuthorityPuller).setUserEnabled("user1", false);
 
 			given().contentType(ContentType.TEXT).body("false")
 					.when().put("/users/user1/enabled")
 					.then().statusCode(204);
 
-			Mockito.verify(keycloakAdminService).setUserEnabled("user1", false);
+			Mockito.verify(keycloakAuthorityPuller).setUserEnabled("user1", false);
 		}
 
 		@Test
 		@DisplayName("DELETE /users/{id} returns 204 when deleted successfully")
 		void testDeleteUserSuccess() {
-			Mockito.doNothing().when(keycloakAdminService).deleteUser("mockedUserId");
+			Mockito.doNothing().when(keycloakAuthorityPuller).deleteUser("mockedUserId");
 
 			when().delete("/users/mockedUserId")
 					.then().statusCode(204);
 
-			Mockito.verify(keycloakAdminService).deleteUser("mockedUserId");
+			Mockito.verify(keycloakAuthorityPuller).deleteUser("mockedUserId");
 		}
 
 		@Test
 		@DisplayName("DELETE /users/{id} returns 404 for non-existing user")
 		void testDeleteUserNotFound() {
-			Mockito.doThrow(new NotFoundException("User not found"))
-					.when(keycloakAdminService).deleteUser("nonexistent");
+			Mockito.doThrow(new NotFoundException())
+					.when(keycloakAuthorityPuller).deleteUser("nonexistent");
 
 			when().delete("/users/nonexistent")
 					.then().statusCode(404);
@@ -653,8 +698,8 @@ class UsersResourceIT {
 		@Test
 		@DisplayName("DELETE /users/{id} returns 403 for federated user")
 		void testDeleteUserForbidden() {
-			Mockito.doThrow(new ForbiddenException("User has a federated identity"))
-					.when(keycloakAdminService).deleteUser("federatedUser");
+			Mockito.doThrow(new ForbiddenException())
+					.when(keycloakAuthorityPuller).deleteUser("federatedUser");
 
 			when().delete("/users/federatedUser")
 					.then().statusCode(403);

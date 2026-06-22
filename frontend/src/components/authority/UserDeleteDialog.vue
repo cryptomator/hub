@@ -43,7 +43,7 @@
                   </button>
                 </div>
                 <p v-if="onDeleteUserError != null" class="text-sm text-red-900 px-4 sm:px-6 text-right bg-red-50">
-                  {{ t('common.unexpectedError', [onDeleteUserError.message]) }}
+                  {{ t('deleteUserDialog.error.failed') }}
                 </p>
               </form>
             </DialogPanel>
@@ -99,7 +99,7 @@ async function deleteUser() {
     open.value = false;
   } catch (error) {
     console.error('Deleting user failed.', error);
-    onDeleteUserError.value = error instanceof Error ? error : new Error('Unknown Error');
+    onDeleteUserError.value = error instanceof Error ? error : new Error('Unknown reason');
   }
 }
 </script>

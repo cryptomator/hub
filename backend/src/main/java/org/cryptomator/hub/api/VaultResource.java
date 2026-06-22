@@ -36,6 +36,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.cryptomator.hub.entities.AccessToken;
 import org.cryptomator.hub.entities.Authority;
+import org.cryptomator.hub.entities.Device;
 import org.cryptomator.hub.entities.EffectiveVaultAccess;
 import org.cryptomator.hub.entities.Group;
 import org.cryptomator.hub.entities.LegacyAccessToken;
@@ -80,6 +81,7 @@ public class VaultResource {
 
 	private final EventLogger eventLogger;
 	private final AccessToken.Repository accessTokenRepo;
+	private final Device.Repository deviceRepo;
 	private final Group.Repository groupRepo;
 	private final User.Repository userRepo;
 	private final Authority.Repository authorityRepo;
@@ -100,9 +102,10 @@ public class VaultResource {
 
 	@Inject
 	@SuppressWarnings("deprecation")
-	VaultResource(EventLogger eventLogger, AccessToken.Repository accessTokenRepo, Group.Repository groupRepo, User.Repository userRepo, Authority.Repository authorityRepo, EffectiveVaultAccess.Repository effectiveVaultAccessRepo, LegacyAccessToken.Repository legacyAccessTokenRepo, Vault.Repository vaultRepo, VaultAccess.Repository vaultAccessRepo, JsonWebToken jwt, LicenseHolder license, VaultUnlockMetrics vaultUnlockMetrics) {
+	VaultResource(EventLogger eventLogger, AccessToken.Repository accessTokenRepo, Device.Repository deviceRepo, Group.Repository groupRepo, User.Repository userRepo, Authority.Repository authorityRepo, EffectiveVaultAccess.Repository effectiveVaultAccessRepo, LegacyAccessToken.Repository legacyAccessTokenRepo, Vault.Repository vaultRepo, VaultAccess.Repository vaultAccessRepo, JsonWebToken jwt, LicenseHolder license, VaultUnlockMetrics vaultUnlockMetrics) {
 		this.eventLogger = eventLogger;
 		this.accessTokenRepo = accessTokenRepo;
+		this.deviceRepo = deviceRepo;
 		this.groupRepo = groupRepo;
 		this.userRepo = userRepo;
 		this.authorityRepo = authorityRepo;
@@ -378,7 +381,7 @@ public class VaultResource {
 		var ipAddress = request.remoteAddress().hostAddress();
 		try {
 			var access = legacyAccessTokenRepo.unlock(vaultId, deviceId, jwt.getSubject());
-			eventLogger.logVaultKeyRetrieved(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.SUCCESS, ipAddress, deviceId);
+			eventLogger.logVaultKeyRetrieved(Instant.now(), jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.SUCCESS, ipAddress, deviceId);
 			var response = Response.ok(access.getJwe());
 			var iosLicense = license.getEntitlements().iosLicense();
 			var androidLicense = license.getEntitlements().androidLicense();
@@ -391,7 +394,7 @@ public class VaultResource {
 			}
 			return response.build();
 		} catch (NoResultException _) {
-			eventLogger.logVaultKeyRetrieved(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.UNAUTHORIZED, ipAddress, deviceId);
+			eventLogger.logVaultKeyRetrieved(Instant.now(), jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.UNAUTHORIZED, ipAddress, deviceId);
 			throw new ForbiddenException("Access to this device not granted.");
 		}
 	}
@@ -428,11 +431,25 @@ public class VaultResource {
 			vaultUnlockMetrics.recordFailure();
 			throw new ActionRequiredException("User account not initialized.");
 		}
+
 		var ipAddress = request.remoteAddress().hostAddress();
 		var deviceId = request.getHeader("Hub-Device-ID");
+		if (deviceId != null) {
+			//for backwards compatibility, we can only validate the deviceId if the header is set
+			try {
+				deviceRepo.findByIdAndUser(deviceId, user.getId());
+			} catch (NoResultException e) {
+				throw new BadRequestException("User has no such device as specified in Header");
+			}
+		}
+
 		var access = accessTokenRepo.unlock(vaultId, jwt.getSubject());
 		if (access != null) {
-			eventLogger.logVaultKeyRetrieved(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.SUCCESS, ipAddress, deviceId);
+			var timestamp = Instant.now();
+			eventLogger.logVaultKeyRetrieved(timestamp, jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.SUCCESS, ipAddress, deviceId);
+			if (deviceId != null) {
+				deviceRepo.updateLastAccess(deviceId, timestamp, ipAddress);
+			}
 			vaultUnlockMetrics.recordSuccess();
 			var response = Response.ok(access.getVaultKey(), MediaType.TEXT_PLAIN_TYPE);
 			var iosLicense = license.getEntitlements().iosLicense();
@@ -446,7 +463,7 @@ public class VaultResource {
 			}
 			return response.build();
 		} else {
-			eventLogger.logVaultKeyRetrieved(jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.UNAUTHORIZED, ipAddress, deviceId);
+			eventLogger.logVaultKeyRetrieved(Instant.now(), jwt.getSubject(), vaultId, VaultKeyRetrievedEvent.Result.UNAUTHORIZED, ipAddress, deviceId);
 			vaultUnlockMetrics.recordFailure();
 			throw new ForbiddenException("Access to this vault not granted.");
 		}
