@@ -397,7 +397,7 @@ public class KeycloakAuthorityPuller {
 		}
 
 		var pictureUrl = KeycloakAuthorityProvider.parsePictureUrl(keycloakGroup.getAttributes());
-		var dbMembers = userRepo.findByIds(memberIds).collect(Collectors.toMap(User::getId, Function.<User>identity()));
+		var dbMembers = userRepo.streamByIds(memberIds).collect(Collectors.toMap(User::getId, Function.<User>identity()));
 
 		applyGroup(dbGroup, keycloakGroup.getName(), pictureUrl, new HashSet<>(memberIds), dbMembers::get);
 		groupRepo.persist(dbGroup);
